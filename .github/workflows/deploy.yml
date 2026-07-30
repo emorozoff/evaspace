@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -33,23 +33,49 @@ jobs:
       - name: Сборка
         run: npm run build
 
-      - name: Настройка Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
+      # Публикация в ветку gh-pages — основной способ.
+      # GitHub Pages подхватывает эту ветку и сайт открывается по ссылке.
+      - name: Публикация в ветку gh-pages
+        run: |
+          touch dist/.nojekyll
+          cp dist/index.html dist/404.html
+          cd dist
+          git init -q
+          git checkout -qb gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Сборка сайта из ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Загрузка сборки
+      # Запасной способ: если в настройках выбран источник «GitHub Actions».
+      - name: Настройка Pages
+        id: pages
+        continue-on-error: true
+        uses: actions/configure-pages@v5
+
+      - name: Загрузка сборки как артефакта Pages
+        if: steps.pages.outcome == 'success'
+        continue-on-error: true
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
+    outputs:
+      pages_ready: ${{ steps.pages.outcome }}
+
   deploy:
     needs: build
+    if: needs.build.outputs.pages_ready == 'success'
+    continue-on-error: true
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Публикация
+      - name: Публикация артефакта
         id: deployment
+        continue-on-error: true
         uses: actions/deploy-pages@v4
