@@ -60,4 +60,8 @@ src/
 └─ screens/             экраны приложения
 ```
 
-Публикация автоматическая: пуш в ветку → GitHub Actions собирает и выкладывает на Pages.
+## Публикация
+
+Пуш в ветку `claude/eva-space-app-ho4tcy` запускает GitHub Actions: сборка и выкладка готового сайта в ветку `gh-pages`, откуда его отдаёт GitHub Pages.
+
+Если ссылка отдаёт 404 — значит, Pages ещё не включён для репозитория. Включается один раз: **Settings → Pages → Build and deployment → Source: «Deploy from a branch» → Branch: `gh-pages` / `/ (root)` → Save**. Через минуту сайт поднимется, дальше всё обновляется автоматически.
