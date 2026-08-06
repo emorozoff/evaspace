@@ -3,6 +3,7 @@ import Art from './Art.jsx';
 import { IcStar, IcSparkStar, IcBack, IcClock, IcPlay, IcCheck } from './Icons.jsx';
 import { TYPE_META, expertById } from '../data/content.js';
 import { back as goBack, go } from '../lib/router.jsx';
+import { APP_VERSION } from '../version.js';
 
 /* --------- звёздное небо (декор) --------- */
 export function StarField({ n = 40, seed = 5, className = 'sky' }) {
@@ -128,18 +129,42 @@ export function TopBar({ title, onBack, right, dark = false, sub }) {
 }
 
 /* --------- логотип --------- */
-export function Logo({ size = 22, withText = true, light = false }) {
+export function Logo({ size = 22, withText = true, light = false, showVersion = true }) {
   return (
     <div className="row" style={{ gap: 8 }}>
       <span style={{ color: light ? '#f6dfae' : '#b64f7c', display: 'grid', placeItems: 'center' }}>
         <IcSparkStar size={size} />
       </span>
       {withText && (
-        <span className="serif" style={{ fontSize: size * 0.86, letterSpacing: 1.2, color: light ? '#fff' : 'var(--plum)' }}>
-          EVA SPACE
+        <span className="row" style={{ gap: 6, alignItems: 'baseline' }}>
+          <span className="serif" style={{ fontSize: size * 0.86, letterSpacing: 1.2, color: light ? '#fff' : 'var(--plum)' }}>
+            EVA SPACE
+          </span>
+          {showVersion && <VersionBadge light={light} />}
         </span>
       )}
     </div>
+  );
+}
+
+/* --------- бейдж версии сборки --------- */
+export function VersionBadge({ light = false, style }) {
+  return (
+    <span
+      style={{
+        fontFamily: 'Manrope, sans-serif',
+        fontSize: 10,
+        fontWeight: 800,
+        letterSpacing: 0.3,
+        padding: '2px 7px',
+        borderRadius: 999,
+        background: light ? 'rgba(255,255,255,.18)' : 'var(--blush)',
+        color: light ? 'rgba(255,255,255,.85)' : 'var(--rose-deep)',
+        ...style,
+      }}
+    >
+      v{APP_VERSION}
+    </span>
   );
 }
 

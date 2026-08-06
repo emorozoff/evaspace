@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore, levelOf, totalStars, weekReport, referralIncome } from '../lib/store.jsx';
 import { LEVELS, REFERRALS, COURSES } from '../data/content.js';
-import { Avatar, StarField, TopBar, Sheet, Empty } from '../components/UI.jsx';
+import { Avatar, StarField, TopBar, Sheet, Empty, VersionBadge } from '../components/UI.jsx';
 import { IcCrown, IcShare, IcCheck, IcLock, IcWallet, IcGift, IcNext, IcSettings, IcStar, IcSparkStar } from '../components/Icons.jsx';
 import { go } from '../lib/router.jsx';
 
@@ -247,7 +247,10 @@ export default function Profile() {
               <span style={{ flex: 1, textAlign: 'left', fontWeight: 700, fontSize: 14, color: '#b64f7c' }}>Сбросить всё и начать заново</span>
             </button>
           </div>
-          <div className="tiny muted" style={{ textAlign: 'center', marginTop: 16 }}>Eva Space · демо-версия MVP</div>
+          <div className="row" style={{ justifyContent: 'center', gap: 7, marginTop: 16 }}>
+            <span className="tiny muted">Eva Space · демо-версия MVP</span>
+            <VersionBadge />
+          </div>
         </div>
       </Sheet>
     </div>

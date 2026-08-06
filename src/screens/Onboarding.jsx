@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { QUESTIONS } from '../data/content.js';
 import { useStore } from '../lib/store.jsx';
-import { StarField, Logo, MatchRing } from '../components/UI.jsx';
+import { StarField, Logo, MatchRing, VersionBadge } from '../components/UI.jsx';
 import { IcCheck, IcNext, IcSparkStar } from '../components/Icons.jsx';
 import { go, currentPath } from '../lib/router.jsx';
 
@@ -60,8 +60,11 @@ export default function Onboarding() {
             <div style={{ display: 'inline-grid', placeItems: 'center', color: '#f6dfae', marginBottom: 14 }}>
               <IcSparkStar size={64} />
             </div>
-            <div className="serif" style={{ fontSize: 42, lineHeight: 1.05, letterSpacing: 1 }}>
-              Eva Space
+            <div className="row" style={{ justifyContent: 'center', gap: 9, alignItems: 'baseline' }}>
+              <div className="serif" style={{ fontSize: 42, lineHeight: 1.05, letterSpacing: 1 }}>
+                Eva Space
+              </div>
+              <VersionBadge light />
             </div>
             <div style={{ opacity: 0.8, marginTop: 10, fontSize: 15, lineHeight: 1.5 }}>
               Платформа женского развития
