@@ -3,3 +3,6 @@
 site/
 data/
 uploads/
+dist/
+/index.html
+__pycache__/

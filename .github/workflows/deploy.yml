@@ -23,13 +23,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Сборка не нужна: приложение — один самодостаточный index.html.
-      # Просто собираем папку сайта из файлов репозитория.
+      # Приложение собирается из src/ в один файл — как и то, что уходит на хостинг.
+      - name: Сборка приложения
+        run: |
+          python3 build.py
+          test -s dist/index.html
+
       - name: Подготовка папки сайта
         run: |
           mkdir -p site
-          cp index.html manifest.json sw.js icon.svg *.png site/
-          cp index.html site/404.html      # чтобы работали ссылки вида /evaspace/#/...
+          cp dist/index.html site/
+          cp manifest.json sw.js icon.svg *.png site/
+          cp dist/index.html site/404.html   # чтобы работали ссылки вида /evaspace/#/...
           touch site/.nojekyll
           ls -la site
 
