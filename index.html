@@ -2130,7 +2130,9 @@ function page(){
 }
 
 /* ---------- переключатель ролей (для разработки) ---------- */
+/* инструмент разработки: с сервером его видит только администратор */
 function roleSwitch(){
+  if(SYNC.alive !== false && !(S.user && S.user.role === 'admin')) return '';
   const R = [['user','Пользователь'],['expert','Эксперт'],['admin','Админ']];
   return `<div class="rolesw">
     ${R.map(([k,l]) => `<button class="${S.role===k?'on':''}" onclick="setRole('${k}')">${l}</button>`).join('')}
@@ -2312,23 +2314,20 @@ function authAdmin(){
       <h1 class="serif" style="font-size:27px;margin:8px 0 8px">Панель управления</h1>
       <p class="muted small" style="margin:0 0 22px">Для администраторов и подтверждённых экспертов. Загрузка контента, модерация, статистика.</p>
       <label class="lbl" style="color:rgba(255,255,255,.6)">Служебная почта</label>
-      <input class="field" id="ad_mail" placeholder="admin@evaspace.ru" value="admin@evaspace.ru">
+      <input class="field" id="ad_mail" type="email" inputmode="email" placeholder="you@mail.ru">
       <label class="lbl" style="color:rgba(255,255,255,.6)">Пароль</label>
-      <input class="field" id="ad_pass" type="password" placeholder="Пароль" value="demo">
-      <div class="seg" style="background:rgba(255,255,255,.08)">
-        ${[['admin','Администратор'],['expert','Эксперт']].map(([k,l]) =>
-          `<button class="${S.role===k?'on':''}" style="${S.role===k?'':'color:rgba(255,255,255,.55)'}"
-            onclick="S.role='${k}';render()">${l}</button>`).join('')}
-      </div>
+      <input class="field" id="ad_pass" type="password" placeholder="Пароль">
       <button class="btn" style="background:#fff;color:var(--ink)" onclick="adminLogin()">Войти в панель</button>
-      <p class="small muted" style="margin-top:14px;font-size:11px">В прототипе вход открыт: любые данные подойдут.</p>
+      <p class="small muted" style="margin-top:14px;font-size:11px">Роль определяет сервер: администратора задаёт
+        файл data/config.php на хостинге, эксперта назначает администратор.</p>
     </div>
   </div>`;
 }
 
-function authGo(m){ S.auth.mode = m; S.auth.err = ''; if(m==='admin'&&S.role==='user') S.role='admin'; render(); }
+/* роль назначает сервер, экран входа её больше не трогает */
+function authGo(m){ S.auth.mode = m; S.auth.err = ''; render(); }
 
-function submitAuth(){
+async function submitAuth(){
   const a = S.auth;
   a.pass = ($('#a_pass')||{}).value || '';
   const nm = (($('#a_name')||{}).value || '').trim();
@@ -2349,7 +2348,19 @@ function submitAuth(){
   if(a.pass.length < 6){ a.err = 'Пароль минимум 6 символов'; return render(); }
 
   if(a.mode === 'login'){
-    const u = DB.find(a.email);
+    if(SYNC.alive !== false){                      // пароль проверяет сервер
+      const r = await apiCall('login', { email:a.email, pass:a.pass }, { silent:true });
+      if(!r){ a.err = SYNC.lastError || 'Не удалось войти'; return render(); }
+      SYNC.token = r.token;
+      mirrorUser(r.user);
+      if(!r.user.verified){
+        a.err = ''; a.code = r.demo_code || ''; a.mode = 'verify';
+        sendVerificationEmail(a.email, a.code);
+        return render();
+      }
+      return signIn(DB.find(a.email) || r.user);
+    }
+    const u = DB.find(a.email);                    // без сервера — только на этом устройстве
     if(!u){ a.err = 'Аккаунт с такой почтой не найден'; return render(); }
     if(u.pass !== hashPass(a.pass)){ a.err = 'Неверный пароль'; return render(); }
     if(!u.verified){ a.err = ''; a.code = u.code; a.mode = 'verify'; sendVerificationEmail(a.email, u.code); return render(); }
@@ -2383,10 +2394,23 @@ function scrMail(){
   </div>`;
 }
 
-function sendCode(){
+async function sendCode(){
   const a = S.auth;
   a.email = (($('#m_mail')||{}).value || '').trim().toLowerCase();
   if(!/^[^@\s]+@[^@\s]+\.[a-zа-я]{2,}$/i.test(a.email)){ a.err = 'Проверь адрес почты'; return render(); }
+
+  if(SYNC.alive !== false){                        // аккаунт заводит сервер
+    const r = await apiCall('register',
+      { email:a.email, name:S.name || 'Гостья', pass:a.pass || 'eva2026' }, { silent:true });
+    if(!r){ a.err = SYNC.lastError || 'Не удалось создать аккаунт'; return render(); }
+    SYNC.token = r.token;
+    mirrorUser(r.user);
+    a.err = ''; a.code = r.demo_code || ''; a.mode = 'verify'; S.screen = 'auth';
+    sendVerificationEmail(a.email, a.code);
+    render(); stars();
+    return;
+  }
+
   if(DB.find(a.email)){ a.err = 'Эта почта уже занята - войди в аккаунт'; return render(); }
   const code = genCode();
   DB.upsert({email:a.email, name:S.name, pass:hashPass(a.pass || 'eva2026'), verified:false, code,
@@ -2439,8 +2463,24 @@ function scrVerify(){
   </div>`;
 }
 
-function checkCode(){
+async function checkCode(){
   const v = (($('#v_code')||{}).value || '').trim();
+
+  if(SYNC.alive !== false){                        // код сверяет сервер
+    const r = await apiCall('verify', { email:S.auth.email, code:v }, { silent:true });
+    if(!r){ S.auth.err = SYNC.lastError || 'Код не совпадает'; return render(); }
+    mirrorUser(r.user);
+    S.auth.err = '';
+    S.user = {email:r.user.email, name:r.user.name, role:r.user.role};
+    S.role = r.user.role === 'expert' ? 'expert' : r.user.role === 'admin' ? 'admin' : 'user';
+    S.name = r.user.name;
+    if(S.auth.remember) DB.setSession({email:r.user.email, at:Date.now()});
+    toast('Почта подтверждена');
+    if(S.tags && S.tags.length){ buildAnim(); }
+    else { restore(r.user.email); S.screen = 'app'; render(); }
+    return;
+  }
+
   const u = DB.find(S.auth.email);
   if(!u) { S.auth.mode = 'signup'; return render(); }
   if(v !== u.code){ S.auth.err = 'Код не совпадает'; return render(); }
@@ -2472,7 +2512,14 @@ function buildAnim(){
     }
   }, 800);
 }
-function resendCode(){
+async function resendCode(){
+  if(SYNC.alive !== false){
+    const r = await apiCall('resend', { email:S.auth.email }, { silent:true });
+    if(!r) return toast(SYNC.lastError || 'Не удалось отправить код');
+    S.auth.code = r.demo_code || '';
+    sendVerificationEmail(S.auth.email, S.auth.code);
+    render(); return toast('Код отправлен повторно');
+  }
   const u = DB.find(S.auth.email);
   if(!u) return;
   u.code = genCode(); DB.upsert(u); S.auth.code = u.code;
@@ -2480,28 +2527,50 @@ function resendCode(){
   render(); toast('Код отправлен повторно');
 }
 
-function adminLogin(){
-  const mail = (($('#ad_mail')||{}).value || 'admin@evaspace.ru').trim().toLowerCase();
-  const pass = ($('#ad_pass')||{}).value || 'demo';
-  let u = DB.find(mail);
-  if(!u){
-    u = {email:mail, name:S.role === 'admin' ? (S.adminName || 'Администратор') : me().n,
-         pass:hashPass(pass), verified:true, role:S.role, created:Date.now()};
-    DB.upsert(u);
-  } else if(u.pass !== hashPass(pass)){
-    return toast('Неверный пароль для служебного входа');
+/* Роль приходит с сервера. Назначить её себе из браузера нельзя:
+   администратора задаёт файл data/config.php, эксперта — администратор. */
+async function adminLogin(){
+  const mail = (($('#ad_mail')||{}).value || '').trim().toLowerCase();
+  const pass = ($('#ad_pass')||{}).value || '';
+  if(!mail || !pass) return toast('Введи почту и пароль');
+
+  const enter = (u, role) => {
+    S.role = role;
+    S.user = {email:u.email, name:u.name, role};
+    S.name = u.name;
+    if(role === 'admin') S.adminName = u.name;
+    DB.setSession({email:u.email, at:Date.now()});
+    S.screen = 'app'; S.page = null;
+    render();
+    toast(role === 'admin' ? 'Панель администратора' : 'Кабинет эксперта');
+  };
+
+  if(SYNC.alive === false){                        // без сервера — только на этом устройстве
+    const u = DB.find(mail);
+    if(!u || u.pass !== hashPass(pass)) return toast('Неверная почта или пароль');
+    const role = u.role === 'admin' ? 'admin' : u.role === 'expert' ? 'expert' : 'user';
+    if(role === 'user') return toast('У этого аккаунта нет доступа к панели');
+    return enter(u, role);
   }
-  u.role = S.role; DB.upsert(u);
-  S.user = {email:u.email, name:u.name, role:S.role};
-  if(S.role === 'admin') S.adminName = u.name;
-  DB.setSession({email:u.email, at:Date.now()});
-  S.screen = 'app'; S.page = null;
-  render(); toast(S.role === 'admin' ? 'Панель администратора' : 'Кабинет эксперта');
+
+  const r = await apiCall('login', { email:mail, pass }, { silent:true });
+  if(!r) return toast(SYNC.lastError || 'Не удалось войти');
+  const role = r.user.role;
+  if(role !== 'admin' && role !== 'expert'){
+    S.role = 'user';
+    return toast('У этого аккаунта нет доступа к панели. Администратор назначается в data/config.php на хостинге');
+  }
+  SYNC.token = r.token;
+  mirrorUser(r.user);
+  enter(r.user, role);
+  if(role === 'admin') pullUsers();
 }
 
-function logout(){
+async function logout(){
   persist();
-  if(typeof pushProgress === 'function') pushProgress();
+  if(typeof pushProgress === 'function') await pushProgress();
+  if(SYNC.alive !== false && SYNC.token) await apiCall('logout', {}, { silent:true });
+  SYNC.token = '';
   const last = S.user ? S.user.email : '';
   DB.clearSession();
   S.user = null; S.role = 'user'; S.avatar = '';
@@ -2512,9 +2581,22 @@ function logout(){
 
 /* автовход по сохранённой сессии */
 async function tryAutoLoginAsync(){
+  try { await SYNC.ready; } catch(e){}
+
+  if(SYNC.alive !== false){                        // с сервером решает токен, а не запись в браузере
+    if(!SYNC.token) return false;
+    const r = await apiCall('me', null, { silent:true });
+    if(!r || !r.user){ SYNC.token = ''; DB.clearSession(); return false; }
+    mirrorUser(r.user);
+    DB.setSession({email:r.user.email, at:Date.now()});
+    if(typeof pullProgress === 'function') await pullProgress(r.user.email);
+    const entered = tryAutoLogin();
+    if(entered && r.user.role === 'admin') await pullUsers();
+    return entered;
+  }
+
   const s = DB.session();
   if(!s) return false;
-  if(typeof pullUsers === 'function') await pullUsers();
   const u = DB.find(s.email);
   if(!u || !u.verified) return false;
   if(typeof pullProgress === 'function') await pullProgress(u.email);
@@ -7172,11 +7254,11 @@ function delAch(id, i){ const e = EXPERTS.find(x=>x.id===id); e.ach.splice(i,1);
    ===================================================================== */
 
 /* ─────────────────────────────────────────────────────────────────
-   КЛЮЧ СИНХРОНИЗАЦИИ
-   Должен совпадать со значением ADMIN_KEY в файле api.php.
-   Смените обе строки перед публикацией сайта.
+   ВХОД НА СЕРВЕР
+   Общего ключа больше нет. Приложение входит по почте и паролю,
+   сервер выдаёт токен сессии и сам решает, что этой женщине можно.
+   Права администратора выдаются в файле data/config.php на хостинге.
    ───────────────────────────────────────────────────────────────── */
-const SYNC_KEY = 'eva-change-me';
 
 const SYNC = {
   base: 'api.php',
@@ -7186,17 +7268,44 @@ const SYNC = {
   lastSaved: 0,
   queue: {},            // ветки, ждущие отправки
   sending: false,
-  get key(){ return Store.get('eva_sync_key', SYNC_KEY); },
-  set key(v){ Store.set('eva_sync_key', v); }
+  ready: null,          // обещание первой проверки связи
+  get token(){ return Store.get('eva_token', ''); },
+  set token(v){ v ? Store.set('eva_token', v) : Store.del('eva_token'); }
 };
+
+/* местная копия профиля: чтобы приложение открывалось и без сети */
+function mirrorUser(u){
+  if(!u || !u.email) return;
+  const mail = String(u.email).toLowerCase();
+  const all = DB.users();
+  all[mail] = Object.assign({}, all[mail], {
+    email: mail, name: u.name, role: u.role || 'user',
+    verified: !!u.verified, created: u.created || Date.now()
+  });
+  DB.saveUsers(all);
+}
+
+/* сервер сказал, что токен больше не годится */
+function dropSession(){
+  SYNC.token = '';
+  if(!S.user) return;
+  const last = S.user.email;
+  DB.clearSession();
+  S.user = null; S.role = 'user'; S.avatar = '';
+  S.auth = {mode:'login', email:last, pass:'', name:'',
+    err:'Сессия истекла, войди ещё раз', code:'', sent:'', remember:true};
+  S.screen = 'auth'; S.page = null; S.sheet = null; S.course = null;
+  render(); stars();
+}
 
 async function apiCall(action, body, opts){
   opts = opts || {};
   if(SYNC.alive === false && !opts.force) return null;
   try {
+    const tok = SYNC.token;
     let payload = null;
     if(body){
-      payload = JSON.stringify(body);
+      payload = JSON.stringify(tok ? Object.assign({ token:tok }, body) : body);
       if(payload.length > 6_000_000){
         SYNC.lastError = 'пакет ' + Math.round(payload.length/1048576) + ' МБ — больше лимита хостинга. Сохраняю частями';
         return null;
@@ -7205,12 +7314,14 @@ async function apiCall(action, body, opts){
     const init = payload
       ? { method:'POST', headers:{'Content-Type':'application/json'}, body:payload }
       : { cache:'no-store' };
-    const res = await fetch(SYNC.base + '?action=' + action, init);
+    const url = SYNC.base + '?action=' + action + (tok && !payload ? '&token=' + encodeURIComponent(tok) : '');
+    const res = await fetch(url, init);
     let j = null;
     try { j = await res.json(); }
     catch(e){ throw new Error('сервер ответил не в формате JSON (код ' + res.status + ')'); }
     if(!j.ok){
       SYNC.lastError = j.error || ('ошибка ' + res.status);
+      if(res.status === 401 && tok) dropSession();
       if(!opts.silent) toast('Не сохранилось: ' + SYNC.lastError);
       return null;
     }
@@ -7291,11 +7402,11 @@ async function flushSync(){
   let okAll = true;
   if(size > 1_200_000){
     for(const b of names){
-      const r = await apiCall('patch', { key:SYNC.key, parts:{ [b]: parts[b] } });
+      const r = await apiCall('patch', { parts:{ [b]: parts[b] } });
       if(!r) okAll = false; else SYNC.rev = r.rev;
     }
   } else {
-    const r = await apiCall('patch', { key:SYNC.key, parts });
+    const r = await apiCall('patch', { parts });
     if(!r) okAll = false; else SYNC.rev = r.rev;
   }
   SYNC.sending = false;
@@ -7375,8 +7486,14 @@ async function uploadImage(id, dataUrl){
 }
 
 /* ---------- аккаунты и прогресс ---------- */
-async function syncUser(u){ if(SYNC.alive !== false) await apiCall('user_save', { user:u }, { silent:true }); }
+/* на сервер уходит только профиль: пароль и права меняются не здесь */
+async function syncUser(u){
+  if(SYNC.alive === false || !SYNC.token || !u || !u.email) return;
+  await apiCall('user_save', { user:{ email:u.email, name:u.name, avatar:u.avatar || '' } }, { silent:true });
+}
+/* список аккаунтов сервер отдаёт только администратору */
 async function pullUsers(){
+  if(S.role !== 'admin') return;
   const r = await apiCall('users', null, { silent:true });
   if(r && r.users && typeof r.users === 'object'){
     DB.saveUsers(Object.assign({}, r.users, DB.users()));
@@ -7424,35 +7541,36 @@ function shDiag(){
   const row = (l, v, good) => `<div class="uline"><span class="small muted" style="flex:1">${l}</span>
     <b style="font-size:12.5px;color:${good === undefined ? 'var(--ink)' : good ? 'var(--ok)' : 'var(--accent)'}">${v}</b></div>`;
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Состояние сервера</h2>
-    <p class="small muted" style="margin:0 0 12px">Проверка связи, прав на папки и ключа синхронизации.</p>
+    <p class="small muted" style="margin:0 0 12px">Проверка связи, прав на папки и твоего доступа.</p>
     ${!d ? `<button class="btn" onclick="runDiag()">Проверить</button>` : `
       <div class="card">
         ${row('Связь с api.php', d.err ? 'нет' : 'есть', !d.err)}
         ${d.err ? `<div class="small" style="color:var(--accent);margin-top:8px">${esc(d.err)}</div>` : `
-          ${row('PHP', d.php)}
           ${row('Запись в data', d.data_ok ? 'работает' : 'НЕТ', d.data_ok)}
           ${row('Запись в uploads', d.uploads_ok ? 'работает' : 'НЕТ', d.uploads_ok)}
-          ${row('Ключ синхронизации', d.key_ok ? 'совпадает' : 'НЕ совпадает', d.key_ok)}
-          ${row('Файлов загружено', d.uploads_count)}
-          ${row('Размер базы', (d.db_size/1024).toFixed(1) + ' КБ')}
-          ${row('Версия данных', d.rev)}
-          ${row('Аккаунтов', d.users)}
-          ${row('Лимит запроса', d.post_max)}
-          ${row('Разделов сохранено', (d.branches||[]).length)}
+          ${row('Администратор назначен', d.config_ok ? 'да' : 'НЕТ', d.config_ok)}
+          ${row('Твои права', {admin:'администратор', expert:'эксперт', user:'пользователь'}[d.you] || 'не вошла')}
+          ${d.php ? `
+            ${row('PHP', d.php)}
+            ${row('Файлов загружено', d.uploads_count)}
+            ${row('Размер базы', (d.db_size/1024).toFixed(1) + ' КБ')}
+            ${row('Версия данных', d.rev)}
+            ${row('Аккаунтов', d.users)}
+            ${row('Открытых сессий', d.sessions)}
+            ${row('Лимит запроса', d.post_max)}
+            ${row('Разделов сохранено', (d.branches||[]).length)}
+            ${d.legacy_pass ? row('Пароли старого образца', d.legacy_pass) : ''}
+          ` : ''}
         `}
       </div>
       ${(d.problems||[]).length ? `<div class="card" style="border-color:var(--accent)">
         <b style="font-size:14px">Что мешает</b>
         ${d.problems.map(p => `<div class="small" style="margin-top:6px">— ${esc(p)}</div>`).join('')}
       </div>` : ''}
-      ${d.key_default ? `<div class="card" style="border-color:var(--warn)">
-        <b style="font-size:14px">Ключ не изменён</b>
-        <div class="small muted" style="margin-top:5px">В api.php стоит стандартный ключ. Смените его и впишите тот же
-          в поле ниже, иначе контент сможет переписать любой.</div></div>` : ''}
-      ${!d.key_ok && !d.err ? `
-        <label class="lbl">Ключ синхронизации из api.php</label>
-        <input class="field" id="sk" value="${esc(SYNC.key)}" placeholder="ADMIN_KEY из api.php">
-        <button class="btn" onclick="saveSyncKey()">Сохранить ключ</button>` : ''}
+      ${d.config_ok === false ? `<div class="card" style="border-color:var(--warn)">
+        <b style="font-size:14px">Администратор не назначен</b>
+        <div class="small muted" style="margin-top:5px">Откройте на хостинге файл data/config.php и впишите свою почту
+          в список admins. Пока список пуст, панель управления недоступна никому.</div></div>` : ''}
       <div class="acts">
         <button class="btn ghost" onclick="runDiag()">Проверить снова</button>
         <button class="btn ghost" onclick="syncPush(null,true);toast('Отправляю данные на сервер')">Сохранить всё</button>
@@ -7461,19 +7579,12 @@ function shDiag(){
     `}`;
 }
 async function runDiag(){
-  const r = await apiCall('diag&key=' + encodeURIComponent(SYNC.key), null, { silent:true, force:true });
+  const r = await apiCall('diag', null, { silent:true, force:true });
   S.diag = r ? r : { err: SYNC.lastError || 'сервер не отвечает' };
   render();
 }
-function saveSyncKey(){
-  const v = (($('#sk')||{}).value || '').trim();
-  if(!v) return toast('Впишите ключ');
-  SYNC.key = v;
-  toast('Ключ сохранён');
-  runDiag();
-}
 async function backupDB(){
-  const r = await apiCall('export&key=' + encodeURIComponent(SYNC.key), null, { silent:true });
+  const r = await apiCall('export', null, { silent:true });
   if(!r) return toast('Не удалось выгрузить: ' + SYNC.lastError);
   const a = document.createElement('a');
   a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(r.db, null, 2));
@@ -7490,7 +7601,6 @@ async function initSync(){
     console.info('[Eva] Сервер не найден — работаем локально в этом браузере');
     return;
   }
-  await pullUsers();
   await syncPull(true);
   if(S.screen === 'app') render();
   setInterval(() => {
@@ -7796,7 +7906,7 @@ S.tags = [];
 S.screen = 'splash';
 render();
 initPWA();
-initSync();
+SYNC.ready = initSync();
 
 function shHint(){
   const h = HINTS[S.sheet.id];

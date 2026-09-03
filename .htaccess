@@ -45,7 +45,13 @@ DirectoryIndex index.html
   Header set Cache-Control "no-cache"
 </Files>
 
-# закрываем служебные файлы
-<FilesMatch "^(db\.json)$">
-  Require all denied
+# закрываем служебные файлы: база, её копия, настройки с почтами администраторов
+<FilesMatch "^(db\.json|db\.backup\.json|db\.json\.tmp|config\.php|\.write-test)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
 </FilesMatch>
