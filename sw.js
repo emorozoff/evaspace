@@ -4,7 +4,7 @@
 const VERSION = 'eva-v2';
 const BASE = new URL('./', self.location).pathname;      // /evaspace/ на GitHub Pages
 const SHELL = [BASE, BASE + 'index.html', BASE + 'manifest.json', BASE + 'icon.svg',
-               BASE + 'icon-192.png', BASE + 'apple-touch-icon.png'];
+               BASE + 'icon-192.png', BASE + 'icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
