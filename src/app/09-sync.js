@@ -316,6 +316,12 @@ function applyShared(sh){
 }
 
 async function syncPull(silent){
+  /* фоновая проверка: сначала спрашиваем только номер версии — это
+     несколько байт вместо всей базы. Тянем данные, лишь если он другой. */
+  if(silent && SYNC.rev){
+    const head = await apiCall('rev', null, { silent:true });
+    if(head && head.rev === SYNC.rev) return false;
+  }
   const r = await apiCall('state', null, { silent:true });
   if(!r) return false;
   if(r.rev === SYNC.rev && silent) return false;
@@ -452,10 +458,14 @@ async function initSync(){
   }
   await syncPull(true);
   if(S.screen === 'app') render();
+  /* пока вкладка не на виду, сервер не тревожим совсем */
   setInterval(() => {
-    if(SYNC.sending || S.sheet) return;
+    if(document.hidden || SYNC.sending || S.sheet) return;
     syncPull(true).then(ch => { if(ch) render(); });
   }, 30000);
+  document.addEventListener('visibilitychange', () => {
+    if(!document.hidden && !SYNC.sending) syncPull(true).then(ch => { if(ch) render(); });
+  });
   // если что-то не отправилось — пробуем ещё раз
   setInterval(() => { if(Object.keys(SYNC.queue).length) flushSync(); }, 15000);
   window.addEventListener('online', () => { SYNC.alive = true; flushSync(); });

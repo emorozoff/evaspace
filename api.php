@@ -29,6 +29,7 @@ const DATA_DIR   = __DIR__ . '/data';
 const DB_FILE    = DATA_DIR . '/db.json';
 const BAK_FILE   = DATA_DIR . '/db.backup.json';
 const CFG_FILE   = DATA_DIR . '/config.php';
+const REV_FILE   = DATA_DIR . '/rev.txt';
 const UPLOAD_DIR = __DIR__ . '/uploads';
 const UPLOAD_URL = 'uploads';
 const MAX_UPLOAD = 12 * 1024 * 1024;
@@ -137,6 +138,9 @@ function db_write(array $db): void {
   }
   if (!@rename($tmp, DB_FILE)) { @unlink($tmp); fail('Не удалось обновить файл базы', 500); }
   @chmod(DB_FILE, 0644);
+  /* крошечный файл с номером версии: приложения спрашивают его каждые
+     полминуты, и разбирать ради этого всю базу незачем */
+  @file_put_contents(REV_FILE, (int)$db['rev'] . ' ' . (int)$db['updated']);
 }
 
 /* ---------- пароли ----------
@@ -285,6 +289,16 @@ switch ($action) {
   }
 
   case 'ping': ok(['time' => time()]);
+
+  /* только номер версии данных — несколько байт вместо всей базы */
+  case 'rev': {
+    if (file_exists(REV_FILE)) {
+      $raw = explode(' ', trim((string)@file_get_contents(REV_FILE)));
+      if (isset($raw[0]) && $raw[0] !== '') ok(['rev' => (int)$raw[0], 'updated' => (int)($raw[1] ?? 0)]);
+    }
+    $db = db_read();
+    ok(['rev' => (int)$db['rev'], 'updated' => (int)$db['updated']]);
+  }
 
   /* общий контент — он и так виден всем в приложении */
   case 'state': {

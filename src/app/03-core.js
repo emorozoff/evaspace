@@ -203,6 +203,7 @@ function render(){
     console.error('[Eva] экран не собрался:', e);
     crashCount++;
     try {
+      shownHTML = null;                          // после падения показываем заново в любом случае
       el.innerHTML = crashCount > 2
         ? `<div class="view pad" style="padding-top:60px"><h1 class="serif">Приложение споткнулось</h1>
              <p class="small muted" style="margin:10px 0 16px">Обнови страницу — данные сохранены.</p>
@@ -236,19 +237,32 @@ function backHome(){
   render();
 }
 
+/* Пересборка страницы — самая дорогая операция в приложении: браузер
+   заново разбирает разметку и считает раскладку. Перерисовку дёргают и
+   таймеры, и ответы сервера, поэтому сравниваем с тем, что уже показано,
+   и не трогаем страницу, если ничего не изменилось. Заодно не сбивается
+   набранный текст и позиция прокрутки. */
+let shownHTML = null;
+window.__renders = 0; window.__skipped = 0;
+function setHTML(html){
+  if(html === shownHTML){ window.__skipped++; return false; }
+  shownHTML = html; el.innerHTML = html; window.__renders++;
+  return true;
+}
+
 function renderScreen(){
   const s = S.screen;
-  if(s === 'splash')   { el.innerHTML = scrSplash(); return; }
-  if(s === 'auth')     { el.innerHTML = scrAuth(); return; }
-  if(s === 'mail')     { el.innerHTML = scrMail(); return; }
-  if(s === 'welcome')  el.innerHTML = scrWelcome();
-  else if(s === 'quiz')     el.innerHTML = scrQuiz();
-  else if(s === 'building') el.innerHTML = scrBuilding();
-  else if(s === 'ready')    el.innerHTML = scrReady();
+  if(s === 'splash')   { setHTML(scrSplash()); return; }
+  if(s === 'auth')     { setHTML(scrAuth()); return; }
+  if(s === 'mail')     { setHTML(scrMail()); return; }
+  if(s === 'welcome')  setHTML(scrWelcome());
+  else if(s === 'quiz')     setHTML(scrQuiz());
+  else if(s === 'building') setHTML(scrBuilding());
+  else if(s === 'ready')    setHTML(scrReady());
   else {
     const pro = S.role !== 'user';
-    el.innerHTML = `<div class="shell">${page()}</div>` + (pro ? '' : nav() + fab()) + roleSwitch()
-      + (S.sheet ? sheetSafe() : '');
+    setHTML(`<div class="shell">${page()}</div>` + (pro ? '' : nav() + fab()) + roleSwitch()
+      + (S.sheet ? sheetSafe() : ''));
   }
   if(s !== 'app' && s !== 'welcome') return;
   if(s === 'welcome') stars();
