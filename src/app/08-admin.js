@@ -62,7 +62,7 @@ function pgAdmin(){
         ideas:'Идеи и доработки', inbox:'Поддержка', events:'Мероприятия', market:'Маркет'})[S.adminTab]}</h1>
       <p class="small muted" style="margin:5px 0 0">${LIB.length} материалов · ${COURSES.length} курсов · ${STATS.users.toLocaleString('ru-RU')} пользователей</p>
       <div class="atabs grid six">
-        ${ADMIN_TABS.map(([k,l,i]) => `<button class="${S.adminTab===k?'on':''}" onclick="S.adminTab='${k}';S.tagSort=null;render()">
+        ${ADMIN_TABS.map(([k,l,i]) => `<button class="${S.adminTab===k?'on':''}" onclick="S.adminTab='${attJs(k)}';S.tagSort=null;render()">
           ${i} ${l}${k==='moderate'&&pend?`<span class="cnt">${pend}</span>`:''}</button>`).join('')}
       </div>
     </div>
@@ -91,14 +91,14 @@ function adContent(){
 
   <div class="seg">
     ${Object.entries(TYPE).map(([k,v]) => `<button class="${type===k?'on':''}"
-      onclick="S.cType='${k}';S.tagSort=null;render()">${v.l} · ${LIB.filter(x=>x.type===k).length}</button>`).join('')}
+      onclick="S.cType='${attJs(k)}';S.tagSort=null;render()">${v.l} · ${LIB.filter(x=>x.type===k).length}</button>`).join('')}
   </div>
 
   <input class="field" placeholder="Поиск по названию или автору" value="${esc(S.cQuery||'')}" oninput="S.cQuery=this.value;render()">
 
   <div class="chips">
     <button class="chip ${!S.tagSort?'on':''}" onclick="S.tagSort=null;render()">все теги</button>
-    ${tags.map(t => `<button class="chip ${S.tagSort===t?'on':''}" onclick="S.tagSort='${t}';render()">${t}
+    ${tags.map(t => `<button class="chip ${S.tagSort===t?'on':''}" onclick="S.tagSort='${attJs(t)}';render()">${esc(t)}
       <span style="opacity:.5">${LIB.filter(x=>x.type===type&&x.tags.includes(t)).length}</span></button>`).join('')}
   </div>
 
@@ -114,7 +114,7 @@ function adModerate(){
   const done = S.pending.filter(x => x.status === 'live' || x.status === 'rejected');
   const card = x => `
     <div class="acard">
-      <button class="cov" style="height:170px;position:relative;width:100%" onclick="openEditor('${x.id}')">
+      <button class="cov" style="height:170px;position:relative;width:100%" onclick="openEditor('${attJs(x.id)}')">
         ${cover(x.id, x.type)}
         <div class="badge">${TYPE[x.type].l} · ${x.min} мин</div>
         ${x.type !== 'affirm' ? '<div class="play">▶</div>' : ''}
@@ -122,17 +122,17 @@ function adModerate(){
       </button>
       <div style="padding:13px">
         <p class="small" style="margin:0 0 10px">${esc(x.text)}</p>
-        <div class="chips wrap">${x.tags.map(t => `<span class="chip pale">${t}</span>`).join('')}</div>
+        <div class="chips wrap">${x.tags.map(t => `<span class="chip pale">${esc(t)}</span>`).join('')}</div>
         <div class="small muted" style="margin:8px 0 0">
           Видео: ${x.video ? esc(x.video.slice(0,34)) : 'не приложено'} · Обложка: ${MEDIA[x.id] ? 'своя' : 'авто'}
           · ${x.free ? 'бесплатный' : 'по подписке'}</div>
         <div class="acts">
-          <button class="btn" onclick="approve('${x.id}')">Одобрить</button>
-          <button class="btn ghost" onclick="openSheet({k:'rework',id:'${x.id}'})">На доработку</button>
+          <button class="btn" onclick="approve('${attJs(x.id)}')">Одобрить</button>
+          <button class="btn ghost" onclick="openSheet({k:'rework',id:'${attJs(x.id)}'})">На доработку</button>
         </div>
         <div class="acts">
-          <button class="btn ghost" onclick="openSheet({k:'reject',id:'${x.id}'})">Отказать</button>
-          <button class="btn ghost" onclick="openEditor('${x.id}')">Открыть и править</button>
+          <button class="btn ghost" onclick="openSheet({k:'reject',id:'${attJs(x.id)}'})">Отказать</button>
+          <button class="btn ghost" onclick="openEditor('${attJs(x.id)}')">Открыть и править</button>
         </div>
       </div>
     </div>`;
@@ -144,8 +144,8 @@ function adModerate(){
     ${eq.map(({e,x}) => `<div class="uline">
       <div class="dot-ava" style="width:28px;height:28px;font-size:10px;background:var(--lilac)">${e.n[0]}</div>
       <div style="flex:1"><b style="font-size:12.5px">${esc(x.t)}</b>
-        <div class="small muted">${e.n}${x.y?' · '+x.y:''}${MEDIA['cert_'+x.id]?' · скан загружен':' · без скана'}</div></div>
-      <button class="btn xs" onclick="openSheet({k:'eduCheck',eid:'${e.id}',id:'${x.id}'})">Открыть</button>
+        <div class="small muted">${esc(e.n)}${x.y?' · '+x.y:''}${MEDIA['cert_'+x.id]?' · скан загружен':' · без скана'}</div></div>
+      <button class="btn xs" onclick="openSheet({k:'eduCheck',eid:'${attJs(e.id)}',id:'${attJs(x.id)}'})">Открыть</button>
     </div>`).join('')}
   </div>` : ''}
   <p class="small muted" style="margin:0 0 12px">Нажми на обложку, чтобы открыть материал целиком: видео, описание, теги и доступ.</p>
@@ -197,10 +197,10 @@ function adCourses(){
   ${COURSES.map(c => {
     const ls = lessonsOf(c.id), mods = modulesOf(c.id);
     return `<div class="acard">
-      <button class="cov catcov" style="height:140px;position:relative;width:100%" onclick="openCourseEditor('${c.id}')">
+      <button class="cov catcov" style="height:140px;position:relative;width:100%" onclick="openCourseEditor('${attJs(c.id)}')">
         ${cover(c.id,'course')}
-        <div class="badge">${COURSE_KIND[c.id]}</div>
-        <div class="cap"><b>${c.t}</b><span>${c.e} · ${mods.length} модуля · ${ls.length} уроков</span></div>
+        <div class="badge">${esc(COURSE_KIND[c.id])}</div>
+        <div class="cap"><b>${esc(c.t)}</b><span>${esc(c.e)} · ${mods.length} модуля · ${ls.length} уроков</span></div>
       </button>
       <div style="padding:12px">
         <div class="spread"><span class="price">${money(c.p)}</span>
@@ -208,8 +208,8 @@ function adCourses(){
         <div class="small muted" style="margin-top:5px">
           Открытых уроков: ${ls.filter(l => l.free).length} · промо: ${(S.videos&&S.videos[c.id+'_promo'])?'есть':'нет'}</div>
         <div class="acts">
-          <button class="btn ghost sm" onclick="openCourseEditor('${c.id}')">Редактировать</button>
-          <button class="btn ghost sm" onclick="openCourseLanding('${c.id}')">Просмотр</button>
+          <button class="btn ghost sm" onclick="openCourseEditor('${attJs(c.id)}')">Редактировать</button>
+          <button class="btn ghost sm" onclick="openCourseLanding('${attJs(c.id)}')">Просмотр</button>
         </div>
       </div>
     </div>`;
@@ -223,7 +223,7 @@ function adStats(){
   const topCourses = COURSES.map(c => ({...c, rev:c.p*Math.round(c.s*0.02)})).sort((a,b) => b.rev - a.rev);
   return `
   <div class="seg">${['неделя','месяц','квартал'].map(p =>
-    `<button class="${period===p?'on':''}" onclick="S.statPeriod='${p}';render()">${p}</button>`).join('')}</div>
+    `<button class="${period===p?'on':''}" onclick="S.statPeriod='${attJs(p)}';render()">${p}</button>`).join('')}</div>
 
   <div class="g2">
     ${[['Пользователей', s.users.toLocaleString('ru-RU'), '+8,2%'],
@@ -254,7 +254,7 @@ function adStats(){
   <div class="card">
     <b style="font-size:14.5px">Просмотры видео и вовлечённость</b>
     ${s.topContent.map(c => `<div style="margin-top:10px">
-      <div class="spread" style="margin-bottom:4px"><span class="small">${c.t}</span>
+      <div class="spread" style="margin-bottom:4px"><span class="small">${esc(c.t)}</span>
         <span class="small muted">${c.v.toLocaleString('ru-RU')} · досмотр ${c.done}%</span></div>
       <div class="bar"><i style="width:${c.done}%"></i></div></div>`).join('')}
     <div class="small muted" style="margin-top:12px">Средний досмотр по библиотеке - 71%. Мастер-классы длиннее 30 минут теряют около четверти зрителей на середине.</div>
@@ -264,8 +264,8 @@ function adStats(){
     <b style="font-size:14.5px">Самые покупаемые курсы</b>
     ${topCourses.slice(0,5).map((c,i) => `<div class="trow" style="padding:9px 0">
       <span class="muted" style="font-size:12px;width:16px">${i+1}</span>
-      <div style="flex:1"><b style="font-size:13px">${c.t}</b>
-        <div class="small muted">${c.e}</div></div>
+      <div style="flex:1"><b style="font-size:13px">${esc(c.t)}</b>
+        <div class="small muted">${esc(c.e)}</div></div>
       <div style="text-align:right"><b style="font-size:13px">${money(c.rev)}</b>
         <div class="small muted">${Math.round(c.s*0.02)} продаж</div></div>
     </div>`).join('')}
@@ -274,7 +274,7 @@ function adStats(){
   <div class="card">
     <b style="font-size:14.5px">Активность в сообществах</b>
     ${GROUPS.slice(0,4).map(g => `<div class="spread" style="margin-top:9px">
-      <span class="small">${g.e} ${g.t}</span>
+      <span class="small">${esc(g.e)} ${esc(g.t)}</span>
       <span class="small muted">${(hash(g.id)%400+80)} сообщений · ${g.m.toLocaleString('ru-RU')} участниц</span></div>`).join('')}
   </div>`;
 }
@@ -321,13 +321,13 @@ function adUsers(){
 
   <input class="field" placeholder="Поиск по имени, почте или телеграму" value="${esc(S.uQuery||'')}" oninput="S.uQuery=this.value;render()">
   <div class="chips">${filters.map(x =>
-    `<button class="chip ${f===x?'on':''}" onclick="S.userFilter='${x}';render()">${x}</button>`).join('')}</div>
+    `<button class="chip ${f===x?'on':''}" onclick="S.userFilter='${attJs(x)}';render()">${x}</button>`).join('')}</div>
   <div class="chips"><span class="small muted" style="align-self:center;margin-right:4px">Сортировка:</span>
     ${['дата','вовлечённость','оплаты'].map(x =>
-      `<button class="chip ${sort===x?'on':''}" onclick="S.uSort='${x}';render()">${x}</button>`).join('')}</div>
+      `<button class="chip ${sort===x?'on':''}" onclick="S.uSort='${attJs(x)}';render()">${x}</button>`).join('')}</div>
   <div class="chips"><span class="small muted" style="align-self:center;margin-right:4px">Вид:</span>
     ${[['card','карточками'],['list','списком']].map(([k,l]) =>
-      `<button class="chip ${(S.uView||'card')===k?'on':''}" onclick="S.uView='${k}';render()">${l}</button>`).join('')}</div>
+      `<button class="chip ${(S.uView||'card')===k?'on':''}" onclick="S.uView='${attJs(k)}';render()">${l}</button>`).join('')}</div>
 
   <div class="acts" style="margin-bottom:12px">
     <button class="btn" onclick="openSheet('addUser')">＋ Добавить вручную</button>
@@ -338,10 +338,10 @@ function adUsers(){
 
   ${(S.uView||'card') === 'list' ? `<div class="tbl">
     <div class="trow head"><span style="flex:1">Пользователь</span><span style="width:70px">Доступ</span><span style="width:44px">Вовл.</span></div>
-    ${list.map(u => `<button class="trow" style="width:100%;text-align:left" onclick="S.uOpen=S.uOpen==='${u.id}'?null:'${u.id}';S.uView='card';render()">
+    ${list.map(u => `<button class="trow" style="width:100%;text-align:left" onclick="S.uOpen=S.uOpen==='${attJs(u.id)}'?null:'${attJs(u.id)}';S.uView='card';render()">
       ${avatarOf(u.m) ? avaImg(avatarOf(u.m), 26)
         : `<div class="dot-ava" style="width:26px;height:26px;font-size:10px;background:${u.role==='эксперт'?'var(--lilac)':'var(--ink)'}">${u.n[0]}</div>`}
-      <div style="flex:1;min-width:0"><b style="font-size:12.5px;display:block">${u.n}</b>
+      <div style="flex:1;min-width:0"><b style="font-size:12.5px;display:block">${esc(u.n)}</b>
         <div class="small muted" style="font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.m}</div></div>
       <span class="tag-st ${PAY[u.pay][1]}" style="width:70px;text-align:center;padding:3px 4px;font-size:9px">${u.gift?'подарен':PAY[u.pay][0]}</span>
       <b style="width:44px;text-align:right;font-size:11.5px">${u.eng}%</b>
@@ -354,8 +354,8 @@ function adUsers(){
         ${avatarOf(u.m)
           ? avaImg(avatarOf(u.m), 40)
           : `<div class="dot-ava" style="width:40px;height:40px;background:${u.role==='эксперт'?'var(--lilac)':u.role==='админ'?'var(--gold)':'var(--ink)'}">${u.n[0]}</div>`}
-        <div><b style="font-size:14px">${u.n}</b>
-          <div class="small muted">${u.role} · с ${u.since} · ${u.last}</div></div>
+        <div><b style="font-size:14px">${esc(u.n)}</b>
+          <div class="small muted">${esc(u.role)} · с ${u.since} · ${u.last}</div></div>
       </div>
       <span class="tag-st ${u.gift?'st-think':PAY[u.pay][1]}">${u.gift?'доступ подарен':PAY[u.pay][0]}${!u.gift&&u.pay==='trial'&&u.days?', день '+(4-u.days):''}</span>
     </div>
@@ -382,14 +382,14 @@ function adUsers(){
     ${u.role === 'ученица' ? `
       <div class="small muted" style="margin:10px 0 5px">Статус сделки</div>
       <div class="chips">${['думает','оплатит позже','отказ',''].map(st =>
-        `<button class="chip ${u.st===st?'on':''}" onclick="setUser('${u.id}','st','${st}')">${st||'сбросить'}</button>`).join('')}</div>
+        `<button class="chip ${u.st===st?'on':''}" onclick="setUser('${attJs(u.id)}','st','${attJs(st)}')">${st||'сбросить'}</button>`).join('')}</div>
       <input class="field" style="margin:4px 0 8px" placeholder="Комментарий менеджера"
-        value="${esc(u.note||'')}" oninput="setUserQuiet('${u.id}','note',this.value)">` : ''}
+        value="${esc(u.note||'')}" oninput="setUserQuiet('${attJs(u.id)}','note',this.value)">` : ''}
 
     <div class="acts" style="margin-top:6px">
-      <button class="btn sm" onclick="openSheet({k:'write2',id:'${u.id}'})">Написать</button>
-      <button class="btn ghost sm" onclick="openSheet({k:'grant',id:'${u.id}'})">Открыть доступ</button>
-      <button class="btn ghost sm" onclick="copyText('${u.m}')">Почта</button>
+      <button class="btn sm" onclick="openSheet({k:'write2',id:'${attJs(u.id)}'})">Написать</button>
+      <button class="btn ghost sm" onclick="openSheet({k:'grant',id:'${attJs(u.id)}'})">Открыть доступ</button>
+      <button class="btn ghost sm" onclick="copyText('${attJs(u.m)}')">Почта</button>
     </div>
   </div>`).join('') || '<div class="empty">Никого не найдено</div>'}`;
 }
@@ -409,23 +409,23 @@ function adInbox(){
   return `
   <p class="small muted" style="margin:0 0 12px">Служба поддержки: вопросы от учениц и экспертов в одном месте.</p>
   <div class="chips">${['все','новые','от пользователей','от экспертов'].map(x =>
-    `<button class="chip ${f===x?'on':''}" onclick="S.inboxFilter='${x}';render()">${x}</button>`).join('')}</div>
+    `<button class="chip ${f===x?'on':''}" onclick="S.inboxFilter='${attJs(x)}';render()">${x}</button>`).join('')}</div>
   ${list.map(t => `<div class="card ${t.st==='новое'?'unread':''}">
     <div class="spread">
-      <div class="row"><div class="dot-ava" style="background:${t.role==='эксперт'?'var(--lilac)':'var(--ink)'}">${t.from[0]}</div>
-        <div><b style="font-size:13.5px">${t.from}</b>
-          <div class="small muted">${t.role} · ${t.ago}</div></div></div>
-      <span class="tag-st ${t.st==='новое'?'st-trial':t.st==='в работе'?'st-think':'st-paid'}">${t.st}</span>
+      <div class="row"><div class="dot-ava" style="background:${t.role==='эксперт'?'var(--lilac)':'var(--ink)'}">${esc(String(t.from||'?')[0])}</div>
+        <div><b style="font-size:13.5px">${esc(t.from)}</b>
+          <div class="small muted">${esc(t.role)} · ${esc(t.ago)}</div></div></div>
+      <span class="tag-st ${t.st==='новое'?'st-trial':t.st==='в работе'?'st-think':'st-paid'}">${esc(t.st)}</span>
     </div>
-    <b style="font-size:14px;display:block;margin:10px 0 5px">${t.sub}</b>
-    <p class="small muted" style="margin:0 0 10px">${t.t}</p>
-    <div class="small muted" style="margin-bottom:8px">${t.mail}</div>
+    <b style="font-size:14px;display:block;margin:10px 0 5px">${esc(t.sub)}</b>
+    <p class="small muted" style="margin:0 0 10px">${esc(t.t)}</p>
+    <div class="small muted" style="margin-bottom:8px">${esc(t.mail)}</div>
     <div class="row" style="gap:8px">
       <input class="field" style="margin:0;flex:1" placeholder="Ответить" id="rp_${t.id}">
-      <button class="btn sm" onclick="replyTicket('${t.id}')">→</button>
+      <button class="btn sm" onclick="replyTicket('${attJs(t.id)}')">→</button>
     </div>
     <div class="chips" style="margin-top:8px">${['новое','в работе','закрыто'].map(st =>
-      `<button class="chip ${t.st===st?'on':''}" onclick="setTicket('${t.id}','${st}')">${st}</button>`).join('')}</div>
+      `<button class="chip ${t.st===st?'on':''}" onclick="setTicket('${attJs(t.id)}','${attJs(st)}')">${st}</button>`).join('')}</div>
   </div>`).join('')}`;
 }
 function setTicket(id, st){ const t = INBOX.find(x => x.id === id); t.st = st; render(); }
@@ -443,21 +443,21 @@ function adEvents(){
   <button class="btn" onclick="openSheet('newEvent')">＋ Добавить мероприятие</button>
   ${pend.length ? `<div class="sec-h"><h2 class="serif">На согласовании</h2><span class="small muted">${pend.length}</span></div>
     ${pend.map(e => `<div class="acard">
-      <button class="cov" style="height:130px;position:relative;width:100%" onclick="openSheet({k:'event',id:'${e.id}'})">
+      <button class="cov" style="height:130px;position:relative;width:100%" onclick="openSheet({k:'event',id:'${attJs(e.id)}'})">
         ${cover(e.id,'practice')}
-        <div class="badge">${e.kind} · ${new Date(e.d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</div>
+        <div class="badge">${esc(e.kind)} · ${new Date(e.d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</div>
         <div class="cap"><b>${esc(e.t)}</b><span>${esc(e.by)} · ${e.mode === 'онлайн' ? 'онлайн, ' + e.city : e.city}</span></div>
       </button>
       <div style="padding:12px">
         <p class="small muted" style="margin:0 0 10px">${esc(e.about || 'Без описания')}</p>
         <div class="small muted">${e.price ? money(e.price) : 'бесплатно'} · ${e.unlimited ? 'мест без ограничения' : e.seats + ' мест'}</div>
         <div class="acts">
-          <button class="btn sm" onclick="pubEvent('${e.id}')">Опубликовать</button>
-          <button class="btn ghost sm" onclick="openSheet({k:'event',id:'${e.id}'})">Открыть</button>
+          <button class="btn sm" onclick="pubEvent('${attJs(e.id)}')">Опубликовать</button>
+          <button class="btn ghost sm" onclick="openSheet({k:'event',id:'${attJs(e.id)}'})">Открыть</button>
         </div>
         <div class="acts">
-          <button class="btn ghost sm" onclick="openSheet({k:'evReview',id:'${e.id}',mode:'rework'})">На доработку</button>
-          <button class="btn ghost sm" onclick="openSheet({k:'evReview',id:'${e.id}',mode:'reject'})">Отказать</button>
+          <button class="btn ghost sm" onclick="openSheet({k:'evReview',id:'${attJs(e.id)}',mode:'rework'})">На доработку</button>
+          <button class="btn ghost sm" onclick="openSheet({k:'evReview',id:'${attJs(e.id)}',mode:'reject'})">Отказать</button>
         </div>
       </div>
     </div>`).join('')}` : ''}
@@ -473,15 +473,15 @@ function adEvents(){
     </div>`).join('')}` : ''}
   <div class="sec-h"><h2 class="serif">Опубликованные</h2><span class="small muted">${EVENTS.filter(e=>e.status==='live').length}</span></div>
   ${EVENTS.filter(e => e.status === 'live').map(e => `<div class="arow2">
-    <button class="mini" onclick="openSheet({k:'event',id:'${e.id}'})">${cover(e.id,'practice')}</button>
-    <button style="flex:1;min-width:0;text-align:left" onclick="openSheet({k:'event',id:'${e.id}'})">
+    <button class="mini" onclick="openSheet({k:'event',id:'${attJs(e.id)}'})">${cover(e.id,'practice')}</button>
+    <button style="flex:1;min-width:0;text-align:left" onclick="openSheet({k:'event',id:'${attJs(e.id)}'})">
       <b style="font-size:13px">${esc(e.t)}</b>
-      <div class="small muted">${new Date(e.d).toLocaleDateString('ru-RU')} ${e.tm} · ${e.city}</div>
+      <div class="small muted">${new Date(e.d).toLocaleDateString('ru-RU')} ${esc(e.tm)} · ${esc(e.city)}</div>
       <div class="small muted">${e.unlimited ? 'мест без ограничения' : (e.seats - e.left) + ' из ' + e.seats + ' записалось'}${e.price?' · '+money(e.price):' · бесплатно'}</div>
     </button>
     <div style="display:flex;flex-direction:column;gap:5px">
-      <button class="chip" onclick="pickImage('${e.id}')">▣</button>
-      <button class="chip" onclick="dropEvent('${e.id}')">✕</button>
+      <button class="chip" onclick="pickImage('${attJs(e.id)}')">▣</button>
+      <button class="chip" onclick="dropEvent('${attJs(e.id)}')">✕</button>
     </div>
   </div>`).join('')}`;
 }
@@ -514,13 +514,13 @@ function adGroups(){
     const msgs = (S.chats[g.id]||[]).length;
     return `<div class="card">
       <div class="spread">
-        <div class="row"><div class="gemoji">${g.e}</div>
-          <div><b style="font-size:14px">${g.t}</b>
+        <div class="row"><div class="gemoji">${esc(g.e)}</div>
+          <div><b style="font-size:14px">${esc(g.t)}</b>
             <div class="small muted">${g.m.toLocaleString('ru-RU')} участниц · ${plural(msgs,'сообщение','сообщения','сообщений')}</div></div></div>
-        <button class="sw ${own?'on':''}" onclick="toggleOwn('${g.id}')"><i></i></button>
+        <button class="sw ${own?'on':''}" onclick="toggleOwn('${attJs(g.id)}')"><i></i></button>
       </div>
       <div class="acts">
-        <button class="btn ghost sm" onclick="openChat('${g.id}')">Открыть чат</button>
+        <button class="btn ghost sm" onclick="openChat('${attJs(g.id)}')">Открыть чат</button>
         <button class="btn ghost sm" onclick="toast('Закреплённое сообщение обновлено')">Закрепить пост</button>
       </div>
       ${own ? `<div class="small" style="margin-top:8px;color:var(--ok)">Ты модератор этой группы</div>` : ''}
@@ -547,13 +547,13 @@ function ideaCard(i){
   const PR = ['высокий','средний','низкий'];
   const ST = ['новое','в бэклоге','в работе','готово','отклонено'];
   return `<div class="card">
-    <div class="spread" style="margin-bottom:6px"><span class="chip pale">${i.a}</span>
-      <span class="small muted">${i.d} · ${i.v} голосов</span></div>
+    <div class="spread" style="margin-bottom:6px"><span class="chip pale">${esc(i.a)}</span>
+      <span class="small muted">${esc(i.d)} · ${i.v} голосов</span></div>
     <b style="font-size:14px">${esc(i.t)}</b>
     <div class="small muted" style="margin:8px 0 5px">Статус</div>
-    <div class="chips">${ST.map(s => `<button class="chip ${i.st===s?'on':''}" onclick="setIdea('${i.id}','st','${s}')">${s}</button>`).join('')}</div>
+    <div class="chips">${ST.map(s => `<button class="chip ${i.st===s?'on':''}" onclick="setIdea('${attJs(i.id)}','st','${attJs(s)}')">${s}</button>`).join('')}</div>
     <div class="small muted" style="margin:3px 0 5px">Приоритет</div>
-    <div class="chips">${PR.map(s => `<button class="chip ${i.pr===s?'on':''}" onclick="setIdea('${i.id}','pr','${s}')">${s}</button>`).join('')}</div>
+    <div class="chips">${PR.map(s => `<button class="chip ${i.pr===s?'on':''}" onclick="setIdea('${attJs(i.id)}','pr','${attJs(s)}')">${s}</button>`).join('')}</div>
   </div>`;
 }
 function setIdea(id, f, v){ const i = S.ideas.find(x => x.id === id); i[f] = v;
@@ -590,7 +590,7 @@ function adminItemCard(x, opts){
   opts = opts || {};
   return `<div class="acard">
     <div class="top">
-      <button class="thumb" onclick="openEditor('${x.id}')">${cover(x.id, x.type)}
+      <button class="thumb" onclick="openEditor('${attJs(x.id)}')">${cover(x.id, x.type)}
         ${x.type !== 'affirm' ? '<div class="play" style="width:26px;height:26px;font-size:9px">▶</div>' : ''}</button>
       <div style="flex:1;min-width:0">
         <div class="spread" style="align-items:flex-start">
@@ -605,9 +605,9 @@ function adminItemCard(x, opts){
       ${(x.aud||[]).length ? `<span class="chip" style="padding:3px 8px;font-size:10px;background:#EEEBFB;color:var(--lilac);border:none">
         ${(x.aud||[]).map(k => (AUDIENCE.find(a=>a.k===k)||{}).n).filter(Boolean).slice(0,2).join(', ')}${x.aud.length>2?' +'+(x.aud.length-2):''}</span>` : ''}
       ${x.level && x.level !== 'any' ? `<span class="chip pale" style="padding:3px 8px;font-size:10px">${(LEVELS_CONTENT.find(l=>l.k===x.level)||{}).n}</span>` : ''}
-      ${x.tags.slice(0,3).map(t => `<span class="chip pale" style="padding:3px 8px;font-size:10px">${t}</span>`).join('')}
-      <button class="chip" style="margin-left:auto" onclick="openEditor('${x.id}')">Редактировать</button>
-      ${opts.del ? `<button class="chip" onclick="delItem('${x.id}')">Удалить</button>` : ''}
+      ${x.tags.slice(0,3).map(t => `<span class="chip pale" style="padding:3px 8px;font-size:10px">${esc(t)}</span>`).join('')}
+      <button class="chip" style="margin-left:auto" onclick="openEditor('${attJs(x.id)}')">Редактировать</button>
+      ${opts.del ? `<button class="chip" onclick="delItem('${attJs(x.id)}')">Удалить</button>` : ''}
     </div>
   </div>`;
 }
@@ -620,33 +620,33 @@ function pgEditItem(){
   return `<div class="view pad">
     <button class="backbtn" onclick="closeEditor()">‹ ${isPending ? 'Модерация' : 'Контент'}</button>
 
-    ${x.video ? videoBlock(x.id, x.type) : `<div class="vidbox" onclick="openSheet({k:'video',id:'${x.id}'})">
+    ${x.video ? videoBlock(x.id, x.type) : `<div class="vidbox" onclick="openSheet({k:'video',id:'${attJs(x.id)}'})">
       ${cover(x.id, x.type)}<div class="pl">▶</div>
       <div class="lbl2">Видео не добавлено — нажми, чтобы вставить ссылку</div></div>`}
     <div class="acts" style="margin:0 0 10px">
-      <button class="btn ghost sm" onclick="openSheet({k:'video',id:'${x.id}'})">Видео по ссылке</button>
-      <button class="btn ghost sm" onclick="pickImage('${x.id}')">Обложка</button>
-      ${MEDIA[x.id] ? `<button class="btn ghost sm" onclick="delete MEDIA['${x.id}'];render()">Сбросить фото</button>` : ''}
+      <button class="btn ghost sm" onclick="openSheet({k:'video',id:'${attJs(x.id)}'})">Видео по ссылке</button>
+      <button class="btn ghost sm" onclick="pickImage('${attJs(x.id)}')">Обложка</button>
+      ${MEDIA[x.id] ? `<button class="btn ghost sm" onclick="delete MEDIA['${attJs(x.id)}'];render()">Сбросить фото</button>` : ''}
     </div>
     ${MEDIA[x.id] ? cropBox(x.id, POS[x.id] || '50% 50%', 'covPos.' + x.id) : ''}
 
     <label class="lbl">Тип материала</label>
     <div class="seg">${Object.entries(TYPE).map(([k,v]) =>
-      `<button class="${x.type===k?'on':''}" onclick="setItem('${x.id}','type','${k}')">${v.l}</button>`).join('')}</div>
+      `<button class="${x.type===k?'on':''}" onclick="setItem('${attJs(x.id)}','type','${attJs(k)}')">${v.l}</button>`).join('')}</div>
 
     <label class="lbl">Название</label>
-    <input class="field" value="${esc(x.title)}" oninput="setQuiet('${x.id}','title',this.value)">
+    <input class="field" value="${esc(x.title)}" oninput="setQuiet('${attJs(x.id)}','title',this.value)">
 
     <label class="lbl">Описание</label>
-    <textarea class="field" rows="4" oninput="setQuiet('${x.id}','text',this.value)">${esc(x.text)}</textarea>
+    <textarea class="field" rows="4" oninput="setQuiet('${attJs(x.id)}','text',this.value)">${esc(x.text)}</textarea>
 
     <div class="g2">
       <div><label class="lbl">Длительность, мин</label>
-        <input class="field" type="number" value="${x.min}" oninput="setQuiet('${x.id}','min',+this.value)"></div>
+        <input class="field" type="number" value="${x.min}" oninput="setQuiet('${attJs(x.id)}','min',+this.value)"></div>
       <div><label class="lbl">Доступ</label>
         <div class="seg" style="margin:0">
-          <button class="${x.free?'on':''}" onclick="setItem('${x.id}','free',true)">Бесплатно</button>
-          <button class="${!x.free?'on':''}" onclick="setItem('${x.id}','free',false)">По подписке</button>
+          <button class="${x.free?'on':''}" onclick="setItem('${attJs(x.id)}','free',true)">Бесплатно</button>
+          <button class="${!x.free?'on':''}" onclick="setItem('${attJs(x.id)}','free',false)">По подписке</button>
         </div></div>
     </div>
 
@@ -654,8 +654,8 @@ function pgEditItem(){
     <div class="scroller">
       <button class="snav left" onclick="scrollChips(this,-1)">‹</button>
       <div class="chips">${EXPERTS.map(e => `<button class="chip ${x.expert===e.n?'on':''}"
-        onclick="chipPickExpert(this,'${x.id}','${esc(e.n)}')">${e.n}</button>`).join('')}
-        <button class="chip ${x.expert==='Редакция Eva'?'on':''}" onclick="chipPickExpert(this,'${x.id}','Редакция Eva')">Редакция</button></div>
+        onclick="chipPickExpert(this,'${attJs(x.id)}','${attJs(esc(e.n))}')">${esc(e.n)}</button>`).join('')}
+        <button class="chip ${x.expert==='Редакция Eva'?'on':''}" onclick="chipPickExpert(this,'${attJs(x.id)}','Редакция Eva')">Редакция</button></div>
       <button class="snav right" onclick="scrollChips(this,1)">›</button>
     </div>
 
@@ -664,14 +664,14 @@ function pgEditItem(){
       <div class="small muted">Ученицы этого не видят. Не выбрано — материал подходит всем.
         Отметьте группу, и он попадёт только в программы этих женщин.</div>
       <div class="chips wrap">${AUDIENCE.map(a => `<button class="chip ${(x.aud||[]).includes(a.k)?'on':''}"
-        onclick="tgAud(this,'${x.id}','${a.k}')" title="${a.hint}">${a.n}</button>`).join('')}</div>
+        onclick="tgAud(this,'${attJs(x.id)}','${attJs(a.k)}')" title="${a.hint}">${esc(a.n)}</button>`).join('')}</div>
     </div>
 
     <div class="svcbox">
       <div class="hd"><span class="svclabel">служебное</span><b>Уровень подготовки</b></div>
       <div class="small muted">Новичкам продвинутое не показывается</div>
       <div class="seg" style="margin-top:8px">${LEVELS_CONTENT.map(l => `<button class="${(x.level||'any')===l.k?'on':''}"
-        onclick="setItem('${x.id}','level','${l.k}')">${l.n}</button>`).join('')}</div>
+        onclick="setItem('${attJs(x.id)}','level','${attJs(l.k)}')">${esc(l.n)}</button>`).join('')}</div>
     </div>
 
     <div class="svcbox">
@@ -679,25 +679,25 @@ function pgEditItem(){
       <div class="small muted">Не выбрано — показывается в любой день. Отметьте дни, если материал
         привязан к конкретному дню недели</div>
       <div class="chips wrap">${WEEKDAYS_TAG.map(w => `<button class="chip ${(x.days||[]).includes(w.k)?'on':''}"
-        onclick="tgDays(this,'${x.id}','${w.k}')">${w.n}</button>`).join('')}</div>
+        onclick="tgDays(this,'${attJs(x.id)}','${attJs(w.k)}')">${esc(w.n)}</button>`).join('')}</div>
     </div>
 
     <label class="lbl">Теги <span class="muted">(${x.tags.length})</span></label>
     <div class="chips wrap">${ALL_TAGS.map(t => `<button class="chip ${x.tags.includes(t)?'on':''}"
-      onclick="tgItem('${x.id}','${t}')">${t}</button>`).join('')}</div>
+      onclick="tgItem('${attJs(x.id)}','${attJs(t)}')">${esc(t)}</button>`).join('')}</div>
 
     <div class="acts" style="margin-top:16px">
       <button class="btn" onclick="closeEditor();toast('Сохранено')">Сохранить</button>
-      ${!isPending ? `<button class="btn ghost" onclick="delItem('${x.id}')">Удалить</button>` : ''}
+      ${!isPending ? `<button class="btn ghost" onclick="delItem('${attJs(x.id)}')">Удалить</button>` : ''}
     </div>
 
     ${isPending ? `<div class="card" style="margin-top:14px">
       <b style="font-size:14.5px">Решение по материалу</b>
       <p class="small muted" style="margin:6px 0 10px">Автор: ${esc(x.expert)}, прислан ${x.sent}</p>
-      <button class="btn" onclick="approve('${x.id}');closeEditor()">Одобрить и опубликовать</button>
+      <button class="btn" onclick="approve('${attJs(x.id)}');closeEditor()">Одобрить и опубликовать</button>
       <div class="acts">
-        <button class="btn ghost" onclick="openSheet({k:'rework',id:'${x.id}'})">На доработку</button>
-        <button class="btn ghost" onclick="openSheet({k:'reject',id:'${x.id}'})">Отказать</button>
+        <button class="btn ghost" onclick="openSheet({k:'rework',id:'${attJs(x.id)}'})">На доработку</button>
+        <button class="btn ghost" onclick="openSheet({k:'reject',id:'${attJs(x.id)}'})">Отказать</button>
       </div>
     </div>` : ''}
   </div>`;
@@ -737,8 +737,8 @@ function pgEditCourse(){
     ${c.draft ? `<div class="card" style="border-color:var(--warn)">
       <div class="spread"><div style="flex:1"><b style="font-size:14.5px">Черновик</b>
         <div class="small muted" style="margin-top:3px">Курс виден только тебе. Добавь уроки и опубликуй - он появится в каталоге.</div></div></div>
-      <div class="acts"><button class="btn" onclick="publishCourse('${c.id}')">Опубликовать</button>
-        <button class="btn ghost" onclick="openCourseLanding('${c.id}')">Предпросмотр</button></div>
+      <div class="acts"><button class="btn" onclick="publishCourse('${attJs(c.id)}')">Опубликовать</button>
+        <button class="btn ghost" onclick="openCourseLanding('${attJs(c.id)}')">Предпросмотр</button></div>
     </div>` : ''}
 
     ${(S.videos&&S.videos[c.id+'_promo']) ? videoBlock(c.id+'_promo','course')
@@ -747,44 +747,44 @@ function pgEditCourse(){
         <div class="lbl2">Промо-ролик не добавлен</div></div>`}
     <div class="acts" style="margin:0 0 14px">
       <button class="btn ghost sm" onclick="openSheet({k:'video',id:'${c.id}_promo'})">Промо по ссылке</button>
-      <button class="btn ghost sm" onclick="pickImage('${c.id}')">Обложка курса</button>
-      <button class="btn ghost sm" onclick="openCourseLanding('${c.id}')">Просмотр</button>
+      <button class="btn ghost sm" onclick="pickImage('${attJs(c.id)}')">Обложка курса</button>
+      <button class="btn ghost sm" onclick="openCourseLanding('${attJs(c.id)}')">Просмотр</button>
     </div>
 
     <label class="lbl">Название</label>
-    <input class="field" value="${esc(c.t)}" oninput="setCourse('${c.id}','t',this.value)">
+    <input class="field" value="${esc(c.t)}" oninput="setCourse('${attJs(c.id)}','t',this.value)">
     <label class="lbl">Короткое описание</label>
-    <textarea class="field" rows="3" oninput="setCourse('${c.id}','d',this.value)">${esc(c.d)}</textarea>
+    <textarea class="field" rows="3" oninput="setCourse('${attJs(c.id)}','d',this.value)">${esc(c.d)}</textarea>
     <div class="g2">
-      <div><label class="lbl">Цена, ₽</label><input class="field" type="number" value="${c.p}" oninput="setCourse('${c.id}','p',+this.value)"></div>
-      <div><label class="lbl">Старая цена</label><input class="field" type="number" value="${c.old}" oninput="setCourse('${c.id}','old',+this.value)"></div>
+      <div><label class="lbl">Цена, ₽</label><input class="field" type="number" value="${c.p}" oninput="setCourse('${attJs(c.id)}','p',+this.value)"></div>
+      <div><label class="lbl">Старая цена</label><input class="field" type="number" value="${c.old}" oninput="setCourse('${attJs(c.id)}','old',+this.value)"></div>
     </div>
     <label class="lbl">Эксперт</label>
     <div class="chips">${EXPERTS.map(e => `<button class="chip ${c.e===e.n?'on':''}"
-      onclick="setCourse('${c.id}','e','${e.n}')">${e.n}</button>`).join('')}</div>
+      onclick="setCourse('${attJs(c.id)}','e','${attJs(e.n)}')">${esc(e.n)}</button>`).join('')}</div>
 
     <div class="sec-h"><h2 class="serif">Продающие блоки</h2></div>
     <div class="card">
       <label class="lbl">Для кого этот курс</label>
-      ${info.who.map((w,i) => `<input class="field" value="${esc(w)}" oninput="COURSE_INFO['${c.id}'].who[${i}]=this.value">`).join('')}
-      <button class="btn ghost sm" onclick="COURSE_INFO['${c.id}'].who.push('Новый пункт');render()">＋ пункт</button>
+      ${info.who.map((w,i) => `<input class="field" value="${esc(w)}" oninput="COURSE_INFO['${attJs(c.id)}'].who[${i}]=this.value">`).join('')}
+      <button class="btn ghost sm" onclick="COURSE_INFO['${attJs(c.id)}'].who.push('Новый пункт');render()">＋ пункт</button>
       <label class="lbl" style="margin-top:12px">Что даёт курс</label>
-      ${info.gives.map((w,i) => `<input class="field" value="${esc(w)}" oninput="COURSE_INFO['${c.id}'].gives[${i}]=this.value">`).join('')}
-      <button class="btn ghost sm" onclick="COURSE_INFO['${c.id}'].gives.push('Новый пункт');render()">＋ пункт</button>
+      ${info.gives.map((w,i) => `<input class="field" value="${esc(w)}" oninput="COURSE_INFO['${attJs(c.id)}'].gives[${i}]=this.value">`).join('')}
+      <button class="btn ghost sm" onclick="COURSE_INFO['${attJs(c.id)}'].gives.push('Новый пункт');render()">＋ пункт</button>
     </div>
 
     <div class="sec-h"><h2 class="serif">Модули и уроки</h2>
       <span class="small muted">${mods.length} модуля · ${ls.length} уроков</span></div>
 
     ${mods.map((m,mi) => `<div class="modbox">
-      <div class="mh"><span>Модуль ${m.n}. ${esc(m.t)}</span>
-        <button class="chip" style="padding:2px 8px" onclick="renameModule('${c.id}',${mi})">✎</button></div>
+      <div class="mh"><span>Модуль ${esc(m.n)}. ${esc(m.t)}</span>
+        <button class="chip" style="padding:2px 8px" onclick="renameModule('${attJs(c.id)}',${mi})">✎</button></div>
       <div style="padding:9px">
         ${m.units.map(un => {
           const l = ls.find(x => x.n === un);
           if(!l) return '';
-          return `<button class="unit" onclick="openUnitEditor('${c.id}','${l.id}')">
-            <div class="n">${l.n}</div>
+          return `<button class="unit" onclick="openUnitEditor('${attJs(c.id)}','${attJs(l.id)}')">
+            <div class="n">${esc(l.n)}</div>
             <div class="mini">${cover(l.id,'practice')}</div>
             <div style="flex:1;min-width:0">
               <b style="font-size:13px;display:block">${esc(l.t)}</b>
@@ -793,11 +793,11 @@ function pgEditCourse(){
             <span class="pill ${l.free?'free':'paid'}">${l.free?'free':'🔒'}</span>
           </button>`;
         }).join('')}
-        <button class="btn ghost sm" style="width:100%" onclick="addUnitTo('${c.id}',${mi})">＋ Добавить урок в модуль</button>
+        <button class="btn ghost sm" style="width:100%" onclick="addUnitTo('${attJs(c.id)}',${mi})">＋ Добавить урок в модуль</button>
       </div>
     </div>`).join('')}
 
-    <button class="btn ghost" onclick="addModule('${c.id}')">＋ Добавить модуль</button>
+    <button class="btn ghost" onclick="addModule('${attJs(c.id)}')">＋ Добавить модуль</button>
     <button class="btn" style="margin-top:9px" onclick="closeCourseEditor();toast('Курс сохранён')">Сохранить курс</button>
   </div>`;
 }
@@ -831,25 +831,25 @@ function pgEditUnit(){
   return `<div class="view pad">
     <button class="backbtn" onclick="S.editUnit=null;render()">‹ ${esc(c.t)}</button>
 
-    ${l.video ? videoBlock(l.id) : `<div class="vidbox" onclick="openSheet({k:'video',id:'${l.id}'})">
+    ${l.video ? videoBlock(l.id) : `<div class="vidbox" onclick="openSheet({k:'video',id:'${attJs(l.id)}'})">
       ${cover(l.id,'practice')}<div class="pl">▶</div>
       <div class="lbl2">Видео урока не добавлено</div></div>`}
     <div class="acts" style="margin:0 0 14px">
-      <button class="btn ghost sm" onclick="openSheet({k:'video',id:'${l.id}'})">Видео по ссылке</button>
-      <button class="btn ghost sm" onclick="pickImage('${l.id}')">Обложка урока</button>
+      <button class="btn ghost sm" onclick="openSheet({k:'video',id:'${attJs(l.id)}'})">Видео по ссылке</button>
+      <button class="btn ghost sm" onclick="pickImage('${attJs(l.id)}')">Обложка урока</button>
     </div>
 
     <label class="lbl">Название урока</label>
-    <input class="field" value="${esc(l.t)}" oninput="setUnit('${c.id}','${l.id}','t',this.value)">
+    <input class="field" value="${esc(l.t)}" oninput="setUnit('${attJs(c.id)}','${attJs(l.id)}','t',this.value)">
     <label class="lbl">Описание урока</label>
-    <textarea class="field" rows="4" oninput="setUnit('${c.id}','${l.id}','d',this.value)">${esc(l.d||'')}</textarea>
+    <textarea class="field" rows="4" oninput="setUnit('${attJs(c.id)}','${attJs(l.id)}','d',this.value)">${esc(l.d||'')}</textarea>
     <div class="g2">
       <div><label class="lbl">Длительность, мин</label>
-        <input class="field" type="number" value="${l.min}" oninput="setUnit('${c.id}','${l.id}','min',+this.value)"></div>
+        <input class="field" type="number" value="${l.min}" oninput="setUnit('${attJs(c.id)}','${attJs(l.id)}','min',+this.value)"></div>
       <div><label class="lbl">Доступ</label>
         <div class="seg" style="margin:0">
-          <button class="${l.free?'on':''}" onclick="setUnitR('${c.id}','${l.id}','free',true)">Открыт</button>
-          <button class="${!l.free?'on':''}" onclick="setUnitR('${c.id}','${l.id}','free',false)">🔒 Платный</button>
+          <button class="${l.free?'on':''}" onclick="setUnitR('${attJs(c.id)}','${attJs(l.id)}','free',true)">Открыт</button>
+          <button class="${!l.free?'on':''}" onclick="setUnitR('${attJs(c.id)}','${attJs(l.id)}','free',false)">🔒 Платный</button>
         </div></div>
     </div>
     <p class="small muted" style="margin:10px 0 0">Открытые уроки видны без покупки - это витрина курса. Обычно открывают первый урок и один из середины.</p>
@@ -857,16 +857,16 @@ function pgEditUnit(){
     <div class="card" style="margin-top:12px">
       <div class="spread"><div style="flex:1"><b style="font-size:14.5px">Домашнее задание</b>
         <div class="small muted" style="margin-top:3px">${l.hw ? esc(l.hw.title) : 'Не добавлено — необязательно'}</div></div>
-        <button class="btn sm ghost" onclick="openSheet({k:'hwEdit',cid:'${c.id}',id:'${l.id}'})">${l.hw?'Изменить':'Добавить'}</button></div>
+        <button class="btn sm ghost" onclick="openSheet({k:'hwEdit',cid:'${attJs(c.id)}',id:'${attJs(l.id)}'})">${l.hw?'Изменить':'Добавить'}</button></div>
       ${l.hw ? `<p class="small muted" style="margin:8px 0 0">${esc(l.hw.text.slice(0,120))}${l.hw.text.length>120?'…':''}</p>` : ''}
     </div>
 
-    <button class="btn ghost" style="margin-top:10px" onclick="openCourseLearn('${c.id}',lessonsOf('${c.id}').findIndex(u=>u.id==='${l.id}'))">
+    <button class="btn ghost" style="margin-top:10px" onclick="openCourseLearn('${attJs(c.id)}',lessonsOf('${attJs(c.id)}').findIndex(u=>u.id==='${attJs(l.id)}'))">
       Посмотреть, как видит ученица</button>
 
     <div class="acts" style="margin-top:16px">
       <button class="btn" onclick="S.editUnit=null;render();toast('Урок сохранён')">Готово</button>
-      <button class="btn ghost" onclick="delUnit('${c.id}','${l.id}')">Удалить урок</button>
+      <button class="btn ghost" onclick="delUnit('${attJs(c.id)}','${attJs(l.id)}')">Удалить урок</button>
     </div>
   </div>`;
 }
@@ -1020,12 +1020,12 @@ function pgExpertRoom(){
               <path d="M12 3v2.2M12 18.8V21M4.2 7.5l1.9 1.1M17.9 15.4l1.9 1.1M4.2 16.5l1.9-1.1M17.9 8.6l1.9-1.1"/></svg>
           </button>
           <select class="mini-sel" onchange="S.expertId=this.value;render()">
-            ${EXPERTS.map(x => `<option value="${x.id}" ${x.id===S.expertId?'selected':''}>${x.n}</option>`).join('')}
+            ${EXPERTS.map(x => `<option value="${x.id}" ${x.id===S.expertId?'selected':''}>${esc(x.n)}</option>`).join('')}
           </select>
         </div></div>
       <div class="row" style="position:relative;z-index:2">
         <div class="pcirc" style="width:56px;height:56px">${expPic(e)}</div>
-        <div style="flex:1"><h1 class="serif" style="font-size:22px;margin:0;color:#fff">${e.n} ${e.verified?'<span class="vt">✓</span>':''}</h1>
+        <div style="flex:1"><h1 class="serif" style="font-size:22px;margin:0;color:#fff">${esc(e.n)} ${e.verified?'<span class="vt">✓</span>':''}</h1>
           <p class="small muted" style="margin:3px 0 0">${e.r}</p></div>
       </div>
       <div class="stats" style="grid-template-columns:repeat(3,1fr)">
@@ -1034,7 +1034,7 @@ function pgExpertRoom(){
         <div><b>${e.rate}</b><span>рейтинг</span></div>
       </div>
       <div class="atabs grid six">
-        ${EXP_TABS.map(([k,l,i]) => `<button class="${S.expTab===k?'on':''}" onclick="S.expTab='${k}';render()">
+        ${EXP_TABS.map(([k,l,i]) => `<button class="${S.expTab===k?'on':''}" onclick="S.expTab='${attJs(k)}';render()">
           ${i} ${l}${k==='msgs'&&unread?`<span class="cnt">${unread}</span>`:''}</button>`).join('')}
       </div>
     </div>
@@ -1055,9 +1055,9 @@ function exProfile(){
   return `
   <div class="card" style="text-align:center">
     <div class="pcirc" style="width:96px;height:96px;margin:0 auto 12px">${expPic(e)}</div>
-    <b style="font-size:16px">${e.n}</b>
+    <b style="font-size:16px">${esc(e.n)}</b>
     <div class="small muted">${e.verified ? 'Аккаунт подтверждён редакцией' : 'Ожидает подтверждения'}</div>
-    <button class="btn ghost sm" style="margin-top:10px" onclick="pickImage('${e.id}')">Сменить фото</button>
+    <button class="btn ghost sm" style="margin-top:10px" onclick="pickImage('${attJs(e.id)}')">Сменить фото</button>
   </div>
 
   <div class="card">
@@ -1071,8 +1071,8 @@ function exProfile(){
     <input class="field" type="number" style="margin-top:10px" value="${e.price}" oninput="me().price=+this.value||0">
     <label class="lbl" style="margin-top:12px">Мои темы</label>
     <div class="small muted" style="margin-bottom:8px">По этим тегам платформа подбирает твои материалы в программы учениц</div>
-    <div class="chips wrap">${e.t.map(t => `<button class="chip on" onclick="dropExpTag('${e.id}','${t}')">${t} <span style="opacity:.6">✕</span></button>`).join('')}
-      <button class="chip" onclick="openSheet({k:'expTags',id:'${e.id}'})">＋ тема</button></div>
+    <div class="chips wrap">${e.t.map(t => `<button class="chip on" onclick="dropExpTag('${attJs(e.id)}','${attJs(t)}')">${esc(t)} <span style="opacity:.6">✕</span></button>`).join('')}
+      <button class="chip" onclick="openSheet({k:'expTags',id:'${attJs(e.id)}'})">＋ тема</button></div>
     <button class="btn" style="margin-top:12px" onclick="render();toast('Профиль сохранён')">Сохранить</button>
   </div>
 
@@ -1081,10 +1081,10 @@ function exProfile(){
     <p class="small muted" style="margin:5px 0 9px">Запросы, с которыми к тебе обращаются. Показывается на публичной странице</p>
     ${(e.who||[]).length
       ? (e.who).map((w,i) => `<div class="linerow">
-          <input class="field" style="margin:0;flex:1" value="${esc(w)}" oninput="setWho('${e.id}',${i},this.value)">
-          <button class="chip" onclick="delWho('${e.id}',${i})">✕</button></div>`).join('')
+          <input class="field" style="margin:0;flex:1" value="${esc(w)}" oninput="setWho('${attJs(e.id)}',${i},this.value)">
+          <button class="chip" onclick="delWho('${attJs(e.id)}',${i})">✕</button></div>`).join('')
       : '<div class="small muted" style="padding:2px 0 8px">Пока пусто. Нажми «Добавить пункт» - предложу готовые формулировки</div>'}
-    <button class="btn ghost sm" onclick="openSheet({k:'pickPhrase', id:'${e.id}', field:'who'})">＋ Добавить пункт</button>
+    <button class="btn ghost sm" onclick="openSheet({k:'pickPhrase', id:'${attJs(e.id)}', field:'who'})">＋ Добавить пункт</button>
   </div>
 
   <div class="card">
@@ -1092,10 +1092,10 @@ function exProfile(){
     <p class="small muted" style="margin:5px 0 9px">Показывается на публичной странице</p>
     ${(e.ach||[]).length
       ? (e.ach).map((a,i) => `<div class="linerow">
-          <input class="field" style="margin:0;flex:1" value="${esc(a)}" oninput="setAch('${e.id}',${i},this.value)">
-          <button class="chip" onclick="delAch('${e.id}',${i})">✕</button></div>`).join('')
+          <input class="field" style="margin:0;flex:1" value="${esc(a)}" oninput="setAch('${attJs(e.id)}',${i},this.value)">
+          <button class="chip" onclick="delAch('${attJs(e.id)}',${i})">✕</button></div>`).join('')
       : '<div class="small muted" style="padding:2px 0 8px">Пока пусто. Нажми «Добавить пункт» - предложу готовые формулировки</div>'}
-    <button class="btn ghost sm" onclick="openSheet({k:'pickPhrase', id:'${e.id}', field:'ach'})">＋ Добавить пункт</button>
+    <button class="btn ghost sm" onclick="openSheet({k:'pickPhrase', id:'${attJs(e.id)}', field:'ach'})">＋ Добавить пункт</button>
   </div>
 
   <div class="card">
@@ -1108,7 +1108,7 @@ function exProfile(){
 
   ${exEduBlock()}
 
-  <button class="btn ghost" onclick="S.viewExpert='${e.id}';S.page='expertPublic';render()">Посмотреть публичную страницу</button>`;
+  <button class="btn ghost" onclick="S.viewExpert='${attJs(e.id)}';S.page='expertPublic';render()">Посмотреть публичную страницу</button>`;
 }
 
 function exContent(){
@@ -1122,7 +1122,7 @@ function exContent(){
   ${sent.length ? `<div class="sec-h"><h2 class="serif">На проверке и доработке</h2></div>
     ${sent.map(x => `<div class="acard">
       <div class="top">
-        <button class="thumb" onclick="pickImage('${x.id}')">${cover(x.id,x.type)}</button>
+        <button class="thumb" onclick="pickImage('${attJs(x.id)}')">${cover(x.id,x.type)}</button>
         <div style="flex:1;min-width:0">
           <div class="spread" style="align-items:flex-start">
             <b style="font-size:13.5px">${esc(x.title)}</b>
@@ -1134,9 +1134,9 @@ function exContent(){
         </div>
       </div>
       <div class="bar2">
-        ${x.status === 'rework' ? `<button class="chip" onclick="openSheet({k:'fix',id:'${x.id}'})">Доработать</button>
-          <button class="chip" onclick="openEditor('${x.id}')">Открыть</button>` : ''}
-        ${x.status !== 'live' ? `<button class="chip" onclick="dropPending('${x.id}')">Удалить</button>` : ''}
+        ${x.status === 'rework' ? `<button class="chip" onclick="openSheet({k:'fix',id:'${attJs(x.id)}'})">Доработать</button>
+          <button class="chip" onclick="openEditor('${attJs(x.id)}')">Открыть</button>` : ''}
+        ${x.status !== 'live' ? `<button class="chip" onclick="dropPending('${attJs(x.id)}')">Удалить</button>` : ''}
       </div>
     </div>`).join('')}` : ''}
 
@@ -1154,18 +1154,18 @@ function exCourses(){
   ${mine.length ? mine.map(c => {
     const ls = lessonsOf(c.id), mods = modulesOf(c.id);
     return `<div class="acard">
-      <button class="cov" style="height:120px;position:relative;width:100%" onclick="openCourseEditor('${c.id}')">
+      <button class="cov" style="height:120px;position:relative;width:100%" onclick="openCourseEditor('${attJs(c.id)}')">
         ${cover(c.id,'course')}
-        <div class="cap"><b>${c.t}</b><span>${mods.length} модуля · ${ls.length} уроков</span></div>
+        <div class="cap"><b>${esc(c.t)}</b><span>${mods.length} модуля · ${ls.length} уроков</span></div>
       </button>
       <div style="padding:12px">
         <div class="spread"><span class="price">${money(c.p)}</span>
           <span class="small muted">${c.s.toLocaleString('ru-RU')} учениц · ★ ${c.r}</span></div>
         <div class="small muted" style="margin-top:5px">Открытых уроков: ${ls.filter(l=>l.free).length} · доход за месяц ${money(Math.round(c.p*c.s*0.02))}</div>
         <div class="acts">
-          <button class="btn ghost sm" onclick="openCourseEditor('${c.id}')">Редактировать</button>
-          <button class="btn ghost sm" onclick="addUnitTo('${c.id}',0)">＋ Урок</button>
-          <button class="btn ghost sm" onclick="openCourseLanding('${c.id}')">Просмотр</button>
+          <button class="btn ghost sm" onclick="openCourseEditor('${attJs(c.id)}')">Редактировать</button>
+          <button class="btn ghost sm" onclick="addUnitTo('${attJs(c.id)}',0)">＋ Урок</button>
+          <button class="btn ghost sm" onclick="openCourseLanding('${attJs(c.id)}')">Просмотр</button>
         </div>
       </div>
     </div>`;
@@ -1177,8 +1177,8 @@ function exClub(){
   const g = GROUPS[hash(e.id) % GROUPS.length];
   return `
   <div class="card">
-    <div class="row"><div style="font-size:26px">${g.e}</div>
-      <div style="flex:1"><b style="font-size:15px">${g.t}</b>
+    <div class="row"><div style="font-size:26px">${esc(g.e)}</div>
+      <div style="flex:1"><b style="font-size:15px">${esc(g.t)}</b>
         <div class="small muted">${g.m.toLocaleString('ru-RU')} участниц · твоя группа</div></div></div>
     <div class="g2" style="margin-top:12px">
       <div class="phbox"><div class="serif" style="font-size:22px">${(hash(g.id)%40+12)}</div><div class="small muted">сообщений сегодня</div></div>
@@ -1188,10 +1188,10 @@ function exClub(){
   <div class="sec-h"><h2 class="serif">Обсуждения</h2></div>
   ${POSTS.filter(p => p.g === g.id || true).slice(0,4).map(p => `<div class="msg">
     <div class="row" style="margin-bottom:8px">
-      <div class="dot-ava" style="background:${p.c}">${p.a.split(' ').map(w=>w[0]).join('')}</div>
-      <div style="flex:1"><b style="font-size:13.5px">${p.a}</b>
-        <div class="small muted" style="font-size:11px">${p.ago}</div></div></div>
-    <p style="margin:0 0 10px;font-size:13.5px;line-height:1.5">${p.t}</p>
+      <div class="dot-ava" style="background:${esc(p.c)}">${p.a.split(' ').map(w=>w[0]).join('')}</div>
+      <div style="flex:1"><b style="font-size:13.5px">${esc(p.a)}</b>
+        <div class="small muted" style="font-size:11px">${esc(p.ago)}</div></div></div>
+    <p style="margin:0 0 10px;font-size:13.5px;line-height:1.5">${esc(p.t)}</p>
     <button class="btn ghost sm" onclick="toast('Ответ отправлен')">Ответить</button>
   </div>`).join('')}
   <button class="btn ghost" onclick="toast('Пост опубликован в группе')">Написать в группу</button>`;
@@ -1204,10 +1204,10 @@ function exMsgs(){
   ${EXPERT_MSGS.map(m => `<div class="card ${m.unread?'unread':''}">
     <div class="row" style="margin-bottom:8px">
       <div class="dot-ava" style="background:var(--lilac)">${m.a[0]}</div>
-      <div style="flex:1"><b style="font-size:13.5px">${m.a}</b>
-        <div class="small muted" style="font-size:11px">${m.ago}</div></div>
+      <div style="flex:1"><b style="font-size:13.5px">${esc(m.a)}</b>
+        <div class="small muted" style="font-size:11px">${esc(m.ago)}</div></div>
       ${m.unread?'<span class="chip pale">новое</span>':''}</div>
-    <p style="margin:0 0 10px;font-size:13.5px;line-height:1.5">${m.t}</p>
+    <p style="margin:0 0 10px;font-size:13.5px;line-height:1.5">${esc(m.t)}</p>
     <div class="row" style="gap:8px">
       <input class="field" style="margin:0;flex:1" placeholder="Ответить">
       <button class="btn sm" onclick="toast('Отправлено')">→</button></div>
@@ -1245,7 +1245,7 @@ function exRefs(){
       <div class="linkbox">${u}</div>
       <button class="btn ghost sm" style="margin-top:10px" onclick="copyText('https://${u}')">Скопировать</button>
     </div>`).join('')}
-  <button class="btn" onclick="S.viewExpert='${e.id}';S.page='expertPublic';render()">Открыть как гость</button>`;
+  <button class="btn" onclick="S.viewExpert='${attJs(e.id)}';S.page='expertPublic';render()">Открыть как гость</button>`;
 }
 
 function copyText(t){ if(navigator.clipboard) navigator.clipboard.writeText(t).catch(()=>{}); toast('Скопировано'); }
@@ -1272,7 +1272,7 @@ function exEduBlock(){
   const ST = {approved:['подтверждено','st-paid'], pending:['на проверке','st-trial'], rejected:['отклонено','st-no']};
   return `<div class="card">
     <div class="spread"><b style="font-size:14.5px">Образование</b>
-      <button class="btn xs ghost" onclick="openSheet({k:'newEdu',id:'${e.id}'})">＋ Добавить</button></div>
+      <button class="btn xs ghost" onclick="openSheet({k:'newEdu',id:'${attJs(e.id)}'})">＋ Добавить</button></div>
     <p class="small muted" style="margin:5px 0 10px">Диплом или сертификат проверяет администратор. Ученицы видят только название
       с отметкой о проверке, сам документ не публикуется.</p>
     ${edu.length ? edu.map(x => `<div class="uline">
@@ -1281,7 +1281,7 @@ function exEduBlock(){
         ${x.comment ? `<div class="small" style="color:var(--warn);margin-top:3px">${esc(x.comment)}</div>` : ''}</div>
       <span class="tag-st ${ST[x.st][1]}">${ST[x.st][0]}</span>
       <button class="chip" onclick="pickImage('cert_${x.id}')">▣</button>
-      <button class="chip" onclick="delEdu('${e.id}','${x.id}')">✕</button>
+      <button class="chip" onclick="delEdu('${attJs(e.id)}','${attJs(x.id)}')">✕</button>
     </div>`).join('') : '<div class="small muted">Пока ничего не добавлено</div>'}
   </div>`;
 }
@@ -1293,7 +1293,7 @@ function exEdu(){
   return `
   <p class="small muted" style="margin:0 0 12px">Добавь дипломы и сертификаты. Администратор проверит документы: сами файлы ученицы не видят,
     в карточке появится только строка об образовании с отметкой о проверке.</p>
-  <button class="btn" onclick="openSheet({k:'newEdu',id:'${e.id}'})">＋ Добавить образование</button>
+  <button class="btn" onclick="openSheet({k:'newEdu',id:'${attJs(e.id)}'})">＋ Добавить образование</button>
 
   <div class="sec-h"><h2 class="serif">Мои документы</h2><span class="small muted">${edu.length}</span></div>
   ${edu.length ? edu.map(x => `<div class="card">
@@ -1306,7 +1306,7 @@ function exEdu(){
     <div class="row" style="margin-top:10px;gap:8px">
       ${MEDIA['cert_'+x.id] ? `<img src="${MEDIA['cert_'+x.id]}" style="width:72px;height:52px;object-fit:cover;border-radius:10px">` : ''}
       <button class="btn ghost sm" onclick="pickImage('cert_${x.id}')">${MEDIA['cert_'+x.id]?'Заменить скан':'Загрузить скан'}</button>
-      <button class="btn ghost sm" onclick="delEdu('${e.id}','${x.id}')">Удалить</button>
+      <button class="btn ghost sm" onclick="delEdu('${attJs(e.id)}','${attJs(x.id)}')">Удалить</button>
     </div>
   </div>`).join('') : '<div class="empty">Пока ничего не добавлено</div>'}`;
 }
@@ -1334,8 +1334,8 @@ function exServices(){
       ${off ? `<div class="small" style="color:var(--lilac);font-weight:600">Спецусловие до ${new Date(x.until).toLocaleDateString('ru-RU')}${x.oldPrice?', прежняя цена '+money(x.oldPrice):''}</div>` : ''}
       <p class="small muted" style="margin:6px 0 0">${esc(x.about||'')}</p>
       <div class="acts">
-        <button class="btn ghost sm" onclick="openSheet({k:'service',id:'${x.id}'})">Редактировать</button>
-        <button class="btn ghost sm" onclick="S.viewExpert='${e.id}';S.page='expertPublic';render()">Как видит ученица</button>
+        <button class="btn ghost sm" onclick="openSheet({k:'service',id:'${attJs(x.id)}'})">Редактировать</button>
+        <button class="btn ghost sm" onclick="S.viewExpert='${attJs(e.id)}';S.page='expertPublic';render()">Как видит ученица</button>
       </div>
     </div>`;
   }).join('') : '<div class="empty">Услуг пока нет</div>'}`;
@@ -1355,12 +1355,12 @@ function exEvents(){
   <div class="sec-h"><h2 class="serif">Мои мероприятия</h2><span class="small muted">${mine.length}</span></div>
   ${mine.length ? mine.map(x => `<div class="acard">
     <div class="top">
-      <button class="thumb" onclick="pickImage('${x.id}')">${cover(x.id,'practice')}</button>
+      <button class="thumb" onclick="pickImage('${attJs(x.id)}')">${cover(x.id,'practice')}</button>
       <div style="flex:1;min-width:0">
         <div class="spread" style="align-items:flex-start">
-          <b style="font-size:13.5px;line-height:1.3">${x.t}</b>
+          <b style="font-size:13.5px;line-height:1.3">${esc(x.t)}</b>
           <span class="tag-st ${ST[x.status][1]}">${ST[x.status][0]}</span></div>
-        <div class="small muted" style="margin-top:3px">${new Date(x.d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}, ${x.tm}</div>
+        <div class="small muted" style="margin-top:3px">${new Date(x.d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}, ${esc(x.tm)}</div>
         <div class="small muted">${x.mode === 'онлайн' ? 'Онлайн · ' + x.city : x.city + (x.place ? ', ' + x.place : '')}
           · ${x.price ? money(x.price) : 'бесплатно'}</div>
         ${x.comment ? `<div class="small" style="color:var(--warn);margin-top:4px">Редакция: ${esc(x.comment)}</div>` : ''}
@@ -1368,8 +1368,8 @@ function exEvents(){
     </div>
     <div class="bar2">
       <span class="chip pale">${x.seats - x.left} из ${x.seats} записались</span>
-      <button class="chip" onclick="openSheet({k:'eventEdit',id:'${x.id}'})">Изменить</button>
-      <button class="chip" style="margin-left:auto" onclick="dropEvent('${x.id}')">✕</button>
+      <button class="chip" onclick="openSheet({k:'eventEdit',id:'${attJs(x.id)}'})">Изменить</button>
+      <button class="chip" style="margin-left:auto" onclick="dropEvent('${attJs(x.id)}')">✕</button>
     </div>
   </div>`).join('') : '<div class="empty">Пока нет мероприятий</div>'}`;
 }
@@ -1438,8 +1438,8 @@ function exIncome(){
   ${invited.map(i => `<div class="card" style="padding:12px">
     <div class="spread">
       <div class="row"><div class="dot-ava" style="background:var(--lilac)">${i.n[0]}</div>
-        <div><b style="font-size:13.5px">${i.n}</b>
-          <div class="small muted">${i.ago} · ${i.st}</div></div></div>
+        <div><b style="font-size:13.5px">${esc(i.n)}</b>
+          <div class="small muted">${esc(i.ago)} · ${esc(i.st)}</div></div></div>
       <b style="font-size:13px;color:${i.sum?'var(--ok)':'var(--muted)'}">
         ${i.sum ? '+'+money(Math.round(i.sum*rate/100)) : 'ещё не оплатила'}</b>
     </div></div>`).join('')}
@@ -1469,7 +1469,7 @@ function exSettings(){
   <div class="card" style="text-align:center">
     <div style="width:88px;height:88px;margin:0 auto 12px;position:relative">
       <div class="pcirc" style="width:88px;height:88px">${expPic(e)}</div>
-      <button class="camera" onclick="pickImage('${e.id}')">▣</button>
+      <button class="camera" onclick="pickImage('${attJs(e.id)}')">▣</button>
     </div>
     <div class="small muted">Фото на публичной странице</div>
   </div>
@@ -1498,7 +1498,7 @@ function exSettings(){
   <div class="card">
     <b style="font-size:14.5px">Публичная страница</b>
     <div class="small muted" style="margin:4px 0 9px">Так тебя видят ученицы</div>
-    <button class="btn ghost" onclick="S.viewExpert='${e.id}';S.page='expertPublic';render()">Посмотреть</button>
+    <button class="btn ghost" onclick="S.viewExpert='${attJs(e.id)}';S.page='expertPublic';render()">Посмотреть</button>
   </div>
 
   <button class="btn ghost" onclick="logout()">Выйти из аккаунта</button>`;

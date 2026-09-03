@@ -88,7 +88,7 @@ function authForm(){
       ${!isNew ? `<button style="color:rgba(255,255,255,.5);font-size:12px;margin-top:14px;width:100%"
         onclick="toast('Ссылка для восстановления отправлена')">Забыла пароль</button>` : ''}
       <button style="color:rgba(255,255,255,.55);font-size:12.5px;margin-top:18px;width:100%"
-        onclick="authGo('${isNew?'login':'signup'}')">
+        onclick="authGo('${attJs(isNew?'login':'signup')}')">
         ${isNew ? 'У меня уже есть аккаунт' : 'Создать новый аккаунт'}</button>
       <button class="svcbtn" onclick="authGo('admin')">Вход для администраторов и экспертов</button>
     </div>
@@ -470,13 +470,13 @@ function pgSub(){
 
     ${!S.sub.active ? `
       ${plans.map(p => `<button class="card" style="width:100%;text-align:left;${S.sub.plan===p.k?'border-color:var(--ink);border-width:1.5px':''}"
-        onclick="S.sub.plan='${p.k}';render()">
+        onclick="S.sub.plan='${attJs(p.k)}';render()">
         <div class="spread">
-          <div><b style="font-size:15px">${p.n}</b>
+          <div><b style="font-size:15px">${esc(p.n)}</b>
             <div class="small muted">${p.s}</div></div>
           <div style="text-align:right">
             <div class="price" style="font-size:18px">${money(p.p)}</div>
-            ${p.d?`<div class="small" style="color:var(--ok);font-weight:700">${p.d}</div>`:''}</div>
+            ${p.d?`<div class="small" style="color:var(--ok);font-weight:700">${esc(p.d)}</div>`:''}</div>
         </div></button>`).join('')}
       <button class="btn acc" onclick="payPlan()">Оформить за ${money(S.sub.plan==='year'?24900:2900)}</button>
       <p class="small muted" style="text-align:center;margin-top:10px;font-size:11.5px">

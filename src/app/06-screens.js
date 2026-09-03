@@ -1,7 +1,7 @@
 /* =====================================================================
    ШАПКА И НАВИГАЦИЯ
    ===================================================================== */
-function hint(k){ return `<button class="qm" onclick="event.stopPropagation();openHint('${k}')" aria-label="Что это">?</button>`; }
+function hint(k){ return `<button class="qm" onclick="event.stopPropagation();openHint('${attJs(k)}')" aria-label="Что это">?</button>`; }
 
 function avatarEl(size, cls){
   const src = myAvatar();
@@ -27,7 +27,7 @@ function hero(){
       </div>
     </div>
     <h1 class="serif" style="font-size:29px;margin:0">${hello()}, ${esc(S.name||'Ева')}</h1>
-    <p class="small muted" style="margin:5px 0 0">${sc.e} ${sc.n} · день ${S.day+1} из 7</p>
+    <p class="small muted" style="margin:5px 0 0">${esc(sc.e)} ${esc(sc.n)} · день ${S.day+1} из 7</p>
 
     <div class="wish">${greetingLine()}</div>
 
@@ -50,7 +50,7 @@ const NAVI = {
 
 function nav(){
   return `<nav class="nav">${Object.entries(NAVI).map(([k,[l,d]]) =>
-    `<button class="${S.tab===k&&!S.page?'on':''}" onclick="go('${k}')">
+    `<button class="${S.tab===k&&!S.page?'on':''}" onclick="go('${attJs(k)}')">
       <svg viewBox="0 0 24 24">${d}</svg><span>${l}</span></button>`).join('')}</nav>`;
 }
 
@@ -90,7 +90,7 @@ function pgHome(){
       ${S.program.map((d,i) => {
         const dt = dateOfDay(i), done = doneOf(i);
         return `<button class="wd ${i===S.day?'sel':''} ${i===todayIdx()&&i!==S.day?'today':''} ${i>todayIdx()?'future':''}" onclick="setDay(${i})">
-          <span>${d.d}</span><b>${dt.getDate()}</b>
+          <span>${esc(d.d)}</span><b>${dt.getDate()}</b>
           <div class="pips">${S.program[i].tasks.map(t => `<i class="pip ${t.done?'on':''}"></i>`).join('')}</div>
           ${done===3?'<div class="wstar">★</div>':''}
         </button>`;}).join('')}
@@ -126,7 +126,7 @@ function pgHome(){
       </div>
       <div class="small muted" style="margin:14px 0 8px">Твои темы - можно убрать лишнее или добавить новое:</div>
       <div class="chips wrap">
-        ${S.tags.map(t => `<button class="chip on" onclick="dropTag('${t}')">${t} <span style="opacity:.6">✕</span></button>`).join('')}
+        ${S.tags.map(t => `<button class="chip on" onclick="dropTag('${attJs(t)}')">${esc(t)} <span style="opacity:.6">✕</span></button>`).join('')}
         <button class="chip" onclick="openSheet('addTag')">＋ тема</button>
       </div>
       <button class="btn ghost" style="margin-top:12px" onclick="openSheet('rebuild')">Пересобрать программу</button>
@@ -143,11 +143,11 @@ function pgHome(){
       ${S.courses.map(id => {
         const c = COURSES.find(x => x.id === id); if(!c) return '';
         const ls = lessonsOf(c.id), done = ls.filter(l => l.done).length;
-        return `<button class="crow" onclick="openCourseLanding('${c.id}')">
+        return `<button class="crow" onclick="openCourseLanding('${attJs(c.id)}')">
           <div class="mini">${cover(c.id,'course')}</div>
           <div style="flex:1;min-width:0">
-            <b style="font-size:13.5px">${c.t}</b>
-            <div class="small muted">${c.e} · ${done} из ${ls.length} уроков</div>
+            <b style="font-size:13.5px">${esc(c.t)}</b>
+            <div class="small muted">${esc(c.e)} · ${done} из ${ls.length} уроков</div>
             <div class="bar" style="margin-top:6px"><i style="width:${done/ls.length*100}%"></i></div>
           </div></button>`;
       }).join('')}` : `
@@ -160,7 +160,7 @@ function pgHome(){
     <div class="sec-h"><h2 class="serif">Ещё для тебя</h2><button class="link" onclick="go('content')">Весь контент</button></div>
     <div class="hscroll">
       ${more.map(x => `
-        <button class="lesson" style="margin:0" onclick="openLesson('${x.id}')">
+        <button class="lesson" style="margin:0" onclick="openLesson('${attJs(x.id)}')">
           <div class="cov" style="height:104px">${cover(x.id, x.type)}
             <div class="badge">${x.m}%</div></div>
           <div class="body" style="padding:11px 12px 13px">
@@ -195,7 +195,7 @@ function lessonCard(t, di, ti, locked, paywall){
       <div class="cap"><b>${esc(t.title)}</b><span>${esc(t.expert)} · ${t.min} мин</span></div>
     </div></div>`;
   return `<div class="lesson wide">
-    <div class="cov" onclick="openLesson('${t.id}')">
+    <div class="cov" onclick="openLesson('${attJs(t.id)}')">
       ${cover(t.id, t.type)}
       <div class="badge afflabel">${ti===0?'Аффирмация дня':ti===1?(t.slot==='утро'?'Утренняя практика':'Практика дня'):'Мастер-класс'}</div>
       ${t.type !== 'affirm' ? `<div class="play">▶</div>` : ''}
@@ -203,7 +203,7 @@ function lessonCard(t, di, ti, locked, paywall){
     </div>
     <div class="body">
       <div class="acts" style="margin:0">
-        <button class="btn ghost sm" style="flex:1" onclick="openLesson('${t.id}')">${t.type==='affirm'?'Подробнее':'Смотреть'}</button>
+        <button class="btn ghost sm" style="flex:1" onclick="openLesson('${attJs(t.id)}')">${t.type==='affirm'?'Подробнее':'Смотреть'}</button>
         <button class="btn sm ${t.done?'done':''}" style="flex:1" ${t.done?'disabled':''} onclick="complete(${di},${ti})">
           ${t.done ? '✓ Готово' : m.act + ' +' + t.pts}</button>
       </div>
@@ -247,7 +247,7 @@ function pgContent(){
     </div>
 
     <div class="seg">${Object.keys(types).map(k =>
-      `<button class="${S.filter===k?'on':''}" onclick="S.filter='${k}';render()">${k}</button>`).join('')}</div>
+      `<button class="${S.filter===k?'on':''}" onclick="S.filter='${attJs(k)}';render()">${k}</button>`).join('')}</div>
     ${(S.likes||[]).length ? `<div class="chips">
       <button class="chip ${S.onlyLiked?'on':''}" onclick="S.onlyLiked=!S.onlyLiked;render()">
         ${starMark(12, S.onlyLiked?'#fff':'#E7A339')} избранное ${(S.likes||[]).length}</button></div>` : ''}
@@ -255,7 +255,7 @@ function pgContent(){
     <div class="chips">
       ${S.tagFilter ? `<button class="chip on" onclick="S.tagFilter=null;render()">${S.tagFilter} ✕</button>` : ''}
       ${allTags().filter(([t]) => t !== S.tagFilter).map(([t,n]) =>
-        `<button class="chip" onclick="S.tagFilter='${t}';render()">${t} <span style="opacity:.5">${n}</span></button>`).join('')}
+        `<button class="chip" onclick="S.tagFilter='${attJs(t)}';render()">${t} <span style="opacity:.5">${n}</span></button>`).join('')}
     </div>
 
     <div class="small muted" style="margin:4px 0 12px">Найдено ${plural(items.length,'урок','урока','уроков')} · отсортировано по совпадению с тобой</div>
@@ -278,7 +278,7 @@ function starContent(btn, id){
 const isLiked = id => (S.likes || []).includes(id);
 
 function contentRow(x){
-  return `<button class="crow" onclick="openLesson('${x.id}')">
+  return `<button class="crow" onclick="openLesson('${attJs(x.id)}')">
     <div class="mini">${cover(x.id, x.type)}${x.type!=='affirm'?'<div style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:15px">▶</div>':''}</div>
     <div style="flex:1;min-width:0">
       <div style="font-size:10.5px;font-weight:800"><span style="color:var(--rose-deep)">${TYPE[x.type].l}</span>
@@ -286,7 +286,7 @@ function contentRow(x){
       <div style="font-weight:700;font-size:14px;line-height:1.3;margin:3px 0 4px">${esc(x.title)}</div>
       <div class="small muted" style="font-size:11.5px">${x.min} мин · ${esc(x.expert)}</div>
     </div>
-    <span class="starbtn ${isLiked(x.id)?'on':''}" onclick="event.stopPropagation();starContent(this,'${x.id}')">
+    <span class="starbtn ${isLiked(x.id)?'on':''}" onclick="event.stopPropagation();starContent(this,'${attJs(x.id)}')">
       ${starMark(15, isLiked(x.id) ? '#E7A339' : 'rgba(17,16,20,.22)')}</span>
   </button>`;
 }
@@ -315,34 +315,34 @@ function pgCourses(){
 
     <div class="sec-h"><h2 class="serif">Эксперты</h2><span class="small muted">${EXPERTS.length}</span></div>
     <div class="hscroll">
-      ${EXPERTS.map(e => `<button class="exp" style="width:154px" onclick="openExpert('${e.id}')">
+      ${EXPERTS.map(e => `<button class="exp" style="width:154px" onclick="openExpert('${attJs(e.id)}')">
         <div class="pcirc">${expPic(e)}</div>
-        <div style="font-weight:800;font-size:13.5px;margin-top:9px">${e.n}${e.verified?' <span class="vt">✓</span>':''}</div>
-        <div class="small muted" style="font-size:11.5px;min-height:32px">${e.r}</div>
+        <div style="font-weight:800;font-size:13.5px;margin-top:9px">${esc(e.n)}${e.verified?' <span class="vt">✓</span>':''}</div>
+        <div class="small muted" style="font-size:11.5px;min-height:32px">${esc(e.r)}</div>
         <div style="color:var(--gold);font-weight:800;font-size:12.5px">★ ${e.rate}</div>
       </button>`).join('')}
     </div>
 
     <div class="sec-h"><h2 class="serif">Все курсы</h2><span class="small muted">${list.length} шт.</span></div>
-    <div class="seg">${kinds.map(k => `<button class="${S.courseSort===k?'on':''}" onclick="S.courseSort='${k}';render()">${k}</button>`).join('')}</div>
+    <div class="seg">${kinds.map(k => `<button class="${S.courseSort===k?'on':''}" onclick="S.courseSort='${attJs(k)}';render()">${k}</button>`).join('')}</div>
 
     ${list.map(c => `
       <div class="lesson">
-        <div class="cov" style="height:158px" onclick="openCourseLanding('${c.id}')">
+        <div class="cov" style="height:158px" onclick="openCourseLanding('${attJs(c.id)}')">
           ${cover(c.id,'course')}
-          <div class="badge">${COURSE_KIND[c.id]}</div>
+          <div class="badge">${esc(COURSE_KIND[c.id])}</div>
           ${rec(c) ? `<div class="badge" style="left:auto;right:12px;background:var(--grad-gold);color:var(--plum)">✦ тебе</div>` : ''}
-          <div class="cap"><b>${c.t}</b><span>${c.e} · ${plural(c.n,'урок','урока','уроков')}</span></div>
+          <div class="cap"><b>${esc(c.t)}</b><span>${esc(c.e)} · ${plural(c.n,'урок','урока','уроков')}</span></div>
         </div>
         <div class="body">
-          <p class="small muted" style="margin:0 0 10px">${c.d}</p>
-          <div class="chips wrap" style="padding-bottom:6px">${(COURSE_TAGS[c.id]||[]).map(t => `<span class="chip pale">${t}</span>`).join('')}</div>
+          <p class="small muted" style="margin:0 0 10px">${esc(c.d)}</p>
+          <div class="chips wrap" style="padding-bottom:6px">${(COURSE_TAGS[c.id]||[]).map(t => `<span class="chip pale">${esc(t)}</span>`).join('')}</div>
           <div class="spread">
             <div><span class="price">${money(c.p)}</span><span class="old">${money(c.old)}</span></div>
             <div class="small muted">★ ${c.r} · ${c.s.toLocaleString('ru-RU')} учениц</div>
           </div>
           <button class="btn ${S.courses.includes(c.id)?'done':''}" style="margin-top:12px"
-            onclick="${S.courses.includes(c.id)?'':`openCourseLanding('${c.id}')`}">
+            onclick="${S.courses.includes(c.id)?'':`openCourseLanding('${attJs(c.id)}')`}">
             ${S.courses.includes(c.id) ? '✓ Курс открыт' : 'Подробнее'}</button>
         </div>
       </div>`).join('')}
@@ -368,7 +368,7 @@ function pgExpertPage(){
         <div class="b">Эксперт</div><div style="width:30px"></div>
       </div>
       <div class="pcirc" style="width:92px;height:92px;margin:6px auto 0;border:2px solid rgba(255,255,255,.35)">${pic}</div>
-      <div class="nm">${e.n} ${e.verified?'<span class="vt big">✓</span>':''}</div>
+      <div class="nm">${esc(e.n)} ${e.verified?'<span class="vt big">✓</span>':''}</div>
       <div class="sub">${e.r}</div>
       <div class="mrow">
         <span class="mstat">★ ${e.rate}</span>
@@ -379,12 +379,12 @@ function pgExpertPage(){
 
     <div class="pad" style="padding-top:16px">
       <div class="card"><b style="font-size:15px">О себе</b>
-        <p class="small muted" style="margin:8px 0 0">${e.about}</p></div>
+        <p class="small muted" style="margin:8px 0 0">${esc(e.about)}</p></div>
 
       <div class="quote">
         <span class="qmark">“</span>
         <p>${esc(e.mission)}</p>
-        <div class="qauthor">${e.n}</div>
+        <div class="qauthor">${esc(e.n)}</div>
       </div>
 
       <div class="sec-h"><h2 class="serif">С чем ко мне приходят</h2></div>
@@ -394,7 +394,7 @@ function pgExpertPage(){
       <div class="card" style="margin-top:12px">
         <b style="font-size:14.5px">Темы, с которыми работает</b>
         <div class="small muted" style="margin:4px 0 9px">По этим темам подбираются практики в твоей программе</div>
-        <div class="chips wrap">${e.t.map(t => `<span class="chip pale">${t}</span>`).join('')}</div>
+        <div class="chips wrap">${e.t.map(t => `<span class="chip pale">${esc(t)}</span>`).join('')}</div>
       </div>
 
       <div class="sec-h"><h2 class="serif">Опыт и достижения</h2></div>
@@ -417,9 +417,9 @@ function pgExpertPage(){
         <div class="small muted" style="margin:-2px 0 12px">Дипломы и сертификаты проверены администрацией платформы. Сами документы не публикуются.</div>` : ''}
 
       <div class="sec-h"><h2 class="serif">Курсы</h2><span class="small muted">${courses.length}</span></div>
-      ${courses.length ? courses.map(c => `<button class="crow" onclick="openCourseLanding('${c.id}')">
+      ${courses.length ? courses.map(c => `<button class="crow" onclick="openCourseLanding('${attJs(c.id)}')">
         <div class="mini">${cover(c.id,'course')}</div>
-        <div style="flex:1"><b style="font-size:13.5px">${c.t}</b>
+        <div style="flex:1"><b style="font-size:13.5px">${esc(c.t)}</b>
           <div class="small muted">${plural(lessonsOf(c.id).length,'урок','урока','уроков')} · ★ ${c.r}</div>
           <div class="price" style="font-size:14px;margin-top:3px">${money(c.p)}</div></div>
       </button>`).join('') : '<div class="empty">Курсы готовятся</div>'}
@@ -456,16 +456,16 @@ function pgExpertPage(){
               ? `<span class="price-l" style="color:var(--ok)">Бесплатно</span>`
               : `<span class="price-l">${money(off && sv.oldPrice ? sv.price : sv.price)}</span>
                  ${off && sv.oldPrice ? `<span class="old">${money(sv.oldPrice)}</span>` : ''}`}</div>
-            <button class="btn sm acc" onclick="openSheet({k:'consult',id:'${e.id}',sv:'${sv.id}'})">
+            <button class="btn sm acc" onclick="openSheet({k:'consult',id:'${attJs(e.id)}',sv:'${attJs(sv.id)}'})">
               ${sv.price === 0 ? 'Записаться' : 'Оставить заявку'}</button>
           </div>
         </div>`;
       }).join('') || '<div class="empty">Услуги пока не добавлены</div>'}
-      <button class="btn ghost" onclick="openSheet({k:'write',id:'${e.id}'})">Написать эксперту</button>
+      <button class="btn ghost" onclick="openSheet({k:'write',id:'${attJs(e.id)}'})">Написать эксперту</button>
 
       <div class="card" style="border:1px dashed var(--line-2)">
         <b style="font-size:15px">Это открытая страница</b>
-        <p class="small muted" style="margin:8px 0 12px">Материалы ${e.n.split(' ')[0]} можно посмотреть без оплаты. С подпиской добавляется личная программа на каждый день, вся библиотека и сообщество.</p>
+        <p class="small muted" style="margin:8px 0 12px">Материалы ${esc(e.n.split(' ')[0])} можно посмотреть без оплаты. С подпиской добавляется личная программа на каждый день, вся библиотека и сообщество.</p>
         <button class="btn ghost" onclick="closeExpert();openPage('sub')">Что входит в подписку</button>
       </div>
     </div>
@@ -489,7 +489,7 @@ function dayAdvice(){
     </div>
     <div class="moonbig" style="margin-bottom:10px">
       ${moonDisc(m, 58)}
-      <div style="flex:1"><b style="font-size:14.5px">${m.n}</b>
+      <div style="flex:1"><b style="font-size:14.5px">${esc(m.n)}</b>
         <div class="small muted">${m.s}</div>
         <div class="small muted" style="margin-top:3px">Освещённость ${m.pct}% · ${plural(m.age,'день','дня','дней')} цикла</div></div>
     </div>
@@ -497,10 +497,10 @@ function dayAdvice(){
       <div class="small">${personalDay(m, z)}</div></div>` : ''}
     <button class="btn ghost sm" style="width:100%" onclick="openPage('calendar')">Подробнее о дне</button>
     <div style="height:8px"></div>
-    ${z ? `<div class="arow"><span class="ae">${z.e}</span>
-      <div><b>${z.n}, стихия ${z.el}</b><div class="small muted">${t}</div></div></div>` : ''}
-    ${cy ? `<div class="arow"><span class="ae">${cy.phase.e}</span>
-      <div><b>${cy.phase.n} фаза, день ${cy.day}</b><div class="small muted">${cy.phase.s}</div></div></div>` : ''}
+    ${z ? `<div class="arow"><span class="ae">${esc(z.e)}</span>
+      <div><b>${esc(z.n)}, стихия ${z.el}</b><div class="small muted">${t}</div></div></div>` : ''}
+    ${cy ? `<div class="arow"><span class="ae">${esc(cy.phase.e)}</span>
+      <div><b>${esc(cy.phase.n)} фаза, день ${cy.day}</b><div class="small muted">${cy.phase.s}</div></div></div>` : ''}
     <button class="btn ghost" style="margin-top:12px" onclick="openPage('birth')">
       ${has ? 'Персональный портрет' : 'Добавить дату рождения и цикл'}</button>
   </div>`;
@@ -553,7 +553,7 @@ function greetingLine(){
       `День закрыт полностью. Знаешь, что самое ценное? Не сами практики, а то, что ты возвращаешься к ним снова.`
     ][v % 3];
     return nextCourse
-      ? `${praise} Если захочется глубже - посмотри курс «${nextCourse.t}», первые уроки открыты бесплатно.`
+      ? `${praise} Если захочется глубже - посмотри курс «${esc(nextCourse.t)}», первые уроки открыты бесплатно.`
       : praise;
   }
   if(done && left === 1)
@@ -611,15 +611,15 @@ function pgMarket(){
           <div class="small muted">Можно оплатить до 30% любого заказа</div></div></div>
     </div>
 
-    <div class="chips">${cats.map(c => `<button class="chip ${S.cat===c?'on':''}" onclick="S.cat='${c}';render()">${c}</button>`).join('')}</div>
+    <div class="chips">${cats.map(c => `<button class="chip ${S.cat===c?'on':''}" onclick="S.cat='${attJs(c)}';render()">${c}</button>`).join('')}</div>
 
     <div class="g2">
       ${items.map(g => `<div class="prod">
-        <div class="ph" onclick="openGood('${g.id}')">${goodPic(g)}${g.f?`<div class="flag">${g.f}</div>`:''}</div>
+        <div class="ph" onclick="openGood('${attJs(g.id)}')">${goodPic(g)}${g.f?`<div class="flag">${g.f}</div>`:''}</div>
         <div class="info">
-          <div class="nm">${g.t}</div>
+          <div class="nm">${esc(g.t)}</div>
           <div style="margin:6px 0 10px"><span class="price">${money(g.p)}</span>${g.old?`<span class="old">${money(g.old)}</span>`:''}</div>
-          <button class="btn sm" style="width:100%" onclick="addCart('${g.id}')">＋ В корзину</button>
+          <button class="btn sm" style="width:100%" onclick="addCart('${attJs(g.id)}')">＋ В корзину</button>
         </div>
       </div>`).join('')}
     </div>
@@ -638,12 +638,12 @@ function pgCart(){
       ${items.map(i => `<div class="card" style="padding:12px">
         <div class="row">
           <div style="width:66px;height:56px;border-radius:12px;overflow:hidden;flex:none">${goodPic(i)}</div>
-          <div style="flex:1"><div style="font-weight:700;font-size:13.5px;line-height:1.3">${i.t}</div>
+          <div style="flex:1"><div style="font-weight:700;font-size:13.5px;line-height:1.3">${esc(i.t)}</div>
             <div class="price" style="font-size:14px;margin-top:4px">${money(i.p*i.n)}</div></div>
           <div class="row" style="gap:8px">
-            <button class="chip" onclick="qty('${i.id}',-1)">−</button>
-            <b>${i.n}</b>
-            <button class="chip" onclick="qty('${i.id}',1)">＋</button>
+            <button class="chip" onclick="qty('${attJs(i.id)}',-1)">−</button>
+            <b>${esc(i.n)}</b>
+            <button class="chip" onclick="qty('${attJs(i.id)}',1)">＋</button>
           </div>
         </div></div>`).join('')}
       <div class="card">
@@ -691,12 +691,12 @@ function pgProfile(){
         <h1 class="serif" style="font-size:24px;margin:0;color:#fff">${esc(S.name||'Ева')}</h1>
         <p class="small muted" style="margin:5px 0 0">${S.user ? esc(S.user.email) : ''}</p>
         <div class="mrow" style="display:flex;justify-content:center;gap:7px;margin-top:12px;flex-wrap:wrap">
-          <span class="mstat">${cur.e} ${cur.n}</span>
+          <span class="mstat">${esc(cur.e)} ${esc(cur.n)}</span>
           <span class="mstat">${S.sub.active ? (S.sub.plan==='year'?'годовая подписка':'подписка') + ', ' + plural(subLeft(),'день','дня','дней') : trialLeft() ? 'пробный, ' + plural(trialLeft(),'день','дня','дней') : 'доступ закрыт'}</span>
         </div>
       </div>
       <div class="bar" style="background:rgba(255,255,255,.2);margin:16px 0 8px"><i style="width:${pct}%"></i></div>
-      <div class="small muted" style="text-align:center">${next ? `${next.from - S.points} баллов до статуса «${next.n}»` : 'высший статус'}</div>
+      <div class="small muted" style="text-align:center">${next ? `${next.from - S.points} баллов до статуса «${esc(next.n)}»` : 'высший статус'}</div>
     </div>
 
     <div class="pad" style="padding-top:16px">
@@ -725,7 +725,7 @@ function pgProfile(){
             <div class="serif" style="font-size:26px;margin-top:3px">${rate}%</div></div>
         </div>
         <div class="linkbox" style="background:rgba(255,255,255,.12);color:#fff;margin-top:12px">
-          eva.space/r/${(S.name||'eva').toLowerCase()}</div>
+          eva.space/r/${esc((S.name||'eva').toLowerCase())}</div>
         <div class="acts">
           <button class="btn" style="background:#fff;color:var(--ink)" onclick="copyRef()">Скопировать ссылку</button>
           <button class="btn ghost" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.2)"
@@ -738,8 +738,8 @@ function pgProfile(){
         <div class="small muted" style="margin:4px 0 8px">${plural(INVITED.length,'подруга','подруги','подруг')} · ${INVITED.filter(i=>i.sum).length} с покупками</div>
         ${INVITED.map(i => `<div class="uline">
           <div class="dot-ava" style="width:28px;height:28px;font-size:11px;background:var(--lilac)">${i.n[0]}</div>
-          <div style="flex:1"><b style="font-size:12.5px">${i.n}</b>
-            <div class="small muted">${i.ago}</div></div>
+          <div style="flex:1"><b style="font-size:12.5px">${esc(i.n)}</b>
+            <div class="small muted">${esc(i.ago)}</div></div>
           <b style="font-size:12.5px;color:${i.sum?'var(--ok)':'var(--muted)'}">
             ${i.sum ? '+'+money(Math.round(i.sum*rate/100)) : 'без покупок'}</b>
         </div>`).join('')}
@@ -749,7 +749,7 @@ function pgProfile(){
       <div class="sec-h"><h2 class="serif">Покупки</h2>
         <span class="small muted">${spent ? 'на ' + money(spent) : ''}</span></div>
       ${S.purchases.length ? S.purchases.map(p => `<div class="card" style="padding:12px">
-        <div class="spread"><div style="flex:1"><b style="font-size:13.5px">${p.t}</b>
+        <div class="spread"><div style="flex:1"><b style="font-size:13.5px">${esc(p.t)}</b>
           <div class="small muted">${p.date}</div></div>
           <div style="text-align:right"><b style="font-size:13.5px">${money(p.p)}</b>
             ${p.cb?`<div class="small" style="color:var(--ok)">+${p.cb} бонусов</div>`:''}</div></div>
@@ -762,7 +762,7 @@ function pgProfile(){
          ['birth','Дата рождения и цикл','Human Design, знак, персональный портрет'],
          ['sub','Подписка', subLabel()],
          ['settings','Настройки','Уведомления, пароль, оплаты, контакты']].map(([k,t,d]) =>
-        `<button class="card" style="width:100%;text-align:left;padding:13px" onclick="openPage('${k}')">
+        `<button class="card" style="width:100%;text-align:left;padding:13px" onclick="openPage('${attJs(k)}')">
           <div class="row"><div style="flex:1"><b style="font-size:14px">${t}</b>
             <div class="small muted" style="margin-top:2px">${d}</div></div>
             <span class="muted">›</span></div></button>`).join('')}
@@ -829,7 +829,7 @@ function pgEarn(){
       return `<div class="card" style="${on?'border-color:var(--ink);border-width:1.5px':''}">
         <div class="spread">
           <div class="row"><div class="lvlmark ${has?'has':''}">${has?'✓':l.e}</div>
-            <div><b style="font-size:14.5px">${l.n}</b>${on?'<span class="chip pale" style="margin-left:7px;padding:2px 8px">сейчас</span>':''}
+            <div><b style="font-size:14.5px">${esc(l.n)}</b>${on?'<span class="chip pale" style="margin-left:7px;padding:2px 8px">сейчас</span>':''}
               <div class="small muted" style="margin-top:2px">${l.from ? 'от '+l.from+' баллов' : 'с первого дня'}</div></div></div>
           <b style="font-size:17px;color:${has?'var(--accent)':'var(--muted)'}">${REF_RATE[l.id]}%</b>
         </div>
@@ -843,7 +843,7 @@ function pgEarn(){
     ${INVITED.map(i => `<div class="card" style="padding:12px">
       <div class="spread">
         <div class="row"><div class="dot-ava" style="background:var(--lilac)">${i.n[0]}</div>
-          <div><b style="font-size:13.5px">${i.n}</b><div class="small muted">${i.ago}</div></div></div>
+          <div><b style="font-size:13.5px">${esc(i.n)}</b><div class="small muted">${esc(i.ago)}</div></div></div>
         <b style="font-size:13.5px;color:${i.sum?'var(--ok)':'var(--muted)'}">
           ${i.sum ? '+'+money(Math.round(i.sum*rate/100)) : 'пока без покупок'}</b>
       </div></div>`).join('')}

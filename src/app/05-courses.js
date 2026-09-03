@@ -74,14 +74,14 @@ function pgCourseLanding(){
       ${cover(c.id,'course')}
       <div class="badge">${COURSE_KIND[c.id]} курс</div>
       <div class="ctext">
-        <h1 class="serif" style="font-size:24px;margin:0 0 6px;color:#fff">${c.t}</h1>
-        <p style="font-size:13.5px;line-height:1.45;color:rgba(255,255,255,.82);margin:0">${info.promo || c.d}</p>
+        <h1 class="serif" style="font-size:24px;margin:0 0 6px;color:#fff">${esc(c.t)}</h1>
+        <p style="font-size:13.5px;line-height:1.45;color:rgba(255,255,255,.82);margin:0">${esc(info.promo || c.d)}</p>
       </div>
     </div>
 
-    <button class="card" style="width:100%;text-align:left;padding:12px" onclick="openExpert('${e.id}')">
+    <button class="card" style="width:100%;text-align:left;padding:12px" onclick="openExpert('${attJs(e.id)}')">
       <div class="row"><div class="pcirc" style="width:46px;height:46px">${expPic(e)}</div>
-        <div style="flex:1"><b style="font-size:14px">${e.n} ${e.verified?'<span class="vt">✓</span>':''}</b>
+        <div style="flex:1"><b style="font-size:14px">${esc(e.n)} ${e.verified?'<span class="vt">✓</span>':''}</b>
           <div class="small muted">${e.r} · ${e.exp} практики</div></div>
         <span class="stars5">★ ${e.rate}</span></div>
     </button>
@@ -108,13 +108,13 @@ function pgCourseLanding(){
     <div class="sec-h"><h2 class="serif">Программа</h2>
       <span class="small muted">${mods.length} модуля · ${ls.length} уроков</span></div>
     ${mods.map(m => `<div class="modbox">
-      <div class="mh"><span>Модуль ${m.n}. ${esc(m.t)}</span>
+      <div class="mh"><span>Модуль ${esc(m.n)}. ${esc(m.t)}</span>
         <span class="lockmini">${m.units.length} уроков</span></div>
       <div style="padding:8px">
         ${m.units.map(un => {
           const l = ls.find(x => x.n === un); if(!l) return '';
           const open = own || l.free;
-          return `<button class="unit ${l.done?'done':''}" onclick="${open?`openCourseLearn('${c.id}',${ls.indexOf(l)})`:`toast('Урок откроется после покупки')`}">
+          return `<button class="unit ${l.done?'done':''}" onclick="${open?`openCourseLearn('${attJs(c.id)}',${ls.indexOf(l)})`:`toast('Урок откроется после покупки')`}">
             <div class="n">${l.done?'✓':l.n}</div>
             <div class="mini">${cover(l.id,'practice')}</div>
             <div style="flex:1;min-width:0">
@@ -139,8 +139,8 @@ function pgCourseLanding(){
       <div class="spread" style="margin-top:8px"><span class="small muted">Списать бонусами</span>
         <b style="color:var(--accent)">−${money(bonus)}</b></div>
       <div class="spread" style="margin-top:8px"><span class="small muted">Доступ</span><b>навсегда</b></div>
-      ${own ? `<button class="btn done" style="margin-top:12px" onclick="openCourseLearn('${c.id}',0)">Продолжить обучение</button>`
-            : `<button class="btn acc" style="margin-top:12px" onclick="buyCourse('${c.id}')">Купить за ${money(c.p - bonus)}</button>
+      ${own ? `<button class="btn done" style="margin-top:12px" onclick="openCourseLearn('${attJs(c.id)}',0)">Продолжить обучение</button>`
+            : `<button class="btn acc" style="margin-top:12px" onclick="buyCourse('${attJs(c.id)}')">Купить за ${money(c.p - bonus)}</button>
                <p class="small muted" style="text-align:center;margin:8px 0 0">Открытые уроки можно посмотреть до покупки</p>`}
     </div>
   </div>`;
@@ -154,9 +154,9 @@ function pgCourseLearn(){
   const done = ls.filter(x => x.done).length;
   const hwDone = S.homework && S.homework[l.id];
   return `<div class="view pad">
-    <button class="backbtn" onclick="openCourseLanding('${c.id}')">‹ ${esc(c.t)}</button>
+    <button class="backbtn" onclick="openCourseLanding('${attJs(c.id)}')">‹ ${esc(c.t)}</button>
 
-    <div class="eyebrow" style="margin-top:6px">Урок ${l.n} из ${ls.length} · ${l.min} мин</div>
+    <div class="eyebrow" style="margin-top:6px">Урок ${esc(l.n)} из ${ls.length} · ${l.min} мин</div>
     <h1 class="serif" style="font-size:23px;margin:7px 0 12px">${esc(l.t)}</h1>
 
     ${videoBlock(l.id)}
@@ -172,7 +172,7 @@ function pgCourseLearn(){
           <div class="small muted" style="margin-top:3px">${esc(l.hw.title || 'Практика после урока')}</div></div>
         ${hwDone ? '<span class="pill free">выполнено</span>' : ''}
       </div>
-      <button class="btn ${hwDone?'ghost':''}" style="margin-top:10px" onclick="openSheet({k:'hw',id:'${l.id}',cid:'${c.id}'})">
+      <button class="btn ${hwDone?'ghost':''}" style="margin-top:10px" onclick="openSheet({k:'hw',id:'${attJs(l.id)}',cid:'${attJs(c.id)}'})">
         ${hwDone ? 'Открыть задание' : 'Открыть задание'}</button>
     </div>` : ''}
 
@@ -180,16 +180,16 @@ function pgCourseLearn(){
     <div class="small muted" style="margin-bottom:12px">Пройдено ${done} из ${ls.length}</div>
 
     <div class="acts" style="margin-bottom:14px">
-      <button class="btn ghost" ${i===0?'disabled':''} onclick="openCourseLearn('${c.id}',${i-1})">←</button>
-      <button class="btn ${l.done?'done':''}" onclick="doneUnit('${c.id}',${i})">${l.done?'✓ Пройден':'Отметить пройденным'}</button>
-      <button class="btn ghost" ${i===ls.length-1?'disabled':''} onclick="openCourseLearn('${c.id}',${i+1})">→</button>
+      <button class="btn ghost" ${i===0?'disabled':''} onclick="openCourseLearn('${attJs(c.id)}',${i-1})">←</button>
+      <button class="btn ${l.done?'done':''}" onclick="doneUnit('${attJs(c.id)}',${i})">${l.done?'✓ Пройден':'Отметить пройденным'}</button>
+      <button class="btn ghost" ${i===ls.length-1?'disabled':''} onclick="openCourseLearn('${attJs(c.id)}',${i+1})">→</button>
     </div>
 
     <div class="sec-h"><h2 class="serif">Все уроки</h2></div>
     ${ls.map((u,k) => {
       const open = S.courses.includes(c.id) || u.free;
       return `<button class="unit ${u.done?'done':''}" style="${k===i?'border-color:var(--ink)':''}"
-        onclick="${open?`openCourseLearn('${c.id}',${k})`:`toast('Урок откроется после покупки')`}">
+        onclick="${open?`openCourseLearn('${attJs(c.id)}',${k})`:`toast('Урок откроется после покупки')`}">
         <div class="n">${u.done?'✓':u.n}</div>
         <div style="flex:1;min-width:0"><b style="font-size:13px;display:block">${esc(u.t)}</b>
           <div class="small muted">${u.min} мин${u.hw?' · есть домашнее':''}</div></div>
@@ -255,7 +255,7 @@ function pgEvents(){
 
   return `
   <div class="seg">${['все','офлайн','онлайн'].map(k =>
-    `<button class="${mode===k?'on':''}" onclick="S.evMode='${k}';render()">${k}</button>`).join('')}</div>
+    `<button class="${mode===k?'on':''}" onclick="S.evMode='${attJs(k)}';render()">${k}</button>`).join('')}</div>
   ${mode !== 'онлайн' ? `<select class="field regionsel" onchange="S.evCity=this.value;render()">
     ${cities.map(c => `<option value="${c}" ${(S.evCity||'все')===c?'selected':''}>${c === 'все' ? 'Все регионы' : c}</option>`).join('')}
   </select>` : ''}
@@ -265,10 +265,10 @@ function pgEvents(){
     : '<div class="empty">По этим фильтрам ничего нет</div>'}
 
   ${mine.length ? `<div class="sec-h" style="margin-top:6px"><h2 class="serif" style="font-size:18px">Я иду</h2></div>
-    ${mine.map(e => `<button class="gitem" onclick="openSheet({k:'event',id:'${e.id}'})">
+    ${mine.map(e => `<button class="gitem" onclick="openSheet({k:'event',id:'${attJs(e.id)}'})">
       <div class="gemoji">${e.mode === 'онлайн' ? '⌘' : '◈'}</div>
-      <div style="flex:1;min-width:0"><b style="font-size:13.5px">${e.t}</b>
-        <div class="small muted">${new Date(e.d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}, ${e.tm} · ${e.city}</div></div>
+      <div style="flex:1;min-width:0"><b style="font-size:13.5px">${esc(e.t)}</b>
+        <div class="small muted">${new Date(e.d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}, ${esc(e.tm)} · ${esc(e.city)}</div></div>
       <span class="chip pale">${e.price?'билет':'запись'}</span></button>`).join('')}` : ''}
 
   ${S.role === 'expert' ? `<button class="btn ghost" style="margin-top:8px" onclick="openSheet('newEvent')">Предложить мероприятие</button>` : ''}
@@ -278,9 +278,9 @@ function pgEvents(){
 function evCard(e){
   const dt = evDate(e.d), going = S.myEvents.includes(e.id);
   return `<div class="evcard">
-    <div class="ph" onclick="openSheet({k:'event',id:'${e.id}'})">
+    <div class="ph" onclick="openSheet({k:'event',id:'${attJs(e.id)}'})">
       ${cover(e.id, e.kind === 'Концерт' ? 'class' : 'practice')}
-      <div class="when"><b>${dt.d}</b><span>${dt.m}</span></div>
+      <div class="when"><b>${esc(dt.d)}</b><span>${esc(dt.m)}</span></div>
       <div class="evtags">
         <span class="evtag">${e.mode}</span>
         <span class="evtag">${e.price ? money(e.price) : 'бесплатно'}</span>
@@ -288,12 +288,12 @@ function evCard(e){
       ${e.status === 'pending' ? '<div class="flag" style="top:auto;bottom:8px">на модерации</div>' : ''}
     </div>
     <div style="padding:12px">
-      <div class="eyebrow">${e.kind} · ${e.tm}</div>
-      <b style="font-size:14.5px;display:block;margin:5px 0 4px;line-height:1.25">${e.t}</b>
-      <div class="small muted">${e.mode === 'онлайн' ? 'Онлайн · ' + e.city : e.city + (e.place ? ', ' + e.place : '')}</div>
-      <div class="small muted" style="margin-top:2px">${e.by} · ${plural(e.left,'место','места','мест')} свободно</div>
+      <div class="eyebrow">${esc(e.kind)} · ${esc(e.tm)}</div>
+      <b style="font-size:14.5px;display:block;margin:5px 0 4px;line-height:1.25">${esc(e.t)}</b>
+      <div class="small muted">${esc(e.mode === 'онлайн' ? 'Онлайн · ' + e.city : e.city + (e.place ? ', ' + e.place : ''))}</div>
+      <div class="small muted" style="margin-top:2px">${esc(e.by)} · ${plural(e.left,'место','места','мест')} свободно</div>
       <button class="btn sm ${going?'done':'acc'}" style="width:100%;margin-top:10px"
-        onclick="event.stopPropagation();goEvent('${e.id}')">
+        onclick="event.stopPropagation();goEvent('${attJs(e.id)}')">
         ${going ? '✓ Я иду, отменить' : e.price ? 'Купить билет' : 'Записаться'}</button>
     </div>
   </div>`;
@@ -361,8 +361,8 @@ function pgMembers(){
       <div class="row" style="align-items:center;margin-bottom:9px">
         ${chatAva(w.a, w.c, !!w.own, 38, w.email)}
         <div style="flex:1;min-width:0">
-          <b style="font-size:14px;display:block">${w.a}${w.own?' · ты':''}</b>
-          <span class="small muted" style="font-size:11px">${w.city} · ${w.ago}</span>
+          <b style="font-size:14px;display:block">${esc(w.a)}${w.own?' · ты':''}</b>
+          <span class="small muted" style="font-size:11px">${esc(w.city)} · ${esc(w.ago)}</span>
         </div>
       </div>
       <p style="margin:0 0 10px;font-size:14px;line-height:1.5">${esc(w.t)}</p>
@@ -370,11 +370,11 @@ function pgMembers(){
         `<span class="chip pale" style="padding:3px 9px;font-size:10.5px">${t}</span>`).join('')}</div>
       <div class="wallfoot">
         <div class="row" style="gap:7px">
-          <button class="btn xs" onclick="replyWall('${w.id}')">Познакомиться</button>
-          <button class="cmtbtn" onclick="toggleComments('${w.id}')">
+          <button class="btn xs" onclick="replyWall('${attJs(w.id)}')">Познакомиться</button>
+          <button class="cmtbtn" onclick="toggleComments('${attJs(w.id)}')">
             💬 ${(w.comments||[]).length || ''}</button>
         </div>
-        <button class="starbtn ${liked?'on':''}" onclick="starPost('${w.id}')">
+        <button class="starbtn ${liked?'on':''}" onclick="starPost('${attJs(w.id)}')">
           ${starMark(16, liked ? '#E7A339' : 'rgba(17,16,20,.22)')}
           <span>${w.st + (liked?1:0)}</span>
         </button>
@@ -387,17 +387,17 @@ function pgMembers(){
               <div class="row" style="gap:6px">
                 <b style="font-size:12.5px;color:${c.own ? 'var(--accent)' : 'var(--ink)'}">${esc(c.a)}${c.own?' · ты':''}</b>
                 ${c.curator ? '<span class="badge-cur">куратор</span>' : ''}
-                <span class="small muted" style="font-size:10px;margin-left:auto">${c.ago}</span></div>
+                <span class="small muted" style="font-size:10px;margin-left:auto">${esc(c.ago)}</span></div>
               <div style="font-size:13px;line-height:1.45;margin-top:3px">${esc(c.t)}</div>
             </div>
           </div>`).join('') || '<div class="small muted" style="padding:4px 0 8px">Пока никто не ответил. Будь первой</div>'}
           <div class="row" style="gap:7px;margin-top:6px">
             <input class="field" style="margin:0;flex:1;padding:9px 12px;font-size:13px" id="cm_${w.id}"
-              placeholder="Ответить" onkeydown="if(event.key==='Enter')addComment('${w.id}')">
-            <button class="btn sm" onclick="addComment('${w.id}')">→</button>
+              placeholder="Ответить" onkeydown="if(event.key==='Enter')addComment('${attJs(w.id)}')">
+            <button class="btn sm" onclick="addComment('${attJs(w.id)}')">→</button>
           </div>
         </div>` : (w.comments||[]).length ? `
-        <button class="cmtpeek" onclick="toggleComments('${w.id}')">
+        <button class="cmtpeek" onclick="toggleComments('${attJs(w.id)}')">
           ${chatAva(w.comments[0].a, w.comments[0].c, !!w.comments[0].own, 22, w.comments[0].email)}
           <span><b>${esc(w.comments[0].a)}:</b> ${esc(w.comments[0].t.slice(0,38))}${w.comments[0].t.length>38?'…':''}</span>
           ${w.comments.length > 1 ? `<span class="cmtmore">ещё ${w.comments.length - 1}</span>` : ''}
@@ -431,7 +431,7 @@ function myProfileCard(){
       <div style="padding:14px">
         <p style="margin:0 0 10px;font-size:14px;line-height:1.5">${esc(p.about || 'Расскажи пару слов о себе - это поможет найти близких по духу')}</p>
         <div class="eyebrow" style="margin-bottom:6px">Интересы</div>
-        <div class="chips wrap" style="padding:0">${(p.ints||[]).map(t => `<span class="chip pale" style="padding:4px 10px">${t}</span>`).join('')}</div>
+        <div class="chips wrap" style="padding:0">${(p.ints||[]).map(t => `<span class="chip pale" style="padding:4px 10px">${esc(t)}</span>`).join('')}</div>
       </div>
     </div>
     <div class="draftbar">
@@ -467,7 +467,7 @@ function datingBlock(){
     ${m ? `<div class="mcard">
       <div class="mphoto">${MEDIA[m.id] ? `<img src="${MEDIA[m.id]}" alt="">` : portrait(m.id)}
         <div class="mname">
-          <b>${m.n}, ${m.age}</b>
+          <b>${esc(m.n)}, ${m.age}</b>
           <span>${fmt === 'кофе' ? m.city : m.city === 'Онлайн' ? 'онлайн' : m.city + ' · онлайн'}</span>
         </div>
       </div>
@@ -479,7 +479,7 @@ function datingBlock(){
         ${common(m).length ? `<div class="small" style="color:var(--ok);margin-top:8px;font-weight:600">
           Совпадение: ${common(m).join(', ')}</div>` : ''}
         <div class="acts">
-          <button class="btn" onclick="inviteMatch('${m.id}')">Позвать ${fmt === 'кофе' ? 'на кофе' : 'познакомиться'}</button>
+          <button class="btn" onclick="inviteMatch('${attJs(m.id)}')">Позвать ${fmt === 'кофе' ? 'на кофе' : 'познакомиться'}</button>
           <button class="btn ghost" onclick="nextMatch()">Следующая</button>
         </div>
       </div>
@@ -639,13 +639,13 @@ function pgClub(){
   const last = id => { const m = S.chats[id]; return m && m.length ? m[m.length-1] : null; };
   const row = (g, joined) => {
     const l = last(g.id), un = (S.chat.unread||{})[g.id];
-    return `<button class="gitem" onclick="${joined?`openChat('${g.id}')`:`join('${g.id}');openChat('${g.id}')`}">
-      <div class="gemoji">${g.e}</div>
+    return `<button class="gitem" onclick="${joined?`openChat('${attJs(g.id)}')`:`join('${attJs(g.id)}');openChat('${attJs(g.id)}')`}">
+      <div class="gemoji">${esc(g.e)}</div>
       <div style="flex:1;min-width:0">
-        <div class="spread"><b style="font-size:14px">${g.t}</b>
+        <div class="spread"><b style="font-size:14px">${esc(g.t)}</b>
           <span class="small muted" style="font-size:10.5px">${l?l.tm:''}</span></div>
         <div class="small muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">
-          ${l ? `${l.a}: ${l.t}` : g.m.toLocaleString('ru-RU') + ' участниц'}</div>
+          ${l ? `${esc(l.a)}: ${esc(l.t)}` : g.m.toLocaleString('ru-RU') + ' участниц'}</div>
       </div>
       ${un ? `<span class="unreadc">${un}</span>` : joined ? '' : '<span class="chip pale">войти</span>'}
     </button>`;
@@ -685,12 +685,12 @@ function pgChatRoom(){
       <div class="brandbar" style="margin:0">
         <button onclick="closeChat()" style="color:#fff;font-size:20px;width:30px;text-align:left">‹</button>
         <div class="row" style="flex:1;justify-content:center">
-          <div class="gemoji" style="width:32px;height:32px;font-size:15px;background:rgba(255,255,255,.12)">${g.e}</div>
-          <div><div style="font-size:14px;font-weight:700">${g.t}</div>
+          <div class="gemoji" style="width:32px;height:32px;font-size:15px;background:rgba(255,255,255,.12)">${esc(g.e)}</div>
+          <div><div style="font-size:14px;font-weight:700">${esc(g.t)}</div>
             <div class="small muted" style="font-size:10.5px">${g.m.toLocaleString('ru-RU')} участниц${S.role==='admin'?' · модерация':''}</div></div>
         </div>
         <button class="chip" style="background:rgba(255,255,255,.12);color:#fff;border-color:transparent"
-          onclick="openSheet({k:'groupInfo',id:'${g.id}'})">···</button>
+          onclick="openSheet({k:'groupInfo',id:'${attJs(g.id)}'})">···</button>
       </div>
     </div>
     <div class="pad">
@@ -698,15 +698,15 @@ function pgChatRoom(){
         ${msgs.map((m,i) => `<div class="cmsg ${m.own?'own':''}">
           ${!m.own ? chatAva(m.a, m.c, false, 32, m.email) : ''}
           <div class="txt">
-            ${!m.own ? `<div class="nm">${m.a}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
+            ${!m.own ? `<div class="nm">${esc(m.a)}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
             ${esc(m.t)}
-            <div class="tm">${m.tm}${S.role==='admin'&&!m.own?` · <span onclick="delMsg('${g.id}',${i})" style="cursor:pointer;color:var(--accent)">удалить</span>`:''}</div>
+            <div class="tm">${esc(m.tm)}${S.role==='admin'&&!m.own?` · <span onclick="delMsg('${attJs(g.id)}',${i})" style="cursor:pointer;color:var(--accent)">удалить</span>`:''}</div>
           </div>
         </div>`).join('')}
       </div>
       <div class="chatbar">
-        <input class="field" id="cin" placeholder="Сообщение" onkeydown="if(event.key==='Enter')sendMsg('${g.id}')">
-        <button class="btn" style="width:auto;padding:12px 16px;border-radius:999px" onclick="sendMsg('${g.id}')">→</button>
+        <input class="field" id="cin" placeholder="Сообщение" onkeydown="if(event.key==='Enter')sendMsg('${attJs(g.id)}')">
+        <button class="btn" style="width:auto;padding:12px 16px;border-radius:999px" onclick="sendMsg('${attJs(g.id)}')">→</button>
       </div>
     </div>
   </div>`;
@@ -726,7 +726,7 @@ function chatAva(name, color, own, size, email){
     if(src) return avaImg(src, s);
   }
   const initials = String(name || '?').split(' ').map(w => w[0]).join('').slice(0,2);
-  return `<div class="dot-ava" style="width:${s}px;height:${s}px;background:${color || 'var(--ink)'}">${initials}</div>`;
+  return `<div class="dot-ava" style="width:${s}px;height:${s}px;background:${safeColor(color)}">${esc(initials)}</div>`;
 }
 
 function sendMsg(gid){
@@ -805,11 +805,11 @@ function pgInbox(){
     <p class="small muted" style="margin:0 0 14px">Приглашения от участниц, ответы экспертов и уведомления платформы.</p>
     ${S.inbox.map(t => {
       const last = t.msgs[t.msgs.length-1];
-      return `<button class="gitem ${t.unread?'unreadrow':''}" onclick="openThread('${t.id}')">
+      return `<button class="gitem ${t.unread?'unreadrow':''}" onclick="openThread('${attJs(t.id)}')">
         ${chatAva(t.from, t.c, false, 42, t.email)}
         <div style="flex:1;min-width:0">
-          <div class="spread"><b style="font-size:14px">${t.from}${t.exp?' <span class="badge-exp">эксперт</span>':''}</b>
-            <span class="small muted" style="font-size:10.5px">${t.ago}</span></div>
+          <div class="spread"><b style="font-size:14px">${esc(t.from)}${t.exp?' <span class="badge-exp">эксперт</span>':''}</b>
+            <span class="small muted" style="font-size:10.5px">${esc(t.ago)}</span></div>
           <div class="small muted" style="margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
             ${esc(last.t)}</div>
         </div>
@@ -830,25 +830,25 @@ function pgThread(){
     <button class="backbtn" onclick="S.thread=null;render()">‹ Сообщения</button>
     <div class="row" style="margin:12px 0 6px">
       ${chatAva(t.from, t.c, false, 40, t.email)}
-      <div><b style="font-size:15px">${t.from}</b>
-        <div class="small muted">${t.kind}</div></div>
+      <div><b style="font-size:15px">${esc(t.from)}</b>
+        <div class="small muted">${esc(t.kind)}</div></div>
     </div>
     <div class="chatlist">
       ${t.msgs.map(m => `<div class="cmsg ${m.me?'own':''}">
         ${!m.me ? chatAva(t.from, t.c, false, 32, t.email) : ''}
-        <div class="txt">${esc(m.t)}<div class="tm">${m.tm}</div></div>
+        <div class="txt">${esc(m.t)}<div class="tm">${esc(m.tm)}</div></div>
       </div>`).join('')}
     </div>
     ${t.pending ? `<div class="card" style="border-color:var(--accent)">
       <b style="font-size:14px">Приглашение</b>
-      <div class="small muted" style="margin:4px 0 10px">${t.from} зовёт тебя встретиться. Ответишь?</div>
+      <div class="small muted" style="margin:4px 0 10px">${esc(t.from)} зовёт тебя встретиться. Ответишь?</div>
       <div class="acts" style="margin:0">
-        <button class="btn" onclick="answerInvite('${t.id}',true)">Принять</button>
-        <button class="btn ghost" onclick="answerInvite('${t.id}',false)">Отклонить</button>
+        <button class="btn" onclick="answerInvite('${attJs(t.id)}',true)">Принять</button>
+        <button class="btn ghost" onclick="answerInvite('${attJs(t.id)}',false)">Отклонить</button>
       </div></div>` : ''}
     <div class="chatbar">
-      <input class="field" id="tin" placeholder="Сообщение" onkeydown="if(event.key==='Enter')sendDM('${t.id}')">
-      <button class="btn" style="width:auto;padding:12px 16px;border-radius:999px" onclick="sendDM('${t.id}')">→</button>
+      <input class="field" id="tin" placeholder="Сообщение" onkeydown="if(event.key==='Enter')sendDM('${attJs(t.id)}')">
+      <button class="btn" style="width:auto;padding:12px 16px;border-radius:999px" onclick="sendDM('${attJs(t.id)}')">→</button>
     </div>
   </div>`;
 }

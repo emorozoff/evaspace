@@ -6,6 +6,25 @@
 const el = document.getElementById('app');
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* Строка, которую подставляют внутрь обработчика: onclick="fn('${attJs(v)}')".
+   Одного esc тут мало: браузер вернёт &#39; обратно в кавычку раньше, чем
+   строку увидит JavaScript. Поэтому сначала прячем кавычку от JavaScript,
+   потом всё вместе — от разметки. */
+const attJs = s => esc(String(s == null ? '' : s)
+  .replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/[\r\n]+/g, ' '));
+
+/* Ссылка на картинку: пропускаем только загруженные файлы, https и картинки
+   в data:. Всё остальное — включая javascript: — превращается в пустую строку. */
+const safeUrl = s => {
+  const v = String(s == null ? '' : s).trim();
+  if(!v) return '';
+  return /^(https?:\/\/|data:image\/|uploads\/|icons?[\w-]*\.|\.?\/)/i.test(v) ? esc(v) : '';
+};
+
+/* Цвет из данных: только своё значение из палитры, иначе основной цвет. */
+const safeColor = c => /^(#[0-9a-f]{3,8}|var\(--[\w-]+\)|[a-z]+)$/i.test(String(c == null ? '' : c).trim())
+  ? String(c).trim() : 'var(--ink)';
 const money = n => n.toLocaleString('ru-RU').replace(/,/g,' ') + ' ₽';
 const hash = s => { let h = 0; for(let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0; return h; };
 const plural = (n,a,b,c) => { const m=n%100, k=n%10; return n+' '+(m>=11&&m<=14?c:k===1?a:k>=2&&k<=4?b:c); };

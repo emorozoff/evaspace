@@ -356,7 +356,7 @@ function personalDay(m, z){
   const key = EL_MOON[m.n] ? m.n : m.age < 14 ? 'Растущая луна' : 'Убывающая луна';
   const tip = (EL_MOON[key]||{})[z.el] || zodTip(z);
   const name = S.name || 'тебе';
-  return `<b>${z.n}</b> и ${m.n.toLowerCase()}: ${tip}. ${zodTip(z)}`;
+  return `<b>${esc(z.n)}</b> и ${m.n.toLowerCase()}: ${tip}. ${zodTip(z)}`;
 }
 
 
@@ -398,7 +398,7 @@ function myAvatar(){
 }
 function avaImg(src, size){
   const s = size || 36;
-  return `<img src="${src}" alt="" style="width:${s}px;height:${s}px;border-radius:50%;object-fit:cover;flex:none">`;
+  return `<img src="${safeUrl(src)}" alt="" style="width:${s}px;height:${s}px;border-radius:50%;object-fit:cover;flex:none">`;
 }
 function avaLetter(name, size, cls){
   const s = size || 36;

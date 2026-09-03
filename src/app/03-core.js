@@ -242,7 +242,7 @@ function scrQuiz(){
     <p class="small muted" style="margin:0 0 20px">${q.hint}</p>
     <div style="flex:1">
       ${q.o.map((o,i) => `<button class="opt ${sel.includes(i)?'on':''}" onclick="pick(${i})">
-        <i>${o.e}</i><span><b>${o.t}</b>${o.s?`<small>${o.s}</small>`:''}</span>
+        <i>${esc(o.e)}</i><span><b>${esc(o.t)}</b>${o.s?`<small>${o.s}</small>`:''}</span>
         ${sel.includes(i)?'<span style="margin-left:auto;color:var(--gold-soft)">✓</span>':''}
       </button>`).join('')}
     </div>
@@ -368,7 +368,7 @@ function roleSwitch(){
   if(SYNC.alive !== false && !(S.user && S.user.role === 'admin')) return '';
   const R = [['user','Пользователь'],['expert','Эксперт'],['admin','Админ']];
   return `<div class="rolesw">
-    ${R.map(([k,l]) => `<button class="${S.role===k?'on':''}" onclick="setRole('${k}')">${l}</button>`).join('')}
+    ${R.map(([k,l]) => `<button class="${S.role===k?'on':''}" onclick="setRole('${attJs(k)}')">${l}</button>`).join('')}
   </div>`;
 }
 function setRole(r){

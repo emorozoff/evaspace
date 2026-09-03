@@ -28,16 +28,16 @@ function shLesson(){
         <div class="badge">${TYPE[x.type].l}</div>
       </div>`}
     <div class="spread"><div class="eyebrow">${x.min} мин · ${matchOf(x)}% совпадение</div>
-      <button class="starbtn ${isLiked(x.id)?'on':''}" onclick="starContent(this,'${x.id}')">
+      <button class="starbtn ${isLiked(x.id)?'on':''}" onclick="starContent(this,'${attJs(x.id)}')">
         ${starMark(16, isLiked(x.id) ? '#E7A339' : 'rgba(17,16,20,.22)')}
         <span style="font-size:11px">${isLiked(x.id)?'в избранном':'в избранное'}</span></button></div>
     <h2 class="serif" style="font-size:27px;margin:8px 0 10px">${esc(x.title)}</h2>
     <p style="font-size:14.5px;line-height:1.6;color:var(--muted);margin:0 0 14px">${esc(x.type==='affirm' ? '«'+x.text+'»' : x.text)}</p>
-    <div class="chips wrap">${x.tags.map(t => `<span class="chip pale">${t}</span>`).join('')}</div>
+    <div class="chips wrap">${x.tags.map(t => `<span class="chip pale">${esc(t)}</span>`).join('')}</div>
 
-    <button class="card" style="margin-top:14px;width:100%;text-align:left" onclick="closeSheet();openExpert('${e.id}')">
+    <button class="card" style="margin-top:14px;width:100%;text-align:left" onclick="closeSheet();openExpert('${attJs(e.id)}')">
       <div class="row"><div class="pcirc" style="width:42px;height:42px">${expPic(e)}</div>
-        <div style="flex:1"><b style="font-size:14px">${e.n} ${e.verified?'<span class="vt">✓</span>':''}</b>
+        <div style="flex:1"><b style="font-size:14px">${esc(e.n)} ${e.verified?'<span class="vt">✓</span>':''}</b>
           <div class="small muted">${e.r}</div></div>
         <span class="stars5">★ ${e.rate}</span><span class="muted">›</span></div>
     </button>
@@ -45,7 +45,7 @@ function shLesson(){
     ${inProg && !inProg.t.done ? `<button class="btn" onclick="complete(${inProg.di},${inProg.ti});closeSheet()">
       ${TYPE[x.type].act} +${TYPE[x.type].pts}</button>` :
       inProg ? `<button class="btn done" disabled>✓ Уже выполнено</button>` :
-      `<button class="btn" onclick="addToDay('${x.id}')">Добавить в мой день</button>`}
+      `<button class="btn" onclick="addToDay('${attJs(x.id)}')">Добавить в мой день</button>`}
     <button class="btn ghost" style="margin-top:9px" onclick="speak(${JSON.stringify(x.text).replace(/"/g,'&quot;')})">Прочитать вслух</button>`;
 }
 
@@ -53,10 +53,10 @@ function shCourse(){
   const c = COURSES.find(i => i.id === S.sheet.id), e = expBy(c.e);
   const bonus = Math.min(S.bonus, Math.round(c.p*0.3));
   return `<div style="border-radius:var(--r-lg);overflow:hidden;height:180px;position:relative;margin-bottom:14px">
-      ${cover(c.id,'course')}<div class="cap"><b>${c.t}</b><span>${c.e}</span></div></div>
+      ${cover(c.id,'course')}<div class="cap"><b>${esc(c.t)}</b><span>${esc(c.e)}</span></div></div>
     <div class="eyebrow">${plural(c.n,'урок','урока','уроков')} · ★ ${c.r}</div>
-    <h2 class="serif" style="font-size:26px;margin:8px 0 10px">${c.t}</h2>
-    <p style="font-size:14.5px;line-height:1.6;color:var(--muted);margin:0 0 14px">${c.d}</p>
+    <h2 class="serif" style="font-size:26px;margin:8px 0 10px">${esc(c.t)}</h2>
+    <p style="font-size:14.5px;line-height:1.6;color:var(--muted);margin:0 0 14px">${esc(c.d)}</p>
     <div class="card">
       <div class="spread"><span class="small muted">Цена</span>
         <div><span class="price">${money(c.p)}</span><span class="old">${money(c.old)}</span></div></div>
@@ -65,11 +65,11 @@ function shCourse(){
       <div class="spread" style="margin-top:8px"><span class="small muted">Баллов за прохождение</span>
         <b style="color:var(--ok)">+150</b></div>
     </div>
-    <button class="card" style="width:100%;text-align:left" onclick="closeSheet();openExpert('${e.id}')">
+    <button class="card" style="width:100%;text-align:left" onclick="closeSheet();openExpert('${attJs(e.id)}')">
       <div class="row"><div class="pcirc" style="width:42px;height:42px">${expPic(e)}</div>
-      <div style="flex:1"><b style="font-size:14px">${e.n}</b><div class="small muted">${e.r}</div></div>
+      <div style="flex:1"><b style="font-size:14px">${esc(e.n)}</b><div class="small muted">${e.r}</div></div>
       <span class="muted">›</span></div></button>
-    <button class="btn" onclick="buyCourse('${c.id}')">Записаться за ${money(c.p - bonus)}</button>`;
+    <button class="btn" onclick="buyCourse('${attJs(c.id)}')">Записаться за ${money(c.p - bonus)}</button>`;
 }
 
 function shRebuild(){
@@ -78,13 +78,13 @@ function shRebuild(){
     <p class="small muted" style="margin:0 0 16px">Ева заново пройдёт по библиотеке и соберёт семь дней. Отметки обнулятся, баллы и звёзды останутся.</p>
     <div class="eyebrow" style="margin-bottom:10px">Темы</div>
     <div class="chips wrap">${tags.map(t =>
-      `<button class="chip ${S.tags.includes(t)?'on':''}" onclick="tgTag('${t}')">${t}</button>`).join('')}</div>
+      `<button class="chip ${S.tags.includes(t)?'on':''}" onclick="tgTag('${attJs(t)}')">${esc(t)}</button>`).join('')}</div>
     <div class="eyebrow" style="margin:16px 0 10px">Сколько минут в день</div>
     <div class="seg">${[[10,'5–10 мин'],[20,'15–20 мин'],[35,'30+ мин']].map(([v,l]) =>
       `<button class="${S.time===v?'on':''}" onclick="S.time=${v};render()">${l}</button>`).join('')}</div>
     <div class="eyebrow" style="margin:16px 0 10px">Удобное время</div>
     <div class="seg">${['утро','день','вечер'].map(v =>
-      `<button class="${S.slot===v?'on':''}" onclick="S.slot='${v}';render()">${v}</button>`).join('')}</div>
+      `<button class="${S.slot===v?'on':''}" onclick="S.slot='${attJs(v)}';render()">${v}</button>`).join('')}</div>
     <button class="btn" style="margin-top:16px" ${S.tags.length?'':'disabled'} onclick="rebuild()">Собрать заново</button>`;
 }
 
@@ -99,7 +99,7 @@ function shEva(){
       ${(S.eva||[]).map(m => `<div class="bubble ${m.r==='me'?'me':''}">${esc(m.t)}</div>`).join('')}
     </div>
     <div class="chips">${['Что мне сегодня делать?','Почему такая программа?','Нет времени на себя','Прочитай аффирмацию','Сколько у меня баллов?']
-      .map(q => `<button class="chip" onclick="ask('${q}')">${q}</button>`).join('')}</div>
+      .map(q => `<button class="chip" onclick="ask('${attJs(q)}')">${q}</button>`).join('')}</div>
     <div class="row" style="gap:8px">
       <input class="field" id="vin" style="margin:0" placeholder="Напиши Еве" onkeydown="if(event.key==='Enter')ask(this.value)">
       <button class="btn" style="width:auto;padding:13px 17px" onclick="ask($('#vin').value)">→</button>
@@ -122,7 +122,7 @@ function evaAnswer(q){
   if(/аффирмац|прочит/.test(q)) return day.tasks[0].text;
   if(/балл|звёзд|звезд|статус|уровен/.test(q)){
     const {next} = levelNow();
-    return `У тебя ${S.points} баллов и ${S.stars} из ${starsTotal()} звёзд на этой неделе.` + (next ? ` До статуса «${next.n}» осталось ${next.from - S.points}.` : '');
+    return `У тебя ${S.points} баллов и ${S.stars} из ${starsTotal()} звёзд на этой неделе.` + (next ? ` До статуса «${esc(next.n)}» осталось ${next.from - S.points}.` : '');
   }
   if(/почему|как.*собра|подобра/.test(q))
     return `Я собрала программу по твоим темам: ${S.tags.slice(0,4).join(', ')}. Из ${LIB.length} уроков библиотеки выбрала те, где совпадение выше всего - среднее по программе ${S.match}%.`;
@@ -228,7 +228,7 @@ SYNC.ready = initSync();
 
 function shHint(){
   const h = HINTS[S.sheet.id];
-  return `<h2 class="serif" style="font-size:25px;margin:0 0 12px">${h.t}</h2>
+  return `<h2 class="serif" style="font-size:25px;margin:0 0 12px">${esc(h.t)}</h2>
     <p style="font-size:14.5px;line-height:1.65;color:var(--muted);white-space:pre-line;margin:0 0 16px">${h.b}</p>
     <button class="btn" onclick="closeSheet()">Понятно</button>`;
 }
@@ -237,7 +237,7 @@ function shAddTag(){
   const rest = allTags().map(([t]) => t).filter(t => !S.tags.includes(t));
   return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">Добавить тему</h2>
     <p class="small muted" style="margin:0 0 14px">Программа пересоберётся сразу - уроки по новой теме появятся в ближайших днях.</p>
-    <div class="chips wrap">${rest.map(t => `<button class="chip" onclick="addTag('${t}')">${t}</button>`).join('')}</div>`;
+    <div class="chips wrap">${rest.map(t => `<button class="chip" onclick="addTag('${attJs(t)}')">${t}</button>`).join('')}</div>`;
 }
 
 function shCycle(){
@@ -265,9 +265,9 @@ function shHD(){
   if(S.hdi >= HD_Q.length){
     const t = HD[S.hd];
     return `<div style="text-align:center;padding:8px 0 4px"><div style="font-size:40px">✦</div>
-      <h2 class="serif" style="font-size:27px;margin:10px 0 8px">${t.n}</h2>
+      <h2 class="serif" style="font-size:27px;margin:10px 0 8px">${esc(t.n)}</h2>
       <p style="font-size:14.5px;line-height:1.6;color:var(--muted)">${t.s}</p></div>
-      <div class="card"><b style="font-size:14px">Твоя сила</b><div class="small muted" style="margin-top:5px">${t.str}</div></div>
+      <div class="card"><b style="font-size:14px">Твоя сила</b><div class="small muted" style="margin-top:5px">${esc(t.str)}</div></div>
       <div class="card"><b style="font-size:14px">Ловушка</b><div class="small muted" style="margin-top:5px">${t.warn}</div></div>
       <p class="small muted" style="text-align:center">Упрощённый тест по четырём вопросам, не расчёт карты рождения.</p>
       <button class="btn" onclick="closeSheet()">Хорошо</button>`;
@@ -275,7 +275,7 @@ function shHD(){
   const q = HD_Q[S.hdi];
   return `<div class="small muted">Вопрос ${S.hdi+1} из ${HD_Q.length}</div>
     <h2 class="serif" style="font-size:24px;margin:8px 0 16px">${q.q}</h2>
-    ${q.o.map(o => `<button class="optl" onclick="hdPick('${o.v}')">${o.t}</button>`).join('')}`;
+    ${q.o.map(o => `<button class="optl" onclick="hdPick('${attJs(o.v)}')">${esc(o.t)}</button>`).join('')}`;
 }
 
 function startHD(){ S.hdi = 0; S.hdAnswers = []; S.sheet = 'hd'; render(); }
@@ -289,18 +289,18 @@ function hdPick(v){
 function shConsult(){
   const e = EXPERTS.find(x => x.id === S.sheet.id);
   return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">Заявка на консультацию</h2>
-    <p class="small muted" style="margin:0 0 14px">${e.n} · 50 минут онлайн · ${money(e.price)}</p>
+    <p class="small muted" style="margin:0 0 14px">${esc(e.n)} · 50 минут онлайн · ${money(e.price)}</p>
     <input class="field" placeholder="Имя" value="${esc(S.name)}">
     <input class="field" placeholder="Телефон или телеграм">
     <textarea class="field" rows="3" placeholder="С каким запросом приходишь"></textarea>
-    <div class="seg">${['утро','день','вечер'].map(t => `<button class="${t===S.slot?'on':''}" onclick="S.slot='${t}';render()">${t}</button>`).join('')}</div>
+    <div class="seg">${['утро','день','вечер'].map(t => `<button class="${t===S.slot?'on':''}" onclick="S.slot='${attJs(t)}';render()">${t}</button>`).join('')}</div>
     <button class="btn" onclick="S.sheet=null;render();toast('Заявка отправлена, эксперт свяжется с тобой')">Отправить заявку</button>`;
 }
 
 function shWrite(){
   const e = EXPERTS.find(x => x.id === S.sheet.id);
   return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">Написать эксперту</h2>
-    <p class="small muted" style="margin:0 0 14px">${e.n} обычно отвечает в течение суток.</p>
+    <p class="small muted" style="margin:0 0 14px">${esc(e.n)} обычно отвечает в течение суток.</p>
     <textarea class="field" rows="5" placeholder="Твой вопрос"></textarea>
     <button class="btn" onclick="S.sheet=null;render();toast('Сообщение отправлено')">Отправить</button>`;
 }
@@ -317,14 +317,14 @@ function suggestTags(text){
 function shEditContent(){
   const x = LIB.find(i => i.id === S.sheet.id);
   return `<h2 class="serif" style="font-size:24px;margin:0 0 12px">Редактирование</h2>
-    <input class="field" value="${esc(x.title)}" oninput="x_edit('${x.id}','title',this.value)">
-    <textarea class="field" rows="4" oninput="x_edit('${x.id}','text',this.value)">${esc(x.text)}</textarea>
-    <input class="field" type="number" value="${x.min}" oninput="x_edit('${x.id}','min',+this.value)">
+    <input class="field" value="${esc(x.title)}" oninput="x_edit('${attJs(x.id)}','title',this.value)">
+    <textarea class="field" rows="4" oninput="x_edit('${attJs(x.id)}','text',this.value)">${esc(x.text)}</textarea>
+    <input class="field" type="number" value="${x.min}" oninput="x_edit('${attJs(x.id)}','min',+this.value)">
     <div class="small muted" style="margin-bottom:6px">Теги</div>
     <div class="chips wrap">${allTags().map(([t]) =>
-      `<button class="chip ${x.tags.includes(t)?'on':''}" onclick="tgItem('${x.id}','${t}')">${t}</button>`).join('')}</div>
+      `<button class="chip ${x.tags.includes(t)?'on':''}" onclick="tgItem('${attJs(x.id)}','${attJs(t)}')">${esc(t)}</button>`).join('')}</div>
     <button class="btn" style="margin-top:14px" onclick="S.sheet=null;render();toast('Сохранено')">Сохранить</button>
-    <button class="btn ghost" style="margin-top:9px" onclick="delItem('${x.id}')">Удалить материал</button>`;
+    <button class="btn ghost" style="margin-top:9px" onclick="delItem('${attJs(x.id)}')">Удалить материал</button>`;
 }
 
 function x_edit(id,f,v){ const x = LIB.find(i => i.id === id); x[f] = v; }
@@ -345,7 +345,7 @@ function shReject(){
   return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">Отклонить материал</h2>
     <p class="small muted" style="margin:0 0 14px">«${esc(x.title)}» · ${esc(x.expert)}</p>
     <textarea class="field" id="rc" rows="4" placeholder="Комментарий автору: что поправить"></textarea>
-    <button class="btn" onclick="reject('${x.id}')">Отклонить с комментарием</button>
+    <button class="btn" onclick="reject('${attJs(x.id)}')">Отклонить с комментарием</button>
     <button class="btn ghost" style="margin-top:9px" onclick="closeSheet()">Отмена</button>`;
 }
 
@@ -403,12 +403,12 @@ function shNewContent(){
 
   <label class="lbl">Тип</label>
   <div class="seg">${Object.entries(TYPE).map(([k,v]) =>
-    `<button class="${d.type===k?'on':''}" onclick="chipPick(this,'cd.type','${k}')">${v.l}</button>`).join('')}</div>
+    `<button class="${d.type===k?'on':''}" onclick="chipPick(this,'cd.type','${attJs(k)}')">${v.l}</button>`).join('')}</div>
 
   ${MEDIA[d.key] ? `<img class="upprev" src="${MEDIA[d.key]}" alt="">
-    <div class="acts" style="margin:0 0 9px"><button class="btn ghost sm" onclick="pickImage('${d.key}')">Заменить фото</button>
-      <button class="btn ghost sm" onclick="delete MEDIA['${d.key}'];render()">Убрать</button></div>`
-  : `<button class="upbox" style="width:100%" onclick="pickImage('${d.key}')">
+    <div class="acts" style="margin:0 0 9px"><button class="btn ghost sm" onclick="pickImage('${attJs(d.key)}')">Заменить фото</button>
+      <button class="btn ghost sm" onclick="delete MEDIA['${attJs(d.key)}'];render()">Убрать</button></div>`
+  : `<button class="upbox" style="width:100%" onclick="pickImage('${attJs(d.key)}')">
       <div style="font-size:20px">▣</div>
       <div style="font-weight:600;font-size:13.5px;margin-top:6px">Загрузить обложку</div>
       <div class="small muted">JPEG, PNG, WebP, HEIC. Сожмём до 1400 px, резкость сохранится</div>
@@ -439,27 +439,27 @@ function shNewContent(){
     <div class="hd"><span class="svclabel">служебное</span><b>Кому показывать</b></div>
     <div class="small muted">Ученицы не видят. Не выбрано — подходит всем</div>
     <div class="chips wrap">${AUDIENCE.map(a => `<button class="chip ${(d.aud||[]).includes(a.k)?'on':''}"
-      onclick="chipToggle(this,'cd.aud','${a.k}')">${a.n}</button>`).join('')}</div>
+      onclick="chipToggle(this,'cd.aud','${attJs(a.k)}')">${esc(a.n)}</button>`).join('')}</div>
   </div>
 
   <div class="svcbox">
     <div class="hd"><span class="svclabel">служебное</span><b>Уровень подготовки</b></div>
     <div class="seg" style="margin-top:8px">${LEVELS_CONTENT.map(l => `<button class="${(d.level||'any')===l.k?'on':''}"
-      onclick="chipPick(this,'cd.level','${l.k}')">${l.n}</button>`).join('')}</div>
+      onclick="chipPick(this,'cd.level','${attJs(l.k)}')">${esc(l.n)}</button>`).join('')}</div>
   </div>
 
   <div class="svcbox">
     <div class="hd"><span class="svclabel">служебное</span><b>День недели</b></div>
     <div class="small muted">Не выбрано — любой день</div>
     <div class="chips wrap">${WEEKDAYS_TAG.map(w => `<button class="chip ${(d.days||[]).includes(w.k)?'on':''}"
-      onclick="chipToggle(this,'cd.days','${w.k}')">${w.n}</button>`).join('')}</div>
+      onclick="chipToggle(this,'cd.days','${attJs(w.k)}')">${esc(w.n)}</button>`).join('')}</div>
   </div>
 
   <label class="lbl">Теги <span id="tagcount" class="muted">${d.tags.length ? '· выбрано ' + d.tags.length : ''}</span></label>
   ${sug.length ? `<div class="chips wrap" style="padding-bottom:4px">${sug.map(t =>
-    `<button class="chip ${d.tags.includes(t)?'on':''}" onclick="tgNew(this,'${t}')">✦ ${t}</button>`).join('')}</div>` : ''}
+    `<button class="chip ${d.tags.includes(t)?'on':''}" onclick="tgNew(this,'${attJs(t)}')">✦ ${t}</button>`).join('')}</div>` : ''}
   <div class="chips wrap">${ALL_TAGS.filter(t => !sug.includes(t)).map(t =>
-    `<button class="chip ${d.tags.includes(t)?'on':''}" onclick="tgNew(this,'${t}')">${t}</button>`).join('')}</div>
+    `<button class="chip ${d.tags.includes(t)?'on':''}" onclick="tgNew(this,'${attJs(t)}')">${t}</button>`).join('')}</div>
 
   <button class="btn" style="margin-top:14px" onclick="saveContent()">
     ${S.role === 'admin' ? 'Опубликовать' : 'Отправить на проверку'}</button>`;
@@ -508,17 +508,17 @@ function shNewCourse(){
     </div>
     <label class="lbl">Тип</label>
     <div class="seg">${['Базовый','Дополнительный'].map(k =>
-      `<button class="${d.kind===k?'on':''}" onclick="chipPick(this,'kd.kind','${k}')">${k}</button>`).join('')}</div>
+      `<button class="${d.kind===k?'on':''}" onclick="chipPick(this,'kd.kind','${attJs(k)}')">${k}</button>`).join('')}</div>
     <label class="lbl">Эксперт</label>
     <div class="scroller">
       <button class="snav left" onclick="scrollChips(this,-1)">‹</button>
       <div class="chips">${EXPERTS.map(e => `<button class="chip ${d.e===e.n?'on':''}"
-        onclick="chipPick(this,'kd.e','${esc(e.n)}')">${e.n}</button>`).join('')}</div>
+        onclick="chipPick(this,'kd.e','${attJs(esc(e.n))}')">${esc(e.n)}</button>`).join('')}</div>
       <button class="snav right" onclick="scrollChips(this,1)">›</button>
     </div>
     <label class="lbl">Темы <span id="kcount" class="muted">${d.tags.length?'('+d.tags.length+')':''}</span></label>
     <div class="chips wrap">${ALL_TAGS.slice(0,20).map(t => `<button class="chip ${d.tags.includes(t)?'on':''}"
-      onclick="tgNc(this,'${t}')">${t}</button>`).join('')}</div>
+      onclick="tgNc(this,'${attJs(t)}')">${t}</button>`).join('')}</div>
     <button class="btn" style="margin-top:12px" onclick="createCourse()">Создать и открыть редактор</button>`;
 }
 function createCourse(){
@@ -547,8 +547,8 @@ function shRework(){
     <p class="small muted" style="margin:0 0 12px">«${esc(x.title)}» · ${esc(x.expert)}</p>
     <textarea class="field" id="rc" rows="4" placeholder="Что поправить: длина, звук, формулировки, теги"></textarea>
     <div class="chips wrap">${['Сократить вступление','Плохой звук','Добавить теги','Уточнить противопоказания','Переснять обложку'].map(t =>
-      `<button class="chip" onclick="$('#rc').value=($('#rc').value?$('#rc').value+'. ':'')+'${t}'">${t}</button>`).join('')}</div>
-    <button class="btn" style="margin-top:12px" onclick="rework('${x.id}')">Отправить эксперту</button>
+      `<button class="chip" onclick="$('#rc').value=($('#rc').value?$('#rc').value+'. ':'')+'${attJs(t)}'">${t}</button>`).join('')}</div>
+    <button class="btn" style="margin-top:12px" onclick="rework('${attJs(x.id)}')">Отправить эксперту</button>
     <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Отмена</button>`;
 }
 function shFix(){
@@ -561,8 +561,8 @@ function shFix(){
     <label class="lbl">Описание</label>
     <textarea class="field" id="fx" rows="4">${esc(x.text)}</textarea>
     ${MEDIA[x.id] ? `<img class="upprev" src="${MEDIA[x.id]}" alt="">` : ''}
-    <button class="btn ghost" onclick="pickImage('${x.id}')">Заменить обложку</button>
-    <button class="btn" style="margin-top:9px" onclick="sendFix('${x.id}')">Отправить снова на проверку</button>`;
+    <button class="btn ghost" onclick="pickImage('${attJs(x.id)}')">Заменить обложку</button>
+    <button class="btn" style="margin-top:9px" onclick="sendFix('${attJs(x.id)}')">Отправить снова на проверку</button>`;
 }
 function sendFix(id){
   const x = S.pending.find(i => i.id === id);
@@ -581,8 +581,8 @@ function shVideo(){
     <p class="small muted" style="margin:0 0 12px">YouTube, Vimeo, Kinescope или прямая ссылка на mp4. Плеер подставится автоматически.</p>
     <input class="field" id="vurl" placeholder="https://" value="${esc(cur)}">
     <div class="chips wrap">${['YouTube','Vimeo','Kinescope','Своя ссылка'].map(t => `<span class="chip pale">${t}</span>`).join('')}</div>
-    <button class="btn" style="margin-top:12px" onclick="saveVideo('${id}')">Сохранить</button>
-    <button class="btn ghost" style="margin-top:8px" onclick="pickImage('${id}')">Загрузить обложку вместо кадра</button>`;
+    <button class="btn" style="margin-top:12px" onclick="saveVideo('${attJs(id)}')">Сохранить</button>
+    <button class="btn ghost" style="margin-top:8px" onclick="pickImage('${attJs(id)}')">Загрузить обложку вместо кадра</button>`;
 }
 function saveVideo(id){
   const v = ($('#vurl')||{}).value || '';
@@ -597,15 +597,15 @@ function shUnits(){
   const c = COURSES.find(x => x.id === S.sheet.id);
   const ls = lessonsOf(c.id);
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Уроки курса</h2>
-    <p class="small muted" style="margin:0 0 12px">${c.t} · ${ls.length} уроков</p>
-    ${ls.map((l,i) => `<button class="unit" onclick="openUnitEditor('${c.id}','${l.id}')">
-      <div class="n">${l.n}</div>
+    <p class="small muted" style="margin:0 0 12px">${esc(c.t)} · ${ls.length} уроков</p>
+    ${ls.map((l,i) => `<button class="unit" onclick="openUnitEditor('${attJs(c.id)}','${attJs(l.id)}')">
+      <div class="n">${esc(l.n)}</div>
       <div class="mini">${cover(l.id,'practice')}</div>
       <div style="flex:1;min-width:0"><b style="font-size:13px;display:block">${esc(l.t)}</b>
         <div class="small muted">${l.min} мин · ${l.video ? 'видео есть' : 'без видео'}</div></div>
       <span class="muted">›</span>
     </button>`).join('')}
-    <button class="btn ghost" style="margin-top:10px" onclick="addUnitTo('${c.id}',0)">＋ Добавить урок</button>
+    <button class="btn ghost" style="margin-top:10px" onclick="addUnitTo('${attJs(c.id)}',0)">＋ Добавить урок</button>
     <button class="btn" style="margin-top:9px" onclick="closeSheet()">Готово</button>`;
 }
 function shHwEdit(){
@@ -613,12 +613,12 @@ function shHwEdit(){
   const l = lessonsOf(cid).find(x => x.id === id);
   const hw = l.hw || {title:'', text:'', min:15};
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Домашнее задание</h2>
-    <p class="small muted" style="margin:0 0 12px">Урок ${l.n}. ${esc(l.t)}. Открывается отдельным окном после видео.</p>
+    <p class="small muted" style="margin:0 0 12px">Урок ${esc(l.n)}. ${esc(l.t)}. Открывается отдельным окном после видео.</p>
     <label class="lbl">Название задания</label><input class="field" id="hw_t" value="${esc(hw.title)}">
     <label class="lbl">Текст задания</label><textarea class="field" id="hw_x" rows="5">${esc(hw.text)}</textarea>
     <label class="lbl">Сколько времени займёт, мин</label><input class="field" id="hw_m" type="number" value="${hw.min||15}">
-    <button class="btn" onclick="saveHW('${cid}','${id}')">Сохранить задание</button>
-    ${l.hw ? `<button class="btn ghost" style="margin-top:8px" onclick="delHW('${cid}','${id}')">Убрать задание из урока</button>` : ''}`;
+    <button class="btn" onclick="saveHW('${attJs(cid)}','${attJs(id)}')">Сохранить задание</button>
+    ${l.hw ? `<button class="btn ghost" style="margin-top:8px" onclick="delHW('${attJs(cid)}','${attJs(id)}')">Убрать задание из урока</button>` : ''}`;
 }
 function saveHW(cid, id){
   const l = lessonsOf(cid).find(x => x.id === id);
@@ -635,13 +635,13 @@ function shHW(){
   const {id, cid} = S.sheet;
   const l = lessonsOf(cid).find(x => x.id === id);
   const done = S.homework && S.homework[id];
-  return `<div class="eyebrow">Домашнее задание · урок ${l.n}</div>
+  return `<div class="eyebrow">Домашнее задание · урок ${esc(l.n)}</div>
     <h2 class="serif" style="font-size:22px;margin:8px 0 10px">${esc(l.hw.title || l.t)}</h2>
     <div class="hwbox"><p class="small" style="margin:0;white-space:pre-line;line-height:1.6">${esc(l.hw.text||'')}</p></div>
     ${l.hw.min ? `<div class="small muted" style="margin-bottom:10px">Примерно ${l.hw.min} минут</div>` : ''}
     <label class="lbl">Заметка для себя</label>
     <textarea class="field" id="hw_note" rows="3" placeholder="Что получилось, что было сложно">${esc((done&&done.note)||'')}</textarea>
-    <button class="btn ${done?'done':''}" onclick="doneHW('${id}','${cid}')">${done ? '✓ Выполнено, сохранить заметку' : 'Выполнила'}</button>
+    <button class="btn ${done?'done':''}" onclick="doneHW('${attJs(id)}','${attJs(cid)}')">${done ? '✓ Выполнено, сохранить заметку' : 'Выполнила'}</button>
     <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Закрыть</button>`;
 }
 function doneHW(id, cid){
@@ -659,13 +659,13 @@ function shGroupInfo(){
   const g = GROUPS.find(x => x.id === S.sheet.id);
   const joined = S.joined.includes(g.id);
   return `<div style="text-align:center">
-      <div class="gemoji" style="width:64px;height:64px;font-size:28px;margin:0 auto 10px">${g.e}</div>
-      <h2 class="serif" style="font-size:22px;margin:0 0 4px">${g.t}</h2>
+      <div class="gemoji" style="width:64px;height:64px;font-size:28px;margin:0 auto 10px">${esc(g.e)}</div>
+      <h2 class="serif" style="font-size:22px;margin:0 0 4px">${esc(g.t)}</h2>
       <p class="small muted">${g.m.toLocaleString('ru-RU')} участниц</p></div>
     <div class="card" style="margin-top:14px"><b style="font-size:14px">О группе</b>
-      <p class="small muted" style="margin:6px 0 0">${g.d}</p></div>
+      <p class="small muted" style="margin:6px 0 0">${esc(g.d)}</p></div>
     <button class="btn ghost" onclick="toast('Уведомления выключены')">Выключить уведомления</button>
-    <button class="btn ${joined?'ghost':''}" style="margin-top:9px" onclick="join('${g.id}');closeSheet()">
+    <button class="btn ${joined?'ghost':''}" style="margin-top:9px" onclick="join('${attJs(g.id)}');closeSheet()">
       ${joined ? 'Выйти из группы' : 'Вступить'}</button>`;
 }
 function shNewGroup(){
@@ -685,25 +685,25 @@ function shEvent(){
   const si = Math.min(S.evSlide || 0, Math.max(0, shots.length-1));
   const isAdm = S.role === 'admin';
   return `${shots.length ? `<div class="gslider" style="margin-bottom:14px">
-      <div class="gslide" style="height:190px"><img src="${MEDIA[shots[si]]}" alt=""></div>
+      <div class="gslide" style="height:190px"><img src="${safeUrl(MEDIA[shots[si]])}" alt=""></div>
       ${shots.length > 1 ? `<button class="gnav left" onclick="slideEv(-1,${shots.length})">‹</button>
         <button class="gnav right" onclick="slideEv(1,${shots.length})">›</button>
         <div class="gdots">${shots.map((_,k) => `<i class="${k===si?'on':''}"></i>`).join('')}</div>` : ''}
     </div>`
     : `<div style="border-radius:var(--r-lg);overflow:hidden;height:170px;margin-bottom:14px">${cover(e.id,'practice')}</div>`}
-    <div class="eyebrow">${e.kind}</div>
-    <h2 class="serif" style="font-size:22px;margin:8px 0 10px">${e.t}</h2>
+    <div class="eyebrow">${esc(e.kind)}</div>
+    <h2 class="serif" style="font-size:22px;margin:8px 0 10px">${esc(e.t)}</h2>
     <div class="card" style="padding:12px">
       <div class="uline" style="border:none;padding-top:0"><span class="small muted" style="width:80px">Когда</span>
-        <b style="font-size:13px">${new Date(e.d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}, ${e.tm}</b></div>
+        <b style="font-size:13px">${new Date(e.d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}, ${esc(e.tm)}</b></div>
       <div class="uline"><span class="small muted" style="width:80px">Формат</span>
-        <b style="font-size:13px">${e.mode === 'онлайн' ? 'Онлайн, ' + e.city : 'Очно, ' + e.city + (e.place ? ', ' + e.place : '')}</b></div>
-      <div class="uline"><span class="small muted" style="width:80px">Ведёт</span><b style="font-size:13px">${e.by}</b></div>
+        <b style="font-size:13px">${esc(e.mode === 'онлайн' ? 'Онлайн, ' + e.city : 'Очно, ' + e.city + (e.place ? ', ' + e.place : ''))}</b></div>
+      <div class="uline"><span class="small muted" style="width:80px">Ведёт</span><b style="font-size:13px">${esc(e.by)}</b></div>
       <div class="uline"><span class="small muted" style="width:80px">Места</span>
         <b style="font-size:13px;color:${e.unlimited || e.left ? 'var(--ink)' : 'var(--accent)'}">
           ${e.unlimited ? 'без ограничения' : e.left ? 'свободно ' + e.left + ' из ' + e.seats : 'мест не осталось'}</b></div>
     </div>
-    <p class="small muted" style="margin:0 0 14px">${e.about}</p>
+    <p class="small muted" style="margin:0 0 14px">${esc(e.about)}</p>
     <div class="spread" style="margin-bottom:12px">
       <span class="price" style="font-size:19px">${e.price ? money(e.price) : 'бесплатно'}</span>
       ${e.price ? '<span class="small muted">оплата на месте или картой</span>' : ''}</div>
@@ -711,14 +711,14 @@ function shEvent(){
       <div class="card" style="border-color:var(--accent)">
         <b style="font-size:14.5px">Мероприятие на согласовании</b>
         <div class="small muted" style="margin:4px 0 10px">Предложил ${esc(e.by)}</div>
-        <button class="btn" onclick="pubEvent('${e.id}');closeSheet()">Опубликовать</button>
+        <button class="btn" onclick="pubEvent('${attJs(e.id)}');closeSheet()">Опубликовать</button>
         <div class="acts">
-          <button class="btn ghost" onclick="openSheet({k:'evReview',id:'${e.id}',mode:'rework'})">На доработку</button>
-          <button class="btn ghost" onclick="openSheet({k:'evReview',id:'${e.id}',mode:'reject'})">Отказать</button>
+          <button class="btn ghost" onclick="openSheet({k:'evReview',id:'${attJs(e.id)}',mode:'rework'})">На доработку</button>
+          <button class="btn ghost" onclick="openSheet({k:'evReview',id:'${attJs(e.id)}',mode:'reject'})">Отказать</button>
         </div>
       </div>`
     : `<button class="btn ${going?'done':'acc'}" ${!going && !e.unlimited && !e.left ? 'disabled' : ''}
-        onclick="goEvent('${e.id}');closeSheet()">
+        onclick="goEvent('${attJs(e.id)}');closeSheet()">
         ${going ? '✓ Ты идёшь, отменить запись'
           : (!e.unlimited && !e.left) ? 'Мест не осталось'
           : e.price ? 'Купить билет за ' + money(e.price) : 'Пойду'}</button>`}`;
@@ -736,8 +736,8 @@ function shEvReview(){
     <p class="small muted" style="margin:0 0 12px">«${esc(e.t)}» · ${esc(e.by)}. Комментарий придёт эксперту в личные сообщения.</p>
     <textarea class="field" id="evc" rows="4" placeholder="${rework ? 'Что поправить' : 'Причина отказа'}"></textarea>
     <div class="chips wrap">${hints.map(t =>
-      `<button class="chip" onclick="$('#evc').value=($('#evc').value?$('#evc').value+'. ':'')+'${t}'">${t}</button>`).join('')}</div>
-    <button class="btn" style="margin-top:12px" onclick="reviewEvent('${e.id}','${S.sheet.mode}')">
+      `<button class="chip" onclick="$('#evc').value=($('#evc').value?$('#evc').value+'. ':'')+'${attJs(t)}'">${t}</button>`).join('')}</div>
+    <button class="btn" style="margin-top:12px" onclick="reviewEvent('${attJs(e.id)}','${attJs(S.sheet.mode)}')">
       ${rework ? 'Отправить эксперту' : 'Отказать'}</button>
     <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Отмена</button>`;
 }
@@ -758,14 +758,14 @@ function shNewEvent(){
     <div class="photos">
       ${(() => {
         const shots = [key, ...d.gallery].filter(k => MEDIA[k]);
-        if(!shots.length) return `<button class="addphoto big" onclick="pickImage('${key}')">
+        if(!shots.length) return `<button class="addphoto big" onclick="pickImage('${attJs(key)}')">
           <span class="pl2">＋</span><b>Загрузить обложку</b>
           <span class="small muted">Первое фото станет обложкой мероприятия</span></button>`;
         return shots.map(k => `<div class="photo ${k===key?'cover':''}">
             <img src="${MEDIA[k]}" alt="">
             ${k===key ? '<span class="covlabel">обложка</span>'
-              : `<button class="mkcov" onclick="setEvCover('${k}')">Сделать обложкой</button>`}
-            <button class="phdel" onclick="delEvPhoto('${k}')">✕</button>
+              : `<button class="mkcov" onclick="setEvCover('${attJs(k)}')">Сделать обложкой</button>`}
+            <button class="phdel" onclick="delEvPhoto('${attJs(k)}')">✕</button>
           </div>`).join('') +
           `<button class="addphoto" onclick="addEvPhoto()"><span class="pl2">＋</span><span class="small">ещё фото</span></button>`;
       })()}
@@ -774,14 +774,14 @@ function shNewEvent(){
     <label class="lbl">Название</label><input class="field" id="ev_t" placeholder="Женский круг «...»">
     <label class="lbl">Тип</label>
     <div class="seg">${['Женский круг','Встреча','Концерт'].map(k =>
-      `<button class="${d.kind===k?'on':''}" onclick="chipPick(this,'evd.kind','${k}')">${k}</button>`).join('')}</div>
+      `<button class="${d.kind===k?'on':''}" onclick="chipPick(this,'evd.kind','${attJs(k)}')">${k}</button>`).join('')}</div>
     <div class="g2">
       <div><label class="lbl">Дата</label><input class="field" id="ev_d" type="date"></div>
       <div><label class="lbl">Время</label><input class="field" id="ev_tm" type="time" value="19:00"></div>
     </div>
     <label class="lbl">Формат</label>
     <div class="seg">${['офлайн','онлайн'].map(k =>
-      `<button class="${d.mode===k?'on':''}" onclick="setEvDR('mode','${k}')">${k}</button>`).join('')}</div>
+      `<button class="${d.mode===k?'on':''}" onclick="setEvDR('mode','${attJs(k)}')">${k}</button>`).join('')}</div>
     <label class="lbl">${d.mode==='онлайн' ? 'Платформа' : 'Город'}</label>
     <input class="field" id="ev_c" placeholder="${d.mode==='онлайн' ? 'Zoom' : 'Москва'}">
     ${d.mode==='офлайн' ? `<label class="lbl">Адрес или место</label>
@@ -855,21 +855,21 @@ function shEventEdit(){
   const x = EVENTS.find(v => v.id === S.sheet.id);
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Мероприятие</h2>
     <p class="small muted" style="margin:0 0 12px">После изменений уйдёт на повторное согласование.</p>
-    <label class="lbl">Название</label><input class="field" value="${esc(x.t)}" oninput="setEv('${x.id}','t',this.value)">
+    <label class="lbl">Название</label><input class="field" value="${esc(x.t)}" oninput="setEv('${attJs(x.id)}','t',this.value)">
     <div class="g2">
-      <div><label class="lbl">Дата</label><input class="field" type="date" value="${x.d}" oninput="setEv('${x.id}','d',this.value)"></div>
-      <div><label class="lbl">Время</label><input class="field" type="time" value="${x.tm}" oninput="setEv('${x.id}','tm',this.value)"></div>
+      <div><label class="lbl">Дата</label><input class="field" type="date" value="${esc(x.d)}" oninput="setEv('${attJs(x.id)}','d',this.value)"></div>
+      <div><label class="lbl">Время</label><input class="field" type="time" value="${esc(x.tm)}" oninput="setEv('${attJs(x.id)}','tm',this.value)"></div>
     </div>
     <label class="lbl">Город или платформа</label>
-    <input class="field" value="${esc(x.city)}" oninput="setEv('${x.id}','city',this.value)">
+    <input class="field" value="${esc(x.city)}" oninput="setEv('${attJs(x.id)}','city',this.value)">
     <div class="g2">
-      <div><label class="lbl">Цена, ₽</label><input class="field" type="number" value="${x.price}" oninput="setEv('${x.id}','price',+this.value||0)"></div>
-      <div><label class="lbl">Мест</label><input class="field" type="number" value="${x.seats}" oninput="setEv('${x.id}','seats',+this.value||10)"></div>
+      <div><label class="lbl">Цена, ₽</label><input class="field" type="number" value="${x.price}" oninput="setEv('${attJs(x.id)}','price',+this.value||0)"></div>
+      <div><label class="lbl">Мест</label><input class="field" type="number" value="${x.seats}" oninput="setEv('${attJs(x.id)}','seats',+this.value||10)"></div>
     </div>
     <label class="lbl">Описание</label>
-    <textarea class="field" rows="3" oninput="setEv('${x.id}','about',this.value)">${esc(x.about||'')}</textarea>
-    <button class="btn ghost" onclick="pickImage('${x.id}')">Заменить обложку</button>
-    <button class="btn" style="margin-top:9px" onclick="resendEvent('${x.id}')">
+    <textarea class="field" rows="3" oninput="setEv('${attJs(x.id)}','about',this.value)">${esc(x.about||'')}</textarea>
+    <button class="btn ghost" onclick="pickImage('${attJs(x.id)}')">Заменить обложку</button>
+    <button class="btn" style="margin-top:9px" onclick="resendEvent('${attJs(x.id)}')">
       ${S.role === 'admin' ? 'Сохранить' : 'Отправить на согласование'}</button>`;
 }
 function setEv(id, f, v){ const x = EVENTS.find(e => e.id === id); x[f] = v; if(f === 'seats') x.left = v; }
@@ -884,11 +884,11 @@ function resendEvent(id){
 function shWrite2(){
   const u = allUsers().find(x => x.id === S.sheet.id);
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Написать пользователю</h2>
-    <p class="small muted" style="margin:0 0 12px">${u.n} · ${u.m}</p>
+    <p class="small muted" style="margin:0 0 12px">${esc(u.n)} · ${u.m}</p>
     <label class="lbl">Тема</label><input class="field" id="w_s" value="Eva Space">
     <label class="lbl">Сообщение</label><textarea class="field" id="w_t" rows="5"></textarea>
     <div class="chips wrap">${['Напомнить про пробный период','Предложить скидку 20%','Спросить, что не подошло','Пригласить на мероприятие'].map(t =>
-      `<button class="chip" onclick="$('#w_t').value=($('#w_t').value?$('#w_t').value+' ':'')+'${t}'">${t}</button>`).join('')}</div>
+      `<button class="chip" onclick="$('#w_t').value=($('#w_t').value?$('#w_t').value+' ':'')+'${attJs(t)}'">${t}</button>`).join('')}</div>
     <button class="btn" style="margin-top:12px" onclick="S.sheet=null;render();toast('Письмо отправлено на ${u.m}')">Отправить</button>`;
 }
 function shAddUser(){
@@ -896,14 +896,14 @@ function shAddUser(){
     <p class="small muted" style="margin:0 0 12px">Аккаунт создастся сразу подтверждённым.</p>
     <label class="lbl">Роль</label>
     <div class="seg">${[['user','Ученица'],['expert','Эксперт'],['admin','Администратор']].map(([k,l]) =>
-      `<button class="${(S.newRole||'user')===k?'on':''}" onclick="chipPick(this,'newRole','${k}')">${l}</button>`).join('')}</div>
+      `<button class="${(S.newRole||'user')===k?'on':''}" onclick="chipPick(this,'newRole','${attJs(k)}')">${l}</button>`).join('')}</div>
     <label class="lbl">Имя</label><input class="field" id="nu_n" placeholder="Имя и фамилия">
     <label class="lbl">Почта</label><input class="field" id="nu_m" type="email" placeholder="mail@example.ru">
     <label class="lbl">Телеграм</label><input class="field" id="nu_t" placeholder="@nickname">
     <label class="lbl">Пароль по умолчанию</label><input class="field" id="nu_p" value="eva2026">
     <label class="lbl">Доступ</label>
     <div class="seg">${[['trial','Пробный, 3 дня'],['gift','Подарить бесплатно'],['paid','Отметить оплаченным']].map(([k,l]) =>
-      `<button class="${(S.newAccess||'trial')===k?'on':''}" onclick="chipPick(this,'newAccess','${k}')">${l}</button>`).join('')}</div>
+      `<button class="${(S.newAccess||'trial')===k?'on':''}" onclick="chipPick(this,'newAccess','${attJs(k)}')">${l}</button>`).join('')}</div>
     <button class="btn" onclick="createUser()">Создать аккаунт</button>`;
 }
 function createUser(){
@@ -935,11 +935,11 @@ function shGrant(){
     {k:'trial7', t:'Продлить пробный период до 7 дней', d:'Если не успела попробовать'}
   ];
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Доступ и предложения</h2>
-    <p class="small muted" style="margin:0 0 12px">${u.n} · ${u.m}</p>
-    ${offers.map(o => `<button class="card" style="width:100%;text-align:left" onclick="grant('${u.id}','${o.k}')">
-      <b style="font-size:14px">${o.t}</b>
-      <div class="small muted" style="margin-top:3px">${o.d}</div></button>`).join('')}
-    ${u.gift || u.pay === 'paid' ? `<button class="btn ghost" onclick="grant('${u.id}','revoke')">Снять доступ</button>` : ''}`;
+    <p class="small muted" style="margin:0 0 12px">${esc(u.n)} · ${u.m}</p>
+    ${offers.map(o => `<button class="card" style="width:100%;text-align:left" onclick="grant('${attJs(u.id)}','${attJs(o.k)}')">
+      <b style="font-size:14px">${esc(o.t)}</b>
+      <div class="small muted" style="margin-top:3px">${esc(o.d)}</div></button>`).join('')}
+    ${u.gift || u.pay === 'paid' ? `<button class="btn ghost" onclick="grant('${attJs(u.id)}','revoke')">Снять доступ</button>` : ''}`;
 }
 function grant(id, kind){
   const all = DB.users(), k = String(id).toLowerCase();
@@ -965,7 +965,7 @@ function shExpTags(){
   const rest = ALL_TAGS.filter(t => !e.t.includes(t));
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Добавить тему</h2>
     <p class="small muted" style="margin:0 0 12px">По этим темам твои материалы попадают в программы учениц.</p>
-    <div class="chips wrap">${rest.map(t => `<button class="chip" onclick="addExpTag('${e.id}','${t}')">${t}</button>`).join('')}</div>`;
+    <div class="chips wrap">${rest.map(t => `<button class="chip" onclick="addExpTag('${attJs(e.id)}','${attJs(t)}')">${t}</button>`).join('')}</div>`;
 }
 function shNewEdu(){
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Образование</h2>
@@ -974,7 +974,7 @@ function shNewEdu(){
     <input class="field" id="ed_t" placeholder="МГУ, факультет психологии">
     <label class="lbl">Год окончания</label>
     <input class="field" id="ed_y" placeholder="2016">
-    <button class="btn" onclick="saveEdu('${S.sheet.id}')">Отправить на проверку</button>`;
+    <button class="btn" onclick="saveEdu('${attJs(S.sheet.id)}')">Отправить на проверку</button>`;
 }
 function saveEdu(eid){
   const t = ($('#ed_t')||{}).value, y = ($('#ed_y')||{}).value;
@@ -992,15 +992,15 @@ function shEduCheck(){
   const e = EXPERTS.find(x => x.id === eid);
   const x = (e.edu||[]).find(v => v.id === id);
   return `<h2 class="serif" style="font-size:22px;margin:0 0 4px">Проверка документа</h2>
-    <p class="small muted" style="margin:0 0 12px">${e.n} · ${esc(x.t)}${x.y?', '+x.y:''}</p>
+    <p class="small muted" style="margin:0 0 12px">${esc(e.n)} · ${esc(x.t)}${x.y?', '+x.y:''}</p>
     ${MEDIA['cert_'+id]
       ? `<img src="${MEDIA['cert_'+id]}" style="width:100%;border-radius:var(--r);margin-bottom:10px">`
       : `<div class="upbox">Скан не загружен - можно запросить у эксперта</div>`}
     <p class="small muted" style="margin:0 0 12px">Скан виден только администраторам.</p>
-    <button class="btn" onclick="setEdu('${eid}','${id}','approved')">Подтвердить образование</button>
+    <button class="btn" onclick="setEdu('${attJs(eid)}','${attJs(id)}','approved')">Подтвердить образование</button>
     <label class="lbl" style="margin-top:12px">Комментарий при отказе</label>
     <textarea class="field" id="ed_c" rows="3" placeholder="Например: скан нечитаемый"></textarea>
-    <button class="btn ghost" onclick="setEdu('${eid}','${id}','rejected')">Отклонить</button>`;
+    <button class="btn ghost" onclick="setEdu('${attJs(eid)}','${attJs(id)}','rejected')">Отклонить</button>`;
 }
 function setEdu(eid, id, st){
   const e = EXPERTS.find(x => x.id === eid);
@@ -1058,7 +1058,7 @@ function shService(){
       <input class="field" type="date" value="${d.until||''}" oninput="S.svDraft.until=this.value">
     </div>
     <button class="btn" onclick="saveService()">Сохранить услугу</button>
-    ${editing ? `<button class="btn ghost" style="margin-top:8px" onclick="delService('${editing.id}')">Удалить</button>` : ''}`;
+    ${editing ? `<button class="btn ghost" style="margin-top:8px" onclick="delService('${attJs(editing.id)}')">Удалить</button>` : ''}`;
 }
 function addWhoField(){
   const box = document.getElementById('svwho');
@@ -1106,10 +1106,10 @@ function shDating(){
     <input class="field" value="${esc(d.city||'')}" placeholder="Москва" oninput="S.dp.city=this.value">
     <label class="lbl">Зачем тебе знакомства</label>
     <div class="chips wrap">${['подруги','спорт вместе','поговорить','мамы рядом','путешествия','нетворкинг'].map(g =>
-      `<button class="chip ${d.goal===g?'on':''}" onclick="chipPick(this,'dp.goal','${g}')">${g}</button>`).join('')}</div>
+      `<button class="chip ${d.goal===g?'on':''}" onclick="chipPick(this,'dp.goal','${attJs(g)}')">${g}</button>`).join('')}</div>
     <label class="lbl" style="margin-top:10px">Интересы <span id="dcount" class="muted">${d.ints.length?'('+d.ints.length+')':''}</span></label>
     <div class="chips wrap" id="dints">${all.map(t =>
-      `<button class="chip ${d.ints.includes(t)?'on':''}" onclick="chipToggle(this,'dp.ints','${t}','#dcount')">${t}</button>`).join('')}</div>
+      `<button class="chip ${d.ints.includes(t)?'on':''}" onclick="chipToggle(this,'dp.ints','${attJs(t)}','#dcount')">${t}</button>`).join('')}</div>
     <button class="btn ghost sm" style="margin-top:8px" onclick="openSheet('newInt')">＋ Свой интерес</button>
     <label class="lbl" style="margin-top:12px">Пара слов о себе</label>
     <textarea class="field" rows="3" placeholder="Например: медитирую по утрам, ищу подругу для практик"
@@ -1148,10 +1148,10 @@ function shNewPost(){
     <textarea class="field" id="wp_t" rows="4" placeholder="Ищу с кем поиграть в падел по выходным…"
       oninput="S.postText=this.value">${esc(S.postText||'')}</textarea>
     <div class="chips wrap">${['Ищу компанию','Предлагаю встречу','Хочу поговорить','Ищу подругу по интересам'].map(t =>
-      `<button class="chip" onclick="addPostPhrase('${t}')">${t}</button>`).join('')}</div>
+      `<button class="chip" onclick="addPostPhrase('${attJs(t)}')">${t}</button>`).join('')}</div>
     <label class="lbl" style="margin-top:10px">Темы послания <span id="pcount" class="muted">${(S.postInts||[]).length?'('+(S.postInts||[]).length+')':''}</span></label>
     <div class="chips wrap">${[...INTERESTS, ...(S.customInts||[])].map(t =>
-      `<button class="chip ${(S.postInts||[]).includes(t)?'on':''}" onclick="chipToggle(this,'postInts','${t}','#pcount')">${t}</button>`).join('')}</div>
+      `<button class="chip ${(S.postInts||[]).includes(t)?'on':''}" onclick="chipToggle(this,'postInts','${attJs(t)}','#pcount')">${t}</button>`).join('')}</div>
     ${ints.length ? `<div class="small muted" style="margin-top:6px">Твои интересы: ${ints.join(', ')}</div>` : ''}
     <button class="btn" style="margin-top:14px" onclick="sendPost()">Отправить послание</button>
     <p class="small muted" style="text-align:center;margin-top:8px;font-size:11.5px">Увидят все участницы · +5 баллов</p>`;
@@ -1178,8 +1178,8 @@ function shAskGood(){
       у тебя в разделе «Сообщения».</p>
     <textarea class="field" id="gq_t" rows="4" placeholder="Например: какой размер выбрать?"></textarea>
     <div class="chips wrap">${['Какой размер выбрать?','Из чего сделано?','Когда будет доставка?','Есть другие цвета?'].map(t =>
-      `<button class="chip" onclick="$('#gq_t').value='${t}'">${t}</button>`).join('')}</div>
-    <button class="btn" style="margin-top:12px" onclick="askGood('${g.id}')">Отправить вопрос</button>`;
+      `<button class="chip" onclick="$('#gq_t').value='${attJs(t)}'">${t}</button>`).join('')}</div>
+    <button class="btn" style="margin-top:12px" onclick="askGood('${attJs(g.id)}')">Отправить вопрос</button>`;
 }
 
 /* вопрос уходит админу и одновременно открывает личную переписку у покупательницы */
@@ -1248,7 +1248,7 @@ function shSupport(){
     <p class="small muted" style="margin:0 0 12px">Обычно отвечаем в течение дня.</p>
     <label class="lbl">Тема</label>
     <div class="chips wrap">${['Оплата','Доступ','Технический сбой','Вопрос по программе','Другое'].map(t =>
-      `<button class="chip ${(S.supTopic||'Другое')===t?'on':''}" onclick="chipPick(this,'supTopic','${t}')">${t}</button>`).join('')}</div>
+      `<button class="chip ${(S.supTopic||'Другое')===t?'on':''}" onclick="chipPick(this,'supTopic','${attJs(t)}')">${t}</button>`).join('')}</div>
     <label class="lbl">Сообщение</label>
     <textarea class="field" id="sup_t" rows="5" placeholder="Опиши, что случилось"></textarea>
     <button class="btn" onclick="sendSupport()">Отправить</button>`;
@@ -1270,8 +1270,8 @@ function reviewEvent(id, mode){
   e.status = mode === 'rework' ? 'rework' : 'rejected';
   e.comment = c;
   notifyExpert(e.by, mode === 'rework'
-    ? `Мероприятие «${e.t}» вернули на доработку. ${c}`
-    : `Мероприятие «${e.t}» отклонено. ${c}`);
+    ? `Мероприятие «${esc(e.t)}» вернули на доработку. ${c}`
+    : `Мероприятие «${esc(e.t)}» отклонено. ${c}`);
   S.sheet = null; syncPush(['events']); render();
   toast(mode === 'rework' ? 'Отправлено эксперту на доработку' : 'Отклонено, эксперт получил причину');
 }
@@ -1378,14 +1378,14 @@ function shPickPhrase(){
     <div class="row" style="gap:8px">
       <input class="field" style="margin:0;flex:1" id="ph_own"
         placeholder="${isWho ? 'Например: не могу отдыхать без вины' : 'Например: 12 лет практики'}"
-        onkeydown="if(event.key==='Enter')addOwnPhrase('${id}','${field}')">
-      <button class="btn sm" onclick="addOwnPhrase('${id}','${field}')">→</button>
+        onkeydown="if(event.key==='Enter')addOwnPhrase('${attJs(id)}','${attJs(field)}')">
+      <button class="btn sm" onclick="addOwnPhrase('${attJs(id)}','${attJs(field)}')">→</button>
     </div>
 
     ${free.length ? `<div class="sec-h" style="margin-top:16px">
         <h2 class="serif" style="font-size:17px">Готовые формулировки</h2>
         <span class="small muted">${free.length}</span></div>
-      ${free.map(t => `<button class="phrase" onclick="addPhrase('${id}','${field}', this.dataset.t)" data-t="${esc(t)}">
+      ${free.map(t => `<button class="phrase" onclick="addPhrase('${attJs(id)}','${attJs(field)}', this.dataset.t)" data-t="${esc(t)}">
         <span class="pl2">＋</span><span>${esc(t)}</span></button>`).join('')}`
     : '<div class="empty" style="margin-top:14px">Все готовые формулировки уже добавлены</div>'}`;
 }

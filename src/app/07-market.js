@@ -63,7 +63,7 @@ function pgMoon(){
 
     <div class="card advice">
       <div class="moonbig" style="margin-bottom:12px">${moonDisc(m,72)}
-        <div style="flex:1"><b style="font-size:16px">${m.n}</b>
+        <div style="flex:1"><b style="font-size:16px">${esc(m.n)}</b>
           <div class="small muted" style="margin-top:3px">${m.s}</div>
           <div class="small muted" style="margin-top:4px">Освещённость ${m.pct}% · ${plural(m.age,'день','дня','дней')} лунного цикла</div></div>
       </div>
@@ -78,7 +78,7 @@ function pgMoon(){
       ${days.map(({d,m:mm}) => `<div class="moonday">
         ${moonDisc(mm,44)}
         <b style="font-size:12.5px;margin-top:8px;display:block">${d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</b>
-        <div class="small muted" style="font-size:10.5px">${mm.n}</div>
+        <div class="small muted" style="font-size:10.5px">${esc(mm.n)}</div>
       </div>`).join('')}
     </div>
 
@@ -120,12 +120,12 @@ function pgCycle(){
   }[cy.phase.k];
   return `<div class="view pad">${backBtn('Назад')}
     <h1 class="serif" style="font-size:26px;margin:10px 0 4px">Календарь цикла</h1>
-    <p class="small muted" style="margin:0 0 14px">День ${cy.day} из ${days} · ${cy.phase.n} фаза</p>
+    <p class="small muted" style="margin:0 0 14px">День ${cy.day} из ${days} · ${esc(cy.phase.n)} фаза</p>
 
     <div class="card">
       <div class="cyclering">${cycleRing(cy)}</div>
       <div class="spread" style="margin-top:10px">
-        <div><b style="font-size:15px">${cy.phase.e} ${cy.phase.n} фаза</b>
+        <div><b style="font-size:15px">${esc(cy.phase.e)} ${esc(cy.phase.n)} фаза</b>
           <div class="small muted" style="margin-top:3px">${cy.phase.s}</div></div>
       </div>
       <div class="small muted" style="margin-top:10px">Следующие месячные примерно через ${plural(cy.next,'день','дня','дней')}</div>
@@ -133,8 +133,8 @@ function pgCycle(){
 
     <div class="g2">
       ${PHASES.map(p => `<div class="phbox ${p.k===cy.phase.k?'on':''}" style="text-align:left;padding:11px">
-        <div style="font-size:15px">${p.e}</div>
-        <b style="font-size:12px;display:block;margin-top:4px">${p.n}</b>
+        <div style="font-size:15px">${esc(p.e)}</div>
+        <b style="font-size:12px;display:block;margin-top:4px">${esc(p.n)}</b>
         <div class="small" style="font-size:10.5px;opacity:.75;margin-top:2px">${p.k===cy.phase.k?'сейчас':''}</div>
       </div>`).join('')}
     </div>
@@ -164,7 +164,7 @@ function cycleRing(cy){
   const seg = C * (cy.day / cy.len);
   return `<svg width="120" height="120" viewBox="0 0 120 120" style="transform:rotate(-90deg);display:block;margin:0 auto">
     <circle cx="60" cy="60" r="46" fill="none" stroke="var(--line)" stroke-width="9"/>
-    <circle cx="60" cy="60" r="46" fill="none" stroke="${cy.phase.c}" stroke-width="9" stroke-linecap="round"
+    <circle cx="60" cy="60" r="46" fill="none" stroke="${esc(cy.phase.c)}" stroke-width="9" stroke-linecap="round"
       stroke-dasharray="${seg} ${C}"/>
     <text x="60" y="60" transform="rotate(90 60 60)" text-anchor="middle" dy="6"
       style="font:700 22px Inter;fill:var(--ink)">${cy.day}</text>
@@ -194,16 +194,16 @@ function pgCalendar(){
     <div class="card advice">
       <div class="spread" style="margin-bottom:10px"><b style="font-size:15px">Сегодня</b>${hint('moon')}</div>
       <div class="moonbig" style="margin-bottom:12px">${moonDisc(m,64)}
-        <div style="flex:1"><b style="font-size:15px">${m.n}</b>
+        <div style="flex:1"><b style="font-size:15px">${esc(m.n)}</b>
           <div class="small muted">${m.s}</div>
           <div class="small muted" style="margin-top:3px">Освещённость ${m.pct}% · ${plural(m.age,'день','дня','дней')} лунного цикла</div></div></div>
       ${z ? `<div class="card" style="background:var(--surface-2);border:none;padding:12px;margin:0 0 10px">
         <div class="eyebrow" style="margin-bottom:5px">Твой день</div>
         <div class="small">${personalDay(m,z)}</div></div>` : ''}
-      ${z ? `<div class="arow"><span class="ae">${z.e}</span><div><b>${z.n}</b><div class="small muted">${tip}</div></div></div>`
+      ${z ? `<div class="arow"><span class="ae">${esc(z.e)}</span><div><b>${esc(z.n)}</b><div class="small muted">${tip}</div></div></div>`
           : `<div class="arow"><span class="ae">✦</span><div><b>Знак не задан</b>
              <div class="small muted">Добавь дату рождения - появятся ежедневные подсказки по стихии.</div></div></div>`}
-      ${cy ? `<div class="arow"><span class="ae">${cy.phase.e}</span><div><b>${cy.phase.n} фаза, день ${cy.day} из ${cy.len}</b>
+      ${cy ? `<div class="arow"><span class="ae">${esc(cy.phase.e)}</span><div><b>${esc(cy.phase.n)} фаза, день ${cy.day} из ${cy.len}</b>
         <div class="small muted">${cy.phase.s}</div>
         <div class="small muted" style="margin-top:4px">Следующие месячные примерно через ${plural(cy.next,'день','дня','дней')}</div></div></div>` : ''}
     </div>
@@ -217,7 +217,7 @@ function pgCalendar(){
           const done = past ? (hash('d'+n) % 10) > 3 : isToday ? doneOf(todayIdx()) === 3 : false;
           const ph = cellPhase(n);
           return `<div class="cday ${isToday?'now':''}" style="${done?'background:var(--blush);color:var(--rose-deep)':past?'color:var(--muted);opacity:.55':''}">
-            ${n}${ph?`<i style="background:${ph.c}"></i>`:''}</div>`;
+            ${n}${ph?`<i style="background:${esc(ph.c)}"></i>`:''}</div>`;
         }).join('')}
       </div>
       <div class="row" style="margin-top:14px;font-size:11px;color:var(--muted);gap:12px;flex-wrap:wrap">
@@ -232,10 +232,10 @@ function pgCalendar(){
       <div class="spread"><b style="font-size:15px">Трекер цикла</b>${hint('cycle')}</div>
       ${cy ? `
         <div class="bar" style="margin:12px 0 8px"><i style="width:${cy.day/cy.len*100}%"></i></div>
-        <div class="small muted">День ${cy.day} из ${cy.len} · ${cy.phase.n} фаза</div>
+        <div class="small muted">День ${cy.day} из ${cy.len} · ${esc(cy.phase.n)} фаза</div>
         <div class="g2" style="margin-top:12px">
           ${PHASES.map(p => `<div class="phbox ${p.k===cy.phase.k?'on':''}">
-            <div style="font-size:16px">${p.e}</div><b style="font-size:12px">${p.n}</b></div>`).join('')}
+            <div style="font-size:16px">${esc(p.e)}</div><b style="font-size:12px">${esc(p.n)}</b></div>`).join('')}
         </div>
         <button class="btn ghost" style="margin-top:12px" onclick="openSheet('cycle')">Изменить данные</button>`
       : `<p class="small muted" style="margin:8px 0 12px">Укажи дату последних месячных - программа будет учитывать фазу и не станет требовать одинаковой энергии всю неделю.</p>
@@ -294,8 +294,8 @@ function pgPoints(){
       </div>
       <div class="bar" style="background:rgba(255,255,255,.2);margin:16px 0 8px"><i style="width:${pct}%"></i></div>
       <div class="spread small" style="opacity:.8">
-        <span>${cur.n}</span><span>${next ? next.n : 'максимум'}</span></div>
-      ${next ? `<div class="small" style="margin-top:8px;opacity:.75">Ещё ${next.from - S.points} баллов - и откроется «${next.n}»</div>` : ''}
+        <span>${esc(cur.n)}</span><span>${next ? next.n : 'максимум'}</span></div>
+      ${next ? `<div class="small" style="margin-top:8px;opacity:.75">Ещё ${next.from - S.points} баллов - и откроется «${esc(next.n)}»</div>` : ''}
     </div>
 
     <div class="card">
@@ -308,7 +308,7 @@ function pgPoints(){
         return `<div class="lvlrow ${now?'now':''}">
           <div class="lvlmark ${has?'has':''}">${has?'✓':l.e}</div>
           <div style="flex:1">
-            <div class="spread"><b style="font-size:13.5px">${l.n}</b>
+            <div class="spread"><b style="font-size:13.5px">${esc(l.n)}</b>
               <span class="small muted">${l.from ? 'от '+l.from+' баллов' : 'с первого дня'}</span></div>
             <div class="small muted" style="margin-top:3px">${l.perks.join(' · ')}</div>
           </div></div>`;
@@ -333,7 +333,7 @@ function pgPoints(){
     <div class="card">
       <b style="font-size:15px">Что открывается дальше</b>
       <p class="small muted" style="margin:7px 0 0">${next
-        ? `На уровне «${next.n}»: ${next.perks[0].toLowerCase()}. Сейчас до него ${next.from - S.points} баллов -
+        ? `На уровне «${esc(next.n)}»: ${next.perks[0].toLowerCase()}. Сейчас до него ${next.from - S.points} баллов -
            это примерно ${Math.ceil((next.from - S.points)/125)} полных дней программы.`
         : 'Ты на высшем уровне. Дальше - только твои собственные группы и курсы.'}</p>
       <button class="btn ghost" style="margin-top:10px" onclick="openPage('earn')">Зарабатывать с Евой</button>
@@ -402,15 +402,15 @@ function pgBirth(){
       </div>
       <label class="lbl">Время рождения, если знаешь</label>
       <input class="field" type="time" value="${S.birth.time}" onchange="setBirth('time',this.value)">
-      ${z ? `<div class="chips wrap"><span class="chip pale">${z.e} ${z.n}</span>
+      ${z ? `<div class="chips wrap"><span class="chip pale">${esc(z.e)} ${esc(z.n)}</span>
         <span class="chip pale">стихия ${z.el}</span>${wd ? `<span class="chip pale">${wd}</span>` : ''}</div>`
       : `<div class="small muted">Выбери дату - появится знак, стихия и день недели рождения</div>`}
     </div>
 
     ${z ? `<div class="portrait">
-      <div class="pbig">${z.e}</div>
+      <div class="pbig">${esc(z.e)}</div>
       <div>
-        <b style="font-size:17px;display:block">${z.n}</b>
+        <b style="font-size:17px;display:block">${esc(z.n)}</b>
         <div class="small muted">стихия ${z.el}${S.birth.time ? ' · рождена в ' + S.birth.time : ''}</div>
       </div>
     </div>
@@ -434,12 +434,12 @@ function pgBirth(){
       <div class="spread"><b style="font-size:15px">Рождена в ${wd}</b>
         <span class="chip pale">${WDAY.p}</span></div>
       <p class="small muted" style="margin:8px 0 0">${WDAY.s}</p>
-      <div class="hwbox" style="margin-top:10px"><div class="small">${WDAY.d}</div></div>
+      <div class="hwbox" style="margin-top:10px"><div class="small">${esc(WDAY.d)}</div></div>
     </div>` : ''}
 
     <div class="card">
       <div class="moonbig">${moonDisc(m,58)}
-        <div style="flex:1"><b style="font-size:15px">${m.n}</b>
+        <div style="flex:1"><b style="font-size:15px">${esc(m.n)}</b>
           <div class="small muted" style="margin-top:3px">${m.s}</div></div></div>
       ${z ? `<div class="hwbox" style="margin-top:10px"><div class="small">${personalDay(m,z)}</div></div>` : ''}
       <button class="btn ghost" style="margin-top:10px" onclick="openPage('moon')">Лунный календарь</button>
@@ -449,7 +449,7 @@ function pgBirth(){
       <div class="spread"><b style="font-size:15px">Женский цикл</b>${hint('cycle')}</div>
       ${cy ? `<div class="row" style="margin-top:10px;gap:14px">
           ${cycleRing(cy)}
-          <div style="flex:1"><b style="font-size:14px">${cy.phase.n} фаза</b>
+          <div style="flex:1"><b style="font-size:14px">${esc(cy.phase.n)} фаза</b>
             <div class="small muted" style="margin-top:3px">${cy.phase.s}</div>
             <div class="small muted" style="margin-top:4px">Следующие месячные через ${plural(cy.next,'день','дня','дней')}</div></div>
         </div>
@@ -479,7 +479,7 @@ function setBirthPart(k, v){
   if(k === 'm') p.m = v ? String(v).padStart(2,'0') : '';
   if(k === 'd') p.d = v ? String(v).padStart(2,'0') : '';
   if(p.y && p.m && p.d){
-    S.birth.date = `${p.y}-${p.m}-${p.d}`;
+    S.birth.date = `${p.y}-${p.m}-${esc(p.d)}`;
     render(); schedulePersist();
   } else {
     S.birth.date = '';
@@ -526,7 +526,7 @@ function pgSettings(){
         `<div class="uline" ${k==='daily'?'style="border:none;padding-top:0"':''}>
           <div style="flex:1"><b style="font-size:13.5px">${t}</b>
             <div class="small muted" style="margin-top:2px">${d}</div></div>
-          <button class="sw ${n[k]?'on':''}" onclick="tgNotif('${k}')"><i></i></button></div>`).join('')}
+          <button class="sw ${n[k]?'on':''}" onclick="tgNotif('${attJs(k)}')"><i></i></button></div>`).join('')}
       <div class="uline"><span class="small muted" style="flex:1">Время напоминания</span>
         <input class="field" type="time" style="margin:0;width:120px;padding:7px 10px" value="${n.time}"
           onchange="S.notif.time=this.value"></div>
@@ -553,7 +553,7 @@ function pgSettings(){
        ['astroOn','Луна и гороскоп','Подсказки дня на главной']].map(([k,t,d]) =>
       `<div class="card"><div class="spread">
         <div style="flex:1"><b style="font-size:14px">${t}</b><div class="small muted" style="margin-top:2px">${d}</div></div>
-        <button class="sw ${S[k]?'on':''}" onclick="toggle('${k}')"><i></i></button>
+        <button class="sw ${S[k]?'on':''}" onclick="toggle('${attJs(k)}')"><i></i></button>
       </div></div>`).join('')}
 
     <div class="sec-h"><h2 class="serif" style="font-size:18px">Помощь</h2></div>
@@ -643,7 +643,7 @@ function adMarket(){
   return `
   <div class="seg">${tabs.map(([k,l]) => {
     const n = k === 'qs' ? newQs : k === 'orders' ? newOrders : 0;
-    return `<button class="${(S.mkTab||'goods')===k?'on':''}" onclick="S.mkTab='${k}';render()">
+    return `<button class="${(S.mkTab||'goods')===k?'on':''}" onclick="S.mkTab='${attJs(k)}';render()">
       ${l}${n?` <span class="cnt" style="background:var(--accent);color:#fff;border-radius:99px;padding:1px 5px;font-size:9px">${n}</span>`:''}</button>`;
   }).join('')}</div>
   ${({goods:adGoodsList, orders:adOrders, qs:adQuestions})[S.mkTab||'goods']()}`;
@@ -655,7 +655,7 @@ function adGoodsList(){
   return `
   <button class="btn" onclick="openGoodEditor()">＋ Добавить товар</button>
   <div class="chips" style="margin-top:12px">
-    ${['все', ...CATS].map(c => `<button class="chip ${cat===c?'on':''}" onclick="S.mkCat='${c}';render()">${c}</button>`).join('')}
+    ${['все', ...CATS].map(c => `<button class="chip ${cat===c?'on':''}" onclick="S.mkCat='${attJs(c)}';render()">${c}</button>`).join('')}
   </div>
   <div class="small muted" style="margin-bottom:10px">${plural(list.length,'товар','товара','товаров')}
     · продано за месяц ${ORDERS.length * 3}</div>
@@ -663,21 +663,21 @@ function adGoodsList(){
     const info = GOOD_INFO[g.id] || {};
     return `<div class="acard">
       <div class="top">
-        <button class="thumb" onclick="openGoodEditor('${g.id}')">${goodPic(g)}</button>
+        <button class="thumb" onclick="openGoodEditor('${attJs(g.id)}')">${goodPic(g)}</button>
         <div style="flex:1;min-width:0">
           <div class="spread" style="align-items:flex-start">
-            <b style="font-size:13.5px;line-height:1.3">${g.t}</b>
+            <b style="font-size:13.5px;line-height:1.3">${esc(g.t)}</b>
             <span class="pill ${info.stock > 5 ? 'free':'paid'}">${info.stock} шт</span>
           </div>
-          <div class="small muted" style="margin-top:3px">${g.c} · ${money(g.p)}${g.old?' вместо '+money(g.old):''}</div>
+          <div class="small muted" style="margin-top:3px">${esc(g.c)} · ${money(g.p)}${g.old?' вместо '+money(g.old):''}</div>
           <div class="small muted">${(info.gallery||[]).length} фото · ${info.video?'видео есть':'без видео'}
             · ${info.delivery && info.delivery.free ? 'доставка бесплатно' : 'доставка платная'}</div>
         </div>
       </div>
       <div class="bar2">
-        <button class="chip" onclick="openGoodEditor('${g.id}')">Редактировать</button>
-        <button class="chip" onclick="openGood('${g.id}')">Как видит покупатель</button>
-        <button class="chip" style="margin-left:auto" onclick="delGood('${g.id}')">✕</button>
+        <button class="chip" onclick="openGoodEditor('${attJs(g.id)}')">Редактировать</button>
+        <button class="chip" onclick="openGood('${attJs(g.id)}')">Как видит покупатель</button>
+        <button class="chip" style="margin-left:auto" onclick="delGood('${attJs(g.id)}')">✕</button>
       </div>
     </div>`;
   }).join('')}`;
@@ -713,17 +713,17 @@ function pgGoodEditor(){
     <div class="photos">
       ${(() => {
         const shots = [key, ...d.gallery].filter(k => MEDIA[k]);
-        if(!shots.length) return `<button class="addphoto big" onclick="pickImage('${key}')">
+        if(!shots.length) return `<button class="addphoto big" onclick="pickImage('${attJs(key)}')">
           <span class="pl2">＋</span>
           <b>Загрузить фото товара</b>
           <span class="small muted">JPEG, PNG или HEIC. Первое станет обложкой</span></button>`;
         return shots.map((k,i) => `<div class="photo ${k===key?'cover':''}">
             <img src="${MEDIA[k]}" alt="" style="object-position:${k===key?(d.pos||'50% 50%'):'50% 50%'}">
             ${k===key ? '<span class="covlabel">обложка</span>' : `
-              <button class="mkcov" onclick="setCoverFrom('${k}')">Сделать обложкой</button>`}
-            <button class="phdel" onclick="${k===key?`dropCover('${key}')`:`delGalleryPhoto(${d.gallery.indexOf(k)})`}">✕</button>
+              <button class="mkcov" onclick="setCoverFrom('${attJs(k)}')">Сделать обложкой</button>`}
+            <button class="phdel" onclick="${k===key?`dropCover('${attJs(key)}')`:`delGalleryPhoto(${d.gallery.indexOf(k)})`}">✕</button>
           </div>`).join('') +
-          `<button class="addphoto" onclick="addGalleryPhoto('${key}')"><span class="pl2">＋</span><span class="small">ещё фото</span></button>`;
+          `<button class="addphoto" onclick="addGalleryPhoto('${attJs(key)}')"><span class="pl2">＋</span><span class="small">ещё фото</span></button>`;
       })()}
     </div>
     <div class="small muted" style="margin:-2px 0 12px">Обложка показывается в каталоге, остальные листаются на странице товара</div>
@@ -733,7 +733,7 @@ function pgGoodEditor(){
 
     <label class="lbl">Категория</label>
     <div class="chips">${CATS.map(c => `<button class="chip ${d.c===c?'on':''}"
-      onclick="chipPick(this,'gDraft.c','${c}')">${c}</button>`).join('')}</div>
+      onclick="chipPick(this,'gDraft.c','${attJs(c)}')">${c}</button>`).join('')}</div>
 
     ${MEDIA[key] ? cropBox(key, d.pos || '50% 50%', 'gDraft.pos') : ''}
 
@@ -762,7 +762,7 @@ function pgGoodEditor(){
       <b style="font-size:14.5px">Спецпредложение</b>
       <div class="small muted" style="margin:4px 0 9px">Метка на карточке товара</div>
       <div class="chips wrap">${['','Хит','Новинка','Бестселлер','Выгодно','Последние'].map(f =>
-        `<button class="chip ${(d.f||'')===f?'on':''}" onclick="chipPick(this,'gDraft.f','${f}')">${f||'без метки'}</button>`).join('')}</div>
+        `<button class="chip ${(d.f||'')===f?'on':''}" onclick="chipPick(this,'gDraft.f','${attJs(f)}')">${f||'без метки'}</button>`).join('')}</div>
     </div>
 
     <div class="card">
@@ -823,14 +823,14 @@ function cropBox(key, pos, path){
       <div class="croprow">
         <span class="small muted">По горизонтали</span>
         <input type="range" min="0" max="100" value="${px}" class="crange"
-          oninput="setCrop('${path}','x',this.value)">
+          oninput="setCrop('${attJs(path)}','x',this.value)">
       </div>
       <div class="croprow">
         <span class="small muted">По вертикали</span>
         <input type="range" min="0" max="100" value="${py}" class="crange"
-          oninput="setCrop('${path}','y',this.value)">
+          oninput="setCrop('${attJs(path)}','y',this.value)">
       </div>
-      <button class="btn ghost xs" style="margin-top:6px" onclick="resetCrop('${path}')">Сбросить в центр</button>
+      <button class="btn ghost xs" style="margin-top:6px" onclick="resetCrop('${attJs(path)}')">Сбросить в центр</button>
     </div>
     <div class="small muted" style="margin:6px 0 12px">Двигай ползунки - так обложка будет обрезана в карточке и на странице</div>`;
 }
@@ -892,22 +892,22 @@ function adOrders(){
   </div>
   <div class="chips"><span class="small muted" style="align-self:center;margin-right:4px">Вид:</span>
     ${[['card','карточками'],['list','списком']].map(([k,l]) =>
-      `<button class="chip ${view===k?'on':''}" onclick="S.ordView='${k}';render()">${l}</button>`).join('')}</div>
+      `<button class="chip ${view===k?'on':''}" onclick="S.ordView='${attJs(k)}';render()">${l}</button>`).join('')}</div>
 
   ${view === 'list' ? `<div class="tbl">
     <div class="trow head"><span style="flex:1">Заказ</span><span style="width:76px">Сумма</span><span style="width:70px">Статус</span></div>
     ${all.map(o => `<div class="trow">
-      <div style="flex:1;min-width:0"><b style="font-size:12.5px">${o.who}</b>
-        <div class="small muted" style="font-size:10.5px">${o.d} · ${o.city}</div></div>
+      <div style="flex:1;min-width:0"><b style="font-size:12.5px">${esc(o.who)}</b>
+        <div class="small muted" style="font-size:10.5px">${esc(o.d)} · ${esc(o.city)}</div></div>
       <b style="width:76px;font-size:12px">${money(o.sum)}</b>
-      <span class="tag-st ${ST[o.st]}" style="width:70px;text-align:center;font-size:9px;padding:3px 4px">${o.st}</span>
+      <span class="tag-st ${ST[o.st]}" style="width:70px;text-align:center;font-size:9px;padding:3px 4px">${esc(o.st)}</span>
     </div>`).join('')}
   </div>` : all.map(o => `<div class="card">
     <div class="spread">
       <div class="row"><div class="dot-ava" style="background:var(--ink)">${o.who[0]}</div>
-        <div><b style="font-size:13.5px">${o.who}</b>
-          <div class="small muted">${o.d} · ${o.city}</div></div></div>
-      <span class="tag-st ${ST[o.st]}">${o.st}</span>
+        <div><b style="font-size:13.5px">${esc(o.who)}</b>
+          <div class="small muted">${esc(o.d)} · ${esc(o.city)}</div></div></div>
+      <span class="tag-st ${ST[o.st]}">${esc(o.st)}</span>
     </div>
     <div class="uline" style="margin-top:8px"><span class="small muted" style="width:80px">Состав</span>
       <div style="flex:1;font-size:12.5px">${o.items.map(it => {
@@ -917,10 +917,10 @@ function adOrders(){
     <div class="uline"><span class="small muted" style="width:80px">Сумма</span>
       <b style="font-size:13px">${money(o.sum)}</b>${o.bonus?`<span class="small muted"> · бонусами ${o.bonus}</span>`:''}</div>
     <div class="uline"><span class="small muted" style="width:80px">Контакты</span>
-      <div style="flex:1;font-size:12.5px">${o.mail}${o.phone?' · '+o.phone:''}</div></div>
+      <div style="flex:1;font-size:12.5px">${esc(o.mail)}${o.phone?' · '+o.phone:''}</div></div>
     <div class="chips" style="margin-top:8px">${['новый','собирается','в пути','доставлен','отменён'].map(st =>
-      `<button class="chip ${o.st===st?'on':''}" onclick="setOrder('${o.id}','${st}')">${st}</button>`).join('')}</div>
-    <button class="btn ghost sm" style="margin-top:8px" onclick="toast('Письмо отправлено на ${o.mail}')">Написать покупателю</button>
+      `<button class="chip ${o.st===st?'on':''}" onclick="setOrder('${attJs(o.id)}','${attJs(st)}')">${st}</button>`).join('')}</div>
+    <button class="btn ghost sm" style="margin-top:8px" onclick="toast('Письмо отправлено на ${esc(o.mail)}')">Написать покупателю</button>
   </div>`).join('')}`;
 }
 function setOrder(id, st){
@@ -939,15 +939,15 @@ function adQuestions(){
     return `<div class="card ${q.answer?'':'unread'}">
       <div class="spread">
         <div class="row"><div class="dot-ava" style="background:var(--lilac)">${q.who[0]}</div>
-          <div><b style="font-size:13.5px">${q.who}</b>
-            <div class="small muted">${q.ago} · ${g ? g.t : 'товар удалён'}</div></div></div>
+          <div><b style="font-size:13.5px">${esc(q.who)}</b>
+            <div class="small muted">${esc(q.ago)} · ${g ? g.t : 'товар удалён'}</div></div></div>
         <span class="tag-st ${q.answer?'st-paid':'st-trial'}">${q.answer?'отвечено':'новый'}</span>
       </div>
       <p class="small" style="margin:9px 0 8px">${esc(q.t)}</p>
       ${q.answer ? `<div class="hwbox"><div class="small"><b>Ответ отправлен:</b> ${esc(q.answer)}</div></div>`
       : `<div class="row" style="gap:8px">
           <input class="field" style="margin:0;flex:1" id="qa_${q.id}" placeholder="Ответить">
-          <button class="btn sm" onclick="answerQ('${q.id}')">→</button></div>`}
+          <button class="btn sm" onclick="answerQ('${attJs(q.id)}')">→</button></div>`}
     </div>`;
   }).join('') || '<div class="empty">Вопросов пока нет</div>'}`;
 }
@@ -1009,8 +1009,8 @@ function pgGood(){
         <div class="gdots">${slides.map((_,k) => `<i class="${k===i?'on':''}"></i>`).join('')}</div>` : ''}
     </div>
 
-    <div class="eyebrow">${g.c}</div>
-    <h1 class="serif" style="font-size:23px;margin:8px 0 10px">${g.t}</h1>
+    <div class="eyebrow">${esc(g.c)}</div>
+    <h1 class="serif" style="font-size:23px;margin:8px 0 10px">${esc(g.t)}</h1>
     <div style="margin-bottom:12px">
       <span class="price" style="font-size:21px">${money(g.p)}</span>
       ${g.old?`<span class="old">${money(g.old)}</span>`:''}
@@ -1040,13 +1040,13 @@ function pgGood(){
         <b style="color:var(--ok)">5% · ${money(Math.round(g.p*0.05))}</b></div>
     </div>
 
-    <button class="btn ghost" onclick="openSheet({k:'askGood',id:'${g.id}'})">Задать вопрос о товаре</button>
+    <button class="btn ghost" onclick="openSheet({k:'askGood',id:'${attJs(g.id)}'})">Задать вопрос о товаре</button>
     <p class="small muted" style="text-align:center;margin:-4px 0 0;font-size:11.5px">Ответим в личных сообщениях</p>
 
     <div class="buybar">
       <div style="flex:1"><div class="small muted">${inCart ? 'в корзине ' + inCart + ' шт' : 'Итого'}</div>
         <b style="font-size:17px">${money(g.p)}</b></div>
-      <button class="btn" style="width:auto;padding:12px 20px" onclick="addCart('${g.id}')">В корзину</button>
+      <button class="btn" style="width:auto;padding:12px 20px" onclick="addCart('${attJs(g.id)}')">В корзину</button>
     </div>
   </div>`;
 }
