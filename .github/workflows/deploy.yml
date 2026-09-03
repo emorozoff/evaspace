@@ -3,6 +3,7 @@ name: Публикация на GitHub Pages
 on:
   push:
     branches:
+      - claude/eva-space-v2-file-m38dcn
       - claude/eva-space-app-ho4tcy
       - main
   workflow_dispatch:
@@ -22,24 +23,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Установка зависимостей
-        run: npm ci
-
-      - name: Сборка
-        run: npm run build
+      # Сборка не нужна: приложение — один самодостаточный index.html.
+      # Просто собираем папку сайта из файлов репозитория.
+      - name: Подготовка папки сайта
+        run: |
+          mkdir -p site
+          cp index.html manifest.json sw.js icon.svg *.png site/
+          cp index.html site/404.html      # чтобы работали ссылки вида /evaspace/#/...
+          touch site/.nojekyll
+          ls -la site
 
       # Публикация в ветку gh-pages — основной способ.
       # GitHub Pages подхватывает эту ветку и сайт открывается по ссылке.
       - name: Публикация в ветку gh-pages
         run: |
-          touch dist/.nojekyll
-          cp dist/index.html dist/404.html
-          cd dist
+          cd site
           git init -q
           git checkout -qb gh-pages
           git config user.name "github-actions[bot]"
@@ -56,12 +54,12 @@ jobs:
         continue-on-error: true
         uses: actions/configure-pages@v5
 
-      - name: Загрузка сборки как артефакта Pages
+      - name: Загрузка сайта как артефакта Pages
         if: steps.pages.outcome == 'success'
         continue-on-error: true
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site
 
     outputs:
       pages_ready: ${{ steps.pages.outcome }}
