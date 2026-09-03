@@ -1,6 +1,19 @@
 /* =====================================================================
    ШТОРКИ
    ===================================================================== */
+/* шторка со страховкой: её падение не должно уносить экран под ней */
+function sheetSafe(){
+  try { return sheet(); }
+  catch(e){
+    console.error('[Eva] шторка не собралась:', e);
+    return `<div class="bg" onclick="if(event.target===this)closeSheet()">
+      <div class="sheet"><div class="grab"></div>
+        <h2 class="serif" style="font-size:20px;margin:0 0 6px">Не получилось открыть</h2>
+        <p class="small muted" style="margin:0 0 14px">В этих данных чего-то не хватает. Остальное работает.</p>
+        <button class="btn" onclick="closeSheet()">Закрыть</button></div></div>`;
+  }
+}
+
 function sheet(){
   const k = typeof S.sheet === 'string' ? S.sheet : S.sheet.k;
   const body = ({lesson:shLesson, course:shCourse, rebuild:shRebuild, eva:shEva,

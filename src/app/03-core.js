@@ -2,10 +2,11 @@
    ЛОГИКА ПРОГРАММЫ
    ===================================================================== */
 function matchOf(item){
-  if(!S.tags.length) return 60 + (hash(item.id) % 25);
-  const hits = item.tags.filter(t => S.tags.includes(t)).length;
+  const id = String(item && item.id || '');
+  if(!S.tags.length) return 60 + (hash(id) % 25);
+  const hits = (item && Array.isArray(item.tags) ? item.tags : []).filter(t => S.tags.includes(t)).length;
   const base = Math.round(hits / Math.max(1, Math.min(S.tags.length, 3)) * 62) + 30;
-  return Math.max(52, Math.min(96, base + (hash(item.id) % 7)));
+  return Math.max(52, Math.min(96, base + (hash(id) % 7)));
 }
 
 /* подходит ли материал пользовательнице по этапу жизни и уровню */
@@ -190,7 +191,52 @@ const hello = () => { const h = new Date().getHours();
 /* =====================================================================
    РОУТЕР
    ===================================================================== */
+/* Перерисовка со страховкой. Если экран не собрался — показываем понятную
+   карточку вместо белого листа: приложение остаётся живым, и из него всегда
+   можно выйти на главную. */
+let crashCount = 0;
 function render(){
+  try {
+    renderScreen();
+    crashCount = 0;
+  } catch(e){
+    console.error('[Eva] экран не собрался:', e);
+    crashCount++;
+    try {
+      el.innerHTML = crashCount > 2
+        ? `<div class="view pad" style="padding-top:60px"><h1 class="serif">Приложение споткнулось</h1>
+             <p class="small muted" style="margin:10px 0 16px">Обнови страницу — данные сохранены.</p>
+             <button class="btn" onclick="location.reload()">Обновить</button></div>`
+        : crashScreen(e);
+    } catch(e2){
+      el.innerHTML = '<div style="padding:28px;font-family:sans-serif">Что-то пошло не так. Обнови страницу.</div>';
+    }
+  }
+}
+
+function crashScreen(e){
+  const pro = S.role === 'admin' || S.role === 'expert';
+  return `<div class="view pad" style="padding-top:calc(40px + env(safe-area-inset-top))">
+    <div style="font-size:40px;margin-bottom:10px">✦</div>
+    <h1 class="serif" style="font-size:26px;margin:0 0 8px">Этот экран не открылся</h1>
+    <p class="small muted" style="margin:0 0 18px">Похоже, в данных чего-то не хватает. Остальное приложение работает —
+      вернись на главную и продолжай.</p>
+    <button class="btn" onclick="backHome()">На главную</button>
+    <button class="btn ghost" style="margin-top:9px" onclick="location.reload()">Обновить страницу</button>
+    ${pro ? `<div class="card" style="margin-top:16px"><div class="eyebrow">Для разработчика</div>
+      <div class="small" style="margin-top:6px;word-break:break-word">${esc(String(e && e.message || e))}</div></div>` : ''}
+  </div>`;
+}
+
+/* вернуться в заведомо рабочее состояние */
+function backHome(){
+  S.sheet = null; S.page = null; S.course = null; S.viewGood = null; S.viewExpert = null;
+  if(S.chat) S.chat.open = null;
+  S.tab = 'home'; S.screen = 'app'; crashCount = 0;
+  render();
+}
+
+function renderScreen(){
   const s = S.screen;
   if(s === 'splash')   { el.innerHTML = scrSplash(); return; }
   if(s === 'auth')     { el.innerHTML = scrAuth(); return; }
@@ -202,7 +248,7 @@ function render(){
   else {
     const pro = S.role !== 'user';
     el.innerHTML = `<div class="shell">${page()}</div>` + (pro ? '' : nav() + fab()) + roleSwitch()
-      + (S.sheet ? sheet() : '');
+      + (S.sheet ? sheetSafe() : '');
   }
   if(s !== 'app' && s !== 'welcome') return;
   if(s === 'welcome') stars();

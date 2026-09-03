@@ -179,9 +179,104 @@ async function flushSync(){
 function pushShared(){ syncPush(); }
 function pushBranch(branch, value){ syncPush([branch]); }
 
+/* ---------- страховка от неполных данных ----------
+   Материал, курс или товар может прийти с сервера без части полей: сохранили
+   старой версией, оборвалась связь, поправили руками в файле. Раньше такой
+   объект ронял весь экран. Дополняем безопасными значениями — пусть лучше
+   будет пусто, чем белый лист. */
+const okStr = (v, d) => (typeof v === 'string' ? v : (v == null ? (d || '') : String(v)));
+const okNum = (v, d) => { const n = typeof v === 'number' ? v : parseFloat(v); return isFinite(n) ? n : (d || 0); };
+const okArr = v => Array.isArray(v) ? v : [];
+const okObj = v => (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
+
+/* оставляем только записи-объекты с идентификатором и дополняем их */
+function fixList(list, fill){
+  return okArr(list).filter(x => x && typeof x === 'object' && x.id != null)
+                    .map(x => fill(Object.assign({}, x)));
+}
+
+const FIX = {
+  lib: x => {
+    x.id = String(x.id); x.t = okStr(x.t, 'Без названия');
+    x.type = ['affirm','practice','class'].indexOf(x.type) >= 0 ? x.type : 'practice';
+    x.min = okNum(x.min, 5); x.expert = okStr(x.expert);
+    x.tags = okArr(x.tags).map(t => okStr(t)); x.d = okStr(x.d); x.text = okStr(x.text);
+    x.aud = okArr(x.aud); x.days = okArr(x.days); x.level = okStr(x.level, 'any');
+    return x;
+  },
+  courses: x => {
+    x.id = String(x.id); x.t = okStr(x.t, 'Без названия'); x.e = okStr(x.e);
+    x.n = okNum(x.n, 1); x.p = okNum(x.p); x.old = okNum(x.old, x.p);
+    x.r = okNum(x.r, 5); x.s = okNum(x.s); x.d = okStr(x.d);
+    return x;
+  },
+  goods: x => {
+    x.id = String(x.id); x.t = okStr(x.t, 'Без названия'); x.p = okNum(x.p);
+    x.c = okStr(x.c, 'Разное'); x.sh = okStr(x.sh, 'mat');
+    return x;
+  },
+  experts: x => {
+    x.id = String(x.id); x.n = okStr(x.n, 'Эксперт'); x.r = okStr(x.r);
+    x.rate = okNum(x.rate, 5); x.t = okArr(x.t); x.who = okArr(x.who);
+    x.ach = okArr(x.ach); x.services = okArr(x.services);
+    return x;
+  },
+  events: x => {
+    x.id = String(x.id); x.t = okStr(x.t, 'Встреча'); x.city = okStr(x.city);
+    x.by = okStr(x.by); x.mode = x.mode === 'онлайн' ? 'онлайн' : 'офлайн';
+    x.d = okStr(x.d, new Date().toISOString().slice(0,10)); x.tm = okStr(x.tm, '19:00');
+    x.left = okNum(x.left); x.seats = okNum(x.seats, x.left); x.price = okNum(x.price);
+    x.about = okStr(x.about); x.kind = okStr(x.kind, 'Встреча'); x.gallery = okArr(x.gallery);
+    return x;
+  },
+  wall: x => {
+    x.id = String(x.id); x.a = okStr(x.a, 'Гостья'); x.t = okStr(x.t);
+    x.c = okStr(x.c, '#111014'); x.ints = okArr(x.ints); x.st = okNum(x.st);
+    x.comments = okArr(x.comments).filter(c => c && typeof c === 'object')
+                  .map(c => ({...c, a: okStr(c.a, 'Гостья'), t: okStr(c.t), ago: okStr(c.ago)}));
+    return x;
+  },
+  plain: x => x                                   // заказы, вопросы, поддержка, идеи
+};
+
+function fixShared(sh){
+  ['lib','courses','goods','experts','events','wall'].forEach(k => {
+    if(sh[k] !== undefined) sh[k] = fixList(sh[k], FIX[k]);
+  });
+  ['orders','questions','support','ideas','pending','replies'].forEach(k => {
+    if(sh[k] !== undefined) sh[k] = fixList(sh[k], FIX.plain);
+  });
+  if(sh.goodInfo !== undefined){
+    const src = okObj(sh.goodInfo), out = {};
+    Object.keys(src).forEach(id => {
+      const i = okObj(src[id]);
+      out[id] = Object.assign({}, i, {
+        about: okStr(i.about), gallery: okArr(i.gallery), spec: okArr(i.spec),
+        stock: okNum(i.stock, 0),
+        delivery: Object.assign({free:false, price:390, cities:'', pickup:false}, okObj(i.delivery))
+      });
+    });
+    sh.goodInfo = out;
+  }
+  if(sh.courseInfo !== undefined){
+    const src = okObj(sh.courseInfo), out = {};
+    Object.keys(src).forEach(id => {
+      const i = okObj(src[id]);
+      out[id] = Object.assign({}, i, {promo: okStr(i.promo), about: okStr(i.about)});
+    });
+    sh.courseInfo = out;
+  }
+  ['courseTags','courseKind','media','videos','covPos','avatars','lessons','modules'].forEach(k => {
+    if(sh[k] !== undefined) sh[k] = okObj(sh[k]);
+  });
+  return sh;
+}
+
 /* ---------- чтение ---------- */
 function applyShared(sh){
   if(!sh || typeof sh !== 'object') return false;
+  try { sh = fixShared(sh); }
+  catch(e){ console.error('[Eva] данные с сервера пришли в неожиданном виде:', e); }
   const repl = (arr, data) => { if(Array.isArray(data) && data.length){ arr.length = 0; data.forEach(x => arr.push(x)); } };
   repl(LIB, sh.lib);
   repl(COURSES, sh.courses);
