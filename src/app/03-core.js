@@ -180,7 +180,12 @@ function checkWeek(quiet){
 function watchCalendar(){
   setInterval(() => {
     if(S.screen !== 'app' || !S.user) return;
-    try { if(checkWeek()) render(); } catch(e){ console.error('[Eva] смена дня:', e); }
+    try {
+      let need = checkWeek();
+      /* заодно двигаем письма Eva Events по настоящему расписанию */
+      if(typeof tickEvChain === 'function' && tickEvChain()) need = true;
+      if(need) render();
+    } catch(e){ console.error('[Eva] смена дня:', e); }
   }, 60000);
 }
 function nextWeek(){

@@ -808,23 +808,52 @@ function shEvent(){
           : (!e.unlimited && !e.left) ? 'Мест не осталось'
           : e.price ? 'Купить билет за ' + money(e.price) : 'Пойду'}</button>`}`;
 }
-/* Подробности мероприятия: коротко видно сразу, детали — по кнопке.
-   Так карточка остаётся лёгкой, но всё нужное можно прочитать не выходя. */
+/* Подробности мероприятия: коротко видно сразу, детали — по неприметной
+   строчке. Раскрываем без перерисовки экрана, иначе страница дёргается. */
 function evDetails(e){
   const prog = Array.isArray(e.program) ? e.program.filter(Boolean) : [];
   const has = e.full || prog.length || e.who || e.bring;
   if(!has) return '';
   const open = S.evMore === e.id;
-  return `<button class="evmore ${open?'on':''}" onclick="S.evMore = ${open?'null':`'${attJs(e.id)}'`}; render()">
-      <span>${open ? 'Свернуть' : 'Подробнее о мероприятии'}</span><i>${open ? '▴' : '▾'}</i></button>
-    ${open ? `<div class="evdet">
-      ${e.full ? `<p>${esc(e.full)}</p>` : ''}
-      ${prog.length ? `<div class="dh">Как всё пройдёт</div>
-        <ul class="evprog">${prog.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
-      ${e.who ? `<div class="dh">Для кого</div><p>${esc(e.who)}</p>` : ''}
-      ${e.bring ? `<div class="dh">${e.mode === 'онлайн' ? 'Как подключиться' : 'Что взять с собой'}</div>
-        <p>${esc(e.bring)}</p>` : ''}
-    </div>` : ''}`;
+  return `<button class="evmore${open?' on':''}" onclick="toggleEvDet('${attJs(e.id)}', this)">
+      <span>Подробности</span><i>⌄</i></button>
+    <div class="evdet${open?' on':''}" id="evdet_${esc(e.id)}" style="max-height:${open?'none':'0'}">
+      <div class="evdet-in">
+        ${e.full ? richText(e.full) : ''}
+        ${prog.length ? `<div class="dh">Расписание</div>
+          <ul class="evprog">${prog.map(x => {
+            const m = /^\s*(\d{1,2}[:.]\d{2}|[А-Яа-яЁё]{2}\s+\d{1,2}[:.]\d{2})\s*[—–-]\s*(.+)$/.exec(x);
+            return m ? `<li><b>${esc(m[1])}</b> ${esc(m[2])}</li>` : `<li>${esc(x)}</li>`;
+          }).join('')}</ul>` : ''}
+        ${e.who ? `<div class="dh">Для кого</div><p>${esc(e.who)}</p>` : ''}
+        ${e.bring ? `<div class="dh">${e.mode === 'онлайн' ? 'Как подключиться' : 'Что взять с собой'}</div>
+          <p>${esc(e.bring)}</p>` : ''}
+      </div>
+    </div>`;
+}
+
+/* плавное раскрытие: считаем высоту содержимого и анимируем её,
+   а не перерисовываем весь экран */
+function toggleEvDet(id, btn){
+  const box = document.getElementById('evdet_' + id);
+  if(!box){ S.evMore = S.evMore === id ? null : id; return render(); }
+  const inner = box.firstElementChild;
+  const open = box.classList.contains('on');
+  if(open){
+    /* сначала фиксируем текущую высоту, заставляем браузер её посчитать
+       и только потом сжимаем — иначе перехода не будет */
+    box.style.maxHeight = inner.offsetHeight + 'px';
+    void box.offsetHeight;
+    box.classList.remove('on');
+    box.style.maxHeight = '0px';
+    S.evMore = null;
+  } else {
+    box.classList.add('on');
+    box.style.maxHeight = inner.offsetHeight + 'px';
+    S.evMore = id;
+    setTimeout(() => { if(box.classList.contains('on')) box.style.maxHeight = 'none'; }, 280);
+  }
+  if(btn) btn.classList.toggle('on', !open);
 }
 
 function slideEv(d, n){ S.evSlide = ((S.evSlide || 0) + d + n) % n; render(); }
@@ -856,12 +885,21 @@ function evTextFields(v, mk){
     <textarea class="field" id="ev_a" rows="2" oninput="${mk('about', 'this.value')}">${esc(v.about || '')}</textarea>
 
     <label class="lbl">Подробное описание</label>
-    <p class="tiny muted" style="margin:-4px 0 6px">Раскроется по кнопке «Подробнее» — тут можно писать свободно.</p>
-    <textarea class="field" id="ev_f" rows="5" oninput="${mk('full', 'this.value')}">${esc(v.full || '')}</textarea>
+    <p class="tiny muted" style="margin:-4px 0 6px">Пишется как пост в телеграме. Пустая строка — новый абзац,
+      «## Заголовок» — подзаголовок, «- » в начале строки — пункт списка, *звёздочки* делают текст жирным.</p>
+    <textarea class="field" id="ev_f" rows="8" placeholder="Что это за встреча и почему на неё стоит прийти.
 
-    <label class="lbl">Как всё пройдёт</label>
+## Что будет
+- разговор в кругу, без советов
+- телесная практика
+- письмо себе
+
+Приходи, *даже если* идёшь на такое впервые."
+      oninput="${mk('full', 'this.value')}">${esc(v.full || '')}</textarea>
+
+    <label class="lbl">Расписание</label>
     <p class="tiny muted" style="margin:-4px 0 6px">Каждый пункт с новой строки: «19:00 — чай и знакомство».</p>
-    <textarea class="field" id="ev_pr" rows="4"
+    <textarea class="field" id="ev_pr" rows="5"
       oninput="${mk('program', 'evLines(this.value)')}">${esc((v.program || []).join('\n'))}</textarea>
 
     <label class="lbl">Для кого</label>
@@ -920,8 +958,8 @@ function shNewEvent(){
     <input class="field" id="ev_t" placeholder="Женский круг «...»"
       value="${esc(d.t || '')}" oninput="setEvD('t', this.value)">
     <label class="lbl">Тип</label>
-    <div class="seg" style="flex-wrap:wrap">${['Женский круг','Встреча','Практика','Лекция','Концерт'].map(k =>
-      `<button class="${d.kind===k?'on':''}" onclick="chipPick(this,'evd.kind','${attJs(k)}')">${k}</button>`).join('')}</div>
+    <div class="chips wrap">${EVENT_KINDS.map(k =>
+      `<button class="chip ${d.kind===k?'on':''}" onclick="setEvDR('kind','${attJs(k)}')">${esc(k)}</button>`).join('')}</div>
     <div class="g2">
       <div><label class="lbl">Дата</label>
         <input class="field" id="ev_d" type="date" value="${esc(d.d || '')}" oninput="setEvD('d', this.value)"></div>
@@ -1015,6 +1053,9 @@ function shEventEdit(){
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Мероприятие</h2>
     <p class="small muted" style="margin:0 0 12px">После изменений уйдёт на повторное согласование.</p>
     <label class="lbl">Название</label><input class="field" value="${esc(x.t)}" oninput="setEv('${attJs(x.id)}','t',this.value)">
+    <label class="lbl">Тип</label>
+    <div class="chips wrap">${EVENT_KINDS.map(k =>
+      `<button class="chip ${x.kind===k?'on':''}" onclick="setEv('${attJs(x.id)}','kind','${attJs(k)}');render()">${esc(k)}</button>`).join('')}</div>
     <div class="g2">
       <div><label class="lbl">Дата</label><input class="field" type="date" value="${esc(x.d)}" oninput="setEv('${attJs(x.id)}','d',this.value)"></div>
       <div><label class="lbl">Время</label><input class="field" type="time" value="${esc(x.tm)}" oninput="setEv('${attJs(x.id)}','tm',this.value)"></div>

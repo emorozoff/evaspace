@@ -672,6 +672,21 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 
 
 
+
+/* ---------- письма Eva Events ---------- */
+.mwhen{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--muted);background:rgba(17,16,20,.05);border-radius:999px;padding:2px 7px;margin-bottom:6px}
+.cmsg.own .mwhen{background:rgba(255,255,255,.16);color:rgba(255,255,255,.75)}
+.macts{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.macts .btn{width:auto;flex:0 1 auto}
+.evok{display:inline-flex;align-items:center;background:#EAF4EE;color:var(--ok);border-radius:999px;
+  padding:2px 8px;font-size:9.5px;font-weight:700}
+.evwait{display:inline-flex;align-items:center;background:#FFF3E2;color:var(--warn);border-radius:999px;
+  padding:2px 8px;font-size:9.5px;font-weight:700}
+.evfast{display:flex;gap:8px;align-items:flex-start;background:#F3EFFA;border-radius:var(--r);
+  padding:10px 12px;margin-bottom:12px;font-size:11.5px;line-height:1.45;color:#5B4E86}
+.evfast b{display:block;font-size:12px;margin-bottom:2px}
+
 /* ---------- сообщества ---------- */
 .gemoji{display:grid;place-items:center;color:var(--gc,var(--ink));
   background:color-mix(in srgb,var(--gc,#111014) 11%,transparent)}
@@ -788,14 +803,23 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .wpick img{width:100%;max-height:240px;object-fit:cover;display:block}
 
 /* ---------- подробности мероприятия ---------- */
-.evmore{display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;
-  padding:10px 13px;margin:0 0 12px;background:var(--surface-2);border-radius:var(--r);
-  font-size:13px;font-weight:700;color:var(--ink)}
-.evmore i{font-style:normal;font-size:11px;color:var(--muted)}
-.evmore.on{background:var(--accent-soft);color:var(--accent)}
-.evmore.on i{color:var(--accent)}
-.evdet{margin:-4px 0 14px;padding:0 2px}
-.evdet p{margin:0 0 10px;font-size:13px;line-height:1.55;color:var(--ink)}
+/* Неприметная строчка, а не кнопка: раскрывается плавно, без перерисовки */
+.evmore{display:inline-flex;align-items:center;gap:5px;width:auto;padding:4px 0;margin:0 0 8px;
+  font-size:12.5px;font-weight:700;color:var(--muted);letter-spacing:-.01em}
+.evmore i{font-style:normal;font-size:12px;line-height:1;transition:transform .22s ease;display:block}
+.evmore.on{color:var(--ink)}
+.evmore.on i{transform:rotate(180deg)}
+.evdet{overflow:hidden;transition:max-height .28s cubic-bezier(.3,.8,.4,1),opacity .22s ease;
+  opacity:0;margin:0 0 6px}
+.evdet.on{opacity:1;margin-bottom:14px}
+.evdet-in{padding:2px 0 0}
+.evdet p{margin:0 0 10px;font-size:13.5px;line-height:1.6;color:var(--ink)}
+.evdet .rhead{font-size:13.5px;font-weight:700;margin:14px 0 6px}
+.evdet .rlist{list-style:none;margin:0 0 10px;padding:0}
+.evdet .rlist li{position:relative;padding:0 0 6px 15px;font-size:13.5px;line-height:1.5}
+.evdet .rlist li:before{content:'';position:absolute;left:3px;top:8px;width:5px;height:5px;
+  border-radius:50%;background:var(--accent);opacity:.5}
+.evprog li b{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:700;margin-right:4px}
 .evdet .dh{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
   color:var(--muted);margin:12px 0 6px}
 .evprog{list-style:none;margin:0 0 10px;padding:0}
@@ -819,24 +843,25 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .pcell b{display:block;font-size:21px;line-height:1.05;font-weight:700;letter-spacing:-.03em}
 .pcell .mn{display:block;font-size:9.5px;color:var(--muted)}
 .pday.now .pcell b,.pday.now .pcell .dw{color:var(--accent)}
-.pitems{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;justify-content:center}
-.pline{display:flex;gap:9px;align-items:flex-start;width:100%;text-align:left}
-.ptm{flex:none;font-size:11.5px;font-weight:700;color:var(--muted);padding-top:2px;
-  font-variant-numeric:tabular-nums}
-.ptxt{flex:1;min-width:0}
-.ptxt b{display:block;font-size:13.5px;line-height:1.3;font-weight:700;
+.pitems{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;justify-content:center}
+.pline{display:block;width:100%;text-align:left}
+.ptxt{display:block;min-width:0}
+.phead{display:flex;align-items:baseline;gap:7px}
+.ptxt b{flex:1;min-width:0;font-size:13.5px;line-height:1.3;font-weight:700;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pwhere{display:block;font-size:11px;margin-top:2px;color:var(--muted);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pwhere.on{color:var(--lilac)}
-.pwhere.off{color:var(--ok)}
-.pnote{display:block;font-size:11px;margin-top:2px;color:var(--muted);opacity:.8;
+/* время ушло из начала строки: сначала название, потом уже когда и где */
+.pmeta{display:flex;align-items:center;gap:5px;font-size:11.5px;margin-top:3px;color:var(--muted);
+  font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pdot{width:6px;height:6px;border-radius:50%;flex:none;display:block}
+.pdot.on{background:var(--lilac)}
+.pdot.off{background:var(--ok)}
+.pnote{display:block;font-size:11.5px;margin-top:3px;color:var(--muted);opacity:.75;line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pgone{padding:7px 13px 6px;border-top:1px solid var(--line);background:var(--surface-2);
   font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .pday.gone{opacity:.52}
 .pday.gone .pcell b{font-weight:600}
-.psoon{flex:none;align-self:center;background:var(--surface-2);border-radius:999px;
+.psoon{flex:none;background:var(--surface-2);border-radius:999px;
   padding:2px 8px;font-size:9.5px;font-weight:700;color:var(--muted)}
 .pday.now .psoon{background:var(--accent);color:#fff}
 

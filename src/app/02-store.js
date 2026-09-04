@@ -83,6 +83,7 @@ function persist(){
     /* без этого после перезагрузки терялась память о показанных мастер-классах
        и об обмене баллов: классы шли по кругу, а обмен можно было повторять */
     seenClasses:S.seenClasses, weekly:S.weekly, seenDm:S.seenDm, streak:S.streak,
+    evChain:S.evChain, evFast:S.evFast,
     savedAt:Date.now()
   });
 }

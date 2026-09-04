@@ -16,6 +16,28 @@ const attJs = s => esc(String(s == null ? '' : s)
 
 /* Ссылка на картинку: пропускаем только загруженные файлы, https и картинки
    в data:. Всё остальное — включая javascript: — превращается в пустую строку. */
+/* Простое оформление длинных текстов — как в постах телеграма:
+   абзацы, подзаголовки со строки «## », списки с «- » и *жирное*.
+   Сначала всё экранируем, потом добавляем разметку: чужой текст
+   не может протащить сюда свои теги. */
+function richText(src){
+  const lines = String(src == null ? '' : src).split(/\r?\n/);
+  const bold = t => esc(t)
+    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s.,!?)]|$)/g, '$1<b>$2</b>');
+  let out = '', list = [];
+  const flush = () => { if(list.length){ out += '<ul class="rlist">' + list.join('') + '</ul>'; list = []; } };
+  lines.forEach(raw => {
+    const t = raw.trim();
+    if(!t){ flush(); return; }
+    if(/^##\s+/.test(t)){ flush(); out += '<div class="rhead">' + bold(t.replace(/^##\s+/, '')) + '</div>'; return; }
+    if(/^[-•]\s+/.test(t)){ list.push('<li>' + bold(t.replace(/^[-•]\s+/, '')) + '</li>'); return; }
+    flush(); out += '<p>' + bold(t) + '</p>';
+  });
+  flush();
+  return out;
+}
+
 const safeUrl = s => {
   const v = String(s == null ? '' : s).trim();
   if(!v) return '';
