@@ -247,6 +247,8 @@ const FIX = {
     x.d = okStr(x.d, new Date().toISOString().slice(0,10)); x.tm = okStr(x.tm, '19:00');
     x.left = okNum(x.left); x.seats = okNum(x.seats, x.left); x.price = okNum(x.price);
     x.about = okStr(x.about); x.kind = okStr(x.kind, 'Встреча'); x.gallery = okArr(x.gallery);
+    x.full = okStr(x.full); x.who = okStr(x.who); x.bring = okStr(x.bring);
+    x.program = okArr(x.program).map(v => okStr(v)).filter(Boolean);
     return x;
   },
   wall: x => {

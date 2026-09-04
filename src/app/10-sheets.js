@@ -717,7 +717,8 @@ function shEvent(){
         <b style="font-size:13px;color:${e.unlimited || e.left ? 'var(--ink)' : 'var(--accent)'}">
           ${e.unlimited ? 'без ограничения' : e.left ? 'свободно ' + e.left + ' из ' + e.seats : 'мест не осталось'}</b></div>
     </div>
-    <p class="small muted" style="margin:0 0 14px">${esc(e.about)}</p>
+    <p class="small" style="margin:0 0 10px;line-height:1.55">${esc(e.about)}</p>
+    ${evDetails(e)}
     <div class="spread" style="margin-bottom:12px">
       <span class="price" style="font-size:19px">${e.price ? money(e.price) : 'бесплатно'}</span>
       ${e.price ? '<span class="small muted">оплата на месте или картой</span>' : ''}</div>
@@ -737,6 +738,25 @@ function shEvent(){
           : (!e.unlimited && !e.left) ? 'Мест не осталось'
           : e.price ? 'Купить билет за ' + money(e.price) : 'Пойду'}</button>`}`;
 }
+/* Подробности мероприятия: коротко видно сразу, детали — по кнопке.
+   Так карточка остаётся лёгкой, но всё нужное можно прочитать не выходя. */
+function evDetails(e){
+  const prog = Array.isArray(e.program) ? e.program.filter(Boolean) : [];
+  const has = e.full || prog.length || e.who || e.bring;
+  if(!has) return '';
+  const open = S.evMore === e.id;
+  return `<button class="evmore ${open?'on':''}" onclick="S.evMore = ${open?'null':`'${attJs(e.id)}'`}; render()">
+      <span>${open ? 'Свернуть' : 'Подробнее о мероприятии'}</span><i>${open ? '▴' : '▾'}</i></button>
+    ${open ? `<div class="evdet">
+      ${e.full ? `<p>${esc(e.full)}</p>` : ''}
+      ${prog.length ? `<div class="dh">Как всё пройдёт</div>
+        <ul class="evprog">${prog.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+      ${e.who ? `<div class="dh">Для кого</div><p>${esc(e.who)}</p>` : ''}
+      ${e.bring ? `<div class="dh">${e.mode === 'онлайн' ? 'Как подключиться' : 'Что взять с собой'}</div>
+        <p>${esc(e.bring)}</p>` : ''}
+    </div>` : ''}`;
+}
+
 function slideEv(d, n){ S.evSlide = ((S.evSlide || 0) + d + n) % n; render(); }
 
 /* решение админа по мероприятию с комментарием эксперту */
@@ -755,6 +775,34 @@ function shEvReview(){
       ${rework ? 'Отправить эксперту' : 'Отказать'}</button>
     <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Отмена</button>`;
 }
+/* Типовые поля мероприятия. Один и тот же блок в добавлении и в правке,
+   чтобы в админке форма была одна и та же и ничего не терялось. */
+const evLines = t => String(t == null ? '' : t).split('\n').map(x => x.trim()).filter(Boolean);
+
+function evTextFields(v, mk){
+  return `
+    <label class="lbl">Короткое описание</label>
+    <p class="tiny muted" style="margin:-4px 0 6px">Одна-две фразы. Их видно в списке и в календаре «Я иду».</p>
+    <textarea class="field" id="ev_a" rows="2" oninput="${mk('about', 'this.value')}">${esc(v.about || '')}</textarea>
+
+    <label class="lbl">Подробное описание</label>
+    <p class="tiny muted" style="margin:-4px 0 6px">Раскроется по кнопке «Подробнее» — тут можно писать свободно.</p>
+    <textarea class="field" id="ev_f" rows="5" oninput="${mk('full', 'this.value')}">${esc(v.full || '')}</textarea>
+
+    <label class="lbl">Как всё пройдёт</label>
+    <p class="tiny muted" style="margin:-4px 0 6px">Каждый пункт с новой строки: «19:00 — чай и знакомство».</p>
+    <textarea class="field" id="ev_pr" rows="4"
+      oninput="${mk('program', 'evLines(this.value)')}">${esc((v.program || []).join('\n'))}</textarea>
+
+    <label class="lbl">Для кого</label>
+    <input class="field" id="ev_w" placeholder="Любой уровень, опыт не нужен"
+      value="${esc(v.who || '')}" oninput="${mk('who', 'this.value')}">
+
+    <label class="lbl">Что взять с собой или как подключиться</label>
+    <input class="field" id="ev_b" placeholder="Коврик и тёплые носки"
+      value="${esc(v.bring || '')}" oninput="${mk('bring', 'this.value')}">`;
+}
+
 function evDraft(){
   if(!S.evd) S.evd = {key:'evnew_' + Date.now().toString(36), gallery:[], unlimited:false, kind:'Женский круг', mode:'офлайн'};
   return S.evd;
@@ -764,10 +812,11 @@ function setEvD(f, v){ evDraft()[f] = v; }
 /* снимаем всё, что сейчас в полях, в черновик — вызывается перед перерисовкой */
 function keepEventFields(){
   const d = evDraft();
-  [['ev_t','t'], ['ev_d','d'], ['ev_tm','tm'], ['ev_c','city'],
-   ['ev_pl','place'], ['ev_a','about']].forEach(([id, f]) => {
+  [['ev_t','t'], ['ev_d','d'], ['ev_tm','tm'], ['ev_c','city'], ['ev_pl','place'],
+   ['ev_a','about'], ['ev_f','full'], ['ev_w','who'], ['ev_b','bring']].forEach(([id, f]) => {
     const e = $('#' + id); if(e && e.value !== undefined && e.value !== '') d[f] = e.value;
   });
+  const pr = $('#ev_pr'); if(pr && pr.value !== '') d.program = evLines(pr.value);
   [['ev_p','price'], ['ev_s','seats']].forEach(([id, f]) => {
     const e = $('#' + id); if(e && e.value !== '') d[f] = +e.value || 0;
   });
@@ -801,7 +850,7 @@ function shNewEvent(){
     <input class="field" id="ev_t" placeholder="Женский круг «...»"
       value="${esc(d.t || '')}" oninput="setEvD('t', this.value)">
     <label class="lbl">Тип</label>
-    <div class="seg">${['Женский круг','Встреча','Концерт'].map(k =>
+    <div class="seg" style="flex-wrap:wrap">${['Женский круг','Встреча','Практика','Лекция','Концерт'].map(k =>
       `<button class="${d.kind===k?'on':''}" onclick="chipPick(this,'evd.kind','${attJs(k)}')">${k}</button>`).join('')}</div>
     <div class="g2">
       <div><label class="lbl">Дата</label>
@@ -828,9 +877,8 @@ function shNewEvent(){
     <button class="row" style="margin:-2px 0 10px;font-size:13px;font-weight:600" onclick="tgUnlimited(this)">
       <span class="sw ${d.unlimited?'on':''}" style="width:38px;height:22px"><i style="width:16px;height:16px;${d.unlimited?'left:19px':''}"></i></span>
       Места не ограничены</button>
-    <label class="lbl">Описание</label>
-    <textarea class="field" id="ev_a" rows="3" oninput="setEvD('about', this.value)">${esc(d.about || '')}</textarea>
-    <button class="btn" onclick="saveEvent()">${isAdmin ? 'Опубликовать' : 'Отправить на согласование'}</button>`;
+    ${evTextFields(d, (f, ex) => `setEvD('${f}', ${ex})`)}
+    <button class="btn" style="margin-top:14px" onclick="saveEvent()">${isAdmin ? 'Опубликовать' : 'Отправить на согласование'}</button>`;
 }
 function tgUnlimited(btn){
   keepEventFields();
@@ -886,7 +934,8 @@ function saveEvent(){
     by:S.role === 'expert' ? me().n : 'Eva Space',
     seats, left:seats, unlimited:!!dr.unlimited, gallery,
     status:S.role === 'admin' ? 'live' : 'pending',
-    about:dr.about || ''});
+    about:dr.about || '', full:dr.full || '', program:dr.program || [],
+    who:dr.who || '', bring:dr.bring || ''});
   S.evd = null; S.sheet = null; syncPush(); render();
   toast(S.role === 'admin' ? 'Мероприятие опубликовано' : 'Отправлено на согласование');
 }
@@ -906,9 +955,8 @@ function shEventEdit(){
       <div><label class="lbl">Цена, ₽</label><input class="field" type="number" value="${x.price}" oninput="setEv('${attJs(x.id)}','price',+this.value||0)"></div>
       <div><label class="lbl">Мест</label><input class="field" type="number" value="${x.seats}" oninput="setEv('${attJs(x.id)}','seats',+this.value||10)"></div>
     </div>
-    <label class="lbl">Описание</label>
-    <textarea class="field" rows="3" oninput="setEv('${attJs(x.id)}','about',this.value)">${esc(x.about||'')}</textarea>
-    <button class="btn ghost" onclick="pickImage('${attJs(x.id)}')">Заменить обложку</button>
+    ${evTextFields(x, (f, ex) => `setEv('${attJs(x.id)}','${f}', ${ex})`)}
+    <button class="btn ghost" style="margin-top:14px" onclick="pickImage('${attJs(x.id)}')">Заменить обложку</button>
     <button class="btn" style="margin-top:9px" onclick="resendEvent('${attJs(x.id)}')">
       ${S.role === 'admin' ? 'Сохранить' : 'Отправить на согласование'}</button>`;
 }
