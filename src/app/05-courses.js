@@ -536,23 +536,83 @@ function goEvent(id){
     : `Записала. Осталось ${plural(e.left,'место','места','мест')}`);
 }
 
-/* ---------- участницы и знакомства ---------- */
+/* =====================================================================
+   ПОСЛАНИЯ
+   Не «объявления с тегами», а поводы рассказать о себе: что получилось,
+   куда съездила, что нашла, о чём хочет спросить круг. У каждого повода
+   свой цвет, свой вопрос-подсказка и своя подпись у звёздочки —
+   так лента читается как разговор, а не как доска объявлений.
+   ===================================================================== */
+const POST_KINDS = [
+  {k:'win',    l:'Получилось',   short:'получилось', i:'✦', c:'#B8894A',
+   ask:'Что получилось на этой неделе? Даже маленькое считается.',
+   hint:'Сегодня встала в шесть и сделала практику до того, как проснулись дети…',
+   star:'горжусь'},
+  {k:'road',   l:'Дорога',       short:'дорога',     i:'⛰', c:'#3F7D62',
+   ask:'Куда съездила и что там было хорошего?',
+   hint:'Вернулась из Дагестана. Горы, тишина и ни одного рабочего чата…',
+   star:'вдохновило'},
+  {k:'meet',   l:'Зову',         short:'зову',       i:'◈', c:'#A8375C',
+   ask:'Кого и куда зовёшь? Напиши город, день и что будете делать.',
+   hint:'В субботу иду в горы, есть место в машине. Маршрут лёгкий, часа четыре…',
+   star:'интересно'},
+  {k:'ask',    l:'Вопрос',       short:'вопрос',     i:'?', c:'#6C5CE0',
+   ask:'О чём хочешь спросить круг?',
+   hint:'Кто возвращался на работу после декрета — как вы это пережили?',
+   star:'тоже важно'},
+  {k:'find',   l:'Находка',      short:'находка',    i:'✧', c:'#4E8F84',
+   ask:'Чем полезным поделишься: книга, врач, место, привычка?',
+   hint:'Нашла подкаст про сон, слушаю вместо ленты перед сном…',
+   star:'спасибо'},
+  {k:'thanks', l:'Спасибо',      short:'спасибо',    i:'♡', c:'#C2506F',
+   ask:'Кого хочешь поблагодарить?',
+   hint:'Спасибо девочке, которая написала мне после круга в четверг…',
+   star:'присоединяюсь'},
+  {k:'hard',   l:'Трудно',       short:'трудно',     i:'◍', c:'#7E7A85',
+   ask:'Что сейчас тяжело? Здесь не советуют — здесь слышат.',
+   hint:'Третий месяц не могу выспаться и злюсь на всех подряд…',
+   star:'я рядом'}
+];
+const kindOf = k => POST_KINDS.find(x => x.k === k) || POST_KINDS[2];
+
+/* цвет автора: один и тот же человек всегда одного цвета */
+const AUTHOR_COLORS = ['#A8375C','#6C5CE0','#3F7D62','#B8894A','#4E8F84','#8054B8','#C2506F','#5E7A6C'];
+function authorColor(who){
+  const key = String(who || '').toLowerCase();
+  return key ? AUTHOR_COLORS[hash(key) % AUTHOR_COLORS.length] : '#7E7A85';
+}
+
 const WALL = [
-  {id:'w1', a:'Ирина', c:'#6C5CE0', ago:'2 ч назад', city:'Москва',
-   t:'Ищу с кем поиграть в падел по выходным. Уровень начинающий, корт в Лужниках, ракетка есть.', st:12, ints:['падел'],
-   comments:[{a:'Света', c:'#3F7D62', t:'Я начинающая, тоже ищу пару. Напиши мне', ago:'1 ч назад'}]},
-  {id:'w2', a:'Настя', c:'#A8375C', ago:'4 ч назад', city:'Москва',
-   t:'Хочу утренние медитации вдвоём по видео. В 7:00, двадцать минут, без разговоров - просто вместе.', st:23, ints:['медитация']},
-  {id:'w3', a:'Юля', c:'#3F7D62', ago:'вчера', city:'Онлайн',
-   t:'Живу в Тбилиси, скучаю по русскому общению. Готова созваниваться и болтать о книгах и жизни.', st:31, ints:['книги','языки']},
-  {id:'w4', a:'Даша', c:'#B8894A', ago:'вчера', city:'Екатеринбург',
-   t:'В субботу иду в горы, есть место в машине. Маршрут лёгкий, часа четыре с привалом.', st:18, ints:['горы']},
-  {id:'w5', a:'Лена', c:'#111014', ago:'2 дня назад', city:'Москва',
-   t:'Мамы с малышами до двух лет, давайте гулять вместе по будням. Парк Горького или Сокольники.', st:27, ints:['материнство']}
+  {id:'w1', a:'Ирина', ago:'2 ч назад', city:'Москва', kind:'meet',
+   t:'Ищу с кем поиграть в падел по выходным. Уровень начинающий, корт в Лужниках, ракетка есть.',
+   st:12, ints:['падел'],
+   comments:[{a:'Света', t:'Я начинающая, тоже ищу пару. Напиши мне', ago:'1 ч назад', st:2}]},
+  {id:'w2', a:'Настя', ago:'4 ч назад', city:'Москва', kind:'win',
+   t:'Третью неделю делаю утреннюю практику до того, как проснутся дети. Раньше не верила, что пять минут что-то меняют — а вечером я спокойнее.',
+   st:23, ints:['медитация'],
+   comments:[{a:'Тая Мирная', t:'Так и работает: важна не длительность, а повторение', ago:'2 ч назад', st:5, curator:true},
+             {a:'Лена', t:'Забираю идею, спасибо', ago:'1 ч назад', st:1}]},
+  {id:'w3', a:'Юля', ago:'вчера', city:'Тбилиси', kind:'road',
+   t:'Месяц живу в Тбилиси. Сюда стоит ехать за тем, чтобы медленно завтракать и разговаривать с незнакомыми людьми. Готова созваниваться и болтать о книгах.',
+   st:31, ints:['книги','языки'], comments:[]},
+  {id:'w4', a:'Даша', ago:'вчера', city:'Екатеринбург', kind:'find',
+   t:'Нашла врача, которая наконец объяснила мне про цикл человеческим языком, а не «попейте витамины». Могу поделиться контактом.',
+   st:18, ints:['здоровье'],
+   comments:[{a:'Марина', t:'Очень надо, напиши пожалуйста', ago:'11 ч назад', st:3}]},
+  {id:'w5', a:'Лена', ago:'2 дня назад', city:'Москва', kind:'hard',
+   t:'Второй месяц не высыпаюсь и срываюсь на своих. Понимаю, что дело не в них. Просто хотела сказать это вслух.',
+   st:27, ints:['материнство'],
+   comments:[{a:'Настя', t:'Я тебя слышу. У меня был такой же год', ago:'1 д назад', st:8}]},
+  {id:'w6', a:'Оксана', ago:'3 дня назад', city:'Казань', kind:'thanks',
+   t:'Спасибо женщине, которая в четверг после круга догнала меня на улице и просто спросила, как я. Это был лучший вопрос за месяц.',
+   st:44, ints:[], comments:[]},
+  {id:'w7', a:'Марина', ago:'4 дня назад', city:'Санкт-Петербург', kind:'ask',
+   t:'Кто возвращался к работе после долгого перерыва? Не про резюме, а про то, как перестать думать, что всё забыла.',
+   st:16, ints:['работа'],
+   comments:[{a:'Ольга Светлова', t:'Начните с одного маленького заказа, а не с большой должности', ago:'3 д назад', st:6, curator:true}]}
 ];
 
 function pgMembers(){
-  const wall = WALL;
   const prof = S.datingProfile;
   return `
   ${prof ? datingBlock() : `
@@ -562,83 +622,143 @@ function pgMembers(){
         с похожими интересами. Можно встретиться на кофе в своём городе или познакомиться онлайн.</p>
       <button class="btn" onclick="openSheet('dating')">Найти подруг</button>
     </div>`}
+  ${wallFeed()}`;
+}
 
+/* ---------- лента посланий ---------- */
+function wallFeed(){
+  const f = S.wallKind || 'все';
+  const list = f === 'все' ? WALL : WALL.filter(w => (w.kind || 'meet') === f);
+  const counts = {};
+  WALL.forEach(w => { const k = w.kind || 'meet'; counts[k] = (counts[k] || 0) + 1; });
+
+  return `
   <div class="sec-h"><h2 class="serif" style="font-size:18px">Послания</h2>
     <span class="small muted">${WALL.length}</span></div>
+
   <button class="wallstart" onclick="openSheet('newPost')">
-    ${chatAva(S.name, 'var(--ink)', true, 34)}
-    <span>Напиши послание: ищу с кем поиграть в падел…</span>
+    ${chatAva(S.name, 'var(--ink)', true, 34, myMail())}
+    <span>Расскажи, что получилось, куда съездила или о чём хочешь спросить…</span>
     <span class="wsend">Написать</span>
   </button>
 
+  <div class="kindrow">
+    <button class="kchip ${f==='все'?'on':''}" onclick="S.wallKind='все';render()">всё</button>
+    ${POST_KINDS.filter(k => counts[k.k]).map(k =>
+      `<button class="kchip ${f===k.k?'on':''}" style="--kc:${safeColor(k.c)}"
+        onclick="S.wallKind='${attJs(k.k)}';render()"><i>${k.i}</i>${k.short}
+        <b>${counts[k.k]}</b></button>`).join('')}
+  </div>
 
-  ${wall.map(w => {
-    const liked = (S.starred||[]).includes(w.id);
-    return `<div class="wallpost">
-      <div class="row" style="align-items:center;margin-bottom:9px">
-        ${chatAva(w.a, w.c, isMine(w), 38, w.email)}
-        <div style="flex:1;min-width:0">
-          <b style="font-size:14px;display:block">${esc(w.a)}${isMine(w)?' · ты':''}</b>
-          <span class="small muted" style="font-size:11px">${esc(w.city)} · ${esc(w.ago)}</span>
-        </div>
+  ${list.length ? list.map(wallCard).join('')
+    : `<div class="empty">В этом разделе пока пусто. Напиши первой — тебя увидят все участницы.</div>`}`;
+}
+
+/* карточка послания */
+function wallCard(w){
+  const k = kindOf(w.kind);
+  const liked = (S.starred||[]).includes(w.id);
+  const mine = isMine(w);
+  const canDrop = mine || S.role === 'admin';
+  const photo = w.photo && MEDIA[w.photo] ? MEDIA[w.photo] : '';
+  const cmts = w.comments || [];
+  const open = (S.openCmts||[]).includes(w.id);
+
+  return `<div class="wallpost k-${esc(k.k)}" style="--kc:${safeColor(k.c)}">
+    <div class="wtop">
+      ${chatAva(w.a, authorColor(w.email || w.a), mine, 38, w.email)}
+      <div style="flex:1;min-width:0">
+        <b style="font-size:14px;display:block">${esc(w.a)}${mine?' · ты':''}</b>
+        <span class="small muted" style="font-size:11px">${esc(w.city || '')}${w.city?' · ':''}${esc(w.ago)}</span>
       </div>
-      <p style="margin:0 0 10px;font-size:14px;line-height:1.5">${esc(w.t)}</p>
-      <div class="chips wrap" style="padding:0 0 10px">${w.ints.map(t =>
-        `<span class="chip pale" style="padding:3px 9px;font-size:10.5px">${t}</span>`).join('')}</div>
-      <div class="wallfoot">
-        <div class="row" style="gap:7px">
-          <button class="btn xs" onclick="replyWall('${attJs(w.id)}')">Познакомиться</button>
-          <button class="cmtbtn" onclick="toggleComments('${attJs(w.id)}')">
-            💬 ${(w.comments||[]).length || ''}</button>
-        </div>
-        <div class="row" style="gap:7px">
-          ${S.role === 'admin' ? `<button class="cmtbtn" style="color:var(--accent)"
-            onclick="delPost('${attJs(w.id)}')">удалить</button>` : ''}
-          <button class="starbtn ${liked?'on':''}" onclick="starPost('${attJs(w.id)}')">
-            ${starMark(16, liked ? '#E7A339' : 'rgba(17,16,20,.22)')}
-            <span>${w.st + (liked?1:0)}</span>
-          </button>
-        </div>
+      <span class="kbadge"><i>${k.i}</i>${k.l}</span>
+    </div>
+
+    <p class="wtext">${esc(w.t)}</p>
+    ${photo ? `<button class="wphoto" onclick="openSheet({k:'photo',src:'${attJs(w.photo)}'})">
+      <img src="${safeUrl(photo)}" alt="" loading="lazy"></button>` : ''}
+    ${(w.ints||[]).length ? `<div class="chips wrap" style="padding:0 0 10px">${(w.ints||[]).map(t =>
+      `<span class="chip pale" style="padding:3px 9px;font-size:10.5px">${esc(t)}</span>`).join('')}</div>` : ''}
+
+    <div class="wallfoot">
+      <div class="row" style="gap:7px">
+        <button class="starbtn ${liked?'on':''}" onclick="starPost('${attJs(w.id)}')">
+          ${starMark(15, liked ? '#E7A339' : 'rgba(17,16,20,.22)')}
+          <span>${w.st + (liked?1:0)}</span>
+          <em>${esc(k.star)}</em>
+        </button>
+        <button class="cmtbtn ${open?'on':''}" onclick="toggleComments('${attJs(w.id)}')">
+          ответить${cmts.length ? ' · ' + cmts.length : ''}</button>
       </div>
-      ${(S.openCmts||[]).includes(w.id) ? `
-        <div class="cmts">
-          ${(w.comments||[]).map((c, ci) => `<div class="cmt ${isMine(c)?'own':''}">
-            ${chatAva(c.a, c.c, isMine(c), 28, c.email)}
-            <div style="flex:1;min-width:0">
-              <div class="row" style="gap:6px">
-                <b style="font-size:12.5px;color:${isMine(c) ? 'var(--accent)' : 'var(--ink)'}">${esc(c.a)}${isMine(c)?' · ты':''}</b>
-                ${c.curator ? '<span class="badge-cur">куратор</span>' : ''}
-                <span class="small muted" style="font-size:10px;margin-left:auto">${esc(c.ago)}</span>
-                ${S.role === 'admin' ? `<button style="font-size:10px;color:var(--accent)"
-                  onclick="delComment('${attJs(w.id)}',${ci})">✕</button>` : ''}</div>
-              <div style="font-size:13px;line-height:1.45;margin-top:3px">${esc(c.t)}</div>
-            </div>
-          </div>`).join('') || '<div class="small muted" style="padding:4px 0 8px">Пока никто не ответил. Будь первой</div>'}
-          <div class="row" style="gap:7px;margin-top:6px">
-            <input class="field" style="margin:0;flex:1;padding:9px 12px;font-size:13px" id="cm_${w.id}"
-              placeholder="Ответить" onkeydown="if(event.key==='Enter')addComment('${attJs(w.id)}')">
-            <button class="btn sm" onclick="addComment('${attJs(w.id)}')">→</button>
-          </div>
-        </div>` : (w.comments||[]).length ? `
-        <button class="cmtpeek" onclick="toggleComments('${attJs(w.id)}')">
-          ${chatAva(w.comments[0].a, w.comments[0].c, isMine(w.comments[0]), 22, w.comments[0].email)}
-          <span><b>${esc(w.comments[0].a)}:</b> ${esc(w.comments[0].t.slice(0,38))}${w.comments[0].t.length>38?'…':''}</span>
-          ${w.comments.length > 1 ? `<span class="cmtmore">ещё ${w.comments.length - 1}</span>` : ''}
-        </button>` : ''}
-    </div>`;
-  }).join('')}`;
+      <div class="row" style="gap:7px">
+        ${w.kind === 'meet' || w.kind === 'ask'
+          ? `<button class="btn xs" onclick="replyWall('${attJs(w.id)}')">Написать</button>` : ''}
+        ${canDrop ? `<button class="wdel" title="Удалить"
+          onclick="delPost('${attJs(w.id)}')">✕</button>` : ''}
+      </div>
+    </div>
+
+    ${open ? `<div class="cmts">
+        ${cmts.map((c, ci) => commentRow(w, c, ci)).join('')
+          || `<div class="small muted" style="padding:4px 0 8px">${
+              w.kind === 'hard' ? 'Пока никто не ответил. Иногда достаточно написать «я рядом»'
+                                : 'Пока никто не ответил. Будь первой'}</div>`}
+        <div class="cmtnew">
+          <input class="field" id="cm_${esc(w.id)}" placeholder="${
+            w.kind === 'hard' ? 'Поддержи, не советуй' : 'Ответить'}"
+            onkeydown="if(event.key==='Enter')addComment('${attJs(w.id)}')">
+          <button class="btn sm" onclick="addComment('${attJs(w.id)}')">→</button>
+        </div>
+      </div>`
+    : cmts.length ? `<button class="cmtpeek" onclick="toggleComments('${attJs(w.id)}')">
+        ${chatAva(cmts[0].a, authorColor(cmts[0].email || cmts[0].a), isMine(cmts[0]), 22, cmts[0].email)}
+        <span><b>${esc(cmts[0].a)}:</b> ${esc(cmts[0].t.slice(0,38))}${cmts[0].t.length>38?'…':''}</span>
+        ${cmts.length > 1 ? `<span class="cmtmore">ещё ${cmts.length - 1}</span>` : ''}
+      </button>` : ''}
+  </div>`;
+}
+
+/* Ответ под посланием. У каждой женщины свой цвет — лента перестаёт быть
+   серой простынёй, и видно, кто здесь уже свой. */
+function commentRow(w, c, ci){
+  const col = authorColor(c.email || c.a);
+  const mine = isMine(c);
+  const author = !!(c.email && w.email && String(c.email).toLowerCase() === String(w.email).toLowerCase());
+  const starred = (S.starredCmts||[]).includes(w.id + ':' + ci);
+  const canDrop = mine || S.role === 'admin';
+  return `<div class="cmt${mine?' own':''}" style="--ac:${safeColor(col)}">
+    ${chatAva(c.a, col, mine, 28, c.email)}
+    <div style="flex:1;min-width:0">
+      <div class="crow">
+        <b style="font-size:12.5px;color:${safeColor(col)}">${esc(c.a)}${mine?' · ты':''}</b>
+        ${author ? '<span class="badge-au">автор</span>' : ''}
+        ${c.curator ? '<span class="badge-cur">куратор</span>' : ''}
+        <span class="small muted" style="font-size:10px;margin-left:auto">${esc(c.ago)}</span>
+        ${canDrop ? `<button class="cdel" title="Удалить"
+          onclick="delComment('${attJs(w.id)}',${ci})">✕</button>` : ''}
+      </div>
+      <div class="ctext">${esc(c.t)}</div>
+      <button class="cstar ${starred?'on':''}" onclick="starComment('${attJs(w.id)}',${ci})">
+        ${starMark(12, starred ? '#E7A339' : 'rgba(17,16,20,.24)')}
+        <span>${(c.st || 0) + (starred?1:0) || ''}</span></button>
+    </div>
+  </div>`;
 }
 
 /* ---------- знакомства ---------- */
-/* пока анкета не опубликована — показываем её в том же виде, в котором увидят другие */
-function myProfileCard(){
+/* Анкета всегда сначала показывается такой, какой её увидят другие: сохранила —
+   смотришь на себя со стороны и решаешь, публиковать или ещё поправить. */
+function profileCard(preview){
   const p = S.datingProfile;
   const age = S.birth.date ? Math.floor((Date.now() - new Date(S.birth.date))/31557600000) : null;
   return `
   <div class="card" style="padding:14px">
-    <b style="font-size:16px">Твоя анкета готова</b>
-    <p class="small muted" style="margin:6px 0 12px">Так тебя увидят другие участницы. Проверь и опубликуй -
-      после этого начнём подбирать знакомства.</p>
+    <div class="spread" style="margin-bottom:8px">
+      <b style="font-size:16px">${preview ? 'Так тебя увидят' : 'Твоя анкета'}</b>
+      ${preview ? '' : '<span class="chip pale" style="padding:3px 9px">опубликована</span>'}
+    </div>
+    ${preview ? `<p class="small muted" style="margin:0 0 12px">Проверь и опубликуй — после этого
+      начнём подбирать знакомства.</p>` : ''}
     <div class="mcard myprofile">
       <div class="mphoto">${myAvatar()
         ? `<img src="${safeUrl(myAvatar())}" alt="">`
@@ -649,7 +769,7 @@ function myProfileCard(){
               <div class="small muted" style="margin-top:6px">С фото откликаются в разы чаще</div>
             </div></div>`}
         <div class="mname"><b>${esc(S.name||'Ты')}${age ? ', ' + age : ''}</b>
-          <span>${esc(p.city || 'город не указан')}${p.goal ? ' · ' + p.goal : ''}</span></div>
+          <span>${esc(p.city || 'город не указан')}${p.goal ? ' · ' + esc(p.goal) : ''}</span></div>
       </div>
       <div style="padding:14px">
         <p style="margin:0 0 10px;font-size:14px;line-height:1.5">${esc(p.about || 'Расскажи пару слов о себе - это поможет найти близких по духу')}</p>
@@ -658,20 +778,38 @@ function myProfileCard(){
       </div>
     </div>
     <div class="draftbar">
-      <button class="btn ghost" style="flex:1" onclick="openSheet('dating')">Редактировать</button>
-      <button class="btn" style="flex:1" onclick="publishProfile()">Опубликовать</button>
+      <button class="btn ghost" style="flex:1" onclick="openSheet('dating')">Изменить</button>
+      ${preview
+        ? `<button class="btn" style="flex:1" onclick="publishProfile()">Опубликовать</button>`
+        : `<button class="btn ghost" style="flex:1" onclick="hideMyProfile()">Скрыть</button>`}
     </div>
+    <button class="btn ghost sm" style="margin-top:9px;color:var(--accent)"
+      onclick="openSheet('dropProfile')">Удалить анкету</button>
   </div>`;
 }
 function publishProfile(){
   S.datingProfile.published = true;
+  S.showProfile = false;
   S.matchIdx = 0;
   render(); schedulePersist();
   toast(myAvatar() ? 'Анкета опубликована. Подбираем знакомства' : 'Опубликовано. С фото откликаются чаще - добавь позже');
 }
+/* посмотреть свою опубликованную анкету и убрать просмотр обратно */
+function showMyProfile(){ S.showProfile = true; render(); }
+function hideMyProfile(){ S.showProfile = false; render(); }
+
+/* анкету можно убрать совсем: пропадает из подбора, интересы остаются в профиле */
+function dropProfile(){
+  S.datingProfile = null; S.dp = null; S.showProfile = false;
+  S.matchIdx = 0; S.sheet = null;
+  render(); schedulePersist();
+  toast('Анкета удалена. Тебя больше не показывают в знакомствах');
+}
+
 function datingBlock(){
   const p = S.datingProfile;
-  if(!p.published) return myProfileCard();
+  if(!p.published) return profileCard(true);        // не опубликована — сначала показываем
+  if(S.showProfile) return profileCard(false);      // и по кнопке в любой момент
   const fmt = S.datingFmt || 'кофе';
   const pool = matchPool(fmt);
   const idx = Math.min(S.matchIdx || 0, Math.max(0, pool.length-1));
@@ -680,7 +818,7 @@ function datingBlock(){
   <div class="card" style="padding:14px">
     <div class="spread" style="margin-bottom:10px">
       <b style="font-size:16px">Новые знакомства</b>
-      <button class="chip" onclick="openSheet('dating')">Анкета</button>
+      <button class="chip" onclick="showMyProfile()">Моя анкета</button>
     </div>
     <div class="seg" style="margin-bottom:12px">
       <button class="${fmt==='кофе'?'on':''}" onclick="setFmt('кофе')">Кофе в моём городе</button>
@@ -809,10 +947,11 @@ function addComment(id){
   if(!w) return;
   w.comments = w.comments || [];
   w.comments.push({a:S.role === 'admin' ? (S.adminName || 'Куратор') : (S.name || 'Я'),
-    c:'#111014', t:v, ago:'только что', curator:S.role === 'admin', email:myMail()});
+    t:v, ago:'только что', st:0, curator:S.role === 'admin', email:myMail()});
+  if(inp) inp.value = '';
   S.points += 3;
   render(); schedulePersist(); syncPush(['wall']);
-  toast('Комментарий добавлен. +3 балла');
+  toast(w.kind === 'hard' ? 'Она это увидит. +3 балла' : 'Ответ добавлен. +3 балла');
 }
 
 function starPost(id){
@@ -820,7 +959,24 @@ function starPost(id){
   const on = S.starred.includes(id);
   S.starred = on ? S.starred.filter(x => x !== id) : [...S.starred, id];
   render(); schedulePersist();
-  if(!on) toast('Звезда отправлена');
+  if(!on){
+    const w = WALL.find(x => x.id === id);
+    toast(w ? kindOf(w.kind).star.charAt(0).toUpperCase() + kindOf(w.kind).star.slice(1) : 'Звезда отправлена');
+  }
+}
+
+/* звёздочка у ответа: отмечаем свои, чтобы не накрутить дважды */
+function starComment(pid, ci){
+  const key = pid + ':' + ci;
+  S.starredCmts = S.starredCmts || [];
+  const on = S.starredCmts.includes(key);
+  S.starredCmts = on ? S.starredCmts.filter(x => x !== key) : [...S.starredCmts, key];
+  const w = WALL.find(x => x.id === pid);
+  if(w && w.comments && w.comments[ci]){
+    const c = w.comments[ci];
+    c.st = Math.max(0, (c.st || 0) + (on ? -1 : 1));
+  }
+  render(); schedulePersist(); syncPush(['wall']);
 }
 
 /* =====================================================================
@@ -988,19 +1144,24 @@ function delMsg(gid, i){ S.chats[gid].splice(i,1); render(); toast('Сообще
 function delPost(id){
   const w = WALL.find(x => x.id === id);
   if(!w) return;
+  /* своё послание женщина убирает сама, чужое — только администратор */
+  if(!isMine(w) && S.role !== 'admin') return toast('Убрать послание может только автор');
   if(!confirm('Удалить послание «' + String(w.t).slice(0, 60) + '…»? Вернуть будет нельзя.')) return;
-  const i = WALL.indexOf(w);
-  WALL.splice(i, 1);
-  render(); syncPush(['wall'], true);
+  if(w.photo) delete MEDIA[w.photo];
+  WALL.splice(WALL.indexOf(w), 1);
+  S.openCmts = (S.openCmts||[]).filter(x => x !== id);
+  render(); schedulePersist(); syncPush(['wall','media'], true);
   toast('Послание удалено');
 }
 function delComment(pid, ci){
   const w = WALL.find(x => x.id === pid);
   if(!w || !w.comments || !w.comments[ci]) return;
-  if(!confirm('Удалить комментарий?')) return;
+  if(!isMine(w.comments[ci]) && S.role !== 'admin') return toast('Убрать ответ может только автор');
+  if(!confirm('Удалить ответ?')) return;
   w.comments.splice(ci, 1);
-  render(); syncPush(['wall'], true);
-  toast('Комментарий удалён');
+  S.starredCmts = (S.starredCmts||[]).filter(x => x.indexOf(pid + ':') !== 0);
+  render(); schedulePersist(); syncPush(['wall'], true);
+  toast('Ответ удалён');
 }
 function scrollChat(){ setTimeout(() => { const l = $('#clist'); if(l) window.scrollTo(0, document.body.scrollHeight); }, 60); }
 
@@ -1135,7 +1296,8 @@ function replyWall(id){
   const tm = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
   let t = S.inbox.find(x => x.from === w.a && x.kind === 'знакомство');
   if(!t){
-    t = {id:'wr'+Date.now().toString(36), from:w.a, c:w.c, kind:'знакомство', ago:'только что', unread:false, msgs:[]};
+    t = {id:'wr'+Date.now().toString(36), from:w.a, c:authorColor(w.email || w.a),
+         kind:'знакомство', ago:'только что', unread:false, msgs:[], email:w.email || ''};
     S.inbox.unshift(t);
   }
   t.msgs.push({me:true, t:`Привет! Откликаюсь на твоё послание: «${w.t.slice(0,60)}${w.t.length>60?'…':''}»`, tm});

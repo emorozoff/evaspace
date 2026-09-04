@@ -253,12 +253,17 @@ const FIX = {
   },
   wall: x => {
     x.id = String(x.id); x.a = okStr(x.a, 'Гостья'); x.t = okStr(x.t);
-    x.c = okStr(x.c, '#111014'); x.ints = okArr(x.ints); x.st = okNum(x.st);
+    x.ints = okArr(x.ints).map(v => okStr(v)).filter(Boolean); x.st = okNum(x.st);
     x.email = okStr(x.email).toLowerCase();
+    x.city = okStr(x.city); x.ago = okStr(x.ago, 'недавно');
+    x.photo = okStr(x.photo);
+    /* неизвестный повод не должен ронять ленту */
+    x.kind = (typeof POST_KINDS !== 'undefined' && POST_KINDS.some(k => k.k === x.kind)) ? x.kind : 'meet';
     delete x.own;                       /* чужая метка «моё» с сервера не в счёт */
     x.comments = okArr(x.comments).filter(c => c && typeof c === 'object')
                   .map(c => { const cc = {...c, a: okStr(c.a, 'Гостья'), t: okStr(c.t),
-                                ago: okStr(c.ago), email: okStr(c.email).toLowerCase()};
+                                ago: okStr(c.ago), st: okNum(c.st),
+                                email: okStr(c.email).toLowerCase()};
                               delete cc.own; return cc; });
     return x;
   },

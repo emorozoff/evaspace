@@ -21,7 +21,7 @@ function sheet(){
     newContent:shNewContent, editContent:shEditContent, reject:shReject, rework:shRework,
     units:shUnits, groupInfo:shGroupInfo, newGroup:shNewGroup, fix:shFix, video:shVideo,
     hw:shHW, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
-    install:shInstall, diag:shDiag, askGood:shAskGood, newPost:shNewPost, dating:shDating, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
+    install:shInstall, diag:shDiag, askGood:shAskGood, newPost:shNewPost, photo:shPhoto, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
     service:shService, editUser:shEditUser,
     newCourse:shNewCourse, newGood:shNewGood, idea:shIdea})[k]();
   return `<div class="bg" onclick="if(event.target===this)closeSheet()">
@@ -1242,11 +1242,25 @@ function shDating(){
 function saveDating(){
   const d = S.dp || {};
   if(!d.ints || !d.ints.length) return toast('Выбери хотя бы один интерес');
-  S.datingProfile = {...d};
+  /* каждый раз после правки показываем анкету такой, какой её увидят другие:
+     раньше опубликованную анкету посмотреть было негде */
+  S.datingProfile = {...d, published:false};
   S.myInts = d.ints;
+  S.dp = null;
   S.matchIdx = 0; S.datingFmt = S.datingFmt || 'кофе';
-  S.sheet = null; render(); schedulePersist();
-  toast('Анкета сохранена. Подбираем знакомства');
+  S.showProfile = false;
+  S.sheet = null; S.tab = 'club'; S.clubTab = 'people';
+  render(); schedulePersist();
+  toast('Посмотри, как анкета выглядит со стороны');
+}
+
+/* подтверждение удаления анкеты */
+function shDropProfile(){
+  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Удалить анкету?</h2>
+    <p class="small muted" style="margin:0 0 14px">Тебя перестанут показывать в знакомствах, а переписки
+      останутся на месте. Заполнить заново можно в любой момент.</p>
+    <button class="btn" style="background:var(--accent)" onclick="dropProfile()">Удалить</button>
+    <button class="btn ghost" style="margin-top:9px" onclick="closeSheet()">Оставить</button>`;
 }
 function shNewInt(){
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Свой интерес</h2>
@@ -1265,34 +1279,89 @@ function addCustomInt(){
   openSheet('dating'); toast('Интерес добавлен');
 }
 function shNewPost(){
-  const ints = S.myInts || [];
-  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Послание участницам</h2>
-    <p class="small muted" style="margin:0 0 12px">Расскажи, кого ищешь или что предлагаешь. Коротко и по делу.</p>
-    <textarea class="field" id="wp_t" rows="4" placeholder="Ищу с кем поиграть в падел по выходным…"
-      oninput="S.postText=this.value">${esc(S.postText||'')}</textarea>
-    <div class="chips wrap">${['Ищу компанию','Предлагаю встречу','Хочу поговорить','Ищу подругу по интересам'].map(t =>
-      `<button class="chip" onclick="addPostPhrase('${attJs(t)}')">${t}</button>`).join('')}</div>
-    <label class="lbl" style="margin-top:10px">Темы послания <span id="pcount" class="muted">${(S.postInts||[]).length?'('+(S.postInts||[]).length+')':''}</span></label>
-    <div class="chips wrap">${[...INTERESTS, ...(S.customInts||[])].map(t =>
-      `<button class="chip ${(S.postInts||[]).includes(t)?'on':''}" onclick="chipToggle(this,'postInts','${attJs(t)}','#pcount')">${t}</button>`).join('')}</div>
-    ${ints.length ? `<div class="small muted" style="margin-top:6px">Твои интересы: ${ints.join(', ')}</div>` : ''}
-    <button class="btn" style="margin-top:14px" onclick="sendPost()">Отправить послание</button>
-    <p class="small muted" style="text-align:center;margin-top:8px;font-size:11.5px">Увидят все участницы · +5 баллов</p>`;
+  const d = S.post = S.post || {kind:'win', t:'', ints:[], photo:''};
+  const k = kindOf(d.kind);
+  const all = [...INTERESTS, ...(S.customInts||[])];
+  const pic = d.photo && MEDIA[d.photo] ? MEDIA[d.photo] : '';
+  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Послание</h2>
+    <p class="small muted" style="margin:0 0 12px">Выбери повод — от него зависит, как послание увидят
+      и что ответят.</p>
+
+    <div class="kindpick">${POST_KINDS.map(x =>
+      `<button class="kcard ${d.kind===x.k?'on':''}" style="--kc:${safeColor(x.c)}"
+        onclick="pickKind('${attJs(x.k)}')"><i>${x.i}</i><span>${x.l}</span></button>`).join('')}</div>
+
+    <div class="kask" style="--kc:${safeColor(k.c)}">${esc(k.ask)}</div>
+    <textarea class="field" id="wp_t" rows="5" placeholder="${esc(k.hint)}"
+      oninput="S.post.t=this.value">${esc(d.t||'')}</textarea>
+
+    <label class="lbl">Фотография</label>
+    ${pic ? `<div class="wpick"><img src="${safeUrl(pic)}" alt="">
+        <button class="phdel" onclick="dropPostPhoto()">✕</button></div>`
+      : `<button class="addphoto" style="width:100%" onclick="addPostPhoto()">
+          <span class="pl2">＋</span><span class="small">Добавить фото</span></button>`}
+
+    <label class="lbl" style="margin-top:12px">Темы <span id="pcount" class="muted">${
+      d.ints.length ? '(' + d.ints.length + ')' : ''}</span></label>
+    <p class="tiny muted" style="margin:-4px 0 6px">Не обязательно. По темам тебя найдут те, кому это близко.</p>
+    <div class="chips wrap">${all.map(x =>
+      `<button class="chip ${d.ints.includes(x)?'on':''}"
+        onclick="chipToggle(this,'post.ints','${attJs(x)}','#pcount')">${esc(x)}</button>`).join('')}</div>
+
+    <button class="btn" style="margin-top:14px" onclick="sendPost()">Опубликовать</button>
+    <p class="small muted" style="text-align:center;margin-top:8px;font-size:11.5px">
+      Увидят все участницы · +5 баллов</p>`;
 }
-function addPostPhrase(t){
-  S.postText = ((S.postText || '') + (S.postText ? ' ' : '') + t + '. ');
+
+/* повод меняем, набранное сохраняем */
+function pickKind(k){
+  const inp = $('#wp_t');
+  S.post = S.post || {};
+  if(inp) S.post.t = inp.value;
+  S.post.kind = k;
   render();
 }
+function addPostPhoto(){
+  const inp = $('#wp_t');
+  S.post = S.post || {};
+  if(inp) S.post.t = inp.value;
+  const key = 'wp_' + Date.now().toString(36);
+  pickImage(key, () => { S.post.photo = key; render(); });
+}
+function dropPostPhoto(){
+  const inp = $('#wp_t');
+  if(inp) S.post.t = inp.value;
+  if(S.post.photo) delete MEDIA[S.post.photo];
+  S.post.photo = '';
+  render();
+}
+
+/* просмотр фотографии из ленты во весь экран */
+function shPhoto(){
+  const src = MEDIA[S.sheet.src];
+  if(!src) return `<div class="empty">Фотография не найдена</div>`;
+  return `<img src="${safeUrl(src)}" alt="" style="width:100%;border-radius:var(--r-lg);display:block">
+    <button class="btn ghost" style="margin-top:12px" onclick="closeSheet()">Закрыть</button>`;
+}
+
 function sendPost(){
-  const t = ((($('#wp_t')||{}).value) || S.postText || '').trim();
-  if(!t) return toast('Напиши хотя бы пару слов');
+  const d = S.post || {};
+  const text = ((($('#wp_t')||{}).value) || d.t || '').trim();
+  if(!text) return toast('Напиши хотя бы пару слов');
+  const id = 'w' + Date.now().toString(36);
+  /* фотография переезжает под номер послания, иначе черновик и лента
+     разошлись бы: черновик стирается, а картинка осталась бы висеть */
+  let photo = '';
+  if(d.photo && MEDIA[d.photo]){ photo = id + '_p'; MEDIA[photo] = MEDIA[d.photo]; delete MEDIA[d.photo]; }
   /* послание подписываем почтой автора: метка «моё» уезжала в общие данные
      и чужие послания показывались чужими же аватарками */
-  WALL.unshift({id:'w'+Date.now().toString(36), a:S.name || 'Я', c:'#111014', ago:'только что',
-    city:((S.datingProfile && S.datingProfile.city) || 'Москва'), t, st:0,
-    ints:(S.postInts||[]).length ? S.postInts : (S.myInts||[]).slice(0,2), email:myMail()});
-  S.points += 5; S.postInts = []; S.postText = ''; S.sheet = null;
-  render(); schedulePersist(); syncPush(['wall']); toast('Послание опубликовано. +5 баллов');
+  WALL.unshift({id, a:S.name || 'Я', ago:'только что', kind:d.kind || 'win',
+    city:((S.datingProfile && S.datingProfile.city) || S.city || ''), t:text, st:0, photo,
+    ints:(d.ints||[]).slice(0, 4), email:myMail(), comments:[]});
+  S.points += 5; S.post = null; S.postInts = []; S.postText = '';
+  S.wallKind = 'все'; S.sheet = null;
+  render(); schedulePersist(); syncPush(['wall','media']);
+  toast('Послание опубликовано. +5 баллов');
 }
 
 /* ---------- вопрос о товаре ---------- */
