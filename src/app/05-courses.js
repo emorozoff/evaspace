@@ -93,7 +93,7 @@ function pgCourseLanding(){
     </div>
 
     <div class="sec-h" style="margin-top:16px"><h2 class="serif">О курсе за две минуты</h2></div>
-    <div class="promo">${videoBlock(c.id+'_promo','course')}</div>
+    <div class="promo${hasPlayer(c.id+'_promo') ? ' live' : ''}">${videoBlock(c.id+'_promo','course')}</div>
 
     <div class="sec-h"><h2 class="serif">Для кого этот курс</h2></div>
     ${info.who.map((w,i) => `<div class="sellcard">

@@ -759,7 +759,19 @@ function evDraft(){
   return S.evd;
 }
 function setEvD(f, v){ evDraft()[f] = v; }
-function setEvDR(f, v){ evDraft()[f] = v; render(); }
+
+/* снимаем всё, что сейчас в полях, в черновик — вызывается перед перерисовкой */
+function keepEventFields(){
+  const d = evDraft();
+  [['ev_t','t'], ['ev_d','d'], ['ev_tm','tm'], ['ev_c','city'],
+   ['ev_pl','place'], ['ev_a','about']].forEach(([id, f]) => {
+    const e = $('#' + id); if(e && e.value !== undefined && e.value !== '') d[f] = e.value;
+  });
+  [['ev_p','price'], ['ev_s','seats']].forEach(([id, f]) => {
+    const e = $('#' + id); if(e && e.value !== '') d[f] = +e.value || 0;
+  });
+}
+function setEvDR(f, v){ keepEventFields(); evDraft()[f] = v; render(); }
 
 function shNewEvent(){
   const isAdmin = S.role === 'admin';
@@ -784,42 +796,54 @@ function shNewEvent(){
       })()}
     </div>
 
-    <label class="lbl">Название</label><input class="field" id="ev_t" placeholder="Женский круг «...»">
+    <label class="lbl">Название</label>
+    <input class="field" id="ev_t" placeholder="Женский круг «...»"
+      value="${esc(d.t || '')}" oninput="setEvD('t', this.value)">
     <label class="lbl">Тип</label>
     <div class="seg">${['Женский круг','Встреча','Концерт'].map(k =>
       `<button class="${d.kind===k?'on':''}" onclick="chipPick(this,'evd.kind','${attJs(k)}')">${k}</button>`).join('')}</div>
     <div class="g2">
-      <div><label class="lbl">Дата</label><input class="field" id="ev_d" type="date"></div>
-      <div><label class="lbl">Время</label><input class="field" id="ev_tm" type="time" value="19:00"></div>
+      <div><label class="lbl">Дата</label>
+        <input class="field" id="ev_d" type="date" value="${esc(d.d || '')}" oninput="setEvD('d', this.value)"></div>
+      <div><label class="lbl">Время</label>
+        <input class="field" id="ev_tm" type="time" value="${esc(d.tm || '19:00')}" oninput="setEvD('tm', this.value)"></div>
     </div>
     <label class="lbl">Формат</label>
     <div class="seg">${['офлайн','онлайн'].map(k =>
       `<button class="${d.mode===k?'on':''}" onclick="setEvDR('mode','${attJs(k)}')">${k}</button>`).join('')}</div>
     <label class="lbl">${d.mode==='онлайн' ? 'Платформа' : 'Город'}</label>
-    <input class="field" id="ev_c" placeholder="${d.mode==='онлайн' ? 'Zoom' : 'Москва'}">
+    <input class="field" id="ev_c" placeholder="${d.mode==='онлайн' ? 'Zoom' : 'Москва'}"
+      value="${esc(d.city || '')}" oninput="setEvD('city', this.value)">
     ${d.mode==='офлайн' ? `<label class="lbl">Адрес или место</label>
-      <input class="field" id="ev_pl" placeholder="Чистые пруды, студия «Тихая»">` : ''}
+      <input class="field" id="ev_pl" placeholder="Чистые пруды, студия «Тихая»"
+        value="${esc(d.place || '')}" oninput="setEvD('place', this.value)">` : ''}
     <div class="g2">
-      <div><label class="lbl">Цена, ₽</label><input class="field" id="ev_p" type="number" value="0"></div>
+      <div><label class="lbl">Цена, ₽</label>
+        <input class="field" id="ev_p" type="number" value="${d.price || 0}" oninput="setEvD('price', +this.value || 0)"></div>
       <div><label class="lbl">Мест</label>
-        <input class="field" id="ev_s" type="number" value="20" ${d.unlimited?'disabled':''}></div>
+        <input class="field" id="ev_s" type="number" value="${d.seats || 20}"
+          oninput="setEvD('seats', +this.value || 0)" ${d.unlimited?'disabled':''}></div>
     </div>
     <button class="row" style="margin:-2px 0 10px;font-size:13px;font-weight:600" onclick="tgUnlimited(this)">
       <span class="sw ${d.unlimited?'on':''}" style="width:38px;height:22px"><i style="width:16px;height:16px;${d.unlimited?'left:19px':''}"></i></span>
       Места не ограничены</button>
-    <label class="lbl">Описание</label><textarea class="field" id="ev_a" rows="3"></textarea>
+    <label class="lbl">Описание</label>
+    <textarea class="field" id="ev_a" rows="3" oninput="setEvD('about', this.value)">${esc(d.about || '')}</textarea>
     <button class="btn" onclick="saveEvent()">${isAdmin ? 'Опубликовать' : 'Отправить на согласование'}</button>`;
 }
 function tgUnlimited(btn){
+  keepEventFields();
   const d = evDraft();
   d.unlimited = !d.unlimited;
   render();
 }
 function addEvPhoto(){
+  keepEventFields();
   const d = evDraft(), gk = d.key + '_g' + Date.now().toString(36);
   pickImage(gk, () => { d.gallery.push(gk); render(); });
 }
 function setEvCover(gk){
+  keepEventFields();
   const d = evDraft(), key = d.key;
   const old = MEDIA[key];
   MEDIA[key] = MEDIA[gk];
@@ -828,6 +852,7 @@ function setEvCover(gk){
   render(); toast('Фото стало обложкой');
 }
 function delEvPhoto(k){
+  keepEventFields();
   const d = evDraft();
   if(k === d.key){
     if(d.gallery.length){ const n = d.gallery.shift(); MEDIA[d.key] = MEDIA[n]; delete MEDIA[n]; }
@@ -841,9 +866,10 @@ function delEvPhoto(k){
 
 function saveEvent(){
   const dr = evDraft();
-  const t = ($('#ev_t')||{}).value, dt = ($('#ev_d')||{}).value;
-  if(!t || !t.trim() || !dt) return toast('Заполни название и дату');
-  const seats = dr.unlimited ? 0 : (+($('#ev_s')||{}).value || 20);
+  keepEventFields();                                  // добираем то, что успели набрать
+  const t = dr.t || '', dt = dr.d || '';
+  if(!t.trim() || !dt) return toast('Заполни название и дату');
+  const seats = dr.unlimited ? 0 : (+dr.seats || 20);
   const id = 'ev'+Date.now().toString(36);
   if(MEDIA[dr.key]){ MEDIA[id] = MEDIA[dr.key]; delete MEDIA[dr.key]; }
   const gallery = [];
@@ -852,14 +878,14 @@ function saveEvent(){
     if(MEDIA[gk]){ MEDIA[nk] = MEDIA[gk]; delete MEDIA[gk]; gallery.push(nk); }
   });
   EVENTS.unshift({id, t:t.trim(), kind:dr.kind || 'Женский круг', d:dt,
-    tm:($('#ev_tm')||{}).value || '19:00', mode:dr.mode || 'офлайн',
-    city:($('#ev_c')||{}).value || (dr.mode === 'онлайн' ? 'Zoom' : 'Москва'),
-    place:($('#ev_pl')||{}).value || '',
-    price:+($('#ev_p')||{}).value || 0,
+    tm:dr.tm || '19:00', mode:dr.mode || 'офлайн',
+    city:dr.city || (dr.mode === 'онлайн' ? 'Zoom' : 'Москва'),
+    place:dr.place || '',
+    price:+dr.price || 0,
     by:S.role === 'expert' ? me().n : 'Eva Space',
     seats, left:seats, unlimited:!!dr.unlimited, gallery,
     status:S.role === 'admin' ? 'live' : 'pending',
-    about:($('#ev_a')||{}).value || ''});
+    about:dr.about || ''});
   S.evd = null; S.sheet = null; syncPush(); render();
   toast(S.role === 'admin' ? 'Мероприятие опубликовано' : 'Отправлено на согласование');
 }

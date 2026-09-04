@@ -224,7 +224,8 @@ function allTags(){
   return Object.entries(c).sort((a,b) => b[1]-a[1]);
 }
 
-function pgContent(){
+/* отбор материалов вынесен отдельно: им пользуются и экран, и обновление списка */
+function contentItems(){
   const types = {'Всё':null, 'Аффирмации':'affirm', 'Практики':'practice', 'Мастер-классы':'class'};
   let items = LIB.filter(x => x.status === 'live');
   if(types[S.filter]) items = items.filter(x => x.type === types[S.filter]);
@@ -235,6 +236,12 @@ function pgContent(){
     items = items.filter(x => (x.title+' '+x.text+' '+x.expert+' '+x.tags.join(' ')).toLowerCase().includes(q));
   }
   items = items.map(x => ({...x, m:matchOf(x)})).sort((a,b) => b.m - a.m);
+  return items;
+}
+
+function pgContent(){
+  const types = {'Всё':null, 'Аффирмации':'affirm', 'Практики':'practice', 'Мастер-классы':'class'};
+  const items = contentItems();
 
   return `<div class="view pad" style="padding-top:calc(20px + env(safe-area-inset-top))">
     <div class="eyebrow">Библиотека</div>
@@ -258,13 +265,25 @@ function pgContent(){
         `<button class="chip" onclick="S.tagFilter='${attJs(t)}';render()">${t} <span style="opacity:.5">${n}</span></button>`).join('')}
     </div>
 
-    <div class="small muted" style="margin:4px 0 12px">Найдено ${plural(items.length,'урок','урока','уроков')} · отсортировано по совпадению с тобой</div>
+    <div class="small muted" id="found" style="margin:4px 0 12px">${foundLine(items.length)}</div>
     <div id="list">${items.length ? items.map(x => contentRow(x)).join('') :
       `<div class="empty">Ничего не нашлось.<br>Попробуй другое слово или сними фильтр.</div>`}</div>
   </div>`;
 }
 
-function renderList(){ render(); const i = $('#list'); if(i) window.scrollTo(0, window.scrollY); }
+const foundLine = n => 'Найдено ' + plural(n,'урок','урока','уроков') + ' · отсортировано по совпадению с тобой';
+
+/* Обновляем только список, не трогая поле ввода: иначе на каждой букве
+   пропадал курсор и приходилось щёлкать по полю заново. */
+function renderList(){
+  const box = $('#list');
+  if(!box) return render();
+  const items = contentItems();
+  box.innerHTML = items.length ? items.map(x => contentRow(x)).join('')
+    : `<div class="empty">Ничего не нашлось.<br>Попробуй другое слово или сними фильтр.</div>`;
+  const cnt = $('#found');
+  if(cnt) cnt.textContent = foundLine(items.length);
+}
 
 function starContent(btn, id){
   S.likes = S.likes || [];
@@ -350,7 +369,12 @@ function pgCourses(){
 }
 
 /* ---------- страница эксперта (публичный лендинг) ---------- */
-function openExpert(id){ S.expShown = 8; S.viewExpert = id; S.page = null; S.sheet = null; render(); window.scrollTo(0,0); }
+function openExpert(id){
+  S.expShown = 8; S.viewExpert = id;
+  S.page = null; S.sheet = null;
+  S.course = null; S.viewGood = null;      // иначе роутер останется на курсе или товаре
+  render(); window.scrollTo(0,0);
+}
 function closeExpert(){ S.viewExpert = null; render(); window.scrollTo(0,0); }
 
 function moreExpert(step){ S.expShown = (S.expShown || step) + step; render(); }

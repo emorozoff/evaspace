@@ -369,7 +369,12 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 /* курс */
 .promo{height:220px;margin-bottom:14px;box-shadow:var(--sh-2)}
 .promo .pl{width:66px;height:66px;font-size:19px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-.promo:after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(17,16,20,.55),transparent 60%)}
+.promo:after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(to top,rgba(17,16,20,.55),transparent 60%)}
+/* когда в рамке настоящий проигрыватель, а не заглушка: отдаём ему всю
+   высоту и убираем плёнку — иначе не видно ни звука, ни полного экрана */
+.promo.live{height:auto;background:transparent;overflow:visible}
+.promo.live:after{content:none}
 .promo .plabel{position:absolute;left:0;right:0;bottom:12px;text-align:center;color:#fff;font-size:12px;font-weight:600;z-index:3}
 .sellblock{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;margin-bottom:12px}
 .sellblock li{margin-bottom:9px;font-size:13.5px;line-height:1.45;list-style:none;display:flex;gap:9px}

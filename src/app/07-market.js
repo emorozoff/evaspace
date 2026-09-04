@@ -971,13 +971,9 @@ function replyToBuyer(q, text){
   const tm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
   S.marketReplies = S.marketReplies || [];
   S.marketReplies.push({qid:q.id, mail:q.mail, t:text, tm, at:Date.now()});
-
-  /* если отвечающий смотрит платформу под тем же аккаунтом — сразу в тред */
-  const th = (S.inbox || []).find(x => x.kind === 'маркет');
-  if(th && S.user && String(S.user.email).toLowerCase() === String(q.mail).toLowerCase()){
-    th.msgs.push({me:false, t:text, tm});
-    th.unread = true;
-  }
+  /* В переписку сообщение попадёт одним путём — через pullMarketReplies.
+     Раньше его клали ещё и напрямую, и покупательница видела ответ дважды. */
+  if(typeof pullMarketReplies === 'function') pullMarketReplies();
 }
 
 
@@ -1020,7 +1016,7 @@ function pgGood(){
     <p style="font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 14px">${esc(info.about||'')}</p>
 
     ${info.video ? `<div class="sec-h" style="margin-top:6px"><h2 class="serif" style="font-size:18px">Видео о товаре</h2></div>
-      <div class="promo" style="height:auto;margin-bottom:14px">${videoBlock(g.id + '_vid')}</div>` : ''}
+      <div class="promo${hasPlayer(g.id + '_vid') ? ' live' : ''}" style="height:auto;margin-bottom:14px">${videoBlock(g.id + '_vid')}</div>` : ''}
 
     <div class="card">
       <b style="font-size:14.5px">Доставка</b>

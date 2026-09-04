@@ -624,12 +624,18 @@ function embedSrc(url){
   if(/\.(mp4|webm|mov)(\?|$)/i.test(url)) return {type:'video', src:url};
   return {type:'link', src:url};
 }
+/* есть ли по этому ключу настоящий проигрыватель, а не заглушка */
+function hasPlayer(id){
+  const e = embedSrc(videoUrl(id));
+  return !!e && (e.type === 'iframe' || e.type === 'video');
+}
 function videoBlock(id, posterKind){
   const url = videoUrl(id), e = embedSrc(url);
   if(e && e.type === 'iframe')
     return `<iframe class="frame" src="${e.src}" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>`;
   if(e && e.type === 'video')
-    return `<video class="frame" src="${e.src}" controls playsinline poster="${MEDIA[id]||''}"></video>`;
+    return `<video class="frame" src="${safeUrl(e.src)}" controls playsinline
+      poster="${safeUrl(MEDIA[id]||'')}" preload="metadata"></video>`;
   if(e && e.type === 'link')
     return `<a class="player" href="${e.src}" target="_blank" rel="noopener" style="text-decoration:none;display:grid">
       ${cover(id, posterKind||'practice')}<div class="pl">▶</div></a>`;
