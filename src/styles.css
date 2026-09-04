@@ -671,6 +671,65 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .cmtpeek span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 
+
+/* ---------- сообщества ---------- */
+.gemoji{display:grid;place-items:center;color:var(--gc,var(--ink));
+  background:color-mix(in srgb,var(--gc,#111014) 11%,transparent)}
+@supports not (color:color-mix(in srgb,red 11%,transparent)){ .gemoji{background:var(--surface-2)} }
+.gline{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.gitem.locked{opacity:.9}
+.gitem.locked .gline{white-space:normal;font-size:11.5px;line-height:1.4;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.glock{flex:none;width:26px;height:26px;border-radius:50%;background:var(--surface-2);
+  color:var(--muted);display:grid;place-items:center}
+
+.gcover{text-align:center;padding:6px 0 14px}
+.gcircle{width:64px;height:64px;border-radius:50%;margin:0 auto;display:grid;place-items:center;
+  color:#fff;background:var(--gc,var(--ink))}
+.grow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.grow span{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--muted)}
+.gabout{margin:0 0 14px;font-size:14px;line-height:1.55}
+.gplate{background:var(--surface-2);border-radius:var(--r);padding:11px 12px;margin-bottom:14px}
+.gsec{margin-bottom:14px}
+.gsec .dh{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:6px}
+.gsec p{margin:0;font-size:13.5px;line-height:1.5}
+.grules{list-style:none;margin:0;padding:0}
+.grules li{position:relative;padding:0 0 7px 16px;font-size:13.5px;line-height:1.45}
+.grules li:before{content:'';position:absolute;left:3px;top:7px;width:5px;height:5px;border-radius:50%;
+  background:var(--line-2)}
+.glocked{display:flex;gap:10px;align-items:flex-start;background:var(--surface-2);border-radius:var(--r);
+  padding:12px;margin-bottom:12px;color:var(--muted)}
+.glocked b{color:var(--ink);font-size:13.5px;display:block;margin-bottom:2px}
+
+/* ---------- чат группы: поле ввода закреплено внизу ---------- */
+/* место под закреплённым полем: иначе оно закрывало последнее сообщение */
+.chatview{padding-bottom:96px}
+.chatview.replying{padding-bottom:142px}
+.chatbar{position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:var(--shell);
+  bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));z-index:35;display:block;
+  padding:8px 16px 10px;background:rgba(247,246,244,.95);backdrop-filter:blur(14px);
+  border-top:1px solid var(--line)}
+.chatinput{display:flex;gap:8px}
+.chatinput .field{margin:0;flex:1}
+.chatinput .btn{width:auto;padding:12px 16px;border-radius:999px}
+.rebar{display:flex;gap:8px;align-items:center;background:var(--surface-2);border-left:3px solid var(--accent);
+  border-radius:8px;padding:6px 9px;margin-bottom:7px}
+.rebar b{display:block;font-size:11px;color:var(--accent)}
+.rebar span{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.rebar button{font-size:14px;color:var(--muted);width:22px;flex:none}
+.requote{border-left:2px solid currentColor;opacity:.75;padding:1px 0 1px 7px;margin-bottom:5px;font-size:11.5px}
+.requote b{display:block;font-weight:700}
+.requote span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px}
+.cmsg .mtext{white-space:pre-wrap;word-break:break-word}
+.cmsg .tm{display:flex;align-items:center;gap:7px;justify-content:flex-end}
+.cmsg .reply{font-size:9px;font-weight:700;color:var(--muted);text-transform:lowercase;
+  opacity:0;transition:opacity .15s}
+.cmsg:hover .reply,.cmsg .txt:focus-within .reply{opacity:1}
+.cmsg.own .reply{color:rgba(255,255,255,.65)}
+@media (hover:none){ .cmsg .reply{opacity:.55} }
+
 /* ---------- лента посланий ---------- */
 .kindrow{display:flex;gap:6px;overflow-x:auto;padding:2px 16px 10px;margin:0 -16px}
 .kchip{flex:none;display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;

@@ -369,7 +369,9 @@ function renderScreen(){
   else if(s === 'ready')    setHTML(scrReady());
   else {
     const pro = S.role !== 'user';
-    setHTML(`<div class="shell">${page()}</div>` + (pro ? '' : nav() + fab()) + roleSwitch()
+    const inChat = !!(S.chat && S.chat.open);      // в чате внизу и так занято полем ввода
+    setHTML(`<div class="shell">${page()}</div>`
+      + (pro ? '' : nav() + (inChat ? '' : fab())) + roleSwitch()
       + (S.sheet ? sheetSafe() : ''));
   }
   if(s !== 'app' && s !== 'welcome') return;

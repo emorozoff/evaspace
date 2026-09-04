@@ -671,17 +671,87 @@ function doneHW(id, cid){
 /* ---------- группы ---------- */
 function shGroupInfo(){
   const g = GROUPS.find(x => x.id === S.sheet.id);
+  if(!g) return `<div class="empty">Группа не найдена</div>`;
   const joined = S.joined.includes(g.id);
-  return `<div style="text-align:center">
-      <div class="gemoji" style="width:64px;height:64px;font-size:28px;margin:0 auto 10px">${esc(g.e)}</div>
-      <h2 class="serif" style="font-size:22px;margin:0 0 4px">${esc(g.t)}</h2>
-      <p class="small muted">${g.m.toLocaleString('ru-RU')} участниц</p></div>
-    <div class="card" style="margin-top:14px"><b style="font-size:14px">О группе</b>
-      <p class="small muted" style="margin:6px 0 0">${esc(g.d)}</p></div>
-    <button class="btn ghost" onclick="toast('Уведомления выключены')">Выключить уведомления</button>
-    <button class="btn ${joined?'ghost':''}" style="margin-top:9px" onclick="join('${attJs(g.id)}');closeSheet()">
-      ${joined ? 'Выйти из группы' : 'Вступить'}</button>`;
+  const may = canEnter(g);
+  const club = isClub(g);
+  const lead = EXPERTS.find(e => e.n === g.lead);
+
+  return `<div class="gcover" style="--gc:${safeColor(g.c)}">
+      <div class="gcircle">${gIcon(g, 30)}</div>
+      <h2 class="serif" style="font-size:22px;margin:10px 0 4px">${esc(g.t)}</h2>
+      <div class="grow">
+        <span>${g.m.toLocaleString('ru-RU')} участниц</span>
+        ${club ? `<span>${lockIcon(11)} клуб · ${money(g.price)} в месяц</span>`
+          : g.access === 'experts' ? `<span>${lockIcon(11)} только для экспертов</span>`
+          : '<span>открытая группа</span>'}
+      </div>
+    </div>
+
+    <p class="gabout">${esc(g.about || '')}</p>
+
+    ${g.lead ? `<div class="gplate">
+      <div class="row" style="gap:10px">
+        ${lead ? `<div class="pcirc" style="width:42px;height:42px;flex:none">${expPic(lead)}</div>`
+               : chatAva(g.lead, safeColor(g.c), false, 42)}
+        <div style="flex:1;min-width:0">
+          <div class="eyebrow" style="margin:0">Ведёт</div>
+          <b style="font-size:14px;display:block">${esc(g.lead)}</b>
+          ${lead ? `<span class="small muted" style="font-size:11.5px">${esc(lead.r)}</span>` : ''}
+        </div>
+      </div>
+    </div>` : ''}
+
+    ${g.who ? `<div class="gsec"><div class="dh">Кто здесь</div><p>${esc(g.who)}</p></div>` : ''}
+
+    ${(g.rules||[]).length ? `<div class="gsec"><div class="dh">О чём договорились</div>
+      <ul class="grules">${g.rules.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
+
+    ${(g.tags||[]).length ? `<div class="chips wrap" style="padding:2px 0 10px">${
+      g.tags.map(t => `<span class="chip pale" style="padding:3px 9px;font-size:10.5px">${esc(t)}</span>`).join('')}</div>` : ''}
+
+    ${!may && g.access === 'experts' ? `
+      <div class="glocked">${lockIcon(15)}
+        <div><b>Закрытая комната</b>
+          <div class="small muted">Сюда попадают эксперты платформы. Если ведёшь практики и хочешь
+            присоединиться — расскажи о себе, мы ответим.</div></div></div>
+      <button class="btn ghost" onclick="closeSheet();openSheet('support')">Написать о себе</button>`
+    : !may && club ? `
+      <div class="glocked">${lockIcon(15)}
+        <div><b>Частный клуб</b>
+          <div class="small muted">${money(g.price)} в месяц. Отменить можно в любой момент,
+            доступ останется до конца оплаченного месяца.</div></div></div>
+      <button class="btn" onclick="joinClub('${attJs(g.id)}')">Вступить за ${money(g.price)} в месяц</button>
+      <button class="btn ghost" style="margin-top:9px" onclick="closeSheet()">Пока подумаю</button>`
+    : `
+      <button class="btn ghost" onclick="toast('Уведомления выключены')">Выключить уведомления</button>
+      <button class="btn ${joined?'ghost':''}" style="margin-top:9px" onclick="join('${attJs(g.id)}');closeSheet()">
+        ${joined ? 'Выйти из группы' : 'Вступить'}</button>
+      ${club && (S.clubs||[]).includes(g.id) ? `<button class="btn ghost" style="margin-top:9px;color:var(--accent)"
+        onclick="leaveClub('${attJs(g.id)}')">Отменить подписку на клуб</button>` : ''}`}`;
 }
+
+/* подписка на частный клуб: в демонстрации оплата не списывается */
+function joinClub(id){
+  const g = GROUPS.find(x => x.id === id);
+  if(!g) return;
+  S.clubs = [...new Set([...(S.clubs||[]), id])];
+  if(!S.joined.includes(id)) S.joined = [...S.joined, id];
+  S.sheet = null;
+  render(); schedulePersist();
+  toast('Ты в клубе «' + g.t + '». Первый созвон — в ближайший вторник');
+  openChat(id);
+}
+function leaveClub(id){
+  if(!confirm('Отменить подписку на клуб? Доступ пропадёт сразу.')) return;
+  S.clubs = (S.clubs||[]).filter(x => x !== id);
+  S.joined = S.joined.filter(x => x !== id);
+  if(S.chat) S.chat.open = null;
+  S.sheet = null;
+  render(); schedulePersist();
+  toast('Подписка отменена');
+}
+
 function shNewGroup(){
   return `<h2 class="serif" style="font-size:22px;margin:0 0 12px">Новая группа</h2>
     <input class="field" placeholder="Название группы">

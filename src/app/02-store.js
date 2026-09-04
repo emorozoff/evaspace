@@ -75,7 +75,7 @@ function persist(){
   DB.saveProgress(S.user.email, {
     name:S.name, tags:S.tags, time:S.time, slot:S.slot, answers:S.answers, extra:S.extra,
     points:S.points, stars:S.stars, starsAll:S.starsAll, bonus:S.bonus, streakDays:S.streakDays,
-    courses:S.courses, purchases:S.purchases, joined:S.joined, avatar:S.avatar,
+    courses:S.courses, purchases:S.purchases, joined:S.joined, clubs:S.clubs, avatar:S.avatar,
     birth:S.birth, cycle:S.cycle, hd:S.hd, sub:S.sub, week:S.week, seed:S.seed,
     program:S.program, day:S.day, match:S.match, homework:S.homework, events:S.myEvents,
     inbox:S.inbox, seenReplies:S.seenReplies, myInts:S.myInts, datingProfile:S.datingProfile,

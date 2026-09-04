@@ -1002,32 +1002,56 @@ const CHAT_SEED = {
 };
 
 function initChats(){
-  if(S.chats) return;
-  S.chats = {};
+  const first = !S.chats;
+  S.chats = S.chats || {};
+  /* добираем и новые группы: раньше добавленная группа оставалась без
+     переписки, и отправка сообщения в неё падала */
   GROUPS.forEach(g => {
-    S.chats[g.id] = (CHAT_SEED[g.id]||[]).map(([a,c,t,tm,exp]) => ({a,c,t,tm,exp:!!exp,own:false}));
+    if(!Array.isArray(S.chats[g.id]))
+      S.chats[g.id] = (CHAT_SEED[g.id]||[]).map(([a,c,t,tm,exp]) => ({a,c,t,tm,exp:!!exp,own:false}));
   });
-  S.chat = {open:null, unread:{gr2:2, gr3:1}};
+  if(first || !S.chat) S.chat = {open:null, reply:null, unread:{gr2:2, gr3:1}};
 }
+
+/* кому открыта группа: экспертная — только своим, клуб — по подписке */
+function canEnter(g){
+  if(!g) return false;
+  if(g.access === 'experts') return S.role === 'expert' || S.role === 'admin';
+  if(g.access === 'club') return S.role === 'admin' || (S.clubs || []).includes(g.id);
+  return true;
+}
+const isClub = g => g && g.access === 'club';
 
 function pgClub(){
   initChats();
-  const mine = GROUPS.filter(g => S.joined.includes(g.id));
-  const rest = GROUPS.filter(g => !S.joined.includes(g.id));
+  const seen = GROUPS.filter(g => g.access !== 'experts' || canEnter(g));
+  const mine  = seen.filter(g => S.joined.includes(g.id) && canEnter(g));
+  const clubs = seen.filter(g => isClub(g) && !mine.includes(g));
+  const open  = seen.filter(g => !isClub(g) && !mine.includes(g));
   const last = id => { const m = S.chats[id]; return m && m.length ? m[m.length-1] : null; };
+
   const row = (g, joined) => {
     const l = last(g.id), un = (S.chat.unread||{})[g.id];
-    return `<button class="gitem" onclick="${joined?`openChat('${attJs(g.id)}')`:`join('${attJs(g.id)}');openChat('${attJs(g.id)}')`}">
-      <div class="gemoji">${esc(g.e)}</div>
+    const locked = !canEnter(g);
+    const act = locked ? `openSheet({k:'groupInfo',id:'${attJs(g.id)}'})`
+      : joined ? `openChat('${attJs(g.id)}')`
+      : `join('${attJs(g.id)}');openChat('${attJs(g.id)}')`;
+    return `<button class="gitem${locked?' locked':''}" onclick="${act}">
+      <div class="gemoji" style="--gc:${safeColor(g.c)}">${gIcon(g, 20)}</div>
       <div style="flex:1;min-width:0">
         <div class="spread"><b style="font-size:14px">${esc(g.t)}</b>
-          <span class="small muted" style="font-size:10.5px">${l?l.tm:''}</span></div>
-        <div class="small muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">
-          ${l ? `${esc(l.a)}: ${esc(l.t)}` : g.m.toLocaleString('ru-RU') + ' участниц'}</div>
+          <span class="small muted" style="font-size:10.5px">${locked ? '' : (l ? esc(l.tm) : '')}</span></div>
+        <div class="small muted gline">
+          ${locked ? esc(g.about)
+            : l ? `${esc(l.a)}: ${esc(l.t)}`
+            : g.m.toLocaleString('ru-RU') + ' участниц'}</div>
       </div>
-      ${un ? `<span class="unreadc">${un}</span>` : joined ? '' : '<span class="chip pale">войти</span>'}
+      ${locked ? `<span class="glock">${lockIcon(12)}</span>`
+        : un ? `<span class="unreadc">${un}</span>`
+        : joined ? '' : '<span class="chip pale">войти</span>'}
     </button>`;
   };
+
   const tab = S.clubTab || 'groups';
   return `<div class="view pad" style="padding-top:calc(18px + env(safe-area-inset-top))">
     <div class="spread">
@@ -1047,8 +1071,14 @@ function pgClub(){
     : `
       <p class="small muted" style="margin:0 0 12px">Переписка как в мессенджере. Эксперты отвечают внутри своих групп.</p>
       ${mine.length ? `<div class="eyebrow" style="margin-bottom:8px">Мои группы</div>${mine.map(g => row(g,true)).join('')}` : ''}
-      <div class="eyebrow" style="margin:16px 0 8px">Все группы</div>
-      ${rest.map(g => row(g,false)).join('')}`}
+      <div class="eyebrow" style="margin:16px 0 8px">Открытые группы</div>
+      ${open.map(g => row(g,false)).join('')}
+      ${clubs.length ? `<div class="sec-h" style="margin:18px 0 8px">
+          <h2 class="serif" style="font-size:17px">Частные клубы</h2>
+          <span class="small muted">по подписке</span></div>
+        <p class="small muted" style="margin:0 0 10px">Маленькие закрытые круги с ведущей, своим ритмом
+          и общими договорённостями.</p>
+        ${clubs.map(g => row(g,false)).join('')}` : ''}`}
   </div>`;
 }
 
@@ -1057,15 +1087,21 @@ function closeChat(){ S.chat.open = null; render(); window.scrollTo(0,0); }
 
 function pgChatRoom(){
   const g = GROUPS.find(x => x.id === S.chat.open);
+  if(!g) return `<div class="empty">Группа не найдена</div>`;
+  if(!canEnter(g)){ S.chat.open = null; return pgClub(); }
   const msgs = S.chats[g.id] || [];
-  return `<div class="view">
+  const re = S.chat.reply && S.chat.reply.g === g.id ? msgs[S.chat.reply.i] : null;
+
+  return `<div class="view chatview${re ? ' replying' : ''}">
     <div class="hero chathead" style="padding-bottom:14px;border-radius:0 0 var(--r) var(--r)">
       <div class="brandbar" style="margin:0">
         <button onclick="closeChat()" style="color:#fff;font-size:20px;width:30px;text-align:left">‹</button>
         <div class="row" style="flex:1;justify-content:center">
-          <div class="gemoji" style="width:32px;height:32px;font-size:15px;background:rgba(255,255,255,.12)">${esc(g.e)}</div>
+          <div class="gemoji" style="width:32px;height:32px;background:rgba(255,255,255,.14);color:#fff">${gIcon(g, 17)}</div>
           <div><div style="font-size:14px;font-weight:700">${esc(g.t)}</div>
-            <div class="small muted" style="font-size:10.5px">${g.m.toLocaleString('ru-RU')} участниц${S.role==='admin'?' · модерация':''}</div></div>
+            <div class="small muted" style="font-size:10.5px">${g.m.toLocaleString('ru-RU')} участниц${
+              isClub(g) ? ' · клуб' : g.access === 'experts' ? ' · закрытая' : ''}${
+              S.role==='admin'?' · модерация':''}</div></div>
         </div>
         <button class="chip" style="background:rgba(255,255,255,.12);color:#fff;border-color:transparent"
           onclick="openSheet({k:'groupInfo',id:'${attJs(g.id)}'})">···</button>
@@ -1073,22 +1109,39 @@ function pgChatRoom(){
     </div>
     <div class="pad">
       <div class="chatlist" id="clist">
-        ${msgs.map((m,i) => `<div class="cmsg ${chatMine(m)?'own':''}">
-          ${!chatMine(m) ? chatAva(m.a, m.c, false, 32, m.email) : ''}
+        ${msgs.map((m,i) => `<div class="cmsg ${chatMine(m)?'own':''}" id="msg_${esc(g.id)}_${i}">
+          ${!chatMine(m) ? chatAva(m.a, m.c || authorColor(m.email || m.a), false, 32, m.email) : ''}
           <div class="txt">
             ${!chatMine(m) ? `<div class="nm">${esc(m.a)}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
-            ${esc(m.t)}
-            <div class="tm">${esc(m.tm)}${S.role==='admin'&&!chatMine(m)?` · <span onclick="delMsg('${attJs(g.id)}',${i})" style="cursor:pointer;color:var(--accent)">удалить</span>`:''}</div>
+            ${m.re ? `<div class="requote"><b>${esc(m.re.a)}</b><span>${esc(m.re.t)}</span></div>` : ''}
+            <div class="mtext">${esc(m.t)}</div>
+            <div class="tm">
+              <button class="reply" onclick="replyMsg('${attJs(g.id)}',${i})">ответить</button>
+              ${esc(m.tm)}${S.role==='admin'&&!chatMine(m)?` · <span onclick="delMsg('${attJs(g.id)}',${i})" style="cursor:pointer;color:var(--accent)">удалить</span>`:''}</div>
           </div>
         </div>`).join('')}
       </div>
-      <div class="chatbar">
-        <input class="field" id="cin" placeholder="Сообщение" onkeydown="if(event.key==='Enter')sendMsg('${attJs(g.id)}')">
-        <button class="btn" style="width:auto;padding:12px 16px;border-radius:999px" onclick="sendMsg('${attJs(g.id)}')">→</button>
+    </div>
+    <div class="chatbar">
+      ${re ? `<div class="rebar">
+        <div style="flex:1;min-width:0"><b>${esc(re.a)}</b><span>${esc(String(re.t).slice(0,70))}</span></div>
+        <button onclick="cancelReply()">✕</button></div>` : ''}
+      <div class="chatinput">
+        <input class="field" id="cin" placeholder="${re ? 'Ответ для ' + esc(re.a) : 'Сообщение'}"
+          onkeydown="if(event.key==='Enter')sendMsg('${attJs(g.id)}')">
+        <button class="btn" onclick="sendMsg('${attJs(g.id)}')">→</button>
       </div>
     </div>
   </div>`;
 }
+
+/* ответ на сообщение: цитата остаётся видимой, пока не отправишь или не отменишь */
+function replyMsg(gid, i){
+  S.chat.reply = {g:gid, i};
+  render();
+  setTimeout(() => { const el = $('#cin'); if(el) el.focus(); }, 60);
+}
+function cancelReply(){ S.chat.reply = null; render(); }
 
 /* своё ли сообщение в групповом чате: по почте, метка — только у старых */
 function chatMine(m){
@@ -1121,9 +1174,14 @@ function sendMsg(gid){
   const t = inp.value.trim(); if(!t) return;
   const now = new Date();
   const tm = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  /* если отвечаем на чьё-то сообщение — цитата уезжает вместе с текстом */
+  const r = S.chat.reply && S.chat.reply.g === gid ? (S.chats[gid] || [])[S.chat.reply.i] : null;
   S.chats[gid].push({a: S.role === 'admin' ? (S.adminName || 'Куратор') : (S.name || 'Я'),
-    c:'#111014', t, tm, own:true, email:myMail(), curator: S.role === 'admin',
-    email:S.user ? S.user.email : ''});
+    c: authorColor(myMail() || S.name), t, tm, own:true, email:myMail(),
+    curator: S.role === 'admin',
+    re: r ? {a:r.a, t:String(r.t).slice(0, 90)} : null});
+  inp.value = '';
+  S.chat.reply = null;
   S.points += 5;
   render(); scrollChat(); toast('+5 баллов за участие');
   setTimeout(() => {
@@ -1134,7 +1192,8 @@ function sendMsg(gid){
       'Хороший вопрос. Начни с самого малого шага, остальное подтянется.',
       'Отмечу это на ближайшем эфире, разберём подробнее.'
     ];
-    S.chats[gid].push({a:ex.n, c:'#A8375C', t:replies[hash(t) % replies.length], tm, exp:true, own:false});
+    S.chats[gid].push({a:ex.n, c:authorColor(ex.n), t:replies[hash(t) % replies.length], tm,
+      exp:true, own:false, re:{a:S.name || 'Я', t:t.slice(0, 90)}});
     if(S.chat.open === gid){ render(); scrollChat(); } else { S.chat.unread[gid] = (S.chat.unread[gid]||0)+1; }
   }, 1600);
 }
