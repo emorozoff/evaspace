@@ -264,15 +264,69 @@ function pgEvents(){
     <div class="small muted" style="margin:2px 0 14px;text-align:center">${plural(list.length,'мероприятие','мероприятия','мероприятий')} · листай вбок</div>`
     : '<div class="empty">По этим фильтрам ничего нет</div>'}
 
-  ${mine.length ? `<div class="sec-h" style="margin-top:6px"><h2 class="serif" style="font-size:18px">Я иду</h2></div>
-    ${mine.map(e => `<button class="gitem" onclick="openSheet({k:'event',id:'${attJs(e.id)}'})">
-      <div class="gemoji">${e.mode === 'онлайн' ? '⌘' : '◈'}</div>
-      <div style="flex:1;min-width:0"><b style="font-size:13.5px">${esc(e.t)}</b>
-        <div class="small muted">${new Date(e.d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}, ${esc(e.tm)} · ${esc(e.city)}</div></div>
-      <span class="chip pale">${e.price?'билет':'запись'}</span></button>`).join('')}` : ''}
+  ${myPlan(mine)}
 
   ${S.role === 'expert' ? `<button class="btn ghost" style="margin-top:8px" onclick="openSheet('newEvent')">Предложить мероприятие</button>` : ''}
   ${S.role === 'admin' ? `<button class="btn" style="margin-top:8px" onclick="openSheet('newEvent')">＋ Добавить мероприятие</button>` : ''}`;
+}
+
+/* =====================================================================
+   МИНИ-КАЛЕНДАРЬ «Я ИДУ»
+   Не месяц и не все недели — только те дни, где у неё что-то есть.
+   Слева день недели и число, справа во сколько и онлайн это или офлайн.
+   ===================================================================== */
+const DOW = ['вс','пн','вт','ср','чт','пт','сб'];
+
+/* только предстоящее, по возрастанию даты, сгруппированное по дню */
+function planDays(mine){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const soon = (mine || []).filter(e => {
+    const t = Date.parse(e.d);
+    return isFinite(t) && t >= today.getTime();
+  }).sort((a,b) => (Date.parse(a.d) - Date.parse(b.d)) || String(a.tm).localeCompare(String(b.tm)));
+
+  const days = [];
+  soon.forEach(e => {
+    const cur = days[days.length - 1];
+    if(cur && cur.d === e.d) cur.items.push(e);
+    else days.push({d:e.d, items:[e]});
+  });
+  return days;
+}
+
+function myPlan(mine){
+  const days = planDays(mine);
+  if(!days.length) return '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const tomorrow = today.getTime() + 864e5;
+  const count = days.reduce((n, x) => n + x.items.length, 0);
+
+  return `
+  <div class="sec-h" style="margin-top:6px">
+    <h2 class="serif" style="font-size:18px">Я иду</h2>
+    <span class="small muted">${plural(count,'мероприятие','мероприятия','мероприятий')}</span>
+  </div>
+  <div class="myplan">${days.map(day => {
+    const dt = new Date(day.d), when = dt.getTime();
+    const mark = when === today.getTime() ? 'сегодня' : when === tomorrow ? 'завтра' : '';
+    return `<div class="pday${mark === 'сегодня' ? ' now' : ''}">
+      <div class="pcell">
+        <span class="dw">${DOW[dt.getDay()]}</span>
+        <b>${dt.getDate()}</b>
+        <span class="mn">${MON[dt.getMonth()]}</span>
+      </div>
+      <div class="pitems">${day.items.map(e => `
+        <button class="pline" onclick="openSheet({k:'event',id:'${attJs(e.id)}'})">
+          <span class="ptm">${esc(e.tm)}</span>
+          <span class="ptxt">
+            <b>${esc(e.t)}</b>
+            <span class="pwhere ${e.mode === 'онлайн' ? 'on' : 'off'}">
+              ${e.mode === 'онлайн' ? '⌘ онлайн' : '◈ офлайн · ' + esc(e.city)}</span>
+          </span>
+          ${mark ? `<span class="psoon">${mark}</span>` : ''}
+        </button>`).join('')}</div>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 function evCard(e){
