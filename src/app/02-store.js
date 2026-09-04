@@ -363,8 +363,11 @@ function personalDay(m, z){
 /* картинка эксперта: загруженное фото или сгенерированный портрет */
 function expPic(e){
   if(!e) return '';
-  const id = typeof e === 'string' ? e : e.id;
-  return MEDIA[id] ? `<img src="${MEDIA[id]}" alt="">` : portrait(id);
+  const rec = typeof e === 'string' ? ((typeof EXPERTS !== 'undefined' && EXPERTS.find(x => x.id === e)) || {id:e}) : e;
+  const id = rec.id;
+  /* сначала фото, загруженное в карточку эксперта, потом — аватар её аккаунта */
+  const src = MEDIA[id] || (rec.email ? avatarOf(rec.email) : '') || (rec.mail ? avatarOf(rec.mail) : '');
+  return src ? `<img src="${safeUrl(src)}" alt="">` : portrait(id);
 }
 
 
@@ -373,8 +376,8 @@ function goodPic(g){
   const info = (typeof GOOD_INFO !== 'undefined' ? GOOD_INFO[g.id] : null) || {};
   const pos = info.pos || '50% 50%';
   const gal = info.gallery || [];
-  if(MEDIA[g.id]) return `<img src="${MEDIA[g.id]}" alt="" style="object-position:${pos}">`;
-  if(gal.length && MEDIA[gal[0]]) return `<img src="${MEDIA[gal[0]]}" alt="" style="object-position:${pos}">`;
+  if(MEDIA[g.id]) return `<img src="${safeUrl(MEDIA[g.id])}" alt="" style="object-position:${esc(pos)}">`;
+  if(gal.length && MEDIA[gal[0]]) return `<img src="${safeUrl(MEDIA[gal[0]])}" alt="" style="object-position:${esc(pos)}">`;
   return prodArt(g.id, g.sh);
 }
 

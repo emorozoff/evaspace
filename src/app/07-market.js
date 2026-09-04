@@ -718,7 +718,7 @@ function pgGoodEditor(){
           <b>Загрузить фото товара</b>
           <span class="small muted">JPEG, PNG или HEIC. Первое станет обложкой</span></button>`;
         return shots.map((k,i) => `<div class="photo ${k===key?'cover':''}">
-            <img src="${MEDIA[k]}" alt="" style="object-position:${k===key?(d.pos||'50% 50%'):'50% 50%'}">
+            <img src="${safeUrl(MEDIA[k])}" alt="" style="object-position:${esc(k===key?(d.pos||'50% 50%'):'50% 50%')}">
             ${k===key ? '<span class="covlabel">обложка</span>' : `
               <button class="mkcov" onclick="setCoverFrom('${attJs(k)}')">Сделать обложкой</button>`}
             <button class="phdel" onclick="${k===key?`dropCover('${attJs(key)}')`:`delGalleryPhoto(${d.gallery.indexOf(k)})`}">✕</button>
@@ -817,7 +817,7 @@ function cropBox(key, pos, path){
   return `<label class="lbl">Кадрирование обложки</label>
     <div class="cropwrap">
       <div class="croppreview" id="croppv">
-        <img src="${MEDIA[key]}" style="object-position:${px}% ${py}%">
+        <img src="${safeUrl(MEDIA[key])}" style="object-position:${px}% ${py}%">
         <span class="cropgrid"></span>
       </div>
       <div class="croprow">
@@ -997,7 +997,7 @@ function pgGood(){
     <button class="backbtn" onclick="closeGood()">‹ Маркет</button>
 
     <div class="gslider">
-      <div class="gslide">${MEDIA[slides[i]] ? `<img src="${MEDIA[slides[i]]}" alt="" style="object-position:${info.pos||'50% 50%'}">` : prodArt(g.id, g.sh)}
+      <div class="gslide">${MEDIA[slides[i]] ? `<img src="${safeUrl(MEDIA[slides[i]])}" alt="" style="object-position:${esc(info.pos||'50% 50%')}">` : prodArt(g.id, g.sh)}
         ${g.f ? `<div class="flag">${g.f}</div>` : ''}</div>
       ${slides.length > 1 ? `
         <button class="gnav left" onclick="slideGood(-1,${slides.length})">‹</button>

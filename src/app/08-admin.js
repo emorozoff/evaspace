@@ -43,7 +43,7 @@ function pgAdmin(){
       <div class="brandbar">
         <button class="row" style="gap:8px" onclick="pickAdminAvatar()">
           ${S.adminAvatar
-            ? `<img src="${S.adminAvatar}" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover">`
+            ? `<img src="${safeUrl(S.adminAvatar)}" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover">`
             : `<span class="ava" style="width:30px;height:30px;font-size:12px;background:var(--gold)">${esc((S.adminName||'К')[0])}</span>`}
           <span class="b" style="margin:0">${esc(S.adminName || 'Куратор')}</span>
         </button>
@@ -210,6 +210,7 @@ function adCourses(){
         <div class="acts">
           <button class="btn ghost sm" onclick="openCourseEditor('${attJs(c.id)}')">Редактировать</button>
           <button class="btn ghost sm" onclick="openCourseLanding('${attJs(c.id)}')">Просмотр</button>
+          <button class="btn ghost sm" style="color:var(--accent)" onclick="delCourse('${attJs(c.id)}')">Удалить</button>
         </div>
       </div>
     </div>`;
@@ -289,6 +290,49 @@ function allUsers(){
   }));
   const demo = USERS.map(u => ({...u, verified:true, days:u.pay==='trial'?2:0, eng:(hash(u.id)%60)+35}));
   return [...reg, ...demo];
+}
+
+/* Роль меняет сервер: администратора назначает только data/config.php,
+   эксперта — администратор. Из браузера роль себе не выдать. */
+async function toggleExpert(id){
+  const u = allUsers().find(x => x.id === id);
+  if(!u) return;
+  if(!u.real) return toast('Это демонстрационная запись, роль ей менять нечему');
+  if(u.role === 'админ') return toast('Права администратора снимаются в data/config.php на хостинге');
+  const next = u.role === 'эксперт' ? 'user' : 'expert';
+  if(SYNC.alive === false) return toast('Роль меняется только при подключённом сервере');
+  const r = await apiCall('grant', { email:u.m, role:next }, { silent:true });
+  if(!r) return toast(SYNC.lastError || 'Не получилось поменять роль');
+  await pullUsers();
+  render();
+  toast(next === 'expert' ? 'Теперь эксперт' : 'Роль эксперта снята');
+}
+
+async function removeUser(id){
+  const u = allUsers().find(x => x.id === id);
+  if(!u) return;
+  if(!u.real) return toast('Это демонстрационная запись, её нельзя удалить');
+  if(!confirm('Удалить аккаунт ' + u.m + '? Вместе с ним пропадут прогресс и переписка. Отменить будет нельзя.')) return;
+  if(SYNC.alive === false) return toast('Удаление работает только при подключённом сервере');
+  const r = await apiCall('user_delete', { email:u.m }, { silent:true });
+  if(!r) return toast(SYNC.lastError || 'Не получилось удалить');
+  const all = DB.users(); delete all[String(u.m).toLowerCase()]; DB.saveUsers(all);
+  render();
+  toast('Аккаунт удалён');
+}
+
+async function saveUserCard(id){
+  const u = allUsers().find(x => x.id === id);
+  if(!u) return;
+  const name = (($('#eu_n')||{}).value || '').trim();
+  if(!name) return toast('Имя не может быть пустым');
+  if(!u.real){ S.sheet = null; render(); return toast('Демонстрационная запись, менять нечего'); }
+  if(SYNC.alive === false) return toast('Правка сохраняется только при подключённом сервере');
+  const r = await apiCall('user_save', { user:{ email:u.m, name, verified:!!($('#eu_v')||{}).checked } }, { silent:true });
+  if(!r) return toast(SYNC.lastError || 'Не сохранилось');
+  await pullUsers();
+  S.sheet = null; render();
+  toast('Сохранено');
 }
 
 function adUsers(){
@@ -390,6 +434,12 @@ function adUsers(){
       <button class="btn sm" onclick="openSheet({k:'write2',id:'${attJs(u.id)}'})">Написать</button>
       <button class="btn ghost sm" onclick="openSheet({k:'grant',id:'${attJs(u.id)}'})">Открыть доступ</button>
       <button class="btn ghost sm" onclick="copyText('${attJs(u.m)}')">Почта</button>
+    </div>
+    <div class="acts" style="margin-top:6px">
+      <button class="btn ghost sm" onclick="openSheet({k:'editUser',id:'${attJs(u.id)}'})">Изменить</button>
+      <button class="btn ghost sm" onclick="toggleExpert('${attJs(u.id)}')">
+        ${u.role === 'эксперт' ? 'Снять роль эксперта' : 'Сделать экспертом'}</button>
+      <button class="btn ghost sm" style="color:var(--accent)" onclick="removeUser('${attJs(u.id)}')">Удалить</button>
     </div>
   </div>`).join('') || '<div class="empty">Никого не найдено</div>'}`;
 }
@@ -778,7 +828,11 @@ function pgEditCourse(){
 
     ${mods.map((m,mi) => `<div class="modbox">
       <div class="mh"><span>Модуль ${esc(m.n)}. ${esc(m.t)}</span>
-        <button class="chip" style="padding:2px 8px" onclick="renameModule('${attJs(c.id)}',${mi})">✎</button></div>
+        <span class="row" style="gap:6px">
+          <button class="chip" style="padding:2px 8px" onclick="renameModule('${attJs(c.id)}',${mi})">✎</button>
+          <button class="chip" style="padding:2px 8px;color:var(--accent)"
+            onclick="delModule('${attJs(c.id)}',${mi})">✕</button>
+        </span></div>
       <div style="padding:9px">
         ${m.units.map(un => {
           const l = ls.find(x => x.n === un);
@@ -803,6 +857,43 @@ function pgEditCourse(){
 }
 
 function setCourse(id, f, v){ const c = COURSES.find(x => x.id === id); c[f] = v; }
+/* Удаление курса: вместе с уроками, модулями и описанием — иначе они
+   остаются висеть в данных и всплывают в других списках. */
+function delCourse(cid){
+  const c = COURSES.find(x => x.id === cid);
+  if(!c) return;
+  const ls = lessonsOf(cid).length;
+  if(!confirm('Удалить курс «' + c.t + '»' + (ls ? ' вместе с ' + plural(ls,'уроком','уроками','уроками') : '') +
+              '? Вернуть будет нельзя.')) return;
+  COURSES.splice(COURSES.indexOf(c), 1);
+  if(S.lessons) delete S.lessons[cid];
+  if(S.modules) delete S.modules[cid];
+  if(typeof COURSE_INFO !== 'undefined') delete COURSE_INFO[cid];
+  if(typeof COURSE_TAGS !== 'undefined') delete COURSE_TAGS[cid];
+  if(typeof COURSE_KIND !== 'undefined') delete COURSE_KIND[cid];
+  S.editCourse = null; S.course = null;
+  render(); syncPush(['courses','lessons','modules','courseInfo','courseTags','courseKind'], true);
+  toast('Курс удалён');
+}
+
+/* Удаление модуля: уроки внутри него удаляются вместе с ним, иначе они
+   пропадают из программы, но остаются в данных. */
+function delModule(cid, mi){
+  const mods = modulesOf(cid), m = mods[mi];
+  if(!m) return;
+  const n = (m.units || []).length;
+  if(!confirm('Удалить модуль «' + m.t + '»' + (n ? ' вместе с ' + plural(n,'уроком','уроками','уроками') : '') + '?')) return;
+  const ls = lessonsOf(cid);
+  (m.units || []).forEach(un => {
+    const i = ls.findIndex(l => l.n === un);
+    if(i >= 0) ls.splice(i, 1);
+  });
+  mods.splice(mi, 1);
+  mods.forEach((x, i) => x.n = i + 1);              // нумерация не должна рваться
+  render(); syncPush(['lessons','modules'], true);
+  toast('Модуль удалён');
+}
+
 function addModule(cid){
   const m = modulesOf(cid);
   m.push({n:m.length+1, t:'Новый модуль', units:[]});
@@ -924,7 +1015,7 @@ function adminHello(){
     <div class="row" style="align-items:flex-start">
       <button onclick="pickAdminAvatar()" style="flex:none">
         ${S.adminAvatar
-          ? `<img src="${S.adminAvatar}" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover">`
+          ? `<img src="${safeUrl(S.adminAvatar)}" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover">`
           : `<span class="ava" style="width:44px;height:44px;font-size:16px;background:var(--gold)">${esc((S.adminName||'К')[0])}</span>`}
       </button>
       <div style="flex:1">
@@ -1304,7 +1395,7 @@ function exEdu(){
     </div>
     ${x.comment ? `<div class="small" style="color:var(--warn);margin-top:8px">Редакция: ${esc(x.comment)}</div>` : ''}
     <div class="row" style="margin-top:10px;gap:8px">
-      ${MEDIA['cert_'+x.id] ? `<img src="${MEDIA['cert_'+x.id]}" style="width:72px;height:52px;object-fit:cover;border-radius:10px">` : ''}
+      ${MEDIA['cert_'+x.id] ? `<img src="${safeUrl(MEDIA['cert_'+x.id])}" style="width:72px;height:52px;object-fit:cover;border-radius:10px">` : ''}
       <button class="btn ghost sm" onclick="pickImage('cert_${x.id}')">${MEDIA['cert_'+x.id]?'Заменить скан':'Загрузить скан'}</button>
       <button class="btn ghost sm" onclick="delEdu('${attJs(e.id)}','${attJs(x.id)}')">Удалить</button>
     </div>

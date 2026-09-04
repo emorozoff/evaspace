@@ -340,19 +340,54 @@ async function uploadImage(id, dataUrl){
   return dataUrl;
 }
 
+/* ---------- личные сообщения от платформы ----------
+   Лежат на сервере отдельно от общих данных: каждая женщина забирает только
+   свои. Поэтому и читаем их отдельным запросом, а не из общего состояния. */
+async function pullDm(){
+  if(SYNC.alive === false || !SYNC.token || !S.user || !S.user.email) return false;
+  const r = await apiCall('dm_get', null, { silent:true });
+  if(!r || !Array.isArray(r.dm) || !r.dm.length) return false;
+  if(typeof initInbox === 'function') initInbox();
+  S.seenDm = S.seenDm || [];
+  const fresh = r.dm.filter(m => m && m.id && S.seenDm.indexOf(m.id) < 0);
+  if(!fresh.length) return false;
+
+  let th = (S.inbox || []).find(x => x.kind === 'платформа');
+  if(!th){
+    th = {id:'pf' + Date.now().toString(36), from:'Eva Space', c:'#111014',
+          kind:'платформа', ago:'только что', unread:false, sys:true, msgs:[]};
+    S.inbox.unshift(th);
+  }
+  fresh.forEach(m => {
+    const d = new Date(m.at || Date.now());
+    const tm = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    th.msgs.push({me:false, t:(m.subject ? m.subject + ' — ' : '') + m.text, tm});
+    S.seenDm.push(m.id);
+  });
+  th.unread = true;
+  if(typeof schedulePersist === 'function') schedulePersist();
+  return true;
+}
+
 /* ---------- аккаунты и прогресс ---------- */
 /* на сервер уходит только профиль: пароль и права меняются не здесь */
 async function syncUser(u){
   if(SYNC.alive === false || !SYNC.token || !u || !u.email) return;
   await apiCall('user_save', { user:{ email:u.email, name:u.name, avatar:u.avatar || '' } }, { silent:true });
 }
-/* список аккаунтов сервер отдаёт только администратору */
+/* Список аккаунтов сервер отдаёт только администратору.
+   Данные сервера главнее местной копии: иначе роль, имя и отметка о почте
+   остаются старыми — например, только что выданная роль эксперта тут же
+   затирается тем, что лежало в браузере. Местные поля, которых на сервере
+   нет (пароль для работы без сети), при этом сохраняются. */
 async function pullUsers(){
   if(S.role !== 'admin') return;
   const r = await apiCall('users', null, { silent:true });
-  if(r && r.users && typeof r.users === 'object'){
-    DB.saveUsers(Object.assign({}, r.users, DB.users()));
-  }
+  if(!r || !r.users || typeof r.users !== 'object') return;
+  const local = DB.users(), merged = {};
+  Object.keys(local).forEach(k => merged[k] = local[k]);
+  Object.keys(r.users).forEach(k => merged[k] = Object.assign({}, local[k], r.users[k]));
+  DB.saveUsers(merged);
 }
 async function pushProgress(){
   if(SYNC.alive === false || !S.user || !S.user.email) return;
@@ -457,11 +492,13 @@ async function initSync(){
     return;
   }
   await syncPull(true);
+  await pullDm();
   if(S.screen === 'app') render();
   /* пока вкладка не на виду, сервер не тревожим совсем */
   setInterval(() => {
     if(document.hidden || SYNC.sending || S.sheet) return;
     syncPull(true).then(ch => { if(ch) render(); });
+    pullDm().then(ch => { if(ch) render(); });
   }, 30000);
   document.addEventListener('visibilitychange', () => {
     if(!document.hidden && !SYNC.sending) syncPull(true).then(ch => { if(ch) render(); });

@@ -527,7 +527,7 @@ const MEDIA = {};   // id -> dataURL (jpeg)
 function cover(id, kind){
   if(MEDIA[id]){
     const pos = (typeof POS !== 'undefined' && POS[id]) || '50% 50%';
-    return `<img src="${MEDIA[id]}" alt="" style="object-position:${pos}">`;
+    return `<img src="${safeUrl(MEDIA[id])}" alt="" style="object-position:${esc(pos)}">`;
   }
   return coverGen(id, kind);
 }

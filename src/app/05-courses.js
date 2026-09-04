@@ -374,20 +374,26 @@ function pgMembers(){
           <button class="cmtbtn" onclick="toggleComments('${attJs(w.id)}')">
             💬 ${(w.comments||[]).length || ''}</button>
         </div>
-        <button class="starbtn ${liked?'on':''}" onclick="starPost('${attJs(w.id)}')">
-          ${starMark(16, liked ? '#E7A339' : 'rgba(17,16,20,.22)')}
-          <span>${w.st + (liked?1:0)}</span>
-        </button>
+        <div class="row" style="gap:7px">
+          ${S.role === 'admin' ? `<button class="cmtbtn" style="color:var(--accent)"
+            onclick="delPost('${attJs(w.id)}')">удалить</button>` : ''}
+          <button class="starbtn ${liked?'on':''}" onclick="starPost('${attJs(w.id)}')">
+            ${starMark(16, liked ? '#E7A339' : 'rgba(17,16,20,.22)')}
+            <span>${w.st + (liked?1:0)}</span>
+          </button>
+        </div>
       </div>
       ${(S.openCmts||[]).includes(w.id) ? `
         <div class="cmts">
-          ${(w.comments||[]).map(c => `<div class="cmt ${c.own?'own':''}">
+          ${(w.comments||[]).map((c, ci) => `<div class="cmt ${c.own?'own':''}">
             ${chatAva(c.a, c.c, !!c.own, 28, c.email)}
             <div style="flex:1;min-width:0">
               <div class="row" style="gap:6px">
                 <b style="font-size:12.5px;color:${c.own ? 'var(--accent)' : 'var(--ink)'}">${esc(c.a)}${c.own?' · ты':''}</b>
                 ${c.curator ? '<span class="badge-cur">куратор</span>' : ''}
-                <span class="small muted" style="font-size:10px;margin-left:auto">${esc(c.ago)}</span></div>
+                <span class="small muted" style="font-size:10px;margin-left:auto">${esc(c.ago)}</span>
+                ${S.role === 'admin' ? `<button style="font-size:10px;color:var(--accent)"
+                  onclick="delComment('${attJs(w.id)}',${ci})">✕</button>` : ''}</div>
               <div style="font-size:13px;line-height:1.45;margin-top:3px">${esc(c.t)}</div>
             </div>
           </div>`).join('') || '<div class="small muted" style="padding:4px 0 8px">Пока никто не ответил. Будь первой</div>'}
@@ -418,7 +424,7 @@ function myProfileCard(){
       после этого начнём подбирать знакомства.</p>
     <div class="mcard myprofile">
       <div class="mphoto">${myAvatar()
-        ? `<img src="${myAvatar()}" alt="">`
+        ? `<img src="${safeUrl(myAvatar())}" alt="">`
         : `<div style="width:100%;height:100%;display:grid;place-items:center;background:var(--surface-2)">
             <div style="text-align:center;padding:20px">
               <div class="dot-ava" style="width:64px;height:64px;font-size:24px;margin:0 auto 10px;background:var(--ink)">${esc((S.name||'Я')[0])}</div>
@@ -465,7 +471,7 @@ function datingBlock(){
     </div>
 
     ${m ? `<div class="mcard">
-      <div class="mphoto">${MEDIA[m.id] ? `<img src="${MEDIA[m.id]}" alt="">` : portrait(m.id)}
+      <div class="mphoto">${MEDIA[m.id] ? `<img src="${safeUrl(MEDIA[m.id])}" alt="">` : portrait(m.id)}
         <div class="mname">
           <b>${esc(m.n)}, ${m.age}</b>
           <span>${fmt === 'кофе' ? m.city : m.city === 'Онлайн' ? 'онлайн' : m.city + ' · онлайн'}</span>
@@ -752,6 +758,25 @@ function sendMsg(gid){
   }, 1600);
 }
 function delMsg(gid, i){ S.chats[gid].splice(i,1); render(); toast('Сообщение удалено'); }
+
+/* модерация ленты: удаление послания и отдельного комментария */
+function delPost(id){
+  const w = WALL.find(x => x.id === id);
+  if(!w) return;
+  if(!confirm('Удалить послание «' + String(w.t).slice(0, 60) + '…»? Вернуть будет нельзя.')) return;
+  const i = WALL.indexOf(w);
+  WALL.splice(i, 1);
+  render(); syncPush(['wall'], true);
+  toast('Послание удалено');
+}
+function delComment(pid, ci){
+  const w = WALL.find(x => x.id === pid);
+  if(!w || !w.comments || !w.comments[ci]) return;
+  if(!confirm('Удалить комментарий?')) return;
+  w.comments.splice(ci, 1);
+  render(); syncPush(['wall'], true);
+  toast('Комментарий удалён');
+}
 function scrollChat(){ setTimeout(() => { const l = $('#clist'); if(l) window.scrollTo(0, document.body.scrollHeight); }, 60); }
 
 /* =====================================================================

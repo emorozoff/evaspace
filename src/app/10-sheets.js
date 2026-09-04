@@ -22,7 +22,7 @@ function sheet(){
     units:shUnits, groupInfo:shGroupInfo, newGroup:shNewGroup, fix:shFix, video:shVideo,
     hw:shHW, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
     install:shInstall, diag:shDiag, askGood:shAskGood, newPost:shNewPost, dating:shDating, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
-    service:shService,
+    service:shService, editUser:shEditUser,
     newCourse:shNewCourse, newGood:shNewGood, idea:shIdea})[k]();
   return `<div class="bg" onclick="if(event.target===this)closeSheet()">
     <div class="sheet"><div class="grab"></div>${body}</div></div>`;
@@ -418,7 +418,7 @@ function shNewContent(){
   <div class="seg">${Object.entries(TYPE).map(([k,v]) =>
     `<button class="${d.type===k?'on':''}" onclick="chipPick(this,'cd.type','${attJs(k)}')">${v.l}</button>`).join('')}</div>
 
-  ${MEDIA[d.key] ? `<img class="upprev" src="${MEDIA[d.key]}" alt="">
+  ${MEDIA[d.key] ? `<img class="upprev" src="${safeUrl(MEDIA[d.key])}" alt="">
     <div class="acts" style="margin:0 0 9px"><button class="btn ghost sm" onclick="pickImage('${attJs(d.key)}')">Заменить фото</button>
       <button class="btn ghost sm" onclick="delete MEDIA['${attJs(d.key)}'];render()">Убрать</button></div>`
   : `<button class="upbox" style="width:100%" onclick="pickImage('${attJs(d.key)}')">
@@ -573,7 +573,7 @@ function shFix(){
     <input class="field" id="ft" value="${esc(x.title)}">
     <label class="lbl">Описание</label>
     <textarea class="field" id="fx" rows="4">${esc(x.text)}</textarea>
-    ${MEDIA[x.id] ? `<img class="upprev" src="${MEDIA[x.id]}" alt="">` : ''}
+    ${MEDIA[x.id] ? `<img class="upprev" src="${safeUrl(MEDIA[x.id])}" alt="">` : ''}
     <button class="btn ghost" onclick="pickImage('${attJs(x.id)}')">Заменить обложку</button>
     <button class="btn" style="margin-top:9px" onclick="sendFix('${attJs(x.id)}')">Отправить снова на проверку</button>`;
 }
@@ -787,7 +787,7 @@ function shNewEvent(){
           <span class="pl2">＋</span><b>Загрузить обложку</b>
           <span class="small muted">Первое фото станет обложкой мероприятия</span></button>`;
         return shots.map(k => `<div class="photo ${k===key?'cover':''}">
-            <img src="${MEDIA[k]}" alt="">
+            <img src="${safeUrl(MEDIA[k])}" alt="">
             ${k===key ? '<span class="covlabel">обложка</span>'
               : `<button class="mkcov" onclick="setEvCover('${attJs(k)}')">Сделать обложкой</button>`}
             <button class="phdel" onclick="delEvPhoto('${attJs(k)}')">✕</button>
@@ -928,7 +928,42 @@ function shWrite2(){
     <label class="lbl">Сообщение</label><textarea class="field" id="w_t" rows="5"></textarea>
     <div class="chips wrap">${['Напомнить про пробный период','Предложить скидку 20%','Спросить, что не подошло','Пригласить на мероприятие'].map(t =>
       `<button class="chip" onclick="$('#w_t').value=($('#w_t').value?$('#w_t').value+' ':'')+'${attJs(t)}'">${t}</button>`).join('')}</div>
-    <button class="btn" style="margin-top:12px" onclick="S.sheet=null;render();toast('Письмо отправлено на ${u.m}')">Отправить</button>`;
+    <button class="btn" style="margin-top:12px" onclick="sendUserMessage('${attJs(u.id)}')">Отправить</button>
+    <p class="tiny muted" style="margin-top:10px">Придёт в её личные сообщения в приложении.
+      Уведомление на почту добавится, когда подключим рассылку.</p>`;
+}
+
+/* сообщение уходит на сервер и появляется у женщины в личных сообщениях */
+async function sendUserMessage(id){
+  const u = allUsers().find(x => x.id === id);
+  if(!u) return;
+  const text = (($('#w_t')||{}).value || '').trim();
+  const subject = (($('#w_s')||{}).value || '').trim();
+  if(!text) return toast('Напиши сообщение');
+  if(!u.real) return toast('Это демонстрационная запись — писать некому');
+  if(SYNC.alive === false) return toast('Отправка работает только при подключённом сервере');
+  const r = await apiCall('dm_send', { email:u.m, subject, text,
+                                       from:S.adminName || 'Eva Space' }, { silent:true });
+  if(!r) return toast(SYNC.lastError || 'Не отправилось');
+  S.sheet = null; render();
+  toast('Сообщение отправлено в личные сообщения');
+}
+
+/* правка карточки: имя и отметка о подтверждённой почте */
+function shEditUser(){
+  const u = allUsers().find(x => x.id === S.sheet.id);
+  if(!u) return `<div class="empty">Аккаунт не найден</div>`;
+  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Карточка пользователя</h2>
+    <p class="small muted" style="margin:0 0 12px">${esc(u.m)}</p>
+    <label class="lbl">Имя</label>
+    <input class="field" id="eu_n" value="${esc(u.n)}">
+    <label class="row" style="margin:10px 0 4px;font-size:13.5px;gap:8px">
+      <input type="checkbox" id="eu_v" ${u.verified ? 'checked' : ''}> Почта подтверждена</label>
+    <p class="tiny muted" style="margin:6px 0 14px">Почту и пароль здесь не меняем: почта — это ключ аккаунта,
+      пароль знает только сама женщина.</p>
+    <button class="btn" onclick="saveUserCard('${attJs(u.id)}')">Сохранить</button>
+    ${u.real ? `<button class="btn ghost" style="margin-top:9px;color:var(--accent)"
+      onclick="closeSheet();removeUser('${attJs(u.id)}')">Удалить аккаунт</button>` : ''}`;
 }
 function shAddUser(){
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Добавить вручную</h2>
@@ -1033,7 +1068,7 @@ function shEduCheck(){
   return `<h2 class="serif" style="font-size:22px;margin:0 0 4px">Проверка документа</h2>
     <p class="small muted" style="margin:0 0 12px">${esc(e.n)} · ${esc(x.t)}${x.y?', '+x.y:''}</p>
     ${MEDIA['cert_'+id]
-      ? `<img src="${MEDIA['cert_'+id]}" style="width:100%;border-radius:var(--r);margin-bottom:10px">`
+      ? `<img src="${safeUrl(MEDIA['cert_'+id])}" style="width:100%;border-radius:var(--r);margin-bottom:10px">`
       : `<div class="upbox">Скан не загружен - можно запросить у эксперта</div>`}
     <p class="small muted" style="margin:0 0 12px">Скан виден только администраторам.</p>
     <button class="btn" onclick="setEdu('${attJs(eid)}','${attJs(id)}','approved')">Подтвердить образование</button>

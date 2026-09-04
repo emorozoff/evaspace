@@ -113,7 +113,7 @@ function db_read(): array {
   }
   if (!is_array($j)) $j = [];
   $j += ['rev' => 0, 'updated' => 0, 'shared' => [], 'users' => [],
-         'progress' => [], 'sessions' => [], 'tries' => []];
+         'progress' => [], 'sessions' => [], 'tries' => [], 'dm' => []];
   return $j;
 }
 function db_write(array $db): void {
@@ -458,6 +458,60 @@ switch ($action) {
     ok(['user' => safe_user($u)]);
   }
 
+  /* удалить аккаунт вместе с прогрессом и перепиской */
+  case 'user_delete': {
+    if (!$isPost) fail('Ожидается POST');
+    $db = db_read();
+    $me = need_admin(user_by_token($db, $token));
+    $mail = low((string)($body['email'] ?? ''));
+    if ($mail === '') fail('Не указана почта');
+    if ($mail === low((string)$me['email'])) fail('Свой аккаунт удалить нельзя', 403);
+    if (in_array($mail, config()['admins'], true)) {
+      fail('Это администратор — уберите почту из data/config.php, потом удаляйте', 403);
+    }
+    if (!isset($db['users'][$mail])) fail('Аккаунт не найден', 404);
+    unset($db['users'][$mail], $db['progress'][$mail], $db['dm'][$mail]);
+    foreach ($db['sessions'] as $t => $sn) {          // выкидываем со всех устройств
+      if (low((string)($sn['email'] ?? '')) === $mail) unset($db['sessions'][$t]);
+    }
+    $db['updated'] = time();
+    db_write($db);
+    ok(['deleted' => $mail]);
+  }
+
+  /* ---------- личные сообщения от платформы ----------
+     Лежат отдельно от общих данных: каждая женщина видит только свои. */
+  case 'dm_send': {
+    if (!$isPost) fail('Ожидается POST');
+    $db = db_read();
+    $me = need_staff(user_by_token($db, $token));
+    $mail = low((string)($body['email'] ?? ''));
+    $text = trim((string)($body['text'] ?? ''));
+    if ($mail === '') fail('Не указана почта получателя');
+    if ($text === '') fail('Пустое сообщение');
+    if (!isset($db['users'][$mail])) fail('Такого аккаунта нет', 404);
+    if (mb_strlen($text) > 4000) fail('Сообщение длиннее 4000 символов', 413);
+
+    $db['dm'][$mail] = array_slice(array_merge($db['dm'][$mail] ?? [], [[
+      'id'      => 'dm' . bin2hex(random_bytes(6)),
+      'from'    => mb_substr(trim((string)($body['from'] ?? 'Eva Space')), 0, 80),
+      'subject' => mb_substr(trim((string)($body['subject'] ?? '')), 0, 120),
+      'text'    => $text,
+      'at'      => time() * 1000
+    ]]), -200);                                        // храним последние 200
+    $db['updated'] = time();
+    db_write($db);
+    ok([]);
+  }
+
+  case 'dm_get': {
+    $db = db_read();
+    $me = need_user(user_by_token($db, $token));
+    $mail = low((string)($_GET['email'] ?? $me['email']));
+    if ($mail !== low((string)$me['email']) && role_of($me) !== 'admin') fail('Чужая переписка недоступна', 403);
+    ok(['dm' => $db['dm'][$mail] ?? []]);
+  }
+
   /* ---------- личный прогресс ---------- */
   case 'progress_get': {
     $db = db_read();
@@ -591,7 +645,7 @@ switch ($action) {
   case 'export': {
     $db = db_read();
     need_admin(user_by_token($db, $token));
-    unset($db['sessions'], $db['tries']);     // токены в копию не кладём
+    unset($db['sessions'], $db['tries']);     // токены в копию не кладём, переписка входит
     ok(['db' => $db]);
   }
   case 'import': {
