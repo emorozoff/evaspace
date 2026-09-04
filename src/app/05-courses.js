@@ -273,25 +273,52 @@ function pgEvents(){
 /* =====================================================================
    МИНИ-КАЛЕНДАРЬ «Я ИДУ»
    Не месяц и не все недели — только те дни, где у неё что-то есть.
-   Слева день недели и число, справа во сколько и онлайн это или офлайн.
+   Слева день недели и число, справа время, название, короткое описание
+   и формат: онлайн или офлайн с городом. Прошедшее не исчезает —
+   уходит вниз приглушённым списком.
    ===================================================================== */
 const DOW = ['вс','пн','вт','ср','чт','пт','сб'];
 
-/* только предстоящее, по возрастанию даты, сгруппированное по дню */
+/* Дата хранится строкой «2026-09-15». Читаем её как есть: через Date такая
+   строка считается полуночью по Гринвичу, и в части часовых поясов день
+   уезжал на сутки назад. */
+function evDay(d){
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d == null ? '' : d));
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+}
+
+/* короткая подпись: первая мысль из описания, без хвоста */
+function evShort(e){
+  const t = String(e.about || '').trim();
+  if(!t) return '';
+  const first = t.split(/(?<=[.!?])\s/)[0] || t;
+  return first.length > 64 ? first.slice(0, 63).replace(/[\s,;:-]+$/, '') + '…' : first;
+}
+
+/* Все её мероприятия, сгруппированные по дню: сначала ближайшие по
+   возрастанию, потом прошедшие — свежие сверху. */
 function planDays(mine){
   const today = new Date(); today.setHours(0,0,0,0);
-  const soon = (mine || []).filter(e => {
-    const t = Date.parse(e.d);
-    return isFinite(t) && t >= today.getTime();
-  }).sort((a,b) => (Date.parse(a.d) - Date.parse(b.d)) || String(a.tm).localeCompare(String(b.tm)));
-
-  const days = [];
-  soon.forEach(e => {
-    const cur = days[days.length - 1];
-    if(cur && cur.d === e.d) cur.items.push(e);
-    else days.push({d:e.d, items:[e]});
+  const rows = [];
+  (mine || []).forEach(e => {
+    const day = evDay(e.d);
+    if(day) rows.push({e, at:day.getTime(), day});
   });
-  return days;
+
+  const pack = list => {
+    const days = [];
+    list.forEach(r => {
+      const cur = days[days.length - 1];
+      if(cur && cur.at === r.at) cur.items.push(r.e);
+      else days.push({at:r.at, day:r.day, past:r.at < today.getTime(), items:[r.e]});
+    });
+    days.forEach(d => d.items.sort((a,b) => String(a.tm).localeCompare(String(b.tm))));
+    return days;
+  };
+
+  const soon = rows.filter(r => r.at >= today.getTime()).sort((a,b) => a.at - b.at);
+  const gone = rows.filter(r => r.at <  today.getTime()).sort((a,b) => b.at - a.at);
+  return pack(soon).concat(pack(gone));
 }
 
 function myPlan(mine){
@@ -300,33 +327,42 @@ function myPlan(mine){
   const today = new Date(); today.setHours(0,0,0,0);
   const tomorrow = today.getTime() + 864e5;
   const count = days.reduce((n, x) => n + x.items.length, 0);
+  const soon = days.filter(d => !d.past).length;
 
-  return `
-  <div class="sec-h" style="margin-top:6px">
-    <h2 class="serif" style="font-size:18px">Я иду</h2>
-    <span class="small muted">${plural(count,'мероприятие','мероприятия','мероприятий')}</span>
-  </div>
-  <div class="myplan">${days.map(day => {
-    const dt = new Date(day.d), when = dt.getTime();
-    const mark = when === today.getTime() ? 'сегодня' : when === tomorrow ? 'завтра' : '';
-    return `<div class="pday${mark === 'сегодня' ? ' now' : ''}">
+  const dayHtml = d => {
+    const mark = d.at === today.getTime() ? 'сегодня' : d.at === tomorrow ? 'завтра' : '';
+    return `<div class="pday${d.at === today.getTime() ? ' now' : ''}${d.past ? ' gone' : ''}">
       <div class="pcell">
-        <span class="dw">${DOW[dt.getDay()]}</span>
-        <b>${dt.getDate()}</b>
-        <span class="mn">${MON[dt.getMonth()]}</span>
+        <span class="dw">${DOW[d.day.getDay()]}</span>
+        <b>${d.day.getDate()}</b>
+        <span class="mn">${MON[d.day.getMonth()]}</span>
       </div>
-      <div class="pitems">${day.items.map(e => `
+      <div class="pitems">${d.items.map(e => {
+        const note = evShort(e);
+        return `
         <button class="pline" onclick="openSheet({k:'event',id:'${attJs(e.id)}'})">
           <span class="ptm">${esc(e.tm)}</span>
           <span class="ptxt">
             <b>${esc(e.t)}</b>
             <span class="pwhere ${e.mode === 'онлайн' ? 'on' : 'off'}">
               ${e.mode === 'онлайн' ? '⌘ онлайн' : '◈ офлайн · ' + esc(e.city)}</span>
+            ${note ? `<span class="pnote">${esc(note)}</span>` : ''}
           </span>
           ${mark ? `<span class="psoon">${mark}</span>` : ''}
-        </button>`).join('')}</div>
+        </button>`; }).join('')}</div>
     </div>`;
-  }).join('')}</div>`;
+  };
+
+  return `
+  <div class="sec-h" style="margin-top:6px">
+    <h2 class="serif" style="font-size:18px">Я иду</h2>
+    <span class="small muted">${plural(count,'мероприятие','мероприятия','мероприятий')}</span>
+  </div>
+  <div class="myplan">
+    ${days.filter(d => !d.past).map(dayHtml).join('')}
+    ${days.some(d => d.past) ? `<div class="pgone">${soon ? 'уже прошли' : 'всё уже прошло'}</div>
+      ${days.filter(d => d.past).map(dayHtml).join('')}` : ''}
+  </div>`;
 }
 
 function evCard(e){

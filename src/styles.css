@@ -693,6 +693,12 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pwhere.on{color:var(--lilac)}
 .pwhere.off{color:var(--ok)}
+.pnote{display:block;font-size:11px;margin-top:2px;color:var(--muted);opacity:.8;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pgone{padding:7px 13px 6px;border-top:1px solid var(--line);background:var(--surface-2);
+  font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pday.gone{opacity:.52}
+.pday.gone .pcell b{font-weight:600}
 .psoon{flex:none;align-self:center;background:var(--surface-2);border-radius:999px;
   padding:2px 8px;font-size:9.5px;font-weight:700;color:var(--muted)}
 .pday.now .psoon{background:var(--accent);color:#fff}
