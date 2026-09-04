@@ -304,8 +304,59 @@ window.__renders = 0; window.__skipped = 0;
 function setHTML(html){
   if(html === shownHTML){ window.__skipped++; return false; }
   shownHTML = html; el.innerHTML = html; window.__renders++;
+  deskArrows();
   return true;
 }
+
+/* =====================================================================
+   СТРЕЛКИ У ГОРИЗОНТАЛЬНЫХ ЛЕНТ
+   На телефоне ленту листают пальцем, на компьютере листать было нечем.
+   После каждой перерисовки оборачиваем ленты, которым не хватает ширины,
+   и ставим по краям две круглые кнопки. На сенсорных экранах их нет.
+   ===================================================================== */
+const RAILS = '.hscroll, .carousel, .galrow';
+
+function railOf(btn){
+  const box = btn && btn.parentElement;
+  return box ? box.querySelector(RAILS) : null;
+}
+function slideRail(btn, dir){
+  const row = railOf(btn);
+  if(!row) return;
+  row.scrollBy({ left: dir * Math.max(220, row.clientWidth * 0.8), behavior:'smooth' });
+}
+/* стрелка гаснет, когда в эту сторону листать больше нечего */
+function markRail(box){
+  const row = box.querySelector(RAILS);
+  if(!row) return;
+  const left = box.querySelector('.snav.left'), right = box.querySelector('.snav.right');
+  const end = row.scrollWidth - row.clientWidth - 2;
+  if(left)  left.classList.toggle('off', row.scrollLeft <= 2);
+  if(right) right.classList.toggle('off', row.scrollLeft >= end);
+}
+function deskArrows(){
+  try {
+    /* мышь или просто широкий экран: на телефоне ленту листают пальцем */
+    const mouse = window.matchMedia && matchMedia('(hover:hover) and (pointer:fine)').matches;
+    if(!mouse && window.innerWidth < 720) return;
+    document.querySelectorAll(RAILS).forEach(row => {
+      const parent = row.parentElement;
+      if(!parent || parent.classList.contains('scroller')) return;
+      if(row.scrollWidth - row.clientWidth < 24) return;      // всё и так помещается
+      const box = document.createElement('div');
+      box.className = 'scroller rail';
+      parent.insertBefore(box, row);
+      box.appendChild(row);
+      box.insertAdjacentHTML('afterbegin',
+        '<button class="snav left" aria-label="Назад" onclick="slideRail(this,-1)">‹</button>');
+      box.insertAdjacentHTML('beforeend',
+        '<button class="snav right" aria-label="Вперёд" onclick="slideRail(this,1)">›</button>');
+      row.addEventListener('scroll', () => markRail(box), { passive:true });
+      markRail(box);
+    });
+  } catch(e){ console.error('[Eva] стрелки лент:', e); }
+}
+window.addEventListener('resize', () => { try { deskArrows(); } catch(e){} });
 
 function renderScreen(){
   const s = S.screen;

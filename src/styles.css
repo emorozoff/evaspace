@@ -677,6 +677,17 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   font-size:15px;z-index:4;color:var(--ink)}
 .snav.left{left:-4px} .snav.right{right:-4px}
 @media (hover:hover) and (pointer:fine){ .scroller:hover .snav{display:grid} }
+
+/* Ленты контента: стрелки видны сразу, но приглушены, пока не наведёшь.
+   Обёртку .rail ставит сам сценарий и только там, где есть мышь или широкий
+   экран, — на телефоне этой разметки просто нет. */
+.scroller.rail .snav{display:grid;width:34px;height:34px;font-size:19px;opacity:.62;
+  transition:opacity .18s ease, background .18s ease, color .18s ease}
+.scroller.rail:hover .snav{opacity:1}
+.scroller.rail .snav:hover{background:var(--ink);color:#fff;border-color:transparent}
+.scroller.rail .snav.off{opacity:0;pointer-events:none}
+.scroller.rail .snav.left{left:6px}
+.scroller.rail .snav.right{right:6px}
 .chip.tpl{background:#F3EFFA;border-color:transparent;color:var(--lilac);font-weight:600}
 .chip.tpl:hover{background:var(--lilac);color:#fff}
 
