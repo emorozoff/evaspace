@@ -359,9 +359,9 @@ function pgMembers(){
     const liked = (S.starred||[]).includes(w.id);
     return `<div class="wallpost">
       <div class="row" style="align-items:center;margin-bottom:9px">
-        ${chatAva(w.a, w.c, !!w.own, 38, w.email)}
+        ${chatAva(w.a, w.c, isMine(w), 38, w.email)}
         <div style="flex:1;min-width:0">
-          <b style="font-size:14px;display:block">${esc(w.a)}${w.own?' · ты':''}</b>
+          <b style="font-size:14px;display:block">${esc(w.a)}${isMine(w)?' · ты':''}</b>
           <span class="small muted" style="font-size:11px">${esc(w.city)} · ${esc(w.ago)}</span>
         </div>
       </div>
@@ -385,11 +385,11 @@ function pgMembers(){
       </div>
       ${(S.openCmts||[]).includes(w.id) ? `
         <div class="cmts">
-          ${(w.comments||[]).map((c, ci) => `<div class="cmt ${c.own?'own':''}">
-            ${chatAva(c.a, c.c, !!c.own, 28, c.email)}
+          ${(w.comments||[]).map((c, ci) => `<div class="cmt ${isMine(c)?'own':''}">
+            ${chatAva(c.a, c.c, isMine(c), 28, c.email)}
             <div style="flex:1;min-width:0">
               <div class="row" style="gap:6px">
-                <b style="font-size:12.5px;color:${c.own ? 'var(--accent)' : 'var(--ink)'}">${esc(c.a)}${c.own?' · ты':''}</b>
+                <b style="font-size:12.5px;color:${isMine(c) ? 'var(--accent)' : 'var(--ink)'}">${esc(c.a)}${isMine(c)?' · ты':''}</b>
                 ${c.curator ? '<span class="badge-cur">куратор</span>' : ''}
                 <span class="small muted" style="font-size:10px;margin-left:auto">${esc(c.ago)}</span>
                 ${S.role === 'admin' ? `<button style="font-size:10px;color:var(--accent)"
@@ -404,7 +404,7 @@ function pgMembers(){
           </div>
         </div>` : (w.comments||[]).length ? `
         <button class="cmtpeek" onclick="toggleComments('${attJs(w.id)}')">
-          ${chatAva(w.comments[0].a, w.comments[0].c, !!w.comments[0].own, 22, w.comments[0].email)}
+          ${chatAva(w.comments[0].a, w.comments[0].c, isMine(w.comments[0]), 22, w.comments[0].email)}
           <span><b>${esc(w.comments[0].a)}:</b> ${esc(w.comments[0].t.slice(0,38))}${w.comments[0].t.length>38?'…':''}</span>
           ${w.comments.length > 1 ? `<span class="cmtmore">ещё ${w.comments.length - 1}</span>` : ''}
         </button>` : ''}
@@ -592,8 +592,7 @@ function addComment(id){
   if(!w) return;
   w.comments = w.comments || [];
   w.comments.push({a:S.role === 'admin' ? (S.adminName || 'Куратор') : (S.name || 'Я'),
-    c:'#111014', t:v, ago:'только что', own:true, curator:S.role === 'admin',
-    email:S.user ? S.user.email : ''});
+    c:'#111014', t:v, ago:'только что', curator:S.role === 'admin', email:myMail()});
   S.points += 3;
   render(); schedulePersist(); syncPush(['wall']);
   toast('Комментарий добавлен. +3 балла');
@@ -701,12 +700,12 @@ function pgChatRoom(){
     </div>
     <div class="pad">
       <div class="chatlist" id="clist">
-        ${msgs.map((m,i) => `<div class="cmsg ${m.own?'own':''}">
-          ${!m.own ? chatAva(m.a, m.c, false, 32, m.email) : ''}
+        ${msgs.map((m,i) => `<div class="cmsg ${chatMine(m)?'own':''}">
+          ${!chatMine(m) ? chatAva(m.a, m.c, false, 32, m.email) : ''}
           <div class="txt">
-            ${!m.own ? `<div class="nm">${esc(m.a)}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
+            ${!chatMine(m) ? `<div class="nm">${esc(m.a)}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
             ${esc(m.t)}
-            <div class="tm">${esc(m.tm)}${S.role==='admin'&&!m.own?` · <span onclick="delMsg('${attJs(g.id)}',${i})" style="cursor:pointer;color:var(--accent)">удалить</span>`:''}</div>
+            <div class="tm">${esc(m.tm)}${S.role==='admin'&&!chatMine(m)?` · <span onclick="delMsg('${attJs(g.id)}',${i})" style="cursor:pointer;color:var(--accent)">удалить</span>`:''}</div>
           </div>
         </div>`).join('')}
       </div>
@@ -718,18 +717,27 @@ function pgChatRoom(){
   </div>`;
 }
 
+/* своё ли сообщение в групповом чате: по почте, метка — только у старых */
+function chatMine(m){
+  if(!m) return false;
+  const his = String(m.email || '').toLowerCase();
+  return his ? his === myMail() : !!m.own;
+}
+
 /* аватар автора: своё фото у себя, буква у остальных */
 function chatAva(name, color, own, size, email){
   const s = size || 32;
+  /* почта автора важнее любых меток: так фото не перескакивают между людьми */
+  if(email){
+    const src = avatarOf(email);
+    if(src) return avaImg(src, s);
+    own = String(email).toLowerCase() === myMail();
+  }
   if(own && S.role === 'admin' && S.adminAvatar) return avaImg(S.adminAvatar, s);
   if((name === 'Куратор' || name === S.adminName) && S.adminAvatar) return avaImg(S.adminAvatar, s);
   if(own){
     const mine = myAvatar();
     if(mine) return avaImg(mine, s);
-  }
-  if(email){
-    const src = avatarOf(email);
-    if(src) return avaImg(src, s);
   }
   const initials = String(name || '?').split(' ').map(w => w[0]).join('').slice(0,2);
   return `<div class="dot-ava" style="width:${s}px;height:${s}px;background:${safeColor(color)}">${esc(initials)}</div>`;
@@ -741,7 +749,7 @@ function sendMsg(gid){
   const now = new Date();
   const tm = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
   S.chats[gid].push({a: S.role === 'admin' ? (S.adminName || 'Куратор') : (S.name || 'Я'),
-    c:'#111014', t, tm, own:true, curator: S.role === 'admin',
+    c:'#111014', t, tm, own:true, email:myMail(), curator: S.role === 'admin',
     email:S.user ? S.user.email : ''});
   S.points += 5;
   render(); scrollChat(); toast('+5 баллов за участие');

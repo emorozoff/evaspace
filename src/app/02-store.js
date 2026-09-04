@@ -402,6 +402,16 @@ function avatarOf(email){
 function myAvatar(){
   return (S.user && avatarOf(S.user.email)) || S.avatar || '';
 }
+/* Своя ли это запись. Считаем по почте аккаунта, а не по метке в данных:
+   метка «моё» уезжала в общие записи, и чужие послания подхватывали
+   аватарку того, кто их читает. */
+function myMail(){ return S.user ? String(S.user.email || '').toLowerCase() : ''; }
+function isMine(rec){
+  if(!rec) return false;
+  const me = myMail(), his = String(rec.email || '').toLowerCase();
+  if(his) return !!me && his === me;
+  return !me && !!rec.own;          /* старые записи без почты — только до входа */
+}
 function avaImg(src, size){
   const s = size || 36;
   return `<img src="${safeUrl(src)}" alt="" style="width:${s}px;height:${s}px;border-radius:50%;object-fit:cover;flex:none">`;

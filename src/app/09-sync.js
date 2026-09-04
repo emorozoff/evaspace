@@ -106,7 +106,7 @@ const BRANCHES = {
   media:      () => mediaLinks(),
   videos:     () => S.videos || {},
   covPos:     () => S.covPos || {},
-  wall:       () => (typeof WALL !== 'undefined' ? WALL : []),
+  wall:       () => (typeof WALL !== 'undefined' ? WALL.map(shareable) : []),
   support:    () => (typeof INBOX !== 'undefined' ? INBOX : []),
   orders:     () => [...(typeof ORDERS !== 'undefined' ? ORDERS : []), ...(S.orders || [])],
   questions:  () => [...(typeof GOOD_QS !== 'undefined' ? GOOD_QS : []), ...(S.qs || [])],
@@ -118,11 +118,31 @@ const BRANCHES = {
 
 const clean = o => JSON.parse(JSON.stringify(o));
 
-/* в общие данные попадают только ссылки на файлы, не base64 */
+/* Из общих записей убираем всё, что верно только на этом устройстве.
+   Метка «моё» раньше уезжала на сервер, и чужие послания приходили к другим
+   помеченными как свои — вместе с чужой аватаркой. Автор теперь узнаётся
+   по почте, а метка остаётся только в памяти браузера. */
+function shareable(rec){
+  const out = clean(rec);
+  delete out.own;
+  if(out.email) out.email = String(out.email).toLowerCase();
+  if(Array.isArray(out.comments)) out.comments = out.comments.map(c => {
+    const cc = Object.assign({}, c); delete cc.own;
+    if(cc.email) cc.email = String(cc.email).toLowerCase();
+    return cc;
+  });
+  return out;
+}
+
+/* В общие данные попадают только ссылки на файлы, не base64.
+   Аватарки не кладём: у них своя защищённая ветка, где каждая может писать
+   только свою строку. Через общий справочник картинок чужое фото можно было
+   бы подменить. */
 function mediaLinks(){
   const out = {};
   Object.keys(MEDIA).forEach(k => {
     const v = MEDIA[k];
+    if(k.indexOf('ava_') === 0) return;
     if(typeof v === 'string' && !v.startsWith('data:')) out[k] = v;
   });
   return out;
@@ -232,8 +252,12 @@ const FIX = {
   wall: x => {
     x.id = String(x.id); x.a = okStr(x.a, 'Гостья'); x.t = okStr(x.t);
     x.c = okStr(x.c, '#111014'); x.ints = okArr(x.ints); x.st = okNum(x.st);
+    x.email = okStr(x.email).toLowerCase();
+    delete x.own;                       /* чужая метка «моё» с сервера не в счёт */
     x.comments = okArr(x.comments).filter(c => c && typeof c === 'object')
-                  .map(c => ({...c, a: okStr(c.a, 'Гостья'), t: okStr(c.t), ago: okStr(c.ago)}));
+                  .map(c => { const cc = {...c, a: okStr(c.a, 'Гостья'), t: okStr(c.t),
+                                ago: okStr(c.ago), email: okStr(c.email).toLowerCase()};
+                              delete cc.own; return cc; });
     return x;
   },
   plain: x => x                                   // заказы, вопросы, поддержка, идеи
@@ -299,8 +323,12 @@ function applyShared(sh){
   if(Array.isArray(sh.ideas)   && sh.ideas.length)   S.ideas = sh.ideas;
   if(Array.isArray(sh.replies)) S.marketReplies = sh.replies;
   if(sh.avatars && typeof sh.avatars === 'object'){
-    Object.keys(sh.avatars).forEach(m => { if(sh.avatars[m]) AVATARS[m] = sh.avatars[m]; });
-    if(S.user && AVATARS[String(S.user.email).toLowerCase()]) S.avatar = AVATARS[String(S.user.email).toLowerCase()];
+    Object.keys(sh.avatars).forEach(m => {
+      const key = String(m).toLowerCase();
+      if(sh.avatars[m] && typeof sh.avatars[m] === 'string') AVATARS[key] = sh.avatars[m];
+    });
+    const me = S.user ? String(S.user.email).toLowerCase() : '';
+    if(me && AVATARS[me]) S.avatar = AVATARS[me];
   }
   if(sh.adminInfo && typeof sh.adminInfo === 'object'){
     if(sh.adminInfo.name) S.adminName = sh.adminInfo.name;

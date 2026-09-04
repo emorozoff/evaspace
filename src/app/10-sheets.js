@@ -1238,9 +1238,11 @@ function addPostPhrase(t){
 function sendPost(){
   const t = ((($('#wp_t')||{}).value) || S.postText || '').trim();
   if(!t) return toast('Напиши хотя бы пару слов');
+  /* послание подписываем почтой автора: метка «моё» уезжала в общие данные
+     и чужие послания показывались чужими же аватарками */
   WALL.unshift({id:'w'+Date.now().toString(36), a:S.name || 'Я', c:'#111014', ago:'только что',
     city:((S.datingProfile && S.datingProfile.city) || 'Москва'), t, st:0,
-    ints:(S.postInts||[]).length ? S.postInts : (S.myInts||[]).slice(0,2), own:true});
+    ints:(S.postInts||[]).length ? S.postInts : (S.myInts||[]).slice(0,2), email:myMail()});
   S.points += 5; S.postInts = []; S.postText = ''; S.sheet = null;
   render(); schedulePersist(); syncPush(['wall']); toast('Послание опубликовано. +5 баллов');
 }
