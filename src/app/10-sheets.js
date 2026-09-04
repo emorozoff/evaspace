@@ -237,6 +237,7 @@ S.tags = [];
 S.screen = 'splash';
 render();
 initPWA();
+watchCalendar();
 SYNC.ready = initSync();
 
 function shHint(){

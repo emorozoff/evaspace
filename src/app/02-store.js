@@ -80,6 +80,9 @@ function persist(){
     program:S.program, day:S.day, match:S.match, homework:S.homework, events:S.myEvents,
     inbox:S.inbox, seenReplies:S.seenReplies, myInts:S.myInts, datingProfile:S.datingProfile,
     starred:S.starred, likes:S.likes, visits:S.visits, gentle:S.gentle,
+    /* без этого после перезагрузки терялась память о показанных мастер-классах
+       и об обмене баллов: классы шли по кругу, а обмен можно было повторять */
+    seenClasses:S.seenClasses, weekly:S.weekly, seenDm:S.seenDm, streak:S.streak,
     savedAt:Date.now()
   });
 }

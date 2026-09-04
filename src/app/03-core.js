@@ -75,36 +75,75 @@ function buildProgram(){
     return fallbackPick(free.length ? free : list, i);
   };
 
-  /* мастер-классы стараемся не повторять: помним показанные */
+  /* Мастер-классы на неделю. Порядок такой:
+     1) те, которых она ещё не видела;
+     2) когда кончились — открытые уроки курсов;
+     3) в крайнем случае повторы, начиная с самых давних.
+     Внутри одной недели материал не повторяется никогда. */
   S.seenClasses = S.seenClasses || [];
-  let freshMk = mk.filter(x => !S.seenClasses.includes(x.id));
-  if(freshMk.length < 7){
-    // всё показали — добавляем открытые уроки курсов, потом разрешаем повторы
-    const lessons = openCourseLessons().filter(x => !S.seenClasses.includes(x.id));
-    freshMk = freshMk.concat(lessons);
-    if(freshMk.length < 7){ S.seenClasses = []; freshMk = mk.slice(); }
-  }
+  const classPool = weekClasses(mk, DAYS.length + 3);
 
   /* практики и аффирмации чередуем со сдвигом недели — повторы допустимы, но не подряд */
   const pickRotating = (list, i) => list[(i * 2 + shift * 3 + i) % list.length];
+
+  /* материал, привязанный к дню недели, важнее очереди; остальное — по очереди */
+  const usedClasses = [];
 
   S.program = DAYS.map((d,i) => ({
     d, tasks:[
       task(pickForDay(af, i, pickRotating), 'утро'),
       task(pickForDay(pr, i, pickRotating), slot),
-      task(freshMk.filter(x => fitsDay(x, i))[i % Math.max(1, freshMk.filter(x => fitsDay(x, i)).length)]
-           || freshMk[i % freshMk.length], 'вечер')
+      task(classForDay(mk, classPool, i, shift, usedClasses), 'вечер')
     ]
   }));
+  /* показанное запоминаем: недавние — в конце списка, чтобы при нехватке
+     материала повторялись самые давние, а не одни и те же */
   S.program.forEach(day => {
     const c = day.tasks[2];
-    if(c && !S.seenClasses.includes(c.id)) S.seenClasses.push(c.id);
+    if(!c) return;
+    const at = S.seenClasses.indexOf(c.id);
+    if(at >= 0) S.seenClasses.splice(at, 1);
+    S.seenClasses.push(c.id);
   });
+  if(S.seenClasses.length > 300) S.seenClasses = S.seenClasses.slice(-300);
   S.stars = starsWeek();
 
   const all = S.program.flatMap(x => x.tasks);
   S.match = Math.round(all.reduce((a,t) => a + t.match, 0) / all.length);
   S.day = todayIdx();
+}
+
+/* Список мастер-классов на неделю без повторов.
+   Сначала неувиденное, потом открытые уроки курсов, потом самые давние. */
+/* Мастер-класс на конкретный день: сначала привязанный к этому дню недели,
+   иначе следующий из очереди, который сегодня ещё не занят. */
+function classForDay(mk, pool, i, shift, used){
+  const fixed = mk.filter(x => x.days && x.days.length && x.days.includes(DAY_KEYS[i])
+                            && used.indexOf(x.id) < 0);
+  const pick = fixed.length ? fixed[(i + shift) % fixed.length]
+                            : pool.find(x => used.indexOf(x.id) < 0)
+                              || pool[i % Math.max(1, pool.length)]
+                              || mk[i % Math.max(1, mk.length)];
+  if(pick) used.push(pick.id);
+  return pick;
+}
+
+function weekClasses(mk, count){
+  const shown = S.seenClasses || [];
+  const lessons = (typeof openCourseLessons === 'function') ? openCourseLessons() : [];
+  const allMk = LIB.filter(x => x.type === 'class' && x.status === 'live');
+  const uniq = [];
+  const add = list => list.forEach(x => { if(x && !uniq.some(u => u.id === x.id)) uniq.push(x); });
+
+  add(mk.filter(x => shown.indexOf(x.id) < 0));         // подходящие и ещё не показанные
+  add(allMk.filter(x => shown.indexOf(x.id) < 0));      // остальные мастер-классы
+  add(lessons.filter(x => shown.indexOf(x.id) < 0));    // открытые уроки курсов
+  if(uniq.length < count){                              // всё показано — идут повторы
+    const rest = allMk.concat(lessons).filter(x => !uniq.some(u => u.id === x.id));
+    rest.sort((a, b) => shown.indexOf(a.id) - shown.indexOf(b.id));   // сначала самые давние
+    add(rest);
+  }
+  return uniq.slice(0, Math.max(count, 1));
 }
 
 function task(item, slot){
@@ -115,16 +154,34 @@ const todayIdx = () => (new Date().getDay() + 6) % 7;
 const weekNo = () => Math.floor((Date.now() - new Date(new Date().getFullYear(),0,1)) / 6048e5);
 
 /* при смене недели программа пересобирается на свежих материалах */
-function checkWeek(){
+function checkWeek(quiet){
+  const wasDay = S.day;
   S.day = todayIdx();
-  bumpVisit();
+  if(!quiet) bumpVisit();
   const w = weekNo();
-  if(S.week === undefined){ S.week = w; return; }
+  S.weekly = S.weekly || {exchanged:false};
+  if(S.week === undefined || S.week === null){ S.week = w; return wasDay !== S.day; }
   if(S.week !== w){
-    S.week = w; S.weekly.exchanged = false;
-    buildProgram();
-    toast('Новая неделя - Ева собрала свежую программу');
+    S.week = w;
+    S.weekly.exchanged = false;          // обмен баллов снова доступен
+    S.stars = 0;                          // звёзды недели считаются заново
+    buildProgram();                       // программа пересобирается на свежем
+    if(!quiet) toast('Новая неделя - Ева собрала свежую программу');
+    if(typeof schedulePersist === 'function') schedulePersist();
+    return true;
   }
+  if(wasDay !== S.day && typeof schedulePersist === 'function') schedulePersist();
+  return wasDay !== S.day;
+}
+
+/* Приложение часто остаётся открытым на ночь. Раз в минуту проверяем,
+   не наступил ли новый день или новая неделя, иначе программа замирает
+   на вчерашнем дне до перезахода. */
+function watchCalendar(){
+  setInterval(() => {
+    if(S.screen !== 'app' || !S.user) return;
+    try { if(checkWeek()) render(); } catch(e){ console.error('[Eva] смена дня:', e); }
+  }, 60000);
 }
 function nextWeek(){
   S.week = weekNo() - 1;

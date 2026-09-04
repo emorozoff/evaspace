@@ -342,6 +342,7 @@ function pgPoints(){
 }
 
 function exchange(){
+  S.weekly = S.weekly || {exchanged:false};
   if(S.points < 100 || S.weekly.exchanged) return;
   S.points -= 100; S.bonus += 50; S.weekly.exchanged = true;
   render(); toast('100 баллов обменяны на 50 бонусов');
