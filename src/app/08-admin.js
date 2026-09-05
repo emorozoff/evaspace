@@ -77,52 +77,6 @@ function pgAdmin(){
 }
 
 /* ---------- контент ---------- */
-/* Послание от Евы — то, что видят все на главной. Меняется раз в неделю,
-   поэтому редактор стоит первым в управлении контентом, а не спрятан. */
-function adEvaMsg(){
-  const e = EVA_MSG || {};
-  const live = !!(e.t || videoUrl('evamsg'));
-  return `<div class="card evaedit">
-    <div class="spread" style="margin-bottom:9px">
-      <div><div class="eyebrow">Послание от Евы</div>
-        <b style="font-size:15px;display:block;margin-top:3px">Видео недели на главной</b></div>
-      <span class="chip ${live?'on':''}">${live ? 'на главной' : 'выключено'}</span>
-    </div>
-    <p class="small muted" style="margin:0 0 11px">Одно короткое видео, которое видят все.
-      Меняй раз в неделю — или в середине, если есть что сказать. Открывается прямо на главной.</p>
-    <input class="field" id="em_t" placeholder="Заголовок" value="${esc(e.t || '')}">
-    <textarea class="field" id="em_d" rows="3" placeholder="Короткое описание — две-три строки">${esc(e.d || '')}</textarea>
-    <input class="field" id="em_at" placeholder="Подпись, например «Неделя 8–14 сентября»" value="${esc(e.at || '')}">
-    <div class="acts" style="margin:2px 0 10px">
-      <button class="btn ghost sm" onclick="openSheet({k:'video',id:'evamsg'})">
-        ${videoUrl('evamsg') ? '✓ Видео' : 'Ссылка на видео'}</button>
-      <button class="btn ghost sm" onclick="pickImage('evamsg')">
-        ${MEDIA['evamsg'] ? '✓ Обложка' : 'Обложка'}</button>
-    </div>
-    <button class="btn" onclick="saveEvaMsg()">Сохранить и опубликовать</button>
-    ${live ? `<button class="btn ghost" style="margin-top:8px" onclick="dropEvaMsg()">Убрать с главной</button>` : ''}
-  </div>`;
-}
-
-function saveEvaMsg(){
-  EVA_MSG = {
-    t:  (($('#em_t')  || {}).value || '').trim(),
-    d:  (($('#em_d')  || {}).value || '').trim(),
-    at: (($('#em_at') || {}).value || '').trim()
-  };
-  S.evaOpen = false;
-  pushShared(); render();
-  toast(EVA_MSG.t ? 'Послание на главной' : 'Заголовок пустой — блок не покажется');
-}
-
-function dropEvaMsg(){
-  if(!confirm('Убрать послание с главной?')) return;
-  EVA_MSG = {t:'', d:'', at:''};
-  S.videos = S.videos || {}; S.videos.evamsg = '';
-  S.evaOpen = false;
-  pushShared(); render(); toast('Убрали с главной');
-}
-
 function adContent(){
   const type = S.cType || 'practice';
   let items = LIB.filter(x => x.type === type);
@@ -134,8 +88,6 @@ function adContent(){
     <button class="btn" onclick="openSheet('newContent')">＋ Материал</button>
     <button class="btn ghost" onclick="openSheet('newCourse')">＋ Курс</button>
   </div>
-
-  ${adEvaMsg()}
 
   <div class="seg">
     ${Object.entries(TYPE).map(([k,v]) => `<button class="${type===k?'on':''}"

@@ -114,13 +114,17 @@ h2.serif{font-size:19px;margin:0}
 .wd .pips{display:flex;gap:3px;justify-content:center;margin-top:4px}
 .pip{width:4px;height:4px;border-radius:50%;background:var(--line-2)}
 .pip.on{background:var(--ok)}
-.wd.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
-.wd.sel span{color:rgba(255,255,255,.55)}
+/* выбранный день был почти чёрным, и точки дел на нём пропадали:
+   тёмно-фиолетовый плюс светлые точки — видно, что сделано */
+.wd.sel{background:linear-gradient(155deg,#4A3563,#2F2242);color:#fff;border-color:transparent}
+.wd.sel span{color:rgba(255,255,255,.62)}
+.wd.sel .pip{background:rgba(255,255,255,.32)}
+.wd.sel .pip.on{background:#8AD8B0}
 .wd.today{border-color:var(--accent)}
 .wd.locked{opacity:.45}
 .wstar{position:absolute;top:-4px;right:-2px;font-size:10px;color:var(--gold)}
 
-.lesson{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:12px}
+.lesson{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:9px}
 .lesson .cov{position:relative;height:156px;cursor:pointer}
 /* только сама обложка: без > правило растягивало на всю карточку и галочку
    внутри отметки — она перекрывала обложку и съедала нажатие */
@@ -349,7 +353,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 /* дни недели */
 .wd{cursor:pointer}
 .wd:hover{border-color:var(--accent);background:var(--accent-soft)}
-.wd.sel:hover{background:var(--ink-3)}
+.wd.sel:hover{background:linear-gradient(155deg,#553C71,#372850)}
 .pip{width:6px;height:6px}
 .pip.on{background:#E7A339;box-shadow:0 0 0 1px rgba(231,163,57,.25)}
 .wstar{font-size:12px;color:#E7A339;top:-5px}
@@ -674,9 +678,12 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .installbar .cl{font-size:19px;opacity:.7;padding:0 2px 0 6px}
 
 /* широкая обложка урока */
-.lesson.wide .cov{height:210px}
+/* три карточки дня плюс полоса недели должны помещаться в экран телефона
+   целиком — иначе она видит первое дело и не знает, что есть ещё два */
+.lesson.wide .cov{height:152px}
 .lesson.wide .body{padding:10px 12px 12px}
-.lesson.wide .cap b{font-size:17px}
+.lesson.wide .cap b{font-size:15.5px}
+.lesson.wide .cap span{font-size:10.5px}
 
 /* закреплённая шапка чата */
 .chathead{position:sticky;top:0;z-index:30}
@@ -1117,13 +1124,63 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .advmore{display:block;width:100%;text-align:left;margin-top:12px;padding-top:11px;
   border-top:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--accent)}
 
-/* ---------- послание от Евы ---------- */
-.evamsg{background:linear-gradient(158deg,#F5EFF8,#FCF2F5);border-color:transparent}
-.evahead{display:flex;gap:11px;align-items:flex-start;margin-bottom:9px}
-.evastar{width:38px;height:38px;border-radius:13px;flex:none;display:grid;place-items:center;
-  background:var(--ink);color:#fff}
-.evatext{font-size:13.5px;line-height:1.6;color:var(--muted);margin:0 0 12px}
-.evavid .player,.evavid .frame{width:100%;height:196px;border-radius:var(--r);display:block;border:none}
-.evavid .player{position:relative;overflow:hidden;padding:0}
-.evafoot{font-size:11px;font-weight:600;color:var(--muted);margin-top:10px;text-align:center}
-.evaedit .field{margin-bottom:8px}
+/* ---------- первое знакомство: подсказки поверх приложения ---------- */
+#tour{position:fixed;inset:0;z-index:82}
+.tveil{position:fixed;inset:0;background:rgba(14,12,18,.74);animation:fade .2s both}
+/* затемнение рисует сама подсветка: огромная тень вокруг светлого окна */
+.thole{position:fixed;pointer-events:none;transition:.26s cubic-bezier(.2,.75,.3,1);
+  box-shadow:0 0 0 9999px rgba(14,12,18,.74),0 0 0 2px rgba(255,255,255,.92),
+    0 0 34px 6px rgba(255,255,255,.26)}
+.ttip{position:fixed;left:50%;transform:translateX(-50%);width:min(var(--shell),100vw - 24px);
+  background:var(--surface);border-radius:24px;padding:17px 17px 15px;
+  box-shadow:0 22px 60px rgba(0,0,0,.42);animation:tpop .24s cubic-bezier(.2,.8,.3,1) both}
+@keyframes tpop{from{opacity:0;transform:translateX(-50%) translateY(8px)}
+  to{opacity:1;transform:translateX(-50%) none}}
+.ttip.mid{top:50%!important;margin-top:-110px}
+.ttip:before{content:"";position:absolute;left:var(--ax,30px);width:16px;height:16px;
+  background:var(--surface);transform:rotate(45deg)}
+.ttip.below:before{top:-7px}
+.ttip.above:before{bottom:-7px}
+.ttip.mid:before{display:none}
+.tico{position:absolute;top:15px;right:16px;width:38px;height:38px;border-radius:13px;
+  display:grid;place-items:center;color:var(--accent);
+  background:linear-gradient(140deg,var(--accent-soft),#EFE7F7)}
+.tnum{display:flex;align-items:center;gap:10px;margin:0 46px 11px 0;
+  font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--accent)}
+.tbars{display:flex;gap:3px;flex:1}
+.tbars i{height:3px;flex:1;border-radius:2px;background:var(--line-2)}
+.tbars i.on{background:var(--accent)}
+.ttip h3{font-family:Inter,sans-serif;font-weight:700;letter-spacing:-.032em;
+  font-size:20px;line-height:1.2;margin:0 0 7px}
+.ttip p{font-size:13.5px;line-height:1.55;color:var(--muted);margin:0 0 15px}
+.tacts{display:flex;align-items:center;gap:9px}
+.tskip{font-size:12.5px;font-weight:600;color:var(--muted)}
+.tback{width:38px;height:38px;border-radius:50%;border:1px solid var(--line-2);
+  display:grid;place-items:center;color:var(--muted);font-size:16px;margin-left:auto}
+.tgo{background:var(--ink);color:#fff;border-radius:999px;padding:0 22px;height:38px;
+  font-size:13px;font-weight:700;margin-left:auto}
+.tback + .tgo{margin-left:0}
+
+/* ---------- отметка «сделала» внутри карточки дня ---------- */
+.lesson .donemark{position:absolute;right:10px;top:10px;z-index:4;width:34px;height:34px;border-radius:50%;
+  display:grid;place-items:center;color:#fff;background:rgba(17,16,20,.34);
+  border:1.5px solid rgba(255,255,255,.6);backdrop-filter:blur(5px);transition:.16s}
+.lesson .donemark svg{opacity:.75}
+.lesson .donemark.on{background:var(--ok);border-color:transparent}
+.lesson .donemark.on svg{opacity:1}
+.lesson.done .cov{filter:saturate(.82)}
+/* значок «видео» уезжает на середину обложки: рядом с отметкой два кружка
+   в углу читались как пара кнопок, а это разные вещи */
+.lesson .play{left:50%;top:50%;right:auto;transform:translate(-50%,-50%);
+  width:46px;height:46px;font-size:14px;background:rgba(17,16,20,.34);
+  border:1.5px solid rgba(255,255,255,.45)}
+
+/* ---------- подсказка на день ---------- */
+.advice .advhead{display:flex;gap:13px;align-items:center;margin-bottom:12px}
+.advline{font-size:13.5px;line-height:1.62;color:var(--muted);margin:0;
+  padding:11px 0;border-top:1px solid var(--line)}
+.advline:first-of-type{border-top:none;padding-top:0}
+.advline:last-of-type{padding-bottom:0}
+.advmore{display:block;width:100%;text-align:left;margin-top:12px;padding-top:11px;
+  border-top:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--accent)}
+

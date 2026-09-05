@@ -114,8 +114,6 @@ function pgHome(){
         <button class="btn ghost" style="flex:1" onclick="gentle(true)">Сегодня совсем нет сил</button>${hint('gentle')}</div>` : ''}
     ${S.gentle ? `<button class="btn ghost" style="margin-bottom:16px" onclick="gentle(false)">Вернуть полную программу</button>` : ''}
 
-    ${evaMsg()}
-
     ${S.astroOn ? dayAdvice() : ''}
 
     <div class="g4" style="margin-bottom:6px">
@@ -526,37 +524,6 @@ function dateOfDay(i){
 }
 
 /* ---------- рекомендация дня ---------- */
-/* Послание от Евы: одно видео на неделю. Видео открывается прямо здесь —
-   отдельное окно ради трёх минут только уводило бы с главной. */
-function evaMsg(){
-  const e = EVA_MSG || {};
-  if(!e.t && !videoUrl('evamsg')) return '';
-  return `<div class="card evamsg">
-    <div class="evahead">
-      <span class="evastar"><svg width="19" height="19" viewBox="0 0 100 100" aria-hidden="true">
-        <path d="${STAR_PATH}" fill="currentColor"/></svg></span>
-      <div style="flex:1;min-width:0">
-        <div class="eyebrow">Послание от Евы</div>
-        <b class="serif" style="font-size:19px;display:block;margin-top:3px">${esc(e.t)}</b>
-      </div>
-    </div>
-    ${e.d ? `<p class="evatext">${esc(e.d)}</p>` : ''}
-    <div class="evavid" id="evavid">${S.evaOpen ? videoBlock('evamsg', 'class')
-      : `<button class="player" onclick="playEva()" aria-label="Смотреть послание">
-          ${cover('evamsg', 'class')}<div class="pl">▶</div></button>`}</div>
-    ${e.at ? `<div class="evafoot">${esc(e.at)}</div>` : ''}
-  </div>`;
-}
-
-/* Подменяем только сам блок с видео: перерисовывать ради этого всю
-   главную незачем — экран бы дёрнулся и уехал вверх. */
-function playEva(){
-  S.evaOpen = true;
-  const box = $('#evavid');
-  if(box) box.innerHTML = videoBlock('evamsg', 'class');
-  else render();
-}
-
 function dayAdvice(){
   const m = moon(), z = zodiac(S.birth.date), cy = cycleNow();
   const story = dayStory();
