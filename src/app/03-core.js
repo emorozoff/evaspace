@@ -3,10 +3,19 @@
    ===================================================================== */
 function matchOf(item){
   const id = String(item && item.id || '');
-  if(!S.tags.length) return 60 + (hash(id) % 25);
+  const near = topicHit(item) ? 8 : 0;          // выбранное направление поднимает совпадение
+  if(!S.tags.length) return Math.min(96, 60 + (hash(id) % 25) + near);
   const hits = (item && Array.isArray(item.tags) ? item.tags : []).filter(t => S.tags.includes(t)).length;
   const base = Math.round(hits / Math.max(1, Math.min(S.tags.length, 3)) * 62) + 30;
-  return Math.max(52, Math.min(96, base + (hash(id) % 7)));
+  return Math.max(52, Math.min(96, base + near + (hash(id) % 7)));
+}
+
+/* попадает ли материал в выбранные ею направления */
+function topicHit(item){
+  const mine = S.topics || [];
+  if(!mine.length) return false;
+  const his = (item && Array.isArray(item.topics)) ? item.topics : [];
+  return his.some(t => mine.indexOf(t) >= 0);
 }
 
 /* подходит ли материал пользовательнице по этапу жизни и уровню */
@@ -61,7 +70,13 @@ function buildProgram(){
     let list = all.filter(x => fitsTime(x) && fitsAudience(x) && fitsLevel(x));
     if(list.length < 3) list = all.filter(x => fitsAudience(x));
     if(list.length < 3) list = all;
-    return list.sort((a,b) => rank(b) - rank(a));
+    /* Порядок такой: сначала очередь, которую задала редакция (меньше число —
+       раньше), потом выбранные ею направления, потом совпадение по тегам. */
+    const q = x => (+x.ord > 0 ? +x.ord : 9999);
+    return list.sort((a,b) =>
+      (q(a) - q(b)) ||
+      ((topicHit(b) ? 1 : 0) - (topicHit(a) ? 1 : 0)) ||
+      (rank(b) - rank(a)));
   };
   const af = byType('affirm'), pr = byType('practice'), mk = byType('class');
   const slot = S.slot;
@@ -420,10 +435,18 @@ function scrQuiz(){
     <h2 class="serif" style="font-size:30px;margin:0 0 6px">${q.q}</h2>
     <p class="small muted" style="margin:0 0 20px">${q.hint}</p>
     <div style="flex:1">
-      ${q.o.map((o,i) => `<button class="opt ${sel.includes(i)?'on':''}" onclick="pick(${i})">
-        <i>${esc(o.e)}</i><span><b>${esc(o.t)}</b>${o.s?`<small>${o.s}</small>`:''}</span>
-        ${sel.includes(i)?'<span style="margin-left:auto;color:var(--gold-soft)">✓</span>':''}
-      </button>`).join('')}
+      ${q.grid
+        ? `<div class="tgrid">${q.o.map((o,i) => `
+            <button class="ttile ${sel.includes(i)?'on':''}" style="--tc:${safeColor(o.c)}"
+              onclick="pick(${i})">
+              <span class="tico">${tIcon(o.topic, 26)}</span>
+              <span class="tlab">${esc(o.t)}</span>
+              ${sel.includes(i) ? '<span class="tmark">✓</span>' : ''}
+            </button>`).join('')}</div>`
+        : q.o.map((o,i) => `<button class="opt ${sel.includes(i)?'on':''}" onclick="pick(${i})">
+            <i>${esc(o.e)}</i><span><b>${esc(o.t)}</b>${o.s?`<small>${o.s}</small>`:''}</span>
+            ${sel.includes(i)?'<span style="margin-left:auto;color:var(--gold-soft)">✓</span>':''}
+          </button>`).join('')}
     </div>
     <button class="btn gold" ${can?'':'disabled'} onclick="nextQ()">
       ${S.qi >= flow.length-1 ? 'Собрать мою программу' : 'Дальше'}</button>
@@ -487,7 +510,9 @@ function pick(i){
   if(sel.includes(i)) sel = sel.filter(x => x !== i);
   else if(q.max === 1) sel = [i];
   else if(sel.length < q.max) sel = [...sel, i];
-  else sel = [sel[1], i];
+  /* набрала максимум — вытесняем самый давний выбор, а не схлопываем список
+     до двух: на вопросе с четырьмя вариантами так терялись ответы */
+  else sel = [...sel.slice(1), i];
   S.picked[S.qi] = sel; render(); stars();
 }
 function prevQ(){
@@ -498,9 +523,12 @@ function nextQ(){
   const flow = quizFlow();
   const q = flow[S.qi];
   S.answers = S.answers || {};
+  /* направления собираем заново: женщина могла снять галочку и вернуться */
+  if(q.grid) S.topics = [];
   (S.picked[S.qi] || []).forEach(i => {
     const o = q.o[i];
     (o.tags || []).forEach(t => { if(!S.tags.includes(t)) S.tags.push(t); });
+    if(o.topic){ S.topics = S.topics || []; if(!S.topics.includes(o.topic)) S.topics.push(o.topic); }
     if(o.time) S.time = o.time;
     if(o.slot) S.slot = o.slot;
     if(o.extra) Object.assign(S.extra, o.extra);

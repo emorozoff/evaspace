@@ -222,6 +222,7 @@ const FIX = {
     x.type = ['affirm','practice','class'].indexOf(x.type) >= 0 ? x.type : 'practice';
     x.min = okNum(x.min, 5); x.expert = okStr(x.expert);
     x.tags = okArr(x.tags).map(t => okStr(t)); x.d = okStr(x.d); x.text = okStr(x.text);
+    x.topics = okArr(x.topics).map(t => okStr(t)).filter(Boolean); x.ord = okNum(x.ord);
     x.aud = okArr(x.aud); x.days = okArr(x.days); x.level = okStr(x.level, 'any');
     return x;
   },

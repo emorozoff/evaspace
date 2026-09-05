@@ -114,6 +114,93 @@ const EXPERTS = [
 ];
 const expBy = n => EXPERTS.find(e => e.n === n) || EXPERTS[0];
 
+/* =====================================================================
+   НАПРАВЛЕНИЯ КОНТЕНТА
+   Второй слой разметки рядом с тегами состояний. Теги отвечают на вопрос
+   «что у неё сейчас болит», направления — «чем она хочет это делать».
+   У практик свой набор, у мастер-классов свой: искать йогу среди лекций
+   о деньгах бессмысленно.
+   ===================================================================== */
+const T_ICONS = {
+  yoga:   '<circle cx="12" cy="4.6" r="2.1"/><path d="M12 7v5.5M12 12.5l-3.6 6.4M12 12.5l3.6 6.4M6.6 9.6 12 11l5.4-1.4"/>',
+  medit:  '<circle cx="12" cy="5.4" r="2.2"/><path d="M12 8v4M7 19c0-3 2.2-5 5-5s5 2 5 5M5.4 15.6c1 1.2 2.2 2 3.6 2.4M18.6 15.6c-1 1.2-2.2 2-3.6 2.4"/>',
+  breath: '<path d="M4 9.5h9.5a2.8 2.8 0 1 0-2.8-2.8M4 14h12a3.2 3.2 0 1 1-3.2 3.2M4 11.8h6"/>',
+  qigong: '<circle cx="12" cy="12" r="8.2"/><path d="M12 3.8a4.1 4.1 0 0 1 0 8.2 4.1 4.1 0 0 0 0 8.2"/><circle cx="12" cy="7.9" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="16.1" r=".9" fill="currentColor" stroke="none"/>',
+  stretch:'<circle cx="7.5" cy="5.2" r="2"/><path d="M7.5 7.4v4.2l-3 6.6M7.5 11.6l4.5 1.4 6-4.4M12 13l1.2 6.4"/>',
+  dance:  '<circle cx="13.5" cy="4.8" r="2"/><path d="M13.5 7v3.6l-4.2 3.2M13.5 10.6l3.8 2.6M9.3 13.8 8 20M17.3 13.2 19 19M13.5 7 8.6 8.6"/>',
+  body:   '<path d="M12 20.5s-6.6-4-6.6-9A3.6 3.6 0 0 1 12 8.8a3.6 3.6 0 0 1 6.6 2.7c0 5-6.6 9-6.6 9z"/><path d="M9.6 12.2c.9 1.1 2.1 1.9 2.4 2.6"/>',
+  sound:  '<path d="M5 9.6v4.8M8.5 6.8v10.4M12 4.4v15.2M15.5 7.6v8.8M19 10.4v3.2"/>',
+  self:   '<circle cx="12" cy="12" r="8.4"/><path d="M8.6 10.2h.01M15.4 10.2h.01M8.8 14.6c1.8 1.4 4.6 1.4 6.4 0"/>',
+  write:  '<path d="M5 19.4h14M6.6 16.4l8.8-8.8 3 3-8.8 8.8-3.6.6z"/><path d="M13.8 6.4l3 3"/>',
+  walk:   '<circle cx="13" cy="4.6" r="1.9"/><path d="M13 6.8 10.6 12l3 2.2.9 5.6M10.6 12 7.6 14M15.4 9.4l2.8 1.4"/>',
+  psy:    '<path d="M9.4 20.2v-2.6C6.8 16.7 5 14.4 5 11.6 5 7.9 8 5 11.8 5S19 7.6 19 11.3c0 2-1 3.2-2 4-1 .8-1.2 1.4-1.2 2.4v2.5z"/><path d="M9.4 17.6h6.4"/>',
+  rel:    '<circle cx="8.6" cy="8.4" r="2.6"/><circle cx="15.4" cy="8.4" r="2.6"/><path d="M3.6 19.4c0-2.8 2.2-4.6 5-4.6M20.4 19.4c0-2.8-2.2-4.6-5-4.6M10 17.6h4"/>',
+  money:  '<circle cx="12" cy="12" r="8.2"/><path d="M14.6 9.2c-.6-.9-1.6-1.4-2.7-1.4-1.5 0-2.5.8-2.5 2s1 1.7 2.6 2.1c1.9.4 2.9 1 2.9 2.3 0 1.3-1.1 2.2-2.7 2.2-1.3 0-2.4-.5-3-1.5M12 6.2v11.6"/>',
+  mom:    '<circle cx="10" cy="6.4" r="2.4"/><path d="M4.6 20c0-3.4 2.4-5.6 5.4-5.6s5.4 2.2 5.4 5.6"/><circle cx="17.4" cy="12.4" r="1.7"/><path d="M14.6 20c0-1.9 1.2-3.2 2.8-3.2s2.8 1.3 2.8 3.2"/>',
+  health: '<circle cx="12" cy="12" r="3"/><path d="M12 9c0-3.4 1.7-5 3.4-5s1.7 3.4-3.4 5zM15 12c3.4 0 5 1.7 5 3.4s-3.4 1.7-5-3.4zM12 15c0 3.4-1.7 5-3.4 5s-1.7-3.4 3.4-5zM9 12c-3.4 0-5-1.7-5-3.4S7.4 6.9 9 12z"/>',
+  beauty: '<path d="M12 3.4 13.9 9l5.6.3-4.4 3.5 1.5 5.4-4.6-3.2-4.6 3.2 1.5-5.4L4.5 9.3 10.1 9z"/>',
+  sleep:  '<path d="M19.4 14.4A8 8 0 0 1 9.6 4.6a7.6 7.6 0 1 0 9.8 9.8z"/><path d="M14.6 4.4h3.6l-3.6 3.4h3.6"/>',
+  career: '<rect x="3.4" y="7.6" width="17.2" height="12" rx="2.4"/><path d="M9 7.6V6.2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.4M3.4 12.6h17.2"/>',
+  create: '<path d="M12 3.6c-4.6 0-8.4 3.5-8.4 7.9 0 4.3 3.4 6.6 6.2 6.6 1.4 0 1.9.7 1.9 1.6 0 .8.6 1.5 1.5 1.5 3.7 0 7.2-3.6 7.2-8.3 0-5.1-3.8-9.3-8.4-9.3z"/><circle cx="8.4" cy="10" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="7.6" r=".9" fill="currentColor" stroke="none"/><circle cx="15.6" cy="10" r=".9" fill="currentColor" stroke="none"/>',
+  morning:'<path d="M12 4v2.2M4.6 12H2.4M21.6 12h-2.2M6.3 6.3 4.8 4.8M17.7 6.3l1.5-1.5"/><path d="M7.4 15.6a4.6 4.6 0 0 1 9.2 0"/><path d="M3.6 18.6h16.8"/>',
+  support:'<path d="M12 20.4s-7-4.6-7-9.6A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.8c0 5-7 9.6-7 9.6z"/>',
+  strength:'<path d="M6.4 9.6v4.8M17.6 9.6v4.8M3.4 11v2M20.6 11v2M6.4 12h11.2"/>',
+  calm:   '<path d="M3.6 9.4c1.6-1.6 3.2-1.6 4.8 0s3.2 1.6 4.8 0 3.2-1.6 4.8 0 1.4 1.4 2.4 1.2M3.6 15c1.6-1.6 3.2-1.6 4.8 0s3.2 1.6 4.8 0 3.2-1.6 4.8 0 1.4 1.4 2.4 1.2"/>'
+};
+function tIcon(k, size){
+  const d = T_ICONS[k] || T_ICONS.calm;
+  const s = size || 22;
+  return `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor"
+    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+}
+
+const TOPICS = {
+  practice: [
+    {k:'yoga',    l:'Йога',          c:'#4E8F84'},
+    {k:'medit',   l:'Медитация',     c:'#8054B8'},
+    {k:'breath',  l:'Дыхание',       c:'#5B7FB8'},
+    {k:'qigong',  l:'Цигун',         c:'#3F7D62'},
+    {k:'stretch', l:'Растяжка',      c:'#B8894A'},
+    {k:'dance',   l:'Танец',         c:'#C2506F'},
+    {k:'body',    l:'Тело и массаж', c:'#A8375C'},
+    {k:'sound',   l:'Голос и звук',  c:'#6C5CE0'},
+    {k:'walk',    l:'Прогулка',      c:'#5E7A6C'},
+    {k:'self',    l:'Работа с собой', c:'#8054B8'},
+    {k:'write',   l:'Письменные',     c:'#B64F7C'}
+  ],
+  /* Наборы разные, но несколько направлений честно живут в обоих:
+     мастер-класс о медитации или о теле — обычное дело. */
+  class: [
+    {k:'psy',     l:'Психология',       c:'#8054B8'},
+    {k:'medit',   l:'Медитация',        c:'#8054B8'},
+    {k:'yoga',    l:'Йога и движение',  c:'#4E8F84'},
+    {k:'body',    l:'Тело',             c:'#A8375C'},
+    {k:'rel',     l:'Отношения',        c:'#C2506F'},
+    {k:'money',   l:'Деньги и дело',    c:'#B8894A'},
+    {k:'mom',     l:'Материнство',      c:'#D18A5B'},
+    {k:'health',  l:'Здоровье и цикл',  c:'#A8375C'},
+    {k:'beauty',  l:'Красота',          c:'#B64F7C'},
+    {k:'sleep',   l:'Сон и отдых',      c:'#5B7FB8'},
+    {k:'career',  l:'Карьера',          c:'#5E5FA8'},
+    {k:'create',  l:'Творчество',       c:'#4E8F84'}
+  ],
+  affirm: [
+    {k:'morning', l:'Утро',       c:'#B8894A'},
+    {k:'support', l:'Поддержка',  c:'#C2506F'},
+    {k:'strength',l:'Сила',       c:'#5E5FA8'},
+    {k:'calm',    l:'Покой',      c:'#4E8F84'}
+  ]
+};
+const ALL_TOPICS = [].concat(TOPICS.practice, TOPICS.class, TOPICS.affirm)
+  .filter((t, i, all) => all.findIndex(x => x.k === t.k) === i);
+const topicsFor = type => TOPICS[type] || TOPICS.practice;
+const topicOf = k => ALL_TOPICS.find(t => t.k === k) || null;
+const topicName = k => { const t = topicOf(k); return t ? t.l : k; };
+
+/* что предлагаем выбрать в тесте: понятные направления из обоих наборов */
+const INTEREST_TOPICS = ['yoga','medit','breath','dance','stretch','body',
+                         'psy','rel','money','mom','health','self'];
+
 /* ---------- библиотека ---------- */
 const T = {af:'affirm', pr:'practice', mk:'class'};
 function L(id,type,title,expert,min,tags,text,aud,level){ return {id,type,title,expert,min,tags,text,status:'live',free:type==='affirm'||hash(id)%3===0,video:'',aud:aud||[],level:level||'any'}; }
@@ -163,6 +250,23 @@ const LIB = [
   L('m11',T.mk,'Тело как дом','Алина Ветрова',32,['тело','принятие','самооценка'],'От войны с отражением к нейтральности. Без бодипозитив-лозунгов.'),
   L('m12',T.mk,'Сон, который лечит','Марина Ясная',25,['сон','восстановление','выгорание'],'Гигиена сна без занудства: что реально влияет, а что городская легенда.')
 ];
+/* Направления по материалам: их ставит редакция в редакторе контента.
+   Здесь — стартовая разметка библиотеки, чтобы подбор заработал сразу. */
+const LIB_TOPICS = {
+  a1:['calm'],  a2:['strength'], a3:['calm'],    a4:['support'], a5:['support'],
+  a6:['support'], a7:['strength'], a8:['strength'], a9:['calm'],  a10:['support'],
+  a11:['strength'], a12:['morning'], a13:['strength'], a14:['morning'], a15:['support'],
+
+  p1:['breath'],  p2:['body'],    p3:['medit'],   p4:['self'],    p5:['medit'],
+  p6:['breath'],  p7:['yoga'],    p8:['medit'],   p9:['yoga','medit'], p10:['medit'],
+  p11:['write'],  p12:['write'],  p13:['self'],   p14:['stretch'], p15:['breath'],
+
+  m1:['psy'],     m2:['psy'],     m3:['rel'],     m4:['health','mom'], m5:['mom'],
+  m6:['rel'],     m7:['medit'],   m8:['psy','sleep'], m9:['money'], m10:['career'],
+  m11:['health','beauty'], m12:['sleep']
+};
+LIB.forEach(x => { x.topics = LIB_TOPICS[x.id] ? LIB_TOPICS[x.id].slice() : []; x.ord = 0; });
+
 
 const TYPE = {
   affirm:  {l:'Аффирмация',  e:'✦', act:'Прочитала', pts:10},
@@ -388,6 +492,11 @@ const QUIZ = [
     {e:'◑', t:'От полугода до полутора лет', tags:['материнство','выгорание'], extra:{baby:'6-18 мес'}},
     {e:'◕', t:'От полутора до трёх', tags:['материнство','границы'], extra:{baby:'1,5-3 года'}}
   ]},
+  {id:'topics', q:'Что тебе интересно?', hint:'Выбери до четырёх направлений - Ева будет предлагать их чаще',
+   max:4, grid:true, o:INTEREST_TOPICS.map(k => {
+     const t = topicOf(k);
+     return {e:k, t:t.l, topic:k, c:t.c};
+   })},
   {id:'pain', q:'Что беспокоит чаще всего?', hint:'Можно выбрать до двух', max:2, o:[
     {e:'◌', t:'Тревожность', tags:['тревога']},
     {e:'◍', t:'Усталость и выгорание', tags:['выгорание','энергия']},

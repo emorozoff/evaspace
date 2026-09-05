@@ -73,7 +73,7 @@ async function sendVerificationEmail(email, code){
 function persist(){
   if(!S.user || !S.user.email) return;
   DB.saveProgress(S.user.email, {
-    name:S.name, tags:S.tags, time:S.time, slot:S.slot, answers:S.answers, extra:S.extra,
+    name:S.name, tags:S.tags, topics:S.topics, time:S.time, slot:S.slot, answers:S.answers, extra:S.extra,
     points:S.points, stars:S.stars, starsAll:S.starsAll, bonus:S.bonus, streakDays:S.streakDays,
     courses:S.courses, purchases:S.purchases, joined:S.joined, clubs:S.clubs, avatar:S.avatar,
     birth:S.birth, cycle:S.cycle, hd:S.hd, sub:S.sub, week:S.week, seed:S.seed,

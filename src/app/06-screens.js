@@ -230,10 +230,12 @@ function contentItems(){
   let items = LIB.filter(x => x.status === 'live');
   if(types[S.filter]) items = items.filter(x => x.type === types[S.filter]);
   if(S.tagFilter) items = items.filter(x => x.tags.includes(S.tagFilter));
+  if(S.topicFilter) items = items.filter(x => (x.topics||[]).includes(S.topicFilter));
   if(S.onlyLiked) items = items.filter(x => isLiked(x.id));
   if(S.q.trim()){
     const q = S.q.toLowerCase();
-    items = items.filter(x => (x.title+' '+x.text+' '+x.expert+' '+x.tags.join(' ')).toLowerCase().includes(q));
+    items = items.filter(x => (x.title + ' ' + x.text + ' ' + x.expert + ' ' + x.tags.join(' ') + ' ' +
+      (x.topics||[]).map(topicName).join(' ')).toLowerCase().includes(q));
   }
   items = items.map(x => ({...x, m:matchOf(x)})).sort((a,b) => b.m - a.m);
   return items;
@@ -258,6 +260,22 @@ function pgContent(){
     ${(S.likes||[]).length ? `<div class="chips">
       <button class="chip ${S.onlyLiked?'on':''}" onclick="S.onlyLiked=!S.onlyLiked;render()">
         ${starMark(12, S.onlyLiked?'#fff':'#E7A339')} избранное ${(S.likes||[]).length}</button></div>` : ''}
+
+    ${(() => {
+      const type = types[S.filter];
+      const live = LIB.filter(x => x.status === 'live' && (!type || x.type === type));
+      const have = {};
+      live.forEach(x => (x.topics||[]).forEach(k => { have[k] = (have[k]||0) + 1; }));
+      const list = (type ? topicsFor(type) : ALL_TOPICS).filter(t => have[t.k]);
+      if(!list.length) return '';
+      return `<div class="trow hscroll">
+        <button class="tchip ${!S.topicFilter?'on plain':''}"
+          onclick="S.topicFilter=null;render()"><span>все направления</span></button>
+        ${list.map(t => `<button class="tchip ${S.topicFilter===t.k?'on':''}" style="--tc:${safeColor(t.c)}"
+          onclick="S.topicFilter=${S.topicFilter===t.k?'null':`'${attJs(t.k)}'`};render()">
+          ${tIcon(t.k, 16)}<span>${esc(t.l)}</span><b>${have[t.k]}</b></button>`).join('')}
+      </div>`;
+    })()}
 
     <div class="chips">
       ${S.tagFilter ? `<button class="chip on" onclick="S.tagFilter=null;render()">${S.tagFilter} ✕</button>` : ''}

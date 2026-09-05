@@ -679,6 +679,38 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 
 
 
+
+/* ---------- направления контента ---------- */
+/* плитки в тесте */
+.tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+@media(max-width:359px){ .tgrid{grid-template-columns:repeat(2,1fr)} }
+.ttile{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;
+  padding:15px 6px 12px;border-radius:var(--r);background:rgba(255,255,255,.07);
+  border:1.5px solid rgba(255,255,255,.12);color:rgba(255,255,255,.9);
+  font-size:12px;font-weight:600;line-height:1.25;text-align:center;
+  transition:background .16s ease,border-color .16s ease,transform .16s ease}
+.ttile .tico{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;
+  background:rgba(255,255,255,.09);color:#fff}
+.ttile .tlab{display:block;padding:0 2px}
+.ttile:hover{background:rgba(255,255,255,.11)}
+.ttile.on{background:#fff;border-color:#fff;color:var(--ink)}
+.ttile.on .tico{background:var(--tc,var(--accent));color:#fff}
+.ttile .tmark{position:absolute;top:7px;right:8px;font-size:11px;color:var(--tc,var(--accent));font-weight:700}
+
+/* фишки направлений в ленте и в редакторе */
+.trow{gap:7px;padding:2px 16px 10px;margin:0 -16px}
+.trow > *{width:auto}
+.tchip{flex:none;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--line);font-size:12px;font-weight:600;
+  color:var(--muted);white-space:nowrap}
+.tchip svg{color:var(--tc,var(--muted));flex:none}
+.tchip b{font-size:10px;font-weight:700;opacity:.5}
+.tchip.on{background:var(--tc,var(--ink));border-color:transparent;color:#fff}
+.tchip.on svg,.tchip.on b{color:#fff;opacity:.9}
+.tchip.on.plain{background:var(--ink)}
+.tpick{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px}
+.tpick .tchip{background:var(--surface-2);border-color:transparent}
+
 /* ---------- доходимость в админке ---------- */
 .reach{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:12px 0 14px}
 .rtile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 13px}

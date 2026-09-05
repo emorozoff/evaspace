@@ -790,7 +790,23 @@ function pgEditItem(){
         onclick="tgDays(this,'${attJs(x.id)}','${attJs(w.k)}')">${esc(w.n)}</button>`).join('')}</div>
     </div>
 
-    <label class="lbl">Теги <span class="muted">(${x.tags.length})</span></label>
+    <label class="lbl">Направление <span class="muted">(${(x.topics||[]).length})</span></label>
+    <p class="tiny muted" style="margin:-4px 0 7px">У практик и мастер-классов свои наборы.
+      По направлению материал попадает к тем, кто выбрал его в тесте.</p>
+    <div class="tpick">${topicsFor(x.type).map(t => `
+      <button class="tchip ${(x.topics||[]).includes(t.k)?'on':''}" style="--tc:${safeColor(t.c)}"
+        onclick="tgTopic(this,'${attJs(x.id)}','${attJs(t.k)}')">
+        ${tIcon(t.k, 17)}<span>${esc(t.l)}</span></button>`).join('')}</div>
+
+    <div class="svcbox">
+      <div class="hd"><span class="svclabel">служебное</span><b>Очерёдность показа</b></div>
+      <div class="small muted">Чем меньше число, тем раньше материал попадёт в программу.
+        Ноль — без очереди, как раньше: по совпадению с её запросом.</div>
+      <input class="field" type="number" min="0" style="margin-top:8px;max-width:120px"
+        value="${+x.ord || 0}" oninput="setQuiet('${attJs(x.id)}','ord',+this.value || 0)">
+    </div>
+
+    <label class="lbl">Теги состояний <span class="muted">(${x.tags.length})</span></label>
     <div class="chips wrap">${ALL_TAGS.map(t => `<button class="chip ${x.tags.includes(t)?'on':''}"
       onclick="tgItem('${attJs(x.id)}','${attJs(t)}')">${esc(t)}</button>`).join('')}</div>
 
@@ -812,6 +828,17 @@ function pgEditItem(){
 }
 
 function setItem(id, f, v){ const x = itemById(id); if(x){ x[f] = v; pushShared(); render(); } }
+
+/* направление материала: подсветка меняется на месте, экран не дёргается */
+function tgTopic(btn, id, k){
+  const x = itemById(id);
+  if(!x) return;
+  x.topics = Array.isArray(x.topics) ? x.topics : [];
+  const on = x.topics.includes(k);
+  x.topics = on ? x.topics.filter(t => t !== k) : [...x.topics, k];
+  btn.classList.toggle('on', !on);
+  pushShared();
+}
 function setQuiet(id, f, v){ const x = itemById(id); if(x) x[f] = v; }
 
 /* ---------- редактор курса ---------- */
