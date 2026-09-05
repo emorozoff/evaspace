@@ -114,23 +114,9 @@ function pgHome(){
         <button class="btn ghost" style="flex:1" onclick="gentle(true)">Сегодня совсем нет сил</button>${hint('gentle')}</div>` : ''}
     ${S.gentle ? `<button class="btn ghost" style="margin-bottom:16px" onclick="gentle(false)">Вернуть полную программу</button>` : ''}
 
-    ${S.astroOn ? dayAdvice() : ''}
+    ${evaMsg()}
 
-    <div class="card">
-      <div class="spread" style="margin-bottom:12px">
-        <h3 class="serif" style="font-size:22px;margin:0">Почему такая программа</h3>${hint('match')}
-      </div>
-      <div class="row" style="align-items:flex-start">
-        ${donutLight(S.match)}
-        <p class="small muted" style="margin:0">Ева прочитала твои ответы, превратила их в теги и сравнила с тегами ${LIB.length} уроков библиотеки. В программу попали те, где совпадений больше всего.</p>
-      </div>
-      <div class="small muted" style="margin:14px 0 8px">Твои темы - можно убрать лишнее или добавить новое:</div>
-      <div class="chips wrap">
-        ${S.tags.map(t => `<button class="chip on" onclick="dropTag('${attJs(t)}')">${esc(t)} <span style="opacity:.6">✕</span></button>`).join('')}
-        <button class="chip" onclick="openSheet('addTag')">＋ тема</button>
-      </div>
-      <button class="btn ghost" style="margin-top:12px" onclick="openSheet('rebuild')">Пересобрать программу</button>
-    </div>
+    ${S.astroOn ? dayAdvice() : ''}
 
     <div class="g4" style="margin-bottom:6px">
       ${[['calendar','Календарь'],['content','Контент'],['profile','Кабинет'],['eva','Ева']].map(([k,l]) =>
@@ -194,22 +180,24 @@ function lessonCard(t, di, ti, locked, paywall){
       ${paywall ? '<div class="lockhint">Нажми, чтобы открыть доступ</div>' : ''}
       <div class="cap"><b>${esc(t.title)}</b><span>${esc(t.expert)} · ${t.min} мин</span></div>
     </div></div>`;
-  return `<div class="lesson wide">
+  /* Отметка «сделала» переехала внутрь карточки маленьким кружком: две
+     кнопки под каждым уроком превращали день в стену из кнопок. Нажатие
+     по самой карточке по-прежнему открывает урок. */
+  return `<div class="lesson wide${t.done?' done':''}">
     <div class="cov" onclick="openLesson('${attJs(t.id)}')">
       ${cover(t.id, t.type)}
       <div class="badge afflabel">${ti===0?'Аффирмация дня':ti===1?(t.slot==='утро'?'Утренняя практика':'Практика дня'):'Мастер-класс'}</div>
       ${t.type !== 'affirm' ? `<div class="play">▶</div>` : ''}
+      <button class="donemark ${t.done?'on':''}" onclick="event.stopPropagation();complete(${di},${ti})"
+        title="${t.done ? 'Сделано' : esc(m.act) + ' · +' + t.pts + ' баллов'}"
+        aria-label="${t.done ? 'Сделано' : esc(m.act)}">${CHECK_SVG}</button>
       <div class="cap"><b>${esc(t.title)}</b><span>${esc(t.expert)} · ${t.min} мин · ${t.match}% совпадение</span></div>
-    </div>
-    <div class="body">
-      <div class="acts" style="margin:0">
-        <button class="btn ghost sm" style="flex:1" onclick="openLesson('${attJs(t.id)}')">${t.type==='affirm'?'Подробнее':'Смотреть'}</button>
-        <button class="btn sm ${t.done?'done':''}" style="flex:1" ${t.done?'disabled':''} onclick="complete(${di},${ti})">
-          ${t.done ? '✓ Готово' : m.act + ' +' + t.pts}</button>
-      </div>
     </div>
   </div>`;
 }
+
+const CHECK_SVG = `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
+  stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>`;
 
 function setDay(i){ S.day = i; render(); if(i > todayIdx()) toast('Заглядываешь вперёд: этот день откроется ' + dateOfDay(i).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})); }
 
@@ -538,29 +526,56 @@ function dateOfDay(i){
 }
 
 /* ---------- рекомендация дня ---------- */
+/* Послание от Евы: одно видео на неделю. Видео открывается прямо здесь —
+   отдельное окно ради трёх минут только уводило бы с главной. */
+function evaMsg(){
+  const e = EVA_MSG || {};
+  if(!e.t && !videoUrl('evamsg')) return '';
+  return `<div class="card evamsg">
+    <div class="evahead">
+      <span class="evastar"><svg width="19" height="19" viewBox="0 0 100 100" aria-hidden="true">
+        <path d="${STAR_PATH}" fill="currentColor"/></svg></span>
+      <div style="flex:1;min-width:0">
+        <div class="eyebrow">Послание от Евы</div>
+        <b class="serif" style="font-size:19px;display:block;margin-top:3px">${esc(e.t)}</b>
+      </div>
+    </div>
+    ${e.d ? `<p class="evatext">${esc(e.d)}</p>` : ''}
+    <div class="evavid" id="evavid">${S.evaOpen ? videoBlock('evamsg', 'class')
+      : `<button class="player" onclick="playEva()" aria-label="Смотреть послание">
+          ${cover('evamsg', 'class')}<div class="pl">▶</div></button>`}</div>
+    ${e.at ? `<div class="evafoot">${esc(e.at)}</div>` : ''}
+  </div>`;
+}
+
+/* Подменяем только сам блок с видео: перерисовывать ради этого всю
+   главную незачем — экран бы дёрнулся и уехал вверх. */
+function playEva(){
+  S.evaOpen = true;
+  const box = $('#evavid');
+  if(box) box.innerHTML = videoBlock('evamsg', 'class');
+  else render();
+}
+
 function dayAdvice(){
-  const m = moon(), z = zodiac(S.birth.date), t = zodTip(z), cy = cycleNow();
-  const has = z || cy;
+  const m = moon(), z = zodiac(S.birth.date), cy = cycleNow();
+  const story = dayStory();
   return `<div class="card advice">
-    <div class="spread" style="margin-bottom:10px">
-      <h3 class="serif" style="font-size:21px;margin:0">Подсказка на сегодня</h3>${hint('moon')}
+    <div class="advhead">
+      ${moonDisc(m, 54)}
+      <div style="flex:1;min-width:0">
+        <div class="eyebrow">Твой день</div>
+        <b class="serif" style="font-size:19px;display:block;margin-top:3px">${esc(m.n)}</b>
+        <div class="small muted" style="margin-top:2px">${[
+          z ? esc(z.e) + ' ' + esc(z.n) : '',
+          cy ? esc(cy.phase.n.toLowerCase()) + ' фаза' : ''
+        ].filter(Boolean).join(' · ') || 'освещённость ' + m.pct + '%'}</div>
+      </div>
+      ${hint('moon')}
     </div>
-    <div class="moonbig" style="margin-bottom:10px">
-      ${moonDisc(m, 58)}
-      <div style="flex:1"><b style="font-size:14.5px">${esc(m.n)}</b>
-        <div class="small muted">${m.s}</div>
-        <div class="small muted" style="margin-top:3px">Освещённость ${m.pct}% · ${plural(m.age,'день','дня','дней')} цикла</div></div>
-    </div>
-    ${z ? `<div class="card" style="background:var(--surface-2);border:none;margin:0 0 10px;padding:12px">
-      <div class="small">${personalDay(m, z)}</div></div>` : ''}
-    <button class="btn ghost sm" style="width:100%" onclick="openPage('calendar')">Подробнее о дне</button>
-    <div style="height:8px"></div>
-    ${z ? `<div class="arow"><span class="ae">${esc(z.e)}</span>
-      <div><b>${esc(z.n)}, стихия ${z.el}</b><div class="small muted">${t}</div></div></div>` : ''}
-    ${cy ? `<div class="arow"><span class="ae">${esc(cy.phase.e)}</span>
-      <div><b>${esc(cy.phase.n)} фаза, день ${cy.day}</b><div class="small muted">${cy.phase.s}</div></div></div>` : ''}
-    <button class="btn ghost" style="margin-top:12px" onclick="openPage('birth')">
-      ${has ? 'Персональный портрет' : 'Добавить дату рождения и цикл'}</button>
+    ${story.map(p => `<p class="advline">${esc(p)}</p>`).join('')}
+    ${!z || !cy ? `<button class="advmore" onclick="openPage('birth')">
+      ${!z ? 'Добавить дату рождения' : 'Добавить даты цикла'} — подсказка станет точнее ›</button>` : ''}
   </div>`;
 }
 
@@ -772,6 +787,20 @@ function pgProfile(){
         <div class="uline"><span class="small muted" style="flex:1">Домашних заданий сдано</span><b style="font-size:13px">${hw}</b></div>
         <div class="uline"><span class="small muted" style="flex:1">Групп в сообществе</span><b style="font-size:13px">${S.joined.length}</b></div>
         <div class="uline"><span class="small muted" style="flex:1">Мероприятий</span><b style="font-size:13px">${(S.myEvents||[]).length}</b></div>
+      </div>
+
+      <div class="sec-h"><h2 class="serif">Почему такая программа</h2>${hint('match')}</div>
+      <div class="card">
+        <div class="row" style="align-items:flex-start">
+          ${donutLight(S.match)}
+          <p class="small muted" style="margin:0">Ева прочитала твои ответы, превратила их в теги и сравнила с тегами ${LIB.length} уроков библиотеки. В программу попали те, где совпадений больше всего.</p>
+        </div>
+        <div class="small muted" style="margin:14px 0 8px">Твои темы — можно убрать лишнее или добавить новое:</div>
+        <div class="chips wrap">
+          ${S.tags.map(t => `<button class="chip on" onclick="dropTag('${attJs(t)}')">${esc(t)} <span style="opacity:.6">✕</span></button>`).join('')}
+          <button class="chip" onclick="openSheet('addTag')">＋ тема</button>
+        </div>
+        <button class="btn ghost" style="margin-top:12px" onclick="openSheet('rebuild')">Пересобрать программу</button>
       </div>
 
       <div class="sec-h"><h2 class="serif">Зарабатывай вместе с Евой</h2>${hint('earn')}</div>

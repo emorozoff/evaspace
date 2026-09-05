@@ -482,7 +482,8 @@ function scrQuiz(){
     <div class="bar" style="background:rgba(255,255,255,.16);margin-bottom:24px"><i style="width:${(S.qi)/flow.length*100}%"></i></div>
     <h2 class="serif" style="font-size:30px;margin:0 0 6px">${q.q}</h2>
     <p class="small muted" style="margin:0 0 ${q.grid ? '14px' : '20px'}">${q.hint}${
-      q.max > 1 && sel.length ? ` · выбрано ${sel.length} из ${q.max}` : ''}</p>
+      !sel.length ? '' : q.max === 0 ? ` · выбрано ${sel.length}`
+        : q.max > 1 ? ` · выбрано ${sel.length} из ${q.max}` : ''}</p>
     <div style="flex:1">
       ${q.grid
         ? `<div class="tgrid">${q.o.map((o,i) => `
@@ -559,9 +560,11 @@ function startQuiz(){
 }
 function pick(i){
   const q = quizFlow()[S.qi]; let sel = S.picked[S.qi] || [];
+  /* max не указан — один ответ; max:0 — сколько захочет */
+  const max = q.max == null ? 1 : q.max;
   if(sel.includes(i)) sel = sel.filter(x => x !== i);
-  else if(q.max === 1) sel = [i];
-  else if(sel.length < q.max) sel = [...sel, i];
+  else if(max === 1) sel = [i];
+  else if(!max || sel.length < max) sel = [...sel, i];
   /* набрала максимум — вытесняем самый давний выбор, а не схлопываем список
      до двух: на вопросе с четырьмя вариантами так терялись ответы */
   else sel = [...sel.slice(1), i];
@@ -620,7 +623,7 @@ function page(){
   if(S.viewExpert) return pgExpertPage();
   if(S.page){
     const M = {report:pgReport, calendar:pgCalendar, profile:pgProfile, points:pgPoints, earn:pgEarn,
-               settings:pgSettings, cart:pgCart, moon:pgMoon, cycle:pgCycle, birth:pgBirth, inbox:pgInbox};
+               settings:pgSettings, cart:pgCart, cycle:pgCycle, birth:pgBirth, inbox:pgInbox};
     return (M[S.page] || pgProfile)();
   }
   return ({home:pgHome, content:pgContent, courses:pgCourses, market:pgMarket, club:pgClub})[S.tab]();

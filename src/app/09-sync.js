@@ -112,6 +112,7 @@ const BRANCHES = {
   questions:  () => [...(typeof GOOD_QS !== 'undefined' ? GOOD_QS : []), ...(S.qs || [])],
   ideas:      () => S.ideas || [],
   adminInfo:  () => ({name:S.adminName, avatar:S.adminAvatar}),
+  evamsg:     () => EVA_MSG,
   avatars:    () => AVATARS,
   replies:    () => S.marketReplies || [],
   reviews:    () => S.reviews || []
@@ -156,7 +157,8 @@ let syncTimer = null;
 function syncPush(branches, immediate){
   if(SYNC.alive === false) return;
   const list = branches || ['lib','courses','lessons','modules','courseInfo','courseTags','courseKind',
-    'goods','goodInfo','events','experts','pending','media','videos','covPos','adminInfo','avatars'];
+    'goods','goodInfo','events','experts','pending','media','videos','covPos','adminInfo','avatars',
+    'evamsg'];
   list.forEach(b => { if(BRANCHES[b]) SYNC.queue[b] = true; });
   clearTimeout(syncTimer);
   syncTimer = setTimeout(flushSync, immediate ? 0 : 800);
@@ -339,6 +341,9 @@ function applyShared(sh){
     });
     const me = S.user ? String(S.user.email).toLowerCase() : '';
     if(me && AVATARS[me]) S.avatar = AVATARS[me];
+  }
+  if(sh.evamsg && typeof sh.evamsg === 'object'){
+    EVA_MSG = {t:okStr(sh.evamsg.t), d:okStr(sh.evamsg.d), at:okStr(sh.evamsg.at)};
   }
   if(sh.adminInfo && typeof sh.adminInfo === 'object'){
     if(sh.adminInfo.name) S.adminName = sh.adminInfo.name;

@@ -51,47 +51,6 @@ function pgReport(){
   </div>`;
 }
 
-function pgMoon(){
-  const m = moon(), z = zodiac(S.birth.date), tip = zodTip(z);
-  const days = [...Array(8)].map((_,i) => {
-    const d = new Date(); d.setDate(d.getDate()+i);
-    return {d, m:moon(d)};
-  });
-  return `<div class="view pad">${backBtn('Назад')}
-    <h1 class="serif" style="font-size:26px;margin:10px 0 4px">Лунный календарь</h1>
-    <p class="small muted" style="margin:0 0 14px">Фаза считается астрономически, подсказка - по стихии твоего знака.</p>
-
-    <div class="card advice">
-      <div class="moonbig" style="margin-bottom:12px">${moonDisc(m,72)}
-        <div style="flex:1"><b style="font-size:16px">${esc(m.n)}</b>
-          <div class="small muted" style="margin-top:3px">${m.s}</div>
-          <div class="small muted" style="margin-top:4px">Освещённость ${m.pct}% · ${plural(m.age,'день','дня','дней')} лунного цикла</div></div>
-      </div>
-      ${z ? `<div class="card" style="background:var(--surface-2);border:none;padding:12px;margin:0">
-        <div class="eyebrow" style="margin-bottom:5px">Тебе сегодня</div>
-        <div class="small">${personalDay(m,z)}</div></div>`
-      : `<button class="btn ghost" onclick="openPage('birth')">Добавить дату рождения для персональных подсказок</button>`}
-    </div>
-
-    <div class="sec-h"><h2 class="serif" style="font-size:18px">Ближайшая неделя</h2></div>
-    <div class="carousel" style="padding-left:0">
-      ${days.map(({d,m:mm}) => `<div class="moonday">
-        ${moonDisc(mm,44)}
-        <b style="font-size:12.5px;margin-top:8px;display:block">${d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</b>
-        <div class="small muted" style="font-size:10.5px">${esc(mm.n)}</div>
-      </div>`).join('')}
-    </div>
-
-    <div class="card">
-      <b style="font-size:15px">Как это использовать</b>
-      <p class="small muted" style="margin:7px 0 0">Растущая луна - время начинать и добавлять нагрузку.
-        Полнолуние - беречь нервы и сон. Убывающая - завершать и разбирать. Новолуние - тихо задумывать новое.
-        Это не про магию, а про ритм: телу и психике полезно жить циклами, а не ровной прямой.</p>
-      <button class="btn ghost" style="margin-top:10px" onclick="openPage('cycle')">Календарь цикла</button>
-    </div>
-  </div>`;
-}
-
 function pgCycle(){
   const cy = cycleNow();
   const c = S.cycle;
@@ -149,7 +108,6 @@ function pgCycle(){
       <p class="small muted" style="margin:7px 0 0">В менструальной и лютеиновой фазе Ева ставит более короткие практики,
         а в фолликулярной и овуляторной - более активные. Если сегодня совсем нет сил, включи мягкий режим на главной.</p>
       <button class="btn ghost" style="margin-top:10px" onclick="openSheet('cycle')">Изменить данные цикла</button>
-      <button class="btn ghost" style="margin-top:8px" onclick="openPage('moon')">Лунный календарь</button>
     </div>
   </div>`;
 }
@@ -443,7 +401,6 @@ function pgBirth(){
         <div style="flex:1"><b style="font-size:15px">${esc(m.n)}</b>
           <div class="small muted" style="margin-top:3px">${m.s}</div></div></div>
       ${z ? `<div class="hwbox" style="margin-top:10px"><div class="small">${personalDay(m,z)}</div></div>` : ''}
-      <button class="btn ghost" style="margin-top:10px" onclick="openPage('moon')">Лунный календарь</button>
     </div>
 
     <div class="card">

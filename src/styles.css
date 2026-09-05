@@ -122,7 +122,9 @@ h2.serif{font-size:19px;margin:0}
 
 .lesson{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:12px}
 .lesson .cov{position:relative;height:156px;cursor:pointer}
-.lesson .cov svg,.lesson .cov img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover}
+/* только сама обложка: без > правило растягивало на всю карточку и галочку
+   внутри отметки — она перекрывала обложку и съедала нажатие */
+.lesson .cov > svg,.lesson .cov > img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover}
 .badge{position:absolute;top:10px;left:10px;background:rgba(17,16,20,.72);color:#fff;backdrop-filter:blur(8px);
   border-radius:999px;padding:4px 10px;font-size:10px;font-weight:600;z-index:3}
 .cov .cap{position:absolute;left:12px;right:12px;bottom:10px;z-index:3;color:#fff}
@@ -1091,3 +1093,37 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .tgo{background:var(--ink);color:#fff;border-radius:999px;padding:0 22px;height:38px;
   font-size:13px;font-weight:700;margin-left:auto}
 .tback + .tgo{margin-left:0}
+
+/* ---------- отметка «сделала» внутри карточки дня ---------- */
+.lesson .donemark{position:absolute;right:10px;top:10px;z-index:4;width:34px;height:34px;border-radius:50%;
+  display:grid;place-items:center;color:#fff;background:rgba(17,16,20,.34);
+  border:1.5px solid rgba(255,255,255,.6);backdrop-filter:blur(5px);transition:.16s}
+.lesson .donemark svg{opacity:.75}
+.lesson .donemark.on{background:var(--ok);border-color:transparent}
+.lesson .donemark.on svg{opacity:1}
+.lesson.done .cov{filter:saturate(.82)}
+/* значок «видео» уезжает на середину обложки: рядом с отметкой два кружка
+   в углу читались как пара кнопок, а это разные вещи */
+.lesson .play{left:50%;top:50%;right:auto;transform:translate(-50%,-50%);
+  width:46px;height:46px;font-size:14px;background:rgba(17,16,20,.34);
+  border:1.5px solid rgba(255,255,255,.45)}
+
+/* ---------- подсказка на день ---------- */
+.advice .advhead{display:flex;gap:13px;align-items:center;margin-bottom:12px}
+.advline{font-size:13.5px;line-height:1.62;color:var(--muted);margin:0;
+  padding:11px 0;border-top:1px solid var(--line)}
+.advline:first-of-type{border-top:none;padding-top:0}
+.advline:last-of-type{padding-bottom:0}
+.advmore{display:block;width:100%;text-align:left;margin-top:12px;padding-top:11px;
+  border-top:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--accent)}
+
+/* ---------- послание от Евы ---------- */
+.evamsg{background:linear-gradient(158deg,#F5EFF8,#FCF2F5);border-color:transparent}
+.evahead{display:flex;gap:11px;align-items:flex-start;margin-bottom:9px}
+.evastar{width:38px;height:38px;border-radius:13px;flex:none;display:grid;place-items:center;
+  background:var(--ink);color:#fff}
+.evatext{font-size:13.5px;line-height:1.6;color:var(--muted);margin:0 0 12px}
+.evavid .player,.evavid .frame{width:100%;height:196px;border-radius:var(--r);display:block;border:none}
+.evavid .player{position:relative;overflow:hidden;padding:0}
+.evafoot{font-size:11px;font-weight:600;color:var(--muted);margin-top:10px;text-align:center}
+.evaedit .field{margin-bottom:8px}
