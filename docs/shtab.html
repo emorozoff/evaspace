@@ -1,0 +1,996 @@
+<title>Штаб Eva Space</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --ground:#F4F2EF; --surface:#FFFFFF; --surface-2:#EEEBE7; --surface-3:#E4E0DB;
+    --ink:#17141C; --ink-2:#3D3745; --muted:#7A7382;
+    --line:rgba(23,20,28,.10); --line-2:rgba(23,20,28,.20);
+    --accent:#A8375C; --accent-soft:#F8EAEF;
+    --ok:#2F6B52; --ok-soft:#E6F1EB;
+    --gold:#8A6428; --gold-soft:#F6EEDF;
+    --lilac:#5446BE; --lilac-soft:#ECEAFA;
+    --alarm:#A33B24; --alarm-soft:#FAEAE5;
+    --shadow:0 1px 2px rgba(23,20,28,.04), 0 10px 30px rgba(23,20,28,.05);
+    --r:15px; --r-sm:10px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#14121A; --surface:#1C1924; --surface-2:#25212E; --surface-3:#2E2939;
+      --ink:#F2EFF5; --ink-2:#CCC6D4; --muted:#948DA1;
+      --line:rgba(242,239,245,.13); --line-2:rgba(242,239,245,.25);
+      --accent:#E5879F; --accent-soft:#38222C;
+      --ok:#77C4A0; --ok-soft:#1C2E26;
+      --gold:#DCAC68; --gold-soft:#312718;
+      --lilac:#AEA2F5; --lilac-soft:#242039;
+      --alarm:#E6907A; --alarm-soft:#331F1B;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px rgba(0,0,0,.34);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#14121A; --surface:#1C1924; --surface-2:#25212E; --surface-3:#2E2939;
+    --ink:#F2EFF5; --ink-2:#CCC6D4; --muted:#948DA1;
+    --line:rgba(242,239,245,.13); --line-2:rgba(242,239,245,.25);
+    --accent:#E5879F; --accent-soft:#38222C;
+    --ok:#77C4A0; --ok-soft:#1C2E26;
+    --gold:#DCAC68; --gold-soft:#312718;
+    --lilac:#AEA2F5; --lilac-soft:#242039;
+    --alarm:#E6907A; --alarm-soft:#331F1B;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px rgba(0,0,0,.34);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--ground); color:var(--ink);
+    font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:15.5px; line-height:1.62; letter-spacing:-.005em; -webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px; margin:0 auto; padding:38px 22px 90px;
+    display:flex; flex-direction:column; gap:34px}
+  @media(max-width:600px){ .wrap{padding:24px 14px 60px; gap:26px} }
+
+  /* ---------- шапка ---------- */
+  .mast{display:flex; flex-direction:column; gap:13px; padding-bottom:24px;
+    border-bottom:1px solid var(--line-2)}
+  .brand{display:flex; align-items:center; gap:9px; font-family:Unbounded,Inter,sans-serif;
+    font-weight:300; font-size:10.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted)}
+  .brand .star{color:var(--accent); font-size:13px; letter-spacing:0}
+  h1{font-family:Unbounded,Inter,sans-serif; font-weight:400; font-size:clamp(27px,4.8vw,38px);
+    line-height:1.12; letter-spacing:-.025em; margin:0; text-wrap:balance}
+  .lede{margin:0; max-width:64ch; color:var(--ink-2); font-size:16px}
+  .meta{display:flex; flex-wrap:wrap; gap:6px 18px; font-size:12.5px; color:var(--muted);
+    font-variant-numeric:tabular-nums}
+  .meta b{color:var(--ink-2); font-weight:600}
+
+  h2.hd{font-family:Unbounded,Inter,sans-serif; font-weight:400; font-size:15px;
+    letter-spacing:.02em; margin:0 0 13px; color:var(--muted)}
+
+  /* ---------- документы и ссылки ---------- */
+  .links{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(268px,1fr));
+    margin:0; padding:0; list-style:none}
+  .links a{display:flex; gap:12px; align-items:flex-start; height:100%;
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+    padding:14px 15px; text-decoration:none; color:var(--ink); transition:border-color .15s}
+  .links a:hover{border-color:var(--line-2)}
+  .links .ic{flex:none; width:32px; height:32px; border-radius:9px; display:grid; place-items:center;
+    background:var(--surface-2); color:var(--accent)}
+  .links .tx{flex:1; min-width:0}
+  .links .k{display:block; font-size:10px; font-weight:700; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted); margin-bottom:2px}
+  .links b{display:block; font-size:14.5px; font-weight:600; line-height:1.3}
+  .links span.d{display:block; font-size:12.5px; color:var(--ink-2); margin-top:2px}
+
+  /* ---------- цифры ---------- */
+  /* ровно четыре в ряд: восемь цифр заполняют две строки без пустых клеток */
+  .nums{display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); border-radius:var(--r); overflow:hidden}
+  @media(max-width:620px){ .nums{grid-template-columns:repeat(2,1fr)} }
+  .num{background:var(--surface); padding:14px 15px; display:flex; flex-direction:column; gap:1px}
+  .num b{font-family:Unbounded,Inter,sans-serif; font-weight:400; font-size:23px; line-height:1.1;
+    font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+  .num span{font-size:11.5px; color:var(--muted); line-height:1.35}
+
+  /* ---------- разделы-гармошки ---------- */
+  .secs{display:flex; flex-direction:column; gap:9px}
+  details.sec{background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+    box-shadow:var(--shadow); overflow:hidden}
+  details.sec[open]{border-color:var(--line-2)}
+  details.sec > summary{display:flex; gap:13px; align-items:center; padding:15px 16px;
+    cursor:pointer; list-style:none; user-select:none}
+  details.sec > summary::-webkit-details-marker{display:none}
+  details.sec > summary:hover{background:var(--surface-2)}
+  .sec .ic{flex:none; width:38px; height:38px; border-radius:11px; display:grid; place-items:center;
+    background:var(--accent-soft); color:var(--accent)}
+  .sec .st{flex:1; min-width:0}
+  .sec .st b{display:block; font-family:Unbounded,Inter,sans-serif; font-weight:400;
+    font-size:16.5px; letter-spacing:-.01em; line-height:1.25}
+  .sec .st span{display:block; font-size:13px; color:var(--muted); margin-top:2px}
+  .sec .tags{display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; flex:none}
+  @media(max-width:560px){
+    details.sec > summary{flex-wrap:wrap}
+    .sec .tags{width:100%; justify-content:flex-start; padding-left:51px}
+    .sec .arw{display:none}
+  }
+  .tag{font-style:normal; font-size:10px; font-weight:700; letter-spacing:.06em;
+    text-transform:uppercase; border-radius:999px; padding:3px 9px; white-space:nowrap}
+  .tag.ok{background:var(--ok-soft); color:var(--ok)}
+  .tag.you{background:var(--gold-soft); color:var(--gold)}
+  .tag.plan{background:var(--lilac-soft); color:var(--lilac)}
+  .tag.hole{background:var(--alarm-soft); color:var(--alarm)}
+  .sec .arw{flex:none; color:var(--muted); font-size:19px; line-height:1;
+    transition:transform .18s ease}
+  details.sec[open] .arw{transform:rotate(90deg)}
+  .sec .body{padding:2px 18px 20px; border-top:1px solid var(--line); margin-top:-1px}
+  @media(max-width:560px){ .sec .body{padding:2px 15px 18px} }
+  .sec .body > *:first-child{margin-top:16px}
+  .sec h4{font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--muted); margin:24px 0 9px}
+  .sec p{margin:0 0 12px; max-width:68ch; color:var(--ink-2)}
+  .sec p:last-child{margin-bottom:0}
+  .sec p b{color:var(--ink)}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.86em;
+    background:var(--surface-2); padding:1px 5px; border-radius:5px; color:var(--ink-2)}
+
+  /* строки «свойство — значение» */
+  .rows{margin:0 0 12px; padding:0; list-style:none; border-top:1px solid var(--line)}
+  .rows li{display:grid; grid-template-columns:minmax(140px,208px) 1fr; gap:8px 16px;
+    padding:9px 0; border-bottom:1px solid var(--line); align-items:baseline}
+  .rows li > span:first-child{font-size:12.5px; color:var(--muted)}
+  .rows li > span:last-child{font-size:14px; color:var(--ink-2)}
+  .rows li b{color:var(--ink); font-weight:600}
+  @media(max-width:560px){ .rows li{grid-template-columns:1fr; gap:1px} }
+
+  /* маркированный список */
+  ul.pts{margin:0 0 12px; padding:0; list-style:none; display:flex; flex-direction:column; gap:7px}
+  ul.pts li{display:grid; grid-template-columns:14px 1fr; gap:10px; font-size:14px; color:var(--ink-2)}
+  ul.pts li:before{content:''; width:5px; height:5px; border-radius:50%; background:var(--accent);
+    margin-top:9px; margin-left:4px}
+  ul.pts li b{color:var(--ink)}
+
+  /* решение */
+  .dec{border-left:3px solid var(--gold); background:var(--gold-soft); border-radius:0 var(--r-sm) var(--r-sm) 0;
+    padding:13px 15px; margin:0 0 10px}
+  .dec.hole{border-left-color:var(--alarm); background:var(--alarm-soft)}
+  .dec .lab{display:block; font-size:10px; font-weight:700; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--gold); margin-bottom:4px}
+  .dec.hole .lab{color:var(--alarm)}
+  .dec b{display:block; font-size:14.5px; margin-bottom:4px; color:var(--ink)}
+  .dec p{margin:0; font-size:13.5px; color:var(--ink-2)}
+  .dec .rec{display:block; margin-top:7px; font-size:13.5px; color:var(--ink-2)}
+  .dec .rec i{font-style:normal; font-weight:700; color:var(--ok)}
+
+  /* таблица */
+  .tablebox{overflow-x:auto; border:1px solid var(--line); border-radius:var(--r-sm);
+    background:var(--surface); margin-bottom:12px}
+  table{border-collapse:collapse; width:100%; min-width:520px; font-size:13.5px}
+  th,td{padding:9px 12px; text-align:left; border-bottom:1px solid var(--line)}
+  thead th{background:var(--surface-2); font-size:10.5px; font-weight:700; letter-spacing:.07em;
+    text-transform:uppercase; color:var(--muted); white-space:nowrap}
+  tbody td{color:var(--ink-2); font-variant-numeric:tabular-nums}
+  tbody th{font-weight:600; color:var(--ink)}
+  tr:last-child th, tr:last-child td{border-bottom:none}
+  .yes{color:var(--ok); font-weight:700}
+  .no{color:var(--line-2)}
+  .part{color:var(--gold); font-weight:700}
+
+  /* поток */
+  ol.flow{margin:0 0 12px; padding:0; list-style:none; counter-reset:st}
+  ol.flow li{position:relative; padding:0 0 18px 32px; border-left:2px solid var(--line);
+    margin-left:8px}
+  ol.flow li:last-child{border-left-color:transparent; padding-bottom:0}
+  ol.flow li:before{counter-increment:st; content:counter(st); position:absolute; left:-10px; top:-1px;
+    width:19px; height:19px; border-radius:50%; background:var(--accent); color:#fff;
+    font-size:10.5px; font-weight:700; display:grid; place-items:center;
+    font-variant-numeric:tabular-nums}
+  ol.flow b{display:block; font-size:14.5px; margin-bottom:2px}
+  ol.flow span{font-size:13.5px; color:var(--ink-2)}
+
+  /* итоговый список решений */
+  .decs{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:1px;
+    background:var(--line); border:1px solid var(--line); border-radius:var(--r); overflow:hidden}
+  .decs li{background:var(--surface); padding:13px 16px; display:grid;
+    grid-template-columns:22px 1fr auto; gap:12px; align-items:baseline}
+  .decs .n{font-size:12px; font-weight:700; color:var(--muted); font-variant-numeric:tabular-nums}
+  .decs b{display:block; font-size:14.5px; margin-bottom:2px}
+  .decs p{margin:0; font-size:13.5px; color:var(--ink-2); max-width:62ch}
+  .decs a{color:var(--accent); text-decoration:none}
+  .decs a:hover{text-decoration:underline}
+  @media(max-width:560px){
+    .decs li{grid-template-columns:22px 1fr}
+    .decs .tag{grid-column:2}
+  }
+
+  footer{padding-top:22px; border-top:1px solid var(--line-2); font-size:12.5px; color:var(--muted)}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:4px}
+  @media(prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <div class="brand"><span class="star">✦</span> Eva Space · штаб продукта</div>
+    <h1>Как устроена платформа</h1>
+    <p class="lede">Одна страница про весь продукт: что как работает сегодня, по каким правилам,
+      и что ещё ждёт вашего решения. Разделы раскрываются — внутри механика, цифры и вопросы
+      с моей рекомендацией.</p>
+    <div class="meta">
+      <span>Версия <b>2</b></span>
+      <span>6 сентября 2026</span>
+      <span>Разделов <b>14</b></span>
+      <span>Решений за вами <b>13</b></span>
+    </div>
+  </header>
+
+  <!-- ═══════════ ДОКУМЕНТЫ И ССЫЛКИ ═══════════ -->
+  <section>
+    <h2 class="hd">Документы и ссылки</h2>
+    <ul class="links">
+      <li><a href="https://github.com/emorozoff/evaspace/tree/claude/eva-space-v2-file-m38dcn" target="_blank" rel="noopener">
+        <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18-6-6 6-6M15 6l6 6-6 6"/></svg></span>
+        <span class="tx"><span class="k">код</span><b>Ветка разработки</b>
+          <span class="d">Исходники в <code>src/</code>, сборка в <code>dist/index.html</code></span></span></a></li>
+
+      <li><a href="https://github.com/emorozoff/evaspace/blob/claude/eva-space-v2-file-m38dcn/INSTALL.md" target="_blank" rel="noopener">
+        <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13M7 11l5 5 5-5M4 21h16"/></svg></span>
+        <span class="tx"><span class="k">инструкция</span><b>Как заливать на хостинг</b>
+          <span class="d">Порядок файлов и откат на старую версию</span></span></a></li>
+
+      <li><a href="https://claude.ai/code/artifact/f5ba45e8-f882-4930-bb98-383509545473" target="_blank" rel="noopener">
+        <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+        <span class="tx"><span class="k">задание</span><b>Права и роли</b>
+          <span class="d">Модель на двух уровнях, матрица прав, порядок работ</span></span></a></li>
+
+      <li><a href="https://claude.ai/code/artifact/e48970ed-e539-41a2-85c4-9bbc9dc41b9d" target="_blank" rel="noopener">
+        <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 11v2"/></svg></span>
+        <span class="tx"><span class="k">задание</span><b>Голоса Eva Space</b>
+          <span class="d">Ева, Адам и служебные аватары: роли, границы, настройка</span></span></a></li>
+
+      <li><a href="http://evaspace.page.gd" target="_blank" rel="noopener">
+        <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg></span>
+        <span class="tx"><span class="k">сайт</span><b>evaspace.page.gd</b>
+          <span class="d">Рабочая версия — обновляется вручную из сборки</span></span></a></li>
+
+      <li><a href="https://github.com/emorozoff/evaspace/tree/claude/eva-space-v2-file-m38dcn/src/app" target="_blank" rel="noopener">
+        <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/></svg></span>
+        <span class="tx"><span class="k">исходники</span><b>Тринадцать модулей</b>
+          <span class="d">Данные, ядро, вход, курсы, экраны, маркет, админка, обмен, шторки, события, подсказки, сообщества</span></span></a></li>
+    </ul>
+  </section>
+
+  <!-- ═══════════ ЦИФРЫ ═══════════ -->
+  <section>
+    <h2 class="hd">Платформа в цифрах</h2>
+    <div class="nums">
+      <div class="num"><b>42</b><span>материала в библиотеке</span></div>
+      <div class="num"><b>6</b><span>курсов</span></div>
+      <div class="num"><b>5</b><span>экспертов</span></div>
+      <div class="num"><b>9</b><span>сообществ</span></div>
+      <div class="num"><b>14</b><span>мероприятий</span></div>
+      <div class="num"><b>14</b><span>товаров в маркете</span></div>
+      <div class="num"><b>12</b><span>направлений</span></div>
+      <div class="num"><b>25</b><span>веток обмена с сервером</span></div>
+    </div>
+    <p style="margin:11px 0 0;font-size:13px;color:var(--muted)">
+      Содержимое пока демонстрационное: имена экспертов, тексты уроков, товары и цены вымышленные.
+      Замена на настоящее — самая большая работа перед запуском, и она не техническая.</p>
+  </section>
+
+  <!-- ═══════════ РАЗДЕЛЫ ═══════════ -->
+  <section>
+    <h2 class="hd">Как что устроено</h2>
+    <div class="secs">
+
+<!-- ─────── ПРОГРАММА ─────── -->
+<details class="sec" id="program">
+  <summary>
+    <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="8.5" cy="15" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1.2" fill="currentColor" stroke="none"/></svg></span>
+    <span class="st"><b>Программа и неделя</b>
+      <span>Как Ева собирает семь дней и что происходит в понедельник</span></span>
+    <span class="tags"><i class="tag ok">работает</i></span>
+    <span class="arw">›</span>
+  </summary>
+  <div class="body">
+    <p>Женщина проходит тест из семи вопросов, и Ева собирает ей неделю: <b>по три дела на день</b> —
+      аффирмация утром, практика днём, мастер-класс вечером. Вместе минут двадцать. Программа
+      пересобирается каждый понедельник на свежих материалах.</p>
+
+    <h4>Как выбираются материалы</h4>
+    <ul class="pts">
+      <li>Ответы теста превращаются в теги, теги сравниваются с тегами всех 42 материалов —
+        отсюда берётся <b>процент совпадения</b> на карточке.</li>
+      <li>Отсекается то, что не подходит: по времени (сколько минут в день она готова тратить),
+        по этапу жизни (беременность, малыш до года, ребёнок до трёх) и по уровню.
+        Если после отбора осталось меньше трёх — условия ослабляются, пустого дня не бывает.</li>
+      <li>Порядок внутри отобранного: сначала <b>очерёдность</b>, которую задала редакция,
+        потом выбранные ею направления, потом совпадение по тегам.</li>
+      <li>Материал можно привязать к конкретному дню недели — тогда он встаёт именно туда.</li>
+      <li>Мастер-классы не повторяются: когда неувиденные кончились, идут открытые уроки курсов,
+        и только потом — самые давние повторы.</li>
+    </ul>
+
+    <h4>Отметки и звёзды</h4>
+    <ul class="rows">
+      <li><span>Отметить сделанное</span><span>Кружок в углу карточки. Открыть урок — нажатие по самой карточке</span></li>
+      <li><span>Баллы за дело</span><span>Аффирмация <b>10</b>, практика <b>25</b>, мастер-класс <b>40</b></span></li>
+      <li><span>Звёзды</span><span>Одна за дело, <b>21 за неделю</b>. В понедельник обнуляются, накопленное остаётся</span></li>
+      <li><span>Мягкий режим</span><span>Два дела вместо трёх — аффирмация и мастер-класс</span></li>
+      <li><span>Пропуск</span><span>Стрик рвётся только после двух пропущенных дней подряд</span></li>
+    </ul>
+
+    <h4>Подсказка на день</h4>
+    <p>Под программой стоит блок «Твой день»: фаза луны и что она значит, стихия её знака и
+      что это значит для неё сегодня, фаза цикла и сколько до следующего. Одним связным текстом.
+      Отдельных страниц про гороскоп нет намеренно — всё сказано в одном месте.</p>
+  </div>
+</details>
+
+<!-- ─────── КОНТЕНТ ─────── -->
+<details class="sec" id="content">
+  <summary>
+    <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H19v3H6.5"/></svg></span>
+    <span class="st"><b>Контент и направления</b>
+      <span>Библиотека, теги, кто и как добавляет материалы</span></span>
+    <span class="tags"><i class="tag ok">работает</i><i class="tag you">1 решение</i></span>
+    <span class="arw">›</span>
+  </summary>
+  <div class="body">
+    <p>Библиотека — то, из чего собирается программа. Сейчас <b>42 материала</b>: 15 аффирмаций,
+      15 практик, 12 мастер-классов.</p>
+
+    <h4>Три вида материала</h4>
+    <ul class="rows">
+      <li><span>Аффирмация</span><span>Одна минута, текст. Читается и отмечается. <b>10 баллов</b></span></li>
+      <li><span>Практика</span><span>5–15 минут, видео. Дыхание, йога, медитация. <b>25 баллов</b></span></li>
+      <li><span>Мастер-класс</span><span>20–40 минут, видео с экспертом. <b>40 баллов</b></span></li>
+    </ul>
+
+    <h4>Два набора тегов</h4>
+    <p>У материала есть <b>теги состояния</b> (тревога, выгорание, границы, материнство) — по ним
+      строится совпадение с ответами теста. И есть <b>направление</b> — то, что женщина выбирает
+      в вопросе «Что тебе интересно»: йога, медитация, дыхание, танец, растяжка, тело и массаж,
+      психология, отношения, деньги и дело, материнство, здоровье и цикл, работа с собой.
+      Двенадцать направлений, выбирать можно сколько угодно.</p>
+    <p>В библиотеке направления показываются не все сразу: во вкладке «Всё» только «Все» и
+      «Избранное», а стоит выбрать вид — приходят направления этого вида, и лишь те, в которых
+      действительно что-то есть.</p>
+
+    <h4>Кто добавляет</h4>
+    <ol class="flow">
+      <li><b>Эксперт добавляет свой материал</b><span>В кабинете: название, вид, длительность,
+        теги, направления, обложка, видео по ссылке, очерёдность показа.</span></li>
+      <li><b>Материал уходит на модерацию</b><span>Появляется у администратора во вкладке
+        «Модерация» со счётчиком.</span></li>
+      <li><b>Администратор решает</b><span>Опубликовать, вернуть на доработку с комментарием
+        или отклонить. Опубликованное сразу попадает в отбор программ.</span></li>
+    </ol>
+
+    <div class="dec">
+      <span class="lab">требует решения</span>
+      <b>Возраст в тесте и материалы 27+ / 35+</b>
+      <p>В плане доработок это приоритет 2. Сейчас программа не различает возраст, хотя запрос
+        у женщины в 25 и в 45 разный.</p>
+      <span class="rec"><i>Моя рекомендация:</i> добавить вопрос о возрасте в тест и поле «для кого»
+        у материала — как уже сделано для беременности и малышей. Работы на день, но нужен контент,
+        который это различие оправдает: пока материалов 42, делить их по возрасту рано.</span>
+    </div>
+  </div>
+</details>
+
+<!-- ─────── КУРСЫ ─────── -->
+<details class="sec" id="courses">
+  <summary>
+    <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4 2 9l10 5 10-5z"/><path d="M6 11.5V17c0 1.6 3 3 6 3s6-1.4 6-3v-5.5"/></svg></span>
+    <span class="st"><b>Курсы</b>
+      <span>Программы на несколько недель: модули, уроки, домашние задания</span></span>
+    <span class="tags"><i class="tag ok">работает</i><i class="tag you">1 решение</i></span>
+    <span class="arw">›</span>
+  </summary>
+  <div class="body">
+    <p>Курс — продолжение практик из программы. Шесть курсов, у каждого своя витрина:
+      промо-видео, о чём, для кого, программа по модулям, отзывы и цена.</p>
+
+    <h4>Устройство</h4>
+    <ul class="rows">
+      <li><span>Структура</span><span>Курс → модули → уроки. Модуль удаляется вместе со своими уроками, нумерация не рвётся</span></li>
+      <li><span>Первый урок</span><span>Открыт всегда — можно посмотреть и решить</span></li>
+      <li><span>Домашнее задание</span><span>Женщина сдаёт текстом, эксперт видит в кабинете и отвечает</span></li>
+      <li><span>Виды курсов</span><span>Базовый и Дополнительный — влияет на то, где курс показывается</span></li>
+      <li><span>Цена</span><span>Разовая покупка. Бонусами можно закрыть <b>до 30%</b> стоимости</span></li>
+      <li><span>Открытые уроки</span><span>Идут в программу недели, когда мастер-классы кончились</span></li>
+    </ul>
+
+    <div class="dec">
+      <span class="lab">требует решения</span>
+      <b>Как делится доход с курса</b>
+      <p>Сейчас курс покупается разово и деньги никак не делятся — в коде этого просто нет.
+        Для настоящих экспертов нужна договорённость: процент платформе, процент эксперту,
+        когда и как выплачивается.</p>
+      <span class="rec"><i>Моя рекомендация:</i> зафиксировать одну ставку для всех на старте
+        (например, 30% платформе) и не делать индивидуальных условий, пока экспертов меньше
+        двадцати. Иначе каждый новый договор — это новая ветка в коде выплат.</span>
+    </div>
+  </div>
+</details>
+
+<!-- ─────── ЭКСПЕРТЫ ─────── -->
+<details class="sec" id="experts">
+  <summary>
+    <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5 21c0-3.6 3.1-6 7-6s7 2.4 7 6"/><path d="m18.5 3 .9 1.9 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2L15.6 5.2l2-.3z"/></svg></span>
+    <span class="st"><b>Работа с экспертами</b>
+      <span>Кабинет, что эксперт может сам, что проходит модерацию</span></span>
+    <span class="tags"><i class="tag ok">работает</i><i class="tag hole">1 дыра</i><i class="tag you">1 решение</i></span>
+    <span class="arw">›</span>
+  </summary>
+  <div class="body">
+    <p>Эксперт — женщина, которая ведёт практики. Роль выдаёт администратор в карточке
+      пользователя. У эксперта свой кабинет вместо обычного приложения.</p>
+
+    <h4>Что в кабинете</h4>
+    <ul class="rows">
+      <li><span>Профиль</span><span>Фото, специализация, темы, образование, «кому подходит», достижения</span></li>
+      <li><span>Контент</span><span>Свои аффирмации, практики и мастер-классы. Добавление, правка, очерёдность показа</span></li>
+      <li><span>Курсы</span><span>Модули, уроки, промо-видео, домашние задания учениц</span></li>
+      <li><span>Услуги и события</span><span>Консультации со своей ценой, предложения мероприятий</span></li>
+      <li><span>Сообщество</span><span>Свои сообщества с управлением и создание нового</span></li>
+      <li><span>Доход</span><span>Что заработано, откуда, статистика по материалам</span></li>
+      <li><span>Сообщения</span><span>Вопросы от учениц и заявки на консультации</span></li>
+    </ul>
+
+    <h4>Что проходит модерацию</h4>
+    <p>Новый материал, новый курс, мероприятие и новое сообщество — всё это эксперт создаёт сам,
+      но публикуется оно после решения администратора. Ответ приходит эксперту в кабинет:
+      опубликовано, на доработку с комментарием или отклонено.</p>
+
+    <div class="dec hole">
+      <span class="lab">дыра в правах</span>
+      <b>Эксперт технически может переписать чужое</b>
+      <p>Сервер делит всех на «редакторов» (администратор и эксперт) и остальных. Редактор
+        заменяет раздел целиком — значит, любой эксперт может переписать курсы и мероприятия
+        коллеги. Пока экспертов пятеро и все свои, но это надо закрыть до того, как их станет больше.</p>
+      <span class="rec"><i>Что делаю:</i> сервер должен принимать от эксперта только те записи,
+        где он указан автором, а остальные оставлять как есть. Это правка в <code>api.php</code>
+        примерно на полдня — сделаю в ближайшем круге.</span>
+    </div>
+
+    <div class="dec">
+      <span class="lab">требует решения</span>
+      <b>Как эксперты попадают на платформу</b>
+      <p>Сейчас никак: роль выдаётся вручную по почте. Нет ни заявки, ни проверки образования,
+        ни договора.</p>
+      <span class="rec"><i>Моя рекомендация:</i> на старте так и оставить — вы приводите экспертов
+        лично. Форма заявки понадобится, когда придут незнакомые; тогда же нужен и минимум проверки:
+        диплом или сертификат, ссылка на практику, короткий созвон.</span>
+    </div>
+  </div>
+</details>
+
+<!-- ─────── СООБЩЕСТВА ─────── -->
+<details class="sec" id="community">
+  <summary>
+    <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/><path d="M16 11a3 3 0 0 0 0-6M18 20c0-2.2-.7-3.9-2-5"/></svg></span>
+    <span class="st"><b>Сообщества, роли и права</b>
+      <span>Два уровня прав, четыре роли внутри круга, создание с согласованием</span></span>
+    <span class="tags"><i class="tag ok">работает</i><i class="tag you">4 решения</i></span>
+    <span class="arw">›</span>
+  </summary>
+  <div class="body">
+    <p><b>Роль на платформе и роль в сообществе — разные вещи.</b> Обычная участница может быть
+      владелицей своего круга и решать там всё, оставаясь обычной участницей на самой платформе.
+      Так работают живые сообщества: администратор дома не становится хозяином каждой квартиры.
+      Единственное исключение — администратор платформы: он может всё и везде, потому что за
+      платформу отвечает он.</p>
+
+    <h4>Роли платформы</h4>
+    <ul class="rows">
+      <li><span>Гостья</span><span>Не вошла. Видит витрину, писать не может</span></li>
+      <li><span>Участница</span><span>Основная роль. Программа, послания, группы, мероприятия. Может создать своё сообщество</span></li>
+      <li><span>Эксперт</span><span>Ведёт практики и курсы, свой кабинет. Выдаёт администратор</span></li>
+      <li><span>Администратор</span><span>Отвечает за платформу целиком. Только по списку почт в <code>data/config.php</code> на сервере — через интерфейс роль не выдаётся</span></li>
+    </ul>
+
+    <h4>Роли внутри сообщества</h4>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Что может</th><th>Владелица</th><th>Со-ведущая</th><th>Хранительница</th><th>Участница</th></tr></thead>
+        <tbody>
+          <tr><th>Читать и писать</th><td class="yes">да</td><td class="yes">да</td><td class="yes">да</td><td class="yes">да</td></tr>
+          <tr><th>Удалить чужое сообщение</th><td class="yes">да</td><td class="yes">да</td><td class="yes">да</td><td class="no">нет</td></tr>
+          <tr><th>Принимать заявки</th><td class="yes">да</td><td class="yes">да</td><td class="no">нет</td><td class="no">нет</td></tr>
+          <tr><th>Менять описание и правила</th><td class="yes">да</td><td class="yes">да</td><td class="no">нет</td><td class="no">нет</td></tr>
+          <tr><th>Назначать помощниц</th><td class="yes">да</td><td class="no">нет</td><td class="no">нет</td><td class="no">нет</td></tr>
+          <tr><th>Ставить цену клуба</th><td class="yes">да</td><td class="no">нет</td><td class="no">нет</td><td class="no">нет</td></tr>
+          <tr><th>Закрыть сообщество</th><td class="yes">да</td><td class="no">нет</td><td class="no">нет</td><td class="no">нет</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Четыре вида доступа</h4>
+    <ul class="rows">
+      <li><span>Открытое</span><span>Заходит любая участница платформы</span></li>
+      <li><span>По заявке</span><span>Видно описание и команду, переписка — после одобрения ведущей</span></li>
+      <li><span>Клуб</span><span>Доступ по подписке, помесячно. Отмена — доступ до конца оплаченного месяца</span></li>
+      <li><span>Для экспертов</span><span>Внутренняя комната, вход по роли платформы</span></li>
+    </ul>
+
+    <h4>Как рождается сообщество</h4>
+    <ol class="flow">
+      <li><b>Форма</b><span>Название, о чём, для кого, знак и цвет, вид доступа, до трёх правил
+        и приветствие новеньким.</span></li>
+      <li><b>Согласование</b><span>Появляется в админке с описанием и правилами целиком.
+        Открыть, вернуть на доработку с текстом или отказать.</span></li>
+      <li><b>Живое сообщество</b><span>Создательница становится владелицей и зовёт помощниц по почте,
+        выбирая роль: со-ведущая или хранительница.</span></li>
+      <li><b>Приветствие</b><span>Первое, что видит новенькая после входа: пара строк от ведущей,
+        правила и кнопка в переписку.</span></li>
+    </ol>
+
+    <div class="dec">
+      <span class="lab">требует решения</span>
+      <b>Может ли владелица клуба зарабатывать</b>
+      <p>Сейчас все клубы ведёт Eva Space, деньги идут платформе.</p>
+      <span class="rec"><i>Моя рекомендация:</i> на старте оставить так. Доход владелиц — это выплаты,
+        отчётность и налоги, работа умножается вчетверо. Вернуться, когда будет хотя бы три живых клуба.</span>
+    </div>
+    <div class="dec">
+      <span class="lab">требует решения</span>
+      <b>Что с сообществом, если владелица ушла</b>
+      <p>Сейчас ничего: сообщество просто затихает.</p>
+      <span class="rec"><i>Моя рекомендация:</i> после месяца тишины платформа пишет владелице
+        и предлагает передать со-ведущей; если и она молчит — архив. Переписка остаётся у участниц,
+        новых не пускаем.</span>
+    </div>
+    <div class="dec">
+      <span class="lab">требует решения</span>
+      <b>Видно ли список участниц внутри группы</b>
+      <p>Сейчас видно команду и число участниц, полного списка нет ни у кого.</p>
+      <span class="rec"><i>Моя рекомендация:</i> так и оставить. Список видят владелица и со-ведущая,
+        остальные — команду и число. Для группы «Беременность» это важнее, чем удобство.</span>
+    </div>
+    <div class="dec">
+      <span class="lab">требует решения</span>
+      <b>Нужны ли анонимные сообщения</b>
+      <p>Просьба звучала: написать в группу, не показывая имени.</p>
+      <span class="rec"><i>Моя рекомендация:</i> не сейчас. Анонимность меняет тон разговора,
+        и модерировать её сложнее. Вернуться, когда будут живые группы и станет видно,
+        чего женщины действительно не решаются сказать.</span>
+    </div>
+  </div>
+</details>
+
+<!-- ─────── МЕРОПРИЯТИЯ ─────── -->
+<details class="sec" id="events">
+  <summary>
+    <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.2a2.3 2.3 0 0 0 0 4.6v1.2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.2a2.3 2.3 0 0 0 0-4.6z"/><path d="M14 7v2M14 14v3"/></svg></span>
+    <span class="st"><b>Мероприятия и Eva Events</b>
+      <span>Женские круги, ретриты, завтраки — и цепочка писем, которая доводит до встречи</span></span>
+    <span class="tags"><i class="tag ok">работает</i><i class="tag you">1 решение</i></span>
+    <span class="arw">›</span>
+  </summary>
+  <div class="body">
+    <p>Четырнадцать мероприятий: женские круги, йога, книжный клуб, лекции, концерт чаш, ретрит,
+      женский завтрак, девичник. Онлайн и офлайн — Москва, Петербург, Подмосковье, Zoom.
+      Бесплатные и платные, с ограничением мест и без.</p>
+
+    <h4>Карточка</h4>
+    <ul class="rows">
+      <li><span>Коротко</span><span>Тип, дата, город, ведущая, цена, сколько мест осталось</span></li>
+      <li><span>Подробнее</span><span>Раскрывается на месте, без перезагрузки: полное описание,
+        расписание, для кого, что взять с собой</span></li>
+      <li><span>Свои мероприятия</span><span>Мини-календарь по дням недели, сегодняшнее подсвечено,
+        прошедшее уходит вниз приглушённым</span></li>
+      <li><span>Билет</span><span>С номером, именем, датой и местом. Отдельно — приглашение для подруги с кодом</span></li>
+    </ul>
+
+    <h4>Цепочка Eva Events</h4>
+    <p>Задача цепочки — <b>поднять доходимость</b>. После записи женщина получает шесть сообщений;
+      каждое приходит в своё время и требует ответа там, где это важно.</p>
+    <ol class="flow">
+      <li><b>Место за тобой</b><span>Сразу после записи. Название, дата, место. Спрашиваем:
+        придёшь одна или с подругой.</span></li>
+      <li><b>Приглашение подруге</b><span>Если ответила «с подругой» — код приглашения,
+        который можно скопировать и отправить.</span></li>
+      <li><b>Подтверди участие</b><span>За три дня. Обязательный шаг: если молчит, место уходит другой.
+        Только для бесплатных — за платный билет уже заплачено.</span></li>
+      <li><b>Напоминание накануне</b><span>Что взять с собой, во сколько выходить.</span></li>
+      <li><b>В день встречи</b><span>Короткое «сегодня в 19:00, ждём».</span></li>
+      <li><b>Как прошло</b><span>После — вопрос о впечатлении и оценка. Отзывы собираются
+        в метрику доходимости у администратора.</span></li>
+    </ol>
+    <p>Ранний отказ возвращает место в общий доступ. В тестовом режиме цепочка проигрывается
+      с интервалом в десять секунд, каждое письмо помечено, за сколько до мероприятия оно приходит.</p>
+
+    <div class="dec">
+      <span class="lab">требует решения</span>
+      <b>Дублировать письма на почту</b>
+      <p>Сейчас цепочка живёт только внутри приложения. Женщина увидит напоминание, только если
+        зайдёт — а именно те, кто не заходит, и не доходят до встречи.</p>
+      <span class="rec"><i>Моя рекомендация:</i> подключить почтовый сервис (он всё равно нужен
+        для регистрации и «забыла пароль») и дублировать три письма из шести: подтверждение записи,
+        «подтверди за три дня» и напоминание накануне. Остальные оставить внутри приложения.</span>
+    </div>
+  </div>
+</details>
+
+<!-- ─────── МАРКЕТ ─────── -->
+<details class="sec" id="market">
+  <summary>
+    <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16l-1.2 11a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></span>
+    <span class="st"><b>Маркет</b>
+      <span>Товары, корзина, бонусы, заказы</span></span>
+    <span class="tags"><i class="tag ok">работает</i><i class="tag you">2 решения</i></span>
+    <span class="arw">›</span>
+  </summary>
+  <div class="body">
+    <p>Четырнадцать товаров: то, что продолжает практику физически — коврики, свечи, дневники,
+      масла, украшения. У каждого карточка с описанием, характеристиками, отзывами и вопросами.</p>
+
+    <h4>Как устроена покупка</h4>
+    <ul class="rows">
+      <li><span>Корзина</span><span>Несколько товаров, количество, итог</span></li>
+      <li><span>Бонусами</span><span>Можно закрыть <b>до 30%</b> чека</span></li>
+      <li><span>Кешбэк</span><span><b>5%</b> от покупки возвращается бонусами</span></li>
+      <li><span>Заказ</span><span>Уходит администратору: кто, что, на сколько, город, телефон, статус</span></li>
+      <li><span>Вопрос о товаре</span><span>Женщина спрашивает — администратор отвечает, ответ виден всем</span></li>
+    </ul>
+
+    <h4>Кто наполняет</h4>
+    <p>Товары заводит администратор в разделе «Маркет»: название, цена, старая цена, категория,
+      описание, характеристики таблицей, остаток, фотографии.</p>
+
+    <div class="dec">
+      <span class="lab">требует решения</span>
+      <b>Кто отправляет товар</b>
+      <p>В коде заказ просто появляется у администратора со статусом «новый». Что происходит
+        дальше — склад, упаковка, доставка, трек-номер — не описано нигде.</p>
+      <span class="rec"><i>Моя рекомендация:</i> на старте не делать свой склад. Либо цифровые
+        товары (дневники и гайды файлом — отправляются сами), либо партнёр, который отгружает
+        со своего склада, а платформа передаёт ему заказ. Свою логистику заводить, когда
+        заказов станет больше десяти в неделю.</span>
+    </div>
+    <div class="dec">
+      <span class="lab">требует решения</span>
+      <b>Могут ли эксперты продавать своё</b>
+      <p>Сейчас маркет только ваш. Эксперт может продать консультацию, но не товар.</p>
+      <span class="rec"><i>Моя рекомендация:</i> отложить. Маркет с чужими товарами — это возвраты,
+        претензии и качество, за которое отвечаете вы. Пусть эксперты продают то, что не надо
+        отгружать: консультации, курсы, участие во встречах.</span>
+    </div>
+  </div>
+</details>
+
+<!-- ─────── БАЛЛЫ И РЕФЕРАЛЫ ─────── -->
+<details class="sec" id="points">
+  <summary>
+    <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.2 2.7 5.5 6 .9-4.3 4.2 1 6-5.4-2.8-5.4 2.8 1-6L3.3 9.6l6-.9z"/></svg></span>
+    <span class="st"><b>Баллы, статусы, рефералы и амбассадоры</b>
+      <span>За что начисляется, что даёт статус, сколько приносит приглашённая подруга</span></span>
+    <span class="tags"><i class="tag ok">работает</i><i class="tag plan">амбассадоры — проект</i><i class="tag you">2 решения</i></span>
+    <span class="arw">›</span>
+  </summary>
+  <div class="body">
+    <p>В приложении две валюты, и их важно не путать. <b>Баллы</b> — это опыт: они копятся
+      за сделанное, никогда не тратятся и поднимают статус. <b>Бонусы</b> — это деньги:
+      ими платят за товары и курсы.</p>
+
+    <h4>Баллы</h4>
+    <ul class="rows">
+      <li><span>Аффирмация прочитана</span><span><b>10</b> баллов</span></li>
+      <li><span>Практика отмечена</span><span><b>25</b> баллов</span></li>
+      <li><span>Мастер-класс отмечен</span><span><b>40</b> баллов</span></li>
+      <li><span>Послание участницам</span><span><b>5</b> баллов</span></li>
+      <li><span>Полная неделя</span><span>21 дело — около <b>500</b> баллов</span></li>
+    </ul>
+
+    <h4>Три статуса</h4>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Статус</th><th>Баллов</th><th>Что даёт</th><th>С покупок подруг</th></tr></thead>
+        <tbody>
+          <tr><th>Ученица</th><td>от 0</td><td>Программа, библиотека, баллы за задания</td><td><b>10%</b></td></tr>
+          <tr><th>Эксперт</th><td>от 1 000</td><td>Своё сообщество, свой контент в библиотеке</td><td><b>20%</b></td></tr>
+          <tr><th>Наставница</th><td>от 3 500</td><td>Свои курсы в каталоге, приоритет в ленте, супервизия</td><td><b>30%</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:13px;color:var(--muted)">Статус «Эксперт» здесь — это уровень внутри
+      программы лояльности, а не роль эксперта платформы. Совпадение названий надо развести:
+      см. решение ниже.</p>
+
+    <h4>Рефералы — как работает сейчас</h4>
+    <ul class="pts">
+      <li>У каждой женщины своя ссылка вида <code>eva.space/r/имя</code> — копируется одной кнопкой
+        из личного кабинета.</li>
+      <li>Пришедшая по ссылке закрепляется за пригласившей навсегда.</li>
+      <li>С каждой её покупки пригласившая получает процент <b>бонусами</b> — 10, 20 или 30
+        в зависимости от своего статуса.</li>
+      <li>В кабинете видно: кто пришёл, когда, кто уже покупал, сколько начислено всего.</li>
+      <li>Начисленное можно вывести — кнопка есть, но денег она пока не двигает.</li>
+    </ul>
+
+    <h4>Амбассадоры — чего ещё нет</h4>
+    <p>Реферальная программа — это «привела подругу». Амбассадор — другое: женщина, которая
+      представляет Eva Space наружу, ведёт свой круг и получает за это не процент, а условия.
+      В коде такого сейчас нет вообще. Вот как я предлагаю это устроить.</p>
+    <ul class="rows">
+      <li><span>Кто становится</span><span>Приглашение от платформы, не заявка. Смотрим на две вещи:
+        привела ли она женщин, которые остались, и ведёт ли она их дальше</span></li>
+      <li><span>Что получает</span><span>Бесплатная подписка, повышенный процент, своё сообщество
+        без согласования, ранний доступ к новому, упоминание на витрине</span></li>
+      <li><span>Что делает</span><span>Ведёт свой круг, приводит женщин, проводит одну встречу
+        в квартал, даёт обратную связь по продукту до релиза</span></li>
+      <li><span>Как отслеживается</span><span>Отдельная ссылка с меткой источника, чтобы было видно,
+        откуда женщина пришла — из поста, со встречи или из личного разговора</span></li>
+      <li><span>Как заканчивается</span><span>Статус на полгода с пересмотром. Не «навсегда» —
+        иначе он превращается в награду за прошлое</span></li>
+    </ul>
+
+    <div class="dec">
+      <span class="lab">требует решения</span>
+      <b>Запускаем ли амбассадоров и когда</b>
+      <p>Работы примерно на неделю: метка источника в ссылке, флаг амбассадора у аккаунта,
+        свои условия по подписке и проценту, страница «мои приглашённые» с разбивкой по источникам.</p>
+      <span class="rec"><i>Моя рекомендация:</i> не раньше, чем наберётся сотня платящих женщин.
+        Пока их нет, амбассадорам нечего представлять, а вам — не с чего платить. Но <b>метку
+        источника в ссылке сделать сразу</b>: она ничего не стоит, а без неё через полгода
+        будет непонятно, какой канал работает.</span>
+    </div>
+    <div class="dec">
+      <span class="lab">требует решения</span>
+      <b>Совпадение названий: статус «Эксперт» и роль «Эксперт»</b>
+      <p>Женщина набирает 1 000 баллов и становится «Экспертом» — но это про лояльность,
+        а не про право вести практики. Два разных смысла под одним словом путают всех.</p>
+      <span class="rec"><i>Моя рекомендация:</i> переименовать статусы лояльности так, чтобы
+        они не пересекались с ролями: <b>Ученица → Практикующая → Наставница</b>. Правка на час,
+        а путаницы избежим на годы.</span>
+    </div>
+  </div>
+</details>
+
+<!-- ─────── ПОСЛАНИЯ И ЗНАКОМСТВА ─────── -->
+<details class="sec" id="wall">
+  <summary>
+    <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 15a3 3 0 0 1-3 3H8l-4 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z"/></svg></span>
+    <span class="st"><b>Послания и знакомства</b>
+      <span>Общая лента участниц и подбор женщин с похожими интересами</span></span>
+    <span class="tags"><i class="tag ok">работает</i></span>
+    <span class="arw">›</span>
+  </summary>
+  <div class="body">
+    <p><b>Послания</b> — общая лента: пара строк о том, что с тобой сейчас, их читают все участницы.
+      Устроены нарочно просто: поле стоит прямо в ленте, нажала и пишешь. Ни тем, ни поводов,
+      ни фотографий — чтобы написать, не надо ничего выбирать.</p>
+    <ul class="rows">
+      <li><span>Что есть у послания</span><span>Имя, город, текст, звезда, ответы</span></li>
+      <li><span>Ответы</span><span>У каждой женщины свой цвет, у ответов своя звёздочка</span></li>
+      <li><span>Удаление</span><span>Своё — всегда, чужое — администратор</span></li>
+      <li><span>Автор</span><span>Узнаётся по почте, а не по метке в данных — иначе аватарки
+        смешивались между аккаунтами</span></li>
+    </ul>
+    <p><b>Знакомства</b> — короткая анкета: город, о себе, интересы, фото. Ева подбирает женщин
+      с похожими интересами, можно встретиться на кофе или познакомиться онлайн.
+      Анкета показывается в предпросмотре перед публикацией и удаляется в любой момент.</p>
+  </div>
+</details>
+
+<!-- ─────── ПОДПИСКА ─────── -->
+<details class="sec" id="sub">
+  <summary>
+    <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3.5M15.5 12v2.5"/></svg></span>
+    <span class="st"><b>Подписка и доступ</b>
+      <span>Три дня бесплатно, потом 2 900 ₽ в месяц</span></span>
+    <span class="tags"><i class="tag ok">работает</i><i class="tag hole">оплата не подключена</i></span>
+    <span class="arw">›</span>
+  </summary>
+  <div class="body">
+    <ul class="rows">
+      <li><span>Пробный период</span><span><b>3 дня</b>, открывается сразу после теста, весь контент без ограничений</span></li>
+      <li><span>Подписка</span><span><b>2 900 ₽</b> в месяц. Отмена в любой момент</span></li>
+      <li><span>Когда доступ закрыт</span><span>Прогресс сохраняется. На главной видна первая карточка дня,
+        остальные под замком с понятным объяснением</span></li>
+      <li><span>Что не входит</span><span>Курсы и товары покупаются отдельно, клубы — своя подписка</span></li>
+    </ul>
+    <div class="dec hole">
+      <span class="lab">не подключено</span>
+      <b>Приём оплаты</b>
+      <p>Подписка и покупки в коде есть, но денег не списывают: платёжный сервис не подключён.
+        До этого платформа не может зарабатывать вообще.</p>
+      <span class="rec"><i>Моя рекомендация:</i> ЮKassa или CloudPayments — оба умеют рекуррентные
+        списания, без которых подписку каждый месяц придётся продлевать вручную. Нужен статус
+        самозанятой или ИП и договор; это самый долгий по срокам пункт, начинать стоит первым.</span>
+    </div>
+  </div>
+</details>
+
+<!-- ─────── АВАТАРЫ ─────── -->
+<details class="sec" id="avatars">
+  <summary>
+    <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4M8 6v12M12 3.5v17M16 7v10M20 10.5v3"/></svg></span>
+    <span class="st"><b>Аватары и голоса</b>
+      <span>Ева, Адам и служебные — кто с кем говорит и о чём молчит</span></span>
+    <span class="tags"><i class="tag plan">задание готово</i><i class="tag you">5 вопросов</i></span>
+    <span class="arw">›</span>
+  </summary>
+  <div class="body">
+    <p>Ева уже отвечает в приложении: объясняет программу, читает аффирмации вслух, подсказывает
+      по дню. Задумано четыре голоса — <b>Ева</b> (спутница), <b>Адам</b> (мужской взгляд),
+      <b>Eva Events</b> (мероприятия) и <b>Eva Market</b> (покупки). Три последних пока не сделаны:
+      письма о мероприятиях подписаны «Eva Events», но за подписью нет отдельного характера.</p>
+    <p>Роли, границы, чему аватар учится и как настраивается — отдельным документом.
+      Там же пять вопросов, которые ждут вашего ответа: с кого начинаем, что аватар знает
+      о женщине, что делает на тяжёлых темах, кто пишет характер и какой месячный потолок расходов.</p>
+    <p><a href="https://claude.ai/code/artifact/e48970ed-e539-41a2-85c4-9bbc9dc41b9d" target="_blank" rel="noopener">Открыть задание «Голоса Eva Space» →</a></p>
+    <div class="dec">
+      <span class="lab">требует решения</span>
+      <b>Сколько это стоит в месяц</b>
+      <p>Живой разговор с языковой моделью — это расход на каждое сообщение. Без потолка
+        один активный месяц может стоить дороже, чем приносит подписка.</p>
+      <span class="rec"><i>Моя рекомендация:</i> начать с одной Евы и жёсткого лимита на аккаунт
+        в день. Остальные три голоса — после того, как станет видно, пользуются ли ею вообще.</span>
+    </div>
+  </div>
+</details>
+
+<!-- ─────── ТЕХНИКА ─────── -->
+<details class="sec" id="tech">
+  <summary>
+    <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/></svg></span>
+    <span class="st"><b>Как это сделано</b>
+      <span>Один файл, тринадцать исходников, PHP-сервер на файлах</span></span>
+    <span class="tags"><i class="tag ok">работает</i><i class="tag you">1 решение</i></span>
+    <span class="arw">›</span>
+  </summary>
+  <div class="body">
+    <h4>Приложение</h4>
+    <ul class="rows">
+      <li><span>Что это</span><span>Одна страница на чистом JavaScript, без библиотек и сборщиков.
+        Ставится на телефон как приложение</span></li>
+      <li><span>Исходники</span><span>Тринадцать файлов в <code>src/app/</code>: данные, хранилище, ядро,
+        вход, курсы, экраны, маркет, админка, обмен, шторки, события, подсказки, сообщества</span></li>
+      <li><span>Сборка</span><span><code>python3 build.py</code> склеивает всё в <code>dist/index.html</code>,
+        около 780 КБ. На хостинг кладётся один этот файл</span></li>
+      <li><span>Почему так</span><span>Обычный хостинг без Node и без базы данных. Один файл
+        заливается и откатывается за минуту</span></li>
+    </ul>
+
+    <h4>Сервер</h4>
+    <ul class="rows">
+      <li><span>Что это</span><span><code>api.php</code> — данные в JSON-файлах, без базы</span></li>
+      <li><span>Вход</span><span>Пароли хешируются на сервере, сессии по токену, роль администратора —
+        только по списку почт в <code>data/config.php</code></span></li>
+      <li><span>Обмен</span><span>25 веток: библиотека, курсы, товары, мероприятия, сообщества,
+        послания, отзывы, аватарки и другие</span></li>
+      <li><span>Кто что пишет</span><span>Администратор и эксперт заменяют раздел целиком;
+        участница только дописывает своё — в послания, заявки, заказы, отзывы, сообщества</span></li>
+      <li><span>Расход трафика</span><span>Проверка обновлений — 67 байт. Полная выгрузка идёт,
+        только если что-то изменилось</span></li>
+    </ul>
+
+    <h4>Как проверяется</h4>
+    <p>Каждый круг доработок прогоняется <b>восемнадцатью наборами сценариев</b> в настоящем браузере:
+      экраны открываются, кнопки нажимаются, проверяется результат. Плюс два набора против
+      живого PHP-сервера. Суммарно около шестисот проверок. Ни один круг не уезжает в ветку
+      с красным.</p>
+
+    <div class="dec">
+      <span class="lab">требует решения</span>
+      <b>Резервные копии</b>
+      <p>Все данные платформы — файлы в папке <code>data/</code> на хостинге. Если хостинг их
+        потеряет, восстанавливать будет нечего.</p>
+      <span class="rec"><i>Моя рекомендация:</i> раз в сутки складывать копию папки в архив
+        и отправлять на почту или в облако. Полдня работы, и с первого платящего пользователя
+        это перестаёт быть необязательным.</span>
+    </div>
+  </div>
+</details>
+
+<!-- ─────── ПЕРВЫЙ ВХОД ─────── -->
+<details class="sec" id="onboarding">
+  <summary>
+    <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v4M9 21H5a2 2 0 0 1-2-2v-4"/><circle cx="12" cy="12" r="3.2"/><path d="M21 15v4a2 2 0 0 1-2 2h-4M3 9V5a2 2 0 0 1 2-2h4"/></svg></span>
+    <span class="st"><b>Первый вход</b>
+      <span>Тест, сборка программы и семь подсказок поверх приложения</span></span>
+    <span class="tags"><i class="tag ok">работает</i></span>
+    <span class="arw">›</span>
+  </summary>
+  <div class="body">
+    <ol class="flow">
+      <li><b>Имя и тест</b><span>Семь вопросов: что важнее всего сейчас, сколько минут в день,
+        когда удобно, этап жизни, что тебе интересно, что беспокоит. На важных вопросах
+        можно выбрать до трёх ответов, на интересах — сколько захочет.</span></li>
+      <li><b>Ева собирает программу</b><span>Показывается процент совпадения и темы,
+        вокруг которых построена неделя.</span></li>
+      <li><b>Подсказки</b><span>Сначала приветствие: «Покажу за минуту, что где лежит» —
+        «Пропустить» или «Посмотреть». Потом семь коротких подсказок поверх живого приложения:
+        экран притемняется, нужный блок остаётся светлым, рядом карточка с объяснением.</span></li>
+      <li><b>Три дня открыты</b><span>Весь контент без ограничений. Подсказки можно вызвать
+        заново из настроек.</span></li>
+    </ol>
+  </div>
+</details>
+
+<!-- ─────── ПЕРЕД ЗАПУСКОМ ─────── -->
+<details class="sec" id="launch" open>
+  <summary>
+    <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 15 4.5 19.5M6 12l-2 .5L8 8l3-1M12 16l-.5 2 4.5-4 1-3"/><path d="M14.5 4.5c3-1.5 5-1 5-1s.5 2-1 5c-1.6 3.2-5.4 6-8 7.5L9.5 13.5C11 10.9 11.3 6.1 14.5 4.5"/><circle cx="15" cy="9" r="1.4"/></svg></span>
+    <span class="st"><b>Перед запуском</b>
+      <span>Что должно быть сделано, прежде чем придут настоящие женщины</span></span>
+    <span class="tags"><i class="tag you">8 задач</i></span>
+    <span class="arw">›</span>
+  </summary>
+  <div class="body">
+    <p>Всё это не про код — это ваши решения и договоры. Порядок здесь по срокам:
+      первое запускается дольше всего, начинать стоит с него.</p>
+    <ul class="rows">
+      <li><span>1 · дольше всего</span><span><b>Приём оплаты.</b> ЮKassa или CloudPayments.
+        Нужен статус самозанятой или ИП и договор. Без этого платформа не зарабатывает</span></li>
+      <li><span>2 · дольше всего</span><span><b>Юридические документы.</b> Оферта, политика
+        конфиденциальности, согласие на обработку данных. Собираются почты и имена — это персональные данные</span></li>
+      <li><span>3 · неделя</span><span><b>Почтовый сервис.</b> Сейчас код подтверждения показывается
+        на экране — зарегистрироваться на чужую почту может кто угодно, а «забыла пароль» не работает</span></li>
+      <li><span>4 · час</span><span><b>HTTPS на домене.</b> Пароль идёт открытым текстом,
+        и без него приложение не ставится на телефон</span></li>
+      <li><span>5 · долго, но параллельно</span><span><b>Настоящий контент.</b> Эксперты, уроки,
+        курсы, товары и цены сейчас вымышленные</span></li>
+      <li><span>6 · минута</span><span><b>Удалить <code>check.php</code> с хостинга.</b>
+        Показывает посторонним устройство сервера</span></li>
+      <li><span>7 · минута</span><span><b>Сделать репозиторий приватным.</b> Сейчас весь код открыт</span></li>
+      <li><span>8 · полдня</span><span><b>Резервные копии данных.</b> Раз в сутки, в облако</span></li>
+    </ul>
+  </div>
+</details>
+
+    </div>
+  </section>
+
+  <!-- ═══════════ РЕШЕНИЯ ═══════════ -->
+  <section id="decisions">
+    <h2 class="hd">Что ждёт вашего решения</h2>
+    <ul class="decs">
+      <li><span class="n">1</span><div><b>Приём оплаты</b>
+        <p>Какой сервис и на какое юридическое лицо. Самый долгий пункт по срокам.</p></div>
+        <i class="tag you">запуск</i></li>
+      <li><span class="n">2</span><div><b>Юридические документы</b>
+        <p>Оферта, политика, согласие на обработку данных.</p></div>
+        <i class="tag you">запуск</i></li>
+      <li><span class="n">3</span><div><b>Почтовый сервис</b>
+        <p>Регистрация, восстановление пароля и три письма из цепочки Eva Events.</p></div>
+        <i class="tag you">запуск</i></li>
+      <li><span class="n">4</span><div><b>Настоящий контент вместо заглушек</b>
+        <p>Эксперты, уроки, курсы, товары и цены. Самая большая работа, и она не техническая.</p></div>
+        <i class="tag you">запуск</i></li>
+      <li><span class="n">5</span><div><b>Как эксперты попадают на платформу</b>
+        <p>Заявка, проверка, договор — или пока только по личному приглашению.
+          <a href="#experts">Раздел про экспертов</a></p></div>
+        <i class="tag you">эксперты</i></li>
+      <li><span class="n">6</span><div><b>Как делится доход с курса</b>
+        <p>Одна ставка для всех или индивидуальные условия. <a href="#courses">Раздел про курсы</a></p></div>
+        <i class="tag you">эксперты</i></li>
+      <li><span class="n">7</span><div><b>Может ли владелица клуба зарабатывать</b>
+        <p>Сейчас все клубы ведёт Eva Space. <a href="#community">Раздел про сообщества</a></p></div>
+        <i class="tag you">сообщества</i></li>
+      <li><span class="n">8</span><div><b>Что с сообществом, если владелица ушла</b>
+        <p>Передать со-ведущей или в архив. <a href="#community">Раздел про сообщества</a></p></div>
+        <i class="tag you">сообщества</i></li>
+      <li><span class="n">9</span><div><b>Видно ли список участниц внутри группы</b>
+        <p>И нужны ли анонимные сообщения. <a href="#community">Раздел про сообщества</a></p></div>
+        <i class="tag you">сообщества</i></li>
+      <li><span class="n">10</span><div><b>Запускаем ли амбассадоров</b>
+        <p>И метку источника в реферальной ссылке — её я предлагаю сделать сразу.
+          <a href="#points">Раздел про баллы</a></p></div>
+        <i class="tag you">рост</i></li>
+      <li><span class="n">11</span><div><b>Переименовать статусы лояльности</b>
+        <p>«Эксперт» означает и уровень, и роль — это путает. <a href="#points">Раздел про баллы</a></p></div>
+        <i class="tag you">рост</i></li>
+      <li><span class="n">12</span><div><b>Кто отправляет товары маркета</b>
+        <p>Свой склад, партнёр или только цифровые товары. <a href="#market">Раздел про маркет</a></p></div>
+        <i class="tag you">маркет</i></li>
+      <li><span class="n">13</span><div><b>Аватары: пять вопросов из отдельного задания</b>
+        <p>С кого начинаем, что аватар знает о женщине, что делает на тяжёлых темах,
+          кто пишет характер, какой месячный потолок. <a href="#avatars">Раздел про аватары</a></p></div>
+        <i class="tag you">аватары</i></li>
+    </ul>
+  </section>
+
+  <footer>
+    Штаб Eva Space · версия 2 · обновляется по ходу работы.<br>
+    Если что-то здесь расходится с тем, как приложение ведёт себя на самом деле —
+    расходится документ, и его надо править.
+  </footer>
+</div>
