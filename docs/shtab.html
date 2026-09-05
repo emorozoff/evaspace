@@ -200,6 +200,77 @@
   footer{padding-top:22px; border-top:1px solid var(--line-2); font-size:12.5px; color:var(--muted)}
   :focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:4px}
   @media(prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} }
+
+  /* ---------- рабочий слой: пул задач и поля по блокам ---------- */
+  .pool{background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+    box-shadow:var(--shadow); overflow:hidden}
+  .poolhead{display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+    padding:15px 17px 13px; border-bottom:1px solid var(--line)}
+  .poolhead h3{font-family:Unbounded,Inter,sans-serif; font-weight:400; font-size:16.5px;
+    margin:0; letter-spacing:-.01em; flex:1; min-width:120px}
+  .filters{display:flex; gap:5px; flex-wrap:wrap}
+  .filt{font:inherit; font-size:11.5px; font-weight:600; border-radius:999px; padding:4px 11px;
+    border:1px solid var(--line); background:var(--surface); color:var(--ink-2); cursor:pointer;
+    white-space:nowrap; transition:.15s}
+  .filt:hover{border-color:var(--line-2)}
+  .filt[aria-pressed="true"]{background:var(--ink); border-color:var(--ink); color:var(--ground)}
+  .filt em{font-style:normal; opacity:.55; font-variant-numeric:tabular-nums; margin-left:3px}
+
+  .addrow{display:flex; gap:8px; align-items:flex-end; padding:13px 17px;
+    border-bottom:1px solid var(--line); background:var(--surface-2)}
+  .addrow textarea{flex:1; min-width:0; font:inherit; font-size:14px; line-height:1.5;
+    resize:vertical; min-height:42px; padding:9px 12px; border-radius:var(--r-sm);
+    border:1px solid var(--line-2); background:var(--surface); color:var(--ink)}
+  .addrow textarea:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:transparent}
+  .bt{flex:none; font:inherit; font-size:13.5px; font-weight:600; padding:10px 16px;
+    border-radius:var(--r-sm); border:none; background:var(--ink); color:var(--ground);
+    cursor:pointer; transition:opacity .15s}
+  .bt:hover{opacity:.86}
+  .bt:disabled{opacity:.38; cursor:default}
+
+  .tasks{list-style:none; margin:0; padding:0}
+  .tasks li{display:grid; grid-template-columns:1fr auto; gap:10px 12px; align-items:start;
+    padding:12px 17px; border-bottom:1px solid var(--line)}
+  .tasks li:last-child{border-bottom:none}
+  .tasks li.is-done .ttext{color:var(--muted); text-decoration:line-through;
+    text-decoration-color:var(--line-2)}
+  .ttext{font-size:14.5px; white-space:pre-wrap; word-break:break-word; min-width:0}
+  .tmeta{display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:5px}
+  .tsrc{font-size:11px; color:var(--muted)}
+  .tsrc b{font-weight:600; color:var(--ink-2)}
+  .tools{display:flex; gap:6px; align-items:center; flex:none}
+  .stbtn,.whobtn{font:inherit; font-size:10.5px; font-weight:700; letter-spacing:.05em;
+    text-transform:uppercase; border-radius:999px; padding:4px 10px; border:1px solid transparent;
+    cursor:pointer; white-space:nowrap; transition:.15s}
+  .stbtn.new{background:var(--accent-soft); color:var(--accent)}
+  .stbtn.work{background:var(--gold-soft); color:var(--gold)}
+  .stbtn.done{background:var(--ok-soft); color:var(--ok)}
+  .whobtn{background:var(--surface-2); color:var(--muted); font-weight:600; text-transform:none;
+    letter-spacing:0; font-size:11px}
+  .delbtn{border:none; background:none; color:var(--muted); cursor:pointer; font-size:15px;
+    line-height:1; padding:2px 4px}
+  .delbtn:hover{color:var(--accent)}
+  .empty{padding:22px 17px; font-size:13.5px; color:var(--muted); text-align:center}
+  .poolfoot{padding:12px 17px; border-top:1px solid var(--line); background:var(--surface-2);
+    font-size:12.5px; color:var(--ink-2)}
+  .poolfoot b{color:var(--ink)}
+
+  /* поле правок внутри раздела */
+  .say{margin-top:20px; padding-top:16px; border-top:1px solid var(--line)}
+  .say > label{display:block; font-size:11px; font-weight:700; letter-spacing:.09em;
+    text-transform:uppercase; color:var(--muted); margin-bottom:8px}
+  .sayrow{display:flex; gap:8px; align-items:flex-end}
+  .sayrow textarea{flex:1; min-width:0; font:inherit; font-size:14px; line-height:1.5;
+    resize:vertical; min-height:42px; padding:9px 12px; border-radius:var(--r-sm);
+    border:1px solid var(--line-2); background:var(--surface); color:var(--ink)}
+  .sayrow textarea:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:transparent}
+  .mine{list-style:none; margin:11px 0 0; padding:0; display:flex; flex-direction:column; gap:7px}
+  .mine li{display:flex; gap:9px; align-items:flex-start; background:var(--surface-2);
+    border-left:3px solid var(--accent); border-radius:0 var(--r-sm) var(--r-sm) 0;
+    padding:9px 11px; font-size:13.5px}
+  .mine li.is-work{border-left-color:var(--gold)}
+  .mine li.is-done{border-left-color:var(--ok); opacity:.7}
+  .mine .txt{flex:1; min-width:0; white-space:pre-wrap; word-break:break-word}
 </style>
 
 <div class="wrap">
@@ -209,9 +280,10 @@
     <h1>Как устроена платформа</h1>
     <p class="lede">Одна страница про весь продукт: что как работает сегодня, по каким правилам,
       и что ещё ждёт вашего решения. Разделы раскрываются — внутри механика, цифры и вопросы
-      с моей рекомендацией.</p>
+      с моей рекомендацией. Внизу каждого раздела поле для правок: написанное попадает
+      в общий пул задач, а я забираю его оттуда.</p>
     <div class="meta">
-      <span>Версия <b>2</b></span>
+      <span>Версия <b>3</b></span>
       <span>6 сентября 2026</span>
       <span>Разделов <b>14</b></span>
       <span>Решений за вами <b>13</b></span>
@@ -270,6 +342,28 @@
     <p style="margin:11px 0 0;font-size:13px;color:var(--muted)">
       Содержимое пока демонстрационное: имена экспертов, тексты уроков, товары и цены вымышленные.
       Замена на настоящее — самая большая работа перед запуском, и она не техническая.</p>
+  </section>
+
+  <!-- ═══════════ ПУЛ ЗАДАЧ ═══════════ -->
+  <section id="pool">
+    <h2 class="hd">Общий пул задач</h2>
+    <div class="pool">
+      <div class="poolhead">
+        <h3>Что в работе</h3>
+        <div class="filters" id="filters">
+          <button class="filt" type="button" data-f="all" aria-pressed="true">Все<em id="c-all">0</em></button>
+          <button class="filt" type="button" data-f="new" aria-pressed="false">Новые<em id="c-new">0</em></button>
+          <button class="filt" type="button" data-f="work" aria-pressed="false">В работе<em id="c-work">0</em></button>
+          <button class="filt" type="button" data-f="done" aria-pressed="false">Готово<em id="c-done">0</em></button>
+        </div>
+      </div>
+      <div class="addrow">
+        <textarea id="add-text" placeholder="Новая задача — коротко, своими словами" rows="1"></textarea>
+        <button class="bt" type="button" id="add-btn">Добавить</button>
+      </div>
+      <ul class="tasks" id="task-list"></ul>
+      <div class="poolfoot" id="poolfoot">Подключаюсь к хранилищу…</div>
+    </div>
   </section>
 
   <!-- ═══════════ РАЗДЕЛЫ ═══════════ -->
@@ -994,3 +1088,270 @@
     расходится документ, и его надо править.
   </footer>
 </div>
+
+<script>
+(function(){
+  /* Рабочий слой штаба. Задачи живут в хранилище артефакта: то, что вы
+     пишете здесь, я читаю оттуда, а то, что меняю я, появляется у вас
+     без перезагрузки. Страница работает и без хранилища — просто тогда
+     записанное никуда не уедет, и об этом честно написано внизу пула. */
+
+  var ST = {
+    new:  {n:'новая',   next:'work'},
+    work: {n:'в работе', next:'done'},
+    done: {n:'готово',   next:'new'}
+  };
+  var WHO = {me:'на мне', you:'на вас'};
+
+  var db = null, tasks = [], filter = 'all';
+  var list  = document.getElementById('task-list');
+  var foot  = document.getElementById('poolfoot');
+  var addTx = document.getElementById('add-text');
+  var addBt = document.getElementById('add-btn');
+
+  function esc(t){ var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+  function when(ts){
+    var d = new Date(ts);
+    if(isNaN(d)) return '';
+    return d.toLocaleDateString('ru-RU', {day:'numeric', month:'short'});
+  }
+
+  /* ---------- панель правок в каждом разделе ---------- */
+  var secs = [].slice.call(document.querySelectorAll('details.sec'));
+  secs.forEach(function(sec){
+    var key = sec.id;
+    var titleEl = sec.querySelector('.st b');
+    var title = titleEl ? titleEl.textContent.trim() : key;
+    var body = sec.querySelector('.body');
+    if(!body || !key) return;
+    sec.setAttribute('data-title', title);
+    var wrap = document.createElement('div');
+    wrap.className = 'say';
+    wrap.innerHTML =
+      '<label>Правки по разделу «' + esc(title) + '»</label>' +
+      '<div class="sayrow">' +
+        '<textarea rows="1" placeholder="Что поправить или добавить"></textarea>' +
+        '<button class="bt" type="button">Записать</button>' +
+      '</div><ul class="mine"></ul>';
+    body.appendChild(wrap);
+    var area = wrap.querySelector('textarea');
+    var btn  = wrap.querySelector('.bt');
+    function submit(){
+      var t = area.value.trim();
+      if(!t) return;
+      add(key, title, t);
+      area.value = '';
+      area.focus();
+    }
+    btn.addEventListener('click', submit);
+    area.addEventListener('keydown', function(e){
+      if((e.metaKey || e.ctrlKey) && e.key === 'Enter') submit();
+    });
+  });
+
+  /* ---------- отрисовка ---------- */
+  function counts(){
+    var c = {all:tasks.length, new:0, work:0, done:0};
+    tasks.forEach(function(t){ if(c[t.status] !== undefined) c[t.status]++; });
+    return c;
+  }
+
+  function taskRow(t){
+    var li = document.createElement('li');
+    li.className = t.status === 'done' ? 'is-done' : '';
+
+    var main = document.createElement('div');
+    var tx = document.createElement('div');
+    tx.className = 'ttext'; tx.textContent = t.text;
+    main.appendChild(tx);
+
+    var meta = document.createElement('div');
+    meta.className = 'tmeta';
+    var src = document.createElement('span');
+    src.className = 'tsrc';
+    src.innerHTML = (t.blockTitle ? '<b>' + esc(t.blockTitle) + '</b> · ' : '') +
+      (t.by === 'claude' ? 'от меня' : 'от вас') + (t.at ? ' · ' + when(t.at) : '');
+    meta.appendChild(src);
+    main.appendChild(meta);
+    li.appendChild(main);
+
+    var tools = document.createElement('div');
+    tools.className = 'tools';
+
+    var st = document.createElement('button');
+    st.type = 'button';
+    st.className = 'stbtn ' + t.status;
+    st.textContent = (ST[t.status] || ST.new).n;
+    st.title = 'Сменить статус';
+    st.addEventListener('click', function(){ cycle(t.id); });
+    tools.appendChild(st);
+
+    var who = document.createElement('button');
+    who.type = 'button';
+    who.className = 'whobtn';
+    who.textContent = WHO[t.who] || WHO.me;
+    who.title = 'Кто делает';
+    who.addEventListener('click', function(){ flip(t.id); });
+    tools.appendChild(who);
+
+    var del = document.createElement('button');
+    del.type = 'button'; del.className = 'delbtn'; del.title = 'Убрать';
+    del.textContent = '✕';
+    del.addEventListener('click', function(){ remove(t.id); });
+    tools.appendChild(del);
+
+    li.appendChild(tools);
+    return li;
+  }
+
+  function render(){
+    var c = counts();
+    ['all','new','work','done'].forEach(function(k){
+      var el = document.getElementById('c-' + k);
+      if(el) el.textContent = c[k];
+    });
+    [].slice.call(document.querySelectorAll('.filt')).forEach(function(b){
+      b.setAttribute('aria-pressed', b.getAttribute('data-f') === filter ? 'true' : 'false');
+    });
+
+    var order = {new:0, work:1, done:2};
+    var shown = tasks
+      .filter(function(t){ return filter === 'all' || t.status === filter; })
+      .sort(function(a,b){
+        return (order[a.status] - order[b.status]) || ((b.at||0) - (a.at||0));
+      });
+
+    list.innerHTML = '';
+    if(!shown.length){
+      var e = document.createElement('li');
+      e.className = 'empty';
+      e.textContent = tasks.length
+        ? 'В этом статусе пусто.'
+        : 'Пока пусто. Напишите задачу выше или в любом разделе ниже.';
+      list.appendChild(e);
+    } else {
+      shown.forEach(function(t){ list.appendChild(taskRow(t)); });
+    }
+
+    /* списки внутри разделов */
+    secs.forEach(function(sec){
+      var box = sec.querySelector('.mine');
+      if(!box) return;
+      box.innerHTML = '';
+      tasks.filter(function(t){ return t.block === sec.id; })
+        .sort(function(a,b){ return (order[a.status] - order[b.status]) || ((b.at||0) - (a.at||0)); })
+        .forEach(function(t){
+          var li = document.createElement('li');
+          li.className = 'is-' + t.status;
+          var tx = document.createElement('span');
+          tx.className = 'txt'; tx.textContent = t.text;
+          var st = document.createElement('button');
+          st.type = 'button'; st.className = 'stbtn ' + t.status;
+          st.textContent = (ST[t.status] || ST.new).n;
+          st.addEventListener('click', function(){ cycle(t.id); });
+          li.appendChild(tx); li.appendChild(st);
+          box.appendChild(li);
+        });
+    });
+
+    if(db){
+      var open = c.new + c.work;
+      foot.innerHTML = open
+        ? '<b>В работе и новых: ' + open + '.</b> Я читаю этот пул — скажите «собери задачи», ' +
+          'и я разберу их по порядку. Статус меняется нажатием, «на мне / на вас» — кто делает.'
+        : '<b>Открытых задач нет.</b> Напишите правку в любом разделе — она появится здесь, ' +
+          'и я её заберу.';
+    }
+  }
+
+  /* ---------- изменения ---------- */
+  function save(t){
+    if(!db) return;
+    db.doc('tasks/' + t.id).set(t).catch(function(){
+      foot.innerHTML = '<b>Не удалось сохранить.</b> Проверьте соединение и повторите — ' +
+        'записанное осталось на экране.';
+    });
+  }
+
+  function add(block, blockTitle, text){
+    var id = 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    var t = {id:id, block:block || '', blockTitle:blockTitle || '', text:text,
+             status:'new', who:'me', by:'you', at:Date.now(), moved:Date.now()};
+    tasks.push(t); render(); save(t);
+  }
+
+  function cycle(id){
+    var t = tasks.filter(function(x){ return x.id === id; })[0];
+    if(!t) return;
+    t.status = (ST[t.status] || ST.new).next;
+    t.moved = Date.now();
+    render(); save(t);
+  }
+
+  function flip(id){
+    var t = tasks.filter(function(x){ return x.id === id; })[0];
+    if(!t) return;
+    t.who = t.who === 'me' ? 'you' : 'me';
+    render(); save(t);
+  }
+
+  function remove(id){
+    tasks = tasks.filter(function(t){ return t.id !== id; });
+    render();
+    if(db) db.doc('tasks/' + id).delete().catch(function(){});
+  }
+
+  addBt.addEventListener('click', function(){
+    var t = addTx.value.trim();
+    if(!t) return;
+    add('', '', t);
+    addTx.value = ''; addTx.focus();
+  });
+  addTx.addEventListener('keydown', function(e){
+    if((e.metaKey || e.ctrlKey) && e.key === 'Enter') addBt.click();
+  });
+  [].slice.call(document.querySelectorAll('.filt')).forEach(function(b){
+    b.addEventListener('click', function(){ filter = b.getAttribute('data-f'); render(); });
+  });
+
+  render();
+
+  /* ---------- хранилище ---------- */
+  if(window.claude && typeof window.claude.use === 'function'){
+    window.claude.use('db').then(function(d){
+      if(!d){
+        foot.innerHTML = '<b>Хранилище недоступно в этом окне.</b> Записывать можно, ' +
+          'но задачи не сохранятся — откройте страницу на claude.ai.';
+        return;
+      }
+      db = d;
+      db.collection('tasks').onSnapshot(function(snap){
+        tasks = (snap.docs || []).map(function(x){
+          var v = x.data ? x.data() : x;
+          return {
+            id: v.id || x.id || '',
+            block: v.block || '',
+            blockTitle: v.blockTitle || '',
+            text: v.text || '',
+            status: ST[v.status] ? v.status : 'new',
+            who: v.who === 'you' ? 'you' : 'me',
+            by: v.by === 'claude' ? 'claude' : 'you',
+            at: v.at || 0,
+            moved: v.moved || 0
+          };
+        }).filter(function(t){ return t.id && t.text; });
+        render();
+      }, function(){
+        foot.innerHTML = '<b>Не получилось прочитать сохранённое.</b> Новые задачи ' +
+          'всё равно записываются.';
+      });
+    }).catch(function(){
+      foot.innerHTML = '<b>Хранилище недоступно.</b> Напишите задачи мне сообщением.';
+    });
+  } else {
+    foot.innerHTML = '<b>Хранилище недоступно в этом окне.</b> Откройте страницу на claude.ai, ' +
+      'чтобы задачи сохранялись.';
+  }
+})();
+</script>
