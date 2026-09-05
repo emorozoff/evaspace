@@ -113,7 +113,8 @@ const BRANCHES = {
   ideas:      () => S.ideas || [],
   adminInfo:  () => ({name:S.adminName, avatar:S.adminAvatar}),
   avatars:    () => AVATARS,
-  replies:    () => S.marketReplies || []
+  replies:    () => S.marketReplies || [],
+  reviews:    () => S.reviews || []
 };
 
 const clean = o => JSON.parse(JSON.stringify(o));
@@ -275,7 +276,7 @@ function fixShared(sh){
   ['lib','courses','goods','experts','events','wall'].forEach(k => {
     if(sh[k] !== undefined) sh[k] = fixList(sh[k], FIX[k]);
   });
-  ['orders','questions','support','ideas','pending','replies'].forEach(k => {
+  ['orders','questions','support','ideas','pending','replies','reviews'].forEach(k => {
     if(sh[k] !== undefined) sh[k] = fixList(sh[k], FIX.plain);
   });
   if(sh.goodInfo !== undefined){
@@ -330,6 +331,7 @@ function applyShared(sh){
   if(Array.isArray(sh.pending) && sh.pending.length) S.pending = sh.pending;
   if(Array.isArray(sh.ideas)   && sh.ideas.length)   S.ideas = sh.ideas;
   if(Array.isArray(sh.replies)) S.marketReplies = sh.replies;
+  if(Array.isArray(sh.reviews)) S.reviews = sh.reviews;
   if(sh.avatars && typeof sh.avatars === 'object'){
     Object.keys(sh.avatars).forEach(m => {
       const key = String(m).toLowerCase();

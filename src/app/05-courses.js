@@ -566,10 +566,14 @@ function evCard(e){
       <div class="eyebrow">${esc(e.kind)} · ${esc(e.tm)}</div>
       <b style="font-size:14.5px;display:block;margin:5px 0 4px;line-height:1.25">${esc(e.t)}</b>
       <div class="small muted">${esc(e.mode === 'онлайн' ? 'Онлайн · ' + e.city : e.city + (e.place ? ', ' + e.place : ''))}</div>
-      <div class="small muted" style="margin-top:2px">${esc(e.by)} · ${plural(e.left,'место','места','мест')} свободно</div>
+      <div class="small muted" style="margin-top:2px">${esc(e.by)} · ${
+        e.unlimited ? 'мест хватит всем' : plural(e.left,'место','места','мест') + ' свободно'}</div>
       <button class="btn sm ${going?'done':'acc'}" style="width:100%;margin-top:10px"
+        ${!going && !e.unlimited && !e.left ? 'disabled' : ''}
         onclick="event.stopPropagation();goEvent('${attJs(e.id)}')">
-        ${going ? '✓ Я иду, отменить' : e.price ? 'Купить билет' : 'Записаться'}</button>
+        ${going ? '✓ Я иду, отменить'
+          : (!e.unlimited && !e.left) ? 'Мест не осталось'
+          : e.price ? 'Купить билет' : 'Записаться'}</button>
     </div>
   </div>`;
 }
@@ -579,22 +583,23 @@ function goEvent(id){
   if(!e) return;
   if(S.myEvents.includes(id)){
     S.myEvents = S.myEvents.filter(x => x !== id);
-    e.left = Math.min(e.seats, e.left + 1);
+    if(!e.unlimited) e.left = Math.min(e.seats, e.left + 1);
     S.points = Math.max(0, S.points - 10);
     if(typeof stopEvChain === 'function') stopEvChain(id, 'cancelled');
     render(); schedulePersist(); syncPush(['events']);
     return toast('Запись отменена, место освободилось');
   }
-  if(e.left <= 0) return toast('Мест не осталось');
+  /* «места не ограничены» — счётчик мест не при чём, иначе записаться нельзя */
+  if(!e.unlimited && e.left <= 0) return toast('Мест не осталось');
   S.myEvents.push(id);
-  e.left = Math.max(0, e.left - 1);
+  if(!e.unlimited) e.left = Math.max(0, e.left - 1);
   S.points += 10;
   /* Eva Events сразу пишет подтверждение и дальше ведёт до самой встречи */
   if(typeof startEvChain === 'function') startEvChain(id);
   render(); schedulePersist(); syncPush(['events']);
   toast(e.price
-    ? `Билет забронирован. Осталось ${plural(e.left,'место','места','мест')}`
-    : `Записала. Осталось ${plural(e.left,'место','места','мест')}`);
+    ? (e.unlimited ? 'Билет забронирован' : `Билет забронирован. Осталось ${plural(e.left,'место','места','мест')}`)
+    : (e.unlimited ? 'Записала. Мест хватит всем' : `Записала. Осталось ${plural(e.left,'место','места','мест')}`));
 }
 
 /* =====================================================================

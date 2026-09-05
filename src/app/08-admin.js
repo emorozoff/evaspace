@@ -487,10 +487,68 @@ function replyTicket(id){
 }
 
 /* ---------- мероприятия ---------- */
+/* =====================================================================
+   ДОХОДИМОСТЬ
+   Главная метрика по мероприятиям: сколько женщин из записавшихся
+   действительно пришли. Считается по бесплатным — там отказ ничего не
+   стоит, и именно там доходимость проседает.
+   ===================================================================== */
+function adReach(){
+  const rev = S.reviews || [];
+  const free = EVENTS.filter(e => !e.price);
+
+  /* считаем по тем, где уже есть ответы: цифра появляется сразу,
+     как только пришёл первый ответ, а не ждёт конца месяца */
+  const rows = free.map(e => {
+    const mine = rev.filter(r => r.eid === e.id);
+    const came = mine.filter(r => r.came).length;
+    const rates = mine.filter(r => r.rate > 0).map(r => r.rate);
+    return {e, asked:mine.length, came,
+      rate: rates.length ? (rates.reduce((a,b) => a + b, 0) / rates.length) : 0};
+  }).filter(r => r.asked);
+
+  const asked = rows.reduce((n, r) => n + r.asked, 0);
+  const came  = rows.reduce((n, r) => n + r.came, 0);
+  const share = asked ? Math.round(came / asked * 100) : 0;
+  const allRates = rev.filter(r => r.rate > 0).map(r => r.rate);
+  const avg = allRates.length ? (allRates.reduce((a,b) => a + b, 0) / allRates.length) : 0;
+  const why = rev.filter(r => r.why).slice(-6).reverse();
+
+  return `
+  <div class="sec-h"><h2 class="serif">Доходимость</h2>
+    <span class="small muted">бесплатные мероприятия</span></div>
+  <div class="reach">
+    <div class="rtile"><b>${share}%</b><span>дошли из записавшихся</span></div>
+    <div class="rtile"><b>${came} из ${asked}</b><span>ответили, что были</span></div>
+    <div class="rtile"><b>${avg ? avg.toFixed(1) : '—'}</b><span>средняя оценка</span></div>
+  </div>
+  ${rows.length ? `<div class="tablewrap"><table class="reachtab">
+      <thead><tr><th>Мероприятие</th><th>Записалось</th><th>Дошло</th><th>Оценка</th></tr></thead>
+      <tbody>${rows.map(r => {
+        const p = r.asked ? Math.round(r.came / r.asked * 100) : 0;
+        return `<tr>
+          <td class="nm"><b>${esc(r.e.t)}</b>
+            <span>${new Date(r.e.d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</span></td>
+          <td>${r.asked}</td>
+          <td><span class="bar"><i style="width:${p}%"></i></span>${r.came} · ${p}%</td>
+          <td>${r.rate ? r.rate.toFixed(1) : '—'}</td>
+        </tr>`; }).join('')}</tbody>
+    </table></div>`
+    : `<div class="empty">Пока никто не ответил на вопрос «получилось прийти».
+        Цифры появятся на следующий день после первого бесплатного мероприятия.</div>`}
+  ${why.length ? `<div class="sec-h" style="margin-top:18px"><h2 class="serif" style="font-size:17px">Что помешало и что не так</h2></div>
+    ${why.map(r => `<div class="card" style="padding:11px 13px;margin-bottom:8px">
+      <div class="small muted" style="font-size:11.5px">${esc(r.who)} · ${esc(r.title)}${
+        r.rate ? ' · оценка ' + r.rate : ''}</div>
+      <div style="font-size:13.5px;margin-top:3px">${esc(r.why)}</div>
+    </div>`).join('')}` : ''}`;
+}
+
 function adEvents(){
   const pend = EVENTS.filter(e => e.status === 'pending');
   return `
   <button class="btn" onclick="openSheet('newEvent')">＋ Добавить мероприятие</button>
+  ${adReach()}
   ${pend.length ? `<div class="sec-h"><h2 class="serif">На согласовании</h2><span class="small muted">${pend.length}</span></div>
     ${pend.map(e => `<div class="acard">
       <button class="cov" style="height:130px;position:relative;width:100%" onclick="openSheet({k:'event',id:'${attJs(e.id)}'})">
