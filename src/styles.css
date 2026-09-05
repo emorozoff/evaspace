@@ -537,11 +537,23 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .portrait{display:flex;gap:14px;align-items:center;background:linear-gradient(150deg,#F3EFFA,#FBF1F4);
   border-radius:var(--r-lg);padding:16px;margin-bottom:12px}
 .pbig{width:56px;height:56px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:26px;flex:none}
-.wallstart{display:flex;gap:10px;align-items:center;width:100%;background:var(--surface);border:1px solid var(--line);
-  border-radius:999px;padding:8px 8px 8px 10px;margin-bottom:10px}
-.wallstart span{flex:1;text-align:left;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wsend{flex:none!important;background:var(--ink);color:#fff!important;border-radius:999px;padding:8px 14px;
-  font-size:12px;font-weight:700;text-align:center!important}
+/* послание пишется прямо в ленте: поле всегда на месте, подпись и
+   кнопка появляются, как только она начала писать */
+.wnew{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-lg);padding:10px;margin-bottom:10px;transition:border-color .16s}
+.wnew:focus-within{border-color:var(--ink)}
+.wnbody{flex:1;min-width:0}
+.wnfield{display:block;width:100%;border:none;background:none;resize:none;font:inherit;font-size:13.5px;
+  line-height:1.5;color:var(--ink);padding:7px 2px;min-height:34px;max-height:190px;overflow-y:auto}
+.wnfield:focus{outline:none}
+.wnfield::placeholder{color:var(--muted)}
+.wnfoot{display:none;align-items:center;justify-content:space-between;gap:10px;
+  border-top:1px solid var(--line);padding-top:9px;animation:fade .16s both}
+.wnew.open .wnfoot,.wnew:focus-within .wnfoot{display:flex}
+.wnnote{flex:1;min-width:0;font-size:11px;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wnsend{flex:none;background:var(--ink);color:#fff;border-radius:999px;padding:8px 16px;
+  font-size:12px;font-weight:700}
 .wallpost{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px;margin-bottom:10px}
 .wallfoot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:10px}
 .starbtn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:var(--surface-2)}
@@ -712,14 +724,15 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 /* фишки направлений в ленте и в редакторе */
 .trow{gap:7px;padding:2px 16px 10px;margin:0 -16px}
 .trow > *{width:auto}
-.tchip{flex:none;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;
-  background:var(--surface);border:1px solid var(--line);font-size:12px;font-weight:600;
-  color:var(--muted);white-space:nowrap}
+.tchip{flex:none;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--line);font-size:11.5px;font-weight:600;
+  color:var(--muted);white-space:nowrap;transition:.14s}
 .tchip svg{color:var(--tc,var(--muted));flex:none}
-.tchip b{font-size:10px;font-weight:700;opacity:.5}
+.tchip b{font-size:9.5px;font-weight:700;opacity:.5}
 .tchip.on{background:var(--tc,var(--ink));border-color:transparent;color:#fff}
 .tchip.on svg,.tchip.on b{color:#fff;opacity:.9}
 .tchip.on.plain{background:var(--ink)}
+.tchip.fav.on{background:#E7A339}
 .tpick{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px}
 .tpick .tchip{background:var(--surface-2);border-color:transparent}
 
@@ -918,13 +931,6 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .cstar.on{background:#FDF3E2;color:#B8894A}
 .cmtnew{display:flex;gap:7px;margin-top:8px}
 .cmtnew .field{margin:0;flex:1;padding:9px 12px;font-size:13px}
-
-/* ---------- окно послания: пишется в одно поле, как в тредах ---------- */
-.composer{padding-top:2px}
-.crow2{display:flex;gap:10px;align-items:flex-start}
-.cfield{flex:1;min-width:0;border:none;background:none;resize:none;padding:6px 0 0;
-  font-size:15.5px;line-height:1.5;color:var(--ink);min-height:96px;outline:none}
-.cfield::placeholder{color:var(--muted)}
 .ctools{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-top:10px;
   border-top:1px solid var(--line);margin-top:6px}
 .ktag{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;

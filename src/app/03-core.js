@@ -280,7 +280,7 @@ function render(){
     console.error('[Eva] экран не собрался:', e);
     crashCount++;
     try {
-      shownHTML = null;                          // после падения показываем заново в любом случае
+      shownHTML = null; shownSheet = null; el.__split = false;   // после падения показываем заново в любом случае
       el.innerHTML = crashCount > 2
         ? `<div class="view pad" style="padding-top:60px"><h1 class="serif">Приложение споткнулось</h1>
              <p class="small muted" style="margin:10px 0 16px">Обнови страницу — данные сохранены.</p>
@@ -319,13 +319,61 @@ function backHome(){
    таймеры, и ответы сервера, поэтому сравниваем с тем, что уже показано,
    и не трогаем страницу, если ничего не изменилось. Заодно не сбивается
    набранный текст и позиция прокрутки. */
-let shownHTML = null;
+let shownHTML = null, shownSheet = null;
 window.__renders = 0; window.__skipped = 0;
 function setHTML(html){
-  if(html === shownHTML){ window.__skipped++; return false; }
+  shownSheet = null;
+  if(html === shownHTML && !el.__split){ window.__skipped++; return false; }
+  el.__split = false;
   shownHTML = html; el.innerHTML = html; window.__renders++;
-  deskArrows();
+  after();
   return true;
+}
+
+/* Внутри приложения страница и шторка живут в разных коробках. Открыть
+   урок — значит дорисовать шторку, а не пересобрать всё вокруг: список
+   под ней остаётся на месте, прокрутка не прыгает, экран не моргает. */
+function setApp(body, sh){
+  if(!el.__split){
+    el.innerHTML = '<div id="pagebox"></div><div id="sheetbox"></div>';
+    el.__split = true; shownHTML = null; shownSheet = null;
+  }
+  const pageBox = el.firstElementChild, sheetBox = el.lastElementChild;
+  if(body === shownHTML) window.__skipped++;
+  else {
+    const memo = keepFocus();
+    shownHTML = body; pageBox.innerHTML = body; window.__renders++;
+    after(); memo();
+  }
+  if(sh !== shownSheet){ shownSheet = sh; sheetBox.innerHTML = sh; }
+  return true;
+}
+
+/* Что делаем после каждой пересборки разметки. */
+function after(){ deskArrows(); growFields(); }
+
+/* Поля, которые растут под текст: после пересборки их надо померить заново,
+   иначе набранное послание схлопывается в одну строку. */
+function growFields(){
+  document.querySelectorAll('textarea[data-grow]').forEach(grow);
+}
+function grow(t){
+  t.style.height = 'auto';
+  t.style.height = Math.min(t.scrollHeight, +t.dataset.grow || 190) + 'px';
+}
+
+/* Перерисовку могут дёрнуть таймер или ответ сервера прямо посреди набора
+   текста. Запоминаем, где стоял курсор, и возвращаем его на место. */
+function keepFocus(){
+  const a = document.activeElement;
+  if(!a || !a.id || (a.tagName !== 'INPUT' && a.tagName !== 'TEXTAREA')) return () => {};
+  const id = a.id, pos = a.selectionStart, end = a.selectionEnd;
+  return () => {
+    const n = document.getElementById(id);
+    if(!n || typeof n.focus !== 'function') return;
+    try { n.focus({preventScroll:true}); } catch(e){ n.focus(); }
+    try { if(pos != null && n.setSelectionRange) n.setSelectionRange(pos, end); } catch(e){}
+  };
 }
 
 /* =====================================================================
@@ -394,9 +442,9 @@ function renderScreen(){
     /* поле ввода рисуем рядом с оболочкой, а не внутри ленты: так оно
        стоит на месте и не съезжает вместе с последним сообщением */
     const bar = S.sheet ? '' : inChat ? chatBar() : inThread ? threadBar() : '';
-    setHTML(`<div class="shell">${page()}</div>` + bar
-      + (pro ? '' : nav() + (inChat || inThread ? '' : fab())) + roleSwitch()
-      + (S.sheet ? sheetSafe() : ''));
+    setApp(`<div class="shell">${page()}</div>` + bar
+      + (pro ? '' : nav() + (inChat || inThread ? '' : fab())) + roleSwitch(),
+      S.sheet ? sheetSafe() : '');
   }
   if(s !== 'app' && s !== 'welcome') return;
   if(s === 'welcome') stars();

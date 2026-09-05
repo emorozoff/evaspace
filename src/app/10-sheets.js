@@ -21,7 +21,7 @@ function sheet(){
     newContent:shNewContent, editContent:shEditContent, reject:shReject, rework:shRework,
     units:shUnits, groupInfo:shGroupInfo, newGroup:shNewGroup, fix:shFix, video:shVideo,
     hw:shHW, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
-    install:shInstall, diag:shDiag, askGood:shAskGood, newPost:shNewPost, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
+    install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
     service:shService, editUser:shEditUser,
     newCourse:shNewCourse, newGood:shNewGood, idea:shIdea})[k]();
   return `<div class="bg" onclick="if(event.target===this)closeSheet()">
@@ -1438,19 +1438,6 @@ function addCustomInt(){
   if(!S.dp.ints.includes(t)) S.dp.ints.push(t);
   openSheet('dating'); toast('Интерес добавлен');
 }
-function shNewPost(){
-  const d = S.post = S.post || {t:''};
-  return `<div class="composer">
-    <div class="crow2">
-      ${chatAva(S.name, 'var(--ink)', true, 38, myMail())}
-      <textarea class="cfield" id="wp_t" rows="4" placeholder="Что расскажешь участницам?"
-        oninput="S.post.t=this.value">${esc(d.t||'')}</textarea>
-    </div>
-    <button class="btn" style="margin-top:10px" onclick="sendPost()">Опубликовать</button>
-    <p class="tiny muted" style="text-align:center;margin-top:8px">Увидят все участницы · +5 баллов</p>
-  </div>`;
-}
-
 /* просмотр фотографии из ленты во весь экран */
 function shPhoto(){
   const src = MEDIA[S.sheet.src];
@@ -1468,7 +1455,11 @@ function sendPost(){
   WALL.unshift({id:'w' + Date.now().toString(36), a:S.name || 'Я', ago:'только что',
     city:((S.datingProfile && S.datingProfile.city) || S.city || ''), t:text, st:0,
     email:myMail(), comments:[]});
-  S.points += 5; S.post = null; S.sheet = null;
+  S.points += 5; S.post = null;
+  /* поле для послания стоит прямо в ленте: убираем набранное и снимаем
+     фокус, чтобы на телефоне не осталась висеть клавиатура */
+  const box = $('#wp_t');
+  if(box){ box.value = ''; box.blur(); }
   render(); schedulePersist(); syncPush(['wall']);
   toast('Послание опубликовано. +5 баллов');
 }

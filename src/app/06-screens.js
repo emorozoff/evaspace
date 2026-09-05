@@ -225,11 +225,11 @@ function allTags(){
 }
 
 /* отбор материалов вынесен отдельно: им пользуются и экран, и обновление списка */
+const CTYPES = {'Всё':null, 'Аффирмации':'affirm', 'Практики':'practice', 'Мастер-классы':'class'};
+
 function contentItems(){
-  const types = {'Всё':null, 'Аффирмации':'affirm', 'Практики':'practice', 'Мастер-классы':'class'};
   let items = LIB.filter(x => x.status === 'live');
-  if(types[S.filter]) items = items.filter(x => x.type === types[S.filter]);
-  if(S.tagFilter) items = items.filter(x => x.tags.includes(S.tagFilter));
+  if(CTYPES[S.filter]) items = items.filter(x => x.type === CTYPES[S.filter]);
   if(S.topicFilter) items = items.filter(x => (x.topics||[]).includes(S.topicFilter));
   if(S.onlyLiked) items = items.filter(x => isLiked(x.id));
   if(S.q.trim()){
@@ -242,9 +242,7 @@ function contentItems(){
 }
 
 function pgContent(){
-  const types = {'Всё':null, 'Аффирмации':'affirm', 'Практики':'practice', 'Мастер-классы':'class'};
   const items = contentItems();
-
   return `<div class="view pad" style="padding-top:calc(20px + env(safe-area-inset-top))">
     <div class="eyebrow">Библиотека</div>
     <h1 class="serif" style="font-size:29px;margin:6px 0 14px">Весь контент</h1>
@@ -255,41 +253,60 @@ function pgContent(){
       <span style="position:absolute;left:15px;top:13px;opacity:.4">🔍</span>
     </div>
 
-    <div class="seg">${Object.keys(types).map(k =>
-      `<button class="${S.filter===k?'on':''}" onclick="S.filter='${attJs(k)}';render()">${k}</button>`).join('')}</div>
-    ${(S.likes||[]).length ? `<div class="chips">
-      <button class="chip ${S.onlyLiked?'on':''}" onclick="S.onlyLiked=!S.onlyLiked;render()">
-        ${starMark(12, S.onlyLiked?'#fff':'#E7A339')} избранное ${(S.likes||[]).length}</button></div>` : ''}
-
-    ${(() => {
-      const type = types[S.filter];
-      const live = LIB.filter(x => x.status === 'live' && (!type || x.type === type));
-      const have = {};
-      live.forEach(x => (x.topics||[]).forEach(k => { have[k] = (have[k]||0) + 1; }));
-      const list = (type ? topicsFor(type) : ALL_TOPICS).filter(t => have[t.k]);
-      if(!list.length) return '';
-      return `<div class="trow hscroll">
-        <button class="tchip ${!S.topicFilter?'on plain':''}"
-          onclick="S.topicFilter=null;render()"><span>все направления</span></button>
-        ${list.map(t => `<button class="tchip ${S.topicFilter===t.k?'on':''}" style="--tc:${safeColor(t.c)}"
-          onclick="S.topicFilter=${S.topicFilter===t.k?'null':`'${attJs(t.k)}'`};render()">
-          ${tIcon(t.k, 16)}<span>${esc(t.l)}</span><b>${have[t.k]}</b></button>`).join('')}
-      </div>`;
-    })()}
-
-    <div class="chips">
-      ${S.tagFilter ? `<button class="chip on" onclick="S.tagFilter=null;render()">${S.tagFilter} ✕</button>` : ''}
-      ${allTags().filter(([t]) => t !== S.tagFilter).map(([t,n]) =>
-        `<button class="chip" onclick="S.tagFilter='${attJs(t)}';render()">${t} <span style="opacity:.5">${n}</span></button>`).join('')}
-    </div>
-
+    <div id="cbox">${contentTabs()}${topicRow()}</div>
     <div class="small muted" id="found" style="margin:4px 0 12px">${foundLine(items.length)}</div>
-    <div id="list">${items.length ? items.map(x => contentRow(x)).join('') :
-      `<div class="empty">Ничего не нашлось.<br>Попробуй другое слово или сними фильтр.</div>`}</div>
+    <div id="list">${listHTML(items)}</div>
   </div>`;
 }
 
+function contentTabs(){
+  return `<div class="seg">${Object.keys(CTYPES).map(k =>
+    `<button class="${S.filter===k?'on':''}" onclick="setCType('${attJs(k)}')">${k}</button>`).join('')}</div>`;
+}
+
+/* Направления показываем только внутри вида. В общем списке их набирается
+   на три экрана, и за фишками теряется сам контент; поэтому во «Всём»
+   остаются только «Все» и «Избранное», а направления приходят вместе с
+   выбранным видом — и лишь те, в которых действительно что-то есть. */
+function topicRow(){
+  const type = CTYPES[S.filter];
+  const live = LIB.filter(x => x.status === 'live' && (!type || x.type === type));
+  const have = {};
+  live.forEach(x => (x.topics||[]).forEach(k => { have[k] = (have[k]||0) + 1; }));
+  const list = type
+    ? (topicsFor(type) || []).filter(t => have[t.k])
+        .sort((a,b) => have[b.k] - have[a.k]).slice(0, 8)
+    : [];
+  const liked = (S.likes || []).length;
+  const all = !S.topicFilter && !S.onlyLiked;
+  return `<div class="trow hscroll">
+    <button class="tchip ${all?'on plain':''}" onclick="showAll()"><span>Все</span></button>
+    ${liked ? `<button class="tchip fav ${S.onlyLiked?'on':''}" onclick="tgLiked()">
+      ${starMark(13, S.onlyLiked ? '#fff' : '#E7A339')}<span>Избранное</span><b>${liked}</b></button>` : ''}
+    ${list.map(t => `<button class="tchip ${S.topicFilter===t.k?'on':''}" style="--tc:${safeColor(t.c)}"
+      onclick="pickTopic('${attJs(t.k)}')">
+      ${tIcon(t.k, 14)}<span>${esc(t.l)}</span><b>${have[t.k]}</b></button>`).join('')}
+  </div>`;
+}
+
+/* Переключения меняют только фишки и список: заголовок и поле поиска
+   остаются нетронутыми, поэтому экран не дёргается и курсор не пропадает. */
+function setCType(k){ S.filter = k; S.topicFilter = null; renderTabs(); }
+function pickTopic(k){ S.topicFilter = S.topicFilter === k ? null : k; S.onlyLiked = false; renderTabs(); }
+function tgLiked(){ S.onlyLiked = !S.onlyLiked; if(S.onlyLiked) S.topicFilter = null; renderTabs(); }
+function showAll(){ S.topicFilter = null; S.onlyLiked = false; renderTabs(); }
+
+function renderTabs(){
+  const box = $('#cbox');
+  if(!box) return render();
+  box.innerHTML = contentTabs() + topicRow();
+  deskArrows();
+  renderList();
+}
+
 const foundLine = n => 'Найдено ' + plural(n,'урок','урока','уроков') + ' · отсортировано по совпадению с тобой';
+const listHTML = items => items.length ? items.map(x => contentRow(x)).join('')
+  : `<div class="empty">Ничего не нашлось.<br>Попробуй другое слово или сними фильтр.</div>`;
 
 /* Обновляем только список, не трогая поле ввода: иначе на каждой букве
    пропадал курсор и приходилось щёлкать по полю заново. */
@@ -297,8 +314,7 @@ function renderList(){
   const box = $('#list');
   if(!box) return render();
   const items = contentItems();
-  box.innerHTML = items.length ? items.map(x => contentRow(x)).join('')
-    : `<div class="empty">Ничего не нашлось.<br>Попробуй другое слово или сними фильтр.</div>`;
+  box.innerHTML = listHTML(items);
   const cnt = $('#found');
   if(cnt) cnt.textContent = foundLine(items.length);
 }

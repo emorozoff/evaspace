@@ -539,7 +539,7 @@ const S = {
   program:[], day:0, match:0,
   points:0, stars:0, bonus:300,
   joined:['gr1'], cart:[], purchases:[], courses:[],
-  filter:'Всё', tagFilter:null, q:'', cat:'Всё',
+  filter:'Всё', q:'', cat:'Всё',
   gentle:false,
   eva:[{r:'eva', t:'Я Ева. Могу рассказать, что у тебя сегодня, объяснить, почему собрана такая программа, или прочитать аффирмацию вслух.'}],
   voice:true, toast:null

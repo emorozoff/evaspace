@@ -661,14 +661,38 @@ function wallFeed(){
   <div class="sec-h"><h2 class="serif" style="font-size:18px">Послания</h2>
     <span class="small muted">${WALL.length}</span></div>
 
-  <button class="wallstart" onclick="openSheet('newPost')">
-    ${chatAva(S.name, 'var(--ink)', true, 34, myMail())}
-    <span>Написать послание участницам…</span>
-    <span class="wsend">Написать</span>
-  </button>
+  ${wallStarter()}
 
   ${WALL.length ? WALL.map(wallCard).join('')
     : `<div class="empty">Здесь пока пусто. Напиши первой — тебя увидят все участницы.</div>`}`;
+}
+
+/* Писать послание можно прямо в ленте. Отдельное окно ради двух строк
+   текста сбивало с мысли: пока оно открывалось, экран перестраивался, а
+   мысль успевала уйти. Поле всегда на месте — нажала и пишешь. */
+function wallStarter(){
+  const d = (S.post && S.post.t) || '';
+  return `<div class="wnew${d.trim() ? ' open' : ''}">
+    ${chatAva(S.name, 'var(--ink)', true, 34, myMail())}
+    <div class="wnbody">
+      <textarea class="wnfield" id="wp_t" rows="1" data-grow="190"
+        placeholder="Что расскажешь участницам?" oninput="wallDraft(this)">${esc(d)}</textarea>
+      <div class="wnfoot">
+        <span class="wnnote">Все участницы · +5 баллов</span>
+        <button class="wnsend" onclick="sendPost()">Отправить</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* Растём под текст и запоминаем черновик, но экран не перерисовываем:
+   иначе на каждой букве пропадал бы курсор. */
+function wallDraft(box){
+  S.post = S.post || {t:''};
+  S.post.t = box.value;
+  grow(box);
+  const wrap = box.closest('.wnew');
+  if(wrap) wrap.classList.toggle('open', !!box.value.trim());
 }
 
 /* Карточка послания: имя, текст, звезда и ответы. Больше ничего —
