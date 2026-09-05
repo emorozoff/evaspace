@@ -722,6 +722,10 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .glocked b{color:var(--ink);font-size:13.5px;display:block;margin-bottom:2px}
 
 
+/* по названию в шапке чата тоже открывается описание группы */
+.ghead{cursor:pointer;border-radius:999px;padding:3px 8px;transition:background .15s}
+.ghead:hover{background:rgba(255,255,255,.08)}
+
 /* команда сообщества: маленькие аватарки, строки списком, лента листается */
 .teamrow{gap:8px;padding:2px 16px 8px;margin:0 -16px}
 .teamrow > *{width:auto}

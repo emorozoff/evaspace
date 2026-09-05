@@ -1145,13 +1145,14 @@ function pgChatRoom(){
     <div class="hero chathead" style="padding-bottom:14px;border-radius:0 0 var(--r) var(--r)">
       <div class="brandbar" style="margin:0">
         <button onclick="closeChat()" style="color:#fff;font-size:20px;width:30px;text-align:left">‹</button>
-        <div class="row" style="flex:1;justify-content:center">
+        <button class="row ghead" style="flex:1;justify-content:center"
+          onclick="openSheet({k:'groupInfo',id:'${attJs(g.id)}'})">
           <div class="gemoji" style="width:32px;height:32px;background:rgba(255,255,255,.14);color:#fff">${gIcon(g, 17)}</div>
-          <div><div style="font-size:14px;font-weight:700">${esc(g.t)}</div>
+          <div style="text-align:left"><div style="font-size:14px;font-weight:700">${esc(g.t)}</div>
             <div class="small muted" style="font-size:10.5px">${g.m.toLocaleString('ru-RU')} участниц${
               isClub(g) ? ' · клуб' : g.access === 'experts' ? ' · закрытая' : ''}${
               S.role==='admin'?' · модерация':''}</div></div>
-        </div>
+        </button>
         <button class="chip" style="background:rgba(255,255,255,.12);color:#fff;border-color:transparent"
           onclick="openSheet({k:'groupInfo',id:'${attJs(g.id)}'})">···</button>
       </div>
