@@ -707,6 +707,19 @@ function shGroupInfo(){
     ${(g.rules||[]).length ? `<div class="gsec"><div class="dh">О чём договорились</div>
       <ul class="grules">${g.rules.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
 
+    ${(g.team||[]).length ? `<div class="gsec">
+      <div class="dh">Команда сообщества</div>
+      <div class="teamrow hscroll">${g.team.map(m => {
+        const ex = m.e ? EXPERTS.find(x => x.id === m.e) : null;
+        return `<div class="tcard">
+          <div class="tpic">${ex ? expPic(ex) : chatAva(m.n, authorColor(m.n), false, 30)}</div>
+          <div style="flex:1;min-width:0">
+            <b>${esc(m.n)}</b><span>${esc(m.r)}</span>
+          </div>
+        </div>`;
+      }).join('')}</div>
+    </div>` : ''}
+
     ${(g.tags||[]).length ? `<div class="chips wrap" style="padding:2px 0 10px">${
       g.tags.map(t => `<span class="chip pale" style="padding:3px 9px;font-size:10.5px">${esc(t)}</span>`).join('')}</div>` : ''}
 
@@ -959,7 +972,7 @@ function shNewEvent(){
       value="${esc(d.t || '')}" oninput="setEvD('t', this.value)">
     <label class="lbl">Тип</label>
     <div class="chips wrap">${EVENT_KINDS.map(k =>
-      `<button class="chip ${d.kind===k?'on':''}" onclick="setEvDR('kind','${attJs(k)}')">${esc(k)}</button>`).join('')}</div>
+      `<button class="chip ${d.kind===k?'on':''}" onclick="pickChip(this,'evd.kind','${attJs(k)}')">${esc(k)}</button>`).join('')}</div>
     <div class="g2">
       <div><label class="lbl">Дата</label>
         <input class="field" id="ev_d" type="date" value="${esc(d.d || '')}" oninput="setEvD('d', this.value)"></div>
@@ -968,13 +981,15 @@ function shNewEvent(){
     </div>
     <label class="lbl">Формат</label>
     <div class="seg">${['офлайн','онлайн'].map(k =>
-      `<button class="${d.mode===k?'on':''}" onclick="setEvDR('mode','${attJs(k)}')">${k}</button>`).join('')}</div>
-    <label class="lbl">${d.mode==='онлайн' ? 'Платформа' : 'Город'}</label>
+      `<button class="${d.mode===k?'on':''}" onclick="pickMode(this,'${attJs(k)}')">${k}</button>`).join('')}</div>
+    <label class="lbl" id="ev_clbl">${d.mode==='онлайн' ? 'Платформа' : 'Город'}</label>
     <input class="field" id="ev_c" placeholder="${d.mode==='онлайн' ? 'Zoom' : 'Москва'}"
       value="${esc(d.city || '')}" oninput="setEvD('city', this.value)">
-    ${d.mode==='офлайн' ? `<label class="lbl">Адрес или место</label>
+    <div id="ev_place" ${d.mode==='офлайн' ? '' : 'hidden'}>
+      <label class="lbl">Адрес или место</label>
       <input class="field" id="ev_pl" placeholder="Чистые пруды, студия «Тихая»"
-        value="${esc(d.place || '')}" oninput="setEvD('place', this.value)">` : ''}
+        value="${esc(d.place || '')}" oninput="setEvD('place', this.value)">
+    </div>
     <div class="g2">
       <div><label class="lbl">Цена, ₽</label>
         <input class="field" id="ev_p" type="number" value="${d.price || 0}" oninput="setEvD('price', +this.value || 0)"></div>
@@ -985,14 +1000,47 @@ function shNewEvent(){
     <button class="row" style="margin:-2px 0 10px;font-size:13px;font-weight:600" onclick="tgUnlimited(this)">
       <span class="sw ${d.unlimited?'on':''}" style="width:38px;height:22px"><i style="width:16px;height:16px;${d.unlimited?'left:19px':''}"></i></span>
       Места не ограничены</button>
+    <p class="tiny muted" id="ev_unl" style="margin:-6px 0 10px" ${d.unlimited?'':'hidden'}>Число мест не понадобится.</p>
     ${evTextFields(d, (f, ex) => `setEvD('${f}', ${ex})`)}
     <button class="btn" style="margin-top:14px" onclick="saveEvent()">${isAdmin ? 'Опубликовать' : 'Отправить на согласование'}</button>`;
 }
+/* Переключатели в форме меняют только то, что должны: экран не
+   перерисовывается, набранное остаётся на месте, страница не дёргается. */
 function tgUnlimited(btn){
-  keepEventFields();
   const d = evDraft();
   d.unlimited = !d.unlimited;
-  render();
+  const sw = btn && btn.querySelector('.sw');
+  if(sw){
+    sw.classList.toggle('on', d.unlimited);
+    const dot = sw.querySelector('i');
+    if(dot) dot.style.left = d.unlimited ? '19px' : '';
+  }
+  const seats = $('#ev_s'); if(seats) seats.disabled = d.unlimited;
+  const note = $('#ev_unl'); if(note) note.hidden = !d.unlimited;
+  schedulePersist();
+}
+
+/* выбор одной фишки из ряда: подсветка переставляется на месте */
+function markChip(btn){
+  const wrap = btn && btn.parentElement;
+  if(wrap) [...wrap.children].forEach(b => b.classList.toggle('on', b === btn));
+}
+function pickChip(btn, path, value){
+  keepEventFields();
+  pathSet(S, path, value);
+  markChip(btn);
+  schedulePersist();
+}
+/* формат встречи: подпись поля и адрес переключаются без перерисовки */
+function pickMode(btn, mode){
+  keepEventFields();
+  evDraft().mode = mode;
+  markChip(btn);
+  const lbl = $('#ev_clbl'), city = $('#ev_c'), place = $('#ev_place');
+  if(lbl)   lbl.textContent = mode === 'онлайн' ? 'Платформа' : 'Город';
+  if(city)  city.placeholder = mode === 'онлайн' ? 'Zoom' : 'Москва';
+  if(place) place.hidden = mode !== 'офлайн';
+  schedulePersist();
 }
 function addEvPhoto(){
   keepEventFields();
@@ -1055,7 +1103,8 @@ function shEventEdit(){
     <label class="lbl">Название</label><input class="field" value="${esc(x.t)}" oninput="setEv('${attJs(x.id)}','t',this.value)">
     <label class="lbl">Тип</label>
     <div class="chips wrap">${EVENT_KINDS.map(k =>
-      `<button class="chip ${x.kind===k?'on':''}" onclick="setEv('${attJs(x.id)}','kind','${attJs(k)}');render()">${esc(k)}</button>`).join('')}</div>
+      `<button class="chip ${x.kind===k?'on':''}"
+        onclick="setEv('${attJs(x.id)}','kind','${attJs(k)}');markChip(this)">${esc(k)}</button>`).join('')}</div>
     <div class="g2">
       <div><label class="lbl">Дата</label><input class="field" type="date" value="${esc(x.d)}" oninput="setEv('${attJs(x.id)}','d',this.value)"></div>
       <div><label class="lbl">Время</label><input class="field" type="time" value="${esc(x.tm)}" oninput="setEv('${attJs(x.id)}','tm',this.value)"></div>
@@ -1390,47 +1439,58 @@ function addCustomInt(){
   openSheet('dating'); toast('Интерес добавлен');
 }
 function shNewPost(){
-  const d = S.post = S.post || {kind:'win', t:'', ints:[], photo:''};
+  const d = S.post = S.post || {kind:'tell', t:'', ints:[], photo:''};
   const k = kindOf(d.kind);
-  const all = [...INTERESTS, ...(S.customInts||[])];
   const pic = d.photo && MEDIA[d.photo] ? MEDIA[d.photo] : '';
-  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Послание</h2>
-    <p class="small muted" style="margin:0 0 12px">Выбери повод — от него зависит, как послание увидят
-      и что ответят.</p>
+  const all = [...INTERESTS, ...(S.customInts||[])];
+  return `<div class="composer">
+    <div class="crow2">
+      ${chatAva(S.name, 'var(--ink)', true, 38, myMail())}
+      <textarea class="cfield" id="wp_t" rows="4" placeholder="${esc(k.ask)}"
+        oninput="S.post.t=this.value">${esc(d.t||'')}</textarea>
+    </div>
 
-    <div class="kindpick">${POST_KINDS.map(x =>
-      `<button class="kcard ${d.kind===x.k?'on':''}" style="--kc:${safeColor(x.c)}"
-        onclick="pickKind('${attJs(x.k)}')"><i>${x.i}</i><span>${x.l}</span></button>`).join('')}</div>
-
-    <div class="kask" style="--kc:${safeColor(k.c)}">${esc(k.ask)}</div>
-    <textarea class="field" id="wp_t" rows="5" placeholder="${esc(k.hint)}"
-      oninput="S.post.t=this.value">${esc(d.t||'')}</textarea>
-
-    <label class="lbl">Фотография</label>
     ${pic ? `<div class="wpick"><img src="${safeUrl(pic)}" alt="">
-        <button class="phdel" onclick="dropPostPhoto()">✕</button></div>`
-      : `<button class="addphoto" style="width:100%" onclick="addPostPhoto()">
-          <span class="pl2">＋</span><span class="small">Добавить фото</span></button>`}
+        <button class="phdel" onclick="dropPostPhoto()">✕</button></div>` : ''}
 
-    <label class="lbl" style="margin-top:12px">Темы <span id="pcount" class="muted">${
-      d.ints.length ? '(' + d.ints.length + ')' : ''}</span></label>
-    <p class="tiny muted" style="margin:-4px 0 6px">Не обязательно. По темам тебя найдут те, кому это близко.</p>
-    <div class="chips wrap">${all.map(x =>
-      `<button class="chip ${d.ints.includes(x)?'on':''}"
-        onclick="chipToggle(this,'post.ints','${attJs(x)}','#pcount')">${esc(x)}</button>`).join('')}</div>
+    <div class="ctools">
+      ${POST_KINDS.map(x => `<button class="ktag ${d.kind===x.k?'on':''}" style="--kc:${safeColor(x.c)}"
+        onclick="pickKind('${attJs(x.k)}', this)"><i>${x.i}</i>${x.l}</button>`).join('')}
+      <button class="cpic" onclick="addPostPhoto()" title="Добавить фото">🖼</button>
+    </div>
+
+    ${(d.ints||[]).length || S.postTopics ? `
+      <div class="chips wrap" style="padding:8px 0 0">${all.map(x =>
+        `<button class="chip sm ${d.ints.includes(x)?'on':''}"
+          onclick="toggleTopic(this,'${attJs(x)}')">${esc(x)}</button>`).join('')}</div>`
+      : `<button class="link" style="display:block;margin-top:8px;font-size:12px"
+          onclick="S.postTopics=true;render()">＋ добавить тему</button>`}
 
     <button class="btn" style="margin-top:14px" onclick="sendPost()">Опубликовать</button>
-    <p class="small muted" style="text-align:center;margin-top:8px;font-size:11.5px">
-      Увидят все участницы · +5 баллов</p>`;
+    <p class="tiny muted" style="text-align:center;margin-top:8px">Увидят все участницы · +5 баллов</p>
+  </div>`;
+}
+
+/* не больше трёх тем: длинный хвост тегов только мешает писать */
+function toggleTopic(btn, t){
+  const d = S.post = S.post || {ints:[]};
+  d.ints = d.ints || [];
+  const on = d.ints.includes(t);
+  if(!on && d.ints.length >= 3) return toast('Хватит трёх тем');
+  d.ints = on ? d.ints.filter(x => x !== t) : [...d.ints, t];
+  btn.classList.toggle('on', !on);
 }
 
 /* повод меняем, набранное сохраняем */
-function pickKind(k){
+function pickKind(k, btn){
   const inp = $('#wp_t');
   S.post = S.post || {};
   if(inp) S.post.t = inp.value;
   S.post.kind = k;
-  render();
+  /* подсказка и подсветка меняются на месте: экран не дёргается */
+  if(inp) inp.placeholder = kindOf(k).ask;
+  if(btn) markChip(btn);
+  else render();
 }
 function addPostPhoto(){
   const inp = $('#wp_t');
@@ -1466,10 +1526,10 @@ function sendPost(){
   if(d.photo && MEDIA[d.photo]){ photo = id + '_p'; MEDIA[photo] = MEDIA[d.photo]; delete MEDIA[d.photo]; }
   /* послание подписываем почтой автора: метка «моё» уезжала в общие данные
      и чужие послания показывались чужими же аватарками */
-  WALL.unshift({id, a:S.name || 'Я', ago:'только что', kind:d.kind || 'win',
+  WALL.unshift({id, a:S.name || 'Я', ago:'только что', kind:kindKey(d.kind),
     city:((S.datingProfile && S.datingProfile.city) || S.city || ''), t:text, st:0, photo,
     ints:(d.ints||[]).slice(0, 4), email:myMail(), comments:[]});
-  S.points += 5; S.post = null; S.postInts = []; S.postText = '';
+  S.points += 5; S.post = null; S.postTopics = false; S.postInts = []; S.postText = '';
   S.wallKind = 'все'; S.sheet = null;
   render(); schedulePersist(); syncPush(['wall','media']);
   toast('Послание опубликовано. +5 баллов');

@@ -375,8 +375,12 @@ function renderScreen(){
   else {
     const pro = S.role !== 'user';
     const inChat = !!(S.chat && S.chat.open);      // в чате внизу и так занято полем ввода
-    setHTML(`<div class="shell">${page()}</div>`
-      + (pro ? '' : nav() + (inChat ? '' : fab())) + roleSwitch()
+    const inThread = S.page === 'inbox' && !!S.thread;
+    /* поле ввода рисуем рядом с оболочкой, а не внутри ленты: так оно
+       стоит на месте и не съезжает вместе с последним сообщением */
+    const bar = S.sheet ? '' : inChat ? chatBar() : inThread ? threadBar() : '';
+    setHTML(`<div class="shell">${page()}</div>` + bar
+      + (pro ? '' : nav() + (inChat || inThread ? '' : fab())) + roleSwitch()
       + (S.sheet ? sheetSafe() : ''));
   }
   if(s !== 'app' && s !== 'welcome') return;

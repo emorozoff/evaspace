@@ -232,7 +232,7 @@ const EVENT_KINDS = ['Женский круг','Встреча','Практик�
                      'Ретрит','Женский завтрак','Девичник Ева'];
 
 const EVENTS = [
-  {id:'ev6', t:'Дыхание перед сном', kind:'Практика', d:'2026-09-04', tm:'21:30',
+  {id:'ev6', t:'Дыхание перед сном', kind:'Практика', d:'2026-09-10', tm:'21:30',
    mode:'онлайн', city:'Zoom', place:'', price:0, by:'Марина Ясная', seats:60, left:24, status:'live',
    about:'Двадцать минут мягкого дыхания, чтобы голова перестала догонять день.',
    full:'Короткая вечерняя практика для тех, кто ложится с мыслями о завтрашнем дне. Дышим лёжа, ' +
@@ -605,36 +605,26 @@ function goEvent(id){
    так лента читается как разговор, а не как доска объявлений.
    ===================================================================== */
 const POST_KINDS = [
-  {k:'win',    l:'Получилось',   short:'получилось', i:'✦', c:'#B8894A',
-   ask:'Что получилось на этой неделе? Даже маленькое считается.',
-   hint:'Сегодня встала в шесть и сделала практику до того, как проснулись дети…',
-   star:'горжусь'},
-  {k:'road',   l:'Дорога',       short:'дорога',     i:'⛰', c:'#3F7D62',
-   ask:'Куда съездила и что там было хорошего?',
+  {k:'tell', l:'Рассказать', short:'рассказы', i:'✦', c:'#B8894A',
+   ask:'Что у тебя нового?',
    hint:'Вернулась из Дагестана. Горы, тишина и ни одного рабочего чата…',
-   star:'вдохновило'},
-  {k:'meet',   l:'Зову',         short:'зову',       i:'◈', c:'#A8375C',
-   ask:'Кого и куда зовёшь? Напиши город, день и что будете делать.',
-   hint:'В субботу иду в горы, есть место в машине. Маршрут лёгкий, часа четыре…',
-   star:'интересно'},
-  {k:'ask',    l:'Вопрос',       short:'вопрос',     i:'?', c:'#6C5CE0',
+   star:'отзывается'},
+  {k:'ask',  l:'Спросить',   short:'вопросы',  i:'?', c:'#6C5CE0',
    ask:'О чём хочешь спросить круг?',
    hint:'Кто возвращался на работу после декрета — как вы это пережили?',
    star:'тоже важно'},
-  {k:'find',   l:'Находка',      short:'находка',    i:'✧', c:'#4E8F84',
-   ask:'Чем полезным поделишься: книга, врач, место, привычка?',
-   hint:'Нашла подкаст про сон, слушаю вместо ленты перед сном…',
-   star:'спасибо'},
-  {k:'thanks', l:'Спасибо',      short:'спасибо',    i:'♡', c:'#C2506F',
-   ask:'Кого хочешь поблагодарить?',
-   hint:'Спасибо девочке, которая написала мне после круга в четверг…',
-   star:'присоединяюсь'},
-  {k:'hard',   l:'Трудно',       short:'трудно',     i:'◍', c:'#7E7A85',
-   ask:'Что сейчас тяжело? Здесь не советуют — здесь слышат.',
-   hint:'Третий месяц не могу выспаться и злюсь на всех подряд…',
-   star:'я рядом'}
+  {k:'call', l:'Позвать',    short:'зову',     i:'◈', c:'#A8375C',
+   ask:'Кого и куда зовёшь? Напиши город, день и что будете делать.',
+   hint:'В субботу иду в горы, есть место в машине. Маршрут лёгкий…',
+   star:'интересно'}
 ];
-const kindOf = k => POST_KINDS.find(x => x.k === k) || POST_KINDS[2];
+
+/* старые поводы сводим к трём: данные с сервера не должны пропадать */
+const KIND_MAP = {win:'tell', road:'tell', find:'tell', thanks:'tell', hard:'tell',
+                  meet:'call', ask:'ask', tell:'tell', call:'call'};
+const kindKey = k => KIND_MAP[k] || 'tell';
+
+const kindOf = k => POST_KINDS.find(x => x.k === kindKey(k)) || POST_KINDS[0];
 
 /* цвет автора: один и тот же человек всегда одного цвета */
 const AUTHOR_COLORS = ['#A8375C','#6C5CE0','#3F7D62','#B8894A','#4E8F84','#8054B8','#C2506F','#5E7A6C'];
@@ -644,27 +634,27 @@ function authorColor(who){
 }
 
 const WALL = [
-  {id:'w1', a:'Ирина', ago:'2 ч назад', city:'Москва', kind:'meet',
+  {id:'w1', a:'Ирина', ago:'2 ч назад', city:'Москва', kind:'call',
    t:'Ищу с кем поиграть в падел по выходным. Уровень начинающий, корт в Лужниках, ракетка есть.',
    st:12, ints:['падел'],
    comments:[{a:'Света', t:'Я начинающая, тоже ищу пару. Напиши мне', ago:'1 ч назад', st:2}]},
-  {id:'w2', a:'Настя', ago:'4 ч назад', city:'Москва', kind:'win',
+  {id:'w2', a:'Настя', ago:'4 ч назад', city:'Москва', kind:'tell',
    t:'Третью неделю делаю утреннюю практику до того, как проснутся дети. Раньше не верила, что пять минут что-то меняют — а вечером я спокойнее.',
    st:23, ints:['медитация'],
    comments:[{a:'Тая Мирная', t:'Так и работает: важна не длительность, а повторение', ago:'2 ч назад', st:5, curator:true},
              {a:'Лена', t:'Забираю идею, спасибо', ago:'1 ч назад', st:1}]},
-  {id:'w3', a:'Юля', ago:'вчера', city:'Тбилиси', kind:'road',
+  {id:'w3', a:'Юля', ago:'вчера', city:'Тбилиси', kind:'tell',
    t:'Месяц живу в Тбилиси. Сюда стоит ехать за тем, чтобы медленно завтракать и разговаривать с незнакомыми людьми. Готова созваниваться и болтать о книгах.',
    st:31, ints:['книги','языки'], comments:[]},
-  {id:'w4', a:'Даша', ago:'вчера', city:'Екатеринбург', kind:'find',
+  {id:'w4', a:'Даша', ago:'вчера', city:'Екатеринбург', kind:'tell',
    t:'Нашла врача, которая наконец объяснила мне про цикл человеческим языком, а не «попейте витамины». Могу поделиться контактом.',
    st:18, ints:['здоровье'],
    comments:[{a:'Марина', t:'Очень надо, напиши пожалуйста', ago:'11 ч назад', st:3}]},
-  {id:'w5', a:'Лена', ago:'2 дня назад', city:'Москва', kind:'hard',
+  {id:'w5', a:'Лена', ago:'2 дня назад', city:'Москва', kind:'tell',
    t:'Второй месяц не высыпаюсь и срываюсь на своих. Понимаю, что дело не в них. Просто хотела сказать это вслух.',
    st:27, ints:['материнство'],
    comments:[{a:'Настя', t:'Я тебя слышу. У меня был такой же год', ago:'1 д назад', st:8}]},
-  {id:'w6', a:'Оксана', ago:'3 дня назад', city:'Казань', kind:'thanks',
+  {id:'w6', a:'Оксана', ago:'3 дня назад', city:'Казань', kind:'tell',
    t:'Спасибо женщине, которая в четверг после круга догнала меня на улице и просто спросила, как я. Это был лучший вопрос за месяц.',
    st:44, ints:[], comments:[]},
   {id:'w7', a:'Марина', ago:'4 дня назад', city:'Санкт-Петербург', kind:'ask',
@@ -689,9 +679,9 @@ function pgMembers(){
 /* ---------- лента посланий ---------- */
 function wallFeed(){
   const f = S.wallKind || 'все';
-  const list = f === 'все' ? WALL : WALL.filter(w => (w.kind || 'meet') === f);
+  const list = f === 'все' ? WALL : WALL.filter(w => kindKey(w.kind) === f);
   const counts = {};
-  WALL.forEach(w => { const k = w.kind || 'meet'; counts[k] = (counts[k] || 0) + 1; });
+  WALL.forEach(w => { const k = kindKey(w.kind); counts[k] = (counts[k] || 0) + 1; });
 
   return `
   <div class="sec-h"><h2 class="serif" style="font-size:18px">Послания</h2>
@@ -752,7 +742,7 @@ function wallCard(w){
           ответить${cmts.length ? ' · ' + cmts.length : ''}</button>
       </div>
       <div class="row" style="gap:7px">
-        ${w.kind === 'meet' || w.kind === 'ask'
+        ${k.k === 'call' || k.k === 'ask'
           ? `<button class="btn xs" onclick="replyWall('${attJs(w.id)}')">Написать</button>` : ''}
         ${canDrop ? `<button class="wdel" title="Удалить"
           onclick="delPost('${attJs(w.id)}')">✕</button>` : ''}
@@ -762,11 +752,9 @@ function wallCard(w){
     ${open ? `<div class="cmts">
         ${cmts.map((c, ci) => commentRow(w, c, ci)).join('')
           || `<div class="small muted" style="padding:4px 0 8px">${
-              w.kind === 'hard' ? 'Пока никто не ответил. Иногда достаточно написать «я рядом»'
-                                : 'Пока никто не ответил. Будь первой'}</div>`}
+              'Пока никто не ответил. Будь первой'}</div>`}
         <div class="cmtnew">
-          <input class="field" id="cm_${esc(w.id)}" placeholder="${
-            w.kind === 'hard' ? 'Поддержи, не советуй' : 'Ответить'}"
+          <input class="field" id="cm_${esc(w.id)}" placeholder="Ответить"
             onkeydown="if(event.key==='Enter')addComment('${attJs(w.id)}')">
           <button class="btn sm" onclick="addComment('${attJs(w.id)}')">→</button>
         </div>
@@ -1012,7 +1000,7 @@ function addComment(id){
   if(inp) inp.value = '';
   S.points += 3;
   render(); schedulePersist(); syncPush(['wall']);
-  toast(w.kind === 'hard' ? 'Она это увидит. +3 балла' : 'Ответ добавлен. +3 балла');
+  toast('Ответ добавлен. +3 балла');
 }
 
 function starPost(id){
@@ -1183,15 +1171,24 @@ function pgChatRoom(){
         </div>`).join('')}
       </div>
     </div>
-    <div class="chatbar">
-      ${re ? `<div class="rebar">
-        <div style="flex:1;min-width:0"><b>${esc(re.a)}</b><span>${esc(String(re.t).slice(0,70))}</span></div>
-        <button onclick="cancelReply()">✕</button></div>` : ''}
-      <div class="chatinput">
-        <input class="field" id="cin" placeholder="${re ? 'Ответ для ' + esc(re.a) : 'Сообщение'}"
-          onkeydown="if(event.key==='Enter')sendMsg('${attJs(g.id)}')">
-        <button class="btn" onclick="sendMsg('${attJs(g.id)}')">→</button>
-      </div>
+  </div>`;
+}
+
+/* Поле ввода живёт вне ленты сообщений: внутри .view его прижимало
+   к последнему сообщению, потому что у блока своя анимация появления. */
+function chatBar(){
+  const g = GROUPS.find(x => x.id === (S.chat && S.chat.open));
+  if(!g || !canEnter(g)) return '';
+  const msgs = S.chats[g.id] || [];
+  const re = S.chat.reply && S.chat.reply.g === g.id ? msgs[S.chat.reply.i] : null;
+  return `<div class="chatbar">
+    ${re ? `<div class="rebar">
+      <div style="flex:1;min-width:0"><b>${esc(re.a)}</b><span>${esc(String(re.t).slice(0,70))}</span></div>
+      <button onclick="cancelReply()">✕</button></div>` : ''}
+    <div class="chatinput">
+      <input class="field" id="cin" placeholder="${re ? 'Ответ для ' + esc(re.a) : 'Сообщение'}"
+        onkeydown="if(event.key==='Enter')sendMsg('${attJs(g.id)}')">
+      <button class="btn" onclick="sendMsg('${attJs(g.id)}')">→</button>
     </div>
   </div>`;
 }
@@ -1390,11 +1387,16 @@ function pgThread(){
         <button class="btn" onclick="answerInvite('${attJs(t.id)}',true)">Принять</button>
         <button class="btn ghost" onclick="answerInvite('${attJs(t.id)}',false)">Отклонить</button>
       </div></div>` : ''}
-    <div class="chatbar">
-      <input class="field" id="tin" placeholder="Сообщение" onkeydown="if(event.key==='Enter')sendDM('${attJs(t.id)}')">
-      <button class="btn" style="width:auto;padding:12px 16px;border-radius:999px" onclick="sendDM('${attJs(t.id)}')">→</button>
-    </div>
   </div>`;
+}
+
+function threadBar(){
+  const t = S.inbox && S.inbox.find(x => x.id === S.thread);
+  if(!t) return '';
+  return `<div class="chatbar"><div class="chatinput">
+    <input class="field" id="tin" placeholder="Сообщение" onkeydown="if(event.key==='Enter')sendDM('${attJs(t.id)}')">
+    <button class="btn" onclick="sendDM('${attJs(t.id)}')">→</button>
+  </div></div>`;
 }
 function sendDM(id){
   const inp = $('#tin'); if(!inp) return;

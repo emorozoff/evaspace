@@ -257,8 +257,9 @@ const FIX = {
     x.email = okStr(x.email).toLowerCase();
     x.city = okStr(x.city); x.ago = okStr(x.ago, 'недавно');
     x.photo = okStr(x.photo);
-    /* неизвестный повод не должен ронять ленту */
-    x.kind = (typeof POST_KINDS !== 'undefined' && POST_KINDS.some(k => k.k === x.kind)) ? x.kind : 'meet';
+    /* повод приводим к нынешним трём: старые названия сводятся картой,
+       незнакомое становится рассказом, лента от этого не падает */
+    x.kind = (typeof kindKey === 'function') ? kindKey(x.kind) : 'tell';
     delete x.own;                       /* чужая метка «моё» с сервера не в счёт */
     x.comments = okArr(x.comments).filter(c => c && typeof c === 'object')
                   .map(c => { const cc = {...c, a: okStr(c.a, 'Гостья'), t: okStr(c.t),
