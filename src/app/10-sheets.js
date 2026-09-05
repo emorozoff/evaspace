@@ -1439,72 +1439,16 @@ function addCustomInt(){
   openSheet('dating'); toast('Интерес добавлен');
 }
 function shNewPost(){
-  const d = S.post = S.post || {kind:'tell', t:'', ints:[], photo:''};
-  const k = kindOf(d.kind);
-  const pic = d.photo && MEDIA[d.photo] ? MEDIA[d.photo] : '';
-  const all = [...INTERESTS, ...(S.customInts||[])];
+  const d = S.post = S.post || {t:''};
   return `<div class="composer">
     <div class="crow2">
       ${chatAva(S.name, 'var(--ink)', true, 38, myMail())}
-      <textarea class="cfield" id="wp_t" rows="4" placeholder="${esc(k.ask)}"
+      <textarea class="cfield" id="wp_t" rows="4" placeholder="Что расскажешь участницам?"
         oninput="S.post.t=this.value">${esc(d.t||'')}</textarea>
     </div>
-
-    ${pic ? `<div class="wpick"><img src="${safeUrl(pic)}" alt="">
-        <button class="phdel" onclick="dropPostPhoto()">✕</button></div>` : ''}
-
-    <div class="ctools">
-      ${POST_KINDS.map(x => `<button class="ktag ${d.kind===x.k?'on':''}" style="--kc:${safeColor(x.c)}"
-        onclick="pickKind('${attJs(x.k)}', this)"><i>${x.i}</i>${x.l}</button>`).join('')}
-      <button class="cpic" onclick="addPostPhoto()" title="Добавить фото">🖼</button>
-    </div>
-
-    ${(d.ints||[]).length || S.postTopics ? `
-      <div class="chips wrap" style="padding:8px 0 0">${all.map(x =>
-        `<button class="chip sm ${d.ints.includes(x)?'on':''}"
-          onclick="toggleTopic(this,'${attJs(x)}')">${esc(x)}</button>`).join('')}</div>`
-      : `<button class="link" style="display:block;margin-top:8px;font-size:12px"
-          onclick="S.postTopics=true;render()">＋ добавить тему</button>`}
-
-    <button class="btn" style="margin-top:14px" onclick="sendPost()">Опубликовать</button>
+    <button class="btn" style="margin-top:10px" onclick="sendPost()">Опубликовать</button>
     <p class="tiny muted" style="text-align:center;margin-top:8px">Увидят все участницы · +5 баллов</p>
   </div>`;
-}
-
-/* не больше трёх тем: длинный хвост тегов только мешает писать */
-function toggleTopic(btn, t){
-  const d = S.post = S.post || {ints:[]};
-  d.ints = d.ints || [];
-  const on = d.ints.includes(t);
-  if(!on && d.ints.length >= 3) return toast('Хватит трёх тем');
-  d.ints = on ? d.ints.filter(x => x !== t) : [...d.ints, t];
-  btn.classList.toggle('on', !on);
-}
-
-/* повод меняем, набранное сохраняем */
-function pickKind(k, btn){
-  const inp = $('#wp_t');
-  S.post = S.post || {};
-  if(inp) S.post.t = inp.value;
-  S.post.kind = k;
-  /* подсказка и подсветка меняются на месте: экран не дёргается */
-  if(inp) inp.placeholder = kindOf(k).ask;
-  if(btn) markChip(btn);
-  else render();
-}
-function addPostPhoto(){
-  const inp = $('#wp_t');
-  S.post = S.post || {};
-  if(inp) S.post.t = inp.value;
-  const key = 'wp_' + Date.now().toString(36);
-  pickImage(key, () => { S.post.photo = key; render(); });
-}
-function dropPostPhoto(){
-  const inp = $('#wp_t');
-  if(inp) S.post.t = inp.value;
-  if(S.post.photo) delete MEDIA[S.post.photo];
-  S.post.photo = '';
-  render();
 }
 
 /* просмотр фотографии из ленты во весь экран */
@@ -1519,19 +1463,13 @@ function sendPost(){
   const d = S.post || {};
   const text = ((($('#wp_t')||{}).value) || d.t || '').trim();
   if(!text) return toast('Напиши хотя бы пару слов');
-  const id = 'w' + Date.now().toString(36);
-  /* фотография переезжает под номер послания, иначе черновик и лента
-     разошлись бы: черновик стирается, а картинка осталась бы висеть */
-  let photo = '';
-  if(d.photo && MEDIA[d.photo]){ photo = id + '_p'; MEDIA[photo] = MEDIA[d.photo]; delete MEDIA[d.photo]; }
   /* послание подписываем почтой автора: метка «моё» уезжала в общие данные
      и чужие послания показывались чужими же аватарками */
-  WALL.unshift({id, a:S.name || 'Я', ago:'только что', kind:kindKey(d.kind),
-    city:((S.datingProfile && S.datingProfile.city) || S.city || ''), t:text, st:0, photo,
-    ints:(d.ints||[]).slice(0, 4), email:myMail(), comments:[]});
-  S.points += 5; S.post = null; S.postTopics = false; S.postInts = []; S.postText = '';
-  S.wallKind = 'все'; S.sheet = null;
-  render(); schedulePersist(); syncPush(['wall','media']);
+  WALL.unshift({id:'w' + Date.now().toString(36), a:S.name || 'Я', ago:'только что',
+    city:((S.datingProfile && S.datingProfile.city) || S.city || ''), t:text, st:0,
+    email:myMail(), comments:[]});
+  S.points += 5; S.post = null; S.sheet = null;
+  render(); schedulePersist(); syncPush(['wall']);
   toast('Послание опубликовано. +5 баллов');
 }
 

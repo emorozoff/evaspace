@@ -125,7 +125,7 @@ const clean = o => JSON.parse(JSON.stringify(o));
    по почте, а метка остаётся только в памяти браузера. */
 function shareable(rec){
   const out = clean(rec);
-  delete out.own;
+  delete out.own; delete out.photo; delete out.kind; delete out.ints;
   if(out.email) out.email = String(out.email).toLowerCase();
   if(Array.isArray(out.comments)) out.comments = out.comments.map(c => {
     const cc = Object.assign({}, c); delete cc.own;
@@ -255,13 +255,12 @@ const FIX = {
   },
   wall: x => {
     x.id = String(x.id); x.a = okStr(x.a, 'Гостья'); x.t = okStr(x.t);
-    x.ints = okArr(x.ints).map(v => okStr(v)).filter(Boolean); x.st = okNum(x.st);
+    x.st = okNum(x.st);
     x.email = okStr(x.email).toLowerCase();
     x.city = okStr(x.city); x.ago = okStr(x.ago, 'недавно');
-    x.photo = okStr(x.photo);
-    /* повод приводим к нынешним трём: старые названия сводятся картой,
-       незнакомое становится рассказом, лента от этого не падает */
-    x.kind = (typeof kindKey === 'function') ? kindKey(x.kind) : 'tell';
+    /* старые послания могли прийти с фото, поводом и темами — просто
+       забываем эти поля: в ленте их больше нет */
+    delete x.photo; delete x.kind; delete x.ints;
     delete x.own;                       /* чужая метка «моё» с сервера не в счёт */
     x.comments = okArr(x.comments).filter(c => c && typeof c === 'object')
                   .map(c => { const cc = {...c, a: okStr(c.a, 'Гостья'), t: okStr(c.t),

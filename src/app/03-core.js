@@ -433,15 +433,19 @@ function scrQuiz(){
     </div>
     <div class="bar" style="background:rgba(255,255,255,.16);margin-bottom:24px"><i style="width:${(S.qi)/flow.length*100}%"></i></div>
     <h2 class="serif" style="font-size:30px;margin:0 0 6px">${q.q}</h2>
-    <p class="small muted" style="margin:0 0 20px">${q.hint}</p>
+    <p class="small muted" style="margin:0 0 ${q.grid ? '14px' : '20px'}">${q.hint}${
+      q.max > 1 && sel.length ? ` · выбрано ${sel.length} из ${q.max}` : ''}</p>
     <div style="flex:1">
       ${q.grid
         ? `<div class="tgrid">${q.o.map((o,i) => `
             <button class="ttile ${sel.includes(i)?'on':''}" style="--tc:${safeColor(o.c)}"
               onclick="pick(${i})">
-              <span class="tico">${tIcon(o.topic, 26)}</span>
-              <span class="tlab">${esc(o.t)}</span>
-              ${sel.includes(i) ? '<span class="tmark">✓</span>' : ''}
+              <span class="tico">${tIcon(o.topic, 24)}</span>
+              <span class="ttxt">
+                <span class="tlab">${esc(o.t)}</span>
+                ${o.s ? `<span class="thint">${esc(o.s)}</span>` : ''}
+              </span>
+              <span class="tmark">✓</span>
             </button>`).join('')}</div>`
         : q.o.map((o,i) => `<button class="opt ${sel.includes(i)?'on':''}" onclick="pick(${i})">
             <i>${esc(o.e)}</i><span><b>${esc(o.t)}</b>${o.s?`<small>${o.s}</small>`:''}</span>

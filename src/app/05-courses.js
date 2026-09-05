@@ -609,27 +609,8 @@ function goEvent(id){
    свой цвет, свой вопрос-подсказка и своя подпись у звёздочки —
    так лента читается как разговор, а не как доска объявлений.
    ===================================================================== */
-const POST_KINDS = [
-  {k:'tell', l:'Рассказать', short:'рассказы', i:'✦', c:'#B8894A',
-   ask:'Что у тебя нового?',
-   hint:'Вернулась из Дагестана. Горы, тишина и ни одного рабочего чата…',
-   star:'отзывается'},
-  {k:'ask',  l:'Спросить',   short:'вопросы',  i:'?', c:'#6C5CE0',
-   ask:'О чём хочешь спросить круг?',
-   hint:'Кто возвращался на работу после декрета — как вы это пережили?',
-   star:'тоже важно'},
-  {k:'call', l:'Позвать',    short:'зову',     i:'◈', c:'#A8375C',
-   ask:'Кого и куда зовёшь? Напиши город, день и что будете делать.',
-   hint:'В субботу иду в горы, есть место в машине. Маршрут лёгкий…',
-   star:'интересно'}
-];
-
-/* старые поводы сводим к трём: данные с сервера не должны пропадать */
-const KIND_MAP = {win:'tell', road:'tell', find:'tell', thanks:'tell', hard:'tell',
-                  meet:'call', ask:'ask', tell:'tell', call:'call'};
-const kindKey = k => KIND_MAP[k] || 'tell';
-
-const kindOf = k => POST_KINDS.find(x => x.k === kindKey(k)) || POST_KINDS[0];
+/* Послания намеренно устроены просто: имя, текст, звезда и ответы.
+   Поводы и темы убраны — чтобы написать, не надо ничего выбирать. */
 
 /* цвет автора: один и тот же человек всегда одного цвета */
 const AUTHOR_COLORS = ['#A8375C','#6C5CE0','#3F7D62','#B8894A','#4E8F84','#8054B8','#C2506F','#5E7A6C'];
@@ -639,33 +620,26 @@ function authorColor(who){
 }
 
 const WALL = [
-  {id:'w1', a:'Ирина', ago:'2 ч назад', city:'Москва', kind:'call',
-   t:'Ищу с кем поиграть в падел по выходным. Уровень начинающий, корт в Лужниках, ракетка есть.',
-   st:12, ints:['падел'],
-   comments:[{a:'Света', t:'Я начинающая, тоже ищу пару. Напиши мне', ago:'1 ч назад', st:2}]},
-  {id:'w2', a:'Настя', ago:'4 ч назад', city:'Москва', kind:'tell',
-   t:'Третью неделю делаю утреннюю практику до того, как проснутся дети. Раньше не верила, что пять минут что-то меняют — а вечером я спокойнее.',
-   st:23, ints:['медитация'],
-   comments:[{a:'Тая Мирная', t:'Так и работает: важна не длительность, а повторение', ago:'2 ч назад', st:5, curator:true},
-             {a:'Лена', t:'Забираю идею, спасибо', ago:'1 ч назад', st:1}]},
-  {id:'w3', a:'Юля', ago:'вчера', city:'Тбилиси', kind:'tell',
-   t:'Месяц живу в Тбилиси. Сюда стоит ехать за тем, чтобы медленно завтракать и разговаривать с незнакомыми людьми. Готова созваниваться и болтать о книгах.',
-   st:31, ints:['книги','языки'], comments:[]},
-  {id:'w4', a:'Даша', ago:'вчера', city:'Екатеринбург', kind:'tell',
-   t:'Нашла врача, которая наконец объяснила мне про цикл человеческим языком, а не «попейте витамины». Могу поделиться контактом.',
-   st:18, ints:['здоровье'],
-   comments:[{a:'Марина', t:'Очень надо, напиши пожалуйста', ago:'11 ч назад', st:3}]},
-  {id:'w5', a:'Лена', ago:'2 дня назад', city:'Москва', kind:'tell',
-   t:'Второй месяц не высыпаюсь и срываюсь на своих. Понимаю, что дело не в них. Просто хотела сказать это вслух.',
-   st:27, ints:['материнство'],
-   comments:[{a:'Настя', t:'Я тебя слышу. У меня был такой же год', ago:'1 д назад', st:8}]},
-  {id:'w6', a:'Оксана', ago:'3 дня назад', city:'Казань', kind:'tell',
-   t:'Спасибо женщине, которая в четверг после круга догнала меня на улице и просто спросила, как я. Это был лучший вопрос за месяц.',
-   st:44, ints:[], comments:[]},
-  {id:'w7', a:'Марина', ago:'4 дня назад', city:'Санкт-Петербург', kind:'ask',
-   t:'Кто возвращался к работе после долгого перерыва? Не про резюме, а про то, как перестать думать, что всё забыла.',
-   st:16, ints:['работа'],
-   comments:[{a:'Ольга Светлова', t:'Начните с одного маленького заказа, а не с большой должности', ago:'3 д назад', st:6, curator:true}]}
+ {id:'w1', a:'Ирина', ago:'2 ч назад', city:'Москва',
+ t:'Ищу с кем поиграть в падел по выходным. Уровень начинающий, корт в Лужниках, ракетка есть.', st:12,
+ comments:[{a:'Света', t:'Я начинающая, тоже ищу пару. Напиши мне', ago:'1 ч назад', st:2}]},
+ {id:'w2', a:'Настя', ago:'4 ч назад', city:'Москва',
+ t:'Третью неделю делаю утреннюю практику до того, как проснутся дети. Раньше не верила, что пять минут что-то меняют — а вечером я спокойнее.', st:23,
+ comments:[{a:'Тая Мирная', t:'Так и работает: важна не длительность, а повторение', ago:'2 ч назад', st:5, curator:true},
+ {a:'Лена', t:'Забираю идею, спасибо', ago:'1 ч назад', st:1}]},
+ {id:'w3', a:'Юля', ago:'вчера', city:'Тбилиси',
+ t:'Месяц живу в Тбилиси. Сюда стоит ехать за тем, чтобы медленно завтракать и разговаривать с незнакомыми людьми. Готова созваниваться и болтать о книгах.', st:31, comments:[]},
+ {id:'w4', a:'Даша', ago:'вчера', city:'Екатеринбург',
+ t:'Нашла врача, которая наконец объяснила мне про цикл человеческим языком, а не «попейте витамины». Могу поделиться контактом.', st:18,
+ comments:[{a:'Марина', t:'Очень надо, напиши пожалуйста', ago:'11 ч назад', st:3}]},
+ {id:'w5', a:'Лена', ago:'2 дня назад', city:'Москва',
+ t:'Второй месяц не высыпаюсь и срываюсь на своих. Понимаю, что дело не в них. Просто хотела сказать это вслух.', st:27,
+ comments:[{a:'Настя', t:'Я тебя слышу. У меня был такой же год', ago:'1 д назад', st:8}]},
+ {id:'w6', a:'Оксана', ago:'3 дня назад', city:'Казань',
+ t:'Спасибо женщине, которая в четверг после круга догнала меня на улице и просто спросила, как я. Это был лучший вопрос за месяц.', st:44, comments:[]},
+ {id:'w7', a:'Марина', ago:'4 дня назад', city:'Санкт-Петербург',
+ t:'Кто возвращался к работе после долгого перерыва? Не про резюме, а про то, как перестать думать, что всё забыла.', st:16,
+ comments:[{a:'Ольга Светлова', t:'Начните с одного маленького заказа, а не с большой должности', ago:'3 д назад', st:6, curator:true}]}
 ];
 
 function pgMembers(){
@@ -683,81 +657,58 @@ function pgMembers(){
 
 /* ---------- лента посланий ---------- */
 function wallFeed(){
-  const f = S.wallKind || 'все';
-  const list = f === 'все' ? WALL : WALL.filter(w => kindKey(w.kind) === f);
-  const counts = {};
-  WALL.forEach(w => { const k = kindKey(w.kind); counts[k] = (counts[k] || 0) + 1; });
-
   return `
   <div class="sec-h"><h2 class="serif" style="font-size:18px">Послания</h2>
     <span class="small muted">${WALL.length}</span></div>
 
   <button class="wallstart" onclick="openSheet('newPost')">
     ${chatAva(S.name, 'var(--ink)', true, 34, myMail())}
-    <span>Расскажи, что получилось, куда съездила или о чём хочешь спросить…</span>
+    <span>Написать послание участницам…</span>
     <span class="wsend">Написать</span>
   </button>
 
-  <div class="kindrow">
-    <button class="kchip ${f==='все'?'on':''}" onclick="S.wallKind='все';render()">всё</button>
-    ${POST_KINDS.filter(k => counts[k.k]).map(k =>
-      `<button class="kchip ${f===k.k?'on':''}" style="--kc:${safeColor(k.c)}"
-        onclick="S.wallKind='${attJs(k.k)}';render()"><i>${k.i}</i>${k.short}
-        <b>${counts[k.k]}</b></button>`).join('')}
-  </div>
-
-  ${list.length ? list.map(wallCard).join('')
-    : `<div class="empty">В этом разделе пока пусто. Напиши первой — тебя увидят все участницы.</div>`}`;
+  ${WALL.length ? WALL.map(wallCard).join('')
+    : `<div class="empty">Здесь пока пусто. Напиши первой — тебя увидят все участницы.</div>`}`;
 }
 
-/* карточка послания */
+/* Карточка послания: имя, текст, звезда и ответы. Больше ничего —
+   послание должно писаться и читаться за несколько секунд. */
 function wallCard(w){
-  const k = kindOf(w.kind);
   const liked = (S.starred||[]).includes(w.id);
   const mine = isMine(w);
   const canDrop = mine || S.role === 'admin';
-  const photo = w.photo && MEDIA[w.photo] ? MEDIA[w.photo] : '';
+  const col = authorColor(w.email || w.a);
   const cmts = w.comments || [];
   const open = (S.openCmts||[]).includes(w.id);
 
-  return `<div class="wallpost k-${esc(k.k)}" style="--kc:${safeColor(k.c)}">
+  return `<div class="wallpost" style="--kc:${safeColor(col)}">
     <div class="wtop">
-      ${chatAva(w.a, authorColor(w.email || w.a), mine, 38, w.email)}
+      ${chatAva(w.a, col, mine, 38, w.email)}
       <div style="flex:1;min-width:0">
         <b style="font-size:14px;display:block">${esc(w.a)}${mine?' · ты':''}</b>
         <span class="small muted" style="font-size:11px">${esc(w.city || '')}${w.city?' · ':''}${esc(w.ago)}</span>
       </div>
-      <span class="kbadge"><i>${k.i}</i>${k.l}</span>
+      ${canDrop ? `<button class="wdel" title="Удалить"
+        onclick="delPost('${attJs(w.id)}')">✕</button>` : ''}
     </div>
 
     <p class="wtext">${esc(w.t)}</p>
-    ${photo ? `<button class="wphoto" onclick="openSheet({k:'photo',src:'${attJs(w.photo)}'})">
-      <img src="${safeUrl(photo)}" alt="" loading="lazy"></button>` : ''}
-    ${(w.ints||[]).length ? `<div class="chips wrap" style="padding:0 0 10px">${(w.ints||[]).map(t =>
-      `<span class="chip pale" style="padding:3px 9px;font-size:10.5px">${esc(t)}</span>`).join('')}</div>` : ''}
 
     <div class="wallfoot">
       <div class="row" style="gap:7px">
         <button class="starbtn ${liked?'on':''}" onclick="starPost('${attJs(w.id)}')">
           ${starMark(15, liked ? '#E7A339' : 'rgba(17,16,20,.22)')}
           <span>${w.st + (liked?1:0)}</span>
-          <em>${esc(k.star)}</em>
         </button>
         <button class="cmtbtn ${open?'on':''}" onclick="toggleComments('${attJs(w.id)}')">
           ответить${cmts.length ? ' · ' + cmts.length : ''}</button>
       </div>
-      <div class="row" style="gap:7px">
-        ${k.k === 'call' || k.k === 'ask'
-          ? `<button class="btn xs" onclick="replyWall('${attJs(w.id)}')">Написать</button>` : ''}
-        ${canDrop ? `<button class="wdel" title="Удалить"
-          onclick="delPost('${attJs(w.id)}')">✕</button>` : ''}
-      </div>
+      <button class="btn xs" onclick="replyWall('${attJs(w.id)}')">Написать</button>
     </div>
 
     ${open ? `<div class="cmts">
         ${cmts.map((c, ci) => commentRow(w, c, ci)).join('')
-          || `<div class="small muted" style="padding:4px 0 8px">${
-              'Пока никто не ответил. Будь первой'}</div>`}
+          || `<div class="small muted" style="padding:4px 0 8px">Пока никто не ответил. Будь первой</div>`}
         <div class="cmtnew">
           <input class="field" id="cm_${esc(w.id)}" placeholder="Ответить"
             onkeydown="if(event.key==='Enter')addComment('${attJs(w.id)}')">
@@ -1013,10 +964,7 @@ function starPost(id){
   const on = S.starred.includes(id);
   S.starred = on ? S.starred.filter(x => x !== id) : [...S.starred, id];
   render(); schedulePersist();
-  if(!on){
-    const w = WALL.find(x => x.id === id);
-    toast(w ? kindOf(w.kind).star.charAt(0).toUpperCase() + kindOf(w.kind).star.slice(1) : 'Звезда отправлена');
-  }
+  if(!on) toast('Звезда отправлена');
 }
 
 /* звёздочка у ответа: отмечаем свои, чтобы не накрутить дважды */
@@ -1270,10 +1218,9 @@ function delPost(id){
   /* своё послание женщина убирает сама, чужое — только администратор */
   if(!isMine(w) && S.role !== 'admin') return toast('Убрать послание может только автор');
   if(!confirm('Удалить послание «' + String(w.t).slice(0, 60) + '…»? Вернуть будет нельзя.')) return;
-  if(w.photo) delete MEDIA[w.photo];
   WALL.splice(WALL.indexOf(w), 1);
   S.openCmts = (S.openCmts||[]).filter(x => x !== id);
-  render(); schedulePersist(); syncPush(['wall','media'], true);
+  render(); schedulePersist(); syncPush(['wall'], true);
   toast('Послание удалено');
 }
 function delComment(pid, ci){
