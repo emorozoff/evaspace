@@ -1054,3 +1054,40 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   border:1px solid var(--line);border-radius:var(--r);padding:12px 13px;margin-bottom:7px;font-size:13.5px;line-height:1.45}
 .phrase:hover{border-color:var(--ink);background:var(--surface-2)}
 .phrase .pl2{color:var(--accent);font-weight:700;flex:none;font-size:15px;line-height:1.3}
+
+/* ---------- первое знакомство: подсказки поверх приложения ---------- */
+#tour{position:fixed;inset:0;z-index:82}
+.tveil{position:fixed;inset:0;background:rgba(14,12,18,.74);animation:fade .2s both}
+/* затемнение рисует сама подсветка: огромная тень вокруг светлого окна */
+.thole{position:fixed;pointer-events:none;transition:.26s cubic-bezier(.2,.75,.3,1);
+  box-shadow:0 0 0 9999px rgba(14,12,18,.74),0 0 0 2px rgba(255,255,255,.92),
+    0 0 34px 6px rgba(255,255,255,.26)}
+.ttip{position:fixed;left:50%;transform:translateX(-50%);width:min(var(--shell),100vw - 24px);
+  background:var(--surface);border-radius:24px;padding:17px 17px 15px;
+  box-shadow:0 22px 60px rgba(0,0,0,.42);animation:tpop .24s cubic-bezier(.2,.8,.3,1) both}
+@keyframes tpop{from{opacity:0;transform:translateX(-50%) translateY(8px)}
+  to{opacity:1;transform:translateX(-50%) none}}
+.ttip.mid{top:50%!important;margin-top:-110px}
+.ttip:before{content:"";position:absolute;left:var(--ax,30px);width:16px;height:16px;
+  background:var(--surface);transform:rotate(45deg)}
+.ttip.below:before{top:-7px}
+.ttip.above:before{bottom:-7px}
+.ttip.mid:before{display:none}
+.tico{position:absolute;top:15px;right:16px;width:38px;height:38px;border-radius:13px;
+  display:grid;place-items:center;color:var(--accent);
+  background:linear-gradient(140deg,var(--accent-soft),#EFE7F7)}
+.tnum{display:flex;align-items:center;gap:10px;margin:0 46px 11px 0;
+  font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--accent)}
+.tbars{display:flex;gap:3px;flex:1}
+.tbars i{height:3px;flex:1;border-radius:2px;background:var(--line-2)}
+.tbars i.on{background:var(--accent)}
+.ttip h3{font-family:Inter,sans-serif;font-weight:700;letter-spacing:-.032em;
+  font-size:20px;line-height:1.2;margin:0 0 7px}
+.ttip p{font-size:13.5px;line-height:1.55;color:var(--muted);margin:0 0 15px}
+.tacts{display:flex;align-items:center;gap:9px}
+.tskip{font-size:12.5px;font-weight:600;color:var(--muted)}
+.tback{width:38px;height:38px;border-radius:50%;border:1px solid var(--line-2);
+  display:grid;place-items:center;color:var(--muted);font-size:16px;margin-left:auto}
+.tgo{background:var(--ink);color:#fff;border-radius:999px;padding:0 22px;height:38px;
+  font-size:13px;font-weight:700;margin-left:auto}
+.tback + .tgo{margin-left:0}

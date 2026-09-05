@@ -600,8 +600,13 @@ function nextQ(){
     if(k >= 4){ clearInterval(iv); buildProgram(); S.screen = 'ready'; render(); stars(); }
   }, 780);
 }
-function enter(){ startTrial(); S.screen = 'app'; S.tab = 'home'; render();
-  setTimeout(() => toast('Три дня бесплатного доступа открыты'), 700); }
+function enter(){
+  startTrial(); S.screen = 'app'; S.tab = 'home'; render();
+  /* в первый раз вместо всплывашки показываем подсказки: про три дня
+     сказано на последнем шаге, две подсказки разом только мешают */
+  if(S.tourDone) setTimeout(() => toast('Три дня бесплатного доступа открыты'), 700);
+  else setTimeout(tourStart, 650);
+}
 function skipAll(){ S.name='Гостья'; S.tags=['спокойствие','тревога','уверенность']; buildProgram(); S.screen='app'; render(); }
 
 /* ---------- роутер страниц ---------- */

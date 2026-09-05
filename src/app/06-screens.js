@@ -50,7 +50,7 @@ const NAVI = {
 
 function nav(){
   return `<nav class="nav">${Object.entries(NAVI).map(([k,[l,d]]) =>
-    `<button class="${S.tab===k&&!S.page?'on':''}" onclick="go('${attJs(k)}')">
+    `<button class="${S.tab===k&&!S.page?'on':''}" data-tab="${attJs(k)}" onclick="go('${attJs(k)}')">
       <svg viewBox="0 0 24 24">${d}</svg><span>${l}</span></button>`).join('')}</nav>`;
 }
 
@@ -103,11 +103,11 @@ function pgHome(){
         ? starMark(17) : `<span class="off">${starMark(17,'rgba(17,16,20,.14)')}</span>`).join(' ')}</div>
     </div>
 
-    ${S.day > todayIdx() ? `<div class="future-note">
+    <div id="today">${S.day > todayIdx() ? `<div class="future-note">
         <b>День откроется ${dateOfDay(S.day).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</b>
         <div class="small muted">Можно посмотреть, что тебя ждёт. Отмечать задания получится в этот день.</div>
       </div>${shown.map((t,k) => lessonCard(t, S.day, idxs[k], true)).join('')}`
-      : shown.map((t,k) => lessonCard(t, S.day, idxs[k], !acc && !(k === 0), !acc)).join('')}
+      : shown.map((t,k) => lessonCard(t, S.day, idxs[k], !acc && !(k === 0), !acc)).join('')}</div>
 
     ${!S.gentle && doneOf(S.day) === 0 ? `
       <div class="row" style="margin-bottom:16px">

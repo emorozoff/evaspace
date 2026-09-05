@@ -563,6 +563,8 @@ function pgSettings(){
         <span style="flex:1;font-size:13.5px;font-weight:600">Написать в поддержку</span><span class="muted">›</span></button>
       <button class="uline" style="width:100%;text-align:left" onclick="openIdea()">
         <span style="flex:1;font-size:13.5px;font-weight:600">Предложить доработку</span><span class="muted">›</span></button>
+      <button class="uline" style="width:100%;text-align:left" onclick="tourAgain()">
+        <span style="flex:1;font-size:13.5px;font-weight:600">Показать подсказки заново</span><span class="muted">›</span></button>
       <div class="uline"><span class="small muted" style="flex:1">Почта поддержки</span>
         <b style="font-size:12.5px">help@evaspace.ru</b></div>
     </div>
