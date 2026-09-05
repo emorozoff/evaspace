@@ -1042,15 +1042,21 @@ function initChats(){
 /* кому открыта группа: экспертная — только своим, клуб — по подписке */
 function canEnter(g){
   if(!g) return false;
-  if(g.access === 'experts') return S.role === 'expert' || S.role === 'admin';
-  if(g.access === 'club') return S.role === 'admin' || (S.clubs || []).includes(g.id);
+  if(S.role === 'admin') return true;
+  if(g.status && g.status !== 'live' && myGRole(g) === 'visitor') return false;
+  if(g.access === 'experts') return S.role === 'expert';
+  if(g.access === 'club') return (S.clubs || []).includes(g.id);
+  /* по заявке: переписка открывается, когда ведущая впустила */
+  if(g.access === 'request') return myGRole(g) !== 'visitor';
   return true;
 }
 const isClub = g => g && g.access === 'club';
 
 function pgClub(){
   initChats();
-  const seen = GROUPS.filter(g => g.access !== 'experts' || canEnter(g));
+  /* на согласовании и закрытые видит только своя команда */
+  const seen = GROUPS.filter(g => (g.access !== 'experts' || canEnter(g)) &&
+    (!g.status || g.status === 'live' || myGRole(g) !== 'visitor'));
   const mine  = seen.filter(g => S.joined.includes(g.id) && canEnter(g));
   const clubs = seen.filter(g => isClub(g) && !mine.includes(g));
   const open  = seen.filter(g => !isClub(g) && !mine.includes(g));
@@ -1144,7 +1150,7 @@ function pgChatRoom(){
             <div class="mtext">${esc(m.t)}</div>
             <div class="tm">
               <button class="reply" onclick="replyMsg('${attJs(g.id)}',${i})">ответить</button>
-              ${esc(m.tm)}${S.role==='admin'&&!chatMine(m)?` · <span onclick="delMsg('${attJs(g.id)}',${i})" style="cursor:pointer;color:var(--accent)">удалить</span>`:''}</div>
+              ${esc(m.tm)}${gCan(g,'delAny')&&!chatMine(m)?` · <span onclick="delMsg('${attJs(g.id)}',${i})" style="cursor:pointer;color:var(--accent)">удалить</span>`:''}</div>
           </div>
         </div>`).join('')}
       </div>

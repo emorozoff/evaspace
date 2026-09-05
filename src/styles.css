@@ -702,33 +702,25 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 
 
 /* ---------- направления контента ---------- */
-/* Карточки направлений в тесте: иконка, название и короткая подпись —
-   без неё женщина пролистывает «цигун» просто потому, что не знает слова. */
-.tgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.ttile{position:relative;display:flex;align-items:center;gap:11px;text-align:left;
-  padding:12px 12px 12px 11px;border-radius:var(--r);
-  background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.11);
-  color:rgba(255,255,255,.92);overflow:hidden;
-  transition:background .18s ease,border-color .18s ease}
-.ttile:before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .18s ease;
-  background:linear-gradient(135deg,var(--tc,#fff),transparent 130%)}
-.ttile .tico{position:relative;z-index:1;display:grid;place-items:center;flex:none;
-  width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;
-  transition:background .18s ease,color .18s ease}
-.ttile .tlab{position:relative;z-index:1;display:block;font-size:13px;font-weight:700;
-  line-height:1.2;letter-spacing:-.01em}
-.ttile .thint{position:relative;z-index:1;display:block;font-size:10.5px;line-height:1.3;
-  color:rgba(255,255,255,.5);margin-top:2px}
-.ttile .tmark{position:absolute;top:8px;right:9px;z-index:2;font-size:11px;font-weight:700;
-  color:#fff;opacity:0;transition:opacity .18s ease}
+/* Направления в тесте: иконка и название в одну строку, две колонки.
+   Крупные карточки с подписями занимали два экрана и читались тяжело —
+   здесь всё видно разом, а выбранное заливается одним цветом. */
+.tgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.ttile{position:relative;display:flex;align-items:center;gap:9px;text-align:left;
+  padding:9px 10px;border-radius:14px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);
+  color:rgba(255,255,255,.92);font-size:12.5px;font-weight:600;
+  transition:background .16s ease,border-color .16s ease,color .16s ease}
+.ttile .tico{display:grid;place-items:center;flex:none;width:28px;height:28px;
+  border-radius:9px;background:rgba(255,255,255,.1);color:#fff;opacity:.8;
+  transition:.16s}
+.ttile .tlab{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  line-height:1.25}
+.ttile .tmark{display:none;flex:none;color:#241C14}
 .ttile:hover{background:rgba(255,255,255,.1)}
-.ttile.on{border-color:var(--tc,#fff);background:rgba(255,255,255,.05)}
-.ttile.on:before{opacity:.9}
-.ttile.on .tico{background:#fff;color:var(--tc,var(--ink))}
-.ttile.on .thint{color:rgba(255,255,255,.72)}
-.ttile.on .tmark{opacity:1}
-.ttile .ttxt{position:relative;z-index:1;flex:1;min-width:0}
-.ttile .tlab,.ttile .thint{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ttile.on{background:var(--gold-soft,#E8D2A8);border-color:transparent;color:#241C14}
+.ttile.on .tico{background:rgba(36,28,20,.12);color:#241C14;opacity:1}
+.ttile.on .tmark{display:block}
 
 /* фишки направлений в ленте и в редакторе */
 .trow{gap:7px;padding:2px 16px 10px;margin:0 -16px}
@@ -1082,7 +1074,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .ttip.below:before{top:-7px}
 .ttip.above:before{bottom:-7px}
 .ttip.mid:before{display:none}
-.tico{position:absolute;top:15px;right:16px;width:38px;height:38px;border-radius:13px;
+.tipico{position:absolute;top:15px;right:16px;width:38px;height:38px;border-radius:13px;
   display:grid;place-items:center;color:var(--accent);
   background:linear-gradient(140deg,var(--accent-soft),#EFE7F7)}
 .tnum{display:flex;align-items:center;gap:10px;margin:0 46px 11px 0;
@@ -1124,63 +1116,15 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .advmore{display:block;width:100%;text-align:left;margin-top:12px;padding-top:11px;
   border-top:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--accent)}
 
-/* ---------- первое знакомство: подсказки поверх приложения ---------- */
-#tour{position:fixed;inset:0;z-index:82}
-.tveil{position:fixed;inset:0;background:rgba(14,12,18,.74);animation:fade .2s both}
-/* затемнение рисует сама подсветка: огромная тень вокруг светлого окна */
-.thole{position:fixed;pointer-events:none;transition:.26s cubic-bezier(.2,.75,.3,1);
-  box-shadow:0 0 0 9999px rgba(14,12,18,.74),0 0 0 2px rgba(255,255,255,.92),
-    0 0 34px 6px rgba(255,255,255,.26)}
-.ttip{position:fixed;left:50%;transform:translateX(-50%);width:min(var(--shell),100vw - 24px);
-  background:var(--surface);border-radius:24px;padding:17px 17px 15px;
-  box-shadow:0 22px 60px rgba(0,0,0,.42);animation:tpop .24s cubic-bezier(.2,.8,.3,1) both}
-@keyframes tpop{from{opacity:0;transform:translateX(-50%) translateY(8px)}
-  to{opacity:1;transform:translateX(-50%) none}}
-.ttip.mid{top:50%!important;margin-top:-110px}
-.ttip:before{content:"";position:absolute;left:var(--ax,30px);width:16px;height:16px;
-  background:var(--surface);transform:rotate(45deg)}
-.ttip.below:before{top:-7px}
-.ttip.above:before{bottom:-7px}
-.ttip.mid:before{display:none}
-.tico{position:absolute;top:15px;right:16px;width:38px;height:38px;border-radius:13px;
-  display:grid;place-items:center;color:var(--accent);
-  background:linear-gradient(140deg,var(--accent-soft),#EFE7F7)}
-.tnum{display:flex;align-items:center;gap:10px;margin:0 46px 11px 0;
-  font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--accent)}
-.tbars{display:flex;gap:3px;flex:1}
-.tbars i{height:3px;flex:1;border-radius:2px;background:var(--line-2)}
-.tbars i.on{background:var(--accent)}
-.ttip h3{font-family:Inter,sans-serif;font-weight:700;letter-spacing:-.032em;
-  font-size:20px;line-height:1.2;margin:0 0 7px}
-.ttip p{font-size:13.5px;line-height:1.55;color:var(--muted);margin:0 0 15px}
-.tacts{display:flex;align-items:center;gap:9px}
-.tskip{font-size:12.5px;font-weight:600;color:var(--muted)}
-.tback{width:38px;height:38px;border-radius:50%;border:1px solid var(--line-2);
-  display:grid;place-items:center;color:var(--muted);font-size:16px;margin-left:auto}
-.tgo{background:var(--ink);color:#fff;border-radius:999px;padding:0 22px;height:38px;
-  font-size:13px;font-weight:700;margin-left:auto}
-.tback + .tgo{margin-left:0}
-
-/* ---------- отметка «сделала» внутри карточки дня ---------- */
-.lesson .donemark{position:absolute;right:10px;top:10px;z-index:4;width:34px;height:34px;border-radius:50%;
-  display:grid;place-items:center;color:#fff;background:rgba(17,16,20,.34);
-  border:1.5px solid rgba(255,255,255,.6);backdrop-filter:blur(5px);transition:.16s}
-.lesson .donemark svg{opacity:.75}
-.lesson .donemark.on{background:var(--ok);border-color:transparent}
-.lesson .donemark.on svg{opacity:1}
-.lesson.done .cov{filter:saturate(.82)}
-/* значок «видео» уезжает на середину обложки: рядом с отметкой два кружка
-   в углу читались как пара кнопок, а это разные вещи */
-.lesson .play{left:50%;top:50%;right:auto;transform:translate(-50%,-50%);
-  width:46px;height:46px;font-size:14px;background:rgba(17,16,20,.34);
-  border:1.5px solid rgba(255,255,255,.45)}
-
-/* ---------- подсказка на день ---------- */
-.advice .advhead{display:flex;gap:13px;align-items:center;margin-bottom:12px}
-.advline{font-size:13.5px;line-height:1.62;color:var(--muted);margin:0;
-  padding:11px 0;border-top:1px solid var(--line)}
-.advline:first-of-type{border-top:none;padding-top:0}
-.advline:last-of-type{padding-bottom:0}
-.advmore{display:block;width:100%;text-align:left;margin-top:12px;padding-top:11px;
-  border-top:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--accent)}
-
+/* ---------- управление сообществом ---------- */
+.gcolors{display:flex;gap:8px;flex-wrap:wrap}
+.gcol{width:30px;height:30px;border-radius:50%;border:2px solid transparent;transition:.14s}
+.gcol.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--surface) inset}
+.optl.on{border-color:var(--ink);background:var(--surface-2)}
+.optl[disabled]{opacity:.45}
+.gmember{padding:12px 13px}
+.gmember .tpic{border-radius:50%;overflow:hidden;flex:none;background:var(--surface-2)}
+.gmember .tpic svg,.gmember .tpic img{width:100%;height:100%;object-fit:cover;display:block}
+.uline.first{border-top:none;padding-top:0}
+.hellonote{background:var(--surface-2);border-radius:var(--r-lg);padding:14px;margin-bottom:12px}
+.hellonote p{margin:0;font-size:13.5px;line-height:1.6}

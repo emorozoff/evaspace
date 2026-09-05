@@ -20,6 +20,7 @@ function sheet(){
     hint:shHint, addTag:shAddTag, cycle:shCycle, hd:shHD, consult:shConsult, write:shWrite,
     newContent:shNewContent, editContent:shEditContent, reject:shReject, rework:shRework,
     units:shUnits, groupInfo:shGroupInfo, newGroup:shNewGroup, fix:shFix, video:shVideo,
+    invite:shInvite, hello:shHello, askGroup:shAskGroup,
     hw:shHW, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
     install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
     service:shService, editUser:shEditUser,
@@ -218,8 +219,24 @@ function buyCourse(id){
   toast('Курс открыт. +150 баллов');
 }
 function join(id){
-  S.joined = S.joined.includes(id) ? S.joined.filter(x => x !== id) : [...S.joined, id];
-  render();
+  const g = GROUPS.find(x => x.id === id);
+  const was = S.joined.includes(id);
+  /* в сообщество по заявке не входят молча: сначала пара строк о себе */
+  if(!was && g && g.access === 'request' && myGRole(g) === 'visitor')
+    return openSheet({k:'askGroup', id});
+  S.joined = was ? S.joined.filter(x => x !== id) : [...S.joined, id];
+  render(); schedulePersist();
+  /* первое, что видит новенькая, — приветствие ведущей, а не пустая переписка */
+  if(!was && g) setTimeout(() => openSheet({k:'hello', id}), 120);
+}
+
+function shAskGroup(){
+  const g = GROUPS.find(x => x.id === S.sheet.id);
+  if(!g) return `<div class="empty">Сообщество не найдено</div>`;
+  return `<h2 class="serif" style="font-size:21px;margin:0 0 4px">Заявка в «${esc(g.t)}»</h2>
+    <p class="small muted" style="margin:0 0 12px">${esc(g.who || 'Расскажи пару слов о себе — ведущая посмотрит и ответит.')}</p>
+    <textarea class="field" id="gq_t" rows="3" placeholder="Почему тебе сюда"></textarea>
+    <button class="btn" onclick="askGroup('${attJs(g.id)}')">Отправить заявку</button>`;
 }
 function copyRef(){
   const u = 'https://eva.space/r/' + (S.name||'eva').toLowerCase();
@@ -723,6 +740,9 @@ function shGroupInfo(){
     ${(g.tags||[]).length ? `<div class="chips wrap" style="padding:2px 0 10px">${
       g.tags.map(t => `<span class="chip pale" style="padding:3px 9px;font-size:10.5px">${esc(t)}</span>`).join('')}</div>` : ''}
 
+    ${gCan(g,'edit') ? `<button class="btn ghost" style="margin-bottom:9px"
+      onclick="closeSheet();openGroupAdmin('${attJs(g.id)}')">Управлять сообществом</button>` : ''}
+
     ${!may && g.access === 'experts' ? `
       <div class="glocked">${lockIcon(15)}
         <div><b>Закрытая комната</b>
@@ -738,8 +758,8 @@ function shGroupInfo(){
       <button class="btn ghost" style="margin-top:9px" onclick="closeSheet()">Пока подумаю</button>`
     : `
       <button class="btn ghost" onclick="toast('Уведомления выключены')">Выключить уведомления</button>
-      <button class="btn ${joined?'ghost':''}" style="margin-top:9px" onclick="join('${attJs(g.id)}');closeSheet()">
-        ${joined ? 'Выйти из группы' : 'Вступить'}</button>
+      <button class="btn ${joined?'ghost':''}" style="margin-top:9px" onclick="join('${attJs(g.id)}')">
+        ${joined ? 'Выйти из сообщества' : g.access === 'request' ? 'Оставить заявку' : 'Вступить'}</button>
       ${club && (S.clubs||[]).includes(g.id) ? `<button class="btn ghost" style="margin-top:9px;color:var(--accent)"
         onclick="leaveClub('${attJs(g.id)}')">Отменить подписку на клуб</button>` : ''}`}`;
 }
@@ -763,14 +783,6 @@ function leaveClub(id){
   S.sheet = null;
   render(); schedulePersist();
   toast('Подписка отменена');
-}
-
-function shNewGroup(){
-  return `<h2 class="serif" style="font-size:22px;margin:0 0 12px">Новая группа</h2>
-    <input class="field" placeholder="Название группы">
-    <textarea class="field" rows="3" placeholder="О чём она"></textarea>
-    <div class="chips wrap">${['🧘‍♀️','🌙','👶','💼','🌸','📖','🏃','🤍'].map(e => `<button class="chip">${e}</button>`).join('')}</div>
-    <button class="btn" style="margin-top:12px" onclick="S.sheet=null;render();toast('Группа отправлена на согласование')">Создать</button>`;
 }
 
 /* ---------- мероприятия ---------- */

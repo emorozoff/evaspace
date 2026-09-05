@@ -101,6 +101,7 @@ const BRANCHES = {
   goods:      () => GOODS.map(clean),
   goodInfo:   () => GOOD_INFO,
   events:     () => EVENTS.map(clean),
+  groups:     () => GROUPS.map(clean),
   experts:    () => EXPERTS.map(clean),
   pending:    () => S.pending || [],
   media:      () => mediaLinks(),
@@ -156,7 +157,8 @@ let syncTimer = null;
 function syncPush(branches, immediate){
   if(SYNC.alive === false) return;
   const list = branches || ['lib','courses','lessons','modules','courseInfo','courseTags','courseKind',
-    'goods','goodInfo','events','experts','pending','media','videos','covPos','adminInfo','avatars'];
+    'goods','goodInfo','events','experts','pending','media','videos','covPos','adminInfo','avatars',
+    'groups'];
   list.forEach(b => { if(BRANCHES[b]) SYNC.queue[b] = true; });
   clearTimeout(syncTimer);
   syncTimer = setTimeout(flushSync, immediate ? 0 : 800);
@@ -217,6 +219,28 @@ function fixList(list, fill){
 }
 
 const FIX = {
+  groups: x => {
+    x.id = String(x.id); x.t = okStr(x.t, 'Сообщество');
+    x.e = okStr(x.e, '🌸'); x.c = okStr(x.c, '#B64F7C');
+    x.m = okNum(x.m); x.price = okNum(x.price);
+    x.about = okStr(x.about); x.who = okStr(x.who); x.welcome = okStr(x.welcome);
+    x.lead = okStr(x.lead); x.owner = okStr(x.owner).toLowerCase();
+    x.note = okStr(x.note);
+    x.access = ['open','request','club','experts'].indexOf(x.access) >= 0 ? x.access : 'open';
+    x.status = ['live','pending','rework','refused','closed'].indexOf(x.status) >= 0 ? x.status : 'live';
+    x.tags  = Array.isArray(x.tags)  ? x.tags.map(t => okStr(t)).filter(Boolean) : [];
+    x.rules = Array.isArray(x.rules) ? x.rules.map(r => okStr(r)).filter(Boolean) : [];
+    x.team  = Array.isArray(x.team) ? x.team.map(m => ({
+      n:okStr(m && m.n, 'Помощница'), r:okStr(m && m.r), e:okStr(m && m.e),
+      mail:okStr(m && m.mail).toLowerCase(),
+      role:['owner','host','keeper'].indexOf(m && m.role) >= 0 ? m.role : 'keeper'
+    })) : [];
+    x.requests = Array.isArray(x.requests) ? x.requests.map(r => ({
+      n:okStr(r && r.n, 'Гостья'), mail:okStr(r && r.mail).toLowerCase(),
+      ago:okStr(r && r.ago, 'недавно'), t:okStr(r && r.t)
+    })) : [];
+    return x;
+  },
   lib: x => {
     x.id = String(x.id); x.t = okStr(x.t, 'Без названия');
     x.type = ['affirm','practice','class'].indexOf(x.type) >= 0 ? x.type : 'practice';
@@ -315,6 +339,7 @@ function applyShared(sh){
   repl(COURSES, sh.courses);
   repl(GOODS, sh.goods);
   repl(EVENTS, sh.events);
+  repl(GROUPS, sh.groups);
   if(typeof WALL !== 'undefined')  repl(WALL, sh.wall);
   if(typeof INBOX !== 'undefined') repl(INBOX, sh.support);
   if(Array.isArray(sh.experts)) sh.experts.forEach(e => {

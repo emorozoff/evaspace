@@ -487,14 +487,10 @@ function scrQuiz(){
     <div style="flex:1">
       ${q.grid
         ? `<div class="tgrid">${q.o.map((o,i) => `
-            <button class="ttile ${sel.includes(i)?'on':''}" style="--tc:${safeColor(o.c)}"
-              onclick="pick(${i})">
-              <span class="tico">${tIcon(o.topic, 24)}</span>
-              <span class="ttxt">
-                <span class="tlab">${esc(o.t)}</span>
-                ${o.s ? `<span class="thint">${esc(o.s)}</span>` : ''}
-              </span>
-              <span class="tmark">✓</span>
+            <button class="ttile ${sel.includes(i)?'on':''}" onclick="pick(${i})">
+              <span class="tico">${tIcon(o.topic, 15)}</span>
+              <span class="tlab">${esc(o.t)}</span>
+              <span class="tmark">${CHECK_SVG}</span>
             </button>`).join('')}</div>`
         : q.o.map((o,i) => `<button class="opt ${sel.includes(i)?'on':''}" onclick="pick(${i})">
             <i>${esc(o.e)}</i><span><b>${esc(o.t)}</b>${o.s?`<small>${o.s}</small>`:''}</span>
@@ -623,7 +619,8 @@ function page(){
   if(S.viewExpert) return pgExpertPage();
   if(S.page){
     const M = {report:pgReport, calendar:pgCalendar, profile:pgProfile, points:pgPoints, earn:pgEarn,
-               settings:pgSettings, cart:pgCart, cycle:pgCycle, birth:pgBirth, inbox:pgInbox};
+               settings:pgSettings, cart:pgCart, cycle:pgCycle, birth:pgBirth, inbox:pgInbox,
+               groupAdmin:pgGroupAdmin};
     return (M[S.page] || pgProfile)();
   }
   return ({home:pgHome, content:pgContent, courses:pgCourses, market:pgMarket, club:pgClub})[S.tab]();

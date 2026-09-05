@@ -92,7 +92,7 @@ function tourShow(){
   const steps = TOUR.length - 1;
   const dots = TOUR.slice(1).map((_,i) => `<i class="${i < S.tour ? 'on' : ''}"></i>`).join('');
   box.querySelector('.ttip').innerHTML = `
-    <div class="tico">${step.ico}</div>
+    <div class="tipico">${step.ico}</div>
     ${step.intro ? '' :
       `<div class="tnum"><span>${S.tour} / ${steps}</span><span class="tbars">${dots}</span></div>`}
     <h3>${esc(typeof step.h === 'function' ? step.h() : step.h)}</h3>

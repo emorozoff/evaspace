@@ -615,7 +615,33 @@ function commTabs(sub){
 }
 function adGroups(){
   S.owned = S.owned || ['gr2'];
+  const wait = GROUPS.filter(g => g.status === 'pending');
   return `
+  ${wait.length ? `<div class="sec-h" style="margin-top:0">
+    <h2 class="serif" style="font-size:18px">Просят открыть</h2>
+    <span class="small muted">${wait.length}</span></div>
+  ${wait.map(g => `<div class="card" style="border-color:var(--warn)">
+    <div class="row" style="gap:11px">
+      <div class="gemoji" style="background:${safeColor(g.c)}22;color:${safeColor(g.c)}">${gIcon(g, 19)}</div>
+      <div style="flex:1;min-width:0">
+        <b style="font-size:14px;display:block">${esc(g.t)}</b>
+        <div class="small muted" style="font-size:11.5px">${esc(g.lead || '')} · ${
+          GACCESS[g.access] ? GACCESS[g.access].n.toLowerCase() : 'открытое'}</div>
+      </div>
+    </div>
+    <p class="small" style="margin:9px 0 0">${esc(g.about || '')}</p>
+    ${g.who ? `<p class="small muted" style="margin:5px 0 0">Кто здесь: ${esc(g.who)}</p>` : ''}
+    ${(g.rules||[]).length ? `<ul class="grules" style="margin:8px 0 0">${
+      g.rules.map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}
+    <div class="acts">
+      <button class="btn sm" onclick="gApprove('${attJs(g.id)}')">Открыть</button>
+      <button class="btn ghost sm" onclick="gRework('${attJs(g.id)}')">На доработку</button>
+      <button class="btn ghost sm" onclick="gRefuse('${attJs(g.id)}')">Отказать</button>
+    </div>
+  </div>`).join('')}` : ''}
+
+  <div class="sec-h"><h2 class="serif" style="font-size:18px">Все сообщества</h2>
+    <button class="link" onclick="newGroup()">＋ создать</button></div>
   <p class="small muted" style="margin:0 0 12px">Закрепи за собой группы, которые модерируешь. В закреплённых видно новые сообщения и доступно удаление.</p>
   ${GROUPS.map(g => {
     const own = S.owned.includes(g.id);
@@ -628,8 +654,8 @@ function adGroups(){
         <button class="sw ${own?'on':''}" onclick="toggleOwn('${attJs(g.id)}')"><i></i></button>
       </div>
       <div class="acts">
+        <button class="btn ghost sm" onclick="openGroupAdmin('${attJs(g.id)}')">Управлять</button>
         <button class="btn ghost sm" onclick="openChat('${attJs(g.id)}')">Открыть чат</button>
-        <button class="btn ghost sm" onclick="toast('Закреплённое сообщение обновлено')">Закрепить пост</button>
       </div>
       ${own ? `<div class="small" style="margin-top:8px;color:var(--ok)">Ты модератор этой группы</div>` : ''}
     </div>`;
@@ -1348,29 +1374,44 @@ function exCourses(){
   }).join('') : '<div class="empty">Пока нет курсов</div>'}`;
 }
 
+/* Кабинет эксперта: свои сообщества с управлением и кнопка создать новое.
+   Раньше здесь показывалась случайная группа и три кнопки-заглушки. */
 function exClub(){
-  const e = me();
-  const g = GROUPS[hash(e.id) % GROUPS.length];
+  const mine = GROUPS.filter(g => gCan(g, 'edit'));
   return `
-  <div class="card">
-    <div class="row"><div style="font-size:26px">${esc(g.e)}</div>
-      <div style="flex:1"><b style="font-size:15px">${esc(g.t)}</b>
-        <div class="small muted">${g.m.toLocaleString('ru-RU')} участниц · твоя группа</div></div></div>
-    <div class="g2" style="margin-top:12px">
-      <div class="phbox"><div class="serif" style="font-size:22px">${(hash(g.id)%40+12)}</div><div class="small muted">сообщений сегодня</div></div>
-      <div class="phbox"><div class="serif" style="font-size:22px">${(hash(g.t)%9+2)}</div><div class="small muted">без ответа</div></div>
+  <p class="small muted" style="margin:0 0 12px">Сообщества, которые ты ведёшь.
+    Здесь меняется описание, состав команды и приветствие новеньким.</p>
+
+  ${mine.length ? mine.map(g => gCardAdmin(g)).join('')
+    : `<div class="empty">Пока ни одного. Создай своё — мы посмотрим и откроем.</div>`}
+
+  <button class="btn" style="margin-top:4px" onclick="newGroup()">＋ Создать сообщество</button>
+  <p class="tiny muted" style="text-align:center;margin-top:9px">
+    Новое сообщество сначала попадает на согласование — так в списке не появляется пустых групп.</p>`;
+}
+
+/* карточка сообщества в кабинете и в админке */
+function gCardAdmin(g){
+  const msgs = (S.chats && S.chats[g.id] || []).length;
+  const reqs = (g.requests || []).length;
+  const st = {pending:['на согласовании','var(--warn)'], rework:['на доработке','var(--warn)'],
+              refused:['отказано','var(--accent)'], closed:['закрыто','var(--muted)']}[g.status];
+  return `<div class="card">
+    <div class="row" style="gap:11px">
+      <div class="gemoji" style="background:${safeColor(g.c)}22;color:${safeColor(g.c)}">${gIcon(g, 19)}</div>
+      <div style="flex:1;min-width:0">
+        <b style="font-size:14px;display:block">${esc(g.t)}</b>
+        <div class="small muted" style="font-size:11.5px">${gStatusLine(g)} · ${
+          plural(msgs,'сообщение','сообщения','сообщений')}${reqs ? ' · ' + reqs + ' в заявках' : ''}</div>
+      </div>
+      ${st ? `<span class="chip" style="color:${st[1]}">${st[0]}</span>` : ''}
     </div>
-  </div>
-  <div class="sec-h"><h2 class="serif">Обсуждения</h2></div>
-  ${POSTS.filter(p => p.g === g.id || true).slice(0,4).map(p => `<div class="msg">
-    <div class="row" style="margin-bottom:8px">
-      <div class="dot-ava" style="background:${esc(p.c)}">${p.a.split(' ').map(w=>w[0]).join('')}</div>
-      <div style="flex:1"><b style="font-size:13.5px">${esc(p.a)}</b>
-        <div class="small muted" style="font-size:11px">${esc(p.ago)}</div></div></div>
-    <p style="margin:0 0 10px;font-size:13.5px;line-height:1.5">${esc(p.t)}</p>
-    <button class="btn ghost sm" onclick="toast('Ответ отправлен')">Ответить</button>
-  </div>`).join('')}
-  <button class="btn ghost" onclick="toast('Пост опубликован в группе')">Написать в группу</button>`;
+    ${g.note ? `<p class="small" style="margin:9px 0 0;color:var(--warn)">${esc(g.note)}</p>` : ''}
+    <div class="acts">
+      <button class="btn ghost sm" onclick="openGroupAdmin('${attJs(g.id)}')">Управлять</button>
+      <button class="btn ghost sm" onclick="openChat('${attJs(g.id)}')">В чат</button>
+    </div>
+  </div>`;
 }
 
 function exMsgs(){
