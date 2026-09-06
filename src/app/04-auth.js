@@ -218,6 +218,7 @@ async function signIn(u){
   if(typeof pullProgress === 'function') await pullProgress(u.email);
   S.avatar = '';
   const had = restore(u.email);
+  if(!S.name) S.name = u.name;
   const known = typeof avatarOf === 'function' ? avatarOf(u.email) : '';
   if(known) S.avatar = known;
   if(had && S.program && S.program.length){
@@ -402,6 +403,7 @@ function tryAutoLogin(){
   S.name = u.name;
   S.avatar = '';
   const had = restore(u.email);
+  if(!S.name) S.name = u.name;
   const known = typeof avatarOf === 'function' ? avatarOf(u.email) : '';
   if(known) S.avatar = known;
   S.screen = 'app';

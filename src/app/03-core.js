@@ -177,14 +177,19 @@ function checkWeek(quiet){
   S.weekly = S.weekly || {exchanged:false};
   if(S.week === undefined || S.week === null){ S.week = w; return wasDay !== S.day; }
   if(S.week !== w){
+    /* снимок делаем ДО пересборки: после неё считать уже нечего */
+    const past = typeof weekSnapshot === 'function' ? weekSnapshot() : null;
     S.week = w;
     S.weekly.exchanged = false;          // обмен баллов снова доступен
     S.stars = 0;                          // звёзды недели считаются заново
     buildProgram();                       // программа пересобирается на свежем
-    if(!quiet) toast('Новая неделя - Ева собрала свежую программу');
+    if(typeof evaWeekly === 'function') evaWeekly(past);
+    if(!quiet) toast('Новая неделя — Ева подвела итоги');
     if(typeof schedulePersist === 'function') schedulePersist();
     return true;
   }
+  /* в выходные напоминаем про непройденное — один раз за неделю */
+  if(typeof weekendNudge === 'function' && weekendNudge()) return true;
   if(wasDay !== S.day && typeof schedulePersist === 'function') schedulePersist();
   return wasDay !== S.day;
 }
@@ -199,14 +204,10 @@ function watchCalendar(){
       let need = checkWeek();
       /* заодно двигаем письма Eva Events по настоящему расписанию */
       if(typeof tickEvChain === 'function' && tickEvChain()) need = true;
+      if(typeof maybeShowWeek === 'function' && maybeShowWeek()) need = true;
       if(need) render();
     } catch(e){ console.error('[Eva] смена дня:', e); }
   }, 60000);
-}
-function nextWeek(){
-  S.week = weekNo() - 1;
-  S.seed = (S.seed || 0) + 1;
-  checkWeek(); render();
 }
 const doneOf = i => S.program[i] ? S.program[i].tasks.filter(t => t.done).length : 0;
 const starsTotal = () => S.program.length * 3;
@@ -606,8 +607,6 @@ function enter(){
   if(S.tourDone) setTimeout(() => toast('Три дня бесплатного доступа открыты'), 700);
   else setTimeout(tourStart, 650);
 }
-function skipAll(){ S.name='Гостья'; S.tags=['спокойствие','тревога','уверенность']; buildProgram(); S.screen='app'; render(); }
-
 /* ---------- роутер страниц ---------- */
 function page(){
   if(S.role === 'admin') return pgAdmin();
@@ -653,8 +652,6 @@ function resetViews(){
 function go(tab, pg){ resetViews(); S.tab = tab; S.page = pg || null; render(); window.scrollTo(0,0); }
 function openPage(p){ resetViews(); S.page = p; render(); window.scrollTo(0,0); }
 function back(){ resetViews(); S.page = null; render(); window.scrollTo(0,0); }
-function selDay(i){ if(i > todayIdx()) return toast('Этот день откроется позже'); S.day = i; render(); }
-
 /* =====================================================================
    ТОЧЕЧНЫЕ ОБНОВЛЕНИЯ БЕЗ ПЕРЕРИСОВКИ
    Клик по тегу или цене не должен перестраивать экран и сбрасывать скролл.

@@ -299,13 +299,6 @@ function pgPoints(){
   </div>`;
 }
 
-function exchange(){
-  S.weekly = S.weekly || {exchanged:false};
-  if(S.points < 100 || S.weekly.exchanged) return;
-  S.points -= 100; S.bonus += 50; S.weekly.exchanged = true;
-  render(); toast('100 баллов обменяны на 50 бонусов');
-}
-
 function pgBirth(){
   const z = zodiac(S.birth.date), m = moon(), cy = cycleNow();
   const born = S.birth.date ? new Date(S.birth.date) : null;
@@ -522,6 +515,8 @@ function pgSettings(){
         <span style="flex:1;font-size:13.5px;font-weight:600">Предложить доработку</span><span class="muted">›</span></button>
       <button class="uline" style="width:100%;text-align:left" onclick="tourAgain()">
         <span style="flex:1;font-size:13.5px;font-weight:600">Показать подсказки заново</span><span class="muted">›</span></button>
+      <button class="uline" style="width:100%;text-align:left" onclick="showWeekSum()">
+        <span style="flex:1;font-size:13.5px;font-weight:600">Итоги недели</span><span class="muted">›</span></button>
       <div class="uline"><span class="small muted" style="flex:1">Почта поддержки</span>
         <b style="font-size:12.5px">help@evaspace.ru</b></div>
     </div>

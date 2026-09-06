@@ -84,11 +84,40 @@ function persist(){
        и об обмене баллов: классы шли по кругу, а обмен можно было повторять */
     seenClasses:S.seenClasses, weekly:S.weekly, seenDm:S.seenDm, streak:S.streak,
     evChain:S.evChain, evFast:S.evFast, reviews:S.reviews, tourDone:S.tourDone,
+    lastWeek:S.lastWeek, weekShown:S.weekShown, weekMood:S.weekMood,
+    nudgedWeek:S.nudgedWeek, gdraft:S.gdraft,
     savedAt:Date.now()
   });
 }
+/* Всё, что принадлежит одной женщине. Раньше вход в другой аккаунт только
+   накладывал сверху сохранённое: чего у новой хозяйки не было - анкеты
+   знакомств, записей на встречи, переписки с Евой - оставалось от прошлой.
+   Теперь перед восстановлением личные поля возвращаются к исходным. */
+const PERSONAL = ['name','tags','topics','time','slot','answers','extra','points','stars','starsAll',
+  'bonus','streakDays','streak','courses','purchases','cart','joined','clubs','owned','avatar','birth',
+  'cycle','hd','hdAnswers','hdi','sub','week','seed','program','day','match','homework','myEvents',
+  'inbox','seenReplies','seenDm','myInts','datingProfile','starred','starredCmts','likes','visits',
+  'gentle','seenClasses','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
+  'weekMood','nudgedWeek','gdraft','qi','picked','eva'];
+
+let PRISTINE = null;
+/* снимок нетронутого состояния - делается один раз, при загрузке */
+function keepPristine(){
+  if(PRISTINE) return;
+  PRISTINE = {};
+  PERSONAL.forEach(k => { PRISTINE[k] = (k in S) ? JSON.stringify(S[k]) : undefined; });
+}
+function wipePersonal(){
+  keepPristine();
+  PERSONAL.forEach(k => {
+    if(PRISTINE[k] === undefined) delete S[k];
+    else S[k] = JSON.parse(PRISTINE[k]);
+  });
+}
+
 function restore(email){
   const d = DB.progress(email);
+  wipePersonal();
   if(!d) return false;
   Object.keys(d).forEach(k => {
     if(k === 'events') S.myEvents = d[k] || [];
@@ -287,20 +316,6 @@ function sceneSVG(part){
 }
 
 /* ---------- пожелание дня ---------- */
-const WISHES = [
-  'Пусть сегодня будет на одну заботу о себе больше, чем вчера.',
-  'Разреши себе сделать меньше, но по-настоящему.',
-  'Сегодня можно не быть удобной.',
-  'Пусть тело сегодня получит хотя бы десять минут внимания.',
-  'Ты не обязана заслуживать отдых.',
-  'Хороший день, чтобы сказать одно честное «нет».',
-  'Пусть сегодня будет тише, чем требует список дел.',
-  'Твоё состояние важнее твоей продуктивности.',
-  'Сегодня можно двигаться медленно и всё равно дойти.',
-  'Пусть найдётся минута, когда никто ничего от тебя не хочет.'
-];
-const wishOfDay = () => WISHES[(new Date().getDate() + new Date().getMonth()) % WISHES.length];
-
 /* ---------- аватары-портреты ---------- */
 function portrait(seed, size){
   const n = hash(seed), [c1,c2] = PAL[n % PAL.length], g = 'pt'+n.toString(36);
@@ -442,8 +457,3 @@ function avaLetter(name, size, cls){
     esc(String(name || 'Е')[0].toUpperCase())}</span>`;
 }
 /* аватар любого человека: по почте, иначе буква имени */
-function avaFor(email, name, size, cls){
-  const src = avatarOf(email);
-  return src ? avaImg(src, size) : avaLetter(name, size, cls);
-}
-

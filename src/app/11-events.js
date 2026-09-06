@@ -323,6 +323,14 @@ function evBadge(id){
 
 /* кнопки под письмом Eva Events */
 function evActions(m){
+  /* письма Евы про неделю живут в той же переписке, но своих кнопок
+     у мероприятий не имеют — разбираем их первыми */
+  if(m.act === 'weekMood') return `<div class="macts">${MOODS.map(x =>
+    `<button class="btn xs${x.k === 'good' ? ' acc' : ''}"
+      onclick="weekMood('${attJs(x.k)}')">${esc(x.n)}</button>`).join('')}</div>`;
+  if(m.act === 'openContent') return `<div class="macts">
+    <button class="btn xs acc" onclick="S.thread=null;go('content')">Открыть библиотеку</button>
+    <button class="btn xs" onclick="S.thread=null;go('home')">К моей неделе</button></div>`;
   const id = m.eid;
   const tick = m.ticket ? `<div class="macts"><button class="btn xs"
     onclick="openSheet({k:'ticket',id:'${attJs(id)}'})">Показать билет</button></div>` : '';

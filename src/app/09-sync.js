@@ -107,7 +107,10 @@ const BRANCHES = {
   media:      () => mediaLinks(),
   videos:     () => S.videos || {},
   covPos:     () => S.covPos || {},
-  wall:       () => (typeof WALL !== 'undefined' ? WALL.map(shareable) : []),
+  wall:       () => (typeof WALL !== 'undefined' ? WALL.map(shareable) : []).concat(TOMBS.wall),
+  chats:      () => Object.keys(S.chats || {}).reduce((acc, g) =>
+                acc.concat((S.chats[g] || []).filter(m => m && m.id)
+                  .map(m => ({...m, g, own:undefined}))), []).concat(TOMBS.chats),
   support:    () => (typeof INBOX !== 'undefined' ? INBOX : []),
   orders:     () => [...(typeof ORDERS !== 'undefined' ? ORDERS : []), ...(S.orders || [])],
   questions:  () => [...(typeof GOOD_QS !== 'undefined' ? GOOD_QS : []), ...(S.qs || [])],
@@ -119,6 +122,17 @@ const BRANCHES = {
 };
 
 const clean = o => JSON.parse(JSON.stringify(o));
+
+/* Надгробия: общий раздел на сервере умеет дописывать и обновлять записи,
+   но не умеет стирать — иначе одна женщина могла бы вычистить чужое.
+   Поэтому удалённое уезжает не «пропажей», а пометкой del: сервер обновит
+   запись по номеру, а при загрузке помеченное мы просто не показываем. */
+const TOMBS = {wall: [], chats: []};
+function tombWall(id){ TOMBS.wall.push({id: String(id), del: true, a: '', t: ''}); }
+function tombChat(gid, m){
+  if(m && m.id) TOMBS.chats.push({id: String(m.id), g: gid, del: true, a: '', c: ''});
+}
+const alive = list => (Array.isArray(list) ? list.filter(x => x && !x.del) : list);
 
 /* Из общих записей убираем всё, что верно только на этом устройстве.
    Метка «моё» раньше уезжала на сервер, и чужие послания приходили к другим
@@ -158,7 +172,7 @@ function syncPush(branches, immediate){
   if(SYNC.alive === false) return;
   const list = branches || ['lib','courses','lessons','modules','courseInfo','courseTags','courseKind',
     'goods','goodInfo','events','experts','pending','media','videos','covPos','adminInfo','avatars',
-    'groups'];
+    'groups','chats'];
   list.forEach(b => { if(BRANCHES[b]) SYNC.queue[b] = true; });
   clearTimeout(syncTimer);
   syncTimer = setTimeout(flushSync, immediate ? 0 : 800);
@@ -200,7 +214,6 @@ async function flushSync(){
 
 /* совместимость со старыми вызовами */
 function pushShared(){ syncPush(); }
-function pushBranch(branch, value){ syncPush([branch]); }
 
 /* ---------- страховка от неполных данных ----------
    Материал, курс или товар может прийти с сервера без части полей: сохранили
@@ -219,6 +232,17 @@ function fixList(list, fill){
 }
 
 const FIX = {
+  chats: x => {
+    x.id = String(x.id); x.g = okStr(x.g);
+    x.a = okStr(x.a, 'Гостья'); x.t = okStr(x.t); x.tm = okStr(x.tm);
+    x.c = okStr(x.c); x.email = okStr(x.email).toLowerCase();
+    x.at = okNum(x.at); x.exp = !!x.exp; x.curator = !!x.curator;
+    /* метка «моё» верна только на своём устройстве: узнаём автора по почте */
+    delete x.own;
+    x.re = x.re && typeof x.re === 'object'
+      ? {a:okStr(x.re.a), t:okStr(x.re.t)} : null;
+    return x;
+  },
   groups: x => {
     x.id = String(x.id); x.t = okStr(x.t, 'Сообщество');
     x.e = okStr(x.e, '🌸'); x.c = okStr(x.c, '#B64F7C');
@@ -340,7 +364,7 @@ function applyShared(sh){
   repl(GOODS, sh.goods);
   repl(EVENTS, sh.events);
   repl(GROUPS, sh.groups);
-  if(typeof WALL !== 'undefined')  repl(WALL, sh.wall);
+  if(typeof WALL !== 'undefined')  repl(WALL, alive(sh.wall));
   if(typeof INBOX !== 'undefined') repl(INBOX, sh.support);
   if(Array.isArray(sh.experts)) sh.experts.forEach(e => {
     const cur = EXPERTS.find(x => x.id === e.id);
@@ -349,6 +373,19 @@ function applyShared(sh){
   const maps = {courseInfo:COURSE_INFO, courseTags:COURSE_TAGS, courseKind:COURSE_KIND, goodInfo:GOOD_INFO};
   Object.keys(maps).forEach(k => { if(sh[k] && typeof sh[k] === 'object') Object.assign(maps[k], sh[k]); });
   if(sh.media)   Object.assign(MEDIA, sh.media);
+  if(Array.isArray(sh.chats) && sh.chats.length){
+    /* обратно из плоского списка в переписку по группам, по времени */
+    const by = {};
+    sh.chats.forEach(m => {
+      const g = okStr(m && m.g);
+      if(!g || !m.id || m.del) return;
+      (by[g] = by[g] || []).push(m);
+    });
+    S.chats = S.chats || {};
+    Object.keys(by).forEach(g => {
+      S.chats[g] = by[g].sort((a, b) => (a.at || 0) - (b.at || 0));
+    });
+  }
   if(sh.videos)  S.videos = Object.assign(S.videos || {}, sh.videos);
   if(sh.covPos)  S.covPos = Object.assign(S.covPos || {}, sh.covPos);
   if(sh.lessons) S.lessons = Object.assign(S.lessons || {}, sh.lessons);

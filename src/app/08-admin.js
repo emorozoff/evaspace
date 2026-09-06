@@ -1091,20 +1091,6 @@ function enterDemo(){
   render(); window.scrollTo(0,0);
   toast('Демо-режим: смотришь платформу глазами пользователя');
 }
-function exitDemo(){
-  S.role = S.demoRole || 'admin'; S.demo = false;
-  S.page = null; S.course = null; if(S.chat) S.chat.open = null;
-  render(); window.scrollTo(0,0);
-  toast('Вернулись в панель');
-}
-function demoBar(){
-  if(!S.demo) return '';
-  return `<div class="demobar">
-    <span style="flex:1">Демо-режим · ты смотришь платформу как пользователь</span>
-    <button onclick="exitDemo()">Вернуться в панель</button>
-  </div>`;
-}
-
 /* ---------- приветствие админа ---------- */
 function pickAdminAvatar(){
   pickImage('__admin__', data => {
@@ -1228,7 +1214,7 @@ function pgExpertRoom(){
       <div class="row" style="position:relative;z-index:2">
         <div class="pcirc" style="width:56px;height:56px">${expPic(e)}</div>
         <div style="flex:1"><h1 class="serif" style="font-size:22px;margin:0;color:#fff">${esc(e.n)} ${e.verified?'<span class="vt">✓</span>':''}</h1>
-          <p class="small muted" style="margin:3px 0 0">${e.r}</p></div>
+          <p class="small muted" style="margin:3px 0 0">${esc(e.r)}</p></div>
       </div>
       <div class="stats" style="grid-template-columns:repeat(3,1fr)">
         <div><b>${EXPERT_STATS.views > 999 ? (EXPERT_STATS.views/1000).toFixed(1)+'к' : EXPERT_STATS.views}</b><span>просмотров</span></div>
@@ -1431,40 +1417,6 @@ function exMsgs(){
   </div>`).join('')}`;
 }
 
-function exStats(){
-  const s = EXPERT_STATS, e = me();
-  return `
-  <div class="g2">
-    ${[['Просмотров', s.views.toLocaleString('ru-RU')],['Досматривают', s.done+'%'],
-       ['Учениц', s.students.toLocaleString('ru-RU')],['Рейтинг','★ '+e.rate],
-       ['Доход за месяц', money(s.income)],['По реф. ссылке', s.refs]].map(([l,v]) =>
-      `<div class="card" style="margin:0"><div class="small muted">${l}</div>
-        <div class="serif" style="font-size:23px;margin-top:4px">${v}</div></div>`).join('')}
-  </div>
-  <div class="card" style="margin-top:14px">
-    <b style="font-size:15px">Просмотры за неделю</b>
-    <div class="rep">${s.week.map((n,i) => `<div>
-      <i style="height:${n/Math.max(...s.week)*88}px"></i><span>${DAYS[i]}</span></div>`).join('')}</div>
-  </div>`;
-}
-
-function exRefs(){
-  const e = me();
-  const slug = e.n.split(' ')[0].toLowerCase();
-  return `
-  <p class="small muted" style="margin:0 0 14px">Обе ссылки открываются без подписки и работают как лендинг. Внутри видно, что можно оформить доступ ко всей платформе.</p>
-  ${[['Страница эксперта', `eva.space/e/${slug}`, 'Профиль, миссия, материалы и консультации'],
-     ['Курсы', `eva.space/e/${slug}/courses`, 'Каталог твоих курсов с оплатой'],
-     ['Реферальная на платформу', `eva.space/r/${slug}`, 'Приводит пользователей, ты получаешь процент']].map(([t,u,d]) => `
-    <div class="card">
-      <b style="font-size:14.5px">${t}</b>
-      <div class="small muted" style="margin:4px 0 8px">${d}</div>
-      <div class="linkbox">${u}</div>
-      <button class="btn ghost sm" style="margin-top:10px" onclick="copyText('https://${u}')">Скопировать</button>
-    </div>`).join('')}
-  <button class="btn" onclick="S.viewExpert='${attJs(e.id)}';S.page='expertPublic';render()">Открыть как гость</button>`;
-}
-
 function copyText(t){ if(navigator.clipboard) navigator.clipboard.writeText(t).catch(()=>{}); toast('Скопировано'); }
 
 function dropPending(id){
@@ -1475,13 +1427,9 @@ function verify(id){ const e = EXPERTS.find(x => x.id === id); e.verified = !e.v
   toast(e.verified ? 'Эксперт подтверждён' : 'Галочка снята'); }
 
 function setWho(id,i,v){ const e = EXPERTS.find(x=>x.id===id); e.who = e.who || ['Тревога и постоянное напряжение','Нет сил и хочется всё бросить']; e.who[i]=v; }
-function addWho(id){ const e = EXPERTS.find(x=>x.id===id); e.who = e.who || []; e.who.push('Новый пункт'); render(); }
-
 function dropExpTag(id, t){ const e = EXPERTS.find(x=>x.id===id); e.t = e.t.filter(x=>x!==t); render(); }
 function addExpTag(id, t){ const e = EXPERTS.find(x=>x.id===id); if(!e.t.includes(t)) e.t.push(t); S.sheet=null; render(); toast('Тема добавлена'); }
 function setAch(id,i,v){ const e = EXPERTS.find(x=>x.id===id); e.ach = e.ach||[]; e.ach[i]=v; }
-function addAch(id){ const e = EXPERTS.find(x=>x.id===id); e.ach = e.ach||[]; e.ach.push('Новое достижение'); render(); }
-
 /* ---------- образование эксперта ---------- */
 function exEduBlock(){
   const e = me();
@@ -1503,30 +1451,6 @@ function exEduBlock(){
   </div>`;
 }
 
-function exEdu(){
-  const e = me();
-  const edu = e.edu || [];
-  const ST = {approved:['подтверждено','st-paid'], pending:['на проверке','st-trial'], rejected:['отклонено','st-no']};
-  return `
-  <p class="small muted" style="margin:0 0 12px">Добавь дипломы и сертификаты. Администратор проверит документы: сами файлы ученицы не видят,
-    в карточке появится только строка об образовании с отметкой о проверке.</p>
-  <button class="btn" onclick="openSheet({k:'newEdu',id:'${attJs(e.id)}'})">＋ Добавить образование</button>
-
-  <div class="sec-h"><h2 class="serif">Мои документы</h2><span class="small muted">${edu.length}</span></div>
-  ${edu.length ? edu.map(x => `<div class="card">
-    <div class="spread">
-      <div style="flex:1"><b style="font-size:14px">${esc(x.t)}</b>
-        <div class="small muted">${x.y}</div></div>
-      <span class="tag-st ${ST[x.st][1]}">${ST[x.st][0]}</span>
-    </div>
-    ${x.comment ? `<div class="small" style="color:var(--warn);margin-top:8px">Редакция: ${esc(x.comment)}</div>` : ''}
-    <div class="row" style="margin-top:10px;gap:8px">
-      ${MEDIA['cert_'+x.id] ? `<img src="${safeUrl(MEDIA['cert_'+x.id])}" style="width:72px;height:52px;object-fit:cover;border-radius:10px">` : ''}
-      <button class="btn ghost sm" onclick="pickImage('cert_${x.id}')">${MEDIA['cert_'+x.id]?'Заменить скан':'Загрузить скан'}</button>
-      <button class="btn ghost sm" onclick="delEdu('${attJs(e.id)}','${attJs(x.id)}')">Удалить</button>
-    </div>
-  </div>`).join('') : '<div class="empty">Пока ничего не добавлено</div>'}`;
-}
 function delEdu(eid, id){
   const e = EXPERTS.find(x=>x.id===eid);
   e.edu = (e.edu||[]).filter(x => x.id !== id);
@@ -1745,16 +1669,6 @@ function saveExpertName(){
 
 
 /* ---------- шаблоны для профиля ---------- */
-const ABOUT_TPL = [
-  'Работаю с женщинами больше {N} лет. Пришла в профессию из собственного опыта: сначала помогла себе, потом это стало делом жизни. Веду в мягком темпе, без давления и обещаний быстрых результатов.',
-  'Помогаю женщинам вернуть контакт с собой в моменты, когда сил не осталось. В основе - {метод}, проверенный на практике и на себе. Не даю универсальных советов: у каждой своя история.',
-  'Веду практику с {ГОД} года. За это время через мои курсы и консультации прошло больше {N} женщин. Верю, что забота о себе - это не роскошь и не эгоизм, а условие, при котором хватает сил на остальное.'
-];
-const MISSION_TPL = [
-  'Показать женщине, что забота о себе занимает не два часа, а десять минут - и эти минуты меняют весь день.',
-  'Помочь женщине услышать свой голос раньше, чем голоса всех остальных.',
-  'Сделать так, чтобы женщина перестала выбирать между собой и близкими - и поняла, что это не выбор.'
-];
 const WHO_TPL = [
   'Постоянная тревога, которая стала фоном',
   'Нет сил, хотя внешне всё нормально',
@@ -1772,26 +1686,6 @@ const ACH_TPL = [
   'Супервизор в программе подготовки специалистов',
   'Больше {N} часов личной практики'
 ];
-function useTpl(sel, field, i, kind){
-  const arr = kind === 'about' ? ABOUT_TPL : MISSION_TPL;
-  const el = document.querySelector(sel);
-  if(el){ el.value = arr[i]; el.focus(); }
-  setExp(field, arr[i]);
-  toast('Шаблон подставлен - поправь под себя');
-}
-function addWhoTpl(id, text){
-  const e = EXPERTS.find(x => x.id === id);
-  e.who = e.who || [];
-  if(!e.who.includes(text)) e.who.push(text);
-  render(); syncPush(['experts']);
-}
-function addAchTpl(id, text){
-  const e = EXPERTS.find(x => x.id === id);
-  e.ach = e.ach || [];
-  if(!e.ach.includes(text)) e.ach.push(text);
-  render(); syncPush(['experts']);
-}
-
 function delWho(id, i){ const e = EXPERTS.find(x=>x.id===id); e.who.splice(i,1); render(); syncPush(['experts']); }
 function delAch(id, i){ const e = EXPERTS.find(x=>x.id===id); e.ach.splice(i,1); render(); syncPush(['experts']); }
 

@@ -413,7 +413,7 @@ function pgExpertPage(){
       </div>
       <div class="pcirc" style="width:92px;height:92px;margin:6px auto 0;border:2px solid rgba(255,255,255,.35)">${pic}</div>
       <div class="nm">${esc(e.n)} ${e.verified?'<span class="vt big">✓</span>':''}</div>
-      <div class="sub">${e.r}</div>
+      <div class="sub">${esc(e.r)}</div>
       <div class="mrow">
         <span class="mstat">★ ${e.rate}</span>
         <span class="mstat">${e.students.toLocaleString('ru-RU')} учениц</span>

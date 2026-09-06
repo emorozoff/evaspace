@@ -82,7 +82,7 @@ function pgCourseLanding(){
     <button class="card" style="width:100%;text-align:left;padding:12px" onclick="openExpert('${attJs(e.id)}')">
       <div class="row"><div class="pcirc" style="width:46px;height:46px">${expPic(e)}</div>
         <div style="flex:1"><b style="font-size:14px">${esc(e.n)} ${e.verified?'<span class="vt">✓</span>':''}</b>
-          <div class="small muted">${e.r} · ${e.exp} практики</div></div>
+          <div class="small muted">${esc(e.r)} · ${e.exp} практики</div></div>
         <span class="stars5">★ ${e.rate}</span></div>
     </button>
 
@@ -957,12 +957,6 @@ function answerInvite(id, yes){
   }, 1600);
 }
 
-function tgInt(btn, t){
-  S.myInts = S.myInts || [];
-  const on = S.myInts.includes(t);
-  S.myInts = on ? S.myInts.filter(x => x !== t) : [...S.myInts, t];
-  btn.classList.toggle('on', !on);
-}
 function toggleComments(id){
   S.openCmts = S.openCmts || [];
   S.openCmts = S.openCmts.includes(id) ? S.openCmts.filter(x => x !== id) : [...S.openCmts, id];
@@ -1034,10 +1028,16 @@ function initChats(){
      переписки, и отправка сообщения в неё падала */
   GROUPS.forEach(g => {
     if(!Array.isArray(S.chats[g.id]))
-      S.chats[g.id] = (CHAT_SEED[g.id]||[]).map(([a,c,t,tm,exp]) => ({a,c,t,tm,exp:!!exp,own:false}));
+      S.chats[g.id] = (CHAT_SEED[g.id]||[]).map(([a,c,t,tm,exp], i) =>
+        ({id:g.id + '_s' + i, a, c, t, tm, exp:!!exp, at:1000 + i}));
   });
   if(first || !S.chat) S.chat = {open:null, reply:null, unread:{gr2:2, gr3:1}};
 }
+
+/* Номер и время нужны каждому сообщению: по номеру сервер склеивает
+   переписку от разных женщин, по времени она выстраивается по порядку.
+   Без этого сообщения затирали друг друга при обмене. */
+const msgId = () => 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
 /* кому открыта группа: экспертная — только своим, клуб — по подписке */
 function canEnter(g){
@@ -1218,14 +1218,16 @@ function sendMsg(gid){
   const tm = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
   /* если отвечаем на чьё-то сообщение — цитата уезжает вместе с текстом */
   const r = S.chat.reply && S.chat.reply.g === gid ? (S.chats[gid] || [])[S.chat.reply.i] : null;
-  S.chats[gid].push({a: S.role === 'admin' ? (S.adminName || 'Куратор') : (S.name || 'Я'),
-    c: authorColor(myMail() || S.name), t, tm, own:true, email:myMail(),
+  S.chats[gid].push({id:msgId(), at:Date.now(),
+    a: S.role === 'admin' ? (S.adminName || 'Куратор') : (S.name || 'Я'),
+    c: authorColor(myMail() || S.name), t, tm, email:myMail(), own:true,
     curator: S.role === 'admin',
     re: r ? {a:r.a, t:String(r.t).slice(0, 90)} : null});
   inp.value = '';
   S.chat.reply = null;
   S.points += 5;
-  render(); scrollChat(); toast('+5 баллов за участие');
+  render(); scrollChat(); schedulePersist(); syncPush(['chats']);
+  toast('+5 баллов за участие');
   setTimeout(() => {
     const g = GROUPS.find(x => x.id === gid);
     const ex = EXPERTS[hash(gid) % EXPERTS.length];
@@ -1234,12 +1236,19 @@ function sendMsg(gid){
       'Хороший вопрос. Начни с самого малого шага, остальное подтянется.',
       'Отмечу это на ближайшем эфире, разберём подробнее.'
     ];
-    S.chats[gid].push({a:ex.n, c:authorColor(ex.n), t:replies[hash(t) % replies.length], tm,
-      exp:true, own:false, re:{a:S.name || 'Я', t:t.slice(0, 90)}});
+    S.chats[gid].push({id:msgId(), at:Date.now(), a:ex.n, c:authorColor(ex.n),
+      t:replies[hash(t) % replies.length], tm, exp:true,
+      re:{a:S.name || 'Я', t:t.slice(0, 90)}});
     if(S.chat.open === gid){ render(); scrollChat(); } else { S.chat.unread[gid] = (S.chat.unread[gid]||0)+1; }
   }, 1600);
 }
-function delMsg(gid, i){ S.chats[gid].splice(i,1); render(); toast('Сообщение удалено'); }
+function delMsg(gid, i){
+  const gone = S.chats[gid][i];
+  S.chats[gid].splice(i, 1);
+  tombChat(gid, gone);
+  render(); schedulePersist(); syncPush(['chats']);
+  toast('Сообщение удалено');
+}
 
 /* модерация ленты: удаление послания и отдельного комментария */
 function delPost(id){
@@ -1249,6 +1258,7 @@ function delPost(id){
   if(!isMine(w) && S.role !== 'admin') return toast('Убрать послание может только автор');
   if(!confirm('Удалить послание «' + String(w.t).slice(0, 60) + '…»? Вернуть будет нельзя.')) return;
   WALL.splice(WALL.indexOf(w), 1);
+  tombWall(id);
   S.openCmts = (S.openCmts||[]).filter(x => x !== id);
   render(); schedulePersist(); syncPush(['wall'], true);
   toast('Послание удалено');

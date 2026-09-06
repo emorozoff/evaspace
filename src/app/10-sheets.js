@@ -20,7 +20,7 @@ function sheet(){
     hint:shHint, addTag:shAddTag, cycle:shCycle, hd:shHD, consult:shConsult, write:shWrite,
     newContent:shNewContent, editContent:shEditContent, reject:shReject, rework:shRework,
     units:shUnits, groupInfo:shGroupInfo, newGroup:shNewGroup, fix:shFix, video:shVideo,
-    invite:shInvite, hello:shHello, askGroup:shAskGroup,
+    invite:shInvite, hello:shHello, askGroup:shAskGroup, weekSum:shWeekSum,
     hw:shHW, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
     install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
     service:shService, editUser:shEditUser,
@@ -52,7 +52,7 @@ function shLesson(){
     <button class="card" style="margin-top:14px;width:100%;text-align:left" onclick="closeSheet();openExpert('${attJs(e.id)}')">
       <div class="row"><div class="pcirc" style="width:42px;height:42px">${expPic(e)}</div>
         <div style="flex:1"><b style="font-size:14px">${esc(e.n)} ${e.verified?'<span class="vt">✓</span>':''}</b>
-          <div class="small muted">${e.r}</div></div>
+          <div class="small muted">${esc(e.r)}</div></div>
         <span class="stars5">★ ${e.rate}</span><span class="muted">›</span></div>
     </button>
 
@@ -81,7 +81,7 @@ function shCourse(){
     </div>
     <button class="card" style="width:100%;text-align:left" onclick="closeSheet();openExpert('${attJs(e.id)}')">
       <div class="row"><div class="pcirc" style="width:42px;height:42px">${expPic(e)}</div>
-      <div style="flex:1"><b style="font-size:14px">${esc(e.n)}</b><div class="small muted">${e.r}</div></div>
+      <div style="flex:1"><b style="font-size:14px">${esc(e.n)}</b><div class="small muted">${esc(e.r)}</div></div>
       <span class="muted">›</span></div></button>
     <button class="btn" onclick="buyCourse('${attJs(c.id)}')">Записаться за ${money(c.p - bonus)}</button>`;
 }
@@ -171,8 +171,6 @@ function openSheet(k){ S.sheet = k; render(); }
 function openIdea(){ S.sheet = 'idea'; render(); }
 function closeSheet(){ S.sheet = null; render(); }
 function openLesson(id){ S.sheet = {k:'lesson', id}; render(); }
-function openCourse(id){ S.sheet = {k:'course', id}; render(); }
-
 function tgTag(t){ S.tags = S.tags.includes(t) ? S.tags.filter(x => x !== t) : [...S.tags, t]; render(); }
 function rebuild(){ buildProgram(); S.sheet = null; S.gentle = false; render(); toast('Программа собрана заново'); }
 
@@ -244,8 +242,6 @@ function copyRef(){
   toast('Ссылка скопирована');
 }
 function restartQuiz(){ S.screen='quiz'; S.qi=0; S.picked=[]; S.tags=[]; S.sheet=null; S.page=null; render(); stars(); }
-function restart(){ S.screen = 'welcome'; S.tags = []; S.picked = []; S.qi = 0; S.sheet = null; S.page = null; render(); stars(); }
-
 /* ---------- старт ---------- */
 window.S = S; window.LIB = LIB;
 S.tags = ['спокойствие','тревога','уверенность'];
@@ -954,8 +950,6 @@ function keepEventFields(){
     const e = $('#' + id); if(e && e.value !== '') d[f] = +e.value || 0;
   });
 }
-function setEvDR(f, v){ keepEventFields(); evDraft()[f] = v; render(); }
-
 function shNewEvent(){
   const isAdmin = S.role === 'admin';
   const d = evDraft(), key = d.key;
@@ -1304,11 +1298,6 @@ function setEdu(eid, id, st){
   if(st === 'rejected') x.comment = (($('#ed_c')||{}).value || 'Документ не принят').trim();
   S.sheet = null; pushShared(); render();
   toast(st === 'approved' ? 'Образование подтверждено' : 'Отклонено, эксперт увидит комментарий');
-}
-function priceStep(v, dir){
-  const idx = Math.round((v - 490) / 500);
-  const next = Math.max(0, idx + dir);
-  return next === 0 ? 0 : 490 + next * 500;
 }
 function svStep(dir){ stepValue('svDraft.price', dir, '#svprice'); }
 function shService(){
