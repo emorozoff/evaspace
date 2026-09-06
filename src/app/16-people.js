@@ -26,7 +26,25 @@
 const PEOPLE = [];
 
 const personKey = m => String(m || '').toLowerCase().trim();
-const cardOf = mail => PEOPLE.find(p => personKey(p.id) === personKey(mail)) || null;
+
+/* Карточки демо-участниц: те же женщины, что в подборе знакомств и в ленте.
+   Живут отдельно от PEOPLE нарочно — PEOPLE целиком приходит с сервера и
+   перезаписывается при каждой синхронизации. Настоящая карточка всегда
+   сильнее демонстрационной: как только женщина с этой почтой заведёт свою,
+   показываем её. */
+function demoCard(mail){
+  const key = personKey(mail);
+  const m = typeof MEMBERS !== 'undefined' && MEMBERS.find(x => personKey(x.mail) === key);
+  if(!m) return null;
+  return {
+    id: key, n: m.n, city: m.city === 'Онлайн' ? '' : m.city, about: m.bio,
+    since: Date.now() - (120 + m.age) * 864e5,
+    ints: m.ints || [], shelf: [], follows: [], mates: [], showMates: false,
+    next: [], past: [], demo: true,
+    dating: m.open ? {goal:'Знакомства и совместные практики', city:m.city} : null
+  };
+}
+const cardOf = mail => PEOPLE.find(p => personKey(p.id) === personKey(mail)) || demoCard(mail);
 
 /* ---------- своя карточка ---------- */
 function myCard(){
@@ -175,23 +193,90 @@ function toggleMate(mail){
                     : 'Отметила. Станете знакомы, когда она ответит тем же');
 }
 
+/* ---------- имена, которые мы уже видели ----------
+   Карточка есть не у всех: женщина, которая ещё не открывала новую версию,
+   в PEOPLE не попала. Но её имя мы только что показали рядом с аватаром —
+   запоминаем, чтобы её страница была с именем, а не «участница». */
+const NAMES = {};
+function rememberName(mail, name){
+  const key = personKey(mail);
+  if(key && name && !NAMES[key]) NAMES[key] = String(name);
+}
+const nameOf = mail => (cardOf(mail) || {}).n || NAMES[personKey(mail)] || 'Участница';
+
+/* эксперт — по почте его же аккаунта: у него своя страница, не эта */
+function expertByMail(mail){
+  const key = personKey(mail);
+  if(!key || typeof EXPERTS === 'undefined') return null;
+  return EXPERTS.find(e => personKey(e.email || e.mail) === key) || null;
+}
+
 /* ---------- переход на страницу ---------- */
 function openPerson(mail){
   const key = personKey(mail);
   if(!key) return;
   if(key === myMail()){ openPage('profile'); return; }
+  const ex = expertByMail(key);
+  if(ex) return openExpert(ex.id);
   S.viewPerson = key; S.page = 'person'; S.sheet = null;
   S.viewExpert = null; S.course = null; S.viewGood = null;
+  S.thread = null; S.viewGood = null;
   if(S.chat) S.chat.open = null;
   render(); window.scrollTo(0, 0);
 }
 function closePerson(){ S.viewPerson = null; S.page = null; render(); window.scrollTo(0, 0); }
 
+/* Один обработчик на всё приложение вместо onclick у каждого аватара.
+   Ставим его на перехвате: аватар часто лежит внутри кнопки — строки письма,
+   карточки поста, — и без перехвата сначала сработала бы кнопка вокруг. */
+document.addEventListener('click', e => {
+  const el = e.target && e.target.closest && e.target.closest('[data-p],[data-x]');
+  if(!el) return;
+  const mail = el.getAttribute('data-p'), exp = el.getAttribute('data-x');
+  if(!mail && !exp) return;
+  e.preventDefault(); e.stopPropagation();
+  if(exp) openExpert(exp); else openPerson(mail);
+}, true);
+
 /* имя автора становится ссылкой только там, где мы знаем почту */
 function personLink(name, mail, cls){
   const key = personKey(mail);
+  if(key) rememberName(key, name);
   if(!key || key === myMail()) return esc(name || '');
   return `<button class="plink ${cls || ''}" onclick="event.stopPropagation();openPerson('${attJs(key)}')">${esc(name || '')}</button>`;
+}
+
+/* Женщина, которая ещё не открывала новую версию, карточки не имеет.
+   Пустой экран «страница не заполнена» — тупик: непонятно, к кому попал
+   и что делать. Поэтому показываем то, что знаем, и оставляем главное
+   действие — познакомиться. Когда она зайдёт, страница наполнится сама. */
+function pgPersonBlank(mail){
+  const key = personKey(mail);
+  const n = nameOf(key);
+  return `<div class="view">
+    <div class="exphead">
+      <div class="brandbar" style="margin:0">
+        <button onclick="closePerson()" style="color:#fff;font-size:20px;width:30px;text-align:left">‹</button>
+        <div class="b">Участница</div><div style="width:30px"></div>
+      </div>
+      <div class="pcirc" style="width:92px;height:92px;margin:6px auto 0;border:2px solid rgba(255,255,255,.35)">
+        ${chatAva(n, authorColor(key), false, 92, key)}</div>
+      <div class="nm">${esc(n)}</div>
+    </div>
+    <div class="pad" style="padding-top:16px">
+      <div class="row" style="gap:8px">
+        <button class="btn" style="flex:1"
+          onclick="toast('Написать можно той, с кем вы знакомы')">Написать</button>
+        <button class="btn ${iAdded(key) ? 'done' : 'ghost'}" style="flex:1"
+          onclick="toggleMate('${attJs(key)}')">${iAdded(key) ? 'Ждём ответа' : 'Познакомиться'}</button>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <b style="font-size:14.5px">Страница пока пустая</b>
+        <p class="small muted" style="margin:7px 0 0">${esc(n)} ещё не заполняла её.
+          Отметь знакомство — она увидит это у себя, и вы сможете написать друг другу.</p>
+      </div>
+    </div>
+  </div>`;
 }
 
 /* =====================================================================
@@ -202,8 +287,7 @@ function personLink(name, mail, cls){
    ===================================================================== */
 function pgPerson(){
   const c = cardOf(S.viewPerson);
-  if(!c) return `<div class="view pad">${backBtn('Назад')}
-    <div class="empty">Страница пока не заполнена</div></div>`;
+  if(!c) return pgPersonBlank(S.viewPerson);
 
   const mates = areMates(c.id);
   const waiting = iAdded(c.id) && !sheAdded(c.id);
@@ -242,6 +326,9 @@ function pgPerson(){
       </div>
       ${!mates && waiting ? `<p class="small muted" style="margin:8px 0 0;text-align:center">
         Она увидит это у себя. Писать можно, когда отметит в ответ.</p>` : ''}
+      ${c.demo ? `<p class="small muted" style="margin:8px 0 0;text-align:center">
+        Это показательная анкета — такие страницы платформа собирает сама,
+        пока не набрались настоящие.</p>` : ''}
 
       ${circleRow('Читает', 'эксперты', follows.map(e => ({
         id:e.id, n:e.n.split(' ')[0], mail:'', ring:expertHasNew(e.id),

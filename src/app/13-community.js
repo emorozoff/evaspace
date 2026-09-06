@@ -269,7 +269,7 @@ function gTabTeam(g){
     return `<div class="card gmember">
       <div class="row" style="gap:11px">
         <div class="tpic" style="width:38px;height:38px">
-          ${ex ? expPic(ex) : chatAva(m.n, authorColor(m.n), false, 38, m.mail)}</div>
+          ${ex ? expPic(ex) : chatAva(m.n, authorColor(m.n), false, 38, m.mail || demoMail(m.n))}</div>
         <div style="flex:1;min-width:0">
           <b style="font-size:14px;display:block">${esc(m.n)}</b>
           <span class="small muted" style="font-size:11.5px">${esc(r.n)} · ${esc(r.s)}</span>
@@ -394,7 +394,7 @@ function shHello(){
     <div class="hellonote">
       <div class="row" style="gap:10px;margin-bottom:9px">
         ${lead ? `<div class="pcirc" style="width:34px;height:34px;flex:none">${expPic(lead)}</div>`
-               : chatAva(g.lead || 'Ева', safeColor(g.c), false, 34)}
+               : chatAva(g.lead || 'Ева', safeColor(g.c), false, 34, demoMail(g.lead))}
         <div><b style="font-size:13.5px;display:block">${esc(g.lead || 'Ведущая')}</b>
           <span class="small muted" style="font-size:11px">ведёт сообщество</span></div>
       </div>

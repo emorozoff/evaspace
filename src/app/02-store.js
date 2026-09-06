@@ -328,12 +328,12 @@ function sceneSVG(part){
 
 /* ---------- пожелание дня ---------- */
 /* ---------- аватары-портреты ---------- */
-function portrait(seed, size){
+function portrait(seed, size, tag){
   const n = hash(seed), [c1,c2] = PAL[n % PAL.length], g = 'pt'+n.toString(36);
   const skin = ['#F2D2BE','#E8BFA4','#D9A583','#C08A66'][n % 4];
   const hair = ['#3A2418','#6B4226','#2E1B36','#8A5A3B','#B0705A'][n % 5];
   const long = n % 3;
-  return `<svg viewBox="0 0 100 100" style="width:${size||'100%'};height:${size||'100%'};display:block">
+  return `<svg viewBox="0 0 100 100"${tag || ''} style="width:${size||'100%'};height:${size||'100%'};display:block">
     <defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs>
     <rect width="100" height="100" fill="url(#${g})"/>
@@ -585,13 +585,19 @@ function tipRating(){
 
 
 /* картинка эксперта: загруженное фото или сгенерированный портрет */
-function expPic(e){
+/* Фото эксперта. Метка data-x работает так же, как data-p у участниц:
+   по ней общий обработчик открывает страницу эксперта — из ленты, из
+   команды сообщества, из шапки группы. Ставим её только там, где сам
+   эксперт известен: у случайной картинки открывать нечего. */
+function expPic(e, noLink){
   if(!e) return '';
   const rec = typeof e === 'string' ? ((typeof EXPERTS !== 'undefined' && EXPERTS.find(x => x.id === e)) || {id:e}) : e;
   const id = rec.id;
+  const known = typeof EXPERTS !== 'undefined' && EXPERTS.some(x => x.id === id);
+  const tag = known && !noLink ? ` data-x="${attJs(id)}" title="Открыть страницу эксперта"` : '';
   /* сначала фото, загруженное в карточку эксперта, потом — аватар её аккаунта */
   const src = MEDIA[id] || (rec.email ? avatarOf(rec.email) : '') || (rec.mail ? avatarOf(rec.mail) : '');
-  return src ? `<img src="${safeUrl(src)}" alt="">` : portrait(id);
+  return src ? `<img src="${safeUrl(src)}" alt=""${tag}>` : portrait(id, null, tag);
 }
 
 
@@ -633,9 +639,9 @@ function isMine(rec){
   if(his) return !!me && his === me;
   return !me && !!rec.own;          /* старые записи без почты — только до входа */
 }
-function avaImg(src, size){
+function avaImg(src, size, tag){
   const s = size || 36;
-  return `<img src="${safeUrl(src)}" alt="" style="width:${s}px;height:${s}px;border-radius:50%;object-fit:cover;flex:none">`;
+  return `<img src="${safeUrl(src)}" alt=""${tag || ''} style="width:${s}px;height:${s}px;border-radius:50%;object-fit:cover;flex:none">`;
 }
 function avaLetter(name, size, cls){
   const s = size || 36;

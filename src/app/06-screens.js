@@ -409,7 +409,7 @@ function pgExpertPage(){
   const courses = COURSES.filter(c => c.e === e.n);
   const mats = LIB.filter(x => x.expert === e.n);
   const rev = (REVIEWS[courses[0] ? courses[0].id : 'k1'] || []).slice(0,2);
-  const pic = expPic(e);
+  const pic = expPic(e, true);
   return `<div class="view">
     <div class="exphead">
       <div class="brandbar" style="margin:0">

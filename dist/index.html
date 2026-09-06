@@ -1159,6 +1159,14 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .starcorner{position:absolute;top:8px;right:8px;z-index:4}
 .starcorner .starbtn{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;
   background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(17,16,20,.14)}
+
+/* Аватар с меткой data-p ведёт на страницу женщины — везде, где он есть:
+   в ленте, в комментарии, в переписке, в списке команды сообщества. */
+[data-p]{cursor:pointer}
+/* имя на белом по фотографии: пунктир под ним должен быть виден */
+.plink.light{color:#fff;border-bottom-color:rgba(255,255,255,.5)}
+.plink.light:hover{border-bottom-color:#fff}
+[data-x]{cursor:pointer}
 </style>
 </head>
 <body>
@@ -1989,18 +1997,32 @@ const MODULES = {
 const INTERESTS = ['йога','бег','падел','теннис','плавание','путешествия','книги','кино','психология',
   'кулинария','танцы','горы','фотография','искусство','медитация','материнство','бизнес','языки','музыка','волонтёрство'];
 
+/* Номера анкет начинаются с d, а не с m: у мастер-классов в библиотеке
+   номера тоже были m1…m12, а фото и там и там берутся из MEDIA по номеру —
+   обложка мастер-класса «Тело как дом» показывалась в анкете Оксаны. */
 const MEMBERS = [
-  {id:'m1', n:'Настя', age:33, city:'Москва', bio:'Медитирую по утрам, ищу подругу для совместных практик', ints:['медитация','йога','книги'], open:true},
-  {id:'m2', n:'Ирина', age:29, city:'Москва', bio:'Играю в падел, зову на корт по выходным', ints:['падел','бег','путешествия'], open:true},
-  {id:'m3', n:'Камила', age:27, city:'Санкт-Петербург', bio:'Люблю кино и долгие разговоры о жизни', ints:['кино','искусство','психология'], open:true},
-  {id:'m4', n:'Лена', age:36, city:'Москва', bio:'Мама двоих, хочу общения не только про детей', ints:['материнство','кулинария','танцы'], open:true},
-  {id:'m5', n:'Юля', age:31, city:'Онлайн', bio:'Живу в Тбилиси, готова созваниваться в зуме', ints:['путешествия','языки','бизнес'], open:true},
-  {id:'m6', n:'Даша', age:41, city:'Екатеринбург', bio:'Хожу в горы, ищу компанию на выходные', ints:['горы','фотография','бег'], open:true},
-  {id:'m7', n:'Марина', age:38, city:'Москва', bio:'Пишу книгу, люблю тихие кофейни', ints:['книги','искусство','кофе'], open:true},
-  {id:'m8', n:'Света', age:34, city:'Казань', bio:'Плаваю, бегаю, зову на утренние тренировки', ints:['плавание','бег','йога'], open:true},
-  {id:'m9', n:'Ника', age:26, city:'Онлайн', bio:'Учу испанский, ищу собеседниц', ints:['языки','музыка','танцы'], open:true},
-  {id:'m10', n:'Оля', age:45, city:'Москва', bio:'Дети выросли, открываю жизнь заново', ints:['путешествия','волонтёрство','искусство'], open:true}
+  {id:'d1', mail:'nastya@demo.evaspace.ru', n:'Настя', age:33, city:'Москва', bio:'Медитирую по утрам, ищу подругу для совместных практик', ints:['медитация','йога','книги'], open:true},
+  {id:'d2', mail:'irina@demo.evaspace.ru', n:'Ирина', age:29, city:'Москва', bio:'Играю в падел, зову на корт по выходным', ints:['падел','бег','путешествия'], open:true},
+  {id:'d3', mail:'kamila@demo.evaspace.ru', n:'Камила', age:27, city:'Санкт-Петербург', bio:'Люблю кино и долгие разговоры о жизни', ints:['кино','искусство','психология'], open:true},
+  {id:'d4', mail:'lena@demo.evaspace.ru', n:'Лена', age:36, city:'Москва', bio:'Мама двоих, хочу общения не только про детей', ints:['материнство','кулинария','танцы'], open:true},
+  {id:'d5', mail:'yulia@demo.evaspace.ru', n:'Юля', age:31, city:'Онлайн', bio:'Живу в Тбилиси, готова созваниваться в зуме', ints:['путешествия','языки','бизнес'], open:true},
+  {id:'d6', mail:'dasha@demo.evaspace.ru', n:'Даша', age:41, city:'Екатеринбург', bio:'Хожу в горы, ищу компанию на выходные', ints:['горы','фотография','бег'], open:true},
+  {id:'d7', mail:'marina@demo.evaspace.ru', n:'Марина', age:38, city:'Москва', bio:'Пишу книгу, люблю тихие кофейни', ints:['книги','искусство','кофе'], open:true},
+  {id:'d8', mail:'sveta@demo.evaspace.ru', n:'Света', age:34, city:'Казань', bio:'Плаваю, бегаю, зову на утренние тренировки', ints:['плавание','бег','йога'], open:true},
+  {id:'d9', mail:'nika@demo.evaspace.ru', n:'Ника', age:26, city:'Онлайн', bio:'Учу испанский, ищу собеседниц', ints:['языки','музыка','танцы'], open:true},
+  {id:'d10', mail:'olya@demo.evaspace.ru', n:'Оля', age:45, city:'Москва', bio:'Дети выросли, открываю жизнь заново', ints:['путешествия','волонтёрство','искусство'], open:true},
+  {id:'d11', mail:'oksana@demo.evaspace.ru', n:'Оксана', age:39, city:'Казань', bio:'Хожу на женские круги, люблю разговоры по душам', ints:['психология','книги','кофе'], open:true}
 ];
+
+/* Демо-участницы — тот же список, что в подборе знакомств. Он же связывает
+   имена в ленте и в переписке с их страницами: у демо-женщин настоящих
+   аккаунтов нет, поэтому адреса свои, на demo.evaspace.ru — с живой почтой
+   они не столкнутся никогда.
+   Как только у этой почты появится настоящая карточка, показываем её. */
+const demoMail = name => {
+  const m = MEMBERS.find(x => x.n === name);
+  return m ? m.mail : '';
+};
 
 /* =====================================================================
    ЦЕЛЕВЫЕ ГРУППЫ И УРОВЕНЬ ПОДГОТОВКИ
@@ -2384,12 +2406,12 @@ function sceneSVG(part){
 
 /* ---------- пожелание дня ---------- */
 /* ---------- аватары-портреты ---------- */
-function portrait(seed, size){
+function portrait(seed, size, tag){
   const n = hash(seed), [c1,c2] = PAL[n % PAL.length], g = 'pt'+n.toString(36);
   const skin = ['#F2D2BE','#E8BFA4','#D9A583','#C08A66'][n % 4];
   const hair = ['#3A2418','#6B4226','#2E1B36','#8A5A3B','#B0705A'][n % 5];
   const long = n % 3;
-  return `<svg viewBox="0 0 100 100" style="width:${size||'100%'};height:${size||'100%'};display:block">
+  return `<svg viewBox="0 0 100 100"${tag || ''} style="width:${size||'100%'};height:${size||'100%'};display:block">
     <defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs>
     <rect width="100" height="100" fill="url(#${g})"/>
@@ -2641,13 +2663,19 @@ function tipRating(){
 
 
 /* картинка эксперта: загруженное фото или сгенерированный портрет */
-function expPic(e){
+/* Фото эксперта. Метка data-x работает так же, как data-p у участниц:
+   по ней общий обработчик открывает страницу эксперта — из ленты, из
+   команды сообщества, из шапки группы. Ставим её только там, где сам
+   эксперт известен: у случайной картинки открывать нечего. */
+function expPic(e, noLink){
   if(!e) return '';
   const rec = typeof e === 'string' ? ((typeof EXPERTS !== 'undefined' && EXPERTS.find(x => x.id === e)) || {id:e}) : e;
   const id = rec.id;
+  const known = typeof EXPERTS !== 'undefined' && EXPERTS.some(x => x.id === id);
+  const tag = known && !noLink ? ` data-x="${attJs(id)}" title="Открыть страницу эксперта"` : '';
   /* сначала фото, загруженное в карточку эксперта, потом — аватар её аккаунта */
   const src = MEDIA[id] || (rec.email ? avatarOf(rec.email) : '') || (rec.mail ? avatarOf(rec.mail) : '');
-  return src ? `<img src="${safeUrl(src)}" alt="">` : portrait(id);
+  return src ? `<img src="${safeUrl(src)}" alt=""${tag}>` : portrait(id, null, tag);
 }
 
 
@@ -2689,9 +2717,9 @@ function isMine(rec){
   if(his) return !!me && his === me;
   return !me && !!rec.own;          /* старые записи без почты — только до входа */
 }
-function avaImg(src, size){
+function avaImg(src, size, tag){
   const s = size || 36;
-  return `<img src="${safeUrl(src)}" alt="" style="width:${s}px;height:${s}px;border-radius:50%;object-fit:cover;flex:none">`;
+  return `<img src="${safeUrl(src)}" alt=""${tag || ''} style="width:${s}px;height:${s}px;border-radius:50%;object-fit:cover;flex:none">`;
 }
 function avaLetter(name, size, cls){
   const s = size || 36;
@@ -5059,6 +5087,11 @@ function wallDraft(box){
 
 /* Карточка послания: имя, текст, звезда и ответы. Больше ничего —
    послание должно писаться и читаться за несколько секунд. */
+/* У демо-посланий почты в данных нет — они написаны до того, как появились
+   аккаунты. Достаём её по имени из списка демо-участниц: иначе имя и аватар
+   в ленте никуда не ведут, а это первое место, где на них нажимают. */
+const authorMail = x => (x && x.email) || (x && !x.curator && !x.exp && demoMail(x.a)) || '';
+
 function wallCard(w){
   const liked = (S.starred||[]).includes(w.id);
   const mine = isMine(w);
@@ -5069,9 +5102,9 @@ function wallCard(w){
 
   return `<div class="wallpost" style="--kc:${safeColor(col)}">
     <div class="wtop">
-      ${chatAva(w.a, col, mine, 38, w.email)}
+      ${chatAva(w.a, col, mine, 38, authorMail(w))}
       <div style="flex:1;min-width:0">
-        <b style="font-size:14px;display:block">${personLink(w.a, w.email)}${mine?' · ты':''}</b>
+        <b style="font-size:14px;display:block">${personLink(w.a, authorMail(w))}${mine?' · ты':''}</b>
         <span class="small muted" style="font-size:11px">${esc(w.city || '')}${w.city?' · ':''}${esc(w.ago)}</span>
       </div>
       ${canDrop ? `<button class="wdel" title="Удалить"
@@ -5102,7 +5135,7 @@ function wallCard(w){
         </div>
       </div>`
     : cmts.length ? `<button class="cmtpeek" onclick="toggleComments('${attJs(w.id)}')">
-        ${chatAva(cmts[0].a, authorColor(cmts[0].email || cmts[0].a), isMine(cmts[0]), 22, cmts[0].email)}
+        ${chatAva(cmts[0].a, authorColor(cmts[0].email || cmts[0].a), isMine(cmts[0]), 22, authorMail(cmts[0]))}
         <span><b>${esc(cmts[0].a)}:</b> ${esc(cmts[0].t.slice(0,38))}${cmts[0].t.length>38?'…':''}</span>
         ${cmts.length > 1 ? `<span class="cmtmore">ещё ${cmts.length - 1}</span>` : ''}
       </button>` : ''}
@@ -5118,10 +5151,10 @@ function commentRow(w, c, ci){
   const starred = (S.starredCmts||[]).includes(w.id + ':' + ci);
   const canDrop = mine || S.role === 'admin';
   return `<div class="cmt${mine?' own':''}" style="--ac:${safeColor(col)}">
-    ${chatAva(c.a, col, mine, 28, c.email)}
+    ${chatAva(c.a, col, mine, 28, authorMail(c))}
     <div style="flex:1;min-width:0">
       <div class="crow">
-        <b style="font-size:12.5px;color:${safeColor(col)}">${c.curator ? esc(c.a) : personLink(c.a, c.email)}${mine?' · ты':''}</b>
+        <b style="font-size:12.5px;color:${safeColor(col)}">${c.curator ? esc(c.a) : personLink(c.a, authorMail(c))}${mine?' · ты':''}</b>
         ${author ? '<span class="badge-au">автор</span>' : ''}
         ${c.curator ? '<span class="badge-cur">куратор</span>' : ''}
         <span class="small muted" style="font-size:10px;margin-left:auto">${esc(c.ago)}</span>
@@ -5219,7 +5252,7 @@ function datingBlock(){
     ${m ? `<div class="mcard">
       <div class="mphoto">${MEDIA[m.id] ? `<img src="${safeUrl(MEDIA[m.id])}" alt="">` : portrait(m.id)}
         <div class="mname">
-          <b>${esc(m.n)}, ${m.age}</b>
+          <b>${personLink(m.n, m.mail, 'light')}, ${m.age}</b>
           <span>${fmt === 'кофе' ? m.city : m.city === 'Онлайн' ? 'онлайн' : m.city + ' · онлайн'}</span>
         </div>
       </div>
@@ -5505,9 +5538,9 @@ function pgChatRoom(){
     <div class="pad">
       <div class="chatlist" id="clist">
         ${msgs.map((m,i) => `<div class="cmsg ${chatMine(m)?'own':''}" id="msg_${esc(g.id)}_${i}">
-          ${!chatMine(m) ? chatAva(m.a, m.c || authorColor(m.email || m.a), false, 32, m.email) : ''}
+          ${!chatMine(m) ? chatAva(m.a, m.c || authorColor(m.email || m.a), false, 32, authorMail(m)) : ''}
           <div class="txt">
-            ${!chatMine(m) ? `<div class="nm">${m.exp || m.curator ? esc(m.a) : personLink(m.a, m.email)}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
+            ${!chatMine(m) ? `<div class="nm">${m.exp || m.curator ? esc(m.a) : personLink(m.a, authorMail(m))}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
             ${m.re ? `<div class="requote"><b>${esc(m.re.a)}</b><span>${esc(m.re.t)}</span></div>` : ''}
             <div class="mtext">${esc(m.t)}</div>
             <div class="tm">
@@ -5554,13 +5587,20 @@ function chatMine(m){
   return his ? his === myMail() : !!m.own;
 }
 
-/* аватар автора: своё фото у себя, буква у остальных */
+/* аватар автора: своё фото у себя, буква у остальных.
+   Если почта известна и это не я — на аватар вешается метка data-p, и по
+   ней открывается страница. Метка, а не onclick: аватар часто лежит внутри
+   кнопки (строка письма, карточка поста), и вложенная кнопка — сломанная
+   разметка. Один общий обработчик разбирает метку на перехвате. */
 function chatAva(name, color, own, size, email){
   const s = size || 32;
+  const key = personKey(email);
+  if(key && name) rememberName(key, name);
+  const tag = key && key !== myMail() ? ` data-p="${attJs(key)}" title="Открыть страницу"` : '';
   /* почта автора важнее любых меток: так фото не перескакивают между людьми */
   if(email){
     const src = avatarOf(email);
-    if(src) return avaImg(src, s);
+    if(src) return avaImg(src, s, tag);
     own = String(email).toLowerCase() === myMail();
   }
   if(own && S.role === 'admin' && S.adminAvatar) return avaImg(S.adminAvatar, s);
@@ -5570,7 +5610,7 @@ function chatAva(name, color, own, size, email){
     if(mine) return avaImg(mine, s);
   }
   const initials = String(name || '?').split(' ').map(w => w[0]).join('').slice(0,2);
-  return `<div class="dot-ava" style="width:${s}px;height:${s}px;background:${safeColor(color)}">${esc(initials)}</div>`;
+  return `<div class="dot-ava"${tag} style="width:${s}px;height:${s}px;background:${safeColor(color)}">${esc(initials)}</div>`;
 }
 
 function sendMsg(gid){
@@ -5696,7 +5736,7 @@ function pgInbox(){
     ${S.inbox.map(t => {
       const last = t.msgs[t.msgs.length-1];
       return `<button class="gitem ${t.unread?'unreadrow':''}" onclick="openThread('${attJs(t.id)}')">
-        ${chatAva(t.from, t.c, false, 42, t.email)}
+        ${chatAva(t.from, t.c, false, 42, authorMail({email:t.email, a:t.from, exp:t.exp}))}
         <div style="flex:1;min-width:0">
           <div class="spread"><b style="font-size:14px">${esc(t.from)}${t.exp?' <span class="badge-exp">эксперт</span>':''}</b>
             <span class="small muted" style="font-size:10.5px">${esc(t.ago)}</span></div>
@@ -5720,13 +5760,13 @@ function pgThread(){
   return `<div class="view pad chatview">
     <button class="backbtn" onclick="S.thread=null;render()">‹ Сообщения</button>
     <div class="row" style="margin:12px 0 6px">
-      ${chatAva(t.from, t.c, false, 40, t.email)}
+      ${chatAva(t.from, t.c, false, 40, authorMail({email:t.email, a:t.from, exp:t.exp}))}
       <div><b style="font-size:15px">${esc(t.from)}</b>
         <div class="small muted">${esc(t.kind)}</div></div>
     </div>
     <div class="chatlist">
       ${t.msgs.map(m => `<div class="cmsg ${m.me?'own':''}">
-        ${!m.me ? chatAva(t.from, t.c, false, 32, t.email) : ''}
+        ${!m.me ? chatAva(t.from, t.c, false, 32, authorMail({email:t.email, a:t.from, exp:t.exp})) : ''}
         <div class="txt">
           ${m.when ? `<div class="mwhen">${esc(m.when)}</div>` : ''}
           <div class="mtext">${esc(m.t)}</div>
@@ -6213,7 +6253,7 @@ function pgExpertPage(){
   const courses = COURSES.filter(c => c.e === e.n);
   const mats = LIB.filter(x => x.expert === e.n);
   const rev = (REVIEWS[courses[0] ? courses[0].id : 'k1'] || []).slice(0,2);
-  const pic = expPic(e);
+  const pic = expPic(e, true);
   return `<div class="view">
     <div class="exphead">
       <div class="brandbar" style="margin:0">
@@ -9075,7 +9115,7 @@ function pgExpertRoom(){
           </select>` : ''}
         </div></div>
       <div class="row" style="position:relative;z-index:2">
-        <div class="pcirc" style="width:56px;height:56px">${expPic(e)}</div>
+        <div class="pcirc" style="width:56px;height:56px">${expPic(e, true)}</div>
         <div style="flex:1"><h1 class="serif" style="font-size:22px;margin:0;color:#fff">${esc(e.n)} ${e.verified?'<span class="vt">✓</span>':''}</h1>
           <p class="small muted" style="margin:3px 0 0">${esc(e.r)}</p></div>
       </div>
@@ -9105,7 +9145,7 @@ function exProfile(){
   const e = me();
   return `
   <div class="card" style="text-align:center">
-    <div class="pcirc" style="width:96px;height:96px;margin:0 auto 12px">${expPic(e)}</div>
+    <div class="pcirc" style="width:96px;height:96px;margin:0 auto 12px">${expPic(e, true)}</div>
     <b style="font-size:16px">${esc(e.n)}</b>
     <div class="small muted">${e.verified ? 'Аккаунт подтверждён редакцией' : 'Ожидает подтверждения'}</div>
     <button class="btn ghost sm" style="margin-top:10px" onclick="pickImage('${attJs(e.id)}')">Сменить фото</button>
@@ -9472,7 +9512,7 @@ function exSettings(){
 
   <div class="card" style="text-align:center">
     <div style="width:88px;height:88px;margin:0 auto 12px;position:relative">
-      <div class="pcirc" style="width:88px;height:88px">${expPic(e)}</div>
+      <div class="pcirc" style="width:88px;height:88px">${expPic(e, true)}</div>
       <button class="camera" onclick="pickImage('${attJs(e.id)}')">▣</button>
     </div>
     <div class="small muted">Фото на публичной странице</div>
@@ -11014,7 +11054,7 @@ function shGroupInfo(){
     ${g.lead ? `<div class="gplate">
       <div class="row" style="gap:10px">
         ${lead ? `<div class="pcirc" style="width:42px;height:42px;flex:none">${expPic(lead)}</div>`
-               : chatAva(g.lead, safeColor(g.c), false, 42)}
+               : chatAva(g.lead, safeColor(g.c), false, 42, demoMail(g.lead))}
         <div style="flex:1;min-width:0">
           <div class="eyebrow" style="margin:0">Ведёт</div>
           <b style="font-size:14px;display:block">${esc(g.lead)}</b>
@@ -11033,7 +11073,7 @@ function shGroupInfo(){
       <div class="teamrow hscroll">${g.team.map(m => {
         const ex = m.e ? EXPERTS.find(x => x.id === m.e) : null;
         return `<div class="tcard">
-          <div class="tpic">${ex ? expPic(ex) : chatAva(m.n, authorColor(m.n), false, 30)}</div>
+          <div class="tpic">${ex ? expPic(ex) : chatAva(m.n, authorColor(m.mail || m.n), false, 30, m.mail || demoMail(m.n))}</div>
           <div style="flex:1;min-width:0">
             <b>${esc(m.n)}</b><span>${esc(m.r)}</span>
           </div>
@@ -12965,7 +13005,7 @@ function gTabTeam(g){
     return `<div class="card gmember">
       <div class="row" style="gap:11px">
         <div class="tpic" style="width:38px;height:38px">
-          ${ex ? expPic(ex) : chatAva(m.n, authorColor(m.n), false, 38, m.mail)}</div>
+          ${ex ? expPic(ex) : chatAva(m.n, authorColor(m.n), false, 38, m.mail || demoMail(m.n))}</div>
         <div style="flex:1;min-width:0">
           <b style="font-size:14px;display:block">${esc(m.n)}</b>
           <span class="small muted" style="font-size:11.5px">${esc(r.n)} · ${esc(r.s)}</span>
@@ -13090,7 +13130,7 @@ function shHello(){
     <div class="hellonote">
       <div class="row" style="gap:10px;margin-bottom:9px">
         ${lead ? `<div class="pcirc" style="width:34px;height:34px;flex:none">${expPic(lead)}</div>`
-               : chatAva(g.lead || 'Ева', safeColor(g.c), false, 34)}
+               : chatAva(g.lead || 'Ева', safeColor(g.c), false, 34, demoMail(g.lead))}
         <div><b style="font-size:13.5px;display:block">${esc(g.lead || 'Ведущая')}</b>
           <span class="small muted" style="font-size:11px">ведёт сообщество</span></div>
       </div>
@@ -13684,7 +13724,25 @@ async function pushSync(){
 const PEOPLE = [];
 
 const personKey = m => String(m || '').toLowerCase().trim();
-const cardOf = mail => PEOPLE.find(p => personKey(p.id) === personKey(mail)) || null;
+
+/* Карточки демо-участниц: те же женщины, что в подборе знакомств и в ленте.
+   Живут отдельно от PEOPLE нарочно — PEOPLE целиком приходит с сервера и
+   перезаписывается при каждой синхронизации. Настоящая карточка всегда
+   сильнее демонстрационной: как только женщина с этой почтой заведёт свою,
+   показываем её. */
+function demoCard(mail){
+  const key = personKey(mail);
+  const m = typeof MEMBERS !== 'undefined' && MEMBERS.find(x => personKey(x.mail) === key);
+  if(!m) return null;
+  return {
+    id: key, n: m.n, city: m.city === 'Онлайн' ? '' : m.city, about: m.bio,
+    since: Date.now() - (120 + m.age) * 864e5,
+    ints: m.ints || [], shelf: [], follows: [], mates: [], showMates: false,
+    next: [], past: [], demo: true,
+    dating: m.open ? {goal:'Знакомства и совместные практики', city:m.city} : null
+  };
+}
+const cardOf = mail => PEOPLE.find(p => personKey(p.id) === personKey(mail)) || demoCard(mail);
 
 /* ---------- своя карточка ---------- */
 function myCard(){
@@ -13833,23 +13891,90 @@ function toggleMate(mail){
                     : 'Отметила. Станете знакомы, когда она ответит тем же');
 }
 
+/* ---------- имена, которые мы уже видели ----------
+   Карточка есть не у всех: женщина, которая ещё не открывала новую версию,
+   в PEOPLE не попала. Но её имя мы только что показали рядом с аватаром —
+   запоминаем, чтобы её страница была с именем, а не «участница». */
+const NAMES = {};
+function rememberName(mail, name){
+  const key = personKey(mail);
+  if(key && name && !NAMES[key]) NAMES[key] = String(name);
+}
+const nameOf = mail => (cardOf(mail) || {}).n || NAMES[personKey(mail)] || 'Участница';
+
+/* эксперт — по почте его же аккаунта: у него своя страница, не эта */
+function expertByMail(mail){
+  const key = personKey(mail);
+  if(!key || typeof EXPERTS === 'undefined') return null;
+  return EXPERTS.find(e => personKey(e.email || e.mail) === key) || null;
+}
+
 /* ---------- переход на страницу ---------- */
 function openPerson(mail){
   const key = personKey(mail);
   if(!key) return;
   if(key === myMail()){ openPage('profile'); return; }
+  const ex = expertByMail(key);
+  if(ex) return openExpert(ex.id);
   S.viewPerson = key; S.page = 'person'; S.sheet = null;
   S.viewExpert = null; S.course = null; S.viewGood = null;
+  S.thread = null; S.viewGood = null;
   if(S.chat) S.chat.open = null;
   render(); window.scrollTo(0, 0);
 }
 function closePerson(){ S.viewPerson = null; S.page = null; render(); window.scrollTo(0, 0); }
 
+/* Один обработчик на всё приложение вместо onclick у каждого аватара.
+   Ставим его на перехвате: аватар часто лежит внутри кнопки — строки письма,
+   карточки поста, — и без перехвата сначала сработала бы кнопка вокруг. */
+document.addEventListener('click', e => {
+  const el = e.target && e.target.closest && e.target.closest('[data-p],[data-x]');
+  if(!el) return;
+  const mail = el.getAttribute('data-p'), exp = el.getAttribute('data-x');
+  if(!mail && !exp) return;
+  e.preventDefault(); e.stopPropagation();
+  if(exp) openExpert(exp); else openPerson(mail);
+}, true);
+
 /* имя автора становится ссылкой только там, где мы знаем почту */
 function personLink(name, mail, cls){
   const key = personKey(mail);
+  if(key) rememberName(key, name);
   if(!key || key === myMail()) return esc(name || '');
   return `<button class="plink ${cls || ''}" onclick="event.stopPropagation();openPerson('${attJs(key)}')">${esc(name || '')}</button>`;
+}
+
+/* Женщина, которая ещё не открывала новую версию, карточки не имеет.
+   Пустой экран «страница не заполнена» — тупик: непонятно, к кому попал
+   и что делать. Поэтому показываем то, что знаем, и оставляем главное
+   действие — познакомиться. Когда она зайдёт, страница наполнится сама. */
+function pgPersonBlank(mail){
+  const key = personKey(mail);
+  const n = nameOf(key);
+  return `<div class="view">
+    <div class="exphead">
+      <div class="brandbar" style="margin:0">
+        <button onclick="closePerson()" style="color:#fff;font-size:20px;width:30px;text-align:left">‹</button>
+        <div class="b">Участница</div><div style="width:30px"></div>
+      </div>
+      <div class="pcirc" style="width:92px;height:92px;margin:6px auto 0;border:2px solid rgba(255,255,255,.35)">
+        ${chatAva(n, authorColor(key), false, 92, key)}</div>
+      <div class="nm">${esc(n)}</div>
+    </div>
+    <div class="pad" style="padding-top:16px">
+      <div class="row" style="gap:8px">
+        <button class="btn" style="flex:1"
+          onclick="toast('Написать можно той, с кем вы знакомы')">Написать</button>
+        <button class="btn ${iAdded(key) ? 'done' : 'ghost'}" style="flex:1"
+          onclick="toggleMate('${attJs(key)}')">${iAdded(key) ? 'Ждём ответа' : 'Познакомиться'}</button>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <b style="font-size:14.5px">Страница пока пустая</b>
+        <p class="small muted" style="margin:7px 0 0">${esc(n)} ещё не заполняла её.
+          Отметь знакомство — она увидит это у себя, и вы сможете написать друг другу.</p>
+      </div>
+    </div>
+  </div>`;
 }
 
 /* =====================================================================
@@ -13860,8 +13985,7 @@ function personLink(name, mail, cls){
    ===================================================================== */
 function pgPerson(){
   const c = cardOf(S.viewPerson);
-  if(!c) return `<div class="view pad">${backBtn('Назад')}
-    <div class="empty">Страница пока не заполнена</div></div>`;
+  if(!c) return pgPersonBlank(S.viewPerson);
 
   const mates = areMates(c.id);
   const waiting = iAdded(c.id) && !sheAdded(c.id);
@@ -13900,6 +14024,9 @@ function pgPerson(){
       </div>
       ${!mates && waiting ? `<p class="small muted" style="margin:8px 0 0;text-align:center">
         Она увидит это у себя. Писать можно, когда отметит в ответ.</p>` : ''}
+      ${c.demo ? `<p class="small muted" style="margin:8px 0 0;text-align:center">
+        Это показательная анкета — такие страницы платформа собирает сама,
+        пока не набрались настоящие.</p>` : ''}
 
       ${circleRow('Читает', 'эксперты', follows.map(e => ({
         id:e.id, n:e.n.split(' ')[0], mail:'', ring:expertHasNew(e.id),

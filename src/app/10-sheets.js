@@ -707,7 +707,7 @@ function shGroupInfo(){
     ${g.lead ? `<div class="gplate">
       <div class="row" style="gap:10px">
         ${lead ? `<div class="pcirc" style="width:42px;height:42px;flex:none">${expPic(lead)}</div>`
-               : chatAva(g.lead, safeColor(g.c), false, 42)}
+               : chatAva(g.lead, safeColor(g.c), false, 42, demoMail(g.lead))}
         <div style="flex:1;min-width:0">
           <div class="eyebrow" style="margin:0">Ведёт</div>
           <b style="font-size:14px;display:block">${esc(g.lead)}</b>
@@ -726,7 +726,7 @@ function shGroupInfo(){
       <div class="teamrow hscroll">${g.team.map(m => {
         const ex = m.e ? EXPERTS.find(x => x.id === m.e) : null;
         return `<div class="tcard">
-          <div class="tpic">${ex ? expPic(ex) : chatAva(m.n, authorColor(m.n), false, 30)}</div>
+          <div class="tpic">${ex ? expPic(ex) : chatAva(m.n, authorColor(m.mail || m.n), false, 30, m.mail || demoMail(m.n))}</div>
           <div style="flex:1;min-width:0">
             <b>${esc(m.n)}</b><span>${esc(m.r)}</span>
           </div>

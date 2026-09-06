@@ -1284,7 +1284,7 @@ function pgExpertRoom(){
           </select>` : ''}
         </div></div>
       <div class="row" style="position:relative;z-index:2">
-        <div class="pcirc" style="width:56px;height:56px">${expPic(e)}</div>
+        <div class="pcirc" style="width:56px;height:56px">${expPic(e, true)}</div>
         <div style="flex:1"><h1 class="serif" style="font-size:22px;margin:0;color:#fff">${esc(e.n)} ${e.verified?'<span class="vt">✓</span>':''}</h1>
           <p class="small muted" style="margin:3px 0 0">${esc(e.r)}</p></div>
       </div>
@@ -1314,7 +1314,7 @@ function exProfile(){
   const e = me();
   return `
   <div class="card" style="text-align:center">
-    <div class="pcirc" style="width:96px;height:96px;margin:0 auto 12px">${expPic(e)}</div>
+    <div class="pcirc" style="width:96px;height:96px;margin:0 auto 12px">${expPic(e, true)}</div>
     <b style="font-size:16px">${esc(e.n)}</b>
     <div class="small muted">${e.verified ? 'Аккаунт подтверждён редакцией' : 'Ожидает подтверждения'}</div>
     <button class="btn ghost sm" style="margin-top:10px" onclick="pickImage('${attJs(e.id)}')">Сменить фото</button>
@@ -1681,7 +1681,7 @@ function exSettings(){
 
   <div class="card" style="text-align:center">
     <div style="width:88px;height:88px;margin:0 auto 12px;position:relative">
-      <div class="pcirc" style="width:88px;height:88px">${expPic(e)}</div>
+      <div class="pcirc" style="width:88px;height:88px">${expPic(e, true)}</div>
       <button class="camera" onclick="pickImage('${attJs(e.id)}')">▣</button>
     </div>
     <div class="small muted">Фото на публичной странице</div>

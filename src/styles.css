@@ -1140,3 +1140,11 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .starcorner{position:absolute;top:8px;right:8px;z-index:4}
 .starcorner .starbtn{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;
   background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(17,16,20,.14)}
+
+/* Аватар с меткой data-p ведёт на страницу женщины — везде, где он есть:
+   в ленте, в комментарии, в переписке, в списке команды сообщества. */
+[data-p]{cursor:pointer}
+/* имя на белом по фотографии: пунктир под ним должен быть виден */
+.plink.light{color:#fff;border-bottom-color:rgba(255,255,255,.5)}
+.plink.light:hover{border-bottom-color:#fff}
+[data-x]{cursor:pointer}

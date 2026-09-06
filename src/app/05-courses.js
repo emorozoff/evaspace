@@ -697,6 +697,11 @@ function wallDraft(box){
 
 /* Карточка послания: имя, текст, звезда и ответы. Больше ничего —
    послание должно писаться и читаться за несколько секунд. */
+/* У демо-посланий почты в данных нет — они написаны до того, как появились
+   аккаунты. Достаём её по имени из списка демо-участниц: иначе имя и аватар
+   в ленте никуда не ведут, а это первое место, где на них нажимают. */
+const authorMail = x => (x && x.email) || (x && !x.curator && !x.exp && demoMail(x.a)) || '';
+
 function wallCard(w){
   const liked = (S.starred||[]).includes(w.id);
   const mine = isMine(w);
@@ -707,9 +712,9 @@ function wallCard(w){
 
   return `<div class="wallpost" style="--kc:${safeColor(col)}">
     <div class="wtop">
-      ${chatAva(w.a, col, mine, 38, w.email)}
+      ${chatAva(w.a, col, mine, 38, authorMail(w))}
       <div style="flex:1;min-width:0">
-        <b style="font-size:14px;display:block">${personLink(w.a, w.email)}${mine?' · ты':''}</b>
+        <b style="font-size:14px;display:block">${personLink(w.a, authorMail(w))}${mine?' · ты':''}</b>
         <span class="small muted" style="font-size:11px">${esc(w.city || '')}${w.city?' · ':''}${esc(w.ago)}</span>
       </div>
       ${canDrop ? `<button class="wdel" title="Удалить"
@@ -740,7 +745,7 @@ function wallCard(w){
         </div>
       </div>`
     : cmts.length ? `<button class="cmtpeek" onclick="toggleComments('${attJs(w.id)}')">
-        ${chatAva(cmts[0].a, authorColor(cmts[0].email || cmts[0].a), isMine(cmts[0]), 22, cmts[0].email)}
+        ${chatAva(cmts[0].a, authorColor(cmts[0].email || cmts[0].a), isMine(cmts[0]), 22, authorMail(cmts[0]))}
         <span><b>${esc(cmts[0].a)}:</b> ${esc(cmts[0].t.slice(0,38))}${cmts[0].t.length>38?'…':''}</span>
         ${cmts.length > 1 ? `<span class="cmtmore">ещё ${cmts.length - 1}</span>` : ''}
       </button>` : ''}
@@ -756,10 +761,10 @@ function commentRow(w, c, ci){
   const starred = (S.starredCmts||[]).includes(w.id + ':' + ci);
   const canDrop = mine || S.role === 'admin';
   return `<div class="cmt${mine?' own':''}" style="--ac:${safeColor(col)}">
-    ${chatAva(c.a, col, mine, 28, c.email)}
+    ${chatAva(c.a, col, mine, 28, authorMail(c))}
     <div style="flex:1;min-width:0">
       <div class="crow">
-        <b style="font-size:12.5px;color:${safeColor(col)}">${c.curator ? esc(c.a) : personLink(c.a, c.email)}${mine?' · ты':''}</b>
+        <b style="font-size:12.5px;color:${safeColor(col)}">${c.curator ? esc(c.a) : personLink(c.a, authorMail(c))}${mine?' · ты':''}</b>
         ${author ? '<span class="badge-au">автор</span>' : ''}
         ${c.curator ? '<span class="badge-cur">куратор</span>' : ''}
         <span class="small muted" style="font-size:10px;margin-left:auto">${esc(c.ago)}</span>
@@ -857,7 +862,7 @@ function datingBlock(){
     ${m ? `<div class="mcard">
       <div class="mphoto">${MEDIA[m.id] ? `<img src="${safeUrl(MEDIA[m.id])}" alt="">` : portrait(m.id)}
         <div class="mname">
-          <b>${esc(m.n)}, ${m.age}</b>
+          <b>${personLink(m.n, m.mail, 'light')}, ${m.age}</b>
           <span>${fmt === 'кофе' ? m.city : m.city === 'Онлайн' ? 'онлайн' : m.city + ' · онлайн'}</span>
         </div>
       </div>
@@ -1143,9 +1148,9 @@ function pgChatRoom(){
     <div class="pad">
       <div class="chatlist" id="clist">
         ${msgs.map((m,i) => `<div class="cmsg ${chatMine(m)?'own':''}" id="msg_${esc(g.id)}_${i}">
-          ${!chatMine(m) ? chatAva(m.a, m.c || authorColor(m.email || m.a), false, 32, m.email) : ''}
+          ${!chatMine(m) ? chatAva(m.a, m.c || authorColor(m.email || m.a), false, 32, authorMail(m)) : ''}
           <div class="txt">
-            ${!chatMine(m) ? `<div class="nm">${m.exp || m.curator ? esc(m.a) : personLink(m.a, m.email)}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
+            ${!chatMine(m) ? `<div class="nm">${m.exp || m.curator ? esc(m.a) : personLink(m.a, authorMail(m))}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
             ${m.re ? `<div class="requote"><b>${esc(m.re.a)}</b><span>${esc(m.re.t)}</span></div>` : ''}
             <div class="mtext">${esc(m.t)}</div>
             <div class="tm">
@@ -1192,13 +1197,20 @@ function chatMine(m){
   return his ? his === myMail() : !!m.own;
 }
 
-/* аватар автора: своё фото у себя, буква у остальных */
+/* аватар автора: своё фото у себя, буква у остальных.
+   Если почта известна и это не я — на аватар вешается метка data-p, и по
+   ней открывается страница. Метка, а не onclick: аватар часто лежит внутри
+   кнопки (строка письма, карточка поста), и вложенная кнопка — сломанная
+   разметка. Один общий обработчик разбирает метку на перехвате. */
 function chatAva(name, color, own, size, email){
   const s = size || 32;
+  const key = personKey(email);
+  if(key && name) rememberName(key, name);
+  const tag = key && key !== myMail() ? ` data-p="${attJs(key)}" title="Открыть страницу"` : '';
   /* почта автора важнее любых меток: так фото не перескакивают между людьми */
   if(email){
     const src = avatarOf(email);
-    if(src) return avaImg(src, s);
+    if(src) return avaImg(src, s, tag);
     own = String(email).toLowerCase() === myMail();
   }
   if(own && S.role === 'admin' && S.adminAvatar) return avaImg(S.adminAvatar, s);
@@ -1208,7 +1220,7 @@ function chatAva(name, color, own, size, email){
     if(mine) return avaImg(mine, s);
   }
   const initials = String(name || '?').split(' ').map(w => w[0]).join('').slice(0,2);
-  return `<div class="dot-ava" style="width:${s}px;height:${s}px;background:${safeColor(color)}">${esc(initials)}</div>`;
+  return `<div class="dot-ava"${tag} style="width:${s}px;height:${s}px;background:${safeColor(color)}">${esc(initials)}</div>`;
 }
 
 function sendMsg(gid){
@@ -1334,7 +1346,7 @@ function pgInbox(){
     ${S.inbox.map(t => {
       const last = t.msgs[t.msgs.length-1];
       return `<button class="gitem ${t.unread?'unreadrow':''}" onclick="openThread('${attJs(t.id)}')">
-        ${chatAva(t.from, t.c, false, 42, t.email)}
+        ${chatAva(t.from, t.c, false, 42, authorMail({email:t.email, a:t.from, exp:t.exp}))}
         <div style="flex:1;min-width:0">
           <div class="spread"><b style="font-size:14px">${esc(t.from)}${t.exp?' <span class="badge-exp">эксперт</span>':''}</b>
             <span class="small muted" style="font-size:10.5px">${esc(t.ago)}</span></div>
@@ -1358,13 +1370,13 @@ function pgThread(){
   return `<div class="view pad chatview">
     <button class="backbtn" onclick="S.thread=null;render()">‹ Сообщения</button>
     <div class="row" style="margin:12px 0 6px">
-      ${chatAva(t.from, t.c, false, 40, t.email)}
+      ${chatAva(t.from, t.c, false, 40, authorMail({email:t.email, a:t.from, exp:t.exp}))}
       <div><b style="font-size:15px">${esc(t.from)}</b>
         <div class="small muted">${esc(t.kind)}</div></div>
     </div>
     <div class="chatlist">
       ${t.msgs.map(m => `<div class="cmsg ${m.me?'own':''}">
-        ${!m.me ? chatAva(t.from, t.c, false, 32, t.email) : ''}
+        ${!m.me ? chatAva(t.from, t.c, false, 32, authorMail({email:t.email, a:t.from, exp:t.exp})) : ''}
         <div class="txt">
           ${m.when ? `<div class="mwhen">${esc(m.when)}</div>` : ''}
           <div class="mtext">${esc(m.t)}</div>
