@@ -1148,3 +1148,14 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .plink.light{color:#fff;border-bottom-color:rgba(255,255,255,.5)}
 .plink.light:hover{border-bottom-color:#fff}
 [data-x]{cursor:pointer}
+
+/* ---------- ряд экспертов в курсах ----------
+   Подписка не заводит себе экрана: те, кого она читает, стоят первыми
+   и подписаны меткой. «Читаю» — спокойная, «новое» — заметная: разница
+   между «я на неё подписана» и «зайди, там появилось». */
+.exp{position:relative}
+.exp.mine{border-color:var(--line-2)}
+.expmark{position:absolute;top:9px;left:10px;z-index:2;border-radius:999px;
+  padding:3px 8px;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--surface-2);color:var(--muted)}
+.expmark.new{background:var(--accent);color:#fff}

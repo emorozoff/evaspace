@@ -1167,6 +1167,17 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .plink.light{color:#fff;border-bottom-color:rgba(255,255,255,.5)}
 .plink.light:hover{border-bottom-color:#fff}
 [data-x]{cursor:pointer}
+
+/* ---------- ряд экспертов в курсах ----------
+   Подписка не заводит себе экрана: те, кого она читает, стоят первыми
+   и подписаны меткой. «Читаю» — спокойная, «новое» — заметная: разница
+   между «я на неё подписана» и «зайди, там появилось». */
+.exp{position:relative}
+.exp.mine{border-color:var(--line-2)}
+.expmark{position:absolute;top:9px;left:10px;z-index:2;border-radius:999px;
+  padding:3px 8px;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--surface-2);color:var(--muted)}
+.expmark.new{background:var(--accent);color:#fff}
 </style>
 </head>
 <body>
@@ -6198,15 +6209,7 @@ function pgCourses(){
         что ты уже пробовала в программе. Первые уроки открыты без оплаты.</p>
     </div>
 
-    <div class="sec-h"><h2 class="serif">Эксперты</h2><span class="small muted">${EXPERTS.length}</span></div>
-    <div class="hscroll">
-      ${EXPERTS.map(e => `<button class="exp" style="width:154px" onclick="openExpert('${attJs(e.id)}')">
-        <div class="pcirc">${expPic(e)}</div>
-        <div style="font-weight:800;font-size:13.5px;margin-top:9px">${esc(e.n)}${e.verified?' <span class="vt">✓</span>':''}</div>
-        <div class="small muted" style="font-size:11.5px;min-height:32px">${esc(e.r)}</div>
-        <div style="color:var(--gold);font-weight:800;font-size:12.5px">★ ${e.rate}</div>
-      </button>`).join('')}
-    </div>
+    ${expertsRow()}
 
     <div class="sec-h"><h2 class="serif">Все курсы</h2><span class="small muted">${list.length} шт.</span></div>
     <div class="seg">${kinds.map(k => `<button class="${S.courseSort===k?'on':''}" onclick="S.courseSort='${attJs(k)}';render()">${k}</button>`).join('')}</div>
@@ -6233,6 +6236,49 @@ function pgCourses(){
         </div>
       </div>`).join('')}
   </div>`;
+}
+
+/* =====================================================================
+   РЯД ЭКСПЕРТОВ В КУРСАХ
+   Подписка не заводит себе отдельного места: она меняет порядок в ряду,
+   который здесь и так был. Те, кого женщина читает, идут первыми и
+   помечены — у кого вышло новое, у того помечено ярче. Дальше остальные,
+   в прежнем порядке.
+
+   Так решено нарочно. Отдельный экран «мои эксперты» пришлось бы чем-то
+   наполнять с первого дня и объяснять, зачем он; порядок в ряду не нужно
+   ни объяснять, ни открывать — он просто есть, и без подписок ряд
+   выглядит ровно как раньше.
+   ===================================================================== */
+function expertsRow(){
+  const has = e => typeof expertHasNew === 'function' && expertHasNew(e.id);
+  const mine = typeof isFollowing === 'function' ? EXPERTS.filter(e => isFollowing(e.id)) : [];
+  /* среди своих первыми те, у кого вышло новое: иначе метка «новое»
+     оказывается второй-третьей и ряд приходится листать до неё */
+  const following = mine.filter(has).concat(mine.filter(e => !has(e)));
+  const rest = EXPERTS.filter(e => following.indexOf(e) < 0);
+  const fresh = mine.filter(has).length;
+
+  const card = (e, own) => {
+    const isNew = own && has(e);
+    return `<button class="exp ${own ? 'mine' : ''}" style="width:154px" onclick="openExpert('${attJs(e.id)}')">
+      ${own ? `<span class="expmark ${isNew ? 'new' : ''}"
+        title="${isNew ? 'Вышло что-то с твоего прошлого захода' : 'Ты подписана'}">${
+        isNew ? 'новое' : 'читаю'}</span>` : ''}
+      <div class="pcirc">${expPic(e, true)}</div>
+      <div style="font-weight:800;font-size:13.5px;margin-top:9px">${esc(e.n)}${e.verified?' <span class="vt">✓</span>':''}</div>
+      <div class="small muted" style="font-size:11.5px;min-height:32px">${esc(e.r)}</div>
+      <div style="color:var(--gold);font-weight:800;font-size:12.5px">★ ${e.rate}</div>
+    </button>`;
+  };
+
+  return `<div class="sec-h"><h2 class="serif">Эксперты</h2>
+      <span class="small muted">${!following.length ? EXPERTS.length
+        : fresh ? (fresh === 1 ? 'у одной новое' : 'новое у ' + fresh)
+        : 'сначала твои'}</span></div>
+    <div class="hscroll">
+      ${following.map(e => card(e, true)).join('')}${rest.map(e => card(e, false)).join('')}
+    </div>`;
 }
 
 /* ---------- страница эксперта (публичный лендинг) ---------- */
