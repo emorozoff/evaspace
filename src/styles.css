@@ -1155,3 +1155,22 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .exp{position:relative}
 .exp.mine{border-color:var(--line-2)}
 .expstar{position:absolute;top:10px;right:11px;z-index:2;line-height:0}
+
+/* ---------- анонимные комнаты ----------
+   Значок один и тот же у всех: любой намёк на разное — цвет, буква,
+   форма — со временем складывается в узнавание. */
+.anonava{width:32px;height:32px;flex:none;border-radius:50%;display:grid;place-items:center;
+  background:var(--surface-2);color:var(--muted)}
+.cmsg.anon .nm{color:var(--muted)}
+.anonnote{display:flex;gap:11px;align-items:flex-start;background:var(--surface-2);
+  border-radius:var(--r);padding:13px 14px;margin-bottom:12px;font-size:12.5px;
+  line-height:1.5;color:var(--muted)}
+.anonnote > svg{flex:none;margin-top:1px;color:var(--ink)}
+.anonnote b{color:var(--ink)}
+
+/* Вход в заявку эксперта: строка под рядом экспертов, там, где женщина
+   смотрит на чужие карточки и думает «я тоже так могу». */
+.applyrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  background:var(--surface);border:1px dashed var(--line-2);border-radius:var(--r);
+  padding:13px 14px;margin-top:10px;transition:.15s}
+.applyrow:hover{border-style:solid;border-color:var(--ink)}

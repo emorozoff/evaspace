@@ -1137,31 +1137,59 @@ function pgChatRoom(){
           onclick="openSheet({k:'groupInfo',id:'${attJs(g.id)}'})">
           <div class="gemoji" style="width:32px;height:32px;background:rgba(255,255,255,.14);color:#fff">${gIcon(g, 17)}</div>
           <div style="text-align:left"><div style="font-size:14px;font-weight:700">${esc(g.t)}</div>
-            <div class="small muted" style="font-size:10.5px">${g.m.toLocaleString('ru-RU')} участниц${
-              isClub(g) ? ' · клуб' : g.access === 'experts' ? ' · закрытая' : ''}${
-              S.role==='admin'?' · модерация':''}</div></div>
+            <div class="small muted" style="font-size:10.5px">${isAnon(g)
+              ? 'без имён · ведёт редакция' + (S.role==='admin'?' · модерация':'')
+              : g.m.toLocaleString('ru-RU') + ' участниц' + (
+                isClub(g) ? ' · клуб' : g.access === 'experts' ? ' · закрытая' : '') + (
+                S.role==='admin'?' · модерация':'')}</div></div>
         </button>
         <button class="chip" style="background:rgba(255,255,255,.12);color:#fff;border-color:transparent"
           onclick="openSheet({k:'groupInfo',id:'${attJs(g.id)}'})">···</button>
       </div>
     </div>
     <div class="pad">
+      ${isAnon(g) ? `<div class="anonnote">
+        ${ANON_MARK}
+        <div>Здесь вы — <b>${esc(myAnonName(g.id))}</b>. Имя, фотография и почта
+          в эту комнату не попадают: их нет ни на экране, ни в сохранённом.
+          В соседней анонимной комнате прозвище будет другим.</div>
+      </div>` : ''}
       <div class="chatlist" id="clist">
-        ${msgs.map((m,i) => `<div class="cmsg ${chatMine(m)?'own':''}" id="msg_${esc(g.id)}_${i}">
-          ${!chatMine(m) ? chatAva(m.a, m.c || authorColor(m.email || m.a), false, 32, authorMail(m)) : ''}
+        ${msgs.map((m,i) => {
+          const mine = chatMine(m, g.id);
+          /* В анонимной группе у сообщения нет ни фото, ни ссылки на страницу:
+             ставить их не из чего — почты в данных нет. Вместо аватара
+             одинаковый для всех кружок, чтобы по нему нельзя было угадать. */
+          const ava = m.anon
+            ? `<span class="anonava">${m.curator ? EVA_MARK : ANON_MARK}</span>`
+            : chatAva(m.a, m.c || authorColor(m.email || m.a), false, 32, authorMail(m));
+          const nm = m.anon || m.exp || m.curator ? esc(m.a) : personLink(m.a, authorMail(m));
+          const muted = m.anon && !m.curator && anonMuted(g, m.a);
+          return `<div class="cmsg ${mine?'own':''}${m.anon?' anon':''}" id="msg_${esc(g.id)}_${i}">
+          ${!mine ? ava : ''}
           <div class="txt">
-            ${!chatMine(m) ? `<div class="nm">${m.exp || m.curator ? esc(m.a) : personLink(m.a, authorMail(m))}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
+            ${!mine ? `<div class="nm">${nm}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">редакция</span>':''}${muted?' <span class="badge-cur">не пишет</span>':''}</div>` : ''}
             ${m.re ? `<div class="requote"><b>${esc(m.re.a)}</b><span>${esc(m.re.t)}</span></div>` : ''}
             <div class="mtext">${esc(m.t)}</div>
             <div class="tm">
               <button class="reply" onclick="replyMsg('${attJs(g.id)}',${i})">ответить</button>
-              ${esc(m.tm)}${gCan(g,'delAny')&&!chatMine(m)?` · <span onclick="delMsg('${attJs(g.id)}',${i})" style="cursor:pointer;color:var(--accent)">удалить</span>`:''}</div>
+              ${esc(m.tm)}${gCan(g,'delAny')&&!mine?` · <span onclick="delMsg('${attJs(g.id)}',${i})" style="cursor:pointer;color:var(--accent)">удалить</span>`:''}${
+              m.anon && !m.curator && !mine && gCan(g,'mute')
+                ? ` · <span onclick="anonMute('${attJs(g.id)}','${attJs(m.a)}')" style="cursor:pointer;color:var(--accent)">${muted?'вернуть':'закрыть письмо'}</span>` : ''}</div>
           </div>
-        </div>`).join('')}
+        </div>`;
+        }).join('')}
       </div>
     </div>
   </div>`;
 }
+
+/* Значок вместо аватара в анонимной группе. Один и тот же у всех:
+   любой намёк на разное — цвет, буква, форма — со временем складывается
+   в узнавание. У редакции свой, чтобы её было видно сразу. */
+const ANON_MARK = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.4"/><path d="M4.8 19.5c0-3.3 3.2-5.4 7.2-5.4s7.2 2.1 7.2 5.4"/></svg>`;
+const EVA_MARK = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6l2.3 6.3 6.4.4-5 4.1 1.7 6.2-5.4-3.6-5.4 3.6 1.7-6.2-5-4.1 6.4-.4z"/></svg>`;
 
 /* Поле ввода живёт вне ленты сообщений: внутри .view его прижимало
    к последнему сообщению, потому что у блока своя анимация появления. */
@@ -1175,7 +1203,8 @@ function chatBar(){
       <div style="flex:1;min-width:0"><b>${esc(re.a)}</b><span>${esc(String(re.t).slice(0,70))}</span></div>
       <button onclick="cancelReply()">✕</button></div>` : ''}
     <div class="chatinput">
-      <input class="field" id="cin" placeholder="${re ? 'Ответ для ' + esc(re.a) : 'Сообщение'}"
+      <input class="field" id="cin" placeholder="${re ? 'Ответ для ' + esc(re.a)
+        : isAnon(g) ? 'Написать как ' + esc(myAnonName(g.id)) : 'Сообщение'}"
         onkeydown="if(event.key==='Enter')sendMsg('${attJs(g.id)}')">
       <button class="btn" onclick="sendMsg('${attJs(g.id)}')">→</button>
     </div>
@@ -1191,8 +1220,11 @@ function replyMsg(gid, i){
 function cancelReply(){ S.chat.reply = null; render(); }
 
 /* своё ли сообщение в групповом чате: по почте, метка — только у старых */
-function chatMine(m){
+function chatMine(m, gid){
   if(!m) return false;
+  /* В анонимной группе своё сообщение узнаём по прозвищу: ни почты,
+     ни метки «моё» в данных нет — иначе анонимность была бы нарисованной. */
+  if(m.anon) return !m.curator && !!gid && m.a === myAnonName(gid);
   const his = String(m.email || '').toLowerCase();
   return his ? his === myMail() : !!m.own;
 }
@@ -1226,20 +1258,40 @@ function chatAva(name, color, own, size, email){
 function sendMsg(gid){
   const inp = $('#cin'); if(!inp) return;
   const t = inp.value.trim(); if(!t) return;
+  const g = GROUPS.find(x => x.id === gid);
+  const anon = isAnon(g);
+  if(anon && anonMuted(g, myAnonName(gid)))
+    return toast('Здесь вы больше не пишете. Напишите в поддержку, если это ошибка');
   const now = new Date();
   const tm = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
   /* если отвечаем на чьё-то сообщение — цитата уезжает вместе с текстом */
   const r = S.chat.reply && S.chat.reply.g === gid ? (S.chats[gid] || [])[S.chat.reply.i] : null;
-  S.chats[gid].push({id:msgId(), at:Date.now(),
-    a: S.role === 'admin' ? (S.adminName || 'Куратор') : (S.name || 'Я'),
-    c: authorColor(myMail() || S.name), t, tm, email:myMail(), own:true,
-    curator: S.role === 'admin',
-    re: r ? {a:r.a, t:String(r.t).slice(0, 90)} : null});
+
+  /* В анонимной группе сообщение уходит без почты и без имени: вместо них
+     прозвище, посчитанное из почты и номера группы. Своё сообщение женщина
+     узнаёт по нему же — метки «моё» в данных тоже нет. */
+  const msg = anon
+    ? {id:msgId(), at:Date.now(), anon:true,
+       a: S.role === 'admin' ? 'Редакция Евы' : myAnonName(gid),
+       t, tm, curator: S.role === 'admin',
+       re: r ? {a:r.a, t:String(r.t).slice(0, 90)} : null}
+    : {id:msgId(), at:Date.now(),
+       a: S.role === 'admin' ? (S.adminName || 'Куратор') : (S.name || 'Я'),
+       c: authorColor(myMail() || S.name), t, tm, email:myMail(), own:true,
+       curator: S.role === 'admin',
+       re: r ? {a:r.a, t:String(r.t).slice(0, 90)} : null};
+  S.chats[gid].push(msg);
   inp.value = '';
   S.chat.reply = null;
-  S.points += 5;
+  /* Баллы за анонимное сообщение не начисляем: «+5 баллов» под рассказом
+     о тяжёлом — неуважение, и заодно след в её счёте. */
+  if(!anon) S.points += 5;
   render(); scrollChat(); schedulePersist(); syncPush(['chats']);
-  toast('+5 баллов за участие');
+  if(!anon) toast('+5 баллов за участие');
+  /* Заготовленный ответ эксперта здесь не появляется: он цитировал бы её
+     имя, а в анонимной группе имени нет. Да и отвечать заготовкой на
+     рассказ о тяжёлом нельзя — тут отвечает живая редакция. */
+  if(anon) return;
   setTimeout(() => {
     const g = GROUPS.find(x => x.id === gid);
     const ex = EXPERTS[hash(gid) % EXPERTS.length];

@@ -1174,6 +1174,25 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .exp{position:relative}
 .exp.mine{border-color:var(--line-2)}
 .expstar{position:absolute;top:10px;right:11px;z-index:2;line-height:0}
+
+/* ---------- анонимные комнаты ----------
+   Значок один и тот же у всех: любой намёк на разное — цвет, буква,
+   форма — со временем складывается в узнавание. */
+.anonava{width:32px;height:32px;flex:none;border-radius:50%;display:grid;place-items:center;
+  background:var(--surface-2);color:var(--muted)}
+.cmsg.anon .nm{color:var(--muted)}
+.anonnote{display:flex;gap:11px;align-items:flex-start;background:var(--surface-2);
+  border-radius:var(--r);padding:13px 14px;margin-bottom:12px;font-size:12.5px;
+  line-height:1.5;color:var(--muted)}
+.anonnote > svg{flex:none;margin-top:1px;color:var(--ink)}
+.anonnote b{color:var(--ink)}
+
+/* Вход в заявку эксперта: строка под рядом экспертов, там, где женщина
+   смотрит на чужие карточки и думает «я тоже так могу». */
+.applyrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  background:var(--surface);border:1px dashed var(--line-2);border-radius:var(--r);
+  padding:13px 14px;margin-top:10px;transition:.15s}
+.applyrow:hover{border-style:solid;border-color:var(--ink)}
 </style>
 </head>
 <body>
@@ -1568,7 +1587,41 @@ const GROUPS = [
    about:'Клуб ранних подъёмов. В 6:00 в чат падает отметка, в 6:15 общая практика по видео, '
      + 'дальше день твой.',
    who:'Тем, кто пробовал вставать рано и сдавался в одиночку.',
-   rules:['Отмечаемся до 6:30','Проспала — просто отмечаешься завтра']}
+   rules:['Отмечаемся до 6:30','Проспала — просто отмечаешься завтра']},
+
+  /* Анонимные комнаты. Их три, а не одна: «тяжело» бывает разного рода,
+     и женщина, которой нужна комната про насилие, не пойдёт писать туда,
+     где рядом обсуждают долги. Больше трёх заводить не стоит — в пустой
+     комнате анонимность не спасает, спасает то, что там кто-то отвечает.
+     Ведёт все три редакция: у обычной женщины не может быть права
+     молчаливо узнать, кто написал. */
+  {id:'gr10', t:'Комната без имён', m:0, e:'◍', icon:'shield', c:'#4A2C42',
+   team:[], access:'anon', lead:'Редакция Евы', tags:['поддержка','безопасность'],
+   about:'Здесь говорят о том, что не рассказывают под своим именем: о насилии дома, '
+     + 'о человеке, от которого страшно уйти, о том, что происходит годами и кажется нормой. '
+     + 'Ни имён, ни фотографий: у каждой в этой комнате своё прозвище, и оно ничего о ней не говорит.',
+   who:'Тем, кому нужно сказать это вслух и не назваться.',
+   rules:['Не спрашиваем, кто ты и где живёшь','Не даём советов вроде «просто уйди»',
+          'Если человеку грозит опасность — пишем в поддержку, редакция подключит помощь',
+          'Ничего отсюда не пересказываем']},
+
+  {id:'gr11', t:'Когда всё рушится', m:0, e:'◒', icon:'moon', c:'#2B4A45',
+   team:[], access:'anon', lead:'Редакция Евы', tags:['развод','утрата','поддержка'],
+   about:'Развод, расставание, утрата, болезнь близкого. Всё то, что длится месяцами '
+     + 'и не закрывается одним мастер-классом. Без имён — чтобы можно было писать в тот день, '
+     + 'когда сил объяснять нет.',
+   who:'Тем, у кого сейчас разваливается что-то большое.',
+   rules:['Пишем о себе, а не о том, кто прав','Не торопим с «отпусти»',
+          'Тяжёлые дни здесь можно просто прожить молча']},
+
+  {id:'gr12', t:'Про деньги честно', m:0, e:'◇', icon:'coin', c:'#6B4E28',
+   team:[], access:'anon', lead:'Редакция Евы', tags:['деньги','долги','стыд'],
+   about:'Долги, кредиты, зарплата, о которой стыдно сказать, зависимость от чужих денег. '
+     + 'Тема, где имя мешает больше всего: о деньгах не говорят честно как раз потому, '
+     + 'что боятся, что узнают.',
+   who:'Тем, кто хочет назвать свои цифры и не бояться.',
+   rules:['Никаких «а я зарабатываю больше»','Не рекламируем кредиты и вложения',
+          'Цифры называем свои, чужие не обсуждаем']}
 ];
 
 /* рисованные иконки групп: одинаковые по стилю, в отличие от эмодзи */
@@ -1595,7 +1648,9 @@ const G_ICONS = {
   bloom: '<circle cx="12" cy="12" r="2.5"/><path d="M12 9.5c0-3 1.5-4.5 3-4.5s1.5 3-3 4.5zM14.5 12c3 0 4.5 1.5 4.5 3s-3 1.5-4.5-3zM12 14.5c0 3-1.5 4.5-3 4.5s-1.5-3 3-4.5zM9.5 12c-3 0-4.5-1.5-4.5-3s3-1.5 4.5 3z"/>',
   crown: '<path d="M4 17h16M4 17l-1-9 5 3.5L12 5l4 6.5L21 8l-1 9z"/>',
   sprout:'<path d="M12 20v-7M12 13c0-3.3-2.5-6-6-6 0 3.3 2.5 6 6 6zM12 13c0-2.8 2.2-5 5-5 0 2.8-2.2 5-5 5z"/>',
-  sun:   '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/>'
+  sun:   '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/>',
+  shield:'<path d="M12 3.2 5 6v5.6c0 4 3 7.3 7 9.2 4-1.9 7-5.2 7-9.2V6z"/><path d="M9.4 12.2l1.9 1.9 3.4-3.6"/>',
+  coin:  '<circle cx="12" cy="12" r="8"/><path d="M12 7.6v8.8M14.4 9.6c-.5-.7-1.4-1-2.4-1-1.4 0-2.4.7-2.4 1.8 0 2.4 4.8 1.3 4.8 3.6 0 1.1-1 1.8-2.4 1.8-1 0-1.9-.3-2.4-1"/>'
 };
 function gIcon(g, size){
   const d = G_ICONS[g && g.icon] || G_ICONS.bloom;
@@ -5528,31 +5583,59 @@ function pgChatRoom(){
           onclick="openSheet({k:'groupInfo',id:'${attJs(g.id)}'})">
           <div class="gemoji" style="width:32px;height:32px;background:rgba(255,255,255,.14);color:#fff">${gIcon(g, 17)}</div>
           <div style="text-align:left"><div style="font-size:14px;font-weight:700">${esc(g.t)}</div>
-            <div class="small muted" style="font-size:10.5px">${g.m.toLocaleString('ru-RU')} участниц${
-              isClub(g) ? ' · клуб' : g.access === 'experts' ? ' · закрытая' : ''}${
-              S.role==='admin'?' · модерация':''}</div></div>
+            <div class="small muted" style="font-size:10.5px">${isAnon(g)
+              ? 'без имён · ведёт редакция' + (S.role==='admin'?' · модерация':'')
+              : g.m.toLocaleString('ru-RU') + ' участниц' + (
+                isClub(g) ? ' · клуб' : g.access === 'experts' ? ' · закрытая' : '') + (
+                S.role==='admin'?' · модерация':'')}</div></div>
         </button>
         <button class="chip" style="background:rgba(255,255,255,.12);color:#fff;border-color:transparent"
           onclick="openSheet({k:'groupInfo',id:'${attJs(g.id)}'})">···</button>
       </div>
     </div>
     <div class="pad">
+      ${isAnon(g) ? `<div class="anonnote">
+        ${ANON_MARK}
+        <div>Здесь вы — <b>${esc(myAnonName(g.id))}</b>. Имя, фотография и почта
+          в эту комнату не попадают: их нет ни на экране, ни в сохранённом.
+          В соседней анонимной комнате прозвище будет другим.</div>
+      </div>` : ''}
       <div class="chatlist" id="clist">
-        ${msgs.map((m,i) => `<div class="cmsg ${chatMine(m)?'own':''}" id="msg_${esc(g.id)}_${i}">
-          ${!chatMine(m) ? chatAva(m.a, m.c || authorColor(m.email || m.a), false, 32, authorMail(m)) : ''}
+        ${msgs.map((m,i) => {
+          const mine = chatMine(m, g.id);
+          /* В анонимной группе у сообщения нет ни фото, ни ссылки на страницу:
+             ставить их не из чего — почты в данных нет. Вместо аватара
+             одинаковый для всех кружок, чтобы по нему нельзя было угадать. */
+          const ava = m.anon
+            ? `<span class="anonava">${m.curator ? EVA_MARK : ANON_MARK}</span>`
+            : chatAva(m.a, m.c || authorColor(m.email || m.a), false, 32, authorMail(m));
+          const nm = m.anon || m.exp || m.curator ? esc(m.a) : personLink(m.a, authorMail(m));
+          const muted = m.anon && !m.curator && anonMuted(g, m.a);
+          return `<div class="cmsg ${mine?'own':''}${m.anon?' anon':''}" id="msg_${esc(g.id)}_${i}">
+          ${!mine ? ava : ''}
           <div class="txt">
-            ${!chatMine(m) ? `<div class="nm">${m.exp || m.curator ? esc(m.a) : personLink(m.a, authorMail(m))}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
+            ${!mine ? `<div class="nm">${nm}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">редакция</span>':''}${muted?' <span class="badge-cur">не пишет</span>':''}</div>` : ''}
             ${m.re ? `<div class="requote"><b>${esc(m.re.a)}</b><span>${esc(m.re.t)}</span></div>` : ''}
             <div class="mtext">${esc(m.t)}</div>
             <div class="tm">
               <button class="reply" onclick="replyMsg('${attJs(g.id)}',${i})">ответить</button>
-              ${esc(m.tm)}${gCan(g,'delAny')&&!chatMine(m)?` · <span onclick="delMsg('${attJs(g.id)}',${i})" style="cursor:pointer;color:var(--accent)">удалить</span>`:''}</div>
+              ${esc(m.tm)}${gCan(g,'delAny')&&!mine?` · <span onclick="delMsg('${attJs(g.id)}',${i})" style="cursor:pointer;color:var(--accent)">удалить</span>`:''}${
+              m.anon && !m.curator && !mine && gCan(g,'mute')
+                ? ` · <span onclick="anonMute('${attJs(g.id)}','${attJs(m.a)}')" style="cursor:pointer;color:var(--accent)">${muted?'вернуть':'закрыть письмо'}</span>` : ''}</div>
           </div>
-        </div>`).join('')}
+        </div>`;
+        }).join('')}
       </div>
     </div>
   </div>`;
 }
+
+/* Значок вместо аватара в анонимной группе. Один и тот же у всех:
+   любой намёк на разное — цвет, буква, форма — со временем складывается
+   в узнавание. У редакции свой, чтобы её было видно сразу. */
+const ANON_MARK = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.4"/><path d="M4.8 19.5c0-3.3 3.2-5.4 7.2-5.4s7.2 2.1 7.2 5.4"/></svg>`;
+const EVA_MARK = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6l2.3 6.3 6.4.4-5 4.1 1.7 6.2-5.4-3.6-5.4 3.6 1.7-6.2-5-4.1 6.4-.4z"/></svg>`;
 
 /* Поле ввода живёт вне ленты сообщений: внутри .view его прижимало
    к последнему сообщению, потому что у блока своя анимация появления. */
@@ -5566,7 +5649,8 @@ function chatBar(){
       <div style="flex:1;min-width:0"><b>${esc(re.a)}</b><span>${esc(String(re.t).slice(0,70))}</span></div>
       <button onclick="cancelReply()">✕</button></div>` : ''}
     <div class="chatinput">
-      <input class="field" id="cin" placeholder="${re ? 'Ответ для ' + esc(re.a) : 'Сообщение'}"
+      <input class="field" id="cin" placeholder="${re ? 'Ответ для ' + esc(re.a)
+        : isAnon(g) ? 'Написать как ' + esc(myAnonName(g.id)) : 'Сообщение'}"
         onkeydown="if(event.key==='Enter')sendMsg('${attJs(g.id)}')">
       <button class="btn" onclick="sendMsg('${attJs(g.id)}')">→</button>
     </div>
@@ -5582,8 +5666,11 @@ function replyMsg(gid, i){
 function cancelReply(){ S.chat.reply = null; render(); }
 
 /* своё ли сообщение в групповом чате: по почте, метка — только у старых */
-function chatMine(m){
+function chatMine(m, gid){
   if(!m) return false;
+  /* В анонимной группе своё сообщение узнаём по прозвищу: ни почты,
+     ни метки «моё» в данных нет — иначе анонимность была бы нарисованной. */
+  if(m.anon) return !m.curator && !!gid && m.a === myAnonName(gid);
   const his = String(m.email || '').toLowerCase();
   return his ? his === myMail() : !!m.own;
 }
@@ -5617,20 +5704,40 @@ function chatAva(name, color, own, size, email){
 function sendMsg(gid){
   const inp = $('#cin'); if(!inp) return;
   const t = inp.value.trim(); if(!t) return;
+  const g = GROUPS.find(x => x.id === gid);
+  const anon = isAnon(g);
+  if(anon && anonMuted(g, myAnonName(gid)))
+    return toast('Здесь вы больше не пишете. Напишите в поддержку, если это ошибка');
   const now = new Date();
   const tm = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
   /* если отвечаем на чьё-то сообщение — цитата уезжает вместе с текстом */
   const r = S.chat.reply && S.chat.reply.g === gid ? (S.chats[gid] || [])[S.chat.reply.i] : null;
-  S.chats[gid].push({id:msgId(), at:Date.now(),
-    a: S.role === 'admin' ? (S.adminName || 'Куратор') : (S.name || 'Я'),
-    c: authorColor(myMail() || S.name), t, tm, email:myMail(), own:true,
-    curator: S.role === 'admin',
-    re: r ? {a:r.a, t:String(r.t).slice(0, 90)} : null});
+
+  /* В анонимной группе сообщение уходит без почты и без имени: вместо них
+     прозвище, посчитанное из почты и номера группы. Своё сообщение женщина
+     узнаёт по нему же — метки «моё» в данных тоже нет. */
+  const msg = anon
+    ? {id:msgId(), at:Date.now(), anon:true,
+       a: S.role === 'admin' ? 'Редакция Евы' : myAnonName(gid),
+       t, tm, curator: S.role === 'admin',
+       re: r ? {a:r.a, t:String(r.t).slice(0, 90)} : null}
+    : {id:msgId(), at:Date.now(),
+       a: S.role === 'admin' ? (S.adminName || 'Куратор') : (S.name || 'Я'),
+       c: authorColor(myMail() || S.name), t, tm, email:myMail(), own:true,
+       curator: S.role === 'admin',
+       re: r ? {a:r.a, t:String(r.t).slice(0, 90)} : null};
+  S.chats[gid].push(msg);
   inp.value = '';
   S.chat.reply = null;
-  S.points += 5;
+  /* Баллы за анонимное сообщение не начисляем: «+5 баллов» под рассказом
+     о тяжёлом — неуважение, и заодно след в её счёте. */
+  if(!anon) S.points += 5;
   render(); scrollChat(); schedulePersist(); syncPush(['chats']);
-  toast('+5 баллов за участие');
+  if(!anon) toast('+5 баллов за участие');
+  /* Заготовленный ответ эксперта здесь не появляется: он цитировал бы её
+     имя, а в анонимной группе имени нет. Да и отвечать заготовкой на
+     рассказ о тяжёлом нельзя — тут отвечает живая редакция. */
+  if(anon) return;
   setTimeout(() => {
     const g = GROUPS.find(x => x.id === gid);
     const ex = EXPERTS[hash(gid) % EXPERTS.length];
@@ -6256,7 +6363,14 @@ function expertsRow(){
       <span class="small muted">${EXPERTS.length}</span></div>
     <div class="hscroll">
       ${mine.map(e => card(e, true)).join('')}${rest.map(e => card(e, false)).join('')}
-    </div>`;
+    </div>
+    ${S.role === 'user' ? `<button class="applyrow" onclick="openSheet('expertApply')">
+      <div style="flex:1;min-width:0">
+        <b style="font-size:13.5px;display:block">Сами ведёте практики?</b>
+        <span class="small muted">Расскажите о себе — читаем каждую заявку</span>
+      </div>
+      <span class="muted" style="font-size:17px">›</span>
+    </button>` : ''}`;
 }
 
 /* ---------- страница эксперта (публичный лендинг) ---------- */
@@ -7361,6 +7475,8 @@ function pgSettings(){
     <div class="card">
       <button class="uline" style="border:none;padding-top:0;width:100%;text-align:left" onclick="openSheet('support')">
         <span style="flex:1;font-size:13.5px;font-weight:600">Написать в поддержку</span><span class="muted">›</span></button>
+      ${S.role === 'user' ? `<button class="uline" style="width:100%;text-align:left" onclick="openSheet('expertApply')">
+        <span style="flex:1;font-size:13.5px;font-weight:600">Вести практики в Еве</span><span class="muted">›</span></button>` : ''}
       <button class="uline" style="width:100%;text-align:left" onclick="openIdea()">
         <span style="flex:1;font-size:13.5px;font-weight:600">Предложить доработку</span><span class="muted">›</span></button>
       <button class="uline" style="width:100%;text-align:left" onclick="tourAgain()">
@@ -8407,8 +8523,11 @@ function adInbox(){
       <span class="tag-st ${t.st==='новое'?'st-trial':t.st==='в работе'?'st-think':'st-paid'}">${esc(t.st)}</span>
     </div>
     <b style="font-size:14px;display:block;margin:10px 0 5px">${esc(t.sub)}</b>
-    <p class="small muted" style="margin:0 0 10px">${esc(t.t)}</p>
+    <p class="small muted" style="margin:0 0 10px;white-space:pre-line">${esc(t.t)}</p>
     <div class="small muted" style="margin-bottom:8px">${esc(t.mail)}</div>
+    ${t.sub === 'Заявка эксперта' && String(t.mail||'').indexOf('@') > 0 ? `
+      <button class="btn sm acc" style="margin-bottom:9px"
+        onclick="makeExpert('${attJs(t.mail)}','${attJs(t.id)}')">Сделать экспертом</button>` : ''}
     <div class="row" style="gap:8px">
       <input class="field" style="margin:0;flex:1" placeholder="Ответить" id="rp_${t.id}">
       <button class="btn sm" onclick="replyTicket('${attJs(t.id)}')">→</button>
@@ -8417,7 +8536,32 @@ function adInbox(){
       `<button class="chip ${t.st===st?'on':''}" onclick="setTicket('${attJs(t.id)}','${attJs(st)}')">${st}</button>`).join('')}</div>
   </div>`).join('')}`;
 }
-function setTicket(id, st){ const t = INBOX.find(x => x.id === id); t.st = st; render(); }
+function setTicket(id, st){ const t = INBOX.find(x => x.id === id); t.st = st; render(); syncPush(['support']); }
+
+/* Заявка эксперта закрывается здесь же, одной кнопкой: роль на сервере,
+   карточка на платформе и письмо ей — иначе редакции пришлось бы держать
+   в голове три разных места и порядок действий между ними. */
+async function makeExpert(mail, ticketId){
+  const m = String(mail || '').toLowerCase();
+  if(!m || m.indexOf('@') < 0) return toast('У заявки нет почты');
+  if(!confirm('Выдать роль эксперта для ' + m + '?')) return;
+
+  const r = await apiCall('grant', {email:m, role:'expert'}, {silent:true});
+  if(!r) return toast(SYNC.lastError || 'Роль не выдалась, попробуйте ещё раз');
+
+  const t = INBOX.find(x => x.id === ticketId);
+  if(t){
+    /* карточку заводим сразу: иначе она войдёт экспертом и увидит пустоту */
+    if(typeof createExpertProfile === 'function') createExpertProfile(t.from, m, '');
+    t.st = 'закрыто';
+    await apiCall('dm_send', {email:m, from:'Редакция Евы', subject:'Заявка одобрена',
+      text:'Мы прочитали вашу заявку и рады работать вместе. Роль эксперта уже выдана — ' +
+           'войдите заново, и откроется кабинет: профиль, материалы, курсы и услуги. ' +
+           'Дипломы можно загрузить в разделе «Образование», мы их проверим.'}, {silent:true});
+  }
+  render(); pushShared(); syncPush(['support']);
+  toast(m + ' теперь эксперт');
+}
 /* Ответ на обращение. Раньше текст ответа выбрасывался: обращение
    переходило «в работу», а женщине приходило только сообщение на экране
    администратора. Теперь ответ уходит ей в личные сообщения. */
@@ -10450,7 +10594,7 @@ function sheet(){
     invite:shInvite, hello:shHello, askGroup:shAskGroup, weekSum:shWeekSum,
     myPage:shMyPage, toMate:shToMate,
     hw:shHW, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
-    install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
+    expertApply:shExpertApply, install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
     service:shService, editUser:shEditUser,
     newCourse:shNewCourse, newGood:shNewGood, idea:shIdea})[k]();
   return `<div class="bg" onclick="if(event.target===this)closeSheet()">
@@ -12020,6 +12164,96 @@ function sendSupport(){
   S.sheet = null; render(); syncPush(['support']); toast('Отправлено в поддержку');
 }
 
+
+/* =====================================================================
+   ЗАЯВКА ЭКСПЕРТА
+   Специалист видит на платформе чужие карточки и думает «я тоже так могу».
+   До сих пор ему некуда было это сказать: эксперты появлялись только
+   через личное приглашение, а на экране про это не было ни слова.
+
+   Заявка спрашивает ровно то, без чего решение не принять, и ничего
+   сверх: имя и почта уже есть в аккаунте, диплом на этом шаге не нужен —
+   его проверяют потом, когда договорились. Пять полей, две минуты.
+
+   Падает она в поддержку, отдельной темой «Заявка эксперта»: там её
+   видит редакция, там же отвечает, и оттуда одной кнопкой выдаёт роль.
+   Заводить ради этого отдельный ящик незачем — обращения уже читают.
+   ===================================================================== */
+const EXP_WANT = ['Практики и медитации', 'Мастер-классы', 'Курс', 'Личные консультации', 'Встречи офлайн'];
+
+function shExpertApply(){
+  const d = S.expApply = S.expApply || {want:[], area:'', exp:'', link:'', about:''};
+  const sent = (typeof INBOX !== 'undefined') &&
+    INBOX.some(t => t.sub === 'Заявка эксперта' && t.mail === (S.user ? S.user.email : ''));
+  if(sent) return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Заявка отправлена</h2>
+    <p class="small muted" style="margin:0 0 14px">Мы читаем каждую и отвечаем в течение недели —
+      ответ придёт в «Сообщения». Если нужно что-то добавить, напишите в поддержку.</p>
+    <button class="btn ghost" onclick="closeSheet()">Понятно</button>`;
+
+  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Вести практики в Еве</h2>
+    <p class="small muted" style="margin:0 0 14px">Пять полей, две минуты. Диплом на этом шаге
+      не нужен — документы проверяем потом, когда договоримся по сути.</p>
+
+    <label class="lbl">Чем занимаетесь</label>
+    <input class="field" id="ea_area" placeholder="Телесный терапевт, преподаю йогу"
+      value="${esc(d.area)}" oninput="S.expApply.area=this.value">
+
+    <label class="lbl">Сколько лет практикуете</label>
+    <input class="field" id="ea_exp" placeholder="Например, восемь"
+      value="${esc(d.exp)}" oninput="S.expApply.exp=this.value">
+
+    <label class="lbl">Что хотели бы вести</label>
+    <div class="chips wrap" style="margin-bottom:12px">${EXP_WANT.map(w =>
+      `<button class="chip ${d.want.indexOf(w) >= 0 ? 'on' : ''}"
+        onclick="expWant('${attJs(w)}')">${w}</button>`).join('')}</div>
+
+    <label class="lbl">Где вас можно посмотреть</label>
+    <input class="field" id="ea_link" placeholder="Сайт, телеграм-канал или профиль в соцсети"
+      value="${esc(d.link)}" oninput="S.expApply.link=this.value">
+
+    <label class="lbl">Пара слов о подходе</label>
+    <textarea class="field" rows="4" placeholder="С чем к вам приходят и что меняется у женщин после работы с вами"
+      oninput="S.expApply.about=this.value">${esc(d.about)}</textarea>
+
+    <div class="card" style="background:var(--surface-2);border-color:transparent;margin-top:4px">
+      <span class="small muted">Отправим от имени <b>${esc(S.name || '—')}</b>,
+        ${S.user ? esc(S.user.email) : 'почта не указана'}. Ответ придёт в «Сообщения».</span>
+    </div>
+
+    <button class="btn" style="margin-top:12px" onclick="sendExpertApply()">Отправить заявку</button>`;
+}
+function expWant(w){
+  const d = S.expApply = S.expApply || {want:[]};
+  d.want = d.want.indexOf(w) >= 0 ? d.want.filter(x => x !== w) : [...d.want, w];
+  render();
+}
+function sendExpertApply(){
+  const d = S.expApply || {};
+  if(!(d.area || '').trim())  return toast('Напишите, чем занимаетесь');
+  if(!(d.about || '').trim()) return toast('Пара слов о подходе — самое важное поле');
+  if(typeof INBOX === 'undefined') return toast('Не отправилось, попробуйте позже');
+  INBOX.unshift({
+    id:'ea' + Date.now().toString(36),
+    from: S.name || 'Участница',
+    role: 'ученица',
+    mail: S.user ? S.user.email : '—',
+    ago: 'только что',
+    sub: 'Заявка эксперта',
+    t: [
+      'Чем занимается: ' + d.area,
+      d.exp ? 'В практике: ' + d.exp : '',
+      (d.want || []).length ? 'Хочет вести: ' + d.want.join(', ') : '',
+      d.link ? 'Где посмотреть: ' + d.link : '',
+      '',
+      d.about
+    ].filter(Boolean).join('\n'),
+    st:'новое'
+  });
+  S.expApply = null;
+  S.sheet = null; render(); syncPush(['support']);
+  toast('Заявка отправлена. Ответим в течение недели');
+}
+
 /* ---------- решение по мероприятию ---------- */
 function reviewEvent(id, mode){
   const c = (($('#evc')||{}).value || '').trim();
@@ -12837,8 +13071,58 @@ const GACCESS = {
   open:    {n:'Открытое',      s:'Заходит любая участница платформы'},
   request: {n:'По заявке',     s:'Видно описание, переписка — после одобрения'},
   club:    {n:'Клуб',          s:'Доступ по подписке, помесячно'},
-  experts: {n:'Для экспертов', s:'Только эксперты платформы'}
+  experts: {n:'Для экспертов', s:'Только эксперты платформы'},
+  anon:    {n:'Анонимное',     s:'Ни имён, ни лиц. Ведёт редакция Евы'}
 };
+
+/* =====================================================================
+   АНОНИМНЫЕ СООБЩЕСТВА
+   Есть разговоры, которые не начинают под своим именем: насилие, долги,
+   зависимость, мысли, за которые стыдно. Такой группе мало убрать аватар
+   с экрана — нужно, чтобы имени не было в самих данных.
+
+   Поэтому здесь не «скрытие», а другой способ подписывать сообщения.
+   В анонимной группе сообщение уходит без почты и без имени, а вместо
+   них — прозвище: «Участница 7». Оно считается из почты и номера группы,
+   поэтому в одной группе женщина всегда одна и та же, а в соседней —
+   другая, и связать их между собой нельзя. Ни на сервере, ни у нас.
+
+   Из этого следует всё остальное:
+   · нажать на имя и попасть на её страницу нельзя — почты в сообщении нет;
+   · вести такую группу может только редакция: у обычной женщины не может
+     быть права молчаливо узнать, кто написал;
+   · модерация работает по прозвищу — этого хватает, чтобы убрать сообщение
+     и остановить того, кто портит разговор, и не хватает, чтобы узнать её;
+   · баллов за сообщения здесь не начисляем: «+5 баллов» под рассказом
+     о насилии — это неуважение, а заодно и след в её счёте.
+   ===================================================================== */
+const isAnon = g => !!g && g.access === 'anon';
+
+/* Прозвище: считаем из почты и номера группы. Число небольшое нарочно —
+   «Участница 7» читается как человек, а не как опознавательный код. */
+function anonNo(mail, gid){
+  const src = String(mail || '').toLowerCase() + '|' + String(gid || '');
+  let h = 5381;
+  for(let i = 0; i < src.length; i++) h = ((h << 5) + h + src.charCodeAt(i)) >>> 0;
+  return (h % 89) + 1;
+}
+const anonName = (mail, gid) => 'Участница ' + anonNo(mail, gid);
+const myAnonName = gid => anonName(myMail(), gid);
+
+/* Молчание по прозвищу: редакция может остановить того, кто портит
+   разговор, не зная, кто это. Список хранится в самой группе. */
+function anonMuted(g, name){
+  return isAnon(g) && (g.muted || []).indexOf(String(name)) >= 0;
+}
+function anonMute(gid, name){
+  const g = GROUPS.find(x => x.id === gid);
+  if(!g || !isAnon(g)) return;
+  g.muted = g.muted || [];
+  const at = g.muted.indexOf(name);
+  if(at >= 0) g.muted.splice(at, 1); else g.muted.push(name);
+  render(); pushShared();
+  toast(at >= 0 ? name + ' снова может писать' : name + ' больше не пишет здесь');
+}
 
 /* Что можно каждой роли. Список плоский нарочно: так его видно целиком
    и не приходится держать в голове иерархию. */
@@ -12852,6 +13136,11 @@ const GRIGHTS = {
 
 function myGRole(g){
   if(!g) return 'visitor';
+  /* В анонимной комнате нет ни владелицы, ни со-ведущих: право удалить
+     сообщение и закрыть кому-то письмо — это право модерации, а модерация
+     здесь только у редакции. Иначе одна из участниц молча получила бы
+     власть над остальными, оставаясь для них безымянной. */
+  if(isAnon(g)) return S.role === 'admin' ? 'owner' : (S.joined || []).indexOf(g.id) >= 0 ? 'member' : 'visitor';
   const me = myMail();
   if(me && g.owner && String(g.owner).toLowerCase() === me) return 'owner';
   /* в демонстрационных сообществах почт нет: ведущую узнаём по имени */
@@ -12909,7 +13198,7 @@ function shNewGroup(){
         onclick="S.gdraft.c='${attJs(c)}';render()" aria-label="Цвет"></button>`).join('')}</div>
 
     <label class="lbl" style="margin-top:12px">Кто может войти</label>
-    ${Object.entries(GACCESS).filter(([k]) => k !== 'experts').map(([k,v]) =>
+    ${Object.entries(GACCESS).filter(([k]) => k !== 'experts' && k !== 'anon').map(([k,v]) =>
       `<button class="optl ${d.access===k?'on':''}" onclick="S.gdraft.access='${attJs(k)}';render()">
         <b style="display:block;font-size:13.5px">${v.n}</b>
         <span class="small muted">${v.s}</span></button>`).join('')}

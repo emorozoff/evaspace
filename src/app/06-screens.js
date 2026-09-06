@@ -411,7 +411,14 @@ function expertsRow(){
       <span class="small muted">${EXPERTS.length}</span></div>
     <div class="hscroll">
       ${mine.map(e => card(e, true)).join('')}${rest.map(e => card(e, false)).join('')}
-    </div>`;
+    </div>
+    ${S.role === 'user' ? `<button class="applyrow" onclick="openSheet('expertApply')">
+      <div style="flex:1;min-width:0">
+        <b style="font-size:13.5px;display:block">Сами ведёте практики?</b>
+        <span class="small muted">Расскажите о себе — читаем каждую заявку</span>
+      </div>
+      <span class="muted" style="font-size:17px">›</span>
+    </button>` : ''}`;
 }
 
 /* ---------- страница эксперта (публичный лендинг) ---------- */

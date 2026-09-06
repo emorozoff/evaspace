@@ -23,7 +23,7 @@ function sheet(){
     invite:shInvite, hello:shHello, askGroup:shAskGroup, weekSum:shWeekSum,
     myPage:shMyPage, toMate:shToMate,
     hw:shHW, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
-    install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
+    expertApply:shExpertApply, install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
     service:shService, editUser:shEditUser,
     newCourse:shNewCourse, newGood:shNewGood, idea:shIdea})[k]();
   return `<div class="bg" onclick="if(event.target===this)closeSheet()">
@@ -1591,6 +1591,96 @@ function sendSupport(){
     role:'ученица', mail:S.user?S.user.email:'—', ago:'только что',
     sub:S.supTopic || 'Другое', t, st:'новое'});
   S.sheet = null; render(); syncPush(['support']); toast('Отправлено в поддержку');
+}
+
+
+/* =====================================================================
+   ЗАЯВКА ЭКСПЕРТА
+   Специалист видит на платформе чужие карточки и думает «я тоже так могу».
+   До сих пор ему некуда было это сказать: эксперты появлялись только
+   через личное приглашение, а на экране про это не было ни слова.
+
+   Заявка спрашивает ровно то, без чего решение не принять, и ничего
+   сверх: имя и почта уже есть в аккаунте, диплом на этом шаге не нужен —
+   его проверяют потом, когда договорились. Пять полей, две минуты.
+
+   Падает она в поддержку, отдельной темой «Заявка эксперта»: там её
+   видит редакция, там же отвечает, и оттуда одной кнопкой выдаёт роль.
+   Заводить ради этого отдельный ящик незачем — обращения уже читают.
+   ===================================================================== */
+const EXP_WANT = ['Практики и медитации', 'Мастер-классы', 'Курс', 'Личные консультации', 'Встречи офлайн'];
+
+function shExpertApply(){
+  const d = S.expApply = S.expApply || {want:[], area:'', exp:'', link:'', about:''};
+  const sent = (typeof INBOX !== 'undefined') &&
+    INBOX.some(t => t.sub === 'Заявка эксперта' && t.mail === (S.user ? S.user.email : ''));
+  if(sent) return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Заявка отправлена</h2>
+    <p class="small muted" style="margin:0 0 14px">Мы читаем каждую и отвечаем в течение недели —
+      ответ придёт в «Сообщения». Если нужно что-то добавить, напишите в поддержку.</p>
+    <button class="btn ghost" onclick="closeSheet()">Понятно</button>`;
+
+  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Вести практики в Еве</h2>
+    <p class="small muted" style="margin:0 0 14px">Пять полей, две минуты. Диплом на этом шаге
+      не нужен — документы проверяем потом, когда договоримся по сути.</p>
+
+    <label class="lbl">Чем занимаетесь</label>
+    <input class="field" id="ea_area" placeholder="Телесный терапевт, преподаю йогу"
+      value="${esc(d.area)}" oninput="S.expApply.area=this.value">
+
+    <label class="lbl">Сколько лет практикуете</label>
+    <input class="field" id="ea_exp" placeholder="Например, восемь"
+      value="${esc(d.exp)}" oninput="S.expApply.exp=this.value">
+
+    <label class="lbl">Что хотели бы вести</label>
+    <div class="chips wrap" style="margin-bottom:12px">${EXP_WANT.map(w =>
+      `<button class="chip ${d.want.indexOf(w) >= 0 ? 'on' : ''}"
+        onclick="expWant('${attJs(w)}')">${w}</button>`).join('')}</div>
+
+    <label class="lbl">Где вас можно посмотреть</label>
+    <input class="field" id="ea_link" placeholder="Сайт, телеграм-канал или профиль в соцсети"
+      value="${esc(d.link)}" oninput="S.expApply.link=this.value">
+
+    <label class="lbl">Пара слов о подходе</label>
+    <textarea class="field" rows="4" placeholder="С чем к вам приходят и что меняется у женщин после работы с вами"
+      oninput="S.expApply.about=this.value">${esc(d.about)}</textarea>
+
+    <div class="card" style="background:var(--surface-2);border-color:transparent;margin-top:4px">
+      <span class="small muted">Отправим от имени <b>${esc(S.name || '—')}</b>,
+        ${S.user ? esc(S.user.email) : 'почта не указана'}. Ответ придёт в «Сообщения».</span>
+    </div>
+
+    <button class="btn" style="margin-top:12px" onclick="sendExpertApply()">Отправить заявку</button>`;
+}
+function expWant(w){
+  const d = S.expApply = S.expApply || {want:[]};
+  d.want = d.want.indexOf(w) >= 0 ? d.want.filter(x => x !== w) : [...d.want, w];
+  render();
+}
+function sendExpertApply(){
+  const d = S.expApply || {};
+  if(!(d.area || '').trim())  return toast('Напишите, чем занимаетесь');
+  if(!(d.about || '').trim()) return toast('Пара слов о подходе — самое важное поле');
+  if(typeof INBOX === 'undefined') return toast('Не отправилось, попробуйте позже');
+  INBOX.unshift({
+    id:'ea' + Date.now().toString(36),
+    from: S.name || 'Участница',
+    role: 'ученица',
+    mail: S.user ? S.user.email : '—',
+    ago: 'только что',
+    sub: 'Заявка эксперта',
+    t: [
+      'Чем занимается: ' + d.area,
+      d.exp ? 'В практике: ' + d.exp : '',
+      (d.want || []).length ? 'Хочет вести: ' + d.want.join(', ') : '',
+      d.link ? 'Где посмотреть: ' + d.link : '',
+      '',
+      d.about
+    ].filter(Boolean).join('\n'),
+    st:'новое'
+  });
+  S.expApply = null;
+  S.sheet = null; render(); syncPush(['support']);
+  toast('Заявка отправлена. Ответим в течение недели');
 }
 
 /* ---------- решение по мероприятию ---------- */

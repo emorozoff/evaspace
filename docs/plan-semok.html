@@ -1,0 +1,907 @@
+<title>План съёмок Eva Space</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --ink:#111014; --ink-2:#2A272F; --paper:#F7F6F4; --surface:#FFFFFF; --surface-2:#F1EFEC;
+  --muted:#7E7A85; --line:rgba(17,16,20,.09); --line-2:rgba(17,16,20,.16);
+  --accent:#A8375C; --accent-soft:#F7E9EE; --lilac:#6C5CE0; --lilac-soft:#EDEAF8;
+  --gold:#B8894A; --gold-soft:#F6EFE2; --ok:#3F7D62; --ok-soft:#E8F1EC;
+  --bar:#C98098; --bar-track:rgba(17,16,20,.06);
+  --r:14px; --r-lg:20px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#F2F0EE; --ink-2:#D6D2CE; --paper:#141317; --surface:#1C1B20; --surface-2:#24222A;
+    --muted:#918C99; --line:rgba(242,240,238,.10); --line-2:rgba(242,240,238,.20);
+    --accent:#E1809B; --accent-soft:#39222B; --lilac:#A79BF0; --lilac-soft:#262341;
+    --gold:#D8AE72; --gold-soft:#332A1D; --ok:#77B396; --ok-soft:#1E2E27;
+    --bar:#8E4761; --bar-track:rgba(242,240,238,.08);
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#F2F0EE; --ink-2:#D6D2CE; --paper:#141317; --surface:#1C1B20; --surface-2:#24222A;
+  --muted:#918C99; --line:rgba(242,240,238,.10); --line-2:rgba(242,240,238,.20);
+  --accent:#E1809B; --accent-soft:#39222B; --lilac:#A79BF0; --lilac-soft:#262341;
+  --gold:#D8AE72; --gold-soft:#332A1D; --ok:#77B396; --ok-soft:#1E2E27;
+  --bar:#8E4761; --bar-track:rgba(242,240,238,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-size:15px;line-height:1.6;letter-spacing:-.006em;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:48px 24px 90px}
+a{color:var(--accent)}
+h1,h2,h3,h4{text-wrap:balance;margin:0}
+.eyebrow{font-family:Unbounded,Inter,sans-serif;font-weight:300;font-size:11px;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:42px;font-weight:700;letter-spacing:-.04em;line-height:1.08;margin:14px 0 16px}
+.lead{font-size:16.5px;line-height:1.65;color:var(--ink-2);max-width:64ch;margin:0 0 10px}
+h2{font-size:26px;font-weight:700;letter-spacing:-.032em;margin:0 0 8px}
+h3{font-size:18px;font-weight:700;letter-spacing:-.022em;margin:0 0 6px}
+h4{font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 10px}
+p{margin:0 0 12px}
+.small{font-size:13px;line-height:1.55}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+
+.facts{display:flex;flex-wrap:wrap;gap:8px 26px;padding:16px 0 0;border-top:1px solid var(--line);margin-top:22px}
+.fact{font-size:12.5px;color:var(--muted)}
+.fact b{color:var(--ink);font-size:15px;font-variant-numeric:tabular-nums;margin-right:4px}
+
+nav{display:flex;gap:4px;margin:34px 0 26px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+nav button{appearance:none;border:none;background:none;font:inherit;color:var(--muted);
+  padding:11px 15px;cursor:pointer;font-weight:600;font-size:14px;position:relative;
+  border-bottom:2px solid transparent;margin-bottom:-1px}
+nav button:hover{color:var(--ink)}
+nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav button:focus-visible{outline:2px solid var(--accent);outline-offset:-3px;border-radius:6px}
+nav em{font-style:normal;font-size:11px;color:var(--muted);margin-left:6px;
+  font-variant-numeric:tabular-nums}
+
+section[hidden]{display:none}
+.band{margin:0 0 40px}
+.band > p{max-width:66ch}
+
+/* ---------- покрытие: одна серия, один тон, значение подписано ---------- */
+.cov{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);
+  padding:20px 22px;overflow-x:auto}
+.covrow{display:grid;grid-template-columns:150px minmax(120px,1fr) 42px 128px;
+  align-items:center;gap:12px;padding:4px 0;min-width:520px}
+.covrow + .covrow{border-top:1px solid var(--line)}
+.covname{font-size:13.5px;font-weight:600}
+.covbar{height:9px;border-radius:5px;background:var(--bar-track);overflow:hidden}
+.covbar i{display:block;height:100%;border-radius:5px;background:var(--bar)}
+/* ноль — это измеренное значение, а не отсутствие данных: показываем засечкой */
+.covbar i.zero{width:3px;background:var(--accent);border-radius:2px}
+.covval{font-size:13px;font-variant-numeric:tabular-nums;text-align:right;color:var(--ink-2)}
+.st{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  border-radius:999px;padding:4px 9px;display:inline-flex;align-items:center;gap:5px;justify-self:start}
+.st.no{background:var(--accent-soft);color:var(--accent)}
+.st.few{background:var(--gold-soft);color:var(--gold)}
+.st.ok{background:var(--ok-soft);color:var(--ok)}
+.st svg{flex:none}
+
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+.tbox{border:1px solid var(--line);border-radius:var(--r-lg);overflow-x:auto;background:var(--surface)}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted)}
+.kind{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  border-radius:5px;padding:3px 6px;white-space:nowrap}
+.kind.p{background:var(--accent-soft);color:var(--accent)}
+.kind.pr{background:var(--ok-soft);color:var(--ok)}
+.kind.mk{background:var(--lilac-soft);color:var(--lilac)}
+
+.blk{margin:0 0 30px}
+.blkhead{display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+  margin:0 0 10px;flex-wrap:wrap}
+.blkhead .why{font-size:13px;color:var(--muted);max-width:60ch}
+
+.note{border-left:2px solid var(--accent);padding:2px 0 2px 16px;margin:0 0 20px;max-width:66ch}
+.note b{display:block;font-size:15px;margin-bottom:4px}
+.note p{font-size:13.5px;color:var(--ink-2);margin:0}
+
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px}
+.card h3{margin-bottom:6px}
+.card p{font-size:13.5px;color:var(--ink-2);margin:0}
+.card ul{margin:8px 0 0;padding-left:17px;font-size:13.5px;color:var(--ink-2)}
+.card li{margin-bottom:4px}
+
+.track{display:grid;grid-template-columns:130px 1fr;gap:0;border:1px solid var(--line);
+  border-radius:var(--r-lg);overflow:hidden;background:var(--surface);margin-bottom:14px}
+.track > div{padding:15px 18px}
+.track .step{background:var(--surface-2);border-right:1px solid var(--line);
+  font-size:12.5px;font-weight:700}
+.track .step span{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:3px}
+.track .what{font-size:13.5px}
+.track .what b{font-weight:600}
+.track .what .m{color:var(--muted);font-size:12.5px;display:block;margin-top:3px}
+
+footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--muted)}
+@media (max-width:620px){
+  h1{font-size:32px}
+  .wrap{padding:34px 16px 70px}
+  .track{grid-template-columns:1fr}
+  .track .step{border-right:none;border-bottom:1px solid var(--line)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Eva Space · производство контента</div>
+  <h1>Что снимать, чтобы программа не повторялась</h1>
+  <p class="lead">Программа собирается на семь дней: послание, практика и мастер-класс на каждый
+    день — двадцать один материал в неделю. Библиотека сейчас закрывает первую неделю и начинает
+    повторяться на второй. Ниже — что снимать, в каком порядке и сколько за год, чтобы этого
+    не происходило.</p>
+  <p class="lead muted">Цифры не на глаз: я прогнал сборку программы на двенадцать недель подряд
+    для шести разных запросов и посчитал, где начинаются повторы и сколько материалов
+    вообще подходит под каждый запрос.</p>
+
+  <div class="facts">
+    <div class="fact"><b class="num">42</b>материала в библиотеке</div>
+    <div class="fact"><b class="num">21</b>материал уходит за неделю</div>
+    <div class="fact"><b class="num">2</b>неделя, с которой начинаются повторы</div>
+    <div class="fact"><b class="num">5</b>запросов из теста закрыты нулём</div>
+    <div class="fact"><b class="num">100</b>тем в плане</div>
+  </div>
+
+  <nav role="tablist" aria-label="Разделы плана">
+    <button role="tab" id="t-now" aria-controls="p-now" aria-selected="true">Что снимать первым</button>
+    <button role="tab" id="t-100" aria-controls="p-100" aria-selected="false">Сто тем<em>100</em></button>
+    <button role="tab" id="t-year" aria-controls="p-year" aria-selected="false">Год целиком</button>
+    <button role="tab" id="t-hard" aria-controls="p-hard" aria-selected="false">Тяжёлые темы</button>
+  </nav>
+
+  <!-- ═══════════ ЧТО СНИМАТЬ ПЕРВЫМ ═══════════ -->
+  <section id="p-now" role="tabpanel" aria-labelledby="t-now">
+
+    <div class="band">
+      <h2>Пять запросов, на которые ответить нечем</h2>
+      <p>Тест спрашивает женщину, что для неё важно, и запоминает это тегами. По каждому тегу
+        подбор потом ищет материалы. Вот сколько материалов есть под каждый ответ теста —
+        отсортировано снизу вверх, от самых пустых.</p>
+
+      <div class="cov" role="img" aria-label="Сколько материалов в библиотеке под каждый запрос из теста: от нуля до девяти">
+        <div class="covrow" style="border:none">
+          <div class="covname" style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)">Запрос</div>
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)">Материалов</div>
+          <div></div><div></div>
+        </div>
+        <div class="covrow"><div class="covname">женственность</div><div class="covbar"><i class="zero"></i></div><div class="covval">0</div><span class="st no">нет ничего</span></div>
+        <div class="covrow"><div class="covname">кризис</div><div class="covbar"><i class="zero"></i></div><div class="covval">0</div><span class="st no">нет ничего</span></div>
+        <div class="covrow"><div class="covname">одиночество</div><div class="covbar"><i class="zero"></i></div><div class="covval">0</div><span class="st no">нет ничего</span></div>
+        <div class="covrow"><div class="covname">новичок</div><div class="covbar"><i class="zero"></i></div><div class="covval">0</div><span class="st no">нет ничего</span></div>
+        <div class="covrow"><div class="covname">опыт</div><div class="covbar"><i class="zero"></i></div><div class="covval">0</div><span class="st no">нет ничего</span></div>
+        <div class="covrow"><div class="covname">коммуникация</div><div class="covbar"><i style="width:11%"></i></div><div class="covval">1</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">восстановление</div><div class="covbar"><i style="width:11%"></i></div><div class="covval">1</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">принятие</div><div class="covbar"><i style="width:22%"></i></div><div class="covval">2</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">поддержка</div><div class="covbar"><i style="width:22%"></i></div><div class="covval">2</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">созависимость</div><div class="covbar"><i style="width:22%"></i></div><div class="covval">2</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">продуктивность</div><div class="covbar"><i style="width:22%"></i></div><div class="covval">2</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">отношения</div><div class="covbar"><i style="width:33%"></i></div><div class="covval">3</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">деньги</div><div class="covbar"><i style="width:33%"></i></div><div class="covval">3</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">карьера</div><div class="covbar"><i style="width:33%"></i></div><div class="covval">3</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">беременность</div><div class="covbar"><i style="width:33%"></i></div><div class="covval">3</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">материнство</div><div class="covbar"><i style="width:33%"></i></div><div class="covval">3</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">цели</div><div class="covbar"><i style="width:33%"></i></div><div class="covval">3</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">вина</div><div class="covbar"><i style="width:44%"></i></div><div class="covval">4</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">самокритика</div><div class="covbar"><i style="width:44%"></i></div><div class="covval">4</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">границы</div><div class="covbar"><i style="width:56%"></i></div><div class="covval">5</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">сон</div><div class="covbar"><i style="width:56%"></i></div><div class="covval">5</div><span class="st few">почти нет</span></div>
+        <div class="covrow"><div class="covname">уверенность</div><div class="covbar"><i style="width:67%"></i></div><div class="covval">6</div><span class="st ok">на неделю</span></div>
+        <div class="covrow"><div class="covname">самооценка</div><div class="covbar"><i style="width:67%"></i></div><div class="covval">6</div><span class="st ok">на неделю</span></div>
+        <div class="covrow"><div class="covname">тревога</div><div class="covbar"><i style="width:67%"></i></div><div class="covval">6</div><span class="st ok">на неделю</span></div>
+        <div class="covrow"><div class="covname">энергия</div><div class="covbar"><i style="width:67%"></i></div><div class="covval">6</div><span class="st ok">на неделю</span></div>
+        <div class="covrow"><div class="covname">выгорание</div><div class="covbar"><i style="width:67%"></i></div><div class="covval">6</div><span class="st ok">на неделю</span></div>
+        <div class="covrow"><div class="covname">тело</div><div class="covbar"><i style="width:78%"></i></div><div class="covval">7</div><span class="st ok">на неделю</span></div>
+        <div class="covrow"><div class="covname">спокойствие</div><div class="covbar"><i style="width:100%"></i></div><div class="covval">9</div><span class="st ok">на неделю</span></div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>«Нет ничего» — это не мелочь, это обещание, которое мы нарушаем</b>
+      <p>Женщина в разводе отвечает «в разводе или расстались», и её запрос помечается тегами
+        «кризис» и «поддержка». Под «кризис» нет ни одного материала. Она получит программу
+        из общих практик и решит, что тест был для вида. Пять таких ответов сейчас в тесте:
+        одиночество, кризис, женственность и оба уровня опыта.</p>
+    </div>
+
+    <div class="band">
+      <h2>Как быстро программа начинает повторяться</h2>
+      <p>Прогон на двенадцать недель подряд для шести разных запросов. В неделю уходит семь
+        посланий, семь практик и семь мастер-классов.</p>
+      <div class="tbox">
+        <table>
+          <thead><tr><th>Запрос</th><th>Послания</th><th>Практики</th><th>Мастер-классы</th>
+            <th>Подходит под запрос</th></tr></thead>
+          <tbody>
+            <tr><td>Спокойствие и тревога</td><td class="n">повтор со 2-й недели</td><td class="n">со 2-й</td><td class="n">с 7-й</td><td class="n">3 / 5 / 2</td></tr>
+            <tr><td>Энергия и выгорание</td><td class="n">со 2-й</td><td class="n">со 2-й</td><td class="n">с 7-й</td><td class="n">2 / 3 / 1</td></tr>
+            <tr><td>Уверенность</td><td class="n">со 2-й</td><td class="n">со 2-й</td><td class="n">с 6-й</td><td class="n">3 / 2 / 1</td></tr>
+            <tr><td>Деньги и дело</td><td class="n">со 2-й</td><td class="n">со 2-й</td><td class="n">с 4-й</td><td class="n">1 / 1 / 2</td></tr>
+            <tr><td>Тело и принятие</td><td class="n">со 2-й</td><td class="n">со 2-й</td><td class="n">с 7-й</td><td class="n">2 / 3 / 1</td></tr>
+            <tr><td>Отношения</td><td class="n">со 2-й</td><td class="n">со 2-й</td><td class="n">с 6-й</td><td class="n">1 / 1 / 2</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted" style="margin-top:10px">Последний столбец — сколько материалов
+        каждого вида показывают совпадение выше 50%. Один-два на запрос: подбору не из чего
+        выбирать, он берёт что осталось. Отсюда и ощущение, что программа «общая».</p>
+    </div>
+
+    <div class="band">
+      <h2>Порядок съёмок</h2>
+      <p>Пять блоков. Первые два закрывают дыры, третий даёт запас на месяц, дальше — глубина
+        и разнообразие. Внутри блока порядок неважен, между блоками — важен.</p>
+
+      <div class="tbox" style="margin-bottom:14px">
+        <table>
+          <thead><tr><th>Очередь</th><th>Что снимаем</th><th>Сколько</th><th>Зачем именно это</th></tr></thead>
+          <tbody>
+            <tr><td class="n"><b>1</b></td><td><b>Пять пустых запросов</b><br><span class="small muted">женственность, кризис, одиночество, новичок, опыт</span></td>
+              <td class="n">30 материалов<br>~3 съёмочных дня</td>
+              <td>Пока их нет, часть женщин получает не свою программу с первого дня. Дешевле
+                всего: по 6 материалов на запрос — послание, две практики, мастер-класс и два коротких.</td></tr>
+            <tr><td class="n"><b>2</b></td><td><b>Уровни: для новичка и для опытной</b></td>
+              <td class="n">14 материалов<br>~1,5 дня</td>
+              <td>Сейчас 41 материал из 42 помечен «для всех». Подбор по уровню фактически
+                выключен: новичок и практикующая получают одно и то же.</td></tr>
+            <tr><td class="n"><b>3</b></td><td><b>Послания: добить до сорока двух</b></td>
+              <td class="n">27 посланий<br>~1 день</td>
+              <td>Самое дешёвое в производстве и самое заметное в повторах: их видят каждый день.
+                42 штуки — это шесть недель без повтора, как задумано в подборе.</td></tr>
+            <tr><td class="n"><b>4</b></td><td><b>Практики по направлениям с нулём</b><br><span class="small muted">цигун, танец, голос и звук, прогулка</span></td>
+              <td class="n">20 практик<br>~2 дня</td>
+              <td>Эти направления женщина выбирает во втором вопросе теста, а материалов под них
+                нет вообще. Выбрала танец — получила медитацию.</td></tr>
+            <tr><td class="n"><b>5</b></td><td><b>Тяжёлые темы траекториями</b><br><span class="small muted">беременность, цикл, развод, выгорание</span></td>
+              <td class="n">36 материалов<br>~4 дня</td>
+              <td>Это не «ещё материалы», это последовательности. Разбор — на вкладке
+                «Тяжёлые темы».</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid3">
+        <div class="card">
+          <h3>Что снимается за один день</h3>
+          <p>Ориентир для планирования смены с одним экспертом:</p>
+          <ul>
+            <li>послания — до 20 за смену, они по минуте</li>
+            <li>короткие практики до 10 минут — 8–10</li>
+            <li>длинные практики 15–30 минут — 4–5</li>
+            <li>мастер-класс 25–35 минут — 2, больше не стоит: садится голос</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Чего не хватает по длине</h3>
+          <p>Сейчас: до 5 минут — 15 штук, 5–10 — 10, 11–20 — всего 5, 21–35 — 11.</p>
+          <ul>
+            <li>дыра в середине: 11–20 минут — это ровно то, что выбирает женщина
+              с ответом «15–20 минут в день»</li>
+            <li>ей достаётся либо пятиминутка, либо получасовой класс</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Что снимать не надо</h3>
+          <p>Чтобы не тратить смены впустую:</p>
+          <ul>
+            <li>ещё медитаций на спокойствие — их больше всего, 9 штук</li>
+            <li>длинных мастер-классов «обо всём» — подбор их почти не ставит</li>
+            <li>материалов без пометки этапа и уровня: 34 из 42 уже «для всех»</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ СТО ТЕМ ═══════════ -->
+  <section id="p-100" role="tabpanel" aria-labelledby="t-100" hidden>
+    <div class="band">
+      <h2>Сто тем по двенадцати блокам</h2>
+      <p>Блоки идут в порядке срочности: сначала четыре, где сейчас ноль или почти ноль,
+        потом восемь, где есть на неделю. Внутри блока — от коротких к длинным, чтобы смену
+        можно было собрать сверху вниз.</p>
+      <div class="facts" style="border-top:none;padding-top:4px;margin-top:0">
+        <div class="fact"><b class="num">24</b>посланий по минуте</div>
+        <div class="fact"><b class="num">39</b>практик от 4 до 20 минут</div>
+        <div class="fact"><b class="num">37</b>мастер-классов от 18 до 32 минут</div>
+        <div class="fact"><b class="num">~14</b>съёмочных дней на всё</div>
+      </div>
+    </div>
+    <div class="blk">
+      <div class="blkhead">
+        <h3>Женственность <span class="muted" style="font-weight:500;font-size:14px">· 8</span></h3>
+        <div class="why">Тег из теста, покрытие ноль. Его получают те, кто ответил «свободна» и «дети уже взрослые» — две большие группы разом.</div>
+      </div>
+      <div class="tbox"><table>
+        <thead><tr><th style="width:34px">№</th><th>Тема</th><th style="width:120px">Вид</th><th style="width:64px">Минут</th></tr></thead>
+        <tbody>
+          <tr><td class="n">1</td><td>Я нравлюсь себе раньше, чем кому-то ещё</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">2</td><td>Мягкость — это не слабость</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">3</td><td>Практика перед зеркалом: смотреть без оценки</td><td><span class="kind pr">практика</span></td><td class="n">12</td></tr>
+          <tr><td class="n">4</td><td>Дыхание и движение таза: вернуть подвижность</td><td><span class="kind pr">практика</span></td><td class="n">8</td></tr>
+          <tr><td class="n">5</td><td>Медленное утро: как разбудить тело, а не подстегнуть</td><td><span class="kind pr">практика</span></td><td class="n">15</td></tr>
+          <tr><td class="n">6</td><td>Женственность без обёртки: что за этим словом на самом деле</td><td><span class="kind mk">мастер-класс</span></td><td class="n">28</td></tr>
+          <tr><td class="n">7</td><td>Как перестать откладывать себя на потом</td><td><span class="kind mk">мастер-класс</span></td><td class="n">25</td></tr>
+          <tr><td class="n">8</td><td>Возраст как ресурс: что появляется после сорока</td><td><span class="kind mk">мастер-класс</span></td><td class="n">30</td></tr>
+        </tbody>
+      </table></div>
+      <div class="small muted" style="margin-top:7px">2 посланий, 3 практик, 3 классов</div>
+    </div>
+    <div class="blk">
+      <div class="blkhead">
+        <h3>Кризис и переходы <span class="muted" style="font-weight:500;font-size:14px">· 9</span></h3>
+        <div class="why">Ноль материалов. Его получают женщины в разводе и те, у кого кризис в отношениях, — самое уязвимое состояние на платформе.</div>
+      </div>
+      <div class="tbox"><table>
+        <thead><tr><th style="width:34px">№</th><th>Тема</th><th style="width:120px">Вид</th><th style="width:64px">Минут</th></tr></thead>
+        <tbody>
+          <tr><td class="n">9</td><td>Это тоже пройдёт, и я останусь</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">10</td><td>Мне не нужно понимать всё сегодня</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">11</td><td>Я имею право не справляться быстро</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">12</td><td>Практика на день, когда ничего не хочется</td><td><span class="kind pr">практика</span></td><td class="n">6</td></tr>
+          <tr><td class="n">13</td><td>Заземление: пять чувств, когда мысли разгоняются</td><td><span class="kind pr">практика</span></td><td class="n">10</td></tr>
+          <tr><td class="n">14</td><td>Письменная практика: что закончилось и что осталось</td><td><span class="kind pr">практика</span></td><td class="n">18</td></tr>
+          <tr><td class="n">15</td><td>Развод: первые три месяца, шаг за шагом</td><td><span class="kind mk">мастер-класс</span></td><td class="n">32</td></tr>
+          <tr><td class="n">16</td><td>Как жить, когда планы рухнули</td><td><span class="kind mk">мастер-класс</span></td><td class="n">28</td></tr>
+          <tr><td class="n">17</td><td>Когда пора к специалисту: признаки, которые важно не пропустить</td><td><span class="kind mk">мастер-класс</span></td><td class="n">26</td></tr>
+        </tbody>
+      </table></div>
+      <div class="small muted" style="margin-top:7px">3 посланий, 3 практик, 3 классов</div>
+    </div>
+    <div class="blk">
+      <div class="blkhead">
+        <h3>Одиночество <span class="muted" style="font-weight:500;font-size:14px">· 7</span></h3>
+        <div class="why">Ноль материалов. Приходит с ответом «хочу отношений, но страшно» — там нужен не совет «полюби себя», а работа со страхом.</div>
+      </div>
+      <div class="tbox"><table>
+        <thead><tr><th style="width:34px">№</th><th>Тема</th><th style="width:120px">Вид</th><th style="width:64px">Минут</th></tr></thead>
+        <tbody>
+          <tr><td class="n">18</td><td>Одиночество — это пауза, а не приговор</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">19</td><td>Я хорошая компания сама себе</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">20</td><td>Практика тёплого контакта с собой</td><td><span class="kind pr">практика</span></td><td class="n">9</td></tr>
+          <tr><td class="n">21</td><td>Вечер для одной: как провести его в удовольствие</td><td><span class="kind pr">практика</span></td><td class="n">14</td></tr>
+          <tr><td class="n">22</td><td>Дыхание при страхе близости</td><td><span class="kind pr">практика</span></td><td class="n">7</td></tr>
+          <tr><td class="n">23</td><td>Страшно снова начинать: как выйти из паузы</td><td><span class="kind mk">мастер-класс</span></td><td class="n">27</td></tr>
+          <tr><td class="n">24</td><td>Как знакомиться взрослой женщине без унижения</td><td><span class="kind mk">мастер-класс</span></td><td class="n">24</td></tr>
+        </tbody>
+      </table></div>
+      <div class="small muted" style="margin-top:7px">2 посланий, 3 практик, 2 классов</div>
+    </div>
+    <div class="blk">
+      <div class="blkhead">
+        <h3>Первые шаги <span class="muted" style="font-weight:500;font-size:14px">· 6</span></h3>
+        <div class="why">Тег «новичок» — ноль. Из 42 материалов 41 помечен «для всех»: подбор по уровню фактически выключен.</div>
+      </div>
+      <div class="tbox"><table>
+        <thead><tr><th style="width:34px">№</th><th>Тема</th><th style="width:120px">Вид</th><th style="width:64px">Минут</th></tr></thead>
+        <tbody>
+          <tr><td class="n">25</td><td>Пять минут — это уже практика</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">26</td><td>Самая первая практика: просто сесть и подышать</td><td><span class="kind pr">практика</span></td><td class="n">4</td></tr>
+          <tr><td class="n">27</td><td>Первая растяжка: три движения, ничего сложного</td><td><span class="kind pr">практика</span></td><td class="n">5</td></tr>
+          <tr><td class="n">28</td><td>Как заметить своё состояние за две минуты</td><td><span class="kind pr">практика</span></td><td class="n">6</td></tr>
+          <tr><td class="n">29</td><td>С чего начать, если раньше ничего не пробовала</td><td><span class="kind mk">мастер-класс</span></td><td class="n">18</td></tr>
+          <tr><td class="n">30</td><td>Почему бросают на второй неделе и как не бросить</td><td><span class="kind mk">мастер-класс</span></td><td class="n">20</td></tr>
+        </tbody>
+      </table></div>
+      <div class="small muted" style="margin-top:7px">1 посланий, 3 практик, 2 классов</div>
+    </div>
+    <div class="blk">
+      <div class="blkhead">
+        <h3>Спокойствие и тревога <span class="muted" style="font-weight:500;font-size:14px">· 9</span></h3>
+        <div class="why">Самый закрытый запрос, 9 материалов. Не хватает не темы, а длины: почти всё либо короткое, либо получасовое.</div>
+      </div>
+      <div class="tbox"><table>
+        <thead><tr><th style="width:34px">№</th><th>Тема</th><th style="width:120px">Вид</th><th style="width:64px">Минут</th></tr></thead>
+        <tbody>
+          <tr><td class="n">31</td><td>Тревога приходит и уходит, я остаюсь</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">32</td><td>Мне можно не быть в порядке</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">33</td><td>Практика на 15 минут: тревожный вечер</td><td><span class="kind pr">практика</span></td><td class="n">16</td></tr>
+          <tr><td class="n">34</td><td>Дыхание при панике: короткий протокол</td><td><span class="kind pr">практика</span></td><td class="n">12</td></tr>
+          <tr><td class="n">35</td><td>Сканирование тела для тех, кто не может усидеть</td><td><span class="kind pr">практика</span></td><td class="n">18</td></tr>
+          <tr><td class="n">36</td><td>Тревога о будущем: практика возвращения в сегодня</td><td><span class="kind pr">практика</span></td><td class="n">11</td></tr>
+          <tr><td class="n">37</td><td>Тревога, которая стала фоном: как её разглядеть</td><td><span class="kind mk">мастер-класс</span></td><td class="n">30</td></tr>
+          <tr><td class="n">38</td><td>Новости и лента: как перестать себя подогревать</td><td><span class="kind mk">мастер-класс</span></td><td class="n">26</td></tr>
+          <tr><td class="n">39</td><td>Тревога за близких: где забота, а где контроль</td><td><span class="kind mk">мастер-класс</span></td><td class="n">22</td></tr>
+        </tbody>
+      </table></div>
+      <div class="small muted" style="margin-top:7px">2 посланий, 4 практик, 3 классов</div>
+    </div>
+    <div class="blk">
+      <div class="blkhead">
+        <h3>Энергия и выгорание <span class="muted" style="font-weight:500;font-size:14px">· 9</span></h3>
+        <div class="why">6 материалов, и все примерно об одном. Нет ничего про восстановление после долгого истощения.</div>
+      </div>
+      <div class="tbox"><table>
+        <thead><tr><th style="width:34px">№</th><th>Тема</th><th style="width:120px">Вид</th><th style="width:64px">Минут</th></tr></thead>
+        <tbody>
+          <tr><td class="n">40</td><td>Отдых — часть работы, а не награда за неё</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">41</td><td>Я не обязана быть продуктивной каждый день</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">42</td><td>Практика на середину дня, когда сели батарейки</td><td><span class="kind pr">практика</span></td><td class="n">13</td></tr>
+          <tr><td class="n">43</td><td>Восстановление после недели на резервах</td><td><span class="kind pr">практика</span></td><td class="n">17</td></tr>
+          <tr><td class="n">44</td><td>Утро без кофе: как разогнаться телом</td><td><span class="kind pr">практика</span></td><td class="n">9</td></tr>
+          <tr><td class="n">45</td><td>Мягкая йога для истощённой</td><td><span class="kind pr">практика</span></td><td class="n">20</td></tr>
+          <tr><td class="n">46</td><td>Выгорание: как понять, что это уже оно</td><td><span class="kind mk">мастер-класс</span></td><td class="n">30</td></tr>
+          <tr><td class="n">47</td><td>Отпуск не помогает: что делать, когда усталость хроническая</td><td><span class="kind mk">мастер-класс</span></td><td class="n">28</td></tr>
+          <tr><td class="n">48</td><td>Как отдыхать по-настоящему, а не листать телефон</td><td><span class="kind mk">мастер-класс</span></td><td class="n">24</td></tr>
+        </tbody>
+      </table></div>
+      <div class="small muted" style="margin-top:7px">2 посланий, 4 практик, 3 классов</div>
+    </div>
+    <div class="blk">
+      <div class="blkhead">
+        <h3>Уверенность и самооценка <span class="muted" style="font-weight:500;font-size:14px">· 9</span></h3>
+        <div class="why">Есть 6 и 6, но подходят по совпадению один-два. Не хватает конкретных ситуаций, где уверенность нужна.</div>
+      </div>
+      <div class="tbox"><table>
+        <thead><tr><th style="width:34px">№</th><th>Тема</th><th style="width:120px">Вид</th><th style="width:64px">Минут</th></tr></thead>
+        <tbody>
+          <tr><td class="n">49</td><td>Мне не нужно чужое разрешение</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">50</td><td>Я могу ошибаться и оставаться хорошей</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">51</td><td>Практика перед сложным разговором</td><td><span class="kind pr">практика</span></td><td class="n">10</td></tr>
+          <tr><td class="n">52</td><td>Работа с внутренним критиком: письменно</td><td><span class="kind pr">практика</span></td><td class="n">14</td></tr>
+          <tr><td class="n">53</td><td>Голос и осанка: как звучать увереннее за пять минут</td><td><span class="kind pr">практика</span></td><td class="n">8</td></tr>
+          <tr><td class="n">54</td><td>Синдром самозванки: почему успех не убеждает</td><td><span class="kind mk">мастер-класс</span></td><td class="n">28</td></tr>
+          <tr><td class="n">55</td><td>Как говорить о себе без обесценивания</td><td><span class="kind mk">мастер-класс</span></td><td class="n">25</td></tr>
+          <tr><td class="n">56</td><td>Сравнение с другими: как выйти из этой петли</td><td><span class="kind mk">мастер-класс</span></td><td class="n">30</td></tr>
+          <tr><td class="n">57</td><td>Как принимать похвалу и не отмахиваться</td><td><span class="kind mk">мастер-класс</span></td><td class="n">22</td></tr>
+        </tbody>
+      </table></div>
+      <div class="small muted" style="margin-top:7px">2 посланий, 3 практик, 4 классов</div>
+    </div>
+    <div class="blk">
+      <div class="blkhead">
+        <h3>Тело и принятие <span class="muted" style="font-weight:500;font-size:14px">· 9</span></h3>
+        <div class="why">7 материалов — почти все про движение. Нет ничего про отношения с телом как таковые.</div>
+      </div>
+      <div class="tbox"><table>
+        <thead><tr><th style="width:34px">№</th><th>Тема</th><th style="width:120px">Вид</th><th style="width:64px">Минут</th></tr></thead>
+        <tbody>
+          <tr><td class="n">58</td><td>Тело — мой дом, а не витрина</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">59</td><td>Я слушаю тело раньше, чем чужие советы</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">60</td><td>Практика благодарности телу</td><td><span class="kind pr">практика</span></td><td class="n">15</td></tr>
+          <tr><td class="n">61</td><td>Растяжка после рабочего дня за столом</td><td><span class="kind pr">практика</span></td><td class="n">12</td></tr>
+          <tr><td class="n">62</td><td>Танцевальная практика для тех, кто стесняется</td><td><span class="kind pr">практика</span></td><td class="n">20</td></tr>
+          <tr><td class="n">63</td><td>Самомассаж шеи и плеч</td><td><span class="kind pr">практика</span></td><td class="n">10</td></tr>
+          <tr><td class="n">64</td><td>Отношения с телом: откуда берётся война</td><td><span class="kind mk">мастер-класс</span></td><td class="n">30</td></tr>
+          <tr><td class="n">65</td><td>Питание без диет и вины</td><td><span class="kind mk">мастер-класс</span></td><td class="n">26</td></tr>
+          <tr><td class="n">66</td><td>Спорт, который не через силу: как найти своё</td><td><span class="kind mk">мастер-класс</span></td><td class="n">24</td></tr>
+        </tbody>
+      </table></div>
+      <div class="small muted" style="margin-top:7px">2 посланий, 4 практик, 3 классов</div>
+    </div>
+    <div class="blk">
+      <div class="blkhead">
+        <h3>Отношения и границы <span class="muted" style="font-weight:500;font-size:14px">· 9</span></h3>
+        <div class="why">3 и 5 материалов. Совпадение выше 50% показывает один. Тема, где женщина ждёт конкретики, а получает общее.</div>
+      </div>
+      <div class="tbox"><table>
+        <thead><tr><th style="width:34px">№</th><th>Тема</th><th style="width:120px">Вид</th><th style="width:64px">Минут</th></tr></thead>
+        <tbody>
+          <tr><td class="n">67</td><td>Моё «нет» не разрушает отношения</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">68</td><td>Я говорю о своих потребностях вслух</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">69</td><td>Практика перед разговором, который откладываешь</td><td><span class="kind pr">практика</span></td><td class="n">11</td></tr>
+          <tr><td class="n">70</td><td>Как отследить, что вы снова растворяетесь</td><td><span class="kind pr">практика</span></td><td class="n">9</td></tr>
+          <tr><td class="n">71</td><td>Письменная практика: чего я жду и о чём молчу</td><td><span class="kind pr">практика</span></td><td class="n">16</td></tr>
+          <tr><td class="n">72</td><td>Границы: как ставить, когда близкие обижаются</td><td><span class="kind mk">мастер-класс</span></td><td class="n">32</td></tr>
+          <tr><td class="n">73</td><td>Раздражение на партнёра: что за ним прячется</td><td><span class="kind mk">мастер-класс</span></td><td class="n">28</td></tr>
+          <tr><td class="n">74</td><td>Созависимость: как узнать себя в этом</td><td><span class="kind mk">мастер-класс</span></td><td class="n">26</td></tr>
+          <tr><td class="n">75</td><td>Разговор о деньгах в паре</td><td><span class="kind mk">мастер-класс</span></td><td class="n">24</td></tr>
+        </tbody>
+      </table></div>
+      <div class="small muted" style="margin-top:7px">2 посланий, 3 практик, 4 классов</div>
+    </div>
+    <div class="blk">
+      <div class="blkhead">
+        <h3>Деньги и дело <span class="muted" style="font-weight:500;font-size:14px">· 8</span></h3>
+        <div class="why">3 и 3. Самое слабое совпадение из всех запросов: один материал на послания, один на практики.</div>
+      </div>
+      <div class="tbox"><table>
+        <thead><tr><th style="width:34px">№</th><th>Тема</th><th style="width:120px">Вид</th><th style="width:64px">Минут</th></tr></thead>
+        <tbody>
+          <tr><td class="n">76</td><td>Я называю свою цену ровным голосом</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">77</td><td>Деньги — это про обмен, а не про мою ценность</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">78</td><td>Практика перед переговорами о цене</td><td><span class="kind pr">практика</span></td><td class="n">12</td></tr>
+          <tr><td class="n">79</td><td>Письменная практика: сколько я на самом деле стою</td><td><span class="kind pr">практика</span></td><td class="n">15</td></tr>
+          <tr><td class="n">80</td><td>Как назвать цену и не начать оправдываться</td><td><span class="kind mk">мастер-класс</span></td><td class="n">30</td></tr>
+          <tr><td class="n">81</td><td>Работы много, денег нет: где протекает</td><td><span class="kind mk">мастер-класс</span></td><td class="n">28</td></tr>
+          <tr><td class="n">82</td><td>Первые деньги в своём деле: с чего начать</td><td><span class="kind mk">мастер-класс</span></td><td class="n">26</td></tr>
+          <tr><td class="n">83</td><td>Финансовая подушка для женщины: зачем и сколько</td><td><span class="kind mk">мастер-класс</span></td><td class="n">24</td></tr>
+        </tbody>
+      </table></div>
+      <div class="small muted" style="margin-top:7px">2 посланий, 2 практик, 4 классов</div>
+    </div>
+    <div class="blk">
+      <div class="blkhead">
+        <h3>Сон и восстановление <span class="muted" style="font-weight:500;font-size:14px">· 7</span></h3>
+        <div class="why">5 материалов, из них ни одного послания. Запрос приходит и от беременных в третьем триместре, и от мам малышей.</div>
+      </div>
+      <div class="tbox"><table>
+        <thead><tr><th style="width:34px">№</th><th>Тема</th><th style="width:120px">Вид</th><th style="width:64px">Минут</th></tr></thead>
+        <tbody>
+          <tr><td class="n">84</td><td>Ночь для сна, а не для решений</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">85</td><td>Я разрешаю себе лечь раньше</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">86</td><td>Практика на бессонницу в три часа ночи</td><td><span class="kind pr">практика</span></td><td class="n">14</td></tr>
+          <tr><td class="n">87</td><td>Вечерний ритуал для тех, кто ложится за полночь</td><td><span class="kind pr">практика</span></td><td class="n">18</td></tr>
+          <tr><td class="n">88</td><td>Дыхание для засыпания</td><td><span class="kind pr">практика</span></td><td class="n">10</td></tr>
+          <tr><td class="n">89</td><td>Почему не спится: разбор причин по порядку</td><td><span class="kind mk">мастер-класс</span></td><td class="n">28</td></tr>
+          <tr><td class="n">90</td><td>Сон при маленьком ребёнке: что реально работает</td><td><span class="kind mk">мастер-класс</span></td><td class="n">22</td></tr>
+        </tbody>
+      </table></div>
+      <div class="small muted" style="margin-top:7px">2 посланий, 3 практик, 2 классов</div>
+    </div>
+    <div class="blk">
+      <div class="blkhead">
+        <h3>Материнство и беременность <span class="muted" style="font-weight:500;font-size:14px">· 10</span></h3>
+        <div class="why">По 3 материала на тег. Здесь особенно мало: этап жизни длится годами, а материалов на неделю.</div>
+      </div>
+      <div class="tbox"><table>
+        <thead><tr><th style="width:34px">№</th><th>Тема</th><th style="width:120px">Вид</th><th style="width:64px">Минут</th></tr></thead>
+        <tbody>
+          <tr><td class="n">91</td><td>Я мама, а не сервис</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">92</td><td>Устать — не значит не любить</td><td><span class="kind p">послание</span></td><td class="n">1</td></tr>
+          <tr><td class="n">93</td><td>Практика для мамы, у которой пять минут</td><td><span class="kind pr">практика</span></td><td class="n">10</td></tr>
+          <tr><td class="n">94</td><td>Восстановление тазового дна после родов</td><td><span class="kind pr">практика</span></td><td class="n">15</td></tr>
+          <tr><td class="n">95</td><td>Дыхание при раздражении на ребёнка</td><td><span class="kind pr">практика</span></td><td class="n">12</td></tr>
+          <tr><td class="n">96</td><td>Мягкая практика в третьем триместре</td><td><span class="kind pr">практика</span></td><td class="n">20</td></tr>
+          <tr><td class="n">97</td><td>Вина перед ребёнком: откуда и что с ней делать</td><td><span class="kind mk">мастер-класс</span></td><td class="n">30</td></tr>
+          <tr><td class="n">98</td><td>Как вернуться к себе после года с малышом</td><td><span class="kind mk">мастер-класс</span></td><td class="n">28</td></tr>
+          <tr><td class="n">99</td><td>Страх родов: разбор по шагам</td><td><span class="kind mk">мастер-класс</span></td><td class="n">26</td></tr>
+          <tr><td class="n">100</td><td>Мама школьника: как перестать жить его расписанием</td><td><span class="kind mk">мастер-класс</span></td><td class="n">24</td></tr>
+        </tbody>
+      </table></div>
+      <div class="small muted" style="margin-top:7px">2 посланий, 4 практик, 4 классов</div>
+    </div>
+  </section>
+
+  <!-- ═══════════ ГОД ═══════════ -->
+  <section id="p-year" role="tabpanel" aria-labelledby="t-year" hidden>
+
+    <div class="band">
+      <h2>Сколько нужно, чтобы программа не повторялась</h2>
+      <p>Считается просто. В неделю уходит по семь материалов каждого вида. Подбор помнит,
+        что уже показывал: послание не повторяется шесть недель, практика — четырнадцать.
+        Чтобы это правило выполнялось, а не отменялось за нехваткой, нужно столько материалов,
+        <b>подходящих под её запрос</b>, — не всего в библиотеке.</p>
+
+      <div class="tbox" style="margin-bottom:16px">
+        <table>
+          <thead><tr><th>Вид</th><th>В неделю</th><th>Не повторять</th>
+            <th>Нужно под один запрос</th><th>Есть сейчас</th></tr></thead>
+          <tbody>
+            <tr><td>Послания</td><td class="n">7</td><td class="n">6 недель</td>
+              <td class="n"><b>42</b></td><td class="n">1–3</td></tr>
+            <tr><td>Практики</td><td class="n">7</td><td class="n">14 недель</td>
+              <td class="n"><b>98</b> — реально целимся в 42</td><td class="n">1–5</td></tr>
+            <tr><td>Мастер-классы</td><td class="n">7</td><td class="n">свежесть не главное</td>
+              <td class="n"><b>28</b></td><td class="n">1–2</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">Запросов из теста — шесть основных. Умножать на шесть не нужно:
+        материал попадает сразу в несколько запросов. Практика на дыхание работает и на
+        тревогу, и на сон, и на беременность. Реальный множитель — примерно два с половиной.</p>
+    </div>
+
+    <div class="note">
+      <b>Цель на год: 620 материалов в библиотеке</b>
+      <p>Это 42 послания × 2,5 + 42 практики × 2,5 + 28 классов × 2,5, округлённое вверх
+        и с запасом на сезонное. От сегодняшних 42 — это примерно 48 материалов в месяц,
+        или четыре съёмочных дня в месяц с одним экспертом. С пятью экспертами — по одному
+        дню на каждого раз в месяц с небольшим.</p>
+    </div>
+
+    <div class="band">
+      <h2>Разбивка по кварталам</h2>
+      <p>Порядок такой, чтобы каждый квартал закрывал отдельную дыру целиком, а не размазывал
+        понемногу везде. К концу каждого квартала есть измеримый результат.</p>
+
+      <div class="tbox">
+        <table>
+          <thead><tr><th style="width:112px">Квартал</th><th>Задача квартала</th>
+            <th style="width:96px">Материалов</th><th style="width:96px">Смен</th>
+            <th>Что становится правдой к концу</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>Первый</b><br><span class="small muted">закрыть дыры</span></td>
+              <td>Пять пустых запросов, уровни новичок и опыт, послания до сорока двух,
+                четыре направления с нулём</td>
+              <td class="n">145</td><td class="n">12</td>
+              <td>Ни одного ответа в тесте, под который нечего показать. Программа идёт
+                четыре недели без повторов.</td>
+            </tr>
+            <tr>
+              <td><b>Второй</b><br><span class="small muted">глубина</span></td>
+              <td>Тяжёлые темы траекториями: беременность по триместрам, цикл, развод,
+                выгорание. Плюс длины 11–20 минут во все блоки</td>
+              <td class="n">160</td><td class="n">13</td>
+              <td>У четырёх состояний есть последовательность на месяцы, а не отдельные
+                материалы. Ответ «15–20 минут» перестаёт быть пустым.</td>
+            </tr>
+            <tr>
+              <td><b>Третий</b><br><span class="small muted">разнообразие</span></td>
+              <td>Все двадцать три направления из теста доводим минимум до восьми материалов.
+                Второй эксперт на каждое крупное направление</td>
+              <td class="n">150</td><td class="n">12</td>
+              <td>Выбор направления во втором вопросе начинает работать: выбрала танец —
+                получила танец, а не медитацию.</td>
+            </tr>
+            <tr>
+              <td><b>Четвёртый</b><br><span class="small muted">сезон и запас</span></td>
+              <td>Сезонное: осенняя усталость, декабрь и итоги года, январь и цели,
+                весеннее восстановление. Плюс запас на первую половину следующего года</td>
+              <td class="n">125</td><td class="n">10</td>
+              <td>Программа отвечает времени года. Есть месяц запаса — съёмки перестают быть
+                срочными.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="band">
+      <h2>Направления: сколько где сейчас</h2>
+      <p>Второй вопрос теста спрашивает, чем ей интересно заниматься. Одиннадцать направлений
+        у практик, двенадцать у мастер-классов. Семь из двадцати трёх — пустые.</p>
+      <div class="grid3">
+        <div class="card">
+          <h4>Пусто</h4>
+          <p>Цигун, танец, голос и звук, прогулка — у практик. Йога и движение, тело,
+            творчество — у мастер-классов.</p>
+          <p style="margin-top:8px">Женщина выбирает направление, а подбор молча даёт другое.
+            По восемь материалов на каждое — это 56 штук, два с половиной съёмочных дня
+            при живом эксперте по каждому.</p>
+        </div>
+        <div class="card">
+          <h4>Один–два</h4>
+          <p>Растяжка, тело и массаж — у практик. Медитация, деньги и дело, красота,
+            карьера — у мастер-классов.</p>
+          <p style="margin-top:8px">Хватает, чтобы направление не выглядело пустым, и не хватает,
+            чтобы им можно было заниматься месяц.</p>
+        </div>
+        <div class="card">
+          <h4>Держат всё</h4>
+          <p>Медитация — 5 практик, дыхание — 3, психология — 3 класса.</p>
+          <p style="margin-top:8px">Сюда больше снимать не нужно. Если снимать «что проще»,
+            перекос усилится: подбор и так чаще ставит медитацию, потому что выбора нет.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="band">
+      <h2>Как считать, что план работает</h2>
+      <div class="tbox">
+        <table>
+          <thead><tr><th>Что меряем</th><th>Сейчас</th><th>Через квартал</th><th>Через год</th></tr></thead>
+          <tbody>
+            <tr><td>Неделя, с которой начинаются повторы</td><td class="n">2-я</td><td class="n">4-я</td><td class="n">не раньше 8-й</td></tr>
+            <tr><td>Запросов из теста с нулём материалов</td><td class="n">5</td><td class="n">0</td><td class="n">0</td></tr>
+            <tr><td>Направлений с нулём материалов</td><td class="n">7</td><td class="n">3</td><td class="n">0</td></tr>
+            <tr><td>Материалов с совпадением выше 50% на запрос</td><td class="n">1–5</td><td class="n">10–15</td><td class="n">30+</td></tr>
+            <tr><td>Материалов с пометкой уровня</td><td class="n">1 из 42</td><td class="n">40 из 190</td><td class="n">треть библиотеки</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted" style="margin-top:10px">Первые три строки считаются из данных
+        автоматически — я прогоняю их той же проверкой, что и сейчас. Просить у кого-то отчёт
+        не нужно.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════ ТЯЖЁЛЫЕ ТЕМЫ ═══════════ -->
+  <section id="p-hard" role="tabpanel" aria-labelledby="t-hard" hidden>
+
+    <div class="band">
+      <h2>Боли, которые не закрыть одним мастер-классом</h2>
+      <p>Есть состояния, которые длятся месяцами и меняются внутри себя. Беременность в первом
+        триместре и в третьем — разные запросы у одной женщины. Развод на второй неделе и через
+        полгода — тоже. Одним материалом такое не закрывается: нужна последовательность,
+        где следующий шаг появляется тогда, когда она к нему готова.</p>
+    </div>
+
+    <div class="note">
+      <b>Как траектория устроена в коде — это уже работает</b>
+      <p>У материала есть пометка этапа жизни: беременность, дни цикла, малыш до года, развод.
+        Подбор не показывает материал чужого этапа никогда — это единственный жёсткий запрет
+        во всей механике, остальное только влияет на оценку. Значит, траекторию не нужно
+        программировать: достаточно снять материалы и правильно их пометить. Сейчас помечено
+        восемь из сорока двух.</p>
+    </div>
+
+    <div class="band">
+      <h3 style="font-size:21px;margin-bottom:4px">Беременность: три триместра, три разных состояния</h3>
+      <p class="small muted" style="margin-bottom:14px">Тест уже спрашивает месяц. Материалов
+        под ответ — три на всю беременность.</p>
+
+      <div class="track">
+        <div class="step">Первый триместр<span>1–3 месяц</span></div>
+        <div class="what"><b>Тревога и тошнота, никто ещё не знает</b>
+          <span class="m">Дыхание при тошноте · Практика на тревогу первых недель ·
+            Мастер-класс «Первый триместр: что нормально» · Послание о том, что можно молчать ·
+            Практика на страх потери — 5 материалов</span></div>
+      </div>
+      <div class="track">
+        <div class="step">Второй триместр<span>4–6 месяц</span></div>
+        <div class="what"><b>Силы вернулись, тело меняется</b>
+          <span class="m">Мягкая йога для второго триместра · Практика на принятие меняющегося
+            тела · Мастер-класс о том, как говорить с партнёром о страхах ·
+            Растяжка для спины · Послание о теле — 5 материалов</span></div>
+      </div>
+      <div class="track">
+        <div class="step">Третий триместр<span>7–9 месяц</span></div>
+        <div class="what"><b>Тяжело физически, страшно перед родами</b>
+          <span class="m">Дыхание для родов · Практика при бессоннице на большом сроке ·
+            Мастер-класс «Страх родов по шагам» · Практика для отёкших ног ·
+            Послание о том, что тело знает — 5 материалов</span></div>
+      </div>
+      <div class="track">
+        <div class="step">После родов<span>первый год</span></div>
+        <div class="what"><b>Тело чужое, сна нет, вина за всё</b>
+          <span class="m">Восстановление тазового дна · Практика на пять минут ·
+            Мастер-класс о вине · Дыхание при раздражении · Сон урывками ·
+            Мастер-класс «Вернуться к себе» — 6 материалов</span></div>
+      </div>
+    </div>
+
+    <div class="band">
+      <h3 style="font-size:21px;margin-bottom:4px">Дни цикла: четыре фазы, четыре набора</h3>
+      <p class="small muted" style="margin-bottom:14px">В коде уже есть жёсткий запрет: активные
+        практики в дни менструации не показываются. Материалов, помеченных фазой, — один.</p>
+
+      <div class="track">
+        <div class="step">Менструация<span>1–5 день</span></div>
+        <div class="what"><b>Только мягкое, активное запрещено кодом</b>
+          <span class="m">Практика лёжа при боли · Дыхание при спазмах · Тёплая растяжка ·
+            Послание о праве замедлиться — 4 материала</span></div>
+      </div>
+      <div class="track">
+        <div class="step">Первая фаза<span>после месячных</span></div>
+        <div class="what"><b>Сил больше всего — сюда всё активное</b>
+          <span class="m">Динамическая практика · Танцевальная разминка · Практика на цели ·
+            Мастер-класс о планировании по циклу — 4 материала</span></div>
+      </div>
+      <div class="track">
+        <div class="step">Овуляция<span>середина</span></div>
+        <div class="what"><b>Пик энергии и общительности</b>
+          <span class="m">Практика на голос и уверенность · Подготовка к сложному разговору ·
+            Активная йога — 3 материала</span></div>
+      </div>
+      <div class="track">
+        <div class="step">Вторая фаза<span>перед месячными</span></div>
+        <div class="what"><b>Раздражение, отёки, всё бесит</b>
+          <span class="m">Практика при раздражении · Дыхание при отёках · Послание о том, что
+            это гормоны, а не характер · Мастер-класс о ПМС без стыда — 4 материала</span></div>
+      </div>
+    </div>
+
+    <div class="band">
+      <h3 style="font-size:21px;margin-bottom:4px">Расставание и развод: полгода по шагам</h3>
+      <p class="small muted" style="margin-bottom:14px">Тег «кризис» — ноль материалов. Это
+        состояние, в котором женщина приходит на платформу чаще всего.</p>
+
+      <div class="track">
+        <div class="step">Первые недели<span>шок</span></div>
+        <div class="what"><b>Не до практик — нужно просто пережить день</b>
+          <span class="m">Практика на 5 минут, когда ничего не хочется · Заземление ·
+            Дыхание при панике · Послание «это тоже пройдёт» — 4 материала</span></div>
+      </div>
+      <div class="track">
+        <div class="step">Первый месяц<span>быт</span></div>
+        <div class="what"><b>Появляются дела: документы, жильё, дети</b>
+          <span class="m">Мастер-класс «Развод: первые три месяца» · Практика на решения,
+            когда голова не работает · Мастер-класс о том, что говорить детям — 3 материала</span></div>
+      </div>
+      <div class="track">
+        <div class="step">Два–четыре месяца<span>злость и вина</span></div>
+        <div class="what"><b>Отпускает шок, приходят чувства</b>
+          <span class="m">Письменная практика на злость · Практика на вину · Мастер-класс
+            «Кто виноват — неправильный вопрос» · Послание о праве злиться — 4 материала</span></div>
+      </div>
+      <div class="track">
+        <div class="step">Полгода и дальше<span>заново</span></div>
+        <div class="what"><b>Пора собирать жизнь, а не переживать прошлую</b>
+          <span class="m">Мастер-класс «Страшно снова начинать» · Практика на новую опору ·
+            Мастер-класс о знакомствах после развода — 3 материала</span></div>
+      </div>
+    </div>
+
+    <div class="band">
+      <h3 style="font-size:21px;margin-bottom:4px">Выгорание: три стадии</h3>
+      <p class="small muted" style="margin-bottom:14px">Отличается от усталости тем, что отпуск
+        не помогает. Материалов, различающих стадии, нет ни одного.</p>
+
+      <div class="track">
+        <div class="step">Начало<span>«просто устала»</span></div>
+        <div class="what"><b>Она ещё тянет и не считает это проблемой</b>
+          <span class="m">Мастер-класс «Как понять, что это уже выгорание» · Практика на
+            середину дня · Послание об отдыхе как части работы — 3 материала</span></div>
+      </div>
+      <div class="track">
+        <div class="step">Середина<span>цинизм</span></div>
+        <div class="what"><b>Раздражает всё, включая то, что любила</b>
+          <span class="m">Практика при раздражении · Мастер-класс о границах на работе ·
+            Практика «что осталось моим» — 3 материала</span></div>
+      </div>
+      <div class="track">
+        <div class="step">Истощение<span>ничего не осталось</span></div>
+        <div class="what"><b>Здесь нельзя предлагать «сделай практику»</b>
+          <span class="m">Только очень короткое и очень мягкое: практика лёжа на 6 минут ·
+            дыхание · послание о том, что можно не справляться · мастер-класс «когда пора
+            к врачу» — 4 материала</span></div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>Одно правило для всех тяжёлых тем</b>
+      <p>Чем тяжелее состояние, тем короче материал и тем меньше в нём требований. В стадии
+        истощения предложение «двадцать минут йоги» читается как упрёк. Поэтому в каждой
+        траектории первый шаг — не больше шести минут, лёжа, без «а теперь постарайся».
+        И в каждой тяжёлой теме нужен материал о том, когда пора не к практике, а к врачу:
+        мы не лечим и не должны делать вид.</p>
+    </div>
+
+    <div class="band">
+      <h2>Что получается в сумме</h2>
+      <div class="tbox">
+        <table>
+          <thead><tr><th>Траектория</th><th>Шагов</th><th>Материалов</th><th>Смен</th>
+            <th>Кто ведёт</th></tr></thead>
+          <tbody>
+            <tr><td>Беременность и первый год</td><td class="n">4</td><td class="n">21</td><td class="n">2</td><td>Перинатальный психолог</td></tr>
+            <tr><td>Дни цикла</td><td class="n">4</td><td class="n">15</td><td class="n">1,5</td><td>Телесный терапевт</td></tr>
+            <tr><td>Расставание и развод</td><td class="n">4</td><td class="n">14</td><td class="n">1,5</td><td>Психолог</td></tr>
+            <tr><td>Выгорание</td><td class="n">3</td><td class="n">10</td><td class="n">1</td><td>Телесный терапевт и психолог</td></tr>
+            <tr><td><b>Всего</b></td><td class="n"><b>15</b></td><td class="n"><b>60</b></td><td class="n"><b>6</b></td><td class="muted">четыре эксперта</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted" style="margin-top:10px">Шесть съёмочных дней закрывают четыре
+        состояния, в которых женщина проводит месяцы. Это второй квартал по плану — после того,
+        как закрыты пустые запросы.</p>
+    </div>
+  </section>
+
+  <footer>
+    План собран из данных приложения: сорок два материала, шесть запросов, двенадцать недель
+    прогона. Пересчитать можно в любой момент — проверка лежит в наборах вместе с остальными.
+    Соседние документы: <a href="https://claude.ai/code/artifact/b30028a4-018b-4629-bf97-0842c6c8f862">Штаб продукта</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  var KEY = 'eva_plan_tab';
+  var tabs = [].slice.call(document.querySelectorAll('nav button'));
+  if(!tabs.length) return;
+  function show(id){
+    tabs.forEach(function(b){
+      var on = b.id === id;
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+      var panel = document.getElementById(b.getAttribute('aria-controls'));
+      if(panel) panel.hidden = !on;
+    });
+    try { localStorage.setItem(KEY, id); } catch(e){}
+  }
+  tabs.forEach(function(b){
+    b.addEventListener('click', function(){ show(b.id); window.scrollTo({top:0, behavior:'smooth'}); });
+    b.addEventListener('keydown', function(e){
+      var i = tabs.indexOf(b);
+      if(e.key === 'ArrowRight' || e.key === 'ArrowLeft'){
+        e.preventDefault();
+        var n = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        n.focus(); show(n.id);
+      }
+    });
+  });
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch(e){}
+  if(saved && document.getElementById(saved)) show(saved);
+})();
+</script>

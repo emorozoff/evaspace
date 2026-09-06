@@ -519,6 +519,8 @@ function pgSettings(){
     <div class="card">
       <button class="uline" style="border:none;padding-top:0;width:100%;text-align:left" onclick="openSheet('support')">
         <span style="flex:1;font-size:13.5px;font-weight:600">Написать в поддержку</span><span class="muted">›</span></button>
+      ${S.role === 'user' ? `<button class="uline" style="width:100%;text-align:left" onclick="openSheet('expertApply')">
+        <span style="flex:1;font-size:13.5px;font-weight:600">Вести практики в Еве</span><span class="muted">›</span></button>` : ''}
       <button class="uline" style="width:100%;text-align:left" onclick="openIdea()">
         <span style="flex:1;font-size:13.5px;font-weight:600">Предложить доработку</span><span class="muted">›</span></button>
       <button class="uline" style="width:100%;text-align:left" onclick="tourAgain()">

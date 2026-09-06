@@ -537,8 +537,11 @@ function adInbox(){
       <span class="tag-st ${t.st==='новое'?'st-trial':t.st==='в работе'?'st-think':'st-paid'}">${esc(t.st)}</span>
     </div>
     <b style="font-size:14px;display:block;margin:10px 0 5px">${esc(t.sub)}</b>
-    <p class="small muted" style="margin:0 0 10px">${esc(t.t)}</p>
+    <p class="small muted" style="margin:0 0 10px;white-space:pre-line">${esc(t.t)}</p>
     <div class="small muted" style="margin-bottom:8px">${esc(t.mail)}</div>
+    ${t.sub === 'Заявка эксперта' && String(t.mail||'').indexOf('@') > 0 ? `
+      <button class="btn sm acc" style="margin-bottom:9px"
+        onclick="makeExpert('${attJs(t.mail)}','${attJs(t.id)}')">Сделать экспертом</button>` : ''}
     <div class="row" style="gap:8px">
       <input class="field" style="margin:0;flex:1" placeholder="Ответить" id="rp_${t.id}">
       <button class="btn sm" onclick="replyTicket('${attJs(t.id)}')">→</button>
@@ -547,7 +550,32 @@ function adInbox(){
       `<button class="chip ${t.st===st?'on':''}" onclick="setTicket('${attJs(t.id)}','${attJs(st)}')">${st}</button>`).join('')}</div>
   </div>`).join('')}`;
 }
-function setTicket(id, st){ const t = INBOX.find(x => x.id === id); t.st = st; render(); }
+function setTicket(id, st){ const t = INBOX.find(x => x.id === id); t.st = st; render(); syncPush(['support']); }
+
+/* Заявка эксперта закрывается здесь же, одной кнопкой: роль на сервере,
+   карточка на платформе и письмо ей — иначе редакции пришлось бы держать
+   в голове три разных места и порядок действий между ними. */
+async function makeExpert(mail, ticketId){
+  const m = String(mail || '').toLowerCase();
+  if(!m || m.indexOf('@') < 0) return toast('У заявки нет почты');
+  if(!confirm('Выдать роль эксперта для ' + m + '?')) return;
+
+  const r = await apiCall('grant', {email:m, role:'expert'}, {silent:true});
+  if(!r) return toast(SYNC.lastError || 'Роль не выдалась, попробуйте ещё раз');
+
+  const t = INBOX.find(x => x.id === ticketId);
+  if(t){
+    /* карточку заводим сразу: иначе она войдёт экспертом и увидит пустоту */
+    if(typeof createExpertProfile === 'function') createExpertProfile(t.from, m, '');
+    t.st = 'закрыто';
+    await apiCall('dm_send', {email:m, from:'Редакция Евы', subject:'Заявка одобрена',
+      text:'Мы прочитали вашу заявку и рады работать вместе. Роль эксперта уже выдана — ' +
+           'войдите заново, и откроется кабинет: профиль, материалы, курсы и услуги. ' +
+           'Дипломы можно загрузить в разделе «Образование», мы их проверим.'}, {silent:true});
+  }
+  render(); pushShared(); syncPush(['support']);
+  toast(m + ' теперь эксперт');
+}
 /* Ответ на обращение. Раньше текст ответа выбрасывался: обращение
    переходило «в работу», а женщине приходило только сообщение на экране
    администратора. Теперь ответ уходит ей в личные сообщения. */
