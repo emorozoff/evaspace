@@ -1021,7 +1021,14 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
    уходит мелкой строкой вниз: кому интересно, тот прочитает. */
 .advice .advhead{display:flex;gap:12px;align-items:center;margin-bottom:10px}
 .advline{font-size:14px;line-height:1.6;color:var(--ink);margin:0}
-.advwhy{margin-top:9px;font-size:11px;color:var(--muted);letter-spacing:.02em}
+.advfoot{display:flex;align-items:center;gap:10px;margin-top:9px}
+.advwhy{flex:1;min-width:0;font-size:11px;color:var(--muted);letter-spacing:.02em}
+/* Звезда под посланием — единственный способ узнать, какие подсказки
+   заходят. Поэтому она видна всегда, но тихо: не зовёт нажать, а ждёт. */
+.tipstar{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  color:var(--line-2);background:transparent;border:1px solid var(--line);transition:.16s}
+.tipstar:hover{color:#E7A339;border-color:var(--line-2)}
+.tipstar.on{color:#E7A339;background:rgba(231,163,57,.12);border-color:transparent}
 .advgo{display:block;width:100%;text-align:left;margin-top:11px;padding-top:10px;
   border-top:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--accent)}
 .advmore{display:block;width:100%;text-align:left;margin-top:10px;padding-top:10px;

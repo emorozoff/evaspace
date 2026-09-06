@@ -122,7 +122,9 @@ const BRANCHES = {
   adminInfo:  () => ({name:S.adminName, avatar:S.adminAvatar}),
   avatars:    () => AVATARS,
   replies:    () => S.marketReplies || [],
-  reviews:    () => S.reviews || []
+  reviews:    () => S.reviews || [],
+  /* отметки «зашло» под посланиями дня: по записи на женщину и послание */
+  tipstars:   () => (typeof TIP_VOTES !== 'undefined' ? TIP_VOTES : [])
 };
 
 const clean = o => JSON.parse(JSON.stringify(o));
@@ -177,7 +179,7 @@ let syncTimer = null;
    и отправляли. Ветка, которую эта роль всё равно не запишет, теперь просто
    не уезжает. */
 const OPEN_PUSH = ['wall','chats','groups','events','orders','questions',
-                   'support','ideas','media','reviews','avatars'];
+                   'support','ideas','media','reviews','avatars','tipstars'];
 function mayPush(b){
   if(S.role === 'admin')  return true;
   if(S.role === 'expert') return b !== 'adminInfo';
@@ -347,7 +349,7 @@ function fixShared(sh){
   ['lib','courses','goods','experts','events','wall'].forEach(k => {
     if(sh[k] !== undefined) sh[k] = fixList(sh[k], FIX[k]);
   });
-  ['orders','questions','support','ideas','pending','replies','reviews'].forEach(k => {
+  ['orders','questions','support','ideas','pending','replies','reviews','tipstars'].forEach(k => {
     if(sh[k] !== undefined) sh[k] = fixList(sh[k], FIX.plain);
   });
   if(sh.goodInfo !== undefined){
@@ -417,6 +419,12 @@ function applyShared(sh){
   if(Array.isArray(sh.ideas)   && sh.ideas.length)   S.ideas = sh.ideas;
   if(Array.isArray(sh.replies)) S.marketReplies = sh.replies;
   if(Array.isArray(sh.reviews)) S.reviews = sh.reviews;
+  if(Array.isArray(sh.tipstars)) TIP_VOTES = sh.tipstars.filter(v => v && v.id && v.k);
+  /* снятые звёзды приходят пометками — свои отметки восстанавливаем по ним же */
+  if(Array.isArray(sh.tipstars) && S.user && S.user.email){
+    const me = String(S.user.email).toLowerCase();
+    S.tipStars = TIP_VOTES.filter(v => !v.del && v.id === v.k + '__' + me).map(v => v.k);
+  }
   if(sh.avatars && typeof sh.avatars === 'object'){
     Object.keys(sh.avatars).forEach(m => {
       const key = String(m).toLowerCase();

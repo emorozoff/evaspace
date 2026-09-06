@@ -41,7 +41,7 @@ const TRY_LIMIT    = 8;           // попыток пароля
 const TRY_WINDOW   = 900;         // за столько секунд
 
 /* разделы, куда пишет обычная пользовательница: только дополнение, без удаления */
-const OPEN_BRANCHES = ['orders', 'questions', 'support', 'wall', 'ideas', 'events', 'media', 'reviews', 'groups', 'chats'];
+const OPEN_BRANCHES = ['orders', 'questions', 'support', 'wall', 'ideas', 'events', 'media', 'reviews', 'groups', 'chats', 'tipstars'];
 /* здесь пользовательница трогает только строку со своей почтой */
 const SELF_BRANCHES = ['avatars'];
 /* сюда пишет только администратор: эксперту тут делать нечего */

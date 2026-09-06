@@ -217,6 +217,30 @@ function adCourses(){
   }).join('')}`;
 }
 
+/* Что заходит в подсказках дня.
+   Собирается из звёзд, которые женщины ставят под посланием. Смотреть
+   сюда имеет смысл, когда наберётся хотя бы сотня отметок: до этого
+   разница между первым и последним местом — случайность. */
+function tipStatsCard(){
+  const r = typeof tipRating === 'function' ? tipRating() : [];
+  const total = r.reduce((n, x) => n + x.n, 0);
+  return `<div class="card">
+    <div class="spread"><b style="font-size:14.5px">Что заходит в подсказках дня</b>
+      <span class="small muted">${plural(total, 'отметка', 'отметки', 'отметок')}</span></div>
+    ${!total ? `<p class="small muted" style="margin:9px 0 0">Пока ни одной звезды.
+        Женщины ставят их под подсказкой на главной — по ним будет видно,
+        какие послания стоит оставить, а какие переписать.</p>`
+      : `${r.filter(x => x.n).slice(0, 8).map((x, i) => `<div class="trow" style="padding:8px 0">
+          <span class="muted" style="font-size:12px;width:16px">${i + 1}</span>
+          <div style="flex:1"><b style="font-size:13px">${esc(x.h)}</b>
+            <div class="bar" style="margin-top:5px"><i style="width:${Math.round(x.n / r[0].n * 100)}%"></i></div></div>
+          <b style="font-size:13px;width:34px;text-align:right">${x.n}</b></div>`).join('')}
+        ${r.filter(x => !x.n).length ? `<div class="small muted" style="margin-top:10px">
+          Без единой звезды: ${r.filter(x => !x.n).length} из ${r.length}.
+          Когда отметок наберётся больше сотни — эти можно переписывать.</div>` : ''}`}
+  </div>`;
+}
+
 /* ---------- статистика ---------- */
 function adStats(){
   const s = STATS;
@@ -260,6 +284,8 @@ function adStats(){
       <div class="bar"><i style="width:${c.done}%"></i></div></div>`).join('')}
     <div class="small muted" style="margin-top:12px">Средний досмотр по библиотеке - 71%. Мастер-классы длиннее 30 минут теряют около четверти зрителей на середине.</div>
   </div>
+
+  ${tipStatsCard()}
 
   <div class="card">
     <b style="font-size:14.5px">Самые покупаемые курсы</b>

@@ -541,7 +541,12 @@ function dayAdvice(){
       ${hint('moon')}
     </div>
     <p class="advline">${esc(tip.t)}</p>
-    <div class="advwhy">${esc(dayWhy())}</div>
+    <div class="advfoot">
+      <div class="advwhy">${esc(dayWhy())}</div>
+      <button class="tipstar ${tipStarred(tip.k) ? 'on' : ''}" id="tipstar"
+        aria-pressed="${tipStarred(tip.k)}" aria-label="Отметить, что подсказка откликнулась"
+        onclick="starTip('${attJs(tip.k)}')">${starMark(15, 'currentColor')}</button>
+    </div>
     ${act ? `<button class="advgo" onclick="${act.go}">${esc(act.n)} ›</button>` : ''}
     ${!z || !cy ? `<button class="advmore" onclick="openPage('birth')">
       ${!z ? 'Добавить дату рождения' : 'Добавить даты цикла'} — подсказки станут точнее ›</button>` : ''}
