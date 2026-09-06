@@ -1,9 +1,11 @@
 /* Eva Space — service worker.
    Приложение открывается даже без интернета: свежая версия берётся из сети,
    а если сети нет — из кэша. */
-const VERSION = 'eva-v3';
+const VERSION = 'eva-v4';   // поднимаем номер, чтобы старый кэш очистился
 const BASE = new URL('./', self.location).pathname;      // /evaspace/ на GitHub Pages
-const SHELL = [BASE, BASE + 'index.html', BASE + 'manifest.json', BASE + 'icon.svg',
+/* Без BASE: это тот же файл, что BASE + 'index.html', и при установке
+   приложение скачивалось дважды. Из кэша его берут по полному имени. */
+const SHELL = [BASE + 'index.html', BASE + 'manifest.json', BASE + 'icon.svg',
                BASE + 'icon-192.png', BASE + 'icon-512.png'];
 
 self.addEventListener('install', (e) => {

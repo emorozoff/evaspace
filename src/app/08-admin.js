@@ -548,11 +548,29 @@ function adInbox(){
   </div>`).join('')}`;
 }
 function setTicket(id, st){ const t = INBOX.find(x => x.id === id); t.st = st; render(); }
-function replyTicket(id){
-  const v = ($('#rp_'+id)||{}).value;
-  if(!v || !v.trim()) return toast('Напиши ответ');
-  const t = INBOX.find(x => x.id === id); t.st = 'в работе';
-  render(); toast('Ответ отправлен на ' + t.mail);
+/* Ответ на обращение. Раньше текст ответа выбрасывался: обращение
+   переходило «в работу», а женщине приходило только сообщение на экране
+   администратора. Теперь ответ уходит ей в личные сообщения. */
+async function replyTicket(id){
+  const v = (($('#rp_'+id)||{}).value || '').trim();
+  if(!v) return toast('Напиши ответ');
+  const t = INBOX.find(x => x.id === id);
+  if(!t) return;
+  const mail = String(t.mail || '').trim();
+  if(!mail || mail.indexOf('@') < 0){
+    t.st = 'в работе'; render(); syncPush(['support']);
+    return toast('У обращения нет почты — ответить некуда');
+  }
+  const r = await apiCall('dm_send', {
+    email: mail.toLowerCase(),
+    from: 'Поддержка Eva',
+    subject: t.sub || 'Ответ поддержки',
+    text: v
+  }, {silent:true});
+  if(!r) return toast(SYNC.lastError || 'Ответ не ушёл, попробуй ещё раз');
+  t.st = 'в работе'; t.answer = v;
+  render(); syncPush(['support']);
+  toast('Ответ ушёл ' + mail);
 }
 
 /* ---------- мероприятия ---------- */
@@ -906,7 +924,7 @@ function pgEditItem(){
       onclick="tgItem('${attJs(x.id)}','${attJs(t)}')">${esc(t)}</button>`).join('')}</div>
 
     <div class="acts" style="margin-top:16px">
-      <button class="btn" onclick="closeEditor();toast('Сохранено')">Сохранить</button>
+      <button class="btn" onclick="closeEditor();pushShared();toast('Сохранено')">Сохранить</button>
       ${!isPending ? `<button class="btn ghost" onclick="delItem('${attJs(x.id)}')">Удалить</button>` : ''}
     </div>
 
@@ -939,6 +957,21 @@ function setQuiet(id, f, v){ const x = itemById(id); if(x) x[f] = v; }
 /* ---------- редактор курса ---------- */
 function openCourseEditor(id){ S.editCourse = id; S.sheet = null; render(); window.scrollTo(0,0); }
 function closeCourseEditor(){ S.editCourse = null; S.editUnit = null; render(); window.scrollTo(0,0); }
+
+/* Кнопки «Сохранить курс» и «Готово» под уроком раньше только закрывали
+   редактор: поля писались в объект, а на сервер не уезжали, и правки жили
+   до перезагрузки. Отправляем здесь — на самой кнопке, а не на каждой
+   набранной букве. */
+function saveCourse(){
+  closeCourseEditor();
+  pushShared();
+  toast('Курс сохранён');
+}
+function saveUnit(){
+  S.editUnit = null; render();
+  pushShared();
+  toast('Урок сохранён');
+}
 
 function modulesOf(cid){
   if(!S.modules) S.modules = {};
@@ -1032,7 +1065,7 @@ function pgEditCourse(){
     </div>`).join('')}
 
     <button class="btn ghost" onclick="addModule('${attJs(c.id)}')">＋ Добавить модуль</button>
-    <button class="btn" style="margin-top:9px" onclick="closeCourseEditor();toast('Курс сохранён')">Сохранить курс</button>
+    <button class="btn" style="margin-top:9px" onclick="saveCourse()">Сохранить курс</button>
   </div>`;
 }
 
@@ -1136,7 +1169,7 @@ function pgEditUnit(){
       Посмотреть, как видит ученица</button>
 
     <div class="acts" style="margin-top:16px">
-      <button class="btn" onclick="S.editUnit=null;render();toast('Урок сохранён')">Готово</button>
+      <button class="btn" onclick="saveUnit()">Готово</button>
       <button class="btn ghost" onclick="delUnit('${attJs(c.id)}','${attJs(l.id)}')">Удалить урок</button>
     </div>
   </div>`;
@@ -1333,7 +1366,7 @@ function exProfile(){
     <div class="small muted" style="margin-bottom:8px">По этим тегам платформа подбирает твои материалы в программы учениц</div>
     <div class="chips wrap">${e.t.map(t => `<button class="chip on" onclick="dropExpTag('${attJs(e.id)}','${attJs(t)}')">${esc(t)} <span style="opacity:.6">✕</span></button>`).join('')}
       <button class="chip" onclick="openSheet({k:'expTags',id:'${attJs(e.id)}'})">＋ тема</button></div>
-    <button class="btn" style="margin-top:12px" onclick="render();toast('Профиль сохранён')">Сохранить</button>
+    <button class="btn" style="margin-top:12px" onclick="saveExpertProfile()">Сохранить</button>
   </div>
 
   <div class="card">
@@ -1495,12 +1528,20 @@ function dropPending(id){
   S.pending = S.pending.filter(x => x.id !== id);
   render(); toast('Материал удалён');
 }
-function verify(id){ const e = EXPERTS.find(x => x.id === id); e.verified = !e.verified; render();
-  toast(e.verified ? 'Эксперт подтверждён' : 'Галочка снята'); }
+/* Кнопка «Сохранить» в кабинете эксперта. Раньше она только перерисовывала
+   экран и говорила «Профиль сохранён» — правки жили до первой перезагрузки,
+   а эксперт был уверен, что всё на месте. */
+function saveExpertProfile(){
+  render();
+  syncPush(['experts'], true);
+  toast('Профиль сохранён');
+}
 
 function setWho(id,i,v){ const e = EXPERTS.find(x=>x.id===id); e.who = e.who || ['Тревога и постоянное напряжение','Нет сил и хочется всё бросить']; e.who[i]=v; }
-function dropExpTag(id, t){ const e = EXPERTS.find(x=>x.id===id); e.t = e.t.filter(x=>x!==t); render(); }
-function addExpTag(id, t){ const e = EXPERTS.find(x=>x.id===id); if(!e.t.includes(t)) e.t.push(t); S.sheet=null; render(); toast('Тема добавлена'); }
+function dropExpTag(id, t){ const e = EXPERTS.find(x=>x.id===id); e.t = e.t.filter(x=>x!==t);
+  render(); syncPush(['experts']); }
+function addExpTag(id, t){ const e = EXPERTS.find(x=>x.id===id); if(!e.t.includes(t)) e.t.push(t);
+  S.sheet=null; render(); syncPush(['experts']); toast('Тема добавлена'); }
 function setAch(id,i,v){ const e = EXPERTS.find(x=>x.id===id); e.ach = e.ach||[]; e.ach[i]=v; }
 /* ---------- образование эксперта ---------- */
 function exEduBlock(){

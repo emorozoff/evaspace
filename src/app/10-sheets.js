@@ -133,7 +133,7 @@ function ask(q){
 }
 
 function evaAnswer(q){
-  const day = S.program[S.day], left = day.tasks.filter(t => !t.done);
+  const day = (S.program || [])[S.day] || {tasks:[]}, left = day.tasks.filter(t => !t.done);
   if(/аффирмац|прочит/.test(q)) return day.tasks[0].text;
   if(/балл|звёзд|звезд|статус|уровен/.test(q)){
     const {next} = levelNow();
@@ -177,6 +177,7 @@ function rebuild(){ buildProgram(); S.sheet = null; S.gentle = false; render(); 
 
 function addToDay(id){
   const x = LIB.find(i => i.id === id);
+  if(!(S.program || [])[S.day]) return;
   S.program[S.day].tasks.push(task(x, S.slot));
   S.sheet = null; S.tab = 'home'; S.page = null; render();
   toast('Добавила в день ' + (S.day+1));
@@ -1530,20 +1531,21 @@ function askGood(gid){
 }
 
 /* ---------- настройки ---------- */
+/* Почта — это номер аккаунта: по ней лежат прогресс, фото, карточка
+   страницы и переписка. Переносить всё это женщина себе сама не может,
+   и делать вид, что может, — хуже, чем сказать прямо. Здесь окно честно
+   говорит, как поменять адрес, вместо кнопки, которая ничего не делала. */
 function shChangeMail(){
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Изменить почту</h2>
-    <p class="small muted" style="margin:0 0 12px">На новый адрес придёт код подтверждения.</p>
-    <label class="lbl">Текущая</label>
-    <div class="linkbox" style="margin-bottom:10px">${S.user ? esc(S.user.email) : '—'}</div>
-    <label class="lbl">Новая почта</label>
-    <input class="field" id="nm_mail" type="email" placeholder="you@mail.ru">
-    <button class="btn" onclick="changeMail()">Отправить код</button>`;
-}
-function changeMail(){
-  const m = (($('#nm_mail')||{}).value || '').trim().toLowerCase();
-  if(!/^[^@\s]+@[^@\s]+\.[a-zа-я]{2,}$/i.test(m)) return toast('Проверь адрес');
-  if(DB.find(m)) return toast('Эта почта уже занята');
-  S.sheet = null; render(); toast('Код отправлен на ' + m);
+    <label class="lbl">Сейчас вход по адресу</label>
+    <div class="linkbox" style="margin-bottom:12px">${S.user ? esc(S.user.email) : '—'}</div>
+    <div class="card" style="background:var(--accent-soft);border-color:transparent">
+      <b style="font-size:14.5px">Адрес меняем вручную</b>
+      <p class="small muted" style="margin:7px 0 0">По этой почте лежит всё: программа,
+        баллы, покупки, фото, страница и переписка. Чтобы ничего не потерялось,
+        адрес переносим руками — напиши в поддержку, поменяем в тот же день.</p>
+    </div>
+    <button class="btn" style="margin-top:12px" onclick="openSheet('support')">Написать в поддержку</button>`;
 }
 function shChangePass(){
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Сменить пароль</h2>
@@ -1553,14 +1555,24 @@ function shChangePass(){
     <label class="lbl">Повтори новый</label><input class="field" id="p_rep" type="password">
     <button class="btn" onclick="changePass()">Сохранить</button>`;
 }
-function changePass(){
-  const o = ($('#p_old')||{}).value, n = ($('#p_new')||{}).value, r = ($('#p_rep')||{}).value;
-  const u = S.user ? DB.find(S.user.email) : null;
-  if(u && u.pass !== hashPass(o)) return toast('Текущий пароль неверный');
+/* Одна смена пароля на всех: у женщины поля p_*, у эксперта xp_*.
+   Меняет сервер — раньше приложение правило только копию в браузере
+   и всё равно говорило «Пароль изменён». */
+async function changePass(pref){
+  const id = k => ($('#' + (pref || 'p') + '_' + k) || {}).value || '';
+  const o = id('old'), n = id('new'), r = id('rep');
   if(!n || n.length < 6) return toast('Новый пароль минимум 6 символов');
   if(n !== r) return toast('Пароли не совпадают');
+
+  const res = await apiCall('pass_change', {old:o, new:n}, {silent:true});
+  if(!res) return toast(SYNC.lastError || 'Не удалось сменить пароль');
+
+  /* копию в браузере держим в согласии с сервером: по ней работает
+     вход, когда сети нет */
+  const u = S.user ? DB.find(S.user.email) : null;
   if(u){ u.pass = hashPass(n); DB.upsert(u); }
-  S.sheet = null; render(); toast('Пароль изменён');
+  S.sheet = null; render();
+  toast('Пароль изменён. Другие входы закрыты');
 }
 function shSupport(){
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Написать в поддержку</h2>
@@ -1649,17 +1661,9 @@ function shExPass(){
     <label class="lbl">Текущий пароль</label><input class="field" id="xp_old" type="password">
     <label class="lbl">Новый пароль</label><input class="field" id="xp_new" type="password" placeholder="Минимум 6 символов">
     <label class="lbl">Повтори новый</label><input class="field" id="xp_rep" type="password">
-    <button class="btn" onclick="changeExpertPass()">Сохранить</button>`;
+    <button class="btn" onclick="changePass('xp')">Сохранить</button>`;
 }
-function changeExpertPass(){
-  const o = ($('#xp_old')||{}).value, n = ($('#xp_new')||{}).value, r = ($('#xp_rep')||{}).value;
-  const u = S.user ? DB.find(S.user.email) : null;
-  if(u && u.pass !== hashPass(o)) return toast('Текущий пароль неверный');
-  if(!n || n.length < 6) return toast('Новый пароль минимум 6 символов');
-  if(n !== r) return toast('Пароли не совпадают');
-  if(u){ u.pass = hashPass(n); DB.upsert(u); }
-  S.sheet = null; render(); toast('Пароль изменён');
-}
+
 
 
 /* создаёт профиль эксперта под новый аккаунт */

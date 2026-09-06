@@ -229,20 +229,6 @@ function matchOf(item){
   return scoreItem(item, profileOf()).score;
 }
 
-/* попадает ли материал в выбранные ею направления */
-function topicHit(item){
-  const mine = S.topics || [];
-  if(!mine.length) return false;
-  const his = (item && Array.isArray(item.topics)) ? item.topics : [];
-  return his.some(t => mine.indexOf(t) >= 0);
-}
-
-/* ---------- совместимость ----------
-   Эти три проверки остались как были: на них смотрит админка,
-   когда показывает, кому материал достанется. */
-function fitsAudience(item){ return allowed(item, profileOf()); }
-function fitsLevel(item){ return sLevel(item, profileOf()) >= 0.45; }
-function fitsTime(item){ return sTime(item, profileOf()) >= 0.3; }
 
 /* ---------- чем библиотека закрывает запросы ----------
    Подбор не может дать того, чего нет. Если под «деньги» в библиотеке
@@ -485,7 +471,7 @@ function watchCalendar(){
     } catch(e){ console.error('[Eva] смена дня:', e); }
   }, 60000);
 }
-const doneOf = i => S.program[i] ? S.program[i].tasks.filter(t => t.done).length : 0;
+const doneOf = i => (S.program || [])[i] ? S.program[i].tasks.filter(t => t.done).length : 0;
 const starsTotal = () => S.program.length * 3;
 
 /* звёзды текущей недели считаем из самой программы, чтобы счётчик
@@ -720,6 +706,14 @@ window.addEventListener('resize', () => { try { deskArrows(); } catch(e){} });
 
 function renderScreen(){
   const s = S.screen;
+  /* Экран приложения без программы собрать нельзя: главная, неделя и итоги
+     читают её насквозь. Обычно она есть - её собирает тест, - но сюда
+     можно попасть и без неё: аккаунтом эксперта, старым профилем, после
+     неудачного восстановления. Собираем на месте, а не падаем. */
+  if(s !== 'splash' && s !== 'auth' && s !== 'mail' && s !== 'quiz' &&
+     (!Array.isArray(S.program) || !S.program.length)){
+    try { buildProgram(); } catch(e){ S.program = []; }
+  }
   if(s === 'splash')   { setHTML(scrSplash()); return; }
   if(s === 'auth')     { setHTML(scrAuth()); return; }
   if(s === 'mail')     { setHTML(scrMail()); return; }

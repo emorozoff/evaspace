@@ -1170,14 +1170,10 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 
 /* ---------- ряд экспертов в курсах ----------
    Подписка не заводит себе экрана: те, кого она читает, стоят первыми
-   и подписаны меткой. «Читаю» — спокойная, «новое» — заметная: разница
-   между «я на неё подписана» и «зайди, там появилось». */
+   и помечены звёздочкой в углу. Ничего больше — ни надписи, ни счётчика. */
 .exp{position:relative}
 .exp.mine{border-color:var(--line-2)}
-.expmark{position:absolute;top:9px;left:10px;z-index:2;border-radius:999px;
-  padding:3px 8px;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
-  background:var(--surface-2);color:var(--muted)}
-.expmark.new{background:var(--accent);color:#fff}
+.expstar{position:absolute;top:10px;right:11px;z-index:2;line-height:0}
 </style>
 </head>
 <body>
@@ -2969,20 +2965,6 @@ function matchOf(item){
   return scoreItem(item, profileOf()).score;
 }
 
-/* попадает ли материал в выбранные ею направления */
-function topicHit(item){
-  const mine = S.topics || [];
-  if(!mine.length) return false;
-  const his = (item && Array.isArray(item.topics)) ? item.topics : [];
-  return his.some(t => mine.indexOf(t) >= 0);
-}
-
-/* ---------- совместимость ----------
-   Эти три проверки остались как были: на них смотрит админка,
-   когда показывает, кому материал достанется. */
-function fitsAudience(item){ return allowed(item, profileOf()); }
-function fitsLevel(item){ return sLevel(item, profileOf()) >= 0.45; }
-function fitsTime(item){ return sTime(item, profileOf()) >= 0.3; }
 
 /* ---------- чем библиотека закрывает запросы ----------
    Подбор не может дать того, чего нет. Если под «деньги» в библиотеке
@@ -3225,7 +3207,7 @@ function watchCalendar(){
     } catch(e){ console.error('[Eva] смена дня:', e); }
   }, 60000);
 }
-const doneOf = i => S.program[i] ? S.program[i].tasks.filter(t => t.done).length : 0;
+const doneOf = i => (S.program || [])[i] ? S.program[i].tasks.filter(t => t.done).length : 0;
 const starsTotal = () => S.program.length * 3;
 
 /* звёзды текущей недели считаем из самой программы, чтобы счётчик
@@ -3460,6 +3442,14 @@ window.addEventListener('resize', () => { try { deskArrows(); } catch(e){} });
 
 function renderScreen(){
   const s = S.screen;
+  /* Экран приложения без программы собрать нельзя: главная, неделя и итоги
+     читают её насквозь. Обычно она есть - её собирает тест, - но сюда
+     можно попасть и без неё: аккаунтом эксперта, старым профилем, после
+     неудачного восстановления. Собираем на месте, а не падаем. */
+  if(s !== 'splash' && s !== 'auth' && s !== 'mail' && s !== 'quiz' &&
+     (!Array.isArray(S.program) || !S.program.length)){
+    try { buildProgram(); } catch(e){ S.program = []; }
+  }
   if(s === 'splash')   { setHTML(scrSplash()); return; }
   if(s === 'auth')     { setHTML(scrAuth()); return; }
   if(s === 'mail')     { setHTML(scrMail()); return; }
@@ -5921,7 +5911,7 @@ const backBtn = t => `<button class="backbtn" onclick="back()">‹ ${t}</button>
    ГЛАВНАЯ
    ===================================================================== */
 function pgHome(){
-  const day = S.program[S.day];
+  const day = (S.program || [])[S.day] || {tasks:[]};
   const idxs = S.gentle ? [0, 2].filter(i => day.tasks[i]) : day.tasks.map((_,i) => i);
   const shown = idxs.map(i => day.tasks[i]);
   const more = LIB.filter(x => !day.tasks.some(t => t.id === x.id))
@@ -5946,7 +5936,7 @@ function pgHome(){
         const dt = dateOfDay(i), done = doneOf(i);
         return `<button class="wd ${i===S.day?'sel':''} ${i===todayIdx()&&i!==S.day?'today':''} ${i>todayIdx()?'future':''}" onclick="setDay(${i})">
           <span>${esc(d.d)}</span><b>${dt.getDate()}</b>
-          <div class="pips">${S.program[i].tasks.map(t => `<i class="pip ${t.done?'on':''}"></i>`).join('')}</div>
+          <div class="pips">${(((S.program || [])[i] || {}).tasks || []).map(t => `<i class="pip ${t.done?'on':''}"></i>`).join('')}</div>
           ${done===3?'<div class="wstar">★</div>':''}
         </button>`;}).join('')}
     </div>
@@ -6242,8 +6232,7 @@ function pgCourses(){
    РЯД ЭКСПЕРТОВ В КУРСАХ
    Подписка не заводит себе отдельного места: она меняет порядок в ряду,
    который здесь и так был. Те, кого женщина читает, идут первыми и
-   помечены — у кого вышло новое, у того помечено ярче. Дальше остальные,
-   в прежнем порядке.
+   помечены звёздочкой в углу. Дальше остальные, в прежнем порядке.
 
    Так решено нарочно. Отдельный экран «мои эксперты» пришлось бы чем-то
    наполнять с первого дня и объяснять, зачем он; порядок в ряду не нужно
@@ -6251,33 +6240,22 @@ function pgCourses(){
    выглядит ровно как раньше.
    ===================================================================== */
 function expertsRow(){
-  const has = e => typeof expertHasNew === 'function' && expertHasNew(e.id);
-  const mine = typeof isFollowing === 'function' ? EXPERTS.filter(e => isFollowing(e.id)) : [];
-  /* среди своих первыми те, у кого вышло новое: иначе метка «новое»
-     оказывается второй-третьей и ряд приходится листать до неё */
-  const following = mine.filter(has).concat(mine.filter(e => !has(e)));
-  const rest = EXPERTS.filter(e => following.indexOf(e) < 0);
-  const fresh = mine.filter(has).length;
+  const mine = EXPERTS.filter(e => isFollowing(e.id));
+  const rest = EXPERTS.filter(e => !isFollowing(e.id));
 
-  const card = (e, own) => {
-    const isNew = own && has(e);
-    return `<button class="exp ${own ? 'mine' : ''}" style="width:154px" onclick="openExpert('${attJs(e.id)}')">
-      ${own ? `<span class="expmark ${isNew ? 'new' : ''}"
-        title="${isNew ? 'Вышло что-то с твоего прошлого захода' : 'Ты подписана'}">${
-        isNew ? 'новое' : 'читаю'}</span>` : ''}
+  const card = (e, own) => `<button class="exp${own ? ' mine' : ''}" style="width:154px"
+      onclick="openExpert('${attJs(e.id)}')">
+      ${own ? `<span class="expstar" title="Ты подписана">${starMark(14)}</span>` : ''}
       <div class="pcirc">${expPic(e, true)}</div>
       <div style="font-weight:800;font-size:13.5px;margin-top:9px">${esc(e.n)}${e.verified?' <span class="vt">✓</span>':''}</div>
       <div class="small muted" style="font-size:11.5px;min-height:32px">${esc(e.r)}</div>
       <div style="color:var(--gold);font-weight:800;font-size:12.5px">★ ${e.rate}</div>
     </button>`;
-  };
 
   return `<div class="sec-h"><h2 class="serif">Эксперты</h2>
-      <span class="small muted">${!following.length ? EXPERTS.length
-        : fresh ? (fresh === 1 ? 'у одной новое' : 'новое у ' + fresh)
-        : 'сначала твои'}</span></div>
+      <span class="small muted">${EXPERTS.length}</span></div>
     <div class="hscroll">
-      ${following.map(e => card(e, true)).join('')}${rest.map(e => card(e, false)).join('')}
+      ${mine.map(e => card(e, true)).join('')}${rest.map(e => card(e, false)).join('')}
     </div>`;
 }
 
@@ -6640,7 +6618,7 @@ function pgProfile(){
   const rate = REF_RATE[cur.id];
   const earned = INVITED.reduce((a,i) => a + Math.round(i.sum*rate/100), 0);
   const spent = S.purchases.reduce((a,p) => a + p.p, 0);
-  const doneTasks = S.program.reduce((a,d) => a + d.tasks.filter(t => t.done).length, 0);
+  const doneTasks = (S.program || []).reduce((a,d) => a + d.tasks.filter(t => t.done).length, 0);
   const hw = Object.keys(S.homework||{}).length;
   const lessons = Object.values(S.lessons||{}).flat().filter(l => l.done).length;
   return `<div class="view">
@@ -6766,9 +6744,24 @@ function pgProfile(){
   </div>`;
 }
 
+/* Заявка на вывод денег. Раньше здесь было одно сообщение и больше
+   ничего: женщина видела «заявка принята», а заявки не существовало
+   нигде. Теперь она уходит в поддержку — туда, где её видит команда. */
 function withdraw(sum){
   if(sum < 3000) return toast('Вывод доступен от 3 000 ₽, сейчас ' + money(sum));
-  toast('Заявка на вывод принята, деньги придут в течение трёх дней');
+  if(typeof INBOX === 'undefined') return toast('Не отправилось, попробуй позже');
+  INBOX.unshift({
+    id:'w' + Date.now().toString(36),
+    from: S.name || 'Участница',
+    role: S.role === 'expert' ? 'эксперт' : 'амбассадор',
+    mail: S.user ? S.user.email : '—',
+    ago: 'только что',
+    sub: 'Вывод вознаграждения',
+    t: 'Прошу вывести ' + money(sum) + '. Реквизиты пришлю в ответ на это письмо.',
+    st: 'новое'
+  });
+  syncPush(['support']);
+  toast('Заявка отправлена. Ответим в течение трёх дней');
 }
 
 function pgEarn(){
@@ -8425,11 +8418,29 @@ function adInbox(){
   </div>`).join('')}`;
 }
 function setTicket(id, st){ const t = INBOX.find(x => x.id === id); t.st = st; render(); }
-function replyTicket(id){
-  const v = ($('#rp_'+id)||{}).value;
-  if(!v || !v.trim()) return toast('Напиши ответ');
-  const t = INBOX.find(x => x.id === id); t.st = 'в работе';
-  render(); toast('Ответ отправлен на ' + t.mail);
+/* Ответ на обращение. Раньше текст ответа выбрасывался: обращение
+   переходило «в работу», а женщине приходило только сообщение на экране
+   администратора. Теперь ответ уходит ей в личные сообщения. */
+async function replyTicket(id){
+  const v = (($('#rp_'+id)||{}).value || '').trim();
+  if(!v) return toast('Напиши ответ');
+  const t = INBOX.find(x => x.id === id);
+  if(!t) return;
+  const mail = String(t.mail || '').trim();
+  if(!mail || mail.indexOf('@') < 0){
+    t.st = 'в работе'; render(); syncPush(['support']);
+    return toast('У обращения нет почты — ответить некуда');
+  }
+  const r = await apiCall('dm_send', {
+    email: mail.toLowerCase(),
+    from: 'Поддержка Eva',
+    subject: t.sub || 'Ответ поддержки',
+    text: v
+  }, {silent:true});
+  if(!r) return toast(SYNC.lastError || 'Ответ не ушёл, попробуй ещё раз');
+  t.st = 'в работе'; t.answer = v;
+  render(); syncPush(['support']);
+  toast('Ответ ушёл ' + mail);
 }
 
 /* ---------- мероприятия ---------- */
@@ -8783,7 +8794,7 @@ function pgEditItem(){
       onclick="tgItem('${attJs(x.id)}','${attJs(t)}')">${esc(t)}</button>`).join('')}</div>
 
     <div class="acts" style="margin-top:16px">
-      <button class="btn" onclick="closeEditor();toast('Сохранено')">Сохранить</button>
+      <button class="btn" onclick="closeEditor();pushShared();toast('Сохранено')">Сохранить</button>
       ${!isPending ? `<button class="btn ghost" onclick="delItem('${attJs(x.id)}')">Удалить</button>` : ''}
     </div>
 
@@ -8816,6 +8827,21 @@ function setQuiet(id, f, v){ const x = itemById(id); if(x) x[f] = v; }
 /* ---------- редактор курса ---------- */
 function openCourseEditor(id){ S.editCourse = id; S.sheet = null; render(); window.scrollTo(0,0); }
 function closeCourseEditor(){ S.editCourse = null; S.editUnit = null; render(); window.scrollTo(0,0); }
+
+/* Кнопки «Сохранить курс» и «Готово» под уроком раньше только закрывали
+   редактор: поля писались в объект, а на сервер не уезжали, и правки жили
+   до перезагрузки. Отправляем здесь — на самой кнопке, а не на каждой
+   набранной букве. */
+function saveCourse(){
+  closeCourseEditor();
+  pushShared();
+  toast('Курс сохранён');
+}
+function saveUnit(){
+  S.editUnit = null; render();
+  pushShared();
+  toast('Урок сохранён');
+}
 
 function modulesOf(cid){
   if(!S.modules) S.modules = {};
@@ -8909,7 +8935,7 @@ function pgEditCourse(){
     </div>`).join('')}
 
     <button class="btn ghost" onclick="addModule('${attJs(c.id)}')">＋ Добавить модуль</button>
-    <button class="btn" style="margin-top:9px" onclick="closeCourseEditor();toast('Курс сохранён')">Сохранить курс</button>
+    <button class="btn" style="margin-top:9px" onclick="saveCourse()">Сохранить курс</button>
   </div>`;
 }
 
@@ -9013,7 +9039,7 @@ function pgEditUnit(){
       Посмотреть, как видит ученица</button>
 
     <div class="acts" style="margin-top:16px">
-      <button class="btn" onclick="S.editUnit=null;render();toast('Урок сохранён')">Готово</button>
+      <button class="btn" onclick="saveUnit()">Готово</button>
       <button class="btn ghost" onclick="delUnit('${attJs(c.id)}','${attJs(l.id)}')">Удалить урок</button>
     </div>
   </div>`;
@@ -9210,7 +9236,7 @@ function exProfile(){
     <div class="small muted" style="margin-bottom:8px">По этим тегам платформа подбирает твои материалы в программы учениц</div>
     <div class="chips wrap">${e.t.map(t => `<button class="chip on" onclick="dropExpTag('${attJs(e.id)}','${attJs(t)}')">${esc(t)} <span style="opacity:.6">✕</span></button>`).join('')}
       <button class="chip" onclick="openSheet({k:'expTags',id:'${attJs(e.id)}'})">＋ тема</button></div>
-    <button class="btn" style="margin-top:12px" onclick="render();toast('Профиль сохранён')">Сохранить</button>
+    <button class="btn" style="margin-top:12px" onclick="saveExpertProfile()">Сохранить</button>
   </div>
 
   <div class="card">
@@ -9372,12 +9398,20 @@ function dropPending(id){
   S.pending = S.pending.filter(x => x.id !== id);
   render(); toast('Материал удалён');
 }
-function verify(id){ const e = EXPERTS.find(x => x.id === id); e.verified = !e.verified; render();
-  toast(e.verified ? 'Эксперт подтверждён' : 'Галочка снята'); }
+/* Кнопка «Сохранить» в кабинете эксперта. Раньше она только перерисовывала
+   экран и говорила «Профиль сохранён» — правки жили до первой перезагрузки,
+   а эксперт был уверен, что всё на месте. */
+function saveExpertProfile(){
+  render();
+  syncPush(['experts'], true);
+  toast('Профиль сохранён');
+}
 
 function setWho(id,i,v){ const e = EXPERTS.find(x=>x.id===id); e.who = e.who || ['Тревога и постоянное напряжение','Нет сил и хочется всё бросить']; e.who[i]=v; }
-function dropExpTag(id, t){ const e = EXPERTS.find(x=>x.id===id); e.t = e.t.filter(x=>x!==t); render(); }
-function addExpTag(id, t){ const e = EXPERTS.find(x=>x.id===id); if(!e.t.includes(t)) e.t.push(t); S.sheet=null; render(); toast('Тема добавлена'); }
+function dropExpTag(id, t){ const e = EXPERTS.find(x=>x.id===id); e.t = e.t.filter(x=>x!==t);
+  render(); syncPush(['experts']); }
+function addExpTag(id, t){ const e = EXPERTS.find(x=>x.id===id); if(!e.t.includes(t)) e.t.push(t);
+  S.sheet=null; render(); syncPush(['experts']); toast('Тема добавлена'); }
 function setAch(id,i,v){ const e = EXPERTS.find(x=>x.id===id); e.ach = e.ach||[]; e.ach[i]=v; }
 /* ---------- образование эксперта ---------- */
 function exEduBlock(){
@@ -10526,7 +10560,7 @@ function ask(q){
 }
 
 function evaAnswer(q){
-  const day = S.program[S.day], left = day.tasks.filter(t => !t.done);
+  const day = (S.program || [])[S.day] || {tasks:[]}, left = day.tasks.filter(t => !t.done);
   if(/аффирмац|прочит/.test(q)) return day.tasks[0].text;
   if(/балл|звёзд|звезд|статус|уровен/.test(q)){
     const {next} = levelNow();
@@ -10570,6 +10604,7 @@ function rebuild(){ buildProgram(); S.sheet = null; S.gentle = false; render(); 
 
 function addToDay(id){
   const x = LIB.find(i => i.id === id);
+  if(!(S.program || [])[S.day]) return;
   S.program[S.day].tasks.push(task(x, S.slot));
   S.sheet = null; S.tab = 'home'; S.page = null; render();
   toast('Добавила в день ' + (S.day+1));
@@ -11923,20 +11958,21 @@ function askGood(gid){
 }
 
 /* ---------- настройки ---------- */
+/* Почта — это номер аккаунта: по ней лежат прогресс, фото, карточка
+   страницы и переписка. Переносить всё это женщина себе сама не может,
+   и делать вид, что может, — хуже, чем сказать прямо. Здесь окно честно
+   говорит, как поменять адрес, вместо кнопки, которая ничего не делала. */
 function shChangeMail(){
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Изменить почту</h2>
-    <p class="small muted" style="margin:0 0 12px">На новый адрес придёт код подтверждения.</p>
-    <label class="lbl">Текущая</label>
-    <div class="linkbox" style="margin-bottom:10px">${S.user ? esc(S.user.email) : '—'}</div>
-    <label class="lbl">Новая почта</label>
-    <input class="field" id="nm_mail" type="email" placeholder="you@mail.ru">
-    <button class="btn" onclick="changeMail()">Отправить код</button>`;
-}
-function changeMail(){
-  const m = (($('#nm_mail')||{}).value || '').trim().toLowerCase();
-  if(!/^[^@\s]+@[^@\s]+\.[a-zа-я]{2,}$/i.test(m)) return toast('Проверь адрес');
-  if(DB.find(m)) return toast('Эта почта уже занята');
-  S.sheet = null; render(); toast('Код отправлен на ' + m);
+    <label class="lbl">Сейчас вход по адресу</label>
+    <div class="linkbox" style="margin-bottom:12px">${S.user ? esc(S.user.email) : '—'}</div>
+    <div class="card" style="background:var(--accent-soft);border-color:transparent">
+      <b style="font-size:14.5px">Адрес меняем вручную</b>
+      <p class="small muted" style="margin:7px 0 0">По этой почте лежит всё: программа,
+        баллы, покупки, фото, страница и переписка. Чтобы ничего не потерялось,
+        адрес переносим руками — напиши в поддержку, поменяем в тот же день.</p>
+    </div>
+    <button class="btn" style="margin-top:12px" onclick="openSheet('support')">Написать в поддержку</button>`;
 }
 function shChangePass(){
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Сменить пароль</h2>
@@ -11946,14 +11982,24 @@ function shChangePass(){
     <label class="lbl">Повтори новый</label><input class="field" id="p_rep" type="password">
     <button class="btn" onclick="changePass()">Сохранить</button>`;
 }
-function changePass(){
-  const o = ($('#p_old')||{}).value, n = ($('#p_new')||{}).value, r = ($('#p_rep')||{}).value;
-  const u = S.user ? DB.find(S.user.email) : null;
-  if(u && u.pass !== hashPass(o)) return toast('Текущий пароль неверный');
+/* Одна смена пароля на всех: у женщины поля p_*, у эксперта xp_*.
+   Меняет сервер — раньше приложение правило только копию в браузере
+   и всё равно говорило «Пароль изменён». */
+async function changePass(pref){
+  const id = k => ($('#' + (pref || 'p') + '_' + k) || {}).value || '';
+  const o = id('old'), n = id('new'), r = id('rep');
   if(!n || n.length < 6) return toast('Новый пароль минимум 6 символов');
   if(n !== r) return toast('Пароли не совпадают');
+
+  const res = await apiCall('pass_change', {old:o, new:n}, {silent:true});
+  if(!res) return toast(SYNC.lastError || 'Не удалось сменить пароль');
+
+  /* копию в браузере держим в согласии с сервером: по ней работает
+     вход, когда сети нет */
+  const u = S.user ? DB.find(S.user.email) : null;
   if(u){ u.pass = hashPass(n); DB.upsert(u); }
-  S.sheet = null; render(); toast('Пароль изменён');
+  S.sheet = null; render();
+  toast('Пароль изменён. Другие входы закрыты');
 }
 function shSupport(){
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Написать в поддержку</h2>
@@ -12042,17 +12088,9 @@ function shExPass(){
     <label class="lbl">Текущий пароль</label><input class="field" id="xp_old" type="password">
     <label class="lbl">Новый пароль</label><input class="field" id="xp_new" type="password" placeholder="Минимум 6 символов">
     <label class="lbl">Повтори новый</label><input class="field" id="xp_rep" type="password">
-    <button class="btn" onclick="changeExpertPass()">Сохранить</button>`;
+    <button class="btn" onclick="changePass('xp')">Сохранить</button>`;
 }
-function changeExpertPass(){
-  const o = ($('#xp_old')||{}).value, n = ($('#xp_new')||{}).value, r = ($('#xp_rep')||{}).value;
-  const u = S.user ? DB.find(S.user.email) : null;
-  if(u && u.pass !== hashPass(o)) return toast('Текущий пароль неверный');
-  if(!n || n.length < 6) return toast('Новый пароль минимум 6 символов');
-  if(n !== r) return toast('Пароли не совпадают');
-  if(u){ u.pass = hashPass(n); DB.upsert(u); }
-  S.sheet = null; render(); toast('Пароль изменён');
-}
+
 
 
 /* создаёт профиль эксперта под новый аккаунт */
@@ -13990,6 +14028,26 @@ function personLink(name, mail, cls){
   return `<button class="plink ${cls || ''}" onclick="event.stopPropagation();openPerson('${attJs(key)}')">${esc(name || '')}</button>`;
 }
 
+/* Шапка страницы — одна на обе: и на заполненную, и на пустую.
+   Город, «здесь с» и пара слов о себе появляются, если они есть. */
+function personHead(mail, name, c){
+  const key = personKey(mail);
+  return `<div class="exphead">
+    <div class="brandbar" style="margin:0">
+      <button onclick="closePerson()" style="color:#fff;font-size:20px;width:30px;text-align:left">‹</button>
+      <div class="b">Участница</div><div style="width:30px"></div>
+    </div>
+    <div class="pcirc" style="width:92px;height:92px;margin:6px auto 0;border:2px solid rgba(255,255,255,.35)">
+      ${chatAva(name, authorColor(key), false, 92, key)}</div>
+    <div class="nm">${esc(name)}</div>
+    ${c ? `<div class="mrow">
+      ${c.city ? `<span class="mstat">${PIN_SVG}${esc(c.city)}</span>` : ''}
+      <span class="mstat">${sinceText(c.since)}</span>
+    </div>
+    ${c.about ? `<p class="pabout">${esc(c.about)}</p>` : ''}` : ''}
+  </div>`;
+}
+
 /* Женщина, которая ещё не открывала новую версию, карточки не имеет.
    Пустой экран «страница не заполнена» — тупик: непонятно, к кому попал
    и что делать. Поэтому показываем то, что знаем, и оставляем главное
@@ -13998,15 +14056,7 @@ function pgPersonBlank(mail){
   const key = personKey(mail);
   const n = nameOf(key);
   return `<div class="view">
-    <div class="exphead">
-      <div class="brandbar" style="margin:0">
-        <button onclick="closePerson()" style="color:#fff;font-size:20px;width:30px;text-align:left">‹</button>
-        <div class="b">Участница</div><div style="width:30px"></div>
-      </div>
-      <div class="pcirc" style="width:92px;height:92px;margin:6px auto 0;border:2px solid rgba(255,255,255,.35)">
-        ${chatAva(n, authorColor(key), false, 92, key)}</div>
-      <div class="nm">${esc(n)}</div>
-    </div>
+    ${personHead(key, n, null)}
     <div class="pad" style="padding-top:16px">
       <div class="row" style="gap:8px">
         <button class="btn" style="flex:1"
@@ -14044,20 +14094,7 @@ function pgPerson(){
       .map(cardOf).filter(Boolean);
 
   return `<div class="view">
-    <div class="exphead">
-      <div class="brandbar" style="margin:0">
-        <button onclick="closePerson()" style="color:#fff;font-size:20px;width:30px;text-align:left">‹</button>
-        <div class="b">Участница</div><div style="width:30px"></div>
-      </div>
-      <div class="pcirc" style="width:92px;height:92px;margin:6px auto 0;border:2px solid rgba(255,255,255,.35)">
-        ${chatAva(c.n, authorColor(c.id), false, 92, c.id)}</div>
-      <div class="nm">${esc(c.n)}</div>
-      <div class="mrow">
-        ${c.city ? `<span class="mstat">${PIN_SVG}${esc(c.city)}</span>` : ''}
-        <span class="mstat">${sinceText(c.since)}</span>
-      </div>
-      ${c.about ? `<p class="pabout">${esc(c.about)}</p>` : ''}
-    </div>
+    ${personHead(c.id, c.n, c)}
 
     <div class="pad" style="padding-top:16px">
       <div class="row" style="gap:8px">

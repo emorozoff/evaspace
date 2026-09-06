@@ -66,7 +66,7 @@ const backBtn = t => `<button class="backbtn" onclick="back()">‹ ${t}</button>
    ГЛАВНАЯ
    ===================================================================== */
 function pgHome(){
-  const day = S.program[S.day];
+  const day = (S.program || [])[S.day] || {tasks:[]};
   const idxs = S.gentle ? [0, 2].filter(i => day.tasks[i]) : day.tasks.map((_,i) => i);
   const shown = idxs.map(i => day.tasks[i]);
   const more = LIB.filter(x => !day.tasks.some(t => t.id === x.id))
@@ -91,7 +91,7 @@ function pgHome(){
         const dt = dateOfDay(i), done = doneOf(i);
         return `<button class="wd ${i===S.day?'sel':''} ${i===todayIdx()&&i!==S.day?'today':''} ${i>todayIdx()?'future':''}" onclick="setDay(${i})">
           <span>${esc(d.d)}</span><b>${dt.getDate()}</b>
-          <div class="pips">${S.program[i].tasks.map(t => `<i class="pip ${t.done?'on':''}"></i>`).join('')}</div>
+          <div class="pips">${(((S.program || [])[i] || {}).tasks || []).map(t => `<i class="pip ${t.done?'on':''}"></i>`).join('')}</div>
           ${done===3?'<div class="wstar">★</div>':''}
         </button>`;}).join('')}
     </div>
@@ -387,8 +387,7 @@ function pgCourses(){
    РЯД ЭКСПЕРТОВ В КУРСАХ
    Подписка не заводит себе отдельного места: она меняет порядок в ряду,
    который здесь и так был. Те, кого женщина читает, идут первыми и
-   помечены — у кого вышло новое, у того помечено ярче. Дальше остальные,
-   в прежнем порядке.
+   помечены звёздочкой в углу. Дальше остальные, в прежнем порядке.
 
    Так решено нарочно. Отдельный экран «мои эксперты» пришлось бы чем-то
    наполнять с первого дня и объяснять, зачем он; порядок в ряду не нужно
@@ -396,33 +395,22 @@ function pgCourses(){
    выглядит ровно как раньше.
    ===================================================================== */
 function expertsRow(){
-  const has = e => typeof expertHasNew === 'function' && expertHasNew(e.id);
-  const mine = typeof isFollowing === 'function' ? EXPERTS.filter(e => isFollowing(e.id)) : [];
-  /* среди своих первыми те, у кого вышло новое: иначе метка «новое»
-     оказывается второй-третьей и ряд приходится листать до неё */
-  const following = mine.filter(has).concat(mine.filter(e => !has(e)));
-  const rest = EXPERTS.filter(e => following.indexOf(e) < 0);
-  const fresh = mine.filter(has).length;
+  const mine = EXPERTS.filter(e => isFollowing(e.id));
+  const rest = EXPERTS.filter(e => !isFollowing(e.id));
 
-  const card = (e, own) => {
-    const isNew = own && has(e);
-    return `<button class="exp ${own ? 'mine' : ''}" style="width:154px" onclick="openExpert('${attJs(e.id)}')">
-      ${own ? `<span class="expmark ${isNew ? 'new' : ''}"
-        title="${isNew ? 'Вышло что-то с твоего прошлого захода' : 'Ты подписана'}">${
-        isNew ? 'новое' : 'читаю'}</span>` : ''}
+  const card = (e, own) => `<button class="exp${own ? ' mine' : ''}" style="width:154px"
+      onclick="openExpert('${attJs(e.id)}')">
+      ${own ? `<span class="expstar" title="Ты подписана">${starMark(14)}</span>` : ''}
       <div class="pcirc">${expPic(e, true)}</div>
       <div style="font-weight:800;font-size:13.5px;margin-top:9px">${esc(e.n)}${e.verified?' <span class="vt">✓</span>':''}</div>
       <div class="small muted" style="font-size:11.5px;min-height:32px">${esc(e.r)}</div>
       <div style="color:var(--gold);font-weight:800;font-size:12.5px">★ ${e.rate}</div>
     </button>`;
-  };
 
   return `<div class="sec-h"><h2 class="serif">Эксперты</h2>
-      <span class="small muted">${!following.length ? EXPERTS.length
-        : fresh ? (fresh === 1 ? 'у одной новое' : 'новое у ' + fresh)
-        : 'сначала твои'}</span></div>
+      <span class="small muted">${EXPERTS.length}</span></div>
     <div class="hscroll">
-      ${following.map(e => card(e, true)).join('')}${rest.map(e => card(e, false)).join('')}
+      ${mine.map(e => card(e, true)).join('')}${rest.map(e => card(e, false)).join('')}
     </div>`;
 }
 
@@ -785,7 +773,7 @@ function pgProfile(){
   const rate = REF_RATE[cur.id];
   const earned = INVITED.reduce((a,i) => a + Math.round(i.sum*rate/100), 0);
   const spent = S.purchases.reduce((a,p) => a + p.p, 0);
-  const doneTasks = S.program.reduce((a,d) => a + d.tasks.filter(t => t.done).length, 0);
+  const doneTasks = (S.program || []).reduce((a,d) => a + d.tasks.filter(t => t.done).length, 0);
   const hw = Object.keys(S.homework||{}).length;
   const lessons = Object.values(S.lessons||{}).flat().filter(l => l.done).length;
   return `<div class="view">
@@ -911,9 +899,24 @@ function pgProfile(){
   </div>`;
 }
 
+/* Заявка на вывод денег. Раньше здесь было одно сообщение и больше
+   ничего: женщина видела «заявка принята», а заявки не существовало
+   нигде. Теперь она уходит в поддержку — туда, где её видит команда. */
 function withdraw(sum){
   if(sum < 3000) return toast('Вывод доступен от 3 000 ₽, сейчас ' + money(sum));
-  toast('Заявка на вывод принята, деньги придут в течение трёх дней');
+  if(typeof INBOX === 'undefined') return toast('Не отправилось, попробуй позже');
+  INBOX.unshift({
+    id:'w' + Date.now().toString(36),
+    from: S.name || 'Участница',
+    role: S.role === 'expert' ? 'эксперт' : 'амбассадор',
+    mail: S.user ? S.user.email : '—',
+    ago: 'только что',
+    sub: 'Вывод вознаграждения',
+    t: 'Прошу вывести ' + money(sum) + '. Реквизиты пришлю в ответ на это письмо.',
+    st: 'новое'
+  });
+  syncPush(['support']);
+  toast('Заявка отправлена. Ответим в течение трёх дней');
 }
 
 function pgEarn(){

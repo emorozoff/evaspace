@@ -389,6 +389,37 @@ switch ($action) {
     ok(['user' => safe_user($u)]);
   }
 
+  /* Смена пароля.
+     Раньше её не было вовсе: приложение меняло пароль в браузере и говорило
+     «Пароль изменён», а на сервере оставался прежний — женщина продолжала
+     входить старым и не знала об этом. Меняем здесь, со сверкой текущего,
+     и закрываем все остальные сессии: если пароль меняют из-за того, что
+     он утёк, чужой вход должен оборваться. */
+  case 'pass_change': {
+    if (!$isPost) fail('Ожидается POST');
+    $db  = db_read();
+    $me  = need_user(user_by_token($db, $token));
+    $old = (string)($body['old'] ?? '');
+    $new = (string)($body['new'] ?? '');
+    $mail = low((string)$me['email']);
+
+    if (!pass_check($me, $old)) fail('Текущий пароль неверный', 403);
+    if (mb_strlen($new) < 6)    fail('Новый пароль минимум 6 символов');
+    if ($new === $old)          fail('Новый пароль совпадает со старым');
+
+    $me['pass'] = password_hash($new, PASSWORD_DEFAULT);
+    $db['users'][$mail] = $me;
+    foreach ($db['sessions'] as $t => $sess) {          // остальные входы закрываем
+      if (low((string)($sess['email'] ?? '')) === $mail && $t !== $token) {
+        unset($db['sessions'][$t]);
+      }
+    }
+    unset($db['tries'][$mail]);
+    $db['updated'] = time();
+    db_write($db);
+    ok([]);
+  }
+
   case 'logout': {
     $db = db_read();
     if ($token !== '' && isset($db['sessions'][$token])) {

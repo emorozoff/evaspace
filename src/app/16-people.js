@@ -246,6 +246,26 @@ function personLink(name, mail, cls){
   return `<button class="plink ${cls || ''}" onclick="event.stopPropagation();openPerson('${attJs(key)}')">${esc(name || '')}</button>`;
 }
 
+/* Шапка страницы — одна на обе: и на заполненную, и на пустую.
+   Город, «здесь с» и пара слов о себе появляются, если они есть. */
+function personHead(mail, name, c){
+  const key = personKey(mail);
+  return `<div class="exphead">
+    <div class="brandbar" style="margin:0">
+      <button onclick="closePerson()" style="color:#fff;font-size:20px;width:30px;text-align:left">‹</button>
+      <div class="b">Участница</div><div style="width:30px"></div>
+    </div>
+    <div class="pcirc" style="width:92px;height:92px;margin:6px auto 0;border:2px solid rgba(255,255,255,.35)">
+      ${chatAva(name, authorColor(key), false, 92, key)}</div>
+    <div class="nm">${esc(name)}</div>
+    ${c ? `<div class="mrow">
+      ${c.city ? `<span class="mstat">${PIN_SVG}${esc(c.city)}</span>` : ''}
+      <span class="mstat">${sinceText(c.since)}</span>
+    </div>
+    ${c.about ? `<p class="pabout">${esc(c.about)}</p>` : ''}` : ''}
+  </div>`;
+}
+
 /* Женщина, которая ещё не открывала новую версию, карточки не имеет.
    Пустой экран «страница не заполнена» — тупик: непонятно, к кому попал
    и что делать. Поэтому показываем то, что знаем, и оставляем главное
@@ -254,15 +274,7 @@ function pgPersonBlank(mail){
   const key = personKey(mail);
   const n = nameOf(key);
   return `<div class="view">
-    <div class="exphead">
-      <div class="brandbar" style="margin:0">
-        <button onclick="closePerson()" style="color:#fff;font-size:20px;width:30px;text-align:left">‹</button>
-        <div class="b">Участница</div><div style="width:30px"></div>
-      </div>
-      <div class="pcirc" style="width:92px;height:92px;margin:6px auto 0;border:2px solid rgba(255,255,255,.35)">
-        ${chatAva(n, authorColor(key), false, 92, key)}</div>
-      <div class="nm">${esc(n)}</div>
-    </div>
+    ${personHead(key, n, null)}
     <div class="pad" style="padding-top:16px">
       <div class="row" style="gap:8px">
         <button class="btn" style="flex:1"
@@ -300,20 +312,7 @@ function pgPerson(){
       .map(cardOf).filter(Boolean);
 
   return `<div class="view">
-    <div class="exphead">
-      <div class="brandbar" style="margin:0">
-        <button onclick="closePerson()" style="color:#fff;font-size:20px;width:30px;text-align:left">‹</button>
-        <div class="b">Участница</div><div style="width:30px"></div>
-      </div>
-      <div class="pcirc" style="width:92px;height:92px;margin:6px auto 0;border:2px solid rgba(255,255,255,.35)">
-        ${chatAva(c.n, authorColor(c.id), false, 92, c.id)}</div>
-      <div class="nm">${esc(c.n)}</div>
-      <div class="mrow">
-        ${c.city ? `<span class="mstat">${PIN_SVG}${esc(c.city)}</span>` : ''}
-        <span class="mstat">${sinceText(c.since)}</span>
-      </div>
-      ${c.about ? `<p class="pabout">${esc(c.about)}</p>` : ''}
-    </div>
+    ${personHead(c.id, c.n, c)}
 
     <div class="pad" style="padding-top:16px">
       <div class="row" style="gap:8px">
