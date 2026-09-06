@@ -1,4 +1,4 @@
-<title>Eva Club — финансовый штаб</title>
+<title>Финансовый штаб Eva Club</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -57,6 +57,7 @@
     scrollbar-width:none;
   }
   .primary-nav::-webkit-scrollbar{display:none;}
+  @media (min-width:940px){ .primary-nav{flex-wrap:wrap; overflow:visible; row-gap:2px;} }
   .primary-nav a{
     padding:8px 13px; border-radius:7px; font-size:13.5px; color:var(--ink-soft);
     white-space:nowrap; font-weight:500;
@@ -462,7 +463,7 @@
   @media (max-width:760px){
     .list-row{grid-template-columns:36px 1fr; grid-template-areas:"badge title" "status prio" "stage month"; row-gap:6px;}
   }
-  .dept-metrics{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:20px;}
+  .dept-metrics{display:grid; grid-template-columns:repeat(auto-fit,minmax(178px,1fr)); gap:12px; margin-bottom:20px;}
   .dept-metric-card{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px;}
   .dept-metric-card label{display:block; font-size:11.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;}
   .dept-metric-card input{
@@ -720,8 +721,14 @@
 
   /* ---------------- breakout wide (table can exceed page width, no scroll) ---------------- */
   .breakout-wide{
-    width:100vw; position:relative; left:50%; right:50%; margin-left:-50vw; margin-right:-50vw;
-    display:flex; justify-content:center; padding:0 12px;
+    width:100%; max-width:100%; position:relative;
+    display:flex; justify-content:center; justify-content:safe center;
+    padding:0; overflow-x:auto;
+  }
+  @media (min-width:1240px){
+    .breakout-wide{
+      width:calc(100vw - 18px); max-width:none; left:50%; margin-left:calc(-50vw + 9px); padding:0 12px;
+    }
   }
   .breakout-wide .cf-table-card{width:auto; max-width:none;}
   .breakout-wide table.monthly-table{font-size:12.5px;}
@@ -779,7 +786,7 @@
   .toggle-row.scroll-tabs button{white-space:nowrap;}
   .toggle-row.inline{margin-bottom:0;}
 
-  .table-card{padding:6px 8px;}
+  .table-card{padding:6px 8px; overflow-x:auto;}
   .table-card > table{margin:0;}
   .table-scroll{overflow-x:auto;}
   table.calc-table td.pos{color:var(--green);}
@@ -812,7 +819,12 @@
   /* --- реестр расходов --- */
   .exp-toolbar{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:12px;}
   .exp-filters{display:flex; gap:8px; flex-wrap:wrap;}
-  .exp-filters select{min-width:170px;}
+  .exp-filters select.v-input{width:auto; min-width:200px; max-width:280px;}
+  .period-cell input[type=number]{width:52px;}
+  table.exp-table input[type=number]::-webkit-outer-spin-button,
+  table.exp-table input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+  table.exp-table input[type=number]{-moz-appearance:textfield; appearance:textfield;}
+  .dept-metrics .dept-metric-card input.money-fmt-input{max-width:220px;}
   .exp-count{font-size:12px; color:var(--ink-faint);}
   table.exp-table{font-size:13px;}
   table.exp-table td{padding:7px 8px; vertical-align:middle;}
@@ -984,8 +996,6 @@
   }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-</head>
-<body>
 
 <div class="topbar">
   <div class="topbar-inner">
@@ -1758,7 +1768,7 @@ async function renderHome(){
       </div>
       <div class="hero-stats">
         <div class="hero-stat"><div class="num">${money(cashNow)}</div><div class="lbl">на счету по факту ${facts.length} мес.</div></div>
-        <div class="hero-stat"><div class="num">${runway!==null?runway.toFixed(1)+' мес.':'—'}</div><div class="lbl">запас хода при burn ${money(burnNow)}</div></div>
+        <div class="hero-stat"><div class="num">${runway!==null?dec(runway)+' мес.':'—'}</div><div class="lbl">запас хода при burn ${money(burnNow)}</div></div>
         <div class="hero-stat"><div class="num">${model.breakevenMonth>0?finMonthLabel(model.breakevenMonth):'>36 мес.'}</div><div class="lbl">выход в плюс по модели</div></div>
         <div class="hero-stat"><div class="num">${st.pct}%</div><div class="lbl">задач проекта выполнено</div></div>
       </div>
@@ -4331,7 +4341,11 @@ function cfMoney(n){
   if(n>=1e4) return sign+Math.round(n/1000).toLocaleString('ru-RU')+' тыс ₽';
   return sign+Math.round(n).toLocaleString('ru-RU')+' ₽';
 }
-function cfPct(n){ if(n===null||n===undefined||!isFinite(n)) return '—'; return (n*100).toFixed(1).replace(/\.0$/,'')+'%'; }
+function cfPct(n){
+  if(n===null||n===undefined||!isFinite(n)) return '—';
+  return (n*100).toFixed(1).replace(/\.0$/,'').replace('.', ',')+'%';
+}
+function dec(n, digits){ return Number(n).toFixed(digits===undefined?1:digits).replace('.', ','); }
 function signedMoney(n){ return (n>=0?'+':'')+money(n); }
 function cfSumRange(arr, from, to){ let s=0; for(let i=from;i<=to;i++) s+=(arr[i]||0); return s; }
 function finTrendCls(n){ return n<0 ? 'neg' : 'pos'; }
@@ -4905,9 +4919,9 @@ function expensePeriodCell(it){
     </select>`;
   }
   return `<span class="period-cell">с
-    <input type="number" min="1" max="${FIN_HORIZON}" class="v-input exp-f" data-exp-field="from" data-id="${it.id}" value="${it.from||1}" style="width:48px; text-align:center;">
+    <input type="number" min="1" max="${FIN_HORIZON}" class="v-input exp-f" data-exp-field="from" data-id="${it.id}" value="${it.from||1}" style="width:52px; text-align:center;">
     по
-    <input type="number" min="1" max="${FIN_HORIZON}" class="v-input exp-f" data-exp-field="to" data-id="${it.id}" value="${it.to||''}" placeholder="∞" style="width:48px; text-align:center;">
+    <input type="number" min="1" max="${FIN_HORIZON}" class="v-input exp-f" data-exp-field="to" data-id="${it.id}" value="${it.to||''}" placeholder="∞" style="width:52px; text-align:center;">
   </span>`;
 }
 
@@ -5146,19 +5160,19 @@ async function renderFinDashboard(body){
     {l:'выручка Год 3', v: cfMoney(cfSumRange(model.revenue,25,36))},
     {l:'минимум на счету', v: cfMoney(model.minCash), cls: model.minCash<0?'neg':'pos'},
     {l:'валовая маржа, Год 1', v: cfPct(cfSumRange(model.grossProfit,1,12)/Math.max(1,cfSumRange(model.revenue,1,12)))},
-    {l:'LTV / CAC на 12-й мес.', v: model.ltvCac[12] ? model.ltvCac[12].toFixed(1)+'×' : '—', cls: model.ltvCac[12]>=3?'pos':'neg'},
+    {l:'LTV / CAC на 12-й мес.', v: model.ltvCac[12] ? dec(model.ltvCac[12])+'×' : '—', cls: model.ltvCac[12]>=3?'pos':'neg'},
   ];
 
   let statusCls, statusLabel, statusDesc;
   if(runway!==null && runway<3){
     statusCls='warn'; statusLabel='Короткий запас хода';
-    statusDesc=`На счету ${money(cashNow)}, факт burn ${money(burnNow)}/мес — денег примерно на ${runway.toFixed(1)} мес. Либо режим экономии на вкладке «Расходы», либо деньги в течение квартала.`;
+    statusDesc=`На счету ${money(cashNow)}, факт burn ${money(burnNow)}/мес — денег примерно на ${dec(runway)} мес. Либо режим экономии на вкладке «Расходы», либо деньги в течение квартала.`;
   } else if(lastFact && lastFact.ebitda>=0){
     statusCls='good'; statusLabel='Операционный плюс';
     statusDesc='Последний закрытый месяц отработан в плюс по EBITDA — выручка покрывает и себестоимость, и операционные расходы.';
   } else {
     statusCls='neutral'; statusLabel='Плановый минус — инвестиционная стадия';
-    statusDesc=`Модель выходит в плюс ${be>0?('в '+finMonthLabel(be)):'позже 36-го месяца'}. До этого минус — это цена роста, а не сбой. Запас хода: ${runway!==null?runway.toFixed(1)+' мес.':'—'}.`;
+    statusDesc=`Модель выходит в плюс ${be>0?('в '+finMonthLabel(be)):'позже 36-го месяца'}. До этого минус — это цена роста, а не сбой. Запас хода: ${runway!==null?dec(runway)+' мес.':'—'}.`;
   }
 
   body.innerHTML = `
@@ -5275,6 +5289,53 @@ async function renderFinDashboard(body){
   }
 }
 
+/* План против факта по категориям за закрытые месяцы. Это и есть
+   «учёт расходов»: реестр задаёт план, ежедневные отчёты и штат дают
+   факт, а разница показывает, где бюджет уехал. */
+function planFactExpenseHtml(model, facts){
+  if(!facts.length) return `
+    <section class="block">
+      <h2>План против факта</h2>
+      <p class="block-sub">Как только в «Отчётах» появятся закрытые месяцы, здесь встанет сравнение реестра с фактическими платежами по каждой категории.</p>
+    </section>`;
+  const n = facts.length;
+  const rows = EXP_CATS.map(c=>{
+    const plan = cfSumRange(model.byCat[c.id], 1, n);
+    const fact = facts.reduce((a,f)=>a+(f.byCat[c.id]||0), 0);
+    return {c, plan, fact, d: fact-plan};
+  }).filter(r=>r.plan>0 || r.fact>0).sort((a,b)=>b.fact-a.fact);
+  const totalPlan = rows.reduce((a,r)=>a+r.plan,0);
+  const totalFact = rows.reduce((a,r)=>a+r.fact,0);
+  const taxPlan = cfSumRange(model.taxTotal, 1, n);
+  const taxFact = facts.reduce((a,f)=>a+f.taxProfit, 0);
+
+  return `
+    <section class="block">
+      <h2>План против факта — ${n} закрытых ${n===1?'месяц':(n<5?'месяца':'месяцев')}</h2>
+      <p class="block-sub">Слева то, что заложено в реестр, справа — что реально заплатили по ежедневным отчётам и штату. Перерасход красным: по этим категориям план не держится.</p>
+      <div class="card table-card">
+        <table class="calc-table">
+          <thead><tr><th>Категория</th><th>План</th><th>Факт</th><th>Разница</th><th>Исполнение</th></tr></thead>
+          <tbody>
+            ${rows.map(r=>`<tr>
+              <td>${r.c.name}</td>
+              <td class="num">${money(r.plan)}</td>
+              <td class="num hl">${money(r.fact)}</td>
+              <td class="num ${r.d>0?'neg':'pos'}">${r.d>=0?'+':'−'}${money(Math.abs(r.d))}</td>
+              <td class="num">${r.plan?Math.round(r.fact/r.plan*100)+'%':'—'}</td>
+            </tr>`).join('')}
+            <tr><td>Налоги и взносы к уплате</td><td class="num">${money(taxPlan)}</td><td class="num hl">${money(taxFact)}</td>
+              <td class="num ${taxFact>taxPlan?'neg':'pos'}">${taxFact>=taxPlan?'+':'−'}${money(Math.abs(taxFact-taxPlan))}</td>
+              <td class="num">${taxPlan?Math.round(taxFact/taxPlan*100)+'%':'—'}</td></tr>
+            <tr class="total-row"><td>Итого</td><td class="num">${money(totalPlan+taxPlan)}</td><td class="num">${money(totalFact+taxFact)}</td>
+              <td class="num ${(totalFact+taxFact)>(totalPlan+taxPlan)?'neg':'pos'}">${(totalFact+taxFact)>=(totalPlan+taxPlan)?'+':'−'}${money(Math.abs((totalFact+taxFact)-(totalPlan+taxPlan)))}</td>
+              <td class="num">${(totalPlan+taxPlan)?Math.round((totalFact+taxFact)/(totalPlan+taxPlan)*100)+'%':'—'}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>`;
+}
+
 async function renderFinExpenses(body){
   const exp = await getExpenses();
   const positions = await getPositions();
@@ -5282,6 +5343,7 @@ async function renderFinExpenses(body){
   const tax = await getTaxCfg();
   const model = await finModel({economy:_economyMode});
   const modelFull = await finModel({economy:false});
+  const facts = await buildFactMonths();
   const insRate = tax.it ? 0.076 : 0.30;
 
   const payrollNow = model.fot[1], insuranceNow = model.insurance[1];
@@ -5307,7 +5369,7 @@ async function renderFinExpenses(body){
       <h2>Реестр расходов</h2>
       <p class="block-sub">Единственное место, где заводятся расходы. Отсюда они идут в модель Cash Flow, в P&amp;L, в фактические отчёты и в расчёт суммы на запуск — вносить одно и то же дважды не нужно.</p>
       <div class="runway-bar">
-        <div><strong class="runway-num">${runway?runway.toFixed(1)+' мес.':'—'}</strong> <span class="runway-desc">запас хода при текущем burn ${money(burnNow)}/мес и остатке ${money(exp.cash)}</span></div>
+        <div><strong class="runway-num">${runway?dec(runway)+' мес.':'—'}</strong> <span class="runway-desc">запас хода при текущем burn ${money(burnNow)}/мес и остатке ${money(exp.cash)}</span></div>
         <button class="btn ${_economyMode?'':'ghost'}" id="economyBtn">${_economyMode ? `✓ Режим экономии включён (−${money(potentialCut)}/мес)` : `Включить режим экономии (можно срезать ${money(potentialCut)}/мес)`}</button>
       </div>
       ${metricCards([
@@ -5336,6 +5398,8 @@ async function renderFinExpenses(body){
         <table class="calc-table"><thead><tr><th>Должность</th><th>Отдел</th><th>Статус</th><th>Оклад, ₽/мес</th><th>Взносы</th><th>Обяз.</th></tr></thead><tbody>${fotRows}</tbody></table>
       </div>
     </section>
+
+    ${planFactExpenseHtml(model, facts)}
 
     <section class="block">
       <h2>Расходы по месяцам — первый год</h2>
@@ -5552,7 +5616,7 @@ async function renderFinGoals(body){
     const pace = recentNew && d.newPerMonth ? d.newPerMonth/recentNew : null;
     const paceLabel = pace===null ? '' :
       (pace<=1 ? `Текущий темп уже перекрывает нужный — держим и не ломаем.`
-               : `Нужно ускориться в ${pace.toFixed(1)} раза: сейчас ${num(recentNew)} новых платящих в месяц, требуется ${num(d.newPerMonth)}.`);
+               : `Нужно ускориться в ${dec(pace)} раза: сейчас ${num(recentNew)} новых платящих в месяц, требуется ${num(d.newPerMonth)}.`);
     const paceCls = pace===null ? 'neutral' : (pace<=1 ? 'good' : (pace<=2 ? 'neutral' : 'warn'));
 
     if(g.kind==='content'){
@@ -5746,7 +5810,7 @@ async function renderFinRevenue(body){
         {l:'ARPU — всего с активного', v:money(ue.arpu)+'/мес'},
         {l:'из них подписка', v:money(ue.arpuSub)+'/мес', sub:cfPct(ue.arpuSub/Math.max(1,ue.arpu))+' выручки'},
         {l:'из них допродажи', v:money(ue.arpuAddon)+'/мес', sub:`оборот ${money(ue.gmvPerUser)} × средний take rate ${cfPct(ue.gmvPerUser?ue.arpuAddon/ue.gmvPerUser:0)}`},
-        {l:'Срок жизни платящей', v: isFinite(ue.lifetimeMonths)?ue.lifetimeMonths.toFixed(1)+' мес.':'—', sub:`смешанный отток ${cfPct(ue.churn)}`},
+        {l:'Срок жизни платящей', v: isFinite(ue.lifetimeMonths)?dec(ue.lifetimeMonths)+' мес.':'—', sub:`смешанный отток ${cfPct(ue.churn)}`},
       ])}
     </section>
 
@@ -5908,7 +5972,6 @@ async function renderFinLaunch(body){
     {key:'content',    label:'Мастер-классов отснято, накопительно'},
   ];
   planRows.forEach(r=>{ while(plan[r.key].length < planMonths.length) plan[r.key].push(plan[r.key][plan[r.key].length-1]||0); });
-  const rev = await getRevenueCfg();
   const ue = unitEconomics(cfgNoFin, 4);
   const planRevenue = planMonths.map((m,i)=> (i>0 ? plan.paying[i-1] : 0)*ue.arpu);
   const planExpense = planMonths.map(m=> bare.totalExpense[m]);
@@ -6302,10 +6365,10 @@ async function renderFinUnit(body){
 
   const verdictCls = ue.ltvCac>=3 ? 'good' : (ue.ltvCac>=1.5 ? 'neutral' : 'warn');
   const verdict = ue.ltvCac>=3
-    ? `LTV/CAC ${ue.ltvCac.toFixed(1)}× — экономика здоровая. Каждый рубль в привлечение возвращается ${ue.ltvCac.toFixed(1)} рублями валовой прибыли за срок жизни пользователя, и рост можно ускорять деньгами.`
+    ? `LTV/CAC ${dec(ue.ltvCac)}× — экономика здоровая. Каждый рубль в привлечение возвращается ${dec(ue.ltvCac)} рублями валовой прибыли за срок жизни пользователя, и рост можно ускорять деньгами.`
     : ue.ltvCac>=1.5
-      ? `LTV/CAC ${ue.ltvCac.toFixed(1)}× — экономика сходится, но запас тонкий. Инвестор ждёт 3× и выше: до этого масштабировать платное привлечение рискованно.`
-      : `LTV/CAC ${ue.ltvCac.toFixed(1)}× — привлечение не окупается. Сначала отток и удержание, только потом бюджет на трафик: иначе каждый новый рубль в рекламу увеличивает убыток.`;
+      ? `LTV/CAC ${dec(ue.ltvCac)}× — экономика сходится, но запас тонкий. Инвестор ждёт 3× и выше: до этого масштабировать платное привлечение рискованно.`
+      : `LTV/CAC ${dec(ue.ltvCac)}× — привлечение не окупается. Сначала отток и удержание, только потом бюджет на трафик: иначе каждый новый рубль в рекламу увеличивает убыток.`;
 
   body.innerHTML = `
     <section class="block" style="margin-top:0;">
@@ -6316,9 +6379,9 @@ async function renderFinUnit(body){
       ${metricCards([
         {l:'ARPU', v:money(ue.arpu)+'/мес', sub: factArpu?`факт последнего месяца: ${money(factArpu)}`:'фактических данных пока нет'},
         {l:'CAC — смешанный', v:money(ue.cacBlended), sub: factCac?`факт за 3 мес.: ${money(factCac)} · предельный ${money(ue.cacRate)}`:`весь бюджет маркетинга на всех новых · предельный ${money(ue.cacRate)}`},
-        {l:'LTV за 24 мес.', v:money(ue.ltv), sub:`валовая прибыль когорты за 24 мес.; средний срок жизни ${isFinite(ue.lifetimeMonths)?ue.lifetimeMonths.toFixed(1):'∞'} мес.`},
-        {l:'LTV / CAC', v:ue.ltvCac?ue.ltvCac.toFixed(1)+'×':'—', cls: ue.ltvCac>=3?'pos':(ue.ltvCac>=1.5?'':'neg'), sub:'здоровый ориентир — от 3×'},
-        {l:'Окупаемость привлечения', v: isFinite(ue.paybackMonths)?ue.paybackMonths.toFixed(1)+' мес.':'—', cls: ue.paybackMonths<=6?'pos':'neg', sub:'ориентир — до 6 месяцев'},
+        {l:'LTV за 24 мес.', v:money(ue.ltv), sub:`валовая прибыль когорты за 24 мес.; средний срок жизни ${isFinite(ue.lifetimeMonths)?dec(ue.lifetimeMonths):'∞'} мес.`},
+        {l:'LTV / CAC', v:ue.ltvCac?dec(ue.ltvCac)+'×':'—', cls: ue.ltvCac>=3?'pos':(ue.ltvCac>=1.5?'':'neg'), sub:'здоровый ориентир — от 3×'},
+        {l:'Окупаемость привлечения', v: isFinite(ue.paybackMonths)?dec(ue.paybackMonths)+' мес.':'—', cls: ue.paybackMonths<=6?'pos':'neg', sub:'ориентир — до 6 месяцев'},
         {l:'Вклад в постоянные расходы', v:money(ue.contribution)+'/мес', cls: ue.contribution>0?'pos':'neg', sub:'с одного активного, после переменных и замены оттока'},
       ])}
     </section>
@@ -6353,7 +6416,7 @@ async function renderFinUnit(body){
               <td class="num">${baseRow.be>0?finMonthLabel(baseRow.be):'позже 36 мес.'}</td>
               <td class="num">${cfMoney(baseRow.y1)}</td>
               <td class="num">${cfMoney(baseRow.cash36)}</td>
-              <td class="num">${baseRow.ltvCac?baseRow.ltvCac.toFixed(1)+'×':'—'}</td></tr>
+              <td class="num">${baseRow.ltvCac?dec(baseRow.ltvCac)+'×':'—'}</td></tr>
             ${sens.map(s=>{
               const dBe = (s.be>0?s.be:99) - (baseRow.be>0?baseRow.be:99);
               const dCash = s.cash36-baseRow.cash36;
@@ -6362,7 +6425,7 @@ async function renderFinUnit(body){
                 <td class="num ${dBe<0?'pos':(dBe>0?'neg':'')}">${s.be>0?finMonthLabel(s.be):'позже 36 мес.'}${dBe?` <span class="delta">${dBe>0?'+':''}${dBe} мес.</span>`:''}</td>
                 <td class="num">${cfMoney(s.y1)}</td>
                 <td class="num ${dCash<0?'neg':'pos'}">${cfMoney(s.cash36)} <span class="delta">${dCash>=0?'+':'−'}${cfMoney(Math.abs(dCash))}</span></td>
-                <td class="num">${s.ltvCac?s.ltvCac.toFixed(1)+'×':'—'}</td>
+                <td class="num">${s.ltvCac?dec(s.ltvCac)+'×':'—'}</td>
               </tr>`;
             }).join('')}
           </tbody>
@@ -6453,20 +6516,33 @@ function pnlSum(list){
   return out;
 }
 
-function pnlRowsFor(p){
-  const {cogs, opex} = splitCats(p.byCat);
+/* Один и тот же набор строк для всех колонок отчёта: список категорий
+   собирается объединением по всем периодам, иначе у плана и факта
+   получились бы разные строки и колонки поехали бы друг относительно
+   друга. */
+function pnlCatSets(sources){
+  const totals = {};
+  sources.forEach(p=>{ if(p) Object.entries(p.byCat||{}).forEach(([c,v])=>{ totals[c]=(totals[c]||0)+Math.abs(v||0); }); });
+  const ids = Object.keys(totals).filter(c=>totals[c]>0).sort((a,b)=>totals[b]-totals[a]);
+  return {
+    cogs: ids.filter(c=>((EXP_CAT_MAP[c]||{}).pnl||'opex')==='cogs'),
+    opex: ids.filter(c=>((EXP_CAT_MAP[c]||{}).pnl||'opex')==='opex'),
+  };
+}
+function pnlRowsFor(p, sets){
+  const byCat = (p && p.byCat) || {};
   const rows = [];
   rows.push({label:'Выручка', head:true});
   rows.push({label:'Подписка', v:p.revSub, indent:true});
   rows.push({label:'Допродажи — наша доля', v:p.revAddon, indent:true});
   rows.push({label:'Итого выручка', v:p.revenue, sub:true});
   rows.push({label:'Себестоимость', head:true});
-  Object.entries(cogs).sort((a,b)=>b[1]-a[1]).forEach(([c,v])=>rows.push({label:expCatName(c), v:-v, indent:true}));
+  sets.cogs.forEach(c=>rows.push({label:expCatName(c), v:-(byCat[c]||0), indent:true}));
   rows.push({label:'Итого себестоимость', v:-p.cogs, sub:true});
   rows.push({label:'Валовая прибыль', v:p.grossProfit, total:true});
   rows.push({label:'Валовая маржа', pct: p.revenue?p.grossProfit/p.revenue:0, muted:true});
   rows.push({label:'Операционные расходы', head:true});
-  Object.entries(opex).sort((a,b)=>b[1]-a[1]).forEach(([c,v])=>rows.push({label:expCatName(c), v:-v, indent:true}));
+  sets.opex.forEach(c=>rows.push({label:expCatName(c), v:-(byCat[c]||0), indent:true}));
   rows.push({label:'Итого операционные', v:-p.opex, sub:true});
   rows.push({label:'EBITDA', v:p.ebitda, total:true});
   rows.push({label:'Рентабельность по EBITDA', pct: p.revenue?p.ebitda/p.revenue:0, muted:true});
@@ -6479,15 +6555,15 @@ function pnlRowsFor(p){
   rows.push({label:'Оборот площадки по допродажам', v:p.gmv, indent:true, memo:true});
   rows.push({label:'Активных платящих на конец периода', count:p.active, indent:true, memo:true});
   rows.push({label:'Выручка на активного (ARPU)', v: p.active ? p.revenue/p.active : 0, indent:true, memo:true});
+  rows.push({label:'Поступило деньгами', v:p.cashIn, indent:true, memo:true});
   return rows;
 }
-function pnlCell(r, p){
+function pnlCell(r){
   if(r.head) return '<td></td>';
   if(r.pct!==undefined) return `<td class="num muted">${cfPct(r.pct)}</td>`;
   if(r.count!==undefined) return `<td class="num">${num(r.count)}</td>`;
-  const v = r.v;
-  const cls = (r.total||r.grand||r.sub) ? (v<0?'num neg':'num') : (v<0?'num neg':'num');
-  return `<td class="${cls}">${v<0?'('+money(-v).replace(' ₽','')+') ₽':money(v)}</td>`;
+  const v = r.v || 0;
+  return `<td class="num${v<0?' neg':''}">${v<0?'('+money(-v).replace(' ₽','')+') ₽':money(v)}</td>`;
 }
 
 async function renderPnl(){
@@ -6527,7 +6603,7 @@ async function renderPnl(){
     }
   }
 
-  const showPlan = _pnlSource!=='fact';
+  const showPlan = _pnlSource!=='fact' || !facts.length;
   const showFact = _pnlSource!=='plan';
   const factPeriods = periods.filter(p=>p.fact);
   const cols = [];
@@ -6536,17 +6612,15 @@ async function renderPnl(){
     if(showPlan) cols.push({p, kind:'plan'});
   });
 
-  const template = pnlRowsFor(periods[0].plan);
+  const sets = pnlCatSets(cols.map(c=>c.kind==='fact'?c.p.fact:c.p.plan));
+  const colRows = cols.map(c=>pnlRowsFor(c.kind==='fact'?c.p.fact:c.p.plan, sets));
+  const template = colRows[0] || pnlRowsFor(periods[0].plan, sets);
   const headRow = `<tr><th class="sticky-col">Показатель</th>${cols.map(c=>`
     <th class="${c.kind}">${c.p.label}<span class="col-kind">${c.kind==='fact'?(c.p.partial?'факт, неполный':'факт'):'план'}</span></th>`).join('')}</tr>`;
   const bodyRows = template.map((r,i)=>{
     const cls = [r.head?'pnl-head':'', r.sub?'pnl-sub':'', r.total?'pnl-total':'', r.grand?'pnl-grand':'',
                  r.muted?'pnl-muted':'', r.memo?'pnl-memo':'', r.indent?'pnl-indent':''].filter(Boolean).join(' ');
-    const cells = cols.map(c=>{
-      const src = c.kind==='fact' ? c.p.fact : c.p.plan;
-      const rr = pnlRowsFor(src)[i];
-      return pnlCell(rr, src).replace('<td', `<td data-kind="${c.kind}"`);
-    }).join('');
+    const cells = cols.map((c,ci)=>pnlCell(colRows[ci][i]).replace('<td', `<td data-kind="${c.kind}"`)).join('');
     return `<tr class="${cls}"><td class="sticky-col">${r.label}</td>${r.head?cols.map(()=>'<td></td>').join(''):cells}</tr>`;
   }).join('');
 
@@ -6586,6 +6660,7 @@ async function renderPnl(){
             ['Валовая прибыль', closedFact.grossProfit, closedPlan.grossProfit, false],
             ['Операционные расходы', closedFact.opex, closedPlan.opex, true],
             ['EBITDA', closedFact.ebitda, closedPlan.ebitda, false],
+            ['Амортизация', closedFact.depreciation, closedPlan.depreciation, true],
             ['Налоги', closedFact.tax, closedPlan.tax, true],
             ['Чистая прибыль', closedFact.net, closedPlan.net, false],
           ].map(([label, f, pl, invert])=>{
@@ -6689,14 +6764,26 @@ async function renderReports(){
 function demoNoticeHtml(days){
   if(!days.some(d=>d.demo)) return '';
   return `<div class="demo-notice">
-    <div><strong>Это демонстрационные данные.</strong> Четыре отработанных месяца — сентябрь–декабрь 2026 — сгенерированы близко к плану запуска, чтобы было видно, как отчётность работает на живых цифрах. Все суммы вымышленные.</div>
-    <button class="btn ghost" id="clearDemoBtn">Очистить и начать с чистого листа</button>
+    <div><strong>Это демонстрационные данные.</strong> Четыре отработанных месяца — сентябрь–декабрь 2026 — сгенерированы близко к плану запуска, чтобы было видно, как отчётность работает на живых цифрах. Все суммы вымышленные. Любой день можно перезаписать своим — форма внизу страницы.</div>
+    <button class="btn ghost" id="clearDemoBtn" data-armed="0">Очистить и начать с чистого листа</button>
   </div>`;
 }
 function wireDemoNotice(){
   const b = document.getElementById('clearDemoBtn');
-  if(b) b.onclick = ()=>{
-    if(!confirm('Удалить все демонстрационные дни? Отчёты станут пустыми, и их можно будет заполнять своими данными.')) return;
+  if(!b) return;
+  b.onclick = ()=>{
+    if(b.dataset.armed !== '1'){
+      b.dataset.armed = '1';
+      b.textContent = 'Нажмите ещё раз — удалить все 122 дня';
+      b.classList.remove('ghost');
+      setTimeout(()=>{
+        if(!document.body.contains(b)) return;
+        b.dataset.armed = '0';
+        b.textContent = 'Очистить и начать с чистого листа';
+        b.classList.add('ghost');
+      }, 5000);
+      return;
+    }
     saveDaily([]);
     setCacheLocal('eva-club-daily', []);
     renderReports();
@@ -6784,13 +6871,18 @@ async function renderRepDay(body){
   const mKey = monthKeyOf(_repDate);
   const mDays = days.filter(d=>monthKeyOf(d.d)===mKey && d.d<=_repDate);
   const mAgg  = rollupDays(mDays, revCfg);
+  const mFact = mDays.length ? factMonth(mKey, mDays, {
+    items:(await getExpenses()).items, hires: cfg.hires, tax: cfg.tax, revCfg, allDays: days.filter(d=>d.d<=_repDate),
+  }) : null;
   const [my, mm] = mKey.split('-').map(Number);
   const modelMonth = my*12+(mm-1)-FIN_BASE_ABS+1;
   const dim = daysInMonth(my, mm-1);
   const elapsed = parseInt(_repDate.slice(8,10));
   const planMonthRevenue = model.revenue[modelMonth]||0;
+  const planMonthCash    = model.cashIn[modelMonth]||0;
   const planToDate = planMonthRevenue*elapsed/dim;
-  const pace = planToDate ? mAgg.revenue/planToDate : null;
+  const factRevenueMTD = mFact ? mFact.revenue : 0;
+  const pace = planToDate ? factRevenueMTD/planToDate : null;
   const planNewMonth = model.newPaying[modelMonth]||0;
   const pacePaying = planNewMonth ? mAgg.newPay/(planNewMonth*elapsed/dim) : null;
 
@@ -6815,7 +6907,7 @@ async function renderRepDay(body){
         </div>
       </div>
       <div class="stat-strip">
-        <div class="stat-box"><div class="sv">${money(dayAgg.revenue)}</div><div class="sl">выручка за день</div></div>
+        <div class="stat-box"><div class="sv">${money(dayAgg.revenue)}</div><div class="sl">поступлений за день</div></div>
         <div class="stat-box"><div class="sv">${num(dayAgg.newPay)}</div><div class="sl">новых платящих</div></div>
         <div class="stat-box"><div class="sv">${num(dayAgg.reg)}</div><div class="sl">регистраций</div></div>
         <div class="stat-box ${dayAgg.churn?'neg':''}"><div class="sv">${num(dayAgg.churn)}</div><div class="sl">отписалось</div></div>
@@ -6826,12 +6918,12 @@ async function renderRepDay(body){
 
     <section class="block">
       <h2>Неделя и месяц</h2>
-      <p class="block-sub">Последние 7 дней против предыдущих семи, и месяц нарастающим итогом против плана модели, разложенного по дням.</p>
+      <p class="block-sub">Последние 7 дней против предыдущих семи, и месяц нарастающим итогом против плана модели, разложенного по дням. Темп считается по выручке начислением — так же, как её видит P&amp;L.</p>
       <div class="grid-2">
         <div class="card">
           <p class="k-label">7 дней по ${ruDate(_repDate)}</p>
           <div class="kv-list">
-            <div class="kv-row"><span>Выручка</span><span class="kv-v">${money(w.revenue)} ${dBadge(delta(w.revenue, wPrev.revenue))}</span></div>
+            <div class="kv-row"><span>Поступления</span><span class="kv-v">${money(w.revenue)} ${dBadge(delta(w.revenue, wPrev.revenue))}</span></div>
             <div class="kv-row"><span>Новых платящих</span><span class="kv-v">${num(w.newPay)} ${dBadge(delta(w.newPay, wPrev.newPay))}</span></div>
             <div class="kv-row"><span>Регистраций</span><span class="kv-v">${num(w.reg)} ${dBadge(delta(w.reg, wPrev.reg))}</span></div>
             <div class="kv-row"><span>Конверсия регистрация → оплата</span><span class="kv-v">${cfPct(w.crRegPay)}</span></div>
@@ -6846,19 +6938,21 @@ async function renderRepDay(body){
             <span class="pace-label">темп к плану месяца по выручке</span>
           </div>
           <div class="kv-list">
-            <div class="kv-row"><span>Выручка за месяц</span><span class="kv-v">${money(mAgg.revenue)}</span></div>
+            <div class="kv-row"><span>Выручка начислением</span><span class="kv-v">${money(factRevenueMTD)}</span></div>
             <div class="kv-row"><span>План к этому дню</span><span class="kv-v">${money(planToDate)}</span></div>
             <div class="kv-row"><span>План на весь месяц</span><span class="kv-v">${money(planMonthRevenue)}</span></div>
+            <div class="kv-row"><span>Поступило деньгами</span><span class="kv-v">${money(mAgg.revenue)} <span class="soft">из плана ${money(planMonthCash)}</span></span></div>
             <div class="kv-row"><span>Новых платящих</span><span class="kv-v">${num(mAgg.newPay)} из ${num(planNewMonth)} по плану ${pacePaying!==null?`<span class="soft">(темп ${(pacePaying*100).toFixed(0)}%)</span>`:''}</span></div>
             <div class="kv-row"><span>Разовых платежей</span><span class="kv-v">${money(mAgg.spendTotal)}</span></div>
             <div class="kv-row"><span>Контента снято</span><span class="kv-v">${num(mAgg.content)} шт.</span></div>
           </div>
+          <p class="note-sm">Деньги и выручка расходятся на годовых подписках: годовая приносит все ${money(revCfg.priceAnnual)} сразу, а в выручку месяца попадает только ${money(revCfg.priceAnnual/12)}. Разница — аванс, который отработается за год.</p>
         </div>
       </div>
     </section>
 
     <section class="block">
-      <h2>Выручка дня по потокам</h2>
+      <h2>Поступления дня по потокам</h2>
       <div class="card table-card">
         <table class="calc-table">
           <thead><tr><th>Поток</th><th>Оборот</th><th>Take rate</th><th>Наша выручка</th></tr></thead>
@@ -6922,7 +7016,7 @@ async function renderRepDay(body){
     _finCharts.day = new Chart(cv, {
       type:'bar',
       data:{labels:window60.map(r=>ruDate(r.d)), datasets:[
-        {type:'bar', label:'Выручка дня', data:rev, backgroundColor:'#E0D9C4', yAxisID:'money', borderWidth:0},
+        {type:'bar', label:'Поступления за день', data:rev, backgroundColor:'#E0D9C4', yAxisID:'money', borderWidth:0},
         {type:'line', label:'Среднее за 7 дней', data:ma, borderColor:SERIES.revenue, yAxisID:'money', tension:0.3, pointRadius:0, borderWidth:2.5},
         {type:'line', label:'Активные платящие', data:act, borderColor:SERIES.users, yAxisID:'count', tension:0.3, pointRadius:0, borderWidth:1.5, borderDash:[3,3]},
       ]},
@@ -6949,10 +7043,10 @@ async function renderRepWeek(body){
     ${demoNoticeHtml(days)}
     <section class="block" style="margin-top:0;">
       <h2>Недели</h2>
-      <p class="block-sub">Неделя — рабочий горизонт: достаточно длинная, чтобы сгладить выходные, и достаточно короткая, чтобы успеть среагировать. Стрелка — к предыдущей неделе.</p>
+      <p class="block-sub">Неделя — рабочий горизонт: достаточно длинная, чтобы сгладить выходные, и достаточно короткая, чтобы успеть среагировать. Поступления — это деньги на счёт; признанная выручка считается по месяцам, она на соседней вкладке. Стрелка — к предыдущей неделе.</p>
       <div class="card table-card">
         <table class="calc-table">
-          <thead><tr><th>Неделя</th><th>Визиты</th><th>Регистрации</th><th>Новых платящих</th><th>Отток</th><th>Платящих на конец</th><th>Выручка</th><th>Платежи</th><th>CAC</th></tr></thead>
+          <thead><tr><th>Неделя</th><th>Визиты</th><th>Регистрации</th><th>Новых платящих</th><th>Отток</th><th>Платящих на конец</th><th>Поступления</th><th>Платежи</th><th>CAC</th></tr></thead>
           <tbody>${rows.map(r=>{
             const p = prevMap[r.k];
             const arrow = (cur, prev)=>{ if(!p||!prev) return ''; const d=(cur-prev)/prev; return `<span class="trend-mini ${d>=0?'up':'down'}">${d>=0?'↑':'↓'}${Math.abs(d*100).toFixed(0)}%</span>`; };
@@ -7116,7 +7210,7 @@ async function renderRepJournal(body){
       <p class="block-sub">Полная лента отчётности от свежего к старому. Нажмите на строку, чтобы открыть день на редактирование.</p>
       <div class="card table-card">
         <table class="calc-table journal-table">
-          <thead><tr><th>Дата</th><th>Визиты</th><th>Рег.</th><th>Новых</th><th>Отток</th><th>Платящих</th><th>Подписка</th><th>Допродажи</th><th>Выручка</th><th>Платежи</th></tr></thead>
+          <thead><tr><th>Дата</th><th>Визиты</th><th>Рег.</th><th>Новых</th><th>Отток</th><th>Платящих</th><th>Подписка</th><th>Допродажи</th><th>Поступило</th><th>Платежи</th></tr></thead>
           <tbody>${recent.map(r=>{
             const a = rollupDays([r], revCfg);
             return `<tr class="journal-row" data-open-day="${r.d}">
