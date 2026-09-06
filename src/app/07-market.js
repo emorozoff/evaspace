@@ -156,7 +156,7 @@ function pgCalendar(){
           <div class="small muted">${m.s}</div>
           <div class="small muted" style="margin-top:3px">Освещённость ${m.pct}% · ${plural(m.age,'день','дня','дней')} лунного цикла</div></div></div>
       ${z ? `<div class="card" style="background:var(--surface-2);border:none;padding:12px;margin:0 0 10px">
-        <div class="eyebrow" style="margin-bottom:5px">Твой день</div>
+        <div class="eyebrow" style="margin-bottom:5px">Подсказка дня</div>
         <div class="small">${personalDay(m,z)}</div></div>` : ''}
       ${z ? `<div class="arow"><span class="ae">${esc(z.e)}</span><div><b>${esc(z.n)}</b><div class="small muted">${tip}</div></div></div>`
           : `<div class="arow"><span class="ae">✦</span><div><b>Знак не задан</b>
@@ -953,12 +953,12 @@ function pgGood(){
     <button class="backbtn" onclick="closeGood()">‹ Маркет</button>
 
     <div class="gslider">
-      <div class="gslide">${MEDIA[slides[i]] ? `<img src="${safeUrl(MEDIA[slides[i]])}" alt="" style="object-position:${esc(info.pos||'50% 50%')}">` : prodArt(g.id, g.sh)}
+      <div class="gslide" id="gdshot">${MEDIA[slides[i]] ? `<img src="${safeUrl(MEDIA[slides[i]])}" alt="" style="object-position:${esc(info.pos||'50% 50%')}">` : prodArt(g.id, g.sh)}
         ${g.f ? `<div class="flag">${g.f}</div>` : ''}</div>
       ${slides.length > 1 ? `
-        <button class="gnav left" onclick="slideGood(-1,${slides.length})">‹</button>
-        <button class="gnav right" onclick="slideGood(1,${slides.length})">›</button>
-        <div class="gdots">${slides.map((_,k) => `<i class="${k===i?'on':''}"></i>`).join('')}</div>` : ''}
+        <button class="gnav left" onclick="slideGood(-1)">‹</button>
+        <button class="gnav right" onclick="slideGood(1)">›</button>
+        <div class="gdots" id="gddots">${slides.map((_,k) => `<i class="${k===i?'on':''}"></i>`).join('')}</div>` : ''}
     </div>
 
     <div class="eyebrow">${esc(g.c)}</div>
@@ -1002,8 +1002,19 @@ function pgGood(){
     </div>
   </div>`;
 }
-function slideGood(d, n){
+/* как и у мероприятий: меняем картинку, а не собираем страницу заново */
+function slideGood(d){
+  const g = GOODS.find(x => x.id === S.viewGood);
+  if(!g) return;
+  const slides = [g.id, ...((GOOD_INFO[g.id] || {}).gallery || [])].filter(k => MEDIA[k]);
+  const n = slides.length;
+  if(n < 2) return;
   S.gSlide = ((S.gSlide || 0) + d + n) % n;
-  render();
+  const box = document.getElementById('gdshot');
+  const img = box && box.querySelector('img');
+  if(!img) return render();
+  img.src = safeUrl(MEDIA[slides[S.gSlide]]);
+  const dots = document.getElementById('gddots');
+  if(dots) [...dots.children].forEach((el, k) => el.className = k === S.gSlide ? 'on' : '');
 }
 

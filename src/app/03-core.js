@@ -293,6 +293,16 @@ function render(){
   }
 }
 
+/* Перерисовка по чужому изменению: страница остаётся на месте.
+   Обычный render() пересобирает разметку, и браузер прокручивает наверх —
+   женщина читала послание, а её выбросило в начало ленты. Со стороны это
+   и выглядело как самопроизвольная перезагрузка. */
+function softRender(){
+  const y = window.scrollY;
+  render();
+  if(Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y);
+}
+
 function crashScreen(e){
   const pro = S.role === 'admin' || S.role === 'expert';
   return `<div class="view pad" style="padding-top:calc(40px + env(safe-area-inset-top))">

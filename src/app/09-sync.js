@@ -18,6 +18,7 @@ const SYNC = {
   base: 'api.php',
   alive: null,          // null — ещё не проверяли
   rev: 0,
+  lastCode: 0,          // код последнего ответа сервера
   lastError: '',
   lastSaved: 0,
   queue: {},            // ветки, ждущие отправки
@@ -75,14 +76,17 @@ async function apiCall(action, body, opts){
     catch(e){ throw new Error('сервер ответил не в формате JSON (код ' + res.status + ')'); }
     if(!j.ok){
       SYNC.lastError = j.error || ('ошибка ' + res.status);
+      SYNC.lastCode = res.status;              // 403 — запрещено навсегда, повтор не поможет
       if(res.status === 401 && tok) dropSession();
       if(!opts.silent) toast('Не сохранилось: ' + SYNC.lastError);
       return null;
     }
+    SYNC.lastCode = 200;
     SYNC.lastError = '';
     return j;
   } catch(e){
     SYNC.lastError = e.message || 'нет связи с сервером';
+    SYNC.lastCode = 0;                         // связи нет — повторить стоит
     if(!opts.silent) toast('Нет связи с сервером');
     return null;
   }
@@ -167,13 +171,27 @@ function mediaLinks(){
 /* ---------- сохранение ---------- */
 let syncTimer = null;
 
+/* Что кому разрешено писать. Раньше отправляли всё подряд, и сервер отвечал
+   «раздел lib меняют только эксперты и администраторы» — а падал при этом
+   весь пакет целиком, вместе с посланием или сообщением, ради которых его
+   и отправляли. Ветка, которую эта роль всё равно не запишет, теперь просто
+   не уезжает. */
+const OPEN_PUSH = ['wall','chats','groups','events','orders','questions',
+                   'support','ideas','media','reviews','avatars'];
+function mayPush(b){
+  if(S.role === 'admin')  return true;
+  if(S.role === 'expert') return b !== 'adminInfo';
+  return OPEN_PUSH.indexOf(b) >= 0;
+}
+
 /* поставить ветки в очередь; без аргументов — все, что относится к контенту */
 function syncPush(branches, immediate){
   if(SYNC.alive === false) return;
   const list = branches || ['lib','courses','lessons','modules','courseInfo','courseTags','courseKind',
     'goods','goodInfo','events','experts','pending','media','videos','covPos','adminInfo','avatars',
     'groups','chats'];
-  list.forEach(b => { if(BRANCHES[b]) SYNC.queue[b] = true; });
+  list.forEach(b => { if(BRANCHES[b] && mayPush(b)) SYNC.queue[b] = true; });
+  if(!Object.keys(SYNC.queue).length) return;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(flushSync, immediate ? 0 : 800);
 }
@@ -205,11 +223,13 @@ async function flushSync(){
     SYNC.lastSaved = Date.now();
     updateSyncBadge('saved');
     if(S.role !== 'user' && !S.sheet) render();
-  } else {
-    names.forEach(b => SYNC.queue[b] = true);
-    updateSyncBadge('error');
-    if(!S.sheet) render();
+    return;
   }
+  /* Запрет не лечится повтором: раньше такая ветка возвращалась в очередь,
+     уходила снова каждые пятнадцать секунд и каждый раз перерисовывала
+     страницу — со стороны это выглядело как самопроизвольная перезагрузка. */
+  if(SYNC.lastCode !== 403) names.forEach(b => SYNC.queue[b] = true);
+  updateSyncBadge('error');
 }
 
 /* совместимость со старыми вызовами */
@@ -600,11 +620,11 @@ async function initSync(){
   /* пока вкладка не на виду, сервер не тревожим совсем */
   setInterval(() => {
     if(document.hidden || SYNC.sending || S.sheet) return;
-    syncPull(true).then(ch => { if(ch) render(); });
-    pullDm().then(ch => { if(ch) render(); });
+    syncPull(true).then(ch => { if(ch) softRender(); });
+    pullDm().then(ch => { if(ch) softRender(); });
   }, 30000);
   document.addEventListener('visibilitychange', () => {
-    if(!document.hidden && !SYNC.sending) syncPull(true).then(ch => { if(ch) render(); });
+    if(!document.hidden && !SYNC.sending) syncPull(true).then(ch => { if(ch) softRender(); });
   });
   // если что-то не отправилось — пробуем ещё раз
   setInterval(() => { if(Object.keys(SYNC.queue).length) flushSync(); }, 15000);
@@ -623,6 +643,20 @@ const isStandalone = () =>
   window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
 const isMobile = () => /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+
+function showUpdateBar(){
+  if(document.getElementById('updbar')) return;
+  const el = document.createElement('div');
+  el.className = 'installbar pop'; el.id = 'updbar';
+  el.innerHTML = '<div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 12a8 8 0 0 1 13.7-5.7M20 12a8 8 0 0 1-13.7 5.7"/>' +
+    '<path d="M18 3v4h-4M6 21v-4h4"/></svg></div>' +
+    '<div style="flex:1;min-width:0"><b>Есть новая версия</b>' +
+    '<div class="small">Обновится за секунду, данные на месте</div></div>' +
+    '<button class="go" onclick="location.reload()">Обновить</button>' +
+    '<button class="cl" onclick="this.parentElement.remove()">✕</button>';
+  document.body.appendChild(el);
+}
 
 function showInstallBar(){
   if(isStandalone() || document.getElementById('installbar')) return;
@@ -675,6 +709,14 @@ function initPWA(){
     navigator.serviceWorker.register('sw.js')
       .then(() => { if(typeof pushSync === 'function') pushSync(); })
       .catch(() => {});
+    /* приложение отдаётся из памяти телефона, а свежая версия догружается
+       следом: когда она пришла — предлагаем обновиться, а не подменяем
+       страницу под руками */
+    navigator.serviceWorker.addEventListener('message', e => {
+      if(!e.data || e.data.eva !== 'update' || S.newVersion) return;
+      S.newVersion = true;
+      if(!S.sheet) showUpdateBar();
+    });
   }
   if(isMobile() && !isStandalone() && !Store.get('eva_install_hidden')){
     setTimeout(() => { if(!deferredPrompt) showInstallBar(); }, 4000);

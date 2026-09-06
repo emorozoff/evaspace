@@ -113,13 +113,13 @@ h2.serif{font-size:19px;margin:0}
 .wd b{display:block;font-size:17px;font-weight:600;line-height:1.2}
 .wd .pips{display:flex;gap:3px;justify-content:center;margin-top:4px}
 .pip{width:4px;height:4px;border-radius:50%;background:var(--line-2)}
-.pip.on{background:var(--ok)}
+.pip.on{background:#E7A339}
 /* выбранный день был почти чёрным, и точки дел на нём пропадали:
-   тёмно-фиолетовый плюс светлые точки — видно, что сделано */
-.wd.sel{background:linear-gradient(155deg,#4A3563,#2F2242);color:#fff;border-color:transparent}
+   глубокий фиолетовый плюс золотые точки — тот же цвет отметок, что и везде */
+.wd.sel{background:linear-gradient(155deg,#3B2851,#221733);color:#fff;border-color:transparent}
 .wd.sel span{color:rgba(255,255,255,.62)}
-.wd.sel .pip{background:rgba(255,255,255,.32)}
-.wd.sel .pip.on{background:#8AD8B0}
+.wd.sel .pip{background:rgba(255,255,255,.28)}
+.wd.sel .pip.on{background:#E7A339;box-shadow:0 0 0 1px rgba(231,163,57,.3)}
 .wd.today{border-color:var(--accent)}
 .wd.locked{opacity:.45}
 .wstar{position:absolute;top:-4px;right:-2px;font-size:10px;color:var(--gold)}
@@ -341,7 +341,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 /* дни недели */
 .wd{cursor:pointer}
 .wd:hover{border-color:var(--accent);background:var(--accent-soft)}
-.wd.sel:hover{background:linear-gradient(155deg,#553C71,#372850)}
+.wd.sel:hover{background:linear-gradient(155deg,#48325F,#2A1D3E)}
 .pip{width:6px;height:6px}
 .pip.on{background:#E7A339;box-shadow:0 0 0 1px rgba(231,163,57,.25)}
 .wstar{font-size:12px;color:#E7A339;top:-5px}
@@ -647,10 +647,14 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   transition:.16s}
 .ttile .tlab{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   line-height:1.25}
-.ttile .tmark{display:none;flex:none;color:#241C14}
+.ttile .tmark{display:none;flex:none}
 .ttile:hover{background:rgba(255,255,255,.1)}
-.ttile.on{background:var(--gold-soft,#E8D2A8);border-color:transparent;color:#241C14}
-.ttile.on .tico{background:rgba(36,28,20,.12);color:#241C14;opacity:1}
+/* Выбранное направление подсвечивается так же, как всё выбранное в тесте:
+   светлая подложка и белая рамка. Золотая заливка выбивалась из ночного
+   экрана и читалась как предупреждение. */
+.ttile.on{background:rgba(255,255,255,.17);border-color:rgba(255,255,255,.55);color:#fff}
+.ttile.on .tico{background:rgba(255,255,255,.2);color:#fff;opacity:1}
+.ttile .tmark{color:#fff}
 .ttile.on .tmark{display:block}
 
 /* фишки направлений в ленте и в редакторе */
@@ -1000,8 +1004,10 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   display:grid;place-items:center;color:#fff;background:rgba(17,16,20,.34);
   border:1.5px solid rgba(255,255,255,.6);backdrop-filter:blur(5px);transition:.16s}
 .lesson .donemark svg{opacity:.75}
-.lesson .donemark.on{background:var(--ok);border-color:transparent}
-.lesson .donemark.on svg{opacity:1}
+/* Отмеченное видно по самой карточке, а не по яркому кружку: зелёная
+   заливка перетягивала внимание на уже пройденное. */
+.lesson .donemark.on{background:rgba(17,16,20,.2);border-color:rgba(255,255,255,.4)}
+.lesson .donemark.on svg{opacity:.55}
 .lesson.done .cov{filter:saturate(.82)}
 /* значок «видео» уезжает на середину обложки: рядом с отметкой два кружка
    в углу читались как пара кнопок, а это разные вещи */
@@ -1009,14 +1015,18 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   width:46px;height:46px;font-size:14px;background:rgba(17,16,20,.34);
   border:1.5px solid rgba(255,255,255,.45)}
 
-/* ---------- подсказка на день ---------- */
-.advice .advhead{display:flex;gap:13px;align-items:center;margin-bottom:12px}
-.advline{font-size:13.5px;line-height:1.62;color:var(--muted);margin:0;
-  padding:11px 0;border-top:1px solid var(--line)}
-.advline:first-of-type{border-top:none;padding-top:0}
-.advline:last-of-type{padding-bottom:0}
-.advmore{display:block;width:100%;text-align:left;margin-top:12px;padding-top:11px;
+/* ---------- подсказка дня ----------
+   Одно послание вместо трёх абзацев: заголовок, две-три строки и, если
+   есть что предложить, одна кнопка. Повод — из чего сложилась подсказка —
+   уходит мелкой строкой вниз: кому интересно, тот прочитает. */
+.advice .advhead{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.advline{font-size:14px;line-height:1.6;color:var(--ink);margin:0}
+.advwhy{margin-top:9px;font-size:11px;color:var(--muted);letter-spacing:.02em}
+.advgo{display:block;width:100%;text-align:left;margin-top:11px;padding-top:10px;
   border-top:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--accent)}
+.advmore{display:block;width:100%;text-align:left;margin-top:10px;padding-top:10px;
+  border-top:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--accent)}
+.advgo + .advmore{margin-top:8px;padding-top:8px}
 
 /* ---------- управление сообществом ---------- */
 .gcolors{display:flex;gap:8px;flex-wrap:wrap}

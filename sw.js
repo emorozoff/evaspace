@@ -28,16 +28,27 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== self.location.origin) return;   // шрифты и прочее с других доменов — мимо
   if (url.pathname.endsWith('.php')) return;         // обращения к серверу синхронизации не кэшируем
 
-  // Открытие приложения: сначала сеть — чтобы сразу приходила новая версия
+  // Открытие приложения: сначала кэш, обновление — фоном.
+  // Раньше здесь была сеть: приложение при каждом запуске ждало восемьсот
+  // килобайт, даже когда они уже лежали в кэше, и на мобильном интернете
+  // это были секунды белого экрана. Теперь оно открывается сразу, а свежая
+  // версия скачивается следом и применяется при следующем запуске —
+  // если изменилась, приложение об этом скажет.
   if (req.mode === 'navigate') {
     e.respondWith(
-      fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(VERSION).then((c) => c.put(BASE + 'index.html', copy));
-          return res;
-        })
-        .catch(() => caches.match(BASE + 'index.html').then((r) => r || caches.match(BASE)))
+      caches.match(BASE + 'index.html').then((cached) => {
+        const fresh = fetch(req)
+          .then((res) => {
+            if (res && res.status === 200) {
+              const copy = res.clone();
+              caches.open(VERSION).then((c) => c.put(BASE + 'index.html', copy));
+              if (cached) tellIfNew(cached.clone(), res.clone());
+            }
+            return res;
+          })
+          .catch(() => cached);
+        return cached || fresh;
+      })
     );
     return;
   }
@@ -64,6 +75,19 @@ self.addEventListener('fetch', (e) => {
    Приходят даже когда приложение закрыто. Всего два в неделю: итоги
    в понедельник и напоминание в субботу — так обещано при подписке.
    ===================================================================== */
+/* Сравниваем размер: если с сервера пришло другое приложение, говорим
+   об этом открытым вкладкам — они предложат обновиться, а не подменят
+   страницу под руками. */
+function tellIfNew(oldRes, newRes) {
+  Promise.all([oldRes.text(), newRes.text()])
+    .then(([a, b]) => {
+      if (a.length === b.length) return;
+      return self.clients.matchAll({ type: 'window' })
+        .then((list) => list.forEach((c) => c.postMessage({ eva: 'update' })));
+    })
+    .catch(() => {});
+}
+
 self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) { d = { b: e.data ? e.data.text() : '' }; }

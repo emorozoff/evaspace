@@ -15,14 +15,27 @@ const STAR = `<svg class="splash-star" viewBox="0 0 100 100" aria-hidden="true">
 const starMark = (size, fill) => `<svg width="${size||13}" height="${size||13}" viewBox="0 0 100 100" style="vertical-align:-1px">
   <path d="${STAR_PATH}" fill="${fill||'#E7A339'}"/></svg>`;
 
+/* Заставка держалась ровно 2,45 секунды при каждом открытии, и только
+   потом начинался вход — то есть приложение сначала ждало, а потом
+   работало. Теперь вход начинается сразу, а заставка живёт ровно столько,
+   сколько он идёт, но не меньше короткой паузы: иначе она мелькает. */
+const SPLASH_MIN = 900;
+let splashRun = false;
 function scrSplash(){
-  setTimeout(async () => {
-    if(!S.user){
-      try { await tryAutoLoginAsync(); } catch(e){ tryAutoLogin(); }
-    }
-    if(!S.user) S.screen = 'auth';
-    render(); stars();
-  }, 2450);
+  if(!splashRun){
+    splashRun = true;
+    const started = Date.now();
+    (async () => {
+      if(!S.user){
+        try { await tryAutoLoginAsync(); } catch(e){ try { tryAutoLogin(); } catch(e2){} }
+      }
+      const left = Math.max(0, SPLASH_MIN - (Date.now() - started));
+      setTimeout(() => {
+        if(!S.user) S.screen = 'auth';
+        render(); stars();
+      }, left);
+    })();
+  }
   return `<div class="splash">
     <div class="splash-glow"></div>
     ${STAR}

@@ -132,13 +132,13 @@ h2.serif{font-size:19px;margin:0}
 .wd b{display:block;font-size:17px;font-weight:600;line-height:1.2}
 .wd .pips{display:flex;gap:3px;justify-content:center;margin-top:4px}
 .pip{width:4px;height:4px;border-radius:50%;background:var(--line-2)}
-.pip.on{background:var(--ok)}
+.pip.on{background:#E7A339}
 /* выбранный день был почти чёрным, и точки дел на нём пропадали:
-   тёмно-фиолетовый плюс светлые точки — видно, что сделано */
-.wd.sel{background:linear-gradient(155deg,#4A3563,#2F2242);color:#fff;border-color:transparent}
+   глубокий фиолетовый плюс золотые точки — тот же цвет отметок, что и везде */
+.wd.sel{background:linear-gradient(155deg,#3B2851,#221733);color:#fff;border-color:transparent}
 .wd.sel span{color:rgba(255,255,255,.62)}
-.wd.sel .pip{background:rgba(255,255,255,.32)}
-.wd.sel .pip.on{background:#8AD8B0}
+.wd.sel .pip{background:rgba(255,255,255,.28)}
+.wd.sel .pip.on{background:#E7A339;box-shadow:0 0 0 1px rgba(231,163,57,.3)}
 .wd.today{border-color:var(--accent)}
 .wd.locked{opacity:.45}
 .wstar{position:absolute;top:-4px;right:-2px;font-size:10px;color:var(--gold)}
@@ -360,7 +360,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 /* дни недели */
 .wd{cursor:pointer}
 .wd:hover{border-color:var(--accent);background:var(--accent-soft)}
-.wd.sel:hover{background:linear-gradient(155deg,#553C71,#372850)}
+.wd.sel:hover{background:linear-gradient(155deg,#48325F,#2A1D3E)}
 .pip{width:6px;height:6px}
 .pip.on{background:#E7A339;box-shadow:0 0 0 1px rgba(231,163,57,.25)}
 .wstar{font-size:12px;color:#E7A339;top:-5px}
@@ -666,10 +666,14 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   transition:.16s}
 .ttile .tlab{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   line-height:1.25}
-.ttile .tmark{display:none;flex:none;color:#241C14}
+.ttile .tmark{display:none;flex:none}
 .ttile:hover{background:rgba(255,255,255,.1)}
-.ttile.on{background:var(--gold-soft,#E8D2A8);border-color:transparent;color:#241C14}
-.ttile.on .tico{background:rgba(36,28,20,.12);color:#241C14;opacity:1}
+/* Выбранное направление подсвечивается так же, как всё выбранное в тесте:
+   светлая подложка и белая рамка. Золотая заливка выбивалась из ночного
+   экрана и читалась как предупреждение. */
+.ttile.on{background:rgba(255,255,255,.17);border-color:rgba(255,255,255,.55);color:#fff}
+.ttile.on .tico{background:rgba(255,255,255,.2);color:#fff;opacity:1}
+.ttile .tmark{color:#fff}
 .ttile.on .tmark{display:block}
 
 /* фишки направлений в ленте и в редакторе */
@@ -1019,8 +1023,10 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   display:grid;place-items:center;color:#fff;background:rgba(17,16,20,.34);
   border:1.5px solid rgba(255,255,255,.6);backdrop-filter:blur(5px);transition:.16s}
 .lesson .donemark svg{opacity:.75}
-.lesson .donemark.on{background:var(--ok);border-color:transparent}
-.lesson .donemark.on svg{opacity:1}
+/* Отмеченное видно по самой карточке, а не по яркому кружку: зелёная
+   заливка перетягивала внимание на уже пройденное. */
+.lesson .donemark.on{background:rgba(17,16,20,.2);border-color:rgba(255,255,255,.4)}
+.lesson .donemark.on svg{opacity:.55}
 .lesson.done .cov{filter:saturate(.82)}
 /* значок «видео» уезжает на середину обложки: рядом с отметкой два кружка
    в углу читались как пара кнопок, а это разные вещи */
@@ -1028,14 +1034,18 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   width:46px;height:46px;font-size:14px;background:rgba(17,16,20,.34);
   border:1.5px solid rgba(255,255,255,.45)}
 
-/* ---------- подсказка на день ---------- */
-.advice .advhead{display:flex;gap:13px;align-items:center;margin-bottom:12px}
-.advline{font-size:13.5px;line-height:1.62;color:var(--muted);margin:0;
-  padding:11px 0;border-top:1px solid var(--line)}
-.advline:first-of-type{border-top:none;padding-top:0}
-.advline:last-of-type{padding-bottom:0}
-.advmore{display:block;width:100%;text-align:left;margin-top:12px;padding-top:11px;
+/* ---------- подсказка дня ----------
+   Одно послание вместо трёх абзацев: заголовок, две-три строки и, если
+   есть что предложить, одна кнопка. Повод — из чего сложилась подсказка —
+   уходит мелкой строкой вниз: кому интересно, тот прочитает. */
+.advice .advhead{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.advline{font-size:14px;line-height:1.6;color:var(--ink);margin:0}
+.advwhy{margin-top:9px;font-size:11px;color:var(--muted);letter-spacing:.02em}
+.advgo{display:block;width:100%;text-align:left;margin-top:11px;padding-top:10px;
   border-top:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--accent)}
+.advmore{display:block;width:100%;text-align:left;margin-top:10px;padding-top:10px;
+  border-top:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--accent)}
+.advgo + .advmore{margin-top:8px;padding-top:8px}
 
 /* ---------- управление сообществом ---------- */
 .gcolors{display:flex;gap:8px;flex-wrap:wrap}
@@ -2324,41 +2334,170 @@ function moonDisc(m, size){
 }
 
 /* ---------- короткий персональный текст дня ---------- */
-const EL_MOON = {
-  'Новолуние':{огонь:'начни одно дело, не десять',земля:'запиши намерение и не проверяй его каждый час',
-    воздух:'меньше разговоров о планах, больше первого шага',вода:'дай себе тишину, идея придёт сама'},
-  'Полнолуние':{огонь:'высокий риск вспыхнуть на пустом месте',земля:'тело просит нагрузки, но лёгкой',
-    воздух:'мысли будут скакать - записывай, не решай',вода:'чувства на максимуме, это пройдёт к утру'},
-  'Растущая луна':{огонь:'хороший день для смелого разговора',земля:'делай понемногу, но каждый день',
-    воздух:'учись, читай, задавай вопросы',вода:'позволь себе хотеть большего'},
-  'Убывающая луна':{огонь:'заверши то, что тянешь',земля:'разбери одну зону: стол, шкаф, задачи',
-    воздух:'отпиши тем, кому давно не отвечала',вода:'отпусти обиду, она уже не про сегодня'}
-};
 /* Раньше день был разложен по трём плашкам — фаза луны, знак, цикл — и
    ни одна ничего толком не объясняла. Теперь это несколько связных фраз:
    что за фаза, что она значит для её стихии и на каком дне цикла она
    сейчас. Читается сверху вниз как короткая записка. */
-function dayStory(){
-  const m = moon(), z = zodiac(S.birth.date), cy = cycleNow();
-  const out = [];
-  out.push(`${m.n}, освещённость ${m.pct}% — ${m.age} день лунного цикла. ${m.s}`);
-  if(z){
-    const key = EL_MOON[m.n] ? m.n : m.age < 14 ? 'Растущая луна' : 'Убывающая луна';
-    const el = (EL_MOON[key] || {})[z.el];
-    out.push(`Ты ${z.n}, стихия ${z.el}.` + (el ? ` В такую луну тебе ${el}.` : '') +
-             ` ${zodTip(z)}`);
-  }
-  if(cy) out.push(`Цикл: ${cy.phase.n.toLowerCase()} фаза, день ${cy.day} из ${cy.len}. ` +
-                  `${cy.phase.s} До следующего — ${plural(cy.next, 'день', 'дня', 'дней')}.`);
-  return out;
+/* =====================================================================
+   ПОСЛАНИЯ ДНЯ
+   Раньше здесь лежал разбор: фаза луны, стихия знака, фаза цикла — три
+   абзаца справочника. Читалось как гороскоп из газеты и ничего не меняло
+   в дне. Теперь это одно короткое послание с делом внутри.
+
+   Правила, по которым они написаны:
+   · одна мысль и одно действие, две-три строки — не лекция;
+   · говорим, что делать, а не кто она: «сегодня хорошо записать цели»,
+     а не «ты Овен, поэтому тебе свойственно»;
+   · никаких предсказаний и обещаний — только то, что она может проверить
+     на себе за пять минут;
+   · совпадения ценнее одиночных поводов: новолуние в первые дни цикла —
+     это другой день, чем просто новолуние, и послание тоже другое.
+
+   Как выбирается. У каждого послания свой вес: чем точнее совпадение,
+   тем выше. Берём самые точные из подходящих, а внутри равных чередуем
+   по числу месяца — чтобы одно и то же не приходило две недели подряд.
+   ===================================================================== */
+const DAY_TIPS = [
+  /* ---------- совпадения: луна и цикл вместе (вес 3) ---------- */
+  {w:3, m:['Новолуние'], c:['follicular'],
+   h:'Новолуние и силы на подъёме',
+   t:'Редкий день: и луна в начале, и цикл. Запиши три цели на месяц — коротко, своими словами. Через месяц вернёшься и удивишься.'},
+  {w:3, m:['Новолуние'], c:['menstrual'],
+   h:'Тихое начало',
+   t:'Всё начинается заново — и луна, и цикл. Но начинать делами не обязательно: сегодня достаточно написать, чего хочется. Дела подождут до сил.'},
+  {w:3, m:['Полнолуние'], c:['luteal'],
+   h:'Всё громче обычного',
+   t:'Полнолуние и вторая половина цикла — чувства будут ярче, включая раздражение. Ничего не решай на эмоциях и ложись пораньше.',
+   a:'practice'},
+  {w:3, m:['Полнолуние'], c:['ovulation'],
+   h:'Пик на пике',
+   t:'Энергии сегодня столько, что хватит на лишнее. Потрать её на то, что давно откладывала, а не на чужие задачи.'},
+  {w:3, m:['Первая четверть'], c:['follicular'],
+   h:'День решений',
+   t:'И луна, и тело сейчас за движение. Если что-то висело неделями — решай сегодня, дальше будет только сложнее собраться.'},
+  {w:3, m:['Убывающая луна','Последняя четверть'], c:['luteal'],
+   h:'Время отпускать',
+   t:'Хорошая пара дней, чтобы убрать лишнее: из списка дел, из переписки, из головы. Не добавляй — вычитай.'},
+
+  /* ---------- цикл (вес 2) ---------- */
+  {w:2, c:['menstrual'], day:1,
+   h:'Первый день',
+   t:'Сегодня можно ничего не мочь. Вкусное, тёплое и кино — это не слабость, а нормальный план на вечер.'},
+  {w:2, c:['menstrual'],
+   h:'Мягкие дни',
+   t:'Энергии меньше — это физиология, а не лень. Тепло, вода, короткая практика лёжа. Спорт и большие решения подождут.',
+   a:'practice'},
+  {w:2, c:['follicular'],
+   h:'Силы возвращаются',
+   t:'Лучшие дни месяца, чтобы попробовать новое: практику, которую откладывала, разговор, идею. Сейчас начатое доводится до конца легче.',
+   a:'content'},
+  {w:2, c:['ovulation'],
+   h:'Тебя хорошо слышно',
+   t:'Сегодня проще говорить и проще договариваться. Если есть сложный разговор — сегодня он пройдёт лучше, чем через неделю.'},
+  {w:2, c:['luteal'],
+   h:'Заранее сбавь темп',
+   t:'Чувствительность растёт, силы убывают. Снизь планку сама, до того как начнёшь себя ругать: два дела вместо трёх — это план, а не провал.'},
+
+  /* ---------- луна (вес 1) ---------- */
+  {w:1, m:['Новолуние'],
+   h:'Чистый лист',
+   t:'Хороший день записать цели на месяц — до следующего новолуния. Три пункта, не больше: так их видно, а не перечитываешь список.'},
+  {w:1, m:['Растущий серп'],
+   h:'Первый шаг',
+   t:'Силы прибывают, но их ещё мало. Сделай самое маленькое действие из того, что задумала — оно потянет за собой остальное.'},
+  {w:1, m:['Первая четверть'],
+   h:'Сдвинуть с места',
+   t:'Если что-то откладывала — сегодня сдвинуть проще, чем обычно. Выбери одно дело и займись им первым, до всего остального.'},
+  {w:1, m:['Растущая луна'],
+   h:'Можно чуть больше',
+   t:'Энергии сейчас с запасом. Возьми чуть больше обычного — но одно, а не всё сразу.',
+   a:'home'},
+  {w:1, m:['Полнолуние'],
+   h:'Ярче обычного',
+   t:'Всё чувствуется сильнее, и хорошее, и раздражающее. Береги сон: сегодня он важнее продуктивности.',
+   a:'practice'},
+  {w:1, m:['Убывающая луна'],
+   h:'Хорошо завершать',
+   t:'Не лучший день начинать, отличный — доводить до точки. Закрой то, что висит незакрытым, хоть одно.'},
+  {w:1, m:['Последняя четверть'],
+   h:'Что можно перестать',
+   t:'Спроси себя: что я делаю по привычке и без радости? Одну такую вещь сегодня можно просто перестать делать.'},
+  {w:1, m:['Старая луна'],
+   h:'Низкая луна',
+   t:'Мало сил — это фаза, а не ты. Отдых сейчас работает лучше усилия. Одна аффирмация — и день засчитан.',
+   a:'home'},
+
+  /* ---------- оттенок по стихии знака (вес 1) ---------- */
+  {w:1, el:'огонь',
+   h:'Запал короткий и сильный',
+   t:'Сегодня хочется делать всё сразу. Направь это в одно дело — иначе к вечеру останется усталость и ни одного законченного.'},
+  {w:1, el:'земля',
+   h:'Опора в теле',
+   t:'Тебе сейчас нужнее не новый план, а порядок: в комнате, в делах, в дыхании. Начни с практики, а не со списка.',
+   a:'practice'},
+  {w:1, el:'воздух',
+   h:'Мыслей много, тела мало',
+   t:'Сначала подыши, потом решай. Пять минут дыхания — и половина сегодняшних вопросов перестанет быть срочной.',
+   a:'practice'},
+  {w:1, el:'вода',
+   h:'Чувства как данные',
+   t:'Сегодня всё считывается острее, включая чужое настроение. Проверь, точно ли то, что ты чувствуешь, — твоё.'},
+
+  /* ---------- общие (вес 0) ---------- */
+  {w:0, h:'Начни с малого',
+   t:'Самое короткое дело из сегодняшних — сделай его первым. Дальше пойдёт само, это не мотивация, а механика.',
+   a:'home'},
+  {w:0, h:'Пять минут',
+   t:'Если сегодня совсем не до себя — возьми пять минут. Не «нормально позаниматься», а пять минут. Этого достаточно.',
+   a:'content'},
+  {w:0, h:'Ты уже начала',
+   t:'Ты открыла приложение — это и есть то самое действие, с которого всё начинается. Остальное сегодня по желанию.'},
+  {w:0, h:'Про тело, не про план',
+   t:'Спроси себя, чего хочет тело: воды, воздуха, тишины или движения. Дай ему это раньше, чем возьмёшься за дела.'},
+  {w:0, h:'Одно вместо всего',
+   t:'Список дел не обязан закрываться целиком. Выбери одно, которое откликается, — и пусть остальное останется на потом.',
+   a:'home'},
+  {w:0, h:'Не сравнивай',
+   t:'Твоя неделя сравнивается только с твоей прошлой. Ни с чьей больше — там другие силы, другой цикл и другая жизнь.'},
+  {w:0, h:'Тишина тоже практика',
+   t:'Если ничего не хочется — побудь пять минут без телефона и без задач. Это работает не хуже практики, а иногда лучше.'}
+];
+
+/* Куда ведёт кнопка под посланием. Больше двух вариантов не нужно:
+   лишний выбор превращает подсказку в меню. */
+const TIP_ACTS = {
+  home:     {n:'К моей программе',  go:"go('home')"},
+  content:  {n:'Открыть библиотеку', go:"go('content')"},
+  practice: {n:'Короткая практика',  go:"go('content');S.cType='practice'"}
+};
+
+/* Послание на сегодня: самое точное из подошедших. */
+function dayTip(d = new Date()){
+  const m = moon(d), z = zodiac(S.birth && S.birth.date), cy = cycleNow();
+  const fits = DAY_TIPS.filter(t => {
+    if(t.m && t.m.indexOf(m.n) < 0) return false;
+    if(t.c && (!cy || t.c.indexOf(cy.phase.k) < 0)) return false;
+    if(t.day && (!cy || cy.day !== t.day)) return false;
+    if(t.el && (!z || z.el !== t.el)) return false;
+    return true;
+  });
+  if(!fits.length) return DAY_TIPS[DAY_TIPS.length - 1];
+  const top = Math.max(...fits.map(t => t.w));
+  const best = fits.filter(t => t.w === top);
+  return best[(d.getDate() + d.getMonth()) % best.length];
+}
+
+/* Строка-повод под заголовком: из чего сегодня сложилось послание. */
+function dayWhy(d = new Date()){
+  const m = moon(d), z = zodiac(S.birth && S.birth.date), cy = cycleNow();
+  return [m.n.toLowerCase(),
+          cy ? cy.phase.n.toLowerCase() + ' фаза, день ' + cy.day : '',
+          z ? z.e + ' ' + z.n.toLowerCase() : ''].filter(Boolean).join(' · ');
 }
 
 function personalDay(m, z){
-  if(!z) return '';
-  const key = EL_MOON[m.n] ? m.n : m.age < 14 ? 'Растущая луна' : 'Убывающая луна';
-  const tip = (EL_MOON[key]||{})[z.el] || zodTip(z);
-  const name = S.name || 'тебе';
-  return `<b>${esc(z.n)}</b> и ${m.n.toLowerCase()}: ${tip}. ${zodTip(z)}`;
+  const t = dayTip();
+  return `<b>${esc(t.h)}.</b> ${esc(t.t)}`;
 }
 
 
@@ -2714,6 +2853,16 @@ function render(){
       el.innerHTML = '<div style="padding:28px;font-family:sans-serif">Что-то пошло не так. Обнови страницу.</div>';
     }
   }
+}
+
+/* Перерисовка по чужому изменению: страница остаётся на месте.
+   Обычный render() пересобирает разметку, и браузер прокручивает наверх —
+   женщина читала послание, а её выбросило в начало ленты. Со стороны это
+   и выглядело как самопроизвольная перезагрузка. */
+function softRender(){
+  const y = window.scrollY;
+  render();
+  if(Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y);
 }
 
 function crashScreen(e){
@@ -3142,14 +3291,27 @@ const STAR = `<svg class="splash-star" viewBox="0 0 100 100" aria-hidden="true">
 const starMark = (size, fill) => `<svg width="${size||13}" height="${size||13}" viewBox="0 0 100 100" style="vertical-align:-1px">
   <path d="${STAR_PATH}" fill="${fill||'#E7A339'}"/></svg>`;
 
+/* Заставка держалась ровно 2,45 секунды при каждом открытии, и только
+   потом начинался вход — то есть приложение сначала ждало, а потом
+   работало. Теперь вход начинается сразу, а заставка живёт ровно столько,
+   сколько он идёт, но не меньше короткой паузы: иначе она мелькает. */
+const SPLASH_MIN = 900;
+let splashRun = false;
 function scrSplash(){
-  setTimeout(async () => {
-    if(!S.user){
-      try { await tryAutoLoginAsync(); } catch(e){ tryAutoLogin(); }
-    }
-    if(!S.user) S.screen = 'auth';
-    render(); stars();
-  }, 2450);
+  if(!splashRun){
+    splashRun = true;
+    const started = Date.now();
+    (async () => {
+      if(!S.user){
+        try { await tryAutoLoginAsync(); } catch(e){ try { tryAutoLogin(); } catch(e2){} }
+      }
+      const left = Math.max(0, SPLASH_MIN - (Date.now() - started));
+      setTimeout(() => {
+        if(!S.user) S.screen = 'auth';
+        render(); stars();
+      }, left);
+    })();
+  }
   return `<div class="splash">
     <div class="splash-glow"></div>
     ${STAR}
@@ -5739,26 +5901,28 @@ function dateOfDay(i){
   return d;
 }
 
-/* ---------- рекомендация дня ---------- */
+/* ---------- подсказка дня ---------- */
+/* Короткое послание с делом внутри вместо трёх абзацев справочника.
+   Из чего оно сложилось — мелкой строкой под заголовком: кому интересно,
+   тот прочитает, остальным не мешает. */
 function dayAdvice(){
   const m = moon(), z = zodiac(S.birth.date), cy = cycleNow();
-  const story = dayStory();
+  const tip = dayTip();
+  const act = tip.a ? TIP_ACTS[tip.a] : null;
   return `<div class="card advice">
     <div class="advhead">
-      ${moonDisc(m, 54)}
+      ${moonDisc(m, 46)}
       <div style="flex:1;min-width:0">
-        <div class="eyebrow">Твой день</div>
-        <b class="serif" style="font-size:19px;display:block;margin-top:3px">${esc(m.n)}</b>
-        <div class="small muted" style="margin-top:2px">${[
-          z ? esc(z.e) + ' ' + esc(z.n) : '',
-          cy ? esc(cy.phase.n.toLowerCase()) + ' фаза' : ''
-        ].filter(Boolean).join(' · ') || 'освещённость ' + m.pct + '%'}</div>
+        <div class="eyebrow">Подсказка дня</div>
+        <b class="serif" style="font-size:18px;display:block;margin-top:3px">${esc(tip.h)}</b>
       </div>
       ${hint('moon')}
     </div>
-    ${story.map(p => `<p class="advline">${esc(p)}</p>`).join('')}
+    <p class="advline">${esc(tip.t)}</p>
+    <div class="advwhy">${esc(dayWhy())}</div>
+    ${act ? `<button class="advgo" onclick="${act.go}">${esc(act.n)} ›</button>` : ''}
     ${!z || !cy ? `<button class="advmore" onclick="openPage('birth')">
-      ${!z ? 'Добавить дату рождения' : 'Добавить даты цикла'} — подсказка станет точнее ›</button>` : ''}
+      ${!z ? 'Добавить дату рождения' : 'Добавить даты цикла'} — подсказки станут точнее ›</button>` : ''}
   </div>`;
 }
 
@@ -6284,7 +6448,7 @@ function pgCalendar(){
           <div class="small muted">${m.s}</div>
           <div class="small muted" style="margin-top:3px">Освещённость ${m.pct}% · ${plural(m.age,'день','дня','дней')} лунного цикла</div></div></div>
       ${z ? `<div class="card" style="background:var(--surface-2);border:none;padding:12px;margin:0 0 10px">
-        <div class="eyebrow" style="margin-bottom:5px">Твой день</div>
+        <div class="eyebrow" style="margin-bottom:5px">Подсказка дня</div>
         <div class="small">${personalDay(m,z)}</div></div>` : ''}
       ${z ? `<div class="arow"><span class="ae">${esc(z.e)}</span><div><b>${esc(z.n)}</b><div class="small muted">${tip}</div></div></div>`
           : `<div class="arow"><span class="ae">✦</span><div><b>Знак не задан</b>
@@ -7081,12 +7245,12 @@ function pgGood(){
     <button class="backbtn" onclick="closeGood()">‹ Маркет</button>
 
     <div class="gslider">
-      <div class="gslide">${MEDIA[slides[i]] ? `<img src="${safeUrl(MEDIA[slides[i]])}" alt="" style="object-position:${esc(info.pos||'50% 50%')}">` : prodArt(g.id, g.sh)}
+      <div class="gslide" id="gdshot">${MEDIA[slides[i]] ? `<img src="${safeUrl(MEDIA[slides[i]])}" alt="" style="object-position:${esc(info.pos||'50% 50%')}">` : prodArt(g.id, g.sh)}
         ${g.f ? `<div class="flag">${g.f}</div>` : ''}</div>
       ${slides.length > 1 ? `
-        <button class="gnav left" onclick="slideGood(-1,${slides.length})">‹</button>
-        <button class="gnav right" onclick="slideGood(1,${slides.length})">›</button>
-        <div class="gdots">${slides.map((_,k) => `<i class="${k===i?'on':''}"></i>`).join('')}</div>` : ''}
+        <button class="gnav left" onclick="slideGood(-1)">‹</button>
+        <button class="gnav right" onclick="slideGood(1)">›</button>
+        <div class="gdots" id="gddots">${slides.map((_,k) => `<i class="${k===i?'on':''}"></i>`).join('')}</div>` : ''}
     </div>
 
     <div class="eyebrow">${esc(g.c)}</div>
@@ -7130,9 +7294,20 @@ function pgGood(){
     </div>
   </div>`;
 }
-function slideGood(d, n){
+/* как и у мероприятий: меняем картинку, а не собираем страницу заново */
+function slideGood(d){
+  const g = GOODS.find(x => x.id === S.viewGood);
+  if(!g) return;
+  const slides = [g.id, ...((GOOD_INFO[g.id] || {}).gallery || [])].filter(k => MEDIA[k]);
+  const n = slides.length;
+  if(n < 2) return;
   S.gSlide = ((S.gSlide || 0) + d + n) % n;
-  render();
+  const box = document.getElementById('gdshot');
+  const img = box && box.querySelector('img');
+  if(!img) return render();
+  img.src = safeUrl(MEDIA[slides[S.gSlide]]);
+  const dots = document.getElementById('gddots');
+  if(dots) [...dots.children].forEach((el, k) => el.className = k === S.gSlide ? 'on' : '');
 }
 
 /* =====================================================================
@@ -8863,6 +9038,7 @@ const SYNC = {
   base: 'api.php',
   alive: null,          // null — ещё не проверяли
   rev: 0,
+  lastCode: 0,          // код последнего ответа сервера
   lastError: '',
   lastSaved: 0,
   queue: {},            // ветки, ждущие отправки
@@ -8920,14 +9096,17 @@ async function apiCall(action, body, opts){
     catch(e){ throw new Error('сервер ответил не в формате JSON (код ' + res.status + ')'); }
     if(!j.ok){
       SYNC.lastError = j.error || ('ошибка ' + res.status);
+      SYNC.lastCode = res.status;              // 403 — запрещено навсегда, повтор не поможет
       if(res.status === 401 && tok) dropSession();
       if(!opts.silent) toast('Не сохранилось: ' + SYNC.lastError);
       return null;
     }
+    SYNC.lastCode = 200;
     SYNC.lastError = '';
     return j;
   } catch(e){
     SYNC.lastError = e.message || 'нет связи с сервером';
+    SYNC.lastCode = 0;                         // связи нет — повторить стоит
     if(!opts.silent) toast('Нет связи с сервером');
     return null;
   }
@@ -9012,13 +9191,27 @@ function mediaLinks(){
 /* ---------- сохранение ---------- */
 let syncTimer = null;
 
+/* Что кому разрешено писать. Раньше отправляли всё подряд, и сервер отвечал
+   «раздел lib меняют только эксперты и администраторы» — а падал при этом
+   весь пакет целиком, вместе с посланием или сообщением, ради которых его
+   и отправляли. Ветка, которую эта роль всё равно не запишет, теперь просто
+   не уезжает. */
+const OPEN_PUSH = ['wall','chats','groups','events','orders','questions',
+                   'support','ideas','media','reviews','avatars'];
+function mayPush(b){
+  if(S.role === 'admin')  return true;
+  if(S.role === 'expert') return b !== 'adminInfo';
+  return OPEN_PUSH.indexOf(b) >= 0;
+}
+
 /* поставить ветки в очередь; без аргументов — все, что относится к контенту */
 function syncPush(branches, immediate){
   if(SYNC.alive === false) return;
   const list = branches || ['lib','courses','lessons','modules','courseInfo','courseTags','courseKind',
     'goods','goodInfo','events','experts','pending','media','videos','covPos','adminInfo','avatars',
     'groups','chats'];
-  list.forEach(b => { if(BRANCHES[b]) SYNC.queue[b] = true; });
+  list.forEach(b => { if(BRANCHES[b] && mayPush(b)) SYNC.queue[b] = true; });
+  if(!Object.keys(SYNC.queue).length) return;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(flushSync, immediate ? 0 : 800);
 }
@@ -9050,11 +9243,13 @@ async function flushSync(){
     SYNC.lastSaved = Date.now();
     updateSyncBadge('saved');
     if(S.role !== 'user' && !S.sheet) render();
-  } else {
-    names.forEach(b => SYNC.queue[b] = true);
-    updateSyncBadge('error');
-    if(!S.sheet) render();
+    return;
   }
+  /* Запрет не лечится повтором: раньше такая ветка возвращалась в очередь,
+     уходила снова каждые пятнадцать секунд и каждый раз перерисовывала
+     страницу — со стороны это выглядело как самопроизвольная перезагрузка. */
+  if(SYNC.lastCode !== 403) names.forEach(b => SYNC.queue[b] = true);
+  updateSyncBadge('error');
 }
 
 /* совместимость со старыми вызовами */
@@ -9445,11 +9640,11 @@ async function initSync(){
   /* пока вкладка не на виду, сервер не тревожим совсем */
   setInterval(() => {
     if(document.hidden || SYNC.sending || S.sheet) return;
-    syncPull(true).then(ch => { if(ch) render(); });
-    pullDm().then(ch => { if(ch) render(); });
+    syncPull(true).then(ch => { if(ch) softRender(); });
+    pullDm().then(ch => { if(ch) softRender(); });
   }, 30000);
   document.addEventListener('visibilitychange', () => {
-    if(!document.hidden && !SYNC.sending) syncPull(true).then(ch => { if(ch) render(); });
+    if(!document.hidden && !SYNC.sending) syncPull(true).then(ch => { if(ch) softRender(); });
   });
   // если что-то не отправилось — пробуем ещё раз
   setInterval(() => { if(Object.keys(SYNC.queue).length) flushSync(); }, 15000);
@@ -9468,6 +9663,20 @@ const isStandalone = () =>
   window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
 const isMobile = () => /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+
+function showUpdateBar(){
+  if(document.getElementById('updbar')) return;
+  const el = document.createElement('div');
+  el.className = 'installbar pop'; el.id = 'updbar';
+  el.innerHTML = '<div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 12a8 8 0 0 1 13.7-5.7M20 12a8 8 0 0 1-13.7 5.7"/>' +
+    '<path d="M18 3v4h-4M6 21v-4h4"/></svg></div>' +
+    '<div style="flex:1;min-width:0"><b>Есть новая версия</b>' +
+    '<div class="small">Обновится за секунду, данные на месте</div></div>' +
+    '<button class="go" onclick="location.reload()">Обновить</button>' +
+    '<button class="cl" onclick="this.parentElement.remove()">✕</button>';
+  document.body.appendChild(el);
+}
 
 function showInstallBar(){
   if(isStandalone() || document.getElementById('installbar')) return;
@@ -9520,6 +9729,14 @@ function initPWA(){
     navigator.serviceWorker.register('sw.js')
       .then(() => { if(typeof pushSync === 'function') pushSync(); })
       .catch(() => {});
+    /* приложение отдаётся из памяти телефона, а свежая версия догружается
+       следом: когда она пришла — предлагаем обновиться, а не подменяем
+       страницу под руками */
+    navigator.serviceWorker.addEventListener('message', e => {
+      if(!e.data || e.data.eva !== 'update' || S.newVersion) return;
+      S.newVersion = true;
+      if(!S.sheet) showUpdateBar();
+    });
   }
   if(isMobile() && !isStandalone() && !Store.get('eva_install_hidden')){
     setTimeout(() => { if(!deferredPrompt) showInstallBar(); }, 4000);
@@ -10317,11 +10534,11 @@ function shEvent(){
   const shots = [e.id, ...(e.gallery||[])].filter(k => MEDIA[k]);
   const si = Math.min(S.evSlide || 0, Math.max(0, shots.length-1));
   const isAdm = S.role === 'admin';
-  return `${shots.length ? `<div class="gslider" style="margin-bottom:14px">
-      <div class="gslide" style="height:190px"><img src="${safeUrl(MEDIA[shots[si]])}" alt=""></div>
-      ${shots.length > 1 ? `<button class="gnav left" onclick="slideEv(-1,${shots.length})">‹</button>
-        <button class="gnav right" onclick="slideEv(1,${shots.length})">›</button>
-        <div class="gdots">${shots.map((_,k) => `<i class="${k===si?'on':''}"></i>`).join('')}</div>` : ''}
+  return `${shots.length ? `<div class="gslider" style="margin-bottom:14px" id="evgal">
+      <div class="gslide" style="height:190px"><img id="evshot" src="${safeUrl(MEDIA[shots[si]])}" alt=""></div>
+      ${shots.length > 1 ? `<button class="gnav left" onclick="slideEv(-1)">‹</button>
+        <button class="gnav right" onclick="slideEv(1)">›</button>
+        <div class="gdots" id="evdots">${shots.map((_,k) => `<i class="${k===si?'on':''}"></i>`).join('')}</div>` : ''}
     </div>`
     : `<div style="border-radius:var(--r-lg);overflow:hidden;height:170px;margin-bottom:14px">${cover(e.id,'practice')}</div>`}
     <div class="eyebrow">${esc(e.kind)}</div>
@@ -10405,7 +10622,22 @@ function toggleEvDet(id, btn){
   if(btn) btn.classList.toggle('on', !open);
 }
 
-function slideEv(d, n){ S.evSlide = ((S.evSlide || 0) + d + n) % n; render(); }
+/* Листаем фото мероприятия, меняя одну картинку.
+   Раньше здесь был render(): страница пересобиралась целиком, прокрутка
+   улетала наверх — со стороны это выглядело как перезагрузка. */
+function slideEv(d){
+  const e = EVENTS.find(x => x.id === (S.sheet||{}).id);
+  if(!e) return;
+  const shots = [e.id, ...(e.gallery || [])].filter(k => MEDIA[k]);
+  const n = shots.length;
+  if(n < 2) return;
+  S.evSlide = ((S.evSlide || 0) + d + n) % n;
+  const img = document.getElementById('evshot');
+  if(!img) return render();                       // шторки нет — обычный путь
+  img.src = safeUrl(MEDIA[shots[S.evSlide]]);
+  const dots = document.getElementById('evdots');
+  if(dots) [...dots.children].forEach((i, k) => i.className = k === S.evSlide ? 'on' : '');
+}
 
 /* решение админа по мероприятию с комментарием эксперту */
 function shEvReview(){

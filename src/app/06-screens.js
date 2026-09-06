@@ -523,26 +523,28 @@ function dateOfDay(i){
   return d;
 }
 
-/* ---------- рекомендация дня ---------- */
+/* ---------- подсказка дня ---------- */
+/* Короткое послание с делом внутри вместо трёх абзацев справочника.
+   Из чего оно сложилось — мелкой строкой под заголовком: кому интересно,
+   тот прочитает, остальным не мешает. */
 function dayAdvice(){
   const m = moon(), z = zodiac(S.birth.date), cy = cycleNow();
-  const story = dayStory();
+  const tip = dayTip();
+  const act = tip.a ? TIP_ACTS[tip.a] : null;
   return `<div class="card advice">
     <div class="advhead">
-      ${moonDisc(m, 54)}
+      ${moonDisc(m, 46)}
       <div style="flex:1;min-width:0">
-        <div class="eyebrow">Твой день</div>
-        <b class="serif" style="font-size:19px;display:block;margin-top:3px">${esc(m.n)}</b>
-        <div class="small muted" style="margin-top:2px">${[
-          z ? esc(z.e) + ' ' + esc(z.n) : '',
-          cy ? esc(cy.phase.n.toLowerCase()) + ' фаза' : ''
-        ].filter(Boolean).join(' · ') || 'освещённость ' + m.pct + '%'}</div>
+        <div class="eyebrow">Подсказка дня</div>
+        <b class="serif" style="font-size:18px;display:block;margin-top:3px">${esc(tip.h)}</b>
       </div>
       ${hint('moon')}
     </div>
-    ${story.map(p => `<p class="advline">${esc(p)}</p>`).join('')}
+    <p class="advline">${esc(tip.t)}</p>
+    <div class="advwhy">${esc(dayWhy())}</div>
+    ${act ? `<button class="advgo" onclick="${act.go}">${esc(act.n)} ›</button>` : ''}
     ${!z || !cy ? `<button class="advmore" onclick="openPage('birth')">
-      ${!z ? 'Добавить дату рождения' : 'Добавить даты цикла'} — подсказка станет точнее ›</button>` : ''}
+      ${!z ? 'Добавить дату рождения' : 'Добавить даты цикла'} — подсказки станут точнее ›</button>` : ''}
   </div>`;
 }
 

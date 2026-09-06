@@ -789,11 +789,11 @@ function shEvent(){
   const shots = [e.id, ...(e.gallery||[])].filter(k => MEDIA[k]);
   const si = Math.min(S.evSlide || 0, Math.max(0, shots.length-1));
   const isAdm = S.role === 'admin';
-  return `${shots.length ? `<div class="gslider" style="margin-bottom:14px">
-      <div class="gslide" style="height:190px"><img src="${safeUrl(MEDIA[shots[si]])}" alt=""></div>
-      ${shots.length > 1 ? `<button class="gnav left" onclick="slideEv(-1,${shots.length})">‹</button>
-        <button class="gnav right" onclick="slideEv(1,${shots.length})">›</button>
-        <div class="gdots">${shots.map((_,k) => `<i class="${k===si?'on':''}"></i>`).join('')}</div>` : ''}
+  return `${shots.length ? `<div class="gslider" style="margin-bottom:14px" id="evgal">
+      <div class="gslide" style="height:190px"><img id="evshot" src="${safeUrl(MEDIA[shots[si]])}" alt=""></div>
+      ${shots.length > 1 ? `<button class="gnav left" onclick="slideEv(-1)">‹</button>
+        <button class="gnav right" onclick="slideEv(1)">›</button>
+        <div class="gdots" id="evdots">${shots.map((_,k) => `<i class="${k===si?'on':''}"></i>`).join('')}</div>` : ''}
     </div>`
     : `<div style="border-radius:var(--r-lg);overflow:hidden;height:170px;margin-bottom:14px">${cover(e.id,'practice')}</div>`}
     <div class="eyebrow">${esc(e.kind)}</div>
@@ -877,7 +877,22 @@ function toggleEvDet(id, btn){
   if(btn) btn.classList.toggle('on', !open);
 }
 
-function slideEv(d, n){ S.evSlide = ((S.evSlide || 0) + d + n) % n; render(); }
+/* Листаем фото мероприятия, меняя одну картинку.
+   Раньше здесь был render(): страница пересобиралась целиком, прокрутка
+   улетала наверх — со стороны это выглядело как перезагрузка. */
+function slideEv(d){
+  const e = EVENTS.find(x => x.id === (S.sheet||{}).id);
+  if(!e) return;
+  const shots = [e.id, ...(e.gallery || [])].filter(k => MEDIA[k]);
+  const n = shots.length;
+  if(n < 2) return;
+  S.evSlide = ((S.evSlide || 0) + d + n) % n;
+  const img = document.getElementById('evshot');
+  if(!img) return render();                       // шторки нет — обычный путь
+  img.src = safeUrl(MEDIA[shots[S.evSlide]]);
+  const dots = document.getElementById('evdots');
+  if(dots) [...dots.children].forEach((i, k) => i.className = k === S.evSlide ? 'on' : '');
+}
 
 /* решение админа по мероприятию с комментарием эксперту */
 function shEvReview(){
