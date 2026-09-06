@@ -21,6 +21,7 @@ function sheet(){
     newContent:shNewContent, editContent:shEditContent, reject:shReject, rework:shRework,
     units:shUnits, groupInfo:shGroupInfo, newGroup:shNewGroup, fix:shFix, video:shVideo,
     invite:shInvite, hello:shHello, askGroup:shAskGroup, weekSum:shWeekSum,
+    myPage:shMyPage, toMate:shToMate,
     hw:shHW, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
     install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
     service:shService, editUser:shEditUser,
@@ -1000,6 +1001,14 @@ function shNewEvent(){
       <div><label class="lbl">Время</label>
         <input class="field" id="ev_tm" type="time" value="${esc(d.tm || '19:00')}" oninput="setEvD('tm', this.value)"></div>
     </div>
+    <div class="card" style="padding:13px 15px;margin:0 0 12px">
+      <div class="spread">
+        <div style="flex:1;min-width:0"><b style="font-size:13px">Закрытая встреча</b>
+          <div class="small muted">Не попадёт на страницы участниц. Для тем,
+            о которых не говорят вслух</div></div>
+        <button class="sw ${d.closed?'on':''}" onclick="setEvD('closed', ${d.closed?'false':'true'});render()"><i></i></button>
+      </div>
+    </div>
     <label class="lbl">Формат</label>
     <div class="seg">${['офлайн','онлайн'].map(k =>
       `<button class="${d.mode===k?'on':''}" onclick="pickMode(this,'${attJs(k)}')">${k}</button>`).join('')}</div>
@@ -1109,7 +1118,7 @@ function saveEvent(){
     place:dr.place || '',
     price:+dr.price || 0,
     by:S.role === 'expert' ? me().n : 'Eva Space',
-    seats, left:seats, unlimited:!!dr.unlimited, gallery,
+    seats, left:seats, unlimited:!!dr.unlimited, closed:!!dr.closed, gallery,
     status:S.role === 'admin' ? 'live' : 'pending',
     about:dr.about || '', full:dr.full || '', program:dr.program || [],
     who:dr.who || '', bring:dr.bring || ''});

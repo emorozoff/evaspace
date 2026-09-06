@@ -1078,3 +1078,65 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
    половины, а очередь редакции — меньше всех. */
 .whyrow{display:flex;flex-direction:column;gap:6px}
 .whyline{display:flex;align-items:center;gap:10px}
+
+/* ---------- страницы женщин ----------
+   Имя автора в ленте, в ответе, в группе — кнопка, а не текст: отсюда
+   попадают на страницу. Подчёркивание пунктиром, чтобы не спорить со ссылками. */
+.plink{font:inherit;color:inherit;padding:0;background:none;border:none;
+  border-bottom:1px dashed var(--line-2);line-height:1.1;cursor:pointer}
+.plink:hover{border-bottom-color:var(--ink)}
+
+.pabout{margin:12px 18px 0;font-size:13.5px;line-height:1.6;color:rgba(255,255,255,.8)}
+.psec{margin-top:22px}
+.psec .sec-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+.psec .sec-h h2{margin:0}
+
+/* Полка «что я люблю»: три плитки в ряд, обложки те же, что в библиотеке. */
+.shelf{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+/* колонкой, чтобы у всех трёх плиток обложка была одной высоты, а подпись
+   начиналась на одной линии — как бы длинно ни называлась практика */
+.stile{text-align:left;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;transition:.15s}
+.stile:hover{border-color:var(--ink)}
+.stile .cov{height:74px;flex:none;position:relative}
+.stile .cov > svg,.stile .cov > img{position:absolute;inset:0;width:100%;height:100%;
+  display:block;object-fit:cover}
+.stile .nm{padding:8px 9px 10px;font-size:11.5px;font-weight:600;line-height:1.3}
+.stile .kind{display:block;font-size:9px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+
+/* Кружки подписок и знакомых — как сторис. Жёлтое кольцо значит «есть новое». */
+.circles{display:flex;gap:14px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+.circles::-webkit-scrollbar{display:none}
+.who{flex:none;width:64px;text-align:center;background:none;border:none;padding:0;cursor:pointer}
+.ring{display:block;width:64px;height:64px;border-radius:50%;padding:3px;
+  background:var(--line);box-sizing:border-box}
+.ring.new{background:linear-gradient(135deg,var(--accent),#E9B44C)}
+.ring svg,.ring img{width:100%;height:100%;border-radius:50%;display:block;object-fit:cover;
+  border:2px solid var(--surface);box-sizing:border-box}
+.more{display:flex;align-items:center;justify-content:center;width:64px;height:64px;
+  border-radius:50%;background:var(--surface-2);color:var(--muted);
+  font-size:15px;font-weight:700;box-sizing:border-box}
+.wname{display:block;margin-top:6px;font-size:11px;line-height:1.25;font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Мероприятия закрывают страницу лентой: пролистала — и упёрлась в конец. */
+.evstrip{display:flex;gap:9px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.evstrip::-webkit-scrollbar{display:none}
+.evmini{flex:none;width:170px;text-align:left;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r);padding:12px 13px;transition:.15s}
+.evmini:hover{border-color:var(--ink)}
+.evdate{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  width:40px;height:40px;border-radius:var(--r-xs);background:var(--surface-2);margin-bottom:9px}
+.evdate b{font-size:15px;line-height:1;font-weight:700}
+.evdate span{font-size:8.5px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--muted);font-weight:700}
+.evt{display:block;font-size:13px;line-height:1.3;margin-bottom:3px}
+
+.datebox{display:flex;align-items:center;gap:11px;padding:13px 14px}
+
+/* Звезда на обложке курса и товара - та же, что на карточке практики:
+   одно «Избранное» на всю платформу и одна полка на странице. */
+.starcorner{position:absolute;top:8px;right:8px;z-index:4}
+.starcorner .starbtn{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;
+  background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(17,16,20,.14)}

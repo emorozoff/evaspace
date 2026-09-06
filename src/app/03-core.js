@@ -551,6 +551,7 @@ const hello = () => { const h = new Date().getHours();
 let crashCount = 0;
 function render(){
   try {
+    if(typeof ensureCard === 'function') ensureCard();
     renderScreen();
     crashCount = 0;
   } catch(e){
@@ -632,7 +633,11 @@ function setApp(body, sh){
     shownHTML = body; pageBox.innerHTML = body; window.__renders++;
     after(); memo();
   }
-  if(sh !== shownSheet){ shownSheet = sh; sheetBox.innerHTML = sh; }
+  /* Шторку тоже надо доводить после отрисовки: внутри неё живут и ленты,
+     которым нужны стрелки, и поля, которые растут под текст. Раньше after()
+     звался только при пересборке страницы, и лента команды сообщества
+     оставалась на компьютере без стрелок. */
+  if(sh !== shownSheet){ shownSheet = sh; sheetBox.innerHTML = sh; if(sh) after(); }
   return true;
 }
 
@@ -669,7 +674,7 @@ function keepFocus(){
    После каждой перерисовки оборачиваем ленты, которым не хватает ширины,
    и ставим по краям две круглые кнопки. На сенсорных экранах их нет.
    ===================================================================== */
-const RAILS = '.hscroll, .carousel, .galrow';
+const RAILS = '.hscroll, .carousel, .galrow, .circles, .evstrip';
 
 function railOf(btn){
   const box = btn && btn.parentElement;
@@ -911,7 +916,7 @@ function page(){
   if(S.page){
     const M = {report:pgReport, calendar:pgCalendar, profile:pgProfile, points:pgPoints, earn:pgEarn,
                settings:pgSettings, cart:pgCart, cycle:pgCycle, birth:pgBirth, inbox:pgInbox,
-               groupAdmin:pgGroupAdmin};
+               groupAdmin:pgGroupAdmin, person:pgPerson};
     return (M[S.page] || pgProfile)();
   }
   return ({home:pgHome, content:pgContent, courses:pgCourses, market:pgMarket, club:pgClub})[S.tab]();

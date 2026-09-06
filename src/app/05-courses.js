@@ -709,7 +709,7 @@ function wallCard(w){
     <div class="wtop">
       ${chatAva(w.a, col, mine, 38, w.email)}
       <div style="flex:1;min-width:0">
-        <b style="font-size:14px;display:block">${esc(w.a)}${mine?' · ты':''}</b>
+        <b style="font-size:14px;display:block">${personLink(w.a, w.email)}${mine?' · ты':''}</b>
         <span class="small muted" style="font-size:11px">${esc(w.city || '')}${w.city?' · ':''}${esc(w.ago)}</span>
       </div>
       ${canDrop ? `<button class="wdel" title="Удалить"
@@ -759,7 +759,7 @@ function commentRow(w, c, ci){
     ${chatAva(c.a, col, mine, 28, c.email)}
     <div style="flex:1;min-width:0">
       <div class="crow">
-        <b style="font-size:12.5px;color:${safeColor(col)}">${esc(c.a)}${mine?' · ты':''}</b>
+        <b style="font-size:12.5px;color:${safeColor(col)}">${c.curator ? esc(c.a) : personLink(c.a, c.email)}${mine?' · ты':''}</b>
         ${author ? '<span class="badge-au">автор</span>' : ''}
         ${c.curator ? '<span class="badge-cur">куратор</span>' : ''}
         <span class="small muted" style="font-size:10px;margin-left:auto">${esc(c.ago)}</span>
@@ -1145,7 +1145,7 @@ function pgChatRoom(){
         ${msgs.map((m,i) => `<div class="cmsg ${chatMine(m)?'own':''}" id="msg_${esc(g.id)}_${i}">
           ${!chatMine(m) ? chatAva(m.a, m.c || authorColor(m.email || m.a), false, 32, m.email) : ''}
           <div class="txt">
-            ${!chatMine(m) ? `<div class="nm">${esc(m.a)}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
+            ${!chatMine(m) ? `<div class="nm">${m.exp || m.curator ? esc(m.a) : personLink(m.a, m.email)}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
             ${m.re ? `<div class="requote"><b>${esc(m.re.a)}</b><span>${esc(m.re.t)}</span></div>` : ''}
             <div class="mtext">${esc(m.t)}</div>
             <div class="tm">

@@ -1097,6 +1097,68 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
    половины, а очередь редакции — меньше всех. */
 .whyrow{display:flex;flex-direction:column;gap:6px}
 .whyline{display:flex;align-items:center;gap:10px}
+
+/* ---------- страницы женщин ----------
+   Имя автора в ленте, в ответе, в группе — кнопка, а не текст: отсюда
+   попадают на страницу. Подчёркивание пунктиром, чтобы не спорить со ссылками. */
+.plink{font:inherit;color:inherit;padding:0;background:none;border:none;
+  border-bottom:1px dashed var(--line-2);line-height:1.1;cursor:pointer}
+.plink:hover{border-bottom-color:var(--ink)}
+
+.pabout{margin:12px 18px 0;font-size:13.5px;line-height:1.6;color:rgba(255,255,255,.8)}
+.psec{margin-top:22px}
+.psec .sec-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+.psec .sec-h h2{margin:0}
+
+/* Полка «что я люблю»: три плитки в ряд, обложки те же, что в библиотеке. */
+.shelf{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+/* колонкой, чтобы у всех трёх плиток обложка была одной высоты, а подпись
+   начиналась на одной линии — как бы длинно ни называлась практика */
+.stile{text-align:left;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;transition:.15s}
+.stile:hover{border-color:var(--ink)}
+.stile .cov{height:74px;flex:none;position:relative}
+.stile .cov > svg,.stile .cov > img{position:absolute;inset:0;width:100%;height:100%;
+  display:block;object-fit:cover}
+.stile .nm{padding:8px 9px 10px;font-size:11.5px;font-weight:600;line-height:1.3}
+.stile .kind{display:block;font-size:9px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+
+/* Кружки подписок и знакомых — как сторис. Жёлтое кольцо значит «есть новое». */
+.circles{display:flex;gap:14px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+.circles::-webkit-scrollbar{display:none}
+.who{flex:none;width:64px;text-align:center;background:none;border:none;padding:0;cursor:pointer}
+.ring{display:block;width:64px;height:64px;border-radius:50%;padding:3px;
+  background:var(--line);box-sizing:border-box}
+.ring.new{background:linear-gradient(135deg,var(--accent),#E9B44C)}
+.ring svg,.ring img{width:100%;height:100%;border-radius:50%;display:block;object-fit:cover;
+  border:2px solid var(--surface);box-sizing:border-box}
+.more{display:flex;align-items:center;justify-content:center;width:64px;height:64px;
+  border-radius:50%;background:var(--surface-2);color:var(--muted);
+  font-size:15px;font-weight:700;box-sizing:border-box}
+.wname{display:block;margin-top:6px;font-size:11px;line-height:1.25;font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Мероприятия закрывают страницу лентой: пролистала — и упёрлась в конец. */
+.evstrip{display:flex;gap:9px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.evstrip::-webkit-scrollbar{display:none}
+.evmini{flex:none;width:170px;text-align:left;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r);padding:12px 13px;transition:.15s}
+.evmini:hover{border-color:var(--ink)}
+.evdate{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  width:40px;height:40px;border-radius:var(--r-xs);background:var(--surface-2);margin-bottom:9px}
+.evdate b{font-size:15px;line-height:1;font-weight:700}
+.evdate span{font-size:8.5px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--muted);font-weight:700}
+.evt{display:block;font-size:13px;line-height:1.3;margin-bottom:3px}
+
+.datebox{display:flex;align-items:center;gap:11px;padding:13px 14px}
+
+/* Звезда на обложке курса и товара - та же, что на карточке практики:
+   одно «Избранное» на всю платформу и одна полка на странице. */
+.starcorner{position:absolute;top:8px;right:8px;z-index:4}
+.starcorner .starbtn{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;
+  background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(17,16,20,.14)}
 </style>
 </head>
 <body>
@@ -1645,6 +1707,10 @@ const S = {
   lastWeek:null, weekShown:true, weekMood:null, nudgedWeek:null,
   quietRun:0, askedBlock:null,
   pushOn:false, pushAsked:false,
+  /* страницы женщин: подписки на экспертов, знакомства, что показывать */
+  follows:[], mates:[], expSeen:{}, about:'', city:'',
+  show:{shelf:true, follows:true, mates:true, next:true, past:true, dating:true},
+  viewPerson:null,
   gentle:false,
   eva:[{r:'eva', t:'Я Ева. Могу рассказать, что у тебя сегодня, объяснить, почему собрана такая программа, или прочитать аффирмацию вслух.'}],
   voice:true, toast:null
@@ -2078,6 +2144,7 @@ function persist(){
     nudgedWeek:S.nudgedWeek, gdraft:S.gdraft,
     quietRun:S.quietRun, askedBlock:S.askedBlock,
     pushOn:S.pushOn, pushAsked:S.pushAsked, tipStars:S.tipStars,
+    follows:S.follows, mates:S.mates, expSeen:S.expSeen, about:S.about, city:S.city, show:S.show,
     savedAt:Date.now()
   });
 }
@@ -2090,7 +2157,8 @@ const PERSONAL = ['name','tags','topics','time','slot','answers','extra','points
   'cycle','hd','hdAnswers','hdi','sub','week','seed','program','day','match','homework','myEvents',
   'inbox','seenReplies','seenDm','myInts','datingProfile','starred','starredCmts','likes','visits',
   'gentle','seen','tagw','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
-  'weekMood','nudgedWeek','gdraft','quietRun','askedBlock','pushOn','pushAsked','tipStars','qi','picked','eva'];
+  'weekMood','nudgedWeek','gdraft','quietRun','askedBlock','pushOn','pushAsked','tipStars','follows','mates','expSeen','about','city','show',
+  'qi','picked','eva'];
 
 let PRISTINE = null;
 /* снимок нетронутого состояния - делается один раз, при загрузке */
@@ -3184,6 +3252,7 @@ const hello = () => { const h = new Date().getHours();
 let crashCount = 0;
 function render(){
   try {
+    if(typeof ensureCard === 'function') ensureCard();
     renderScreen();
     crashCount = 0;
   } catch(e){
@@ -3265,7 +3334,11 @@ function setApp(body, sh){
     shownHTML = body; pageBox.innerHTML = body; window.__renders++;
     after(); memo();
   }
-  if(sh !== shownSheet){ shownSheet = sh; sheetBox.innerHTML = sh; }
+  /* Шторку тоже надо доводить после отрисовки: внутри неё живут и ленты,
+     которым нужны стрелки, и поля, которые растут под текст. Раньше after()
+     звался только при пересборке страницы, и лента команды сообщества
+     оставалась на компьютере без стрелок. */
+  if(sh !== shownSheet){ shownSheet = sh; sheetBox.innerHTML = sh; if(sh) after(); }
   return true;
 }
 
@@ -3302,7 +3375,7 @@ function keepFocus(){
    После каждой перерисовки оборачиваем ленты, которым не хватает ширины,
    и ставим по краям две круглые кнопки. На сенсорных экранах их нет.
    ===================================================================== */
-const RAILS = '.hscroll, .carousel, .galrow';
+const RAILS = '.hscroll, .carousel, .galrow, .circles, .evstrip';
 
 function railOf(btn){
   const box = btn && btn.parentElement;
@@ -3544,7 +3617,7 @@ function page(){
   if(S.page){
     const M = {report:pgReport, calendar:pgCalendar, profile:pgProfile, points:pgPoints, earn:pgEarn,
                settings:pgSettings, cart:pgCart, cycle:pgCycle, birth:pgBirth, inbox:pgInbox,
-               groupAdmin:pgGroupAdmin};
+               groupAdmin:pgGroupAdmin, person:pgPerson};
     return (M[S.page] || pgProfile)();
   }
   return ({home:pgHome, content:pgContent, courses:pgCourses, market:pgMarket, club:pgClub})[S.tab]();
@@ -4998,7 +5071,7 @@ function wallCard(w){
     <div class="wtop">
       ${chatAva(w.a, col, mine, 38, w.email)}
       <div style="flex:1;min-width:0">
-        <b style="font-size:14px;display:block">${esc(w.a)}${mine?' · ты':''}</b>
+        <b style="font-size:14px;display:block">${personLink(w.a, w.email)}${mine?' · ты':''}</b>
         <span class="small muted" style="font-size:11px">${esc(w.city || '')}${w.city?' · ':''}${esc(w.ago)}</span>
       </div>
       ${canDrop ? `<button class="wdel" title="Удалить"
@@ -5048,7 +5121,7 @@ function commentRow(w, c, ci){
     ${chatAva(c.a, col, mine, 28, c.email)}
     <div style="flex:1;min-width:0">
       <div class="crow">
-        <b style="font-size:12.5px;color:${safeColor(col)}">${esc(c.a)}${mine?' · ты':''}</b>
+        <b style="font-size:12.5px;color:${safeColor(col)}">${c.curator ? esc(c.a) : personLink(c.a, c.email)}${mine?' · ты':''}</b>
         ${author ? '<span class="badge-au">автор</span>' : ''}
         ${c.curator ? '<span class="badge-cur">куратор</span>' : ''}
         <span class="small muted" style="font-size:10px;margin-left:auto">${esc(c.ago)}</span>
@@ -5434,7 +5507,7 @@ function pgChatRoom(){
         ${msgs.map((m,i) => `<div class="cmsg ${chatMine(m)?'own':''}" id="msg_${esc(g.id)}_${i}">
           ${!chatMine(m) ? chatAva(m.a, m.c || authorColor(m.email || m.a), false, 32, m.email) : ''}
           <div class="txt">
-            ${!chatMine(m) ? `<div class="nm">${esc(m.a)}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
+            ${!chatMine(m) ? `<div class="nm">${m.exp || m.curator ? esc(m.a) : personLink(m.a, m.email)}${m.exp?' <span class="badge-exp">эксперт</span>':''}${m.curator?' <span class="badge-cur">куратор</span>':''}</div>` : ''}
             ${m.re ? `<div class="requote"><b>${esc(m.re.a)}</b><span>${esc(m.re.t)}</span></div>` : ''}
             <div class="mtext">${esc(m.t)}</div>
             <div class="tm">
@@ -5995,7 +6068,7 @@ function topicRow(){
     ? (topicsFor(type) || []).filter(t => have[t.k])
         .sort((a,b) => have[b.k] - have[a.k]).slice(0, 8)
     : [];
-  const liked = (S.likes || []).length;
+  const liked = (S.likes || []).filter(id => LIB.some(x => x.id === id)).length;
   const all = !S.topicFilter && !S.onlyLiked;
   return `<div class="trow hscroll">
     <button class="tchip ${all?'on plain':''}" onclick="showAll()"><span>Все</span></button>
@@ -6044,6 +6117,7 @@ function starContent(btn, id){
   btn.classList.toggle('on', !on);
   btn.innerHTML = starMark(15, !on ? '#E7A339' : 'rgba(17,16,20,.22)');
   schedulePersist();
+  publishCard();                       /* полка на её странице - это те же звёзды */
   if(!on) toast('Добавлено в избранное');
 }
 const isLiked = id => (S.likes || []).includes(id);
@@ -6104,6 +6178,7 @@ function pgCourses(){
           <div class="badge">${esc(COURSE_KIND[c.id])}</div>
           ${rec(c) ? `<div class="badge" style="left:auto;right:12px;background:var(--grad-gold);color:var(--plum)">✦ тебе</div>` : ''}
           <div class="cap"><b>${esc(c.t)}</b><span>${esc(c.e)} · ${plural(c.n,'урок','урока','уроков')}</span></div>
+          <span class="starcorner">${starBtn(c.id, 15)}</span>
         </div>
         <div class="body">
           <p class="small muted" style="margin:0 0 10px">${esc(c.d)}</p>
@@ -6123,8 +6198,11 @@ function pgCourses(){
 /* ---------- страница эксперта (публичный лендинг) ---------- */
 function openExpert(id){
   S.expShown = 8; S.viewExpert = id;
-  S.page = null; S.sheet = null;
+  S.page = null; S.sheet = null; S.viewPerson = null;
   S.course = null; S.viewGood = null;      // иначе роутер останется на курсе или товаре
+  /* запоминаем, сколько у него материалов было в этот раз: по этому
+     числу кружок потом покажет, что вышло новое */
+  if(typeof markExpertSeen === 'function') markExpertSeen(id);
   render(); window.scrollTo(0,0);
 }
 function closeExpert(){ S.viewExpert = null; render(); window.scrollTo(0,0); }
@@ -6149,11 +6227,20 @@ function pgExpertPage(){
       <div class="mrow">
         <span class="mstat">★ ${e.rate}</span>
         <span class="mstat">${e.students.toLocaleString('ru-RU')} учениц</span>
-        <span class="mstat">${e.exp} практики</span>
+        <span class="mstat">${followCount(e.id)} подписаны</span>
       </div>
     </div>
 
     <div class="pad" style="padding-top:16px">
+      ${S.role === 'user' ? `<div class="row" style="gap:8px;margin-bottom:12px">
+        <button class="btn ${isFollowing(e.id) ? 'done' : 'acc'}" style="flex:1"
+          onclick="followExpert('${attJs(e.id)}')">
+          ${isFollowing(e.id) ? 'Вы подписаны' : 'Подписаться'}</button>
+        <button class="btn ghost" style="flex:1"
+          onclick="openSheet({k:'write',id:'${attJs(e.id)}'})">Написать</button>
+      </div>
+      <p class="small muted" style="margin:-6px 0 14px;text-align:center">
+        Подписка — про новые практики и встречи. Не чаще, чем они выходят.</p>` : ''}
       <div class="card"><b style="font-size:15px">О себе</b>
         <p class="small muted" style="margin:8px 0 0">${esc(e.about)}</p></div>
 
@@ -6410,7 +6497,8 @@ function pgMarket(){
 
     <div class="g2">
       ${items.map(g => `<div class="prod">
-        <div class="ph" onclick="openGood('${attJs(g.id)}')">${goodPic(g)}${g.f?`<div class="flag">${g.f}</div>`:''}</div>
+        <div class="ph" onclick="openGood('${attJs(g.id)}')">${goodPic(g)}${g.f?`<div class="flag">${g.f}</div>`:''}
+          <span class="starcorner">${starBtn(g.id, 14)}</span></div>
         <div class="info">
           <div class="nm">${esc(g.t)}</div>
           <div style="margin:6px 0 10px"><span class="price">${money(g.p)}</span>${g.old?`<span class="old">${money(g.old)}</span>`:''}</div>
@@ -7123,8 +7211,16 @@ function pgSettings(){
         ${avatarEl(88)}
         <button class="camera" onclick="pickAvatar()">▣</button>
       </div>
-      <input class="field" style="text-align:center" value="${esc(S.name)}" oninput="S.name=this.value||'Ева'">
+      <input class="field" style="text-align:center" value="${esc(S.name)}"
+        oninput="S.name=this.value||'Ева'" onchange="publishCard()">
       <div class="small muted">JPEG, PNG или HEIC. Сожмём без потери резкости</div>
+    </div>
+
+    <div class="sec-h"><h2 class="serif" style="font-size:18px">Моя страница</h2></div>
+    <div class="card">
+      <div class="spread"><div style="flex:1"><b style="font-size:14px">Что видят другие</b>
+        <div class="small muted" style="margin-top:2px">Город, пара слов о себе и что показывать на странице</div></div>
+        <button class="btn sm ghost" onclick="openSheet('myPage')">Открыть</button></div>
     </div>
 
     <div class="sec-h"><h2 class="serif" style="font-size:18px">Аккаунт</h2></div>
@@ -9582,7 +9678,9 @@ const BRANCHES = {
   replies:    () => S.marketReplies || [],
   reviews:    () => S.reviews || [],
   /* отметки «зашло» под посланиями дня: по записи на женщину и послание */
-  tipstars:   () => (typeof TIP_VOTES !== 'undefined' ? TIP_VOTES : [])
+  tipstars:   () => (typeof TIP_VOTES !== 'undefined' ? TIP_VOTES : []),
+  /* публичные карточки женщин: своя уезжает, чужие приходят обратно */
+  people:     () => (typeof PEOPLE !== 'undefined' ? PEOPLE : [])
 };
 
 const clean = o => JSON.parse(JSON.stringify(o));
@@ -9637,7 +9735,7 @@ let syncTimer = null;
    и отправляли. Ветка, которую эта роль всё равно не запишет, теперь просто
    не уезжает. */
 const OPEN_PUSH = ['wall','chats','groups','events','orders','questions',
-                   'support','ideas','media','reviews','avatars','tipstars'];
+                   'support','ideas','media','reviews','avatars','tipstars','people'];
 function mayPush(b){
   if(S.role === 'admin')  return true;
   if(S.role === 'expert') return b !== 'adminInfo';
@@ -9779,6 +9877,7 @@ const FIX = {
     x.by = okStr(x.by); x.mode = x.mode === 'онлайн' ? 'онлайн' : 'офлайн';
     x.d = okStr(x.d, new Date().toISOString().slice(0,10)); x.tm = okStr(x.tm, '19:00');
     x.left = okNum(x.left); x.seats = okNum(x.seats, x.left); x.price = okNum(x.price);
+    x.closed = !!x.closed;              // закрытая встреча не попадает на страницы участниц
     x.about = okStr(x.about); x.kind = okStr(x.kind, 'Встреча'); x.gallery = okArr(x.gallery);
     x.full = okStr(x.full); x.who = okStr(x.who); x.bring = okStr(x.bring);
     x.program = okArr(x.program).map(v => okStr(v)).filter(Boolean);
@@ -9800,11 +9899,24 @@ const FIX = {
                               delete cc.own; return cc; });
     return x;
   },
+  people: x => {
+    x.id = okStr(x.id).toLowerCase(); x.n = okStr(x.n, 'Женщина');
+    x.city = okStr(x.city); x.about = okStr(x.about).slice(0, 300);
+    x.since = okNum(x.since, Date.now());
+    ['ints','shelf','follows','mates','next','past'].forEach(k => {
+      x[k] = okArr(x[k]).map(v => okStr(v)).filter(Boolean).slice(0, 40);
+    });
+    x.mates = x.mates.map(v => v.toLowerCase());
+    x.showMates = x.showMates !== false;
+    x.dating = x.dating && typeof x.dating === 'object'
+      ? {goal:okStr(x.dating.goal), city:okStr(x.dating.city)} : null;
+    return x;
+  },
   plain: x => x                                   // заказы, вопросы, поддержка, идеи
 };
 
 function fixShared(sh){
-  ['lib','courses','goods','experts','events','wall'].forEach(k => {
+  ['lib','courses','goods','experts','events','wall','people'].forEach(k => {
     if(sh[k] !== undefined) sh[k] = fixList(sh[k], FIX[k]);
   });
   ['orders','questions','support','ideas','pending','replies','reviews','tipstars'].forEach(k => {
@@ -9877,6 +9989,10 @@ function applyShared(sh){
   if(Array.isArray(sh.ideas)   && sh.ideas.length)   S.ideas = sh.ideas;
   if(Array.isArray(sh.replies)) S.marketReplies = sh.replies;
   if(Array.isArray(sh.reviews)) S.reviews = sh.reviews;
+  if(Array.isArray(sh.people) && typeof PEOPLE !== 'undefined'){
+    PEOPLE.length = 0;
+    sh.people.filter(x => x && x.id).forEach(x => PEOPLE.push(x));
+  }
   if(Array.isArray(sh.tipstars)) TIP_VOTES = sh.tipstars.filter(v => v && v.id && v.k);
   /* снятые звёзды приходят пометками — свои отметки восстанавливаем по ним же */
   if(Array.isArray(sh.tipstars) && S.user && S.user.email){
@@ -10212,6 +10328,7 @@ function sheet(){
     newContent:shNewContent, editContent:shEditContent, reject:shReject, rework:shRework,
     units:shUnits, groupInfo:shGroupInfo, newGroup:shNewGroup, fix:shFix, video:shVideo,
     invite:shInvite, hello:shHello, askGroup:shAskGroup, weekSum:shWeekSum,
+    myPage:shMyPage, toMate:shToMate,
     hw:shHW, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
     install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
     service:shService, editUser:shEditUser,
@@ -11191,6 +11308,14 @@ function shNewEvent(){
       <div><label class="lbl">Время</label>
         <input class="field" id="ev_tm" type="time" value="${esc(d.tm || '19:00')}" oninput="setEvD('tm', this.value)"></div>
     </div>
+    <div class="card" style="padding:13px 15px;margin:0 0 12px">
+      <div class="spread">
+        <div style="flex:1;min-width:0"><b style="font-size:13px">Закрытая встреча</b>
+          <div class="small muted">Не попадёт на страницы участниц. Для тем,
+            о которых не говорят вслух</div></div>
+        <button class="sw ${d.closed?'on':''}" onclick="setEvD('closed', ${d.closed?'false':'true'});render()"><i></i></button>
+      </div>
+    </div>
     <label class="lbl">Формат</label>
     <div class="seg">${['офлайн','онлайн'].map(k =>
       `<button class="${d.mode===k?'on':''}" onclick="pickMode(this,'${attJs(k)}')">${k}</button>`).join('')}</div>
@@ -11300,7 +11425,7 @@ function saveEvent(){
     place:dr.place || '',
     price:+dr.price || 0,
     by:S.role === 'expert' ? me().n : 'Eva Space',
-    seats, left:seats, unlimited:!!dr.unlimited, gallery,
+    seats, left:seats, unlimited:!!dr.unlimited, closed:!!dr.closed, gallery,
     status:S.role === 'admin' ? 'live' : 'pending',
     about:dr.about || '', full:dr.full || '', program:dr.program || [],
     who:dr.who || '', bring:dr.bring || ''});
@@ -13529,6 +13654,407 @@ async function pushSync(){
     const sub = await reg.pushManager.getSubscription();
     if(!sub || Notification.permission !== 'granted'){ S.pushOn = false; schedulePersist(); }
   } catch(e){}
+}
+
+/* =====================================================================
+   СТРАНИЦЫ ЖЕНЩИН
+   У каждой женщины есть страница: не витрина и не лента её постов,
+   а карточка — кто она, что любит, с кем знакома, куда идёт.
+
+   Три правила, из которых всё остальное следует.
+
+   1. Страница показывает то, что она выбрала, и ничего из того, что
+      она делала. Ни звёзд, ни стрика, ни её посланий: мы обещали ей,
+      что её неделя сравнивается только с её прошлой, и счётчик на
+      чужой странице отменял бы это обещание за один взгляд.
+
+   2. Подписка и знакомство — разные связи. На эксперта подписываются
+      в одну сторону, и у него счётчик: это витрина, счётчик работает
+      на него. С женщиной знакомятся взаимно и без счётчика — это не
+      рейтинг популярности, а разрешение написать.
+
+   3. Чувствительное закрывается на самой встрече, а не в её
+      настройках. Женщина, которая идёт на «Развод: как пережить»,
+      в этот момент думает о разводе, а не о приватности.
+   ===================================================================== */
+
+/* Публичные карточки: своя уезжает в общие данные, чужие приходят
+   обратно. Одна запись на почту — сервер сливает список по номеру,
+   поэтому чужую карточку затереть нельзя. */
+const PEOPLE = [];
+
+const personKey = m => String(m || '').toLowerCase().trim();
+const cardOf = mail => PEOPLE.find(p => personKey(p.id) === personKey(mail)) || null;
+
+/* ---------- своя карточка ---------- */
+function myCard(){
+  const me = myMail();
+  if(!me) return null;
+  const show = S.show || {};
+  const ev = myEventsSplit();
+  return {
+    id: me,
+    n: S.name || 'Женщина',
+    city: S.city || (S.datingProfile && S.datingProfile.city) || '',
+    about: S.about || (S.datingProfile && S.datingProfile.about) || '',
+    since: S.since || (S.sub && S.sub.start) || Date.now(),
+    ints: (S.myInts || []).slice(0, 12),
+    shelf: show.shelf === false ? [] : myShelf().map(x => x.id),
+    follows: show.follows === false ? [] : (S.follows || []).slice(),
+    mates: (S.mates || []).slice(),                    // нужен всегда: по нему сервер проверяет знакомство
+    showMates: show.mates !== false,
+    next: show.next === false ? [] : ev.next.map(e => e.id),
+    past: show.past === false ? [] : ev.past.map(e => e.id),
+    dating: show.dating !== false && !!(S.datingProfile && S.datingProfile.goal)
+      ? {goal:S.datingProfile.goal, city:S.datingProfile.city || ''} : null
+  };
+}
+
+/* Её карточка уезжает после каждого изменения. Отдельной кнопки
+   «опубликовать» нет намеренно: страница должна быть свежей сама. */
+function publishCard(){
+  if(S.role && S.role !== 'user') return;   // у экспертов и админов своя страница
+  const c = myCard();
+  if(!c) return;
+  const at = PEOPLE.findIndex(p => personKey(p.id) === c.id);
+  if(at >= 0) PEOPLE[at] = c; else PEOPLE.push(c);
+  schedulePersist();
+  syncPush(['people']);
+}
+
+/* Карточка появляется сама, без кнопки «опубликовать»: как только
+   женщина вошла, её страница уже есть. Помним почту, для которой
+   отправляли, - при смене аккаунта карточка уедет заново. */
+let CARD_FOR = '';
+function ensureCard(){
+  const me = myMail && myMail();
+  if(!me || S.role !== 'user' || S.screen !== 'app' || CARD_FOR === me) return;
+  CARD_FOR = me;
+  publishCard();
+}
+
+/* ---------- что она отметила ---------- */
+/* Полка собирается из того же «Избранного», которым она уже пользуется:
+   одна звезда на всю платформу, а не отдельная кнопка «на полку».
+   Показываем не больше трёх - полка, а не склад. */
+function myShelf(){
+  return (S.likes || []).map(shelfItem).filter(Boolean).slice(0, 3);
+}
+function shelfItem(id){
+  const lib = LIB.find(x => x.id === id);
+  if(lib) return {id, kind:lib.type === 'class' ? 'Мастер-класс' : lib.type === 'affirm' ? 'Послание' : 'Практика',
+    t:lib.title, type:lib.type};
+  const c = COURSES.find(x => x.id === id);
+  if(c) return {id, kind:'Курс', t:c.t, type:'course'};
+  const g = GOODS.find(x => x.id === id);
+  if(g) return {id, kind:'Товар', t:g.t, type:'good'};
+  return null;
+}
+
+/* Звезда на курсе и на товаре: те же «Избранное» и та же полка, что
+   у практик. Возвращает разметку кнопки, чтобы не повторять её трижды. */
+function starBtn(id, size){
+  return `<span class="starbtn ${isLiked(id) ? 'on' : ''}"
+    onclick="event.stopPropagation();starContent(this,'${attJs(id)}')"
+    aria-label="В избранное">${starMark(size || 15, isLiked(id) ? '#E7A339' : 'rgba(17,16,20,.22)')}</span>`;
+}
+
+/* ---------- мероприятия ----------
+   Закрытая встреча не попадает на страницу никогда: метку ставит тот,
+   кто заводит мероприятие, и она сильнее любых её переключателей. */
+function myEventsSplit(ids){
+  const list = (ids || S.myEvents || [])
+    .map(id => EVENTS.find(e => e.id === id))
+    .filter(e => e && !e.closed);
+  const today = new Date().toISOString().slice(0, 10);
+  return {
+    next: list.filter(e => (e.d || '') >= today).sort((a,b) => (a.d||'').localeCompare(b.d||'')),
+    past: list.filter(e => (e.d || '') <  today).sort((a,b) => (b.d||'').localeCompare(a.d||''))
+  };
+}
+
+/* ---------- подписка на эксперта ---------- */
+const isFollowing = id => (S.follows || []).includes(id);
+function followExpert(id){
+  S.follows = S.follows || [];
+  const on = isFollowing(id);
+  S.follows = on ? S.follows.filter(x => x !== id) : [...S.follows, id];
+  publishCard(); render();
+  toast(on ? 'Отписалась' : 'Подписалась. Напишем, когда выйдет новое');
+}
+
+/* Кольцо вокруг кружка значит «есть новое» — иначе это украшение,
+   на которое перестают нажимать. Новое считаем по двум честным
+   признакам: материалов стало больше, чем когда она заходила, или
+   у эксперта есть ближайшая встреча, на которую она не записана. */
+function expertHasNew(id){
+  const e = EXPERTS.find(x => x.id === id);
+  if(!e) return false;
+  const seen = (S.expSeen || {})[id] || {n:0, at:0};
+  const mats = LIB.filter(x => x.expert === e.n && x.status === 'live').length;
+  if(mats > (seen.n || 0)) return true;
+  const today = new Date().toISOString().slice(0, 10);
+  return EVENTS.some(v => v.by === e.n && !v.closed && (v.d || '') >= today
+    && !(S.myEvents || []).includes(v.id));
+}
+function markExpertSeen(id){
+  const e = EXPERTS.find(x => x.id === id);
+  if(!e) return;
+  S.expSeen = S.expSeen || {};
+  S.expSeen[id] = {n: LIB.filter(x => x.expert === e.n && x.status === 'live').length, at: Date.now()};
+  schedulePersist();
+}
+
+/* Сколько женщин подписано на эксперта — считаем по их же карточкам.
+   Это витрина, и здесь счётчик уместен: он работает на него. */
+function followCount(id){
+  return PEOPLE.filter(p => (p.follows || []).includes(id)).length;
+}
+
+/* ---------- знакомство ----------
+   Взаимно: пока обе не назвали друг друга, это заявка, а не связь.
+   Сервер проверяет то же самое перед тем, как пропустить сообщение. */
+const iAdded  = mail => (S.mates || []).includes(personKey(mail));
+function sheAdded(mail){
+  const c = cardOf(mail);
+  return !!c && (c.mates || []).some(x => personKey(x) === myMail());
+}
+const areMates = mail => iAdded(mail) && sheAdded(mail);
+
+function toggleMate(mail){
+  const key = personKey(mail);
+  if(!key || key === myMail()) return;
+  S.mates = S.mates || [];
+  const on = iAdded(key);
+  S.mates = on ? S.mates.filter(x => x !== key) : [...S.mates, key];
+  publishCard(); render();
+  toast(on ? 'Убрала из знакомых'
+    : sheAdded(key) ? 'Теперь вы знакомы — можно написать'
+                    : 'Отметила. Станете знакомы, когда она ответит тем же');
+}
+
+/* ---------- переход на страницу ---------- */
+function openPerson(mail){
+  const key = personKey(mail);
+  if(!key) return;
+  if(key === myMail()){ openPage('profile'); return; }
+  S.viewPerson = key; S.page = 'person'; S.sheet = null;
+  S.viewExpert = null; S.course = null; S.viewGood = null;
+  if(S.chat) S.chat.open = null;
+  render(); window.scrollTo(0, 0);
+}
+function closePerson(){ S.viewPerson = null; S.page = null; render(); window.scrollTo(0, 0); }
+
+/* имя автора становится ссылкой только там, где мы знаем почту */
+function personLink(name, mail, cls){
+  const key = personKey(mail);
+  if(!key || key === myMail()) return esc(name || '');
+  return `<button class="plink ${cls || ''}" onclick="event.stopPropagation();openPerson('${attJs(key)}')">${esc(name || '')}</button>`;
+}
+
+/* =====================================================================
+   СТРАНИЦА
+   Порядок: шапка → действия → эксперты → интересы → полка → статус →
+   знакомые → мероприятия. Мероприятия в конце и лентой: у страницы
+   должно быть окончание, а не обрыв.
+   ===================================================================== */
+function pgPerson(){
+  const c = cardOf(S.viewPerson);
+  if(!c) return `<div class="view pad">${backBtn('Назад')}
+    <div class="empty">Страница пока не заполнена</div></div>`;
+
+  const mates = areMates(c.id);
+  const waiting = iAdded(c.id) && !sheAdded(c.id);
+  const ev = myEventsSplit([...(c.next || []), ...(c.past || [])]);
+  const shelf = (c.shelf || []).map(shelfItem).filter(Boolean);
+  const follows = (c.follows || []).map(id => EXPERTS.find(e => e.id === id)).filter(Boolean);
+  const friends = c.showMates === false ? []
+    : (c.mates || []).filter(m => (cardOf(m) || {}).mates &&
+        (cardOf(m).mates || []).some(x => personKey(x) === personKey(c.id)))
+      .map(cardOf).filter(Boolean);
+
+  return `<div class="view">
+    <div class="exphead">
+      <div class="brandbar" style="margin:0">
+        <button onclick="closePerson()" style="color:#fff;font-size:20px;width:30px;text-align:left">‹</button>
+        <div class="b">Участница</div><div style="width:30px"></div>
+      </div>
+      <div class="pcirc" style="width:92px;height:92px;margin:6px auto 0;border:2px solid rgba(255,255,255,.35)">
+        ${chatAva(c.n, authorColor(c.id), false, 92, c.id)}</div>
+      <div class="nm">${esc(c.n)}</div>
+      <div class="mrow">
+        ${c.city ? `<span class="mstat">${PIN_SVG}${esc(c.city)}</span>` : ''}
+        <span class="mstat">${sinceText(c.since)}</span>
+      </div>
+      ${c.about ? `<p class="pabout">${esc(c.about)}</p>` : ''}
+    </div>
+
+    <div class="pad" style="padding-top:16px">
+      <div class="row" style="gap:8px">
+        <button class="btn ${mates ? 'acc' : ''}" style="flex:1"
+          onclick="${mates ? `writeMate('${attJs(c.id)}')` : `toast('Написать можно той, с кем вы знакомы')`}"
+          ${mates ? '' : 'aria-disabled="true"'}>Написать</button>
+        <button class="btn ${iAdded(c.id) ? 'done' : 'ghost'}" style="flex:1"
+          onclick="toggleMate('${attJs(c.id)}')">
+          ${mates ? 'Знакомы' : waiting ? 'Ждём ответа' : 'Познакомиться'}</button>
+      </div>
+      ${!mates && waiting ? `<p class="small muted" style="margin:8px 0 0;text-align:center">
+        Она увидит это у себя. Писать можно, когда отметит в ответ.</p>` : ''}
+
+      ${circleRow('Читает', 'эксперты', follows.map(e => ({
+        id:e.id, n:e.n.split(' ')[0], mail:'', ring:expertHasNew(e.id),
+        go:`openExpert('${attJs(e.id)}')`})), 'Цветное кольцо — у неё вышло что-то новое.')}
+
+      ${(c.ints || []).length ? `<div class="psec">
+        <div class="sec-h"><h2 class="serif" style="font-size:17px">Интересы</h2></div>
+        <div class="chips wrap">${c.ints.map(t => `<span class="chip pale">${esc(t)}</span>`).join('')}</div>
+      </div>` : ''}
+
+      ${shelf.length ? `<div class="psec">
+        <div class="sec-h"><h2 class="serif" style="font-size:17px">Что я люблю</h2>
+          <span class="small muted">отмечено ею</span></div>
+        <div class="shelf">${shelf.map(x => `<button class="stile" onclick="${shelfGo(x)}">
+          <div class="cov">${cover(x.id, x.type === 'course' ? 'course' : x.type === 'good' ? 'practice' : x.type)}</div>
+          <div class="nm"><span class="kind">${esc(x.kind)}</span>${esc(x.t)}</div></button>`).join('')}</div>
+      </div>` : ''}
+
+      ${c.dating ? `<div class="psec">
+        <div class="sec-h"><h2 class="serif" style="font-size:17px">Статус</h2></div>
+        <div class="card datebox">
+          ${HEART_SVG}
+          <div style="flex:1;min-width:0"><b style="font-size:13.5px;display:block">Открыта к знакомствам</b>
+            <span class="small muted">${esc(c.dating.goal)}${c.dating.city ? ' · ' + esc(c.dating.city) : ''}</span></div>
+        </div>
+      </div>` : ''}
+
+      ${circleRow('Знакомы', plural(friends.length, 'женщина', 'женщины', 'женщин'),
+        friends.map(f => ({id:f.id, n:(f.n || '').split(' ')[0], mail:f.id, ring:false,
+          go:`openPerson('${attJs(f.id)}')`})), '')}
+
+      ${ev.next.length || ev.past.length ? `<div class="psec">
+        <div class="sec-h"><h2 class="serif" style="font-size:17px">Мероприятия</h2></div>
+        ${ev.next.length ? `<div class="eyebrow" style="margin-bottom:8px">Идёт</div>
+          <div class="evstrip">${ev.next.map(evChip).join('')}</div>` : ''}
+        ${ev.past.length ? `<div class="eyebrow" style="margin:14px 0 8px">Была раньше</div>
+          <div class="evstrip">${ev.past.map(evChip).join('')}</div>` : ''}
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+
+const PIN_SVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 0 1 13 0c0 4.5-6.5 10-6.5 10z"/><circle cx="12" cy="11" r="2.2"/></svg>`;
+const HEART_SVG = `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--accent)"
+  stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 20s-6.5-4.2-6.5-8.6A3.9 3.9 0 0 1 12 8.6a3.9 3.9 0 0 1 6.5 2.8C18.5 15.8 12 20 12 20z"/></svg>`;
+
+/* «с апреля здесь», а не «с апрель здесь»: месяц сам по себе браузер
+   отдаёт в именительном падеже, поэтому держим родительный списком. */
+const MONTHS_OF = ['января','февраля','марта','апреля','мая','июня',
+                   'июля','августа','сентября','октября','ноября','декабря'];
+function sinceText(at){
+  const d = new Date(+at || Date.now());
+  const now = new Date();
+  const year = d.getFullYear() === now.getFullYear() ? '' : ' ' + d.getFullYear();
+  return 'с ' + MONTHS_OF[d.getMonth()] + year + ' здесь';
+}
+function shelfGo(x){
+  if(x.type === 'course') return `openCourseLanding('${attJs(x.id)}')`;
+  if(x.type === 'good')   return `openGood('${attJs(x.id)}')`;
+  return `openLesson('${attJs(x.id)}')`;
+}
+
+/* Мероприятие в ленте: дата, название, место. Лента листается вбок —
+   так у страницы есть окончание, а не обрыв на середине списка. */
+function evChip(e){
+  const d = new Date(e.d);
+  return `<button class="evmini" onclick="openSheet({k:'event',id:'${attJs(e.id)}'})">
+    <div class="evdate"><b>${d.getDate()}</b><span>${d.toLocaleDateString('ru-RU',{month:'short'}).replace('.','')}</span></div>
+    <b class="evt">${esc(e.t)}</b>
+    <span class="small muted">${esc(e.city || e.mode || '')}</span>
+  </button>`;
+}
+
+/* Ряд кружков. Пустой ряд не показываем вовсе: пустой круг с надписью
+   «пока никого» выглядит как упрёк. */
+function circleRow(title, note, people, hint){
+  if(!people.length) return '';
+  const show = people.slice(0, 4), rest = people.length - show.length;
+  return `<div class="psec">
+    <div class="sec-h"><h2 class="serif" style="font-size:17px">${esc(title)}</h2>
+      <span class="small muted">${esc(note)}</span></div>
+    <div class="circles">
+      ${show.map(p => `<button class="who" onclick="${p.go}">
+        <span class="ring ${p.ring ? 'new' : ''}">${chatAva(p.n, authorColor(p.id), false, 56, p.mail)}</span>
+        <span class="wname">${esc(p.n)}</span></button>`).join('')}
+      ${rest > 0 ? `<div class="who"><span class="more">+${rest}</span>
+        <span class="wname muted">ещё</span></div>` : ''}
+    </div>
+    ${hint ? `<p class="small muted" style="margin:9px 0 0">${esc(hint)}</p>` : ''}
+  </div>`;
+}
+
+/* ---------- письмо знакомой ---------- */
+function writeMate(mail){
+  if(!areMates(mail)) return toast('Написать можно той, с кем вы знакомы');
+  openSheet({k:'toMate', id:personKey(mail)});
+}
+function shToMate(){
+  const c = cardOf(S.sheet.id);
+  if(!c) return `<div class="empty">Не нашли</div>`;
+  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Написать ${esc(c.n)}</h2>
+    <p class="small muted" style="margin:0 0 12px">Придёт ей в личные сообщения от твоего имени.</p>
+    <textarea class="field" id="tm_t" rows="5" placeholder="Что хочешь написать"></textarea>
+    <button class="btn" onclick="sendToMate('${attJs(c.id)}')">Отправить</button>`;
+}
+async function sendToMate(mail){
+  const t = (($('#tm_t') || {}).value || '').trim();
+  if(!t) return toast('Напиши пару слов');
+  const r = await apiCall('dm_send', {email:personKey(mail), text:t,
+    from:S.name || 'Участница', subject:''}, {silent:true});
+  if(!r) return toast(SYNC.lastError || 'Не отправилось');
+  S.sheet = null; render();
+  toast('Отправлено');
+}
+
+/* ---------- настройки видимости ----------
+   По умолчанию открыто всё: закрытая страница остаётся закрытой
+   навсегда — до настроек доходят единицы. Убрать можно каждый блок
+   отдельно, а не «скрыть страницу целиком». */
+const SHOW_ROWS = [
+  ['shelf',   'Что я люблю',        'Практики, курсы и товары, которые ты отметила'],
+  ['follows', 'На кого я подписана','Эксперты, которых ты читаешь'],
+  ['mates',   'С кем я знакома',    'Кружки знакомых перед мероприятиями'],
+  ['next',    'Куда я иду',         'Ближайшие встречи, на которые ты записана'],
+  ['past',    'Где я была',         'Прошедшие встречи'],
+  ['dating',  'Открыта к знакомствам', 'Город и повод — в блоке «Статус»']
+];
+function shMyPage(){
+  const show = S.show || {};
+  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Моя страница</h2>
+    <p class="small muted" style="margin:0 0 14px">Так тебя видят другие женщины и эксперты.</p>
+    <label class="lbl">Город</label>
+    <input class="field" value="${esc(S.city || '')}" placeholder="Москва"
+      oninput="S.city=this.value" onchange="publishCard()">
+    <label class="lbl">Пара слов о себе</label>
+    <textarea class="field" rows="2" placeholder="Йога по утрам, учусь говорить «нет»"
+      oninput="S.about=this.value" onchange="publishCard()">${esc(S.about || '')}</textarea>
+    <div class="card" style="margin-top:12px">
+      ${SHOW_ROWS.map(([k, t, d], i) => `<div class="uline"${i === 0 ? ' style="border:none;padding-top:0"' : ''}>
+        <div style="flex:1;min-width:0"><b style="font-size:13.5px">${esc(t)}</b>
+          <div class="small muted">${esc(d)}</div></div>
+        <button class="sw ${show[k] !== false ? 'on' : ''}" onclick="toggleShow('${attJs(k)}')"><i></i></button>
+      </div>`).join('')}
+    </div>
+    <div class="card" style="background:var(--accent-soft);border-color:transparent">
+      <b style="font-size:13px;display:block;margin-bottom:3px">Закрытые встречи не показываются никогда</b>
+      <span class="small muted">Ни в «где я была», ни в «куда я иду» — что бы ни стояло в переключателях.</span>
+    </div>
+    <button class="btn ghost" onclick="closeSheet();openPerson(myMail())">Посмотреть, как видят другие</button>`;
+}
+function toggleShow(k){
+  S.show = Object.assign({shelf:true, follows:true, mates:true, next:true, past:true, dating:true}, S.show || {});
+  S.show[k] = !(S.show[k] !== false);
+  publishCard(); render();
 }
 
 /* Все модули расставили значения по умолчанию — запоминаем чистое состояние,

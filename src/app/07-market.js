@@ -448,8 +448,16 @@ function pgSettings(){
         ${avatarEl(88)}
         <button class="camera" onclick="pickAvatar()">▣</button>
       </div>
-      <input class="field" style="text-align:center" value="${esc(S.name)}" oninput="S.name=this.value||'Ева'">
+      <input class="field" style="text-align:center" value="${esc(S.name)}"
+        oninput="S.name=this.value||'Ева'" onchange="publishCard()">
       <div class="small muted">JPEG, PNG или HEIC. Сожмём без потери резкости</div>
+    </div>
+
+    <div class="sec-h"><h2 class="serif" style="font-size:18px">Моя страница</h2></div>
+    <div class="card">
+      <div class="spread"><div style="flex:1"><b style="font-size:14px">Что видят другие</b>
+        <div class="small muted" style="margin-top:2px">Город, пара слов о себе и что показывать на странице</div></div>
+        <button class="btn sm ghost" onclick="openSheet('myPage')">Открыть</button></div>
     </div>
 
     <div class="sec-h"><h2 class="serif" style="font-size:18px">Аккаунт</h2></div>

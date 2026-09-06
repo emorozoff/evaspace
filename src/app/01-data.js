@@ -541,6 +541,10 @@ const S = {
   lastWeek:null, weekShown:true, weekMood:null, nudgedWeek:null,
   quietRun:0, askedBlock:null,
   pushOn:false, pushAsked:false,
+  /* страницы женщин: подписки на экспертов, знакомства, что показывать */
+  follows:[], mates:[], expSeen:{}, about:'', city:'',
+  show:{shelf:true, follows:true, mates:true, next:true, past:true, dating:true},
+  viewPerson:null,
   gentle:false,
   eva:[{r:'eva', t:'Я Ева. Могу рассказать, что у тебя сегодня, объяснить, почему собрана такая программа, или прочитать аффирмацию вслух.'}],
   voice:true, toast:null

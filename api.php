@@ -42,6 +42,11 @@ const TRY_WINDOW   = 900;         // за столько секунд
 
 /* разделы, куда пишет обычная пользовательница: только дополнение, без удаления */
 const OPEN_BRANCHES = ['orders', 'questions', 'support', 'wall', 'ideas', 'events', 'media', 'reviews', 'groups', 'chats', 'tipstars'];
+/* карточки участниц: номер записи — это почта, и своя запись у каждой одна.
+   Отдельно от OPEN_BRANCHES нарочно: там запись правит кто угодно, а здесь
+   чужую карточку тронуть нельзя — иначе можно было бы вписать себя
+   в чужие знакомые и тем открыть себе переписку. */
+const CARD_BRANCHES = ['people'];
 /* здесь пользовательница трогает только строку со своей почтой */
 const SELF_BRANCHES = ['avatars'];
 /* сюда пишет только администратор: эксперту тут делать нечего */
@@ -498,9 +503,18 @@ switch ($action) {
   case 'dm_send': {
     if (!$isPost) fail('Ожидается POST');
     $db = db_read();
-    $me = need_staff(user_by_token($db, $token));
+    $me = need_user(user_by_token($db, $token));
     $mail = low((string)($body['email'] ?? ''));
     $text = trim((string)($body['text'] ?? ''));
+    /* Женщина пишет только той, с кем знакома, и знакомство проверяется
+       здесь, а не в приложении: обе карточки должны называть друг друга.
+       Иначе достаточно было бы подделать запрос, чтобы писать незнакомым. */
+    if (!in_array(role_of($me), ['admin', 'expert'], true)) {
+      if (!mates_both($db, low((string)$me['email']), $mail))
+        fail('Написать можно той, с кем вы знакомы', 403);
+      if (mb_strlen($text) > 2000) fail('Сообщение длиннее 2000 символов', 413);
+      if (dm_flood($db, low((string)$me['email']))) fail('Слишком много сообщений подряд, подождите', 429);
+    }
     if ($mail === '') fail('Не указана почта получателя');
     if ($text === '') fail('Пустое сообщение');
     if (!isset($db['users'][$mail])) fail('Такого аккаунта нет', 404);
@@ -509,6 +523,7 @@ switch ($action) {
     $db['dm'][$mail] = array_slice(array_merge($db['dm'][$mail] ?? [], [[
       'id'      => 'dm' . bin2hex(random_bytes(6)),
       'from'    => mb_substr(trim((string)($body['from'] ?? 'Eva Space')), 0, 80),
+      'by'      => low((string)$me['email']),        // кто отправил — для счёта и жалоб
       'subject' => mb_substr(trim((string)($body['subject'] ?? '')), 0, 120),
       'text'    => $text,
       'at'      => time() * 1000
@@ -624,7 +639,10 @@ switch ($action) {
         fail('Раздел «' . $b . '» больше ' . round(MAX_BRANCH / 1048576) . ' МБ — не сохраняю', 413);
       }
 
-      if ($role === 'admin') {                        // администратор: полная замена
+      if (in_array($b, CARD_BRANCHES, true) && $role !== 'admin') {
+        /* эксперт участницам не хозяин: его страница живёт в разделе experts */
+        $db['shared'][$b] = merge_cards($db['shared'][$b] ?? null, $v, low((string)$me['email']));
+      } elseif ($role === 'admin') {                  // администратор: полная замена
         $db['shared'][$b] = $v;
       } elseif ($role === 'expert') {                 // эксперт: только своё
         if (in_array($b, ADMIN_BRANCHES, true))
@@ -633,6 +651,8 @@ switch ($action) {
                                          low((string)$me['email']), $db['shared'] ?? []);
       } elseif (in_array($b, OPEN_BRANCHES, true)) {   // пользовательница: дописываем, не стираем
         $db['shared'][$b] = merge_open($db['shared'][$b] ?? null, $v);
+      } elseif (in_array($b, CARD_BRANCHES, true)) {   // только своя карточка
+        $db['shared'][$b] = merge_cards($db['shared'][$b] ?? null, $v, low((string)$me['email']));
       } elseif (in_array($b, SELF_BRANCHES, true)) {   // только своя строка
         $db['shared'][$b] = merge_self($db['shared'][$b] ?? null, $v, low((string)$me['email']));
       } else {
@@ -1013,6 +1033,45 @@ function push_tick(bool $force = false): int {
   return $sent;
 }
 
+/* Знакомы ли двое: обе публичные карточки называют друг друга.
+   Односторонней записи мало — иначе «знакомство» назначалось бы в одну
+   сторону, и писать можно было бы кому угодно. */
+function mates_both(array $db, string $a, string $b): bool {
+  if ($a === '' || $b === '' || $a === $b) return false;
+  $list = $db['shared']['people'] ?? [];
+  if (!is_array($list)) return false;
+  $card = function (string $mail) use ($list) {
+    foreach ($list as $c) {
+      if (is_array($c) && low((string)($c['id'] ?? '')) === $mail) return $c;
+    }
+    return null;
+  };
+  $ca = $card($a); $cb = $card($b);
+  if (!$ca || !$cb) return false;
+  $has = function ($card, string $mail): bool {
+    $m = $card['mates'] ?? [];
+    if (!is_array($m)) return false;
+    foreach ($m as $x) { if (low((string)$x) === $mail) return true; }
+    return false;
+  };
+  return $has($ca, $b) && $has($cb, $a);
+}
+
+/* не больше двадцати личных сообщений в час от одной женщины */
+function dm_flood(array $db, string $mail): bool {
+  $edge = time() - 3600;
+  $n = 0;
+  foreach (($db['dm'] ?? []) as $box) {
+    if (!is_array($box)) continue;
+    foreach ($box as $m) {
+      if (!is_array($m)) continue;
+      if (low((string)($m['by'] ?? '')) !== $mail) continue;
+      if ((int)(($m['at'] ?? 0) / 1000) > $edge) $n++;
+    }
+  }
+  return $n >= 20;
+}
+
 /* список это или карта: список — ключи 0,1,2… подряд */
 function is_list_arr($a): bool {
   if (!is_array($a)) return false;
@@ -1086,6 +1145,26 @@ function merge_owned(array $old, array $new, string $mail): array {
 }
 
 /* Карта «почта → значение»: чужие строки не трогаем */
+/* Карточки участниц: список, где номер записи — почта хозяйки.
+   Из присланного берём ровно одну запись — её собственную. Всё остальное
+   остаётся как было, даже если клиент прислал полный список: так чужую
+   карточку нельзя ни переписать, ни удалить, ни дополнить. */
+function merge_cards($old, $new, string $mail): array {
+  $out = [];
+  foreach (is_array($old) ? $old : [] as $item) {
+    if (is_array($item) && isset($item['id'])) $out[low((string)$item['id'])] = $item;
+  }
+  if ($mail !== '' && is_array($new)) {
+    foreach ($new as $item) {
+      if (!is_array($item) || low((string)($item['id'] ?? '')) !== $mail) continue;
+      $item['id'] = $mail;                       // номер записи ставим сами
+      $out[$mail] = $item;
+      break;
+    }
+  }
+  return array_slice(array_values($out), 0, MAX_ITEMS);
+}
+
 function merge_self($old, $new, string $mail) {
   $old = is_array($old) ? $old : [];
   if (!is_array($new)) return $old;

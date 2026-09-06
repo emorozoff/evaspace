@@ -88,6 +88,7 @@ function persist(){
     nudgedWeek:S.nudgedWeek, gdraft:S.gdraft,
     quietRun:S.quietRun, askedBlock:S.askedBlock,
     pushOn:S.pushOn, pushAsked:S.pushAsked, tipStars:S.tipStars,
+    follows:S.follows, mates:S.mates, expSeen:S.expSeen, about:S.about, city:S.city, show:S.show,
     savedAt:Date.now()
   });
 }
@@ -100,7 +101,8 @@ const PERSONAL = ['name','tags','topics','time','slot','answers','extra','points
   'cycle','hd','hdAnswers','hdi','sub','week','seed','program','day','match','homework','myEvents',
   'inbox','seenReplies','seenDm','myInts','datingProfile','starred','starredCmts','likes','visits',
   'gentle','seen','tagw','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
-  'weekMood','nudgedWeek','gdraft','quietRun','askedBlock','pushOn','pushAsked','tipStars','qi','picked','eva'];
+  'weekMood','nudgedWeek','gdraft','quietRun','askedBlock','pushOn','pushAsked','tipStars','follows','mates','expSeen','about','city','show',
+  'qi','picked','eva'];
 
 let PRISTINE = null;
 /* снимок нетронутого состояния - делается один раз, при загрузке */

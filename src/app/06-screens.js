@@ -264,7 +264,7 @@ function topicRow(){
     ? (topicsFor(type) || []).filter(t => have[t.k])
         .sort((a,b) => have[b.k] - have[a.k]).slice(0, 8)
     : [];
-  const liked = (S.likes || []).length;
+  const liked = (S.likes || []).filter(id => LIB.some(x => x.id === id)).length;
   const all = !S.topicFilter && !S.onlyLiked;
   return `<div class="trow hscroll">
     <button class="tchip ${all?'on plain':''}" onclick="showAll()"><span>Все</span></button>
@@ -313,6 +313,7 @@ function starContent(btn, id){
   btn.classList.toggle('on', !on);
   btn.innerHTML = starMark(15, !on ? '#E7A339' : 'rgba(17,16,20,.22)');
   schedulePersist();
+  publishCard();                       /* полка на её странице - это те же звёзды */
   if(!on) toast('Добавлено в избранное');
 }
 const isLiked = id => (S.likes || []).includes(id);
@@ -373,6 +374,7 @@ function pgCourses(){
           <div class="badge">${esc(COURSE_KIND[c.id])}</div>
           ${rec(c) ? `<div class="badge" style="left:auto;right:12px;background:var(--grad-gold);color:var(--plum)">✦ тебе</div>` : ''}
           <div class="cap"><b>${esc(c.t)}</b><span>${esc(c.e)} · ${plural(c.n,'урок','урока','уроков')}</span></div>
+          <span class="starcorner">${starBtn(c.id, 15)}</span>
         </div>
         <div class="body">
           <p class="small muted" style="margin:0 0 10px">${esc(c.d)}</p>
@@ -392,8 +394,11 @@ function pgCourses(){
 /* ---------- страница эксперта (публичный лендинг) ---------- */
 function openExpert(id){
   S.expShown = 8; S.viewExpert = id;
-  S.page = null; S.sheet = null;
+  S.page = null; S.sheet = null; S.viewPerson = null;
   S.course = null; S.viewGood = null;      // иначе роутер останется на курсе или товаре
+  /* запоминаем, сколько у него материалов было в этот раз: по этому
+     числу кружок потом покажет, что вышло новое */
+  if(typeof markExpertSeen === 'function') markExpertSeen(id);
   render(); window.scrollTo(0,0);
 }
 function closeExpert(){ S.viewExpert = null; render(); window.scrollTo(0,0); }
@@ -418,11 +423,20 @@ function pgExpertPage(){
       <div class="mrow">
         <span class="mstat">★ ${e.rate}</span>
         <span class="mstat">${e.students.toLocaleString('ru-RU')} учениц</span>
-        <span class="mstat">${e.exp} практики</span>
+        <span class="mstat">${followCount(e.id)} подписаны</span>
       </div>
     </div>
 
     <div class="pad" style="padding-top:16px">
+      ${S.role === 'user' ? `<div class="row" style="gap:8px;margin-bottom:12px">
+        <button class="btn ${isFollowing(e.id) ? 'done' : 'acc'}" style="flex:1"
+          onclick="followExpert('${attJs(e.id)}')">
+          ${isFollowing(e.id) ? 'Вы подписаны' : 'Подписаться'}</button>
+        <button class="btn ghost" style="flex:1"
+          onclick="openSheet({k:'write',id:'${attJs(e.id)}'})">Написать</button>
+      </div>
+      <p class="small muted" style="margin:-6px 0 14px;text-align:center">
+        Подписка — про новые практики и встречи. Не чаще, чем они выходят.</p>` : ''}
       <div class="card"><b style="font-size:15px">О себе</b>
         <p class="small muted" style="margin:8px 0 0">${esc(e.about)}</p></div>
 
@@ -679,7 +693,8 @@ function pgMarket(){
 
     <div class="g2">
       ${items.map(g => `<div class="prod">
-        <div class="ph" onclick="openGood('${attJs(g.id)}')">${goodPic(g)}${g.f?`<div class="flag">${g.f}</div>`:''}</div>
+        <div class="ph" onclick="openGood('${attJs(g.id)}')">${goodPic(g)}${g.f?`<div class="flag">${g.f}</div>`:''}
+          <span class="starcorner">${starBtn(g.id, 14)}</span></div>
         <div class="info">
           <div class="nm">${esc(g.t)}</div>
           <div style="margin:6px 0 10px"><span class="price">${money(g.p)}</span>${g.old?`<span class="old">${money(g.old)}</span>`:''}</div>

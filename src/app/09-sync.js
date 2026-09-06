@@ -124,7 +124,9 @@ const BRANCHES = {
   replies:    () => S.marketReplies || [],
   reviews:    () => S.reviews || [],
   /* отметки «зашло» под посланиями дня: по записи на женщину и послание */
-  tipstars:   () => (typeof TIP_VOTES !== 'undefined' ? TIP_VOTES : [])
+  tipstars:   () => (typeof TIP_VOTES !== 'undefined' ? TIP_VOTES : []),
+  /* публичные карточки женщин: своя уезжает, чужие приходят обратно */
+  people:     () => (typeof PEOPLE !== 'undefined' ? PEOPLE : [])
 };
 
 const clean = o => JSON.parse(JSON.stringify(o));
@@ -179,7 +181,7 @@ let syncTimer = null;
    и отправляли. Ветка, которую эта роль всё равно не запишет, теперь просто
    не уезжает. */
 const OPEN_PUSH = ['wall','chats','groups','events','orders','questions',
-                   'support','ideas','media','reviews','avatars','tipstars'];
+                   'support','ideas','media','reviews','avatars','tipstars','people'];
 function mayPush(b){
   if(S.role === 'admin')  return true;
   if(S.role === 'expert') return b !== 'adminInfo';
@@ -321,6 +323,7 @@ const FIX = {
     x.by = okStr(x.by); x.mode = x.mode === 'онлайн' ? 'онлайн' : 'офлайн';
     x.d = okStr(x.d, new Date().toISOString().slice(0,10)); x.tm = okStr(x.tm, '19:00');
     x.left = okNum(x.left); x.seats = okNum(x.seats, x.left); x.price = okNum(x.price);
+    x.closed = !!x.closed;              // закрытая встреча не попадает на страницы участниц
     x.about = okStr(x.about); x.kind = okStr(x.kind, 'Встреча'); x.gallery = okArr(x.gallery);
     x.full = okStr(x.full); x.who = okStr(x.who); x.bring = okStr(x.bring);
     x.program = okArr(x.program).map(v => okStr(v)).filter(Boolean);
@@ -342,11 +345,24 @@ const FIX = {
                               delete cc.own; return cc; });
     return x;
   },
+  people: x => {
+    x.id = okStr(x.id).toLowerCase(); x.n = okStr(x.n, 'Женщина');
+    x.city = okStr(x.city); x.about = okStr(x.about).slice(0, 300);
+    x.since = okNum(x.since, Date.now());
+    ['ints','shelf','follows','mates','next','past'].forEach(k => {
+      x[k] = okArr(x[k]).map(v => okStr(v)).filter(Boolean).slice(0, 40);
+    });
+    x.mates = x.mates.map(v => v.toLowerCase());
+    x.showMates = x.showMates !== false;
+    x.dating = x.dating && typeof x.dating === 'object'
+      ? {goal:okStr(x.dating.goal), city:okStr(x.dating.city)} : null;
+    return x;
+  },
   plain: x => x                                   // заказы, вопросы, поддержка, идеи
 };
 
 function fixShared(sh){
-  ['lib','courses','goods','experts','events','wall'].forEach(k => {
+  ['lib','courses','goods','experts','events','wall','people'].forEach(k => {
     if(sh[k] !== undefined) sh[k] = fixList(sh[k], FIX[k]);
   });
   ['orders','questions','support','ideas','pending','replies','reviews','tipstars'].forEach(k => {
@@ -419,6 +435,10 @@ function applyShared(sh){
   if(Array.isArray(sh.ideas)   && sh.ideas.length)   S.ideas = sh.ideas;
   if(Array.isArray(sh.replies)) S.marketReplies = sh.replies;
   if(Array.isArray(sh.reviews)) S.reviews = sh.reviews;
+  if(Array.isArray(sh.people) && typeof PEOPLE !== 'undefined'){
+    PEOPLE.length = 0;
+    sh.people.filter(x => x && x.id).forEach(x => PEOPLE.push(x));
+  }
   if(Array.isArray(sh.tipstars)) TIP_VOTES = sh.tipstars.filter(v => v && v.id && v.k);
   /* снятые звёзды приходят пометками — свои отметки восстанавливаем по ним же */
   if(Array.isArray(sh.tipstars) && S.user && S.user.email){
