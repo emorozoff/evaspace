@@ -331,6 +331,13 @@ function evActions(m){
   if(m.act === 'openContent') return `<div class="macts">
     <button class="btn xs acc" onclick="S.thread=null;go('content')">Открыть библиотеку</button>
     <button class="btn xs" onclick="S.thread=null;go('home')">К моей неделе</button></div>`;
+  if(m.act === 'weekBlock') return `<div class="macts">${BLOCKS.map(x =>
+    `<button class="btn xs" onclick="weekBlock('${attJs(x.k)}')">${esc(x.n)}</button>`).join('')}</div>`;
+  if(m.act === 'rebuild') return `<div class="macts">
+    <button class="btn xs acc" onclick="S.thread=null;openSheet('rebuild')">Пересобрать программу</button></div>`;
+  if(m.act === 'support') return `<div class="macts">
+    <button class="btn xs acc" onclick="S.thread=null;openSheet('support')">Написать нам</button>
+    <button class="btn xs" onclick="S.thread=null;go('home')">Не сейчас</button></div>`;
   const id = m.eid;
   const tick = m.ticket ? `<div class="macts"><button class="btn xs"
     onclick="openSheet({k:'ticket',id:'${attJs(id)}'})">Показать билет</button></div>` : '';

@@ -289,6 +289,9 @@ const FIX = {
     x.id = String(x.id); x.n = okStr(x.n, 'Эксперт'); x.r = okStr(x.r);
     x.rate = okNum(x.rate, 5); x.t = okArr(x.t); x.who = okArr(x.who);
     x.ach = okArr(x.ach); x.services = okArr(x.services);
+    /* почта связывает карточку с аккаунтом, по ней же сервер понимает,
+       чьи это материалы */
+    x.email = okStr(x.email).toLowerCase();
     return x;
   },
   events: x => {
@@ -669,7 +672,9 @@ function shInstall(){
 }
 function initPWA(){
   if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js')
+      .then(() => { if(typeof pushSync === 'function') pushSync(); })
+      .catch(() => {});
   }
   if(isMobile() && !isStandalone() && !Store.get('eva_install_hidden')){
     setTimeout(() => { if(!deferredPrompt) showInstallBar(); }, 4000);

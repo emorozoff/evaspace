@@ -534,6 +534,8 @@ const S = {
   filter:'Всё', q:'', cat:'Всё',
   tour:null, tourDone:false,
   lastWeek:null, weekShown:true, weekMood:null, nudgedWeek:null,
+  quietRun:0, askedBlock:null,
+  pushOn:false, pushAsked:false,
   gentle:false,
   eva:[{r:'eva', t:'Я Ева. Могу рассказать, что у тебя сегодня, объяснить, почему собрана такая программа, или прочитать аффирмацию вслух.'}],
   voice:true, toast:null

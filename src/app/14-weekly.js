@@ -113,18 +113,72 @@ function evaSay(text, act){
 
 /* Итог недели: письмо в сообщения плюс шторка при входе.
    Вызывается из checkWeek со снимком прошедшей недели. */
+/* Что мешает — вопрос второй тихой недели.
+   Одна тихая неделя бывает у всех. Две подряд — это почти ушедшая женщина,
+   и обычным письмом её не вернуть: она его уже читала неделю назад и оно
+   не сработало. Поэтому вместо итога — короткий вопрос и три ответа,
+   каждый из которых что-то делает, а не просто записывается в метрику. */
+const BLOCKS = [
+  {k:'time',  n:'Нет времени',
+   r:'Поняла. Включаю мягкий режим: два дела в день вместо трёх, минут семь. ' +
+     'Когда станет полегче — вернём как было, это одна кнопка в настройках.'},
+  {k:'wrong', n:'Не то, что нужно',
+   r:'Спасибо, это важнее всего остального. Давай пересоберём программу — ' +
+     'ответишь заново на несколько вопросов, и я подберу другое.'},
+  {k:'hard',  n:'Тяжело сейчас',
+   r:'Спасибо, что сказала. Программа подождёт, она никуда не денется. ' +
+     'Если хочешь поговорить с живым человеком — напиши нам, мы правда отвечаем.'}
+];
+
+/* Вопрос вместо итога: пишем его на второй тихой неделе подряд и не чаще
+   раза в месяц — иначе он сам превращается в фон. */
+function askWhatBlocks(w){
+  const name = S.name || 'Ева';
+  evaSay(`${name}, вторую неделю подряд почти ничего не отмечено — и я не хочу ` +
+    `делать вид, что не заметила. Не для галочки: скажи, что мешает? ` +
+    `Я подстрою программу под ответ.`, 'weekBlock');
+  S.lastWeek = w;
+  S.weekShown = false;
+  S.weekMood = null;
+  S.askedBlock = S.week;
+}
+
+function weekBlock(k){
+  const b = BLOCKS.find(x => x.k === k);
+  if(!b) return;
+  S.weekMood = k === 'time' ? 'so-so' : 'hard';
+  const t = evaThread();
+  t.msgs.push({me:true, t:b.n, tm:nowTime()});
+  evaSay(b.r, k === 'wrong' ? 'rebuild' : (k === 'hard' ? 'support' : ''));
+  if(k === 'time') S.gentle = true;
+  S.sheet = null;
+  render(); schedulePersist();
+  toast(k === 'time' ? 'Включила мягкий режим' : 'Спасибо, что ответила');
+}
+
 function evaWeekly(w){
   if(!w || !S.user) return;
+  /* считаем тихие недели подряд: на второй разговор другой */
+  S.quietRun = w.level === 'quiet' ? (S.quietRun || 0) + 1 : 0;
+  if(S.quietRun >= 2 && (S.askedBlock === null || S.askedBlock === undefined ||
+     S.week - S.askedBlock >= 4)){
+    S.quietRun = 0;
+    return askWhatBlocks(w);
+  }
   const name = S.name || 'Ева';
   const set = WEEK_TEXT[w.level] || WEEK_TEXT.quiet;
   const lead = set[(S.week || 0) % set.length](name);
   const work = weekWork(w), topics = weekTopics(w);
 
   const lines = [lead];
-  if(w.done) lines.push(`За неделю: ${w.done} из ${w.total} дел, ${plural(w.days,'день','дня','дней')} с отметками` +
-    (w.full ? `, ${plural(w.full,'день закрыт','дня закрыты','дней закрыты')} полностью` : '') + '.');
-  if(work)   lines.push(`Ты прошла: ${work}.`);
-  if(topics) lines.push(`Больше всего — про ${topics.toLowerCase()}.`);
+  /* На тихой неделе цифры не называем. «2 из 21» — это не поддержка,
+     а счёт к оплате: она и так знает, что почти ничего не сделала. */
+  if(w.level !== 'quiet'){
+    if(w.done) lines.push(`За неделю: ${w.done} из ${w.total} дел, ${plural(w.days,'день','дня','дней')} с отметками` +
+      (w.full ? `, ${plural(w.full,'день закрыт','дня закрыты','дней закрыты')} полностью` : '') + '.');
+    if(work)   lines.push(`Ты прошла: ${work}.`);
+    if(topics) lines.push(`Больше всего — про ${topics.toLowerCase()}.`);
+  }
   lines.push(WEEK_TAIL[w.level] || WEEK_TAIL.quiet);
 
   evaSay(lines.join(' '), 'weekMood');
@@ -160,19 +214,22 @@ const nowTime = () => {
 function shWeekSum(){
   const w = S.lastWeek;
   if(!w) return `<div class="empty">Итогов пока нет</div>`;
+  if(S.askedBlock === S.week && !S.weekMood) return shWeekBlock(w);
   const work = weekWork(w), topics = weekTopics(w);
   const set = WEEK_TEXT[w.level] || WEEK_TEXT.quiet;
+  const quiet = w.level === 'quiet';
   return `<div class="wsum wsum-${w.level}">
-      <div class="wsumtop">${starMark(20, w.level === 'quiet' ? 'rgba(255,255,255,.5)' : '#E7A339')}
+      <div class="wsumtop">${starMark(20, quiet ? 'rgba(255,255,255,.5)' : '#E7A339')}
         <span>Итоги недели</span></div>
-      <div class="wsumbig">${w.done}<i>из ${w.total}</i></div>
+      ${quiet ? `<div class="wsumsub" style="margin-top:6px">Неделя вышла тихой</div>`
+              : `<div class="wsumbig">${w.done}<i>из ${w.total}</i></div>
       <div class="wsumsub">${plural(w.days,'день','дня','дней')} с отметками${
-        w.full ? ` · ${plural(w.full,'день','дня','дней')} закрыто полностью` : ''}</div>
+        w.full ? ` · ${plural(w.full,'день','дня','дней')} закрыто полностью` : ''}</div>`}
     </div>
     <p class="wsumtext">${esc(set[(S.week || 0) % set.length](S.name || 'Ева'))}</p>
-    ${work ? `<div class="uline first"><span class="small muted" style="flex:1">Прошла</span>
+    ${work && !quiet ? `<div class="uline first"><span class="small muted" style="flex:1">Прошла</span>
       <b style="font-size:13px">${esc(work)}</b></div>` : ''}
-    ${topics ? `<div class="uline"><span class="small muted" style="flex:1">Больше всего</span>
+    ${topics && !quiet ? `<div class="uline"><span class="small muted" style="flex:1">Больше всего</span>
       <b style="font-size:13px">${esc(topics)}</b></div>` : ''}
     <div class="uline"><span class="small muted" style="flex:1">Баллов всего</span>
       <b style="font-size:13px">${w.points}</b></div>
@@ -180,6 +237,21 @@ function shWeekSum(){
     <div class="eyebrow" style="margin-bottom:8px">Как прошла твоя неделя?</div>
     <div class="moods">${MOODS.map(m => `<button class="mood" onclick="weekMood('${attJs(m.k)}')">
       ${esc(m.n)}</button>`).join('')}</div>
+    ${typeof pushOffer === 'function' ? pushOffer() : ''}
+    <button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Позже</button>`;
+}
+
+/* Вторая тихая неделя: вместо цифр — вопрос. Цифры здесь были бы упрёком:
+   она и так знает, что ничего не сделала. */
+function shWeekBlock(w){
+  return `<div class="wsum wsum-quiet">
+      <div class="wsumtop">${starMark(20, 'rgba(255,255,255,.5)')}<span>Разговор</span></div>
+      <div class="wsumsub" style="margin-top:6px">Вторая тихая неделя подряд</div>
+    </div>
+    <p class="wsumtext">${esc(S.name || 'Ева')}, я не буду делать вид, что не заметила.
+      Скажи, что мешает — я подстрою программу под ответ.</p>
+    <div class="moods">${BLOCKS.map(b => `<button class="mood" onclick="weekBlock('${attJs(b.k)}')">
+      ${esc(b.n)}</button>`).join('')}</div>
     <button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Позже</button>`;
 }
 
@@ -228,6 +300,3 @@ function showWeekSum(){
   render();
 }
 
-/* Все модули расставили значения по умолчанию — запоминаем чистое состояние,
-   чтобы вход в другой аккаунт начинался с него, а не с чужих данных. */
-keepPristine();

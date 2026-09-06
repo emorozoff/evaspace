@@ -1,7 +1,7 @@
 /* Eva Space — service worker.
    Приложение открывается даже без интернета: свежая версия берётся из сети,
    а если сети нет — из кэша. */
-const VERSION = 'eva-v2';
+const VERSION = 'eva-v3';
 const BASE = new URL('./', self.location).pathname;      // /evaspace/ на GitHub Pages
 const SHELL = [BASE, BASE + 'index.html', BASE + 'manifest.json', BASE + 'icon.svg',
                BASE + 'icon-192.png', BASE + 'icon-512.png'];
@@ -55,6 +55,39 @@ self.addEventListener('fetch', (e) => {
         })
         .catch(() => cached);
       return cached || network;
+    })
+  );
+});
+
+/* =====================================================================
+   Напоминания от Евы
+   Приходят даже когда приложение закрыто. Всего два в неделю: итоги
+   в понедельник и напоминание в субботу — так обещано при подписке.
+   ===================================================================== */
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) { d = { b: e.data ? e.data.text() : '' }; }
+  const title = d.t || 'Eva Space';
+  e.waitUntil(self.registration.showNotification(title, {
+    body: d.b || '',
+    icon: BASE + 'icon-192.png',
+    badge: BASE + 'icon-192.png',
+    tag: d.k || 'eva',
+    renotify: false,
+    data: { url: d.u || BASE }
+  }));
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const want = (e.notification.data && e.notification.data.url) || BASE;
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      /* приложение уже открыто — просто выводим его вперёд */
+      for (const c of list) {
+        if (c.url.indexOf(self.location.origin) === 0 && 'focus' in c) return c.focus();
+      }
+      return self.clients.openWindow(want);
     })
   );
 });

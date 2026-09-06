@@ -1065,6 +1065,15 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .mood{flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);
   padding:11px 8px;font-size:12.5px;font-weight:600;line-height:1.25;transition:.15s}
 .mood:hover{border-color:var(--ink)}
+
+/* ---------- напоминания на телефон ---------- */
+/* Предложение включить показывается один раз, сразу после письма Евы:
+   в этот момент понятно, о чём вообще будут напоминать. */
+.pushoffer{margin-top:14px;padding:13px 15px;border-radius:14px;
+  background:var(--surface-2, #F3F0EC);border:1px solid var(--line)}
+.pushoffer b{display:block;font-size:14px;margin-bottom:4px}
+.pushoffer p{margin:0 0 10px;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.pill.on{background:#EAF2ED;color:var(--ok);border-color:transparent}
 </style>
 </head>
 <body>
@@ -1606,6 +1615,8 @@ const S = {
   filter:'Всё', q:'', cat:'Всё',
   tour:null, tourDone:false,
   lastWeek:null, weekShown:true, weekMood:null, nudgedWeek:null,
+  quietRun:0, askedBlock:null,
+  pushOn:false, pushAsked:false,
   gentle:false,
   eva:[{r:'eva', t:'Я Ева. Могу рассказать, что у тебя сегодня, объяснить, почему собрана такая программа, или прочитать аффирмацию вслух.'}],
   voice:true, toast:null
@@ -2037,6 +2048,8 @@ function persist(){
     evChain:S.evChain, evFast:S.evFast, reviews:S.reviews, tourDone:S.tourDone,
     lastWeek:S.lastWeek, weekShown:S.weekShown, weekMood:S.weekMood,
     nudgedWeek:S.nudgedWeek, gdraft:S.gdraft,
+    quietRun:S.quietRun, askedBlock:S.askedBlock,
+    pushOn:S.pushOn, pushAsked:S.pushAsked,
     savedAt:Date.now()
   });
 }
@@ -2049,7 +2062,7 @@ const PERSONAL = ['name','tags','topics','time','slot','answers','extra','points
   'cycle','hd','hdAnswers','hdi','sub','week','seed','program','day','match','homework','myEvents',
   'inbox','seenReplies','seenDm','myInts','datingProfile','starred','starredCmts','likes','visits',
   'gentle','seenClasses','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
-  'weekMood','nudgedWeek','gdraft','qi','picked','eva'];
+  'weekMood','nudgedWeek','gdraft','quietRun','askedBlock','pushOn','pushAsked','qi','picked','eva'];
 
 let PRISTINE = null;
 /* снимок нетронутого состояния - делается один раз, при загрузке */
@@ -6632,6 +6645,7 @@ function pgSettings(){
         <span style="flex:1;font-size:13.5px;font-weight:600">Показать подсказки заново</span><span class="muted">›</span></button>
       <button class="uline" style="width:100%;text-align:left" onclick="showWeekSum()">
         <span style="flex:1;font-size:13.5px;font-weight:600">Итоги недели</span><span class="muted">›</span></button>
+      ${typeof pushRow === 'function' ? pushRow() : ''}
       <div class="uline"><span class="small muted" style="flex:1">Почта поддержки</span>
         <b style="font-size:12.5px">help@evaspace.ru</b></div>
     </div>
@@ -7426,9 +7440,23 @@ async function toggleExpert(id){
   if(SYNC.alive === false) return toast('Роль меняется только при подключённом сервере');
   const r = await apiCall('grant', { email:u.m, role:next }, { silent:true });
   if(!r) return toast(SYNC.lastError || 'Не получилось поменять роль');
+  if(next === 'expert') bindExpert(u.m, u.n);
   await pullUsers();
   render();
   toast(next === 'expert' ? 'Теперь эксперт' : 'Роль эксперта снята');
+}
+
+/* Аккаунт и карточка эксперта связываются почтой. Без этой связки кабинет
+   открывался на чужом профиле, а сервер не мог понять, чьи это материалы. */
+function bindExpert(mail, name){
+  const key = String(mail || '').toLowerCase();
+  if(!key) return;
+  if(EXPERTS.some(x => String(x.email || '').toLowerCase() === key)) return;
+  const byName = EXPERTS.find(x => !x.email && x.n === name);
+  if(byName){ byName.email = key; }
+  else EXPERTS.push({id:'e' + Date.now().toString(36), n:name || 'Эксперт',
+    r:'Специализация', rate:5.0, c:'#8054B8', t:[], email:key, exp:0});
+  syncPush(['experts'], true);
 }
 
 async function removeUser(id){
@@ -8304,9 +8332,12 @@ const EXP_TABS = [
 const me = () => EXPERTS.find(e => e.id === S.expertId);
 
 function pgExpertRoom(){
-  /* если вошли под аккаунтом эксперта — открываем именно его профиль */
+  /* Кабинет открывается на своём профиле. Раньше рядом стоял список всех
+     экспертов, и любая могла работать от чужого лица — удобно в демо,
+     недопустимо на бою. Переключатель остался только у администратора. */
   if(S.user && S.user.email && !S.expertPicked){
-    const mine = EXPERTS.find(x => x.email === S.user.email) ||
+    const me2 = String(S.user.email).toLowerCase();
+    const mine = EXPERTS.find(x => String(x.email || '').toLowerCase() === me2) ||
                  EXPERTS.find(x => x.n === S.user.name);
     if(mine) S.expertId = mine.id;
     S.expertPicked = true;
@@ -8330,9 +8361,9 @@ function pgExpertRoom(){
               <circle cx="12" cy="12" r="3.2"/>
               <path d="M12 3v2.2M12 18.8V21M4.2 7.5l1.9 1.1M17.9 15.4l1.9 1.1M4.2 16.5l1.9-1.1M17.9 8.6l1.9-1.1"/></svg>
           </button>
-          <select class="mini-sel" onchange="S.expertId=this.value;render()">
+          ${S.role === 'admin' ? `<select class="mini-sel" onchange="S.expertId=this.value;render()">
             ${EXPERTS.map(x => `<option value="${x.id}" ${x.id===S.expertId?'selected':''}>${esc(x.n)}</option>`).join('')}
-          </select>
+          </select>` : ''}
         </div></div>
       <div class="row" style="position:relative;z-index:2">
         <div class="pcirc" style="width:56px;height:56px">${expPic(e)}</div>
@@ -9103,6 +9134,9 @@ const FIX = {
     x.id = String(x.id); x.n = okStr(x.n, 'Эксперт'); x.r = okStr(x.r);
     x.rate = okNum(x.rate, 5); x.t = okArr(x.t); x.who = okArr(x.who);
     x.ach = okArr(x.ach); x.services = okArr(x.services);
+    /* почта связывает карточку с аккаунтом, по ней же сервер понимает,
+       чьи это материалы */
+    x.email = okStr(x.email).toLowerCase();
     return x;
   },
   events: x => {
@@ -9483,7 +9517,9 @@ function shInstall(){
 }
 function initPWA(){
   if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js')
+      .then(() => { if(typeof pushSync === 'function') pushSync(); })
+      .catch(() => {});
   }
   if(isMobile() && !isStandalone() && !Store.get('eva_install_hidden')){
     setTimeout(() => { if(!deferredPrompt) showInstallBar(); }, 4000);
@@ -11527,6 +11563,13 @@ function evActions(m){
   if(m.act === 'openContent') return `<div class="macts">
     <button class="btn xs acc" onclick="S.thread=null;go('content')">Открыть библиотеку</button>
     <button class="btn xs" onclick="S.thread=null;go('home')">К моей неделе</button></div>`;
+  if(m.act === 'weekBlock') return `<div class="macts">${BLOCKS.map(x =>
+    `<button class="btn xs" onclick="weekBlock('${attJs(x.k)}')">${esc(x.n)}</button>`).join('')}</div>`;
+  if(m.act === 'rebuild') return `<div class="macts">
+    <button class="btn xs acc" onclick="S.thread=null;openSheet('rebuild')">Пересобрать программу</button></div>`;
+  if(m.act === 'support') return `<div class="macts">
+    <button class="btn xs acc" onclick="S.thread=null;openSheet('support')">Написать нам</button>
+    <button class="btn xs" onclick="S.thread=null;go('home')">Не сейчас</button></div>`;
   const id = m.eid;
   const tick = m.ticket ? `<div class="macts"><button class="btn xs"
     onclick="openSheet({k:'ticket',id:'${attJs(id)}'})">Показать билет</button></div>` : '';
@@ -12450,18 +12493,72 @@ function evaSay(text, act){
 
 /* Итог недели: письмо в сообщения плюс шторка при входе.
    Вызывается из checkWeek со снимком прошедшей недели. */
+/* Что мешает — вопрос второй тихой недели.
+   Одна тихая неделя бывает у всех. Две подряд — это почти ушедшая женщина,
+   и обычным письмом её не вернуть: она его уже читала неделю назад и оно
+   не сработало. Поэтому вместо итога — короткий вопрос и три ответа,
+   каждый из которых что-то делает, а не просто записывается в метрику. */
+const BLOCKS = [
+  {k:'time',  n:'Нет времени',
+   r:'Поняла. Включаю мягкий режим: два дела в день вместо трёх, минут семь. ' +
+     'Когда станет полегче — вернём как было, это одна кнопка в настройках.'},
+  {k:'wrong', n:'Не то, что нужно',
+   r:'Спасибо, это важнее всего остального. Давай пересоберём программу — ' +
+     'ответишь заново на несколько вопросов, и я подберу другое.'},
+  {k:'hard',  n:'Тяжело сейчас',
+   r:'Спасибо, что сказала. Программа подождёт, она никуда не денется. ' +
+     'Если хочешь поговорить с живым человеком — напиши нам, мы правда отвечаем.'}
+];
+
+/* Вопрос вместо итога: пишем его на второй тихой неделе подряд и не чаще
+   раза в месяц — иначе он сам превращается в фон. */
+function askWhatBlocks(w){
+  const name = S.name || 'Ева';
+  evaSay(`${name}, вторую неделю подряд почти ничего не отмечено — и я не хочу ` +
+    `делать вид, что не заметила. Не для галочки: скажи, что мешает? ` +
+    `Я подстрою программу под ответ.`, 'weekBlock');
+  S.lastWeek = w;
+  S.weekShown = false;
+  S.weekMood = null;
+  S.askedBlock = S.week;
+}
+
+function weekBlock(k){
+  const b = BLOCKS.find(x => x.k === k);
+  if(!b) return;
+  S.weekMood = k === 'time' ? 'so-so' : 'hard';
+  const t = evaThread();
+  t.msgs.push({me:true, t:b.n, tm:nowTime()});
+  evaSay(b.r, k === 'wrong' ? 'rebuild' : (k === 'hard' ? 'support' : ''));
+  if(k === 'time') S.gentle = true;
+  S.sheet = null;
+  render(); schedulePersist();
+  toast(k === 'time' ? 'Включила мягкий режим' : 'Спасибо, что ответила');
+}
+
 function evaWeekly(w){
   if(!w || !S.user) return;
+  /* считаем тихие недели подряд: на второй разговор другой */
+  S.quietRun = w.level === 'quiet' ? (S.quietRun || 0) + 1 : 0;
+  if(S.quietRun >= 2 && (S.askedBlock === null || S.askedBlock === undefined ||
+     S.week - S.askedBlock >= 4)){
+    S.quietRun = 0;
+    return askWhatBlocks(w);
+  }
   const name = S.name || 'Ева';
   const set = WEEK_TEXT[w.level] || WEEK_TEXT.quiet;
   const lead = set[(S.week || 0) % set.length](name);
   const work = weekWork(w), topics = weekTopics(w);
 
   const lines = [lead];
-  if(w.done) lines.push(`За неделю: ${w.done} из ${w.total} дел, ${plural(w.days,'день','дня','дней')} с отметками` +
-    (w.full ? `, ${plural(w.full,'день закрыт','дня закрыты','дней закрыты')} полностью` : '') + '.');
-  if(work)   lines.push(`Ты прошла: ${work}.`);
-  if(topics) lines.push(`Больше всего — про ${topics.toLowerCase()}.`);
+  /* На тихой неделе цифры не называем. «2 из 21» — это не поддержка,
+     а счёт к оплате: она и так знает, что почти ничего не сделала. */
+  if(w.level !== 'quiet'){
+    if(w.done) lines.push(`За неделю: ${w.done} из ${w.total} дел, ${plural(w.days,'день','дня','дней')} с отметками` +
+      (w.full ? `, ${plural(w.full,'день закрыт','дня закрыты','дней закрыты')} полностью` : '') + '.');
+    if(work)   lines.push(`Ты прошла: ${work}.`);
+    if(topics) lines.push(`Больше всего — про ${topics.toLowerCase()}.`);
+  }
   lines.push(WEEK_TAIL[w.level] || WEEK_TAIL.quiet);
 
   evaSay(lines.join(' '), 'weekMood');
@@ -12497,19 +12594,22 @@ const nowTime = () => {
 function shWeekSum(){
   const w = S.lastWeek;
   if(!w) return `<div class="empty">Итогов пока нет</div>`;
+  if(S.askedBlock === S.week && !S.weekMood) return shWeekBlock(w);
   const work = weekWork(w), topics = weekTopics(w);
   const set = WEEK_TEXT[w.level] || WEEK_TEXT.quiet;
+  const quiet = w.level === 'quiet';
   return `<div class="wsum wsum-${w.level}">
-      <div class="wsumtop">${starMark(20, w.level === 'quiet' ? 'rgba(255,255,255,.5)' : '#E7A339')}
+      <div class="wsumtop">${starMark(20, quiet ? 'rgba(255,255,255,.5)' : '#E7A339')}
         <span>Итоги недели</span></div>
-      <div class="wsumbig">${w.done}<i>из ${w.total}</i></div>
+      ${quiet ? `<div class="wsumsub" style="margin-top:6px">Неделя вышла тихой</div>`
+              : `<div class="wsumbig">${w.done}<i>из ${w.total}</i></div>
       <div class="wsumsub">${plural(w.days,'день','дня','дней')} с отметками${
-        w.full ? ` · ${plural(w.full,'день','дня','дней')} закрыто полностью` : ''}</div>
+        w.full ? ` · ${plural(w.full,'день','дня','дней')} закрыто полностью` : ''}</div>`}
     </div>
     <p class="wsumtext">${esc(set[(S.week || 0) % set.length](S.name || 'Ева'))}</p>
-    ${work ? `<div class="uline first"><span class="small muted" style="flex:1">Прошла</span>
+    ${work && !quiet ? `<div class="uline first"><span class="small muted" style="flex:1">Прошла</span>
       <b style="font-size:13px">${esc(work)}</b></div>` : ''}
-    ${topics ? `<div class="uline"><span class="small muted" style="flex:1">Больше всего</span>
+    ${topics && !quiet ? `<div class="uline"><span class="small muted" style="flex:1">Больше всего</span>
       <b style="font-size:13px">${esc(topics)}</b></div>` : ''}
     <div class="uline"><span class="small muted" style="flex:1">Баллов всего</span>
       <b style="font-size:13px">${w.points}</b></div>
@@ -12517,6 +12617,21 @@ function shWeekSum(){
     <div class="eyebrow" style="margin-bottom:8px">Как прошла твоя неделя?</div>
     <div class="moods">${MOODS.map(m => `<button class="mood" onclick="weekMood('${attJs(m.k)}')">
       ${esc(m.n)}</button>`).join('')}</div>
+    ${typeof pushOffer === 'function' ? pushOffer() : ''}
+    <button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Позже</button>`;
+}
+
+/* Вторая тихая неделя: вместо цифр — вопрос. Цифры здесь были бы упрёком:
+   она и так знает, что ничего не сделала. */
+function shWeekBlock(w){
+  return `<div class="wsum wsum-quiet">
+      <div class="wsumtop">${starMark(20, 'rgba(255,255,255,.5)')}<span>Разговор</span></div>
+      <div class="wsumsub" style="margin-top:6px">Вторая тихая неделя подряд</div>
+    </div>
+    <p class="wsumtext">${esc(S.name || 'Ева')}, я не буду делать вид, что не заметила.
+      Скажи, что мешает — я подстрою программу под ответ.</p>
+    <div class="moods">${BLOCKS.map(b => `<button class="mood" onclick="weekBlock('${attJs(b.k)}')">
+      ${esc(b.n)}</button>`).join('')}</div>
     <button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Позже</button>`;
 }
 
@@ -12563,6 +12678,179 @@ function showWeekSum(){
   if(!S.lastWeek) S.lastWeek = weekSnapshot();
   S.page = null; S.sheet = 'weekSum';
   render();
+}
+
+/* =====================================================================
+   НАПОМИНАНИЯ НА ТЕЛЕФОН
+   Письмо от Евы лежит в приложении и ждёт, пока женщина зайдёт сама.
+   А не заходят как раз те, кого мы теряем. Уведомление достаёт их —
+   но только пока ему верят, поэтому обещание здесь жёсткое и одно:
+   не чаще двух раз в неделю и только от Евы. Итоги в понедельник,
+   напоминание в субботу. Ничего про акции, курсы и мероприятия.
+
+   Как это устроено технически. Приложение ставится на экран телефона —
+   это и есть «веб-версия», отдельного приложения из магазина не нужно.
+   На Android и в Chrome уведомления работают и во вкладке. На iPhone,
+   начиная с iOS 16.4, — только у приложения, добавленного на экран
+   «Домой»: во вкладке Safari кнопки разрешения просто нет. Поэтому
+   на айфоне сначала предлагаем поставить, а разрешение спрашиваем уже
+   внутри установленного приложения.
+   ===================================================================== */
+
+const PUSH_PROMISE = 'Не чаще двух раз в неделю и только от Евы: итоги в понедельник ' +
+  'и напоминание в субботу. Ни акций, ни рекламы курсов — это обещание.';
+
+let pushKey = null;                       // публичный ключ сервера, берём один раз
+
+const pushApi = () => 'serviceWorker' in navigator &&
+  'PushManager' in window && 'Notification' in window;
+
+/* Почему нельзя — человеческим языком, а не «not supported» */
+function pushWhy(){
+  if(!window.isSecureContext && location.protocol !== 'http:')
+    return 'Уведомления работают только на защищённом соединении (https)';
+  if(isIOS() && !isStandalone())
+    return 'На айфоне уведомления приходят приложению с экрана «Домой». Поставь Eva Space — и вернись сюда';
+  if(!pushApi())
+    return 'Этот браузер уведомления не умеет. Попробуй Chrome или Safari';
+  if(Notification.permission === 'denied')
+    return 'Уведомления запрещены в настройках телефона. Разреши их для Eva Space и вернись';
+  return '';
+}
+
+/* off — можно включить, on — включены, no — нельзя и почему */
+function pushState(){
+  if(!S.user) return 'no';
+  if(pushWhy()) return 'no';
+  if(Notification.permission !== 'granted') return 'off';
+  return S.pushOn ? 'on' : 'off';
+}
+
+const b64ToBytes = s => {
+  const pad = '='.repeat((4 - s.length % 4) % 4);
+  const raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+};
+
+async function pushServerKey(){
+  if(pushKey) return pushKey;
+  const r = await apiCall('push_key', null, {silent:true});
+  pushKey = r && r.key ? r.key : null;
+  return pushKey;
+}
+
+/* Включение. Вызывается только по нажатию — иначе браузер не покажет
+   запрос разрешения, а на айфоне просто откажет. */
+async function pushOn(){
+  const why = pushWhy();
+  if(why){
+    if(isIOS() && !isStandalone()) return openSheet('install');
+    return toast(why);
+  }
+  if(SYNC.alive === false) return toast('Нужен сервер: без него напоминание некому отправить');
+
+  let perm = Notification.permission;
+  if(perm !== 'granted') perm = await Notification.requestPermission();
+  if(perm !== 'granted'){
+    render();
+    return toast(perm === 'denied' ? 'Уведомления запрещены — можно разрешить в настройках телефона'
+                                   : 'Хорошо, не буду напоминать');
+  }
+
+  const key = await pushServerKey();
+  if(!key) return toast('Сервер не отдал ключ — попробуй позже');
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub) sub = await reg.pushManager.subscribe(
+      {userVisibleOnly:true, applicationServerKey:b64ToBytes(key)});
+    const j = sub.toJSON();
+    const r = await apiCall('push_save', {
+      endpoint: sub.endpoint,
+      p256dh: (j.keys || {}).p256dh || '',
+      auth:   (j.keys || {}).auth || ''
+    }, {silent:true});
+    if(!r) return toast('Не получилось сохранить — попробуй ещё раз');
+    S.pushOn = true; schedulePersist(); render();
+    toast('Договорились. Ева напишет в понедельник');
+  } catch(e){
+    console.error('[Eva] уведомления:', e);
+    toast('Телефон не дал подписаться на уведомления');
+  }
+}
+
+async function pushOff(){
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if(sub){
+      await apiCall('push_drop', {endpoint: sub.endpoint}, {silent:true});
+      await sub.unsubscribe();
+    } else {
+      await apiCall('push_drop', {endpoint: ''}, {silent:true});
+    }
+  } catch(e){}
+  S.pushOn = false; schedulePersist(); render();
+  toast('Больше не напоминаю');
+}
+
+function pushToggle(){ return S.pushOn ? pushOff() : pushOn(); }
+
+/* Проверка «дошло или нет»: женщина нажимает сама и видит уведомление
+   своими глазами. Без этого включение — акт веры. */
+async function pushCheck(){
+  const r = await apiCall('push_test', {}, {silent:true});
+  if(!r) return toast('Не получилось — проверь связь');
+  toast(r.sent ? 'Отправила, посмотри на экран телефона'
+               : 'Ни одного устройства не подписано');
+}
+
+/* ---------- где предлагаем ---------- */
+
+/* Строка в настройках: всегда честная — и когда включено, и когда нельзя */
+function pushRow(){
+  if(!S.user || S.role !== 'user') return '';
+  const st = pushState();
+  const why = pushWhy();
+  return `<button class="uline" style="width:100%;text-align:left" onclick="${
+      st === 'no' ? (isIOS() && !isStandalone() ? "openSheet('install')" : "toast('" + attJs(why) + "')")
+                  : 'pushToggle()'}">
+      <span style="flex:1;font-size:13.5px;font-weight:600">Напоминания от Евы
+        <span class="small muted" style="display:block;font-weight:400;margin-top:2px">${
+          st === 'on' ? 'Включены · два раза в неделю' : (why || 'Итоги недели и напоминание в субботу')}</span></span>
+      <span class="${st === 'on' ? 'pill on' : 'muted'}">${st === 'on' ? 'вкл' : (st === 'no' ? '' : '›')}</span></button>
+    ${st === 'on' ? `<button class="uline" style="width:100%;text-align:left" onclick="pushCheck()">
+      <span style="flex:1;font-size:13.5px">Проверить, доходят ли</span><span class="muted">›</span></button>` : ''}`;
+}
+
+/* Предложение включить — один раз и в правильный момент: сразу после
+   того, как она прочитала первое письмо Евы про неделю. Раньше просить
+   рано: непонятно, о чём вообще будут напоминать. */
+function pushOffer(){
+  if(S.pushAsked || S.pushOn) return '';
+  if(!S.user || S.role !== 'user') return '';
+  if(pushWhy() && !(isIOS() && !isStandalone())) return '';
+  return `<div class="pushoffer">
+      <b>Присылать это на телефон?</b>
+      <p>${esc(PUSH_PROMISE)}</p>
+      <div class="row" style="gap:8px">
+        <button class="btn xs acc" onclick="pushFromOffer()">Присылать</button>
+        <button class="btn xs" onclick="pushNoThanks()">Не надо</button>
+      </div>
+    </div>`;
+}
+function pushFromOffer(){ S.pushAsked = true; schedulePersist(); pushOn(); }
+function pushNoThanks(){ S.pushAsked = true; schedulePersist(); render(); toast('Хорошо, не буду'); }
+
+/* при входе восстанавливаем отметку: подписка могла отвалиться сама */
+async function pushSync(){
+  if(!S.pushOn || !pushApi()) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if(!sub || Notification.permission !== 'granted'){ S.pushOn = false; schedulePersist(); }
+  } catch(e){}
 }
 
 /* Все модули расставили значения по умолчанию — запоминаем чистое состояние,

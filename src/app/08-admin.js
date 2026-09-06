@@ -303,9 +303,23 @@ async function toggleExpert(id){
   if(SYNC.alive === false) return toast('Роль меняется только при подключённом сервере');
   const r = await apiCall('grant', { email:u.m, role:next }, { silent:true });
   if(!r) return toast(SYNC.lastError || 'Не получилось поменять роль');
+  if(next === 'expert') bindExpert(u.m, u.n);
   await pullUsers();
   render();
   toast(next === 'expert' ? 'Теперь эксперт' : 'Роль эксперта снята');
+}
+
+/* Аккаунт и карточка эксперта связываются почтой. Без этой связки кабинет
+   открывался на чужом профиле, а сервер не мог понять, чьи это материалы. */
+function bindExpert(mail, name){
+  const key = String(mail || '').toLowerCase();
+  if(!key) return;
+  if(EXPERTS.some(x => String(x.email || '').toLowerCase() === key)) return;
+  const byName = EXPERTS.find(x => !x.email && x.n === name);
+  if(byName){ byName.email = key; }
+  else EXPERTS.push({id:'e' + Date.now().toString(36), n:name || 'Эксперт',
+    r:'Специализация', rate:5.0, c:'#8054B8', t:[], email:key, exp:0});
+  syncPush(['experts'], true);
 }
 
 async function removeUser(id){
@@ -1181,9 +1195,12 @@ const EXP_TABS = [
 const me = () => EXPERTS.find(e => e.id === S.expertId);
 
 function pgExpertRoom(){
-  /* если вошли под аккаунтом эксперта — открываем именно его профиль */
+  /* Кабинет открывается на своём профиле. Раньше рядом стоял список всех
+     экспертов, и любая могла работать от чужого лица — удобно в демо,
+     недопустимо на бою. Переключатель остался только у администратора. */
   if(S.user && S.user.email && !S.expertPicked){
-    const mine = EXPERTS.find(x => x.email === S.user.email) ||
+    const me2 = String(S.user.email).toLowerCase();
+    const mine = EXPERTS.find(x => String(x.email || '').toLowerCase() === me2) ||
                  EXPERTS.find(x => x.n === S.user.name);
     if(mine) S.expertId = mine.id;
     S.expertPicked = true;
@@ -1207,9 +1224,9 @@ function pgExpertRoom(){
               <circle cx="12" cy="12" r="3.2"/>
               <path d="M12 3v2.2M12 18.8V21M4.2 7.5l1.9 1.1M17.9 15.4l1.9 1.1M4.2 16.5l1.9-1.1M17.9 8.6l1.9-1.1"/></svg>
           </button>
-          <select class="mini-sel" onchange="S.expertId=this.value;render()">
+          ${S.role === 'admin' ? `<select class="mini-sel" onchange="S.expertId=this.value;render()">
             ${EXPERTS.map(x => `<option value="${x.id}" ${x.id===S.expertId?'selected':''}>${esc(x.n)}</option>`).join('')}
-          </select>
+          </select>` : ''}
         </div></div>
       <div class="row" style="position:relative;z-index:2">
         <div class="pcirc" style="width:56px;height:56px">${expPic(e)}</div>

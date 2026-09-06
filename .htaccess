@@ -46,7 +46,7 @@ DirectoryIndex index.html
 </Files>
 
 # закрываем служебные файлы: база, её копия, настройки с почтами администраторов
-<FilesMatch "^(db\.json|db\.backup\.json|db\.json\.tmp|config\.php|\.write-test)$">
+<FilesMatch "^(db\.json|db\.backup\.json|db\.json\.tmp|config\.php|push\.json|\.write-test)$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

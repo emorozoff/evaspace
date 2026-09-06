@@ -44,6 +44,19 @@ const TRY_WINDOW   = 900;         // за столько секунд
 const OPEN_BRANCHES = ['orders', 'questions', 'support', 'wall', 'ideas', 'events', 'media', 'reviews', 'groups', 'chats'];
 /* здесь пользовательница трогает только строку со своей почтой */
 const SELF_BRANCHES = ['avatars'];
+/* сюда пишет только администратор: эксперту тут делать нечего */
+const ADMIN_BRANCHES = ['adminInfo'];
+/* ---------- напоминания на телефон ----------
+   Объявлено здесь, а не рядом с самими функциями: константы в PHP
+   появляются по ходу выполнения файла, а расписание дёргается из
+   обработчика выше по тексту. */
+const PUSH_FILE    = DATA_DIR . '/push.json';
+const PUSH_TICK    = 600;         // не чаще раза в десять минут проверяем расписание
+const PUSH_TTL     = 172800;      // двое суток на доставку
+/* обратный адрес в подписи уведомлений — его требует стандарт */
+const PUSH_CONTACT = 'help@evaspace.ru';
+/* карты, ключ которых — номер курса: право на ключ равно праву на курс */
+const COURSE_MAPS = ['lessons', 'modules', 'courseInfo', 'courseTags', 'courseKind'];
 
 /* ---------- служебное ---------- */
 function low(string $s): string {
@@ -292,6 +305,7 @@ switch ($action) {
 
   /* только номер версии данных — несколько байт вместо всей базы */
   case 'rev': {
+    push_tick();
     if (file_exists(REV_FILE)) {
       $raw = explode(' ', trim((string)@file_get_contents(REV_FILE)));
       if (isset($raw[0]) && $raw[0] !== '') ok(['rev' => (int)$raw[0], 'updated' => (int)($raw[1] ?? 0)]);
@@ -512,6 +526,62 @@ switch ($action) {
     ok(['dm' => $db['dm'][$mail] ?? []]);
   }
 
+  /* ---------- напоминания на телефон ---------- */
+  case 'push_key': {
+    ok(['key' => push_keys()['pub'], 'contact' => PUSH_CONTACT]);
+  }
+  case 'push_save': {
+    if (!$isPost) fail('Ожидается POST');
+    $db = db_read();
+    $me = need_user(user_by_token($db, $token));
+    $mail = low((string)$me['email']);
+    $ep = (string)($body['endpoint'] ?? '');
+    $p256 = (string)($body['p256dh'] ?? '');
+    $auth = (string)($body['auth'] ?? '');
+    if ($ep === '' || $p256 === '' || $auth === '') fail('Неполная подписка');
+    if (!preg_match('~^https://~', $ep)) fail('Подписка должна быть по https');
+
+    $p = push_read();
+    $list = $p['subs'][$mail] ?? [];
+    $list = array_values(array_filter(is_array($list) ? $list : [],
+      fn($s) => ($s['endpoint'] ?? '') !== $ep));          // то же устройство не двоим
+    $list[] = ['endpoint' => $ep, 'p256dh' => $p256, 'auth' => $auth, 'at' => time()];
+    $p['subs'][$mail] = array_slice($list, -5);            // пять устройств на женщину
+    push_write($p);
+    ok(['devices' => count($p['subs'][$mail])]);
+  }
+  case 'push_drop': {
+    if (!$isPost) fail('Ожидается POST');
+    $db = db_read();
+    $me = need_user(user_by_token($db, $token));
+    $mail = low((string)$me['email']);
+    $ep = (string)($body['endpoint'] ?? '');
+    $p = push_read();
+    if ($ep === '') unset($p['subs'][$mail]);
+    else {
+      $list = array_values(array_filter($p['subs'][$mail] ?? [],
+        fn($s) => ($s['endpoint'] ?? '') !== $ep));
+      if ($list) $p['subs'][$mail] = $list; else unset($p['subs'][$mail]);
+    }
+    push_write($p);
+    ok(['devices' => count($p['subs'][$mail] ?? [])]);
+  }
+  /* проверка «дошло или нет» — женщина нажимает сама у себя в настройках */
+  case 'push_test': {
+    $db = db_read();
+    $me = need_user(user_by_token($db, $token));
+    $n = push_to(low((string)$me['email']), [
+      't' => 'Проверка связи',
+      'b' => 'Так будут выглядеть напоминания от Евы. Не чаще двух раз в неделю.',
+      'u' => '/'
+    ]);
+    ok(['sent' => $n]);
+  }
+  /* расписание вручную или по cron */
+  case 'push_tick': {
+    ok(['sent' => push_tick(true)]);
+  }
+
   /* ---------- личный прогресс ---------- */
   case 'progress_get': {
     $db = db_read();
@@ -540,7 +610,6 @@ switch ($action) {
     $db = db_read();
     $me = need_user(user_by_token($db, $token));
     $role = role_of($me);
-    $staff = in_array($role, ['admin', 'expert'], true);
 
     $parts = $body['parts'] ?? null;
     if ($parts === null && isset($body['branch'])) $parts = [$body['branch'] => $body['value']];
@@ -555,8 +624,13 @@ switch ($action) {
         fail('Раздел «' . $b . '» больше ' . round(MAX_BRANCH / 1048576) . ' МБ — не сохраняю', 413);
       }
 
-      if ($staff) {                                   // редактор: полная замена, можно и удалять
+      if ($role === 'admin') {                        // администратор: полная замена
         $db['shared'][$b] = $v;
+      } elseif ($role === 'expert') {                 // эксперт: только своё
+        if (in_array($b, ADMIN_BRANCHES, true))
+          fail('Раздел «' . $b . '» меняет только администратор', 403);
+        $db['shared'][$b] = merge_expert($b, $db['shared'][$b] ?? null, $v,
+                                         low((string)$me['email']), $db['shared'] ?? []);
       } elseif (in_array($b, OPEN_BRANCHES, true)) {   // пользовательница: дописываем, не стираем
         $db['shared'][$b] = merge_open($db['shared'][$b] ?? null, $v);
       } elseif (in_array($b, SELF_BRANCHES, true)) {   // только своя строка
@@ -688,6 +762,327 @@ function merge_open($old, $new) {
     $out[$key] = $item;
   }
   return array_slice(array_values($out), 0, MAX_ITEMS);
+}
+
+/* =====================================================================
+   Слияние данных для эксперта
+   Раньше эксперт считался редактором наравне с администратором и заменял
+   раздел целиком — значит, мог переписать и стереть курсы, материалы и
+   мероприятия коллеги. Теперь он распоряжается только своими записями.
+
+   Правило простое и предсказуемое:
+   · запись без хозяина (демо-контент, заведённое администратором) —
+     доступна любому эксперту, как и раньше;
+   · запись с хозяином — только ему; чужая правка молча отбрасывается,
+     на сервере остаётся прежняя версия;
+   · новая запись получает хозяина здесь, на сервере, а не со слов клиента:
+     подделать поле «хозяин» нельзя;
+   · пропала из присланного списка — удаляем, только если она его.
+   ===================================================================== */
+/* =====================================================================
+   НАПОМИНАНИЯ НА ТЕЛЕФОН (Web Push)
+   Женщина ставит приложение на экран телефона и разрешает уведомления —
+   дальше письма Евы доходят до неё, даже когда приложение закрыто.
+   Работает по стандарту Web Push: Chrome и Android через свой сервис,
+   iPhone начиная с 16.4 — но только у приложения, добавленного на экран
+   «Домой», не у вкладки в Safari.
+
+   Обещание при подписке — не чаще двух раз в неделю и только от Евы:
+   итоги в понедельник и напоминание в субботу. Ничего рекламного здесь
+   не отправляется намеренно: один такой пуш отменяет согласие на все
+   остальные.
+   ===================================================================== */
+function b64u(string $bin): string {
+  return rtrim(strtr(base64_encode($bin), '+/', '-_'), '=');
+}
+function b64u_dec(string $s): string {
+  $s = strtr($s, '-_', '+/');
+  $pad = strlen($s) % 4;
+  if ($pad) $s .= str_repeat('=', 4 - $pad);
+  return base64_decode($s) ?: '';
+}
+
+function push_read(): array {
+  $j = file_exists(PUSH_FILE) ? json_decode(@file_get_contents(PUSH_FILE) ?: '', true) : null;
+  if (!is_array($j)) $j = [];
+  return $j + ['keys' => null, 'subs' => [], 'sent' => [], 'tick' => 0];
+}
+function push_write(array $p): void {
+  @file_put_contents(PUSH_FILE, json_encode($p, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
+  @chmod(PUSH_FILE, 0600);
+}
+
+/* Пара ключей VAPID — подпись, по которой Google и Apple понимают, что
+   это мы. Заводится сама при первом обращении и лежит только на сервере. */
+function push_keys(): array {
+  $p = push_read();
+  if (is_array($p['keys']) && !empty($p['keys']['priv'])) return $p['keys'];
+
+  $res = openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
+  if (!$res) fail('Не получилось завести ключи для уведомлений', 500);
+  $d = openssl_pkey_get_details($res);
+  $pub = "\x04" . str_pad($d['ec']['x'], 32, "\0", STR_PAD_LEFT)
+                . str_pad($d['ec']['y'], 32, "\0", STR_PAD_LEFT);
+  $p['keys'] = ['pub' => b64u($pub), 'priv' => b64u(str_pad($d['ec']['d'], 32, "\0", STR_PAD_LEFT))];
+  push_write($p);
+  return $p['keys'];
+}
+
+/* приватный ключ из «сырых» 32 байт — в вид, понятный openssl */
+function push_priv_key(string $rawPriv, string $rawPub) {
+  $seq = "\x30\x77\x02\x01\x01\x04\x20" . $rawPriv
+       . "\xa0\x0a\x06\x08\x2a\x86\x48\xce\x3d\x03\x01\x07"
+       . "\xa1\x44\x03\x42\x00" . $rawPub;
+  $pem = "-----BEGIN EC PRIVATE KEY-----\n" .
+         chunk_split(base64_encode($seq), 64, "\n") .
+         "-----END EC PRIVATE KEY-----\n";
+  return openssl_pkey_get_private($pem);
+}
+
+/* подпись ES256: openssl отдаёт DER, а JWT ждёт две половинки по 32 байта */
+function der_to_raw(string $der): string {
+  $o = 3; if (ord($der[1]) > 0x80) $o++;
+  $lr = ord($der[$o]); $o++;
+  $r = ltrim(substr($der, $o, $lr), "\0"); $o += $lr + 1;
+  $ls = ord($der[$o]); $o++;
+  $s = ltrim(substr($der, $o, $ls), "\0");
+  return str_pad($r, 32, "\0", STR_PAD_LEFT) . str_pad($s, 32, "\0", STR_PAD_LEFT);
+}
+
+function push_jwt(string $origin, array $keys): string {
+  $head = b64u(json_encode(['typ' => 'JWT', 'alg' => 'ES256']));
+  $body = b64u(json_encode([
+    'aud' => $origin,
+    'exp' => time() + 12 * 3600,
+    'sub' => 'mailto:' . PUSH_CONTACT
+  ]));
+  $pk = push_priv_key(b64u_dec($keys['priv']), b64u_dec($keys['pub']));
+  $sig = '';
+  openssl_sign($head . '.' . $body, $sig, $pk, OPENSSL_ALGO_SHA256);
+  return $head . '.' . $body . '.' . b64u(der_to_raw($sig));
+}
+
+/* Шифрование тела по RFC 8291: без него сервис доставки увидел бы текст. */
+function push_encrypt(string $payload, string $p256dh, string $auth): array {
+  $clientPub = b64u_dec($p256dh);
+  $authSecret = b64u_dec($auth);
+
+  $me = openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
+  $d = openssl_pkey_get_details($me);
+  $myPub = "\x04" . str_pad($d['ec']['x'], 32, "\0", STR_PAD_LEFT)
+                  . str_pad($d['ec']['y'], 32, "\0", STR_PAD_LEFT);
+
+  $peerPem = ec_pub_pem($clientPub);
+  $peer = openssl_pkey_get_public($peerPem);
+  if (!$peer) return ['', ''];
+  $shared = openssl_pkey_derive($peer, $me, 32);
+  if (!$shared) return ['', ''];
+
+  $salt = random_bytes(16);
+  $info = "WebPush: info\0" . $clientPub . $myPub;
+  $ikm  = hash_hkdf('sha256', $shared, 32, $info, $authSecret);
+  $cek  = hash_hkdf('sha256', $ikm, 16, "Content-Encoding: aes128gcm\0", $salt);
+  $nonce = hash_hkdf('sha256', $ikm, 12, "Content-Encoding: nonce\0", $salt);
+
+  $tag = '';
+  $ct = openssl_encrypt($payload . "\x02", 'aes-128-gcm', $cek, OPENSSL_RAW_DATA, $nonce, $tag);
+  $head = $salt . pack('N', 4096) . chr(strlen($myPub)) . $myPub;
+  return [$head . $ct . $tag, ''];
+}
+
+/* публичный ключ из 65 «сырых» байт — в PEM */
+function ec_pub_pem(string $raw): string {
+  $der = "\x30\x59\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01"
+       . "\x06\x08\x2a\x86\x48\xce\x3d\x03\x01\x07\x03\x42\x00" . $raw;
+  return "-----BEGIN PUBLIC KEY-----\n" .
+         chunk_split(base64_encode($der), 64, "\n") .
+         "-----END PUBLIC KEY-----\n";
+}
+
+/* Одно уведомление одной подписке. Возвращает код ответа сервиса:
+   404 и 410 значат, что подписки больше нет — её надо забыть. */
+function push_one(array $sub, array $msg, array $keys): int {
+  $ep = (string)($sub['endpoint'] ?? '');
+  if ($ep === '' || !function_exists('curl_init')) return 0;
+  $u = parse_url($ep);
+  if (!$u || empty($u['host'])) return 0;
+  $origin = $u['scheme'] . '://' . $u['host'];
+
+  [$body] = push_encrypt(json_encode($msg, JSON_UNESCAPED_UNICODE),
+                         (string)($sub['p256dh'] ?? ''), (string)($sub['auth'] ?? ''));
+  if ($body === '') return 0;
+
+  $ch = curl_init($ep);
+  curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_TIMEOUT => 10,
+    CURLOPT_POSTFIELDS => $body,
+    CURLOPT_HTTPHEADER => [
+      'TTL: ' . PUSH_TTL,
+      'Content-Type: application/octet-stream',
+      'Content-Encoding: aes128gcm',
+      'Urgency: normal',
+      'Authorization: vapid t=' . push_jwt($origin, $keys) . ', k=' . $keys['pub']
+    ]
+  ]);
+  curl_exec($ch);
+  $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  curl_close($ch);
+  return $code;
+}
+
+/* Все устройства одной женщины. Отвалившиеся подписки убираем. */
+function push_to(string $mail, array $msg): int {
+  $p = push_read();
+  $keys = push_keys();
+  $list = $p['subs'][$mail] ?? [];
+  if (!is_array($list) || !$list) return 0;
+  $left = []; $sent = 0;
+  foreach ($list as $sub) {
+    $code = push_one($sub, $msg, $keys);
+    if ($code === 404 || $code === 410) continue;      // устройство отписалось
+    $left[] = $sub;
+    if ($code >= 200 && $code < 300) $sent++;
+  }
+  $p = push_read();                                     // перечитываем: могли добавиться
+  $p['subs'][$mail] = $left;
+  if (!$left) unset($p['subs'][$mail]);
+  push_write($p);
+  return $sent;
+}
+
+/* ---------- расписание ----------
+   Настоящего планировщика на дешёвом хостинге может не быть, поэтому
+   расписание подтягивается любым обращением к серверу, но не чаще раза
+   в десять минут. Если на хостинге есть cron — можно дёргать
+   api.php?action=push_tick, и тогда время будет точнее. */
+function push_due(array $prog, int $wday, int $hour): ?array {
+  $week = (int)date('W');
+  if ($wday === 1 && $hour >= 9)  return ['k' => 'week',  'w' => $week];
+  if ($wday === 6 && $hour >= 11) return ['k' => 'nudge', 'w' => $week];
+  return null;
+}
+
+/* сколько дел в её программе ещё не отмечено */
+function push_left(array $prog): array {
+  $all = 0; $left = 0;
+  foreach (($prog['program'] ?? []) as $day) {
+    foreach (($day['tasks'] ?? []) as $t) { $all++; if (empty($t['done'])) $left++; }
+  }
+  return [$all, $left];
+}
+
+function push_tick(bool $force = false): int {
+  $p = push_read();
+  if (!$force && time() - (int)$p['tick'] < PUSH_TICK) return 0;
+  $p['tick'] = time();
+  push_write($p);
+  if (!$p['subs']) return 0;
+
+  $wday = (int)date('N');            // 1 — понедельник, 6 — суббота
+  $hour = (int)date('G');
+  $due = push_due([], $wday, $hour);
+  if (!$due) return 0;
+
+  $db = db_read();
+  $sent = 0;
+  foreach (array_keys($p['subs']) as $mail) {
+    $mark = $p['sent'][$mail][$due['k']] ?? null;
+    if ($mark === $due['w']) continue;                  // за эту неделю уже писали
+
+    $prog = $db['progress'][$mail] ?? [];
+    [$all, $left] = push_left(is_array($prog) ? $prog : []);
+    $name = trim((string)($prog['name'] ?? ''));
+
+    if ($due['k'] === 'week') {
+      $msg = ['t' => 'Ева подвела итоги недели',
+              'b' => ($name !== '' ? $name . ', п' : 'П') . 'осмотри, что получилось за неделю — и что собрано на новую.',
+              'u' => '/'];
+    } else {
+      if (!$all || $left < $all * 0.5) { $p['sent'][$mail]['nudge'] = $due['w']; continue; }
+      $msg = ['t' => 'Выходные — хорошее время',
+              'b' => 'Непройденного осталось ' . $left . '. Догонять всё не нужно: выбери одно, что откликается.',
+              'u' => '/'];
+    }
+    if (push_to($mail, $msg)) $sent++;
+    $p = push_read();
+    $p['sent'][$mail][$due['k']] = $due['w'];
+    push_write($p);
+  }
+  return $sent;
+}
+
+/* список это или карта: список — ключи 0,1,2… подряд */
+function is_list_arr($a): bool {
+  if (!is_array($a)) return false;
+  $i = 0;
+  foreach ($a as $k => $_) { if ($k !== $i++) return false; }
+  return true;
+}
+
+function merge_expert(string $branch, $old, $new, string $mail, array $shared) {
+  if (!is_array($new)) return $old;
+  $isList = is_array($old) && $old ? is_list_arr($old) : is_list_arr($new);
+
+  if ($isList) return merge_owned(is_array($old) ? $old : [], $new, $mail);
+
+  /* карта: ключи только добавляем и обновляем, стереть раздел целиком нельзя */
+  $out = is_array($old) ? $old : [];
+  $courses = in_array($branch, COURSE_MAPS, true) ? ($shared['courses'] ?? null) : null;
+  foreach ($new as $k => $v) {
+    if ($courses !== null && !own_course($courses, (string)$k, $mail)) continue;
+    $out[$k] = $v;
+  }
+  return $out;
+}
+
+/* курс чужой, если у него есть хозяин и это не он */
+function own_course($courses, string $key, string $mail): bool {
+  if (!is_array($courses)) return true;
+  /* ключ карты — это номер курса или номер курса с хвостом: k1, k1_2 */
+  $cid = explode('_', $key)[0];
+  foreach ($courses as $c) {
+    if (!is_array($c) || (string)($c['id'] ?? '') !== $cid) continue;
+    $owner = low((string)($c['owner'] ?? ''));
+    return $owner === '' || $owner === $mail;
+  }
+  return true;
+}
+
+function merge_owned(array $old, array $new, string $mail): array {
+  $byId = [];
+  foreach ($old as $item) {
+    if (is_array($item) && isset($item['id'])) $byId['id:' . $item['id']] = $item;
+  }
+  $out = []; $seen = [];
+  foreach ($new as $item) {
+    if (!is_array($item) || !isset($item['id'])) { $out[] = $item; continue; }
+    $key = 'id:' . $item['id'];
+    $seen[$key] = true;
+    $was = $byId[$key] ?? null;
+    if ($was === null) {                       // новая запись — хозяин ставится здесь
+      $item['owner'] = $mail;
+      $out[] = $item;
+      continue;
+    }
+    $owner = low((string)($was['owner'] ?? ''));
+    if ($owner !== '' && $owner !== $mail) {   // чужая — оставляем как было
+      $out[] = $was;
+      continue;
+    }
+    /* хозяина не переписываем словами клиента: он либо был, либо его нет */
+    if ($owner === '') unset($item['owner']); else $item['owner'] = $owner;
+    $out[] = $item;
+  }
+  /* чего не прислали: удаляем только своё, всё остальное остаётся.
+     Демонстрационный контент и заведённое администратором эксперт убрать
+     не может — это делает администратор. */
+  foreach ($byId as $key => $was) {
+    if (isset($seen[$key])) continue;
+    if (low((string)($was['owner'] ?? '')) !== $mail) $out[] = $was;
+  }
+  return array_slice($out, 0, MAX_ITEMS);
 }
 
 /* Карта «почта → значение»: чужие строки не трогаем */
