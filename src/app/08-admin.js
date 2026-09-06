@@ -217,6 +217,33 @@ function adCourses(){
   }).join('')}`;
 }
 
+/* Чем библиотека закрывает запросы теста.
+   Подбор не выдумывает материалы: если под запрос их три, женщина с этим
+   запросом получит три попадания и восемнадцать нейтральных дел. Здесь
+   видно, где дыра, и по каким запросам снимать в первую очередь. */
+function coverageCard(){
+  const cov = typeof tagCoverage === 'function' ? tagCoverage() : [];
+  if(!cov.length) return '';
+  const thin = cov.filter(c => c.n < 4);
+  return `<div class="card">
+    <div class="spread"><b style="font-size:14.5px">Чем закрыты запросы теста</b>
+      <span class="small muted">${cov.length} запросов</span></div>
+    <p class="small muted" style="margin:8px 0 4px">Женщина выбирает запрос в тесте, а программа
+      собирается из того, что есть. Меньше четырёх материалов на запрос — она это заметит:
+      попаданий будет мало, остальное придёт нейтральным.</p>
+    ${cov.slice(0, 10).map(c => `<div class="trow" style="padding:8px 0">
+      <div style="flex:1"><b style="font-size:13px">${esc(c.t)}</b>
+        <div class="small muted">${c.by.affirm} аффирмаций · ${c.by.practice} практик · ${c.by.class} мастер-классов</div></div>
+      <b style="font-size:14px;width:34px;text-align:right;color:${c.n < 4 ? 'var(--accent)' : 'var(--ink)'}">${c.n}</b>
+    </div>`).join('')}
+    <div class="small muted" style="margin-top:10px">
+      ${thin.length ? `Тонко по ${plural(thin.length, 'запросу', 'запросам', 'запросам')}:
+        <b>${thin.slice(0, 6).map(c => esc(c.t)).join(', ')}</b>${thin.length > 6 ? ' и другим' : ''}.
+        Каждый новый материал на такой запрос сразу меняет программу десяткам женщин.`
+      : 'Все запросы закрыты хотя бы четырьмя материалами.'}</div>
+  </div>`;
+}
+
 /* Что заходит в подсказках дня.
    Собирается из звёзд, которые женщины ставят под посланием. Смотреть
    сюда имеет смысл, когда наберётся хотя бы сотня отметок: до этого
@@ -284,6 +311,8 @@ function adStats(){
       <div class="bar"><i style="width:${c.done}%"></i></div></div>`).join('')}
     <div class="small muted" style="margin-top:12px">Средний досмотр по библиотеке - 71%. Мастер-классы длиннее 30 минут теряют около четверти зрителей на середине.</div>
   </div>
+
+  ${coverageCard()}
 
   ${tipStatsCard()}
 

@@ -189,7 +189,8 @@ function lessonCard(t, di, ti, locked, paywall){
       <button class="donemark ${t.done?'on':''}" onclick="event.stopPropagation();complete(${di},${ti})"
         title="${t.done ? 'Сделано' : esc(m.act) + ' · +' + t.pts + ' баллов'}"
         aria-label="${t.done ? 'Сделано' : esc(m.act)}">${CHECK_SVG}</button>
-      <div class="cap"><b>${esc(t.title)}</b><span>${esc(t.expert)} · ${t.min} мин · ${t.match}% совпадение</span></div>
+      <div class="cap"><b>${esc(t.title)}</b><span>${esc(t.expert)} · ${t.min} мин${
+        t.why ? ' · ' + esc(t.why) : ' · ' + t.match + '% совпадение'}</span></div>
     </div>
   </div>`;
 }
@@ -553,6 +554,22 @@ function dayAdvice(){
   </div>`;
 }
 
+/* Веса подбора её словами. Числа те же, что в коде: если поменяем вес,
+   поменяется и объяснение — расходиться им нельзя. */
+const SIGNAL_NAMES = {
+  request:'Твой запрос', topic:'Направления', stage:'Этап жизни',
+  time:'Твоё время', fresh:'Новое для тебя', level:'Уровень', order:'Порядок редакции'
+};
+function whyWeights(){
+  const max = Math.max(...Object.keys(SIGNALS).map(k => SIGNALS[k]));
+  return Object.keys(SIGNALS)
+    .sort((a, b) => SIGNALS[b] - SIGNALS[a])
+    .map(k => `<div class="whyline">
+      <span class="small" style="flex:1">${esc(SIGNAL_NAMES[k] || k)}</span>
+      <div class="bar" style="width:96px"><i style="width:${Math.round(SIGNALS[k] / max * 100)}%"></i></div>
+    </div>`).join('');
+}
+
 function dropTag(t){ S.tags = S.tags.filter(x => x !== t); buildProgram(); render(); toast('Тема убрана, программа обновлена'); }
 function addTag(t){ if(!S.tags.includes(t)) S.tags.push(t); buildProgram(); S.sheet = null; render(); toast('Тема добавлена'); }
 
@@ -767,8 +784,16 @@ function pgProfile(){
       <div class="card">
         <div class="row" style="align-items:flex-start">
           ${donutLight(S.match)}
-          <p class="small muted" style="margin:0">Ева прочитала твои ответы, превратила их в теги и сравнила с тегами ${LIB.length} уроков библиотеки. В программу попали те, где совпадений больше всего.</p>
+          <p class="small muted" style="margin:0">Ева сравнила твои ответы с ${LIB.length} материалами библиотеки
+            и оценила каждый по семи признакам: насколько он про твой запрос, попадает ли
+            в выбранные направления, подходит ли твоему этапу и уровню, влезает ли
+            в ${S.time} минут и давно ли ты его видела.</p>
         </div>
+        <div class="small muted" style="margin:14px 0 8px">Что было решающим:</div>
+        <div class="whyrow">${whyWeights()}</div>
+        <p class="small muted" style="margin:12px 0 0">В будни остаётся то, что влезает
+          в твои минуты, длинное уходит на выходные. Внутри недели ничего не повторяется,
+          а на следующей первым вернётся самое давнее.</p>
         <div class="small muted" style="margin:14px 0 8px">Твои темы — можно убрать лишнее или добавить новое:</div>
         <div class="chips wrap">
           ${S.tags.map(t => `<button class="chip on" onclick="dropTag('${attJs(t)}')">${esc(t)} <span style="opacity:.6">✕</span></button>`).join('')}

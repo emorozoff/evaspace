@@ -82,7 +82,7 @@ function persist(){
     starred:S.starred, starredCmts:S.starredCmts, likes:S.likes, visits:S.visits, gentle:S.gentle,
     /* без этого после перезагрузки терялась память о показанных мастер-классах
        и об обмене баллов: классы шли по кругу, а обмен можно было повторять */
-    seenClasses:S.seenClasses, weekly:S.weekly, seenDm:S.seenDm, streak:S.streak,
+    seen:S.seen, tagw:S.tagw, weekly:S.weekly, seenDm:S.seenDm, streak:S.streak,
     evChain:S.evChain, evFast:S.evFast, reviews:S.reviews, tourDone:S.tourDone,
     lastWeek:S.lastWeek, weekShown:S.weekShown, weekMood:S.weekMood,
     nudgedWeek:S.nudgedWeek, gdraft:S.gdraft,
@@ -99,7 +99,7 @@ const PERSONAL = ['name','tags','topics','time','slot','answers','extra','points
   'bonus','streakDays','streak','courses','purchases','cart','joined','clubs','owned','avatar','birth',
   'cycle','hd','hdAnswers','hdi','sub','week','seed','program','day','match','homework','myEvents',
   'inbox','seenReplies','seenDm','myInts','datingProfile','starred','starredCmts','likes','visits',
-  'gentle','seenClasses','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
+  'gentle','seen','tagw','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
   'weekMood','nudgedWeek','gdraft','quietRun','askedBlock','pushOn','pushAsked','tipStars','qi','picked','eva'];
 
 let PRISTINE = null;
@@ -125,6 +125,13 @@ function restore(email){
     if(k === 'events') S.myEvents = d[k] || [];
     else if(d[k] !== undefined && d[k] !== null) S[k] = d[k];
   });
+  /* Старая память о показанном была списком одних мастер-классов.
+     Переносим её в общую: порядок в списке был от давних к недавним. */
+  if(!S.seen && Array.isArray(d.seenClasses)){
+    S.seen = {};
+    const w = S.week || 0, n = d.seenClasses.length;
+    d.seenClasses.forEach((id, i) => { S.seen[id] = w - Math.ceil((n - i) / 3); });
+  }
   return true;
 }
 

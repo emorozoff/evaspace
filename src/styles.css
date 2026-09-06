@@ -1072,3 +1072,9 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .pushoffer b{display:block;font-size:14px;margin-bottom:4px}
 .pushoffer p{margin:0 0 10px;font-size:12.5px;line-height:1.5;color:var(--muted)}
 .pill.on{background:#EAF2ED;color:var(--ok);border-color:transparent}
+
+/* ---------- почему такая программа ----------
+   Веса подбора показаны полосками: видно, что запрос женщины весит больше
+   половины, а очередь редакции — меньше всех. */
+.whyrow{display:flex;flex-direction:column;gap:6px}
+.whyline{display:flex;align-items:center;gap:10px}
