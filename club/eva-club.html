@@ -4492,7 +4492,10 @@ function generateDemoDaily(){
 async function getDaily(){
   if(!('eva-club-daily' in _cache)){
     const stored = await loadShared('eva-club-daily', null);
-    _cache['eva-club-daily'] = (stored && stored.length) ? stored : generateDemoDaily();
+    /* Пустой список — это осознанный выбор («очистить демо-данные»),
+       а не отсутствие данных: демо подставляется только когда в базе
+       вообще ничего нет. */
+    _cache['eva-club-daily'] = Array.isArray(stored) ? stored : generateDemoDaily();
   }
   return _cache['eva-club-daily'];
 }
