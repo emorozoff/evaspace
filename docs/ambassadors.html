@@ -1,0 +1,773 @@
+<title>Амбассадорская программа</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --ground:#F5F3F0; --surface:#FFFFFF; --surface-2:#EFECE9;
+    --ink:#17141C; --ink-2:#3A3542; --muted:#78727F;
+    --line:rgba(23,20,28,.10); --line-2:rgba(23,20,28,.22);
+    --accent:#A8375C; --accent-soft:#F8EAEF;
+    --gold:#9A7238; --ok:#356B54; --lilac:#5B4CC4; --warn:#A4551F;
+    --shadow:0 1px 2px rgba(23,20,28,.05), 0 8px 28px rgba(23,20,28,.055);
+    --r:14px; --r-sm:9px;
+    --maxw:800px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#15131A; --surface:#1D1A24; --surface-2:#26222E;
+      --ink:#F1EEF4; --ink-2:#CBC5D3; --muted:#948DA0;
+      --line:rgba(241,238,244,.13); --line-2:rgba(241,238,244,.26);
+      --accent:#E0819D; --accent-soft:#33202A;
+      --gold:#D3A462; --ok:#6FBE9B; --lilac:#A79BF2; --warn:#DC9A63;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#15131A; --surface:#1D1A24; --surface-2:#26222E;
+    --ink:#F1EEF4; --ink-2:#CBC5D3; --muted:#948DA0;
+    --line:rgba(241,238,244,.13); --line-2:rgba(241,238,244,.26);
+    --accent:#E0819D; --accent-soft:#33202A;
+    --gold:#D3A462; --ok:#6FBE9B; --lilac:#A79BF2; --warn:#DC9A63;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:16px; line-height:1.62; letter-spacing:-.005em;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:40px 22px 90px}
+  @media(max-width:600px){ .wrap{padding:26px 16px 60px} }
+
+  /* ---------- шапка ---------- */
+  .mast{display:flex; flex-direction:column; gap:16px; padding-bottom:26px;
+    border-bottom:1px solid var(--line-2); margin-bottom:38px}
+  .brand{display:flex; align-items:center; gap:9px; font-family:Unbounded,Inter,sans-serif;
+    font-weight:300; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted)}
+  .brand .star{color:var(--accent); font-size:13px; letter-spacing:0}
+  h1{font-family:Unbounded,Inter,sans-serif; font-weight:500; font-size:clamp(28px,5.2vw,40px);
+    line-height:1.1; letter-spacing:-.02em; margin:0; text-wrap:balance}
+  .lede{margin:0; max-width:62ch; font-size:17px; color:var(--ink-2)}
+  .meta{display:flex; flex-wrap:wrap; gap:8px 18px; font-size:12.5px; color:var(--muted);
+    font-variant-numeric:tabular-nums}
+  .meta b{color:var(--ink-2); font-weight:600}
+
+  /* ---------- секции ---------- */
+  section{margin-bottom:52px; scroll-margin-top:20px}
+  .eyebrow{font-family:Unbounded,Inter,sans-serif; font-weight:500; font-size:10px;
+    letter-spacing:.2em; text-transform:uppercase; color:var(--accent); margin:0 0 10px}
+  h2{font-family:Unbounded,Inter,sans-serif; font-weight:500; font-size:clamp(20px,3.4vw,25px);
+    line-height:1.2; letter-spacing:-.015em; margin:0 0 14px; text-wrap:balance}
+  h3{font-size:16.5px; font-weight:700; margin:26px 0 8px; letter-spacing:-.01em}
+  p{margin:0 0 14px; max-width:66ch}
+  p:last-child{margin-bottom:0}
+  a{color:var(--accent)}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.87em;
+    background:var(--surface-2); padding:1px 5px; border-radius:5px; color:var(--ink-2)}
+
+  /* оглавление */
+  .toc{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:2px 22px;
+    padding:0; margin:0; list-style:none}
+  .toc a{display:flex; gap:9px; padding:5px 0; font-size:14px; color:var(--ink-2);
+    text-decoration:none; border-bottom:1px solid transparent}
+  .toc a:hover{color:var(--accent)}
+  .toc span{color:var(--muted); font-variant-numeric:tabular-nums; min-width:16px}
+
+  /* проблемы «сейчас» */
+  .now{display:flex; flex-direction:column; gap:0; margin:0; padding:0; list-style:none}
+  .now li{display:grid; grid-template-columns:22px 1fr; gap:12px; padding:13px 0;
+    border-top:1px solid var(--line)}
+  .now li:last-child{border-bottom:1px solid var(--line)}
+  .now .n{font-variant-numeric:tabular-nums; font-size:12px; font-weight:700; color:var(--warn);
+    padding-top:3px}
+  .now div > b{display:block; font-size:15.5px; margin-bottom:2px}
+  .now span{font-size:14px; color:var(--ink-2)}
+
+  /* роли */
+  .roles{display:flex; flex-direction:column; margin:0; padding:0; list-style:none}
+  .roles li{display:grid; grid-template-columns:11px 1fr; gap:14px; padding:15px 0;
+    border-top:1px solid var(--line)}
+  .roles li:last-child{border-bottom:1px solid var(--line)}
+  .dot{width:11px; height:11px; border-radius:50%; margin-top:7px}
+  .rname{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:3px}
+  .rname b{font-size:16px}
+  .rname em{font-style:normal; font-size:11.5px; color:var(--muted); font-family:ui-monospace,monospace}
+  .roles p{margin:0; font-size:14.5px; color:var(--ink-2); max-width:60ch}
+  .roles .how{display:block; margin-top:5px; font-size:13px; color:var(--muted)}
+
+  /* матрица */
+  .tablebox{overflow-x:auto; border:1px solid var(--line); border-radius:var(--r);
+    background:var(--surface); box-shadow:var(--shadow)}
+  table{border-collapse:collapse; width:100%; min-width:660px; font-size:13.5px}
+  th,td{padding:10px 12px; text-align:left; border-bottom:1px solid var(--line)}
+  thead th{position:sticky; top:0; background:var(--surface); font-size:11px; font-weight:700;
+    letter-spacing:.06em; text-transform:uppercase; color:var(--muted); white-space:nowrap}
+  tbody th{font-weight:500; color:var(--ink); position:sticky; left:0; background:var(--surface);
+    min-width:220px; box-shadow:1px 0 0 var(--line)}
+  td{text-align:center; font-variant-numeric:tabular-nums}
+  tr:last-child th, tr:last-child td{border-bottom:none}
+  .yes{color:var(--ok); font-weight:700}
+  .no{color:var(--line-2)}
+  .part{color:var(--gold); font-weight:700}
+  .legend{display:flex; gap:16px; flex-wrap:wrap; margin-top:11px; font-size:12.5px; color:var(--muted)}
+  .legend b{font-weight:700}
+
+  /* виды сообществ */
+  .kinds{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .kind{border:1px solid var(--line); border-radius:var(--r); padding:16px 17px;
+    background:var(--surface); display:flex; flex-direction:column; gap:7px}
+  .kind h4{margin:0; font-size:15.5px; font-weight:700; display:flex; align-items:center; gap:8px}
+  .kind h4 i{font-style:normal; width:9px; height:9px; border-radius:2px; flex:none}
+  .kind p{margin:0; font-size:13.5px; color:var(--ink-2)}
+  .kind .ex{margin-top:auto; padding-top:8px; font-size:12.5px; color:var(--muted);
+    border-top:1px solid var(--line)}
+
+  /* поток создания */
+  .flow{display:flex; flex-direction:column; margin:0; padding:0; list-style:none;
+    counter-reset:step}
+  .flow li{position:relative; padding:0 0 22px 34px; border-left:2px solid var(--line);
+    margin-left:9px}
+  .flow li:last-child{border-left-color:transparent; padding-bottom:0}
+  .flow li:before{counter-increment:step; content:counter(step);
+    position:absolute; left:-11px; top:-2px; width:20px; height:20px; border-radius:50%;
+    background:var(--accent); color:#fff; font-size:11px; font-weight:700;
+    display:grid; place-items:center; font-variant-numeric:tabular-nums}
+  .flow b{display:block; font-size:15.5px; margin-bottom:3px}
+  .flow span{font-size:14px; color:var(--ink-2)}
+  .flow .who{display:inline-block; margin-top:5px; font-size:11.5px; font-weight:600;
+    color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:2px 9px}
+
+  /* серверная часть */
+  .srv{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:11px}
+  .srv li{display:grid; grid-template-columns:minmax(120px,190px) 1fr; gap:14px;
+    font-size:14.5px; align-items:start}
+  .srv li > span:first-child{color:var(--muted); font-size:13px; padding-top:2px}
+  @media(max-width:560px){ .srv li{grid-template-columns:1fr; gap:2px} }
+
+  /* этапы */
+  .stages{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:0}
+  .stages li{display:grid; grid-template-columns:26px 1fr auto; gap:14px; align-items:baseline;
+    padding:14px 0; border-top:1px solid var(--line)}
+  .stages li:last-child{border-bottom:1px solid var(--line)}
+  .stages .n{font-family:Unbounded,Inter,sans-serif; font-weight:500; font-size:13px; color:var(--accent);
+    font-variant-numeric:tabular-nums}
+  .stages b{font-size:15.5px; display:block; margin-bottom:2px}
+  .stages span{font-size:14px; color:var(--ink-2)}
+  .stages .size{font-size:11.5px; font-weight:700; color:var(--muted); white-space:nowrap;
+    background:var(--surface-2); border-radius:999px; padding:3px 10px}
+
+  /* вопросы */
+  .qs{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:16px}
+  .qs li{border-left:3px solid var(--accent); padding:2px 0 2px 15px}
+  .qs b{display:block; font-size:15.5px; margin-bottom:5px}
+  .qs p{margin:0; font-size:14px; color:var(--ink-2)}
+  .qs .opt{display:block; margin-top:4px; font-size:13.5px; color:var(--muted)}
+  .qs .rec{color:var(--ok); font-weight:600}
+
+  .note{background:var(--surface-2); border-radius:var(--r); padding:15px 17px; font-size:14px;
+    color:var(--ink-2); margin-top:18px}
+  .note b{color:var(--ink)}
+
+  footer{margin-top:56px; padding-top:22px; border-top:1px solid var(--line-2);
+    font-size:13px; color:var(--muted)}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:3px}
+  @media(prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} }
+
+  /* деньги: колонки цифр в таблицах ставок */
+  .money td, .money th{font-variant-numeric:tabular-nums}
+  .money td{text-align:right}
+  .money td:first-of-type{text-align:left}
+  .money tbody th{text-align:left}
+  .money .hi{color:var(--accent); font-weight:700}
+  .money .mut{color:var(--muted)}
+  tfoot td, tfoot th{border-top:1px solid var(--line-2); font-weight:700}
+
+  /* формула */
+  .formula{background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+    padding:16px 18px; margin:0 0 16px; font-size:15px; line-height:1.75}
+  .formula b{color:var(--accent)}
+  .formula .eq{display:block; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:13.5px; color:var(--ink-2); margin-top:9px; padding-top:11px;
+    border-top:1px solid var(--line)}
+
+  /* полосы рейтинга */
+  .bands{margin:0 0 14px; padding:0; list-style:none; display:flex; flex-direction:column}
+  .bands li{display:grid; grid-template-columns:74px 1fr auto; gap:14px; align-items:baseline;
+    padding:12px 0; border-top:1px solid var(--line)}
+  .bands li:last-child{border-bottom:1px solid var(--line)}
+  .bands .sc{font-variant-numeric:tabular-nums; font-weight:700; font-size:13px}
+  .bands b{font-size:15px; display:block}
+  .bands span{font-size:13.5px; color:var(--ink-2)}
+  .bands .rate{font-size:13px; font-weight:700; white-space:nowrap; border-radius:999px;
+    padding:3px 11px; background:var(--surface-2)}
+  @media(max-width:560px){ .bands li{grid-template-columns:60px 1fr} .bands .rate{grid-column:2} }
+
+  /* риски */
+  .risks{margin:0 0 14px; padding:0; list-style:none; display:flex; flex-direction:column; gap:12px}
+  .risks li{border:1px solid var(--line); border-radius:var(--r); padding:14px 16px;
+    background:var(--surface)}
+  .risks b{display:block; font-size:15px; margin-bottom:4px}
+  .risks p{margin:0; font-size:14px; color:var(--ink-2)}
+  .risks .fix{display:block; margin-top:7px; font-size:13.5px; color:var(--ink-2)}
+  .risks .fix i{font-style:normal; font-weight:700; color:var(--ok)}
+
+  /* принято */
+  .taken{display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ok); background:var(--surface-2); border-radius:999px;
+    padding:2px 9px; margin-left:8px; vertical-align:middle}
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <div class="brand"><span class="star">✦</span> Eva Space · техническое задание</div>
+    <h1>Амбассадорская программа</h1>
+    <p class="lede">Кто такие амбассадоры, чем они не рефералы и не наставницы, сколько и от чего
+      получают они и их агенты, как считается рейтинг, как устроены выплаты и возвраты,
+      и как запускать интеграции, чтобы рост был ровным, а не пилой.</p>
+    <div class="meta">
+      <span>Версия <b>1</b></span>
+      <span>6 сентября 2026</span>
+      <span>Решения приняты: <b>4</b></span>
+      <span>Вопросов к обсуждению: <b>9</b></span>
+    </div>
+  </header>
+
+  <section>
+    <ul class="toc">
+      <li><a href="#why"><span>1</span> Зачем и чем это не является</a></li>
+      <li><a href="#who"><span>2</span> Кто участвует</a></li>
+      <li><a href="#rates"><span>3</span> Ставки и база начисления</a></li>
+      <li><a href="#year"><span>4</span> Спец-условия на первый год</a></li>
+      <li><a href="#rating"><span>5</span> Рейтинг амбассадора</a></li>
+      <li><a href="#payout"><span>6</span> Выплаты</a></li>
+      <li><a href="#refund"><span>7</span> Возвраты и оспаривания</a></li>
+      <li><a href="#tax"><span>8</span> Налоги и договоры</a></li>
+      <li><a href="#launch"><span>9</span> Ровный запуск по месяцам</a></li>
+      <li><a href="#kpi"><span>10</span> Работа с амбассадорами: план и KPI</a></li>
+      <li><a href="#risks"><span>11</span> Риски</a></li>
+      <li><a href="#qs"><span>12</span> Вопросы к обсуждению</a></li>
+      <li><a href="#order"><span>13</span> Порядок работ</a></li>
+    </ul>
+  </section>
+
+  <section id="why">
+    <p class="eyebrow">Отправная точка</p>
+    <h2>Зачем и чем это не является</h2>
+    <p>Амбассадорская программа — <b>маркетинговый канал</b>, а не программа лояльности.
+      Мы сознательно отдаём маржинальность в обмен на ценность: доверие, которое не покупается
+      рекламой, живые истории вместо баннеров и женщин, пришедших не по объявлению, а за человеком.</p>
+    <p>Дальше по документу это важно держать в голове: канал не должен зарабатывать.
+      Он должен приводить и удерживать. Зарабатывает платформа — потом и на всём остальном.</p>
+
+    <h3>Три разные вещи, которые легко перепутать</h3>
+    <ul class="now">
+      <li><span class="n">01</span><div><b>Реферальная программа</b>
+        <span>Есть у каждой участницы по умолчанию. Одинаковые условия, самообслуживание,
+          начисление бонусами внутри платформы. Никто никого не отбирает.</span></div></li>
+      <li><span class="n">02</span><div><b>Наставница</b>
+        <span>Статус внутри продукта: женщина набрала баллы, ведёт сообщество, делится опытом,
+          <b>выполняет функционал платформы</b>. Её экспертиза — часть продукта.</span></div></li>
+      <li><span class="n">03</span><div><b>Амбассадор</b>
+        <span>Внешний голос. <b>Делает рекламу</b> — её участие в жизни платформы и экспертиза
+          не обязательны. Отбирается вручную, получает деньгами, берёт на себя обязательства.</span></div></li>
+    </ul>
+    <p class="note"><b>Главное отличие:</b> амбассадором становятся <b>только по приглашению</b>.
+      Заявок нет и не будет. Статус ценен ровно настолько, насколько его нельзя попросить —
+      как только появится форма «стать амбассадором», программа превратится в рефералку
+      с повышенной ставкой.</p>
+  </section>
+
+  <section id="who">
+    <p class="eyebrow">Участники</p>
+    <h2>Кто участвует</h2>
+
+    <h3>Три вида амбассадоров</h3>
+    <p>Одного типажа не бывает, и мерить их одной меркой «сколько привела» нельзя:
+      у половины ценность вообще не в объёме.</p>
+    <div class="kinds">
+      <div class="kind">
+        <h4><i style="background:var(--accent)"></i> Голос охвата</h4>
+        <p>Блогер, ведущая, публичная женщина. Приводит поток. Риск — низкое качество аудитории:
+          пришли на человека, а не за продуктом.</p>
+        <div class="ex">Мера: сколько пришло и сколько осталось через три месяца</div>
+      </div>
+      <div class="kind">
+        <h4><i style="background:var(--lilac)"></i> Голос ценностей</h4>
+        <p>Небольшая аудитория, точное попадание. Её история и есть то, во что верит Eva Space.
+          Приводит немного, но тех, кто остаётся надолго.</p>
+        <div class="ex">Мера: удержание и годовые подписки среди приведённых</div>
+      </div>
+      <div class="kind">
+        <h4><i style="background:var(--gold)"></i> Эксперт-амбассадор</h4>
+        <p>Уже ведёт практики у нас. Представляет платформу наружу и своим именем отвечает
+          за качество. Совмещает две роли и два источника дохода.</p>
+        <div class="ex">Мера: приведённые плюс её собственный контент</div>
+      </div>
+    </div>
+
+    <h3>Агент</h3>
+    <p>Тот, кто привёл амбассадора и с ним работает: менеджер, продюсер, партнёрское агентство.
+      <b>Агент — такой же участник программы</b>, со своим кабинетом, рейтингом и договором.
+      Отличие одно: он зарабатывает не на приведённых женщинах, а на приведённых амбассадорах.</p>
+    <ul class="srv">
+      <li><span>Доля</span><span>Из того же пула, а не сверх него. Платформа отдаёт фиксированную
+        долю, а как она делится между амбассадором и агентом — их договорённость,
+        зафиксированная в приглашении</span></li>
+      <li><span>Закрепление</span><span>Указывается в момент приглашения амбассадора
+        и не меняется задним числом</span></li>
+      <li><span>Срок</span><span>Пока амбассадор активен. Ушёл амбассадор — прекратилась и доля
+        агента: он привёл человека, а не аудиторию</span></li>
+      <li><span>Рейтинг агента</span><span>Считается по удержанию женщин, приведённых
+        <i>его</i> амбассадорами. Агент, который приводит ярких, но пустых — виден сразу</span></li>
+      <li><span>Может ли агент быть амбассадором</span><span>Да. Роли независимы,
+        начисления идут по каждой отдельно</span></li>
+    </ul>
+  </section>
+
+  <section id="rates">
+    <p class="eyebrow">Деньги</p>
+    <h2>Ставки и база начисления</h2>
+    <p>Вся реферальная и амбассадорская механика считается <b>только с подписок</b>
+      <span class="taken">принято</span>. Курсы, мероприятия и маркет в базу не входят:
+      у курсов доход уже делится с экспертом, у товаров есть физическая себестоимость.
+      Отдав с них долю, мы уйдём в минус на каждой продаже.</p>
+
+    <div class="formula">
+      База начисления — <b>чистое поступление</b>: сколько реально пришло на счёт с этого платежа,
+      за вычетом эквайринга и налога с оборота. Не прайс, а <b>фактический платёж</b> —
+      если женщина оплатила по промо-коду амбассадора со скидкой, доля считается от суммы
+      со скидкой.
+      <span class="eq">чистое поступление = платёж − эквайринг (≈3%) − налог с оборота (6%)</span>
+    </div>
+
+    <h3>Как это выглядит на цифрах</h3>
+    <div class="tablebox">
+      <table class="money">
+        <thead><tr><th>Месячная подписка</th><th>Стандарт 30%</th><th>Ключевой 50%</th></tr></thead>
+        <tbody>
+          <tr><th>Платёж</th><td>2 900 ₽</td><td>2 900 ₽</td></tr>
+          <tr><th>Эквайринг 3%</th><td class="mut">−87 ₽</td><td class="mut">−87 ₽</td></tr>
+          <tr><th>Налог 6%</th><td class="mut">−174 ₽</td><td class="mut">−174 ₽</td></tr>
+          <tr><th>Чистое поступление</th><td>2 639 ₽</td><td>2 639 ₽</td></tr>
+          <tr><th>Доля участнику программы</th><td class="hi">792 ₽</td><td class="hi">1 320 ₽</td></tr>
+          <tr><th>В процентах от платежа</th><td>27,3%</td><td>45,5%</td></tr>
+        </tbody>
+        <tfoot><tr><th>Остаётся платформе</th><td>1 847 ₽</td><td>1 319 ₽</td></tr></tfoot>
+      </table>
+    </div>
+    <p>Ставка 50% от чистого поступления даёт <b>45% в кассе</b> — ровно тот коридор 40–45%,
+      о котором договаривались. Формула «процент от прибыли, а не от оборота» честна для обеих
+      сторон: когда эквайринг подорожает или изменится налог, доля меняется у всех одинаково,
+      и никому не приходится пересматривать договор.</p>
+
+    <div class="tablebox">
+      <table class="money">
+        <thead><tr><th>Годовая подписка</th><th>Стандарт 30%</th><th>Ключевой 50%</th></tr></thead>
+        <tbody>
+          <tr><th>Платёж</th><td>24 900 ₽</td><td>24 900 ₽</td></tr>
+          <tr><th>Чистое поступление</th><td>22 659 ₽</td><td>22 659 ₽</td></tr>
+          <tr><th>Доля за год</th><td class="hi">6 798 ₽</td><td class="hi">11 330 ₽</td></tr>
+          <tr><th>Выплачивается</th><td>566 ₽ × 12 мес</td><td>944 ₽ × 12 мес</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Годовая подписка приходит одним платежом, но <b>начисляется помесячно</b> — по 1/12
+      за каждый прожитый женщиной месяц. Почему так — в разделе о выплатах: если отдать всю
+      сумму сразу, а женщина через месяц вернёт деньги, платформа уйдёт в минус
+      на разницу.</p>
+
+    <h3>Стандартная ставка</h3>
+    <p><b>30%</b> — столько же, сколько у наставницы <span class="taken">принято</span>.
+      Это делает систему прозрачной: одна цифра для всех, кто приводит, независимо от роли.
+      Разница в другом — наставница получает бонусами внутри платформы, амбассадор деньгами
+      на счёт, и у амбассадора есть обязательства.</p>
+  </section>
+
+  <section id="year">
+    <p class="eyebrow">Индивидуально</p>
+    <h2>Спец-условия на первый год</h2>
+    <p>Ключевые амбассадоры получают <b>50% на первый год</b> — считая от подписания договора
+      и первого поступившего платежа <span class="taken">принято</span>. Через год ставка
+      пересматривается по рейтингу.</p>
+    <ul class="srv">
+      <li><span>Когда начинается год</span><span>С даты первого платежа, пришедшего по её ссылке
+        или коду, а не с даты подписания: между подписанием и выходом интеграции проходит
+        от двух недель до двух месяцев</span></li>
+      <li><span>Что после года</span><span>Ставка на следующий год назначается по рейтингу.
+        80+ баллов — 50% сохраняются, 60–79 — 40%, ниже — стандартные 30%</span></li>
+      <li><span>Женщины, приведённые в первый год</span><span>Продолжают считаться по той ставке,
+        по которой пришли, до конца двенадцатого месяца с их первого платежа</span></li>
+      <li><span>Кому даём</span><span>Решение штучное. Ориентир — не размер аудитории,
+        а совпадение с ценностями и готовность вести круг, а не просто снять ролик</span></li>
+    </ul>
+    <p class="note">Прозрачность важнее щедрости. Стандарт — 30% и он известен всем;
+      повышенная ставка — исключение, о котором тоже говорим прямо: «есть базовые условия
+      и есть индивидуальные для тех, кто берёт на себя больше». Скрытые ставки рано или поздно
+      всплывают и стоят дороже, чем сама разница в процентах.</p>
+  </section>
+
+  <section id="rating">
+    <p class="eyebrow">Качество</p>
+    <h2>Рейтинг амбассадора</h2>
+    <p>Число приведённых — плохая мера. «Голос ценностей» приведёт десять женщин, и девять
+      останутся; «голос охвата» — триста, из которых через месяц не будет никого. Поэтому
+      рейтинг складывается из нескольких факторов, и <b>ключевой — удержание</b>.</p>
+
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Фактор</th><th>Вес</th><th>Как считается</th></tr></thead>
+        <tbody>
+          <tr><th>Удержание на третий месяц</th><td class="yes">40</td>
+            <td>Доля приведённых, которые платят третий месяц подряд</td></tr>
+          <tr><th>Годовые подписки</th><td class="part">20</td>
+            <td>Доля приведённых, выбравших год. Годовая — то же удержание, только оплаченное вперёд</td></tr>
+          <tr><th>Объём</th><td>15</td>
+            <td>Сколько привела за период, в сравнении с её же прошлым периодом</td></tr>
+          <tr><th>Возвраты</th><td>15</td>
+            <td>Доля возвратов и оспариваний среди приведённых. Фактор обратный</td></tr>
+          <tr><th>Обязательства</th><td>10</td>
+            <td>Интеграции в срок, встреча в квартал, обратная связь по продукту</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Сумма — от 0 до 100. Удержание с весом 40 — единственная цифра, которую нельзя накрутить:
+      её не поднять ни закупкой охватов, ни разовой акцией.</p>
+
+    <h3>Что даёт рейтинг</h3>
+    <ul class="bands">
+      <li><span class="sc">80–100</span><div><b>Ключевой</b>
+        <span>Повышенная ставка на следующий год, приоритет в совместных проектах, право
+          приводить агентов</span></div><span class="rate">50%</span></li>
+      <li><span class="sc">60–79</span><div><b>Сильный</b>
+        <span>Ставка выше стандартной, доступ к раннему тестированию нового</span></div>
+        <span class="rate">40%</span></li>
+      <li><span class="sc">40–59</span><div><b>Стандарт</b>
+        <span>Базовые условия. Разговор о том, что мешает расти</span></div>
+        <span class="rate">30%</span></li>
+      <li><span class="sc">до 40</span><div><b>План или расставание</b>
+        <span>Один период на исправление с конкретным планом. Не помогло — расстаёмся заранее
+          и мирно, а не молча перестаём платить</span></div><span class="rate">разговор</span></li>
+    </ul>
+    <p>Пересмотр — <b>раз в полгода</b>. Рейтинг виден амбассадору в кабинете постоянно,
+      с разбивкой по факторам: он должен понимать, что именно тянет вниз, до того,
+      как об этом скажем мы.</p>
+  </section>
+
+  <section id="payout">
+    <p class="eyebrow">Порядок</p>
+    <h2>Выплаты</h2>
+    <p>Главный принцип: <b>платформа не платит вперёд денег, которые может отдать обратно.</b>
+      Между поступлением платежа и выплатой доли всегда стоит окно, в котором помещается возврат.</p>
+
+    <h3>Месячная подписка: месяц плюс один</h3>
+    <ol class="flow">
+      <li><b>Платёж приходит в месяце N</b><span>Начисление появляется в кабинете сразу,
+        со статусом «ожидает».</span></li>
+      <li><b>Месяц N закрывается</b><span>Первого числа месяца N+1 период закрыт: считаем
+        начисления минус возвраты, случившиеся до этого момента.</span></li>
+      <li><b>Выплата до 10-го числа месяца N+1</b><span>Одной суммой за весь период,
+        с актом и расшифровкой по женщинам.</span></li>
+    </ol>
+    <p>Задержка в месяц — не жадность, а буфер: она покрывает окно возврата и даёт время
+      закрыть период спокойно.</p>
+
+    <h3>Годовая подписка: помесячно</h3>
+    <p>Платёж пришёл целиком, но начисляем <b>1/12 за каждый прожитый месяц</b>, и выплачиваем
+      по тому же правилу «месяц плюс один». Итого двенадцать выплат за тринадцать месяцев.</p>
+    <p>Иначе выходит так: отдали за год сразу 11 330 ₽, женщина через полтора месяца попросила
+      вернуть деньги — по закону обязаны вернуть за неиспользованный период, около 21 800 ₽,
+      а у амбассадора уже всё выплачено. <b>Минус на ровном месте</b>, и не с чего удерживать.</p>
+
+    <h3>Общие правила</h3>
+    <ul class="srv">
+      <li><span>Минимальная выплата</span><span>5 000 ₽. Меньше — копится до следующего периода:
+        иначе комиссии за переводы съедают сам смысл</span></li>
+      <li><span>Расшифровка</span><span>По каждой женщине: когда пришла, по какой ставке,
+        сколько начислено, были ли возвраты. Без этого доверия не будет</span></li>
+      <li><span>Отрицательный баланс</span><span>Если возвратов за период больше, чем начислений,
+        разница переносится на следующий период. В минус амбассадор не уходит</span></li>
+      <li><span>Валюта</span><span>Рубли, на счёт ИП или самозанятой. Наличных, криптовалюты
+        и переводов на карту физлица без статуса нет</span></li>
+    </ul>
+  </section>
+
+  <section id="refund">
+    <p class="eyebrow">Риск денег</p>
+    <h2>Возвраты и оспаривания</h2>
+    <p>Возврат — обычная часть подписочного бизнеса, а не исключение. Правила должны быть
+      написаны заранее, иначе первый же крупный возврат превратится в личный разговор
+      с обидой.</p>
+    <ul class="srv">
+      <li><span>Возврат до выплаты</span><span>Начисление просто снимается. Амбассадор видит
+        это в расшифровке и понимает, почему сумма изменилась</span></li>
+      <li><span>Возврат после выплаты</span><span>Удерживается из ближайшей следующей выплаты</span></li>
+      <li><span>Выплат больше не будет</span><span>Долг списываем. Судиться за полторы тысячи
+        дороже, чем списать. Но случай попадает в рейтинг и в решение о продлении</span></li>
+      <li><span>Оспаривание платежа</span><span>Приходит через 30–120 дней и работает как возврат.
+        Именно из-за него окно «месяц плюс один» не стоит сокращать</span></li>
+      <li><span>Массовые возвраты</span><span>Если у одного амбассадора доля возвратов выше 15%
+        за период — начисления ставим на паузу и разбираемся. Обычно это значит, что интеграция
+        обещала не то, что есть внутри</span></li>
+    </ul>
+    <p class="note"><b>Отдельно про обещания.</b> Возвраты почти никогда не про продукт —
+      они про несовпадение ожидания и реальности. Поэтому текст интеграции согласовываем
+      заранее: не цензура, а сверка, чтобы амбассадор не пообещал того, чего у нас нет.</p>
+  </section>
+
+  <section id="tax">
+    <p class="eyebrow">Юридически</p>
+    <h2>Налоги и договоры</h2>
+    <p>При обороте программы это перестаёт быть формальностью. Четыре ситуации, и они
+      сильно разные по стоимости.</p>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Кто получает</th><th>Что платим сверх</th><th>Оформление</th><th>Ограничение</th></tr></thead>
+        <tbody>
+          <tr><th>Самозанятая (НПД)</th><td class="yes">ничего</td><td>Договор + чек из «Мой налог»</td>
+            <td>Лимит 2,4 млн ₽ в год</td></tr>
+          <tr><th>ИП на УСН</th><td class="yes">ничего</td><td>Договор + акт + счёт</td>
+            <td>Нет</td></tr>
+          <tr><th>Агентство (ООО)</th><td class="part">НДС, если на ОСНО</td><td>Договор с юрлицом</td>
+            <td>Нет</td></tr>
+          <tr><th>Физлицо без статуса</th><td class="no">13% НДФЛ + ~30% взносов</td>
+            <td>Платформа — налоговый агент</td><td>Дорого почти всегда</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><b>Рекомендация:</b> работать только с самозанятыми и ИП, а с агентствами — по договору
+      с юрлицом. Физлиц без статуса не брать: 43% сверху убивают экономику канала полностью.
+      В договор — обязанность уведомить о потере статуса самозанятой и о приближении к лимиту
+      в 2,4 млн: при ставке 45% этот лимит выбирается примерно на 5 300 приведённых
+      месячных платежах, то есть у сильного амбассадора — за первый же год.</p>
+
+    <div class="note">
+      <b>Ловушка на стороне платформы.</b> Если платформа на УСН «доходы» 6%, выплата
+      амбассадору <b>не уменьшает налог</b>: он считается со всей суммы поступления.
+      На УСН «доходы минус расходы» 15% выплата в расходы принимается — при документах.
+      Разница на ставке 50% существенная, и выбор системы налогообложения надо делать
+      <b>до</b> запуска программы, а не после.
+    </div>
+
+    <h3>Что должно быть в договоре</h3>
+    <ul class="srv">
+      <li><span>Предмет</span><span>Продвижение платформы, а не «оказание услуг» вообще</span></li>
+      <li><span>Ставка и база</span><span>Формула чистого поступления целиком, с примером на цифрах</span></li>
+      <li><span>Срок повышенной ставки</span><span>Двенадцать месяцев с первого платежа, дальше по рейтингу</span></li>
+      <li><span>Обязательства</span><span>Сколько интеграций, в какие сроки, встреча в квартал</span></li>
+      <li><span>Имя и лицо</span><span>Согласие на использование в материалах платформы, срок и территория</span></li>
+      <li><span>Возвраты</span><span>Правило удержания из следующей выплаты</span></li>
+      <li><span>Расставание</span><span>Уведомление за месяц с обеих сторон; начисления
+        по уже приведённым женщинам продолжаются до конца их года</span></li>
+      <li><span>Агент</span><span>Кто, какая доля пула, что происходит при уходе амбассадора</span></li>
+    </ul>
+  </section>
+
+  <section id="launch">
+    <p class="eyebrow">Ритм</p>
+    <h2>Ровный запуск по месяцам</h2>
+    <p>Главная опасность программы — не в ставке, а в форме кривой. Три сильные интеграции
+      в октябре дают тысячу женщин, ноябрь без интеграций — сто. Средний рост при этом
+      отличный, а по факту это <b>пила</b>: команда не успевает за пиком, потом простаивает,
+      и по такой картинке нельзя ни планировать, ни разговаривать с инвестором.</p>
+    <p>Поэтому запуск управляется отдельно от привлечения.
+      <b>Привлечение идёт с первого месяца</b> <span class="taken">принято</span>, а выход
+      интеграций расставляется так, чтобы кривая была ровной.</p>
+
+    <h3>Как это работает</h3>
+    <ol class="flow">
+      <li><b>Договорились и сняли</b><span>Амбассадор подписан, интеграция отснята и согласована.
+        Это ещё не запуск.</span></li>
+      <li><b>Интеграция ложится в банк</b><span>Готовая, но не вышедшая. Банк — наш главный
+        инструмент против провалов: в слабый месяц достаём из него, а не бежим искать
+        нового амбассадора.</span></li>
+      <li><b>Планируем выход</b><span>Смотрим на прогноз месяца. Если план закрывается —
+        двигаем на следующий. Если провисает — достаём из банка.</span></li>
+      <li><b>Топовых ставим на последнюю декаду</b><span>Хвост крупной интеграции живёт
+        две-четыре недели: запущенная 22-го числа, она даёт результат и в текущем месяце,
+        и в следующем. Так один амбассадор закрывает стык двух периодов.</span></li>
+      <li><b>Смотрим разброс</b><span>Цель — прирост месяц к месяцу в коридоре ±25%.
+        Выше — значит, выпустили слишком много разом и следующий месяц просядет.</span></li>
+    </ol>
+
+    <p class="note"><b>Программу целиком запускаем поэтапно</b> — когда точно понимаем,
+      что справимся с потоком: есть контент, работает оплата, живут сообщества.
+      Но <b>работа с амбассадорами начинается сразу</b>: переговоры, съёмки, банк интеграций.
+      Между «сняли» и «выпустили» может пройти месяц-два, и это не простой, а запас.</p>
+
+    <h3>Порядок этапов</h3>
+    <ul class="stages">
+      <li><span class="n">1</span><div><b>Привлечение и съёмки</b>
+        <span>Переговоры, договоры, интеграции в банк. Ничего не публикуется.</span></div>
+        <span class="size">с первого месяца</span></li>
+      <li><span class="n">2</span><div><b>Пилот на двух амбассадорах</b>
+        <span>Проверяем всю цепочку на живых деньгах: ссылка, код, начисление, выплата,
+          возврат. Двое — чтобы сравнить, и мало — чтобы ошибки были дешёвыми.</span></div>
+        <span class="size">после оплаты и контента</span></li>
+      <li><span class="n">3</span><div><b>Плановый выход</b>
+        <span>Не больше трёх новых в месяц, топовые — в последнюю декаду.</span></div>
+        <span class="size">когда пилот прошёл</span></li>
+      <li><span class="n">4</span><div><b>Агенты</b>
+        <span>Открываем, когда есть хотя бы пять живых амбассадоров: агенту должно быть
+          понятно, во что он приводит людей.</span></div>
+        <span class="size">после третьего этапа</span></li>
+    </ul>
+  </section>
+
+  <section id="kpi">
+    <p class="eyebrow">План</p>
+    <h2>Работа с амбассадорами: план и KPI</h2>
+    <p>Это отдельная работа с отдельными показателями, а не «между делом». Цифры ниже —
+      ориентир для первых месяцев, их надо поправить под реальность после пилота.</p>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Показатель</th><th>Ориентир в месяц</th><th>Зачем</th></tr></thead>
+        <tbody>
+          <tr><th>Переговоров начато</th><td>12</td><td>Воронка: до договора доходит примерно каждый четвёртый</td></tr>
+          <tr><th>Договоров подписано</th><td>3</td><td>Ровный приток, а не разовый набор</td></tr>
+          <tr><th>Интеграций отснято</th><td>3</td><td>Съёмка — узкое место, она длиннее переговоров</td></tr>
+          <tr><th>Банк готовых, не вышедших</th><td>не меньше 2</td><td>Страховка на слабый месяц</td></tr>
+          <tr><th>Разброс прироста месяц к месяцу</th><td>±25%</td><td>Ровная кривая вместо пилы</td></tr>
+          <tr><th>Удержание приведённых на 3-й месяц</th><td>от 45%</td><td>Главная мера качества канала</td></tr>
+          <tr><th>Доля возвратов</th><td>до 8%</td><td>Выше — интеграции обещают не то</td></tr>
+          <tr><th>Стоимость приведённой</th><td>считаем, не нормируем</td><td>Сравниваем с платной рекламой, чтобы понимать, что канал вообще нужен</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Отдельно ведём <b>причины отказов</b> в переговорах: не подошла ставка, не поверил
+      в продукт, занят конкурентом, не понял, что от него хотят. Через десять переговоров
+      из этого списка становится ясно, что чинить — оффер, продукт или разговор.</p>
+  </section>
+
+  <section id="risks">
+    <p class="eyebrow">Что может пойти не так</p>
+    <h2>Риски</h2>
+    <ul class="risks">
+      <li><b>Канал съедает маржу и не отпускает</b>
+        <p>Половина выручки уходит навсегда, база растёт, платформе нечем оплачивать развитие.</p>
+        <span class="fix"><i>Что делаем:</i> повышенная ставка только на первый год,
+          дальше по рейтингу. Потолок — не больше десяти амбассадоров на старте.</span></li>
+      <li><b>Пила по месяцам</b>
+        <p>Пик от трёх интеграций, следующий месяц — провал. Планировать невозможно.</p>
+        <span class="fix"><i>Что делаем:</i> банк готовых интеграций, топовые — в последнюю
+          декаду месяца, коридор ±25% как показатель.</span></li>
+      <li><b>Пришли, посмотрели, ушли</b>
+        <p>Охват большой, удержание нулевое: аудитория пришла на человека, а не за продуктом.</p>
+        <span class="fix"><i>Что делаем:</i> удержание с весом 40 в рейтинге; при доле
+          возвратов выше 15% начисления на паузу и разбор.</span></li>
+      <li><b>Возврат после выплаты</b>
+        <p>Особенно на годовых: отдали за год, женщина ушла через месяц.</p>
+        <span class="fix"><i>Что делаем:</i> годовая начисляется помесячно, выплата всегда
+          «месяц плюс один», удержание из следующей выплаты.</span></li>
+      <li><b>Налоговая ловушка</b>
+        <p>На УСН «доходы» 6% выплата не уменьшает налог — при ставке 50% это ощутимо.</p>
+        <span class="fix"><i>Что делаем:</i> выбрать систему налогообложения до запуска,
+          а не после. Работать только с самозанятыми, ИП и юрлицами.</span></li>
+      <li><b>Амбассадор пообещал не то</b>
+        <p>«Там персональный психолог» — а у нас библиотека практик. Возвраты и испорченная репутация.</p>
+        <span class="fix"><i>Что делаем:</i> текст интеграции согласовываем заранее —
+          не цензура, а сверка фактов.</span></li>
+      <li><b>Репутационный риск самого амбассадора</b>
+        <p>Публичный человек — это и его скандалы тоже. Особенно чувствительно для платформы
+          о женском самочувствии.</p>
+        <span class="fix"><i>Что делаем:</i> в договоре — право приостановить сотрудничество
+          и снять материалы без штрафов; заранее решить, что делать с уже приведёнными.</span></li>
+      <li><b>Агент приводит пустых</b>
+        <p>Агенту выгодно количество, а платформе — качество.</p>
+        <span class="fix"><i>Что делаем:</i> рейтинг агента считается по удержанию женщин,
+          приведённых его амбассадорами, а не по их числу.</span></li>
+    </ul>
+  </section>
+
+  <section id="qs">
+    <p class="eyebrow">За вами</p>
+    <h2>Вопросы к обсуждению</h2>
+    <ul class="qs">
+      <li><b>1. Система налогообложения платформы</b>
+        <p>На УСН «доходы» 6% выплата амбассадору не уменьшает налог. При ставке 50% это меняет
+          экономику канала целиком.</p>
+        <span class="opt"><span class="rec">Мой вариант:</span> посчитать оба сценария до пилота
+          и выбрать осознанно. Если программа планируется большой — «доходы минус расходы».</span></li>
+      <li><b>2. Годовая подписка: доля с полной суммы или с фактической</b>
+        <p>Годовая 24 900 ₽ — это 2 075 ₽ в месяц против 2 900 ₽ у месячной. Амбассадор
+          за годовую получит меньше в пересчёте на месяц, хотя привёл более ценную женщину.</p>
+        <span class="opt"><span class="rec">Мой вариант:</span> добавить коэффициент 1,2
+          на годовые. Годовая — это оплаченное вперёд удержание, за него стоит доплатить.</span></li>
+      <li><b>3. Порог входа для повышенной ставки</b>
+        <p>Кому именно даём 50%: по размеру аудитории, по совпадению ценностей, по обещанному
+          объёму?</p>
+        <span class="opt"><span class="rec">Мой вариант:</span> не по аудитории. Критерий —
+          готовность вести своё сообщество внутри платформы, а не только снять ролик.
+          Это единственное, что отличает амбассадора от разовой рекламы.</span></li>
+      <li><b>4. Что с приведёнными, если расстались</b>
+        <p>Амбассадор ушёл — начисления по её женщинам прекращаются сразу или доигрывают год?</p>
+        <span class="opt"><span class="rec">Мой вариант:</span> доигрывают до конца года
+          с первого платежа каждой. Женщины остались с нами — честно доплатить.
+          Исключение — расставание из-за нарушения договора.</span></li>
+      <li><b>5. Эксклюзивность</b>
+        <p>Может ли амбассадор одновременно рекламировать конкурента?</p>
+        <span class="opt"><span class="rec">Мой вариант:</span> запрет только на прямых
+          конкурентов и только на срок повышенной ставки. Полная эксклюзивность стоит
+          дороже, чем даёт.</span></li>
+      <li><b>6. Скидка по промо-коду</b>
+        <p>Даём ли женщинам амбассадора скидку, и если да — за чей счёт: платформы или из пула?</p>
+        <span class="opt"><span class="rec">Мой вариант:</span> первый месяц −30% за счёт
+          платформы, доля амбассадора при этом считается от суммы со скидкой. Обе стороны
+          вкладываются в приход.</span></li>
+      <li><b>7. Минимальная выплата и периодичность</b>
+        <p>Предложено 5 000 ₽ и раз в месяц. Для маленьких амбассадоров это может значить
+          выплату раз в квартал.</p>
+        <span class="opt"><span class="rec">Мой вариант:</span> оставить 5 000 ₽,
+          но добавить принудительную выплату раз в квартал независимо от суммы.</span></li>
+      <li><b>8. Кто ведёт программу</b>
+        <p>Переговоры, съёмки, планирование выходов, отчётность и выплаты — это работа
+          на человека, а не «в свободное время».</p>
+        <span class="opt"><span class="rec">Мой вариант:</span> на старте вы сами,
+          но с записанным планом и KPI. Отдельный человек — с пятого амбассадора.</span></li>
+      <li><b>9. Когда открываем агентов</b>
+        <p>Агент приводит амбассадоров и получает долю из их пула.</p>
+        <span class="opt"><span class="rec">Мой вариант:</span> после пяти живых амбассадоров.
+          Раньше агенту нечего показывать, и он приведёт кого угодно.</span></li>
+    </ul>
+  </section>
+
+  <section id="order">
+    <p class="eyebrow">Что делать</p>
+    <h2>Порядок работ</h2>
+    <ul class="stages">
+      <li><span class="n">1</span><div><b>Метка источника в ссылке</b>
+        <span>Откуда пришла женщина: пост, встреча, личный разговор. Делается сразу и стоит
+          почти ничего, но без неё через полгода не отличить сработавший канал.</span></div>
+        <span class="size">полдня</span></li>
+      <li><span class="n">2</span><div><b>Роли амбассадора и агента</b>
+        <span>Флаг у аккаунта, ставка, дата начала года, привязка агента и доля пула.</span></div>
+        <span class="size">2 дня</span></li>
+      <li><span class="n">3</span><div><b>Промо-коды</b>
+        <span>Свой код у амбассадора, скидка для её женщин, привязка платежа к коду.</span></div>
+        <span class="size">2 дня</span></li>
+      <li><span class="n">4</span><div><b>Начисления</b>
+        <span>Формула чистого поступления, помесячное начисление годовых, статусы
+          «ожидает — к выплате — выплачено», снятие при возврате.</span></div>
+        <span class="size">3 дня</span></li>
+      <li><span class="n">5</span><div><b>Кабинет</b>
+        <span>Приведённые, удержание, начисления с расшифровкой, рейтинг по факторам.
+          Отдельный вид для агента — по его амбассадорам.</span></div>
+        <span class="size">3 дня</span></li>
+      <li><span class="n">6</span><div><b>Выплаты и акты</b>
+        <span>Закрытие периода, расчёт, выгрузка на подпись.</span></div>
+        <span class="size">2 дня</span></li>
+      <li><span class="n">7</span><div><b>Договор и документы</b>
+        <span>Шаблон договора, согласие на имя и лицо, порядок возвратов.</span></div>
+        <span class="size">за вами</span></li>
+    </ul>
+    <p class="note">Итого примерно <b>две недели работы по коду</b>. Первый пункт имеет смысл
+      сделать прямо сейчас, независимо от сроков запуска программы: он ничего не ломает,
+      а данные начинает собирать с первого дня.</p>
+  </section>
+
+  <footer>
+    Амбассадорская программа Eva Space · версия 1 · документ для обсуждения.<br>
+    Цифры ставок и KPI — расчётные, их надо поправить после пилота на двух амбассадорах.
+  </footer>
+</div>
