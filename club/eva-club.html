@@ -52,6 +52,16 @@
     font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:14px;
   }
   .brand .wordmark{font-size:18px; font-weight:700;}
+  .save-status{
+    font-size:10.5px; font-weight:500; color:var(--ink-faint); margin-left:10px; padding:2px 8px;
+    border-radius:20px; border:1px solid var(--line); white-space:nowrap; letter-spacing:.01em; font-family:'Inter',sans-serif;
+  }
+  .save-status:empty{display:none;}
+  .save-status.ok{color:var(--green); border-color:#CBD9CC;}
+  .save-status.busy{color:var(--gold-ink); border-color:#E6D7A8;}
+  .save-status.err{color:var(--rust); border-color:#DDBBA3; background:var(--rust-bg);}
+  .save-status.local{color:var(--ink-faint);}
+  @media (max-width:640px){ .save-status{display:none;} }
   .primary-nav{
     display:flex; gap:2px; overflow-x:auto; flex:1;
     scrollbar-width:none;
@@ -90,6 +100,19 @@
   }
   .hero h1{font-size:32px; color:#fff; margin-bottom:12px; line-height:1.15;}
   .hero p{color:#D8D5C9; font-size:15px; max-width:52ch;}
+  .hero-eyebrow{display:block; font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--gold); margin-bottom:12px;}
+  .hero h1{text-wrap:balance;}
+  .hero-links{display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;}
+  .hero-btn{font-size:13px; padding:9px 16px;}
+  .hero .btn.hero-btn:not(.ghost){background:var(--gold); color:var(--ink); border-color:var(--gold);}
+  .hero .btn.hero-btn:not(.ghost):hover{background:#D0A94A;}
+  .hero .btn.ghost.hero-btn{color:#D8D5C9; border-color:rgba(255,255,255,0.25);}
+  .hero .btn.ghost.hero-btn:hover{color:#fff; border-color:rgba(255,255,255,0.6);}
+  .use-bars{display:flex; flex-direction:column; gap:9px; margin-top:4px;}
+  .use-row{display:grid; grid-template-columns:minmax(120px,1.2fr) 2fr 48px; align-items:center; gap:12px; font-size:13px;}
+  .use-name{color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .use-bar{height:8px;}
+  .use-val{font-family:'IBM Plex Mono',monospace; font-size:12px; text-align:right;}
   .hero-stats{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
   .hero-stat{background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:14px 16px;}
   .hero-stat .num{font-family:'Space Grotesk',sans-serif; font-size:24px; font-weight:700; color:var(--gold);}
@@ -950,6 +973,58 @@
   table.pnl-table td.neg{color:var(--rust);}
   table.pnl-table tr:hover td:not(.sticky-col){background:rgba(184,145,47,0.06);}
 
+  /* --- раскрывающиеся пояснения --- */
+  details.how{margin:-6px 0 18px; max-width:72ch;}
+  details.how summary{cursor:pointer; font-size:12.5px; color:var(--ink-faint); list-style:none; display:inline-flex; align-items:center; gap:6px;}
+  details.how summary::-webkit-details-marker{display:none;}
+  details.how summary::before{content:'›'; display:inline-block; transition:transform .15s; color:var(--gold-ink);}
+  details.how[open] summary::before{transform:rotate(90deg);}
+  details.how summary:hover{color:var(--ink);}
+  .how-body{font-size:13px; color:var(--ink-soft); line-height:1.6; padding:8px 0 0 14px; border-left:2px solid var(--gold-bg); margin-top:6px;}
+  .how-body p{margin-bottom:8px;}
+
+  /* --- план основателя --- */
+  .strategy-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px;}
+  .strategy-card{padding:16px 18px 12px;}
+  .strategy-card .k-label{margin-bottom:8px;}
+  .strategy-input{
+    width:100%; border:none; background:transparent; resize:vertical; font-family:'Inter',sans-serif;
+    font-size:14px; line-height:1.55; color:var(--ink); padding:0; min-height:48px;
+  }
+  .strategy-input:focus{outline:none; box-shadow:0 1px 0 var(--gold);}
+  .strategy-hint{display:block; font-size:11.5px; color:var(--ink-faint); margin-top:8px; padding-top:8px; border-top:1px solid var(--line);}
+  .plan-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px;}
+  .plan-head > div:first-child{max-width:68ch;}
+  .plan-controls{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  table.plan-budget{font-size:12.5px;}
+  table.plan-budget th{white-space:nowrap;}
+  table.plan-budget td{padding:8px 8px; white-space:nowrap;}
+  table.plan-budget td:first-child{white-space:normal; min-width:200px;}
+  .pb-name{font-weight:500;}
+  .pb-sub{font-size:11px; color:var(--ink-faint); margin-top:2px;}
+  table.plan-budget tfoot tr.eco td{color:var(--green); border-top:1px solid var(--line);}
+  table.compare-table td:first-child{color:var(--ink-soft);}
+
+  /* --- журнал платежей --- */
+  table.ledger-table{font-size:13px;}
+  table.ledger-table td{padding:6px 8px; vertical-align:middle;}
+  table.ledger-table td.lg-date input{width:138px;}
+  table.ledger-table select.v-input{max-width:200px;}
+  table.ledger-table .lg-note{min-width:160px;}
+  table.ledger-table .lg-amount{width:110px; text-align:right;}
+  table.ledger-table tfoot td{font-weight:600;}
+  tr.lg-in td.num input{color:var(--green);}
+  tr.lg-out td.num input{color:var(--rust);}
+  .kind-pill{display:inline-block; font-size:10.5px; padding:2px 8px; border-radius:20px; white-space:nowrap;}
+  .kind-pill.in{background:var(--green-bg); color:var(--green);}
+  .kind-pill.out{background:var(--rust-bg); color:var(--rust);}
+  .kind-pill.fin{background:var(--navy-bg); color:var(--navy);}
+  tr.lg-fin td.num input{color:var(--navy);}
+  .lg-add{background:var(--paper); border:1px dashed var(--line); border-radius:12px; padding:14px 16px 2px; margin-bottom:12px;}
+  .lg-more{padding:10px 8px 6px; text-align:center;}
+  .lg-add .field-row{margin-bottom:12px;}
+  .day-ledger .lg-add{margin-top:4px;}
+
   /* --- ежедневная отчётность --- */
   .demo-notice{
     display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
@@ -999,7 +1074,7 @@
 
 <div class="topbar">
   <div class="topbar-inner">
-    <a href="#home" class="brand"><span class="mark">E</span><span class="wordmark">Eva Club</span></a>
+    <a href="#home" class="brand"><span class="mark">E</span><span class="wordmark">Eva Club</span><span class="save-status" id="saveStatus"></span></a>
     <nav class="primary-nav" id="primaryNav">
       <a href="#home" data-route="home">Обзор</a>
       <a href="#platform" data-route="platform">Платформа</a>
@@ -1613,7 +1688,7 @@ const _dbReady = (function(){
   }
   const timeout = new Promise(res=>setTimeout(()=>res(null), 6000));
   return Promise.race([window.claude.use('db').catch(()=>null), timeout])
-    .then(db=>{ if(db) _storageMode = 'shared'; return db; })
+    .then(db=>{ if(db) _storageMode = 'shared'; setTimeout(_setSaveStatus, 0); return db; })
     .catch(()=>null);
 })();
 
@@ -1641,14 +1716,44 @@ async function loadShared(key, fallback){
   const local = _lsGet(key);
   return local === undefined ? fallback : local;
 }
+
+/* Записи в общую базу идут по одному ключу строго по очереди: иначе две
+   быстрые правки могли бы долететь в обратном порядке, и старая
+   затёрла бы новую. Значение прогоняется через JSON — так в базу не
+   попадают undefined и функции. */
+const _saveQueues = {};
+const _saveState = {pending:0, failed:false, lastOk:null};
+function _setSaveStatus(){
+  const el = document.getElementById('saveStatus');
+  if(!el) return;
+  if(_saveState.failed){ el.textContent = 'не сохранилось в общую базу — данные остались в этом браузере'; el.className = 'save-status err'; return; }
+  if(_saveState.pending>0){ el.textContent = 'сохраняю…'; el.className = 'save-status busy'; return; }
+  if(_storageMode==='shared'){ el.textContent = _saveState.lastOk ? 'сохранено для всех' : 'общая база'; el.className = 'save-status ok'; }
+  else { el.textContent = 'только этот браузер'; el.className = 'save-status local'; }
+}
 async function saveShared(key, value){
-  _lsSet(key, value);
+  const clean = JSON.parse(JSON.stringify(value === undefined ? null : value));
+  _lsSet(key, clean);
   const db = await _dbReady;
-  if(!db) return true;
-  try{
-    await db.doc(STORAGE_COLLECTION+'/'+key).set({v:value, updatedAt: Date.now()});
-    return true;
-  }catch(e){ console.error('storage error', e); return false; }
+  if(!db){ _setSaveStatus(); return true; }
+  _saveState.pending++; _setSaveStatus();
+  const prev = _saveQueues[key] || Promise.resolve();
+  const run = prev.catch(()=>{}).then(async ()=>{
+    try{
+      await db.doc(STORAGE_COLLECTION+'/'+key).set({v:clean, updatedAt: Date.now()});
+      _saveState.failed = false; _saveState.lastOk = Date.now();
+      return true;
+    }catch(e){
+      console.error('storage error', key, e);
+      _saveState.failed = true;
+      return false;
+    }finally{
+      _saveState.pending = Math.max(0, _saveState.pending-1);
+      _setSaveStatus();
+    }
+  });
+  _saveQueues[key] = run;
+  return run;
 }
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function fmtDate(ts){
@@ -1668,6 +1773,65 @@ function setCacheLocal(key, value){ _cache[key] = value; }
 function persistCache(key){ saveShared(key, _cache[key]); /* fire-and-forget */ }
 
 const votedPolls = new Set();
+
+/* ============================================================
+   ФОКУС ПОСЛЕ ПЕРЕРИСОВКИ
+   Страницы перерисовываются целиком после каждой правки. Без этого
+   клик по соседнему полю пропадал: поле успевало получить фокус,
+   а потом его заменяла свежая копия. Запоминаем, какой элемент был
+   в фокусе, и после перерисовки возвращаем фокус его двойнику.
+   ============================================================ */
+function focusKeyOf(el){
+  if(!el || el===document.body || el===document.documentElement) return null;
+  const tag = el.tagName ? el.tagName.toLowerCase() : '';
+  if(!['input','select','textarea','button'].includes(tag)) return null;
+  if(el.id) return '#'+CSS.escape(el.id);
+  const parts = [];
+  for(const a of el.attributes){
+    if(a.name.startsWith('data-')) parts.push(`[${a.name}="${String(a.value).replace(/"/g,'\\"')}"]`);
+  }
+  if(!parts.length) return null;
+  return tag+parts.join('');
+}
+function captureFocus(){
+  const el = document.activeElement;
+  const key = focusKeyOf(el);
+  if(!key) return null;
+  let sel = null;
+  try{ if(el.selectionStart!==undefined && el.selectionStart!==null) sel = el.selectionStart; }catch(e){}
+  return {key, sel, scrollY: window.scrollY};
+}
+function restoreFocus(f){
+  if(!f || !f.key) return;
+  let el = null;
+  try{ el = document.querySelector(f.key); }catch(e){ return; }
+  if(!el) return;
+  try{ el.focus({preventScroll:true}); }catch(e){ return; }
+  try{ if(f.sel!==null && el.setSelectionRange && /^(text|search|url|tel|password)$/i.test(el.type||'text')) el.setSelectionRange(f.sel, f.sel); }catch(e){}
+  if(typeof f.scrollY==='number') window.scrollTo(0, f.scrollY);
+}
+function withFocus(fn){
+  return async function(){
+    /* change срабатывает в момент, когда старое поле уже отпустило фокус,
+       а новое ещё не получило. Один тик ожидания — и браузер успевает
+       поставить курсор туда, куда кликнул пользователь; это место и
+       запоминаем. */
+    await new Promise(r=>setTimeout(r, 0));
+    const f = captureFocus();
+    const r = await fn.apply(this, arguments);
+    restoreFocus(f);
+    return r;
+  };
+}
+/* Enter в поле ввода = закончить правку (срабатывает change и сохранение). */
+document.addEventListener('keydown', (e)=>{
+  if(e.key!=='Enter') return;
+  const t = e.target;
+  if(!t || t.tagName!=='INPUT') return;
+  if(t.type==='checkbox' || t.type==='radio' || t.type==='button' || t.type==='submit') return;
+  e.preventDefault();
+  t.blur();
+});
 
 /* ============================================================
    ROUTER
@@ -1721,24 +1885,34 @@ async function render(){
 }
 
 window.addEventListener('hashchange', render);
-window.addEventListener('DOMContentLoaded', render);
+window.addEventListener('DOMContentLoaded', ()=>{
+  /* Все перерисовки финансовых страниц возвращают фокус тому полю,
+     в котором был пользователь: без этого клик по соседней ячейке
+     после правки пропадал. Оборачиваем по имени — объявления функций
+     ниже по файлу к этому моменту уже существуют. */
+  ['renderFinDashboard','renderFinPlan','renderFinGoals','renderFinExpenses','renderFinRevenue','renderFinLaunch',
+   'renderFinCashflow','renderFinUnit','renderPnl','renderRepDay','renderRepWeek','renderRepMonth','renderRepLedger',
+   'renderRepJournal','renderStatistics','renderReports','renderRoadmap','renderTeam'].forEach(name=>{
+    if(typeof window[name]==='function' && !window[name].__focusWrapped){
+      const wrapped = withFocus(window[name]); wrapped.__focusWrapped = true; window[name] = wrapped;
+    }
+  });
+  render();
+});
 
 /* ============================================================
    PAGE: HOME
    ============================================================ */
 async function renderHome(){
-  const current = DOCS.filter(d=>d.status==='current').length;
-  const gap = DOCS.filter(d=>d.status==='gap').length;
   const allTasks = await getTasks();
-  const people = await getPeople();
   const st = taskStats(allTasks);
-  const highOpen = allTasks.filter(t=>t.priority==='high' && t.status!=='done').length;
-
   const cfg = await buildFinCfg({});
   const model = computeFinModel(cfg);
   const ue = unitEconomics(cfg, 12);
   const facts = await buildFactMonths();
   const exp = await getExpenses();
+  const strategy = await getStrategy();
+  const financing = await getFinancing();
   const bare = computeFinModel(await buildFinCfg({noFinancing:true, cashStart:0}));
 
   const lastFact = facts[facts.length-1];
@@ -1747,79 +1921,94 @@ async function renderHome(){
   const runway   = burnNow>0 ? cashNow/burnNow : null;
   const factRev  = facts.reduce((a,f)=>a+f.revenue,0);
   const planRev  = cfSumRange(model.revenue, 1, Math.max(1,facts.length));
-  const needed   = Math.ceil((Math.abs(Math.min(0,bare.minCumOper)) + Math.max(...bare.burn.slice(1, Math.max(2,bare.minCumOperMonth+1)),0)*3)/100000)*100000;
+  const bottom   = Math.max(1, bare.minCumOperMonth);
+  const deficit  = Math.abs(Math.min(0, bare.minCumOper));
+  const peakBurn = Math.max(...bare.burn.slice(1, bottom+1), 0);
+  const needed   = Math.ceil((deficit + peakBurn*3)/100000)*100000;
+  const roundSum = financing.reduce((a,f)=>a+f.amount,0);
 
-  const workload = people.filter(p=>p.type!=='investor').map(p=>{
-    const mine = allTasks.filter(t=>t.assignee===p.id);
-    return {p, total: mine.length, done: mine.filter(t=>t.status==='done').length};
-  }).filter(w=>w.total>0).sort((a,b)=>b.total-a.total).slice(0,6);
-  const workloadHtml = workload.map(w=>`
-    <div class="wl-row">
-      <span class="wl-name">${esc(w.p.name || w.p.role)}</span>
-      <div class="pctbar" style="flex:1; margin:0 10px;"><div class="pctfill" style="width:${w.total?Math.round(w.done/w.total*100):0}%"></div></div>
-      <span class="wl-count mono">${w.done}/${w.total}</span>
-    </div>`).join('');
+  /* на что уходят деньги до выхода в плюс — три крупнейшие статьи */
+  const useRows = EXP_CATS.map(c=>({c, v:cfSumRange(bare.byCat[c.id],1,bottom)})).filter(r=>r.v>0).sort((a,b)=>b.v-a.v);
+  const useTotal = useRows.reduce((a,r)=>a+r.v,0);
+  const useTop = useRows.slice(0,4);
+  const useRest = useRows.slice(4).reduce((a,r)=>a+r.v,0);
+
+  const monthsWord = (n)=> n===1?'месяц':(n<5?'месяца':'месяцев');
 
   return `
     <div class="hero">
       <div>
-        <h1>Штаб проекта Eva Space</h1>
-        <p>Деньги, дорожная карта и люди в одном месте. Расходы заводятся один раз в общий реестр — и сами расходятся по модели, отчётам и P&amp;L, поэтому цифры на разных страницах не могут разойтись.</p>
+        <span class="hero-eyebrow">Eva Space · платформа женского развития</span>
+        <h1>${esc(strategy.vision || 'Штаб проекта Eva Space')}</h1>
+        <p>Подписка ${money(cfg.revenue.priceMonthly)}/мес + допродажи экспертов. ${facts.length ? `Работаем ${facts.length} ${monthsWord(facts.length)}: ${num(lastFact.active)} платящих, выручка ${money(factRev)} против плана ${money(planRev)}.` : 'Первые платящие ожидаются в первый месяц после запуска.'}</p>
+        <div class="hero-links">
+          <a class="btn hero-btn" href="#statistics">Финансовая модель</a>
+          <a class="btn ghost hero-btn" href="#pnl">P&amp;L</a>
+          <a class="btn ghost hero-btn" href="#platform">Что за продукт</a>
+        </div>
       </div>
       <div class="hero-stats">
-        <div class="hero-stat"><div class="num">${money(cashNow)}</div><div class="lbl">на счету по факту ${facts.length} мес.</div></div>
-        <div class="hero-stat"><div class="num">${runway!==null?dec(runway)+' мес.':'—'}</div><div class="lbl">запас хода при burn ${money(burnNow)}</div></div>
+        <div class="hero-stat"><div class="num">${cfMoney(needed)}</div><div class="lbl">нужно до самоокупаемости</div></div>
         <div class="hero-stat"><div class="num">${model.breakevenMonth>0?finMonthLabel(model.breakevenMonth):'>36 мес.'}</div><div class="lbl">выход в плюс по модели</div></div>
-        <div class="hero-stat"><div class="num">${st.pct}%</div><div class="lbl">задач проекта выполнено</div></div>
+        <div class="hero-stat"><div class="num">${cfMoney(cfSumRange(model.revenue,25,36))}</div><div class="lbl">выручка в третий год</div></div>
+        <div class="hero-stat"><div class="num">${ue.ltvCac?dec(ue.ltvCac)+'×':'—'}</div><div class="lbl">LTV / CAC — окупаемость привлечения</div></div>
       </div>
     </div>
 
     <section class="block">
-      <h2>Цифры за ${facts.length} отработанных ${facts.length===1?'месяц':(facts.length<5?'месяца':'месяцев')}</h2>
-      <p class="section-sub">Факт собран из ежедневных отчётов, план — из финансовой модели за те же месяцы. Подробности — на страницах <a href="#reports">«Отчёты»</a> и <a href="#pnl">«P&amp;L»</a>.</p>
-      ${metricCards([
-        {l:'Выручка, факт', v:money(factRev), sub:`план ${money(planRev)} ${planFactBadge(factRev, planRev)}`},
-        {l:'Платящих сейчас', v:num(lastFact?lastFact.active:0), sub:`ARPU ${money(ue.arpu)} · отток ${cfPct(ue.churn)}/мес`},
-        {l:'Нужно денег до самоокупаемости', v:money(needed), sub:`расчёт на вкладке «Сколько нужно на запуск»`},
-        {l:'Открытых задач высокого приоритета', v:num(highOpen), cls: highOpen>6?'neg':'', sub:`${st.done} готово · ${st.doing} в работе · ${st.todo} не начато`},
-      ])}
-    </section>
-
-    <div class="tiles">
-      <a class="tile" href="#reports"><div class="icon" style="background:var(--green-bg)">${iconChart('green')}</div><h3>Отчёты</h3><p>День, неделя, месяц — факт и темп к плану</p></a>
-      <a class="tile" href="#pnl"><div class="icon" style="background:var(--navy-bg)">${iconChart('navy')}</div><h3>P&amp;L</h3><p>Прибыли и убытки, план против факта</p></a>
-      <a class="tile" href="#statistics"><div class="icon" style="background:var(--gold-bg)">${iconChart('gold')}</div><h3>Финмодель</h3><p>Цели, расходы, cash flow, юнит-экономика</p></a>
-      <a class="tile" href="#roadmap"><div class="icon" style="background:var(--rust-bg)">${iconMap('rust')}</div><h3>Дорожная карта</h3><p>Задачи по этапам и их бюджеты</p></a>
-      <a class="tile" href="#team"><div class="icon" style="background:var(--wine-bg)">${iconUsers('wine')}</div><h3>Команда</h3><p>Люди, роли, оклады, задачи каждого</p></a>
-      <a class="tile" href="#documents"><div class="icon" style="background:var(--gold-bg)">${iconFolder('gold')}</div><h3>Документы</h3><p>Вся история проекта и рабочие модели</p></a>
-      <a class="tile" href="#platform"><div class="icon" style="background:var(--navy-bg)">${iconBook('navy')}</div><h3>Платформа</h3><p>Что такое Eva Space и как это работает</p></a>
-      <a class="tile" href="#voting"><div class="icon" style="background:var(--gold-bg)">${iconVote('gold')}</div><h3>Голосования</h3><p>Совместные решения по проекту</p></a>
-    </div>
-
-    <section class="block">
-      <h2>Задачи проекта</h2>
-      <p class="section-sub">${st.total} задач всего · ${st.done} готово · ${st.doing} в работе · ${st.todo} не начато.</p>
+      <h2>Что просим и на что</h2>
+      <p class="section-sub">Три цифры, которые нужны инвестору в первую минуту. Подробный расчёт — на вкладке <a href="#statistics">«Сколько нужно на запуск»</a>.</p>
       <div class="grid-2">
         <div class="card">
-          <p class="k-label">Нагрузка по команде (готово / всего)</p>
-          <div class="workload-list">${workloadHtml || '<p style="font-size:13px;color:var(--ink-faint);">Задачи ещё не назначены.</p>'}</div>
+          <p class="k-label">Деньги</p>
+          <div class="kv-list">
+            <div class="kv-row"><span>Кассовый разрыв до выхода в плюс</span><span class="kv-v">${money(deficit)}</span></div>
+            <div class="kv-row"><span>Подушка: 3 месяца пикового burn</span><span class="kv-v">${money(peakBurn*3)}</span></div>
+            <div class="kv-row"><span><strong>Нужно, чтобы дойти до самоокупаемости</strong></span><span class="kv-v"><strong>${money(needed)}</strong></span></div>
+            <div class="kv-row"><span>Планируемый раунд</span><span class="kv-v">${money(roundSum)}</span></div>
+            <div class="kv-row"><span>${roundSum>needed?'Сверх потребности — на ускорение роста':'Не хватает'}</span><span class="kv-v ${roundSum>=needed?'pos':'neg'}">${money(Math.abs(roundSum-needed))}</span></div>
+          </div>
         </div>
         <div class="card">
-          <p class="k-label">Документы</p>
-          <div class="value-item" style="border-top:none; padding-top:0;"><div class="n">${current}</div><div><h4><a href="#documents">Актуальных документа</a></h4><p>Готовы к показу команде и инвесторам.</p></div></div>
-          <div class="value-item"><div class="n">${gap}</div><div><h4>Ещё не создано</h4><p>Пробелы в документации проекта.</p></div></div>
+          <p class="k-label">На что уходят деньги до ${finMonthLabel(bottom)}</p>
+          <div class="use-bars">
+            ${useTop.map(r=>`<div class="use-row"><span class="use-name">${r.c.name}</span><div class="pctbar use-bar"><div class="pctfill" style="width:${Math.round(r.v/useTotal*100)}%"></div></div><span class="use-val">${cfPct(r.v/useTotal)}</span></div>`).join('')}
+            ${useRest>0?`<div class="use-row"><span class="use-name soft">Остальное</span><div class="pctbar use-bar"><div class="pctfill" style="width:${Math.round(useRest/useTotal*100)}%; background:var(--ink-faint);"></div></div><span class="use-val">${cfPct(useRest/useTotal)}</span></div>`:''}
+          </div>
+          <p class="note-sm">Всего расходов за период — ${money(useTotal)}, поступлений — ${money(cfSumRange(bare.cashIn,1,bottom))}. Разница и есть кассовый разрыв.</p>
         </div>
       </div>
     </section>
 
+    ${facts.length ? `
     <section class="block">
-      <h2>С чего начать</h2>
-      <p class="section-sub">Короткий путь для знакомства с проектом — от продукта к деньгам.</p>
+      <h2>Факт за ${facts.length} ${monthsWord(facts.length)}</h2>
+      <p class="section-sub">Из ежедневных отчётов и журнала платежей. План — та же финмодель за те же месяцы.</p>
+      ${metricCards([
+        {l:'Выручка', v:money(factRev), sub:`план ${money(planRev)} ${planFactBadge(factRev, planRev)}`},
+        {l:'Платящих сейчас', v:num(lastFact.active), sub:`модель на этот месяц: ${num(model.active[facts.length]||0)}`},
+        {l:'На счету', v:money(cashNow), cls: cashNow<0?'neg':'', sub:`запас хода ${runway!==null?dec(runway)+' мес.':'—'} при burn ${money(burnNow)}`},
+        {l:'Дорожная карта', v:st.pct+'%', sub:`${st.done} из ${st.total} задач закрыто`},
+      ])}
+    </section>` : ''}
+
+    <div class="tiles">
+      <a class="tile" href="#statistics"><div class="icon" style="background:var(--gold-bg)">${iconChart('gold')}</div><h3>Финмодель</h3><p>План основателя, расходы, cash flow на 36 месяцев</p></a>
+      <a class="tile" href="#pnl"><div class="icon" style="background:var(--navy-bg)">${iconChart('navy')}</div><h3>P&amp;L</h3><p>Прибыли и убытки, журнал доходов и расходов</p></a>
+      <a class="tile" href="#reports"><div class="icon" style="background:var(--green-bg)">${iconChart('green')}</div><h3>Отчёты</h3><p>День, неделя, месяц — факт и темп к плану</p></a>
+      <a class="tile" href="#roadmap"><div class="icon" style="background:var(--rust-bg)">${iconMap('rust')}</div><h3>Дорожная карта</h3><p>Задачи по этапам и их бюджеты</p></a>
+      <a class="tile" href="#team"><div class="icon" style="background:var(--wine-bg)">${iconUsers('wine')}</div><h3>Команда</h3><p>Люди, роли, оклады</p></a>
+      <a class="tile" href="#platform"><div class="icon" style="background:var(--navy-bg)">${iconBook('navy')}</div><h3>Платформа</h3><p>Что такое Eva Space и как это работает</p></a>
+      <a class="tile" href="#documents"><div class="icon" style="background:var(--gold-bg)">${iconFolder('gold')}</div><h3>Документы</h3><p>История проекта и рабочие модели</p></a>
+      <a class="tile" href="#voting"><div class="icon" style="background:var(--gold-bg)">${iconVote('gold')}</div><h3>Голосования</h3><p>Совместные решения</p></a>
+    </div>
+
+    <section class="block">
+      <h2>Как читать этот штаб</h2>
       <div class="roadmap" style="padding-left:0;">
-        <div class="value-item"><div class="n">01</div><div><h4><a href="#platform">Платформа</a></h4><p>Что такое Eva Space, как зарабатываем, кто эксперты.</p></div></div>
-        <div class="value-item"><div class="n">02</div><div><h4><a href="#reports">Отчёты</a></h4><p>Что уже происходит по факту — день за днём.</p></div></div>
-        <div class="value-item"><div class="n">03</div><div><h4><a href="#statistics">Финмодель и цели</a></h4><p>Куда идём, сколько это стоит и что нужно делать каждый месяц.</p></div></div>
-        <div class="value-item"><div class="n">04</div><div><h4><a href="#roadmap">Дорожная карта</a></h4><p>Что уже сделано, что дальше и сколько это стоит.</p></div></div>
+        <div class="value-item"><div class="n">1</div><div><h4>Инвестору — 10 минут</h4><p>Эта страница, затем <a href="#statistics">«Сколько нужно на запуск»</a> и <a href="#statistics">«Юнит-экономика»</a>. Всё остальное — по желанию.</p></div></div>
+        <div class="value-item"><div class="n">2</div><div><h4>Основателю — рабочее место</h4><p><a href="#statistics">«План основателя»</a>: стратегия, стартовый бюджет, экономный вариант и цели, разложенные до дневных задач.</p></div></div>
+        <div class="value-item"><div class="n">3</div><div><h4>Менеджеру — каждый день</h4><p><a href="#reports">«Отчёты»</a>: показатели дня и журнал всех платежей. Записанное сразу попадает в P&amp;L.</p></div></div>
       </div>
     </section>
   `;
@@ -4336,8 +4525,8 @@ function cfMoney(n){
   if(n===null||n===undefined||isNaN(n)) return '—';
   const sign = n<0?'−':'';
   n = Math.abs(n);
-  if(n>=1e9) return sign+(n/1e9).toFixed(2).replace(/\.00$/,'')+' млрд ₽';
-  if(n>=1e6) return sign+(n/1e6).toFixed(1).replace(/\.0$/,'')+' млн ₽';
+  if(n>=1e9) return sign+(n/1e9).toFixed(2).replace(/\.00$/,'').replace('.', ',')+' млрд ₽';
+  if(n>=1e6) return sign+(n/1e6).toFixed(1).replace(/\.0$/,'').replace('.', ',')+' млн ₽';
   if(n>=1e4) return sign+Math.round(n/1000).toLocaleString('ru-RU')+' тыс ₽';
   return sign+Math.round(n).toLocaleString('ru-RU')+' ₽';
 }
@@ -4425,7 +4614,7 @@ const DEMO_MONTHS = [
 
 function generateDemoDaily(){
   const rnd = mulberry32(20260901);
-  const out = [];
+  const out = [], ledger = [];
   let active = 0;
   const price = DEFAULT_REVENUE.priceMonthly;
   const priceY = DEFAULT_REVENUE.priceAnnual;
@@ -4481,30 +4670,122 @@ function generateDemoDaily(){
 
       out.push({
         d: iso, leads: dayLeads[i], reg: dayReg[i], newPay, annual, churn,
-        revSub, gmv, spend, content: dayCont[i], experts: dayExp[i], demo:true,
+        content: dayCont[i], experts: dayExp[i], demo:true,
       });
+      if(revSub) ledger.push({id:'demo_'+iso+'_in_sub', d:iso, kind:'in', cat:'sub', amount:revSub, note:'', demo:true});
+      Object.entries(gmv).forEach(([id,v])=>{ if(v) ledger.push({id:'demo_'+iso+'_in_'+id, d:iso, kind:'in', cat:id, amount:v, note:'', demo:true}); });
+      Object.entries(spend).forEach(([cat,v])=>{ if(v) ledger.push({id:'demo_'+iso+'_out_'+cat, d:iso, kind:'out', cat, amount:v, note:'', demo:true}); });
       active = Math.max(0, active+newPay-churn);
     }
   });
-  return out;
+  return {days: out, ledger};
 }
 
-async function getDaily(){
-  if(!('eva-club-daily' in _cache)){
-    const stored = await loadShared('eva-club-daily', null);
-    /* Пустой список — это осознанный выбор («очистить демо-данные»),
+/* ============================================================
+   ДВА ХРАНИЛИЩА ВМЕСТО ОДНОГО
+   • дни — воронка и производство (регистрации, платящие, контент);
+   • журнал платежей — каждое движение денег отдельной строкой:
+     дата, приход или расход, статья, сумма, комментарий.
+   Деньги живут только в журнале: это и есть таблица «доходы и
+   расходы», которую заполняет менеджер. Для расчётов оба списка
+   склеиваются в один вид дня — getDays().
+   ============================================================ */
+const LEDGER_MONEY_FIELDS = ['revSub','gmv','spend','finIn'];
+
+function stripMoneyFromDay(r){
+  const o = Object.assign({}, r);
+  LEDGER_MONEY_FIELDS.forEach(k=>{ delete o[k]; });
+  return o;
+}
+/* Старые дневные записи хранили деньги внутри себя — разносим их по
+   журналу платежей один раз, с предсказуемыми id, чтобы не задвоить. */
+function migrateDayMoneyToLedger(days, ledger){
+  const have = new Set(ledger.map(e=>e.id));
+  let touched = false;
+  days.forEach(r=>{
+    if(r.revSub){ const id='mig_'+r.d+'_in_sub'; if(!have.has(id)){ ledger.push({id, d:r.d, kind:'in', cat:'sub', amount:r.revSub, note:'', demo:!!r.demo}); have.add(id); } touched = true; }
+    Object.entries(r.gmv||{}).forEach(([c,v])=>{ if(!v) return; const id='mig_'+r.d+'_in_'+c; if(!have.has(id)){ ledger.push({id, d:r.d, kind:'in', cat:c, amount:v, note:'', demo:!!r.demo}); have.add(id); } touched = true; });
+    Object.entries(r.spend||{}).forEach(([c,v])=>{ if(!v) return; const id='mig_'+r.d+'_out_'+c; if(!have.has(id)){ ledger.push({id, d:r.d, kind:'out', cat:c, amount:v, note:'', demo:!!r.demo}); have.add(id); } touched = true; });
+  });
+  return touched;
+}
+
+async function _loadDayStores(){
+  if('eva-club-daily' in _cache && 'eva-club-ledger' in _cache) return;
+  const storedDays = await loadShared('eva-club-daily', null);
+  const storedLedger = await loadShared('eva-club-ledger', null);
+  let days, ledger;
+  if(Array.isArray(storedDays)){
+    /* Пустой список — осознанный выбор («очистить демо-данные»),
        а не отсутствие данных: демо подставляется только когда в базе
        вообще ничего нет. */
-    _cache['eva-club-daily'] = Array.isArray(stored) ? stored : generateDemoDaily();
+    days = storedDays;
+    ledger = Array.isArray(storedLedger) ? storedLedger : [];
+    if(migrateDayMoneyToLedger(days, ledger)){
+      days = days.map(stripMoneyFromDay);
+      setCacheLocal('eva-club-daily', days); persistCache('eva-club-daily');
+      setCacheLocal('eva-club-ledger', ledger); persistCache('eva-club-ledger');
+    }
+  } else {
+    const demo = generateDemoDaily();
+    days = demo.days; ledger = Array.isArray(storedLedger) ? storedLedger.concat(demo.ledger) : demo.ledger;
   }
-  return _cache['eva-club-daily'];
+  days.sort((a,b)=>a.d.localeCompare(b.d));
+  ledger.sort((a,b)=>a.d.localeCompare(b.d));
+  _cache['eva-club-daily'] = days;
+  _cache['eva-club-ledger'] = ledger;
 }
+async function getDailyMetrics(){ await _loadDayStores(); return _cache['eva-club-daily']; }
+async function getLedger(){ await _loadDayStores(); return _cache['eva-club-ledger']; }
 function saveDaily(list){
-  list.sort((a,b)=>a.d.localeCompare(b.d));
+  list = list.map(stripMoneyFromDay).sort((a,b)=>a.d.localeCompare(b.d));
   setCacheLocal('eva-club-daily', list); persistCache('eva-club-daily');
 }
+function saveLedger(list){
+  list.sort((a,b)=>a.d.localeCompare(b.d) || String(a.id).localeCompare(String(b.id)));
+  setCacheLocal('eva-club-ledger', list); persistCache('eva-club-ledger');
+}
+function clearAllDays(){
+  setCacheLocal('eva-club-daily', []); persistCache('eva-club-daily');
+  setCacheLocal('eva-club-ledger', []); persistCache('eva-club-ledger');
+}
+
+/* Деньги дня из журнала: подписка, оборот по потокам, платежи по категориям. */
+function ledgerByDay(ledger){
+  const map = {};
+  ledger.forEach(e=>{
+    const m = map[e.d] || (map[e.d] = {revSub:0, gmv:{}, spend:{}, finIn:0});
+    if(e.kind==='fin'){ m.finIn += e.amount||0; return; }
+    if(e.kind==='in'){
+      if(e.cat==='sub') m.revSub += e.amount||0;
+      else m.gmv[e.cat] = (m.gmv[e.cat]||0)+(e.amount||0);
+    } else {
+      m.spend[e.cat||'other'] = (m.spend[e.cat||'other']||0)+(e.amount||0);
+    }
+  });
+  return map;
+}
+/* Объединённый вид: метрики дня + деньги дня. Есть запись на каждую
+   дату, где было хоть что-то — метрика или платёж. */
+async function getDays(){
+  const days = await getDailyMetrics();
+  const ledger = await getLedger();
+  const money = ledgerByDay(ledger);
+  const byDate = {};
+  days.forEach(r=>{ byDate[r.d] = Object.assign(emptyDay(r.d), r); });
+  Object.keys(money).forEach(d=>{ if(!byDate[d]) byDate[d] = emptyDay(d); });
+  const out = Object.values(byDate).sort((a,b)=>a.d.localeCompare(b.d));
+  out.forEach(r=>{
+    const m = money[r.d];
+    if(m){ r.revSub = m.revSub; r.gmv = m.gmv; r.spend = m.spend; r.finIn = m.finIn||0; }
+    r.demo = !!(days.find(x=>x.d===r.d)||{}).demo || ledger.some(e=>e.d===r.d && e.demo);
+  });
+  return out;
+}
+/* Совместимость: старые вызовы получают объединённый вид. */
+async function getDaily(){ return getDays(); }
 function emptyDay(iso){
-  return {d:iso, leads:0, reg:0, newPay:0, annual:0, churn:0, revSub:0, gmv:{}, spend:{}, content:0, experts:0};
+  return {d:iso, leads:0, reg:0, newPay:0, annual:0, churn:0, revSub:0, gmv:{}, spend:{}, finIn:0, content:0, experts:0};
 }
 
 /* Свод дневных записей за период + разложение выручки по потокам. */
@@ -4513,13 +4794,13 @@ function rollupDays(days, revCfg){
   const agg = {
     days: days.length, leads:0, reg:0, newPay:0, annual:0, churn:0,
     revSub:0, gmvTotal:0, revAddonNet:0, revenue:0,
-    gmvByStream:{}, netByStream:{}, spendByCat:{}, spendTotal:0,
+    gmvByStream:{}, netByStream:{}, spendByCat:{}, spendTotal:0, finIn:0,
     content:0, experts:0, first: days.length?days[0].d:null, last: days.length?days[days.length-1].d:null,
   };
   days.forEach(r=>{
     agg.leads+=r.leads||0; agg.reg+=r.reg||0; agg.newPay+=r.newPay||0;
     agg.annual+=r.annual||0; agg.churn+=r.churn||0; agg.revSub+=r.revSub||0;
-    agg.content+=r.content||0; agg.experts+=r.experts||0;
+    agg.content+=r.content||0; agg.experts+=r.experts||0; agg.finIn+=r.finIn||0;
     Object.entries(r.gmv||{}).forEach(([id,v])=>{
       agg.gmvByStream[id] = (agg.gmvByStream[id]||0)+v;
       const take = takeMap[id] ? takeMap[id].take : 1;
@@ -4684,7 +4965,8 @@ function factMonth(monthKey, days, ctxCfg){
     grossProfit, grossMargin: revenue?grossProfit/revenue:0,
     ebitda, taxProfit, netProfit,
     totalExpense: cogs+opex+taxProfit,
-    cashFlow: cashIn-cogs-opex-taxProfit-capex,
+    finIn: agg.finIn,
+    cashFlow: cashIn-cogs-opex-taxProfit-capex+agg.finIn,
   };
 }
 
@@ -4870,6 +5152,9 @@ function chartBase(extra){
 function moneyAxis(pos){ return {position:pos||'left', grid:{color:CHART_GRID}, ticks:{color:CHART_SOFT, font:{size:10}, callback:v=>cfMoney(v)}}; }
 function countAxis(pos){ return {position:pos||'right', grid:{display:false}, ticks:{color:CHART_SOFT, font:{size:10}, callback:v=>num(v)}}; }
 
+function howHtml(title, text){
+  return `<details class="how"><summary>${title||'Как это считается'}</summary><div class="how-body">${text}</div></details>`;
+}
 function kpiStrip(tiles){
   return `<div class="kpi-list-card">${tiles.map(t=>`
     <div class="kpi-item ${t.cls||''}" ${t.hint?`title="${esc(t.hint)}"`:''}>
@@ -4978,7 +5263,7 @@ function expenseRegistryHtml(exp, opts){
 
     <div class="card add-exp-card">
       <p class="k-label">Добавить расход</p>
-      <p class="add-exp-hint">Любой расход проекта описывается одинаково: название, категория, тип и правило суммы. Дальше он сам попадает в модель, в P&amp;L и в расчёт денег на запуск.</p>
+      <p class="add-exp-hint">Название, категория, как платим и сколько. Остальное посчитается само.</p>
       <div class="field-row">
         <div class="field grow"><label>Название</label><input type="text" id="newExpName" placeholder="Например, таргет в соцсетях"></div>
         <div class="field"><label>Категория</label><select id="newExpCat">${EXP_CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
@@ -5087,7 +5372,7 @@ function wireExpenseRegistry(rerender){
    ============================================================ */
 const FIN_TABS = [
   {id:'dashboard', name:'Обзор'},
-  {id:'goals',     name:'План и цели'},
+  {id:'plan',      name:'План основателя'},
   {id:'expenses',  name:'Расходы'},
   {id:'revenue',   name:'Доходы и воронка'},
   {id:'launch',    name:'Сколько нужно на запуск'},
@@ -5099,7 +5384,7 @@ async function renderStatistics(){
   killAllCharts();
   app.innerHTML = `
     <h1 class="page-title">Финансовая модель</h1>
-    <p class="page-sub">Одни и те же цифры для всех вкладок: расходы вводятся один раз в общий реестр, а модель, P&amp;L, отчёты и расчёт денег на запуск считаются из него автоматически.</p>
+    <p class="page-sub">План основателя, расходы, доходы и денежный поток на 36 месяцев — из одних и тех же данных.</p>
     <div class="toggle-row scroll-tabs" id="finTabs">
       ${FIN_TABS.map(t=>`<button data-v="${t.id}" class="${_finView===t.id?'active':''}">${t.name}</button>`).join('')}
     </div>
@@ -5109,8 +5394,9 @@ async function renderStatistics(){
     b.onclick = ()=>{ _finView = b.dataset.v; renderStatistics(); };
   });
   const body = document.getElementById('finBody');
+  if(_finView==='goals') _finView = 'plan';
   const map = {
-    dashboard: renderFinDashboard, goals: renderFinGoals, expenses: renderFinExpenses,
+    dashboard: renderFinDashboard, plan: renderFinPlan, goals: renderFinPlan, expenses: renderFinExpenses,
     revenue: renderFinRevenue, launch: renderFinLaunch, cashflow: renderFinCashflow, unit: renderFinUnit,
   };
   await (map[_finView] || renderFinDashboard)(body);
@@ -5162,8 +5448,6 @@ async function renderFinDashboard(body){
     {l:'выручка Год 1', v: cfMoney(cfSumRange(model.revenue,1,12))},
     {l:'выручка Год 3', v: cfMoney(cfSumRange(model.revenue,25,36))},
     {l:'минимум на счету', v: cfMoney(model.minCash), cls: model.minCash<0?'neg':'pos'},
-    {l:'валовая маржа, Год 1', v: cfPct(cfSumRange(model.grossProfit,1,12)/Math.max(1,cfSumRange(model.revenue,1,12)))},
-    {l:'LTV / CAC на 12-й мес.', v: model.ltvCac[12] ? dec(model.ltvCac[12])+'×' : '—', cls: model.ltvCac[12]>=3?'pos':'neg'},
   ];
 
   let statusCls, statusLabel, statusDesc;
@@ -5186,14 +5470,15 @@ async function renderFinDashboard(body){
 
     <section class="block" style="margin-top:0;">
       <h2>Сценарий</h2>
-      <p class="block-sub">Сценарий меняет воронку, отток и стоимость привлечения. Расходы и штат при этом остаются вашими — меняются только предположения о рынке.</p>
+      <p class="block-sub">Три взгляда на рынок при одних и тех же расходах и команде.</p>
       ${scenarioRowHtml()}
       ${kpiStrip(tiles)}
+      ${howHtml('Что меняет сценарий', 'Сценарий задаёт приток новых платящих, конверсии воронки, отток и стоимость привлечения. Штат и реестр расходов при этом ваши — они не меняются. Свои значения рычагов — на вкладке «Доходы и воронка».')}
     </section>
 
     <section class="block">
       <h2>Факт против плана — ${facts.length} закрытых ${facts.length===1?'месяц':(facts.length<5?'месяца':'месяцев')}</h2>
-      <p class="block-sub">Слева то, что уже произошло по ежедневным отчётам, справа — что предполагала модель за тот же период.</p>
+      <p class="block-sub">Что уже произошло по отчётам — и что предполагала модель за те же месяцы.</p>
       ${metricCards([
         {l:'Выручка, факт', v:money(factRevenue), sub:`план ${money(planRevenue)} ${planFactBadge(factRevenue, planRevenue)}`},
         {l:'Расходы, факт', v:money(factSpend), sub:`план ${money(planSpend)} ${planFactBadge(factSpend, planSpend, true)}`},
@@ -5204,13 +5489,13 @@ async function renderFinDashboard(body){
 
     <section class="block">
       <h2>Денежный поток и база пользователей</h2>
-      <p class="block-sub">36 месяцев модели: остаток на счету, признанная выручка, полные расходы — по левой шкале; активные платящие — по правой.</p>
+      <p class="block-sub">36 месяцев: деньги — по левой шкале, платящие — по правой.</p>
       <div class="chart-card"><div class="chart-holder" style="height:340px;"><canvas id="finMainChart"></canvas></div></div>
     </section>
 
     <section class="block">
-      <h2>Структура расходов по категориям — Год 1</h2>
-      <p class="block-sub">Из чего складывается burn первого года. Всё это — записи одного реестра на вкладке «Расходы», ФОТ подтягивается из штата.</p>
+      <h2>Из чего складываются расходы первого года</h2>
+      <p class="block-sub">Все статьи — из реестра на вкладке «Расходы»; ФОТ — из штата.</p>
       <div class="grid-2">
         <div class="card"><div class="chart-holder" style="height:280px;"><canvas id="finCatChart"></canvas></div></div>
         <div class="card table-card">
@@ -5231,37 +5516,9 @@ async function renderFinDashboard(body){
       </div>
     </section>
 
-    <section class="block">
-      <h2>Налоговый режим</h2>
-      <p class="block-sub">Влияет и на модель, и на фактический P&amp;L. Оценка приблизительная — финальную схему подтверждает бухгалтер.</p>
-      <div class="grid-2">
-        <div class="card">
-          <p class="k-label">База налога</p>
-          <div class="toggle-row" id="taxBaseRow">
-            <button data-tax-base="usn6" class="${tax.base==='usn6'?'active':''}">УСН «доходы» 6%</button>
-            <button data-tax-base="usn15" class="${tax.base==='usn15'?'active':''}">УСН «доходы минус расходы» 15%</button>
-          </div>
-          <p class="note-sm">На «доходах» налог уменьшается на страховые взносы, но не более чем вдвое. На «доходы минус расходы» есть минимальный налог 1% с выручки — он и берётся, если по расчёту вышло меньше.</p>
-        </div>
-        <div class="card">
-          <p class="k-label">Страховые взносы на ФОТ</p>
-          <div class="toggle-row" id="taxItRow">
-            <button data-tax-it="0" class="${!tax.it?'active':''}">Обычные ~30%</button>
-            <button data-tax-it="1" class="${tax.it?'active':''}">ИТ-аккредитация 7,6%</button>
-          </div>
-          <p class="note-sm">Аккредитация ИТ-компании экономит ${money(cfSumRange(model.fot,1,12)*(0.30-0.076))} за первый год при текущем штате. Это одна из самых дешёвых мер в модели.</p>
-        </div>
-      </div>
-    </section>
   `;
 
   wireScenarioRow(()=>renderFinDashboard(body));
-  document.querySelectorAll('[data-tax-base]').forEach(b=>{
-    b.onclick = async ()=>{ const t = await getTaxCfg(); t.base = b.dataset.taxBase; saveTaxCfg(t); renderFinDashboard(body); };
-  });
-  document.querySelectorAll('[data-tax-it]').forEach(b=>{
-    b.onclick = async ()=>{ const t = await getTaxCfg(); t.it = b.dataset.taxIt==='1'; saveTaxCfg(t); renderFinDashboard(body); };
-  });
 
   const labels = Array.from({length:36},(_,i)=>finMonthLabel(i+1));
   killChart('main');
@@ -5347,6 +5604,8 @@ async function renderFinExpenses(body){
   const model = await finModel({economy:_economyMode});
   const modelFull = await finModel({economy:false});
   const facts = await buildFactMonths();
+  const ledgerAll = await getLedger();
+  const revCfgE = await getRevenueCfg();
   const insRate = tax.it ? 0.076 : 0.30;
 
   const payrollNow = model.fot[1], insuranceNow = model.insurance[1];
@@ -5370,7 +5629,8 @@ async function renderFinExpenses(body){
   body.innerHTML = `
     <section class="block" style="margin-top:0;">
       <h2>Реестр расходов</h2>
-      <p class="block-sub">Единственное место, где заводятся расходы. Отсюда они идут в модель Cash Flow, в P&amp;L, в фактические отчёты и в расчёт суммы на запуск — вносить одно и то же дважды не нужно.</p>
+      <p class="block-sub">Плановые расходы проекта — одно место для всех. Фактические платежи записываются в журнал ниже.</p>
+      ${howHtml('Куда уходят записи реестра', 'Каждая запись попадает в модель Cash Flow, в план P&amp;L и в расчёт суммы на запуск. Для закрытых месяцев факт берётся из журнала платежей, а по категориям, где платежей нет, подставляется плановая строка — чтобы месяц не выглядел дешевле, чем он есть. Переменные расходы (эквайринг, хостинг, поддержка) считаются от факта автоматически.')}
       <div class="runway-bar">
         <div><strong class="runway-num">${runway?dec(runway)+' мес.':'—'}</strong> <span class="runway-desc">запас хода при текущем burn ${money(burnNow)}/мес и остатке ${money(exp.cash)}</span></div>
         <button class="btn ${_economyMode?'':'ghost'}" id="economyBtn">${_economyMode ? `✓ Режим экономии включён (−${money(potentialCut)}/мес)` : `Включить режим экономии (можно срезать ${money(potentialCut)}/мес)`}</button>
@@ -5395,6 +5655,28 @@ async function renderFinExpenses(body){
     </section>
 
     <section class="block">
+      <h2>Налоговый режим</h2>
+      <p class="block-sub">Влияет на взносы с ФОТ и на налог с выручки — и в модели, и в фактическом P&amp;L. Финальную схему подтверждает бухгалтер.</p>
+      <div class="grid-2">
+        <div class="card">
+          <p class="k-label">База налога</p>
+          <div class="toggle-row" id="taxBaseRow">
+            <button data-tax-base="usn6" class="${tax.base==='usn6'?'active':''}">УСН «доходы» 6%</button>
+            <button data-tax-base="usn15" class="${tax.base==='usn15'?'active':''}">УСН «доходы минус расходы» 15%</button>
+          </div>
+          <p class="note-sm">На «доходах» налог уменьшается на страховые взносы, но не более чем вдвое. На «доходы минус расходы» есть минимальный налог 1% с выручки — он и берётся, если по расчёту вышло меньше.</p>
+        </div>
+        <div class="card">
+          <p class="k-label">Страховые взносы на ФОТ</p>
+          <div class="toggle-row" id="taxItRow">
+            <button data-tax-it="0" class="${!tax.it?'active':''}">Обычные ~30%</button>
+            <button data-tax-it="1" class="${tax.it?'active':''}">ИТ-аккредитация 7,6%</button>
+          </div>
+          <p class="note-sm">Аккредитация ИТ-компании экономит ${money(cfSumRange(model.fot,1,12)*(0.30-0.076))} за первый год при текущем штате. Это одна из самых дешёвых мер в модели.</p>
+        </div>
+      </div>
+    </section>
+    <section class="block">
       <h2>ФОТ — из штата</h2>
       <p class="block-sub">Оклады и состав правятся на вкладке «Команда», месяц выхода — в модели Cash Flow. Здесь только отметка «обязательная позиция» для режима экономии.</p>
       <div class="card table-card">
@@ -5403,6 +5685,12 @@ async function renderFinExpenses(body){
     </section>
 
     ${planFactExpenseHtml(model, facts)}
+
+    <section class="block">
+      <h2>Записать фактический платёж</h2>
+      <p class="block-sub">Разовые оплаты — сюда, в общий журнал платежей. Последние записи ниже, полный журнал — на странице <a href="#pnl">P&amp;L</a> или в <a href="#reports">«Отчётах»</a>.</p>
+      ${ledgerTableHtml(ledgerAll, revCfgE, {defaultKind:'out', filters:false, limit:12, defaultDate: ledgerAll.length ? ledgerAll[ledgerAll.length-1].d : undefined})}
+    </section>
 
     <section class="block">
       <h2>Расходы по месяцам — первый год</h2>
@@ -5415,6 +5703,12 @@ async function renderFinExpenses(body){
     const x = await getExpenses(); x.cash = parseThousands(e.target.value); saveExpenses(x); renderFinExpenses(body);
   });
   document.getElementById('economyBtn').onclick = ()=>{ _economyMode = !_economyMode; renderFinExpenses(body); };
+  document.querySelectorAll('[data-tax-base]').forEach(b=>{
+    b.onclick = async ()=>{ const t = await getTaxCfg(); t.base = b.dataset.taxBase; saveTaxCfg(t); renderFinExpenses(body); };
+  });
+  document.querySelectorAll('[data-tax-it]').forEach(b=>{
+    b.onclick = async ()=>{ const t = await getTaxCfg(); t.it = b.dataset.taxIt==='1'; saveTaxCfg(t); renderFinExpenses(body); };
+  });
   document.querySelectorAll('.pos-mandatory').forEach(cb=>{
     cb.addEventListener('change', async ()=>{
       const list = await getPositions();
@@ -5423,6 +5717,7 @@ async function renderFinExpenses(body){
     });
   });
   wireExpenseRegistry(()=>renderFinExpenses(body));
+  wireLedger(()=>renderFinExpenses(body), revCfgE);
 
   killChart('expmonth');
   const cv = document.getElementById('expByMonthChart');
@@ -5600,6 +5895,239 @@ function decomposeGoal(goal, cfg, ue, startActive, startMonth, norms){
   return out;
 }
 
+/* ============================================================
+   ПЛАН ОСНОВАТЕЛЯ
+   Мини-стратегия словами, стартовый бюджет цифрами, экономный
+   вариант рядом с полным и цели, разложенные до дневных задач.
+   ============================================================ */
+const STRATEGY_FIELDS = [
+  {key:'vision',     label:'Куда идём за 12 месяцев',       hint:'Одно предложение, которое можно сказать инвестору за 10 секунд.', rows:2},
+  {key:'priorities', label:'Три приоритета',                hint:'То, на что уходит время и деньги в первую очередь. Всё остальное — потом.', rows:3},
+  {key:'notDoing',   label:'Чего сознательно не делаем',    hint:'Отказы экономят больше денег, чем любая скидка.', rows:2},
+  {key:'risks',      label:'Что может сломать план',        hint:'Три главных риска и что делаем, если они случатся.', rows:3},
+  {key:'needs',      label:'Что нужно, чтобы план сработал',hint:'Деньги, люди, партнёры, решения — конкретно.', rows:2},
+];
+const DEFAULT_STRATEGY = {
+  vision:'К августу 2027 — 1 000 платящих и операционный плюс: платформа окупает себя без внешних денег.',
+  priorities:'1. Довести конверсию регистрация → оплата до 20% и удержать отток ниже 8%.\n2. 100 мастер-классов в библиотеке к декабрю, дальше +30 в месяц.\n3. Платное привлечение только при LTV/CAC выше 3×.',
+  notDoing:'Не открываем офис и офлайн-точки до выхода в плюс. Не берём разработчиков в штат сверх одного — v2 делаем подрядом с 10-го месяца.',
+  risks:'Отток выше 11% — режем платный трафик, усиливаем программу первых 30 дней. CAC дороже 7 000 ₽ — останавливаем каналы дороже LTV/3. Задержка раунда — режим экономии срезает 360 тыс. ₽/мес.',
+  needs:'3,8 млн ₽ до самоокупаемости с подушкой 3 месяца; куратор контента и видеограф к 4-му месяцу; 50 экспертов с подписанной офертой.',
+};
+async function getStrategy(){
+  if(!('eva-club-strategy' in _cache)){
+    _cache['eva-club-strategy'] = Object.assign({}, DEFAULT_STRATEGY, await loadShared('eva-club-strategy', null)||{});
+  }
+  return _cache['eva-club-strategy'];
+}
+function saveStrategy(o){ setCacheLocal('eva-club-strategy', o); persistCache('eva-club-strategy'); }
+
+let _planHorizon = 6;
+
+async function renderFinPlan(body){
+  const strategy = await getStrategy();
+  const exp = await getExpenses();
+  const cfgFull = await buildFinCfg({economy:false});
+  const cfgEco  = await buildFinCfg({economy:true});
+  const full = computeFinModel(cfgFull);
+  const eco  = computeFinModel(cfgEco);
+  const bareFull = computeFinModel(await buildFinCfg({economy:false, noFinancing:true, cashStart:0}));
+  const bareEco  = computeFinModel(await buildFinCfg({economy:true,  noFinancing:true, cashStart:0}));
+  const needOf = (m)=>{ const d = Math.abs(Math.min(0,m.minCumOper)); const b = Math.max(...m.burn.slice(1, Math.max(2,m.minCumOperMonth+1)),0)*3; return Math.ceil((d+b)/100000)*100000; };
+  const insRate = cfgFull.tax.it ? 0.076 : 0.30;
+  const H = _planHorizon;
+  const months = Array.from({length:H},(_,i)=>i+1);
+
+  /* строки стартового бюджета: штат + реестр, всё что живёт в первые H месяцев */
+  const rows = [];
+  cfgFull.hires.filter(h=>h.month<=H && h.salary>0).forEach(h=>{
+    const arr = months.map(m=> m>=h.month ? h.salary*(1+insRate) : 0);
+    rows.push({kind:'hire', id:h.id, real:h.real, name:h.role, sub:`оклад ${money(h.salary)} + взносы ${cfPct(insRate)}`, cat:'fot', mandatory:h.mandatory!==false, month:h.month, arr, total:arr.reduce((a,b)=>a+b,0)});
+  });
+  exp.items.forEach(it=>{
+    let arr;
+    if(it.kind==='monthly'){ const from=it.from||1, to=it.to||FIN_HORIZON; arr = months.map(m=>(m>=from&&m<=to)?(it.amount||0):0); }
+    else if(it.kind==='once'){ arr = months.map(m=>((it.month||1)===m)?(it.amount||0):0); }
+    else { arr = months.map(m=>full.byCat[it.cat||'other'] ? 0 : 0); /* переменные показываем отдельно */ }
+    const total = arr.reduce((a,b)=>a+b,0);
+    if(it.kind==='variable' || total>0){
+      const varArr = it.kind==='variable' ? months.map(m=>{
+        const d = it.driver||{}, r = d.rate||0;
+        if(d.base==='cash_in') return full.cashIn[m]*r;
+        if(d.base==='revenue') return full.revenue[m]*r;
+        if(d.base==='gmv_addons') return full.gmvAddon[m]*r;
+        if(d.base==='active') return full.active[m]*r;
+        if(d.base==='new_paying') return full.newPaying[m]*r;
+        if(d.base==='active_step500') return Math.floor(full.active[m]/500)*r;
+        return 0;
+      }) : arr;
+      const t2 = varArr.reduce((a,b)=>a+b,0);
+      if(t2>0 || it.kind!=='variable') rows.push({kind:it.kind, id:it.id, name:it.name, sub: it.kind==='variable' ? ('от объёма: '+((EXP_DRIVER_MAP[(it.driver||{}).base]||{}).name||'')) : (it.kind==='once' ? 'разово' : `${money(it.amount)}/мес`), cat:it.cat, mandatory:it.mandatory!==false, arr:varArr, total:t2});
+    }
+  });
+  rows.sort((a,b)=>b.total-a.total);
+  const totals = months.map((m,i)=>rows.reduce((s,r)=>s+r.arr[i],0));
+  const totalsEco = months.map((m,i)=>rows.filter(r=>r.mandatory).reduce((s,r)=>s+r.arr[i],0));
+  const grand = totals.reduce((a,b)=>a+b,0), grandEco = totalsEco.reduce((a,b)=>a+b,0);
+  const revenueH = cfSumRange(full.cashIn,1,H);
+
+  const rowHtml = rows.map(r=>`
+    <tr class="${_economyMode && !r.mandatory ? 'economy-cut':''}">
+      <td>
+        <div class="pb-name">${esc(r.name)}</div>
+        <div class="pb-sub">${r.sub} · <span class="soft">${expCatName(r.cat)}</span></div>
+      </td>
+      <td>${r.kind==='hire'
+          ? `<select class="hire-month-select" data-hire-month="${r.id}" data-hire-real="${!!r.real}">${Array.from({length:FIN_HORIZON},(_,i)=>i+1).map(m=>`<option value="${m}" ${r.month===m?'selected':''}>${m<=12?finMonthShort(m)+(m===1||finMonthDate(m).month===0?' '+finMonthDate(m).year:''):finMonthLabel(m)}</option>`).join('')}</select>`
+          : `<span class="pnl-tag pnl-${r.kind==='monthly'?'opex':(r.kind==='once'?'capex':'cogs')}" style="background:var(--paper); color:var(--ink-soft);">${r.kind==='monthly'?'каждый месяц':(r.kind==='once'?'разово':'от объёма')}</span>`}</td>
+      ${r.arr.map(v=>`<td class="num">${v?cfMoney(v):'<span class="soft">—</span>'}</td>`).join('')}
+      <td class="num hl">${cfMoney(r.total)}</td>
+      <td style="text-align:center;"><input type="checkbox" class="pb-mandatory" data-kind="${r.kind}" data-id="${r.id}" ${r.mandatory?'checked':''} title="Обязательный — остаётся в экономном варианте"></td>
+      <td>${r.kind==='hire' ? '' : `<button class="btn ghost sm-del" data-del-exp="${r.id}" title="Убрать из реестра">✕</button>`}</td>
+    </tr>`).join('');
+
+  body.innerHTML = `
+    <section class="block" style="margin-top:0;">
+      <h2>Мини-стратегия</h2>
+      <p class="block-sub">Пять полей, которые основатель должен уметь заполнить без подготовки. Сохраняются сами, видны всей команде.</p>
+      <div class="strategy-grid">
+        ${STRATEGY_FIELDS.map(f=>`
+          <div class="card strategy-card">
+            <label class="k-label" for="st_${f.key}">${f.label}</label>
+            <textarea id="st_${f.key}" class="strategy-input" data-strategy="${f.key}" rows="${f.rows}" placeholder="${esc(f.hint)}">${esc(strategy[f.key]||'')}</textarea>
+            <span class="strategy-hint">${f.hint}</span>
+          </div>`).join('')}
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="plan-head">
+        <div>
+          <h2>Стартовый бюджет — первые ${H} месяцев</h2>
+          <p class="block-sub" style="margin-bottom:0;">Всё, что проект заплатит на старте: люди из штата и записи реестра. Снимите галочку «обяз.» — и статья уйдёт в экономный вариант. Добавляйте новые статьи прямо здесь.</p>
+        </div>
+        <div class="plan-controls">
+          <div class="toggle-row inline" id="planHorizonRow">
+            ${[3,6,12].map(n=>`<button data-h="${n}" class="${H===n?'active':''}">${n} мес.</button>`).join('')}
+          </div>
+          <button class="btn ${_economyMode?'':'ghost'}" id="planEconomyBtn">${_economyMode?'✓ Экономный вариант':'Показать экономный вариант'}</button>
+        </div>
+      </div>
+      ${metricCards([
+        {l:`Расходы за ${H} мес. — полный вариант`, v:money(grand), sub:`в среднем ${money(grand/H)}/мес`},
+        {l:`Экономный вариант`, v:money(grandEco), cls:'pos', sub:`экономия ${money(grand-grandEco)} за ${H} мес.`},
+        {l:`Поступления за ${H} мес. по модели`, v:money(revenueH)},
+        {l:'Нужно на запуск (полный / экономный)', v:`${cfMoney(needOf(bareFull))} <span class="slash">/</span> ${cfMoney(needOf(bareEco))}`, sub:'кассовый разрыв + подушка 3 месяца'},
+      ])}
+      <div class="card table-card">
+        <div class="table-scroll">
+          <table class="calc-table plan-budget">
+            <thead><tr><th>Статья</th><th>Как платим</th>${months.map(m=>`<th>${finMonthShort(m)}</th>`).join('')}<th>Итого</th><th>Обяз.</th><th></th></tr></thead>
+            <tbody>${rowHtml}</tbody>
+            <tfoot>
+              <tr class="total-row"><td>Полный вариант</td><td></td>${totals.map(v=>`<td class="num">${cfMoney(v)}</td>`).join('')}<td class="num">${cfMoney(grand)}</td><td></td><td></td></tr>
+              <tr class="total-row eco"><td>Экономный вариант</td><td></td>${totalsEco.map(v=>`<td class="num">${cfMoney(v)}</td>`).join('')}<td class="num">${cfMoney(grandEco)}</td><td></td><td></td></tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+      <div class="card add-exp-card">
+        <p class="k-label">Добавить статью в стартовый бюджет</p>
+        <div class="field-row">
+          <div class="field grow"><label>Название</label><input type="text" id="pbName" placeholder="Например, дизайн лендинга"></div>
+          <div class="field"><label>Категория</label><select id="pbCat">${EXP_CATS.filter(c=>!c.auto).map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+          <div class="field"><label>Как платим</label><select id="pbKind"><option value="monthly">Каждый месяц</option><option value="once">Разово</option></select></div>
+          <div class="field"><label>Сумма, ₽</label><input type="text" class="money-fmt-input" id="pbAmount" placeholder="0"></div>
+          <div class="field"><label>С месяца</label><select id="pbFrom">${Array.from({length:12},(_,i)=>i+1).map(m=>`<option value="${m}">${finMonthLabel(m)}</option>`).join('')}</select></div>
+        </div>
+        <label class="inline-check"><input type="checkbox" id="pbMandatory" checked> обязательная — остаётся в экономном варианте</label>
+        <button class="btn" id="pbAddBtn">+ Добавить</button>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>Полный и экономный вариант рядом</h2>
+      <p class="block-sub">Одна и та же воронка и цены — разный набор расходов. Экономный вариант убирает всё, что не отмечено обязательным.</p>
+      <div class="card table-card">
+        <table class="calc-table compare-table">
+          <thead><tr><th>Показатель</th><th>Полный</th><th>Экономный</th><th>Разница</th></tr></thead>
+          <tbody>
+            ${[
+              ['Расходы в 1-й месяц', full.totalExpense[1], eco.totalExpense[1], true],
+              ['Расходы в 6-й месяц', full.totalExpense[6], eco.totalExpense[6], true],
+              ['Нужно на запуск', needOf(bareFull), needOf(bareEco), true],
+              ['Выход в плюс по EBITDA', full.breakevenMonth, eco.breakevenMonth, 'month'],
+              ['Минимум на счету', full.minCash, eco.minCash, false],
+              ['Платящих через 12 мес.', full.active[12], eco.active[12], 'count'],
+              ['Выручка Год 1', cfSumRange(full.revenue,1,12), cfSumRange(eco.revenue,1,12), false],
+              ['Остаток на 36-й мес.', full.cash[36], eco.cash[36], false],
+            ].map(([label,a,b,mode])=>{
+              const fmt = mode==='month' ? (v=>v>0?finMonthLabel(v):'позже 36 мес.') : (mode==='count' ? num : money);
+              let diff = '';
+              if(mode==='month'){ const d = (b>0?b:99)-(a>0?a:99); diff = d ? `<span class="${d<0?'pos':'neg'}">${d>0?'+':''}${d} мес.</span>` : '—'; }
+              else { const d = b-a; const good = mode===true ? d<=0 : d>=0; diff = `<span class="${good?'pos':'neg'}">${d>=0?'+':'−'}${mode==='count'?num(Math.abs(d)):money(Math.abs(d))}</span>`; }
+              return `<tr><td>${label}</td><td class="num">${fmt(a)}</td><td class="num">${fmt(b)}</td><td class="num">${diff}</td></tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <p class="note-sm">Экономный вариант почти не трогает выручку, потому что воронка задана отдельно. В жизни урезанный маркетинг замедлит рост — проверьте это на вкладке «Доходы и воронка», снизив приток.</p>
+    </section>
+
+    <section class="block">
+      <h2>Цели и что делать каждый день</h2>
+      <div id="planGoals"><div class="loading">Считаем…</div></div>
+    </section>
+  `;
+
+  document.querySelectorAll('[data-strategy]').forEach(ta=>{
+    ta.addEventListener('change', async ()=>{
+      const st = await getStrategy(); st[ta.dataset.strategy] = ta.value; saveStrategy(st);
+    });
+  });
+  document.querySelectorAll('#planHorizonRow button').forEach(b=>{ b.onclick = ()=>{ _planHorizon = parseInt(b.dataset.h); renderFinPlan(body); }; });
+  document.getElementById('planEconomyBtn').onclick = ()=>{ _economyMode = !_economyMode; renderFinPlan(body); };
+  document.querySelectorAll('.pb-mandatory').forEach(cb=>{
+    cb.addEventListener('change', async ()=>{
+      if(cb.dataset.kind==='hire'){
+        const list = await getPositions(); const pos = list.find(p=>p.id===cb.dataset.id);
+        if(pos){ pos.mandatory = cb.checked; savePositions(list); }
+        else { const ex = await getExtraHires(); const h = ex.find(x=>x.id===cb.dataset.id); if(h){ h.mandatory = cb.checked; saveExtraHires(ex); } }
+      } else {
+        const e = await getExpenses(); const it = e.items.find(x=>x.id===cb.dataset.id); if(it){ it.mandatory = cb.checked; saveExpenses(e); }
+      }
+      renderFinPlan(body);
+    });
+  });
+  document.querySelectorAll('[data-hire-month]').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      const val = parseInt(sel.value)||1;
+      if(sel.dataset.hireReal==='true'){ const mm = await getHireMonths(); mm[sel.dataset.hireMonth]=val; saveHireMonths(mm); }
+      else { const list = await getExtraHires(); const h = list.find(x=>x.id===sel.dataset.hireMonth); if(h) h.month=val; saveExtraHires(list); }
+      renderFinPlan(body);
+    });
+  });
+  document.querySelectorAll('[data-del-exp]').forEach(b=>{
+    b.onclick = async ()=>{ const e = await getExpenses(); e.items = e.items.filter(x=>x.id!==b.dataset.delExp); saveExpenses(e); renderFinPlan(body); };
+  });
+  document.querySelectorAll('.money-fmt-input').forEach(wireThousandsInput);
+  document.getElementById('pbAddBtn').onclick = async ()=>{
+    const name = document.getElementById('pbName').value.trim();
+    if(!name){ document.getElementById('pbName').focus(); return; }
+    const kind = document.getElementById('pbKind').value;
+    const amount = parseThousands(document.getElementById('pbAmount').value);
+    if(!amount){ document.getElementById('pbAmount').focus(); return; }
+    const from = parseInt(document.getElementById('pbFrom').value)||1;
+    const e = await getExpenses();
+    const rec = {id:uid(), name, cat:document.getElementById('pbCat').value, kind, mandatory:document.getElementById('pbMandatory').checked, dept:null};
+    if(kind==='once'){ rec.amount = amount; rec.month = from; } else { rec.amount = amount; rec.from = from; rec.to = null; }
+    e.items.push(rec); saveExpenses(e); renderFinPlan(body);
+  };
+
+  const goalsEl = document.getElementById('planGoals');
+  if(goalsEl) await renderFinGoals(goalsEl);
+}
+
 async function renderFinGoals(body){
   const cfg   = await buildFinCfg({economy:_economyMode});
   const model = computeFinModel(cfg);
@@ -5658,7 +6186,6 @@ async function renderFinGoals(body){
 
   body.innerHTML = `
     <section class="block" style="margin-top:0;">
-      <h2>Цели и их декомпозиция</h2>
       <p class="block-sub">Ставите цель — программа раскладывает её обратно по воронке: сколько нужно платящих, регистраций, визитов, денег на привлечение, экспертов и контента. Каждый месяц, каждую неделю, каждый день.</p>
       ${metricCards([
         {l:'ARPU — выручка с активного', v:money(ue.arpu)+'/мес', sub:`подписка ${money(ue.arpuSub)} + допродажи ${money(ue.arpuAddon)}`},
@@ -5808,7 +6335,8 @@ async function renderFinRevenue(body){
   body.innerHTML = `
     <section class="block" style="margin-top:0;">
       <h2>Из чего складывается выручка</h2>
-      <p class="block-sub">Подписка — своя выручка целиком. Допродажи — оборот площадки, из которого нам остаётся take rate: доля платформы после выплаты эксперту или поставщику. Инвестор смотрит именно на вторую цифру, а не на оборот.</p>
+      <p class="block-sub">Подписка целиком наша; от допродаж остаётся только доля платформы.</p>
+      ${howHtml('Почему считаем долю, а не оборот', 'Курс за 5 000 ₽ — это оборот площадки, а выручка компании — только take rate: то, что остаётся после выплаты эксперту. Инвестор и налоговая смотрят именно на неё. Оборот показываем справочно.')}
       ${metricCards([
         {l:'ARPU — всего с активного', v:money(ue.arpu)+'/мес'},
         {l:'из них подписка', v:money(ue.arpuSub)+'/мес', sub:cfPct(ue.arpuSub/Math.max(1,ue.arpu))+' выручки'},
@@ -5819,7 +6347,7 @@ async function renderFinRevenue(body){
 
     <section class="block">
       <h2>Допродажи</h2>
-      <p class="block-sub">Конверсия — какая доля активной базы покупает это в течение месяца. Take rate — сколько остаётся платформе после выплаты эксперту или поставщику.</p>
+      <p class="block-sub">Конверсия — доля активных, покупающих за месяц. Take rate — наша доля с чека.</p>
       <div class="card table-card">
         <table class="calc-table">
           <thead><tr><th>Поток</th><th>Конверсия</th><th>Средний чек</th><th>Take rate</th><th>Оборот на польз.</th><th>Наша выручка</th><th>Вкл.</th><th></th></tr></thead>
@@ -5839,8 +6367,8 @@ async function renderFinRevenue(body){
     </section>
 
     <section class="block">
-      <h2>Рычаги подписки и оттока</h2>
-      <p class="block-sub">Отток — самый чувствительный рычаг модели: он определяет и срок жизни пользователя, и сколько новых нужно докупать просто чтобы стоять на месте.</p>
+      <h2>Рычаги подписки и воронки</h2>
+      <p class="block-sub">Отток — самый чувствительный рычаг: он определяет, сколько новых нужно докупать, чтобы просто не падать.</p>
       <div class="ctrl-grid">
         <div class="ctrl-group churn-group">
           <h4>Цена и удержание</h4>
@@ -6011,7 +6539,7 @@ async function renderFinLaunch(body){
         <div class="toggle-row inline" id="bufferRow">
           ${[0,2,3,6].map(n=>`<button data-buffer="${n}" class="${_launchBufferMonths===n?'active':''}">${n===0?'без подушки':n+' мес.'}</button>`).join('')}
         </div>
-        <span class="note-sm">Подушка — это месяцы, которые проект переживёт, если выручка не придёт вовремя. Без неё модель верна ровно до первого сдвига плана.</span>
+        <span class="note-sm">Месяцы, которые проект переживёт, если выручка задержится.</span>
       </div>
       ${metricCards([
         {l:'Уже есть и обещано', v:money(raised), sub:`остаток ${money(exp.cash)} + раунды ${money(raised-exp.cash)}`},
@@ -6044,7 +6572,7 @@ async function renderFinLaunch(body){
 
     <section class="block">
       <h2>Сколько нужно при разных сценариях</h2>
-      <p class="block-sub">Одна и та же команда и те же расходы, но разные предположения о рынке. Разница между строками — это и есть цена оптимизма.</p>
+      <p class="block-sub">Те же расходы — разный рынок. Разница между строками — цена оптимизма.</p>
       <div class="card table-card">
         <table class="calc-table">
           <thead><tr><th>Сценарий</th><th>Нужно денег</th><th>Дно кассы</th><th>Выход в плюс</th></tr></thead>
@@ -6077,8 +6605,8 @@ async function renderFinLaunch(body){
     </section>
 
     <section class="block">
-      <h2>План первых шести месяцев — ставим руками</h2>
-      <p class="block-sub">Здесь план не выводится из модели, а задаётся вами: сколько людей, экспертов и контента вы обязуетесь сделать. Выручка и остаток пересчитываются автоматически по ARPU ${money(ue.arpu)}.</p>
+      <h2>План первых шести месяцев — руками</h2>
+      <p class="block-sub">Ваши обязательства по людям, экспертам и контенту. Выручка и остаток считаются сами по ARPU ${money(ue.arpu)}.</p>
       <div class="card table-card">
         <table class="calc-table">
           <thead><tr><th>Показатель</th>${planMonths.map(m=>`<th>${finMonthLabel(m)}</th>`).join('')}</tr></thead>
@@ -6210,14 +6738,12 @@ async function renderFinCashflow(body){
   body.innerHTML = `
     <section class="block" style="margin-top:0;">
       <span class="post-launch-badge">36 месяцев модели — с ${finMonthLabel(1)} по ${finMonthLabel(36)}</span>
-      <p class="block-sub">Полная модель: воронка, выручка по потокам, расходы из общего реестра, налоги и остаток на счету. Штат — живой, из вкладки «Команда»: поменяли оклад там — цифра здесь сдвинулась.</p>
+      <p class="block-sub">Воронка, выручка, расходы, налоги и остаток на счету по месяцам. Штат — из «Команды», расходы — из реестра.</p>
       ${scenarioRowHtml()}
       ${kpiStrip([
         {l:'выход в плюс по EBITDA', v: model.breakevenMonth>0?finMonthLabel(model.breakevenMonth):'позже 36 мес.', cls: model.breakevenMonth>0?'':'neg'},
-        {l:'первый плюсовой денежный месяц', v: model.cashPositiveMonth>0?finMonthLabel(model.cashPositiveMonth):'позже 36 мес.'},
         {l:'платящих на конец Года 1', v:num(model.active[12])},
         {l:'платящих на конец Года 3', v:num(model.active[36])},
-        {l:'выручка Года 3', v:cfMoney(cfSumRange(model.revenue,25,36))},
         {l:'минимум на счету', v:cfMoney(model.minCash), cls: model.minCash<0?'neg':'pos'},
         {l:'остаток на 36-й месяц', v:cfMoney(model.cash[36]), cls: model.cash[36]<0?'neg':'pos'},
       ])}
@@ -6229,7 +6755,7 @@ async function renderFinCashflow(body){
 
     <section class="block">
       <h2>Полная таблица по месяцам</h2>
-      <p class="block-sub">Первые 12 месяцев подробно, дальше Год 2 и Год 3 одной колонкой. Показатели «на конец периода» — активные пользователи и остаток — не суммируются, а берутся на последний месяц года.</p>
+      <p class="block-sub">Первые 12 месяцев подробно, дальше Год 2 и Год 3 одной колонкой.</p>
       <div class="breakout-wide">
         <div class="cf-table-card">
           <div class="cf-table-title">Cash Flow — ${finMonthLabel(1)} → ${finMonthLabel(36)}</div>
@@ -6574,6 +7100,8 @@ async function renderPnl(){
   const cfg = await buildFinCfg({economy:_economyMode});
   const model = computeFinModel(cfg);
   const facts = await buildFactMonths();
+  const ledger = await getLedger();
+  const revCfgL = await getRevenueCfg();
 
   /* амортизация факта — по тому же правилу, что и в модели */
   const factDep = facts.map((f,i)=>facts.slice(0,i+1).reduce((s,x)=>s+x.capex/CAPEX_AMORT_MONTHS,0));
@@ -6633,7 +7161,8 @@ async function renderPnl(){
 
   app.innerHTML = `
     <h1 class="page-title">Отчёт о прибылях и убытках</h1>
-    <p class="page-sub">Начислением: выручка признаётся в том месяце, к которому относится, а не когда пришли деньги. Годовая подписка приносит деньги сразу, а в P&amp;L раскладывается по 1/12 — поэтому прибыль и остаток на счету никогда не совпадают, и ниже показано, почему.</p>
+    <p class="page-sub">Сколько заработали и сколько потратили — по месяцам, кварталам и годам. Факт против плана.</p>
+    ${howHtml('Почему прибыль и деньги на счету не совпадают', 'Отчёт составлен начислением: выручка признаётся в том месяце, к которому относится, а не когда пришли деньги. Годовая подписка приносит все деньги сразу, а в P&amp;L раскладывается по 1/12 — разница копится в авансах. Мост от прибыли к деньгам показан внизу страницы.')}
 
     <div class="pnl-controls">
       <div class="toggle-row" id="pnlPeriodRow">
@@ -6682,6 +7211,12 @@ async function renderPnl(){
     </section>` : ''}
 
     <section class="block">
+      <h2>Доходы и расходы — журнал платежей</h2>
+      <p class="block-sub">Каждая оплата одной строкой: что пришло, что ушло. Из этих строк собирается факт. ФОТ и регулярные расходы записывать не нужно — они подставляются из реестра.</p>
+      ${ledgerTableHtml(ledger, revCfgL, {defaultKind:'out', defaultDate: ledger.length ? ledger[ledger.length-1].d : undefined})}
+    </section>
+
+    <section class="block">
       <h2>Полный отчёт</h2>
       <p class="block-sub">Отрицательные суммы в скобках — как в бухгалтерской практике. Строки со сдвигом — расшифровка итога над ними.</p>
       <div class="breakout-wide">
@@ -6722,6 +7257,7 @@ async function renderPnl(){
 
   document.querySelectorAll('#pnlPeriodRow button').forEach(b=>{ b.onclick = ()=>{ _pnlPeriod = b.dataset.p; renderPnl(); }; });
   document.querySelectorAll('#pnlSourceRow button').forEach(b=>{ b.onclick = ()=>{ _pnlSource = b.dataset.s; renderPnl(); }; });
+  wireLedger(()=>renderPnl(), revCfgL);
 
   killChart('pnl');
   const cv = document.getElementById('pnlChart');
@@ -6738,6 +7274,167 @@ async function renderPnl(){
 }
 
 /* ============================================================
+   ЖУРНАЛ ПЛАТЕЖЕЙ — ТАБЛИЦА «ДОХОДЫ И РАСХОДЫ»
+   Один компонент для всех страниц: на P&L, в отчёте за день,
+   на вкладке расходов. Одна строка — одно движение денег.
+   ============================================================ */
+let _lgMonth = 'all';
+let _lgKindFilter = 'all';
+let _lgShow = 60;
+
+const FIN_SOURCES = [
+  {id:'round',   name:'Инвестиционный раунд'},
+  {id:'loan',    name:'Займ'},
+  {id:'founder', name:'Взнос основателя'},
+  {id:'grant',   name:'Грант / субсидия'},
+];
+function ledgerStatName(cat, revCfg){
+  if(cat==='sub') return 'Подписка';
+  const f = FIN_SOURCES.find(x=>x.id===cat); if(f) return f.name;
+  const a = (revCfg.addons||[]).find(x=>x.id===cat);
+  if(a) return a.name;
+  return expCatName(cat);
+}
+function ledgerStatOptions(kind, revCfg, selected){
+  if(kind==='fin'){
+    return FIN_SOURCES.map(f=>`<option value="${f.id}" ${selected===f.id?'selected':''}>${f.name}</option>`).join('');
+  }
+  if(kind==='in'){
+    return [`<option value="sub" ${selected==='sub'?'selected':''}>Подписка</option>`]
+      .concat((revCfg.addons||[]).map(a=>`<option value="${a.id}" ${selected===a.id?'selected':''}>${esc(a.name)} (нам ${cfPct(a.take)})</option>`)).join('');
+  }
+  return EXP_CATS.filter(c=>!c.auto).map(c=>`<option value="${c.id}" ${selected===c.id?'selected':''}>${c.name}</option>`).join('');
+}
+function ledgerNet(e, revCfg){
+  if(e.kind!=='in') return e.amount||0;
+  if(e.cat==='sub') return e.amount||0;
+  const a = (revCfg.addons||[]).find(x=>x.id===e.cat);
+  return (e.amount||0)*(a?a.take:1);
+}
+
+function ledgerTableHtml(entries, revCfg, opts){
+  opts = opts || {};
+  const showFilters = !opts.fixedDate && opts.filters!==false;
+  let list = entries.slice();
+  if(opts.fixedDate) list = list.filter(e=>e.d===opts.fixedDate);
+  if(showFilters && _lgMonth!=='all') list = list.filter(e=>monthKeyOf(e.d)===_lgMonth);
+  if(showFilters && _lgKindFilter!=='all') list = list.filter(e=>e.kind===_lgKindFilter);
+  list.sort((a,b)=>b.d.localeCompare(a.d) || String(b.id).localeCompare(String(a.id)));
+  const totalRows = list.length;
+  const pageSize = opts.limit || (showFilters ? _lgShow : list.length);
+  const hiddenRows = Math.max(0, list.length - pageSize);
+  list = list.slice(0, pageSize);
+
+  const totIn  = list.filter(e=>e.kind==='in').reduce((s,e)=>s+(e.amount||0),0);
+  const totInNet = list.filter(e=>e.kind==='in').reduce((s,e)=>s+ledgerNet(e, revCfg),0);
+  const totFin = list.filter(e=>e.kind==='fin').reduce((s,e)=>s+(e.amount||0),0);
+  const totOut = list.filter(e=>e.kind==='out').reduce((s,e)=>s+(e.amount||0),0);
+
+  const months = Array.from(new Set(entries.map(e=>monthKeyOf(e.d)))).sort().reverse();
+  const filtersHtml = showFilters ? `
+    <div class="exp-toolbar">
+      <div class="exp-filters">
+        <select id="lgMonthFilter" class="v-input">
+          <option value="all" ${_lgMonth==='all'?'selected':''}>Все месяцы</option>
+          ${months.map(m=>`<option value="${m}" ${_lgMonth===m?'selected':''}>${monthKeyLabel(m)}</option>`).join('')}
+        </select>
+        <select id="lgKindFilter" class="v-input">
+          <option value="all" ${_lgKindFilter==='all'?'selected':''}>Доходы и расходы</option>
+          <option value="in" ${_lgKindFilter==='in'?'selected':''}>Только доходы</option>
+          <option value="out" ${_lgKindFilter==='out'?'selected':''}>Только расходы</option>
+          <option value="fin" ${_lgKindFilter==='fin'?'selected':''}>Инвестиции и займы</option>
+        </select>
+      </div>
+      <span class="exp-count">${totalRows} ${totalRows===1?'запись':(totalRows<5?'записи':'записей')}</span>
+    </div>` : '';
+
+  const rows = list.map(e=>`
+    <tr data-id="${e.id}" class="lg-row lg-${e.kind}">
+      <td class="lg-date">${opts.fixedDate ? '' : `<input type="date" class="v-input lg-f" data-lg-field="d" data-id="${e.id}" value="${e.d}">`}</td>
+      <td><span class="kind-pill ${e.kind}">${e.kind==='in'?'доход':(e.kind==='fin'?'инвестиции':'расход')}</span></td>
+      <td><select class="v-input lg-f" data-lg-field="cat" data-id="${e.id}">${ledgerStatOptions(e.kind, revCfg, e.cat)}</select></td>
+      <td><input type="text" class="v-input lg-f lg-note" data-lg-field="note" data-id="${e.id}" value="${esc(e.note||'')}" placeholder="—"></td>
+      <td class="num">${e.kind!=='out' ? `<input type="text" class="v-input money-fmt-input lg-f lg-amount" data-lg-field="amount" data-id="${e.id}" value="${fmtThousands(e.amount)}">` : ''}</td>
+      <td class="num">${e.kind==='out' ? `<input type="text" class="v-input money-fmt-input lg-f lg-amount" data-lg-field="amount" data-id="${e.id}" value="${fmtThousands(e.amount)}">` : ''}</td>
+      <td><button class="btn ghost sm-del" data-del-lg="${e.id}" title="Удалить">✕</button></td>
+    </tr>`).join('');
+
+  const defaultKind = opts.defaultKind || 'out';
+  const addForm = opts.showAdd===false ? '' : `
+    <div class="lg-add">
+      <div class="field-row">
+        ${opts.fixedDate ? `<input type="hidden" id="lgDate" value="${opts.fixedDate}">` : `<div class="field" style="flex:0 0 150px;"><label>Дата</label><input type="date" id="lgDate" value="${opts.defaultDate || new Date().toISOString().slice(0,10)}"></div>`}
+        <div class="field" style="flex:0 0 130px;"><label>Тип</label>
+          <select id="lgKind"><option value="in" ${defaultKind==='in'?'selected':''}>Доход</option><option value="out" ${defaultKind==='out'?'selected':''}>Расход</option><option value="fin">Инвестиции / займ</option></select></div>
+        <div class="field" style="flex:0 0 220px;"><label>Статья</label><select id="lgCat">${ledgerStatOptions(defaultKind, revCfg)}</select></div>
+        <div class="field" style="flex:0 0 130px;"><label>Сумма, ₽</label><input type="text" class="money-fmt-input" id="lgAmount" placeholder="0"></div>
+        <div class="field grow"><label>Комментарий</label><input type="text" id="lgNote" placeholder="За что, кому, откуда"></div>
+        <div class="field" style="flex:0 0 auto; display:flex; align-items:flex-end;"><button class="btn" id="lgAddBtn">+ Записать</button></div>
+      </div>
+    </div>`;
+
+  return `
+    ${filtersHtml}
+    ${addForm}
+    <div class="card table-card">
+      <table class="calc-table ledger-table">
+        <thead><tr><th>Дата</th><th>Тип</th><th>Статья</th><th>Комментарий</th><th>Приход</th><th>Расход</th><th></th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="7" class="empty-note">${opts.fixedDate ? 'За этот день платежей не записано.' : 'Пока пусто — добавьте первую запись.'}</td></tr>`}</tbody>
+        ${list.length ? `<tfoot><tr class="total-row">
+          <td colspan="4">Итого${opts.fixedDate?' за день':''}${totIn!==totInNet?` <span class="soft">· наша доля доходов ${money(totInNet)}</span>`:''}${totFin?` <span class="soft">· из них инвестиции и займы ${money(totFin)}</span>`:''}</td>
+          <td class="num pos">${money(totIn+totFin)}</td>
+          <td class="num neg">${money(totOut)}</td>
+          <td></td>
+        </tr></tfoot>` : ''}
+      </table>
+      ${hiddenRows>0 && !opts.limit ? `<div class="lg-more"><button class="btn ghost" id="lgMoreBtn">Показать ещё ${Math.min(hiddenRows, 200)} из ${hiddenRows} более ранних</button></div>` : ''}
+    </div>`;
+}
+
+function wireLedger(rerender, revCfg){
+  document.querySelectorAll('.money-fmt-input').forEach(wireThousandsInput);
+  const mf = document.getElementById('lgMonthFilter');
+  if(mf) mf.onchange = ()=>{ _lgMonth = mf.value; rerender(); };
+  const kf = document.getElementById('lgKindFilter');
+  if(kf) kf.onchange = ()=>{ _lgKindFilter = kf.value; rerender(); };
+  const more = document.getElementById('lgMoreBtn');
+  if(more) more.onclick = ()=>{ _lgShow += 200; rerender(); };
+
+  const kindSel = document.getElementById('lgKind');
+  const catSel  = document.getElementById('lgCat');
+  if(kindSel && catSel){
+    kindSel.onchange = ()=>{ catSel.innerHTML = ledgerStatOptions(kindSel.value, revCfg); };
+  }
+  const addBtn = document.getElementById('lgAddBtn');
+  if(addBtn) addBtn.onclick = async ()=>{
+    const amount = parseThousands(document.getElementById('lgAmount').value);
+    const d = document.getElementById('lgDate').value;
+    if(!amount){ document.getElementById('lgAmount').focus(); return; }
+    if(!d){ const de = document.getElementById('lgDate'); if(de) de.focus(); return; }
+    const list = await getLedger();
+    list.push({id:uid(), d, kind:kindSel.value, cat:catSel.value, amount, note:document.getElementById('lgNote').value.trim()});
+    saveLedger(list);
+    rerender();
+  };
+  document.querySelectorAll('[data-lg-field]').forEach(inp=>{
+    inp.addEventListener('change', async ()=>{
+      const list = await getLedger(); const e = list.find(x=>x.id===inp.dataset.id); if(!e) return;
+      const f = inp.dataset.lgField;
+      if(f==='amount') e.amount = parseThousands(inp.value);
+      else e[f] = inp.value;
+      if(f==='d' && !e.d) return;
+      saveLedger(list); rerender();
+    });
+  });
+  document.querySelectorAll('[data-del-lg]').forEach(b=>{
+    b.onclick = async ()=>{
+      const list = (await getLedger()).filter(x=>x.id!==b.dataset.delLg);
+      saveLedger(list); rerender();
+    };
+  });
+}
+
+/* ============================================================
    СТРАНИЦА «ОТЧЁТЫ» — ЕЖЕДНЕВНАЯ ОТЧЁТНОСТЬ
    ============================================================ */
 let _repView = 'day';
@@ -6749,25 +7446,26 @@ async function renderReports(){
   if(!_repDate || !days.some(d=>d.d===_repDate)) _repDate = days.length ? days[days.length-1].d : new Date().toISOString().slice(0,10);
   app.innerHTML = `
     <h1 class="page-title">Отчёты</h1>
-    <p class="page-sub">Один день — одна запись одного и того же формата. Из дней собираются недели и месяцы, из месяцев — фактический P&amp;L. Регулярные расходы и ФОТ сюда не вносятся: они уже в реестре расходов и подхватываются сами.</p>
+    <p class="page-sub">Что происходит по факту: показатели по дням и все движения денег. Из дней собираются недели и месяцы, из них — фактический P&amp;L.</p>
     <div class="toggle-row" id="repTabs">
       <button data-v="day"     class="${_repView==='day'?'active':''}">День</button>
       <button data-v="week"    class="${_repView==='week'?'active':''}">Недели</button>
       <button data-v="month"   class="${_repView==='month'?'active':''}">Месяцы и план/факт</button>
-      <button data-v="journal" class="${_repView==='journal'?'active':''}">Журнал</button>
+      <button data-v="ledger"  class="${_repView==='ledger'?'active':''}">Платежи</button>
+      <button data-v="journal" class="${_repView==='journal'?'active':''}">Все дни</button>
     </div>
     <div id="repBody"><div class="loading">Собираем отчёт…</div></div>
   `;
   document.querySelectorAll('#repTabs button').forEach(b=>{ b.onclick = ()=>{ _repView = b.dataset.v; renderReports(); }; });
   const body = document.getElementById('repBody');
-  const map = {day:renderRepDay, week:renderRepWeek, month:renderRepMonth, journal:renderRepJournal};
+  const map = {day:renderRepDay, week:renderRepWeek, month:renderRepMonth, ledger:renderRepLedger, journal:renderRepJournal};
   await (map[_repView]||renderRepDay)(body);
 }
 
 function demoNoticeHtml(days){
   if(!days.some(d=>d.demo)) return '';
   return `<div class="demo-notice">
-    <div><strong>Это демонстрационные данные.</strong> Четыре отработанных месяца — сентябрь–декабрь 2026 — сгенерированы близко к плану запуска, чтобы было видно, как отчётность работает на живых цифрах. Все суммы вымышленные. Любой день можно перезаписать своим — форма внизу страницы.</div>
+    <div><strong>Это демонстрационные данные.</strong> Четыре отработанных месяца — сентябрь–декабрь 2026 — сгенерированы близко к плану запуска, чтобы было видно, как отчётность работает на живых цифрах. Все суммы вымышленные — поверх них можно вносить свои дни и платежи.</div>
     <button class="btn ghost" id="clearDemoBtn" data-armed="0">Очистить и начать с чистого листа</button>
   </div>`;
 }
@@ -6787,77 +7485,74 @@ function wireDemoNotice(){
       }, 5000);
       return;
     }
-    saveDaily([]);
-    setCacheLocal('eva-club-daily', []);
+    clearAllDays();
     renderReports();
   };
 }
 
-function dailyFormHtml(rec, revCfg){
+function dailyFormHtml(rec, revCfg, ledgerEntries, opts){
+  opts = opts || {};
+  const metricFields = DAILY_FIELDS.filter(f=>f.key!=='revSub');
   return `
     <div class="card day-form">
       <div class="day-form-head">
         <div class="field"><label>Дата</label><input type="date" id="dfDate" value="${rec.d}"></div>
         <span class="day-weekday">${weekdayShort(rec.d)}, ${ruDateFull(rec.d)}</span>
       </div>
-      <p class="k-label">Воронка и подписка</p>
+      <p class="k-label">Воронка и производство <span class="k-hint">штуки, не деньги</span></p>
       <div class="field-row">
-        ${DAILY_FIELDS.filter(f=>f.key!=='content'&&f.key!=='experts').map(f=>`
+        ${metricFields.map(f=>`
           <div class="field"><label title="${esc(f.hint)}">${f.label}</label>
-            <input type="${f.unit==='₽'?'text':'number'}" class="${f.unit==='₽'?'money-fmt-input':''} df-in" data-df="${f.key}"
-              value="${f.unit==='₽'?fmtThousands(rec[f.key]||0):(rec[f.key]||0)}"></div>`).join('')}
-      </div>
-      <p class="k-label">Допродажи — оборот за день, ₽</p>
-      <div class="field-row">
-        ${revCfg.addons.map(a=>`
-          <div class="field"><label>${esc(a.name)}<span class="take-hint">нам ${cfPct(a.take)}</span></label>
-            <input type="text" class="money-fmt-input df-gmv" data-addon="${a.id}" value="${fmtThousands((rec.gmv||{})[a.id]||0)}"></div>`).join('')}
-      </div>
-      <p class="k-label">Разовые платежи дня, ₽ <span class="k-hint">ФОТ и регулярные расходы вносить не нужно — они уже в реестре</span></p>
-      <div class="field-row">
-        ${['marketing','content','experts','other','equipment','legal'].map(c=>`
-          <div class="field"><label>${expCatName(c)}</label>
-            <input type="text" class="money-fmt-input df-spend" data-cat="${c}" value="${fmtThousands((rec.spend||{})[c]||0)}"></div>`).join('')}
-      </div>
-      <p class="k-label">Производство</p>
-      <div class="field-row">
-        <div class="field"><label>Мастер-классов снято</label><input type="number" class="df-in" data-df="content" value="${rec.content||0}"></div>
-        <div class="field"><label>Экспертов подключено</label><input type="number" class="df-in" data-df="experts" value="${rec.experts||0}"></div>
+            <input type="number" min="0" class="df-in" data-df="${f.key}" value="${rec[f.key]||0}"></div>`).join('')}
         <div class="field grow"><label>Что важного случилось</label><input type="text" id="dfNote" value="${esc(rec.note||'')}" placeholder="Необязательно"></div>
       </div>
       <div class="day-form-actions">
         <button class="btn" id="saveDayBtn">Сохранить день</button>
-        <button class="btn ghost" id="deleteDayBtn">Удалить запись</button>
+        ${opts.allowDelete!==false ? `<button class="btn ghost" id="deleteDayBtn">Удалить показатели дня</button>` : ''}
       </div>
-    </div>`;
+    </div>
+    ${opts.noLedger ? '' : `<div class="day-ledger">
+      <p class="k-label" style="margin-top:20px;">Деньги за ${ruDate(rec.d)} <span class="k-hint">поступления и платежи — по одной строке на каждое движение. ФОТ и регулярные расходы вносить не нужно, они в реестре</span></p>
+      ${ledgerTableHtml(ledgerEntries||[], revCfg, {fixedDate: rec.d, defaultKind:'in'})}
+    </div>`}`;
 }
 function readDailyForm(){
-  const rec = {d: document.getElementById('dfDate').value, gmv:{}, spend:{}};
-  document.querySelectorAll('.df-in').forEach(el=>{
-    rec[el.dataset.df] = el.classList.contains('money-fmt-input') ? parseThousands(el.value) : (parseFloat(el.value)||0);
-  });
-  document.querySelectorAll('[data-df="revSub"]').forEach(el=>{ rec.revSub = parseThousands(el.value); });
-  document.querySelectorAll('.df-gmv').forEach(el=>{ const v = parseThousands(el.value); if(v) rec.gmv[el.dataset.addon]=v; });
-  document.querySelectorAll('.df-spend').forEach(el=>{ const v = parseThousands(el.value); if(v) rec.spend[el.dataset.cat]=v; });
+  const rec = {d: document.getElementById('dfDate').value};
+  document.querySelectorAll('.df-in').forEach(el=>{ rec[el.dataset.df] = Math.max(0, parseFloat(el.value)||0); });
   const n = document.getElementById('dfNote'); if(n && n.value.trim()) rec.note = n.value.trim();
   return rec;
 }
-function wireDailyForm(rerender){
-  document.querySelectorAll('.money-fmt-input').forEach(wireThousandsInput);
-  document.getElementById('dfDate').addEventListener('change', (e)=>{ _repDate = e.target.value; rerender(); });
-  document.getElementById('saveDayBtn').onclick = async ()=>{
+function wireDailyForm(rerender, revCfg, opts){
+  opts = opts || {};
+  const dateEl = document.getElementById('dfDate');
+  if(dateEl) dateEl.addEventListener('change', (e)=>{
+    if(!e.target.value) return;
+    /* на вкладке дня смена даты открывает этот день; в форме добавления — просто меняет дату записи */
+    if(opts.navigateOnDate){ _repDate = e.target.value; rerender(); }
+    else {
+      const lbl = document.querySelector('.day-weekday');
+      if(lbl) lbl.textContent = weekdayShort(e.target.value)+', '+ruDateFull(e.target.value);
+      const lg = document.getElementById('lgDate'); if(lg) lg.value = e.target.value;
+    }
+  });
+  const saveBtn = document.getElementById('saveDayBtn');
+  if(saveBtn) saveBtn.onclick = async ()=>{
     const rec = readDailyForm();
-    const list = (await getDaily()).filter(x=>x.d!==rec.d);
+    if(!rec.d){ dateEl.focus(); return; }
+    const list = (await getDailyMetrics()).filter(x=>x.d!==rec.d);
     list.push(rec); saveDaily(list); _repDate = rec.d; rerender();
   };
-  document.getElementById('deleteDayBtn').onclick = async ()=>{
-    const list = (await getDaily()).filter(x=>x.d!==_repDate);
+  const delBtn = document.getElementById('deleteDayBtn');
+  if(delBtn) delBtn.onclick = async ()=>{
+    const list = (await getDailyMetrics()).filter(x=>x.d!==_repDate);
     saveDaily(list); rerender();
   };
+  wireLedger(rerender, revCfg);
 }
 
 async function renderRepDay(body){
-  const days = await getDaily();
+  const days = await getDays();
+  const ledger = await getLedger();
   const revCfg = await getRevenueCfg();
   const cfg = await buildFinCfg({economy:_economyMode});
   const model = computeFinModel(cfg);
@@ -6893,7 +7588,6 @@ async function renderRepDay(body){
   const dBadge = (d)=> d===null||!isFinite(d) ? '' : `<span class="trend-badge ${d>=0?'trend-up':'trend-down'}">${d>=0?'↑':'↓'} ${Math.abs(d*100).toFixed(0)}%</span>`;
 
   const streams = revCfg.addons.map(a=>({a, gmv:(rec.gmv||{})[a.id]||0}));
-  const spendRows = Object.entries(rec.spend||{}).filter(([,v])=>v>0);
 
   body.innerHTML = `
     ${demoNoticeHtml(days)}
@@ -6968,20 +7662,6 @@ async function renderRepDay(body){
       </div>
     </section>
 
-    ${spendRows.length ? `
-    <section class="block">
-      <h2>Платежи дня</h2>
-      <div class="card table-card">
-        <table class="calc-table">
-          <thead><tr><th>Категория</th><th>Сумма</th><th>В P&amp;L</th></tr></thead>
-          <tbody>${spendRows.map(([c,v])=>`<tr><td>${expCatName(c)}</td><td class="num hl">${money(v)}</td>
-            <td><span class="pnl-tag pnl-${(EXP_CAT_MAP[c]||{}).pnl||'opex'}">${((EXP_CAT_MAP[c]||{}).pnl==='cogs')?'себестоимость':(((EXP_CAT_MAP[c]||{}).pnl==='capex')?'капвложение':'операционный')}</span></td></tr>`).join('')}
-            <tr class="total-row"><td>Итого</td><td class="num">${money(dayAgg.spendTotal)}</td><td></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>` : ''}
-
     <section class="block">
       <h2>Динамика последних 60 дней</h2>
       <p class="block-sub">Выручка по дням со сглаживанием по неделе — дневные всплески не должны сбивать с толку, важна линия тренда.</p>
@@ -6990,8 +7670,8 @@ async function renderRepDay(body){
 
     <section class="block">
       <h2>Внести день</h2>
-      <p class="block-sub">Тот же набор полей каждый день — так цифры остаются сравнимыми и складываются в отчётность без ручной сверки.</p>
-      ${dailyFormHtml(rec, revCfg)}
+      <p class="block-sub">Показатели дня — штуками, деньги — отдельными строками в журнале ниже. Так цифры складываются в недели, месяцы и P&amp;L без ручной сверки.</p>
+      ${dailyFormHtml(rec, revCfg, ledger, {})}
     </section>
   `;
 
@@ -7004,7 +7684,7 @@ async function renderRepDay(body){
     };
   });
   wireDemoNotice();
-  wireDailyForm(()=>renderReports());
+  wireDailyForm(()=>renderReports(), revCfg, {navigateOnDate:true});
 
   killChart('day');
   const cv = document.getElementById('dayChart');
@@ -7199,6 +7879,32 @@ async function renderRepMonth(body){
   }
 }
 
+async function renderRepLedger(body){
+  const ledger = await getLedger();
+  const revCfg = await getRevenueCfg();
+  const days = await getDays();
+  const thisMonth = ledger.length ? monthKeyOf(ledger[ledger.length-1].d) : null;
+  const mEntries = thisMonth ? ledger.filter(e=>monthKeyOf(e.d)===thisMonth) : [];
+  const mIn  = mEntries.filter(e=>e.kind==='in').reduce((s2,e)=>s2+e.amount,0);
+  const mOut = mEntries.filter(e=>e.kind==='out').reduce((s2,e)=>s2+e.amount,0);
+  body.innerHTML = `
+    ${demoNoticeHtml(days)}
+    <section class="block" style="margin-top:0;">
+      <h2>Доходы и расходы</h2>
+      <p class="block-sub">Каждое движение денег — одной строкой. Регулярные расходы и ФОТ сюда не вносятся: они подставляются из реестра сами. Всё, что записано здесь, сразу видно в отчёте за день, в месяцах и в P&amp;L.</p>
+      ${thisMonth ? metricCards([
+        {l:`Поступило за ${monthKeyLabel(thisMonth)}`, v:money(mIn), cls:'pos'},
+        {l:`Заплатили разово за ${monthKeyLabel(thisMonth)}`, v:money(mOut), cls:'neg'},
+        {l:'Сальдо по журналу', v:signedMoney(mIn-mOut), cls: mIn-mOut>=0?'pos':'neg', sub:'без ФОТ и регулярных расходов из реестра'},
+        {l:'Записей всего', v:num(ledger.length)},
+      ]) : ''}
+      ${ledgerTableHtml(ledger, revCfg, {defaultKind:'out', defaultDate: ledger.length ? ledger[ledger.length-1].d : undefined})}
+    </section>
+  `;
+  wireDemoNotice();
+  wireLedger(()=>renderReports(), revCfg);
+}
+
 async function renderRepJournal(body){
   const days = await getDaily();
   const revCfg = await getRevenueCfg();
@@ -7209,8 +7915,8 @@ async function renderRepJournal(body){
   body.innerHTML = `
     ${demoNoticeHtml(days)}
     <section class="block" style="margin-top:0;">
-      <h2>Журнал — все ${days.length} дней</h2>
-      <p class="block-sub">Полная лента отчётности от свежего к старому. Нажмите на строку, чтобы открыть день на редактирование.</p>
+      <h2>Все дни — ${days.length}</h2>
+      <p class="block-sub">Лента от свежего к старому. Нажмите на строку, чтобы открыть день.</p>
       <div class="card table-card">
         <table class="calc-table journal-table">
           <thead><tr><th>Дата</th><th>Визиты</th><th>Рег.</th><th>Новых</th><th>Отток</th><th>Платящих</th><th>Подписка</th><th>Допродажи</th><th>Поступило</th><th>Платежи</th></tr></thead>
@@ -7234,11 +7940,12 @@ async function renderRepJournal(body){
     </section>
     <section class="block">
       <h2>Добавить день</h2>
-      ${dailyFormHtml(emptyDay(new Date().toISOString().slice(0,10)), revCfg)}
+      <p class="block-sub">Показатели дня. Деньги за этот день записываются на вкладке «Платежи» или прямо в карточке дня.</p>
+      ${dailyFormHtml(emptyDay(new Date().toISOString().slice(0,10)), revCfg, [], {allowDelete:false, noLedger:true})}
     </section>
   `;
   wireDemoNotice();
-  wireDailyForm(()=>renderReports());
+  wireDailyForm(()=>renderReports(), revCfg, {navigateOnDate:false});
   document.querySelectorAll('[data-open-day]').forEach(tr=>{
     tr.onclick = ()=>{ _repDate = tr.dataset.openDay; _repView = 'day'; renderReports(); };
   });
