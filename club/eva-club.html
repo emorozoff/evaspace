@@ -1080,7 +1080,14 @@
   /* ================= ГАНТ СТРАТЕГИИ ================= */
   .gantt-toolbar{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:14px;}
   .gantt-toolbar .note-sm{flex:1; min-width:220px;}
-  .gantt-scroll{overflow-x:auto; overflow-y:visible; border:1px solid var(--line); border-radius:14px; background:var(--panel);}
+  /* Гант прокручивается внутри себя в обе стороны: только так шапка
+     месяцев и ключевые точки могут закрепиться — при прокрутке всей
+     страницы горизонтальный скроллер перехватывает закрепление. */
+  .gantt-scroll{
+    overflow:auto; max-height:min(76vh, 780px);
+    border:1px solid var(--line); border-radius:14px; background:var(--panel);
+    overscroll-behavior:contain;
+  }
   .gantt{position:relative; min-width:880px; --g-label:262px;}
   .g-row{
     display:grid; grid-template-columns:var(--g-label) repeat(var(--g-cols), minmax(15px,1fr));
@@ -1110,7 +1117,10 @@
   .track-rust{--tc:#B85C2E; --tcbg:#F7E9DF;}
 
   /* шапка месяцев */
-  .g-head{background:var(--paper); border-bottom:1px solid var(--ink-faint); position:sticky; top:0; z-index:4;}
+  /* Шапка месяцев и ключевые точки закрепляются вместе: пока листаешь
+     задачи, видно, к какому месяцу и к какому событию они относятся.
+     На узких экранах закрепление выключается — там оно съедает экран. */
+  .g-head{background:var(--paper); border-bottom:1px solid var(--ink-faint); position:sticky; top:0; z-index:6;}
   .g-head .g-label{background:var(--paper);}
   .g-month{
     grid-column:span 2; text-align:center; padding:8px 2px; font-size:11.5px; font-weight:600;
@@ -1132,10 +1142,21 @@
   .g-bar:focus-visible{outline:2px solid var(--ink); outline-offset:2px;}
   .g-bar.dragging{cursor:grabbing; opacity:.85; z-index:5;}
   .g-bar.sel{box-shadow:0 0 0 2px var(--ink);}
-  .g-bar-title{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; pointer-events:none;}
+  .g-bar-body{flex:1; min-width:0; pointer-events:none; display:flex; flex-direction:column; gap:2px;}
+  .g-bar-title{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .g-bar-meta, .g-bar-note{font-size:10.5px; font-weight:400; opacity:.85; white-space:normal;}
+  .g-bar-note{opacity:.7;}
+  /* раскрытая полоса растёт вниз и показывает всё целиком */
+  .g-bar.expanded{
+    height:auto; min-height:24px; align-self:start; margin-top:4px; padding:6px 10px;
+    z-index:3; box-shadow:0 0 0 2px var(--ink), 0 6px 18px rgba(28,27,24,0.12);
+  }
+  .g-bar.expanded .g-bar-title{white-space:normal; overflow:visible; font-weight:600;}
+  .g-item.open{background:var(--gold-bg);}
+  .g-item.open .g-label{background:var(--gold-bg);}
   .g-bar.st-plan{border-style:dashed;}
   .g-bar.st-doing{box-shadow:inset 3px 0 0 var(--tc);}
-  .g-bar.st-doing.sel{box-shadow:inset 3px 0 0 var(--tc), 0 0 0 2px var(--ink);}
+  .g-bar.st-doing.sel{box-shadow:inset 3px 0 0 var(--tc), 0 0 0 2px var(--ink), 0 6px 18px rgba(28,27,24,0.12);}
   .g-bar.st-done{background:var(--paper); border-color:var(--line); color:var(--ink-faint);}
   .g-bar.st-done .g-bar-title{text-decoration:line-through;}
   .g-bar.st-risk{background:var(--rust-bg); border-color:var(--rust); color:var(--rust);}
@@ -1161,47 +1182,60 @@
   .dep-dot.late{fill:var(--rust);}
 
   /* ключевые точки */
-  .g-miles{min-height:56px; overflow:visible; background:var(--paper);}
+  .g-miles{
+    min-height:78px; overflow:visible; background:var(--paper);
+    border-bottom:1px solid var(--ink-faint); position:sticky; top:var(--g-head-h, 46px); z-index:5;
+  }
+  .g-mile-cells{grid-column:2/-1; display:grid; grid-template-columns:repeat(var(--g-months),1fr); height:100%;}
+  .g-mile-cell{border-left:1px solid var(--line); display:flex; align-items:flex-start; justify-content:flex-end; padding:3px 4px 0;}
+  .g-mile-add{
+    font-size:12px; line-height:1; padding:2px 7px; border-radius:5px; border:1px dashed var(--line);
+    background:transparent; color:var(--ink-faint); opacity:0; transition:opacity .12s;
+  }
+  .g-mile-cell:hover .g-mile-add{opacity:1;}
+  .g-mile-add:hover{border-color:var(--gold-ink); color:var(--gold-ink); background:var(--panel);}
+  .g-mile-add:focus-visible{opacity:1; outline:2px solid var(--ink); outline-offset:1px;}
   .g-mile{
     position:relative; display:flex; align-items:center; justify-content:center;
-    background:none; border:none; padding:0; height:50%; z-index:3; overflow:visible; align-self:start;
+    background:none; border:none; padding:0; height:34%; z-index:3; overflow:visible; align-self:start;
   }
-  .g-mile.lane-1{align-self:end;}
+  .g-mile.lane-1{align-self:center;}
+  .g-mile.lane-2{align-self:end;}
   .g-mile-dot{
     width:11px; height:11px; background:var(--gold-ink); transform:rotate(45deg);
     border-radius:2px; flex-shrink:0; box-shadow:0 0 0 3px var(--paper);
   }
   .g-mile-label{
     position:absolute; left:12px; white-space:nowrap; font-size:10.5px; font-weight:600;
-    color:var(--ink); background:var(--paper); padding:1px 5px; border-radius:4px; pointer-events:none;
+    color:var(--ink); background:var(--panel); padding:3px 8px; border-radius:6px; pointer-events:none;
+    border:1px solid var(--gold-ink); box-shadow:0 1px 2px rgba(28,27,24,0.06);
   }
+  .g-mile:hover .g-mile-label{background:var(--gold-bg);}
   .g-mile.to-left .g-mile-label{left:auto; right:12px;}
   .g-mile:hover .g-mile-dot{background:var(--ink);}
   .g-mile:focus-visible{outline:2px solid var(--ink); outline-offset:2px; border-radius:4px;}
 
-  /* цели месяца */
-  .g-goals{min-height:42px; background:var(--paper);}
-  .g-goal-cell{
-    grid-column:span 2; display:flex; align-items:center; gap:4px; flex-wrap:wrap;
-    padding:5px 4px; border-left:1px solid var(--line); min-width:0;
+  /* три строки плана: продажи, эксперты, контент */
+  /* Шапка, ключевые точки и три строки целей закрепляются сверху:
+     листая задачи, всегда видно, к какому месяцу и к какой цели они
+     относятся. Отступы проставляются в JS по реальным высотам. */
+  .g-plan{min-height:38px; background:var(--paper); position:sticky; z-index:5;}
+  .g-plan + .g-plan{border-top:1px solid var(--line);}
+  .g-plan .g-label{background:var(--paper);}
+  .g-plan-name{font-size:11.5px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:help;}
+  .g-plan-cell{grid-column:span 2; padding:4px 5px; border-left:1px solid var(--line); min-width:0;}
+  .g-plan-input{
+    width:100%; border:1px solid transparent; border-radius:6px; background:transparent;
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; text-align:center; padding:4px 2px;
+    color:var(--ink); -moz-appearance:textfield; appearance:textfield;
   }
-  .g-goal{
-    font-size:10px; padding:2px 5px; border-radius:5px; border:1px solid transparent;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
-    background:var(--gold-bg); color:var(--gold-ink); cursor:pointer; font-family:inherit;
-  }
-  .g-goal b{font-family:'IBM Plex Mono',monospace;}
-  .g-goal:hover{border-color:currentColor;}
-  .goal-green{background:var(--green-bg); color:var(--green);}
-  .goal-navy{background:var(--navy-bg); color:var(--navy);}
-  .goal-wine{background:var(--wine-bg); color:var(--wine);}
-  .goal-gold{background:var(--gold-bg); color:var(--gold-ink);}
-  .g-goal-add{
-    font-size:12px; line-height:1; padding:2px 6px; border-radius:5px; border:1px dashed var(--line);
-    background:transparent; color:var(--ink-faint); opacity:0; transition:opacity .12s;
-  }
-  .g-goal-cell:hover .g-goal-add{opacity:1;}
-  .g-goal-add:hover{border-color:var(--gold-ink); color:var(--gold-ink);}
+  .g-plan-input::-webkit-outer-spin-button, .g-plan-input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+  .g-plan-input::placeholder{color:var(--line);}
+  .g-plan-input:hover{border-color:var(--line); background:var(--panel);}
+  .g-plan-input:focus{outline:none; border-color:var(--gold-ink); background:var(--panel);}
+  .g-plan-input.plan-green{color:var(--green);}
+  .g-plan-input.plan-wine{color:var(--wine);}
+  .g-plan-input.plan-navy{color:var(--navy);}
 
   /* загрузка */
   .g-load{min-height:30px; background:var(--paper);}
@@ -1237,6 +1271,44 @@
   .ny-tag{font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--gold-ink); margin-left:8px;}
 
   .tasks-bar{display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap; margin-bottom:16px;}
+
+  /* стартовый бюджет */
+  table.bud-table{font-size:12.5px;}
+  table.bud-table th{white-space:nowrap; font-size:10px;}
+  table.bud-table td{padding:7px 8px; white-space:nowrap; vertical-align:middle;}
+  table.bud-table td:first-child{white-space:normal; min-width:210px;}
+  table.bud-table .bud-name{min-width:190px;}
+  table.bud-table .bud-money{width:118px; text-align:right; padding-left:6px; padding-right:6px;}
+  table.bud-table .bud-period{white-space:nowrap;}
+  table.bud-table .bud-sel{width:auto; min-width:104px; max-width:120px; display:inline-block; padding:5px 7px; font-size:12px;}
+  table.bud-table .bud-period .bud-sel + .bud-sel{margin-left:5px;}
+  tr.bud-group td{
+    background:var(--paper); font-weight:600; font-size:11.5px; text-transform:uppercase;
+    letter-spacing:.04em; color:var(--ink-soft); border-top:1px solid var(--ink-faint); padding-top:12px;
+  }
+  tr.bud-group td:last-child{text-transform:none; letter-spacing:0;}
+  .bud-hint{font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-faint); font-size:11px; margin-left:8px;}
+  tr.bud-add td{background:var(--paper); padding:6px 10px 0;}
+  tr.bud-add .field-row{margin-bottom:8px;}
+  tr.bud-add label{font-size:10.5px;}
+  tr.bud-var td{color:var(--ink-soft);}
+  tr.bud-cum td{color:var(--ink-faint); font-size:11.5px; border-top:none; padding-top:2px;}
+
+  /* инструкция */
+  details.guide{
+    background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--gold-ink);
+    border-radius:12px; padding:14px 20px; margin-bottom:24px;
+  }
+  details.guide summary{
+    cursor:pointer; list-style:none; font-family:'Space Grotesk',sans-serif; font-weight:600;
+    font-size:15px; display:inline-flex; align-items:center; gap:8px;
+  }
+  details.guide summary::-webkit-details-marker{display:none;}
+  details.guide summary::before{content:'›'; color:var(--gold-ink); transition:transform .15s;}
+  details.guide[open] summary::before{transform:rotate(90deg);}
+  .guide-list{margin:12px 0 2px; padding-left:22px; display:flex; flex-direction:column; gap:9px;}
+  .guide-list li{font-size:13.5px; color:var(--ink-soft); line-height:1.6; max-width:88ch;}
+  .guide-list b{color:var(--ink);}
   .apply-plan{
     display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
     background:var(--paper); border:1px dashed var(--line); border-radius:11px;
@@ -4171,16 +4243,26 @@ const DEFAULT_STRAT_ITEMS = [
   {id:'st_s6', track:'sales',   title:'Релизы, статьи и подготовка к запуску',    from:10, to:12, status:'plan'},
   {id:'st_s7', track:'sales',   title:'Закупка рекламы',                          from:11, to:15, status:'plan', deps:['st_s6']},
 ];
-const DEFAULT_STRAT_GOALS = [
-  {id:'sg1', month:1, kind:'text',       label:'Рабочая платформа, 30 экспертов, деньги на счету'},
-  {id:'sg2', month:2, kind:'registered', value:100},
-  {id:'sg3', month:2, kind:'sales',      value:20},
-  {id:'sg4', month:3, kind:'sales',      value:80},
-  {id:'sg5', month:4, kind:'sales',      value:120},
-  {id:'sg6', month:5, kind:'sales',      value:70},
-  {id:'sg7', month:6, kind:'sales',      value:100},
-  {id:'sg8', month:7, kind:'text',       label:'Официальный публичный запуск'},
+/* Цели месяца — три строки, которые ведёт основатель. Продажи кормят
+   расчёт денег, эксперты и контент — производственный план съёмок. */
+const STRAT_PLAN_LINES = [
+  {key:'sales',   name:'Продаж за месяц',        short:'продажи', color:'green',
+   hint:'Новые платящие. Эта строка подставляется в модель вместо формулы роста и определяет всю выручку.'},
+  {key:'experts', name:'Экспертов в сети, всего', short:'эксперты', color:'wine',
+   hint:'Накопительно: сколько практикующих подписали оферту и готовы сниматься.'},
+  {key:'content', name:'Мастер-классов снято',    short:'контент', color:'navy',
+   hint:'За месяц. Ориентир: 2 эксперта в день × 3 мастер-класса — до 90 роликов в месяц при полной загрузке студии.'},
 ];
+const DEFAULT_STRAT_PLAN = {
+  1:{sales:0,   experts:30, content:0},
+  2:{sales:20,  experts:40, content:60},
+  3:{sales:80,  experts:50, content:90},
+  4:{sales:120, experts:55, content:90},
+  5:{sales:70,  experts:58, content:60},
+  6:{sales:100, experts:60, content:60},
+  7:{sales:150, experts:65, content:60},
+  8:{sales:170, experts:70, content:50},
+};
 const DEFAULT_STRAT_MILES = [
   {id:'sm1', h:2,  title:'Мини-раунд закрыт'},
   {id:'sm2', h:3,  title:'Первые платящие'},
@@ -4189,12 +4271,7 @@ const DEFAULT_STRAT_MILES = [
   {id:'sm5', h:22, title:'1 000 платящих'},
   {id:'sm6', h:23, title:'Операционная окупаемость'},
 ];
-const GOAL_KIND_LABEL = {
-  sales:      {name:'прод.',  full:'продаж за месяц',      color:'green'},
-  registered: {name:'рег.',   full:'регистраций за месяц', color:'navy'},
-  revenue:    {name:'',       full:'выручка за месяц',     color:'gold'},
-  text:       {name:'',       full:'',                     color:'wine'},
-};
+
 
 async function getStratItems(){
   if(!('eva-club-strategy-items' in _cache)){
@@ -4204,14 +4281,33 @@ async function getStratItems(){
   return _cache['eva-club-strategy-items'];
 }
 function saveStratItems(list){ setCacheLocal('eva-club-strategy-items', list); persistCache('eva-club-strategy-items'); }
-async function getStratGoals(){
-  if(!('eva-club-strategy-goals' in _cache)){
-    const stored = await loadShared('eva-club-strategy-goals', null);
-    _cache['eva-club-strategy-goals'] = Array.isArray(stored) ? stored : JSON.parse(JSON.stringify(DEFAULT_STRAT_GOALS));
+/* План по месяцам. Старый формат — россыпь разнотипных плашек —
+   переносится в три строки: числовые цели по продажам сохраняются,
+   остальное отбрасывается, потому что текстовые цели теперь живут
+   в ключевых точках. */
+async function getStratPlan(){
+  if(!('eva-club-strategy-plan' in _cache)){
+    let stored = await loadShared('eva-club-strategy-plan', null);
+    if(!stored || typeof stored !== 'object' || Array.isArray(stored)){
+      const legacy = await loadShared('eva-club-strategy-goals', null);
+      const base = JSON.parse(JSON.stringify(DEFAULT_STRAT_PLAN));
+      if(Array.isArray(legacy)){
+        legacy.filter(g=>g.kind==='sales').forEach(g=>{
+          base[g.month] = Object.assign({sales:0, experts:0, content:0}, base[g.month], {sales:g.value||0});
+        });
+      }
+      stored = base;
+    }
+    _cache['eva-club-strategy-plan'] = stored;
   }
-  return _cache['eva-club-strategy-goals'];
+  return _cache['eva-club-strategy-plan'];
 }
-function saveStratGoals(list){ setCacheLocal('eva-club-strategy-goals', list); persistCache('eva-club-strategy-goals'); }
+function saveStratPlan(obj){ setCacheLocal('eva-club-strategy-plan', obj); persistCache('eva-club-strategy-plan'); }
+function planAt(plan, month, key){
+  const row = plan[month] || plan[String(month)];
+  const v = row ? row[key] : undefined;
+  return (v===undefined || v===null || v==='') ? null : v;
+}
 async function getStratMiles(){
   if(!('eva-club-strategy-miles' in _cache)){
     const stored = await loadShared('eva-club-strategy-miles', null);
@@ -4234,11 +4330,13 @@ function saveStratTargets(o){ setCacheLocal('eva-club-strategy-targets', o); per
    Внутри горизонта стратегии месяц без цели означает ноль продаж,
    а не формулу роста: иначе сентябрь «продавал» бы до запуска.
    За горизонтом план заканчивается и модель считает как обычно. */
-function salesPlanFromGoals(goals, horizon){
-  const plan = {};
-  for(let m=1; m<=(horizon||0); m++) plan[m] = 0;
-  goals.filter(g=>g.kind==='sales' && g.value>0).forEach(g=>{ plan[g.month] = g.value; });
-  return plan;
+function salesPlanFromGoals(plan, horizon){
+  const out = {};
+  for(let m=1; m<=(horizon||0); m++){
+    const v = planAt(plan, m, 'sales');
+    out[m] = v===null ? 0 : v;
+  }
+  return out;
 }
 
 let _stratMonths = 12;
@@ -4258,44 +4356,50 @@ function stratItemRowHtml(it, items, cols){
   const dur  = to-from+1;
   const deps = (it.deps||[]).map(d=>items.find(x=>x.id===d)).filter(Boolean);
   const late = deps.some(d=>d.to > it.from);
+  const open = _stratOpen===it.id;
+  const owner = it.ownerName ? ' · '+esc(it.ownerName) : '';
   return `
-    <div class="g-row g-item ${_stratOpen===it.id?'open':''}">
+    <div class="g-row g-item ${open?'open':''}">
       <div class="g-label">
         <span class="g-dot track-${tr.color}"></span>
         <span class="g-label-text" title="${esc(it.title)}">${esc(it.title)}</span>
         ${deps.length?`<span class="g-dep-chip ${late?'late':''}" title="Начинается после: ${deps.map(d=>esc(d.title)).join(', ')}${late?' — сейчас начинается раньше, чем закончится предыдущая':''}">↳</span>`:''}
       </div>
       <div class="g-lane"></div>
-      <button type="button" class="g-bar track-${tr.color} st-${it.status||'plan'} ${_stratOpen===it.id?'sel':''}"
+      <button type="button" class="g-bar track-${tr.color} st-${it.status||'plan'} ${open?'sel expanded':''}"
               style="${stratBarStyle(from,to)}" data-strat-bar="${it.id}"
+              aria-expanded="${open?'true':'false'}"
               aria-label="${esc(it.title)}: ${halfLabel(from)} — ${halfLabel(to)}. Стрелки двигают срок, Shift со стрелкой меняет длину."
-              title="${esc(it.title)} · ${halfLabel(from)} → ${halfLabel(to)}">
+              title="${open?'Свернуть':'Раскрыть и открыть карточку'} · ${esc(it.title)} · ${halfLabel(from)} → ${halfLabel(to)}">
         <span class="g-handle l" data-strat-handle="l" data-strat-bar="${it.id}"></span>
-        <span class="g-bar-title">${dur>1?esc(it.title):''}</span>
+        <span class="g-bar-body">
+          <span class="g-bar-title">${open||dur>1?esc(it.title):''}</span>
+          ${open?`<span class="g-bar-meta">${STRAT_STATUS[it.status||'plan'].name} · ${halfShort(from)} → ${halfShort(to)}${owner}</span>`:''}
+          ${open&&it.note?`<span class="g-bar-note">${esc(it.note)}</span>`:''}
+        </span>
         <span class="g-handle r" data-strat-handle="r" data-strat-bar="${it.id}"></span>
       </button>
     </div>`;
 }
 
-function stratGoalsRowHtml(goals, months){
-  const cells = [];
-  for(let m=1;m<=months;m++){
-    const mine = goals.filter(g=>g.month===m);
-    cells.push(`<div class="g-goal-cell" data-goal-month="${m}">
-      ${mine.map(g=>{
-        const k = GOAL_KIND_LABEL[g.kind]||GOAL_KIND_LABEL.text;
-        const tip = g.kind==='text' ? (g.label||'') : `${g.kind==='revenue'?money(g.value):num(g.value)} — ${k.full}`;
-        return `<button type="button" class="g-goal goal-${k.color}" data-strat-goal="${g.id}" title="${esc(tip)} · нажмите, чтобы изменить">
-          ${g.kind==='text' ? esc(g.label||'') : `<b>${g.kind==='revenue'?cfMoney(g.value):num(g.value)}</b>${k.name?' '+k.name:''}`}
-        </button>`;
-      }).join('')}
-      <button type="button" class="g-goal-add" data-add-goal="${m}" title="Добавить цель на ${finMonthLabel(m)}">+</button>
-    </div>`);
-  }
-  return `<div class="g-row g-goals">
-    <div class="g-label"><span class="g-band-name">Цели месяца</span></div>
-    ${cells.join('')}
-  </div>`;
+function stratPlanRowsHtml(plan, months){
+  return STRAT_PLAN_LINES.map(line=>{
+    const cells = [];
+    for(let m=1;m<=months;m++){
+      const v = planAt(plan, m, line.key);
+      cells.push(`<div class="g-plan-cell">
+        <input type="number" min="0" step="1" class="g-plan-input plan-${line.color}"
+               data-plan-line="${line.key}" data-plan-month="${m}"
+               value="${v===null?'':v}" placeholder="—"
+               aria-label="${line.name}, ${finMonthLabel(m)}"
+               title="${line.name} · ${finMonthLabel(m)}">
+      </div>`);
+    }
+    return `<div class="g-row g-plan">
+      <div class="g-label"><span class="g-dot track-${line.color}"></span><span class="g-plan-name" title="${esc(line.hint)}">${line.name}</span></div>
+      ${cells.join('')}
+    </div>`;
+  }).join('');
 }
 
 function stratMilesRowHtml(miles, cols){
@@ -4303,17 +4407,23 @@ function stratMilesRowHtml(miles, cols){
      ближе, чем длина подписи предыдущей, она уходит на второй ярус —
      иначе названия наезжают друг на друга. */
   const list = miles.filter(m=>m.h<cols).slice().sort((a,b)=>a.h-b.h);
-  const laneEnd = [-99, -99];
+  const laneEnd = [-99, -99, -99];
   const placed = list.map(m=>{
     const span = Math.ceil(m.title.length/5) + 1;
-    const lane = m.h > laneEnd[0] ? 0 : (m.h > laneEnd[1] ? 1 : (laneEnd[0]<=laneEnd[1] ? 0 : 1));
+    let lane = laneEnd.findIndex(end=>m.h > end);
+    if(lane < 0) lane = laneEnd.indexOf(Math.min(...laneEnd));
     laneEnd[lane] = m.h + span;
     /* у правого края подпись уводится влево, иначе она уезжает за таблицу */
     return {m, lane, left: m.h > cols-7};
   });
+  const months = Math.ceil(cols/2);
+  const cells = [];
+  for(let m=1;m<=months;m++){
+    cells.push(`<div class="g-mile-cell"><button type="button" class="g-mile-add" data-add-mile="${m}" title="Добавить ключевую точку на ${finMonthLabel(m)}">+</button></div>`);
+  }
   return `<div class="g-row g-miles">
     <div class="g-label"><span class="g-band-name">Ключевые точки</span></div>
-    <div class="g-lane"></div>
+    <div class="g-mile-cells">${cells.join('')}</div>
     ${placed.map(({m,lane,left})=>`
       <button type="button" class="g-mile lane-${lane} ${left?'to-left':''}" style="grid-column:${2+m.h}/${3+m.h}" data-strat-mile="${m.id}" title="${esc(m.title)} · ${halfLabel(m.h)}">
         <span class="g-mile-dot"></span><span class="g-mile-label">${esc(m.title)}</span>
@@ -4391,9 +4501,11 @@ function stratEditorHtml(it, items, people, cols){
 
 async function renderStrategyGantt(container){
   const items  = await getStratItems();
-  const goals  = await getStratGoals();
+  const plan   = await getStratPlan();
   const miles  = await getStratMiles();
   const people = await getPeople();
+  /* имя ответственного нужно прямо в раскрытой полосе */
+  items.forEach(i=>{ const o = people.find(x=>x.id===i.owner); i.ownerName = o ? (o.name || o.role) : ''; });
   const months = _stratMonths;
   const cols   = months*2;
 
@@ -4414,7 +4526,8 @@ async function renderStrategyGantt(container){
       <div class="toggle-row inline" id="stratMonthsRow">
         ${[6,12,18].map(n=>`<button data-m="${n}" class="${months===n?'active':''}">${n} мес.</button>`).join('')}
       </div>
-      <span class="note-sm" style="margin:0;">Полоса тянется мышью: за середину — сдвинуть срок, за край — растянуть. Клик открывает карточку.</span>
+      <span class="note-sm" style="margin:0;">Полоса тянется мышью: за середину — сдвинуть срок, за край — растянуть. Клик раскрывает её и открывает карточку.</span>
+      <button class="btn ghost" id="stratAddMileBtn">+ Ключевая точка</button>
       <button class="btn" id="stratAddBtn">+ Ключевая задача</button>
     </div>
     <div class="gantt-scroll">
@@ -4424,7 +4537,7 @@ async function renderStrategyGantt(container){
           ${headCells.join('')}
         </div>
         ${stratMilesRowHtml(miles, cols)}
-        ${stratGoalsRowHtml(goals, months)}
+        ${stratPlanRowsHtml(plan, months)}
         ${byTrack.map(g=>`
           <div class="g-row g-track-head">
             <div class="g-label"><span class="g-dot track-${g.t.color}"></span><span class="g-track-name">${g.t.name}</span></div>
@@ -4459,7 +4572,20 @@ async function renderStrategyGantt(container){
     </div>`;
 
   wireStrategyGantt(container);
-  requestAnimationFrame(()=>drawStratDeps(container));
+  requestAnimationFrame(()=>{
+    const gantt = container.querySelector('.gantt');
+    const head = container.querySelector('.g-head');
+    const miles = container.querySelector('.g-miles');
+    if(gantt && head){
+      gantt.style.setProperty('--g-head-h', head.offsetHeight+'px');
+      let top = head.offsetHeight + (miles ? miles.offsetHeight : 0);
+      container.querySelectorAll('.g-plan').forEach(row=>{
+        row.style.top = top+'px';
+        top += row.offsetHeight;
+      });
+    }
+    drawStratDeps(container);
+  });
 }
 
 /* Стрелки зависимостей рисуются поверх сетки после отрисовки:
@@ -4499,6 +4625,20 @@ function wireStrategyGantt(container){
   });
   const addBtn = container.querySelector('#stratAddBtn');
   if(addBtn) addBtn.onclick = ()=>{ _stratAdding = true; _stratOpen = null; rerender(); };
+  const addMile = container.querySelector('#stratAddMileBtn');
+  if(addMile) addMile.onclick = ()=>openMileEditor(null, 1, rerender);
+  /* три строки плана: правка любой ячейки пересчитывает деньги */
+  container.querySelectorAll('.g-plan-input').forEach(inp=>{
+    inp.addEventListener('change', async ()=>{
+      const planObj = await getStratPlan();
+      const m = inp.dataset.planMonth;
+      const row = planObj[m] || (planObj[m] = {sales:null, experts:null, content:null});
+      const raw = inp.value.trim();
+      row[inp.dataset.planLine] = raw==='' ? null : Math.max(0, parseInt(raw)||0);
+      saveStratPlan(planObj);
+      rerender();
+    });
+  });
   const cancel = container.querySelector('#stratNewCancel');
   if(cancel) cancel.onclick = ()=>{ _stratAdding = false; rerender(); };
   const save = container.querySelector('#stratNewSave');
@@ -4584,14 +4724,11 @@ function wireStrategyGantt(container){
   };
 
   /* цели */
-  container.querySelectorAll('[data-strat-goal]').forEach(b=>{
-    b.onclick = ()=>openGoalEditor(b.dataset.stratGoal, null, rerender);
-  });
-  container.querySelectorAll('[data-add-goal]').forEach(b=>{
-    b.onclick = ()=>openGoalEditor(null, parseInt(b.dataset.addGoal), rerender);
-  });
   container.querySelectorAll('[data-strat-mile]').forEach(b=>{
-    b.onclick = ()=>openMileEditor(b.dataset.stratMile, rerender);
+    b.onclick = ()=>openMileEditor(b.dataset.stratMile, null, rerender);
+  });
+  container.querySelectorAll('[data-add-mile]').forEach(b=>{
+    b.onclick = ()=>openMileEditor(null, parseInt(b.dataset.addMile), rerender);
   });
 }
 
@@ -4668,84 +4805,39 @@ function stratOverlay(inner, onClose){
   if(x) x.onclick = close;
   return {el, close};
 }
-async function openGoalEditor(goalId, month, rerender){
-  const goals = await getStratGoals();
-  const g = goalId ? goals.find(x=>x.id===goalId) : {id:uid(), month, kind:'sales', value:0, label:''};
-  if(!g) return;
-  const isNew = !goalId;
-  const {el, close} = stratOverlay(`
-    <div class="tm-header"><span class="tm-header-label">Цель на ${finMonthLabel(g.month)}</span>
-      <button class="tm-close" data-modal-close="1">✕</button></div>
-    <div class="tm-body">
-      <div class="field-row">
-        <div class="field"><label>Что считаем</label>
-          <select id="goKind">
-            <option value="sales" ${g.kind==='sales'?'selected':''}>Продаж за месяц</option>
-            <option value="registered" ${g.kind==='registered'?'selected':''}>Регистраций за месяц</option>
-            <option value="revenue" ${g.kind==='revenue'?'selected':''}>Выручка за месяц, ₽</option>
-            <option value="text" ${g.kind==='text'?'selected':''}>Своими словами</option>
-          </select></div>
-        <div class="field"><label>Месяц</label>
-          <select id="goMonth">${Array.from({length:_stratMonths},(_,i)=>i+1).map(m=>`<option value="${m}" ${g.month===m?'selected':''}>${finMonthLabel(m)}</option>`).join('')}</select></div>
-      </div>
-      <div class="field-row" id="goValueRow" style="${g.kind==='text'?'display:none;':''}">
-        <div class="field"><label>Сколько</label><input type="text" class="money-fmt-input" id="goValue" value="${fmtThousands(g.value||0)}"></div>
-      </div>
-      <div class="field-row" id="goLabelRow" style="${g.kind==='text'?'':'display:none;'}">
-        <div class="field grow"><label>Цель словами</label><input type="text" id="goLabel" value="${esc(g.label||'')}" placeholder="Например, рабочая платформа с контентом"></div>
-      </div>
-      <div class="tm-actions">
-        <button class="btn" id="goSave">Сохранить</button>
-        ${isNew?'':'<button class="btn ghost" id="goDel">Удалить цель</button>'}
-      </div>
-    </div>`);
-  el.querySelectorAll('.money-fmt-input').forEach(wireThousandsInput);
-  const kind = el.querySelector('#goKind');
-  kind.onchange = ()=>{
-    el.querySelector('#goValueRow').style.display = kind.value==='text' ? 'none' : '';
-    el.querySelector('#goLabelRow').style.display = kind.value==='text' ? '' : 'none';
-  };
-  el.querySelector('#goSave').onclick = async ()=>{
-    const list = await getStratGoals();
-    g.kind = kind.value;
-    g.month = parseInt(el.querySelector('#goMonth').value)||1;
-    g.value = parseThousands(el.querySelector('#goValue').value);
-    g.label = el.querySelector('#goLabel').value.trim();
-    if(isNew) list.push(g);
-    saveStratGoals(list); close(); rerender();
-  };
-  const del = el.querySelector('#goDel');
-  if(del) del.onclick = async ()=>{
-    saveStratGoals((await getStratGoals()).filter(x=>x.id!==g.id)); close(); rerender();
-  };
-}
-async function openMileEditor(mileId, rerender){
+async function openMileEditor(mileId, month, rerender){
   const miles = await getStratMiles();
-  const m = miles.find(x=>x.id===mileId); if(!m) return;
+  const isNew = !mileId;
+  const m = isNew ? {id:uid(), h:mkHalf(month||1, 0), title:''} : miles.find(x=>x.id===mileId);
+  if(!m) return;
   const {el, close} = stratOverlay(`
-    <div class="tm-header"><span class="tm-header-label">Ключевая точка</span>
+    <div class="tm-header"><span class="tm-header-label">${isNew?'Новая ключевая точка':'Ключевая точка'}</span>
       <button class="tm-close" data-modal-close="1">✕</button></div>
     <div class="tm-body">
       <div class="field-row">
-        <div class="field grow"><label>Название</label><input type="text" id="mlTitle" value="${esc(m.title)}"></div>
+        <div class="field grow"><label>Название</label><input type="text" id="mlTitle" value="${esc(m.title)}" placeholder="Например, первая тысяча платящих"></div>
         <div class="field"><label>Месяц</label>
           <select id="mlMonth">${Array.from({length:_stratMonths},(_,i)=>i+1).map(x=>`<option value="${x}" ${halfToMonth(m.h)===x?'selected':''}>${finMonthLabel(x)}</option>`).join('')}</select></div>
         <div class="field"><label>Когда в месяце</label>
           <select id="mlHalf"><option value="0" ${!halfIsSecond(m.h)?'selected':''}>первая половина</option><option value="1" ${halfIsSecond(m.h)?'selected':''}>вторая половина</option></select></div>
       </div>
       <div class="tm-actions">
-        <button class="btn" id="mlSave">Сохранить</button>
-        <button class="btn ghost" id="mlDel">Удалить точку</button>
+        <button class="btn" id="mlSave">${isNew?'Добавить точку':'Сохранить'}</button>
+        ${isNew?'':'<button class="btn ghost" id="mlDel">Удалить точку</button>'}
       </div>
     </div>`);
   el.querySelector('#mlSave').onclick = async ()=>{
+    const title = el.querySelector('#mlTitle').value.trim();
+    if(!title){ el.querySelector('#mlTitle').focus(); return; }
     const list = await getStratMiles();
-    const t = list.find(x=>x.id===m.id);
-    t.title = el.querySelector('#mlTitle').value.trim() || t.title;
+    const t = isNew ? m : list.find(x=>x.id===m.id);
+    t.title = title;
     t.h = mkHalf(parseInt(el.querySelector('#mlMonth').value)||1, parseInt(el.querySelector('#mlHalf').value));
+    if(isNew) list.push(t);
     saveStratMiles(list); close(); rerender();
   };
-  el.querySelector('#mlDel').onclick = async ()=>{
+  const mlDel = el.querySelector('#mlDel');
+  if(mlDel) mlDel.onclick = async ()=>{
     saveStratMiles((await getStratMiles()).filter(x=>x.id!==m.id)); close(); rerender();
   };
 }
@@ -4757,14 +4849,300 @@ async function openMileEditor(mileId, rerender){
    ровно так же, как в основной модели, просто на нашем плане.
    Основную модель на 36 месяцев это не меняет.
    ============================================================ */
+/* ============================================================
+   СТАРТОВЫЙ БЮДЖЕТ ДО ЗАПУСКА
+   Всё, что проект платит в первые месяцы, одной таблицей: люди
+   с окладами и сроками, регулярные платежи, разовые и переменные.
+   Правки пишутся в общий реестр расходов и в штат — те же данные,
+   что считают модель, P&L и «сколько нужно на запуск».
+   ============================================================ */
+function budgetMonthSelect(name, id, value, months, allowEmpty){
+  return `<select class="v-input bud-sel" data-bud-field="${name}" data-id="${id}">
+    ${allowEmpty?`<option value="" ${!value?'selected':''}>бессрочно</option>`:''}
+    ${Array.from({length:FIN_HORIZON},(_,i)=>i+1).map(m=>`<option value="${m}" ${value===m?'selected':''}>${finMonthLabel(m)}</option>`).join('')}
+  </select>`;
+}
+
+async function stratBudgetHtml(model){
+  const H      = STRAT_MONEY_HORIZON;
+  const months = Array.from({length:H},(_,i)=>i+1);
+  const exp    = await getExpenses();
+  const hires  = await buildHires();
+  const tax    = await getTaxCfg();
+  const insRate = tax.it ? 0.076 : 0.30;
+
+  const rows = [];
+  /* --- люди --- */
+  hires.filter(h=>h.salary>0 && h.month<=H).forEach(h=>{
+    const arr = months.map(m=>(m>=h.month && (!h.until || m<=h.until)) ? h.salary*(1+insRate) : 0);
+    rows.push({group:'people', id:h.id, real:h.real, name:h.role, dept:h.dept,
+      amount:h.salary, from:h.month, to:h.until, arr, total:arr.reduce((a,b)=>a+b,0),
+      note:`оклад ${money(h.salary)} + взносы ${cfPct(insRate)}`});
+  });
+  /* --- регулярные и разовые из реестра --- */
+  exp.items.forEach(it=>{
+    if(it.kind==='monthly'){
+      const from = it.from||1, to = it.to||FIN_HORIZON;
+      if(from>H) return;
+      const arr = months.map(m=>(m>=from && m<=to) ? (it.amount||0) : 0);
+      if(!arr.some(v=>v>0)) return;
+      rows.push({group:'monthly', id:it.id, name:it.name, cat:it.cat, amount:it.amount,
+        from, to:it.to, arr, total:arr.reduce((a,b)=>a+b,0), note:`${money(it.amount)}/мес`});
+    } else if(it.kind==='once'){
+      const mm = it.month||1;
+      if(mm>H) return;
+      const arr = months.map(m=>m===mm ? (it.amount||0) : 0);
+      rows.push({group:'once', id:it.id, name:it.name, cat:it.cat, amount:it.amount,
+        from:mm, arr, total:it.amount||0, note:'разово'});
+    }
+  });
+  /* --- переменные: считаются от объёма, править можно только ставку --- */
+  const varRows = exp.items.filter(it=>it.kind==='variable').map(it=>{
+    const arr = months.map(m=>{
+      const from = it.from||1, to = it.to||FIN_HORIZON;
+      if(m<from || m>to) return 0;
+      return registryVariableCost([it], {
+        cashIn: model.cashIn[m], revenue: model.revenue[m], gmv: model.gmvAddon[m],
+        active: model.active[m], newPaying: model.newPaying[m],
+      }).total;
+    });
+    const d = it.driver||{}; const def = EXP_DRIVER_MAP[d.base]||{};
+    return {group:'variable', id:it.id, name:it.name, cat:it.cat, arr, total:arr.reduce((a,b)=>a+b,0),
+      note: def.unit==='pct' ? cfPct(d.rate||0)+' · '+(def.name||'') : num(d.rate||0)+' ₽ · '+(def.name||'')};
+  }).filter(r=>r.total>0);
+
+  const taxArr = months.map(m=>model.taxTotal[m]);
+  const totals = months.map((m,i)=>
+    rows.reduce((a,r)=>a+r.arr[i],0) + varRows.reduce((a,r)=>a+r.arr[i],0) + taxArr[i]);
+  let cum = 0; const cumArr = totals.map(v=>(cum+=v));
+  const grand = totals.reduce((a,b)=>a+b,0);
+  const fotTotal  = rows.filter(r=>r.group==='people').reduce((a,r)=>a+r.total,0);
+  const monTotal  = rows.filter(r=>r.group==='monthly').reduce((a,r)=>a+r.total,0);
+  const onceTotal = rows.filter(r=>r.group==='once').reduce((a,r)=>a+r.total,0);
+  const varTotal  = varRows.reduce((a,r)=>a+r.total,0) + taxArr.reduce((a,b)=>a+b,0);
+
+  const cellFor = (v)=>`<td class="num">${v?cfMoney(v):'<span class="soft">—</span>'}</td>`;
+  const groupHead = (title, hint, total)=>`
+    <tr class="bud-group"><td colspan="3">${title} <span class="bud-hint">${hint}</span></td>
+      ${months.map(()=>'<td></td>').join('')}<td class="num">${cfMoney(total)}</td><td></td></tr>`;
+
+  const peopleRows = rows.filter(r=>r.group==='people').map(r=>`
+    <tr>
+      <td><div class="pb-name">${esc(r.name)}</div><div class="pb-sub">${r.note}</div></td>
+      <td><input type="text" class="v-input money-fmt-input bud-money" data-bud-field="salary" data-id="${r.id}" data-real="${!!r.real}" value="${fmtThousands(r.amount)}"></td>
+      <td class="bud-period">
+        ${budgetMonthSelect('hireFrom', r.id, r.from, months, false)}
+        ${budgetMonthSelect('hireUntil', r.id, r.to, months, true)}
+      </td>
+      ${r.arr.map(cellFor).join('')}
+      <td class="num hl">${cfMoney(r.total)}</td>
+      <td>${r.real?'':`<button class="btn ghost sm-del" data-bud-del-hire="${r.id}" title="Убрать">✕</button>`}</td>
+    </tr>`).join('');
+
+  const editRow = (r)=>`
+    <tr>
+      <td><input type="text" class="v-input bud-name" data-bud-field="name" data-id="${r.id}" value="${esc(r.name)}"></td>
+      <td><input type="text" class="v-input money-fmt-input bud-money" data-bud-field="amount" data-id="${r.id}" value="${fmtThousands(r.amount)}"></td>
+      <td class="bud-period">
+        ${r.group==='once'
+          ? budgetMonthSelect('onceMonth', r.id, r.from, months, false)
+          : budgetMonthSelect('expFrom', r.id, r.from, months, false)+budgetMonthSelect('expTo', r.id, r.to, months, true)}
+      </td>
+      ${r.arr.map(cellFor).join('')}
+      <td class="num hl">${cfMoney(r.total)}</td>
+      <td><button class="btn ghost sm-del" data-bud-del-exp="${r.id}" title="Убрать">✕</button></td>
+    </tr>`;
+
+  const varRowsHtml = varRows.map(r=>`
+    <tr class="bud-var">
+      <td><div class="pb-name">${esc(r.name)}</div><div class="pb-sub">${r.note}</div></td>
+      <td class="soft">от объёма</td>
+      <td class="soft">—</td>
+      ${r.arr.map(cellFor).join('')}
+      <td class="num hl">${cfMoney(r.total)}</td>
+      <td></td>
+    </tr>`).join('');
+
+  return `
+    <section class="block">
+      <h2>Стартовый бюджет до запуска</h2>
+      <p class="block-sub">Всё, что проект заплатит за первые ${H} месяцев. Правьте прямо здесь: оклады и сроки людей, суммы и периоды расходов. Эти же цифры считают модель, P&amp;L и «сколько нужно на запуск» — вносить дважды не нужно.</p>
+      ${metricCards([
+        {l:`Всего за ${H} мес.`, v:money(grand), sub:`в среднем ${money(grand/H)}/мес`},
+        {l:'Люди со взносами', v:money(fotTotal), sub:cfPct(grand?fotTotal/grand:0)+' бюджета'},
+        {l:'Регулярные платежи', v:money(monTotal), sub:'студия, инфраструктура, бухгалтерия'},
+        {l:'Разовые и переменные', v:money(onceTotal+varTotal), sub:`разово ${money(onceTotal)} · от объёма и налоги ${money(varTotal)}`},
+      ])}
+      <div class="card table-card">
+        <div class="table-scroll">
+          <table class="calc-table bud-table">
+            <thead><tr>
+              <th>Статья</th><th>Сумма</th><th>Период</th>
+              ${months.map(m=>`<th>${finMonthShort(m)}</th>`).join('')}
+              <th>Итого</th><th></th>
+            </tr></thead>
+            <tbody>
+              ${groupHead('Люди', 'оклад плюс страховые взносы; состав и должности — на вкладке «Команда»', fotTotal)}
+              ${peopleRows}
+              <tr class="bud-add"><td colspan="${months.length+5}">
+                <div class="field-row">
+                  <div class="field grow"><label>Кого добавляем</label><input type="text" id="budNewHireRole" placeholder="Например, монтажёр на проект"></div>
+                  <div class="field"><label>Оклад, ₽/мес</label><input type="text" class="money-fmt-input" id="budNewHireSalary" placeholder="0"></div>
+                  <div class="field"><label>С месяца</label><select id="budNewHireFrom">${months.map(m=>`<option value="${m}">${finMonthLabel(m)}</option>`).join('')}</select></div>
+                  <div class="field"><label>По месяц</label><select id="budNewHireTo"><option value="">бессрочно</option>${Array.from({length:FIN_HORIZON},(_,i)=>i+1).map(m=>`<option value="${m}">${finMonthLabel(m)}</option>`).join('')}</select></div>
+                  <div class="field" style="flex:0 0 auto; display:flex; align-items:flex-end;"><button class="btn ghost" id="budAddHire">+ Человек</button></div>
+                </div>
+              </td></tr>
+
+              ${groupHead('Регулярные платежи', 'каждый месяц с одного по другой', monTotal)}
+              ${rows.filter(r=>r.group==='monthly').map(editRow).join('')}
+              <tr class="bud-add"><td colspan="${months.length+5}">
+                <div class="field-row">
+                  <div class="field grow"><label>Что платим</label><input type="text" id="budNewMonName" placeholder="Например, аренда студии"></div>
+                  <div class="field"><label>Категория</label><select id="budNewMonCat">${EXP_CATS.filter(c=>!c.auto).map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+                  <div class="field"><label>₽/мес</label><input type="text" class="money-fmt-input" id="budNewMonAmount" placeholder="0"></div>
+                  <div class="field"><label>С месяца</label><select id="budNewMonFrom">${months.map(m=>`<option value="${m}">${finMonthLabel(m)}</option>`).join('')}</select></div>
+                  <div class="field"><label>По месяц</label><select id="budNewMonTo"><option value="">бессрочно</option>${Array.from({length:FIN_HORIZON},(_,i)=>i+1).map(m=>`<option value="${m}">${finMonthLabel(m)}</option>`).join('')}</select></div>
+                  <div class="field" style="flex:0 0 auto; display:flex; align-items:flex-end;"><button class="btn ghost" id="budAddMon">+ Расход</button></div>
+                </div>
+              </td></tr>
+
+              ${groupHead('Разовые платежи', 'юрлицо, оборудование, пошлины — один платёж в свой месяц', onceTotal)}
+              ${rows.filter(r=>r.group==='once').map(editRow).join('')}
+              <tr class="bud-add"><td colspan="${months.length+5}">
+                <div class="field-row">
+                  <div class="field grow"><label>За что платим</label><input type="text" id="budNewOnceName" placeholder="Например, домен и почта на год"></div>
+                  <div class="field"><label>Категория</label><select id="budNewOnceCat">${EXP_CATS.filter(c=>!c.auto).map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+                  <div class="field"><label>Сумма, ₽</label><input type="text" class="money-fmt-input" id="budNewOnceAmount" placeholder="0"></div>
+                  <div class="field"><label>Месяц</label><select id="budNewOnceMonth">${months.map(m=>`<option value="${m}">${finMonthLabel(m)}</option>`).join('')}</select></div>
+                  <div class="field" style="flex:0 0 auto; display:flex; align-items:flex-end;"><button class="btn ghost" id="budAddOnce">+ Платёж</button></div>
+                </div>
+              </td></tr>
+
+              ${varRows.length ? groupHead('Растут вместе с продажами', 'считаются автоматически от выручки и числа пользователей — ставки правятся в реестре на вкладке «Расходы»', varTotal-taxArr.reduce((a,b)=>a+b,0)) : ''}
+              ${varRowsHtml}
+              <tr class="bud-var">
+                <td><div class="pb-name">Налоги и взносы с выручки</div><div class="pb-sub">${tax.base==='usn15'?'УСН «доходы минус расходы» 15%':'УСН «доходы» 6%'}</div></td>
+                <td class="soft">от выручки</td><td class="soft">—</td>
+                ${taxArr.map(cellFor).join('')}
+                <td class="num hl">${cfMoney(taxArr.reduce((a,b)=>a+b,0))}</td><td></td>
+              </tr>
+
+              <tr class="total-row"><td>Итого за месяц</td><td></td><td></td>
+                ${totals.map(v=>`<td class="num">${cfMoney(v)}</td>`).join('')}
+                <td class="num">${cfMoney(grand)}</td><td></td></tr>
+              <tr class="bud-cum"><td>Накопительно</td><td></td><td></td>
+                ${cumArr.map(v=>`<td class="num">${cfMoney(v)}</td>`).join('')}
+                <td></td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>`;
+}
+
+function wireStratBudget(rerender){
+  document.querySelectorAll('.money-fmt-input').forEach(wireThousandsInput);
+
+  document.querySelectorAll('[data-bud-field]').forEach(inp=>{
+    inp.addEventListener('change', async ()=>{
+      const id = inp.dataset.id, f = inp.dataset.budField;
+      if(f==='salary'){
+        if(inp.dataset.real==='true'){
+          const list = await getPositions();
+          const pos = list.find(x=>x.id===id);
+          if(pos){ pos.salary = parseThousands(inp.value); savePositions(list); }
+        } else {
+          const list = await getExtraHires();
+          const h = list.find(x=>x.id===id);
+          if(h){ h.salary = parseThousands(inp.value); saveExtraHires(list); }
+        }
+      } else if(f==='hireFrom'){
+        const v = parseInt(inp.value)||1;
+        const list = await getExtraHires();
+        const h = list.find(x=>x.id===id);
+        if(h){ h.month = v; saveExtraHires(list); }
+        else { const mm = await getHireMonths(); mm[id] = v; saveHireMonths(mm); }
+      } else if(f==='hireUntil'){
+        const v = inp.value ? parseInt(inp.value) : null;
+        const list = await getExtraHires();
+        const h = list.find(x=>x.id===id);
+        if(h){ h.until = v; saveExtraHires(list); }
+        else { const uu = await getHireUntil(); if(v) uu[id] = v; else delete uu[id]; saveHireUntil(uu); }
+      } else {
+        const e = await getExpenses();
+        const it = e.items.find(x=>x.id===id);
+        if(!it) return;
+        if(f==='name')           it.name = inp.value;
+        else if(f==='amount')    it.amount = parseThousands(inp.value);
+        else if(f==='expFrom')   it.from = parseInt(inp.value)||1;
+        else if(f==='expTo')     it.to = inp.value ? parseInt(inp.value) : null;
+        else if(f==='onceMonth') it.month = parseInt(inp.value)||1;
+        saveExpenses(e);
+      }
+      rerender();
+    });
+  });
+  document.querySelectorAll('[data-bud-del-exp]').forEach(b=>{
+    b.onclick = async ()=>{
+      const e = await getExpenses();
+      e.items = e.items.filter(x=>x.id!==b.dataset.budDelExp);
+      saveExpenses(e); rerender();
+    };
+  });
+  document.querySelectorAll('[data-bud-del-hire]').forEach(b=>{
+    b.onclick = async ()=>{
+      saveExtraHires((await getExtraHires()).filter(h=>h.id!==b.dataset.budDelHire));
+      rerender();
+    };
+  });
+
+  const addHire = document.getElementById('budAddHire');
+  if(addHire) addHire.onclick = async ()=>{
+    const role = document.getElementById('budNewHireRole').value.trim();
+    const salary = parseThousands(document.getElementById('budNewHireSalary').value);
+    if(!role){ document.getElementById('budNewHireRole').focus(); return; }
+    if(!salary){ document.getElementById('budNewHireSalary').focus(); return; }
+    const list = await getExtraHires();
+    const to = document.getElementById('budNewHireTo').value;
+    list.push({id:uid(), role, salary, month: parseInt(document.getElementById('budNewHireFrom').value)||1,
+      until: to ? parseInt(to) : null, status:'Стартовый план', dept:'founders'});
+    saveExtraHires(list); rerender();
+  };
+  const addMon = document.getElementById('budAddMon');
+  if(addMon) addMon.onclick = async ()=>{
+    const name = document.getElementById('budNewMonName').value.trim();
+    const amount = parseThousands(document.getElementById('budNewMonAmount').value);
+    if(!name){ document.getElementById('budNewMonName').focus(); return; }
+    if(!amount){ document.getElementById('budNewMonAmount').focus(); return; }
+    const e = await getExpenses();
+    const to = document.getElementById('budNewMonTo').value;
+    e.items.push({id:uid(), name, cat:document.getElementById('budNewMonCat').value, kind:'monthly',
+      amount, from: parseInt(document.getElementById('budNewMonFrom').value)||1,
+      to: to ? parseInt(to) : null, mandatory:true, dept:null});
+    saveExpenses(e); rerender();
+  };
+  const addOnce = document.getElementById('budAddOnce');
+  if(addOnce) addOnce.onclick = async ()=>{
+    const name = document.getElementById('budNewOnceName').value.trim();
+    const amount = parseThousands(document.getElementById('budNewOnceAmount').value);
+    if(!name){ document.getElementById('budNewOnceName').focus(); return; }
+    if(!amount){ document.getElementById('budNewOnceAmount').focus(); return; }
+    const e = await getExpenses();
+    e.items.push({id:uid(), name, cat:document.getElementById('budNewOnceCat').value, kind:'once',
+      amount, month: parseInt(document.getElementById('budNewOnceMonth').value)||1, mandatory:true, dept:null});
+    saveExpenses(e); rerender();
+  };
+}
+
 const STRAT_MONEY_HORIZON = 6;
 
 async function stratMoneyHtml(){
-  const goals   = await getStratGoals();
+  const planRows= await getStratPlan();
   const targets = await getStratTargets();
   const norms   = await getNorms();
   const H       = STRAT_MONEY_HORIZON;
-  const plan    = salesPlanFromGoals(goals, H);
+  const plan    = salesPlanFromGoals(planRows, H);
   const cfgBase = await buildFinCfg({});
   const cfg     = await buildFinCfg({newPayingPlan: plan, noFinancing:true, cashStart:0});
   const model   = computeFinModel(cfg);
@@ -4772,20 +5150,22 @@ async function stratMoneyHtml(){
 
   const NY = Math.min(H, targets.throughMonth || 4);          /* до Нового года */
   const rows = Array.from({length:H},(_,i)=>i+1);
+  /* Оборудование — это тоже деньги со счёта, поэтому в поток входит
+     и операционная часть, и капвложения. */
+  const flow = {};
   const cumFlow = [];
   let acc = 0;
-  rows.forEach(m=>{ acc += model.cfOper[m]; cumFlow[m] = acc; });
+  rows.forEach(m=>{ flow[m] = model.cfOper[m]+model.cfInvest[m]; acc += flow[m]; cumFlow[m] = acc; });
   const need = Math.abs(Math.min(0, ...rows.map(m=>cumFlow[m])));
   const needMonth = rows.find(m=>cumFlow[m]===Math.min(...rows.map(x=>cumFlow[x])));
   const cashNY  = cfSumRange(model.cashIn, 1, NY);
   const revNY   = cfSumRange(model.revenue, 1, NY);
-  const spendNY = cfSumRange(model.totalExpense, 1, NY);
-  const firstPlus = rows.find(m=>model.cfOper[m] > 0);
+  const spendNY = cfSumRange(model.totalExpense, 1, NY)+cfSumRange(model.capex, 1, NY);
+  const firstPlus = rows.find(m=>flow[m] > 0);
 
   const investOk = need <= targets.invest;
   const earnOk   = cashNY >= targets.earn;
 
-  const goalRegistered = Object.fromEntries(goals.filter(g=>g.kind==='registered').map(g=>[g.month, g.value]));
 
   const rowsHtml = rows.map(m=>{
     const isNY = m===NY;
@@ -4795,28 +5175,38 @@ async function stratMoneyHtml(){
       <td class="num">${num(model.active[m])}</td>
       <td class="num">${money(model.revenue[m])}</td>
       <td class="num hl">${money(model.cashIn[m])}</td>
-      <td class="num">${money(model.totalExpense[m])}</td>
-      <td class="num ${model.cfOper[m]<0?'neg':'pos'}">${signedMoney(model.cfOper[m])}</td>
+      <td class="num">${money(model.totalExpense[m]+model.capex[m])}</td>
+      <td class="num ${flow[m]<0?'neg':'pos'}">${signedMoney(flow[m])}</td>
       <td class="num ${cumFlow[m]<0?'neg':'pos'}">${signedMoney(cumFlow[m])}</td>
     </tr>`;
   }).join('');
 
-  const decompHtml = rows.filter(m=>plan[m]).map(m=>{
-    const sales = plan[m];
-    const regNeed = goalRegistered[m] || (cfg.funnel.crRegPay ? sales/cfg.funnel.crRegPay : 0);
+  /* Что нужно под цель: воронка вверх от продаж и производство —
+     план по экспертам и контенту сверяется с тем, сколько их
+     требует растущая база. */
+  const decompHtml = rows.map(m=>{
+    const sales = plan[m]||0;
+    const regNeed = cfg.funnel.crRegPay ? sales/cfg.funnel.crRegPay : 0;
     const leads = cfg.funnel.crLeadReg ? regNeed/cfg.funnel.crLeadReg : 0;
-    const content = norms.contentBaseMonthly + model.active[m]/100*norms.contentPer100Users;
-    const experts = Math.ceil(model.active[m]/norms.usersPerExpert);
+    const contentNeed = norms.contentBaseMonthly + model.active[m]/100*norms.contentPer100Users;
+    const expertsNeed = Math.ceil(model.active[m]/norms.usersPerExpert);
+    const contentPlan = planAt(planRows, m, 'content');
+    const expertsPlan = planAt(planRows, m, 'experts');
+    const gap = (p, need)=> p===null ? '<span class="soft">не задано</span>'
+      : `<b>${num(p)}</b> <span class="${p>=need?'pos':'neg'}">${p>=need?'✓':'нужно '+num(need)}</span>`;
     return `<tr>
       <td>${finMonthLabel(m)}</td>
-      <td class="num hl">${num(sales)}</td>
+      <td class="num hl">${sales?num(sales):'<span class="soft">—</span>'}</td>
       <td class="num">${num(regNeed)}</td>
       <td class="num">${num(leads)}</td>
-      <td class="num">${num(Math.ceil(sales/22))} <span class="soft">в рабочий день</span></td>
-      <td class="num">${num(content)}</td>
-      <td class="num">${num(experts)}</td>
+      <td class="num">${sales?num(Math.ceil(sales/22)):'—'}</td>
+      <td class="num">${gap(contentPlan, contentNeed)}</td>
+      <td class="num">${gap(expertsPlan, expertsNeed)}</td>
     </tr>`;
   }).join('');
+
+  const contentTotal = rows.reduce((a,m)=>a+(planAt(planRows,m,'content')||0),0);
+  const expertsEnd = (function(){ for(let m=H;m>=1;m--){ const v=planAt(planRows,m,'experts'); if(v!==null) return v; } return 0; })();
 
   return `
     <section class="block">
@@ -4867,11 +5257,11 @@ async function stratMoneyHtml(){
       <p class="block-sub">Цель по продажам, развёрнутая обратно по воронке и производству.</p>
       <div class="card table-card">
         <table class="calc-table">
-          <thead><tr><th>Месяц</th><th>Продаж</th><th>Регистраций</th><th>Визитов</th><th>Продаж в день</th><th>Мастер-классов</th><th>Экспертов в сети</th></tr></thead>
+          <thead><tr><th>Месяц</th><th>Продаж по плану</th><th>Регистраций нужно</th><th>Визитов нужно</th><th>Продаж в рабочий день</th><th>Мастер-классов: план и норма</th><th>Экспертов: план и норма</th></tr></thead>
           <tbody>${decompHtml || '<tr><td colspan="7" class="empty-note">Поставьте цели по продажам в ганте — здесь появится, что для них нужно.</td></tr>'}</tbody>
         </table>
       </div>
-      <p class="note-sm">Конверсии берутся из вкладки «Доходы и воронка»: визит → регистрация ${cfPct(cfg.funnel.crLeadReg)}, регистрация → оплата ${cfPct(cfg.funnel.crRegPay)}. Нормативы по контенту и экспертам — на вкладке «План основателя».</p>
+      <p class="note-sm">Конверсии берутся из вкладки «Доходы и воронка»: визит → регистрация ${cfPct(cfg.funnel.crLeadReg)}, регистрация → оплата ${cfPct(cfg.funnel.crRegPay)}. Нормативы «сколько нужно» — на вкладке «План основателя»: 1 эксперт на ${norms.usersPerExpert} пользователей, ${norms.contentBaseMonthly} мастер-классов в месяц плюс ${norms.contentPer100Users} на каждые 100 пользователей. За ${H} месяцев по плану снимается <b>${num(contentTotal)}</b> мастер-классов, в сети <b>${num(expertsEnd)}</b> экспертов.</p>
     </section>`;
 }
 
@@ -4899,11 +5289,27 @@ function wireStratMoney(rerender){
 /* ============================================================
    СТРАНИЦА СТРАТЕГИИ
    ============================================================ */
+function stratGuideHtml(){
+  return `
+    <details class="guide" open>
+      <summary>Куда что вносить</summary>
+      <ol class="guide-list">
+        <li><b>Ключевые точки</b> — верхняя полоса. События, к которым идём: раунд закрыт, первые платящие, официальный запуск. Наведите на месяц и нажмите «+», чтобы добавить.</li>
+        <li><b>Три строки целей</b> — продажи, эксперты, контент. Впишите число в клетку месяца. Продажи из этой строки идут прямо в расчёт денег ниже, эксперты и контент — в производственный план.</li>
+        <li><b>Ключевые задачи</b> — полосы по направлениям. Тяните за середину, чтобы сдвинуть срок, за край — чтобы растянуть. Клик раскрывает полосу и открывает карточку: статус, ответственный, «начинается после».</li>
+        <li><b>Стартовый бюджет</b> — люди, регулярные и разовые платежи первых месяцев. Правится прямо в таблице; сюда же добавляются новые строки.</li>
+        <li><b>Деньги</b> считаются сами из целей и бюджета: сколько вложить, когда первый плюсовой месяц, что нужно делать под цели. Ничего дублировать не нужно — это те же данные, что в финмодели и P&amp;L.</li>
+      </ol>
+    </details>`;
+}
+
 async function renderStrategy(body){
   const allTasks = await getTasks();
   const overall = taskStats(allTasks);
   body.innerHTML = `
+    ${stratGuideHtml()}
     <div id="stratGantt"><div class="loading">Строим гант…</div></div>
+    <div id="stratBudget"></div>
     <div id="stratMoney"></div>
     <section class="block">
       <h2>Как идут задачи</h2>
@@ -4919,12 +5325,21 @@ async function renderStrategy(body){
       </div>
       ${efficiencyCardHtml(efficiencyStats(allTasks, allTasks), 'Эффективность команды')}
     </section>
-    <div id="stratBudget"></div>
+    <div id="stratRoadmapBudget"></div>
   `;
+  const rerender = ()=>renderStrategy(body);
   await renderStrategyGantt(document.getElementById('stratGantt'));
+
+  /* бюджет и деньги считаются на одной и той же модели плана продаж */
+  const planRows = await getStratPlan();
+  const cfgPlan = await buildFinCfg({newPayingPlan: salesPlanFromGoals(planRows, STRAT_MONEY_HORIZON), noFinancing:true, cashStart:0});
+  const modelPlan = computeFinModel(cfgPlan);
+  document.getElementById('stratBudget').innerHTML = await stratBudgetHtml(modelPlan);
+  wireStratBudget(rerender);
+
   document.getElementById('stratMoney').innerHTML = await stratMoneyHtml();
-  wireStratMoney(()=>renderStrategy(body));
-  document.getElementById('stratBudget').innerHTML = await roadmapBudgetHtml(allTasks);
+  wireStratMoney(rerender);
+  document.getElementById('stratRoadmapBudget').innerHTML = await roadmapBudgetHtml(allTasks);
 }
 
 /* ============================================================
@@ -5311,6 +5726,16 @@ async function getHireMonths(){
   return _cache['eva-club-cf-hire-months'];
 }
 function saveHireMonths(obj){ setCacheLocal('eva-club-cf-hire-months', obj); persistCache('eva-club-cf-hire-months'); }
+/* До какого месяца человек в расходах. Пусто — бессрочно. Нужно для
+   стартового плана: видеограф и студия берутся на три месяца, а не
+   навсегда. */
+async function getHireUntil(){
+  if(!('eva-club-cf-hire-until' in _cache)){
+    _cache['eva-club-cf-hire-until'] = await loadShared('eva-club-cf-hire-until', null) || {};
+  }
+  return _cache['eva-club-cf-hire-until'];
+}
+function saveHireUntil(obj){ setCacheLocal('eva-club-cf-hire-until', obj); persistCache('eva-club-cf-hire-until'); }
 async function getExtraHires(){
   if(!('eva-club-cf-extra-hires' in _cache)){
     _cache['eva-club-cf-extra-hires'] = await loadShared('eva-club-cf-extra-hires', null) || [];
@@ -5376,10 +5801,12 @@ async function buildHires(){
   const positions = await getPositions();
   const people = await getPeople();
   const monthMap = await getHireMonths();
+  const untilMap = await getHireUntil();
   const extra = await getExtraHires();
   const real = positions.filter(p=>p.status!=='archived').map(pos=>({
     id:pos.id, role:pos.title, salary:positionSalary(pos, people),
     month: monthMap[pos.id] || DEFAULT_HIRE_MONTHS[pos.id] || (pos.status==='filled' ? 1 : 4),
+    until: untilMap[pos.id] || null,
     status: POSITION_STATUS_LABEL[pos.status], dept:pos.dept,
     mandatory: pos.mandatory!==false, real:true,
   }));
@@ -5471,7 +5898,7 @@ function computeFinModel(cfg){
     o.cashIn[m]  = o.cashSub[m]+o.cashAddon[m];
 
     /* --- ФОТ --- */
-    o.fot[m]       = hires.filter(h=>h.month<=m).reduce((s,h)=>s+(h.salary||0),0);
+    o.fot[m]       = hires.filter(h=>h.month<=m && (!h.until || m<=h.until)).reduce((s,h)=>s+(h.salary||0),0);
     o.insurance[m] = o.fot[m]*insRate;
     o.payrollTotal[m] = o.fot[m]+o.insurance[m];
     o.byCat.fot[m] = o.payrollTotal[m];
@@ -5988,7 +6415,7 @@ function factMonth(monthKey, days, ctxCfg){
   const cashIn   = agg.revSub + agg.revAddonNet;
   const deferredDelta = cashIn - revenue;
 
-  const fot = hires.filter(h=>h.month<=m).reduce((s2,h)=>s2+(h.salary||0),0);
+  const fot = hires.filter(h=>h.month<=m && (!h.until || m<=h.until)).reduce((s2,h)=>s2+(h.salary||0),0);
   const insurance = fot*insRate;
 
   const dailyCats = new Set(Object.keys(agg.spendByCat).filter(c=>agg.spendByCat[c]>0));
@@ -6823,7 +7250,7 @@ function unitEconomics(cfg, m){
 
   /* постоянные расходы месяца m: ФОТ со взносами + регулярные позиции */
   const insRate = (cfg.tax&&cfg.tax.it) ? 0.076 : 0.30;
-  const fot = (cfg.hires||[]).filter(h=>h.month<=m).reduce((s,h)=>s+(h.salary||0),0);
+  const fot = (cfg.hires||[]).filter(h=>h.month<=m && (!h.until || m<=h.until)).reduce((s,h)=>s+(h.salary||0),0);
   let fixed = fot*(1+insRate);
   (cfg.expenses||[]).forEach(it=>{
     if(it.kind!=='monthly') return;
