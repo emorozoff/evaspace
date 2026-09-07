@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/eva-space-app-ho4tcy
+      - claude/upass-dao-blockchain-av7skf
       - main
   workflow_dispatch:
 

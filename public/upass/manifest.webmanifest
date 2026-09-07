@@ -1,0 +1,17 @@
+{
+  "name": "UPASS — цифровой паспорт резидента",
+  "short_name": "UPASS",
+  "description": "Приложение закрытого кооператива: паспорт, сеть UHOME, доля в активах, репутация и общее управление.",
+  "start_url": "/evaspace/upass/",
+  "scope": "/evaspace/upass/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#05060a",
+  "theme_color": "#05060a",
+  "lang": "ru",
+  "icons": [
+    { "src": "/evaspace/upass/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/evaspace/upass/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/evaspace/upass/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

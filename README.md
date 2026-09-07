@@ -1,3 +1,14 @@
+# Репозиторий двух приложений
+
+| Приложение | Ссылка | Документация |
+| --- | --- | --- |
+| **UPASS** — кооператив, паспорт резидента, UHOME и UHT | https://emorozoff.github.io/evaspace/upass/ | [UPASS.md](UPASS.md) · [ТЗ](docs/upass-tz.md) |
+| **Eva Space** — платформа женского развития | https://emorozoff.github.io/evaspace/ | ниже |
+
+Обе собираются одной командой `npm run build` и публикуются вместе.
+
+---
+
 # Eva Space — MVP
 
 Платформа женского развития с индивидуальной программой обучения.
