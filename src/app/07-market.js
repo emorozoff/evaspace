@@ -498,7 +498,7 @@ function pgSettings(){
         <button class="btn sm ghost" onclick="openPage('sub')">Управлять</button></div>
       <div class="uline"><span class="small muted" style="flex:1">Способ оплаты</span>
         <b style="font-size:12.5px">${S.card || 'не привязан'}</b>
-        <button class="btn xs ghost" onclick="addCard()">${S.card?'Заменить':'Привязать'}</button></div>
+        <button class="btn xs ghost" onclick="addCard()">Скоро</button></div>
       <div class="uline"><span class="small muted" style="flex:1">Бонусный счёт</span>
         <b style="font-size:12.5px">${S.bonus} ₽</b></div>
       <div class="uline"><span class="small muted" style="flex:1">История покупок</span>
@@ -540,7 +540,9 @@ function pgSettings(){
   </div>`;
 }
 function tgNotif(k){ S.notif[k] = !S.notif[k]; render(); toast(S.notif[k] ? 'Уведомление включено' : 'Выключено'); }
-function addCard(){ S.card = '•••• 4242'; render(); toast('Карта привязана'); }
+/* Приём оплаты ещё не подключён. Раньше кнопка рисовала «•••• 4242» и
+   говорила «Карта привязана» — обещание, за которым ничего не стояло. */
+function addCard(){ toast('Оплата картой подключится позже. Пока доступ открывает администратор'); }
 
 /* ---------- утилиты профиля ---------- */
 function pickAvatar(){
@@ -886,7 +888,7 @@ function adOrders(){
       <div style="flex:1;font-size:12.5px">${esc(o.mail)}${o.phone?' · '+o.phone:''}</div></div>
     <div class="chips" style="margin-top:8px">${['новый','собирается','в пути','доставлен','отменён'].map(st =>
       `<button class="chip ${o.st===st?'on':''}" onclick="setOrder('${attJs(o.id)}','${attJs(st)}')">${st}</button>`).join('')}</div>
-    <button class="btn ghost sm" style="margin-top:8px" onclick="toast('Письмо отправлено на ${esc(o.mail)}')">Написать покупателю</button>
+    <button class="btn ghost sm" style="margin-top:8px" onclick="openSheet({k:'write2',id:'${attJs(o.mail)}'})">Написать покупателю</button>
   </div>`).join('')}`;
 }
 function setOrder(id, st){

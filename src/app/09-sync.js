@@ -35,7 +35,10 @@ function mirrorUser(u){
   const all = DB.users();
   all[mail] = Object.assign({}, all[mail], {
     email: mail, name: u.name, role: u.role || 'user',
-    verified: !!u.verified, created: u.created || Date.now()
+    verified: !!u.verified, created: u.created || Date.now(),
+    /* доступ, открытый администратором, живёт в аккаунте на сервере */
+    gift: !!u.gift, access_until: +u.access_until || 0, trial_days: +u.trial_days || 0,
+    courses: Array.isArray(u.courses) ? u.courses.map(String) : []
   });
   DB.saveUsers(all);
 }

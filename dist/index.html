@@ -285,12 +285,6 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .splash{position:fixed;inset:0;background:#111014;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:18px;overflow:hidden;z-index:100}
 .splash-star{width:60px;height:60px;animation:starIn 2.4s cubic-bezier(.5,0,.2,1) both}
-@keyframes starIn{
-  0%{transform:scale(.2) rotate(-24deg);opacity:0}
-  22%{transform:scale(1) rotate(0);opacity:1}
-  56%{transform:scale(1.05);opacity:1}
-  80%{transform:scale(13);opacity:.5}
-  100%{transform:scale(42);opacity:0}}
 .splash-name{font-family:Unbounded,sans-serif;font-weight:300;color:#fff;font-size:25px;letter-spacing:.2em;
   opacity:0;animation:nameIn 2.4s ease both}
 .splash-sub{font-size:11.5px;color:rgba(255,255,255,.45);letter-spacing:.05em;opacity:0;animation:nameIn 2.4s ease .08s both}
@@ -985,13 +979,19 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 #tour{position:fixed;inset:0;z-index:82}
 .tveil{position:fixed;inset:0;background:rgba(14,12,18,.74);animation:fade .2s both}
 /* затемнение рисует сама подсветка: огромная тень вокруг светлого окна */
-.thole{position:fixed;pointer-events:none;transition:.26s cubic-bezier(.2,.75,.3,1);
+.thole{position:fixed;pointer-events:none;transition:.32s cubic-bezier(.2,.75,.3,1);
   box-shadow:0 0 0 9999px rgba(14,12,18,.74),0 0 0 2px rgba(255,255,255,.92),
     0 0 34px 6px rgba(255,255,255,.26)}
+/* пока страница едет к блоку, подсветка идёт за ним шаг в шаг */
+.thole.glide{transition:none}
 .ttip{position:fixed;left:50%;transform:translateX(-50%);width:min(var(--shell),100vw - 24px);
   background:var(--surface);border-radius:24px;padding:17px 17px 15px;
-  box-shadow:0 22px 60px rgba(0,0,0,.42);animation:tpop .24s cubic-bezier(.2,.8,.3,1) both}
-@keyframes tpop{from{opacity:0;transform:translateX(-50%) translateY(8px)}
+  box-shadow:0 22px 60px rgba(0,0,0,.42);
+  transition:opacity .18s ease,transform .22s cubic-bezier(.2,.75,.3,1)}
+.ttip.in{animation:tpop .3s cubic-bezier(.2,.8,.3,1) both}
+/* смена шага: карточка гаснет и чуть оседает, потом проявляется на новом месте */
+.ttip.swap{opacity:0;transform:translateX(-50%) translateY(6px)}
+@keyframes tpop{from{opacity:0;transform:translateX(-50%) translateY(10px)}
   to{opacity:1;transform:translateX(-50%) none}}
 .ttip.mid{top:50%!important;margin-top:-110px}
 .ttip:before{content:"";position:absolute;left:var(--ax,30px);width:16px;height:16px;
@@ -1676,27 +1676,35 @@ const INVITED = [
 ];
 
 /* ---------- тест ---------- */
-/* Вес вопроса в подборе. Первый вопрос — «что важнее всего сейчас»,
-   и его ответы весят больше остальных: женщина назвала главное. Уточняющие
-   вопросы весят чуть меньше главного, обстоятельства — ещё меньше. */
+/* Шесть вопросов вместо семи. Раньше был отдельный «Что беспокоит чаще
+   всего?» — и четыре его ответа из шести повторяли первый вопрос другими
+   словами: тревога, усталость, самокритика, границы. Женщина отвечала
+   дважды на одно и то же и уставала ещё до программы. Его темы переехали
+   в первый вопрос: у каждого ответа теперь три тега, и подписи, которые и
+   так говорили «сон» и «самокритика», наконец совпадают с тем, что уходит
+   в подбор.
+
+   Вес вопроса в подборе. Первый вопрос — «что важнее всего сейчас», и его
+   ответы весят больше остальных: женщина назвала главное. Первый тег
+   ответа — главный, остальные чуть легче: см. applyQuiz(). */
 const QUIZ_W = {goal:1, rel_free:0.85, rel_married:0.85, preg:0.85, baby:0.85,
-                rel:0.7, stage:0.7, hard:0.75, level:0.5, time:0.5};
+                rel:0.7, stage:0.7};
 const QUIZ = [
   {id:'goal', q:'Что для тебя сейчас важнее всего?',
    hint:'Выбери до трёх — чем точнее, тем точнее программа', max:3, o:[
-    {e:'◆', t:'Уверенность в себе', s:'Меньше сомнений и самокритики', tags:['уверенность','самооценка']},
-    {e:'◇', t:'Спокойствие, меньше тревоги', s:'Сон и нервная система', tags:['спокойствие','тревога']},
-    {e:'◉', t:'Энергия и силы', s:'Выйти из усталости', tags:['энергия','выгорание']},
-    {e:'❤', t:'Любовь и отношения', s:'С собой и с другими', tags:['отношения','границы']},
-    {e:'◈', t:'Деньги и своё дело', s:'Рост и уверенность в цене', tags:['деньги','карьера']},
-    {e:'✦', t:'Контакт с телом', s:'Принятие и движение', tags:['тело','принятие']}
+    {e:'◆', t:'Уверенность в себе', s:'Меньше сомнений и самокритики', tags:['уверенность','самооценка','самокритика']},
+    {e:'◇', t:'Спокойствие, меньше тревоги', s:'Сон и нервная система', tags:['спокойствие','тревога','сон']},
+    {e:'◉', t:'Энергия и силы', s:'Выйти из усталости', tags:['энергия','выгорание','отдых']},
+    {e:'❤', t:'Любовь и отношения', s:'С собой и с другими', tags:['отношения','границы','поддержка']},
+    {e:'◈', t:'Деньги и своё дело', s:'Рост и уверенность в цене', tags:['деньги','карьера','цели']},
+    {e:'✦', t:'Контакт с телом', s:'Принятие и движение', tags:['тело','принятие','восстановление']}
   ]},
   {id:'level', q:'Как сейчас с практиками?', hint:'Чтобы не дать слишком сложное', max:1, o:[
-    {e:'○', t:'Совсем новичок', s:'Начнём с коротких и простых', tags:['новичок']},
-    {e:'◐', t:'Пробовала, но бросала', s:'Сделаем так, чтобы держалось', tags:['новичок']},
-    {e:'●', t:'Практикую регулярно', s:'Дадим более глубокие практики', tags:['опыт']}
+    {e:'○', t:'Совсем новичок', s:'Начнём с коротких и простых', lvl:'new'},
+    {e:'◐', t:'Пробовала, но бросала', s:'Сделаем так, чтобы держалось', lvl:'new'},
+    {e:'●', t:'Практикую регулярно', s:'Дадим более глубокие практики', lvl:'pro'}
   ]},
-  {id:'time', q:'Сколько минут в день готова уделять себе?', hint:'Честно - так программа будет рабочей', max:1, o:[
+  {id:'time', q:'Сколько минут в день готова уделять себе?', hint:'Честно — так программа будет рабочей', max:1, o:[
     {e:'◔', t:'5–10 минут', s:'Коротко, но каждый день', time:10},
     {e:'◑', t:'15–20 минут', s:'Золотая середина', time:20},
     {e:'◕', t:'30 минут и больше', s:'Полноценные практики', time:35}
@@ -1708,12 +1716,12 @@ const QUIZ = [
     {e:'◈', t:'В разводе или расстались', s:'', tags:['кризис','поддержка','самооценка']},
     {e:'◐', t:'Переживаю кризис в отношениях', s:'', tags:['кризис','созависимость','границы']}
   ]},
-  {id:'rel_free', q:'Одиночество сейчас - это про что?', hint:'', max:1, skipIf:o => o.id !== 'rel_free', o:[
+  {id:'rel_free', q:'Одиночество сейчас — это про что?', hint:'Один ответ', max:1, o:[
     {e:'◔', t:'Мне спокойно, я восстанавливаюсь', tags:['восстановление']},
     {e:'◑', t:'Хочу отношений, но страшно', tags:['одиночество','уверенность']},
     {e:'◕', t:'Больно после расставания', tags:['кризис','поддержка']}
   ]},
-  {id:'rel_married', q:'Что в отношениях даётся тяжелее всего?', hint:'', max:1, o:[
+  {id:'rel_married', q:'Что в отношениях даётся тяжелее всего?', hint:'Один ответ', max:1, o:[
     {e:'◇', t:'Не умею говорить о своих потребностях', tags:['границы','коммуникация']},
     {e:'◆', t:'Много раздражения и усталости', tags:['выгорание','отношения']},
     {e:'◈', t:'Растворяюсь в партнёре и семье', tags:['созависимость','самооценка']},
@@ -1743,24 +1751,57 @@ const QUIZ = [
    max:0, grid:true, o:INTEREST_TOPICS.map(k => {
      const t = topicOf(k);
      return {e:k, t:t.l, topic:k, c:t.c};
-   })},
-  {id:'pain', q:'Что беспокоит чаще всего?', hint:'Можно выбрать до трёх', max:3, o:[
-    {e:'◌', t:'Тревожность', tags:['тревога']},
-    {e:'◍', t:'Усталость и выгорание', tags:['выгорание','энергия']},
-    {e:'◎', t:'Постоянно себя ругаю', tags:['самокритика','самооценка']},
-    {e:'◐', t:'Плохо сплю', tags:['сон']},
-    {e:'◔', t:'Совсем нет времени на себя', tags:['границы','продуктивность']},
-    {e:'◇', t:'Чувствую себя одиноко', tags:['одиночество','поддержка']}
-  ]}
+   })}
 ];
+/* уточняющие вопросы: открываются только по ответу на родительский */
+const QUIZ_SUB = ['rel_free','rel_married','preg','baby'];
 
 /* какие вопросы показывать: часть открывается только по предыдущему ответу */
 function quizFlow(){
   const asked = S.answers || {};
-  return QUIZ.filter(q => {
-    if(!['rel_free','rel_married','preg','baby'].includes(q.id)) return true;
-    return Object.values(asked).some(a => a && a.next === q.id);
+  return QUIZ.filter(q => QUIZ_SUB.indexOf(q.id) < 0 ||
+    Object.values(asked).some(a => a && a.next === q.id));
+}
+
+/* Всё, что тест знает о ней, — из отмеченных ответов заново.
+   Раньше теги копились по ходу: нажала «Дальше» — добавились. Вернулась,
+   поменяла ответ — старые теги оставались, и программа собиралась под то,
+   от чего она отказалась. Теперь ответы хранятся по вопросу, а профиль
+   считается из них целиком при каждом шаге. */
+function applyQuiz(){
+  const picked = S.picked || {};
+  S.tags = []; S.tagw = {}; S.topics = []; S.goals = []; S.answers = {}; S.extra = {};
+  S.level = '';
+  let time = 0, slot = '';
+  QUIZ.forEach(q => {
+    if(QUIZ_SUB.indexOf(q.id) >= 0 &&
+       !Object.values(S.answers).some(a => a && a.next === q.id)) return;
+    const w = QUIZ_W[q.id] != null ? QUIZ_W[q.id] : 0.6;
+    (picked[q.id] || []).forEach(i => {
+      const o = q.o[i];
+      if(!o) return;
+      (o.tags || []).forEach((t, k) => {
+        const tw = k ? w * 0.8 : w;               // первый тег ответа — главный
+        if(!S.tags.includes(t)) S.tags.push(t);
+        S.tagw[t] = Math.max(S.tagw[t] || 0, tw);
+      });
+      if(q.id === 'goal' && o.tags && o.tags[0]) S.goals.push(o.tags[0]);
+      if(o.topic && !S.topics.includes(o.topic)) S.topics.push(o.topic);
+      if(o.lvl) S.level = o.lvl;
+      if(o.time) time = o.time;
+      if(o.slot) slot = o.slot;
+      if(o.extra) Object.assign(S.extra, o.extra);
+      S.answers[q.id] = {t:o.t, next:o.next || null};
+    });
   });
+  if(time) S.time = time;
+  if(slot) S.slot = slot;
+}
+
+/* чистый лист перед тестом: и для новой, и для той, у кого программы нет */
+function resetQuiz(){
+  S.qi = 0; S.picked = {}; S.tags = []; S.tagw = {}; S.topics = []; S.goals = [];
+  S.answers = {}; S.extra = {}; S.level = '';
 }
 
 /* ---------- состояние ---------- */
@@ -1768,7 +1809,8 @@ const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 
 const S = {
   screen:'welcome', tab:'home', page:null, sheet:null,
-  name:'', qi:0, picked:[], tags:[], time:20, slot:'утро',
+  name:'', qi:0, picked:{}, tags:[], tagw:{}, topics:[], goals:[], answers:{}, extra:{},
+  level:'', taste:{}, time:20, slot:'утро',
   program:[], day:0, match:0,
   points:0, stars:0, bonus:300,
   joined:['gr1'], cart:[], purchases:[], courses:[],
@@ -2222,7 +2264,9 @@ function persist(){
     starred:S.starred, starredCmts:S.starredCmts, likes:S.likes, visits:S.visits, gentle:S.gentle,
     /* без этого после перезагрузки терялась память о показанных мастер-классах
        и об обмене баллов: классы шли по кругу, а обмен можно было повторять */
-    seen:S.seen, tagw:S.tagw, weekly:S.weekly, seenDm:S.seenDm, streak:S.streak,
+    seen:S.seen, tagw:S.tagw, goals:S.goals, level:S.level, taste:S.taste,
+    subAsked:S.subAsked, courseAsked:S.courseAsked,
+    weekly:S.weekly, seenDm:S.seenDm, streak:S.streak,
     evChain:S.evChain, evFast:S.evFast, reviews:S.reviews, tourDone:S.tourDone,
     lastWeek:S.lastWeek, weekShown:S.weekShown, weekMood:S.weekMood,
     nudgedWeek:S.nudgedWeek, gdraft:S.gdraft,
@@ -2240,7 +2284,7 @@ const PERSONAL = ['name','tags','topics','time','slot','answers','extra','points
   'bonus','streakDays','streak','courses','purchases','cart','joined','clubs','owned','avatar','birth',
   'cycle','hd','hdAnswers','hdi','sub','week','seed','program','day','match','homework','myEvents',
   'inbox','seenReplies','seenDm','myInts','datingProfile','starred','starredCmts','likes','visits',
-  'gentle','seen','tagw','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
+  'gentle','seen','tagw','goals','level','taste','subAsked','courseAsked','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
   'weekMood','nudgedWeek','gdraft','quietRun','askedBlock','pushOn','pushAsked','tipStars','follows','mates','expSeen','about','city','show',
   'qi','picked','eva'];
 
@@ -2823,6 +2867,7 @@ function avaLetter(name, size, cls){
 function profileOf(){
   return {
     tags:   weightedTags(),
+    goals:  S.goals || [],
     topics: S.topics || [],
     aud:    typeof myAudience === 'function' ? myAudience() : [],
     time:   +S.time || 20,          // из старых профилей могло прийти строкой
@@ -2838,14 +2883,48 @@ function profileOf(){
    У старых профилей веса нет — там считаем по месту в списке, порядок
    там тот же, потому что теги копятся по ходу теста. */
 function weightedTags(){
-  const src = S.tagw || {};
-  return (S.tags || []).map((t, i) => ({
+  const src = S.tagw || {}, taste = S.taste || {};
+  const out = (S.tags || []).map((t, i) => ({
     t,
-    w: src[t] != null ? src[t] : Math.max(0.5, 1 - i * 0.12)
+    w: (src[t] != null ? src[t] : Math.max(0.5, 1 - i * 0.12)) + tasteShift(taste[t])
+  }));
+  /* тема, которой в тесте не было, но которую она раз за разом доделывает
+     и отмечает звездой, — тоже её запрос, пусть и негромкий */
+  Object.keys(taste).forEach(t => {
+    if(taste[t] >= TASTE_NEW && !out.some(x => x.t === t)) out.push({t, w: 0.45});
+  });
+  return out.sort((a, b) => b.w - a.w);
+}
+
+/* ---------- вкус: чему учится программа ----------
+   Тест — это то, что она сказала о себе в первый день. Дальше говорит
+   поведение: практику про границы она доделывает, а про деньги третью
+   неделю не открывает. Считаем по тегам: сделанное дело — плюс, показанное
+   и не тронутое — минус поменьше, звезда в библиотеке — плюс. Сдвиг веса
+   нарочно небольшой: он подкручивает порядок, а не переписывает запрос. */
+const TASTE_STEP = 0.07, TASTE_MAX = 3, TASTE_NEW = 3;
+function tasteShift(v){
+  if(!v) return 0;
+  return Math.max(-TASTE_MAX, Math.min(TASTE_MAX, v)) * TASTE_STEP;
+}
+function tasteAdd(tags, d){
+  S.taste = S.taste || {};
+  (tags || []).forEach(t => {
+    const v = (S.taste[t] || 0) + d;
+    if(Math.abs(v) < 0.01) delete S.taste[t];
+    else S.taste[t] = Math.round(Math.max(-6, Math.min(9, v)) * 100) / 100;
+  });
+}
+/* итог прошедшей недели — до пересборки, пока задания ещё её */
+function learnFromWeek(){
+  (S.program || []).forEach(day => (day.tasks || []).forEach(t => {
+    if(!t || t.type === 'affirm') return;      // аффирмацию читают за минуту, это не выбор
+    tasteAdd(t.tags, t.done ? 1 : -0.35);
   }));
 }
 
 function myLevel(){
+  if(S.level === 'new' || S.level === 'pro') return S.level;
   if((S.tags || []).includes('опыт')) return 'pro';
   if((S.tags || []).includes('новичок')) return 'new';
   return 'middle';
@@ -3001,11 +3080,13 @@ function whyItem(item, p){
   const out = [];
   const his = Array.isArray(item.tags) ? item.tags : [];
   const mine = p.tags.filter(x => his.includes(x.t)).map(x => x.t);
-  if(mine.length) out.push('про ' + mine.slice(0, 2).join(' и '));
+  /* теги — существительные в именительном: «про тревога» не по-русски,
+     поэтому без предлога, через двоеточие */
+  if(mine.length) out.push('твой запрос: ' + mine.slice(0, 2).join(', '));
   const tp = (item.topics || []).filter(t => (p.topics || []).includes(t));
   if(tp.length && typeof topicName === 'function'){
     const n = topicName(tp[0]);
-    if(n) out.push(n.toLowerCase());
+    if(n) out.push('тебе интересно: ' + n.toLowerCase());
   }
   const aud = (item.aud || []).filter(k => k !== 'active' && k !== 'period');
   if(!out.length && aud.some(k => p.aud.includes(k))) out.push('под твой этап');
@@ -3044,7 +3125,9 @@ function tagCoverage(){
    Три главных запроса раскладываются по семи дням так, чтобы соседние
    дни не повторялись, а к концу недели каждая тема прозвучала. */
 function weekThemes(p){
-  const top = p.tags.slice(0, 3).map(x => x.t);
+  /* цели — главные теги ответов первого вопроса: по одной на выбранный
+     ответ. Без них (старый профиль) берём три самых тяжёлых тега */
+  const top = (p.goals && p.goals.length ? p.goals : p.tags.map(x => x.t)).slice(0, 3);
   if(!top.length) return DAYS.map(() => null);
   return DAYS.map((_, i) => top[i % top.length]);
 }
@@ -3232,6 +3315,7 @@ function checkWeek(quiet){
   if(S.week !== w){
     /* снимок делаем ДО пересборки: после неё считать уже нечего */
     const past = typeof weekSnapshot === 'function' ? weekSnapshot() : null;
+    learnFromWeek();
     S.week = w;
     S.weekly.exchanged = false;          // обмен баллов снова доступен
     S.stars = 0;                          // звёзды недели считаются заново
@@ -3540,14 +3624,14 @@ function scrWelcome(){
         oninput="S.name=this.value" onkeydown="if(event.key==='Enter')startQuiz()">
     </div>
     <div style="flex:1"></div>
-    <p class="small muted anim-up d3" style="margin-bottom:14px">6 коротких вопросов - и Ева соберёт программу<br>из аффирмаций, практик и мастер-классов</p>
+    <p class="small muted anim-up d3" style="margin-bottom:14px">Шесть коротких вопросов — и Ева соберёт программу<br>из аффирмаций, практик и мастер-классов</p>
     <button class="btn gold anim-up d3" onclick="startQuiz()">Начать</button>
   </div>`;
 }
 
 function scrQuiz(){
   const flow = quizFlow();
-  const q = flow[Math.min(S.qi, flow.length-1)], sel = S.picked[S.qi] || [];
+  const q = flow[Math.min(S.qi, flow.length-1)], sel = quizSel(q);
   const can = sel.length > 0;
   return `<div class="sky"><canvas id="sky"></canvas></div>
   <div class="night">
@@ -3628,11 +3712,14 @@ function donut(pct){
 /* ---------- действия онбординга ---------- */
 function startQuiz(){
   if(!S.name.trim()) S.name = 'Ева';
-  S.screen = 'quiz'; S.qi = 0; S.picked = []; S.tags = [];
+  resetQuiz(); S.screen = 'quiz';
   render(); stars();
 }
+/* ответы лежат по вопросу, а не по его номеру: уточняющий вопрос
+   появляется и исчезает, и номера съезжают */
+const quizSel = q => (q && S.picked && !Array.isArray(S.picked) && S.picked[q.id]) || [];
 function pick(i){
-  const q = quizFlow()[S.qi]; let sel = S.picked[S.qi] || [];
+  const q = quizFlow()[S.qi]; let sel = quizSel(q);
   /* max не указан — один ответ; max:0 — сколько захочет */
   const max = q.max == null ? 1 : q.max;
   if(sel.includes(i)) sel = sel.filter(x => x !== i);
@@ -3641,33 +3728,17 @@ function pick(i){
   /* набрала максимум — вытесняем самый давний выбор, а не схлопываем список
      до двух: на вопросе с четырьмя вариантами так терялись ответы */
   else sel = [...sel.slice(1), i];
-  S.picked[S.qi] = sel; render(); stars();
+  if(Array.isArray(S.picked)) S.picked = {};
+  S.picked[q.id] = sel;
+  applyQuiz();                              // уточняющий вопрос появляется сразу
+  render(); stars();
 }
 function prevQ(){
   if(S.qi === 0){ S.screen = 'welcome'; render(); return; }
   S.qi--; render(); stars();
 }
 function nextQ(){
-  const flow = quizFlow();
-  const q = flow[S.qi];
-  S.answers = S.answers || {};
-  /* направления собираем заново: женщина могла снять галочку и вернуться */
-  if(q.grid) S.topics = [];
-  const qw = (typeof QUIZ_W !== 'undefined' && QUIZ_W[q.id] != null) ? QUIZ_W[q.id] : 0.6;
-  S.tagw = S.tagw || {};
-  (S.picked[S.qi] || []).forEach(i => {
-    const o = q.o[i];
-    /* тег мог прийти из двух вопросов — оставляем больший вес */
-    (o.tags || []).forEach(t => {
-      if(!S.tags.includes(t)) S.tags.push(t);
-      S.tagw[t] = Math.max(S.tagw[t] || 0, qw);
-    });
-    if(o.topic){ S.topics = S.topics || []; if(!S.topics.includes(o.topic)) S.topics.push(o.topic); }
-    if(o.time) S.time = o.time;
-    if(o.slot) S.slot = o.slot;
-    if(o.extra) Object.assign(S.extra, o.extra);
-    S.answers[q.id] = {t:o.t, next:o.next || null};
-  });
+  applyQuiz();
   if(S.qi < quizFlow().length - 1){ S.qi++; render(); stars(); return; }
   if(!S.user){ S.screen = 'mail'; render(); stars(); return; }
   S.screen = 'building'; render(); stars();
@@ -3838,7 +3909,28 @@ function scrAuth(){
   if(a.mode === 'admin') return authAdmin();
   if(a.mode === 'verify') return scrVerify();
   if(a.mode === 'choose') return authChoose();
+  if(a.mode === 'forgot') return authForgot();
   return authForm();
+}
+
+/* Почтового сервиса пока нет, и письмо с восстановлением отправить некому.
+   Раньше кнопка отвечала «Ссылка отправлена» — и женщина ждала письма,
+   которого не будет. Говорим как есть и даём путь, который работает. */
+function authForgot(){
+  const a = S.auth;
+  return `<div class="sky"><canvas id="sky"></canvas></div>
+  <div class="night">
+    <button onclick="authGo('login')" style="color:#fff;font-size:20px;width:34px;text-align:left">‹</button>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+      <h1 class="serif" style="font-size:28px;margin:0 0 10px">Забыла пароль</h1>
+      <p class="muted small" style="margin:0 0 14px;line-height:1.6">Письмо с восстановлением мы пока не отправляем — почтовый
+        сервис подключится позже. Сейчас пароль восстанавливает администратор: напиши нам с почты, на которую
+        заведён аккаунт${a.email ? ` (<b style="color:#fff">${esc(a.email)}</b>)` : ''}, и получишь временный пароль.</p>
+      <p class="muted small" style="margin:0 0 22px;line-height:1.6">Войдёшь с ним — и сразу поменяй на свой:
+        Кабинет → Настройки → Сменить пароль.</p>
+      <button class="btn" style="background:#fff;color:var(--ink)" onclick="authGo('login')">Вернуться ко входу</button>
+    </div>
+  </div>`;
 }
 
 function authChoose(){
@@ -3885,7 +3977,7 @@ function authForm(){
       <button class="btn" style="background:#fff;color:var(--ink);margin-top:2px" onclick="submitAuth()">
         ${isNew ? 'Создать аккаунт' : 'Войти'}</button>
       ${!isNew ? `<button style="color:rgba(255,255,255,.5);font-size:12px;margin-top:14px;width:100%"
-        onclick="toast('Ссылка для восстановления отправлена')">Забыла пароль</button>` : ''}
+        onclick="S.auth.email=(($('#a_mail')||{}).value||S.auth.email||'').trim().toLowerCase();authGo('forgot')">Забыла пароль</button>` : ''}
       <button style="color:rgba(255,255,255,.55);font-size:12.5px;margin-top:18px;width:100%"
         onclick="authGo('${attJs(isNew?'login':'signup')}')">
         ${isNew ? 'У меня уже есть аккаунт' : 'Создать новый аккаунт'}</button>
@@ -3926,7 +4018,7 @@ async function submitAuth(){
     if(a.pass.length < 6){ a.err = 'Пароль минимум 6 символов'; return render(); }
     a.err = ''; a.name = nm;
     S.name = nm; S.role = 'user';
-    S.tags = []; S.picked = []; S.qi = 0; S.answers = {}; S.extra = {};
+    resetQuiz();
     S.screen = 'quiz';
     render(); stars();
     return;
@@ -4020,10 +4112,11 @@ async function signIn(u){
   if(!S.name) S.name = u.name;
   const known = typeof avatarOf === 'function' ? avatarOf(u.email) : '';
   if(known) S.avatar = known;
+  applyGrants();
   if(had && S.program && S.program.length){
     S.screen = 'app'; S.tab = 'home'; checkWeek();
   } else {
-    S.tags = []; S.picked = []; S.qi = 0; S.screen = 'quiz';
+    resetQuiz(); S.screen = 'quiz';
   }
   render(); stars();
   toast('С возвращением, ' + u.name);
@@ -4067,7 +4160,7 @@ async function checkCode(){
     if(S.auth.remember) DB.setSession({email:r.user.email, at:Date.now()});
     toast('Почта подтверждена');
     if(S.tags && S.tags.length){ buildAnim(); }
-    else { restore(r.user.email); S.screen = 'app'; render(); }
+    else { restore(r.user.email); applyGrants(); S.screen = 'app'; render(); }
     return;
   }
 
@@ -4205,8 +4298,9 @@ function tryAutoLogin(){
   if(!S.name) S.name = u.name;
   const known = typeof avatarOf === 'function' ? avatarOf(u.email) : '';
   if(known) S.avatar = known;
+  applyGrants();
   S.screen = 'app';
-  if(S.role === 'user' && (!had || !S.program || !S.program.length)){ S.screen = 'quiz'; S.qi = 0; S.picked = []; }
+  if(S.role === 'user' && (!had || !S.program || !S.program.length)){ resetQuiz(); S.screen = 'quiz'; }
   else checkWeek();
   return true;
 }
@@ -4218,14 +4312,35 @@ function startTrial(){
 function trialLeft(){
   if(!S.sub.trial || !S.sub.start) return 0;
   const passed = Math.floor((Date.now() - S.sub.start)/864e5);
-  return Math.max(0, S.sub.days - passed);
+  return Math.max(0, Math.max(S.sub.days, meRec().trial_days || 0) - passed);
 }
-function hasAccess(){ return S.sub.active || trialLeft() > 0; }
+/* Доступ, который открыл администратор. Пока оплата не подключена, это
+   единственный путь дальше пробных дней — и он приходит с сервера вместе
+   с аккаунтом, а не из браузера администратора, как раньше. */
+const meRec = () => (S.user && S.user.email && DB.find(S.user.email)) || {};
+function grantedUntil(){
+  const r = meRec();
+  if(r.gift) return Infinity;
+  return r.access_until && r.access_until * 1000 > Date.now() ? r.access_until * 1000 : 0;
+}
+function hasAccess(){ return S.sub.active || trialLeft() > 0 || grantedUntil() > 0; }
+/* курсы, открытые администратором, добавляются к её собственным */
+function applyGrants(){
+  const r = meRec();
+  S.courses = S.courses || [];
+  (r.courses || []).forEach(id => { if(!S.courses.includes(id)) S.courses.push(id); });
+}
 
 function trialBar(){ return ''; }
 
 /* строка о доступе внутри шапки */
 function accessLine(){
+  const g = grantedUntil();
+  if(g && !S.sub.active) return `<button class="levelbar" onclick="openPage('sub')">
+    <span class="lchip">Доступ открыт</span>
+    <span class="small" style="flex:1;opacity:.85">${g === Infinity ? 'без ограничения по сроку'
+      : 'до ' + new Date(g).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</span>
+    <span style="opacity:.7">›</span></button>`;
   if(S.sub.active) return `<button class="levelbar" onclick="openPage('sub')">
     <span class="lchip">Подписка</span>
     <span class="small" style="flex:1;opacity:.85">${S.sub.plan === 'year' ? 'годовая' : 'месячная'} · осталось ${plural(subLeft(),'день','дня','дней')}</span>
@@ -4252,8 +4367,10 @@ function pgSub(){
       <p class="small" style="opacity:.75;margin:0">${S.sub.active
         ? (S.sub.plan === 'year' ? 'Годовая подписка активна. ' : 'Подписка активна. ') +
           'Следующее списание через ' + plural(subLeft(),'день','дня','дней') + '.'
+        : grantedUntil() ? (grantedUntil() === Infinity ? 'Доступ открыт командой Евы без ограничения по сроку.'
+            : 'Доступ открыт командой Евы до ' + new Date(grantedUntil()).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) + '.')
         : l > 0 ? `Сейчас у тебя бесплатный доступ, осталось ${plural(l,'день','дня','дней')}. После этого 2 900 ₽ в месяц.`
-                : 'Пробные три дня закончились. Оформи подписку, чтобы вернуть программу.'}</p>
+                : 'Пробные три дня закончились. Напиши нам — откроем доступ, оплата картой подключится позже.'}</p>
     </div>
 
     <div class="card">
@@ -4279,20 +4396,25 @@ function pgSub(){
             <div class="price" style="font-size:18px">${money(p.p)}</div>
             ${p.d?`<div class="small" style="color:var(--ok);font-weight:700">${esc(p.d)}</div>`:''}</div>
         </div></button>`).join('')}
-      <button class="btn acc" onclick="payPlan()">Оформить за ${money(S.sub.plan==='year'?24900:2900)}</button>
+      <button class="btn acc" onclick="payPlan()">${S.subAsked ? 'Заявка отправлена' : 'Оформить за ' + money(S.sub.plan==='year'?24900:2900)}</button>
       <p class="small muted" style="text-align:center;margin-top:10px;font-size:11.5px">
-        Отменить можно в любой момент в настройках. Оплата в прототипе не проходит.</p>`
+        Оплата картой подключится позже. Сейчас заявка уходит команде Евы — доступ откроем вручную и напишем в личные сообщения.</p>`
     : `<button class="btn ghost" onclick="S.sub.active=false;render();toast('Подписка отменена')">Отменить подписку</button>`}
   </div>`;
 }
 
+/* Приёма оплаты пока нет. Раньше кнопка включала подписку и начисляла
+   бонусы сама — обещание без денег. Теперь это заявка команде: она видит
+   её в поддержке, открывает доступ и отвечает в личные сообщения. */
 function payPlan(){
-  const days = S.sub.plan === 'year' ? 365 : 30;
-  S.sub.active = true; S.sub.trial = false;
-  S.sub.paidAt = Date.now(); S.sub.days2 = days;
-  S.bonus += S.sub.plan === 'year' ? 1000 : 300;
+  if(S.subAsked) return toast('Заявка уже у нас, ответим в течение дня');
+  const plan = S.sub.plan === 'year' ? 'год, 24 900 ₽' : 'месяц, 2 900 ₽';
+  if(typeof toSupport !== 'function' || !toSupport('Подписка: ' + plan,
+      'Хочу оформить подписку на ' + plan + '. Оплата картой ещё не подключена — прошу открыть доступ.'))
+    return toast('Не отправилось, попробуй позже');
+  S.subAsked = true;
   render(); schedulePersist();
-  toast(S.sub.plan === 'year' ? 'Годовая подписка активна. Начислено 1 000 бонусов' : 'Подписка активна. Начислено 300 бонусов');
+  toast('Заявка отправлена. Откроем доступ и напишем в личные сообщения');
 }
 function subLeft(){
   if(!S.sub.active || !S.sub.paidAt) return 0;
@@ -4301,6 +4423,7 @@ function subLeft(){
 }
 const subLabel = () => S.sub.active
   ? (S.sub.plan === 'year' ? 'Годовая подписка' : 'Подписка на месяц') + ' · осталось ' + plural(subLeft(),'день','дня','дней')
+  : grantedUntil() ? 'Доступ открыт' + (grantedUntil() === Infinity ? '' : ' до ' + new Date(grantedUntil()).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}))
   : trialLeft() ? 'Пробный период, осталось ' + plural(trialLeft(),'день','дня','дней') : 'Не активна';
 
 /* ---------- анимированные звёзды на тёмных экранах ---------- */
@@ -6262,6 +6385,8 @@ function starContent(btn, id){
   S.likes = S.likes || [];
   const on = S.likes.includes(id);
   S.likes = on ? S.likes.filter(v => v !== id) : [...S.likes, id];
+  const it = LIB.find(x => x.id === id);
+  if(it && typeof tasteAdd === 'function') tasteAdd(it.tags, on ? -1 : 1);
   btn.classList.toggle('on', !on);
   btn.innerHTML = starMark(15, !on ? '#E7A339' : 'rgba(17,16,20,.22)');
   schedulePersist();
@@ -6589,9 +6714,9 @@ function bumpVisit(){
   S.visits = S.visits || {day:'', n:0};
   if(S.visits.day !== today){ S.visits = {day:today, n:1}; }
   else S.visits.n++;
-  schedulePersit_safe();
+  persistQuiet();
 }
-function schedulePersit_safe(){ try{ schedulePersist(); }catch(e){} }
+function persistQuiet(){ try{ schedulePersist(); }catch(e){} }
 
 function greetingLine(){
   const v = (S.visits && S.visits.n) || 1;
@@ -7454,7 +7579,7 @@ function pgSettings(){
         <button class="btn sm ghost" onclick="openPage('sub')">Управлять</button></div>
       <div class="uline"><span class="small muted" style="flex:1">Способ оплаты</span>
         <b style="font-size:12.5px">${S.card || 'не привязан'}</b>
-        <button class="btn xs ghost" onclick="addCard()">${S.card?'Заменить':'Привязать'}</button></div>
+        <button class="btn xs ghost" onclick="addCard()">Скоро</button></div>
       <div class="uline"><span class="small muted" style="flex:1">Бонусный счёт</span>
         <b style="font-size:12.5px">${S.bonus} ₽</b></div>
       <div class="uline"><span class="small muted" style="flex:1">История покупок</span>
@@ -7496,7 +7621,9 @@ function pgSettings(){
   </div>`;
 }
 function tgNotif(k){ S.notif[k] = !S.notif[k]; render(); toast(S.notif[k] ? 'Уведомление включено' : 'Выключено'); }
-function addCard(){ S.card = '•••• 4242'; render(); toast('Карта привязана'); }
+/* Приём оплаты ещё не подключён. Раньше кнопка рисовала «•••• 4242» и
+   говорила «Карта привязана» — обещание, за которым ничего не стояло. */
+function addCard(){ toast('Оплата картой подключится позже. Пока доступ открывает администратор'); }
 
 /* ---------- утилиты профиля ---------- */
 function pickAvatar(){
@@ -7842,7 +7969,7 @@ function adOrders(){
       <div style="flex:1;font-size:12.5px">${esc(o.mail)}${o.phone?' · '+o.phone:''}</div></div>
     <div class="chips" style="margin-top:8px">${['новый','собирается','в пути','доставлен','отменён'].map(st =>
       `<button class="chip ${o.st===st?'on':''}" onclick="setOrder('${attJs(o.id)}','${attJs(st)}')">${st}</button>`).join('')}</div>
-    <button class="btn ghost sm" style="margin-top:8px" onclick="toast('Письмо отправлено на ${esc(o.mail)}')">Написать покупателю</button>
+    <button class="btn ghost sm" style="margin-top:8px" onclick="openSheet({k:'write2',id:'${attJs(o.mail)}'})">Написать покупателю</button>
   </div>`).join('')}`;
 }
 function setOrder(id, st){
@@ -8325,9 +8452,11 @@ function adStats(){
 function allUsers(){
   const reg = Object.values(DB.users()).map(u => ({
     id:u.email, n:u.name, m:u.email, tg:u.tg || '—', role:u.role === 'expert' ? 'эксперт' : u.role === 'admin' ? 'админ' : 'ученица',
-    pay:u.paid ? 'paid' : 'trial', since:new Date(u.created||Date.now()).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}),
+    pay:(u.gift || (u.access_until && u.access_until*1000 > Date.now())) ? 'paid' : 'trial',
+    since:new Date((u.created > 1e12 ? u.created : u.created*1000)||Date.now()).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}),
     sum:0, note:u.note||'', st:u.st||'', last:'сегодня', real:true, gift:!!u.gift, offer:u.offer||'',
-    verified:u.verified, days:Math.max(0, (u.trialDays||3) - Math.floor((Date.now()-(u.created||Date.now()))/864e5)), eng:70
+    courses:(u.courses||[]).length,
+    verified:u.verified, days:Math.max(0, (u.trial_days||3) - Math.floor((Date.now()-((u.created > 1e12 ? u.created : u.created*1000)||Date.now()))/864e5)), eng:70
   }));
   const demo = USERS.map(u => ({...u, verified:true, days:u.pay==='trial'?2:0, eng:(hash(u.id)%60)+35}));
   return [...reg, ...demo];
@@ -8374,6 +8503,19 @@ async function removeUser(id){
   const all = DB.users(); delete all[String(u.m).toLowerCase()]; DB.saveUsers(all);
   render();
   toast('Аккаунт удалён');
+}
+
+async function resetUserPass(id){
+  const u = allUsers().find(x => x.id === id);
+  if(!u) return;
+  const pass = (($('#eu_p')||{}).value || '').trim();
+  if(pass.length < 6) return toast('Временный пароль минимум 6 символов');
+  if(!u.real) return toast('Демонстрационная запись, пароля у неё нет');
+  if(SYNC.alive === false) return toast('Пароль меняется только при подключённом сервере');
+  const r = await apiCall('pass_reset', { email:u.m, pass }, { silent:true });
+  if(!r) return toast(SYNC.lastError || 'Не получилось сменить пароль');
+  S.sheet = null; render();
+  toast('Временный пароль выдан. Скажи его ' + u.n + ' — старые входы закрыты');
 }
 
 async function saveUserCard(id){
@@ -8473,7 +8615,7 @@ function adUsers(){
 
     <div class="ustat">
       <span>${(hash(u.m)%18)+2} практик</span>
-      <span>${(hash(u.n)%6)} курсов</span>
+      <span>${u.real ? plural(u.courses||0,'курс','курса','курсов') : (hash(u.n)%6)+' курсов'}</span>
       <span>${(hash(u.m+'g')%40)} сообщений</span>
       <span>стрик ${(hash(u.n+'s')%9)}</span>
     </div>
@@ -9530,10 +9672,9 @@ function exMsgs(){
         <div class="small muted" style="font-size:11px">${esc(m.ago)}</div></div>
       ${m.unread?'<span class="chip pale">новое</span>':''}</div>
     <p style="margin:0 0 10px;font-size:13.5px;line-height:1.5">${esc(m.t)}</p>
-    <div class="row" style="gap:8px">
-      <input class="field" style="margin:0;flex:1" placeholder="Ответить">
-      <button class="btn sm" onclick="toast('Отправлено')">→</button></div>
-  </div>`).join('')}`;
+  </div>`).join('')}
+  <p class="tiny muted" style="margin-top:4px">Это пример того, как выглядят вопросы. Настоящие заявки и вопросы
+    учениц приходят команде Евы в поддержку и передаются тебе в личные сообщения.</p>`;
 }
 
 function copyText(t){ if(navigator.clipboard) navigator.clipboard.writeText(t).catch(()=>{}); toast('Скопировано'); }
@@ -9677,7 +9818,7 @@ function exIncome(){
         <div class="serif" style="font-size:28px;margin-top:4px;color:#fff">${rate}%</div></div>
     </div>
     <div class="acts">
-      <button class="btn" style="background:#fff;color:var(--ink)" onclick="toast('Заявка на вывод принята')">Вывести</button>
+      <button class="btn" style="background:#fff;color:var(--ink)" onclick="withdraw(${courseIncome + refIncome})">Вывести</button>
       <button class="btn ghost" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.2)"
         onclick="copyText('https://eva.space/r/${slug}')">Скопировать ссылку</button>
     </div>
@@ -9853,7 +9994,10 @@ function mirrorUser(u){
   const all = DB.users();
   all[mail] = Object.assign({}, all[mail], {
     email: mail, name: u.name, role: u.role || 'user',
-    verified: !!u.verified, created: u.created || Date.now()
+    verified: !!u.verified, created: u.created || Date.now(),
+    /* доступ, открытый администратором, живёт в аккаунте на сервере */
+    gift: !!u.gift, access_until: +u.access_until || 0, trial_days: +u.trial_days || 0,
+    courses: Array.isArray(u.courses) ? u.courses.map(String) : []
   });
   DB.saveUsers(all);
 }
@@ -10705,13 +10849,16 @@ function ask(q){
 
 function evaAnswer(q){
   const day = (S.program || [])[S.day] || {tasks:[]}, left = day.tasks.filter(t => !t.done);
-  if(/аффирмац|прочит/.test(q)) return day.tasks[0].text;
+  if(/аффирмац|прочит/.test(q)){
+    const af = day.tasks.find(t => t.type === 'affirm') || day.tasks[0];
+    return af && af.text ? af.text : 'На сегодня аффирмации нет — загляни в библиотеку, там их много.';
+  }
   if(/балл|звёзд|звезд|статус|уровен/.test(q)){
     const {next} = levelNow();
     return `У тебя ${S.points} баллов и ${S.stars} из ${starsTotal()} звёзд на этой неделе.` + (next ? ` До статуса «${esc(next.n)}» осталось ${next.from - S.points}.` : '');
   }
   if(/почему|как.*собра|подобра/.test(q))
-    return `Я собрала программу по твоим темам: ${S.tags.slice(0,4).join(', ')}. Из ${LIB.length} уроков библиотеки выбрала те, где совпадение выше всего - среднее по программе ${S.match}%.`;
+    return `Я собрала программу по твоим темам: ${((S.goals||[]).length ? S.goals : S.tags).slice(0,4).join(', ')}. Из ${LIB.length} уроков библиотеки выбрала те, где совпадение выше всего — среднее по программе ${S.match}%.`;
   if(/нет времени|не успева|некогда|нет сил|устал|тяжел/.test(q)){
     S.gentle = true;
     return 'Включила мягкий режим: сегодня только аффирмация на одну минуту. Остальное подождёт, программа никуда не денется.';
@@ -10743,7 +10890,12 @@ function openSheet(k){ S.sheet = k; render(); }
 function openIdea(){ S.sheet = 'idea'; render(); }
 function closeSheet(){ S.sheet = null; render(); }
 function openLesson(id){ S.sheet = {k:'lesson', id}; render(); }
-function tgTag(t){ S.tags = S.tags.includes(t) ? S.tags.filter(x => x !== t) : [...S.tags, t]; render(); }
+function tgTag(t){
+  S.tagw = S.tagw || {};
+  if(S.tags.includes(t)){ S.tags = S.tags.filter(x => x !== t); delete S.tagw[t]; }
+  else { S.tags = [...S.tags, t]; S.tagw[t] = 0.9; }   // выбрала сама — весит как ответ теста
+  render();
+}
 function rebuild(){ buildProgram(); S.sheet = null; S.gentle = false; render(); toast('Программа собрана заново'); }
 
 function addToDay(id){
@@ -10778,16 +10930,23 @@ function checkout(){
     d:'сегодня', city:(S.datingProfile && S.datingProfile.city) || 'Москва', phone:S.phone || ''});
   S.cart = []; S.page = 'profile'; render(); schedulePersist();
   if(typeof syncPush === 'function') syncPush(['orders']);
-  toast(`Заказ оформлен. Кэшбэк ${cb} бонусов`);
+  toast(`Заказ принят. Менеджер напишет, как оплатить. Кэшбэк ${cb} бонусов`);
 }
+/* Оплаты пока нет. Раньше «Купить» открывало курс бесплатно и обещало
+   «+150 баллов» (начисляя 50). Теперь это заявка: команда видит её в
+   поддержке, открывает курс в карточке пользователя — и он появляется
+   у женщины при следующем входе. */
 function buyCourse(id){
   if(S.courses.includes(id)) return;
   const c = COURSES.find(x => x.id === id);
-  const used = Math.min(S.bonus, Math.round(c.p*0.3));
-  S.bonus -= used; S.courses.push(id); S.points += 50;
-  S.purchases.unshift({t:c.t, p:c.p - used, cb:0, date:'сегодня'});
-  S.sheet = null; render();
-  toast('Курс открыт. +150 баллов');
+  if(!c) return;
+  S.courseAsked = S.courseAsked || [];
+  if(S.courseAsked.includes(id)){ S.sheet = null; render(); return toast('Заявка на этот курс уже у нас'); }
+  if(!toSupport('Курс: ' + c.t, 'Хочу курс «' + c.t + '» (' + money(c.p) + '). Оплата картой ещё не подключена — прошу открыть доступ.'))
+    return toast('Не отправилось, попробуй позже');
+  S.courseAsked.push(id);
+  S.sheet = null; render(); schedulePersist();
+  toast('Заявка отправлена. Откроем курс и напишем в личные сообщения');
 }
 function join(id){
   const g = GROUPS.find(x => x.id === id);
@@ -10814,7 +10973,7 @@ function copyRef(){
   if(navigator.clipboard) navigator.clipboard.writeText(u).catch(()=>{});
   toast('Ссылка скопирована');
 }
-function restartQuiz(){ S.screen='quiz'; S.qi=0; S.picked=[]; S.tags=[]; S.sheet=null; S.page=null; render(); stars(); }
+function restartQuiz(){ resetQuiz(); S.screen='quiz'; S.sheet=null; S.page=null; render(); stars(); }
 /* ---------- старт ---------- */
 window.S = S; window.LIB = LIB;
 S.tags = ['спокойствие','тревога','уверенность'];
@@ -10886,23 +11045,61 @@ function hdPick(v){
   render();
 }
 
+/* Заявка эксперту и вопрос ему уходят в поддержку — туда, где их видит
+   команда и откуда ответ приходит женщине в личные сообщения. Раньше обе
+   кнопки только показывали «отправлено»: заявки не существовало нигде. */
 function shConsult(){
   const e = EXPERTS.find(x => x.id === S.sheet.id);
   return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">Заявка на консультацию</h2>
     <p class="small muted" style="margin:0 0 14px">${esc(e.n)} · 50 минут онлайн · ${money(e.price)}</p>
-    <input class="field" placeholder="Имя" value="${esc(S.name)}">
-    <input class="field" placeholder="Телефон или телеграм">
-    <textarea class="field" rows="3" placeholder="С каким запросом приходишь"></textarea>
+    <input class="field" id="cs_name" placeholder="Имя" value="${esc(S.name)}">
+    <input class="field" id="cs_contact" placeholder="Телефон или телеграм">
+    <textarea class="field" id="cs_text" rows="3" placeholder="С каким запросом приходишь"></textarea>
     <div class="seg">${['утро','день','вечер'].map(t => `<button class="${t===S.slot?'on':''}" onclick="S.slot='${attJs(t)}';render()">${t}</button>`).join('')}</div>
-    <button class="btn" onclick="S.sheet=null;render();toast('Заявка отправлена, эксперт свяжется с тобой')">Отправить заявку</button>`;
+    <button class="btn" onclick="sendConsult('${attJs(e.id)}')">Отправить заявку</button>
+    <p class="tiny muted" style="margin-top:10px">Заявку получит команда Евы и передаст эксперту. Ответ придёт в личные сообщения.</p>`;
+}
+function sendConsult(eid){
+  const e = EXPERTS.find(x => x.id === eid);
+  const contact = (($('#cs_contact')||{}).value || '').trim();
+  const text = (($('#cs_text')||{}).value || '').trim();
+  if(!contact) return toast('Оставь телефон или телеграм — иначе не с кем связаться');
+  toSupport('Заявка на консультацию: ' + (e ? e.n : ''),
+    ['Имя: ' + ((($('#cs_name')||{}).value || S.name || '').trim()), 'Связь: ' + contact,
+     'Удобно: ' + S.slot, '', text || 'Запрос не описан'].join('\n'));
+  S.sheet = null; render();
+  toast('Заявка отправлена. Ответим в течение дня');
 }
 
 function shWrite(){
   const e = EXPERTS.find(x => x.id === S.sheet.id);
   return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">Написать эксперту</h2>
     <p class="small muted" style="margin:0 0 14px">${esc(e.n)} обычно отвечает в течение суток.</p>
-    <textarea class="field" rows="5" placeholder="Твой вопрос"></textarea>
-    <button class="btn" onclick="S.sheet=null;render();toast('Сообщение отправлено')">Отправить</button>`;
+    <textarea class="field" id="wq_text" rows="5" placeholder="Твой вопрос"></textarea>
+    <button class="btn" onclick="sendExpertQuestion('${attJs(e.id)}')">Отправить</button>
+    <p class="tiny muted" style="margin-top:10px">Ответ придёт в личные сообщения.</p>`;
+}
+function sendExpertQuestion(eid){
+  const e = EXPERTS.find(x => x.id === eid);
+  const text = (($('#wq_text')||{}).value || '').trim();
+  if(!text) return toast('Напиши вопрос');
+  toSupport('Вопрос эксперту: ' + (e ? e.n : ''), text);
+  S.sheet = null; render();
+  toast('Вопрос отправлен. Ответ придёт в личные сообщения');
+}
+
+/* одно окно в поддержку для всех обращений из приложения */
+function toSupport(sub, text){
+  if(typeof INBOX === 'undefined') return false;
+  INBOX.unshift({
+    id:'s' + Date.now().toString(36),
+    from: S.name || 'Участница',
+    role: S.role === 'expert' ? 'эксперт' : 'ученица',
+    mail: S.user ? S.user.email : '—',
+    ago: 'только что', sub, t: text, st:'новое'
+  });
+  if(typeof syncPush === 'function') syncPush(['support']);
+  return true;
 }
 
 function suggestTags(text){
@@ -11731,8 +11928,16 @@ function resendEvent(id){
 }
 
 /* ---------- админ: пользователи ---------- */
+/* адресат — аккаунт из списка или просто почта (покупательница из заказа) */
+function dmTarget(id){
+  const u = allUsers().find(x => x.id === id);
+  if(u) return u;
+  const m = String(id || '').trim().toLowerCase();
+  return m.includes('@') ? {id:m, n:m, m, real:true} : null;
+}
 function shWrite2(){
-  const u = allUsers().find(x => x.id === S.sheet.id);
+  const u = dmTarget(S.sheet.id);
+  if(!u) return `<div class="empty">Некому писать</div>`;
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Написать пользователю</h2>
     <p class="small muted" style="margin:0 0 12px">${esc(u.n)} · ${u.m}</p>
     <label class="lbl">Тема</label><input class="field" id="w_s" value="Eva Space">
@@ -11746,7 +11951,7 @@ function shWrite2(){
 
 /* сообщение уходит на сервер и появляется у женщины в личных сообщениях */
 async function sendUserMessage(id){
-  const u = allUsers().find(x => x.id === id);
+  const u = dmTarget(id);
   if(!u) return;
   const text = (($('#w_t')||{}).value || '').trim();
   const subject = (($('#w_s')||{}).value || '').trim();
@@ -11770,9 +11975,14 @@ function shEditUser(){
     <input class="field" id="eu_n" value="${esc(u.n)}">
     <label class="row" style="margin:10px 0 4px;font-size:13.5px;gap:8px">
       <input type="checkbox" id="eu_v" ${u.verified ? 'checked' : ''}> Почта подтверждена</label>
-    <p class="tiny muted" style="margin:6px 0 14px">Почту и пароль здесь не меняем: почта — это ключ аккаунта,
-      пароль знает только сама женщина.</p>
+    <p class="tiny muted" style="margin:6px 0 14px">Почту здесь не меняем: почта — это ключ аккаунта.</p>
     <button class="btn" onclick="saveUserCard('${attJs(u.id)}')">Сохранить</button>
+    ${u.real ? `<div class="eyebrow" style="margin:18px 0 6px">Забыла пароль</div>
+    <p class="tiny muted" style="margin:0 0 8px">Пока почта не подключена, письмо с восстановлением не уходит.
+      Выдай временный пароль и скажи его ей — она войдёт и поменяет на свой в настройках.
+      Остальные её входы закроются.</p>
+    <input class="field" id="eu_p" placeholder="Временный пароль, минимум 6 символов" autocomplete="off">
+    <button class="btn ghost" onclick="resetUserPass('${attJs(u.id)}')">Выдать временный пароль</button>` : ''}
     ${u.real ? `<button class="btn ghost" style="margin-top:9px;color:var(--accent)"
       onclick="closeSheet();removeUser('${attJs(u.id)}')">Удалить аккаунт</button>` : ''}`;
 }
@@ -11791,57 +12001,69 @@ function shAddUser(){
       `<button class="${(S.newAccess||'trial')===k?'on':''}" onclick="chipPick(this,'newAccess','${attJs(k)}')">${l}</button>`).join('')}</div>
     <button class="btn" onclick="createUser()">Создать аккаунт</button>`;
 }
-function createUser(){
+/* Аккаунт заводит сервер. Раньше запись оставалась в браузере
+   администратора, а тост обещал письмо, которого никто не отправлял. */
+async function createUser(){
   const n = ($('#nu_n')||{}).value, m = (($('#nu_m')||{}).value||'').trim().toLowerCase();
+  const pass = ($('#nu_p')||{}).value || 'eva2026';
   if(!n || !n.trim()) return toast('Укажи имя');
   if(!/^[^@\s]+@[^@\s]+\.[a-zа-я]{2,}$/i.test(m)) return toast('Проверь почту');
+  if(pass.length < 6) return toast('Пароль минимум 6 символов');
   if(DB.find(m)) return toast('Такая почта уже есть');
   const access = S.newAccess || 'trial';
   const role = S.newRole || 'user';
-  DB.upsert({email:m, name:n.trim(), pass:hashPass(($('#nu_p')||{}).value || 'eva2026'), verified:true,
-    role, created:Date.now(), tg:($('#nu_t')||{}).value || '',
-    gift:access === 'gift', paid:access === 'paid',
-    note:access === 'gift' ? 'Доступ подарен администратором' : ''});
+  if(role === 'admin') return toast('Администратор назначается в data/config.php на хостинге');
+  if(SYNC.alive === false) return toast('Аккаунт создаётся только при подключённом сервере');
+  const r = await apiCall('user_create', { email:m, name:n.trim(), pass, role, access,
+                                           tg:($('#nu_t')||{}).value || '' }, { silent:true });
+  if(!r) return toast(SYNC.lastError || 'Не получилось создать аккаунт');
+  mirrorUser(r.user);
 
   /* эксперт сразу получает карточку и появляется в переключателе кабинета */
   if(role === 'expert') createExpertProfile(n.trim(), m, ($('#nu_t')||{}).value || '');
 
   S.sheet = null; syncPush(); render();
   toast(role === 'expert'
-    ? 'Эксперт добавлен. Профиль создан, можно выбрать его в кабинете'
-    : 'Аккаунт создан. Данные для входа отправлены на ' + m);
+    ? 'Эксперт добавлен. Скажи ей пароль: ' + pass
+    : 'Аккаунт создан. Письма нет — скажи ей почту и пароль: ' + pass);
 }
+/* Доступ живёт в аккаунте на сервере. Раньше «подарить» писало отметку
+   в браузер администратора — женщина об этом не узнавала никогда. */
 function shGrant(){
   const u = allUsers().find(x => x.id === S.sheet.id);
+  if(!u) return `<div class="empty">Аккаунт не найден</div>`;
+  const rec = DB.find(u.m) || {};
   const offers = [
-    {k:'gift30', t:'Бесплатный доступ на 30 дней', d:'Подписка без оплаты, потом обычные условия'},
-    {k:'gift', t:'Бессрочный бесплатный доступ', d:'Для амбассадоров, партнёров и тестировщиц'},
-    {k:'off50', t:'Скидка 50% на первый месяц', d:'1 450 ₽ вместо 2 900 ₽'},
+    {k:'gift30', t:'Доступ на 30 дней', d:'Полная программа без оплаты, потом обычные условия'},
+    {k:'gift', t:'Бессрочный доступ', d:'Для амбассадоров, партнёров и тестировщиц'},
     {k:'trial7', t:'Продлить пробный период до 7 дней', d:'Если не успела попробовать'}
   ];
-  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Доступ и предложения</h2>
-    <p class="small muted" style="margin:0 0 12px">${esc(u.n)} · ${u.m}</p>
+  const has = rec.gift ? 'бессрочный' : rec.access_until && rec.access_until * 1000 > Date.now()
+    ? 'до ' + new Date(rec.access_until * 1000).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) : '';
+  const mine = rec.courses || [];
+  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Доступ</h2>
+    <p class="small muted" style="margin:0 0 12px">${esc(u.n)} · ${u.m}${has ? ' · доступ ' + has : ''}</p>
     ${offers.map(o => `<button class="card" style="width:100%;text-align:left" onclick="grant('${attJs(u.id)}','${attJs(o.k)}')">
       <b style="font-size:14px">${esc(o.t)}</b>
       <div class="small muted" style="margin-top:3px">${esc(o.d)}</div></button>`).join('')}
-    ${u.gift || u.pay === 'paid' ? `<button class="btn ghost" onclick="grant('${attJs(u.id)}','revoke')">Снять доступ</button>` : ''}`;
+    <div class="eyebrow" style="margin:14px 0 8px">Курсы</div>
+    <div class="chips wrap">${COURSES.filter(c => !c.draft).map(c =>
+      `<button class="chip ${mine.includes(c.id) ? 'on' : ''}" onclick="grant('${attJs(u.id)}','${mine.includes(c.id) ? 'uncourse' : 'course'}','${attJs(c.id)}')">${esc(c.t)}</button>`).join('')}</div>
+    <p class="tiny muted" style="margin:8px 0 12px">Открытый курс появится у неё при следующем входе в приложение.</p>
+    ${has || mine.length ? `<button class="btn ghost" onclick="grant('${attJs(u.id)}','revoke')">Снять весь доступ</button>` : ''}`;
 }
-function grant(id, kind){
-  const all = DB.users(), k = String(id).toLowerCase();
-  const label = {gift30:'Бесплатный доступ на 30 дней', gift:'Бессрочный доступ подарен',
-    off50:'Скидка 50% на первый месяц', trial7:'Пробный продлён до 7 дней', revoke:'Доступ снят'}[kind];
-  if(all[k]){
-    if(kind === 'revoke'){ all[k].gift = false; all[k].paid = false; all[k].offer = ''; }
-    else if(kind === 'off50'){ all[k].offer = 'Скидка 50%'; }
-    else if(kind === 'trial7'){ all[k].trialDays = 7; }
-    else { all[k].gift = true; all[k].paid = true; all[k].offer = label; }
-    DB.saveUsers(all);
-  } else {
-    const u = USERS.find(x => x.id === id);
-    if(u){ u.pay = kind === 'revoke' ? 'none' : 'paid'; u.note = (u.note ? u.note + '. ' : '') + label; }
-  }
-  if(S.user && S.user.email === k && kind !== 'revoke') S.sub.active = true;
-  S.sheet = null; render(); toast(label);
+async function grant(id, kind, course){
+  const u = allUsers().find(x => x.id === id);
+  if(!u) return;
+  const label = {gift30:'Доступ открыт на 30 дней', gift:'Бессрочный доступ открыт',
+    trial7:'Пробный продлён до 7 дней', course:'Курс открыт', uncourse:'Курс закрыт', revoke:'Доступ снят'}[kind];
+  if(!u.real){ S.sheet = null; render(); return toast('Это демонстрационная запись, доступ ей не нужен'); }
+  if(SYNC.alive === false) return toast('Доступ открывается только при подключённом сервере');
+  const r = await apiCall('access', { email:u.m, kind, course:course || '' }, { silent:true });
+  if(!r) return toast(SYNC.lastError || 'Не получилось');
+  mirrorUser(r.user);
+  if(S.user && S.user.email === u.m) applyGrants();
+  render(); toast(label);
 }
 
 /* ---------- эксперт: услуги, теги, образование ---------- */
@@ -12904,17 +13126,38 @@ const TOUR = [
    p:'Начни с одного дела сегодня — этого достаточно. Три дня открыты полностью.'}
 ];
 
+/* Плавность держится на трёх вещах. Карточка между шагами не исчезает и
+   не выскакивает заново — гаснет, меняет текст и проявляется на новом
+   месте. Страница прокручивается к блоку плавно, а подсветка идёт за ним
+   по событиям прокрутки, без своей задержки, и только потом снова
+   переезжает мягко. Шаг, чей блок на экране не нашёлся, пропускаем:
+   карточка «про звёзды» посреди пустого экрана хуже, чем её отсутствие. */
+let tourDir = 1, tourGlide = null, tourScrollNo = 0;
 function tourStart(){
   if(S.role !== 'user' || S.screen !== 'app') return;
   if(document.getElementById('tour')) return;
-  S.tour = 0;
+  S.tour = 0; tourDir = 1;
   const box = document.createElement('div');
   box.id = 'tour';
   box.innerHTML = `<div class="tveil"></div><div class="thole"></div><div class="ttip"></div>`;
   document.body.appendChild(box);
-  window.addEventListener('resize', tourPlace);
-  window.addEventListener('scroll', tourPlace, {passive:true});
+  window.addEventListener('resize', tourFollow);
+  window.addEventListener('scroll', tourFollow, {passive:true});
   tourShow();
+}
+
+/* прокрутка и поворот экрана: только переставить, не прокручивать снова */
+function tourFollow(){
+  tourPlace(false);
+  if(tourGlide){
+    clearTimeout(tourGlide.t);
+    tourGlide.t = setTimeout(() => {
+      const hole = document.querySelector('#tour .thole');
+      if(hole) hole.classList.remove('glide');
+      tourGlide = null;
+      tourPlace(false);
+    }, 140);
+  }
 }
 
 function tourShow(){
@@ -12930,7 +13173,29 @@ function tourShow(){
     S.tab = step.tab;
     render();
   }
+  /* блока нет на экране — шаг пропускаем в ту сторону, куда шли */
+  if(step.at && !document.querySelector(step.at)){
+    const next = S.tour + tourDir;
+    if(next < 0 || next >= TOUR.length) return tourEnd();
+    S.tour = next;
+    return tourShow();
+  }
 
+  const tip = box.querySelector('.ttip');
+  if(!tip.innerHTML){ tourFill(step); tip.classList.add('in'); tourPlace(true); return; }
+  /* смена шага: гаснем, меняем, проявляемся уже на новом месте */
+  tip.classList.add('swap');
+  setTimeout(() => {
+    if(!document.getElementById('tour') || TOUR[S.tour] !== step) return;
+    tourFill(step);
+    tourPlace(true);
+    requestAnimationFrame(() => tip.classList.remove('swap'));
+  }, 150);
+}
+
+function tourFill(step){
+  const box = document.getElementById('tour');
+  if(!box) return;
   /* приветствие не считаем: шаги нумеруются от первой настоящей подсказки */
   const steps = TOUR.length - 1;
   const dots = TOUR.slice(1).map((_,i) => `<i class="${i < S.tour ? 'on' : ''}"></i>`).join('');
@@ -12946,7 +13211,6 @@ function tourShow(){
       <button class="tgo" onclick="${step.last ? 'tourEnd()' : 'tourNext()'}">
         ${step.last ? 'Начать первый день' : step.intro ? 'Посмотреть' : 'Дальше'}</button>
     </div>`;
-  tourPlace();
 }
 
 /* Закреплённые блоки — нижняя навигация — не прокручиваются вместе со
@@ -12959,7 +13223,7 @@ function fixedEl(el){
 
 /* Считаем место каждый раз заново: экран мог прокрутиться, повернуться
    или перерисоваться, и подсветка обязана остаться на своём блоке. */
-function tourPlace(){
+function tourPlace(settle){
   const box = document.getElementById('tour');
   if(!box) return;
   const step = TOUR[S.tour];
@@ -12968,31 +13232,50 @@ function tourPlace(){
         veil = box.querySelector('.tveil');
   const t = step.at ? document.querySelector(step.at) : null;
   const vh = window.innerHeight, vw = window.innerWidth, gap = 14, edge = 12;
+  /* классы состояния переживают перестановку: swap — идёт смена шага,
+     in — первое появление (иначе анимация выхода снималась до старта) */
+  const keep = ['swap','in'].filter(c => tip.classList.contains(c)).map(c => ' ' + c).join('');
 
   if(!t){
     hole.style.display = 'none';
     veil.style.display = '';
-    tip.className = 'ttip mid';
+    tip.className = 'ttip mid' + keep;
     tip.style.top = '';
     return;
   }
 
   /* высоту карточки надо знать заранее: от неё зависит, сколько места
      останется подсветке и с какой стороны карточка встанет */
-  tip.className = 'ttip';
+  tip.className = 'ttip' + keep;
   tip.style.top = '-9999px';
   const tipH = tip.offsetHeight || 210;
   const pad = step.pad == null ? 8 : step.pad;
   const room = Math.max(140, vh - tipH - 2*gap - 2*edge);
 
-  if(!fixedEl(t)){
+  if(settle && !fixedEl(t)){
     const r0 = t.getBoundingClientRect();
     const a = edge, b = edge + room;
     if(r0.top < a || r0.bottom > b){
-      /* блок выше экрана целиком не показать — подводим его верх под край */
+      /* блок выше экрана целиком не показать — подводим его верх под край.
+         Едем плавно, а подсветка идёт за блоком без своей задержки */
       let want = window.scrollY + r0.top - a;
       if(r0.height < room) want -= (room - r0.height) / 2;
-      window.scrollTo(0, Math.max(0, want));
+      want = Math.max(0, want);
+      const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if(Math.abs(want - window.scrollY) > 2){
+        if(!calm){ hole.classList.add('glide'); tourGlide = tourGlide || {t:0}; }
+        try { window.scrollTo({top:want, behavior: calm ? 'auto' : 'smooth'}); }
+        catch(e){ window.scrollTo(0, want); }
+        /* браузер, который плавно не умеет (или не стал), — доводим сами:
+           иначе подсветка так и останется у блока за краем экрана */
+        const my = ++tourScrollNo;
+        setTimeout(() => {
+          if(my !== tourScrollNo || !document.getElementById('tour')) return;
+          const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+          const goal = Math.min(want, maxY);
+          if(Math.abs(window.scrollY - goal) > 4){ window.scrollTo(0, goal); tourFollow(); }
+        }, 700);
+      }
     }
   }
 
@@ -13031,14 +13314,16 @@ function tourPlace(){
   tip.style.setProperty('--ax', x + 'px');
 }
 
-function tourNext(){ S.tour++; S.tour < TOUR.length ? tourShow() : tourEnd(); }
-function tourBack(){ if(S.tour > 0){ S.tour--; tourShow(); } }
+function tourNext(){ tourDir = 1; S.tour++; S.tour < TOUR.length ? tourShow() : tourEnd(); }
+function tourBack(){ if(S.tour > 0){ tourDir = -1; S.tour--; tourShow(); } }
 
 function tourEnd(){
   const box = document.getElementById('tour');
   if(box) box.remove();
-  window.removeEventListener('resize', tourPlace);
-  window.removeEventListener('scroll', tourPlace);
+  window.removeEventListener('resize', tourFollow);
+  window.removeEventListener('scroll', tourFollow);
+  if(tourGlide) clearTimeout(tourGlide.t);
+  tourGlide = null;
   S.tour = null;
   S.tourDone = true;
   S.tab = 'home'; S.page = null;

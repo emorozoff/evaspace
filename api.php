@@ -201,7 +201,13 @@ function safe_user(array $u): array {
     'role'     => role_of($u),
     'verified' => !empty($u['verified']),
     'avatar'   => $u['avatar'] ?? '',
-    'created'  => $u['created'] ?? 0
+    'created'  => $u['created'] ?? 0,
+    /* доступ, который открыл администратор: пока оплаты нет, это
+       единственный путь дальше пробных дней */
+    'gift'         => !empty($u['gift']),
+    'access_until' => (int)($u['access_until'] ?? 0),
+    'trial_days'   => (int)($u['trial_days'] ?? 0),
+    'courses'      => array_values(array_map('strval', (array)($u['courses'] ?? [])))
   ];
 }
 function user_by_token(array $db, string $token): ?array {
@@ -420,6 +426,34 @@ switch ($action) {
     ok([]);
   }
 
+  /* Временный пароль от администратора.
+     Почтового сервиса пока нет, и «забыла пароль» отправить письмо не может.
+     Единственный честный путь — администратор выдаёт временный пароль и
+     говорит его женщине; она входит и меняет на свой в настройках.
+     Все её входы закрываем: раз пароль сбрасывают, старый мог утечь. */
+  case 'pass_reset': {
+    if (!$isPost) fail('Ожидается POST');
+    $db   = db_read();
+    $me   = need_admin(user_by_token($db, $token));
+    $mail = low((string)($body['email'] ?? ''));
+    $new  = (string)($body['pass'] ?? '');
+    $u    = $db['users'][$mail] ?? null;
+    if (!is_array($u)) fail('Аккаунт не найден', 404);
+    if (mb_strlen($new) < 6) fail('Временный пароль минимум 6 символов');
+    if ($mail !== low((string)$me['email']) && in_array($mail, config()['admins'], true)) {
+      fail('Пароль другого администратора здесь не сбрасывают', 403);
+    }
+    $u['pass'] = password_hash($new, PASSWORD_DEFAULT);
+    $db['users'][$mail] = $u;
+    foreach ($db['sessions'] as $t => $sess) {
+      if (low((string)($sess['email'] ?? '')) === $mail && $t !== $token) unset($db['sessions'][$t]);
+    }
+    unset($db['tries'][$mail]);
+    $db['updated'] = time();
+    db_write($db);
+    ok([]);
+  }
+
   case 'logout': {
     $db = db_read();
     if ($token !== '' && isset($db['sessions'][$token])) {
@@ -487,6 +521,77 @@ switch ($action) {
       if (isset($in['role']))     $u['role'] = ((string)$in['role'] === 'expert') ? 'expert' : 'user';
     }
     /* пароль, почта и права через этот вызов не меняются никогда */
+    $db['users'][$mail] = $u;
+    $db['updated'] = time();
+    db_write($db);
+    ok(['user' => safe_user($u)]);
+  }
+
+  /* Аккаунт, заведённый администратором.
+     Раньше «Добавить вручную» писало запись в браузер администратора и
+     говорило «данные отправлены на почту» — сервер о ней не знал, войти
+     было нельзя, письма не было. Теперь аккаунт создаётся здесь, сразу
+     подтверждённым, а пароль администратор передаёт сам. */
+  case 'user_create': {
+    if (!$isPost) fail('Ожидается POST');
+    $db   = db_read();
+    need_admin(user_by_token($db, $token));
+    $mail = low((string)($body['email'] ?? ''));
+    $name = mb_substr(trim((string)($body['name'] ?? '')), 0, 80);
+    $pass = (string)($body['pass'] ?? '');
+    $role = ((string)($body['role'] ?? 'user') === 'expert') ? 'expert' : 'user';
+    if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) fail('Проверь почту');
+    if ($name === '') fail('Укажи имя');
+    if (mb_strlen($pass) < 6) fail('Пароль минимум 6 символов');
+    if (isset($db['users'][$mail])) fail('Такая почта уже есть', 409);
+    $u = [
+      'email' => $mail, 'name' => $name, 'pass' => password_hash($pass, PASSWORD_DEFAULT),
+      'role' => $role, 'verified' => true, 'code' => '', 'created' => time(),
+      'tg' => mb_substr(trim((string)($body['tg'] ?? '')), 0, 80)
+    ];
+    $access = (string)($body['access'] ?? 'trial');
+    if ($access === 'gift') $u['gift'] = true;
+    if ($access === 'paid') $u['access_until'] = time() + 30 * 86400;
+    $db['users'][$mail] = $u;
+    $db['updated'] = time();
+    db_write($db);
+    ok(['user' => safe_user($u)]);
+  }
+
+  /* Доступ от администратора.
+     Раньше «подарить доступ» писало отметку в браузер администратора — и
+     только туда: женщина ничего не получала. Теперь отметка живёт в её
+     аккаунте на сервере и приходит ей при входе.
+       gift     — бессрочно;  gift30 — на 30 дней;  trial7 — пробный до 7 дней;
+       course   — открыть курс (body.course);  uncourse — закрыть;  revoke — снять всё. */
+  case 'access': {
+    if (!$isPost) fail('Ожидается POST');
+    $db   = db_read();
+    need_admin(user_by_token($db, $token));
+    $mail = low((string)($body['email'] ?? ''));
+    $kind = (string)($body['kind'] ?? '');
+    $u    = $db['users'][$mail] ?? null;
+    if (!is_array($u)) fail('Аккаунт не найден', 404);
+    $courses = array_values(array_map('strval', (array)($u['courses'] ?? [])));
+    switch ($kind) {
+      case 'gift':     $u['gift'] = true;  $u['access_until'] = 0; break;
+      case 'gift30':   $u['gift'] = false; $u['access_until'] = time() + 30 * 86400; break;
+      case 'trial7':   $u['trial_days'] = 7; break;
+      case 'course': {
+        $cid = mb_substr(trim((string)($body['course'] ?? '')), 0, 60);
+        if ($cid === '') fail('Не указан курс');
+        if (!in_array($cid, $courses, true)) $courses[] = $cid;
+        break;
+      }
+      case 'uncourse': {
+        $cid = mb_substr(trim((string)($body['course'] ?? '')), 0, 60);
+        $courses = array_values(array_filter($courses, fn($c) => $c !== $cid));
+        break;
+      }
+      case 'revoke':   $u['gift'] = false; $u['access_until'] = 0; $u['trial_days'] = 0; $courses = []; break;
+      default: fail('Неизвестный вид доступа');
+    }
+    $u['courses'] = $courses;
     $db['users'][$mail] = $u;
     $db['updated'] = time();
     db_write($db);

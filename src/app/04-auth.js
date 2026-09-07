@@ -52,7 +52,28 @@ function scrAuth(){
   if(a.mode === 'admin') return authAdmin();
   if(a.mode === 'verify') return scrVerify();
   if(a.mode === 'choose') return authChoose();
+  if(a.mode === 'forgot') return authForgot();
   return authForm();
+}
+
+/* Почтового сервиса пока нет, и письмо с восстановлением отправить некому.
+   Раньше кнопка отвечала «Ссылка отправлена» — и женщина ждала письма,
+   которого не будет. Говорим как есть и даём путь, который работает. */
+function authForgot(){
+  const a = S.auth;
+  return `<div class="sky"><canvas id="sky"></canvas></div>
+  <div class="night">
+    <button onclick="authGo('login')" style="color:#fff;font-size:20px;width:34px;text-align:left">‹</button>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+      <h1 class="serif" style="font-size:28px;margin:0 0 10px">Забыла пароль</h1>
+      <p class="muted small" style="margin:0 0 14px;line-height:1.6">Письмо с восстановлением мы пока не отправляем — почтовый
+        сервис подключится позже. Сейчас пароль восстанавливает администратор: напиши нам с почты, на которую
+        заведён аккаунт${a.email ? ` (<b style="color:#fff">${esc(a.email)}</b>)` : ''}, и получишь временный пароль.</p>
+      <p class="muted small" style="margin:0 0 22px;line-height:1.6">Войдёшь с ним — и сразу поменяй на свой:
+        Кабинет → Настройки → Сменить пароль.</p>
+      <button class="btn" style="background:#fff;color:var(--ink)" onclick="authGo('login')">Вернуться ко входу</button>
+    </div>
+  </div>`;
 }
 
 function authChoose(){
@@ -99,7 +120,7 @@ function authForm(){
       <button class="btn" style="background:#fff;color:var(--ink);margin-top:2px" onclick="submitAuth()">
         ${isNew ? 'Создать аккаунт' : 'Войти'}</button>
       ${!isNew ? `<button style="color:rgba(255,255,255,.5);font-size:12px;margin-top:14px;width:100%"
-        onclick="toast('Ссылка для восстановления отправлена')">Забыла пароль</button>` : ''}
+        onclick="S.auth.email=(($('#a_mail')||{}).value||S.auth.email||'').trim().toLowerCase();authGo('forgot')">Забыла пароль</button>` : ''}
       <button style="color:rgba(255,255,255,.55);font-size:12.5px;margin-top:18px;width:100%"
         onclick="authGo('${attJs(isNew?'login':'signup')}')">
         ${isNew ? 'У меня уже есть аккаунт' : 'Создать новый аккаунт'}</button>
@@ -140,7 +161,7 @@ async function submitAuth(){
     if(a.pass.length < 6){ a.err = 'Пароль минимум 6 символов'; return render(); }
     a.err = ''; a.name = nm;
     S.name = nm; S.role = 'user';
-    S.tags = []; S.picked = []; S.qi = 0; S.answers = {}; S.extra = {};
+    resetQuiz();
     S.screen = 'quiz';
     render(); stars();
     return;
@@ -234,10 +255,11 @@ async function signIn(u){
   if(!S.name) S.name = u.name;
   const known = typeof avatarOf === 'function' ? avatarOf(u.email) : '';
   if(known) S.avatar = known;
+  applyGrants();
   if(had && S.program && S.program.length){
     S.screen = 'app'; S.tab = 'home'; checkWeek();
   } else {
-    S.tags = []; S.picked = []; S.qi = 0; S.screen = 'quiz';
+    resetQuiz(); S.screen = 'quiz';
   }
   render(); stars();
   toast('С возвращением, ' + u.name);
@@ -281,7 +303,7 @@ async function checkCode(){
     if(S.auth.remember) DB.setSession({email:r.user.email, at:Date.now()});
     toast('Почта подтверждена');
     if(S.tags && S.tags.length){ buildAnim(); }
-    else { restore(r.user.email); S.screen = 'app'; render(); }
+    else { restore(r.user.email); applyGrants(); S.screen = 'app'; render(); }
     return;
   }
 
@@ -419,8 +441,9 @@ function tryAutoLogin(){
   if(!S.name) S.name = u.name;
   const known = typeof avatarOf === 'function' ? avatarOf(u.email) : '';
   if(known) S.avatar = known;
+  applyGrants();
   S.screen = 'app';
-  if(S.role === 'user' && (!had || !S.program || !S.program.length)){ S.screen = 'quiz'; S.qi = 0; S.picked = []; }
+  if(S.role === 'user' && (!had || !S.program || !S.program.length)){ resetQuiz(); S.screen = 'quiz'; }
   else checkWeek();
   return true;
 }
@@ -432,14 +455,35 @@ function startTrial(){
 function trialLeft(){
   if(!S.sub.trial || !S.sub.start) return 0;
   const passed = Math.floor((Date.now() - S.sub.start)/864e5);
-  return Math.max(0, S.sub.days - passed);
+  return Math.max(0, Math.max(S.sub.days, meRec().trial_days || 0) - passed);
 }
-function hasAccess(){ return S.sub.active || trialLeft() > 0; }
+/* Доступ, который открыл администратор. Пока оплата не подключена, это
+   единственный путь дальше пробных дней — и он приходит с сервера вместе
+   с аккаунтом, а не из браузера администратора, как раньше. */
+const meRec = () => (S.user && S.user.email && DB.find(S.user.email)) || {};
+function grantedUntil(){
+  const r = meRec();
+  if(r.gift) return Infinity;
+  return r.access_until && r.access_until * 1000 > Date.now() ? r.access_until * 1000 : 0;
+}
+function hasAccess(){ return S.sub.active || trialLeft() > 0 || grantedUntil() > 0; }
+/* курсы, открытые администратором, добавляются к её собственным */
+function applyGrants(){
+  const r = meRec();
+  S.courses = S.courses || [];
+  (r.courses || []).forEach(id => { if(!S.courses.includes(id)) S.courses.push(id); });
+}
 
 function trialBar(){ return ''; }
 
 /* строка о доступе внутри шапки */
 function accessLine(){
+  const g = grantedUntil();
+  if(g && !S.sub.active) return `<button class="levelbar" onclick="openPage('sub')">
+    <span class="lchip">Доступ открыт</span>
+    <span class="small" style="flex:1;opacity:.85">${g === Infinity ? 'без ограничения по сроку'
+      : 'до ' + new Date(g).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</span>
+    <span style="opacity:.7">›</span></button>`;
   if(S.sub.active) return `<button class="levelbar" onclick="openPage('sub')">
     <span class="lchip">Подписка</span>
     <span class="small" style="flex:1;opacity:.85">${S.sub.plan === 'year' ? 'годовая' : 'месячная'} · осталось ${plural(subLeft(),'день','дня','дней')}</span>
@@ -466,8 +510,10 @@ function pgSub(){
       <p class="small" style="opacity:.75;margin:0">${S.sub.active
         ? (S.sub.plan === 'year' ? 'Годовая подписка активна. ' : 'Подписка активна. ') +
           'Следующее списание через ' + plural(subLeft(),'день','дня','дней') + '.'
+        : grantedUntil() ? (grantedUntil() === Infinity ? 'Доступ открыт командой Евы без ограничения по сроку.'
+            : 'Доступ открыт командой Евы до ' + new Date(grantedUntil()).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) + '.')
         : l > 0 ? `Сейчас у тебя бесплатный доступ, осталось ${plural(l,'день','дня','дней')}. После этого 2 900 ₽ в месяц.`
-                : 'Пробные три дня закончились. Оформи подписку, чтобы вернуть программу.'}</p>
+                : 'Пробные три дня закончились. Напиши нам — откроем доступ, оплата картой подключится позже.'}</p>
     </div>
 
     <div class="card">
@@ -493,20 +539,25 @@ function pgSub(){
             <div class="price" style="font-size:18px">${money(p.p)}</div>
             ${p.d?`<div class="small" style="color:var(--ok);font-weight:700">${esc(p.d)}</div>`:''}</div>
         </div></button>`).join('')}
-      <button class="btn acc" onclick="payPlan()">Оформить за ${money(S.sub.plan==='year'?24900:2900)}</button>
+      <button class="btn acc" onclick="payPlan()">${S.subAsked ? 'Заявка отправлена' : 'Оформить за ' + money(S.sub.plan==='year'?24900:2900)}</button>
       <p class="small muted" style="text-align:center;margin-top:10px;font-size:11.5px">
-        Отменить можно в любой момент в настройках. Оплата в прототипе не проходит.</p>`
+        Оплата картой подключится позже. Сейчас заявка уходит команде Евы — доступ откроем вручную и напишем в личные сообщения.</p>`
     : `<button class="btn ghost" onclick="S.sub.active=false;render();toast('Подписка отменена')">Отменить подписку</button>`}
   </div>`;
 }
 
+/* Приёма оплаты пока нет. Раньше кнопка включала подписку и начисляла
+   бонусы сама — обещание без денег. Теперь это заявка команде: она видит
+   её в поддержке, открывает доступ и отвечает в личные сообщения. */
 function payPlan(){
-  const days = S.sub.plan === 'year' ? 365 : 30;
-  S.sub.active = true; S.sub.trial = false;
-  S.sub.paidAt = Date.now(); S.sub.days2 = days;
-  S.bonus += S.sub.plan === 'year' ? 1000 : 300;
+  if(S.subAsked) return toast('Заявка уже у нас, ответим в течение дня');
+  const plan = S.sub.plan === 'year' ? 'год, 24 900 ₽' : 'месяц, 2 900 ₽';
+  if(typeof toSupport !== 'function' || !toSupport('Подписка: ' + plan,
+      'Хочу оформить подписку на ' + plan + '. Оплата картой ещё не подключена — прошу открыть доступ.'))
+    return toast('Не отправилось, попробуй позже');
+  S.subAsked = true;
   render(); schedulePersist();
-  toast(S.sub.plan === 'year' ? 'Годовая подписка активна. Начислено 1 000 бонусов' : 'Подписка активна. Начислено 300 бонусов');
+  toast('Заявка отправлена. Откроем доступ и напишем в личные сообщения');
 }
 function subLeft(){
   if(!S.sub.active || !S.sub.paidAt) return 0;
@@ -515,6 +566,7 @@ function subLeft(){
 }
 const subLabel = () => S.sub.active
   ? (S.sub.plan === 'year' ? 'Годовая подписка' : 'Подписка на месяц') + ' · осталось ' + plural(subLeft(),'день','дня','дней')
+  : grantedUntil() ? 'Доступ открыт' + (grantedUntil() === Infinity ? '' : ' до ' + new Date(grantedUntil()).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}))
   : trialLeft() ? 'Пробный период, осталось ' + plural(trialLeft(),'день','дня','дней') : 'Не активна';
 
 /* ---------- анимированные звёзды на тёмных экранах ---------- */

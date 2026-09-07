@@ -339,9 +339,11 @@ function adStats(){
 function allUsers(){
   const reg = Object.values(DB.users()).map(u => ({
     id:u.email, n:u.name, m:u.email, tg:u.tg || '—', role:u.role === 'expert' ? 'эксперт' : u.role === 'admin' ? 'админ' : 'ученица',
-    pay:u.paid ? 'paid' : 'trial', since:new Date(u.created||Date.now()).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}),
+    pay:(u.gift || (u.access_until && u.access_until*1000 > Date.now())) ? 'paid' : 'trial',
+    since:new Date((u.created > 1e12 ? u.created : u.created*1000)||Date.now()).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}),
     sum:0, note:u.note||'', st:u.st||'', last:'сегодня', real:true, gift:!!u.gift, offer:u.offer||'',
-    verified:u.verified, days:Math.max(0, (u.trialDays||3) - Math.floor((Date.now()-(u.created||Date.now()))/864e5)), eng:70
+    courses:(u.courses||[]).length,
+    verified:u.verified, days:Math.max(0, (u.trial_days||3) - Math.floor((Date.now()-((u.created > 1e12 ? u.created : u.created*1000)||Date.now()))/864e5)), eng:70
   }));
   const demo = USERS.map(u => ({...u, verified:true, days:u.pay==='trial'?2:0, eng:(hash(u.id)%60)+35}));
   return [...reg, ...demo];
@@ -388,6 +390,19 @@ async function removeUser(id){
   const all = DB.users(); delete all[String(u.m).toLowerCase()]; DB.saveUsers(all);
   render();
   toast('Аккаунт удалён');
+}
+
+async function resetUserPass(id){
+  const u = allUsers().find(x => x.id === id);
+  if(!u) return;
+  const pass = (($('#eu_p')||{}).value || '').trim();
+  if(pass.length < 6) return toast('Временный пароль минимум 6 символов');
+  if(!u.real) return toast('Демонстрационная запись, пароля у неё нет');
+  if(SYNC.alive === false) return toast('Пароль меняется только при подключённом сервере');
+  const r = await apiCall('pass_reset', { email:u.m, pass }, { silent:true });
+  if(!r) return toast(SYNC.lastError || 'Не получилось сменить пароль');
+  S.sheet = null; render();
+  toast('Временный пароль выдан. Скажи его ' + u.n + ' — старые входы закрыты');
 }
 
 async function saveUserCard(id){
@@ -487,7 +502,7 @@ function adUsers(){
 
     <div class="ustat">
       <span>${(hash(u.m)%18)+2} практик</span>
-      <span>${(hash(u.n)%6)} курсов</span>
+      <span>${u.real ? plural(u.courses||0,'курс','курса','курсов') : (hash(u.n)%6)+' курсов'}</span>
       <span>${(hash(u.m+'g')%40)} сообщений</span>
       <span>стрик ${(hash(u.n+'s')%9)}</span>
     </div>
@@ -1544,10 +1559,9 @@ function exMsgs(){
         <div class="small muted" style="font-size:11px">${esc(m.ago)}</div></div>
       ${m.unread?'<span class="chip pale">новое</span>':''}</div>
     <p style="margin:0 0 10px;font-size:13.5px;line-height:1.5">${esc(m.t)}</p>
-    <div class="row" style="gap:8px">
-      <input class="field" style="margin:0;flex:1" placeholder="Ответить">
-      <button class="btn sm" onclick="toast('Отправлено')">→</button></div>
-  </div>`).join('')}`;
+  </div>`).join('')}
+  <p class="tiny muted" style="margin-top:4px">Это пример того, как выглядят вопросы. Настоящие заявки и вопросы
+    учениц приходят команде Евы в поддержку и передаются тебе в личные сообщения.</p>`;
 }
 
 function copyText(t){ if(navigator.clipboard) navigator.clipboard.writeText(t).catch(()=>{}); toast('Скопировано'); }
@@ -1691,7 +1705,7 @@ function exIncome(){
         <div class="serif" style="font-size:28px;margin-top:4px;color:#fff">${rate}%</div></div>
     </div>
     <div class="acts">
-      <button class="btn" style="background:#fff;color:var(--ink)" onclick="toast('Заявка на вывод принята')">Вывести</button>
+      <button class="btn" style="background:#fff;color:var(--ink)" onclick="withdraw(${courseIncome + refIncome})">Вывести</button>
       <button class="btn ghost" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.2)"
         onclick="copyText('https://eva.space/r/${slug}')">Скопировать ссылку</button>
     </div>

@@ -82,7 +82,9 @@ function persist(){
     starred:S.starred, starredCmts:S.starredCmts, likes:S.likes, visits:S.visits, gentle:S.gentle,
     /* без этого после перезагрузки терялась память о показанных мастер-классах
        и об обмене баллов: классы шли по кругу, а обмен можно было повторять */
-    seen:S.seen, tagw:S.tagw, weekly:S.weekly, seenDm:S.seenDm, streak:S.streak,
+    seen:S.seen, tagw:S.tagw, goals:S.goals, level:S.level, taste:S.taste,
+    subAsked:S.subAsked, courseAsked:S.courseAsked,
+    weekly:S.weekly, seenDm:S.seenDm, streak:S.streak,
     evChain:S.evChain, evFast:S.evFast, reviews:S.reviews, tourDone:S.tourDone,
     lastWeek:S.lastWeek, weekShown:S.weekShown, weekMood:S.weekMood,
     nudgedWeek:S.nudgedWeek, gdraft:S.gdraft,
@@ -100,7 +102,7 @@ const PERSONAL = ['name','tags','topics','time','slot','answers','extra','points
   'bonus','streakDays','streak','courses','purchases','cart','joined','clubs','owned','avatar','birth',
   'cycle','hd','hdAnswers','hdi','sub','week','seed','program','day','match','homework','myEvents',
   'inbox','seenReplies','seenDm','myInts','datingProfile','starred','starredCmts','likes','visits',
-  'gentle','seen','tagw','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
+  'gentle','seen','tagw','goals','level','taste','subAsked','courseAsked','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
   'weekMood','nudgedWeek','gdraft','quietRun','askedBlock','pushOn','pushAsked','tipStars','follows','mates','expSeen','about','city','show',
   'qi','picked','eva'];
 

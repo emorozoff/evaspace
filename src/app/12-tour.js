@@ -61,17 +61,38 @@ const TOUR = [
    p:'Начни с одного дела сегодня — этого достаточно. Три дня открыты полностью.'}
 ];
 
+/* Плавность держится на трёх вещах. Карточка между шагами не исчезает и
+   не выскакивает заново — гаснет, меняет текст и проявляется на новом
+   месте. Страница прокручивается к блоку плавно, а подсветка идёт за ним
+   по событиям прокрутки, без своей задержки, и только потом снова
+   переезжает мягко. Шаг, чей блок на экране не нашёлся, пропускаем:
+   карточка «про звёзды» посреди пустого экрана хуже, чем её отсутствие. */
+let tourDir = 1, tourGlide = null, tourScrollNo = 0;
 function tourStart(){
   if(S.role !== 'user' || S.screen !== 'app') return;
   if(document.getElementById('tour')) return;
-  S.tour = 0;
+  S.tour = 0; tourDir = 1;
   const box = document.createElement('div');
   box.id = 'tour';
   box.innerHTML = `<div class="tveil"></div><div class="thole"></div><div class="ttip"></div>`;
   document.body.appendChild(box);
-  window.addEventListener('resize', tourPlace);
-  window.addEventListener('scroll', tourPlace, {passive:true});
+  window.addEventListener('resize', tourFollow);
+  window.addEventListener('scroll', tourFollow, {passive:true});
   tourShow();
+}
+
+/* прокрутка и поворот экрана: только переставить, не прокручивать снова */
+function tourFollow(){
+  tourPlace(false);
+  if(tourGlide){
+    clearTimeout(tourGlide.t);
+    tourGlide.t = setTimeout(() => {
+      const hole = document.querySelector('#tour .thole');
+      if(hole) hole.classList.remove('glide');
+      tourGlide = null;
+      tourPlace(false);
+    }, 140);
+  }
 }
 
 function tourShow(){
@@ -87,7 +108,29 @@ function tourShow(){
     S.tab = step.tab;
     render();
   }
+  /* блока нет на экране — шаг пропускаем в ту сторону, куда шли */
+  if(step.at && !document.querySelector(step.at)){
+    const next = S.tour + tourDir;
+    if(next < 0 || next >= TOUR.length) return tourEnd();
+    S.tour = next;
+    return tourShow();
+  }
 
+  const tip = box.querySelector('.ttip');
+  if(!tip.innerHTML){ tourFill(step); tip.classList.add('in'); tourPlace(true); return; }
+  /* смена шага: гаснем, меняем, проявляемся уже на новом месте */
+  tip.classList.add('swap');
+  setTimeout(() => {
+    if(!document.getElementById('tour') || TOUR[S.tour] !== step) return;
+    tourFill(step);
+    tourPlace(true);
+    requestAnimationFrame(() => tip.classList.remove('swap'));
+  }, 150);
+}
+
+function tourFill(step){
+  const box = document.getElementById('tour');
+  if(!box) return;
   /* приветствие не считаем: шаги нумеруются от первой настоящей подсказки */
   const steps = TOUR.length - 1;
   const dots = TOUR.slice(1).map((_,i) => `<i class="${i < S.tour ? 'on' : ''}"></i>`).join('');
@@ -103,7 +146,6 @@ function tourShow(){
       <button class="tgo" onclick="${step.last ? 'tourEnd()' : 'tourNext()'}">
         ${step.last ? 'Начать первый день' : step.intro ? 'Посмотреть' : 'Дальше'}</button>
     </div>`;
-  tourPlace();
 }
 
 /* Закреплённые блоки — нижняя навигация — не прокручиваются вместе со
@@ -116,7 +158,7 @@ function fixedEl(el){
 
 /* Считаем место каждый раз заново: экран мог прокрутиться, повернуться
    или перерисоваться, и подсветка обязана остаться на своём блоке. */
-function tourPlace(){
+function tourPlace(settle){
   const box = document.getElementById('tour');
   if(!box) return;
   const step = TOUR[S.tour];
@@ -125,31 +167,50 @@ function tourPlace(){
         veil = box.querySelector('.tveil');
   const t = step.at ? document.querySelector(step.at) : null;
   const vh = window.innerHeight, vw = window.innerWidth, gap = 14, edge = 12;
+  /* классы состояния переживают перестановку: swap — идёт смена шага,
+     in — первое появление (иначе анимация выхода снималась до старта) */
+  const keep = ['swap','in'].filter(c => tip.classList.contains(c)).map(c => ' ' + c).join('');
 
   if(!t){
     hole.style.display = 'none';
     veil.style.display = '';
-    tip.className = 'ttip mid';
+    tip.className = 'ttip mid' + keep;
     tip.style.top = '';
     return;
   }
 
   /* высоту карточки надо знать заранее: от неё зависит, сколько места
      останется подсветке и с какой стороны карточка встанет */
-  tip.className = 'ttip';
+  tip.className = 'ttip' + keep;
   tip.style.top = '-9999px';
   const tipH = tip.offsetHeight || 210;
   const pad = step.pad == null ? 8 : step.pad;
   const room = Math.max(140, vh - tipH - 2*gap - 2*edge);
 
-  if(!fixedEl(t)){
+  if(settle && !fixedEl(t)){
     const r0 = t.getBoundingClientRect();
     const a = edge, b = edge + room;
     if(r0.top < a || r0.bottom > b){
-      /* блок выше экрана целиком не показать — подводим его верх под край */
+      /* блок выше экрана целиком не показать — подводим его верх под край.
+         Едем плавно, а подсветка идёт за блоком без своей задержки */
       let want = window.scrollY + r0.top - a;
       if(r0.height < room) want -= (room - r0.height) / 2;
-      window.scrollTo(0, Math.max(0, want));
+      want = Math.max(0, want);
+      const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if(Math.abs(want - window.scrollY) > 2){
+        if(!calm){ hole.classList.add('glide'); tourGlide = tourGlide || {t:0}; }
+        try { window.scrollTo({top:want, behavior: calm ? 'auto' : 'smooth'}); }
+        catch(e){ window.scrollTo(0, want); }
+        /* браузер, который плавно не умеет (или не стал), — доводим сами:
+           иначе подсветка так и останется у блока за краем экрана */
+        const my = ++tourScrollNo;
+        setTimeout(() => {
+          if(my !== tourScrollNo || !document.getElementById('tour')) return;
+          const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+          const goal = Math.min(want, maxY);
+          if(Math.abs(window.scrollY - goal) > 4){ window.scrollTo(0, goal); tourFollow(); }
+        }, 700);
+      }
     }
   }
 
@@ -188,14 +249,16 @@ function tourPlace(){
   tip.style.setProperty('--ax', x + 'px');
 }
 
-function tourNext(){ S.tour++; S.tour < TOUR.length ? tourShow() : tourEnd(); }
-function tourBack(){ if(S.tour > 0){ S.tour--; tourShow(); } }
+function tourNext(){ tourDir = 1; S.tour++; S.tour < TOUR.length ? tourShow() : tourEnd(); }
+function tourBack(){ if(S.tour > 0){ tourDir = -1; S.tour--; tourShow(); } }
 
 function tourEnd(){
   const box = document.getElementById('tour');
   if(box) box.remove();
-  window.removeEventListener('resize', tourPlace);
-  window.removeEventListener('scroll', tourPlace);
+  window.removeEventListener('resize', tourFollow);
+  window.removeEventListener('scroll', tourFollow);
+  if(tourGlide) clearTimeout(tourGlide.t);
+  tourGlide = null;
   S.tour = null;
   S.tourDone = true;
   S.tab = 'home'; S.page = null;

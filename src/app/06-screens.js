@@ -310,6 +310,8 @@ function starContent(btn, id){
   S.likes = S.likes || [];
   const on = S.likes.includes(id);
   S.likes = on ? S.likes.filter(v => v !== id) : [...S.likes, id];
+  const it = LIB.find(x => x.id === id);
+  if(it && typeof tasteAdd === 'function') tasteAdd(it.tags, on ? -1 : 1);
   btn.classList.toggle('on', !on);
   btn.innerHTML = starMark(15, !on ? '#E7A339' : 'rgba(17,16,20,.22)');
   schedulePersist();
@@ -637,9 +639,9 @@ function bumpVisit(){
   S.visits = S.visits || {day:'', n:0};
   if(S.visits.day !== today){ S.visits = {day:today, n:1}; }
   else S.visits.n++;
-  schedulePersit_safe();
+  persistQuiet();
 }
-function schedulePersit_safe(){ try{ schedulePersist(); }catch(e){} }
+function persistQuiet(){ try{ schedulePersist(); }catch(e){} }
 
 function greetingLine(){
   const v = (S.visits && S.visits.n) || 1;

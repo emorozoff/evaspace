@@ -134,13 +134,16 @@ function ask(q){
 
 function evaAnswer(q){
   const day = (S.program || [])[S.day] || {tasks:[]}, left = day.tasks.filter(t => !t.done);
-  if(/аффирмац|прочит/.test(q)) return day.tasks[0].text;
+  if(/аффирмац|прочит/.test(q)){
+    const af = day.tasks.find(t => t.type === 'affirm') || day.tasks[0];
+    return af && af.text ? af.text : 'На сегодня аффирмации нет — загляни в библиотеку, там их много.';
+  }
   if(/балл|звёзд|звезд|статус|уровен/.test(q)){
     const {next} = levelNow();
     return `У тебя ${S.points} баллов и ${S.stars} из ${starsTotal()} звёзд на этой неделе.` + (next ? ` До статуса «${esc(next.n)}» осталось ${next.from - S.points}.` : '');
   }
   if(/почему|как.*собра|подобра/.test(q))
-    return `Я собрала программу по твоим темам: ${S.tags.slice(0,4).join(', ')}. Из ${LIB.length} уроков библиотеки выбрала те, где совпадение выше всего - среднее по программе ${S.match}%.`;
+    return `Я собрала программу по твоим темам: ${((S.goals||[]).length ? S.goals : S.tags).slice(0,4).join(', ')}. Из ${LIB.length} уроков библиотеки выбрала те, где совпадение выше всего — среднее по программе ${S.match}%.`;
   if(/нет времени|не успева|некогда|нет сил|устал|тяжел/.test(q)){
     S.gentle = true;
     return 'Включила мягкий режим: сегодня только аффирмация на одну минуту. Остальное подождёт, программа никуда не денется.';
@@ -172,7 +175,12 @@ function openSheet(k){ S.sheet = k; render(); }
 function openIdea(){ S.sheet = 'idea'; render(); }
 function closeSheet(){ S.sheet = null; render(); }
 function openLesson(id){ S.sheet = {k:'lesson', id}; render(); }
-function tgTag(t){ S.tags = S.tags.includes(t) ? S.tags.filter(x => x !== t) : [...S.tags, t]; render(); }
+function tgTag(t){
+  S.tagw = S.tagw || {};
+  if(S.tags.includes(t)){ S.tags = S.tags.filter(x => x !== t); delete S.tagw[t]; }
+  else { S.tags = [...S.tags, t]; S.tagw[t] = 0.9; }   // выбрала сама — весит как ответ теста
+  render();
+}
 function rebuild(){ buildProgram(); S.sheet = null; S.gentle = false; render(); toast('Программа собрана заново'); }
 
 function addToDay(id){
@@ -207,16 +215,23 @@ function checkout(){
     d:'сегодня', city:(S.datingProfile && S.datingProfile.city) || 'Москва', phone:S.phone || ''});
   S.cart = []; S.page = 'profile'; render(); schedulePersist();
   if(typeof syncPush === 'function') syncPush(['orders']);
-  toast(`Заказ оформлен. Кэшбэк ${cb} бонусов`);
+  toast(`Заказ принят. Менеджер напишет, как оплатить. Кэшбэк ${cb} бонусов`);
 }
+/* Оплаты пока нет. Раньше «Купить» открывало курс бесплатно и обещало
+   «+150 баллов» (начисляя 50). Теперь это заявка: команда видит её в
+   поддержке, открывает курс в карточке пользователя — и он появляется
+   у женщины при следующем входе. */
 function buyCourse(id){
   if(S.courses.includes(id)) return;
   const c = COURSES.find(x => x.id === id);
-  const used = Math.min(S.bonus, Math.round(c.p*0.3));
-  S.bonus -= used; S.courses.push(id); S.points += 50;
-  S.purchases.unshift({t:c.t, p:c.p - used, cb:0, date:'сегодня'});
-  S.sheet = null; render();
-  toast('Курс открыт. +150 баллов');
+  if(!c) return;
+  S.courseAsked = S.courseAsked || [];
+  if(S.courseAsked.includes(id)){ S.sheet = null; render(); return toast('Заявка на этот курс уже у нас'); }
+  if(!toSupport('Курс: ' + c.t, 'Хочу курс «' + c.t + '» (' + money(c.p) + '). Оплата картой ещё не подключена — прошу открыть доступ.'))
+    return toast('Не отправилось, попробуй позже');
+  S.courseAsked.push(id);
+  S.sheet = null; render(); schedulePersist();
+  toast('Заявка отправлена. Откроем курс и напишем в личные сообщения');
 }
 function join(id){
   const g = GROUPS.find(x => x.id === id);
@@ -243,7 +258,7 @@ function copyRef(){
   if(navigator.clipboard) navigator.clipboard.writeText(u).catch(()=>{});
   toast('Ссылка скопирована');
 }
-function restartQuiz(){ S.screen='quiz'; S.qi=0; S.picked=[]; S.tags=[]; S.sheet=null; S.page=null; render(); stars(); }
+function restartQuiz(){ resetQuiz(); S.screen='quiz'; S.sheet=null; S.page=null; render(); stars(); }
 /* ---------- старт ---------- */
 window.S = S; window.LIB = LIB;
 S.tags = ['спокойствие','тревога','уверенность'];
@@ -315,23 +330,61 @@ function hdPick(v){
   render();
 }
 
+/* Заявка эксперту и вопрос ему уходят в поддержку — туда, где их видит
+   команда и откуда ответ приходит женщине в личные сообщения. Раньше обе
+   кнопки только показывали «отправлено»: заявки не существовало нигде. */
 function shConsult(){
   const e = EXPERTS.find(x => x.id === S.sheet.id);
   return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">Заявка на консультацию</h2>
     <p class="small muted" style="margin:0 0 14px">${esc(e.n)} · 50 минут онлайн · ${money(e.price)}</p>
-    <input class="field" placeholder="Имя" value="${esc(S.name)}">
-    <input class="field" placeholder="Телефон или телеграм">
-    <textarea class="field" rows="3" placeholder="С каким запросом приходишь"></textarea>
+    <input class="field" id="cs_name" placeholder="Имя" value="${esc(S.name)}">
+    <input class="field" id="cs_contact" placeholder="Телефон или телеграм">
+    <textarea class="field" id="cs_text" rows="3" placeholder="С каким запросом приходишь"></textarea>
     <div class="seg">${['утро','день','вечер'].map(t => `<button class="${t===S.slot?'on':''}" onclick="S.slot='${attJs(t)}';render()">${t}</button>`).join('')}</div>
-    <button class="btn" onclick="S.sheet=null;render();toast('Заявка отправлена, эксперт свяжется с тобой')">Отправить заявку</button>`;
+    <button class="btn" onclick="sendConsult('${attJs(e.id)}')">Отправить заявку</button>
+    <p class="tiny muted" style="margin-top:10px">Заявку получит команда Евы и передаст эксперту. Ответ придёт в личные сообщения.</p>`;
+}
+function sendConsult(eid){
+  const e = EXPERTS.find(x => x.id === eid);
+  const contact = (($('#cs_contact')||{}).value || '').trim();
+  const text = (($('#cs_text')||{}).value || '').trim();
+  if(!contact) return toast('Оставь телефон или телеграм — иначе не с кем связаться');
+  toSupport('Заявка на консультацию: ' + (e ? e.n : ''),
+    ['Имя: ' + ((($('#cs_name')||{}).value || S.name || '').trim()), 'Связь: ' + contact,
+     'Удобно: ' + S.slot, '', text || 'Запрос не описан'].join('\n'));
+  S.sheet = null; render();
+  toast('Заявка отправлена. Ответим в течение дня');
 }
 
 function shWrite(){
   const e = EXPERTS.find(x => x.id === S.sheet.id);
   return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">Написать эксперту</h2>
     <p class="small muted" style="margin:0 0 14px">${esc(e.n)} обычно отвечает в течение суток.</p>
-    <textarea class="field" rows="5" placeholder="Твой вопрос"></textarea>
-    <button class="btn" onclick="S.sheet=null;render();toast('Сообщение отправлено')">Отправить</button>`;
+    <textarea class="field" id="wq_text" rows="5" placeholder="Твой вопрос"></textarea>
+    <button class="btn" onclick="sendExpertQuestion('${attJs(e.id)}')">Отправить</button>
+    <p class="tiny muted" style="margin-top:10px">Ответ придёт в личные сообщения.</p>`;
+}
+function sendExpertQuestion(eid){
+  const e = EXPERTS.find(x => x.id === eid);
+  const text = (($('#wq_text')||{}).value || '').trim();
+  if(!text) return toast('Напиши вопрос');
+  toSupport('Вопрос эксперту: ' + (e ? e.n : ''), text);
+  S.sheet = null; render();
+  toast('Вопрос отправлен. Ответ придёт в личные сообщения');
+}
+
+/* одно окно в поддержку для всех обращений из приложения */
+function toSupport(sub, text){
+  if(typeof INBOX === 'undefined') return false;
+  INBOX.unshift({
+    id:'s' + Date.now().toString(36),
+    from: S.name || 'Участница',
+    role: S.role === 'expert' ? 'эксперт' : 'ученица',
+    mail: S.user ? S.user.email : '—',
+    ago: 'только что', sub, t: text, st:'новое'
+  });
+  if(typeof syncPush === 'function') syncPush(['support']);
+  return true;
 }
 
 function suggestTags(text){
@@ -1160,8 +1213,16 @@ function resendEvent(id){
 }
 
 /* ---------- админ: пользователи ---------- */
+/* адресат — аккаунт из списка или просто почта (покупательница из заказа) */
+function dmTarget(id){
+  const u = allUsers().find(x => x.id === id);
+  if(u) return u;
+  const m = String(id || '').trim().toLowerCase();
+  return m.includes('@') ? {id:m, n:m, m, real:true} : null;
+}
 function shWrite2(){
-  const u = allUsers().find(x => x.id === S.sheet.id);
+  const u = dmTarget(S.sheet.id);
+  if(!u) return `<div class="empty">Некому писать</div>`;
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Написать пользователю</h2>
     <p class="small muted" style="margin:0 0 12px">${esc(u.n)} · ${u.m}</p>
     <label class="lbl">Тема</label><input class="field" id="w_s" value="Eva Space">
@@ -1175,7 +1236,7 @@ function shWrite2(){
 
 /* сообщение уходит на сервер и появляется у женщины в личных сообщениях */
 async function sendUserMessage(id){
-  const u = allUsers().find(x => x.id === id);
+  const u = dmTarget(id);
   if(!u) return;
   const text = (($('#w_t')||{}).value || '').trim();
   const subject = (($('#w_s')||{}).value || '').trim();
@@ -1199,9 +1260,14 @@ function shEditUser(){
     <input class="field" id="eu_n" value="${esc(u.n)}">
     <label class="row" style="margin:10px 0 4px;font-size:13.5px;gap:8px">
       <input type="checkbox" id="eu_v" ${u.verified ? 'checked' : ''}> Почта подтверждена</label>
-    <p class="tiny muted" style="margin:6px 0 14px">Почту и пароль здесь не меняем: почта — это ключ аккаунта,
-      пароль знает только сама женщина.</p>
+    <p class="tiny muted" style="margin:6px 0 14px">Почту здесь не меняем: почта — это ключ аккаунта.</p>
     <button class="btn" onclick="saveUserCard('${attJs(u.id)}')">Сохранить</button>
+    ${u.real ? `<div class="eyebrow" style="margin:18px 0 6px">Забыла пароль</div>
+    <p class="tiny muted" style="margin:0 0 8px">Пока почта не подключена, письмо с восстановлением не уходит.
+      Выдай временный пароль и скажи его ей — она войдёт и поменяет на свой в настройках.
+      Остальные её входы закроются.</p>
+    <input class="field" id="eu_p" placeholder="Временный пароль, минимум 6 символов" autocomplete="off">
+    <button class="btn ghost" onclick="resetUserPass('${attJs(u.id)}')">Выдать временный пароль</button>` : ''}
     ${u.real ? `<button class="btn ghost" style="margin-top:9px;color:var(--accent)"
       onclick="closeSheet();removeUser('${attJs(u.id)}')">Удалить аккаунт</button>` : ''}`;
 }
@@ -1220,57 +1286,69 @@ function shAddUser(){
       `<button class="${(S.newAccess||'trial')===k?'on':''}" onclick="chipPick(this,'newAccess','${attJs(k)}')">${l}</button>`).join('')}</div>
     <button class="btn" onclick="createUser()">Создать аккаунт</button>`;
 }
-function createUser(){
+/* Аккаунт заводит сервер. Раньше запись оставалась в браузере
+   администратора, а тост обещал письмо, которого никто не отправлял. */
+async function createUser(){
   const n = ($('#nu_n')||{}).value, m = (($('#nu_m')||{}).value||'').trim().toLowerCase();
+  const pass = ($('#nu_p')||{}).value || 'eva2026';
   if(!n || !n.trim()) return toast('Укажи имя');
   if(!/^[^@\s]+@[^@\s]+\.[a-zа-я]{2,}$/i.test(m)) return toast('Проверь почту');
+  if(pass.length < 6) return toast('Пароль минимум 6 символов');
   if(DB.find(m)) return toast('Такая почта уже есть');
   const access = S.newAccess || 'trial';
   const role = S.newRole || 'user';
-  DB.upsert({email:m, name:n.trim(), pass:hashPass(($('#nu_p')||{}).value || 'eva2026'), verified:true,
-    role, created:Date.now(), tg:($('#nu_t')||{}).value || '',
-    gift:access === 'gift', paid:access === 'paid',
-    note:access === 'gift' ? 'Доступ подарен администратором' : ''});
+  if(role === 'admin') return toast('Администратор назначается в data/config.php на хостинге');
+  if(SYNC.alive === false) return toast('Аккаунт создаётся только при подключённом сервере');
+  const r = await apiCall('user_create', { email:m, name:n.trim(), pass, role, access,
+                                           tg:($('#nu_t')||{}).value || '' }, { silent:true });
+  if(!r) return toast(SYNC.lastError || 'Не получилось создать аккаунт');
+  mirrorUser(r.user);
 
   /* эксперт сразу получает карточку и появляется в переключателе кабинета */
   if(role === 'expert') createExpertProfile(n.trim(), m, ($('#nu_t')||{}).value || '');
 
   S.sheet = null; syncPush(); render();
   toast(role === 'expert'
-    ? 'Эксперт добавлен. Профиль создан, можно выбрать его в кабинете'
-    : 'Аккаунт создан. Данные для входа отправлены на ' + m);
+    ? 'Эксперт добавлен. Скажи ей пароль: ' + pass
+    : 'Аккаунт создан. Письма нет — скажи ей почту и пароль: ' + pass);
 }
+/* Доступ живёт в аккаунте на сервере. Раньше «подарить» писало отметку
+   в браузер администратора — женщина об этом не узнавала никогда. */
 function shGrant(){
   const u = allUsers().find(x => x.id === S.sheet.id);
+  if(!u) return `<div class="empty">Аккаунт не найден</div>`;
+  const rec = DB.find(u.m) || {};
   const offers = [
-    {k:'gift30', t:'Бесплатный доступ на 30 дней', d:'Подписка без оплаты, потом обычные условия'},
-    {k:'gift', t:'Бессрочный бесплатный доступ', d:'Для амбассадоров, партнёров и тестировщиц'},
-    {k:'off50', t:'Скидка 50% на первый месяц', d:'1 450 ₽ вместо 2 900 ₽'},
+    {k:'gift30', t:'Доступ на 30 дней', d:'Полная программа без оплаты, потом обычные условия'},
+    {k:'gift', t:'Бессрочный доступ', d:'Для амбассадоров, партнёров и тестировщиц'},
     {k:'trial7', t:'Продлить пробный период до 7 дней', d:'Если не успела попробовать'}
   ];
-  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Доступ и предложения</h2>
-    <p class="small muted" style="margin:0 0 12px">${esc(u.n)} · ${u.m}</p>
+  const has = rec.gift ? 'бессрочный' : rec.access_until && rec.access_until * 1000 > Date.now()
+    ? 'до ' + new Date(rec.access_until * 1000).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) : '';
+  const mine = rec.courses || [];
+  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Доступ</h2>
+    <p class="small muted" style="margin:0 0 12px">${esc(u.n)} · ${u.m}${has ? ' · доступ ' + has : ''}</p>
     ${offers.map(o => `<button class="card" style="width:100%;text-align:left" onclick="grant('${attJs(u.id)}','${attJs(o.k)}')">
       <b style="font-size:14px">${esc(o.t)}</b>
       <div class="small muted" style="margin-top:3px">${esc(o.d)}</div></button>`).join('')}
-    ${u.gift || u.pay === 'paid' ? `<button class="btn ghost" onclick="grant('${attJs(u.id)}','revoke')">Снять доступ</button>` : ''}`;
+    <div class="eyebrow" style="margin:14px 0 8px">Курсы</div>
+    <div class="chips wrap">${COURSES.filter(c => !c.draft).map(c =>
+      `<button class="chip ${mine.includes(c.id) ? 'on' : ''}" onclick="grant('${attJs(u.id)}','${mine.includes(c.id) ? 'uncourse' : 'course'}','${attJs(c.id)}')">${esc(c.t)}</button>`).join('')}</div>
+    <p class="tiny muted" style="margin:8px 0 12px">Открытый курс появится у неё при следующем входе в приложение.</p>
+    ${has || mine.length ? `<button class="btn ghost" onclick="grant('${attJs(u.id)}','revoke')">Снять весь доступ</button>` : ''}`;
 }
-function grant(id, kind){
-  const all = DB.users(), k = String(id).toLowerCase();
-  const label = {gift30:'Бесплатный доступ на 30 дней', gift:'Бессрочный доступ подарен',
-    off50:'Скидка 50% на первый месяц', trial7:'Пробный продлён до 7 дней', revoke:'Доступ снят'}[kind];
-  if(all[k]){
-    if(kind === 'revoke'){ all[k].gift = false; all[k].paid = false; all[k].offer = ''; }
-    else if(kind === 'off50'){ all[k].offer = 'Скидка 50%'; }
-    else if(kind === 'trial7'){ all[k].trialDays = 7; }
-    else { all[k].gift = true; all[k].paid = true; all[k].offer = label; }
-    DB.saveUsers(all);
-  } else {
-    const u = USERS.find(x => x.id === id);
-    if(u){ u.pay = kind === 'revoke' ? 'none' : 'paid'; u.note = (u.note ? u.note + '. ' : '') + label; }
-  }
-  if(S.user && S.user.email === k && kind !== 'revoke') S.sub.active = true;
-  S.sheet = null; render(); toast(label);
+async function grant(id, kind, course){
+  const u = allUsers().find(x => x.id === id);
+  if(!u) return;
+  const label = {gift30:'Доступ открыт на 30 дней', gift:'Бессрочный доступ открыт',
+    trial7:'Пробный продлён до 7 дней', course:'Курс открыт', uncourse:'Курс закрыт', revoke:'Доступ снят'}[kind];
+  if(!u.real){ S.sheet = null; render(); return toast('Это демонстрационная запись, доступ ей не нужен'); }
+  if(SYNC.alive === false) return toast('Доступ открывается только при подключённом сервере');
+  const r = await apiCall('access', { email:u.m, kind, course:course || '' }, { silent:true });
+  if(!r) return toast(SYNC.lastError || 'Не получилось');
+  mirrorUser(r.user);
+  if(S.user && S.user.email === u.m) applyGrants();
+  render(); toast(label);
 }
 
 /* ---------- эксперт: услуги, теги, образование ---------- */

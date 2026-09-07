@@ -32,6 +32,7 @@
 function profileOf(){
   return {
     tags:   weightedTags(),
+    goals:  S.goals || [],
     topics: S.topics || [],
     aud:    typeof myAudience === 'function' ? myAudience() : [],
     time:   +S.time || 20,          // из старых профилей могло прийти строкой
@@ -47,14 +48,48 @@ function profileOf(){
    У старых профилей веса нет — там считаем по месту в списке, порядок
    там тот же, потому что теги копятся по ходу теста. */
 function weightedTags(){
-  const src = S.tagw || {};
-  return (S.tags || []).map((t, i) => ({
+  const src = S.tagw || {}, taste = S.taste || {};
+  const out = (S.tags || []).map((t, i) => ({
     t,
-    w: src[t] != null ? src[t] : Math.max(0.5, 1 - i * 0.12)
+    w: (src[t] != null ? src[t] : Math.max(0.5, 1 - i * 0.12)) + tasteShift(taste[t])
+  }));
+  /* тема, которой в тесте не было, но которую она раз за разом доделывает
+     и отмечает звездой, — тоже её запрос, пусть и негромкий */
+  Object.keys(taste).forEach(t => {
+    if(taste[t] >= TASTE_NEW && !out.some(x => x.t === t)) out.push({t, w: 0.45});
+  });
+  return out.sort((a, b) => b.w - a.w);
+}
+
+/* ---------- вкус: чему учится программа ----------
+   Тест — это то, что она сказала о себе в первый день. Дальше говорит
+   поведение: практику про границы она доделывает, а про деньги третью
+   неделю не открывает. Считаем по тегам: сделанное дело — плюс, показанное
+   и не тронутое — минус поменьше, звезда в библиотеке — плюс. Сдвиг веса
+   нарочно небольшой: он подкручивает порядок, а не переписывает запрос. */
+const TASTE_STEP = 0.07, TASTE_MAX = 3, TASTE_NEW = 3;
+function tasteShift(v){
+  if(!v) return 0;
+  return Math.max(-TASTE_MAX, Math.min(TASTE_MAX, v)) * TASTE_STEP;
+}
+function tasteAdd(tags, d){
+  S.taste = S.taste || {};
+  (tags || []).forEach(t => {
+    const v = (S.taste[t] || 0) + d;
+    if(Math.abs(v) < 0.01) delete S.taste[t];
+    else S.taste[t] = Math.round(Math.max(-6, Math.min(9, v)) * 100) / 100;
+  });
+}
+/* итог прошедшей недели — до пересборки, пока задания ещё её */
+function learnFromWeek(){
+  (S.program || []).forEach(day => (day.tasks || []).forEach(t => {
+    if(!t || t.type === 'affirm') return;      // аффирмацию читают за минуту, это не выбор
+    tasteAdd(t.tags, t.done ? 1 : -0.35);
   }));
 }
 
 function myLevel(){
+  if(S.level === 'new' || S.level === 'pro') return S.level;
   if((S.tags || []).includes('опыт')) return 'pro';
   if((S.tags || []).includes('новичок')) return 'new';
   return 'middle';
@@ -210,11 +245,13 @@ function whyItem(item, p){
   const out = [];
   const his = Array.isArray(item.tags) ? item.tags : [];
   const mine = p.tags.filter(x => his.includes(x.t)).map(x => x.t);
-  if(mine.length) out.push('про ' + mine.slice(0, 2).join(' и '));
+  /* теги — существительные в именительном: «про тревога» не по-русски,
+     поэтому без предлога, через двоеточие */
+  if(mine.length) out.push('твой запрос: ' + mine.slice(0, 2).join(', '));
   const tp = (item.topics || []).filter(t => (p.topics || []).includes(t));
   if(tp.length && typeof topicName === 'function'){
     const n = topicName(tp[0]);
-    if(n) out.push(n.toLowerCase());
+    if(n) out.push('тебе интересно: ' + n.toLowerCase());
   }
   const aud = (item.aud || []).filter(k => k !== 'active' && k !== 'period');
   if(!out.length && aud.some(k => p.aud.includes(k))) out.push('под твой этап');
@@ -253,7 +290,9 @@ function tagCoverage(){
    Три главных запроса раскладываются по семи дням так, чтобы соседние
    дни не повторялись, а к концу недели каждая тема прозвучала. */
 function weekThemes(p){
-  const top = p.tags.slice(0, 3).map(x => x.t);
+  /* цели — главные теги ответов первого вопроса: по одной на выбранный
+     ответ. Без них (старый профиль) берём три самых тяжёлых тега */
+  const top = (p.goals && p.goals.length ? p.goals : p.tags.map(x => x.t)).slice(0, 3);
   if(!top.length) return DAYS.map(() => null);
   return DAYS.map((_, i) => top[i % top.length]);
 }
@@ -441,6 +480,7 @@ function checkWeek(quiet){
   if(S.week !== w){
     /* снимок делаем ДО пересборки: после неё считать уже нечего */
     const past = typeof weekSnapshot === 'function' ? weekSnapshot() : null;
+    learnFromWeek();
     S.week = w;
     S.weekly.exchanged = false;          // обмен баллов снова доступен
     S.stars = 0;                          // звёзды недели считаются заново
@@ -749,14 +789,14 @@ function scrWelcome(){
         oninput="S.name=this.value" onkeydown="if(event.key==='Enter')startQuiz()">
     </div>
     <div style="flex:1"></div>
-    <p class="small muted anim-up d3" style="margin-bottom:14px">6 коротких вопросов - и Ева соберёт программу<br>из аффирмаций, практик и мастер-классов</p>
+    <p class="small muted anim-up d3" style="margin-bottom:14px">Шесть коротких вопросов — и Ева соберёт программу<br>из аффирмаций, практик и мастер-классов</p>
     <button class="btn gold anim-up d3" onclick="startQuiz()">Начать</button>
   </div>`;
 }
 
 function scrQuiz(){
   const flow = quizFlow();
-  const q = flow[Math.min(S.qi, flow.length-1)], sel = S.picked[S.qi] || [];
+  const q = flow[Math.min(S.qi, flow.length-1)], sel = quizSel(q);
   const can = sel.length > 0;
   return `<div class="sky"><canvas id="sky"></canvas></div>
   <div class="night">
@@ -837,11 +877,14 @@ function donut(pct){
 /* ---------- действия онбординга ---------- */
 function startQuiz(){
   if(!S.name.trim()) S.name = 'Ева';
-  S.screen = 'quiz'; S.qi = 0; S.picked = []; S.tags = [];
+  resetQuiz(); S.screen = 'quiz';
   render(); stars();
 }
+/* ответы лежат по вопросу, а не по его номеру: уточняющий вопрос
+   появляется и исчезает, и номера съезжают */
+const quizSel = q => (q && S.picked && !Array.isArray(S.picked) && S.picked[q.id]) || [];
 function pick(i){
-  const q = quizFlow()[S.qi]; let sel = S.picked[S.qi] || [];
+  const q = quizFlow()[S.qi]; let sel = quizSel(q);
   /* max не указан — один ответ; max:0 — сколько захочет */
   const max = q.max == null ? 1 : q.max;
   if(sel.includes(i)) sel = sel.filter(x => x !== i);
@@ -850,33 +893,17 @@ function pick(i){
   /* набрала максимум — вытесняем самый давний выбор, а не схлопываем список
      до двух: на вопросе с четырьмя вариантами так терялись ответы */
   else sel = [...sel.slice(1), i];
-  S.picked[S.qi] = sel; render(); stars();
+  if(Array.isArray(S.picked)) S.picked = {};
+  S.picked[q.id] = sel;
+  applyQuiz();                              // уточняющий вопрос появляется сразу
+  render(); stars();
 }
 function prevQ(){
   if(S.qi === 0){ S.screen = 'welcome'; render(); return; }
   S.qi--; render(); stars();
 }
 function nextQ(){
-  const flow = quizFlow();
-  const q = flow[S.qi];
-  S.answers = S.answers || {};
-  /* направления собираем заново: женщина могла снять галочку и вернуться */
-  if(q.grid) S.topics = [];
-  const qw = (typeof QUIZ_W !== 'undefined' && QUIZ_W[q.id] != null) ? QUIZ_W[q.id] : 0.6;
-  S.tagw = S.tagw || {};
-  (S.picked[S.qi] || []).forEach(i => {
-    const o = q.o[i];
-    /* тег мог прийти из двух вопросов — оставляем больший вес */
-    (o.tags || []).forEach(t => {
-      if(!S.tags.includes(t)) S.tags.push(t);
-      S.tagw[t] = Math.max(S.tagw[t] || 0, qw);
-    });
-    if(o.topic){ S.topics = S.topics || []; if(!S.topics.includes(o.topic)) S.topics.push(o.topic); }
-    if(o.time) S.time = o.time;
-    if(o.slot) S.slot = o.slot;
-    if(o.extra) Object.assign(S.extra, o.extra);
-    S.answers[q.id] = {t:o.t, next:o.next || null};
-  });
+  applyQuiz();
   if(S.qi < quizFlow().length - 1){ S.qi++; render(); stars(); return; }
   if(!S.user){ S.screen = 'mail'; render(); stars(); return; }
   S.screen = 'building'; render(); stars();
