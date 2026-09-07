@@ -505,7 +505,7 @@ async function pullDm(){
 
   let th = (S.inbox || []).find(x => x.kind === 'платформа');
   if(!th){
-    th = {id:'pf' + Date.now().toString(36), from:'Eva Space', c:'#111014',
+    th = {id:'pf' + Date.now().toString(36), from:'Eva Space', c:'var(--ink)',
           kind:'платформа', ago:'только что', unread:false, sys:true, msgs:[]};
     S.inbox.unshift(th);
   }
@@ -635,11 +635,26 @@ async function backupDB(){
 }
 
 /* ---------- запуск ---------- */
+/* Без сервера панель и кабинет иначе не открыть: роль выдаёт только сервер.
+   Для показа заводим две учётные записи прямо в браузере — на бою, где
+   сервер есть, они не создаются. */
+function seedDemoAccounts(){
+  const all = DB.users();
+  const add = (email, name, role) => {
+    if(all[email]) return;
+    all[email] = {email, name, pass:hashPass('eva2026'), verified:true, role, created:Date.now(), demo:true};
+  };
+  add('admin@evaspace.ru', 'Егор', 'admin');
+  add('marina@evaspace.ru', 'Марина Ясная', 'expert');
+  DB.saveUsers(all);
+}
+
 async function initSync(){
   const ping = await apiCall('ping', null, { silent:true, force:true });
   SYNC.alive = !!ping;
   if(!SYNC.alive){
     console.info('[Eva] Сервер не найден — работаем локально в этом браузере');
+    seedDemoAccounts();
     return;
   }
   await syncPull(true);

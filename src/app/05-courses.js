@@ -120,7 +120,7 @@ function pgCourseLanding(){
             <div style="flex:1;min-width:0">
               <b style="font-size:13px;display:block">${esc(l.t)}</b>
               <div class="small muted">${l.d ? esc(l.d)+' · ' : ''}${l.min} мин</div></div>
-            ${open ? '<span class="pill free">открыт</span>' : '<span class="lockmini">🔒</span>'}
+            ${open ? '<span class="pill free">открыт</span>' : '<span class="lockmini">' + ico('lock',13) + '</span>'}
           </button>`;
         }).join('')}
       </div>
@@ -193,7 +193,7 @@ function pgCourseLearn(){
         <div class="n">${u.done?'✓':u.n}</div>
         <div style="flex:1;min-width:0"><b style="font-size:13px;display:block">${esc(u.t)}</b>
           <div class="small muted">${u.min} мин${u.hw?' · есть домашнее':''}</div></div>
-        ${k===i?'<span class="chip pale">сейчас</span>':open?'<span class="muted">›</span>':'<span class="lockmini">🔒</span>'}
+        ${k===i?'<span class="chip pale">сейчас</span>':open?'<span class="muted">›</span>':'<span class="lockmini">' + ico('lock',13) + '</span>'}
       </button>`;
     }).join('')}
   </div>`;
@@ -646,7 +646,7 @@ function pgMembers(){
   const prof = S.datingProfile;
   return `
   ${prof ? datingBlock() : `
-    <div class="card" style="background:linear-gradient(150deg,#F3EFFA,#FBF1F4);border-color:transparent">
+    <div class="card" style="background:var(--grad-soft);border-color:transparent">
       <b style="font-size:16px">Новые знакомства</b>
       <p class="small muted" style="margin:7px 0 12px">Заполни короткую анкету - и Ева начнёт подбирать женщин
         с похожими интересами. Можно встретиться на кофе в своём городе или познакомиться онлайн.</p>
@@ -726,7 +726,7 @@ function wallCard(w){
     <div class="wallfoot">
       <div class="row" style="gap:7px">
         <button class="starbtn ${liked?'on':''}" onclick="starPost('${attJs(w.id)}')">
-          ${starMark(15, liked ? '#E7A339' : 'rgba(17,16,20,.22)')}
+          ${starMark(15, liked ? 'var(--star)' : 'var(--star-off)')}
           <span>${w.st + (liked?1:0)}</span>
         </button>
         <button class="cmtbtn ${open?'on':''}" onclick="toggleComments('${attJs(w.id)}')">
@@ -773,7 +773,7 @@ function commentRow(w, c, ci){
       </div>
       <div class="ctext">${esc(c.t)}</div>
       <button class="cstar ${starred?'on':''}" onclick="starComment('${attJs(w.id)}',${ci})">
-        ${starMark(12, starred ? '#E7A339' : 'rgba(17,16,20,.24)')}
+        ${starMark(12, starred ? 'var(--star)' : 'var(--star-off)')}
         <span>${(c.st || 0) + (starred?1:0) || ''}</span></button>
     </div>
   </div>`;
@@ -1353,7 +1353,7 @@ function seedInbox(){
      msgs:[{me:false, t:'Привет! Увидела твоё послание про пробежки. Я как раз бегаю в Сокольниках по средам, давай вместе?', tm:'09:20'}]},
     {id:'p2', from:'Марина Ясная', c:'#A8375C', kind:'эксперт', ago:'вчера', unread:true, exp:true,
      msgs:[{me:false, t:'Спасибо за вопрос в группе. Отвечаю подробнее: дыхание 4-7-8 можно делать и при панике, но начинать лучше в спокойном состоянии, чтобы тело запомнило схему.', tm:'18:05'}]},
-    {id:'p3', from:'Eva Space', c:'#111014', kind:'система', ago:'2 дня назад', unread:false, sys:true,
+    {id:'p3', from:'Eva Space', c:'var(--ink)', kind:'система', ago:'2 дня назад', unread:false, sys:true,
      msgs:[{me:false, t:'Твоя программа обновилась: на новой неделе новые практики. Хорошего старта!', tm:'08:00'}]}
   ];
   S.inbox = S.inbox || [];
@@ -1371,7 +1371,7 @@ function pullMarketReplies(){
   if(!fresh.length) return;
   let th = S.inbox.find(x => x.kind === 'маркет');
   if(!th){
-    th = {id:'mk'+Date.now().toString(36), from:'Eva Space · Маркет', c:'#111014',
+    th = {id:'mk'+Date.now().toString(36), from:'Eva Space · Маркет', c:'var(--ink)',
           kind:'маркет', ago:'только что', unread:false, sys:true, msgs:[]};
     S.inbox.unshift(th);
   }

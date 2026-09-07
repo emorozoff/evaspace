@@ -3,6 +3,7 @@
    ===================================================================== */
 
 /* ---------- утилиты ---------- */
+const APP_VERSION = 'v3.1';
 const el = document.getElementById('app');
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -52,11 +53,31 @@ const hash = s => { let h = 0; for(let i=0;i<s.length;i++) h = (h*31 + s.charCod
 const plural = (n,a,b,c) => { const m=n%100, k=n%10; return n+' '+(m>=11&&m<=14?c:k===1?a:k>=2&&k<=4?b:c); };
 
 /* ---------- генеративные обложки ---------- */
+/* Обложки: восемь глубоких пар «свет → тень». Раньше все были серо-бурыми,
+   и лента читалась как один длинный сумрак; теперь у каждой есть свой цвет,
+   но все достаточно тёмные, чтобы белая подпись читалась. */
 const PAL = [
-  ['#6B5570','#2C2333'], ['#4E5C74','#232B3A'], ['#8A6B4E','#3A2A22'],
-  ['#5E7A6C','#22322C'], ['#7A5C7E','#2E2136'], ['#8C5A5E','#33222A'],
-  ['#59607F','#242838'], ['#7E6A55','#2E2620']
+  ['#7A3B6E','#2A1836'], ['#3E4C8C','#1B2242'], ['#B06A48','#4A2A1E'],
+  ['#3F8A78','#1B3A33'], ['#8A55A6','#33204A'], ['#B04A6A','#4A1F30'],
+  ['#4F6FA8','#213048'], ['#9A7A46','#3E301C']
 ];
+
+/* ---------- служебные иконки ----------
+   Одна линия, один вес. Эмодзи в интерфейсе на каждом телефоне выглядели
+   по-своему и всегда чужими. */
+const ICONS = {
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
+  cart:   '<path d="M4 8h16l-1.2 11a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  gift:   '<rect x="3.5" y="8" width="17" height="12.5" rx="2.5"/><path d="M3.5 12.5h17M12 8v12.5"/><path d="M12 8c-2.6 0-4.6-1.1-4.6-2.6S8.4 3 9.6 3c1.6 0 2.4 2.5 2.4 5 0-2.5.8-5 2.4-5 1.2 0 2.2.9 2.2 2.4S14.6 8 12 8z"/>',
+  lock:   '<rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>',
+  mic:    '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"/>',
+  camera: '<path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.6l1.2-2h5.4l1.2 2h1.6A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.4"/>',
+  image:  '<rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="9.5" r="1.6"/><path d="m20.5 15-4.4-4.4a1.5 1.5 0 0 0-2.1 0L6 18.5"/>'
+};
+function ico(k, size){
+  const s = size || 16;
+  return `<svg class="ic" viewBox="0 0 24 24" width="${s}" height="${s}" style="width:${s}px;height:${s}px" aria-hidden="true">${ICONS[k] || ''}</svg>`;
+}
 
 function coverGen(id, kind, w, h){
   const n = hash(id), [c1,c2] = PAL[n % PAL.length], g = 'g'+n.toString(36);
@@ -479,8 +500,8 @@ const INVITED = [
 /* Вес вопроса в подборе. Первый вопрос — «что важнее всего сейчас»,
    и его ответы весят больше остальных: женщина назвала главное. Уточняющие
    вопросы весят чуть меньше главного, обстоятельства — ещё меньше. */
-const QUIZ_W = {goal:1, rel_free:0.85, rel_married:0.85, preg:0.85, baby:0.85,
-                rel:0.7, stage:0.7, hard:0.75, level:0.5, time:0.5};
+const QUIZ_W = {goal:1, pain:0.9, rel_free:0.85, rel_married:0.85, preg:0.85, baby:0.85,
+                rel:0.7, stage:0.7, hard:0.75, topics:0.6, level:0.5, time:0.5};
 const QUIZ = [
   {id:'goal', q:'Что для тебя сейчас важнее всего?',
    hint:'Выбери до трёх — чем точнее, тем точнее программа', max:3, o:[
@@ -568,7 +589,7 @@ const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 
 const S = {
   screen:'welcome', tab:'home', page:null, sheet:null,
-  name:'', qi:0, picked:[], tags:[], time:20, slot:'утро',
+  name:'', qi:0, picked:{}, tags:[], time:20, slot:'утро',
   program:[], day:0, match:0,
   points:0, stars:0, bonus:300,
   joined:['gr1'], cart:[], purchases:[], courses:[],

@@ -703,7 +703,7 @@ function adEvents(){
       <div class="small muted">${e.unlimited ? 'мест без ограничения' : (e.seats - e.left) + ' из ' + e.seats + ' записалось'}${e.price?' · '+money(e.price):' · бесплатно'}</div>
     </button>
     <div style="display:flex;flex-direction:column;gap:5px">
-      <button class="chip" onclick="pickImage('${attJs(e.id)}')">▣</button>
+      <button class="chip" onclick="pickImage('${attJs(e.id)}')" aria-label="Фото">${ico('camera',14)}</button>
       <button class="chip" onclick="dropEvent('${attJs(e.id)}')">✕</button>
     </div>
   </div>`).join('')}`;
@@ -1085,7 +1085,7 @@ function pgEditCourse(){
               <b style="font-size:13px;display:block">${esc(l.t)}</b>
               <div class="small muted">${l.min} мин · ${l.video?'видео есть':'без видео'}</div>
             </div>
-            <span class="pill ${l.free?'free':'paid'}">${l.free?'free':'🔒'}</span>
+            <span class="pill ${l.free?'free':'paid'}">${l.free?'free':ico('lock',11)}</span>
           </button>`;
         }).join('')}
         <button class="btn ghost sm" style="width:100%" onclick="addUnitTo('${attJs(c.id)}',${mi})">＋ Добавить урок в модуль</button>
@@ -1181,7 +1181,7 @@ function pgEditUnit(){
       <div><label class="lbl">Доступ</label>
         <div class="seg" style="margin:0">
           <button class="${l.free?'on':''}" onclick="setUnitR('${attJs(c.id)}','${attJs(l.id)}','free',true)">Открыт</button>
-          <button class="${!l.free?'on':''}" onclick="setUnitR('${attJs(c.id)}','${attJs(l.id)}','free',false)">🔒 Платный</button>
+          <button class="${!l.free?'on':''}" onclick="setUnitR('${attJs(c.id)}','${attJs(l.id)}','free',false)">${ico('lock',12)} Платный</button>
         </div></div>
     </div>
     <p class="small muted" style="margin:10px 0 0">Открытые уроки видны без покупки - это витрина курса. Обычно открывают первый урок и один из середины.</p>
@@ -1586,7 +1586,7 @@ function exEduBlock(){
         <div class="small muted">${x.y}${MEDIA['cert_'+x.id] ? ' · скан загружен' : ' · скан не загружен'}</div>
         ${x.comment ? `<div class="small" style="color:var(--warn);margin-top:3px">${esc(x.comment)}</div>` : ''}</div>
       <span class="tag-st ${ST[x.st][1]}">${ST[x.st][0]}</span>
-      <button class="chip" onclick="pickImage('cert_${x.id}')">▣</button>
+      <button class="chip" onclick="pickImage('cert_${x.id}')" aria-label="Скан">${ico('camera',14)}</button>
       <button class="chip" onclick="delEdu('${attJs(e.id)}','${attJs(x.id)}')">✕</button>
     </div>`).join('') : '<div class="small muted">Пока ничего не добавлено</div>'}
   </div>`;
@@ -1751,7 +1751,7 @@ function exSettings(){
   <div class="card" style="text-align:center">
     <div style="width:88px;height:88px;margin:0 auto 12px;position:relative">
       <div class="pcirc" style="width:88px;height:88px">${expPic(e, true)}</div>
-      <button class="camera" onclick="pickImage('${attJs(e.id)}')">▣</button>
+      <button class="camera" onclick="pickImage('${attJs(e.id)}')" aria-label="Сменить фото">${ico('camera',15)}</button>
     </div>
     <div class="small muted">Фото на публичной странице</div>
   </div>

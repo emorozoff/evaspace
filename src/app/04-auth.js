@@ -13,7 +13,7 @@ const STAR = `<svg class="splash-star" viewBox="0 0 100 100" aria-hidden="true">
     <stop offset="0" stop-color="#FFFDF6"/><stop offset="1" stop-color="#F0D9A8"/></linearGradient></defs>
   <path d="${STAR_PATH}" fill="url(#sg)"/></svg>`;
 const starMark = (size, fill) => `<svg width="${size||13}" height="${size||13}" viewBox="0 0 100 100" style="vertical-align:-1px">
-  <path d="${STAR_PATH}" fill="${fill||'#E7A339'}"/></svg>`;
+  <path d="${STAR_PATH}" fill="${fill||'var(--star)'}"/></svg>`;
 
 /* Заставка держалась ровно 2,45 секунды при каждом открытии, и только
    потом начинался вход — то есть приложение сначала ждало, а потом
@@ -123,6 +123,10 @@ function authAdmin(){
       <button class="btn" style="background:#fff;color:var(--ink)" onclick="adminLogin()">Войти в панель</button>
       <p class="small muted" style="margin-top:14px;font-size:11px">Роль определяет сервер: администратора задаёт
         файл data/config.php на хостинге, эксперта назначает администратор.</p>
+      ${SYNC.alive === false ? `<div class="card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14);color:#fff;margin-top:14px">
+        <div class="small" style="opacity:.72">Демо без сервера — можно зайти так:</div>
+        <div class="small" style="margin-top:5px;line-height:1.7"><b>admin@evaspace.ru</b> · пароль <b>eva2026</b> — панель<br>
+          <b>marina@evaspace.ru</b> · пароль <b>eva2026</b> — кабинет эксперта</div></div>` : ''}
     </div>
   </div>`;
 }
@@ -140,7 +144,7 @@ async function submitAuth(){
     if(a.pass.length < 6){ a.err = 'Пароль минимум 6 символов'; return render(); }
     a.err = ''; a.name = nm;
     S.name = nm; S.role = 'user';
-    S.tags = []; S.picked = []; S.qi = 0; S.answers = {}; S.extra = {};
+    S.tags = []; S.picked = {}; S.qi = 0; S.answers = {}; S.extra = {};
     S.screen = 'quiz';
     render(); stars();
     return;
@@ -237,7 +241,7 @@ async function signIn(u){
   if(had && S.program && S.program.length){
     S.screen = 'app'; S.tab = 'home'; checkWeek();
   } else {
-    S.tags = []; S.picked = []; S.qi = 0; S.screen = 'quiz';
+    S.tags = []; S.picked = {}; S.qi = 0; S.screen = 'quiz';
   }
   render(); stars();
   toast('С возвращением, ' + u.name);
@@ -420,7 +424,7 @@ function tryAutoLogin(){
   const known = typeof avatarOf === 'function' ? avatarOf(u.email) : '';
   if(known) S.avatar = known;
   S.screen = 'app';
-  if(S.role === 'user' && (!had || !S.program || !S.program.length)){ S.screen = 'quiz'; S.qi = 0; S.picked = []; }
+  if(S.role === 'user' && (!had || !S.program || !S.program.length)){ S.screen = 'quiz'; S.qi = 0; S.picked = {}; }
   else checkWeek();
   return true;
 }
@@ -436,7 +440,6 @@ function trialLeft(){
 }
 function hasAccess(){ return S.sub.active || trialLeft() > 0; }
 
-function trialBar(){ return ''; }
 
 /* строка о доступе внутри шапки */
 function accessLine(){
@@ -473,7 +476,7 @@ function pgSub(){
     <div class="card">
       <b style="font-size:14.5px">Что входит</b>
       ${[['Личная программа на каждый день','Пересобирается под твои темы и цикл'],
-         ['Вся библиотека практик и мастер-классов','37 материалов, новые каждую неделю'],
+         ['Вся библиотека практик и мастер-классов',LIB.length + ' материалов, новые каждую неделю'],
          ['Сообщество и группы','Ответы экспертов внутри чатов'],
          ['Отчёты, календарь, трекер цикла',''],
          ['Скидка 15% на курсы и маркет','']].map(([t,d]) => `

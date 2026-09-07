@@ -75,7 +75,6 @@ function pgHome(){
   return `${hero()}
   <div class="view pad">
     <div style="height:14px"></div>
-    ${trialBar()}
     ${!acc ? `<button class="expbar" onclick="openPage('sub')">
       <span class="lk">${LOCK_SVG}</span>
       <span style="flex:1;text-align:left"><b>Пробные три дня прошли</b>
@@ -95,12 +94,15 @@ function pgHome(){
           ${done===3?'<div class="wstar">★</div>':''}
         </button>`;}).join('')}
     </div>
+    ${weekThemesLine()}
 
     <div class="sec-h">
       <div><h2 class="serif">${S.day === todayIdx() ? 'Сегодня' : DAYS[S.day]+', день '+(S.day+1)}</h2>
-        <div class="small muted">${S.gentle ? 'Мягкий режим: аффирмация и мастер-класс' : 'Выполни три шага - получишь три звезды'}</div></div>
+        <div class="small muted">${S.gentle ? 'Мягкий режим: аффирмация и мастер-класс'
+          : day.theme ? `Тема дня — <b style="color:var(--accent-ink)">${esc(day.theme)}</b> · три шага, три звезды`
+          : 'Выполни три шага - получишь три звезды'}</div></div>
       <div class="starrow">${[0,1,2].map(i => i < doneOf(S.day)
-        ? starMark(17) : `<span class="off">${starMark(17,'rgba(17,16,20,.14)')}</span>`).join(' ')}</div>
+        ? starMark(17) : `<span class="off">${starMark(17,'var(--star-off)')}</span>`).join(' ')}</div>
     </div>
 
     <div id="today">${S.day > todayIdx() ? `<div class="future-note">
@@ -155,6 +157,14 @@ function pgHome(){
         </button>`).join('')}
     </div>
   </div>`;
+}
+
+/* Темы недели одной строкой: три её главных запроса, разложенные по дням.
+   Так видно, что неделя собрана вокруг неё, а не из случайных карточек. */
+function weekThemesLine(){
+  const th = [...new Set((S.program || []).map(d => d.theme).filter(Boolean))];
+  if(!th.length) return '';
+  return `<div class="small muted" style="margin:2px 0 6px">Эта неделя про <b style="color:var(--ink)">${th.map(esc).join('</b>, <b style="color:var(--ink)">')}</b></div>`;
 }
 
 function donutLight(pct){
@@ -237,7 +247,7 @@ function pgContent(){
     <div style="position:relative;margin-bottom:12px">
       <input class="field" style="margin:0;padding-left:40px" placeholder="Поиск: тревога, йога, сон"
         value="${esc(S.q)}" oninput="S.q=this.value;renderList()">
-      <span style="position:absolute;left:15px;top:13px;opacity:.4">🔍</span>
+      <span style="position:absolute;left:14px;top:14px;color:var(--muted);display:flex">${ico('search',17)}</span>
     </div>
 
     <div id="cbox">${contentTabs()}${topicRow()}</div>
@@ -269,7 +279,7 @@ function topicRow(){
   return `<div class="trow hscroll">
     <button class="tchip ${all?'on plain':''}" onclick="showAll()"><span>Все</span></button>
     ${liked ? `<button class="tchip fav ${S.onlyLiked?'on':''}" onclick="tgLiked()">
-      ${starMark(13, S.onlyLiked ? '#fff' : '#E7A339')}<span>Избранное</span><b>${liked}</b></button>` : ''}
+      ${starMark(13, S.onlyLiked ? '#fff' : 'var(--star)')}<span>Избранное</span><b>${liked}</b></button>` : ''}
     ${list.map(t => `<button class="tchip ${S.topicFilter===t.k?'on':''}" style="--tc:${safeColor(t.c)}"
       onclick="pickTopic('${attJs(t.k)}')">
       ${tIcon(t.k, 14)}<span>${esc(t.l)}</span><b>${have[t.k]}</b></button>`).join('')}
@@ -311,7 +321,7 @@ function starContent(btn, id){
   const on = S.likes.includes(id);
   S.likes = on ? S.likes.filter(v => v !== id) : [...S.likes, id];
   btn.classList.toggle('on', !on);
-  btn.innerHTML = starMark(15, !on ? '#E7A339' : 'rgba(17,16,20,.22)');
+  btn.innerHTML = starMark(15, !on ? 'var(--star)' : 'var(--star-off)');
   schedulePersist();
   publishCard();                       /* полка на её странице - это те же звёзды */
   if(!on) toast('Добавлено в избранное');
@@ -328,7 +338,7 @@ function contentRow(x){
       <div class="small muted" style="font-size:11.5px">${x.min} мин · ${esc(x.expert)}</div>
     </div>
     <span class="starbtn ${isLiked(x.id)?'on':''}" onclick="event.stopPropagation();starContent(this,'${attJs(x.id)}')">
-      ${starMark(15, isLiked(x.id) ? '#E7A339' : 'rgba(17,16,20,.22)')}</span>
+      ${starMark(15, isLiked(x.id) ? 'var(--star)' : 'var(--star-off)')}</span>
   </button>`;
 }
 
@@ -348,7 +358,7 @@ function pgCourses(){
     <div class="eyebrow">Обучение</div>
     <h1 class="serif" style="font-size:29px;margin:6px 0 14px">Курсы экспертов</h1>
 
-    <div class="card" style="background:linear-gradient(150deg,#2E2145,#4B2A4E);color:#fff;border-color:transparent">
+    <div class="card" style="background:var(--grad-dark);color:#fff;border-color:transparent">
       <h3 class="serif" style="font-size:20px;margin:0 0 8px;color:#fff">Понравилась бесплатная практика?</h3>
       <p class="small" style="margin:0;color:rgba(255,255,255,.78)">У каждого эксперта есть полный курс - продолжение того,
         что ты уже пробовала в программе. Первые уроки открыты без оплаты.</p>
@@ -707,14 +717,14 @@ function pgMarket(){
     <div class="spread">
       <div><div class="eyebrow">Маркет</div>
         <h1 class="serif" style="font-size:29px;margin:6px 0 0">Для твоих практик</h1></div>
-      <button class="quick" style="width:46px;height:46px;padding:0;display:grid;place-items:center;position:relative" onclick="openPage('cart')">
-        <i style="margin:0">🛒</i>
+      <button class="quick iconbtn" style="width:46px;height:46px;padding:0;display:grid;place-items:center;position:relative" onclick="openPage('cart')">
+        ${ico('cart',22)}
         ${cnt ? `<span style="position:absolute;top:-4px;right:-4px;background:var(--rose-deep);color:#fff;border-radius:99px;font-size:10px;font-weight:800;padding:2px 6px">${cnt}</span>` : ''}
       </button>
     </div>
 
     <div class="card" style="background:linear-gradient(120deg,var(--blush),var(--lilac-soft));margin-top:14px">
-      <div class="row"><div style="font-size:24px">🎁</div>
+      <div class="row"><div class="giftic">${ico('gift',22)}</div>
         <div><b style="font-size:15px">${S.bonus} ₽ бонусами</b>
           <div class="small muted">Можно оплатить до 30% любого заказа</div></div></div>
     </div>
@@ -795,7 +805,7 @@ function pgProfile(){
       <div style="text-align:center;position:relative;z-index:2">
         <div style="margin:2px auto 10px;width:82px;position:relative">
           ${avatarEl(82)}
-          <button class="camera" onclick="pickAvatar()">▣</button>
+          <button class="camera" onclick="pickAvatar()" aria-label="Сменить фото">${ico('camera',15)}</button>
         </div>
         <h1 class="serif" style="font-size:24px;margin:0;color:#fff">${esc(S.name||'Ева')}</h1>
         <p class="small muted" style="margin:5px 0 0">${S.user ? esc(S.user.email) : ''}</p>
@@ -958,7 +968,7 @@ function pgEarn(){
       </div>
     </div>
 
-    <div class="card" style="background:linear-gradient(150deg,#F3EFFA,#FBF1F4);border-color:transparent">
+    <div class="card" style="background:var(--grad-soft);border-color:transparent">
       <b style="font-size:15px">Вдохновляй своим примером</b>
       <p class="small muted" style="margin:7px 0 0">Женщины приходят не по рекламе, а за живым примером.
         Расскажи, что у тебя изменилось за эти недели: как стал спать, как перестала извиняться за отдых,

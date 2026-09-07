@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Eva Space</title>
 <meta name="description" content="Eva Space — платформа женского развития: личная программа, практики, курсы экспертов.">
-<meta name="theme-color" content="#111014">
+<meta name="theme-color" content="#1B1327">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -13,44 +13,92 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Eva Space">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Unbounded:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/manrope-500-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/manrope-700-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/cormorant-garamond-600-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 /* =====================================================================
-   EVA SPACE — дизайн-система v2: графит + приглушённая фуксия
+   EVA SPACE — дизайн-система v3
+   Тёплая бумага, глубокая слива, малина и лаванда. Заголовки — Cormorant
+   Garamond, интерфейс — Manrope. Шрифты лежат рядом с приложением в fonts/:
+   работают без интернета и не зависят от чужих серверов.
    ===================================================================== */
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/cormorant-garamond-500-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/cormorant-garamond-500-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/cormorant-garamond-600-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/cormorant-garamond-600-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/cormorant-garamond-700-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/cormorant-garamond-700-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/manrope-400-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/manrope-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/manrope-500-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/manrope-500-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/manrope-600-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/manrope-600-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/manrope-700-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/manrope-700-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/manrope-800-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/manrope-800-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+
 :root{
-  --ink:#111014; --ink-2:#1C1A21; --ink-3:#2A272F;
-  --paper:#F7F6F4; --surface:#FFFFFF; --surface-2:#F1EFEC;
-  --muted:#7E7A85; --line:rgba(17,16,20,.09); --line-2:rgba(17,16,20,.16);
-  --accent:#A8375C; --accent-2:#C2506F; --accent-soft:#F7E9EE;
-  --gold:#B8894A; --ok:#3F7D62; --warn:#B4642A; --lilac:#6C5CE0;
-  --grad-dark:linear-gradient(155deg,#1A171F 0%,#2B2233 55%,#4A2C42 100%);
-  --sh-1:0 1px 2px rgba(17,16,20,.05);
-  --sh-2:0 4px 18px rgba(17,16,20,.07);
-  --sh-3:0 16px 44px rgba(17,16,20,.14);
-  --r-xs:8px; --r-sm:12px; --r:16px; --r-lg:22px; --r-xl:28px;
-  --shell:430px; --nav-h:64px;
+  --sans:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --display:'Cormorant Garamond','Iowan Old Style','Times New Roman',Georgia,serif;
+
+  /* основа */
+  --ink:#1C1626; --ink-2:#2A2236; --ink-3:#3B3149;
+  --paper:#F9F6F1; --surface:#FFFFFF; --surface-2:#F3EEE7; --surface-3:#EAE3DA;
+  --muted:#7C7388; --line:rgba(28,22,38,.08); --line-2:rgba(28,22,38,.15);
+
+  /* цвета смысла */
+  --accent:#C43A6B; --accent-2:#DA5486; --accent-soft:#FBEAF0; --accent-ink:#8F2450;
+  --rose:#C43A6B; --rose-deep:#8F2450; --blush:#FBEAF0;
+  --lilac:#7B5CF0; --lilac-soft:#EEE9FF;
+  --gold:#C08F3B; --gold-soft:#F3D78E; --star:#F0B23A; --star-off:rgba(28,22,38,.16);
+  --ok:#2F8C6C; --ok-soft:#E3F3EB; --warn:#C2672B; --warn-soft:#FBEEE1;
+  --plum:#2A1A38;
+
+  /* градиенты */
+  --grad-dark:linear-gradient(150deg,#1B1327 0%,#3A2149 48%,#7A2D5C 100%);
+  --grad-hero:linear-gradient(135deg,#C43A6B 0%,#7B5CF0 100%);
+  --grad-accent:linear-gradient(135deg,#C43A6B 0%,#7B5CF0 100%);
+  --grad-gold:linear-gradient(135deg,#F7DE9F 0%,#E3A945 100%);
+  --grad-soft:linear-gradient(150deg,#EEE9FF 0%,#FBEAF0 100%);
+
+  /* тени с оттенком сливы: серые на тёплой бумаге выглядят грязью */
+  --sh-1:0 1px 2px rgba(42,26,56,.04),0 2px 8px rgba(42,26,56,.04);
+  --sh-2:0 6px 22px rgba(42,26,56,.09);
+  --sh-3:0 18px 48px rgba(42,26,56,.2);
+  --sh-acc:0 10px 26px rgba(196,58,107,.32);
+
+  --r-xs:10px; --r-sm:14px; --r:18px; --r-lg:24px; --r-xl:30px;
+  --shell:430px; --nav-h:66px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
-body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--paper);
-  color:var(--ink);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;font-size:15px;letter-spacing:-.006em}
+html{background:var(--paper)}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);min-height:100vh;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-size:15px;letter-spacing:-.005em;line-height:1.45}
 button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer;padding:0;letter-spacing:inherit}
-button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-input,textarea,select{font-family:inherit;font-size:15px;letter-spacing:-.006em}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,textarea,select{font-family:inherit;font-size:15px;letter-spacing:-.005em;color:var(--ink)}
 ::-webkit-scrollbar{display:none}
 img{max-width:100%}
+::selection{background:var(--accent-soft)}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
-.serif{font-family:Inter,sans-serif;font-weight:700;letter-spacing:-.038em;line-height:1.13}
-.logo{font-family:Unbounded,Inter,sans-serif;font-weight:300;letter-spacing:.18em}
+/* ---------- типографика ----------
+   Заголовки — антиква: у неё маленькая высота строчных, поэтому размеры
+   выставлены крупнее, чем были у гротеска. Цифры в антикве — только
+   маюскульные: старостильные «прыгают» в счётчиках. */
+.serif{font-family:var(--display);font-weight:600;letter-spacing:-.005em;line-height:1.08;font-variant-numeric:lining-nums}
+.logo{font-family:var(--display);font-weight:600;letter-spacing:.24em;text-transform:uppercase}
 .small{font-size:13px;line-height:1.5}
+.tiny{font-size:11.5px;line-height:1.45}
 .muted{color:var(--muted)}
-.eyebrow{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
-h1.serif{font-size:26px;margin:0}
-h2.serif{font-size:19px;margin:0}
+.eyebrow{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+h1.serif{font-size:30px;margin:0}
+h2.serif{font-size:22px;margin:0}
+b,strong{font-weight:700}
 
 .shell{max-width:var(--shell);margin:0 auto;min-height:100vh;padding-bottom:calc(var(--nav-h) + 58px + env(safe-area-inset-bottom))}
 .pad{padding:0 16px}
@@ -60,188 +108,240 @@ h2.serif{font-size:19px;margin:0}
 .anim-up{animation:up .45s cubic-bezier(.2,.75,.3,1) forwards}
 .d1{animation-delay:.06s}.d2{animation-delay:.14s}.d3{animation-delay:.24s}
 
+/* ---------- ночные экраны: заставка, вход, тест ---------- */
 .sky{position:fixed;inset:0;background:var(--grad-dark);z-index:0}
+.sky:before{content:"";position:absolute;inset:0;
+  background:radial-gradient(90% 60% at 80% 0%,rgba(218,84,134,.28),transparent 60%),
+             radial-gradient(70% 50% at 10% 100%,rgba(123,92,240,.22),transparent 60%)}
 .sky canvas{position:absolute;inset:0;width:100%;height:100%}
 .night{position:relative;z-index:1;color:#fff;min-height:100vh;display:flex;flex-direction:column;
   max-width:var(--shell);margin:0 auto;padding:calc(26px + env(safe-area-inset-top)) 22px calc(24px + env(safe-area-inset-bottom))}
-.night .muted{color:rgba(255,255,255,.6)}
-.night .field{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16);color:#fff}
-.night .field::placeholder{color:rgba(255,255,255,.4)}
-.night .btn.ghost{background:rgba(255,255,255,.07);color:#fff;border-color:rgba(255,255,255,.16)}
+.night .muted{color:rgba(255,255,255,.62)}
+.night .field{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:#fff}
+.night .field::placeholder{color:rgba(255,255,255,.42)}
+.night .field:focus{border-color:rgba(255,255,255,.7);box-shadow:0 0 0 3px rgba(255,255,255,.12)}
+.night .btn{background:#fff;color:var(--ink);box-shadow:0 10px 26px rgba(0,0,0,.22)}
+.night .btn:hover{background:#fff;opacity:.94}
+.night .btn.ghost{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.18);box-shadow:none}
+.night .btn.ghost:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4)}
+.night .btn.gold{background:var(--grad-gold);color:var(--plum);box-shadow:0 12px 30px rgba(227,169,69,.35)}
+.night .bar{background:rgba(255,255,255,.16)}
+.night .bar i{background:var(--grad-gold)}
+.night .chip{background:rgba(255,255,255,.12);color:#fff;border-color:transparent}
+.authhead{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.authhead .logo{font-size:31px;line-height:1;color:#fff}
 
+/* ---------- шапка ---------- */
 .hero{background:var(--grad-dark);color:#fff;border-radius:0 0 var(--r-xl) var(--r-xl);
-  padding:calc(14px + env(safe-area-inset-top)) 16px 20px;position:relative;overflow:hidden}
-.hero .muted{color:rgba(255,255,255,.6)}
+  padding:calc(14px + env(safe-area-inset-top)) 18px 22px;position:relative;overflow:hidden;
+  box-shadow:0 12px 32px rgba(42,26,56,.16)}
+.hero .muted{color:rgba(255,255,255,.62)}
 .brandbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;position:relative;z-index:2}
-.brandbar .b{display:flex;align-items:center;gap:7px;font-size:10.5px;letter-spacing:.2em;font-weight:700;text-transform:uppercase;opacity:.85}
-.ava{border-radius:50%;background:var(--accent);color:#fff;display:inline-grid;place-items:center;font-weight:700;flex:none}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:14px;position:relative;z-index:2}
-.stats div,.stats button{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);
-  padding:10px 6px;text-align:center;color:#fff}
-.stats b{display:block;font-size:21px;font-weight:700;line-height:1.1;letter-spacing:-.035em;display:flex;align-items:center;justify-content:center;gap:4px}
-.stats span{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.55;font-weight:700}
-.levelbar{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
-  border-radius:999px;padding:7px 12px;margin-top:8px;position:relative;z-index:2;width:100%;text-align:left;color:#fff}
-.lchip{background:#fff;color:var(--ink);border-radius:999px;padding:3px 9px;font-size:10.5px;font-weight:700;flex:none}
+.brandbar .b{display:flex;align-items:center;gap:7px;font-size:10.5px;letter-spacing:.2em;font-weight:800;text-transform:uppercase;opacity:.85}
+.ava{border-radius:50%;background:var(--grad-accent);color:#fff;display:inline-grid;place-items:center;font-weight:700;flex:none}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;position:relative;z-index:2}
+.stats div,.stats button{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);border-radius:var(--r);
+  padding:11px 6px 10px;text-align:center;color:#fff;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.stats b{font-family:var(--display);font-variant-numeric:lining-nums;font-size:25px;font-weight:600;line-height:1;
+  display:flex;align-items:center;justify-content:center;gap:5px}
+.stats span{display:block;margin-top:5px;font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;font-weight:800}
+.levelbar{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);
+  border-radius:999px;padding:7px 12px 7px 7px;margin-top:9px;position:relative;z-index:2;width:100%;text-align:left;color:#fff}
+.lchip{background:#fff;color:var(--ink);border-radius:999px;padding:4px 10px;font-size:10.5px;font-weight:800;flex:none}
+.wish{position:relative;z-index:2;margin-top:12px;font-size:14.5px;line-height:1.5;background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);border-radius:var(--r);padding:12px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 
+/* ---------- карточки и строки ---------- */
 .card{background:var(--surface);border-radius:var(--r-lg);padding:16px;box-shadow:var(--sh-1);margin-bottom:12px;border:1px solid var(--line)}
 .card.p0{padding:0;overflow:hidden}
 .row{display:flex;gap:10px;align-items:center}
 .spread{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .sec-h{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 10px}
-.sec-h h2{font-size:20px;margin:0}
-.link{font-size:12px;font-weight:600;color:var(--accent)}
+.sec-h h2{font-size:23px;margin:0}
+.link{font-size:12.5px;font-weight:700;color:var(--accent-ink)}
 
-.btn{display:block;width:100%;text-align:center;background:var(--ink);color:#fff;padding:12px;border-radius:var(--r);
-  font-weight:600;font-size:14px;transition:.16s}
+/* ---------- кнопки ---------- */
+.btn{display:block;width:100%;text-align:center;background:var(--ink);color:#fff;padding:13px 18px;border-radius:999px;
+  font-weight:700;font-size:14.5px;line-height:1.25;transition:background .16s,box-shadow .16s,opacity .16s,transform .12s}
 .btn:hover{background:var(--ink-3)}
-.btn.acc{background:var(--accent)}
-.btn.acc:hover{background:var(--accent-2)}
-.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line-2)}
+.btn:active{transform:scale(.985)}
+.btn.acc{background:var(--grad-accent);box-shadow:var(--sh-acc)}
+.btn.acc:hover{background:var(--grad-accent);opacity:.94}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line-2);box-shadow:none}
 .btn.ghost:hover{background:var(--surface-2)}
-.btn.done{background:#EAF2ED;color:var(--ok)}
-.btn.sm{padding:8px 14px;font-size:12.5px;width:auto;display:inline-block;border-radius:var(--r-sm)}
-.btn.xs{padding:6px 11px;font-size:11.5px;width:auto;display:inline-block;border-radius:var(--r-xs)}
-.btn[disabled]{opacity:.4;pointer-events:none}
+.btn.done{background:var(--ok-soft);color:var(--ok);box-shadow:none}
+.btn.done:hover{background:var(--ok-soft)}
+.btn.gold{background:var(--grad-gold);color:var(--plum);box-shadow:0 10px 26px rgba(227,169,69,.3)}
+.btn.sm{padding:9px 16px;font-size:12.5px;width:auto;display:inline-block}
+.btn.xs{padding:7px 12px;font-size:11.5px;width:auto;display:inline-block}
+.btn[disabled]{opacity:.4;pointer-events:none;box-shadow:none}
 .acts{display:flex;gap:8px;margin-top:10px}
 .acts .btn{flex:1;width:auto}
 
+/* ---------- фишки и переключатели ---------- */
 .chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px}
 .chips.wrap{flex-wrap:wrap;overflow:visible}
-.chip{flex:none;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 11px;
+.chip{flex:none;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 12px;
   font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap;transition:.14s}
+.chip:hover{border-color:var(--line-2);color:var(--ink)}
 .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .chip.pale{background:var(--surface-2);border-color:transparent;color:var(--ink)}
-.seg{display:flex;background:var(--surface-2);border-radius:var(--r);padding:3px;gap:2px;margin-bottom:12px;overflow-x:auto}
-.seg button{flex:1;padding:8px 6px;border-radius:var(--r-sm);font-size:12px;font-weight:600;color:var(--muted);line-height:1.2;white-space:nowrap}
+.seg{display:flex;background:var(--surface-2);border-radius:999px;padding:4px;gap:2px;margin-bottom:12px;overflow-x:auto}
+.seg button{flex:1;padding:8px 8px;border-radius:999px;font-size:12px;font-weight:700;color:var(--muted);line-height:1.2;white-space:nowrap;transition:.14s}
 .seg button.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh-1)}
 
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
-.quick{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:11px 5px;text-align:center}
+.quick{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 5px 11px;text-align:center;
+  box-shadow:var(--sh-1);transition:.15s}
+.quick:hover{border-color:var(--line-2);transform:translateY(-1px)}
 .quick i{display:block;font-size:16px;font-style:normal;margin-bottom:4px}
-.quick span{font-size:10px;font-weight:600}
-.hscroll{display:flex;gap:10px;overflow-x:auto;padding:2px 16px 6px;margin:0 -16px}
+.quick svg{width:20px;height:20px;color:var(--accent-ink);stroke:var(--accent-ink);display:block;margin:0 auto 7px;
+  padding:8px;background:var(--accent-soft);border-radius:13px;box-sizing:content-box}
+.quick span{font-size:10.5px;font-weight:700}
+.hscroll{display:flex;gap:10px;overflow-x:auto;padding:2px 16px 8px;margin:0 -16px}
 .hscroll > *{flex:none;width:180px}
 
-.week{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px}
-.wd{flex:none;width:44px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
-  padding:8px 0;text-align:center;position:relative;transition:.16s}
-.wd span{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--muted)}
-.wd b{display:block;font-size:17px;font-weight:600;line-height:1.2}
-.wd .pips{display:flex;gap:3px;justify-content:center;margin-top:4px}
-.pip{width:4px;height:4px;border-radius:50%;background:var(--line-2)}
-.pip.on{background:#E7A339}
-/* выбранный день был почти чёрным, и точки дел на нём пропадали:
-   глубокий фиолетовый плюс золотые точки — тот же цвет отметок, что и везде */
-.wd.sel{background:linear-gradient(155deg,#3B2851,#221733);color:#fff;border-color:transparent}
-.wd.sel span{color:rgba(255,255,255,.62)}
-.wd.sel .pip{background:rgba(255,255,255,.28)}
-.wd.sel .pip.on{background:#E7A339;box-shadow:0 0 0 1px rgba(231,163,57,.3)}
+/* ---------- неделя ---------- */
+.week{display:flex;gap:7px;overflow-x:auto;padding:4px 0 8px}
+.wd{flex:none;width:46px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:9px 0 8px;text-align:center;position:relative;transition:.16s;cursor:pointer;box-shadow:var(--sh-1)}
+.wd span{font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;color:var(--muted)}
+.wd b{display:block;font-size:17px;font-weight:700;line-height:1.25;margin-top:1px}
+.wd .pips{display:flex;gap:3px;justify-content:center;margin-top:5px}
+.pip{width:6px;height:6px;border-radius:50%;background:var(--line-2)}
+.pip.on{background:var(--star);box-shadow:0 0 0 1px rgba(240,178,58,.25)}
+.wd:hover{border-color:var(--accent-2)}
+.wd.sel{background:var(--grad-accent);color:#fff;border-color:transparent;box-shadow:var(--sh-acc)}
+.wd.sel span{color:rgba(255,255,255,.72)}
+.wd.sel .pip{background:rgba(255,255,255,.32)}
+.wd.sel .pip.on{background:#FFE08A;box-shadow:0 0 0 1px rgba(255,224,138,.35)}
 .wd.today{border-color:var(--accent)}
 .wd.locked{opacity:.45}
-.wstar{position:absolute;top:-4px;right:-2px;font-size:10px;color:var(--gold)}
+.wd.future{opacity:.6}
+.wd.future b{color:var(--muted)}
+.wstar{position:absolute;top:-6px;right:-3px;font-size:12px;color:var(--star)}
+.starrow{font-size:15px;letter-spacing:2px;color:var(--star)}
+.starrow .off{color:var(--line-2)}
 
-.lesson{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:9px}
-.lesson .cov{position:relative;height:156px;cursor:pointer}
+/* ---------- карточка урока ---------- */
+.lesson{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:10px;box-shadow:var(--sh-1)}
+.lesson .cov{position:relative;height:160px;cursor:pointer}
 /* только сама обложка: без > правило растягивало на всю карточку и галочку
    внутри отметки — она перекрывала обложку и съедала нажатие */
 .lesson .cov > svg,.lesson .cov > img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover}
-.badge{position:absolute;top:10px;left:10px;background:rgba(17,16,20,.72);color:#fff;backdrop-filter:blur(8px);
-  border-radius:999px;padding:4px 10px;font-size:10px;font-weight:600;z-index:3}
-.cov .cap{position:absolute;left:12px;right:12px;bottom:10px;z-index:3;color:#fff}
-.cov .cap b{font-size:16px;display:block;line-height:1.25;letter-spacing:-.02em}
-.cov .cap span{font-size:11px;opacity:.8;font-weight:500}
-.cov:after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(17,16,20,.62),transparent 58%);z-index:1}
+.badge{position:absolute;top:10px;left:10px;background:rgba(20,12,28,.5);color:#fff;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:5px 11px;font-size:10px;font-weight:700;z-index:3}
+.cov .cap{position:absolute;left:14px;right:14px;bottom:12px;z-index:3;color:#fff}
+.cov .cap b{font-family:var(--display);font-size:20px;font-weight:600;display:block;line-height:1.12;letter-spacing:0}
+.cov .cap span{display:block;margin-top:3px;font-size:11.5px;opacity:.85;font-weight:600}
+.cov:after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(20,12,28,.74),rgba(20,12,28,.12) 56%,transparent);z-index:1}
 .play{position:absolute;right:10px;top:10px;width:26px;height:26px;border-radius:50%;
-  background:rgba(17,16,20,.4);backdrop-filter:blur(4px);display:grid;place-items:center;
+  background:rgba(20,12,28,.4);backdrop-filter:blur(4px);display:grid;place-items:center;
   z-index:3;color:rgba(255,255,255,.9);font-size:9px;border:1px solid rgba(255,255,255,.25)}
 .lesson .body{padding:12px 14px 14px}
 
 .crow{display:flex;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
-  padding:9px;margin-bottom:8px;width:100%;text-align:left;align-items:center}
-.crow .mini{width:80px;height:56px;border-radius:var(--r-sm);overflow:hidden;flex:none;position:relative;background:var(--surface-2)}
+  padding:9px;margin-bottom:8px;width:100%;text-align:left;align-items:center;box-shadow:var(--sh-1);transition:.15s}
+.crow:hover{border-color:var(--line-2)}
+.crow .mini{width:80px;height:58px;border-radius:var(--r-sm);overflow:hidden;flex:none;position:relative;background:var(--surface-2)}
 .crow .mini svg,.crow .mini img{width:100%;height:100%;display:block;object-fit:cover}
 .arow2{display:flex;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);
   border-radius:var(--r);padding:9px;margin-bottom:8px}
 .arow2 .mini{width:70px;height:50px;border-radius:var(--r-xs);overflow:hidden;flex:none;background:var(--surface-2)}
 .arow2 .mini svg,.arow2 .mini img{width:100%;height:100%;display:block;object-fit:cover}
 
-.bar{height:5px;border-radius:99px;background:var(--line);overflow:hidden}
-.bar i{display:block;height:100%;border-radius:99px;background:var(--accent);transition:width .6s}
-.price{font-weight:700;font-size:15px;letter-spacing:-.02em}
+.bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--grad-accent);transition:width .6s}
+.price{font-weight:800;font-size:15px;letter-spacing:-.02em}
 .old{color:var(--muted);text-decoration:line-through;font-size:12px;font-weight:500;margin-left:5px}
 
-.prod{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-.prod .ph{height:132px;position:relative}
+/* ---------- товар, эксперт ---------- */
+.prod{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-1)}
+.prod .ph{height:140px;position:relative}
 .prod .ph svg,.prod .ph img{width:100%;height:100%;display:block;object-fit:cover}
-.prod .info{padding:10px 11px 11px}
-.prod .nm{font-size:12.5px;font-weight:600;line-height:1.3;min-height:32px}
-.flag{position:absolute;top:8px;left:8px;background:rgba(17,16,20,.72);color:#fff;border-radius:999px;
-  padding:3px 9px;font-size:9.5px;font-weight:600;z-index:2}
+.prod .info{padding:11px 12px 12px}
+.prod .nm{font-size:12.5px;font-weight:700;line-height:1.3;min-height:32px}
+.flag{position:absolute;top:8px;left:8px;background:rgba(20,12,28,.55);color:#fff;border-radius:999px;backdrop-filter:blur(8px);
+  padding:4px 9px;font-size:9.5px;font-weight:700;z-index:2}
 
-.exp{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 10px;text-align:center}
-.pcirc{width:58px;height:58px;border-radius:50%;overflow:hidden;margin:0 auto;background:var(--surface-2)}
+.exp{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 10px;text-align:center;box-shadow:var(--sh-1)}
+.pcirc{width:58px;height:58px;border-radius:50%;overflow:hidden;margin:0 auto;background:var(--surface-2);
+  box-shadow:0 0 0 3px var(--surface),0 0 0 4px var(--line-2)}
 .pcirc svg,.pcirc img{width:100%;height:100%;display:block;object-fit:cover}
 .vt{display:inline-grid;place-items:center;width:14px;height:14px;border-radius:50%;background:var(--lilac);
   color:#fff;font-size:8.5px;vertical-align:middle}
 .vt.big{width:18px;height:18px;font-size:10px}
 .dot-ava{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:11.5px;flex:none}
 
+/* ---------- навигация ---------- */
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:var(--shell);
-  background:rgba(247,246,244,.93);backdrop-filter:blur(18px);border-top:1px solid var(--line);
-  display:grid;grid-template-columns:repeat(5,1fr);padding:7px 4px calc(7px + env(safe-area-inset-bottom));z-index:40}
-.nav button{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;font-weight:600;color:var(--muted);padding:3px 0}
-.nav svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.nav button.on{color:var(--ink)}
+  background:rgba(249,246,241,.86);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);
+  border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:7px 6px calc(7px + env(safe-area-inset-bottom));z-index:40}
+.nav button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:var(--muted);padding:2px 0;transition:color .15s}
+.nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;
+  padding:4px 14px;border-radius:999px;box-sizing:content-box;transition:background .18s,color .18s}
+.nav button.on{color:var(--accent-ink)}
+.nav button.on svg{background:var(--accent-soft);color:var(--accent)}
 .fab{position:fixed;right:calc(50% - var(--shell)/2 + 14px);bottom:calc(var(--nav-h) + 48px + env(safe-area-inset-bottom));
-  width:48px;height:48px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;z-index:45;box-shadow:var(--sh-3)}
+  width:52px;height:52px;border-radius:50%;background:var(--grad-accent);color:#fff;display:grid;place-items:center;z-index:45;
+  box-shadow:var(--sh-acc);transition:transform .15s}
+.fab:hover{transform:scale(1.05)}
 @media(max-width:462px){.fab{right:14px}}
 .backbtn{display:inline-flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--line);
-  border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:600;margin:14px 0 2px}
+  border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:700;margin:14px 0 2px;box-shadow:var(--sh-1)}
 
-.bg{position:fixed;inset:0;background:rgba(17,16,20,.55);z-index:60;display:flex;align-items:flex-end;
-  justify-content:center;animation:fade .18s both;backdrop-filter:blur(2px)}
+/* ---------- шторка ---------- */
+.bg{position:fixed;inset:0;background:rgba(20,12,28,.5);z-index:60;display:flex;align-items:flex-end;
+  justify-content:center;animation:fade .18s both;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
 .sheet{background:var(--paper);width:100%;max-width:var(--shell);border-radius:var(--r-xl) var(--r-xl) 0 0;
-  padding:16px 16px calc(22px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto;
-  animation:slide .28s cubic-bezier(.2,.75,.3,1) both}
+  padding:14px 18px calc(24px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto;
+  box-shadow:0 -12px 40px rgba(20,12,28,.25);animation:slide .28s cubic-bezier(.2,.75,.3,1) both}
 @keyframes slide{from{transform:translateY(100%)}to{transform:none}}
-.grab{width:34px;height:4px;background:var(--line-2);border-radius:99px;margin:0 auto 12px}
+.grab{width:38px;height:5px;background:var(--line-2);border-radius:99px;margin:0 auto 14px}
 
-.field{width:100%;padding:12px 13px;border-radius:var(--r);border:1px solid var(--line-2);background:var(--surface);margin-bottom:9px}
-.field:focus{outline:none;border-color:var(--ink)}
-.lbl{font-size:12px;font-weight:600;color:var(--muted);margin:2px 0 6px;display:block}
-.sw{width:42px;height:25px;border-radius:99px;background:var(--line-2);position:relative;flex:none;transition:.18s}
-.sw i{position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:.18s;box-shadow:var(--sh-1)}
-.sw.on{background:var(--ink)}
-.sw.on i{left:20px}
+/* ---------- поля ---------- */
+.field{width:100%;padding:13px 14px;border-radius:var(--r-sm);border:1px solid var(--line-2);background:var(--surface);
+  margin-bottom:10px;transition:border-color .15s,box-shadow .15s}
+.field:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.field::placeholder{color:#A39BAE}
+.lbl{font-size:12px;font-weight:700;color:var(--muted);margin:2px 0 6px;display:block}
+.sw{width:44px;height:26px;border-radius:99px;background:var(--line-2);position:relative;flex:none;transition:.18s}
+.sw i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.18s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.sw.on{background:var(--accent)}
+.sw.on i{left:21px}
 .optl{width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
-  padding:13px;margin-bottom:8px;font-size:14px;font-weight:500}
+  padding:13px 14px;margin-bottom:8px;font-size:14px;font-weight:500;transition:.14s}
 .optl:hover{border-color:var(--ink)}
-.opt{width:100%;text-align:left;display:flex;gap:11px;align-items:center;background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.12);border-radius:var(--r);padding:13px;margin-bottom:8px;color:#fff;transition:.14s}
-.opt.on{background:rgba(255,255,255,.14);border-color:#fff}
-.opt i{font-size:17px;font-style:normal;flex:none;opacity:.9}
-.opt b{font-size:14px;font-weight:600;display:block}
-.opt small{opacity:.6;font-size:11.5px}
+.opt{width:100%;text-align:left;display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.13);border-radius:var(--r);padding:11px 13px;margin-bottom:8px;color:#fff;transition:.14s}
+.opt:hover{background:rgba(255,255,255,.11)}
+.opt.on{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.85)}
+.opt i{width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.1);display:grid;place-items:center;
+  font-size:15px;font-style:normal;flex:none;opacity:.95}
+.opt.on i{background:var(--grad-gold);color:var(--plum)}
+.opt b{font-size:14px;font-weight:700;display:block}
+.opt small{opacity:.62;font-size:11.5px}
 
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + 74px);background:var(--ink);color:#fff;
-  padding:11px 18px;border-radius:999px;font-size:12.5px;font-weight:600;z-index:90;animation:slide .22s both;box-shadow:var(--sh-3)}
+/* ---------- мелочи ---------- */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + 74px);background:rgba(28,22,38,.94);color:#fff;
+  padding:11px 18px;border-radius:999px;font-size:12.5px;font-weight:600;z-index:90;animation:slide .22s both;
+  box-shadow:var(--sh-3);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);max-width:calc(100% - 32px);text-align:center}
 .empty{text-align:center;padding:38px 18px;color:var(--muted);font-size:13.5px}
-.qm{width:17px;height:17px;border-radius:50%;background:var(--surface-2);color:var(--muted);
-  font-size:10px;font-weight:700;flex:none;display:inline-grid;place-items:center;line-height:1;border:1px solid var(--line)}
+.qm{width:18px;height:18px;border-radius:50%;background:var(--surface-2);color:var(--muted);
+  font-size:10px;font-weight:800;flex:none;display:inline-grid;place-items:center;line-height:1;border:1px solid var(--line)}
 .hero .qm{background:rgba(255,255,255,.14);color:#fff;border-color:transparent}
-.bubble{background:var(--surface);border:1px solid var(--line);border-radius:var(--r) var(--r) var(--r) 5px;
+.bubble{background:var(--surface);border:1px solid var(--line);border-radius:var(--r) var(--r) var(--r) 6px;
   padding:11px 13px;font-size:13.5px;line-height:1.5;margin-bottom:8px}
-.bubble.me{border-radius:var(--r) var(--r) 5px var(--r);background:var(--ink);color:#fff;margin-left:36px;border-color:var(--ink)}
+.bubble.me{border-radius:var(--r) var(--r) 6px var(--r);background:var(--grad-accent);color:#fff;margin-left:36px;border-color:transparent}
 .rep{display:flex;align-items:flex-end;gap:5px;height:96px;margin:12px 0 6px}
 .rep div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
-.rep i{display:block;width:100%;border-radius:5px 5px 2px 2px;background:var(--ink);min-height:3px;transition:height .5s}
-.rep span{font-size:9px;font-weight:600;color:var(--muted)}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px;text-align:center}
-.wish{position:relative;z-index:2;margin-top:12px;font-size:14.5px;line-height:1.42;background:rgba(255,255,255,.07);
-  border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:11px 13px}.advice .arow{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line)}
+.rep i{display:block;width:100%;border-radius:6px 6px 3px 3px;background:var(--grad-accent);min-height:3px;transition:height .5s}
+.rep span{font-size:9px;font-weight:700;color:var(--muted)}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px 8px;text-align:center;box-shadow:var(--sh-1)}
+.stat b{font-weight:800;letter-spacing:-.02em}
+.advice .arow{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line)}
 .advice .arow:first-of-type{border-top:none;padding-top:2px}
 .ae{font-size:18px;flex:none;width:24px;text-align:center}
 .cday{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:600;position:relative}
@@ -250,8 +350,9 @@ h2.serif{font-size:19px;margin:0}
 i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:middle;margin-right:3px}
 .phbox{background:var(--surface-2);border-radius:var(--r-sm);padding:9px;text-align:center}
 .phbox.on{background:var(--ink);color:#fff}
-.camera{position:absolute;right:0;bottom:2px;width:30px;height:30px;border-radius:50%;background:var(--ink);
-  color:#fff;box-shadow:var(--sh-2);font-size:13px}
+.camera{position:absolute;right:0;bottom:2px;width:30px;height:30px;border-radius:50%;background:var(--accent);
+  color:#fff;box-shadow:var(--sh-2);display:grid;place-items:center}
+.camera svg{width:15px;height:15px}
 .linkbox{background:var(--surface-2);border-radius:var(--r-sm);padding:9px 11px;font-size:12px;font-weight:600;word-break:break-all}
 .msg{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:8px}
 .badge-exp{background:var(--lilac);color:#fff;border-radius:999px;padding:2px 7px;font-size:9px;font-weight:700}
@@ -267,42 +368,47 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .mini-sel option{color:var(--ink)}
 .rolesw{position:fixed;left:50%;transform:translateX(-50%);z-index:80;display:flex;gap:2px;
   bottom:calc(var(--nav-h) + 4px + env(safe-area-inset-bottom));
-  background:rgba(17,16,20,.9);backdrop-filter:blur(10px);border-radius:999px;padding:3px}
+  background:rgba(28,22,38,.9);backdrop-filter:blur(10px);border-radius:999px;padding:3px}
 .rolesw button{padding:5px 10px;border-radius:999px;font-size:10px;font-weight:600;color:rgba(255,255,255,.55)}
 .rolesw button.on{background:rgba(255,255,255,.16);color:#fff}
 
 .tbl{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
 .trow{display:flex;gap:10px;align-items:center;padding:11px 12px;border-top:1px solid var(--line)}
 .trow:first-child{border-top:none}
-.trow.head{background:var(--surface-2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.trow.head{background:var(--surface-2);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .tag-st{border-radius:999px;padding:3px 8px;font-size:10px;font-weight:700;white-space:nowrap}
-.st-paid{background:#EAF2ED;color:var(--ok)}
-.st-trial{background:#FBF0E4;color:var(--warn)}
+.st-paid{background:var(--ok-soft);color:var(--ok)}
+.st-trial{background:var(--warn-soft);color:var(--warn)}
 .st-none{background:var(--surface-2);color:var(--muted)}
-.st-think{background:#EEEBFB;color:var(--lilac)}
-.st-no{background:#FBE9EE;color:var(--accent)}
+.st-think{background:var(--lilac-soft);color:var(--lilac)}
+.st-no{background:var(--accent-soft);color:var(--accent)}
 
-.splash{position:fixed;inset:0;background:#111014;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:18px;overflow:hidden;z-index:100}
-.splash-star{width:60px;height:60px;animation:starIn 2.4s cubic-bezier(.5,0,.2,1) both}
+/* ---------- заставка ---------- */
+.splash{position:fixed;inset:0;background:radial-gradient(120% 90% at 50% 40%,#4A2A55 0%,#1B1327 60%,#120C1A 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;overflow:hidden;z-index:100}
+.splash-star{width:74px;height:74px;filter:drop-shadow(0 0 26px rgba(255,236,190,.55));animation:starIn 2.4s cubic-bezier(.5,0,.2,1) both}
 @keyframes starIn{
-  0%{transform:scale(.2) rotate(-24deg);opacity:0}
-  22%{transform:scale(1) rotate(0);opacity:1}
-  56%{transform:scale(1.05);opacity:1}
-  80%{transform:scale(13);opacity:.5}
-  100%{transform:scale(42);opacity:0}}
-.splash-name{font-family:Unbounded,sans-serif;font-weight:300;color:#fff;font-size:25px;letter-spacing:.2em;
-  opacity:0;animation:nameIn 2.4s ease both}
-.splash-sub{font-size:11.5px;color:rgba(255,255,255,.45);letter-spacing:.05em;opacity:0;animation:nameIn 2.4s ease .08s both}
+  0%{transform:scale(.4) rotate(-18deg);opacity:0;filter:blur(6px) drop-shadow(0 0 0 rgba(255,240,200,0))}
+  26%{transform:scale(1) rotate(0);opacity:1;filter:blur(0) drop-shadow(0 0 26px rgba(255,240,200,.55))}
+  62%{transform:scale(1.08);opacity:1}
+  86%{transform:scale(16);opacity:.35;filter:blur(0)}
+  100%{transform:scale(52);opacity:0}}
+.splash-glow{position:absolute;width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,225,180,.16),transparent 68%);animation:glow 2.4s ease both}
+@keyframes glow{0%{opacity:0;transform:scale(.4)}35%{opacity:1;transform:scale(1)}75%{opacity:.6;transform:scale(1.5)}100%{opacity:0;transform:scale(2.4)}}
+.splash-name{font-family:var(--display);font-weight:500;color:#fff;font-size:30px;letter-spacing:.26em;text-transform:uppercase;
+  text-align:center;padding-left:.26em;opacity:0;animation:nameIn 2.4s ease both}
+.splash-sub{font-size:12px;color:rgba(255,255,255,.5);letter-spacing:.06em;opacity:0;animation:nameIn 2.4s ease .08s both}
 @keyframes nameIn{0%,20%{opacity:0;transform:translateY(10px)}40%{opacity:1;transform:none}74%{opacity:1}100%{opacity:0}}
 
-.paywall{background:var(--grad-dark);color:#fff;border-radius:var(--r-lg);padding:18px;margin-bottom:12px;position:relative;overflow:hidden}.chatlist{padding:10px 0 4px}
+.paywall{background:var(--grad-dark);color:#fff;border-radius:var(--r-lg);padding:18px;margin-bottom:12px;position:relative;overflow:hidden}
+.chatlist{padding:10px 0 4px}
 .cmsg{display:flex;gap:8px;margin-bottom:9px;align-items:flex-end}
-.cmsg .txt{background:var(--surface);border:1px solid var(--line);border-radius:14px 14px 14px 4px;
-  padding:8px 11px;font-size:13.5px;line-height:1.45;max-width:78%}
+.cmsg .txt{background:var(--surface);border:1px solid var(--line);border-radius:16px 16px 16px 5px;
+  padding:9px 12px;font-size:13.5px;line-height:1.45;max-width:78%;box-shadow:var(--sh-1)}
 .cmsg.own{flex-direction:row-reverse}
 .cmsg.own .txt{background:var(--accent-soft);color:var(--ink);border-color:transparent;
-  border-radius:14px 14px 4px 14px}
+  border-radius:16px 16px 5px 16px}
 .cmsg .nm{font-size:10.5px;font-weight:700;margin-bottom:2px;color:var(--accent)}
 .cmsg.own .nm{color:var(--accent)}
 .cmsg .tm{font-size:9px;color:var(--muted);margin-top:2px;text-align:right}
@@ -310,7 +416,8 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .chatbar{display:flex;gap:8px;padding:8px 0;position:sticky;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));background:var(--paper)}
 .chatbar .field{margin:0;flex:1;border-radius:999px}
 .gitem{display:flex;gap:11px;align-items:center;padding:10px 11px;background:var(--surface);border:1px solid var(--line);
-  border-radius:var(--r);margin-bottom:7px;width:100%;text-align:left}
+  border-radius:var(--r);margin-bottom:7px;width:100%;text-align:left;box-shadow:var(--sh-1);transition:.15s}
+.gitem:hover{border-color:var(--line-2)}
 .gemoji{width:42px;height:42px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-size:18px;flex:none}
 .unreadc{background:var(--accent);color:#fff;border-radius:999px;min-width:19px;height:19px;display:grid;
   place-items:center;font-size:10px;font-weight:700;padding:0 5px}
@@ -322,8 +429,8 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   display:grid;place-items:center;font-size:13px;color:#fff}
 .unit{display:flex;gap:10px;align-items:center;padding:9px;background:var(--surface);border:1px solid var(--line);
   border-radius:var(--r);margin-bottom:7px;width:100%;text-align:left}
-.unit .n{width:25px;height:25px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;
-  font-size:11px;font-weight:700;flex:none}
+.unit .n{width:26px;height:26px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;
+  font-size:11px;font-weight:800;flex:none}
 .unit.done .n{background:var(--ok);color:#fff}
 .unit .mini{width:62px;height:44px;border-radius:var(--r-xs);overflow:hidden;flex:none;background:var(--surface-2)}
 .unit .mini svg,.unit .mini img{width:100%;height:100%;object-fit:cover;display:block}
@@ -335,37 +442,8 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .upbox{border:1.5px dashed var(--line-2);border-radius:var(--r);padding:18px;text-align:center;margin-bottom:9px;background:var(--surface)}
 .upprev{width:100%;height:130px;object-fit:cover;border-radius:var(--r-sm);margin-bottom:8px;display:block}
 
-/* ---------- доработки ---------- */
-.night .btn.ghost:hover{background:#fff;color:var(--ink);border-color:#fff}
-.night .btn:hover{opacity:.92}
-
-/* заставка */
-.splash{background:radial-gradient(120% 90% at 50% 45%,#3A2340 0%,#141018 65%,#0D0B10 100%);gap:26px}
-.splash-star{width:74px;height:74px;filter:drop-shadow(0 0 26px rgba(255,240,200,.55))}
-@keyframes starIn{
-  0%{transform:scale(.4) rotate(-18deg);opacity:0;filter:blur(6px) drop-shadow(0 0 0 rgba(255,240,200,0))}
-  26%{transform:scale(1) rotate(0);opacity:1;filter:blur(0) drop-shadow(0 0 26px rgba(255,240,200,.55))}
-  62%{transform:scale(1.08);opacity:1}
-  86%{transform:scale(16);opacity:.35;filter:blur(0)}
-  100%{transform:scale(52);opacity:0}}
-.splash-glow{position:absolute;width:300px;height:300px;border-radius:50%;
-  background:radial-gradient(circle,rgba(255,225,180,.16),transparent 68%);animation:glow 2.4s ease both}
-@keyframes glow{0%{opacity:0;transform:scale(.4)}35%{opacity:1;transform:scale(1)}75%{opacity:.6;transform:scale(1.5)}100%{opacity:0;transform:scale(2.4)}}
-.splash-name{text-align:center}
-
-/* вход: центрирование */
-.authhead{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
-.authhead .logo{font-size:31px;line-height:1;color:#fff}
-
-/* дни недели */
-.wd{cursor:pointer}
-.wd:hover{border-color:var(--accent);background:var(--accent-soft)}
-.wd.sel:hover{background:linear-gradient(155deg,#48325F,#2A1D3E)}
-.pip{width:6px;height:6px}
-.pip.on{background:#E7A339;box-shadow:0 0 0 1px rgba(231,163,57,.25)}
-.wstar{font-size:12px;color:#E7A339;top:-5px}
-.starrow{font-size:15px;letter-spacing:2px;color:#E7A339}
-.starrow .off{color:var(--line-2)}
+/* ---------- иконки в строку с текстом ---------- */
+.ic{display:inline-block;vertical-align:-3px;width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 /* аффирмация */
 .afflabel{font-size:9.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;opacity:.75}
@@ -373,27 +451,27 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 /* луна */
 .moonbig{display:flex;gap:14px;align-items:center}
 .moondisc{width:58px;height:58px;border-radius:50%;flex:none;position:relative;overflow:hidden;
-  background:#171520;box-shadow:inset 0 0 0 1px var(--line)}
+  background:#1F1830;box-shadow:inset 0 0 0 1px var(--line)}
 .moondisc i{position:absolute;inset:0;border-radius:50%;background:#F2E5C8}.expired .btn{background:#fff;color:var(--ink)}
 
 /* курс */
 .promo{height:220px;margin-bottom:14px;box-shadow:var(--sh-2)}
 .promo .pl{width:66px;height:66px;font-size:19px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .promo:after{content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(to top,rgba(17,16,20,.55),transparent 60%)}
+  background:linear-gradient(to top,rgba(28,22,38,.55),transparent 60%)}
 /* когда в рамке настоящий проигрыватель, а не заглушка: отдаём ему всю
    высоту и убираем плёнку — иначе не видно ни звука, ни полного экрана */
 .promo.live{height:auto;background:transparent;overflow:visible}
 .promo.live:after{content:none}
 .promo .plabel{position:absolute;left:0;right:0;bottom:12px;text-align:center;color:#fff;font-size:12px;font-weight:600;z-index:3}.review{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px;margin-bottom:8px}
-.stars5{color:#E7A339;font-size:12px;letter-spacing:1px}
+.stars5{color:var(--star);font-size:12px;letter-spacing:1px;font-weight:700}
 
 /* эксперт: читаемые блоки */
 .consult{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;margin-bottom:12px}
 .consult .price-l{font-size:20px;font-weight:700;letter-spacing:-.02em}
 .exphead{background:var(--grad-dark);color:#fff;border-radius:0 0 var(--r-xl) var(--r-xl);
   padding:calc(14px + env(safe-area-inset-top)) 16px 22px;text-align:center}
-.exphead .nm{font-size:24px;font-weight:700;letter-spacing:-.03em;margin-top:10px}
+.exphead .nm{font-family:var(--display);font-size:29px;font-weight:600;letter-spacing:0;line-height:1.1;margin-top:10px}
 .exphead .sub{font-size:13px;color:rgba(255,255,255,.72);margin-top:5px}
 .exphead .mrow{display:flex;justify-content:center;gap:8px;margin-top:14px;flex-wrap:wrap}
 .mstat{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:999px;
@@ -403,8 +481,8 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .acard .thumb svg,.acard .thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .acard .bar2{display:flex;gap:6px;padding:0 11px 11px;flex-wrap:wrap}
 .pill{border-radius:999px;padding:3px 9px;font-size:10px;font-weight:700;border:1px solid var(--line)}
-.pill.free{background:#EAF2ED;color:var(--ok);border-color:transparent}
-.pill.paid{background:#F3EEE4;color:var(--gold);border-color:transparent}
+.pill.free{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.pill.paid{background:#F7EBD2;color:var(--gold);border-color:transparent}
 .vidbox{background:var(--ink);border-radius:var(--r);height:170px;position:relative;overflow:hidden;
   display:grid;place-items:center;color:#fff;margin-bottom:10px}
 .vidbox img,.vidbox svg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45}
@@ -414,14 +492,10 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .modbox .mh{background:var(--surface-2);padding:9px 12px;font-size:12px;font-weight:700;display:flex;justify-content:space-between}
 .lockmini{font-size:11px;color:var(--muted)}.duo .k{display:block;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.55;font-weight:700}
 .duo .v{display:block;font-size:12.5px;font-weight:600;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hero{padding-bottom:22px}
-.hero:after{display:none}
-.quick svg{width:20px;height:20px;stroke:var(--ink);display:block;margin:0 auto 5px}
-.quick{padding:12px 5px}
 .wd.future{opacity:.62}
 .wd.future b{color:var(--muted)}
 .lesson.locked-day .cov{filter:saturate(.55)}
-.lesson.locked-day .cov:before{content:"";position:absolute;inset:0;background:rgba(17,16,20,.45);z-index:2}
+.lesson.locked-day .cov:before{content:"";position:absolute;inset:0;background:rgba(28,22,38,.45);z-index:2}
 .daylock{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;width:34px;height:34px;
   color:#fff;opacity:.92}
 .daylock svg{width:34px;height:34px}
@@ -446,10 +520,10 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .ustat{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .ustat span{background:var(--surface-2);border-radius:999px;padding:3px 9px;font-size:10.5px;font-weight:600}
 .uline{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}/* ---------- v2.3 ---------- */
-.quote{position:relative;background:linear-gradient(150deg,#F3EFFA,#FBF1F4);border:1px solid var(--line);
+.quote{position:relative;background:var(--grad-soft);border:1px solid var(--line);
   border-radius:var(--r-lg);padding:22px 18px 16px;margin:12px 0}
-.quote .qmark{position:absolute;top:2px;left:14px;font-size:56px;line-height:1;color:var(--lilac);opacity:.28;font-family:Georgia,serif}
-.quote p{position:relative;z-index:1;margin:0;font-size:17px;line-height:1.45;font-weight:600;letter-spacing:-.02em}
+.quote .qmark{position:absolute;top:2px;left:14px;font-size:56px;line-height:1;color:var(--lilac);opacity:.28;font-family:var(--display)}
+.quote p{position:relative;z-index:1;margin:0;font-family:var(--display);font-size:21px;line-height:1.3;font-weight:600}
 .quote .qauthor{margin-top:10px;font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .whocard{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);
   border-radius:var(--r);padding:12px;margin-bottom:8px}
@@ -457,17 +531,17 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .achline{display:flex;gap:9px;align-items:flex-start;padding:8px 0 0;font-size:13px;line-height:1.45}
 .educard{display:flex;gap:11px;align-items:center;background:var(--surface);border:1px solid var(--line);
   border-radius:var(--r);padding:12px;margin-bottom:8px}
-.edok{width:26px;height:26px;border-radius:50%;background:#EAF2ED;color:var(--ok);display:grid;place-items:center;
+.edok{width:26px;height:26px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:grid;place-items:center;
   font-size:12px;font-weight:800;flex:none}
-.sellwrap{background:linear-gradient(155deg,#F4F1FA,#FAF3F6);color:var(--ink);border:1px solid var(--line)}
+.sellwrap{background:var(--grad-soft);color:var(--ink);border:1px solid var(--line)}
 .sellwrap h3{color:var(--ink)}
-.sellwrap .sellcard{background:rgba(255,255,255,.72);border-color:rgba(17,16,20,.06)}
+.sellwrap .sellcard{background:rgba(255,255,255,.72);border-color:rgba(28,22,38,.06)}
 .sellwrap .sellcard .num{background:var(--lilac);color:#fff}
-.sellwrap .sellcard.dark{background:rgba(255,255,255,.72);border-color:rgba(17,16,20,.06);color:var(--ink)}
+.sellwrap .sellcard.dark{background:rgba(255,255,255,.72);border-color:rgba(28,22,38,.06);color:var(--ink)}
 .sellcard{align-items:center}
 .sellcard .num{width:26px;height:26px}
 .catcov .cap b{font-size:15px}
-.catcov:after{background:linear-gradient(to top,rgba(17,16,20,.78),rgba(17,16,20,.15) 62%,transparent)}
+.catcov:after{background:linear-gradient(to top,rgba(28,22,38,.78),rgba(28,22,38,.15) 62%,transparent)}
 .trow.head span{font-size:9.5px}
 
 .chead{position:relative;height:210px;border-radius:var(--r-lg);overflow:hidden;margin-bottom:12px}
@@ -489,7 +563,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .carousel{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 16px 10px;margin:0 -16px}
 .carousel > *{flex:none;width:270px;scroll-snap-align:center;margin:0}
 .evtags{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:4px;align-items:flex-end;z-index:2}
-.evtag{background:rgba(17,16,20,.72);color:#fff;border-radius:999px;padding:3px 9px;font-size:9.5px;font-weight:700}.pricepick{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line-2);
+.evtag{background:rgba(28,22,38,.72);color:#fff;border-radius:999px;padding:3px 9px;font-size:9.5px;font-weight:700}.pricepick{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line-2);
   border-radius:var(--r);padding:6px;margin-bottom:6px}
 .pricepick button{width:40px;height:38px;border-radius:var(--r-sm);background:var(--surface-2);font-size:19px;font-weight:600}
 .pricepick .pv{flex:1;text-align:center;font-size:17px;font-weight:700;letter-spacing:-.02em}
@@ -498,7 +572,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   padding:4px 10px;font-size:10px;font-weight:700}.wallpost{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:8px}
 .starbtn{display:flex;flex-direction:column;align-items:center;gap:2px;flex:none;padding:2px 4px}
 .starbtn span{font-size:10.5px;font-weight:700;color:var(--muted)}
-.starbtn.on span{color:#E7A339}
+.starbtn.on span{color:var(--star)}
 .lvlrow{display:flex;gap:11px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--line)}
 .lvlmark{width:26px;height:26px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;
   font-size:11px;font-weight:800;flex:none}
@@ -506,7 +580,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .lvlrow.now{background:var(--surface-2);border-radius:var(--r);padding:11px;margin-top:8px;border-top:none}.cyclering{display:flex;justify-content:center}
 .reflink{background:var(--surface);border:1.5px solid var(--accent);border-radius:var(--r-lg);padding:16px;margin-bottom:12px}
 .reflink-url{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-top:7px;word-break:break-all}
-.portrait{display:flex;gap:14px;align-items:center;background:linear-gradient(150deg,#F3EFFA,#FBF1F4);
+.portrait{display:flex;gap:14px;align-items:center;background:var(--grad-soft);
   border-radius:var(--r-lg);padding:16px;margin-bottom:12px}
 .pbig{width:56px;height:56px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:26px;flex:none}
 /* послание пишется прямо в ленте: поле всегда на месте, подпись и
@@ -529,7 +603,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .wallpost{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px;margin-bottom:10px}
 .wallfoot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:10px}
 .starbtn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:var(--surface-2)}
-.starbtn.on{background:#FDF3E2}
+.starbtn.on{background:#FDF1D6}
 .mcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
 .mphoto{position:relative;height:230px;background:var(--surface-2)}
 .mphoto svg,.mphoto img{width:100%;height:100%;object-fit:cover;display:block}
@@ -538,7 +612,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .mphoto:after{content:"";position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(to top,rgba(12,10,16,.8),transparent 55%)}
 .mname{position:absolute;left:14px;right:14px;bottom:12px;z-index:2;color:#fff}
-.mname b{display:block;font-size:19px;letter-spacing:-.02em}
+.mname b{display:block;font-family:var(--display);font-size:24px;font-weight:600;line-height:1.1}
 .mname span{font-size:12.5px;opacity:.85}
 .gslider{position:relative;border-radius:var(--r-lg);overflow:hidden;margin-bottom:14px;background:var(--surface-2)}
 .gslide{height:280px}
@@ -611,10 +685,10 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .photo.cover{grid-column:span 3;aspect-ratio:16/10;outline:2px solid var(--ink);outline-offset:-2px}
 .covlabel{position:absolute;left:8px;bottom:8px;background:var(--ink);color:#fff;border-radius:999px;
   padding:4px 10px;font-size:10px;font-weight:700}
-.mkcov{position:absolute;left:4px;right:4px;bottom:4px;background:rgba(17,16,20,.78);color:#fff;
+.mkcov{position:absolute;left:4px;right:4px;bottom:4px;background:rgba(28,22,38,.78);color:#fff;
   border-radius:8px;padding:5px 0;font-size:9.5px;font-weight:700}
 .phdel{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;
-  background:rgba(17,16,20,.72);color:#fff;font-size:11px;display:grid;place-items:center}
+  background:rgba(28,22,38,.72);color:#fff;font-size:11px;display:grid;place-items:center}
 .addphoto{aspect-ratio:1;border:1.5px dashed var(--line-2);border-radius:var(--r-sm);background:var(--surface);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted)}
 .addphoto.big{grid-column:span 3;aspect-ratio:16/9;gap:6px}
@@ -632,8 +706,8 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
    целиком — иначе она видит первое дело и не знает, что есть ещё два */
 .lesson.wide .cov{height:152px}
 .lesson.wide .body{padding:10px 12px 12px}
-.lesson.wide .cap b{font-size:15.5px}
-.lesson.wide .cap span{font-size:10.5px}
+.lesson.wide .cap b{font-size:19px}
+.lesson.wide .cap span{font-size:11px}
 
 /* закреплённая шапка чата */
 .chathead{position:sticky;top:0;z-index:30}
@@ -687,7 +761,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .tchip.on{background:var(--tc,var(--ink));border-color:transparent;color:#fff}
 .tchip.on svg,.tchip.on b{color:#fff;opacity:.9}
 .tchip.on.plain{background:var(--ink)}
-.tchip.fav.on{background:#E7A339}
+.tchip.fav.on{background:var(--star)}
 .tpick{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px}
 .tpick .tchip{background:var(--surface-2);border-color:transparent}
 
@@ -714,24 +788,24 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 /* оценка и «что помешало» в переписке */
 .rateline{display:flex;gap:2px;margin-top:9px}
 .rstar{padding:3px;line-height:0;border-radius:6px}
-.rstar:hover{background:rgba(17,16,20,.06)}
+.rstar:hover{background:rgba(28,22,38,.06)}
 .whyrow{display:flex;gap:7px;margin-top:9px}
 .whyrow .field{margin:0;flex:1;padding:8px 11px;font-size:13px}
 
 /* ---------- билет и приглашение ---------- */
 .tick{border-radius:var(--r-lg);overflow:hidden;color:#fff;
-  background:linear-gradient(150deg,#1A171F 0%,#2B2233 52%,#4A2C42 100%);
-  box-shadow:0 14px 34px rgba(17,16,20,.22)}
-.tick.inv{background:linear-gradient(150deg,#3A2230 0%,#6B2A46 55%,#A8375C 100%)}
+  background:var(--grad-dark);
+  box-shadow:0 14px 34px rgba(28,22,38,.22)}
+.tick.inv{background:linear-gradient(150deg,#4A1F3A 0%,#8F2450 55%,#C43A6B 100%)}
 .tick-top{display:flex;align-items:center;justify-content:space-between;
   padding:13px 16px 0;font-size:10px;letter-spacing:.18em;text-transform:uppercase}
-.tick-brand{display:flex;align-items:center;gap:6px;font-family:Unbounded,Inter,sans-serif;
-  font-weight:300;opacity:.9}
+.tick-brand{display:flex;align-items:center;gap:6px;font-family:var(--display);
+  font-weight:600;letter-spacing:.22em;opacity:.9}
 .tick-kind{font-weight:700;opacity:.6}
 .tick-body{display:flex;gap:14px;padding:14px 16px 16px}
 .tick-date{flex:none;width:62px;text-align:center;background:rgba(255,255,255,.1);
   border-radius:var(--r);padding:9px 4px 7px}
-.tick-date b{display:block;font-size:28px;line-height:1;font-weight:700;letter-spacing:-.03em}
+.tick-date b{display:block;font-family:var(--display);font-variant-numeric:lining-nums;font-size:32px;line-height:1;font-weight:600}
 .tick-date span{display:block;font-size:10.5px;opacity:.75;margin-top:2px}
 .tick-date i{display:block;font-style:normal;font-size:9px;letter-spacing:.1em;
   text-transform:uppercase;opacity:.5;margin-top:4px}
@@ -753,21 +827,21 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 
 /* ---------- письма Eva Events ---------- */
 .mwhen{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-  color:var(--muted);background:rgba(17,16,20,.05);border-radius:999px;padding:2px 7px;margin-bottom:6px}
-.cmsg.own .mwhen{background:rgba(17,16,20,.06);color:var(--muted)}
+  color:var(--muted);background:rgba(28,22,38,.05);border-radius:999px;padding:2px 7px;margin-bottom:6px}
+.cmsg.own .mwhen{background:rgba(28,22,38,.06);color:var(--muted)}
 .macts{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
 .macts .btn{width:auto;flex:0 1 auto}
-.evok{display:inline-flex;align-items:center;background:#EAF4EE;color:var(--ok);border-radius:999px;
+.evok{display:inline-flex;align-items:center;background:var(--ok-soft);color:var(--ok);border-radius:999px;
   padding:2px 8px;font-size:9.5px;font-weight:700}
-.evwait{display:inline-flex;align-items:center;background:#FFF3E2;color:var(--warn);border-radius:999px;
+.evwait{display:inline-flex;align-items:center;background:var(--warn-soft);color:var(--warn);border-radius:999px;
   padding:2px 8px;font-size:9.5px;font-weight:700}
-.evfast{display:flex;gap:8px;align-items:flex-start;background:#F3EFFA;border-radius:var(--r);
-  padding:10px 12px;margin-bottom:12px;font-size:11.5px;line-height:1.45;color:#5B4E86}
+.evfast{display:flex;gap:8px;align-items:flex-start;background:var(--lilac-soft);border-radius:var(--r);
+  padding:10px 12px;margin-bottom:12px;font-size:11.5px;line-height:1.45;color:var(--lilac)}
 .evfast b{display:block;font-size:12px;margin-bottom:2px}
 
 /* ---------- сообщества ---------- */
 .gemoji{display:grid;place-items:center;color:var(--gc,var(--ink));
-  background:color-mix(in srgb,var(--gc,#111014) 11%,transparent)}
+  background:color-mix(in srgb,var(--gc,#1C1626) 11%,transparent)}
 @supports not (color:color-mix(in srgb,red 11%,transparent)){ .gemoji{background:var(--surface-2)} }
 .gline{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 .gitem.locked{opacity:.9}
@@ -850,7 +924,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .starbtn{flex-direction:row;gap:6px}
 .starbtn span{font-size:12px}
 .starbtn em{font-style:normal;font-size:10.5px;font-weight:600;color:var(--muted)}
-.starbtn.on em{color:#B8894A}
+.starbtn.on em{color:var(--gold)}
 .cmtbtn.on{background:var(--ink);color:#fff}
 .wdel{width:26px;height:26px;border-radius:50%;background:var(--surface-2);color:var(--muted);
   font-size:12px;line-height:1;display:grid;place-items:center;flex:none}
@@ -860,15 +934,15 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .cmt{position:relative;padding-left:11px}
 .cmt:before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:2px;border-radius:2px;
   background:var(--ac,var(--line-2));opacity:.5}
-.cmt.own{background:#F7EEF2}
+.cmt.own{background:var(--accent-soft)}
 .crow{display:flex;align-items:center;gap:6px}
 .ctext{font-size:13px;line-height:1.45;margin-top:3px;word-break:break-word}
 .badge-au{background:var(--ink);color:#fff;border-radius:999px;padding:2px 7px;font-size:9px;font-weight:700}
 .cdel{font-size:11px;color:var(--muted);width:18px;height:18px;line-height:1}
 .cdel:hover{color:var(--accent)}
 .cstar{display:inline-flex;align-items:center;gap:4px;margin-top:5px;padding:2px 8px 2px 6px;
-  border-radius:999px;background:rgba(17,16,20,.05);font-size:10.5px;font-weight:700;color:var(--muted)}
-.cstar.on{background:#FDF3E2;color:#B8894A}
+  border-radius:999px;background:rgba(28,22,38,.05);font-size:10.5px;font-weight:700;color:var(--muted)}
+.cstar.on{background:#FDF1D6;color:var(--gold)}
 .cmtnew{display:flex;gap:7px;margin-top:8px}
 .cmtnew .field{margin:0;flex:1;padding:9px 12px;font-size:13px}.ktag.on{background:var(--kc,var(--ink));color:#fff}
 .ktag.on i{color:#fff}.chip.sm{padding:4px 10px;font-size:11px}/* ---------- подробности мероприятия ---------- */
@@ -953,11 +1027,11 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .scroller.rail .snav.off{opacity:0;pointer-events:none}
 .scroller.rail .snav.left{left:6px}
 .scroller.rail .snav.right{right:6px}
-.chip.tpl{background:#F3EFFA;border-color:transparent;color:var(--lilac);font-weight:600}
+.chip.tpl{background:var(--lilac-soft);border-color:transparent;color:var(--lilac);font-weight:600}
 .chip.tpl:hover{background:var(--lilac);color:#fff}
 
 /* служебные блоки в редакторе контента */
-.svcbox{background:#F5F3FA;border:1px solid #E3DEF0;border-radius:var(--r);padding:13px;margin:12px 0}
+.svcbox{background:var(--lilac-soft);border:1px solid #E4DDF5;border-radius:var(--r);padding:13px;margin:12px 0}
 .svcbox .hd{display:flex;align-items:center;gap:7px;margin-bottom:4px}
 .svcbox .hd b{font-size:13.5px}
 .svclabel{background:var(--lilac);color:#fff;border-radius:999px;padding:2px 8px;font-size:9px;font-weight:700}
@@ -966,13 +1040,13 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 
 /* комментарии */
 .cmt{background:var(--surface-2);border-radius:12px;padding:9px 11px;margin-bottom:6px;align-items:flex-start}
-.cmt.own{background:#F5EBEF}
+.cmt.own{background:var(--accent-soft)}
 .cmts{background:transparent}
 
 /* моя анкета знакомств */
 .myprofile{position:relative}
 .myprofile:before{content:"так тебя увидят";position:absolute;top:10px;left:10px;z-index:3;
-  background:rgba(17,16,20,.72);color:#fff;border-radius:999px;padding:4px 10px;font-size:9.5px;font-weight:700}
+  background:rgba(28,22,38,.72);color:#fff;border-radius:999px;padding:4px 10px;font-size:9.5px;font-weight:700}
 .draftbar{display:flex;gap:8px;margin-top:10px}
 .cmtmore{margin-left:auto;background:var(--surface-2);border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;flex:none}
 .linerow{display:flex;gap:7px;align-items:center;margin-bottom:7px}
@@ -1007,8 +1081,8 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .tbars{display:flex;gap:3px;flex:1}
 .tbars i{height:3px;flex:1;border-radius:2px;background:var(--line-2)}
 .tbars i.on{background:var(--accent)}
-.ttip h3{font-family:Inter,sans-serif;font-weight:700;letter-spacing:-.032em;
-  font-size:20px;line-height:1.2;margin:0 0 7px}
+.ttip h3{font-family:var(--display);font-weight:600;letter-spacing:0;
+  font-size:25px;line-height:1.2;margin:0 0 7px}
 .ttip p{font-size:13.5px;line-height:1.55;color:var(--muted);margin:0 0 15px}
 .tacts{display:flex;align-items:center;gap:9px}
 .tskip{font-size:12.5px;font-weight:600;color:var(--muted)}
@@ -1020,18 +1094,18 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 
 /* ---------- отметка «сделала» внутри карточки дня ---------- */
 .lesson .donemark{position:absolute;right:10px;top:10px;z-index:4;width:34px;height:34px;border-radius:50%;
-  display:grid;place-items:center;color:#fff;background:rgba(17,16,20,.34);
+  display:grid;place-items:center;color:#fff;background:rgba(28,22,38,.34);
   border:1.5px solid rgba(255,255,255,.6);backdrop-filter:blur(5px);transition:.16s}
 .lesson .donemark svg{opacity:.75}
 /* Отмеченное видно по самой карточке, а не по яркому кружку: зелёная
    заливка перетягивала внимание на уже пройденное. */
-.lesson .donemark.on{background:rgba(17,16,20,.2);border-color:rgba(255,255,255,.4)}
+.lesson .donemark.on{background:rgba(28,22,38,.2);border-color:rgba(255,255,255,.4)}
 .lesson .donemark.on svg{opacity:.55}
 .lesson.done .cov{filter:saturate(.82)}
 /* значок «видео» уезжает на середину обложки: рядом с отметкой два кружка
    в углу читались как пара кнопок, а это разные вещи */
 .lesson .play{left:50%;top:50%;right:auto;transform:translate(-50%,-50%);
-  width:46px;height:46px;font-size:14px;background:rgba(17,16,20,.34);
+  width:46px;height:46px;font-size:14px;background:rgba(28,22,38,.34);
   border:1.5px solid rgba(255,255,255,.45)}
 
 /* ---------- подсказка дня ----------
@@ -1046,8 +1120,8 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
    заходят. Поэтому она видна всегда, но тихо: не зовёт нажать, а ждёт. */
 .tipstar{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
   color:var(--line-2);background:transparent;border:1px solid var(--line);transition:.16s}
-.tipstar:hover{color:#E7A339;border-color:var(--line-2)}
-.tipstar.on{color:#E7A339;background:rgba(231,163,57,.12);border-color:transparent}
+.tipstar:hover{color:var(--star);border-color:var(--line-2)}
+.tipstar.on{color:var(--star);background:rgba(240,178,58,.12);border-color:transparent}
 .advgo{display:block;width:100%;text-align:left;margin-top:11px;padding-top:10px;
   border-top:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--accent)}
 .advmore{display:block;width:100%;text-align:left;margin-top:10px;padding-top:10px;
@@ -1069,12 +1143,12 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 
 /* ---------- итоги недели ---------- */
 .wsum{border-radius:var(--r-lg);padding:18px;margin-bottom:14px;color:#fff;text-align:center;
-  background:linear-gradient(150deg,#2B2233,#4A2C42)}
-.wsum-strong{background:linear-gradient(150deg,#2E5A48,#4E8F84)}
-.wsum-middle{background:linear-gradient(150deg,#3A2A4C,#6C5CE0)}
+  background:linear-gradient(150deg,#3A2149,#7A2D5C)}
+.wsum-strong{background:linear-gradient(150deg,#2F6E56,#3F9C86)}
+.wsum-middle{background:linear-gradient(150deg,#3E2A5C,#7B5CF0)}
 .wsumtop{display:flex;align-items:center;justify-content:center;gap:7px;font-size:10px;
   font-weight:700;letter-spacing:.16em;text-transform:uppercase;opacity:.8}
-.wsumbig{font-size:46px;font-weight:700;letter-spacing:-.04em;line-height:1.05;margin:8px 0 2px}
+.wsumbig{font-family:var(--display);font-variant-numeric:lining-nums;font-size:54px;font-weight:600;letter-spacing:-.01em;line-height:1.05;margin:8px 0 2px}
 .wsumbig i{font-style:normal;font-size:17px;font-weight:500;opacity:.6;margin-left:5px}
 .wsumsub{font-size:12px;opacity:.75}
 .wsumtext{font-size:14.5px;line-height:1.6;margin:0 0 14px}
@@ -1090,7 +1164,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   background:var(--surface-2, #F3F0EC);border:1px solid var(--line)}
 .pushoffer b{display:block;font-size:14px;margin-bottom:4px}
 .pushoffer p{margin:0 0 10px;font-size:12.5px;line-height:1.5;color:var(--muted)}
-.pill.on{background:#EAF2ED;color:var(--ok);border-color:transparent}
+.pill.on{background:var(--ok-soft);color:var(--ok);border-color:transparent}
 
 /* ---------- почему такая программа ----------
    Веса подбора показаны полосками: видно, что запрос женщины весит больше
@@ -1130,7 +1204,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .who{flex:none;width:64px;text-align:center;background:none;border:none;padding:0;cursor:pointer}
 .ring{display:block;width:64px;height:64px;border-radius:50%;padding:3px;
   background:var(--line);box-sizing:border-box}
-.ring.new{background:linear-gradient(135deg,var(--accent),#E9B44C)}
+.ring.new{background:linear-gradient(135deg,var(--accent),var(--star))}
 .ring svg,.ring img{width:100%;height:100%;border-radius:50%;display:block;object-fit:cover;
   border:2px solid var(--surface);box-sizing:border-box}
 .more{display:flex;align-items:center;justify-content:center;width:64px;height:64px;
@@ -1158,7 +1232,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
    одно «Избранное» на всю платформу и одна полка на странице. */
 .starcorner{position:absolute;top:8px;right:8px;z-index:4}
 .starcorner .starbtn{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;
-  background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(17,16,20,.14)}
+  background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(28,22,38,.14)}
 
 /* Аватар с меткой data-p ведёт на страницу женщины — везде, где он есть:
    в ленте, в комментарии, в переписке, в списке команды сообщества. */
@@ -1193,6 +1267,13 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   background:var(--surface);border:1px dashed var(--line-2);border-radius:var(--r);
   padding:13px 14px;margin-top:10px;transition:.15s}
 .applyrow:hover{border-style:solid;border-color:var(--ink)}
+
+/* ---------- v3.1 ---------- */
+.quick.iconbtn svg{margin:0;padding:0;background:none;color:var(--ink);stroke:var(--ink)}
+.giftic{width:44px;height:44px;border-radius:14px;background:#fff;display:grid;place-items:center;color:var(--accent);flex:none;box-shadow:var(--sh-1)}
+.cday.part{background:var(--accent-soft);color:var(--accent-ink)}
+.cday.full{background:var(--accent);color:#fff;font-weight:800}
+.cday.full i{background:#fff!important}
 </style>
 </head>
 <body>
@@ -1203,6 +1284,7 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
    ===================================================================== */
 
 /* ---------- утилиты ---------- */
+const APP_VERSION = 'v3.1';
 const el = document.getElementById('app');
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1252,11 +1334,31 @@ const hash = s => { let h = 0; for(let i=0;i<s.length;i++) h = (h*31 + s.charCod
 const plural = (n,a,b,c) => { const m=n%100, k=n%10; return n+' '+(m>=11&&m<=14?c:k===1?a:k>=2&&k<=4?b:c); };
 
 /* ---------- генеративные обложки ---------- */
+/* Обложки: восемь глубоких пар «свет → тень». Раньше все были серо-бурыми,
+   и лента читалась как один длинный сумрак; теперь у каждой есть свой цвет,
+   но все достаточно тёмные, чтобы белая подпись читалась. */
 const PAL = [
-  ['#6B5570','#2C2333'], ['#4E5C74','#232B3A'], ['#8A6B4E','#3A2A22'],
-  ['#5E7A6C','#22322C'], ['#7A5C7E','#2E2136'], ['#8C5A5E','#33222A'],
-  ['#59607F','#242838'], ['#7E6A55','#2E2620']
+  ['#7A3B6E','#2A1836'], ['#3E4C8C','#1B2242'], ['#B06A48','#4A2A1E'],
+  ['#3F8A78','#1B3A33'], ['#8A55A6','#33204A'], ['#B04A6A','#4A1F30'],
+  ['#4F6FA8','#213048'], ['#9A7A46','#3E301C']
 ];
+
+/* ---------- служебные иконки ----------
+   Одна линия, один вес. Эмодзи в интерфейсе на каждом телефоне выглядели
+   по-своему и всегда чужими. */
+const ICONS = {
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
+  cart:   '<path d="M4 8h16l-1.2 11a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  gift:   '<rect x="3.5" y="8" width="17" height="12.5" rx="2.5"/><path d="M3.5 12.5h17M12 8v12.5"/><path d="M12 8c-2.6 0-4.6-1.1-4.6-2.6S8.4 3 9.6 3c1.6 0 2.4 2.5 2.4 5 0-2.5.8-5 2.4-5 1.2 0 2.2.9 2.2 2.4S14.6 8 12 8z"/>',
+  lock:   '<rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>',
+  mic:    '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"/>',
+  camera: '<path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.6l1.2-2h5.4l1.2 2h1.6A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.4"/>',
+  image:  '<rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="9.5" r="1.6"/><path d="m20.5 15-4.4-4.4a1.5 1.5 0 0 0-2.1 0L6 18.5"/>'
+};
+function ico(k, size){
+  const s = size || 16;
+  return `<svg class="ic" viewBox="0 0 24 24" width="${s}" height="${s}" style="width:${s}px;height:${s}px" aria-hidden="true">${ICONS[k] || ''}</svg>`;
+}
 
 function coverGen(id, kind, w, h){
   const n = hash(id), [c1,c2] = PAL[n % PAL.length], g = 'g'+n.toString(36);
@@ -1679,8 +1781,8 @@ const INVITED = [
 /* Вес вопроса в подборе. Первый вопрос — «что важнее всего сейчас»,
    и его ответы весят больше остальных: женщина назвала главное. Уточняющие
    вопросы весят чуть меньше главного, обстоятельства — ещё меньше. */
-const QUIZ_W = {goal:1, rel_free:0.85, rel_married:0.85, preg:0.85, baby:0.85,
-                rel:0.7, stage:0.7, hard:0.75, level:0.5, time:0.5};
+const QUIZ_W = {goal:1, pain:0.9, rel_free:0.85, rel_married:0.85, preg:0.85, baby:0.85,
+                rel:0.7, stage:0.7, hard:0.75, topics:0.6, level:0.5, time:0.5};
 const QUIZ = [
   {id:'goal', q:'Что для тебя сейчас важнее всего?',
    hint:'Выбери до трёх — чем точнее, тем точнее программа', max:3, o:[
@@ -1768,7 +1870,7 @@ const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 
 const S = {
   screen:'welcome', tab:'home', page:null, sheet:null,
-  name:'', qi:0, picked:[], tags:[], time:20, slot:'утро',
+  name:'', qi:0, picked:{}, tags:[], time:20, slot:'утро',
   program:[], day:0, match:0,
   points:0, stars:0, bonus:300,
   joined:['gr1'], cart:[], purchases:[], courses:[],
@@ -2227,7 +2329,7 @@ function persist(){
     lastWeek:S.lastWeek, weekShown:S.weekShown, weekMood:S.weekMood,
     nudgedWeek:S.nudgedWeek, gdraft:S.gdraft,
     quietRun:S.quietRun, askedBlock:S.askedBlock,
-    pushOn:S.pushOn, pushAsked:S.pushAsked, tipStars:S.tipStars,
+    pushOn:S.pushOn, pushAsked:S.pushAsked, tipStars:S.tipStars, history:S.history,
     follows:S.follows, mates:S.mates, expSeen:S.expSeen, about:S.about, city:S.city, show:S.show,
     savedAt:Date.now()
   });
@@ -2242,7 +2344,7 @@ const PERSONAL = ['name','tags','topics','time','slot','answers','extra','points
   'inbox','seenReplies','seenDm','myInts','datingProfile','starred','starredCmts','likes','visits',
   'gentle','seen','tagw','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
   'weekMood','nudgedWeek','gdraft','quietRun','askedBlock','pushOn','pushAsked','tipStars','follows','mates','expSeen','about','city','show',
-  'qi','picked','eva'];
+  'qi','picked','eva','history'];
 
 let PRISTINE = null;
 /* снимок нетронутого состояния - делается один раз, при загрузке */
@@ -2433,10 +2535,10 @@ function daypart(){
 }
 
 const SCENES = {
-  dawn:  {g:'linear-gradient(168deg,#2A2036 0%,#5B3550 46%,#B2705C 100%)', n:'Утро', e:'☀'},
-  day:   {g:'linear-gradient(168deg,#241F33 0%,#3E3358 46%,#7C6A93 100%)', n:'День', e:'☀'},
-  sunset:{g:'linear-gradient(168deg,#1E1826 0%,#4A2740 45%,#A8563F 100%)', n:'Закат', e:'☾'},
-  night: {g:'linear-gradient(168deg,#141019 0%,#241C33 50%,#3B2A45 100%)', n:'Вечер', e:'☾'}
+  dawn:  {g:'linear-gradient(165deg,#241833 0%,#5E2E56 46%,#C97A63 100%)', n:'Утро', e:'☀'},
+  day:   {g:'linear-gradient(165deg,#1F1A33 0%,#3C2E64 46%,#8B6BB5 100%)', n:'День', e:'☀'},
+  sunset:{g:'linear-gradient(165deg,#1E1527 0%,#5A2447 45%,#C25A4A 100%)', n:'Закат', e:'☾'},
+  night: {g:'linear-gradient(165deg,#120E1B 0%,#251A3A 50%,#472C57 100%)', n:'Вечер', e:'☾'}
 };
 
 /* Мягкая сцена в шапке: светило у горизонта и лёгкая дымка, без «пузырей» */
@@ -2906,7 +3008,11 @@ function sRequest(item, p){
   if(!p.tags.length) return 0.5;                       // теста не было — не наказываем
   const his = Array.isArray(item.tags) ? item.tags : [];
   const top = p.tags.slice(0, 3);
-  const need = top.reduce((n, x) => n + x.w, 0) || 1;
+  /* Мерка — её главный запрос. Материал прямо про него закрывает запрос
+     целиком, про второй — почти целиком. Раньше делили на сумму трёх
+     запросов, и даже точное попадание давало треть: у всей библиотеки
+     выходило «50% совпадения» — и она не понимала, за что это. */
+  const need = Math.max.apply(null, top.map(x => x.w)) || 1;
   const got = p.tags.filter(x => his.includes(x.t))
                     .reduce((n, x) => n + x.w, 0);
   return Math.min(1, got / need);
@@ -2929,8 +3035,15 @@ function sStage(item, p){
 
 /* Время: важно не «влезает ли вообще», а влезает ли спокойно.
    В мягком режиме бюджет урезаем — она сама сказала, что тяжело. */
+/* Бюджет минут: её ответ, срезанный в мягком режиме и в дни месячных —
+   в эти дни она сама сказала бы «поменьше», если бы её спросили. */
+function timeBudget(p){
+  let b = p.gentle ? Math.max(10, p.time * 0.6) : p.time;
+  if((p.aud || []).includes('period')) b = Math.max(10, b * 0.8);
+  return b;
+}
 function sTime(item, p){
-  const budget = p.gentle ? Math.max(10, p.time * 0.6) : p.time;
+  const budget = timeBudget(p);
   const min = +item.min || 0;
   if(min <= budget * 0.7) return 1;
   if(min <= budget)       return 0.75;
@@ -2990,10 +3103,19 @@ function scoreItem(item, p){
     order:   sOrder(item)
   };
   const sig = signalsFor(item.type);
-  let sum = 0;
-  Object.keys(sig).forEach(k => { sum += parts[k] * sig[k]; });
-  return {score: Math.round(sum / signalMax(sig) * 100), parts, sig};
+  /* Два числа. score — для порядка показа: со свежестью и очередью
+     редакции. fit — то, что видит женщина: насколько материал про неё.
+     Свежесть и очередь к ней не относятся, и раньше они молча снимали
+     у каждого материала до пятнадцати процентов «совпадения». */
+  let sum = 0, fitSum = 0, fitMax = 0;
+  Object.keys(sig).forEach(k => {
+    sum += parts[k] * sig[k];
+    if(USER_SIGNALS.indexOf(k) >= 0){ fitSum += parts[k] * sig[k]; fitMax += sig[k]; }
+  });
+  return {score: Math.round(sum / signalMax(sig) * 100),
+          fit: Math.round(fitSum / (fitMax || 1) * 100), parts, sig};
 }
+const USER_SIGNALS = ['request', 'topic', 'stage', 'time', 'level'];
 
 /* Почему именно это — одной строкой, её словами.
    Показываем не больше двух причин: третья уже не читается. */
@@ -3017,7 +3139,7 @@ function whyItem(item, p){
    Используется в библиотеке для сортировки и на карточках. */
 function matchOf(item){
   if(!item) return 0;
-  return scoreItem(item, profileOf()).score;
+  return scoreItem(item, profileOf()).fit;
 }
 
 
@@ -3066,7 +3188,7 @@ function themeFit(item, theme){
    ограничения нет: там время есть, и туда уходит самое содержательное. */
 const WEEKEND_FROM = 5;                        // суббота и воскресенье
 function fitsBudget(item, p){
-  return (+item.min || 0) <= (p.gentle ? Math.max(10, p.time * 0.6) : p.time);
+  return (+item.min || 0) <= timeBudget(p);
 }
 function dayChoice(list, p, i){
   if(i >= WEEKEND_FROM) return list;
@@ -3215,11 +3337,18 @@ function task(item, slot, p){
   const prof = p || profileOf();
   const s = scoreItem(item, prof);
   return {...item, slot, pts:TYPE[item.type].pts,
-          match:s.score, why:whyItem(item, prof), done:false};
+          match:s.fit, why:whyItem(item, prof), done:false};
 }
 
 const todayIdx = () => (new Date().getDay() + 6) % 7;
-const weekNo = () => Math.floor((Date.now() - new Date(new Date().getFullYear(),0,1)) / 6048e5);
+/* Номер недели считаем от понедельника: программа живёт по дням недели и
+   пересобираться должна в понедельник. При счёте от первого января она
+   обновлялась в случайный день посреди недели и обнуляла звёзды. */
+const weekNo = () => {
+  const d = new Date(); d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - todayIdx());
+  return Math.round(d.getTime() / 6048e5);
+};
 
 /* при смене недели программа пересобирается на свежих материалах */
 function checkWeek(quiet){
@@ -3272,6 +3401,9 @@ function starsWeek(){
   return (S.program || []).reduce((a, d) => a + d.tasks.filter(t => t.done).length, 0);
 }
 
+/* Закрытый день целиком стоит отдельных баллов — так обещано в подсказке
+   про баллы, а начислялось ноль. */
+const DAY_BONUS = 50;
 function complete(di, ti){
   const t = S.program[di].tasks[ti];
   if(t.done) return;
@@ -3279,10 +3411,28 @@ function complete(di, ti){
   S.points += t.pts;
   S.starsAll = (S.starsAll || 0) + 1;
   S.stars = starsWeek();
+  rememberDay(di);
+  const full = S.program[di].tasks.every(x => x.done);
+  if(full) S.points += DAY_BONUS;
   toast(`+${t.pts} баллов`);
-  if(doneOf(di) === 3) setTimeout(() => toast('День закрыт полностью'), 1000);
+  if(full) setTimeout(() => toast('День закрыт полностью · ещё +' + DAY_BONUS), 1000);
   render(); schedulePersist();
 }
+
+/* История по дням: сколько дел закрыто в каждый календарный день. По ней
+   считаются стрик и календарь. Раньше календарь рисовал прошлые дни наугад
+   из хеша числа, а стрик обнулялся каждый понедельник вместе с программой. */
+const dayKey = d => {
+  const x = new Date(d); x.setHours(0,0,0,0);
+  return x.getFullYear() + '-' + String(x.getMonth()+1).padStart(2,'0') + '-' + String(x.getDate()).padStart(2,'0');
+};
+function rememberDay(di){
+  S.history = S.history || {};
+  S.history[dayKey(dateOfDay(di))] = doneOf(di);
+  const keys = Object.keys(S.history);
+  if(keys.length > 400) keys.sort().slice(0, keys.length - 400).forEach(k => delete S.history[k]);
+}
+const doneOn = d => (S.history || {})[dayKey(d)] || 0;
 
 function levelNow(){
   let cur = LEVELS[0], next = LEVELS[1];
@@ -3290,9 +3440,17 @@ function levelNow(){
   return {cur, next};
 }
 
+/* Дней подряд с хотя бы одним делом. Один пропуск цепочку не рвёт, два
+   подряд — рвут: так написано в календаре, и так теперь и считается. */
 function streak(){
-  let n = 0;
-  for(let i = todayIdx(); i >= 0; i--){ if(doneOf(i) === 3) n++; else break; }
+  let n = 0, gaps = 0;
+  const d = new Date(); d.setHours(0,0,0,0);
+  if(!doneOn(d)) d.setDate(d.getDate() - 1);          // сегодня ещё можно успеть
+  for(let i = 0; i < 400; i++){
+    if(doneOn(d)){ n++; gaps = 0; }
+    else if(++gaps >= 2) break;
+    d.setDate(d.getDate() - 1);
+  }
   return n;
 }
 
@@ -3547,7 +3705,7 @@ function scrWelcome(){
 
 function scrQuiz(){
   const flow = quizFlow();
-  const q = flow[Math.min(S.qi, flow.length-1)], sel = S.picked[S.qi] || [];
+  const q = flow[Math.min(S.qi, flow.length-1)], sel = picksOf(q);
   const can = sel.length > 0;
   return `<div class="sky"><canvas id="sky"></canvas></div>
   <div class="night">
@@ -3628,11 +3786,12 @@ function donut(pct){
 /* ---------- действия онбординга ---------- */
 function startQuiz(){
   if(!S.name.trim()) S.name = 'Ева';
-  S.screen = 'quiz'; S.qi = 0; S.picked = []; S.tags = [];
+  S.screen = 'quiz'; S.qi = 0; S.picked = {}; S.tags = [];
   render(); stars();
 }
+const picksOf = q => (q && S.picked && S.picked[q.id]) || [];
 function pick(i){
-  const q = quizFlow()[S.qi]; let sel = S.picked[S.qi] || [];
+  const q = quizFlow()[S.qi]; let sel = picksOf(q);
   /* max не указан — один ответ; max:0 — сколько захочет */
   const max = q.max == null ? 1 : q.max;
   if(sel.includes(i)) sel = sel.filter(x => x !== i);
@@ -3641,33 +3800,43 @@ function pick(i){
   /* набрала максимум — вытесняем самый давний выбор, а не схлопываем список
      до двух: на вопросе с четырьмя вариантами так терялись ответы */
   else sel = [...sel.slice(1), i];
-  S.picked[S.qi] = sel; render(); stars();
+  S.picked = S.picked || {}; S.picked[q.id] = sel; render(); stars();
 }
 function prevQ(){
   if(S.qi === 0){ S.screen = 'welcome'; render(); return; }
   S.qi--; render(); stars();
 }
-function nextQ(){
-  const flow = quizFlow();
-  const q = flow[S.qi];
-  S.answers = S.answers || {};
-  /* направления собираем заново: женщина могла снять галочку и вернуться */
-  if(q.grid) S.topics = [];
-  const qw = (typeof QUIZ_W !== 'undefined' && QUIZ_W[q.id] != null) ? QUIZ_W[q.id] : 0.6;
-  S.tagw = S.tagw || {};
-  (S.picked[S.qi] || []).forEach(i => {
-    const o = q.o[i];
-    /* тег мог прийти из двух вопросов — оставляем больший вес */
-    (o.tags || []).forEach(t => {
-      if(!S.tags.includes(t)) S.tags.push(t);
-      S.tagw[t] = Math.max(S.tagw[t] || 0, qw);
+/* Ответы теста складываются заново из всех отмеченных вариантов. Раньше
+   теги только добавлялись на каждом «Дальше»: вернулась, поменяла ответ —
+   а старый тег оставался в программе. Ответы хранятся по номеру вопроса,
+   а не по его месту: уточняющие вопросы появляются и исчезают, и место
+   у них плавает. */
+function applyPicks(){
+  S.answers = {}; S.tags = []; S.tagw = {}; S.topics = []; S.extra = {};
+  S.time = 20; S.slot = 'утро';
+  S.picked = S.picked || {};
+  for(let i = 0; i < 20; i++){
+    const q = quizFlow()[i];
+    if(!q) break;
+    const qw = (typeof QUIZ_W !== 'undefined' && QUIZ_W[q.id] != null) ? QUIZ_W[q.id] : 0.6;
+    (S.picked[q.id] || []).forEach(idx => {
+      const o = q.o[idx];
+      if(!o) return;
+      /* тег мог прийти из двух вопросов — оставляем больший вес */
+      (o.tags || []).forEach(t => {
+        if(!S.tags.includes(t)) S.tags.push(t);
+        S.tagw[t] = Math.max(S.tagw[t] || 0, qw);
+      });
+      if(o.topic && !S.topics.includes(o.topic)) S.topics.push(o.topic);
+      if(o.time) S.time = o.time;
+      if(o.slot) S.slot = o.slot;
+      if(o.extra) Object.assign(S.extra, o.extra);
+      S.answers[q.id] = {t:o.t, next:o.next || null};
     });
-    if(o.topic){ S.topics = S.topics || []; if(!S.topics.includes(o.topic)) S.topics.push(o.topic); }
-    if(o.time) S.time = o.time;
-    if(o.slot) S.slot = o.slot;
-    if(o.extra) Object.assign(S.extra, o.extra);
-    S.answers[q.id] = {t:o.t, next:o.next || null};
-  });
+  }
+}
+function nextQ(){
+  applyPicks();
   if(S.qi < quizFlow().length - 1){ S.qi++; render(); stars(); return; }
   if(!S.user){ S.screen = 'mail'; render(); stars(); return; }
   S.screen = 'building'; render(); stars();
@@ -3709,8 +3878,24 @@ function page(){
 
 /* ---------- переключатель ролей (для разработки) ---------- */
 /* инструмент разработки: с сервером его видит только администратор */
+/* Переключатель ролей — инструмент для показа и разработки. Виден
+   администратору (роль подтверждает сервер) и в режиме разработчика: он
+   включается пятью нажатиями на строку версии в настройках или ?dev в
+   адресе. Раньше без сервера его видела каждая женщина поверх меню. */
+const devMode = () => !!Store.get('eva_dev') || /[?&#]dev\b/.test(location.href);
+function toggleDev(){
+  const on = !Store.get('eva_dev');
+  if(on) Store.set('eva_dev', 1); else Store.del('eva_dev');
+  render(); toast(on ? 'Режим разработчика включён' : 'Режим разработчика выключен');
+}
+let verTaps = 0, verTimer = null;
+function versionTap(){
+  verTaps++; clearTimeout(verTimer);
+  verTimer = setTimeout(() => { verTaps = 0; }, 1500);
+  if(verTaps >= 5){ verTaps = 0; toggleDev(); }
+}
 function roleSwitch(){
-  if(SYNC.alive !== false && !(S.user && S.user.role === 'admin')) return '';
+  if(!(S.user && S.user.role === 'admin') && !devMode()) return '';
   const R = [['user','Пользователь'],['expert','Эксперт'],['admin','Админ']];
   return `<div class="rolesw">
     ${R.map(([k,l]) => `<button class="${S.role===k?'on':''}" onclick="setRole('${attJs(k)}')">${l}</button>`).join('')}
@@ -3799,7 +3984,7 @@ const STAR = `<svg class="splash-star" viewBox="0 0 100 100" aria-hidden="true">
     <stop offset="0" stop-color="#FFFDF6"/><stop offset="1" stop-color="#F0D9A8"/></linearGradient></defs>
   <path d="${STAR_PATH}" fill="url(#sg)"/></svg>`;
 const starMark = (size, fill) => `<svg width="${size||13}" height="${size||13}" viewBox="0 0 100 100" style="vertical-align:-1px">
-  <path d="${STAR_PATH}" fill="${fill||'#E7A339'}"/></svg>`;
+  <path d="${STAR_PATH}" fill="${fill||'var(--star)'}"/></svg>`;
 
 /* Заставка держалась ровно 2,45 секунды при каждом открытии, и только
    потом начинался вход — то есть приложение сначала ждало, а потом
@@ -3909,6 +4094,10 @@ function authAdmin(){
       <button class="btn" style="background:#fff;color:var(--ink)" onclick="adminLogin()">Войти в панель</button>
       <p class="small muted" style="margin-top:14px;font-size:11px">Роль определяет сервер: администратора задаёт
         файл data/config.php на хостинге, эксперта назначает администратор.</p>
+      ${SYNC.alive === false ? `<div class="card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14);color:#fff;margin-top:14px">
+        <div class="small" style="opacity:.72">Демо без сервера — можно зайти так:</div>
+        <div class="small" style="margin-top:5px;line-height:1.7"><b>admin@evaspace.ru</b> · пароль <b>eva2026</b> — панель<br>
+          <b>marina@evaspace.ru</b> · пароль <b>eva2026</b> — кабинет эксперта</div></div>` : ''}
     </div>
   </div>`;
 }
@@ -3926,7 +4115,7 @@ async function submitAuth(){
     if(a.pass.length < 6){ a.err = 'Пароль минимум 6 символов'; return render(); }
     a.err = ''; a.name = nm;
     S.name = nm; S.role = 'user';
-    S.tags = []; S.picked = []; S.qi = 0; S.answers = {}; S.extra = {};
+    S.tags = []; S.picked = {}; S.qi = 0; S.answers = {}; S.extra = {};
     S.screen = 'quiz';
     render(); stars();
     return;
@@ -4023,7 +4212,7 @@ async function signIn(u){
   if(had && S.program && S.program.length){
     S.screen = 'app'; S.tab = 'home'; checkWeek();
   } else {
-    S.tags = []; S.picked = []; S.qi = 0; S.screen = 'quiz';
+    S.tags = []; S.picked = {}; S.qi = 0; S.screen = 'quiz';
   }
   render(); stars();
   toast('С возвращением, ' + u.name);
@@ -4206,7 +4395,7 @@ function tryAutoLogin(){
   const known = typeof avatarOf === 'function' ? avatarOf(u.email) : '';
   if(known) S.avatar = known;
   S.screen = 'app';
-  if(S.role === 'user' && (!had || !S.program || !S.program.length)){ S.screen = 'quiz'; S.qi = 0; S.picked = []; }
+  if(S.role === 'user' && (!had || !S.program || !S.program.length)){ S.screen = 'quiz'; S.qi = 0; S.picked = {}; }
   else checkWeek();
   return true;
 }
@@ -4222,7 +4411,6 @@ function trialLeft(){
 }
 function hasAccess(){ return S.sub.active || trialLeft() > 0; }
 
-function trialBar(){ return ''; }
 
 /* строка о доступе внутри шапки */
 function accessLine(){
@@ -4259,7 +4447,7 @@ function pgSub(){
     <div class="card">
       <b style="font-size:14.5px">Что входит</b>
       ${[['Личная программа на каждый день','Пересобирается под твои темы и цикл'],
-         ['Вся библиотека практик и мастер-классов','37 материалов, новые каждую неделю'],
+         ['Вся библиотека практик и мастер-классов',LIB.length + ' материалов, новые каждую неделю'],
          ['Сообщество и группы','Ответы экспертов внутри чатов'],
          ['Отчёты, календарь, трекер цикла',''],
          ['Скидка 15% на курсы и маркет','']].map(([t,d]) => `
@@ -4566,7 +4754,7 @@ function pgCourseLanding(){
             <div style="flex:1;min-width:0">
               <b style="font-size:13px;display:block">${esc(l.t)}</b>
               <div class="small muted">${l.d ? esc(l.d)+' · ' : ''}${l.min} мин</div></div>
-            ${open ? '<span class="pill free">открыт</span>' : '<span class="lockmini">🔒</span>'}
+            ${open ? '<span class="pill free">открыт</span>' : '<span class="lockmini">' + ico('lock',13) + '</span>'}
           </button>`;
         }).join('')}
       </div>
@@ -4639,7 +4827,7 @@ function pgCourseLearn(){
         <div class="n">${u.done?'✓':u.n}</div>
         <div style="flex:1;min-width:0"><b style="font-size:13px;display:block">${esc(u.t)}</b>
           <div class="small muted">${u.min} мин${u.hw?' · есть домашнее':''}</div></div>
-        ${k===i?'<span class="chip pale">сейчас</span>':open?'<span class="muted">›</span>':'<span class="lockmini">🔒</span>'}
+        ${k===i?'<span class="chip pale">сейчас</span>':open?'<span class="muted">›</span>':'<span class="lockmini">' + ico('lock',13) + '</span>'}
       </button>`;
     }).join('')}
   </div>`;
@@ -5092,7 +5280,7 @@ function pgMembers(){
   const prof = S.datingProfile;
   return `
   ${prof ? datingBlock() : `
-    <div class="card" style="background:linear-gradient(150deg,#F3EFFA,#FBF1F4);border-color:transparent">
+    <div class="card" style="background:var(--grad-soft);border-color:transparent">
       <b style="font-size:16px">Новые знакомства</b>
       <p class="small muted" style="margin:7px 0 12px">Заполни короткую анкету - и Ева начнёт подбирать женщин
         с похожими интересами. Можно встретиться на кофе в своём городе или познакомиться онлайн.</p>
@@ -5172,7 +5360,7 @@ function wallCard(w){
     <div class="wallfoot">
       <div class="row" style="gap:7px">
         <button class="starbtn ${liked?'on':''}" onclick="starPost('${attJs(w.id)}')">
-          ${starMark(15, liked ? '#E7A339' : 'rgba(17,16,20,.22)')}
+          ${starMark(15, liked ? 'var(--star)' : 'var(--star-off)')}
           <span>${w.st + (liked?1:0)}</span>
         </button>
         <button class="cmtbtn ${open?'on':''}" onclick="toggleComments('${attJs(w.id)}')">
@@ -5219,7 +5407,7 @@ function commentRow(w, c, ci){
       </div>
       <div class="ctext">${esc(c.t)}</div>
       <button class="cstar ${starred?'on':''}" onclick="starComment('${attJs(w.id)}',${ci})">
-        ${starMark(12, starred ? '#E7A339' : 'rgba(17,16,20,.24)')}
+        ${starMark(12, starred ? 'var(--star)' : 'var(--star-off)')}
         <span>${(c.st || 0) + (starred?1:0) || ''}</span></button>
     </div>
   </div>`;
@@ -5799,7 +5987,7 @@ function seedInbox(){
      msgs:[{me:false, t:'Привет! Увидела твоё послание про пробежки. Я как раз бегаю в Сокольниках по средам, давай вместе?', tm:'09:20'}]},
     {id:'p2', from:'Марина Ясная', c:'#A8375C', kind:'эксперт', ago:'вчера', unread:true, exp:true,
      msgs:[{me:false, t:'Спасибо за вопрос в группе. Отвечаю подробнее: дыхание 4-7-8 можно делать и при панике, но начинать лучше в спокойном состоянии, чтобы тело запомнило схему.', tm:'18:05'}]},
-    {id:'p3', from:'Eva Space', c:'#111014', kind:'система', ago:'2 дня назад', unread:false, sys:true,
+    {id:'p3', from:'Eva Space', c:'var(--ink)', kind:'система', ago:'2 дня назад', unread:false, sys:true,
      msgs:[{me:false, t:'Твоя программа обновилась: на новой неделе новые практики. Хорошего старта!', tm:'08:00'}]}
   ];
   S.inbox = S.inbox || [];
@@ -5817,7 +6005,7 @@ function pullMarketReplies(){
   if(!fresh.length) return;
   let th = S.inbox.find(x => x.kind === 'маркет');
   if(!th){
-    th = {id:'mk'+Date.now().toString(36), from:'Eva Space · Маркет', c:'#111014',
+    th = {id:'mk'+Date.now().toString(36), from:'Eva Space · Маркет', c:'var(--ink)',
           kind:'маркет', ago:'только что', unread:false, sys:true, msgs:[]};
     S.inbox.unshift(th);
   }
@@ -6027,7 +6215,6 @@ function pgHome(){
   return `${hero()}
   <div class="view pad">
     <div style="height:14px"></div>
-    ${trialBar()}
     ${!acc ? `<button class="expbar" onclick="openPage('sub')">
       <span class="lk">${LOCK_SVG}</span>
       <span style="flex:1;text-align:left"><b>Пробные три дня прошли</b>
@@ -6047,12 +6234,15 @@ function pgHome(){
           ${done===3?'<div class="wstar">★</div>':''}
         </button>`;}).join('')}
     </div>
+    ${weekThemesLine()}
 
     <div class="sec-h">
       <div><h2 class="serif">${S.day === todayIdx() ? 'Сегодня' : DAYS[S.day]+', день '+(S.day+1)}</h2>
-        <div class="small muted">${S.gentle ? 'Мягкий режим: аффирмация и мастер-класс' : 'Выполни три шага - получишь три звезды'}</div></div>
+        <div class="small muted">${S.gentle ? 'Мягкий режим: аффирмация и мастер-класс'
+          : day.theme ? `Тема дня — <b style="color:var(--accent-ink)">${esc(day.theme)}</b> · три шага, три звезды`
+          : 'Выполни три шага - получишь три звезды'}</div></div>
       <div class="starrow">${[0,1,2].map(i => i < doneOf(S.day)
-        ? starMark(17) : `<span class="off">${starMark(17,'rgba(17,16,20,.14)')}</span>`).join(' ')}</div>
+        ? starMark(17) : `<span class="off">${starMark(17,'var(--star-off)')}</span>`).join(' ')}</div>
     </div>
 
     <div id="today">${S.day > todayIdx() ? `<div class="future-note">
@@ -6107,6 +6297,14 @@ function pgHome(){
         </button>`).join('')}
     </div>
   </div>`;
+}
+
+/* Темы недели одной строкой: три её главных запроса, разложенные по дням.
+   Так видно, что неделя собрана вокруг неё, а не из случайных карточек. */
+function weekThemesLine(){
+  const th = [...new Set((S.program || []).map(d => d.theme).filter(Boolean))];
+  if(!th.length) return '';
+  return `<div class="small muted" style="margin:2px 0 6px">Эта неделя про <b style="color:var(--ink)">${th.map(esc).join('</b>, <b style="color:var(--ink)">')}</b></div>`;
 }
 
 function donutLight(pct){
@@ -6189,7 +6387,7 @@ function pgContent(){
     <div style="position:relative;margin-bottom:12px">
       <input class="field" style="margin:0;padding-left:40px" placeholder="Поиск: тревога, йога, сон"
         value="${esc(S.q)}" oninput="S.q=this.value;renderList()">
-      <span style="position:absolute;left:15px;top:13px;opacity:.4">🔍</span>
+      <span style="position:absolute;left:14px;top:14px;color:var(--muted);display:flex">${ico('search',17)}</span>
     </div>
 
     <div id="cbox">${contentTabs()}${topicRow()}</div>
@@ -6221,7 +6419,7 @@ function topicRow(){
   return `<div class="trow hscroll">
     <button class="tchip ${all?'on plain':''}" onclick="showAll()"><span>Все</span></button>
     ${liked ? `<button class="tchip fav ${S.onlyLiked?'on':''}" onclick="tgLiked()">
-      ${starMark(13, S.onlyLiked ? '#fff' : '#E7A339')}<span>Избранное</span><b>${liked}</b></button>` : ''}
+      ${starMark(13, S.onlyLiked ? '#fff' : 'var(--star)')}<span>Избранное</span><b>${liked}</b></button>` : ''}
     ${list.map(t => `<button class="tchip ${S.topicFilter===t.k?'on':''}" style="--tc:${safeColor(t.c)}"
       onclick="pickTopic('${attJs(t.k)}')">
       ${tIcon(t.k, 14)}<span>${esc(t.l)}</span><b>${have[t.k]}</b></button>`).join('')}
@@ -6263,7 +6461,7 @@ function starContent(btn, id){
   const on = S.likes.includes(id);
   S.likes = on ? S.likes.filter(v => v !== id) : [...S.likes, id];
   btn.classList.toggle('on', !on);
-  btn.innerHTML = starMark(15, !on ? '#E7A339' : 'rgba(17,16,20,.22)');
+  btn.innerHTML = starMark(15, !on ? 'var(--star)' : 'var(--star-off)');
   schedulePersist();
   publishCard();                       /* полка на её странице - это те же звёзды */
   if(!on) toast('Добавлено в избранное');
@@ -6280,7 +6478,7 @@ function contentRow(x){
       <div class="small muted" style="font-size:11.5px">${x.min} мин · ${esc(x.expert)}</div>
     </div>
     <span class="starbtn ${isLiked(x.id)?'on':''}" onclick="event.stopPropagation();starContent(this,'${attJs(x.id)}')">
-      ${starMark(15, isLiked(x.id) ? '#E7A339' : 'rgba(17,16,20,.22)')}</span>
+      ${starMark(15, isLiked(x.id) ? 'var(--star)' : 'var(--star-off)')}</span>
   </button>`;
 }
 
@@ -6300,7 +6498,7 @@ function pgCourses(){
     <div class="eyebrow">Обучение</div>
     <h1 class="serif" style="font-size:29px;margin:6px 0 14px">Курсы экспертов</h1>
 
-    <div class="card" style="background:linear-gradient(150deg,#2E2145,#4B2A4E);color:#fff;border-color:transparent">
+    <div class="card" style="background:var(--grad-dark);color:#fff;border-color:transparent">
       <h3 class="serif" style="font-size:20px;margin:0 0 8px;color:#fff">Понравилась бесплатная практика?</h3>
       <p class="small" style="margin:0;color:rgba(255,255,255,.78)">У каждого эксперта есть полный курс - продолжение того,
         что ты уже пробовала в программе. Первые уроки открыты без оплаты.</p>
@@ -6659,14 +6857,14 @@ function pgMarket(){
     <div class="spread">
       <div><div class="eyebrow">Маркет</div>
         <h1 class="serif" style="font-size:29px;margin:6px 0 0">Для твоих практик</h1></div>
-      <button class="quick" style="width:46px;height:46px;padding:0;display:grid;place-items:center;position:relative" onclick="openPage('cart')">
-        <i style="margin:0">🛒</i>
+      <button class="quick iconbtn" style="width:46px;height:46px;padding:0;display:grid;place-items:center;position:relative" onclick="openPage('cart')">
+        ${ico('cart',22)}
         ${cnt ? `<span style="position:absolute;top:-4px;right:-4px;background:var(--rose-deep);color:#fff;border-radius:99px;font-size:10px;font-weight:800;padding:2px 6px">${cnt}</span>` : ''}
       </button>
     </div>
 
     <div class="card" style="background:linear-gradient(120deg,var(--blush),var(--lilac-soft));margin-top:14px">
-      <div class="row"><div style="font-size:24px">🎁</div>
+      <div class="row"><div class="giftic">${ico('gift',22)}</div>
         <div><b style="font-size:15px">${S.bonus} ₽ бонусами</b>
           <div class="small muted">Можно оплатить до 30% любого заказа</div></div></div>
     </div>
@@ -6747,7 +6945,7 @@ function pgProfile(){
       <div style="text-align:center;position:relative;z-index:2">
         <div style="margin:2px auto 10px;width:82px;position:relative">
           ${avatarEl(82)}
-          <button class="camera" onclick="pickAvatar()">▣</button>
+          <button class="camera" onclick="pickAvatar()" aria-label="Сменить фото">${ico('camera',15)}</button>
         </div>
         <h1 class="serif" style="font-size:24px;margin:0;color:#fff">${esc(S.name||'Ева')}</h1>
         <p class="small muted" style="margin:5px 0 0">${S.user ? esc(S.user.email) : ''}</p>
@@ -6910,7 +7108,7 @@ function pgEarn(){
       </div>
     </div>
 
-    <div class="card" style="background:linear-gradient(150deg,#F3EFFA,#FBF1F4);border-color:transparent">
+    <div class="card" style="background:var(--grad-soft);border-color:transparent">
       <b style="font-size:15px">Вдохновляй своим примером</b>
       <p class="small muted" style="margin:7px 0 0">Женщины приходят не по рекламе, а за живым примером.
         Расскажи, что у тебя изменилось за эти недели: как стал спать, как перестала извиняться за отдых,
@@ -7081,7 +7279,7 @@ function cycleRing(cy){
     <circle cx="60" cy="60" r="46" fill="none" stroke="${esc(cy.phase.c)}" stroke-width="9" stroke-linecap="round"
       stroke-dasharray="${seg} ${C}"/>
     <text x="60" y="60" transform="rotate(90 60 60)" text-anchor="middle" dy="6"
-      style="font:700 22px Inter;fill:var(--ink)">${cy.day}</text>
+      style="font:700 22px Manrope,sans-serif;fill:var(--ink)">${cy.day}</text>
   </svg>`;
 }
 
@@ -7128,14 +7326,17 @@ function pgCalendar(){
         ${[...Array(shift)].map(() => '<div></div>').join('')}
         ${[...Array(days)].map((_,i) => {
           const n = i+1, past = n < today, isToday = n === today;
-          const done = past ? (hash('d'+n) % 10) > 3 : isToday ? doneOf(todayIdx()) === 3 : false;
+          /* настоящая история, а не случайные пятна: сколько дел закрыто в этот день */
+          const cnt = doneOn(new Date(first.getFullYear(), first.getMonth(), n));
+          const cls = cnt >= 3 ? ' full' : cnt ? ' part' : '';
           const ph = cellPhase(n);
-          return `<div class="cday ${isToday?'now':''}" style="${done?'background:var(--blush);color:var(--rose-deep)':past?'color:var(--muted);opacity:.55':''}">
+          return `<div class="cday${isToday?' now':''}${cls}" style="${!cnt && past ? 'color:var(--muted);opacity:.55' : ''}">
             ${n}${ph?`<i style="background:${esc(ph.c)}"></i>`:''}</div>`;
         }).join('')}
       </div>
       <div class="row" style="margin-top:14px;font-size:11px;color:var(--muted);gap:12px;flex-wrap:wrap">
-        <span><i class="lg" style="background:var(--blush)"></i> закрытый день</span>
+        <span><i class="lg" style="background:var(--accent)"></i> закрыт целиком</span>
+        <span><i class="lg" style="background:var(--accent-soft);border:1px solid var(--accent-2)"></i> были дела</span>
         <span><i class="lg" style="border:1.5px solid var(--rose)"></i> сегодня</span>
         ${cy?`<span><i class="lg" style="background:${PHASES[0].c}"></i> месячные</span>
         <span><i class="lg" style="background:${PHASES[2].c}"></i> овуляция</span>`:''}
@@ -7402,7 +7603,7 @@ function pgSettings(){
     <div class="card" style="text-align:center">
       <div style="width:88px;height:88px;margin:0 auto 12px;position:relative">
         ${avatarEl(88)}
-        <button class="camera" onclick="pickAvatar()">▣</button>
+        <button class="camera" onclick="pickAvatar()" aria-label="Сменить фото">${ico('camera',15)}</button>
       </div>
       <input class="field" style="text-align:center" value="${esc(S.name)}"
         oninput="S.name=this.value||'Ева'" onchange="publishCard()">
@@ -7491,8 +7692,8 @@ function pgSettings(){
     <button class="btn ghost" onclick="openSheet('rebuild')">Пересобрать программу вручную</button>
     <button class="btn ghost" style="margin-top:9px" onclick="restartQuiz()">Пройти тест заново</button>
     <button class="btn ghost" style="margin-top:9px" onclick="logout()">Выйти из аккаунта</button>
-    <p class="small muted" style="text-align:center;margin-top:16px;font-size:11px">
-      Eva Space · прототип${Store.available?' · данные сохраняются в этом браузере':''}</p>
+    <p class="small muted" style="text-align:center;margin-top:16px;font-size:11px" onclick="versionTap()">
+      Eva Space · ${APP_VERSION}${Store.available?' · данные сохраняются в этом браузере':''}${devMode()?' · режим разработчика':''}</p>
   </div>`;
 }
 function tgNotif(k){ S.notif[k] = !S.notif[k]; render(); toast(S.notif[k] ? 'Уведомление включено' : 'Выключено'); }
@@ -8689,7 +8890,7 @@ function adEvents(){
       <div class="small muted">${e.unlimited ? 'мест без ограничения' : (e.seats - e.left) + ' из ' + e.seats + ' записалось'}${e.price?' · '+money(e.price):' · бесплатно'}</div>
     </button>
     <div style="display:flex;flex-direction:column;gap:5px">
-      <button class="chip" onclick="pickImage('${attJs(e.id)}')">▣</button>
+      <button class="chip" onclick="pickImage('${attJs(e.id)}')" aria-label="Фото">${ico('camera',14)}</button>
       <button class="chip" onclick="dropEvent('${attJs(e.id)}')">✕</button>
     </div>
   </div>`).join('')}`;
@@ -9071,7 +9272,7 @@ function pgEditCourse(){
               <b style="font-size:13px;display:block">${esc(l.t)}</b>
               <div class="small muted">${l.min} мин · ${l.video?'видео есть':'без видео'}</div>
             </div>
-            <span class="pill ${l.free?'free':'paid'}">${l.free?'free':'🔒'}</span>
+            <span class="pill ${l.free?'free':'paid'}">${l.free?'free':ico('lock',11)}</span>
           </button>`;
         }).join('')}
         <button class="btn ghost sm" style="width:100%" onclick="addUnitTo('${attJs(c.id)}',${mi})">＋ Добавить урок в модуль</button>
@@ -9167,7 +9368,7 @@ function pgEditUnit(){
       <div><label class="lbl">Доступ</label>
         <div class="seg" style="margin:0">
           <button class="${l.free?'on':''}" onclick="setUnitR('${attJs(c.id)}','${attJs(l.id)}','free',true)">Открыт</button>
-          <button class="${!l.free?'on':''}" onclick="setUnitR('${attJs(c.id)}','${attJs(l.id)}','free',false)">🔒 Платный</button>
+          <button class="${!l.free?'on':''}" onclick="setUnitR('${attJs(c.id)}','${attJs(l.id)}','free',false)">${ico('lock',12)} Платный</button>
         </div></div>
     </div>
     <p class="small muted" style="margin:10px 0 0">Открытые уроки видны без покупки - это витрина курса. Обычно открывают первый урок и один из середины.</p>
@@ -9572,7 +9773,7 @@ function exEduBlock(){
         <div class="small muted">${x.y}${MEDIA['cert_'+x.id] ? ' · скан загружен' : ' · скан не загружен'}</div>
         ${x.comment ? `<div class="small" style="color:var(--warn);margin-top:3px">${esc(x.comment)}</div>` : ''}</div>
       <span class="tag-st ${ST[x.st][1]}">${ST[x.st][0]}</span>
-      <button class="chip" onclick="pickImage('cert_${x.id}')">▣</button>
+      <button class="chip" onclick="pickImage('cert_${x.id}')" aria-label="Скан">${ico('camera',14)}</button>
       <button class="chip" onclick="delEdu('${attJs(e.id)}','${attJs(x.id)}')">✕</button>
     </div>`).join('') : '<div class="small muted">Пока ничего не добавлено</div>'}
   </div>`;
@@ -9737,7 +9938,7 @@ function exSettings(){
   <div class="card" style="text-align:center">
     <div style="width:88px;height:88px;margin:0 auto 12px;position:relative">
       <div class="pcirc" style="width:88px;height:88px">${expPic(e, true)}</div>
-      <button class="camera" onclick="pickImage('${attJs(e.id)}')">▣</button>
+      <button class="camera" onclick="pickImage('${attJs(e.id)}')" aria-label="Сменить фото">${ico('camera',15)}</button>
     </div>
     <div class="small muted">Фото на публичной странице</div>
   </div>
@@ -10323,7 +10524,7 @@ async function pullDm(){
 
   let th = (S.inbox || []).find(x => x.kind === 'платформа');
   if(!th){
-    th = {id:'pf' + Date.now().toString(36), from:'Eva Space', c:'#111014',
+    th = {id:'pf' + Date.now().toString(36), from:'Eva Space', c:'var(--ink)',
           kind:'платформа', ago:'только что', unread:false, sys:true, msgs:[]};
     S.inbox.unshift(th);
   }
@@ -10453,11 +10654,26 @@ async function backupDB(){
 }
 
 /* ---------- запуск ---------- */
+/* Без сервера панель и кабинет иначе не открыть: роль выдаёт только сервер.
+   Для показа заводим две учётные записи прямо в браузере — на бою, где
+   сервер есть, они не создаются. */
+function seedDemoAccounts(){
+  const all = DB.users();
+  const add = (email, name, role) => {
+    if(all[email]) return;
+    all[email] = {email, name, pass:hashPass('eva2026'), verified:true, role, created:Date.now(), demo:true};
+  };
+  add('admin@evaspace.ru', 'Егор', 'admin');
+  add('marina@evaspace.ru', 'Марина Ясная', 'expert');
+  DB.saveUsers(all);
+}
+
 async function initSync(){
   const ping = await apiCall('ping', null, { silent:true, force:true });
   SYNC.alive = !!ping;
   if(!SYNC.alive){
     console.info('[Eva] Сервер не найден — работаем локально в этом браузере');
+    seedDemoAccounts();
     return;
   }
   await syncPull(true);
@@ -10589,14 +10805,14 @@ function sheet(){
   const k = typeof S.sheet === 'string' ? S.sheet : S.sheet.k;
   const body = ({lesson:shLesson, course:shCourse, rebuild:shRebuild, eva:shEva,
     hint:shHint, addTag:shAddTag, cycle:shCycle, hd:shHD, consult:shConsult, write:shWrite,
-    newContent:shNewContent, editContent:shEditContent, reject:shReject, rework:shRework,
-    units:shUnits, groupInfo:shGroupInfo, newGroup:shNewGroup, fix:shFix, video:shVideo,
+    newContent:shNewContent, reject:shReject, rework:shRework,
+    groupInfo:shGroupInfo, newGroup:shNewGroup, fix:shFix, video:shVideo,
     invite:shInvite, hello:shHello, askGroup:shAskGroup, weekSum:shWeekSum,
     myPage:shMyPage, toMate:shToMate,
     hw:shHW, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
-    expertApply:shExpertApply, install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
+    expertApply:shExpertApply, install:shInstall, diag:shDiag, askGood:shAskGood, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
     service:shService, editUser:shEditUser,
-    newCourse:shNewCourse, newGood:shNewGood, idea:shIdea})[k]();
+    newCourse:shNewCourse, idea:shIdea})[k]();
   return `<div class="bg" onclick="if(event.target===this)closeSheet()">
     <div class="sheet"><div class="grab"></div>${body}</div></div>`;
 }
@@ -10606,6 +10822,7 @@ function shLesson(){
   const inProg = S.program.map((d,di) => d.tasks.map((t,ti) => ({t,di,ti})))
                   .flat().find(o => o.t.id === x.id);
   const e = expBy(x.expert);
+  const why = whyItem(x, profileOf());      // её словами: про что это для неё
   return `${x.video
     ? `<div style="margin-bottom:14px">${videoBlock(x.id, x.type)}</div>`
     : `<div style="border-radius:var(--r-lg);overflow:hidden;height:190px;position:relative;margin-bottom:14px">
@@ -10613,9 +10830,9 @@ function shLesson(){
         ${x.type !== 'affirm' ? '<div class="play">▶</div>' : ''}
         <div class="badge">${TYPE[x.type].l}</div>
       </div>`}
-    <div class="spread"><div class="eyebrow">${x.min} мин · ${matchOf(x)}% совпадение</div>
+    <div class="spread"><div class="eyebrow">${x.min} мин · ${matchOf(x)}%${why ? ' · ' + esc(why) : ' совпадение'}</div>
       <button class="starbtn ${isLiked(x.id)?'on':''}" onclick="starContent(this,'${attJs(x.id)}')">
-        ${starMark(16, isLiked(x.id) ? '#E7A339' : 'rgba(17,16,20,.22)')}
+        ${starMark(16, isLiked(x.id) ? 'var(--star)' : 'var(--star-off)')}
         <span style="font-size:11px">${isLiked(x.id)?'в избранном':'в избранное'}</span></button></div>
     <h2 class="serif" style="font-size:27px;margin:8px 0 10px">${esc(x.title)}</h2>
     <p style="font-size:14.5px;line-height:1.6;color:var(--muted);margin:0 0 14px">${esc(x.type==='affirm' ? '«'+x.text+'»' : x.text)}</p>
@@ -10689,7 +10906,7 @@ function shEva(){
     <div class="row" style="gap:8px">
       <input class="field" id="vin" style="margin:0" placeholder="Напиши Еве" onkeydown="if(event.key==='Enter')ask(this.value)">
       <button class="btn" style="width:auto;padding:13px 17px" onclick="ask($('#vin').value)">→</button>
-      <button class="btn ghost" style="width:auto;padding:13px 15px" onclick="listen()">🎙</button>
+      <button class="btn ghost" style="width:auto;padding:13px 15px" onclick="listen()" aria-label="Сказать голосом">${ico('mic',18)}</button>
     </div>`;
 }
 
@@ -10705,7 +10922,7 @@ function ask(q){
 
 function evaAnswer(q){
   const day = (S.program || [])[S.day] || {tasks:[]}, left = day.tasks.filter(t => !t.done);
-  if(/аффирмац|прочит/.test(q)) return day.tasks[0].text;
+  if(/аффирмац|прочит/.test(q)) return day.tasks[0] ? day.tasks[0].text : 'Сегодня в программе нет аффирмации. Загляни в библиотеку — там их пятнадцать.';
   if(/балл|звёзд|звезд|статус|уровен/.test(q)){
     const {next} = levelNow();
     return `У тебя ${S.points} баллов и ${S.stars} из ${starsTotal()} звёзд на этой неделе.` + (next ? ` До статуса «${esc(next.n)}» осталось ${next.from - S.points}.` : '');
@@ -10814,12 +11031,9 @@ function copyRef(){
   if(navigator.clipboard) navigator.clipboard.writeText(u).catch(()=>{});
   toast('Ссылка скопирована');
 }
-function restartQuiz(){ S.screen='quiz'; S.qi=0; S.picked=[]; S.tags=[]; S.sheet=null; S.page=null; render(); stars(); }
+function restartQuiz(){ S.screen='quiz'; S.qi=0; S.picked={}; S.tags=[]; S.sheet=null; S.page=null; render(); stars(); }
 /* ---------- старт ---------- */
 window.S = S; window.LIB = LIB;
-S.tags = ['спокойствие','тревога','уверенность'];
-buildProgram();
-S.tags = [];
 S.screen = 'splash';
 render();
 initPWA();
@@ -10886,24 +11100,78 @@ function hdPick(v){
   render();
 }
 
+/* Заявка на услугу. Раньше окно показывало «50 минут» и общую цену эксперта,
+   какую бы услугу ни выбрали, а кнопка только закрывала окно. Теперь берём
+   ту услугу, на которую нажали, и заявка уходит в переписку с экспертом —
+   там же придёт ответ. */
 function shConsult(){
   const e = EXPERTS.find(x => x.id === S.sheet.id);
-  return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">Заявка на консультацию</h2>
-    <p class="small muted" style="margin:0 0 14px">${esc(e.n)} · 50 минут онлайн · ${money(e.price)}</p>
-    <input class="field" placeholder="Имя" value="${esc(S.name)}">
-    <input class="field" placeholder="Телефон или телеграм">
-    <textarea class="field" rows="3" placeholder="С каким запросом приходишь"></textarea>
-    <div class="seg">${['утро','день','вечер'].map(t => `<button class="${t===S.slot?'on':''}" onclick="S.slot='${attJs(t)}';render()">${t}</button>`).join('')}</div>
-    <button class="btn" onclick="S.sheet=null;render();toast('Заявка отправлена, эксперт свяжется с тобой')">Отправить заявку</button>`;
+  const sv = (e.services || []).find(x => x.id === S.sheet.sv) || null;
+  const title = sv ? sv.t : 'Личная консультация';
+  const line = sv ? `${sv.mins} минут · ${sv.format} · ${sv.price ? money(sv.price) : 'бесплатно'}`
+                  : `50 минут онлайн · ${money(e.price)}`;
+  return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">${esc(title)}</h2>
+    <p class="small muted" style="margin:0 0 14px">${esc(e.n)} · ${esc(line)}</p>
+    <label class="lbl">Как к тебе обращаться</label>
+    <input class="field" id="cs_n" placeholder="Имя" value="${esc(S.name)}">
+    <label class="lbl">Как связаться</label>
+    <input class="field" id="cs_c" placeholder="Телефон или телеграм" value="${esc(S.tg || S.phone || '')}">
+    <label class="lbl">С каким запросом приходишь</label>
+    <textarea class="field" id="cs_t" rows="3" placeholder="Пара слов, чтобы эксперт подготовилась"></textarea>
+    <label class="lbl">Удобное время</label>
+    <div class="seg">${['утро','день','вечер'].map(t => `<button class="${t===(S.csSlot||S.slot)?'on':''}" onclick="chipPick(this,'csSlot','${attJs(t)}')">${t}</button>`).join('')}</div>
+    <button class="btn acc" onclick="sendConsult('${attJs(e.id)}','${attJs(sv ? sv.id : '')}')">${sv && !sv.price ? 'Записаться' : 'Отправить заявку'}</button>
+    <p class="tiny muted" style="text-align:center;margin:10px 0 0">Ответ придёт в «Сообщения». Оплата — после того, как договоритесь о времени.</p>`;
 }
-
+function sendConsult(eid, svid){
+  const e = EXPERTS.find(x => x.id === eid);
+  if(!e) return;
+  const sv = (e.services || []).find(x => x.id === svid) || null;
+  const nm = (($('#cs_n')||{}).value || S.name || '').trim();
+  const contact = (($('#cs_c')||{}).value || '').trim();
+  const txt = (($('#cs_t')||{}).value || '').trim();
+  if(!contact) return toast('Оставь телефон или телеграм — иначе не связаться');
+  const text = 'Заявка: «' + (sv ? sv.t : 'Личная консультация') + '». ' + nm +
+    ', связь: ' + contact + '. Удобно ' + (S.csSlot || S.slot) + (txt ? '. Запрос: ' + txt : '');
+  expertThread(e, text, 'Заявку получила. Напишу, когда будет свободное окно, — обычно в течение дня.');
+  S.points += 5;
+  toast('Заявка отправлена ' + e.n.split(' ')[0]);
+}
 function shWrite(){
   const e = EXPERTS.find(x => x.id === S.sheet.id);
   return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">Написать эксперту</h2>
-    <p class="small muted" style="margin:0 0 14px">${esc(e.n)} обычно отвечает в течение суток.</p>
-    <textarea class="field" rows="5" placeholder="Твой вопрос"></textarea>
-    <button class="btn" onclick="S.sheet=null;render();toast('Сообщение отправлено')">Отправить</button>`;
+    <p class="small muted" style="margin:0 0 14px">${esc(e.n)} обычно отвечает в течение суток. Переписка появится в «Сообщениях».</p>
+    <textarea class="field" id="we_t" rows="5" placeholder="Твой вопрос"></textarea>
+    <button class="btn" onclick="writeExpert('${attJs(e.id)}')">Отправить</button>`;
 }
+function writeExpert(id){
+  const e = EXPERTS.find(x => x.id === id);
+  const t = (($('#we_t')||{}).value || '').trim();
+  if(!e) return;
+  if(!t) return toast('Напиши вопрос');
+  expertThread(e, t, 'Спасибо, что написала. Отвечу подробнее в течение дня.');
+  toast('Отправлено ' + e.n.split(' ')[0]);
+}
+/* переписка с экспертом в «Сообщениях»: одна на эксперта, как в мессенджере */
+function expertThread(e, text, reply){
+  initInbox();
+  let th = S.inbox.find(x => x.exp && x.from === e.n);
+  if(!th){
+    th = {id:'ex' + Date.now().toString(36), from:e.n, c:authorColor(e.n), kind:'эксперт',
+          ago:'только что', unread:false, exp:true, msgs:[]};
+    S.inbox.unshift(th);
+  }
+  th.msgs.push({me:true, t:text, tm:nowTime()});
+  th.ago = 'только что';
+  S.sheet = null; S.viewExpert = null; S.course = null;
+  S.page = 'inbox'; S.thread = th.id;
+  render(); schedulePersist();
+  if(reply) setTimeout(() => {
+    th.msgs.push({me:false, t:reply, tm:nowTime()});
+    if(S.thread === th.id) render(); else { th.unread = true; render(); }
+  }, 1800);
+}
+
 
 function suggestTags(text){
   const t = (text || '').toLowerCase();
@@ -10914,20 +11182,6 @@ function suggestTags(text){
   return found.slice(0,5);
 }
 
-function shEditContent(){
-  const x = LIB.find(i => i.id === S.sheet.id);
-  return `<h2 class="serif" style="font-size:24px;margin:0 0 12px">Редактирование</h2>
-    <input class="field" value="${esc(x.title)}" oninput="x_edit('${attJs(x.id)}','title',this.value)">
-    <textarea class="field" rows="4" oninput="x_edit('${attJs(x.id)}','text',this.value)">${esc(x.text)}</textarea>
-    <input class="field" type="number" value="${x.min}" oninput="x_edit('${attJs(x.id)}','min',+this.value)">
-    <div class="small muted" style="margin-bottom:6px">Теги</div>
-    <div class="chips wrap">${allTags().map(([t]) =>
-      `<button class="chip ${x.tags.includes(t)?'on':''}" onclick="tgItem('${attJs(x.id)}','${attJs(t)}')">${esc(t)}</button>`).join('')}</div>
-    <button class="btn" style="margin-top:14px" onclick="S.sheet=null;render();toast('Сохранено')">Сохранить</button>
-    <button class="btn ghost" style="margin-top:9px" onclick="delItem('${attJs(x.id)}')">Удалить материал</button>`;
-}
-
-function x_edit(id,f,v){ const x = LIB.find(i => i.id === id); x[f] = v; }
 
 function tgItem(id,t){
   const x = LIB.find(i => i.id === id);
@@ -10949,14 +11203,6 @@ function shReject(){
     <button class="btn ghost" style="margin-top:9px" onclick="closeSheet()">Отмена</button>`;
 }
 
-function shNewGood(){
-  return `<h2 class="serif" style="font-size:24px;margin:0 0 12px">Новый товар</h2>
-    <input class="field" placeholder="Название">
-    <input class="field" type="number" placeholder="Цена, ₽">
-    <input class="field" type="number" placeholder="Старая цена, ₽">
-    <div class="seg">${['Для практики','Одежда','Дом'].map((k,i) => `<button class="${i===0?'on':''}">${k}</button>`).join('')}</div>
-    <button class="btn" style="margin-top:14px" onclick="S.sheet=null;render();toast('Товар добавлен в каталог')">Добавить</button>`;
-}
 
 function shIdea(){
   return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">Предложить доработку</h2>
@@ -11009,7 +11255,7 @@ function shNewContent(){
     <div class="acts" style="margin:0 0 9px"><button class="btn ghost sm" onclick="pickImage('${attJs(d.key)}')">Заменить фото</button>
       <button class="btn ghost sm" onclick="delete MEDIA['${attJs(d.key)}'];render()">Убрать</button></div>`
   : `<button class="upbox" style="width:100%" onclick="pickImage('${attJs(d.key)}')">
-      <div style="font-size:20px">▣</div>
+      <div style="color:var(--muted)">${ico('image',26)}</div>
       <div style="font-weight:600;font-size:13.5px;margin-top:6px">Загрузить обложку</div>
       <div class="small muted">JPEG, PNG, WebP, HEIC. Сожмём до 1400 px, резкость сохранится</div>
     </button>`}
@@ -11193,21 +11439,6 @@ function saveVideo(id){
 }
 
 /* ---------- уроки и домашние задания ---------- */
-function shUnits(){
-  const c = COURSES.find(x => x.id === S.sheet.id);
-  const ls = lessonsOf(c.id);
-  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Уроки курса</h2>
-    <p class="small muted" style="margin:0 0 12px">${esc(c.t)} · ${ls.length} уроков</p>
-    ${ls.map((l,i) => `<button class="unit" onclick="openUnitEditor('${attJs(c.id)}','${attJs(l.id)}')">
-      <div class="n">${esc(l.n)}</div>
-      <div class="mini">${cover(l.id,'practice')}</div>
-      <div style="flex:1;min-width:0"><b style="font-size:13px;display:block">${esc(l.t)}</b>
-        <div class="small muted">${l.min} мин · ${l.video ? 'видео есть' : 'без видео'}</div></div>
-      <span class="muted">›</span>
-    </button>`).join('')}
-    <button class="btn ghost" style="margin-top:10px" onclick="addUnitTo('${attJs(c.id)}',0)">＋ Добавить урок</button>
-    <button class="btn" style="margin-top:9px" onclick="closeSheet()">Готово</button>`;
-}
 function shHwEdit(){
   const {cid, id} = S.sheet;
   const l = lessonsOf(cid).find(x => x.id === id);
@@ -12036,12 +12267,6 @@ function addCustomInt(){
   openSheet('dating'); toast('Интерес добавлен');
 }
 /* просмотр фотографии из ленты во весь экран */
-function shPhoto(){
-  const src = MEDIA[S.sheet.src];
-  if(!src) return `<div class="empty">Фотография не найдена</div>`;
-  return `<img src="${safeUrl(src)}" alt="" style="width:100%;border-radius:var(--r-lg);display:block">
-    <button class="btn ghost" style="margin-top:12px" onclick="closeSheet()">Закрыть</button>`;
-}
 
 function sendPost(){
   const d = S.post || {};
@@ -12089,7 +12314,7 @@ function askGood(gid){
   const tm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
   let th = S.inbox.find(x => x.kind === 'маркет');
   if(!th){
-    th = {id:'mk'+Date.now().toString(36), from:'Eva Space · Маркет', c:'#111014',
+    th = {id:'mk'+Date.now().toString(36), from:'Eva Space · Маркет', c:'var(--ink)',
           kind:'маркет', ago:'только что', unread:false, sys:true, msgs:[]};
     S.inbox.unshift(th);
   }
@@ -12276,7 +12501,7 @@ function notifyExpert(expertName, text){
   const tm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
   let t = S.inbox.find(x => x.from === 'Редакция Eva' && x.to === expertName);
   if(!t){
-    t = {id:'ed'+Date.now().toString(36), from:'Редакция Eva', to:expertName, c:'#111014',
+    t = {id:'ed'+Date.now().toString(36), from:'Редакция Eva', to:expertName, c:'var(--ink)',
          kind:'редакция', ago:'только что', unread:true, sys:true, msgs:[]};
     S.inbox.unshift(t);
   }
@@ -12459,7 +12684,7 @@ function evThread(e){
   initInbox();
   let t = S.inbox.find(x => x.kind === 'мероприятие' && x.eid === e.id);
   if(!t){
-    t = {id:'ev_' + e.id, from:EVA_EVENTS, c:'#111014', kind:'мероприятие', eid:e.id,
+    t = {id:'ev_' + e.id, from:EVA_EVENTS, c:'var(--ink)', kind:'мероприятие', eid:e.id,
          ago:'только что', unread:false, sys:true, msgs:[]};
     S.inbox.unshift(t);
   }
@@ -12749,7 +12974,7 @@ function evActions(m){
     <button class="btn xs" onclick="evCame('${attJs(id)}',false)">Не получилось</button></div>`;
   if(m.act === 'rate') return `<div class="rateline">${[1,2,3,4,5].map(n =>
     `<button class="rstar" onclick="evRate('${attJs(id)}',${n})" aria-label="${n} из 5">
-      ${starMark(21, 'rgba(17,16,20,.24)')}</button>`).join('')}</div>`;
+      ${starMark(21, 'var(--star-off)')}</button>`).join('')}</div>`;
   if(m.act === 'why') return `<div class="whyrow">
     <input class="field" id="evwhy_${esc(id)}" placeholder="Пара слов"
       onkeydown="if(event.key==='Enter')evWhy('${attJs(id)}')">
@@ -13815,7 +14040,7 @@ function shWeekSum(){
   const set = WEEK_TEXT[w.level] || WEEK_TEXT.quiet;
   const quiet = w.level === 'quiet';
   return `<div class="wsum wsum-${w.level}">
-      <div class="wsumtop">${starMark(20, quiet ? 'rgba(255,255,255,.5)' : '#E7A339')}
+      <div class="wsumtop">${starMark(20, quiet ? 'rgba(255,255,255,.5)' : 'var(--star)')}
         <span>Итоги недели</span></div>
       ${quiet ? `<div class="wsumsub" style="margin-top:6px">Неделя вышла тихой</div>`
               : `<div class="wsumbig">${w.done}<i>из ${w.total}</i></div>
@@ -14187,7 +14412,7 @@ function shelfItem(id){
 function starBtn(id, size){
   return `<span class="starbtn ${isLiked(id) ? 'on' : ''}"
     onclick="event.stopPropagation();starContent(this,'${attJs(id)}')"
-    aria-label="В избранное">${starMark(size || 15, isLiked(id) ? '#E7A339' : 'rgba(17,16,20,.22)')}</span>`;
+    aria-label="В избранное">${starMark(size || 15, isLiked(id) ? 'var(--star)' : 'var(--star-off)')}</span>`;
 }
 
 /* ---------- мероприятия ----------

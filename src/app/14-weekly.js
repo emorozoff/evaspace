@@ -219,7 +219,7 @@ function shWeekSum(){
   const set = WEEK_TEXT[w.level] || WEEK_TEXT.quiet;
   const quiet = w.level === 'quiet';
   return `<div class="wsum wsum-${w.level}">
-      <div class="wsumtop">${starMark(20, quiet ? 'rgba(255,255,255,.5)' : '#E7A339')}
+      <div class="wsumtop">${starMark(20, quiet ? 'rgba(255,255,255,.5)' : 'var(--star)')}
         <span>Итоги недели</span></div>
       ${quiet ? `<div class="wsumsub" style="margin-top:6px">Неделя вышла тихой</div>`
               : `<div class="wsumbig">${w.done}<i>из ${w.total}</i></div>

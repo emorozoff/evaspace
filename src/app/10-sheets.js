@@ -18,14 +18,14 @@ function sheet(){
   const k = typeof S.sheet === 'string' ? S.sheet : S.sheet.k;
   const body = ({lesson:shLesson, course:shCourse, rebuild:shRebuild, eva:shEva,
     hint:shHint, addTag:shAddTag, cycle:shCycle, hd:shHD, consult:shConsult, write:shWrite,
-    newContent:shNewContent, editContent:shEditContent, reject:shReject, rework:shRework,
-    units:shUnits, groupInfo:shGroupInfo, newGroup:shNewGroup, fix:shFix, video:shVideo,
+    newContent:shNewContent, reject:shReject, rework:shRework,
+    groupInfo:shGroupInfo, newGroup:shNewGroup, fix:shFix, video:shVideo,
     invite:shInvite, hello:shHello, askGroup:shAskGroup, weekSum:shWeekSum,
     myPage:shMyPage, toMate:shToMate,
     hw:shHW, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
-    expertApply:shExpertApply, install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
+    expertApply:shExpertApply, install:shInstall, diag:shDiag, askGood:shAskGood, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
     service:shService, editUser:shEditUser,
-    newCourse:shNewCourse, newGood:shNewGood, idea:shIdea})[k]();
+    newCourse:shNewCourse, idea:shIdea})[k]();
   return `<div class="bg" onclick="if(event.target===this)closeSheet()">
     <div class="sheet"><div class="grab"></div>${body}</div></div>`;
 }
@@ -35,6 +35,7 @@ function shLesson(){
   const inProg = S.program.map((d,di) => d.tasks.map((t,ti) => ({t,di,ti})))
                   .flat().find(o => o.t.id === x.id);
   const e = expBy(x.expert);
+  const why = whyItem(x, profileOf());      // её словами: про что это для неё
   return `${x.video
     ? `<div style="margin-bottom:14px">${videoBlock(x.id, x.type)}</div>`
     : `<div style="border-radius:var(--r-lg);overflow:hidden;height:190px;position:relative;margin-bottom:14px">
@@ -42,9 +43,9 @@ function shLesson(){
         ${x.type !== 'affirm' ? '<div class="play">▶</div>' : ''}
         <div class="badge">${TYPE[x.type].l}</div>
       </div>`}
-    <div class="spread"><div class="eyebrow">${x.min} мин · ${matchOf(x)}% совпадение</div>
+    <div class="spread"><div class="eyebrow">${x.min} мин · ${matchOf(x)}%${why ? ' · ' + esc(why) : ' совпадение'}</div>
       <button class="starbtn ${isLiked(x.id)?'on':''}" onclick="starContent(this,'${attJs(x.id)}')">
-        ${starMark(16, isLiked(x.id) ? '#E7A339' : 'rgba(17,16,20,.22)')}
+        ${starMark(16, isLiked(x.id) ? 'var(--star)' : 'var(--star-off)')}
         <span style="font-size:11px">${isLiked(x.id)?'в избранном':'в избранное'}</span></button></div>
     <h2 class="serif" style="font-size:27px;margin:8px 0 10px">${esc(x.title)}</h2>
     <p style="font-size:14.5px;line-height:1.6;color:var(--muted);margin:0 0 14px">${esc(x.type==='affirm' ? '«'+x.text+'»' : x.text)}</p>
@@ -118,7 +119,7 @@ function shEva(){
     <div class="row" style="gap:8px">
       <input class="field" id="vin" style="margin:0" placeholder="Напиши Еве" onkeydown="if(event.key==='Enter')ask(this.value)">
       <button class="btn" style="width:auto;padding:13px 17px" onclick="ask($('#vin').value)">→</button>
-      <button class="btn ghost" style="width:auto;padding:13px 15px" onclick="listen()">🎙</button>
+      <button class="btn ghost" style="width:auto;padding:13px 15px" onclick="listen()" aria-label="Сказать голосом">${ico('mic',18)}</button>
     </div>`;
 }
 
@@ -134,7 +135,7 @@ function ask(q){
 
 function evaAnswer(q){
   const day = (S.program || [])[S.day] || {tasks:[]}, left = day.tasks.filter(t => !t.done);
-  if(/аффирмац|прочит/.test(q)) return day.tasks[0].text;
+  if(/аффирмац|прочит/.test(q)) return day.tasks[0] ? day.tasks[0].text : 'Сегодня в программе нет аффирмации. Загляни в библиотеку — там их пятнадцать.';
   if(/балл|звёзд|звезд|статус|уровен/.test(q)){
     const {next} = levelNow();
     return `У тебя ${S.points} баллов и ${S.stars} из ${starsTotal()} звёзд на этой неделе.` + (next ? ` До статуса «${esc(next.n)}» осталось ${next.from - S.points}.` : '');
@@ -243,12 +244,9 @@ function copyRef(){
   if(navigator.clipboard) navigator.clipboard.writeText(u).catch(()=>{});
   toast('Ссылка скопирована');
 }
-function restartQuiz(){ S.screen='quiz'; S.qi=0; S.picked=[]; S.tags=[]; S.sheet=null; S.page=null; render(); stars(); }
+function restartQuiz(){ S.screen='quiz'; S.qi=0; S.picked={}; S.tags=[]; S.sheet=null; S.page=null; render(); stars(); }
 /* ---------- старт ---------- */
 window.S = S; window.LIB = LIB;
-S.tags = ['спокойствие','тревога','уверенность'];
-buildProgram();
-S.tags = [];
 S.screen = 'splash';
 render();
 initPWA();
@@ -315,24 +313,78 @@ function hdPick(v){
   render();
 }
 
+/* Заявка на услугу. Раньше окно показывало «50 минут» и общую цену эксперта,
+   какую бы услугу ни выбрали, а кнопка только закрывала окно. Теперь берём
+   ту услугу, на которую нажали, и заявка уходит в переписку с экспертом —
+   там же придёт ответ. */
 function shConsult(){
   const e = EXPERTS.find(x => x.id === S.sheet.id);
-  return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">Заявка на консультацию</h2>
-    <p class="small muted" style="margin:0 0 14px">${esc(e.n)} · 50 минут онлайн · ${money(e.price)}</p>
-    <input class="field" placeholder="Имя" value="${esc(S.name)}">
-    <input class="field" placeholder="Телефон или телеграм">
-    <textarea class="field" rows="3" placeholder="С каким запросом приходишь"></textarea>
-    <div class="seg">${['утро','день','вечер'].map(t => `<button class="${t===S.slot?'on':''}" onclick="S.slot='${attJs(t)}';render()">${t}</button>`).join('')}</div>
-    <button class="btn" onclick="S.sheet=null;render();toast('Заявка отправлена, эксперт свяжется с тобой')">Отправить заявку</button>`;
+  const sv = (e.services || []).find(x => x.id === S.sheet.sv) || null;
+  const title = sv ? sv.t : 'Личная консультация';
+  const line = sv ? `${sv.mins} минут · ${sv.format} · ${sv.price ? money(sv.price) : 'бесплатно'}`
+                  : `50 минут онлайн · ${money(e.price)}`;
+  return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">${esc(title)}</h2>
+    <p class="small muted" style="margin:0 0 14px">${esc(e.n)} · ${esc(line)}</p>
+    <label class="lbl">Как к тебе обращаться</label>
+    <input class="field" id="cs_n" placeholder="Имя" value="${esc(S.name)}">
+    <label class="lbl">Как связаться</label>
+    <input class="field" id="cs_c" placeholder="Телефон или телеграм" value="${esc(S.tg || S.phone || '')}">
+    <label class="lbl">С каким запросом приходишь</label>
+    <textarea class="field" id="cs_t" rows="3" placeholder="Пара слов, чтобы эксперт подготовилась"></textarea>
+    <label class="lbl">Удобное время</label>
+    <div class="seg">${['утро','день','вечер'].map(t => `<button class="${t===(S.csSlot||S.slot)?'on':''}" onclick="chipPick(this,'csSlot','${attJs(t)}')">${t}</button>`).join('')}</div>
+    <button class="btn acc" onclick="sendConsult('${attJs(e.id)}','${attJs(sv ? sv.id : '')}')">${sv && !sv.price ? 'Записаться' : 'Отправить заявку'}</button>
+    <p class="tiny muted" style="text-align:center;margin:10px 0 0">Ответ придёт в «Сообщения». Оплата — после того, как договоритесь о времени.</p>`;
 }
-
+function sendConsult(eid, svid){
+  const e = EXPERTS.find(x => x.id === eid);
+  if(!e) return;
+  const sv = (e.services || []).find(x => x.id === svid) || null;
+  const nm = (($('#cs_n')||{}).value || S.name || '').trim();
+  const contact = (($('#cs_c')||{}).value || '').trim();
+  const txt = (($('#cs_t')||{}).value || '').trim();
+  if(!contact) return toast('Оставь телефон или телеграм — иначе не связаться');
+  const text = 'Заявка: «' + (sv ? sv.t : 'Личная консультация') + '». ' + nm +
+    ', связь: ' + contact + '. Удобно ' + (S.csSlot || S.slot) + (txt ? '. Запрос: ' + txt : '');
+  expertThread(e, text, 'Заявку получила. Напишу, когда будет свободное окно, — обычно в течение дня.');
+  S.points += 5;
+  toast('Заявка отправлена ' + e.n.split(' ')[0]);
+}
 function shWrite(){
   const e = EXPERTS.find(x => x.id === S.sheet.id);
   return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">Написать эксперту</h2>
-    <p class="small muted" style="margin:0 0 14px">${esc(e.n)} обычно отвечает в течение суток.</p>
-    <textarea class="field" rows="5" placeholder="Твой вопрос"></textarea>
-    <button class="btn" onclick="S.sheet=null;render();toast('Сообщение отправлено')">Отправить</button>`;
+    <p class="small muted" style="margin:0 0 14px">${esc(e.n)} обычно отвечает в течение суток. Переписка появится в «Сообщениях».</p>
+    <textarea class="field" id="we_t" rows="5" placeholder="Твой вопрос"></textarea>
+    <button class="btn" onclick="writeExpert('${attJs(e.id)}')">Отправить</button>`;
 }
+function writeExpert(id){
+  const e = EXPERTS.find(x => x.id === id);
+  const t = (($('#we_t')||{}).value || '').trim();
+  if(!e) return;
+  if(!t) return toast('Напиши вопрос');
+  expertThread(e, t, 'Спасибо, что написала. Отвечу подробнее в течение дня.');
+  toast('Отправлено ' + e.n.split(' ')[0]);
+}
+/* переписка с экспертом в «Сообщениях»: одна на эксперта, как в мессенджере */
+function expertThread(e, text, reply){
+  initInbox();
+  let th = S.inbox.find(x => x.exp && x.from === e.n);
+  if(!th){
+    th = {id:'ex' + Date.now().toString(36), from:e.n, c:authorColor(e.n), kind:'эксперт',
+          ago:'только что', unread:false, exp:true, msgs:[]};
+    S.inbox.unshift(th);
+  }
+  th.msgs.push({me:true, t:text, tm:nowTime()});
+  th.ago = 'только что';
+  S.sheet = null; S.viewExpert = null; S.course = null;
+  S.page = 'inbox'; S.thread = th.id;
+  render(); schedulePersist();
+  if(reply) setTimeout(() => {
+    th.msgs.push({me:false, t:reply, tm:nowTime()});
+    if(S.thread === th.id) render(); else { th.unread = true; render(); }
+  }, 1800);
+}
+
 
 function suggestTags(text){
   const t = (text || '').toLowerCase();
@@ -343,20 +395,6 @@ function suggestTags(text){
   return found.slice(0,5);
 }
 
-function shEditContent(){
-  const x = LIB.find(i => i.id === S.sheet.id);
-  return `<h2 class="serif" style="font-size:24px;margin:0 0 12px">Редактирование</h2>
-    <input class="field" value="${esc(x.title)}" oninput="x_edit('${attJs(x.id)}','title',this.value)">
-    <textarea class="field" rows="4" oninput="x_edit('${attJs(x.id)}','text',this.value)">${esc(x.text)}</textarea>
-    <input class="field" type="number" value="${x.min}" oninput="x_edit('${attJs(x.id)}','min',+this.value)">
-    <div class="small muted" style="margin-bottom:6px">Теги</div>
-    <div class="chips wrap">${allTags().map(([t]) =>
-      `<button class="chip ${x.tags.includes(t)?'on':''}" onclick="tgItem('${attJs(x.id)}','${attJs(t)}')">${esc(t)}</button>`).join('')}</div>
-    <button class="btn" style="margin-top:14px" onclick="S.sheet=null;render();toast('Сохранено')">Сохранить</button>
-    <button class="btn ghost" style="margin-top:9px" onclick="delItem('${attJs(x.id)}')">Удалить материал</button>`;
-}
-
-function x_edit(id,f,v){ const x = LIB.find(i => i.id === id); x[f] = v; }
 
 function tgItem(id,t){
   const x = LIB.find(i => i.id === id);
@@ -378,14 +416,6 @@ function shReject(){
     <button class="btn ghost" style="margin-top:9px" onclick="closeSheet()">Отмена</button>`;
 }
 
-function shNewGood(){
-  return `<h2 class="serif" style="font-size:24px;margin:0 0 12px">Новый товар</h2>
-    <input class="field" placeholder="Название">
-    <input class="field" type="number" placeholder="Цена, ₽">
-    <input class="field" type="number" placeholder="Старая цена, ₽">
-    <div class="seg">${['Для практики','Одежда','Дом'].map((k,i) => `<button class="${i===0?'on':''}">${k}</button>`).join('')}</div>
-    <button class="btn" style="margin-top:14px" onclick="S.sheet=null;render();toast('Товар добавлен в каталог')">Добавить</button>`;
-}
 
 function shIdea(){
   return `<h2 class="serif" style="font-size:24px;margin:0 0 6px">Предложить доработку</h2>
@@ -438,7 +468,7 @@ function shNewContent(){
     <div class="acts" style="margin:0 0 9px"><button class="btn ghost sm" onclick="pickImage('${attJs(d.key)}')">Заменить фото</button>
       <button class="btn ghost sm" onclick="delete MEDIA['${attJs(d.key)}'];render()">Убрать</button></div>`
   : `<button class="upbox" style="width:100%" onclick="pickImage('${attJs(d.key)}')">
-      <div style="font-size:20px">▣</div>
+      <div style="color:var(--muted)">${ico('image',26)}</div>
       <div style="font-weight:600;font-size:13.5px;margin-top:6px">Загрузить обложку</div>
       <div class="small muted">JPEG, PNG, WebP, HEIC. Сожмём до 1400 px, резкость сохранится</div>
     </button>`}
@@ -622,21 +652,6 @@ function saveVideo(id){
 }
 
 /* ---------- уроки и домашние задания ---------- */
-function shUnits(){
-  const c = COURSES.find(x => x.id === S.sheet.id);
-  const ls = lessonsOf(c.id);
-  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Уроки курса</h2>
-    <p class="small muted" style="margin:0 0 12px">${esc(c.t)} · ${ls.length} уроков</p>
-    ${ls.map((l,i) => `<button class="unit" onclick="openUnitEditor('${attJs(c.id)}','${attJs(l.id)}')">
-      <div class="n">${esc(l.n)}</div>
-      <div class="mini">${cover(l.id,'practice')}</div>
-      <div style="flex:1;min-width:0"><b style="font-size:13px;display:block">${esc(l.t)}</b>
-        <div class="small muted">${l.min} мин · ${l.video ? 'видео есть' : 'без видео'}</div></div>
-      <span class="muted">›</span>
-    </button>`).join('')}
-    <button class="btn ghost" style="margin-top:10px" onclick="addUnitTo('${attJs(c.id)}',0)">＋ Добавить урок</button>
-    <button class="btn" style="margin-top:9px" onclick="closeSheet()">Готово</button>`;
-}
 function shHwEdit(){
   const {cid, id} = S.sheet;
   const l = lessonsOf(cid).find(x => x.id === id);
@@ -1465,12 +1480,6 @@ function addCustomInt(){
   openSheet('dating'); toast('Интерес добавлен');
 }
 /* просмотр фотографии из ленты во весь экран */
-function shPhoto(){
-  const src = MEDIA[S.sheet.src];
-  if(!src) return `<div class="empty">Фотография не найдена</div>`;
-  return `<img src="${safeUrl(src)}" alt="" style="width:100%;border-radius:var(--r-lg);display:block">
-    <button class="btn ghost" style="margin-top:12px" onclick="closeSheet()">Закрыть</button>`;
-}
 
 function sendPost(){
   const d = S.post || {};
@@ -1518,7 +1527,7 @@ function askGood(gid){
   const tm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
   let th = S.inbox.find(x => x.kind === 'маркет');
   if(!th){
-    th = {id:'mk'+Date.now().toString(36), from:'Eva Space · Маркет', c:'#111014',
+    th = {id:'mk'+Date.now().toString(36), from:'Eva Space · Маркет', c:'var(--ink)',
           kind:'маркет', ago:'только что', unread:false, sys:true, msgs:[]};
     S.inbox.unshift(th);
   }
@@ -1705,7 +1714,7 @@ function notifyExpert(expertName, text){
   const tm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
   let t = S.inbox.find(x => x.from === 'Редакция Eva' && x.to === expertName);
   if(!t){
-    t = {id:'ed'+Date.now().toString(36), from:'Редакция Eva', to:expertName, c:'#111014',
+    t = {id:'ed'+Date.now().toString(36), from:'Редакция Eva', to:expertName, c:'var(--ink)',
          kind:'редакция', ago:'только что', unread:true, sys:true, msgs:[]};
     S.inbox.unshift(t);
   }

@@ -115,7 +115,11 @@ function sRequest(item, p){
   if(!p.tags.length) return 0.5;                       // теста не было — не наказываем
   const his = Array.isArray(item.tags) ? item.tags : [];
   const top = p.tags.slice(0, 3);
-  const need = top.reduce((n, x) => n + x.w, 0) || 1;
+  /* Мерка — её главный запрос. Материал прямо про него закрывает запрос
+     целиком, про второй — почти целиком. Раньше делили на сумму трёх
+     запросов, и даже точное попадание давало треть: у всей библиотеки
+     выходило «50% совпадения» — и она не понимала, за что это. */
+  const need = Math.max.apply(null, top.map(x => x.w)) || 1;
   const got = p.tags.filter(x => his.includes(x.t))
                     .reduce((n, x) => n + x.w, 0);
   return Math.min(1, got / need);
@@ -138,8 +142,15 @@ function sStage(item, p){
 
 /* Время: важно не «влезает ли вообще», а влезает ли спокойно.
    В мягком режиме бюджет урезаем — она сама сказала, что тяжело. */
+/* Бюджет минут: её ответ, срезанный в мягком режиме и в дни месячных —
+   в эти дни она сама сказала бы «поменьше», если бы её спросили. */
+function timeBudget(p){
+  let b = p.gentle ? Math.max(10, p.time * 0.6) : p.time;
+  if((p.aud || []).includes('period')) b = Math.max(10, b * 0.8);
+  return b;
+}
 function sTime(item, p){
-  const budget = p.gentle ? Math.max(10, p.time * 0.6) : p.time;
+  const budget = timeBudget(p);
   const min = +item.min || 0;
   if(min <= budget * 0.7) return 1;
   if(min <= budget)       return 0.75;
@@ -199,10 +210,19 @@ function scoreItem(item, p){
     order:   sOrder(item)
   };
   const sig = signalsFor(item.type);
-  let sum = 0;
-  Object.keys(sig).forEach(k => { sum += parts[k] * sig[k]; });
-  return {score: Math.round(sum / signalMax(sig) * 100), parts, sig};
+  /* Два числа. score — для порядка показа: со свежестью и очередью
+     редакции. fit — то, что видит женщина: насколько материал про неё.
+     Свежесть и очередь к ней не относятся, и раньше они молча снимали
+     у каждого материала до пятнадцати процентов «совпадения». */
+  let sum = 0, fitSum = 0, fitMax = 0;
+  Object.keys(sig).forEach(k => {
+    sum += parts[k] * sig[k];
+    if(USER_SIGNALS.indexOf(k) >= 0){ fitSum += parts[k] * sig[k]; fitMax += sig[k]; }
+  });
+  return {score: Math.round(sum / signalMax(sig) * 100),
+          fit: Math.round(fitSum / (fitMax || 1) * 100), parts, sig};
 }
+const USER_SIGNALS = ['request', 'topic', 'stage', 'time', 'level'];
 
 /* Почему именно это — одной строкой, её словами.
    Показываем не больше двух причин: третья уже не читается. */
@@ -226,7 +246,7 @@ function whyItem(item, p){
    Используется в библиотеке для сортировки и на карточках. */
 function matchOf(item){
   if(!item) return 0;
-  return scoreItem(item, profileOf()).score;
+  return scoreItem(item, profileOf()).fit;
 }
 
 
@@ -275,7 +295,7 @@ function themeFit(item, theme){
    ограничения нет: там время есть, и туда уходит самое содержательное. */
 const WEEKEND_FROM = 5;                        // суббота и воскресенье
 function fitsBudget(item, p){
-  return (+item.min || 0) <= (p.gentle ? Math.max(10, p.time * 0.6) : p.time);
+  return (+item.min || 0) <= timeBudget(p);
 }
 function dayChoice(list, p, i){
   if(i >= WEEKEND_FROM) return list;
@@ -424,11 +444,18 @@ function task(item, slot, p){
   const prof = p || profileOf();
   const s = scoreItem(item, prof);
   return {...item, slot, pts:TYPE[item.type].pts,
-          match:s.score, why:whyItem(item, prof), done:false};
+          match:s.fit, why:whyItem(item, prof), done:false};
 }
 
 const todayIdx = () => (new Date().getDay() + 6) % 7;
-const weekNo = () => Math.floor((Date.now() - new Date(new Date().getFullYear(),0,1)) / 6048e5);
+/* Номер недели считаем от понедельника: программа живёт по дням недели и
+   пересобираться должна в понедельник. При счёте от первого января она
+   обновлялась в случайный день посреди недели и обнуляла звёзды. */
+const weekNo = () => {
+  const d = new Date(); d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - todayIdx());
+  return Math.round(d.getTime() / 6048e5);
+};
 
 /* при смене недели программа пересобирается на свежих материалах */
 function checkWeek(quiet){
@@ -481,6 +508,9 @@ function starsWeek(){
   return (S.program || []).reduce((a, d) => a + d.tasks.filter(t => t.done).length, 0);
 }
 
+/* Закрытый день целиком стоит отдельных баллов — так обещано в подсказке
+   про баллы, а начислялось ноль. */
+const DAY_BONUS = 50;
 function complete(di, ti){
   const t = S.program[di].tasks[ti];
   if(t.done) return;
@@ -488,10 +518,28 @@ function complete(di, ti){
   S.points += t.pts;
   S.starsAll = (S.starsAll || 0) + 1;
   S.stars = starsWeek();
+  rememberDay(di);
+  const full = S.program[di].tasks.every(x => x.done);
+  if(full) S.points += DAY_BONUS;
   toast(`+${t.pts} баллов`);
-  if(doneOf(di) === 3) setTimeout(() => toast('День закрыт полностью'), 1000);
+  if(full) setTimeout(() => toast('День закрыт полностью · ещё +' + DAY_BONUS), 1000);
   render(); schedulePersist();
 }
+
+/* История по дням: сколько дел закрыто в каждый календарный день. По ней
+   считаются стрик и календарь. Раньше календарь рисовал прошлые дни наугад
+   из хеша числа, а стрик обнулялся каждый понедельник вместе с программой. */
+const dayKey = d => {
+  const x = new Date(d); x.setHours(0,0,0,0);
+  return x.getFullYear() + '-' + String(x.getMonth()+1).padStart(2,'0') + '-' + String(x.getDate()).padStart(2,'0');
+};
+function rememberDay(di){
+  S.history = S.history || {};
+  S.history[dayKey(dateOfDay(di))] = doneOf(di);
+  const keys = Object.keys(S.history);
+  if(keys.length > 400) keys.sort().slice(0, keys.length - 400).forEach(k => delete S.history[k]);
+}
+const doneOn = d => (S.history || {})[dayKey(d)] || 0;
 
 function levelNow(){
   let cur = LEVELS[0], next = LEVELS[1];
@@ -499,9 +547,17 @@ function levelNow(){
   return {cur, next};
 }
 
+/* Дней подряд с хотя бы одним делом. Один пропуск цепочку не рвёт, два
+   подряд — рвут: так написано в календаре, и так теперь и считается. */
 function streak(){
-  let n = 0;
-  for(let i = todayIdx(); i >= 0; i--){ if(doneOf(i) === 3) n++; else break; }
+  let n = 0, gaps = 0;
+  const d = new Date(); d.setHours(0,0,0,0);
+  if(!doneOn(d)) d.setDate(d.getDate() - 1);          // сегодня ещё можно успеть
+  for(let i = 0; i < 400; i++){
+    if(doneOn(d)){ n++; gaps = 0; }
+    else if(++gaps >= 2) break;
+    d.setDate(d.getDate() - 1);
+  }
   return n;
 }
 
@@ -756,7 +812,7 @@ function scrWelcome(){
 
 function scrQuiz(){
   const flow = quizFlow();
-  const q = flow[Math.min(S.qi, flow.length-1)], sel = S.picked[S.qi] || [];
+  const q = flow[Math.min(S.qi, flow.length-1)], sel = picksOf(q);
   const can = sel.length > 0;
   return `<div class="sky"><canvas id="sky"></canvas></div>
   <div class="night">
@@ -837,11 +893,12 @@ function donut(pct){
 /* ---------- действия онбординга ---------- */
 function startQuiz(){
   if(!S.name.trim()) S.name = 'Ева';
-  S.screen = 'quiz'; S.qi = 0; S.picked = []; S.tags = [];
+  S.screen = 'quiz'; S.qi = 0; S.picked = {}; S.tags = [];
   render(); stars();
 }
+const picksOf = q => (q && S.picked && S.picked[q.id]) || [];
 function pick(i){
-  const q = quizFlow()[S.qi]; let sel = S.picked[S.qi] || [];
+  const q = quizFlow()[S.qi]; let sel = picksOf(q);
   /* max не указан — один ответ; max:0 — сколько захочет */
   const max = q.max == null ? 1 : q.max;
   if(sel.includes(i)) sel = sel.filter(x => x !== i);
@@ -850,33 +907,43 @@ function pick(i){
   /* набрала максимум — вытесняем самый давний выбор, а не схлопываем список
      до двух: на вопросе с четырьмя вариантами так терялись ответы */
   else sel = [...sel.slice(1), i];
-  S.picked[S.qi] = sel; render(); stars();
+  S.picked = S.picked || {}; S.picked[q.id] = sel; render(); stars();
 }
 function prevQ(){
   if(S.qi === 0){ S.screen = 'welcome'; render(); return; }
   S.qi--; render(); stars();
 }
-function nextQ(){
-  const flow = quizFlow();
-  const q = flow[S.qi];
-  S.answers = S.answers || {};
-  /* направления собираем заново: женщина могла снять галочку и вернуться */
-  if(q.grid) S.topics = [];
-  const qw = (typeof QUIZ_W !== 'undefined' && QUIZ_W[q.id] != null) ? QUIZ_W[q.id] : 0.6;
-  S.tagw = S.tagw || {};
-  (S.picked[S.qi] || []).forEach(i => {
-    const o = q.o[i];
-    /* тег мог прийти из двух вопросов — оставляем больший вес */
-    (o.tags || []).forEach(t => {
-      if(!S.tags.includes(t)) S.tags.push(t);
-      S.tagw[t] = Math.max(S.tagw[t] || 0, qw);
+/* Ответы теста складываются заново из всех отмеченных вариантов. Раньше
+   теги только добавлялись на каждом «Дальше»: вернулась, поменяла ответ —
+   а старый тег оставался в программе. Ответы хранятся по номеру вопроса,
+   а не по его месту: уточняющие вопросы появляются и исчезают, и место
+   у них плавает. */
+function applyPicks(){
+  S.answers = {}; S.tags = []; S.tagw = {}; S.topics = []; S.extra = {};
+  S.time = 20; S.slot = 'утро';
+  S.picked = S.picked || {};
+  for(let i = 0; i < 20; i++){
+    const q = quizFlow()[i];
+    if(!q) break;
+    const qw = (typeof QUIZ_W !== 'undefined' && QUIZ_W[q.id] != null) ? QUIZ_W[q.id] : 0.6;
+    (S.picked[q.id] || []).forEach(idx => {
+      const o = q.o[idx];
+      if(!o) return;
+      /* тег мог прийти из двух вопросов — оставляем больший вес */
+      (o.tags || []).forEach(t => {
+        if(!S.tags.includes(t)) S.tags.push(t);
+        S.tagw[t] = Math.max(S.tagw[t] || 0, qw);
+      });
+      if(o.topic && !S.topics.includes(o.topic)) S.topics.push(o.topic);
+      if(o.time) S.time = o.time;
+      if(o.slot) S.slot = o.slot;
+      if(o.extra) Object.assign(S.extra, o.extra);
+      S.answers[q.id] = {t:o.t, next:o.next || null};
     });
-    if(o.topic){ S.topics = S.topics || []; if(!S.topics.includes(o.topic)) S.topics.push(o.topic); }
-    if(o.time) S.time = o.time;
-    if(o.slot) S.slot = o.slot;
-    if(o.extra) Object.assign(S.extra, o.extra);
-    S.answers[q.id] = {t:o.t, next:o.next || null};
-  });
+  }
+}
+function nextQ(){
+  applyPicks();
   if(S.qi < quizFlow().length - 1){ S.qi++; render(); stars(); return; }
   if(!S.user){ S.screen = 'mail'; render(); stars(); return; }
   S.screen = 'building'; render(); stars();
@@ -918,8 +985,24 @@ function page(){
 
 /* ---------- переключатель ролей (для разработки) ---------- */
 /* инструмент разработки: с сервером его видит только администратор */
+/* Переключатель ролей — инструмент для показа и разработки. Виден
+   администратору (роль подтверждает сервер) и в режиме разработчика: он
+   включается пятью нажатиями на строку версии в настройках или ?dev в
+   адресе. Раньше без сервера его видела каждая женщина поверх меню. */
+const devMode = () => !!Store.get('eva_dev') || /[?&#]dev\b/.test(location.href);
+function toggleDev(){
+  const on = !Store.get('eva_dev');
+  if(on) Store.set('eva_dev', 1); else Store.del('eva_dev');
+  render(); toast(on ? 'Режим разработчика включён' : 'Режим разработчика выключен');
+}
+let verTaps = 0, verTimer = null;
+function versionTap(){
+  verTaps++; clearTimeout(verTimer);
+  verTimer = setTimeout(() => { verTaps = 0; }, 1500);
+  if(verTaps >= 5){ verTaps = 0; toggleDev(); }
+}
 function roleSwitch(){
-  if(SYNC.alive !== false && !(S.user && S.user.role === 'admin')) return '';
+  if(!(S.user && S.user.role === 'admin') && !devMode()) return '';
   const R = [['user','Пользователь'],['expert','Эксперт'],['admin','Админ']];
   return `<div class="rolesw">
     ${R.map(([k,l]) => `<button class="${S.role===k?'on':''}" onclick="setRole('${attJs(k)}')">${l}</button>`).join('')}

@@ -66,7 +66,7 @@ function evThread(e){
   initInbox();
   let t = S.inbox.find(x => x.kind === 'мероприятие' && x.eid === e.id);
   if(!t){
-    t = {id:'ev_' + e.id, from:EVA_EVENTS, c:'#111014', kind:'мероприятие', eid:e.id,
+    t = {id:'ev_' + e.id, from:EVA_EVENTS, c:'var(--ink)', kind:'мероприятие', eid:e.id,
          ago:'только что', unread:false, sys:true, msgs:[]};
     S.inbox.unshift(t);
   }
@@ -356,7 +356,7 @@ function evActions(m){
     <button class="btn xs" onclick="evCame('${attJs(id)}',false)">Не получилось</button></div>`;
   if(m.act === 'rate') return `<div class="rateline">${[1,2,3,4,5].map(n =>
     `<button class="rstar" onclick="evRate('${attJs(id)}',${n})" aria-label="${n} из 5">
-      ${starMark(21, 'rgba(17,16,20,.24)')}</button>`).join('')}</div>`;
+      ${starMark(21, 'var(--star-off)')}</button>`).join('')}</div>`;
   if(m.act === 'why') return `<div class="whyrow">
     <input class="field" id="evwhy_${esc(id)}" placeholder="Пара слов"
       onkeydown="if(event.key==='Enter')evWhy('${attJs(id)}')">

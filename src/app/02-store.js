@@ -87,7 +87,7 @@ function persist(){
     lastWeek:S.lastWeek, weekShown:S.weekShown, weekMood:S.weekMood,
     nudgedWeek:S.nudgedWeek, gdraft:S.gdraft,
     quietRun:S.quietRun, askedBlock:S.askedBlock,
-    pushOn:S.pushOn, pushAsked:S.pushAsked, tipStars:S.tipStars,
+    pushOn:S.pushOn, pushAsked:S.pushAsked, tipStars:S.tipStars, history:S.history,
     follows:S.follows, mates:S.mates, expSeen:S.expSeen, about:S.about, city:S.city, show:S.show,
     savedAt:Date.now()
   });
@@ -102,7 +102,7 @@ const PERSONAL = ['name','tags','topics','time','slot','answers','extra','points
   'inbox','seenReplies','seenDm','myInts','datingProfile','starred','starredCmts','likes','visits',
   'gentle','seen','tagw','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
   'weekMood','nudgedWeek','gdraft','quietRun','askedBlock','pushOn','pushAsked','tipStars','follows','mates','expSeen','about','city','show',
-  'qi','picked','eva'];
+  'qi','picked','eva','history'];
 
 let PRISTINE = null;
 /* снимок нетронутого состояния - делается один раз, при загрузке */
@@ -293,10 +293,10 @@ function daypart(){
 }
 
 const SCENES = {
-  dawn:  {g:'linear-gradient(168deg,#2A2036 0%,#5B3550 46%,#B2705C 100%)', n:'Утро', e:'☀'},
-  day:   {g:'linear-gradient(168deg,#241F33 0%,#3E3358 46%,#7C6A93 100%)', n:'День', e:'☀'},
-  sunset:{g:'linear-gradient(168deg,#1E1826 0%,#4A2740 45%,#A8563F 100%)', n:'Закат', e:'☾'},
-  night: {g:'linear-gradient(168deg,#141019 0%,#241C33 50%,#3B2A45 100%)', n:'Вечер', e:'☾'}
+  dawn:  {g:'linear-gradient(165deg,#241833 0%,#5E2E56 46%,#C97A63 100%)', n:'Утро', e:'☀'},
+  day:   {g:'linear-gradient(165deg,#1F1A33 0%,#3C2E64 46%,#8B6BB5 100%)', n:'День', e:'☀'},
+  sunset:{g:'linear-gradient(165deg,#1E1527 0%,#5A2447 45%,#C25A4A 100%)', n:'Закат', e:'☾'},
+  night: {g:'linear-gradient(165deg,#120E1B 0%,#251A3A 50%,#472C57 100%)', n:'Вечер', e:'☾'}
 };
 
 /* Мягкая сцена в шапке: светило у горизонта и лёгкая дымка, без «пузырей» */

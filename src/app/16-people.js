@@ -116,7 +116,7 @@ function shelfItem(id){
 function starBtn(id, size){
   return `<span class="starbtn ${isLiked(id) ? 'on' : ''}"
     onclick="event.stopPropagation();starContent(this,'${attJs(id)}')"
-    aria-label="В избранное">${starMark(size || 15, isLiked(id) ? '#E7A339' : 'rgba(17,16,20,.22)')}</span>`;
+    aria-label="В избранное">${starMark(size || 15, isLiked(id) ? 'var(--star)' : 'var(--star-off)')}</span>`;
 }
 
 /* ---------- мероприятия ----------

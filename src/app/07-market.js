@@ -125,7 +125,7 @@ function cycleRing(cy){
     <circle cx="60" cy="60" r="46" fill="none" stroke="${esc(cy.phase.c)}" stroke-width="9" stroke-linecap="round"
       stroke-dasharray="${seg} ${C}"/>
     <text x="60" y="60" transform="rotate(90 60 60)" text-anchor="middle" dy="6"
-      style="font:700 22px Inter;fill:var(--ink)">${cy.day}</text>
+      style="font:700 22px Manrope,sans-serif;fill:var(--ink)">${cy.day}</text>
   </svg>`;
 }
 
@@ -172,14 +172,17 @@ function pgCalendar(){
         ${[...Array(shift)].map(() => '<div></div>').join('')}
         ${[...Array(days)].map((_,i) => {
           const n = i+1, past = n < today, isToday = n === today;
-          const done = past ? (hash('d'+n) % 10) > 3 : isToday ? doneOf(todayIdx()) === 3 : false;
+          /* настоящая история, а не случайные пятна: сколько дел закрыто в этот день */
+          const cnt = doneOn(new Date(first.getFullYear(), first.getMonth(), n));
+          const cls = cnt >= 3 ? ' full' : cnt ? ' part' : '';
           const ph = cellPhase(n);
-          return `<div class="cday ${isToday?'now':''}" style="${done?'background:var(--blush);color:var(--rose-deep)':past?'color:var(--muted);opacity:.55':''}">
+          return `<div class="cday${isToday?' now':''}${cls}" style="${!cnt && past ? 'color:var(--muted);opacity:.55' : ''}">
             ${n}${ph?`<i style="background:${esc(ph.c)}"></i>`:''}</div>`;
         }).join('')}
       </div>
       <div class="row" style="margin-top:14px;font-size:11px;color:var(--muted);gap:12px;flex-wrap:wrap">
-        <span><i class="lg" style="background:var(--blush)"></i> закрытый день</span>
+        <span><i class="lg" style="background:var(--accent)"></i> закрыт целиком</span>
+        <span><i class="lg" style="background:var(--accent-soft);border:1px solid var(--accent-2)"></i> были дела</span>
         <span><i class="lg" style="border:1.5px solid var(--rose)"></i> сегодня</span>
         ${cy?`<span><i class="lg" style="background:${PHASES[0].c}"></i> месячные</span>
         <span><i class="lg" style="background:${PHASES[2].c}"></i> овуляция</span>`:''}
@@ -446,7 +449,7 @@ function pgSettings(){
     <div class="card" style="text-align:center">
       <div style="width:88px;height:88px;margin:0 auto 12px;position:relative">
         ${avatarEl(88)}
-        <button class="camera" onclick="pickAvatar()">▣</button>
+        <button class="camera" onclick="pickAvatar()" aria-label="Сменить фото">${ico('camera',15)}</button>
       </div>
       <input class="field" style="text-align:center" value="${esc(S.name)}"
         oninput="S.name=this.value||'Ева'" onchange="publishCard()">
@@ -535,8 +538,8 @@ function pgSettings(){
     <button class="btn ghost" onclick="openSheet('rebuild')">Пересобрать программу вручную</button>
     <button class="btn ghost" style="margin-top:9px" onclick="restartQuiz()">Пройти тест заново</button>
     <button class="btn ghost" style="margin-top:9px" onclick="logout()">Выйти из аккаунта</button>
-    <p class="small muted" style="text-align:center;margin-top:16px;font-size:11px">
-      Eva Space · прототип${Store.available?' · данные сохраняются в этом браузере':''}</p>
+    <p class="small muted" style="text-align:center;margin-top:16px;font-size:11px" onclick="versionTap()">
+      Eva Space · ${APP_VERSION}${Store.available?' · данные сохраняются в этом браузере':''}${devMode()?' · режим разработчика':''}</p>
   </div>`;
 }
 function tgNotif(k){ S.notif[k] = !S.notif[k]; render(); toast(S.notif[k] ? 'Уведомление включено' : 'Выключено'); }
