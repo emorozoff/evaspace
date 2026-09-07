@@ -2094,6 +2094,61 @@ function restoreFocus(f){
   try{ if(f.sel!==null && el.setSelectionRange && /^(text|search|url|tel|password)$/i.test(el.type||'text')) el.setSelectionRange(f.sel, f.sel); }catch(e){}
   if(typeof f.scrollY==='number') window.scrollTo(0, f.scrollY);
 }
+/* ------------------------------------------------------------
+   Перерисовка без рывков.
+   Любое действие внутри страницы — перетащили задачу, сменили
+   статус, добавили платёж — не должно выглядеть как перезагрузка:
+   держим прокрутку страницы, прокрутку внутренних областей
+   (доска, гант, широкие таблицы) и высоту страницы, пока
+   содержимое пересобирается.
+   ------------------------------------------------------------ */
+const SCROLL_KEEP_SEL = '.kanban-board, .gantt-scroll, .table-scroll, .table-card, .scroll-tabs, [data-keep-scroll]';
+function cssPathOf(el){
+  const parts = [];
+  let node = el;
+  while(node && node.nodeType===1 && node!==document.body && parts.length<10){
+    if(node.id){ parts.unshift('#'+(window.CSS && CSS.escape ? CSS.escape(node.id) : node.id)); break; }
+    const parent = node.parentElement;
+    if(!parent) break;
+    parts.unshift(node.tagName.toLowerCase()+':nth-child('+(Array.prototype.indexOf.call(parent.children, node)+1)+')');
+    node = parent;
+  }
+  return parts.length ? parts.join('>') : null;
+}
+function captureScroll(){
+  const inner = [];
+  document.querySelectorAll(SCROLL_KEEP_SEL).forEach(el=>{
+    if(!el.scrollLeft && !el.scrollTop) return;
+    const sel = cssPathOf(el);
+    if(sel) inner.push({sel, left:el.scrollLeft, top:el.scrollTop});
+  });
+  return {y: window.scrollY, inner};
+}
+function restoreScroll(s){
+  if(!s) return;
+  const apply = ()=>{
+    s.inner.forEach(r=>{
+      let el = null; try{ el = document.querySelector(r.sel); }catch(e){}
+      if(!el) return;
+      if(r.left && !el.scrollLeft) el.scrollLeft = r.left;
+      if(r.top  && !el.scrollTop ) el.scrollTop  = r.top;
+    });
+    if(Math.abs(window.scrollY - s.y) > 1) window.scrollTo(0, s.y);
+  };
+  apply();
+  requestAnimationFrame(apply);   /* высота могла ещё не устояться */
+}
+/* Переключили вкладку — строка вкладок должна остаться на виду.
+   Если она ушла под шапку, аккуратно подтягиваем страницу к ней;
+   если видна — ничего не двигаем. */
+function keepTabsInView(row){
+  if(!row) return;
+  const bar = document.querySelector('.topbar');
+  const headH = bar ? bar.offsetHeight : 0;
+  const top = row.getBoundingClientRect().top;
+  if(top < headH + 8) window.scrollTo(0, Math.max(0, window.scrollY + top - headH - 14));
+}
+let _renderDepth = 0;
 function withFocus(fn){
   return async function(){
     /* change срабатывает в момент, когда старое поле уже отпустило фокус,
@@ -2101,10 +2156,28 @@ function withFocus(fn){
        поставить курсор туда, куда кликнул пользователь; это место и
        запоминаем. */
     await new Promise(r=>setTimeout(r, 0));
-    const f = captureFocus();
-    const r = await fn.apply(this, arguments);
-    restoreFocus(f);
-    return r;
+    /* перерисовки вложены друг в друга (страница → вкладка → блок);
+       положение запоминает и возвращает только самая внешняя, иначе
+       внутренняя запомнит уже «схлопнутую» страницу */
+    const outer = _renderDepth===0;
+    let f = null, s = null;
+    if(outer){
+      f = captureFocus();
+      s = captureScroll();
+      const hold = app ? app.offsetHeight : 0;
+      if(app && hold) app.style.minHeight = hold+'px';
+    }
+    _renderDepth++;
+    try{
+      return await fn.apply(this, arguments);
+    } finally {
+      _renderDepth--;
+      if(outer){
+        if(app) app.style.minHeight = '';
+        restoreFocus(f);
+        restoreScroll(s);
+      }
+    }
   };
 }
 /* Escape закрывает верхнее модальное окно — любое, по крестику. */
@@ -2197,7 +2270,8 @@ window.addEventListener('DOMContentLoaded', ()=>{
      ниже по файлу к этому моменту уже существуют. */
   ['renderFinDashboard','renderFinPlan','renderFinGoals','renderFinExpenses','renderFinRevenue','renderFinLaunch',
    'renderFinCashflow','renderFinUnit','renderPnl','renderRepDay','renderRepWeek','renderRepMonth','renderRepLedger',
-   'renderRepJournal','renderStatistics','renderReports','renderRoadmap','renderStrategy','renderTasksBoard','renderTeam'].forEach(name=>{
+   'renderRepJournal','renderStatistics','renderReports','renderRoadmap','renderStrategy','renderTasksBoard','renderTeam',
+   'renderPersonDetail','renderDepartmentDetail','renderVoting','renderDiscussions','renderDiscussionDetail'].forEach(name=>{
     if(typeof window[name]==='function' && !window[name].__focusWrapped){
       const wrapped = withFocus(window[name]); wrapped.__focusWrapped = true; window[name] = wrapped;
     }
@@ -5572,6 +5646,10 @@ function stratGuideHtml(){
 async function renderStrategy(body){
   const allTasks = await getTasks();
   const overall = taskStats(allTasks);
+  /* пока гант и бюджет пересобираются, держим прежнюю высоту —
+     иначе страница схлопывается и прокрутка улетает наверх */
+  const holdH = body.offsetHeight;
+  if(holdH) body.style.minHeight = holdH+'px';
   body.innerHTML = `
     <div id="stratGantt"><div class="loading">Строим гант…</div></div>
     <div id="stratBudget"></div>
@@ -5606,6 +5684,7 @@ async function renderStrategy(body){
   document.getElementById('stratMoney').innerHTML = await stratMoneyHtml();
   wireStratMoney(rerender);
   document.getElementById('stratRoadmapBudget').innerHTML = await roadmapBudgetHtml(allTasks);
+  body.style.minHeight = '';
 }
 
 /* ============================================================
@@ -5658,7 +5737,9 @@ async function renderTasksBoard(body){
       <p>Карточки перетаскиваются между этапами и месяцами, клик открывает полную карточку.</p>`)}
   `;
 
-  const rerender = ()=>renderRoadmap();
+  /* перетащили карточку или поменяли статус — пересобираем только доску:
+     страница не «перезагружается» и не прыгает наверх */
+  const rerender = ()=>renderTasksBoard(document.getElementById('rmBody') || body);
   document.querySelectorAll('#roadmapViewToggle button').forEach(b=>{
     b.onclick = ()=>{ _roadmapView = b.dataset.v; rerender(); };
   });
@@ -5694,9 +5775,17 @@ async function renderRoadmap(){
     <div id="rmBody"><div class="loading">Загрузка…</div></div>
   `;
   document.querySelectorAll('#rmTabs button').forEach(b=>{
-    b.onclick = ()=>{ _roadmapTab = b.dataset.v; history.replaceState(null, '', '#roadmap/'+_roadmapTab); renderRoadmap(); };
+    b.onclick = ()=>{
+      _roadmapTab = b.dataset.v;
+      history.replaceState(null, '', '#roadmap/'+_roadmapTab);
+      document.querySelectorAll('#rmTabs button').forEach(x=>x.classList.toggle('active', x.dataset.v===_roadmapTab));
+      renderRoadmapBody(document.getElementById('rmBody')).then(()=>keepTabsInView(document.getElementById('rmTabs')));
+    };
   });
-  const body = document.getElementById('rmBody');
+  await renderRoadmapBody(document.getElementById('rmBody'));
+}
+async function renderRoadmapBody(body){
+  if(!body) return;
   if(_roadmapTab==='tasks') await renderTasksBoard(body);
   else await renderStrategy(body);
 }
@@ -7179,9 +7268,19 @@ async function renderStatistics(){
     <div id="finBody"><div class="loading">Считаем…</div></div>
   `;
   document.querySelectorAll('#finTabs button').forEach(b=>{
-    b.onclick = ()=>{ _finView = b.dataset.v; history.replaceState(null, '', '#statistics/'+_finView); renderStatistics(); };
+    b.onclick = ()=>{
+      _finView = b.dataset.v;
+      history.replaceState(null, '', '#statistics/'+_finView);
+      /* меняем только содержимое вкладки: страница не пересобирается,
+         прокрутка и шапка остаются на месте */
+      document.querySelectorAll('#finTabs button').forEach(x=>x.classList.toggle('active', x.dataset.v===_finView));
+      renderFinBody(document.getElementById('finBody')).then(()=>keepTabsInView(document.getElementById('finTabs')));
+    };
   });
-  const body = document.getElementById('finBody');
+  await renderFinBody(document.getElementById('finBody'));
+}
+async function renderFinBody(body){
+  if(!body) return;
   if(_finView==='goals') _finView = 'plan';
   const map = {
     dashboard: renderFinDashboard, plan: renderFinPlan, goals: renderFinPlan, expenses: renderFinExpenses,
@@ -9255,8 +9354,18 @@ async function renderReports(){
     </div>
     <div id="repBody"><div class="loading">Собираем отчёт…</div></div>
   `;
-  document.querySelectorAll('#repTabs button').forEach(b=>{ b.onclick = ()=>{ _repView = b.dataset.v; history.replaceState(null, '', '#reports/'+_repView); renderReports(); }; });
-  const body = document.getElementById('repBody');
+  document.querySelectorAll('#repTabs button').forEach(b=>{
+    b.onclick = ()=>{
+      _repView = b.dataset.v;
+      history.replaceState(null, '', '#reports/'+_repView);
+      document.querySelectorAll('#repTabs button').forEach(x=>x.classList.toggle('active', x.dataset.v===_repView));
+      renderRepBody(document.getElementById('repBody')).then(()=>keepTabsInView(document.getElementById('repTabs')));
+    };
+  });
+  await renderRepBody(document.getElementById('repBody'));
+}
+async function renderRepBody(body){
+  if(!body) return;
   const map = {day:renderRepDay, week:renderRepWeek, month:renderRepMonth, ledger:renderRepLedger, journal:renderRepJournal};
   await (map[_repView]||renderRepDay)(body);
 }
@@ -9898,7 +10007,7 @@ async function openQuickAddModal(presets, onDone){
     if(!title){
       document.getElementById('qamError').style.display = 'block';
       titleEl.style.borderColor = 'var(--rust)';
-      titleEl.focus();
+      titleEl.focus({preventScroll:true});
       return null;
     }
     return {
