@@ -123,6 +123,90 @@ td.n{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted)}
 
 footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);
   font-size:12.5px;color:var(--muted)}
+
+/* ---------- дашборд ---------- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,1fr));gap:12px;margin:0 0 30px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px}
+.tile.bad{border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.tile b{display:block;font-size:38px;font-weight:700;letter-spacing:-.045em;line-height:1;
+  font-variant-numeric:tabular-nums}
+.tile span{display:block;font-size:12.5px;line-height:1.45;color:var(--muted);margin-top:7px}
+.tile .sub{font-size:11px;margin-top:5px}
+
+/* светофор: состояние всегда словом, не только цветом */
+.mx{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow-x:auto}
+.mxrow{display:grid;grid-template-columns:minmax(190px,1.25fr) repeat(3,minmax(122px,1fr));
+  gap:1px;background:var(--line);min-width:640px}
+.mxrow > div{background:var(--surface);padding:13px 15px}
+.mxhead > div{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);padding-top:15px;padding-bottom:11px}
+.want b{display:block;font-size:14px;font-weight:600;line-height:1.3}
+.want span{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+.cell{display:flex;flex-direction:column;gap:5px}
+.cell .wk{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.cell .lb{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:5px}
+.cell .n2{font-size:11.5px;color:var(--muted)}
+.cell.red   .wk{color:var(--accent)} .cell.red .lb{color:var(--accent)}
+.cell.amber .wk{color:var(--gold)}   .cell.amber .lb{color:var(--gold)}
+.cell.green .wk{color:var(--ok)}     .cell.green .lb{color:var(--ok)}
+.dotc{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+
+/* состав контента: один тон тремя ступенями, каждая подписана */
+.compo{display:flex;height:34px;border-radius:9px;overflow:hidden;gap:2px;background:var(--paper)}
+.compo > div{display:flex;align-items:center;justify-content:center;color:#fff;
+  font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.c1{background:#4A3C9E} .c2{background:#6C5CE0} .c3{background:#A9A2E8;color:#241E4E!important}
+.colegend{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:11px;font-size:12.5px;color:var(--muted)}
+.colegend i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:6px;
+  vertical-align:0}
+
+/* приоритеты: есть → нужно, одной полосой */
+.prio{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}
+.prio > div{display:grid;grid-template-columns:26px minmax(180px,1.2fr) minmax(150px,1fr) 92px;
+  gap:14px;align-items:center;padding:15px 18px}
+.prio > div + div{border-top:1px solid var(--line)}
+.prio .no{width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--paper);
+  display:grid;place-items:center;font-size:11.5px;font-weight:700}
+.prio .ttl{font-size:14px;font-weight:600;line-height:1.3}
+.prio .ttl span{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:3px}
+.gauge{height:9px;border-radius:5px;background:var(--bar-track);position:relative;overflow:hidden}
+.gauge i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--bar)}
+.gauge u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);text-decoration:none}
+.gnums{font-size:11.5px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums}
+.prio .add{font-size:15px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.prio .add span{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}
+
+/* траектории */
+.trajs{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:12px}
+.traj{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px}
+.traj.red{border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+.traj h4{margin-bottom:7px;color:var(--ink);font-size:14px;font-weight:700;letter-spacing:-.01em;
+  text-transform:none}
+.traj .steps{display:flex;gap:4px;margin:10px 0 9px}
+.traj .steps i{flex:1;height:6px;border-radius:3px;background:var(--bar-track)}
+.traj .steps i.on{background:var(--ok)}
+.traj .steps i.half{background:var(--gold)}
+.traj p{font-size:12.5px;color:var(--muted);margin:0;line-height:1.5}
+
+/* план-факт */
+.pf{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}
+.pf > div{display:grid;grid-template-columns:minmax(210px,1.6fr) 96px 96px minmax(130px,1fr);
+  gap:14px;align-items:center;padding:13px 18px}
+.pf > div + div{border-top:1px solid var(--line)}
+.pf .h{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.pf .nm{font-size:13.5px;font-weight:600}
+.pf .nm span{display:block;font-size:11.5px;color:var(--muted);font-weight:400;margin-top:2px}
+.pf .v{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+@media (max-width:700px){
+  .mxrow{min-width:600px}
+  .prio > div{grid-template-columns:24px 1fr;gap:10px}
+  .prio .gauge,.prio .gnums{grid-column:1/-1}
+  .prio .add{grid-column:1/-1;text-align:left}
+  .pf > div{grid-template-columns:1fr 70px 70px;gap:10px}
+  .pf > div > :nth-child(4){grid-column:1/-1}
+}
+
 @media (max-width:620px){
   h1{font-size:32px}
   .wrap{padding:34px 16px 70px}
@@ -152,15 +236,292 @@ footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);
   </div>
 
   <nav role="tablist" aria-label="Разделы плана">
-    <button role="tab" id="t-now" aria-controls="p-now" aria-selected="true">Что снимать первым</button>
+    <button role="tab" id="t-dash" aria-controls="p-dash" aria-selected="true">Дашборд</button>
+    <button role="tab" id="t-now" aria-controls="p-now" aria-selected="false">Что снимать первым</button>
     <button role="tab" id="t-100" aria-controls="p-100" aria-selected="false">Сто тем<em>100</em></button>
     <button role="tab" id="t-year" aria-controls="p-year" aria-selected="false">Год целиком</button>
     <button role="tab" id="t-hard" aria-controls="p-hard" aria-selected="false">Тяжёлые темы</button>
     <button role="tab" id="t-kurs" aria-controls="p-kurs" aria-selected="false">Курсы<em>14</em></button>
   </nav>
 
+  <!-- ═══════════ ДАШБОРД ═══════════ -->
+  <section id="p-dash" role="tabpanel" aria-labelledby="t-dash">
+
+    <div class="tiles">
+      <div class="tile">
+        <b>81</b><span>ролика снято</span>
+        <span class="sub">7 посланий · 43 практики · 31 класс</span>
+      </div>
+      <div class="tile bad">
+        <b>1</b><span>неделя до первого повтора</span>
+        <span class="sub">послания кончаются за семь дней</span>
+      </div>
+      <div class="tile bad">
+        <b>3<span style="display:inline;font-size:19px;color:var(--muted);font-weight:500"> из 6</span></b>
+        <span>запросов без единой практики</span>
+        <span class="sub">уверенность · отношения · деньги</span>
+      </div>
+      <div class="tile">
+        <b>6<span style="display:inline;font-size:19px;color:var(--muted);font-weight:500"> из 28</span></b>
+        <span>задач Штаба закрыто</span>
+        <span class="sub">17 ждут вас, 5 на мне</span>
+      </div>
+    </div>
+
+    <div class="band">
+      <h2>Что ждёт пользователь и что она получает</h2>
+      <p>Первый вопрос теста — «что для тебя сейчас важнее всего». Женщина отвечает, и дальше
+        приложение обязано выдавать ей материалы по её теме: послание каждое утро, практику
+        на день, мастер-класс. Вот на сколько недель хватает каждого — при семи в неделю.</p>
+
+      <div class="mx">
+        <div class="mxrow mxhead">
+          <div>Она выбрала в тесте</div><div>Послания</div><div>Практики</div><div>Мастер-классы</div>
+        </div>
+
+        <div class="mxrow">
+          <div class="want"><b>Энергия и силы</b><span>устала, живу на резервах</span></div>
+          <div class="cell amber"><span class="wk">1 нед</span>
+            <span class="lb"><i class="dotc"></i>мало</span><span class="n2">7 штук</span></div>
+          <div class="cell green"><span class="wk">4 нед</span>
+            <span class="lb"><i class="dotc"></i>хватает</span><span class="n2">31 штука</span></div>
+          <div class="cell red"><span class="wk">0 нед</span>
+            <span class="lb"><i class="dotc"></i>пусто</span><span class="n2">ни одного</span></div>
+        </div>
+
+        <div class="mxrow">
+          <div class="want"><b>Контакт с телом</b><span>тело как чужое</span></div>
+          <div class="cell amber"><span class="wk">1 нед</span>
+            <span class="lb"><i class="dotc"></i>мало</span><span class="n2">7 штук</span></div>
+          <div class="cell green"><span class="wk">4 нед</span>
+            <span class="lb"><i class="dotc"></i>хватает</span><span class="n2">34 штуки</span></div>
+          <div class="cell red"><span class="wk">0 нед</span>
+            <span class="lb"><i class="dotc"></i>меньше недели</span><span class="n2">5 штук</span></div>
+        </div>
+
+        <div class="mxrow">
+          <div class="want"><b>Спокойствие, меньше тревоги</b><span>тревога стала фоном</span></div>
+          <div class="cell amber"><span class="wk">1 нед</span>
+            <span class="lb"><i class="dotc"></i>мало</span><span class="n2">7 штук</span></div>
+          <div class="cell amber"><span class="wk">2 нед</span>
+            <span class="lb"><i class="dotc"></i>мало</span><span class="n2">18 штук</span></div>
+          <div class="cell amber"><span class="wk">1 нед</span>
+            <span class="lb"><i class="dotc"></i>мало</span><span class="n2">8 штук</span></div>
+        </div>
+
+        <div class="mxrow">
+          <div class="want"><b>Уверенность в себе</b><span>внутренний критик громче меня</span></div>
+          <div class="cell amber"><span class="wk">1 нед</span>
+            <span class="lb"><i class="dotc"></i>мало</span><span class="n2">7 штук</span></div>
+          <div class="cell red"><span class="wk">0 нед</span>
+            <span class="lb"><i class="dotc"></i>пусто</span><span class="n2">ни одной</span></div>
+          <div class="cell amber"><span class="wk">1 нед</span>
+            <span class="lb"><i class="dotc"></i>мало</span><span class="n2">8 штук</span></div>
+        </div>
+
+        <div class="mxrow">
+          <div class="want"><b>Деньги и своё дело</b><span>занижаю цену, боюсь называть</span></div>
+          <div class="cell amber"><span class="wk">1 нед</span>
+            <span class="lb"><i class="dotc"></i>мало</span><span class="n2">7 штук</span></div>
+          <div class="cell red"><span class="wk">0 нед</span>
+            <span class="lb"><i class="dotc"></i>пусто</span><span class="n2">ни одной</span></div>
+          <div class="cell amber"><span class="wk">1 нед</span>
+            <span class="lb"><i class="dotc"></i>ровно неделя</span><span class="n2">7 штук</span></div>
+        </div>
+
+        <div class="mxrow">
+          <div class="want"><b>Любовь и отношения</b><span>не умею говорить о себе</span></div>
+          <div class="cell amber"><span class="wk">1 нед</span>
+            <span class="lb"><i class="dotc"></i>мало</span><span class="n2">7 штук</span></div>
+          <div class="cell red"><span class="wk">0 нед</span>
+            <span class="lb"><i class="dotc"></i>пусто</span><span class="n2">ни одной</span></div>
+          <div class="cell red"><span class="wk">0 нед</span>
+            <span class="lb"><i class="dotc"></i>меньше недели</span><span class="n2">5 штук</span></div>
+        </div>
+      </div>
+
+      <p class="small muted" style="margin-top:11px">Зелёное — хватает на месяц. Жёлтое —
+        от недели до двух, она заметит повтор. Красное — материалов нет или не набирается
+        даже на неделю: подбор возьмёт что-нибудь чужое, и программа перестанет быть про неё.</p>
+    </div>
+
+    <div class="band">
+      <h2>Из чего состоит 81 ролик</h2>
+      <div class="grid3" style="grid-template-columns:1.35fr 1fr">
+        <div class="card">
+          <h4>По видам</h4>
+          <div class="compo" style="margin-top:4px">
+            <div class="c1" style="flex:7">7</div>
+            <div class="c2" style="flex:43">43</div>
+            <div class="c3" style="flex:31">31</div>
+          </div>
+          <div class="colegend">
+            <span><i style="background:#4A3C9E"></i>послания — 7</span>
+            <span><i style="background:#6C5CE0"></i>практики — 43</span>
+            <span><i style="background:#A9A2E8"></i>мастер-классы — 31</span>
+          </div>
+          <p style="margin-top:12px;font-size:13.5px;color:var(--ink-2)">Программа берёт по семь
+            каждого вида в неделю — то есть все три полосы расходуются одинаково быстро.
+            Первая заканчивается за неделю.</p>
+        </div>
+        <div class="card">
+          <h4>Куда ушли практики</h4>
+          <div class="compo" style="margin-top:4px">
+            <div class="c2" style="flex:37">37</div>
+            <div class="c3" style="flex:6">6</div>
+          </div>
+          <div class="colegend">
+            <span><i style="background:#6C5CE0"></i>тело и движение — 86%</span>
+            <span><i style="background:#A9A2E8"></i>всё остальное — 6</span>
+          </div>
+          <p style="margin-top:12px;font-size:13.5px;color:var(--ink-2)">Фитнес, растяжка, йога,
+            цигун, женские и для беременных. На уверенность, отношения и деньги
+            не осталось ничего.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="band">
+      <h2>Приоритеты съёмок</h2>
+      <p>Четыре очереди. Полоса показывает, сколько есть от цели в 28 материалов —
+        четыре недели без повтора; чёрточка справа — сама цель.</p>
+
+      <div class="prio">
+        <div>
+          <span class="no">1</span>
+          <div class="ttl">Послания<span>то, что она видит каждое утро</span></div>
+          <div>
+            <div class="gauge"><i style="width:25%"></i><u style="left:100%"></u></div>
+            <div class="gnums">есть 7 из 28</div>
+          </div>
+          <div class="add">+21<span>1 смена</span></div>
+        </div>
+        <div>
+          <span class="no">2</span>
+          <div class="ttl">Практики не про тело<span>уверенность, отношения, деньги — три запроса разом</span></div>
+          <div>
+            <div class="gauge"><i style="width:0%"></i><u style="left:100%"></u></div>
+            <div class="gnums">есть 0 из 30</div>
+          </div>
+          <div class="add">+30<span>3 смены</span></div>
+        </div>
+        <div>
+          <span class="no">3</span>
+          <div class="ttl">Мастер-классы про энергию<span>практик 31, классов ноль</span></div>
+          <div>
+            <div class="gauge"><i style="width:0%"></i><u style="left:100%"></u></div>
+            <div class="gnums">есть 0 из 14</div>
+          </div>
+          <div class="add">+14<span>7 смен по два</span></div>
+        </div>
+        <div>
+          <span class="no">4</span>
+          <div class="ttl">Практики про сон<span>курс «Здоровый сон» есть, роликов нет</span></div>
+          <div>
+            <div class="gauge"><i style="width:0%"></i><u style="left:100%"></u></div>
+            <div class="gnums">есть 0 из 10</div>
+          </div>
+          <div class="add">+10<span>1 смена</span></div>
+        </div>
+      </div>
+      <p class="small muted" style="margin-top:11px">Итого 75 роликов, около 12 съёмочных дней.
+        После них ни одного запроса без практик и послания держатся четыре недели вместо одной.</p>
+    </div>
+
+    <div class="band">
+      <h2>Специализированный контент</h2>
+      <p>Состояния, которые длятся месяцами и меняются внутри себя. Полоски — шаги траектории:
+        закрашенные есть, пустые снимать. Подробный разбор — на вкладке «Тяжёлые темы».</p>
+
+      <div class="trajs">
+        <div class="traj">
+          <h4>Беременность и первый год</h4>
+          <div class="steps"><i class="half"></i><i class="half"></i><i class="half"></i><i></i></div>
+          <p><b style="color:var(--gold)">Три ролика на всё.</b> Тест спрашивает месяц
+            беременности, а материал один на триместр. После родов — ничего.
+            Нужен 21 ролик, 2 смены.</p>
+        </div>
+        <div class="traj red">
+          <h4>Дни цикла</h4>
+          <div class="steps"><i></i><i></i><i></i><i></i></div>
+          <p><b style="color:var(--accent)">Ноль.</b> В коде уже есть запрет: активные практики
+            в дни менструации не показываются — а мягких, которые должны показываться вместо них,
+            нет. Нужно 15 роликов, 1,5 смены.</p>
+        </div>
+        <div class="traj red">
+          <h4>Расставание и развод</h4>
+          <div class="steps"><i></i><i></i><i></i><i></i></div>
+          <p><b style="color:var(--accent)">Ноль.</b> Состояние, в котором женщина приходит
+            на платформу чаще всего. Нужно 14 роликов, 1,5 смены.</p>
+        </div>
+        <div class="traj red">
+          <h4>Выгорание</h4>
+          <div class="steps"><i></i><i></i><i></i></div>
+          <p><b style="color:var(--accent)">Ноль по стадиям.</b> Практик про энергию много,
+            но они не различают «просто устала» и «ничего не осталось». Нужно 10 роликов, 1 смена.</p>
+        </div>
+        <div class="traj">
+          <h4>Для мам</h4>
+          <div class="steps"><i class="on"></i><i class="on"></i><i class="half"></i><i></i></div>
+          <p><b style="color:var(--ok)">Шесть классов — лучше всех.</b> Не хватает практик:
+            мастер-классы есть, ежедневного дела под них нет.</p>
+        </div>
+        <div class="traj">
+          <h4>Сон</h4>
+          <div class="steps"><i></i><i></i><i></i><i></i></div>
+          <p><b style="color:var(--accent)">Курс есть, роликов ноль.</b> Тег «сон» приходит
+            от беременных в третьем триместре и от мам малышей — две большие группы.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="band">
+      <h2>План и факт по ключевым задачам</h2>
+      <p>Из пула Штаба, на сегодня. «Ждёт вас» — то, где нужно решение или действие
+        не в коде: договор, документы, съёмка, оплата.</p>
+
+      <div class="pf">
+        <div><div class="h">Направление</div><div class="h">Всего</div><div class="h">Закрыто</div><div class="h">Что осталось</div></div>
+
+        <div><div class="nm">Код и механики<span>страницы, подбор, сообщества, подсказки</span></div>
+          <div class="v" style="color:var(--ok)">6</div><div class="v" style="color:var(--ok)">6</div>
+          <div class="small" style="color:var(--ok)">закрыто полностью</div></div>
+
+        <div><div class="nm">Перед запуском<span>оплата, документы, почта, HTTPS</span></div>
+          <div class="v">5</div><div class="v" style="color:var(--accent)">0</div>
+          <div class="small" style="color:var(--accent)">ни одна не начата — это блокеры</div></div>
+
+        <div><div class="nm">Контент<span>заменить демо на настоящее, возраст в тесте</span></div>
+          <div class="v">2</div><div class="v" style="color:var(--accent)">0</div>
+          <div class="small" style="color:var(--gold)">план съёмок готов, съёмки не начаты</div></div>
+
+        <div><div class="nm">Амбассадоры<span>ставки, рейтинг, договор, привлечение</span></div>
+          <div class="v">7</div><div class="v" style="color:var(--gold)">2</div>
+          <div class="small" style="color:var(--gold)">условия описаны, программа не в коде</div></div>
+
+        <div><div class="nm">Сообщества и эксперты<span>роли, права, заявки, клубы</span></div>
+          <div class="v">7</div><div class="v" style="color:var(--ok)">2</div>
+          <div class="small" style="color:var(--gold)">осталась дыра в правах эксперта</div></div>
+
+        <div><div class="nm">Остальное<span>баллы, маркет, аватары, копии данных</span></div>
+          <div class="v">5</div><div class="v">0</div>
+          <div class="small muted">не срочное</div></div>
+      </div>
+
+      <div class="note" style="margin-top:20px">
+        <b>Куда идём: три вещи держат запуск</b>
+        <p>Первое — <b>оплата</b>: ЮKassa или CloudPayments, нужен статус самозанятой или ИП
+          и договор. Самый долгий пункт по срокам, начинать первым. Второе — <b>почтовый
+          сервис</b>: сейчас код подтверждения показывается на экране, то есть
+          зарегистрироваться на чужую почту может кто угодно, и «забыла пароль» не работает.
+          Третье — <b>контент</b>: 75 роликов первой волной, двенадцать смен.
+          Всё остальное в списке подождёт.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ═══════════ ЧТО СНИМАТЬ ПЕРВЫМ ═══════════ -->
-  <section id="p-now" role="tabpanel" aria-labelledby="t-now">
+  <section id="p-now" role="tabpanel" aria-labelledby="t-now" hidden>
 
     <div class="band">
       <h2>Что есть на платформе</h2>
@@ -1003,6 +1364,6 @@ footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);
   });
   var saved = null;
   try { saved = localStorage.getItem(KEY); } catch(e){}
-  if(saved && document.getElementById(saved)) show(saved);
+  show(saved && document.getElementById(saved) ? saved : 't-dash');
 })();
 </script>
