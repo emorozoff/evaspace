@@ -221,6 +221,8 @@ function pgCalendar(){
       </div><span class="muted">›</span></div>
     </button>
 
+    ${inviteRow('event')}
+
     <div class="card">
       <b style="font-size:15px">Пропуски - часть пути</b>
       <p class="small muted" style="margin:8px 0 0">Стрик не обнуляется от одного пропущенного дня. Только после двух подряд, и то без драм: программа просто перестраивается.</p>
@@ -614,6 +616,7 @@ function adMarket(){
     return `<button class="${(S.mkTab||'goods')===k?'on':''}" onclick="S.mkTab='${attJs(k)}';render()">
       ${l}${n?` <span class="cnt" style="background:var(--accent);color:#fff;border-radius:99px;padding:1px 5px;font-size:9px">${n}</span>`:''}</button>`;
   }).join('')}</div>
+  ${(S.mkTab||'goods') === 'goods' ? adRequests('partner') : ''}
   ${({goods:adGoodsList, orders:adOrders, qs:adQuestions})[S.mkTab||'goods']()}`;
 }
 

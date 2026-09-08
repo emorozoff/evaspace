@@ -192,6 +192,7 @@ function reject(id){
 /* ---------- курсы ---------- */
 function adCourses(){
   return `
+  ${adRequests('expert')}
   <button class="btn" onclick="openSheet('newCourse')">＋ Создать курс</button>
   <div class="sec-h"><h2 class="serif">Каталог</h2><span class="small muted">${COURSES.length}</span></div>
   ${COURSES.map(c => {
@@ -534,6 +535,71 @@ function setUserQuiet(id, f, v){ const u = USERS.find(x => x.id === id); if(u){ 
   const all = DB.users(); const k = String(id).toLowerCase(); if(all[k]){ all[k][f] = v; DB.saveUsers(all); } }
 
 /* ---------- входящие ---------- */
+/* Заявки по виду — там, где администратор ими занимается: эксперты
+   в «Курсах», партнёры в «Маркете», мероприятия в «Сообществе».
+   Это те же обращения, что и в «Поддержке», только отфильтрованные
+   и с нужной кнопкой: сделать экспертом, создать мероприятие. */
+const REQ_TITLE = {expert:'Заявки в эксперты', partner:'Заявки партнёров', event:'Предложенные мероприятия'};
+function reqKind(t){
+  if(t.kind) return t.kind;
+  const sub = String(t.sub || '');
+  if(/^Заявка эксперта/.test(sub)) return 'expert';
+  if(/^Партнёр/.test(sub)) return 'partner';
+  if(/^(Мероприятие|Рекомендация):/.test(sub)) return 'event';
+  return '';
+}
+function adRequests(kind){
+  const list = INBOX.filter(t => reqKind(t) === kind);
+  if(!list.length) return '';
+  const open = list.filter(t => t.st !== 'закрыто').length;
+  const all = S.reqAll === kind, shown = all ? list : list.slice(0, 3);
+  return `<div class="sec-h" style="margin-top:6px"><h2 class="serif" style="font-size:18px">${REQ_TITLE[kind]}</h2>
+      <span class="small muted">${open ? open + ' в работе' : 'все закрыты'}</span></div>
+    ${shown.map(t => reqCard(t)).join('')}
+    ${list.length > 3 && !all ? `<button class="morebtn" onclick="S.reqAll='${attJs(kind)}';render()">＋ ещё ${list.length - 3}</button>` : ''}`;
+}
+function reqCard(t){
+  const kind = reqKind(t), hasMail = String(t.mail||'').indexOf('@') > 0;
+  return `<div class="card ${t.st==='новое'?'unread':''}">
+    <div class="spread">
+      <div class="row"><div class="dot-ava" style="background:${t.role==='эксперт'?'var(--lilac)':'var(--ink)'}">${esc(String(t.from||'?')[0])}</div>
+        <div><b style="font-size:13.5px">${esc(t.from)}</b>
+          <div class="small muted">${esc(t.mail)} · ${esc(t.ago)}</div></div></div>
+      <span class="tag-st ${t.st==='новое'?'st-trial':t.st==='в работе'?'st-think':'st-paid'}">${esc(t.st)}</span>
+    </div>
+    <b style="font-size:14px;display:block;margin:10px 0 5px">${esc(t.sub)}</b>
+    <p class="small muted" style="margin:0 0 10px;white-space:pre-line">${esc(t.t)}</p>
+    <div class="acts" style="margin:0 0 8px">
+      ${kind === 'expert' && hasMail ? `<button class="btn sm acc" onclick="makeExpert('${attJs(t.mail)}','${attJs(t.id)}')">Сделать экспертом</button>` : ''}
+      ${kind === 'event' ? `<button class="btn sm acc" onclick="eventFromRequest('${attJs(t.id)}')">Создать мероприятие</button>` : ''}
+      ${hasMail ? `<button class="btn ghost sm" onclick="openSheet({k:'write2',id:'${attJs(t.mail)}'})">Написать</button>` : ''}
+    </div>
+    <div class="row" style="gap:8px">
+      <input class="field" style="margin:0;flex:1" placeholder="Ответить" id="rp_${t.id}">
+      <button class="btn sm" onclick="replyTicket('${attJs(t.id)}')">→</button>
+    </div>
+    <div class="chips" style="margin-top:8px">${['новое','в работе','закрыто'].map(st =>
+      `<button class="chip ${t.st===st?'on':''}" onclick="setTicket('${attJs(t.id)}','${attJs(st)}')">${st}</button>`).join('')}</div>
+  </div>`;
+}
+/* Мероприятие из заявки: поля заявки — в черновик, дальше обычная форма
+   администратора. Заявку помечаем «в работе», чтобы не создать дважды. */
+function eventFromRequest(id){
+  const t = INBOX.find(x => x.id === id);
+  if(!t) return;
+  const d = t.data || {};
+  const online = /онлайн|zoom|телемост/i.test(String(d.where || ''));
+  S.evd = {key:'evnew_' + Date.now().toString(36), gallery:[], unlimited:false,
+    kind:'Встреча', mode: online ? 'онлайн' : 'офлайн',
+    t: d.t || String(t.sub || '').replace(/^(Мероприятие|Рекомендация):\s*/, ''),
+    d: d.d || '', city: d.where || '', about: d.about || t.t || '',
+    full: [d.about || '', d.link ? 'Подробнее: ' + d.link : ''].filter(Boolean).join('\n'),
+    by: d.own === false ? '' : (t.from || '')};
+  if(t.st === 'новое'){ t.st = 'в работе'; syncPush(['support']); }
+  S.sheet = 'newEvent'; render();
+  toast('Поля заполнены из заявки — проверь и опубликуй');
+}
+
 function adInbox(){
   const f = S.inboxFilter || 'все';
   let list = INBOX.slice();
@@ -553,10 +619,13 @@ function adInbox(){
     </div>
     <b style="font-size:14px;display:block;margin:10px 0 5px">${esc(t.sub)}</b>
     <p class="small muted" style="margin:0 0 10px;white-space:pre-line">${esc(t.t)}</p>
-    <div class="small muted" style="margin-bottom:8px">${esc(t.mail)}</div>
-    ${t.sub === 'Заявка эксперта' && String(t.mail||'').indexOf('@') > 0 ? `
+    <div class="small muted" style="margin-bottom:8px">${esc(t.mail)}${reqKind(t) ? ' · <b>' + esc(REQ_TITLE[reqKind(t)] || '') + '</b>' : ''}</div>
+    ${reqKind(t) === 'expert' && String(t.mail||'').indexOf('@') > 0 ? `
       <button class="btn sm acc" style="margin-bottom:9px"
         onclick="makeExpert('${attJs(t.mail)}','${attJs(t.id)}')">Сделать экспертом</button>` : ''}
+    ${reqKind(t) === 'event' ? `
+      <button class="btn sm acc" style="margin-bottom:9px"
+        onclick="eventFromRequest('${attJs(t.id)}')">Создать мероприятие</button>` : ''}
     <div class="row" style="gap:8px">
       <input class="field" style="margin:0;flex:1" placeholder="Ответить" id="rp_${t.id}">
       <button class="btn sm" onclick="replyTicket('${attJs(t.id)}')">→</button>
@@ -677,6 +746,7 @@ function adReach(){
 function adEvents(){
   const pend = EVENTS.filter(e => e.status === 'pending');
   return `
+  ${adRequests('event')}
   <button class="btn" onclick="openSheet('newEvent')">＋ Добавить мероприятие</button>
   ${adReach()}
   ${pend.length ? `<div class="sec-h"><h2 class="serif">На согласовании</h2><span class="small muted">${pend.length}</span></div>

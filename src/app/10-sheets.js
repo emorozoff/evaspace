@@ -25,6 +25,7 @@ function sheet(){
     hw:shHW, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
     expertApply:shExpertApply, install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
     service:shService, editUser:shEditUser,
+    partnerApply:shPartnerApply, eventApply:shEventApply, rules:shRules,
     newCourse:shNewCourse, newGood:shNewGood, idea:shIdea})[k]();
   return `<div class="bg" onclick="if(event.target===this)closeSheet()">
     <div class="sheet"><div class="grab"></div>${body}</div></div>`;
@@ -213,9 +214,13 @@ function checkout(){
   S.orders.unshift({id:'o'+Date.now().toString(36), who:S.name || 'Гостья',
     mail:S.user ? S.user.email : '—', items:_items, sum:total, bonus:used, st:'новый',
     d:'сегодня', city:(S.datingProfile && S.datingProfile.city) || 'Москва', phone:S.phone || ''});
+  const oid = S.orders[0].id;
+  platformSay(`Заказ принят: ${items.map(i => i.t + (i.n > 1 ? ' × ' + i.n : '')).join(', ')}. ` +
+    `Сумма ${money(total)}${used ? ', из них бонусами ' + used : ''}. ` +
+    `Менеджер напишет сюда, как оплатить и когда доставим. Кэшбэк ${cb} бонусов уже начислен. Номер заказа ${oid}.`);
   S.cart = []; S.page = 'profile'; render(); schedulePersist();
   if(typeof syncPush === 'function') syncPush(['orders']);
-  toast(`Заказ принят. Менеджер напишет, как оплатить. Кэшбэк ${cb} бонусов`);
+  toast('Заказ принят. Подробности — в сообщениях');
 }
 /* Оплаты пока нет. Раньше «Купить» открывало курс бесплатно и обещало
    «+150 баллов» (начисляя 50). Теперь это заявка: команда видит её в
@@ -227,11 +232,13 @@ function buyCourse(id){
   if(!c) return;
   S.courseAsked = S.courseAsked || [];
   if(S.courseAsked.includes(id)){ S.sheet = null; render(); return toast('Заявка на этот курс уже у нас'); }
-  if(!toSupport('Курс: ' + c.t, 'Хочу курс «' + c.t + '» (' + money(c.p) + '). Оплата картой ещё не подключена — прошу открыть доступ.'))
+  if(!toSupport('Курс: ' + c.t, 'Хочу курс «' + c.t + '» (' + money(c.p) + '). Оплата картой ещё не подключена — прошу открыть доступ.', 'course', {course:c.id}))
     return toast('Не отправилось, попробуй позже');
   S.courseAsked.push(id);
+  platformSay(`Заявка на курс «${c.t}» у нас. Оплата картой пока не подключена, поэтому курс откроем вручную ` +
+    `и напишем сюда — обычно в течение дня. Первые уроки уже открыты, можно начинать.`, 'openCourses');
   S.sheet = null; render(); schedulePersist();
-  toast('Заявка отправлена. Откроем курс и напишем в личные сообщения');
+  toast('Заявка отправлена. Подтверждение — в сообщениях');
 }
 function join(id){
   const g = GROUPS.find(x => x.id === id);
@@ -351,9 +358,11 @@ function sendConsult(eid){
   if(!contact) return toast('Оставь телефон или телеграм — иначе не с кем связаться');
   toSupport('Заявка на консультацию: ' + (e ? e.n : ''),
     ['Имя: ' + ((($('#cs_name')||{}).value || S.name || '').trim()), 'Связь: ' + contact,
-     'Удобно: ' + S.slot, '', text || 'Запрос не описан'].join('\n'));
+     'Удобно: ' + S.slot, '', text || 'Запрос не описан'].join('\n'), 'consult');
+  platformSay(`Заявка на консультацию к ${e ? e.n : 'эксперту'} передана. ` +
+    `Свяжемся по контакту «${contact}» и напишем сюда — обычно в течение дня.`);
   S.sheet = null; render();
-  toast('Заявка отправлена. Ответим в течение дня');
+  toast('Заявка отправлена. Подтверждение — в сообщениях');
 }
 
 function shWrite(){
@@ -368,23 +377,53 @@ function sendExpertQuestion(eid){
   const e = EXPERTS.find(x => x.id === eid);
   const text = (($('#wq_text')||{}).value || '').trim();
   if(!text) return toast('Напиши вопрос');
-  toSupport('Вопрос эксперту: ' + (e ? e.n : ''), text);
+  toSupport('Вопрос эксперту: ' + (e ? e.n : ''), text, 'question');
+  platformSay(`Вопрос для ${e ? e.n : 'эксперта'} передан: «${text.length > 90 ? text.slice(0, 88) + '…' : text}». ` +
+    `Ответ придёт сюда — обычно в течение суток.`);
   S.sheet = null; render();
-  toast('Вопрос отправлен. Ответ придёт в личные сообщения');
+  toast('Вопрос отправлен. Ответ придёт в сообщения');
 }
 
-/* одно окно в поддержку для всех обращений из приложения */
-function toSupport(sub, text){
-  if(typeof INBOX === 'undefined') return false;
-  INBOX.unshift({
+/* Одно окно в поддержку для всех обращений из приложения.
+   kind — вид заявки (expert, partner, event, course, sub, order…): по нему
+   администратор видит заявки прямо в своём разделе, а не только в общей
+   ленте поддержки. data — структурированные поля, из которых заявку можно
+   превратить в мероприятие или карточку одной кнопкой. */
+function toSupport(sub, text, kind, data){
+  if(typeof INBOX === 'undefined') return null;
+  const t = {
     id:'s' + Date.now().toString(36),
     from: S.name || 'Участница',
     role: S.role === 'expert' ? 'эксперт' : 'ученица',
     mail: S.user ? S.user.email : '—',
-    ago: 'только что', sub, t: text, st:'новое'
-  });
+    ago: 'только что', sub, t: text, st:'новое',
+    kind: kind || '', at: Date.now()
+  };
+  if(data) t.data = data;
+  INBOX.unshift(t);
   if(typeof syncPush === 'function') syncPush(['support']);
-  return true;
+  return t;
+}
+
+/* Подтверждение в её сообщениях. Тост живёт две секунды, и после него
+   легко засомневаться: ушло ли, что дальше, когда ждать. Поэтому всё,
+   что она отправила или заказала, оставляет след в нити «Eva Space»:
+   что именно получено, что произойдёт и в какой срок. */
+function platformSay(text, act){
+  if(typeof initInbox === 'function') initInbox();
+  S.inbox = S.inbox || [];
+  let th = S.inbox.find(x => x.kind === 'платформа');
+  if(!th){
+    th = {id:'pf' + Date.now().toString(36), from:'Eva Space', c:'#111014',
+          kind:'платформа', ago:'только что', unread:false, sys:true, msgs:[]};
+  } else S.inbox = S.inbox.filter(x => x !== th);
+  S.inbox.unshift(th);                          // свежее — наверх
+  const d = new Date();
+  th.msgs.push({me:false, t:text, act:act || '',
+    tm:String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0')});
+  if(th.msgs.length > 40) th.msgs = th.msgs.slice(-40);
+  th.unread = true; th.ago = 'только что';
+  if(typeof schedulePersist === 'function') schedulePersist();
 }
 
 function suggestTags(text){
@@ -1665,10 +1704,9 @@ function shSupport(){
 function sendSupport(){
   const t = (($('#sup_t')||{}).value || '').trim();
   if(!t) return toast('Опиши вопрос');
-  if(typeof INBOX !== 'undefined') INBOX.unshift({id:'t'+Date.now().toString(36), from:S.name||'Пользователь',
-    role:'ученица', mail:S.user?S.user.email:'—', ago:'только что',
-    sub:S.supTopic || 'Другое', t, st:'новое'});
-  S.sheet = null; render(); syncPush(['support']); toast('Отправлено в поддержку');
+  toSupport(S.supTopic || 'Другое', t, 'support');
+  platformSay(`Получили обращение «${S.supTopic || 'Другое'}». Обычно отвечаем в течение дня — ответ придёт сюда.`);
+  S.sheet = null; render(); toast('Отправлено в поддержку. Подтверждение — в сообщениях');
 }
 
 
@@ -1688,18 +1726,28 @@ function sendSupport(){
    ===================================================================== */
 const EXP_WANT = ['Практики и медитации', 'Мастер-классы', 'Курс', 'Личные консультации', 'Встречи офлайн'];
 
+/* ссылка на правила — одна строка под любой формой заявки */
+const rulesLine = kind => `<p class="tiny muted" style="margin:10px 0 0">Отправляя заявку, вы соглашаетесь
+  с <button class="link" style="font-size:inherit" onclick="openSheet({k:'rules',kind:'${attJs(kind)}'})">правилами для ${
+  {expert:'экспертов', partner:'партнёров', event:'мероприятий'}[kind] || 'участников'}</button> — они короткие.</p>`;
+
+/* уже отправленная заявка: не даём дублировать, говорим, что дальше */
+const sentCard = (title, text, again) => `<h2 class="serif" style="font-size:22px;margin:0 0 6px">${title}</h2>
+    <p class="small muted" style="margin:0 0 14px">${text}</p>
+    ${again ? `<button class="btn ghost" style="margin-bottom:9px" onclick="${again}">Предложить ещё</button>` : ''}
+    <button class="btn ghost" onclick="closeSheet()">Понятно</button>`;
+
 function shExpertApply(){
   const d = S.expApply = S.expApply || {want:[], area:'', exp:'', link:'', about:''};
   const sent = (typeof INBOX !== 'undefined') &&
     INBOX.some(t => t.sub === 'Заявка эксперта' && t.mail === (S.user ? S.user.email : ''));
-  if(sent) return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Заявка отправлена</h2>
-    <p class="small muted" style="margin:0 0 14px">Мы читаем каждую и отвечаем в течение недели —
-      ответ придёт в «Сообщения». Если нужно что-то добавить, напишите в поддержку.</p>
-    <button class="btn ghost" onclick="closeSheet()">Понятно</button>`;
+  if(sent) return sentCard('Заявка отправлена',
+    'Прочитаем и ответим в течение недели — ответ придёт в «Сообщения». Если нужно что-то добавить, напишите в поддержку.');
 
-  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Вести практики в Еве</h2>
-    <p class="small muted" style="margin:0 0 14px">Пять полей, две минуты. Диплом на этом шаге
-      не нужен — документы проверяем потом, когда договоримся по сути.</p>
+  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Стать экспертом Евы</h2>
+    <p class="small muted" style="margin:0 0 14px">Практики, мастер-классы, курс или консультации — расскажите,
+      чем делитесь. Пять полей, две минуты. Диплом на этом шаге не нужен: документы посмотрим потом,
+      когда договоримся по сути.</p>
 
     <label class="lbl">Чем занимаетесь</label>
     <input class="field" id="ea_area" placeholder="Телесный терапевт, преподаю йогу"
@@ -1727,7 +1775,8 @@ function shExpertApply(){
         ${S.user ? esc(S.user.email) : 'почта не указана'}. Ответ придёт в «Сообщения».</span>
     </div>
 
-    <button class="btn" style="margin-top:12px" onclick="sendExpertApply()">Отправить заявку</button>`;
+    <button class="btn" style="margin-top:12px" onclick="sendExpertApply()">Отправить заявку</button>
+    ${rulesLine('expert')}`;
 }
 function expWant(w){
   const d = S.expApply = S.expApply || {want:[]};
@@ -1754,11 +1803,153 @@ function sendExpertApply(){
       '',
       d.about
     ].filter(Boolean).join('\n'),
-    st:'новое'
+    st:'новое', kind:'expert', at:Date.now()
   });
   S.expApply = null;
+  platformSay('Заявка на роль эксперта у нас. Прочитаем внимательно и ответим сюда в течение недели. ' +
+    'Спасибо, что хотите делиться опытом — из таких заявок и растёт Ева.');
   S.sheet = null; render(); syncPush(['support']);
-  toast('Заявка отправлена. Ответим в течение недели');
+  toast('Заявка отправлена. Подтверждение — в сообщениях');
+}
+
+/* =====================================================================
+   ПАРТНЁР МАРКЕТА И МЕРОПРИЯТИЕ ОТ УЧАСТНИЦЫ
+   Те же правила, что у заявки эксперта: короткая форма, заявка уходит
+   в поддержку с меткой вида, администратор видит её в своём разделе,
+   женщине приходит подтверждение в сообщения.
+   ===================================================================== */
+function shPartnerApply(){
+  const d = S.partnerApply = S.partnerApply || {brand:'', goods:'', link:'', why:'', contact:''};
+  const sent = (typeof INBOX !== 'undefined') &&
+    INBOX.some(t => t.kind === 'partner' && t.mail === (S.user ? S.user.email : '') && t.st !== 'закрыто');
+  if(sent) return sentCard('Заявка партнёра отправлена',
+    'Посмотрим товар и ответим в течение трёх дней — ответ придёт в «Сообщения».');
+  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Стать партнёром маркета</h2>
+    <p class="small muted" style="margin:0 0 14px">Мы собираем маркет из вещей для заботы о себе, которые
+      сами бы выбрали. Расскажите о товаре — пять полей, две минуты.</p>
+    <label class="lbl">Бренд или имя</label>
+    <input class="field" id="pa_brand" placeholder="Мастерская «Тихий час»" value="${esc(d.brand)}" oninput="S.partnerApply.brand=this.value">
+    <label class="lbl">Что за товар</label>
+    <textarea class="field" id="pa_goods" rows="3" placeholder="Свечи из соевого воска, коврики, травяные чаи…"
+      oninput="S.partnerApply.goods=this.value">${esc(d.goods)}</textarea>
+    <label class="lbl">Где посмотреть</label>
+    <input class="field" id="pa_link" placeholder="Сайт, маркетплейс или соцсеть" value="${esc(d.link)}" oninput="S.partnerApply.link=this.value">
+    <label class="lbl">Почему это для Евы</label>
+    <input class="field" id="pa_why" placeholder="Состав, производство, для каких практик" value="${esc(d.why)}" oninput="S.partnerApply.why=this.value">
+    <label class="lbl">Как связаться</label>
+    <input class="field" id="pa_contact" placeholder="Телефон или телеграм" value="${esc(d.contact)}" oninput="S.partnerApply.contact=this.value">
+    <div class="card" style="background:var(--surface-2);border-color:transparent;margin-top:4px">
+      <span class="small muted">Отправим от имени <b>${esc(S.name || '—')}</b>,
+        ${S.user ? esc(S.user.email) : 'почта не указана'}. Ответ придёт в «Сообщения».</span>
+    </div>
+    <button class="btn" style="margin-top:12px" onclick="sendPartnerApply()">Отправить заявку</button>
+    ${rulesLine('partner')}`;
+}
+function sendPartnerApply(){
+  const d = S.partnerApply || {};
+  if(!(d.brand || '').trim()) return toast('Назовите бренд или себя');
+  if(!(d.goods || '').trim()) return toast('Напишите, что за товар');
+  if(!(d.contact || '').trim()) return toast('Оставьте телефон или телеграм');
+  const t = toSupport('Партнёр маркета: ' + d.brand.trim(), [
+      'Товар: ' + d.goods.trim(),
+      d.link ? 'Где посмотреть: ' + d.link : '',
+      d.why ? 'Почему для Евы: ' + d.why : '',
+      'Связь: ' + d.contact.trim()
+    ].filter(Boolean).join('\n'), 'partner', {brand:d.brand.trim(), contact:d.contact.trim()});
+  if(!t) return toast('Не отправилось, попробуйте позже');
+  S.partnerApply = null;
+  platformSay(`Заявка партнёра «${d.brand.trim()}» получена. Посмотрим товар и ответим сюда в течение трёх дней. ` +
+    'Спасибо — мы собираем маркет из вещей, которые сами бы выбрали.');
+  S.sheet = null; render();
+  toast('Заявка отправлена. Подтверждение — в сообщениях');
+}
+
+function shEventApply(){
+  const d = S.eventApply = S.eventApply || {own:true, t:'', d:'', where:'', link:'', about:'', contact:''};
+  const last = (typeof INBOX !== 'undefined') &&
+    INBOX.find(t => t.kind === 'event' && t.mail === (S.user ? S.user.email : '') && t.st === 'новое');
+  if(last && !d.more) return sentCard('Мероприятие отправлено',
+    'Проверим и, если всё сходится с правилами, опубликуем — напишем в «Сообщения» в течение трёх дней.',
+    "S.eventApply.more=true;render()");
+  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">${d.own ? 'Добавить своё мероприятие' : 'Порекомендовать мероприятие'}</h2>
+    <div class="seg" style="margin:0 0 12px">
+      <button class="${d.own ? 'on' : ''}" onclick="S.eventApply.own=true;render()">Провожу сама</button>
+      <button class="${d.own ? '' : 'on'}" onclick="S.eventApply.own=false;render()">Рекомендую</button>
+    </div>
+    <p class="small muted" style="margin:0 0 14px">${d.own
+      ? 'Женский круг, практика, лекция или встреча — расскажите коротко, мы проверим и опубликуем.'
+      : 'Знаете хорошее мероприятие? Напишите, что и откуда знаете, — мы свяжемся с организаторами сами.'}</p>
+    <label class="lbl">Название</label>
+    <input class="field" id="ea2_t" placeholder="Женский круг «Тихая пятница»" value="${esc(d.t)}" oninput="S.eventApply.t=this.value">
+    <div class="g2">
+      <div><label class="lbl">Дата</label>
+        <input class="field" id="ea2_d" type="date" value="${esc(d.d)}" oninput="S.eventApply.d=this.value"></div>
+      <div><label class="lbl">Город или онлайн</label>
+        <input class="field" id="ea2_w" placeholder="Москва / Zoom" value="${esc(d.where)}" oninput="S.eventApply.where=this.value"></div>
+    </div>
+    <label class="lbl">Ссылка</label>
+    <input class="field" id="ea2_l" placeholder="Страница, канал или анонс" value="${esc(d.link)}" oninput="S.eventApply.link=this.value">
+    <label class="lbl">${d.own ? 'О чём и для кого' : 'Что там и откуда знаете'}</label>
+    <textarea class="field" id="ea2_a" rows="3" placeholder="${d.own ? 'Что будет, сколько длится, сколько стоит' : 'Были сами или советовали подруги — так и напишите'}"
+      oninput="S.eventApply.about=this.value">${esc(d.about)}</textarea>
+    ${d.own ? `<label class="lbl">Как связаться</label>
+    <input class="field" id="ea2_c" placeholder="Телефон или телеграм" value="${esc(d.contact)}" oninput="S.eventApply.contact=this.value">` : ''}
+    <button class="btn" style="margin-top:8px" onclick="sendEventApply()">${d.own ? 'Отправить на проверку' : 'Порекомендовать'}</button>
+    ${rulesLine('event')}`;
+}
+function sendEventApply(){
+  const d = S.eventApply || {};
+  if(!(d.t || '').trim()) return toast('Назовите мероприятие');
+  if(!(d.about || '').trim()) return toast(d.own ? 'Напишите, о чём оно' : 'Напишите, откуда знаете');
+  if(d.own && !(d.contact || '').trim()) return toast('Оставьте телефон или телеграм');
+  const own = !!d.own;
+  const t = toSupport((own ? 'Мероприятие: ' : 'Рекомендация: ') + d.t.trim(), [
+      d.d ? 'Когда: ' + d.d : '',
+      d.where ? 'Где: ' + d.where : '',
+      d.link ? 'Ссылка: ' + d.link : '',
+      d.about.trim(),
+      own ? 'Связь: ' + d.contact.trim() : 'Рекомендует участница'
+    ].filter(Boolean).join('\n'), 'event',
+    {own, t:d.t.trim(), d:d.d || '', where:d.where || '', link:d.link || '', about:d.about.trim(), contact:d.contact || ''});
+  if(!t) return toast('Не отправилось, попробуйте позже');
+  S.eventApply = {own, t:'', d:'', where:'', link:'', about:'', contact:''};
+  platformSay(own
+    ? `Мероприятие «${d.t.trim()}» получено. Проверим и, если всё сходится с правилами, опубликуем — напишем сюда в течение трёх дней.`
+    : `Спасибо за рекомендацию «${d.t.trim()}». Свяжемся с организаторами и, если подойдёт, добавим в раздел. Напишем сюда.`);
+  S.sheet = null; render();
+  toast(own ? 'Отправлено на проверку. Подтверждение — в сообщениях' : 'Спасибо, передали команде');
+}
+
+/* ---------- правила: коротко, с благодарностью и общей целью ---------- */
+const RULES = {
+  expert: {t:'Правила для экспертов', lead:'Спасибо, что хотите делиться опытом в Еве. Наша общая цель — платформа, где женщине помогают настоящие люди с настоящей практикой.',
+    pts:['Опыт настоящий: вы ведёте практику не первый год и можете это показать.',
+         'Материал ваш — своё, а не пересказ чужих курсов.',
+         'Без обещаний чудес: не лечим, не гарантируем, не пугаем.',
+         'Бережно: женщина может быть в тяжёлом состоянии, и это учитывается в каждом слове.',
+         'Ученицам в своих группах отвечаете в разумный срок.',
+         'Документы посмотрим позже — на старте достаточно рассказа о себе.']},
+  partner: {t:'Правила для партнёров маркета', lead:'Спасибо за интерес к маркету Евы. Наша общая цель — собрать здесь качественные вещи для заботы о себе, которые сами бы подарили подруге.',
+    pts:['Качество: товар, за который не стыдно и через год.',
+         'Экологичность: состав, упаковка и производство без вреда — нам это важно.',
+         'Честное описание: без «волшебных» свойств и обещаний.',
+         'Доставка и возврат на вашей стороне, условия оговариваем заранее.',
+         'По теме: практики, дом, тело, ритуалы — то, ради чего женщины здесь.']},
+  event: {t:'Правила для мероприятий', lead:'Спасибо, что хотите позвать женщин на встречу или подсказать хорошую. Наша общая цель — чтобы каждое мероприятие в Еве было безопасным и таким, каким описано.',
+    pts:['Безопасно: понятное место, ведущая с опытом, без давления и продаж на встрече.',
+         'Честно: описание совпадает с тем, что будет; цена и условия возврата указаны.',
+         'По теме Евы: женские круги, практики, встречи, лекции, ретриты.',
+         'Рекомендуете чужое — скажите, откуда знаете; с организаторами свяжемся сами.',
+         'Мы можем не опубликовать — но обычно объясняем, почему.']}
+};
+function shRules(){
+  const r = RULES[S.sheet && S.sheet.kind] || RULES.expert;
+  return `<h2 class="serif" style="font-size:22px;margin:0 0 8px">${r.t}</h2>
+    <p class="small" style="margin:0 0 12px;line-height:1.55">${r.lead}</p>
+    <ul class="rules">${r.pts.map(x => `<li>${x}</li>`).join('')}</ul>
+    <p class="tiny muted" style="margin:12px 0 14px">Отправляя заявку, вы соглашаетесь с этими правилами и с условиями сервиса.
+      Спорные случаи разбираем вручную — и обычно договариваемся.</p>
+    <button class="btn ghost" onclick="closeSheet()">Понятно</button>`;
 }
 
 /* ---------- решение по мероприятию ---------- */

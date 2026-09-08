@@ -366,16 +366,15 @@ function pgCourses(){
         <div class="cov" style="height:158px" onclick="openCourseLanding('${attJs(c.id)}')">
           ${cover(c.id,'course')}
           <div class="badge">${esc(COURSE_KIND[c.id])}</div>
-          ${rec(c) ? `<div class="badge" style="left:auto;right:12px;background:var(--grad-gold);color:var(--plum)">✦ тебе</div>` : ''}
+          ${rec(c) ? `<div class="badge" style="left:auto;right:12px;background:var(--grad-gold);color:var(--plum)">✦ тебе подойдёт</div>` : ''}
           <div class="cap"><b>${esc(c.t)}</b><span>${esc(c.e)} · ${plural(c.n,'урок','урока','уроков')}</span></div>
-          <span class="starcorner">${starBtn(c.id, 15)}</span>
         </div>
         <div class="body">
           <p class="small muted" style="margin:0 0 10px">${esc(c.d)}</p>
           <div class="chips wrap" style="padding-bottom:6px">${(COURSE_TAGS[c.id]||[]).map(t => `<span class="chip pale">${esc(t)}</span>`).join('')}</div>
           <div class="spread">
             <div><span class="price">${money(c.p)}</span><span class="old">${money(c.old)}</span></div>
-            <div class="small muted">★ ${c.r} · ${c.s.toLocaleString('ru-RU')} учениц</div>
+            <div class="row starline"><span class="small muted">★ ${c.r} · ${c.s.toLocaleString('ru-RU')} учениц</span>${starBtn(c.id, 14)}</div>
           </div>
           <button class="btn ${S.courses.includes(c.id)?'done':''}" style="margin-top:12px"
             onclick="${S.courses.includes(c.id)?'':`openCourseLanding('${attJs(c.id)}')`}">
@@ -396,6 +395,37 @@ function pgCourses(){
    ни объяснять, ни открывать — он просто есть, и без подписок ряд
    выглядит ровно как раньше.
    ===================================================================== */
+/* Строка-приглашение внизу раздела: для тех, кто смотрит на чужие
+   карточки и думает «я тоже так могу». Одна на три места — эксперты,
+   маркет, мероприятия, — чтобы читалась одинаково и не спорила с
+   содержанием над ней. Показываем только участницам: эксперту и
+   администратору звать себя некуда. */
+const INVITE_ICO = {
+  star: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.85-4.2 4.1 1 5.8-5.2-2.75-5.2 2.75 1-5.8-4.2-4.1 5.8-.85z"/></svg>`,
+  bag:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16l-1.2 11a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>`,
+  cal:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3.5v3M16 3.5v3"/></svg>`
+};
+function inviteRow(kind){
+  if(S.role !== 'user') return '';
+  const r = {
+    expert:  {ico:'star', sheet:'expertApply',  h:'Хотите стать экспертом Евы?',
+              p:'Практики, мастер-классы, курсы или консультации — расскажите о себе'},
+    partner: {ico:'bag',  sheet:'partnerApply', h:'Хотите стать партнёром маркета?',
+              p:'Разместим ваш товар, если он про заботу о себе'},
+    event:   {ico:'cal',  sheet:'eventApply',   h:'Проводите встречи или знаете хорошие?',
+              p:'Добавим ваше мероприятие или то, что советуете'}
+  }[kind];
+  if(!r) return '';
+  return `<button class="applyrow" onclick="openSheet('${attJs(r.sheet)}')">
+      <span class="aico">${INVITE_ICO[r.ico]}</span>
+      <div style="flex:1;min-width:0">
+        <b style="font-size:13.5px;display:block">${r.h}</b>
+        <span class="small muted">${r.p}</span>
+      </div>
+      <span class="muted" style="font-size:17px">›</span>
+    </button>`;
+}
+
 function expertsRow(){
   const mine = EXPERTS.filter(e => isFollowing(e.id));
   const rest = EXPERTS.filter(e => !isFollowing(e.id));
@@ -414,13 +444,7 @@ function expertsRow(){
     <div class="hscroll">
       ${mine.map(e => card(e, true)).join('')}${rest.map(e => card(e, false)).join('')}
     </div>
-    ${S.role === 'user' ? `<button class="applyrow" onclick="openSheet('expertApply')">
-      <div style="flex:1;min-width:0">
-        <b style="font-size:13.5px;display:block">Сами ведёте практики?</b>
-        <span class="small muted">Расскажите о себе — читаем каждую заявку</span>
-      </div>
-      <span class="muted" style="font-size:17px">›</span>
-    </button>` : ''}`;
+    ${inviteRow('expert')}`;
 }
 
 /* ---------- страница эксперта (публичный лендинг) ---------- */
@@ -734,6 +758,7 @@ function pgMarket(){
         </div>
       </div>`).join('')}
     </div>
+    ${inviteRow('partner')}
   </div>`;
 }
 
@@ -925,7 +950,9 @@ function withdraw(sum){
     st: 'новое'
   });
   syncPush(['support']);
-  toast('Заявка отправлена. Ответим в течение трёх дней');
+  if(typeof platformSay === 'function')
+    platformSay('Заявка на вывод ' + money(sum) + ' принята. Реквизиты можно прислать ответом на это сообщение. Ответим в течение трёх дней.');
+  toast('Заявка отправлена. Подтверждение — в сообщениях');
 }
 
 function pgEarn(){

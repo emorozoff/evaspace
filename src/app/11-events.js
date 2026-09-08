@@ -328,6 +328,8 @@ function evActions(m){
   if(m.act === 'weekMood') return `<div class="macts">${MOODS.map(x =>
     `<button class="btn xs${x.k === 'good' ? ' acc' : ''}"
       onclick="weekMood('${attJs(x.k)}')">${esc(x.n)}</button>`).join('')}</div>`;
+  if(m.act === 'openCourses') return `<div class="macts">
+    <button class="btn xs acc" onclick="S.thread=null;go('courses')">К курсам</button></div>`;
   if(m.act === 'openContent') return `<div class="macts">
     <button class="btn xs acc" onclick="S.thread=null;go('content')">Открыть библиотеку</button>
     <button class="btn xs" onclick="S.thread=null;go('home')">К моей неделе</button></div>`;

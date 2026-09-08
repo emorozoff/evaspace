@@ -449,6 +449,7 @@ function pgEvents(){
 
   ${myPlan(mine)}
 
+  ${inviteRow('event')}
   ${S.role === 'expert' ? `<button class="btn ghost" style="margin-top:8px" onclick="openSheet('newEvent')">Предложить мероприятие</button>` : ''}
   ${S.role === 'admin' ? `<button class="btn" style="margin-top:8px" onclick="openSheet('newEvent')">＋ Добавить мероприятие</button>` : ''}`;
 }
@@ -1064,7 +1065,12 @@ function pgClub(){
     (!g.status || g.status === 'live' || myGRole(g) !== 'visitor'));
   const mine  = seen.filter(g => S.joined.includes(g.id) && canEnter(g));
   const clubs = seen.filter(g => isClub(g) && !mine.includes(g));
-  const open  = seen.filter(g => !isClub(g) && !mine.includes(g));
+  const anon  = seen.filter(g => isAnon(g) && !mine.includes(g));
+  /* свои — где она ведущая или в команде — впереди: раздел показывает
+     первые три, и своя комната не должна прятаться за «ещё» */
+  const rank = g => myGRole(g) !== 'visitor' || g.access === 'experts' ? 0 : 1;
+  const open  = seen.filter(g => !isClub(g) && !isAnon(g) && !mine.includes(g))
+                    .sort((a, b) => rank(a) - rank(b));
   const last = id => { const m = S.chats[id]; return m && m.length ? m[m.length-1] : null; };
 
   const row = (g, joined) => {
@@ -1108,15 +1114,31 @@ function pgClub(){
     : `
       <p class="small muted" style="margin:0 0 12px">Переписка как в мессенджере. Эксперты отвечают внутри своих групп.</p>
       ${mine.length ? `<div class="eyebrow" style="margin-bottom:8px">Мои группы</div>${mine.map(g => row(g,true)).join('')}` : ''}
-      <div class="eyebrow" style="margin:16px 0 8px">Открытые группы</div>
-      ${open.map(g => row(g,false)).join('')}
-      ${clubs.length ? `<div class="sec-h" style="margin:18px 0 8px">
-          <h2 class="serif" style="font-size:17px">Частные клубы</h2>
-          <span class="small muted">по подписке</span></div>
-        <p class="small muted" style="margin:0 0 10px">Маленькие закрытые круги с ведущей, своим ритмом
-          и общими договорённостями.</p>
-        ${clubs.map(g => row(g,false)).join('')}` : ''}`}
+      ${gSection('open', 'Открытые сообщества', 'вход свободный',
+          'Имена и лица видны, темы общие — от тела до денег.', open, row)}
+      ${gSection('club', 'Частные клубы', 'по подписке',
+          'Маленькие закрытые круги с ведущей, своим ритмом и общими договорённостями.', clubs, row)}
+      ${gSection('anon', 'Анонимные комнаты', 'без имён',
+          'Ни имён, ни фото — только прозвище. Ведёт редакция Евы, для тем, о которых не говорят вслух.', anon, row)}`}
   </div>`;
+}
+
+/* Три формата стоят друг за другом, и каждый виден сразу: показываем по
+   три группы на раздел, остальное — за «＋ ещё». Иначе десять открытых
+   групп уводили клубы и анонимные комнаты за край экрана, и женщина
+   не знала, что они вообще есть. */
+const G_SHOW = 3;
+function gSection(key, title, tag, about, list, row){
+  if(!list.length) return '';
+  S.gMore = S.gMore || {};
+  const all = S.gMore[key], shown = all ? list : list.slice(0, G_SHOW);
+  return `<div class="sec-h" style="margin:18px 0 6px">
+      <h2 class="serif" style="font-size:17px">${title}</h2>
+      <span class="small muted">${tag}</span></div>
+    <p class="small muted" style="margin:0 0 10px">${about}</p>
+    ${shown.map(g => row(g, false)).join('')}
+    ${list.length > G_SHOW && !all ? `<button class="morebtn" onclick="S.gMore.${key}=true;render()">
+      ＋ ещё ${plural(list.length - G_SHOW, 'группа', 'группы', 'групп')}</button>` : ''}`;
 }
 
 function openChat(id){ initChats(); S.chat.open = id; (S.chat.unread||{})[id] = 0; render(); scrollChat(); }
@@ -1469,6 +1491,15 @@ function sendDM(id){
     syncPush(['questions']);
     render(); schedulePersist();
     return toast('Вопрос отправлен, ответим в течение дня');
+  }
+  /* Ответ в нити Eva Space — реквизиты, уточнение к заявке — раньше
+     оставался только у неё в телефоне. Теперь уходит команде как
+     обращение, и она видит, что его получили. */
+  if(t.kind === 'платформа' && typeof toSupport === 'function'){
+    toSupport('Ответ в переписке Eva Space', v, 'reply');
+    t.msgs.push({me:false, t:'Передали команде. Ответим здесь же.', tm});
+    render(); schedulePersist();
+    return toast('Передали команде');
   }
   render(); schedulePersist();
   setTimeout(() => {
