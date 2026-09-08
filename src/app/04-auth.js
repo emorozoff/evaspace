@@ -712,7 +712,11 @@ function videoBlock(id, posterKind){
   if(e && e.type === 'link')
     return `<a class="player" href="${e.src}" target="_blank" rel="noopener" style="text-decoration:none;display:grid">
       ${cover(id, posterKind||'practice')}<div class="pl">▶</div></a>`;
-  return `<div class="player" onclick="toast('Видео ещё не добавлено')">
-    ${cover(id, posterKind||'practice')}<div class="pl">▶</div></div>`;
+  /* Видео ещё не залили. Раньше здесь была кнопка «play», которая на
+     нажатие отвечала тостом, — обещание, за которым ничего нет. Теперь
+     обложка честно подписана, и нажимать не на что. */
+  return `<div class="player empty">
+    ${cover(id, posterKind||'practice')}
+    <div class="soon">Видео скоро появится</div></div>`;
 }
 

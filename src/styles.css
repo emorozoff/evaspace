@@ -190,6 +190,19 @@ h2.serif{font-size:19px;margin:0}
 @keyframes slide{from{transform:translateY(100%)}to{transform:none}}
 /* перерисовка той же шторки — не повод играть выезд заново */
 .sheet.noanim{animation:none}
+/* обложка без видео: подпись вместо кнопки, которая ничего не делает */
+.player.empty{cursor:default}
+.player.empty .soon{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  background:rgba(17,16,20,.62);color:#fff;font-size:11.5px;font-weight:600;
+  padding:7px 14px;border-radius:999px;white-space:nowrap}
+/* Окно по центру: не список, который дочитывают, а вопрос, на который
+   отвечают сейчас. Появляется мягко, из середины, а не выезжает снизу. */
+.bg.mid{align-items:center;padding:18px}
+.sheet.modal{border-radius:var(--r-lg);max-height:88vh;padding:20px 18px 18px;
+  animation:popmid .26s cubic-bezier(.2,.8,.3,1) both;box-shadow:0 28px 70px rgba(17,16,20,.32)}
+.sheet.modal.noanim{animation:none}
+@keyframes popmid{from{opacity:0;transform:translateY(10px) scale(.97)}
+  to{opacity:1;transform:none}}
 .grab{width:34px;height:4px;background:var(--line-2);border-radius:99px;margin:0 auto 12px}
 
 .field{width:100%;padding:12px 13px;border-radius:var(--r);border:1px solid var(--line-2);background:var(--surface);margin-bottom:9px}

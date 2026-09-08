@@ -278,7 +278,7 @@ function pgPersonBlank(mail){
     <div class="pad" style="padding-top:16px">
       <div class="row" style="gap:8px">
         <button class="btn" style="flex:1"
-          onclick="toast('Написать можно той, с кем вы знакомы')">Написать</button>
+          onclick="toast(MATES_ONLY)">Написать</button>
         <button class="btn ${iAdded(key) ? 'done' : 'ghost'}" style="flex:1"
           onclick="toggleMate('${attJs(key)}')">${iAdded(key) ? 'Ждём ответа' : 'Познакомиться'}</button>
       </div>
@@ -317,7 +317,7 @@ function pgPerson(){
     <div class="pad" style="padding-top:16px">
       <div class="row" style="gap:8px">
         <button class="btn ${mates ? 'acc' : ''}" style="flex:1"
-          onclick="${mates ? `writeMate('${attJs(c.id)}')` : `toast('Написать можно той, с кем вы знакомы')`}"
+          onclick="${mates ? `writeMate('${attJs(c.id)}')` : `toast(MATES_ONLY)`}"
           ${mates ? '' : 'aria-disabled="true"'}>Написать</button>
         <button class="btn ${iAdded(c.id) ? 'done' : 'ghost'}" style="flex:1"
           onclick="toggleMate('${attJs(c.id)}')">
@@ -423,12 +423,16 @@ function circleRow(title, note, people, hint){
 
 /* ---------- письмо знакомой ---------- */
 function writeMate(mail){
-  if(!areMates(mail)) return toast('Написать можно той, с кем вы знакомы');
+  if(!areMates(mail)) return toast(MATES_ONLY);
   openSheet({k:'toMate', id:personKey(mail)});
 }
+/* одна фраза на все три места, где она встречается */
+const MATES_ONLY = 'Написать можно той, с кем вы уже познакомились. Отправь ей знакомство — и переписка откроется';
+
 function shToMate(){
   const c = cardOf(S.sheet.id);
-  if(!c) return `<div class="empty">Не нашли</div>`;
+  if(!c) return typeof gone === 'function' ? gone('Этой участницы')
+    : `<div class="empty">Не нашли эту участницу</div>`;
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Написать ${esc(c.n)}</h2>
     <p class="small muted" style="margin:0 0 12px">Придёт ей в личные сообщения от твоего имени.</p>
     <textarea class="field" id="tm_t" rows="5" placeholder="Что хочешь написать"></textarea>

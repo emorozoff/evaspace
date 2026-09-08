@@ -14,6 +14,15 @@ function sheetSafe(){
   }
 }
 
+/* Окно всегда открывается от какой-то записи: урока, курса, эксперта.
+   Запись может исчезнуть между открытием списка и нажатием — редакция
+   удалила материал, эксперт снял услугу, синхронизация принесла свежие
+   данные. Раньше окно в этом случае падало в «Не получилось открыть» с
+   ошибкой в консоли. Теперь говорит понятную фразу и не пугает. */
+const gone = what => `<div class="empty">${what} больше нет — возможно, запись удалили.<br>
+  Вернись к списку, там всё свежее.</div>
+  <button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Закрыть</button>`;
+
 function sheet(){
   const k = typeof S.sheet === 'string' ? S.sheet : S.sheet.k;
   const body = ({lesson:shLesson, course:shCourse, rebuild:shRebuild, eva:shEva,
@@ -27,9 +36,14 @@ function sheet(){
     service:shService, editUser:shEditUser,
     partnerApply:shPartnerApply, eventApply:shEventApply, rules:shRules, anonNick:shAnonNick,
     newCourse:shNewCourse, newGood:shNewGood, idea:shIdea})[k]();
-  return `<div class="bg" onclick="if(event.target===this)closeSheet()">
-    <div class="sheet"><div class="grab"></div>${body}</div></div>`;
+  /* Часть окон — не шторка снизу, а окно по центру: короткий разговор,
+     на который надо ответить сейчас, а не «дочитать список». Ник в
+     анонимной комнате именно такой: без него она не может написать. */
+  const mid = MODAL_SHEETS.indexOf(k) >= 0;
+  return `<div class="bg${mid ? ' mid' : ''}" onclick="if(event.target===this)closeSheet()">
+    <div class="sheet${mid ? ' modal' : ''}">${mid ? '' : '<div class="grab"></div>'}${body}</div></div>`;
 }
+const MODAL_SHEETS = ['anonNick'];
 
 function shLesson(){
   const x = LIB.find(i => i.id === S.sheet.id);
@@ -217,7 +231,8 @@ function checkout(){
   const oid = S.orders[0].id;
   platformSay(`Заказ принят: ${items.map(i => i.t + (i.n > 1 ? ' × ' + i.n : '')).join(', ')}. ` +
     `Сумма ${money(total)}${used ? ', из них бонусами ' + used : ''}. ` +
-    `Менеджер напишет сюда, как оплатить и когда доставим. Кэшбэк ${cb} бонусов уже начислен. Номер заказа ${oid}.`,
+    `Номер заказа ${oid}. Менеджер напишет сюда, как оплатить и когда доставим — обычно в течение дня. ` +
+    `Если нужно что-то поменять или отменить, ответь на это сообщение. Кэшбэк ${cb} бонусов уже начислен.`,
     '', 'market');
   S.cart = []; S.page = 'profile'; render(); schedulePersist();
   if(typeof syncPush === 'function') syncPush(['orders']);
@@ -684,7 +699,8 @@ function shRework(){
     <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Отмена</button>`;
 }
 function shFix(){
-  const x = S.pending.find(i => i.id === S.sheet.id);
+  const x = (S.pending || []).find(i => i.id === S.sheet.id);
+  if(!x) return gone('Этого материала');
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Доработка</h2>
     <div class="card" style="background:var(--surface-2);border:none">
       <div class="small"><b>Комментарий редакции:</b> ${esc(x.comment||'')}</div></div>
@@ -743,6 +759,7 @@ function shUnits(){
 function shHwEdit(){
   const {cid, id} = S.sheet;
   const l = lessonsOf(cid).find(x => x.id === id);
+  if(!l) return gone('Этого урока');
   const hw = l.hw || {title:'', text:'', min:15};
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Домашнее задание</h2>
     <p class="small muted" style="margin:0 0 12px">Урок ${esc(l.n)}. ${esc(l.t)}. Открывается отдельным окном после видео.</p>
@@ -766,6 +783,7 @@ function delHW(cid, id){
 function shHW(){
   const {id, cid} = S.sheet;
   const l = lessonsOf(cid).find(x => x.id === id);
+  if(!l || !l.hw) return gone('Этого задания');
   const done = S.homework && S.homework[id];
   return `<div class="eyebrow">Домашнее задание · урок ${esc(l.n)}</div>
     <h2 class="serif" style="font-size:22px;margin:8px 0 10px">${esc(l.hw.title || l.t)}</h2>
@@ -858,7 +876,7 @@ function shGroupInfo(){
       <button class="btn" onclick="joinClub('${attJs(g.id)}')">Вступить за ${money(g.price)} в месяц</button>
       <button class="btn ghost" style="margin-top:9px" onclick="closeSheet()">Пока подумаю</button>`
     : `
-      <button class="btn ghost" onclick="toast('Уведомления выключены')">Выключить уведомления</button>
+      <button class="btn ghost" onclick="pushOff()">Выключить уведомления</button>
       <button class="btn ${joined?'ghost':''}" style="margin-top:9px" onclick="join('${attJs(g.id)}')">
         ${joined ? 'Выйти из сообщества' : g.access === 'request' ? 'Оставить заявку' : 'Вступить'}</button>
       ${club && (S.clubs||[]).includes(g.id) ? `<button class="btn ghost" style="margin-top:9px;color:var(--accent)"
@@ -1398,13 +1416,31 @@ async function grant(id, kind, course){
   if(!r) return toast(SYNC.lastError || 'Не получилось');
   mirrorUser(r.user);
   if(S.user && S.user.email === u.m) applyGrants();
-  render(); toast(label);
+  /* Женщина просила доступ и ждёт ответа. Раньше он просто появлялся —
+     она заходила и обнаруживала, что программа открыта, без единого слова.
+     Теперь приходит письмо от того, кто за это отвечает. */
+  const c = course && typeof COURSES !== 'undefined' ? COURSES.find(x => x.id === course) : null;
+  const letter = {
+    gift:   ['space',   'Доступ открыт',
+             'Доступ к программе и библиотеке открыт — без ограничения по сроку. Заходи и продолжай с того места, где остановилась.'],
+    gift30: ['space',   'Доступ открыт на 30 дней',
+             'Доступ к программе и библиотеке открыт на тридцать дней. Ближе к концу напомним, ничего не пропадёт.'],
+    trial7: ['space',   'Пробный период продлён',
+             'Продлили пробный период до семи дней — успеешь посмотреть спокойно.'],
+    course: ['experts', 'Курс открыт',
+             'Курс «' + (c ? c.t : 'твой курс') + '» открыт. Он уже в разделе «Курсы», можно начинать с первого урока.'],
+    uncourse: null, revoke: null
+  }[kind];
+  if(letter) await apiCall('dm_send', { email:u.m, from:(CHANNELS[letter[0]]||{}).from || 'Eva Space',
+    chan:letter[0], subject:letter[1], text:letter[2] }, { silent:true });
+  render(); toast(label + (letter ? '. Написали ей' : ''));
 }
 
 /* ---------- эксперт: услуги, теги, образование ---------- */
 function shExpTags(){
   const e = EXPERTS.find(x => x.id === S.sheet.id);
-  const rest = ALL_TAGS.filter(t => !e.t.includes(t));
+  if(!e) return gone('Этой карточки');
+  const rest = ALL_TAGS.filter(t => !(e.t || []).includes(t));
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Добавить тему</h2>
     <p class="small muted" style="margin:0 0 12px">По этим темам твои материалы попадают в программы учениц.</p>
     <div class="chips wrap">${rest.map(t => `<button class="chip" onclick="addExpTag('${attJs(e.id)}','${attJs(t)}')">${t}</button>`).join('')}</div>`;
@@ -1432,7 +1468,8 @@ function saveEdu(eid){
 function shEduCheck(){
   const {eid, id} = S.sheet;
   const e = EXPERTS.find(x => x.id === eid);
-  const x = (e.edu||[]).find(v => v.id === id);
+  const x = ((e || {}).edu || []).find(v => v.id === id);
+  if(!e || !x) return gone('Этого документа');
   return `<h2 class="serif" style="font-size:22px;margin:0 0 4px">Проверка документа</h2>
     <p class="small muted" style="margin:0 0 12px">${esc(e.n)} · ${esc(x.t)}${x.y?', '+x.y:''}</p>
     ${MEDIA['cert_'+id]
@@ -1652,10 +1689,12 @@ function askGood(gid){
   }
   th.msgs.push({me:true, t:`Вопрос о товаре «${g ? g.t : ''}»: ${t}`, tm});
   th.qid = id;
+  platformSay(`Вопрос о товаре «${g ? g.t : ''}» передан. Ответим сюда — обычно в течение дня. ` +
+    'Если это про заказ, напиши его номер, так найдём быстрее.', '', 'market');
 
   S.sheet = null; S.viewGood = null; S.page = 'inbox'; S.thread = th.id;
   render(); schedulePersist(); syncPush(['questions']);
-  toast('Вопрос отправлен, ответим в личных сообщениях');
+  toast('Вопрос отправлен. Ответ придёт в сообщения');
 }
 
 /* ---------- настройки ---------- */
@@ -1948,28 +1987,45 @@ function shAnonNick(){
   const cur = myAnonName(gid);
   S.nickDraft = S.nickDraft || {};
   const v = S.nickDraft[gid] != null ? S.nickDraft[gid] : '';
-  const err = v.trim() ? anonNickError(gid, v) : '';
   S.nickIdeas = S.nickIdeas || {};
   if(!S.nickIdeas[gid]) S.nickIdeas[gid] = nickIdeas(gid);
   return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">${cur ? 'Сменить ник' : 'Твой ник здесь'}</h2>
     <p class="small muted" style="margin:0 0 14px">${esc((g||{}).t || 'Анонимная комната')} · виден только в этой комнате.
       С твоей страницей, именем и почтой он не связан — ни на экране, ни в сохранённом.
       ${cur ? 'Прежние сообщения останутся под старым ником и останутся твоими.' : ''}</p>
-    <div class="nickpreview">${anonAva(v.trim() || cur || '?', 46)}
-      <div><b style="font-size:15px">${esc(v.trim() || cur || 'Ник')}</b>
-        <div class="small muted">так тебя увидят в комнате</div></div></div>
+    <div class="nickpreview" id="an_prev">${nickPreview(v.trim() || cur)}</div>
     <label class="lbl">Ник</label>
     <input class="field" id="an_nick" maxlength="18" autocomplete="off" placeholder="Например, Тихая осень"
-      value="${esc(v)}" oninput="S.nickDraft['${attJs(gid)}']=this.value;render()"
+      value="${esc(v)}" oninput="typeNick('${attJs(gid)}', this.value)"
       onkeydown="if(event.key==='Enter')saveAnonNick('${attJs(gid)}')">
-    ${err ? `<div class="small" style="color:var(--accent);margin:-4px 0 8px">${esc(err)}</div>` : ''}
-    <div class="eyebrow" style="margin:8px 0 7px">Если не придумывается</div>
+    <div class="small" id="an_err" style="color:var(--accent);margin:-4px 0 8px;min-height:16px"></div>
+    <div class="eyebrow" style="margin:2px 0 7px">Если не придумывается</div>
     <div class="chips wrap">${S.nickIdeas[gid].map(n =>
-      `<button class="chip" onclick="S.nickDraft['${attJs(gid)}']='${attJs(n)}';render()">${esc(n)}</button>`).join('')}</div>
-    <button class="btn" style="margin-top:14px" ${err || !v.trim() ? 'disabled' : ''}
+      `<button class="chip" onclick="pickNick('${attJs(gid)}','${attJs(n)}')">${esc(n)}</button>`).join('')}</div>
+    <button class="btn" id="an_go" style="margin-top:14px" ${cur ? '' : 'disabled'}
       onclick="saveAnonNick('${attJs(gid)}')">${cur ? 'Сменить' : 'Войти в комнату'}</button>
     <p class="tiny muted" style="margin-top:10px">Здесь не начисляются баллы и не видно, кто прочитал.
       Если кто-то портит разговор, редакция закроет ему письмо — по нику, не зная, кто за ним.</p>`;
+}
+const nickPreview = n => `${anonAva(n || '?', 46)}
+  <div><b style="font-size:15px">${esc(n || 'Ник')}</b>
+    <div class="small muted">так тебя увидят в комнате</div></div>`;
+/* Набор ника меняет только предпросмотр, подсказку об ошибке и кнопку.
+   Пересобирать окно на каждую букву — это моргание и потерянный курсор. */
+function typeNick(gid, val){
+  S.nickDraft = S.nickDraft || {};
+  S.nickDraft[gid] = val;
+  const n = String(val || '').trim();
+  const err = n ? anonNickError(gid, n) : '';
+  const prev = $('#an_prev'), box = $('#an_err'), go = $('#an_go');
+  if(prev) prev.innerHTML = nickPreview(n || myAnonName(gid));
+  if(box)  box.textContent = err;
+  if(go)   go.disabled = !!err || !n;
+}
+function pickNick(gid, n){
+  const inp = $('#an_nick');
+  if(inp){ inp.value = n; inp.focus(); }
+  typeNick(gid, n);
 }
 function saveAnonNick(gid){
   const v = (($('#an_nick')||{}).value || (S.nickDraft||{})[gid] || '').trim();
@@ -2106,6 +2162,7 @@ function createExpertProfile(name, email, tg){
 function shPickPhrase(){
   const {id, field} = S.sheet;
   const e = EXPERTS.find(x => x.id === id);
+  if(!e || !field) return gone('Этой карточки');
   const isWho = field === 'who';
   const list = isWho ? WHO_TPL : ACH_TPL;
   const used = e[field] || [];

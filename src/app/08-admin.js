@@ -94,7 +94,7 @@ function adContent(){
       onclick="S.cType='${attJs(k)}';S.tagSort=null;render()">${v.l} · ${LIB.filter(x=>x.type===k).length}</button>`).join('')}
   </div>
 
-  <input class="field" placeholder="Поиск по названию или автору" value="${esc(S.cQuery||'')}" oninput="S.cQuery=this.value;render()">
+  <input class="field" id="ad_q_content" placeholder="Поиск по названию или автору" value="${esc(S.cQuery||'')}" oninput="S.cQuery=this.value;render()">
 
   <div class="chips">
     <button class="chip ${!S.tagSort?'on':''}" onclick="S.tagSort=null;render()">все теги</button>
@@ -448,7 +448,7 @@ function adUsers(){
   </div>
   ${Store.available ? '' : '<div class="small muted" style="margin-bottom:10px">Хранилище браузера недоступно в этой среде: показаны демо-данные. На домене или GitHub Pages сюда попадают реальные регистрации.</div>'}
 
-  <input class="field" placeholder="Поиск по имени, почте или телеграму" value="${esc(S.uQuery||'')}" oninput="S.uQuery=this.value;render()">
+  <input class="field" id="ad_q_users" placeholder="Поиск по имени, почте или телеграму" value="${esc(S.uQuery||'')}" oninput="S.uQuery=this.value;render()">
   <div class="chips">${filters.map(x =>
     `<button class="chip ${f===x?'on':''}" onclick="S.userFilter='${attJs(x)}';render()">${x}</button>`).join('')}</div>
   <div class="chips"><span class="small muted" style="align-self:center;margin-right:4px">Сортировка:</span>
