@@ -1334,6 +1334,13 @@
   .ny-tag{font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--gold-ink); margin-left:8px;}
 
   .tasks-bar{display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap; margin-bottom:16px;}
+  /* дубли карточек: заметная кнопка слияния и метка на самой карточке */
+  .btn.dup-btn{background:var(--rust-bg); color:var(--rust); border-color:var(--rust);}
+  .btn.dup-btn:hover{background:var(--rust); color:#fff;}
+  .tc-dup{
+    display:inline-block; margin-left:6px; padding:1px 6px; border-radius:20px; vertical-align:middle;
+    background:var(--rust-bg); color:var(--rust); font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:700;
+  }
 
   /* стартовый бюджет */
   table.bud-table{font-size:12.5px;}
@@ -3745,6 +3752,7 @@ function escalationDotsHtml(t){
   return `<div class="tc-esc-dots">${dots}</div>`;
 }
 
+let _dupTaskIds = new Set();   /* карточки с одинаковыми названиями — помечаем на доске */
 function taskCardHtml(t, people, allTasks, groupBy){
   const assignee = people.find(p=>p.id===t.assignee);
   const avatarHtml = assignee ? personAvatarHtml(assignee, false).replace('p-avatar-img','p-avatar-img tc-avatar').replace('p-avatar-fallback','p-avatar-fallback tc-avatar') : `<div class="tc-avatar p-avatar-fallback" style="opacity:.35;">?</div>`;
@@ -3765,7 +3773,7 @@ function taskCardHtml(t, people, allTasks, groupBy){
       ${escalationDotsHtml(t)}
       <span class="tc-corner-avatar">${avatarHtml}</span>
     </div>
-    <div class="tc-title tc-title-centered ${t.status==='done'?'done':''}">${t.stratId?'<span class="tc-strat" title="Ключевая задача из стратегии — сроки синхронизируются с гантом">◆</span> ':''}${esc(t.title)}</div>
+    <div class="tc-title tc-title-centered ${t.status==='done'?'done':''}">${t.stratId?'<span class="tc-strat" title="Ключевая задача из стратегии — сроки синхронизируются с гантом">◆</span> ':''}${esc(t.title)}${_dupTaskIds.has(t.id)?'<span class="tc-dup" title="Есть ещё карточка с таким же названием — объедините их кнопкой в панели над доской">дубль</span>':''}</div>
     <div class="tc-inline-row">
       <select class="tk-status tc-mini status-${t.status}" data-task="${t.id}">
         <option value="todo" ${t.status==='todo'?'selected':''}>○ Не начато</option>
@@ -4207,10 +4215,25 @@ async function openTaskModal(taskId, onCloseRerender){
   });
 
   document.getElementById('tmVoteBtn').onclick = ()=>{ openVoteLevelPrompt(t, closeAndRefresh); };
-  document.getElementById('tmDeleteBtn').onclick = ()=>{
-    if(!confirm('Удалить задачу «'+t.title+'»? Это необратимо.')) return;
-    const list = allTasks.filter(x=>x.id!==taskId);
+  /* Системные окна confirm() внутри артефакта не открываются, поэтому
+     подтверждаем удаление вторым нажатием на саму кнопку. */
+  const delBtn = document.getElementById('tmDeleteBtn');
+  delBtn.onclick = async ()=>{
+    if(delBtn.dataset.armed!=='1'){
+      delBtn.dataset.armed = '1';
+      delBtn.textContent = 'Точно удалить? Нажмите ещё раз';
+      delBtn.style.background = 'var(--rust)'; delBtn.style.color = '#fff'; delBtn.style.borderColor = 'var(--rust)';
+      setTimeout(()=>{ if(delBtn.dataset.armed==='1'){ delBtn.dataset.armed='0'; delBtn.textContent='Удалить задачу';
+        delBtn.style.background=''; delBtn.style.color='var(--rust)'; delBtn.style.borderColor='#D9B3A8'; } }, 6000);
+      return;
+    }
+    const list = (await getTasks()).filter(x=>x.id!==taskId);
     saveTasks(list);
+    /* отвязываем ключевую задачу стратегии, если она ссылалась на эту */
+    const items = await getStratItems();
+    let touched = false;
+    items.forEach(i=>{ if(i.taskId===taskId){ delete i.taskId; touched = true; } });
+    if(touched) saveStratItems(items);
     closeAndRefresh();
   };
 }
@@ -4296,7 +4319,7 @@ function taskLineHtml(t, people, allTasks, groupBy){
       <option value="review" ${t.status==='review'?'selected':''}>◈ Согласование</option>
       <option value="done" ${t.status==='done'?'selected':''}>✓ Готово</option>
     </select>
-    <span class="tl-title ${t.status==='done'?'done':''}">${esc(t.title)}</span>
+    <span class="tl-title ${t.status==='done'?'done':''}">${t.stratId?'<span class="tc-strat" title="Ключевая задача из стратегии">◆</span> ':''}${esc(t.title)}${_dupTaskIds.has(t.id)?'<span class="tc-dup" title="Есть ещё карточка с таким же названием">дубль</span>':''}</span>
     ${escalationDotsHtml(t)}
     ${lockInline}
     <select class="tk-priority tc-mini priority-${t.priority}" style="flex:0 0 72px;" data-task="${t.id}">
@@ -4834,7 +4857,10 @@ async function renderStrategyGantt(container){
     i.task = i.taskId ? (allTasks.find(t=>t.id===i.taskId)||null) : null;
     if(i.taskId && !i.task) delete i.taskId;   /* задачу удалили с доски */
   });
-  const unlinked = items.filter(i=>!i.task).length;
+  /* сколько ключевых задач ещё не на доске — с той же логикой поиска,
+     что и у кнопки: карточка по названию тоже считается найденной */
+  const usedIds = new Set(items.map(i=>i.taskId).filter(Boolean));
+  const unlinked = items.filter(i=>!i.task && !findTaskForStratItem(allTasks, i, usedIds)).length;
   const months = _stratMonths;
   const cols   = months*2;
 
@@ -4964,15 +4990,21 @@ function wireStrategyGantt(container){
   if(syncBtn) syncBtn.onclick = async ()=>{
     const list = await getStratItems();
     const tasks = await getTasks();
-    let made = 0;
+    const used = new Set(list.map(x=>x.taskId).filter(Boolean));
     for(const it of list){
-      if(it.taskId && tasks.some(t=>t.id===it.taskId)) continue;
+      /* карточка уже может быть на доске — тогда просто связываем,
+         а не заводим вторую с тем же названием */
+      const found = findTaskForStratItem(tasks, it, used);
+      if(found){
+        it.taskId = found.id; found.stratId = it.id; used.add(found.id);
+        continue;
+      }
       const tr = STRAT_TRACK_MAP[it.track] || STRAT_TRACKS[0];
       const id = uid();
       tasks.push({id, title:it.title, dept:tr.dept, stage:'s1', status: it.status==='done'?'done':(it.status==='doing'?'doing':'todo'),
         priority:'high', month: await stratToRoadmapMonth(halfToMonth(it.from)), assignee:it.owner||null, budget:0, stratId:it.id,
         desc:(it.note||'')+(it.note?'\n\n':'')+'Из стратегии: '+halfLabel(it.from)+' → '+halfLabel(it.to)});
-      it.taskId = id; made++;
+      it.taskId = id; used.add(id);
     }
     saveTasks(tasks); saveStratItems(list); rerender();
   };
@@ -5047,22 +5079,33 @@ function wireStrategyGantt(container){
     const id = delBtn.dataset.stratDel;
     let list = (await getStratItems()).filter(x=>x.id!==id);
     list.forEach(x=>{ if(x.deps) x.deps = x.deps.filter(d=>d!==id); });
-    saveStratItems(list); _stratOpen = null; rerender();
+    saveStratItems(list);
+    /* карточка на доске остаётся, но метку стратегии с неё снимаем —
+       иначе она ссылалась бы на удалённую полосу */
+    const tasks = await getTasks();
+    let touched = false;
+    tasks.forEach(t=>{ if(t.stratId===id){ delete t.stratId; touched = true; } });
+    if(touched) saveTasks(tasks);
+    _stratOpen = null; rerender();
   };
   const taskBtn = container.querySelector('[data-strat-task]');
   if(taskBtn) taskBtn.onclick = async ()=>{
-    const it = (await getStratItems()).find(x=>x.id===taskBtn.dataset.stratTask); if(!it) return;
+    const list = await getStratItems();
+    const it = list.find(x=>x.id===taskBtn.dataset.stratTask); if(!it) return;
     const tr = STRAT_TRACK_MAP[it.track] || STRAT_TRACKS[0];
     const tasks = await getTasks();
-    const roadmapMonth = await stratToRoadmapMonth(halfToMonth(it.from));
-    const newId = uid();
-    tasks.push({id:newId, title:it.title, dept:tr.dept, stage:'s1', status:'todo',
-      priority:'high', month:roadmapMonth, assignee:it.owner||null, budget:0, stratId:it.id,
-      desc:(it.note||'')+(it.note?'\n\n':'')+'Из стратегии: '+halfLabel(it.from)+' → '+halfLabel(it.to)});
+    const used = new Set(list.map(x=>x.taskId).filter(Boolean).filter(id=>id!==it.taskId));
+    let newId;
+    const found = findTaskForStratItem(tasks, it, used);
+    if(found){ newId = found.id; found.stratId = it.id; }
+    else {
+      newId = uid();
+      tasks.push({id:newId, title:it.title, dept:tr.dept, stage:'s1', status:'todo',
+        priority:'high', month: await stratToRoadmapMonth(halfToMonth(it.from)), assignee:it.owner||null, budget:0, stratId:it.id,
+        desc:(it.note||'')+(it.note?'\n\n':'')+'Из стратегии: '+halfLabel(it.from)+' → '+halfLabel(it.to)});
+    }
     saveTasks(tasks);
-    const list = await getStratItems();
-    const me = list.find(x=>x.id===it.id);
-    if(me){ me.taskId = newId; saveStratItems(list); }
+    it.taskId = newId; saveStratItems(list);
     rerender();
   };
 
@@ -5154,6 +5197,85 @@ async function stratToRoadmapMonth(finM){
   if(base===null || base===undefined) base = ROADMAP_BASE_DEFAULT;
   return Math.max(1, FIN_BASE_ABS + (finM-1) - base + 1);
 }
+/* ------------------------------------------------------------
+   ЗАДАЧИ БЕЗ ДУБЛЕЙ
+   Одна ключевая задача стратегии = одна карточка на доске.
+   Прежде чем заводить новую, ищем уже существующую: сначала по
+   прямой связи, потом по метке стратегии, потом по названию.
+   ------------------------------------------------------------ */
+function normTaskTitle(s){
+  return (s||'').toLowerCase().replace(/ё/g,'е').replace(/[^a-zа-я0-9]+/gi,' ').trim();
+}
+function findTaskForStratItem(tasks, it, used){
+  used = used || new Set();
+  if(it.taskId){
+    const byId = tasks.find(t=>t.id===it.taskId);
+    if(byId) return byId;
+  }
+  const byStrat = tasks.find(t=>t.stratId===it.id && !used.has(t.id));
+  if(byStrat) return byStrat;
+  const n = normTaskTitle(it.title);
+  return tasks.find(t=>!used.has(t.id) && !t.stratId && normTaskTitle(t.title)===n) || null;
+}
+/* Насколько карточка «наполнена» — при слиянии дублей оставляем самую живую */
+function taskWeight(t){
+  return (t.budget>0?8:0) + ((t.desc||'').length>20?4:0) + ((t.ckp||'').length>10?2:0)
+       + (t.status==='done'?6:(t.status==='doing'?3:0)) + (t.stratId?2:0) + (t.assignee?1:0)
+       + ((t.commentThread||[]).length?3:0);
+}
+/* Группы карточек с одинаковым названием — это и есть дубли.
+   Повторяющиеся по смыслу задачи в разных месяцах («Отчёт за месяц»)
+   дублями не считаем: группа берётся только если хотя бы одна карточка
+   пришла из стратегии либо все они стоят в одном месяце или на одном
+   этапе — там одинаковое название всегда означает лишнюю копию. */
+function duplicateTaskGroups(tasks){
+  const by = {};
+  tasks.forEach(t=>{
+    const n = normTaskTitle(t.title);
+    if(!n) return;
+    (by[n] = by[n] || []).push(t);
+  });
+  return Object.values(by).filter(g=>{
+    if(g.length<2) return false;
+    if(g.some(t=>t.stratId)) return true;
+    if(g.every(t=>(t.month||0)===(g[0].month||0))) return true;
+    if(g.every(t=>(t.stage||'')===(g[0].stage||''))) return true;
+    return false;
+  });
+}
+/* Слить дубли: оставляем самую наполненную карточку, переносим в неё
+   то, чего в ней нет, остальные убираем и переводим на неё ссылки. */
+async function mergeDuplicateTasks(){
+  const tasks = await getTasks();
+  const groups = duplicateTaskGroups(tasks);
+  if(!groups.length) return 0;
+  const drop = new Set();
+  const remap = {};
+  groups.forEach(g=>{
+    const sorted = g.slice().sort((a,b)=>taskWeight(b)-taskWeight(a));
+    const keep = sorted[0];
+    sorted.slice(1).forEach(x=>{
+      if(!keep.budget && x.budget) keep.budget = x.budget;
+      if(!keep.desc && x.desc) keep.desc = x.desc;
+      if(!keep.ckp && x.ckp) keep.ckp = x.ckp;
+      if(!keep.assignee && x.assignee) keep.assignee = x.assignee;
+      if(!keep.stratId && x.stratId) keep.stratId = x.stratId;
+      if(x.status==='done') keep.status = 'done';
+      drop.add(x.id); remap[x.id] = keep.id;
+    });
+  });
+  if(!drop.size) return 0;
+  const left = tasks.filter(t=>!drop.has(t.id));
+  /* чужие ссылки на убранные карточки переводим на оставшуюся */
+  left.forEach(t=>{ if(t.blockedBy) t.blockedBy = [...new Set(t.blockedBy.map(id=>remap[id]||id))].filter(id=>!drop.has(id)); });
+  saveTasks(left);
+  const items = await getStratItems();
+  let touched = false;
+  items.forEach(i=>{ if(i.taskId && remap[i.taskId]){ i.taskId = remap[i.taskId]; touched = true; } });
+  if(touched) saveStratItems(items);
+  return drop.size;
+}
+
 /* Сдвинули ключевую задачу — двигаем и её задачу на доске. */
 async function syncLinkedTask(it){
   if(!it.taskId) return;
@@ -5878,6 +6000,12 @@ async function renderTasksBoard(body){
   const people = await getPeople();
   const monthsBase = await getMonthsBase();
 
+  /* карточки с одинаковыми названиями — считаем до отрисовки доски,
+     чтобы метка «дубль» попала на сами карточки */
+  const dupGroups = duplicateTaskGroups(allTasks);
+  const dupCount  = dupGroups.reduce((a,g)=>a+g.length-1, 0);
+  _dupTaskIds     = new Set(dupGroups.flat().map(t=>t.id));
+
   let boardHtml, arrowsHtml = '', monthsPickerHtml = '';
   if(_roadmapView==='stages'){ boardHtml = `<div class="kanban-board" id="rmBoard">${stageKanbanHtml(allTasks, people)}</div>`; arrowsHtml = scrollArrowsHtml('rmBoard'); }
   else if(_roadmapView==='months'){
@@ -5903,6 +6031,7 @@ async function renderTasksBoard(body){
   body.innerHTML = `
     <div class="tasks-bar">
       <button class="btn" id="topQuickAddBtn">+ Добавить задачу</button>
+      ${dupCount ? `<button class="btn dup-btn" id="mergeDupBtn" data-armed="0" title="Одинаковые названия: оставим одну карточку, перенесём в неё бюджет, описание и ответственного">Дублей: ${dupCount} — объединить</button>` : ''}
       <div class="toggle-row inline" id="roadmapViewToggle">
         <button data-v="list" class="${_roadmapView==='list'?'active':''}">Список</button>
         <button data-v="stages" class="${_roadmapView==='stages'?'active':''}">Этапы</button>
@@ -5930,6 +6059,17 @@ async function renderTasksBoard(body){
   wireScrollArrows(body);
   const addBtn = document.getElementById('topQuickAddBtn');
   if(addBtn) addBtn.onclick = ()=>openQuickAddModal({}, rerender);
+  const mergeBtn = document.getElementById('mergeDupBtn');
+  if(mergeBtn) mergeBtn.onclick = async ()=>{
+    if(mergeBtn.dataset.armed!=='1'){
+      mergeBtn.dataset.armed = '1';
+      mergeBtn.textContent = 'Объединить дубли? Нажмите ещё раз';
+      setTimeout(()=>{ if(mergeBtn.dataset.armed==='1'){ mergeBtn.dataset.armed='0'; mergeBtn.textContent = `Дублей: ${dupCount} — объединить`; } }, 6000);
+      return;
+    }
+    await mergeDuplicateTasks();
+    rerender();
+  };
   document.querySelectorAll('[data-quick-add-stage]').forEach(btn=>{
     btn.onclick = ()=>openQuickAddModal({stage:btn.dataset.quickAddStage, stageLabel:btn.dataset.stageLabel}, rerender);
   });
