@@ -3,6 +3,7 @@ import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import { Top, List, Item, Section, Sheet, Btn, Note } from '../components/UI.jsx';
 import { Seal, Avatar } from '../components/Art.jsx';
+import Install from '../components/Install.jsx';
 import Icon from '../components/Icons.jsx';
 import { DEGREES, TIERS, MOTTO_MASKED, MOTTO } from '../data/canon.js';
 import { nf } from '../lib/format.js';
@@ -74,6 +75,7 @@ export default function Club() {
           <List>
             {g.items.map((it) => <Item key={it.to} icon={it.icon} title={it.title} sub={it.sub} onClick={() => go(it.to)} />)}
           </List>
+          {g.title === 'Личное' && <Install />}
         </Section>
       ))}
 

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import Passport from '../components/Passport.jsx';
+import Install from '../components/Install.jsx';
 import { Avatar } from '../components/Art.jsx';
 import { SceneThumb } from '../components/Scene.jsx';
 import { Top, List, Item, Section, Sheet, Chip, Btn, Actions, Bar, KV } from '../components/UI.jsx';
@@ -73,6 +74,8 @@ export default function Home() {
           { icon: 'gavel', title: 'Голос', onClick: () => go('/dao') },
         ]}
       />
+
+      <Install compact />
 
       {next && (
         <Section title="Ближайшее событие" more="Все" onMore={() => go('/events')}>

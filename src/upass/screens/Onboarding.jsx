@@ -3,6 +3,7 @@ import { useApp } from '../lib/store.jsx';
 import { Btn, Chip, Card, Seg } from '../components/UI.jsx';
 import { Seal, Guilloche } from '../components/Art.jsx';
 import Passport from '../components/Passport.jsx';
+import Install from '../components/Install.jsx';
 import Icon from '../components/Icons.jsx';
 import { SKILL_GROUPS, ROLES } from '../data/people.js';
 import { CITIES } from '../data/places.js';
@@ -184,6 +185,7 @@ function Hero({ onStart, onDemo }) {
       </div>
 
       <div style={{ marginTop: 'auto', paddingTop: 28, display: 'grid', gap: 10, position: 'relative' }}>
+        <Install compact />
         <Btn variant="gold" wide onClick={onStart}>Подать заявку</Btn>
         <Btn variant="quiet" wide onClick={onDemo}>Войти демо-резидентом</Btn>
         <div className="center t-xs dim-2" style={{ marginTop: 4 }}>

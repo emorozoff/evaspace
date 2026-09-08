@@ -1,7 +1,12 @@
-/* Eva Space — простой service worker: приложение открывается даже без интернета */
-const VERSION = 'eva-v1';
+/* Eva Space — service worker: приложение открывается даже без интернета.
+   Область видимости — вся папка /evaspace/, поэтому важно не трогать
+   вложенные приложения: у UPASS свой service worker и своя оболочка. */
+const VERSION = 'eva-v2';
 const BASE = '/evaspace/';
+const NESTED = ['/evaspace/upass/', '/evaspace/u/'];   // чужие приложения внутри той же папки
 const SHELL = [BASE, BASE + 'index.html', BASE + 'manifest.webmanifest', BASE + 'icons/apple-touch-icon.png'];
+
+const isNested = (pathname) => NESTED.some((p) => pathname.startsWith(p));
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting()));
@@ -18,8 +23,9 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  if (isNested(url.pathname)) return;   // отдаём запрос соседнему приложению как есть
 
-  // Навигация: сначала сеть, при офлайне — сохранённая оболочка приложения
+  // Навигация: сначала сеть, при офлайне — сохранённая оболочка Eva Space
   if (req.mode === 'navigate') {
     e.respondWith(
       fetch(req)
