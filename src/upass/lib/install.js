@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 
 export function isStandalone() {
+  if (window.__UPASS_EMBED__) return true;   // внутри published-страницы ставить нечего
   return (
     window.matchMedia?.('(display-mode: standalone)').matches ||
     window.navigator.standalone === true

@@ -5,3 +5,5 @@ dist/
 .shot.mjs
 .vite/
 .shot*.mjs
+dist-upass/
+dist-artifact/

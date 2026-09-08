@@ -1,21 +1,22 @@
-name: Публикация на GitHub Pages
+name: Публикация UPASS
+
+# UPASS публикуется отдельно от остального сайта: сборка кладётся только
+# в папку /upass/ ветки gh-pages, всё остальное на сайте остаётся как было.
+# Так публикация из этой ветки не затирает сборку Eva Space, которую
+# выкладывают другие ветки.
 
 on:
   push:
     branches:
-      - claude/eva-space-app-ho4tcy
       - claude/upass-dao-blockchain-av7skf
-      - main
   workflow_dispatch:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -31,52 +32,47 @@ jobs:
       - name: Установка зависимостей
         run: npm ci
 
-      - name: Сборка
-        run: npm run build
+      - name: Сборка UPASS
+        run: npm run build:upass
 
-      # Публикация в ветку gh-pages — основной способ.
-      # GitHub Pages подхватывает эту ветку и сайт открывается по ссылке.
-      - name: Публикация в ветку gh-pages
-        run: |
-          touch dist/.nojekyll
-          cp dist/index.html dist/404.html
-          cd dist
-          git init -q
-          git checkout -qb gh-pages
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -q -m "Сборка сайта из ${GITHUB_SHA}"
-          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+      - name: Публикация папки /upass/ в gh-pages
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          REMOTE="https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
-      # Запасной способ: если в настройках выбран источник «GitHub Actions».
-      - name: Настройка Pages
-        id: pages
-        continue-on-error: true
-        uses: actions/configure-pages@v5
+          for attempt in 1 2 3; do
+            rm -rf site
+            if git clone -q --depth 1 --branch gh-pages "$REMOTE" site; then
+              echo "Ветка gh-pages получена"
+            else
+              echo "Ветки gh-pages ещё нет — создаём"
+              mkdir site && cd site && git init -q && git checkout -qb gh-pages && cd ..
+            fi
 
-      - name: Загрузка сборки как артефакта Pages
-        if: steps.pages.outcome == 'success'
-        continue-on-error: true
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
+            rm -rf site/upass site/u
+            mkdir -p site/upass site/u
+            cp -r dist-upass/. site/upass/
+            cp public/u/index.html site/u/index.html
+            touch site/.nojekyll
 
-    outputs:
-      pages_ready: ${{ steps.pages.outcome }}
-
-  deploy:
-    needs: build
-    if: needs.build.outputs.pages_ready == 'success'
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Публикация артефакта
-        id: deployment
-        continue-on-error: true
-        uses: actions/deploy-pages@v4
+            cd site
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            if git diff --cached --quiet; then
+              echo "Изменений нет"
+              exit 0
+            fi
+            git commit -q -m "UPASS из ${GITHUB_SHA}"
+            if git push -q "$REMOTE" gh-pages; then
+              echo "Опубликовано: /upass/"
+              exit 0
+            fi
+            echo "Кто-то опубликовался параллельно, пробуем ещё раз"
+            cd ..
+            sleep 5
+          done
+          echo "Не удалось опубликовать после трёх попыток" >&2
+          exit 1
