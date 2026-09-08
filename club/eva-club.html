@@ -288,11 +288,24 @@
   .kanban-cards{flex:1; padding:10px; display:flex; flex-direction:column; gap:9px; min-height:80px; transition:background .15s ease;}
   .kanban-cards.drag-over{background:var(--gold-bg);}
   .kanban-empty{font-size:11.5px; color:var(--ink-faint); text-align:center; padding:16px 6px; border:1px dashed var(--ink-faint); border-radius:10px;}
+  /* «Добавить задачу» не должна теряться в колонке: белая плашка
+     с золотой пунктирной рамкой и знаком плюса */
   .col-add-btn{
-    display:block; width:calc(100% - 20px); margin:8px 10px 10px; padding:9px; border:1px dashed #C9C3B0; border-radius:9px;
-    background:none; color:var(--ink-soft); font-size:12.5px; cursor:pointer; transition:background .12s ease, border-color .12s ease;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:calc(100% - 20px); margin:10px; padding:10px 9px;
+    border:1.5px dashed var(--gold); border-radius:10px;
+    background:var(--panel); color:var(--gold-ink); font-size:12.5px; font-weight:600;
+    cursor:pointer; transition:background .12s ease, border-color .12s ease, box-shadow .12s ease;
   }
-  .col-add-btn:hover{background:var(--gold-bg); border-color:var(--gold); color:var(--gold-ink);}
+  .col-add-btn::before{
+    content:'+'; display:inline-flex; align-items:center; justify-content:center;
+    width:18px; height:18px; border-radius:50%; background:var(--gold-bg);
+    color:var(--gold-ink); font-size:14px; line-height:1; font-weight:700;
+  }
+  .col-add-btn:hover{background:var(--gold-bg); border-style:solid; box-shadow:0 1px 4px rgba(184,145,47,0.25);}
+  /* верхняя кнопка доски — главное действие страницы */
+  #topQuickAddBtn{box-shadow:0 2px 8px rgba(28,27,24,0.18);}
+  #topQuickAddBtn:hover{transform:translateY(-1px);}
 
   .task-card{
     position:relative; background:var(--panel); border:1px solid #DDD8C8; border-radius:14px; padding:15px 17px;
@@ -436,6 +449,10 @@
   .tm-blocker-remove:hover{color:var(--rust);}
   .tm-meta-box{background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin:14px 0;}
   .tm-meta-box-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); margin-bottom:10px;}
+  .tm-budget-note{
+    font-size:11.5px; line-height:1.5; color:var(--ink-faint); margin-top:8px;
+    border-left:2px solid var(--gold); padding-left:9px;
+  }
   .tm-budget-quick{display:flex; gap:6px; flex-wrap:wrap;}
   .tm-budget-chip{
     border:1px solid var(--line); background:var(--panel); border-radius:8px; padding:6px 11px; font-size:12px;
@@ -1320,17 +1337,37 @@
 
   /* стартовый бюджет */
   table.bud-table{font-size:12.5px;}
-  table.bud-table th{white-space:nowrap; font-size:10px;}
-  table.bud-table td{padding:7px 8px; white-space:nowrap; vertical-align:middle;}
-  table.bud-table td:first-child{white-space:normal; min-width:190px;}
-  table.bud-table .bud-name{min-width:170px;}
-  table.bud-table .bud-money{width:104px; text-align:right; padding-left:6px; padding-right:6px;}
+  table.bud-table th{white-space:nowrap; font-size:10px; padding:10px 8px;}
+  table.bud-table td{padding:10px 8px; white-space:nowrap; vertical-align:middle;}
+  /* колонки не сжимаются: иначе поле суммы обрезает цифры */
+  table.bud-table td:first-child, table.bud-table th:first-child{white-space:normal; min-width:210px;}
+  table.bud-table thead th:nth-child(2), tbody.bud-body tr td:nth-child(2){min-width:118px;}
+  table.bud-table thead th:nth-child(3), tbody.bud-body tr td:nth-child(3){min-width:214px;}
+  tbody.bud-body tr.bud-add td:nth-child(2){min-width:0;}
+  table.bud-table .bud-name{min-width:180px; width:100%;}
+  table.bud-table .bud-money{width:102px; min-width:102px; text-align:right; padding-left:6px; padding-right:6px; font-size:12.5px;}
   table.bud-table .bud-period{white-space:nowrap;}
-  table.bud-table .bud-sel{width:auto; min-width:92px; max-width:106px; display:inline-block; padding:5px 5px; font-size:11.5px;}
+  table.bud-table .bud-sel{width:auto; min-width:98px; max-width:104px; display:inline-block; padding:5px 5px; font-size:11.5px;}
   table.bud-table .bud-period .bud-sel + .bud-sel{margin-left:4px;}
-  /* крестик «убрать» всегда виден, даже если таблица шире экрана */
-  table.bud-table td:last-child, table.bud-table th:last-child{position:sticky; right:0; background:var(--panel); z-index:1;}
-  table.bud-table tr.bud-group td:last-child, table.bud-table tr.bud-add td:last-child, table.bud-table tr.bud-excluded td:last-child{position:static; background:var(--paper);}
+  /* воздух между статьями и между разделами */
+  tbody.bud-body tr td{border-bottom:1px solid var(--line);}
+  tbody.bud-body tr:last-child td{border-bottom:0;}
+  tbody.bud-body tr.bud-add td{padding-top:12px; padding-bottom:16px; border-bottom:0;}
+  tbody.bud-head-body + tbody.bud-body tr:first-child td{padding-top:13px;}
+  tbody.bud-body + tbody.bud-head-body tr.bud-group td{padding-top:20px;}
+  tr.bud-from-task td{background:#FBF7EC;}
+  tr.bud-from-task td:first-child{border-left-color:var(--gold) !important;}
+  tr.bud-from-task .pb-sub{color:var(--gold-ink);}
+  tr.bud-from-task .pb-name{white-space:normal;}
+  /* итог по строке и крестик «убрать» всегда видны, даже когда
+     таблица шире экрана: обе колонки прилипают к правому краю */
+  table.bud-table td:last-child, table.bud-table th:last-child{position:sticky; right:0; background:var(--panel); z-index:2;}
+  table.bud-table td:nth-last-child(2), table.bud-table th:nth-last-child(2){position:sticky; right:45px; background:var(--panel); z-index:2; box-shadow:-6px 0 8px -8px rgba(28,27,24,0.25);}
+  table.bud-table thead th:last-child, table.bud-table thead th:nth-last-child(2){background:var(--panel);}
+  table.bud-table tr.bud-group td:last-child, table.bud-table tr.bud-group td:nth-last-child(2){background:var(--paper);}
+  table.bud-table tr.bud-add td:last-child, table.bud-table tr.bud-excluded td:last-child{position:static; background:var(--paper);}
+  table.bud-table tr.bud-from-task td:last-child, table.bud-table tr.bud-from-task td:nth-last-child(2){background:#FBF7EC;}
+  table.bud-table tbody.bud-foot td:last-child, table.bud-table tbody.bud-foot td:nth-last-child(2){background:var(--paper);}
   tr.bud-group td{
     background:var(--paper); font-weight:600; font-size:11.5px;
     color:var(--ink-soft); border-top:1px solid var(--ink-faint); padding-top:10px; padding-bottom:10px;
@@ -1364,7 +1401,8 @@
   tbody.bud-body[data-bud-rows="variable"] tr td:first-child{border-left-color:var(--green-bg, var(--paper));}
   .bud-hint{font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-faint); font-size:11px; margin-left:8px;}
   tr.bud-add td{background:var(--paper); padding:6px 10px 0;}
-  tr.bud-add .field-row{margin-bottom:8px;}
+  /* форма добавления не должна уезжать за правый край широкой таблицы */
+  tr.bud-add .field-row{margin-bottom:8px; max-width:1030px; flex-wrap:wrap;}
   tr.bud-add label{font-size:10.5px;}
   tr.bud-var td{color:var(--ink-soft);}
   td.bud-cell{padding:3px 3px !important;}
@@ -3065,6 +3103,7 @@ async function getTasks(){
 function saveTasks(list){
   setCacheLocal('eva-club-tasks', list);
   persistCache('eva-club-tasks');
+  queueTaskBudgetSync();   /* бюджеты карточек всегда совпадают с реестром */
 }
 function taskStats(list){
   const total = list.length;
@@ -3908,6 +3947,15 @@ async function openTaskModal(taskId, onCloseRerender){
   const people = await getPeople();
   const t = allTasks.find(x=>x.id===taskId);
   if(!t) return;
+  /* куда уходит бюджет карточки — показываем прямо здесь, чтобы
+     не приходилось искать эту строку в реестре расходов */
+  const roadmapBase = await getMonthsBase();
+  const bMonth = taskBudgetMonth(t, roadmapBase);
+  const budgetNote = !(t.budget>0)
+    ? 'Проставьте сумму — она сама встанет разовым платежом в реестр расходов, в месяц этой карточки.'
+    : (bMonth>FIN_HORIZON
+        ? `Месяц карточки (${monthCalendarLabel(t.month, roadmapBase)}) выходит за 36 месяцев модели — платёж сохранится в реестре, но в расчёт не попадёт.`
+        : `Уже в расходах: разовый платёж <b>${money(t.budget)}</b> за <b>${finMonthLabel(Math.max(1,bMonth))}</b> — строка «Бюджет задачи: ${esc(t.title)}». Правка суммы или месяца здесь обновляет ту же строку, второй не появится.`);
 
   const old = document.getElementById('taskModalOverlay');
   if(old) old.remove();
@@ -4037,6 +4085,7 @@ async function openTaskModal(taskId, onCloseRerender){
           <div class="tm-field" style="margin-top:10px;"><label>Или своя сумма, ₽</label>
             <input type="text" id="tmBudget" class="v-input money-fmt-input" value="${fmtThousands(t.budget||0)}" placeholder="0">
           </div>
+          <div class="tm-budget-note">${budgetNote}</div>
           <label style="display:flex; align-items:center; gap:8px; margin-top:12px; font-size:12.5px; cursor:pointer;">
             <input type="checkbox" id="tmBudgetApproval" ${t.budgetNeedsApproval?'checked':''}> Требует согласования
           </label>
@@ -4202,7 +4251,7 @@ async function getMonthsBase(){
   if(!('eva-club-months-base' in _cache)){
     const stored = await loadShared('eva-club-months-base', null);
     /* задачи доски заведены от августа 2026 — это и есть месяц 1 */
-    _cache['eva-club-months-base'] = (stored===null || stored===undefined) ? (2026*12+7) : stored;
+    _cache['eva-club-months-base'] = (stored===null || stored===undefined) ? ROADMAP_BASE_DEFAULT : stored;
   }
   return _cache['eva-club-months-base'];
 }
@@ -5102,7 +5151,7 @@ function startStratDrag(e, bar, rerender){
    доска начинается с августа 2026, как заведены её задачи. */
 async function stratToRoadmapMonth(finM){
   let base = await getMonthsBase();
-  if(base===null || base===undefined) base = 2026*12+7;
+  if(base===null || base===undefined) base = ROADMAP_BASE_DEFAULT;
   return Math.max(1, FIN_BASE_ABS + (finM-1) - base + 1);
 }
 /* Сдвинули ключевую задачу — двигаем и её задачу на доске. */
@@ -5251,8 +5300,8 @@ async function stratBudgetHtml(model){
       const mm = it.month||1;
       if(mm>H) return;
       const arr = months.map(m=>m===mm ? (it.amount||0) : 0);
-      rows.push({group:'once', id:it.id, name:it.name, cat:it.cat, amount:it.amount,
-        from:mm, arr, total:it.amount||0, note:'разово'});
+      rows.push({group:'once', id:it.id, taskId:it.taskId, name:it.name, cat:it.cat, amount:it.amount,
+        from:mm, arr, total:it.amount||0, note: it.taskId ? 'бюджет задачи' : 'разово'});
     }
   });
   /* --- переменные: считаются от объёма, править можно только ставку --- */
@@ -5331,7 +5380,19 @@ async function stratBudgetHtml(model){
       ${excludedRows.map(p=>`<button type="button" class="pp-chip small" data-bud-restore-hire="${p.id}" title="Вернуть в план">${esc(p.title)} ↩</button>`).join(' ')}
     </td></tr>` : '');
 
-  const editRow = (r)=>`
+  const editRow = (r)=>{
+    /* бюджет задачи правится в карточке — здесь он только показан,
+       иначе правки разъезжались бы с доской */
+    if(r.taskId) return `
+    <tr class="bud-from-task">
+      <td><div class="pb-name">${esc(r.name.replace(/^Бюджет задачи:\s*/,''))}</div><div class="pb-sub">бюджет задачи · сумма и месяц берутся из карточки</div></td>
+      <td class="num">${money(r.amount)}</td>
+      <td class="soft">${finMonthLabel(r.from)}</td>
+      ${r.arr.map(cellFor).join('')}
+      <td class="num hl">${cfMoney(r.total)}</td>
+      <td><button class="btn ghost sm-del" data-open-task="${r.taskId}" title="Открыть карточку задачи">↗</button></td>
+    </tr>`;
+    return `
     <tr>
       <td><input type="text" class="v-input bud-name" data-bud-field="name" data-id="${r.id}" value="${esc(r.name)}"></td>
       <td><input type="text" class="v-input money-fmt-input bud-money" data-bud-field="amount" data-id="${r.id}" value="${fmtThousands(r.amount)}"></td>
@@ -5344,6 +5405,7 @@ async function stratBudgetHtml(model){
       <td class="num hl">${cfMoney(r.total)}</td>
       <td><button class="btn ghost sm-del" data-bud-del-exp="${r.id}" title="Убрать">✕</button></td>
     </tr>`;
+  };
 
   const varRowsHtml = varRows.map(r=>`
     <tr class="bud-var">
@@ -5875,10 +5937,11 @@ async function renderTasksBoard(body){
     btn.onclick = ()=>openQuickAddModal({month:parseInt(btn.dataset.quickAddMonth)}, rerender);
   });
   const monthsBaseSelect = document.getElementById('monthsBaseSelect');
-  if(monthsBaseSelect) monthsBaseSelect.addEventListener('change', (e)=>{
+  if(monthsBaseSelect) monthsBaseSelect.addEventListener('change', async (e)=>{
     const val = e.target.value === '' ? null : parseInt(e.target.value);
     setCacheLocal('eva-club-months-base', val);
     persistCache('eva-club-months-base');
+    await syncAllTaskBudgets();   /* бюджеты задач переезжают вместе с календарём */
     rerender();
   });
 }
@@ -5980,6 +6043,8 @@ async function renderDepartmentList(){
 
 /* Месяц 1 финансовой модели — сентябрь 2026 (начало отслеживания). */
 const FIN_BASE_ABS = 2026*12 + 8;
+/* первый месяц дорожной карты, если он не задан вручную — Авг. 2026 */
+const ROADMAP_BASE_DEFAULT = 2026*12 + 7;
 const FIN_HORIZON = 36;
 
 /* --- Справочник категорий расходов -------------------------------
@@ -6308,23 +6373,64 @@ function finMonthFromDate(iso){
 /* Бюджет задачи из дорожной карты попадает в тот же реестр расходов
    отдельной единоразовой записью — цифры дорожной карты и финмодели
    всегда сходятся. */
-async function syncTaskBudgetToExpenses(task){
-  const exp = await getExpenses();
-  exp.items = exp.items.filter(o=>o.taskId!==task.id);
-  if(task.budget && task.budget > 0){
-    const roadmapBase = await getMonthsBase();
-    let month = task.month || 1;
-    if(roadmapBase!==null && roadmapBase!==undefined && task.month){
-      month = Math.max(1, roadmapBase + (task.month-1) - FIN_BASE_ABS + 1);
-    }
-    exp.items.push({
-      id:'taskbudget_'+task.id, taskId:task.id, name:'Бюджет задачи: '+task.title,
-      cat: task.dept==='tech' ? 'product' : (task.dept==='legal' ? 'legal' : (task.dept==='content' ? 'content' : (task.dept==='commercial' ? 'marketing' : 'other'))),
-      dept: task.dept, kind:'once', amount:task.budget, month, mandatory:true,
-      pendingApproval: !!(task.budgetNeedsApproval && !task.budgetApproved),
-    });
-  }
-  saveExpenses(exp);
+/* ------------------------------------------------------------
+   БЮДЖЕТ ЗАДАЧИ → РАЗОВЫЙ РАСХОД
+   Бюджет, проставленный в карточке, живёт в реестре расходов
+   одной строкой: месяц берётся из месяца карточки, сумма — из
+   карточки. Повторная правка эту же строку и обновляет, поэтому
+   задвоиться она не может; убрали бюджет или задачу — строка
+   уходит. Синхронизация идёт от всего списка задач сразу, чтобы
+   ни один способ правки (карточка, перетаскивание, гант, смена
+   первого месяца карты) не остался в стороне.
+   ------------------------------------------------------------ */
+const TASK_BUDGET_CAT = {tech:'product', legal:'legal', content:'content', commercial:'marketing', founders:'other'};
+function taskBudgetMonth(task, roadmapBase){
+  const base = (roadmapBase===null || roadmapBase===undefined) ? ROADMAP_BASE_DEFAULT : roadmapBase;
+  return base + ((task.month||1)-1) - FIN_BASE_ABS + 1;
+}
+function taskBudgetRow(task, roadmapBase){
+  const m = taskBudgetMonth(task, roadmapBase);
+  return {
+    id:'taskbudget_'+task.id, taskId:task.id, name:'Бюджет задачи: '+task.title,
+    cat: TASK_BUDGET_CAT[task.dept] || 'other',
+    dept: task.dept, kind:'once', amount:task.budget,
+    month: Math.max(1, m), outOfHorizon: m>FIN_HORIZON, mandatory:true,
+    pendingApproval: !!(task.budgetNeedsApproval && !task.budgetApproved),
+  };
+}
+async function syncAllTaskBudgets(){
+  const tasks = await getTasks();
+  const exp   = await getExpenses();
+  const base  = await getMonthsBase();
+  const wanted = tasks.filter(t=>t.budget>0);
+  const alive  = new Set(wanted.map(t=>t.id));
+  let changed = false;
+
+  /* строки задач, которых уже нет или у которых убрали бюджет */
+  const kept = exp.items.filter(i=>!i.taskId || alive.has(i.taskId));
+  if(kept.length !== exp.items.length){ exp.items = kept; changed = true; }
+
+  const byTask = {};
+  exp.items.forEach(i=>{ if(i.taskId) byTask[i.taskId] = i; });
+  wanted.forEach(t=>{
+    const row = taskBudgetRow(t, base);
+    const cur = byTask[t.id];
+    if(!cur){ exp.items.push(row); changed = true; return; }
+    /* правим на месте: строка остаётся там же, где стояла в реестре */
+    const same = cur.amount===row.amount && cur.month===row.month && cur.name===row.name
+              && cur.cat===row.cat && !!cur.pendingApproval===!!row.pendingApproval
+              && !!cur.outOfHorizon===!!row.outOfHorizon;
+    if(!same){ Object.assign(cur, row); changed = true; }
+  });
+  if(changed) saveExpenses(exp);
+  return changed;
+}
+/* оставлено для точечных вызовов из карточки — считает всё разом */
+async function syncTaskBudgetToExpenses(){ return syncAllTaskBudgets(); }
+let _taskBudgetTimer = null;
+function queueTaskBudgetSync(){
+  clearTimeout(_taskBudgetTimer);
+  _taskBudgetTimer = setTimeout(()=>{ syncAllTaskBudgets(); }, 80);
 }
 
 async function payrollTotal(){
