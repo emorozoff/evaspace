@@ -1,6 +1,6 @@
 import { useId, useMemo } from 'react';
 import { LANDMARKS } from '../data/landmarks.js';
-import { CITIES } from '../data/places.js';
+import { REGIONS } from '../data/regions.js';
 import { seeded } from '../lib/art.js';
 
 /* Обложка-иллюстрация: плотная тонированная поверхность, звёзды, луна,
@@ -60,7 +60,7 @@ export default function Scene({ city, height = 150, children, style, label, radi
       </svg>
       {label && (
         <div style={{ position: 'absolute', left: 14, top: 12, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(255,255,255,.55)' }}>
-          {(CITIES[city]?.flag || '') + ' ' + (label === true ? (CITIES[city]?.name || '').toUpperCase() : label)}
+          {(REGIONS[city]?.flag || '') + ' ' + (label === true ? (REGIONS[city]?.name || '').toUpperCase() : label)}
         </div>
       )}
       {children}

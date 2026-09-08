@@ -5,8 +5,8 @@ import { TopBar, List, Item, Btn, Section, Sheet, KV, Chip, Seg, Note } from '..
 import { Avatar } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
 import { SKILL_GROUPS } from '../data/people.js';
-import { CITIES } from '../data/places.js';
-import { TIERS, DEGREES } from '../data/canon.js';
+import { REGIONS, REGION_KEYS } from '../data/regions.js';
+import { DEGREES } from '../data/canon.js';
 import { VERSION } from '../version.js';
 import { usdExact, nf } from '../lib/format.js';
 
@@ -16,7 +16,7 @@ export default function Profile() {
   const [edit, setEdit] = useState(false);
   const [cityOpen, setCityOpen] = useState(false);
   const [form, setForm] = useState({ title: me.title, company: me.company, mission: me.mission, bio: me.bio, gives: me.gives, needs: me.needs });
-  const tier = TIERS.find((t) => t.n === me.tier) || TIERS[0];
+  
   const deg = DEGREES.find((d) => d.n === me.degree) || DEGREES[0];
 
   return (
@@ -27,12 +27,12 @@ export default function Profile() {
           <Avatar person={me} size={88} ring={deg.tone} style={{ margin: '0 auto' }} />
           <h2 className="h2" style={{ marginTop: 12 }}>{me.name || 'Резидент'}</h2>
           <div className="t-sm dim" style={{ marginTop: 4 }}>{me.title || me.role}{me.company ? ` · ${me.company}` : ''}</div>
-          <div className="t-xs dim-2" style={{ marginTop: 3 }}>{me.number} · {tier.name} · степень {deg.roman}</div>
+          <div className="t-xs dim-2" style={{ marginTop: 3 }}>{me.number} · Travel · степень {deg.roman}</div>
         </div>
 
         <div className="row" style={{ gap: 10 }}>
           <Btn variant="ghost" wide icon="settings" onClick={() => setEdit(true)}>Редактировать</Btn>
-          <Btn variant="ghost" wide icon="pin" onClick={() => setCityOpen(true)}>{CITIES[me.city].flag} {CITIES[me.city].name}</Btn>
+          <Btn variant="ghost" wide icon="pin" onClick={() => setCityOpen(true)}>{REGIONS[me.city].flag} {REGIONS[me.city].name}</Btn>
         </div>
 
         <Section title="Видимость профиля">
@@ -42,9 +42,8 @@ export default function Profile() {
 
         <Section title="Разделы">
           <List>
-            <Item icon="key" title="Уровень и степень" sub={`${tier.name}${tier.price ? ` · ${usdExact(tier.price)}/год` : ''} · ${deg.name}`} onClick={() => go('/degrees')} />
-            <Item icon="wallet" title="Баллы" sub={`${nf(app.points)} на счёте`} onClick={() => go('/wallet')} />
-            <Item icon="shield" title="Наследие" sub={app.heirs.length ? `${app.heirs.length} наследник(ов)` : 'Не назначено'} onClick={() => go('/heritage')} />
+            <Item icon="key" title="Уровень и степень" sub={`Travel · ${usdExact(200)}/год · степень ${deg.roman}`} onClick={() => go('/degrees')} />
+            <Item icon="plane" title="Мои поездки" sub={app.trips.length ? `${app.trips.length} объявлено` : 'Ничего не объявлено'} onClick={() => go('/map')} />
             <Item icon="hash" title="Репутация" sub={`${app.chain.length} записей в цепочке`} onClick={() => go('/rep')} />
           </List>
         </Section>
@@ -80,9 +79,9 @@ export default function Profile() {
         </div>
       </Sheet>
 
-      <Sheet open={cityOpen} onClose={() => setCityOpen(false)} title="Город присутствия" sub="По нему клуб понимает, кто рядом">
+      <Sheet open={cityOpen} onClose={() => setCityOpen(false)} title="Регион присутствия" sub="Определяет сообщества, афишу и запросы на главной">
         <div className="wrap">
-          {Object.entries(CITIES).map(([key, c]) => <Chip key={key} on={me.city === key} onClick={() => { app.setMe({ city: key }); setCityOpen(false); }}>{c.flag} {c.name}</Chip>)}
+          {REGION_KEYS.map((key) => <Chip key={key} on={me.city === key} onClick={() => { app.setRegion(key); setCityOpen(false); }}>{REGIONS[key].flag} {REGIONS[key].name}</Chip>)}
         </div>
       </Sheet>
     </>

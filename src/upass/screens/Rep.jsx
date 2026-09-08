@@ -7,11 +7,11 @@ import { verifyChain, dayRoot, shortHash } from '../lib/chain.js';
 import { plural } from '../lib/format.js';
 
 const TYPES = {
-  join: { name: 'Посвящение', icon: 'seal', tone: '#D9B26B' }, tier: { name: 'Уровень', icon: 'star', tone: '#D9B26B' },
+  join: { name: 'Посвящение', icon: 'seal', tone: '#D9B26B' }, 
   meet: { name: 'Встреча', icon: 'cup', tone: '#5FE0C8' }, connect: { name: 'Знакомство', icon: 'users', tone: '#5B8CFF' },
   vouch: { name: 'Поручительство', icon: 'shield', tone: '#8E7BF5' }, event: { name: 'Событие', icon: 'calendar', tone: '#F2789B' },
-  deal: { name: 'Сделка', icon: 'gift', tone: '#E9855C' }, booking: { name: 'Бронь', icon: 'bed', tone: '#9BA6BE' },
-  vote: { name: 'Голос', icon: 'gavel', tone: '#8E7BF5' }, capital: { name: 'Взнос капитала', icon: 'coin', tone: '#D9B26B' },
+ booking: { name: 'Бронь', icon: 'bed', tone: '#9BA6BE' },
+ capital: { name: 'Взнос капитала', icon: 'coin', tone: '#D9B26B' },
   trip: { name: 'Поездка', icon: 'plane', tone: '#5FE0C8' },
 };
 

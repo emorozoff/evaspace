@@ -2,59 +2,87 @@ import { useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import { Top, List, Item, Chip, Seg, Scroller, Section, Empty, Note } from '../components/UI.jsx';
+import Poster, { PosterThumb } from '../components/Poster.jsx';
 import Icon from '../components/Icons.jsx';
-import { EVENTS, EVENT_KINDS } from '../data/life.js';
-import { CITIES, locById } from '../data/places.js';
-import { canSee, eventDate, eventsSorted } from '../lib/select.js';
-import { DateBlock } from './Location.jsx';
-import { relDay, usdExact, MONTH_NOM, WEEKDAYS, plural, weekday, dateLong } from '../lib/format.js';
+import { EVENTS, EVENT_KINDS, FLAGSHIPS } from '../data/life.js';
+import { REGIONS } from '../data/regions.js';
+import { eventDate, eventsSorted, canSee } from '../lib/select.js';
+import { relDay, usdExact, MONTH_NOM, WEEKDAYS, plural, dateLong, weekday } from '../lib/format.js';
 
 export default function Events() {
   const app = useApp();
   const { me } = app;
   const [tab, setTab] = useState('feed');
-  const [kind, setKind] = useState('all');
+  const [filter, setFilter] = useState('all');
   const [cursor, setCursor] = useState(0);
 
   const list = useMemo(
-    () => eventsSorted().filter((e) => e.inDays >= -14).filter((e) => canSee(me, e.minTier, e.minDegree)).filter((e) => kind === 'all' || e.kind === kind),
-    [me, kind]
+    () =>
+      eventsSorted()
+        .filter((e) => e.inDays >= -14 && canSee(me, e.minDegree))
+        .filter((e) => {
+          if (filter === 'live') return e.online;
+          if (filter === 'meet') return !e.online;
+          if (filter === 'big') return FLAGSHIPS.includes(e.kind);
+          if (filter === 'mine') return e.region === me.city || e.region === 'global';
+          return true;
+        }),
+    [me, filter]
   );
-  const hiddenCount = EVENTS.filter((e) => e.inDays >= 0 && !canSee(me, e.minTier, e.minDegree)).length;
+
+  const big = EVENTS.filter((e) => FLAGSHIPS.includes(e.kind) && e.inDays >= 0).sort((a, b) => a.inDays - b.inDays);
 
   return (
     <div className="screen stack">
-      <Top title="События" right={<button className="iconbtn" onClick={() => go('/club')}><Icon name="back" size={18} /></button>} />
+      <Top title="Афиша" sub="Встречи в регионах и эфиры сообщества" />
 
-      <Seg value={tab} onChange={setTab} options={[{ value: 'feed', label: 'Лента' }, { value: 'month', label: 'Календарь' }]} />
+      <Seg value={tab} onChange={setTab} options={[{ value: 'feed', label: 'Расписание' }, { value: 'month', label: 'Календарь' }]} />
 
       <Scroller>
-        <Chip on={kind === 'all'} onClick={() => setKind('all')}>Все</Chip>
-        {Object.entries(EVENT_KINDS).map(([k, v]) => (
-          <Chip key={k} on={kind === k} onClick={() => setKind(k)}>
-            <span style={{ width: 7, height: 7, borderRadius: 4, background: v.tone, display: 'inline-block' }} />
-            {v.name}
-          </Chip>
-        ))}
+        <Chip on={filter === 'all'} onClick={() => setFilter('all')}>Всё</Chip>
+        <Chip on={filter === 'mine'} onClick={() => setFilter('mine')}>{REGIONS[me.city].flag} Мой регион</Chip>
+        <Chip on={filter === 'live'} onClick={() => setFilter('live')}>Эфиры</Chip>
+        <Chip on={filter === 'meet'} onClick={() => setFilter('meet')}>Встречи</Chip>
+        <Chip on={filter === 'big'} onClick={() => setFilter('big')}>Большие слёты</Chip>
       </Scroller>
 
-      {tab === 'month' ? <MonthGrid list={list} cursor={cursor} setCursor={setCursor} /> : <Feed list={list} going={app.going} />}
-
-      {hiddenCount > 0 && (
-        <Note icon="lock">{hiddenCount} {plural(hiddenCount, 'событие скрыто', 'события скрыты', 'событий скрыто')}: они требуют уровня выше вашего.</Note>
+      {tab === 'month' ? (
+        <MonthGrid list={list} cursor={cursor} setCursor={setCursor} going={app.going} />
+      ) : (
+        <>
+          {filter === 'all' && big.length > 0 && (
+            <Section title="Три больших события года">
+              <div className="stack">
+                {big.map((e) => (
+                  <button key={e.id} className="tap" style={{ display: 'block', width: '100%' }} onClick={() => go(`/event/${e.id}`)}>
+                    <Poster event={e} height={158} radius={16}>
+                      <div className="scene__over">
+                        <div className="t-lg" style={{ color: '#fff' }}>{e.title}</div>
+                        <div className="t-xs" style={{ color: 'rgba(255,255,255,.72)', marginTop: 3 }}>
+                          {relDay(e.inDays)} · {e.days} {plural(e.days, 'день', 'дня', 'дней')} · {REGIONS[e.region]?.name}
+                        </div>
+                      </div>
+                    </Poster>
+                  </button>
+                ))}
+              </div>
+            </Section>
+          )}
+          <Feed list={list} going={app.going} skip={filter === 'all' ? big.map((e) => e.id) : []} />
+        </>
       )}
     </div>
   );
 }
 
 export function EventItem({ e, going }) {
-  const loc = locById(e.loc);
   const k = EVENT_KINDS[e.kind];
+  const d = eventDate(e);
   return (
     <Item
-      lead={<DateBlock d={eventDate(e)} />}
+      lead={<PosterThumb event={e} size={46} />}
       title={e.title}
-      sub={`${e.time} · ${CITIES[loc.city].flag} ${loc.name} · ${e.going.length} идут`}
+      sub={`${d.getDate()} ${MONTH_NOM[d.getMonth()].toLowerCase().slice(0, 3)}, ${e.time} · ${e.online ? 'онлайн' : REGIONS[e.region]?.name || ''} · ${e.going.length} идут`}
       meta={
         <>
           <span className="tag" style={{ background: `${k.tone}22`, color: k.tone }}>{k.name}</span>
@@ -67,10 +95,11 @@ export function EventItem({ e, going }) {
   );
 }
 
-function Feed({ list, going }) {
-  if (!list.length) return <Empty title="Событий не найдено" />;
-  const future = list.filter((e) => e.inDays >= 0);
-  const past = list.filter((e) => e.inDays < 0);
+function Feed({ list, going, skip = [] }) {
+  const items = list.filter((e) => !skip.includes(e.id));
+  if (!items.length) return <Empty title="Ничего не нашлось" text="Смените фильтр." />;
+  const future = items.filter((e) => e.inDays >= 0);
+  const past = items.filter((e) => e.inDays < 0);
   const groups = [];
   for (const e of future) {
     const key = e.inDays <= 7 ? 'На этой неделе' : e.inDays <= 30 ? 'В этом месяце' : 'Позже';
@@ -87,7 +116,7 @@ function Feed({ list, going }) {
         <Section title="Прошедшие · записи">
           <List>
             {past.map((e) => (
-              <Item key={e.id} icon="clock" title={e.title} sub={`${relDay(e.inDays)} · ${locById(e.loc)?.name}`} onClick={() => go(`/event/${e.id}`)} />
+              <Item key={e.id} icon="clock" title={e.title} sub={`${relDay(e.inDays)} · запись в базе знаний`} onClick={() => go(`/event/${e.id}`)} />
             ))}
           </List>
         </Section>
@@ -96,7 +125,7 @@ function Feed({ list, going }) {
   );
 }
 
-function MonthGrid({ list, cursor, setCursor }) {
+function MonthGrid({ list, cursor, setCursor, going }) {
   const base = new Date();
   const view = new Date(base.getFullYear(), base.getMonth() + cursor, 1);
   const year = view.getFullYear(), month = view.getMonth();
@@ -151,9 +180,9 @@ function MonthGrid({ list, cursor, setCursor }) {
         </div>
       </div>
       {picked ? (
-        <List>{picked.map((e) => <EventItem key={e.id} e={e} />)}</List>
+        <List>{picked.map((e) => <EventItem key={e.id} e={e} going={going.includes(e.id)} />)}</List>
       ) : (
-        <Note icon="calendar">Нажмите на день с точками — раскроются события. Цвет точки — формат.</Note>
+        <Note icon="calendar">Точки под числом — события дня. Синие — эфиры, золотые — встречи, розовые — слёты.</Note>
       )}
     </div>
   );

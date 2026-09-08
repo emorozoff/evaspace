@@ -1,29 +1,28 @@
 import { useApp } from './lib/store.jsx';
 import { useRoute } from './lib/router.jsx';
-import { DMS } from './data/life.js';
 import Nav from './components/Nav.jsx';
+import { DMS } from './data/life.js';
 import Onboarding from './screens/Onboarding.jsx';
 import Home from './screens/Home.jsx';
 import MapScreen from './screens/Map.jsx';
-import Location from './screens/Location.jsx';
+import Region from './screens/Region.jsx';
 import People from './screens/People.jsx';
 import Person from './screens/Person.jsx';
-import Events from './screens/Events.jsx';
-import Event from './screens/Event.jsx';
-import Club from './screens/Club.jsx';
+import Communities from './screens/Communities.jsx';
 import Chats from './screens/Chats.jsx';
 import Chat from './screens/Chat.jsx';
+import Requests from './screens/Requests.jsx';
+import Request from './screens/Request.jsx';
+import Events from './screens/Events.jsx';
+import Event from './screens/Event.jsx';
 import Market from './screens/Market.jsx';
 import Service from './screens/Service.jsx';
-import Capital from './screens/Capital.jsx';
-import Dao from './screens/Dao.jsx';
+import Club from './screens/Club.jsx';
 import Codex from './screens/Codex.jsx';
 import Vault from './screens/Vault.jsx';
 import Degrees from './screens/Degrees.jsx';
 import Lodge from './screens/Lodge.jsx';
 import Rep from './screens/Rep.jsx';
-import Wallet from './screens/Wallet.jsx';
-import Heritage from './screens/Heritage.jsx';
 import Profile from './screens/Profile.jsx';
 
 export default function App() {
@@ -44,12 +43,14 @@ export default function App() {
     );
   }
 
+  const unread = DMS.filter((d) => d.unread && !app.seen['dm-' + d.with]).length;
+
   return (
     <>
       <div className="aura" />
       <div className="app">
         <main key={path}>{render(root, id, query)}</main>
-        <Nav root={root} unread={DMS.filter((d) => d.unread && !app.seen['dm-' + d.with]).length} />
+        <Nav root={root} unread={unread} />
         {app.toast && <div className="toast">{app.toast}</div>}
       </div>
     </>
@@ -60,28 +61,25 @@ function render(root, id, query) {
   switch (root) {
     case '': return <Home />;
     case 'map': return <MapScreen />;
-    case 'loc': return <Location id={id} />;
+    case 'region': return <Region id={id} />;
     case 'people': return <People query={query} />;
     case 'p': return <Person id={id} />;
+    case 'communities': return <Communities />;
+    case 'chats': return <Chats />;
+    case 'chat': return <Chat kind="circle" id={id} />;
+    case 'dm': return <Chat kind="dm" id={id} />;
+    case 'requests': return <Requests />;
+    case 'request': return <Request id={id} />;
     case 'events': return <Events />;
     case 'event': return <Event id={id} />;
-    case 'club': return <Club />;
-    case 'chats': return <Chats />;
-    case 'circles': return <Chats />;
-    case 'chat': return <Chat kind="circle" id={id} />;
-    case 'circle': return <Chat kind="circle" id={id} />;
-    case 'dm': return <Chat kind="dm" id={id} />;
     case 'market': return <Market />;
     case 'service': return <Service id={id} />;
-    case 'capital': return <Capital />;
-    case 'dao': return <Dao />;
+    case 'club': return <Club />;
     case 'codex': return <Codex />;
     case 'vault': return <Vault />;
     case 'degrees': return <Degrees />;
     case 'lodge': return <Lodge />;
     case 'rep': return <Rep />;
-    case 'wallet': return <Wallet />;
-    case 'heritage': return <Heritage />;
     case 'profile': return <Profile />;
     default: return <Home />;
   }

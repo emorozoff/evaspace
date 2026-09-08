@@ -12,28 +12,30 @@ export default function Degrees() {
 
   return (
     <div className="screen stack-20">
-      <Top title="Уровни и степени" sub="Уровень покупается, степень зарабатывается" right={<button className="iconbtn" onClick={() => go('/club')}><Icon name="back" size={18} /></button>} />
+      <Top title="Уровень и степень" sub="Уровень оплачивается, степень зарабатывается" right={<button className="iconbtn" onClick={() => go('/club')}><Icon name="back" size={18} /></button>} />
 
       <Section title="Уровень членства">
         <List>
-          {TIERS.map((t) => {
-            const cur = me.tier === t.n;
-            const canUp = !cur && me.tier < t.n && t.price;
-            return (
-              <Item
-                key={t.n}
-                lead={<div style={{ width: 6, height: 40, borderRadius: 3, flex: 'none', background: `linear-gradient(180deg, ${t.edge[0]}, ${t.edge[1]})`, marginLeft: 8, marginRight: 8 }} />}
-                title={<span className="row" style={{ gap: 7 }}>{t.name}{cur && <Tag tone="gold">ваш</Tag>}</span>}
-                sub={`${t.line} · ${t.perks[t.perks.length - 1]}`}
-                subWrap
-                meta={<span>{t.price ? `${usdExact(t.price)} / год` : 'по приглашению'}</span>}
-                chev={!!canUp}
-                onClick={canUp ? () => app.upgrade(t.n) : undefined}
-              />
-            );
-          })}
+          {TIERS.map((t) => (
+            <Item
+              key={t.n}
+              lead={<div style={{ width: 6, height: 40, borderRadius: 3, flex: 'none', background: `linear-gradient(180deg, ${t.edge[0]}, ${t.edge[1]})`, marginLeft: 8, marginRight: 8, opacity: t.open ? 1 : 0.5 }} />}
+              title={
+                <span className="row" style={{ gap: 7 }}>
+                  {t.name}
+                  {t.open && <Tag tone="gold">ваш</Tag>}
+                  {t.soon && <Tag>скоро</Tag>}
+                  {t.invite && <Tag tone="violet">по приглашению</Tag>}
+                </span>
+              }
+              sub={t.perks.join(' · ')}
+              subWrap
+              meta={<span>{t.price ? `${usdExact(t.price)} / год` : t.invite ? '—' : 'позже'}</span>}
+              chev={false}
+            />
+          ))}
         </List>
-        <Note icon="eye">Объект с минимальным уровнем N виден участнику с уровнем не ниже N. Нижние верхних не видят нигде.</Note>
+        <Note icon="eye">Сейчас в сообществе один уровень — Travel. Business и Gold откроются, когда для них появится что предложить. Black был и остаётся закрытым.</Note>
       </Section>
 
       <Section title="Степень">
@@ -46,7 +48,13 @@ export default function Degrees() {
               <Item
                 key={d.n}
                 lead={<div className="item__ic display" style={{ fontSize: 17, background: `${d.tone}1e`, color: d.tone }}>{d.roman}</div>}
-                title={<span className="row" style={{ gap: 7 }}>{d.name}{cur && <Tag style={{ background: `${d.tone}22`, color: d.tone }}>ваша</Tag>}{d.secret && <Tag tone="violet">закрытая</Tag>}</span>}
+                title={
+                  <span className="row" style={{ gap: 7 }}>
+                    {d.name}
+                    {cur && <Tag style={{ background: `${d.tone}22`, color: d.tone }}>ваша</Tag>}
+                    {d.secret && <Tag tone="violet">закрытая</Tag>}
+                  </span>
+                }
                 sub={done ? d.opens.join(' · ') : `Нужно: встречи ${counts.meets}/${d.need.meets}, поручительства ${counts.vouches}/${d.need.vouches}, события ${counts.events}/${d.need.events}`}
                 subWrap
                 meta={done ? <Icon name="check" size={16} color="var(--green)" /> : <div style={{ width: 48 }}><Bar value={prog} /></div>}
@@ -55,7 +63,13 @@ export default function Degrees() {
             );
           })}
           {!app.secret && (
-            <Item icon="lock" title={<span>Дальше — <span className="redacted">степень IV</span>, <span className="redacted">степень V</span> и ещё одна</span>} sub="Официально клуб объявляет три степени. О следующих известно из устава, но их названия и состав не публикуются." subWrap chev={false} />
+            <Item
+              icon="lock"
+              title={<span>Дальше — <span className="redacted">степень IV</span> и ещё две</span>}
+              sub="Официально объявлены три степени. О следующих известно из устава, но их названия и состав не публикуются."
+              subWrap
+              chev={false}
+            />
           )}
         </List>
         {app.secret && <Btn variant="ghost" wide icon="seal" onClick={() => go('/lodge')}>Войти в ложу</Btn>}

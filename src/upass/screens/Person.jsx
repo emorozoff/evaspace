@@ -5,9 +5,9 @@ import { TopBar, List, Item, Section, Sheet, Chip, Tag, Empty, KV, Btn, Actions,
 import { Avatar } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
 import { SKILL_GROUPS, BADGES, byId } from '../data/people.js';
-import { CITIES } from '../data/places.js';
+import { REGIONS } from '../data/regions.js';
 import { DEGREES, TIERS } from '../data/canon.js';
-import { CIRCLES, SERVICES, EVENTS } from '../data/life.js';
+import { COMMUNITIES, SERVICES, EVENTS } from '../data/life.js';
 import { visibleOnly } from '../lib/select.js';
 import { usdExact, plural } from '../lib/format.js';
 
@@ -24,9 +24,9 @@ export default function Person({ id }) {
 
   const deg = DEGREES.find((d) => d.n === r.degree);
   const tier = TIERS.find((t) => t.n === r.tier);
-  const city = CITIES[r.city];
+  const city = REGIONS[r.city];
   const known = app.connections.includes(r.id);
-  const circle = CIRCLES.find((c) => c.id === r.circle);
+  const circle = COMMUNITIES.find((c) => c.id === r.circle);
   const services = SERVICES.filter((s) => s.owner === r.id);
   const events = EVENTS.filter((e) => e.going.includes(r.id) && e.inDays >= 0).slice(0, 3);
   const vouchers = visibleOnly(app.me, r.vouchedBy || []);
@@ -43,7 +43,7 @@ export default function Person({ id }) {
           </h2>
           <div className="t-sm dim" style={{ marginTop: 4 }}>{r.title} · {r.company}</div>
           <div className="wrap" style={{ justifyContent: 'center', marginTop: 10, gap: 6 }}>
-            <Tag tone="gold">{tier.name}</Tag>
+            <Tag tone="gold">{tier?.name || 'Travel'}</Tag>
             <Tag style={{ background: `${deg.tone}22`, color: deg.tone }}>Степень {deg.roman}{deg.secret ? '' : ` · ${deg.name}`}</Tag>
             {r.badges.map((b) => <Tag key={b} style={{ background: `${BADGES[b].tone}1e`, color: BADGES[b].tone }}>{BADGES[b].name}</Tag>)}
           </div>
@@ -123,9 +123,9 @@ export default function Person({ id }) {
         {(services.length > 0 || circle || events.length > 0) && (
           <Section title="В клубе">
             <List>
-              {circle && <Item icon="message" title={circle.name} sub="Круг по интересам" onClick={() => go(`/chat/${circle.id}`)} />}
+              {circle && <Item icon="message" title={circle.name} sub="Сообщество" onClick={() => go(`/chat/${circle.id}`)} />}
               {services.map((s) => (
-                <Item key={s.id} icon="gift" title={s.title} sub={`Услуга · кэшбэк ${s.cashback}%`} meta={<span className="gold">{s.price ? usdExact(s.price) : 'по запросу'}</span>} onClick={() => go(`/service/${s.id}`)} />
+                <Item key={s.id} icon="gift" title={s.title} sub="Услуга резидента" meta={<span className="gold">{s.price ? usdExact(s.price) : 'по запросу'}</span>} onClick={() => go(`/service/${s.id}`)} />
               ))}
               {events.map((e) => (
                 <Item key={e.id} icon="calendar" title={e.title} sub="Будет на событии" onClick={() => go(`/event/${e.id}`)} />

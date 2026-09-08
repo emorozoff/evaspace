@@ -1,30 +1,29 @@
-import { useMemo, useRef, useState, useEffect } from 'react';
-import { landDots, project } from '../data/world.js';
-import { CITIES, STATUS } from '../data/places.js';
-import { LANDMARKS, HUB_MAIN } from '../data/landmarks.js';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { landDots, project, distanceKm } from '../data/world.js';
+import { REGIONS, TIERS_REGION, MAIN_REGIONS } from '../data/regions.js';
+import { LANDMARKS } from '../data/landmarks.js';
+import { toneOf } from '../data/people.js';
 import { initials } from '../lib/format.js';
 
-/* Карта мира точками. Три уровня детализации по масштабу:
-   — обзор: четыре главных хаба с силуэтами, остальные — точки;
-   — ближе: силуэты и названия у всех локаций;
-   — вплотную: вокруг города раскрываются резиденты, которые в нём сейчас. */
+/* Карта регионов. Три уровня: обзор — четыре основных региона со значками;
+   ближе — все двадцать; вплотную — резиденты дугой НАД значком, чтобы никогда
+   не перекрывать ни сам хаб, ни его подпись снизу. */
 
 const W = 720;
 const H = 276;
 const CELL = W / 180;
 
-/* Города, которые на карте почти совпадают: значок отводится в сторону, к точке идёт выноска. */
-const NUDGE = { yerevan: [-14, 16], tbilisi: [12, -10], singapore: [10, 12], bangkok: [-6, -12], bali: [12, 10], phuket: [-12, -4] };
+/* Регионы, которые на карте почти совпадают: значок отводится, к точке идёт выноска. */
+const NUDGE = { yerevan: [-15, 15], tbilisi: [11, -11], singapore: [9, 13], bangkok: [-7, -13], bali: [13, 9], phuket: [-13, -3], miami: [6, 12] };
 
 export default function WorldMap({
-  locations = [],
+  regions = [],
   people = [],
   selected = null,
   onSelect,
   onPerson,
-  myCity = null,
-  routeTo = null,
-  height = 300,
+  myRegion = null,
+  height = 320,
   interactive = true,
 }) {
   const dotsPath = useMemo(() => {
@@ -38,29 +37,28 @@ export default function WorldMap({
 
   const pins = useMemo(
     () =>
-      locations.map((l) => {
-        const c = CITIES[l.city];
-        const p = project(c.lat, c.lon);
-        return { ...l, x: p.x * W, y: p.y * H, cityName: c.name, flag: c.flag, main: HUB_MAIN.includes(l.city) };
+      regions.map((key) => {
+        const r = REGIONS[key];
+        const p = project(r.lat, r.lon);
+        return { key, ...r, x: p.x * W, y: p.y * H, main: MAIN_REGIONS.includes(key) };
       }),
-    [locations]
+    [regions]
   );
 
-  const byCity = useMemo(() => {
+  const byRegion = useMemo(() => {
     const m = {};
     for (const r of people) (m[r.city] ||= []).push(r);
     return m;
   }, [people]);
 
-  const mine = myCity && CITIES[myCity] ? project(CITIES[myCity].lat, CITIES[myCity].lon) : null;
-  const dest = routeTo && CITIES[routeTo] ? project(CITIES[routeTo].lat, CITIES[routeTo].lon) : null;
+  const mine = myRegion && REGIONS[myRegion] ? project(REGIONS[myRegion].lat, REGIONS[myRegion].lon) : null;
+  const dest = selected && REGIONS[selected] ? project(REGIONS[selected].lat, REGIONS[selected].lon) : null;
 
   const box = useRef(null);
   const drag = useRef(null);
   const pointers = useRef(new Map());
   const moved = useRef(false);
 
-  /* Видимая ширина в единицах viewBox: контейнер уже карты, края обрезаются (slice). */
   const visW = () => {
     const r = box.current?.getBoundingClientRect();
     return r && r.height ? Math.min(W, H * (r.width / r.height)) : W;
@@ -70,17 +68,12 @@ export default function WorldMap({
     const k = Math.max(1, Math.min(7, v.k));
     const vis = visW();
     const left = (W - vis) / 2;
-    return {
-      k,
-      x: Math.min(left, Math.max(left + vis - W * k, v.x)),
-      y: Math.min(0, Math.max(H - H * k, v.y)),
-    };
+    return { k, x: Math.min(left, Math.max(left + vis - W * k, v.x)), y: Math.min(0, Math.max(H - H * k, v.y)) };
   };
 
-  /* Старт: свой город в центре, чуть приближено — видны Европа, Залив и Азия. */
   const [view, setView] = useState(() => {
-    const c = myCity && CITIES[myCity] ? project(CITIES[myCity].lat, CITIES[myCity].lon) : { x: 0.6, y: 0.4 };
-    const k = 1.2;
+    const c = myRegion && REGIONS[myRegion] ? project(REGIONS[myRegion].lat, REGIONS[myRegion].lon) : { x: 0.6, y: 0.4 };
+    const k = 1.25;
     return { k, x: W / 2 - c.x * W * k, y: H / 2 - c.y * H * k };
   });
 
@@ -89,12 +82,14 @@ export default function WorldMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const focus = (x, y, k) => setView(clamp({ k, x: W / 2 - x * k, y: H / 2 - y * k }));
-
   useEffect(() => {
     if (!selected) return;
-    const pin = pins.find((p) => p.id === selected);
-    if (pin) focus(pin.x, pin.y, Math.max(3.4, view.k));
+    const pin = pins.find((p) => p.key === selected);
+    if (!pin) return;
+    setView((v) => {
+      const k = Math.max(3.2, v.k);
+      return clamp({ k, x: W / 2 - pin.x * k, y: H / 2 - pin.y * k });
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
@@ -143,9 +138,13 @@ export default function WorldMap({
     });
   };
 
+  const zoomBy = (f) =>
+    setView((v) => clamp({ k: v.k * f, x: W / 2 - ((W / 2 - v.x) / v.k) * v.k * f, y: H / 2 - ((H / 2 - v.y) / v.k) * v.k * f }));
+
   const k = view.k;
-  const level = k >= 3.2 ? 2 : k >= 1.7 ? 1 : 0;
-  const arc = mine && dest ? arcPath(mine.x * W, mine.y * H, dest.x * W, dest.y * H) : null;
+  const showPeople = k >= 3;
+  const showAll = k >= 1.7;
+  const arc = mine && dest && selected !== myRegion ? arcPath(mine.x * W, mine.y * H, dest.x * W, dest.y * H) : null;
 
   return (
     <div className="mapwrap" style={{ height }} ref={box}>
@@ -160,10 +159,10 @@ export default function WorldMap({
         onWheel={onWheel}
       >
         <g transform={`translate(${view.x} ${view.y}) scale(${k})`}>
-          <path d={dotsPath} fill="#8b97b3" fillOpacity="0.28" />
+          <path d={dotsPath} fill="#8b97b3" fillOpacity="0.26" />
 
           {arc && (
-            <path d={arc} fill="none" stroke="#D9B26B" strokeOpacity="0.6" strokeWidth={1.1 / k} strokeDasharray={`${4 / k} ${4 / k}`}>
+            <path d={arc} fill="none" stroke="#D9B26B" strokeOpacity="0.7" strokeWidth={1.2 / k} strokeDasharray={`${4 / k} ${4 / k}`}>
               <animate attributeName="stroke-dashoffset" from="16" to="0" dur="1.2s" repeatCount="indefinite" />
             </path>
           )}
@@ -171,59 +170,94 @@ export default function WorldMap({
           {mine && (
             <g transform={`translate(${mine.x * W} ${mine.y * H})`}>
               <circle className="pin__halo" r="3" fill="none" stroke="#5FE0C8" strokeWidth={0.9 / k} />
-              <circle r={2.8 / k} fill="#5FE0C8" />
+              <circle r={2.6 / k} fill="#5FE0C8" />
             </g>
           )}
 
           {pins.map((p) => {
-            const tone = STATUS[p.status].tone;
-            const on = selected === p.id;
-            const showBadge = p.main || level >= 1 || on;
-            const badge = (p.main ? 15 : 11) / Math.pow(k, 0.62);
-            const folks = level >= 2 ? byCity[p.city] || [] : [];
-            const nudge = showBadge && NUDGE[p.city] ? NUDGE[p.city] : [0, 0];
-            const nx = nudge[0] / Math.sqrt(k), ny = nudge[1] / Math.sqrt(k);
-            return (
-              <g key={p.id} transform={`translate(${p.x} ${p.y})`}>
-                {(nx || ny) && <line x1="0" y1="0" x2={nx} y2={ny} stroke="#D9B26B" strokeOpacity="0.5" strokeWidth={0.7 / k} />}
-                {(nx || ny) && <circle r={1.4 / k} fill="#D9B26B" />}
-                <g transform={`translate(${nx} ${ny})`}>
-                {/* люди раскрываются кольцом вокруг города */}
-                {folks.map((r, i) => {
-                  const n = folks.length;
-                  const ang = -Math.PI / 2 + Math.PI / 6 + (i / n) * Math.PI * 2;
-                  const rad = badge + 20 / Math.sqrt(k);
-                  const ax = Math.cos(ang) * rad, ay = Math.sin(ang) * rad;
-                  const s = 7 / Math.sqrt(k);
-                  return (
-                    <g key={r.id} transform={`translate(${ax} ${ay})`} className="pin" onClick={(e) => { e.stopPropagation(); if (!moved.current) onPerson?.(r.id); }}>
-                      <line x1={-ax * 0.35} y1={-ay * 0.35} x2={0} y2={0} stroke="#D9B26B" strokeOpacity="0.35" strokeWidth={0.6 / k} />
-                      <circle r={s} fill={r.tone} stroke="#0a0d15" strokeWidth={1.2 / k} />
-                      <text y={s * 0.36} textAnchor="middle" fontSize={s * 0.85} fontWeight="700" fill="#fff" fontFamily="Manrope, sans-serif">{initials(r.name)}</text>
-                      {r.online && <circle cx={s * 0.72} cy={s * 0.72} r={s * 0.24} fill="#58D68D" stroke="#0a0d15" strokeWidth={0.6 / k} />}
-                    </g>
-                  );
-                })}
+            const tone = TIERS_REGION[p.tier].tone;
+            const on = selected === p.key;
+            const badged = p.main || showAll || on;
+            const R = (p.main ? 15 : 11.5) / Math.pow(k, 0.6);
+            const n = NUDGE[p.key] && badged ? NUDGE[p.key] : [0, 0];
+            const nx = n[0] / Math.sqrt(k), ny = n[1] / Math.sqrt(k);
+            const folks = showPeople ? byRegion[p.key] || [] : [];
+            const dim = selected && !on;
 
-                <g className="pin" onClick={(e) => { e.stopPropagation(); if (!moved.current) onSelect?.(p.id); }}>
-                  {showBadge ? (
-                    <>
-                      {p.status === 'open' && !on && <circle className="pin__halo" r="3" fill="none" stroke={tone} strokeWidth={0.8 / k} />}
-                      <circle r={badge} fill="#12141b" stroke={on ? '#F3E0B3' : tone} strokeWidth={(on ? 1.6 : 1) / Math.sqrt(k)} strokeOpacity={p.status === 'vote' ? 0.55 : 1} />
-                      <Silhouette city={p.city} size={badge * 1.5} dim={p.status === 'vote'} />
-                      {(p.main || on || k >= 2.4) && (
-                        <text y={badge + 8 / Math.sqrt(k)} textAnchor="middle" fontSize={7.5 / Math.sqrt(k)} fontWeight="700" fill="#EEF0F6" fillOpacity="0.92" fontFamily="Manrope, sans-serif" style={{ paintOrder: 'stroke' }} stroke="#0a0d15" strokeWidth={2.4 / k}>
-                          {p.cityName}
-                        </text>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <circle r={9 / k} fill="transparent" />
-                      <circle r={3 / Math.sqrt(k)} fill={tone} fillOpacity={p.status === 'vote' ? 0.45 : 1} />
-                    </>
-                  )}
-                </g>
+            return (
+              <g key={p.key} transform={`translate(${p.x} ${p.y})`} opacity={dim ? 0.45 : 1}>
+                {(nx || ny) && <line x1="0" y1="0" x2={nx} y2={ny} stroke="#D9B26B" strokeOpacity="0.45" strokeWidth={0.7 / k} />}
+                {(nx || ny) && <circle r={1.4 / k} fill="#D9B26B" />}
+
+                <g transform={`translate(${nx} ${ny})`}>
+                  {/* Резиденты — дугой над значком. Шаг по углу считается из размера
+                      аватара и радиуса, поэтому они не наезжают ни друг на друга,
+                      ни на сам значок, ни на подпись снизу. */}
+                  {folks.length > 0 && (() => {
+                    const a = 8.5 / Math.sqrt(k);            // половина стороны аватара
+                    const perRow = 5;
+                    const rows = Math.ceil(folks.length / perRow);
+                    return folks.map((r, i) => {
+                      const row = Math.floor(i / perRow);
+                      const idx = i % perRow;
+                      const count = Math.min(perRow, folks.length - row * perRow);
+                      /* дуга держится в верхних 150°, поэтому люди никогда не сползают
+                         на бока значка: при нехватке места растёт радиус, а не размах */
+                      const SWEEP = (150 * Math.PI) / 180;
+                      const base = R + a + (6 + row * a * 2.6) / Math.sqrt(k);
+                      const stepMax = count > 1 ? SWEEP / (count - 1) : SWEEP;
+                      const need = (a * 1.22) / Math.sin(Math.min(Math.PI / 2, stepMax) / 2);
+                      const rad = Math.max(base, need);
+                      const step = 2 * Math.asin(Math.min(0.85, (a * 1.22) / rad));
+                      const ang = -Math.PI / 2 + (idx - (count - 1) / 2) * step;
+                      const ax = Math.cos(ang) * rad, ay = Math.sin(ang) * rad;
+                      return (
+                        <g
+                          key={r.id}
+                          transform={`translate(${ax} ${ay})`}
+                          className="pin"
+                          onClick={(e) => { e.stopPropagation(); if (!moved.current) onPerson?.(r.id); }}
+                        >
+                          <rect x={-a} y={-a} width={a * 2} height={a * 2} rx={a * 0.62} fill={toneOf(r)} stroke="#0a0d15" strokeWidth={1.2 / k} />
+                          <text y={a * 0.36} textAnchor="middle" fontSize={a * 0.8} fontWeight="700" fill="#fff" fontFamily="Manrope, sans-serif">
+                            {initials(r.name)}
+                          </text>
+                          {r.online && <circle cx={a * 0.8} cy={a * 0.8} r={a * 0.26} fill="#58D68D" stroke="#0a0d15" strokeWidth={0.6 / k} />}
+                        </g>
+                      );
+                    });
+                  })()}
+
+                  <g className="pin" onClick={(e) => { e.stopPropagation(); if (!moved.current) onSelect?.(p.key); }}>
+                    {badged ? (
+                      <>
+                        {p.tier === 'core' && !on && <circle className="pin__halo" r="3" fill="none" stroke={tone} strokeWidth={0.8 / k} />}
+                        <circle r={R} fill="#12141b" stroke={on ? '#F3E0B3' : tone} strokeWidth={(on ? 1.8 : 1) / Math.sqrt(k)} />
+                        <Silhouette region={p.key} size={R * 1.5} />
+                        {(p.main || on || showAll) && (
+                          <text
+                            y={R + 8 / Math.sqrt(k)}
+                            textAnchor="middle"
+                            fontSize={7.5 / Math.sqrt(k)}
+                            fontWeight="700"
+                            fill="#EEF0F6"
+                            fillOpacity="0.94"
+                            fontFamily="Manrope, sans-serif"
+                            style={{ paintOrder: 'stroke' }}
+                            stroke="#0a0d15"
+                            strokeWidth={2.4 / k}
+                          >
+                            {p.name}
+                          </text>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <circle r={9 / k} fill="transparent" />
+                        <circle r={3 / Math.sqrt(k)} fill={tone} />
+                      </>
+                    )}
+                  </g>
                 </g>
               </g>
             );
@@ -232,26 +266,26 @@ export default function WorldMap({
       </svg>
 
       {interactive && (
-        <div style={{ position: 'absolute', right: 10, bottom: 10, display: 'grid', gap: 6 }}>
-          <button className="mapbtn" onClick={() => setView((v) => clamp({ k: v.k * 1.45, x: W / 2 - ((W / 2 - v.x) / v.k) * v.k * 1.45, y: H / 2 - ((H / 2 - v.y) / v.k) * v.k * 1.45 }))}>+</button>
-          <button className="mapbtn" onClick={() => setView((v) => clamp({ k: v.k / 1.45, x: W / 2 - ((W / 2 - v.x) / v.k) * (v.k / 1.45), y: H / 2 - ((H / 2 - v.y) / v.k) * (v.k / 1.45) }))}>−</button>
-        </div>
-      )}
-      {interactive && (
-        <div style={{ position: 'absolute', left: 10, bottom: 10, fontSize: 11, color: 'var(--ink-3)', fontWeight: 600, background: 'rgba(18,20,27,.85)', padding: '5px 9px', borderRadius: 9 }}>
-          {level === 0 ? 'Приблизьте, чтобы увидеть все хабы' : level === 1 ? 'Ещё ближе — появятся резиденты' : 'Нажмите на человека, чтобы открыть профиль'}
-        </div>
+        <>
+          <div style={{ position: 'absolute', right: 10, bottom: 10, display: 'grid', gap: 6 }}>
+            <button className="mapbtn" onClick={() => zoomBy(1.45)} aria-label="Приблизить">+</button>
+            <button className="mapbtn" onClick={() => zoomBy(1 / 1.45)} aria-label="Отдалить">−</button>
+          </div>
+          <div style={{ position: 'absolute', left: 10, bottom: 10, fontSize: 11, color: 'var(--ink-3)', fontWeight: 600, background: 'rgba(18,20,27,.85)', padding: '5px 9px', borderRadius: 9 }}>
+            {!showAll ? 'Приблизьте — появятся все регионы' : !showPeople ? 'Ещё ближе — появятся резиденты' : 'Нажмите на человека — откроется профиль'}
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-function Silhouette({ city, size, dim }) {
-  const lm = LANDMARKS[city];
+function Silhouette({ region, size }) {
+  const lm = LANDMARKS[region];
   if (!lm) return null;
   const s = size / 100;
   return (
-    <g transform={`translate(${-size / 2} ${-size / 2 - size * 0.02}) scale(${s})`} opacity={dim ? 0.5 : 1}>
+    <g transform={`translate(${-size / 2} ${-size / 2 - size * 0.02}) scale(${s})`}>
       {lm.parts.map((p, i) =>
         p.c ? (
           <circle key={i} cx={p.c[0]} cy={p.c[1]} r={p.c[2]} fill={p.fill ? '#D9B26B' : 'none'} fillOpacity={p.fill ? 0.3 : 1} stroke="#D9B26B" strokeWidth="3.2" />

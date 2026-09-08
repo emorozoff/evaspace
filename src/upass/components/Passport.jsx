@@ -3,20 +3,20 @@ import { Guilloche, QR, Avatar, Seal } from './Art.jsx';
 import { mrz, residentNumber } from '../lib/art.js';
 import { translit } from '../lib/format.js';
 import { TIERS, DEGREES } from '../data/canon.js';
-import { CITIES } from '../data/places.js';
+import { REGIONS } from '../data/regions.js';
 import { shortHash } from '../lib/chain.js';
 
 /* Цифровой паспорт. Лицевая сторона — кто это; оборот — всё, что нужно на входе:
    большой код для сканирования, номер, срок, уровень, степень, языки, наследник, хеш репутации. */
 
-export default function Passport({ me, chain = [], heirs = [], flippable = true, compact = false }) {
+export default function Passport({ me, chain = [], trips = [], flippable = true, compact = false }) {
   const [flip, setFlip] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const ref = useRef(null);
 
   const tier = TIERS.find((t) => t.n === me.tier) || TIERS[0];
   const degree = DEGREES.find((d) => d.n === me.degree) || DEGREES[0];
-  const city = CITIES[me.city] || {};
+  const city = REGIONS[me.city] || {};
   const number = me.number || residentNumber(me.name || 'guest', me.since);
   const [l1, l2] = mrz(translit(me.name || 'RESIDENT'), number.replace(/-/g, ''), 'UHM', 'P');
   const root = chain.length ? chain[chain.length - 1].hash : '';
@@ -102,7 +102,7 @@ export default function Passport({ me, chain = [], heirs = [], flippable = true,
           <div className="pass__edge" style={{ boxShadow: `inset 0 0 0 1.5px ${e1}60` }} />
           <div className="pass__body" style={{ gap: 0 }}>
             <div className="spread">
-              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', color: e1 }}>ПРОПУСК В UHOME</span>
+              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', color: e1 }}>ПРОПУСК СООБЩЕСТВА</span>
               <span style={{ fontSize: 9.5, color: 'rgba(255,255,255,.5)', letterSpacing: '0.08em' }}>{number}</span>
             </div>
 
@@ -113,10 +113,10 @@ export default function Passport({ me, chain = [], heirs = [], flippable = true,
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '7px 10px', flex: 1, alignContent: 'center' }}>
                 <F label="Уровень" value={tier.name} tone={e1} />
                 <F label="Степень" value={degree.secret ? `${degree.roman} · ·····` : `${degree.roman} · ${degree.name}`} tone={e1} />
-                <F label="Город" value={`${city.flag} ${city.name || ''}`} tone="#fff" />
+                <F label="Регион" value={`${city.flag} ${city.name || ''}`} tone="#fff" />
                 <F label="Языки" value={(me.langs || []).join(' · ') || '—'} tone="#fff" />
                 <F label="В клубе с" value={String(me.since || '')} tone="#fff" />
-                <F label="Наследник" value={heirs.length ? 'назначен' : 'не назначен'} tone={heirs.length ? '#58D68D' : 'rgba(255,255,255,.55)'} />
+                <F label="Поездки" value={trips.length ? `${trips.length} объявлено` : 'не объявлены'} tone={trips.length ? '#58D68D' : 'rgba(255,255,255,.55)'} />
               </div>
             </div>
 
@@ -127,7 +127,7 @@ export default function Passport({ me, chain = [], heirs = [], flippable = true,
               </div>
               <div className="mono" style={{ fontSize: 9.5, color: e1, letterSpacing: '0.04em' }}>{root ? shortHash(root, 18) : 'цепочка пуста'}</div>
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,.45)', lineHeight: 1.35 }}>
-                Покажите код на входе в любую локацию сети. Паспорт действует только внутри сообщества и аннулируется при исключении.
+                Покажите код на входе на любую встречу сообщества. Паспорт действует внутри сообщества и аннулируется при исключении.
               </div>
             </div>
           </div>

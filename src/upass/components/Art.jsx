@@ -1,25 +1,30 @@
 import { useMemo, useId } from 'react';
 import { guillochePath, wavePath, qrMatrix, seeded, coverFrom } from '../lib/art.js';
 import { initials } from '../lib/format.js';
+import { toneOf } from '../data/people.js';
 
-/* ---------- аватар ------------------------------------------------------- */
-export function Avatar({ person, size = 44, ring = null, dot = false, style }) {
-  const tone = person?.tone || '#8E7BF5';
+/* ---------- аватар ----------------------------------------------------- */
+/* Сквиркл — между кругом и квадратом. Цвет берётся от роли резидента,
+   поэтому инвестора видно от предпринимателя одним взглядом. */
+export function Avatar({ person, size = 44, ring = null, dot = false, style, radius = 0.32 }) {
+  const tone = toneOf(person);
   const id = useId().replace(/:/g, '');
   return (
     <div className="ava" style={{ width: size, height: size, fontSize: size * 0.34, ...style }}>
-      <svg width={size} height={size} viewBox="0 0 100 100" style={{ position: 'absolute', inset: 0 }}>
-        <defs>
-          <linearGradient id={`av${id}`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor={tone} stopOpacity="0.95" />
-            <stop offset="100%" stopColor="#0b0d14" />
-          </linearGradient>
-        </defs>
-        <rect width="100" height="100" fill={`url(#av${id})`} />
-        <circle cx="72" cy="26" r="30" fill="#fff" opacity="0.09" />
-      </svg>
+      <div className="ava__img" style={{ borderRadius: size * radius }}>
+        <svg width={size} height={size} viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id={`av${id}`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor={tone} stopOpacity="0.95" />
+              <stop offset="100%" stopColor="#0b0d14" />
+            </linearGradient>
+          </defs>
+          <rect width="100" height="100" fill={`url(#av${id})`} />
+          <circle cx="74" cy="24" r="30" fill="#fff" opacity="0.1" />
+        </svg>
+      </div>
       <span style={{ position: 'relative' }}>{initials(person?.name)}</span>
-      {ring && <i className="ava__ring" style={{ borderColor: ring }} />}
+      {ring && <i className="ava__ring" style={{ borderColor: ring, borderRadius: size * radius + 3 }} />}
       {dot && <i className="ava__dot" />}
     </div>
   );

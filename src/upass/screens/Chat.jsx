@@ -4,11 +4,10 @@ import { go } from '../lib/router.jsx';
 import { TopBar, Empty, Btn, Note } from '../components/UI.jsx';
 import { Avatar } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
-import { circleById, THREADS, DMS } from '../data/life.js';
+import { communityById, THREADS, DMS } from '../data/life.js';
 import { byId } from '../data/people.js';
-import { canSee, visibleResidents } from '../lib/select.js';
+import { canSee } from '../lib/select.js';
 import { RESIDENTS } from '../data/people.js';
-import { CircleIcon } from './Chats.jsx';
 import { plural, nf } from '../lib/format.js';
 
 /* Один экран для круга и личной переписки: заголовок, лента пузырей, поле ввода. */
@@ -17,7 +16,7 @@ export default function Chat({ kind, id }) {
   const [text, setText] = useState('');
   const endRef = useRef(null);
 
-  const circle = kind === 'circle' ? circleById(id) : null;
+  const circle = kind === 'circle' ? communityById(id) : null;
   const person = kind === 'dm' ? byId(id) : null;
 
   useEffect(() => {
@@ -29,24 +28,24 @@ export default function Chat({ kind, id }) {
     endRef.current?.scrollIntoView({ block: 'end' });
   }, [app.messages[id]?.length, app.dms[id]?.length]);
 
-  if (kind === 'circle' && !circle) return <Empty title="Круг не найден" />;
+  if (kind === 'circle' && !circle) return <Empty title="Сообщество не найдено" />;
   if (kind === 'dm' && !person) return <Empty title="Резидент не найден" />;
 
-  if (circle && !canSee(app.me, circle.minTier, circle.minDegree)) {
+  if (circle && !canSee(app.me, circle.minDegree)) {
     return (
       <>
-        <TopBar title={circle.name} backTo="/chats" />
+        <TopBar title={circle.name} backTo="/communities" />
         <div className="screen">
-          <Empty icon="lock" title="Круг закрыт" text={`Нужен уровень ${circle.minTier} и степень ${circle.minDegree}. Ни участники, ни переписка снаружи не видны.`} action={<Btn size="sm" variant="quiet" onClick={() => go('/degrees')}>Как получить доступ</Btn>} />
+          <Empty icon="lock" title="Закрытый клуб" text={`Нужна степень ${circle.minDegree}. Ни участники, ни переписка снаружи не видны.`} action={<Btn size="sm" variant="quiet" onClick={() => go('/degrees')}>Как получить доступ</Btn>} />
         </div>
       </>
     );
   }
 
-  const joined = circle ? app.circles.includes(circle.id) : true;
+  const joined = circle ? app.communities.includes(circle.id) : true;
   const base = circle ? THREADS[circle.id] || [] : DMS.find((d) => d.with === id)?.thread || [];
   const mine = circle ? app.messages[id] || [] : app.dms[id] || [];
-  const members = circle ? visibleResidents(app.me).filter((r) => r.circle === circle.id) : [];
+  const members = circle ? RESIDENTS.filter((r) => r.circle === circle.id) : [];
 
   const send = () => {
     if (!text.trim()) return;
@@ -65,10 +64,10 @@ export default function Chat({ kind, id }) {
       <TopBar
         title={title}
         sub={sub}
-        backTo="/chats"
+        backTo="/communities"
         right={
           circle ? (
-            <Btn size="sm" variant={joined ? 'quiet' : 'gold'} onClick={() => app.joinCircle(circle.id, circle.name)}>{joined ? 'Выйти' : 'Вступить'}</Btn>
+            <Btn size="sm" variant={joined ? 'quiet' : 'gold'} onClick={() => app.joinCommunity(circle.id, circle.name)}>{joined ? 'Выйти' : 'Вступить'}</Btn>
           ) : (
             <button className="iconbtn" onClick={() => go(`/p/${person.id}`)}><Avatar person={person} size={32} /></button>
           )
@@ -78,10 +77,12 @@ export default function Chat({ kind, id }) {
       <div className="screen screen--chat">
         {circle && (
           <div className="scroller" style={{ paddingTop: 10 }}>
-            <button className="center" style={{ width: 58 }} onClick={() => {}}>
-              <CircleIcon c={circle} size={40} />
-              <div className="t-xs dim-2" style={{ marginTop: 5 }}>круг</div>
-            </button>
+            <div className="center" style={{ width: 58 }}>
+              <div className="item__ic" style={{ width: 40, height: 40, margin: '0 auto', borderRadius: 14, background: `${circle.tone}22`, color: circle.tone }}>
+                <Icon name={circle.icon} size={20} />
+              </div>
+              <div className="t-xs dim-2" style={{ marginTop: 5 }}>тема</div>
+            </div>
             {members.map((m) => (
               <button key={m.id} className="center" style={{ width: 58 }} onClick={() => go(`/p/${m.id}`)}>
                 <Avatar person={m} size={40} dot={m.online} style={{ margin: '0 auto' }} />
@@ -124,7 +125,7 @@ export default function Chat({ kind, id }) {
           </div>
         ) : (
           <div className="composer">
-            <Btn variant="gold" wide onClick={() => app.joinCircle(circle.id, circle.name)}>Вступить, чтобы писать</Btn>
+            <Btn variant="gold" wide onClick={() => app.joinCommunity(circle.id, circle.name)}>Вступить, чтобы писать</Btn>
           </div>
         )}
       </div>

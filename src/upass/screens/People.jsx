@@ -4,9 +4,8 @@ import { go } from '../lib/router.jsx';
 import { Top, List, Item, Chip, Search, Scroller, Empty, Note, Seg } from '../components/UI.jsx';
 import { Avatar } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
-import { RESIDENTS, SKILL_GROUPS } from '../data/people.js';
-import { CITIES } from '../data/places.js';
-import { HUB_MAIN } from '../data/landmarks.js';
+import { RESIDENTS, SKILL_GROUPS, ROLE_TONE } from '../data/people.js';
+import { REGIONS, MAIN_REGIONS } from '../data/regions.js';
 import { matchScore, visibleResidents } from '../lib/select.js';
 import { plural } from '../lib/format.js';
 
@@ -14,14 +13,14 @@ export default function People({ query = {} }) {
   const app = useApp();
   const { me } = app;
   const [q, setQ] = useState('');
-  const [city, setCity] = useState(query.city || 'all');
+  const [city, setCity] = useState(query.region || query.city || 'all');
   const [skill, setSkill] = useState('all');
   const [sort, setSort] = useState('match');
 
   const cities = useMemo(() => {
     const set = {};
     for (const r of RESIDENTS) set[r.city] = (set[r.city] || 0) + 1;
-    return Object.entries(set).sort((a, b) => (HUB_MAIN.includes(b[0]) - HUB_MAIN.includes(a[0])) || b[1] - a[1]);
+    return Object.entries(set).sort((a, b) => (MAIN_REGIONS.includes(b[0]) - MAIN_REGIONS.includes(a[0])) || b[1] - a[1]);
   }, []);
 
   const list = useMemo(() => {
@@ -40,11 +39,10 @@ export default function People({ query = {} }) {
     return out;
   }, [me, city, skill, q, sort]);
 
-  const hidden = RESIDENTS.length - visibleResidents(me).length;
 
   return (
     <div className="screen stack">
-      <Top title="Люди" sub={`${RESIDENTS.length} ${plural(RESIDENTS.length, 'резидент', 'резидента', 'резидентов')} · ${cities.length} городов`} />
+      <Top title="Люди" sub={`${RESIDENTS.length} ${plural(RESIDENTS.length, 'резидент', 'резидента', 'резидентов')} в ${cities.length} регионах`} />
 
       <Search value={q} onChange={setQ} placeholder="Имя, компания, талант, город…" />
 
@@ -52,7 +50,7 @@ export default function People({ query = {} }) {
         <Chip on={city === 'all'} onClick={() => setCity('all')}>Все</Chip>
         <Chip on={city === me.city} onClick={() => setCity(me.city)}>Рядом</Chip>
         {cities.map(([key, n]) => (
-          <Chip key={key} on={city === key} onClick={() => setCity(key)}>{CITIES[key].flag} {CITIES[key].name} · {n}</Chip>
+          <Chip key={key} on={city === key} onClick={() => setCity(key)}>{REGIONS[key].flag} {REGIONS[key].name} · {n}</Chip>
         ))}
       </Scroller>
 
@@ -73,17 +71,17 @@ export default function People({ query = {} }) {
         </List>
       )}
 
-      {hidden > 0 && (
-        <Note icon="lock">
-          Ещё {hidden} {plural(hidden, 'профиль скрыт', 'профиля скрыты', 'профилей скрыто')}: их уровень членства выше вашего.
-        </Note>
-      )}
+      <div className="legend">
+        {Object.entries(ROLE_TONE).map(([role, tone]) => (
+          <span key={role} className="legend__i"><i className="legend__d" style={{ background: tone }} />{role}</span>
+        ))}
+      </div>
     </div>
   );
 }
 
 export function PersonItem({ r, me, sub }) {
-  const c = CITIES[r.city];
+  const c = REGIONS[r.city];
   const score = matchScore(me, r);
   return (
     <Item

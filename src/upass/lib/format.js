@@ -12,7 +12,6 @@ export function usd(n, d = 0) {
 
 export const usdExact = (n, d = 0) => '$' + nf(n, d);
 export const pct = (x, d = 0) => nf((x || 0) * 100, d) + '%';
-export const uht = (n, d = 0) => nf(n, d) + ' UHT';
 
 export function plural(n, one, few, many) {
   const a = Math.abs(n) % 100;

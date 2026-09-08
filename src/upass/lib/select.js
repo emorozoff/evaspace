@@ -1,26 +1,31 @@
-/* Выборки, общие для нескольких экранов. Правила видимости живут здесь. */
+/* Выборки и правила доступа. Всё, что решает «видно или нет», живёт здесь. */
 
-import { EVENTS, CIRCLES, SERVICES } from '../data/life.js';
+import { EVENTS, COMMUNITIES, SERVICES, REQUESTS } from '../data/life.js';
 import { RESIDENTS } from '../data/people.js';
-import { LOCATIONS } from '../data/places.js';
 import { VAULT } from '../data/canon.js';
-import { SPEND } from '../data/capital.js';
+import { REGIONS } from '../data/regions.js';
 import { dayShift } from './format.js';
 
-/* Правило видимости: объект с минимальным уровнем N виден участнику с уровнем не ниже N.
-   Верхние видят нижних полностью, нижние верхних не видят нигде. */
-export const canSee = (me, minTier = 1, minDegree = 1) =>
-  (me.tier || 0) >= minTier && (me.degree || 0) >= minDegree;
+/* Доступ: у объекта может быть минимальная степень. Уровень членства на старте один,
+   поэтому решает степень — она зарабатывается внутри сообщества. */
+export const canSee = (me, minDegree = 1) => (me.degree || 0) >= (minDegree || 1);
 
-export function eventsSorted() {
-  return [...EVENTS].sort((a, b) => a.inDays - b.inDays);
+export const visibleResidents = () => RESIDENTS;
+
+export function visibleOnly(me, ids) {
+  return ids.map((id) => RESIDENTS.find((r) => r.id === id)).filter(Boolean);
 }
 
-export function upcoming(me, limit = 99) {
-  return eventsSorted()
-    .filter((e) => e.inDays >= 0)
-    .filter((e) => canSee(me, e.minTier, e.minDegree))
-    .slice(0, limit);
+/* ——— регионы ——— */
+export const residentsIn = (key) => RESIDENTS.filter((r) => r.city === key);
+export const eventsIn = (key) => EVENTS.filter((e) => e.region === key);
+export const communitiesIn = (key) => COMMUNITIES.filter((c) => c.region === key);
+export const servicesIn = (key) => SERVICES.filter((s) => s.region === key || s.region === 'global');
+export const requestsIn = (key) => REQUESTS.filter((r) => r.region === key);
+
+/* ——— мероприятия ——— */
+export function eventsSorted() {
+  return [...EVENTS].sort((a, b) => a.inDays - b.inDays);
 }
 
 export function eventDate(e) {
@@ -30,55 +35,32 @@ export function eventDate(e) {
   return d;
 }
 
-export function visibleResidents(me) {
-  // резидент виден, если его уровень членства не выше вашего
-  return RESIDENTS.filter((r) => r.tier <= Math.max(1, me.tier || 1));
+export function upcoming(me, limit = 99) {
+  return eventsSorted()
+    .filter((e) => e.inDays >= 0 && canSee(me, e.minDegree))
+    .slice(0, limit);
 }
 
-/* То же правило для любого списка людей: имён выше своего уровня участник
-   не видит нигде — ни в городе, ни в списках участников событий. */
-export function visibleOnly(me, ids) {
-  const max = Math.max(1, me.tier || 1);
-  return ids
-    .map((id) => RESIDENTS.find((r) => r.id === id))
-    .filter((r) => r && r.tier <= max);
+/** Что происходит в регионе: своё плюс общие эфиры и большие слёты. */
+export function agendaFor(me, regionKey, limit = 99) {
+  return upcoming(me).filter((e) => e.region === regionKey || e.region === 'global').slice(0, limit);
 }
 
-export function nearby(me, limit = 99) {
-  return visibleResidents(me).filter((r) => r.city === me.city).slice(0, limit);
+/* ——— сообщества ——— */
+export function communitiesFor(me) {
+  return COMMUNITIES.map((c) => ({ ...c, locked: !canSee(me, c.minDegree) }));
 }
 
-export function partnersOf(city) {
-  return SERVICES.filter((s) => s.city === city);
+export function myCommunities(me, joined = []) {
+  return communitiesFor(me).filter((c) => joined.includes(c.id));
 }
 
-export function circlesFor(me) {
-  return CIRCLES.map((c) => ({ ...c, locked: !canSee(me, c.minTier, c.minDegree) }));
-}
-
+/* ——— знания ——— */
 export function vaultFor(me) {
   return VAULT.map((v) => ({ ...v, locked: (me.degree || 0) < v.degree }));
 }
 
-export function openLocations() {
-  return LOCATIONS.filter((l) => l.status === 'open');
-}
-
-export function spendTotals(extra = []) {
-  const rows = [...SPEND];
-  for (const e of extra) {
-    const found = rows.find((r) => r.cat === e.cat);
-    if (found) {
-      found.inside += e.inside || 0;
-      found.outside += e.outside || 0;
-    } else rows.push({ cat: e.cat, inside: e.inside || 0, outside: e.outside || 0 });
-  }
-  const inside = rows.reduce((s, r) => s + r.inside, 0);
-  const outside = rows.reduce((s, r) => s + r.outside, 0);
-  return { rows, inside, outside, total: inside + outside, share: inside / Math.max(1, inside + outside) };
-}
-
-/* Совпадение по интересам: чем больше общих навыков и целей, тем выше */
+/* ——— подбор знакомств ——— */
 export function matchScore(me, r) {
   const mine = new Set(me.skills || []);
   let s = 0;
@@ -90,9 +72,19 @@ export function matchScore(me, r) {
 }
 
 export function suggestions(me, limit = 3) {
-  return visibleResidents(me)
+  return RESIDENTS.filter((r) => r.id !== me.id)
     .map((r) => ({ r, score: matchScore(me, r) }))
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((x) => x.r);
 }
+
+/* Компании резидентов в регионе — считаем по профилям, а не по справочнику. */
+export function companiesIn(key) {
+  return [...new Set(residentsIn(key).map((r) => r.company).filter(Boolean))];
+}
+
+export const regionStats = (key) => {
+  const r = REGIONS[key];
+  return { residents: r.residents, companies: r.companies, communities: r.communities, events: eventsIn(key).filter((e) => e.inDays >= 0).length };
+};

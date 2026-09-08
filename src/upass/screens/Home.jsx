@@ -4,38 +4,28 @@ import { go } from '../lib/router.jsx';
 import Passport from '../components/Passport.jsx';
 import Install from '../components/Install.jsx';
 import { Avatar } from '../components/Art.jsx';
-import { SceneThumb } from '../components/Scene.jsx';
-import { Top, List, Item, Section, Sheet, Chip, Btn, Actions, Bar, KV } from '../components/UI.jsx';
+import { PosterThumb } from '../components/Poster.jsx';
+import { Top, List, Item, Section, Sheet, Chip, Btn, Actions, Note } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
-import { CITIES, locById } from '../data/places.js';
-import { DEGREES, TIERS } from '../data/canon.js';
-import { EVENT_KINDS, TRIPS } from '../data/life.js';
-import { RESIDENTS } from '../data/people.js';
-import { upcoming, nearby, visibleOnly } from '../lib/select.js';
-import { usd, nf, relDay, plural } from '../lib/format.js';
+import { REGIONS, REGION_KEYS } from '../data/regions.js';
+import { DEGREES } from '../data/canon.js';
+import { EVENT_KINDS, REQUESTS, COMMUNITIES } from '../data/life.js';
+import { agendaFor, residentsIn, regionStats } from '../lib/select.js';
+import { relDay, plural, nf } from '../lib/format.js';
+import { byId } from '../data/people.js';
 
 export default function Home() {
   const app = useApp();
-  const { me, chain, pf } = app;
-  const [tripOpen, setTripOpen] = useState(false);
-  const [tripCity, setTripCity] = useState('bali');
-  const [tripIn, setTripIn] = useState(7);
-  const [tripDays, setTripDays] = useState(7);
+  const { me, chain } = app;
+  const [pick, setPick] = useState(false);
 
-  const next = upcoming(me, 1)[0];
-  const around = useMemo(() => nearby(me), [me]);
-  const incoming = useMemo(
-    () => visibleOnly(me, TRIPS.filter((t) => t.city === me.city).sort((a, b) => a.inDays - b.inDays).map((t) => t.who)).slice(0, 3)
-      .map((r) => ({ r, t: TRIPS.find((t) => t.who === r.id && t.city === me.city) })),
-    [me]
-  );
-  const city = CITIES[me.city];
+  const r = REGIONS[me.city];
+  const stats = regionStats(me.city);
+  const agenda = useMemo(() => agendaFor(me, me.city, 3), [me]);
+  const around = useMemo(() => residentsIn(me.city).filter((x) => x.id !== me.id).slice(0, 10), [me]);
+  const asks = useMemo(() => REQUESTS.filter((q) => q.region === me.city).slice(0, 2), [me.city]);
+  const mine = COMMUNITIES.filter((c) => app.communities.includes(c.id));
   const deg = DEGREES.find((d) => d.n === me.degree) || DEGREES[0];
-  const tier = TIERS.find((t) => t.n === me.tier) || TIERS[0];
-  const nextDeg = DEGREES.find((d) => d.n === me.degree + 1);
-  const progress = nextDeg
-    ? Math.min(1, (app.counts.meets / Math.max(1, nextDeg.need.meets)) * 0.5 + (app.counts.vouches / Math.max(1, nextDeg.need.vouches)) * 0.3 + (app.counts.events / Math.max(1, nextDeg.need.events || 1)) * 0.2)
-    : 1;
 
   return (
     <div className="screen stack-20 rise-in">
@@ -48,117 +38,125 @@ export default function Home() {
         }
       />
 
-      <Passport me={me} chain={chain} heirs={app.heirs} />
+      <Passport me={me} chain={chain} />
 
-      <List>
-        <Item
-          lead={<div className="item__ic" style={{ background: `${deg.tone}22`, color: deg.tone, fontFamily: 'var(--display)', fontSize: 17, fontWeight: 700 }}>{deg.roman}</div>}
-          title={`${tier.name} · степень ${deg.secret ? '·····' : deg.name}`}
-          sub={nextDeg ? `До степени ${nextDeg.roman}: встречи ${app.counts.meets}/${nextDeg.need.meets}, поручительства ${app.counts.vouches}/${nextDeg.need.vouches}` : 'Высшая известная степень'}
-          meta={nextDeg ? <div style={{ width: 48 }}><Bar value={progress} /></div> : null}
-          onClick={() => go('/degrees')}
-        />
-        <Item
-          icon="coin"
-          title={`${nf(me.uht, 0)} UHT · ${usd(me.uht * pf.price)}`}
-          sub={`Доля в активах · ${nf(app.points)} баллов на счёте`}
-          onClick={() => go('/capital')}
-        />
-      </List>
+      {/* регион задаёт всё остальное на экране */}
+      <button className="card tap row" style={{ gap: 12 }} onClick={() => setPick(true)}>
+        <div style={{ fontSize: 26, lineHeight: 1 }}>{r.flag}</div>
+        <div className="grow">
+          <div className="t-md">{r.name}</div>
+          <div className="t-xs dim" style={{ marginTop: 2 }}>
+            {nf(stats.residents)} резидентов · {nf(stats.companies)} компаний · {stats.communities} сообществ
+          </div>
+        </div>
+        <span className="t-xs gold" style={{ fontWeight: 700 }}>сменить</span>
+      </button>
 
       <Actions
         items={[
-          { icon: 'bed', title: 'Бронь', onClick: () => go('/map') },
-          { icon: 'plane', title: 'Поездка', onClick: () => setTripOpen(true) },
-          { icon: 'cup', title: 'Кофе', onClick: () => go('/people') },
-          { icon: 'gavel', title: 'Голос', onClick: () => go('/dao') },
+          { icon: 'compass', title: 'Куда лечу', onClick: () => go('/map') },
+          { icon: 'message', title: 'Запросить', onClick: () => go('/requests') },
+          { icon: 'users', title: 'Кто рядом', onClick: () => go(`/people?region=${me.city}`) },
+          { icon: 'calendar', title: 'Афиша', onClick: () => go('/events') },
         ]}
       />
 
       <Install compact />
 
-      {next && (
-        <Section title="Ближайшее событие" more="Все" onMore={() => go('/events')}>
+      {agenda.length > 0 && (
+        <Section title={`Ближайшее · ${r.name}`} more="Афиша" onMore={() => go('/events')}>
           <List>
-            <Item
-              lead={<SceneThumb city={locById(next.loc)?.city} size={44} />}
-              title={next.title}
-              sub={`${relDay(next.inDays)}, ${next.time} · ${locById(next.loc)?.name}`}
-              meta={<span className="tag" style={{ background: `${EVENT_KINDS[next.kind].tone}22`, color: EVENT_KINDS[next.kind].tone }}>{EVENT_KINDS[next.kind].name}</span>}
-              onClick={() => go(`/event/${next.id}`)}
-            />
+            {agenda.map((e) => (
+              <Item
+                key={e.id}
+                lead={<PosterThumb event={e} size={44} />}
+                title={e.title}
+                sub={`${relDay(e.inDays)}, ${e.time} · ${e.online ? 'эфир' : REGIONS[e.region]?.name || 'сообщество'}`}
+                meta={<span className="tag" style={{ background: `${EVENT_KINDS[e.kind].tone}22`, color: EVENT_KINDS[e.kind].tone }}>{EVENT_KINDS[e.kind].name}</span>}
+                onClick={() => go(`/event/${e.id}`)}
+              />
+            ))}
           </List>
         </Section>
       )}
 
-      <Section title={`Рядом · ${city.flag} ${city.name}`} more="Все люди" onMore={() => go(`/people?city=${me.city}`)}>
+      {asks.length > 0 && (
+        <Section title="Запросы рядом" more="Все" onMore={() => go('/requests')}>
+          <List>
+            {asks.map((q) => {
+              const p = byId(q.who);
+              return (
+                <Item
+                  key={q.id}
+                  lead={<Avatar person={p} size={42} dot={p?.online} />}
+                  title={p?.name}
+                  sub={q.text}
+                  subWrap
+                  onClick={() => go(`/request/${q.id}`)}
+                />
+              );
+            })}
+          </List>
+        </Section>
+      )}
+
+      <Section title={`Рядом · ${r.flag} ${r.name}`} more="Все" onMore={() => go(`/people?region=${me.city}`)}>
         {around.length ? (
           <div className="scroller">
-            {around.map((r) => (
-              <button key={r.id} className="center" style={{ width: 66 }} onClick={() => go(`/p/${r.id}`)}>
-                <Avatar person={r} size={52} dot={r.online} style={{ margin: '0 auto' }} />
-                <div className="t-xs" style={{ marginTop: 7, fontWeight: 600 }}>{r.name.split(' ')[0]}</div>
+            {around.map((p) => (
+              <button key={p.id} className="center" style={{ width: 66 }} onClick={() => go(`/p/${p.id}`)}>
+                <Avatar person={p} size={52} dot={p.online} style={{ margin: '0 auto' }} />
+                <div className="t-xs" style={{ marginTop: 7, fontWeight: 600 }}>{p.name.split(' ')[0]}</div>
               </button>
             ))}
           </div>
         ) : (
-          <List><Item icon="globe" title="В этом городе пока никого" sub="Посмотрите карту — круг может быть в соседней стране" onClick={() => go('/map')} /></List>
+          <Note icon="globe">В этом регионе пока никого из своих. Посмотрите карту — сообщество рядом.</Note>
         )}
       </Section>
 
-      {(incoming.length > 0 || app.trips.length > 0) && (
-        <Section title="Перелёты">
+      {mine.length > 0 && (
+        <Section title="Мои сообщества" more="Все" onMore={() => go('/communities')}>
+          <List>
+            {mine.slice(0, 3).map((c) => (
+              <Item
+                key={c.id}
+                lead={<div className="item__ic" style={{ background: `${c.tone}22`, color: c.tone, borderRadius: 14 }}><Icon name={c.icon} size={19} /></div>}
+                title={c.name}
+                sub={`${nf(c.members)} ${plural(c.members, 'участник', 'участника', 'участников')}`}
+                onClick={() => go(`/chat/${c.id}`)}
+              />
+            ))}
+          </List>
+        </Section>
+      )}
+
+      {app.trips.length > 0 && (
+        <Section title="Мои поездки">
           <List>
             {app.trips.map((t) => (
               <Item
                 key={t.id}
                 icon="plane"
-                title={`Вы летите: ${t.cityName}`}
+                title={REGIONS[t.region]?.name}
                 sub={`${relDay(t.inDays)} · ${t.days} ${plural(t.days, 'день', 'дня', 'дней')}`}
                 meta={<button className="iconbtn" style={{ width: 30, height: 30 }} onClick={() => app.cancelTrip(t.id)}><Icon name="x" size={13} /></button>}
                 chev={false}
-              />
-            ))}
-            {incoming.map(({ r, t }) => (
-              <Item
-                key={r.id}
-                lead={<Avatar person={r} size={40} dot={r.online} />}
-                title={r.name}
-                sub={`${relDay(t.inDays)} в ${city.name} · ${t.note}`}
-                onClick={() => go(`/p/${r.id}`)}
               />
             ))}
           </List>
         </Section>
       )}
 
-      <Sheet open={tripOpen} onClose={() => setTripOpen(false)} title="Объявить поездку" sub="Круг в городе увидит вас заранее">
-        <div className="stack">
-          <div>
-            <div className="label">Куда</div>
-            <div className="wrap">
-              {Object.entries(CITIES).map(([key, c]) => (
-                <Chip key={key} on={tripCity === key} onClick={() => setTripCity(key)}>{c.flag} {c.name}</Chip>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="label">Когда</div>
-            <div className="wrap">{[1, 3, 7, 14, 30].map((d) => <Chip key={d} on={tripIn === d} onClick={() => setTripIn(d)}>{relDay(d)}</Chip>)}</div>
-          </div>
-          <div>
-            <div className="label">Насколько</div>
-            <div className="wrap">{[2, 3, 5, 7, 14, 30].map((d) => <Chip key={d} on={tripDays === d} onClick={() => setTripDays(d)}>{d} {plural(d, 'день', 'дня', 'дней')}</Chip>)}</div>
-          </div>
-          <div className="card">
-            <KV k="Резидентов там" v={String(RESIDENTS.filter((r) => r.city === tripCity).length)} />
-            <KV k="Локация UHOME" v={locById(`u-${tripCity}`)?.name || 'пока нет'} />
-          </div>
-          <Btn variant="gold" wide onClick={() => { app.announceTrip({ city: tripCity, cityName: CITIES[tripCity].name, inDays: tripIn, days: tripDays }); setTripOpen(false); }}>
-            Объявить
-          </Btn>
-          <div className="center t-xs dim-2">Видны только дата и город. Маршрут клуб не спрашивает и не хранит.</div>
+      <Sheet open={pick} onClose={() => setPick(false)} title="Где вы сейчас" sub="Регион определяет сообщества, афишу и запросы">
+        <div className="wrap">
+          {REGION_KEYS.map((key) => (
+            <Chip key={key} on={me.city === key} onClick={() => { app.setRegion(key); setPick(false); }}>
+              {REGIONS[key].flag} {REGIONS[key].name}
+            </Chip>
+          ))}
         </div>
+        <Btn variant="quiet" wide style={{ marginTop: 16 }} onClick={() => { setPick(false); go('/map'); }}>Открыть карту</Btn>
       </Sheet>
     </div>
   );

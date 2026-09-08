@@ -3,70 +3,77 @@ import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import WorldMap from '../components/WorldMap.jsx';
 import Scene, { SceneThumb } from '../components/Scene.jsx';
-import { Top, List, Item, Chip, Scroller, Section, Sheet, Btn, KV, Note } from '../components/UI.jsx';
-import { Avatar } from '../components/Art.jsx';
+import { Top, List, Item, Chip, Scroller, Section, Sheet, Btn, KV, Note, Seg } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
-import { LOCATIONS, CITIES, STATUS, KINDS } from '../data/places.js';
-import { HUB_MAIN } from '../data/landmarks.js';
-import { upcoming, visibleResidents } from '../lib/select.js';
+import { REGIONS, REGION_KEYS, MAIN_REGIONS, TIERS_REGION, TOTALS } from '../data/regions.js';
+import { ROLE_TONE } from '../data/people.js';
+import { RESIDENTS } from '../data/people.js';
+import { flight, monthly, tripCost, fitsBudget, hoursText } from '../lib/travel.js';
 import { usdExact, nf, plural } from '../lib/format.js';
-import { distanceKm } from '../data/world.js';
+
+const HOUSING = [
+  { id: 'apt', name: 'Апартаменты' },
+  { id: 'villa', name: 'Вилла' },
+  { id: 'hotel', name: 'Отель' },
+];
 
 export default function MapScreen() {
   const app = useApp();
   const { me } = app;
-  const [filter, setFilter] = useState('all');
   const [sel, setSel] = useState(null);
+  const [budget, setBudget] = useState(null);
 
-  const people = useMemo(() => visibleResidents(me), [me]);
-  const summit = upcoming(me).find((e) => e.kind === 'summit');
-  const summitCity = summit ? LOCATIONS.find((l) => l.id === summit.loc)?.city : null;
-
-  const homes = useMemo(() => LOCATIONS.filter((l) => filter === 'all' || l.status === filter), [filter]);
-  const selected = sel && LOCATIONS.find((l) => l.id === sel);
-  const main = LOCATIONS.filter((l) => HUB_MAIN.includes(l.city));
-
-  const sorted = useMemo(() => {
-    const from = CITIES[me.city];
-    return [...homes].map((l) => ({ ...l, km: distanceKm(from, CITIES[l.city]) })).sort((a, b) => a.km - b.km);
-  }, [homes, me.city]);
+  const sorted = useMemo(
+    () =>
+      REGION_KEYS.filter((k) => k !== me.city)
+        .map((k) => ({ key: k, ...REGIONS[k], f: flight(me.city, k), m: monthly(k, 'lean') }))
+        .sort((a, b) => a.f.km - b.f.km),
+    [me.city]
+  );
 
   return (
     <div className="screen screen--flush stack-20">
       <div style={{ padding: '0 16px' }}>
-        <Top title="Карта" sub={`20 хабов UHOME · ${people.length} ${plural(people.length, 'резидент', 'резидента', 'резидентов')} на карте`} />
+        <Top
+          title="Куда лечу"
+          sub={`${REGION_KEYS.length} регионов · ${nf(TOTALS.residents)} резидентов · ${nf(TOTALS.companies)} компаний`}
+        />
       </div>
 
       <WorldMap
-        locations={homes}
-        people={people}
+        regions={REGION_KEYS}
+        people={RESIDENTS}
         selected={sel}
-        onSelect={(id) => setSel(id)}
+        onSelect={setSel}
         onPerson={(id) => go(`/p/${id}`)}
-        myCity={me.city}
-        routeTo={summitCity}
+        myRegion={me.city}
         height={340}
       />
 
       <div style={{ padding: '0 16px' }} className="stack-20">
-        <Scroller>
-          <Chip on={filter === 'all'} onClick={() => setFilter('all')}>Все · {LOCATIONS.length}</Chip>
-          {Object.entries(STATUS).map(([k, s]) => (
-            <Chip key={k} on={filter === k} onClick={() => setFilter(k)}>
-              <span style={{ width: 7, height: 7, borderRadius: 4, background: s.tone, display: 'inline-block' }} />
-              {s.name} · {LOCATIONS.filter((l) => l.status === k).length}
-            </Chip>
+        <div className="legend">
+          {Object.entries(ROLE_TONE).map(([role, tone]) => (
+            <span key={role} className="legend__i"><i className="legend__d" style={{ background: tone }} />{role}</span>
           ))}
-        </Scroller>
+        </div>
 
-        <Section title="Главные хабы">
+        <List>
+          <Item
+            icon="compass"
+            title="Подобрать регион под бюджет"
+            sub="Сколько стоит месяц жизни с билетами — от вашего региона"
+            onClick={() => setBudget(2000)}
+          />
+        </List>
+
+        <Section title="Основные регионы">
           <div className="scroller">
-            {main.map((l) => (
-              <button key={l.id} onClick={() => setSel(l.id)} style={{ width: 168 }}>
-                <Scene city={l.city} height={104} label>
+            {MAIN_REGIONS.map((k) => (
+              <button key={k} onClick={() => setSel(k)} style={{ width: 168 }}>
+                <Scene city={k} height={104} label>
                   <div className="scene__over">
-                    <div className="t-md" style={{ color: '#fff' }}>{l.name}</div>
-                    <div className="t-xs" style={{ color: 'rgba(255,255,255,.65)' }}>{l.residents} резидентов</div>
+                    <div className="t-md" style={{ color: '#fff' }}>{REGIONS[k].name}</div>
+                    <div className="t-xs" style={{ color: 'rgba(255,255,255,.65)' }}>{REGIONS[k].residents} резидентов</div>
                   </div>
                 </Scene>
               </button>
@@ -74,80 +81,120 @@ export default function MapScreen() {
           </div>
         </Section>
 
-        {summit && (
+        <Section title={`От вас · ${REGIONS[me.city].flag} ${REGIONS[me.city].name}`}>
           <List>
-            <Item
-              icon="plane"
-              title={summit.title}
-              sub="Дуга на карте — путь от вашего города до места слёта"
-              subWrap
-              onClick={() => go(`/event/${summit.id}`)}
-            />
-          </List>
-        )}
-
-        <Section title={`От вас · ${CITIES[me.city].flag} ${CITIES[me.city].name}`}>
-          <List>
-            {sorted.map((l) => (
+            {sorted.map((r) => (
               <Item
-                key={l.id}
-                lead={<SceneThumb city={l.city} size={46} />}
+                key={r.key}
+                lead={<SceneThumb city={r.key} size={46} />}
                 title={
                   <span className="row" style={{ gap: 6 }}>
-                    <span className="ell">{l.name}</span>
-                    <span style={{ width: 6, height: 6, borderRadius: 3, background: STATUS[l.status].tone, flex: 'none' }} />
+                    <span className="ell">{r.name}</span>
+                    <span style={{ width: 6, height: 6, borderRadius: 3, background: TIERS_REGION[r.tier].tone, flex: 'none' }} />
                   </span>
                 }
-                sub={`${CITIES[l.city].flag} ${CITIES[l.city].name} · ${KINDS[l.kind].short} · ${nf(l.km)} км`}
-                meta={l.tariff ? <span className="gold" style={{ fontSize: 13, fontWeight: 700 }}>{usdExact(l.tariff)}</span> : <span>{STATUS[l.status].name}</span>}
-                onClick={() => setSel(l.id)}
+                sub={`${nf(r.f.km)} км · ${hoursText(r.f.hours)} · ${r.residents} своих`}
+                meta={
+                  <>
+                    <span className="gold" style={{ fontSize: 13, fontWeight: 700 }}>от {usdExact(r.f.from)}</span>
+                    <span>месяц от {usdExact(r.m.total)}</span>
+                  </>
+                }
+                chev={false}
+                onClick={() => setSel(r.key)}
               />
             ))}
           </List>
         </Section>
       </div>
 
-      <Sheet open={!!selected} onClose={() => setSel(null)}>
-        {selected && <HubSheet loc={selected} me={me} people={people} onOpen={() => go(`/loc/${selected.id}`)} />}
+      <Sheet open={!!sel} onClose={() => setSel(null)}>
+        {sel && <RegionSheet from={me.city} to={sel} onOpen={() => go(`/region/${sel}`)} />}
+      </Sheet>
+
+      <Sheet open={budget !== null} onClose={() => setBudget(null)} title="Регион под бюджет" sub="Билеты туда-обратно плюс месяц жизни">
+        {budget !== null && <BudgetPicker from={me.city} limit={budget} setLimit={setBudget} onPick={(k) => { setBudget(null); setSel(k); }} />}
       </Sheet>
     </div>
   );
 }
 
-function HubSheet({ loc, me, people, onOpen }) {
-  const c = CITIES[loc.city];
-  const here = people.filter((r) => r.city === loc.city);
+/* Карточка направления: перелёт, жильё, месяц жизни — всё считается на месте. */
+function RegionSheet({ from, to, onOpen }) {
+  const [style, setStyle] = useState('lean');
+  const [housing, setHousing] = useState('apt');
+  const r = REGIONS[to];
+  const t = tripCost(from, to, style, housing, 1);
+  const f = t.flight;
+
   return (
     <div className="stack">
-      <Scene city={loc.city} height={150} label>
+      <Scene city={to} height={150} label>
         <div className="scene__over">
-          <div className="row" style={{ gap: 6, marginBottom: 4 }}>
-            <span className="tag" style={{ background: `${STATUS[loc.status].tone}2a`, color: STATUS[loc.status].tone }}>{STATUS[loc.status].name}</span>
-            <span className="tag">{KINDS[loc.kind].name}</span>
-          </div>
-          <div className="h2" style={{ color: '#fff' }}>{loc.name}</div>
+          <div className="h2" style={{ color: '#fff' }}>{r.name}</div>
+          <div className="t-xs" style={{ color: 'rgba(255,255,255,.7)' }}>{r.country} · {TIERS_REGION[r.tier].name}</div>
         </div>
       </Scene>
 
-      <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
-        <KV k="Адрес" v={loc.address} />
-        {loc.tariff > 0 && <KV k="Тариф резидента" v={`${usdExact(loc.tariff)} / ночь · рынок ${usdExact(loc.market)}`} tone="var(--gold)" />}
-        <KV k="Резидентов в городе" v={String(loc.residents)} />
-        {loc.opened && <KV k="Открытие" v={String(loc.opened)} />}
+      <div className="stats">
+        <div className="stat"><div className="stat__v">{r.residents}</div><div className="stat__l">Резидентов</div></div>
+        <div className="stat"><div className="stat__v">{r.companies}</div><div className="stat__l">Компаний</div></div>
+        <div className="stat"><div className="stat__v">{r.communities}</div><div className="stat__l">Сообществ</div></div>
       </div>
 
-      {here.length > 0 && (
-        <div className="scroller">
-          {here.map((r) => (
-            <button key={r.id} className="center" style={{ width: 62 }} onClick={() => go(`/p/${r.id}`)}>
-              <Avatar person={r} size={44} dot={r.online} style={{ margin: '0 auto' }} />
-              <div className="t-xs dim-2" style={{ marginTop: 5 }}>{r.name.split(' ')[0]}</div>
-            </button>
-          ))}
+      {f && (
+        <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
+          <KV k="Перелёт" v={`${nf(f.km)} км · ${hoursText(f.hours)}${f.direct ? '' : ' · с пересадкой'}`} />
+          <KV k="Билет" v={`от ${usdExact(f.from)} · обычно ${usdExact(f.avg)}`} tone="var(--gold)" />
         </div>
       )}
 
-      <Btn variant="gold" wide onClick={onOpen}>Открыть локацию</Btn>
+      <Seg value={style} onChange={setStyle} options={[{ value: 'lean', label: 'Экономно' }, { value: 'comfort', label: 'Комфортно' }]} />
+      <div className="wrap">
+        {HOUSING.map((h) => <Chip key={h.id} on={housing === h.id} onClick={() => setHousing(h.id)}>{h.name}</Chip>)}
+      </div>
+
+      <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
+        <KV k={housing === 'hotel' ? 'Отель, за месяц' : 'Жильё, месяц'} v={usdExact(housing === 'hotel' ? t.monthly.rent * 30 : t.monthly.rent)} />
+        <KV k="Еда, транспорт, связь" v={usdExact(t.monthly.living)} />
+        <KV k="Месяц жизни" v={usdExact(housing === 'hotel' ? t.monthly.rent * 30 + t.monthly.living : t.monthly.total)} tone="var(--gold)" />
+        <KV k="С билетами туда-обратно" v={usdExact(t.tickets + (housing === 'hotel' ? t.monthly.rent * 30 + t.monthly.living : t.monthly.total))} tone="var(--cyan)" />
+      </div>
+
+      <Note icon="eye">{r.visa}. Лучшее время: {r.best.toLowerCase()}. Интернет — около {r.internet} Мбит/с.</Note>
+
+      <Btn variant="gold" wide onClick={onOpen}>Открыть регион</Btn>
+    </div>
+  );
+}
+
+function BudgetPicker({ from, limit, setLimit, onPick }) {
+  const fits = useMemo(() => fitsBudget(from, limit, 'lean', 'apt'), [from, limit]);
+  return (
+    <div className="stack">
+      <div className="wrap">
+        {[1200, 1500, 2000, 3000, 5000].map((v) => (
+          <Chip key={v} on={limit === v} onClick={() => setLimit(v)}>до {usdExact(v)}</Chip>
+        ))}
+      </div>
+      <div className="t-sm dim">
+        {fits.length
+          ? `${fits.length} ${plural(fits.length, 'регион подходит', 'региона подходят', 'регионов подходят')} под ${usdExact(limit)} в месяц — с билетами туда-обратно и жильём.`
+          : 'Под такой бюджет пока ничего. Поднимите порог.'}
+      </div>
+      <List>
+        {fits.map((x) => (
+          <Item
+            key={x.key}
+            lead={<SceneThumb city={x.key} size={44} />}
+            title={REGIONS[x.key].name}
+            sub={`Билеты ${usdExact(x.tickets)} · месяц ${usdExact(x.living)}`}
+            meta={<span className="gold" style={{ fontSize: 13, fontWeight: 700 }}>{usdExact(x.total)}</span>}
+            chev={false}
+            onClick={() => onPick(x.key)}
+          />
+        ))}
+      </List>
     </div>
   );
 }

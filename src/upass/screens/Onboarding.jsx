@@ -6,7 +6,7 @@ import Passport from '../components/Passport.jsx';
 import Install from '../components/Install.jsx';
 import Icon from '../components/Icons.jsx';
 import { SKILL_GROUPS, ROLES } from '../data/people.js';
-import { CITIES } from '../data/places.js';
+import { REGIONS, REGION_KEYS } from '../data/regions.js';
 import { TIERS, LAWS, MOTTO_MASKED } from '../data/canon.js';
 import { usdExact } from '../lib/format.js';
 
@@ -19,7 +19,6 @@ export default function Onboarding() {
     name: '', role: 'Основатель', company: '', city: 'dubai',
     skills: [], talents: [], mission: '', gives: '', needs: '',
   });
-  const [tier, setTier] = useState(1);
   const [paid, setPaid] = useState(false);
   const [oath, setOath] = useState(false);
 
@@ -37,15 +36,8 @@ export default function Onboarding() {
   if (app.stage === 'review') return <Review onApprove={app.approve} name={app.me.name} />;
 
   if (app.stage === 'approved') {
-    if (!paid) return <Payment tier={tier} setTier={setTier} city={app.me.city} onPay={() => setPaid(true)} />;
-    return (
-      <Ceremony
-        me={{ ...app.me, tier, degree: 1 }}
-        oath={oath}
-        setOath={setOath}
-        onDone={() => app.payMembership(tier)}
-      />
-    );
+    if (!paid) return <Payment city={app.me.city} onPay={() => setPaid(true)} />;
+    return <Ceremony me={{ ...app.me, tier: 1, degree: 1 }} oath={oath} setOath={setOath} onDone={() => app.payMembership()} />;
   }
 
   if (step === 0) return <Hero onStart={() => setStep(1)} onDemo={() => demo(app)} />;
@@ -76,13 +68,13 @@ export default function Onboarding() {
     },
     {
       title: 'Где вы сейчас',
-      hint: 'Город присутствия можно менять в любой момент — по нему клуб понимает, кто рядом.',
+      hint: 'Регион можно менять в любой момент — по нему сообщество понимает, кто рядом, и подбирает афишу.',
       ok: true,
       body: (
         <div className="wrap">
-          {Object.entries(CITIES).slice(0, 12).map(([key, c]) => (
+          {REGION_KEYS.map((key) => (
             <Chip key={key} on={form.city === key} onClick={() => set('city', key)}>
-              {c.flag} {c.name}
+              {REGIONS[key].flag} {REGIONS[key].name}
             </Chip>
           ))}
         </div>
@@ -173,15 +165,15 @@ function Hero({ onStart, onDemo }) {
         </h1>
         <div className="eyebrow eyebrow--gold" style={{ marginTop: 8 }}>{MOTTO_MASKED}</div>
         <p className="dim" style={{ marginTop: 18, fontSize: 15, lineHeight: 1.55, maxWidth: 380 }}>
-          Закрытый кооператив: люди, места и общая собственность. Один паспорт на весь мир,
-          двадцать локаций UHOME, доля в активах вместо арендной наценки.
+          Сообщество тех, кто живёт между странами. Двадцать регионов, свои люди в каждом,
+          общая афиша и помощь с переездом — от тех, кто уже там.
         </p>
       </div>
 
       <div className="stack-8" style={{ marginTop: 26, position: 'relative' }}>
-        <Pillar icon="passport" title="Цифровой паспорт" text="Одна проверенная личность, репутация в цепочке хешей, доступ во все локации" />
-        <Pillar icon="globe" title="Сеть UHOME" text="Отели, резиденции и лаунжи в двадцати городах — по внутреннему тарифу" />
-        <Pillar icon="coin" title="Доля, а не аренда" text="Токен UHT — учёт вашей доли в портфеле активов кооператива" />
+        <Pillar icon="compass" title="Двадцать регионов" text="Куда лететь, сколько стоит билет и месяц жизни — считается на карте" />
+        <Pillar icon="users" title="Сообщества" text="По направлениям и по регионам: свои в каждом городе, куда вы прилетаете" />
+        <Pillar icon="message" title="Запросы" text="Спросили — ответили. Быстрее, чем искать людей вручную" />
       </div>
 
       <div style={{ marginTop: 'auto', paddingTop: 28, display: 'grid', gap: 10, position: 'relative' }}>
@@ -254,11 +246,10 @@ function Review({ onApprove, name }) {
 }
 
 /* ---------- оплата взноса ------------------------------------------------- */
-function Payment({ tier, setTier, city, onPay }) {
-  const t = TIERS.find((x) => x.n === tier);
+function Payment({ city, onPay }) {
+  const t = TIERS[0];
   const ru = city === 'moscow';
   const [busy, setBusy] = useState(false);
-
   const pay = () => {
     setBusy(true);
     setTimeout(onPay, 1400);
@@ -267,42 +258,31 @@ function Payment({ tier, setTier, city, onPay }) {
   return (
     <div className="screen screen--plain" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="eyebrow eyebrow--gold" style={{ marginTop: 18 }}>Заявка одобрена</div>
-      <h2 className="display" style={{ margin: '8px 0 6px' }}>Выберите уровень членства</h2>
+      <h2 className="h1" style={{ margin: '8px 0 6px' }}>Уровень Travel</h2>
       <div className="t-sm dim" style={{ marginBottom: 18, lineHeight: 1.5 }}>
-        Уровень покупается и открывает доступ. Степень — то, что зарабатывается внутри, — начинается с первой у всех.
+        Сейчас в сообществе один уровень — чтобы не было путаницы. Business и Gold откроются позже,
+        Black был и остаётся закрытым.
       </div>
 
-      <div className="stack-8">
-        {TIERS.filter((x) => x.price).map((x) => (
-          <button key={x.n} className={`card tap${tier === x.n ? ' card--gold' : ''}`} onClick={() => setTier(x.n)}>
-            <div className="spread">
-              <div className="row" style={{ gap: 10 }}>
-                <div style={{ width: 4, height: 34, borderRadius: 3, background: `linear-gradient(180deg, ${x.edge[0]}, ${x.edge[1]})` }} />
-                <div>
-                  <div className="t-md">{x.name}</div>
-                  <div className="t-xs dim">{x.line}</div>
-                </div>
-              </div>
-              <div className="t-md num">{usdExact(x.price)}<span className="dim-2 t-xs"> / год</span></div>
+      <div className="card card--gold">
+        <div className="spread">
+          <div className="h2">{t.name}</div>
+          <div className="t-lg num">{usdExact(t.price)} <span className="t-xs dim">/ год</span></div>
+        </div>
+        <div className="stack-8" style={{ marginTop: 14 }}>
+          {t.perks.map((p) => (
+            <div key={p} className="row t-sm" style={{ gap: 9 }}>
+              <Icon name="check" size={15} color="var(--gold)" />
+              <span className="dim">{p}</span>
             </div>
-            {tier === x.n && (
-              <div style={{ marginTop: 12, display: 'grid', gap: 6 }}>
-                {x.perks.map((p) => (
-                  <div key={p} className="row t-xs" style={{ gap: 7 }}>
-                    <Icon name="check" size={13} color="var(--gold)" />
-                    <span className="dim">{p}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </button>
-        ))}
+          ))}
+        </div>
       </div>
 
-      <Card style={{ marginTop: 14 }} className="row" >
+      <Card style={{ marginTop: 14 }} className="row">
         <Icon name="wallet" size={18} color="var(--ink-3)" />
         <div className="grow t-xs dim">
-          Провайдер платежа выбран по вашему региону: {ru ? 'карты российских банков, рубли по курсу на момент оплаты' : 'международный платёж, доллары'}.
+          Платёж проходит по вашему региону: {ru ? 'карты российских банков, рубли по курсу на момент оплаты' : 'международный платёж в долларах'}.
         </div>
       </Card>
 
@@ -366,24 +346,27 @@ function demo(app) {
   app.apply({
     name: 'Евгений Морозов',
     role: 'Основатель',
+    title: 'Основатель',
     company: 'Upass',
     city: 'dubai',
     skills: ['it', 'ai', 'capital'],
     talents: ['Стратегия', 'Публичные выступления', 'Инвестиции'],
-    mission: 'Строю кооператив, в котором успех каждого — доля каждого.',
+    mission: 'Строю сообщество, в котором успех каждого — общий успех.',
+    bio: 'Живу между Дубаем, Москвой и Бали. Собираю сообщество тех, кто выбрал жизнь между странами.',
     gives: 'Помогу собрать сообщество и запустить продукт',
-    needs: 'Партнёры по активам в Азии и Заливе',
+    needs: 'Партнёры в новых регионах',
   });
   setTimeout(() => {
     app.approve();
     setTimeout(() => {
-      app.payMembership(4);
-      app.addRep('meet', 'me', { with: 'r22', weight: 3, note: 'Подтверждённая встреча: Мария Тонева' });
-      app.addRep('meet', 'me', { with: 'r2', weight: 3, note: 'Подтверждённая встреча: Алексей Ремизов' });
-      app.addRep('meet', 'me', { with: 'r9', weight: 3, note: 'Подтверждённая встреча: Наталья Верх' });
-      app.addRep('vouch', 'me', { with: 'r13', weight: 5, note: 'Поручительство за Егор Тамм' });
-      app.addRep('event', 'me', { weight: 2, note: 'Участие: Квартальный слёт, Дубай' });
-      app.invest(24000, 24000 / app.pf.price);
+      app.payMembership();
+      app.addRep('meet', { with: 'r22', weight: 3, note: 'Подтверждённая встреча: Мария Тонева' });
+      app.addRep('meet', { with: 'r9', weight: 3, note: 'Подтверждённая встреча: Наталья Верх' });
+      app.addRep('meet', { with: 'r13', weight: 3, note: 'Подтверждённая встреча: Егор Тамм' });
+      app.addRep('vouch', { with: 'r13', weight: 5, note: 'Поручительство за Егор Тамм' });
+      app.addRep('event', { weight: 2, note: 'Участие: U-connect · Стамбул' });
+      app.joinCommunity('c-move', 'Релокация и визы');
+      app.joinCommunity('c-ai', 'Искусственный интеллект');
     }, 120);
   }, 120);
 }

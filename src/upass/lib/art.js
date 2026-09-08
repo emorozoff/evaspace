@@ -87,7 +87,7 @@ export function mrz(name, number, country = 'UHM', tier = 'P', expiry = '311227'
       .slice(0, len)
       .padEnd(len, '<');
   const line1 = clean(`${tier}<${country}${(name || '').replace(/\s+/g, '<<')}`, 44);
-  const line2 = clean(`${number}${country}${expiry}UHT<<<<<<<<<<<<<<`, 44);
+  const line2 = clean(`${number}${country}${expiry}<<<<<<<<<<<<<<<<<`, 44);
   return [line1, line2];
 }
 

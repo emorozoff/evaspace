@@ -25,8 +25,8 @@ export default function Vault() {
 
   return (
     <div className="screen stack">
-      <Top title="База знаний" sub="Разборы, документы и шаблоны резидентов" right={<button className="iconbtn" onClick={() => go('/club')}><Icon name="back" size={18} /></button>} />
-      <Search value={q} onChange={setQ} placeholder="NAV, виза, найм, аренда…" />
+      <Top title="База знаний" sub="Разборы, шаблоны и записи эфиров" right={<button className="iconbtn" onClick={() => go('/club')}><Icon name="back" size={18} /></button>} />
+      <Search value={q} onChange={setQ} placeholder="Виза, жильё, школа, бюджет…" />
       <Scroller>
         <Chip on={kind === 'all'} onClick={() => setKind('all')}>Всё</Chip>
         {Object.entries(VAULT_KINDS).map(([k, v]) => <Chip key={k} on={kind === k} onClick={() => setKind(k)}>{v.name}</Chip>)}
