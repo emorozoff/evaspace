@@ -2,185 +2,152 @@ import { useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import WorldMap from '../components/WorldMap.jsx';
-import { Card, Chip, Section, Seg, Btn, Scroller } from '../components/UI.jsx';
-import { Cover } from '../components/Art.jsx';
+import Scene, { SceneThumb } from '../components/Scene.jsx';
+import { Top, List, Item, Chip, Scroller, Section, Sheet, Btn, KV, Note } from '../components/UI.jsx';
+import { Avatar } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
 import { LOCATIONS, CITIES, STATUS, KINDS } from '../data/places.js';
-import { RESIDENTS } from '../data/people.js';
-import { upcoming } from '../lib/select.js';
-import { usd, nf, pct, plural } from '../lib/format.js';
+import { HUB_MAIN } from '../data/landmarks.js';
+import { upcoming, visibleResidents } from '../lib/select.js';
+import { usdExact, nf, plural } from '../lib/format.js';
 import { distanceKm } from '../data/world.js';
 
 export default function MapScreen() {
   const app = useApp();
   const { me } = app;
-  const [mode, setMode] = useState('homes');
   const [filter, setFilter] = useState('all');
   const [sel, setSel] = useState(null);
 
+  const people = useMemo(() => visibleResidents(me), [me]);
   const summit = upcoming(me).find((e) => e.kind === 'summit');
   const summitCity = summit ? LOCATIONS.find((l) => l.id === summit.loc)?.city : null;
 
-  const homes = useMemo(
-    () => LOCATIONS.filter((l) => filter === 'all' || l.status === filter),
-    [filter]
-  );
-
-  const peoplePins = useMemo(() => {
-    const byCity = {};
-    for (const r of RESIDENTS) byCity[r.city] = (byCity[r.city] || 0) + 1;
-    return Object.entries(byCity).map(([city, n]) => ({
-      id: 'city-' + city,
-      city,
-      name: CITIES[city].name,
-      status: n >= 4 ? 'open' : 'soon',
-      count: n,
-    }));
-  }, []);
-
-  const pins = mode === 'homes' ? homes : peoplePins;
-  const selected = sel && pins.find((p) => p.id === sel);
+  const homes = useMemo(() => LOCATIONS.filter((l) => filter === 'all' || l.status === filter), [filter]);
+  const selected = sel && LOCATIONS.find((l) => l.id === sel);
+  const main = LOCATIONS.filter((l) => HUB_MAIN.includes(l.city));
 
   const sorted = useMemo(() => {
     const from = CITIES[me.city];
-    return [...homes]
-      .map((l) => ({ ...l, km: distanceKm(from, CITIES[l.city]) }))
-      .sort((a, b) => a.km - b.km);
+    return [...homes].map((l) => ({ ...l, km: distanceKm(from, CITIES[l.city]) })).sort((a, b) => a.km - b.km);
   }, [homes, me.city]);
 
   return (
-    <div className="screen screen--flush stack-16">
-      <div style={{ padding: '4px 18px 0' }} className="spread">
-        <div>
-          <div className="eyebrow">Сеть кооператива</div>
-          <h2 className="display" style={{ marginTop: 3 }}>UHOME · 20 локаций</h2>
-        </div>
-        <button className="iconbtn" onClick={() => go('/people')}><Icon name="users" size={18} /></button>
-      </div>
-
-      <div style={{ padding: '0 18px' }}>
-        <Seg
-          value={mode}
-          onChange={(v) => { setMode(v); setSel(null); }}
-          options={[{ value: 'homes', label: 'Локации' }, { value: 'people', label: 'Резиденты' }]}
-        />
+    <div className="screen screen--flush stack-20">
+      <div style={{ padding: '0 16px' }}>
+        <Top title="Карта" sub={`20 хабов UHOME · ${people.length} ${plural(people.length, 'резидент', 'резидента', 'резидентов')} на карте`} />
       </div>
 
       <WorldMap
-        locations={pins}
+        locations={homes}
+        people={people}
         selected={sel}
-        onSelect={(id) => setSel((s) => (s === id ? null : id))}
+        onSelect={(id) => setSel(id)}
+        onPerson={(id) => go(`/p/${id}`)}
         myCity={me.city}
         routeTo={summitCity}
-        height={264}
+        height={340}
       />
 
-      <div style={{ padding: '0 18px' }} className="stack-16">
-        {mode === 'homes' ? (
-          <Scroller>
-            <Chip on={filter === 'all'} onClick={() => setFilter('all')}>Все · {LOCATIONS.length}</Chip>
-            {Object.entries(STATUS).map(([k, s]) => (
-              <Chip key={k} on={filter === k} onClick={() => setFilter(k)}>
-                <span style={{ width: 6, height: 6, borderRadius: 3, background: s.tone, display: 'inline-block' }} />
-                {s.name} · {LOCATIONS.filter((l) => l.status === k).length}
-              </Chip>
-            ))}
-          </Scroller>
-        ) : (
-          <Card className="row" style={{ gap: 12 }}>
-            <Icon name="pin" size={18} color="var(--cyan)" />
-            <div className="t-xs dim grow">
-              Точка вашего города горит бирюзовым. Резиденты видны по городу, который указали сами —
-              точнее города геолокация в клубе не работает.
-            </div>
-          </Card>
-        )}
+      <div style={{ padding: '0 16px' }} className="stack-20">
+        <Scroller>
+          <Chip on={filter === 'all'} onClick={() => setFilter('all')}>Все · {LOCATIONS.length}</Chip>
+          {Object.entries(STATUS).map(([k, s]) => (
+            <Chip key={k} on={filter === k} onClick={() => setFilter(k)}>
+              <span style={{ width: 7, height: 7, borderRadius: 4, background: s.tone, display: 'inline-block' }} />
+              {s.name} · {LOCATIONS.filter((l) => l.status === k).length}
+            </Chip>
+          ))}
+        </Scroller>
 
-        {selected && mode === 'homes' && <LocCard loc={selected} me={me} />}
-        {selected && mode === 'people' && (
-          <Card className="spread">
-            <div>
-              <div className="t-md">{CITIES[selected.city].flag} {selected.name}</div>
-              <div className="t-xs dim" style={{ marginTop: 3 }}>
-                {selected.count} {plural(selected.count, 'резидент', 'резидента', 'резидентов')} в городе
-              </div>
-            </div>
-            <Btn size="sm" variant="quiet" onClick={() => go(`/people?city=${selected.city}`)}>Открыть</Btn>
-          </Card>
-        )}
+        <Section title="Главные хабы">
+          <div className="scroller">
+            {main.map((l) => (
+              <button key={l.id} onClick={() => setSel(l.id)} style={{ width: 168 }}>
+                <Scene city={l.city} height={104} label>
+                  <div className="scene__over">
+                    <div className="t-md" style={{ color: '#fff' }}>{l.name}</div>
+                    <div className="t-xs" style={{ color: 'rgba(255,255,255,.65)' }}>{l.residents} резидентов</div>
+                  </div>
+                </Scene>
+              </button>
+            ))}
+          </div>
+        </Section>
 
         {summit && (
-          <Card variant="gold" className="row-t" style={{ gap: 12 }}>
-            <Icon name="plane" size={19} color="var(--gold)" />
-            <div>
-              <div className="t-md">{summit.title}</div>
-              <div className="t-xs dim" style={{ marginTop: 3, lineHeight: 1.45 }}>
-                Золотая дуга на карте — путь от вашего города до места следующего слёта.
-                Раз в квартал круг собирается в новой стране.
-              </div>
-              <Btn size="sm" variant="ghost" style={{ marginTop: 10 }} onClick={() => go(`/event/${summit.id}`)}>
-                Смотреть программу
-              </Btn>
-            </div>
-          </Card>
+          <List>
+            <Item
+              icon="plane"
+              title={summit.title}
+              sub="Дуга на карте — путь от вашего города до места слёта"
+              subWrap
+              onClick={() => go(`/event/${summit.id}`)}
+            />
+          </List>
         )}
 
-        {mode === 'homes' && (
-          <Section eyebrow={`От вас · ${CITIES[me.city].name}`} title="Ближайшие локации">
-            <div className="stack-8">
-              {sorted.map((l) => (
-                <button key={l.id} className="card tap row" style={{ gap: 12 }} onClick={() => go(`/loc/${l.id}`)}>
-                  <div style={{ width: 46, height: 46, flex: 'none', borderRadius: 12, overflow: 'hidden' }}>
-                    <Cover art={l.art} seed={l.id} height={46} radius={12} />
-                  </div>
-                  <div className="grow" style={{ minWidth: 0 }}>
-                    <div className="row" style={{ gap: 6 }}>
-                      <span className="t-md">{l.name}</span>
-                      <span style={{ width: 6, height: 6, borderRadius: 3, background: STATUS[l.status].tone }} />
-                    </div>
-                    <div className="t-xs dim" style={{ marginTop: 2 }}>
-                      {CITIES[l.city].flag} {CITIES[l.city].name} · {KINDS[l.kind].short} · {nf(l.km)} км
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    {l.tariff ? (
-                      <>
-                        <div className="t-sm gold num">{usd(l.tariff)}</div>
-                        <div className="t-xs dim-2">за ночь</div>
-                      </>
-                    ) : (
-                      <div className="t-xs dim-2">{STATUS[l.status].name}</div>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </Section>
-        )}
+        <Section title={`От вас · ${CITIES[me.city].flag} ${CITIES[me.city].name}`}>
+          <List>
+            {sorted.map((l) => (
+              <Item
+                key={l.id}
+                lead={<SceneThumb city={l.city} size={46} />}
+                title={
+                  <span className="row" style={{ gap: 6 }}>
+                    <span className="ell">{l.name}</span>
+                    <span style={{ width: 6, height: 6, borderRadius: 3, background: STATUS[l.status].tone, flex: 'none' }} />
+                  </span>
+                }
+                sub={`${CITIES[l.city].flag} ${CITIES[l.city].name} · ${KINDS[l.kind].short} · ${nf(l.km)} км`}
+                meta={l.tariff ? <span className="gold" style={{ fontSize: 13, fontWeight: 700 }}>{usdExact(l.tariff)}</span> : <span>{STATUS[l.status].name}</span>}
+                onClick={() => setSel(l.id)}
+              />
+            ))}
+          </List>
+        </Section>
       </div>
+
+      <Sheet open={!!selected} onClose={() => setSel(null)}>
+        {selected && <HubSheet loc={selected} me={me} people={people} onOpen={() => go(`/loc/${selected.id}`)} />}
+      </Sheet>
     </div>
   );
 }
 
-function LocCard({ loc, me }) {
+function HubSheet({ loc, me, people, onOpen }) {
   const c = CITIES[loc.city];
+  const here = people.filter((r) => r.city === loc.city);
   return (
-    <Card as="button" className="tap" onClick={() => go(`/loc/${loc.id}`)} style={{ padding: 0, overflow: 'hidden', display: 'block', width: '100%', textAlign: 'left' }}>
-      <Cover art={loc.art} seed={loc.id} height={110}>
-        <div style={{ position: 'absolute', left: 14, bottom: 11, right: 14 }}>
-          <div className="row" style={{ gap: 6, marginBottom: 5 }}>
-            <span className="tag" style={{ background: `${STATUS[loc.status].tone}28`, color: STATUS[loc.status].tone }}>
-              {STATUS[loc.status].name}
-            </span>
-            <span className="tag tag--plain">{KINDS[loc.kind].name}</span>
+    <div className="stack">
+      <Scene city={loc.city} height={150} label>
+        <div className="scene__over">
+          <div className="row" style={{ gap: 6, marginBottom: 4 }}>
+            <span className="tag" style={{ background: `${STATUS[loc.status].tone}2a`, color: STATUS[loc.status].tone }}>{STATUS[loc.status].name}</span>
+            <span className="tag">{KINDS[loc.kind].name}</span>
           </div>
-          <div className="t-lg">{loc.name}</div>
+          <div className="h2" style={{ color: '#fff' }}>{loc.name}</div>
         </div>
-      </Cover>
-      <div className="spread" style={{ padding: 13 }}>
-        <div className="t-xs dim">{c.flag} {c.name}, {c.country} · {loc.residents} резидентов</div>
-        {loc.tariff > 0 && <div className="t-sm gold">{usd(loc.tariff)} <span className="dim-2 t-xs">/ ночь</span></div>}
+      </Scene>
+
+      <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
+        <KV k="Адрес" v={loc.address} />
+        {loc.tariff > 0 && <KV k="Тариф резидента" v={`${usdExact(loc.tariff)} / ночь · рынок ${usdExact(loc.market)}`} tone="var(--gold)" />}
+        <KV k="Резидентов в городе" v={String(loc.residents)} />
+        {loc.opened && <KV k="Открытие" v={String(loc.opened)} />}
       </div>
-    </Card>
+
+      {here.length > 0 && (
+        <div className="scroller">
+          {here.map((r) => (
+            <button key={r.id} className="center" style={{ width: 62 }} onClick={() => go(`/p/${r.id}`)}>
+              <Avatar person={r} size={44} dot={r.online} style={{ margin: '0 auto' }} />
+              <div className="t-xs dim-2" style={{ marginTop: 5 }}>{r.name.split(' ')[0]}</div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <Btn variant="gold" wide onClick={onOpen}>Открыть локацию</Btn>
+    </div>
   );
 }

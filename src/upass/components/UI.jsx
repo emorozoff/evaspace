@@ -2,17 +2,29 @@ import { useEffect } from 'react';
 import Icon from './Icons.jsx';
 import { back } from '../lib/router.jsx';
 
-export function TopBar({ title, subtitle, onBack, right, backTo }) {
+/* Заголовок экрана: большой заголовок и одно-два действия справа. */
+export function Top({ title, right, sub }) {
+  return (
+    <div className="top">
+      <div className="grow" style={{ minWidth: 0 }}>
+        <h1 className="h1">{title}</h1>
+        {sub && <div className="t-sm dim-2" style={{ marginTop: 4 }}>{sub}</div>}
+      </div>
+      {right}
+    </div>
+  );
+}
+
+/* Липкая шапка вложенного экрана. */
+export function TopBar({ title, sub, backTo, onBack, right }) {
   return (
     <div className="topbar">
-      {(onBack || backTo) && (
-        <button className="iconbtn" onClick={() => (onBack ? onBack() : back(backTo))} aria-label="Назад">
-          <Icon name="back" size={19} />
-        </button>
-      )}
+      <button className="iconbtn" onClick={() => (onBack ? onBack() : back(backTo))} aria-label="Назад">
+        <Icon name="back" size={19} />
+      </button>
       <div className="grow" style={{ minWidth: 0 }}>
-        {subtitle && <div className="eyebrow" style={{ marginBottom: 1 }}>{subtitle}</div>}
-        <div className="topbar__title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
+        <div className="topbar__title ell">{title}</div>
+        {sub && <div className="topbar__sub ell">{sub}</div>}
       </div>
       {right}
     </div>
@@ -31,11 +43,7 @@ export function Btn({ variant = 'ghost', size, wide, icon, iconRight, children, 
 }
 
 export function Chip({ on, children, ...rest }) {
-  return (
-    <button className={`chip${on ? ' chip--on' : ''}`} {...rest}>
-      {children}
-    </button>
-  );
+  return <button className={`chip${on ? ' chip--on' : ''}`} {...rest}>{children}</button>;
 }
 
 export function Tag({ tone, plain, children, style }) {
@@ -43,21 +51,40 @@ export function Tag({ tone, plain, children, style }) {
   return <span className={cls} style={style}>{children}</span>;
 }
 
-export function Card({ as = 'div', variant, tight, pad, className = '', children, ...rest }) {
+export function Card({ as = 'div', variant, className = '', children, ...rest }) {
   const El = as;
-  const cls = ['card', variant ? `card--${variant}` : '', tight ? 'card--tight' : '', pad ? 'card--pad' : '', className].filter(Boolean).join(' ');
+  const cls = ['card', variant ? `card--${variant}` : '', className].filter(Boolean).join(' ');
   return <El className={cls} {...rest}>{children}</El>;
 }
 
-export function Section({ eyebrow, title, more, onMore, children }) {
+/* Группа строк как в мессенджере. */
+export function List({ children, plain, style }) {
+  return <div className={`list${plain ? ' list--plain' : ''}`} style={style}>{children}</div>;
+}
+
+/* Строка списка: слева иконка или аватар, по центру заголовок и подпись, справа мета. */
+export function Item({ lead, icon, title, sub, subWrap, meta, chev = true, onClick, as, tone, plain }) {
+  const El = as || (onClick ? 'button' : 'div');
+  return (
+    <El className={`item${plain ? ' item--plain' : ''}`} onClick={onClick}>
+      {lead}
+      {icon && !lead && <div className="item__ic"><Icon name={icon} size={19} /></div>}
+      <div className="item__body">
+        <div className="item__t" style={tone ? { color: tone } : undefined}>{title}</div>
+        {sub && <div className={`item__s${subWrap ? ' item__s--wrap' : ''}`}>{sub}</div>}
+      </div>
+      {meta !== undefined && <div className="item__meta">{meta}</div>}
+      {chev && onClick && <Icon name="right" size={16} className="chev" color="var(--ink-4)" />}
+    </El>
+  );
+}
+
+export function Section({ title, more, onMore, children }) {
   return (
     <section className="sect">
-      {(title || eyebrow) && (
+      {title && (
         <div className="sect__head">
-          <div>
-            {eyebrow && <div className="eyebrow">{eyebrow}</div>}
-            {title && <div className="t-lg" style={{ marginTop: eyebrow ? 3 : 0 }}>{title}</div>}
-          </div>
+          <div className="hdr">{title}</div>
           {more && <button className="sect__more" onClick={onMore}>{more}</button>}
         </div>
       )}
@@ -66,13 +93,20 @@ export function Section({ eyebrow, title, more, onMore, children }) {
   );
 }
 
+export function Note({ icon = 'eye', children, tone = 'var(--ink-3)' }) {
+  return (
+    <div className="note">
+      <Icon name={icon} size={16} color={tone} />
+      <div>{children}</div>
+    </div>
+  );
+}
+
 export function Seg({ value, onChange, options }) {
   return (
     <div className="seg">
       {options.map((o) => (
-        <button key={o.value} data-on={value === o.value} onClick={() => onChange(o.value)}>
-          {o.label}
-        </button>
+        <button key={o.value} data-on={value === o.value} onClick={() => onChange(o.value)}>{o.label}</button>
       ))}
     </div>
   );
@@ -106,8 +140,8 @@ export function Stat({ v, l, tone }) {
 
 export function Empty({ icon = 'search', title, text, action }) {
   return (
-    <div className="card center" style={{ padding: '30px 20px' }}>
-      <div style={{ opacity: 0.4, marginBottom: 10 }}><Icon name={icon} size={30} /></div>
+    <div className="card center" style={{ padding: '28px 20px' }}>
+      <div style={{ opacity: 0.4, marginBottom: 10 }}><Icon name={icon} size={28} /></div>
       <div className="t-md">{title}</div>
       {text && <div className="t-sm dim" style={{ marginTop: 6, lineHeight: 1.5 }}>{text}</div>}
       {action && <div style={{ marginTop: 14 }}>{action}</div>}
@@ -115,7 +149,7 @@ export function Empty({ icon = 'search', title, text, action }) {
   );
 }
 
-export function Sheet({ open, onClose, title, eyebrow, children }) {
+export function Sheet({ open, onClose, title, sub, children }) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -126,17 +160,16 @@ export function Sheet({ open, onClose, title, eyebrow, children }) {
       document.body.style.overflow = '';
     };
   }, [open, onClose]);
-
   if (!open) return null;
   return (
     <>
       <div className="backdrop" onClick={onClose} />
       <div className="sheet" role="dialog" aria-modal="true">
         <div className="sheet__grip" />
-        {(title || eyebrow) && (
+        {title && (
           <div style={{ marginBottom: 14 }}>
-            {eyebrow && <div className="eyebrow">{eyebrow}</div>}
-            {title && <h3 className="display" style={{ marginTop: 4 }}>{title}</h3>}
+            <h2 className="h2">{title}</h2>
+            {sub && <div className="t-sm dim-2" style={{ marginTop: 4 }}>{sub}</div>}
           </div>
         )}
         {children}
@@ -158,6 +191,20 @@ export function Scroller({ children }) {
   return <div className="scroller">{children}</div>;
 }
 
+/* Ряд круглых действий: как «написать · позвонить · видео» в профиле мессенджера. */
+export function Actions({ items }) {
+  return (
+    <div className="actions" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
+      {items.map((a) => (
+        <button key={a.title} className={`action${a.on ? ' action--on' : ''}`} onClick={a.onClick} disabled={a.disabled}>
+          <span className="action__ic"><Icon name={a.icon} size={21} /></span>
+          <span className="action__t">{a.title}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function Lock({ text, action }) {
   return (
     <div className="locked__veil">
@@ -165,18 +212,5 @@ export function Lock({ text, action }) {
       <div className="t-sm dim" style={{ maxWidth: 250, lineHeight: 1.45 }}>{text}</div>
       {action}
     </div>
-  );
-}
-
-export function Row({ left, title, sub, right, onClick, tone }) {
-  return (
-    <button className="card tap row" onClick={onClick} style={{ gap: 12 }}>
-      {left}
-      <div className="grow">
-        <div className="t-md" style={{ color: tone }}>{title}</div>
-        {sub && <div className="t-xs dim" style={{ marginTop: 2 }}>{sub}</div>}
-      </div>
-      {right ?? <Icon name="right" size={16} color="var(--ink-4)" />}
-    </button>
   );
 }

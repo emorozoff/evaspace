@@ -1,13 +1,14 @@
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { TopBar, Card, Btn, Section, Bar, KV, Empty, Tag } from '../components/UI.jsx';
-import { Cover, Avatar, QR } from '../components/Art.jsx';
+import { TopBar, List, Item, Btn, Section, Bar, Empty, Note } from '../components/UI.jsx';
+import Scene from '../components/Scene.jsx';
+import { Avatar, QR } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
 import { eventById, EVENT_KINDS, AWARDS } from '../data/life.js';
 import { locById, CITIES } from '../data/places.js';
-import { RESIDENTS, byId } from '../data/people.js';
+import { byId } from '../data/people.js';
 import { eventDate, visibleOnly } from '../lib/select.js';
-import { dateLong, weekday, relDay, usd, usdExact, plural } from '../lib/format.js';
+import { dateLong, weekday, relDay, usdExact, plural } from '../lib/format.js';
 
 export default function Event({ id }) {
   const app = useApp();
@@ -20,110 +21,65 @@ export default function Event({ id }) {
   const host = byId(e.host);
   const d = eventDate(e);
   const going = app.going.includes(e.id);
-  const seats = e.capacity - e.going.length - (going ? 1 : 0);
   const past = e.inDays < 0;
   const shown = visibleOnly(app.me, e.going);
+  const count = e.going.length + (going ? 1 : 0);
 
   return (
     <>
-      <TopBar title={e.title} subtitle={k.name} backTo="/events" />
-      <div className="screen stack-22">
-        <Cover art={[k.tone, '#0a0c13']} seed={e.id} height={188} radius={20}>
-          <div style={{ position: 'absolute', left: 16, right: 16, bottom: 14 }}>
-            <div className="row" style={{ gap: 6, marginBottom: 8 }}>
+      <TopBar title={e.title} sub={k.name} backTo="/events" />
+      <div className="screen stack-20">
+        <Scene city={loc.city} height={180} label>
+          <div className="scene__over">
+            <div className="row" style={{ gap: 6, marginBottom: 6 }}>
               <span className="tag" style={{ background: `${k.tone}2a`, color: k.tone }}>{k.name}</span>
               {e.minTier > 1 && <span className="tag tag--gold">уровень {e.minTier}+</span>}
             </div>
-            <h2 className="display" style={{ fontSize: 26 }}>{e.title}</h2>
+            <div className="h2" style={{ color: '#fff' }}>{e.title}</div>
           </div>
-        </Cover>
+        </Scene>
 
-        <div className="stack-8">
-          <Card className="row" style={{ gap: 12 }}>
-            <Icon name="calendar" size={18} color="var(--gold)" />
-            <div className="grow">
-              <div className="t-md">{dateLong(d)}, {weekday(d)} · {e.time}</div>
-              <div className="t-xs dim">{relDay(e.inDays)} · {city.tz}</div>
-            </div>
-          </Card>
-          <button className="card tap row" style={{ gap: 12 }} onClick={() => go(`/loc/${loc.id}`)}>
-            <Icon name="pin" size={18} color="var(--gold)" />
-            <div className="grow">
-              <div className="t-md">{loc.name}</div>
-              <div className="t-xs dim">{city.flag} {city.name} · {loc.address}</div>
-            </div>
-            <Icon name="right" size={15} color="var(--ink-4)" />
-          </button>
-        </div>
+        <List>
+          <Item icon="calendar" title={`${dateLong(d)}, ${weekday(d)} · ${e.time}`} sub={`${relDay(e.inDays)} · ${city.tz}`} chev={false} />
+          <Item icon="pin" title={loc.name} sub={`${city.flag} ${city.name} · ${loc.address}`} onClick={() => go(`/loc/${loc.id}`)} />
+          {host && <Item lead={<Avatar person={host} size={40} dot={host.online} />} title={host.name} sub={`Ведёт · ${host.company}`} onClick={() => go(`/p/${host.id}`)} />}
+        </List>
 
-        <p className="dim t-sm" style={{ lineHeight: 1.6, margin: 0 }}>{e.about}</p>
+        <p className="lead">{e.about}</p>
 
-        {e.kind === 'summit' && <SummitProgram e={e} />}
+        {e.kind === 'summit' && <Program e={e} />}
 
-        <Card>
-          <div className="spread">
-            <div className="t-md">Участники</div>
-            <div className="t-xs dim">{e.going.length + (going ? 1 : 0)} из {e.capacity}</div>
-          </div>
-          <div style={{ marginTop: 10 }}><Bar value={(e.going.length + (going ? 1 : 0)) / e.capacity} /></div>
-          <div className="scroller" style={{ marginTop: 14, marginBottom: -2 }}>
-            {shown.map((p) => {
-              const rid = p.id;
-              return (
-                <button key={rid} className="center" style={{ width: 62 }} onClick={() => go(`/p/${rid}`)}>
+        <Section title={`Участники · ${count} из ${e.capacity}`}>
+          <div className="card">
+            <Bar value={count / e.capacity} />
+            <div className="scroller" style={{ marginTop: 14, marginBottom: -2 }}>
+              {shown.map((p) => (
+                <button key={p.id} className="center" style={{ width: 60 }} onClick={() => go(`/p/${p.id}`)}>
                   <Avatar person={p} size={40} dot={p.online} style={{ margin: '0 auto' }} />
-                  <div className="t-xs dim" style={{ marginTop: 6 }}>{p.name.split(' ')[0]}</div>
+                  <div className="t-xs dim-2" style={{ marginTop: 5 }}>{p.name.split(' ')[0]}</div>
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </Card>
-
-        {host && (
-          <Section eyebrow="Ведёт" title="Организатор">
-            <button className="card tap row" style={{ gap: 12 }} onClick={() => go(`/p/${host.id}`)}>
-              <Avatar person={host} size={44} dot={host.online} />
-              <div className="grow">
-                <div className="t-md">{host.name}</div>
-                <div className="t-xs dim">{host.role} · {host.company}</div>
-              </div>
-              <Icon name="right" size={15} color="var(--ink-4)" />
-            </button>
-          </Section>
-        )}
+        </Section>
 
         {going && !past && (
-          <Card variant="gold">
-            <div className="row" style={{ gap: 14 }}>
-              <div style={{ background: '#fff', borderRadius: 9, padding: 4, lineHeight: 0, flex: 'none' }}>
-                <QR value={`ticket:${e.id}:${app.me.number}`} size={78} />
-              </div>
-              <div>
-                <div className="eyebrow eyebrow--gold">Билет резидента</div>
-                <div className="t-md" style={{ marginTop: 4 }}>Покажите код на входе</div>
-                <div className="t-xs dim" style={{ marginTop: 5, lineHeight: 1.45 }}>
-                  Отметка о регистрации попадёт в вашу цепочку репутации и зачтётся в степень.
-                </div>
-              </div>
+          <div className="card card--gold row" style={{ gap: 14 }}>
+            <div style={{ background: '#fff', borderRadius: 9, padding: 4, lineHeight: 0, flex: 'none' }}>
+              <QR value={`ticket:${e.id}:${app.me.number}`} size={76} />
             </div>
-          </Card>
+            <div>
+              <div className="t-md">Билет резидента</div>
+              <div className="t-xs dim" style={{ marginTop: 4, lineHeight: 1.45 }}>Покажите код на входе. Отметка попадёт в цепочку репутации.</div>
+            </div>
+          </div>
         )}
 
         {!past && (
           <div style={{ position: 'sticky', bottom: 'calc(var(--tab-h) + 12px)' }}>
-            <Btn
-              variant={going ? 'ghost' : 'gold'}
-              wide
-              icon={going ? 'check' : undefined}
-              onClick={() => app.toggleGoing(e.id, e.title)}
-            >
+            <Btn variant={going ? 'ghost' : 'gold'} wide icon={going ? 'check' : undefined} onClick={() => app.toggleGoing(e.id, e.title)}>
               {going ? 'Вы идёте · отменить' : e.price ? `Купить билет · ${usdExact(e.price)}` : 'Записаться'}
             </Btn>
-            {!going && seats <= 5 && seats > 0 && (
-              <div className="center t-xs gold" style={{ marginTop: 8 }}>
-                Осталось {seats} {plural(seats, 'место', 'места', 'мест')}
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -131,49 +87,20 @@ export default function Event({ id }) {
   );
 }
 
-function SummitProgram({ e }) {
-  const isNewYear = e.title.toLowerCase().includes('новогодняя');
-  const days = isNewYear
-    ? [
-        { d: 'День 1', t: 'Съезд, открытие, общий ужин' },
-        { d: 'День 2', t: 'Итоги года по направлениям, отчёт по активам и NAV' },
-        { d: 'День 3', t: 'Секции кругов: капитал, ИИ, недвижимость, тело' },
-        { d: 'День 4', t: 'Свободный день: спорт, вода, семьи' },
-        { d: 'День 5', t: 'Голосования и решения на год' },
-        { d: 'День 6', t: 'Церемония года: девять номинаций и посвящение в степени' },
-        { d: 'День 7', t: 'Общий стол и проводы' },
-      ]
-    : [
-        { d: 'День 1', t: 'Открытие, отчёт по активам, новые резиденты' },
-        { d: 'День 2', t: 'Шесть параллельных секций, питчи, спорт с утра' },
-        { d: 'День 3', t: 'Голосования, решения о покупках, общий ужин' },
-      ];
-
+function Program({ e }) {
+  const ny = e.title.toLowerCase().includes('новогодняя');
+  const days = ny
+    ? ['Съезд, открытие, общий ужин', 'Итоги года по направлениям, отчёт по активам', 'Секции кругов: капитал, ИИ, недвижимость, тело', 'Свободный день: спорт, вода, семьи', 'Голосования и решения на год', 'Церемония года: девять номинаций и посвящение в степени', 'Общий стол и проводы']
+    : ['Открытие, отчёт по активам, новые резиденты', 'Шесть секций, питчи, спорт с утра', 'Голосования, решения о покупках, общий ужин'];
   return (
-    <Section eyebrow="Программа" title={isNewYear ? 'Неделя года' : 'Три дня'}>
-      <div className="stack-8">
-        {days.map((x) => (
-          <Card key={x.d} className="row-t" style={{ gap: 12 }}>
-            <div className="eyebrow eyebrow--gold" style={{ width: 48, flex: 'none', paddingTop: 2 }}>{x.d}</div>
-            <div className="t-sm">{x.t}</div>
-          </Card>
-        ))}
-      </div>
-      {isNewYear && (
-        <Card style={{ marginTop: 4 }}>
-          <div className="eyebrow">Номинации церемонии</div>
-          <div className="stack-8" style={{ marginTop: 10 }}>
-            {AWARDS.map((a) => (
-              <div key={a.id} className="row-t" style={{ gap: 9 }}>
-                <Icon name="star" size={14} color="var(--gold)" style={{ marginTop: 2, flex: 'none' }} />
-                <div>
-                  <div className="t-sm">{a.name}</div>
-                  <div className="t-xs dim-2" style={{ marginTop: 1 }}>{a.about}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+    <Section title="Программа">
+      <List>
+        {days.map((t, i) => <Item key={i} lead={<div className="item__ic" style={{ fontFamily: 'var(--display)', fontSize: 18 }}>{i + 1}</div>} title={<span style={{ whiteSpace: 'normal', fontWeight: 500, fontSize: 14 }}>{t}</span>} chev={false} />)}
+      </List>
+      {ny && (
+        <List>
+          {AWARDS.map((a) => <Item key={a.id} icon="star" title={a.name} sub={a.about} subWrap chev={false} />)}
+        </List>
       )}
     </Section>
   );

@@ -1,5 +1,6 @@
 import { useApp } from './lib/store.jsx';
 import { useRoute } from './lib/router.jsx';
+import { DMS } from './data/life.js';
 import Nav from './components/Nav.jsx';
 import Onboarding from './screens/Onboarding.jsx';
 import Home from './screens/Home.jsx';
@@ -10,8 +11,8 @@ import Person from './screens/Person.jsx';
 import Events from './screens/Events.jsx';
 import Event from './screens/Event.jsx';
 import Club from './screens/Club.jsx';
-import Circles from './screens/Circles.jsx';
-import Circle from './screens/Circle.jsx';
+import Chats from './screens/Chats.jsx';
+import Chat from './screens/Chat.jsx';
 import Market from './screens/Market.jsx';
 import Service from './screens/Service.jsx';
 import Capital from './screens/Capital.jsx';
@@ -48,7 +49,7 @@ export default function App() {
       <div className="aura" />
       <div className="app">
         <main key={path}>{render(root, id, query)}</main>
-        <Nav root={root} />
+        <Nav root={root} unread={DMS.filter((d) => d.unread && !app.seen['dm-' + d.with]).length} />
         {app.toast && <div className="toast">{app.toast}</div>}
       </div>
     </>
@@ -65,8 +66,11 @@ function render(root, id, query) {
     case 'events': return <Events />;
     case 'event': return <Event id={id} />;
     case 'club': return <Club />;
-    case 'circles': return <Circles />;
-    case 'circle': return <Circle id={id} />;
+    case 'chats': return <Chats />;
+    case 'circles': return <Chats />;
+    case 'chat': return <Chat kind="circle" id={id} />;
+    case 'circle': return <Chat kind="circle" id={id} />;
+    case 'dm': return <Chat kind="dm" id={id} />;
     case 'market': return <Market />;
     case 'service': return <Service id={id} />;
     case 'capital': return <Capital />;

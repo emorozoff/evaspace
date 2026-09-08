@@ -29,6 +29,7 @@ const EMPTY = {
   visibility: 'all',
   extraSpend: [],
   trips: [],
+  dms: {},
   seen: {},
 };
 
@@ -213,6 +214,13 @@ export function StoreProvider({ children }) {
     [say]
   );
 
+  const sendDm = useCallback((personId, text) => {
+    setS((prev) => ({
+      ...prev,
+      dms: { ...prev.dms, [personId]: [...(prev.dms[personId] || []), { text, at: Date.now() }] },
+    }));
+  }, []);
+
   const post = useCallback((circleId, text) => {
     setS((prev) => ({
       ...prev,
@@ -352,6 +360,7 @@ export function StoreProvider({ children }) {
     requestService,
     joinCircle,
     post,
+    sendDm,
     vote,
     invest,
     spendPoints,

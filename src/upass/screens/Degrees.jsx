@@ -1,163 +1,67 @@
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { Card, Btn, Section, Bar, Tag, KV } from '../components/UI.jsx';
+import { Top, List, Item, Btn, Section, Bar, Tag, Note } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 import { TIERS, DEGREES } from '../data/canon.js';
-import { usdExact, plural } from '../lib/format.js';
+import { usdExact } from '../lib/format.js';
 
 export default function Degrees() {
   const app = useApp();
   const { me, counts } = app;
-
-  const visibleDegrees = DEGREES.filter((d) => !d.secret || app.secret);
-  const hiddenCount = DEGREES.filter((d) => d.secret).length - (app.secret ? DEGREES.filter((d) => d.secret).length : 0);
+  const visible = DEGREES.filter((d) => !d.secret || app.secret);
 
   return (
-    <div className="screen stack-22">
-      <div>
-        <div className="eyebrow">Две шкалы</div>
-        <h2 className="display" style={{ marginTop: 3 }}>Уровни и степени</h2>
-        <p className="t-sm dim" style={{ marginTop: 8, lineHeight: 1.55 }}>
-          Уровень членства покупается и открывает доступ. Степень зарабатывается внутри и
-          определяет доверие. Их нельзя обменять друг на друга — и это принципиально.
-        </p>
-      </div>
+    <div className="screen stack-20">
+      <Top title="Уровни и степени" sub="Уровень покупается, степень зарабатывается" right={<button className="iconbtn" onClick={() => go('/club')}><Icon name="back" size={18} /></button>} />
 
-      <Section eyebrow="Покупается" title="Уровень членства">
-        <div className="stack-8">
+      <Section title="Уровень членства">
+        <List>
           {TIERS.map((t) => {
             const cur = me.tier === t.n;
-            const lower = me.tier > t.n;
+            const canUp = !cur && me.tier < t.n && t.price;
             return (
-              <Card key={t.n} variant={cur ? 'gold' : undefined}>
-                <div className="spread">
-                  <div className="row" style={{ gap: 11 }}>
-                    <div style={{ width: 4, height: 36, borderRadius: 3, background: `linear-gradient(180deg, ${t.edge[0]}, ${t.edge[1]})` }} />
-                    <div>
-                      <div className="row" style={{ gap: 7 }}>
-                        <span className="t-md">{t.name}</span>
-                        {cur && <Tag tone="gold">ваш</Tag>}
-                      </div>
-                      <div className="t-xs dim">{t.line}</div>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div className="t-sm num">{t.price ? usdExact(t.price) : '—'}</div>
-                    <div className="t-xs dim-2">{t.price ? 'в год' : 'по приглашению'}</div>
-                  </div>
-                </div>
-                {(cur || (!lower && t.n === me.tier + 1)) && (
-                  <div className="stack-8" style={{ marginTop: 12 }}>
-                    {t.perks.map((p) => (
-                      <div key={p} className="row t-xs" style={{ gap: 8 }}>
-                        <Icon name="check" size={13} color={cur ? 'var(--gold)' : 'var(--ink-3)'} />
-                        <span className="dim">{p}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {!cur && !lower && t.price && (
-                  <Btn variant="quiet" size="sm" wide style={{ marginTop: 12 }} onClick={() => app.upgrade(t.n)}>
-                    Перейти на {t.name} · {usdExact(t.price)}
-                  </Btn>
-                )}
-              </Card>
+              <Item
+                key={t.n}
+                lead={<div style={{ width: 6, height: 40, borderRadius: 3, flex: 'none', background: `linear-gradient(180deg, ${t.edge[0]}, ${t.edge[1]})`, marginLeft: 8, marginRight: 8 }} />}
+                title={<span className="row" style={{ gap: 7 }}>{t.name}{cur && <Tag tone="gold">ваш</Tag>}</span>}
+                sub={`${t.line} · ${t.perks[t.perks.length - 1]}`}
+                subWrap
+                meta={<span>{t.price ? `${usdExact(t.price)} / год` : 'по приглашению'}</span>}
+                chev={!!canUp}
+                onClick={canUp ? () => app.upgrade(t.n) : undefined}
+              />
             );
           })}
-        </div>
-        <Card className="row-t" style={{ gap: 11, marginTop: 4 }}>
-          <Icon name="eye" size={17} color="var(--ink-3)" />
-          <div className="t-xs dim">
-            Правило видимости: объект с минимальным уровнем N виден участнику с уровнем не ниже N.
-            Исключение — витрина услуг: бизнес-карточка партнёра видна всем, а его личный профиль
-            остаётся закрытым. Это две персоны одного человека с разными правами доступа.
-          </div>
-        </Card>
+        </List>
+        <Note icon="eye">Объект с минимальным уровнем N виден участнику с уровнем не ниже N. Нижние верхних не видят нигде.</Note>
       </Section>
 
-      <Section eyebrow="Зарабатывается" title="Степень">
-        <div className="stack-8">
-          {visibleDegrees.map((d) => {
+      <Section title="Степень">
+        <List>
+          {visible.map((d) => {
             const cur = me.degree === d.n;
             const done = me.degree >= d.n;
-            const ready =
-              counts.meets >= d.need.meets && counts.vouches >= d.need.vouches && counts.events >= d.need.events;
-            const prog = Math.min(
-              1,
-              (counts.meets / Math.max(1, d.need.meets)) * 0.5 +
-                (counts.vouches / Math.max(1, d.need.vouches)) * 0.3 +
-                (counts.events / Math.max(1, d.need.events || 1)) * 0.2
-            );
+            const prog = Math.min(1, (counts.meets / Math.max(1, d.need.meets)) * 0.5 + (counts.vouches / Math.max(1, d.need.vouches)) * 0.3 + (counts.events / Math.max(1, d.need.events || 1)) * 0.2);
             return (
-              <Card key={d.n} style={cur ? { borderColor: `${d.tone}66` } : undefined}>
-                <div className="spread">
-                  <div className="row" style={{ gap: 11 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 12, display: 'grid', placeItems: 'center', background: `${d.tone}1e`, color: d.tone, fontFamily: 'var(--display)', fontSize: 17, fontWeight: 700 }}>
-                      {d.roman}
-                    </div>
-                    <div>
-                      <div className="row" style={{ gap: 7 }}>
-                        <span className="t-md">{d.name}</span>
-                        {cur && <Tag style={{ background: `${d.tone}22`, color: d.tone }}>ваша</Tag>}
-                        {done && <Icon name="check" size={13} color="var(--green)" />}
-                        {d.secret && <Tag tone="violet">закрытая</Tag>}
-                      </div>
-                      <div className="t-xs dim">{d.line}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {!done && (
-                  <>
-                    <div style={{ marginTop: 12 }}><Bar value={prog} /></div>
-                    <div className="row t-xs dim-2" style={{ marginTop: 8, gap: 14, flexWrap: 'wrap' }}>
-                      <span>Встречи {counts.meets}/{d.need.meets}</span>
-                      <span>Поручительства {counts.vouches}/{d.need.vouches}</span>
-                      <span>События {counts.events}/{d.need.events}</span>
-                    </div>
-                  </>
-                )}
-
-                <div className="stack-8" style={{ marginTop: 12 }}>
-                  {d.opens.map((o) => (
-                    <div key={o} className="row t-xs" style={{ gap: 8 }}>
-                      <Icon name="key" size={12} color={d.tone} />
-                      <span className="dim">{o}</span>
-                    </div>
-                  ))}
-                </div>
-              </Card>
+              <Item
+                key={d.n}
+                lead={<div className="item__ic display" style={{ fontSize: 17, background: `${d.tone}1e`, color: d.tone }}>{d.roman}</div>}
+                title={<span className="row" style={{ gap: 7 }}>{d.name}{cur && <Tag style={{ background: `${d.tone}22`, color: d.tone }}>ваша</Tag>}{d.secret && <Tag tone="violet">закрытая</Tag>}</span>}
+                sub={done ? d.opens.join(' · ') : `Нужно: встречи ${counts.meets}/${d.need.meets}, поручительства ${counts.vouches}/${d.need.vouches}, события ${counts.events}/${d.need.events}`}
+                subWrap
+                meta={done ? <Icon name="check" size={16} color="var(--green)" /> : <div style={{ width: 48 }}><Bar value={prog} /></div>}
+                chev={false}
+              />
             );
           })}
-
           {!app.secret && (
-            <Card className="row-t" style={{ gap: 12 }}>
-              <Icon name="lock" size={18} color="var(--violet)" />
-              <div>
-                <div className="t-sm">
-                  Дальше — <span className="redacted">степень IV</span>, <span className="redacted">степень V</span> и ещё одна
-                </div>
-                <div className="t-xs dim" style={{ marginTop: 5, lineHeight: 1.5 }}>
-                  Официально клуб объявляет три степени. О существовании следующих известно
-                  из устава: их названия, состав и порядок перехода не публикуются.
-                </div>
-              </div>
-            </Card>
+            <Item icon="lock" title={<span>Дальше — <span className="redacted">степень IV</span>, <span className="redacted">степень V</span> и ещё одна</span>} sub="Официально клуб объявляет три степени. О следующих известно из устава, но их названия и состав не публикуются." subWrap chev={false} />
           )}
-
-          {app.secret && (
-            <Btn variant="ghost" wide icon="seal" onClick={() => go('/lodge')}>Войти в ложу</Btn>
-          )}
-        </div>
+        </List>
+        {app.secret && <Btn variant="ghost" wide icon="seal" onClick={() => go('/lodge')}>Войти в ложу</Btn>}
       </Section>
 
-      <Card className="row-t" style={{ gap: 11 }}>
-        <Icon name="users" size={17} color="var(--gold)" />
-        <div className="t-xs dim" style={{ lineHeight: 1.5 }}>
-          Быстрее всего степень растёт от подтверждённых встреч и поручительств.
-          Написать в чат — не считается: клуб держится на встречах.
-        </div>
-      </Card>
+      <Note icon="cup">Быстрее всего степень растёт от подтверждённых встреч и поручительств. Написать в чат — не считается.</Note>
     </div>
   );
 }

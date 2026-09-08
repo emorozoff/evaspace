@@ -49,12 +49,20 @@ const P = {
   dumbbell: 'M4 9v6m3-8v10m10-10v10m3-8v6M7 12h10',
   target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-4.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0-3.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z',
   scroll: 'M6 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6M6 4a2 2 0 0 0-2 2v2h4M6 4a2 2 0 0 1 2 2v10a2 2 0 0 0 2 2h7M9 9h6M9 13h6',
+  briefcase: 'M4 8.5A1.5 1.5 0 0 1 5.5 7h13A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5v-9ZM9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M4 12h16',
+  award: 'M12 14.5a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm-3 .5-1.5 6 4.5-2.5 4.5 2.5L15 15',
+  heart: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z',
+  at: 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm4-4v1.5a2.5 2.5 0 0 0 5 0V12a9 9 0 1 0-3.5 7.1',
+  graduation: 'M3 9.5 12 5l9 4.5-9 4.5-9-4.5Zm4 2.6v4.4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4.4M21 9.5V15',
+  car: 'M5 14.5 6.3 9.6A2 2 0 0 1 8.2 8h7.6a2 2 0 0 1 1.9 1.6L19 14.5M4 14.5h16v4a1 1 0 0 1-1 1h-1.5a1 1 0 0 1-1-1V18h-9v.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4Zm3.5 2h.01M16.5 16.5h.01',
+  sun: 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-13v2m0 14v2M3 12h2m14 0h2M5.6 5.6l1.4 1.4m10 10 1.4 1.4m0-12.8-1.4 1.4m-10 10-1.4 1.4',
+  send: 'M20 4 4 10.5l7 2.5 2.5 7L20 4Zm0 0-9 9',
 };
 
-export default function Icon({ name, size = 22, color = 'currentColor', width = 1.6, style }) {
+export default function Icon({ name, size = 22, color = 'currentColor', width = 1.6, style, className }) {
   const d = P[name] || P.grid;
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={style} aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={style} className={className} aria-hidden="true">
       <path d={d} stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );

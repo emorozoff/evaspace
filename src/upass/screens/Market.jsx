@@ -1,125 +1,79 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { Card, Chip, Scroller, Search, Section, Empty, Bar } from '../components/UI.jsx';
-import { Cover, Avatar, Ring } from '../components/Art.jsx';
+import { Top, List, Item, Chip, Scroller, Search, Empty, Bar, Note } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 import { SERVICES, SERVICE_CATS } from '../data/life.js';
 import { CITIES } from '../data/places.js';
 import { byId } from '../data/people.js';
 import { spendTotals } from '../lib/select.js';
-import { usd, usdExact, pct, nf, plural } from '../lib/format.js';
+import { usd, usdExact, pct } from '../lib/format.js';
+
+export const CAT_ICON = { transport: 'car', docs: 'passport', home: 'home', health: 'heart', media: 'brush', legal: 'shield', food: 'cup', gifts: 'gift', edu: 'book', tech: 'code' };
 
 export default function Market() {
   const app = useApp();
   const [cat, setCat] = useState('all');
-  const [city, setCity] = useState('all');
   const [q, setQ] = useState('');
-
   const spend = useMemo(() => spendTotals(app.extraSpend), [app.extraSpend]);
 
   const list = useMemo(() => {
     let out = SERVICES;
     if (cat !== 'all') out = out.filter((s) => s.cat === cat);
-    if (city !== 'all') out = out.filter((s) => s.city === city);
     if (q.trim()) {
       const t = q.toLowerCase();
-      out = out.filter((s) => s.title.toLowerCase().includes(t) || s.desc.toLowerCase().includes(t));
+      out = out.filter((s) => (s.title + ' ' + s.desc + ' ' + CITIES[s.city].name).toLowerCase().includes(t));
     }
     return out;
-  }, [cat, city, q]);
-
-  const cities = useMemo(() => [...new Set(SERVICES.map((s) => s.city))], []);
+  }, [cat, q]);
 
   return (
-    <div className="screen stack-16">
-      <div>
-        <div className="eyebrow">Внутренняя экономика</div>
-        <h2 className="display" style={{ marginTop: 3 }}>Услуги резидентов</h2>
-      </div>
+    <div className="screen stack">
+      <Top title="Услуги" sub="Резиденты — резидентам, с кэшбэком" right={<button className="iconbtn" onClick={() => go('/club')}><Icon name="back" size={18} /></button>} />
 
-      <Card variant="gold">
-        <div className="row" style={{ gap: 16 }}>
-          <Ring value={spend.share} size={84} stroke={7}>
-            <div>
-              <div className="display" style={{ fontSize: 19 }}>{pct(spend.share)}</div>
-              <div className="eyebrow" style={{ fontSize: 7.5 }}>внутри</div>
-            </div>
-          </Ring>
-          <div className="grow">
-            <div className="t-md">Цель круга — 80% трат внутри</div>
-            <div className="t-xs dim" style={{ marginTop: 5, lineHeight: 1.45 }}>
-              Мы ходим в рестораны резидентов, арендуем у резидентов, лечимся и снимаем у резидентов.
-              Деньги остаются в круге и возвращаются кэшбэком и ростом NAV.
-            </div>
-          </div>
+      <div className="card">
+        <div className="spread">
+          <div className="t-md">Трат внутри круга</div>
+          <div className="t-md gold">{pct(spend.share)} <span className="t-xs dim-2">/ цель 80%</span></div>
         </div>
-        <div style={{ marginTop: 12 }}><Bar value={spend.share / 0.8} /></div>
-        <div className="spread t-xs dim-2" style={{ marginTop: 7 }}>
-          <span>{usd(spend.inside)} внутри</span>
-          <span>{usd(spend.outside)} снаружи</span>
-        </div>
-      </Card>
+        <div style={{ marginTop: 10 }}><Bar value={spend.share / 0.8} /></div>
+        <div className="t-xs dim-2" style={{ marginTop: 7 }}>{usd(spend.inside)} внутри · {usd(spend.outside)} снаружи за 90 дней</div>
+      </div>
 
       <Search value={q} onChange={setQ} placeholder="Виза, байк, вилла, цветы, съёмка…" />
 
       <Scroller>
         <Chip on={cat === 'all'} onClick={() => setCat('all')}>Всё</Chip>
-        {SERVICE_CATS.map((c) => (
-          <Chip key={c.id} on={cat === c.id} onClick={() => setCat(c.id)}>{c.name}</Chip>
-        ))}
-      </Scroller>
-
-      <Scroller>
-        <Chip on={city === 'all'} onClick={() => setCity('all')}>Все города</Chip>
-        {cities.map((c) => (
-          <Chip key={c} on={city === c} onClick={() => setCity(c)}>{CITIES[c].flag} {CITIES[c].name}</Chip>
-        ))}
+        {SERVICE_CATS.map((c) => <Chip key={c.id} on={cat === c.id} onClick={() => setCat(c.id)}>{c.name}</Chip>)}
       </Scroller>
 
       {list.length === 0 ? (
-        <Empty title="Ничего не нашлось" text="В этом городе пока нет такой услуги. Условие открытия нового города — десять активных услуг от местных резидентов." />
+        <Empty title="Ничего не нашлось" text="Условие открытия нового города — десять активных услуг от местных резидентов." />
       ) : (
-        <div className="stack">
+        <List>
           {list.map((s) => {
             const owner = byId(s.owner);
             return (
-              <button key={s.id} className="card tap" style={{ padding: 0, overflow: 'hidden', display: 'block', width: '100%', textAlign: 'left' }} onClick={() => go(`/service/${s.id}`)}>
-                <Cover art={s.art} seed={s.id} height={106}>
-                  <div style={{ position: 'absolute', left: 13, right: 13, bottom: 10 }}>
-                    <div className="row" style={{ gap: 6, marginBottom: 5 }}>
-                      <span className="tag tag--gold">кэшбэк {s.cashback}%</span>
-                      <span className="tag tag--plain">{CITIES[s.city].flag} {CITIES[s.city].name}</span>
-                    </div>
-                    <div className="t-lg">{s.title}</div>
-                  </div>
-                </Cover>
-                <div className="spread" style={{ padding: 12 }}>
-                  <div className="row" style={{ gap: 9 }}>
-                    <Avatar person={owner} size={26} />
-                    <div>
-                      <div className="t-xs" style={{ fontWeight: 600 }}>{owner?.company}</div>
-                      <div className="t-xs dim-2">Ответ ≈ {s.reply} мин · ★ {s.rating}</div>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div className="t-sm gold">{s.price ? usdExact(s.price) : 'по запросу'}</div>
-                    {s.price > 0 && <div className="t-xs dim-2">за {s.unit}</div>}
-                  </div>
-                </div>
-              </button>
+              <Item
+                key={s.id}
+                icon={CAT_ICON[s.cat]}
+                title={s.title}
+                sub={`${owner?.company} · ${CITIES[s.city].flag} ${CITIES[s.city].name} · ответ ≈ ${s.reply} мин`}
+                meta={
+                  <>
+                    <span className="gold" style={{ fontSize: 13, fontWeight: 700 }}>{s.price ? usdExact(s.price) : 'по запросу'}</span>
+                    <span className="tag tag--gold">+{s.cashback}%</span>
+                  </>
+                }
+                chev={false}
+                onClick={() => go(`/service/${s.id}`)}
+              />
             );
           })}
-        </div>
+        </List>
       )}
 
-      <Card className="row-t" style={{ gap: 11 }}>
-        <Icon name="wallet" size={17} color="var(--gold)" />
-        <div className="t-xs dim">
-          Баллы начисляются за оплату услуг партнёров, билеты и приглашённых резидентов.
-          Курс списания фиксирован: 100 баллов = $1. Баллы — не UHT: они не дают доли в активах.
-        </div>
-      </Card>
+      <Note icon="wallet">Баллы начисляются за услуги, билеты и приглашённых. 100 баллов = $1. Баллы — не UHT.</Note>
     </div>
   );
 }
