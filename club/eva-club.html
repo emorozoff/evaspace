@@ -877,6 +877,22 @@
   .runway-desc{color:var(--ink-soft); font-size:13px;}
   .econ-row{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:16px;}
   .econ-row .note-sm{margin:0; flex:1; min-width:240px;}
+  .econ-sep{width:1px; height:24px; background:var(--line);}
+  .econ-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint);}
+  /* карточки-пояснения под таблицами */
+  .note-card{
+    background:var(--paper); border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px; font-size:12.5px; line-height:1.55; color:var(--ink-soft); margin-top:14px;
+  }
+  .warn-card{
+    display:flex; align-items:flex-start; gap:16px; flex-wrap:wrap;
+    background:var(--rust-bg); border:1px solid var(--rust); border-radius:12px;
+    padding:14px 16px; font-size:12.5px; line-height:1.55; color:var(--ink); margin-top:14px;
+  }
+  .warn-card > div{flex:1; min-width:280px;}
+  /* границы годов в широкой таблице Cash Flow */
+  .cf-table-bordered th.year-start, .cf-table-bordered td.year-start{border-left:2px solid var(--ink-faint);}
+  tr.cf-soft td{color:var(--ink-soft);}
 
   /* --- цели и декомпозиция --- */
   .goal-list{display:flex; flex-direction:column; gap:20px;}
@@ -1316,10 +1332,36 @@
   table.bud-table td:last-child, table.bud-table th:last-child{position:sticky; right:0; background:var(--panel); z-index:1;}
   table.bud-table tr.bud-group td:last-child, table.bud-table tr.bud-add td:last-child, table.bud-table tr.bud-excluded td:last-child{position:static; background:var(--paper);}
   tr.bud-group td{
-    background:var(--paper); font-weight:600; font-size:11.5px; text-transform:uppercase;
-    letter-spacing:.04em; color:var(--ink-soft); border-top:1px solid var(--ink-faint); padding-top:12px;
+    background:var(--paper); font-weight:600; font-size:11.5px;
+    color:var(--ink-soft); border-top:1px solid var(--ink-faint); padding-top:10px; padding-bottom:10px;
   }
+  tr.bud-group td:first-child{border-left:3px solid var(--line);}
+  tr.bud-group.grp-people   td:first-child{border-left-color:var(--gold-ink);}
+  tr.bud-group.grp-monthly  td:first-child{border-left-color:var(--navy, #3B4A6B);}
+  tr.bud-group.grp-once     td:first-child{border-left-color:var(--rust);}
+  tr.bud-group.grp-variable td:first-child{border-left-color:var(--green);}
   tr.bud-group td:last-child{text-transform:none; letter-spacing:0;}
+  .bud-grp-btn{
+    background:none; border:0; padding:0; cursor:pointer; display:inline-flex; align-items:center; gap:8px;
+    font:inherit; font-weight:700; font-size:13px; color:var(--ink); text-transform:none; letter-spacing:0;
+  }
+  .bud-grp-btn:hover{color:var(--gold-ink);}
+  .bud-chev{display:inline-block; transition:transform .15s; color:var(--ink-faint); font-size:11px; transform:rotate(90deg);}
+  tr.bud-group.collapsed .bud-chev{transform:rotate(0deg);}
+  .bud-count{
+    font-size:10.5px; font-weight:600; color:var(--ink-faint); background:var(--panel);
+    border:1px solid var(--line); border-radius:20px; padding:1px 7px;
+  }
+  tr.bud-group.collapsed .bud-hint{display:none;}   /* в свёрнутом виде строка остаётся в один ряд */
+  tr.bud-group td:first-child{white-space:normal;}
+  .bud-grp-sum{font-size:11px; color:var(--ink-faint); font-weight:500;}
+  tr.bud-group.collapsed .bud-grp-sum{color:var(--ink-soft); font-weight:600;}
+  tbody.bud-body.collapsed{display:none;}
+  tbody.bud-body tr td:first-child{border-left:3px solid transparent;}
+  tbody.bud-body[data-bud-rows="people"]   tr td:first-child{border-left-color:var(--gold-bg);}
+  tbody.bud-body[data-bud-rows="monthly"]  tr td:first-child{border-left-color:var(--paper);}
+  tbody.bud-body[data-bud-rows="once"]     tr td:first-child{border-left-color:var(--rust-bg);}
+  tbody.bud-body[data-bud-rows="variable"] tr td:first-child{border-left-color:var(--green-bg, var(--paper));}
   .bud-hint{font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-faint); font-size:11px; margin-left:8px;}
   tr.bud-add td{background:var(--paper); padding:6px 10px 0;}
   tr.bud-add .field-row{margin-bottom:8px;}
@@ -1335,6 +1377,15 @@
   .bud-month-input:focus{outline:none; border-color:var(--gold-ink); background:var(--panel);}
   td.bud-cell.overridden .bud-month-input{color:var(--gold-ink); font-weight:600; background:var(--gold-bg);}
   tr.bud-excluded td{background:var(--paper); font-size:12px; padding:8px 10px;}
+  /* варианты модели */
+  tr.var-current td{background:var(--paper);}
+  .var-star{color:var(--gold-ink);}
+  .var-now{font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--green); margin-left:6px;}
+  .var-actions{white-space:nowrap;}
+  .var-actions .btn{margin-left:4px;}
+  .btn.armed{background:var(--rust) !important; color:#fff !important; border-color:var(--rust) !important;}
+  .ctrl-hint{font-size:11px; color:var(--ink-faint); margin-top:4px; line-height:1.4;}
+  .ctrl-val.warn{color:var(--rust);}
   .plan-source{border-bottom:1px solid var(--line); margin-bottom:12px;}
   tr.bud-cum td{color:var(--ink-faint); font-size:11.5px; border-top:none; padding-top:2px;}
 
@@ -2115,6 +2166,15 @@ function cssPathOf(el){
   }
   return parts.length ? parts.join('>') : null;
 }
+/* Если человек сам прокрутил страницу, пока идёт перерисовка, — не
+   тянем его обратно: возвращаем положение только когда прокрутку
+   сбил сам браузер. */
+let _lastUserScroll = 0;
+['wheel','touchmove','pointerdown'].forEach(ev=>
+  document.addEventListener(ev, ()=>{ _lastUserScroll = Date.now(); }, {passive:true, capture:true}));
+document.addEventListener('keydown', (e)=>{
+  if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(e.key)) _lastUserScroll = Date.now();
+}, true);
 function captureScroll(){
   const inner = [];
   document.querySelectorAll(SCROLL_KEEP_SEL).forEach(el=>{
@@ -2122,11 +2182,12 @@ function captureScroll(){
     const sel = cssPathOf(el);
     if(sel) inner.push({sel, left:el.scrollLeft, top:el.scrollTop});
   });
-  return {y: window.scrollY, inner};
+  return {y: window.scrollY, inner, t: Date.now()};
 }
 function restoreScroll(s){
   if(!s) return;
   const apply = ()=>{
+    if(_lastUserScroll > s.t) return;   /* человек уже прокрутил сам */
     s.inner.forEach(r=>{
       let el = null; try{ el = document.querySelector(r.sel); }catch(e){}
       if(!el) return;
@@ -5231,9 +5292,25 @@ async function stratBudgetHtml(model){
   const excluded = await getHireExcluded();
   const positionsAll = await getPositions();
   const excludedRows = positionsAll.filter(p=>p.status!=='archived' && excluded[p.id]);
-  const groupHead = (title, hint, total)=>`
-    <tr class="bud-group"><td colspan="3">${title} <span class="bud-hint">${hint}</span></td>
-      ${months.map(()=>'<td></td>').join('')}<td class="num">${cfMoney(total)}</td><td></td></tr>`;
+  /* Шапка группы: сворачивается, показывает число строк и раскладку
+     группы по месяцам — так видно форму расходов даже в свёрнутом виде. */
+  const groupHead = (key, title, hint, list, total)=>{
+    const open = _budOpen[key]!==false;
+    const byMonth = months.map((m,i)=>list.reduce((a,r)=>a+(r.arr?r.arr[i]:0),0));
+    return `
+    <tr class="bud-group grp-${key} ${open?'':'collapsed'}" data-bud-group="${key}">
+      <td colspan="3">
+        <button type="button" class="bud-grp-btn" data-bud-toggle="${key}" aria-expanded="${open}">
+          <span class="bud-chev">▸</span><span class="bud-grp-title">${title}</span>
+          <span class="bud-count">${list.length}</span>
+        </button>
+        <span class="bud-hint">${hint}</span>
+      </td>
+      ${byMonth.map(v=>`<td class="num bud-grp-sum">${v?cfMoney(v):'<span class="soft">—</span>'}</td>`).join('')}
+      <td class="num">${cfMoney(total)}</td><td></td>
+    </tr>`;
+  };
+  const grp = (key, html)=>`<tbody class="bud-body ${_budOpen[key]===false?'collapsed':''}" data-bud-rows="${key}">${html}</tbody>`;
 
   const peopleRows = rows.filter(r=>r.group==='people').map(r=>`
     <tr>
@@ -5288,6 +5365,10 @@ async function stratBudgetHtml(model){
         {l:'Регулярные платежи', v:money(monTotal), sub:'студия, инфраструктура, бухгалтерия'},
         {l:'Разовые и переменные', v:money(onceTotal+varTotal), sub:`разово ${money(onceTotal)} · от объёма и налоги ${money(varTotal)}`},
       ])}
+      <div class="econ-row" style="margin:0 0 12px;">
+        <button class="btn ghost" id="budCollapseAll">${Object.values(_budOpen).every(v=>v===false)?'Развернуть все разделы':'Свернуть все разделы'}</button>
+        <span class="note-sm" style="margin:0;">Разделы сворачиваются по клику на заголовок: в свёрнутом виде остаётся только сумма по месяцам.</span>
+      </div>
       <div class="card table-card">
         <div class="table-scroll">
           <table class="calc-table bud-table">
@@ -5296,8 +5377,10 @@ async function stratBudgetHtml(model){
               ${months.map(m=>`<th>${finMonthShort(m)}</th>`).join('')}
               <th>Итого</th><th></th>
             </tr></thead>
-            <tbody>
-              ${groupHead('Люди', 'оклад плюс страховые взносы; состав и должности — на вкладке «Команда»', fotTotal)}
+            <tbody class="bud-head-body">
+              ${groupHead('people', 'Люди', 'оклад плюс страховые взносы; состав и должности — на вкладке «Команда»', rows.filter(r=>r.group==='people'), fotTotal)}
+            </tbody>
+            ${grp('people', `
               ${peopleRows}
               <tr class="bud-add"><td colspan="${months.length+5}">
                 <div class="field-row">
@@ -5307,9 +5390,12 @@ async function stratBudgetHtml(model){
                   <div class="field"><label>По месяц</label><select id="budNewHireTo"><option value="">бессрочно</option>${Array.from({length:FIN_HORIZON},(_,i)=>i+1).map(m=>`<option value="${m}">${finMonthLabel(m)}</option>`).join('')}</select></div>
                   <div class="field" style="flex:0 0 auto; display:flex; align-items:flex-end;"><button class="btn ghost" id="budAddHire">+ Человек</button></div>
                 </div>
-              </td></tr>
+              </td></tr>`)}
 
-              ${groupHead('Регулярные платежи', 'каждый месяц с одного по другой; сумму в конкретном месяце можно поправить прямо в клетке', monTotal)}
+            <tbody class="bud-head-body">
+              ${groupHead('monthly', 'Регулярные платежи', 'каждый месяц с одного по другой; сумму в конкретном месяце можно поправить прямо в клетке', rows.filter(r=>r.group==='monthly'), monTotal)}
+            </tbody>
+            ${grp('monthly', `
               ${rows.filter(r=>r.group==='monthly').map(editRow).join('')}
               <tr class="bud-add"><td colspan="${months.length+5}">
                 <div class="field-row">
@@ -5320,9 +5406,12 @@ async function stratBudgetHtml(model){
                   <div class="field"><label>По месяц</label><select id="budNewMonTo"><option value="">бессрочно</option>${Array.from({length:FIN_HORIZON},(_,i)=>i+1).map(m=>`<option value="${m}">${finMonthLabel(m)}</option>`).join('')}</select></div>
                   <div class="field" style="flex:0 0 auto; display:flex; align-items:flex-end;"><button class="btn ghost" id="budAddMon">+ Расход</button></div>
                 </div>
-              </td></tr>
+              </td></tr>`)}
 
-              ${groupHead('Разовые платежи', 'юрлицо, оборудование, пошлины — один платёж в свой месяц', onceTotal)}
+            <tbody class="bud-head-body">
+              ${groupHead('once', 'Разовые платежи', 'юрлицо, оборудование, пошлины — один платёж в свой месяц', rows.filter(r=>r.group==='once'), onceTotal)}
+            </tbody>
+            ${grp('once', `
               ${rows.filter(r=>r.group==='once').map(editRow).join('')}
               <tr class="bud-add"><td colspan="${months.length+5}">
                 <div class="field-row">
@@ -5332,17 +5421,22 @@ async function stratBudgetHtml(model){
                   <div class="field"><label>Месяц</label><select id="budNewOnceMonth">${months.map(m=>`<option value="${m}">${finMonthLabel(m)}</option>`).join('')}</select></div>
                   <div class="field" style="flex:0 0 auto; display:flex; align-items:flex-end;"><button class="btn ghost" id="budAddOnce">+ Платёж</button></div>
                 </div>
-              </td></tr>
+              </td></tr>`)}
 
-              ${varRows.length ? groupHead('Растут вместе с продажами', 'считаются автоматически от выручки и числа пользователей — ставки правятся в реестре на вкладке «Расходы»', varTotal-taxArr.reduce((a,b)=>a+b,0)) : ''}
+            <tbody class="bud-head-body">
+              ${groupHead('variable', 'Растут вместе с продажами и налоги', 'считаются сами от выручки и числа пользователей — ставки правятся в реестре на вкладке «Расходы»',
+                 varRows.concat([{arr:taxArr}]), varTotal)}
+            </tbody>
+            ${grp('variable', `
               ${varRowsHtml}
               <tr class="bud-var">
                 <td><div class="pb-name">Налоги и взносы с выручки</div><div class="pb-sub">${tax.base==='usn15'?'УСН «доходы минус расходы» 15%':'УСН «доходы» 6%'}</div></td>
                 <td class="soft">от выручки</td><td class="soft">—</td>
                 ${taxArr.map(cellFor).join('')}
                 <td class="num hl">${cfMoney(taxArr.reduce((a,b)=>a+b,0))}</td><td></td>
-              </tr>
+              </tr>`)}
 
+            <tbody class="bud-foot">
               <tr class="total-row"><td>Итого за месяц</td><td></td><td></td>
                 ${totals.map(v=>`<td class="num">${cfMoney(v)}</td>`).join('')}
                 <td class="num">${cfMoney(grand)}</td><td></td></tr>
@@ -5358,6 +5452,33 @@ async function stratBudgetHtml(model){
 
 function wireStratBudget(rerender){
   document.querySelectorAll('.money-fmt-input').forEach(wireThousandsInput);
+
+  /* сворачивание разделов — без перерисовки, чтобы ничего не дёргалось */
+  const applyGroup = (key)=>{
+    const open = _budOpen[key]!==false;
+    const head = document.querySelector(`tr.bud-group[data-bud-group="${key}"]`);
+    const bodyEl = document.querySelector(`tbody.bud-body[data-bud-rows="${key}"]`);
+    if(head) head.classList.toggle('collapsed', !open);
+    if(bodyEl) bodyEl.classList.toggle('collapsed', !open);
+    const btn = document.querySelector(`[data-bud-toggle="${key}"]`);
+    if(btn) btn.setAttribute('aria-expanded', String(open));
+  };
+  document.querySelectorAll('[data-bud-toggle]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const key = btn.dataset.budToggle;
+      _budOpen[key] = _budOpen[key]===false;
+      applyGroup(key);
+      const all = document.getElementById('budCollapseAll');
+      if(all) all.textContent = Object.values(_budOpen).every(v=>v===false) ? 'Развернуть все разделы' : 'Свернуть все разделы';
+    };
+  });
+  const collapseAll = document.getElementById('budCollapseAll');
+  if(collapseAll) collapseAll.onclick = ()=>{
+    const anyOpen = Object.values(_budOpen).some(v=>v!==false);
+    Object.keys(_budOpen).forEach(k=>{ _budOpen[k] = !anyOpen; });
+    Object.keys(_budOpen).forEach(applyGroup);
+    collapseAll.textContent = anyOpen ? 'Развернуть все разделы' : 'Свернуть все разделы';
+  };
 
   document.querySelectorAll('[data-bud-field]').forEach(inp=>{
     inp.addEventListener('change', async ()=>{
@@ -5962,6 +6083,24 @@ const DEFAULT_FUNNEL = {
   crLeadReg: 0.12,  /* визит/лид → регистрация */
 };
 
+/* ------------------------------------------------------------
+   ВАРИАНТЫ МОДЕЛИ
+   Вариант — это снимок доходной части: воронка, цены, отток,
+   допродажи. Расходы, штат и налоги в вариант не входят —
+   они заполняются отдельно и общие для всех вариантов.
+   ------------------------------------------------------------ */
+const VARIANT_KINDS = [
+  {id:'pessimistic', label:'Пессимистичный', cls:'pessimistic', ratio:0.65, min:0.35, max:0.90,
+   rule:'должен быть заметно слабее базового'},
+  {id:'realistic',   label:'Базовый',        cls:'realistic',   ratio:1,    min:1,    max:1,
+   rule:'точка отсчёта для остальных'},
+  {id:'optimistic',  label:'Оптимистичный',  cls:'optimistic',  ratio:1.45, min:1.10, max:2.60,
+   rule:'должен быть заметно сильнее базового, но не фантастика'},
+];
+const VARIANT_KIND_MAP = Object.fromEntries(VARIANT_KINDS.map(k=>[k.id,k]));
+const VARIANT_FUNNEL_KEYS  = ['newPayingM1','growthY1','growthY2','growthY3','crRegPay','crLeadReg'];
+const VARIANT_REVENUE_KEYS = ['priceMonthly','priceAnnual','annualShare','churn','churnAnnual','addons','useStrategyPlan'];
+
 const DEFAULT_TAX = { base:'usn6', it:false };   /* base: usn6 | usn15 */
 /* Два этапа денег, чтобы не путаться:
    • бюджет до запуска — мини-раунд от основателей, 1,5–3 млн ₽ на первые
@@ -5971,9 +6110,17 @@ const DEFAULT_FINANCING = [
   {id:'f_mini', name:'Мини-раунд основателей — бюджет до запуска', stage:'prelaunch', month:1, amount:2000000},
   {id:'f_main', name:'Основной раунд — к официальному запуску',    stage:'launch',    month:7, amount:15000000},
 ];
+/* Этапы денег: до запуска — выживание, к запуску — до самоокупаемости,
+   на масштабирование — уже не для выживания, а чтобы покупать рост
+   быстрее, чем он окупается сам. */
+const FIN_STAGES = [
+  {id:'prelaunch', label:'до запуска',        short:'До запуска'},
+  {id:'launch',    label:'к запуску',         short:'К официальному запуску'},
+  {id:'scale',     label:'на масштабирование',short:'На масштабирование'},
+];
 
 const FIN_SCENARIOS = {
-  pessimistic: { label:'Пессимистичный', cls:'pessimistic', desc:'Рост медленнее, отток выше, привлечение дороже',
+  pessimistic: { label:'Пессимистичный', cls:'pessimistic', desc:'Рост медленнее, отток выше',
     funnel:{newPayingM1:38, growthY1:0.08, growthY2:0.05, growthY3:0.02, crRegPay:0.15, crLeadReg:0.09},
     revenue:{churn:0.11, churnAnnual:0.045, annualShare:0.12}, cacRate:7000 },
   realistic:   { label:'Реалистичный',   cls:'realistic',   desc:'Базовый сценарий модели',
@@ -5983,6 +6130,26 @@ const FIN_SCENARIOS = {
     funnel:{newPayingM1:70, growthY1:0.16, growthY2:0.09, growthY3:0.04, crRegPay:0.26, crLeadReg:0.16},
     revenue:{churn:0.06, churnAnnual:0.02, annualShare:0.28}, cacRate:3000 },
 };
+
+/* Расходы, которые честно растут вместе с базой. Добавляются одной
+   кнопкой на вкладке Cash Flow и живут дальше обычными строками
+   реестра: их видно на «Расходах», ставку можно поправить, строку
+   удалить. Модель без них показывает маржу, которой не бывает. */
+const SCALE_COST_IDS = ['sc_team','sc_content','sc_partners'];
+const SCALE_COST_ITEMS = [
+  {id:'sc_team',     name:'Команда роста: +1 человек на каждые 500 платящих', cat:'fot', dept:'founders',
+   kind:'variable', driver:{base:'active_step500', rate:180000}, mandatory:false},
+  {id:'sc_content',  name:'Продакшн контента под рост базы',                  cat:'content', dept:'content',
+   kind:'variable', driver:{base:'active_step500', rate:60000},  mandatory:false},
+  {id:'sc_partners', name:'Партнёрские выплаты и амбассадоры',                cat:'marketing', dept:'commercial',
+   kind:'variable', driver:{base:'revenue', rate:0.03},          mandatory:false},
+];
+function scaleCostNote(it){
+  const d = it.driver||{};
+  if(d.base==='active_step500') return `${money(d.rate)} за каждые полные 500 платящих`;
+  if(d.base==='revenue')        return `${cfPct(d.rate)} от выручки`;
+  return (EXP_DRIVER_MAP[d.base]||{}).name || '';
+}
 
 const CAPEX_AMORT_MONTHS = 24;
 
@@ -6189,6 +6356,17 @@ async function buildHires(){
    ДВИЖОК. На вход — конфиг, на выход — помесячные ряды.
    Индекс 0 — «до старта», месяцы модели идут с 1.
    ============================================================ */
+/* Темп роста притока меняется плавно, а не ступенькой в январе.
+   Ползунки задают средний темп года — он приходится на середину года,
+   между серединами темп перетекает линейно. Так на графике нет
+   искусственного излома на 13-м и 25-м месяце. */
+function growthAt(F, m){
+  const g1 = F.growthY1||0, g2 = F.growthY2||0, g3 = F.growthY3||0;
+  if(m<=6)  return g1;
+  if(m<=18) return g1 + (g2-g1)*(m-6)/12;
+  if(m<=30) return g2 + (g3-g2)*(m-18)/12;
+  return g3;
+}
 function computeFinModel(cfg){
   const months   = cfg.months || FIN_HORIZON;
   const F        = cfg.funnel;
@@ -6204,7 +6382,7 @@ function computeFinModel(cfg){
     months,
     leads:z(), registered:z(), newPaying:z(), newMonthly:z(), newAnnual:z(),
     churned:z(), active:z(), activeMonthly:z(), activeAnnual:z(),
-    revSub:z(), revAddonNet:z(), gmvAddon:z(), revenue:z(),
+    revSub:z(), revAddonNet:z(), gmvAddon:z(), revenue:z(), turnover:z(),
     cashSub:z(), cashAddon:z(), cashIn:z(), deferred:z(),
     fot:z(), insurance:z(), payrollTotal:z(),
     cogs:z(), opex:z(), capex:z(), depreciation:z(),
@@ -6227,7 +6405,7 @@ function computeFinModel(cfg){
 
   for(let m=1; m<=months; m++){
     /* --- воронка --- */
-    const g = m<=12 ? F.growthY1 : (m<=24 ? F.growthY2 : F.growthY3);
+    const g = growthAt(F, m);
     /* Если на месяц задан план продаж из стратегии — берём его, а не
        формулу роста: так гант и деньги считают одно и то же. */
     const planned = cfg.newPayingPlan && cfg.newPayingPlan[m];
@@ -6266,6 +6444,9 @@ function computeFinModel(cfg){
     o.revAddonNet[m] = avgBase*arpuAddonNet;
     o.cashAddon[m]   = o.revAddonNet[m];
 
+    /* оборот — все деньги, которые проходят через площадку:
+       подписка целиком наша, от допродаж наша только доля */
+    o.turnover[m] = o.revSub[m]+o.gmvAddon[m];
     o.revenue[m] = o.revSub[m]+o.revAddonNet[m];
     o.cashIn[m]  = o.cashSub[m]+o.cashAddon[m];
 
@@ -6353,6 +6534,68 @@ function computeFinModel(cfg){
 }
 
 /* Собрать конфиг из сохранённых данных и посчитать модель. */
+async function getVariants(){
+  if(!('eva-club-fin-variants' in _cache)){
+    const stored = await loadShared('eva-club-fin-variants', null);
+    _cache['eva-club-fin-variants'] = stored || {items:[], approved:null};
+  }
+  return _cache['eva-club-fin-variants'];
+}
+function saveVariants(v){ setCacheLocal('eva-club-fin-variants', v); persistCache('eva-club-fin-variants'); }
+
+/* снимок текущих ползунков — только доходная часть */
+async function variantFromCurrent(name, kind){
+  const fun = await getFunnelCfg(), rev = await getRevenueCfg();
+  const f = {}, r = {};
+  VARIANT_FUNNEL_KEYS.forEach(k=>{ if(fun[k]!==undefined) f[k] = fun[k]; });
+  VARIANT_REVENUE_KEYS.forEach(k=>{ if(rev[k]!==undefined) r[k] = JSON.parse(JSON.stringify(rev[k])); });
+  return {id:uid(), name, kind, funnel:f, revenue:r, savedAt:new Date().toISOString()};
+}
+/* применить вариант: трогаем только доходы, расходы остаются как есть */
+async function applyVariant(v){
+  const fun = await getFunnelCfg(); Object.assign(fun, v.funnel); saveFunnelCfg(fun);
+  const rev = await getRevenueCfg(); Object.assign(rev, JSON.parse(JSON.stringify(v.revenue))); saveRevenueCfg(rev);
+  _finScenario = null;
+}
+function scaleVariant(v, s){
+  const cl = (x,a,b)=>Math.max(a, Math.min(b, x));
+  const f = Object.assign({}, v.funnel), r = JSON.parse(JSON.stringify(v.revenue||{}));
+  ['growthY1','growthY2','growthY3'].forEach(k=>{ if(f[k]!==undefined) f[k] = +cl(f[k]*s, 0, 0.4).toFixed(4); });
+  ['crRegPay','crLeadReg'].forEach(k=>{ if(f[k]!==undefined) f[k] = +cl(f[k]*Math.sqrt(s), 0.01, 0.9).toFixed(4); });
+  if(f.newPayingM1!==undefined) f.newPayingM1 = Math.max(1, Math.round(f.newPayingM1*Math.sqrt(s)));
+  ['churn','churnAnnual'].forEach(k=>{ if(r[k]!==undefined) r[k] = +cl(r[k]/Math.sqrt(s), 0.002, 0.5).toFixed(4); });
+  return Object.assign({}, v, {funnel:f, revenue:r});
+}
+function variantModel(baseCfg, v){
+  const cfg = Object.assign({}, baseCfg, {
+    funnel:  Object.assign({}, baseCfg.funnel,  v.funnel||{}),
+    revenue: Object.assign({}, baseCfg.revenue, v.revenue||{}),
+  });
+  return computeFinModel(cfg);
+}
+function variantStats(baseCfg, v){
+  const m = variantModel(baseCfg, v);
+  return {
+    revY3:  cfSumRange(m.revenue, 25, 36),
+    turnY3: cfSumRange(m.turnover, 25, 36),
+    active36: m.active[36],
+    be: m.breakevenMonth,
+    minCash: m.minCash,
+  };
+}
+/* подгонка: ищем множитель силы, при котором вариант попадает
+   в разумную полосу относительно базового */
+function fitVariant(baseCfg, v, targetRev){
+  let lo = 0.2, hi = 4, best = v;
+  for(let i=0;i<26;i++){
+    const mid = (lo+hi)/2;
+    const cand = scaleVariant(v, mid);
+    const rev = cfSumRange(variantModel(baseCfg, cand).revenue, 25, 36);
+    best = cand;
+    if(rev < targetRev) lo = mid; else hi = mid;
+  }
+  return best;
+}
 async function buildFinCfg(opts){
   opts = opts || {};
   const exp   = await getExpenses();
@@ -6398,9 +6641,10 @@ function cfMoney(n){
   if(n>=1e4) return sign+Math.round(n/1000).toLocaleString('ru-RU')+' тыс ₽';
   return sign+Math.round(n).toLocaleString('ru-RU')+' ₽';
 }
-function cfPct(n){
+function cfPct(n, signed){
   if(n===null||n===undefined||!isFinite(n)) return '—';
-  return (n*100).toFixed(1).replace(/\.0$/,'').replace('.', ',')+'%';
+  const v = (n*100).toFixed(1).replace(/\.0$/,'').replace('.', ',')+'%';
+  return signed && n>0 ? '+'+v : v;
 }
 function dec(n, digits){ return Number(n).toFixed(digits===undefined?1:digits).replace('.', ','); }
 function signedMoney(n){ return (n>=0?'+':'')+money(n); }
@@ -7005,6 +7249,9 @@ async function renderDepartmentDetail(id){
    ============================================================ */
 let _finView = 'dashboard';
 let _economyMode = false;
+let _cfMonths = 36;          /* сколько месяцев показывать в таблице Cash Flow */
+/* какие группы стартового бюджета раскрыты */
+let _budOpen = {people:true, monthly:true, once:true, variable:false};
 let _finScenario = 'realistic';
 let _finCharts = {};
 
@@ -7300,11 +7547,11 @@ function scenarioRowHtml(){
 async function applyScenario(key){
   const s = FIN_SCENARIOS[key]; if(!s) return;
   _finScenario = key;
+  /* сценарий меняет только доходную часть: воронку, цены и отток.
+     Расходы, штат и налоги заполняются отдельно и общие для всех
+     сценариев — иначе «пессимизм» незаметно переписывал бы бюджет. */
   const fun = await getFunnelCfg(); Object.assign(fun, s.funnel); saveFunnelCfg(fun);
   const rev = await getRevenueCfg(); Object.assign(rev, s.revenue); saveRevenueCfg(rev);
-  const exp = await getExpenses();
-  const cacItem = exp.items.find(i=>i.driver && i.driver.base==='new_paying');
-  if(cacItem){ cacItem.driver.rate = s.cacRate; saveExpenses(exp); }
 }
 function wireScenarioRow(rerender){
   document.querySelectorAll('[data-fin-scenario]').forEach(btn=>{
@@ -7665,7 +7912,7 @@ function unitEconomics(cfg, m){
   });
   const F2 = cfg.funnel;
   let newAtM = F2.newPayingM1;
-  for(let i=2;i<=m;i++){ const g = i<=12?F2.growthY1:(i<=24?F2.growthY2:F2.growthY3); newAtM *= (1+g); }
+  for(let i=2;i<=m;i++){ newAtM *= (1+growthAt(F2, i)); }
   const cacBlended = newAtM ? (marketingFixed + newAtM*cacRate)/newAtM : cacRate;
 
   /* вклад одного пользователя в покрытие постоянных расходов:
@@ -8197,6 +8444,92 @@ async function renderFinRevenue(body){
       <td><button class="btn ghost sm-del" data-del-addon="${a.id}">✕</button></td>
     </tr>`).join('');
 
+  /* ---------- варианты модели ---------- */
+  const vstore   = await getVariants();
+  const vitems   = vstore.items || [];
+  const current  = await variantFromCurrent('текущие настройки', 'realistic');
+  const curStats = variantStats(cfg, current);
+  const vrows    = vitems.map(v=>({v, st: variantStats(cfg, v)}));
+  const baseRow  = vrows.find(r=>r.v.id===vstore.approved) || vrows.find(r=>r.v.kind==='realistic') || null;
+  const baseRev  = baseRow ? baseRow.st.revY3 : curStats.revY3;
+  const sameAsCurrent = (v)=>JSON.stringify([v.funnel, v.revenue])===JSON.stringify([current.funnel, current.revenue]);
+
+  /* проверки: пессимистичный не должен быть сильнее базового и наоборот */
+  const vwarn = [];
+  vrows.forEach(r=>{
+    const k = VARIANT_KIND_MAP[r.v.kind]; if(!k || !baseRow || r.v.id===baseRow.v.id || k.id==='realistic') return;
+    const ratio = baseRev ? r.st.revY3/baseRev : 1;
+    if(ratio < k.min || ratio > k.max){
+      vwarn.push({row:r, kind:k, ratio,
+        text: k.id==='pessimistic'
+          ? (ratio > k.max
+              ? `«${esc(r.v.name)}» помечен пессимистичным, но даёт ${cfPct(ratio-1, true)} к базовому варианту — пессимистичный сценарий не может быть выгоднее базового.`
+              : `«${esc(r.v.name)}» слабее базового в ${dec(1/Math.max(0.01,ratio))} раза. Это уже не пессимизм, а другой бизнес: инвестор решит, что вы сами не верите в модель.`)
+          : (ratio < k.min
+              ? `«${esc(r.v.name)}» помечен оптимистичным, но почти не отличается от базового (${cfPct(ratio-1, true)}). Оптимистичный вариант должен показывать, что будет, если всё пойдёт лучше.`
+              : `«${esc(r.v.name)}» выше базового в ${dec(ratio)} раза. Такой разброс инвестор читает как «цифры взяты с потолка».`)});
+    }
+  });
+
+  const vkindOpts = (sel)=>VARIANT_KINDS.map(k=>`<option value="${k.id}" ${sel===k.id?'selected':''}>${k.label}</option>`).join('');
+  const variantsBlockHtml = `
+    <section class="block" style="margin-top:0;">
+      <h2>Варианты модели</h2>
+      <p class="block-sub">Вариант — снимок доходной части: воронка, цены, отток, допродажи. Расходы, штат и налоги в вариант не входят: они общие для всех вариантов и заполняются на своих вкладках. Утверждённый вариант — точка отсчёта, с ним сравниваются остальные.</p>
+      <div class="card table-card">
+        <table class="calc-table">
+          <thead><tr><th>Вариант</th><th>Тип</th><th>Платящих на 36 мес.</th><th>Выручка Год 3</th><th>Оборот Год 3</th><th>Выход в плюс</th><th>К базовому</th><th></th></tr></thead>
+          <tbody>
+            <tr class="var-current">
+              <td><b>Сейчас на ползунках</b><div class="pb-sub">то, что настроено прямо сейчас</div></td>
+              <td>—</td>
+              <td class="num">${num(Math.round(curStats.active36))}</td>
+              <td class="num hl">${cfMoney(curStats.revY3)}</td>
+              <td class="num">${cfMoney(curStats.turnY3)}</td>
+              <td class="num">${curStats.be>0?finMonthLabel(curStats.be):'позже 36 мес.'}</td>
+              <td class="num">${baseRev?cfPct(curStats.revY3/baseRev-1, true):'—'}</td>
+              <td></td>
+            </tr>
+            ${vrows.length ? vrows.map(({v,st})=>{
+              const k = VARIANT_KIND_MAP[v.kind] || VARIANT_KINDS[1];
+              const isApproved = vstore.approved===v.id;
+              const isCurrent  = sameAsCurrent(v);
+              return `<tr class="${isApproved?'row-active':''}">
+                <td><b>${esc(v.name)}</b>${isApproved?' <span class="var-star" title="Утверждённый вариант — точка отсчёта">★</span>':''}${isCurrent?' <span class="var-now">сейчас применён</span>':''}
+                    <div class="pb-sub">сохранён ${ruDate((v.savedAt||'').slice(0,10))}</div></td>
+                <td><span class="sc-dot ${k.cls}"></span>${k.label}</td>
+                <td class="num">${num(Math.round(st.active36))}</td>
+                <td class="num hl">${cfMoney(st.revY3)}</td>
+                <td class="num">${cfMoney(st.turnY3)}</td>
+                <td class="num">${st.be>0?finMonthLabel(st.be):'позже 36 мес.'}</td>
+                <td class="num ${baseRow && v.id!==baseRow.v.id ? (st.revY3>=baseRev?'pos':'neg') : ''}">${baseRow && v.id!==baseRow.v.id && baseRev ? cfPct(st.revY3/baseRev-1, true) : '—'}</td>
+                <td class="var-actions">
+                  <button class="btn ghost sm-del" data-var-apply="${v.id}" data-armed="0" ${isCurrent?'disabled':''} title="Поставить ползунки как в этом варианте">Применить</button>
+                  <button class="btn ghost sm-del" data-var-approve="${v.id}" data-armed="0" ${isApproved?'disabled':''} title="Сделать точкой отсчёта">Утвердить</button>
+                  <button class="btn ghost sm-del" data-var-update="${v.id}" data-armed="0" title="Перезаписать вариант текущими ползунками">Обновить</button>
+                  <button class="btn ghost sm-del" data-var-del="${v.id}" data-armed="0">✕</button>
+                </td>
+              </tr>`;
+            }).join('') : `<tr><td colspan="8" class="soft">Пока ни одного сохранённого варианта. Настройте ползунки ниже и сохраните — например, базовый, пессимистичный и оптимистичный.</td></tr>`}
+          </tbody>
+        </table>
+        <div class="field-row" style="margin-top:14px;">
+          <div class="field grow"><label>Название варианта</label><input type="text" id="newVarName" placeholder="Например, пессимистичный на защиту"></div>
+          <div class="field"><label>Тип</label><select id="newVarKind">${vkindOpts('realistic')}</select></div>
+          <div class="field" style="flex:0 0 auto; display:flex; align-items:flex-end;"><button class="btn" id="saveVarBtn">Сохранить как вариант</button></div>
+        </div>
+      </div>
+      ${vwarn.map(w=>`
+        <div class="warn-card">
+          <div><strong>Проверьте вариант.</strong> ${w.text}<br><span class="soft">${VARIANT_KIND_MAP[w.kind.id].label} ${w.kind.rule}: ориентир — ${cfPct(w.kind.min-1, true)} … ${cfPct(w.kind.max-1, true)} к базовому.</span></div>
+          <div style="display:flex; gap:8px; flex:0 0 auto;">
+            <button class="btn" data-var-fit="${w.row.v.id}" data-armed="0" title="Пересчитать ползунки варианта так, чтобы он встал в разумную полосу">Подогнать автоматически</button>
+            <button class="btn ghost" data-var-apply="${w.row.v.id}" data-armed="0">Поправить вручную</button>
+          </div>
+        </div>`).join('')}
+    </section>
+  `;
+
   const usePlan = rev.useStrategyPlan!==false;
   const funnelFields = [
     ...(usePlan ? [] : [{key:'newPayingM1', label:'Новых платящих в 1-й месяц', min:5, max:200, step:5, fmt:v=>num(v)+' чел.'}]),
@@ -8210,17 +8543,22 @@ async function renderFinRevenue(body){
     {key:'priceMonthly', label:'Цена месячной подписки', min:900,  max:7000,  step:100, fmt:v=>num(v)+' ₽'},
     {key:'priceAnnual',  label:'Цена годовой подписки',  min:9000, max:60000, step:500, fmt:v=>num(v)+' ₽'},
     {key:'annualShare',  label:'Доля выбирающих годовую',min:0,    max:0.8,   step:0.05, fmt:cfPct},
-    {key:'churn',        label:'Отток по месячной подписке', min:0.02, max:0.20, step:0.005, fmt:cfPct},
-    {key:'churnAnnual',  label:'Отток по годовой подписке',  min:0.002, max:0.08, step:0.002, fmt:cfPct},
+    {key:'churn',        label:'Отток по месячной подписке', min:0.01, max:0.50, step:0.005, fmt:cfPct, warn:0.20,
+      hint:'Сколько платящих уходит каждый месяц. Выше 20% — база не накапливается, модель проверяет это отдельно.'},
+    {key:'churnAnnual',  label:'Отток по годовой подписке',  min:0.002, max:0.25, step:0.002, fmt:cfPct, warn:0.08,
+      hint:'Годовая подписка отваливается медленнее: человек уже заплатил за год вперёд.'},
   ];
   const slider = (f, store, val)=>`
     <div class="ctrl">
-      <label>${f.label} <span class="ctrl-val" data-val-for="${f.key}">${f.fmt(val)}</span></label>
+      <label>${f.label} <span class="ctrl-val ${f.warn && val>f.warn ? 'warn':''}" data-val-for="${f.key}" data-warn="${f.warn||''}">${f.fmt(val)}</span></label>
       <input type="range" data-cfg-store="${store}" data-cfg-key="${f.key}" min="${f.min}" max="${f.max}" step="${f.step}" value="${val}">
+      ${f.hint?`<div class="ctrl-hint">${f.hint}</div>`:''}
     </div>`;
 
   body.innerHTML = `
-    <section class="block" style="margin-top:0;">
+    ${variantsBlockHtml}
+
+    <section class="block">
       <h2>Из чего складывается выручка</h2>
       <p class="block-sub">Подписка целиком наша; от допродаж остаётся только доля платформы.</p>
       ${howHtml('Почему считаем долю, а не оборот', 'Курс за 5 000 ₽ — это оборот площадки, а выручка компании — только take rate: то, что остаётся после выплаты эксперту. Инвестор и налоговая смотрят именно на неё. Оборот показываем справочно.')}
@@ -8281,6 +8619,72 @@ async function renderFinRevenue(body){
     </section>
   `;
 
+  /* ---------- варианты: сохранить, применить, утвердить, подогнать ---------- */
+  const rerenderRev = ()=>renderFinRevenue(body);
+  /* каждая кнопка спрашивает подтверждение вторым нажатием */
+  const armed = (btn, question, run)=>{
+    const original = btn.textContent;
+    btn.onclick = async ()=>{
+      if(btn.dataset.armed!=='1'){
+        btn.dataset.armed = '1';
+        btn.textContent = question;
+        btn.classList.add('armed');
+        setTimeout(()=>{ if(btn.dataset.armed==='1'){ btn.dataset.armed='0'; btn.textContent = original; btn.classList.remove('armed'); } }, 6000);
+        return;
+      }
+      await run();
+    };
+  };
+  const saveVarBtn = document.getElementById('saveVarBtn');
+  if(saveVarBtn) saveVarBtn.onclick = async ()=>{
+    const name = document.getElementById('newVarName').value.trim();
+    const kind = document.getElementById('newVarKind').value;
+    if(!name){ document.getElementById('newVarName').focus(); return; }
+    const st = await getVariants();
+    const v = await variantFromCurrent(name, kind);
+    st.items = (st.items||[]).concat([v]);
+    if(!st.approved && kind==='realistic') st.approved = v.id;   /* первый базовый становится точкой отсчёта */
+    saveVariants(st); rerenderRev();
+  };
+  document.querySelectorAll('[data-var-apply]').forEach(btn=>armed(btn, 'Заменить ползунки? Ещё раз', async ()=>{
+    const st = await getVariants();
+    const v = (st.items||[]).find(x=>x.id===btn.dataset.varApply);
+    if(v) await applyVariant(v);
+    rerenderRev();
+  }));
+  document.querySelectorAll('[data-var-approve]').forEach(btn=>armed(btn, 'Утвердить? Ещё раз', async ()=>{
+    const st = await getVariants();
+    st.approved = btn.dataset.varApprove;
+    saveVariants(st); rerenderRev();
+  }));
+  document.querySelectorAll('[data-var-update]').forEach(btn=>armed(btn, 'Перезаписать? Ещё раз', async ()=>{
+    const st = await getVariants();
+    const v = (st.items||[]).find(x=>x.id===btn.dataset.varUpdate);
+    if(v){
+      const fresh = await variantFromCurrent(v.name, v.kind);
+      v.funnel = fresh.funnel; v.revenue = fresh.revenue; v.savedAt = fresh.savedAt;
+      saveVariants(st);
+    }
+    rerenderRev();
+  }));
+  document.querySelectorAll('[data-var-del]').forEach(btn=>armed(btn, 'Удалить?', async ()=>{
+    const st = await getVariants();
+    st.items = (st.items||[]).filter(x=>x.id!==btn.dataset.varDel);
+    if(st.approved===btn.dataset.varDel) st.approved = null;
+    saveVariants(st); rerenderRev();
+  }));
+  document.querySelectorAll('[data-var-fit]').forEach(btn=>armed(btn, 'Пересчитать вариант? Ещё раз', async ()=>{
+    const st = await getVariants();
+    const v = (st.items||[]).find(x=>x.id===btn.dataset.varFit);
+    if(v){
+      const k = VARIANT_KIND_MAP[v.kind] || VARIANT_KINDS[1];
+      const fitted = fitVariant(cfg, v, baseRev*k.ratio);
+      v.funnel = fitted.funnel; v.revenue = fitted.revenue; v.savedAt = new Date().toISOString();
+      saveVariants(st);
+    }
+    rerenderRev();
+  }));
+
   document.querySelectorAll('.money-fmt-input').forEach(wireThousandsInput);
   const usePlanToggle = document.getElementById('usePlanToggle');
   if(usePlanToggle) usePlanToggle.addEventListener('change', async ()=>{
@@ -8299,7 +8703,11 @@ async function renderFinRevenue(body){
       const all = funnelFields.concat(revFields);
       const def = all.find(f=>f.key===key);
       const el = document.querySelector(`[data-val-for="${key}"]`);
-      if(def && el) el.textContent = def.fmt(parseFloat(inp.value));
+      if(def && el){
+        const v = parseFloat(inp.value);
+        el.textContent = def.fmt(v);
+        el.classList.toggle('warn', !!(def.warn && v>def.warn));
+      }
     });
   });
   document.querySelectorAll('[data-rev-field]').forEach(inp=>{
@@ -8397,12 +8805,18 @@ async function renderFinLaunch(body){
   let c = 0;
   const planCash = planMonths.map((m,i)=>{ c += bare.cashIn[m]-planExpense[i]; return c; });
 
-  const preFin  = financing.filter(f=>f.stage==='prelaunch');
-  const mainFin = financing.filter(f=>f.stage!=='prelaunch');
-  const preSum  = preFin.reduce((s2,f)=>s2+f.amount,0);
-  const mainSum = mainFin.reduce((s2,f)=>s2+f.amount,0);
-  const preNeed = Math.abs(Math.min(0, ...planMonths.map((m,i)=>planCash[i])));
-  const stageOpts = (sel)=>`<option value="prelaunch" ${sel==='prelaunch'?'selected':''}>до запуска</option><option value="launch" ${sel!=='prelaunch'?'selected':''}>к запуску</option>`;
+  const preFin   = financing.filter(f=>f.stage==='prelaunch');
+  const scaleFin = financing.filter(f=>f.stage==='scale');
+  const mainFin  = financing.filter(f=>f.stage!=='prelaunch' && f.stage!=='scale');
+  const preSum   = preFin.reduce((s2,f)=>s2+f.amount,0);
+  const mainSum  = mainFin.reduce((s2,f)=>s2+f.amount,0);
+  const scaleSum = scaleFin.reduce((s2,f)=>s2+f.amount,0);
+  const preNeed  = Math.abs(Math.min(0, ...planMonths.map((m,i)=>planCash[i])));
+  const mainNeed = Math.max(0, needed - preNeed);
+  const stageOpts = (sel)=>FIN_STAGES.map(st=>`<option value="${st.id}" ${(sel||'launch')===st.id?'selected':''}>${st.label}</option>`).join('');
+  /* ориентир для раунда на масштабирование: год привлечения сверх плана
+     на третьем году — столько стоит купить рост, а не ждать его */
+  const scaleHint = Math.round((cfSumRange(bare.byCat.marketing||[],25,36))/1e6)*1e6;
 
   const financingRows = financing.map(f=>`
     <tr data-id="${f.id}">
@@ -8484,14 +8898,20 @@ async function renderFinLaunch(body){
     </section>
 
     <section class="block">
-      <h2>Два этапа денег</h2>
-      <p class="block-sub">Чтобы не путаться: <b>бюджет до запуска</b> — мини-раунд основателей на первые ${STRAT_MONEY_HORIZON} месяцев с учётом старта продаж, ориентир 1,5–3 млн; <b>основной раунд</b> — к официальному запуску, в декабре или марте: месяц раунда меняется в колонке «Когда», а сама дата запуска — ключевой точкой в стратегии. Модель Cash Flow считает остаток с учётом обоих раундов, расчёт выше — без них.</p>
+      <h2>Три этапа денег</h2>
+      <p class="block-sub">Чтобы не путаться: <b>бюджет до запуска</b> — мини-раунд основателей на первые ${STRAT_MONEY_HORIZON} месяцев с учётом старта продаж, ориентир 1,5–3 млн; <b>основной раунд</b> — к официальному запуску, в декабре или марте: месяц раунда меняется в колонке «Когда», а сама дата запуска — ключевой точкой в стратегии; <b>раунд на масштабирование</b> — третий год, уже не на выживание: к этому моменту модель в плюсе, деньги нужны, чтобы покупать рост раньше, чем он окупается. Модель Cash Flow считает остаток с учётом всех трёх, расчёт выше — без них.</p>
       ${metricCards([
         {l:'Бюджет до запуска — нужно', v:money(preNeed), sub:'дно накопленного потока за первые 6 месяцев по плану стратегии'},
         {l:'Мини-раунд — заложено', v:money(preSum), cls: preSum>=preNeed?'pos':'neg', sub: (preSum>=preNeed ? 'хватает, запас '+money(preSum-preNeed) : 'не хватает '+money(preNeed-preSum)) + (preFin.length ? ' · '+preFin.map(f=>finMonthLabel(f.month)).join(', ') : ' · не задан')},
-        {l:'Основной раунд — нужно ещё', v:money(Math.max(0, needed-preNeed)), sub:'сверх этапа до запуска, до самоокупаемости с подушкой; всего '+money(needed)},
-        {l:'Основной раунд — заложено', v:money(mainSum), cls: mainSum>=Math.max(0, needed-preNeed)?'pos':'neg', sub: (mainSum>=Math.max(0, needed-preNeed) ? 'хватает, запас '+money(mainSum-Math.max(0, needed-preNeed)) : 'не хватает '+money(Math.max(0, needed-preNeed)-mainSum)) + (mainFin.length ? ' · '+mainFin.map(f=>finMonthLabel(f.month)).join(', ') : ' · не задан')},
+        {l:'Основной раунд — нужно ещё', v:money(mainNeed), sub:'сверх этапа до запуска, до самоокупаемости с подушкой; всего '+money(needed)},
+        {l:'Основной раунд — заложено', v:money(mainSum), cls: mainSum>=mainNeed?'pos':'neg', sub: (mainSum>=mainNeed ? 'хватает, запас '+money(mainSum-mainNeed) : 'не хватает '+money(mainNeed-mainSum)) + (mainFin.length ? ' · '+mainFin.map(f=>finMonthLabel(f.month)).join(', ') : ' · не задан')},
       ])}
+      <div class="${scaleFin.length?'note-card':'warn-card'}" style="${scaleFin.length?'':'background:var(--paper); border-color:var(--line);'}">
+        <div><strong>Раунд на масштабирование${scaleFin.length?' — '+money(scaleSum):''}.</strong> ${scaleFin.length
+          ? 'Заложен на '+scaleFin.map(f=>finMonthLabel(f.month)).join(', ')+'. Модель уже в плюсе к этому моменту, поэтому раунд идёт целиком в рост: привлечение, контент, новые направления.'
+          : `Не заложен. На третьем году модель выходит в плюс сама, но темп упирается в бюджет привлечения. Ориентир — ${money(scaleHint)}: столько модель тратит на маркетинг за весь третий год, примерно столько же нужно сверху, чтобы удвоить темп набора базы.`}</div>
+        ${scaleFin.length?'':`<button class="btn" id="addScaleRoundBtn">+ Раунд на масштабирование</button>`}
+      </div>
       <div class="card table-card">
         <table class="calc-table">
           <thead><tr><th>Источник</th><th>Этап</th><th>Когда</th><th>Сумма</th><th></th></tr></thead>
@@ -8541,6 +8961,12 @@ async function renderFinLaunch(body){
   document.querySelectorAll('[data-del-fin]').forEach(b=>{
     b.onclick = async ()=>{ saveFinancing((await getFinancing()).filter(f=>f.id!==b.dataset.delFin)); renderFinLaunch(body); };
   });
+  const scaleBtn = document.getElementById('addScaleRoundBtn');
+  if(scaleBtn) scaleBtn.onclick = async ()=>{
+    const list = await getFinancing();
+    list.push({id:uid(), name:'Раунд на масштабирование', stage:'scale', month:25, amount:scaleHint||30000000});
+    saveFinancing(list); renderFinLaunch(body);
+  };
   document.getElementById('addFinBtn').onclick = async ()=>{
     const name = document.getElementById('newFinName').value.trim(); if(!name) return;
     const list = await getFinancing();
@@ -8599,6 +9025,7 @@ async function renderFinCashflow(body){
     {label:'Выручка — подписка',       arr:model.revSub,       m:true},
     {label:'Выручка — допродажи',      arr:model.revAddonNet,  m:true},
     {label:'Выручка всего',            arr:model.revenue,      m:true, strong:true},
+    {label:'Оборот площадки',          arr:model.turnover,     m:true, soft:true},
     {label:'Себестоимость',            arr:model.cogs,         m:true},
     {label:'Валовая прибыль',          arr:model.grossProfit,  m:true, signed:true},
     {label:'ФОТ со взносами',          arr:model.payrollTotal, m:true},
@@ -8611,20 +9038,61 @@ async function renderFinCashflow(body){
     {label:'Внешние деньги',           arr:model.cfFin,        m:true},
     {label:'Остаток на конец месяца',  arr:model.cash,         m:true, signed:true, strong:true, eoy:true},
   ];
-  const fmtCell = (r,v)=>{
-    const cls = r.signed && v<0 ? ' class="neg"' : '';
-    return `<td${cls}>${r.m?cfMoney(v):num(Math.round(v))}</td>`;
+  const fmtCell = (r,v,yearStart)=>{
+    const cls = [r.signed && v<0 ? 'neg' : '', yearStart ? 'year-start' : ''].filter(Boolean).join(' ');
+    return `<td${cls?` class="${cls}"`:''}>${r.m?cfMoney(v):num(Math.round(v))}</td>`;
   };
-  const monthHeads = Array.from({length:12},(_,i)=>`<th>${finMonthLabel(i+1)}</th>`).join('');
+  const shown = _cfMonths;                       /* 12 или 36 месяцев подробно */
+  const yearCols = shown>=36 ? [] : [[13,24,'Год 2'],[25,36,'Год 3']];
+  const monthHeads = Array.from({length:shown},(_,i)=>
+    `<th class="${(i+1)%12===1&&i>0?'year-start':''}">${finMonthLabel(i+1)}</th>`).join('')
+    + yearCols.map(([,,lbl])=>`<th class="year-start">${lbl}</th>`).join('');
   const tableRows = rows.map((r,i)=>{
-    const cells = r.arr.slice(1,13).map(v=>fmtCell(r,v)).join('');
-    const y2 = r.eoy ? r.arr[24] : cfSumRange(r.arr,13,24);
-    const y3 = r.eoy ? r.arr[36] : cfSumRange(r.arr,25,36);
-    return `<tr class="${i%2?'zebra':''}"${r.strong?' style="font-weight:600;"':''}><td>${r.label}</td>${cells}${fmtCell(r,y2)}${fmtCell(r,y3)}</tr>`;
+    const cells = r.arr.slice(1,shown+1).map((v,idx)=>fmtCell(r,v,(idx+1)%12===1&&idx>0)).join('');
+    const extra = yearCols.map(([a,b])=>fmtCell(r, r.eoy?r.arr[b]:cfSumRange(r.arr,a,b), true)).join('');
+    return `<tr class="${i%2?'zebra':''} ${r.soft?'cf-soft':''}"${r.strong?' style="font-weight:600;"':''}><td>${r.label}</td>${cells}${extra}</tr>`;
   }).join('');
+
+  /* --- разбор по годам: откуда берётся третий год --- */
+  const yStat = [1,13,25].map((st)=>{
+    const a = st, b = st+11;
+    const rev  = cfSumRange(model.revenue, a, b);
+    const turn = cfSumRange(model.turnover, a, b);
+    const exp  = cfSumRange(model.totalExpense, a, b) + cfSumRange(model.taxTotal, a, b);
+    const eb   = cfSumRange(model.ebitda, a, b);
+    let sum = 0; for(let m=a;m<=b;m++) sum += model.active[m];
+    const avgBase = sum/12;
+    return {a, b, rev, turn, exp, eb, base:model.active[b], avgBase,
+            arpu: avgBase ? rev/12/avgBase : 0,
+            margin: rev ? eb/rev : 0,
+            per1000: avgBase ? exp/12/(avgBase/1000) : 0};
+  });
+  const scaleItemsOn = (await getExpenses()).items.some(i=>SCALE_COST_IDS.includes(i.id));
+  const marginFlagHtml = yStat[2].margin>0.45
+    ? `<div class="warn-card">
+        <div><strong>Маржа третьего года — ${cfPct(yStat[2].margin)}.</strong> Так получается потому, что база растёт в ${dec(yStat[2].avgBase/Math.max(1,yStat[0].avgBase))} раза, а штат и продакшн контента в модели остаются почти прежними: расходы на 1 000 платящих падают с ${cfMoney(yStat[0].per1000)} до ${cfMoney(yStat[2].per1000)} в месяц. Инвестор спросит об этом первым. Честнее заложить, что вместе с базой растут люди, контент и партнёрские выплаты.</div>
+        <button class="btn ${scaleItemsOn?'ghost':''}" id="cfScaleCostsBtn" data-armed="0">${scaleItemsOn?'Убрать расходы, растущие с базой':'Заложить расходы, растущие с базой'}</button>
+      </div>
+      <details class="guide"><summary>Что именно добавится</summary>
+        <ul>${SCALE_COST_ITEMS.map(i=>`<li><b>${esc(i.name)}</b> — ${scaleCostNote(i)}</li>`).join('')}</ul>
+        <p>Это обычные строки реестра расходов: их видно на вкладке «Расходы», можно поправить ставку или удалить по одной.</p>
+      </details>`
+    : (scaleItemsOn ? `<div class="note-card">Расходы, растущие вместе с базой, заложены — маржа третьего года ${cfPct(yStat[2].margin)}, расходы на 1 000 платящих ${cfMoney(yStat[2].per1000)} в месяц.
+        <button class="btn ghost sm-del" id="cfScaleCostsBtn" data-armed="0" style="margin-left:10px;">Убрать их</button></div>` : '');
+
+  /* --- дорога к миллиарду --- */
+  const turnPerUser  = model.active[36] ? model.turnover[36]/model.active[36] : 0;
+  const runRate      = model.turnover[36]*12;
+  const needPaying1B = turnPerUser ? 1e9/12/turnPerUser : 0;
+  const baseGrowth   = model.active[30]>0 ? Math.pow(model.active[36]/model.active[30], 1/6)-1 : 0;
+  const monthsTo1B   = (baseGrowth>0.001 && needPaying1B>model.active[36])
+    ? Math.log(needPaying1B/model.active[36])/Math.log(1+baseGrowth) : (needPaying1B<=model.active[36] ? 0 : Infinity);
+  const ue36         = unitEconomics(cfg, 36);
+  const payback      = ue36.paybackMonths;
 
   const yearRows = [
     {label:'Активные платящие на конец года', arr:model.active, m:false, eoy:true},
+    {label:'Оборот площадки',                 arr:model.turnover, m:true},
     {label:'Выручка',                         arr:model.revenue, m:true},
     {label:'Валовая прибыль',                 arr:model.grossProfit, m:true},
     {label:'EBITDA',                          arr:model.ebitda, m:true, signed:true},
@@ -8640,26 +9108,79 @@ async function renderFinCashflow(body){
       ${scenarioRowHtml()}
       ${kpiStrip([
         {l:'выход в плюс по EBITDA', v: model.breakevenMonth>0?finMonthLabel(model.breakevenMonth):'позже 36 мес.', cls: model.breakevenMonth>0?'':'neg'},
-        {l:'платящих на конец Года 1', v:num(model.active[12])},
         {l:'платящих на конец Года 3', v:num(model.active[36])},
+        {l:'оборот за Год 3', v:cfMoney(yStat[2].turn), hint:'подписка целиком плюс оборот допродаж — все деньги, проходящие через площадку'},
+        {l:'выручка за Год 3', v:cfMoney(yStat[2].rev)},
+        {l:'маржа EBITDA, Год 3', v:cfPct(yStat[2].margin), cls: yStat[2].margin>0.45?'neg':'pos'},
         {l:'минимум на счету', v:cfMoney(model.minCash), cls: model.minCash<0?'neg':'pos'},
-        {l:'остаток на 36-й месяц', v:cfMoney(model.cash[36]), cls: model.cash[36]<0?'neg':'pos'},
       ])}
       <div class="econ-row">
         <button class="btn ${_economyMode?'':'ghost'}" id="cfEconomyBtn">${_economyMode?'✓ Сокращённый вариант включён':'Показать сокращённый вариант'}</button>
-        <span class="note-sm">Сокращённый вариант убирает всё, что не отмечено обязательным: и позиции штата, и строки реестра расходов.</span>
+        <span class="econ-sep"></span>
+        <span class="econ-label">Налог</span>
+        <div class="toggle-row inline" id="cfTaxBaseRow">
+          <button data-tax-base="usn6" class="${tax.base==='usn6'?'active':''}" title="Налог считается с поступлений и уменьшается на страховые взносы, но не более чем вдвое">УСН 6%</button>
+          <button data-tax-base="usn15" class="${tax.base==='usn15'?'active':''}" title="Налог с разницы доходы минус расходы, но не меньше 1% с выручки">УСН 15%</button>
+        </div>
+        <span class="econ-label">Взносы на ФОТ</span>
+        <div class="toggle-row inline" id="cfTaxItRow">
+          <button data-tax-it="0" class="${!tax.it?'active':''}">обычные 30%</button>
+          <button data-tax-it="1" class="${tax.it?'active':''}" title="Экономия ${cfMoney(cfSumRange(model.fot,1,36)*(0.30-0.076))} за три года при текущем штате">ИТ 7,6%</button>
+        </div>
       </div>
+      <p class="note-sm">Сокращённый вариант убирает всё, что не отмечено обязательным: и позиции штата, и строки реестра расходов. Налоговый режим общий для всей модели — те же кнопки на вкладке «Расходы».</p>
+    </section>
+
+    <section class="block">
+      <h2>Почему третий год выглядит так</h2>
+      <p class="block-sub">Выручка года — это средняя база за год, умноженная на ARPU и на 12. База накапливается, потому что приток каждый месяц больше оттока; ARPU при этом не растёт. Отсюда и разница между годами — не «скачок», а накопление.</p>
+      <div class="card table-card">
+        <table class="calc-table">
+          <thead><tr><th>Показатель</th><th>Год 1</th><th>Год 2</th><th>Год 3</th></tr></thead>
+          <tbody>
+            <tr><td>Платящих на конец года</td>${yStat.map(y=>`<td class="num">${num(Math.round(y.base))}</td>`).join('')}</tr>
+            <tr><td>Средняя база за год</td>${yStat.map(y=>`<td class="num">${num(Math.round(y.avgBase))}</td>`).join('')}</tr>
+            <tr><td>ARPU, ₽/мес</td>${yStat.map(y=>`<td class="num">${money(y.arpu)}</td>`).join('')}</tr>
+            <tr><td>Оборот площадки</td>${yStat.map(y=>`<td class="num hl">${cfMoney(y.turn)}</td>`).join('')}</tr>
+            <tr><td>Выручка</td>${yStat.map(y=>`<td class="num hl">${cfMoney(y.rev)}</td>`).join('')}</tr>
+            <tr><td>Расходы с налогами</td>${yStat.map(y=>`<td class="num">${cfMoney(y.exp)}</td>`).join('')}</tr>
+            <tr><td>EBITDA</td>${yStat.map(y=>`<td class="num ${y.eb<0?'neg':'pos'}">${cfMoney(y.eb)}</td>`).join('')}</tr>
+            <tr><td>Маржа EBITDA</td>${yStat.map(y=>`<td class="num ${y.margin>0.45?'neg':''}">${cfPct(y.margin)}</td>`).join('')}</tr>
+            <tr><td>Расходы на 1 000 платящих в месяц</td>${yStat.map(y=>`<td class="num">${cfMoney(y.per1000)}</td>`).join('')}</tr>
+            <tr><td>Рост выручки к прошлому году</td><td class="num">—</td>${yStat.slice(1).map((y,i)=>`<td class="num">×${dec(y.rev/Math.max(1,yStat[i].rev))}</td>`).join('')}</tr>
+          </tbody>
+        </table>
+      </div>
+      ${marginFlagHtml}
+    </section>
+
+    <section class="block">
+      <h2>Дорога к миллиарду</h2>
+      <p class="block-sub">Миллиард — это оборот площадки, а не выручка компании. Считаем от текущей модели: сколько платящих для него нужно и когда они набираются при том же темпе.</p>
+      ${metricCards([
+        {l:'Оборот на 36-й месяц в годовом выражении', v:cfMoney(runRate), sub:`${cfMoney(model.turnover[36])} за месяц × 12`},
+        {l:'Оборот на платящего', v:money(turnPerUser)+'/мес', sub:'подписка плюс его покупки на площадке'},
+        {l:'Платящих для 1 млрд оборота', v:num(Math.round(needPaying1B)), sub:`сейчас в модели ${num(Math.round(model.active[36]))} на 36-й месяц`},
+        {l:'Когда это наберётся', v: monthsTo1B && isFinite(monthsTo1B) ? finMonthLabel(36+Math.ceil(monthsTo1B)) : 'нужен другой темп', cls: monthsTo1B && isFinite(monthsTo1B) && monthsTo1B<=36 ? 'pos':'', sub: monthsTo1B && isFinite(monthsTo1B) ? `≈ ${Math.ceil(monthsTo1B)} мес. после горизонта модели при темпе последних месяцев` : 'при текущем темпе база выходит на полку'},
+      ])}
+      <div class="note-card">Ускорить можно только деньгами в привлечение: каждый новый платящий стоит ${money(model.cac[36]||0)} на 36-м месяце и окупается за ${isFinite(payback)&&payback>0?dec(payback)+' мес':'—'}. Это и есть смысл раунда на масштабирование — он берётся не на выживание, а на то, чтобы покупать рост раньше, чем он окупится. Сумма и месяц раунда задаются на вкладке <a href="#statistics/launch">«Сколько нужно на запуск»</a>.</div>
     </section>
 
     <section class="block">
       <h2>Полная таблица по месяцам</h2>
-      <p class="block-sub">Первые 12 месяцев подробно, дальше Год 2 и Год 3 одной колонкой.</p>
+      <div class="econ-row" style="margin:0 0 12px;">
+        <div class="toggle-row inline" id="cfMonthsRow">
+          <button data-cf-months="36" class="${_cfMonths===36?'active':''}">Все 36 месяцев</button>
+          <button data-cf-months="12" class="${_cfMonths===12?'active':''}">12 месяцев + годы</button>
+        </div>
+        <span class="note-sm" style="margin:0;">Таблица прокручивается вбок; вертикальные линии — границы годов.</span>
+      </div>
       <div class="breakout-wide">
         <div class="cf-table-card">
-          <div class="cf-table-title">Cash Flow — ${finMonthLabel(1)} → ${finMonthLabel(36)}</div>
+          <div class="cf-table-title">Cash Flow — ${finMonthLabel(1)} → ${finMonthLabel(36)}${_cfMonths<36?' · первые 12 месяцев помесячно, дальше итогами за год':''}</div>
           <div class="table-scroll">
             <table class="monthly-table cf-table-bordered">
-              <tr><th>Показатель</th>${monthHeads}<th>Год 2</th><th>Год 3</th></tr>
+              <tr><th>Показатель</th>${monthHeads}</tr>
               ${tableRows}
             </table>
           </div>
@@ -8709,6 +9230,29 @@ async function renderFinCashflow(body){
 
   wireScenarioRow(()=>renderFinCashflow(body));
   document.getElementById('cfEconomyBtn').onclick = ()=>{ _economyMode = !_economyMode; renderFinCashflow(body); };
+  document.querySelectorAll('#cfMonthsRow button').forEach(b=>{
+    b.onclick = ()=>{ _cfMonths = parseInt(b.dataset.cfMonths); renderFinCashflow(body); };
+  });
+  document.querySelectorAll('#cfTaxBaseRow button').forEach(b=>{
+    b.onclick = async ()=>{ const t = await getTaxCfg(); t.base = b.dataset.taxBase; saveTaxCfg(t); renderFinCashflow(body); };
+  });
+  document.querySelectorAll('#cfTaxItRow button').forEach(b=>{
+    b.onclick = async ()=>{ const t = await getTaxCfg(); t.it = b.dataset.taxIt==='1'; saveTaxCfg(t); renderFinCashflow(body); };
+  });
+  const scaleBtn = document.getElementById('cfScaleCostsBtn');
+  if(scaleBtn) scaleBtn.onclick = async ()=>{
+    /* добавление и удаление строк реестра — спрашиваем подтверждение */
+    if(scaleBtn.dataset.armed!=='1'){
+      scaleBtn.dataset.armed = '1';
+      scaleBtn.textContent = scaleItemsOn ? 'Точно убрать? Нажмите ещё раз' : 'Точно добавить? Нажмите ещё раз';
+      setTimeout(()=>{ if(scaleBtn.dataset.armed==='1'){ scaleBtn.dataset.armed='0'; renderFinCashflow(body); } }, 6000);
+      return;
+    }
+    const x = await getExpenses();
+    if(scaleItemsOn) x.items = x.items.filter(i=>!SCALE_COST_IDS.includes(i.id));
+    else SCALE_COST_ITEMS.forEach(i=>{ if(!x.items.some(y=>y.id===i.id)) x.items.push(JSON.parse(JSON.stringify(i))); });
+    saveExpenses(x); renderFinCashflow(body);
+  };
   document.querySelectorAll('[data-hire-month]').forEach(sel=>{
     sel.addEventListener('change', async ()=>{
       const val = parseInt(sel.value)||1;
