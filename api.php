@@ -661,6 +661,11 @@ switch ($action) {
       'from'    => mb_substr(trim((string)($body['from'] ?? 'Eva Space')), 0, 80),
       'by'      => low((string)$me['email']),        // кто отправил — для счёта и жалоб
       'subject' => mb_substr(trim((string)($body['subject'] ?? '')), 0, 120),
+      /* от кого именно письмо и к какому обращению относится: по этим двум
+         полям приложение кладёт его в нужную нить, а её ответ возвращается
+         в то же обращение, а не заводит новое */
+      'chan'    => mb_substr(trim((string)($body['chan'] ?? '')), 0, 20),
+      'tid'     => mb_substr(trim((string)($body['tid'] ?? '')), 0, 40),
       'text'    => $text,
       'at'      => time() * 1000
     ]]), -200);                                        // храним последние 200
@@ -785,6 +790,8 @@ switch ($action) {
           fail('Раздел «' . $b . '» меняет только администратор', 403);
         $db['shared'][$b] = merge_expert($b, $db['shared'][$b] ?? null, $v,
                                          low((string)$me['email']), $db['shared'] ?? []);
+      } elseif ($b === 'support') {                    // обращения: переписку не теряем
+        $db['shared'][$b] = merge_talk($db['shared'][$b] ?? [], $v);
       } elseif (in_array($b, OPEN_BRANCHES, true)) {   // пользовательница: дописываем, не стираем
         $db['shared'][$b] = merge_open($db['shared'][$b] ?? null, $v);
       } elseif (in_array($b, CARD_BRANCHES, true)) {   // только своя карточка
@@ -898,6 +905,36 @@ switch ($action) {
 
 /* Массив записей: старые остаются, новые добавляются, совпавшие по id
    обновляются. Стереть раздел целиком пользовательница не может. */
+/* Обращение правят обе стороны: она пишет ответ, администратор — свой.
+   При обычном слиянии побеждал тот, кто отправил последним, и одно из
+   сообщений пропадало. Поэтому список переписки внутри обращения
+   объединяем по идентификаторам сообщений. */
+function merge_talk($old, $new) {
+  $merged = merge_open($old, $new);
+  if (!is_array($old) || !is_array($merged)) return $merged;
+  $byId = [];
+  foreach ($old as $item) {
+    if (is_array($item) && isset($item['id'])) $byId[(string)$item['id']] = $item;
+  }
+  foreach ($merged as $i => $item) {
+    if (!is_array($item) || !isset($item['id'])) continue;
+    $prev = $byId[(string)$item['id']] ?? null;
+    if (!$prev || !is_array($prev['msgs'] ?? null) || !is_array($item['msgs'] ?? null)) continue;
+    $seen = [];
+    $all  = [];
+    foreach (array_merge($prev['msgs'], $item['msgs']) as $m) {
+      if (!is_array($m)) continue;
+      $key = (string)($m['id'] ?? md5(json_encode($m) ?: ''));
+      if (isset($seen[$key])) continue;
+      $seen[$key] = true;
+      $all[] = $m;
+    }
+    usort($all, fn($a, $b) => ((int)($a['at'] ?? 0)) <=> ((int)($b['at'] ?? 0)));
+    $merged[$i]['msgs'] = array_slice($all, -60);
+  }
+  return $merged;
+}
+
 function merge_open($old, $new) {
   if (!is_array($new)) return $old;
   if (!is_array($old) || !$old) return is_array($new) ? array_slice(array_values($new), 0, MAX_ITEMS) : $new;

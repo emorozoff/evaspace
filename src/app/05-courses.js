@@ -1008,7 +1008,20 @@ function starComment(pid, ci){
 /* =====================================================================
    СООБЩЕСТВА: чаты
    ===================================================================== */
+/* В анонимных комнатах разговор посеян нарочно: женщина, которая зашла
+   первой, не должна упереться в пустой экран на такой теме. Ники здесь —
+   обычные придуманные имена, как у неё самой. */
 const CHAT_SEED = {
+  gr10:[['Редакция Евы','#2E2145',"Здесь без имён. Можно писать о том, о чём не говорят вслух: никто не увидит, кто вы. Мы читаем комнату каждый день.",'09:00','','1'],
+        ['Тихая осень','#2E2145',"Второй год живу с человеком, который не бьёт, но говорит так, что я перестала узнавать себя в зеркале. Написала это впервые.",'11:20'],
+        ['Синяя сова','#24384A',"Тихая осень, я вас слышу. Полтора года назад было так же. Первое, что помогло, — записывать фразы. На бумаге видно то, что в голове стирается.",'12:05'],
+        ['Ранняя река','#23423B',"Спасибо, что написали. Я пока только читаю.",'13:40']],
+  gr11:[['Редакция Евы','#2E2145',"Комната для тех, у кого сейчас рушится. Развод, потеря, долги, болезнь. Без советов, если о них не просят.",'08:30','','1'],
+        ['Поздняя гавань','#402C1F',"Развожусь после одиннадцати лет. Больше всего боюсь не одиночества, а того, что придётся объяснять это всем.",'10:15'],
+        ['Мятная лиса','#3B2436',"Объяснять не придётся. Я в прошлом году поняла: достаточно фразы «мы больше не вместе» и паузы.",'10:44']],
+  gr12:[['Редакция Евы','#2E2145',"Про деньги честно: долги, кредиты, стыд, зарплата меньше, чем у всех вокруг. Здесь не считают чужие.",'09:10','','1'],
+        ['Дальняя заря','#402038',"Триста тысяч долга по картам, из них половина — за чужие подарки и «надо соответствовать». Никому не говорила.",'14:02'],
+        ['Ясная волна','#2B2B3F',"Я год выбиралась из такого же. Сработало одно: перестала платить минимальные платежи по всем и закрывала по одной.",'15:20']],
   gr1:[['Ирина','#3F7D62',"Девочки, седьмой день подряд на коврике. Раньше максимум было два.",'09:12'],
        ['Алина Ветрова','#A8375C',"Ирина, поздравляю. Если появится ощущение «уже легко» — не увеличивай время, увеличь внимание.",'09:31',1],
        ['Камила','#6C5CE0',"А коврик 6 мм не слишком мягкий для баланса?",'10:02'],
@@ -1034,8 +1047,9 @@ function initChats(){
      переписки, и отправка сообщения в неё падала */
   GROUPS.forEach(g => {
     if(!Array.isArray(S.chats[g.id]))
-      S.chats[g.id] = (CHAT_SEED[g.id]||[]).map(([a,c,t,tm,exp], i) =>
-        ({id:g.id + '_s' + i, a, c, t, tm, exp:!!exp, at:1000 + i}));
+      S.chats[g.id] = (CHAT_SEED[g.id]||[]).map(([a,c,t,tm,exp,cur], i) =>
+        ({id:g.id + '_s' + i, a, c, t, tm, exp:!!exp, at:1000 + i,
+          anon:isAnon(g) || undefined, curator:cur ? true : undefined}));
   });
   if(first || !S.chat) S.chat = {open:null, reply:null, unread:{gr2:2, gr3:1}};
 }
@@ -1170,12 +1184,7 @@ function pgChatRoom(){
       </div>
     </div>
     <div class="pad">
-      ${isAnon(g) ? `<div class="anonnote">
-        ${ANON_MARK}
-        <div>Здесь вы — <b>${esc(myAnonName(g.id))}</b>. Имя, фотография и почта
-          в эту комнату не попадают: их нет ни на экране, ни в сохранённом.
-          В соседней анонимной комнате прозвище будет другим.</div>
-      </div>` : ''}
+      ${isAnon(g) ? anonHead(g) : ''}
       <div class="chatlist" id="clist">
         ${msgs.map((m,i) => {
           const mine = chatMine(m, g.id);
@@ -1183,7 +1192,7 @@ function pgChatRoom(){
              ставить их не из чего — почты в данных нет. Вместо аватара
              одинаковый для всех кружок, чтобы по нему нельзя было угадать. */
           const ava = m.anon
-            ? `<span class="anonava">${m.curator ? EVA_MARK : ANON_MARK}</span>`
+            ? anonAva(m.a, 32, m.curator)
             : chatAva(m.a, m.c || authorColor(m.email || m.a), false, 32, authorMail(m));
           const nm = m.anon || m.exp || m.curator ? esc(m.a) : personLink(m.a, authorMail(m));
           const muted = m.anon && !m.curator && anonMuted(g, m.a);
@@ -1209,6 +1218,37 @@ function pgChatRoom(){
 /* Значок вместо аватара в анонимной группе. Один и тот же у всех:
    любой намёк на разное — цвет, буква, форма — со временем складывается
    в узнавание. У редакции свой, чтобы её было видно сразу. */
+/* =====================================================================
+   ЛИЦО В АНОНИМНОЙ КОМНАТЕ
+   Один и тот же значок у всех превращал разговор в стену: непонятно,
+   где чья реплика, и поддержать конкретную женщину невозможно. Поэтому
+   аватар считается из ника — буква и цвет из палитры глубоких тонов.
+   Ник она придумала сама, с её аккаунтом он не связан ничем, значит и
+   аватар ничего о ней не выдаёт: он про имя в комнате, а не про неё.
+
+   Стиль общий для всех аватаров комнаты — меняется одним словом ниже.
+   Варианты: plain — тёмный круг и буква; veil — буква под вуалью;
+   night — глубокая ночь с искрой; ring — кольцо и прозрачная середина;
+   frost — матовое стекло. */
+const ANON_AVA = 'veil';
+const ANON_COLORS = ['#2E2145','#24384A','#3B2436','#23423B','#402C1F','#2B2B3F','#402038','#1F3A44'];
+function anonColor(name){
+  const src = String(name || '');
+  let h = 5381;
+  for(let i = 0; i < src.length; i++) h = ((h << 5) + h + src.charCodeAt(i)) >>> 0;
+  return ANON_COLORS[h % ANON_COLORS.length];
+}
+/* Буква — первая буква ника. У «Редакции Евы» вместо буквы звезда:
+   ведущую видно сразу, и спутать её с участницей нельзя. */
+function anonAva(name, size, curator){
+  const s = size || 32;
+  if(curator) return `<span class="anonava eva" style="width:${s}px;height:${s}px">${EVA_MARK}</span>`;
+  const n = String(name || '?').trim();
+  const letter = n ? n[0].toUpperCase() : '?';
+  return `<span class="anonava av-${ANON_AVA}" style="--ac:${anonColor(n)};width:${s}px;height:${s}px;
+    font-size:${Math.round(s * 0.42)}px"><i>${esc(letter)}</i></span>`;
+}
+
 const ANON_MARK = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
   stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.4"/><path d="M4.8 19.5c0-3.3 3.2-5.4 7.2-5.4s7.2 2.1 7.2 5.4"/></svg>`;
 const EVA_MARK = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6l2.3 6.3 6.4.4-5 4.1 1.7 6.2-5.4-3.6-5.4 3.6 1.7-6.2-5-4.1 6.4-.4z"/></svg>`;
@@ -1224,13 +1264,38 @@ function chatBar(){
     ${re ? `<div class="rebar">
       <div style="flex:1;min-width:0"><b>${esc(re.a)}</b><span>${esc(String(re.t).slice(0,70))}</span></div>
       <button onclick="cancelReply()">✕</button></div>` : ''}
-    <div class="chatinput">
+    ${isAnon(g) && !hasAnonNick(g.id) && S.role !== 'admin'
+      ? `<div class="chatinput"><button class="btn" style="flex:1"
+           onclick="openSheet({k:'anonNick',id:'${attJs(g.id)}'})">Придумать ник и написать</button></div>`
+      : `<div class="chatinput">
       <input class="field" id="cin" placeholder="${re ? 'Ответ для ' + esc(re.a)
-        : isAnon(g) ? 'Написать как ' + esc(myAnonName(g.id)) : 'Сообщение'}"
+        : isAnon(g) ? 'Написать как ' + esc(myAnonName(g.id) || 'редакция') : 'Сообщение'}"
         onkeydown="if(event.key==='Enter')sendMsg('${attJs(g.id)}')">
       <button class="btn" onclick="sendMsg('${attJs(g.id)}')">→</button>
-    </div>
+    </div>`}
   </div>`;
+}
+
+/* Шапка анонимной комнаты: пока ника нет — приглашение придумать его,
+   потом — короткая строка о том, кто она здесь и что это значит. */
+function anonHead(g){
+  if(S.role === 'admin') return `<div class="anonnote">${ANON_MARK}
+    <div>Вы здесь как <b>Редакция Евы</b>. Участницы подписаны никами, которые придумали сами:
+      кто за ником — не видно ни вам, ни серверу. Можно убрать сообщение и закрыть письмо по нику.</div></div>`;
+  if(!hasAnonNick(g.id)) return `<div class="nickcard">
+      <div class="nickico">${ANON_MARK}</div>
+      <h3 class="serif">Придумай себе ник</h3>
+      <p>Он будет виден только в этой комнате и не связан с твоей страницей: ни имени,
+        ни фотографии, ни почты здесь нет. Можно говорить о том, что глубоко внутри,
+        и поддерживать других. Без масок.</p>
+      <button class="btn" onclick="openSheet({k:'anonNick',id:'${attJs(g.id)}'})">Придумать ник</button>
+    </div>`;
+  return `<div class="anonnote">
+      ${anonAva(myAnonName(g.id), 34)}
+      <div>Здесь ты — <b>${esc(myAnonName(g.id))}</b>. Этот ник живёт только в этой комнате:
+        с твоей страницей, именем и почтой он не связан.
+        <button class="link" onclick="openSheet({k:'anonNick',id:'${attJs(g.id)}'})">Сменить ник</button></div>
+    </div>`;
 }
 
 /* ответ на сообщение: цитата остаётся видимой, пока не отправишь или не отменишь */
@@ -1246,7 +1311,7 @@ function chatMine(m, gid){
   if(!m) return false;
   /* В анонимной группе своё сообщение узнаём по прозвищу: ни почты,
      ни метки «моё» в данных нет — иначе анонимность была бы нарисованной. */
-  if(m.anon) return !m.curator && !!gid && m.a === myAnonName(gid);
+  if(m.anon) return !m.curator && !!gid && anonMine(m.a, gid);
   const his = String(m.email || '').toLowerCase();
   return his ? his === myMail() : !!m.own;
 }
@@ -1282,6 +1347,10 @@ function sendMsg(gid){
   const t = inp.value.trim(); if(!t) return;
   const g = GROUPS.find(x => x.id === gid);
   const anon = isAnon(g);
+  if(anon && S.role !== 'admin' && !hasAnonNick(gid)){
+    openSheet({k:'anonNick', id:gid});
+    return;
+  }
   if(anon && anonMuted(g, myAnonName(gid)))
     return toast('Здесь вы больше не пишете. Напишите в поддержку, если это ошибка');
   const now = new Date();
@@ -1295,6 +1364,7 @@ function sendMsg(gid){
   const msg = anon
     ? {id:msgId(), at:Date.now(), anon:true,
        a: S.role === 'admin' ? 'Редакция Евы' : myAnonName(gid),
+       av: S.role === 'admin' ? '' : anonColor(myAnonName(gid)),
        t, tm, curator: S.role === 'admin',
        re: r ? {a:r.a, t:String(r.t).slice(0, 90)} : null}
     : {id:msgId(), at:Date.now(),
@@ -1364,10 +1434,93 @@ function scrollChat(){ setTimeout(() => { const l = $('#clist'); if(l) window.sc
 /* =====================================================================
    ЛИЧНЫЕ СООБЩЕНИЯ ПОЛЬЗОВАТЕЛЯ
    ===================================================================== */
+/* =====================================================================
+   КТО ПИШЕТ ЖЕНЩИНЕ
+   Раньше всё, что приходило от платформы, подписывалось «Eva Space»:
+   итоги недели, билет на встречу, ответ про заказ и ответ поддержки —
+   одна нить, четыре разных разговора. Найти в ней нужное было нельзя,
+   а ответить — тем более непонятно кому.
+
+   Теперь у каждой темы свой отправитель со своим именем, значком и
+   цветом. Это не украшение: по отправителю сразу видно, о чём письмо
+   и кто на него ответит.
+   ===================================================================== */
+const CHANNELS = {
+  eva:     {id:'eva_week',   from:'Ева',           kind:'программа',   c:'#A8375C',
+            s:'программа, итоги недели и разговоры о том, как идёт'},
+  events:  {id:'ch_events',  from:'Eva Events',    kind:'мероприятия', c:'#5E5FA8',
+            s:'встречи, билеты и напоминания'},
+  market:  {id:'ch_market',  from:'Eva Маркет',    kind:'маркет',      c:'#B8894A',
+            s:'заказы, доставка и вопросы о товарах'},
+  experts: {id:'ch_experts', from:'Eva Эксперты',  kind:'эксперты',    c:'#8054B8',
+            s:'заявки, консультации и курсы'},
+  space:   {id:'ch_space',   from:'Eva Space',     kind:'аккаунт',     c:'#111014',
+            s:'доступ, подписка и поддержка'}
+};
+/* старые нити переезжают в каналы: у женщины уже что-то накопилось,
+   и терять переписку из-за нашей перестройки она не должна */
+const CHAN_OLD = {'платформа':'space', 'система':'eva', 'итоги':'eva', 'маркет':'market'};
+
+function chanThread(key){
+  const c = CHANNELS[key] || CHANNELS.space;
+  S.inbox = S.inbox || [];
+  let t = S.inbox.find(x => x.id === c.id || (x.chan === key && !x.eid));
+  if(!t){
+    t = {id:c.id, chan:key, from:c.from, c:c.c, kind:c.kind, ago:'только что',
+         unread:false, sys:true, msgs:[]};
+    S.inbox.unshift(t);
+  } else {
+    /* имя и цвет всегда берём из описания канала: так переименование
+       доезжает и до тех, у кого нить лежит с прошлой версии */
+    t.chan = key; t.from = c.from; t.c = c.c; t.kind = c.kind; t.sys = true;
+  }
+  return t;
+}
+
+/* Письмо от платформы. act — кнопка под письмом, tid — обращение,
+   к которому оно относится: её ответ уйдёт туда же, а не заведёт новое. */
+function sayFrom(key, text, act, tid){
+  initInbox();
+  const t = chanThread(key);
+  const d = new Date();
+  t.msgs.push({me:false, t:text, act:act || '', tid:tid || '',
+    tm:String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0')});
+  if(t.msgs.length > 40) t.msgs = t.msgs.slice(-40);
+  t.unread = true; t.ago = 'только что';
+  if(tid) t.tid = tid;
+  /* свежая нить — наверх списка */
+  S.inbox = [t].concat(S.inbox.filter(x => x !== t));
+  if(typeof schedulePersist === 'function') schedulePersist();
+  return t;
+}
+
 function initInbox(){
-  if(S.inbox && S.inbox.length) return;
-  if(S.inbox) { seedInbox(); return; }
-  seedInbox();
+  if(!S.inbox) { seedInbox(); migrateInbox(); return; }
+  if(!S.inbox.length) seedInbox();
+  migrateInbox();
+}
+/* нити старого образца переименовываем один раз, на месте */
+function migrateInbox(){
+  let moved = false;
+  (S.inbox || []).forEach(t => {
+    if(t.chan || !t.sys) return;
+    const key = CHAN_OLD[t.kind];
+    if(!key) return;
+    const c = CHANNELS[key];
+    t.chan = key; t.from = c.from; t.c = c.c; t.kind = c.kind; moved = true;
+  });
+  /* после переезда две нити могли получить один канал — сливаем по времени */
+  const seen = {};
+  (S.inbox || []).slice().forEach(t => {
+    if(!t.chan || t.eid) return;                 // переписка по конкретной встрече живёт отдельно
+    const first = seen[t.chan];
+    if(!first){ seen[t.chan] = t; return; }
+    first.msgs = (first.msgs || []).concat(t.msgs || []);
+    first.unread = first.unread || t.unread;
+    S.inbox = S.inbox.filter(x => x !== t);
+    moved = true;
+  });
+  if(moved && typeof schedulePersist === 'function') schedulePersist();
 }
 function seedInbox(){
   const base = [
@@ -1375,7 +1528,7 @@ function seedInbox(){
      msgs:[{me:false, t:'Привет! Увидела твоё послание про пробежки. Я как раз бегаю в Сокольниках по средам, давай вместе?', tm:'09:20'}]},
     {id:'p2', from:'Марина Ясная', c:'#A8375C', kind:'эксперт', ago:'вчера', unread:true, exp:true,
      msgs:[{me:false, t:'Спасибо за вопрос в группе. Отвечаю подробнее: дыхание 4-7-8 можно делать и при панике, но начинать лучше в спокойном состоянии, чтобы тело запомнило схему.', tm:'18:05'}]},
-    {id:'p3', from:'Eva Space', c:'#111014', kind:'система', ago:'2 дня назад', unread:false, sys:true,
+    {id:'eva_week', from:'Ева', c:'#A8375C', kind:'программа', chan:'eva', ago:'2 дня назад', unread:false, sys:true,
      msgs:[{me:false, t:'Твоя программа обновилась: на новой неделе новые практики. Хорошего старта!', tm:'08:00'}]}
   ];
   S.inbox = S.inbox || [];
@@ -1391,12 +1544,7 @@ function pullMarketReplies(){
   const fresh = S.marketReplies.filter(r =>
     String(r.mail).toLowerCase() === mine && !S.seenReplies.includes(r.qid + '_' + r.at));
   if(!fresh.length) return;
-  let th = S.inbox.find(x => x.kind === 'маркет');
-  if(!th){
-    th = {id:'mk'+Date.now().toString(36), from:'Eva Space · Маркет', c:'#111014',
-          kind:'маркет', ago:'только что', unread:false, sys:true, msgs:[]};
-    S.inbox.unshift(th);
-  }
+  const th = chanThread('market');
   fresh.forEach(r => {
     th.msgs.push({me:false, t:r.t, tm:r.tm});
     S.seenReplies.push(r.qid + '_' + r.at);
@@ -1418,12 +1566,13 @@ function pgInbox(){
           <button class="link" style="display:block;margin-top:5px" onclick="S.evFast=false;render();toast('Письма пойдут по настоящему расписанию')">Перейти на настоящее расписание</button>
         </div></div>` : ''}
     ${S.inbox.map(t => {
-      const last = t.msgs[t.msgs.length-1];
+      const last = t.msgs[t.msgs.length-1] || {t:''};
       return `<button class="gitem ${t.unread?'unreadrow':''}" onclick="openThread('${attJs(t.id)}')">
-        ${chatAva(t.from, t.c, false, 42, authorMail({email:t.email, a:t.from, exp:t.exp}))}
+        ${threadAva(t, 42)}
         <div style="flex:1;min-width:0">
           <div class="spread"><b style="font-size:14px">${esc(t.from)}${t.exp?' <span class="badge-exp">эксперт</span>':''}</b>
             <span class="small muted" style="font-size:10.5px">${esc(t.ago)}</span></div>
+          ${t.chan ? `<div class="chanrole">${esc(t.kind)}</div>` : ''}
           <div class="small muted" style="margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
             ${esc(last.t)}</div>
         </div>
@@ -1431,26 +1580,44 @@ function pgInbox(){
       </button>`;
     }).join('')}
     <div class="card" style="margin-top:10px">
-      <b style="font-size:14.5px">Как сюда попадают сообщения</b>
-      <p class="small muted" style="margin:7px 0 0">Когда ты отвечаешь на послание участницы или зовёшь кого-то познакомиться,
-        переписка появляется здесь. Эксперты пишут сюда же, если ответили на твой вопрос лично.</p>
+      <b style="font-size:14.5px">Кто тебе пишет</b>
+      <div class="chanlist">${Object.keys(CHANNELS).map(k => `<div class="chanrow">
+        <span class="chanico" style="--cc:${CHANNELS[k].c}">${CHAN_ICO[k]}</span>
+        <div><b style="font-size:13px">${esc(CHANNELS[k].from)}</b>
+          <div class="small muted">${esc(CHANNELS[k].s)}</div></div></div>`).join('')}</div>
+      <p class="small muted" style="margin:10px 0 0">Здесь же переписка с участницами и ответы экспертов.
+        На письмо от Евы можно ответить прямо в нём — прочитаем.</p>
     </div>
   </div>`;
 }
-function openThread(id){ initInbox(); const t = S.inbox.find(x => x.id === id); t.unread = false; S.thread = id; render(); }
+const CHAN_ICO = {
+  eva:     `<svg viewBox="0 0 100 100" width="19" height="19" aria-hidden="true"><path d="${STAR_PATH}" fill="currentColor"/></svg>`,
+  events:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3.5v3M16 3.5v3"/></svg>`,
+  market:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16l-1.2 11a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>`,
+  experts: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.4 3.1-5.6 7-5.6 1.5 0 2.9.3 4 .9"/><path d="m16.5 19.2 1.7 1.7 3.3-3.6"/></svg>`,
+  space:   `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 19.5 6v6.1c0 4-3.1 7.2-7.5 8.7-4.4-1.5-7.5-4.7-7.5-8.7V6z"/><path d="m9 12 2.2 2.2L15.4 10"/></svg>`
+};
+/* Аватар нити: у канала — свой значок в своём цвете, у человека — как везде */
+function threadAva(t, size){
+  if(!t.chan) return chatAva(t.from, t.c, false, size, authorMail({email:t.email, a:t.from, exp:t.exp}));
+  const s = size || 42;
+  return `<span class="chanava" style="--cc:${safeColor(t.c)};width:${s}px;height:${s}px">${CHAN_ICO[t.chan] || CHAN_ICO.space}</span>`;
+}
+
+function openThread(id){ initInbox(); const t = S.inbox.find(x => x.id === id); if(!t) return; t.unread = false; S.thread = id; render(); }
 function pgThread(){
   const t = S.inbox.find(x => x.id === S.thread);
   if(!t){ S.thread = null; return pgInbox(); }
   return `<div class="view pad chatview">
     <button class="backbtn" onclick="S.thread=null;render()">‹ Сообщения</button>
     <div class="row" style="margin:12px 0 6px">
-      ${chatAva(t.from, t.c, false, 40, authorMail({email:t.email, a:t.from, exp:t.exp}))}
+      ${threadAva(t, 40)}
       <div><b style="font-size:15px">${esc(t.from)}</b>
-        <div class="small muted">${esc(t.kind)}</div></div>
+        <div class="small muted">${esc(t.chan ? (CHANNELS[t.chan]||{}).s || t.kind : t.kind)}</div></div>
     </div>
     <div class="chatlist">
       ${t.msgs.map(m => `<div class="cmsg ${m.me?'own':''}">
-        ${!m.me ? chatAva(t.from, t.c, false, 32, authorMail({email:t.email, a:t.from, exp:t.exp})) : ''}
+        ${!m.me ? threadAva(t, 32) : ''}
         <div class="txt">
           ${m.when ? `<div class="mwhen">${esc(m.when)}</div>` : ''}
           <div class="mtext">${esc(m.t)}</div>
@@ -1492,12 +1659,24 @@ function sendDM(id){
     render(); schedulePersist();
     return toast('Вопрос отправлен, ответим в течение дня');
   }
-  /* Ответ в нити Eva Space — реквизиты, уточнение к заявке — раньше
-     оставался только у неё в телефоне. Теперь уходит команде как
-     обращение, и она видит, что его получили. */
-  if(t.kind === 'платформа' && typeof toSupport === 'function'){
-    toSupport('Ответ в переписке Eva Space', v, 'reply');
+  /* Ответ в письме от платформы — уточнение к заявке, реквизиты, вопрос —
+     дописывается в то самое обращение, на которое она отвечает. Раньше он
+     оставался в телефоне, потом заводил новое обращение без связи с первым,
+     и администратор видел обрывки вместо разговора. */
+  if(t.chan && typeof toSupport === 'function'){
+    const tid = t.tid || [...t.msgs].reverse().map(m => m.tid).find(Boolean);
+    const tk = tid && typeof INBOX !== 'undefined' ? INBOX.find(x => x.id === tid) : null;
+    if(tk && typeof ticketSay === 'function'){
+      ticketSay(tk, 'user', v);
+      if(tk.st === 'закрыто') tk.st = 'новое';       // ответ снова открывает разговор
+      tk.ago = 'только что';
+      syncPush(['support']);
+    } else {
+      const fresh = toSupport('Ответ: ' + (t.from || 'Eva Space'), v, 'reply');
+      if(fresh) t.tid = fresh.id;
+    }
     t.msgs.push({me:false, t:'Передали команде. Ответим здесь же.', tm});
+    t.ago = 'только что';
     render(); schedulePersist();
     return toast('Передали команде');
   }

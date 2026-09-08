@@ -506,19 +506,23 @@ async function pullDm(){
   const fresh = r.dm.filter(m => m && m.id && S.seenDm.indexOf(m.id) < 0);
   if(!fresh.length) return false;
 
-  let th = (S.inbox || []).find(x => x.kind === 'платформа');
-  if(!th){
-    th = {id:'pf' + Date.now().toString(36), from:'Eva Space', c:'#111014',
-          kind:'платформа', ago:'только что', unread:false, sys:true, msgs:[]};
-    S.inbox.unshift(th);
-  }
+  /* Письмо кладём тому отправителю, от чьего имени оно пришло: ответ про
+     заказ — в «Eva Маркет», про заявку эксперта — в «Eva Эксперты». Канал
+     присылает сервер вместе с письмом; у старых писем его нет — они идут
+     в «Eva Space», как раньше. */
   fresh.forEach(m => {
     const d = new Date(m.at || Date.now());
     const tm = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-    th.msgs.push({me:false, t:(m.subject ? m.subject + ' — ' : '') + m.text, tm});
+    const chan = (typeof CHANNELS !== 'undefined' && CHANNELS[m.chan]) ? m.chan : 'space';
+    const th = typeof chanThread === 'function' ? chanThread(chan) : null;
+    if(!th) return;
+    th.msgs.push({me:false, t:(m.subject ? m.subject + ' — ' : '') + m.text, tm, tid:m.tid || ''});
+    if(m.tid) th.tid = m.tid;
+    if(th.msgs.length > 40) th.msgs = th.msgs.slice(-40);
+    th.unread = true; th.ago = 'только что';
+    S.inbox = [th].concat(S.inbox.filter(x => x !== th));
     S.seenDm.push(m.id);
   });
-  th.unread = true;
   if(typeof schedulePersist === 'function') schedulePersist();
   return true;
 }

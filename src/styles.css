@@ -188,6 +188,8 @@ h2.serif{font-size:19px;margin:0}
   padding:16px 16px calc(22px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto;
   animation:slide .28s cubic-bezier(.2,.75,.3,1) both}
 @keyframes slide{from{transform:translateY(100%)}to{transform:none}}
+/* перерисовка той же шторки — не повод играть выезд заново */
+.sheet.noanim{animation:none}
 .grab{width:34px;height:4px;background:var(--line-2);border-radius:99px;margin:0 auto 12px}
 
 .field{width:100%;padding:12px 13px;border-radius:var(--r);border:1px solid var(--line-2);background:var(--surface);margin-bottom:9px}
@@ -1159,8 +1161,42 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 /* ---------- анонимные комнаты ----------
    Значок один и тот же у всех: любой намёк на разное — цвет, буква,
    форма — со временем складывается в узнавание. */
-.anonava{width:32px;height:32px;flex:none;border-radius:50%;display:grid;place-items:center;
-  background:var(--surface-2);color:var(--muted)}
+/* Лицо в анонимной комнате: буква ника и цвет из палитры глубин.
+   Один общий стиль для всей комнаты — переключается словом в ANON_AVA.
+   Ник придуман ею и ни с чем не связан, поэтому аватар ничего не выдаёт. */
+.anonava{flex:none;border-radius:50%;display:grid;place-items:center;position:relative;
+  overflow:hidden;background:var(--surface-2);color:var(--muted);font-weight:800}
+.anonava i{font-style:normal;position:relative;z-index:2;line-height:1}
+.anonava.eva{background:var(--ink);color:#fff}
+/* 1. Инициал: тёмный круг и светлая буква */
+.anonava.av-plain{background:var(--ac);color:rgba(255,255,255,.94)}
+/* 2. Под вуалью: свет сверху, темнота снизу */
+.anonava.av-veil{background:var(--ac);color:rgba(255,255,255,.92)}
+.anonava.av-veil:after{content:"";position:absolute;inset:0;z-index:1;
+  background:linear-gradient(155deg,rgba(255,255,255,.24),rgba(255,255,255,0) 44%,rgba(0,0,0,.52))}
+/* 3. Ночь: глубина и одна искра */
+.anonava.av-night{color:rgba(255,255,255,.88);
+  background:radial-gradient(115% 115% at 32% 18%,rgba(255,255,255,.26),var(--ac) 62%)}
+.anonava.av-night:before{content:"";position:absolute;top:15%;right:17%;width:3px;height:3px;
+  border-radius:50%;background:rgba(255,236,196,.92);box-shadow:0 0 6px rgba(255,236,196,.75);z-index:2}
+/* 4. Кольцо: середина прозрачная, буква цветом кольца */
+.anonava.av-ring{background:transparent;border:2px solid var(--ac);color:var(--ac)}
+.anonava.av-ring:after{content:"";position:absolute;inset:0;background:var(--ac);opacity:.1}
+/* 5. Матовое стекло: буква проступает сквозь дымку */
+.anonava.av-frost{background:var(--ac);color:rgba(255,255,255,.84)}
+.anonava.av-frost i{filter:blur(.4px)}
+.anonava.av-frost:after{content:"";position:absolute;inset:0;z-index:1;
+  background:linear-gradient(180deg,rgba(255,255,255,.32),rgba(255,255,255,.04) 55%,rgba(255,255,255,.18))}
+
+/* приглашение придумать ник — первое, что она видит в комнате */
+.nickcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:18px 16px;margin-bottom:12px;text-align:center}
+.nickcard .nickico{width:44px;height:44px;border-radius:50%;margin:0 auto 10px;display:grid;
+  place-items:center;background:var(--surface-2);color:var(--ink)}
+.nickcard h3{font-size:19px;margin:0 0 7px}
+.nickcard p{font-size:12.5px;line-height:1.55;color:var(--muted);margin:0 0 14px}
+.nickpreview{display:flex;align-items:center;gap:12px;background:var(--surface-2);
+  border-radius:var(--r);padding:12px 14px;margin-bottom:14px}
 .cmsg.anon .nm{color:var(--muted)}
 .anonnote{display:flex;gap:11px;align-items:flex-start;background:var(--surface-2);
   border-radius:var(--r);padding:13px 14px;margin-bottom:12px;font-size:12.5px;
@@ -1180,6 +1216,25 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .morebtn{width:100%;text-align:center;padding:10px;border:1px dashed var(--line-2);border-radius:var(--r);
   font-size:12.5px;font-weight:600;color:var(--muted);margin:2px 0 6px}
 .morebtn:hover{border-color:var(--ink);color:var(--ink)}
+/* ---------- кто пишет: отправители платформы ----------
+   Значок в цвете канала вместо буквы: по нему видно, о чём письмо,
+   ещё до того как прочитано имя. */
+.chanava{flex:none;border-radius:50%;display:grid;place-items:center;
+  color:#fff;background:var(--cc,#111014)}
+.chanrole{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);margin-top:1px}
+.chanlist{margin-top:10px;display:flex;flex-direction:column;gap:9px}
+.chanrow{display:flex;gap:10px;align-items:center}
+.chanico{width:30px;height:30px;border-radius:10px;flex:none;display:grid;place-items:center;
+  color:#fff;background:var(--cc,#111014)}
+/* переписка внутри обращения у администратора */
+.talk{border-left:2px solid var(--line-2);padding-left:11px;margin:0 0 10px;
+  display:flex;flex-direction:column;gap:8px}
+.talkrow{font-size:12.5px;line-height:1.45}
+.talkrow .who{font-weight:700;margin-right:6px}
+.talkrow.staff .who{color:var(--accent)}
+.talkrow .at{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+
 /* правила заявок: короткий список */
 .rules{margin:0;padding:0 0 0 18px;font-size:13px;line-height:1.5}
 .rules li{margin:0 0 7px}

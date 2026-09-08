@@ -938,20 +938,12 @@ function pgProfile(){
    нигде. Теперь она уходит в поддержку — туда, где её видит команда. */
 function withdraw(sum){
   if(sum < 3000) return toast('Вывод доступен от 3 000 ₽, сейчас ' + money(sum));
-  if(typeof INBOX === 'undefined') return toast('Не отправилось, попробуй позже');
-  INBOX.unshift({
-    id:'w' + Date.now().toString(36),
-    from: S.name || 'Участница',
-    role: S.role === 'expert' ? 'эксперт' : 'амбассадор',
-    mail: S.user ? S.user.email : '—',
-    ago: 'только что',
-    sub: 'Вывод вознаграждения',
-    t: 'Прошу вывести ' + money(sum) + '. Реквизиты пришлю в ответ на это письмо.',
-    st: 'новое'
-  });
-  syncPush(['support']);
+  const tk = typeof toSupport === 'function' && toSupport('Вывод вознаграждения',
+    'Прошу вывести ' + money(sum) + '. Реквизиты пришлю в ответ на это письмо.', 'sub');
+  if(!tk) return toast('Не отправилось, попробуй позже');
   if(typeof platformSay === 'function')
-    platformSay('Заявка на вывод ' + money(sum) + ' принята. Реквизиты можно прислать ответом на это сообщение. Ответим в течение трёх дней.');
+    platformSay('Заявка на вывод ' + money(sum) + ' принята. Реквизиты можно прислать ответом на это сообщение. Ответим в течение трёх дней.',
+      '', 'space', tk.id);
   toast('Заявка отправлена. Подтверждение — в сообщениях');
 }
 

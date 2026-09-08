@@ -584,7 +584,7 @@ function render(){
     console.error('[Eva] экран не собрался:', e);
     crashCount++;
     try {
-      shownHTML = null; shownSheet = null; el.__split = false;   // после падения показываем заново в любом случае
+      shownHTML = null; shownSheet = null; shownSheetKey = ''; el.__split = false;   // после падения показываем заново в любом случае
       el.innerHTML = crashCount > 2
         ? `<div class="view pad" style="padding-top:60px"><h1 class="serif">Приложение споткнулось</h1>
              <p class="small muted" style="margin:10px 0 16px">Обнови страницу — данные сохранены.</p>
@@ -633,10 +633,10 @@ function backHome(){
    таймеры, и ответы сервера, поэтому сравниваем с тем, что уже показано,
    и не трогаем страницу, если ничего не изменилось. Заодно не сбивается
    набранный текст и позиция прокрутки. */
-let shownHTML = null, shownSheet = null;
+let shownHTML = null, shownSheet = null, shownSheetKey = '';
 window.__renders = 0; window.__skipped = 0;
 function setHTML(html){
-  shownSheet = null;
+  shownSheet = null; shownSheetKey = '';
   if(html === shownHTML && !el.__split){ window.__skipped++; return false; }
   el.__split = false;
   shownHTML = html; el.innerHTML = html; window.__renders++;
@@ -650,7 +650,7 @@ function setHTML(html){
 function setApp(body, sh){
   if(!el.__split){
     el.innerHTML = '<div id="pagebox"></div><div id="sheetbox"></div>';
-    el.__split = true; shownHTML = null; shownSheet = null;
+    el.__split = true; shownHTML = null; shownSheet = null; shownSheetKey = '';
   }
   const pageBox = el.firstElementChild, sheetBox = el.lastElementChild;
   if(body === shownHTML) window.__skipped++;
@@ -662,8 +662,27 @@ function setApp(body, sh){
   /* Шторку тоже надо доводить после отрисовки: внутри неё живут и ленты,
      которым нужны стрелки, и поля, которые растут под текст. Раньше after()
      звался только при пересборке страницы, и лента команды сообщества
-     оставалась на компьютере без стрелок. */
-  if(sh !== shownSheet){ shownSheet = sh; sheetBox.innerHTML = sh; if(sh) after(); }
+     оставалась на компьютере без стрелок.
+
+     И главное: шторка с формой перерисовывается на каждый клик по чипу или
+     переключателю. Раньше при этом она уезжала в начало, поле теряло курсор,
+     а карточка заново выезжала снизу — форма выглядела так, будто её
+     перезагрузили. Поэтому запоминаем прокрутку и фокус, а выезд играем
+     только когда шторка действительно новая. */
+  if(sh !== shownSheet){
+    const was = sheetBox.querySelector('.sheet');
+    const top = was ? was.scrollTop : 0;
+    const key = S.sheet ? (typeof S.sheet === 'string' ? S.sheet : S.sheet.k) : '';
+    const same = !!sh && key === shownSheetKey;
+    const memo = same ? keepFocus() : (() => {});
+    shownSheet = sh; shownSheetKey = key;
+    sheetBox.innerHTML = sh;
+    if(sh){
+      const now = sheetBox.querySelector('.sheet');
+      if(now && same){ now.classList.add('noanim'); if(top) now.scrollTop = top; }
+      after(); memo();
+    }
+  }
   return true;
 }
 

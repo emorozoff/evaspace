@@ -569,6 +569,7 @@ function reqCard(t){
     </div>
     <b style="font-size:14px;display:block;margin:10px 0 5px">${esc(t.sub)}</b>
     <p class="small muted" style="margin:0 0 10px;white-space:pre-line">${esc(t.t)}</p>
+    ${ticketTalk(t)}
     <div class="acts" style="margin:0 0 8px">
       ${kind === 'expert' && hasMail ? `<button class="btn sm acc" onclick="makeExpert('${attJs(t.mail)}','${attJs(t.id)}')">Сделать экспертом</button>` : ''}
       ${kind === 'event' ? `<button class="btn sm acc" onclick="eventFromRequest('${attJs(t.id)}')">Создать мероприятие</button>` : ''}
@@ -606,9 +607,13 @@ function adInbox(){
   if(f === 'от экспертов') list = list.filter(x => x.role === 'эксперт');
   if(f === 'от пользователей') list = list.filter(x => x.role === 'ученица');
   if(f === 'новые') list = list.filter(x => x.st === 'новое');
+  if(f === 'ждут ответа') list = list.filter(x => {
+    const ms = Array.isArray(x.msgs) ? x.msgs : [];
+    return x.st !== 'закрыто' && (!ms.length || ms[ms.length-1].who !== 'staff');
+  });
   return `
   <p class="small muted" style="margin:0 0 12px">Служба поддержки: вопросы от учениц и экспертов в одном месте.</p>
-  <div class="chips">${['все','новые','от пользователей','от экспертов'].map(x =>
+  <div class="chips">${['все','новые','ждут ответа','от пользователей','от экспертов'].map(x =>
     `<button class="chip ${f===x?'on':''}" onclick="S.inboxFilter='${attJs(x)}';render()">${x}</button>`).join('')}</div>
   ${list.map(t => `<div class="card ${t.st==='новое'?'unread':''}">
     <div class="spread">
@@ -620,6 +625,7 @@ function adInbox(){
     <b style="font-size:14px;display:block;margin:10px 0 5px">${esc(t.sub)}</b>
     <p class="small muted" style="margin:0 0 10px;white-space:pre-line">${esc(t.t)}</p>
     <div class="small muted" style="margin-bottom:8px">${esc(t.mail)}${reqKind(t) ? ' · <b>' + esc(REQ_TITLE[reqKind(t)] || '') + '</b>' : ''}</div>
+    ${ticketTalk(t)}
     ${reqKind(t) === 'expert' && String(t.mail||'').indexOf('@') > 0 ? `
       <button class="btn sm acc" style="margin-bottom:9px"
         onclick="makeExpert('${attJs(t.mail)}','${attJs(t.id)}')">Сделать экспертом</button>` : ''}
@@ -673,16 +679,35 @@ async function replyTicket(id){
     t.st = 'в работе'; render(); syncPush(['support']);
     return toast('У обращения нет почты — ответить некуда');
   }
+  /* Ответ уходит от того же отправителя, что вёл эту тему: заявку эксперта
+     закрывает Eva Эксперты, заказ — Eva Маркет. Иначе женщина получала бы
+     ответы от «Поддержки» в нити, где до этого писал кто-то другой. */
+  const chan = typeof chanOf === 'function' ? chanOf(reqKind(t)) : 'space';
+  const from = ((typeof CHANNELS !== 'undefined' && CHANNELS[chan]) || {}).from || 'Eva Space';
   const r = await apiCall('dm_send', {
     email: mail.toLowerCase(),
-    from: 'Поддержка Eva',
+    from, chan, tid: t.id,
     subject: t.sub || 'Ответ поддержки',
     text: v
   }, {silent:true});
   if(!r) return toast(SYNC.lastError || 'Ответ не ушёл, попробуй ещё раз');
-  t.st = 'в работе'; t.answer = v;
+  if(typeof ticketSay === 'function') ticketSay(t, 'staff', v);
+  t.st = 'в работе'; t.answer = v; t.ago = 'только что';
+  const box = $('#rp_' + id); if(box) box.value = '';
   render(); syncPush(['support']);
   toast('Ответ ушёл ' + mail);
+}
+
+/* Переписка внутри обращения: видно, кто что сказал и когда. */
+function ticketTalk(t){
+  const ms = Array.isArray(t.msgs) ? t.msgs : [];
+  const rest = ms.filter((m, i) => !(i === 0 && m.who === 'user' && m.t === t.t));
+  if(!rest.length) return '';
+  return `<div class="talk">${rest.map(m => `<div class="talkrow ${m.who === 'staff' ? 'staff' : ''}">
+      <span class="who">${m.who === 'staff' ? esc(S.adminName || 'Команда') : esc(t.from || 'Она')}</span>
+      <span class="txt">${esc(m.t)}</span>
+      <span class="at">${new Date(m.at || Date.now()).toLocaleString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+    </div>`).join('')}</div>`;
 }
 
 /* ---------- мероприятия ---------- */

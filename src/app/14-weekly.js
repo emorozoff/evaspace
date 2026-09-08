@@ -89,14 +89,12 @@ function weekTopics(w){
 
 /* ---------- письмо от Евы ---------- */
 function evaThread(){
-  S.inbox = S.inbox || [];
-  let t = S.inbox.find(x => x.id === 'eva_week');
-  if(!t){
-    t = {id:'eva_week', from:EVA_NAME, c:'#A8375C', kind:'итоги', ago:'только что',
-         unread:false, sys:true, msgs:[]};
-    S.inbox.unshift(t);
-  }
-  return t;
+  if(typeof initInbox === 'function') initInbox();
+  return typeof chanThread === 'function'
+    ? chanThread('eva')
+    : (S.inbox = S.inbox || []).find(x => x.id === 'eva_week') ||
+      (S.inbox.unshift({id:'eva_week', from:EVA_NAME, c:'#A8375C', kind:'программа',
+        chan:'eva', ago:'только что', unread:false, sys:true, msgs:[]}), S.inbox[0]);
 }
 
 function evaSay(text, act){

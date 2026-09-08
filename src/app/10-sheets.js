@@ -25,7 +25,7 @@ function sheet(){
     hw:shHW, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
     expertApply:shExpertApply, install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
     service:shService, editUser:shEditUser,
-    partnerApply:shPartnerApply, eventApply:shEventApply, rules:shRules,
+    partnerApply:shPartnerApply, eventApply:shEventApply, rules:shRules, anonNick:shAnonNick,
     newCourse:shNewCourse, newGood:shNewGood, idea:shIdea})[k]();
   return `<div class="bg" onclick="if(event.target===this)closeSheet()">
     <div class="sheet"><div class="grab"></div>${body}</div></div>`;
@@ -217,7 +217,8 @@ function checkout(){
   const oid = S.orders[0].id;
   platformSay(`Заказ принят: ${items.map(i => i.t + (i.n > 1 ? ' × ' + i.n : '')).join(', ')}. ` +
     `Сумма ${money(total)}${used ? ', из них бонусами ' + used : ''}. ` +
-    `Менеджер напишет сюда, как оплатить и когда доставим. Кэшбэк ${cb} бонусов уже начислен. Номер заказа ${oid}.`);
+    `Менеджер напишет сюда, как оплатить и когда доставим. Кэшбэк ${cb} бонусов уже начислен. Номер заказа ${oid}.`,
+    '', 'market');
   S.cart = []; S.page = 'profile'; render(); schedulePersist();
   if(typeof syncPush === 'function') syncPush(['orders']);
   toast('Заказ принят. Подробности — в сообщениях');
@@ -232,11 +233,11 @@ function buyCourse(id){
   if(!c) return;
   S.courseAsked = S.courseAsked || [];
   if(S.courseAsked.includes(id)){ S.sheet = null; render(); return toast('Заявка на этот курс уже у нас'); }
-  if(!toSupport('Курс: ' + c.t, 'Хочу курс «' + c.t + '» (' + money(c.p) + '). Оплата картой ещё не подключена — прошу открыть доступ.', 'course', {course:c.id}))
-    return toast('Не отправилось, попробуй позже');
+  const tk = toSupport('Курс: ' + c.t, 'Хочу курс «' + c.t + '» (' + money(c.p) + '). Оплата картой ещё не подключена — прошу открыть доступ.', 'course', {course:c.id});
+  if(!tk) return toast('Не отправилось, попробуй позже');
   S.courseAsked.push(id);
   platformSay(`Заявка на курс «${c.t}» у нас. Оплата картой пока не подключена, поэтому курс откроем вручную ` +
-    `и напишем сюда — обычно в течение дня. Первые уроки уже открыты, можно начинать.`, 'openCourses');
+    `и напишем сюда — обычно в течение дня. Первые уроки уже открыты, можно начинать.`, 'openCourses', 'experts', tk.id);
   S.sheet = null; render(); schedulePersist();
   toast('Заявка отправлена. Подтверждение — в сообщениях');
 }
@@ -356,11 +357,12 @@ function sendConsult(eid){
   const contact = (($('#cs_contact')||{}).value || '').trim();
   const text = (($('#cs_text')||{}).value || '').trim();
   if(!contact) return toast('Оставь телефон или телеграм — иначе не с кем связаться');
-  toSupport('Заявка на консультацию: ' + (e ? e.n : ''),
+  const t = toSupport('Заявка на консультацию: ' + (e ? e.n : ''),
     ['Имя: ' + ((($('#cs_name')||{}).value || S.name || '').trim()), 'Связь: ' + contact,
      'Удобно: ' + S.slot, '', text || 'Запрос не описан'].join('\n'), 'consult');
   platformSay(`Заявка на консультацию к ${e ? e.n : 'эксперту'} передана. ` +
-    `Свяжемся по контакту «${contact}» и напишем сюда — обычно в течение дня.`);
+    `Свяжемся по контакту «${contact}» и напишем сюда — обычно в течение дня.`,
+    '', 'experts', t && t.id);
   S.sheet = null; render();
   toast('Заявка отправлена. Подтверждение — в сообщениях');
 }
@@ -377,9 +379,9 @@ function sendExpertQuestion(eid){
   const e = EXPERTS.find(x => x.id === eid);
   const text = (($('#wq_text')||{}).value || '').trim();
   if(!text) return toast('Напиши вопрос');
-  toSupport('Вопрос эксперту: ' + (e ? e.n : ''), text, 'question');
+  const tk = toSupport('Вопрос эксперту: ' + (e ? e.n : ''), text, 'question');
   platformSay(`Вопрос для ${e ? e.n : 'эксперта'} передан: «${text.length > 90 ? text.slice(0, 88) + '…' : text}». ` +
-    `Ответ придёт сюда — обычно в течение суток.`);
+    `Ответ придёт сюда — обычно в течение суток.`, '', 'experts', tk && tk.id);
   S.sheet = null; render();
   toast('Вопрос отправлен. Ответ придёт в сообщения');
 }
@@ -400,6 +402,7 @@ function toSupport(sub, text, kind, data){
     kind: kind || '', at: Date.now()
   };
   if(data) t.data = data;
+  t.msgs = [{id:'m' + Date.now().toString(36), who:'user', t:text, at:Date.now()}];
   INBOX.unshift(t);
   if(typeof syncPush === 'function') syncPush(['support']);
   return t;
@@ -407,24 +410,32 @@ function toSupport(sub, text, kind, data){
 
 /* Подтверждение в её сообщениях. Тост живёт две секунды, и после него
    легко засомневаться: ушло ли, что дальше, когда ждать. Поэтому всё,
-   что она отправила или заказала, оставляет след в нити «Eva Space»:
-   что именно получено, что произойдёт и в какой срок. */
-function platformSay(text, act){
-  if(typeof initInbox === 'function') initInbox();
-  S.inbox = S.inbox || [];
-  let th = S.inbox.find(x => x.kind === 'платформа');
-  if(!th){
-    th = {id:'pf' + Date.now().toString(36), from:'Eva Space', c:'#111014',
-          kind:'платформа', ago:'только что', unread:false, sys:true, msgs:[]};
-  } else S.inbox = S.inbox.filter(x => x !== th);
-  S.inbox.unshift(th);                          // свежее — наверх
-  const d = new Date();
-  th.msgs.push({me:false, t:text, act:act || '',
-    tm:String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0')});
-  if(th.msgs.length > 40) th.msgs = th.msgs.slice(-40);
-  th.unread = true; th.ago = 'только что';
-  if(typeof schedulePersist === 'function') schedulePersist();
+   что она отправила или заказала, оставляет след в переписке — и не
+   в общей куче, а у того отправителя, кто за это отвечает. */
+function platformSay(text, act, chan, tid){
+  if(typeof sayFrom !== 'function') return;
+  sayFrom(chan || 'space', text, act, tid);
 }
+/* Обращение — это разговор, а не одно письмо. Раньше ответ поддержки
+   уходил женщине, её ответ заводил новое обращение, и связать их было
+   нечем: администратор видел ленту обрывков. Теперь у обращения есть
+   переписка, и обе стороны дописывают в неё. */
+function ticketSay(tk, who, text){
+  if(!tk) return null;
+  tk.msgs = Array.isArray(tk.msgs) ? tk.msgs : (tk.t ? [{id:'m0', who:'user', t:tk.t, at:tk.at || Date.now()}] : []);
+  const m = {id:'m' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+             who, t:String(text), at:Date.now()};
+  tk.msgs.push(m);
+  if(tk.msgs.length > 60) tk.msgs = tk.msgs.slice(-60);
+  return m;
+}
+
+/* какой отправитель отвечает за этот вид заявки */
+const KIND_CHAN = {expert:'experts', question:'experts', consult:'experts', course:'experts',
+                   partner:'market', order:'market',
+                   event:'events',
+                   sub:'space', support:'space', reply:'space'};
+const chanOf = kind => KIND_CHAN[kind] || 'space';
 
 function suggestTags(text){
   const t = (text || '').toLowerCase();
@@ -1704,8 +1715,9 @@ function shSupport(){
 function sendSupport(){
   const t = (($('#sup_t')||{}).value || '').trim();
   if(!t) return toast('Опиши вопрос');
-  toSupport(S.supTopic || 'Другое', t, 'support');
-  platformSay(`Получили обращение «${S.supTopic || 'Другое'}». Обычно отвечаем в течение дня — ответ придёт сюда.`);
+  const tk = toSupport(S.supTopic || 'Другое', t, 'support');
+  platformSay(`Получили обращение «${S.supTopic || 'Другое'}». Обычно отвечаем в течение дня — ответ придёт сюда.`,
+    '', 'space', tk && tk.id);
   S.sheet = null; render(); toast('Отправлено в поддержку. Подтверждение — в сообщениях');
 }
 
@@ -1760,7 +1772,7 @@ function shExpertApply(){
     <label class="lbl">Что хотели бы вести</label>
     <div class="chips wrap" style="margin-bottom:12px">${EXP_WANT.map(w =>
       `<button class="chip ${d.want.indexOf(w) >= 0 ? 'on' : ''}"
-        onclick="expWant('${attJs(w)}')">${w}</button>`).join('')}</div>
+        onclick="expWant(this,'${attJs(w)}')">${w}</button>`).join('')}</div>
 
     <label class="lbl">Где вас можно посмотреть</label>
     <input class="field" id="ea_link" placeholder="Сайт, телеграм-канал или профиль в соцсети"
@@ -1778,17 +1790,21 @@ function shExpertApply(){
     <button class="btn" style="margin-top:12px" onclick="sendExpertApply()">Отправить заявку</button>
     ${rulesLine('expert')}`;
 }
-function expWant(w){
+/* Отметка «что хотела бы вести» меняется на месте: перерисовывать всю
+   форму ради одного чипа незачем — она набирает текст в соседнем поле. */
+function expWant(btn, w){
   const d = S.expApply = S.expApply || {want:[]};
-  d.want = d.want.indexOf(w) >= 0 ? d.want.filter(x => x !== w) : [...d.want, w];
-  render();
+  const on = d.want.indexOf(w) >= 0;
+  d.want = on ? d.want.filter(x => x !== w) : [...d.want, w];
+  if(btn && btn.classList) btn.classList.toggle('on', !on);
+  schedulePersist();
 }
 function sendExpertApply(){
   const d = S.expApply || {};
   if(!(d.area || '').trim())  return toast('Напишите, чем занимаетесь');
   if(!(d.about || '').trim()) return toast('Пара слов о подходе — самое важное поле');
   if(typeof INBOX === 'undefined') return toast('Не отправилось, попробуйте позже');
-  INBOX.unshift({
+  const tk = {
     id:'ea' + Date.now().toString(36),
     from: S.name || 'Участница',
     role: 'ученица',
@@ -1804,10 +1820,11 @@ function sendExpertApply(){
       d.about
     ].filter(Boolean).join('\n'),
     st:'новое', kind:'expert', at:Date.now()
-  });
+  };
+  INBOX.unshift(tk);
   S.expApply = null;
   platformSay('Заявка на роль эксперта у нас. Прочитаем внимательно и ответим сюда в течение недели. ' +
-    'Спасибо, что хотите делиться опытом — из таких заявок и растёт Ева.');
+    'Спасибо, что хотите делиться опытом — из таких заявок и растёт Ева.', '', 'experts', tk.id);
   S.sheet = null; render(); syncPush(['support']);
   toast('Заявка отправлена. Подтверждение — в сообщениях');
 }
@@ -1859,7 +1876,7 @@ function sendPartnerApply(){
   if(!t) return toast('Не отправилось, попробуйте позже');
   S.partnerApply = null;
   platformSay(`Заявка партнёра «${d.brand.trim()}» получена. Посмотрим товар и ответим сюда в течение трёх дней. ` +
-    'Спасибо — мы собираем маркет из вещей, которые сами бы выбрали.');
+    'Спасибо — мы собираем маркет из вещей, которые сами бы выбрали.', '', 'market', t.id);
   S.sheet = null; render();
   toast('Заявка отправлена. Подтверждение — в сообщениях');
 }
@@ -1915,9 +1932,52 @@ function sendEventApply(){
   S.eventApply = {own, t:'', d:'', where:'', link:'', about:'', contact:''};
   platformSay(own
     ? `Мероприятие «${d.t.trim()}» получено. Проверим и, если всё сходится с правилами, опубликуем — напишем сюда в течение трёх дней.`
-    : `Спасибо за рекомендацию «${d.t.trim()}». Свяжемся с организаторами и, если подойдёт, добавим в раздел. Напишем сюда.`);
+    : `Спасибо за рекомендацию «${d.t.trim()}». Свяжемся с организаторами и, если подойдёт, добавим в раздел. Напишем сюда.`,
+    '', 'events', t.id);
   S.sheet = null; render();
   toast(own ? 'Отправлено на проверку. Подтверждение — в сообщениях' : 'Спасибо, передали команде');
+}
+
+/* Ник для анонимной комнаты. Первое, что она здесь делает, — поэтому
+   объясняем на месте, что он значит, и предлагаем три готовых на случай
+   «не придумывается». Проверку показываем сразу под полем, а не после
+   отправки: переписывать ник вслепую неприятно. */
+function shAnonNick(){
+  const gid = S.sheet.id;
+  const g = GROUPS.find(x => x.id === gid);
+  const cur = myAnonName(gid);
+  S.nickDraft = S.nickDraft || {};
+  const v = S.nickDraft[gid] != null ? S.nickDraft[gid] : '';
+  const err = v.trim() ? anonNickError(gid, v) : '';
+  S.nickIdeas = S.nickIdeas || {};
+  if(!S.nickIdeas[gid]) S.nickIdeas[gid] = nickIdeas(gid);
+  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">${cur ? 'Сменить ник' : 'Твой ник здесь'}</h2>
+    <p class="small muted" style="margin:0 0 14px">${esc((g||{}).t || 'Анонимная комната')} · виден только в этой комнате.
+      С твоей страницей, именем и почтой он не связан — ни на экране, ни в сохранённом.
+      ${cur ? 'Прежние сообщения останутся под старым ником и останутся твоими.' : ''}</p>
+    <div class="nickpreview">${anonAva(v.trim() || cur || '?', 46)}
+      <div><b style="font-size:15px">${esc(v.trim() || cur || 'Ник')}</b>
+        <div class="small muted">так тебя увидят в комнате</div></div></div>
+    <label class="lbl">Ник</label>
+    <input class="field" id="an_nick" maxlength="18" autocomplete="off" placeholder="Например, Тихая осень"
+      value="${esc(v)}" oninput="S.nickDraft['${attJs(gid)}']=this.value;render()"
+      onkeydown="if(event.key==='Enter')saveAnonNick('${attJs(gid)}')">
+    ${err ? `<div class="small" style="color:var(--accent);margin:-4px 0 8px">${esc(err)}</div>` : ''}
+    <div class="eyebrow" style="margin:8px 0 7px">Если не придумывается</div>
+    <div class="chips wrap">${S.nickIdeas[gid].map(n =>
+      `<button class="chip" onclick="S.nickDraft['${attJs(gid)}']='${attJs(n)}';render()">${esc(n)}</button>`).join('')}</div>
+    <button class="btn" style="margin-top:14px" ${err || !v.trim() ? 'disabled' : ''}
+      onclick="saveAnonNick('${attJs(gid)}')">${cur ? 'Сменить' : 'Войти в комнату'}</button>
+    <p class="tiny muted" style="margin-top:10px">Здесь не начисляются баллы и не видно, кто прочитал.
+      Если кто-то портит разговор, редакция закроет ему письмо — по нику, не зная, кто за ним.</p>`;
+}
+function saveAnonNick(gid){
+  const v = (($('#an_nick')||{}).value || (S.nickDraft||{})[gid] || '').trim();
+  if(setAnonNick(gid, v)){
+    if(S.nickDraft) delete S.nickDraft[gid];
+    if(S.nickIdeas) delete S.nickIdeas[gid];
+    setTimeout(() => { const el = $('#cin'); if(el) el.focus(); }, 80);
+  }
 }
 
 /* ---------- правила: коротко, с благодарностью и общей целью ---------- */

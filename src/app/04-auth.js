@@ -256,6 +256,9 @@ async function signIn(u){
   const known = typeof avatarOf === 'function' ? avatarOf(u.email) : '';
   if(known) S.avatar = known;
   applyGrants();
+  /* письма, пришедшие пока её тут не было, забираем сразу: ждать
+     полминуты до следующей проверки — значит показать пустой ящик */
+  if(typeof pullDm === 'function') pullDm().then(ch => { if(ch) softRender(); });
   if(had && S.program && S.program.length){
     S.screen = 'app'; S.tab = 'home'; checkWeek();
   } else {
@@ -442,6 +445,7 @@ function tryAutoLogin(){
   const known = typeof avatarOf === 'function' ? avatarOf(u.email) : '';
   if(known) S.avatar = known;
   applyGrants();
+  if(typeof pullDm === 'function') pullDm().then(ch => { if(ch) softRender(); });
   S.screen = 'app';
   if(S.role === 'user' && (!had || !S.program || !S.program.length)){ resetQuiz(); S.screen = 'quiz'; }
   else checkWeek();
@@ -552,12 +556,12 @@ function pgSub(){
 function payPlan(){
   if(S.subAsked) return toast('Заявка уже у нас, ответим в течение дня');
   const plan = S.sub.plan === 'year' ? 'год, 24 900 ₽' : 'месяц, 2 900 ₽';
-  if(typeof toSupport !== 'function' || !toSupport('Подписка: ' + plan,
-      'Хочу оформить подписку на ' + plan + '. Оплата картой ещё не подключена — прошу открыть доступ.', 'sub'))
-    return toast('Не отправилось, попробуй позже');
+  const tk = typeof toSupport === 'function' && toSupport('Подписка: ' + plan,
+      'Хочу оформить подписку на ' + plan + '. Оплата картой ещё не подключена — прошу открыть доступ.', 'sub');
+  if(!tk) return toast('Не отправилось, попробуй позже');
   S.subAsked = true;
   platformSay(`Заявка на подписку (${plan}) получена. Оплата картой пока не подключена, поэтому доступ откроем вручную ` +
-    'и напишем сюда — обычно в течение дня. Программа и библиотека станут доступны сразу после этого.');
+    'и напишем сюда — обычно в течение дня. Программа и библиотека станут доступны сразу после этого.', '', 'space', tk.id);
   render(); schedulePersist();
   toast('Заявка отправлена. Подтверждение — в сообщениях');
 }

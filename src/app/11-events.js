@@ -66,7 +66,7 @@ function evThread(e){
   initInbox();
   let t = S.inbox.find(x => x.kind === 'мероприятие' && x.eid === e.id);
   if(!t){
-    t = {id:'ev_' + e.id, from:EVA_EVENTS, c:'#111014', kind:'мероприятие', eid:e.id,
+    t = {id:'ev_' + e.id, from:EVA_EVENTS, c:'#5E5FA8', kind:'мероприятие', chan:'events', eid:e.id,
          ago:'только что', unread:false, sys:true, msgs:[]};
     S.inbox.unshift(t);
   }
