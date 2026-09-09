@@ -73,7 +73,7 @@ strong{font-weight:600;color:var(--ink)}
 .scr::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(0,0,0,.24) 0 1px,rgba(0,0,0,0) 1px 3px)}
 .scr::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(80% 60% at 50% 18%,rgba(120,190,255,.14),transparent 70%)}
 .scr-h{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:#6E93C9;margin:0 0 11px;max-width:none;padding-bottom:7px;border-bottom:1px solid rgba(120,180,255,.2)}
-.hello{font-family:var(--mono);font-size:12.5px;color:#EAF3FF;margin:0 0 4px;max-width:none;text-shadow:0 0 10px rgba(140,200,255,.5)}
+.hello{font-family:var(--mono);font-size:12.5px;font-weight:700;color:#B8FFD4;margin:0 0 4px;max-width:none;text-shadow:0 0 12px rgba(90,255,160,.55)}
 .cmd{font-family:var(--mono);font-size:12px;color:#7FE3B0;margin:0 0 14px;max-width:none;text-shadow:0 0 9px rgba(90,230,160,.5);white-space:nowrap;overflow:hidden}
 .cur{display:inline-block;width:7px;height:1em;background:#7FE3B0;vertical-align:-.14em;margin-left:2px;box-shadow:0 0 8px rgba(90,230,160,.7);animation:bl 1.05s steps(1) infinite}
 @keyframes bl{50%{opacity:0}}
@@ -130,7 +130,7 @@ strong{font-weight:600;color:var(--ink)}
 
 /* wide feature cards */
 .feat{display:grid;grid-template-columns:1fr;gap:12px;margin:0 0 18px}
-@media (min-width:720px){.feat{grid-template-columns:1fr 1fr}.feat .fc:last-child{grid-column:1/-1}}
+@media (min-width:720px){.feat{grid-template-columns:1fr 1fr}}
 .fc{background:var(--green-soft);border:1px solid var(--green-line);border-radius:6px;padding:16px 18px 17px;display:flex;gap:13px;align-items:flex-start}
 .fc .ic{flex:0 0 30px;width:30px;height:30px;display:block;margin-top:1px}
 .h4c{display:flex;align-items:center;gap:9px;margin:28px 0 12px}
@@ -153,7 +153,13 @@ strong{font-weight:600;color:var(--ink)}
 .who span{font-size:13.5px;color:var(--muted);line-height:1.4}
 
 /* tiers */
-.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(236px,1fr));gap:14px;margin:0 0 18px}
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(236px,1fr));gap:14px;margin:0 0 18px;align-items:start}
+@media (min-width:780px){.tiers .tier:not(.hot){margin-top:27px}}
+.tier.hot{border:2px solid var(--red);box-shadow:0 6px 22px rgba(218,58,38,.18)}
+.tier:not(.hot) .prc{font-size:24px}
+.tier:not(.hot) .tb{padding:13px 15px 15px}
+.tier:not(.hot) ul{font-size:13px}
+.rec{display:block;background:var(--red);color:#fff;font-family:var(--chrome);font-weight:700;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;text-align:center;padding:6px 8px}
 .tier{border:1px solid var(--line-2);border-radius:5px;overflow:hidden;display:flex;flex-direction:column;background:var(--card)}
 .tier .bar{height:28px;font-size:12px}
 .tier .bar.gray{background:linear-gradient(180deg,#98A5B5,#6E7C8D 52%,#5A6675)}
@@ -212,6 +218,7 @@ tr.tot td{background:var(--soft);font-weight:700;color:var(--ink)}
 @media (prefers-reduced-motion:reduce){.pb i{transform:none;opacity:1}}
 .pbl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:7px 0 0;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted)}
 .pbl span:last-child{color:var(--red-ink)}
+.pbl .em{font-size:17px;line-height:1;font-weight:400;vertical-align:-3px;margin-left:2px}
 .h4e{display:flex;align-items:center;gap:8px;margin:28px 0 12px}
 .h4e h4{margin:0}
 .h4e .em{font-size:19px;line-height:1}
@@ -336,6 +343,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
 <symbol id="f-team" viewBox="0 0 16 16" shape-rendering="crispEdges"><circle cx="5.4" cy="5" r="2.6" fill="#F2C88C" stroke="#3A4657"/><path d="M1 15c0-3 2-4.6 4.4-4.6S10 12 10 15z" fill="#DA3A26" stroke="#3A4657"/><circle cx="11.2" cy="5.6" r="2.2" fill="#F2C88C" stroke="#3A4657"/><path d="M8 15c0-2.7 1.7-4 3.2-4s3.8 1.3 3.8 4z" fill="#1D4BA6" stroke="#3A4657"/></symbol>
 <symbol id="f-chat" viewBox="0 0 16 16" shape-rendering="crispEdges"><path d="M1 2h14v9H6l-3 3v-3H1z" fill="#FFF" stroke="#3A4657"/><g fill="#3C8A43"><rect x="4" y="5" width="8" height="1.4"/><rect x="4" y="7.6" width="5" height="1.4"/></g></symbol>
 <symbol id="f-app" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3.5" y="1" width="9" height="14" rx="1" fill="#DDE4EE" stroke="#3A4657"/><rect x="5" y="3" width="6" height="9" fill="#1D4BA6"/><rect x="6.8" y="13" width="2.4" height="1" fill="#8894A6"/></symbol>
+<symbol id="f-meet" viewBox="0 0 16 16" shape-rendering="crispEdges"><ellipse cx="8" cy="11.5" rx="7" ry="2.6" fill="#DDE4EE" stroke="#3A4657"/><circle cx="3.6" cy="5.2" r="2" fill="#F2C88C" stroke="#3A4657"/><circle cx="8" cy="4.2" r="2" fill="#F2C88C" stroke="#3A4657"/><circle cx="12.4" cy="5.2" r="2" fill="#F2C88C" stroke="#3A4657"/><path d="M1.4 9.6c0-1.7 1-2.5 2.2-2.5s2.2.8 2.2 2.5z" fill="#1D4BA6" stroke="#3A4657"/><path d="M5.8 8.8c0-1.8 1-2.6 2.2-2.6s2.2.8 2.2 2.6z" fill="#DA3A26" stroke="#3A4657"/><path d="M10.2 9.6c0-1.7 1-2.5 2.2-2.5s2.2.8 2.2 2.5z" fill="#3C8A43" stroke="#3A4657"/></symbol>
 <symbol id="f-party" viewBox="0 0 16 16" shape-rendering="crispEdges"><path d="M8 1l1.9 4.4 4.8.4-3.6 3.1 1.1 4.7L8 11.2 3.8 13.6l1.1-4.7L1.3 5.8l4.8-.4z" fill="#F5C542" stroke="#3A4657"/><rect x="7.2" y="6" width="1.6" height="3.4" fill="#DA3A26"/></symbol>
 </defs></svg>
 
@@ -425,7 +433,8 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
           <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-team"/></svg><div><b>Команда</b><span>Делаете выручку на практике и делитесь опытом, что реально работает.</span></div></div>
           <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-chat"/></svg><div><b>Дружеский вайб</b><span>Без «здравствуйте, а можно вопрос». Лёгкое общение без масок и понтов.</span></div></div>
           <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-app"/></svg><div><b>Чат и приложение</b><span>Чат для общения, приложение для удобства: ответы на вопросы и все материалы.</span></div></div>
-          <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-party"/></svg><div><b>Общие встречи и командная работа</b><span>В первую очередь это знакомства, классные люди, совместная работа и отдых. Ближе к Новому году — один большой выпускной для всех участников сразу: награждение команд, итоги сезона, живая музыка и вечеринка. Приходят все, независимо от пакета.</span></div></div>
+          <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-meet"/></svg><div><b>Общие встречи и командная работа</b><span>В первую очередь это знакомства, классные люди, совместная работа и отдых.</span></div></div>
+          <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-party"/></svg><div><b>Выпускной</b><span>Ближе к Новому году — один большой выпускной для всех участников сразу: награждение команд, итоги сезона, живая музыка и вечеринка. Приходят все, независимо от пакета.</span></div></div>
         </div>
 
         <h4>Три принципа, на которых всё держится</h4>
@@ -494,6 +503,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
             </div>
           </div>
           <div class="tier hot">
+            <span class="rec">Рекомендуем</span>
             <div class="bar red"><span class="t">PRO — команды и Мани Челлендж</span></div>
             <div class="tb">
               <p class="prc">4 900 ₽<small>в месяц</small></p>
@@ -522,6 +532,18 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
           </table>
         </div>
         <p class="sm">Никаких пробников и скидок: и так дёшево. Цена растёт, потому что к третьему месяцу клуб плотнее, а база знаний толще.</p>
+        <div class="tw" style="max-width:560px">
+          <table class="cmp">
+            <thead><tr><th>Коротко</th><th>CLUB</th><th>PRO</th></tr></thead>
+            <tbody>
+              <tr><td>Общие встречи</td><td class="c">4 в месяц</td><td class="c">4 в месяц</td></tr>
+              <tr><td>Командные встречи</td><td class="no">—</td><td class="c">2 в месяц</td></tr>
+              <tr><td>Команда и Мани Челлендж</td><td class="no">—</td><td class="c">да</td></tr>
+              <tr class="mark"><td>Выпускной</td><td class="c">да</td><td class="c">да</td></tr>
+              <tr class="tot"><td>Первый месяц</td><td class="c">1 900 ₽</td><td class="c">4 900 ₽</td></tr>
+            </tbody>
+          </table>
+        </div>
 
         <h4>Заходят потоками, а не по одному</h4>
         <ol class="flow">
@@ -599,9 +621,9 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
         <p class="k">PRO — это не курс, а совместный спринт на три месяца. Команды по 3–20 человек, у каждой своя история. Мы смотрим не только на выручку, а на то, как команда прошла путь: что попробовала, где ошиблась, чем поделилась с остальными и как поддерживала своих.</p>
         <p>Поэтому здесь не соревнуются в одиночку. Команда, которая нашла рабочую механику, рассказывает её всем — и от этого выигрывает весь клуб. Общий результат сезона важнее личного места в таблице.</p>
         <div class="pb" role="img" aria-label="Полоса сезона: три месяца и выпускной">
-          <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i class="w" style="--i:7"></i><i class="w" style="--i:8"></i><i class="f" style="--i:9"></i><i class="f" style="--i:10"></i><i class="f" style="--i:11"></i>
+          <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i class="w" style="--i:6"></i><i class="w" style="--i:7"></i><i class="w" style="--i:8"></i><i class="f" style="--i:9"></i><i class="f" style="--i:10"></i><i class="f" style="--i:11"></i>
         </div>
-        <div class="pbl"><span>МЕСЯЦ 1</span><span>МЕСЯЦ 2</span><span>МЕСЯЦ 3</span><span>🎉 ВЫПУСКНОЙ</span></div>
+        <div class="pbl"><span>МЕСЯЦ 1</span><span>МЕСЯЦ 2</span><span>МЕСЯЦ 3</span><span>ВЫПУСКНОЙ <b class="em" aria-hidden="true">🌟</b></span></div>
         <div class="steps">
           <div><b>Собираемся</b>Знакомимся, выбираем идею, делим роли. Правило одно: идея должна приносить деньги, а не лайки.</div>
           <div><b>Делаем и продаём</b>Прототип на ИИ, первые клиенты, первые отказы. Мастермайнд разбирает, где затык.</div>
@@ -1035,13 +1057,19 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
     try{
       var C=window.AudioContext||window.webkitAudioContext; if(!C) return null;
       if(!ac) ac=new C();
-      if(ac.state==='suspended') ac.resume();
       return ac;
     }catch(e){ return null; }
   }
-  function tone(notes,type,peak,rel){
+  function sfx(kind){
     var a=ctx(); if(!a) return;
-    var t=a.currentTime;
+    var play=function(){ try{ render(a,kind); }catch(e){} };
+    if(a.state==='suspended'){
+      var r=a.resume();
+      if(r&&r.then){ r.then(play)['catch'](function(){ play(); }); } else { play(); }
+    } else { play(); }
+  }
+  function tone(a,notes,type,peak,rel){
+    var t=a.currentTime+.01;
     notes.forEach(function(x){
       var o=a.createOscillator(), g=a.createGain();
       o.type=type; o.frequency.value=x[0];
@@ -1052,18 +1080,17 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
     });
   }
   var flip=0;
-  function sfx(kind){
-    var a=ctx(); if(!a) return;
+  function render(a,kind){
     if(kind==='switch'){
       flip=1-flip;
-      if(flip) tone([[987.77,0],[1318.51,.085]],'triangle',.15,.26);
-      else tone([[880,0],[659.25,.08]],'square',.09,.2);
+      if(flip) tone(a,[[987.77,0],[1318.51,.085]],'triangle',.15,.26);
+      else tone(a,[[880,0],[659.25,.08]],'square',.09,.2);
       return;
     }
-    if(kind==='err'){ tone([[466.16,0],[349.23,.15],[293.66,.3]],'triangle',.15,.32); return; }
+    if(kind==='tick'){ tone(a,[[1244.51,0]],'square',.05,.055); return; }
+    if(kind==='err'){ tone(a,[[466.16,0],[349.23,.15],[293.66,.3]],'triangle',.15,.32); return; }
     if(kind==='boot'){
-      /* мягкий стартовый аккорд, как при загрузке системы */
-      var t=a.currentTime;
+      var t=a.currentTime+.01;
       [[261.63,0],[392.00,.26],[523.25,.5],[659.25,.72]].forEach(function(x){
         var o=a.createOscillator(), o2=a.createOscillator(), g=a.createGain();
         o.type='sine'; o2.type='triangle';
@@ -1077,19 +1104,40 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
       return;
     }
     if(kind==='clap'){
-      var sr=a.sampleRate, n=Math.floor(sr*2.1), buf=a.createBuffer(1,n,sr), d=buf.getChannelData(0);
-      for(var c=0;c<160;c++){
-        var r=Math.random(), start=Math.floor(r*r*n*0.92), len=Math.floor(sr*0.035), amp=.3+Math.random()*.6;
-        for(var j=0;j<len && start+j<n;j++) d[start+j]+=(Math.random()*2-1)*amp*Math.exp(-j/(sr*0.0055));
+      var sr=a.sampleRate, dur=1.9, n=Math.floor(sr*dur), buf=a.createBuffer(2,n,sr);
+      for(var chn=0;chn<2;chn++){
+        var d=buf.getChannelData(chn), i, j;
+        /* четыре первых хлопка, чтобы аплодисменты начинались отчётливо */
+        for(var k=0;k<4;k++){
+          var st=Math.floor(sr*(0.015+k*0.058+Math.random()*0.012)), ln=Math.floor(sr*0.03);
+          for(j=0;j<ln && st+j<n;j++) d[st+j]+=(Math.random()*2-1)*0.85*Math.exp(-j/(sr*0.0024));
+        }
+        /* остальные хлопки: короткие и разреженные, иначе получается шипение */
+        for(var c=0;c<54;c++){
+          var pos=Math.pow(Math.random(),1.35);
+          var start=Math.floor(pos*n*0.88), len=Math.floor(sr*0.028);
+          var amp=(0.45+Math.random()*0.55)*(1-pos*0.5);
+          var tau=sr*(0.0021+Math.random()*0.0015);
+          for(j=0;j<len && start+j<n;j++){
+            d[start+j]+=(Math.random()*2-1)*amp*Math.exp(-j/tau)*(j<6?j/6:1);
+          }
+        }
+        for(i=0;i<n;i++){ if(d[i]>1)d[i]=1; else if(d[i]<-1)d[i]=-1; }
       }
-      for(var i=0;i<n;i++){ if(d[i]>1)d[i]=1; if(d[i]<-1)d[i]=-1; }
       var src=a.createBufferSource(); src.buffer=buf;
-      var bp=a.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1700; bp.Q.value=.7;
-      var g=a.createGain(); g.gain.value=.26;
-      src.connect(bp); bp.connect(g); g.connect(a.destination); src.start();
+      var hp=a.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=780;
+      var pk=a.createBiquadFilter(); pk.type='peaking'; pk.frequency.value=2200; pk.Q.value=1.1; pk.gain.value=7;
+      var lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=7200;
+      var g=a.createGain(), t=a.currentTime+.01;
+      g.gain.setValueAtTime(.0001,t);
+      g.gain.exponentialRampToValueAtTime(.5,t+.09);
+      g.gain.setValueAtTime(.5,t+.95);
+      g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+      src.connect(hp); hp.connect(pk); pk.connect(lp); lp.connect(g); g.connect(a.destination);
+      src.start(t);
       return;
     }
-    tone([[987.77,0],[1318.51,.085]],'triangle',.15,.26);
+    tone(a,[[987.77,0],[1318.51,.085]],'triangle',.15,.26);
   }
 
   /* ---------- окна ---------- */
@@ -1136,7 +1184,8 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
   $('back9').addEventListener('click',function(){ swap('ov9','ov1'); });
   document.querySelectorAll('.opts label').forEach(function(l){
     l.addEventListener('click',function(){
-      document.querySelectorAll('.opts label').forEach(function(x){x.classList.remove('sel')}); l.classList.add('sel');
+      document.querySelectorAll('.opts label').forEach(function(x){x.classList.remove('sel')});
+      l.classList.add('sel'); sfx('tick');
     });
   });
 
@@ -1193,7 +1242,8 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
   $('toPkg').addEventListener('click',function(){ swap('ov2','ov3'); });
   document.querySelectorAll('.pkg label').forEach(function(l){
     l.addEventListener('click',function(){
-      document.querySelectorAll('.pkg label').forEach(function(x){x.classList.remove('sel')}); l.classList.add('sel');
+      document.querySelectorAll('.pkg label').forEach(function(x){x.classList.remove('sel')});
+      l.classList.add('sel'); sfx('tick');
     });
   });
   $('backUni').addEventListener('click',function(){ swap('ov3','ov2'); });
