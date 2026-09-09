@@ -1,0 +1,65 @@
+name: Сборка Android APK
+
+# Запускается вручную: Actions → «Сборка Android APK» → Run workflow.
+# На выходе — файл app-debug.apk, который можно скинуть на телефон и установить.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Установка зависимостей
+        run: npm ci
+
+      - name: Сборка веб-части с относительными путями
+        run: npm run build:club
+        env:
+          CLUB_BASE: ./
+
+      - name: Установка Capacitor
+        run: npm install --no-save @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
+
+      - name: Конфигурация мобильной обёртки
+        run: |
+          cat > capacitor.config.json <<'JSON'
+          {
+            "appId": "club.iai.app",
+            "appName": "И АЙ КЛАБ",
+            "webDir": "dist/club",
+            "android": { "allowMixedContent": false },
+            "server": { "androidScheme": "https" }
+          }
+          JSON
+
+      - name: Генерация Android-проекта
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Сборка APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Публикация APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: iai-club-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

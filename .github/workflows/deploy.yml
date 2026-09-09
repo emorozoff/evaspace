@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/eva-space-app-ho4tcy
+      - claude/mobile-app-development-cyzatb
       - main
   workflow_dispatch:
 
@@ -31,7 +32,8 @@ jobs:
         run: npm ci
 
       - name: Сборка
-        run: npm run build
+        # Eva Space собирается в dist/, И АЙ КЛАБ — в dist/club/
+        run: npm run build:all
 
       # Публикация в ветку gh-pages — основной способ.
       # GitHub Pages подхватывает эту ветку и сайт открывается по ссылке.
@@ -39,6 +41,7 @@ jobs:
         run: |
           touch dist/.nojekyll
           cp dist/index.html dist/404.html
+          cp dist/club/index.html dist/club/404.html
           cd dist
           git init -q
           git checkout -qb gh-pages

@@ -7,7 +7,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview --port 4173"
+    "preview": "vite preview --port 4173",
+    "dev:club": "vite --config vite.club.config.js",
+    "build:club": "vite build --config vite.club.config.js",
+    "build:all": "npm run build && npm run build:club",
+    "icons:club": "node club/tools/make-icons.mjs"
   },
   "license": "MIT",
   "dependencies": {
