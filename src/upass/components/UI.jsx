@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Icon from './Icons.jsx';
 import { back } from '../lib/router.jsx';
 
@@ -197,11 +197,69 @@ export function Actions({ items }) {
     <div className="actions" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
       {items.map((a) => (
         <button key={a.title} className={`action${a.on ? ' action--on' : ''}`} onClick={a.onClick} disabled={a.disabled}>
-          <span className="action__ic"><Icon name={a.icon} size={21} /></span>
+          <span className="action__ic">
+            <Icon name={a.icon} size={21} />
+            {a.badge > 0 && <span className="badge-n">{a.badge}</span>}
+          </span>
           <span className="action__t">{a.title}</span>
         </button>
       ))}
     </div>
+  );
+}
+
+/* Фильтр-раскрывашка. Вместо длинной ленты чипов — одна кнопка с текущим
+   выбором; список открывается шторкой. Так три фильтра занимают одну строку. */
+export function Picker({ label, summary, title, sub, options, value, onChange, multi = false, allLabel }) {
+  const [open, setOpen] = useState(false);
+  const chosen = multi ? value || [] : value;
+  const active = multi ? chosen.length > 0 : chosen && chosen !== 'all';
+
+  const pickOne = (id) => {
+    if (!multi) {
+      onChange(id);
+      setOpen(false);
+      return;
+    }
+    onChange(chosen.includes(id) ? chosen.filter((x) => x !== id) : [...chosen, id]);
+  };
+
+  return (
+    <>
+      <button className={`picker${active ? ' picker--on' : ''}`} onClick={() => setOpen(true)}>
+        <span className="picker__t ell">{summary || label}</span>
+        <Icon name="down" size={14} />
+      </button>
+      <Sheet open={open} onClose={() => setOpen(false)} title={title || label} sub={sub}>
+        <div className="list">
+          {allLabel && (
+            <Item
+              plain
+              title={allLabel}
+              meta={!active ? <Icon name="check" size={16} color="var(--gold)" /> : undefined}
+              chev={false}
+              onClick={() => { onChange(multi ? [] : 'all'); setOpen(false); }}
+            />
+          )}
+          {options.map((o) => {
+            const on = multi ? chosen.includes(o.id) : chosen === o.id;
+            return (
+              <Item
+                key={o.id}
+                plain
+                lead={o.lead ? <span className="picker__lead">{o.lead}</span> : undefined}
+                title={o.name}
+                sub={o.sub}
+                meta={on ? <Icon name="check" size={16} color="var(--gold)" /> : o.meta}
+                chev={false}
+                onClick={() => pickOne(o.id)}
+              />
+            );
+          })}
+        </div>
+        {multi && <Btn variant="gold" wide style={{ marginTop: 14 }} onClick={() => setOpen(false)}>Показать</Btn>}
+      </Sheet>
+    </>
   );
 }
 

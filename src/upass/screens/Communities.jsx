@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { Top, List, Item, Chip, Scroller, Section, Seg, Empty, Note, Tag } from '../components/UI.jsx';
+import { Top, List, Item, Seg, Empty, Note, Tag, Picker } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 import { COMMUNITY_TOPICS, THREADS } from '../data/life.js';
 import { REGIONS, REGION_KEYS } from '../data/regions.js';
 import { byId } from '../data/people.js';
 import { communitiesFor } from '../lib/select.js';
-import { nf, plural, agoHours } from '../lib/format.js';
+import { nf, plural } from '../lib/format.js';
 
 /* Три взгляда на сообщества: мои, по регионам, закрытые клубы. */
 export default function Communities() {
@@ -29,11 +29,9 @@ export default function Communities() {
     return out;
   }, [all, tab, regions, topic, app.communities]);
 
-  const toggleRegion = (k) => setRegions((v) => (v.includes(k) ? v.filter((x) => x !== k) : [...v, k]));
-
   return (
     <div className="screen stack">
-      <Top title="Сообщества" sub={`${all.length} направлений · вступление в один тап`} />
+      <Top title="Сообщества" sub={`${all.length} ${plural(all.length, 'сообщество', 'сообщества', 'сообществ')} · вступление в один тап`} />
 
       <Seg
         value={tab}
@@ -46,19 +44,28 @@ export default function Communities() {
       />
 
       {tab !== 'mine' && (
-        <>
-          <Scroller>
-            <Chip on={topic === 'all'} onClick={() => setTopic('all')}>Все темы</Chip>
-            {COMMUNITY_TOPICS.map((t) => <Chip key={t} on={topic === t} onClick={() => setTopic(t)}>{t}</Chip>)}
-          </Scroller>
-          <Scroller>
-            <Chip on={regions.length === 0} onClick={() => setRegions([])}>Все регионы</Chip>
-            <Chip on={regions.length === 1 && regions[0] === me.city} onClick={() => setRegions([me.city])}>{REGIONS[me.city].flag} Мой</Chip>
-            {REGION_KEYS.filter((k) => REGIONS[k].communities > 2).map((k) => (
-              <Chip key={k} on={regions.includes(k)} onClick={() => toggleRegion(k)}>{REGIONS[k].flag} {REGIONS[k].name}</Chip>
-            ))}
-          </Scroller>
-        </>
+        <div className="filters">
+          <Picker
+            label="Тема"
+            summary={topic === 'all' ? 'Тема' : topic}
+            title="Тема сообщества"
+            options={COMMUNITY_TOPICS.map((t) => ({ id: t, name: t }))}
+            value={topic}
+            onChange={setTopic}
+            allLabel="Все темы"
+          />
+          <Picker
+            label="Регион"
+            summary={regionSummary(regions)}
+            title="Регионы"
+            sub="Можно выбрать несколько"
+            options={REGION_KEYS.map((k) => ({ id: k, lead: REGIONS[k].flag, name: REGIONS[k].name, sub: `${REGIONS[k].communities} ${plural(REGIONS[k].communities, 'сообщество', 'сообщества', 'сообществ')}` }))}
+            value={regions}
+            onChange={setRegions}
+            multi
+            allLabel="Все регионы"
+          />
+        </div>
       )}
 
       {list.length === 0 ? (
@@ -78,6 +85,12 @@ export default function Communities() {
     </div>
   );
 }
+
+const regionSummary = (keys) => {
+  if (!keys.length) return 'Регион';
+  if (keys.length === 1) return `${REGIONS[keys[0]].flag} ${REGIONS[keys[0]].name}`;
+  return `${keys.map((k) => REGIONS[k].flag).join(' ')} · ${keys.length}`;
+};
 
 export function CommunityRow({ c, joined }) {
   const thread = THREADS[c.id] || [];

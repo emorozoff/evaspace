@@ -25,6 +25,9 @@ import Lodge from './screens/Lodge.jsx';
 import Rep from './screens/Rep.jsx';
 import Profile from './screens/Profile.jsx';
 
+/* Экраны, которые занимают всю высоту и прячут таб-бар. */
+const FULLSCREEN = new Set(['chat', 'dm']);
+
 export default function App() {
   const app = useApp();
   const { path, parts, query } = useRoute();
@@ -50,7 +53,8 @@ export default function App() {
       <div className="aura" />
       <div className="app">
         <main key={path}>{render(root, id, query)}</main>
-        <Nav root={root} unread={unread} />
+        {/* внутри разговора таб-бара нет: поле ввода стоит на его месте */}
+        {!FULLSCREEN.has(root) && <Nav root={root} unread={unread} />}
         {app.toast && <div className="toast">{app.toast}</div>}
       </div>
     </>
@@ -66,7 +70,7 @@ function render(root, id, query) {
     case 'p': return <Person id={id} />;
     case 'communities': return <Communities />;
     case 'chats': return <Chats />;
-    case 'chat': return <Chat kind="circle" id={id} />;
+    case 'chat': return <Chat kind="community" id={id} />;
     case 'dm': return <Chat kind="dm" id={id} />;
     case 'requests': return <Requests />;
     case 'request': return <Request id={id} />;

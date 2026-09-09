@@ -2,12 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { Guilloche, QR, Avatar, Seal } from './Art.jsx';
 import { mrz, residentNumber } from '../lib/art.js';
 import { translit } from '../lib/format.js';
+import { roleEn } from '../data/people.js';
 import { TIERS, DEGREES } from '../data/canon.js';
 import { REGIONS } from '../data/regions.js';
 import { shortHash } from '../lib/chain.js';
 
-/* Цифровой паспорт. Лицевая сторона — кто это; оборот — всё, что нужно на входе:
-   большой код для сканирования, номер, срок, уровень, степень, языки, наследник, хеш репутации. */
+/* Цифровой паспорт. Заполнен латиницей, как настоящий проездной документ:
+   лицевая сторона — кто это, оборот — пропуск с большим кодом.
+   Карта живёт: медленно качается сама и доворачивается за пальцем,
+   по нажатию переворачивается. */
 
 export default function Passport({ me, chain = [], trips = [], flippable = true, compact = false }) {
   const [flip, setFlip] = useState(false);
@@ -21,6 +24,10 @@ export default function Passport({ me, chain = [], trips = [], flippable = true,
   const [l1, l2] = mrz(translit(me.name || 'RESIDENT'), number.replace(/-/g, ''), 'UHM', 'P');
   const root = chain.length ? chain[chain.length - 1].hash : '';
   const [e1] = tier.edge;
+
+  const nameEn = translit(me.name || 'Resident') || 'RESIDENT';
+  const org = (me.company || '').toUpperCase();
+  const degreeEn = degree.secret ? '·····' : degree.en;
 
   useEffect(() => {
     const el = ref.current;
@@ -40,94 +47,85 @@ export default function Passport({ me, chain = [], trips = [], flippable = true,
 
   return (
     <div className="pass-scene" ref={ref}>
-      <div
-        className="pass"
-        onClick={() => flippable && setFlip((f) => !f)}
-        style={{ transform: flip ? 'rotateY(180deg)' : `rotateY(${tilt.x * 6}deg) rotateX(${-tilt.y * 6}deg)` }}
-      >
-        {/* ЛИЦЕВАЯ */}
-        <div className="pass__face">
-          <div className="pass__bg" style={{ background: 'linear-gradient(150deg, #171a24 0%, #0d0f16 50%, #08090e 100%)' }} />
-          <div style={{ position: 'absolute', right: -70, top: -60, opacity: 0.5 }}>
-            <Guilloche color={e1} opacity={0.4} seed={number} size={280} />
-          </div>
-          <div className="pass__edge" style={{ boxShadow: `inset 0 0 0 1.5px ${e1}70, inset 0 0 30px ${e1}14` }} />
-          <div className="pass__sheen" style={{ transform: `translate(${tilt.x * 26}px, ${tilt.y * 18}px)` }} />
-
-          <div className="pass__body">
-            <div className="spread">
-              <div className="row" style={{ gap: 7 }}>
-                <Seal size={20} color={e1} motto="" />
-                <span style={{ fontWeight: 800, letterSpacing: '0.24em', fontSize: 12 }}>UPASS</span>
-              </div>
-              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', color: e1 }}>{tier.name.toUpperCase()}</span>
+      {/* качается отдельным слоем: наклон за пальцем и переворот живут на карте,
+          собственная анимация — на обёртке, иначе одно затирает другое */}
+      <div className="pass-float">
+        <div
+          className={`pass${flip ? ' pass--flip' : ''}`}
+          onClick={() => flippable && setFlip((f) => !f)}
+          style={{ '--tx': `${tilt.x * 7}deg`, '--ty': `${-tilt.y * 7}deg` }}
+        >
+          {/* ЛИЦЕВАЯ */}
+          <div className="pass__face">
+            <div className="pass__bg" style={{ background: 'linear-gradient(148deg, #1a1e29 0%, #0e1017 52%, #08090e 100%)' }} />
+            <div style={{ position: 'absolute', right: -78, top: -70, opacity: 0.45 }}>
+              <Guilloche color={e1} opacity={0.4} seed={number} size={270} />
             </div>
+            <div className="pass__edge" style={{ boxShadow: `inset 0 0 0 1.5px ${e1}66, inset 0 0 34px ${e1}12` }} />
+            <div className="pass__sheen" style={{ transform: `translate(${tilt.x * 30}px, ${tilt.y * 20}px)` }} />
 
-            <div className="row" style={{ gap: 13, marginTop: 'auto' }}>
-              <Avatar person={me} size={compact ? 46 : 54} ring={e1} />
-              <div className="grow" style={{ minWidth: 0 }}>
-                <div className="display ell" style={{ fontSize: compact ? 20 : 23 }}>{me.name || 'Имя резидента'}</div>
-                <div style={{ height: 1.5, width: 54, background: `linear-gradient(90deg, ${e1}, transparent)`, margin: '5px 0' }} />
-                <div className="ell" style={{ fontSize: 11, color: 'rgba(255,255,255,.62)' }}>
-                  {me.title || me.role}{me.company ? ` · ${me.company}` : ''}
+            <div className="pass__body">
+              {/* шапка: марка отдельной строкой, аватар к ней не примыкает */}
+              <div className="pass__head">
+                <div className="row" style={{ gap: 8 }}>
+                  <Seal size={17} color={e1} motto="" />
+                  <span className="pass__mark">UPASS</span>
+                </div>
+                <span className="pass__tier" style={{ color: e1 }}>{tier.name.toUpperCase()}</span>
+              </div>
+
+              <div className="pass__id">
+                <Avatar person={me} size={compact ? 42 : 48} ring={e1} />
+                <div className="grow" style={{ minWidth: 0 }}>
+                  <div className="pass__name ell">{nameEn}</div>
+                  <div className="pass__role ell">{roleEn(me)}{org ? ` · ${org}` : ''}</div>
+                </div>
+                <QR value={`upass:${number}`} size={compact ? 42 : 48} tone={e1} radius={10} />
+              </div>
+
+              <div className="pass__grid">
+                <F label="Passport No." value={number} tone={e1} />
+                <F label="Region" value={`${city.flag || ''} ${(city.en || '').toUpperCase()}`} />
+                <F label="Valid thru" value="12 / 27" align="right" />
+              </div>
+
+              <div className="pass__mrzbox">
+                <div className="pass__mrz">{l1}</div>
+                <div className="pass__mrz">{l2}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ОБОРОТ */}
+          <div className="pass__face pass__face--back">
+            <div className="pass__bg" style={{ background: 'linear-gradient(148deg, #141721, #08090e)' }} />
+            <div className="pass__edge" style={{ boxShadow: `inset 0 0 0 1.5px ${e1}55` }} />
+            <div className="pass__body">
+              <div className="pass__head">
+                <span className="pass__mark" style={{ color: e1 }}>MEMBER PASS</span>
+                <span className="pass__no">{number}</span>
+              </div>
+
+              <div className="pass__back">
+                <QR value={`upass:${number}:entry`} size={compact ? 86 : 96} tone={e1} radius={14} />
+                <div className="pass__pairs">
+                  <F label="Level" value={tier.name.toUpperCase()} tone={e1} />
+                  <F label="Degree" value={`${degree.roman} · ${degreeEn}`} tone={e1} />
+                  <F label="Region" value={`${city.flag || ''} ${(city.en || '').toUpperCase()}`} />
+                  <F label="Languages" value={(me.langs || []).join(' · ') || '—'} />
+                  <F label="Member since" value={String(me.since || '')} />
+                  <F label="Trips" value={trips.length ? `${trips.length} announced` : 'none'} tone={trips.length ? '#58D68D' : undefined} />
                 </div>
               </div>
-              <div style={{ textAlign: 'right', flex: 'none' }}>
-                <div style={{ fontSize: 22, lineHeight: 1 }}>{city.flag}</div>
-                <div style={{ fontSize: 8.5, letterSpacing: '0.1em', color: 'rgba(255,255,255,.6)', marginTop: 4 }}>{(city.name || '').toUpperCase()}</div>
-              </div>
-            </div>
 
-            <div className="spread" style={{ marginTop: 12, alignItems: 'flex-end' }}>
-              <div style={{ display: 'grid', gap: 6 }}>
-                <F label="Номер" value={number} tone={e1} />
-                <F label="Степень" value={`${degree.roman} · ${degree.secret ? '·····' : degree.name}`} tone={e1} />
-                <F label="Действует до" value="12 · 2027" tone={e1} />
-              </div>
-              <div style={{ background: '#fff', borderRadius: 8, padding: 3, lineHeight: 0 }}>
-                <QR value={`upass:${number}`} size={compact ? 52 : 60} />
-              </div>
-            </div>
-
-            <div style={{ marginTop: 10, borderTop: '1px solid rgba(255,255,255,.09)', paddingTop: 6 }}>
-              <div className="pass__mrz">{l1}</div>
-              <div className="pass__mrz">{l2}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* ОБОРОТ */}
-        <div className="pass__face pass__face--back">
-          <div className="pass__bg" style={{ background: 'linear-gradient(150deg, #12141c, #08090e)' }} />
-          <div className="pass__edge" style={{ boxShadow: `inset 0 0 0 1.5px ${e1}60` }} />
-          <div className="pass__body" style={{ gap: 0 }}>
-            <div className="spread">
-              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', color: e1 }}>ПРОПУСК СООБЩЕСТВА</span>
-              <span style={{ fontSize: 9.5, color: 'rgba(255,255,255,.5)', letterSpacing: '0.08em' }}>{number}</span>
-            </div>
-
-            <div className="row-t" style={{ gap: 14, marginTop: 10, flex: 1 }}>
-              <div style={{ background: '#fff', borderRadius: 10, padding: 5, lineHeight: 0, flex: 'none', alignSelf: 'center' }}>
-                <QR value={`upass:${number}:entry`} size={compact ? 84 : 98} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '7px 10px', flex: 1, alignContent: 'center' }}>
-                <F label="Уровень" value={tier.name} tone={e1} />
-                <F label="Степень" value={degree.secret ? `${degree.roman} · ·····` : `${degree.roman} · ${degree.name}`} tone={e1} />
-                <F label="Регион" value={`${city.flag} ${city.name || ''}`} tone="#fff" />
-                <F label="Языки" value={(me.langs || []).join(' · ') || '—'} tone="#fff" />
-                <F label="В клубе с" value={String(me.since || '')} tone="#fff" />
-                <F label="Поездки" value={trips.length ? `${trips.length} объявлено` : 'не объявлены'} tone={trips.length ? '#58D68D' : 'rgba(255,255,255,.55)'} />
-              </div>
-            </div>
-
-            <div style={{ borderTop: '1px solid rgba(255,255,255,.09)', paddingTop: 7, display: 'grid', gap: 3 }}>
-              <div className="spread">
-                <span className="pass__lbl">Репутация · записей {chain.length}</span>
-                <span className="pass__lbl">Действует до 12 · 2027</span>
-              </div>
-              <div className="mono" style={{ fontSize: 9.5, color: e1, letterSpacing: '0.04em' }}>{root ? shortHash(root, 18) : 'цепочка пуста'}</div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,.45)', lineHeight: 1.35 }}>
-                Покажите код на входе на любую встречу сообщества. Паспорт действует внутри сообщества и аннулируется при исключении.
+              <div className="pass__mrzbox">
+                <div className="spread">
+                  <span className="pass__lbl">Reputation · {chain.length} {chain.length === 1 ? 'record' : 'records'}</span>
+                  <span className="pass__lbl">Valid thru 12 / 27</span>
+                </div>
+                <div className="mono" style={{ fontSize: 9.5, color: e1, letterSpacing: '0.04em', marginTop: 3 }}>
+                  {root ? shortHash(root, 18) : 'chain is empty'}
+                </div>
               </div>
             </div>
           </div>
@@ -135,7 +133,7 @@ export default function Passport({ me, chain = [], trips = [], flippable = true,
       </div>
 
       {flippable && (
-        <div className="center dim-2 t-xs" style={{ marginTop: 9 }}>
+        <div className="center dim-2 t-xs" style={{ marginTop: 10 }}>
           {flip ? 'Нажмите, чтобы вернуть лицевую сторону' : 'Нажмите на карту — на обороте пропуск'}
         </div>
       )}
@@ -143,11 +141,11 @@ export default function Passport({ me, chain = [], trips = [], flippable = true,
   );
 }
 
-function F({ label, value, tone }) {
+function F({ label, value, tone, align }) {
   return (
-    <div style={{ minWidth: 0 }}>
+    <div style={{ minWidth: 0, textAlign: align }}>
       <div className="pass__lbl">{label}</div>
-      <div className="pass__val ell" style={{ color: tone }}>{value}</div>
+      <div className="pass__val ell" style={tone ? { color: tone } : undefined}>{value}</div>
     </div>
   );
 }

@@ -15,15 +15,27 @@ export const ROLE_TONE = {
 
 export const toneOf = (p) => (p && ROLE_TONE[p.role]) || p?.tone || '#8E7BF5';
 
+/* Роль латиницей — паспорт заполняется по-английски, как настоящий. */
+export const ROLE_EN = {
+  'Основатель': 'FOUNDER',
+  'Инвестор': 'INVESTOR',
+  'Предприниматель': 'ENTREPRENEUR',
+  'Эксперт': 'EXPERT',
+  'Творец': 'CREATOR',
+  'Управляющий': 'MANAGER',
+};
+
+export const roleEn = (p) => ROLE_EN[p?.role] || 'RESIDENT';
+
 export const SKILL_GROUPS = [
-  { id: 'it', name: 'ИТ и продукт', tone: '#5B8CFF' },
-  { id: 'ai', name: 'Искусственный интеллект', tone: '#8E7BF5' },
-  { id: 'realty', name: 'Жильё и релокация', tone: '#D9B26B' },
-  { id: 'capital', name: 'Инвестиции', tone: '#5FE0C8' },
-  { id: 'brand', name: 'Бренд и медиа', tone: '#F2789B' },
-  { id: 'law', name: 'Право и структуры', tone: '#9BA6BE' },
-  { id: 'body', name: 'Тело и практики', tone: '#58D68D' },
-  { id: 'ops', name: 'Операции и логистика', tone: '#E9855C' },
+  { id: 'it', emoji: '💻', name: 'ИТ и продукт', tone: '#5B8CFF' },
+  { id: 'ai', emoji: '🧠', name: 'Искусственный интеллект', tone: '#8E7BF5' },
+  { id: 'realty', emoji: '🏠', name: 'Жильё и релокация', tone: '#D9B26B' },
+  { id: 'capital', emoji: '📈', name: 'Инвестиции', tone: '#5FE0C8' },
+  { id: 'brand', emoji: '🎬', name: 'Бренд и медиа', tone: '#F2789B' },
+  { id: 'law', emoji: '⚖️', name: 'Право и структуры', tone: '#9BA6BE' },
+  { id: 'body', emoji: '🌿', name: 'Тело и практики', tone: '#58D68D' },
+  { id: 'ops', emoji: '📦', name: 'Операции и логистика', tone: '#E9855C' },
 ];
 
 export const BADGES = {
@@ -31,7 +43,7 @@ export const BADGES = {
   partner: { name: 'Партнёр', tone: '#5FE0C8' },
   curator: { name: 'Куратор круга', tone: '#8E7BF5' },
   moderator: { name: 'Модератор', tone: '#F2789B' },
-  assets: { name: 'Управляющий активами', tone: '#E9855C' },
+  assets: { name: 'Управляющий партнёр', tone: '#E9855C' },
 };
 
 /* tier — оплаченный уровень членства (1..5), degree — заслуженная степень (1..6) */
@@ -71,7 +83,7 @@ export const RESIDENTS = [
     interests: ['Теннис', 'Шахматы', 'История экономики'], lived: ['Москва', 'Лондон', 'Дубай'],
     gives: 'Разбор юнит-экономики и честный ответ за 40 минут',
     needs: 'Операторы жилой недвижимости в ОАЭ и Азии',
-    langs: ['RU', 'EN'], meets: 63, vouches: 27, badges: ['founder', 'partner'], circle: 'c-capital',
+    langs: ['RU', 'EN'], meets: 63, vouches: 27, badges: ['founder', 'partner'], circle: 'c-invest',
     vouchedBy: ['r6', 'r23', 'r14'], contact: '@remizov',
   },
   {
@@ -109,7 +121,7 @@ export const RESIDENTS = [
     interests: ['Мотоциклы', 'Дайвинг', 'Рыбалка'], lived: ['Екатеринбург', 'Бали'],
     gives: 'Транспорт в день обращения в Бали и на Пхукете',
     needs: 'Инвестиции в расширение парка до 120 машин',
-    langs: ['RU', 'EN', 'ID'], meets: 37, vouches: 14, badges: ['partner'], circle: 'c-ops',
+    langs: ['RU', 'EN', 'ID'], meets: 37, vouches: 14, badges: ['partner'], circle: 'c-biz',
     vouchedBy: ['r1', 'r12', 'r15'], contact: '@vaulin',
   },
   {
@@ -147,7 +159,7 @@ export const RESIDENTS = [
     interests: ['Соколиная охота', 'Каллиграфия', 'Парусный спорт'], lived: ['Баку', 'Москва', 'Дубай'],
     gives: 'Знакомство с семейными офисами ОАЭ — по рекомендации круга',
     needs: 'Проверенные операторы активов',
-    langs: ['RU', 'EN', 'AR'], meets: 52, vouches: 31, badges: ['founder'], circle: 'c-capital',
+    langs: ['RU', 'EN', 'AR'], meets: 52, vouches: 31, badges: ['founder'], circle: 'c-invest',
     vouchedBy: ['r23', 'r2'], contact: 'по рекомендации',
   },
   {
@@ -166,7 +178,7 @@ export const RESIDENTS = [
     interests: ['Йога', 'Тайская кухня', 'Дети и школы'], lived: ['Санкт-Петербург', 'Бангкок', 'Пхукет'],
     gives: 'Проверю ваш договор аренды до подписания',
     needs: 'Управляющий для пяти вилл на Пхукете',
-    langs: ['RU', 'EN', 'TH'], meets: 33, vouches: 11, badges: ['partner'], circle: 'c-realty',
+    langs: ['RU', 'EN', 'TH'], meets: 33, vouches: 11, badges: ['partner'], circle: 'c-home',
     vouchedBy: ['r15', 'r1', 'r3'], contact: '@dorn',
   },
   {
@@ -204,7 +216,7 @@ export const RESIDENTS = [
     interests: ['Пилатес', 'Парусный спорт', 'Арабский язык'], lived: ['Самара', 'Москва', 'Дубай'],
     gives: 'Резидентская виза ОАЭ без нервов за 12 рабочих дней',
     needs: 'Надёжный партнёр по медицинскому страхованию',
-    langs: ['RU', 'EN', 'AR'], meets: 47, vouches: 19, badges: ['partner', 'moderator'], circle: 'c-ops',
+    langs: ['RU', 'EN', 'AR'], meets: 47, vouches: 19, badges: ['partner', 'moderator'], circle: 'c-biz',
     vouchedBy: ['r22', 'r2', 'r11'], contact: '@verkh',
   },
   {
@@ -240,7 +252,7 @@ export const RESIDENTS = [
     interests: ['Пилатес', 'Архитектура', 'Путешествия'], lived: ['Ташкент', 'Дубай'],
     gives: 'Разбор трёх объектов по доходности за встречу',
     needs: 'Клиенты на длинный горизонт, а не на перепродажу',
-    langs: ['RU', 'EN', 'AR'], meets: 22, vouches: 7, badges: [], circle: 'c-realty',
+    langs: ['RU', 'EN', 'AR'], meets: 22, vouches: 7, badges: [], circle: 'c-home',
     vouchedBy: ['r9', 'r2'], contact: '@yusupova',
   },
   {
@@ -258,7 +270,7 @@ export const RESIDENTS = [
     interests: ['Сёрфинг', 'Мотоциклы', 'Кофе'], lived: ['Новосибирск', 'Бали'],
     gives: 'Байк с доставкой к вилле за два часа',
     needs: 'Механики на второй склад',
-    langs: ['RU', 'EN', 'ID'], meets: 31, vouches: 10, badges: ['curator'], circle: 'c-ops',
+    langs: ['RU', 'EN', 'ID'], meets: 31, vouches: 10, badges: ['curator'], circle: 'c-biz',
     vouchedBy: ['r4', 'r1'], contact: '@polovtsev',
   },
   {
@@ -314,7 +326,7 @@ export const RESIDENTS = [
     interests: ['Падел', 'Дайвинг', 'Столярное дело'], lived: ['Краснодар', 'Сочи', 'Пхукет'],
     gives: 'Финмодель объекта до покупки',
     needs: 'Управляющие на новые локации',
-    langs: ['RU', 'EN', 'TH'], meets: 44, vouches: 18, badges: ['assets'], circle: 'c-realty',
+    langs: ['RU', 'EN', 'TH'], meets: 44, vouches: 18, badges: ['assets'], circle: 'c-home',
     vouchedBy: ['r2', 'r6', 'r7'], contact: '@guryev',
   },
   {
@@ -332,7 +344,7 @@ export const RESIDENTS = [
     interests: ['Горные лыжи', 'Конный спорт', 'Китайская каллиграфия'], lived: ['Алматы', 'Урумчи'],
     gives: 'Доставка личных вещей при переезде по себестоимости',
     needs: 'Партнёр по складам в ОАЭ',
-    langs: ['RU', 'KZ', 'EN', 'ZH'], meets: 17, vouches: 6, badges: [], circle: 'c-ops',
+    langs: ['RU', 'KZ', 'EN', 'ZH'], meets: 17, vouches: 6, badges: [], circle: 'c-biz',
     vouchedBy: ['r9', 'r8'], contact: '@aida',
   },
   {
@@ -460,7 +472,7 @@ export const RESIDENTS = [
     interests: ['Верблюжьи бега', 'Арабская поэзия', 'Гольф'], lived: ['Дубай', 'Лондон'],
     gives: 'Взгляд на портфель сообщество глазами семейного офиса',
     needs: 'Ничего не ищу — смотрю',
-    langs: ['EN', 'AR'], meets: 19, vouches: 24, badges: ['founder'], circle: 'c-capital',
+    langs: ['EN', 'AR'], meets: 19, vouches: 24, badges: ['founder'], circle: 'c-invest',
     vouchedBy: ['r6'], contact: 'по рекомендации',
   },
   {
@@ -496,7 +508,7 @@ export const RESIDENTS = [
     interests: ['Падел', 'Яхтинг', 'Кубинская кухня'], lived: ['Одесса', 'Нью-Йорк', 'Майами'],
     gives: 'Разбор американского рынка для команд из СНГ',
     needs: 'Партнёр по круглогодичным программам в Майами',
-    langs: ['RU', 'EN', 'ES'], meets: 23, vouches: 8, badges: ['partner'], circle: 'c-capital',
+    langs: ['RU', 'EN', 'ES'], meets: 23, vouches: 8, badges: ['partner'], circle: 'c-invest',
     vouchedBy: ['r2', 'r14'], contact: '@levin',
   },
   {
@@ -550,7 +562,7 @@ export const RESIDENTS = [
     interests: ['Вино', 'Хайкинг', 'Сёрфинг'], lived: ['Йоханнесбург', 'Кейптаун'],
     gives: 'Разбор объекта на побережье ЮАР за встречу',
     needs: 'Партнёр по управлению домами в аренде',
-    langs: ['EN', 'AF'], meets: 7, vouches: 2, badges: [], circle: 'c-realty',
+    langs: ['EN', 'AF'], meets: 7, vouches: 2, badges: [], circle: 'c-home',
     vouchedBy: ['r15', 'r14'], contact: '@mbeki',
   },
   {

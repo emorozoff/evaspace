@@ -2,7 +2,7 @@
   "id": "/evaspace/upass/",
   "name": "UPASS — цифровой паспорт резидента",
   "short_name": "UPASS",
-  "description": "Приложение закрытого кооператива: паспорт резидента, сеть UHOME в двадцати городах, доля в активах через UHT, репутация и общее управление.",
+  "description": "Приложение сообщества для тех, кто живёт между странами: паспорт резидента, двадцать регионов, сообщества, запросы и расчёт поездки.",
   "start_url": "/evaspace/upass/",
   "scope": "/evaspace/upass/",
   "display": "standalone",
@@ -20,7 +20,7 @@
     { "src": "/evaspace/upass/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Карта UHOME", "short_name": "Карта", "url": "/evaspace/upass/#/map", "icons": [{ "src": "/evaspace/upass/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Карта регионов", "short_name": "Карта", "url": "/evaspace/upass/#/map", "icons": [{ "src": "/evaspace/upass/icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Чаты", "short_name": "Чаты", "url": "/evaspace/upass/#/chats", "icons": [{ "src": "/evaspace/upass/icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Люди", "short_name": "Люди", "url": "/evaspace/upass/#/people", "icons": [{ "src": "/evaspace/upass/icons/icon-192.png", "sizes": "192x192" }] }
   ]

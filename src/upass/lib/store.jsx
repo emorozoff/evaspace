@@ -2,10 +2,12 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { ME_DEFAULT, RESIDENTS } from '../data/people.js';
 import { DEGREES, PASSPHRASES, TIERS } from '../data/canon.js';
 import { REGIONS } from '../data/regions.js';
+import { CIRCLES } from '../data/circles.js';
 import { linkChain } from './chain.js';
 import { residentNumber, seeded } from './art.js';
 
-const KEY = 'upass.v3';
+const KEY = 'upass.v4';
+const CIRCLE_NAME = Object.fromEntries(CIRCLES.map((c) => [c.id, c.name]));
 
 const EMPTY = {
   stage: 'guest',            // guest → review → approved → member
@@ -20,6 +22,9 @@ const EMPTY = {
   dms: {},
   requests: [],              // свои запросы в ленте
   replies: {},               // ответы на чужие запросы
+  askVariant: 0,             // какой вариант автотекста показать следующим
+  circles: {},               // человек → круг общения, если резидент перенёс его руками
+  clocks: ['moscow', 'dubai', 'bali'],   // часы на главной
   trips: [],
   rep: [],
   secret: false,
@@ -138,6 +143,16 @@ export function StoreProvider({ children }) {
     [addRep, say]
   );
 
+  const setCircle = useCallback(
+    (personId, circleId) => {
+      setS((prev) => ({ ...prev, circles: { ...prev.circles, [personId]: circleId } }));
+      say(CIRCLE_NAME[circleId] ? `Перенесли в «${CIRCLE_NAME[circleId]}»` : 'Убрали из кругов');
+    },
+    [say]
+  );
+
+  const setClocks = useCallback((keys) => setS((prev) => ({ ...prev, clocks: keys.slice(0, 3) })), []);
+
   /* ——— мероприятия ——— */
   const toggleGoing = useCallback(
     (id, title) => {
@@ -180,9 +195,13 @@ export function StoreProvider({ children }) {
 
   /* ——— запросы ——— */
   const ask = useCallback(
-    ({ text, tags, region }) => {
+    ({ text, tags, region, auto }) => {
       const id = 'my' + Date.now();
-      setS((prev) => ({ ...prev, requests: [{ id, text, tags, region, at: Date.now() }, ...prev.requests] }));
+      setS((prev) => ({
+        ...prev,
+        requests: [{ id, text, tags, region, auto: !!auto, at: Date.now() }, ...prev.requests],
+        askVariant: prev.askVariant + 1,
+      }));
       addRep('request', { weight: 1, note: 'Запрос сообществу' });
       say('Запрос опубликован — ответы придут в ленту и в личку');
       return id;
@@ -304,6 +323,8 @@ export function StoreProvider({ children }) {
     setOath,
     setMe,
     setRegion,
+    setCircle,
+    setClocks,
     setVisibility,
     markSeen,
     addRep,

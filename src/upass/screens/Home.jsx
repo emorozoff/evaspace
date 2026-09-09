@@ -2,15 +2,16 @@ import { useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import Passport from '../components/Passport.jsx';
+import Pulse from '../components/Pulse.jsx';
 import Install from '../components/Install.jsx';
 import { Avatar } from '../components/Art.jsx';
 import { PosterThumb } from '../components/Poster.jsx';
 import { Top, List, Item, Section, Sheet, Chip, Btn, Actions, Note } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 import { REGIONS, REGION_KEYS } from '../data/regions.js';
-import { DEGREES } from '../data/canon.js';
-import { EVENT_KINDS, REQUESTS, COMMUNITIES } from '../data/life.js';
-import { agendaFor, residentsIn, regionStats } from '../lib/select.js';
+import { EVENT_KINDS, COMMUNITIES, DMS } from '../data/life.js';
+import { peopleInCircle } from '../data/circles.js';
+import { agendaFor, requestsIn } from '../lib/select.js';
 import { relDay, plural, nf } from '../lib/format.js';
 import { byId } from '../data/people.js';
 
@@ -18,14 +19,17 @@ export default function Home() {
   const app = useApp();
   const { me, chain } = app;
   const [pick, setPick] = useState(false);
+  const [clocks, setClocks] = useState(false);
 
   const r = REGIONS[me.city];
-  const stats = regionStats(me.city);
   const agenda = useMemo(() => agendaFor(me, me.city, 3), [me]);
-  const around = useMemo(() => residentsIn(me.city).filter((x) => x.id !== me.id).slice(0, 10), [me]);
-  const asks = useMemo(() => REQUESTS.filter((q) => q.region === me.city).slice(0, 2), [me.city]);
+  const asks = useMemo(() => requestsIn(me.city).slice(0, 2), [me.city]);
   const mine = COMMUNITIES.filter((c) => app.communities.includes(c.id));
-  const deg = DEGREES.find((d) => d.n === me.degree) || DEGREES[0];
+  const inner = useMemo(
+    () => peopleInCircle('inner', app.circles).map(byId).filter(Boolean),
+    [app.circles]
+  );
+  const unread = DMS.filter((d) => d.unread && !app.seen['dm-' + d.with]).length;
 
   return (
     <div className="screen stack-20 rise-in">
@@ -38,30 +42,46 @@ export default function Home() {
         }
       />
 
-      <Passport me={me} chain={chain} />
+      <Passport me={me} chain={chain} trips={app.trips} />
 
-      {/* регион задаёт всё остальное на экране */}
-      <button className="card tap row" style={{ gap: 12 }} onClick={() => setPick(true)}>
-        <div style={{ fontSize: 26, lineHeight: 1 }}>{r.flag}</div>
-        <div className="grow">
-          <div className="t-md">{r.name}</div>
-          <div className="t-xs dim" style={{ marginTop: 2 }}>
-            {nf(stats.residents)} резидентов · {nf(stats.companies)} компаний · {stats.communities} сообществ
-          </div>
-        </div>
-        <span className="t-xs gold" style={{ fontWeight: 700 }}>сменить</span>
-      </button>
+      <Pulse
+        app={app}
+        onSettings={() => setClocks(true)}
+        onOpen={(id) => {
+          if (id === 'region') setPick(true);
+          else if (id === 'clock') setClocks(true);
+          else if (id === 'trip') go('/map');
+          else go(`/people?region=${me.city}`);
+        }}
+      />
 
       <Actions
         items={[
-          { icon: 'compass', title: 'Куда лечу', onClick: () => go('/map') },
-          { icon: 'message', title: 'Запросить', onClick: () => go('/requests') },
-          { icon: 'users', title: 'Кто рядом', onClick: () => go(`/people?region=${me.city}`) },
+          { icon: 'send', title: 'Мессенджер', badge: unread, onClick: () => go('/chats') },
+          { icon: 'compass', title: 'Карта', onClick: () => go('/map') },
+          { icon: 'message', title: 'Запросы', onClick: () => go('/requests') },
           { icon: 'calendar', title: 'Афиша', onClick: () => go('/events') },
         ]}
       />
 
       <Install compact />
+
+      {inner.length > 0 && (
+        <Section title="Ближний круг" more="Все чаты" onMore={() => go('/chats')}>
+          <div className="scroller">
+            {inner.map((p) => (
+              <button key={p.id} className="center" style={{ width: 66 }} onClick={() => go(`/dm/${p.id}`)}>
+                <Avatar person={p} size={52} dot={p.online} style={{ margin: '0 auto' }} />
+                <div className="t-xs" style={{ marginTop: 7, fontWeight: 600 }}>{p.name.split(' ')[0]}</div>
+              </button>
+            ))}
+            <button className="center" style={{ width: 66 }} onClick={() => go('/people')}>
+              <span className="circle-add"><Icon name="plus" size={20} /></span>
+              <div className="t-xs dim-2" style={{ marginTop: 7, fontWeight: 600 }}>Добавить</div>
+            </button>
+          </div>
+        </Section>
+      )}
 
       {agenda.length > 0 && (
         <Section title={`Ближайшее · ${r.name}`} more="Афиша" onMore={() => go('/events')}>
@@ -100,21 +120,6 @@ export default function Home() {
         </Section>
       )}
 
-      <Section title={`Рядом · ${r.flag} ${r.name}`} more="Все" onMore={() => go(`/people?region=${me.city}`)}>
-        {around.length ? (
-          <div className="scroller">
-            {around.map((p) => (
-              <button key={p.id} className="center" style={{ width: 66 }} onClick={() => go(`/p/${p.id}`)}>
-                <Avatar person={p} size={52} dot={p.online} style={{ margin: '0 auto' }} />
-                <div className="t-xs" style={{ marginTop: 7, fontWeight: 600 }}>{p.name.split(' ')[0]}</div>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <Note icon="globe">В этом регионе пока никого из своих. Посмотрите карту — сообщество рядом.</Note>
-        )}
-      </Section>
-
       {mine.length > 0 && (
         <Section title="Мои сообщества" more="Все" onMore={() => go('/communities')}>
           <List>
@@ -139,7 +144,7 @@ export default function Home() {
                 key={t.id}
                 icon="plane"
                 title={REGIONS[t.region]?.name}
-                sub={`${relDay(t.inDays)} · ${t.days} ${plural(t.days, 'день', 'дня', 'дней')}`}
+                sub={`${t.when || relDay(t.inDays)} · ${t.days} ${plural(t.days, 'день', 'дня', 'дней')}`}
                 meta={<button className="iconbtn" style={{ width: 30, height: 30 }} onClick={() => app.cancelTrip(t.id)}><Icon name="x" size={13} /></button>}
                 chev={false}
               />
@@ -158,6 +163,28 @@ export default function Home() {
         </div>
         <Btn variant="quiet" wide style={{ marginTop: 16 }} onClick={() => { setPick(false); go('/map'); }}>Открыть карту</Btn>
       </Sheet>
+
+      <Sheet open={clocks} onClose={() => setClocks(false)} title="Часы на главной" sub="До трёх регионов — время идёт само">
+        <ClockPicker app={app} />
+      </Sheet>
+    </div>
+  );
+}
+
+function ClockPicker({ app }) {
+  const on = app.clocks || [];
+  const toggle = (k) =>
+    app.setClocks(on.includes(k) ? on.filter((x) => x !== k) : on.length < 3 ? [...on, k] : [...on.slice(1), k]);
+  return (
+    <div className="stack">
+      <div className="wrap">
+        {REGION_KEYS.map((k) => (
+          <Chip key={k} on={on.includes(k)} onClick={() => toggle(k)}>
+            {REGIONS[k].flag} {REGIONS[k].name}
+          </Chip>
+        ))}
+      </div>
+      <Note icon="clock">Выбрано {on.length} из трёх. Четвёртый регион вытеснит самый старый.</Note>
     </div>
   );
 }

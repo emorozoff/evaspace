@@ -60,6 +60,23 @@ export function agoHours(h) {
   return `${d} ${plural(d, 'день', 'дня', 'дней')} назад`;
 }
 
+/* Ближайшие месяцы для выбора даты поездки: подпись и через сколько дней
+   начинается месяц (текущий считается от сегодня). */
+export function monthsAhead(count = 7) {
+  const base = today();
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
+    const start = i === 0 ? base : d;
+    out.push({
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: i === 0 ? 'В этом месяце' : `${MONTH_NOM[d.getMonth()]}${d.getFullYear() !== base.getFullYear() ? ` ${String(d.getFullYear()).slice(2)}` : ''}`,
+      inDays: Math.round((start - base) / 86400000),
+    });
+  }
+  return out;
+}
+
 export function monthLabel(key) {
   const [y, m] = key.split('-');
   return `${MONTHS_SHORT[Number(m) - 1]} ${y.slice(2)}`;

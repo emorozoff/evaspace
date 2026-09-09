@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { Top, List, Item, Chip, Scroller, Sheet, Btn, Empty, Note, Tag } from '../components/UI.jsx';
+import { Top, Chip, Sheet, Btn, Empty, Note, Picker } from '../components/UI.jsx';
 import { Avatar } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
-import { REQUESTS, REQUEST_TAGS } from '../data/life.js';
+import { REQUESTS, REQUEST_TAGS, requestTag, autoRequestText, topicsPhrase } from '../data/life.js';
 import { REGIONS } from '../data/regions.js';
 import { byId } from '../data/people.js';
-import { agoHours, plural } from '../lib/format.js';
+import { agoHours } from '../lib/format.js';
 
-/* Лента запросов: короткий текст, теги, ответы в ветке или в личку. */
+/* Лента запросов. Ответить можно прямо в карточке — экран запроса нужен
+   только чтобы прочитать всю ветку. */
 export default function Requests() {
   const app = useApp();
   const { me } = app;
@@ -34,16 +35,29 @@ export default function Requests() {
         right={<button className="iconbtn iconbtn--gold" onClick={() => setAsk(true)} aria-label="Написать запрос"><Icon name="plus" size={19} /></button>}
       />
 
-      <Scroller>
-        <Chip on={scope === 'all'} onClick={() => setScope('all')}>Все</Chip>
-        <Chip on={scope === 'region'} onClick={() => setScope('region')}>{REGIONS[me.city].flag} Мой регион</Chip>
-        <Chip on={scope === 'mine'} onClick={() => setScope('mine')}>Мои</Chip>
-      </Scroller>
-
-      <Scroller>
-        <Chip on={tag === 'all'} onClick={() => setTag('all')}>Все темы</Chip>
-        {REQUEST_TAGS.map((t) => <Chip key={t} on={tag === t} onClick={() => setTag(t)}>{t}</Chip>)}
-      </Scroller>
+      <div className="filters">
+        <Picker
+          label="Все"
+          summary={scope === 'all' ? 'Все' : scope === 'region' ? `${REGIONS[me.city].flag} Мой регион` : 'Мои'}
+          title="Чьи запросы"
+          options={[
+            { id: 'region', lead: REGIONS[me.city].flag, name: 'Мой регион', sub: REGIONS[me.city].name },
+            { id: 'mine', lead: '📌', name: 'Мои запросы' },
+          ]}
+          value={scope}
+          onChange={setScope}
+          allLabel="Все запросы"
+        />
+        <Picker
+          label="Тема"
+          summary={tag === 'all' ? 'Тема' : `${requestTag(tag).emoji} ${requestTag(tag).name}`}
+          title="Тема"
+          options={REQUEST_TAGS.map((t) => ({ id: t.id, lead: t.emoji, name: t.name }))}
+          value={tag}
+          onChange={setTag}
+          allLabel="Все темы"
+        />
+      </div>
 
       {all.length === 0 ? (
         <Empty icon="message" title="Пока пусто" text="Напишите первый запрос — сообщество отвечает в среднем за пару часов." action={<Btn size="sm" variant="gold" onClick={() => setAsk(true)}>Написать</Btn>} />
@@ -53,21 +67,30 @@ export default function Requests() {
         </div>
       )}
 
-      <Note icon="eye">Ответить можно прямо в ветке или написать автору в личку. Запросы видят все резиденты сообщества.</Note>
+      <Note icon="eye">Ответ уходит в ветку запроса и автору в личку. Запросы видят все резиденты сообщества.</Note>
 
-      <Sheet open={ask} onClose={() => setAsk(false)} title="Новый запрос" sub="Коротко и по делу — так отвечают быстрее">
+      <Sheet open={ask} onClose={() => setAsk(false)} title="Новый запрос" sub="Хватит и одних тем — текст соберётся сам">
         <AskForm app={app} onDone={() => setAsk(false)} />
       </Sheet>
     </div>
   );
 }
 
-export function RequestCard({ q, app, full }) {
+export function RequestCard({ q, app }) {
+  const [text, setText] = useState('');
   const p = q.who === 'me' ? app.me : byId(q.who);
-  const replies = (q.replies || []).length + (app.replies[q.id] || []).length;
+  const own = app.replies[q.id] || [];
+  const total = (q.replies || []).length + own.length;
+
+  const send = () => {
+    if (!text.trim()) return;
+    app.replyTo(q.id, text.trim());
+    setText('');
+  };
+
   return (
-    <button className="card tap" style={{ display: 'block', width: '100%' }} onClick={() => go(`/request/${q.id}`)}>
-      <div className="row" style={{ gap: 11 }}>
+    <div className="card">
+      <button className="row" style={{ gap: 11, width: '100%' }} onClick={() => q.who !== 'me' && go(`/p/${q.who}`)}>
         <Avatar person={p} size={40} dot={p?.online} />
         <div className="grow" style={{ minWidth: 0 }}>
           <div className="row" style={{ gap: 7 }}>
@@ -76,39 +99,108 @@ export function RequestCard({ q, app, full }) {
           </div>
           <div className="t-xs dim-2">{REGIONS[q.region]?.flag} {REGIONS[q.region]?.name}</div>
         </div>
-      </div>
+      </button>
+
       <div className="t-sm" style={{ marginTop: 10, lineHeight: 1.5 }}>{q.text}</div>
-      <div className="spread" style={{ marginTop: 11 }}>
-        <div className="wrap" style={{ gap: 6 }}>
-          {q.tags.map((t) => <Tag key={t} plain>#{t}</Tag>)}
-        </div>
-        <span className="t-xs dim-2 row" style={{ gap: 5 }}>
-          <Icon name="message" size={13} />
-          {replies || 0}
-        </span>
+
+      <div className="wrap" style={{ gap: 6, marginTop: 11 }}>
+        {q.tags.map((t) => {
+          const meta = requestTag(t);
+          return <span key={t} className="tag tag--plain">{meta ? `${meta.emoji} ${meta.name}` : t}</span>;
+        })}
       </div>
-    </button>
+
+      {/* последний ответ виден сразу, вся ветка — по «Открыть» */}
+      <button className="reply" onClick={() => go(`/request/${q.id}`)}>
+        {total > 0 ? (
+          <>
+            <span className="reply__who">{lastAuthor(q, own)}</span>
+            <span className="reply__t ell">{lastText(q, own)}</span>
+            <span className="reply__more">Открыть · {total}</span>
+          </>
+        ) : (
+          <>
+            <span className="reply__t dim-2">Ответов пока нет</span>
+            <span className="reply__more">Открыть</span>
+          </>
+        )}
+      </button>
+
+      <div className="composer composer--inline">
+        <input
+          className="field grow"
+          placeholder={q.who === 'me' ? 'Добавить к запросу' : 'Ответить в ветке'}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && send()}
+        />
+        <button className="iconbtn iconbtn--gold" onClick={send} aria-label="Отправить">
+          <Icon name="send" size={17} width={1.9} />
+        </button>
+      </div>
+    </div>
   );
 }
 
+const lastAuthor = (q, own) => {
+  if (own.length) return 'Вы';
+  const r = (q.replies || [])[q.replies.length - 1];
+  return byId(r.who)?.name.split(' ')[0] || '';
+};
+const lastText = (q, own) => (own.length ? own[own.length - 1].text : (q.replies || [])[q.replies.length - 1]?.text || '');
+
+/* Запрос можно собрать из одних тем: текст напишется сам, а вариант подачи
+   каждый раз новый — иначе лента превращается в одинаковые объявления. */
 export function AskForm({ app, onDone }) {
   const [text, setText] = useState('');
   const [tags, setTags] = useState([]);
+  const auto = !text.trim();
+  const preview = tags.length ? autoRequestText(app.me.city, tags, app.askVariant) : '';
+
   const toggle = (t) => setTags((v) => (v.includes(t) ? v.filter((x) => x !== t) : v.length < 3 ? [...v, t] : v));
+
   return (
     <div className="stack">
-      <textarea className="field" autoFocus placeholder="Что нужно? Чем конкретнее, тем быстрее ответят." value={text} onChange={(e) => setText(e.target.value)} style={{ minHeight: 120 }} />
       <div>
         <div className="label">Темы · до трёх</div>
         <div className="wrap">
-          {['Визы', 'Жильё', 'Работа', 'Партнёрство', 'Совет', 'Инвестиции', 'Здоровье', 'Дети', 'Транспорт', 'Знакомство'].map((t) => (
-            <Chip key={t} on={tags.includes(t)} onClick={() => toggle(t)}>{t}</Chip>
+          {REQUEST_TAGS.map((t) => (
+            <Chip key={t.id} on={tags.includes(t.id)} onClick={() => toggle(t.id)}>{t.emoji} {t.name}</Chip>
           ))}
         </div>
       </div>
-      <Note icon="users">Запрос увидят резиденты во всех регионах, но первыми — те, кто рядом с вами.</Note>
-      <Btn variant="gold" wide disabled={text.trim().length < 10 || !tags.length} onClick={() => { app.ask({ text: text.trim(), tags, region: app.me.city }); onDone(); }}>
-        Опубликовать
+
+      <textarea
+        className="field"
+        placeholder="Можно оставить пустым — текст соберётся из тем"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        style={{ minHeight: 96 }}
+      />
+
+      {auto && tags.length > 0 && (
+        <div className="card card--gold">
+          <div className="eyebrow eyebrow--gold">Опубликуем так</div>
+          <div className="t-sm" style={{ marginTop: 7, lineHeight: 1.5 }}>{preview}</div>
+        </div>
+      )}
+
+      <Note icon="users">
+        {tags.length
+          ? `Тема: ${topicsPhrase(tags)}. Первыми увидят те, кто рядом с вами.`
+          : 'Выберите хотя бы одну тему — по ней запрос найдут те, кто может помочь.'}
+      </Note>
+
+      <Btn
+        variant="gold"
+        wide
+        disabled={!tags.length || (!auto && text.trim().length < 10)}
+        onClick={() => {
+          app.ask({ text: auto ? preview : text.trim(), tags, region: app.me.city, auto });
+          onDone();
+        }}
+      >
+        {auto ? 'Опубликовать готовый текст' : 'Опубликовать'}
       </Btn>
     </div>
   );

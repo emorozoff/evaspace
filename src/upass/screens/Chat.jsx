@@ -1,22 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { TopBar, Empty, Btn, Note } from '../components/UI.jsx';
+import { TopBar, Empty, Btn, Sheet, List, Item } from '../components/UI.jsx';
 import { Avatar } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
 import { communityById, THREADS, DMS } from '../data/life.js';
+import { CIRCLES, circleOf } from '../data/circles.js';
 import { byId } from '../data/people.js';
 import { canSee } from '../lib/select.js';
 import { RESIDENTS } from '../data/people.js';
 import { plural, nf } from '../lib/format.js';
 
-/* Один экран для круга и личной переписки: заголовок, лента пузырей, поле ввода. */
+/* Один экран для сообщества и личной переписки: шапка, лента пузырей,
+   поле ввода прижато к низу экрана. Таб-бар на время разговора уходит —
+   как в телеграме, чтобы клавиатура и поле не боролись за место. */
+
 export default function Chat({ kind, id }) {
   const app = useApp();
   const [text, setText] = useState('');
+  const [move, setMove] = useState(false);
   const endRef = useRef(null);
 
-  const circle = kind === 'circle' ? communityById(id) : null;
+  const group = kind === 'community' ? communityById(id) : null;
   const person = kind === 'dm' ? byId(id) : null;
 
   useEffect(() => {
@@ -28,35 +33,36 @@ export default function Chat({ kind, id }) {
     endRef.current?.scrollIntoView({ block: 'end' });
   }, [app.messages[id]?.length, app.dms[id]?.length]);
 
-  if (kind === 'circle' && !circle) return <Empty title="Сообщество не найдено" />;
+  if (kind === 'community' && !group) return <Empty title="Сообщество не найдено" />;
   if (kind === 'dm' && !person) return <Empty title="Резидент не найден" />;
 
-  if (circle && !canSee(app.me, circle.minDegree)) {
+  if (group && !canSee(app.me, group.minDegree)) {
     return (
       <>
-        <TopBar title={circle.name} backTo="/communities" />
+        <TopBar title={group.name} backTo="/communities" />
         <div className="screen">
-          <Empty icon="lock" title="Закрытый клуб" text={`Нужна степень ${circle.minDegree}. Ни участники, ни переписка снаружи не видны.`} action={<Btn size="sm" variant="quiet" onClick={() => go('/degrees')}>Как получить доступ</Btn>} />
+          <Empty icon="lock" title="Закрытый клуб" text={`Нужна степень ${group.minDegree}. Ни участники, ни переписка снаружи не видны.`} action={<Btn size="sm" variant="quiet" onClick={() => go('/degrees')}>Как получить доступ</Btn>} />
         </div>
       </>
     );
   }
 
-  const joined = circle ? app.communities.includes(circle.id) : true;
-  const base = circle ? THREADS[circle.id] || [] : DMS.find((d) => d.with === id)?.thread || [];
-  const mine = circle ? app.messages[id] || [] : app.dms[id] || [];
-  const members = circle ? RESIDENTS.filter((r) => r.circle === circle.id) : [];
+  const joined = group ? app.communities.includes(group.id) : true;
+  const base = group ? THREADS[group.id] || [] : DMS.find((d) => d.with === id)?.thread || [];
+  const mine = group ? app.messages[id] || [] : app.dms[id] || [];
+  const members = group ? RESIDENTS.filter((r) => r.circle === group.id || r.city === group.region) : [];
+  const myCircle = person ? circleOf(person.id, app.circles) : null;
 
   const send = () => {
     if (!text.trim()) return;
-    if (circle) app.post(circle.id, text.trim());
+    if (group) app.post(group.id, text.trim());
     else app.sendDm(id, text.trim());
     setText('');
   };
 
-  const title = circle ? circle.name : person.name;
-  const sub = circle
-    ? `${nf(circle.members)} ${plural(circle.members, 'участник', 'участника', 'участников')} · куратор ${byId(circle.curator)?.name.split(' ')[0]}`
+  const title = group ? group.name : person.name;
+  const sub = group
+    ? `${nf(group.members)} ${plural(group.members, 'участник', 'участника', 'участников')} · куратор ${byId(group.curator)?.name.split(' ')[0]}`
     : person.online ? 'в сети' : `${person.title} · ${person.company}`;
 
   return (
@@ -64,26 +70,33 @@ export default function Chat({ kind, id }) {
       <TopBar
         title={title}
         sub={sub}
-        backTo="/communities"
+        backTo={group ? '/communities' : '/chats'}
         right={
-          circle ? (
-            <Btn size="sm" variant={joined ? 'quiet' : 'gold'} onClick={() => app.joinCommunity(circle.id, circle.name)}>{joined ? 'Выйти' : 'Вступить'}</Btn>
+          group ? (
+            <Btn size="sm" variant={joined ? 'quiet' : 'gold'} onClick={() => app.joinCommunity(group.id, group.name)}>{joined ? 'Выйти' : 'Вступить'}</Btn>
           ) : (
-            <button className="iconbtn" onClick={() => go(`/p/${person.id}`)}><Avatar person={person} size={32} /></button>
+            <>
+              <button className="iconbtn" onClick={() => setMove(true)} aria-label="Круг общения">
+                <Icon name="users" size={18} />
+              </button>
+              <button className="iconbtn" onClick={() => go(`/p/${person.id}`)} aria-label="Профиль">
+                <Avatar person={person} size={32} />
+              </button>
+            </>
           )
         }
       />
 
       <div className="screen screen--chat">
-        {circle && (
+        {group && members.length > 0 && (
           <div className="scroller" style={{ paddingTop: 10 }}>
             <div className="center" style={{ width: 58 }}>
-              <div className="item__ic" style={{ width: 40, height: 40, margin: '0 auto', borderRadius: 14, background: `${circle.tone}22`, color: circle.tone }}>
-                <Icon name={circle.icon} size={20} />
+              <div className="item__ic" style={{ width: 40, height: 40, margin: '0 auto', borderRadius: 14, background: `${group.tone}22`, color: group.tone }}>
+                <Icon name={group.icon} size={20} />
               </div>
               <div className="t-xs dim-2" style={{ marginTop: 5 }}>тема</div>
             </div>
-            {members.map((m) => (
+            {members.slice(0, 12).map((m) => (
               <button key={m.id} className="center" style={{ width: 58 }} onClick={() => go(`/p/${m.id}`)}>
                 <Avatar person={m} size={40} dot={m.online} style={{ margin: '0 auto' }} />
                 <div className="t-xs dim-2" style={{ marginTop: 5 }}>{m.name.split(' ')[0]}</div>
@@ -93,15 +106,15 @@ export default function Chat({ kind, id }) {
         )}
 
         <div className="chat">
-          <div className="chat__day">{circle ? 'Последние сообщения' : 'Переписка'}</div>
+          <div className="chat__day">{group ? 'Последние сообщения' : 'Переписка'}</div>
           {base.map((m, i) => {
             const isMe = m.who === 'me';
             const p = isMe ? null : byId(m.who);
             return (
               <div key={i} className={`bubble ${isMe ? 'bubble--out' : 'bubble--in'}`}>
-                {circle && !isMe && (
+                {group && !isMe && (
                   <button className="bubble__who" onClick={() => go(`/p/${m.who}`)}>
-                    {p?.name}{m.who === circle.curator ? ' · куратор' : ''}
+                    {p?.name}{m.who === group.curator ? ' · куратор' : ''}
                   </button>
                 )}
                 {m.text}
@@ -120,15 +133,40 @@ export default function Chat({ kind, id }) {
 
         {joined ? (
           <div className="composer">
-            <input className="field grow" placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} />
+            <input
+              className="field grow"
+              placeholder="Сообщение"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && send()}
+            />
             <button className="iconbtn iconbtn--gold" onClick={send} aria-label="Отправить"><Icon name="send" size={18} width={1.9} /></button>
           </div>
         ) : (
           <div className="composer">
-            <Btn variant="gold" wide onClick={() => app.joinCommunity(circle.id, circle.name)}>Вступить, чтобы писать</Btn>
+            <Btn variant="gold" wide onClick={() => app.joinCommunity(group.id, group.name)}>Вступить, чтобы писать</Btn>
           </div>
         )}
       </div>
+
+      {person && (
+        <Sheet open={move} onClose={() => setMove(false)} title="Круг общения" sub={`${person.name} — где держать переписку`}>
+          <List>
+            {CIRCLES.map((c) => (
+              <Item
+                key={c.id}
+                plain
+                lead={<span className="picker__lead">{c.emoji}</span>}
+                title={c.name}
+                sub={c.hint}
+                meta={myCircle === c.id ? <Icon name="check" size={16} color="var(--gold)" /> : undefined}
+                chev={false}
+                onClick={() => { app.setCircle(person.id, c.id); setMove(false); }}
+              />
+            ))}
+          </List>
+        </Sheet>
+      )}
     </>
   );
 }

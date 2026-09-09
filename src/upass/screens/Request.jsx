@@ -4,7 +4,7 @@ import { go } from '../lib/router.jsx';
 import { TopBar, List, Item, Btn, Empty, Tag, Note, Section } from '../components/UI.jsx';
 import { Avatar } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
-import { requestById } from '../data/life.js';
+import { requestById, requestTag } from '../data/life.js';
 import { REGIONS } from '../data/regions.js';
 import { byId } from '../data/people.js';
 import { agoHours } from '../lib/format.js';
@@ -34,7 +34,10 @@ export default function Request({ id }) {
           </button>
           <div className="t-sm" style={{ marginTop: 12, lineHeight: 1.6 }}>{q.text}</div>
           <div className="wrap" style={{ marginTop: 12, gap: 6 }}>
-            {q.tags.map((t) => <Tag key={t} plain>#{t}</Tag>)}
+            {q.tags.map((t) => {
+              const meta = requestTag(t);
+              return <Tag key={t} plain>{meta ? `${meta.emoji} ${meta.name}` : t}</Tag>;
+            })}
           </div>
         </div>
 
@@ -85,7 +88,7 @@ export default function Request({ id }) {
           )}
         </Section>
 
-        <div className="composer" style={{ background: 'transparent' }}>
+        <div className="composer composer--inline">
           <input className="field grow" placeholder="Ответить в ветке" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && text.trim() && (app.replyTo(q.id, text.trim()), setText(''))} />
           <button className="iconbtn iconbtn--gold" aria-label="Отправить" onClick={() => text.trim() && (app.replyTo(q.id, text.trim()), setText(''))}>
             <Icon name="send" size={18} width={1.9} />

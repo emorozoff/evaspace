@@ -2,16 +2,19 @@ import { useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import Scene from '../components/Scene.jsx';
-import { Avatar } from '../components/Art.jsx';
+import PersonCard from '../components/PersonCard.jsx';
 import { PosterThumb } from '../components/Poster.jsx';
-import { TopBar, List, Item, Section, Btn, KV, Chip, Seg, Note, Empty, Sheet } from '../components/UI.jsx';
+import { TopBar, List, Item, Section, Btn, KV, Chip, Seg, Note, Empty, Sheet, Tag } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
-import { REGIONS, TIERS_REGION } from '../data/regions.js';
-import { EVENT_KINDS, SERVICE_CATS } from '../data/life.js';
+import { REGIONS, TIERS_REGION, visaShort } from '../data/regions.js';
+import { EVENT_KINDS, FLAGSHIPS, SERVICE_CATS, SERVICE_ORDER, serviceCat } from '../data/life.js';
 import { byId } from '../data/people.js';
-import { agendaFor, communitiesIn, residentsIn, requestsIn, servicesIn } from '../lib/select.js';
+import { agendaFor, communitiesIn, residentsIn, servicesIn, matchScore } from '../lib/select.js';
 import { flight, monthly, hoursText } from '../lib/travel.js';
-import { usdExact, nf, plural, relDay } from '../lib/format.js';
+import { usdExact, nf, plural, relDay, monthsAhead } from '../lib/format.js';
+
+const STAY = [3, 7, 14, 30, 60, 89];
+const stayLabel = (d) => (d === 89 ? 'до 90 дней' : `${d} ${plural(d, 'день', 'дня', 'дней')}`);
 
 export default function Region({ id }) {
   const app = useApp();
@@ -19,25 +22,40 @@ export default function Region({ id }) {
   const r = REGIONS[id];
   const [style, setStyle] = useState('lean');
   const [trip, setTrip] = useState(false);
-  const [tripIn, setTripIn] = useState(7);
-  const [tripDays, setTripDays] = useState(14);
-
-  if (!r) return <Empty title="Регион не найден" />;
 
   const here = me.city === id;
   const f = here ? null : flight(me.city, id);
   const m = monthly(id, style);
-  const events = useMemo(() => agendaFor(me, id, 5), [me, id]);
+
+  const events = useMemo(() => {
+    const list = agendaFor(me, id, 30);
+    return [...list].sort((a, b) => rank(b) - rank(a) || a.inDays - b.inDays).slice(0, 4);
+  }, [me, id]);
+
+  const people = useMemo(
+    () =>
+      residentsIn(id)
+        .filter((p) => p.id !== me.id)
+        .map((p) => ({ p, score: matchScore(me, p) }))
+        .sort((a, b) => b.score - a.score),
+    [me, id]
+  );
+
   const communities = communitiesIn(id);
-  const people = residentsIn(id);
-  const asks = requestsIn(id).slice(0, 2);
-  const services = servicesIn(id).slice(0, 4);
+  const services = servicesIn(id);
+  const cats = useMemo(() => {
+    const has = new Set(servicesIn(id).map((s) => s.cat));
+    return SERVICE_ORDER.filter((c) => has.has(c)).map(serviceCat);
+  }, [id]);
+
+  if (!r) return <Empty title="Регион не найден" />;
+
 
   return (
     <>
       <TopBar title={r.name} sub={`${r.flag} ${r.country}`} backTo="/map" />
       <div className="screen stack-20">
-        <Scene city={id} height={186} label>
+        <Scene city={id} height={176}>
           <div className="scene__over">
             <span className="tag" style={{ background: `${TIERS_REGION[r.tier].tone}2a`, color: TIERS_REGION[r.tier].tone }}>
               {TIERS_REGION[r.tier].name}
@@ -48,52 +66,50 @@ export default function Region({ id }) {
 
         <p className="lead">{r.about}</p>
 
+        {here ? (
+          <Note icon="pin" tone="var(--cyan)">Вы сейчас здесь. Афиша, сообщества и запросы на главной уже из этого региона.</Note>
+        ) : (
+          <div className="pair">
+            <Btn variant="gold" icon="plane" onClick={() => setTrip(true)}>Объявить поездку</Btn>
+            <Btn variant="ghost" icon="pin" onClick={() => app.setRegion(id)}>Я здесь</Btn>
+          </div>
+        )}
+
         <div className="stats">
           <div className="stat"><div className="stat__v">{nf(r.residents)}</div><div className="stat__l">Резидентов</div></div>
           <div className="stat"><div className="stat__v">{nf(r.companies)}</div><div className="stat__l">Компаний</div></div>
           <div className="stat"><div className="stat__v">{r.communities}</div><div className="stat__l">Сообществ</div></div>
         </div>
 
-        {here ? (
-          <Note icon="pin" tone="var(--cyan)">Вы сейчас здесь. Афиша, сообщества и запросы на главной уже из этого региона.</Note>
-        ) : (
-          <div className="row" style={{ gap: 10 }}>
-            <Btn variant="gold" wide icon="plane" onClick={() => setTrip(true)}>Объявить поездку</Btn>
-            <Btn variant="ghost" onClick={() => app.setRegion(id)}>Я здесь</Btn>
-          </div>
-        )}
-
-        {f && (
-          <Section title="Перелёт">
-            <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
-              <KV k="Расстояние" v={`${nf(f.km)} км`} />
-              <KV k="В пути" v={`${hoursText(f.hours)}${f.direct ? ', прямой' : ', с пересадкой'}`} />
-              <KV k="Билет" v={`от ${usdExact(f.from)}`} tone="var(--gold)" />
-              <KV k="Обычная цена" v={usdExact(f.avg)} />
+        {people.length > 0 && (
+          <Section title="Кто вам подойдёт" more={`Все · ${nf(r.residents)}`} onMore={() => go(`/people?region=${id}`)}>
+            <div className="scroller">
+              {people.slice(0, 30).map(({ p, score }) => <PersonCard key={p.id} p={p} score={score} />)}
             </div>
           </Section>
         )}
 
-        <Section title="Сколько стоит месяц">
-          <Seg value={style} onChange={setStyle} options={[{ value: 'lean', label: 'Экономно' }, { value: 'comfort', label: 'Комфортно' }]} />
-          <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
-            <KV k="Апартаменты, месяц" v={`от ${usdExact(r.rent.apt[0])} · обычно ${usdExact(r.rent.apt[1])}`} />
-            <KV k="Вилла, месяц" v={`от ${usdExact(r.rent.villa[0])} · обычно ${usdExact(r.rent.villa[1])}`} />
-            <KV k="Отель, ночь" v={`от ${usdExact(r.rent.hotel[0])} · обычно ${usdExact(r.rent.hotel[1])}`} />
-            <KV k="Еда, транспорт, связь" v={usdExact(m.living)} />
-            <KV k="Комфортный минимум" v={`${usdExact(m.total)} в месяц`} tone="var(--gold)" />
-          </div>
-          <Note icon="eye">{r.visa}. Лучшее время — {r.best.toLowerCase()}. Интернет около {r.internet} Мбит/с.</Note>
-        </Section>
+        {/* короткая справка: сколько стоит, когда ехать, какая погода, нужна ли виза */}
+        <div className="facts">
+          <Fact emoji="🧾" v={usdExact(r.check)} l="Ужин на одного" />
+          <Fact emoji="🌡" v={`${r.temp[0]}° … ${r.temp[1]}°`} l="Прохладно / жарко" />
+          <Fact emoji="🗓" v={r.best.split(',')[0]} l="Лучший сезон" />
+          <Fact emoji="🛂" v={visaShort(id)} l="Въезд" />
+        </div>
 
         {events.length > 0 && (
-          <Section title="Афиша региона" more="Вся" onMore={() => go('/events')}>
+          <Section title="Ключевые события" more="Вся афиша" onMore={() => go('/events')}>
             <List>
               {events.map((e) => (
                 <Item
                   key={e.id}
                   lead={<PosterThumb event={e} size={44} />}
-                  title={e.title}
+                  title={
+                    <span className="row" style={{ gap: 6 }}>
+                      <span className="ell">{e.title}</span>
+                      {FLAGSHIPS.includes(e.kind) ? <Tag tone="gold">Маст-хэв</Tag> : e.top ? <Tag tone="cyan">Топ</Tag> : null}
+                    </span>
+                  }
                   sub={`${relDay(e.inDays)}, ${e.time}${e.online ? ' · эфир' : ''}`}
                   meta={<span className="tag" style={{ background: `${EVENT_KINDS[e.kind].tone}22`, color: EVENT_KINDS[e.kind].tone }}>{EVENT_KINDS[e.kind].name}</span>}
                   onClick={() => go(`/event/${e.id}`)}
@@ -105,48 +121,33 @@ export default function Region({ id }) {
 
         {communities.length > 0 && (
           <Section title="Сообщества региона" more="Все" onMore={() => go('/communities')}>
-            <List>
-              {communities.map((c) => (
-                <Item
-                  key={c.id}
-                  lead={<div className="item__ic" style={{ background: `${c.tone}22`, color: c.tone, borderRadius: 14 }}><Icon name={c.icon} size={19} /></div>}
-                  title={c.name}
-                  sub={`${nf(c.members)} ${plural(c.members, 'участник', 'участника', 'участников')} · куратор ${byId(c.curator)?.name.split(' ')[0]}`}
-                  onClick={() => go(`/chat/${c.id}`)}
-                />
-              ))}
-            </List>
-          </Section>
-        )}
-
-        {people.length > 0 && (
-          <Section title="Резиденты" more={`Все · ${r.residents}`} onMore={() => go(`/people?region=${id}`)}>
-            <div className="scroller">
-              {people.map((p) => (
-                <button key={p.id} className="center" style={{ width: 66 }} onClick={() => go(`/p/${p.id}`)}>
-                  <Avatar person={p} size={52} dot={p.online} style={{ margin: '0 auto' }} />
-                  <div className="t-xs" style={{ marginTop: 7, fontWeight: 600 }}>{p.name.split(' ')[0]}</div>
+            <div className="tiles">
+              {communities.slice(0, 6).map((c) => (
+                <button key={c.id} className="tile" onClick={() => go(`/chat/${c.id}`)}>
+                  <span className="tile__ic" style={{ background: `${c.tone}1f`, color: c.tone }}>
+                    <Icon name={c.icon} size={20} />
+                  </span>
+                  <span className="tile__t">{tileName(c, r.name)}</span>
+                  <span className="tile__n figure">{nf(c.members)}</span>
                 </button>
               ))}
             </div>
           </Section>
         )}
 
-        {asks.length > 0 && (
-          <Section title="Запросы из региона" more="Все" onMore={() => go('/requests')}>
-            <List>
-              {asks.map((q) => {
-                const p = byId(q.who);
-                return <Item key={q.id} lead={<Avatar person={p} size={42} />} title={p?.name} sub={q.text} subWrap onClick={() => go(`/request/${q.id}`)} />;
-              })}
-            </List>
-          </Section>
-        )}
-
-        {services.length > 0 && (
+        {cats.length > 0 && (
           <Section title="Помощь с переездом" more="Все услуги" onMore={() => go('/market')}>
+            <div className="scroller">
+              {cats.map((c) => (
+                <button key={c.id} className="shelf" onClick={() => go('/market')}>
+                  <span className="shelf__e">{c.emoji}</span>
+                  <span className="shelf__t">{c.short}</span>
+                  <span className="shelf__n">{services.filter((s) => s.cat === c.id).length}</span>
+                </button>
+              ))}
+            </div>
             <List>
-              {services.map((s) => (
+              {services.slice(0, 3).map((s) => (
                 <Item
                   key={s.id}
                   icon={SERVICE_CATS.find((c) => c.id === s.cat)?.icon || 'gift'}
@@ -160,29 +161,90 @@ export default function Region({ id }) {
             </List>
           </Section>
         )}
+
+        <Section title="Сколько стоит месяц">
+          <Seg value={style} onChange={setStyle} options={[{ value: 'lean', label: 'Экономно' }, { value: 'comfort', label: 'Комфортно' }]} />
+          <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
+            {f && <KV k="Билет" v={`от ${usdExact(f.from)} · ${hoursText(f.hours)}${f.direct ? '' : ' с пересадкой'}`} tone="var(--gold)" />}
+            <KV k="Апартаменты, месяц" v={`от ${usdExact(r.rent.apt[0])} · обычно ${usdExact(r.rent.apt[1])}`} />
+            <KV k="Вилла, месяц" v={`от ${usdExact(r.rent.villa[0])} · обычно ${usdExact(r.rent.villa[1])}`} />
+            <KV k="Отель, ночь" v={`от ${usdExact(r.rent.hotel[0])} · обычно ${usdExact(r.rent.hotel[1])}`} />
+            <KV k="Еда, транспорт, связь" v={usdExact(m.living)} />
+            <KV k="Комфортный минимум" v={`${usdExact(m.total)} в месяц`} tone="var(--gold)" />
+          </div>
+        </Section>
       </div>
 
-      <Sheet open={trip} onClose={() => setTrip(false)} title="Объявить поездку" sub={`${r.flag} ${r.name}`}>
-        <div className="stack">
-          <div>
-            <div className="label">Когда</div>
-            <div className="wrap">{[1, 3, 7, 14, 30].map((d) => <Chip key={d} on={tripIn === d} onClick={() => setTripIn(d)}>{relDay(d)}</Chip>)}</div>
-          </div>
-          <div>
-            <div className="label">Насколько</div>
-            <div className="wrap">{[3, 7, 14, 30, 90].map((d) => <Chip key={d} on={tripDays === d} onClick={() => setTripDays(d)}>{d} {plural(d, 'день', 'дня', 'дней')}</Chip>)}</div>
-          </div>
-          {f && (
-            <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
-              <KV k="Билеты туда-обратно" v={`от ${usdExact(f.from * 2)}`} />
-              <KV k="Жизнь на срок" v={usdExact(Math.round((m.total / 30) * tripDays))} />
-              <KV k="Всего примерно" v={usdExact(f.from * 2 + Math.round((m.total / 30) * tripDays))} tone="var(--gold)" />
-            </div>
-          )}
-          <Note icon="users">Видны только регион и даты. Резиденты на месте увидят вас в списке «прилетают» и позовут на встречи.</Note>
-          <Btn variant="gold" wide onClick={() => { app.announceTrip({ region: id, inDays: tripIn, days: tripDays }); setTrip(false); }}>Объявить</Btn>
-        </div>
-      </Sheet>
+      <TripSheet open={trip} onClose={() => setTrip(false)} region={id} app={app} f={f} m={m} />
     </>
+  );
+}
+
+const rank = (e) => (FLAGSHIPS.includes(e.kind) ? 2 : e.top ? 1 : 0);
+
+/* На плитке имя региона лишнее — он и так открыт. */
+const tileName = (c, region) => {
+  if (c.expat) return 'Экспаты';
+  const short = c.name.replace(`${region}: `, '');
+  return short[0].toUpperCase() + short.slice(1);
+};
+
+function Fact({ emoji, v, l }) {
+  return (
+    <div className="fact">
+      <span className="fact__e">{emoji}</span>
+      <span className="fact__v">{v}</span>
+      <span className="fact__l">{l}</span>
+    </div>
+  );
+}
+
+/* Поездка объявляется месяцем и сроком: точные даты сообществу не нужны,
+   важно, что человек будет в регионе и его можно позвать. */
+function TripSheet({ open, onClose, region, app, f, m }) {
+  const months = useMemo(() => monthsAhead(7), []);
+  const [month, setMonth] = useState(months[0].key);
+  const [days, setDays] = useState(14);
+  const r = REGIONS[region];
+  const picked = months.find((x) => x.key === month) || months[0];
+  const live = m ? Math.round((m.total / 30) * days) : 0;
+
+  return (
+    <Sheet open={open} onClose={onClose} title="Объявить поездку" sub={`${r.flag} ${r.name}`}>
+      <div className="stack">
+        <div>
+          <div className="label">Когда</div>
+          <div className="wrap">
+            {months.map((x) => (
+              <Chip key={x.key} on={month === x.key} onClick={() => setMonth(x.key)}>{x.label}</Chip>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="label">На сколько</div>
+          <div className="wrap">
+            {STAY.map((d) => (
+              <Chip key={d} on={days === d} onClick={() => setDays(d)}>{stayLabel(d)}</Chip>
+            ))}
+          </div>
+        </div>
+        <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
+          {f && <KV k="Билеты туда-обратно" v={`от ${usdExact(f.from * 2)}`} />}
+          <KV k="Жизнь на срок" v={usdExact(live)} />
+          <KV k="Всего примерно" v={usdExact((f ? f.from * 2 : 0) + live)} tone="var(--gold)" />
+        </div>
+        <Note icon="users">Видны только регион и месяц. Резиденты на месте увидят вас в списке «прилетают» и позовут на встречи.</Note>
+        <Btn
+          variant="gold"
+          wide
+          onClick={() => {
+            app.announceTrip({ region, inDays: picked.inDays, days, when: picked.label });
+            onClose();
+          }}
+        >
+          Объявить
+        </Btn>
+      </div>
+    </Sheet>
   );
 }

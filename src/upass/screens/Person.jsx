@@ -8,6 +8,7 @@ import { SKILL_GROUPS, BADGES, byId } from '../data/people.js';
 import { REGIONS } from '../data/regions.js';
 import { DEGREES, TIERS } from '../data/canon.js';
 import { COMMUNITIES, SERVICES, EVENTS } from '../data/life.js';
+import { CIRCLES, circleOf } from '../data/circles.js';
 import { visibleOnly } from '../lib/select.js';
 import { usdExact, plural } from '../lib/format.js';
 
@@ -30,6 +31,7 @@ export default function Person({ id }) {
   const services = SERVICES.filter((s) => s.owner === r.id);
   const events = EVENTS.filter((e) => e.going.includes(r.id) && e.inDays >= 0).slice(0, 3);
   const vouchers = visibleOnly(app.me, r.vouchedBy || []);
+  const myCircle = circleOf(r.id, app.circles);
 
   return (
     <>
@@ -57,6 +59,15 @@ export default function Person({ id }) {
             { icon: 'shield', title: 'Поручиться', onClick: () => app.vouch(r.id) },
           ]}
         />
+
+        {/* круг общения — им управляет мессенджер, поэтому ставится прямо здесь */}
+        <div className="wrap">
+          {CIRCLES.map((c) => (
+            <Chip key={c.id} on={myCircle === c.id} onClick={() => app.setCircle(r.id, myCircle === c.id ? 'none' : c.id)}>
+              {c.emoji} {c.name}
+            </Chip>
+          ))}
+        </div>
 
         <p className="lead">{r.mission}</p>
 

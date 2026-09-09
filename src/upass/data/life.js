@@ -2,6 +2,8 @@
    запросы резидентов, услуги релокации, переписки.
    Даты — смещение в днях от сегодня, чтобы расписание всегда было живым. */
 
+import { REGIONS, REGION_KEYS } from './regions.js';
+
 export const EVENT_KINDS = {
   meet: { name: 'Встреча', tone: '#D9B26B', icon: 'cup' },
   live: { name: 'Эфир', tone: '#5B8CFF', icon: 'video' },
@@ -64,13 +66,13 @@ export const EVENTS = [
     about: 'Разбираем пять программ, по которым резиденты уже получили долгие визы: сроки, суммы, документы и где обычно отказывают.',
   },
   {
-    id: 'e2', kind: 'live', title: 'Перенос компании в ОАЭ: без иллюзий', region: 'global',
+    id: 'e2', top: true, kind: 'live', title: 'Перенос компании в ОАЭ: без иллюзий', region: 'global',
     inDays: 3, time: '18:30', mins: 90, online: true, price: 0, capacity: 200, host: 'r9',
     going: ['r2', 'r8', 'r11', 'r9', 'r6'],
     about: 'Свободная зона или материк, банк, найм, налоги. Считаем на реальных цифрах трёх резидентов, которые прошли это за последний год.',
   },
   {
-    id: 'e3', kind: 'live', title: 'ИИ в продукте: что реально работает', region: 'global',
+    id: 'e3', top: true, kind: 'live', title: 'ИИ в продукте: что реально работает', region: 'global',
     inDays: 6, time: '17:00', mins: 75, online: true, price: 0, capacity: 250, host: 'r13',
     going: ['r13', 'r21', 'r10', 'r5'],
     about: 'Без обзоров и новостей: три внедрения в проде, сколько стоили, где сломались и что дали в деньгах.',
@@ -96,19 +98,19 @@ export const EVENTS = [
 
   /* ——— офлайн по регионам ——— */
   {
-    id: 'e7', kind: 'meet', title: 'Завтрак резидентов', region: 'moscow',
+    id: 'e7', top: true, kind: 'meet', title: 'Завтрак резидентов', region: 'moscow',
     inDays: 1, time: '09:00', mins: 120, online: false, price: 0, capacity: 24, host: 'r22',
     going: ['r5', 'r8', 'r10', 'r22'],
     about: 'Каждый за минуту говорит, что строит и какая помощь нужна. Дальше свободное общение.',
   },
   {
-    id: 'e8', kind: 'sport', title: 'Утренний сёрф и кофе', region: 'bali',
+    id: 'e8', top: true, kind: 'sport', title: 'Утренний сёрф и кофе', region: 'bali',
     inDays: 2, time: '06:30', mins: 150, online: false, price: 0, capacity: 12, host: 'r12',
     going: ['r1', 'r3', 'r12', 'r4'],
     about: 'Сессия для любого уровня, доски на месте. После воды — кофе на террасе.',
   },
   {
-    id: 'e9', kind: 'meet', title: 'Ужин нового круга', region: 'dubai',
+    id: 'e9', top: true, kind: 'meet', title: 'Ужин нового круга', region: 'dubai',
     inDays: 4, time: '20:00', mins: 180, online: false, price: 45, capacity: 16, host: 'r9',
     going: ['r9', 'r11', 'r2', 'r13'],
     about: 'Стол на шестнадцать человек для тех, кто в регионе меньше трёх месяцев. Знакомство и практические вопросы переезда.',
@@ -126,7 +128,7 @@ export const EVENTS = [
     about: 'Знакомство с теми, кто вступил в этом месяце. Старшие рассказывают, чем могут быть полезны.',
   },
   {
-    id: 'e12', kind: 'meet', title: 'Питчи резидентов', region: 'moscow',
+    id: 'e12', top: true, kind: 'meet', title: 'Питчи резидентов', region: 'moscow',
     inDays: 8, time: '19:00', mins: 150, online: false, price: 30, capacity: 40, host: 'r8',
     going: ['r8', 'r2', 'r5', 'r10', 'r13'],
     about: 'Шесть питчей по семь минут, вопросы от круга. Заявки принимает куратор.',
@@ -179,13 +181,13 @@ export const AWARDS = [
 /* ——— сообщества ———
    region: ключ региона или 'global'. access: open | closed. */
 export const COMMUNITIES = [
-  { id: 'c-it', name: 'ИТ и продукт', topic: 'Технологии', icon: 'code', tone: '#5B8CFF', region: 'global', access: 'open', members: 186, curator: 'r13', about: 'Инженеры, продакты, основатели софтверных компаний. Разборы архитектур, найм, подрядчики.' },
-  { id: 'c-ai', name: 'Искусственный интеллект', topic: 'Технологии', icon: 'spark', tone: '#8E7BF5', region: 'global', access: 'open', members: 204, curator: 'r13', about: 'Внедрения, а не новости: что работает в проде, сколько стоит и где ломается.' },
-  { id: 'c-move', name: 'Релокация и визы', topic: 'Переезд', icon: 'plane', tone: '#5FE0C8', region: 'global', access: 'open', members: 241, curator: 'r9', about: 'Самое живое сообщество: визы, банки, жильё, школы. Отвечают те, кто прошёл это сам.' },
-  { id: 'c-home', name: 'Жильё и быт', topic: 'Переезд', icon: 'home', tone: '#D9B26B', region: 'global', access: 'open', members: 171, curator: 'r7', about: 'Где жить в каждом регионе, как проверять договор и не потерять депозит.' },
-  { id: 'c-biz', name: 'Операционный бизнес', topic: 'Дело', icon: 'chart', tone: '#E9855C', region: 'global', access: 'open', members: 143, curator: 'r8', about: 'Розница, услуги, франшизы. Скучные бизнесы с настоящей выручкой.' },
-  { id: 'c-body', name: 'Тело и практики', topic: 'Жизнь', icon: 'leaf', tone: '#58D68D', region: 'global', access: 'open', members: 158, curator: 'r20', about: 'Спорт, восстановление, ретриты, медицина для тех, кто много летает.' },
-  { id: 'c-brand', name: 'Бренд и медиа', topic: 'Дело', icon: 'brush', tone: '#F2789B', region: 'global', access: 'open', members: 121, curator: 'r18', about: 'Айдентика, съёмки, тексты, звук. Резиденты делают проекты друг для друга.' },
+  { id: 'c-it', skill: 'it', name: 'ИТ и продукт', topic: 'Технологии', icon: 'code', tone: '#5B8CFF', region: 'global', access: 'open', members: 186, curator: 'r13', about: 'Инженеры, продакты, основатели софтверных компаний. Разборы архитектур, найм, подрядчики.' },
+  { id: 'c-ai', skill: 'ai', name: 'Искусственный интеллект', topic: 'Технологии', icon: 'spark', tone: '#8E7BF5', region: 'global', access: 'open', members: 204, curator: 'r13', about: 'Внедрения, а не новости: что работает в проде, сколько стоит и где ломается.' },
+  { id: 'c-move', skill: 'realty', name: 'Релокация и визы', topic: 'Переезд', icon: 'plane', tone: '#5FE0C8', region: 'global', access: 'open', members: 241, curator: 'r9', about: 'Самое живое сообщество: визы, банки, жильё, школы. Отвечают те, кто прошёл это сам.' },
+  { id: 'c-home', skill: 'realty', name: 'Жильё и быт', topic: 'Переезд', icon: 'home', tone: '#D9B26B', region: 'global', access: 'open', members: 171, curator: 'r7', about: 'Где жить в каждом регионе, как проверять договор и не потерять депозит.' },
+  { id: 'c-biz', skill: 'ops', name: 'Операционный бизнес', topic: 'Дело', icon: 'chart', tone: '#E9855C', region: 'global', access: 'open', members: 143, curator: 'r8', about: 'Розница, услуги, франшизы. Скучные бизнесы с настоящей выручкой.' },
+  { id: 'c-body', skill: 'body', name: 'Тело и практики', topic: 'Жизнь', icon: 'leaf', tone: '#58D68D', region: 'global', access: 'open', members: 158, curator: 'r20', about: 'Спорт, восстановление, ретриты, медицина для тех, кто много летает.' },
+  { id: 'c-brand', skill: 'brand', name: 'Бренд и медиа', topic: 'Дело', icon: 'brush', tone: '#F2789B', region: 'global', access: 'open', members: 121, curator: 'r18', about: 'Айдентика, съёмки, тексты, звук. Резиденты делают проекты друг для друга.' },
   { id: 'c-family', name: 'Семья в переезде', topic: 'Жизнь', icon: 'heart', tone: '#C7A3E8', region: 'global', access: 'open', members: 97, curator: 'r11', about: 'Школы, врачи, документы для детей в новой стране.' },
 
   { id: 'c-dubai', name: 'Дубай: свои', topic: 'Регион', icon: 'users', tone: '#D9B26B', region: 'dubai', access: 'open', members: 148, curator: 'r9', about: 'Всё про жизнь в регионе: где встречаемся, кто прилетел, куда идти с вопросом.' },
@@ -195,10 +197,38 @@ export const COMMUNITIES = [
   { id: 'c-tbilisi', name: 'Тбилиси: свои', topic: 'Регион', icon: 'users', tone: '#5FE0C8', region: 'tbilisi', access: 'open', members: 58, curator: 'r20', about: 'Первый регион для тех, кто только начал жить между странами.' },
   { id: 'c-istanbul', name: 'Стамбул: свои', topic: 'Регион', icon: 'users', tone: '#E9855C', region: 'istanbul', access: 'open', members: 74, curator: 'r19', about: 'Встречи на двух берегах, рестораны резидентов, короткие визиты.' },
 
-  { id: 'c-invest', name: 'Инвестиции', topic: 'Дело', icon: 'coin', tone: '#5FE0C8', region: 'global', access: 'closed', minDegree: 3, members: 52, curator: 'r2', about: 'Синдикаты, дью-дилидженс, сделки. Закрытый клуб: вход с третьей степени.' },
-  { id: 'c-law', name: 'Право и структуры', topic: 'Дело', icon: 'shield', tone: '#9BA6BE', region: 'global', access: 'closed', minDegree: 2, members: 68, curator: 'r14', about: 'Холдинги, трасты, мультиюрисдикция. Закрытый клуб.' },
-  { id: 'c-black', name: '·····', topic: 'Клуб', icon: 'seal', tone: '#D9B26B', region: 'global', access: 'closed', minDegree: 4, members: 0, curator: 'r23', about: '' },
+  { id: 'c-invest', skill: 'capital', name: 'Инвестиции', topic: 'Дело', icon: 'coin', tone: '#5FE0C8', region: 'global', access: 'closed', minDegree: 3, members: 52, curator: 'r2', about: 'Синдикаты, дью-дилидженс, сделки. Закрытый клуб: вход с третьей степени.' },
+  { id: 'c-law', skill: 'law', name: 'Право и структуры', topic: 'Дело', icon: 'shield', tone: '#9BA6BE', region: 'global', access: 'closed', minDegree: 2, members: 68, curator: 'r14', about: 'Холдинги, трасты, мультиюрисдикция. Закрытый клуб.' },
+  { id: 'c-founders', skill: 'ops', name: 'Основатели', topic: 'Дело', icon: 'spark', tone: '#5B8CFF', region: 'global', access: 'closed', minDegree: 2, members: 96, curator: 'r13', about: 'Только те, кто держит компанию. Разговор без питчей: наём, увольнения, кассовые разрывы, выгорание.' },
+  { id: 'c-office', skill: 'capital', name: 'Семейный капитал', topic: 'Дело', icon: 'wallet', tone: '#D9B26B', region: 'global', access: 'closed', minDegree: 3, members: 34, curator: 'r2', about: 'Как устроены семейные деньги: наследование, доверительное управление, разделение рисков между странами.' },
+  { id: 'c-long', skill: 'body', name: 'Долголетие', topic: 'Жизнь', icon: 'heart', tone: '#58D68D', region: 'global', access: 'closed', minDegree: 2, members: 61, curator: 'r20', about: 'Чекапы, врачи в каждом регионе, протоколы восстановления после перелётов. Данные участников не выходят за клуб.' },
+  { id: 'c-curators', name: 'Совет кураторов', topic: 'Клуб', icon: 'seal', tone: '#8E7BF5', region: 'global', access: 'closed', minDegree: 3, members: 24, curator: 'r22', about: 'Кураторы сообществ и регионов: кого принимаем, кого просим уйти, что меняем в правилах.' },
+  { id: 'c-deep', name: 'Глубокая вода', topic: 'Клуб', icon: 'compass', tone: '#5FE0C8', region: 'global', access: 'closed', minDegree: 4, members: 18, curator: 'r23', about: 'Разговор о том, что не обсуждают вслух. Состав известен только участникам.' },
+  { id: 'c-black', name: '·····', topic: 'Клуб', icon: 'seal', tone: '#D9B26B', region: 'global', access: 'closed', minDegree: 5, members: 0, curator: 'r23', about: '' },
 ];
+
+/* Чат экспатов есть в каждом регионе: туда идут в первый день на месте —
+   спросить про сим-карту, врача и договор аренды. Собирается из справочника
+   регионов, чтобы двадцать почти одинаковых записей не жили руками. */
+const EXPAT_TONES = ['#5FE0C8', '#5B8CFF', '#58D68D', '#D9B26B', '#8E7BF5', '#F2789B', '#E9855C'];
+const EXPAT_CURATORS = ['r9', 'r12', 'r22', 'r15', 'r19', 'r20', 'r17', 'r16', 'r5', 'r7'];
+
+export const EXPAT_CHATS = REGION_KEYS.map((key, i) => ({
+  id: `c-exp-${key}`,
+  name: `Экспаты · ${REGIONS[key].name}`,
+  topic: 'Регион',
+  icon: 'globe',
+  tone: EXPAT_TONES[i % EXPAT_TONES.length],
+  region: key,
+  access: 'open',
+  expat: true,
+  members: Math.round(REGIONS[key].residents * 1.7),
+  curator: EXPAT_CURATORS[i % EXPAT_CURATORS.length],
+  about: 'Бытовой чат региона: сим-карта, врач, договор аренды, куда идти с документами.',
+}));
+
+/* Общий список: тематические сообщества, клубы и чаты экспатов. */
+COMMUNITIES.push(...EXPAT_CHATS);
 
 export const COMMUNITY_TOPICS = ['Переезд', 'Технологии', 'Дело', 'Жизнь', 'Регион'];
 
@@ -247,11 +277,56 @@ export const THREADS = {
 
 /* ——— запросы резидентов ———
    Лента, где просят помощь и отвечают. Ответ — в ветке или в личку. */
-export const REQUEST_TAGS = ['Визы', 'Жильё', 'Работа', 'Партнёрство', 'Совет', 'Инвестиции', 'Здоровье', 'Дети', 'Транспорт', 'Знакомство'];
+/* Теги запроса: id — для хранения, name — для чипа, ask — как тема звучит
+   внутри автособранного текста («запрос на партнёрство и знакомства»). */
+export const REQUEST_TAGS = [
+  { id: 'contacts', emoji: '🤝', name: 'Знакомства', ask: 'знакомства' },
+  { id: 'partner', emoji: '🧩', name: 'Партнёрство', ask: 'партнёрство' },
+  { id: 'work', emoji: '💼', name: 'Работа', ask: 'работа' },
+  { id: 'money', emoji: '📈', name: 'Деньги', ask: 'инвестиции' },
+  { id: 'visa', emoji: '🛂', name: 'Визы', ask: 'визы' },
+  { id: 'home', emoji: '🏠', name: 'Жильё', ask: 'жильё' },
+  { id: 'move', emoji: '📦', name: 'Переезд', ask: 'переезд' },
+  { id: 'advice', emoji: '💡', name: 'Совет', ask: 'совет' },
+  { id: 'health', emoji: '🩺', name: 'Здоровье', ask: 'здоровье' },
+  { id: 'family', emoji: '🎒', name: 'Дети', ask: 'школа для детей' },
+];
+
+export const requestTag = (id) => REQUEST_TAGS.find((t) => t.id === id);
+
+/* Запрос можно опубликовать вообще без текста — достаточно тегов.
+   Тогда он собирается сам. Вариантов подачи семь, они чередуются,
+   чтобы лента не выглядела как рассылка одного бота. */
+const cap = (t) => (t ? t[0].toUpperCase() + t.slice(1) : t);
+
+const TEMPLATES = [
+  (loc, topics) => `У меня запрос ${loc}: ${topics}. Жду контактов и откликов.`,
+  (loc, topics) => `Ищу ${loc} помощь по теме: ${topics}. Напишите, если это ваша сфера.`,
+  (loc, topics) => `${cap(topics)} — вот что нужно ${loc} прямо сейчас. Откликнитесь, кто в теме.`,
+  (loc, topics) => `Я ${loc}. Тема: ${topics}. Можно ответить в ветке, можно в личку.`,
+  (loc, topics) => `Короткий запрос ${loc}: ${topics}. Быстро созвонимся — и я тоже пригожусь.`,
+  (loc, topics) => `Собираю контакты ${loc} по теме: ${topics}. Любая наводка в помощь.`,
+  (loc, topics) => `${cap(loc)} нужен человек, который разбирается: ${topics}. Подскажете?`,
+];
+
+/** Перечисление тем через запятую и «и»: «жильё, визы и переезд». */
+export function topicsPhrase(tagIds) {
+  const words = tagIds.map((id) => requestTag(id)?.ask).filter(Boolean);
+  if (words.length <= 1) return words[0] || 'помощь сообщества';
+  return `${words.slice(0, -1).join(', ')} и ${words[words.length - 1]}`;
+}
+
+/** Текст запроса из одних тегов. variant крутит подачу по кругу. */
+export function autoRequestText(regionKey, tagIds, variant = 0) {
+  const loc = REGIONS[regionKey]?.loc || 'в сообществе';
+  return TEMPLATES[((variant % TEMPLATES.length) + TEMPLATES.length) % TEMPLATES.length](loc, topicsPhrase(tagIds));
+}
+
+export const REQUEST_VARIANTS = TEMPLATES.length;
 
 export const REQUESTS = [
   {
-    id: 'q1', who: 'r5', region: 'moscow', ago: 2, tags: ['Работа', 'Партнёрство'],
+    id: 'q1', who: 'r5', region: 'moscow', ago: 2, tags: ['work', 'partner'],
     text: 'Ищу команду, которой нужен продакт-сооснователь. Платежи, финтех, семь лет опыта. Готова войти в проект на ранней стадии и переехать в любой регион сообщества.',
     replies: [
       { who: 'r13', ago: 1.5, text: 'У меня как раз стоит вопрос по продуктовой части в Лиссабоне. Напишу в личку, обсудим.' },
@@ -259,14 +334,14 @@ export const REQUESTS = [
     ],
   },
   {
-    id: 'q2', who: 'r16', region: 'almaty', ago: 5, tags: ['Партнёрство', 'Транспорт'],
+    id: 'q2', who: 'r16', region: 'almaty', ago: 5, tags: ['partner', 'move'],
     text: 'Нужен партнёр по складу в Дубае, 800 м². Есть поток грузов из Китая, не хватает рук на месте. Готова отдать долю за операционку.',
     replies: [
       { who: 'r9', ago: 4, text: 'Знаю двоих, кто держит склады в Джебель-Али. Свела вас в личке.' },
     ],
   },
   {
-    id: 'q3', who: 'r3', region: 'phuket', ago: 8, tags: ['Жильё', 'Совет'],
+    id: 'q3', who: 'r3', region: 'phuket', ago: 8, tags: ['home', 'advice'],
     text: 'Переезжаю с Пхукета на Бали в марте. Что сейчас с ценами на длинную аренду в Чангу и стоит ли брать через агента? Бюджет до $1200 в месяц.',
     replies: [
       { who: 'r7', ago: 7, text: 'До $1200 реально, но не в первой линии. Агент нужен только для проверки договора — покажу шаблон.' },
@@ -274,7 +349,7 @@ export const REQUESTS = [
     ],
   },
   {
-    id: 'q4', who: 'r10', region: 'moscow', ago: 12, tags: ['Работа', 'Знакомство'],
+    id: 'q4', who: 'r10', region: 'moscow', ago: 12, tags: ['work', 'contacts'],
     text: 'Снимаю про технологии. Ищу резидентов, кто готов рассказать о своём деле на камеру — сделаю материал бесплатно, мне нужны истории, вам — видео для себя.',
     replies: [
       { who: 'r21', ago: 10, text: 'Возьмусь. У нас как раз запускается линия на складе, будет что показать.' },
@@ -282,14 +357,14 @@ export const REQUESTS = [
     ],
   },
   {
-    id: 'q5', who: 'r24', region: 'newyork', ago: 18, tags: ['Совет', 'Визы'],
+    id: 'q5', who: 'r24', region: 'newyork', ago: 18, tags: ['advice', 'visa'],
     text: 'Кто продлевал B1/B2 в этом году не из США? Интересуют реальные сроки записи и города, где очередь короче.',
     replies: [
       { who: 'r14', ago: 16, text: 'Белград и Ереван — самые быстрые сейчас. В Ереване записывалась за три недели.' },
     ],
   },
   {
-    id: 'q6', who: 'r18', region: 'barcelona', ago: 26, tags: ['Знакомство'],
+    id: 'q6', who: 'r18', region: 'barcelona', ago: 26, tags: ['contacts'],
     text: 'Прилетаю в Дубай на неделю с 20-го. Ищу компанию на утренний спорт и один хороший ужин. Кто на месте?',
     replies: [
       { who: 'r11', ago: 24, text: 'Я на месте. Бегаем по утрам вдоль канала, присоединяйтесь.' },
@@ -297,12 +372,12 @@ export const REQUESTS = [
     ],
   },
   {
-    id: 'q7', who: 'r15', region: 'phuket', ago: 34, tags: ['Работа'],
+    id: 'q7', who: 'r15', region: 'phuket', ago: 34, tags: ['work'],
     text: 'Ищу управляющего на объект в Бангкоке. Нужен человек, который жил в Азии и умеет держать подрядчиков. Ставка выше рынка, но и спрос серьёзный.',
     replies: [],
   },
   {
-    id: 'q8', who: 'r20', region: 'tbilisi', ago: 40, tags: ['Здоровье'],
+    id: 'q8', who: 'r20', region: 'tbilisi', ago: 40, tags: ['health'],
     text: 'Собираю группу на расширенный чекап в Тбилиси в феврале — от восьми человек цена падает вдвое. Кому актуально?',
     replies: [
       { who: 'r22', ago: 38, text: 'Записывай двоих.' },
@@ -310,7 +385,7 @@ export const REQUESTS = [
     ],
   },
   {
-    id: 'q9', who: 'r17', region: 'yerevan', ago: 50, tags: ['Инвестиции'],
+    id: 'q9', who: 'r17', region: 'yerevan', ago: 50, tags: ['money'],
     text: 'Поднимаем раунд на платёжную инфраструктуру. Не прошу денег — прошу двух-трёх человек, кто пройдёт по нашей юнит-экономике и скажет, где мы себя обманываем.',
     replies: [
       { who: 'r2', ago: 47, text: 'Присылайте модель. Разберу и отвечу честно, даже если ответ не понравится.' },
@@ -320,15 +395,19 @@ export const REQUESTS = [
 
 /* ——— услуги: всё, что помогает быстро осесть в новом регионе ——— */
 export const SERVICE_CATS = [
-  { id: 'visa', name: 'Визы и документы', icon: 'passport' },
-  { id: 'home', name: 'Жильё', icon: 'home' },
-  { id: 'money', name: 'Счета и налоги', icon: 'wallet' },
-  { id: 'move', name: 'Переезд', icon: 'briefcase' },
-  { id: 'transport', name: 'Транспорт', icon: 'car' },
-  { id: 'health', name: 'Здоровье', icon: 'heart' },
-  { id: 'kids', name: 'Дети и школы', icon: 'graduation' },
-  { id: 'work', name: 'Работа и офис', icon: 'code' },
+  { id: 'visa', name: 'Визы и документы', short: 'Виза', emoji: '🛂', icon: 'passport' },
+  { id: 'home', name: 'Жильё', short: 'Жильё', emoji: '🏠', icon: 'home' },
+  { id: 'money', name: 'Счета и налоги', short: 'Счёт', emoji: '🏦', icon: 'wallet' },
+  { id: 'move', name: 'Переезд', short: 'Переезд', emoji: '📦', icon: 'briefcase' },
+  { id: 'transport', name: 'Транспорт', short: 'Транспорт', emoji: '🚗', icon: 'car' },
+  { id: 'health', name: 'Здоровье', short: 'Здоровье', emoji: '🩺', icon: 'heart' },
+  { id: 'kids', name: 'Дети и школы', short: 'Школа', emoji: '🎒', icon: 'graduation' },
+  { id: 'work', name: 'Работа и офис', short: 'Офис', emoji: '💻', icon: 'code' },
 ];
+
+/* Порядок витрины в регионе — по тому, что нужно в первую неделю на месте. */
+export const SERVICE_ORDER = ['home', 'visa', 'transport', 'money', 'move', 'health', 'kids', 'work'];
+export const serviceCat = (id) => SERVICE_CATS.find((c) => c.id === id);
 
 export const SERVICES = [
   { id: 's1', title: 'Резидентская виза ОАЭ под ключ', cat: 'visa', owner: 'r9', region: 'dubai', price: 300, unit: 'услуга', days: 12, reply: 8, rating: 5.0, deals: 96, desc: 'Виза, Emirates ID, медицинская проверка, банковский счёт. Сопровождение на всех этапах, включая запись в центры.' },

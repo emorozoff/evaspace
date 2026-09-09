@@ -119,19 +119,78 @@ export function Seal({ size = 96, color = '#D7B06A', motto = 'EX UMBRA IN ···
   );
 }
 
-/* ---------- псевдо-QR ----------------------------------------------------- */
-export function QR({ value, size = 92, color = '#0b0d14', bg = '#fff', pad = 4 }) {
+/* ---------- код на входе -------------------------------------------------- */
+/* Не белое пятно, а часть карты: тёмная плашка, светлые модули со скруглением
+   и золотые угловые метки. Углы рисуются отдельно, поэтому код читается
+   даже когда сама плашка тёмная. */
+export function QR({ value, size = 92, tone = '#D9B26B', ink = '#EBDFC4', bg = '#0A0C12', radius = 12 }) {
+  const id = useId().replace(/:/g, '');
   const n = 25;
   const grid = useMemo(() => qrMatrix(value, n), [value]);
+  const pad = Math.max(3, size * 0.085);
   const cell = (size - pad * 2) / n;
+  const r = cell * 0.34;
+
+  /* зона угловой метки вместе с полем вокруг — точками её не засоряем */
+  const inEye = (x, y) => {
+    const near = (ox, oy) => x >= ox - 1 && x <= ox + 7 && y >= oy - 1 && y <= oy + 7;
+    return near(0, 0) || near(n - 7, 0) || near(0, n - 7);
+  };
+
+  const dots = [];
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      if (!grid[y][x] || inEye(x, y)) continue;
+      dots.push(
+        <rect
+          key={`${x}-${y}`}
+          x={pad + x * cell + cell * 0.1}
+          y={pad + y * cell + cell * 0.1}
+          width={cell * 0.8}
+          height={cell * 0.8}
+          rx={r}
+          fill={ink}
+          opacity={0.72 + ((x * 7 + y * 5) % 5) * 0.056}
+        />
+      );
+    }
+  }
+
+  const eye = (ox, oy, key) => (
+    <g key={key}>
+      <rect
+        x={pad + ox * cell + cell * 0.5}
+        y={pad + oy * cell + cell * 0.5}
+        width={cell * 6}
+        height={cell * 6}
+        rx={cell * 1.9}
+        fill="none"
+        stroke={tone}
+        strokeWidth={cell}
+      />
+      <rect
+        x={pad + (ox + 2) * cell}
+        y={pad + (oy + 2) * cell}
+        width={cell * 3}
+        height={cell * 3}
+        rx={cell * 0.95}
+        fill={tone}
+      />
+    </g>
+  );
+
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} shapeRendering="crispEdges">
-      <rect width={size} height={size} rx="6" fill={bg} />
-      {grid.map((row, y) =>
-        row.map((v, x) =>
-          v ? <rect key={`${x}-${y}`} x={pad + x * cell} y={pad + y * cell} width={cell} height={cell} fill={color} /> : null
-        )
-      )}
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block', flex: 'none' }}>
+      <defs>
+        <linearGradient id={`qr${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={bg} />
+          <stop offset="100%" stopColor="#04050a" />
+        </linearGradient>
+      </defs>
+      <rect width={size} height={size} rx={radius} fill={`url(#qr${id})`} />
+      <rect x="0.6" y="0.6" width={size - 1.2} height={size - 1.2} rx={radius - 0.6} fill="none" stroke={tone} strokeOpacity="0.32" strokeWidth="1.2" />
+      {dots}
+      {[eye(0, 0, 'a'), eye(n - 7, 0, 'b'), eye(0, n - 7, 'c')]}
     </svg>
   );
 }

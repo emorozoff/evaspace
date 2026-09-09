@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --port 4173",
-    "build:upass": "vite build --config vite.upass.config.js && node scripts/pack-upass.mjs"
+    "build:upass": "vite build --config vite.upass.config.js && node scripts/pack-upass.mjs",
+    "build:artifact": "vite build --config vite.artifact.config.js && node scripts/pack-artifact.mjs"
   },
   "license": "MIT",
   "dependencies": {
