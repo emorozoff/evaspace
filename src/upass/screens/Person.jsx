@@ -56,7 +56,7 @@ export default function Person({ id }) {
             { icon: 'message', title: 'Написать', onClick: () => go(`/dm/${r.id}`) },
             { icon: 'cup', title: 'Позвать', onClick: () => setInvite(true) },
             { icon: known ? 'check' : 'plus', title: known ? 'В контактах' : 'В контакты', on: known, onClick: () => !known && app.connect(r.id) },
-            { icon: 'shield', title: 'Поручиться', onClick: () => app.vouch(r.id) },
+            { icon: app.meet.includes(r.id) ? 'check' : 'pin', title: 'Встретиться', on: app.meet.includes(r.id), onClick: () => app.toggleMeet(r.id) },
           ]}
         />
 

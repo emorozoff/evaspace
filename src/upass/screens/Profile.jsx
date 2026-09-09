@@ -5,6 +5,7 @@ import { TopBar, List, Item, Btn, Section, Sheet, KV, Chip, Seg, Note } from '..
 import { Avatar } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
 import { SKILL_GROUPS } from '../data/people.js';
+import { OFFERS } from '../data/exchange.js';
 import { REGIONS, REGION_KEYS } from '../data/regions.js';
 import { DEGREES } from '../data/canon.js';
 import { VERSION } from '../version.js';
@@ -40,11 +41,20 @@ export default function Profile() {
           <Note icon="eye">Клуб знает только город, который вы указали. Точная геолокация не используется, история перемещений не хранится.</Note>
         </Section>
 
-        <Section title="Разделы">
+        <Section title="Клуб и правила">
           <List>
+            <Item icon="scroll" title="Кодекс" sub="Законы, традиции, ритуалы" onClick={() => go('/codex')} />
+            <Item icon="book" title="База знаний" sub="Разборы, шаблоны, записи эфиров" onClick={() => go('/vault')} />
             <Item icon="key" title="Уровень и степень" sub={`Travel · ${usdExact(200)}/год · степень ${deg.roman}`} onClick={() => go('/degrees')} />
-            <Item icon="plane" title="Мои поездки" sub={app.trips.length ? `${app.trips.length} объявлено` : 'Ничего не объявлено'} onClick={() => go('/map')} />
             <Item icon="hash" title="Репутация" sub={`${app.chain.length} записей в цепочке`} onClick={() => go('/rep')} />
+          </List>
+        </Section>
+
+        <Section title="Моё">
+          <List>
+            <Item icon="plane" title="Мои поездки" sub={app.trips.length ? `${app.trips.length} объявлено` : 'Ничего не объявлено'} onClick={() => go('/trips')} />
+            <Item icon="message" title="Мои запросы" sub={app.requests.length ? `${app.requests.length} в ленте` : 'Ничего не опубликовано'} onClick={() => go('/requests')} />
+            <Item icon="users" title="Хочу встретиться" sub={app.meet.length ? `${app.meet.length} отмечено` : 'Никого не отмечено'} onClick={() => go('/map')} />
           </List>
         </Section>
 
@@ -67,6 +77,22 @@ export default function Profile() {
           ))}
           <div><div className="label">Миссия одним предложением</div><textarea className="field" value={form.mission || ''} onChange={(e) => setForm({ ...form, mission: e.target.value })} /></div>
           <div><div className="label">О себе</div><textarea className="field" value={form.bio || ''} onChange={(e) => setForm({ ...form, bio: e.target.value })} /></div>
+          <div>
+            <div className="label">Что ищу</div>
+            <div className="wrap">
+              {OFFERS.map((o) => (
+                <Chip key={o.id} on={me.wants?.includes(o.id)} onClick={() => app.setMe({ wants: me.wants?.includes(o.id) ? me.wants.filter((x) => x !== o.id) : [...(me.wants || []), o.id] })}>{o.emoji} {o.short}</Chip>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="label">Чем могу быть полезен</div>
+            <div className="wrap">
+              {OFFERS.map((o) => (
+                <Chip key={o.id} on={me.offers?.includes(o.id)} onClick={() => app.setMe({ offers: me.offers?.includes(o.id) ? me.offers.filter((x) => x !== o.id) : [...(me.offers || []), o.id] })}>{o.emoji} {o.short}</Chip>
+              ))}
+            </div>
+          </div>
           <div>
             <div className="label">Направления</div>
             <div className="wrap">

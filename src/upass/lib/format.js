@@ -77,6 +77,9 @@ export function monthsAhead(count = 7) {
   return out;
 }
 
+/** Срок поездки словами. 89 — это «до 90 дней»: столько пускают без визы. */
+export const stayLabel = (d) => (d === 89 ? 'до 90 дней' : `${d} ${plural(d, 'день', 'дня', 'дней')}`);
+
 export function monthLabel(key) {
   const [y, m] = key.split('-');
   return `${MONTHS_SHORT[Number(m) - 1]} ${y.slice(2)}`;

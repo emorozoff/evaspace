@@ -6,30 +6,43 @@ import Pulse from '../components/Pulse.jsx';
 import Install from '../components/Install.jsx';
 import { Avatar } from '../components/Art.jsx';
 import { PosterThumb } from '../components/Poster.jsx';
-import { Top, List, Item, Section, Sheet, Chip, Btn, Actions, Note } from '../components/UI.jsx';
+import { Top, List, Item, Section, Sheet, Btn, Actions, Note } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
-import { REGIONS, REGION_KEYS } from '../data/regions.js';
+import { REGIONS } from '../data/regions.js';
 import { EVENT_KINDS, COMMUNITIES, DMS } from '../data/life.js';
-import { peopleInCircle } from '../data/circles.js';
+import { CIRCLES, peopleInCircle, circleOf } from '../data/circles.js';
 import { agendaFor, requestsIn } from '../lib/select.js';
-import { relDay, plural, nf } from '../lib/format.js';
-import { byId } from '../data/people.js';
+import { bestMatches, matchPct } from '../lib/match.js';
+import { relDay, plural, nf, stayLabel } from '../lib/format.js';
+import { byId, RESIDENTS } from '../data/people.js';
 
 export default function Home() {
   const app = useApp();
   const { me, chain } = app;
-  const [pick, setPick] = useState(false);
-  const [clocks, setClocks] = useState(false);
+  const [add, setAdd] = useState(false);
 
   const r = REGIONS[me.city];
   const agenda = useMemo(() => agendaFor(me, me.city, 3), [me]);
   const asks = useMemo(() => requestsIn(me.city).slice(0, 2), [me.city]);
   const mine = COMMUNITIES.filter((c) => app.communities.includes(c.id));
-  const inner = useMemo(
-    () => peopleInCircle('inner', app.circles).map(byId).filter(Boolean),
-    [app.circles]
-  );
   const unread = DMS.filter((d) => d.unread && !app.seen['dm-' + d.with]).length;
+
+  /* Ближний круг сортируется по тому, с кем переписка живее. */
+  const talk = useMemo(() => {
+    const n = {};
+    for (const d of DMS) n[d.with] = d.thread.length + (d.unread || 0) * 3;
+    for (const [id, msgs] of Object.entries(app.dms)) n[id] = (n[id] || 0) + msgs.length * 2;
+    return n;
+  }, [app.dms]);
+
+  const inner = useMemo(
+    () =>
+      peopleInCircle('inner', app.circles)
+        .map(byId)
+        .filter(Boolean)
+        .sort((a, b) => (talk[b.id] || 0) - (talk[a.id] || 0)),
+    [app.circles, talk]
+  );
 
   return (
     <div className="screen stack-20 rise-in">
@@ -44,44 +57,33 @@ export default function Home() {
 
       <Passport me={me} chain={chain} trips={app.trips} />
 
-      <Pulse
-        app={app}
-        onSettings={() => setClocks(true)}
-        onOpen={(id) => {
-          if (id === 'region') setPick(true);
-          else if (id === 'clock') setClocks(true);
-          else if (id === 'trip') go('/map');
-          else go(`/people?region=${me.city}`);
-        }}
-      />
+      <Pulse app={app} />
+
+      <Section title="Ближний круг" more="Все чаты" onMore={() => go('/chats')}>
+        <div className="scroller">
+          <button className="center" style={{ width: 66 }} onClick={() => setAdd(true)}>
+            <span className="circle-add"><Icon name="plus" size={20} /></span>
+            <div className="t-xs dim-2" style={{ marginTop: 7, fontWeight: 600 }}>Добавить</div>
+          </button>
+          {inner.map((p) => (
+            <button key={p.id} className="center" style={{ width: 66 }} onClick={() => go(`/dm/${p.id}`)}>
+              <Avatar person={p} size={52} dot={p.online} style={{ margin: '0 auto' }} />
+              <div className="t-xs" style={{ marginTop: 7, fontWeight: 600 }}>{p.name.split(' ')[0]}</div>
+            </button>
+          ))}
+        </div>
+      </Section>
 
       <Actions
         items={[
           { icon: 'send', title: 'Мессенджер', badge: unread, onClick: () => go('/chats') },
           { icon: 'compass', title: 'Карта', onClick: () => go('/map') },
           { icon: 'message', title: 'Запросы', onClick: () => go('/requests') },
-          { icon: 'calendar', title: 'Афиша', onClick: () => go('/events') },
+          { icon: 'plane', title: 'Поездки', badge: app.trips.length, onClick: () => go('/trips') },
         ]}
       />
 
       <Install compact />
-
-      {inner.length > 0 && (
-        <Section title="Ближний круг" more="Все чаты" onMore={() => go('/chats')}>
-          <div className="scroller">
-            {inner.map((p) => (
-              <button key={p.id} className="center" style={{ width: 66 }} onClick={() => go(`/dm/${p.id}`)}>
-                <Avatar person={p} size={52} dot={p.online} style={{ margin: '0 auto' }} />
-                <div className="t-xs" style={{ marginTop: 7, fontWeight: 600 }}>{p.name.split(' ')[0]}</div>
-              </button>
-            ))}
-            <button className="center" style={{ width: 66 }} onClick={() => go('/people')}>
-              <span className="circle-add"><Icon name="plus" size={20} /></span>
-              <div className="t-xs dim-2" style={{ marginTop: 7, fontWeight: 600 }}>Добавить</div>
-            </button>
-          </div>
-        </Section>
-      )}
 
       {agenda.length > 0 && (
         <Section title={`Ближайшее · ${r.name}`} more="Афиша" onMore={() => go('/events')}>
@@ -137,54 +139,60 @@ export default function Home() {
       )}
 
       {app.trips.length > 0 && (
-        <Section title="Мои поездки">
+        <Section title="Мои поездки" more="Все" onMore={() => go('/trips')}>
           <List>
-            {app.trips.map((t) => (
+            {[...app.trips].sort((a, b) => a.inDays - b.inDays).slice(0, 3).map((t) => (
               <Item
                 key={t.id}
                 icon="plane"
-                title={REGIONS[t.region]?.name}
-                sub={`${t.when || relDay(t.inDays)} · ${t.days} ${plural(t.days, 'день', 'дня', 'дней')}`}
-                meta={<button className="iconbtn" style={{ width: 30, height: 30 }} onClick={() => app.cancelTrip(t.id)}><Icon name="x" size={13} /></button>}
-                chev={false}
+                title={`${REGIONS[t.region]?.flag} ${REGIONS[t.region]?.name}`}
+                sub={`${t.when || relDay(t.inDays)} · ${stayLabel(t.days)}`}
+                onClick={() => go('/trips')}
               />
             ))}
           </List>
         </Section>
       )}
 
-      <Sheet open={pick} onClose={() => setPick(false)} title="Где вы сейчас" sub="Регион определяет сообщества, афишу и запросы">
-        <div className="wrap">
-          {REGION_KEYS.map((key) => (
-            <Chip key={key} on={me.city === key} onClick={() => { app.setRegion(key); setPick(false); }}>
-              {REGIONS[key].flag} {REGIONS[key].name}
-            </Chip>
-          ))}
-        </div>
-        <Btn variant="quiet" wide style={{ marginTop: 16 }} onClick={() => { setPick(false); go('/map'); }}>Открыть карту</Btn>
-      </Sheet>
-
-      <Sheet open={clocks} onClose={() => setClocks(false)} title="Часы на главной" sub="До трёх регионов — время идёт само">
-        <ClockPicker app={app} />
+      <Sheet open={add} onClose={() => setAdd(false)} title="Кого добавить" sub="Нажатие сразу переносит в ближний круг">
+        <AddCircle app={app} />
       </Sheet>
     </div>
   );
 }
 
-function ClockPicker({ app }) {
-  const on = app.clocks || [];
-  const toggle = (k) =>
-    app.setClocks(on.includes(k) ? on.filter((x) => x !== k) : on.length < 3 ? [...on, k] : [...on.slice(1), k]);
+/* Быстрое добавление: один тап — человек в круге, шторка не закрывается. */
+function AddCircle({ app }) {
+  const { me } = app;
+  const suggest = useMemo(() => {
+    const known = new Set(DMS.map((d) => d.with));
+    const ranked = bestMatches(me, RESIDENTS, 40);
+    return ranked.sort((a, b) => (known.has(b.p.id) ? 1 : 0) - (known.has(a.p.id) ? 1 : 0)).slice(0, 14);
+  }, [me]);
+
   return (
     <div className="stack">
-      <div className="wrap">
-        {REGION_KEYS.map((k) => (
-          <Chip key={k} on={on.includes(k)} onClick={() => toggle(k)}>
-            {REGIONS[k].flag} {REGIONS[k].name}
-          </Chip>
-        ))}
-      </div>
-      <Note icon="clock">Выбрано {on.length} из трёх. Четвёртый регион вытеснит самый старый.</Note>
+      <List>
+        {suggest.map(({ p, pct }) => {
+          const on = circleOf(p.id, app.circles) === 'inner';
+          return (
+            <Item
+              key={p.id}
+              lead={<Avatar person={p} size={44} dot={p.online} />}
+              title={p.name}
+              sub={`${REGIONS[p.city].flag} ${REGIONS[p.city].name} · ${p.company}`}
+              meta={
+                <span className={`tag${on ? ' tag--cyan' : pct >= 75 ? ' tag--gold' : ''}`}>
+                  {on ? 'в круге' : `${pct}%`}
+                </span>
+              }
+              chev={false}
+              onClick={() => app.setCircle(p.id, on ? 'none' : 'inner')}
+            />
+          );
+        })}
+      </List>
+      <Note icon="users">Круг можно поменять в профиле резидента или в шапке переписки: ближний, друзья, бизнес.</Note>
     </div>
   );
 }

@@ -7,7 +7,8 @@ import Icon from '../components/Icons.jsx';
 import { RESIDENTS, SKILL_GROUPS } from '../data/people.js';
 import { REGIONS, REGION_KEYS } from '../data/regions.js';
 import { COMMUNITIES } from '../data/life.js';
-import { matchScore, visibleResidents, communitiesFor } from '../lib/select.js';
+import { visibleResidents, communitiesFor } from '../lib/select.js';
+import { matchScore, matchPct } from '../lib/match.js';
 import { CommunityRow } from './Communities.jsx';
 import { nf, plural } from '../lib/format.js';
 
@@ -131,7 +132,7 @@ export function PersonItem({ r, me, sub }) {
         </span>
       }
       sub={sub || `${c.flag} ${c.name} · ${r.company}`}
-      meta={score >= 7 ? <span className="tag tag--gold">{Math.min(99, 55 + score * 4)}%</span> : undefined}
+      meta={<span className={`tag${score >= 9 ? ' tag--gold' : ''}`}>{matchPct(me, r)}%</span>}
       onClick={() => go(`/p/${r.id}`)}
     />
   );

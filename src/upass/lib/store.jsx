@@ -6,7 +6,7 @@ import { CIRCLES } from '../data/circles.js';
 import { linkChain } from './chain.js';
 import { residentNumber, seeded } from './art.js';
 
-const KEY = 'upass.v4';
+const KEY = 'upass.v5';
 const CIRCLE_NAME = Object.fromEntries(CIRCLES.map((c) => [c.id, c.name]));
 
 const EMPTY = {
@@ -24,6 +24,7 @@ const EMPTY = {
   replies: {},               // ответы на чужие запросы
   askVariant: 0,             // какой вариант автотекста показать следующим
   circles: {},               // человек → круг общения, если резидент перенёс его руками
+  meet: [],                  // с кем хочу пересечься — по ним собираются рекомендации
   clocks: ['moscow', 'dubai', 'bali'],   // часы на главной
   trips: [],
   rep: [],
@@ -153,6 +154,15 @@ export function StoreProvider({ children }) {
 
   const setClocks = useCallback((keys) => setS((prev) => ({ ...prev, clocks: keys.slice(0, 3) })), []);
 
+  const toggleMeet = useCallback(
+    (id) => {
+      const on = !snap.current.meet.includes(id);
+      setS((prev) => ({ ...prev, meet: on ? [...prev.meet, id] : prev.meet.filter((x) => x !== id) }));
+      say(on ? 'Добавили в «хочу встретиться» — подскажем, где пересечься' : 'Убрали из «хочу встретиться»');
+    },
+    [say]
+  );
+
   /* ——— мероприятия ——— */
   const toggleGoing = useCallback(
     (id, title) => {
@@ -231,6 +241,14 @@ export function StoreProvider({ children }) {
       say('Поездка объявлена — сообщество в регионе увидит');
     },
     [addRep, say]
+  );
+
+  const updateTrip = useCallback(
+    (id, patch) => {
+      setS((prev) => ({ ...prev, trips: prev.trips.map((t) => (t.id === id ? { ...t, ...patch } : t)) }));
+      say('Поездка обновлена');
+    },
+    [say]
   );
 
   const cancelTrip = useCallback((id) => setS((prev) => ({ ...prev, trips: prev.trips.filter((t) => t.id !== id) })), []);
@@ -318,6 +336,7 @@ export function StoreProvider({ children }) {
     replyTo,
     dropRequest,
     announceTrip,
+    updateTrip,
     cancelTrip,
     tryPassphrase,
     setOath,
@@ -325,6 +344,7 @@ export function StoreProvider({ children }) {
     setRegion,
     setCircle,
     setClocks,
+    toggleMeet,
     setVisibility,
     markSeen,
     addRep,

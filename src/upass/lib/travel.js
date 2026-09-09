@@ -19,14 +19,14 @@ export function flight(fromKey, toKey) {
   const direct = km < 6500;
   const hours = km / CRUISE + GROUND + (direct ? 0 : TRANSFER);
   const index = (a.price + b.price) / 2;
-  const from = Math.round(((55 + km * 0.045) * index) / 5) * 5;
+  const from = Math.round(((75 + km * 0.055) * index) / 5) * 5;
 
   return {
     km,
     hours,
     direct,
     from,
-    avg: Math.round((from * 1.75) / 5) * 5,
+    avg: Math.round((from * 1.7) / 5) * 5,
     business: Math.round((from * 3.4) / 10) * 10,
   };
 }

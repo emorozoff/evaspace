@@ -7,11 +7,14 @@ import { seeded } from '../lib/art.js';
    линия горизонта и силуэт достопримечательности города. Не сливается
    с фоном экрана: у неё свой цвет и светлая кромка. */
 
+/* Плиты сделаны заметно светлее фона приложения — иначе обложка сливается
+   с экраном и читается как тёмный прямоугольник. Текст на ней держится
+   за счёт затемнения снизу, а не за счёт общей темноты. */
 export const PLATES = {
-  dubai: '#3a2f18', bali: '#173a2f', phuket: '#163446', moscow: '#2a2141', istanbul: '#3f2420',
-  tbilisi: '#1c3a38', yerevan: '#3b1f1c', almaty: '#3a2c14', belgrade: '#2c2440', lisbon: '#1d2547',
-  barcelona: '#3b1e2c', london: '#232a3a', newyork: '#1b2436', miami: '#3a1d2c', mexico: '#3d2414',
-  saopaulo: '#173628', capetown: '#183334', bangkok: '#3a3014', singapore: '#1e2247', tokyo: '#32203a',
+  dubai: '#6b5426', bali: '#245c4a', phuket: '#22506b', moscow: '#3f3163', istanbul: '#61362f',
+  tbilisi: '#2a5a57', yerevan: '#5b2f2a', almaty: '#5a4420', belgrade: '#443761', lisbon: '#2c3a6d',
+  barcelona: '#5c2e44', london: '#354162', newyork: '#2a3855', miami: '#5a2c44', mexico: '#5e3820',
+  saopaulo: '#23543e', capetown: '#254f51', bangkok: '#5a4a20', singapore: '#2e356d', tokyo: '#4d3159',
 };
 
 export default function Scene({ city, height = 150, children, style, label, radius, sun = true, size }) {
@@ -56,8 +59,8 @@ export default function Scene({ city, height = 150, children, style, label, radi
             )}
           </g>
         )}
-        <rect width={W} height={H} fill="url(#none)" />
       </svg>
+      <div className="scene__shade" />
       {label && (
         <div style={{ position: 'absolute', left: 14, top: 12, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(255,255,255,.55)' }}>
           {(REGIONS[city]?.flag || '') + ' ' + (label === true ? (REGIONS[city]?.name || '').toUpperCase() : label)}

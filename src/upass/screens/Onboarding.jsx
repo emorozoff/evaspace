@@ -1,23 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
-import { Btn, Chip, Card, Seg } from '../components/UI.jsx';
-import { Seal, Guilloche } from '../components/Art.jsx';
+import { Btn, Chip, Card, Sheet, Note } from '../components/UI.jsx';
+import { Seal, Guilloche, Avatar } from '../components/Art.jsx';
 import Passport from '../components/Passport.jsx';
 import Install from '../components/Install.jsx';
 import Icon from '../components/Icons.jsx';
-import { SKILL_GROUPS, ROLES } from '../data/people.js';
+import { SKILL_GROUPS, ROLES, RESIDENTS } from '../data/people.js';
+import { OFFERS } from '../data/exchange.js';
 import { REGIONS, REGION_KEYS } from '../data/regions.js';
-import { TIERS, LAWS, MOTTO_MASKED } from '../data/canon.js';
-import { usdExact } from '../lib/format.js';
-
-const TALENTS = ['Стратегия', 'Продажи', 'Найм', 'Публичные выступления', 'Переговоры', 'Инженерия', 'Дизайн', 'Тексты', 'Съёмка', 'Спорт', 'Кулинария', 'Языки', 'Инвестиции', 'Право', 'Психология', 'Музыка'];
+import { TIERS, LAWS, TRADITIONS, MOTTO_MASKED } from '../data/canon.js';
+import { bestMatches, matchReasons } from '../lib/match.js';
+import { usdExact, plural } from '../lib/format.js';
 
 export default function Onboarding() {
   const app = useApp();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
-    name: '', role: 'Основатель', company: '', city: 'dubai',
-    skills: [], talents: [], mission: '', gives: '', needs: '',
+    first: '', last: '', role: 'Основатель', company: '', city: 'dubai',
+    skills: [], wants: [], offers: [], mission: '',
   });
   const [paid, setPaid] = useState(false);
   const [oath, setOath] = useState(false);
@@ -26,7 +26,7 @@ export default function Onboarding() {
   const toggle = (k, v) =>
     setForm((f) => ({ ...f, [k]: f[k].includes(v) ? f[k].filter((x) => x !== v) : [...f[k], v] }));
 
-  /* модерация: в жизни до 24 часов, здесь — несколько секунд */
+  /* модерация: в жизни до суток, здесь — несколько секунд */
   useEffect(() => {
     if (app.stage !== 'review') return;
     const t = setTimeout(app.approve, 7000);
@@ -36,7 +36,7 @@ export default function Onboarding() {
   if (app.stage === 'review') return <Review onApprove={app.approve} name={app.me.name} />;
 
   if (app.stage === 'approved') {
-    if (!paid) return <Payment city={app.me.city} onPay={() => setPaid(true)} />;
+    if (!paid) return <Payment me={app.me} onPay={() => setPaid(true)} />;
     return <Ceremony me={{ ...app.me, tier: 1, degree: 1 }} oath={oath} setOath={setOath} onDone={() => app.payMembership()} />;
   }
 
@@ -46,25 +46,46 @@ export default function Onboarding() {
     {
       title: 'Как вас зовут',
       hint: 'Имя и фамилия попадут на паспорт резидента. Псевдонимы не принимаются.',
-      ok: form.name.trim().length > 3,
+      ok: form.first.trim().length > 1 && form.last.trim().length > 1,
       body: (
-        <input className="field" autoFocus placeholder="Имя и фамилия" value={form.name} onChange={(e) => set('name', e.target.value)} />
+        <div className="stack">
+          <div>
+            <div className="label">Имя</div>
+            <input className="field" autoFocus placeholder="Сергей" value={form.first} onChange={(e) => set('first', e.target.value)} />
+          </div>
+          <div>
+            <div className="label">Фамилия</div>
+            <input className="field" placeholder="Морозов" value={form.last} onChange={(e) => set('last', e.target.value)} />
+          </div>
+        </div>
       ),
     },
     {
       title: 'Чем вы занимаетесь',
-      hint: 'Роль в деле и компания. Это видят резиденты, когда решают, познакомиться ли с вами.',
-      ok: form.company.trim().length > 1,
+      hint: 'Роль в деле, компания и направления. Это видят резиденты, когда решают, познакомиться ли с вами.',
+      ok: form.company.trim().length > 1 && form.skills.length > 0,
       body: (
         <div className="stack">
           <div className="wrap">
-            {ROLES.map((r) => (
-              <Chip key={r} on={form.role === r} onClick={() => set('role', r)}>{r}</Chip>
-            ))}
+            {ROLES.map((r) => <Chip key={r} on={form.role === r} onClick={() => set('role', r)}>{r}</Chip>)}
           </div>
           <input className="field" placeholder="Компания или практика" value={form.company} onChange={(e) => set('company', e.target.value)} />
+          <div>
+            <div className="label">Направления</div>
+            <div className="wrap">
+              {SKILL_GROUPS.map((g) => (
+                <Chip key={g.id} on={form.skills.includes(g.id)} onClick={() => toggle('skills', g.id)}>{g.emoji} {g.name}</Chip>
+              ))}
+            </div>
+          </div>
         </div>
       ),
+    },
+    {
+      title: 'Обмен',
+      hint: 'Два вопроса из одного словаря. Совпадение считается встречно: вы ищете инвестиции — вам покажут тех, кто инвестирует.',
+      ok: form.wants.length > 0 && form.offers.length > 0,
+      body: <Exchange form={form} toggle={toggle} />,
     },
     {
       title: 'Где вы сейчас',
@@ -81,45 +102,31 @@ export default function Onboarding() {
       ),
     },
     {
-      title: 'Сильные стороны',
-      hint: 'Направления и таланты. По ним вас найдут те, кому нужна именно ваша помощь.',
-      ok: form.skills.length > 0,
-      body: (
-        <div className="stack-16">
-          <div>
-            <div className="eyebrow" style={{ marginBottom: 8 }}>Направления</div>
-            <div className="wrap">
-              {SKILL_GROUPS.map((g) => (
-                <Chip key={g.id} on={form.skills.includes(g.id)} onClick={() => toggle('skills', g.id)}>{g.name}</Chip>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="eyebrow" style={{ marginBottom: 8 }}>Таланты</div>
-            <div className="wrap">
-              {TALENTS.map((t) => (
-                <Chip key={t} on={form.talents.includes(t)} onClick={() => toggle('talents', t)}>{t}</Chip>
-              ))}
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
       title: 'Одним предложением',
-      hint: 'Что вы строите и чем можете быть полезны кругу. Эту строку модератор читает первой.',
+      hint: 'Что вы строите. Эту строку модератор читает первой.',
       ok: form.mission.trim().length > 10,
       body: (
-        <div className="stack">
-          <textarea className="field" autoFocus placeholder="Например: строю сеть ретрит-центров в Азии и помогаю основателям восстанавливаться" value={form.mission} onChange={(e) => set('mission', e.target.value)} />
-          <input className="field" placeholder="Чем могу быть полезен кругу" value={form.gives} onChange={(e) => set('gives', e.target.value)} />
-          <input className="field" placeholder="Что ищу" value={form.needs} onChange={(e) => set('needs', e.target.value)} />
-        </div>
+        <textarea
+          className="field"
+          autoFocus
+          placeholder="Например: строю сеть ретрит-центров в Азии и помогаю основателям восстанавливаться"
+          value={form.mission}
+          onChange={(e) => set('mission', e.target.value)}
+        />
       ),
     },
   ];
 
   const cur = steps[step - 1];
+
+  const submit = () =>
+    app.apply({
+      ...form,
+      name: `${form.first.trim()} ${form.last.trim()}`,
+      title: form.role,
+      gives: form.offers.map((id) => OFFERS.find((o) => o.id === id)?.give).filter(Boolean).join('. '),
+      needs: form.wants.map((id) => OFFERS.find((o) => o.id === id)?.need).filter(Boolean).join(', '),
+    });
 
   return (
     <div className="screen screen--plain" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -137,12 +144,7 @@ export default function Onboarding() {
 
       <div style={{ marginTop: 'auto', paddingTop: 26, display: 'flex', gap: 10 }}>
         <Btn variant="quiet" onClick={() => setStep((s) => s - 1)}>Назад</Btn>
-        <Btn
-          variant="gold"
-          wide
-          disabled={!cur.ok}
-          onClick={() => (step === steps.length ? app.apply(form) : setStep((s) => s + 1))}
-        >
+        <Btn variant="gold" wide disabled={!cur.ok} onClick={() => (step === steps.length ? submit() : setStep((s) => s + 1))}>
           {step === steps.length ? 'Отправить заявку' : 'Дальше'}
         </Btn>
       </div>
@@ -150,19 +152,65 @@ export default function Onboarding() {
   );
 }
 
+/* ---------- два вопроса одним экраном ------------------------------------ */
+function Exchange({ form, toggle }) {
+  const me = { id: 'me', city: form.city, skills: form.skills, wants: form.wants, offers: form.offers };
+  const found = useMemo(
+    () => (form.wants.length || form.offers.length ? bestMatches(me, RESIDENTS, 3) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [form.wants, form.offers, form.city, form.skills]
+  );
+
+  return (
+    <div className="stack">
+      <div>
+        <div className="label">Что ищу</div>
+        <div className="wrap">
+          {OFFERS.map((o) => (
+            <Chip key={o.id} on={form.wants.includes(o.id)} onClick={() => toggle('wants', o.id)}>{o.emoji} {o.short}</Chip>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div className="label">Чем могу быть полезен</div>
+        <div className="wrap">
+          {OFFERS.map((o) => (
+            <Chip key={o.id} on={form.offers.includes(o.id)} onClick={() => toggle('offers', o.id)}>{o.emoji} {o.short}</Chip>
+          ))}
+        </div>
+      </div>
+
+      {found.length > 0 && (
+        <div className="stack-8">
+          <div className="eyebrow eyebrow--gold">Уже нашлись</div>
+          {found.map(({ p, pct }) => (
+            <div key={p.id} className="card row" style={{ gap: 11 }}>
+              <Avatar person={p} size={40} />
+              <div className="grow" style={{ minWidth: 0 }}>
+                <div className="t-md ell">{p.name}</div>
+                <div className="t-xs dim-2 ell">{matchReasons(me, p)[0] || `${p.title} · ${p.company}`}</div>
+              </div>
+              <span className="tag tag--gold">{pct}%</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ---------- титульный экран ---------------------------------------------- */
 function Hero({ onStart, onDemo }) {
   return (
-    <div className="screen screen--plain" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
+    <div className="screen screen--plain" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: -70, left: '50%', transform: 'translateX(-46%)', opacity: 0.1, pointerEvents: 'none' }}>
         <Guilloche color="#D7B06A" opacity={0.7} size={420} seed="hero" />
       </div>
 
       <div style={{ marginTop: 54, position: 'relative' }}>
         <Seal size={78} glow />
-        <h1 className="display" style={{ fontSize: 46, marginTop: 20, letterSpacing: '-0.02em' }}>
-          UPASS
-        </h1>
+        <h1 className="display" style={{ fontSize: 46, marginTop: 20, letterSpacing: '-0.02em' }}>UPASS</h1>
         <div className="eyebrow eyebrow--gold" style={{ marginTop: 8 }}>{MOTTO_MASKED}</div>
         <p className="dim" style={{ marginTop: 18, fontSize: 15, lineHeight: 1.55, maxWidth: 380 }}>
           Сообщество тех, кто живёт между странами. Двадцать регионов, свои люди в каждом,
@@ -172,8 +220,8 @@ function Hero({ onStart, onDemo }) {
 
       <div className="stack-8" style={{ marginTop: 26, position: 'relative' }}>
         <Pillar icon="compass" title="Двадцать регионов" text="Куда лететь, сколько стоит билет и месяц жизни — считается на карте" />
-        <Pillar icon="users" title="Сообщества" text="По направлениям и по регионам: свои в каждом городе, куда вы прилетаете" />
-        <Pillar icon="message" title="Запросы" text="Спросили — ответили. Быстрее, чем искать людей вручную" />
+        <Pillar icon="users" title="Свои в каждом городе" text="Совпадение считается встречно: вы ищете — у кого-то это есть" />
+        <Pillar icon="calendar" title="События" text="Встречи, эфиры и три больших слёта года" />
       </div>
 
       <div style={{ marginTop: 'auto', paddingTop: 28, display: 'grid', gap: 10, position: 'relative' }}>
@@ -218,7 +266,7 @@ function Review({ onApprove, name }) {
 
   return (
     <div className="screen screen--plain center" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', alignItems: 'center' }}>
-      <div style={{ marginTop: 80 }} className="pulse">
+      <div style={{ marginTop: 80 }} className="pulsing">
         <Seal size={104} glow />
       </div>
       <h2 className="display" style={{ marginTop: 26 }}>Заявка на рассмотрении</h2>
@@ -245,29 +293,35 @@ function Review({ onApprove, name }) {
   );
 }
 
-/* ---------- оплата взноса ------------------------------------------------- */
-function Payment({ city, onPay }) {
+/* ---------- одобрено: сначала карта, потом цена --------------------------- */
+function Payment({ me, onPay }) {
   const t = TIERS[0];
-  const ru = city === 'moscow';
+  const ru = me.city === 'moscow';
   const [busy, setBusy] = useState(false);
-  const pay = () => {
-    setBusy(true);
-    setTimeout(onPay, 1400);
-  };
+  const matched = useMemo(() => bestMatches(me, RESIDENTS, 30).filter((x) => x.pct >= 60).length, [me]);
 
   return (
     <div className="screen screen--plain" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="eyebrow eyebrow--gold" style={{ marginTop: 18 }}>Заявка одобрена</div>
-      <h2 className="h1" style={{ margin: '8px 0 6px' }}>Уровень Travel</h2>
-      <div className="t-sm dim" style={{ marginBottom: 18, lineHeight: 1.5 }}>
-        Сейчас в сообществе один уровень — чтобы не было путаницы. Business и Gold откроются позже,
-        Black был и остаётся закрытым.
+      <div className="center" style={{ marginTop: 10, marginBottom: 16 }}>
+        <div className="eyebrow eyebrow--gold">Заявка одобрена</div>
+        <h2 className="display" style={{ marginTop: 6, fontSize: 30 }}>Ваш паспорт готов</h2>
       </div>
 
-      <div className="card card--gold">
+      <Passport me={{ ...me, tier: 1, degree: 1 }} chain={[]} flippable={false} />
+
+      <Note icon="users" tone="var(--gold)">
+        {matched > 0
+          ? `По вашим меткам обмена нашлось ${matched} ${plural(matched, 'резидент', 'резидента', 'резидентов')} с совпадением выше 60 %.`
+          : 'Метки обмена можно менять в профиле — по ним подбираются знакомства.'}
+      </Note>
+
+      <div className="card card--gold" style={{ marginTop: 14 }}>
         <div className="spread">
-          <div className="h2">{t.name}</div>
-          <div className="t-lg num">{usdExact(t.price)} <span className="t-xs dim">/ год</span></div>
+          <div>
+            <div className="h2">{t.name}</div>
+            <div className="t-xs dim-2" style={{ marginTop: 2 }}>{t.line}</div>
+          </div>
+          <div className="figure" style={{ fontSize: 22 }}>{usdExact(t.price)}<span className="t-xs dim" style={{ fontWeight: 600 }}> / год</span></div>
         </div>
         <div className="stack-8" style={{ marginTop: 14 }}>
           {t.perks.map((p) => (
@@ -279,16 +333,16 @@ function Payment({ city, onPay }) {
         </div>
       </div>
 
-      <Card style={{ marginTop: 14 }} className="row">
+      <Card style={{ marginTop: 12 }} className="row">
         <Icon name="wallet" size={18} color="var(--ink-3)" />
         <div className="grow t-xs dim">
           Платёж проходит по вашему региону: {ru ? 'карты российских банков, рубли по курсу на момент оплаты' : 'международный платёж в долларах'}.
         </div>
       </Card>
 
-      <div style={{ marginTop: 'auto', paddingTop: 22 }}>
-        <Btn variant="gold" wide onClick={pay} disabled={busy}>
-          {busy ? 'Проводим платёж…' : `Оплатить ${usdExact(t.price)} и получить паспорт`}
+      <div style={{ marginTop: 'auto', paddingTop: 20 }}>
+        <Btn variant="gold" wide disabled={busy} onClick={() => { setBusy(true); setTimeout(onPay, 1400); }}>
+          {busy ? 'Проводим платёж…' : `Оплатить ${usdExact(t.price)} и активировать`}
         </Btn>
         <div className="center t-xs dim-2" style={{ marginTop: 10 }}>Демонстрация: настоящий платёж не проводится</div>
       </div>
@@ -299,6 +353,7 @@ function Payment({ city, onPay }) {
 /* ---------- посвящение ---------------------------------------------------- */
 function Ceremony({ me, oath, setOath, onDone }) {
   const [show, setShow] = useState(false);
+  const [codex, setCodex] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setShow(true), 250);
     return () => clearTimeout(t);
@@ -306,17 +361,20 @@ function Ceremony({ me, oath, setOath, onDone }) {
 
   return (
     <div className="screen screen--plain" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="center" style={{ marginTop: 24 }}>
+      <div className="center" style={{ marginTop: 18 }}>
         <div className="eyebrow eyebrow--gold">Посвящение</div>
-        <h2 className="display" style={{ marginTop: 8 }}>Паспорт выдан</h2>
+        <h2 className="display" style={{ marginTop: 8, fontSize: 30 }}>Паспорт выдан</h2>
       </div>
 
-      <div style={{ marginTop: 22, opacity: show ? 1 : 0, transform: show ? 'none' : 'translateY(16px) scale(.96)', transition: '.7s cubic-bezier(.22,1,.36,1)' }}>
-        <Passport me={me} chain={[]} flippable={false} />
+      <div style={{ marginTop: 20, opacity: show ? 1 : 0, transform: show ? 'none' : 'translateY(16px) scale(.96)', transition: '.7s cubic-bezier(.22,1,.36,1)' }}>
+        <Passport me={me} chain={[]} />
       </div>
 
-      <Card style={{ marginTop: 18 }}>
-        <div className="eyebrow">Принятие законов</div>
+      <Card style={{ marginTop: 16 }}>
+        <div className="spread">
+          <div className="eyebrow">Принятие законов</div>
+          <button className="sect__more" onClick={() => setCodex(true)}>Весь кодекс</button>
+        </div>
         <div className="stack-8" style={{ marginTop: 10 }}>
           {LAWS.slice(0, 3).map((l) => (
             <div key={l.n} className="row-t t-xs dim" style={{ gap: 8 }}>
@@ -324,7 +382,6 @@ function Ceremony({ me, oath, setOath, onDone }) {
               <span style={{ lineHeight: 1.45 }}>{l.text}</span>
             </div>
           ))}
-          <div className="t-xs dim-2">Полный свод из семи законов — в разделе «Кодекс».</div>
         </div>
         <button className="row" style={{ marginTop: 14, width: '100%', textAlign: 'left', gap: 10 }} onClick={() => setOath(!oath)}>
           <div style={{ width: 22, height: 22, borderRadius: 7, flex: 'none', display: 'grid', placeItems: 'center', border: `1px solid ${oath ? 'var(--gold)' : 'var(--line-2)'}`, background: oath ? 'var(--gold-soft)' : 'transparent' }}>
@@ -337,6 +394,29 @@ function Ceremony({ me, oath, setOath, onDone }) {
       <div style={{ marginTop: 'auto', paddingTop: 20 }}>
         <Btn variant="gold" wide disabled={!oath} onClick={onDone}>Войти в круг</Btn>
       </div>
+
+      <Sheet open={codex} onClose={() => setCodex(false)} title="Кодекс кратко" sub="Семь законов и пять традиций — то, что вы принимаете">
+        <div className="stack">
+          <div className="stack-8">
+            {LAWS.map((l) => (
+              <div key={l.n} className="row-t t-sm" style={{ gap: 10 }}>
+                <span className="gold mono" style={{ flex: 'none', width: 20 }}>{l.n}</span>
+                <span className="dim" style={{ lineHeight: 1.45 }}>{l.text}</span>
+              </div>
+            ))}
+          </div>
+          <div className="eyebrow" style={{ marginTop: 4 }}>Традиции</div>
+          <div className="stack-8">
+            {TRADITIONS.map((t) => (
+              <div key={t.key} className="row-t t-sm" style={{ gap: 10 }}>
+                <span className="gold mono" style={{ flex: 'none', width: 20 }}>{t.key}</span>
+                <span className="dim" style={{ lineHeight: 1.45 }}><b style={{ color: 'var(--ink)' }}>{t.name}.</b> {t.text}</span>
+              </div>
+            ))}
+          </div>
+          <Btn variant="quiet" wide onClick={() => setCodex(false)}>Понятно</Btn>
+        </div>
+      </Sheet>
     </div>
   );
 }
@@ -345,16 +425,16 @@ function Ceremony({ me, oath, setOath, onDone }) {
 function demo(app) {
   app.apply({
     name: 'Евгений Морозов',
-    role: 'Основатель',
-    title: 'Основатель',
-    company: 'Upass',
-    city: 'dubai',
+    first: 'Евгений', last: 'Морозов',
+    role: 'Основатель', title: 'Основатель', company: 'Upass', city: 'dubai',
     skills: ['it', 'ai', 'capital'],
     talents: ['Стратегия', 'Публичные выступления', 'Инвестиции'],
+    wants: ['invest', 'partner', 'clients'],
+    offers: ['product', 'ai', 'circle'],
     mission: 'Строю сообщество, в котором успех каждого — общий успех.',
     bio: 'Живу между Дубаем, Москвой и Бали. Собираю сообщество тех, кто выбрал жизнь между странами.',
-    gives: 'Помогу собрать сообщество и запустить продукт',
-    needs: 'Партнёры в новых регионах',
+    gives: 'Сделаю продукт, разберу техчасть. Внедряю ИИ в работу. Познакомлю и соберу стол',
+    needs: 'Инвестиции в проект, Партнёр в дело, Клиенты и новый рынок',
   });
   setTimeout(() => {
     app.approve();

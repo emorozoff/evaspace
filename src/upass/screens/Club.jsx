@@ -1,31 +1,19 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import { Top, List, Item, Section, Sheet, Btn, Note } from '../components/UI.jsx';
-import { Seal, Avatar } from '../components/Art.jsx';
-import Install from '../components/Install.jsx';
+import { Seal } from '../components/Art.jsx';
+import ResidentCard from '../components/ResidentCard.jsx';
 import Icon from '../components/Icons.jsx';
-import { DEGREES, MOTTO, MOTTO_MASKED } from '../data/canon.js';
-import { DMS } from '../data/life.js';
+import { MOTTO, MOTTO_MASKED } from '../data/canon.js';
+import { COMMUNITIES, SERVICE_CATS, SERVICE_ORDER, SERVICES } from '../data/life.js';
+import { RESIDENTS } from '../data/people.js';
+import { REGIONS } from '../data/regions.js';
+import { bestMatches } from '../lib/match.js';
+import { nf, plural } from '../lib/format.js';
 
-const GROUPS = [
-  { title: 'Жизнь сообщества', items: [
-    { to: '/events', icon: 'calendar', title: 'Афиша', sub: 'Встречи, эфиры и три больших слёта' },
-    { to: '/chats', icon: 'message', title: 'Чаты', sub: 'Личные и сообщества' },
-    { to: '/people', icon: 'users', title: 'Резиденты', sub: 'Кто есть в сообществе' },
-    { to: '/market', icon: 'briefcase', title: 'Услуги', sub: 'Переезд, документы, быт' },
-  ] },
-  { title: 'Правила и знание', items: [
-    { to: '/codex', icon: 'scroll', title: 'Кодекс', sub: 'Законы, традиции, ритуалы' },
-    { to: '/vault', icon: 'book', title: 'База знаний', sub: 'Разборы, шаблоны, записи эфиров' },
-    { to: '/degrees', icon: 'key', title: 'Уровень и степень', sub: 'Как расти внутри' },
-    { to: '/rep', icon: 'hash', title: 'Репутация', sub: 'Подтверждённые события' },
-  ] },
-  { title: 'Личное', items: [
-    { to: '/profile', icon: 'settings', title: 'Профиль и настройки', sub: 'Регион, видимость, данные' },
-  ] },
-];
-
+/* Клуб — это справочник из трёх блоков: сообщества, люди, услуги.
+   Всё, что про правила и личный рост, живёт в настройках. */
 export default function Club() {
   const app = useApp();
   const { me } = app;
@@ -33,8 +21,27 @@ export default function Club() {
   const [door, setDoor] = useState(false);
   const [word, setWord] = useState('');
   const [tries, setTries] = useState(0);
-  const deg = DEGREES.find((d) => d.n === me.degree) || DEGREES[0];
-  const unread = DMS.filter((d) => d.unread && !app.seen['dm-' + d.with]).length;
+
+  const open = COMMUNITIES.filter((c) => c.access === 'open');
+  const byTopic = open.filter((c) => c.region === 'global').length;
+  const byCity = open.filter((c) => c.region !== 'global').length;
+  const clubs = COMMUNITIES.filter((c) => c.access === 'closed').length;
+  const joined = COMMUNITIES.filter((c) => app.communities.includes(c.id));
+
+  /* В витрине показываем разных людей: подряд четыре инвестора с одинаковым
+     процентом выглядят как ошибка, хотя счёт честный. */
+  const people = useMemo(() => {
+    const seen = {};
+    return bestMatches(me, RESIDENTS, 40)
+      .filter(({ p }) => (seen[p.role] = (seen[p.role] || 0) + 1) <= 2)
+      .slice(0, 4);
+  }, [me]);
+  const cats = useMemo(() => {
+    const has = {};
+    for (const s of SERVICES) has[s.cat] = (has[s.cat] || 0) + 1;
+    return SERVICE_ORDER.map((id) => SERVICE_CATS.find((c) => c.id === id)).filter((c) => has[c.id]);
+  }, []);
+  const count = (id) => SERVICES.filter((s) => s.cat === id).length;
 
   const knock = () => {
     if (app.secret) return go('/lodge');
@@ -49,40 +56,72 @@ export default function Club() {
 
   return (
     <div className="screen stack-20">
-      <Top title="Клуб" />
+      <Top
+        title="Клуб"
+        sub={`${COMMUNITIES.length} сообществ · ${RESIDENTS.length} резидентов · ${SERVICES.length} услуг`}
+        right={<button className="iconbtn" onClick={() => go('/profile')} aria-label="Настройки"><Icon name="settings" size={18} /></button>}
+      />
 
-      <List>
-        <Item
-          lead={<Avatar person={me} size={48} ring={deg.tone} />}
-          title={me.name || 'Резидент'}
-          sub={`Travel · степень ${deg.roman} · ${deg.secret ? '·····' : deg.name}`}
-          onClick={() => go('/profile')}
-        />
-      </List>
-
-      {GROUPS.map((g) => (
-        <Section key={g.title} title={g.title}>
+      {/* — сообщества — */}
+      <Section title="Сообщества" more="Все" onMore={() => go('/communities')}>
+        <div className="tiles">
+          <Tile emoji="🧭" title="По интересам" n={byTopic} onClick={() => go('/communities')} />
+          <Tile emoji="📍" title="По городам" n={byCity} onClick={() => go('/communities')} />
+          <Tile emoji="🔒" title="Закрытые клубы" n={clubs} onClick={() => go('/communities')} />
+        </div>
+        {joined.length > 0 && (
           <List>
-            {g.items.map((it) => (
+            {joined.slice(0, 3).map((c) => (
               <Item
-                key={it.to}
-                icon={it.icon}
-                title={it.title}
-                sub={it.sub}
-                meta={it.to === '/chats' && unread ? <span className="unread">{unread}</span> : undefined}
-                onClick={() => go(it.to)}
+                key={c.id}
+                lead={<div className="item__ic" style={{ background: `${c.tone}22`, color: c.tone, borderRadius: 14 }}><Icon name={c.icon} size={19} /></div>}
+                title={c.name}
+                sub={`Вы здесь · ${nf(c.members)} ${plural(c.members, 'участник', 'участника', 'участников')}`}
+                onClick={() => go(`/chat/${c.id}`)}
               />
             ))}
           </List>
-          {g.title === 'Личное' && <Install />}
-        </Section>
-      ))}
+        )}
+      </Section>
 
-      <div className="center" style={{ paddingTop: 8 }}>
+      {/* — резиденты — */}
+      <Section title="Резиденты" more={`Вся база · ${RESIDENTS.length}`} onMore={() => go('/people')}>
+        <div className="stack-8">
+          {people.map(({ p }) => <ResidentCard key={p.id} p={p} me={me} />)}
+        </div>
+      </Section>
+
+      {/* — услуги — */}
+      <Section title="Услуги" more="Все услуги" onMore={() => go('/market')}>
+        <div className="scroller">
+          {cats.map((c) => (
+            <button key={c.id} className="shelf" onClick={() => go('/market')}>
+              <span className="shelf__e">{c.emoji}</span>
+              <span className="shelf__t">{c.short}</span>
+              <span className="shelf__n">{count(c.id)}</span>
+            </button>
+          ))}
+        </div>
+        <List>
+          {SERVICES.slice(0, 2).map((s) => (
+            <Item
+              key={s.id}
+              icon={SERVICE_CATS.find((c) => c.id === s.cat)?.icon || 'gift'}
+              title={s.title}
+              sub={`${s.region === 'global' ? 'везде' : REGIONS[s.region]?.name} · ${s.days} ${plural(s.days, 'день', 'дня', 'дней')}`}
+              onClick={() => go(`/service/${s.id}`)}
+            />
+          ))}
+        </List>
+      </Section>
+
+      <div className="center" style={{ paddingTop: 4 }}>
         <button onClick={knock} aria-label="Печать клуба" style={{ opacity: app.secret ? 1 : 0.5 }}>
-          <Seal size={68} motto={app.secret ? MOTTO : MOTTO_MASKED} glow={app.secret} />
+          <Seal size={64} motto={app.secret ? MOTTO : MOTTO_MASKED} glow={app.secret} />
         </button>
-        <div className="t-xs dim-2" style={{ marginTop: 8 }}>{app.secret ? 'Ложа открыта' : knocks ? '·'.repeat(knocks) : 'Печать сообщества'}</div>
+        <div className="t-xs dim-2" style={{ marginTop: 8 }}>
+          {app.secret ? 'Ложа открыта' : knocks ? '·'.repeat(knocks) : 'Печать сообщества'}
+        </div>
       </div>
 
       <Sheet open={door} onClose={() => setDoor(false)} title="Дверь без таблички" sub="Три удара">
@@ -90,10 +129,20 @@ export default function Club() {
           <div className="t-sm dim" style={{ lineHeight: 1.5 }}>Войти можно, назвав последнее слово девиза на печати.</div>
           <div className="center mono gold" style={{ fontSize: 13, letterSpacing: '0.22em' }}>{MOTTO_MASKED}</div>
           <input className="field center mono" style={{ letterSpacing: '0.3em', textTransform: 'uppercase' }} value={word} autoFocus placeholder="·····" onChange={(e) => setWord(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
-          {tries > 0 && <Note icon="key">{tries === 1 ? 'Не то слово. Подсказка — в разделе «Кодекс».' : 'Пять традиций стоят в правильном порядке не случайно. Прочтите их первые буквы.'}</Note>}
+          {tries > 0 && <Note icon="key">{tries === 1 ? 'Не то слово. Подсказка — в разделе «Кодекс» в настройках.' : 'Пять традиций стоят в правильном порядке не случайно. Прочтите их первые буквы.'}</Note>}
           <Btn variant="gold" wide onClick={submit} disabled={!word.trim()}>Назвать слово</Btn>
         </div>
       </Sheet>
     </div>
+  );
+}
+
+function Tile({ emoji, title, n, onClick }) {
+  return (
+    <button className="tile" onClick={onClick}>
+      <span className="tile__ic" style={{ background: 'var(--surface-3)', fontSize: 19 }}>{emoji}</span>
+      <span className="tile__t">{title}</span>
+      <span className="tile__n figure">{n}</span>
+    </button>
   );
 }

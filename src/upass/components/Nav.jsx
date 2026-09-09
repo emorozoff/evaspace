@@ -5,8 +5,8 @@ const TABS = [
   { to: '/', icon: 'passport', label: 'Паспорт', match: [''] },
   { to: '/map', icon: 'compass', label: 'Регионы', match: ['map', 'region'] },
   { to: '/chats', icon: 'send', label: 'Чаты', match: ['chats', 'chat', 'dm', 'communities'] },
-  { to: '/requests', icon: 'message', label: 'Запросы', match: ['requests', 'request'] },
-  { to: '/club', icon: 'grid', label: 'Клуб', match: ['club', 'events', 'event', 'people', 'p', 'market', 'service', 'codex', 'vault', 'degrees', 'lodge', 'rep', 'profile'] },
+  { to: '/events', icon: 'calendar', label: 'События', match: ['events', 'event'] },
+  { to: '/club', icon: 'grid', label: 'Клуб', match: ['club', 'people', 'p', 'market', 'service', 'codex', 'vault', 'degrees', 'lodge', 'rep', 'profile', 'requests', 'request', 'trips'] },
 ];
 
 export default function Nav({ root, unread = 0 }) {

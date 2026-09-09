@@ -7,14 +7,16 @@ import { PosterThumb } from '../components/Poster.jsx';
 import { TopBar, List, Item, Section, Btn, KV, Chip, Seg, Note, Empty, Sheet, Tag } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 import { REGIONS, TIERS_REGION, visaShort } from '../data/regions.js';
+import { COMMUNITIES } from '../data/life.js';
 import { EVENT_KINDS, FLAGSHIPS, SERVICE_CATS, SERVICE_ORDER, serviceCat } from '../data/life.js';
 import { byId } from '../data/people.js';
-import { agendaFor, communitiesIn, residentsIn, servicesIn, matchScore } from '../lib/select.js';
+import { Avatar } from '../components/Art.jsx';
+import { agendaFor, communitiesIn, residentsIn, servicesIn, arrivalsIn } from '../lib/select.js';
+import { matchScore, matchPct } from '../lib/match.js';
 import { flight, monthly, hoursText } from '../lib/travel.js';
-import { usdExact, nf, plural, relDay, monthsAhead } from '../lib/format.js';
+import { usdExact, nf, plural, relDay, monthsAhead, stayLabel } from '../lib/format.js';
 
 const STAY = [3, 7, 14, 30, 60, 89];
-const stayLabel = (d) => (d === 89 ? 'до 90 дней' : `${d} ${plural(d, 'день', 'дня', 'дней')}`);
 
 export default function Region({ id }) {
   const app = useApp();
@@ -36,12 +38,19 @@ export default function Region({ id }) {
     () =>
       residentsIn(id)
         .filter((p) => p.id !== me.id)
-        .map((p) => ({ p, score: matchScore(me, p) }))
+        .map((p) => ({ p, score: matchScore(me, p), pct: matchPct(me, p) }))
         .sort((a, b) => b.score - a.score),
     [me, id]
   );
 
-  const communities = communitiesIn(id);
+  /* В регионе всегда есть что показать: свои чаты плюс общие сообщества,
+     иначе в новом регионе блок выглядит пустым. */
+  const communities = useMemo(() => {
+    const own = communitiesIn(id);
+    const global = COMMUNITIES.filter((c) => c.region === 'global' && c.access === 'open');
+    return [...own, ...global].slice(0, 6);
+  }, [id]);
+  const arrivals = useMemo(() => arrivalsIn(id).slice(0, 8), [id]);
   const services = servicesIn(id);
   const cats = useMemo(() => {
     const has = new Set(servicesIn(id).map((s) => s.cat));
@@ -75,6 +84,14 @@ export default function Region({ id }) {
           </div>
         )}
 
+        {/* что есть в регионе — сразу, чтобы не искать прокруткой */}
+        <div className="scroller">
+          <Jump to="r-people" emoji="🧑" title="Люди" n={people.length} />
+          <Jump to="r-events" emoji="🗓" title="События" n={events.length} />
+          <Jump to="r-communities" emoji="💬" title="Сообщества" n={communities.length} />
+          <Jump to="r-services" emoji="🛠" title="Услуги" n={services.length} />
+        </div>
+
         <div className="stats">
           <div className="stat"><div className="stat__v">{nf(r.residents)}</div><div className="stat__l">Резидентов</div></div>
           <div className="stat"><div className="stat__v">{nf(r.companies)}</div><div className="stat__l">Компаний</div></div>
@@ -82,9 +99,27 @@ export default function Region({ id }) {
         </div>
 
         {people.length > 0 && (
-          <Section title="Кто вам подойдёт" more={`Все · ${nf(r.residents)}`} onMore={() => go(`/people?region=${id}`)}>
+          <Section id="r-people" title="Кто вам подойдёт" more={`Все · ${nf(r.residents)}`} onMore={() => go(`/people?region=${id}`)}>
             <div className="scroller">
-              {people.slice(0, 30).map(({ p, score }) => <PersonCard key={p.id} p={p} score={score} />)}
+              {people.slice(0, 30).map(({ p, pct }) => <PersonCard key={p.id} p={p} pct={pct} me={me} />)}
+            </div>
+          </Section>
+        )}
+
+        {arrivals.length > 0 && (
+          <Section title="Прилетают">
+            <div className="scroller">
+              {arrivals.map((t) => {
+                const p = byId(t.who);
+                if (!p) return null;
+                return (
+                  <button key={p.id + t.inDays} className="center" style={{ width: 70 }} onClick={() => go(`/p/${p.id}`)}>
+                    <Avatar person={p} size={48} dot={p.online} style={{ margin: '0 auto' }} />
+                    <div className="t-xs" style={{ marginTop: 6, fontWeight: 600 }}>{p.name.split(' ')[0]}</div>
+                    <div className="t-xs dim-2">{relDay(t.inDays)}</div>
+                  </button>
+                );
+              })}
             </div>
           </Section>
         )}
@@ -98,20 +133,15 @@ export default function Region({ id }) {
         </div>
 
         {events.length > 0 && (
-          <Section title="Ключевые события" more="Вся афиша" onMore={() => go('/events')}>
+          <Section id="r-events" title="Ключевые события" more="Вся афиша" onMore={() => go('/events')}>
             <List>
               {events.map((e) => (
                 <Item
                   key={e.id}
                   lead={<PosterThumb event={e} size={44} />}
-                  title={
-                    <span className="row" style={{ gap: 6 }}>
-                      <span className="ell">{e.title}</span>
-                      {FLAGSHIPS.includes(e.kind) ? <Tag tone="gold">Маст-хэв</Tag> : e.top ? <Tag tone="cyan">Топ</Tag> : null}
-                    </span>
-                  }
-                  sub={`${relDay(e.inDays)}, ${e.time}${e.online ? ' · эфир' : ''}`}
-                  meta={<span className="tag" style={{ background: `${EVENT_KINDS[e.kind].tone}22`, color: EVENT_KINDS[e.kind].tone }}>{EVENT_KINDS[e.kind].name}</span>}
+                  title={e.title}
+                  sub={`${relDay(e.inDays)}, ${e.time} · ${EVENT_KINDS[e.kind].name}${e.online ? ' · эфир' : ''}`}
+                  meta={FLAGSHIPS.includes(e.kind) ? <Tag tone="gold">Маст-хэв</Tag> : e.top ? <Tag tone="cyan">Топ</Tag> : undefined}
                   onClick={() => go(`/event/${e.id}`)}
                 />
               ))}
@@ -120,7 +150,7 @@ export default function Region({ id }) {
         )}
 
         {communities.length > 0 && (
-          <Section title="Сообщества региона" more="Все" onMore={() => go('/communities')}>
+          <Section id="r-communities" title="Сообщества региона" more="Все" onMore={() => go('/communities')}>
             <div className="tiles">
               {communities.slice(0, 6).map((c) => (
                 <button key={c.id} className="tile" onClick={() => go(`/chat/${c.id}`)}>
@@ -136,7 +166,7 @@ export default function Region({ id }) {
         )}
 
         {cats.length > 0 && (
-          <Section title="Помощь с переездом" more="Все услуги" onMore={() => go('/market')}>
+          <Section id="r-services" title="Помощь с переездом" more="Все услуги" onMore={() => go('/market')}>
             <div className="scroller">
               {cats.map((c) => (
                 <button key={c.id} className="shelf" onClick={() => go('/market')}>
@@ -181,6 +211,20 @@ export default function Region({ id }) {
 }
 
 const rank = (e) => (FLAGSHIPS.includes(e.kind) ? 2 : e.top ? 1 : 0);
+
+/* Чип-навигация по блокам региона: экран длинный, а нужен один раздел. */
+function Jump({ to, emoji, title, n }) {
+  return (
+    <button
+      className="jump"
+      onClick={() => document.getElementById(to)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+    >
+      <span>{emoji}</span>
+      <span className="jump__t">{title}</span>
+      <span className="jump__n figure">{n}</span>
+    </button>
+  );
+}
 
 /* На плитке имя региона лишнее — он и так открыт. */
 const tileName = (c, region) => {
@@ -238,7 +282,7 @@ function TripSheet({ open, onClose, region, app, f, m }) {
           variant="gold"
           wide
           onClick={() => {
-            app.announceTrip({ region, inDays: picked.inDays, days, when: picked.label });
+            app.announceTrip({ region, inDays: picked.inDays, days, month: picked.key, when: picked.label });
             onClose();
           }}
         >

@@ -58,10 +58,16 @@ export default function Passport({ me, chain = [], trips = [], flippable = true,
           {/* ЛИЦЕВАЯ */}
           <div className="pass__face">
             <div className="pass__bg" style={{ background: 'linear-gradient(148deg, #1a1e29 0%, #0e1017 52%, #08090e 100%)' }} />
-            <div style={{ position: 'absolute', right: -78, top: -70, opacity: 0.45 }}>
+            {/* два кольца гильоша: нижнее стоит, верхнее очень медленно
+                вращается — на их пересечении линии переливаются сами */}
+            <div className="pass__guilloche">
               <Guilloche color={e1} opacity={0.4} seed={number} size={270} />
             </div>
+            <div className="pass__guilloche pass__guilloche--spin">
+              <Guilloche color={e1} opacity={0.26} seed={`${number}b`} size={270} />
+            </div>
             <div className="pass__edge" style={{ boxShadow: `inset 0 0 0 1.5px ${e1}66, inset 0 0 34px ${e1}12` }} />
+            <div className="pass__band" style={{ '--tone': e1 }} />
             <div className="pass__sheen" style={{ transform: `translate(${tilt.x * 30}px, ${tilt.y * 20}px)` }} />
 
             <div className="pass__body">
@@ -100,6 +106,7 @@ export default function Passport({ me, chain = [], trips = [], flippable = true,
           <div className="pass__face pass__face--back">
             <div className="pass__bg" style={{ background: 'linear-gradient(148deg, #141721, #08090e)' }} />
             <div className="pass__edge" style={{ boxShadow: `inset 0 0 0 1.5px ${e1}55` }} />
+            <div className="pass__band" style={{ '--tone': e1 }} />
             <div className="pass__body">
               <div className="pass__head">
                 <span className="pass__mark" style={{ color: e1 }}>MEMBER PASS</span>

@@ -609,8 +609,43 @@ export const ME_DEFAULT = {
   tier: 0, degree: 0, tone: '#D9B26B', since: new Date().getFullYear(), online: true, verified: true,
   mission: '', bio: '', career: [], wins: [], education: '',
   skills: [], talents: [], interests: [], lived: [],
-  gives: '', needs: '', langs: ['RU', 'EN'], meets: 0, vouches: 0, badges: [], circle: null,
+  gives: '', needs: '', wants: [], offers: [], langs: ['RU', 'EN'], meets: 0, vouches: 0, badges: [], circle: null,
   vouchedBy: [], contact: '',
+};
+
+/* Что резидент ищет и что даёт — метками из общего словаря обмена.
+   По ним считается совместимость: мой запрос против его предложения. */
+export const EXCHANGE = {
+  r1:  { offers: ['health', 'circle', 'ops'],   wants: ['partner', 'ops'] },
+  r2:  { offers: ['invest', 'mentor'],          wants: ['partner', 'home'] },
+  r3:  { offers: ['media', 'mentor'],           wants: ['clients'] },
+  r4:  { offers: ['ops'],                       wants: ['invest'] },
+  r5:  { offers: ['product', 'mentor'],         wants: ['partner', 'team'] },
+  r6:  { offers: ['invest', 'circle', 'legal'], wants: ['partner'] },
+  r7:  { offers: ['home', 'legal'],             wants: ['team'] },
+  r8:  { offers: ['ops', 'mentor'],             wants: ['partner'] },
+  r9:  { offers: ['visa', 'ops'],               wants: ['partner', 'health'] },
+  r10: { offers: ['media'],                     wants: ['clients'] },
+  r11: { offers: ['home', 'mentor'],            wants: ['clients'] },
+  r12: { offers: ['ops'],                       wants: ['team'] },
+  r13: { offers: ['ai', 'product'],             wants: ['clients'] },
+  r14: { offers: ['legal', 'mentor'],           wants: ['clients'] },
+  r15: { offers: ['home', 'ops'],               wants: ['team'] },
+  r16: { offers: ['ops'],                       wants: ['partner'] },
+  r17: { offers: ['money', 'product'],          wants: ['clients'] },
+  r18: { offers: ['media'],                     wants: ['clients'] },
+  r19: { offers: ['circle', 'mentor'],          wants: ['team'] },
+  r20: { offers: ['health'],                    wants: ['partner'] },
+  r21: { offers: ['product', 'ops'],            wants: ['team'] },
+  r22: { offers: ['circle', 'media'],           wants: ['team'] },
+  r23: { offers: ['invest', 'mentor'],          wants: [] },
+  r24: { offers: ['media'],                     wants: ['clients'] },
+  r25: { offers: ['invest', 'mentor'],          wants: ['partner'] },
+  r26: { offers: ['circle'],                    wants: ['ops', 'clients'] },
+  r27: { offers: ['clients', 'ops'],            wants: ['team'] },
+  r28: { offers: ['home', 'mentor'],            wants: ['partner'] },
+  r29: { offers: ['money', 'product'],          wants: ['partner'] },
+  r30: { offers: ['clients', 'product'],        wants: ['partner'] },
 };
 
 export const byId = (id) => RESIDENTS.find((r) => r.id === id);

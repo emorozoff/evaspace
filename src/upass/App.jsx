@@ -24,6 +24,7 @@ import Degrees from './screens/Degrees.jsx';
 import Lodge from './screens/Lodge.jsx';
 import Rep from './screens/Rep.jsx';
 import Profile from './screens/Profile.jsx';
+import Trips from './screens/Trips.jsx';
 
 /* Экраны, которые занимают всю высоту и прячут таб-бар. */
 const FULLSCREEN = new Set(['chat', 'dm']);
@@ -85,6 +86,7 @@ function render(root, id, query) {
     case 'lodge': return <Lodge />;
     case 'rep': return <Rep />;
     case 'profile': return <Profile />;
+    case 'trips': return <Trips />;
     default: return <Home />;
   }
 }

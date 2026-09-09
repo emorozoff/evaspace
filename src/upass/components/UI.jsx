@@ -79,9 +79,9 @@ export function Item({ lead, icon, title, sub, subWrap, meta, chev = true, onCli
   );
 }
 
-export function Section({ title, more, onMore, children }) {
+export function Section({ id, title, more, onMore, children }) {
   return (
-    <section className="sect">
+    <section className="sect" id={id}>
       {title && (
         <div className="sect__head">
           <div className="hdr">{title}</div>
@@ -197,11 +197,9 @@ export function Actions({ items }) {
     <div className="actions" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
       {items.map((a) => (
         <button key={a.title} className={`action${a.on ? ' action--on' : ''}`} onClick={a.onClick} disabled={a.disabled}>
-          <span className="action__ic">
-            <Icon name={a.icon} size={21} />
-            {a.badge > 0 && <span className="badge-n">{a.badge}</span>}
-          </span>
+          <span className="action__ic"><Icon name={a.icon} size={21} /></span>
           <span className="action__t">{a.title}</span>
+          {a.badge > 0 && <span className="badge-n">{a.badge}</span>}
         </button>
       ))}
     </div>

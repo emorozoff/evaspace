@@ -466,6 +466,27 @@ export const DMS = [
   },
 ];
 
+/* Объявленные поездки резидентов. Смещение в днях, как и у событий,
+   чтобы расписание всегда было живым. */
+export const TRIPS = [
+  { who: 'r13', region: 'dubai', inDays: 3, days: 7 },
+  { who: 'r18', region: 'dubai', inDays: 11, days: 7 },
+  { who: 'r5', region: 'dubai', inDays: 19, days: 14 },
+  { who: 'r2', region: 'bali', inDays: 26, days: 30 },
+  { who: 'r22', region: 'istanbul', inDays: 24, days: 3 },
+  { who: 'r9', region: 'istanbul', inDays: 24, days: 4 },
+  { who: 'r14', region: 'lisbon', inDays: 47, days: 2 },
+  { who: 'r21', region: 'lisbon', inDays: 46, days: 4 },
+  { who: 'r3', region: 'bali', inDays: 34, days: 60 },
+  { who: 'r16', region: 'dubai', inDays: 8, days: 5 },
+  { who: 'r25', region: 'lisbon', inDays: 44, days: 6 },
+  { who: 'r30', region: 'singapore', inDays: 15, days: 4 },
+  { who: 'r29', region: 'phuket', inDays: 6, days: 10 },
+  { who: 'r20', region: 'dubai', inDays: 21, days: 8 },
+  { who: 'r8', region: 'almaty', inDays: 13, days: 4 },
+  { who: 'r27', region: 'mexico', inDays: 29, days: 12 },
+];
+
 export const eventById = (id) => EVENTS.find((e) => e.id === id);
 export const communityById = (id) => COMMUNITIES.find((c) => c.id === id);
 export const serviceById = (id) => SERVICES.find((s) => s.id === id);

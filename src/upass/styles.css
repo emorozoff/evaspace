@@ -161,7 +161,7 @@ button.card.spread { display: flex; align-items: center; justify-content: space-
 .note { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--r-md); background: var(--surface); font-size: 13px; line-height: 1.45; color: var(--ink-2); }
 .note svg { flex: none; margin-top: 1px; }
 
-.sect { display: grid; gap: 10px; }
+.sect { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .sect__head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 0 4px; }
 .sect__more { font-size: 13px; font-weight: 600; color: var(--gold); }
 
@@ -182,9 +182,9 @@ button.card.spread { display: flex; align-items: center; justify-content: space-
 
 /* круглые действия профиля, как в мессенджере */
 .actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.action { display: grid; justify-items: center; gap: 7px; padding: 12px 4px 10px; border-radius: var(--r-md); background: var(--surface); transition: 0.14s; }
+.action { position: relative; display: grid; justify-items: center; gap: 7px; padding: 12px 4px 10px; border-radius: var(--r-md); background: var(--surface); transition: 0.14s; }
 .action:active { background: var(--surface-2); transform: scale(0.97); }
-.action__ic { position: relative; color: var(--gold); }
+.action__ic { color: var(--gold); }
 .action__t { font-size: 11.5px; font-weight: 600; color: var(--ink-2); }
 .action--on { background: var(--gold-soft); }
 
@@ -206,6 +206,7 @@ button.card.spread { display: flex; align-items: center; justify-content: space-
 .scroller { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px var(--pad); margin: 0 calc(var(--pad) * -1); }
 .scroller::-webkit-scrollbar { display: none; }
 .scroller > * { flex: none; }
+.card > .scroller { padding-left: 0; padding-right: 0; margin-left: 0; margin-right: 0; }
 
 .seg { display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--surface); }
 .seg button { flex: 1; height: 34px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--ink-3); text-align: center; transition: 0.15s; }
@@ -295,7 +296,19 @@ textarea.field { min-height: 88px; resize: vertical; line-height: 1.5; }
 .pass__face { position: absolute; inset: 0; border-radius: 20px; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; isolation: isolate; }
 .pass__face--back { transform: rotateY(180deg); }
 .pass__bg { position: absolute; inset: 0; }
-.pass__sheen { position: absolute; inset: -40%; background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.12) 48%, transparent 58%); pointer-events: none; mix-blend-mode: screen; }
+.pass__sheen { position: absolute; inset: -40%; background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.1) 48%, transparent 58%); pointer-events: none; mix-blend-mode: screen; }
+/* Гильош: нижний слой стоит, верхний идёт по кругу — линии переливаются. */
+.pass__guilloche { position: absolute; right: -78px; top: -70px; opacity: 0.45; pointer-events: none; }
+.pass__guilloche--spin { opacity: 0.5; animation: guillocheTurn 54s linear infinite; }
+@keyframes guillocheTurn { to { transform: rotate(360deg) } }
+/* Световая полоса, которая раз в несколько секунд проходит по карте. */
+.pass__band {
+  position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; opacity: 0.55;
+  background: linear-gradient(100deg, transparent 38%, color-mix(in srgb, var(--tone, #d9b26b) 55%, transparent) 47%, transparent 56%);
+  background-size: 260% 100%;
+  animation: passBand 7.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+@keyframes passBand { 0% { background-position: 160% 0 } 55%, 100% { background-position: -60% 0 } }
 .pass__edge { position: absolute; inset: 0; border-radius: 20px; pointer-events: none; }
 .pass__body { position: relative; height: 100%; padding: 13px 15px 12px; display: flex; flex-direction: column; gap: 10px; }
 
@@ -319,6 +332,7 @@ textarea.field { min-height: 88px; resize: vertical; line-height: 1.5; }
 /* --- обложка-иллюстрация ------------------------------------------------- */
 .scene { position: relative; overflow: hidden; border-radius: var(--r-md); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
 .scene svg { display: block; width: 100%; height: 100%; }
+.scene__shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(6, 7, 11, 0.16) 0%, transparent 34%, rgba(6, 7, 11, 0.68) 100%); }
 .scene__over { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 14px; }
 
 /* --- карта --------------------------------------------------------------- */
@@ -350,31 +364,42 @@ textarea.field { min-height: 88px; resize: vertical; line-height: 1.5; }
 
 
 /* --- живая строка на главной ------------------------------------------- */
-.pulse { display: flex; align-items: stretch; gap: 10px; padding: 12px 12px 12px 14px; border-radius: var(--r-md); background: var(--surface); }
-.pulse__body { flex: 1; min-width: 0; touch-action: pan-y; }
-.pulse__view { position: relative; height: 46px; overflow: hidden; }
-.pulse__slide { position: absolute; inset: 0; display: flex; align-items: center; animation: pulseIn 0.42s cubic-bezier(0.22, 1, 0.36, 1); }
-.pulse__slide[data-dir='-1'] { animation-name: pulseInBack; }
-@keyframes pulseIn { from { opacity: 0; transform: translateX(18px) } to { opacity: 1; transform: none } }
-@keyframes pulseInBack { from { opacity: 0; transform: translateX(-18px) } to { opacity: 1; transform: none } }
-.pulse__line { display: flex; align-items: center; gap: 11px; width: 100%; }
-.pulse__flag { font-size: 26px; line-height: 1; flex: none; }
-.pulse__flag--sm { font-size: 17px; line-height: 1; }
-.pulse__ic { width: 34px; height: 34px; flex: none; border-radius: 11px; display: grid; place-items: center; background: var(--surface-3); }
-.pulse__hint { flex: none; font-size: 11px; font-weight: 700; color: var(--gold); }
-.pulse__clocks { display: flex; gap: 20px; width: 100%; }
-.pulse__clock { display: grid; gap: 2px; }
-.pulse__time { font-size: 19px; }
-.pulse__city { font-size: 10.5px; font-weight: 600; color: var(--ink-3); }
-.pulse__trip { display: flex; align-items: center; gap: 10px; width: 100%; }
-.pulse__end { flex: none; display: grid; gap: 2px; justify-items: center; }
-.pulse__route { flex: 1; min-width: 26px; display: flex; align-items: center; gap: 6px; }
+/* Карусель: уходящий слайд и приходящий живут рядом ровно одну анимацию. */
+.pulse { position: relative; padding: 14px 16px 22px; border-radius: var(--r-md); background: var(--surface); overflow: hidden; }
+.pulse__body { display: block; width: 100%; touch-action: pan-y; }
+.pulse__view { position: relative; height: 50px; }
+.pulse__slide { position: absolute; inset: 0; display: flex; align-items: center; }
+.pulse__slide--in { animation: pulseIn 0.44s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.pulse__slide--out { animation: pulseOut 0.44s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.pulse[data-dir='-1'] .pulse__slide--in { animation-name: pulseInBack; }
+.pulse[data-dir='-1'] .pulse__slide--out { animation-name: pulseOutBack; }
+@keyframes pulseIn { from { opacity: 0; transform: translateX(40px) } to { opacity: 1; transform: none } }
+@keyframes pulseOut { from { opacity: 1; transform: none } to { opacity: 0; transform: translateX(-40px) } }
+@keyframes pulseInBack { from { opacity: 0; transform: translateX(-40px) } to { opacity: 1; transform: none } }
+@keyframes pulseOutBack { from { opacity: 1; transform: none } to { opacity: 0; transform: translateX(40px) } }
+
+.pulse__region { display: flex; align-items: center; gap: 13px; width: 100%; }
+.pulse__title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.pulse__sub { font-size: 12.5px; color: var(--ink-3); margin-top: 3px; }
+.pulse__flag { font-size: 30px; line-height: 1; flex: none; }
+.pulse__flag--sm { font-size: 20px; line-height: 1; }
+.pulse__flag--xs { font-size: 13px; line-height: 1; }
+.pulse__ic { width: 38px; height: 38px; flex: none; border-radius: 12px; display: grid; place-items: center; background: var(--surface-3); }
+
+.pulse__clocks { display: flex; width: 100%; }
+.pulse__clock { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.pulse__clock + .pulse__clock { padding-left: 14px; border-left: 1px solid var(--line); }
+.pulse__time { font-size: 24px; letter-spacing: -0.04em; }
+.pulse__place { display: flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.pulse__trip { display: flex; align-items: center; gap: 12px; width: 100%; }
+.pulse__city { flex: none; display: flex; align-items: center; gap: 7px; font-size: 16px; font-weight: 700; }
+.pulse__route { flex: 1; min-width: 30px; display: flex; align-items: center; gap: 8px; }
 .pulse__dash { flex: 1; height: 1px; background: repeating-linear-gradient(90deg, var(--line-2) 0 4px, transparent 4px 8px); }
-.pulse__when { flex: none; text-align: right; }
-.pulse__side { flex: none; display: grid; justify-items: center; align-content: space-between; gap: 8px; }
-.pulse__dots { display: flex; gap: 5px; }
-.pulse__dots button { width: 5px; height: 5px; border-radius: 3px; background: var(--ink-4); transition: 0.2s; }
-.pulse__dots button[data-on='true'] { width: 13px; background: var(--gold); }
+
+.pulse__dots { position: absolute; left: 0; right: 0; bottom: 9px; display: flex; justify-content: center; gap: 5px; }
+.pulse__dots button { width: 5px; height: 5px; border-radius: 3px; background: var(--ink-4); transition: 0.25s; }
+.pulse__dots button[data-on='true'] { width: 14px; background: var(--gold); }
 
 /* --- фильтры-раскрывашки ------------------------------------------------ */
 .filters { display: flex; gap: 8px; }
@@ -412,6 +437,32 @@ textarea.field { min-height: 88px; resize: vertical; line-height: 1.5; }
 .shelf__t { font-size: 11px; font-weight: 700; }
 .shelf__n { font-size: 10px; font-weight: 700; color: var(--ink-3); }
 
+/* --- чипы-переходы по разделам региона ----------------------------------- */
+.jump { display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 13px; border-radius: 999px; background: var(--surface); font-size: 13px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.jump:active { transform: scale(0.96); }
+.jump__t { color: var(--ink); }
+.jump__n { font-size: 12px; color: var(--ink-3); }
+
+/* --- карточка резидента во всю ширину ------------------------------------ */
+.rcard { display: block; width: 100%; padding: 13px 14px; border-radius: var(--r-md); background: var(--surface); transition: 0.14s; }
+.rcard:active { transform: scale(0.99); background: var(--surface-2); }
+.rcard__row { display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; }
+.rcard__k { flex: none; width: 40px; padding-top: 3px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-4); }
+
+/* --- «хочу встретиться» -------------------------------------------------- */
+.meetside { flex: none; display: grid; justify-items: end; gap: 6px; }
+.meetbtn { width: 30px; height: 30px; flex: none; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); color: var(--ink-3); transition: 0.15s; }
+.meetbtn--on { background: var(--gold); color: #241a07; }
+.meetbtn:active { transform: scale(0.92); }
+.meetline { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border-radius: 11px; background: var(--surface-2); font-size: 12.5px; color: var(--ink-2); }
+.meetline svg { flex: none; }
+
+/* --- месяц в списке поездок --------------------------------------------- */
+.monthline { display: flex; align-items: center; gap: 10px; padding: 0 4px; }
+.monthline__t { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; }
+.monthline__r { flex: 1; height: 1px; background: var(--line); }
+.monthline__n { font-size: 12px; color: var(--ink-3); }
+
 /* --- прочее -------------------------------------------------------------- */
 .pair { display: grid; grid-template-columns: 1fr 0.64fr; gap: 10px; }
 .pair .btn { width: 100%; }
@@ -440,7 +491,7 @@ textarea.field { min-height: 88px; resize: vertical; line-height: 1.5; }
 .tile__ic { width: 40px; height: 40px; margin: 0 auto; border-radius: 12px; display: grid; place-items: center; background: var(--surface-3); color: var(--gold); }
 .tile__t { font-size: 12px; font-weight: 700; line-height: 1.2; }
 
-.badge-n { position: absolute; top: -3px; right: -3px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--gold); color: #241a07; font-size: 10px; font-weight: 800; display: grid; place-items: center; }
+.badge-n { position: absolute; top: 7px; right: 9px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--gold); color: #241a07; font-size: 10px; font-weight: 800; display: grid; place-items: center; }
 
 .toast {
   position: fixed; left: 50%; bottom: calc(var(--tab-h) + var(--safe-b) + 16px); transform: translateX(-50%); z-index: 80;
@@ -448,8 +499,8 @@ textarea.field { min-height: 88px; resize: vertical; line-height: 1.5; }
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); font-size: 13px; font-weight: 600; text-align: center; animation: toastIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 10px) } to { opacity: 1; transform: translate(-50%, 0) } }
-.pulse { animation: pulse 2.4s ease-in-out infinite; }
-@keyframes pulse { 0%, 100% { opacity: 0.55 } 50% { opacity: 1 } }
+.pulsing { animation: pulsing 2.4s ease-in-out infinite; }
+@keyframes pulsing { 0%, 100% { opacity: 0.55 } 50% { opacity: 1 } }
 .rise-in > * { animation: rise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .rise-in > *:nth-child(2) { animation-delay: 0.04s }
 .rise-in > *:nth-child(3) { animation-delay: 0.08s }
