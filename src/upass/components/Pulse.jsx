@@ -9,8 +9,8 @@ import { nf, plural } from '../lib/format.js';
    раз в пять секунд, по нажатию и свайпом. Высота фиксирована — иначе
    экран прыгает на каждой смене. */
 
-const EVERY = 5000;
-const OUT = 620;                       // столько же длится анимация в стилях
+const EVERY = 6500;
+const OUT = 1860;                      // столько же длится анимация в стилях
 const SUGGEST = ['bali', 'dubai'];     // куда зовём, если поездка не объявлена
 const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 

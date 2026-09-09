@@ -605,7 +605,7 @@ export const RESIDENTS = [
 
 /* Профиль владельца устройства. Заполняется на онбординге. */
 export const ME_DEFAULT = {
-  id: 'me', name: '', handle: 'you', role: 'Основатель', title: '', company: '', city: 'dubai',
+  id: 'me', name: '', handle: 'you', role: 'Основатель', title: '', company: '', city: 'dubai', often: [],
   tier: 0, degree: 0, tone: '#D9B26B', since: new Date().getFullYear(), online: true, verified: true,
   mission: '', bio: '', career: [], wins: [], education: '',
   skills: [], talents: [], interests: [], lived: [],

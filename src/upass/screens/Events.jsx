@@ -34,7 +34,8 @@ export default function Events() {
 
   return (
     <div className="screen stack">
-      <Top title="Афиша" sub="Встречи в регионах и эфиры сообщества" />
+      <Top
+        back title="Афиша" sub="Встречи в регионах и эфиры сообщества" />
 
       <Seg value={tab} onChange={setTab} options={[{ value: 'feed', label: 'Расписание' }, { value: 'month', label: 'Календарь' }]} />
 

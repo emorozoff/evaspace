@@ -29,7 +29,8 @@ export default function Market() {
 
   return (
     <div className="screen stack">
-      <Top title="Услуги" sub="Переезд, документы, жильё и быт — от своих" />
+      <Top
+        back title="Услуги" sub="Переезд, документы, жильё и быт — от своих" />
 
       <Search value={q} onChange={setQ} placeholder="Виза, счёт, жильё, школа, байк…" />
 

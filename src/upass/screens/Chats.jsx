@@ -56,6 +56,7 @@ export default function Chats() {
   return (
     <div className="screen stack">
       <Top
+        back
         title="Чаты"
         right={
           <button className="iconbtn" onClick={() => go('/people')} aria-label="Новый чат">

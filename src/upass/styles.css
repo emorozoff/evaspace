@@ -377,8 +377,8 @@ textarea.field { min-height: 88px; resize: vertical; line-height: 1.5; }
 /* Как на табло: строка целиком уезжает влево, следующая приходит справа.
    Прозрачность падает только по краям, поэтому смена читается как движение,
    а не как мигание. */
-.pulse__slide--in { animation: pulseIn 0.62s cubic-bezier(0.62, 0.02, 0.24, 1) both; }
-.pulse__slide--out { animation: pulseOut 0.62s cubic-bezier(0.62, 0.02, 0.24, 1) both; }
+.pulse__slide--in { animation: pulseIn 1.86s cubic-bezier(0.5, 0.02, 0.3, 1) both; }
+.pulse__slide--out { animation: pulseOut 1.86s cubic-bezier(0.5, 0.02, 0.3, 1) both; }
 .pulse[data-dir='-1'] .pulse__slide--in { animation-name: pulseInBack; }
 .pulse[data-dir='-1'] .pulse__slide--out { animation-name: pulseOutBack; }
 @keyframes pulseIn { from { opacity: 0; transform: translateX(112%) } 40% { opacity: 1 } to { opacity: 1; transform: none } }
@@ -444,6 +444,12 @@ textarea.field { min-height: 88px; resize: vertical; line-height: 1.5; }
 .shelf__e { font-size: 21px; }
 .shelf__t { font-size: 11px; font-weight: 700; }
 .shelf__n { font-size: 10px; font-weight: 700; color: var(--ink-3); }
+
+/* --- выбор региона одной строкой ---------------------------------------- */
+.pick { display: grid; justify-items: center; gap: 6px; width: 62px; padding: 7px 4px; border-radius: 14px; background: transparent; transition: 0.14s; }
+.pick--on { background: var(--gold-soft); }
+.pick__t { font-size: 10.5px; font-weight: 600; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.pick--on .pick__t { color: var(--gold); }
 
 /* --- кодекс внизу клуба -------------------------------------------------- */
 .codex-card { display: grid; justify-items: center; gap: 8px; width: 100%; padding: 16px 12px; border-radius: var(--r-md); background: var(--surface); transition: 0.14s; }

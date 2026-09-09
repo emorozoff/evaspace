@@ -24,6 +24,7 @@ export function matchScore(me, r) {
   let s = forMe.length * 9 + forThem.length * 7;
   s += (r.skills || []).filter((k) => (me.skills || []).includes(k)).length * 2;
   if (r.city === me.city) s += 4;
+  else if ((me.often || []).includes(r.city)) s += 2;   // бываю там часто — пересечёмся
   if (r.online) s += 1;
   return s;
 }

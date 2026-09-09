@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { TopBar, List, Item, Btn, Chip, Sheet, Empty, KV, Note } from '../components/UI.jsx';
+import { TopBar, List, Item, Btn, Chip, Sheet, Empty, Note } from '../components/UI.jsx';
 import { SceneThumb } from '../components/Scene.jsx';
 import Icon from '../components/Icons.jsx';
 import { REGIONS, REGION_KEYS } from '../data/regions.js';
@@ -123,40 +123,46 @@ function TripSheet({ open, trip, months, app, onClose }) {
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title={trip ? 'Поездка' : 'Новая поездка'} sub="Регион, месяц и срок">
+    <Sheet open={open} onClose={onClose} title={trip ? 'Поездка' : 'Новая поездка'} sub="Регион, месяц и срок — всё на одном экране">
       <div className="stack">
         <div>
           <div className="label">Куда</div>
-          <div className="wrap">
+          <div className="scroller">
             {REGION_KEYS.filter((k) => k !== app.me.city).map((k) => (
-              <Chip key={k} on={region === k} onClick={() => setRegion(k)}>{REGIONS[k].flag} {REGIONS[k].name}</Chip>
+              <button key={k} className={`pick${region === k ? ' pick--on' : ''}`} onClick={() => setRegion(k)}>
+                <SceneThumb city={k} size={38} radius={11} />
+                <span className="pick__t">{REGIONS[k].name}</span>
+              </button>
             ))}
           </div>
         </div>
+
         <div>
           <div className="label">Когда</div>
-          <div className="wrap">
+          <div className="scroller">
             {months.map((x) => <Chip key={x.key} on={month === x.key} onClick={() => setMonth(x.key)}>{x.label}</Chip>)}
           </div>
         </div>
+
         <div>
           <div className="label">На сколько</div>
-          <div className="wrap">
+          <div className="scroller">
             {STAY.map((d) => <Chip key={d} on={days === d} onClick={() => setDays(d)}>{stayLabel(d)}</Chip>)}
           </div>
         </div>
 
         {f && (
-          <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
-            <KV k="Перелёт" v={`${nf(f.km)} км · ${hoursText(f.hours)}${f.direct ? '' : ' · с пересадкой'}`} />
+          <div className="note">
+            <Icon name="plane" size={16} color="var(--gold)" />
+            <div>{REGIONS[region].flag} {REGIONS[region].name} · {nf(f.km)} км · {hoursText(f.hours)}{f.direct ? '' : ' с пересадкой'}</div>
           </div>
         )}
 
         <Btn variant="gold" wide onClick={save}>{trip ? 'Сохранить' : 'Объявить'}</Btn>
-        {trip && (
-          <Btn variant="danger" wide icon="x" onClick={() => { app.cancelTrip(trip.id); onClose(); }}>Отменить поездку</Btn>
-        )}
-        <Btn variant="quiet" wide onClick={() => { onClose(); go(`/region/${region}`); }}>Открыть регион</Btn>
+        <div className="row" style={{ gap: 10 }}>
+          <Btn variant="quiet" wide onClick={() => { onClose(); go(`/region/${region}`); }}>Открыть регион</Btn>
+          {trip && <Btn variant="danger" icon="x" onClick={() => { app.cancelTrip(trip.id); onClose(); }}>Отменить</Btn>}
+        </div>
       </div>
     </Sheet>
   );

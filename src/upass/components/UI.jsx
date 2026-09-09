@@ -1,16 +1,26 @@
 import { useEffect, useState } from 'react';
 import Icon from './Icons.jsx';
-import { back } from '../lib/router.jsx';
+import { back as backNav } from '../lib/router.jsx';
 
-/* Заголовок экрана: большой заголовок и одно-два действия справа. */
-export function Top({ title, right, sub }) {
+/* Заголовок экрана: большой заголовок и одно-два действия справа.
+   На всех экранах, кроме главной, сверху стоит возврат — по одному
+   таб-бару вернуться туда, откуда пришёл, не получается. */
+export function Top({ title, right, sub, back, backTo }) {
   return (
-    <div className="top">
-      <div className="grow" style={{ minWidth: 0 }}>
-        <h1 className="h1">{title}</h1>
-        {sub && <div className="t-sm dim-2" style={{ marginTop: 4 }}>{sub}</div>}
+    <div>
+      {back && (
+        <button className="backbtn" style={{ marginBottom: 4 }} onClick={() => backNav(backTo)}>
+          <Icon name="back" size={18} />
+          <span>Назад</span>
+        </button>
+      )}
+      <div className="top">
+        <div className="grow" style={{ minWidth: 0 }}>
+          <h1 className="h1">{title}</h1>
+          {sub && <div className="t-sm dim-2" style={{ marginTop: 4 }}>{sub}</div>}
+        </div>
+        {right}
       </div>
-      {right}
     </div>
   );
 }
@@ -19,7 +29,7 @@ export function Top({ title, right, sub }) {
 export function TopBar({ title, sub, backTo, onBack, right }) {
   return (
     <div className="topbar">
-      <button className="backbtn" onClick={() => (onBack ? onBack() : back(backTo))}>
+      <button className="backbtn" onClick={() => (onBack ? onBack() : backNav(backTo))}>
         <Icon name="back" size={18} />
         <span>Назад</span>
       </button>

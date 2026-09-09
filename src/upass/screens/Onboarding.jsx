@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
-import { Btn, Chip, Card, Sheet, Note } from '../components/UI.jsx';
+import { Btn, Chip, Card, Sheet } from '../components/UI.jsx';
 import { Seal, Guilloche, Avatar } from '../components/Art.jsx';
 import Passport from '../components/Passport.jsx';
 import Install from '../components/Install.jsx';
@@ -10,13 +10,13 @@ import { OFFERS } from '../data/exchange.js';
 import { REGIONS, REGION_KEYS } from '../data/regions.js';
 import { TIERS, LAWS, TRADITIONS, MOTTO_MASKED } from '../data/canon.js';
 import { bestMatches, matchReasons } from '../lib/match.js';
-import { usdExact, plural } from '../lib/format.js';
+import { usdExact } from '../lib/format.js';
 
 export default function Onboarding() {
   const app = useApp();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
-    first: '', last: '', role: 'Основатель', company: '', city: 'dubai',
+    name: '', role: 'Основатель', company: '', city: 'dubai', often: [],
     skills: [], wants: [], offers: [], mission: '',
   });
   const [paid, setPaid] = useState(false);
@@ -46,30 +46,24 @@ export default function Onboarding() {
     {
       title: 'Как вас зовут',
       hint: 'Имя и фамилия попадут на паспорт резидента. Псевдонимы не принимаются.',
-      ok: form.first.trim().length > 1 && form.last.trim().length > 1,
+      ok: form.name.trim().split(/\s+/).filter((x) => x.length > 1).length >= 2,
       body: (
-        <div className="stack">
-          <div>
-            <div className="label">Имя</div>
-            <input className="field" autoFocus placeholder="Сергей" value={form.first} onChange={(e) => set('first', e.target.value)} />
-          </div>
-          <div>
-            <div className="label">Фамилия</div>
-            <input className="field" placeholder="Морозов" value={form.last} onChange={(e) => set('last', e.target.value)} />
-          </div>
-        </div>
+        <input className="field" autoFocus placeholder="Илон Маск" value={form.name} onChange={(e) => set('name', e.target.value)} />
       ),
     },
     {
       title: 'Чем вы занимаетесь',
       hint: 'Роль в деле, компания и направления. Это видят резиденты, когда решают, познакомиться ли с вами.',
-      ok: form.company.trim().length > 1 && form.skills.length > 0,
+      ok: form.skills.length > 0,
       body: (
         <div className="stack">
           <div className="wrap">
             {ROLES.map((r) => <Chip key={r} on={form.role === r} onClick={() => set('role', r)}>{r}</Chip>)}
           </div>
-          <input className="field" placeholder="Компания или практика" value={form.company} onChange={(e) => set('company', e.target.value)} />
+          <div>
+            <div className="label">Компания или практика <span className="dim-2" style={{ fontWeight: 500 }}>· не обязательно</span></div>
+            <input className="field" placeholder="Например, Aster Labs" value={form.company} onChange={(e) => set('company', e.target.value)} />
+          </div>
           <div>
             <div className="label">Направления</div>
             <div className="wrap">
@@ -88,16 +82,39 @@ export default function Onboarding() {
       body: <Exchange form={form} toggle={toggle} />,
     },
     {
-      title: 'Где вы сейчас',
+      title: 'Где вы бываете',
       hint: 'Регион можно менять в любой момент — по нему сообщество понимает, кто рядом, и подбирает афишу.',
       ok: true,
       body: (
-        <div className="wrap">
-          {REGION_KEYS.map((key) => (
-            <Chip key={key} on={form.city === key} onClick={() => set('city', key)}>
-              {REGIONS[key].flag} {REGIONS[key].name}
-            </Chip>
-          ))}
+        <div className="stack">
+          <div>
+            <div className="label">Где сейчас</div>
+            <div className="wrap">
+              {REGION_KEYS.map((key) => (
+                <Chip key={key} on={form.city === key} onClick={() => set('city', key)}>
+                  {REGIONS[key].flag} {REGIONS[key].name}
+                </Chip>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="label">Где часто бываете <span className="dim-2" style={{ fontWeight: 500 }}>· до трёх стран</span></div>
+            <div className="wrap">
+              {REGION_KEYS.filter((k) => k !== form.city).map((key) => (
+                <Chip
+                  key={key}
+                  on={form.often.includes(key)}
+                  onClick={() =>
+                    set('often', form.often.includes(key)
+                      ? form.often.filter((x) => x !== key)
+                      : form.often.length < 3 ? [...form.often, key] : form.often)
+                  }
+                >
+                  {REGIONS[key].flag} {REGIONS[key].name}
+                </Chip>
+              ))}
+            </div>
+          </div>
         </div>
       ),
     },
@@ -122,7 +139,7 @@ export default function Onboarding() {
   const submit = () =>
     app.apply({
       ...form,
-      name: `${form.first.trim()} ${form.last.trim()}`,
+      name: form.name.trim().replace(/\s+/g, ' '),
       title: form.role,
       gives: form.offers.map((id) => OFFERS.find((o) => o.id === id)?.give).filter(Boolean).join('. '),
       needs: form.wants.map((id) => OFFERS.find((o) => o.id === id)?.need).filter(Boolean).join(', '),
@@ -296,9 +313,7 @@ function Review({ onApprove, name }) {
 /* ---------- одобрено: сначала карта, потом цена --------------------------- */
 function Payment({ me, onPay }) {
   const t = TIERS[0];
-  const ru = me.city === 'moscow';
   const [busy, setBusy] = useState(false);
-  const matched = useMemo(() => bestMatches(me, RESIDENTS, 30).filter((x) => x.pct >= 60).length, [me]);
 
   return (
     <div className="screen screen--plain" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -309,13 +324,7 @@ function Payment({ me, onPay }) {
 
       <Passport me={{ ...me, tier: 1, degree: 1 }} chain={[]} flippable={false} />
 
-      <Note icon="users" tone="var(--gold)">
-        {matched > 0
-          ? `По вашим меткам обмена нашлось ${matched} ${plural(matched, 'резидент', 'резидента', 'резидентов')} с совпадением выше 60 %.`
-          : 'Метки обмена можно менять в профиле — по ним подбираются знакомства.'}
-      </Note>
-
-      <div className="card card--gold" style={{ marginTop: 14 }}>
+      <div className="card card--gold" style={{ marginTop: 18 }}>
         <div className="spread">
           <div>
             <div className="h2">{t.name}</div>
@@ -333,18 +342,10 @@ function Payment({ me, onPay }) {
         </div>
       </div>
 
-      <Card style={{ marginTop: 12 }} className="row">
-        <Icon name="wallet" size={18} color="var(--ink-3)" />
-        <div className="grow t-xs dim">
-          Платёж проходит по вашему региону: {ru ? 'карты российских банков, рубли по курсу на момент оплаты' : 'международный платёж в долларах'}.
-        </div>
-      </Card>
-
       <div style={{ marginTop: 'auto', paddingTop: 20 }}>
         <Btn variant="gold" wide disabled={busy} onClick={() => { setBusy(true); setTimeout(onPay, 1400); }}>
           {busy ? 'Проводим платёж…' : `Оплатить ${usdExact(t.price)} и активировать`}
         </Btn>
-        <div className="center t-xs dim-2" style={{ marginTop: 10 }}>Демонстрация: настоящий платёж не проводится</div>
       </div>
     </div>
   );
@@ -425,8 +426,8 @@ function Ceremony({ me, oath, setOath, onDone }) {
 function demo(app) {
   app.apply({
     name: 'Евгений Морозов',
-    first: 'Евгений', last: 'Морозов',
     role: 'Основатель', title: 'Основатель', company: 'Upass', city: 'dubai',
+    often: ['bali', 'moscow'],
     skills: ['it', 'ai', 'capital'],
     talents: ['Стратегия', 'Публичные выступления', 'Инвестиции'],
     wants: ['invest', 'partner', 'clients'],

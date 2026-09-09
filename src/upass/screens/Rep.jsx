@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
-import { go } from '../lib/router.jsx';
 import { Top, List, Item, Btn, Section, Tag, Note } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 import { verifyChain, dayRoot, shortHash } from '../lib/chain.js';
@@ -33,7 +32,8 @@ export default function Rep() {
 
   return (
     <div className="screen stack-20">
-      <Top title="Репутация" sub="Журнал только на добавление, каждая запись хранит хеш предыдущей" right={<button className="iconbtn" onClick={() => go('/club')}><Icon name="back" size={18} /></button>} />
+      <Top
+        back title="Репутация" sub="Журнал только на добавление, каждая запись хранит хеш предыдущей" />
 
       <div className="card" style={ok ? undefined : { boxShadow: 'inset 0 0 0 1px rgba(255,122,110,.4)' }}>
         <div className="row" style={{ gap: 12 }}>

@@ -58,8 +58,6 @@ export default function Home() {
 
       <Passport me={me} chain={chain} trips={app.trips} />
 
-      <Pulse app={app} />
-
       <Section title="Ближний круг" more="Все чаты" onMore={() => go('/chats')}>
         <div className="scroller">
           {inner.map((p) => (
@@ -74,6 +72,8 @@ export default function Home() {
           </button>
         </div>
       </Section>
+
+      <Pulse app={app} />
 
       <Actions
         items={[

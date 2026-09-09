@@ -30,6 +30,7 @@ export default function Requests() {
   return (
     <div className="screen stack">
       <Top
+        back
         title="Запросы"
         sub="Что нужно прямо сейчас — и кто может помочь"
         right={<button className="iconbtn iconbtn--gold" onClick={() => setAsk(true)} aria-label="Написать запрос"><Icon name="plus" size={19} /></button>}

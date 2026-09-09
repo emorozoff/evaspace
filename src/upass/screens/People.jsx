@@ -65,7 +65,8 @@ export default function People({ query = {} }) {
 
   return (
     <div className="screen stack">
-      <Top title="Кто рядом" sub={`${RESIDENTS.length} резидентов · ${COMMUNITIES.length} сообществ`} />
+      <Top
+        back title="Кто рядом" sub={`${RESIDENTS.length} резидентов · ${COMMUNITIES.length} сообществ`} />
 
       <Search value={q} onChange={setQ} placeholder="Имя, компания, талант…" />
 

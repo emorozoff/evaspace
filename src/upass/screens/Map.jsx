@@ -16,12 +16,6 @@ import { bestMatches, matchPct, matchReasons } from '../lib/match.js';
 import { flight, monthly, fitsBudget, hoursText } from '../lib/travel.js';
 import { usdExact, nf, plural, relDay, stayLabel } from '../lib/format.js';
 
-const SORTS = [
-  { value: 'near', label: 'Ближе' },
-  { value: 'cheap', label: 'Дешевле' },
-  { value: 'people', label: 'Своих' },
-];
-
 export default function MapScreen() {
   const app = useApp();
   const { me } = app;
@@ -33,6 +27,7 @@ export default function MapScreen() {
     <div className="screen screen--flush stack-20">
       <div style={{ padding: '0 16px' }}>
         <Top
+        back
           title="Регионы"
           sub={`${REGION_KEYS.length} регионов · ${nf(TOTALS.residents)} резидентов · ${nf(TOTALS.companies)} компаний`}
         />
@@ -71,7 +66,11 @@ export default function MapScreen() {
           </div>
         </Section>
 
-        <Section title={`От вас · ${REGIONS[me.city].flag} ${REGIONS[me.city].name}`}>
+        <Section
+          title={`От вас · ${REGIONS[me.city].flag} ${REGIONS[me.city].name}`}
+          more={tab === 'places' ? 'Под бюджет' : undefined}
+          onMore={() => setBudget(3000)}
+        >
           <Seg
             value={tab}
             onChange={setTab}
@@ -83,7 +82,7 @@ export default function MapScreen() {
           />
           {tab === 'events' && <EventsTab me={me} />}
           {tab === 'people' && <PeopleTab app={app} />}
-          {tab === 'places' && <PlacesTab me={me} onPick={open} onBudget={() => setBudget(3000)} />}
+          {tab === 'places' && <PlacesTab me={me} onPick={open} />}
         </Section>
       </div>
 
@@ -217,23 +216,19 @@ function MeetRow({ p, pct, app }) {
 }
 
 /* ——— локации ——— */
-function PlacesTab({ me, onPick, onBudget }) {
-  const [sort, setSort] = useState('near');
-  const list = useMemo(() => {
-    const rows = REGION_KEYS.filter((k) => k !== me.city).map((k) => ({
-      key: k, ...REGIONS[k], f: flight(me.city, k), m: monthly(k, 'lean'),
-    }));
-    if (sort === 'cheap') return rows.sort((a, b) => a.f.from + a.m.total - (b.f.from + b.m.total));
-    if (sort === 'people') return rows.sort((a, b) => b.residents - a.residents);
-    return rows.sort((a, b) => a.f.km - b.f.km);
-  }, [me.city, sort]);
+/* Список ближайших направлений. Сортировка одна — по расстоянию: это то,
+   зачем сюда заходят, а лишний ряд переключателей только шумел. */
+function PlacesTab({ me, onPick }) {
+  const list = useMemo(
+    () =>
+      REGION_KEYS.filter((k) => k !== me.city)
+        .map((k) => ({ key: k, ...REGIONS[k], f: flight(me.city, k), m: monthly(k, 'lean') }))
+        .sort((a, b) => a.f.km - b.f.km),
+    [me.city]
+  );
 
   return (
     <div className="stack">
-      <div className="row" style={{ gap: 8 }}>
-        <div className="grow"><Seg value={sort} onChange={setSort} options={SORTS} /></div>
-        <Btn size="sm" variant="quiet" icon="wallet" onClick={onBudget}>Бюджет</Btn>
-      </div>
       <List>
         {list.map((r) => (
           <Item

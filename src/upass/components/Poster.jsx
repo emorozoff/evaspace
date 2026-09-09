@@ -18,7 +18,6 @@ export default function Poster({ event, height = 168, radius, children, compact 
   if (big) {
     return (
       <Flagship kind={event.kind} seed={event.id} height={height} radius={radius}>
-        <Ribbon kind={event.kind} />
         {children}
       </Flagship>
     );
@@ -115,11 +114,11 @@ export function Flagship({ kind, seed = 'x', height = 168, radius, children }) {
           <ellipse cx="228" cy="62" rx="18" ry="44" fill="none" stroke={tone} strokeOpacity="0.3" strokeWidth="0.9" />
           <ellipse cx="228" cy="62" rx="34" ry="44" fill="none" stroke={tone} strokeOpacity="0.22" strokeWidth="0.9" />
           <path d="M184 62h88M192 40h72M192 84h72" stroke={tone} strokeOpacity="0.24" strokeWidth="0.9" />
-          <path d="M62 96C110 24 210 12 268 34" fill="none" stroke={tone} strokeOpacity="0.75" strokeWidth="1.5" strokeDasharray="5 5" />
-          <circle cx="62" cy="96" r="4" fill={tone} />
-          <circle cx="268" cy="34" r="4" fill={tone} />
+          <path d="M62 96C110 24 210 12 268 34" fill="none" stroke={tone} strokeOpacity="0.5" strokeWidth="1.3" strokeDasharray="5 6" />
+          <circle cx="62" cy="96" r="3" fill={tone} fillOpacity="0.7" />
+          <circle cx="268" cy="34" r="3" fill={tone} fillOpacity="0.7" />
           {dots.map(([x, y], i) => (
-            <circle key={i} cx={x} cy={y} r={i % 3 ? 2.6 : 3.6} fill={tone} fillOpacity={0.3 + (i % 4) * 0.14} />
+            <circle key={i} cx={x} cy={y} r="2.4" fill={tone} fillOpacity={0.16 + (i % 4) * 0.06} />
           ))}
         </g>
       );
@@ -135,11 +134,11 @@ export function Flagship({ kind, seed = 'x', height = 168, radius, children }) {
           {lines.map((d, i) => (
             <path key={i} d={d} fill="none" stroke={tone} strokeOpacity={0.14 + (i % 3) * 0.1} strokeWidth="1" />
           ))}
-          <circle cx="196" cy="80" r="30" fill="none" stroke={tone} strokeOpacity="0.4" strokeWidth="1.1" />
-          <circle cx="196" cy="80" r="16" fill={tone} fillOpacity="0.14" stroke={tone} strokeOpacity="0.6" strokeWidth="1" />
-          <path d="M196 66l4.4 9.6 9.6 4.4-9.6 4.4-4.4 9.6-4.4-9.6-9.6-4.4 9.6-4.4z" fill={tone} fillOpacity="0.9" />
-          {[248, 274, 300].map((x, i) => (
-            <rect key={x} x={x} y={54 + i * 18} width="14" height="14" rx="4" fill="none" stroke={tone} strokeOpacity="0.4" strokeWidth="1" />
+          <circle cx="196" cy="80" r="34" fill="none" stroke={tone} strokeOpacity="0.28" strokeWidth="1" />
+          <circle cx="196" cy="80" r="22" fill="none" stroke={tone} strokeOpacity="0.4" strokeWidth="1" />
+          <circle cx="196" cy="80" r="6" fill={tone} fillOpacity="0.6" />
+          {[248, 276].map((x, i) => (
+            <rect key={x} x={x} y={58 + i * 22} width="13" height="13" rx="4" fill="none" stroke={tone} strokeOpacity="0.26" strokeWidth="1" />
           ))}
         </g>
       );
@@ -159,14 +158,14 @@ export function Flagship({ kind, seed = 'x', height = 168, radius, children }) {
     return (
       <g>
         {rays.map((d, i) => (
-          <path key={i} d={d} stroke={tone} strokeOpacity={i % 2 ? 0.16 : 0.32} strokeWidth="1" />
+          <path key={i} d={d} stroke={tone} strokeOpacity={i % 2 ? 0.1 : 0.2} strokeWidth="1" />
         ))}
         {[...leaf(1), ...leaf(-1)].map((d, i) => (
-          <path key={i} d={d} fill={tone} fillOpacity="0.5" />
+          <path key={i} d={d} fill={tone} fillOpacity="0.26" />
         ))}
-        <circle cx="228" cy="72" r="30" fill="none" stroke={tone} strokeOpacity="0.5" strokeWidth="1.1" />
-        <path d="M228 54l5.6 12.2 12.2 5.6-12.2 5.6-5.6 12.2-5.6-12.2-12.2-5.6 12.2-5.6z" fill={tone} fillOpacity="0.9" />
-        <path d="M18 128h120M18 138h74" stroke={tone} strokeOpacity="0.22" strokeWidth="1" />
+        <circle cx="228" cy="72" r="32" fill="none" stroke={tone} strokeOpacity="0.4" strokeWidth="1.1" />
+        <circle cx="228" cy="72" r="20" fill="none" stroke={tone} strokeOpacity="0.24" strokeWidth="1" />
+        <path d="M228 60l4.4 9.6 9.6 4.4-9.6 4.4-4.4 9.6-4.4-9.6-9.6-4.4 9.6-4.4z" fill="none" stroke={tone} strokeOpacity="0.7" strokeWidth="1.2" strokeLinejoin="round" />
       </g>
     );
   }, [kind, seed, tone]);
@@ -190,17 +189,6 @@ export function Flagship({ kind, seed = 'x', height = 168, radius, children }) {
       </svg>
       <div className="scene__shade" />
       {children}
-    </div>
-  );
-}
-
-/* Лента большого события поверх заставки. */
-function Ribbon({ kind }) {
-  const k = EVENT_KINDS[kind];
-  return (
-    <div style={{ position: 'absolute', right: 12, top: 12, display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 999, background: 'rgba(7,8,12,.6)', color: k.tone, fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
-      <Icon name={k.icon} size={13} color={k.tone} />
-      {k.name.toUpperCase()}
     </div>
   );
 }

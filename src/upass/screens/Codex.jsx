@@ -2,14 +2,14 @@ import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import { Top, List, Item, Section, Note } from '../components/UI.jsx';
 import { Seal } from '../components/Art.jsx';
-import Icon from '../components/Icons.jsx';
 import { LAWS, TRADITIONS, RITUALS, MOTTO, MOTTO_MASKED } from '../data/canon.js';
 
 export default function Codex() {
   const app = useApp();
   return (
     <div className="screen stack-20">
-      <Top title="Кодекс" sub="Законы, традиции, ритуалы. Меняется только собранием" right={<button className="iconbtn" onClick={() => go('/club')}><Icon name="back" size={18} /></button>} />
+      <Top
+        back title="Кодекс" sub="Законы, традиции, ритуалы. Меняется только собранием" />
 
       <Section title="Семь законов">
         <List>

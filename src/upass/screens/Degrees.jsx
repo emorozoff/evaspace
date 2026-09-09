@@ -12,7 +12,8 @@ export default function Degrees() {
 
   return (
     <div className="screen stack-20">
-      <Top title="Уровень и степень" sub="Уровень оплачивается, степень зарабатывается" right={<button className="iconbtn" onClick={() => go('/club')}><Icon name="back" size={18} /></button>} />
+      <Top
+        back title="Уровень и степень" sub="Уровень оплачивается, степень зарабатывается" />
 
       <Section title="Уровень членства">
         <List>

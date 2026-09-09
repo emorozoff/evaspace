@@ -19,65 +19,66 @@ export default function Communities() {
 
   const all = useMemo(() => communitiesFor(me), [me]);
 
+  /* Свои поднимаются наверх любого фильтра и отделяются пустотой —
+     отдельная вкладка «Мои» для этого не нужна. */
   const list = useMemo(() => {
-    let out = all;
-    if (tab === 'mine') out = out.filter((c) => app.communities.includes(c.id));
-    if (tab === 'closed') out = out.filter((c) => c.access === 'closed');
-    if (tab === 'all') out = out.filter((c) => c.access === 'open');
+    let out = all.filter((c) => (tab === 'closed' ? c.access === 'closed' : c.access === 'open'));
     if (regions.length) out = out.filter((c) => c.region === 'global' || regions.includes(c.region));
     if (topic !== 'all') out = out.filter((c) => c.topic === topic);
-    return out;
+    return {
+      mine: out.filter((c) => app.communities.includes(c.id)),
+      rest: out.filter((c) => !app.communities.includes(c.id)),
+    };
   }, [all, tab, regions, topic, app.communities]);
 
   return (
     <div className="screen stack">
-      <Top title="Сообщества" sub={`${all.length} ${plural(all.length, 'сообщество', 'сообщества', 'сообществ')} · вступление в один тап`} />
+      <Top
+        back title="Сообщества" sub={`${all.length} ${plural(all.length, 'сообщество', 'сообщества', 'сообществ')} · вступление в один тап`} />
 
       <Seg
         value={tab}
         onChange={setTab}
         options={[
           { value: 'all', label: 'Открытые' },
-          { value: 'mine', label: `Мои · ${app.communities.length}` },
-          { value: 'closed', label: 'Клубы' },
+          { value: 'closed', label: 'Закрытые клубы' },
         ]}
       />
 
-      {tab !== 'mine' && (
-        <div className="filters">
-          <Picker
-            label="Тема"
-            summary={topic === 'all' ? 'Тема' : topic}
-            title="Тема сообщества"
-            options={COMMUNITY_TOPICS.map((t) => ({ id: t, name: t }))}
-            value={topic}
-            onChange={setTopic}
-            allLabel="Все темы"
-          />
-          <Picker
-            label="Регион"
-            summary={regionSummary(regions)}
-            title="Регионы"
-            sub="Можно выбрать несколько"
-            options={REGION_KEYS.map((k) => ({ id: k, lead: REGIONS[k].flag, name: REGIONS[k].name, sub: `${REGIONS[k].communities} ${plural(REGIONS[k].communities, 'сообщество', 'сообщества', 'сообществ')}` }))}
-            value={regions}
-            onChange={setRegions}
-            multi
-            allLabel="Все регионы"
-          />
-        </div>
-      )}
-
-      {list.length === 0 ? (
-        <Empty
-          icon="users"
-          title={tab === 'mine' ? 'Вы пока ни в одном' : 'Ничего не нашлось'}
-          text={tab === 'mine' ? 'Вступите в сообщество — оно появится здесь и в чатах.' : 'Снимите фильтр по региону или теме.'}
+      <div className="filters">
+        <Picker
+          label="Тема"
+          summary={topic === 'all' ? 'Тема' : topic}
+          title="Тема сообщества"
+          options={COMMUNITY_TOPICS.map((t) => ({ id: t, name: t }))}
+          value={topic}
+          onChange={setTopic}
+          allLabel="Все темы"
         />
+        <Picker
+          label="Регион"
+          summary={regionSummary(regions)}
+          title="Регионы"
+          sub="Можно выбрать несколько"
+          options={REGION_KEYS.map((k) => ({ id: k, lead: REGIONS[k].flag, name: REGIONS[k].name, sub: `${REGIONS[k].communities} ${plural(REGIONS[k].communities, 'сообщество', 'сообщества', 'сообществ')}` }))}
+          value={regions}
+          onChange={setRegions}
+          multi
+          allLabel="Все регионы"
+        />
+      </div>
+
+      {list.mine.length + list.rest.length === 0 ? (
+        <Empty icon="users" title="Ничего не нашлось" text="Снимите фильтр по региону или теме." />
       ) : (
-        <List>
-          {list.map((c) => <CommunityRow key={c.id} c={c} joined={app.communities.includes(c.id)} />)}
-        </List>
+        <>
+          {list.mine.length > 0 && <List>{list.mine.map((c) => <CommunityRow key={c.id} c={c} joined />)}</List>}
+          {list.rest.length > 0 && (
+            <List style={list.mine.length ? { marginTop: 4 } : undefined}>
+              {list.rest.map((c) => <CommunityRow key={c.id} c={c} />)}
+            </List>
+          )}
+        </>
       )}
 
       {tab === 'closed' && <Note icon="lock">Закрытые клубы открываются со степенью: её зарабатывают встречами и поручительствами, а не деньгами.</Note>}

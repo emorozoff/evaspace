@@ -19,7 +19,6 @@ import { plural } from '../lib/format.js';
 
 const GROUPS = [
   { id: 'all', name: 'Все' },
-  { id: 'mine', name: 'Мои' },
   { id: 'topic', name: 'По интересам' },
   { id: 'city', name: 'По городам' },
   { id: 'closed', name: 'Закрытые' },
@@ -45,14 +44,19 @@ export default function Club() {
     );
   }, [me, q]);
 
+  /* Свои сообщества не прячутся в отдельную вкладку, а поднимаются наверх
+     любого фильтра и отделяются пустотой. */
   const groups = useMemo(() => {
     let out = communitiesFor(me);
-    if (group === 'mine') out = out.filter((c) => app.communities.includes(c.id));
     if (group === 'topic') out = out.filter((c) => c.access === 'open' && c.region === 'global');
     if (group === 'city') out = out.filter((c) => c.access === 'open' && c.region !== 'global');
     if (group === 'closed') out = out.filter((c) => c.access === 'closed');
     const s = q.trim().toLowerCase();
-    return s ? out.filter((c) => `${c.name} ${c.about}`.toLowerCase().includes(s)) : out;
+    if (s) out = out.filter((c) => `${c.name} ${c.about}`.toLowerCase().includes(s));
+    return {
+      mine: out.filter((c) => app.communities.includes(c.id)),
+      rest: out.filter((c) => !app.communities.includes(c.id)),
+    };
   }, [me, group, q, app.communities]);
 
   const knock = () => {
@@ -69,6 +73,7 @@ export default function Club() {
   return (
     <div className="screen stack-20">
       <Top
+        back
         title="Клуб"
         right={<button className="iconbtn" onClick={() => go('/profile')} aria-label="Настройки"><Icon name="settings" size={18} /></button>}
       />
@@ -93,17 +98,22 @@ export default function Club() {
         <>
           <Scroller>
             {GROUPS.map((g) => (
-              <Chip key={g.id} on={group === g.id} onClick={() => setGroup(g.id)}>
-                {g.name}{g.id === 'mine' ? ` · ${app.communities.length}` : ''}
-              </Chip>
+              <Chip key={g.id} on={group === g.id} onClick={() => setGroup(g.id)}>{g.name}</Chip>
             ))}
           </Scroller>
-          {groups.length === 0 ? (
+          {groups.mine.length + groups.rest.length === 0 ? (
             <Note icon="users">Ничего не нашлось. Снимите фильтр или измените запрос.</Note>
           ) : (
-            <List>
-              {groups.map((c) => <CommunityRow key={c.id} c={c} joined={app.communities.includes(c.id)} />)}
-            </List>
+            <>
+              {groups.mine.length > 0 && (
+                <List>{groups.mine.map((c) => <CommunityRow key={c.id} c={c} joined />)}</List>
+              )}
+              {groups.rest.length > 0 && (
+                <List style={groups.mine.length ? { marginTop: 4 } : undefined}>
+                  {groups.rest.map((c) => <CommunityRow key={c.id} c={c} />)}
+                </List>
+              )}
+            </>
           )}
         </>
       )}

@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import { Top, List, Item, Chip, Scroller, Search, Section, Btn, Note } from '../components/UI.jsx';
-import Icon from '../components/Icons.jsx';
 import { VAULT_KINDS, DEGREES } from '../data/canon.js';
 import { byId } from '../data/people.js';
 import { vaultFor } from '../lib/select.js';
@@ -25,7 +24,8 @@ export default function Vault() {
 
   return (
     <div className="screen stack">
-      <Top title="База знаний" sub="Разборы, шаблоны и записи эфиров" right={<button className="iconbtn" onClick={() => go('/club')}><Icon name="back" size={18} /></button>} />
+      <Top
+        back title="База знаний" sub="Разборы, шаблоны и записи эфиров" />
       <Search value={q} onChange={setQ} placeholder="Виза, жильё, школа, бюджет…" />
       <Scroller>
         <Chip on={kind === 'all'} onClick={() => setKind('all')}>Всё</Chip>
