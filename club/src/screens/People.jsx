@@ -1,223 +1,146 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../lib/store.jsx';
+import { go } from '../lib/router.jsx';
 import { cityName, friendIds, friendStatus, teamOf, coffeeFor, userById } from '../lib/logic.js';
 import { SKILLS } from '../data/people.js';
 import { weekKey, WEEK } from '../lib/time.js';
-import { money, people as peopleWord } from '../lib/format.js';
-import { Avatar, Btn, Card, Empty, Segmented } from '../components/UI.jsx';
-import { IcSpark, IcSearch, IcNext, IcCoffee } from '../components/Icons.jsx';
+import { money } from '../lib/format.js';
+import { Avatar, Btn, Empty, List, Item, Picker, Search, Section, Seg, Tag, Top } from '../components/UI.jsx';
 
-export default function People({ navigate, now }) {
+/* Люди: каталог и друзья. Пара по рандом-кофе — первой строкой. */
+
+export default function People({ now }) {
   const { state, me } = useStore();
-  const [tab, setTab] = useState('catalog');
+  const [tab, setTab] = useState('all');
   const pair = coffeeFor(state, me.id, weekKey(now));
   const buddy = pair ? userById(state, pair.a === me.id ? pair.b : pair.a) : null;
+  const incoming = state.friends.filter((f) => f.status === 'pending' && f.b === me.id).length;
 
   return (
-    <div className="screen">
-      <div className="topbar">
-        <div className="logo">
-          <div className="mark"><IcSpark size={16} className="t-lime" /></div>
-          <h1>Люди</h1>
-        </div>
-      </div>
+    <div className="screen stack-20">
+      <Top title="Люди" sub="Каталог участников, друзья и кофе" />
+      <Seg value={tab} onChange={setTab} options={[{ value: 'all', label: 'Все' }, { value: 'friends', label: incoming ? `Друзья · ${incoming}` : 'Друзья' }]} />
 
-      <Segmented
-        value={tab}
-        onChange={setTab}
-        options={[
-          { value: 'catalog', label: 'Каталог' },
-          { value: 'friends', label: 'Друзья' },
-        ]}
-      />
-
-      {buddy && (
-        <Card kind="accent" tap style={{ marginTop: 10 }} onClick={() => navigate('/coffee')}>
-          <div className="row">
-            <IcCoffee size={20} className="t-lime" />
-            <div style={{ minWidth: 0 }}>
-              <div className="t-title ellipsis">Пара недели: {buddy.name}</div>
-              <div className="t-sub ellipsis">{buddy.about}</div>
-            </div>
-            <div className="spacer" />
-            <IcNext />
-          </div>
-        </Card>
+      {buddy && me.coffeeEnabled && (
+        <List>
+          <Item
+            lead={<Avatar user={buddy} size={44} ring="var(--accent)" />}
+            title={`Пара недели: ${buddy.name}`}
+            sub={pair.status === 'agreed' ? 'Договорились — хорошей встречи' : 'Напишите и договоритесь о кофе'}
+            meta={<Tag tone="accent">кофе</Tag>}
+            onClick={() => go('/coffee')}
+          />
+        </List>
       )}
 
-      {tab === 'catalog' ? <Catalog navigate={navigate} /> : <Friends navigate={navigate} now={now} />}
+      {tab === 'all' ? <Catalog /> : <Friends now={now} />}
     </div>
   );
 }
 
-function Catalog({ navigate }) {
-  const { state, me, dispatch } = useStore();
+function Catalog() {
+  const { state, me } = useStore();
   const [query, setQuery] = useState('');
-  const [city, setCity] = useState('все');
-  const [skill, setSkill] = useState('все');
-  const [pack, setPack] = useState('все');
+  const [city, setCity] = useState('all');
+  const [skill, setSkill] = useState('all');
 
-  const list = useMemo(() => {
-    return state.users
+  const list = useMemo(() =>
+    state.users
       .filter((u) => u.id !== me.id && u.visible !== false && u.active !== false)
-      .filter((u) => (city === 'все' ? true : u.cityId === city))
-      .filter((u) => (skill === 'все' ? true : (u.skills || []).includes(skill)))
-      .filter((u) => (pack === 'все' ? true : u.package === pack))
-      .filter((u) => (query ? `${u.name} ${u.about} ${u.lookingFor}`.toLowerCase().includes(query.toLowerCase()) : true))
-      .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
-  }, [state.users, me.id, city, skill, pack, query]);
+      .filter((u) => city === 'all' || u.cityId === city)
+      .filter((u) => skill === 'all' || (u.skills || []).includes(skill))
+      .filter((u) => !query || `${u.name} ${u.about} ${u.lookingFor}`.toLowerCase().includes(query.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name, 'ru')),
+  [state.users, me.id, city, skill, query]);
 
   return (
     <>
-      <div className="field" style={{ position: 'relative', marginTop: 10 }}>
-        <input placeholder="Имя, занятие, запрос" value={query} onChange={(e) => setQuery(e.target.value)} style={{ paddingLeft: 40 }} />
-        <span style={{ position: 'absolute', left: 13, top: 14, color: 'var(--dim)' }}><IcSearch /></span>
+      <div className="stack-8">
+        <Search value={query} onChange={setQuery} placeholder="Имя, дело или запрос" />
+        <div className="filters">
+          <Picker label="Все города" title="Город" options={state.cities.map((c) => ({ id: c.id, label: c.name }))} value={city} onChange={setCity} allLabel="Все города" />
+          <Picker label="Все навыки" title="Навык" options={SKILLS.map((s) => ({ id: s, label: s }))} value={skill} onChange={setSkill} allLabel="Все навыки" />
+        </div>
       </div>
 
-      <div className="chips" style={{ marginTop: 10 }}>
-        <span className={`chip ${city === 'все' ? 'on' : ''}`} onClick={() => setCity('все')}>все города</span>
-        {state.cities.map((c) => (
-          <span key={c.id} className={`chip ${city === c.id ? 'on' : ''}`} onClick={() => setCity(c.id)}>{c.name}</span>
-        ))}
-      </div>
-      <div className="chips">
-        <span className={`chip ${skill === 'все' ? 'on' : ''}`} onClick={() => setSkill('все')}>все навыки</span>
-        {SKILLS.map((s) => (
-          <span key={s} className={`chip ${skill === s ? 'on' : ''}`} onClick={() => setSkill(s)}>{s}</span>
-        ))}
-      </div>
-      <div className="chips">
-        {['все', 'start', 'club', 'pro'].map((p) => (
-          <span key={p} className={`chip ${pack === p ? 'on' : ''}`} onClick={() => setPack(p)}>
-            {p === 'все' ? 'все пакеты' : p.toUpperCase()}
-          </span>
-        ))}
-      </div>
-
-      <div className="t-dim" style={{ margin: '4px 2px 10px' }}>{peopleWord(list.length)}</div>
-
-      {list.length === 0 && <Empty title="Никого не нашлось" text="Снимите фильтры или попробуйте другой запрос." />}
-
-      <div className="stack">
-        {list.map((u) => {
-          const link = friendStatus(state, me.id, u.id);
-          return (
-            <Card key={u.id}>
-              <div className="person" onClick={() => navigate(`/person/${u.id}`)} style={{ cursor: 'pointer' }}>
-                <Avatar user={u} size={46} />
-                <div style={{ minWidth: 0 }}>
-                  <div className="ellipsis" style={{ fontWeight: 700 }}>{u.name}</div>
-                  <div className="t-dim ellipsis">{cityName(state, u.cityId)}</div>
-                  <div className="t-sub ellipsis" style={{ marginTop: 2 }}>{u.about}</div>
-                </div>
-                <IcNext />
-              </div>
-              {u.lookingFor && <div className="t-dim" style={{ marginTop: 8 }}>Ищет: {u.lookingFor}</div>}
-              <div className="btn-row" style={{ marginTop: 10 }}>
-                <a className="btn soft s" href={`https://t.me/${(u.tg || '').replace('@', '')}`} target="_blank" rel="noreferrer">
-                  Написать
-                </a>
-                <Btn
-                  kind={link.status === 'accepted' ? 'on' : link.status === 'pending' ? 'soft' : 'ghost'}
-                  small
-                  disabled={link.status !== 'none'}
-                  onClick={() => dispatch({ type: 'friendAdd', userId: u.id })}
-                >
-                  {link.status === 'accepted' ? 'В друзьях' : link.status === 'pending' ? 'Заявка' : 'В друзья'}
-                </Btn>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+      {list.length === 0 ? (
+        <Empty icon="people" title="Никого не нашлось" text="Снимите фильтры или измените запрос." />
+      ) : (
+        <List>
+          {list.map((u) => {
+            const link = friendStatus(state, me.id, u.id);
+            return (
+              <Item
+                key={u.id}
+                lead={<Avatar user={u} size={44} />}
+                title={u.name}
+                sub={`${cityName(state, u.cityId)} · ${u.about}`}
+                meta={link.status === 'accepted' ? <Tag tone="accent">друг</Tag> : u.package === 'pro' ? <Tag tone="violet">PRO</Tag> : undefined}
+                onClick={() => go(`/person/${u.id}`)}
+              />
+            );
+          })}
+        </List>
+      )}
     </>
   );
 }
 
-function Friends({ navigate, now }) {
+function Friends({ now }) {
   const { state, me, dispatch } = useStore();
   const incoming = state.friends.filter((f) => f.status === 'pending' && f.b === me.id);
-  const ids = friendIds(state, me.id);
-  const friends = ids.map((id) => userById(state, id)).filter(Boolean);
-
-  // Лента: что друзья показали за неделю
+  const friends = friendIds(state, me.id).map((id) => userById(state, id)).filter(Boolean);
   const feed = friends
     .map((friend) => {
       const team = teamOf(state, friend.id);
-      const entries = state.revenue.filter((r) => r.userId === friend.id && now - r.at < 2 * WEEK);
-      const sum = entries.reduce((s, r) => s + r.amount, 0);
-      return { friend, team, sum, last: entries.sort((a, b) => b.at - a.at)[0] };
+      const sum = state.revenue.filter((r) => r.userId === friend.id && now - r.at < 2 * WEEK).reduce((s, r) => s + r.amount, 0);
+      return { friend, team, sum };
     })
-    .filter((row) => row.sum > 0 || row.team)
     .sort((a, b) => b.sum - a.sum);
 
   return (
     <>
       {incoming.length > 0 && (
-        <>
-          <div className="section"><h2>Заявки · {incoming.length}</h2></div>
-          <Card>
+        <Section title={`Хотят дружить · ${incoming.length}`}>
+          <List>
             {incoming.map((f) => {
               const user = userById(state, f.a);
               return (
-                <div key={f.id} className="stack s" style={{ padding: '10px 0' }}>
-                  <div className="row">
-                    <Avatar user={user} size={36} />
-                    <div style={{ minWidth: 0 }}>
-                      <div className="ellipsis" style={{ fontWeight: 600 }}>{user?.name}</div>
-                      <div className="t-dim ellipsis">{user?.about}</div>
+                <Item
+                  key={f.id}
+                  lead={<Avatar user={user} size={44} />}
+                  title={user?.name}
+                  sub={user?.about}
+                  chev={false}
+                  meta={
+                    <div className="row" style={{ gap: 6 }}>
+                      <Btn variant="accent" size="sm" onClick={() => dispatch({ type: 'friendAnswer', id: f.id, accept: true })}>Принять</Btn>
+                      <Btn variant="quiet" size="sm" onClick={() => dispatch({ type: 'friendAnswer', id: f.id, accept: false })}>Нет</Btn>
                     </div>
-                  </div>
-                  <div className="btn-row">
-                    <Btn kind="primary" small onClick={() => dispatch({ type: 'friendAnswer', id: f.id, accept: true })}>Принять</Btn>
-                    <Btn kind="soft" small onClick={() => dispatch({ type: 'friendAnswer', id: f.id, accept: false })}>Отклонить</Btn>
-                  </div>
-                </div>
+                  }
+                />
               );
             })}
-          </Card>
-        </>
+          </List>
+        </Section>
       )}
 
       {friends.length === 0 ? (
-        <Empty title="Друзей пока нет" text="Добавляйте людей из каталога — их вы будете видеть в расписании и в ленте." />
+        <Empty icon="people" title="Друзей пока нет" text="Откройте человека в каталоге и нажмите «В друзья» — друзей вы увидите в расписании и здесь." />
       ) : (
-        <>
-          <div className="section"><h2>Лента друзей</h2></div>
-          {feed.length === 0 && <Empty title="За эту неделю тихо" text="Никто из друзей ещё не показывал результат." />}
-          <div className="stack">
-            {feed.map(({ friend, team, sum, last }) => (
-              <Card key={friend.id} tap onClick={() => navigate(`/person/${friend.id}`)}>
-                <div className="row">
-                  <Avatar user={friend} size={40} />
-                  <div style={{ minWidth: 0 }}>
-                    <div className="ellipsis" style={{ fontWeight: 700 }}>{friend.name}</div>
-                    <div className="t-dim ellipsis">{team ? `команда «${team.name}»` : 'пока без команды'}</div>
-                  </div>
-                </div>
-                {sum > 0 && (
-                  <div className="t-sub" style={{ marginTop: 8 }}>
-                    Внёс <b className="t-lime mono">{money(sum)}</b> за две недели{last?.comment ? ` — ${last.comment}` : ''}
-                  </div>
-                )}
-              </Card>
+        <Section title={`Друзья · ${friends.length}`}>
+          <List>
+            {feed.map(({ friend, team, sum }) => (
+              <Item
+                key={friend.id}
+                lead={<Avatar user={friend} size={44} />}
+                title={friend.name}
+                sub={team ? `команда «${team.name}»${sum ? ` · +${money(sum)} за две недели` : ''}` : cityName(state, friend.cityId)}
+                onClick={() => go(`/person/${friend.id}`)}
+              />
             ))}
-          </div>
-
-          <div className="section"><h2>Все друзья · {friends.length}</h2></div>
-          <Card>
-            {friends.map((u) => (
-              <div key={u.id} className="lead" style={{ gridTemplateColumns: 'auto 1fr auto', cursor: 'pointer' }} onClick={() => navigate(`/person/${u.id}`)}>
-                <Avatar user={u} size={34} />
-                <div style={{ minWidth: 0 }}>
-                  <div className="ellipsis" style={{ fontWeight: 600 }}>{u.name}</div>
-                  <div className="t-dim ellipsis">{cityName(state, u.cityId)}</div>
-                </div>
-                <IcNext />
-              </div>
-            ))}
-          </Card>
-        </>
+          </List>
+        </Section>
       )}
     </>
   );

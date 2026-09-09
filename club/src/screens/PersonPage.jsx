@@ -1,90 +1,64 @@
 import { useStore } from '../lib/store.jsx';
+import { go } from '../lib/router.jsx';
 import { cityName, friendStatus, friendIds, teamOf } from '../lib/logic.js';
 import { dateShort } from '../lib/time.js';
-import { Avatar, Btn, Card, Empty, TopBar } from '../components/UI.jsx';
-import { IcNext } from '../components/Icons.jsx';
+import { Actions, Avatar, Card, Empty, List, Item, Note, Tag, TopBar } from '../components/UI.jsx';
 
-export default function PersonPage({ id, navigate }) {
+export default function PersonPage({ id }) {
   const { state, me, dispatch } = useStore();
   const user = state.users.find((u) => u.id === id);
-  if (!user) return <Empty title="Участник не найден" />;
+  if (!user) return <div className="screen"><Empty title="Участник не найден" /></div>;
 
   const link = friendStatus(state, me.id, user.id);
   const team = teamOf(state, user.id);
   const mutual = friendIds(state, me.id).filter((x) => friendIds(state, user.id).includes(x)).length;
+  const tg = `https://t.me/${(user.tg || '').replace('@', '')}`;
+
+  const friendAction = link.status === 'accepted'
+    ? { icon: 'check', title: 'В друзьях', on: true, onClick: () => dispatch({ type: 'friendRemove', id: link.link.id }) }
+    : link.incoming
+    ? { icon: 'plus', title: 'Принять', onClick: () => dispatch({ type: 'friendAnswer', id: link.link.id, accept: true }) }
+    : link.status === 'pending'
+    ? { icon: 'clock', title: 'Заявка', disabled: true, onClick: () => {} }
+    : { icon: 'plus', title: 'В друзья', onClick: () => dispatch({ type: 'friendAdd', userId: user.id }) };
 
   return (
-    <div className="screen">
+    <div className="screen" style={{ paddingTop: 0 }}>
       <TopBar title={user.name} sub={cityName(state, user.cityId)} />
-
-      <div className="hero center">
-        <div style={{ display: 'grid', justifyItems: 'center', gap: 10 }}>
-          <Avatar user={user} size={82} />
+      <div className="stack-20">
+        <div className="center" style={{ display: 'grid', justifyItems: 'center', gap: 10 }}>
+          <Avatar user={user} size={92} />
           <div>
-            <div className="t-big">{user.name}</div>
-            <div className="t-sub">{cityName(state, user.cityId)} · в клубе с {dateShort(user.joinedAt)}</div>
+            <h2 className="h2">{user.name}</h2>
+            <div className="t-sm dim-2" style={{ marginTop: 4 }}>{cityName(state, user.cityId)} · в клубе с {dateShort(user.joinedAt)}</div>
           </div>
-          <span className={`chip ${user.package === 'pro' ? 'pro' : ''}`}>{user.package.toUpperCase()}</span>
+          <Tag tone={user.package === 'pro' ? 'violet' : undefined}>{user.package.toUpperCase()}</Tag>
         </div>
-      </div>
 
-      <Card style={{ marginTop: 10 }}>
-        <div className="t-dim">Чем занимается</div>
-        <div style={{ marginTop: 3 }}>{user.about}</div>
-        {user.lookingFor && (
-          <>
-            <div className="t-dim" style={{ marginTop: 12 }}>Что ищет</div>
-            <div style={{ marginTop: 3 }}>{user.lookingFor}</div>
-          </>
+        {user.id !== me.id && (
+          <Actions items={[
+            { icon: 'send', title: 'Написать', onClick: () => window.open(tg, '_blank') },
+            friendAction,
+            { icon: 'coffee', title: 'Кофе', onClick: () => go('/coffee') },
+          ]} />
         )}
-        {(user.skills || []).length > 0 && (
-          <div className="row wrap" style={{ gap: 6, marginTop: 12 }}>
-            {user.skills.map((s) => (
-              <span key={s} className="chip static">{s}</span>
-            ))}
-          </div>
-        )}
-        {user.links && (
-          <a className="link t-lime" style={{ display: 'block', marginTop: 12 }} href={user.links} target="_blank" rel="noreferrer">
-            {user.links}
-          </a>
-        )}
-      </Card>
 
-      {team && (
-        <Card tap style={{ marginTop: 10 }} onClick={() => navigate(`/team/${team.id}`)}>
-          <div className="split">
-            <div style={{ minWidth: 0 }}>
-              <div className="t-dim">Команда</div>
-              <div className="t-title ellipsis">{team.name}</div>
-              <div className="t-sub ellipsis">{team.idea}</div>
-            </div>
-            <IcNext />
-          </div>
+        <Card>
+          <div className="eyebrow">Чем занимается</div>
+          <div style={{ marginTop: 4, lineHeight: 1.5 }}>{user.about}</div>
+          {user.lookingFor && (<><div className="eyebrow" style={{ marginTop: 14 }}>Что ищет</div><div style={{ marginTop: 4, lineHeight: 1.5 }}>{user.lookingFor}</div></>)}
+          {(user.skills || []).length > 0 && <div className="wrap" style={{ marginTop: 14 }}>{user.skills.map((s) => <Tag key={s}>{s}</Tag>)}</div>}
+          {user.links && <a className="accent t-sm" style={{ display: 'block', marginTop: 12, fontWeight: 600 }} href={user.links} target="_blank" rel="noreferrer">{user.links}</a>}
         </Card>
-      )}
 
-      {mutual > 0 && <div className="t-dim center" style={{ marginTop: 12 }}>Общих друзей: {mutual}</div>}
+        {(team || mutual > 0) && (
+          <List>
+            {team && <Item icon="team" title={`Команда «${team.name}»`} sub={team.idea} chev={false} />}
+            {mutual > 0 && <Item icon="people" title={`Общих друзей: ${mutual}`} chev={false} />}
+          </List>
+        )}
 
-      {user.id !== me.id && (
-        <div className="btn-row" style={{ marginTop: 14 }}>
-          <a className="btn primary" href={`https://t.me/${(user.tg || '').replace('@', '')}`} target="_blank" rel="noreferrer">
-            Написать в телеграм
-          </a>
-          {link.status === 'accepted' ? (
-            <Btn kind="soft" onClick={() => dispatch({ type: 'friendRemove', id: link.link.id })}>Убрать из друзей</Btn>
-          ) : link.incoming ? (
-            <Btn kind="primary" onClick={() => dispatch({ type: 'friendAnswer', id: link.link.id, accept: true })}>Принять заявку</Btn>
-          ) : (
-            <Btn kind="ghost" disabled={link.status === 'pending'} onClick={() => dispatch({ type: 'friendAdd', userId: user.id })}>
-              {link.status === 'pending' ? 'Заявка отправлена' : 'Добавить в друзья'}
-            </Btn>
-          )}
-        </div>
-      )}
-
-      <div className="t-dim center" style={{ marginTop: 14 }}>
-        Личных сообщений внутри приложения нет — для этого есть телеграм.
+        <Note icon="send">Личных сообщений внутри приложения нет — для этого есть телеграм.</Note>
       </div>
     </div>
   );

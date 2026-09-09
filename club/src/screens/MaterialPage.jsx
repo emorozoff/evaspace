@@ -2,53 +2,40 @@ import { useStore } from '../lib/store.jsx';
 import { isViewed } from '../lib/logic.js';
 import { dateShort } from '../lib/time.js';
 import { preview, service } from '../lib/video.js';
-import { Btn, Card, Empty, TopBar } from '../components/UI.jsx';
-import { IcPlay, IcCheck } from '../components/Icons.jsx';
+import { hash } from '../lib/format.js';
+import { Btn, Empty, List, Item, Note, TopBar } from '../components/UI.jsx';
+import Icon from '../components/Icons.jsx';
 
 export default function MaterialPage({ id }) {
   const { state, me, dispatch } = useStore();
-  const material = state.materials.find((m) => m.id === id);
-  if (!material) return <Empty title="Материал не найден" />;
-
-  const viewed = isViewed(state, material.id, me.id);
-  const cover = preview(material.videoUrl);
+  const m = state.materials.find((x) => x.id === id);
+  if (!m) return <div className="screen"><Empty title="Материал не найден" /></div>;
+  const viewed = isViewed(state, m.id, me.id);
+  const cover = preview(m.videoUrl);
+  const hue = hash(m.id) % 360;
 
   return (
-    <div className="screen">
-      <TopBar title={material.type} sub={material.topic} />
+    <div className="screen" style={{ paddingTop: 0 }}>
+      <TopBar title={m.type[0].toUpperCase() + m.type.slice(1)} sub={m.topic} backTo="/base" />
+      <div className="stack-20">
+        <a className="ev__cover" href={m.videoUrl} target="_blank" rel="noreferrer" style={{ borderRadius: 16, background: `linear-gradient(135deg, hsl(${hue} 30% 24%), #0f121a)` }}>
+          {cover && <img src={cover} alt="" onError={(e) => (e.currentTarget.style.display = 'none')} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
+          <div className="ev__shade" />
+          <div className="thumb__play"><i style={{ width: 54, height: 54 }}><Icon name="play" size={20} /></i></div>
+          <div className="ev__over"><div className="ev__title">{m.title}</div><div className="ev__meta">{dateShort(m.publishedAt)} · {service(m.videoUrl)}</div></div>
+        </a>
 
-      <a href={material.videoUrl} target="_blank" rel="noreferrer" className="video" style={{ display: 'grid' }}>
-        {cover && (
-          <img
-            src={cover}
-            alt=""
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        )}
-        <div className="play" style={{ position: 'relative' }}>
-          <IcPlay size={20} />
-        </div>
-      </a>
+        <p className="lead">{m.description}</p>
 
-      <h2 className="t-big" style={{ marginTop: 14 }}>{material.title}</h2>
-      <div className="t-dim" style={{ marginTop: 4 }}>
-        {dateShort(material.publishedAt)} · {service(material.videoUrl)}
-        {material.seasonId < state.season.id ? ' · архив' : ''}
+        <List>
+          <Item icon="video" title={`Смотреть на ${service(m.videoUrl)}`} sub="Откроется в приложении сервиса" onClick={() => window.open(m.videoUrl, '_blank')} />
+        </List>
+
+        <Btn variant={viewed ? 'soft' : 'ghost'} wide icon="check" onClick={() => dispatch({ type: 'view', materialId: m.id })}>
+          {viewed ? 'Просмотрено' : 'Отметить просмотренным'}
+        </Btn>
+        <Note icon="eye">Отметка видна только вам. Видео мы не храним — только ссылку.</Note>
       </div>
-      <p className="t-sub" style={{ marginTop: 12 }}>{material.description}</p>
-
-      <a className="btn primary wide" style={{ marginTop: 16 }} href={material.videoUrl} target="_blank" rel="noreferrer">
-        Смотреть на {service(material.videoUrl)}
-      </a>
-      <Btn kind={viewed ? 'on' : 'soft'} wide style={{ marginTop: 10 }} onClick={() => dispatch({ type: 'view', materialId: material.id })}>
-        <IcCheck /> {viewed ? 'Просмотрено' : 'Отметить просмотренным'}
-      </Btn>
-      <div className="t-dim center" style={{ marginTop: 10 }}>Отметка видна только вам.</div>
-
-      <Card className="flat" style={{ marginTop: 18 }}>
-        <div className="t-dim">Видео мы не храним — материал открывается по ссылке на внешнем сервисе.</div>
-      </Card>
     </div>
   );
 }

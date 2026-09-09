@@ -1,76 +1,53 @@
-/* Иконки — простые контуры, рисуются вектором и не грузятся из сети. */
+/* Иконки — один контурный набор, рисуются вектором. */
 
-const S = ({ children, size = 22, fill = 'none', ...rest }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...rest}>
-    {children}
-  </svg>
-);
+const P = {
+  home: 'M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z',
+  calendar: 'M3.5 5h17v15h-17zM3.5 10h17M8 3v4M16 3v4',
+  team: 'M9 12.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zM3.5 19.5c.6-3 2.8-4.6 5.5-4.6s4.9 1.6 5.5 4.6M16 6.4a3 3 0 0 1 0 5.6M17.5 15.2c2 .6 3.2 2.1 3.6 4.3',
+  people: 'M12 11.4a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8zM5 20c.7-3.7 3.4-5.6 7-5.6s6.3 1.9 7 5.6',
+  user: 'M12 12.1a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2zM4.8 20c.8-3.6 3.6-5.5 7.2-5.5s6.4 1.9 7.2 5.5',
+  book: 'M4 5.5A2 2 0 0 1 6 3.5h13v14H6a2 2 0 0 0-2 2zM4 19.5a2 2 0 0 1 2-2h13v3H6a2 2 0 0 1-2-1z',
+  bell: 'M6 9a6 6 0 0 1 12 0c0 4 1.2 5.4 1.8 6H4.2C4.8 14.4 6 13 6 9zM10 19a2 2 0 0 0 4 0',
+  back: 'M15 5 8 12l7 7',
+  right: 'M9 5l7 7-7 7',
+  down: 'M5 9l7 7 7-7',
+  x: 'M6 6l12 12M18 6 6 18',
+  check: 'm5 12.5 4.5 4.5L19 7',
+  plus: 'M12 5v14M5 12h14',
+  search: 'M11 17.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zm5-1.5 4 4',
+  share: 'M12 15V4M8.5 7.5 12 4l3.5 3.5M5 13v5.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V13',
+  pin: 'M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11zM12 12.4a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8z',
+  clock: 'M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17zM12 7.5V12l3 2',
+  link: 'M10.5 13.5a4 4 0 0 0 5.7 0l2.3-2.3a4 4 0 0 0-5.7-5.7L11.5 6.8M13.5 10.5a4 4 0 0 0-5.7 0l-2.3 2.3a4 4 0 1 0 5.7 5.7l1.3-1.3',
+  money: 'M3 6h18v12H3zM12 14.6a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2zM6.5 9.5v5M17.5 9.5v5',
+  trophy: 'M7 4h10v5a5 5 0 0 1-10 0zM7 5.5H4.5V7a3 3 0 0 0 3 3M17 5.5h2.5V7a3 3 0 0 1-3 3M12 14v3M8.5 20h7l-.8-3h-5.4z',
+  coffee: 'M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4zM17 9.5h1.5a2.5 2.5 0 0 1 0 5H17M7.5 3.5v2M11 3.5v2',
+  city: 'M3 20h18M5 20V9l6-4v15M11 20V11h8v9M14.5 14.5h1M14.5 17.5h1M7.5 10.5h1M7.5 13.5h1M7.5 16.5h1',
+  edit: 'M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17zM14.5 7.5 17 10',
+  out: 'M14 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7M17 8.5 20.5 12 17 15.5M20 12h-9',
+  download: 'M12 4v11M8 11.5l4 4 4-4M5 19h14',
+  video: 'M3.5 7h11a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 2 15.5v-7A1.5 1.5 0 0 1 3.5 7zM16 10l5-2.5v9L16 14',
+  eye: 'M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6zM12 14.8a2.8 2.8 0 1 0 0-5.6 2.8 2.8 0 0 0 0 5.6z',
+  settings: 'M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zM19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.5-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.5 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.5 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.5-2-1.5c.1-.4.1-.8.1-1.2z',
+  send: 'M21 3 3 10.5l7.5 3L13.5 21z M10.5 13.5 21 3',
+  star: 'm12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',
+  spark: 'M12 2.5c.9 5.1 3.5 7.7 8.6 8.6-5.1.9-7.7 3.5-8.6 8.6-.9-5.1-3.5-7.7-8.6-8.6 5.1-.9 7.7-3.5 8.6-8.6z',
+  play: 'M8 5.5v13l11-6.5z',
+  flag: 'M5 21V4M5 4h12l-2.5 4L17 12H5',
+  hand: 'M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 12V4.5a1.5 1.5 0 0 1 3 0V12M14 12V6.5a1.5 1.5 0 0 1 3 0V13M17 13v-1.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-2.2a6 6 0 0 1-4.7-2.3L4 14.5a1.6 1.6 0 0 1 2.5-2L8 14',
+  gift: 'M3.5 12h17v8h-17zM3 8h18v4H3zM12 8v12M12 8c-1.5-3-5-3.5-5-1s3 1.5 5 1zM12 8c1.5-3 5-3.5 5-1s-3 1.5-5 1z',
+  message: 'M4 5h16v11H9l-5 4z',
+  grid: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+  filter: 'M4 6h16M7 12h10M10 18h4',
+  refresh: 'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5',
+};
 
-export const IcHome = (p) => (
-  <S {...p}><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z" /></S>
-);
-export const IcCalendar = (p) => (
-  <S {...p}><rect x="3.5" y="5" width="17" height="15" rx="3" /><path d="M3.5 10h17M8 3v4M16 3v4" /></S>
-);
-export const IcTeam = (p) => (
-  <S {...p}><circle cx="9" cy="9" r="3.2" /><path d="M3.5 19.5c.6-3 2.8-4.6 5.5-4.6s4.9 1.6 5.5 4.6" /><path d="M16 6.4a3 3 0 0 1 0 5.6M17.5 15.2c2 .6 3.2 2.1 3.6 4.3" /></S>
-);
-export const IcPeople = (p) => (
-  <S {...p}><circle cx="12" cy="8" r="3.4" /><path d="M5 20c.7-3.7 3.4-5.6 7-5.6s6.3 1.9 7 5.6" /></S>
-);
-export const IcBook = (p) => (
-  <S {...p}><path d="M4 5.5A2 2 0 0 1 6 3.5h13v14H6a2 2 0 0 0-2 2z" /><path d="M4 19.5a2 2 0 0 1 2-2h13v3H6a2 2 0 0 1-2-1z" /></S>
-);
-export const IcUser = (p) => (
-  <S {...p}><circle cx="12" cy="8.5" r="3.6" /><path d="M4.8 20c.8-3.6 3.6-5.5 7.2-5.5s6.4 1.9 7.2 5.5" /></S>
-);
-export const IcBell = (p) => (
-  <S {...p} size={p.size || 19}><path d="M6 9a6 6 0 0 1 12 0c0 4 1.2 5.4 1.8 6H4.2C4.8 14.4 6 13 6 9z" /><path d="M10 19a2 2 0 0 0 4 0" /></S>
-);
-export const IcBack = (p) => (<S {...p}><path d="M15 5 8 12l7 7" /></S>);
-export const IcNext = (p) => (<S {...p} size={p.size || 18}><path d="M9 5l7 7-7 7" /></S>);
-export const IcPlus = (p) => (<S {...p}><path d="M12 5v14M5 12h14" /></S>);
-export const IcCheck = (p) => (<S {...p} size={p.size || 18}><path d="m5 12.5 4.5 4.5L19 7" /></S>);
-export const IcClose = (p) => (<S {...p} size={p.size || 18}><path d="M6 6l12 12M18 6 6 18" /></S>);
-export const IcSearch = (p) => (<S {...p} size={p.size || 18}><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></S>);
-export const IcShare = (p) => (
-  <S {...p} size={p.size || 18}><path d="M12 15V4M8.5 7.5 12 4l3.5 3.5" /><path d="M5 13v5.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V13" /></S>
-);
-export const IcPlay = (p) => (<S {...p} fill="currentColor" stroke="none"><path d="M8 5.5v13l11-6.5z" /></S>);
-export const IcPin = (p) => (
-  <S {...p} size={p.size || 16}><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z" /><circle cx="12" cy="10" r="2.4" /></S>
-);
-export const IcClock = (p) => (<S {...p} size={p.size || 16}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></S>);
-export const IcLink = (p) => (
-  <S {...p} size={p.size || 18}><path d="M10.5 13.5a4 4 0 0 0 5.7 0l2.3-2.3a4 4 0 0 0-5.7-5.7L11.5 6.8" /><path d="M13.5 10.5a4 4 0 0 0-5.7 0l-2.3 2.3a4 4 0 1 0 5.7 5.7l1.3-1.3" /></S>
-);
-export const IcMoney = (p) => (
-  <S {...p}><rect x="3" y="6" width="18" height="12" rx="3" /><circle cx="12" cy="12" r="2.6" /><path d="M6.5 9.5v5M17.5 9.5v5" /></S>
-);
-export const IcTrophy = (p) => (
-  <S {...p}><path d="M7 4h10v5a5 5 0 0 1-10 0z" /><path d="M7 5.5H4.5V7a3 3 0 0 0 3 3M17 5.5h2.5V7a3 3 0 0 1-3 3" /><path d="M12 14v3M8.5 20h7l-.8-3h-5.4z" /></S>
-);
-export const IcCoffee = (p) => (
-  <S {...p}><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z" /><path d="M17 9.5h1.5a2.5 2.5 0 0 1 0 5H17" /><path d="M7.5 3.5v2M11 3.5v2" /></S>
-);
-export const IcSpark = (p) => (
-  <S {...p} fill="currentColor" stroke="none"><path d="M12 2.5c.9 5.1 3.5 7.7 8.6 8.6-5.1.9-7.7 3.5-8.6 8.6-.9-5.1-3.5-7.7-8.6-8.6 5.1-.9 7.7-3.5 8.6-8.6z" /></S>
-);
-export const IcCity = (p) => (
-  <S {...p}><path d="M3 20h18" /><path d="M5 20V9l6-4v15" /><path d="M11 20V11h8v9" /><path d="M14.5 14.5h1M14.5 17.5h1M7.5 10.5h1M7.5 13.5h1M7.5 16.5h1" /></S>
-);
-export const IcEdit = (p) => (
-  <S {...p} size={p.size || 18}><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z" /><path d="M14.5 7.5 17 10" /></S>
-);
-export const IcOut = (p) => (
-  <S {...p} size={p.size || 18}><path d="M14 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7" /><path d="M17 8.5 20.5 12 17 15.5M20 12h-9" /></S>
-);
-export const IcDownload = (p) => (
-  <S {...p} size={p.size || 18}><path d="M12 4v11M8 11.5l4 4 4-4" /><path d="M5 19h14" /></S>
-);
-export const IcFilter = (p) => (<S {...p} size={p.size || 18}><path d="M4 6h16M7 12h10M10 18h4" /></S>);
-export const IcFire = (p) => (
-  <S {...p} size={p.size || 16}><path d="M12 3c3.5 3.2 5.5 5.8 5.5 8.8A5.5 5.5 0 0 1 12 21a5.5 5.5 0 0 1-5.5-5.2c0-2.2 1-3.6 2.4-5 .2 1.3.8 2.1 1.7 2.4C10 10.4 10.6 6.9 12 3z" /></S>
-);
-
-export const NAV_ICONS = { home: IcHome, calendar: IcCalendar, team: IcTeam, people: IcPeople, book: IcBook, user: IcUser };
+export default function Icon({ name, size = 20, width = 1.7, color = 'currentColor', className, style, filled = false }) {
+  const d = P[name] || P.spark;
+  const solid = filled || name === 'play' || name === 'spark';
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={solid ? color : 'none'} stroke={solid ? 'none' : color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" className={className} style={style} aria-hidden>
+      <path d={d} />
+    </svg>
+  );
+}

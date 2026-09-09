@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Btn, Card, TopBar } from '../components/UI.jsx';
-import { IcDownload, IcCheck } from '../components/Icons.jsx';
+import { Btn, Card, List, Item, TopBar } from '../components/UI.jsx';
+import Icon from '../components/Icons.jsx';
 
-/* Приложение ставится на телефон без магазинов: иконка на экране,
-   запуск на весь экран и работа без интернета. */
+/* Приложение ставится без магазинов: иконка на экране, весь экран, офлайн. */
 
 function platform() {
   const ua = navigator.userAgent || '';
@@ -19,11 +18,7 @@ export default function Install() {
   const os = platform();
 
   useEffect(() => {
-    const on = (e) => {
-      e.preventDefault();
-      window.__installPrompt = e;
-      setPrompt(e);
-    };
+    const on = (e) => { e.preventDefault(); window.__installPrompt = e; setPrompt(e); };
     window.addEventListener('beforeinstallprompt', on);
     return () => window.removeEventListener('beforeinstallprompt', on);
   }, []);
@@ -37,71 +32,36 @@ export default function Install() {
     setPrompt(null);
   };
 
+  const steps = os === 'ios'
+    ? ['Откройте эту страницу в Safari', 'Нажмите «Поделиться» — квадрат со стрелкой', 'Выберите «На экран “Домой”»', 'Нажмите «Добавить»']
+    : os === 'android'
+    ? ['Откройте страницу в Chrome', 'Меню из трёх точек справа сверху', '«Установить приложение» или «Добавить на главный экран»']
+    : ['В Chrome или Edge — значок установки справа в адресной строке', 'Приложение откроется отдельным окном'];
+
   return (
-    <div className="screen">
-      <TopBar title="Установить на телефон" sub="Без App Store и Google Play" />
-
-      {installed || done ? (
-        <Card kind="accent">
-          <div className="row">
-            <IcCheck size={22} className="t-lime" />
-            <div>
-              <div className="t-title">Приложение установлено</div>
-              <div className="t-sub">Открывайте его с домашнего экрана — оно работает и без интернета.</div>
-            </div>
-          </div>
-        </Card>
-      ) : (
-        <>
-          {prompt && (
-            <Btn kind="primary" wide onClick={install}>
-              <IcDownload /> Установить приложение
-            </Btn>
-          )}
-
-          {os === 'ios' && (
-            <Card style={{ marginTop: 10 }}>
-              <div className="t-title">iPhone и iPad</div>
-              <div className="stack s" style={{ marginTop: 8 }}>
-                <div className="t-sub">1. Откройте эту страницу в Safari</div>
-                <div className="t-sub">2. Нажмите «Поделиться» — квадрат со стрелкой внизу экрана</div>
-                <div className="t-sub">3. Выберите «На экран “Домой”»</div>
-                <div className="t-sub">4. Нажмите «Добавить» — появится иконка приложения</div>
-              </div>
-            </Card>
-          )}
-
-          {os === 'android' && (
-            <Card style={{ marginTop: 10 }}>
-              <div className="t-title">Android</div>
-              <div className="stack s" style={{ marginTop: 8 }}>
-                <div className="t-sub">1. Откройте страницу в Chrome</div>
-                <div className="t-sub">2. Меню из трёх точек справа сверху</div>
-                <div className="t-sub">3. «Установить приложение» или «Добавить на главный экран»</div>
-              </div>
-            </Card>
-          )}
-
-          {os === 'desktop' && (
-            <Card style={{ marginTop: 10 }}>
-              <div className="t-title">Компьютер</div>
-              <div className="t-sub" style={{ marginTop: 6 }}>
-                В Chrome или Edge — значок установки справа в адресной строке. Приложение откроется отдельным окном.
-              </div>
-            </Card>
-          )}
-        </>
-      )}
-
-      <Card style={{ marginTop: 10 }}>
-        <div className="t-title">Что это даёт</div>
-        <div className="stack s" style={{ marginTop: 8 }}>
-          <div className="t-sub">· Иконка на экране телефона, как у обычного приложения</div>
-          <div className="t-sub">· Запуск на весь экран, без адресной строки</div>
-          <div className="t-sub">· Расписание и база открываются без интернета</div>
-          <div className="t-sub">· Обновления приходят сами, ничего скачивать не нужно</div>
-        </div>
-      </Card>
+    <div className="screen" style={{ paddingTop: 0 }}>
+      <TopBar title="Установить на телефон" sub="Без App Store и Google Play" backTo="/profile" />
+      <div className="stack-20">
+        {installed || done ? (
+          <Card variant="accent" className="row">
+            <Icon name="check" size={22} color="var(--accent)" />
+            <div><div className="t-md">Приложение установлено</div><div className="t-xs dim-2">Открывайте его с домашнего экрана — работает и без интернета.</div></div>
+          </Card>
+        ) : (
+          <>
+            {prompt && <Btn variant="accent" wide icon="download" onClick={install}>Установить приложение</Btn>}
+            <List>
+              {steps.map((s, i) => <Item key={i} lead={<div className="item__ic num" style={{ fontWeight: 800 }}>{i + 1}</div>} title={s} chev={false} />)}
+            </List>
+          </>
+        )}
+        <List>
+          <Item icon="home" title="Иконка на экране" sub="Как у обычного приложения" chev={false} />
+          <Item icon="eye" title="Весь экран" sub="Без адресной строки браузера" chev={false} />
+          <Item icon="download" title="Работает офлайн" sub="Расписание и база открываются без сети" chev={false} />
+          <Item icon="refresh" title="Обновляется сама" sub="Ничего скачивать не нужно" chev={false} />
+        </List>
+      </div>
     </div>
   );
 }

@@ -117,6 +117,13 @@ export function teamRoster(state, teamId) {
     .filter((m) => m.user);
 }
 
+/** Заявка участника куратору: одна активная на человека. */
+export function applicationOf(state, userId) {
+  return state.applications.find((a) => a.userId === userId && a.status === 'pending') || null;
+}
+
+export const TEAM_ROLES = ['Продукт', 'Продажи', 'Разработка', 'Маркетинг', 'Операционка', 'Финансы'];
+
 export function teamSize(state, teamId) {
   return state.members.filter((m) => m.teamId === teamId).length;
 }

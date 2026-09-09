@@ -5,7 +5,6 @@ import {
   ensureCityRules,
   ensureCoffee,
   buildNotifications,
-  teamOf,
   teamSize,
   MAX_TEAM,
   REFERRAL_BONUS,
@@ -16,9 +15,9 @@ import { DAY, weekKey } from './time.js';
 
 const KEY = 'iaiclub.state.v1';
 
-/* Задержки демо-режима: капитан и участники отвечают сами,
-   иначе в одиночном демо заявку некому принять. */
-const AUTO_TEAM_ANSWER = 15 * 1000;
+/* Задержки демо-режима: куратор и участники отвечают сами,
+   иначе в одиночном демо некому распределить и принять. */
+const AUTO_CURATOR = 20 * 1000;
 const AUTO_FRIEND_ANSWER = 10 * 1000;
 
 function load() {
@@ -195,78 +194,72 @@ function reducer(state, action) {
         'Предложение отправлено в чат города'
       );
 
-    /* ---------- команды ---------- */
+    /* ---------- команды: распределяет куратор ---------- */
+
+    case 'apply': {
+      if (!user) return state;
+      const applications = state.applications.filter((a) => !(a.userId === user.id && a.status === 'pending'));
+      return withToast(
+        {
+          ...state,
+          applications: [...applications, { id: uid('ap'), userId: user.id, role: action.role, hours: action.hours, about: action.about || '', at: now, status: 'pending' }],
+        },
+        'Заявка у куратора'
+      );
+    }
+
+    case 'applyCancel':
+      return withToast({ ...state, applications: state.applications.filter((a) => !(a.userId === user?.id && a.status === 'pending')) }, 'Заявка отозвана');
 
     case 'teamCreate': {
-      if (!user) return state;
       const id = uid('t');
       const team = {
         id,
         name: action.name.trim(),
-        idea: action.idea.trim(),
-        captainId: user.id,
+        idea: (action.idea || '').trim(),
+        captainId: action.captainId || null,
         seasonId: state.season.id,
-        isOpen: true,
-        wanted: action.wanted || 5,
         chatUrl: '',
         createdAt: now,
       };
-      const next = {
-        ...state,
-        teams: [...state.teams, team],
-        members: [...state.members, { teamId: id, userId: user.id, role: 'капитан', joinedAt: now }],
-        requests: state.requests.filter((r) => r.userId !== user.id || r.status !== 'pending'),
-      };
-      return withToast({ ...next, events: [...next.events, ...ensureEvents(next, now)] }, 'Команда создана. Вы капитан');
+      const next = { ...state, teams: [...state.teams, team] };
+      return withToast({ ...next, events: [...next.events, ...ensureEvents(next, now)] }, 'Команда создана');
     }
 
     case 'teamPatch':
       return withToast({ ...state, teams: state.teams.map((t) => (t.id === action.teamId ? { ...t, ...action.patch } : t)) }, 'Сохранено');
 
-    case 'teamApply': {
-      if (!user) return state;
-      if (state.requests.some((r) => r.teamId === action.teamId && r.userId === user.id && r.status === 'pending')) return state;
-      return withToast(
-        { ...state, requests: [...state.requests, { id: uid('q'), teamId: action.teamId, userId: user.id, status: 'pending', note: action.note || '', at: now }] },
-        'Заявка отправлена капитану'
-      );
-    }
-
-    case 'teamAnswer': {
-      const request = state.requests.find((r) => r.id === action.requestId);
-      if (!request) return state;
-      const accept = action.accept && teamSize(state, request.teamId) < MAX_TEAM;
-      const requests = state.requests.map((r) => (r.id === request.id ? { ...r, status: accept ? 'accepted' : 'declined' } : r));
-      if (!accept) return withToast({ ...state, requests }, 'Заявка отклонена');
-      const team = state.teams.find((t) => t.id === request.teamId);
+    /** Куратор определяет участника в команду. */
+    case 'assign': {
+      if (teamSize(state, action.teamId) >= MAX_TEAM) return withToast(state, 'В команде уже 10 человек');
+      const team = state.teams.find((t) => t.id === action.teamId);
+      if (!team) return state;
+      const members = state.members.filter((m) => m.userId !== action.userId);
+      const application = state.applications.find((a) => a.userId === action.userId && a.status === 'pending');
       return withToast(
         {
           ...state,
-          requests,
-          members: [...state.members, { teamId: request.teamId, userId: request.userId, role: 'участник', joinedAt: now }],
-          notes: [...state.notes, note(`team-in-${request.id}`, request.userId, 'Вас взяли в команду', `${team?.name || 'Команда'} приняла вашу заявку.`, `/team/${request.teamId}`, now)],
+          members: [...members, { teamId: team.id, userId: action.userId, role: action.role || application?.role || 'участник', joinedAt: now }],
+          applications: state.applications.map((a) => (a.userId === action.userId && a.status === 'pending' ? { ...a, status: 'assigned', teamId: team.id } : a)),
+          teams: state.teams.map((t) => (t.id === team.id && !t.captainId ? { ...t, captainId: action.userId } : t)),
+          notes: [...state.notes, note(`assigned-${team.id}-${action.userId}-${now}`, action.userId, 'Вы в команде', `Куратор определил вас в команду «${team.name}».`, '/team', now)],
         },
-        'Участник добавлен'
+        action.silent ? null : 'Участник в команде'
       );
     }
 
-    case 'teamLeave': {
-      if (!user) return state;
-      const team = teamOf(state, user.id);
-      if (!team) return state;
-      const members = state.members.filter((m) => !(m.teamId === team.id && m.userId === user.id));
-      const rest = members.filter((m) => m.teamId === team.id);
-      const teams = rest.length
-        ? state.teams.map((t) => (t.id === team.id && t.captainId === user.id ? { ...t, captainId: rest[0].userId } : t))
-        : state.teams.filter((t) => t.id !== team.id);
-      return withToast({ ...state, members, teams }, 'Вы вышли из команды');
-    }
-
-    case 'teamKick':
+    case 'unassign': {
+      const members = state.members.filter((m) => !(m.teamId === action.teamId && m.userId === action.userId));
+      const rest = members.filter((m) => m.teamId === action.teamId);
       return withToast(
-        { ...state, members: state.members.filter((m) => !(m.teamId === action.teamId && m.userId === action.userId)) },
-        'Участник исключён'
+        {
+          ...state,
+          members,
+          teams: state.teams.map((t) => (t.id === action.teamId && t.captainId === action.userId ? { ...t, captainId: rest[0]?.userId || null } : t)),
+        },
+        'Участник убран из команды'
       );
+    }
 
     case 'report': {
       if (!user) return state;
@@ -431,14 +424,17 @@ function reducer(state, action) {
 
       next = ensureCoffee(next, now);
 
-      // Демо: капитаны и участники отвечают на заявки сами
-      const pending = next.requests.filter(
-        (r) => r.status === 'pending' && now - r.at > AUTO_TEAM_ANSWER && next.users.find((u) => u.id === next.teams.find((t) => t.id === r.teamId)?.captainId)?.demo
-      );
-      for (const request of pending) {
-        next = reducer(next, { type: 'teamAnswer', requestId: request.id, accept: teamSize(next, request.teamId) < MAX_TEAM, now });
+      // Демо: куратор распределяет заявки сам — в команду, где меньше всего людей
+      const waiting = next.applications.filter((a) => a.status === 'pending' && now - a.at > AUTO_CURATOR);
+      for (const application of waiting) {
+        const target = [...next.teams]
+          .map((t) => ({ t, n: teamSize(next, t.id) }))
+          .filter((x) => x.n < MAX_TEAM)
+          .sort((a, b) => a.n - b.n)[0];
+        if (!target) break;
+        next = reducer(next, { type: 'assign', teamId: target.t.id, userId: application.userId, role: application.role, silent: true, now });
       }
-      if (pending.length) next = { ...next, toast: state.toast };
+      if (waiting.length) next = { ...next, toast: state.toast };
 
       const friendPending = next.friends.filter(
         (f) => f.status === 'pending' && now - f.at > AUTO_FRIEND_ANSWER && next.users.find((u) => u.id === f.b)?.demo

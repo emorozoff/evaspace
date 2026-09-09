@@ -5,10 +5,10 @@ import { DAY, WEEK, startOfDay, startOfWeek, isoDate, addMonths } from './time.j
    пересборка не плодит дубли: новые недели просто добавляются. */
 
 export const EVENT_TYPES = {
-  online: { label: 'Онлайн', short: 'онлайн' },
-  offline: { label: 'Оффлайн', short: 'оффлайн' },
-  team: { label: 'Командный созвон', short: 'команда' },
-  summit: { label: 'Большой слёт', short: 'слёт' },
+  online: { label: 'Эфир', short: 'эфир' },
+  offline: { label: 'Встреча', short: 'встреча' },
+  team: { label: 'Созвон', short: 'созвон' },
+  summit: { label: 'Слёт', short: 'слёт' },
 };
 
 const RECORDS = [
@@ -93,7 +93,7 @@ export function ensureEvents(state, now = Date.now()) {
     if (weekIndex % 2 === 0) {
       push(
         makeEvent('mastermind', weekdayAt(w, 4, 19), {
-          title: 'Мастермайнд PRO',
+          title: 'Мастермайнд',
           description: 'Пять участников, у каждого 12 минут на разбор своей задачи.',
           type: 'online',
           minPackage: 'pro',
@@ -107,8 +107,8 @@ export function ensureEvents(state, now = Date.now()) {
     if (weekIndex % 2 === 1) {
       push(
         makeEvent('workshop', weekdayAt(w, 2, 19), {
-          title: 'Воркшоп: делаем руками',
-          description: 'Садимся и доделываем одну вещь до конца прямо на встрече.',
+          title: 'Воркшоп',
+          description: 'Доделываем одну вещь до конца прямо на встрече, руками.',
           type: 'online',
           minPackage: 'pro',
           joinUrl: 'https://meet.google.com/iai-club-work',

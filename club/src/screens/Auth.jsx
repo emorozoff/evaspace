@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { PACKAGES } from '../lib/logic.js';
-import { Avatar, Btn, Card, Input, Area, Sheet } from '../components/UI.jsx';
-import { IcSpark, IcCheck } from '../components/Icons.jsx';
 import { money } from '../lib/format.js';
+import { Avatar, Btn, Card, Field, Sheet, List, Item, Tag } from '../components/UI.jsx';
+import Icon from '../components/Icons.jsx';
 
-/* Вход максимально короткий: телефон, три поля, пакет. */
+/* Вход короткий: телефон и код, три поля, пакет. */
 
-export default function Auth({ invite: refCode }) {
+export default function Auth({ invite }) {
   const { state, dispatch } = useStore();
   const [step, setStep] = useState('phone');
   const [phone, setPhone] = useState('');
@@ -18,172 +18,101 @@ export default function Auth({ invite: refCode }) {
   const [pack, setPack] = useState('pro');
   const [demo, setDemo] = useState(false);
 
-  // Пригласившего мы знаем, только если он заходил с этого же устройства.
-  // Ссылка работает в любом случае: скидка применяется по самому коду.
-  const inviter = refCode ? state.users.find((u) => u.ref === refCode) : null;
-  const invited = Boolean(refCode);
-
-  const phoneOk = phone.replace(/\D/g, '').length >= 10;
+  // Пригласившего знаем, только если он заходил с этого же устройства; скидка — по коду.
+  const inviter = invite ? state.users.find((u) => u.ref === invite) : null;
+  const phoneOk = phone.replace(/\D/g, '').length >= 10 && code.length >= 4;
   const profileOk = name.trim().length > 1 && city.trim().length > 1 && about.trim().length > 2;
 
   return (
-    <div className="paywall">
-      <div className="auth-logo">
-        <IcSpark size={34} className="t-lime" />
-      </div>
-
-      <div className="center stack s">
-        <h1 className="t-huge">И АЙ КЛАБ</h1>
-        <div className="t-sub">
-          Расписание, команды, рейтинг выручки, база знаний и люди. Телеграм оставляем для живого общения.
+    <div className="app">
+      <div className="gate">
+        <div className="gate__mark"><Icon name="spark" size={30} color="var(--accent)" /></div>
+        <div className="center">
+          <h1 className="h1">И АЙ КЛАБ</h1>
+          <p className="lead" style={{ marginTop: 8 }}>События, команда, рейтинг и люди клуба. Общение — по-прежнему в телеграме.</p>
         </div>
-      </div>
 
-      {invited && (
-        <Card kind="accent">
-          <div className="row">
-            {inviter ? <Avatar user={inviter} size={40} /> : <IcSpark size={22} className="t-lime" />}
-            <div>
-              <div style={{ fontWeight: 700 }}>
-                {inviter ? `${inviter.name} приглашает вас в клуб` : 'Вы пришли по приглашению'}
-              </div>
-              <div className="t-sub">Скидка 10% на первый месяц уже применена</div>
+        {invite && (
+          <Card variant="accent" className="row">
+            {inviter ? <Avatar user={inviter} size={40} /> : <Icon name="gift" size={22} color="var(--accent)" />}
+            <div className="grow">
+              <div className="t-md">{inviter ? `${inviter.name} приглашает вас` : 'Вы пришли по приглашению'}</div>
+              <div className="t-xs dim-2">Скидка 10% на первый месяц уже применена</div>
             </div>
-          </div>
-        </Card>
-      )}
+          </Card>
+        )}
 
-      {step === 'phone' && (
-        <Card>
+        {step === 'phone' && (
           <div className="stack">
-            <Input
-              label="Телефон"
-              inputMode="tel"
-              placeholder="+7 900 000-00-00"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-            <Input
-              label="Код из СМС"
-              inputMode="numeric"
-              placeholder="4 цифры"
-              hint="Это демо: подойдёт любой код"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-            />
-            <Btn kind="primary" wide disabled={!phoneOk || code.length < 4} onClick={() => setStep('profile')}>
-              Войти
-            </Btn>
-            <Btn kind="ghost" wide onClick={() => setDemo(true)}>
-              Посмотреть как участник клуба
-            </Btn>
+            <Field label="Телефон">
+              <input className="field" inputMode="tel" placeholder="+7 900 000-00-00" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </Field>
+            <Field label="Код из СМС" hint="Это демо — подойдёт любой код из четырёх цифр">
+              <input className="field" inputMode="numeric" placeholder="••••" value={code} onChange={(e) => setCode(e.target.value)} />
+            </Field>
+            <Btn variant="accent" wide disabled={!phoneOk} onClick={() => setStep('profile')}>Войти</Btn>
+            <Btn variant="quiet" wide onClick={() => setDemo(true)}>Посмотреть глазами участника</Btn>
           </div>
-        </Card>
-      )}
+        )}
 
-      {step === 'profile' && (
-        <Card>
+        {step === 'profile' && (
           <div className="stack">
-            <div className="t-sub">Три поля — и вы внутри. Фото, ссылки и «что ищу» можно заполнить потом.</div>
-            <Input label="Имя" placeholder="Как к вам обращаться" value={name} onChange={(e) => setName(e.target.value)} />
-            <Input
-              label="Город"
-              list="cities"
-              placeholder="Начните вводить"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              hint="Как только в городе наберётся двое — появится чат и пятничная встреча"
-            />
-            <datalist id="cities">
-              {state.cities.map((c) => (
-                <option key={c.id} value={c.name} />
-              ))}
-            </datalist>
-            <Area label="Чем занимаетесь" placeholder="Одной строкой" value={about} onChange={(e) => setAbout(e.target.value)} />
-            <Btn
-              kind="primary"
-              wide
-              disabled={!profileOk}
-              onClick={() => {
-                dispatch({ type: 'register', name, city, about, phone, pack, ref: refCode });
-                setStep('pay');
-              }}
-            >
+            <Field label="Имя">
+              <input className="field" placeholder="Как к вам обращаться" value={name} onChange={(e) => setName(e.target.value)} />
+            </Field>
+            <Field label="Город" hint="Двое в городе — и появится чат с пятничной встречей">
+              <input className="field" list="cities" placeholder="Начните вводить" value={city} onChange={(e) => setCity(e.target.value)} />
+            </Field>
+            <datalist id="cities">{state.cities.map((c) => <option key={c.id} value={c.name} />)}</datalist>
+            <Field label="Чем занимаетесь">
+              <input className="field" placeholder="Одной строкой" value={about} onChange={(e) => setAbout(e.target.value)} />
+            </Field>
+            <Btn variant="accent" wide disabled={!profileOk} onClick={() => { dispatch({ type: 'register', name, city, about, phone, pack, ref: invite }); setStep('pay'); }}>
               Продолжить
             </Btn>
+            <div className="t-xs dim-2 center">Фото, ссылки и «что ищу» — потом, в профиле.</div>
           </div>
-        </Card>
-      )}
+        )}
 
-      {step === 'pay' && <Paywall selected={pack} onSelect={setPack} discount={invited} />}
+        {step === 'pay' && <Paywall selected={pack} onSelect={setPack} discount={Boolean(invite)} />}
 
-      {demo && <DemoLogin onClose={() => setDemo(false)} />}
+        <Sheet open={demo} onClose={() => setDemo(false)} title="Войти как участник" sub="Демо: команда, рейтинг и друзья изнутри">
+          <List>
+            {state.users.filter((u) => u.demo).slice(0, 10).map((u) => (
+              <Item key={u.id} lead={<Avatar user={u} size={40} />} title={u.name} sub={u.about} meta={<Tag tone={u.package === 'pro' ? 'violet' : undefined}>{u.package.toUpperCase()}</Tag>} chev={false} onClick={() => dispatch({ type: 'login', userId: u.id })} />
+            ))}
+          </List>
+        </Sheet>
+      </div>
     </div>
   );
 }
 
-/** Экран «Оплати, чтобы войти». Оплата живёт снаружи, приложение только читает статус. */
+/** «Оплатите, чтобы войти». Оплата снаружи — приложение только читает статус. */
 export function Paywall({ selected = 'pro', onSelect, discount = false }) {
   const { dispatch } = useStore();
   const [pack, setPack] = useState(selected);
-  const choose = (id) => {
-    setPack(id);
-    onSelect?.(id);
-  };
-
+  const choose = (id) => { setPack(id); onSelect?.(id); };
   return (
     <div className="stack">
-      <div className="center stack s">
-        <div className="t-title">Оплатите доступ</div>
-        <div className="t-sub">Оплата проходит вне приложения. После оплаты доступ откроется сам.</div>
-      </div>
-
+      <div className="hdr">Пакет</div>
       {Object.values(PACKAGES).map((p) => (
-        <div key={p.id} className={`pack ${pack === p.id ? 'on' : ''}`} onClick={() => choose(p.id)}>
-          <div className="split">
+        <button key={p.id} className={`pack${pack === p.id ? ' pack--on' : ''}`} onClick={() => choose(p.id)}>
+          <div className="spread">
             <div>
-              <div className="t-title">{p.title}</div>
-              <div className="t-sub">{p.note}</div>
+              <div className="t-lg">{p.title}</div>
+              <div className="t-sm dim-2">{p.note}</div>
             </div>
             <div className="center">
-              <div className="mono" style={{ fontWeight: 800 }}>
-                {money(discount ? Math.round(p.price * 0.9) : p.price)}
-              </div>
-              {discount && <div className="t-dim" style={{ textDecoration: 'line-through' }}>{money(p.price)}</div>}
-              <div className="t-dim">в месяц</div>
+              <div className="figure" style={{ fontSize: 17 }}>{money(discount ? Math.round(p.price * 0.9) : p.price)}</div>
+              <div className="t-xs dim-2" style={{ marginTop: 3 }}>{discount ? <s>{money(p.price)}</s> : 'в месяц'}</div>
             </div>
           </div>
-        </div>
+        </button>
       ))}
-
-      <a className="btn violet wide" href="https://t.me/" target="_blank" rel="noreferrer">
-        Перейти к оплате
-      </a>
-      <Btn kind="primary" wide onClick={() => dispatch({ type: 'pay', pack })}>
-        <IcCheck /> Я оплатил — открыть доступ
-      </Btn>
-      <div className="t-dim center">В демо вторая кнопка просто открывает доступ.</div>
+      <a className="btn btn--ghost btn--wide" href="https://t.me/" target="_blank" rel="noreferrer">Перейти к оплате</a>
+      <Btn variant="accent" wide icon="check" onClick={() => dispatch({ type: 'pay', pack })}>Я оплатил — открыть доступ</Btn>
+      <div className="t-xs dim-2 center">В демо вторая кнопка просто открывает доступ.</div>
     </div>
-  );
-}
-
-function DemoLogin({ onClose }) {
-  const { state, dispatch } = useStore();
-  const list = state.users.filter((u) => u.demo).slice(0, 12);
-  return (
-    <Sheet title="Войти как участник" sub="Демо-режим: чтобы посмотреть команды, рейтинг и друзей изнутри" onClose={onClose}>
-      <div className="stack s">
-        {list.map((u) => (
-          <div key={u.id} className="person" onClick={() => dispatch({ type: 'login', userId: u.id })} style={{ padding: '8px 0', cursor: 'pointer' }}>
-            <Avatar user={u} size={40} />
-            <div style={{ minWidth: 0 }}>
-              <div className="ellipsis" style={{ fontWeight: 600 }}>{u.name}</div>
-              <div className="t-dim ellipsis">{u.about}</div>
-            </div>
-            <span className={`chip ${u.package === 'pro' ? 'pro' : ''}`}>{u.package.toUpperCase()}</span>
-          </div>
-        ))}
-      </div>
-    </Sheet>
   );
 }

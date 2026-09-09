@@ -252,7 +252,7 @@ export function buildSeed(now = Date.now()) {
     users,
     teams,
     members,
-    requests: [],
+    applications: [],
     reports,
     revenue,
     contributions,
