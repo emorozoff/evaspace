@@ -89,10 +89,15 @@ strong{font-weight:600;color:var(--ink)}
 .hm em{font-style:normal;color:var(--red)}
 .tag{font-size:clamp(19px,2.2vw,25px);line-height:1.32;font-weight:600;color:var(--ink);margin:0 0 14px;text-wrap:balance;max-width:30ch}
 .hgrid .lead{color:var(--ink-2);margin:0 0 18px;max-width:60ch;font-size:16.5px;line-height:1.6}
-.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(212px,1fr));gap:0 26px;margin:24px 0 0;border-top:2px solid var(--ink);padding-top:2px}
-.facts div{padding:10px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:baseline}
-.facts dt{font-size:13px;color:var(--muted)}
-.facts dd{margin:0;font-family:var(--mono);font-size:12.5px;font-weight:700;white-space:nowrap}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:8px 0 0;background:var(--line-2);border:1px solid var(--line-2);border-radius:6px;overflow:hidden}
+@media (max-width:780px){.facts{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:440px){.facts{grid-template-columns:1fr}}
+.factsh{display:flex;align-items:center;gap:10px;margin:26px 0 0}
+.factsh h4{margin:0}
+.factsh .ln{flex:1;height:1px;background:var(--line-2)}
+.facts div{background:var(--card);padding:12px 15px;display:flex;justify-content:space-between;gap:12px;align-items:baseline;min-width:0}
+.facts dt{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);min-width:0;line-height:1.35}
+.facts dd{margin:0;font-family:var(--mono);font-size:13.5px;font-weight:700;white-space:nowrap;color:var(--ink);text-align:right}
 .cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:22px}
 .cta .hint{font-family:var(--mono);font-size:11.5px;color:var(--muted);flex-basis:100%;margin:0}
 
@@ -378,7 +383,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
           <div>
             <h1 class="hm">И <em>АЙ</em> КЛАБ</h1>
             <p class="tag">Клуб для тех, кто делает всякие штуки с ИИ и хочет наконец встретить своих.</p>
-            <p class="lead">Собираемся по пятницам: онлайн и оффлайн. За 90 дней команда делает вместе первую выручку. По окончанию — крутой выпускной с награждением.</p>
+            <p class="lead">Собираемся по пятницам: онлайн и оффлайн.<br>За 90 дней команда делает вместе первую выручку.<br>По окончанию — крутой выпускной с награждением.</p>
           </div>
           <div class="crt">
             <div class="mon">
@@ -396,11 +401,12 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
             <div class="base" aria-hidden="true"></div>
           </div>
         </div>
+        <div class="factsh"><h4>Коротко о клубе</h4><span class="ln" aria-hidden="true"></span></div>
         <dl class="facts">
           <div><dt>Сезон</dt><dd>90 дней</dd></div>
           <div><dt>Подписка CLUB</dt><dd>от 1 900 ₽</dd></div>
           <div><dt>Подписка PRO</dt><dd>от 4 900 ₽</dd></div>
-          <div><dt>Встречи в месяц</dt><dd>4 CLUB / 6 PRO</dd></div>
+          <div><dt>Встречи</dt><dd>4 CLUB / 6 PRO</dd></div>
           <div><dt>Выпускной</dt><dd>Москва и Питер</dd></div>
           <div><dt>Команды</dt><dd>3–10 человек</dd></div>
         </dl>
@@ -577,19 +583,19 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
 
           <div class="mow">НЕД 1</div>
           <div class="mc"><div class="h"><span class="kind">Онлайн</span><span class="time">18:00–19:30</span></div><span class="topic">Технологии</span>Что вышло, что работает, что перехвалили. Плюс знакомства в комнатах.</div>
-          <div class="mc pro"><div class="h"><span class="kind">Онлайн · глубоко</span><span class="time">18:00–19:30</span></div><span class="topic">Разбор по-взрослому</span>Одна тема целиком: модели, деньги, таблицы, чужие ошибки.</div>
+          <div class="mc pro"><div class="h"><span class="kind">Командный созвон</span><span class="time">как удобно команде</span></div><span class="topic">Проект и задачи</span>Команда обсуждает проект, распределяет задачи, делится опытом и результатом.</div>
 
           <div class="mow">НЕД 2</div>
           <div class="mc off"><div class="h"><span class="kind">Оффлайн</span><span class="time">20:00–23:00</span></div><span class="topic">Москва, Питер или свой регион</span>Боулинг, картинг, бар. Активно проводим время, пьём сок или что-то покрепче.</div>
-          <div class="mc pro"><div class="h"><span class="kind">Командный созвон</span><span class="time">18:00 или как удобно</span></div><span class="topic">Проект и задачи</span>Команда обсуждает проект, распределяет задачи, делится опытом и результатом.</div>
+          <div class="mc pro"><div class="h"><span class="kind">Онлайн · воркшоп</span><span class="time">18:00–19:30</span></div><span class="topic">Разбираем одну тему глубоко</span>Модели, деньги, таблицы, чужие ошибки. Только то, что применяем на практике.</div>
 
           <div class="mow">НЕД 3</div>
           <div class="mc"><div class="h"><span class="kind">Онлайн · гость</span><span class="time">18:00–19:30</span></div><span class="topic">Применение и заработок</span>Кейсы и цифры. Зовём того, кто реально делает, а не рассказывает, как надо.</div>
-          <div class="mc pro"><div class="h"><span class="kind">Мастермайнд</span><span class="time">18:00–19:30</span></div><span class="topic">Команда до 20 человек</span>У кого что горит, кто чем закрывает. Разбираем затыки по очереди.</div>
+          <div class="mc pro"><div class="h"><span class="kind">Командный созвон</span><span class="time">как удобно команде</span></div><span class="topic">Итоги месяца</span>Что получилось, что нет, куда идём дальше и с какими цифрами.</div>
 
           <div class="mow">НЕД 4</div>
           <div class="mc off"><div class="h"><span class="kind">Оффлайн</span><span class="time">20:00–23:00</span></div><span class="topic">Москва, Питер или свой регион</span>Второй сбор. Приводи друга противоположного пола — так в клубе держится баланс.</div>
-          <div class="mc pro"><div class="h"><span class="kind">Командный созвон</span><span class="time">18:00 или как удобно</span></div><span class="topic">Итоги месяца</span>Что получилось, что нет, куда идём дальше и с какими цифрами.</div>
+          <div class="mc pro"><div class="h"><span class="kind">Мастермайнд</span><span class="time">18:00–19:30</span></div><span class="topic">Команда до 10 человек</span>У кого что горит, кто чем закрывает. Разбираем затыки по очереди.</div>
         </div>
         <div class="msg">
           <span class="gl" aria-hidden="true">i</span>
@@ -1099,7 +1105,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
         o.frequency.value=x[0]; o2.frequency.value=x[0]*2.01;
         var g2=a.createGain(); g2.gain.value=.3; o2.connect(g2); g2.connect(g);
         g.gain.setValueAtTime(.0001,t0+x[1]);
-        g.gain.exponentialRampToValueAtTime(.2,t0+x[1]+.008);
+        g.gain.exponentialRampToValueAtTime(.15,t0+x[1]+.008);
         g.gain.exponentialRampToValueAtTime(.0001,t0+x[1]+1.1);
         o.connect(g); g.connect(a.destination);
         o.start(t0+x[1]); o2.start(t0+x[1]); o.stop(t0+x[1]+1.2); o2.stop(t0+x[1]+1.2);
@@ -1108,8 +1114,8 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
       /* 2. «вау»: несколько расстроенных голосов с движущимися формантами */
       var wg=a.createGain();
       wg.gain.setValueAtTime(.0001,t0+.1);
-      wg.gain.exponentialRampToValueAtTime(.34,t0+.28);
-      wg.gain.setValueAtTime(.34,t0+.6);
+      wg.gain.exponentialRampToValueAtTime(.24,t0+.28);
+      wg.gain.setValueAtTime(.24,t0+.6);
       wg.gain.exponentialRampToValueAtTime(.0001,t0+1.5);
       wg.connect(a.destination);
       var fA=a.createBiquadFilter(); fA.type='bandpass'; fA.Q.value=3.5;
@@ -1154,23 +1160,32 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
           }
         };
         for(var k=0;k<3;k++) clap(Math.floor(sr*(0.015+k*0.085+Math.random()*0.02)), 1);
-        for(var c=0;c<48;c++){
+        for(var c=0;c<130;c++){
           var pos=Math.pow(Math.random(),1.2);
           clap(Math.floor(pos*n*0.86), (.45+Math.random()*.55)*(1-pos*.4));
         }
         var pk=0;
         for(i=0;i<n;i++){ var av=d[i]<0?-d[i]:d[i]; if(av>pk) pk=av; }
-        if(pk>0){ var sc=.92/pk; for(i=0;i<n;i++) d[i]*=sc; }
+        if(pk>0){ var sc=.95/pk; for(i=0;i<n;i++) d[i]*=sc; }
+        /* мягкая сатурация: у хлопков высокий пик и низкая средняя энергия,
+           без неё овация звучит тихо даже на полной громкости */
+        var st=4.5, th=Math.tanh(st);
+        for(i=0;i<n;i++) d[i]=Math.tanh(d[i]*st)/th;
       }
       var src=a.createBufferSource(); src.buffer=buf;
-      var hp=a.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=420;
-      var lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=8000;
+      var hp=a.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=400;
+      var lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=8500;
+      var comp=a.createDynamicsCompressor();
+      try{
+        comp.threshold.value=-26; comp.knee.value=12; comp.ratio.value=6;
+        comp.attack.value=.004; comp.release.value=.18;
+      }catch(e){}
       var ag=a.createGain();
       ag.gain.setValueAtTime(.0001,t0+.1);
-      ag.gain.exponentialRampToValueAtTime(.8,t0+.22);
-      ag.gain.setValueAtTime(.8,t0+1.5);
+      ag.gain.exponentialRampToValueAtTime(1.8,t0+.22);
+      ag.gain.setValueAtTime(1.8,t0+1.6);
       ag.gain.exponentialRampToValueAtTime(.0001,t0+.1+dur);
-      src.connect(hp); hp.connect(lp); lp.connect(ag); ag.connect(a.destination);
+      src.connect(hp); hp.connect(lp); lp.connect(comp); comp.connect(ag); ag.connect(a.destination);
       src.start(t0+.1);
       return;
     }
