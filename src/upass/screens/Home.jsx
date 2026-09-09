@@ -6,6 +6,7 @@ import Pulse from '../components/Pulse.jsx';
 import Install from '../components/Install.jsx';
 import { Avatar } from '../components/Art.jsx';
 import { PosterThumb } from '../components/Poster.jsx';
+import { SceneThumb } from '../components/Scene.jsx';
 import { Top, List, Item, Section, Sheet, Btn, Actions, Note } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 import { REGIONS } from '../data/regions.js';
@@ -61,16 +62,16 @@ export default function Home() {
 
       <Section title="Ближний круг" more="Все чаты" onMore={() => go('/chats')}>
         <div className="scroller">
-          <button className="center" style={{ width: 66 }} onClick={() => setAdd(true)}>
-            <span className="circle-add"><Icon name="plus" size={20} /></span>
-            <div className="t-xs dim-2" style={{ marginTop: 7, fontWeight: 600 }}>Добавить</div>
-          </button>
           {inner.map((p) => (
             <button key={p.id} className="center" style={{ width: 66 }} onClick={() => go(`/dm/${p.id}`)}>
               <Avatar person={p} size={52} dot={p.online} style={{ margin: '0 auto' }} />
               <div className="t-xs" style={{ marginTop: 7, fontWeight: 600 }}>{p.name.split(' ')[0]}</div>
             </button>
           ))}
+          <button className="center" style={{ width: 66 }} onClick={() => setAdd(true)}>
+            <span className="circle-add"><Icon name="plus" size={20} /></span>
+            <div className="t-xs dim-2" style={{ marginTop: 7, fontWeight: 600 }}>Добавить</div>
+          </button>
         </div>
       </Section>
 
@@ -138,21 +139,26 @@ export default function Home() {
         </Section>
       )}
 
-      {app.trips.length > 0 && (
-        <Section title="Мои поездки" more="Все" onMore={() => go('/trips')}>
-          <List>
-            {[...app.trips].sort((a, b) => a.inDays - b.inDays).slice(0, 3).map((t) => (
-              <Item
-                key={t.id}
-                icon="plane"
-                title={`${REGIONS[t.region]?.flag} ${REGIONS[t.region]?.name}`}
-                sub={`${t.when || relDay(t.inDays)} · ${stayLabel(t.days)}`}
-                onClick={() => go('/trips')}
-              />
-            ))}
-          </List>
-        </Section>
-      )}
+      <Section title="Мои поездки" more={app.trips.length ? 'Все' : undefined} onMore={() => go('/trips')}>
+        <List>
+          {[...app.trips].sort((a, b) => a.inDays - b.inDays).slice(0, 3).map((t) => (
+            <Item
+              key={t.id}
+              lead={<SceneThumb city={t.region} size={44} />}
+              title={`${REGIONS[t.region]?.flag} ${REGIONS[t.region]?.name}`}
+              sub={`${t.when || relDay(t.inDays)} · ${stayLabel(t.days)}`}
+              onClick={() => go('/trips')}
+            />
+          ))}
+          <Item
+            icon="plus"
+            title="Добавить поездку"
+            sub={app.trips.length ? 'Регион, месяц и срок' : 'Сообщество в регионе увидит вас и позовёт на встречи'}
+            tone="var(--gold)"
+            onClick={() => go('/trips?new=1')}
+          />
+        </List>
+      </Section>
 
       <Sheet open={add} onClose={() => setAdd(false)} title="Кого добавить" sub="Нажатие сразу переносит в ближний круг">
         <AddCircle app={app} />

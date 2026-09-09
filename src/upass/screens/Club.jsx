@@ -1,47 +1,59 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { Top, List, Item, Section, Sheet, Btn, Note } from '../components/UI.jsx';
+import { Top, List, Item, Section, Seg, Sheet, Btn, Note, Search, Chip, Scroller } from '../components/UI.jsx';
 import { Seal } from '../components/Art.jsx';
 import ResidentCard from '../components/ResidentCard.jsx';
+import { CommunityRow } from './Communities.jsx';
 import Icon from '../components/Icons.jsx';
 import { MOTTO, MOTTO_MASKED } from '../data/canon.js';
-import { COMMUNITIES, SERVICE_CATS, SERVICE_ORDER, SERVICES } from '../data/life.js';
+import { COMMUNITIES, SERVICES } from '../data/life.js';
 import { RESIDENTS } from '../data/people.js';
 import { REGIONS } from '../data/regions.js';
+import { communitiesFor } from '../lib/select.js';
 import { bestMatches } from '../lib/match.js';
-import { nf, plural } from '../lib/format.js';
+import { plural } from '../lib/format.js';
 
-/* Клуб — это справочник из трёх блоков: сообщества, люди, услуги.
-   Всё, что про правила и личный рост, живёт в настройках. */
+/* Клуб — две вкладки: люди и сообщества. Деление сообществ на интересы,
+   города и закрытые клубы стало обычным фильтром внутри вкладки. */
+
+const GROUPS = [
+  { id: 'all', name: 'Все' },
+  { id: 'mine', name: 'Мои' },
+  { id: 'topic', name: 'По интересам' },
+  { id: 'city', name: 'По городам' },
+  { id: 'closed', name: 'Закрытые' },
+];
+
 export default function Club() {
   const app = useApp();
   const { me } = app;
+  const [tab, setTab] = useState('people');
+  const [q, setQ] = useState('');
+  const [group, setGroup] = useState('all');
   const [knocks, setKnocks] = useState(0);
   const [door, setDoor] = useState(false);
   const [word, setWord] = useState('');
   const [tries, setTries] = useState(0);
 
-  const open = COMMUNITIES.filter((c) => c.access === 'open');
-  const byTopic = open.filter((c) => c.region === 'global').length;
-  const byCity = open.filter((c) => c.region !== 'global').length;
-  const clubs = COMMUNITIES.filter((c) => c.access === 'closed').length;
-  const joined = COMMUNITIES.filter((c) => app.communities.includes(c.id));
-
-  /* В витрине показываем разных людей: подряд четыре инвестора с одинаковым
-     процентом выглядят как ошибка, хотя счёт честный. */
   const people = useMemo(() => {
-    const seen = {};
-    return bestMatches(me, RESIDENTS, 40)
-      .filter(({ p }) => (seen[p.role] = (seen[p.role] || 0) + 1) <= 2)
-      .slice(0, 4);
-  }, [me]);
-  const cats = useMemo(() => {
-    const has = {};
-    for (const s of SERVICES) has[s.cat] = (has[s.cat] || 0) + 1;
-    return SERVICE_ORDER.map((id) => SERVICE_CATS.find((c) => c.id === id)).filter((c) => has[c.id]);
-  }, []);
-  const count = (id) => SERVICES.filter((s) => s.cat === id).length;
+    const s = q.trim().toLowerCase();
+    const ranked = bestMatches(me, RESIDENTS, 60);
+    if (!s) return ranked;
+    return ranked.filter(({ p }) =>
+      [p.name, p.company, p.title, p.gives, p.needs, REGIONS[p.city].name].join(' ').toLowerCase().includes(s)
+    );
+  }, [me, q]);
+
+  const groups = useMemo(() => {
+    let out = communitiesFor(me);
+    if (group === 'mine') out = out.filter((c) => app.communities.includes(c.id));
+    if (group === 'topic') out = out.filter((c) => c.access === 'open' && c.region === 'global');
+    if (group === 'city') out = out.filter((c) => c.access === 'open' && c.region !== 'global');
+    if (group === 'closed') out = out.filter((c) => c.access === 'closed');
+    const s = q.trim().toLowerCase();
+    return s ? out.filter((c) => `${c.name} ${c.about}`.toLowerCase().includes(s)) : out;
+  }, [me, group, q, app.communities]);
 
   const knock = () => {
     if (app.secret) return go('/lodge');
@@ -58,70 +70,65 @@ export default function Club() {
     <div className="screen stack-20">
       <Top
         title="Клуб"
-        sub={`${COMMUNITIES.length} сообществ · ${RESIDENTS.length} резидентов · ${SERVICES.length} услуг`}
         right={<button className="iconbtn" onClick={() => go('/profile')} aria-label="Настройки"><Icon name="settings" size={18} /></button>}
       />
 
-      {/* — сообщества — */}
-      <Section title="Сообщества" more="Все" onMore={() => go('/communities')}>
-        <div className="tiles">
-          <Tile emoji="🧭" title="По интересам" n={byTopic} onClick={() => go('/communities')} />
-          <Tile emoji="📍" title="По городам" n={byCity} onClick={() => go('/communities')} />
-          <Tile emoji="🔒" title="Закрытые клубы" n={clubs} onClick={() => go('/communities')} />
-        </div>
-        {joined.length > 0 && (
-          <List>
-            {joined.slice(0, 3).map((c) => (
-              <Item
-                key={c.id}
-                lead={<div className="item__ic" style={{ background: `${c.tone}22`, color: c.tone, borderRadius: 14 }}><Icon name={c.icon} size={19} /></div>}
-                title={c.name}
-                sub={`Вы здесь · ${nf(c.members)} ${plural(c.members, 'участник', 'участника', 'участников')}`}
-                onClick={() => go(`/chat/${c.id}`)}
-              />
-            ))}
-          </List>
-        )}
-      </Section>
+      <Seg
+        value={tab}
+        onChange={(v) => { setTab(v); setQ(''); }}
+        options={[
+          { value: 'people', label: `Резиденты · ${RESIDENTS.length}` },
+          { value: 'groups', label: `Сообщества · ${COMMUNITIES.length}` },
+        ]}
+      />
 
-      {/* — резиденты — */}
-      <Section title="Резиденты" more={`Вся база · ${RESIDENTS.length}`} onMore={() => go('/people')}>
+      <Search value={q} onChange={setQ} placeholder={tab === 'people' ? 'Имя, компания, что даёт…' : 'Название сообщества'} />
+
+      {tab === 'people' ? (
         <div className="stack-8">
-          {people.map(({ p }) => <ResidentCard key={p.id} p={p} me={me} />)}
+          {people.length === 0 && <Note icon="search">Никого не нашлось. Попробуйте другое слово.</Note>}
+          {people.slice(0, 30).map(({ p }) => <ResidentCard key={p.id} p={p} me={me} />)}
         </div>
-      </Section>
+      ) : (
+        <>
+          <Scroller>
+            {GROUPS.map((g) => (
+              <Chip key={g.id} on={group === g.id} onClick={() => setGroup(g.id)}>
+                {g.name}{g.id === 'mine' ? ` · ${app.communities.length}` : ''}
+              </Chip>
+            ))}
+          </Scroller>
+          {groups.length === 0 ? (
+            <Note icon="users">Ничего не нашлось. Снимите фильтр или измените запрос.</Note>
+          ) : (
+            <List>
+              {groups.map((c) => <CommunityRow key={c.id} c={c} joined={app.communities.includes(c.id)} />)}
+            </List>
+          )}
+        </>
+      )}
 
-      {/* — услуги — */}
-      <Section title="Услуги" more="Все услуги" onMore={() => go('/market')}>
-        <div className="scroller">
-          {cats.map((c) => (
-            <button key={c.id} className="shelf" onClick={() => go('/market')}>
-              <span className="shelf__e">{c.emoji}</span>
-              <span className="shelf__t">{c.short}</span>
-              <span className="shelf__n">{count(c.id)}</span>
-            </button>
-          ))}
-        </div>
+      <Section title="Ещё">
         <List>
-          {SERVICES.slice(0, 2).map((s) => (
-            <Item
-              key={s.id}
-              icon={SERVICE_CATS.find((c) => c.id === s.cat)?.icon || 'gift'}
-              title={s.title}
-              sub={`${s.region === 'global' ? 'везде' : REGIONS[s.region]?.name} · ${s.days} ${plural(s.days, 'день', 'дня', 'дней')}`}
-              onClick={() => go(`/service/${s.id}`)}
-            />
-          ))}
+          <Item
+            icon="briefcase"
+            title="Услуги"
+            sub={`${SERVICES.length} ${plural(SERVICES.length, 'услуга', 'услуги', 'услуг')} для переезда и быта`}
+            onClick={() => go('/market')}
+          />
+          <Item icon="message" title="Запросы" sub="Что нужно резидентам прямо сейчас" onClick={() => go('/requests')} />
         </List>
       </Section>
 
+      {/* Кодекс — единственная кнопка внизу. Дверь в ложу спрятана в подписи. */}
       <div className="center" style={{ paddingTop: 4 }}>
-        <button onClick={knock} aria-label="Печать клуба" style={{ opacity: app.secret ? 1 : 0.5 }}>
-          <Seal size={64} motto={app.secret ? MOTTO : MOTTO_MASKED} glow={app.secret} />
+        <button className="codex-card" onClick={() => go('/codex')}>
+          <Seal size={70} motto={app.secret ? MOTTO : MOTTO_MASKED} glow={app.secret} />
+          <span className="t-md">Кодекс сообщества</span>
         </button>
-        <div className="t-xs dim-2" style={{ marginTop: 8 }}>
-          {app.secret ? 'Ложа открыта' : knocks ? '·'.repeat(knocks) : 'Печать сообщества'}
-        </div>
+        <button className="t-xs dim-2" style={{ marginTop: 8, padding: '4px 10px' }} onClick={knock}>
+          {app.secret ? 'Ложа открыта' : knocks ? '·'.repeat(knocks) : 'Законы, традиции и ритуалы'}
+        </button>
       </div>
 
       <Sheet open={door} onClose={() => setDoor(false)} title="Дверь без таблички" sub="Три удара">
@@ -129,20 +136,10 @@ export default function Club() {
           <div className="t-sm dim" style={{ lineHeight: 1.5 }}>Войти можно, назвав последнее слово девиза на печати.</div>
           <div className="center mono gold" style={{ fontSize: 13, letterSpacing: '0.22em' }}>{MOTTO_MASKED}</div>
           <input className="field center mono" style={{ letterSpacing: '0.3em', textTransform: 'uppercase' }} value={word} autoFocus placeholder="·····" onChange={(e) => setWord(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
-          {tries > 0 && <Note icon="key">{tries === 1 ? 'Не то слово. Подсказка — в разделе «Кодекс» в настройках.' : 'Пять традиций стоят в правильном порядке не случайно. Прочтите их первые буквы.'}</Note>}
+          {tries > 0 && <Note icon="key">{tries === 1 ? 'Не то слово. Подсказка — в кодексе.' : 'Пять традиций стоят в правильном порядке не случайно. Прочтите их первые буквы.'}</Note>}
           <Btn variant="gold" wide onClick={submit} disabled={!word.trim()}>Назвать слово</Btn>
         </div>
       </Sheet>
     </div>
-  );
-}
-
-function Tile({ emoji, title, n, onClick }) {
-  return (
-    <button className="tile" onClick={onClick}>
-      <span className="tile__ic" style={{ background: 'var(--surface-3)', fontSize: 19 }}>{emoji}</span>
-      <span className="tile__t">{title}</span>
-      <span className="tile__n figure">{n}</span>
-    </button>
   );
 }

@@ -5,17 +5,17 @@ import { TopBar, List, Item, Btn, Chip, Sheet, Empty, KV, Note } from '../compon
 import { SceneThumb } from '../components/Scene.jsx';
 import Icon from '../components/Icons.jsx';
 import { REGIONS, REGION_KEYS } from '../data/regions.js';
-import { flight, monthly, hoursText } from '../lib/travel.js';
-import { usdExact, nf, plural, monthsAhead, relDay, stayLabel } from '../lib/format.js';
+import { flight, hoursText } from '../lib/travel.js';
+import { nf, plural, monthsAhead, relDay, stayLabel } from '../lib/format.js';
 
 /* Мои поездки. Календарь тут стилистика, а не сетка: месяцы идут сверху вниз
    списком, внутри месяца — карточки. Поездка открывается и правится. */
 
 const STAY = [3, 7, 14, 30, 60, 89];
 
-export default function Trips() {
+export default function Trips({ query = {} }) {
   const app = useApp();
-  const [edit, setEdit] = useState(null);       // поездка или 'new'
+  const [edit, setEdit] = useState(query.new ? 'new' : null);   // поездка или 'new'
   const months = useMemo(() => monthsAhead(9), []);
 
   const groups = useMemo(() => {
@@ -62,15 +62,13 @@ export default function Trips() {
                 {list.map((t) => {
                   const r = REGIONS[t.region];
                   const f = flight(app.me.city, t.region);
-                  const m = monthly(t.region, 'lean');
-                  const total = (f ? f.from * 2 : 0) + Math.round((m.total / 30) * t.days);
                   return (
                     <Item
                       key={t.id}
                       lead={<SceneThumb city={t.region} size={46} />}
                       title={`${r.flag} ${r.name}`}
                       sub={`${t.when || relDay(t.inDays)} · ${stayLabel(t.days)}`}
-                      meta={<span className="gold" style={{ fontSize: 13, fontWeight: 700 }}>≈ {usdExact(total)}</span>}
+                      meta={f ? <span>{hoursText(f.hours)}</span> : undefined}
                       onClick={() => setEdit(t)}
                     />
                   );
@@ -116,8 +114,6 @@ function TripSheet({ open, trip, months, app, onClose }) {
 
   const picked = months.find((x) => x.key === month) || months[0];
   const f = flight(app.me.city, region);
-  const m = monthly(region, 'lean');
-  const live = Math.round((m.total / 30) * days);
 
   const save = () => {
     const patch = { region, days, month: picked.key, inDays: picked.inDays, when: picked.label };
@@ -150,12 +146,11 @@ function TripSheet({ open, trip, months, app, onClose }) {
           </div>
         </div>
 
-        <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
-          {f && <KV k="Перелёт" v={`${nf(f.km)} км · ${hoursText(f.hours)}`} />}
-          {f && <KV k="Билеты туда-обратно" v={`от ${usdExact(f.from * 2)}`} />}
-          <KV k="Жизнь на срок" v={usdExact(live)} />
-          <KV k="Всего примерно" v={usdExact((f ? f.from * 2 : 0) + live)} tone="var(--gold)" />
-        </div>
+        {f && (
+          <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
+            <KV k="Перелёт" v={`${nf(f.km)} км · ${hoursText(f.hours)}${f.direct ? '' : ' · с пересадкой'}`} />
+          </div>
+        )}
 
         <Btn variant="gold" wide onClick={save}>{trip ? 'Сохранить' : 'Объявить'}</Btn>
         {trip && (

@@ -19,8 +19,9 @@ export function Top({ title, right, sub }) {
 export function TopBar({ title, sub, backTo, onBack, right }) {
   return (
     <div className="topbar">
-      <button className="iconbtn" onClick={() => (onBack ? onBack() : back(backTo))} aria-label="Назад">
-        <Icon name="back" size={19} />
+      <button className="backbtn" onClick={() => (onBack ? onBack() : back(backTo))}>
+        <Icon name="back" size={18} />
+        <span>Назад</span>
       </button>
       <div className="grow" style={{ minWidth: 0 }}>
         <div className="topbar__title ell">{title}</div>
@@ -166,8 +167,11 @@ export function Sheet({ open, onClose, title, sub, children }) {
       <div className="backdrop" onClick={onClose} />
       <div className="sheet" role="dialog" aria-modal="true">
         <div className="sheet__grip" />
+        <button className="sheet__x" onClick={onClose} aria-label="Закрыть">
+          <Icon name="x" size={16} />
+        </button>
         {title && (
-          <div style={{ marginBottom: 14 }}>
+          <div style={{ marginBottom: 14, paddingRight: 44 }}>
             <h2 className="h2">{title}</h2>
             {sub && <div className="t-sm dim-2" style={{ marginTop: 4 }}>{sub}</div>}
           </div>

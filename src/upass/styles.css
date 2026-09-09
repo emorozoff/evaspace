@@ -125,6 +125,9 @@ a { color: inherit; text-decoration: none; }
 .iconbtn:active { transform: scale(0.94); background: var(--surface-2); }
 .iconbtn--gold { background: var(--gold); color: #241a07; }
 .iconbtn--sm { width: 30px; height: 30px; border-radius: 9px; }
+/* Возврат — с подписью: по одной иконке в шапке легко промахнуться. */
+.backbtn { display: flex; align-items: center; gap: 5px; height: 38px; padding: 0 12px 0 9px; flex: none; border-radius: 12px; background: var(--surface); color: var(--ink-2); font-size: 13.5px; font-weight: 600; transition: 0.15s; }
+.backbtn:active { transform: scale(0.95); background: var(--surface-2); }
 
 /* --- списки как в мессенджере ------------------------------------------- */
 .list { background: var(--surface); border-radius: var(--r-md); overflow: hidden; }
@@ -264,6 +267,8 @@ button.card.spread { display: flex; align-items: center; justify-content: space-
 .sheet .list, .sheet .card, .sheet .note, .sheet .stat { background: var(--surface-2); }
 @keyframes sheetUp { from { transform: translateY(14%); opacity: 0.5 } to { transform: none; opacity: 1 } }
 .sheet__grip { width: 36px; height: 4px; border-radius: 999px; background: var(--line-2); margin: 2px auto 14px; }
+.sheet__x { position: absolute; top: 12px; right: var(--pad); width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: var(--surface-2); color: var(--ink-2); }
+.sheet__x:active { transform: scale(0.92); }
 
 /* --- поля ---------------------------------------------------------------- */
 .field { width: 100%; min-height: 46px; padding: 12px 14px; border-radius: var(--r-sm); background: var(--surface); border: 1px solid transparent; color: var(--ink); outline: none; transition: 0.15s; }
@@ -367,16 +372,19 @@ textarea.field { min-height: 88px; resize: vertical; line-height: 1.5; }
 /* Карусель: уходящий слайд и приходящий живут рядом ровно одну анимацию. */
 .pulse { position: relative; padding: 14px 16px 22px; border-radius: var(--r-md); background: var(--surface); overflow: hidden; }
 .pulse__body { display: block; width: 100%; touch-action: pan-y; }
-.pulse__view { position: relative; height: 50px; }
+.pulse__view { position: relative; height: 50px; overflow: hidden; }
 .pulse__slide { position: absolute; inset: 0; display: flex; align-items: center; }
-.pulse__slide--in { animation: pulseIn 0.44s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.pulse__slide--out { animation: pulseOut 0.44s cubic-bezier(0.22, 1, 0.36, 1) both; }
+/* Как на табло: строка целиком уезжает влево, следующая приходит справа.
+   Прозрачность падает только по краям, поэтому смена читается как движение,
+   а не как мигание. */
+.pulse__slide--in { animation: pulseIn 0.62s cubic-bezier(0.62, 0.02, 0.24, 1) both; }
+.pulse__slide--out { animation: pulseOut 0.62s cubic-bezier(0.62, 0.02, 0.24, 1) both; }
 .pulse[data-dir='-1'] .pulse__slide--in { animation-name: pulseInBack; }
 .pulse[data-dir='-1'] .pulse__slide--out { animation-name: pulseOutBack; }
-@keyframes pulseIn { from { opacity: 0; transform: translateX(40px) } to { opacity: 1; transform: none } }
-@keyframes pulseOut { from { opacity: 1; transform: none } to { opacity: 0; transform: translateX(-40px) } }
-@keyframes pulseInBack { from { opacity: 0; transform: translateX(-40px) } to { opacity: 1; transform: none } }
-@keyframes pulseOutBack { from { opacity: 1; transform: none } to { opacity: 0; transform: translateX(40px) } }
+@keyframes pulseIn { from { opacity: 0; transform: translateX(112%) } 40% { opacity: 1 } to { opacity: 1; transform: none } }
+@keyframes pulseOut { from { opacity: 1; transform: none } 60% { opacity: 1 } to { opacity: 0; transform: translateX(-112%) } }
+@keyframes pulseInBack { from { opacity: 0; transform: translateX(-112%) } 40% { opacity: 1 } to { opacity: 1; transform: none } }
+@keyframes pulseOutBack { from { opacity: 1; transform: none } 60% { opacity: 1 } to { opacity: 0; transform: translateX(112%) } }
 
 .pulse__region { display: flex; align-items: center; gap: 13px; width: 100%; }
 .pulse__title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
@@ -436,6 +444,10 @@ textarea.field { min-height: 88px; resize: vertical; line-height: 1.5; }
 .shelf__e { font-size: 21px; }
 .shelf__t { font-size: 11px; font-weight: 700; }
 .shelf__n { font-size: 10px; font-weight: 700; color: var(--ink-3); }
+
+/* --- кодекс внизу клуба -------------------------------------------------- */
+.codex-card { display: grid; justify-items: center; gap: 8px; width: 100%; padding: 16px 12px; border-radius: var(--r-md); background: var(--surface); transition: 0.14s; }
+.codex-card:active { transform: scale(0.98); background: var(--surface-2); }
 
 /* --- чипы-переходы по разделам региона ----------------------------------- */
 .jump { display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 13px; border-radius: 999px; background: var(--surface); font-size: 13px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }

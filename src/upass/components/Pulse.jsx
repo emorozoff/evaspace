@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from './Icons.jsx';
-import { Avatar } from './Art.jsx';
 import { REGIONS, timeIn } from '../data/regions.js';
-import { residentsIn, agendaFor, regionStats } from '../lib/select.js';
-import { nf, plural, relDay } from '../lib/format.js';
+import { regionStats } from '../lib/select.js';
+import { nf, plural } from '../lib/format.js';
 
 /* Живой блок под паспортом. Информация занимает его целиком и сменяется
    каруселью: текущее уходит влево, следующее приходит справа. Меняется само
@@ -11,7 +10,8 @@ import { nf, plural, relDay } from '../lib/format.js';
    экран прыгает на каждой смене. */
 
 const EVERY = 5000;
-const OUT = 440;
+const OUT = 620;                       // столько же длится анимация в стилях
+const SUGGEST = ['bali', 'dubai'];     // куда зовём, если поездка не объявлена
 const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
 export default function Pulse({ app }) {
@@ -91,13 +91,33 @@ function buildSlides(app, now) {
   const { me } = app;
   const r = REGIONS[me.city];
   const stats = regionStats(me.city);
-  const here = residentsIn(me.city).filter((p) => p.id !== me.id);
-  const online = here.filter((p) => p.online);
-  const next = agendaFor(me, me.city, 1)[0];
   const trip = [...app.trips].sort((a, b) => a.inDays - b.inDays)[0];
   const clocks = (app.clocks || []).filter((k) => REGIONS[k]).slice(0, 3);
+  /* Перелёт стоит первым: это самая красивая карточка. Если своя поездка
+     не объявлена, показываем направление, куда сообщество летает чаще всего. */
+  const to = REGIONS[trip?.region || SUGGEST.find((k) => k !== me.city)];
 
-  const out = [
+  return [
+    {
+      id: 'trip',
+      body: (
+        <div className="pulse__trip">
+          <div className="pulse__city">
+            <span className="pulse__flag--sm">{r.flag}</span>
+            <span>{r.name}</span>
+          </div>
+          <div className="pulse__route">
+            <span className="pulse__dash" />
+            <Icon name="plane" size={22} color="var(--gold)" />
+            <span className="pulse__dash" />
+          </div>
+          <div className="pulse__city">
+            <span className="pulse__flag--sm">{to.flag}</span>
+            <span>{to.name}</span>
+          </div>
+        </div>
+      ),
+    },
     {
       id: 'region',
       body: (
@@ -129,62 +149,4 @@ function buildSlides(app, now) {
       ),
     },
   ];
-
-  if (trip) {
-    const to = REGIONS[trip.region];
-    out.push({
-      id: 'trip',
-      body: (
-        <div className="pulse__trip">
-          <div className="pulse__city">
-            <span className="pulse__flag--sm">{r.flag}</span>
-            <span>{r.name}</span>
-          </div>
-          <div className="pulse__route">
-            <span className="pulse__dash" />
-            <Icon name="plane" size={22} color="var(--gold)" />
-            <span className="pulse__dash" />
-          </div>
-          <div className="pulse__city">
-            <span className="pulse__flag--sm">{to.flag}</span>
-            <span>{to.name}</span>
-          </div>
-        </div>
-      ),
-    });
-  } else {
-    out.push({
-      id: 'trip',
-      body: (
-        <div className="pulse__region">
-          <span className="pulse__ic"><Icon name="plane" size={20} color="var(--gold)" /></span>
-          <div className="grow" style={{ minWidth: 0 }}>
-            <div className="pulse__title ell">Куда летим</div>
-            <div className="pulse__sub ell">Поездка ещё не объявлена</div>
-          </div>
-        </div>
-      ),
-    });
-  }
-
-  out.push({
-    id: 'near',
-    body: (
-      <div className="pulse__region">
-        <div className="ava-stack" style={{ flex: 'none' }}>
-          {here.slice(0, 3).map((p) => <Avatar key={p.id} person={p} size={34} />)}
-        </div>
-        <div className="grow" style={{ minWidth: 0 }}>
-          <div className="pulse__title ell">{here.length ? `${here.length} своих рядом` : 'Своих рядом пока нет'}</div>
-          <div className="pulse__sub ell">
-            {here.length
-              ? `${online.length} в сети${next ? ` · встреча ${relDay(next.inDays)}` : ''}`
-              : 'Посмотрите карту — сообщество в соседнем регионе'}
-          </div>
-        </div>
-      </div>
-    ),
-  });
-
-  return out;
 }

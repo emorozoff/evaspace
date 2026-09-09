@@ -36,6 +36,16 @@ export default function Profile() {
           <Btn variant="ghost" wide icon="pin" onClick={() => setCityOpen(true)}>{REGIONS[me.city].flag} {REGIONS[me.city].name}</Btn>
         </div>
 
+        <List>
+          <Item
+            icon="message"
+            title="Написать в поддержку UPASS"
+            sub="Отвечаем в рабочие часы, обычно в тот же день"
+            tone="var(--gold)"
+            onClick={() => app.say('Обращение отправлено — ответим в чате')}
+          />
+        </List>
+
         <Section title="Видимость профиля">
           <Seg value={app.visibility} onChange={app.setVisibility} options={[{ value: 'all', label: 'Все' }, { value: 'contacts', label: 'Контакты' }, { value: 'hidden', label: 'Скрыт' }]} />
           <Note icon="eye">Клуб знает только город, который вы указали. Точная геолокация не используется, история перемещений не хранится.</Note>

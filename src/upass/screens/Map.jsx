@@ -5,22 +5,16 @@ import WorldMap from '../components/WorldMap.jsx';
 import Scene, { SceneThumb } from '../components/Scene.jsx';
 import { Avatar } from '../components/Art.jsx';
 import { PosterThumb } from '../components/Poster.jsx';
-import { Top, List, Item, Chip, Section, Sheet, Btn, KV, Note, Seg, Tag } from '../components/UI.jsx';
+import { Top, List, Item, Chip, Section, Sheet, Btn, Note, Seg, Tag } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
-import { REGIONS, REGION_KEYS, MAIN_REGIONS, TIERS_REGION, TOTALS, visaShort } from '../data/regions.js';
+import { REGIONS, REGION_KEYS, MAIN_REGIONS, TIERS_REGION, TOTALS } from '../data/regions.js';
 import { RESIDENTS, byId } from '../data/people.js';
 import { EVENT_KINDS, FLAGSHIPS } from '../data/life.js';
 import { circleOf, circleMeta } from '../data/circles.js';
 import { upcoming, whereToMeet } from '../lib/select.js';
 import { bestMatches, matchPct, matchReasons } from '../lib/match.js';
-import { flight, monthly, tripCost, fitsBudget, hoursText } from '../lib/travel.js';
+import { flight, monthly, fitsBudget, hoursText } from '../lib/travel.js';
 import { usdExact, nf, plural, relDay, stayLabel } from '../lib/format.js';
-
-const HOUSING = [
-  { id: 'apt', name: 'Апартаменты' },
-  { id: 'villa', name: 'Вилла' },
-  { id: 'hotel', name: 'Отель' },
-];
 
 const SORTS = [
   { value: 'near', label: 'Ближе' },
@@ -31,9 +25,9 @@ const SORTS = [
 export default function MapScreen() {
   const app = useApp();
   const { me } = app;
-  const [sel, setSel] = useState(null);
   const [budget, setBudget] = useState(null);
   const [tab, setTab] = useState('places');
+  const open = (key) => go(`/region/${key}`);
 
   return (
     <div className="screen screen--flush stack-20">
@@ -48,8 +42,7 @@ export default function MapScreen() {
         <WorldMap
           regions={REGION_KEYS}
           people={RESIDENTS}
-          selected={sel}
-          onSelect={setSel}
+          onSelect={open}
           onPerson={(id) => go(`/p/${id}`)}
           myRegion={me.city}
           height={340}
@@ -64,7 +57,7 @@ export default function MapScreen() {
         <Section title="Основные регионы">
           <div className="scroller">
             {MAIN_REGIONS.map((k) => (
-              <button key={k} onClick={() => setSel(k)} style={{ width: 172 }}>
+              <button key={k} onClick={() => open(k)} style={{ width: 172 }}>
                 <Scene city={k} height={108}>
                   <div className="scene__over">
                     <div className="t-md" style={{ color: '#fff' }}>{REGIONS[k].flag} {REGIONS[k].name}</div>
@@ -90,16 +83,12 @@ export default function MapScreen() {
           />
           {tab === 'events' && <EventsTab me={me} />}
           {tab === 'people' && <PeopleTab app={app} />}
-          {tab === 'places' && <PlacesTab me={me} onPick={setSel} onBudget={() => setBudget(3000)} />}
+          {tab === 'places' && <PlacesTab me={me} onPick={open} onBudget={() => setBudget(3000)} />}
         </Section>
       </div>
 
-      <Sheet open={!!sel} onClose={() => setSel(null)}>
-        {sel && <RegionSheet from={me.city} to={sel} onOpen={() => go(`/region/${sel}`)} />}
-      </Sheet>
-
       <Sheet open={budget !== null} onClose={() => setBudget(null)} title="Регион под бюджет" sub="Билеты туда-обратно плюс месяц жизни">
-        {budget !== null && <BudgetPicker from={me.city} limit={budget} setLimit={setBudget} onPick={(k) => { setBudget(null); setSel(k); }} />}
+        {budget !== null && <BudgetPicker from={me.city} limit={budget} setLimit={setBudget} onPick={open} />}
       </Sheet>
     </div>
   );
@@ -268,57 +257,6 @@ function PlacesTab({ me, onPick, onBudget }) {
           />
         ))}
       </List>
-    </div>
-  );
-}
-
-/* Карточка направления: перелёт, жильё, месяц жизни — всё считается на месте. */
-function RegionSheet({ from, to, onOpen }) {
-  const [style, setStyle] = useState('lean');
-  const [housing, setHousing] = useState('apt');
-  const r = REGIONS[to];
-  const t = tripCost(from, to, style, housing, 1);
-  const f = t.flight;
-  const rent = housing === 'hotel' ? t.monthly.rent * 30 : t.monthly.rent;
-  const month = rent + t.monthly.living;
-
-  return (
-    <div className="stack">
-      <Scene city={to} height={150}>
-        <div className="scene__over">
-          <div className="h2" style={{ color: '#fff' }}>{r.name}</div>
-          <div className="t-xs" style={{ color: 'rgba(255,255,255,.75)' }}>{r.country} · {TIERS_REGION[r.tier].name}</div>
-        </div>
-      </Scene>
-
-      <div className="stats">
-        <div className="stat"><div className="stat__v">{r.residents}</div><div className="stat__l">Резидентов</div></div>
-        <div className="stat"><div className="stat__v">{r.companies}</div><div className="stat__l">Компаний</div></div>
-        <div className="stat"><div className="stat__v">{r.communities}</div><div className="stat__l">Сообществ</div></div>
-      </div>
-
-      {f && (
-        <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
-          <KV k="Перелёт" v={`${nf(f.km)} км · ${hoursText(f.hours)}${f.direct ? '' : ' · с пересадкой'}`} />
-          <KV k="Билет" v={`от ${usdExact(f.from)} · обычно ${usdExact(f.avg)}`} tone="var(--gold)" />
-        </div>
-      )}
-
-      <Seg value={style} onChange={setStyle} options={[{ value: 'lean', label: 'Экономно' }, { value: 'comfort', label: 'Комфортно' }]} />
-      <div className="wrap">
-        {HOUSING.map((h) => <Chip key={h.id} on={housing === h.id} onClick={() => setHousing(h.id)}>{h.name}</Chip>)}
-      </div>
-
-      <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
-        <KV k={housing === 'hotel' ? 'Отель, за месяц' : 'Жильё, месяц'} v={usdExact(rent)} />
-        <KV k="Еда, транспорт, связь" v={usdExact(t.monthly.living)} />
-        <KV k="Месяц жизни" v={usdExact(month)} tone="var(--gold)" />
-        <KV k="С билетами туда-обратно" v={usdExact(t.tickets + month)} tone="var(--cyan)" />
-      </div>
-
-      <Note icon="eye">{visaShort(to)}. Лучшее время: {r.best.toLowerCase()}. Интернет — около {r.internet} Мбит/с.</Note>
-
-      <Btn variant="gold" wide onClick={onOpen}>Открыть регион</Btn>
     </div>
   );
 }

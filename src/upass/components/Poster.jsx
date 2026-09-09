@@ -13,10 +13,20 @@ export default function Poster({ event, height = 168, radius, children, compact 
   const kind = EVENT_KINDS[event.kind];
   const big = ['connect', 'conf', 'world'].includes(event.kind);
 
+  /* У трёх событий года своя заставка: силуэт города для них слишком
+     обычный, а сами слёты каждый раз в новой стране. */
+  if (big) {
+    return (
+      <Flagship kind={event.kind} seed={event.id} height={height} radius={radius}>
+        <Ribbon kind={event.kind} />
+        {children}
+      </Flagship>
+    );
+  }
+
   if (!event.online && REGIONS[event.region]) {
     return (
       <Scene city={event.region} height={height} radius={radius} label>
-        {big && <Ribbon kind={event.kind} />}
         {children}
       </Scene>
     );
@@ -82,11 +92,113 @@ export function Live({ tone = '#5B8CFF', seed = 'x', height = 168, radius, label
   );
 }
 
-/* Лента большого события поверх силуэта региона. */
+/* ——— заставки трёх событий года ——————————————————————————————————————— */
+const PLATE = { connect: '#3b1c33', conf: '#3d2617', world: '#2a2338' };
+
+export function Flagship({ kind, seed = 'x', height = 168, radius, children }) {
+  const id = useId().replace(/:/g, '');
+  const tone = EVENT_KINDS[kind].tone;
+  const plate = PLATE[kind] || '#241f33';
+  const W = 320, H = 160;
+
+  const art = useMemo(() => {
+    const rnd = seeded('flag' + seed);
+    if (kind === 'connect') {
+      /* Слёт в новой стране: глобус, дуга маршрута и круг гостей. */
+      const dots = Array.from({ length: 13 }, (_, i) => {
+        const a = Math.PI + (i / 12) * Math.PI;
+        return [160 + Math.cos(a) * 96, 138 + Math.sin(a) * 30];
+      });
+      return (
+        <g>
+          <circle cx="228" cy="62" r="44" fill="none" stroke={tone} strokeOpacity="0.5" strokeWidth="1.1" />
+          <ellipse cx="228" cy="62" rx="18" ry="44" fill="none" stroke={tone} strokeOpacity="0.3" strokeWidth="0.9" />
+          <ellipse cx="228" cy="62" rx="34" ry="44" fill="none" stroke={tone} strokeOpacity="0.22" strokeWidth="0.9" />
+          <path d="M184 62h88M192 40h72M192 84h72" stroke={tone} strokeOpacity="0.24" strokeWidth="0.9" />
+          <path d="M62 96C110 24 210 12 268 34" fill="none" stroke={tone} strokeOpacity="0.75" strokeWidth="1.5" strokeDasharray="5 5" />
+          <circle cx="62" cy="96" r="4" fill={tone} />
+          <circle cx="268" cy="34" r="4" fill={tone} />
+          {dots.map(([x, y], i) => (
+            <circle key={i} cx={x} cy={y} r={i % 3 ? 2.6 : 3.6} fill={tone} fillOpacity={0.3 + (i % 4) * 0.14} />
+          ))}
+        </g>
+      );
+    }
+    if (kind === 'conf') {
+      /* Конференция: схема, где линии сходятся в один узел. */
+      const lines = Array.from({ length: 9 }, (_, i) => {
+        const y = 18 + i * 16;
+        return `M8 ${y}H${90 + rnd() * 60}L${196} 80`;
+      });
+      return (
+        <g>
+          {lines.map((d, i) => (
+            <path key={i} d={d} fill="none" stroke={tone} strokeOpacity={0.14 + (i % 3) * 0.1} strokeWidth="1" />
+          ))}
+          <circle cx="196" cy="80" r="30" fill="none" stroke={tone} strokeOpacity="0.4" strokeWidth="1.1" />
+          <circle cx="196" cy="80" r="16" fill={tone} fillOpacity="0.14" stroke={tone} strokeOpacity="0.6" strokeWidth="1" />
+          <path d="M196 66l4.4 9.6 9.6 4.4-9.6 4.4-4.4 9.6-4.4-9.6-9.6-4.4 9.6-4.4z" fill={tone} fillOpacity="0.9" />
+          {[248, 274, 300].map((x, i) => (
+            <rect key={x} x={x} y={54 + i * 18} width="14" height="14" rx="4" fill="none" stroke={tone} strokeOpacity="0.4" strokeWidth="1" />
+          ))}
+        </g>
+      );
+    }
+    /* U-world: венок, лучи и звезда — церемония года. */
+    const rays = Array.from({ length: 24 }, (_, i) => {
+      const a = (i / 24) * Math.PI * 2;
+      return `M${228 + Math.cos(a) * 46} ${72 + Math.sin(a) * 46}L${228 + Math.cos(a) * 62} ${72 + Math.sin(a) * 62}`;
+    });
+    const leaf = (side) =>
+      Array.from({ length: 7 }, (_, i) => {
+        const a = (-0.9 + i * 0.3) * side;
+        const x = 228 + Math.sin(a) * 42 * side;
+        const y = 72 + Math.cos(a) * 42;
+        return `M${x} ${y}q${7 * side} -7 ${13 * side} -2q-8 7 -13 2z`;
+      });
+    return (
+      <g>
+        {rays.map((d, i) => (
+          <path key={i} d={d} stroke={tone} strokeOpacity={i % 2 ? 0.16 : 0.32} strokeWidth="1" />
+        ))}
+        {[...leaf(1), ...leaf(-1)].map((d, i) => (
+          <path key={i} d={d} fill={tone} fillOpacity="0.5" />
+        ))}
+        <circle cx="228" cy="72" r="30" fill="none" stroke={tone} strokeOpacity="0.5" strokeWidth="1.1" />
+        <path d="M228 54l5.6 12.2 12.2 5.6-12.2 5.6-5.6 12.2-5.6-12.2-12.2-5.6 12.2-5.6z" fill={tone} fillOpacity="0.9" />
+        <path d="M18 128h120M18 138h74" stroke={tone} strokeOpacity="0.22" strokeWidth="1" />
+      </g>
+    );
+  }, [kind, seed, tone]);
+
+  return (
+    <div className="scene" style={{ height, borderRadius: radius, background: plate }}>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <radialGradient id={`fg${id}`} cx="70%" cy="34%" r="72%">
+            <stop offset="0%" stopColor={tone} stopOpacity="0.34" />
+            <stop offset="100%" stopColor={tone} stopOpacity="0" />
+          </radialGradient>
+          <pattern id={`fp${id}`} width="7" height="7" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.6" fill="#fff" fillOpacity="0.06" />
+          </pattern>
+        </defs>
+        <rect width={W} height={H} fill={plate} />
+        <rect width={W} height={H} fill={`url(#fp${id})`} />
+        <rect width={W} height={H} fill={`url(#fg${id})`} />
+        {art}
+      </svg>
+      <div className="scene__shade" />
+      {children}
+    </div>
+  );
+}
+
+/* Лента большого события поверх заставки. */
 function Ribbon({ kind }) {
   const k = EVENT_KINDS[kind];
   return (
-    <div style={{ position: 'absolute', right: 12, top: 12, display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 999, background: 'rgba(7,8,12,.6)', color: k.tone, fontSize: 11, fontWeight: 800, letterSpacing: '0.08em' }}>
+    <div style={{ position: 'absolute', right: 12, top: 12, display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 999, background: 'rgba(7,8,12,.6)', color: k.tone, fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
       <Icon name={k.icon} size={13} color={k.tone} />
       {k.name.toUpperCase()}
     </div>
@@ -96,9 +208,10 @@ function Ribbon({ kind }) {
 /* Маленькая квадратная заставка для строк списка. */
 export function PosterThumb({ event, size = 46 }) {
   const kind = EVENT_KINDS[event.kind];
-  if (!event.online && REGIONS[event.region]) return <SceneThumb city={event.region} size={size} />;
+  const big = ['connect', 'conf', 'world'].includes(event.kind);
+  if (!big && !event.online && REGIONS[event.region]) return <SceneThumb city={event.region} size={size} />;
   return (
-    <div style={{ width: size, height: size, flex: 'none', borderRadius: size * 0.28, background: `${kind.tone}1e`, display: 'grid', placeItems: 'center', color: kind.tone }}>
+    <div style={{ width: size, height: size, flex: 'none', borderRadius: size * 0.28, background: big ? `${kind.tone}2e` : `${kind.tone}1e`, boxShadow: big ? `inset 0 0 0 1px ${kind.tone}55` : 'none', display: 'grid', placeItems: 'center', color: kind.tone }}>
       <Icon name={kind.icon} size={size * 0.44} />
     </div>
   );

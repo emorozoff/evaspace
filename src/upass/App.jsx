@@ -86,7 +86,7 @@ function render(root, id, query) {
     case 'lodge': return <Lodge />;
     case 'rep': return <Rep />;
     case 'profile': return <Profile />;
-    case 'trips': return <Trips />;
+    case 'trips': return <Trips query={query} />;
     default: return <Home />;
   }
 }
