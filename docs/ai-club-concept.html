@@ -4,9 +4,10 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 :root{
-  --bg:#F1F0F2; --surface:#FFFFFF; --ink:#171419; --ink-2:#3B3740; --muted:#6B6672;
-  --line:#D9D6DD; --line-strong:#B4B0BB;
-  --accent:#DE3B2A; --accent-ink:#FFF7F5; --accent-tint:#FBE6E2; --accent-text:#C4321F;
+  --bg:#EDECEF; --surface:#FFFFFF; --ink:#141218; --ink-2:#3A3640; --muted:#6E6976;
+  --line:#DAD7DE; --line-strong:#B6B2BC;
+  --accent:#E8402B; --on-accent:#FFF6F4; --accent-soft:#FBE5E1; --accent-text:#C22E1B;
+  --dark:#141218; --on-dark:#F3F0F5; --dark-line:#3A3640;
   --display:'Unbounded','Arial Black','Helvetica Neue',Arial,sans-serif;
   --body:'Onest','Helvetica Neue',Arial,sans-serif;
   --mono:'JetBrains Mono','SFMono-Regular',Consolas,'Liberation Mono',monospace;
@@ -14,52 +15,50 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#121115; --surface:#1B191F; --ink:#F2EFF4; --ink-2:#D3CFD8; --muted:#9C96A3;
-    --line:#2E2B34; --line-strong:#4A4652;
-    --accent:#F0553F; --accent-ink:#1A0D0B; --accent-tint:#3A1F1B; --accent-text:#FF7A66;
+    --bg:#111014; --surface:#1A181E; --ink:#F3F0F5; --ink-2:#D2CDD8; --muted:#9A94A2;
+    --line:#2B2831; --line-strong:#474350;
+    --accent:#FF5A42; --on-accent:#1A0B08; --accent-soft:#3A1C17; --accent-text:#FF8068;
+    --dark:#26232C; --on-dark:#F3F0F5; --dark-line:#4A4653;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#121115; --surface:#1B191F; --ink:#F2EFF4; --ink-2:#D3CFD8; --muted:#9C96A3;
-  --line:#2E2B34; --line-strong:#4A4652;
-  --accent:#F0553F; --accent-ink:#1A0D0B; --accent-tint:#3A1F1B; --accent-text:#FF7A66;
+  --bg:#111014; --surface:#1A181E; --ink:#F3F0F5; --ink-2:#D2CDD8; --muted:#9A94A2;
+  --line:#2B2831; --line-strong:#474350;
+  --accent:#FF5A42; --on-accent:#1A0B08; --accent-soft:#3A1C17; --accent-text:#FF8068;
+  --dark:#26232C; --on-dark:#F3F0F5; --dark-line:#4A4653;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased}
 a{color:inherit}
 a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-.page{max-width:1180px;margin:0 auto;padding:28px 20px 96px}
+.page{max-width:1160px;margin:0 auto;padding:26px 18px 90px}
 @media (min-width:1000px){
-  .page{display:grid;grid-template-columns:200px minmax(0,1fr);gap:64px;padding:48px 40px 120px}
-  .index{position:sticky;top:28px;align-self:start}
+  .page{display:grid;grid-template-columns:180px minmax(0,1fr);gap:56px;padding:44px 36px 110px}
+  .index{position:sticky;top:26px;align-self:start}
 }
-.content{min-width:0;max-width:860px}
-p,li{max-width:68ch}
-.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-h2{font-family:var(--display);font-weight:700;font-size:clamp(22px,2.6vw,30px);line-height:1.18;letter-spacing:-.01em;margin:0 0 16px;text-wrap:balance}
-h3{font-family:var(--display);font-weight:500;font-size:16px;line-height:1.3;margin:0 0 8px;text-wrap:balance}
-h4{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px;font-weight:500}
-p{margin:0 0 14px}
-ul,ol{margin:0 0 14px;padding-left:20px}
-li{margin:0 0 6px}
-li::marker{color:var(--muted)}
-strong{font-weight:600}
-.sec{padding:56px 0 12px;border-top:1px solid var(--line)}
-.sec:first-of-type{border-top:0}
-.small{font-size:14px;color:var(--muted)}
-.tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-text);border:1px solid currentColor;border-radius:999px;padding:2px 9px;font-weight:500;white-space:nowrap}
+.content{min-width:0;max-width:880px}
+.sec{padding:54px 0 8px;border-top:1px solid var(--line)}
+.sec.hero{border-top:0;padding:14px 0 34px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(23px,2.7vw,32px);line-height:1.14;letter-spacing:-.015em;margin:0 0 14px;text-wrap:balance}
+h3{font-family:var(--display);font-weight:500;font-size:15.5px;line-height:1.3;margin:0 0 6px;text-wrap:balance}
+h4{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:30px 0 12px;font-weight:500}
+.sec > p{margin:0 0 14px;max-width:66ch;color:var(--ink-2)}
+.sec > p.strong{color:var(--ink)}
+strong{font-weight:600;color:var(--ink)}
+.small{font-size:13.5px;color:var(--muted);max-width:70ch}
 
-/* index */
-.index{font-family:var(--mono);font-size:12px;letter-spacing:.03em}
-.index .brand{font-family:var(--display);font-weight:900;font-size:14px;letter-spacing:.02em;margin:0 0 18px;padding-left:12px;color:var(--ink)}
+/* nav */
+.index{font-family:var(--mono);font-size:11.5px;letter-spacing:.02em}
+.index .brand{font-family:var(--display);font-weight:900;font-size:13px;letter-spacing:.01em;margin:0 0 16px;padding-left:12px}
 .index a{display:block;color:var(--muted);text-decoration:none;padding:5px 0 5px 12px;border-left:1px solid var(--line)}
 .index a.on,.index a:hover{color:var(--ink);border-left-color:var(--accent)}
 @media (max-width:999px){
-  .index{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid var(--line);scrollbar-width:none}
+  .index{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:4px;border-bottom:1px solid var(--line);scrollbar-width:none}
   .index::-webkit-scrollbar{display:none}
   .index .brand{display:none}
   .index a{border:1px solid var(--line);border-radius:999px;padding:6px 11px;white-space:nowrap}
@@ -67,715 +66,482 @@ strong{font-weight:600}
 }
 
 /* hero */
-.hero{padding:18px 0 0}
-.brand-title{font-family:var(--display);font-weight:900;font-size:clamp(58px,11.5vw,138px);line-height:.92;letter-spacing:-.025em;margin:6px 0 28px;text-transform:uppercase}
+.brand-title{font-family:var(--display);font-weight:900;font-size:clamp(56px,11.8vw,140px);line-height:.9;letter-spacing:-.03em;margin:4px 0 24px;text-transform:uppercase}
 .brand-title span{display:block}
 .brand-title em{font-style:normal;color:var(--accent)}
-.lead{font-size:clamp(19px,2.1vw,23px);line-height:1.4;font-weight:500;max-width:30ch;margin:0 0 12px;text-wrap:balance}
-.lead + p{color:var(--ink-2);max-width:60ch}
-.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:22px 28px;margin:34px 0 0;padding:20px 0 0;border-top:2px solid var(--ink)}
-.facts div{margin:0}
-.facts dt{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.lead{font-size:clamp(19px,2.2vw,24px);line-height:1.35;font-weight:500;max-width:26ch;margin:0 0 14px;color:var(--ink);text-wrap:balance}
+.hero > p{max-width:58ch;color:var(--ink-2);margin:0 0 14px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px 26px;margin:30px 0 0;padding:18px 0 0;border-top:2px solid var(--ink)}
+.facts dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .facts dd{margin:0}
-.facts dd.big{font-family:var(--display);font-weight:700;font-size:27px;line-height:1.1;letter-spacing:-.01em;margin:6px 0 4px;font-variant-numeric:tabular-nums}
-.facts dd.sub{font-size:14px;color:var(--muted)}
+.facts dd.big{font-family:var(--display);font-weight:700;font-size:25px;line-height:1.1;letter-spacing:-.01em;margin:6px 0 3px}
+.facts dd.sub{font-size:13.5px;color:var(--muted);line-height:1.35}
 
-/* tables */
-.scroll{overflow-x:auto;margin:0 0 18px}
-.tbl{width:100%;border-collapse:collapse;font-size:15px;line-height:1.45;min-width:520px}
-.tbl th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 14px 10px 0;border-bottom:1px solid var(--line-strong);font-weight:500;vertical-align:bottom}
-.tbl td{padding:12px 14px 12px 0;border-bottom:1px solid var(--line);vertical-align:top}
-.tbl td:first-child{font-weight:600}
-.tbl tr.hi td{background:var(--accent-tint)}
-.tbl tr.hi td:first-child{padding-left:10px}
-.nw{white-space:nowrap}
-.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:14px}
+/* two-column honest lists */
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:22px 32px;margin:18px 0 20px}
+.stack{border-top:2px solid var(--ink);padding-top:12px}
+.stack.no{border-top-color:var(--line-strong)}
+.stack h3{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:10px}
+.stack ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.stack li{font-size:15.5px;line-height:1.4;padding-left:20px;position:relative;color:var(--ink-2)}
+.stack li::before{content:"—";position:absolute;left:0;color:var(--line-strong)}
+.stack.yes li::before{content:"+";color:var(--accent);font-weight:600}
 
-/* grids and cards */
-.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:26px 36px;margin:8px 0 22px}
-.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:26px 36px;margin:8px 0 22px}
-.seg,.level,.tier,.col{border-top:2px solid var(--ink);padding-top:12px}
-.seg h3{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.seg .who{font-size:15px;color:var(--ink-2);margin:0 0 6px}
-.kv{display:grid;grid-template-columns:86px 1fr;gap:6px 12px;margin:10px 0 0;font-size:15px}
-.kv dt{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:3px}
-.kv dd{margin:0}
-.level .lvl{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
-.level h3{font-size:19px}
-.level .q{font-size:15px;color:var(--ink-2);margin:0 0 12px;font-style:italic}
-.level ul,.col ul,.tier ul{padding-left:18px;font-size:15px}
-.note{border-left:3px solid var(--accent);padding:4px 0 4px 18px;margin:22px 0;color:var(--ink-2)}
-.note p:last-child{margin-bottom:0}
-.manifest{list-style:none;padding:0;margin:8px 0 26px;display:grid;gap:14px}
-.manifest li{max-width:none;padding:0 0 14px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:minmax(200px,2fr) 3fr;gap:6px 28px}
-.manifest li b{font-family:var(--display);font-weight:500;font-size:16px;line-height:1.3}
-.manifest li span{color:var(--ink-2);font-size:15px}
-@media (max-width:640px){.manifest li{grid-template-columns:1fr}}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
-.chips span{font-family:var(--mono);font-size:12.5px;border:1px solid var(--line-strong);border-radius:999px;padding:4px 11px}
+/* callout */
+.note{border-left:3px solid var(--accent);padding:2px 0 2px 18px;margin:22px 0;max-width:66ch}
+.note p{margin:0;color:var(--ink-2)}
+.note p + p{margin-top:8px}
 
-/* accent plate */
-.plate{background:var(--accent);color:var(--accent-ink);padding:34px 34px 30px;border-radius:6px;margin:6px 0 26px}
-.plate .eyebrow{color:var(--accent-ink);opacity:.85}
-.plate .tag{color:var(--accent-ink);opacity:.9}
-.plate h2{font-size:clamp(30px,4.4vw,48px);font-weight:900;line-height:1.02;letter-spacing:-.02em;margin:0 0 18px}
-.plate p{font-size:17px;max-width:62ch}
-.plate ul{margin:18px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 22px}
-.plate li{max-width:none;font-size:15px;line-height:1.45;padding-top:10px;border-top:1px solid color-mix(in srgb,var(--accent-ink) 35%,transparent)}
-.plate li b{display:block;font-family:var(--display);font-weight:500;font-size:14px;margin-bottom:3px}
-@media (max-width:640px){.plate{padding:26px 22px 22px}}
-
-/* weeks */
-.weeks{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0 26px}
-@media (max-width:700px){.weeks{grid-template-columns:repeat(2,1fr)}}
-.wk{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;font-size:14px;line-height:1.4}
-.wk b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:500}
-.wk.final{border-color:var(--accent);background:var(--accent-tint)}
-.wk.final b{color:var(--accent-text)}
-
-/* sequences */
-.seq{list-style:none;margin:16px 0 22px;padding:0;border-left:2px solid var(--line-strong)}
-.seq li{position:relative;padding:0 0 18px 22px;max-width:70ch}
-.seq li::before{content:"";position:absolute;left:-6px;top:7px;width:10px;height:10px;border-radius:50%;background:var(--ink)}
-.seq li:last-child{padding-bottom:4px}
-.seq b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;font-weight:500}
-.pipe{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;counter-reset:step;list-style:none;margin:14px 0 18px;padding:0}
-.pipe li{max-width:none;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 13px;font-size:14px;line-height:1.4;counter-increment:step;margin:0}
-.pipe li::before{content:"шаг " counter(step);display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-
-@media (max-width:700px){.pipe{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:460px){.pipe{grid-template-columns:1fr}}
+/* who */
+.who{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 32px;margin:6px 0 18px}
+.who div{padding:12px 0;border-bottom:1px solid var(--line)}
+.who b{font-family:var(--display);font-weight:500;font-size:15px;display:block;margin-bottom:3px}
+.who span{font-size:14.5px;color:var(--muted);line-height:1.4}
 
 /* tiers */
-.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:26px 32px;margin:8px 0 22px}
-.tier.pro{border-top-color:var(--accent)}
-.tier .name{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;align-items:center}
-.price{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:-.01em;line-height:1;margin:8px 0 4px;font-variant-numeric:tabular-nums}
-.price small{font-family:var(--mono);font-size:12px;font-weight:400;color:var(--muted);letter-spacing:.04em;margin-left:6px}
-.tier .for{font-size:14px;color:var(--muted);margin:0 0 10px}
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:8px 0 18px}
+.tier{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px 18px 20px;display:flex;flex-direction:column}
+.tier.pro{background:var(--dark);border-color:var(--dark);color:var(--on-dark)}
+.tier .nm{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tier.pro .nm{color:var(--accent)}
+.tier .pr{font-family:var(--display);font-weight:700;font-size:27px;letter-spacing:-.015em;line-height:1;margin:10px 0 2px}
+.tier .pr small{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--muted);letter-spacing:.04em;margin-left:5px}
+.tier.pro .pr small{color:#A9A2B3}
+.tier .qt{font-size:14px;color:var(--muted);margin:0 0 12px;line-height:1.4}
+.tier.pro .qt{color:#A9A2B3}
+.tier ul{list-style:none;margin:0;padding:0;display:grid;gap:7px;font-size:14.5px;line-height:1.4}
+.tier li{padding-left:15px;position:relative;color:var(--ink-2)}
+.tier.pro li{color:var(--on-dark)}
+.tier li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:var(--line-strong)}
+.tier.pro li::before{background:var(--accent)}
 
-/* flywheel */
-.fly{display:grid;grid-template-columns:minmax(300px,1.5fr) minmax(220px,1fr);gap:28px 40px;align-items:center;margin:8px 0 22px}
-@media (max-width:820px){.fly{grid-template-columns:1fr}}
-.fly svg{width:100%;height:auto;color:var(--ink);font-family:var(--body);font-size:22px;font-weight:600;display:block}
-.fly svg .cap{font-family:var(--mono);font-size:15px;font-weight:500;letter-spacing:.1em;fill:var(--muted)}
+/* month grid */
+.month{display:grid;grid-template-columns:74px 1fr 1fr;gap:8px;margin:12px 0 16px}
+.mh{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:0 0 2px 2px}
+.mh.pro{color:var(--accent-text)}
+.mw{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:14px}
+.mc{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 13px;font-size:14px;line-height:1.4;color:var(--ink-2)}
+.mc b{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;font-weight:500;color:var(--muted)}
+.mc.online b{color:var(--ink)}
+.mc.offline{background:var(--accent-soft);border-color:var(--accent-soft)}
+.mc.offline b{color:var(--accent-text)}
+.mc.prod{background:var(--dark);border-color:var(--dark);color:var(--on-dark)}
+.mc.prod b{color:var(--accent)}
+.mc.idle{background:transparent;border-style:dashed;color:var(--muted);display:flex;align-items:center}
+.mc.idle b{display:none}
+@media (max-width:600px){
+  .month{grid-template-columns:52px 1fr 1fr;gap:6px}
+  .mc{padding:10px;font-size:12.5px}
+  .mw{font-size:10px}
+}
 
-/* phases */
-.phases{display:grid;grid-template-columns:repeat(4,1fr);gap:22px 24px;margin:8px 0 22px}
-@media (max-width:820px){.phases{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:460px){.phases{grid-template-columns:1fr}}
-.phase{border-top:2px solid var(--ink);padding-top:12px}
-.phase b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:6px}
-.phase h3{margin-bottom:8px}
-.phase ul{padding-left:18px;font-size:14.5px;margin:0}
+/* season timeline */
+.season{list-style:none;margin:16px 0 18px;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;position:relative}
+.season li{border-top:2px solid var(--line-strong);padding:12px 12px 0 0}
+.season li.fin{border-top-color:var(--accent)}
+.season b{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:500}
+.season li.fin b{color:var(--accent-text)}
+.season h3{margin-bottom:5px}
+.season p{margin:0;font-size:14px;line-height:1.42;color:var(--muted)}
+@media (max-width:760px){.season{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:420px){.season{grid-template-columns:1fr}}
 
-.cal{list-style:none;padding:0;margin:8px 0 22px;display:grid;gap:0}
-.cal li{max-width:none;display:grid;grid-template-columns:110px 1fr;gap:8px 22px;padding:14px 0;border-bottom:1px solid var(--line);margin:0}
-.cal li b{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500;padding-top:4px}
-.cal li h3{margin-bottom:4px}
-.cal li p{margin:0;font-size:15px;color:var(--ink-2)}
-@media (max-width:560px){.cal li{grid-template-columns:1fr}}
+/* flow steps */
+.flow{list-style:none;margin:14px 0 18px;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;counter-reset:s}
+.flow li{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:13px 14px;font-size:14px;line-height:1.4;color:var(--ink-2);counter-increment:s;position:relative}
+.flow li::before{content:counter(s);display:block;font-family:var(--mono);font-size:10.5px;color:var(--accent-text);margin-bottom:6px;font-weight:500}
+.flow li b{display:block;font-family:var(--display);font-weight:500;font-size:14.5px;color:var(--ink);margin-bottom:4px}
+@media (max-width:760px){.flow{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:420px){.flow{grid-template-columns:1fr}}
 
-.questions{list-style:none;padding:0;margin:8px 0 0}
-.questions li{max-width:70ch;padding:12px 0 12px 30px;border-bottom:1px solid var(--line);position:relative;margin:0}
-.questions li::before{content:"?";position:absolute;left:0;top:11px;font-family:var(--mono);color:var(--accent-text);font-weight:500}
-footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
-footer p{max-width:none}
+/* price ladder */
+.ladder{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:end;margin:14px 0 10px;max-width:520px}
+.ladder div{text-align:center}
+.ladder .bar{background:var(--line);border-radius:5px 5px 0 0}
+.ladder div:first-child .bar{background:var(--accent)}
+.ladder .v{font-family:var(--mono);font-size:12.5px;margin-bottom:6px;color:var(--ink)}
+.ladder .lb{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:7px;line-height:1.3}
+
+/* diagrams */
+.dia{margin:14px 0 18px}
+.dia svg{width:100%;height:auto;display:block;color:var(--ink);font-family:var(--body);font-weight:600}
+.dia svg text{fill:currentColor}
+.dia svg .cap{font-family:var(--mono);font-weight:500;letter-spacing:.1em;fill:var(--muted)}
+.dia svg .hot{fill:var(--on-accent)}
+.dia + p{margin-top:0}
+.two{display:grid;grid-template-columns:minmax(280px,1.5fr) minmax(220px,1fr);gap:26px 34px;align-items:center;margin:14px 0 18px}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+.two p{margin:0;font-size:15.5px;color:var(--ink-2)}
+
+/* lists in sections */
+.bul{list-style:none;margin:6px 0 16px;padding:0;display:grid;gap:10px;max-width:70ch}
+.bul li{padding-left:20px;position:relative;font-size:15.5px;line-height:1.45;color:var(--ink-2)}
+.bul li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.bul li b{color:var(--ink)}
+
+/* tables */
+.scroll{overflow-x:auto;margin:6px 0 16px}
+.tbl{width:100%;border-collapse:collapse;font-size:14.5px;line-height:1.4;min-width:480px}
+.tbl th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 14px 9px 0;border-bottom:1px solid var(--line-strong);font-weight:500}
+.tbl td{padding:11px 14px 11px 0;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2)}
+.tbl td:first-child{font-weight:600;color:var(--ink);white-space:nowrap}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:13.5px}
+
+/* people */
+.people{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin:8px 0 16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px}
+.card b{font-family:var(--display);font-weight:500;font-size:16px;display:block;margin-bottom:6px}
+.card p{margin:0;font-size:14.5px;line-height:1.45;color:var(--ink-2)}
+
+/* next */
+.next{list-style:none;margin:8px 0 0;padding:0;counter-reset:n}
+.next li{counter-increment:n;padding:13px 0 13px 38px;border-bottom:1px solid var(--line);position:relative;font-size:15.5px;color:var(--ink-2)}
+.next li::before{content:counter(n);position:absolute;left:0;top:13px;font-family:var(--mono);font-size:12px;color:var(--accent-text);border:1px solid var(--accent);border-radius:50%;width:22px;height:22px;display:grid;place-items:center}
+.next li b{color:var(--ink)}
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 </style>
 
 <div class="page">
   <nav class="index" aria-label="Разделы">
     <p class="brand">И АЙ КЛАБ</p>
-    <a href="#idea">Идея</a>
-    <a href="#audience">Для кого</a>
-    <a href="#levels">Три уровня</a>
-    <a href="#tasks">Что решаем</a>
-    <a href="#hook">Фишка</a>
-    <a href="#inside">Как устроен</a>
-    <a href="#flywheel">Саморазвитие</a>
-    <a href="#funnels">Воронки</a>
-    <a href="#money">Монетизация</a>
-    <a href="#offline">Оффлайн</a>
-    <a href="#launch">Запуск</a>
-    <a href="#risks">Риски</a>
-    <a href="#decide">Решить вместе</a>
+    <a href="#honest">Честно</a>
+    <a href="#who">Кто здесь</a>
+    <a href="#tiers">Уровни</a>
+    <a href="#month">Месяц</a>
+    <a href="#season">90 дней</a>
+    <a href="#join">Как заходят</a>
+    <a href="#app">Приложение</a>
+    <a href="#funnel">Откуда люди</a>
+    <a href="#loop">Растёт сам</a>
+    <a href="#money">Деньги</a>
+    <a href="#team">Кто ведёт</a>
+    <a href="#next">Что дальше</a>
   </nav>
 
   <main class="content">
-    <header class="hero">
-      <p class="eyebrow">Концепт сообщества · черновик v1 · сентябрь 2026</p>
+    <header class="sec hero">
+      <p class="eyebrow">Концепт · Москва и Бали · сезон 1</p>
       <h1 class="brand-title"><span>И <em>АЙ</em></span><span>Клаб</span></h1>
-      <p class="lead">Клуб современных мечтателей, креаторов и предпринимателей, которые делают проекты на ИИ и знакомятся по дороге.</p>
-      <p>Не курс и не чат айтишников. ИИ здесь клей, а не тема: он склеивает людей в команды, команды в проекты, а проекты в повод собраться и отпраздновать.</p>
+      <p class="lead">Клуб для тех, кто делает штуки с ИИ и хочет наконец встретить своих.</p>
+      <p>Собираемся по пятницам: два раза за ноутбуком, два раза в баре. За 90 дней команда должна заработать вместе первые деньги. Кто заработает больше — тот и красавчик.</p>
       <dl class="facts">
-        <div><dt>Уровни</dt><dd class="big">3</dd><dd class="sub">Старт · Практик · Ядро</dd></div>
-        <div><dt>Подписка</dt><dd class="big">1&nbsp;900&nbsp;₽</dd><dd class="sub">в месяц · PRO 4&nbsp;900&nbsp;₽</dd></div>
-        <div><dt>Задачи</dt><dd class="big">3</dd><dd class="sub">деньги · время · знакомства</dd></div>
-        <div><dt>Сезон</dt><dd class="big">8 недель</dd><dd class="sub">от команды до Demo Night</dd></div>
+        <div><dt>Сезон</dt><dd class="big">90 дней</dd><dd class="sub">от идеи до первых денег</dd></div>
+        <div><dt>Подписка</dt><dd class="big">1 900 ₽</dd><dd class="sub">PRO — 4 900 ₽ в месяц</dd></div>
+        <div><dt>Встречи</dt><dd class="big">4 в месяц</dd><dd class="sub">на PRO — шесть</dd></div>
+        <div><dt>Города</dt><dd class="big">2</dd><dd class="sub">Москва и Бали</dd></div>
       </dl>
     </header>
 
-    <!-- ИДЕЯ -->
-    <section class="sec" id="idea">
-      <p class="eyebrow">Идея</p>
-      <h2>Красивые люди × ИИ × совместные проекты</h2>
-      <p>И АЙ КЛАБ — социальный клуб нового поколения. Люди приходят за ИИ, а остаются из-за людей. Мы собираем тех, кто хочет идти в ногу со временем, делать больше и общаться больше, и даём им общее дело: проекты, которые можно запустить вместе за восемь недель.</p>
-      <p>Главное отличие от всего, что есть на рынке: у нас нельзя просто читать. Каждую неделю участник что-то делает с ИИ и показывает результат. Из этих результатов растёт всё остальное: контент, репутация, команды, деньги.</p>
-
-      <h4>Манифест</h4>
-      <ul class="manifest">
-        <li><b>Мы не учим ИИ. Мы делаем с ним.</b><span>Результат каждую неделю — правило, а не пожелание.</span></li>
-        <li><b>Не «задроты», а визионеры.</b><span>Здесь говорят по-человечески, одеваются красиво и не стесняются мечтать вслух.</span></li>
-        <li><b>ИИ — повод встретиться.</b><span>Половина ценности клуба — люди, с которыми ты его пройдёшь.</span></li>
-        <li><b>Каждый приносит ценность.</b><span>Пришёл — представился. Спросил — поделился ответом. Сделал — показал.</span></li>
-        <li><b>Клуб живёт сезонами.</b><span>Восемь недель, команда, запуск, вечеринка. И снова.</span></li>
-      </ul>
-
-      <h4>Почему не то, что уже есть</h4>
-      <div class="scroll">
-        <table class="tbl">
-          <thead><tr><th>Что есть</th><th>В чём проблема</th><th>Что делаем мы</th></tr></thead>
-          <tbody>
-            <tr><td>Курсы по ИИ</td><td>Учат и оставляют одного. Знания без применения и без людей.</td><td>Делаем вместе, результат каждую неделю, люди остаются после.</td></tr>
-            <tr><td>Чаты «про нейросети»</td><td>Шум, споры о моделях, ноль оффлайна.</td><td>Ритм недели, ритуалы, живые встречи два раза в месяц.</td></tr>
-            <tr><td>Бизнес-клубы</td><td>Дорого, аудитория старше, ИИ по касательной.</td><td>1&nbsp;900&nbsp;₽, ровесники, ИИ в центре, но по-человечески.</td></tr>
-            <tr><td>Нетворкинг и дейтинг</td><td>Неловко: нет общего дела, только «давай знакомиться».</td><td>Общее дело есть: команда сезона и проект.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- ДЛЯ КОГО -->
-    <section class="sec" id="audience">
-      <p class="eyebrow">Для кого</p>
-      <h2>Восемь сегментов, одна общая черта: хотят больше</h2>
-      <p>Четыре сегмента из брифа и четыре, которые я добавил. Общая черта у всех: им важно быть в теме и делать, а не только читать. И им не хватает своих людей.</p>
-
-      <div class="grid-2">
-        <article class="seg">
-          <h3>Автоматизаторы</h3>
-          <p class="who">Эксперты по воронкам, ботам, CRM, n8n и Make.</p>
-          <dl class="kv"><dt>Боль</dt><dd>Нужны клиенты и свежие кейсы, чтобы расти в чеке.</dd><dt>Получает</dt><dd>Заказы от предпринимателей клуба, статус эксперта, сцену по средам.</dd></dl>
-        </article>
-        <article class="seg">
-          <h3>Предприниматели</h3>
-          <p class="who">Внедряют ИИ, чтобы систематизировать и оптимизировать бизнес.</p>
-          <dl class="kv"><dt>Боль</dt><dd>Нет времени разбираться, непонятно, с чего начать и кому доверить.</dd><dt>Получает</dt><dd>Готовые схемы, подрядчиков из клуба, сэкономленные часы и деньги.</dd></dl>
-        </article>
-        <article class="seg">
-          <h3>Блогеры и креаторы</h3>
-          <p class="who">Делают контент на ИИ: сценарии, монтаж, визуал, озвучка.</p>
-          <dl class="kv"><dt>Боль</dt><dd>Контент-конвейер съедает жизнь, идеи заканчиваются.</dd><dt>Получает</dt><dd>Пайплайны производства, коллабы, аудиторию клуба и сюжеты сезона.</dd></dl>
-        </article>
-        <article class="seg">
-          <h3>Для жизни и удовольствия</h3>
-          <p class="who">Пользуются ради интереса: путешествия, тексты, картинки, учёба, дети.</p>
-          <dl class="kv"><dt>Боль</dt><dd>Любопытно, но не с кем обсудить, и страшно отстать.</dd><dt>Получает</dt><dd>Тусовку, простые фишки на каждый день, знакомства.</dd></dl>
-        </article>
-        <article class="seg">
-          <h3>Специалисты «×2 к чеку» <span class="tag">дополнил</span></h3>
-          <p class="who">Маркетологи, дизайнеры, копирайтеры, SMM, HR, продакты.</p>
-          <dl class="kv"><dt>Боль</dt><dd>Рынок требует ИИ-навыков, а учиться одному скучно и долго.</dd><dt>Получает</dt><dd>Приёмы под свою профессию, портфолио, заказы через биржу клуба.</dd></dl>
-        </article>
-        <article class="seg">
-          <h3>Вайб-кодеры без бэкграунда <span class="tag">дополнил</span></h3>
-          <p class="who">Хотят собрать своё приложение или сервис без программистов.</p>
-          <dl class="kv"><dt>Боль</dt><dd>В одиночку до релиза не доходят: застревают на первом баге.</dd><dt>Получает</dt><dd>Команду, куратора, спринты и Demo Night, где проект увидят.</dd></dl>
-        </article>
-        <article class="seg">
-          <h3>Ищущие свой проект <span class="tag">дополнил</span></h3>
-          <p class="who">Студенты, молодые специалисты, уставшие от найма.</p>
-          <dl class="kv"><dt>Боль</dt><dd>Нет среды и первого шага, вокруг никто ничего не запускает.</dd><dt>Получает</dt><dd>Путь Старт → Практик → Ядро и первый запуск в команде.</dd></dl>
-        </article>
-        <article class="seg">
-          <h3>Менторы и инвесторы <span class="tag">дополнил</span></h3>
-          <p class="who">Небольшой, но важный слой для PRO-трека.</p>
-          <dl class="kv"><dt>Боль</dt><dd>Ранние команды сложно найти, а «питч-сессии» утомили.</dd><dt>Получает</dt><dd>Доступ к проектам сезона, место в жюри Demo Night, ранний вход.</dd></dl>
-        </article>
-      </div>
-
-      <h4>Портрет участника</h4>
-      <ul>
-        <li><strong>23–38 лет</strong>, города-миллионники. Старт в одном городе, чтобы оффлайн был живым.</li>
-        <li>Живут в Instagram и Telegram, смотрят YouTube. Ценят атмосферу и стиль, платят за среду: фитнес, бары, курсы.</li>
-        <li>Боятся отстать от ИИ, но не хотят становиться «айтишниками». Хотят красиво и по делу.</li>
-        <li><strong>Девушки и парни 50/50</strong>. Баланс держим на наборе и на каждом ивенте, это часть продукта.</li>
-      </ul>
-    </section>
-
-    <!-- УРОВНИ -->
-    <section class="sec" id="levels">
-      <p class="eyebrow">Три уровня</p>
-      <h2>Старт, Практик, Ядро</h2>
-      <p>Уровень — это не только знания, а роль в клубе. Старт кормит воронку, Практик кормит кассу, Ядро кормит контент.</p>
-
-      <div class="grid-3">
-        <article class="level">
-          <p class="lvl">Уровень 1 · бесплатно</p>
-          <h3>Старт</h3>
-          <p class="q">«Не знаю, как оплатить и куда нажимать»</p>
-          <dl class="kv"><dt>Где живёт</dt><dd>Закреп в Инсте и бот. Без оплаты.</dd></dl>
-          <h4>Что даём</h4>
+    <section class="sec" id="honest">
+      <p class="eyebrow">Честно</p>
+      <h2>Сразу договоримся, чтобы потом не ругаться</h2>
+      <p class="strong">Мы насмотрелись на клубы, где взрослые люди час объясняют, как важно быть в правильном окружении. И на рилсы, где ИИ приносит миллион за вечер. Так это не работает.</p>
+      <p>Работает скучнее: сесть, разобраться, сделать, показать, переделать. Зато рядом будут те, кто делает то же самое, и с ними можно выпить в пятницу.</p>
+      <div class="split">
+        <div class="stack no">
+          <h3>Чего здесь не будет</h3>
           <ul>
-            <li>Гайд «Как оплатить и подключить ChatGPT и Claude», пошагово со скринами.</li>
-            <li>10 промптов на каждый день: письма, планы, тексты, путешествия.</li>
-            <li>«Первая неделя с ИИ»: 7 коротких видео, бот присылает по одному в день.</li>
-            <li>На 7-й день бот спрашивает: «Получилось? Покажи».</li>
+            <li>Марафонов желаний и «выйди из зоны комфорта»</li>
+            <li>Трёхчасовых эфиров с продажей в конце</li>
+            <li>Гуру, который знает, как тебе жить</li>
+            <li>Обещаний бросить работу через месяц</li>
           </ul>
-          <dl class="kv"><dt>Цель</dt><dd>Первый результат за 7 дней и вход в клуб.</dd></dl>
-        </article>
-        <article class="level">
-          <p class="lvl">Уровень 2 · CLUB</p>
-          <h3>Практик</h3>
-          <p class="q">«Пользуюсь, хочу лучше и быстрее»</p>
-          <dl class="kv"><dt>Где живёт</dt><dd>Подписка 1&nbsp;900&nbsp;₽ в месяц.</dd></dl>
-          <h4>Что даём</h4>
+        </div>
+        <div class="stack yes">
+          <h3>Что будет</h3>
           <ul>
-            <li>Разборы по средам под профессии, а не «про ИИ вообще».</li>
-            <li>База промптов, сценариев и автоматизаций с тегами по задачам.</li>
-            <li>«Результат недели», 30-дневные челленджи, «случайный кофе».</li>
-            <li>Биржа «ищу / сделаю» и оффлайн со скидкой.</li>
+            <li>Пятница: либо созвон по делу, либо боулинг</li>
+            <li>Команда, с которой 90 дней зарабатываете вместе</li>
+            <li>Люди, которым пишешь без «здравствуйте, а можно вопрос»</li>
+            <li>Ответ на любой вопрос про ИИ в течение часа</li>
           </ul>
-          <dl class="kv"><dt>Цель</dt><dd>×2 в своём деле и первые партнёрства внутри клуба.</dd></dl>
-        </article>
-        <article class="level">
-          <p class="lvl">Уровень 3 · PRO и роли</p>
-          <h3>Ядро</h3>
-          <p class="q">«Вайб-кодят, сравнивают модели и не спят в ночь релиза»</p>
-          <dl class="kv"><dt>Где живёт</dt><dd>PRO 4&nbsp;900&nbsp;₽ в месяц плюс роли в клубе.</dd></dl>
-          <h4>Что даём</h4>
-          <ul>
-            <li>Команда сезона, недельные спринты, Demo Night.</li>
-            <li>Ночь релиза: лайв в ту же ночь, когда выходит новая модель.</li>
-            <li>Сравнение моделей, ранний доступ, закрытый чат Ядра.</li>
-            <li>Сцена: они ведут разборы по средам. Кураторство с процентом от PRO. Доля в проектах.</li>
-          </ul>
-          <dl class="kv"><dt>Цель</dt><dd>Запустить проект и стать лицом клуба.</dd></dl>
-        </article>
+        </div>
       </div>
-
       <div class="note">
-        <p><strong>Как переходят выше.</strong> Старт получает первый результат и видит в клубе сотни таких результатов — покупает CLUB. Практик набирает репутацию и находит команду — идёт в PRO на сезон. Ядро делится знаниями — мы упаковываем их в бесплатки и разборы для двух нижних уровней. Так клуб кормит сам себя.</p>
+        <p><strong>Берём на себя ровно 90 дней.</strong> Дальше решаем вместе: продолжаем, делаем паузу или закрываем красиво. Никто не будет тихо списывать подписку, пока ты не вспомнишь отписаться.</p>
       </div>
     </section>
 
-    <!-- ЗАДАЧИ -->
-    <section class="sec" id="tasks">
-      <p class="eyebrow">Что решаем</p>
-      <h2>Деньги, время, знакомства</h2>
-      <p>Каждая задача решается конкретной механикой, а не обещанием. Если механики нет, обещание не даём.</p>
-      <div class="grid-3">
-        <div class="col">
-          <h3>Деньги</h3>
+    <section class="sec" id="who">
+      <p class="eyebrow">Кто здесь</p>
+      <h2>Не айтишники. Нормальные люди, которым интересно</h2>
+      <div class="who">
+        <div><b>Предприниматели</b><span>Хотят, чтобы бизнес работал без них</span></div>
+        <div><b>Автоматизаторы</b><span>Собирают воронки и ботов, ищут заказы</span></div>
+        <div><b>Блогеры и креаторы</b><span>Делают контент в десять раз быстрее</span></div>
+        <div><b>Спецы</b><span>Маркетинг, дизайн, HR: поднимают чек через ИИ</span></div>
+        <div><b>Вайб-кодеры</b><span>Собирают приложения без программистов</span></div>
+        <div><b>Любопытные</b><span>Пользуются для жизни, хотят своих людей</span></div>
+      </div>
+      <p>23–38 лет, Москва и Бали. Живут в телеге и инсте, ценят атмосферу, платят за среду. Хотят делать и знакомиться, а не сидеть в чате из тысячи человек. <strong>Девушек и парней поровну</strong> — за этим следим специально, это половина смысла.</p>
+    </section>
+
+    <section class="sec" id="tiers">
+      <p class="eyebrow">Уровни</p>
+      <h2>Три уровня, и это не про статус</h2>
+      <p>Уровень — это про то, где ты сейчас. Переходить можно в любой момент, обратно тоже.</p>
+      <div class="tiers">
+        <div class="tier">
+          <p class="nm">Старт · бесплатно</p>
+          <p class="pr">0 ₽</p>
+          <p class="qt">«Я даже не знаю, как оплатить подписку»</p>
           <ul>
-            <li>Биржа «ищу / сделаю»: предприниматели ставят задачи, эксперты берут. Клуб — витрина и гарант.</li>
-            <li>Навыки, которые поднимают чек: разборы под профессии.</li>
-            <li>Проекты сезона: команда, продукт, первые продажи, иногда доля и инвестор.</li>
-            <li>Реферальные выплаты и партнёрские скидки на сервисы.</li>
+            <li>Как оплатить ChatGPT и Claude из России, по шагам</li>
+            <li>10 промптов на каждый день</li>
+            <li>«Первая неделя с ИИ»: 7 коротких видео от бота</li>
+            <li>Всё лежит в закрепе инсты, платить не надо</li>
           </ul>
         </div>
-        <div class="col">
-          <h3>Время</h3>
+        <div class="tier">
+          <p class="nm">Club</p>
+          <p class="pr">1 900 ₽<small>в месяц</small></p>
+          <p class="qt">«Пользуюсь, но хочу нормально»</p>
           <ul>
-            <li>Дайджест по понедельникам: 5 минут вместо 5 часов мониторинга.</li>
-            <li>Библиотека готовых промптов, сценариев и автоматизаций.</li>
-            <li>«Спроси клуб»: ответ в течение часа, Ядро не спит.</li>
-            <li>Шаблоны рутины: письма, отчёты, контент-план, договоры.</li>
+            <li>Четыре встречи в месяц: две онлайн, две в баре</li>
+            <li>Чат по темам и дайджест по понедельникам</li>
+            <li>База промптов, сценариев, записей</li>
+            <li>Рандом-кофе и биржа «ищу / сделаю»</li>
           </ul>
         </div>
-        <div class="col">
-          <h3>Знакомства</h3>
+        <div class="tier pro">
+          <p class="nm">Pro</p>
+          <p class="pr">4 900 ₽<small>в месяц</small></p>
+          <p class="qt">«Хочу команду и запустить своё»</p>
           <ul>
-            <li>Оффлайн два раза в месяц, всегда с новыми лицами.</li>
-            <li>«Случайный кофе»: ИИ подбирает пару на неделю по интересам и целям.</li>
-            <li>Команда сезона: восемь недель вместе сближают лучше нетворкинга.</li>
-            <li>Чаты по городам и форматы, где легко подойти и заговорить.</li>
+            <li>Всё из Club плюс две встречи</li>
+            <li>Команда 3–10 человек на весь сезон</li>
+            <li>Мастермайнд раз в месяц</li>
+            <li>Гонка 90 дней: кто заработал больше</li>
+            <li>Таблицы, финмодели, презентации для инвесторов</li>
           </ul>
         </div>
       </div>
     </section>
 
-    <!-- ФИШКА -->
-    <section class="sec" id="hook">
-      <p class="eyebrow">Фишка <span class="tag">предложение</span></p>
-      <div class="plate">
-        <p class="eyebrow">Главная механика</p>
-        <h2>Клуб живёт сезонами</h2>
-        <p>Каждые восемь недель — новый сезон. Тема, команды до 10 человек, еженедельные спринты и финал: Demo Night, вечеринка-презентация с жюри, призами и красивой картинкой. Не курс, а сериал, в котором ты главный герой.</p>
-        <ul>
-          <li><b>Ритм</b>Чат не умирает: у всех есть дедлайн и повод возвращаться.</li>
-          <li><b>Продление</b>Подписка живёт от сезона к сезону, а не «посмотрю месяц».</li>
-          <li><b>Контент</b>Реалити про запуск: сюжеты для рилсов и ютуба каждую неделю.</li>
-          <li><b>Проекты</b>Лучшие команды — кандидаты на долю 10% и поддержку клуба.</li>
-          <li><b>Знакомства</b>Восемь недель в одной команде сближают лучше любого нетворкинга.</li>
-        </ul>
-      </div>
+    <section class="sec" id="month">
+      <p class="eyebrow">Месяц</p>
+      <h2>Всё держится на пятнице</h2>
+      <p>Один день недели, и он всегда занят клубом. Дальше по обстоятельствам: либо ноутбук, либо боулинг.</p>
+      <div class="month">
+        <div class="mh"></div>
+        <div class="mh">Club · 1 900 ₽</div>
+        <div class="mh pro">Pro · ещё две встречи</div>
 
-      <h4>Один сезон по неделям</h4>
-      <div class="weeks">
-        <div class="wk"><b>Неделя 1</b>Питч идей и сбор команд. ИИ подбирает людей по навыкам и характеру.</div>
-        <div class="wk"><b>Неделя 2</b>Исследование: кому, зачем, сколько. Десять разговоров с будущими клиентами.</div>
-        <div class="wk"><b>Неделя 3</b>Прототип. Вайб-кодим MVP, без программистов.</div>
-        <div class="wk"><b>Неделя 4</b>Первые пользователи и честная обратная связь.</div>
-        <div class="wk"><b>Неделя 5</b>Доработка и упаковка: лендинг, оффер, цена.</div>
-        <div class="wk"><b>Неделя 6</b>Цифры: юнит-экономика и cash flow с куратором.</div>
-        <div class="wk"><b>Неделя 7</b>Репетиция питча. Съёмка тизера для Demo Night.</div>
-        <div class="wk final"><b>Неделя 8</b>Demo Night: жюри, призы, вечеринка. Победители — в трек с долей.</div>
-      </div>
+        <div class="mw">Нед. 1</div>
+        <div class="mc online"><b>Онлайн</b>Разбираем тему: что вышло, что работает, что перехвалили. Плюс знакомства в комнатах.</div>
+        <div class="mc prod"><b>Онлайн · глубоко</b>Садимся в одну тему по-взрослому: модели, деньги, таблицы, чужие ошибки.</div>
 
-      <h4>Усилители</h4>
-      <div class="grid-2">
-        <article class="seg">
-          <h3>ИИ-консьерж</h3>
-          <p>Клубом управляет ИИ, и это видно. Он проводит онбординг, собирает команды, подбирает «случайный кофе», пишет дайджест и ведёт автоканал. Клуб — живая витрина того, что мы проповедуем.</p>
-        </article>
-        <article class="seg">
-          <h3>Ночь релиза</h3>
-          <p>Вышла новая модель — Ядро собирается в лайв той же ночью. К утру у клуба готов разбор, у автоканала пост, у новичков ответ «что это значит для тебя».</p>
-        </article>
-        <article class="seg">
-          <h3>Правило результата</h3>
-          <p>Здесь нельзя просто читать. Раз в неделю каждый показывает, что сделал с ИИ: скрин, ссылка, цифра. Четыре недели тишины — бот спрашивает, чем помочь.</p>
-        </article>
-        <article class="seg">
-          <h3>Красиво по умолчанию</h3>
-          <p>Фотограф на каждой встрече, дресс-код, площадки, куда хочется прийти. Пришёл — ушёл с фото для сторис. Это и есть маркетинг, который не стоит денег.</p>
-        </article>
+        <div class="mw">Нед. 2</div>
+        <div class="mc offline"><b>Оффлайн</b>Москва или Бали. Боулинг, картинг, бар. Без бейджиков и питчей у стойки.</div>
+        <div class="mc idle">Команды созваниваются сами — это уже их бизнес.</div>
+
+        <div class="mw">Нед. 3</div>
+        <div class="mc online"><b>Онлайн · гость</b>Зовём того, кто реально делает, а не рассказывает, как надо делать.</div>
+        <div class="mc prod"><b>Мастермайнд</b>Команда до 10 человек: у кого что горит, кто чем закрывает.</div>
+
+        <div class="mw">Нед. 4</div>
+        <div class="mc offline"><b>Оффлайн</b>Второй сбор по городам. Можно привести друга, ему будет не стыдно.</div>
+        <div class="mc idle">Команды созваниваются сами — это уже их бизнес.</div>
+      </div>
+      <p class="small">Бранчи, мини-конференции по ИИ и конкурс стартапов — отдельно и за деньги. Захотел, купил билет, пришёл. Не захотел, ничего не потерял.</p>
+    </section>
+
+    <section class="sec" id="season">
+      <p class="eyebrow">90 дней</p>
+      <h2>Гонка: от идеи до первых денег</h2>
+      <p>PRO — это не курс, а спор на три месяца. Команды по 3–10 человек, у каждой своя история, в конце сравниваем выручку. Побеждает не самая красивая презентация, а та команда, у которой больше пришло на счёт.</p>
+      <ol class="season">
+        <li><b>Месяц 1</b><h3>Собираемся</h3><p>Знакомимся, выбираем идею, делим роли. Правило одно: идея должна приносить деньги, а не лайки.</p></li>
+        <li><b>Месяц 2</b><h3>Делаем и продаём</h3><p>Прототип на ИИ, первые клиенты, первые отказы. Мастермайнд разбирает, где затык.</p></li>
+        <li><b>Месяц 3</b><h3>Считаем</h3><p>Юнит-экономика, cash flow, что масштабировать. Здесь подключаются таблицы и презентации.</p></li>
+        <li class="fin"><b>Финиш</b><h3>Кто больше</h3><p>Команды показывают выручку. Победителям — призы, слава и следующий сезон бесплатно.</p></li>
+      </ol>
+      <div class="note">
+        <p><strong>Если выстрелило и хочется дальше</strong> — помогаем как взрослым: финмодель, инвест-презентация, смета, знакомства. Можем войти долей 10%, но только если сами попросите. Оформляем через ИП или самозанятость, без сорока страниц договора.</p>
       </div>
     </section>
 
-    <!-- КАК УСТРОЕН -->
-    <section class="sec" id="inside">
-      <p class="eyebrow">Как устроен клуб</p>
-      <h2>Ритм недели, пространства, правила</h2>
-      <div class="scroll">
-        <table class="tbl">
-          <thead><tr><th>День</th><th>Формат</th><th>Что происходит</th></tr></thead>
-          <tbody>
-            <tr><td>Понедельник</td><td>Дайджест</td><td>5 новостей и 1 приём недели. Собирает ИИ, проверяет редактор.</td></tr>
-            <tr><td>Среда</td><td>Лайв</td><td>40 минут: разбор кейса, гость или воркшоп. Ведут участники Ядра и приглашённые.</td></tr>
-            <tr><td>Пятница</td><td>Результат недели</td><td>Каждый показывает, что сделал. Топ-3 попадают в дайджест и в сторис клуба.</td></tr>
-            <tr><td>Выходные</td><td>Оффлайн</td><td>Два раза в месяц: бранч, активность, ужин, вечеринка.</td></tr>
-            <tr><td>Каждый день</td><td>Чат</td><td>Темы, вопросы, биржа, флуд. Ответ на вопрос — в течение часа.</td></tr>
-          </tbody>
-        </table>
+    <section class="sec" id="join">
+      <p class="eyebrow">Как заходят</p>
+      <h2>Потоками, а не по одному</h2>
+      <p>Никто не бросает новичка в чат на триста человек со словами «осваивайся». Пока идёт текущий месяц, мы собираем следующую мини-группу, и она заходит вместе.</p>
+      <ol class="flow">
+        <li><b>Оплатил</b>Цена фиксируется за тобой. Месяц ещё не начался.</li>
+        <li><b>2–3 недели разминки</b>Чат мини-группы, знакомства, первые задания. Бесплатно.</li>
+        <li><b>Приветственный зум</b>Кто вы, что тут как, куда нажимать, с кем дружить.</li>
+        <li><b>Старт вместе со всеми</b>Плюс архив: записи и материалы прошлых месяцев.</li>
+      </ol>
+      <h4>Цена растёт каждый месяц</h4>
+      <div class="ladder">
+        <div><p class="v">1 900</p><div class="bar" style="height:52px"></div><p class="lb">сейчас</p></div>
+        <div><p class="v">2 200</p><div class="bar" style="height:62px"></div><p class="lb">+1 мес</p></div>
+        <div><p class="v">2 500</p><div class="bar" style="height:72px"></div><p class="lb">+2 мес</p></div>
+        <div><p class="v">2 800</p><div class="bar" style="height:82px"></div><p class="lb">+3 мес</p></div>
       </div>
+      <p class="small">Никаких пробников и скидок: и так дёшево. Чем позже заходишь, тем дороже, потому что клуб к тому времени плотнее. Цена, на которой ты зашёл, остаётся с тобой навсегда.</p>
+    </section>
 
-      <h4>Пространства</h4>
-      <p><strong>Telegram-клуб с темами.</strong> Всё в одном месте, вход через бота после оплаты.</p>
-      <div class="chips">
-        <span>#старт</span><span>#промпты</span><span>#вайбкод</span><span>#автоматизации</span><span>#контент</span><span>#бизнес</span><span>#ищу-сделаю</span><span>#оффлайн</span><span>#знакомства</span><span>#ночь-релиза</span><span>#флуд</span>
-      </div>
-      <ul>
-        <li><strong>База знаний в Notion:</strong> промпты, сценарии, записи лайвов, гайды по оплате. Ищется по тегам.</li>
-        <li><strong>Бот клуба:</strong> оплата и продление, онбординг, «случайный кофе», напоминания, «покажи результат».</li>
-        <li><strong>Позже — своё приложение:</strong> профили, репутация, биржа, календарь ивентов. Когда участников станет больше пятисот.</li>
+    <section class="sec" id="app">
+      <p class="eyebrow">Приложение</p>
+      <h2>Телега для болтовни, приложение для всего остального</h2>
+      <p>Приложение делаем сразу, а не «когда вырастем». За основу берём механику UPass.</p>
+      <ul class="bul">
+        <li><b>Команды.</b> Кто в какой, что сделали за неделю, сколько заработали.</li>
+        <li><b>Записи и видео.</b> Все эфиры и полезное, разложено по темам.</li>
+        <li><b>Люди.</b> Профили: чем занимается, что умеет, кого ищет.</li>
+        <li><b>Рандом-кофе.</b> По городам и онлайн, пару подбирает ИИ.</li>
+        <li><b>Расписание.</b> Пятницы, мастермайнды, доп. мероприятия и билеты.</li>
       </ul>
-
-      <h4>Правила</h4>
-      <ul>
-        <li>Пришёл — представься по шаблону: кто ты, что делаешь с ИИ, чем полезен, что ищешь.</li>
-        <li>Спросил — поделись ответом, когда найдёшь.</li>
-        <li>Продажи только через биржу «ищу / сделаю». В лоб — нет.</li>
-        <li>Уважение. Это место для знакомств, а не для навязчивости. Одно предупреждение, потом выход.</li>
-        <li>Фото и кейсы публикуем только с согласия.</li>
-      </ul>
     </section>
 
-    <!-- САМОРАЗВИТИЕ -->
-    <section class="sec" id="flywheel">
-      <p class="eyebrow">Саморазвивающееся сообщество</p>
-      <h2>Клуб, который растёт сам</h2>
-      <p>Задача не в том, чтобы удерживать людей контентом от основателей. Ценность должны создавать участники, а клуб — только задавать ритм и подсвечивать лучших.</p>
-
-      <div class="fly">
-        <svg viewBox="0 0 760 340" role="img" aria-label="Маховик клуба: контент приводит новых участников, они дают результаты и знакомства, из них рождаются кейсы, рефералы и спикеры, которые снова становятся контентом">
+    <section class="sec" id="funnel">
+      <p class="eyebrow">Откуда люди</p>
+      <h2>Одно слово: КЛУБ</h2>
+      <p>Все каналы ведут в одну точку. Человек пишет слово КЛУБ, бот спрашивает уровень, отдаёт бесплатку под него и через неделю зовёт в мини-поток.</p>
+      <div class="dia">
+        <svg viewBox="0 0 900 300" role="img" aria-label="Схема воронки: YouTube, рилсы, сторис участников и ИИ-канал ведут к слову КЛУБ, дальше бот отдаёт гайд под уровень, и человек попадает в мини-поток или остаётся на прогреве в ИИ-канале">
           <defs>
-            <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
               <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
             </marker>
           </defs>
-          <g fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ah)">
-            <path d="M 466 44 L 570 44 Q 640 44 640 114 L 640 138"/>
-            <path d="M 640 202 L 640 226 Q 640 296 570 296 L 545 296"/>
-            <path d="M 215 296 L 190 296 Q 120 296 120 226 L 120 202"/>
-            <path d="M 120 138 L 120 114 Q 120 44 190 44 L 292 44"/>
+          <g font-size="19" text-anchor="start">
+            <text x="4" y="46">YouTube</text>
+            <text x="4" y="107">Рилсы</text>
+            <text x="4" y="168">Сторис участников</text>
+            <text x="4" y="229">ИИ-канал</text>
           </g>
-          <g stroke="currentColor" stroke-width="1.5">
-            <rect x="300" y="22" width="160" height="44" rx="22" fill="var(--surface)"/>
-            <rect x="530" y="148" width="220" height="44" rx="22" fill="var(--surface)"/>
-            <rect x="225" y="274" width="310" height="44" rx="22" fill="var(--surface)"/>
-            <rect x="5" y="148" width="230" height="44" rx="22" fill="var(--surface)"/>
+          <g fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#a1)">
+            <path d="M 196 40 L 232 40 Q 262 40 262 70 L 262 122"/>
+            <path d="M 196 101 L 240 101 Q 262 101 262 123 L 262 128"/>
+            <path d="M 196 162 L 240 162 Q 262 162 262 140 L 262 136"/>
+            <path d="M 196 223 L 232 223 Q 262 223 262 193 L 262 142"/>
+            <path d="M 470 132 L 512 132"/>
+            <path d="M 762 118 L 800 118 Q 830 118 830 88 L 830 74"/>
+            <path d="M 762 146 L 800 146 Q 830 146 830 176 L 830 190"/>
           </g>
-          <g fill="currentColor" text-anchor="middle">
-            <text x="380" y="51">Контент</text>
-            <text x="640" y="177">Новые участники</text>
-            <text x="380" y="303">Результаты и знакомства</text>
-            <text x="120" y="177">Кейсы и рефералы</text>
-            <text x="380" y="177" class="cap">МАХОВИК КЛУБА</text>
+          <g stroke="currentColor" stroke-width="1.6">
+            <rect x="272" y="106" width="200" height="56" rx="28" fill="var(--accent)" stroke="var(--accent)"/>
+            <rect x="512" y="100" width="252" height="68" rx="12" fill="var(--surface)"/>
+            <rect x="700" y="14" width="196" height="56" rx="12" fill="var(--surface)"/>
+            <rect x="700" y="194" width="196" height="56" rx="12" fill="var(--surface)"/>
+          </g>
+          <g font-size="19" text-anchor="middle">
+            <text x="372" y="141" class="hot">пишет «КЛУБ»</text>
+            <text x="638" y="128">бот: гайд под уровень</text>
+            <text x="638" y="153" class="cap" font-size="14">СРАЗУ, БЕЗ МЕНЕДЖЕРА</text>
+            <text x="798" y="49">мини-поток</text>
+            <text x="798" y="229">прогрев в канале</text>
           </g>
         </svg>
-        <div>
-          <p>Контент приводит людей. Люди получают результаты и знакомятся. Из результатов рождаются кейсы, рефералы и спикеры. Кейсы и спикеры становятся контентом. Каждый оборот дешевле предыдущего.</p>
+      </div>
+      <div class="scroll">
+        <table class="tbl">
+          <thead><tr><th>Канал</th><th>Что делаем</th><th>Ориентир</th></tr></thead>
+          <tbody>
+            <tr><td>YouTube</td><td>Призыв в видео и закреплённый комментарий</td><td class="num">3–4 тыс. просмотров</td></tr>
+            <tr><td>Рилсы</td><td>«Напиши КЛУБ в директ», дальше автосообщение</td><td class="num">10 тыс. просмотров</td></tr>
+            <tr><td>Сторис участников</td><td>Шаблон и личная ссылка. Привёл друга — месяц в подарок обоим</td><td class="num">25% новых</td></tr>
+            <tr><td>ИИ-канал</td><td>Полный автопилот: ИИ сам выбирает темы и постит, каждый пятый пост про клуб</td><td class="num">10 мин в день</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small">Ориентир для планирования: со 100 тысяч просмотров получаем примерно 80 оплат. Это не прогноз, а цифра, которую проверим на первых двух неделях и пересчитаем.</p>
+    </section>
+
+    <section class="sec" id="loop">
+      <p class="eyebrow">Растёт сам</p>
+      <h2>Клуб должен крутиться без нас</h2>
+      <div class="two">
+        <div class="dia">
+          <svg viewBox="0 0 760 340" role="img" aria-label="Маховик: контент приводит людей, люди делают результаты и знакомятся, результаты превращаются в кейсы и рекомендации, кейсы снова становятся контентом">
+            <defs>
+              <marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+              </marker>
+            </defs>
+            <g fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#a2)">
+              <path d="M 466 44 L 570 44 Q 640 44 640 114 L 640 138"/>
+              <path d="M 640 202 L 640 226 Q 640 296 570 296 L 545 296"/>
+              <path d="M 215 296 L 190 296 Q 120 296 120 226 L 120 202"/>
+              <path d="M 120 138 L 120 114 Q 120 44 190 44 L 292 44"/>
+            </g>
+            <g stroke="currentColor" stroke-width="1.6">
+              <rect x="300" y="22" width="160" height="44" rx="22" fill="var(--surface)"/>
+              <rect x="530" y="148" width="220" height="44" rx="22" fill="var(--surface)"/>
+              <rect x="225" y="274" width="310" height="44" rx="22" fill="var(--surface)"/>
+              <rect x="0" y="148" width="250" height="44" rx="22" fill="var(--surface)"/>
+            </g>
+            <g font-size="21" text-anchor="middle">
+              <text x="380" y="51">Контент</text>
+              <text x="640" y="177">Новые люди</text>
+              <text x="380" y="303">Результаты и знакомства</text>
+              <text x="125" y="177" font-size="19">Кейсы и рекомендации</text>
+              <text x="380" y="177" class="cap" font-size="15">МАХОВИК</text>
+            </g>
+          </svg>
+        </div>
+        <p>Каждый оборот дешевле предыдущего. К третьему сезону контент делают участники, разборы ведут участники, новых приводят участники. Нам остаётся держать ритм и наливать.</p>
+      </div>
+      <ul class="bul">
+        <li><b>Результат недели.</b> Раз в неделю показываешь, что сделал: скрин, ссылка, цифра. Лучшее идёт в сторис клуба с твоим именем.</li>
+        <li><b>Роли из своих.</b> Амбассадор города, куратор команды с процентом от её PRO, ведущий пятницы. Всё это участники, а не наёмные люди.</li>
+        <li><b>Кейс превращается в рилс.</b> Ты получаешь охват, клуб получает воронку. Обоим норм.</li>
+      </ul>
+    </section>
+
+    <section class="sec" id="money">
+      <p class="eyebrow">Деньги</p>
+      <h2>Откуда касса</h2>
+      <ul class="bul">
+        <li><b>Подписки.</b> Основа. Club и PRO, цена растёт для новых каждый месяц.</li>
+        <li><b>Доп. мероприятия.</b> Бранчи, мини-конференции, конкурс стартапов. Отдельные билеты.</li>
+        <li><b>Реклама и партнёрки.</b> Только сервисы, которыми пользуемся сами, 20–30% с оплат по ссылке.</li>
+        <li><b>Доля 10%.</b> Редко и по желанию команды. Считаем апсайдом, а не доходом.</li>
+      </ul>
+      <div class="scroll">
+        <table class="tbl">
+          <thead><tr><th>Когда</th><th>Club</th><th>Pro</th><th>В месяц</th></tr></thead>
+          <tbody>
+            <tr><td>Первый месяц</td><td class="num">100 × 1 900</td><td class="num">15 × 4 900</td><td class="num">≈ 264 000 ₽</td></tr>
+            <tr><td>Конец сезона</td><td class="num">300 × 1 900</td><td class="num">40 × 4 900</td><td class="num">≈ 766 000 ₽</td></tr>
+            <tr><td>Второй сезон</td><td class="num">600 × 1 900</td><td class="num">80 × 4 900</td><td class="num">≈ 1 530 000 ₽</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small">Расходы: комьюнити-менеджер, съёмка и монтаж, площадки и фотограф, приложение, сервисы и API. На старте закладываем 35–45% выручки, дальше доля падает. Оффлайн держим в ноль или в небольшой плюс за счёт билетов и партнёрских площадок.</p>
+    </section>
+
+    <section class="sec" id="team">
+      <p class="eyebrow">Кто ведёт</p>
+      <h2>Двое, и роли не пересекаются</h2>
+      <div class="people">
+        <div class="card">
+          <b>Стартапы и деньги</b>
+          <p>Таблицы, юнит-экономика, cash flow, инвест-презентации, работа с инвесторами. Всё, что превращает «мы что-то делаем» в «мы понимаем, сколько это стоит».</p>
+        </div>
+        <div class="card">
+          <b>Нейронки и практика — Егор</b>
+          <p>Сравнение моделей, свежие фишки, автоматизации, вайб-кодинг. Что реально работает сегодня, а что просто громко вышло.</p>
         </div>
       </div>
-
-      <h4>Пять механик</h4>
-      <ul>
-        <li><strong>Репутация.</strong> Баллы за пользу: ответы, кейсы, лайвы, приведённые друзья. Уровни репутации дают бесплатный месяц, VIP-места на ивентах, право вести разбор и кураторство.</li>
-        <li><strong>Роли из участников.</strong> Амбассадоры городов, кураторы команд с процентом от PRO своей команды, спикеры среды, редакторы базы знаний.</li>
-        <li><strong>Кейсы становятся контентом.</strong> Результат участника превращается в рилс или сюжет на ютубе с его именем. Он получает охват, клуб получает воронку.</li>
-        <li><strong>Челленджи.</strong> 7-дневные для Старта, 30-дневные для Практиков: «автоматизируй одну рутину», «контент-план на месяц за час».</li>
-        <li><strong>Биржа «ищу / сделаю».</strong> Предприниматели ставят задачи, автоматизаторы и креаторы берут. Клуб — гарант, витрина и небольшая комиссия в будущем.</li>
-      </ul>
+      <p class="small">Новые участники после первого месяца получают доступ ко всем прошлым материалам и отдельный зум-знакомство. Никто не приходит в середину разговора.</p>
     </section>
 
-    <!-- ВОРОНКИ -->
-    <section class="sec" id="funnels">
-      <p class="eyebrow">Воронки</p>
-      <h2>Одно слово: КЛУБ</h2>
-      <p>Все каналы ведут в одну точку. Человек пишет слово КЛУБ, бот отвечает, отдаёт пользу под его уровень и через неделю приглашает в клуб. Один сценарий, много входов.</p>
-
-      <div class="scroll">
-        <table class="tbl">
-          <thead><tr><th>Канал</th><th>Механика</th><th>Ориентир</th></tr></thead>
-          <tbody>
-            <tr><td>YouTube<br><span class="small">3–4 тыс. просмотров на видео</span></td><td>CTA в видео и закреплённый комментарий «напиши КЛУБ». Бот отвечает, отдаёт гайд, ведёт в клуб.</td><td><span class="num">≈ 4 подписчика</span> с видео: аудитория теплее, конверсия выше.</td></tr>
-            <tr><td>Reels<br><span class="small">10 тыс. просмотров</span></td><td>«Напиши КЛУБ в директ» — автосообщение — гайд — цепочка из четырёх касаний.</td><td><span class="num">≈ 8 подписчиков</span> с рилса.</td></tr>
-            <tr><td>Рекомендации</td><td>Шаблон сторис «я в клубе» и персональная ссылка. Приведи друга — месяц бесплатно обоим.</td><td><span class="num">25%</span> новых участников по рефералке.</td></tr>
-            <tr><td>Чаты и партнёры</td><td>Посев в дружественных чатах, обмен аудиторией с другими клубами, площадки ивентов.</td><td>Дёшево, но нестабильно. Поддерживающий канал.</td></tr>
-            <tr><td>ИИ-канал</td><td>Полный автопилот: ежедневные посты, каждый пятый — про клуб и кейс участника.</td><td>Растёт медленно, зато без рук. Прогрев тех, кто не купил сразу.</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h4>Что делает бот после слова «КЛУБ»</h4>
-      <ol class="seq">
-        <li><b>Сразу</b>«Привет! Ты кто из трёх?» Старт, Практик или Ядро. Под уровень — свой гайд. Так мы сегментируем с первого сообщения.</li>
-        <li><b>День 1</b>Кейс участника с цифрой и скрин «результата недели». Показываем, что здесь делают, а не читают.</li>
-        <li><b>День 3</b>Приглашение: первая неделя в клубе бесплатно. Если в городе скоро оффлайн, зовём на него.</li>
-        <li><b>День 7</b>Последнее напоминание. Кто не купил, уходит в бесплатный ИИ-канал, чтобы не потеряться.</li>
+    <section class="sec" id="next">
+      <p class="eyebrow">Что дальше</p>
+      <h2>Пять дел до первой пятницы</h2>
+      <ol class="next">
+        <li><b>Три бесплатки</b> — как оплатить, 10 промптов, первая неделя с ИИ. В закреп инсты.</li>
+        <li><b>Бот на слово КЛУБ</b> — вопрос про уровень, гайд, приглашение в мини-поток.</li>
+        <li><b>Телеграм-клуб</b> — темы, правила, оплата. И первый набор мини-группы.</li>
+        <li><b>Приложение</b> — первая версия: команды, расписание, профили, записи.</li>
+        <li><b>Дата первой пятницы</b> — и площадка в Москве под второй сбор.</li>
       </ol>
-
-      <h4>Математика воронки</h4>
-      <div class="scroll">
-        <table class="tbl">
-          <thead><tr><th>Просмотры за месяц</th><th>Написали «КЛУБ» · 2%</th><th>Взяли гайд · 50%</th><th>Оплатили · 8%</th></tr></thead>
-          <tbody>
-            <tr><td class="num">100 000</td><td class="num">2 000</td><td class="num">1 000</td><td class="num">80 подписчиков</td></tr>
-            <tr><td class="num">200 000</td><td class="num">4 000</td><td class="num">2 000</td><td class="num">160 подписчиков</td></tr>
-            <tr><td class="num">400 000</td><td class="num">8 000</td><td class="num">4 000</td><td class="num">320 подписчиков</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p>Чтобы к концу третьего месяца иметь 300 участников, воронке нужно около 300 тысяч просмотров суммарно плюс рефералка на четверть. Это 5–7 рилсов в неделю и одно видео на ютубе. Проценты здесь — ориентиры для планирования, не прогноз: первые две недели покажут реальные, и таблицу пересчитаем.</p>
-
-      <h4>ИИ-канал на автопилоте</h4>
-      <ol class="pipe">
-        <li>Источники: RSS, релизы моделей, X, Product Hunt, YouTube.</li>
-        <li>ИИ отбирает 3 темы в день по редполитике клуба.</li>
-        <li>Пишет посты в тоне клуба: по-человечески, без «нейросеток».</li>
-        <li>Второй проход: проверка фактов и стоп-тем.</li>
-        <li>Публикация по расписанию в Telegram.</li>
-        <li>Каждый пятый пост — клуб: кейс участника и слово КЛУБ.</li>
-      </ol>
-      <p>Стек: n8n или Make, API модели, Telegram. На старте редактор тратит 10 минут в день на просмотр очереди, через месяц смотрит выборочно. Бюджет на API — несколько тысяч рублей в месяц.</p>
+      <footer>
+        <p>Черновик для обсуждения. Цифры воронки и экономики — ориентиры для планирования, а не прогноз: пересчитаем после первых двух недель.</p>
+      </footer>
     </section>
-
-    <!-- МОНЕТИЗАЦИЯ -->
-    <section class="sec" id="money">
-      <p class="eyebrow">Монетизация</p>
-      <h2>Подписка как база, сезоны как рост, доля как апсайд</h2>
-
-      <div class="tiers">
-        <article class="tier">
-          <p class="name">Старт</p>
-          <p class="price">0&nbsp;₽</p>
-          <p class="for">Воронка и первый результат</p>
-          <ul>
-            <li>Три бесплатки в закрепе Инсты</li>
-            <li>Бот с гайдами и «первой неделей»</li>
-            <li>Открытый ИИ-канал</li>
-            <li>Приглашения на открытые ивенты</li>
-          </ul>
-        </article>
-        <article class="tier">
-          <p class="name">CLUB</p>
-          <p class="price">1&nbsp;900&nbsp;₽<small>в месяц</small></p>
-          <p class="for">Основной доход клуба</p>
-          <ul>
-            <li>Чат по темам и дайджест</li>
-            <li>Лайвы по средам, база знаний</li>
-            <li>«Результат недели», «случайный кофе», челленджи</li>
-            <li>Биржа «ищу / сделаю»</li>
-            <li>Оффлайн со скидкой, сезон как зритель и болельщик</li>
-            <li>Репутация и роли</li>
-          </ul>
-        </article>
-        <article class="tier pro">
-          <p class="name">PRO <span class="tag">флагман</span></p>
-          <p class="price">4&nbsp;900&nbsp;₽<small>в месяц</small></p>
-          <p class="for">Команда и запуск за сезон</p>
-          <ul>
-            <li>Всё из CLUB</li>
-            <li>Команда до 10 человек и куратор</li>
-            <li>Недельные спринты и Demo Night</li>
-            <li>Пакет «как у взрослых»: cash flow, инвест-презентация, смета, юнит-экономика</li>
-            <li>Опция: клуб входит в проект с долей 10% и ведёт дальше</li>
-          </ul>
-        </article>
-      </div>
-
-      <div class="note">
-        <p><strong>Годовой тариф</strong> <span class="tag">дополнил</span> — 19&nbsp;000&nbsp;₽ за CLUB, два месяца в подарок. Годовые участники — это низкий отток и деньги вперёд на площадки и съёмку.</p>
-      </div>
-
-      <h4>Дополнительные доходы</h4>
-      <ul>
-        <li><strong>Реклама и интеграции</strong> в дайджест и автоканал: сервисы, курсы, площадки. Только то, чем пользуемся сами.</li>
-        <li><strong>Партнёрки</strong> на ИИ-инструменты и сервисы: обычно 20–30% с оплат по нашей ссылке.</li>
-        <li><strong>Живые мероприятия:</strong> боулинг, бизнес-бранч, ужин, вечеринка. Билет покрывает площадку плюс маржа, часть площадок — партнёры.</li>
-        <li><strong>Demo Night:</strong> спонсоры и партнёрские призы.</li>
-        <li><strong>Потом:</strong> мерч, корпоративные воркшопы «ИИ для команды за день», инкубатор для проектов после сезона.</li>
-      </ul>
-
-      <h4>Доля 10%: как это работает</h4>
-      <ul>
-        <li>Только по желанию команды и только после Demo Night. Никто не подписывает ничего на входе.</li>
-        <li>Простое соглашение или опцион. Клуб взамен даёт финмодель, инвест-презентацию, смету, юридическую упаковку, первых клиентов из клуба и знакомство с инвесторами.</li>
-        <li>Считаем это апсайдом, а не доходом: 3–5 проектов в год могут дойти до доли, один-два из них могут выстрелить.</li>
-      </ul>
-
-      <h4>Экономика по сценариям</h4>
-      <div class="scroll">
-        <table class="tbl">
-          <thead><tr><th>Сценарий</th><th>CLUB</th><th>PRO</th><th>Ивенты, реклама, партнёрки</th><th>Итого в месяц</th></tr></thead>
-          <tbody>
-            <tr><td class="nw">Месяц 3</td><td class="num">150 × 1 900 = 285 000</td><td class="num">20 × 4 900 = 98 000</td><td class="num">50 000</td><td class="num">≈ 430 000 ₽</td></tr>
-            <tr><td class="nw">Месяцы 6–9</td><td class="num">400 × 1 900 = 760 000</td><td class="num">60 × 4 900 = 294 000</td><td class="num">150 000</td><td class="num">≈ 1 200 000 ₽</td></tr>
-            <tr><td class="nw">Месяц 12</td><td class="num">800 × 1 900 = 1 520 000</td><td class="num">120 × 4 900 = 588 000</td><td class="num">300 000</td><td class="num">≈ 2 400 000 ₽</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p>Куда уходит: комьюнити-менеджер с первого дня, кураторы с процентом 20–30% от PRO своей команды, съёмка и монтаж, площадки и фотограф, сервисы: бот, платёжка, API. Ориентир — 35–45% выручки на стадии роста, дальше доля расходов падает. Отток держим ниже 10% в месяц: сезоны и годовой тариф — главные инструменты.</p>
-    </section>
-
-    <!-- ОФФЛАЙН -->
-    <section class="sec" id="offline">
-      <p class="eyebrow">Оффлайн</p>
-      <h2>Четыре недели, четыре формата</h2>
-      <p>Оффлайн — не бонус к подписке, а половина продукта. Каждый месяц один и тот же ритм, чтобы участники планировали заранее и приводили друзей.</p>
-      <ul class="cal">
-        <li><b>Неделя 1</b><div><h3>Бизнес-бранч</h3><p>Воскресенье, утро, 20–30 человек. Один разбор от участника и знакомство по столам: ИИ рассаживает так, чтобы за столом были разные уровни и профессии.</p></div></li>
-        <li><b>Неделя 2</b><div><h3>Активность</h3><p>Боулинг, картинг, падел, квиз. Играем командами сезона: соревнование склеивает быстрее любого воркшопа.</p></div></li>
-        <li><b>Неделя 3</b><div><h3>Ужин клуба</h3><p>12–16 человек, рассадку делает ИИ по интересам и целям. Самый «знакомственный» формат, попасть можно раз в два месяца, чтобы лица менялись.</p></div></li>
-        <li><b>Неделя 4</b><div><h3>Вечеринка или Demo Night</h3><p>Раз в сезон — Demo Night с жюри и призами, в остальные месяцы — вечеринка. Дресс-код, фотограф, партнёры, открытый вход для друзей участников.</p></div></li>
-      </ul>
-      <p class="small">Дополнительные форматы, когда клуб вырастет: «ИИ и вино» (мини-воркшоп и дегустация), утренний забег, выезд на природу на выходные, спид-нетворкинг перед сезоном.</p>
-    </section>
-
-    <!-- ЗАПУСК -->
-    <section class="sec" id="launch">
-      <p class="eyebrow">Запуск</p>
-      <h2>90 дней до первого полного сезона</h2>
-      <div class="phases">
-        <article class="phase">
-          <b>Недели 1–2</b>
-          <h3>Фундамент</h3>
-          <ul>
-            <li>Бренд, тон, визуал</li>
-            <li>Три бесплатки в закреп Инсты</li>
-            <li>Бот «КЛУБ» и цепочка касаний</li>
-            <li>Telegram-клуб с темами и правилами</li>
-            <li>Страница оплаты, первый дайджест</li>
-          </ul>
-        </article>
-        <article class="phase">
-          <b>Недели 3–4</b>
-          <h3>Первые 50</h3>
-          <ul>
-            <li>Тёплая аудитория и друзья по спеццене</li>
-            <li>Первая среда-лайв</li>
-            <li>Первый бранч</li>
-            <li>Автоканал в полуавтомате</li>
-          </ul>
-        </article>
-        <article class="phase">
-          <b>Недели 5–8</b>
-          <h3>150 и Сезон 0</h3>
-          <ul>
-            <li>Рефералка через сторис</li>
-            <li>Пилот PRO: две команды</li>
-            <li>Demo Night в формате ужина</li>
-            <li>Партнёры площадок</li>
-          </ul>
-        </article>
-        <article class="phase">
-          <b>Недели 9–12</b>
-          <h3>300 и Сезон 1</h3>
-          <ul>
-            <li>Пять команд, полноценный Demo Night</li>
-            <li>Автоканал автономен</li>
-            <li>Годовой тариф</li>
-            <li>Первые интеграции и партнёрки</li>
-          </ul>
-        </article>
-      </div>
-
-      <h4>Что измеряем</h4>
-      <div class="scroll">
-        <table class="tbl">
-          <thead><tr><th>Метрика</th><th>Цель</th><th>Зачем</th></tr></thead>
-          <tbody>
-            <tr><td>Участники и выручка в месяц</td><td class="num">300 · 430 000 ₽ к 3-му месяцу</td><td>Главная цифра здоровья клуба.</td></tr>
-            <tr><td>Отток</td><td class="num">ниже 10% в месяц</td><td>Показывает, работают ли сезоны и ритм.</td></tr>
-            <tr><td>Активные</td><td class="num">больше 40%</td><td>Доля тех, кто показал результат за месяц. Ниже — клуб превращается в чат.</td></tr>
-            <tr><td>Рефералы</td><td class="num">от 25% новых</td><td>Признак, что людям хочется звать друзей.</td></tr>
-            <tr><td>Заполняемость ивентов</td><td class="num">больше 80%</td><td>Оффлайн должен быть дефицитным, а не пустым.</td></tr>
-            <tr><td>Баланс девушки / парни</td><td class="num">коридор 40–60</td><td>Часть продукта, следим на наборе и на ивентах.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- РИСКИ -->
-    <section class="sec" id="risks">
-      <p class="eyebrow">Риски</p>
-      <h2>Что может пойти не так и что делаем заранее</h2>
-      <div class="scroll">
-        <table class="tbl">
-          <thead><tr><th>Риск</th><th>Как снимаем</th></tr></thead>
-          <tbody>
-            <tr><td>«Ещё один мёртвый чат»</td><td>Ритм недели, правило результата, сезоны, комьюнити-менеджер с первого дня.</td></tr>
-            <tr><td>Перекос в «задротов»</td><td>Редполитика «по-человечески», баланс при наборе, оффлайн-форматы для всех уровней, дресс-код.</td></tr>
-            <tr><td>Доля 10% отпугивает</td><td>Только по желанию и после Demo Night, прозрачные условия, реальная помощь взамен.</td></tr>
-            <tr><td>Автоканал генерит мусор</td><td>Редполитика, проверка фактов вторым проходом, 10 минут редактора в день.</td></tr>
-            <tr><td>Отток после первого месяца</td><td>Сезоны, годовой тариф, репутация и роли, ивенты как якорь.</td></tr>
-            <tr><td>«Площадка для знакомств» превращается в дейтинг</td><td>Правила уважения, модерация, форматы без давления, общее дело вместо «давай знакомиться».</td></tr>
-            <tr><td>1&nbsp;900&nbsp;₽ кажется дорого для Старта</td><td>Бесплатный уровень с результатом, первая неделя бесплатно, месяц в подарок по рефералке.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- РЕШИТЬ ВМЕСТЕ -->
-    <section class="sec" id="decide">
-      <p class="eyebrow">Что решить вместе</p>
-      <h2>Семь вопросов перед стартом</h2>
-      <ul class="questions">
-        <li>Город старта и первая площадка для бранча.</li>
-        <li>Названия уровней: Старт / Практик / Ядро или другие?</li>
-        <li>Пробный период: первая неделя бесплатно или первый месяц за 990&nbsp;₽?</li>
-        <li>Платформа: Telegram сейчас, своё приложение после 500 участников?</li>
-        <li>Кто ведёт кураторство PRO в Сезоне 0: основатели или первые участники Ядра?</li>
-        <li>Юридическая форма доли 10%: опцион, договор или вход в компанию.</li>
-        <li>Тема первого сезона. Предлагаю «Автоматизируй чужую рутину»: проекты, которые можно продать другим участникам клуба.</li>
-      </ul>
-    </section>
-
-    <footer>
-      <p>Черновик для обсуждения. Проценты воронки и цифры экономики — ориентиры для планирования, не прогноз: пересчитываем после первых двух недель реальных данных.</p>
-    </footer>
   </main>
 </div>
 
