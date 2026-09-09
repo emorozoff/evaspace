@@ -62,35 +62,36 @@ strong{font-weight:600;color:var(--ink)}
 .sm{font-size:13.5px;color:var(--muted);max-width:74ch}
 
 /* ---------- HERO ---------- */
-.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:30px 40px;align-items:center;padding:26px 26px 30px}
-@media (max-width:900px){.hero{grid-template-columns:1fr;gap:24px;padding:18px 15px 22px}}
+.hgrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:26px 36px;align-items:center}
+@media (max-width:820px){.hgrid{grid-template-columns:1fr;gap:22px}}
 
 /* CRT */
-.crt{max-width:420px;margin:0 auto;width:100%}
-.mon{background:linear-gradient(160deg,#E2DCCC 0%,#CFC7B2 46%,#B8AF98 100%);border-radius:20px 20px 12px 12px;padding:16px 16px 0;box-shadow:0 2px 0 #A79E86,0 16px 34px rgba(30,26,16,.28),inset 0 1px 0 rgba(255,255,255,.7)}
-.bez{background:linear-gradient(160deg,#2A2A2C,#151517);border-radius:12px;padding:11px;box-shadow:inset 0 2px 5px rgba(0,0,0,.7)}
-.scr{position:relative;border-radius:9px;overflow:hidden;background:radial-gradient(120% 100% at 50% 30%,#123059 0%,#0A1A31 55%,#050C18 100%);padding:20px 18px 22px;min-height:212px;box-shadow:inset 0 0 44px rgba(0,0,0,.75),inset 0 0 0 1px rgba(120,180,255,.14)}
+.crt{max-width:300px;margin:0 auto;width:100%}
+.mon{background:linear-gradient(160deg,#E2DCCC 0%,#CFC7B2 46%,#B8AF98 100%);border-radius:16px 16px 10px 10px;padding:12px 12px 0;box-shadow:0 2px 0 #A79E86,0 16px 34px rgba(30,26,16,.28),inset 0 1px 0 rgba(255,255,255,.7)}
+.bez{background:linear-gradient(160deg,#2A2A2C,#151517);border-radius:10px;padding:9px;box-shadow:inset 0 2px 5px rgba(0,0,0,.7)}
+.scr{position:relative;border-radius:8px;overflow:hidden;background:radial-gradient(120% 100% at 50% 30%,#123059 0%,#0A1A31 55%,#050C18 100%);padding:15px 14px 17px;min-height:158px;box-shadow:inset 0 0 40px rgba(0,0,0,.75),inset 0 0 0 1px rgba(120,180,255,.14)}
 .scr::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(0,0,0,.24) 0 1px,rgba(0,0,0,0) 1px 3px)}
 .scr::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(80% 60% at 50% 18%,rgba(120,190,255,.14),transparent 70%)}
-.cmd{font-family:var(--mono);font-size:12px;color:#7FE3B0;margin:0 0 14px;max-width:none;text-shadow:0 0 9px rgba(90,230,160,.5);white-space:nowrap;overflow:hidden}
-.cur{display:inline-block;width:8px;height:1em;background:#7FE3B0;vertical-align:-.14em;margin-left:2px;box-shadow:0 0 8px rgba(90,230,160,.7);animation:bl 1.05s steps(1) infinite}
+.cmd{font-family:var(--mono);font-size:10.5px;color:#7FE3B0;margin:0 0 12px;max-width:none;text-shadow:0 0 9px rgba(90,230,160,.5);white-space:nowrap;overflow:hidden}
+.cur{display:inline-block;width:7px;height:1em;background:#7FE3B0;vertical-align:-.14em;margin-left:2px;box-shadow:0 0 8px rgba(90,230,160,.7);animation:bl 1.05s steps(1) infinite}
 @keyframes bl{50%{opacity:0}}
-.mk{font-weight:800;font-size:clamp(34px,7.6vw,52px);line-height:.96;letter-spacing:-.035em;color:#EAF3FF;margin:0 0 12px;max-width:none;text-shadow:0 0 18px rgba(130,200,255,.45)}
+.mk{font-weight:800;font-size:clamp(24px,4.6vw,34px);line-height:1;letter-spacing:-.03em;color:#EAF3FF;margin:0 0 10px;max-width:none;text-shadow:0 0 16px rgba(130,200,255,.45)}
 .mk em{font-style:normal;color:#FF7A5C;text-shadow:0 0 20px rgba(255,110,70,.55)}
-.meta{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:#8FB6E8;margin:0;max-width:none;text-shadow:0 0 8px rgba(120,180,255,.4)}
-.chin{display:flex;align-items:center;justify-content:space-between;padding:9px 6px 12px}
-.chin .lb{font-family:var(--chrome);font-weight:700;font-size:10px;letter-spacing:.16em;color:#6E6552}
+.meta{font-family:var(--mono);font-size:8.5px;letter-spacing:.11em;line-height:1.8;color:#8FB6E8;margin:0;max-width:none;text-shadow:0 0 8px rgba(120,180,255,.4)}
+.chin{display:flex;align-items:center;justify-content:space-between;padding:7px 5px 10px}
+.chin .lb{font-family:var(--chrome);font-weight:700;font-size:8.5px;letter-spacing:.16em;color:#6E6552}
 .chin .led{width:8px;height:8px;border-radius:50%;background:#5BD97A;box-shadow:0 0 8px #5BD97A,inset 0 1px 1px rgba(255,255,255,.6)}
-.stand{width:96px;height:16px;margin:0 auto;background:linear-gradient(180deg,#C6BEA8,#A79E86)}
-.base{width:172px;height:11px;margin:0 auto;border-radius:0 0 9px 9px;background:linear-gradient(180deg,#B8AF98,#948B74);box-shadow:0 8px 18px rgba(30,26,16,.24)}
+.stand{width:74px;height:13px;margin:0 auto;background:linear-gradient(180deg,#C6BEA8,#A79E86)}
+.base{width:130px;height:10px;margin:0 auto;border-radius:0 0 9px 9px;background:linear-gradient(180deg,#B8AF98,#948B74);box-shadow:0 8px 18px rgba(30,26,16,.24)}
 
-.tag{font-size:clamp(19px,2.3vw,25px);line-height:1.28;font-weight:600;color:var(--ink);margin:0 0 14px;text-wrap:balance}
-.hero .lead{color:var(--ink-2);margin:0 0 18px}
-.facts{display:grid;grid-template-columns:1fr 1fr;gap:0 22px;margin:0 0 20px;border-top:1px solid var(--line)}
-.facts div{padding:8px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.hm{font-weight:800;font-size:clamp(40px,7vw,74px);line-height:.92;letter-spacing:-.045em;margin:0 0 14px;color:var(--ink)}
+.hm em{font-style:normal;color:var(--red)}
+.tag{font-size:clamp(19px,2.3vw,25px);line-height:1.28;font-weight:600;color:var(--ink);margin:0 0 14px;text-wrap:balance;max-width:22ch}
+.hgrid .lead{color:var(--ink-2);margin:0 0 18px;max-width:46ch}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 30px;margin:24px 0 0;border-top:2px solid var(--ink);padding-top:2px}
+.facts div{padding:10px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:baseline}
 .facts dt{font-size:13px;color:var(--muted)}
 .facts dd{margin:0;font-family:var(--mono);font-size:12.5px;font-weight:700;white-space:nowrap}
-@media (max-width:460px){.facts{grid-template-columns:1fr}}
 .cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 .cta .hint{font-family:var(--mono);font-size:11.5px;color:var(--muted);flex-basis:100%;margin:0}
 
@@ -130,7 +131,10 @@ strong{font-weight:600;color:var(--ink)}
 .feat{display:grid;grid-template-columns:1fr;gap:12px;margin:0 0 18px}
 @media (min-width:720px){.feat{grid-template-columns:1fr 1fr}.feat .fc:last-child{grid-column:1/-1}}
 .fc{background:var(--green-soft);border:1px solid var(--green-line);border-radius:6px;padding:16px 18px 17px;display:flex;gap:13px;align-items:flex-start}
-.fc .tick{flex:0 0 24px;width:24px;height:24px;border-radius:5px;background:var(--green);color:#fff;font-size:13px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+.fc .ic{flex:0 0 30px;width:30px;height:30px;display:block;margin-top:1px}
+.h4c{display:flex;align-items:center;gap:9px;margin:28px 0 12px}
+.h4c h4{margin:0}
+.h4c .tick{width:20px;height:20px;border-radius:4px;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}
 .fc b{display:block;font-weight:700;font-size:15.5px;color:var(--ink);margin-bottom:4px}
 .fc span{font-size:14px;line-height:1.45;color:var(--ink-2)}
 
@@ -190,10 +194,8 @@ tr.tot td{background:var(--soft);font-weight:700;color:var(--ink)}
 .mc.off{background:var(--red-soft);border-color:#F2C9C0}
 .mc.off .kind{color:var(--red-ink)}
 .mc.off .time{background:#fff;border-color:#EFC4BA}
-.mc.pro{background:#1B2430;border-color:#1B2430;color:#C9D3DF}
-.mc.pro .kind{color:#FF8E75}
-.mc.pro .topic{color:#FFF}
-.mc.pro .time{background:#2A3646;border-color:#3B4A5D;color:#9DAABB}
+.mc.pro{background:#F8FAFD;border-color:#CBD6E8;border-left:4px solid var(--red)}
+.mc.pro .kind{color:var(--red-ink)}
 @media (max-width:620px){.mo{grid-template-columns:34px 1fr 1fr;gap:6px}.mc{padding:9px 10px;font-size:12.5px}.mow{font-size:9.5px;padding-top:13px}}
 
 /* progress */
@@ -295,8 +297,36 @@ tr.tot td{background:var(--soft);font-weight:700;color:var(--ink)}
 .term .c2{color:#D97757}
 .term .c3{color:#7FB88A}
 
+.mx{position:relative;margin:14px 22px 0;border:1px solid #14351F;border-radius:6px;overflow:hidden;background:#03100A}
+.mx canvas{display:block;width:100%;height:96px}
+.mx .ovl{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-family:var(--mono);padding:8px;background:radial-gradient(65% 80% at 50% 50%,rgba(3,16,10,.9) 0%,rgba(3,16,10,.72) 55%,rgba(3,16,10,.15) 100%)}
+.mx .ovl p{margin:0;max-width:none;color:#7CFFAE;font-size:12px;letter-spacing:.06em;text-shadow:0 0 10px rgba(80,255,150,.6)}
+.mx .ovl .big{font-size:19px;font-weight:700;color:#B8FFD4;letter-spacing:.02em;margin-top:5px}
+.pbar{height:16px;margin:14px 22px 0;background:var(--soft);border:1px solid var(--line-2);border-radius:4px;padding:2px;overflow:hidden}
+.pbar i{display:block;height:100%;width:0;border-radius:2px;background:repeating-linear-gradient(90deg,var(--xp1) 0 10px,transparent 10px 13px);transition:width .12s linear}
+.pkg{list-style:none;margin:14px 22px 0;padding:0;display:grid;gap:10px}
+.pkg label{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line-2);border-radius:5px;padding:13px 14px;cursor:pointer;background:var(--card)}
+.pkg label:hover{background:var(--soft)}
+.pkg label.sel{border-color:var(--xp1);background:#F1F6FE;box-shadow:inset 0 0 0 1px var(--xp1)}
+.pkg input{accent-color:var(--xp1);width:15px;height:15px;margin:3px 0 0;flex:0 0 15px}
+.pkg b{display:block;font-size:15px;margin-bottom:2px}
+.pkg b span{font-family:var(--mono);font-size:13px;color:var(--red-ink);margin-left:7px}
+.pkg small{font-size:13px;color:var(--ink-2);line-height:1.4;display:block}
+.allnote{margin:12px 22px 0;padding:9px 12px;background:var(--amber);border:1px solid var(--amber-line);border-radius:4px;font-size:13px;color:var(--ink)}
+.tglink{margin:14px 22px 0;padding:13px 15px;border:1px solid var(--line-2);border-radius:5px;background:var(--soft);text-align:center}
+.tglink .u{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--xp1);display:block;margin:4px 0 6px}
+.tglink small{font-size:12px;color:var(--muted)}
+.tstmode{font-family:var(--mono);font-size:11px;color:var(--muted);margin:10px 22px 0;text-align:center}
 footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
 </style>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+<symbol id="f-cal" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="2" width="14" height="13" fill="#fff" stroke="#3A4657"/><rect x="1" y="2" width="14" height="4" fill="#1D4BA6" stroke="#3A4657"/><g fill="#8894A6"><rect x="3" y="8" width="2" height="2"/><rect x="7" y="8" width="2" height="2"/><rect x="3" y="11" width="2" height="2"/></g><rect x="11" y="8" width="2" height="2" fill="#DA3A26"/><rect x="7" y="11" width="2" height="2" fill="#DA3A26"/></symbol>
+<symbol id="f-team" viewBox="0 0 16 16" shape-rendering="crispEdges"><circle cx="5.4" cy="5" r="2.6" fill="#F2C88C" stroke="#3A4657"/><path d="M1 15c0-3 2-4.6 4.4-4.6S10 12 10 15z" fill="#DA3A26" stroke="#3A4657"/><circle cx="11.2" cy="5.6" r="2.2" fill="#F2C88C" stroke="#3A4657"/><path d="M8 15c0-2.7 1.7-4 3.2-4s3.8 1.3 3.8 4z" fill="#1D4BA6" stroke="#3A4657"/></symbol>
+<symbol id="f-chat" viewBox="0 0 16 16" shape-rendering="crispEdges"><path d="M1 2h14v9H6l-3 3v-3H1z" fill="#FFF" stroke="#3A4657"/><g fill="#3C8A43"><rect x="4" y="5" width="8" height="1.4"/><rect x="4" y="7.6" width="5" height="1.4"/></g></symbol>
+<symbol id="f-app" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3.5" y="1" width="9" height="14" rx="1" fill="#DDE4EE" stroke="#3A4657"/><rect x="5" y="3" width="6" height="9" fill="#1D4BA6"/><rect x="6.8" y="13" width="2.4" height="1" fill="#8894A6"/></symbol>
+<symbol id="f-party" viewBox="0 0 16 16" shape-rendering="crispEdges"><path d="M8 1l1.9 4.4 4.8.4-3.6 3.1 1.1 4.7L8 11.2 3.8 13.6l1.1-4.7L1.3 5.8l4.8-.4z" fill="#F5C542" stroke="#3A4657"/><rect x="7.2" y="6" width="1.6" height="3.4" fill="#DA3A26"/></symbol>
+</defs></svg>
 
 <div class="page">
   <nav class="nav" aria-label="Разделы">
@@ -320,38 +350,41 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
     <!-- HERO -->
     <section class="win" id="top">
       <div class="bar"><span class="t">И АЙ КЛАБ — сезон 1</span><span class="wb" aria-hidden="true"><i>_</i><i>□</i><i class="x">✕</i></span></div>
-      <div class="bd hero">
-        <div class="crt">
-          <div class="mon">
-            <div class="bez">
-              <div class="scr">
-                <p class="cmd">C:\CLUB&gt;&nbsp;<span id="tw">запуск сезона 1</span><span class="cur" aria-hidden="true"></span></p>
-                <h1 class="mk">И <em>АЙ</em><br>КЛАБ</h1>
-                <p class="meta">СЕЗОН 1 · МОСКВА · ПИТЕР</p>
-              </div>
+      <div class="bd">
+        <div class="hgrid">
+          <div>
+            <h1 class="hm">И <em>АЙ</em><br>КЛАБ</h1>
+            <p class="tag">Клуб для тех, кто делает всякие штуки с ИИ и хочет наконец встретить своих.</p>
+            <p class="lead">Собираемся по пятницам: два раза за ноутбуком, два раза оффлайн. За 90 дней команда делает вместе первую выручку. По окончанию — крутой выпускной с награждением.</p>
+            <div class="cta">
+              <button class="btn go" id="startb" type="button"><span class="wlogo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Пуск</button>
+              <a class="btn big" href="#honest">Подробнее</a>
+              <p class="hint">Пуск — беру не глядя. Для самых быстрых.</p>
             </div>
-            <div class="chin"><span class="lb">И АЙ КЛАБ</span><span class="led" aria-hidden="true"></span></div>
           </div>
-          <div class="stand" aria-hidden="true"></div>
-          <div class="base" aria-hidden="true"></div>
-        </div>
-        <div>
-          <p class="tag">Клуб для тех, кто делает всякие штуки с ИИ и хочет наконец встретить своих.</p>
-          <p class="lead">Собираемся по пятницам: два раза за ноутбуком, два раза в баре. За 90 дней команда делает вместе первую выручку. По окончанию — крутой выпускной с награждением.</p>
-          <dl class="facts">
-            <div><dt>Сезон</dt><dd>90 дней</dd></div>
-            <div><dt>Подписка</dt><dd>от 1 900 ₽</dd></div>
-            <div><dt>PRO</dt><dd>от 4 900 ₽</dd></div>
-            <div><dt>Встречи</dt><dd>4 в месяц · PRO 6</dd></div>
-            <div><dt>Оффлайн</dt><dd>Москва и Питер</dd></div>
-            <div><dt>Команды</dt><dd>3–10 человек</dd></div>
-          </dl>
-          <div class="cta">
-            <button class="btn go" id="startb" type="button"><span class="wlogo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Пуск</button>
-            <a class="btn big" href="#honest">Подробнее</a>
-            <p class="hint">Пуск — беру не глядя. Для самых быстрых.</p>
+          <div class="crt">
+            <div class="mon">
+              <div class="bez">
+                <div class="scr">
+                  <p class="cmd">C:\CLUB&gt;&nbsp;<span id="tw">запуск сезона 1</span><span class="cur" aria-hidden="true"></span></p>
+                  <p class="mk">И <em>АЙ</em> КЛАБ</p>
+                  <p class="meta">ОНЛАЙН — ВСЕ РЕГИОНЫ<br>ВЫПУСКНОЙ — МОСКВА И ПИТЕР</p>
+                </div>
+              </div>
+              <div class="chin"><span class="lb">И АЙ КЛАБ</span><span class="led" aria-hidden="true"></span></div>
+            </div>
+            <div class="stand" aria-hidden="true"></div>
+            <div class="base" aria-hidden="true"></div>
           </div>
         </div>
+        <dl class="facts">
+          <div><dt>Сезон</dt><dd>90 дней</dd></div>
+          <div><dt>Подписка CLUB</dt><dd>от 1 900 ₽</dd></div>
+          <div><dt>Подписка PRO</dt><dd>от 4 900 ₽</dd></div>
+          <div><dt>Встречи</dt><dd>4 в месяц · PRO 6</dd></div>
+          <div><dt>Выпускной</dt><dd>Москва и Питер</dd></div>
+          <div><dt>Команды</dt><dd>3–10 человек</dd></div>
+        </dl>
       </div>
     </section>
 
@@ -361,7 +394,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
       <div class="bd">
         <h2>Сразу договоримся, чтобы потом не ругаться</h2>
         <p class="k">Мы насмотрелись на клубы, где взрослые люди в костюмах час объясняют, как важно быть в правильном окружении. И на рилсы, где ИИ приносит миллион за вечер. Так это не работает, и вы это знаете.</p>
-        <p>Работает скучнее: сесть, разобраться, сделать, показать, переделать. Зато рядом будут те, кто делает то же самое, и с ними можно выпить в пятницу.</p>
+        <p>Работает скучнее: сесть, разобраться, сделать, показать, переделать. Зато рядом будут те, кто делает то же самое, и с ними хочется проводить пятницу.</p>
         <div class="bsod">
           <b>ЧЕГО ЗДЕСЬ НЕ БУДЕТ</b>
           <ul>
@@ -374,13 +407,13 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
           <p>Нажмите любую клавишу, чтобы вернуться к нормальной жизни _</p>
         </div>
 
-        <h4>А вот это будет</h4>
+        <div class="h4c"><span class="tick" aria-hidden="true">✓</span><h4>А вот это будет</h4></div>
         <div class="feat">
-          <div class="fc"><span class="tick" aria-hidden="true">✓</span><div><b>Встречаемся по пятницам</b><span>Либо созвон по делу, либо боулинг, картинг, бар.</span></div></div>
-          <div class="fc"><span class="tick" aria-hidden="true">✓</span><div><b>Команда</b><span>Делаете выручку на практике и делитесь опытом, что реально работает.</span></div></div>
-          <div class="fc"><span class="tick" aria-hidden="true">✓</span><div><b>Дружеский вайб</b><span>Без «здравствуйте, а можно вопрос». Лёгкое общение без масок и понтов.</span></div></div>
-          <div class="fc"><span class="tick" aria-hidden="true">✓</span><div><b>Чат и приложение</b><span>Чат для общения, приложение для удобства: ответы на вопросы и все материалы.</span></div></div>
-          <div class="fc"><span class="tick" aria-hidden="true">✓</span><div><b>Общие встречи и командная работа</b><span>В первую очередь это знакомства, классные люди, совместная работа и отдых.</span></div></div>
+          <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-cal"/></svg><div><b>Встречаемся по пятницам</b><span>Либо созвон по делу, либо боулинг, картинг, бар. Активно проводим время, максимум — сок.</span></div></div>
+          <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-team"/></svg><div><b>Команда</b><span>Делаете выручку на практике и делитесь опытом, что реально работает.</span></div></div>
+          <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-chat"/></svg><div><b>Дружеский вайб</b><span>Без «здравствуйте, а можно вопрос». Лёгкое общение без масок и понтов.</span></div></div>
+          <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-app"/></svg><div><b>Чат и приложение</b><span>Чат для общения, приложение для удобства: ответы на вопросы и все материалы.</span></div></div>
+          <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-party"/></svg><div><b>Общие встречи и командная работа</b><span>В первую очередь это знакомства, классные люди, совместная работа и отдых.</span></div></div>
         </div>
 
         <h4>Три принципа, на которых всё держится</h4>
@@ -435,21 +468,21 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
             </div>
           </div>
           <div class="tier">
-            <div class="bar"><span class="t">CLUB</span></div>
+            <div class="bar"><span class="t">CLUB — общие встречи</span></div>
             <div class="tb">
               <p class="prc">1 900 ₽<small>в месяц</small></p>
               <p class="qt">«Пользуюсь, но хочу нормально»</p>
               <ul>
-                <li>Четыре встречи в месяц: две онлайн, две в баре</li>
+                <li>Четыре общие встречи в месяц: две онлайн, две оффлайн</li>
                 <li>Чат по темам и дайджест по понедельникам</li>
                 <li>База знаний и записи всех эфиров</li>
                 <li>Рандом-кофе и биржа «ищу / сделаю»</li>
-                <li>Приложение клуба</li>
+                <li>Приложение клуба и выпускной</li>
               </ul>
             </div>
           </div>
           <div class="tier hot">
-            <div class="bar red"><span class="t">PRO — Мани Челлендж</span></div>
+            <div class="bar red"><span class="t">PRO — команды и Мани Челлендж</span></div>
             <div class="tb">
               <p class="prc">4 900 ₽<small>в месяц</small></p>
               <p class="qt">«Хочу команду и заработать вместе»</p>
@@ -459,6 +492,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
                 <li>Мастермайнд и командные созвоны</li>
                 <li>Общий рейтинг и копилка сезона</li>
                 <li>Таблицы, финмодели, презентации для инвесторов</li>
+                <li>Выпускной, как и у всех</li>
               </ul>
             </div>
           </div>
@@ -508,7 +542,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
           <div class="mc pro"><div class="h"><span class="kind">Онлайн · глубоко</span><span class="time">18:00–19:30</span></div><span class="topic">Разбор по-взрослому</span>Одна тема целиком: модели, деньги, таблицы, чужие ошибки.</div>
 
           <div class="mow">НЕД 2</div>
-          <div class="mc off"><div class="h"><span class="kind">Оффлайн</span><span class="time">20:00–23:00</span></div><span class="topic">Москва, Питер или свой регион</span>Боулинг, картинг, бар. Без бейджиков и питчей у стойки.</div>
+          <div class="mc off"><div class="h"><span class="kind">Оффлайн</span><span class="time">20:00–23:00</span></div><span class="topic">Москва, Питер или свой регион</span>Боулинг, картинг, бар. Активно проводим время, максимум — сок.</div>
           <div class="mc pro"><div class="h"><span class="kind">Командный созвон</span><span class="time">18:00 или как удобно</span></div><span class="topic">Проект и задачи</span>Команда обсуждает проект, распределяет задачи, делится опытом и результатом.</div>
 
           <div class="mow">НЕД 3</div>
@@ -532,7 +566,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
       <div class="bar red"><span class="t">Мани Челлендж — 90 дней</span><span class="wb" aria-hidden="true"><i>_</i><i>□</i><i class="x">✕</i></span></div>
       <div class="bd">
         <h2>Мани Челлендж: важнее путь, а не только сумма</h2>
-        <p class="k">PRO — это не курс, а совместный забег на три месяца. Команды по 3–10 человек, у каждой своя история. Мы смотрим не только на выручку, а на то, как команда прошла путь: что попробовала, где ошиблась, чем поделилась с остальными.</p>
+        <p class="k">PRO — это не курс, а совместный спринт на три месяца. Команды по 3–10 человек, у каждой своя история. Мы смотрим не только на выручку, а на то, как команда прошла путь: что попробовала, где ошиблась, чем поделилась с остальными и как поддерживала своих.</p>
         <p>Поэтому здесь не соревнуются в одиночку. Команда, которая нашла рабочую механику, рассказывает её всем — и от этого выигрывает весь клуб. Общий результат сезона важнее личного места в таблице.</p>
         <div class="pb" role="img" aria-label="Полоса сезона: три месяца и выпускной">
           <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="f"></i><i class="f"></i><i class="f"></i>
@@ -662,7 +696,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
               </g>
             </svg>
           </div>
-          <p>Каждый оборот дешевле предыдущего. К третьему сезону контент делают участники, разборы ведут участники, новых приводят участники. Нам остаётся держать ритм и наливать.</p>
+          <p>Каждый оборот дешевле предыдущего. К третьему сезону контент делают участники, разборы ведут участники, новых приводят участники. Нам остаётся держать ритм и придумывать, куда пойти.</p>
         </div>
       </div>
     </section>
@@ -739,14 +773,14 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
           <table>
             <thead><tr><th>Источник</th><th>Механика</th><th>За сезон</th></tr></thead>
             <tbody>
-              <tr><td>Подписки</td><td>CLUB и PRO. Набор идёт три месяца, цена для новых растёт каждый месяц. К третьему месяцу ≈ 300 CLUB и 45 PRO</td><td class="n">≈ 2 100 000 ₽</td></tr>
-              <tr><td>Спонсоры</td><td>Один генеральный за 300 000 ₽ и до четырёх по 100 000 ₽</td><td class="n">до 700 000 ₽</td></tr>
-              <tr><td>Допы</td><td>Бранчи, мини-конференции, конкурс стартапов, база знаний и членство после сезона по 990 ₽</td><td class="n">≈ 300 000 ₽</td></tr>
-              <tr class="tot"><td>Итого за сезон</td><td>Три месяца</td><td class="n">≈ 3 100 000 ₽</td></tr>
+              <tr><td>Подписки</td><td>К концу сезона 100 CLUB и 15 PRO. Набор идёт три месяца, цена для новых растёт каждый месяц</td><td class="n">550 000 – 700 000 ₽</td></tr>
+              <tr><td>Спонсоры</td><td>Один генеральный за 300 000 ₽ и до четырёх по 100 000 ₽. Продадим хотя бы одного — уже хорошо</td><td class="n">100 000 – 700 000 ₽</td></tr>
+              <tr><td>Допы</td><td>Конкурсы, бранчи, мини-конференции, база знаний и членство после сезона по 990 ₽</td><td class="n">≈ 150 000 ₽</td></tr>
+              <tr class="tot"><td>Итого за сезон</td><td>Три месяца</td><td class="n">800 000 – 1 550 000 ₽</td></tr>
             </tbody>
           </table>
         </div>
-        <p class="sm">Подписки по месяцам: первый ≈ 264 000 ₽, второй ≈ 657 000 ₽, третий ≈ 1 180 000 ₽ — сумма растёт, потому что старые участники остаются, а новые заходят по цене выше. Спонсорские деньги приходят разом в начале сезона. Расходы: комьюнити-менеджер, съёмка и монтаж, площадки и фотограф, приложение, сервисы и API — на старте 35–45% выручки. Копилка сезона в кассу не входит: это деньги участников, они уходят на призы и выпускной.</p>
+        <p class="sm">Реалистичный ориентир — около <strong>1 000 000 ₽ за сезон</strong>, и это уже хорошо. Планируем от нижней границы: если спонсоров не будет вовсе, подписки всё равно закрывают расходы. Расходы: комьюнити-менеджер, съёмка и монтаж, площадки и фотограф, приложение, сервисы и API — на старте 35–45% выручки. Копилка сезона в кассу не входит: это деньги участников, они уходят на призы и выпускной.</p>
       </div>
     </section>
 
@@ -786,10 +820,10 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
   </main>
 </div>
 
-<!-- диалог 1: выбор цели -->
+<!-- 1. цель -->
 <div class="ov" id="ov1" role="dialog" aria-modal="true" aria-labelledby="t1">
   <div class="dlg">
-    <div class="bar"><span class="t" id="t1">Мастер запуска сезона — шаг 1 из 1</span><span class="wb"><i class="x" data-close="ov1" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
+    <div class="bar"><span class="t" id="t1">Мастер запуска сезона — шаг 1 из 3</span><span class="wb"><i class="x" data-close="ov1" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
     <div class="dlgb">
       <span class="gl" aria-hidden="true">?</span>
       <div>
@@ -799,7 +833,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
     </div>
     <div style="padding:0 22px">
       <ul class="opts" id="opts">
-        <li><label><input type="radio" name="goal" value="gin"><span>Бутылка джина и хорошая пятница</span></label></li>
+        <li><label><input type="radio" name="goal" value="gin"><span>Бутылка сока и хорошая пятница</span></label></li>
         <li><label><input type="radio" name="goal" value="100" checked><span>100 000 ₽ на всех</span></label></li>
         <li><label><input type="radio" name="goal" value="500"><span>500 000 ₽ и полный зал на выпускном</span></label></li>
         <li><label><input type="radio" name="goal" value="1000"><span>1 000 000 ₽ и выпускной с размахом</span></label></li>
@@ -812,48 +846,115 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
   </div>
 </div>
 
-<!-- диалог 2: ошибка -->
+<!-- 2. вселенная -->
 <div class="ov" id="ov2" role="dialog" aria-modal="true" aria-labelledby="t2">
   <div class="dlg">
-    <div class="bar red"><span class="t" id="t2">Ошибка ЦЕЛЬ.EXE</span><span class="wb"><i class="x" data-close="ov2" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
-    <div class="dlgb err">
-      <span class="gl" aria-hidden="true">✕</span>
+    <div class="bar"><span class="t" id="t2">Вселенная — обработка запроса</span><span class="wb"><i class="x" data-close="ov2" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
+    <div class="dlgb">
+      <span class="gl" aria-hidden="true">↯</span>
       <div>
-        <h3 id="errh">Цель принята, но кнопкой она не ставится</h3>
-        <p id="errp">Требуется команда, 90 дней и первая пятница.</p>
+        <h3 id="uh">Запрос принят и поставлен в очередь</h3>
+        <p id="up">Вселенная не отвечает мгновенно. Обычно ей нужно ровно 90 дней и немного участия с твоей стороны.</p>
       </div>
     </div>
+    <div class="mx">
+      <canvas id="mxc" aria-hidden="true"></canvas>
+      <div class="ovl"><div>
+        <p id="mxs">ОБРАБОТКА ЗАПРОСА...</p>
+        <p class="big" id="mxt">90д 00:00:00</p>
+      </div></div>
+    </div>
     <div class="term" aria-hidden="true">
-      <div class="th"><span class="dot"></span><span>клуб — консоль</span></div>
+      <div class="th"><span class="dot"></span><span>вселенная — консоль</span></div>
       <div class="tb2">
-        <div class="c1">$ клуб --цель <span class="c2" id="tgoal">"100 000 ₽"</span></div>
+        <div class="c1">$ вселенная --цель <span class="c2" id="tgoal">"100 000 ₽"</span> --срок 90д</div>
         <div>› проверяю наличие отговорок<span class="c1"> ... </span><span class="c3">не найдено</span></div>
-        <div>› команда<span class="c1"> ... </span><span class="c2">требуется</span></div>
-        <div>› первая пятница<span class="c1"> ... </span><span class="c2">не назначена</span></div>
-        <div class="c1">› запусти вручную: скажи «делаем»</div>
+        <div>› команда<span class="c1"> ... </span><span class="c3">подберём в первый месяц</span></div>
+        <div id="uline">› срок исполнения<span class="c1"> ... </span><span class="c2">90 дней, отсчёт пошёл</span></div>
       </div>
     </div>
     <div class="dlgf">
-      <button class="btn hot" data-close="ov2" type="button">Ладно, погнали</button>
-      <button class="btn" id="change2" type="button">Изменить</button>
+      <button class="btn hot" id="toPkg" type="button">ОК, беру</button>
+      <button class="btn" id="change2" type="button">Изменить цель</button>
     </div>
   </div>
 </div>
 
-<!-- диалог 3: шутка про отмену -->
+<!-- 3. пакет -->
 <div class="ov" id="ov3" role="dialog" aria-modal="true" aria-labelledby="t3">
+  <div class="dlg">
+    <div class="bar"><span class="t" id="t3">Мастер запуска сезона — шаг 2 из 3</span><span class="wb"><i class="x" data-close="ov3" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
+    <div class="dlgb">
+      <span class="gl" aria-hidden="true">i</span>
+      <div>
+        <h3>Выберите пакет</h3>
+        <p>Цена первого месяца. Со второго месяца для новых она вырастет.</p>
+      </div>
+    </div>
+    <ul class="pkg" id="pkg">
+      <li><label class="sel"><input type="radio" name="pk" value="club" checked><span><b>CLUB<span>1 900 ₽/мес</span></b><small>Общие встречи: две онлайн и две оффлайн в месяц, чат, база знаний, приложение.</small></span></label></li>
+      <li><label><input type="radio" name="pk" value="pro"><span><b>PRO<span>4 900 ₽/мес</span></b><small>Всё из CLUB плюс команда 3–10 человек, мастермайнд, командные созвоны и Мани Челлендж.</small></span></label></li>
+    </ul>
+    <p class="allnote">Выпускной в конце сезона — для всех, независимо от пакета.</p>
+    <div class="dlgf">
+      <button class="btn hot" id="toPay" type="button">Перейти к оплате</button>
+      <button class="btn" id="backGoal" type="button">Назад</button>
+    </div>
+  </div>
+</div>
+
+<!-- 4. оплата и ссылка -->
+<div class="ov" id="ov4" role="dialog" aria-modal="true" aria-labelledby="t4">
+  <div class="dlg">
+    <div class="bar"><span class="t" id="t4">Мастер запуска сезона — шаг 3 из 3</span><span class="wb"><i class="x" data-close="ov4" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
+    <div id="payStep">
+      <div class="dlgb">
+        <span class="gl" aria-hidden="true">₽</span>
+        <div>
+          <h3 id="payh">Оплата пакета CLUB — 1 900 ₽</h3>
+          <p>Это демонстрация механики. Никакие данные карты не запрашиваются и никуда не уходят.</p>
+        </div>
+      </div>
+      <div class="pbar" aria-hidden="true"><i id="pbi"></i></div>
+      <p class="tstmode" id="paystatus">тестовый режим · нажми «Оплатить»</p>
+      <div class="dlgf">
+        <button class="btn hot" id="doPay" type="button">Оплатить</button>
+        <button class="btn" id="backPkg" type="button">Назад</button>
+      </div>
+    </div>
+    <div id="doneStep" hidden>
+      <div class="dlgb">
+        <span class="gl" aria-hidden="true" style="background:#3C8A43">✓</span>
+        <div>
+          <h3>Готово. Ты в клубе</h3>
+          <p id="doneP">Пакет CLUB на первый месяц. Ссылка на закрытый телеграм отправлена — там знакомство, расписание и первая пятница.</p>
+        </div>
+      </div>
+      <div class="tglink">
+        <span class="u">t.me/•••••••</span>
+        <small>Настоящую ссылку подставим перед запуском клуба</small>
+      </div>
+      <div class="dlgf"><button class="btn hot" data-close="ov4" type="button">Закрыть</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- шутка про отмену -->
+<div class="ov" id="ov9" role="dialog" aria-modal="true" aria-labelledby="t9">
   <div class="dlg" style="max-width:380px">
-    <div class="bar"><span class="t" id="t3">Отмена</span><span class="wb"><i class="x" data-close="ov3" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
+    <div class="bar"><span class="t" id="t9">Отмена</span><span class="wb"><i class="x" data-close="ov9" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
     <div class="dlgb">
       <span class="gl" aria-hidden="true">i</span>
       <div><p>Кнопка «Отмена» в этой сборке не работает. Попробуйте «Далее» — там всё равно ничего страшного.</p></div>
     </div>
-    <div class="dlgf"><button class="btn hot" id="back3" type="button">Вернуться к выбору</button></div>
+    <div class="dlgf"><button class="btn hot" id="back9" type="button">Вернуться к выбору</button></div>
   </div>
 </div>
 
 <script>
 (function(){
+  var $=function(id){return document.getElementById(id)};
+
   /* активный раздел в меню */
   var links=[].slice.call(document.querySelectorAll('.nav a[href^="#"]')),map={};
   links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
@@ -864,91 +965,166 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
     document.querySelectorAll('section[id]').forEach(function(s){io.observe(s)});
   }
 
-  /* печатающая строка на экране монитора */
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var tw=document.getElementById('tw');
+
+  /* печатающая строка на экране монитора */
+  var tw=$('tw');
   if(tw&&!reduce){
-    var lines=['запуск сезона 1','собираем команды','пятница уже близко','москва / питер'],li=0,ci=lines[0].length,del=true;
+    var lines=['запуск сезона 1','собираем команды','пятница уже близко','девчонки и мальчишки'],li=0,ci=lines[0].length,del=true;
     (function step(){
-      var s=lines[li];
+      var str=lines[li];
       if(del){ ci--; if(ci<=0){ del=false; li=(li+1)%lines.length; } }
-      else { ci++; if(ci>=s.length){ del=true; tw.textContent=s; setTimeout(step,1900); return; } }
+      else { ci++; if(ci>=str.length){ del=true; tw.textContent=str; setTimeout(step,1900); return; } }
       tw.textContent=lines[li].slice(0,Math.max(ci,0));
       setTimeout(step, del?45:75);
     })();
   }
 
-  /* звук всплывающего окна */
+  /* звук */
   var ac=null;
   function beep(kind){
     try{
       var C=window.AudioContext||window.webkitAudioContext; if(!C) return;
       if(!ac) ac=new C();
       if(ac.state==='suspended') ac.resume();
-      var t=ac.currentTime, notes = kind==='err' ? [[466.16,0],[349.23,.15],[293.66,.3]] : [[987.77,0],[1318.51,.085]];
-      notes.forEach(function(n){
+      var t=ac.currentTime, n;
+      if(kind==='err') n=[[466.16,0],[349.23,.15],[293.66,.3]];
+      else if(kind==='ok') n=[[659.25,0],[830.61,.09],[987.77,.18]];
+      else n=[[987.77,0],[1318.51,.085]];
+      n.forEach(function(x){
         var o=ac.createOscillator(), g=ac.createGain();
-        o.type='triangle'; o.frequency.value=n[0];
-        g.gain.setValueAtTime(.0001,t+n[1]);
-        g.gain.exponentialRampToValueAtTime(.16,t+n[1]+.012);
-        g.gain.exponentialRampToValueAtTime(.0001,t+n[1]+(kind==='err'?.34:.24));
-        o.connect(g); g.connect(ac.destination); o.start(t+n[1]); o.stop(t+n[1]+.4);
+        o.type='triangle'; o.frequency.value=x[0];
+        g.gain.setValueAtTime(.0001,t+x[1]);
+        g.gain.exponentialRampToValueAtTime(.15,t+x[1]+.012);
+        g.gain.exponentialRampToValueAtTime(.0001,t+x[1]+.3);
+        o.connect(g); g.connect(ac.destination); o.start(t+x[1]); o.stop(t+x[1]+.36);
       });
     }catch(e){}
   }
 
+  /* окна */
   var last=null;
-  function show(id,kind){
-    var ov=document.getElementById(id);
-    ov.classList.add('on'); beep(kind||'pop');
+  function open(id,kind){
+    var ov=$(id); ov.classList.add('on'); beep(kind||'pop');
     var f=ov.querySelector('input:checked')||ov.querySelector('button');
     if(f) f.focus();
+    if(id==='ov2') startUniverse();
   }
-  function hide(id){ document.getElementById(id).classList.remove('on'); if(last) last.focus(); }
+  function close(id){ $(id).classList.remove('on'); if(id==='ov2') stopUniverse(); if(last) last.focus(); }
+  function swap(from,to,kind){ $(from).classList.remove('on'); if(from==='ov2') stopUniverse(); open(to,kind); }
+
   document.querySelectorAll('[data-close]').forEach(function(el){
-    function go(){ hide(el.getAttribute('data-close')); }
+    function go(){ close(el.getAttribute('data-close')); }
     el.addEventListener('click',go);
     el.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){e.preventDefault();go();} });
   });
   document.querySelectorAll('.ov').forEach(function(ov){
-    ov.addEventListener('click',function(e){ if(e.target===ov) ov.classList.remove('on'); });
+    ov.addEventListener('click',function(e){ if(e.target===ov) close(ov.id); });
   });
   document.addEventListener('keydown',function(e){
-    if(e.key==='Escape'){ document.querySelectorAll('.ov.on').forEach(function(o){o.classList.remove('on')}); }
+    if(e.key==='Escape'){ document.querySelectorAll('.ov.on').forEach(function(o){ close(o.id); }); }
   });
 
   ['startb','startb2'].forEach(function(id){
-    var b=document.getElementById(id);
-    if(b) b.addEventListener('click',function(){ last=b; show('ov1'); });
+    var b=$(id); if(b) b.addEventListener('click',function(){ last=b; open('ov1'); });
   });
 
-  var texts={
-    gin:['Скромно и по делу','Система оценила реализм. Джин будет в любом случае, но он идёт бонусом к выручке, а не вместо неё.','"бутылка джина"'],
+  /* шаг 1 */
+  var goals={
+    gin:['Скромно и по делу','Вселенная оценила реализм. Сок будет в любом случае, но он идёт бонусом к выручке, а не вместо неё.','"бутылка сока"'],
     '100':['Подозрительно похоже на план','Обычно на этом месте пишут «свобода и рост», и это ничем не заканчивается. Тут хотя бы есть число.','"100 000 ₽"'],
     '500':['Принято, считаем','Пятнадцать команд, много кофе и ни одной пропущенной пятницы. Выглядит достижимо.','"500 000 ₽"'],
     '1000':['Амбиции перезагружены','Перезагрузка выполнена успешно. Копилка на выпускной получится неприлично приличной.','"1 000 000 ₽"']
   };
-  document.getElementById('next').addEventListener('click',function(){
+  $('next').addEventListener('click',function(){
     var v=(document.querySelector('input[name=goal]:checked')||{}).value||'100';
-    document.getElementById('errh').textContent=texts[v][0]+', но кнопкой цель не ставится';
-    document.getElementById('errp').textContent=texts[v][1];
-    document.getElementById('tgoal').textContent=texts[v][2];
-    document.getElementById('ov1').classList.remove('on');
-    show('ov2','err');
+    $('uh').textContent=goals[v][0]+'. Запрос принят';
+    $('up').textContent=goals[v][1]+' Вселенная не отвечает мгновенно: ей нужно ровно 90 дней и немного участия с твоей стороны.';
+    $('tgoal').textContent=goals[v][2];
+    swap('ov1','ov2','err');
   });
-  document.getElementById('change2').addEventListener('click',function(){
-    document.getElementById('ov2').classList.remove('on'); show('ov1');
-  });
-  document.getElementById('cancel1').addEventListener('click',function(){
-    document.getElementById('ov1').classList.remove('on'); show('ov3');
-  });
-  document.getElementById('back3').addEventListener('click',function(){
-    document.getElementById('ov3').classList.remove('on'); show('ov1');
-  });
+  $('cancel1').addEventListener('click',function(){ swap('ov1','ov9'); });
+  $('back9').addEventListener('click',function(){ swap('ov9','ov1'); });
   document.querySelectorAll('.opts label').forEach(function(l){
-    function mark(){ document.querySelectorAll('.opts label').forEach(function(x){x.classList.remove('sel')}); l.classList.add('sel'); }
-    l.addEventListener('click',mark);
-    var i=l.querySelector('input'); if(i&&i.checked) l.classList.add('sel');
+    l.addEventListener('click',function(){
+      document.querySelectorAll('.opts label').forEach(function(x){x.classList.remove('sel')}); l.classList.add('sel');
+    });
+  });
+
+  /* шаг 2: матрица и обратный отсчёт */
+  var mxTimer=null, cdTimer=null, target=null;
+  function startUniverse(){
+    var cv=$('mxc'); if(cv){
+      var w=cv.width=cv.offsetWidth||360, h=cv.height=96;
+      var ctx=cv.getContext('2d'), cols=Math.max(1,Math.floor(w/13)), y=[];
+      for(var i=0;i<cols;i++) y[i]=Math.random()*10;
+      var ch='АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЭЮЯ01АЙ';
+      function frame(){
+        ctx.fillStyle='rgba(3,16,10,.14)'; ctx.fillRect(0,0,w,h);
+        ctx.font='12px monospace';
+        for(var i=0;i<cols;i++){
+          ctx.fillStyle = Math.random()>.94 ? '#CFFFE0' : '#3FC96F';
+          ctx.fillText(ch[Math.floor(Math.random()*ch.length)], i*13, y[i]*14);
+          if(y[i]*14>h && Math.random()>.965) y[i]=0;
+          y[i]++;
+        }
+      }
+      ctx.fillStyle='#03100A'; ctx.fillRect(0,0,w,h);
+      if(reduce){ for(var k=0;k<26;k++) frame(); }
+      else { mxTimer=setInterval(frame,70); }
+    }
+    target=Date.now()+90*24*3600*1000;
+    var st=$('mxs'); if(st) st.textContent='ОБРАБОТКА ЗАПРОСА...';
+    var pct=0;
+    var load=setInterval(function(){
+      pct+=7+Math.random()*11;
+      if(pct>=100){ clearInterval(load); if(st) st.textContent='ЦЕЛЬ БУДЕТ ВЫПОЛНЕНА ЧЕРЕЗ'; }
+      else if(st) st.textContent='ОБРАБОТКА ЗАПРОСА... '+Math.floor(pct)+'%';
+    },170);
+    function tick(){
+      var d=Math.max(0,target-Date.now()), day=Math.floor(d/86400000);
+      var hh=Math.floor(d%86400000/3600000), mm=Math.floor(d%3600000/60000), ss=Math.floor(d%60000/1000);
+      var pad=function(x){return (x<10?'0':'')+x};
+      var el=$('mxt'); if(el) el.textContent=day+'д '+pad(hh)+':'+pad(mm)+':'+pad(ss);
+    }
+    tick(); cdTimer=setInterval(tick,1000);
+  }
+  function stopUniverse(){ if(mxTimer){clearInterval(mxTimer);mxTimer=null;} if(cdTimer){clearInterval(cdTimer);cdTimer=null;} }
+
+  $('change2').addEventListener('click',function(){ swap('ov2','ov1'); });
+  $('toPkg').addEventListener('click',function(){ swap('ov2','ov3'); });
+
+  /* шаг 3: пакет */
+  document.querySelectorAll('.pkg label').forEach(function(l){
+    l.addEventListener('click',function(){
+      document.querySelectorAll('.pkg label').forEach(function(x){x.classList.remove('sel')}); l.classList.add('sel');
+    });
+  });
+  $('backGoal').addEventListener('click',function(){ swap('ov3','ov1'); });
+  $('toPay').addEventListener('click',function(){
+    var pro=(document.querySelector('input[name=pk]:checked')||{}).value==='pro';
+    $('payh').textContent='Оплата пакета '+(pro?'PRO — 4 900 ₽':'CLUB — 1 900 ₽');
+    $('doneP').textContent='Пакет '+(pro?'PRO':'CLUB')+' на первый месяц. Ссылка на закрытый телеграм отправлена — там знакомство, расписание и первая пятница.';
+    $('payStep').hidden=false; $('doneStep').hidden=true; $('pbi').style.width='0';
+    $('paystatus').textContent='тестовый режим · нажми «Оплатить»';
+    swap('ov3','ov4');
+  });
+  $('backPkg').addEventListener('click',function(){ swap('ov4','ov3'); });
+  $('doPay').addEventListener('click',function(){
+    var b=$('doPay'); b.disabled=true; b.textContent='Оплачиваем...';
+    var v=0, bar=$('pbi');
+    var t=setInterval(function(){
+      v+=9+Math.random()*13; if(v>100) v=100;
+      bar.style.width=v+'%';
+      $('paystatus').textContent='тестовый режим · проводим платёж '+Math.floor(v)+'%';
+      if(v>=100){
+        clearInterval(t);
+        setTimeout(function(){
+          $('payStep').hidden=true; $('doneStep').hidden=false; beep('ok');
+          b.disabled=false; b.textContent='Оплатить';
+        },320);
+      }
+    },130);
   });
 })();
 </script>
