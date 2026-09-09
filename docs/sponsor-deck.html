@@ -1,0 +1,405 @@
+<title>Партнёрство И АЙ КЛАБ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root{
+  --bg:#E7ECF3; --card:#FFFFFF; --soft:#F3F6FA; --ink:#141922; --ink-2:#414C5A; --muted:#6C7787;
+  --line:#D6DDE6; --line-2:#B9C3D0; --xp1:#1D4BA6; --xp2:#4287D8;
+  --red:#DA3A26; --red-2:#F0603F; --red-soft:#FDEAE6; --red-ink:#B02A18;
+  --green:#3C8A43; --amber:#FFF6DC; --amber-line:#E8D9A8;
+  --ui:'Onest','Segoe UI',Tahoma,Verdana,sans-serif; --chrome:Tahoma,Verdana,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono','Consolas',monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0F1620;color:var(--ink);font-family:var(--ui);-webkit-font-smoothing:antialiased;overflow:hidden}
+.deck{position:fixed;inset:0;display:grid;place-items:center}
+.stage{width:1280px;height:720px;position:relative;transform-origin:center center}
+.slide{position:absolute;inset:0;background:var(--bg);padding:34px 40px 30px;display:none;flex-direction:column}
+.slide.on{display:flex}
+.win{background:var(--card);border:1px solid var(--line-2);border-radius:7px;box-shadow:0 2px 4px rgba(20,32,50,.08),0 14px 34px rgba(20,32,50,.10);flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.bar{background:linear-gradient(180deg,var(--xp2) 0%,var(--xp1) 52%,#173D89 100%);color:#fff;display:flex;align-items:center;gap:10px;padding:0 10px 0 16px;height:36px;font-family:var(--chrome);font-weight:700;font-size:14px;flex:0 0 36px}
+.bar.red{background:linear-gradient(180deg,var(--red-2) 0%,var(--red) 52%,#9E2312 100%)}
+.bar .t{flex:1;text-shadow:0 1px 1px rgba(0,0,0,.28)}
+.bar .wb{display:flex;gap:4px}
+.bar .wb i{width:20px;height:17px;border-radius:2px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.38);font-style:normal;font-size:10px;font-weight:700;display:grid;place-items:center;line-height:1;font-family:var(--chrome)}
+.bd{padding:30px 38px 30px;flex:1;display:flex;flex-direction:column;min-height:0}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:14px;font-family:var(--mono);font-size:11.5px;color:#8C97A8;letter-spacing:.06em;text-transform:uppercase;flex:0 0 auto}
+h1{font-weight:800;font-size:76px;line-height:.98;letter-spacing:-.045em;margin:0 0 18px;color:var(--ink)}
+h1 em{font-style:normal;color:var(--red)}
+h2{font-weight:800;font-size:34px;line-height:1.12;letter-spacing:-.025em;margin:0 0 10px;text-wrap:balance}
+h3{font-weight:700;font-size:18px;margin:0 0 6px;letter-spacing:-.01em}
+p{margin:0 0 10px;color:var(--ink-2);font-size:17px;line-height:1.5}
+.k{color:var(--ink);font-weight:500}
+.sub{font-size:15px;color:var(--muted)}
+.lbl{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.two{display:grid;grid-template-columns:1.15fr 1fr;gap:40px;flex:1;align-items:center;min-height:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;min-height:0}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;flex:1;min-height:0}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;flex:1;min-height:0}
+.card{background:var(--soft);border:1px solid var(--line-2);border-radius:7px;padding:20px 22px;display:flex;flex-direction:column}
+.card.red{background:var(--red-soft);border-color:#F2C9C0}
+.card.white{background:var(--card)}
+.card .lbl{margin-bottom:8px}
+.card h3{font-size:19px}
+.card p{font-size:15px;margin:0;line-height:1.45}
+.num{font-family:var(--mono);font-weight:700}
+.big{font-weight:800;font-size:54px;letter-spacing:-.04em;line-height:1;color:var(--ink);margin:0 0 4px}
+.big small{font-size:22px;letter-spacing:-.01em;color:var(--muted);font-weight:700;margin-left:6px}
+.stat{padding:18px 0 16px;border-top:2px solid var(--ink)}
+.stat p{margin:0;font-size:15px;color:var(--ink-2)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--card);border:1px solid var(--line-2);border-radius:999px;padding:6px 13px;font-size:14px;font-weight:500}
+
+table{width:100%;border-collapse:collapse;font-size:16px;background:var(--card);border:1px solid var(--line-2);border-radius:6px;overflow:hidden}
+th{background:var(--soft);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:11px 16px;border-bottom:1px solid var(--line-2)}
+td{padding:12px 16px;border-bottom:1px solid var(--line);color:var(--ink-2);line-height:1.4;vertical-align:top}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:700;color:var(--ink);white-space:nowrap}
+td.n{font-family:var(--mono);font-size:14.5px;white-space:nowrap;color:var(--ink)}
+tr.mark td{background:var(--amber)}
+
+/* пакеты */
+.pk{background:var(--card);border:1px solid var(--line-2);border-radius:7px;overflow:hidden;display:flex;flex-direction:column}
+.pk.hot{border:2px solid var(--red);box-shadow:0 8px 24px rgba(218,58,38,.14)}
+.pk .bar{height:34px;flex-basis:34px;font-size:13.5px}
+.pkb{padding:18px 22px 20px;flex:1;display:flex;flex-direction:column}
+.price{font-weight:800;font-size:40px;letter-spacing:-.035em;line-height:1;margin:0 0 4px}
+.seats{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.06em;margin:0 0 14px}
+.pk dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:14.5px;flex:1}
+.pk dt{font-weight:700;color:var(--ink);white-space:nowrap}
+.pk dd{margin:0;color:var(--ink-2);line-height:1.4}
+.tot{margin:14px 0 0;padding:11px 14px;background:var(--amber);border:1px solid var(--amber-line);border-radius:5px;font-size:14px;line-height:1.5;color:var(--ink)}
+
+/* монитор */
+.crt{width:340px}
+.mon{background:linear-gradient(160deg,#E2DCCC 0%,#CFC7B2 46%,#B8AF98 100%);border-radius:18px 18px 12px 12px;padding:14px 14px 0;box-shadow:0 2px 0 #A79E86,0 18px 36px rgba(30,26,16,.28),inset 0 1px 0 rgba(255,255,255,.7)}
+.bez{background:linear-gradient(160deg,#2A2A2C,#151517);border-radius:11px;padding:10px;box-shadow:inset 0 2px 5px rgba(0,0,0,.7)}
+.scr{position:relative;border-radius:9px;overflow:hidden;background:radial-gradient(120% 100% at 50% 30%,#123059 0%,#0A1A31 55%,#050C18 100%);padding:16px 15px 18px;min-height:190px;box-shadow:inset 0 0 40px rgba(0,0,0,.75),inset 0 0 0 1px rgba(120,180,255,.14)}
+.scr::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(0,0,0,.24) 0 1px,rgba(0,0,0,0) 1px 3px)}
+.scr-h{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:#6E93C9;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid rgba(120,180,255,.2)}
+.hello{font-family:var(--mono);font-size:15px;font-weight:700;color:#B8FFD4;margin:0 0 6px;text-shadow:0 0 12px rgba(90,255,160,.55)}
+.cmd{font-family:var(--mono);font-size:13.5px;color:#7FE3B0;margin:0 0 18px;text-shadow:0 0 9px rgba(90,230,160,.5);white-space:nowrap}
+.cur{display:inline-block;width:8px;height:1em;background:#7FE3B0;vertical-align:-.14em;margin-left:2px;box-shadow:0 0 8px rgba(90,230,160,.7);animation:bl 1.05s steps(1) infinite}
+@keyframes bl{50%{opacity:0}}
+.meta{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;line-height:1.9;color:#8FB6E8;margin:0}
+.chin{display:flex;align-items:center;justify-content:space-between;padding:8px 6px 11px}
+.chin .lb{font-family:var(--chrome);font-weight:700;font-size:10px;letter-spacing:.1em;color:#6E6552;flex:1;text-align:center;padding-left:9px}
+.chin .led{width:8px;height:8px;border-radius:50%;background:#5BD97A;box-shadow:0 0 8px #5BD97A}
+.stand{width:90px;height:15px;margin:0 auto;background:linear-gradient(180deg,#C6BEA8,#A79E86)}
+.base{width:160px;height:11px;margin:0 auto;border-radius:0 0 9px 9px;background:linear-gradient(180deg,#B8AF98,#948B74);box-shadow:0 8px 18px rgba(30,26,16,.24)}
+
+/* шаги */
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;counter-reset:s}
+.steps li{background:var(--soft);border:1px solid var(--line-2);border-radius:7px;padding:20px 22px;counter-increment:s}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:30px;height:30px;border-radius:5px;background:var(--xp1);color:#fff;font-family:var(--mono);font-size:14px;font-weight:700;margin-bottom:12px}
+.steps b{display:block;font-size:18px;margin-bottom:5px}
+.steps span{font-size:15px;color:var(--ink-2);line-height:1.45}
+.note{border-left:4px solid var(--red);background:var(--soft);border-radius:5px;padding:14px 18px;margin-top:auto}
+.note p{margin:0;font-size:15.5px}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.who div{border:1px solid var(--line-2);border-radius:7px;overflow:hidden;background:var(--card)}
+.who .bar{height:30px;flex-basis:30px;font-size:12.5px;background:linear-gradient(180deg,#98A5B5,#6E7C8D 52%,#5A6675)}
+.who p{margin:0;padding:12px 16px 14px;font-size:14.5px}
+
+/* навигация */
+.nav{position:fixed;left:0;right:0;bottom:14px;display:flex;justify-content:center;align-items:center;gap:14px;z-index:5;font-family:var(--mono);font-size:12px;color:#9FB0C8}
+.dots{display:flex;gap:7px}
+.dots i{width:8px;height:8px;border-radius:50%;background:#3A4C66;cursor:pointer}
+.dots i.on{background:#fff}
+.hint{position:fixed;right:18px;top:14px;font-family:var(--mono);font-size:11px;color:#6F819B;z-index:5}
+.zone{position:fixed;top:0;bottom:60px;width:34%;z-index:4;cursor:pointer}
+.zone.l{left:0}.zone.r{right:0;width:66%}
+
+@media print{
+  @page{size:1280px 720px;margin:0}
+  html,body{background:#fff;overflow:visible;height:auto}
+  .deck{position:static;display:block}
+  .stage{width:1280px;height:auto;transform:none!important}
+  .slide{position:relative;display:flex!important;width:1280px;height:720px;page-break-after:always;break-after:page}
+  .nav,.hint,.zone{display:none}
+  .cur{animation:none}
+}
+</style>
+
+<div class="deck"><div class="stage" id="stage">
+
+<!-- 1. ТИТУЛ -->
+<section class="slide on">
+  <div class="win">
+    <div class="bar"><span class="t">сообщение от И АЙ КЛАБ — партнёрство на сезон 1</span><span class="wb" aria-hidden="true"><i>_</i><i>□</i><i>✕</i></span></div>
+    <div class="bd">
+      <div class="two">
+        <div>
+          <p class="lbl" style="margin-bottom:16px">Предложение для спонсоров · сезон 1</p>
+          <h1>И <em>АЙ</em> КЛАБ</h1>
+          <p class="k" style="font-size:24px;line-height:1.3;max-width:26ch;margin-bottom:16px">Клуб для тех, кто делает всякие штуки с ИИ и хочет наконец встретить своих.</p>
+          <p style="max-width:44ch">Три месяца, восемь встреч в месяц, команды, которые зарабатывают первую выручку, и большой выпускной. Ваш бренд внутри всего этого.</p>
+        </div>
+        <div style="display:grid;justify-items:end">
+          <div class="crt">
+            <div class="mon"><div class="bez"><div class="scr">
+              <p class="scr-h">И АЙ КЛАБ</p>
+              <p class="hello">привет, партнёр.</p>
+              <p class="cmd">&gt;&nbsp;запуск сезона 1<span class="cur" aria-hidden="true"></span></p>
+              <p class="meta">ОНЛАЙН — ВСЕ РЕГИОНЫ<br>ВЫПУСКНОЙ — МОСКВА И ПИТЕР</p>
+            </div></div><div class="chin"><span class="lb">яблоко</span><span class="led"></span></div></div>
+            <div class="stand"></div><div class="base"></div>
+          </div>
+        </div>
+      </div>
+      <div class="foot"><span>Москва · Питер · онлайн — все регионы</span><span>90 дней · 1 / 8</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. О ПРОЕКТЕ -->
+<section class="slide">
+  <div class="win">
+    <div class="bar"><span class="t">О проекте</span><span class="wb" aria-hidden="true"><i>_</i><i>□</i><i>✕</i></span></div>
+    <div class="bd">
+      <div class="two" style="grid-template-columns:1.25fr 1fr;align-items:start">
+        <div>
+          <h2>Не курс и не чат. Клуб, где ИИ внедряют вместе</h2>
+          <p class="k">Мы собираем предпринимателей, маркетологов, креаторов и просто любопытных людей 23–38 лет, которые хотят делать больше с помощью ИИ и не отстать.</p>
+          <p>Формат простой: встречаемся каждую пятницу, онлайн и оффлайн. Команды PRO за 90 дней делают первую выручку на практике. В конце сезона — большой выпускной с награждением и профессиональной съёмкой.</p>
+          <p>Клуб живёт открыто: цифры, рейтинг команд и результаты видны всем участникам. Здесь нельзя просто читать — раз в неделю каждый показывает, что сделал.</p>
+          <div class="chips" style="margin-top:14px">
+            <span class="chip">Предприниматели</span><span class="chip">Автоматизаторы</span><span class="chip">Блогеры и креаторы</span><span class="chip">Маркетинг, дизайн, HR</span><span class="chip">Вайб-кодеры</span>
+          </div>
+        </div>
+        <div style="display:grid;gap:14px;padding-top:6px">
+          <div class="stat"><p class="big">90<small>дней</small></p><p>Один сезон. Три месяца набора, потом выпускной</p></div>
+          <div class="stat"><p class="big">8<small>встреч в месяц</small></p><p>У PRO. У CLUB четыре: две онлайн, две оффлайн</p></div>
+          <div class="stat"><p class="big">100–300<small>человек</small></p><p>Платящих участников, которые уже внедряют ИИ</p></div>
+        </div>
+      </div>
+      <div class="foot"><span>И АЙ КЛАБ · спонсорам</span><span>2 / 8</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. ФОРМАТ -->
+<section class="slide">
+  <div class="win">
+    <div class="bar"><span class="t">Формат сезона</span><span class="wb" aria-hidden="true"><i>_</i><i>□</i><i>✕</i></span></div>
+    <div class="bd">
+      <h2>Всё держится на пятнице</h2>
+      <p style="margin-bottom:20px">Один день недели, и он всегда занят клубом. Каждый месяц — новый этап, каждую неделю — новая тема.</p>
+      <div class="grid4">
+        <div class="card white">
+          <p class="lbl">Онлайн · 18:00–19:30</p>
+          <h3>Эфиры в стиле Netflix</h3>
+          <p>Профессиональная камера, свет, графика. Двенадцать выпусков за сезон, все остаются в базе знаний. Главный рекламный носитель клуба.</p>
+        </div>
+        <div class="card red">
+          <p class="lbl" style="color:var(--red-ink)">Оффлайн · 20:00–23:00</p>
+          <h3>По городам</h3>
+          <p>Москва, Питер и свои регионы. Боулинг, картинг, бар. Живые встречи два раза в месяц, всегда с новыми лицами.</p>
+        </div>
+        <div class="card white">
+          <p class="lbl">PRO · 90 дней</p>
+          <h3>Мани Челлендж</h3>
+          <p>Команды по 3–10 человек делают первую выручку. Открытый рейтинг, копилка 10% на призы. Воркшопы, мастермайнды, командные созвоны.</p>
+        </div>
+        <div class="card" style="background:var(--amber);border-color:var(--amber-line)">
+          <p class="lbl">Финал сезона</p>
+          <h3>Выпускной</h3>
+          <p>Награждение команд, итоги сезона, профессиональная видеосъёмка и ролик о сезоне. Приходят все участники, независимо от пакета.</p>
+        </div>
+      </div>
+      <div class="foot"><span>И АЙ КЛАБ · спонсорам</span><span>3 / 8</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. АУДИТОРИЯ -->
+<section class="slide">
+  <div class="win">
+    <div class="bar"><span class="t">Аудитория</span><span class="wb" aria-hidden="true"><i>_</i><i>□</i><i>✕</i></span></div>
+    <div class="bd">
+      <div class="two" style="align-items:start">
+        <div>
+          <h2>Два слоя: широкий охват и ядро, которое уже платит</h2>
+          <p class="k">Не айтишники. Предприниматели, маркетологи, креаторы и специалисты 23–38 лет из Москвы, Питера и регионов.</p>
+          <p>Они пришли не смотреть, а внедрять: подключают инструменты, сравнивают модели, считают выручку и делают это на глазах друг у друга. Девушек и парней в клубе поровну — за этим мы следим специально.</p>
+          <p class="sub">Для бренда это значит: интеграция попадает не в ленту, а в момент выбора инструмента.</p>
+        </div>
+        <div style="display:grid;gap:14px">
+          <div class="card white">
+            <p class="lbl">Широкий охват · за сезон</p>
+            <p class="big" style="font-size:44px">≈ 340 000<small>показов</small></p>
+            <p>30 рилсов в Instagram и 12 видео на YouTube. Тёплая аудитория, которая ищет решение осознанно.</p>
+          </div>
+          <div class="card red">
+            <p class="lbl" style="color:var(--red-ink)">Ядро · внутри клуба</p>
+            <p class="big" style="font-size:44px">100–300<small>человек</small></p>
+            <p>Платящие участники: 12 эфиров, ежедневный чат, приложение с витриной инструментов и выпускной.</p>
+          </div>
+        </div>
+      </div>
+      <div class="foot"><span>И АЙ КЛАБ · спонсорам</span><span>4 / 8</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. ИНВЕНТАРЬ -->
+<section class="slide">
+  <div class="win">
+    <div class="bar"><span class="t">Инвентарь сезона</span><span class="wb" aria-hidden="true"><i>_</i><i>□</i><i>✕</i></span></div>
+    <div class="bd">
+      <h2>Где живёт бренд три месяца</h2>
+      <p style="margin-bottom:18px">Спонсорство берём на весь сезон целиком, а не на один пост. Вот всё, что выходит за это время.</p>
+      <table>
+        <thead><tr><th>Носитель</th><th>Объём за сезон</th><th>Кто и где видит</th></tr></thead>
+        <tbody>
+          <tr><td>Рилсы</td><td class="n">30 роликов</td><td>≈ 300 000 показов в Instagram, широкая тёплая аудитория</td></tr>
+          <tr><td>YouTube</td><td class="n">12 видео</td><td>≈ 42 000 показов, длинный просмотр, ищут решение осознанно</td></tr>
+          <tr><td>Эфиры</td><td class="n">12 выпусков</td><td>100–300 участников в прямом эфире и в записи, навсегда в базе знаний</td></tr>
+          <tr><td>ИИ-канал и чат</td><td class="n">≈ 90 постов</td><td>Ежедневный контакт с ядром клуба</td></tr>
+          <tr class="mark"><td>Приложение</td><td class="n">витрина инструментов</td><td>100–300 человек, которые уже платят и внедряют ИИ. Промокоды и карточка бренда</td></tr>
+          <tr><td>Выпускной</td><td class="n">1 мероприятие</td><td>Все команды и гости, профессиональная съёмка и ролик о сезоне</td></tr>
+        </tbody>
+      </table>
+      <div class="foot"><span>И АЙ КЛАБ · спонсорам</span><span>5 / 8</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. ВЫГОДЫ -->
+<section class="slide">
+  <div class="win">
+    <div class="bar"><span class="t">Почему это работает</span><span class="wb" aria-hidden="true"><i>_</i><i>□</i><i>✕</i></span></div>
+    <div class="bd">
+      <h2>Три причины, почему спонсору здесь хорошо</h2>
+      <div class="grid3" style="margin-top:12px">
+        <div class="card white">
+          <p class="lbl">Время</p>
+          <h3>Три месяца, а не один пост</h3>
+          <p>Бренд появляется каждую неделю: в рилсах, в эфирах, в канале, в приложении. К выпускному его знают по имени, а не по логотипу в углу.</p>
+        </div>
+        <div class="card white">
+          <p class="lbl">Момент</p>
+          <h3>Аудитория выбирает инструменты сейчас</h3>
+          <p>Участники не читают про ИИ, а подключают его. Ваш продукт попадает в момент выбора и внедряется на глазах у всей команды.</p>
+        </div>
+        <div class="card white">
+          <p class="lbl">Доверие</p>
+          <h3>Внутри разбора, не рекламным блоком</h3>
+          <p>Мы показываем только то, чем пользуемся сами: в эфире, в воркшопе, в промокоде для участников. Иначе клуб перестанет верить нам обоим.</p>
+        </div>
+      </div>
+      <div class="note">
+        <p><strong>Честно про цену.</strong> Если считать голые просмотры, это дороже обычной блогерской интеграции. Мы продаём другое: три месяца внутри среды, где сто-триста человек выбирают инструменты и внедряют их вместе.</p>
+      </div>
+      <div class="foot"><span>И АЙ КЛАБ · спонсорам</span><span>6 / 8</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. ПАКЕТЫ -->
+<section class="slide">
+  <div class="win">
+    <div class="bar red"><span class="t">Пакеты сезона</span><span class="wb" aria-hidden="true"><i>_</i><i>□</i><i>✕</i></span></div>
+    <div class="bd">
+      <div class="grid2" style="gap:22px">
+        <div class="pk hot">
+          <div class="bar red"><span class="t">Генеральный спонсор</span></div>
+          <div class="pkb">
+            <p class="price">300 000 ₽</p>
+            <p class="seats">ЗА СЕЗОН · 1 МЕСТО</p>
+            <dl>
+              <dt>Титул</dt><dd>«Сезон при поддержке бренда», имя в названии Мани Челленджа</dd>
+              <dt>Рилсы</dt><dd>6 интеграций, по две в месяц</dd>
+              <dt>YouTube</dt><dd>3 интеграции внутри видео</dd>
+              <dt>Эфиры</dt><dd>Логотип и упоминание во всех 12 выпусках</dd>
+              <dt>Канал</dt><dd>12 постов</dd>
+              <dt>Клуб</dt><dd>Свой воркшоп и промокод для всех участников</dd>
+              <dt>Выпускной</dt><dd>Стенд, слово со сцены, имя на призах</dd>
+            </dl>
+            <p class="tot"><strong>Охват:</strong> ≈ 70 000 показов в рилсах и на ютубе. <strong>Целевые:</strong> 100–300 человек, которые уже внедряют ИИ.</p>
+          </div>
+        </div>
+        <div class="pk">
+          <div class="bar"><span class="t">Спонсор сезона</span></div>
+          <div class="pkb">
+            <p class="price">100 000 ₽</p>
+            <p class="seats">ЗА СЕЗОН · ДО 4 МЕСТ</p>
+            <dl>
+              <dt>Рилсы</dt><dd>2 интеграции</dd>
+              <dt>YouTube</dt><dd>1 интеграция</dd>
+              <dt>Эфиры</dt><dd>Логотип во всех 12 выпусках</dd>
+              <dt>Канал</dt><dd>6 постов</dd>
+              <dt>Клуб</dt><dd>Одно живое демо продукта для участников</dd>
+              <dt>Выпускной</dt><dd>Упоминание и место на мероприятии</dd>
+            </dl>
+            <p class="tot"><strong>Охват:</strong> ≈ 25 000 показов в рилсах и на ютубе. <strong>Целевые:</strong> те же 100–300 человек внутри клуба.</p>
+          </div>
+        </div>
+      </div>
+      <div class="foot"><span>Потолок сезона 700 000 ₽ · пять мест, больше не продаём</span><span>7 / 8</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. ДАЛЬШЕ -->
+<section class="slide">
+  <div class="win">
+    <div class="bar"><span class="t">Что дальше</span><span class="wb" aria-hidden="true"><i>_</i><i>□</i><i>✕</i></span></div>
+    <div class="bd">
+      <h2>Давайте сделаем сезон вместе</h2>
+      <p style="margin-bottom:20px">Три шага от письма до первой пятницы с вашим брендом.</p>
+      <ol class="steps">
+        <li><b>Напишите нам</b><span>Расскажем про календарь сезона, темы эфиров и покажем, где встанет бренд.</span></li>
+        <li><b>Выберем пакет и даты</b><span>Согласуем интеграции по неделям, воркшоп или демо и промокод для участников.</span></li>
+        <li><b>Стартуем с первой пятницы</b><span>Бренд появляется в первом же эфире и в приложении. Отчёт по охватам — каждый месяц.</span></li>
+      </ol>
+      <div class="who" style="margin-top:22px">
+        <div><div class="bar"><span class="t">Егор — нейронки и практика</span></div><p>Сравнение моделей, свежие фишки, автоматизации, вайб-кодинг. Ведёт эфиры и воркшопы.</p></div>
+        <div><div class="bar"><span class="t">Кирилл — стартапы и деньги</span></div><p>Финмодели, юнит-экономика, работа с инвесторами. Ведёт Мани Челлендж и партнёрства.</p></div>
+      </div>
+      <div class="note" style="margin-top:18px">
+        <p><strong>Контакты:</strong> <span class="num">t.me/•••••••</span> · <span class="num">+7 ••• ••• •• ••</span> &nbsp;<span class="sub">подставим перед отправкой</span></p>
+      </div>
+      <div class="foot"><span>И АЙ КЛАБ · спонсорам</span><span>8 / 8</span></div>
+    </div>
+  </div>
+</section>
+
+</div></div>
+
+<div class="zone l" id="zl" aria-hidden="true"></div>
+<div class="zone r" id="zr" aria-hidden="true"></div>
+<div class="hint">← → листать · P печать</div>
+<div class="nav"><span id="cnt">1 / 8</span><div class="dots" id="dots"></div></div>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide')), i=0, stage=document.getElementById('stage');
+  var dots=document.getElementById('dots'), cnt=document.getElementById('cnt');
+  slides.forEach(function(_,k){ var d=document.createElement('i'); d.addEventListener('click',function(){go(k)}); dots.appendChild(d); });
+  function go(k){
+    i=Math.max(0,Math.min(slides.length-1,k));
+    slides.forEach(function(s,n){ s.classList.toggle('on',n===i); });
+    [].slice.call(dots.children).forEach(function(d,n){ d.classList.toggle('on',n===i); });
+    cnt.textContent=(i+1)+' / '+slides.length;
+    if(history.replaceState) history.replaceState(null,'','#'+(i+1));
+  }
+  function fit(){
+    var w=window.innerWidth, h=window.innerHeight-70;
+    var s=Math.min(w/1300, h/740);
+    stage.style.transform='scale('+s+')';
+  }
+  window.addEventListener('resize',fit); fit();
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){ e.preventDefault(); go(i+1); }
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); go(i-1); }
+    else if(e.key==='Home'){ go(0); } else if(e.key==='End'){ go(slides.length-1); }
+    else if(e.key==='p'||e.key==='P'||e.key==='з'||e.key==='З'){ window.print(); }
+  });
+  document.getElementById('zr').addEventListener('click',function(){go(i+1)});
+  document.getElementById('zl').addEventListener('click',function(){go(i-1)});
+  var m=location.hash.match(/^#(\d+)$/); go(m?parseInt(m[1],10)-1:0);
+})();
+</script>
