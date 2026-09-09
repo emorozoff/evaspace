@@ -222,11 +222,13 @@ tr.tot td{background:var(--soft);font-weight:700;color:var(--ink)}
 
 /* progress */
 .pb{height:26px;background:var(--soft);border:1px solid var(--line-2);border-radius:5px;padding:3px;display:flex;gap:3px;overflow:hidden}
-.pb i{flex:1;border-radius:2px;background:linear-gradient(180deg,#6FB3F0,var(--xp1));transform-origin:left center;transform:scaleX(0);opacity:0;animation:seg .42s cubic-bezier(.2,.8,.3,1) forwards;animation-delay:calc(var(--i,0)*95ms)}
+.pb i{flex:1;border-radius:2px;background:linear-gradient(180deg,#6FB3F0,var(--xp1));transform-origin:left center}
+.pb.armed i{transform:scaleX(0);opacity:0}
+.pb.armed.run i{animation:seg .9s cubic-bezier(.25,.7,.3,1) forwards;animation-delay:calc(var(--i,0)*260ms)}
 .pb i.w{background:linear-gradient(180deg,#F7C955,#E8A317)}
 .pb i.f{background:linear-gradient(180deg,var(--red-2),var(--red))}
-@keyframes seg{to{transform:scaleX(1);opacity:1}}
-@media (prefers-reduced-motion:reduce){.pb i{transform:none;opacity:1}}
+@keyframes seg{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.pb.armed i{transform:none;opacity:1}}
 .pbl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:7px 0 0;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted)}
 .pbl span:last-child{color:var(--red-ink)}
 .pbl .em{font-size:17px;line-height:1;font-weight:400;vertical-align:-3px;margin-left:2px}
@@ -1032,6 +1034,18 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
   }
 
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* полоса сезона заполняется, когда до неё доскроллили, и повторяется при возврате */
+  var pb=document.querySelector('.pb');
+  if(pb && !reduce && 'IntersectionObserver' in window){
+    pb.classList.add('armed');
+    new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        pb.classList.remove('run');
+        if(e.isIntersecting){ void pb.offsetWidth; pb.classList.add('run'); }
+      });
+    },{threshold:.4}).observe(pb);
+  }
 
   /* печатающая строка */
   var tw=$('tw');
