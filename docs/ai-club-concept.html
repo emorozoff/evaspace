@@ -444,7 +444,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
           <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-chat"/></svg><div><b>Дружеский вайб</b><span>Без «здравствуйте, а можно вопрос». Лёгкое общение на равных, без масок и понтов.</span></div></div>
           <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-app"/></svg><div><b>Чат и приложение</b><span>Чат для общения, приложение для удобства: ответы на вопросы и все материалы.</span></div></div>
           <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-meet"/></svg><div><b>Общие встречи и командная работа</b><span>В первую очередь это знакомства, классные люди, совместная работа и приятный досуг.</span></div></div>
-          <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-party"/></svg><div><b>Выпускной</b><span>Один большой выпускной для всех участников сразу: награждение команд, итоги сезона, живая музыка и вечеринка. Приходят все, независимо от пакета.</span></div></div>
+          <div class="fc"><svg class="ic" aria-hidden="true"><use href="#f-party"/></svg><div><b>Выпускной</b><span>Один большой выпускной для всех участников сразу: награждение команд, итоги сезона, живая музыка и вечеринка. Работает профессиональная видеосъёмка, из которой соберём ролик о сезоне. Приходят все, независимо от пакета.</span></div></div>
         </div>
 
         <h4>Три принципа, на которых всё держится</h4>
@@ -620,7 +620,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
           <div><b>Собираемся</b>Знакомимся, выбираем идею, делим роли. Правило одно: идея должна приносить деньги, а не лайки.</div>
           <div><b>Делаем и продаём</b>Прототип на ИИ, первые клиенты, первые отказы. Мастермайнд разбирает, где затык.</div>
           <div><b>Считаем</b>Юнит-экономика, cash flow, что масштабировать. Здесь подключаются таблицы и презентации.</div>
-          <div class="last"><b>Выпускной</b>Большой оффлайн: награждение, призы и вечеринка на деньги из копилки.</div>
+          <div class="last"><b>Выпускной</b>Большой оффлайн: награждение, призы и вечеринка на деньги из копилки. Профессиональная съёмка и ролик о сезоне.</div>
         </div>
 
         <div class="h4e"><span class="em" aria-hidden="true">💰</span><h4>Копилка: 10% в общак</h4></div>
@@ -633,7 +633,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
         <p class="sm">Пример для понимания механики. Масштаб финала зависит от всех сразу.</p>
         <ul class="bul">
           <li><strong>Никто не проверяет.</strong> Мы не сможем и не будем контролировать чужие доходы. Это работает на честном слове.</li>
-          <li><strong>Рейтинг открытый.</strong> В приложении видно, у какой команды какая выручка. Врать невыгодно: цифры без денег в копилке выглядят смешно.</li>
+          <li><strong>Рейтинг открытый.</strong> В приложении видно, у какой команды какая выручка. Врать невыгодно: цифры без денег в копилке не засчитываются.</li>
           <li><strong>В конце публикуем отчёт.</strong> Сколько заработали, какими механиками, что не сработало. Если модель себя покажет, соберём из неё отдельный курс.</li>
         </ul>
         <div class="msg warn">
@@ -760,7 +760,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
               <tr><td>Эфиры</td><td class="n">12 выпусков</td><td>100–300 участников в прямом эфире и в записи</td></tr>
               <tr><td>ИИ-канал и чат</td><td class="n">≈ 90 постов</td><td>Ежедневный контакт с ядром клуба</td></tr>
               <tr class="mark"><td>Приложение</td><td class="n">витрина инструментов</td><td>100–300 человек, которые уже платят и внедряют ИИ</td></tr>
-              <tr><td>Выпускной</td><td class="n">1 мероприятие</td><td>Все команды, гости, съёмка и публикации</td></tr>
+              <tr><td>Выпускной</td><td class="n">1 мероприятие</td><td>Все команды и гости, профессиональная съёмка и ролик о сезоне</td></tr>
             </tbody>
           </table>
         </div>
@@ -1098,95 +1098,72 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
     if(kind==='clap'){
       var t0=a.currentTime+.02, sr=a.sampleRate;
 
-      /* 1. короткий радостный аккорд — чтобы момент оплаты читался сразу */
+      /* общий выход с ограничителем: без него сумма звуков уходит за единицу
+         и браузер срезает верхушки — это и слышалось как треск */
+      var master=a.createGain(); master.gain.value=.78;
+      var lim=a.createDynamicsCompressor();
+      try{
+        lim.threshold.value=-6; lim.knee.value=2; lim.ratio.value=20;
+        lim.attack.value=.0008; lim.release.value=.1;
+      }catch(e){}
+      master.connect(lim); lim.connect(a.destination);
+
+      /* короткий светлый аккорд — отметка успеха, тихо, чтобы не забивал овацию */
       [[1046.50,0],[1318.51,.07],[1567.98,.14],[2093.00,.21]].forEach(function(x){
-        var o=a.createOscillator(), o2=a.createOscillator(), g=a.createGain();
-        o.type='sine'; o2.type='sine';
-        o.frequency.value=x[0]; o2.frequency.value=x[0]*2.01;
-        var g2=a.createGain(); g2.gain.value=.3; o2.connect(g2); g2.connect(g);
+        var o=a.createOscillator(), g=a.createGain();
+        o.type='sine'; o.frequency.value=x[0];
         g.gain.setValueAtTime(.0001,t0+x[1]);
-        g.gain.exponentialRampToValueAtTime(.15,t0+x[1]+.008);
-        g.gain.exponentialRampToValueAtTime(.0001,t0+x[1]+1.1);
-        o.connect(g); g.connect(a.destination);
-        o.start(t0+x[1]); o2.start(t0+x[1]); o.stop(t0+x[1]+1.2); o2.stop(t0+x[1]+1.2);
+        g.gain.exponentialRampToValueAtTime(.11,t0+x[1]+.008);
+        g.gain.exponentialRampToValueAtTime(.0001,t0+x[1]+1);
+        o.connect(g); g.connect(master);
+        o.start(t0+x[1]); o.stop(t0+x[1]+1.1);
       });
 
-      /* 2. «вау»: несколько расстроенных голосов с движущимися формантами */
-      var wg=a.createGain();
-      wg.gain.setValueAtTime(.0001,t0+.1);
-      wg.gain.exponentialRampToValueAtTime(.24,t0+.28);
-      wg.gain.setValueAtTime(.24,t0+.6);
-      wg.gain.exponentialRampToValueAtTime(.0001,t0+1.5);
-      wg.connect(a.destination);
-      var fA=a.createBiquadFilter(); fA.type='bandpass'; fA.Q.value=3.5;
-      fA.frequency.setValueAtTime(360,t0+.1);
-      fA.frequency.linearRampToValueAtTime(840,t0+.5);
-      fA.frequency.linearRampToValueAtTime(560,t0+1.35);
-      var fB=a.createBiquadFilter(); fB.type='bandpass'; fB.Q.value=4.5;
-      fB.frequency.setValueAtTime(880,t0+.1);
-      fB.frequency.linearRampToValueAtTime(1520,t0+.5);
-      fB.frequency.linearRampToValueAtTime(1150,t0+1.35);
-      fA.connect(wg); fB.connect(wg);
-      for(var v=0;v<6;v++){
-        var os=a.createOscillator(); os.type='sawtooth';
-        var base=188+v*13+Math.random()*9;
-        os.frequency.setValueAtTime(base*.84,t0+.1);
-        os.frequency.linearRampToValueAtTime(base*1.24,t0+.42);
-        os.frequency.linearRampToValueAtTime(base*.93,t0+1.4);
-        var vg=a.createGain(); vg.gain.value=.15;
-        os.connect(vg); vg.connect(fA); vg.connect(fB);
-        os.start(t0+.1); os.stop(t0+1.5);
-      }
-
-      /* 3. аплодисменты. Каждый хлопок — короткое возбуждение шумом, пропущенное
-         через два затухающих резонатора: у настоящего хлопка энергия сидит около
-         1-2 кГц, а не в верхах, иначе получается шипение. */
-      var dur=2.6, n=Math.floor(sr*dur), buf=a.createBuffer(2,n,sr);
-      var len=Math.floor(sr*0.09), exc=Math.floor(sr*0.0016);
+      /* овация. Каждый хлопок — короткое возбуждение шумом через три затухающих
+         резонатора: тело ладони около 500 Гц, основной тон около 1.3 кГц и щелчок
+         около 2.5 кГц. Плотность даёт громкость, поэтому сатурация умеренная —
+         сильная превращала овацию в шипение. */
+      var dur=2.8, n=Math.floor(sr*dur), buf=a.createBuffer(2,n,sr);
+      var len=Math.floor(sr*0.12), exc=Math.floor(sr*0.0018);
       for(var chn=0;chn<2;chn++){
-        var d=buf.getChannelData(chn), i, j;
+        var d=buf.getChannelData(chn), i;
         var clap=function(start,amp){
           if(start<0||start>=n) return;
-          for(var m=0;m<2;m++){
-            var f = m===0 ? 900+Math.random()*700 : 1900+Math.random()*1400;
-            var bw = m===0 ? 260+Math.random()*160 : 700+Math.random()*400;
+          for(var m=0;m<3;m++){
+            var f,bw,g0;
+            if(m===0){ f=430+Math.random()*260; bw=170+Math.random()*90; g0=.75; }
+            else if(m===1){ f=950+Math.random()*750; bw=260+Math.random()*170; g0=1; }
+            else { f=1900+Math.random()*1500; bw=760+Math.random()*450; g0=.55; }
             var w=2*Math.PI*f/sr, r=Math.exp(-Math.PI*bw/sr);
-            var a1=2*r*Math.cos(w), a2=-r*r, g0=(1-r)*(m===0?1:.7), y1=0, y2=0;
-            for(var k2=0;k2<len && start+k2<n;k2++){
-              var x = k2<exc ? (Math.random()*2-1) : 0;
+            var a1=2*r*Math.cos(w), a2=-r*r, gg=(1-r)*g0, y1=0, y2=0;
+            for(var j=0;j<len && start+j<n;j++){
+              var x = j<exc ? (Math.random()*2-1) : 0;
               var y = x + a1*y1 + a2*y2; y2=y1; y1=y;
-              d[start+k2] += y*g0*amp*3.4;
+              d[start+j] += y*gg*amp*3.4;
             }
           }
         };
-        for(var k=0;k<3;k++) clap(Math.floor(sr*(0.015+k*0.085+Math.random()*0.02)), 1);
-        for(var c=0;c<130;c++){
-          var pos=Math.pow(Math.random(),1.2);
-          clap(Math.floor(pos*n*0.86), (.45+Math.random()*.55)*(1-pos*.4));
+        for(var k=0;k<4;k++) clap(Math.floor(sr*(0.012+k*0.06+Math.random()*.015)), 1);
+        for(var c=0;c<200;c++){
+          var pos=Math.pow(Math.random(),1.15);
+          clap(Math.floor(pos*n*0.88), (.5+Math.random()*.5)*(1-pos*.35));
         }
         var pk=0;
         for(i=0;i<n;i++){ var av=d[i]<0?-d[i]:d[i]; if(av>pk) pk=av; }
         if(pk>0){ var sc=.95/pk; for(i=0;i<n;i++) d[i]*=sc; }
-        /* мягкая сатурация: у хлопков высокий пик и низкая средняя энергия,
-           без неё овация звучит тихо даже на полной громкости */
-        var st=4.5, th=Math.tanh(st);
+        var st=2.5, th=Math.tanh(st);
         for(i=0;i<n;i++) d[i]=Math.tanh(d[i]*st)/th;
       }
       var src=a.createBufferSource(); src.buffer=buf;
-      var hp=a.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=400;
-      var lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=8500;
-      var comp=a.createDynamicsCompressor();
-      try{
-        comp.threshold.value=-26; comp.knee.value=12; comp.ratio.value=6;
-        comp.attack.value=.004; comp.release.value=.18;
-      }catch(e){}
+      var hp=a.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=380;
+      var lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=9000;
       var ag=a.createGain();
-      ag.gain.setValueAtTime(.0001,t0+.1);
-      ag.gain.exponentialRampToValueAtTime(1.8,t0+.22);
-      ag.gain.setValueAtTime(1.8,t0+1.6);
-      ag.gain.exponentialRampToValueAtTime(.0001,t0+.1+dur);
-      src.connect(hp); hp.connect(lp); lp.connect(comp); comp.connect(ag); ag.connect(a.destination);
-      src.start(t0+.1);
+      ag.gain.setValueAtTime(.0001,t0+.06);
+      ag.gain.exponentialRampToValueAtTime(1.5,t0+.2);
+      ag.gain.setValueAtTime(1.5,t0+1.9);
+      ag.gain.exponentialRampToValueAtTime(.0001,t0+.06+dur);
+      src.connect(hp); hp.connect(lp); lp.connect(ag); ag.connect(master);
+      src.start(t0+.06);
       return;
     }
     tone(a,[[987.77,0],[1318.51,.085]],'triangle',.15,.26);
