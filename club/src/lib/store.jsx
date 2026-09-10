@@ -6,6 +6,8 @@ import {
   ensureMeets,
   chatKey,
   buildNotifications,
+  POINTS,
+  suggestTeamPlan,
   teamSize,
   MAX_TEAM,
   REFERRAL_BONUS,
@@ -14,7 +16,7 @@ import {
 import { uid, hash } from './format.js';
 import { DAY, weekKey } from './time.js';
 
-const KEY = 'iaiclub.state.v3';
+const KEY = 'iaiclub.state.v4';
 
 /* Задержки демо-режима: куратор и участники отвечают сами,
    иначе в одиночном демо некому распределить и принять. */
@@ -66,6 +68,17 @@ function save(state) {
   } catch {
     /* приватный режим — молча продолжаем */
   }
+}
+
+/** Баллы за активность: копятся у участника и видны в профиле. */
+function award(state, userId, kind, times = 1) {
+  const amount = (POINTS[kind] || 0) * times;
+  if (!userId || !amount) return state;
+  return {
+    ...state,
+    users: state.users.map((u) => (u.id === userId ? { ...u, points: (u.points || 0) + amount } : u)),
+    pointsLog: [...(state.pointsLog || []), { id: uid('pt'), userId, kind, amount, at: Date.now() }].slice(-200),
+  };
 }
 
 function withToast(state, text) {
@@ -199,9 +212,11 @@ function reducer(state, action) {
       if (!user) return state;
       const key = `${action.eventId}:${user.id}`;
       const rsvp = { ...state.rsvp };
+      const first = !rsvp[key] && action.status === 'going';
       if (rsvp[key] === action.status) delete rsvp[key];
       else rsvp[key] = action.status;
-      return { ...state, rsvp };
+      const next = { ...state, rsvp };
+      return first ? award(next, user.id, 'rsvp') : next;
     }
 
     case 'eventPatch':
@@ -268,6 +283,15 @@ function reducer(state, action) {
 
     case 'teamCover':
       return withToast({ ...state, teams: state.teams.map((t) => (t.id === action.teamId ? { ...t, cover: action.cover } : t)) }, 'Обложка обновлена');
+
+    /** Куратор применяет план, собранный ИИ. */
+    case 'applyPlan': {
+      let next = state;
+      for (const step of action.plan) {
+        next = reducer(next, { type: 'assign', teamId: step.teamId, userId: step.userId, role: step.role, silent: true, now });
+      }
+      return withToast(next, `Распределено: ${action.plan.length}`);
+    }
 
     case 'teamPatch':
       return withToast({ ...state, teams: state.teams.map((t) => (t.id === action.teamId ? { ...t, ...action.patch } : t)) }, 'Сохранено');
@@ -356,12 +380,14 @@ function reducer(state, action) {
 
     case 'send': {
       if (!user || !action.text.trim()) return state;
-      const at = now;
-      return {
+      const next = {
         ...state,
-        messages: [...state.messages, { id: uid('ms'), chat: action.chat, userId: user.id, text: action.text.trim(), at }],
-        seen: { ...state.seen, [action.chat]: at },
+        messages: [...state.messages, { id: uid('ms'), chat: action.chat, userId: user.id, text: action.text.trim(), at: now }],
+        seen: { ...state.seen, [action.chat]: now },
       };
+      // Баллы за живое общение, но не за спам: не чаще раза в минуту
+      const last = state.messages.filter((m) => m.userId === user.id).sort((a, b) => b.at - a.at)[0];
+      return last && now - last.at < 60 * 1000 ? next : award(next, user.id, 'message');
     }
 
     case 'readChat':
@@ -371,7 +397,7 @@ function reducer(state, action) {
 
     /** Цель, с которой участник идёт знакомиться на этой неделе. */
     case 'meetGoal':
-      return { ...state, users: state.users.map((u) => (u.id === user?.id ? { ...u, meetGoal: action.goal } : u)) };
+      return { ...state, users: state.users.map((u) => (u.id === user?.id ? { ...u, meetGoal: [].concat(action.goal).slice(0, 3) } : u)) };
 
     case 'meetSkip':
       return withToast({ ...state, meets: state.meets.map((m) => (m.id === action.id ? { ...m, status: 'skipped' } : m)) }, 'Пропускаем');
@@ -388,16 +414,17 @@ function reducer(state, action) {
 
       const chat = chatKey('dm', [meet.a, meet.b]);
       const names = [meet.a, meet.b].map((id) => state.users.find((u) => u.id === id));
+      const rewarded = award(award(state, meet.a, 'match'), meet.b, 'match');
       return withToast(
         {
-          ...state,
+          ...rewarded,
           meets,
           messages: [
-            ...state.messages,
+            ...rewarded.messages,
             { id: uid('ms'), chat, userId: 'system', text: `Метч недели: совпадение интересов ${meet.percent}%. Договоритесь, где и когда.`, at: now },
           ],
           notes: [
-            ...state.notes,
+            ...rewarded.notes,
             note(`match-${meet.id}-${meet.a}`, meet.a, 'Метч недели', `${names[1]?.name} тоже хочет познакомиться. Открывайте чат.`, `/chat/${chat}`, now),
             note(`match-${meet.id}-${meet.b}`, meet.b, 'Метч недели', `${names[0]?.name} тоже хочет познакомиться. Открывайте чат.`, `/chat/${chat}`, now),
           ],
@@ -405,6 +432,29 @@ function reducer(state, action) {
         'Метч! Чат уже открыт'
       );
     }
+
+    /* ---------- лента ---------- */
+
+    case 'postAdd': {
+      if (!user) return state;
+      const post = { id: uid('ps'), userId: user.id, text: action.text.trim(), photo: action.photo || '', tag: action.tag || 'встреча', at: now, likes: [] };
+      const withPost = { ...state, posts: [post, ...state.posts] };
+      const kind = post.tag === 'встреча' && post.photo ? 'meetPhoto' : 'post';
+      return withToast(award(withPost, user.id, kind), `+${POINTS[kind]} баллов за пост`);
+    }
+
+    case 'postLike': {
+      if (!user) return state;
+      return {
+        ...state,
+        posts: state.posts.map((p) =>
+          p.id === action.id ? { ...p, likes: p.likes.includes(user.id) ? p.likes.filter((x) => x !== user.id) : [...p.likes, user.id] } : p
+        ),
+      };
+    }
+
+    case 'postDelete':
+      return withToast({ ...state, posts: state.posts.filter((p) => p.id !== action.id) }, 'Пост удалён');
 
     /* ---------- ближний круг ---------- */
 
@@ -447,7 +497,7 @@ function reducer(state, action) {
         at: now,
         editableUntil: now + 2 * DAY,
       };
-      return withToast({ ...state, revenue: [...state.revenue, entry] }, `Записано ${entry.amount.toLocaleString('ru-RU')} ₽`);
+      return withToast(award({ ...state, revenue: [...state.revenue, entry] }, user.id, 'revenue'), `Записано ${entry.amount.toLocaleString('ru-RU')} ₽`);
     }
 
     case 'revenueEdit':
@@ -579,17 +629,20 @@ function reducer(state, action) {
 
       next = ensureMeets(next, now);
 
-      // Демо: куратор распределяет заявки сам — в команду, где меньше всего людей
-      const waiting = next.applications.filter((a) => a.status === 'pending' && now - a.at > AUTO_CURATOR);
-      for (const application of waiting) {
-        const target = [...next.teams]
-          .map((t) => ({ t, n: teamSize(next, t.id) }))
-          .filter((x) => x.n < MAX_TEAM)
-          .sort((a, b) => a.n - b.n)[0];
-        if (!target) break;
-        next = reducer(next, { type: 'assign', teamId: target.t.id, userId: application.userId, role: application.role, silent: true, now });
+      // Демо: ИИ-куратор разбирает вашу заявку сам — тем же алгоритмом, что в админке.
+      // Чужие заявки остаются куратору: иначе в админке нечего было бы распределять.
+      const waiting = next.applications.filter(
+        (a) => a.status === 'pending' && a.userId === next.session.userId && now - a.at > AUTO_CURATOR
+      );
+      if (waiting.length) {
+        const plan = suggestTeamPlan(next);
+        for (const application of waiting) {
+          const step = plan.find((x) => x.userId === application.userId);
+          if (!step) break;
+          next = reducer(next, { type: 'assign', teamId: step.teamId, userId: step.userId, role: step.role, silent: true, now });
+        }
+        next = { ...next, toast: state.toast };
       }
-      if (waiting.length) next = { ...next, toast: state.toast };
 
       // Демо: собеседник в личном чате отвечает сам — иначе разговор мёртвый
       const replies = ['Привет! Рад знакомству', 'Давай созвонимся на неделе?', 'Отличная идея, я за', 'Напиши, когда удобно — подстроюсь', 'Как раз думал об этом же'];

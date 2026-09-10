@@ -17,7 +17,7 @@ import Choice from '../components/Choice.jsx';
 import RevenueSheet, { ContributionSheet } from '../components/RevenueSheet.jsx';
 import { STEPS } from '../data/onboarding.js';
 
-const ROLE_ICON = Object.fromEntries(STEPS[0].questions[0].options.map((o) => [o.id, o.icon]));
+const ROLE_ICON = Object.fromEntries(STEPS[1].questions[1].options.map((o) => [o.id, o.icon]));
 
 export default function Team({ now }) {
   const { state, me } = useStore();
@@ -40,13 +40,13 @@ function Waiting({ now }) {
   const { state, me, dispatch } = useStore();
   const application = applicationOf(state, me.id);
   const [open, setOpen] = useState(false);
-  const [role, setRole] = useState(me.facts?.role?.[0] || TEAM_ROLES[0]);
+  const [role, setRole] = useState(me.facts?.craft?.[0] || TEAM_ROLES[0]);
   const [hours, setHours] = useState('5');
   const [about, setAbout] = useState(me.about || '');
 
   return (
     <div className="screen stack-20">
-      <Top title="Команда" sub="Команды на сезон собирает куратор" />
+      <Top title="Команда" sub="Команды на сезон собирает ИИ-куратор" />
 
       {application ? (
         <Card variant="accent">
@@ -55,7 +55,7 @@ function Waiting({ now }) {
             <div className="grow">
               <div className="t-lg">Заявка у куратора</div>
               <div className="t-sm dim" style={{ marginTop: 4, lineHeight: 1.5 }}>
-                Отправлена {relative(application.at, now)}. Куратор собирает команды из 3–10 человек так, чтобы роли не повторялись.
+                Отправлена {relative(application.at, now)}. ИИ-куратор разложит заявки по командам из 3–10 человек: сравнит роли, сферы и опыт, чтобы силы вышли равными.
               </div>
               <div className="wrap" style={{ marginTop: 10 }}>
                 <Tag tone="accent">{application.role}</Tag>
@@ -72,7 +72,7 @@ function Waiting({ now }) {
         <Card>
           <div className="t-lg">Хотите в команду сезона?</div>
           <div className="t-sm dim" style={{ marginTop: 4, lineHeight: 1.5 }}>
-            Команда — это 3–10 человек, одна цель и общая выручка в рейтинге. Куратор подбирает людей так, чтобы роли дополняли друг друга.
+            Команда — это 3–10 человек, одна цель и общая выручка в рейтинге. ИИ-куратор подбирает людей по анкете: роли, сферы и опыт должны дополнять друг друга.
           </div>
           <Btn variant="accent" wide style={{ marginTop: 14 }} icon="hand" onClick={() => setOpen(true)}>Оставить заявку</Btn>
         </Card>
@@ -162,7 +162,7 @@ function TeamScreen({ team, now }) {
         {stats.debt > 0 && <div className="t-xs warm" style={{ marginTop: 10 }}>Копилка не закрыта: не хватает {money(stats.debt)}</div>}
       </button>
 
-      {roster.length < MIN_TEAM && <Note icon="team" tone="var(--warm)">В команде меньше {MIN_TEAM} человек — в рейтинг она пока не попадает.</Note>}
+      {roster.length < MIN_TEAM && <Note icon="team" tone="var(--warm)">В команде меньше {MIN_TEAM} человек — в рейтинг она пока не попадает. ИИ-куратор доберёт людей из новых заявок.</Note>}
 
       <Section title="Цель сезона" more={isCaptain ? 'Изменить' : undefined} onMore={() => setSheet('goal')}>
         <Card variant="violet">
@@ -356,7 +356,7 @@ function InviteForm({ team, onDone }) {
       ) : (
         <List>
           {list.map((u) => (
-            <Item key={u.id} lead={<Avatar user={u} size={40} />} title={u.name} sub={`${cityName(state, u.cityId)} · ${u.facts?.role?.[0] || u.about}`} meta={<Icon name="plus" size={17} color="var(--accent)" />} chev={false} onClick={() => { dispatch({ type: 'invite', teamId: team.id, userId: u.id }); onDone(); }} />
+            <Item key={u.id} lead={<Avatar user={u} size={40} />} title={u.name} sub={`${cityName(state, u.cityId)} · ${u.facts?.craft?.[0] || u.about}`} meta={<Icon name="plus" size={17} color="var(--accent)" />} chev={false} onClick={() => { dispatch({ type: 'invite', teamId: team.id, userId: u.id }); onDone(); }} />
           ))}
         </List>
       )}

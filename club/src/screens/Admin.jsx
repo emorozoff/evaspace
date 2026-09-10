@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { cityStats, cityName, goingUsers, leaderboard, teamRoster, teamSize, teamBalance, factOf, PACKAGES, MAX_TEAM, MIN_TEAM } from '../lib/logic.js';
+import { cityStats, cityName, goingUsers, leaderboard, teamRoster, teamSize, teamBalance, factOf, suggestTeamPlan, userById, PACKAGES, MAX_TEAM, MIN_TEAM } from '../lib/logic.js';
 import { dateShort, inputValue, isoDate, timeOf, relative } from '../lib/time.js';
 import { money, downloadCsv } from '../lib/format.js';
 import { Avatar, Btn, Card, Empty, Field, List, Item, Note, Scroller, Section, Sheet, Stat, Tag, TopBar } from '../components/UI.jsx';
@@ -53,6 +53,7 @@ function Teams({ now }) {
   const { state, dispatch } = useStore();
   const [pick, setPick] = useState(null);   // заявка, которую распределяем
   const [create, setCreate] = useState(false);
+  const [plan, setPlan] = useState(null);  // предложение ИИ-куратора
   const [name, setName] = useState('');
   const [idea, setIdea] = useState('');
   const pending = state.applications.filter((a) => a.status === 'pending').sort((a, b) => a.at - b.at);
@@ -60,7 +61,7 @@ function Teams({ now }) {
 
   return (
     <>
-      <Section title={`Ждут распределения · ${pending.length}`}>
+      <Section title={`Ждут распределения · ${pending.length}`} more={pending.length ? 'Собрать ИИ' : undefined} onMore={() => setPlan(suggestTeamPlan(state))}>
         {pending.length === 0 ? (
           <Empty icon="hand" title="Заявок нет" text="Когда участник оставит заявку, она появится здесь." />
         ) : (
@@ -121,6 +122,42 @@ function Teams({ now }) {
           })}
         </div>
       </Section>
+
+      <Sheet open={Boolean(plan)} onClose={() => setPlan(null)} title="Предложение ИИ-куратора" sub="Роли не повторяются, сферы разные, силы выровнены">
+        {plan && (
+          <div className="stack">
+            {plan.length === 0 ? (
+              <Empty icon="team" title="Некого распределять" text="Заявок нет или все команды набраны." />
+            ) : (
+              <>
+                <div className="stack-8">
+                  {plan.map((step) => {
+                    const person = userById(state, step.userId);
+                    const team = state.teams.find((t) => t.id === step.teamId);
+                    return (
+                      <Card key={step.userId}>
+                        <div className="row">
+                          <Avatar user={person} size={40} />
+                          <div className="grow" style={{ minWidth: 0 }}>
+                            <div className="t-md ell">{person?.name}</div>
+                            <div className="t-xs dim-2 ell">в «{team?.name}»</div>
+                          </div>
+                          <Tag tone="accent">{step.role}</Tag>
+                        </div>
+                        {/* Почему именно сюда — куратор всегда может переиграть вручную */}
+                        <div className="t-xs dim" style={{ marginTop: 8, lineHeight: 1.45 }}>{step.why}</div>
+                      </Card>
+                    );
+                  })}
+                </div>
+                <Btn variant="accent" wide onClick={() => { dispatch({ type: 'applyPlan', plan }); setPlan(null); }}>
+                  Применить · {plan.length}
+                </Btn>
+              </>
+            )}
+          </div>
+        )}
+      </Sheet>
 
       <Sheet open={Boolean(pick)} onClose={() => setPick(null)} title="В какую команду" sub={pick ? `${state.users.find((u) => u.id === pick.userId)?.name} · ${pick.role}` : ''}>
         {pick && (

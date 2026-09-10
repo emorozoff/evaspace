@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { cityName, matchPercent, meetsFor, WEEKLY_MEETS } from '../lib/logic.js';
+import { cityName, matchPercent, meetsFor, recommendPeople, WEEKLY_MEETS } from '../lib/logic.js';
 import { weekKey, plural } from '../lib/time.js';
-import { Avatar, Empty, Seg, Tag, Top } from '../components/UI.jsx';
+import { Avatar, Empty, Scroller, Section, Seg, Tag, Top } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 
 /* Люди: все участники крупными карточками. Сортировка одним нажатием —
@@ -37,6 +37,8 @@ export default function People({ now }) {
   }, [state.users, me, mode]);
 
   const inCity = list.filter((x) => x.u.cityId === me.cityId).length;
+  // Рекомендации: те, с кем совпало сильнее всего и кого ещё нет в ближнем круге
+  const recommended = useMemo(() => recommendPeople(state, me.id, 8), [state, me.id]);
 
   return (
     <div className="screen stack-20">
@@ -54,6 +56,21 @@ export default function People({ now }) {
         {fresh > 0 && <span className="count">{fresh}</span>}
         <Icon name="right" size={16} className="chev" />
       </button>
+
+      {recommended.length > 0 && (
+        <Section title="Вам будет интересно" sub="Подбор по сфере, целям и увлечениям">
+          <Scroller>
+            {recommended.map(({ user, percent, reasons }) => (
+              <button key={user.id} className="rec" onClick={() => go(`/person/${user.id}`)}>
+                <Avatar user={user} size={52} radius={0.32} />
+                <div className="rec__name">{user.name}</div>
+                <div className="rec__why">{reasons[0] || user.about}</div>
+                <span className="rec__pct"><Icon name="spark" size={11} /> {percent}%</span>
+              </button>
+            ))}
+          </Scroller>
+        </Section>
+      )}
 
       <Seg value={mode} onChange={setMode} options={MODES} />
       {mode === 'city' && <div className="t-xs dim-2" style={{ marginTop: -8, paddingLeft: 4 }}>{cityName(state, me.cityId)}: {inCity} человек, дальше — остальные</div>}
@@ -73,6 +90,7 @@ export default function People({ now }) {
               <div className="pcard__line">{u.about}</div>
               <div className="pcard__tags">
                 <Tag>{cityName(state, u.cityId)}</Tag>
+                {u.facts?.sphere?.[0] && <Tag>{u.facts.sphere[0]}</Tag>}
                 {(u.facts?.hobby || []).slice(0, 1).map((h) => (
                   <Tag key={h} tone={(me.facts?.hobby || []).includes(h) ? 'accent' : undefined}>{h}</Tag>
                 ))}

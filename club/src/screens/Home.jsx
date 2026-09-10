@@ -3,7 +3,7 @@ import { go } from '../lib/router.jsx';
 import {
   nextEvent, visibleEvents, teamOf, teamStats, teamPlace, seasonProgress, cityStats, nextFridayEvent,
   meetsFor, userById, materialsFor, isPro, summitVisible, summitEvent, unreadCount, applicationOf,
-  attendanceOf, inviteFor, awardOf, chatsOf, WEEKLY_MEETS,
+  attendanceOf, inviteFor, awardOf, chatsOf, feedPosts, WEEKLY_MEETS,
 } from '../lib/logic.js';
 import { weekKey, plural, whenLabel, dateShort, DAY } from '../lib/time.js';
 import { moneyShort } from '../lib/format.js';
@@ -14,6 +14,7 @@ import Circle from '../components/Circle.jsx';
 import EventCompact from '../components/EventCompact.jsx';
 import { EventRow } from '../components/EventCard.jsx';
 import { MaterialThumb } from './Base.jsx';
+import { Post } from './Feed.jsx';
 
 export default function Home({ now }) {
   const { state, me, dispatch } = useStore();
@@ -34,6 +35,7 @@ export default function Home({ now }) {
   const summit = summitVisible(state, now) ? summitEvent(state) : null;
   const offer = city.city?.organizerOfferTo === me.id && !city.city?.organizerId;
   const place = team ? teamPlace(state, team.id) : null;
+  const posts = feedPosts(state).slice(0, 2);
 
   return (
     <div className="screen stack-20">
@@ -129,6 +131,14 @@ export default function Home({ now }) {
               </div>
             </button>
           )}
+        </Section>
+      )}
+
+      {posts.length > 0 && (
+        <Section title="Лента" more="Вся лента" onMore={() => go('/feed')}>
+          <div className="stack">
+            {posts.map((post) => <Post key={post.id} post={post} now={now} compact />)}
+          </div>
         </Section>
       )}
 

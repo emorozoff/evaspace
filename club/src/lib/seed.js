@@ -63,23 +63,34 @@ const ROLE_BY_SKILL = {
   'Обучение': 'Операционка',
 };
 
+const ROLES = ['Предприниматель', 'Эксперт', 'Креатор', 'Инвестор', 'Руководитель'];
+const WORK = ['Своё дело', 'Фриланс', 'Работаю в компании'];
+const SPHERES = ['Инфобизнес', 'ИТ-продукты', 'Контент и блогинг', 'Услуги и агентство', 'Торговля', 'Производство', 'Образование'];
 const EXP = ['Первый год', '1–3 года', '3–7 лет', 'Больше 7'];
 const AGE = ['18–25', '26–32', '33–40', '41–50', '50+'];
-const INCOME = ['до 300 тыс', '300 тыс — 1 млн', '1–3 млн', '3–10 млн', 'больше 10 млн'];
-const STATUS = ['Свободен', 'В отношениях', 'Женат / замужем', 'Не указываю'];
+const INCOME = ['до 100 тыс', '100–300 тыс', '300–500 тыс', 'больше 500 тыс'];
+const STATUS = ['Хочу влюбиться', 'В отношениях', 'Женат / замужем', 'Не указываю'];
 const AI = ['Новичок', 'Средний уровень', 'Про'];
 const GOALS = ['Новые знакомства', 'Встретить любовь', 'Найти партнёров', 'Запустить проект', 'Оптимизировать время', 'Научиться ИИ'];
 const POWERS = ['Придумывать', 'Договариваться', 'Собирать продукт', 'Делать красиво', 'Писать тексты', 'Считать деньги', 'Автоматизировать', 'Выступать', 'Доводить до конца'];
 const HOBBY = ['Падл и теннис', 'Горы и походы', 'Караоке', 'Настолки', 'Клубы и вечеринки', 'Зал и бег', 'Путешествия', 'Вино и рестораны', 'Книги и подкасты', 'Мотоциклы и авто', 'Музыка', 'Фото и видео'];
 
 /** Ответы анкеты для демо-участника — устойчивые, но разные. */
-function factsFor(user, pick) {
-  const role = ROLE_BY_SKILL[user.skills[0]] || ROLE_BY_SKILL[user.skills[1]] || 'Продукт';
+function factsFor(user, pick, female) {
+  const craft = ROLE_BY_SKILL[user.skills[0]] || ROLE_BY_SKILL[user.skills[1]] || 'Продукт';
+  // Возраст и доход тянутся за опытом: «Больше 7 лет в деле» в 18–25 выглядит выдумкой
+  const expIndex = Math.floor(pick() * EXP.length);
+  const age = AGE[Math.min(AGE.length - 1, expIndex + Math.floor(pick() * 2))];
+  const income = INCOME[Math.min(INCOME.length - 1, Math.max(0, expIndex - 1 + Math.floor(pick() * 2)))];
   return {
-    role: [role],
-    exp: [EXP[Math.floor(pick() * EXP.length)]],
-    age: [AGE[Math.floor(pick() * AGE.length)]],
-    income: [INCOME[Math.floor(pick() * INCOME.length)]],
+    craft: [craft],
+    role: [ROLES[Math.floor(pick() * ROLES.length)]],
+    work: [WORK[Math.floor(pick() * WORK.length)]],
+    gender: [female ? 'Женщина' : 'Мужчина'],
+    sphere: [SPHERES[Math.floor(pick() * SPHERES.length)]],
+    exp: [EXP[expIndex]],
+    age: [age],
+    income: [income],
     status: [STATUS[Math.floor(pick() * STATUS.length)]],
     ai: [AI[Math.floor(pick() * AI.length)]],
     goal: [...GOALS].sort(() => pick() - 0.5).slice(0, 1 + Math.floor(pick() * 2)),
@@ -192,7 +203,7 @@ export function buildSeed(now = Date.now()) {
       onboarded: true,
       demo: true,
     };
-  }).map((u) => ({ ...u, facts: factsFor(u, rand) }));
+  }).map((u) => ({ ...u, points: 0, facts: factsFor(u, rand, /(а|я)$/i.test(u.name.split(' ')[0])) }));
 
   // Участников с включённым кофе делаем нечётное число: тогда новый
   // участник сразу получает пару, а не ждёт следующего понедельника
@@ -230,7 +241,7 @@ export function buildSeed(now = Date.now()) {
       chatUrl: `https://t.me/+iai_team_${id}`,
       createdAt: season.startsAt + 3 * DAY,
     });
-    members.push({ teamId: id, userId: captain.id, role: captain.facts.role[0], joinedAt: season.startsAt + 3 * DAY });
+    members.push({ teamId: id, userId: captain.id, role: captain.facts.craft[0], joinedAt: season.startsAt + 3 * DAY });
 
     const size = 3 + Math.floor(rand() * 3);
     const rest = users.filter((u) => !used.has(u.id));
@@ -238,12 +249,26 @@ export function buildSeed(now = Date.now()) {
       const pick = rest[Math.floor(rand() * rest.length)];
       if (!pick || used.has(pick.id)) continue;
       used.add(pick.id);
-      members.push({ teamId: id, userId: pick.id, role: pick.facts.role[0], joinedAt: season.startsAt + (5 + k) * DAY });
+      members.push({ teamId: id, userId: pick.id, role: pick.facts.craft[0], joinedAt: season.startsAt + (5 + k) * DAY });
     }
     // Второй по дате в команде становится помощником капитана
     const mate = members.filter((m) => m.teamId === id && m.userId !== captain.id)[0];
     if (mate) teams[teams.length - 1].mateId = mate.userId;
   });
+
+  // Часть участников ещё ждёт распределения — иначе куратору в админке нечего делать
+  const applications = users
+    .filter((u) => !used.has(u.id) && u.paid !== false)
+    .slice(0, 5)
+    .map((u, i) => ({
+      id: `ap_seed_${i + 1}`,
+      userId: u.id,
+      role: u.facts.craft[0],
+      hours: [3, 5, 8, 10][i % 4],
+      about: u.about,
+      at: now - (i + 1) * 9 * HOUR,
+      status: 'pending',
+    }));
 
   // Выручка и копилка
   const revenue = [];
@@ -331,19 +356,21 @@ export function buildSeed(now = Date.now()) {
   }
 
   const state = {
-    v: 3,
+    v: 4,
     seededAt: now,
     season,
     cities,
     users,
     teams,
     members,
-    applications: [],
+    applications,
     invites: [],
     circle: [],
     circleOut: [],
     meets: [],
     messages: [],
+    posts: [],
+    pointsLog: [],
     seen: {},
     sponsors: SPONSORS,
     reports,
@@ -431,6 +458,34 @@ export function buildSeed(now = Date.now()) {
       });
     });
   });
+
+  // Лента: клуб выглядит живым уже на первом открытии
+  const feed = [
+    ['встреча', 'Собрались вчетвером на Патриках, три часа разбирали воронки. Оказалось, у всех одна и та же дыра на втором шаге.'],
+    ['результат', 'Первый клиент на внедрение агента в поддержку. Дошли за две недели с момента знакомства на пятнице.'],
+    ['команда', 'Поменяли гипотезу: вместо своего продукта делаем внедрения. Считать стало приятнее.'],
+    ['встреча', 'Пятница в Казани удалась: было девять человек, двое из них — новенькие. Разошлись за полночь.'],
+    ['вопрос', 'Кто уже поднимал телефонию на ИИ-агенте? Нужен совет по сценариям, готов обменяться опытом.'],
+    ['результат', 'Сэкономили 40 часов в месяц на отчётности. Всё, что раньше делали руками, теперь собирается само.'],
+  ];
+  feed.forEach(([tag, text], i) => {
+    const author = users[(i * 5 + 3) % users.length];
+    state.posts.push({
+      id: `ps_seed_${i}`,
+      userId: author.id,
+      text,
+      photo: '',
+      tag,
+      at: now - (i + 1) * 9 * HOUR,
+      likes: users.slice(i, i + 2 + (i % 4)).map((u) => u.id),
+    });
+  });
+
+  // Баллы демо-участников: активность за сезон уже накопилась
+  state.users = state.users.map((u) => ({
+    ...u,
+    points: Math.round(40 + rand() * 320),
+  }));
 
   return state;
 }

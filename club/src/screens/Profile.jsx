@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { PACKAGES, cityName, teamOf, referralStats, factOf } from '../lib/logic.js';
+import { PACKAGES, cityName, teamOf, referralStats, factOf, pointsOf, pointsRank } from '../lib/logic.js';
 import { SKILLS } from '../data/people.js';
 import { dateShort, addMonths } from '../lib/time.js';
 import { money } from '../lib/format.js';
@@ -34,20 +34,21 @@ export default function Profile() {
           </div>
           <div className="wrap" style={{ justifyContent: 'center' }}>
             {me.facts?.role?.length > 0 && <Tag tone="accent">{factOf(me, 'role')}</Tag>}
-            {me.facts?.exp?.length > 0 && <Tag>{factOf(me, 'exp')} в деле</Tag>}
+            {me.facts?.sphere?.length > 0 && <Tag>{factOf(me, 'sphere')}</Tag>}
             {me.facts?.ai?.length > 0 && <Tag tone="violet">ИИ: {factOf(me, 'ai')}</Tag>}
           </div>
         </div>
 
         <div className="stats">
+          <Stat v={pointsOf(state, me.id)} l={`баллов · ${pointsRank(state, me.id)}-е место`} tone="var(--accent)" />
           <Stat v={PACKAGES[me.package].title} l="пакет" />
-          <Stat v={money(me.bonus || 0)} l="бонусов" tone="var(--accent)" />
-          <Stat v={referral.paid} l="привели" />
+          <Stat v={money(me.bonus || 0)} l="бонусов" />
         </div>
 
         <List>
           <Item icon="star" title={`${PACKAGES[me.package].title} · ${money(PACKAGES[me.package].price)} в месяц`} sub={`Следующее списание ${dateShort(nextCharge)}`} meta={<span className="accent">сменить</span>} chev={false} onClick={() => setPacks(true)} />
-          <Item icon="gift" title="Пригласить друга" sub="Ссылка, бонусы и текст для сторис" onClick={() => go('/invite')} />
+          <Item icon="camera" title="Лента клуба" sub="Фото со встреч и результаты — за них баллы" onClick={() => go('/feed')} />
+          <Item icon="gift" title="Пригласить друга" sub={referral.paid > 0 ? `Вы привели ${referral.paid} · бонусов ${money(referral.earned)}` : 'Ссылка, бонусы и текст для сторис'} onClick={() => go('/invite')} />
           {team && <Item icon="team" title={`Команда «${team.name}»`} sub={team.idea} onClick={() => go('/team')} />}
           <Item icon="city" title={`Город ${cityName(state, me.cityId)}`} sub="Пятница, чат и участники" onClick={() => go(`/city/${me.cityId}`)} />
           <Item icon="download" title="Установить на телефон" sub="Иконка на экране, работа офлайн" onClick={() => go('/install')} />
@@ -55,7 +56,7 @@ export default function Profile() {
 
         <Section title="Анкета" more="Изменить" onMore={() => setQuiz(true)}>
           <Card>
-            {['role', 'exp', 'ai', 'age', 'income', 'status', 'goal'].filter((k) => me.facts?.[k]?.length).map((k) => (
+            {['role', 'work', 'sphere', 'craft', 'exp', 'ai', 'age', 'income', 'status', 'gender'].filter((k) => me.facts?.[k]?.length).map((k) => (
               <div key={k} className="kv">
                 <span className="kv__k">{LABELS[k]}</span>
                 <span className="kv__v">{factOf(me, k)}</span>

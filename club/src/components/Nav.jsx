@@ -3,7 +3,7 @@ import Icon from './Icons.jsx';
 /* Пять вкладок — больше в голове не держится. Профиль открывается
    по аватарке на главной, рейтинг и город — оттуда же. */
 const TABS = [
-  { to: '/', icon: 'home', label: 'Главная', match: ['', 'join', 'rating', 'invite', 'notes', 'profile', 'install', 'summit', 'city', 'chat', 'chats', 'sponsor'] },
+  { to: '/', icon: 'home', label: 'Главная', match: ['', 'join', 'rating', 'invite', 'notes', 'profile', 'install', 'summit', 'city', 'chat', 'chats', 'sponsor', 'feed'] },
   { to: '/events', icon: 'calendar', label: 'События', match: ['events', 'event', 'archive'] },
   { to: '/team', icon: 'team', label: 'Команда', match: ['team'] },
   { to: '/people', icon: 'people', label: 'Люди', match: ['people', 'person', 'meet'] },

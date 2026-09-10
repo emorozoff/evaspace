@@ -225,7 +225,7 @@ export function teamBalance(state, teamId) {
   const roster = teamRoster(state, teamId);
   const roles = {};
   roster.forEach((m) => {
-    const role = m.user.facts?.role?.[0] || m.role;
+    const role = m.user.facts?.craft?.[0] || m.role;
     roles[role] = (roles[role] || 0) + 1;
   });
   const missing = TEAM_ROLES.filter((r) => !roles[r]);
@@ -243,7 +243,7 @@ export function teamBalance(state, teamId) {
 }
 
 export const EXP_LEVELS = ['Первый год', '1–3 года', '3–7 лет', 'Больше 7'];
-export const INCOME_LEVELS = ['до 300 тыс', '300 тыс — 1 млн', '1–3 млн', '3–10 млн', 'больше 10 млн'];
+export const INCOME_LEVELS = ['до 100 тыс', '100–300 тыс', '300–500 тыс', 'больше 500 тыс'];
 
 /** Значение из анкеты одной строкой. */
 export function factOf(user, key) {
@@ -308,6 +308,126 @@ export function residentNumber(user) {
   return String(hash(user?.id || 'x') % 9000 + 1000);
 }
 
+/* ---------- ИИ-куратор: сборка команд ---------- */
+
+const strengthOf = (user) => {
+  const exp = Math.max(0, EXP_LEVELS.indexOf(user?.facts?.exp?.[0]));
+  const income = Math.max(0, INCOME_LEVELS.indexOf(user?.facts?.income?.[0]));
+  const ai = Math.max(0, ['Новичок', 'Средний уровень', 'Про'].indexOf(user?.facts?.ai?.[0]));
+  return exp * 3 + income * 3 + ai * 2;
+};
+
+/**
+ * Раскладка заявок по командам. Считаем три вещи: чтобы роли не повторялись,
+ * чтобы сферы были разными и чтобы сумма опыта у команд сошлась.
+ * Возвращает план — куратор смотрит его и применяет одним нажатием.
+ */
+export function suggestTeamPlan(state) {
+  const waiting = state.applications
+    .filter((a) => a.status === 'pending')
+    .map((a) => ({ application: a, user: userById(state, a.userId) }))
+    .filter((x) => x.user);
+  if (!waiting.length || !state.teams.length) return [];
+
+  // Команды, где меньше народу и слабее состав, набирают первыми
+  const teams = state.teams.map((team) => {
+    const roster = teamRoster(state, team.id);
+    return {
+      team,
+      size: roster.length,
+      power: roster.reduce((sum, m) => sum + strengthOf(m.user), 0),
+      crafts: new Set(roster.map((m) => m.user.facts?.craft?.[0] || m.role)),
+      spheres: new Set(roster.map((m) => m.user.facts?.sphere?.[0]).filter(Boolean)),
+    };
+  });
+
+  // Сильных распределяем первыми — иначе последняя команда соберёт одних новичков
+  const queue = [...waiting].sort((a, b) => strengthOf(b.user) - strengthOf(a.user));
+  const plan = [];
+
+  for (const { application, user } of queue) {
+    const craft = user.facts?.craft?.[0] || application.role;
+    const sphere = user.facts?.sphere?.[0];
+    const open = teams.filter((t) => t.size < MAX_TEAM);
+    if (!open.length) break;
+
+    const best = open
+      .map((t) => {
+        let score = 0;
+        if (!t.crafts.has(craft)) score += 40;               // роли не должны повторяться
+        if (sphere && !t.spheres.has(sphere)) score += 12;   // разные сферы — шире взгляд
+        score += (MAX_TEAM - t.size) * 6;                    // маленькие команды важнее
+        score -= t.power * 0.6;                              // выравниваем силу
+        if (t.size < MIN_TEAM) score += 25;                  // сначала доводим до трёх
+        return { t, score };
+      })
+      .sort((x, y) => y.score - x.score)[0].t;
+
+    // Причина понадобится куратору: он должен понимать, почему ИИ так решил
+    const why = [best.crafts.has(craft) ? `усилит ${craft.toLowerCase()}` : `закроет роль «${craft.toLowerCase()}»`];
+    if (sphere && !best.spheres.has(sphere)) why.push(`сфера «${sphere.toLowerCase()}» новая для команды`);
+    if (best.size < MIN_TEAM) why.push('команда ещё не набрана');
+    else why.push(`станет ${best.size + 1} из ${MAX_TEAM}`);
+
+    plan.push({ userId: user.id, teamId: best.team.id, role: craft, why: why.join(' · ') });
+    best.size += 1;
+    best.power += strengthOf(user);
+    best.crafts.add(craft);
+    if (sphere) best.spheres.add(sphere);
+  }
+
+  return plan;
+}
+
+/* ---------- баллы за активность ---------- */
+
+export const POINTS = {
+  message: 2,
+  rsvp: 3,
+  attend: 10,
+  match: 15,
+  post: 20,
+  meetPhoto: 25,
+  revenue: 10,
+};
+
+export const POINT_LABELS = {
+  message: 'Сообщение в чате',
+  rsvp: 'Записался на встречу',
+  attend: 'Пришёл на встречу',
+  match: 'Метч на знакомстве',
+  post: 'Пост в ленте',
+  meetPhoto: 'Фото со встречи',
+  revenue: 'Запись о выручке',
+};
+
+export function pointsOf(state, userId) {
+  return userById(state, userId)?.points || 0;
+}
+
+/** Место в клубе по баллам — простая мерка активности. */
+export function pointsRank(state, userId) {
+  const sorted = [...state.users].filter((u) => u.active !== false).sort((a, b) => (b.points || 0) - (a.points || 0));
+  return sorted.findIndex((u) => u.id === userId) + 1;
+}
+
+/* ---------- лента ---------- */
+
+export const POST_TAGS = [
+  { id: 'встреча', label: 'Встреча', icon: 'people', tone: 'accent' },
+  { id: 'результат', label: 'Результат', icon: 'chart', tone: 'warm' },
+  { id: 'команда', label: 'Команда', icon: 'team', tone: 'violet' },
+  { id: 'вопрос', label: 'Вопрос', icon: 'bulb', tone: 'blue' },
+];
+
+export function feedPosts(state) {
+  return [...state.posts].sort((a, b) => b.at - a.at);
+}
+
+export function tagOf(id) {
+  return POST_TAGS.find((t) => t.id === id) || POST_TAGS[0];
+}
+
 /* ---------- база знаний ---------- */
 
 export function materialsFor(state, user) {
@@ -357,22 +477,73 @@ export const MEET_GOALS = [
   { id: 'Встретить любовь', label: 'Встретить любовь', icon: 'heart' },
 ];
 
-/** Насколько совпадают интересы: увлечения весомее целей и сильных сторон. */
+const AI_LEVELS = ['Новичок', 'Средний уровень', 'Про'];
+const AGE_ORDER = ['18–25', '26–32', '33–40', '41–50', '50+'];
+
+const fact = (user, key) => user?.facts?.[key]?.[0] || '';
+const facts = (user, key) => user?.facts?.[key] || [];
+
+/**
+ * Совпадение двух участников в процентах. Главное — общие увлечения и цели:
+ * по ним люди действительно сходятся. Дальше идут сфера, город и близость
+ * уровня в ИИ; разные роли в деле тоже плюс — вместе они сильнее.
+ */
 export function matchPercent(a, b) {
   if (!a || !b) return 0;
-  const cross = (key) => {
-    const one = new Set(a.facts?.[key] || []);
-    const two = b.facts?.[key] || [];
-    return two.filter((x) => one.has(x)).length;
+  const common = (key) => {
+    const one = new Set(facts(a, key));
+    return facts(b, key).filter((x) => one.has(x)).length;
   };
-  const hobby = cross('hobby');
-  const goal = cross('goal');
-  const powers = cross('powers');
-  const sameCity = a.cityId === b.cityId ? 1 : 0;
-  const sameAi = (a.facts?.ai?.[0] && a.facts.ai[0] === b.facts?.ai?.[0]) ? 1 : 0;
-  const score = hobby * 22 + goal * 16 + powers * 8 + sameCity * 12 + sameAi * 6;
-  // Небольшая база, чтобы даже непохожие люди не выглядели «0%»
-  return Math.max(12, Math.min(98, Math.round(18 + score)));
+
+  let score = 10;
+  score += common('hobby') * 14;      // до 42
+  score += common('goal') * 12;       // до 24
+  score += common('powers') * 5;
+  if (fact(a, 'sphere') && fact(a, 'sphere') === fact(b, 'sphere')) score += 10;
+  if (a.cityId === b.cityId) score += 10;
+  if (fact(a, 'work') && fact(a, 'work') === fact(b, 'work')) score += 4;
+
+  const ai = AI_LEVELS.indexOf(fact(a, 'ai'));
+  const aiOther = AI_LEVELS.indexOf(fact(b, 'ai'));
+  if (ai >= 0 && aiOther >= 0) score += ai === aiOther ? 6 : Math.abs(ai - aiOther) === 1 ? 3 : 0;
+
+  const age = AGE_ORDER.indexOf(fact(a, 'age'));
+  const ageOther = AGE_ORDER.indexOf(fact(b, 'age'));
+  if (age >= 0 && ageOther >= 0 && Math.abs(age - ageOther) <= 1) score += 4;
+
+  // Разные роли в деле дополняют друг друга
+  if (fact(a, 'craft') && fact(b, 'craft') && fact(a, 'craft') !== fact(b, 'craft')) score += 6;
+
+  return Math.max(12, Math.min(98, Math.round(score)));
+}
+
+/** Что именно совпало — показываем человеку словами, а не голым процентом. */
+export function matchReasons(a, b) {
+  const out = [];
+  const common = (key) => {
+    const one = new Set(facts(a, key));
+    return facts(b, key).filter((x) => one.has(x));
+  };
+  const hobby = common('hobby');
+  // «Встретить любовь» — личное: в общий каталог такая причина не выносится
+  const goal = common('goal').filter((g) => g !== 'Встретить любовь');
+  if (hobby.length) out.push(hobby.slice(0, 2).join(', ').toLowerCase());
+  if (fact(a, 'sphere') && fact(a, 'sphere') === fact(b, 'sphere')) out.push(fact(a, 'sphere').toLowerCase());
+  if (goal.length) out.push(`оба за «${goal[0].toLowerCase()}»`);
+  if (a.cityId === b.cityId) out.push('один город');
+  if (fact(a, 'craft') && fact(b, 'craft') && fact(a, 'craft') !== fact(b, 'craft')) out.push(`${fact(a, 'craft').toLowerCase()} и ${fact(b, 'craft').toLowerCase()}`);
+  return out.slice(0, 3);
+}
+
+/** Кого показать в рекомендациях: похожие по духу и ещё не в круге. */
+export function recommendPeople(state, userId, limit = 6) {
+  const me = userById(state, userId);
+  const circle = new Set([...(state.circle || []), ...state.members.filter((m) => m.teamId === teamOf(state, userId)?.id).map((m) => m.userId)]);
+  return state.users
+    .filter((u) => u.id !== userId && u.active !== false && u.visible !== false && !circle.has(u.id))
+    .map((u) => ({ user: u, percent: matchPercent(me, u), reasons: matchReasons(me, u) }))
+    .sort((x, y) => y.percent - x.percent || y.user.joinedAt - x.user.joinedAt)
+    .slice(0, limit);
 }
 
 export function meetsFor(state, userId, week) {

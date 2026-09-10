@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { meetsFor, userById, cityName, MEET_GOALS, WEEKLY_MEETS, chatKey, factOf } from '../lib/logic.js';
+import { meetsFor, userById, cityName, matchReasons, MEET_GOALS, WEEKLY_MEETS, chatKey } from '../lib/logic.js';
 import { weekKey, dateShort } from '../lib/time.js';
 import { Avatar, Btn, Empty, List, Item, Note, Section, Sheet, Tag, TopBar } from '../components/UI.jsx';
 import Choice from '../components/Choice.jsx';
@@ -19,18 +19,20 @@ export default function Meet({ now }) {
   const current = open[0];
   const other = current ? userById(state, current.a === me.id ? current.b : current.a) : null;
   const matched = mine.filter((m) => m.status === 'matched');
-  const goal = me.meetGoal || me.facts?.goal?.[0] || MEET_GOALS[0].id;
-  const goalLabel = MEET_GOALS.find((g) => g.id === goal)?.label || goal;
+  // Целей может быть до трёх — люди редко ищут что-то одно
+  const goals = (Array.isArray(me.meetGoal) ? me.meetGoal : me.meetGoal ? [me.meetGoal] : me.facts?.goal || []).slice(0, 3);
+  const chosen = goals.length ? goals : [MEET_GOALS[0].id];
+  const goalLabel = chosen.map((g) => MEET_GOALS.find((x) => x.id === g)?.label || g).join(' · ');
 
   return (
     <div className="screen" style={{ paddingTop: 0 }}>
       <TopBar title="Новые знакомства" sub={`${WEEKLY_MEETS} предложения в неделю`} backTo="/people" />
       <div className="stack-20">
         <button className="card tap row" onClick={() => setGoalOpen(true)}>
-          <div className="item__ic"><Icon name={MEET_GOALS.find((g) => g.id === goal)?.icon || 'people'} size={19} /></div>
-          <div className="grow">
-            <div className="t-xs dim-2">Цель знакомств</div>
-            <div className="t-md">{goalLabel}</div>
+          <div className="item__ic"><Icon name={MEET_GOALS.find((g) => g.id === chosen[0])?.icon || 'people'} size={19} /></div>
+          <div className="grow" style={{ minWidth: 0 }}>
+            <div className="t-xs dim-2">Зачем знакомитесь · до трёх</div>
+            <div className="t-md" style={{ lineHeight: 1.3 }}>{goalLabel}</div>
           </div>
           <Icon name="right" size={16} className="chev" />
         </button>
@@ -59,10 +61,12 @@ export default function Meet({ now }) {
                   <Tag key={h} tone={(me.facts?.hobby || []).includes(h) ? 'accent' : undefined}>{h}</Tag>
                 ))}
               </div>
-              {factOf(other, 'goal') && <div className="t-sm dim center">В клубе за: {factOf(other, 'goal').toLowerCase()}</div>}
+              {matchReasons(me, other).length > 0 && (
+                <div className="t-sm dim center">Общее: {matchReasons(me, other).join(' · ')}</div>
+              )}
 
               <div className="pair">
-                <Btn variant="accent" icon="handshake" onClick={() => dispatch({ type: 'meetLike', id: current.id, goal })}>Познакомиться</Btn>
+                <Btn variant="accent" icon="handshake" onClick={() => dispatch({ type: 'meetLike', id: current.id, goal: chosen })}>Познакомиться</Btn>
                 <Btn variant="quiet" onClick={() => dispatch({ type: 'meetSkip', id: current.id })}>Пропустить</Btn>
               </div>
               <button className="t-sm accent center" style={{ fontWeight: 600 }} onClick={() => go(`/person/${other.id}`)}>Открыть профиль</button>
@@ -110,9 +114,10 @@ export default function Meet({ now }) {
         <Note icon="eye">Программа подбирает по совпадению интересов и следит, чтобы вы не встречались дважды. Город решает только формат: живьём или онлайн.</Note>
       </div>
 
-      <Sheet open={goalOpen} onClose={() => setGoalOpen(false)} title="Зачем знакомитесь" sub="Это видит собеседник">
+      <Sheet open={goalOpen} onClose={() => setGoalOpen(false)} title="Зачем знакомитесь" sub="До трёх целей — их видит собеседник">
         <div className="stack">
-          <Choice options={MEET_GOALS} value={[goal]} max={1} onChange={(v) => { dispatch({ type: 'meetGoal', goal: v[0] }); setGoalOpen(false); }} />
+          <Choice options={MEET_GOALS} value={chosen} max={3} onChange={(v) => dispatch({ type: 'meetGoal', goal: v })} />
+          <Btn variant="accent" wide onClick={() => setGoalOpen(false)}>Готово</Btn>
         </div>
       </Sheet>
     </div>

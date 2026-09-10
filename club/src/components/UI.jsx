@@ -87,12 +87,15 @@ export function Item({ lead, icon, title, sub, subWrap, meta, chev = true, onCli
   );
 }
 
-export function Section({ title, more, onMore, children }) {
+export function Section({ title, sub, more, onMore, children }) {
   return (
     <section className="sect">
       {title && (
         <div className="sect__head">
-          <div className="hdr">{title}</div>
+          <div className="grow" style={{ minWidth: 0 }}>
+            <div className="hdr">{title}</div>
+            {sub && <div className="t-xs dim-2" style={{ padding: '0 4px 6px' }}>{sub}</div>}
+          </div>
           {more && <button className="sect__more" onClick={onMore}>{more}</button>}
         </div>
       )}
