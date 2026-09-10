@@ -14,6 +14,7 @@ import CityPage from './screens/CityPage.jsx';
 import Team from './screens/Team.jsx';
 import Rating from './screens/Rating.jsx';
 import Base from './screens/Base.jsx';
+import Dict from './screens/Dict.jsx';
 import MaterialPage from './screens/MaterialPage.jsx';
 import People from './screens/People.jsx';
 import PersonPage from './screens/PersonPage.jsx';
@@ -74,7 +75,8 @@ export default function App() {
       case 'city': return <CityPage id={id} now={now} />;
       case 'team': return <Team id={id} now={now} />;
       case 'rating': return <Rating />;
-      case 'base': return <Base />;
+      case 'base': return <Base now={now} />;
+      case 'dict': return <Dict />;
       case 'material': return <MaterialPage id={id} />;
       case 'people': return <People now={now} />;
       case 'person': return <PersonPage id={id} now={now} />;

@@ -1,23 +1,23 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { cityName, matchPercent, meetsFor, recommendPeople, WEEKLY_MEETS } from '../lib/logic.js';
+import { cityName, matchPercent, meetsFor, MATCH_STRONG } from '../lib/logic.js';
 import { weekKey, plural } from '../lib/time.js';
-import { Avatar, Empty, Scroller, Section, Seg, Tag, Top } from '../components/UI.jsx';
+import { Avatar, Empty, Seg, Tag, Top } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 
-/* Люди: все участники крупными карточками. Сортировка одним нажатием —
-   по городу или по совпадению интересов. */
+/* Люди: все участники крупными карточками. По умолчанию сверху те, с кем
+   совпадает сильнее всего; процент виден на каждой карточке. */
 
 const MODES = [
-  { value: 'all', label: 'Все' },
+  { value: 'match', label: 'По совпадению' },
   { value: 'city', label: 'Мой город' },
-  { value: 'match', label: 'По интересам' },
+  { value: 'name', label: 'По алфавиту' },
 ];
 
 export default function People({ now }) {
   const { state, me } = useStore();
-  const [mode, setMode] = useState('all');
+  const [mode, setMode] = useState('match');
   const week = weekKey(now);
   const meets = meetsFor(state, me.id, week);
   const fresh = meets.filter((m) => m.status === 'new').length;
@@ -26,19 +26,17 @@ export default function People({ now }) {
     const base = state.users
       .filter((u) => u.id !== me.id && u.visible !== false && u.active !== false)
       .map((u) => ({ u, percent: matchPercent(me, u) }));
+    base.sort((a, b) => b.percent - a.percent);
     if (mode === 'city') {
-      return base
-        .filter((x) => x.u.cityId === me.cityId)
-        .concat(base.filter((x) => x.u.cityId !== me.cityId))
-        .slice(0, 60);
+      // Свой город сверху, дальше остальные — внутри каждой группы по совпадению
+      return base.filter((x) => x.u.cityId === me.cityId).concat(base.filter((x) => x.u.cityId !== me.cityId));
     }
-    if (mode === 'match') return base.sort((a, b) => b.percent - a.percent);
-    return base.sort((a, b) => a.u.name.localeCompare(b.u.name, 'ru'));
+    if (mode === 'name') return [...base].sort((a, b) => a.u.name.localeCompare(b.u.name, 'ru'));
+    return base;
   }, [state.users, me, mode]);
 
   const inCity = list.filter((x) => x.u.cityId === me.cityId).length;
-  // Рекомендации: те, с кем совпало сильнее всего и кого ещё нет в ближнем круге
-  const recommended = useMemo(() => recommendPeople(state, me.id, 8), [state, me.id]);
+  const strong = list.filter((x) => x.percent >= MATCH_STRONG).length;
 
   return (
     <div className="screen stack-20">
@@ -50,39 +48,28 @@ export default function People({ now }) {
         <div className="grow">
           <div className="t-md">Новые знакомства</div>
           <div className="t-xs dim-2" style={{ marginTop: 2 }}>
-            {fresh ? `${fresh} из ${WEEKLY_MEETS} предложений на этой неделе` : 'На этой неделе всё посмотрели'}
+            {fresh ? `${fresh} ${plural(fresh, 'новое предложение', 'новых предложения', 'новых предложений')} на этой неделе` : 'На этой неделе всё посмотрели'}
           </div>
         </div>
         {fresh > 0 && <span className="count">{fresh}</span>}
         <Icon name="right" size={16} className="chev" />
       </button>
 
-      {recommended.length > 0 && (
-        <Section title="Вам будет интересно" sub="Подбор по сфере, целям и увлечениям">
-          <Scroller>
-            {recommended.map(({ user, percent, reasons }) => (
-              <button key={user.id} className="rec" onClick={() => go(`/person/${user.id}`)}>
-                <Avatar user={user} size={52} radius={0.32} />
-                <div className="rec__name">{user.name}</div>
-                <div className="rec__why">{reasons[0] || user.about}</div>
-                <span className="rec__pct"><Icon name="spark" size={11} /> {percent}%</span>
-              </button>
-            ))}
-          </Scroller>
-        </Section>
-      )}
-
       <Seg value={mode} onChange={setMode} options={MODES} />
-      {mode === 'city' && <div className="t-xs dim-2" style={{ marginTop: -8, paddingLeft: 4 }}>{cityName(state, me.cityId)}: {inCity} человек, дальше — остальные</div>}
+      <div className="t-xs dim-2" style={{ marginTop: -8, paddingLeft: 4 }}>
+        {mode === 'city'
+          ? `${cityName(state, me.cityId)}: ${inCity} человек, дальше — остальные`
+          : `Ярко выделены ${strong} ${plural(strong, 'человек', 'человека', 'человек')} с совпадением от ${MATCH_STRONG}%`}
+      </div>
 
       {list.length === 0 ? (
         <Empty icon="people" title="Никого не нашлось" text="Попробуйте другую сортировку." />
       ) : (
         <div className="people">
           {list.map(({ u, percent }) => (
-            <button key={u.id} className="pcard" onClick={() => go(`/person/${u.id}`)}>
-              {mode === 'match' && <span className="pcard__pct">{percent}%</span>}
-              <Avatar user={u} size={64} radius={0.3} />
+            <button key={u.id} className={`pcard${percent >= MATCH_STRONG ? ' pcard--strong' : ''}`} onClick={() => go(`/person/${u.id}`)}>
+              <span className="pcard__pct"><Icon name="spark" size={10} /> {percent}%</span>
+              <Avatar user={u} size={64} radius={0.3} ring={percent >= MATCH_STRONG ? 'var(--accent)' : undefined} />
               <div>
                 <div className="pcard__name">{u.name}</div>
                 <div className="pcard__role" style={{ marginTop: 3 }}>{u.facts?.role?.[0] || u.package.toUpperCase()}</div>

@@ -2,19 +2,17 @@ import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import {
   nextEvent, visibleEvents, teamOf, teamStats, teamPlace, seasonProgress, cityStats, nextFridayEvent,
-  meetsFor, userById, materialsFor, isPro, summitVisible, summitEvent, unreadCount, applicationOf,
-  attendanceOf, inviteFor, awardOf, chatsOf, feedPosts, WEEKLY_MEETS,
+  userById, isPro, unreadCount, applicationOf,
+  attendanceOf, inviteFor, awardOf, chatsOf, newsFor,
 } from '../lib/logic.js';
-import { weekKey, plural, whenLabel, dateShort, DAY } from '../lib/time.js';
+import { plural, whenLabel, DAY } from '../lib/time.js';
 import { moneyShort } from '../lib/format.js';
-import { Avatar, Actions, Btn, Card, List, Item, Section, Stat, Tag } from '../components/UI.jsx';
+import { Avatar, Actions, Btn, Card, List, Item, Section, Stat } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 import ResidentCard from '../components/ResidentCard.jsx';
 import Circle from '../components/Circle.jsx';
 import EventCompact from '../components/EventCompact.jsx';
 import { EventRow } from '../components/EventCard.jsx';
-import { MaterialThumb } from './Base.jsx';
-import { Post } from './Feed.jsx';
 
 export default function Home({ now }) {
   const { state, me, dispatch } = useStore();
@@ -28,14 +26,11 @@ export default function Home({ now }) {
   const application = applicationOf(state, me.id);
   const city = cityStats(state, me.cityId);
   const friday = nextFridayEvent(state, me.cityId, now);
-  const freshMeets = meetsFor(state, me.id, weekKey(now)).filter((m) => m.status === 'new').length;
   const unreadChats = chatsOf(state, me.id).reduce((sum, c) => sum + c.unread, 0);
-  const material = materialsFor(state, me)[0];
   const unread = unreadCount(state, me.id);
-  const summit = summitVisible(state, now) ? summitEvent(state) : null;
   const offer = city.city?.organizerOfferTo === me.id && !city.city?.organizerId;
   const place = team ? teamPlace(state, team.id) : null;
-  const posts = feedPosts(state).slice(0, 2);
+  const news = newsFor(state, me, now);
 
   return (
     <div className="screen stack-20">
@@ -134,16 +129,20 @@ export default function Home({ now }) {
         </Section>
       )}
 
-      {posts.length > 0 && (
-        <Section title="Лента" more="Вся лента" onMore={() => go('/feed')}>
-          <div className="stack">
-            {posts.map((post) => <Post key={post.id} post={post} now={now} compact />)}
-          </div>
-        </Section>
-      )}
-
-      <Section title="Рядом">
-        <List>
+      {/* Новости: три главных повода открыть приложение сегодня */}
+      <Section title="Новости" more="Лента" onMore={() => go('/feed')}>
+        <div className="stack-8">
+          {news.map((n) => (
+            <button key={n.id} className="news" onClick={() => go(n.to)}>
+              <span className={`news__ic${n.tone ? ` news__ic--${n.tone}` : ''}`}><Icon name={n.icon} size={19} /></span>
+              <span className="grow" style={{ minWidth: 0 }}>
+                <span className="news__tag">{n.tag}</span>
+                <span className="news__t">{n.title}</span>
+                <span className="news__s">{n.sub}</span>
+              </span>
+              <Icon name="right" size={16} className="chev" />
+            </button>
+          ))}
           <Item
             icon="city"
             title={city.city?.name}
@@ -152,20 +151,7 @@ export default function Home({ now }) {
               : 'Пока вы один — позовите второго, и появится пятница'}
             onClick={() => go(`/city/${me.cityId}`)}
           />
-          {me.coffeeEnabled && freshMeets > 0 && (
-            <Item
-              icon="spark"
-              title="Новые знакомства"
-              sub={`${freshMeets} из ${WEEKLY_MEETS} предложений на этой неделе`}
-              meta={<Tag tone="accent">{freshMeets}</Tag>}
-              onClick={() => go('/meet')}
-            />
-          )}
-          {summit && <Item icon="star" title="Большой слёт" sub={`${dateShort(summit.startsAt)} · ${summit.place}`} onClick={() => go('/summit')} />}
-          {material && (
-            <Item lead={<MaterialThumb material={material} />} title={material.title} sub={`${material.type} · ${dateShort(material.publishedAt)}`} onClick={() => go(`/material/${material.id}`)} />
-          )}
-        </List>
+        </div>
       </Section>
     </div>
   );

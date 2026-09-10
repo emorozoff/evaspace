@@ -1,4 +1,4 @@
-/* Знакомство при входе: двенадцать вопросов на четырёх экранах.
+/* Знакомство при входе: тринадцать вопросов на четырёх экранах.
    Ответы нужны не ради анкеты — по ним ИИ-куратор собирает равные команды,
    а подбор людей и знакомств понимает, кто кому будет интересен. */
 
@@ -11,25 +11,24 @@ export const STEPS = [
     questions: [
       {
         id: 'role',
-        title: 'Кем себя считаете',
-        max: 1,
+        title: 'Чем занимаетесь',
+        hint: 'До двух — по этому подбираются люди и команды',
+        max: 2,
+        list: true,
         options: [
           { id: 'Предприниматель', label: 'Предприниматель', icon: 'rocket' },
-          { id: 'Эксперт', label: 'Эксперт', icon: 'bulb' },
-          { id: 'Креатор', label: 'Креатор', icon: 'palette' },
-          { id: 'Инвестор', label: 'Инвестор', icon: 'chart' },
+          { id: 'Эксперт', label: 'Эксперт, консультант', icon: 'bulb' },
           { id: 'Руководитель', label: 'Руководитель', icon: 'crown' },
-          { id: 'other', label: 'Другое', icon: 'pen', other: true, placeholder: 'Кем себя считаете' },
-        ],
-      },
-      {
-        id: 'work',
-        title: 'Чем занимаетесь сейчас',
-        max: 1,
-        options: [
-          { id: 'Своё дело', label: 'Своё дело', icon: 'rocket' },
-          { id: 'Фриланс', label: 'Фриланс', icon: 'spark' },
-          { id: 'Работаю в компании', label: 'В компании', icon: 'city' },
+          { id: 'Программист', label: 'Программист', icon: 'code' },
+          { id: 'Автоматизация', label: 'Автоматизация и ИИ', icon: 'robot' },
+          { id: 'Дизайнер', label: 'Дизайнер', icon: 'brush' },
+          { id: 'Креатор', label: 'Креатор', icon: 'palette' },
+          { id: 'Блогер', label: 'Блогер', icon: 'camera' },
+          { id: 'Маркетолог', label: 'Маркетолог', icon: 'megaphone' },
+          { id: 'Продюсер', label: 'Продюсер', icon: 'mic' },
+          { id: 'Продажи', label: 'Продажи', icon: 'handshake' },
+          { id: 'Инвестор', label: 'Инвестор', icon: 'chart' },
+          { id: 'other', label: 'Другое', icon: 'pen', other: true, placeholder: 'Чем занимаетесь' },
         ],
       },
       {
@@ -41,14 +40,34 @@ export const STEPS = [
           { id: 'Женщина', label: 'Женщина', icon: 'female' },
         ],
       },
+      {
+        id: 'work',
+        title: 'Где работаете',
+        max: 1,
+        options: [
+          { id: 'Своё дело', label: 'Своё дело', icon: 'rocket' },
+          { id: 'Фриланс', label: 'Фриланс', icon: 'spark' },
+          { id: 'Работаю в компании', label: 'В компании', icon: 'city' },
+        ],
+      },
     ],
   },
   {
     id: 'work',
     eyebrow: 'Шаг 2 из 4',
     title: 'Ваше дело',
-    sub: 'ИИ-куратор собирает команды так, чтобы роли и сферы дополняли друг друга',
+    sub: 'ИИ-куратор собирает команды так, чтобы роли, сферы и графики сходились',
     questions: [
+      {
+        id: 'schedule',
+        title: 'Ваш график',
+        max: 1,
+        options: [
+          { id: 'Стандартный 5/2', label: 'Стандартный', big: '5/2' },
+          { id: 'Сменный 2/2', label: 'Сменный', big: '2/2' },
+          { id: 'Свободный', label: 'Свободный', big: '∞' },
+        ],
+      },
       {
         id: 'sphere',
         title: 'Сфера',
@@ -197,8 +216,9 @@ export function stepDone(step, answers) {
 }
 
 export const FACT_LABELS = {
-  role: 'Кто вы',
-  work: 'Занятость',
+  role: 'Чем занимается',
+  work: 'Где работает',
+  schedule: 'График',
   gender: 'Пол',
   sphere: 'Сфера',
   craft: 'В команде',

@@ -6,6 +6,8 @@ import {
   ensureMeets,
   chatKey,
   buildNotifications,
+  MAX_PINNED,
+  MEET_PHOTOS,
   POINTS,
   suggestTeamPlan,
   teamSize,
@@ -16,7 +18,7 @@ import {
 import { uid, hash } from './format.js';
 import { DAY, weekKey } from './time.js';
 
-const KEY = 'iaiclub.state.v4';
+const KEY = 'iaiclub.state.v5';
 
 /* Задержки демо-режима: куратор и участники отвечают сами,
    иначе в одиночном демо некому распределить и принять. */
@@ -199,6 +201,37 @@ function reducer(state, action) {
       return withToast(patch.cityId ? reducer(moved, { type: 'tick', now }) : moved, action.silent ? null : 'Сохранено');
     }
 
+    /* ---------- база знаний: закреп и словарь ---------- */
+
+    case 'pin': {
+      const pinned = state.pinned || [];
+      const has = pinned.includes(action.id);
+      if (!has && pinned.length >= MAX_PINNED) return withToast(state, `В закрепе уже ${MAX_PINNED} материалов`);
+      return withToast(
+        { ...state, pinned: has ? pinned.filter((x) => x !== action.id) : [...pinned, action.id] },
+        has ? 'Убрали из закрепа' : 'Закрепили'
+      );
+    }
+
+    /** Слово в словарь может добавить любой участник — язык клуба общий. */
+    case 'termAdd': {
+      const term = (action.term || '').trim();
+      if (!term) return state;
+      return withToast(
+        {
+          ...state,
+          terms: [
+            ...(state.terms || []),
+            { id: uid('tm'), level: action.level || 'base', term, full: (action.full || '').trim(), text: (action.text || '').trim(), userId: user?.id || null, at: now },
+          ],
+        },
+        'Слово добавлено'
+      );
+    }
+
+    case 'termDelete':
+      return withToast({ ...state, terms: (state.terms || []).filter((t) => t.id !== action.id) }, 'Удалено');
+
     case 'buyArchive':
       if (!user) return state;
       return withToast(
@@ -257,7 +290,20 @@ function reducer(state, action) {
       return withToast(
         {
           ...state,
-          applications: [...applications, { id: uid('ap'), userId: user.id, role: action.role, hours: action.hours, about: action.about || '', at: now, status: 'pending' }],
+          applications: [
+            ...applications,
+            {
+              id: uid('ap'),
+              userId: user.id,
+              role: action.role,
+              hours: action.hours,
+              aim: action.aim || [],
+              field: action.field || [],
+              about: action.about || '',
+              at: now,
+              status: 'pending',
+            },
+          ],
         },
         'Заявка у куратора'
       );
@@ -398,6 +444,19 @@ function reducer(state, action) {
     /** Цель, с которой участник идёт знакомиться на этой неделе. */
     case 'meetGoal':
       return { ...state, users: state.users.map((u) => (u.id === user?.id ? { ...u, meetGoal: [].concat(action.goal).slice(0, 3) } : u)) };
+
+    /** Витрина в знакомствах: свои фото, цели и теги — отдельно от профиля. */
+    case 'meetProfile': {
+      if (!user) return state;
+      const patch = {};
+      if (action.photos) patch.meetPhotos = action.photos.filter(Boolean).slice(0, MEET_PHOTOS);
+      if (action.tags) patch.meetTags = action.tags.filter(Boolean).slice(0, 8);
+      if (action.goal) patch.meetGoal = [].concat(action.goal).slice(0, 3);
+      return withToast(
+        { ...state, users: state.users.map((u) => (u.id === user.id ? { ...u, ...patch } : u)) },
+        action.silent ? null : 'Сохранено'
+      );
+    }
 
     case 'meetSkip':
       return withToast({ ...state, meets: state.meets.map((m) => (m.id === action.id ? { ...m, status: 'skipped' } : m)) }, 'Пропускаем');

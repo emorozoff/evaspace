@@ -5,7 +5,7 @@ import Icon from './Icons.jsx';
    Вариант «Другое» открывает поле — так анкета остаётся на нажатиях,
    но не заставляет выбирать из чужого списка. */
 
-export default function Choice({ options, value = [], max = 1, onChange, wide }) {
+export default function Choice({ options, value = [], max = 1, onChange, wide, list }) {
   const known = new Set(options.filter((o) => !o.other).map((o) => o.id));
   const other = options.find((o) => o.other);
   const custom = value.find((v) => v && !known.has(v)) || '';
@@ -25,20 +25,28 @@ export default function Choice({ options, value = [], max = 1, onChange, wide })
     onChange([...rest, text]);
   };
 
+  // Длинные перечни (профессии) читаются списком, короткие — плитками
+  const rows = options.map((o) => {
+    const on = o.other ? otherOn : value.includes(o.id);
+    return list ? (
+      <button key={o.id} className={`crow${on ? ' crow--on' : ''}`} onClick={() => (o.other ? pickOther() : pick(o.id))} aria-pressed={on}>
+        <span className="crow__ic"><Icon name={o.icon} size={19} /></span>
+        <span className="crow__t">{o.other && custom ? custom : o.label}</span>
+        {o.hint && <span className="crow__hint">{o.hint}</span>}
+        <span className="crow__tick"><Icon name="check" size={15} color="var(--accent)" /></span>
+      </button>
+    ) : (
+      <button key={o.id} className={`choice${on ? ' choice--on' : ''}`} onClick={() => (o.other ? pickOther() : pick(o.id))} aria-pressed={on}>
+        <span className="choice__tick"><Icon name="check" size={15} color="var(--accent)" /></span>
+        {o.big ? <span className="choice__big">{o.big}</span> : <span className="choice__ic"><Icon name={o.icon} size={26} /></span>}
+        <span className="choice__t">{o.other && custom ? custom : o.label}</span>
+      </button>
+    );
+  });
+
   return (
     <>
-      <div className={`choices${wide ? ' choices--wide' : ''}`}>
-        {options.map((o) => {
-          const on = o.other ? otherOn : value.includes(o.id);
-          return (
-            <button key={o.id} className={`choice${on ? ' choice--on' : ''}`} onClick={() => (o.other ? pickOther() : pick(o.id))} aria-pressed={on}>
-              <span className="choice__tick"><Icon name="check" size={15} color="var(--accent)" /></span>
-              {o.big ? <span className="choice__big">{o.big}</span> : <span className="choice__ic"><Icon name={o.icon} size={26} /></span>}
-              <span className="choice__t">{o.other && custom ? custom : o.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      <div className={list ? 'crows' : `choices${wide ? ' choices--wide' : ''}`}>{rows}</div>
 
       {otherOn && other && (
         <input

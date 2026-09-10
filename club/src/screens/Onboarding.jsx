@@ -51,7 +51,15 @@ export default function Onboarding() {
                 {q.max > 1 && <span className="t-xs dim-2">{(answers[q.id] || []).length} из {q.max}</span>}
               </div>
             )}
-            <Choice options={q.options} value={answers[q.id] || []} max={q.max} onChange={(v) => set(q.id, v)} wide={Boolean(q.options[0]?.big)} />
+            {q.hint && <div className="t-xs dim-2" style={{ padding: '0 4px', marginTop: -4 }}>{q.hint}</div>}
+            <Choice
+              options={q.options}
+              value={answers[q.id] || []}
+              max={q.max}
+              list={q.list}
+              onChange={(v) => set(q.id, v)}
+              wide={Boolean(q.options[0]?.big)}
+            />
           </section>
         ))}
 

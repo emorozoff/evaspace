@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { canJoin, goingUsers, rsvpOf, friendsGoing, cityById } from '../lib/logic.js';
+import { canJoin, goingUsers, rsvpOf, friendsGoing, cityById, eventMeta } from '../lib/logic.js';
 import { whenLabel, MINUTE } from '../lib/time.js';
+import { money } from '../lib/format.js';
 import { plural } from '../lib/time.js';
 import { EVENT_TYPES } from '../lib/events.js';
 import Cover, { CoverThumb } from './Cover.jsx';
@@ -28,7 +29,8 @@ export default function EventCard({ event, now = Date.now() }) {
   const joinable = canJoin(event, now);
   const open = () => go(`/event/${event.id}`);
 
-  const where = event.type === 'online' || event.type === 'team' ? 'онлайн' : event.place || city?.name || '';
+  const meta = eventMeta(event);
+  const where = meta.offline ? event.place || city?.name || '' : 'онлайн';
   const when = event.flexible ? 'время выбирает команда' : whenLabel(event.startsAt, now);
 
   return (
@@ -48,7 +50,13 @@ export default function EventCard({ event, now = Date.now() }) {
       </button>
 
       <div className="ev__body">
-        {event.description && <div className="ev__desc clamp-2">{event.description}</div>}
+        {/* Формат, для кого и стоимость — то, что решают до нажатия */}
+        <div className="wrap">
+          <Tag>{meta.format}</Tag>
+          <Tag>{meta.audience}</Tag>
+          {meta.paid ? <Tag tone="warm">{money(event.price)}</Tag> : <Tag tone="accent">бесплатно</Tag>}
+        </div>
+        {(event.topic || event.description) && <div className="ev__desc clamp-2">{event.topic || event.description}</div>}
 
         <div className="ev__foot">
           <div className="ev__who">

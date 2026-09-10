@@ -56,7 +56,7 @@ export default function Profile() {
 
         <Section title="Анкета" more="Изменить" onMore={() => setQuiz(true)}>
           <Card>
-            {['role', 'work', 'sphere', 'craft', 'exp', 'ai', 'age', 'income', 'status', 'gender'].filter((k) => me.facts?.[k]?.length).map((k) => (
+            {['role', 'work', 'schedule', 'sphere', 'craft', 'exp', 'ai', 'age', 'income', 'status', 'gender'].filter((k) => me.facts?.[k]?.length).map((k) => (
               <div key={k} className="kv">
                 <span className="kv__k">{LABELS[k]}</span>
                 <span className="kv__v">{factOf(me, k)}</span>
@@ -116,6 +116,7 @@ function QuizForm({ onDone }) {
             options={q.options}
             value={facts[q.id] || []}
             max={q.max}
+            list={q.list}
             wide={Boolean(q.options[0]?.big)}
             onChange={(v) => setFacts({ ...facts, [q.id]: v })}
           />

@@ -14,7 +14,7 @@ import Icon from '../components/Icons.jsx';
 /* Страница участника: широкая шапка, крупные факты и живая активность —
    по ней сразу понятно, о чём говорить при встрече. */
 
-const SHOWN = ['role', 'sphere', 'work', 'exp', 'ai', 'craft', 'age', 'status'];
+const SHOWN = ['role', 'sphere', 'work', 'schedule', 'exp', 'ai', 'craft', 'age', 'status'];
 
 export default function PersonPage({ id, now = Date.now() }) {
   const { state, me, dispatch } = useStore();

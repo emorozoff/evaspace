@@ -31,7 +31,10 @@ function makeEvent(series, startsAt, patch) {
     id: `ev_${series}_${isoDate(startsAt)}`,
     series,
     title: '',
+    topic: '',
     description: '',
+    agenda: [],
+    price: 0,
     type: 'online',
     cityId: null,
     teamId: null,
@@ -82,7 +85,9 @@ export function ensureEvents(state, now = Date.now()) {
     push(
       makeEvent('efir', weekdayAt(w, 3, 20), {
         title: 'Общий эфир клуба',
+        topic: 'ИИ в деле: что сработало на этой неделе',
         description: 'Разбор недели, гость и ответы на вопросы. Приходите с одним вопросом.',
+        agenda: ['Что у команд получилось за неделю', 'Гость: как он это сделал', 'Разбор ваших вопросов вживую'],
         type: 'online',
         joinUrl: 'https://meet.google.com/iai-club-efir',
         duration: 90,
@@ -95,7 +100,9 @@ export function ensureEvents(state, now = Date.now()) {
       push(
         makeEvent('mastermind', weekdayAt(w, 2, 19), {
           title: 'Мастермайнд',
+          topic: 'Разбор задач участников',
           description: 'Пять участников, у каждого 12 минут на разбор своей задачи.',
+          agenda: ['12 минут на человека: задача и контекст', 'Вопросы группы, потом идеи', 'Одно решение, за которое берётесь до следующей встречи'],
           type: 'online',
           minPackage: 'pro',
           joinUrl: 'https://meet.google.com/iai-club-mm',
@@ -108,7 +115,9 @@ export function ensureEvents(state, now = Date.now()) {
       push(
         makeEvent('workshop', weekdayAt(w, 2, 19), {
           title: 'Воркшоп',
+          topic: 'Собираем ИИ-инструмент под свою задачу',
           description: 'Доделываем одну вещь до конца прямо на встрече, руками.',
+          agenda: ['Выбираем задачу, которая съедает время', 'Собираем решение по шагам вместе', 'Уходим с работающим инструментом, а не с конспектом'],
           type: 'online',
           minPackage: 'pro',
           joinUrl: 'https://meet.google.com/iai-club-work',
@@ -123,7 +132,9 @@ export function ensureEvents(state, now = Date.now()) {
       push(
         makeEvent(`friday-${city.id}`, weekdayAt(w, 5, 19, 30), {
           title: `Пятница в ${city.nameIn}`,
+          topic: 'Живая встреча резидентов города',
           description: city.organizerId ? '' : 'Место ещё не выбрано. Предложите своё — участники договариваются сами.',
+          agenda: ['Знакомство новых участников', 'Кто чем занят и кому чем помочь', 'Свободное общение'],
           type: 'offline',
           cityId: city.id,
           place: '',
@@ -137,7 +148,9 @@ export function ensureEvents(state, now = Date.now()) {
       push(
         makeEvent(`team-${team.id}`, weekdayAt(w, 1, 20), {
           title: 'Командный созвон',
+          topic: 'Недельный статус команды',
           description: 'Что сделали, что не получилось, что дальше.',
+          agenda: ['Что сделали за неделю', 'Где застряли', 'План на следующую неделю'],
           type: 'team',
           teamId: team.id,
           flexible: true,
@@ -154,9 +167,12 @@ export function ensureEvents(state, now = Date.now()) {
   push(
     makeEvent('summit', summitAt.getTime(), {
       title: 'Большой слёт',
+      topic: 'Финал сезона',
       description: 'Финал сезона: итоги команд, награждение и вечеринка.',
+      agenda: ['Защита проектов команд', 'Награждение и итоги копилки', 'Ужин и вечеринка'],
       type: 'summit',
       duration: 600,
+      price: 6500,
       place: 'Москва, лофт «Депо», Лесная 20',
     })
   );

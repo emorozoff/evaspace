@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { canJoin, chatKey, cityById, goingUsers, rsvpOf, friendsGoing } from '../lib/logic.js';
+import { canJoin, chatKey, cityById, goingUsers, rsvpOf, friendsGoing, eventMeta } from '../lib/logic.js';
 import { whenLabel, dayName, timeOf, inputValue, MINUTE, relative, plural } from '../lib/time.js';
 import { EVENT_TYPES } from '../lib/events.js';
+import { money } from '../lib/format.js';
 import Cover from '../components/Cover.jsx';
 import { Avatar, Btn, Card, Empty, Field, List, Item, Note, Section, Sheet, Tag, TopBar } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
@@ -26,6 +27,7 @@ export default function EventPage({ id, now }) {
   const friends = friendsGoing(state, event.id, me.id);
   const mine = rsvpOf(state, event.id, me.id);
   const past = event.startsAt + event.duration * MINUTE < now;
+  const meta = eventMeta(event);
   const isOrganizer = city?.organizerId === me.id;
   const canEdit = (isOrganizer || state.session.admin || (team && team.captainId === me.id)) && !past;
 
@@ -45,6 +47,14 @@ export default function EventPage({ id, now }) {
           </Cover>
         </div>
 
+        {/* Тема встречи — первое, что человек хочет понять */}
+        {event.topic && (
+          <div>
+            <div className="hdr">Тема</div>
+            <p className="lead" style={{ marginTop: 6 }}>{event.topic}</p>
+          </div>
+        )}
+
         <List>
           <Item
             icon="calendar"
@@ -52,16 +62,41 @@ export default function EventPage({ id, now }) {
             sub={event.flexible ? 'Договоритесь в чате команды' : `${dayName(event.startsAt)}, ${timeOf(event.startsAt)}`}
             chev={false}
           />
-          {event.type === 'offline' ? (
-            <Item icon="pin" title={event.place || 'Место ещё не выбрано'} sub={city ? `${city.name} · открыть город` : ''} onClick={city ? () => go(`/city/${city.id}`) : undefined} />
+          {meta.offline ? (
+            <Item icon="pin" title={event.place || 'Адрес ещё не выбран'} sub={city ? `${city.name} · открыть город` : 'Офлайн'} onClick={city ? () => go(`/city/${city.id}`) : undefined} />
           ) : (
             <Item icon="video" title="Онлайн" sub={event.joinUrl ? 'Кнопка «Подключиться» появится за 15 минут до начала' : 'Ссылка появится ближе к началу'} chev={false} />
           )}
+          <Item
+            icon="people"
+            title={`Для кого · ${meta.audience}`}
+            sub={event.type === 'team' ? 'Только участники вашей команды' : event.minPackage === 'pro' ? 'Входит в пакет PRO' : 'Открыто всем резидентам клуба'}
+            chev={false}
+          />
+          <Item
+            icon="money"
+            title={meta.paid ? `Участие ${money(event.price)}` : 'Участие бесплатно'}
+            sub={meta.paid ? 'Оплата отдельно, вне приложения' : 'Входит в подписку клуба'}
+            chev={false}
+          />
           {team && <Item icon="message" title="Чат команды" sub="Согласовать время и место" onClick={() => go(`/chat/${encodeURIComponent(chatKey('team', [team.id]))}`)} />}
           {event.type === 'offline' && city && <Item icon="message" title="Чат города" sub="Договориться, кто где" onClick={() => go(`/chat/${encodeURIComponent(chatKey('city', [city.id]))}`)} />}
         </List>
 
         {event.description && <p className="lead">{event.description}</p>}
+
+        {/* Что разберём — чтобы человек шёл за конкретикой, а не «послушать» */}
+        {event.agenda?.length > 0 && (
+          <Section title="Что разберём">
+            <Card>
+              <ol className="agenda">
+                {event.agenda.map((line, i) => (
+                  <li key={line}><span className="agenda__n">{i + 1}</span><span>{line}</span></li>
+                ))}
+              </ol>
+            </Card>
+          </Section>
+        )}
 
         {event.type === 'offline' && !city?.organizerId && !past && (
           <Note icon="pin" tone="var(--accent)">
@@ -133,14 +168,18 @@ export default function EventPage({ id, now }) {
 function EditForm({ event, onDone }) {
   const { dispatch } = useStore();
   const [place, setPlace] = useState(event.place);
+  const [topic, setTopic] = useState(event.topic || '');
+  const [price, setPrice] = useState(String(event.price || ''));
   const [description, setDescription] = useState(event.description);
   const [at, setAt] = useState(inputValue(event.startsAt));
   return (
     <div className="stack">
-      <Field label="Место"><input className="field" placeholder="Кофейня на Ленина, второй этаж" value={place} onChange={(e) => setPlace(e.target.value)} /></Field>
+      <Field label="Тема встречи"><input className="field" placeholder="Что разбираем" value={topic} onChange={(e) => setTopic(e.target.value)} /></Field>
+      <Field label="Адрес"><input className="field" placeholder="Кофейня на Ленина, второй этаж" value={place} onChange={(e) => setPlace(e.target.value)} /></Field>
+      <Field label="Стоимость участия" hint="Пусто или 0 — бесплатно"><input className="field" inputMode="numeric" placeholder="0" value={price} onChange={(e) => setPrice(e.target.value.replace(/\D/g, ''))} /></Field>
       <Field label="Описание"><textarea className="field" placeholder="Идём в боулинг, сбор в 20:00" value={description} onChange={(e) => setDescription(e.target.value)} /></Field>
       <Field label="Дата и время"><input className="field" type="datetime-local" value={at} onChange={(e) => setAt(e.target.value)} /></Field>
-      <Btn variant="accent" wide onClick={() => { dispatch({ type: 'eventPatch', eventId: event.id, patch: { place, description, startsAt: new Date(at).getTime() || event.startsAt } }); onDone(); }}>Сохранить</Btn>
+      <Btn variant="accent" wide onClick={() => { dispatch({ type: 'eventPatch', eventId: event.id, patch: { place, topic, description, price: Number(price) || 0, startsAt: new Date(at).getTime() || event.startsAt } }); onDone(); }}>Сохранить</Btn>
       <Btn variant={event.canceled ? 'ghost' : 'danger'} wide onClick={() => { dispatch({ type: 'eventPatch', eventId: event.id, patch: { canceled: !event.canceled }, toast: event.canceled ? 'Встреча снова в расписании' : 'Встреча отменена на эту неделю' }); onDone(); }}>
         {event.canceled ? 'Вернуть встречу' : 'Отменить на эту неделю'}
       </Btn>

@@ -1,18 +1,18 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { materialsFor, isViewed, archiveCount } from '../lib/logic.js';
+import { materialsFor, isViewed, archiveCount, baseOrder, isNew, isPinned, MAX_PINNED } from '../lib/logic.js';
 import { dateShort } from '../lib/time.js';
 import { preview } from '../lib/video.js';
 import { money, hash } from '../lib/format.js';
-import { Btn, Card, Empty, List, Item, Picker, Search, TopBar } from '../components/UI.jsx';
+import { Btn, Card, Empty, List, Item, Picker, Search, Section, Tag, TopBar } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 
 const TYPES = ['эфир', 'воркшоп', 'мастермайнд', 'гайд'].map((t) => ({ id: t, label: t[0].toUpperCase() + t.slice(1) }));
 const TYPE_TONE = { эфир: 'blue', воркшоп: 'accent', мастермайнд: 'violet', гайд: 'warm' };
 const ARCHIVE_PRICE = 990;
 
-export default function Base() {
+export default function Base({ now = Date.now() }) {
   const { state, me, dispatch } = useStore();
   const [query, setQuery] = useState('');
   const [type, setType] = useState('all');
@@ -24,6 +24,26 @@ export default function Base() {
     (type === 'all' || m.type === type) &&
     (topic === 'all' || m.topic === topic) &&
     (!query || `${m.title} ${m.description}`.toLowerCase().includes(query.toLowerCase()))
+  );
+  // Закреп держится наверху, новинки идут следом, дальше — по дате
+  const filtered = type !== 'all' || topic !== 'all' || query;
+  const order = baseOrder(list, state, now);
+  // Значки нужны только там, где раздел сам о них не говорит
+  const row = (m, badges = false) => (
+    <Item
+      key={m.id}
+      lead={<MaterialThumb material={m} size={52} />}
+      title={<span className="clamp-2" style={{ whiteSpace: 'normal', lineHeight: 1.3 }}>{m.title}</span>}
+      sub={<><span style={{ color: `var(--${TYPE_TONE[m.type] === 'accent' ? 'accent' : TYPE_TONE[m.type]})` }}>{m.type}</span> · {m.topic} · {dateShort(m.publishedAt)}{m.seasonId < state.season.id ? ' · архив' : ''}</>}
+      meta={
+        <span className="row" style={{ gap: 6 }}>
+          {badges && isNew(m, now) && <Tag tone="accent">новинка</Tag>}
+          {badges && isPinned(state, m.id) && <Icon name="pin" size={14} color="var(--warm)" />}
+          {isViewed(state, m.id, me.id) && <Icon name="check" size={16} color="var(--accent)" />}
+        </span>
+      }
+      onClick={() => go(`/material/${m.id}`)}
+    />
   );
 
   return (
@@ -40,19 +60,36 @@ export default function Base() {
 
         {list.length === 0 ? (
           <Empty title="Ничего не нашлось" text="Попробуйте другой запрос или снимите фильтры." />
+        ) : filtered ? (
+          <List>{list.map((m) => row(m, true))}</List>
         ) : (
-          <List>
-            {list.map((m) => (
-              <Item
-                key={m.id}
-                lead={<MaterialThumb material={m} size={52} />}
-                title={<span className="clamp-2" style={{ whiteSpace: 'normal', lineHeight: 1.3 }}>{m.title}</span>}
-                sub={<><span style={{ color: `var(--${TYPE_TONE[m.type] === 'accent' ? 'accent' : TYPE_TONE[m.type]})` }}>{m.type}</span> · {m.topic} · {dateShort(m.publishedAt)}{m.seasonId < state.season.id ? ' · архив' : ''}</>}
-                meta={isViewed(state, m.id, me.id) ? <Icon name="check" size={16} color="var(--accent)" /> : undefined}
-                onClick={() => go(`/material/${m.id}`)}
-              />
-            ))}
-          </List>
+          <>
+            {/* Закреп: приветствие, видео недели и словарь клуба */}
+            <Section title="Закреплено" sub={`До ${MAX_PINNED} материалов — их видят все`}>
+              <List>
+                {order.pinned.map((m) => row(m))}
+                <Item
+                  icon="abc"
+                  title="Гайд-словарь клуба"
+                  sub="Раунды, метрики и сленг — от лёгкого к сложному"
+                  meta={<Tag tone="warm">словарь</Tag>}
+                  onClick={() => go('/dict')}
+                />
+              </List>
+            </Section>
+
+            {order.fresh.length > 0 && (
+              <Section title="Новое" sub="Появилось за последнюю неделю">
+                <List>{order.fresh.map((m) => row(m))}</List>
+              </Section>
+            )}
+
+            {order.rest.length > 0 && (
+              <Section title="Всё остальное">
+                <List>{order.rest.map((m) => row(m))}</List>
+              </Section>
+            )}
+          </>
         )}
 
         {!me.archive && archiveCount(state) > 0 && (

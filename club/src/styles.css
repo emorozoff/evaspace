@@ -207,7 +207,7 @@ button.card.spread { display: flex; align-items: center; justify-content: space-
 
 /* --- обложка события: Ева-механика, 16:10 -------------------------------- */
 .ev { background: var(--surface); border-radius: var(--r-md); overflow: hidden; }
-.ev__cover { position: relative; aspect-ratio: 16 / 10; overflow: hidden; display: block; width: 100%; }
+.ev__cover { position: relative; aspect-ratio: 16 / 7; overflow: hidden; display: block; width: 100%; }
 .ev__cover--square { aspect-ratio: 1; height: 100%; }
 /* Только сама обложка — иконки в плашках поверх неё остаются обычными */
 .ev__cover > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -215,10 +215,10 @@ button.card.spread { display: flex; align-items: center; justify-content: space-
 .ev__tags { position: absolute; left: 12px; top: 12px; display: flex; gap: 6px; }
 .ev__when { position: absolute; right: 12px; top: 12px; display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 8px; background: rgba(9, 11, 16, 0.55); backdrop-filter: blur(8px); font-size: 11.5px; font-weight: 700; color: #fff; white-space: nowrap; }
 .ev__over { position: absolute; left: 14px; right: 14px; bottom: 12px; color: #fff; }
-.ev__title { font-size: 19px; font-weight: 800; line-height: 1.2; letter-spacing: -0.01em; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35); }
-.ev__meta { font-size: 12.5px; opacity: 0.86; margin-top: 4px; }
-.ev__body { padding: 12px 14px 14px; display: grid; gap: 12px; }
-.ev__desc { font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+.ev__title { font-size: 17px; font-weight: 800; line-height: 1.2; letter-spacing: -0.01em; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35); }
+.ev__meta { font-size: 12.5px; opacity: 0.86; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev__body { padding: 11px 14px 13px; display: grid; gap: 10px; }
+.ev__desc { font-size: 13px; line-height: 1.4; color: var(--ink-2); }
 .ev__foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .ev__who { display: flex; align-items: center; gap: 9px; min-width: 0; font-size: 12.5px; color: var(--ink-3); }
 .ev__who b { color: var(--ink-2); font-weight: 600; }
@@ -389,6 +389,18 @@ select.field { background-image: linear-gradient(45deg, transparent 50%, var(--i
 .choice__tick { position: absolute; top: 7px; right: 7px; opacity: 0; transition: 0.16s; }
 .choice--on .choice__tick { opacity: 1; }
 
+/* Списочный выбор: длинные перечни вроде профессий плитками не читаются */
+.crows { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.crow { display: flex; align-items: center; gap: 11px; padding: 12px 14px; border-radius: var(--r-md); background: var(--surface); color: var(--ink-2); text-align: left; transition: 0.14s; }
+.crow:active { transform: scale(0.99); }
+.crow__ic { color: var(--ink-3); display: grid; place-items: center; width: 20px; flex: none; }
+.crow__t { font-size: 14.5px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.crow__hint { font-size: 12px; color: var(--ink-3); flex: none; }
+.crow__tick { opacity: 0; transition: 0.14s; flex: none; }
+.crow--on { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.crow--on .crow__ic { color: var(--accent); }
+.crow--on .crow__tick { opacity: 1; }
+
 .steps { display: flex; gap: 5px; }
 .steps i { flex: 1; height: 3px; border-radius: 2px; background: var(--surface-3); transition: 0.3s; }
 .steps i[data-on='true'] { background: var(--accent); }
@@ -444,10 +456,20 @@ select.field { background-image: linear-gradient(45deg, transparent 50%, var(--i
 
 /* --- знакомства ------------------------------------------------------------ */
 .meet { border-radius: var(--r-lg); background: var(--surface); overflow: hidden; }
-.meet__top { position: relative; padding: 22px 16px 16px; display: grid; justify-items: center; gap: 10px; text-align: center; }
-.meet__pct { position: absolute; top: 14px; right: 14px; display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 800; }
-.meet__mode { position: absolute; top: 14px; left: 14px; padding: 5px 10px; z-index: 1; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); font-size: 11.5px; font-weight: 700; }
-.meet__body { padding: 0 16px 16px; display: grid; gap: 12px; }
+/* Кадр знакомства: фото во всю ширину, всё остальное — поверх него */
+.meet__shot { position: relative; aspect-ratio: 4 / 5; background: var(--surface-2); overflow: hidden; }
+.meet__shot > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+.meet__shot--blank { aspect-ratio: 16 / 12; }
+.meet__blank { position: absolute; inset: 0; display: grid; place-items: center; padding-bottom: 46px; }
+.meet__shot::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6, 7, 11, 0.45) 0%, transparent 30%, transparent 45%, rgba(6, 7, 11, 0.85) 100%); pointer-events: none; }
+.meet__dots { position: absolute; top: 10px; left: 14px; right: 14px; display: flex; gap: 4px; z-index: 2; }
+.meet__dots i { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.3); }
+.meet__dots i[data-on='true'] { background: #fff; }
+.meet__over { position: absolute; left: 16px; right: 16px; bottom: 14px; z-index: 2; }
+.meet__pct { position: absolute; top: 22px; right: 14px; z-index: 2; display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: rgba(10, 12, 16, 0.7); color: var(--accent); font-size: 12px; font-weight: 800; backdrop-filter: blur(6px); }
+.meet__mode { position: absolute; top: 22px; left: 14px; padding: 5px 10px; z-index: 2; border-radius: 999px; background: rgba(10, 12, 16, 0.7); color: #fff; font-size: 11.5px; font-weight: 700; backdrop-filter: blur(6px); }
+.meet__love { position: absolute; left: 14px; right: 14px; bottom: 76px; z-index: 2; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--warm); color: #17120a; font-size: 12px; font-weight: 800; }
+.meet__body { padding: 14px 16px 16px; display: grid; gap: 14px; }
 .meet__quota { display: flex; gap: 5px; }
 .meet__quota i { flex: 1; height: 3px; border-radius: 2px; background: var(--surface-3); }
 .meet__quota i[data-on='true'] { background: var(--accent); }
@@ -481,7 +503,11 @@ select.field { background-image: linear-gradient(45deg, transparent 50%, var(--i
 .pcard__name { font-size: 14.5px; font-weight: 700; line-height: 1.2; }
 .pcard__role { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); }
 .pcard__line { font-size: 11.5px; line-height: 1.35; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.pcard__pct { position: absolute; top: 8px; right: 8px; padding: 3px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 10.5px; font-weight: 800; }
+.pcard__pct { position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; gap: 3px; padding: 3px 7px; border-radius: 999px; background: var(--surface-2); color: var(--ink-3); font-size: 10.5px; font-weight: 800; }
+/* Сильное совпадение видно с первого взгляда — к таким людям и идут первыми */
+.pcard--strong { background: var(--accent-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent); }
+.pcard--strong .pcard__pct { background: var(--accent); color: #0d1512; }
+.pcard--strong .pcard__name { color: var(--accent); }
 .pcard__tags { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
 
 /* --- лента ---------------------------------------------------------------- */
@@ -495,11 +521,46 @@ select.field { background-image: linear-gradient(45deg, transparent 50%, var(--i
 .post__drop { position: relative; aspect-ratio: 3 / 2; border-radius: var(--r-md); background: var(--surface-2); display: grid; place-items: center; gap: 8px; align-content: center; color: var(--ink-3); cursor: pointer; box-shadow: inset 0 0 0 1px var(--line-2); overflow: hidden; }
 .post__drop img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
-/* --- рекомендации в «Людях» ------------------------------------------------ */
-.rec { position: relative; width: 148px; padding: 14px 12px 12px; border-radius: var(--r-md); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); display: grid; justify-items: center; gap: 8px; text-align: center; }
-.rec__name { font-size: 13.5px; font-weight: 700; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rec__why { font-size: 11.5px; line-height: 1.35; color: var(--ink-3); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.rec__pct { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 3px 8px; }
+/* --- своя витрина в знакомствах --------------------------------------------- */
+.mine { display: block; width: 100%; padding: 12px; border-radius: var(--r-md); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); transition: 0.14s; }
+.mine:active { transform: scale(0.99); }
+.mine__row { display: flex; align-items: center; gap: 12px; }
+.mine__ph { position: relative; width: 64px; height: 64px; flex: none; border-radius: 20px; overflow: hidden; background: var(--surface-2); }
+.mine__ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mine__n { position: absolute; right: 4px; bottom: 4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: rgba(10, 12, 16, 0.75); color: #fff; font-size: 10.5px; font-weight: 800; display: grid; place-items: center; }
+
+.shots { display: flex; flex-wrap: wrap; gap: 8px; }
+.shots__i { position: relative; width: 78px; height: 100px; border-radius: 14px; overflow: hidden; background: var(--surface-2); }
+.shots__i img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.shots__main { position: absolute; left: 4px; bottom: 4px; padding: 2px 6px; border-radius: 999px; background: var(--accent); color: #0d1512; font-size: 9.5px; font-weight: 800; }
+.shots__x { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 999px; background: rgba(10, 12, 16, 0.75); color: #fff; display: grid; place-items: center; }
+.shots__add { width: 78px; height: 100px; border-radius: 14px; display: grid; place-items: center; background: var(--surface-2); color: var(--ink-3); cursor: pointer; box-shadow: inset 0 0 0 1px var(--line-2); }
+
+/* --- словарь клуба ---------------------------------------------------------- */
+.terms { background: var(--surface); border-radius: var(--r-md); overflow: hidden; }
+.term { display: block; width: 100%; padding: 12px 14px; position: relative; transition: background 0.12s; }
+.term + .term::before { content: ''; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--line); }
+.term:active { background: var(--surface-2); }
+.term--on { background: var(--surface-2); }
+.term__t { font-size: 15px; font-weight: 700; }
+.term__f { font-size: 12.5px; color: var(--ink-3); }
+.term__x { font-size: 13.5px; line-height: 1.55; color: var(--ink-2); margin-top: 8px; }
+
+/* --- программа события ------------------------------------------------------ */
+.agenda { display: grid; gap: 12px; }
+.agenda li { display: flex; gap: 11px; align-items: flex-start; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+.agenda__n { flex: none; width: 22px; height: 22px; border-radius: 8px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-size: 11.5px; font-weight: 800; margin-top: 1px; }
+
+/* --- новости на главной ---------------------------------------------------- */
+.news { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: var(--r-md); background: var(--surface); text-align: left; transition: 0.14s; }
+.news:active { transform: scale(0.99); background: var(--surface-2); }
+.news__ic { width: 38px; height: 38px; flex: none; border-radius: 13px; display: grid; place-items: center; background: var(--surface-2); color: var(--ink-2); }
+.news__ic--accent { background: var(--accent-soft); color: var(--accent); }
+.news__ic--violet { background: var(--violet-soft); color: var(--violet); }
+.news__ic--warm { background: var(--warm-soft); color: var(--warm); }
+.news__tag { display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+.news__t { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14.5px; font-weight: 600; line-height: 1.3; margin-top: 3px; }
+.news__s { display: block; font-size: 11.5px; color: var(--ink-3); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* --- страница участника --------------------------------------------------- */
 .hero-user { position: relative; border-radius: var(--r-lg); overflow: hidden; padding: 24px 18px 20px; display: grid; justify-items: center; gap: 12px; text-align: center; }

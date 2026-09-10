@@ -1,4 +1,4 @@
-import { DAY, HOUR, MINUTE, startOfWeek, weekKey } from './time.js';
+import { DAY, HOUR, MINUTE, plural, startOfWeek, weekKey } from './time.js';
 import { hash, uid } from './format.js';
 import { cityMembers } from './events.js';
 
@@ -92,6 +92,22 @@ export function canJoin(event, now = Date.now()) {
   return now >= event.startsAt - 15 * MINUTE && now <= event.startsAt + event.duration * MINUTE;
 }
 
+/**
+ * Формат и аудитория события — короткими словами, одинаково на всех экранах.
+ * Раньше это приходилось выводить в каждом компоненте заново.
+ */
+export function eventMeta(event) {
+  const offline = event.type === 'offline' || event.type === 'summit';
+  const audience =
+    event.type === 'team' ? 'для команды' : event.minPackage === 'pro' ? 'для PRO' : event.minPackage === 'club' ? 'для клуба' : 'для всех';
+  return {
+    offline,
+    format: offline ? 'офлайн' : 'онлайн',
+    audience,
+    paid: (event.price || 0) > 0,
+  };
+}
+
 export function eventCity(state, event) {
   return event.cityId ? cityById(state, event.cityId) : null;
 }
@@ -123,6 +139,23 @@ export function applicationOf(state, userId) {
 }
 
 export const TEAM_ROLES = ['Продукт', 'Продажи', 'Разработка', 'Маркетинг', 'Операционка', 'Финансы'];
+
+/* Цель и направление из заявки: по ним ИИ-куратор собирает людей,
+   которые тянут проект в одну сторону, а не спорят о смысле сезона. */
+export const TEAM_AIMS = [
+  { id: 'Заработать', label: 'Заработать', icon: 'money' },
+  { id: 'Научиться', label: 'Научиться', icon: 'bulb' },
+  { id: 'Общение', label: 'Общение', icon: 'people' },
+];
+
+export const TEAM_FIELDS = [
+  { id: 'Услуги', label: 'Услуги', icon: 'handshake' },
+  { id: 'Приложение', label: 'Приложение', icon: 'code' },
+  { id: 'Креатив', label: 'Креатив', icon: 'palette' },
+  { id: 'Торговля', label: 'Торговля', icon: 'cart' },
+  { id: 'Обучение', label: 'Обучение', icon: 'book' },
+  { id: 'other', label: 'Своё', icon: 'pen', other: true, placeholder: 'Что хотите делать' },
+];
 
 export function teamSize(state, teamId) {
   return state.members.filter((m) => m.teamId === teamId).length;
@@ -317,10 +350,19 @@ const strengthOf = (user) => {
   return exp * 3 + income * 3 + ai * 2;
 };
 
+const expLevel = (user) => Math.max(0, EXP_LEVELS.indexOf(user?.facts?.exp?.[0]));
+const incomeLevel = (user) => Math.max(0, INCOME_LEVELS.indexOf(user?.facts?.income?.[0]));
+
+/** Заявка человека: цель, направление и часы — то, чего нет в анкете. */
+const applicationOfUser = (state, userId) =>
+  state.applications.find((a) => a.userId === userId && (a.status === 'pending' || a.status === 'assigned')) || null;
+
 /**
- * Раскладка заявок по командам. Считаем три вещи: чтобы роли не повторялись,
- * чтобы сферы были разными и чтобы сумма опыта у команд сошлась.
- * Возвращает план — куратор смотрит его и применяет одним нажатием.
+ * Раскладка заявок по командам. Команда работоспособна, когда в ней
+ * разные роли, разный опыт и разный доход (иначе одна команда собирает
+ * всех сильных, а вторая — всех новичков), но одна цель и близкое
+ * направление — иначе люди спорят не о работе, а о смысле сезона.
+ * Возвращает план: куратор смотрит его и применяет одним нажатием.
  */
 export function suggestTeamPlan(state) {
   const waiting = state.applications
@@ -332,12 +374,20 @@ export function suggestTeamPlan(state) {
   // Команды, где меньше народу и слабее состав, набирают первыми
   const teams = state.teams.map((team) => {
     const roster = teamRoster(state, team.id);
+    const apps = roster.map((m) => applicationOfUser(state, m.userId));
     return {
       team,
       size: roster.length,
       power: roster.reduce((sum, m) => sum + strengthOf(m.user), 0),
       crafts: new Set(roster.map((m) => m.user.facts?.craft?.[0] || m.role)),
       spheres: new Set(roster.map((m) => m.user.facts?.sphere?.[0]).filter(Boolean)),
+      exps: new Set(roster.map((m) => expLevel(m.user))),
+      incomes: new Set(roster.map((m) => incomeLevel(m.user))),
+      aims: apps.map((a) => a?.aim?.[0]).filter(Boolean),
+      fields: apps.map((a) => a?.field?.[0]).filter(Boolean),
+      goals: roster.flatMap((m) => m.user.facts?.goal || []),
+      hobby: roster.flatMap((m) => m.user.facts?.hobby || []),
+      hours: apps.map((a) => a?.hours || 0).filter(Boolean),
     };
   });
 
@@ -348,32 +398,64 @@ export function suggestTeamPlan(state) {
   for (const { application, user } of queue) {
     const craft = user.facts?.craft?.[0] || application.role;
     const sphere = user.facts?.sphere?.[0];
+    const exp = expLevel(user);
+    const income = incomeLevel(user);
+    const aim = application.aim?.[0];
+    const field = application.field?.[0];
+    const goals = user.facts?.goal || [];
+    const hobby = user.facts?.hobby || [];
     const open = teams.filter((t) => t.size < MAX_TEAM);
     if (!open.length) break;
 
     const best = open
       .map((t) => {
+        const sameAim = aim ? t.aims.filter((x) => x === aim).length : 0;
+        const sameField = field ? t.fields.filter((x) => x === field).length : 0;
+        const sharedGoals = goals.filter((g) => t.goals.includes(g)).length;
+        const sharedHobby = hobby.filter((h) => t.hobby.includes(h)).length;
+
         let score = 0;
-        if (!t.crafts.has(craft)) score += 40;               // роли не должны повторяться
-        if (sphere && !t.spheres.has(sphere)) score += 12;   // разные сферы — шире взгляд
-        score += (MAX_TEAM - t.size) * 6;                    // маленькие команды важнее
-        score -= t.power * 0.6;                              // выравниваем силу
-        if (t.size < MIN_TEAM) score += 25;                  // сначала доводим до трёх
+        if (!t.crafts.has(craft)) score += 40;                       // роли не должны повторяться
+        if (sphere && !t.spheres.has(sphere)) score += 12;           // разные сферы — шире взгляд
+        if (!t.exps.has(exp)) score += 18;                           // рядом с новичком нужен опытный
+        if (!t.incomes.has(income)) score += 16;                     // и разный уровень дохода
+        score += Math.min(sameAim, 2) * 20;                          // общая цель — важнее всего
+        score += Math.min(sameField, 2) * 10;                        // и близкое направление
+        score += Math.min(sharedGoals, 2) * 6;                       // общее «зачем в клубе»
+        score += Math.min(sharedHobby, 2) * 3;                       // и просто общий язык
+        score += (MAX_TEAM - t.size) * 6;                            // маленькие команды важнее
+        score -= t.power * 0.6;                                      // выравниваем суммарную силу
+        if (t.size < MIN_TEAM) score += 25;                          // сначала доводим до трёх
+        // Похожие ожидания по времени: 3 часа рядом с 20 — будущий конфликт
+        if (t.hours.length && application.hours) {
+          const avg = t.hours.reduce((a, b) => a + b, 0) / t.hours.length;
+          score -= Math.min(14, Math.abs(avg - application.hours));
+        }
         return { t, score };
       })
       .sort((x, y) => y.score - x.score)[0].t;
 
     // Причина понадобится куратору: он должен понимать, почему ИИ так решил
     const why = [best.crafts.has(craft) ? `усилит ${craft.toLowerCase()}` : `закроет роль «${craft.toLowerCase()}»`];
+    if (aim && best.aims.includes(aim)) why.push(`общая цель — ${aim.toLowerCase()}`);
+    if (!best.exps.has(exp)) why.push('добавит другой уровень опыта');
+    else if (!best.incomes.has(income)) why.push('выровняет команду по доходу');
     if (sphere && !best.spheres.has(sphere)) why.push(`сфера «${sphere.toLowerCase()}» новая для команды`);
     if (best.size < MIN_TEAM) why.push('команда ещё не набрана');
     else why.push(`станет ${best.size + 1} из ${MAX_TEAM}`);
 
-    plan.push({ userId: user.id, teamId: best.team.id, role: craft, why: why.join(' · ') });
+    plan.push({ userId: user.id, teamId: best.team.id, role: craft, why: why.slice(0, 4).join(' · ') });
     best.size += 1;
     best.power += strengthOf(user);
     best.crafts.add(craft);
+    best.exps.add(exp);
+    best.incomes.add(income);
     if (sphere) best.spheres.add(sphere);
+    if (aim) best.aims.push(aim);
+    if (field) best.fields.push(field);
+    best.goals.push(...goals);
+    best.hobby.push(...hobby);
+    if (application.hours) best.hours.push(application.hours);
   }
 
   return plan;
@@ -436,6 +518,137 @@ export function materialsFor(state, user) {
     .sort((a, b) => b.publishedAt - a.publishedAt);
 }
 
+/** Сколько материалов можно держать в закрепе. */
+export const MAX_PINNED = 5;
+
+/** Материал считается новинкой первую неделю — так его видно без объяснений. */
+export const isNew = (material, now = Date.now()) => now - material.publishedAt < 7 * DAY;
+
+export const isPinned = (state, id) => (state.pinned || []).includes(id);
+
+/**
+ * Порядок в базе: сначала закреплённое в заданном порядке, потом новинки,
+ * потом всё остальное по дате. Словарь клуба живёт третьим закрепом и
+ * приходит сюда отдельной строкой, потому что это не видео.
+ */
+export function baseOrder(list, state, now = Date.now()) {
+  const pinned = (state.pinned || []).slice(0, MAX_PINNED);
+  const inPin = list.filter((m) => pinned.includes(m.id)).sort((a, b) => pinned.indexOf(a.id) - pinned.indexOf(b.id));
+  const rest = list.filter((m) => !pinned.includes(m.id));
+  const fresh = rest.filter((m) => isNew(m, now));
+  const old = rest.filter((m) => !isNew(m, now));
+  return { pinned: inPin, fresh, rest: old };
+}
+
+/* ---------- словарь клуба ---------- */
+
+/** Свои слова участников идут вместе с базовыми — источник виден по флагу. */
+export function termsOf(state) {
+  return [...(state.terms || [])];
+}
+
+/* ---------- новости ---------- */
+
+/**
+ * Три главные новости на сегодня. Собираются из того, что уже есть
+ * в клубе: свежая запись, ближайшее событие, знакомства, лента.
+ * Порядок — по важности, а не по времени: сверху то, из-за чего
+ * стоит открыть приложение прямо сейчас.
+ */
+export function newsFor(state, user, now = Date.now()) {
+  const out = [];
+  const fresh = materialsFor(state, user).filter((m) => now - m.publishedAt < 12 * DAY);
+  const material = fresh.find((m) => !isViewed(state, m.id, user.id)) || fresh[0];
+  if (material) {
+    out.push({
+      id: `mat-${material.id}`,
+      tag: material.type === 'гайд' ? 'новый гайд' : 'новое видео',
+      tone: 'accent',
+      icon: material.type === 'гайд' ? 'book' : 'play',
+      title: material.title,
+      sub: `${material.topic} · ${dayLabel(material.publishedAt, now)}`,
+      to: `/material/${material.id}`,
+    });
+  }
+
+  const soon = visibleEvents(state, user, { from: now, to: now + 8 * DAY })[0];
+  if (soon && !rsvpOf(state, soon.id, user.id)) {
+    out.push({
+      id: `ev-${soon.id}`,
+      tag: 'событие',
+      tone: 'violet',
+      icon: 'calendar',
+      title: soon.title,
+      sub: `${eventMeta(soon).offline ? soon.place || 'офлайн' : 'онлайн'} · ещё не отметились`,
+      to: `/event/${soon.id}`,
+    });
+  }
+
+  const week = weekKey(now);
+  const meets = meetsFor(state, user.id, week);
+  const match = meets.filter((m) => m.status === 'matched');
+  const waiting = meets.filter((m) => m.status === 'new').length;
+  if (match.length) {
+    const other = userById(state, match[0].a === user.id ? match[0].b : match[0].a);
+    out.push({
+      id: `match-${match[0].id}`,
+      tag: 'метч недели',
+      tone: 'warm',
+      icon: 'handshake',
+      title: `${other?.name} тоже за знакомство`,
+      sub: `Совпадение ${match[0].percent}% · чат уже открыт`,
+      to: `/chat/${encodeURIComponent(chatKey('dm', [match[0].a, match[0].b]))}`,
+    });
+  } else if (waiting) {
+    out.push({
+      id: 'meets',
+      tag: 'знакомства',
+      tone: 'warm',
+      icon: 'spark',
+      title: `${waiting} ${plural(waiting, 'человек ждёт', 'человека ждут', 'человек ждут')} ответа`,
+      sub: 'Предложения этой недели',
+      to: '/meet',
+    });
+  }
+
+  const post = feedPosts(state).find((p) => p.userId !== user.id);
+  if (post) {
+    const author = userById(state, post.userId);
+    out.push({
+      id: `post-${post.id}`,
+      tag: 'в ленте',
+      tone: undefined,
+      icon: post.photo ? 'camera' : 'message',
+      title: post.text,
+      sub: `${author?.name} · ${dayLabel(post.at, now)}`,
+      to: '/feed',
+    });
+  }
+
+  const summit = summitVisible(state, now) ? summitEvent(state) : null;
+  if (summit) {
+    out.push({
+      id: 'summit',
+      tag: 'слёт',
+      tone: 'violet',
+      icon: 'star',
+      title: 'Большой слёт сезона',
+      sub: `${summit.place} · финал трёх месяцев`,
+      to: '/summit',
+    });
+  }
+
+  return out.slice(0, 3);
+}
+
+/** «сегодня / вчера / 3 дня назад» — короче, чем полная дата. */
+function dayLabel(at, now) {
+  const days = Math.floor((now - at) / DAY);
+  if (days <= 0) return 'сегодня';
+  if (days === 1) return 'вчера';
+  return `${days} ${plural(days, 'день', 'дня', 'дней')} назад`;
+}
+
 export function isViewed(state, materialId, userId) {
   return Boolean(state.views[`${materialId}:${userId}`]);
 }
@@ -467,7 +680,39 @@ export function friendsGoing(state, eventId, userId) {
 
 /** Сколько предложений программа выдаёт в неделю: хватает, чтобы за сезон
     познакомиться со всеми, но не превращается в ленту. */
-export const WEEKLY_MEETS = 3;
+export const WEEKLY_MEETS = 7;
+
+/** Сколько раз человек может попасть в чужие списки за неделю. */
+const MEETS_CAP = WEEKLY_MEETS * 2;
+
+/** Сколько фото можно показать в знакомствах. */
+export const MEET_PHOTOS = 5;
+
+/** Фото для знакомств: своё, если загрузил, иначе аватар из профиля. */
+export function meetPhotos(user) {
+  const own = (user?.meetPhotos || []).filter(Boolean);
+  return own.length ? own : user?.photo ? [user.photo] : [];
+}
+
+/** Теги для знакомств: свои, если задал, иначе увлечения из анкеты. */
+export function meetTags(user) {
+  const own = (user?.meetTags || []).filter(Boolean);
+  return own.length ? own : user?.facts?.hobby || [];
+}
+
+/** Цели знакомства: выбранные вручную или взятые из «зачем в клубе». */
+export function meetGoals(user) {
+  const own = Array.isArray(user?.meetGoal) ? user.meetGoal : user?.meetGoal ? [user.meetGoal] : [];
+  const list = (own.length ? own : user?.facts?.goal || []).filter((g) => MEET_GOALS.some((x) => x.id === g));
+  return list.length ? list.slice(0, 3) : [MEET_GOALS[0].id];
+}
+
+/** Оба отметили «хочу влюбиться» и оба ищут любовь — про это стоит сказать вслух. */
+export function loveMatch(a, b) {
+  const wants = (u) => (u?.facts?.goal || []).includes('Встретить любовь') || meetGoals(u).includes('Встретить любовь');
+  const free = (u) => u?.facts?.status?.[0] === 'Хочу влюбиться';
+  return wants(a) && wants(b) && free(a) && free(b);
+}
 
 export const MEET_GOALS = [
   { id: 'Новые знакомства', label: 'Просто пообщаться', icon: 'people' },
@@ -488,6 +733,9 @@ const facts = (user, key) => user?.facts?.[key] || [];
  * по ним люди действительно сходятся. Дальше идут сфера, город и близость
  * уровня в ИИ; разные роли в деле тоже плюс — вместе они сильнее.
  */
+/** С кем совпало настолько, что стоит написать первым. */
+export const MATCH_STRONG = 60;
+
 export function matchPercent(a, b) {
   if (!a || !b) return 0;
   const common = (key) => {
@@ -496,12 +744,18 @@ export function matchPercent(a, b) {
   };
 
   let score = 10;
-  score += common('hobby') * 14;      // до 42
-  score += common('goal') * 12;       // до 24
+  score += common('hobby') * 13;      // до 39
+  score += common('goal') * 11;       // до 22
   score += common('powers') * 5;
+  score += common('role') * 8;        // одно занятие — сразу есть о чём говорить
   if (fact(a, 'sphere') && fact(a, 'sphere') === fact(b, 'sphere')) score += 10;
   if (a.cityId === b.cityId) score += 10;
   if (fact(a, 'work') && fact(a, 'work') === fact(b, 'work')) score += 4;
+  // Совпал график — реально получится встретиться, а не только переписываться
+  if (fact(a, 'schedule') && fact(a, 'schedule') === fact(b, 'schedule')) score += 5;
+  // Оба «хотят влюбиться» и оба ищут любовь — отдельный, сильный сигнал
+  const bothLove = facts(a, 'goal').includes('Встретить любовь') && facts(b, 'goal').includes('Встретить любовь');
+  if (bothLove && fact(a, 'status') === 'Хочу влюбиться' && fact(b, 'status') === 'Хочу влюбиться') score += 10;
 
   const ai = AI_LEVELS.indexOf(fact(a, 'ai'));
   const aiOther = AI_LEVELS.indexOf(fact(b, 'ai'));
@@ -527,7 +781,9 @@ export function matchReasons(a, b) {
   const hobby = common('hobby');
   // «Встретить любовь» — личное: в общий каталог такая причина не выносится
   const goal = common('goal').filter((g) => g !== 'Встретить любовь');
+  const role = common('role');
   if (hobby.length) out.push(hobby.slice(0, 2).join(', ').toLowerCase());
+  if (role.length) out.push(role[0].toLowerCase());
   if (fact(a, 'sphere') && fact(a, 'sphere') === fact(b, 'sphere')) out.push(fact(a, 'sphere').toLowerCase());
   if (goal.length) out.push(`оба за «${goal[0].toLowerCase()}»`);
   if (a.cityId === b.cityId) out.push('один город');
@@ -565,7 +821,10 @@ export function ensureMeets(state, now = Date.now()) {
   const week = weekKey(now);
   const made = [];
 
-  // Квота считается с обеих сторон: попасть в чужие предложения — тоже расход недели
+  // Каждому нужно набрать свои WEEKLY_MEETS предложений. Попасть в чужой
+  // список — тоже расход недели, но с запасом: иначе новичок, пришедший
+  // в среду, остался бы вообще без знакомств.
+  const shown = MEETS_CAP;
   const quota = {};
   state.meets.filter((m) => m.week === week).forEach((m) => {
     quota[m.a] = (quota[m.a] || 0) + 1;
@@ -576,16 +835,26 @@ export function ensureMeets(state, now = Date.now()) {
     if (user.active === false || !user.coffeeEnabled) return;
     if ((quota[user.id] || 0) >= WEEKLY_MEETS) return;
 
-    const met = new Set(
-      state.meets.concat(made).filter((m) => m.a === user.id || m.b === user.id).map((m) => (m.a === user.id ? m.b : m.a))
+    // С кем уже виделись и чем это кончилось: повторно зовём только тех,
+    // до кого не дошли — пропущенных и не ответивших, но не бывших метчей
+    const history = state.meets.concat(made).filter((m) => m.a === user.id || m.b === user.id);
+    const met = new Set(history.map((m) => (m.a === user.id ? m.b : m.a)));
+    const closed = new Set(
+      history.filter((m) => m.status === 'matched' || m.likedBy.includes(user.id)).map((m) => (m.a === user.id ? m.b : m.a))
     );
 
-    const pool = state.users
-      .filter((u) => u.id !== user.id && u.active !== false && u.coffeeEnabled && !met.has(u.id) && (quota[u.id] || 0) < WEEKLY_MEETS)
-      .map((u) => ({ u, percent: matchPercent(user, u), luck: hash(week + user.id + u.id) % 20 }))
-      .sort((x, y) => y.percent + y.luck - (x.percent + x.luck));
+    const candidates = state.users.filter(
+      (u) => u.id !== user.id && u.active !== false && u.coffeeEnabled && (quota[u.id] || 0) < shown
+    );
+    const rank = (u) => ({ u, percent: matchPercent(user, u), luck: hash(week + user.id + u.id) % 20 });
+    const byScore = (x, y) => y.percent + y.luck - (x.percent + x.luck);
 
-    for (const { u, percent } of pool) {
+    // Сначала новые люди, а когда база кончилась — второй круг по тем,
+    // с кем знакомство так и не состоялось. Пустых недель быть не должно.
+    const pool = candidates.filter((u) => !met.has(u.id)).map(rank).sort(byScore);
+    const again = candidates.filter((u) => met.has(u.id) && !closed.has(u.id)).map(rank).sort(byScore);
+
+    for (const { u, percent } of pool.concat(again)) {
       if ((quota[user.id] || 0) >= WEEKLY_MEETS) break;
       made.push({
         id: uid('mt'),

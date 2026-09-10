@@ -3,7 +3,7 @@ import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import {
   teamOf, teamRoster, teamStats, teamPlace, lastReport, applicationOf, isPro, awardOf,
-  MIN_TEAM, MAX_TEAM, TEAM_ROLES, TEAM_TITLES, titleOf, invitableUsers, invitesFrom,
+  MIN_TEAM, MAX_TEAM, TEAM_ROLES, TEAM_AIMS, TEAM_FIELDS, TEAM_TITLES, titleOf, invitableUsers, invitesFrom,
   attendanceOf, userById, cityName, chatKey, unreadIn,
 } from '../lib/logic.js';
 import { weekKey, dateShort, startOfWeek, weekTitle, relative, WEEK } from '../lib/time.js';
@@ -42,6 +42,8 @@ function Waiting({ now }) {
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState(me.facts?.craft?.[0] || TEAM_ROLES[0]);
   const [hours, setHours] = useState('5');
+  const [aim, setAim] = useState([TEAM_AIMS[0].id]);
+  const [field, setField] = useState([TEAM_FIELDS[0].id]);
   const [about, setAbout] = useState(me.about || '');
 
   return (
@@ -59,7 +61,9 @@ function Waiting({ now }) {
               </div>
               <div className="wrap" style={{ marginTop: 10 }}>
                 <Tag tone="accent">{application.role}</Tag>
-                <Tag>{application.hours} ч в неделю</Tag>
+                <Tag>{application.hours} ч проекту</Tag>
+                {application.aim?.[0] && <Tag tone="violet">{application.aim[0]}</Tag>}
+                {application.field?.[0] && <Tag>{application.field[0]}</Tag>}
               </div>
             </div>
           </div>
@@ -86,14 +90,22 @@ function Waiting({ now }) {
         </List>
       </Section>
 
-      <Sheet open={open} onClose={() => setOpen(false)} title="Заявка в команду" sub="Три поля — куратору этого хватит">
+      <Sheet open={open} onClose={() => setOpen(false)} title="Заявка в команду" sub="По этим ответам ИИ-куратор и собирает состав">
         <div className="stack">
-          <Field label="Какую роль возьмёте">
+          <Field label="Какую роль возьмёте" hint="Роли в команде не должны повторяться">
             <Choice options={TEAM_ROLES.map((r) => ({ id: r, label: r, icon: ROLE_ICON[r] }))} value={[role]} max={1} onChange={(v) => setRole(v[0])} />
           </Field>
-          <Field label="Часов в неделю"><input className="field" inputMode="numeric" value={hours} onChange={(e) => setHours(e.target.value.replace(/\D/g, ''))} /></Field>
+          <Field label="Зачем вам команда" hint="Команды собираются по общей цели">
+            <Choice options={TEAM_AIMS} value={aim} max={1} onChange={setAim} />
+          </Field>
+          <Field label="Что хотите делать" hint="Можно вписать своё">
+            <Choice options={TEAM_FIELDS} value={field} max={1} onChange={setField} />
+          </Field>
+          <Field label="Сколько часов в неделю готовы уделять проекту и команде" hint="Честно: по этому куратор сверяет ожидания внутри команды">
+            <input className="field" inputMode="numeric" value={hours} onChange={(e) => setHours(e.target.value.replace(/\D/g, ''))} />
+          </Field>
           <Field label="Что умеете и что хотите сделать за сезон"><textarea className="field" value={about} onChange={(e) => setAbout(e.target.value)} /></Field>
-          <Btn variant="accent" wide onClick={() => { dispatch({ type: 'apply', role, hours: Number(hours) || 0, about }); setOpen(false); }}>Отправить куратору</Btn>
+          <Btn variant="accent" wide onClick={() => { dispatch({ type: 'apply', role, hours: Number(hours) || 0, aim, field, about }); setOpen(false); }}>Отправить куратору</Btn>
         </div>
       </Sheet>
     </div>

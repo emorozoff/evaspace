@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { cityStats, cityName, goingUsers, leaderboard, teamRoster, teamSize, teamBalance, factOf, suggestTeamPlan, userById, PACKAGES, MAX_TEAM, MIN_TEAM } from '../lib/logic.js';
+import { cityStats, cityName, goingUsers, leaderboard, teamRoster, teamSize, teamBalance, factOf, isPinned, suggestTeamPlan, userById, PACKAGES, MAX_PINNED, MAX_TEAM, MIN_TEAM } from '../lib/logic.js';
 import { dateShort, inputValue, isoDate, timeOf, relative } from '../lib/time.js';
 import { money, downloadCsv } from '../lib/format.js';
 import { Avatar, Btn, Card, Empty, Field, List, Item, Note, Scroller, Section, Sheet, Stat, Tag, TopBar } from '../components/UI.jsx';
@@ -81,7 +81,9 @@ function Teams({ now }) {
                   {/* Куратору важны роль, опыт и цифры — иначе команды выйдут неравными */}
                   <div className="wrap" style={{ marginTop: 10 }}>
                     <Tag tone="accent">{a.role}</Tag>
-                    <Tag>{a.hours} ч/нед</Tag>
+                    <Tag>{a.hours} ч проекту</Tag>
+                    {a.aim?.[0] && <Tag tone="violet">{a.aim[0]}</Tag>}
+                    {a.field?.[0] && <Tag>{a.field[0]}</Tag>}
                     {factOf(user, 'exp') && <Tag>опыт {factOf(user, 'exp')}</Tag>}
                     {factOf(user, 'age') && <Tag>{factOf(user, 'age')} лет</Tag>}
                     {factOf(user, 'income') && <Tag tone="warm">{factOf(user, 'income')}</Tag>}
@@ -296,9 +298,27 @@ function Base() {
           <Btn variant="accent" wide disabled={!f.title.trim() || !f.videoUrl.trim()} onClick={() => { dispatch({ type: 'materialAdd', material: { ...f, topic: f.topic || 'Разное' } }); setF({ title: '', type: 'эфир', topic: '', videoUrl: '', description: '' }); }}>Добавить</Btn>
         </div>
       </Card>
+      <Note icon="pin">
+        Закреп держит материал наверху базы: до {MAX_PINNED} штук, порядок — как закрепляли.
+        Первым обычно идёт приветственное видео, вторым — видео недели.
+      </Note>
       <List>
         {[...state.materials].sort((a, b) => b.publishedAt - a.publishedAt).slice(0, 20).map((m) => (
-          <Item key={m.id} icon="video" title={m.title} sub={`${m.type} · ${dateShort(m.publishedAt)}${m.seasonId < state.season.id ? ' · архив' : ''}`} meta={<button className="red t-xs" onClick={() => dispatch({ type: 'materialDelete', id: m.id })}>удалить</button>} chev={false} />
+          <Item
+            key={m.id}
+            icon={isPinned(state, m.id) ? 'pin' : 'video'}
+            title={m.title}
+            sub={`${m.type} · ${dateShort(m.publishedAt)}${m.seasonId < state.season.id ? ' · архив' : ''}`}
+            meta={
+              <span className="row" style={{ gap: 10 }}>
+                <button className="t-xs" style={{ color: isPinned(state, m.id) ? 'var(--warm)' : 'var(--ink-3)' }} onClick={() => dispatch({ type: 'pin', id: m.id })}>
+                  {isPinned(state, m.id) ? 'открепить' : 'закрепить'}
+                </button>
+                <button className="red t-xs" onClick={() => dispatch({ type: 'materialDelete', id: m.id })}>удалить</button>
+              </span>
+            }
+            chev={false}
+          />
         ))}
       </List>
     </>

@@ -63,8 +63,11 @@ const ROLE_BY_SKILL = {
   'Обучение': 'Операционка',
 };
 
-const ROLES = ['Предприниматель', 'Эксперт', 'Креатор', 'Инвестор', 'Руководитель'];
+const ROLES = ['Предприниматель', 'Эксперт', 'Руководитель', 'Программист', 'Автоматизация', 'Дизайнер', 'Креатор', 'Блогер', 'Маркетолог', 'Продюсер', 'Продажи', 'Инвестор'];
 const WORK = ['Своё дело', 'Фриланс', 'Работаю в компании'];
+const SCHEDULE = ['Стандартный 5/2', 'Сменный 2/2', 'Свободный'];
+const AIMS = ['Заработать', 'Научиться', 'Общение'];
+const FIELDS = ['Услуги', 'Приложение', 'Креатив', 'Торговля', 'Обучение'];
 const SPHERES = ['Инфобизнес', 'ИТ-продукты', 'Контент и блогинг', 'Услуги и агентство', 'Торговля', 'Производство', 'Образование'];
 const EXP = ['Первый год', '1–3 года', '3–7 лет', 'Больше 7'];
 const AGE = ['18–25', '26–32', '33–40', '41–50', '50+'];
@@ -84,8 +87,9 @@ function factsFor(user, pick, female) {
   const income = INCOME[Math.min(INCOME.length - 1, Math.max(0, expIndex - 1 + Math.floor(pick() * 2)))];
   return {
     craft: [craft],
-    role: [ROLES[Math.floor(pick() * ROLES.length)]],
+    role: [...ROLES].sort(() => pick() - 0.5).slice(0, 1 + Math.floor(pick() * 2)),
     work: [WORK[Math.floor(pick() * WORK.length)]],
+    schedule: [SCHEDULE[Math.floor(pick() * SCHEDULE.length)]],
     gender: [female ? 'Женщина' : 'Мужчина'],
     sphere: [SPHERES[Math.floor(pick() * SPHERES.length)]],
     exp: [EXP[expIndex]],
@@ -264,7 +268,9 @@ export function buildSeed(now = Date.now()) {
       id: `ap_seed_${i + 1}`,
       userId: u.id,
       role: u.facts.craft[0],
-      hours: [3, 5, 8, 10][i % 4],
+      hours: [4, 6, 8, 12][i % 4],
+      aim: [AIMS[i % AIMS.length]],
+      field: [FIELDS[(i + 1) % FIELDS.length]],
       about: u.about,
       at: now - (i + 1) * 9 * HOUR,
       status: 'pending',
@@ -356,7 +362,7 @@ export function buildSeed(now = Date.now()) {
   }
 
   const state = {
-    v: 4,
+    v: 5,
     seededAt: now,
     season,
     cities,
@@ -377,6 +383,9 @@ export function buildSeed(now = Date.now()) {
     revenue,
     contributions,
     materials,
+    // Закреплённые материалы: приветствие, видео недели, дальше — словарь
+    pinned: ['m1', 'm2'],
+    terms: [],
     events: [],
     rsvp: {},
     views: {},

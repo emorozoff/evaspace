@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import Icon from './Icons.jsx';
 import { back as backNav } from '../lib/router.jsx';
 import { hash, initials } from '../lib/format.js';
@@ -253,13 +253,21 @@ export function Switch({ on, onChange, title, sub }) {
   );
 }
 
+/**
+ * Подпись, содержимое и подсказка. Раньше здесь был <label> вокруг всего,
+ * но внутри поля живут не только инпуты: плитки выбора и кнопки склеивались
+ * в одну подпись для скринридера и ловили чужие клики. Теперь это обычный
+ * блок, а подпись сама наводит фокус на первое поле внутри.
+ */
 export function Field({ label, hint, children }) {
+  const box = useRef(null);
+  const focus = () => box.current?.querySelector('input, textarea, select')?.focus();
   return (
-    <label style={{ display: 'block' }}>
-      {label && <span className="label">{label}</span>}
+    <div ref={box}>
+      {label && <span className="label" onClick={focus}>{label}</span>}
       {children}
       {hint && <div className="hint">{hint}</div>}
-    </label>
+    </div>
   );
 }
 
