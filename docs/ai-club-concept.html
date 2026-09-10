@@ -374,6 +374,104 @@ tr.tot td{background:var(--soft);font-weight:700;color:var(--ink)}
 .appnote{margin:12px 22px 0;font-size:13px;line-height:1.45;color:var(--muted)}
 .tstmode{font-family:var(--mono);font-size:11px;color:var(--muted);margin:10px 22px 0;text-align:center}
 footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
+
+/* ---------- полировка: воздух, мягкие рамки, единая типографика ---------- */
+body{line-height:1.6}
+p{margin:0 0 14px;text-wrap:pretty}
+.page{padding:28px 18px 90px}
+@media (min-width:1020px){.page{gap:48px;padding:44px 32px 110px}}
+.nav{font-size:14px}
+.nav .lg{font-size:14.5px;margin-bottom:16px}
+.nav a{padding:6px 0 6px 12px;transition:color .15s,border-color .15s}
+.win{border-radius:7px;border-color:#C9D2DE;margin:0 0 24px;box-shadow:0 1px 2px rgba(20,32,50,.06),0 10px 28px rgba(20,32,50,.06)}
+.bar{height:33px;font-size:12.5px;padding:0 9px 0 14px}
+.bd{padding:28px 34px 32px}
+@media (max-width:620px){.bd{padding:20px 16px 22px}}
+h2{font-weight:800;font-size:clamp(23px,2.7vw,31px);letter-spacing:-.022em;line-height:1.15;margin:0 0 14px}
+.bd > p.k{font-size:17px;line-height:1.55}
+h4{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;margin:30px 0 14px}
+.h4c,.h4e{margin:30px 0 14px}
+.sm{font-size:14px;line-height:1.55}
+strong{font-weight:600}
+
+/* герой */
+.hgrid{gap:24px 44px}
+.hm{margin-bottom:16px}
+.tag{margin-bottom:16px}
+.hgrid .lead{font-size:17px;line-height:1.62}
+.facts{border-radius:8px;background:var(--line);border-color:var(--line)}
+.facts div{padding:13px 16px}
+.facts dt{font-size:12px;letter-spacing:.07em}
+.facts dd{font-size:14px}
+.factsh{margin-top:30px}
+.cta{margin-top:24px}
+
+/* карточки — мягче рамки, одинаковые углы */
+.fc,.pr3,.rc,.mc,.steps div,.flow li,.tier,.sp,.pc,.calc,.msg,.rc,.deckline,.dia,.tw{border-radius:8px}
+.pr3,.rc,.mc,.steps div,.flow li,.tier,.sp,.pc,.calc,.deckline,.tw,.pkg label,.opts,.tglink{border-color:var(--line)}
+.tier.hot{border-color:var(--red)}
+.mc.off{border-color:#F0CFC6}
+.mc.pro{border-color:#D5DEEC;border-left-color:var(--red)}
+.mc.pro.team{border-color:var(--line)}
+.fc{padding:17px 19px 18px;gap:14px}
+.fc b{font-size:16px;margin-bottom:5px}
+.fc span,.pr3 span,.who span,.mc,.steps div,.flow li,.spb dl,.pc p,.rc li,.pcb li{font-size:14px;line-height:1.5}
+.rc span{font-size:14px;line-height:1.45}
+.pr3{padding:16px 18px 17px}
+.pr3 b{font-size:17px}
+.who{gap:0 34px}
+.who div{padding:12px 0}
+.who b{font-size:15.5px}
+.tier ul{font-size:14px;gap:8px}
+.tb{padding:17px 18px 19px}
+.prc{font-size:30px}
+.steps,.flow{gap:12px}
+.steps div,.flow li{padding:14px 15px}
+.steps b,.flow b{font-size:15px}
+.bul{gap:10px}
+.bul li,.num li{font-size:15px}
+.mo{gap:10px;margin:4px 0 18px}
+.mc{padding:12px 14px}
+.mc .topic{font-size:14.5px}
+.rhy{gap:14px}
+.rc{padding:15px 17px}
+.rc b{font-size:15.5px}
+.msg{padding:15px 18px;margin:20px 0}
+.msg p{line-height:1.55}
+.bsod{border-radius:8px;padding:20px 22px;margin-bottom:20px}
+.calc .r{padding:10px 15px;font-size:14px}
+.pbl{margin-top:9px}
+.dia{padding:16px}
+
+/* таблицы */
+table{font-size:14.5px}
+th{padding:10px 15px;letter-spacing:.08em;font-size:11.5px}
+td{padding:12px 15px}
+
+/* спонсоры и команда */
+.spon{gap:16px}
+.spb{padding:18px 19px 20px}
+.spb .p{font-size:29px}
+.spb .tot{border-radius:6px;font-size:13.5px}
+.ppl{gap:16px}
+.pcb{padding:16px 17px 18px}
+.deckline{padding:16px 20px;margin-top:20px;gap:20px}
+
+/* условия и решение */
+.rules{gap:16px}
+.rc{border-radius:8px}
+.rules .rc{padding:17px 20px 18px}
+.rules .rc b{font-size:17px;margin-bottom:10px}
+.rules .rc li{font-size:14.5px;line-height:1.55}
+.dec{padding:44px 26px 40px}
+.dec p{font-size:17px}
+footer{padding-top:12px}
+
+/* окна мастера */
+.dlg{border-radius:8px}
+.dlgb h3{font-size:16px}
+.dlgb p{font-size:14.5px}
+.pkg label,.opts label{border-radius:6px}
 </style>
 
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
