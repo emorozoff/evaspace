@@ -6,6 +6,8 @@ import {
   ensureMeets,
   chatKey,
   buildNotifications,
+  canPin,
+  greetInChats,
   MAX_PINNED,
   MEET_PHOTOS,
   POINTS,
@@ -18,7 +20,7 @@ import {
 import { uid, hash } from './format.js';
 import { DAY, weekKey } from './time.js';
 
-const KEY = 'iaiclub.state.v5';
+const KEY = 'iaiclub.state.v6';
 
 /* Задержки демо-режима: куратор и участники отвечают сами,
    иначе в одиночном демо некому распределить и принять. */
@@ -106,7 +108,7 @@ function reducer(state, action) {
     /* ---------- вход и профиль ---------- */
 
     case 'register': {
-      const { name, city, about, phone, pack, ref } = action;
+      const { name, city, about, phone, pack, ref, role } = action;
       const resolved = resolveCity(state, city);
       let next = resolved.state;
       const id = uid('u');
@@ -132,7 +134,7 @@ function reducer(state, action) {
         active: true,
         paid: false,
         onboarded: false,
-        facts: {},
+        facts: role?.length ? { role } : {},
         demo: false,
         ref: 'r' + hash(name + now).toString(36).slice(0, 6),
         links: '',
@@ -199,6 +201,30 @@ function reducer(state, action) {
       }
       const moved = { ...next, users: next.users.map((u) => (u.id === user.id ? { ...u, ...patch } : u)) };
       return withToast(patch.cityId ? reducer(moved, { type: 'tick', now }) : moved, action.silent ? null : 'Сохранено');
+    }
+
+    /** Ответ в ленте: тред раскрывается прямо под постом. */
+    case 'postReply': {
+      if (!user || !action.text?.trim()) return state;
+      const next = {
+        ...state,
+        postReplies: [...(state.postReplies || []), { id: uid('pr'), postId: action.postId, userId: user.id, text: action.text.trim(), at: now }],
+      };
+      return withToast(award(next, user.id, 'message'), null);
+    }
+
+    case 'postReplyDelete':
+      return { ...state, postReplies: (state.postReplies || []).filter((r) => r.id !== action.id) };
+
+    /* ---------- чаты: закреп и приветствие ---------- */
+
+    case 'pinMessage': {
+      if (!canPin(state, action.chat, user?.id)) return withToast(state, 'Закреплять может только ведущий чата');
+      const pins = { ...(state.pins || {}) };
+      const same = pins[action.chat] === action.id;
+      if (same) delete pins[action.chat];
+      else pins[action.chat] = action.id;
+      return withToast({ ...state, pins }, same ? 'Открепили' : 'Закрепили сообщение');
     }
 
     /* ---------- база знаний: закреп и словарь ---------- */
@@ -687,6 +713,7 @@ function reducer(state, action) {
       if (cityNotes.length) next = { ...next, notes: [...next.notes, ...cityNotes] };
 
       next = ensureMeets(next, now);
+      next = greetInChats(next, now);
 
       // Демо: ИИ-куратор разбирает вашу заявку сам — тем же алгоритмом, что в админке.
       // Чужие заявки остаются куратору: иначе в админке нечего было бы распределять.

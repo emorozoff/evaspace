@@ -1,34 +1,47 @@
-/* Знакомство при входе: тринадцать вопросов на четырёх экранах.
-   Ответы нужны не ради анкеты — по ним ИИ-куратор собирает равные команды,
-   а подбор людей и знакомств понимает, кто кому будет интересен. */
+/* Знакомство при входе. Занятие спрашивают сразу при регистрации — это
+   первое, что о человеке хотят знать. Дальше двенадцать вопросов на четырёх
+   экранах: по ним ИИ-куратор собирает равные команды, а подбор людей
+   и знакомств понимает, кто кому будет интересен. */
+
+/** Занятие: спрашивается на экране регистрации, сразу после имени. */
+export const ROLE_QUESTION = {
+  id: 'role',
+  title: 'Чем занимаетесь',
+  hint: 'До двух — по этому подбираются люди и команды',
+  max: 2,
+  list: true,
+  options: [
+    { id: 'Предприниматель', label: 'Предприниматель', icon: 'rocket' },
+    { id: 'Эксперт', label: 'Эксперт, консультант', icon: 'bulb' },
+    { id: 'Руководитель', label: 'Руководитель', icon: 'crown' },
+    { id: 'Программист', label: 'Программист', icon: 'code' },
+    { id: 'Автоматизация', label: 'Автоматизация и ИИ', icon: 'robot' },
+    { id: 'Дизайнер', label: 'Дизайнер', icon: 'brush' },
+    { id: 'Креатор', label: 'Креатор', icon: 'palette' },
+    { id: 'Блогер', label: 'Блогер', icon: 'camera' },
+    { id: 'Маркетолог', label: 'Маркетолог', icon: 'megaphone' },
+    { id: 'Продюсер', label: 'Продюсер', icon: 'mic' },
+    { id: 'Продажи', label: 'Продажи', icon: 'handshake' },
+    { id: 'Инвестор', label: 'Инвестор', icon: 'chart' },
+    { id: 'other', label: 'Другое', icon: 'pen', other: true, placeholder: 'Чем занимаетесь' },
+  ],
+};
 
 export const STEPS = [
   {
     id: 'who',
     eyebrow: 'Шаг 1 из 4',
     title: 'Кто вы',
-    sub: 'Так участники понимают, с кем имеют дело',
+    sub: 'Пара вопросов о том, как устроена ваша неделя',
     questions: [
       {
-        id: 'role',
-        title: 'Чем занимаетесь',
-        hint: 'До двух — по этому подбираются люди и команды',
-        max: 2,
-        list: true,
+        id: 'schedule',
+        title: 'Ваш график',
+        max: 1,
         options: [
-          { id: 'Предприниматель', label: 'Предприниматель', icon: 'rocket' },
-          { id: 'Эксперт', label: 'Эксперт, консультант', icon: 'bulb' },
-          { id: 'Руководитель', label: 'Руководитель', icon: 'crown' },
-          { id: 'Программист', label: 'Программист', icon: 'code' },
-          { id: 'Автоматизация', label: 'Автоматизация и ИИ', icon: 'robot' },
-          { id: 'Дизайнер', label: 'Дизайнер', icon: 'brush' },
-          { id: 'Креатор', label: 'Креатор', icon: 'palette' },
-          { id: 'Блогер', label: 'Блогер', icon: 'camera' },
-          { id: 'Маркетолог', label: 'Маркетолог', icon: 'megaphone' },
-          { id: 'Продюсер', label: 'Продюсер', icon: 'mic' },
-          { id: 'Продажи', label: 'Продажи', icon: 'handshake' },
-          { id: 'Инвестор', label: 'Инвестор', icon: 'chart' },
-          { id: 'other', label: 'Другое', icon: 'pen', other: true, placeholder: 'Чем занимаетесь' },
+          { id: 'Стандартный 5/2', label: 'Стандартный', big: '5/2' },
+          { id: 'Сменный 2/2', label: 'Сменный', big: '2/2' },
+          { id: 'Свободный', label: 'Свободный', big: '∞' },
         ],
       },
       {
@@ -58,16 +71,6 @@ export const STEPS = [
     title: 'Ваше дело',
     sub: 'ИИ-куратор собирает команды так, чтобы роли, сферы и графики сходились',
     questions: [
-      {
-        id: 'schedule',
-        title: 'Ваш график',
-        max: 1,
-        options: [
-          { id: 'Стандартный 5/2', label: 'Стандартный', big: '5/2' },
-          { id: 'Сменный 2/2', label: 'Сменный', big: '2/2' },
-          { id: 'Свободный', label: 'Свободный', big: '∞' },
-        ],
-      },
       {
         id: 'sphere',
         title: 'Сфера',
@@ -203,7 +206,7 @@ export const STEPS = [
   },
 ];
 
-export const QUESTIONS = STEPS.flatMap((s) => s.questions);
+export const QUESTIONS = [ROLE_QUESTION, ...STEPS.flatMap((s) => s.questions)];
 
 export const questionById = (id) => QUESTIONS.find((q) => q.id === id);
 

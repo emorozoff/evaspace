@@ -3,7 +3,8 @@ import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import { cityName, matchPercent, meetsFor, MATCH_STRONG } from '../lib/logic.js';
 import { weekKey, plural } from '../lib/time.js';
-import { Avatar, Empty, Seg, Tag, Top } from '../components/UI.jsx';
+import { Avatar, Btn, Empty, Seg, Sheet, Tag, Top } from '../components/UI.jsx';
+import { FeedList, PostForm } from './Feed.jsx';
 import Icon from '../components/Icons.jsx';
 
 /* Люди: все участники крупными карточками. По умолчанию сверху те, с кем
@@ -12,12 +13,13 @@ import Icon from '../components/Icons.jsx';
 const MODES = [
   { value: 'match', label: 'По совпадению' },
   { value: 'city', label: 'Мой город' },
-  { value: 'name', label: 'По алфавиту' },
+  { value: 'feed', label: 'Лента' },
 ];
 
 export default function People({ now }) {
   const { state, me } = useStore();
   const [mode, setMode] = useState('match');
+  const [write, setWrite] = useState(false);
   const week = weekKey(now);
   const meets = meetsFor(state, me.id, week);
   const fresh = meets.filter((m) => m.status === 'new').length;
@@ -31,7 +33,6 @@ export default function People({ now }) {
       // Свой город сверху, дальше остальные — внутри каждой группы по совпадению
       return base.filter((x) => x.u.cityId === me.cityId).concat(base.filter((x) => x.u.cityId !== me.cityId));
     }
-    if (mode === 'name') return [...base].sort((a, b) => a.u.name.localeCompare(b.u.name, 'ru'));
     return base;
   }, [state.users, me, mode]);
 
@@ -56,6 +57,17 @@ export default function People({ now }) {
       </button>
 
       <Seg value={mode} onChange={setMode} options={MODES} />
+
+      {mode === 'feed' ? (
+        <>
+          <div className="spread" style={{ marginTop: -8, paddingLeft: 4 }}>
+            <span className="t-xs dim-2">Встречи, результаты и вопросы клуба</span>
+            <Btn variant="soft" size="sm" icon="plus" onClick={() => setWrite(true)}>Написать</Btn>
+          </div>
+          <FeedList now={now} onWrite={() => setWrite(true)} />
+        </>
+      ) : (
+      <>
       <div className="t-xs dim-2" style={{ marginTop: -8, paddingLeft: 4 }}>
         {mode === 'city'
           ? `${cityName(state, me.cityId)}: ${inCity} человек, дальше — остальные`
@@ -86,6 +98,12 @@ export default function People({ now }) {
           ))}
         </div>
       )}
+      </>
+      )}
+
+      <Sheet open={write} onClose={() => setWrite(false)} title="Что рассказать" sub="Фото со встречи — самое ценное">
+        {write && <PostForm onDone={() => setWrite(false)} />}
+      </Sheet>
     </div>
   );
 }

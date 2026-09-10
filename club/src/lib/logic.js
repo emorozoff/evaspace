@@ -502,6 +502,11 @@ export const POST_TAGS = [
   { id: 'вопрос', label: 'Вопрос', icon: 'bulb', tone: 'blue' },
 ];
 
+/** Ответы под постом — тред, как в тредсах: первым сам пост, дальше разговор. */
+export function repliesOf(state, postId) {
+  return (state.postReplies || []).filter((r) => r.postId === postId).sort((a, b) => a.at - b.at);
+}
+
 export function feedPosts(state) {
   return [...state.posts].sort((a, b) => b.at - a.at);
 }
@@ -882,6 +887,99 @@ export function ensureMeets(state, now = Date.now()) {
 /** Ключ разговора: у команды и города он один на всех, у людей — общий на двоих. */
 export function chatKey(kind, ids) {
   return kind === 'dm' ? `dm:${[...ids].sort().join('|')}` : `${kind}:${ids[0]}`;
+}
+
+/* Кто ведёт чат. В команде это капитан и его зам, в городе — хранитель
+   (организатор пятниц) и админы клуба. У ведущих есть право закрепить
+   сообщение: чат без хозяина быстро превращается в свалку. */
+
+export const CHAT_TITLES = {
+  captain: 'Капитан',
+  mate: 'Зам капитана',
+  keeper: 'Хранитель',
+  admin: 'Админ клуба',
+};
+
+export function chatCrew(state, key) {
+  const [kind, rest] = [key.slice(0, key.indexOf(':')), key.slice(key.indexOf(':') + 1)];
+  const crew = [];
+  const push = (userId, role) => {
+    const user = userById(state, userId);
+    if (user && !crew.some((c) => c.user.id === user.id)) crew.push({ user, role });
+  };
+
+  if (kind === 'team') {
+    const team = state.teams.find((t) => t.id === rest);
+    if (team) {
+      push(team.captainId, 'captain');
+      push(team.mateId, 'mate');
+    }
+  }
+  if (kind === 'city') {
+    const city = cityById(state, rest);
+    if (city) push(city.organizerId, 'keeper');
+  }
+  if (kind !== 'dm') state.users.filter((u) => u.admin).forEach((u) => push(u.id, 'admin'));
+  return crew;
+}
+
+/** Ведущие чата могут закреплять сообщения и следят за правилами. */
+export function canPin(state, key, userId) {
+  return chatCrew(state, key).some((c) => c.user.id === userId);
+}
+
+export function pinnedMessage(state, key) {
+  const id = state.pins?.[key];
+  return id ? state.messages.find((m) => m.id === id) || null : null;
+}
+
+/** Правила общие для всех чатов — их же участник видит при входе. */
+export const CHAT_RULES = [
+  'Без ссылок и рекламы — ни в сообщениях, ни в личных.',
+  'Без оскорблений и осуждения: спорить о деле можно, о человеке нельзя.',
+  'Пишите по делу чата: команде — про команду, городу — про встречи.',
+  'Нарушение — удаление из клуба без возврата взноса.',
+];
+
+export const WELCOME_TEXT =
+  'добро пожаловать. Здесь без ссылок и рекламы, без оскорблений и осуждения — ' +
+  'нарушение значит удаление из клуба без возврата взноса. В остальном как дома: спрашивайте и рассказывайте.';
+
+/**
+ * Приветствие новому участнику чата. Пишется один раз на человека и чат,
+ * поэтому мы помним выданные пары в state.welcomed: перезаход в приложение
+ * не должен снова здороваться со всеми.
+ */
+export function greetInChats(state, now = Date.now()) {
+  const done = new Set(state.welcomed || []);
+  const added = [];
+  const marks = [];
+
+  const greet = (key, user) => {
+    const mark = `${key}|${user.id}`;
+    if (done.has(mark)) return;
+    done.add(mark);
+    marks.push(mark);
+    added.push({
+      id: uid('ms'),
+      chat: key,
+      userId: 'system',
+      text: `${user.name.split(' ')[0]}, ${WELCOME_TEXT}`,
+      at: now,
+    });
+  };
+
+  state.members.forEach((m) => {
+    const user = userById(state, m.userId);
+    if (user) greet(chatKey('team', [m.teamId]), user);
+  });
+  state.cities.forEach((city) => {
+    if (cityMembers(state, city.id).length < 2) return;
+    cityMembers(state, city.id).forEach((user) => greet(chatKey('city', [city.id]), user));
+  });
+
+  if (!added.length) return state;
+  return { ...state, messages: [...state.messages, ...added], welcomed: [...(state.welcomed || []), ...marks] };
 }
 
 export function chatMessages(state, key) {

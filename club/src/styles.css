@@ -286,6 +286,8 @@ select.field { background-image: linear-gradient(45deg, transparent 50%, var(--i
 .filters { display: flex; gap: 8px; }
 .picker { flex: 1; min-width: 0; height: 36px; padding: 0 9px 0 12px; border-radius: 11px; display: flex; align-items: center; justify-content: space-between; gap: 6px; background: var(--surface); color: var(--ink-2); font-size: 12.5px; font-weight: 700; }
 .picker--on { background: var(--accent-soft); color: var(--accent); }
+/* Тот же пикер, но в форме — по высоте и шрифту как обычное поле */
+.picker--field { width: 100%; height: auto; min-height: 46px; padding: 12px 14px; border-radius: var(--r-sm); font-size: 15px; font-weight: 500; }
 .picker:active { transform: scale(0.97); }
 .picker svg { flex: none; opacity: 0.65; }
 
@@ -443,12 +445,33 @@ select.field { background-image: linear-gradient(45deg, transparent 50%, var(--i
 .bubble--sys { align-self: center; background: var(--violet-soft); color: #b9aefb; font-size: 12.5px; text-align: center; border-radius: 12px; }
 .bubble__who { display: block; font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 3px; }
 .bubble__time { font-size: 10.5px; opacity: 0.55; text-align: right; margin-top: 3px; }
+/* Поле ввода стоит на месте: раньше оно было sticky и уезжало вместе
+   с перепиской, из-за чего «прыгало» при каждом новом сообщении. */
 .composer {
-  position: sticky; bottom: calc(var(--tab-h) + var(--safe-b)); z-index: 20;
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--tab-h) + var(--safe-b)); z-index: 20;
+  width: 100%; max-width: 480px;
   display: flex; align-items: center; gap: 8px;
-  margin: 0 calc(var(--pad) * -1); padding: 10px var(--pad) calc(10px + var(--safe-b));
+  padding: 10px var(--pad);
   background: rgba(9, 11, 16, 0.94); backdrop-filter: blur(14px); border-top: 1px solid var(--line);
 }
+/* Переписка не должна прятаться под полем ввода */
+.screen--chat { padding-bottom: calc(var(--tab-h) + var(--safe-b) + 76px); }
+
+.pinned {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  margin-bottom: 4px; padding: 9px 12px; border-radius: var(--r-sm);
+  background: var(--warm-soft); color: var(--ink-2); font-size: 13px;
+}
+.bubble__role { font-weight: 600; color: var(--ink-3); }
+
+.gains { display: grid; gap: 10px; }
+.gain { display: flex; gap: 12px; align-items: center; }
+.gain__ic { width: 38px; height: 38px; flex: none; border-radius: 13px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+
+.rules { display: grid; gap: 10px; }
+.rules__i { display: flex; gap: 11px; align-items: flex-start; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+.rules__n { flex: none; width: 22px; height: 22px; border-radius: 8px; display: grid; place-items: center; background: var(--surface-2); color: var(--ink-3); font-size: 11.5px; font-weight: 800; margin-top: 1px; }
 .composer .field { border-radius: 999px; min-height: 44px; }
 .composer__send { width: 44px; height: 44px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); }
 .composer__send:disabled { opacity: 0.4; }
@@ -518,6 +541,20 @@ select.field { background-image: linear-gradient(45deg, transparent 50%, var(--i
 .post__foot { display: flex; align-items: center; gap: 14px; padding: 12px 14px; }
 .post__act { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink-3); }
 .post__act--on { color: var(--accent); }
+/* Разговор под постом: ответы вниз, как в тредах */
+.thread { border-top: 1px solid var(--line); padding: 10px 14px 12px; display: grid; gap: 12px; }
+.thread__i { display: flex; gap: 10px; align-items: flex-start; }
+.thread__who { font-size: 12.5px; font-weight: 700; }
+.thread__t { font-size: 13.5px; line-height: 1.45; color: var(--ink-2); margin-top: 2px; }
+.thread__new { display: flex; gap: 8px; align-items: center; }
+.thread__new .field { min-height: 36px; padding: 7px 12px; border-radius: 999px; font-size: 13.5px; }
+
+.post__pick { position: relative; border-radius: var(--r-sm); overflow: hidden; max-height: 220px; }
+.post__pick img { width: 100%; max-height: 220px; object-fit: cover; display: block; }
+/* Скрепка: фото прикладывается значком, а не отдельным экраном */
+.clipbtn { width: 46px; height: 46px; flex: none; border-radius: var(--r-sm); display: grid; place-items: center; background: var(--surface-2); color: var(--ink-2); cursor: pointer; transition: 0.14s; }
+.clipbtn:active { transform: scale(0.95); }
+
 .post__drop { position: relative; aspect-ratio: 3 / 2; border-radius: var(--r-md); background: var(--surface-2); display: grid; place-items: center; gap: 8px; align-content: center; color: var(--ink-3); cursor: pointer; box-shadow: inset 0 0 0 1px var(--line-2); overflow: hidden; }
 .post__drop img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
@@ -545,6 +582,8 @@ select.field { background-image: linear-gradient(45deg, transparent 50%, var(--i
 .term__t { font-size: 15px; font-weight: 700; }
 .term__f { font-size: 12.5px; color: var(--ink-3); }
 .term__x { font-size: 13.5px; line-height: 1.55; color: var(--ink-2); margin-top: 8px; }
+.term--static { cursor: default; }
+.code__ic { width: 30px; height: 30px; flex: none; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); color: var(--accent); }
 
 /* --- программа события ------------------------------------------------------ */
 .agenda { display: grid; gap: 12px; }

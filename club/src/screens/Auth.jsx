@@ -3,7 +3,9 @@ import { useStore } from '../lib/store.jsx';
 import { PACKAGES } from '../lib/logic.js';
 import { money } from '../lib/format.js';
 import { Avatar, Btn, Card, Field, Sheet, List, Item, Tag } from '../components/UI.jsx';
+import Choice from '../components/Choice.jsx';
 import Icon from '../components/Icons.jsx';
+import { ROLE_QUESTION } from '../data/onboarding.js';
 
 /* Вход короткий: телефон и код, три поля, пакет. */
 
@@ -16,12 +18,15 @@ export default function Auth({ invite }) {
   const [city, setCity] = useState('');
   const [about, setAbout] = useState('');
   const [pack, setPack] = useState('pro');
+  const [role, setRole] = useState([]);
+  const [roleOpen, setRoleOpen] = useState(false);
   const [demo, setDemo] = useState(false);
 
   // Пригласившего знаем, только если он заходил с этого же устройства; скидка — по коду.
   const inviter = invite ? state.users.find((u) => u.ref === invite) : null;
   const phoneOk = phone.replace(/\D/g, '').length >= 10 && code.length >= 4;
-  const profileOk = name.trim().length > 1 && city.trim().length > 1 && about.trim().length > 2;
+  const roleLabel = role.filter(Boolean).map((r) => ROLE_QUESTION.options.find((o) => o.id === r)?.label || r).join(', ');
+  const profileOk = name.trim().length > 1 && role.filter(Boolean).length > 0 && city.trim().length > 1 && about.trim().length > 2;
 
   return (
     <div className="app">
@@ -60,14 +65,21 @@ export default function Auth({ invite }) {
             <Field label="Имя">
               <input className="field" placeholder="Как к вам обращаться" value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
+            {/* Занятие — второй вопрос после имени: с него начинается подбор людей */}
+            <Field label="Чем занимаетесь" hint="До двух — по этому подбираются люди и команды">
+              <button className={`picker picker--field${role.filter(Boolean).length ? ' picker--on' : ''}`} onClick={() => setRoleOpen(true)}>
+                <span className="grow ell">{roleLabel || 'Выберите из списка'}</span>
+                <Icon name="down" size={16} />
+              </button>
+            </Field>
             <Field label="Город" hint="Двое в городе — и появится чат с пятничной встречей">
               <input className="field" list="cities" placeholder="Начните вводить" value={city} onChange={(e) => setCity(e.target.value)} />
             </Field>
             <datalist id="cities">{state.cities.map((c) => <option key={c.id} value={c.name} />)}</datalist>
-            <Field label="Чем занимаетесь">
+            <Field label="Ваше дело">
               <input className="field" placeholder="Одной строкой" value={about} onChange={(e) => setAbout(e.target.value)} />
             </Field>
-            <Btn variant="accent" wide disabled={!profileOk} onClick={() => { dispatch({ type: 'register', name, city, about, phone, pack, ref: invite }); setStep('pay'); }}>
+            <Btn variant="accent" wide disabled={!profileOk} onClick={() => { dispatch({ type: 'register', name, city, about, phone, pack, role: role.filter(Boolean), ref: invite }); setStep('pay'); }}>
               Продолжить
             </Btn>
             <div className="t-xs dim-2 center">Фото, ссылки и «что ищу» — потом, в профиле.</div>
@@ -75,6 +87,13 @@ export default function Auth({ invite }) {
         )}
 
         {step === 'pay' && <Paywall selected={pack} onSelect={setPack} discount={Boolean(invite)} />}
+
+        <Sheet open={roleOpen} onClose={() => setRoleOpen(false)} title={ROLE_QUESTION.title} sub={ROLE_QUESTION.hint}>
+          <div className="stack">
+            <Choice options={ROLE_QUESTION.options} value={role} max={ROLE_QUESTION.max} list onChange={setRole} />
+            <Btn variant="accent" wide disabled={!role.filter(Boolean).length} onClick={() => setRoleOpen(false)}>Готово</Btn>
+          </div>
+        </Sheet>
 
         <Sheet open={demo} onClose={() => setDemo(false)} title="Войти как участник" sub="Демо: команда, рейтинг и друзья изнутри">
           <List>

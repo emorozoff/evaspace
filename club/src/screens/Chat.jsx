@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { chatMessages, chatsOf, userById, teamOf } from '../lib/logic.js';
+import { chatMessages, chatsOf, userById, teamOf, chatCrew, canPin, pinnedMessage, CHAT_RULES, CHAT_TITLES } from '../lib/logic.js';
 import { timeOf, dateShort, sameDay } from '../lib/time.js';
-import { Avatar, Empty, TopBar } from '../components/UI.jsx';
+import { Avatar, Btn, Empty, Note, Sheet, Tag, TopBar } from '../components/UI.jsx';
 import TeamAvatar from '../components/TeamAvatar.jsx';
 import Icon from '../components/Icons.jsx';
 
@@ -12,10 +12,14 @@ import Icon from '../components/Icons.jsx';
 export default function Chat({ id }) {
   const { state, me, dispatch } = useStore();
   const [text, setText] = useState('');
+  const [about, setAbout] = useState(false);
   const bottom = useRef(null);
   const key = decodeURIComponent(id || '');
   const info = chatsOf(state, me.id).find((c) => c.key === key);
   const list = chatMessages(state, key);
+  const crew = chatCrew(state, key);
+  const may = canPin(state, key, me.id);
+  const pinned = pinnedMessage(state, key);
 
   useEffect(() => {
     dispatch({ type: 'readChat', chat: key });
@@ -37,14 +41,25 @@ export default function Chat({ id }) {
     : info.kind === 'dm' ? <Avatar user={info.user} size={34} />
     : <div className="item__ic" style={{ width: 34, height: 34, borderRadius: 11 }}><Icon name="city" size={17} /></div>;
 
+  const sub = info.kind === 'team' ? 'Чат команды' : info.kind === 'city' ? 'Чат города' : 'Личный чат';
+
   return (
-    <div className="screen" style={{ paddingTop: 0 }}>
+    <div className="screen screen--chat" style={{ paddingTop: 0 }}>
+      {/* По нажатию на название открываются правила и те, кто ведёт чат */}
       <TopBar
-        title={info.title}
-        sub={info.kind === 'team' ? 'Чат команды' : info.kind === 'city' ? 'Чат города' : 'Личный чат'}
+        title={<button onClick={() => info.kind !== 'dm' && setAbout(true)}>{info.title}</button>}
+        sub={info.kind === 'dm' ? sub : `${sub} · правила и ведущие`}
         backTo="/"
         right={<button className="iconbtn" onClick={() => info.kind === 'dm' ? go(`/person/${info.user.id}`) : info.kind === 'team' ? go('/team') : go(`/city/${info.city.id}`)}>{lead}</button>}
       />
+
+      {pinned && (
+        <button className="pinned" onClick={() => may && dispatch({ type: 'pinMessage', chat: key, id: pinned.id })}>
+          <Icon name="pin" size={15} color="var(--warm)" />
+          <span className="grow ell">{pinned.text}</span>
+          {may && <span className="t-xs dim-2">открепить</span>}
+        </button>
+      )}
 
       <div className="chat">
         {list.length === 0 && <Empty icon="message" title="Здесь пока тихо" text="Напишите первым — остальные подтянутся." />}
@@ -58,8 +73,16 @@ export default function Chat({ id }) {
               {m.userId === 'system' ? (
                 <div className="bubble bubble--sys">{m.text}</div>
               ) : (
-                <div className={`bubble ${mine ? 'bubble--out' : 'bubble--in'}`}>
-                  {!mine && info.kind !== 'dm' && <span className="bubble__who">{author?.name.split(' ')[0]}</span>}
+                <div
+                  className={`bubble ${mine ? 'bubble--out' : 'bubble--in'}`}
+                  onDoubleClick={() => may && dispatch({ type: 'pinMessage', chat: key, id: m.id })}
+                >
+                  {!mine && info.kind !== 'dm' && (
+                    <span className="bubble__who">
+                      {author?.name.split(' ')[0]}
+                      {crewRole(crew, m.userId) && <span className="bubble__role"> · {CHAT_TITLES[crewRole(crew, m.userId)].toLowerCase()}</span>}
+                    </span>
+                  )}
                   {m.text}
                   <div className="bubble__time">{timeOf(m.at)}</div>
                 </div>
@@ -82,8 +105,50 @@ export default function Chat({ id }) {
           <Icon name="send" size={18} />
         </button>
       </div>
+
+      <Sheet open={about} onClose={() => setAbout(false)} title={info.title} sub={sub}>
+        <div className="stack-20">
+          <section className="stack-8">
+            <div className="hdr">Кто ведёт чат</div>
+            <div className="list">
+              {crew.length === 0 && <div className="item"><div className="item__body"><div className="item__s">Пока никто — куратор назначит ведущего.</div></div></div>}
+              {crew.map((c) => (
+                <button key={c.user.id} className="item" onClick={() => { setAbout(false); go(`/person/${c.user.id}`); }}>
+                  <Avatar user={c.user} size={44} ring={c.role === 'captain' ? 'var(--warm)' : c.role === 'mate' ? 'var(--accent)' : 'var(--violet)'} />
+                  <div className="item__body">
+                    <div className="item__t">{c.user.name}</div>
+                    <div className="item__s">{c.user.about}</div>
+                  </div>
+                  <div className="item__meta"><Tag tone={c.role === 'captain' ? 'warm' : c.role === 'admin' ? 'violet' : 'accent'}>{CHAT_TITLES[c.role]}</Tag></div>
+                </button>
+              ))}
+            </div>
+            <div className="t-xs dim-2" style={{ padding: '0 4px' }}>Ведущие закрепляют сообщения и следят за правилами.</div>
+          </section>
+
+          <section className="stack-8">
+            <div className="hdr">Правила чата</div>
+            <div className="rules">
+              {CHAT_RULES.map((r, i) => (
+                <div key={r} className="rules__i"><span className="rules__n">{i + 1}</span><span>{r}</span></div>
+              ))}
+            </div>
+            <button className="t-sm accent" style={{ fontWeight: 600, padding: '2px 4px' }} onClick={() => { setAbout(false); go('/rules'); }}>
+              Полный кодекс клуба →
+            </button>
+          </section>
+
+          {may && <Note icon="pin" tone="var(--warm)">Вы ведёте этот чат: закрепить сообщение можно двойным нажатием по нему.</Note>}
+          <Btn variant="quiet" wide onClick={() => setAbout(false)}>Понятно</Btn>
+        </div>
+      </Sheet>
     </div>
   );
+}
+
+/** Роль автора в этом чате — подписью рядом с именем. */
+function crewRole(crew, userId) {
+  return crew.find((c) => c.user.id === userId)?.role || null;
 }
 
 /** Список разговоров — открывается из ближнего круга. */

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { STEPS, stepDone } from '../data/onboarding.js';
 import Choice from '../components/Choice.jsx';
@@ -12,6 +12,9 @@ export default function Onboarding() {
   const { dispatch } = useStore();
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState({});
+  // Новый шаг всегда начинается сверху — иначе после длинного экрана
+  // человек оказывается в середине следующего вопроса
+  useEffect(() => window.scrollTo(0, 0), [index]);
   const step = STEPS[index];
   const ready = stepDone(step, answers);
   const last = index === STEPS.length - 1;

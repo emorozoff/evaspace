@@ -15,6 +15,7 @@ import Team from './screens/Team.jsx';
 import Rating from './screens/Rating.jsx';
 import Base from './screens/Base.jsx';
 import Dict from './screens/Dict.jsx';
+import Rules from './screens/Rules.jsx';
 import MaterialPage from './screens/MaterialPage.jsx';
 import People from './screens/People.jsx';
 import PersonPage from './screens/PersonPage.jsx';
@@ -28,6 +29,7 @@ import Invite from './screens/Invite.jsx';
 import Profile from './screens/Profile.jsx';
 import Notifications from './screens/Notifications.jsx';
 import Install from './screens/Install.jsx';
+import InstallGate from './components/InstallGate.jsx';
 import Admin from './screens/Admin.jsx';
 
 export default function App() {
@@ -43,6 +45,10 @@ export default function App() {
   }, []);
 
   useSystemNotifications(state, me);
+
+  // Новый экран всегда открывается сверху: иначе после длинного списка
+  // следующий раздел показывается с середины
+  useEffect(() => window.scrollTo(0, 0), [parts.join('/')]);
 
   const cover = splash ? <Splash onDone={() => setSplash(false)} /> : null;
 
@@ -77,6 +83,7 @@ export default function App() {
       case 'rating': return <Rating />;
       case 'base': return <Base now={now} />;
       case 'dict': return <Dict />;
+      case 'rules': return <Rules />;
       case 'material': return <MaterialPage id={id} />;
       case 'people': return <People now={now} />;
       case 'person': return <PersonPage id={id} now={now} />;
@@ -101,6 +108,7 @@ export default function App() {
       {cover}
       {screen}
       {root !== 'admin' && <Nav root={root} badge={unreadCount(state, me.id)} />}
+      {!splash && <InstallGate />}
       <Toast />
     </div>
   );

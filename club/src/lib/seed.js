@@ -209,6 +209,11 @@ export function buildSeed(now = Date.now()) {
     };
   }).map((u) => ({ ...u, points: 0, facts: factsFor(u, rand, /(а|я)$/i.test(u.name.split(' ')[0])) }));
 
+  // Двое ведут клуб: их видно в каждом чате как админов. Первых демо-участников
+  // не трогаем — с них начинают знакомство с приложением, и это обычные резиденты
+  users[7].admin = true;
+  users[12].admin = true;
+
   // Участников с включённым кофе делаем нечётное число: тогда новый
   // участник сразу получает пару, а не ждёт следующего понедельника
   const coffeeOn = users.filter((u) => u.coffeeEnabled);
@@ -362,7 +367,7 @@ export function buildSeed(now = Date.now()) {
   }
 
   const state = {
-    v: 5,
+    v: 6,
     seededAt: now,
     season,
     cities,
@@ -386,6 +391,13 @@ export function buildSeed(now = Date.now()) {
     // Закреплённые материалы: приветствие, видео недели, дальше — словарь
     pinned: ['m1', 'm2'],
     terms: [],
+    pins: {},
+    postReplies: [],
+    // Демо-участники в клубе давно — здороваться с ними заново незачем
+    welcomed: [
+      ...members.map((m) => `team:${m.teamId}|${m.userId}`),
+      ...cities.flatMap((c) => users.filter((u) => u.cityId === c.id).map((u) => `city:${c.id}|${u.id}`)),
+    ],
     events: [],
     rsvp: {},
     views: {},
@@ -487,6 +499,27 @@ export function buildSeed(now = Date.now()) {
       tag,
       at: now - (i + 1) * 9 * HOUR,
       likes: users.slice(i, i + 2 + (i % 4)).map((u) => u.id),
+    });
+  });
+
+  // Ответы под постами: без них лента выглядит доской объявлений
+  const replies = [
+    [0, 'Та же история. У нас отваливались на оплате — переписали шаг, стало вдвое лучше.'],
+    [0, 'Скиньте потом схему воронки, интересно сравнить.'],
+    [1, 'Красиво. Сколько заняло внедрение по времени?'],
+    [4, 'Поднимал. Главное — короткие сценарии и живой перехват, напишу в личку.'],
+    [4, 'Плюсую, тоже интересно послушать.'],
+    [5, 'Вот это результат. Чем считали часы?'],
+  ];
+  replies.forEach(([index, text], k) => {
+    const post = state.posts[index];
+    if (!post) return;
+    state.postReplies.push({
+      id: `pr_seed_${k}`,
+      postId: post.id,
+      userId: users[(k * 7 + 5) % users.length].id,
+      text,
+      at: post.at + (k + 1) * 40 * 60 * 1000,
     });
   });
 

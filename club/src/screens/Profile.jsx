@@ -51,6 +51,7 @@ export default function Profile() {
           <Item icon="gift" title="Пригласить друга" sub={referral.paid > 0 ? `Вы привели ${referral.paid} · бонусов ${money(referral.earned)}` : 'Ссылка, бонусы и текст для сторис'} onClick={() => go('/invite')} />
           {team && <Item icon="team" title={`Команда «${team.name}»`} sub={team.idea} onClick={() => go('/team')} />}
           <Item icon="city" title={`Город ${cityName(state, me.cityId)}`} sub="Пятница, чат и участники" onClick={() => go(`/city/${me.cityId}`)} />
+          <Item icon="shield" title="Кодекс и правила клуба" sub="Что можно, что нельзя и что бывает за нарушение" onClick={() => go('/rules')} />
           <Item icon="download" title="Установить на телефон" sub="Иконка на экране, работа офлайн" onClick={() => go('/install')} />
         </List>
 
