@@ -2,30 +2,38 @@ import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import {
   nextEvent, visibleEvents, teamOf, teamStats, teamPlace, seasonProgress, cityStats, nextFridayEvent,
-  coffeeFor, userById, materialsFor, isPro, summitVisible, summitEvent, unreadCount, seasonPot, applicationOf,
+  coffeeFor, userById, materialsFor, isPro, summitVisible, summitEvent, unreadCount, applicationOf,
+  attendanceOf, inviteFor, awardOf,
 } from '../lib/logic.js';
 import { weekKey, plural, whenLabel, dateShort, DAY } from '../lib/time.js';
-import { money, moneyShort } from '../lib/format.js';
-import { Avatar, Actions, Bar, Card, List, Item, Section, Tag } from '../components/UI.jsx';
+import { moneyShort } from '../lib/format.js';
+import { Avatar, Actions, Btn, Card, List, Item, Section, Stat, Tag } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
-import EventCard, { EventRow } from '../components/EventCard.jsx';
+import ResidentCard from '../components/ResidentCard.jsx';
+import Circle from '../components/Circle.jsx';
+import EventCompact from '../components/EventCompact.jsx';
+import { EventRow } from '../components/EventCard.jsx';
 import { MaterialThumb } from './Base.jsx';
 
 export default function Home({ now }) {
   const { state, me, dispatch } = useStore();
   const season = seasonProgress(state, now);
+  const been = attendanceOf(state, me.id, now);
   const event = nextEvent(state, me, now);
-  const upcoming = visibleEvents(state, me, { from: now, to: now + 7 * DAY }).filter((e) => e.id !== event?.id).slice(0, 3);
+  const upcoming = visibleEvents(state, me, { from: now, to: now + 8 * DAY }).filter((e) => e.id !== event?.id).slice(0, 2);
   const team = teamOf(state, me.id);
+  const stats = team ? teamStats(state, team.id, now) : null;
+  const invite = inviteFor(state, me.id);
   const application = applicationOf(state, me.id);
   const city = cityStats(state, me.cityId);
   const friday = nextFridayEvent(state, me.cityId, now);
   const pair = coffeeFor(state, me.id, weekKey(now));
   const buddy = pair ? userById(state, pair.a === me.id ? pair.b : pair.a) : null;
-  const materials = materialsFor(state, me).slice(0, 3);
+  const material = materialsFor(state, me)[0];
   const unread = unreadCount(state, me.id);
   const summit = summitVisible(state, now) ? summitEvent(state) : null;
   const offer = city.city?.organizerOfferTo === me.id && !city.city?.organizerId;
+  const place = team ? teamPlace(state, team.id) : null;
 
   return (
     <div className="screen stack-20">
@@ -41,23 +49,17 @@ export default function Home({ now }) {
         <button onClick={() => go('/profile')} aria-label="Профиль"><Avatar user={me} size={38} /></button>
       </div>
 
-      {/* Ближайшее событие — одна большая карточка */}
-      {event ? (
-        <Section title="Ближайшее" more="Все события" onMore={() => go('/events')}>
-          <EventCard event={event} now={now} />
-        </Section>
-      ) : (
-        <Card><div className="t-sm dim">Ближайших событий нет — загляните в расписание позже.</div></Card>
-      )}
+      <ResidentCard now={now} />
 
-      <Actions
-        items={[
-          { icon: 'book', title: 'База знаний', onClick: () => go('/base') },
-          { icon: 'trophy', title: 'Рейтинг', onClick: () => go('/rating') },
-          { icon: 'city', title: city.city?.name || 'Город', onClick: () => go(`/city/${me.cityId}`) },
-          { icon: 'gift', title: 'Пригласить', onClick: () => go('/invite') },
-        ]}
-      />
+      {/* Обратный отсчёт и главные цифры сезона */}
+      <div className="stats">
+        <Stat v={season.daysLeft} l={`${plural(season.daysLeft, 'день', 'дня', 'дней')} до финала`} tone="var(--accent)" />
+        <Stat v={`${been.went}/${been.total}`} l="встреч посетил" />
+        <Stat v={stats ? stats.size : '—'} l={stats ? 'в команде' : 'без команды'} />
+      </div>
+
+      {/* Зовут в команду — это важнее всего остального */}
+      {invite && <InviteCard invite={invite} />}
 
       {offer && (
         <Card variant="accent">
@@ -66,24 +68,58 @@ export default function Home({ now }) {
             Вы первый в городе {city.city.nameIn}. Организатор выбирает место и время — две минуты в неделю.
           </div>
           <div className="pair" style={{ marginTop: 12 }}>
-            <button className="btn btn--accent btn--sm" onClick={() => dispatch({ type: 'organizer', cityId: city.city.id, accept: true })}>Согласен</button>
-            <button className="btn btn--ghost btn--sm" onClick={() => dispatch({ type: 'organizer', cityId: city.city.id, accept: false })}>Не сейчас</button>
+            <Btn variant="accent" size="sm" onClick={() => dispatch({ type: 'organizer', cityId: city.city.id, accept: true })}>Согласен</Btn>
+            <Btn variant="ghost" size="sm" onClick={() => dispatch({ type: 'organizer', cityId: city.city.id, accept: false })}>Не сейчас</Btn>
           </div>
         </Card>
       )}
 
-      {/* Команда */}
+      <Circle />
+
+      <Section title="Ближайшее" more="Все события" onMore={() => go('/events')}>
+        {event ? <EventCompact event={event} now={now} /> : <Card><div className="t-sm dim">Ближайших событий нет — загляните позже.</div></Card>}
+        {upcoming.length > 0 && <List>{upcoming.map((e) => <EventRow key={e.id} event={e} now={now} />)}</List>}
+      </Section>
+
+      <Actions
+        items={[
+          { icon: 'book', title: 'База знаний', onClick: () => go('/base') },
+          { icon: 'cup', title: 'Рейтинг', onClick: () => go('/rating') },
+          { icon: 'city', title: city.city?.name || 'Город', onClick: () => go(`/city/${me.cityId}`) },
+          { icon: 'gift', title: 'Пригласить', onClick: () => go('/invite') },
+        ]}
+      />
+
       {isPro(me) && (
         <Section title="Команда" more={team ? 'Открыть' : undefined} onMore={() => go('/team')}>
-          {team ? (
-            <TeamCard team={team} />
+          {team && stats ? (
+            <button className="card tap" onClick={() => go('/team')}>
+              <div className="row">
+                {place && (
+                  <span className="award" style={{ background: `${awardOf(place).tone}22` }}>
+                    <Icon name={awardOf(place).icon} size={22} color={awardOf(place).tone} />
+                    <span className="award__n">{place}</span>
+                  </span>
+                )}
+                <div className="grow">
+                  <div className="t-lg ell">{team.name}</div>
+                  <div className="t-xs dim-2 ell" style={{ marginTop: 2 }}>{team.goal || team.idea}</div>
+                </div>
+                <Icon name="right" size={16} className="chev" />
+              </div>
+              <div className="stats" style={{ marginTop: 12 }}>
+                <div className="stat" style={{ background: 'var(--surface-2)' }}><div className="stat__v" style={{ fontSize: 16 }}>{moneyShort(stats.total)}</div><div className="stat__l">выручка</div></div>
+                <div className="stat" style={{ background: 'var(--surface-2)' }}><div className="stat__v" style={{ fontSize: 16 }}>{stats.activity}%</div><div className="stat__l">активность</div></div>
+                <div className="stat" style={{ background: 'var(--surface-2)' }}><div className="stat__v" style={{ fontSize: 16, color: stats.debt ? 'var(--warm)' : 'var(--accent)' }}>{stats.debt ? moneyShort(stats.debt) : 'ок'}</div><div className="stat__l">копилка</div></div>
+              </div>
+            </button>
           ) : (
             <button className="card tap" onClick={() => go('/team')}>
               <div className="row">
                 <div className="item__ic"><Icon name={application ? 'clock' : 'hand'} size={19} /></div>
                 <div className="grow">
                   <div className="t-md">{application ? 'Заявка у куратора' : 'Вы ещё не в команде'}</div>
-                  <div className="t-xs dim-2" style={{ marginTop: 2 }}>{application ? 'Куратор соберёт команды и напишет' : 'Заполните короткую заявку — куратор подберёт команду'}</div>
+                  <div className="t-xs dim-2" style={{ marginTop: 2 }}>{application ? 'Куратор соберёт команды и напишет' : 'Короткая заявка — и куратор подберёт команду'}</div>
                 </div>
                 <Icon name="right" size={16} className="chev" />
               </div>
@@ -92,14 +128,6 @@ export default function Home({ now }) {
         </Section>
       )}
 
-      {/* На неделе */}
-      {upcoming.length > 0 && (
-        <Section title="На этой неделе" more="Все" onMore={() => go('/events')}>
-          <List>{upcoming.map((e) => <EventRow key={e.id} event={e} now={now} />)}</List>
-        </Section>
-      )}
-
-      {/* Город и кофе — одним списком */}
       <Section title="Рядом">
         <List>
           <Item
@@ -119,62 +147,38 @@ export default function Home({ now }) {
               onClick={() => go('/coffee')}
             />
           )}
-          {summit && (
-            <Item icon="star" title="Большой слёт" sub={`${dateShort(summit.startsAt)} · ${summit.place}`} onClick={() => go('/summit')} />
+          {summit && <Item icon="star" title="Большой слёт" sub={`${dateShort(summit.startsAt)} · ${summit.place}`} onClick={() => go('/summit')} />}
+          {material && (
+            <Item lead={<MaterialThumb material={material} />} title={material.title} sub={`${material.type} · ${dateShort(material.publishedAt)}`} onClick={() => go(`/material/${material.id}`)} />
           )}
         </List>
       </Section>
-
-      {/* База знаний */}
-      {materials.length > 0 && (
-        <Section title="Новое в базе" more="Вся база" onMore={() => go('/base')}>
-          <List>
-            {materials.map((m) => (
-              <Item key={m.id} lead={<MaterialThumb material={m} />} title={m.title} sub={`${m.type} · ${dateShort(m.publishedAt)}`} onClick={() => go(`/material/${m.id}`)} />
-            ))}
-          </List>
-        </Section>
-      )}
-
-      {/* Сезон */}
-      <div className="season">
-        <div className="spread">
-          <div>
-            <div className="t-md">До выпускного {season.daysLeft} {plural(season.daysLeft, 'день', 'дня', 'дней')}</div>
-            <div className="t-xs dim-2" style={{ marginTop: 2 }}>Копилка сезона {money(seasonPot(state))} — на призы и выпускной</div>
-          </div>
-          <Icon name="trophy" size={20} color="var(--warm)" />
-        </div>
-        <Bar value={season.percent / 100} />
-      </div>
     </div>
   );
 }
 
-function TeamCard({ team }) {
-  const { state } = useStore();
-  const stats = teamStats(state, team.id);
-  const place = teamPlace(state, team.id);
+/** Приглашение в команду: решает сам участник, не куратор. */
+function InviteCard({ invite }) {
+  const { state, dispatch } = useStore();
+  const team = state.teams.find((t) => t.id === invite.teamId);
+  const from = userById(state, invite.fromId);
+  if (!team) return null;
   return (
-    <button className="card tap" onClick={() => go('/team')}>
-      <div className="spread">
+    <Card variant="violet">
+      <div className="row-t">
+        <div className="item__ic" style={{ color: 'var(--violet)' }}><Icon name="team" size={19} /></div>
         <div className="grow">
-          <div className="t-lg ell">{team.name}</div>
-          <div className="t-xs dim-2 ell" style={{ marginTop: 2 }}>{team.idea}</div>
-        </div>
-        {place && (
-          <div className="center" style={{ flex: 'none' }}>
-            <div className="figure warm" style={{ fontSize: 26 }}>{place}</div>
-            <div className="t-xs dim-2">место</div>
+          <div className="t-lg">Вас зовут в «{team.name}»</div>
+          <div className="t-sm dim" style={{ marginTop: 4, lineHeight: 1.5 }}>
+            {from ? `${from.name} приглашает вас усилить команду. ` : ''}{team.goal || team.idea}
           </div>
-        )}
+        </div>
       </div>
-      <div className="stats" style={{ marginTop: 12 }}>
-        <div className="stat" style={{ background: 'var(--surface-2)' }}><div className="stat__v" style={{ fontSize: 16 }}>{moneyShort(stats.total)}</div><div className="stat__l">выручка</div></div>
-        <div className="stat" style={{ background: 'var(--surface-2)' }}><div className="stat__v" style={{ fontSize: 16 }}>{stats.size}</div><div className="stat__l">в команде</div></div>
-        <div className="stat" style={{ background: 'var(--surface-2)' }}><div className="stat__v" style={{ fontSize: 16, color: stats.debt ? 'var(--warm)' : 'var(--accent)' }}>{stats.debt ? moneyShort(stats.debt) : 'ок'}</div><div className="stat__l">копилка</div></div>
+      <div className="pair" style={{ marginTop: 14 }}>
+        <Btn variant="accent" size="sm" onClick={() => dispatch({ type: 'inviteAnswer', id: invite.id, accept: true })}>Согласен</Btn>
+        <Btn variant="quiet" size="sm" onClick={() => dispatch({ type: 'inviteAnswer', id: invite.id, accept: false })}>Не сейчас</Btn>
       </div>
-    </button>
+    </Card>
   );
 }
 

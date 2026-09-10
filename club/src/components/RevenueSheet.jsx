@@ -1,22 +1,24 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { readImage } from '../lib/image.js';
-import { money } from '../lib/format.js';
-import { Btn, Field, KV, Sheet } from './UI.jsx';
+import { money, groupDigits, digitsOf } from '../lib/format.js';
+import { Btn, Field, FileButton, KV, Sheet } from './UI.jsx';
 
-/* Внести выручку: сумма, за что, скриншот. Рядом — сэкономленные часы. */
+/* Внести выручку: сумма, за что, скриншот. Часто встречающиеся суммы —
+   одним нажатием, остальное вводится руками с разрядами. */
+
+const PRESETS = [25000, 50000, 100000, 250000, 500000, 1000000];
 
 export default function RevenueSheet({ open, teamId, entry, onClose }) {
   const { dispatch } = useStore();
-  const [amount, setAmount] = useState(entry ? String(entry.amount) : '');
+  const [amount, setAmount] = useState(entry ? groupDigits(entry.amount) : '');
   const [comment, setComment] = useState(entry?.comment || '');
   const [hours, setHours] = useState(entry ? String(entry.hours || '') : '');
   const [proof, setProof] = useState(entry?.proof || '');
   const [error, setError] = useState('');
-  const value = Number(String(amount).replace(/[^\d]/g, '')) || 0;
+  const value = digitsOf(amount);
 
-  const pickFile = async (e) => {
-    const file = e.target.files?.[0];
+  const pickFile = async (file) => {
     if (!file) return;
     try { setProof(await readImage(file)); setError(''); } catch (err) { setError(err.message); }
   };
@@ -31,15 +33,32 @@ export default function RevenueSheet({ open, teamId, entry, onClose }) {
     <Sheet open={open} onClose={onClose} title={entry ? 'Изменить запись' : 'Добавить выручку'} sub={entry ? 'Правки доступны 48 часов' : 'Записи складываются в сумму за сезон'}>
       <div className="stack">
         <Field label="Сумма, ₽" hint={value > 0 ? `В копилку клуба уйдёт ${money(Math.round(value * 0.1))} — это 10%` : undefined}>
-          <input className="field" inputMode="numeric" placeholder="120 000" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <input
+            className="field num"
+            style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}
+            inputMode="numeric"
+            placeholder="0"
+            value={amount}
+            onChange={(e) => setAmount(groupDigits(e.target.value))}
+          />
         </Field>
+        <div className="sums">
+          {PRESETS.map((p) => (
+            <button key={p} className={`chip${value === p ? ' chip--on' : ''}`} onClick={() => setAmount(groupDigits(p))}>
+              {groupDigits(p)}
+            </button>
+          ))}
+          {value > 0 && <button className="chip" onClick={() => setAmount('')}>сбросить</button>}
+        </div>
+
         <Field label="За что"><input className="field" placeholder="Пилот с сетью из 4 точек" value={comment} onChange={(e) => setComment(e.target.value)} /></Field>
-        <Field label="Сэкономленные часы"><input className="field" inputMode="numeric" placeholder="8" value={hours} onChange={(e) => setHours(e.target.value)} /></Field>
+        <Field label="Сэкономленные часы"><input className="field" inputMode="numeric" placeholder="8" value={hours} onChange={(e) => setHours(e.target.value.replace(/\D/g, ''))} /></Field>
         <Field label="Скриншот — необязательно" hint={error || 'Никто не проверяет цифры автоматически — это про честность'}>
-          <input className="field" type="file" accept="image/*" onChange={pickFile} />
+          <FileButton label={proof ? 'Заменить скриншот' : 'Приложить скриншот'} onFile={pickFile} />
         </Field>
         {proof && proof.startsWith('data:') && <img src={proof} alt="" style={{ width: '100%', borderRadius: 12 }} />}
-        <Btn variant="accent" wide disabled={value <= 0} onClick={submit}>{entry ? 'Сохранить' : 'Записать'}</Btn>
+
+        <Btn variant="accent" wide disabled={value <= 0} onClick={submit}>{entry ? 'Сохранить' : `Записать ${value ? money(value) : ''}`}</Btn>
         {entry && <Btn variant="danger" wide onClick={() => { dispatch({ type: 'revenueDelete', id: entry.id }); onClose(); }}>Удалить запись</Btn>}
       </div>
     </Sheet>
@@ -49,9 +68,9 @@ export default function RevenueSheet({ open, teamId, entry, onClose }) {
 /** Копилка: команда сама отмечает перевод и прикладывает подтверждение. */
 export function ContributionSheet({ open, teamId, stats, onClose }) {
   const { dispatch } = useStore();
-  const [amount, setAmount] = useState(String(stats.debt || ''));
+  const [amount, setAmount] = useState(stats.debt ? groupDigits(stats.debt) : '');
   const [proof, setProof] = useState('');
-  const value = Number(String(amount).replace(/[^\d]/g, '')) || 0;
+  const value = digitsOf(amount);
   return (
     <Sheet open={open} onClose={onClose} title="Взнос в копилку" sub="10% от внесённой выручки">
       <div className="stack">
@@ -61,7 +80,9 @@ export function ContributionSheet({ open, teamId, stats, onClose }) {
           <KV k="Уже отмечено" v={money(stats.paid)} tone="var(--accent)" />
           <KV k="Осталось" v={money(stats.debt)} tone="var(--warm)" />
         </div>
-        <Field label="Сумма перевода, ₽"><input className="field" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>
+        <Field label="Сумма перевода, ₽">
+          <input className="field num" style={{ fontSize: 20, fontWeight: 800 }} inputMode="numeric" value={amount} onChange={(e) => setAmount(groupDigits(e.target.value))} />
+        </Field>
         <Field label="Подтверждение"><input className="field" placeholder="Ссылка на чек или номер операции" value={proof} onChange={(e) => setProof(e.target.value)} /></Field>
         <Btn variant="accent" wide disabled={value <= 0} onClick={() => { dispatch({ type: 'contributionAdd', teamId, amount: value, proof }); onClose(); }}>Отметить перевод</Btn>
         <div className="t-xs dim-2 center">Пока взнос не отмечен, эта часть выручки не засчитывается в рейтинг.</div>

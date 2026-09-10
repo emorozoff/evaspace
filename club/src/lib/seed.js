@@ -47,6 +47,43 @@ export function makeCity(name, now = Date.now()) {
   };
 }
 
+/* Роль в команде выводим из навыков: так демо-люди сразу разложены по ролям */
+const ROLE_BY_SKILL = {
+  'Разработка': 'Разработка',
+  'Продажи': 'Продажи',
+  'ИИ-агенты': 'Продукт',
+  'Продукт': 'Продукт',
+  'Нейросети в маркетинге': 'Маркетинг',
+  'Контент': 'Маркетинг',
+  'Видео и монтаж': 'Маркетинг',
+  'Дизайн': 'Маркетинг',
+  'Финансы': 'Финансы',
+  'Автоматизация': 'Операционка',
+  'Найм и HR': 'Операционка',
+  'Обучение': 'Операционка',
+};
+
+const EXP = ['Первый год', '1–3 года', '3–7 лет', 'Больше 7'];
+const AGE = ['18–25', '26–32', '33–40', '41–50', '50+'];
+const INCOME = ['до 300 тыс', '300 тыс — 1 млн', '1–3 млн', '3–10 млн', 'больше 10 млн'];
+const HEART = ['Сердце открыто', 'Хочу влюбиться', 'Уже влюблён', 'Женат / замужем', 'Всё сложно'];
+const POWERS = ['Придумывать', 'Договариваться', 'Собирать продукт', 'Делать красиво', 'Писать тексты', 'Считать деньги', 'Автоматизировать', 'Выступать', 'Доводить до конца'];
+const HOBBY = ['Спорт', 'Горы', 'Путешествия', 'Книги', 'Музыка', 'Игры', 'Еда и вино', 'Фото и видео', 'Экстрим'];
+
+/** Ответы анкеты для демо-участника — устойчивые, но разные. */
+function factsFor(user, pick) {
+  const role = ROLE_BY_SKILL[user.skills[0]] || ROLE_BY_SKILL[user.skills[1]] || 'Продукт';
+  return {
+    role: [role],
+    exp: [EXP[Math.floor(pick() * EXP.length)]],
+    age: [AGE[Math.floor(pick() * AGE.length)]],
+    income: [INCOME[Math.floor(pick() * INCOME.length)]],
+    heart: [HEART[Math.floor(pick() * HEART.length)]],
+    powers: [...POWERS].sort(() => pick() - 0.5).slice(0, 2 + Math.floor(pick() * 2)),
+    hobby: [...HOBBY].sort(() => pick() - 0.5).slice(0, 2 + Math.floor(pick() * 2)),
+  };
+}
+
 /* Простой генератор псевдослучайных чисел: одинаковые данные при каждой сборке */
 function rng(seed) {
   let s = hash(String(seed)) % 2147483647;
@@ -55,6 +92,14 @@ function rng(seed) {
     return (s - 1) / 2147483646;
   };
 }
+
+const TEAM_GOALS = [
+  'Дойти до миллиона выручки и нанять первого сотрудника',
+  'Собрать 30 клиентов на подписке до выпускного',
+  'Запустить продукт в трёх городах',
+  'Выйти на окупаемость и снять зависимость от рекламы',
+  'Сделать так, чтобы продукт продавал себя сам',
+];
 
 const PLACES = {
   Москва: 'Кофейня «Депо», Лесная 20 — второй этаж у окна',
@@ -104,9 +149,10 @@ export function buildSeed(now = Date.now()) {
       archive: false,
       admin: false,
       active: true,
+      onboarded: true,
       demo: true,
     };
-  });
+  }).map((u) => ({ ...u, facts: factsFor(u, rand) }));
 
   // Участников с включённым кофе делаем нечётное число: тогда новый
   // участник сразу получает пару, а не ждёт следующего понедельника
@@ -136,14 +182,14 @@ export function buildSeed(now = Date.now()) {
       id,
       name,
       idea,
+      goal: TEAM_GOALS[i % TEAM_GOALS.length],
       captainId: captain.id,
+      mateId: null,
       seasonId: season.id,
-      isOpen: i > 1,
-      wanted: 5,
       chatUrl: `https://t.me/+iai_team_${id}`,
       createdAt: season.startsAt + 3 * DAY,
     });
-    members.push({ teamId: id, userId: captain.id, role: 'капитан', joinedAt: season.startsAt + 3 * DAY });
+    members.push({ teamId: id, userId: captain.id, role: captain.facts.role[0], joinedAt: season.startsAt + 3 * DAY });
 
     const size = 3 + Math.floor(rand() * 3);
     const rest = users.filter((u) => !used.has(u.id));
@@ -151,13 +197,11 @@ export function buildSeed(now = Date.now()) {
       const pick = rest[Math.floor(rand() * rest.length)];
       if (!pick || used.has(pick.id)) continue;
       used.add(pick.id);
-      members.push({
-        teamId: id,
-        userId: pick.id,
-        role: ['продукт', 'продажи', 'разработка', 'маркетинг', 'операционка'][k % 5],
-        joinedAt: season.startsAt + (5 + k) * DAY,
-      });
+      members.push({ teamId: id, userId: pick.id, role: pick.facts.role[0], joinedAt: season.startsAt + (5 + k) * DAY });
     }
+    // Второй по дате в команде становится помощником капитана
+    const mate = members.filter((m) => m.teamId === id && m.userId !== captain.id)[0];
+    if (mate) teams[teams.length - 1].mateId = mate.userId;
   });
 
   // Выручка и копилка
@@ -165,10 +209,11 @@ export function buildSeed(now = Date.now()) {
   const contributions = [];
   teams.forEach((team, i) => {
     const teamUsers = members.filter((m) => m.teamId === team.id);
-    const count = 4 + Math.floor(rand() * 5);
+    const count = 3 + Math.floor(rand() * 4);
     let total = 0;
     for (let k = 0; k < count; k++) {
-      const amount = Math.round((40 + rand() * 260) * 1000 * (1 - i * 0.12));
+      // Живые суммы с шагом в 500 ₽ — круглые миллионы выглядят выдумкой
+      const amount = Math.round(((25 + rand() * 175) * 1000 * (1 - i * 0.13)) / 500) * 500;
       const author = teamUsers[Math.floor(rand() * teamUsers.length)];
       const at = season.startsAt + Math.floor(rand() * ((now - season.startsAt) / DAY)) * DAY;
       total += amount;
@@ -177,7 +222,7 @@ export function buildSeed(now = Date.now()) {
         teamId: team.id,
         userId: author.userId,
         amount,
-        hours: Math.round(rand() * 20),
+        hours: 2 + Math.round(rand() * 12),
         comment: REVENUE_REASONS[Math.floor(rand() * REVENUE_REASONS.length)],
         proof: '',
         at,
@@ -190,7 +235,7 @@ export function buildSeed(now = Date.now()) {
       contributions.push({
         id: `k_${team.id}`,
         teamId: team.id,
-        amount: Math.ceil((total * 0.1 * share) / 100) * 100,
+        amount: share >= 1 ? Math.round(total * 0.1) : Math.round((total * 0.1 * share) / 100) * 100,
         proof: 'Перевод от ' + team.name,
         confirmed: i < 2,
         at: now - (3 + i) * DAY,
@@ -245,7 +290,7 @@ export function buildSeed(now = Date.now()) {
   }
 
   const state = {
-    v: 1,
+    v: 2,
     seededAt: now,
     season,
     cities,
@@ -253,6 +298,9 @@ export function buildSeed(now = Date.now()) {
     teams,
     members,
     applications: [],
+    invites: [],
+    circle: [],
+    circleOut: [],
     reports,
     revenue,
     contributions,
@@ -282,9 +330,12 @@ export function buildSeed(now = Date.now()) {
     }
   });
 
-  // Кто-то уже отметился на ближайших событиях
+  // Посещаемость: у каждого свой характер — кто-то ходит почти всегда,
+  // кто-то заглядывает раз в месяц. От этого зависит активность команды.
+  const habit = {};
+  users.forEach((u) => (habit[u.id] = 0.35 + rand() * 0.55));
+
   state.events.forEach((event) => {
-    if (event.startsAt < now - WEEK) return;
     const pool = users.filter((u) => {
       if (event.type === 'offline') return u.cityId === event.cityId;
       if (event.type === 'team') return members.some((m) => m.teamId === event.teamId && m.userId === u.id);
@@ -293,8 +344,8 @@ export function buildSeed(now = Date.now()) {
     });
     pool.forEach((u) => {
       const r = rand();
-      if (r < 0.55) state.rsvp[`${event.id}:${u.id}`] = 'going';
-      else if (r < 0.68) state.rsvp[`${event.id}:${u.id}`] = 'not_going';
+      if (r < habit[u.id]) state.rsvp[`${event.id}:${u.id}`] = 'going';
+      else if (r < habit[u.id] + 0.15) state.rsvp[`${event.id}:${u.id}`] = 'not_going';
     });
   });
 

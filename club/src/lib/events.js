@@ -89,10 +89,11 @@ export function ensureEvents(state, now = Date.now()) {
       })
     );
 
-    // Мастермайнд — раз в две недели, четверг, только PRO
+    // Второе событие недели — вторник. Мастермайнд и воркшоп чередуются,
+    // поэтому в неделе всегда ровно два клубных события: вторник и среда.
     if (weekIndex % 2 === 0) {
       push(
-        makeEvent('mastermind', weekdayAt(w, 4, 19), {
+        makeEvent('mastermind', weekdayAt(w, 2, 19), {
           title: 'Мастермайнд',
           description: 'Пять участников, у каждого 12 минут на разбор своей задачи.',
           type: 'online',
@@ -103,7 +104,6 @@ export function ensureEvents(state, now = Date.now()) {
       );
     }
 
-    // Воркшоп — раз в две недели, вторник, только PRO
     if (weekIndex % 2 === 1) {
       push(
         makeEvent('workshop', weekdayAt(w, 2, 19), {

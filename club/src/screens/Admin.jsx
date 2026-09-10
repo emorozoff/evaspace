@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { cityStats, cityName, goingUsers, leaderboard, teamRoster, teamSize, PACKAGES, MAX_TEAM } from '../lib/logic.js';
+import { cityStats, cityName, goingUsers, leaderboard, teamRoster, teamSize, teamBalance, factOf, PACKAGES, MAX_TEAM, MIN_TEAM } from '../lib/logic.js';
 import { dateShort, inputValue, isoDate, timeOf, relative } from '../lib/time.js';
 import { money, downloadCsv } from '../lib/format.js';
 import { Avatar, Btn, Card, Empty, Field, List, Item, Note, Scroller, Section, Sheet, Stat, Tag, TopBar } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
+import TeamAvatar from '../components/TeamAvatar.jsx';
 
 const PASSWORD = 'club2026';
 const TABS = [['teams', 'Команды'], ['users', 'Участники'], ['events', 'События'], ['base', 'База'], ['rating', 'Копилка'], ['cities', 'Города'], ['mail', 'Рассылка'], ['export', 'Выгрузка']];
@@ -63,12 +64,32 @@ function Teams({ now }) {
         {pending.length === 0 ? (
           <Empty icon="hand" title="Заявок нет" text="Когда участник оставит заявку, она появится здесь." />
         ) : (
-          <List>
+          <div className="stack">
             {pending.map((a) => {
               const user = state.users.find((u) => u.id === a.userId);
-              return <Item key={a.id} lead={<Avatar user={user} size={40} />} title={user?.name} sub={`${a.role} · ${a.hours} ч/нед · ${cityName(state, user?.cityId)} · ${relative(a.at, now)}`} meta={<span className="accent">в команду</span>} chev={false} onClick={() => setPick(a)} />;
+              return (
+                <Card key={a.id} tap onClick={() => setPick(a)}>
+                  <div className="row">
+                    <Avatar user={user} size={44} />
+                    <div className="grow">
+                      <div className="t-md ell">{user?.name}</div>
+                      <div className="t-xs dim-2 ell">{cityName(state, user?.cityId)} · {relative(a.at, now)}</div>
+                    </div>
+                    <Btn variant="soft" size="sm">В команду</Btn>
+                  </div>
+                  {/* Куратору важны роль, опыт и цифры — иначе команды выйдут неравными */}
+                  <div className="wrap" style={{ marginTop: 10 }}>
+                    <Tag tone="accent">{a.role}</Tag>
+                    <Tag>{a.hours} ч/нед</Tag>
+                    {factOf(user, 'exp') && <Tag>опыт {factOf(user, 'exp')}</Tag>}
+                    {factOf(user, 'age') && <Tag>{factOf(user, 'age')} лет</Tag>}
+                    {factOf(user, 'income') && <Tag tone="warm">{factOf(user, 'income')}</Tag>}
+                  </div>
+                  {factOf(user, 'powers') && <div className="t-xs dim-2" style={{ marginTop: 8 }}>Сильные стороны: {factOf(user, 'powers')}</div>}
+                </Card>
+              );
             })}
-          </List>
+          </div>
         )}
       </Section>
 
@@ -82,6 +103,7 @@ function Teams({ now }) {
                   <div className="grow"><div className="t-md ell">{t.name}</div><div className="t-xs dim-2 ell">{t.idea}</div></div>
                   <Tag tone={roster.length < 3 ? 'warm' : undefined}>{roster.length} из {MAX_TEAM}</Tag>
                 </div>
+                <BalanceLine teamId={t.id} />
                 <div className="stack-8" style={{ marginTop: 10 }}>
                   {roster.map((m) => (
                     <div key={m.userId} className="row">
@@ -103,9 +125,24 @@ function Teams({ now }) {
           <div className="stack">
             {pick.about && <Note icon="user">{pick.about}</Note>}
             <List>
-              {[...state.teams].map((t) => ({ t, n: teamSize(state, t.id) })).sort((a, b) => a.n - b.n).map(({ t, n }) => (
-                <Item key={t.id} icon="team" title={t.name} sub={`${n} чел. · ${t.idea}`} meta={n >= MAX_TEAM ? <Tag tone="red">полная</Tag> : undefined} chev={false} onClick={n >= MAX_TEAM ? undefined : () => { dispatch({ type: 'assign', teamId: t.id, userId: pick.userId, role: pick.role }); setPick(null); }} />
-              ))}
+              {[...state.teams]
+                .map((t) => ({ t, n: teamSize(state, t.id), balance: teamBalance(state, t.id) }))
+                .sort((a, b) => Number(b.balance.missing.includes(pick.role)) - Number(a.balance.missing.includes(pick.role)) || a.n - b.n)
+                .map(({ t, n, balance }) => {
+                  const fits = balance.missing.includes(pick.role);
+                  return (
+                    <Item
+                      key={t.id}
+                      lead={<TeamAvatar team={t} size={40} />}
+                      title={t.name}
+                      sub={n >= MAX_TEAM ? 'команда набрана' : fits ? `${n} чел. · роли «${pick.role}» ещё нет` : `${n} чел. · ${pick.role} уже есть`}
+                      subWrap
+                      meta={n >= MAX_TEAM ? <Tag tone="red">полная</Tag> : fits ? <Tag tone="accent">подходит</Tag> : undefined}
+                      chev={false}
+                      onClick={n >= MAX_TEAM ? undefined : () => { dispatch({ type: 'assign', teamId: t.id, userId: pick.userId, role: pick.role }); setPick(null); }}
+                    />
+                  );
+                })}
             </List>
           </div>
         )}
@@ -119,6 +156,20 @@ function Teams({ now }) {
         </div>
       </Sheet>
     </>
+  );
+}
+
+/** Чего команде не хватает — короткой строкой под составом. */
+function BalanceLine({ teamId }) {
+  const { state } = useStore();
+  const balance = teamBalance(state, teamId);
+  if (!balance.roster.length) return <div className="t-xs dim-2" style={{ marginTop: 8 }}>Пока никого</div>;
+  return (
+    <div className="wrap" style={{ marginTop: 10 }}>
+      {balance.roster.length < MIN_TEAM && <Tag tone="warm">меньше {MIN_TEAM} человек</Tag>}
+      {balance.missing.slice(0, 3).map((r) => <Tag key={r}>нет: {r.toLowerCase()}</Tag>)}
+      {balance.doubled.map((r) => <Tag key={r} tone="violet">двое: {r.toLowerCase()}</Tag>)}
+    </div>
   );
 }
 

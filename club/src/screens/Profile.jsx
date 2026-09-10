@@ -1,18 +1,21 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { PACKAGES, cityName, teamOf, referralStats } from '../lib/logic.js';
+import { PACKAGES, cityName, teamOf, referralStats, factOf } from '../lib/logic.js';
 import { SKILLS } from '../data/people.js';
 import { dateShort, addMonths } from '../lib/time.js';
 import { money } from '../lib/format.js';
 import { readImage } from '../lib/image.js';
-import { Avatar, Btn, Field, List, Item, Section, Sheet, Stat, Switch, Tag, TopBar } from '../components/UI.jsx';
+import { Avatar, Btn, Card, Field, FileButton, List, Item, Section, Sheet, Stat, Switch, Tag, TopBar } from '../components/UI.jsx';
+import Choice from '../components/Choice.jsx';
+import { STEPS } from '../data/onboarding.js';
 import { VERSION } from '../version.js';
 
 export default function Profile() {
   const { state, me, dispatch } = useStore();
   const [edit, setEdit] = useState(false);
   const [packs, setPacks] = useState(false);
+  const [quiz, setQuiz] = useState(false);
   const team = teamOf(state, me.id);
   const referral = referralStats(state, me.id);
   let nextCharge = me.joinedAt;
@@ -29,7 +32,11 @@ export default function Profile() {
             <h2 className="h2">{me.name}</h2>
             <div className="t-sm dim-2" style={{ marginTop: 4 }}>{cityName(state, me.cityId)} · {me.about}</div>
           </div>
-          {(me.skills || []).length > 0 && <div className="wrap" style={{ justifyContent: 'center' }}>{me.skills.map((s) => <Tag key={s}>{s}</Tag>)}</div>}
+          <div className="wrap" style={{ justifyContent: 'center' }}>
+            {me.facts?.role?.length > 0 && <Tag tone="accent">{factOf(me, 'role')}</Tag>}
+            {me.facts?.exp?.length > 0 && <Tag>{factOf(me, 'exp')} в деле</Tag>}
+            {me.facts?.heart?.length > 0 && <Tag tone="violet">{factOf(me, 'heart')}</Tag>}
+          </div>
         </div>
 
         <div className="stats">
@@ -45,6 +52,20 @@ export default function Profile() {
           <Item icon="city" title={`Город ${cityName(state, me.cityId)}`} sub="Пятница, чат и участники" onClick={() => go(`/city/${me.cityId}`)} />
           <Item icon="download" title="Установить на телефон" sub="Иконка на экране, работа офлайн" onClick={() => go('/install')} />
         </List>
+
+        <Section title="Анкета" more="Изменить" onMore={() => setQuiz(true)}>
+          <Card>
+            {['role', 'exp', 'age', 'income', 'heart'].filter((k) => me.facts?.[k]?.length).map((k) => (
+              <div key={k} className="kv">
+                <span className="kv__k">{LABELS[k]}</span>
+                <span className="kv__v">{factOf(me, k)}</span>
+              </div>
+            ))}
+            {me.facts?.powers?.length > 0 && <div className="wrap" style={{ marginTop: 12 }}>{me.facts.powers.map((x) => <Tag key={x} tone="accent">{x}</Tag>)}</div>}
+            {me.facts?.hobby?.length > 0 && <div className="wrap" style={{ marginTop: 8 }}>{me.facts.hobby.map((x) => <Tag key={x}>{x}</Tag>)}</div>}
+            {!me.facts?.role?.length && <div className="t-sm dim">Анкета не заполнена — куратору сложнее подобрать вам команду.</div>}
+          </Card>
+        </Section>
 
         <Section title="Настройки">
           <List>
@@ -71,6 +92,35 @@ export default function Profile() {
       <Sheet open={packs} onClose={() => setPacks(false)} title="Пакет" sub="Оплата проходит вне приложения">
         <PackForm onDone={() => setPacks(false)} />
       </Sheet>
+      <Sheet open={quiz} onClose={() => setQuiz(false)} title="Анкета" sub="Ответы видит куратор, когда собирает команды">
+        {quiz && <QuizForm onDone={() => setQuiz(false)} />}
+      </Sheet>
+    </div>
+  );
+}
+
+const LABELS = { role: 'Роль', exp: 'Опыт', age: 'Возраст', income: 'Доход в месяц', heart: 'Сердце' };
+
+/** Перепройти анкету можно в любой момент — люди меняются за сезон. */
+function QuizForm({ onDone }) {
+  const { me, dispatch } = useStore();
+  const [facts, setFacts] = useState(me.facts || {});
+  const questions = STEPS.flatMap((step) => step.questions);
+  return (
+    <div className="stack-20">
+      {questions.map((q) => (
+        <section key={q.id} className="stack-8">
+          <div className="hdr" style={{ padding: 0 }}>{q.title || LABELS[q.id] || 'Выберите'}</div>
+          <Choice
+            options={q.options}
+            value={facts[q.id] || []}
+            max={q.max}
+            wide={Boolean(q.options[0]?.big)}
+            onChange={(v) => setFacts({ ...facts, [q.id]: v })}
+          />
+        </section>
+      ))}
+      <Btn variant="accent" wide onClick={() => { dispatch({ type: 'onboard', facts }); onDone(); }}>Сохранить</Btn>
     </div>
   );
 }
@@ -80,8 +130,7 @@ function EditForm({ onDone }) {
   const [form, setForm] = useState({ name: me.name, city: cityName(state, me.cityId), about: me.about, lookingFor: me.lookingFor || '', tg: me.tg || '', links: me.links || '', photo: me.photo || '', skills: me.skills || [] });
   const [error, setError] = useState('');
   const field = (key) => ({ value: form[key], onChange: (e) => setForm({ ...form, [key]: e.target.value }) });
-  const pickPhoto = async (e) => {
-    const file = e.target.files?.[0];
+  const pickPhoto = async (file) => {
     if (!file) return;
     try { setForm({ ...form, photo: await readImage(file) }); setError(''); } catch (err) { setError(err.message); }
   };
@@ -91,7 +140,7 @@ function EditForm({ onDone }) {
     <div className="stack">
       <div className="row">
         <Avatar user={{ ...me, photo: form.photo }} size={60} />
-        <label className="btn btn--ghost btn--sm" style={{ cursor: 'pointer' }}>Загрузить фото<input type="file" accept="image/*" onChange={pickPhoto} style={{ display: 'none' }} /></label>
+        <FileButton label="Загрузить фото" onFile={pickPhoto} />
         {form.photo && <Btn variant="quiet" size="sm" onClick={() => setForm({ ...form, photo: '' })}>Убрать</Btn>}
       </div>
       {error && <div className="t-sm red">{error}</div>}

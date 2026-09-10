@@ -13,7 +13,7 @@ import {
 import { uid, hash } from './format.js';
 import { DAY, weekKey } from './time.js';
 
-const KEY = 'iaiclub.state.v1';
+const KEY = 'iaiclub.state.v2';
 
 /* Задержки демо-режима: куратор и участники отвечают сами,
    иначе в одиночном демо некому распределить и принять. */
@@ -25,7 +25,7 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return buildSeed();
     const parsed = JSON.parse(raw);
-    if (!parsed || parsed.v !== 1) return buildSeed();
+    if (!parsed || parsed.v !== 2) return buildSeed();
     return parsed;
   } catch {
     return buildSeed();
@@ -88,6 +88,8 @@ function reducer(state, action) {
         admin: false,
         active: true,
         paid: false,
+        onboarded: false,
+        facts: {},
         demo: false,
         ref: 'r' + hash(name + now).toString(36).slice(0, 6),
         links: '',
@@ -104,6 +106,16 @@ function reducer(state, action) {
       }
       // Сразу применяем правила города: чат, пятница, предложение организатору
       return withToast(reducer(next, { type: 'tick', now }), 'Добро пожаловать в клуб');
+    }
+
+    /** Ответы анкеты знакомства — по ним куратор балансирует команды. */
+    case 'onboard': {
+      if (!user) return state;
+      const facts = { ...(user.facts || {}), ...action.facts };
+      const patch = { facts, onboarded: true };
+      // Роль и увлечения сразу видны в каталоге — дублировать их руками не нужно
+      if (facts.hobby?.length) patch.skills = [...new Set([...(user.skills || []), ...facts.hobby])].slice(0, 5);
+      return { ...state, users: state.users.map((u) => (u.id === user.id ? { ...u, ...patch } : u)) };
     }
 
     case 'pay': {
@@ -260,6 +272,69 @@ function reducer(state, action) {
         'Участник убран из команды'
       );
     }
+
+    /** Капитан раздаёт роли и назначает помощника. */
+    case 'teamRole':
+      return withToast(
+        { ...state, members: state.members.map((m) => (m.teamId === action.teamId && m.userId === action.userId ? { ...m, role: action.role } : m)) },
+        'Роль обновлена'
+      );
+
+    case 'teamTitle': {
+      const team = state.teams.find((t) => t.id === action.teamId);
+      if (!team) return state;
+      const patch = action.title === 'captain' ? { captainId: action.userId } : { mateId: action.userId === team.mateId ? null : action.userId };
+      return withToast({ ...state, teams: state.teams.map((t) => (t.id === team.id ? { ...t, ...patch } : t)) }, action.title === 'captain' ? 'Новый капитан' : 'Помощник назначен');
+    }
+
+    /** Усиление команды: участник зовёт человека, тот решает сам. */
+    case 'invite': {
+      if (state.invites.some((i) => i.userId === action.userId && i.status === 'pending')) return withToast(state, 'Этого человека уже позвали');
+      const team = state.teams.find((t) => t.id === action.teamId);
+      const id = uid('iv');
+      return withToast(
+        {
+          ...state,
+          invites: [...state.invites, { id, teamId: action.teamId, userId: action.userId, fromId: user?.id, at: now, status: 'pending' }],
+          notes: [...state.notes, note(`invite-${id}`, action.userId, 'Вас зовут в команду', `«${team?.name}» приглашает вас усилить команду.`, '/team', now)],
+        },
+        'Приглашение отправлено'
+      );
+    }
+
+    case 'inviteAnswer': {
+      const invite = state.invites.find((i) => i.id === action.id);
+      if (!invite) return state;
+      const invites = state.invites.map((i) => (i.id === invite.id ? { ...i, status: action.accept ? 'accepted' : 'declined' } : i));
+      if (!action.accept) return withToast({ ...state, invites }, 'Приглашение отклонено');
+      const application = state.applications.find((a) => a.userId === invite.userId && a.status === 'pending');
+      const next = reducer({ ...state, invites }, { type: 'assign', teamId: invite.teamId, userId: invite.userId, role: application?.role || user?.facts?.role?.[0], silent: true, now });
+      // Тот, кто позвал, получает благодарность в бонусах: команда стала сильнее
+      const bonus = 500;
+      return withToast(
+        {
+          ...next,
+          users: next.users.map((u) => (u.id === invite.fromId ? { ...u, bonus: (u.bonus || 0) + bonus } : u)),
+          bonusLog: [...next.bonusLog, { id: uid('b'), userId: invite.fromId, amount: bonus, reason: 'Привёл человека в команду', at: now }],
+        },
+        'Добро пожаловать в команду'
+      );
+    }
+
+    /* ---------- ближний круг ---------- */
+
+    case 'circleAdd':
+      return withToast(
+        { ...state, circle: [...new Set([...(state.circle || []), action.userId])], circleOut: (state.circleOut || []).filter((id) => id !== action.userId) },
+        'Добавлен в ближний круг'
+      );
+
+    case 'circleRemove':
+      return {
+        ...state,
+        circle: (state.circle || []).filter((id) => id !== action.userId),
+        circleOut: [...new Set([...(state.circleOut || []), action.userId])],
+      };
 
     case 'report': {
       if (!user) return state;
@@ -435,6 +510,11 @@ function reducer(state, action) {
         next = reducer(next, { type: 'assign', teamId: target.t.id, userId: application.userId, role: application.role, silent: true, now });
       }
       if (waiting.length) next = { ...next, toast: state.toast };
+
+      // Демо: приглашённый в команду соглашается сам
+      const invited = next.invites.filter((i) => i.status === 'pending' && now - i.at > AUTO_FRIEND_ANSWER && next.users.find((u) => u.id === i.userId)?.demo);
+      for (const invite of invited) next = reducer(next, { type: 'inviteAnswer', id: invite.id, accept: true, now });
+      if (invited.length) next = { ...next, toast: state.toast };
 
       const friendPending = next.friends.filter(
         (f) => f.status === 'pending' && now - f.at > AUTO_FRIEND_ANSWER && next.users.find((u) => u.id === f.b)?.demo

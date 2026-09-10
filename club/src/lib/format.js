@@ -15,6 +15,14 @@ export function moneyShort(n) {
   return money(value);
 }
 
+/** Разряды при вводе: 120000 → «120 000». Нужен обычный пробел — с ним курсор ведёт себя предсказуемо. */
+export function groupDigits(value) {
+  const digits = String(value).replace(/\D/g, '').slice(0, 12);
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+export const digitsOf = (value) => Number(String(value).replace(/\D/g, '')) || 0;
+
 export function hours(n) {
   const v = Math.round(Number(n) || 0);
   return `${v} ${plural(v, 'час', 'часа', 'часов')}`;

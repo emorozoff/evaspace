@@ -263,6 +263,17 @@ export function Field({ label, hint, children }) {
 /* ---------- аватар: сквиркл, оттенок от имени ---------------------------- */
 const TONES = ['#6d9bff', '#8e7bf5', '#79d2bf', '#e9b872', '#f2789b', '#58d68d', '#5fb8e0', '#d98ae6'];
 
+/** Выбор файла: своя кнопка вместо системной «Choose file». */
+export function FileButton({ label = 'Выбрать файл', icon = 'download', onFile }) {
+  return (
+    <label className="filebtn">
+      <Icon name={icon} size={17} />
+      <span>{label}</span>
+      <input type="file" accept="image/*" onChange={(e) => onFile(e.target.files?.[0])} />
+    </label>
+  );
+}
+
 export function toneOf(user) {
   return TONES[hash(user?.name || '?') % TONES.length];
 }

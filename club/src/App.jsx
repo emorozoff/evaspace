@@ -5,6 +5,8 @@ import { unreadCount } from './lib/logic.js';
 import Nav from './components/Nav.jsx';
 import { Empty } from './components/UI.jsx';
 import Auth, { Paywall } from './screens/Auth.jsx';
+import Onboarding from './screens/Onboarding.jsx';
+import Splash, { splashNeeded } from './components/Splash.jsx';
 import Home from './screens/Home.jsx';
 import Events from './screens/Events.jsx';
 import EventPage from './screens/EventPage.jsx';
@@ -27,6 +29,7 @@ export default function App() {
   const { parts } = useRoute();
   const { state, me } = useStore();
   const [now, setNow] = useState(() => Date.now());
+  const [splash, setSplash] = useState(splashNeeded);
 
   // Часы приложения: от них зависят «через час», кнопка «Подключиться» и напоминания
   useEffect(() => {
@@ -36,7 +39,12 @@ export default function App() {
 
   useSystemNotifications(state, me);
 
-  if (!me) return <Auth invite={parts[0] === 'join' ? parts[1] : null} />;
+  const cover = splash ? <Splash onDone={() => setSplash(false)} /> : null;
+
+  if (!me) return <>{cover}<Auth invite={parts[0] === 'join' ? parts[1] : null} /></>;
+
+  // Сначала знакомство, потом оплата: анкета лёгкая и объясняет, зачем клуб
+  if (me.onboarded === false) return <>{cover}<Onboarding /></>;
 
   if (me.demo !== true && me.paid === false) {
     return (
@@ -79,6 +87,7 @@ export default function App() {
 
   return (
     <div className="app">
+      {cover}
       {screen}
       {root !== 'admin' && <Nav root={root} badge={unreadCount(state, me.id)} />}
       <Toast />

@@ -59,10 +59,19 @@ export default function Events({ now }) {
           <div className="week-hdr">
             <span className="week-hdr__t">{weekTitle(weekStart, now)}</span>
             <span className="week-hdr__r" />
-            <span className="week-hdr__n">{events.length}</span>
+            <span className="week-hdr__n">
+              {events.filter((e) => e.type === 'online').length} клубных · {events.length} всего
+            </span>
           </div>
           {when === 'next' ? (
-            events.map((e) => <EventCard key={e.id} event={e} now={now} />)
+            <>
+              {/* Клубные события и пятница — карточками, созвон команды — строкой:
+                  у него нет времени, это скорее напоминание, чем анонс. */}
+              {events.filter((e) => e.type !== 'team').map((e) => <EventCard key={e.id} event={e} now={now} />)}
+              {events.some((e) => e.type === 'team') && (
+                <List>{events.filter((e) => e.type === 'team').map((e) => <EventRow key={e.id} event={e} now={now} />)}</List>
+              )}
+            </>
           ) : (
             <List>{events.map((e) => <EventRow key={e.id} event={e} now={now} meta={e.recordUrl ? <span className="accent">запись</span> : undefined} />)}</List>
           )}
