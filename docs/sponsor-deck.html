@@ -247,7 +247,8 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
 .mon{background:linear-gradient(160deg,#E2DCCC 0%,#CFC7B2 46%,#B8AF98 100%);border-radius:18px 18px 12px 12px;padding:13px 13px 0;box-shadow:0 2px 0 #A79E86,0 18px 36px rgba(30,26,16,.28),inset 0 1px 0 rgba(255,255,255,.7)}
 .bez{background:linear-gradient(160deg,#2A2A2C,#151517);border-radius:11px;padding:10px;box-shadow:inset 0 2px 5px rgba(0,0,0,.7)}
 .scr{position:relative;border-radius:9px;overflow:hidden;background:radial-gradient(120% 100% at 50% 30%,#123059 0%,#0A1A31 55%,#050C18 100%);padding:15px 11px 17px;min-height:178px;box-shadow:inset 0 0 40px rgba(0,0,0,.75),inset 0 0 0 1px rgba(120,180,255,.14);display:flex;flex-direction:column}
-.scr-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+.scr-mid{flex:1;display:flex;align-items:center;justify-content:center}
+.scr-lines{width:100%;max-width:266px;display:flex;flex-direction:column;gap:10px;text-align:left}
 .scr::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(0,0,0,.24) 0 1px,rgba(0,0,0,0) 1px 3px)}
 .scr-h{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;color:#6E93C9;margin:0 0 13px;padding-bottom:8px;border-bottom:1px solid rgba(120,180,255,.2)}
 .hello{font-family:var(--mono);font-size:12.5px;font-weight:700;color:#B8FFD4;margin:0;text-shadow:0 0 12px rgba(90,255,160,.55)}
@@ -416,10 +417,10 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
       <div style="display:grid;justify-items:end">
         <div class="crt"><div class="mon"><div class="bez"><div class="scr">
           <p class="scr-h">И АЙ КЛАБ</p>
-          <div class="scr-mid">
+          <div class="scr-mid"><div class="scr-lines">
             <p class="hello">привет, партнёр.</p>
             <p class="cmd"><span class="pr" aria-hidden="true">код&gt;</span>&nbsp;<span id="typ">запуск сезона 1</span><span class="cur" aria-hidden="true"></span></p>
-          </div>
+          </div></div>
         </div></div><div class="chin"><span class="lb">яблоко</span><span class="led"></span></div></div><div class="stand"></div><div class="base"></div></div>
       </div>
     </div>
@@ -1227,25 +1228,29 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
   function joke(){
     $('eh').textContent=jokes[ji][0]; $('ep').textContent=jokes[ji][1];
     ji=Math.min(ji+1,jokes.length-1);
-    $('ovE').classList.add('on'); sfx('err');
+    $('ovE').classList.add('on'); sfx('err'); armErrDodge();
     var b=$('ovE').querySelector('.btn.hot'); if(b) b.focus();
   }
   $('nope').addEventListener('click',function(){ joke(); armDodge(); });
 
-  /* после отказа крестик один раз уворачивается от курсора */
-  var dodgeArmed=false, dodgeUsed=false;
-  var xBtn=document.querySelector('#ov1 [data-close="ov1"]');
-  function armDodge(){ if(!dodgeUsed) dodgeArmed=true; }
-  if(xBtn){
-    xBtn.style.transition='transform .22s cubic-bezier(.3,1.4,.5,1)';
-    xBtn.addEventListener('mouseenter',function(){
-      if(!dodgeArmed||dodgeUsed) return;
-      dodgeUsed=true; dodgeArmed=false;
+  /* крестик один раз уворачивается от курсора — и в мастере, и в окне ошибки.
+     Заряжается заново каждый раз, когда окно открывают снова. */
+  function makeDodge(sel){
+    var el=document.querySelector(sel);
+    if(!el) return function(){};
+    var armed=false;
+    el.style.transition='transform .22s cubic-bezier(.3,1.4,.5,1)';
+    el.addEventListener('mouseenter',function(){
+      if(!armed) return;
+      armed=false;
       sfx('whoosh');
-      xBtn.style.transform='translateX(-46px)';
-      setTimeout(function(){ xBtn.style.transform='translateX(0)'; },620);
+      el.style.transform='translateX(-46px)';
+      setTimeout(function(){ el.style.transform='translateX(0)'; },620);
     });
+    return function(){ armed=true; el.style.transform='translateX(0)'; };
   }
+  var armDodge=makeDodge('#ov1 [data-close="ov1"]');
+  var armErrDodge=makeDodge('#ovE [data-close="ovE"]');
   $('again').addEventListener('click',function(){ $('ovE').classList.remove('on'); setTimeout(joke,180); });
 
   function chosenFormats(){

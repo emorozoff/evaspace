@@ -375,6 +375,19 @@ tr.tot td{background:var(--soft);font-weight:700;color:var(--ink)}
 .tstmode{font-family:var(--mono);font-size:11px;color:var(--muted);margin:10px 22px 0;text-align:center}
 footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
 
+/* чек-лист дел */
+.num.check li{align-items:center;gap:14px}
+.task{flex:1;cursor:pointer;min-width:0}
+.tick{appearance:none;-webkit-appearance:none;flex:0 0 24px;width:24px;height:24px;margin:0;border:1.6px solid var(--line-2);border-radius:6px;background:var(--card);cursor:pointer;display:grid;place-items:center;transition:background .15s,border-color .15s}
+.tick:hover{border-color:var(--xp1)}
+.tick::after{content:"";width:11px;height:6px;border-left:2.4px solid #fff;border-bottom:2.4px solid #fff;transform:rotate(-45deg) translate(1px,-2px);opacity:0}
+.tick:checked{background:var(--green);border-color:#2F7335}
+.tick:checked::after{opacity:1}
+.num.check li:has(.tick:checked) .task span,.num.check li.done .task span{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:#AFBAC8}
+.num.check li:has(.tick:checked) strong,.num.check li.done strong{color:var(--muted);font-weight:600}
+.num.check li:has(.tick:checked)::before,.num.check li.done::before{background:var(--green-soft);border-color:var(--green-line);color:var(--green)}
+.tcount{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--muted);font-weight:700}
+
 /* ---------- полировка: воздух, мягкие рамки, единая типографика ---------- */
 body{line-height:1.6}
 p{margin:0 0 14px;text-wrap:pretty}
@@ -811,27 +824,26 @@ footer{padding-top:12px}
         <p class="k">Все каналы ведут в одну точку. Человек пишет слово КЛУБ, бот спрашивает уровень, отдаёт бесплатку под него и через неделю зовёт в мини-поток.</p>
         <div class="dia">
           <svg viewBox="0 0 900 300" role="img" aria-label="Схема воронки: YouTube, рилсы, сторис участников и ИИ-канал ведут к слову КЛУБ, дальше бот отдаёт гайд под уровень, и человек попадает в мини-поток или остаётся на прогреве в ИИ-канале">
-            <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
-            <g font-size="19">
-              <text x="4" y="46">YouTube</text><text x="4" y="107">Рилсы</text>
-              <text x="4" y="168">Сторис участников</text><text x="4" y="229">ИИ-канал</text>
-            </g>
-            <g fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#a1)">
-              <path d="M 196 40 L 232 40 Q 262 40 262 70 L 262 122"/><path d="M 196 101 L 240 101 Q 262 101 262 123 L 262 128"/>
-              <path d="M 196 162 L 240 162 Q 262 162 262 140 L 262 136"/><path d="M 196 223 L 232 223 Q 262 223 262 193 L 262 142"/>
-              <path d="M 476 132 L 512 132"/><path d="M 768 118 L 800 118 Q 830 118 830 88 L 830 74"/><path d="M 768 146 L 800 146 Q 830 146 830 176 L 830 190"/>
-            </g>
-            <g stroke="#B9C3D0" stroke-width="1.5">
-              <rect x="272" y="104" width="200" height="58" rx="5" fill="#DA3A26" stroke="#9E2312"/>
-              <rect x="512" y="100" width="252" height="68" rx="5" fill="#FFFFFF"/>
-              <rect x="700" y="14" width="196" height="56" rx="5" fill="#FFFFFF"/>
-              <rect x="700" y="194" width="196" height="56" rx="5" fill="#FFFFFF"/>
-            </g>
-            <g font-size="19" text-anchor="middle">
-              <text x="372" y="140" class="w">пишет «КЛУБ»</text>
-              <text x="638" y="127">бот: гайд под уровень</text>
-              <text x="638" y="152" class="m" font-size="13">СРАЗУ, БЕЗ МЕНЕДЖЕРА</text>
-              <text x="798" y="49">мини-поток</text><text x="798" y="229">прогрев в канале</text>
+            <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9AA6B6"/></marker></defs>
+            <text x="0" y="12" class="m" font-size="11">ОТКУДА ПРИХОДЯТ</text>
+            <text x="286" y="12" class="m" font-size="11">ОДНА ТОЧКА ВХОДА</text>
+            <text x="530" y="12" class="m" font-size="11">ЧТО ПРОИСХОДИТ ДАЛЬШЕ</text>
+            <g transform="translate(0,26)"><g><rect x="0" y="18" width="196" height="40" rx="20" fill="#FFFFFF" stroke="#C9D2DE" stroke-width="1.5"/><circle cx="22" cy="38" r="6" fill="#DA3A26"/><text x="40" y="44" font-size="16">YouTube</text></g><g><rect x="0" y="72" width="196" height="40" rx="20" fill="#FFFFFF" stroke="#C9D2DE" stroke-width="1.5"/><circle cx="22" cy="92" r="6" fill="#1D4BA6"/><text x="40" y="98" font-size="16">Рилсы</text></g><g><rect x="0" y="126" width="196" height="40" rx="20" fill="#FFFFFF" stroke="#C9D2DE" stroke-width="1.5"/><circle cx="22" cy="146" r="6" fill="#3C8A43"/><text x="40" y="152" font-size="16">Сторис участников</text></g><g><rect x="0" y="180" width="196" height="40" rx="20" fill="#FFFFFF" stroke="#C9D2DE" stroke-width="1.5"/><circle cx="22" cy="200" r="6" fill="#E8A317"/><text x="40" y="206" font-size="16">ИИ-канал</text></g></g>
+            <g fill="none" stroke="#C9D2DE" stroke-width="1.8" marker-end="url(#a1)" transform="translate(0,26)"><path d="M 200 38 C 240 38 250 130 286 130"/><path d="M 200 92 C 240 92 250 130 286 130"/><path d="M 200 146 C 240 146 250 130 286 130"/><path d="M 200 200 C 240 200 250 130 286 130"/></g>
+            <g transform="translate(0,26)">
+              <rect x="290" y="126" width="196" height="58" rx="12" fill="#DA3A26"/>
+              <text x="388" y="152" text-anchor="middle" class="w" font-size="15">пишет слово</text>
+              <text x="388" y="172" text-anchor="middle" class="w" font-size="19" font-weight="800">«КЛУБ»</text>
+              <path d="M 496 155 L 524 155" fill="none" stroke="#C9D2DE" stroke-width="1.8" marker-end="url(#a1)"/>
+              <rect x="530" y="120" width="234" height="70" rx="10" fill="#F3F6FA" stroke="#C9D2DE" stroke-width="1.5"/>
+              <text x="647" y="148" text-anchor="middle" font-size="16">бот отдаёт гайд</text>
+              <text x="647" y="170" text-anchor="middle" class="m" font-size="11">СРАЗУ, БЕЗ МЕНЕДЖЕРА</text>
+              <path d="M 770 148 C 800 148 800 92 828 92" fill="none" stroke="#C9D2DE" stroke-width="1.8" marker-end="url(#a1)"/>
+              <path d="M 770 162 C 800 162 800 218 828 218" fill="none" stroke="#C9D2DE" stroke-width="1.8" marker-end="url(#a1)"/>
+              <rect x="700" y="42" width="200" height="50" rx="10" fill="#EEF7EE" stroke="#C6E2C8" stroke-width="1.5" transform="translate(-66,26)"/>
+              <text x="734" y="97" text-anchor="middle" font-size="16">мини-поток</text>
+              <rect x="700" y="180" width="200" height="50" rx="10" fill="#FFFFFF" stroke="#C9D2DE" stroke-width="1.5" transform="translate(-66,26)"/>
+              <text x="734" y="235" text-anchor="middle" font-size="16">прогрев в канале</text>
             </g>
           </svg>
         </div>
@@ -852,20 +864,26 @@ footer{padding-top:12px}
         <h4>Клуб должен крутиться без нас</h4>
         <div class="two">
           <div class="dia">
-            <svg viewBox="0 0 760 340" role="img" aria-label="Маховик: контент приводит людей, люди делают результаты и знакомятся, результаты превращаются в кейсы и рекомендации, кейсы снова становятся контентом">
-              <defs><marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
-              <g fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#a2)">
-                <path d="M 466 44 L 570 44 Q 640 44 640 114 L 640 138"/><path d="M 640 202 L 640 226 Q 640 296 570 296 L 545 296"/>
-                <path d="M 215 296 L 190 296 Q 120 296 120 226 L 120 202"/><path d="M 120 138 L 120 114 Q 120 44 190 44 L 292 44"/>
+            <svg viewBox="0 0 620 440" role="img" aria-label="Маховик: контент приводит людей, люди делают результаты и знакомятся, результаты превращаются в кейсы и рекомендации, кейсы снова становятся контентом">
+              <defs><marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9AA6B6"/></marker></defs>
+              <circle cx="310" cy="220" r="152" fill="none" stroke="#DDE3EC" stroke-width="1.5" stroke-dasharray="3 7"/>
+              <g fill="none" stroke="#9AA6B6" stroke-width="2.2" marker-end="url(#a2)"><path d="M 381 86 A 152 152 0 0 1 439 139"/><path d="M 444 291 A 152 152 0 0 1 391 349"/><path d="M 239 354 A 152 152 0 0 1 181 301"/><path d="M 176 149 A 152 152 0 0 1 229 91"/></g>
+              <circle cx="310" cy="220" r="60" fill="#F3F6FA" stroke="#C9D2DE" stroke-width="1.5"/>
+              <text x="310" y="214" text-anchor="middle" class="m" font-size="12">МАХОВИК</text>
+              <text x="310" y="236" text-anchor="middle" font-size="13" fill="#6C7787">каждый оборот</text>
+              <text x="310" y="252" text-anchor="middle" font-size="13" fill="#6C7787">дешевле</text>
+              <g stroke-width="1.5">
+                <rect x="196" y="34" width="228" height="56" rx="12" fill="#E4EDFB" stroke="#A9C4E8"/>
+                <rect x="392" y="188" width="216" height="64" rx="12" fill="#FDEAE6" stroke="#EFC4BA"/>
+                <rect x="180" y="350" width="260" height="56" rx="12" fill="#EEF7EE" stroke="#C6E2C8"/>
+                <rect x="12" y="188" width="216" height="64" rx="12" fill="#FFF6DC" stroke="#E8D9A8"/>
               </g>
-              <g stroke="#B9C3D0" stroke-width="1.5" fill="#FFFFFF">
-                <rect x="300" y="22" width="160" height="46" rx="6"/><rect x="530" y="148" width="220" height="46" rx="6"/>
-                <rect x="225" y="274" width="310" height="46" rx="6"/><rect x="0" y="148" width="250" height="46" rx="6"/>
-              </g>
-              <g font-size="20" text-anchor="middle">
-                <text x="380" y="52">Контент</text><text x="640" y="178">Новые люди</text>
-                <text x="380" y="304">Результаты и знакомства</text><text x="125" y="178" font-size="18">Кейсы и рекомендации</text>
-                <text x="380" y="178" class="m" font-size="13">МАХОВИК</text>
+              <g text-anchor="middle" font-size="18">
+                <text x="310" y="69">Контент</text>
+                <text x="500" y="226">Новые люди</text>
+                <text x="310" y="385">Результаты и знакомства</text>
+                <text x="120" y="215">Кейсы</text>
+                <text x="120" y="237">и рекомендации</text>
               </g>
             </svg>
           </div>
@@ -995,13 +1013,13 @@ footer{padding-top:12px}
           </div>
         </div>
         <p class="sm">Новые участники после первого месяца получают доступ ко всем прошлым материалам и отдельный зум-знакомство. Никто не приходит в середину разговора.</p>
-        <h4>Пять дел до первой пятницы</h4>
-        <ol class="num">
-          <li><span><strong>Расписать модули и уроки</strong> — программа трёх месяцев по неделям, кто какую тему ведёт.</span></li>
-          <li><span><strong>Снять 10 рилсов и подключить бота</strong> — контент на старт и автоответ на слово КЛУБ.</span></li>
-          <li><span><strong>Телеграм-клуб и первый мини-поток</strong> — темы, правила, оплата.</span></li>
-          <li><span><strong>Приложение</strong> — первая версия: команды, рейтинг, расписание, профили.</span></li>
-          <li><span><strong>Питч спонсорам</strong> — пакеты на сезон 1, пока места свободны.</span></li>
+        <div class="h4c" style="justify-content:space-between"><h4>Пять дел до первой пятницы</h4><span class="tcount" id="tcount">готово 0 из 5</span></div>
+        <ol class="num check">
+          <li><label class="task" for="d1"><span><strong>Расписать модули и уроки</strong> — программа трёх месяцев по неделям, кто какую тему ведёт.</span></label><input class="tick" type="checkbox" id="d1"></li>
+          <li><label class="task" for="d2"><span><strong>Снять 10 рилсов и подключить бота</strong> — контент на старт и автоответ на слово КЛУБ.</span></label><input class="tick" type="checkbox" id="d2"></li>
+          <li><label class="task" for="d3"><span><strong>Телеграм-клуб и первый мини-поток</strong> — темы, правила, оплата.</span></label><input class="tick" type="checkbox" id="d3"></li>
+          <li><label class="task" for="d4"><span><strong>Приложение</strong> — первая версия: команды, рейтинг, расписание, профили.</span></label><input class="tick" type="checkbox" id="d4"></li>
+          <li><label class="task" for="d5"><span><strong>Питч спонсорам</strong> — пакеты на сезон 1, пока места свободны.</span></label><input class="tick" type="checkbox" id="d5"></li>
         </ol>
       </div>
     </section>
@@ -1506,6 +1524,20 @@ footer{padding-top:12px}
   });
   $('backPkg').addEventListener('click',function(){ swap('ov4','ov3'); });
   $('toapp').addEventListener('click',function(){ close('ov4'); });
+
+  /* чек-лист: зачёркиваем сделанное и считаем готовое */
+  var ticks=[].slice.call(document.querySelectorAll('.num.check .tick'));
+  function countTasks(){
+    var n=0;
+    ticks.forEach(function(t){
+      var li=t.closest('li');
+      if(li) li.classList.toggle('done',t.checked);
+      if(t.checked) n++;
+    });
+    var el=$('tcount'); if(el) el.textContent='готово '+n+' из '+ticks.length;
+  }
+  ticks.forEach(function(t){ t.addEventListener('change',countTasks); });
+  countTasks();
   $('doPay').addEventListener('click',function(){
     var b=$('doPay'); b.disabled=true; b.textContent='Оплачиваем...';
     var v=0, bar=$('pbi');
