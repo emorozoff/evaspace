@@ -3,12 +3,12 @@ import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import { leaderboard, seasonPot, teamOf, teamRoster, isPro } from '../lib/logic.js';
 import { money, moneyShort } from '../lib/format.js';
-import { AvatarStack, Card, Empty, KV, Note, Tag, TopBar } from '../components/UI.jsx';
+import { AvatarStack, Empty, KV, Note, Section, Tag, TopBar } from '../components/UI.jsx';
 import TeamAvatar from '../components/TeamAvatar.jsx';
+import { SponsorArt } from './Sponsor.jsx';
 import Icon from '../components/Icons.jsx';
 
-/* Таблица лидеров: три кубка на подиуме, дальше медали.
-   Выручка без взноса в копилку в рейтинг не идёт. */
+/* Рейтинг — простой список: кубок за первые три места, дальше медали. */
 
 export default function Rating() {
   const { state, me } = useStore();
@@ -25,114 +25,93 @@ export default function Rating() {
     );
   }
 
-  const podium = board.slice(0, 3);
-  const rest = board.slice(3);
-  // На подиуме серебро слева, золото в центре, бронза справа
-  const order = [podium[1], podium[0], podium[2]].filter(Boolean);
-
   return (
     <div className="screen" style={{ paddingTop: 0 }}>
       <TopBar title="Рейтинг" sub={state.season.title} backTo="/" />
       <div className="stack-20">
-        <div className="card card--warm row">
-          <div className="item__ic" style={{ color: 'var(--warm)' }}><Icon name="cup" size={19} /></div>
-          <div className="grow">
-            <div className="t-xs dim-2">Копилка сезона</div>
-            <div className="figure" style={{ fontSize: 23, marginTop: 2 }}>{money(seasonPot(state))}</div>
+        <div className="card card--warm">
+          <div className="row">
+            <div className="item__ic" style={{ color: 'var(--warm)' }}><Icon name="cup" size={19} /></div>
+            <div className="grow">
+              <div className="t-xs dim-2">Копилка сезона</div>
+              <div className="figure" style={{ fontSize: 24, marginTop: 2 }}>{money(seasonPot(state))}</div>
+            </div>
           </div>
-          <div className="t-xs dim-2" style={{ maxWidth: 108, textAlign: 'right' }}>на призы и выпускной</div>
+          <div className="t-xs dim-2" style={{ marginTop: 10, lineHeight: 1.5 }}>
+            {money(state.season.clubPot)} — десятина клуба с продаж сезона, остальное — взносы команд. Всё уйдёт на призы и выпускной.
+          </div>
         </div>
 
         {board.length === 0 ? (
           <Empty icon="cup" title="Рейтинг пуст" text="Команда попадает сюда, когда в ней хотя бы трое." />
         ) : (
-          <>
-            <div className="podium">
-              {order.map((row) => (
-                <button
-                  key={row.team.id}
-                  className="podium__i"
-                  style={{ paddingTop: row.place === 1 ? 18 : 12, boxShadow: myTeam?.id === row.team.id ? 'inset 0 0 0 1.5px var(--accent)' : undefined }}
-                  onClick={() => setOpen(open === row.team.id ? null : row.team.id)}
-                >
-                  <Icon name="cup" size={row.place === 1 ? 34 : 27} color={row.award.tone} />
-                  <TeamAvatar team={row.team} size={row.place === 1 ? 40 : 34} />
-                  <span className="podium__t">{row.team.name}</span>
-                  <span className="podium__v" style={{ color: row.award.tone }}>{moneyShort(row.counted)}</span>
-                </button>
-              ))}
-            </div>
-
-            {rest.length > 0 && (
-              <div className="list">
-                {rest.map((row) => (
-                  <Row key={row.team.id} row={row} mine={myTeam?.id === row.team.id} open={open === row.team.id} onToggle={() => setOpen(open === row.team.id ? null : row.team.id)} state={state} />
-                ))}
-              </div>
-            )}
-
-            {/* Раскрытая карточка призёра показывается отдельно под подиумом */}
-            {podium.some((r) => r.team.id === open) && (
-              <Card>
-                <Details row={board.find((r) => r.team.id === open)} state={state} />
-              </Card>
-            )}
-          </>
+          <div className="list">
+            {board.map((row) => {
+              const roster = teamRoster(state, row.team.id);
+              const mine = myTeam?.id === row.team.id;
+              const expanded = open === row.team.id;
+              const top = row.place <= 3;
+              return (
+                <div key={row.team.id}>
+                  <button className={`rank${row.debt > 0 ? ' rank--dim' : ''}`} onClick={() => setOpen(expanded ? null : row.team.id)}>
+                    <span className="award" style={{ background: top ? `${row.award.tone}1f` : 'var(--surface-2)' }}>
+                      <Icon name={row.award.icon} size={top ? 22 : 19} color={top ? row.award.tone : 'var(--ink-3)'} />
+                      <span className="award__n">{row.place}</span>
+                    </span>
+                    <TeamAvatar team={row.team} size={38} />
+                    <div className="grow">
+                      <div className="row" style={{ gap: 6 }}>
+                        <span className="t-md ell rank__t">{row.team.name}</span>
+                        {mine && <Tag tone="accent">вы</Tag>}
+                      </div>
+                      <div className="row" style={{ gap: 8, marginTop: 5 }}>
+                        <AvatarStack users={roster.map((r) => r.user)} max={3} size={20} />
+                        {row.debt > 0 && <Tag tone="warm">нет взноса</Tag>}
+                      </div>
+                    </div>
+                    <div className="item__meta">
+                      <div className="figure rank__v" style={{ fontSize: 15 }}>{moneyShort(row.counted)}</div>
+                      <span className="t-xs dim-2">{row.activity}% актив.</span>
+                    </div>
+                  </button>
+                  {expanded && (
+                    <div style={{ padding: '0 14px 14px 52px' }}>
+                      <div className="t-xs dim" style={{ marginBottom: 8 }}>{row.team.goal || row.team.idea}</div>
+                      <KV k="Выручка всего" v={money(row.total)} />
+                      <KV k="Зачтено в рейтинг" v={money(row.counted)} tone="var(--accent)" />
+                      <KV k="Копилка 10%" v={`${money(row.paid)} из ${money(row.required)}`} tone={row.debt ? 'var(--warm)' : undefined} />
+                      <KV k="Активность" v={`${row.activity}%`} tone={row.activity >= 60 ? 'var(--accent)' : 'var(--warm)'} />
+                      <KV k="В команде" v={`${roster.length} чел.`} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
 
-        <Note icon="eye">Никто не проверяет цифры автоматически. Выручка без взноса в копилку не засчитывается: команда сама отмечает перевод.</Note>
+        <Section title="Партнёры сезона">
+          <div className="stack">
+            {state.sponsors.map((s) => (
+              <button key={s.id} className="sponsor tap" onClick={() => go(`/sponsor/${s.id}`)}>
+                <SponsorArt tone={s.tone} height={84} />
+                <span className="sponsor__logo" style={{ background: s.tone }}>{s.name[0]}</span>
+                <div className="sponsor__body" style={{ paddingTop: 24 }}>
+                  <div className="spread">
+                    <div className="grow">
+                      <div className="t-md">{s.name}</div>
+                      <div className="t-xs dim-2" style={{ marginTop: 2 }}>{s.tag} · {s.short}</div>
+                    </div>
+                    <Icon name="right" size={16} className="chev" />
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </Section>
+
+        <Note icon="eye">Выручка без взноса в копилку не засчитывается: команда сама отмечает перевод и прикладывает подтверждение.</Note>
       </div>
     </div>
-  );
-}
-
-function Row({ row, mine, open, onToggle, state }) {
-  const roster = teamRoster(state, row.team.id);
-  return (
-    <div>
-      <button className={`rank${row.debt > 0 ? ' rank--dim' : ''}`} onClick={onToggle}>
-        <span className="award" style={{ background: 'var(--surface-2)', width: 36, height: 36 }}>
-          <Icon name="medal" size={19} color="var(--ink-3)" />
-          <span className="award__n">{row.place}</span>
-        </span>
-        <div className="grow">
-          <div className="row" style={{ gap: 6 }}>
-            <span className="t-md ell rank__t">{row.team.name}</span>
-            {mine && <Tag tone="accent">вы</Tag>}
-          </div>
-          <div className="row" style={{ gap: 8, marginTop: 5 }}>
-            <AvatarStack users={roster.map((r) => r.user)} max={4} size={22} />
-            <span className="t-xs dim-2 nowrap">{row.activity}% · {row.hours} ч</span>
-          </div>
-        </div>
-        <div className="item__meta">
-          <div className="figure rank__v" style={{ fontSize: 15 }}>{moneyShort(row.counted)}</div>
-          {row.debt > 0 && <span className="t-xs warm">не засчитано</span>}
-        </div>
-      </button>
-      {open && <div style={{ padding: '0 14px 14px 52px' }}><Details row={row} state={state} /></div>}
-    </div>
-  );
-}
-
-function Details({ row, state }) {
-  if (!row) return null;
-  const roster = teamRoster(state, row.team.id);
-  return (
-    <>
-      <div className="row" style={{ marginBottom: 10 }}>
-        <TeamAvatar team={row.team} size={38} />
-        <div className="grow">
-          <div className="t-md">{row.team.name}</div>
-          <div className="t-xs dim-2 clamp-2" style={{ whiteSpace: 'normal' }}>{row.team.goal || row.team.idea}</div>
-        </div>
-      </div>
-      <KV k="Выручка всего" v={money(row.total)} />
-      <KV k="Зачтено в рейтинг" v={money(row.counted)} tone="var(--accent)" />
-      <KV k="Копилка 10%" v={`${money(row.paid)} из ${money(row.required)}`} tone={row.debt ? 'var(--warm)' : undefined} />
-      <KV k="Активность команды" v={`${row.activity}%`} tone={row.activity >= 60 ? 'var(--accent)' : 'var(--warm)'} />
-      <KV k="В команде" v={`${roster.length} чел.`} />
-      <button className="t-sm accent" style={{ fontWeight: 600, marginTop: 10 }} onClick={() => go('/team')}>Открыть свою команду →</button>
-    </>
   );
 }

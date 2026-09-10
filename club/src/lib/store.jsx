@@ -3,7 +3,8 @@ import { buildSeed, makeCity, cityId as makeCityId } from './seed.js';
 import { ensureEvents } from './events.js';
 import {
   ensureCityRules,
-  ensureCoffee,
+  ensureMeets,
+  chatKey,
   buildNotifications,
   teamSize,
   MAX_TEAM,
@@ -238,6 +239,9 @@ function reducer(state, action) {
       return withToast({ ...next, events: [...next.events, ...ensureEvents(next, now)] }, 'Команда создана');
     }
 
+    case 'teamCover':
+      return withToast({ ...state, teams: state.teams.map((t) => (t.id === action.teamId ? { ...t, cover: action.cover } : t)) }, 'Обложка обновлена');
+
     case 'teamPatch':
       return withToast({ ...state, teams: state.teams.map((t) => (t.id === action.teamId ? { ...t, ...action.patch } : t)) }, 'Сохранено');
 
@@ -318,6 +322,60 @@ function reducer(state, action) {
           bonusLog: [...next.bonusLog, { id: uid('b'), userId: invite.fromId, amount: bonus, reason: 'Привёл человека в команду', at: now }],
         },
         'Добро пожаловать в команду'
+      );
+    }
+
+    /* ---------- разговоры ---------- */
+
+    case 'send': {
+      if (!user || !action.text.trim()) return state;
+      const at = now;
+      return {
+        ...state,
+        messages: [...state.messages, { id: uid('ms'), chat: action.chat, userId: user.id, text: action.text.trim(), at }],
+        seen: { ...state.seen, [action.chat]: at },
+      };
+    }
+
+    case 'readChat':
+      return { ...state, seen: { ...state.seen, [action.chat]: now } };
+
+    /* ---------- знакомства ---------- */
+
+    /** Цель, с которой участник идёт знакомиться на этой неделе. */
+    case 'meetGoal':
+      return { ...state, users: state.users.map((u) => (u.id === user?.id ? { ...u, meetGoal: action.goal } : u)) };
+
+    case 'meetSkip':
+      return withToast({ ...state, meets: state.meets.map((m) => (m.id === action.id ? { ...m, status: 'skipped' } : m)) }, 'Пропускаем');
+
+    /** Предложить знакомство. Совпало с обеих сторон — метч и общий чат. */
+    case 'meetLike': {
+      const meet = state.meets.find((m) => m.id === action.id);
+      if (!meet || !user) return state;
+      const other = meet.a === user.id ? meet.b : meet.a;
+      const likedBy = [...new Set([...(meet.likedBy || []), user.id])];
+      const matched = likedBy.includes(other);
+      const meets = state.meets.map((m) => (m.id === meet.id ? { ...m, likedBy, status: matched ? 'matched' : 'liked', goal: action.goal || m.goal } : m));
+      if (!matched) return withToast({ ...state, meets }, 'Предложение отправлено');
+
+      const chat = chatKey('dm', [meet.a, meet.b]);
+      const names = [meet.a, meet.b].map((id) => state.users.find((u) => u.id === id));
+      return withToast(
+        {
+          ...state,
+          meets,
+          messages: [
+            ...state.messages,
+            { id: uid('ms'), chat, userId: 'system', text: `Метч недели: совпадение интересов ${meet.percent}%. Договоритесь, где и когда.`, at: now },
+          ],
+          notes: [
+            ...state.notes,
+            note(`match-${meet.id}-${meet.a}`, meet.a, 'Метч недели', `${names[1]?.name} тоже хочет познакомиться. Открывайте чат.`, `/chat/${chat}`, now),
+            note(`match-${meet.id}-${meet.b}`, meet.b, 'Метч недели', `${names[0]?.name} тоже хочет познакомиться. Открывайте чат.`, `/chat/${chat}`, now),
+          ],
+        },
+        'Метч! Чат уже открыт'
       );
     }
 
@@ -436,11 +494,6 @@ function reducer(state, action) {
     case 'friendRemove':
       return withToast({ ...state, friends: state.friends.filter((f) => f.id !== action.id) }, 'Удалено из друзей');
 
-    case 'coffee':
-      return withToast(
-        { ...state, coffee: state.coffee.map((c) => (c.id === action.id ? { ...c, status: action.status } : c)) },
-        action.status === 'agreed' ? 'Отлично, хорошей встречи' : 'Пропускаем эту неделю'
-      );
 
     /* ---------- уведомления ---------- */
 
@@ -497,7 +550,7 @@ function reducer(state, action) {
       const cityNotes = rules.notes.filter((n) => !next.notes.some((x) => x.key === n.key));
       if (cityNotes.length) next = { ...next, notes: [...next.notes, ...cityNotes] };
 
-      next = ensureCoffee(next, now);
+      next = ensureMeets(next, now);
 
       // Демо: куратор распределяет заявки сам — в команду, где меньше всего людей
       const waiting = next.applications.filter((a) => a.status === 'pending' && now - a.at > AUTO_CURATOR);
@@ -510,6 +563,38 @@ function reducer(state, action) {
         next = reducer(next, { type: 'assign', teamId: target.t.id, userId: application.userId, role: application.role, silent: true, now });
       }
       if (waiting.length) next = { ...next, toast: state.toast };
+
+      // Демо: собеседник в личном чате отвечает сам — иначе разговор мёртвый
+      const replies = ['Привет! Рад знакомству', 'Давай созвонимся на неделе?', 'Отличная идея, я за', 'Напиши, когда удобно — подстроюсь', 'Как раз думал об этом же'];
+      const dmKeys = [...new Set(next.messages.filter((m) => m.chat.startsWith('dm:')).map((m) => m.chat))];
+      for (const key of dmKeys) {
+        const thread = next.messages.filter((m) => m.chat === key).sort((a, b) => a.at - b.at);
+        const last = thread[thread.length - 1];
+        if (!last || last.userId !== next.session.userId || now - last.at < AUTO_FRIEND_ANSWER) continue;
+        const other = key.slice(3).split('|').find((id) => id !== next.session.userId);
+        if (!next.users.find((u) => u.id === other)?.demo) continue;
+        next = {
+          ...next,
+          messages: [...next.messages, { id: uid('ms'), chat: key, userId: other, text: replies[thread.length % replies.length], at: now }],
+        };
+      }
+
+      // Демо: собеседник отвечает взаимностью тем охотнее, чем ближе интересы
+      const waitingMeets = next.meets.filter(
+        (m) => m.status === 'liked' && now - m.at > AUTO_FRIEND_ANSWER && !m.likedBy.includes(m.a === next.session.userId ? m.b : m.a)
+      );
+      for (const meet of waitingMeets) {
+        const other = meet.likedBy.includes(meet.a) ? meet.b : meet.a;
+        const person = next.users.find((u) => u.id === other);
+        if (!person?.demo) continue;
+        if (meet.percent < 45) {
+          next = { ...next, meets: next.meets.map((m) => (m.id === meet.id ? { ...m, status: 'passed' } : m)) };
+          continue;
+        }
+        const saved = next.session.userId;
+        next = reducer({ ...next, session: { ...next.session, userId: other } }, { type: 'meetLike', id: meet.id, now });
+        next = { ...next, session: { ...next.session, userId: saved }, toast: state.toast };
+      }
 
       // Демо: приглашённый в команду соглашается сам
       const invited = next.invites.filter((i) => i.status === 'pending' && now - i.at > AUTO_FRIEND_ANSWER && next.users.find((u) => u.id === i.userId)?.demo);

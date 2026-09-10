@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { canJoin, cityById, goingUsers, rsvpOf, friendsGoing } from '../lib/logic.js';
+import { canJoin, chatKey, cityById, goingUsers, rsvpOf, friendsGoing } from '../lib/logic.js';
 import { whenLabel, dayName, timeOf, inputValue, MINUTE, relative, plural } from '../lib/time.js';
 import { EVENT_TYPES } from '../lib/events.js';
 import Cover from '../components/Cover.jsx';
 import { Avatar, Btn, Card, Empty, Field, List, Item, Note, Section, Sheet, Tag, TopBar } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
+import VideoModal from '../components/VideoModal.jsx';
 
 const TONE_TAG = { online: 'blue', offline: 'accent', team: 'violet', summit: 'warm' };
 
@@ -16,6 +17,7 @@ export default function EventPage({ id, now }) {
   const [edit, setEdit] = useState(false);
   const [propose, setPropose] = useState(false);
   const [text, setText] = useState('');
+  const [play, setPlay] = useState(false);
   if (!event) return <div className="screen"><Empty title="Событие не найдено" /></div>;
 
   const city = event.cityId ? cityById(state, event.cityId) : null;
@@ -55,7 +57,8 @@ export default function EventPage({ id, now }) {
           ) : (
             <Item icon="video" title="Онлайн" sub={event.joinUrl ? 'Кнопка «Подключиться» появится за 15 минут до начала' : 'Ссылка появится ближе к началу'} chev={false} />
           )}
-          {team && <Item icon="team" title={`Команда «${team.name}»`} sub={team.idea} onClick={() => go('/team')} />}
+          {team && <Item icon="message" title="Чат команды" sub="Согласовать время и место" onClick={() => go(`/chat/${encodeURIComponent(chatKey('team', [team.id]))}`)} />}
+          {event.type === 'offline' && city && <Item icon="message" title="Чат города" sub="Договориться, кто где" onClick={() => go(`/chat/${encodeURIComponent(chatKey('city', [city.id]))}`)} />}
         </List>
 
         {event.description && <p className="lead">{event.description}</p>}
@@ -86,7 +89,7 @@ export default function EventPage({ id, now }) {
         </Section>
 
         {past && event.recordUrl && (
-          <a className="btn btn--ghost btn--wide" href={event.recordUrl} target="_blank" rel="noreferrer"><Icon name="play" size={15} /> Запись встречи</a>
+          <Btn variant="ghost" wide icon="play" onClick={() => setPlay(true)}>Смотреть запись</Btn>
         )}
 
         {!past && !event.canceled && (
@@ -109,6 +112,8 @@ export default function EventPage({ id, now }) {
           </div>
         )}
       </div>
+
+      {play && <VideoModal url={event.recordUrl} title={event.title} onClose={() => setPlay(false)} />}
 
       <Sheet open={edit} onClose={() => setEdit(false)} title="Встреча" sub="Место, время и описание">
         <EditForm event={event} onDone={() => setEdit(false)} />

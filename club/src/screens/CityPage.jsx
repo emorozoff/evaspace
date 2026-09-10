@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { cityStats, nextFridayEvent } from '../lib/logic.js';
+import { chatKey, cityStats, nextFridayEvent } from '../lib/logic.js';
 import { dateShort } from '../lib/time.js';
 import { Avatar, Btn, Card, Empty, List, Item, Note, Section, Sheet, Stat, TopBar } from '../components/UI.jsx';
 import EventCard from '../components/EventCard.jsx';
@@ -61,8 +61,8 @@ export default function CityPage({ id, now }) {
           </Note>
         )}
 
-        {stats.city.chatUrl && (
-          <a className="btn btn--ghost btn--wide" href={stats.city.chatUrl} target="_blank" rel="noreferrer">Чат города в телеграме</a>
+        {stats.ready && (
+          <Btn variant="ghost" wide icon="message" onClick={() => go(`/chat/${encodeURIComponent(chatKey('city', [id]))}`)}>Чат города</Btn>
         )}
 
         {proposals.length > 0 && (

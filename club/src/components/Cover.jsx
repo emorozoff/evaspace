@@ -116,7 +116,7 @@ function draw(event, tone) {
 export function CoverThumb({ event, size = 46 }) {
   return (
     <div className="thumb" style={{ width: size, height: size }}>
-      <Cover event={event} className="thumb__cover" />
+      <Cover event={event} className="ev__cover--square" />
     </div>
   );
 }

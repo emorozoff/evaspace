@@ -1,6 +1,6 @@
-/* Знакомство при входе: семь вопросов на четырёх экранах.
+/* Знакомство при входе: девять вопросов на четырёх экранах.
    Ответы нужны не ради анкеты — по ним куратор собирает равные команды,
-   а люди находят друг друга в каталоге и на рандом-кофе. */
+   а люди находят друг друга в каталоге и на рандом-знакомствах. */
 
 export const STEPS = [
   {
@@ -57,6 +57,16 @@ export const STEPS = [
           { id: 'Доводить до конца', label: 'Доводить до конца', icon: 'shield' },
         ],
       },
+      {
+        id: 'ai',
+        title: 'Насколько уверенно с ИИ',
+        max: 1,
+        options: [
+          { id: 'Новичок', label: 'Новичок', icon: 'sprout' },
+          { id: 'Средний уровень', label: 'Средний', icon: 'bulb' },
+          { id: 'Про', label: 'Про', icon: 'bolt' },
+        ],
+      },
     ],
   },
   {
@@ -95,18 +105,30 @@ export const STEPS = [
     id: 'life',
     eyebrow: 'Шаг 4 из 4',
     title: 'И про жизнь',
-    sub: 'По этому люди находят друг друга на пятницах и рандом-кофе',
+    sub: 'По этому люди находят друг друга на пятницах и знакомствах',
     questions: [
       {
-        id: 'heart',
-        title: 'Как дела с сердцем',
+        id: 'goal',
+        title: 'Зачем вступаете в клуб',
+        max: 2,
+        options: [
+          { id: 'Новые знакомства', label: 'Новые знакомства', icon: 'people' },
+          { id: 'Встретить любовь', label: 'Встретить любовь', icon: 'heart' },
+          { id: 'Найти партнёров', label: 'Найти партнёров', icon: 'handshake' },
+          { id: 'Запустить проект', label: 'Запустить проект', icon: 'rocket' },
+          { id: 'Оптимизировать время', label: 'Освободить время', icon: 'clock' },
+          { id: 'Научиться ИИ', label: 'Научиться ИИ', icon: 'spark' },
+        ],
+      },
+      {
+        id: 'status',
+        title: 'Статус в отношениях',
         max: 1,
         options: [
-          { id: 'Сердце открыто', label: 'Сердце открыто', icon: 'heart' },
-          { id: 'Хочу влюбиться', label: 'Хочу влюбиться', icon: 'heartPlus' },
-          { id: 'Уже влюблён', label: 'Уже влюблён', icon: 'flame' },
+          { id: 'Свободен', label: 'Свободен', icon: 'heart' },
+          { id: 'В отношениях', label: 'В отношениях', icon: 'flame' },
           { id: 'Женат / замужем', label: 'Женат / замужем', icon: 'rings' },
-          { id: 'Всё сложно', label: 'Всё сложно', icon: 'lock' },
+          { id: 'Не указываю', label: 'Не указываю', icon: 'lock' },
         ],
       },
       {
@@ -114,22 +136,24 @@ export const STEPS = [
         title: 'Чем занимаетесь, когда не работаете',
         max: 3,
         options: [
-          { id: 'Спорт', label: 'Спорт', icon: 'run' },
-          { id: 'Горы', label: 'Горы', icon: 'mountain' },
+          { id: 'Падл и теннис', label: 'Падл, теннис', icon: 'run' },
+          { id: 'Горы и походы', label: 'Горы, походы', icon: 'mountain' },
+          { id: 'Караоке', label: 'Караоке', icon: 'mic' },
+          { id: 'Настолки', label: 'Настолки', icon: 'game' },
+          { id: 'Клубы и вечеринки', label: 'Клубы, вечеринки', icon: 'bolt' },
+          { id: 'Зал и бег', label: 'Зал, бег', icon: 'shield' },
           { id: 'Путешествия', label: 'Путешествия', icon: 'plane' },
-          { id: 'Книги', label: 'Книги', icon: 'book' },
+          { id: 'Вино и рестораны', label: 'Вино, рестораны', icon: 'fork' },
+          { id: 'Книги и подкасты', label: 'Книги, подкасты', icon: 'book' },
+          { id: 'Мотоциклы и авто', label: 'Мото, авто', icon: 'bolt' },
           { id: 'Музыка', label: 'Музыка', icon: 'music' },
-          { id: 'Игры', label: 'Игры', icon: 'game' },
-          { id: 'Еда и вино', label: 'Еда и вино', icon: 'fork' },
-          { id: 'Фото и видео', label: 'Фото и видео', icon: 'camera' },
-          { id: 'Экстрим', label: 'Экстрим', icon: 'bolt' },
+          { id: 'Фото и видео', label: 'Фото, видео', icon: 'camera' },
         ],
       },
     ],
   },
 ];
 
-/** Все вопросы одним списком — удобно для профиля и админки. */
 export const QUESTIONS = STEPS.flatMap((s) => s.questions);
 
 export const questionById = (id) => QUESTIONS.find((q) => q.id === id);
@@ -143,10 +167,15 @@ export function stepDone(step, answers) {
   return step.questions.every((q) => (answers[q.id] || []).length > 0);
 }
 
-/* Порядок и подписи для показа в профиле и карточке человека */
-export const PROFILE_FACTS = [
-  { id: 'role', label: 'Роль' },
-  { id: 'exp', label: 'Опыт' },
-  { id: 'age', label: 'Возраст' },
-  { id: 'heart', label: 'Сердце' },
-];
+/** Подписи в профиле и админке */
+export const FACT_LABELS = {
+  role: 'Роль',
+  exp: 'Опыт',
+  ai: 'Владение ИИ',
+  age: 'Возраст',
+  income: 'Доход в месяц',
+  goal: 'Зачем в клубе',
+  status: 'Отношения',
+  powers: 'Сильные стороны',
+  hobby: 'Увлечения',
+};

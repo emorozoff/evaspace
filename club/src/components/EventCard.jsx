@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import { canJoin, goingUsers, rsvpOf, friendsGoing, cityById } from '../lib/logic.js';
@@ -6,6 +7,7 @@ import { plural } from '../lib/time.js';
 import { EVENT_TYPES } from '../lib/events.js';
 import Cover, { CoverThumb } from './Cover.jsx';
 import { AvatarStack, Btn, Tag, Item } from './UI.jsx';
+import VideoModal from './VideoModal.jsx';
 import Icon from './Icons.jsx';
 
 const TONE_TAG = { online: 'blue', offline: 'accent', team: 'violet', summit: 'warm' };
@@ -17,6 +19,7 @@ const TONE_TAG = { online: 'blue', offline: 'accent', team: 'violet', summit: 'w
  */
 export default function EventCard({ event, now = Date.now() }) {
   const { state, me, dispatch } = useStore();
+  const [play, setPlay] = useState(false);
   const mine = rsvpOf(state, event.id, me.id);
   const going = goingUsers(state, event.id);
   const friends = friendsGoing(state, event.id, me.id);
@@ -36,7 +39,7 @@ export default function EventCard({ event, now = Date.now() }) {
             <Tag tone={TONE_TAG[event.type]}>{EVENT_TYPES[event.type].label}</Tag>
             {event.minPackage === 'pro' && <Tag tone="violet">PRO</Tag>}
           </div>
-          {mine === 'going' && !past && <div className="ev__when"><Icon name="check" size={12} /><span>вы идёте</span></div>}
+          {mine === 'going' && !past && <div className="ev__when"><Icon name="check" size={12} /><span>иду</span></div>}
           <div className="ev__over">
             <div className="ev__title">{event.title}</div>
             <div className="ev__meta">{when} · {where}</div>
@@ -58,9 +61,7 @@ export default function EventCard({ event, now = Date.now() }) {
 
           {past ? (
             event.recordUrl ? (
-              <a className="btn btn--ghost btn--sm" href={event.recordUrl} target="_blank" rel="noreferrer">
-                <Icon name="play" size={13} /> Запись
-              </a>
+              <Btn variant="ghost" size="sm" icon="play" onClick={() => setPlay(true)}>Запись</Btn>
             ) : null
           ) : joinable ? (
             <a className="btn btn--accent btn--sm" href={event.joinUrl} target="_blank" rel="noreferrer">
@@ -78,6 +79,7 @@ export default function EventCard({ event, now = Date.now() }) {
           )}
         </div>
       </div>
+      {play && <VideoModal url={event.recordUrl} title={event.title} onClose={() => setPlay(false)} />}
     </article>
   );
 }

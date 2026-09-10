@@ -199,8 +199,9 @@ export function teamPlace(state, teamId) {
   return row ? row.place : null;
 }
 
+/** Клуб заходит в копилку своей десятиной — сезон стартует не с нуля. */
 export function seasonPot(state) {
-  return state.contributions.reduce((s, c) => s + c.amount, 0);
+  return (state.season.clubPot || 0) + state.contributions.reduce((s, c) => s + c.amount, 0);
 }
 
 export function lastReport(state, teamId) {
@@ -274,12 +275,25 @@ export function invitableUsers(state, teamId) {
  * Убранных вручную (`circleOut`) раскладка обратно не возвращает.
  */
 export function innerCircle(state, userId) {
+  const me = userById(state, userId);
   const team = teamOf(state, userId);
-  const auto = team ? state.members.filter((m) => m.teamId === team.id && m.userId !== userId).map((m) => m.userId) : [];
-  const manual = state.circle || [];
   const out = new Set(state.circleOut || []);
-  const ids = [...new Set([...manual, ...auto])].filter((id) => id !== userId && !out.has(id));
-  return ids.map((id) => userById(state, id)).filter(Boolean);
+  const auto = team ? state.members.filter((m) => m.teamId === team.id && m.userId !== userId).map((m) => m.userId) : [];
+  const met = matchedWith(state, userId).map((u) => u.id);
+  let ids = [...new Set([...auto, ...met, ...(state.circle || [])])];
+
+  // Круг не должен пустовать: добираем недавно пришедших с близкими интересами
+  if (ids.length < 5) {
+    const suggested = state.users
+      .filter((u) => u.id !== userId && u.active !== false && !ids.includes(u.id) && !out.has(u.id))
+      .map((u) => ({ u, score: matchPercent(me, u) }))
+      .sort((x, y) => y.score - x.score || y.u.joinedAt - x.u.joinedAt)
+      .slice(0, 5 - ids.length)
+      .map((x) => x.u.id);
+    ids = [...ids, ...suggested];
+  }
+
+  return ids.filter((id) => id !== userId && !out.has(id)).map((id) => userById(state, id)).filter(Boolean);
 }
 
 /** Статус в клубе — то, что напечатано на карточке резидента. */
@@ -329,69 +343,132 @@ export function friendsGoing(state, eventId, userId) {
   return goingUsers(state, eventId).filter((u) => ids.has(u.id));
 }
 
-/* ---------- рандом-кофе ---------- */
+/* ---------- знакомства ---------- */
 
-export function coffeeFor(state, userId, week) {
-  return state.coffee.find((c) => c.week === week && (c.a === userId || c.b === userId)) || null;
+/** Сколько предложений программа выдаёт в неделю: хватает, чтобы за сезон
+    познакомиться со всеми, но не превращается в ленту. */
+export const WEEKLY_MEETS = 3;
+
+export const MEET_GOALS = [
+  { id: 'Новые знакомства', label: 'Просто пообщаться', icon: 'people' },
+  { id: 'Найти партнёров', label: 'Найти партнёра в дело', icon: 'handshake' },
+  { id: 'Запустить проект', label: 'Собрать проект', icon: 'rocket' },
+  { id: 'Научиться ИИ', label: 'Обменяться опытом в ИИ', icon: 'spark' },
+  { id: 'Встретить любовь', label: 'Встретить любовь', icon: 'heart' },
+];
+
+/** Насколько совпадают интересы: увлечения весомее целей и сильных сторон. */
+export function matchPercent(a, b) {
+  if (!a || !b) return 0;
+  const cross = (key) => {
+    const one = new Set(a.facts?.[key] || []);
+    const two = b.facts?.[key] || [];
+    return two.filter((x) => one.has(x)).length;
+  };
+  const hobby = cross('hobby');
+  const goal = cross('goal');
+  const powers = cross('powers');
+  const sameCity = a.cityId === b.cityId ? 1 : 0;
+  const sameAi = (a.facts?.ai?.[0] && a.facts.ai[0] === b.facts?.ai?.[0]) ? 1 : 0;
+  const score = hobby * 22 + goal * 16 + powers * 8 + sameCity * 12 + sameAi * 6;
+  // Небольшая база, чтобы даже непохожие люди не выглядели «0%»
+  return Math.max(12, Math.min(98, Math.round(18 + score)));
+}
+
+export function meetsFor(state, userId, week) {
+  return state.meets.filter((m) => m.week === week && (m.a === userId || m.b === userId));
+}
+
+export function matchedWith(state, userId) {
+  return state.meets
+    .filter((m) => m.status === 'matched' && (m.a === userId || m.b === userId))
+    .map((m) => userById(state, m.a === userId ? m.b : m.a))
+    .filter(Boolean);
 }
 
 /**
- * Пары на неделю. Приоритет: один город, разные команды, ещё не встречались.
- * Если в городе никого нет — пара подбирается онлайн.
+ * Предложения на неделю. Приоритет — совпадение интересов и «ещё не виделись»;
+ * город решает только формат встречи: офлайн или онлайн.
  */
-export function ensureCoffee(state, now = Date.now()) {
+export function ensureMeets(state, now = Date.now()) {
   const week = weekKey(now);
-  const matched = new Set();
-  state.coffee.filter((c) => c.week === week).forEach((c) => {
-    matched.add(c.a);
-    matched.add(c.b);
-  });
-
-  // Подбираем только тех, у кого пары на этой неделе ещё нет:
-  // так новый участник получает собеседника сразу, а не через неделю.
-  const pool = state.users.filter((u) => u.active !== false && u.coffeeEnabled && !matched.has(u.id));
-  if (pool.length < 2) return state;
-
-  const order = [...pool].sort((a, b) => hash(week + a.id) - hash(week + b.id));
-  const met = new Set(state.coffee.map((c) => [c.a, c.b].sort().join('|')));
-  const taken = new Set();
   const made = [];
 
-  for (const user of order) {
-    if (taken.has(user.id)) continue;
-    let best = null;
-    let bestScore = -1;
-    for (const other of order) {
-      if (other.id === user.id || taken.has(other.id)) continue;
-      const pair = [user.id, other.id].sort().join('|');
-      const myTeam = teamOf(state, user.id)?.id;
-      const theirTeam = teamOf(state, other.id)?.id;
-      let score = 0;
-      if (!met.has(pair)) score += 8;                                  // ещё не встречались
-      if (other.cityId === user.cityId) score += 4;                    // один город
-      if (!myTeam || myTeam !== theirTeam) score += 2;                 // разные команды
-      score += (hash(week + pair) % 100) / 1000;
-      if (score > bestScore) {
-        bestScore = score;
-        best = other;
-      }
+  // Квота считается с обеих сторон: попасть в чужие предложения — тоже расход недели
+  const quota = {};
+  state.meets.filter((m) => m.week === week).forEach((m) => {
+    quota[m.a] = (quota[m.a] || 0) + 1;
+    quota[m.b] = (quota[m.b] || 0) + 1;
+  });
+
+  state.users.forEach((user) => {
+    if (user.active === false || !user.coffeeEnabled) return;
+    if ((quota[user.id] || 0) >= WEEKLY_MEETS) return;
+
+    const met = new Set(
+      state.meets.concat(made).filter((m) => m.a === user.id || m.b === user.id).map((m) => (m.a === user.id ? m.b : m.a))
+    );
+
+    const pool = state.users
+      .filter((u) => u.id !== user.id && u.active !== false && u.coffeeEnabled && !met.has(u.id) && (quota[u.id] || 0) < WEEKLY_MEETS)
+      .map((u) => ({ u, percent: matchPercent(user, u), luck: hash(week + user.id + u.id) % 20 }))
+      .sort((x, y) => y.percent + y.luck - (x.percent + x.luck));
+
+    for (const { u, percent } of pool) {
+      if ((quota[user.id] || 0) >= WEEKLY_MEETS) break;
+      made.push({
+        id: uid('mt'),
+        week,
+        a: user.id,
+        b: u.id,
+        percent,
+        online: user.cityId !== u.cityId,
+        status: 'new',
+        likedBy: [],
+        at: startOfWeek(now),
+      });
+      quota[user.id] = (quota[user.id] || 0) + 1;
+      quota[u.id] = (quota[u.id] || 0) + 1;
+      met.add(u.id);
     }
-    if (!best) continue;
-    taken.add(user.id);
-    taken.add(best.id);
-    made.push({
-      id: uid('cf'),
-      week,
-      a: user.id,
-      b: best.id,
-      status: 'new',
-      online: user.cityId !== best.cityId,
-      at: startOfWeek(now),
-    });
-  }
+  });
 
   if (!made.length) return state;
-  return { ...state, coffee: [...state.coffee, ...made] };
+  return { ...state, meets: [...state.meets, ...made] };
+}
+
+/* ---------- разговоры ---------- */
+
+/** Ключ разговора: у команды и города он один на всех, у людей — общий на двоих. */
+export function chatKey(kind, ids) {
+  return kind === 'dm' ? `dm:${[...ids].sort().join('|')}` : `${kind}:${ids[0]}`;
+}
+
+export function chatMessages(state, key) {
+  return state.messages.filter((m) => m.chat === key).sort((a, b) => a.at - b.at);
+}
+
+export function lastMessage(state, key) {
+  const list = chatMessages(state, key);
+  return list[list.length - 1] || null;
+}
+
+export function unreadIn(state, key, userId) {
+  const seen = state.seen?.[key] || 0;
+  return chatMessages(state, key).filter((m) => m.at > seen && m.userId !== userId).length;
+}
+
+/** Все разговоры участника: команда, город и личные — в одном списке. */
+export function chatsOf(state, userId) {
+  const list = [];
+  const team = teamOf(state, userId);
+  if (team) list.push({ key: chatKey('team', [team.id]), kind: 'team', title: `Команда «${team.name}»`, team });
+  const city = cityById(state, userById(state, userId)?.cityId);
+  if (city && cityMembers(state, city.id).length >= 2) list.push({ key: chatKey('city', [city.id]), kind: 'city', title: `${city.name} · город`, city });
+  matchedWith(state, userId).forEach((u) => list.push({ key: chatKey('dm', [userId, u.id]), kind: 'dm', title: u.name, user: u }));
+  return list
+    .map((c) => ({ ...c, last: lastMessage(state, c.key), unread: unreadIn(state, c.key, userId) }))
+    .sort((a, b) => (b.last?.at || 0) - (a.last?.at || 0));
 }
 
 /* ---------- города: главное правило ---------- */
@@ -487,10 +564,9 @@ export function buildNotifications(state, user, now = Date.now()) {
   }
 
   const week = weekKey(now);
-  const pair = coffeeFor(state, user.id, week);
-  if (pair) {
-    const other = userById(state, pair.a === user.id ? pair.b : pair.a);
-    if (other) add(`coffee-${week}-${user.id}`, 'Пара недели', `${other.name} — ${other.about}. Напишите и договоритесь.`, '/coffee', startOfWeek(now) + 9 * HOUR);
+  const waiting = meetsFor(state, user.id, week).filter((m) => m.status === 'new').length;
+  if (waiting) {
+    add(`meets-${week}-${user.id}`, 'Новые знакомства', `На этой неделе ${waiting} предложения. Загляните, пока не разобрали.`, '/meet', startOfWeek(now) + 9 * HOUR);
   }
 
   const fresh = state.materials
@@ -524,6 +600,12 @@ export function summitEvent(state) {
 export function summitVisible(state, now = Date.now()) {
   const summit = summitEvent(state);
   return Boolean(summit) && summit.startsAt - now < 45 * DAY;
+}
+
+/* ---------- спонсоры ---------- */
+
+export function sponsorById(state, id) {
+  return state.sponsors.find((s) => s.id === id) || null;
 }
 
 /* ---------- сезон ---------- */

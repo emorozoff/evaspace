@@ -84,8 +84,10 @@ function Teams({ now }) {
                     {factOf(user, 'exp') && <Tag>опыт {factOf(user, 'exp')}</Tag>}
                     {factOf(user, 'age') && <Tag>{factOf(user, 'age')} лет</Tag>}
                     {factOf(user, 'income') && <Tag tone="warm">{factOf(user, 'income')}</Tag>}
+                    {factOf(user, 'ai') && <Tag tone="violet">ИИ: {factOf(user, 'ai')}</Tag>}
                   </div>
                   {factOf(user, 'powers') && <div className="t-xs dim-2" style={{ marginTop: 8 }}>Сильные стороны: {factOf(user, 'powers')}</div>}
+                  {factOf(user, 'goal') && <div className="t-xs dim-2" style={{ marginTop: 4 }}>Зачем в клубе: {factOf(user, 'goal').toLowerCase()}</div>}
                 </Card>
               );
             })}

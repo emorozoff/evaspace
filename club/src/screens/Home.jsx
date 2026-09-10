@@ -2,8 +2,8 @@ import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import {
   nextEvent, visibleEvents, teamOf, teamStats, teamPlace, seasonProgress, cityStats, nextFridayEvent,
-  coffeeFor, userById, materialsFor, isPro, summitVisible, summitEvent, unreadCount, applicationOf,
-  attendanceOf, inviteFor, awardOf,
+  meetsFor, userById, materialsFor, isPro, summitVisible, summitEvent, unreadCount, applicationOf,
+  attendanceOf, inviteFor, awardOf, chatsOf, WEEKLY_MEETS,
 } from '../lib/logic.js';
 import { weekKey, plural, whenLabel, dateShort, DAY } from '../lib/time.js';
 import { moneyShort } from '../lib/format.js';
@@ -27,8 +27,8 @@ export default function Home({ now }) {
   const application = applicationOf(state, me.id);
   const city = cityStats(state, me.cityId);
   const friday = nextFridayEvent(state, me.cityId, now);
-  const pair = coffeeFor(state, me.id, weekKey(now));
-  const buddy = pair ? userById(state, pair.a === me.id ? pair.b : pair.a) : null;
+  const freshMeets = meetsFor(state, me.id, weekKey(now)).filter((m) => m.status === 'new').length;
+  const unreadChats = chatsOf(state, me.id).reduce((sum, c) => sum + c.unread, 0);
   const material = materialsFor(state, me)[0];
   const unread = unreadCount(state, me.id);
   const summit = summitVisible(state, now) ? summitEvent(state) : null;
@@ -42,6 +42,10 @@ export default function Home({ now }) {
           <div className="eyebrow">{state.season.title} · месяц {season.monthIndex} из 3</div>
           <h1 className="h1" style={{ marginTop: 4 }}>{greet()}, {me.name.split(' ')[0]}</h1>
         </div>
+        <button className="iconbtn" onClick={() => go('/chats')} aria-label="Сообщения">
+          <Icon name="message" size={19} />
+          {unreadChats > 0 && <span className="badge-n">{unreadChats}</span>}
+        </button>
         <button className="iconbtn" onClick={() => go('/notes')} aria-label="Уведомления">
           <Icon name="bell" size={19} />
           {unread > 0 && <span className="badge-n">{unread}</span>}
@@ -138,13 +142,13 @@ export default function Home({ now }) {
               : 'Пока вы один — позовите второго, и появится пятница'}
             onClick={() => go(`/city/${me.cityId}`)}
           />
-          {me.coffeeEnabled && buddy && (
+          {me.coffeeEnabled && freshMeets > 0 && (
             <Item
-              lead={<Avatar user={buddy} size={40} />}
-              title={`Пара недели: ${buddy.name.split(' ')[0]}`}
-              sub={pair.status === 'agreed' ? 'Договорились — хорошей встречи' : buddy.about}
-              meta={<Tag tone="accent">кофе</Tag>}
-              onClick={() => go('/coffee')}
+              icon="spark"
+              title="Новые знакомства"
+              sub={`${freshMeets} из ${WEEKLY_MEETS} предложений на этой неделе`}
+              meta={<Tag tone="accent">{freshMeets}</Tag>}
+              onClick={() => go('/meet')}
             />
           )}
           {summit && <Item icon="star" title="Большой слёт" sub={`${dateShort(summit.startsAt)} · ${summit.place}`} onClick={() => go('/summit')} />}

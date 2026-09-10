@@ -1,6 +1,6 @@
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { cityName, friendStatus, friendIds, teamOf, factOf } from '../lib/logic.js';
+import { chatKey, cityName, friendStatus, friendIds, matchPercent, matchedWith, teamOf, factOf } from '../lib/logic.js';
 import { dateShort } from '../lib/time.js';
 import { Actions, Avatar, Card, Empty, List, Item, Note, Tag, TopBar } from '../components/UI.jsx';
 
@@ -12,7 +12,9 @@ export default function PersonPage({ id }) {
   const link = friendStatus(state, me.id, user.id);
   const team = teamOf(state, user.id);
   const mutual = friendIds(state, me.id).filter((x) => friendIds(state, user.id).includes(x)).length;
-  const tg = `https://t.me/${(user.tg || '').replace('@', '')}`;
+  const matched = matchedWith(state, me.id).some((u) => u.id === user.id);
+  const dm = chatKey('dm', [me.id, user.id]);
+  const percent = matchPercent(me, user);
 
   const friendAction = link.status === 'accepted'
     ? { icon: 'check', title: 'В друзьях', on: true, onClick: () => dispatch({ type: 'friendRemove', id: link.link.id }) }
@@ -37,18 +39,21 @@ export default function PersonPage({ id }) {
 
         {user.id !== me.id && (
           <Actions items={[
-            { icon: 'send', title: 'Написать', onClick: () => window.open(tg, '_blank') },
+            matched
+              ? { icon: 'message', title: 'Написать', onClick: () => go(`/chat/${encodeURIComponent(dm)}`) }
+              : { icon: 'spark', title: 'Познакомиться', onClick: () => go('/meet') },
             friendAction,
-            { icon: 'coffee', title: 'Кофе', onClick: () => go('/coffee') },
+            { icon: 'people', title: 'В круг', onClick: () => dispatch({ type: 'circleAdd', userId: user.id }) },
           ]} />
         )}
 
-        {(user.facts?.role?.length || user.facts?.heart?.length) && (
+        {(user.facts?.role?.length || user.facts?.status?.length) && (
           <div className="wrap" style={{ justifyContent: 'center' }}>
             {user.facts?.role?.length > 0 && <Tag tone="accent">{factOf(user, 'role')}</Tag>}
             {user.facts?.exp?.length > 0 && <Tag>{factOf(user, 'exp')} в деле</Tag>}
             {user.facts?.age?.length > 0 && <Tag>{factOf(user, 'age')} лет</Tag>}
-            {user.facts?.heart?.length > 0 && <Tag tone="violet">{factOf(user, 'heart')}</Tag>}
+            {user.facts?.ai?.length > 0 && <Tag tone="violet">ИИ: {factOf(user, 'ai')}</Tag>}
+            {user.facts?.status?.length > 0 && <Tag>{factOf(user, 'status')}</Tag>}
           </div>
         )}
 
@@ -59,6 +64,12 @@ export default function PersonPage({ id }) {
             <>
               <div className="eyebrow" style={{ marginTop: 14 }}>Что получается лучше всего</div>
               <div className="wrap" style={{ marginTop: 6 }}>{user.facts.powers.map((x) => <Tag key={x}>{x}</Tag>)}</div>
+            </>
+          )}
+          {user.facts?.goal?.length > 0 && (
+            <>
+              <div className="eyebrow" style={{ marginTop: 14 }}>Зачем в клубе</div>
+              <div className="wrap" style={{ marginTop: 6 }}>{user.facts.goal.map((x) => <Tag key={x} tone="accent">{x}</Tag>)}</div>
             </>
           )}
           {user.facts?.hobby?.length > 0 && (
@@ -78,7 +89,7 @@ export default function PersonPage({ id }) {
           </List>
         )}
 
-        <Note icon="send">Личных сообщений внутри приложения нет — для этого есть телеграм.</Note>
+        <Note icon="spark">Совпадение интересов — {percent}%. Личный чат открывается после взаимного знакомства.</Note>
       </div>
     </div>
   );

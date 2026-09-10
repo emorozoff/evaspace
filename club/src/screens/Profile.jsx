@@ -8,7 +8,7 @@ import { money } from '../lib/format.js';
 import { readImage } from '../lib/image.js';
 import { Avatar, Btn, Card, Field, FileButton, List, Item, Section, Sheet, Stat, Switch, Tag, TopBar } from '../components/UI.jsx';
 import Choice from '../components/Choice.jsx';
-import { STEPS } from '../data/onboarding.js';
+import { STEPS, FACT_LABELS } from '../data/onboarding.js';
 import { VERSION } from '../version.js';
 
 export default function Profile() {
@@ -35,7 +35,7 @@ export default function Profile() {
           <div className="wrap" style={{ justifyContent: 'center' }}>
             {me.facts?.role?.length > 0 && <Tag tone="accent">{factOf(me, 'role')}</Tag>}
             {me.facts?.exp?.length > 0 && <Tag>{factOf(me, 'exp')} в деле</Tag>}
-            {me.facts?.heart?.length > 0 && <Tag tone="violet">{factOf(me, 'heart')}</Tag>}
+            {me.facts?.ai?.length > 0 && <Tag tone="violet">ИИ: {factOf(me, 'ai')}</Tag>}
           </div>
         </div>
 
@@ -55,7 +55,7 @@ export default function Profile() {
 
         <Section title="Анкета" more="Изменить" onMore={() => setQuiz(true)}>
           <Card>
-            {['role', 'exp', 'age', 'income', 'heart'].filter((k) => me.facts?.[k]?.length).map((k) => (
+            {['role', 'exp', 'ai', 'age', 'income', 'status', 'goal'].filter((k) => me.facts?.[k]?.length).map((k) => (
               <div key={k} className="kv">
                 <span className="kv__k">{LABELS[k]}</span>
                 <span className="kv__v">{factOf(me, k)}</span>
@@ -70,7 +70,7 @@ export default function Profile() {
         <Section title="Настройки">
           <List>
             <Switch title="Уведомления" sub="Не больше пяти в неделю" on={me.notifications !== false} onChange={(v) => set({ notifications: v })} />
-            <Switch title="Рандом-кофе" sub="Пара каждый понедельник" on={me.coffeeEnabled} onChange={(v) => set({ coffeeEnabled: v })} />
+            <Switch title="Новые знакомства" sub="Несколько предложений каждый понедельник" on={me.coffeeEnabled} onChange={(v) => set({ coffeeEnabled: v })} />
             <Switch title="Показывать меня в каталоге" sub="Иначе вас не будет в разделе «Люди»" on={me.visible !== false} onChange={(v) => set({ visible: v })} />
           </List>
         </Section>
@@ -99,7 +99,7 @@ export default function Profile() {
   );
 }
 
-const LABELS = { role: 'Роль', exp: 'Опыт', age: 'Возраст', income: 'Доход в месяц', heart: 'Сердце' };
+const LABELS = FACT_LABELS;
 
 /** Перепройти анкету можно в любой момент — люди меняются за сезон. */
 function QuizForm({ onDone }) {

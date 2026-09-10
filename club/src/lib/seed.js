@@ -66,9 +66,11 @@ const ROLE_BY_SKILL = {
 const EXP = ['Первый год', '1–3 года', '3–7 лет', 'Больше 7'];
 const AGE = ['18–25', '26–32', '33–40', '41–50', '50+'];
 const INCOME = ['до 300 тыс', '300 тыс — 1 млн', '1–3 млн', '3–10 млн', 'больше 10 млн'];
-const HEART = ['Сердце открыто', 'Хочу влюбиться', 'Уже влюблён', 'Женат / замужем', 'Всё сложно'];
+const STATUS = ['Свободен', 'В отношениях', 'Женат / замужем', 'Не указываю'];
+const AI = ['Новичок', 'Средний уровень', 'Про'];
+const GOALS = ['Новые знакомства', 'Встретить любовь', 'Найти партнёров', 'Запустить проект', 'Оптимизировать время', 'Научиться ИИ'];
 const POWERS = ['Придумывать', 'Договариваться', 'Собирать продукт', 'Делать красиво', 'Писать тексты', 'Считать деньги', 'Автоматизировать', 'Выступать', 'Доводить до конца'];
-const HOBBY = ['Спорт', 'Горы', 'Путешествия', 'Книги', 'Музыка', 'Игры', 'Еда и вино', 'Фото и видео', 'Экстрим'];
+const HOBBY = ['Падл и теннис', 'Горы и походы', 'Караоке', 'Настолки', 'Клубы и вечеринки', 'Зал и бег', 'Путешествия', 'Вино и рестораны', 'Книги и подкасты', 'Мотоциклы и авто', 'Музыка', 'Фото и видео'];
 
 /** Ответы анкеты для демо-участника — устойчивые, но разные. */
 function factsFor(user, pick) {
@@ -78,7 +80,9 @@ function factsFor(user, pick) {
     exp: [EXP[Math.floor(pick() * EXP.length)]],
     age: [AGE[Math.floor(pick() * AGE.length)]],
     income: [INCOME[Math.floor(pick() * INCOME.length)]],
-    heart: [HEART[Math.floor(pick() * HEART.length)]],
+    status: [STATUS[Math.floor(pick() * STATUS.length)]],
+    ai: [AI[Math.floor(pick() * AI.length)]],
+    goal: [...GOALS].sort(() => pick() - 0.5).slice(0, 1 + Math.floor(pick() * 2)),
     powers: [...POWERS].sort(() => pick() - 0.5).slice(0, 2 + Math.floor(pick() * 2)),
     hobby: [...HOBBY].sort(() => pick() - 0.5).slice(0, 2 + Math.floor(pick() * 2)),
   };
@@ -92,6 +96,40 @@ function rng(seed) {
     return (s - 1) / 2147483646;
   };
 }
+
+/* Партнёры сезона: у каждого своя страница и оффер участникам */
+const SPONSORS = [
+  {
+    id: 'sp1',
+    name: 'Кинескоп',
+    tone: '#6d9bff',
+    tag: 'Видеохостинг',
+    short: 'Хранит все эфиры клуба',
+    about: 'Российский видеохостинг для бизнеса: приватные ссылки, аналитика досмотров и плеер, который не тормозит.',
+    offer: 'Три месяца тарифа Pro бесплатно по промокоду IAICLUB',
+    link: 'https://kinescope.io',
+  },
+  {
+    id: 'sp2',
+    name: 'Точка',
+    tone: '#79d2bf',
+    tag: 'Банк для бизнеса',
+    short: 'Счёт за день, без визита',
+    about: 'Банк для предпринимателей: открытие счёта онлайн, бухгалтерия и эквайринг в одном окне.',
+    offer: 'Обслуживание бесплатно на год для участников клуба',
+    link: 'https://tochka.com',
+  },
+  {
+    id: 'sp3',
+    name: 'Лоджик',
+    tone: '#8e7bf5',
+    tag: 'ИИ-платформа',
+    short: 'Агенты без разработчика',
+    about: 'Конструктор ИИ-агентов: база знаний, телефония и интеграции с CRM без единой строки кода.',
+    offer: 'Годовая лицензия со скидкой 40% и час внедрения в подарок',
+    link: 'https://example.com',
+  },
+];
 
 const TEAM_GOALS = [
   'Дойти до миллиона выручки и нанять первого сотрудника',
@@ -120,6 +158,8 @@ export function buildSeed(now = Date.now()) {
     title: 'Сезон 2',
     startsAt: seasonStart.getTime(),
     graduationAt: addMonths(seasonStart.getTime(), 3),
+    // Клуб заходит в копилку своей десятиной с продаж сезона
+    clubPot: 480000,
   };
 
   // Города
@@ -183,6 +223,7 @@ export function buildSeed(now = Date.now()) {
       name,
       idea,
       goal: TEAM_GOALS[i % TEAM_GOALS.length],
+      cover: i % 4,
       captainId: captain.id,
       mateId: null,
       seasonId: season.id,
@@ -301,6 +342,10 @@ export function buildSeed(now = Date.now()) {
     invites: [],
     circle: [],
     circleOut: [],
+    meets: [],
+    messages: [],
+    seen: {},
+    sponsors: SPONSORS,
     reports,
     revenue,
     contributions,
@@ -309,7 +354,6 @@ export function buildSeed(now = Date.now()) {
     rsvp: {},
     views: {},
     friends,
-    coffee: [],
     referrals: [],
     bonusLog: [],
     notes: [],
@@ -353,6 +397,38 @@ export function buildSeed(now = Date.now()) {
   materials.forEach((m) => {
     users.forEach((u) => {
       if (rand() < 0.25) state.views[`${m.id}:${u.id}`] = now - Math.floor(rand() * 20) * DAY;
+    });
+  });
+
+  // Живая переписка: в чатах команд и городов уже что-то есть
+  const talk = [
+    ['Собираемся в четверг в 20:00, всем удобно?', 'Да, буду', 'Плюс'],
+    ['Скинул в папку черновик лендинга — посмотрите к созвону', 'Ок, гляну вечером'],
+    ['Кто идёт в пятницу? Возьму столик побольше', 'Я иду', 'Буду с партнёром'],
+  ];
+  state.teams.forEach((team, i) => {
+    const roster = state.members.filter((m) => m.teamId === team.id);
+    const lines = talk[i % talk.length];
+    lines.forEach((text, k) => {
+      state.messages.push({
+        id: `msg_t${team.id}_${k}`,
+        chat: `team:${team.id}`,
+        userId: roster[k % roster.length]?.userId,
+        text,
+        at: now - (lines.length - k) * 5 * HOUR,
+      });
+    });
+  });
+  cities.filter((c) => c.chatUrl).slice(0, 4).forEach((city, i) => {
+    const members = users.filter((u) => u.cityId === city.id);
+    ['Кто в пятницу? Предлагаю кофейню на Ленина', 'Я за', 'Буду в 19:40'].forEach((text, k) => {
+      state.messages.push({
+        id: `msg_c${city.id}_${k}`,
+        chat: `city:${city.id}`,
+        userId: members[(k + i) % members.length]?.id,
+        text,
+        at: now - (3 - k) * 4 * HOUR,
+      });
     });
   });
 
