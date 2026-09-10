@@ -136,41 +136,74 @@
   /* ---------- страница «Модель» ---------- */
   .live-bar{
     position:sticky; top:64px; z-index:40; display:flex; gap:0; flex-wrap:wrap; align-items:stretch;
-    background:var(--ink); color:#fff; border-radius:14px; padding:10px 14px; margin:0 0 18px;
+    background:var(--ink); color:#fff; border-radius:14px; padding:9px 14px 10px; margin:0 0 16px;
     box-shadow:0 8px 24px rgba(28,27,24,0.22);
   }
-  .live-tag{flex:0 0 100%; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,0.55); margin-bottom:6px;}
-  .live-tile{flex:1 1 140px; min-width:130px; padding:4px 14px 4px 0; border-right:1px solid rgba(255,255,255,0.12); margin-right:14px; display:flex; flex-direction:column;}
+  .live-tag{flex:0 0 100%; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,0.55); margin-bottom:4px;}
+  .live-tile{flex:1 1 140px; min-width:130px; padding:2px 14px 2px 0; border-right:1px solid rgba(255,255,255,0.12); margin-right:14px; display:flex; flex-direction:column;}
   .live-tile:last-child{border-right:0; margin-right:0;}
   .live-tile .lt-l{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:rgba(255,255,255,0.6);}
-  .live-tile .lt-v{font-family:'Space Grotesk',sans-serif; font-size:19px; font-weight:700; color:#fff; margin-top:2px; white-space:nowrap;}
+  .live-tile .lt-v{font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700; color:#fff; margin-top:1px; white-space:nowrap;}
   .live-tile .lt-s{font-size:11px; color:rgba(255,255,255,0.55); margin-top:1px;}
   .live-tile.pos .lt-v{color:#9FD3A8;}
   .live-tile.neg .lt-v{color:#F2A58C;}
-  .model-nav{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 18px;}
-  .model-nav a{
-    display:inline-flex; align-items:center; gap:8px; padding:7px 12px 7px 8px; border:1px solid var(--line); border-radius:20px;
-    background:var(--panel); color:var(--ink-soft); font-size:12.5px; text-decoration:none;
+  .sec-num{
+    display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%;
+    background:var(--gold-ink); color:#fff; font-size:12px; font-weight:700; flex:0 0 26px;
   }
-  .model-nav a:hover{border-color:var(--gold); color:var(--gold-ink);}
-  .mn-num, .sec-num{
-    display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%;
-    background:var(--gold-ink); color:#fff; font-size:11px; font-weight:700; flex:0 0 20px;
+  .model-toolbar{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:0 0 20px;}
+  /* в полоске сценариев оставляем только названия — описание в подсказке */
+  .scenario-strip .scenario-btn{padding:9px 14px;}
+  .scenario-strip .sc-desc{display:none;}
+  .scenario-strip{display:flex; align-items:center; gap:10px; flex-wrap:wrap; flex:1 1 560px; margin:0;}
+  .scenario-strip .scenario-row{flex:1; min-width:300px; margin:0;}
+  /* раздел-карточка: свёрнут — одна строка с главными цифрами */
+  .model-sec{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    margin:0 0 14px; box-shadow:var(--shadow); overflow:hidden; transition:border-color .15s ease;
   }
-  .scenario-strip{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 36px;}
-  .scenario-strip .scenario-row{flex:1; min-width:320px; margin:0;}
-  .model-sec{margin:0 0 64px; padding-top:8px; border-top:2px solid var(--ink-faint);}
-  .sec-head{margin:18px 0 22px;}
-  .sec-title{display:flex; align-items:center; gap:12px;}
-  .sec-title h2{font-size:24px; margin:0; letter-spacing:-0.01em;}
-  .sec-title .sec-num{width:28px; height:28px; flex:0 0 28px; font-size:13px;}
-  .sec-sub{color:var(--ink-soft); font-size:14px; max-width:72ch; margin:8px 0 0 40px;}
-  .sec-result{display:flex; gap:10px; flex-wrap:wrap; margin:14px 0 0 40px;}
-  .sr-item{display:inline-flex; flex-direction:column; padding:8px 12px; background:var(--gold-bg); border:1px solid var(--gold); border-radius:10px; min-width:120px;}
-  .sr-item .sr-l{font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--gold-ink);}
-  .sr-item .sr-v{font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:600; color:var(--ink); margin-top:2px;}
+  .model-sec.open{border-color:var(--gold); margin-bottom:30px;}
+  .sec-head{
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    padding:14px 18px; cursor:pointer; transition:background .12s ease;
+  }
+  .sec-head:hover{background:var(--paper);}
+  .model-sec.open .sec-head{background:var(--gold-bg); border-bottom:1px solid var(--gold);}
+  .sec-title{display:flex; align-items:center; gap:11px; flex:0 1 300px; min-width:210px;}
+  /* свёрнутая карточка показывает три главные цифры, остальные — при раскрытии */
+  .model-sec:not(.open) .sr-item:nth-child(n+4){display:none;}
+  .sec-main{min-width:0;}
+  .sec-title h2{font-size:17px; margin:0; letter-spacing:-0.01em; padding:0; border:0; line-height:1.3;}
+  .sec-sub{
+    color:var(--ink-faint); font-size:12px; margin:3px 0 0; line-height:1.45;
+    overflow:hidden; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical;
+  }
+  .model-sec.open .sec-sub{-webkit-line-clamp:3; color:var(--ink-soft);}
+  .sec-result{display:flex; gap:8px; flex-wrap:wrap; margin:0; justify-content:flex-end; flex:1 1 auto;}
+  .sr-item{
+    display:inline-flex; align-items:baseline; gap:6px; padding:4px 9px; border-radius:20px;
+    background:var(--paper); border:1px solid var(--line); white-space:nowrap;
+  }
+  .model-sec.open .sr-item{background:var(--panel); border-color:var(--gold);}
+  .sr-item .sr-l{font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint);}
+  .sr-item .sr-v{font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; color:var(--ink);}
+  .sec-more{flex:0 0 auto; white-space:nowrap; padding:8px 14px !important; font-size:12.5px !important;}
+  .sec-chev{display:inline-block; margin-left:7px; transform:rotate(90deg); transition:transform .15s ease;}
+  .model-sec.open .sec-chev{transform:rotate(-90deg);}
+  .sec-body{padding:26px 22px 4px;}
   .sec-body section.block:first-child{margin-top:0;}
-  @media (max-width:760px){ .live-bar{top:56px;} .sec-sub, .sec-result{margin-left:0;} }
+  .sec-body section.block:last-child{margin-bottom:24px;}
+  .sec-foot{display:flex; justify-content:center; padding:0 0 16px;}
+  .sec-collapse{
+    background:none; border:1px solid var(--line); border-radius:20px; padding:6px 16px; cursor:pointer;
+    color:var(--ink-faint); font-size:12px; font-family:inherit;
+  }
+  .sec-collapse:hover{border-color:var(--gold); color:var(--gold-ink); background:var(--gold-bg);}
+  @media (max-width:900px){
+    .sec-result{justify-content:flex-start; flex-basis:100%; margin-left:38px;}
+    .sec-more{margin-left:38px;}
+  }
+  @media (max-width:760px){ .live-bar{top:56px;} .sec-body{padding:20px 14px 4px;} }
   section.block > .section-sub{color:var(--ink-soft); font-size:14px; margin-bottom:20px; max-width:64ch;}
 
   /* ---------------- generic cards / lists ---------------- */
@@ -2392,6 +2425,7 @@ async function render(){
   });
   const {name, param} = getRoute();
   _modelPage = (name==='model' || name==='statistics' || name==='finance');
+  if(_modelPage) _modelOpen = {};   /* при заходе на страницу разделы свёрнуты */
   setActiveNav(name);
   window.scrollTo(0,0);
   try{
@@ -2406,7 +2440,7 @@ async function render(){
       app.innerHTML = '<div class="loading">Считаем модель…</div>';
       await renderModelPage();
       const sec = MODEL_SECTIONS.some(x=>x.id===param) ? param : MODEL_TAB_TO_SECTION[param];
-      if(sec) setTimeout(()=>scrollToModelSection(sec), 60);
+      if(sec) await toggleModelSection(sec, true, true);
     }
     else if(name==='fact' || name==='reports' || name==='pnl'){
       if(name==='pnl') _repView = 'summary';
@@ -7988,11 +8022,11 @@ function liveBarHtml(S){
 function sectionResultHtml(id, S){
   const M = S.M, ue = S.ue;
   const map = {
-    revenue:  [['платящих на конец Года 1', num(Math.round(M.active[12]))], ['выручка Год 1', cfMoney(S.revY1)], ['Год 3', cfMoney(S.revY3)], ['привлечение Год 1', cfMoney(S.acqY1)]],
-    expenses: [['расходы Год 1', cfMoney(S.expY1)], ['налог Год 1', cfMoney(S.taxY1)], ['взносы Год 1', cfMoney(S.insY1)], ['EBITDA Год 1', cfMoney(S.ebitdaY1)]],
+    revenue:  [['платящих Y1', num(Math.round(M.active[12]))], ['выручка Y1', cfMoney(S.revY1)], ['выручка Y3', cfMoney(S.revY3)], ['привлечение Y1', cfMoney(S.acqY1)]],
+    expenses: [['расходы Y1', cfMoney(S.expY1)], ['налог Y1', cfMoney(S.taxY1)], ['взносы Y1', cfMoney(S.insY1)], ['EBITDA Y1', cfMoney(S.ebitdaY1)]],
     money:    [['нужно привлечь', cfMoney(S.needed)], ['дно кассы', finMonthLabel(S.bottomM)], ['заложено', cfMoney(S.raised)]],
-    cashflow: [['выход в плюс', M.breakevenMonth>0?finMonthLabel(M.breakevenMonth):'позже 36 мес.'], ['остаток на 36-й', cfMoney(M.cash[36])], ['минимум', cfMoney(M.minCash)], ['EBITDA Год 3', cfMoney(S.ebitdaY3)]],
-    unit:     [['ARPU', money(ue.arpu)+'/мес'], ['CAC смешанный', money(ue.cacBlended)], ['LTV/CAC', dec(ue.ltvCac)+'×'], ['окупаемость', isFinite(ue.paybackMonths)?dec(ue.paybackMonths)+' мес.':'—']],
+    cashflow: [['выход в плюс', M.breakevenMonth>0?finMonthLabel(M.breakevenMonth):'позже 36 мес.'], ['минимум', cfMoney(M.minCash)], ['остаток Y3', cfMoney(M.cash[36])], ['EBITDA Y3', cfMoney(S.ebitdaY3)]],
+    unit:     [['ARPU', money(ue.arpu)], ['CAC', money(ue.cacBlended)], ['LTV/CAC', dec(ue.ltvCac)+'×'], ['окупаемость', isFinite(ue.paybackMonths)?dec(ue.paybackMonths)+' мес.':'—']],
   };
   return `<div class="sec-result">${(map[id]||[]).map(([l,v])=>`<span class="sr-item"><span class="sr-l">${l}</span><span class="sr-v">${v}</span></span>`).join('')}</div>`;
 }
@@ -8008,50 +8042,118 @@ async function renderModelPage(){
     if(_modelAgain){ _modelAgain = false; renderModelPage(); }
   }
 }
+/* Какие разделы раскрыты. При заходе на страницу — ни одного:
+   видно пять коротких карточек с главными цифрами, подробности
+   открываются по кнопке. */
+let _modelOpen = {};
 async function renderModelPageNow(){
   _modelPage = true;
   killAllCharts();
   const S = await modelSummary();
   const holdH = app.offsetHeight;
+  const openCount = MODEL_SECTIONS.filter(sc=>_modelOpen[sc.id]).length;
   app.innerHTML = `
     <div id="modelPage">
       <h1 class="page-title">Модель</h1>
-      <p class="page-sub">Одна страница вместо семи вкладок: слева меняете цифру — сверху и в каждом разделе сразу видно, что из этого получается. Расходы, штат и налоги общие для всех сценариев; сценарии и варианты меняют только доходную часть.</p>
+      <p class="page-sub" style="margin-bottom:20px;">Главные цифры — сверху и в каждой карточке. Нужны подробности или правки — раскройте раздел кнопкой «Подробнее».</p>
       ${liveBarHtml(S)}
-      <div class="model-nav" id="modelNav">
-        ${MODEL_SECTIONS.map(sc=>`<a href="#model/${sc.id}" data-model-jump="${sc.id}"><span class="mn-num">${sc.num}</span>${sc.title}</a>`).join('')}
+      <div class="model-toolbar">
+        <div class="scenario-strip">
+          <span class="k-label" style="margin:0 12px 0 0;">Сценарий рынка</span>
+          ${scenarioRowHtml()}
+        </div>
+        <button class="btn ghost" id="modelExpandAll">${openCount ? 'Свернуть все разделы' : 'Раскрыть все разделы'}</button>
       </div>
-      <div class="scenario-strip">
-        <span class="k-label" style="margin:0 12px 0 0;">Сценарий рынка</span>
-        ${scenarioRowHtml()}
-      </div>
-      ${MODEL_SECTIONS.map(sc=>`
-        <div class="model-sec" id="model-${sc.id}">
-          <div class="sec-head">
-            <div class="sec-title"><span class="sec-num">${sc.num}</span><h2>${sc.title}</h2></div>
-            <p class="sec-sub">${sc.sub}</p>
+      ${MODEL_SECTIONS.map(sc=>{
+        const open = !!_modelOpen[sc.id];
+        return `
+        <section class="model-sec ${open?'open':''}" id="model-${sc.id}">
+          <div class="sec-head" data-model-head="${sc.id}">
+            <div class="sec-title">
+              <span class="sec-num">${sc.num}</span>
+              <div class="sec-main">
+                <h2>${sc.title}</h2>
+                <p class="sec-sub">${sc.sub}</p>
+              </div>
+            </div>
             ${sectionResultHtml(sc.id, S)}
+            <button type="button" class="btn ghost sec-more" data-model-toggle="${sc.id}" aria-expanded="${open}" aria-controls="model-body-${sc.id}">
+              ${open?'Свернуть':'Подробнее'}<span class="sec-chev">›</span>
+            </button>
           </div>
-          <div class="sec-body" id="model-body-${sc.id}"><div class="loading">Считаем…</div></div>
-        </div>`).join('')}
+          <div class="sec-body" id="model-body-${sc.id}" ${open?'':'hidden'}></div>
+          <div class="sec-foot" ${open?'':'hidden'}>
+            <button type="button" class="sec-collapse" data-model-collapse="${sc.id}" title="Свернуть раздел">↑ Свернуть «${sc.title}»</button>
+          </div>
+        </section>`;
+      }).join('')}
     </div>`;
   if(holdH) app.style.minHeight = holdH+'px';
+  /* считаем только то, что раскрыто — страница открывается мгновенно */
   for(const sc of MODEL_SECTIONS){
+    if(!_modelOpen[sc.id]) continue;
     if(!document.getElementById('modelPage')) return;   /* ушли со страницы, пока считали */
     const el = document.getElementById('model-body-'+sc.id);
-    if(el) await window[sc.fn](el);
+    if(el){ el.innerHTML = '<div class="loading">Считаем…</div>'; await window[sc.fn](el); el.dataset.drawn = '1'; }
   }
   app.style.minHeight = '';
   wireScenarioRow(()=>renderModelPage());
-  document.querySelectorAll('[data-model-jump]').forEach(a=>{
-    a.onclick = (e)=>{ e.preventDefault(); history.replaceState(null,'','#model/'+a.dataset.modelJump); scrollToModelSection(a.dataset.modelJump); };
+  document.querySelectorAll('[data-model-head]').forEach(head=>{
+    head.onclick = (e)=>{
+      if(e.target.closest('.sec-more')) return;   /* кнопка обработает сама */
+      toggleModelSection(head.dataset.modelHead);
+    };
   });
+  document.querySelectorAll('[data-model-toggle]').forEach(b=>{
+    b.onclick = (e)=>{ e.stopPropagation(); toggleModelSection(b.dataset.modelToggle); };
+  });
+  document.querySelectorAll('[data-model-collapse]').forEach(b=>{
+    b.onclick = ()=>toggleModelSection(b.dataset.modelCollapse, false, true);
+  });
+  const all = document.getElementById('modelExpandAll');
+  if(all) all.onclick = async ()=>{
+    const anyOpen = MODEL_SECTIONS.some(sc=>_modelOpen[sc.id]);
+    for(const sc of MODEL_SECTIONS){ await toggleModelSection(sc.id, !anyOpen, false); }
+    all.textContent = anyOpen ? 'Раскрыть все разделы' : 'Свернуть все разделы';
+  };
 }
-function scrollToModelSection(id){
+/* Раскрыть или свернуть раздел. Содержимое считается в момент
+   первого раскрытия, поэтому закрытые разделы ничего не стоят. */
+async function toggleModelSection(id, force, scrollToHead){
+  const sc = MODEL_SECTIONS.find(x=>x.id===id); if(!sc) return;
+  const sec = document.getElementById('model-'+id); if(!sec) return;
+  const body = document.getElementById('model-body-'+id);
+  const foot = sec.querySelector('.sec-foot');
+  const btn  = sec.querySelector('[data-model-toggle]');
+  const open = force===undefined ? !_modelOpen[id] : !!force;
+  if(open===!!_modelOpen[id] && (open ? body.dataset.drawn : true)){
+    if(scrollToHead) scrollToModelSection(id);
+    return;
+  }
+  _modelOpen[id] = open;
+  sec.classList.toggle('open', open);
+  if(body) body.hidden = !open;
+  if(foot) foot.hidden = !open;
+  if(btn){ btn.innerHTML = (open?'Свернуть':'Подробнее')+'<span class="sec-chev">›</span>'; btn.setAttribute('aria-expanded', String(open)); }
+  if(open){
+    if(!body.dataset.drawn){
+      body.innerHTML = '<div class="loading">Считаем…</div>';
+      await window[sc.fn](body);
+      body.dataset.drawn = '1';
+    }
+  } else if(body){
+    body.innerHTML = ''; delete body.dataset.drawn;
+  }
+  if(scrollToHead) scrollToModelSection(id, !open);   /* сворачиваем — возвращаемся к заголовку сразу */
+  const all = document.getElementById('modelExpandAll');
+  if(all) all.textContent = MODEL_SECTIONS.some(x=>_modelOpen[x.id]) ? 'Свернуть все разделы' : 'Раскрыть все разделы';
+}
+function scrollToModelSection(id, instant){
   const el = document.getElementById('model-'+id); if(!el) return;
   const bar = document.querySelector('.topbar'); const live = document.getElementById('liveBar');
   const off = (bar?bar.offsetHeight:0) + (live?live.offsetHeight:0) + 16;
-  window.scrollTo({top: el.getBoundingClientRect().top + window.scrollY - off, behavior:'smooth'});
+  const top = Math.max(0, el.getBoundingClientRect().top + window.scrollY - off);
+  window.scrollTo({top, behavior: instant ? 'auto' : 'smooth'});
 }
 
 async function renderStatistics(){
@@ -8089,7 +8191,7 @@ async function renderFinBody(body){
 function scenarioRowHtml(){
   return `<div class="scenario-row">
     ${Object.entries(FIN_SCENARIOS).map(([k,s])=>`
-      <button class="scenario-btn ${s.cls} ${_finScenario===k?'active':''}" data-fin-scenario="${k}">
+      <button class="scenario-btn ${s.cls} ${_finScenario===k?'active':''}" data-fin-scenario="${k}" title="${esc(s.desc)}">
         <span class="sc-name">${s.label}</span><span class="sc-desc">${s.desc}</span>
       </button>`).join('')}
   </div>`;
@@ -10175,8 +10277,9 @@ function pnlCell(r){
   return `<td class="num${v<0?' neg':''}">${v<0?'('+money(-v).replace(' ₽','')+') ₽':money(v)}</td>`;
 }
 
-async function renderPnl(body){
+async function renderPnl(body, force){
   const nested = !!body; body = body || app;
+  if(nested && !body.isConnected) return;
   if(!nested) killAllCharts();
   const cfg = await buildFinCfg({economy:_economyMode});
   const model = computeFinModel(cfg);
@@ -10536,7 +10639,17 @@ const FACT_TABS = [
 /* старые вкладки отчётов ведут в новые */
 const REP_TO_FACT = {day:'day', week:'summary', month:'summary', ledger:'ledger', journal:'day'};
 async function renderReports(){ return renderFact(); }   /* старое имя — из внутренних перерисовок */
+let _factBusy = false, _factAgain = false;
 async function renderFact(){
+  if(_factBusy){ _factAgain = true; return; }
+  _factBusy = true;
+  try { await renderFactNow(); }
+  finally {
+    _factBusy = false;
+    if(_factAgain){ _factAgain = false; renderFact(); }
+  }
+}
+async function renderFactNow(){
   killAllCharts();
   const days = await getDaily();
   if(!_repDate || !days.some(d=>d.d===_repDate)) _repDate = days.length ? days[days.length-1].d : new Date().toISOString().slice(0,10);
@@ -10563,15 +10676,16 @@ async function renderFactBody(body){
   if(!body) return;
   const holdH = body.offsetHeight; if(holdH) body.style.minHeight = holdH+'px';
   const foldable = (id, title)=>`<details class="guide fact-fold" data-fold="${id}"><summary>${title}</summary><div id="${id}"><div class="loading">Считаем…</div></div></details>`;
+  const part = (id)=>body.isConnected ? document.getElementById(id) : null;
   if(_repView==='summary'){
     body.innerHTML = `<div id="factPnl"></div><div id="factMonths"></div>${foldable('factWeeks','Понедельно')}`;
-    await renderPnl(document.getElementById('factPnl'));
-    await renderRepMonth(document.getElementById('factMonths'));
-    await renderRepWeek(document.getElementById('factWeeks'));
+    await renderPnl(part('factPnl'));
+    await renderRepMonth(part('factMonths'));
+    await renderRepWeek(part('factWeeks'));
   } else if(_repView==='day'){
     body.innerHTML = `<div id="factDay"></div>${foldable('factJournal','Все дни списком')}`;
-    await renderRepDay(document.getElementById('factDay'));
-    await renderRepJournal(document.getElementById('factJournal'), {noForm:true});
+    await renderRepDay(part('factDay'));
+    await renderRepJournal(part('factJournal'), {noForm:true});
   } else {
     await renderRepLedger(body);
   }
@@ -10671,6 +10785,7 @@ function wireDailyForm(rerender, revCfg, opts){
 }
 
 async function renderRepDay(body){
+  if(!body) return;
   const days = await getDays();
   const ledger = await getLedger();
   const revCfg = await getRevenueCfg();
@@ -10829,6 +10944,7 @@ async function renderRepDay(body){
 }
 
 async function renderRepWeek(body){
+  if(!body) return;
   const days = await getDaily();
   const revCfg = await getRevenueCfg();
   const groups = groupDaysBy(days, isoWeekKey);
@@ -10888,6 +11004,7 @@ async function renderRepWeek(body){
 }
 
 async function renderRepMonth(body){
+  if(!body) return;
   const days = await getDaily();
   const facts = await buildFactMonths();
   const cfg = await buildFinCfg({economy:_economyMode});
@@ -11000,6 +11117,7 @@ async function renderRepMonth(body){
 }
 
 async function renderRepLedger(body){
+  if(!body) return;
   const ledger = await getLedger();
   const revCfg = await getRevenueCfg();
   const days = await getDays();
@@ -11026,6 +11144,7 @@ async function renderRepLedger(body){
 }
 
 async function renderRepJournal(body, opts){
+  if(!body) return;
   opts = opts || {};
   const days = await getDaily();
   const revCfg = await getRevenueCfg();
