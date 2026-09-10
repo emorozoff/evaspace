@@ -1,6 +1,6 @@
 /* И АЙ КЛАБ — офлайн-оболочка. Путь вычисляем от самого файла,
    чтобы одна и та же сборка работала и на сайте, и внутри мобильной обёртки. */
-const VERSION = 'club-v1';
+const VERSION = 'club-v3';
 const BASE = new URL('./', self.location).href;
 const SHELL = [BASE, BASE + 'index.html', BASE + 'manifest.webmanifest'];
 

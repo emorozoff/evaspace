@@ -331,7 +331,7 @@ export function buildSeed(now = Date.now()) {
   }
 
   const state = {
-    v: 2,
+    v: 3,
     seededAt: now,
     season,
     cities,

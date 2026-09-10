@@ -14,22 +14,49 @@ import {
 import { uid, hash } from './format.js';
 import { DAY, weekKey } from './time.js';
 
-const KEY = 'iaiclub.state.v2';
+const KEY = 'iaiclub.state.v3';
 
 /* Задержки демо-режима: куратор и участники отвечают сами,
    иначе в одиночном демо некому распределить и принять. */
 const AUTO_CURATOR = 20 * 1000;
 const AUTO_FRIEND_ANSWER = 10 * 1000;
 
+/**
+ * Читаем сохранённое состояние и достраиваем его до текущей формы.
+ * Раньше новая коллекция в коде роняла приложение у тех, кто уже заходил;
+ * теперь недостающие поля берутся из свежей сборки, а не остаются пустыми.
+ */
+/* Ключи прошлых версий только занимают место — убираем их при старте. */
+function dropOldKeys() {
+  try {
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith('iaiclub.state.') && k !== KEY)
+      .forEach((k) => localStorage.removeItem(k));
+  } catch {
+    /* приватный режим — ничего страшного */
+  }
+}
+
 function load() {
+  dropOldKeys();
+  const fresh = buildSeed();
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return buildSeed();
-    const parsed = JSON.parse(raw);
-    if (!parsed || parsed.v !== 2) return buildSeed();
-    return parsed;
+    if (!raw) return fresh;
+    const saved = JSON.parse(raw);
+    if (!saved || saved.v !== fresh.v) return fresh;
+
+    const merged = { ...fresh, ...saved };
+    for (const [key, value] of Object.entries(fresh)) {
+      const kept = saved[key];
+      const shapeMatches = Array.isArray(value) ? Array.isArray(kept) : typeof kept === typeof value && kept !== null;
+      if (!shapeMatches) merged[key] = value;
+    }
+    merged.season = { ...fresh.season, ...(saved.season || {}) };
+    merged.session = { ...fresh.session, ...(saved.session || {}) };
+    return merged;
   } catch {
-    return buildSeed();
+    return fresh;
   }
 }
 
