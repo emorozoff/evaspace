@@ -53,7 +53,7 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
 .st.star small{color:var(--red-ink)}
 .st.star .ico{position:absolute;right:12px;top:10px;width:32px;height:32px}
 .stats.armed .st{opacity:0;transform:translateY(16px)}
-.stats.armed.run .st{animation:stIn .52s cubic-bezier(.22,.72,.3,1) forwards;animation-delay:calc(var(--i,0)*110ms)}
+.stats.armed.run .st{animation:stIn 1.1s cubic-bezier(.22,.72,.3,1) forwards;animation-delay:calc(var(--i,0)*330ms)}
 @keyframes stIn{to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.stats.armed .st{opacity:1;transform:none}.stats.armed.run .st{animation:none}}
 
@@ -96,6 +96,17 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
 .ms.m2{border-color:#E8A317}.ms.m2 span{color:var(--amber-ink)}
 .ms.m3{border-color:var(--red)}.ms.m3 span{color:var(--red-ink)}
 .ms.m4{border-color:var(--red);background:var(--red-soft)}.ms.m4 span{color:var(--red-ink)}
+.season.armed .pb i,.season.armed .pb-star,.season.armed .ms{opacity:0}
+.season.armed .pb i{transform:scaleX(0);transform-origin:left center}
+.season.armed .pb-star{transform:scale(.5)}
+.season.armed .ms{transform:translateY(12px)}
+.season.armed.run .pb i{animation:segIn .42s cubic-bezier(.25,.7,.3,1) forwards;animation-delay:var(--d,0ms)}
+.season.armed.run .pb-star{animation:starIn .5s cubic-bezier(.3,1.5,.5,1) forwards;animation-delay:var(--d,0ms)}
+.season.armed.run .ms{animation:msIn .5s cubic-bezier(.22,.72,.3,1) forwards;animation-delay:var(--d,0ms)}
+@keyframes segIn{to{transform:scaleX(1);opacity:1}}
+@keyframes starIn{to{transform:scale(1);opacity:1}}
+@keyframes msIn{to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.season.armed .pb i,.season.armed .pb-star,.season.armed .ms{opacity:1;transform:none}.season.armed.run .pb i,.season.armed.run .pb-star,.season.armed.run .ms{animation:none}}
 
 /* точки контакта */
 .tp{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:0 0 16px}
@@ -119,6 +130,15 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
 .lr span{display:block;font-size:13.5px;color:var(--muted);margin-top:1px}
 .lr em{font-style:normal;font-family:var(--mono);font-weight:700;font-size:16px;color:var(--ink);white-space:nowrap}
 .lr.hot b,.lr.hot em{color:var(--red-ink)}
+.aud.armed .ring{opacity:0;transform:scale(.55);transform-box:fill-box;transform-origin:center}
+.aud.armed .rlab{opacity:0}
+.aud.armed .lr{opacity:0;transform:translateY(10px)}
+.aud.armed.run .ring{animation:ringIn .62s cubic-bezier(.25,.8,.35,1) forwards;animation-delay:var(--d,0ms)}
+.aud.armed.run .rlab{animation:labIn .5s ease-out forwards;animation-delay:var(--d,0ms)}
+.aud.armed.run .lr{animation:msIn .5s cubic-bezier(.22,.72,.3,1) forwards;animation-delay:var(--d,0ms)}
+@keyframes ringIn{to{transform:scale(1);opacity:1}}
+@keyframes labIn{to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.aud.armed .ring,.aud.armed .rlab,.aud.armed .lr{opacity:1;transform:none}.aud.armed.run .ring,.aud.armed.run .rlab,.aud.armed.run .lr{animation:none}}
 
 /* присутствие */
 .cal{display:grid;grid-template-columns:172px repeat(12,1fr) 150px;gap:5px 3px;align-items:center;background:var(--soft);border:1px solid var(--line-2);border-radius:10px;padding:14px 18px 16px;margin:0 0 18px}
@@ -219,11 +239,12 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
 .crt{width:320px}
 .mon{background:linear-gradient(160deg,#E2DCCC 0%,#CFC7B2 46%,#B8AF98 100%);border-radius:18px 18px 12px 12px;padding:13px 13px 0;box-shadow:0 2px 0 #A79E86,0 18px 36px rgba(30,26,16,.28),inset 0 1px 0 rgba(255,255,255,.7)}
 .bez{background:linear-gradient(160deg,#2A2A2C,#151517);border-radius:11px;padding:10px;box-shadow:inset 0 2px 5px rgba(0,0,0,.7)}
-.scr{position:relative;border-radius:9px;overflow:hidden;background:radial-gradient(120% 100% at 50% 30%,#123059 0%,#0A1A31 55%,#050C18 100%);padding:15px 14px 17px;min-height:178px;box-shadow:inset 0 0 40px rgba(0,0,0,.75),inset 0 0 0 1px rgba(120,180,255,.14)}
+.scr{position:relative;border-radius:9px;overflow:hidden;background:radial-gradient(120% 100% at 50% 30%,#123059 0%,#0A1A31 55%,#050C18 100%);padding:15px 11px 17px;min-height:178px;box-shadow:inset 0 0 40px rgba(0,0,0,.75),inset 0 0 0 1px rgba(120,180,255,.14);display:flex;flex-direction:column}
+.scr-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
 .scr::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(0,0,0,.24) 0 1px,rgba(0,0,0,0) 1px 3px)}
 .scr-h{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;color:#6E93C9;margin:0 0 13px;padding-bottom:8px;border-bottom:1px solid rgba(120,180,255,.2)}
-.hello{font-family:var(--mono);font-size:14px;font-weight:700;color:#B8FFD4;margin:0 0 6px;text-shadow:0 0 12px rgba(90,255,160,.55)}
-.cmd{font-family:var(--mono);font-size:11.5px;min-height:1.2em;color:#7FE3B0;margin:0 0 16px;text-shadow:0 0 9px rgba(90,230,160,.5);white-space:nowrap}
+.hello{font-family:var(--mono);font-size:12.5px;font-weight:700;color:#B8FFD4;margin:0;text-shadow:0 0 12px rgba(90,255,160,.55)}
+.cmd{font-family:var(--mono);font-size:12.5px;font-weight:700;min-height:1.3em;color:#7FE3B0;margin:0;text-shadow:0 0 10px rgba(90,230,160,.5);white-space:nowrap}
 .cur{display:inline-block;width:8px;height:1em;background:#7FE3B0;vertical-align:-.14em;margin-left:2px;box-shadow:0 0 8px rgba(90,230,160,.7);animation:bl 1.05s steps(1) infinite}
 @keyframes bl{50%{opacity:0}}
 .meta{font-family:var(--mono);font-size:9px;letter-spacing:.1em;line-height:1.9;color:#8FB6E8;margin:0}
@@ -383,9 +404,11 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
       </div>
       <div style="display:grid;justify-items:end">
         <div class="crt"><div class="mon"><div class="bez"><div class="scr">
-          <p class="scr-h">И АЙ КЛАБ</p><p class="hello">привет, партнёр.</p>
-          <p class="cmd">&gt;&nbsp;<span id="typ">запуск сезона 1</span><span class="cur" aria-hidden="true"></span></p>
-          <p class="meta">ОНЛАЙН — ВСЕ РЕГИОНЫ<br>ВЫПУСКНОЙ — МОСКВА И ПИТЕР</p>
+          <p class="scr-h">И АЙ КЛАБ</p>
+          <div class="scr-mid">
+            <p class="hello">привет, партнёр.</p>
+            <p class="cmd"><span id="typ">запуск сезона 1</span><span class="cur" aria-hidden="true"></span></p>
+          </div>
         </div></div><div class="chin"><span class="lb">яблоко</span><span class="led"></span></div></div><div class="stand"></div><div class="base"></div></div>
       </div>
     </div>
@@ -444,12 +467,12 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
     </div>
     <p class="lbl" style="margin:0 0 10px">Сезон · 12 недель</p>
     <div class="season">
-      <div class="pb"><i></i><i></i><i></i><i></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i></div>
-      <div class="pb-star"><svg class="ico" aria-hidden="true"><use href="#i-party"/></svg></div>
-      <div class="ms m1"><span>месяц 1</span><b>Изучаем технологии и формируем команды</b></div>
-      <div class="ms m2"><span>месяц 2</span><b>Внедряем на практике и создаём продукты</b></div>
-      <div class="ms m3"><span>месяц 3</span><b>Запускаем продажи и считаем выручку</b></div>
-      <div class="ms m4"><span>финал</span><b>Отмечаем выпускной и награждаем лучших</b></div>
+      <div class="pb"><i style="--d:0ms"></i><i style="--d:120ms"></i><i style="--d:240ms"></i><i style="--d:360ms"></i><i class="w" style="--d:750ms"></i><i class="w" style="--d:870ms"></i><i class="w" style="--d:990ms"></i><i class="w" style="--d:1110ms"></i><i class="f" style="--d:1500ms"></i><i class="f" style="--d:1620ms"></i><i class="f" style="--d:1740ms"></i><i class="f" style="--d:1860ms"></i></div>
+      <div class="pb-star" style="--d:2250ms"><svg class="ico" aria-hidden="true"><use href="#i-party"/></svg></div>
+      <div class="ms m1" style="--d:450ms"><span>месяц 1</span><b>Изучаем технологии и формируем команды</b></div>
+      <div class="ms m2" style="--d:1200ms"><span>месяц 2</span><b>Внедряем на практике и создаём продукты</b></div>
+      <div class="ms m3" style="--d:1950ms"><span>месяц 3</span><b>Запускаем продажи и считаем выручку</b></div>
+      <div class="ms m4" style="--d:2350ms"><span>финал</span><b>Отмечаем выпускной и награждаем лучших</b></div>
     </div>
   </div><div class="foot"><span>И АЙ КЛАБ · спонсорам</span><span>3 / 10</span></div></div>
 </div></section>
@@ -481,29 +504,29 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
         <h2 class="sm">От широкого охвата к <em>горячему ядру</em></h2>
         <p style="font-size:17px">Чем ближе к центру, тем теплее контакт с брендом. В ядре — люди, которые уже платят и внедряют.</p>
         <div class="leg2">
-          <div class="lr"><span class="sw" style="background:#EEF2F8"></span><div><b>Широкие</b><span>Рилсы в Instagram · 30 роликов за сезон</span></div><em>≈ 300 000</em></div>
-          <div class="lr"><span class="sw" style="background:#D3E2F6"></span><div><b>Целевые</b><span>YouTube · 12 видео, смотрят длинно и осознанно</span></div><em>≈ 42 000</em></div>
-          <div class="lr"><span class="sw" style="background:#F7D6C3"></span><div><b>Тёплые</b><span>Эфиры и канал · 12 эфиров, 90 постов</span></div><em>≈ 3 500</em></div>
-          <div class="lr hot"><span class="sw" style="background:var(--red)"></span><div><b>Ядро</b><span>Участники клуба · чат, приложение, воркшоп, промокод</span></div><em>100–300</em></div>
+          <div style="--d:200ms" class="lr"><span class="sw" style="background:#EEF2F8"></span><div><b>Широкие</b><span>Рилсы в Instagram · 30 роликов за сезон</span></div><em>≈ 300 000</em></div>
+          <div style="--d:650ms" class="lr"><span class="sw" style="background:#D3E2F6"></span><div><b>Целевые</b><span>YouTube · 12 видео, смотрят длинно и осознанно</span></div><em>≈ 42 000</em></div>
+          <div style="--d:1100ms" class="lr"><span class="sw" style="background:#F7D6C3"></span><div><b>Тёплые</b><span>Эфиры и канал · 12 эфиров, 90 постов</span></div><em>≈ 3 500</em></div>
+          <div style="--d:1550ms" class="lr hot"><span class="sw" style="background:var(--red)"></span><div><b>Ядро</b><span>Участники клуба · чат, приложение, воркшоп, промокод</span></div><em>100–300</em></div>
         </div>
       </div>
       <svg viewBox="0 0 440 440" role="img" aria-label="Четыре вложенных круга от большего к меньшему: широкие 300 000 показов в рилсах, целевые 42 000 на YouTube, тёплые 3 500 на эфирах и в канале, ядро 100–300 участников клуба">
-        <circle cx="220" cy="220" r="210" fill="#EEF2F8" stroke="#C6D4E8" stroke-width="1.5"/>
-        <circle cx="220" cy="280" r="150" fill="#D3E2F6" stroke="#A9C4E8" stroke-width="1.5"/>
-        <circle cx="220" cy="332" r="98" fill="#F7D6C3" stroke="#E8B99C" stroke-width="1.5"/>
-        <circle cx="220" cy="378" r="52" fill="#DA3A26" stroke="#fff" stroke-width="3"/>
+        <circle class="ring" style="--d:0ms" cx="220" cy="220" r="210" fill="#EEF2F8" stroke="#C6D4E8" stroke-width="1.5"/>
+        <circle class="ring" style="--d:450ms" cx="220" cy="280" r="150" fill="#D3E2F6" stroke="#A9C4E8" stroke-width="1.5"/>
+        <circle class="ring" style="--d:900ms" cx="220" cy="332" r="98" fill="#F7D6C3" stroke="#E8B99C" stroke-width="1.5"/>
+        <circle class="ring" style="--d:1350ms" cx="220" cy="378" r="52" fill="#DA3A26" stroke="#fff" stroke-width="3"/>
         <g text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="700" font-size="11" letter-spacing="2">
-          <text x="220" y="60" fill="#6C7787">ШИРОКИЕ · РИЛСЫ</text>
-          <text x="220" y="172" fill="#2F5386">ЦЕЛЕВЫЕ · YOUTUBE</text>
-          <text x="220" y="270" fill="#8A4A22">ТЁПЛЫЕ · ЭФИРЫ</text>
+          <text class="rlab" style="--d:350ms" x="220" y="60" fill="#6C7787">ШИРОКИЕ · РИЛСЫ</text>
+          <text class="rlab" style="--d:800ms" x="220" y="172" fill="#2F5386">ЦЕЛЕВЫЕ · YOUTUBE</text>
+          <text class="rlab" style="--d:1250ms" x="220" y="270" fill="#8A4A22">ТЁПЛЫЕ · ЭФИРЫ</text>
         </g>
         <g text-anchor="middle" font-family="Onest,sans-serif" font-weight="800" font-size="22">
-          <text x="220" y="90" fill="#414C5A">≈ 300 000</text>
-          <text x="220" y="202" fill="#1D4BA6">≈ 42 000</text>
-          <text x="220" y="300" fill="#B02A18">≈ 3 500</text>
-          <text x="220" y="385" font-size="21" fill="#fff">100–300</text>
+          <text class="rlab" style="--d:350ms" x="220" y="90" fill="#414C5A">≈ 300 000</text>
+          <text class="rlab" style="--d:800ms" x="220" y="202" fill="#1D4BA6">≈ 42 000</text>
+          <text class="rlab" style="--d:1250ms" x="220" y="300" fill="#B02A18">≈ 3 500</text>
+          <text class="rlab" style="--d:1700ms" x="220" y="385" font-size="21" fill="#fff">100–300</text>
         </g>
-        <text x="220" y="405" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="700" font-size="9.5" letter-spacing="1.5" fill="#FFD9D2">ЯДРО КЛУБА</text>
+        <text class="rlab" style="--d:1700ms" x="220" y="405" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="700" font-size="9.5" letter-spacing="1.5" fill="#FFD9D2">ЯДРО КЛУБА</text>
       </svg>
     </div>
   </div><div class="foot"><span>И АЙ КЛАБ · спонсорам</span><span>5 / 10</span></div></div>
@@ -802,7 +825,7 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
       </div></div>
       <div class="done-c"><span class="m">t.me/•••••••</span><small>здесь будет прямой контакт для партнёров</small></div>
       <div class="dlgf">
-        <a class="btn hot" id="applink" href="https://claude.ai/code/artifact/1caca428-e82d-4a13-a8b3-8498e963c820" target="_blank" rel="noopener">Посмотреть приложение</a>
+        <a class="btn hot" id="applink" href="https://claude.ai/code/artifact/1caca428-e82d-4a13-a8b3-8498e963c820" target="_blank" rel="noopener">Перейти на сайт проекта</a>
         <button class="btn" data-close="ov2" type="button">Закрыть</button>
       </div>
     </div>
@@ -1065,7 +1088,7 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
       var to=parseInt(el.getAttribute('data-n'),10), pre=el.getAttribute('data-pre')||'';
       if(reduce){ el.textContent=pre+fmt(to); return; }
       clearInterval(el._t);
-      var start=null, dur=760, delay=k*110;
+      var start=null, dur=2280, delay=k*330;
       el.textContent=pre+fmt(0);
       setTimeout(function(){
         el._t=setInterval(function(){
@@ -1076,6 +1099,15 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
         },40);
       },delay);
     });
+  }
+  /* при печати и экспорте счётчики должны быть уже досчитаны */
+  function finishStats(){
+    if(!stats) return;
+    [].slice.call(stats.querySelectorAll('b[data-n]')).forEach(function(el){
+      clearInterval(el._t);
+      el.textContent=(el.getAttribute('data-pre')||'')+fmt(parseInt(el.getAttribute('data-n'),10));
+    });
+    stats.classList.remove('armed','run');
   }
   function playStats(){
     if(!stats) return;
@@ -1109,7 +1141,7 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
     typ.textContent=lines[0];
     tmr=setTimeout(typeStep,1500);
   }
-  window.addEventListener('beforeprint',function(){ typing(false); });
+  window.addEventListener('beforeprint',function(){ typing(false); finishStats(); });
 
   /* ---------- окна ---------- */
   var last=null;
@@ -1219,8 +1251,15 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
   });
   $('zr').addEventListener('click',function(){ if(!document.querySelector('.ov.on')) go(i+1); });
   $('zl').addEventListener('click',function(){ if(!document.querySelector('.ov.on')) go(i-1); });
+  function replay(sel){
+    var el=document.querySelector(sel); if(!el) return;
+    el.classList.add('armed'); el.classList.remove('run');
+    void el.offsetWidth; el.classList.add('run');
+  }
   function onSlide(n){
     if(n===0){ playStats(); typing(true); } else { typing(false); }
+    if(n===2) replay('.season');
+    if(n===4) replay('.aud');
   }
   var m=location.hash.match(/^#(\d+)$/); go(m?parseInt(m[1],10)-1:0);
 })();
