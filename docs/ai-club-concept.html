@@ -344,9 +344,25 @@ tr.tot td{background:var(--soft);font-weight:700;color:var(--ink)}
 .pkg b span{font-family:var(--mono);font-size:13px;color:var(--red-ink);margin-left:7px}
 .pkg small{font-size:13px;color:var(--ink-2);line-height:1.4;display:block}
 .allnote{margin:12px 22px 0;padding:9px 12px;background:var(--amber);border:1px solid var(--amber-line);border-radius:4px;font-size:13px;color:var(--ink)}
+.rules{display:grid;grid-template-columns:1fr;gap:14px;margin:0 0 16px}
+@media (min-width:820px){.rules{grid-template-columns:1fr 1fr}}
+.rc{background:var(--soft);border:1px solid var(--line-2);border-radius:6px;padding:15px 18px 16px}
+.rc b{display:flex;align-items:center;gap:9px;font-weight:700;font-size:16.5px;letter-spacing:-.01em;margin-bottom:9px}
+.rc b::before{content:'';width:9px;height:9px;border-radius:2px;background:var(--xp1);flex:0 0 9px}
+.rc:nth-child(3) b::before{background:var(--red)}
+.rc:nth-child(4) b::before{background:#E8A317}
+.rc ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.rc li{font-size:13.8px;line-height:1.5;color:var(--ink-2);padding-left:16px;position:relative}
+.rc li::before{content:'';position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:var(--line-2)}
+.deckline{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:18px 0 0;padding:14px 18px;background:var(--soft);border:1px solid var(--line-2);border-radius:6px}
+.deckline b{display:block;font-weight:700;font-size:15px;margin-bottom:3px}
+.deckline span{display:block;font-size:13.5px;color:var(--muted);line-height:1.45;max-width:62ch}
+.deckline .btn{flex:0 0 auto;white-space:nowrap}
+.deckline .ic{width:19px;height:19px;flex:0 0 19px}
 .tglink{margin:14px 22px 0;padding:13px 15px;border:1px solid var(--line-2);border-radius:5px;background:var(--soft);text-align:center}
 .tglink .u{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--xp1);display:block;margin:4px 0 6px}
 .tglink small{font-size:12px;color:var(--muted)}
+.appnote{margin:12px 22px 0;font-size:13px;line-height:1.45;color:var(--muted)}
 .tstmode{font-family:var(--mono);font-size:11px;color:var(--muted);margin:10px 22px 0;text-align:center}
 footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
 </style>
@@ -374,6 +390,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
     <a href="#sponsor">Спонсорам</a>
     <a href="#money">Деньги</a>
     <a href="#team">Кто ведёт</a>
+    <a href="#rules">Условия</a>
     <a href="#go">Решение</a>
   </nav>
 
@@ -809,6 +826,13 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
           <p>Если считать голые просмотры, это дороже обычной блогерской интеграции. Мы продаём другое: три месяца внутри среды, где сто-триста человек выбирают инструменты и внедряют их на глазах друг у друга. И рекламируем только то, чем пользуемся сами.</p>
         </div>
         <p class="sm">Потолок сезона: <strong>700 000 ₽</strong> — один генеральный и четыре обычных спонсора. Больше мест не продаём, иначе клуб превратится в рекламный щит.</p>
+        <div class="deckline">
+          <div>
+            <b>Есть отдельная презентация для спонсоров</b>
+            <span>Десять слайдов: форматы, охваты, выпускной, пакеты и подробные условия партнёрства.</span>
+          </div>
+          <a class="btn" href="https://claude.ai/code/artifact/7ba38a74-a432-4c49-acea-4234a30e6ff7" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="2" fill="#E4EDFB" stroke="#1D4BA6" stroke-width="1.7"/><path d="M9 20h6M12 17v3" stroke="#1D4BA6" stroke-width="1.7" stroke-linecap="round"/><path d="M10 8.5v4l4-2z" fill="#DA3A26"/></svg>Посмотреть презентацию</a>
+        </div>
       </div>
     </section>
 
@@ -851,6 +875,53 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
           <li><span><strong>Приложение</strong> — первая версия: команды, рейтинг, расписание, профили.</span></li>
           <li><span><strong>Питч спонсорам</strong> — пакеты на сезон 1, пока места свободны.</span></li>
         </ol>
+      </div>
+    </section>
+
+    <!-- УСЛОВИЯ -->
+    <section class="win" id="rules">
+      <div class="bar"><span class="t">Что важно знать до старта</span><span class="wb" aria-hidden="true"><i>_</i><i>□</i><i class="x">✕</i></span></div>
+      <div class="bd">
+        <h2>Условия участия — коротко и без мелкого шрифта</h2>
+        <p class="k">Здесь главное, чтобы потом не было сюрпризов. Подробный договор приходит сразу после оплаты — если в нём что-то непонятно, лучше спросить до, а не после.</p>
+        <div class="rules">
+          <div class="rc">
+            <b>Подписка помесячная</b>
+            <ul>
+              <li>Платишь за месяц. Не пошло, стало не до клуба, поменялись планы — просто не продлеваешь. Никто не будет отрабатывать возражения.</li>
+              <li>Цена фиксируется на входе: пока участвуешь без перерыва, она не растёт до конца сезона.</li>
+              <li>Вернулся после паузы — заходишь по цене, актуальной на тот момент.</li>
+            </ul>
+          </div>
+          <div class="rc">
+            <b>Оффлайн — это неформальные встречи</b>
+            <ul>
+              <li>Пятница в городе — не конференция и не лекция. Садимся, разбираем, общаемся, пьём сок или что-то покрепче.</li>
+              <li>Если у площадки есть вход по билету, а вечер уходит в боулинг, картинг или что-то ещё — это оплачивается отдельно и только по желанию.</li>
+              <li>Встречи в своём городе участники организуют сами: выбирают дату и место и собираются. Клуб даёт чат и повод, остальное — за вами.</li>
+            </ul>
+          </div>
+          <div class="rc">
+            <b>Выпускной сезона</b>
+            <ul>
+              <li>Основной — в Москве: награждение, пресс-волл, профессиональная съёмка и ролик о сезоне.</li>
+              <li>В Питере проводим дополнительный для тех, кто не доедет до Москвы.</li>
+              <li>Для всех остальных — онлайн-эфир выпускного за пару дней до или после, чтобы никто не остался за бортом.</li>
+              <li>Кто в других городах и странах — собирайтесь своей компанией в тот же вечер, это часть общего праздника.</li>
+              <li>Организацию закрываем из двух источников: 10% оборота от организаторов и 10% общей копилки сезона. Этого хватает на площадку, съёмку и награждение. Еда, напитки и личные расходы — за свой счёт.</li>
+            </ul>
+          </div>
+          <div class="rc">
+            <b>Деньги и ответственность</b>
+            <ul>
+              <li>Мани Челлендж — это практика, а не инвестиционный продукт и не обещание дохода. Клуб не берёт процент с того, что вы заработали, и не входит в ваши проекты.</li>
+              <li>Всё, что вы делаете и продаёте, — ваш бизнес: договоры с клиентами, качество, обязательства и налоги на вашей стороне.</li>
+              <li>Мы не гарантируем результат и не отвечаем за решения, которые вы принимаете внутри команды.</li>
+              <li>Копилка — общие деньги команд, они идут на призы и выпускной. Клуб их себе не забирает.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="sm">Отдельная просьба: всё, что обсуждается внутри клуба, остаётся внутри клуба. Чужие цифры и чужие идеи не выносим наружу — на этом держится открытость.</p>
       </div>
     </section>
 
@@ -1002,7 +1073,11 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
         <span class="u">t.me/•••••••</span>
         <small>Настоящую ссылку подставим перед запуском клуба</small>
       </div>
-      <div class="dlgf"><button class="btn hot" data-close="ov4" type="button">Закрыть</button></div>
+      <p class="appnote">Приложение уже знает про оплату: пакет, срок доступа и материалы подтянутся сами — логин и коды вводить не нужно.</p>
+      <div class="dlgf">
+        <a class="btn hot" id="toapp" href="#app">Перейти в приложение</a>
+        <button class="btn" data-close="ov4" type="button">Закрыть</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1302,6 +1377,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
     swap('ov3','ov4','boot');
   });
   $('backPkg').addEventListener('click',function(){ swap('ov4','ov3'); });
+  $('toapp').addEventListener('click',function(){ close('ov4'); });
   $('doPay').addEventListener('click',function(){
     var b=$('doPay'); b.disabled=true; b.textContent='Оплачиваем...';
     var v=0, bar=$('pbi');
