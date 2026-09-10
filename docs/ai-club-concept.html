@@ -288,6 +288,15 @@ tr.tot td{background:var(--soft);font-weight:700;color:var(--ink)}
 .pc{border:1px solid var(--line-2);border-radius:5px;overflow:hidden}
 .pc .bar{height:28px;font-size:12px;background:linear-gradient(180deg,#98A5B5,#6E7C8D 52%,#5A6675)}
 .pc p{margin:0;padding:14px 15px 16px;font-size:13.5px;line-height:1.5}
+.pcb{padding:14px 15px 16px}
+.pcb p{padding:0}
+.pcb .role{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 10px}
+.pcb ul{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:7px}
+.pcb li{font-size:13.5px;line-height:1.45;color:var(--ink-2);padding-left:16px;position:relative}
+.pcb li::before{content:'';position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:1px;background:var(--xp1)}
+.ppl .pc:last-child .pcb li::before{background:var(--red)}
+.pcb .own{font-size:13px;line-height:1.5;color:var(--muted);padding-top:11px;border-top:1px solid var(--line)}
+.pcb .own b{color:var(--ink);font-weight:600}
 
 /* numbered */
 .num{list-style:none;margin:0;padding:0;counter-reset:n;display:grid;gap:0}
@@ -825,7 +834,6 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
           <span class="gl" aria-hidden="true">!</span>
           <p>Если считать голые просмотры, это дороже обычной блогерской интеграции. Мы продаём другое: три месяца внутри среды, где сто-триста человек выбирают инструменты и внедряют их на глазах друг у друга. И рекламируем только то, чем пользуемся сами.</p>
         </div>
-        <p class="sm">Потолок сезона: <strong>700 000 ₽</strong> — один генеральный и четыре обычных спонсора. Больше мест не продаём, иначе клуб превратится в рекламный щит.</p>
         <div class="deckline">
           <div>
             <b>Есть отдельная презентация для спонсоров</b>
@@ -863,8 +871,30 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
       <div class="bd">
         <h2>Двое, и роли не пересекаются</h2>
         <div class="ppl">
-          <div class="pc"><div class="bar"><span class="t">Егор — нейронки и практика</span></div><p>Сравнение моделей, свежие фишки, автоматизации, вайб-кодинг. Что реально работает сегодня, а что просто громко вышло.</p></div>
-          <div class="pc"><div class="bar"><span class="t">Кирилл — стартапы и деньги</span></div><p>Таблицы, юнит-экономика, cash flow, инвест-презентации, работа с инвесторами. Всё, что превращает «мы что-то делаем» в «мы понимаем, как на этом заработать».</p></div>
+          <div class="pc">
+            <div class="bar"><span class="t">Егор — нейронки и практика</span></div>
+            <div class="pcb">
+              <p class="role">Медиа, контент, эфиры и воркшопы</p>
+              <ul>
+                <li>В медиа, контенте и курсах с 2017 года</li>
+                <li>Работал с Оскаром Хартманом и Варламовым</li>
+                <li>Сравнивает модели и собирает автоматизации на практике</li>
+              </ul>
+              <p class="own"><b>Отвечает за:</b> эфиры и воркшопы, ИИ-канал клуба, базу знаний и всё, что связано с инструментами и вайб-кодингом.</p>
+            </div>
+          </div>
+          <div class="pc">
+            <div class="bar"><span class="t">Кирилл — стартапы и деньги</span></div>
+            <div class="pcb">
+              <p class="role">Сообщества, конференции, партнёрства</p>
+              <ul>
+                <li>Основатель одного из крупнейших бизнес-сообществ</li>
+                <li>Основатель конференции Startup Uniconf</li>
+                <li>ИТ-предприниматель: финмодели и работа с инвесторами</li>
+              </ul>
+              <p class="own"><b>Отвечает за:</b> Мани Челлендж и команды, юнит-экономику и презентации, партнёрства и спонсоров, оффлайн и выпускной.</p>
+            </div>
+          </div>
         </div>
         <p class="sm">Новые участники после первого месяца получают доступ ко всем прошлым материалам и отдельный зум-знакомство. Никто не приходит в середину разговора.</p>
         <h4>Пять дел до первой пятницы</h4>
@@ -1075,7 +1105,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
       </div>
       <p class="appnote">Приложение уже знает про оплату: пакет, срок доступа и материалы подтянутся сами — логин и коды вводить не нужно.</p>
       <div class="dlgf">
-        <a class="btn hot" id="toapp" href="#app">Перейти в приложение</a>
+        <a class="btn hot" id="toapp" href="https://emorozoff.github.io/evaspace/club/" target="_blank" rel="noopener">Перейти в приложение</a>
         <button class="btn" data-close="ov4" type="button">Закрыть</button>
       </div>
     </div>
