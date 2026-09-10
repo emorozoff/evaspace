@@ -1,7 +1,10 @@
 /* Eva Space — простой service worker: приложение открывается даже без интернета */
-const VERSION = 'eva-v1';
+const VERSION = 'eva-v2';
 const BASE = '/evaspace/';
 const SHELL = [BASE, BASE + 'index.html', BASE + 'manifest.webmanifest', BASE + 'icons/apple-touch-icon.png'];
+/* Самостоятельные страницы сайта, которые не относятся к приложению.
+   Их отдаёт сеть как есть: без подмены оболочкой Eva Space и без кэша. */
+const STANDALONE = [BASE + 'klub'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting()));
@@ -18,6 +21,7 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  if (STANDALONE.some((path) => url.pathname.startsWith(path))) return;
 
   // Навигация: сначала сеть, при офлайне — сохранённая оболочка приложения
   if (req.mode === 'navigate') {
