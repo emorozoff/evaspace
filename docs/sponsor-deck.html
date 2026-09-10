@@ -13,6 +13,7 @@
   color-scheme:light;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0;height:100%;background:#0F1620;color:var(--ink);font-family:var(--ui);-webkit-font-smoothing:antialiased;overflow:hidden}
 .deck{position:fixed;inset:0;display:grid;place-items:center}
 .stage{width:1280px;height:720px;position:relative;transform-origin:center center}
@@ -149,10 +150,9 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
 .gl span{font-size:13.5px;color:var(--ink-2);line-height:1.35}
 
 /* пакеты */
-.excl{display:flex;gap:10px;align-items:center;background:#EEF3FB;border:1px solid #C9D7EC;border-radius:8px;padding:8px 14px;margin:10px 0 0}
-.excl .ico{width:26px;height:26px;flex:0 0 26px}
-.excl p{color:var(--ink-2);font-size:14px;margin:0}
-.excl b{color:var(--ink);font-weight:700}
+.limit{display:flex;gap:8px;align-items:center;justify-content:center;margin:12px 0 0;font-size:12.5px;color:var(--muted);text-align:center}
+.limit .ico{width:17px;height:17px;flex:0 0 17px;opacity:.75}
+.limit b{color:var(--ink-2);font-weight:700}
 .col3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .cl{display:flex;gap:10px;align-items:center;background:var(--soft);border:1px solid var(--line-2);border-radius:8px;padding:8px 12px}
 .cl .ico{width:24px;height:24px;flex:0 0 24px}
@@ -207,6 +207,9 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
 .hintline{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:16px}
 .contact{margin-top:26px;font-size:16px;color:var(--ink-2)}
 .contact .m{font-family:var(--mono);font-weight:700;color:var(--ink)}
+.policy{margin-top:14px;font-size:13px;color:var(--muted)}
+.policy a{color:var(--xp1);font-weight:600;text-decoration:underline;text-underline-offset:2px}
+.policy a:hover{color:var(--red)}
 
 /* монитор */
 .crt{width:320px}
@@ -242,6 +245,16 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
 .opts input{accent-color:var(--xp1);width:17px;height:17px;margin:2px 0 0;flex:0 0 17px}
 .opts b{display:block;font-size:16.5px;font-weight:700;margin-bottom:2px}
 .opts small{font-size:14px;color:var(--muted);line-height:1.35;display:block}
+.opts.chips{gap:8px}
+.opts.chips label{padding:11px 15px;align-items:center}
+.opts.chips b{font-size:15.5px;margin-bottom:0}
+.opts.chips small{margin-top:2px}
+.own{margin:12px 26px 0}
+.own label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:6px}
+.own input{width:100%;font-family:var(--ui);font-size:15px;color:var(--ink);padding:11px 14px;border:1px solid var(--line-2);border-radius:7px;background:var(--card);outline:none}
+.own input:focus{border-color:var(--xp1);box-shadow:inset 0 0 0 1px var(--xp1)}
+.own input::placeholder{color:#A6B0BE}
+.dlgf .btn:first-child{margin-right:auto}
 .pbar{height:18px;margin:18px 26px 0;background:var(--soft);border:1px solid var(--line-2);border-radius:5px;padding:3px;overflow:hidden}
 .pbar i{display:block;height:100%;width:0;border-radius:3px;background:repeating-linear-gradient(90deg,var(--xp1) 0 11px,transparent 11px 14px);transition:width .12s linear}
 .tst{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin:12px 26px 0;text-align:center}
@@ -249,6 +262,57 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
 .done-c{margin:16px 26px 0;padding:16px 18px;background:var(--soft);border:1px solid var(--line-2);border-radius:7px;text-align:center}
 .done-c .m{font-family:var(--mono);font-weight:700;font-size:16px;color:var(--ink);display:block;margin-bottom:4px}
 .done-c small{font-size:13px;color:var(--muted)}
+
+/* документ условий */
+.doc-ov{padding:26px 20px;align-items:flex-start;overflow:auto}
+.doc{background:var(--card);border:1px solid #14337A;border-radius:8px;box-shadow:0 20px 56px rgba(10,20,40,.45);width:100%;max-width:1000px;margin:auto;display:flex;flex-direction:column;max-height:calc(100vh - 52px);overflow:hidden}
+.doc>.bar{flex:0 0 36px}
+.doc-b{overflow-y:auto;padding:34px 46px 30px}
+.doc-h{border-bottom:1px solid var(--line);padding-bottom:24px;margin-bottom:8px}
+.doc-h h2{font-size:34px;margin:10px 0 12px;max-width:none}
+.doc-lead{font-size:17px;line-height:1.55;color:var(--ink-2);max-width:78ch}
+.doc-s{padding:24px 0;border-bottom:1px solid var(--line)}
+.doc-s h3{display:flex;align-items:baseline;gap:12px;font-size:21px;font-weight:800;letter-spacing:-.02em;margin:0 0 14px}
+.doc-s h3 i{font-style:normal;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--red);letter-spacing:.1em}
+.doc-p{font-size:16px;line-height:1.55;color:var(--ink-2);max-width:82ch;margin-bottom:14px}
+.doc-n{font-size:14px;line-height:1.5;color:var(--muted);margin-top:14px;padding-left:14px;border-left:3px solid var(--line-2);max-width:82ch}
+.doc-l{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.doc-l li{font-size:15.5px;line-height:1.5;color:var(--ink-2);padding-left:20px;position:relative}
+.doc-l li::before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;border-radius:2px;background:var(--xp1)}
+.doc-l b{color:var(--ink);font-weight:700}
+.doc-tw{overflow-x:auto}
+.doc-t{border-collapse:collapse;width:100%;font-size:14.5px;min-width:620px}
+.doc-t th,.doc-t td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+.doc-t thead th{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700;border-bottom:1.5px solid var(--line-2)}
+.doc-t tbody td:first-child{font-weight:600;color:var(--ink)}
+.doc-t td{color:var(--ink-2)}
+.doc-t td.y{background:#FFF7F5;color:var(--ink);font-weight:600}
+.doc-2{display:grid;grid-template-columns:1fr 1.25fr;gap:26px;align-items:start}
+.doc-2.tight{grid-template-columns:1fr 1fr;gap:16px}
+.doc-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.doc-card{background:var(--soft);border:1px solid var(--line-2);border-radius:9px;padding:14px 17px;margin-bottom:12px}
+.doc-3 .doc-card,.doc-2.tight .doc-card{margin-bottom:0}
+.doc-card b{display:block;font-size:15.5px;font-weight:700;margin-bottom:5px}
+.doc-card p{font-size:14px;line-height:1.45;color:var(--ink-2)}
+.doc-card ul{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.doc-card li{font-size:14px;line-height:1.4;color:var(--ink-2);padding-left:18px;position:relative}
+.doc-card li::before{content:"";position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:var(--line-2)}
+.doc-card.ok{background:var(--xp-soft);border-color:#B7CEEE}
+.doc-card.ok li::before{background:var(--xp1)}
+.doc-card.no{background:var(--soft)}
+.doc-card.no li::before{background:var(--red)}
+.wall{width:100%;height:auto;display:block;margin-bottom:14px}
+.doc-f{padding-top:24px}
+.doc-f p{font-size:16px;color:var(--ink-2);line-height:1.55}
+.doc-f b{color:var(--ink)}
+.doc-c{margin-top:12px}
+.doc-c .m{font-family:var(--mono);font-weight:700;color:var(--ink)}
+.doc-close{border-top:1px solid var(--line);padding:14px 46px;display:flex;justify-content:flex-end;background:var(--soft)}
+@media (max-width:900px){
+  .doc-b{padding:26px 22px}
+  .doc-2,.doc-2.tight,.doc-3{grid-template-columns:1fr}
+  .doc-close{padding:14px 22px}
+}
 
 /* nav */
 .nav{position:fixed;left:0;right:0;bottom:14px;display:flex;justify-content:center;align-items:center;gap:14px;z-index:5;font-family:var(--mono);font-size:12px;color:#9FB0C8}
@@ -558,7 +622,7 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
 <section class="slide"><div class="win">
   <div class="bar red"><span class="t">Пакеты партнёрства</span><span class="wb" aria-hidden="true"><i>_</i><i>□</i><i>✕</i></span></div>
   <div class="bd"><div class="mid">
-    <h2 class="sm" style="margin-bottom:10px">Два пакета — и оба <em>на весь сезон</em></h2>
+    <h2 class="sm" style="margin-bottom:18px">Два пакета — и оба <em>на весь сезон</em></h2>
     <div class="pks">
       <div class="pk">
         <div class="bar"><span class="t">Спонсор сезона</span></div>
@@ -597,8 +661,8 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
       <div class="cl"><svg class="ico"><use href="#i-gift"/></svg><div><b>Подарки и призы</b><span>Ваш продукт или мерч — командам и на выпускном</span></div></div>
       <div class="cl"><svg class="ico"><use href="#i-bowl"/></svg><div><b>Площадка для встреч</b><span>Ваше пространство для оффлайн-пятниц</span></div></div>
     </div>
-    <div class="excl"><svg class="ico"><use href="#i-lock-b"/></svg><p><b>Мест мало, и это принципиально.</b> Один генеральный спонсор, до четырёх спонсоров сезона, категория закрывается за вами.</p></div>
-  </div><div class="foot"><span>Категория закрывается за партнёром</span><span>8 / 10</span></div></div>
+    <p class="limit"><svg class="ico" aria-hidden="true"><use href="#i-lock-b"/></svg><b>Места ограничены принципиально.</b> Один генеральный спонсор, до четырёх спонсоров сезона, категория закрывается за вами.</p>
+  </div><div class="foot"><span>И АЙ КЛАБ · спонсорам</span><span>8 / 10</span></div></div>
 </div></section>
 
 <!-- 9 КОМАНДА -->
@@ -650,32 +714,71 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
     <button class="btn go" id="startb" type="button"><span class="wlogo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Пуск</button>
     <p class="hintline">займёт десять секунд</p>
     <div class="contact">Или напишите напрямую: <span class="m">t.me/•••••••</span> · <span class="m">+7 ••• ••• •• ••</span></div>
+    <p class="policy"><a href="#terms" id="termsl">Подробные условия партнёрства</a> · что входит в пакеты, форматы размещения, продакшен и порядок работы</p>
   </div><div class="foot"><span>И АЙ КЛАБ · спонсорам</span><span>10 / 10</span></div></div>
 </div></section>
 
 </div></div>
 
-<!-- диалог 1: выбор -->
+<!-- диалог 1: мастер -->
 <div class="ov" id="ov1" role="dialog" aria-modal="true" aria-labelledby="t1">
   <div class="dlg">
-    <div class="bar"><span class="t" id="t1">Мастер партнёрства — шаг 1 из 2</span><span class="wb"><i data-close="ov1" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
-    <div class="dlgb"><span class="gl2" aria-hidden="true">?</span><div>
-      <h3>Что вам интересно?</h3>
-      <p>Выберите вариант — мы вернёмся с деталями по нему.</p>
-    </div></div>
-    <ul class="opts" id="opts">
-      <li><label class="sel"><input type="radio" name="pr" value="talk" checked><span><b>Хочу обсудить партнёрство</b><small>Расскажите подробнее, пока присматриваюсь</small></span></label></li>
-      <li><label><input type="radio" name="pr" value="season"><span><b>Интересно быть спонсором сезона</b><small>100 000 ₽ · до четырёх мест</small></span></label></li>
-      <li><label><input type="radio" name="pr" value="general"><span><b>Хочу быть генеральным спонсором</b><small>300 000 ₽ · одно место, эксклюзив в категории</small></span></label></li>
-    </ul>
-    <div class="dlgf"><button class="btn hot" id="send" type="button">Отправить</button><button class="btn" data-close="ov1" type="button">Не сейчас</button></div>
+    <div class="bar"><span class="t" id="t1">Мастер партнёрства — шаг 1 из 3</span><span class="wb"><i data-close="ov1" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
+
+    <div class="step" data-step="what">
+      <div class="dlgb"><span class="gl2" aria-hidden="true">?</span><div>
+        <h3>Что вам интересно?</h3>
+        <p>Выберите вариант — мы вернёмся с деталями по нему.</p>
+      </div></div>
+      <ul class="opts" id="opts-what">
+        <li><label class="sel"><input type="radio" name="pr" value="talk" checked><span><b>Хочу обсудить партнёрство</b><small>Расскажите подробнее, пока присматриваюсь</small></span></label></li>
+        <li><label><input type="radio" name="pr" value="season"><span><b>Интересно быть спонсором сезона</b><small>100 000 ₽ · до четырёх мест</small></span></label></li>
+        <li><label><input type="radio" name="pr" value="general"><span><b>Хочу быть генеральным спонсором</b><small>300 000 ₽ · одно место, эксклюзив в категории</small></span></label></li>
+      </ul>
+    </div>
+
+    <div class="step" data-step="format" hidden>
+      <div class="dlgb"><span class="gl2" aria-hidden="true">≡</span><div>
+        <h3>Какой формат обсудим?</h3>
+        <p>Можно выбрать несколько — или написать свой вариант.</p>
+      </div></div>
+      <ul class="opts chips" id="opts-format">
+        <li><label><input type="checkbox" name="fm" value="Инфо-партнёрство"><span><b>Инфо-партнёрство</b><small>Анонсы друг у друга и обмен аудиториями</small></span></label></li>
+        <li><label><input type="checkbox" name="fm" value="Подарки и призы"><span><b>Подарки и призы</b><small>Ваш продукт или мерч командам и на выпускном</small></span></label></li>
+        <li><label><input type="checkbox" name="fm" value="Площадка для встреч"><span><b>Площадка для встреч</b><small>Ваше пространство для оффлайн-пятниц</small></span></label></li>
+        <li><label><input type="checkbox" name="fm" value="Спонсорский пакет"><span><b>Спонсорский пакет</b><small>Хочу посмотреть, что входит и сколько стоит</small></span></label></li>
+      </ul>
+      <div class="own"><label for="fmOwn">Другое — напишите своими словами</label><input id="fmOwn" type="text" maxlength="120" placeholder="например: совместный воркшоп для участников" autocomplete="off"></div>
+    </div>
+
+    <div class="step" data-step="niche" hidden>
+      <div class="dlgb"><span class="gl2" aria-hidden="true">◎</span><div>
+        <h3>Ваша ниша</h3>
+        <p>Так мы сразу проверим, свободна ли категория.</p>
+      </div></div>
+      <ul class="opts chips" id="opts-niche">
+        <li><label><input type="radio" name="nc" value="ИИ-сервис или SaaS"><span><b>ИИ-сервис или SaaS</b></span></label></li>
+        <li><label><input type="radio" name="nc" value="Образование и курсы"><span><b>Образование и курсы</b></span></label></li>
+        <li><label><input type="radio" name="nc" value="Банк, финтех, инвестиции"><span><b>Банк, финтех, инвестиции</b></span></label></li>
+        <li><label><input type="radio" name="nc" value="Автоматизация, CRM, аналитика"><span><b>Автоматизация, CRM, аналитика</b></span></label></li>
+        <li><label><input type="radio" name="nc" value="Мероприятия и площадки"><span><b>Мероприятия и площадки</b></span></label></li>
+      </ul>
+      <div class="own"><label for="ncOwn">Другая ниша — напишите своими словами</label><input id="ncOwn" type="text" maxlength="120" placeholder="например: производство и логистика" autocomplete="off"></div>
+    </div>
+
+    <div class="dlgf">
+      <button class="btn" id="back" type="button" hidden>Назад</button>
+      <button class="btn hot" id="next" type="button">Далее</button>
+      <button class="btn hot" id="send" type="button" hidden>Отправить</button>
+      <button class="btn" data-close="ov1" type="button">Не сейчас</button>
+    </div>
   </div>
 </div>
 
 <!-- диалог 2: отправка и готово -->
 <div class="ov" id="ov2" role="dialog" aria-modal="true" aria-labelledby="t2">
   <div class="dlg">
-    <div class="bar"><span class="t" id="t2">Мастер партнёрства — шаг 2 из 2</span><span class="wb"><i data-close="ov2" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
+    <div class="bar"><span class="t" id="t2">Мастер партнёрства — отправка</span><span class="wb"><i data-close="ov2" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
     <div id="sending">
       <div class="dlgb"><span class="gl2" aria-hidden="true">↯</span><div>
         <h3 id="sh">Отправляем заявку</h3>
@@ -696,6 +799,124 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
         <button class="btn" data-close="ov2" type="button">Закрыть</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- условия партнёрства -->
+<div class="ov doc-ov" id="ovT" role="dialog" aria-modal="true" aria-labelledby="tT">
+  <div class="doc">
+    <div class="bar"><span class="t" id="tT">Условия партнёрства — И АЙ КЛАБ</span><span class="wb"><i data-close="ovT" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
+    <div class="doc-b">
+
+      <div class="doc-h">
+        <p class="lbl">Сезон 1 · документ для партнёра</p>
+        <h2>Как мы работаем с партнёрами</h2>
+        <p class="doc-lead">Мы берём немного партнёров и надолго. Нам невыгодно продать место и забыть — нам выгодно, чтобы после сезона вы вернулись во второй. Поэтому ниже честно расписано, что вы получаете, в каком виде и в какие сроки, за что отвечаем мы и что остаётся зоной вашего решения. Если чего-то нет в списке, а хочется — почти всегда это можно добавить: пишите, придумаем.</p>
+      </div>
+
+      <section class="doc-s"><h3><i>01</i>Что входит в пакеты</h3>
+        <div class="doc-tw"><table class="doc-t">
+          <thead><tr><th>Формат</th><th>Генеральный спонсор</th><th>Спонсор сезона</th><th>Инфо-партнёр</th></tr></thead>
+          <tbody>
+            <tr><td>Мест в сезоне</td><td class="y">Одно</td><td>До четырёх</td><td>По договорённости</td></tr>
+            <tr><td>Эксклюзив в категории</td><td class="y">Да, весь сезон</td><td>Нет</td><td>Нет</td></tr>
+            <tr><td>Рилсы в Instagram</td><td class="y">6</td><td>2</td><td>Взаимные анонсы</td></tr>
+            <tr><td>Видео на YouTube</td><td class="y">3</td><td>1</td><td>Упоминание</td></tr>
+            <tr><td>Логотип в эфирах</td><td class="y">Все 12</td><td>Все 12</td><td>—</td></tr>
+            <tr><td>Посты в ИИ-канале</td><td class="y">12</td><td>6</td><td>Кросс-анонсы</td></tr>
+            <tr><td>Карточка в приложении</td><td class="y">Да, с промокодом</td><td>Да, с промокодом</td><td>Упоминание</td></tr>
+            <tr><td>Воркшоп для участников</td><td class="y">Свой воркшоп</td><td>Живое демо продукта</td><td>—</td></tr>
+            <tr><td>Титул сезона</td><td class="y">Имя в названии Мани Челленджа</td><td>—</td><td>—</td></tr>
+            <tr><td>Выпускной</td><td class="y">Стенд, слово со сцены, награждение</td><td>Логотип и место в зале</td><td>Логотип на пресс-волле</td></tr>
+          </tbody>
+        </table></div>
+        <p class="doc-n">Конкретные даты выходов согласуем до старта сезона и фиксируем в медиаплане. Если формат по объективным причинам не выходит в срок, он переносится внутри сезона или заменяется равным по объёму — без уменьшения общего пакета.</p>
+      </section>
+
+      <section class="doc-s"><h3><i>02</i>Оффлайн: стенд и пресс-волл</h3>
+        <div class="doc-2">
+          <div>
+            <div class="doc-card"><b>Генеральный спонсор</b><p>Зона до 3 × 2 м в холле: стойка, два ролапа 0,85 × 2 м, место под демо-оборудование и своего человека для общения с гостями. Монтаж — за два часа до начала, макеты присылаете за 10 дней.</p></div>
+            <div class="doc-card"><b>Спонсор сезона</b><p>Один ролап 0,85 × 2 м и стойка для раздатки в общей партнёрской зоне. Демо продукта — по согласованию, отдельным слотом в программе вечера.</p></div>
+            <div class="doc-card"><b>Инфо-партнёр</b><p>Раздатка на общем партнёрском столе и логотип на пресс-волле в нижнем ряду.</p></div>
+          </div>
+          <div>
+            <p class="lbl" style="margin-bottom:10px">Пресс-волл — как распределяются логотипы</p>
+            <svg viewBox="0 0 710 230" class="wall" role="img" aria-label="Схема пресс-волла: верхний ряд — крупные логотипы генерального спонсора, средний ряд — логотипы спонсоров сезона, нижний ряд — небольшие логотипы инфо-партнёров">
+              <rect x="10" y="10" width="690" height="210" rx="8" fill="#F8FAFD" stroke="#C6D4E8" stroke-width="1.5"/>
+              <text x="34" y="34" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" letter-spacing="2" fill="#8C97A8">И АЙ КЛАБ · ВЫПУСКНОЙ СЕЗОНА</text>
+              <rect x="34" y="46" width="132" height="54" rx="4" fill="#FDEAE6" stroke="#DA3A26" stroke-width="2"/><text x="100" y="79" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" letter-spacing="1" fill="#B02A18">ГЕН. СПОНСОР</text><rect x="202" y="46" width="132" height="54" rx="4" fill="#FDEAE6" stroke="#DA3A26" stroke-width="2"/><text x="268" y="79" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" letter-spacing="1" fill="#B02A18">ГЕН. СПОНСОР</text><rect x="370" y="46" width="132" height="54" rx="4" fill="#FDEAE6" stroke="#DA3A26" stroke-width="2"/><text x="436" y="79" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" letter-spacing="1" fill="#B02A18">ГЕН. СПОНСОР</text><rect x="538" y="46" width="132" height="54" rx="4" fill="#FDEAE6" stroke="#DA3A26" stroke-width="2"/><text x="604" y="79" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" letter-spacing="1" fill="#B02A18">ГЕН. СПОНСОР</text><rect x="34" y="120" width="90" height="38" rx="4" fill="#E4EDFB" stroke="#1D4BA6" stroke-width="1.5"/><text x="79" y="144" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8.5" font-weight="700" letter-spacing=".5" fill="#1D4BA6">СПОНСОР</text><rect x="146" y="120" width="90" height="38" rx="4" fill="#E4EDFB" stroke="#1D4BA6" stroke-width="1.5"/><text x="191" y="144" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8.5" font-weight="700" letter-spacing=".5" fill="#1D4BA6">СПОНСОР</text><rect x="258" y="120" width="90" height="38" rx="4" fill="#E4EDFB" stroke="#1D4BA6" stroke-width="1.5"/><text x="303" y="144" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8.5" font-weight="700" letter-spacing=".5" fill="#1D4BA6">СПОНСОР</text><rect x="370" y="120" width="90" height="38" rx="4" fill="#E4EDFB" stroke="#1D4BA6" stroke-width="1.5"/><text x="415" y="144" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8.5" font-weight="700" letter-spacing=".5" fill="#1D4BA6">СПОНСОР</text><rect x="482" y="120" width="90" height="38" rx="4" fill="#E4EDFB" stroke="#1D4BA6" stroke-width="1.5"/><text x="527" y="144" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8.5" font-weight="700" letter-spacing=".5" fill="#1D4BA6">СПОНСОР</text><rect x="594" y="120" width="90" height="38" rx="4" fill="#E4EDFB" stroke="#1D4BA6" stroke-width="1.5"/><text x="639" y="144" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8.5" font-weight="700" letter-spacing=".5" fill="#1D4BA6">СПОНСОР</text><rect x="34" y="178" width="66" height="26" rx="3" fill="#EEF2F8" stroke="#B9C3D0" stroke-width="1.5"/><text x="67" y="195" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" font-weight="700" fill="#6C7787">ИНФО</text><rect x="118" y="178" width="66" height="26" rx="3" fill="#EEF2F8" stroke="#B9C3D0" stroke-width="1.5"/><text x="151" y="195" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" font-weight="700" fill="#6C7787">ИНФО</text><rect x="202" y="178" width="66" height="26" rx="3" fill="#EEF2F8" stroke="#B9C3D0" stroke-width="1.5"/><text x="235" y="195" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" font-weight="700" fill="#6C7787">ИНФО</text><rect x="286" y="178" width="66" height="26" rx="3" fill="#EEF2F8" stroke="#B9C3D0" stroke-width="1.5"/><text x="319" y="195" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" font-weight="700" fill="#6C7787">ИНФО</text><rect x="370" y="178" width="66" height="26" rx="3" fill="#EEF2F8" stroke="#B9C3D0" stroke-width="1.5"/><text x="403" y="195" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" font-weight="700" fill="#6C7787">ИНФО</text><rect x="454" y="178" width="66" height="26" rx="3" fill="#EEF2F8" stroke="#B9C3D0" stroke-width="1.5"/><text x="487" y="195" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" font-weight="700" fill="#6C7787">ИНФО</text><rect x="538" y="178" width="66" height="26" rx="3" fill="#EEF2F8" stroke="#B9C3D0" stroke-width="1.5"/><text x="571" y="195" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" font-weight="700" fill="#6C7787">ИНФО</text><rect x="622" y="178" width="66" height="26" rx="3" fill="#EEF2F8" stroke="#B9C3D0" stroke-width="1.5"/><text x="655" y="195" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" font-weight="700" fill="#6C7787">ИНФО</text>
+            </svg>
+            <ul class="doc-l">
+              <li><b>Генеральный</b> — верхний ряд, логотип примерно вдвое крупнее спонсорского, повторяется по всей плоскости.</li>
+              <li><b>Спонсоры сезона</b> — средний ряд, одинаковый размер у всех, порядок по дате оплаты.</li>
+              <li><b>Инфо-партнёры</b> — нижний ряд, компактный блок.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="doc-s"><h3><i>03</i>Видео и продакшен</h3>
+        <p class="doc-p">Съёмкой занимается наша команда — мы восемь лет делаем медиа и курсы, и продакшен закрываем целиком: сценарий, съёмка, монтаж, графика. Ролики остаются в сети навсегда и продолжают собирать просмотры после сезона.</p>
+        <div class="doc-3">
+          <div class="doc-card"><b>Генеральный спонсор</b><p>Отдельная сцена в ролике о сезоне: продукт в кадре и в деле, ваш представитель может участвовать. Логотип в открывающих и закрывающих титрах, упоминание в озвучке.</p></div>
+          <div class="doc-card"><b>Спонсор сезона</b><p>Нативная интеграция: логотип в титрах, кадры со стенда и демо, плашка при упоминании продукта участниками.</p></div>
+          <div class="doc-card"><b>Инфо-партнёр</b><p>Логотип в блоке партнёров в титрах и в описании ролика.</p></div>
+        </div>
+        <p class="doc-n">Финальный монтаж остаётся за нами — так ролик получается смотрибельным, а не рекламным блоком. Один круг правок по вашему присутствию в кадре включён.</p>
+      </section>
+
+      <section class="doc-s"><h3><i>04</i>Про цифры охвата</h3>
+        <p class="doc-p">Цифры в презентации — это прогноз на основе наших прошлых запусков, а не гарантированный медиаплан. Мы отвечаем за то, что зависит от нас: количество выходов, качество материалов и сроки. Алгоритмы площадок и поведение аудитории мы не контролируем — как и никто другой на рынке. Если охват по какому-то каналу проседает, мы добираем объём другими форматами внутри сезона, а не разводим руками.</p>
+      </section>
+
+      <section class="doc-s"><h3><i>05</i>Оплата и бронь места</h3>
+        <ul class="doc-l">
+          <li>Работаем по договору через ИП, с закрывающими документами. Оплата — 100% до старта сезона.</li>
+          <li>Место и категория закрываются за партнёром <b>с момента поступления оплаты</b>, а не с момента разговора. До этого мы продолжаем общаться с другими брендами — иначе нечестно и по отношению к ним.</li>
+          <li>Макеты, промокод и вводные ждём в течение 10 дней после оплаты, чтобы успеть встроить бренд в сценарии сезона.</li>
+        </ul>
+      </section>
+
+      <section class="doc-s"><h3><i>06</i>Если планы изменились</h3>
+        <p class="doc-p">Здесь всё честно и заранее: как только вы в сезоне, мы сразу начинаем тратить на вас ресурс — закрываем категорию и отказываем вашим конкурентам, перекраиваем сценарии эфиров, отдаём макеты в продакшен, ставим бренд в приложение и в медиаплан. Поэтому:</p>
+        <ul class="doc-l">
+          <li><b>До оплаты</b> — никаких обязательств ни с одной стороны. Можно спокойно думать, сравнивать и спрашивать что угодно.</li>
+          <li><b>После оплаты и до старта сезона</b> — место уже занято вами и снято с рынка, деньги не возвращаются. Зато их можно целиком перенести на следующий сезон или переоформить на другой ваш бренд или продукт.</li>
+          <li><b>После старта сезона</b> — интеграция уже идёт в эфирах, роликах и приложении, поэтому возврат не предусмотрен. Если по ходу видно, что формат работает не так, как хотелось, мы меняем наполнение внутри пакета — это быстрее и полезнее любого возврата.</li>
+          <li>Пакет можно передать другой компании вашей группы в любой момент — просто напишите, переоформим.</li>
+        </ul>
+      </section>
+
+      <section class="doc-s"><h3><i>07</i>За что отвечаем мы, а что решаете вы</h3>
+        <div class="doc-2 tight">
+          <div class="doc-card ok"><b>Наша зона</b><ul><li>Количество и сроки выходов по медиаплану</li><li>Качество съёмки, монтажа и оформления</li><li>Доступ к участникам клуба и к сцене выпускного</li><li>Эксклюзив категории для генерального спонсора</li><li>Один менеджер на связи весь сезон</li></ul></div>
+          <div class="doc-card no"><b>Вне нашего контроля</b><ul><li>Продажи, заявки и конверсия из показов</li><li>Решения участников — покупать ваш продукт или нет</li><li>Алгоритмы Instagram, YouTube и Telegram</li><li>Явка конкретных людей на конкретную встречу</li><li>Результаты команд в Мани Челлендже</li></ul></div>
+        </div>
+      </section>
+
+      <section class="doc-s"><h3><i>08</i>Что можем сделать сверх пакета</h3>
+        <div class="doc-3">
+          <div class="doc-card"><b>Рекламный ролик</b><p>Снимем отдельный ролик под ваш продукт силами нашей команды — со сценарием, съёмкой и монтажом.</p></div>
+          <div class="doc-card"><b>Кейс с командой</b><p>Возьмём команду из клуба, внедрим ваш продукт и снимем честный кейс с цифрами.</p></div>
+          <div class="doc-card"><b>Своя номинация</b><p>Отдельная номинация вашего бренда на выпускном с призом и награждением на сцене.</p></div>
+          <div class="doc-card"><b>Интенсив или воркшоп</b><p>Обучающий блок по вашему продукту — в записи он остаётся в базе знаний клуба навсегда.</p></div>
+          <div class="doc-card"><b>Спецпроект в канале</b><p>Серия материалов или челлендж вокруг вашей темы, а не разовая рекламная подача.</p></div>
+          <div class="doc-card"><b>Мерч и подарки</b><p>Придумаем и произведём брендированный мерч для участников сезона.</p></div>
+        </div>
+      </section>
+
+      <section class="doc-s"><h3><i>09</i>Форс-мажор</h3>
+        <p class="doc-p">Если оффлайн-встречу нельзя провести по внешним причинам — она переносится или проходит онлайн, а общий объём сезона сохраняется. Даты выпускного при переносе согласуем с партнёрами заранее.</p>
+      </section>
+
+      <div class="doc-f">
+        <p><b>Остались вопросы?</b> Это рамка, а не жёсткий регламент: почти любой пункт можно обсудить и собрать пакет под вашу задачу. Напишите — разберём за один разговор.</p>
+        <p class="doc-c"><span class="m">t.me/•••••••</span> · <span class="m">+7 ••• ••• •• ••</span></p>
+      </div>
+
+    </div>
+    <div class="doc-close"><button class="btn hot" data-close="ovT" type="button">Понятно, закрыть</button></div>
   </div>
 </div>
 
@@ -825,9 +1046,47 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
   });
   document.querySelectorAll('.ov').forEach(function(o){ o.addEventListener('click',function(e){ if(e.target===o) close(o.id); }); });
   document.querySelectorAll('.opts label').forEach(function(l){
-    l.addEventListener('click',function(){ document.querySelectorAll('.opts label').forEach(function(x){x.classList.remove('sel')}); l.classList.add('sel'); sfx('tick'); });
+    var inp=l.querySelector('input');
+    l.addEventListener('click',function(){
+      if(inp.type==='radio'){
+        l.closest('.opts').querySelectorAll('label').forEach(function(x){x.classList.remove('sel')});
+        l.classList.add('sel');
+      } else {
+        setTimeout(function(){ l.classList.toggle('sel',inp.checked); },0);
+      }
+      sfx('tick');
+    });
   });
-  $('startb').addEventListener('click',function(){ last=this; open('ov1'); });
+
+  /* ---------- мастер ---------- */
+  var steps=[].slice.call(document.querySelectorAll('.step')), si=0;
+  function plan(){ var v=pick(); return v==='talk' ? ['what','format','niche'] : ['what','niche']; }
+  function pick(){ return (document.querySelector('input[name=pr]:checked')||{}).value||'talk'; }
+  function show(){
+    var pl=plan(), key=pl[si];
+    steps.forEach(function(el){ el.hidden = el.getAttribute('data-step')!==key; });
+    $('t1').textContent='Мастер партнёрства — шаг '+(si+1)+' из '+pl.length;
+    $('back').hidden = si===0;
+    var lastStep = si===pl.length-1;
+    $('next').hidden = lastStep; $('send').hidden = !lastStep;
+    var f=steps[0].parentNode.querySelector('.step:not([hidden]) input:checked')||(lastStep?$('send'):$('next'));
+    if(f&&f.focus) f.focus();
+  }
+  $('next').addEventListener('click',function(){ si++; sfx('switch'); show(); });
+  $('back').addEventListener('click',function(){ si--; sfx('switch'); show(); });
+  $('startb').addEventListener('click',function(){ last=this; si=0; show(); open('ov1'); });
+  $('termsl').addEventListener('click',function(e){ e.preventDefault(); last=this; $('ovT').scrollTop=0; open('ovT'); });
+
+  function chosenFormats(){
+    var v=[].slice.call(document.querySelectorAll('input[name=fm]:checked')).map(function(x){return x.value});
+    var own=$('fmOwn').value.trim(); if(own) v.push(own);
+    return v;
+  }
+  function chosenNiche(){
+    var own=$('ncOwn').value.trim(); if(own) return own;
+    var r=document.querySelector('input[name=nc]:checked');
+    return r?r.value:'';
+  }
 
   var texts={
     talk:['Отправляем запрос','Пришлём календарь сезона, темы эфиров и покажем, где встанет бренд.'],
@@ -835,9 +1094,12 @@ p{margin:0;color:var(--ink-2);font-size:18px;line-height:1.45}
     general:['Резервируем генеральное место','Место одно на весь сезон. Держим его за вами, пока обсуждаем детали.']
   };
   $('send').addEventListener('click',function(){
-    var v=(document.querySelector('input[name=pr]:checked')||{}).value||'talk';
+    var v=pick(), tail='';
+    var fm=chosenFormats(), nc=chosenNiche();
+    if(v==='talk'&&fm.length) tail+=' Формат: '+fm.join(', ')+'.';
+    if(nc) tail+=' Ниша: '+nc+'.';
     $('sh').textContent=texts[v][0]; $('sp').textContent=texts[v][1];
-    $('dp').textContent=texts[v][1]+' Свяжемся в течение дня.';
+    $('dp').textContent=texts[v][1]+(tail?tail:'')+' Свяжемся в течение дня.';
     $('sending').hidden=false; $('done').hidden=true; $('pbi').style.width='0';
     $('sst').textContent='соединение с клубом…';
     $('ov1').classList.remove('on'); open('ov2','boot');
