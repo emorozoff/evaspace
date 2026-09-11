@@ -1606,7 +1606,23 @@
   .est-progress .epnote{font-size:11.5px; color:var(--ink-faint); margin-top:6px;}
   .est-controls{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:0 0 12px;}
 
-  table.est-table{font-size:12.5px;}
+  /* Смета помещается в ширину страницы целиком: раскладка фиксированная,
+     колонки периодов узкие, название статьи переносится по словам. */
+  .est-table-wrap{overflow-x:visible;}
+  table.est-table{font-size:12.5px; width:100%; table-layout:fixed;}
+  table.est-table th.est-no, table.est-table td.est-no{width:32px; min-width:32px;}
+  table.est-table th.est-per{width:88px;}
+  /* кварталов всего три — колонки шире, иначе название статьи занимает полтаблицы */
+  table.est-table.est-q th.est-per{width:190px;}
+  table.est-table th.est-tot, table.est-table td.est-tot{width:92px;}
+  table.est-table td.est-name, table.est-table th.est-name{min-width:0;}
+  table.est-table .est-nm, table.est-table .est-sub{white-space:normal; overflow-wrap:anywhere;}
+  table.est-table td.est-cell{overflow:hidden;}
+  @media (max-width:900px){
+    .est-table-wrap{overflow-x:auto;}
+    table.est-table{table-layout:auto; min-width:760px;}
+    table.est-table td.est-name, table.est-table th.est-name{min-width:200px;}
+  }
   table.est-table th{
     font-size:9.5px; padding:9px 8px; vertical-align:bottom; text-align:right; white-space:nowrap;
     border-bottom:1.5px solid var(--ink-faint);
@@ -1635,11 +1651,13 @@
     font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink); white-space:nowrap; min-width:64px;
   }
   .est-pay:hover{border-color:var(--gold); border-style:solid; background:var(--gold-bg); color:var(--gold-ink);}
-  .est-pay.armed{background:var(--rust); border-color:var(--rust); color:#fff; border-style:solid;}
+  .est-pay.armed{background:var(--gold-bg); border-color:var(--gold-ink); color:var(--gold-ink); border-style:solid;}
   .est-done{
     display:inline-block; color:var(--green); font-family:'IBM Plex Mono',monospace; font-size:11.5px;
     font-weight:600; padding:4px 7px; border:1px solid #C7DBCB; border-radius:7px; background:var(--green-bg);
+    cursor:pointer; white-space:nowrap; max-width:100%; overflow:hidden;
   }
+  .est-done:hover{border-color:var(--rust); color:var(--rust); background:var(--rust-bg);}
   .est-mark{color:var(--green); margin-left:5px;}
   td.est-cell.est-paid{background:rgba(63,107,74,0.05);}
   td.est-tot{font-family:'IBM Plex Mono',monospace; text-align:right; font-weight:600; color:var(--gold-ink); border-left:1px solid var(--line);}
@@ -1654,6 +1672,18 @@
     .est-top{gap:16px; padding:14px 16px;}
     .est-top-fig .etv{font-size:19px;}
   }
+  .est-confirm{padding:16px 18px;}
+  .ec-title{font-size:14px; font-weight:600; margin-bottom:8px;}
+  .ec-what{font-size:12.5px; color:var(--ink-soft); line-height:1.4;}
+  .ec-what span{color:var(--ink-faint);}
+  .ec-sum{font-family:'Space Grotesk',sans-serif; font-size:24px; font-weight:700; color:var(--green); margin:8px 0 2px;}
+  .ec-sum.undo{color:var(--rust);}
+  .ec-note{font-size:11.5px; color:var(--ink-faint); line-height:1.45; margin-bottom:14px;}
+  .ec-actions{display:flex; gap:8px;}
+  .ec-actions .btn{padding:8px 16px; font-size:13px;}
+  .btn.danger{background:var(--rust); color:#fff;}
+  .btn.danger:hover{background:#9C4A22;}
+  .est-pay.armed, .est-done.armed{box-shadow:0 0 0 2px var(--gold-ink); border-style:solid; position:relative; z-index:1;}
   /* источники трафика */
   .src-table td{vertical-align:middle;}
   .src-share{min-width:170px;}
@@ -6299,8 +6329,9 @@ async function estimateHtml(model){
     const m = col.ms[0];
     return `<td class="num est-cell ${fullyPaid?'est-paid':''}">
       ${fullyPaid
-        ? `<span class="est-done" title="Оплачено ${money(paidSum)} · запись в журнале платежей">✓ ${cfMoney(paidSum)}</span>`
-        : `<button type="button" class="est-pay" data-est-pay="${row.id}" data-est-month="${m}" data-est-amount="${Math.round(v)}" data-est-name="${esc(row.name)}" data-est-cat="${row.cat||'other'}" data-armed="0"
+        ? `<button type="button" class="est-done" data-est-undo="${row.id}" data-est-month="${m}" data-est-amount="${Math.round(paidSum)}" data-est-name="${esc(row.name)}"
+             title="Оплачено ${money(paidSum)} · нажмите, чтобы отменить оплату">✓ ${cfMoney(paidSum)}</button>`
+        : `<button type="button" class="est-pay" data-est-pay="${row.id}" data-est-month="${m}" data-est-amount="${Math.round(v)}" data-est-name="${esc(row.name)}" data-est-cat="${row.cat||'other'}"
              title="${money(v)} · нажмите, чтобы отметить оплаченным">${cfMoney(v)}</button>`}
     </td>`;
   };
@@ -6374,13 +6405,13 @@ async function estimateHtml(model){
         <span class="note-sm" style="margin:0;">Кварталы календарные: ${finMonthShort(1)} — ${ROMAN_Q[Math.floor((((FIN_BASE_ABS%12)+12)%12)/3)]} квартал.</span>
       </div>
 
-      <div class="card table-card">
-        <div class="table-scroll">
-          <table class="calc-table est-table">
+      <div class="card table-card est-card">
+        <div class="table-scroll est-table-wrap">
+          <table class="calc-table est-table ${byQ?'est-q':''}">
             <thead><tr>
               <th class="est-no">№</th>
               <th class="est-name">Статья расходов</th>
-              ${cols.map(c=>`<th>${c.label}${c.sub?`<div class="est-th-sub">${c.sub}</div>`:''}</th>`).join('')}
+              ${cols.map(c=>`<th class="est-per">${c.label}${c.sub?`<div class="est-th-sub">${c.sub}</div>`:''}</th>`).join('')}
               <th class="est-tot">Всего</th>
             </tr></thead>
             <tbody>
@@ -6404,28 +6435,70 @@ async function estimateHtml(model){
       <p class="note-sm">Переменные расходы и налоги в смету не входят: эквайринг, хостинг, поддержка, партнёрские выплаты и УСН считаются сами от оборота — за ${H} месяцев это ещё ${money(varTax.reduce((a,b)=>a+b,0))}. Их не платят вручную, они уже учтены в P&amp;L и Cash&nbsp;Flow на странице «Модель».</p>
     </section>`;
 }
+/* Окно «Да / Нет» у клетки сметы: отметить платёж или отменить оплату.
+   Отмена убирает запись из журнала платежей, поэтому P&L и факт
+   пересчитываются сами. */
+function openEstConfirm(btn, mode, rerender){
+  const old = document.getElementById('estConfirm'); if(old) old.remove();
+  const m      = parseInt(btn.dataset.estMonth);
+  const amount = parseInt(btn.dataset.estAmount)||0;
+  const name   = btn.dataset.estName || '';
+  const undo   = mode==='undo';
+  const pop = document.createElement('div');
+  pop.id = 'estConfirm'; pop.className = 'plan-picker est-confirm';
+  pop.innerHTML = `
+    <div class="ec-title">${undo?'Отменить оплату?':'Отметить платёж оплаченным?'}</div>
+    <div class="ec-what">${esc(name)} <span>· ${finMonthLabel(m)}</span></div>
+    <div class="ec-sum ${undo?'undo':''}">${money(amount)}</div>
+    <div class="ec-note">${undo
+      ? 'Запись уйдёт из журнала платежей, из P&amp;L и из факта — платёж снова станет плановым.'
+      : 'Появится записью в журнале платежей, в P&amp;L и в факте этого месяца.'}</div>
+    <div class="ec-actions">
+      <button type="button" class="btn ${undo?'danger':''}" id="ecYes">Да${undo?', отменить':', оплачено'}</button>
+      <button type="button" class="btn ghost" id="ecNo">Нет</button>
+    </div>`;
+  document.body.appendChild(pop);
+
+  const r = btn.getBoundingClientRect();
+  const w = 280, h = pop.offsetHeight || 210;
+  const left = Math.min(window.innerWidth - w - 12, Math.max(12, r.left + r.width/2 - w/2));
+  let top = r.bottom + 8;
+  if(top + h > window.innerHeight - 8) top = Math.max(12, r.top - h - 8);
+  pop.style.left = left+'px'; pop.style.top = top+'px'; pop.style.width = w+'px';
+  btn.classList.add('armed');
+
+  const close = ()=>{
+    pop.remove(); btn.classList.remove('armed');
+    document.removeEventListener('pointerdown', outside, true);
+    document.removeEventListener('keydown', onKey, true);
+  };
+  const outside = (e)=>{ if(!pop.contains(e.target) && e.target!==btn) close(); };
+  const onKey = (e)=>{ if(e.key==='Escape'){ e.preventDefault(); close(); } };
+  setTimeout(()=>{ document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', onKey, true); }, 0);
+
+  pop.querySelector('#ecNo').onclick = close;
+  pop.querySelector('#ecYes').onclick = async ()=>{
+    const list = await getLedger();
+    if(undo){
+      saveLedger(list.filter(e=>!(e.estId===btn.dataset.estUndo && e.estMonth===m)));
+    } else {
+      list.push({id:uid(), d:estMonthDate(m), kind:'out', cat:btn.dataset.estCat,
+        amount, note: name+' · '+finMonthLabel(m), estId: btn.dataset.estPay, estMonth: m});
+      saveLedger(list);
+    }
+    close(); rerender();
+  };
+  pop.querySelector('#ecYes').focus();
+}
 function wireEstimate(rerender){
   document.querySelectorAll('#estViewRow button').forEach(b=>{
     b.onclick = ()=>{ _estView = b.dataset.estView; rerender(); };
   });
   document.querySelectorAll('[data-est-pay]').forEach(btn=>{
-    const original = btn.textContent;
-    btn.onclick = async ()=>{
-      if(btn.dataset.armed!=='1'){
-        btn.dataset.armed = '1';
-        btn.classList.add('armed');
-        btn.textContent = 'Оплатить?';
-        setTimeout(()=>{ if(btn.dataset.armed==='1'){ btn.dataset.armed='0'; btn.classList.remove('armed'); btn.textContent = original; } }, 6000);
-        return;
-      }
-      const m = parseInt(btn.dataset.estMonth);
-      const list = await getLedger();
-      list.push({id:uid(), d:estMonthDate(m), kind:'out', cat:btn.dataset.estCat,
-        amount: parseInt(btn.dataset.estAmount)||0, note: btn.dataset.estName+' · '+finMonthLabel(m),
-        estId: btn.dataset.estPay, estMonth: m});
-      saveLedger(list);
-      rerender();
-    };
+    btn.onclick = ()=>openEstConfirm(btn, 'pay', rerender);
+  });
+  document.querySelectorAll('[data-est-undo]').forEach(btn=>{
+    btn.onclick = ()=>openEstConfirm(btn, 'undo', rerender);
   });
 }
 
@@ -6468,8 +6541,9 @@ function stratGuideHtml(){
     </details>`;
 }
 
-/* раскрыт ли нижний блок «Цели, декомпозиция и стоимость дорожной карты» */
+/* раскрыты ли нижние блоки: их состояние переживает перерисовку страницы */
 let _stratDetailsOpen = false;
+let _stratFounderOpen = false;
 async function renderStrategy(body){
   const allTasks = await getTasks();
   const overall = taskStats(allTasks);
@@ -6478,7 +6552,6 @@ async function renderStrategy(body){
   const holdH = body.offsetHeight;
   if(holdH) body.style.minHeight = holdH+'px';
   body.innerHTML = `
-    <div id="stratFounder"><div class="loading">Считаем ориентиры…</div></div>
     <div id="stratGantt"><div class="loading">Строим гант…</div></div>
     <div id="stratBudget"></div>
     <div id="stratMoney"></div>
@@ -6497,6 +6570,10 @@ async function renderStrategy(body){
       </div>
       ${efficiencyCardHtml(efficiencyStats(allTasks, allTasks), 'Эффективность команды')}
     </section>
+    <details class="guide" id="stratFounder" ${_stratFounderOpen?'open':''}>
+      <summary>Стратегия основателя — цель года, три приоритета и рамки</summary>
+      <div id="stratFounderBody"><div class="loading">Считаем ориентиры…</div></div>
+    </details>
     <details class="guide" id="stratDetails" ${_stratDetailsOpen?'open':''}>
       <summary>Цели, декомпозиция и стоимость дорожной карты</summary>
       <div id="stratDetailsBody"><div class="loading">Открывается…</div></div>
@@ -6517,7 +6594,16 @@ async function renderStrategy(body){
   document.getElementById('stratMoney').innerHTML = moneyBlocks.top;
   document.getElementById('stratEstimate').innerHTML = await estimateHtml(modelPlan);
   wireEstimate(rerender);
-  await renderFounderNotes(document.getElementById('stratFounder'));
+  /* Стратегия основателя: считает свою модель, поэтому рисуем при раскрытии */
+  const fnd = document.getElementById('stratFounder');
+  if(fnd){
+    const drawF = ()=>renderFounderNotes(document.getElementById('stratFounderBody'));
+    if(fnd.open){ fnd.dataset.drawn='1'; await drawF(); }
+    fnd.addEventListener('toggle', ()=>{
+      _stratFounderOpen = fnd.open;
+      if(fnd.open && !fnd.dataset.drawn){ fnd.dataset.drawn='1'; drawF(); }
+    });
+  }
 
   /* Подробности — ориентиры, помесячный поток, декомпозиция и стоимость
      дорожной карты: тяжёлые таблицы, поэтому считаем при раскрытии. */
@@ -6614,7 +6700,6 @@ async function renderFounderNotes(container){
 
   container.innerHTML = `
     <section class="block founder-block">
-      <h2>Стратегия основателя</h2>
       <p class="block-sub">Куда идём за 12 месяцев, по чему сверяем каждое решение и чего сознательно не делаем. Цель и приоритеты можно привязать к показателю модели — тогда рядом видно, что модель считает прямо сейчас и дотягиваем ли мы. Любая правка уходит команде: в ленту на «Обзоре» и в личный кабинет каждого.</p>
 
       <div class="founder-card fgoal ${approved?'approved':'draft'}">
