@@ -903,6 +903,64 @@
   }
   .toggle-row.subnav a.active{background:var(--ink); color:#fff; border-color:var(--ink);}
   details.fact-fold{margin-top:8px;}
+  /* карточки стратегии основателя */
+  .founder-card{
+    border:1px solid var(--line); border-radius:14px; background:var(--panel);
+    margin-bottom:14px; overflow:hidden; box-shadow:var(--shadow);
+  }
+  .founder-card.fgoal{border-left:4px solid var(--gold);}
+  .founder-card.fgoal.draft{border-left-color:var(--ink-faint);}
+  .fc-head{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    padding:11px 16px; background:var(--paper); border-bottom:1px solid var(--line);
+  }
+  .fc-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); font-weight:600;}
+  .fc-num{
+    display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%;
+    background:var(--gold-ink); color:#fff; font-size:11px; font-weight:700;
+  }
+  .fc-badge{font-size:10.5px; padding:2px 9px; border-radius:20px; font-weight:600;}
+  .fc-badge.ok{background:var(--green-bg, #E7EFE8); color:var(--green);}
+  .fc-badge.draft{background:var(--paper); color:var(--ink-faint); border:1px solid var(--line);}
+  .fc-when{font-size:11px; color:var(--ink-faint);}
+  .fc-edit{
+    margin-left:auto; background:none; border:1px solid var(--line); border-radius:20px; padding:4px 12px;
+    font-size:11.5px; color:var(--ink-soft); cursor:pointer; font-family:inherit; white-space:nowrap;
+  }
+  .fc-edit:hover{border-color:var(--gold); color:var(--gold-ink); background:var(--gold-bg);}
+  .fc-body{padding:16px;}
+  .goal-text{font-size:17px; line-height:1.45; margin:0; color:var(--ink);}
+  .founder-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:14px;}
+  .fp-card{margin-bottom:0; display:flex; flex-direction:column;}
+  .fp-card .fc-body{display:flex; flex-direction:column; gap:12px; flex:1;}
+  .fp-text{margin:0; font-size:14px; line-height:1.5;}
+  .fp-foot{margin-top:auto; padding-top:10px; border-top:1px dashed var(--line); font-size:12px; line-height:1.5;}
+  .fp-metric{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--gold-ink); margin-bottom:3px;}
+  .fp-nums b{font-family:'IBM Plex Mono',monospace;}
+  .fp-ok{color:var(--green); margin-left:6px;}
+  .fp-bad{color:var(--rust); margin-left:6px;}
+  .prio-now{margin-top:12px; font-size:12.5px; color:var(--ink-soft); background:var(--paper); border-radius:10px; padding:10px 12px;}
+  /* лента и личные уведомления */
+  .ann-feed{padding:6px 16px;}
+  .ann-row{display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--line);}
+  .ann-row:last-child{border-bottom:none;}
+  .ann-ico{
+    flex:0 0 26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+    background:var(--gold-bg); color:var(--gold-ink); font-size:13px;
+  }
+  .ann-ico.priority{background:var(--navy-bg, var(--paper)); color:var(--navy, #3A4A6B);}
+  .ann-main{min-width:0;}
+  .ann-title{font-size:13px; font-weight:600;}
+  .ann-when{font-weight:400; color:var(--ink-faint); font-size:11px; margin-left:6px;}
+  .ann-text{font-size:13px; color:var(--ink-soft); margin-top:3px; line-height:1.5;}
+  .ann-prev{font-size:11.5px; color:var(--ink-faint); margin-top:3px; text-decoration:line-through;}
+  .ann-personal{
+    border:1px solid var(--gold); background:var(--gold-bg); border-radius:12px; padding:6px 16px 10px; margin-bottom:16px;
+  }
+  .ann-personal-head{display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600; padding:10px 0 4px;}
+  .ann-count{background:var(--gold-ink); color:#fff; border-radius:20px; padding:1px 8px; font-size:11px;}
+  .ann-personal .ann-row{border-bottom-color:rgba(184,145,47,0.25);}
+  .ann-personal .fc-edit, .ann-personal-head .btn{margin-left:auto;}
   .founder-notes{padding:6px 0 0;}
   .founder-h3{font-size:17px; margin:28px 0 12px; padding-left:12px; border-left:3px solid var(--gold);}
   .toggle-row .tab-link{
@@ -1196,6 +1254,8 @@
   /* Гант прокручивается внутри себя в обе стороны: только так шапка
      месяцев и ключевые точки могут закрепиться — при прокрутке всей
      страницы горизонтальный скроллер перехватывает закрепление. */
+  #stratGantt{margin-bottom:44px;}          /* гант не должен упираться в стартовый бюджет */
+  #stratBudget, #stratMoney, #stratRoadmapBudget{margin-top:8px;}
   .gantt-scroll{
     overflow:auto; max-height:min(76vh, 780px);
     border:1px solid var(--line); border-radius:14px; background:var(--panel);
@@ -1502,6 +1562,24 @@
   .bud-month-input:focus{outline:none; border-color:var(--gold-ink); background:var(--panel);}
   td.bud-cell.overridden .bud-month-input{color:var(--gold-ink); font-weight:600; background:var(--gold-bg);}
   tr.bud-excluded td{background:var(--paper); font-size:12px; padding:8px 10px;}
+  /* смета */
+  table.est-table td{padding:9px 10px; white-space:nowrap; vertical-align:middle;}
+  table.est-table td:first-child, table.est-table th:first-child{white-space:normal; min-width:250px;}
+  table.est-table th{font-size:10px;}
+  .est-th-sub{font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-faint); font-size:9.5px; margin-top:2px;}
+  tr.est-group td{background:var(--paper); font-weight:600; border-top:1px solid var(--ink-faint); padding-top:11px;}
+  td.est-cell{padding:5px 8px !important;}
+  .est-pay{
+    background:none; border:1px dashed var(--line); border-radius:8px; padding:5px 9px; cursor:pointer;
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink); white-space:nowrap;
+  }
+  .est-pay:hover{border-color:var(--gold); border-style:solid; background:var(--gold-bg); color:var(--gold-ink);}
+  .est-pay.armed{background:var(--rust); border-color:var(--rust); color:#fff; border-style:solid;}
+  .est-done{color:var(--green); font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600;}
+  .est-mark{color:var(--green); margin-left:5px;}
+  td.est-cell.est-paid{background:rgba(63,107,74,0.06);}
+  tr.est-fact td{color:var(--ink-soft);}
+  tr.est-diff td{border-top:1px solid var(--ink-faint); font-weight:600;}
   /* источники трафика */
   .src-table td{vertical-align:middle;}
   .src-share{min-width:170px;}
@@ -2483,7 +2561,28 @@ window.addEventListener('DOMContentLoaded', ()=>{
 /* ============================================================
    PAGE: HOME
    ============================================================ */
+/* Лента изменений: что основатель поменял в целях и приоритетах */
+function annFeedHtml(list){
+  if(!list || !list.length) return '';
+  return `
+    <section class="block">
+      <h2>Лента изменений</h2>
+      <p class="block-sub">Что основатель поменял в целях и приоритетах. Те же записи приходят каждому в личный кабинет.</p>
+      <div class="card ann-feed">
+        ${list.slice(0,5).map(a=>`
+          <div class="ann-row">
+            <span class="ann-ico ${a.kind}">${a.kind==='goal'?'◎':'▲'}</span>
+            <div class="ann-main">
+              <div class="ann-title">${esc(a.title)} <span class="ann-when">${annTimeAgo(a.at)}</span></div>
+              <div class="ann-text">${esc(a.text)}</div>
+              ${a.prev?`<div class="ann-prev">было: ${esc(a.prev)}</div>`:''}
+            </div>
+          </div>`).join('')}
+      </div>
+    </section>`;
+}
 async function renderHome(){
+  const annList = await getAnnouncements();
   const allTasks = await getTasks();
   const st = taskStats(allTasks);
   const cfg = await buildFinCfg({});
@@ -2580,6 +2679,8 @@ async function renderHome(){
         {l:'Дорожная карта', v:st.pct+'%', sub:`${st.done} из ${st.total} задач закрыто`},
       ])}
     </section>` : ''}
+
+    ${annFeedHtml(annList)}
 
     <div class="tiles">
       <a class="tile" href="#model"><div class="icon" style="background:var(--gold-bg)">${iconChart('gold')}</div><h3>Модель</h3><p>Доходы, расходы, деньги и cash flow на 36 месяцев — на одной странице</p></a>
@@ -3677,6 +3778,24 @@ async function renderPersonDetail(id){
   if(newTasks.length) notifyParts.push(`🔔 <strong>Новые задачи (${newTasks.length}):</strong> ${newTasks.map(t=>esc(t.title)).join(', ')}`);
   if(approvedTasks.length) notifyParts.push(`✓ <strong>Согласовано (${approvedTasks.length}):</strong> ${approvedTasks.map(t=>esc(t.title)).join(', ')}`);
   if(rejectedTasks.length) notifyParts.push(`↩ <strong>Возвращено на доработку (${rejectedTasks.length}):</strong> ${rejectedTasks.map(t=>esc(t.title)).join(', ')}`);
+  /* объявления основателя, которые этот человек ещё не читал */
+  const annAll  = await getAnnouncements();
+  const annRead = await getAnnRead();
+  const annNew  = annAll.filter(a=>!annRead[id] || a.at > annRead[id]);
+  const annPersonHtml = annNew.length ? `
+    <div class="ann-personal">
+      <div class="ann-personal-head">🔔 Новое от основателя <span class="ann-count">${annNew.length}</span>
+        <button class="btn ghost sm-del" id="annReadBtn">Прочитано</button></div>
+      ${annNew.slice(0,5).map(a=>`
+        <div class="ann-row">
+          <span class="ann-ico ${a.kind}">${a.kind==='goal'?'◎':'▲'}</span>
+          <div class="ann-main">
+            <div class="ann-title">${esc(a.title)} <span class="ann-when">${annTimeAgo(a.at)}</span></div>
+            <div class="ann-text">${esc(a.text)}</div>
+          </div>
+        </div>`).join('')}
+    </div>` : '';
+
   const notifyHtml = notifyParts.length ? `<div class="tm-rejected-note" style="background:#E7EFE8; border-color:#B9D4BE; margin-bottom:16px;">
     ${notifyParts.join('<br>')}
   </div>` : '';
@@ -3761,6 +3880,7 @@ async function renderPersonDetail(id){
         <span class="ptype ptype-${p.type}" style="margin-top:6px; display:inline-block;">${TYPE_LABEL[p.type]}</span>
       </div>
     </div>
+    ${annPersonHtml}
     ${notifyHtml}
     ${approvalSectionHtml}
     ${budgetApprovalHtml}
@@ -3826,6 +3946,10 @@ async function renderPersonDetail(id){
     };
   });
   wireTaskCardClicks(app, ()=>renderPersonDetail(id));
+  const annBtn = document.getElementById('annReadBtn');
+  if(annBtn) annBtn.onclick = async ()=>{
+    const r = await getAnnRead(); r[id] = new Date().toISOString(); saveAnnRead(r); renderPersonDetail(id);
+  };
   wireInlineTaskControls(app, allTasks, ()=>renderPersonDetail(id));
   wireTaskCards(app, allTasks, ()=>renderPersonDetail(id));
   if(p.type==='team') wirePersonEval(id);
@@ -5541,6 +5665,16 @@ async function stratBudgetHtml(model){
       note: def.unit==='pct' ? cfPct(d.rate||0)+' · '+(def.name||'') : num(d.rate||0)+' ₽ · '+(def.name||'')};
   }).filter(r=>r.total>0);
 
+  /* партнёрские выплаты считает сам движок (эксперты, амбассадоры, рефералка
+     пользователей): в реестре расходов их нет, но платить их придётся — иначе
+     стартовый бюджет расходится с моделью и Cash Flow. */
+  const partnerArr = months.map(m=>model.partnerTotal[m]||0);
+  if(partnerArr.some(v=>v>0)){
+    const pRates = TRAFFIC_SOURCES.filter(t=>t.kind==='share')
+      .map(t=>`${t.short||t.name} ${cfPct((model.srcCfg&&model.srcCfg[t.id]||{}).rate||0)}`).join(' · ');
+    varRows.push({group:'variable', id:'__partners', name:'Партнёрские выплаты и рефералка', cat:'partners',
+      arr:partnerArr, total:partnerArr.reduce((x,y)=>x+y,0), note:pRates||'доля с подписки приведённых'});
+  }
   const taxArr = months.map(m=>model.taxTotal[m]);
   const totals = months.map((m,i)=>
     rows.reduce((a,r)=>a+r.arr[i],0) + varRows.reduce((a,r)=>a+r.arr[i],0) + taxArr[i]);
@@ -5954,7 +6088,7 @@ async function stratMoneyHtml(){
 
   return `
     <section class="block">
-      <h2>Что стратегия значит в деньгах</h2>
+      <h2>Стратегия в деньгах и смета</h2>
       <p class="block-sub">Первые ${STRAT_MONEY_HORIZON} месяцев — бюджет до запуска: цели по продажам из ганта, расходы из стартового бюджета выше. Раунды не учтены: таблица показывает, сколько денег нужно принести мини-раундом. Основной раунд к официальному запуску считается в разделе «Деньги» на странице «Модель».</p>
       ${metricCards([
         {l:'Бюджет до запуска — нужно вложить', v:money(need), cls: investOk?'pos':'neg',
@@ -6009,6 +6143,201 @@ async function stratMoneyHtml(){
     </section>`;
 }
 
+/* ============================================================
+   СМЕТА
+   Плановые платежи проекта по месяцам: люди из штата, регулярные
+   и разовые строки реестра (включая бюджеты задач). Ничего не
+   редактируется здесь — только считается; правки идут в реестре
+   расходов выше и в карточках задач. Каждый платёж можно отметить
+   оплаченным: запись уходит в журнал платежей и дальше в P&L.
+   ============================================================ */
+let _estView = 'month';   /* month | quarter */
+function estMonthDate(m){
+  /* платёж ставим на 5-е число месяца модели, а текущий месяц — сегодняшним днём */
+  const abs = FIN_BASE_ABS + (m-1);
+  const y = Math.floor(abs/12), mo = ((abs%12)+12)%12;
+  const today = new Date();
+  if(today.getFullYear()===y && today.getMonth()===mo) return today.toISOString().slice(0,10);
+  return `${y}-${String(mo+1).padStart(2,'0')}-05`;
+}
+function estMonthRange(m){
+  const abs = FIN_BASE_ABS + (m-1);
+  const y = Math.floor(abs/12), mo = ((abs%12)+12)%12;
+  const from = `${y}-${String(mo+1).padStart(2,'0')}-01`;
+  const to   = `${y}-${String(mo+1).padStart(2,'0')}-${String(daysInMonth(y,mo)).padStart(2,'0')}`;
+  return {from, to};
+}
+/* строки сметы: люди + регулярные + разовые, каждая с суммой по месяцам */
+async function estimateRows(H){
+  const months = Array.from({length:H},(_,i)=>i+1);
+  const exp   = await getExpenses();
+  const hires = await buildHires();
+  const tax   = await getTaxCfg();
+  const insRate = tax.it ? 0.076 : 0.30;
+  const groups = [
+    {id:'people',  name:'Люди', hint:'оклад со страховыми взносами · состав в «Команде»', rows:[]},
+    {id:'monthly', name:'Регулярные платежи', hint:'каждый месяц · правится в реестре расходов', rows:[]},
+    {id:'once',    name:'Разовые платежи', hint:'один платёж в свой месяц · часть приходит из карточек задач', rows:[]},
+  ];
+  hires.filter(h=>h.salary>0 && h.month<=H).forEach(h=>{
+    const arr = months.map(m=>(m>=h.month && (!h.until || m<=h.until)) ? h.salary*(1+insRate) : 0);
+    if(!arr.some(v=>v>0)) return;
+    groups[0].rows.push({id:'hire_'+h.id, name:h.role, cat:'fot', arr,
+      sub:`${money(h.salary)} + взносы ${cfPct(insRate)}`, src:'из «Команды»'});
+  });
+  exp.items.forEach(it=>{
+    if(it.kind==='monthly'){
+      const arr = months.map(m=>monthlyAmountAt(it, m, FIN_HORIZON));
+      if(!arr.some(v=>v>0)) return;
+      groups[1].rows.push({id:'exp_'+it.id, name:it.name, cat:it.cat, arr,
+        sub:`${money(it.amount)}/мес`, src:'из реестра расходов'});
+    } else if(it.kind==='once'){
+      const mm = it.month||1;
+      if(mm>H) return;
+      const arr = months.map(m=>m===mm ? (it.amount||0) : 0);
+      if(!arr.some(v=>v>0)) return;
+      groups[2].rows.push({id:'exp_'+it.id, name:it.taskId ? it.name.replace(/^Бюджет задачи:\s*/,'') : it.name,
+        cat:it.cat, arr, taskId:it.taskId,
+        sub: it.taskId ? 'бюджет задачи' : 'разовый платёж',
+        src: it.taskId ? 'из карточки задачи' : 'из реестра расходов'});
+    }
+  });
+  groups.forEach(g=>g.rows.sort((a,b)=>b.arr.reduce((x,y)=>x+y,0)-a.arr.reduce((x,y)=>x+y,0)));
+  return groups.filter(g=>g.rows.length);
+}
+/* какие строки-месяцы уже оплачены — по журналу платежей */
+function estPaidMap(ledger){
+  const map = {};
+  (ledger||[]).forEach(e=>{ if(e.estId && e.estMonth) map[e.estId+'@'+e.estMonth] = (map[e.estId+'@'+e.estMonth]||0) + (e.amount||0); });
+  return map;
+}
+async function estimateHtml(model){
+  const H = STRAT_MONEY_HORIZON;
+  const months = Array.from({length:H},(_,i)=>i+1);
+  const groups = await estimateRows(H);
+  const ledger = await getLedger();
+  const paid   = estPaidMap(ledger);
+  const byQ = _estView==='quarter';
+  /* колонки: месяцы или кварталы */
+  const cols = byQ
+    ? Array.from({length:Math.ceil(H/3)},(_,q)=>({key:'q'+(q+1), label:'Квартал '+(q+1),
+        sub:finMonthShort(q*3+1)+' – '+finMonthShort(Math.min(H,q*3+3)), ms:months.slice(q*3, q*3+3)}))
+    : months.map(m=>({key:'m'+m, label:finMonthShort(m), sub:'', ms:[m]}));
+  const cellSum = (arr, col)=>col.ms.reduce((a,m)=>a+(arr[m-1]||0),0);
+
+  /* факт из журнала: все расходы месяца, не только отмеченные в смете */
+  const factByMonth = months.map(m=>{
+    const r = estMonthRange(m);
+    return (ledger||[]).filter(e=>e.kind==='out' && e.d>=r.from && e.d<=r.to).reduce((a,e)=>a+(e.amount||0),0);
+  });
+  const planByMonth = months.map(m=>groups.reduce((a,g)=>a+g.rows.reduce((b,r)=>b+(r.arr[m-1]||0),0),0));
+  const paidByMonth = months.map(m=>groups.reduce((a,g)=>a+g.rows.reduce((b,r)=>b+(paid[r.id+'@'+m]||0),0),0));
+
+  const cell = (row, col)=>{
+    const v = cellSum(row.arr, col);
+    if(!v) return '<td class="num est-cell"><span class="soft">—</span></td>';
+    const paidSum = col.ms.reduce((a,m)=>a+(paid[row.id+'@'+m]||0),0);
+    const fullyPaid = paidSum>0 && paidSum>=v-1;
+    if(byQ) return `<td class="num est-cell ${fullyPaid?'est-paid':''}">${cfMoney(v)}${paidSum?`<span class="est-mark" title="оплачено ${money(paidSum)}">✓</span>`:''}</td>`;
+    const m = col.ms[0];
+    return `<td class="num est-cell ${fullyPaid?'est-paid':''}">
+      ${fullyPaid
+        ? `<span class="est-done" title="Оплачено ${money(paidSum)} · запись в журнале платежей">✓ ${cfMoney(paidSum)}</span>`
+        : `<button type="button" class="est-pay" data-est-pay="${row.id}" data-est-month="${m}" data-est-amount="${Math.round(v)}" data-est-name="${esc(row.name)}" data-est-cat="${row.cat||'other'}" data-armed="0"
+             title="${money(v)} · нажмите, чтобы отметить оплаченным">${cfMoney(v)}</button>`}
+    </td>`;
+  };
+  const groupHtml = groups.map(g=>{
+    const tot = months.map(m=>g.rows.reduce((a,r)=>a+(r.arr[m-1]||0),0));
+    return `
+      <tr class="est-group">
+        <td>${g.name} <span class="bud-hint">${g.hint}</span></td>
+        ${cols.map(c=>`<td class="num">${cellSum(tot, c)?cfMoney(cellSum(tot, c)):'<span class="soft">—</span>'}</td>`).join('')}
+        <td class="num">${cfMoney(tot.reduce((a,b)=>a+b,0))}</td>
+      </tr>
+      ${g.rows.map(r=>`
+        <tr>
+          <td><div class="pb-name">${esc(r.name)}</div><div class="pb-sub">${r.sub} · ${r.src}</div></td>
+          ${cols.map(c=>cell(r, c)).join('')}
+          <td class="num hl">${cfMoney(r.arr.reduce((a,b)=>a+b,0))}</td>
+        </tr>`).join('')}`;
+  }).join('');
+
+  const planTotal = planByMonth.reduce((a,b)=>a+b,0);
+  const factTotal = factByMonth.reduce((a,b)=>a+b,0);
+  const paidTotal = paidByMonth.reduce((a,b)=>a+b,0);
+  const diffCell = (plan, fact)=>{
+    const d = fact-plan;
+    if(!fact) return '<td class="num"><span class="soft">—</span></td>';
+    return `<td class="num ${d>0?'neg':'pos'}">${d>0?'+':'−'}${cfMoney(Math.abs(d))}</td>`;
+  };
+  /* всё, чего в смете нет: модель считает это сама от оборота, вручную не платится.
+     Считаем разницей, чтобы смета и модель сходились до рубля. */
+  const varTax = months.map(m=>Math.max(0,
+    (model.cogs[m]||0)+(model.opex[m]||0)+(model.capex[m]||0)+(model.taxTotal[m]||0) - (planByMonth[m-1]||0)));
+
+  return `
+    <section class="block" id="estimate">
+      <h2>Смета: что и когда платим</h2>
+      <p class="block-sub">Только реальные платежи: люди из штата и строки реестра расходов, включая бюджеты задач. Здесь ничего не редактируется — суммы приходят из реестра выше и из карточек задач, а таблица считает их по месяцам. Нажмите на сумму, чтобы отметить платёж состоявшимся: он попадёт в журнал платежей, в P&amp;L и в факт.</p>
+      <div class="econ-row" style="margin:0 0 14px;">
+        <div class="toggle-row inline" id="estViewRow">
+          <button data-est-view="month" class="${byQ?'':'active'}">По месяцам</button>
+          <button data-est-view="quarter" class="${byQ?'active':''}">По кварталам</button>
+        </div>
+        <span class="note-sm" style="margin:0;">Оплачено ${money(paidTotal)} из ${money(planTotal)} сметы за ${H} мес.</span>
+      </div>
+      <div class="card table-card">
+        <div class="table-scroll">
+          <table class="calc-table est-table">
+            <thead><tr>
+              <th>Статья</th>
+              ${cols.map(c=>`<th>${c.label}${c.sub?`<div class="est-th-sub">${c.sub}</div>`:''}</th>`).join('')}
+              <th>Итого</th>
+            </tr></thead>
+            <tbody>
+              ${groupHtml}
+              <tr class="total-row"><td>План по смете</td>
+                ${cols.map(c=>`<td class="num">${cfMoney(cellSum(planByMonth.map((v,i)=>v), c))}</td>`).join('')}
+                <td class="num">${cfMoney(planTotal)}</td></tr>
+              <tr class="est-fact"><td>Оплачено фактически <span class="bud-hint">все расходы месяца из журнала платежей</span></td>
+                ${cols.map(c=>`<td class="num">${cellSum(factByMonth, c)?cfMoney(cellSum(factByMonth, c)):'<span class="soft">—</span>'}</td>`).join('')}
+                <td class="num">${factTotal?cfMoney(factTotal):'—'}</td></tr>
+              <tr class="est-diff"><td>± к плану <span class="bud-hint">минус — потратили меньше плана</span></td>
+                ${cols.map(c=>diffCell(cellSum(planByMonth, c), cellSum(factByMonth, c))).join('')}
+                ${diffCell(planTotal, factTotal)}</tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="note-sm">В смету не входят расходы, которые считаются сами от оборота — эквайринг, хостинг, поддержка, партнёрские выплаты и налоги: за ${H} месяцев это ещё ${money(varTax.reduce((a,b)=>a+b,0))}. Их не нужно «оплачивать» руками, они уже в модели и в Cash Flow.</p>
+    </section>`;
+}
+function wireEstimate(rerender){
+  document.querySelectorAll('#estViewRow button').forEach(b=>{
+    b.onclick = ()=>{ _estView = b.dataset.estView; rerender(); };
+  });
+  document.querySelectorAll('[data-est-pay]').forEach(btn=>{
+    const original = btn.textContent;
+    btn.onclick = async ()=>{
+      if(btn.dataset.armed!=='1'){
+        btn.dataset.armed = '1';
+        btn.classList.add('armed');
+        btn.textContent = 'Оплатить?';
+        setTimeout(()=>{ if(btn.dataset.armed==='1'){ btn.dataset.armed='0'; btn.classList.remove('armed'); btn.textContent = original; } }, 6000);
+        return;
+      }
+      const m = parseInt(btn.dataset.estMonth);
+      const list = await getLedger();
+      list.push({id:uid(), d:estMonthDate(m), kind:'out', cat:btn.dataset.estCat,
+        amount: parseInt(btn.dataset.estAmount)||0, note: btn.dataset.estName+' · '+finMonthLabel(m),
+        estId: btn.dataset.estPay, estMonth: m});
+      saveLedger(list);
+      rerender();
+    };
+  });
+}
+
 function wireStratMoney(rerender){
   document.querySelectorAll('.money-fmt-input').forEach(wireThousandsInput);
   const inv = document.getElementById('stTargetInvest');
@@ -6059,6 +6388,7 @@ async function renderStrategy(body){
     <div id="stratGantt"><div class="loading">Строим гант…</div></div>
     <div id="stratBudget"></div>
     <div id="stratMoney"></div>
+    <div id="stratEstimate"></div>
     <section class="block">
       <h2>Как идут задачи</h2>
       <p class="block-sub">Сводка по рабочей доске. Сами задачи — на соседней вкладке.</p>
@@ -6075,7 +6405,7 @@ async function renderStrategy(body){
     </section>
     <div id="stratRoadmapBudget"></div>
     <details class="guide" id="stratFounder">
-      <summary>Мини-стратегия основателя и цели, разложенные до дневных действий</summary>
+      <summary>Стратегия основателя — ключевые ориентиры</summary>
       <div id="stratFounderBody"><div class="loading">Открывается…</div></div>
     </details>
     ${stratGuideHtml()}
@@ -6092,6 +6422,8 @@ async function renderStrategy(body){
 
   document.getElementById('stratMoney').innerHTML = await stratMoneyHtml();
   wireStratMoney(rerender);
+  document.getElementById('stratEstimate').innerHTML = await estimateHtml(modelPlan);
+  wireEstimate(rerender);
   document.getElementById('stratRoadmapBudget').innerHTML = await roadmapBudgetHtml(allTasks);
   /* блок основателя тяжёлый — рисуем, когда раскрыли */
   const founder = document.getElementById('stratFounder');
@@ -6103,28 +6435,191 @@ async function renderStrategy(body){
   }
   body.style.minHeight = '';
 }
-/* Пять полей мини-стратегии и декомпозиция целей до дневных действий */
+/* Три приоритета: старый текст «1. …\n2. …» превращаем в отдельные пункты */
+function founderPriorities(st){
+  if(Array.isArray(st.prio) && st.prio.length) return st.prio.slice(0,3);
+  const lines = String(st.priorities||'').split('\n').map(x=>x.replace(/^\s*\d+[.)]\s*/,'').trim()).filter(Boolean);
+  return [0,1,2].map(i=>({id:'p'+(i+1), text: lines[i]||'', metric:null, target:null}));
+}
+/* ============================================================
+   СТРАТЕГИЯ ОСНОВАТЕЛЯ — КЛЮЧЕВЫЕ ОРИЕНТИРЫ
+   Цель года и три приоритета — не текстовые поля, а карточки со
+   статусом и цифрой из модели: видно, утверждена ли цель, какой
+   у приоритета показатель и совпадает ли он с тем, что модель
+   считает сейчас. Смена цели или приоритета уходит команде.
+   ============================================================ */
 async function renderFounderNotes(container){
   if(!container) return;
-  const strategy = await getStrategy();
+  const st  = await getStrategy();
+  const ctx = await founderMetricCtx();
+  const prio = founderPriorities(st);
+  const approved = st.goalStatus!=='draft';
+  const goalText = st.vision || '';
+
+  const prioCard = (pr, i)=>{
+    const m = pr.metric ? FOUNDER_METRIC_MAP[pr.metric] : null;
+    let factLine = '<span class="soft">показатель не выбран — цель словами</span>';
+    if(m){
+      const now = m.get(ctx);
+      const target = pr.target;
+      let ok = null;
+      if(target!==null && target!==undefined && isFinite(now)){
+        ok = m.lower ? now<=target*1.0001 : now>=target*0.9999;
+      }
+      factLine = `<span class="fp-metric">${m.name}</span>
+        <span class="fp-nums">цель <b>${target!==null&&target!==undefined?founderMetricFmt(m, target):'—'}</b>
+        · сейчас в модели <b class="${ok===null?'':(ok?'pos':'neg')}">${founderMetricFmt(m, now)}</b>
+        ${ok===null?'':(ok?'<span class="fp-ok">✓ в цели</span>':'<span class="fp-bad">не дотягивает</span>')}</span>`;
+    }
+    return `
+      <div class="founder-card fp-card" data-prio-card="${pr.id}">
+        <div class="fc-head"><span class="fc-num">${i+1}</span>
+          <span class="fc-label">Приоритет ${i+1}</span>
+          <button type="button" class="fc-edit" data-prio-edit="${pr.id}" title="Изменить приоритет">✎ Изменить</button>
+        </div>
+        <div class="fc-body">
+          <p class="fp-text">${pr.text ? esc(pr.text) : '<span class="soft">Не заполнено — нажмите «Изменить»</span>'}</p>
+          <div class="fp-foot">${factLine}</div>
+        </div>
+      </div>`;
+  };
+
   container.innerHTML = `
     <div class="founder-notes">
-      <p class="block-sub">Пять полей, которые основатель должен уметь заполнить без подготовки. Сохраняются сами, видны всей команде.</p>
-      <div class="strategy-grid">
-        ${STRATEGY_FIELDS.map(f=>`
-          <div class="card strategy-card">
-            <label class="k-label" for="st_${f.key}">${f.label}</label>
-            <textarea id="st_${f.key}" class="strategy-input" data-strategy="${f.key}" rows="${f.rows}" placeholder="${esc(f.hint)}">${esc(strategy[f.key]||'')}</textarea>
-            <span class="strategy-hint">${f.hint}</span>
-          </div>`).join('')}
+      <p class="block-sub">Цель года и три приоритета, на которые сверяется вся команда. Приоритет можно привязать к показателю модели — тогда рядом с целью видно, что модель считает прямо сейчас. Смена цели или приоритета уходит команде: в ленту на «Обзоре» и в личный кабинет каждого.</p>
+
+      <div class="founder-card fgoal ${approved?'approved':'draft'}">
+        <div class="fc-head">
+          <span class="fc-label">Куда идём за 12 месяцев</span>
+          <span class="fc-badge ${approved?'ok':'draft'}">${approved?'✓ Утверждена':'черновик'}</span>
+          ${st.goalAt?`<span class="fc-when">обновлена ${annTimeAgo(st.goalAt)}</span>`:''}
+          <button type="button" class="fc-edit" id="goalEdit" title="Изменить цель года">✎ Изменить</button>
+        </div>
+        <div class="fc-body">
+          <p class="goal-text">${goalText ? esc(goalText) : '<span class="soft">Цель не задана — нажмите «Изменить»</span>'}</p>
+        </div>
       </div>
+
+      <div class="founder-grid">${prio.map(prioCard).join('')}</div>
+
+      <details class="guide" style="margin-top:18px;">
+        <summary>Чего сознательно не делаем, риски и что нужно</summary>
+        <div class="strategy-grid" style="margin-top:14px;">
+          ${STRATEGY_FIELDS.filter(f=>['notDoing','risks','needs'].includes(f.key)).map(f=>`
+            <div class="card strategy-card">
+              <label class="k-label" for="st_${f.key}">${f.label}</label>
+              <textarea id="st_${f.key}" class="strategy-input" data-strategy="${f.key}" rows="${f.rows}" placeholder="${esc(f.hint)}">${esc(st[f.key]||'')}</textarea>
+              <span class="strategy-hint">${f.hint}</span>
+            </div>`).join('')}
+        </div>
+      </details>
+
       <h3 class="founder-h3">Цели и что делать каждый день</h3>
       <div id="founderGoals"><div class="loading">Считаем…</div></div>
     </div>`;
+
   container.querySelectorAll('[data-strategy]').forEach(ta=>{
-    ta.addEventListener('change', async ()=>{ const st = await getStrategy(); st[ta.dataset.strategy] = ta.value; saveStrategy(st); });
+    ta.addEventListener('change', async ()=>{ const x = await getStrategy(); x[ta.dataset.strategy] = ta.value; saveStrategy(x); });
+  });
+  const rerender = ()=>renderFounderNotes(container);
+  const goalBtn = document.getElementById('goalEdit');
+  if(goalBtn) goalBtn.onclick = ()=>openGoalEditor(rerender);
+  container.querySelectorAll('[data-prio-edit]').forEach(b=>{
+    b.onclick = ()=>openPriorityEditor(b.dataset.prioEdit, ctx, rerender);
   });
   await renderFinGoals(document.getElementById('founderGoals'));
+}
+/* Правка цели года: текст, статус и уведомление команде */
+async function openGoalEditor(rerender){
+  const st = await getStrategy();
+  const {el, close} = stratOverlay(`
+    <div class="tm-header"><span class="tm-header-label">Цель на 12 месяцев</span>
+      <button class="tm-close" data-modal-close="1">✕</button></div>
+    <div class="tm-body">
+      <div class="field"><label>Куда идём за 12 месяцев</label>
+        <textarea id="glText" class="v-input" rows="3" placeholder="Одно предложение, которое можно сказать инвестору за 10 секунд">${esc(st.vision||'')}</textarea></div>
+      <label class="inline-check" style="margin-top:12px;"><input type="checkbox" id="glApproved" ${st.goalStatus!=='draft'?'checked':''}> цель утверждена</label>
+      <label class="inline-check" style="margin-top:8px;"><input type="checkbox" id="glNotify" checked> сообщить команде: в ленту и в личный кабинет</label>
+      <div class="tm-actions">
+        <button class="btn" id="glSave">Сохранить</button>
+        <button class="btn ghost" data-modal-close="1">Отмена</button>
+      </div>
+    </div>`);
+  el.querySelector('#glSave').onclick = async ()=>{
+    const text = el.querySelector('#glText').value.trim();
+    if(!text){ el.querySelector('#glText').focus(); return; }
+    const x = await getStrategy();
+    const prev = x.vision||'';
+    const changed = prev.trim()!==text;
+    x.vision = text;
+    x.goalStatus = el.querySelector('#glApproved').checked ? 'approved' : 'draft';
+    x.goalAt = new Date().toISOString();
+    saveStrategy(x);
+    if(changed && el.querySelector('#glNotify').checked){
+      await announce('goal', 'Цель на 12 месяцев обновлена', text, prev);
+    }
+    close(); rerender();
+  };
+}
+/* Правка приоритета: текст, показатель модели и целевое значение */
+async function openPriorityEditor(id, ctx, rerender){
+  const st = await getStrategy();
+  const list = founderPriorities(st);
+  const pr = list.find(x=>x.id===id) || list[0];
+  const m = pr.metric ? FOUNDER_METRIC_MAP[pr.metric] : null;
+  const {el, close} = stratOverlay(`
+    <div class="tm-header"><span class="tm-header-label">Приоритет: ${esc((pr.text||'').slice(0,40) || 'новый')}</span>
+      <button class="tm-close" data-modal-close="1">✕</button></div>
+    <div class="tm-body">
+      <div class="field"><label>Что делаем</label>
+        <textarea id="prText" class="v-input" rows="2" placeholder="Например: довести конверсию регистрация → оплата до 20%">${esc(pr.text||'')}</textarea></div>
+      <div class="field-row" style="margin-top:12px;">
+        <div class="field grow"><label>Показатель модели</label>
+          <select id="prMetric">
+            <option value="">— без показателя, цель словами —</option>
+            ${FOUNDER_METRICS.map(x=>`<option value="${x.id}" ${pr.metric===x.id?'selected':''}>${x.name}</option>`).join('')}
+          </select></div>
+        <div class="field"><label>Цель</label>
+          <input type="text" id="prTarget" class="v-input" value="${m?founderMetricInputValue(m, pr.target):''}" placeholder="—">
+          <span class="unit" id="prUnit">${m?(m.unit==='pct'?'%':(m.unit==='x'?'×':(m.unit==='money'?'₽':''))):''}</span></div>
+      </div>
+      <div class="prio-now" id="prNow"></div>
+      <label class="inline-check" style="margin-top:10px;"><input type="checkbox" id="prNotify" checked> сообщить команде об изменении</label>
+      <div class="tm-actions">
+        <button class="btn" id="prSave">Сохранить</button>
+        <button class="btn ghost" data-modal-close="1">Отмена</button>
+      </div>
+    </div>`);
+  const sel = el.querySelector('#prMetric'), tgt = el.querySelector('#prTarget'), now = el.querySelector('#prNow');
+  const refresh = ()=>{
+    const mm = sel.value ? FOUNDER_METRIC_MAP[sel.value] : null;
+    el.querySelector('#prUnit').textContent = mm?(mm.unit==='pct'?'%':(mm.unit==='x'?'×':(mm.unit==='money'?'₽':''))):'';
+    if(!mm){ now.innerHTML = '<span class="soft">Без показателя приоритет останется просто текстом.</span>'; return; }
+    const v = mm.get(ctx);
+    now.innerHTML = `Сейчас модель считает <b>${founderMetricFmt(mm, v)}</b>.
+      <button type="button" class="btn ghost sm-del" id="prTake">Взять как цель</button>
+      <span class="soft">${mm.lower?'Чем меньше, тем лучше.':'Чем больше, тем лучше.'}</span>`;
+    const take = el.querySelector('#prTake');
+    if(take) take.onclick = ()=>{ tgt.value = founderMetricInputValue(mm, v); };
+  };
+  sel.onchange = refresh; refresh();
+  el.querySelector('#prSave').onclick = async ()=>{
+    const x = await getStrategy();
+    const arr = founderPriorities(x);
+    const item = arr.find(y=>y.id===pr.id) || arr[0];
+    const prev = item.text||'';
+    item.text = el.querySelector('#prText').value.trim();
+    item.metric = sel.value || null;
+    const mm = item.metric ? FOUNDER_METRIC_MAP[item.metric] : null;
+    item.target = mm && tgt.value.trim() ? founderMetricParse(mm, tgt.value) : null;
+    x.prio = arr;
+    saveStrategy(x);
+    if(el.querySelector('#prNotify').checked && prev.trim()!==item.text){
+      const suffix = mm && item.target!==null ? ` · цель ${founderMetricFmt(mm, item.target)} по показателю «${mm.name}»` : '';
+      await announce('priority', 'Приоритет обновлён', item.text+suffix, prev);
+    }
+    close(); rerender();
+  };
 }
 
 /* ============================================================
@@ -6829,6 +7324,7 @@ function computeFinModel(cfg){
   };
   EXP_CATS.forEach(c=>{ o.byCat[c.id] = z(); });
   const SRC = normalizeSources(F.sources);
+  o.srcCfg = SRC;
   TRAFFIC_SOURCES.forEach(t=>{ o.newBySource[t.id] = z(); if(t.kind==='share') o.partnerPayout[t.id] = z(); });
 
   const arpuAddonNet = R.addons.filter(a=>a.active!==false)
@@ -8737,6 +9233,56 @@ function decomposeGoal(goal, cfg, ue, startActive, startMonth, norms){
    Мини-стратегия словами, стартовый бюджет цифрами, экономный
    вариант рядом с полным и цели, разложенные до дневных задач.
    ============================================================ */
+/* Показатели модели, на которые можно повесить приоритет: цель
+   рядом с тем, что модель считает прямо сейчас. */
+const FOUNDER_METRICS = [
+  {id:'crRegPay',  name:'Конверсия регистрация → оплата', unit:'pct',   get:c=>c.fun.crRegPay},
+  {id:'crLeadReg', name:'Конверсия визит → регистрация',  unit:'pct',   get:c=>c.fun.crLeadReg},
+  {id:'churn',     name:'Отток по месячной подписке',     unit:'pct',   get:c=>c.rev.churn, lower:true},
+  {id:'payingY1',  name:'Платящих к концу Года 1',        unit:'num',   get:c=>c.M.active[12]},
+  {id:'revY1',     name:'Выручка за Год 1',               unit:'money', get:c=>cfSumRange(c.M.revenue,1,12)},
+  {id:'need',      name:'Бюджет до запуска',              unit:'money', get:c=>c.need, lower:true},
+  {id:'cac',       name:'Стоимость платящего (CAC)',      unit:'money', get:c=>c.ue.cacBlended, lower:true},
+  {id:'ltvCac',    name:'LTV / CAC',                      unit:'x',     get:c=>c.ue.ltvCac},
+  {id:'content',   name:'Мастер-классов в библиотеке',    unit:'num',   get:c=>c.contentEnd},
+  {id:'experts',   name:'Экспертов в сети',               unit:'num',   get:c=>c.expertsEnd},
+  {id:'breakeven', name:'Месяц выхода в плюс',            unit:'month', get:c=>c.M.breakevenMonth},
+];
+const FOUNDER_METRIC_MAP = Object.fromEntries(FOUNDER_METRICS.map(m=>[m.id,m]));
+function founderMetricFmt(m, v){
+  if(v===null || v===undefined || !isFinite(v)) return '—';
+  if(m.unit==='pct')   return cfPct(v);
+  if(m.unit==='money') return money(Math.round(v));
+  if(m.unit==='x')     return dec(v)+'×';
+  if(m.unit==='month') return v>0 ? finMonthLabel(v) : 'позже 36 мес.';
+  return num(Math.round(v));
+}
+function founderMetricParse(m, raw){
+  const n = parseThousands(String(raw).replace(',', '.'));
+  if(m.unit==='pct') return (parseFloat(String(raw).replace(',', '.'))||0)/100;
+  if(m.unit==='x')   return parseFloat(String(raw).replace(',', '.'))||0;
+  return n;
+}
+function founderMetricInputValue(m, v){
+  if(v===null || v===undefined) return '';
+  if(m.unit==='pct') return dec(v*100);
+  if(m.unit==='x')   return dec(v);
+  return fmtThousands(Math.round(v));
+}
+/* всё, что нужно метрикам, считаем один раз */
+async function founderMetricCtx(){
+  const cfg  = await buildFinCfg({});
+  const M    = computeFinModel(cfg);
+  const bare = computeFinModel(await buildFinCfg({noFinancing:true, cashStart:0}));
+  const ue   = unitEconomics(cfg, 12);
+  const plan = await getStratPlan();
+  const H    = STRAT_MONEY_HORIZON;
+  const lastOf = (key)=>{ for(let m=H;m>=1;m--){ const v = planAt(plan, m, key); if(v!==null && v!==undefined) return v; } return 0; };
+  return {cfg, M, ue, fun:cfg.funnel, rev:cfg.revenue,
+    need: Math.abs(Math.min(0, bare.minCumOper)),
+    contentEnd: lastOf('content'), expertsEnd: lastOf('experts')};
+}
+
 const STRATEGY_FIELDS = [
   {key:'vision',     label:'Куда идём за 12 месяцев',       hint:'Одно предложение, которое можно сказать инвестору за 10 секунд.', rows:2},
   {key:'priorities', label:'Три приоритета',                hint:'То, на что уходит время и деньги в первую очередь. Всё остальное — потом.', rows:3},
@@ -8744,6 +9290,39 @@ const STRATEGY_FIELDS = [
   {key:'risks',      label:'Что может сломать план',        hint:'Три главных риска и что делаем, если они случатся.', rows:3},
   {key:'needs',      label:'Что нужно, чтобы план сработал',hint:'Деньги, люди, партнёры, решения — конкретно.', rows:2},
 ];
+/* ------------------------------------------------------------
+   ОБЪЯВЛЕНИЯ ОСНОВАТЕЛЯ
+   Смена цели или приоритета — событие для всей команды: запись
+   уходит в ленту на «Обзоре» и в личный кабинет каждого человека,
+   пока он её не прочитает.
+   ------------------------------------------------------------ */
+async function getAnnouncements(){
+  if(!('eva-club-announcements' in _cache)){
+    _cache['eva-club-announcements'] = await loadShared('eva-club-announcements', null) || [];
+  }
+  return _cache['eva-club-announcements'];
+}
+function saveAnnouncements(list){ setCacheLocal('eva-club-announcements', list); persistCache('eva-club-announcements'); }
+async function getAnnRead(){
+  if(!('eva-club-ann-read' in _cache)){
+    _cache['eva-club-ann-read'] = await loadShared('eva-club-ann-read', null) || {};
+  }
+  return _cache['eva-club-ann-read'];
+}
+function saveAnnRead(obj){ setCacheLocal('eva-club-ann-read', obj); persistCache('eva-club-ann-read'); }
+async function announce(kind, title, text, prev){
+  const list = await getAnnouncements();
+  list.unshift({id:uid(), at:new Date().toISOString(), kind, title, text, prev: prev||''});
+  saveAnnouncements(list.slice(0, 40));
+}
+function annTimeAgo(iso){
+  const diff = (Date.now() - new Date(iso).getTime())/60000;
+  if(diff < 1) return 'только что';
+  if(diff < 60) return Math.round(diff)+' мин назад';
+  if(diff < 24*60) return Math.round(diff/60)+' ч назад';
+  return ruDateFull(iso.slice(0,10));
+}
+
 const DEFAULT_STRATEGY = {
   vision:'К августу 2027 — 1 000 платящих и операционный плюс: платформа окупает себя без внешних денег.',
   priorities:'1. Довести конверсию регистрация → оплата до 20% и удержать отток ниже 8%.\n2. 100 мастер-классов в библиотеке к декабрю, дальше +30 в месяц.\n3. Платное привлечение только при LTV/CAC выше 3×.',
