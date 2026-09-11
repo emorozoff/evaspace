@@ -88,7 +88,8 @@ strong{font-weight:600;color:var(--ink)}
 .hm{font-weight:800;font-size:clamp(34px,5.4vw,62px);line-height:1;letter-spacing:-.04em;margin:0 0 14px;color:var(--ink);white-space:nowrap}
 .hm em{font-style:normal;color:var(--red)}
 .tag{font-size:clamp(19px,2.2vw,25px);line-height:1.32;font-weight:600;color:var(--ink);margin:0 0 14px;text-wrap:balance;max-width:30ch}
-.hgrid .lead{color:var(--ink-2);margin:0 0 18px;max-width:60ch;font-size:16.5px;line-height:1.6}
+.hgrid .lead{color:var(--ink-2);margin:0 0 18px;max-width:60ch;font-size:16.5px;line-height:1.9}
+.hgrid .lead b{font-weight:700;color:var(--ink);box-shadow:inset 0 -8px 0 rgba(218,58,38,.16)}
 .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:8px 0 0;background:var(--line-2);border:1px solid var(--line-2);border-radius:6px;overflow:hidden}
 @media (max-width:780px){.facts{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:440px){.facts{grid-template-columns:1fr}}
@@ -375,6 +376,18 @@ tr.tot td{background:var(--soft);font-weight:700;color:var(--ink)}
 .tstmode{font-family:var(--mono);font-size:11px;color:var(--muted);margin:10px 22px 0;text-align:center}
 footer{font-size:12.5px;color:var(--muted);text-align:center;padding:8px 10px 0}
 
+/* сезон по месяцам */
+.sgrid{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin:0 0 14px}
+.sgrid .pb{margin:0}
+.pstar{font-size:22px;line-height:1}
+.steps{grid-template-columns:1fr 1fr}
+@media (max-width:520px){.steps{grid-template-columns:1fr}}
+.steps div{position:relative;padding:14px 16px 15px}
+.steps span{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:6px;color:var(--xp1)}
+.steps .m2 span{color:var(--amber-ink,#8A6200)}
+.steps .m3 span,.steps .last span{color:var(--red-ink)}
+.steps b{font-size:15px;line-height:1.3;margin-bottom:5px}
+
 /* чек-лист дел */
 .num.check li{align-items:center;gap:14px}
 .task{flex:1;cursor:pointer;min-width:0}
@@ -524,7 +537,7 @@ footer{padding-top:12px}
           <div>
             <h1 class="hm">И <em>АЙ</em> КЛАБ</h1>
             <p class="tag">Клуб для тех, кто делает всякие штуки с ИИ и хочет наконец встретить своих.</p>
-            <p class="lead">Собираемся по пятницам: онлайн и оффлайн.<br>За 90 дней команда делает вместе первую выручку.<br>По окончанию — крутой выпускной с награждением.</p>
+            <p class="lead">Собираемся каждую пятницу — <b>онлайн и оффлайн</b>.<br>За <b>90 дней</b> команда делает вместе первую выручку.<br>В конце — <b>выпускной с награждением</b>.</p>
           </div>
           <div class="crt">
             <div class="mon">
@@ -753,15 +766,15 @@ footer{padding-top:12px}
         <h2>Мани Челлендж: важнее путь, а не только сумма</h2>
         <p class="k">PRO — это не курс, а совместный спринт на три месяца. Команды по 3–10 человек, у каждой своя история. Мы смотрим не только на выручку, а на то, как команда прошла путь: что попробовала, где ошиблась, чем поделилась с остальными и как поддерживала своих.</p>
         <p>Поэтому здесь не соревнуются в одиночку. Команда, которая нашла рабочую механику, рассказывает её всем — и от этого выигрывает весь клуб. Общий результат сезона важнее личного места в таблице.</p>
-        <div class="pb" role="img" aria-label="Полоса сезона: три месяца и выпускной">
-          <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i class="w" style="--i:6"></i><i class="w" style="--i:7"></i><i class="w" style="--i:8"></i><i class="f" style="--i:9"></i><i class="f" style="--i:10"></i><i class="f" style="--i:11"></i>
+        <div class="sgrid">
+          <div class="pb" role="img" aria-label="Полоса сезона: двенадцать недель, три месяца и выпускной"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i class="w" style="--i:4"></i><i class="w" style="--i:5"></i><i class="w" style="--i:6"></i><i class="w" style="--i:7"></i><i class="f" style="--i:8"></i><i class="f" style="--i:9"></i><i class="f" style="--i:10"></i><i class="f" style="--i:11"></i></div>
+          <div class="pstar" aria-hidden="true">🌟</div>
         </div>
-        <div class="pbl"><span>МЕСЯЦ 1</span><span>МЕСЯЦ 2</span><span>МЕСЯЦ 3</span><span>ВЫПУСКНОЙ <b class="em" aria-hidden="true">🌟</b></span></div>
         <div class="steps">
-          <div><b>Собираемся</b>Знакомимся, выбираем идею, делим роли. Правило одно: идея должна приносить деньги, а не лайки.</div>
-          <div><b>Делаем и продаём</b>Прототип на ИИ, первые клиенты, первые отказы. Мастермайнд разбирает, где затык.</div>
-          <div><b>Считаем</b>Юнит-экономика, cash flow, что масштабировать. Здесь подключаются таблицы и презентации.</div>
-          <div class="last"><b>Выпускной</b>Большой оффлайн: награждение, призы и вечеринка на деньги из копилки. Профессиональная съёмка и ролик о сезоне.</div>
+          <div class="m1"><span>месяц 1</span><b>Изучаем технологии и формируем команды</b>Разбираемся, что реально работает, выбираем идею и делим роли. Правило одно: идея должна приносить деньги, а не лайки.</div>
+          <div class="m2"><span>месяц 2</span><b>Внедряем на практике и создаём продукты</b>Прототип на ИИ, первые клиенты, первые отказы. Мастермайнд разбирает, где затык.</div>
+          <div class="m3"><span>месяц 3</span><b>Запускаем продажи и считаем выручку</b>Юнит-экономика, cash flow, что масштабировать. Здесь подключаются таблицы и презентации.</div>
+          <div class="last"><span>финал</span><b>Отмечаем выпускной и награждаем лучших</b>Большой оффлайн: призы из копилки, профессиональная съёмка и ролик о сезоне.</div>
         </div>
 
         <div class="h4e"><span class="em" aria-hidden="true">💰</span><h4>Копилка: 10% в общак</h4></div>
