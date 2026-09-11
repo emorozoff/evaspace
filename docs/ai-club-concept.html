@@ -88,8 +88,8 @@ strong{font-weight:600;color:var(--ink)}
 .hm{font-weight:800;font-size:clamp(34px,5.4vw,62px);line-height:1;letter-spacing:-.04em;margin:0 0 14px;color:var(--ink);white-space:nowrap}
 .hm em{font-style:normal;color:var(--red)}
 .tag{font-size:clamp(19px,2.2vw,25px);line-height:1.32;font-weight:600;color:var(--ink);margin:0 0 14px;text-wrap:balance;max-width:30ch}
-.hgrid .lead{color:var(--ink-2);margin:0 0 18px;max-width:60ch;font-size:16.5px;line-height:1.9}
-.hgrid .lead b{font-weight:700;color:var(--ink);box-shadow:inset 0 -8px 0 rgba(218,58,38,.16)}
+.hgrid .lead{color:var(--ink-2);margin:0 0 18px;max-width:60ch;font-size:16.5px;line-height:1.7}
+.hgrid .lead b{font-weight:600;color:var(--ink)}
 .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:8px 0 0;background:var(--line-2);border:1px solid var(--line-2);border-radius:6px;overflow:hidden}
 @media (max-width:780px){.facts{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:440px){.facts{grid-template-columns:1fr}}
@@ -224,24 +224,42 @@ tr.tot td{background:var(--soft);font-weight:700;color:var(--ink)}
 /* progress */
 .pb{height:26px;background:var(--soft);border:1px solid var(--line-2);border-radius:5px;padding:3px;display:flex;gap:3px;overflow:hidden}
 .pb i{flex:1;border-radius:2px;background:linear-gradient(180deg,#6FB3F0,var(--xp1));transform-origin:left center}
-.pb.armed i{transform:scaleX(0);opacity:0}
-.pb.armed.run i{animation:seg .9s cubic-bezier(.25,.7,.3,1) forwards;animation-delay:calc(var(--i,0)*260ms)}
+.mgrid.armed .pb i{transform:scaleX(0);opacity:0}
+.mgrid.armed .st,.mgrid.armed .pstar{opacity:0;transform:translateY(10px)}
+.mgrid.armed.run .pb i{animation:seg .5s cubic-bezier(.25,.7,.3,1) forwards;animation-delay:var(--d,0ms)}
+.mgrid.armed.run .st,.mgrid.armed.run .pstar{animation:stepIn .5s cubic-bezier(.22,.72,.3,1) forwards;animation-delay:var(--d,0ms)}
+@keyframes stepIn{to{opacity:1;transform:none}}
 .pb i.w{background:linear-gradient(180deg,#F7C955,#E8A317)}
 .pb i.f{background:linear-gradient(180deg,var(--red-2),var(--red))}
 @keyframes seg{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
-@media (prefers-reduced-motion:reduce){.pb.armed i{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.mgrid.armed .pb i,.mgrid.armed .st,.mgrid.armed .pstar{transform:none;opacity:1}.mgrid.armed.run .pb i,.mgrid.armed.run .st,.mgrid.armed.run .pstar{animation:none}}
 .pbl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:7px 0 0;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted)}
 .pbl span:last-child{color:var(--red-ink)}
 .pbl .em{font-size:17px;line-height:1;font-weight:400;vertical-align:-3px;margin-left:2px}
 .h4e{display:flex;align-items:center;gap:8px;margin:28px 0 12px}
 .h4e h4{margin:0}
 .h4e .em{font-size:19px;line-height:1}
-.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0 16px}
-.steps div{border:1px solid var(--line-2);border-radius:5px;padding:12px 13px;font-size:13.5px;line-height:1.42;color:var(--ink-2)}
-.steps b{display:block;font-weight:600;font-size:14.5px;color:var(--ink);margin-bottom:4px}
-.steps div.last{background:var(--amber);border-color:var(--amber-line)}
-@media (max-width:760px){.steps,.pbl{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:420px){.steps{grid-template-columns:1fr}}
+/* сезон: шкала и этапы в одной сетке — каждый этап под своими неделями */
+.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:center;margin:14px 0 16px}
+.mgrid .pb{grid-column:1 / span 3;margin:0}
+.pstar{font-size:22px;line-height:1;text-align:center}
+.mgrid .st{align-self:stretch;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--line-2);border-radius:8px;padding:13px 14px 15px;font-size:13px;line-height:1.45;color:var(--ink-2)}
+.mgrid .st span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.mgrid .st b{display:block;font-weight:700;font-size:14px;line-height:1.28;color:var(--ink);margin-bottom:6px}
+.mgrid .m1{border-top-color:var(--xp1)}.mgrid .m1 span{color:var(--xp1)}
+.mgrid .m2{border-top-color:#E8A317}.mgrid .m2 span{color:#8A6200}
+.mgrid .m3{border-top-color:var(--red)}.mgrid .m3 span{color:var(--red-ink)}
+.mgrid .fin{background:var(--amber);border-color:var(--amber-line);border-top-color:var(--red)}.mgrid .fin span{color:var(--red-ink)}
+@media (max-width:760px){
+  .mgrid{grid-template-columns:1fr 1fr}
+  .mgrid .pb{grid-column:1 / span 2}
+  .pstar{text-align:right}
+}
+@media (max-width:520px){
+  .mgrid{grid-template-columns:1fr}
+  .mgrid .pb{grid-column:1}
+  .pstar{display:none}
+}
 
 /* flow */
 .flow{list-style:none;margin:12px 0 16px;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:11px;counter-reset:s}
@@ -766,15 +784,13 @@ footer{padding-top:12px}
         <h2>Мани Челлендж: важнее путь, а не только сумма</h2>
         <p class="k">PRO — это не курс, а совместный спринт на три месяца. Команды по 3–10 человек, у каждой своя история. Мы смотрим не только на выручку, а на то, как команда прошла путь: что попробовала, где ошиблась, чем поделилась с остальными и как поддерживала своих.</p>
         <p>Поэтому здесь не соревнуются в одиночку. Команда, которая нашла рабочую механику, рассказывает её всем — и от этого выигрывает весь клуб. Общий результат сезона важнее личного места в таблице.</p>
-        <div class="sgrid">
-          <div class="pb" role="img" aria-label="Полоса сезона: двенадцать недель, три месяца и выпускной"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i class="w" style="--i:4"></i><i class="w" style="--i:5"></i><i class="w" style="--i:6"></i><i class="w" style="--i:7"></i><i class="f" style="--i:8"></i><i class="f" style="--i:9"></i><i class="f" style="--i:10"></i><i class="f" style="--i:11"></i></div>
-          <div class="pstar" aria-hidden="true">🌟</div>
-        </div>
-        <div class="steps">
-          <div class="m1"><span>месяц 1</span><b>Изучаем технологии и формируем команды</b>Разбираемся, что реально работает, выбираем идею и делим роли. Правило одно: идея должна приносить деньги, а не лайки.</div>
-          <div class="m2"><span>месяц 2</span><b>Внедряем на практике и создаём продукты</b>Прототип на ИИ, первые клиенты, первые отказы. Мастермайнд разбирает, где затык.</div>
-          <div class="m3"><span>месяц 3</span><b>Запускаем продажи и считаем выручку</b>Юнит-экономика, cash flow, что масштабировать. Здесь подключаются таблицы и презентации.</div>
-          <div class="last"><span>финал</span><b>Отмечаем выпускной и награждаем лучших</b>Большой оффлайн: призы из копилки, профессиональная съёмка и ролик о сезоне.</div>
+        <div class="mgrid">
+          <div class="pb" role="img" aria-label="Полоса сезона: двенадцать недель, по четыре на каждый месяц"><i style="--d:0ms"></i><i style="--d:130ms"></i><i style="--d:260ms"></i><i style="--d:390ms"></i><i class="w" style="--d:520ms"></i><i class="w" style="--d:650ms"></i><i class="w" style="--d:780ms"></i><i class="w" style="--d:910ms"></i><i class="f" style="--d:1040ms"></i><i class="f" style="--d:1170ms"></i><i class="f" style="--d:1300ms"></i><i class="f" style="--d:1430ms"></i></div>
+          <div class="pstar" style="--d:1800ms" aria-hidden="true">🌟</div>
+          <div class="st m1" style="--d:640ms"><span>месяц 1</span><b>Изучаем технологии и формируем команды</b>Разбираемся, что работает, выбираем идею и делим роли. Идея должна приносить деньги, а не лайки.</div>
+          <div class="st m2" style="--d:1160ms"><span>месяц 2</span><b>Внедряем на практике и создаём продукты</b>Прототип на ИИ, первые клиенты, первые отказы. Мастермайнд разбирает, где затык.</div>
+          <div class="st m3" style="--d:1680ms"><span>месяц 3</span><b>Запускаем продажи и считаем выручку</b>Юнит-экономика, cash flow, что масштабировать. Подключаются таблицы и презентации.</div>
+          <div class="st fin" style="--d:1900ms"><span>финал</span><b>Отмечаем выпускной и награждаем лучших</b>Призы из копилки, профессиональная съёмка и ролик о сезоне.</div>
         </div>
 
         <div class="h4e"><span class="em" aria-hidden="true">💰</span><h4>Копилка: 10% в общак</h4></div>
@@ -1270,15 +1286,15 @@ footer{padding-top:12px}
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* полоса сезона заполняется, когда до неё доскроллили, и повторяется при возврате */
-  var pb=document.querySelector('.pb');
-  if(pb && !reduce && 'IntersectionObserver' in window){
-    pb.classList.add('armed');
+  var mg=document.querySelector('.mgrid');
+  if(mg && !reduce && 'IntersectionObserver' in window){
+    mg.classList.add('armed');
     new IntersectionObserver(function(es){
       es.forEach(function(e){
-        pb.classList.remove('run');
-        if(e.isIntersecting){ void pb.offsetWidth; pb.classList.add('run'); }
+        mg.classList.remove('run');
+        if(e.isIntersecting){ void mg.offsetWidth; mg.classList.add('run'); }
       });
-    },{threshold:.4}).observe(pb);
+    },{threshold:.3}).observe(mg);
   }
 
   /* печатающая строка */
