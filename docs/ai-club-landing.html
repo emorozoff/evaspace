@@ -74,8 +74,15 @@ p{margin:0 0 12px}
 
 /* ---------- герой ---------- */
 .hero{padding-top:44px}
-.hgrid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:30px 44px;align-items:center;padding:34px 36px 36px}
-@media (max-width:900px){.hgrid{grid-template-columns:1fr;padding:26px 20px 28px}.crt{max-width:280px;margin:0 auto}}
+.hgrid{display:grid;grid-template-columns:minmax(0,1fr) 300px;grid-template-areas:"head crt" "body crt";gap:18px 44px;align-items:center;padding:34px 36px 36px}
+.hhead{grid-area:head;align-self:end}
+.hbody{grid-area:body;align-self:start}
+.crt{grid-area:crt}
+@media (max-width:900px){
+  .hgrid{grid-template-columns:1fr;grid-template-areas:"head" "crt" "body";gap:22px;padding:26px 20px 28px}
+  .crt{max-width:264px;margin:0 auto}
+  .hhead,.hbody{align-self:auto}
+}
 h1{font-weight:800;font-size:clamp(30px,4.6vw,50px);line-height:1.06;letter-spacing:-.035em;margin:0 0 16px}
 h1 em{font-style:normal;color:var(--red)}
 .hsub{font-size:clamp(16px,1.7vw,19px);line-height:1.55;color:var(--ink-2);max-width:52ch;margin:0 0 22px}
@@ -83,6 +90,13 @@ h1 em{font-style:normal;color:var(--red)}
 .hfacts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 26px}
 .hfacts span{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.04em;padding:6px 12px;border-radius:20px;background:var(--card);border:1px solid var(--line-2);color:var(--ink-2)}
 .hfacts span.on{background:var(--red-soft);border-color:#F2C9C0;color:var(--red-ink)}
+@media (max-width:580px){
+  .hfacts{gap:4px 9px;margin-bottom:22px}
+  .hfacts span{background:none;border:0;padding:0;font-size:12.5px;color:var(--muted)}
+  .hfacts span::after{content:"·";margin-left:9px;color:var(--line-2)}
+  .hfacts span:last-child::after{content:none}
+  .hfacts span.on{color:var(--red-ink);font-weight:700}
+}
 .hcta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 .hnote{font-family:var(--mono);font-size:12px;color:var(--muted);flex-basis:100%;margin:4px 0 0}
 
@@ -241,6 +255,14 @@ summary::before{content:"+";flex:0 0 22px;width:22px;height:22px;border-radius:5
 details[open] summary::before{content:"–";background:var(--red-soft);color:var(--red-ink)}
 details p{margin:0;padding:0 20px 18px 55px;font-size:15px;color:var(--ink-2);line-height:1.55;max-width:72ch}
 
+/* ---------- партнёрам ---------- */
+.pwrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:28px 44px;padding:32px 36px 36px;align-items:start}
+@media (max-width:860px){.pwrap{grid-template-columns:1fr;padding:24px 20px 28px}}
+.pbens{list-style:none;margin:0;padding:0;display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.pbens li{background:var(--card);padding:14px 18px}
+.pbens b{display:block;font-size:15.5px;font-weight:700;letter-spacing:-.01em;margin-bottom:3px}
+.pbens span{display:block;font-size:14px;color:var(--muted);line-height:1.45}
+
 /* ---------- финал ---------- */
 .final{text-align:center;background:var(--card);border:1px solid var(--line-2);border-radius:12px;padding:52px 28px 46px;box-shadow:0 1px 2px rgba(20,32,50,.06),0 16px 40px rgba(20,32,50,.07)}
 .final h2{margin:0 auto 14px;max-width:20ch}
@@ -267,6 +289,18 @@ footer a{color:var(--xp1)}
 .opts b{display:block;font-size:15.5px;margin-bottom:2px}
 .opts b i{font-style:normal;font-family:var(--mono);font-size:13px;color:var(--red-ink);margin-left:7px}
 .opts small{font-size:13.5px;color:var(--muted);line-height:1.4;display:block}
+.term{margin:15px 22px 0;background:#1B1A18;border:1px solid #35322E;border-radius:7px;overflow:hidden;font-family:var(--mono);font-size:11.5px;line-height:1.7}
+.term .th{display:flex;align-items:center;gap:7px;padding:7px 11px;background:#232120;border-bottom:1px solid #35322E;color:#8C867C;font-size:10.5px;letter-spacing:.06em}
+.term .dot{width:9px;height:9px;border-radius:50%;background:#D97757;flex:0 0 9px}
+.term .tb2{padding:11px 13px 13px;color:#CFC9BF}
+.term .tb2 div{white-space:pre-wrap;word-break:break-word}
+.term .c1{color:#8C867C}.term .c2{color:#D97757}.term .c3{color:#7FB88A}
+.dlgb.err .g{background:var(--red);border-radius:6px}
+.mx{position:relative;margin:15px 22px 0;border:1px solid #14351F;border-radius:7px;overflow:hidden;background:#03100A}
+.mx canvas{display:block;width:100%;height:100px}
+.mx .ovl{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-family:var(--mono);padding:8px;background:radial-gradient(65% 80% at 50% 50%,rgba(3,16,10,.9) 0%,rgba(3,16,10,.72) 55%,rgba(3,16,10,.15) 100%)}
+.mx .ovl p{margin:0;color:#7CFFAE;font-size:12px;letter-spacing:.06em;text-shadow:0 0 10px rgba(80,255,150,.6)}
+.mx .ovl .big{font-size:20px;font-weight:700;color:#B8FFD4;letter-spacing:.02em;margin-top:5px}
 .pbar{height:17px;margin:16px 22px 0;background:var(--soft);border:1px solid var(--line-2);border-radius:5px;padding:3px;overflow:hidden}
 .pbar i{display:block;height:100%;width:0;border-radius:2px;background:repeating-linear-gradient(90deg,var(--xp1) 0 10px,transparent 10px 13px);transition:width .12s linear}
 .tst{font-family:var(--mono);font-size:12px;color:var(--muted);margin:11px 22px 0;text-align:center}
@@ -311,14 +345,16 @@ footer a{color:var(--xp1)}
     <div class="win">
       <div class="bar"><span class="t">сообщение от claude</span><span class="wb" aria-hidden="true"><i>_</i><i>□</i><i>✕</i></span></div>
       <div class="hgrid">
-        <div>
+        <div class="hhead">
           <p class="lbl red">Набор в первый сезон открыт</p>
-          <h1>Хватит разбираться в ИИ <em>в одиночку</em></h1>
-          <p class="hsub">Клуб, где каждую пятницу собираются те, кто уже делает. За <b>90 дней</b> команда доводит идею до первых денег, а сезон заканчивается <b>выпускным с награждением</b>.</p>
+          <h1>Хватит разбираться с ИИ <em>в одиночку</em></h1>
+        </div>
+        <div class="hbody">
+          <p class="hsub">Клуб, где каждую пятницу собираются те, кто уже делает.<br>За <b>90 дней</b> команда доводит идею до первых денег.<br>Сезон заканчивается <b>выпускным с награждением</b>.</p>
           <div class="hfacts">
             <span>90 дней</span>
             <span>пятницы онлайн и оффлайн</span>
-            <span>Москва и Питер</span>
+            <span>Москва, Питер, регионы</span>
             <span class="on">выпускной с награждением</span>
           </div>
           <div class="hcta">
@@ -652,6 +688,30 @@ footer a{color:var(--xp1)}
   </div>
 </section>
 
+<!-- СПОНСОРАМ -->
+<section id="partner">
+  <div class="wrap">
+    <div class="win">
+      <div class="bar red"><span class="t">Партнёрам сезона</span><span class="wb" aria-hidden="true"><i>_</i><i>□</i><i>✕</i></span></div>
+      <div class="pwrap">
+        <div>
+          <h2 style="font-size:clamp(23px,2.9vw,32px)">Хотите стать <em>партнёром сезона?</em></h2>
+          <p class="lead" style="margin-bottom:22px">Мы берём немного партнёров и на весь сезон целиком. Бренд не мелькает одним постом, а живёт рядом с людьми, которые каждую неделю выбирают инструменты и внедряют их на глазах друг у друга.</p>
+          <a class="btn hot" href="https://emorozoff.github.io/evaspace/klub/sponsoram/" target="_blank" rel="noopener">Узнать подробнее</a>
+          <p class="hnote" style="margin-top:14px">презентация с форматами, охватами и условиями</p>
+        </div>
+        <ul class="pbens">
+          <li><b>Доступ к тем, кто внедряет ИИ прямо сейчас</b><span>Сто-триста человек, которые платят за то, чтобы разбираться в инструментах</span></li>
+          <li><b>Три месяца присутствия, а не один пост</b><span>Эфиры, рилсы, канал, приложение и выпускной — каждую неделю сезона</span></li>
+          <li><b>Рекомендация вместо рекламного блока</b><span>Показываем только то, чем пользуемся сами, и всегда внутри разбора</span></li>
+          <li><b>Сцена на выпускном</b><span>Стенд, награждение от бренда и профессиональная съёмка всего вечера</span></li>
+          <li><b>Эксклюзив в своей категории</b><span>Мест мало принципиально: конкурентов рядом с вами не будет</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ФИНАЛ -->
 <section>
   <div class="wrap">
@@ -672,10 +732,69 @@ footer a{color:var(--xp1)}
 
 </main>
 
+<!-- мастер: цель -->
+<div class="ov" id="ov0" role="dialog" aria-modal="true" aria-labelledby="t0">
+  <div class="dlg">
+    <div class="bar"><span class="t" id="t0">Мастер запуска — шаг 1 из 3</span><span class="wb"><i data-close="ov0" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
+    <div class="dlgb"><span class="g" aria-hidden="true">?</span><div>
+      <h3>Какую цель ставим на сезон?</h3>
+      <p>Выберите один вариант. Потом можно будет передумать.</p>
+    </div></div>
+    <ul class="opts" id="goals">
+      <li><label><input type="radio" name="goal" value="gin"><span><b>Бутылка джина и хорошая пятница</b><small>Пришёл за людьми, деньги — как получится</small></span></label></li>
+      <li><label class="sel"><input type="radio" name="goal" value="100" checked><span><b>100 000 ₽ на команду</b><small>Первые честные деньги на ИИ за сезон</small></span></label></li>
+      <li><label><input type="radio" name="goal" value="500"><span><b>500 000 ₽ и полный зал на выпускном</b><small>Уже есть что продавать, нужен ритм</small></span></label></li>
+      <li><label><input type="radio" name="goal" value="1000"><span><b>1 000 000 ₽ и выпускной с размахом</b><small>Собираюсь выжать из трёх месяцев всё</small></span></label></li>
+    </ul>
+    <div class="dlgf"><button class="btn hot" id="next0" type="button">Далее</button><button class="btn" data-close="ov0" type="button">Не сейчас</button></div>
+  </div>
+</div>
+
+<!-- мастер: шутка и консоль -->
+<div class="ov" id="ovj" role="dialog" aria-modal="true" aria-labelledby="tj">
+  <div class="dlg">
+    <div class="bar red"><span class="t" id="tj">Ошибка ЦЕЛЬ.EXE</span><span class="wb"><i data-close="ovj" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
+    <div class="dlgb err"><span class="g" aria-hidden="true">✕</span><div>
+      <h3 id="errh">Цель принята, но кнопкой она не ставится</h3>
+      <p id="errp">Для продолжения требуется команда, 90 дней и первая пятница.</p>
+    </div></div>
+    <div class="term" aria-hidden="true">
+      <div class="th"><span class="dot"></span><span>клуб — консоль</span></div>
+      <div class="tb2">
+        <div class="c1">$ клуб --цель <span class="c2" id="tgoal">"100 000 ₽"</span></div>
+        <div>› проверяю наличие отговорок<span class="c1"> ... </span><span class="c3">не найдено</span></div>
+        <div>› команда<span class="c1"> ... </span><span class="c2">требуется</span></div>
+        <div>› первая пятница<span class="c1"> ... </span><span class="c2">не назначена</span></div>
+        <div class="c1">› запусти вручную: скажи «погнали»</div>
+      </div>
+    </div>
+    <div class="dlgf"><button class="btn hot" id="toUni" type="button">Ладно, погнали</button><button class="btn" id="backGoal" type="button">Изменить цель</button></div>
+  </div>
+</div>
+
+<!-- мастер: вселенная -->
+<div class="ov" id="ovu" role="dialog" aria-modal="true" aria-labelledby="tu">
+  <div class="dlg">
+    <div class="bar"><span class="t" id="tu">Вселенная — обработка запроса</span><span class="wb"><i data-close="ovu" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
+    <div class="dlgb"><span class="g" aria-hidden="true">↯</span><div>
+      <h3>Запрос принят и поставлен в очередь</h3>
+      <p>Вселенная не отвечает мгновенно. Обычно ей нужно ровно 90 дней и немного участия с вашей стороны.</p>
+    </div></div>
+    <div class="mx">
+      <canvas id="mxc" aria-hidden="true"></canvas>
+      <div class="ovl"><div>
+        <p id="mxs">ОБРАБОТКА ЗАПРОСА...</p>
+        <p class="big" id="mxt">90д 00:00:00</p>
+      </div></div>
+    </div>
+    <div class="dlgf"><button class="btn hot" id="toPkg" type="button">ОК, беру!</button><button class="btn" id="backJoke" type="button">Назад</button></div>
+  </div>
+</div>
+
 <!-- мастер: выбор пакета -->
 <div class="ov" id="ov1" role="dialog" aria-modal="true" aria-labelledby="t1">
   <div class="dlg">
-    <div class="bar"><span class="t" id="t1">Заявка в клуб — шаг 1 из 2</span><span class="wb"><i data-close="ov1" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
+    <div class="bar"><span class="t" id="t1">Мастер запуска — шаг 2 из 3</span><span class="wb"><i data-close="ov1" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
     <div class="dlgb"><span class="g" aria-hidden="true">?</span><div>
       <h3>С чего начнём?</h3>
       <p>Выберите вариант — пришлём детали именно по нему.</p>
@@ -692,7 +811,7 @@ footer a{color:var(--xp1)}
 <!-- мастер: отправка и готово -->
 <div class="ov" id="ov2" role="dialog" aria-modal="true" aria-labelledby="t2">
   <div class="dlg">
-    <div class="bar"><span class="t" id="t2">Заявка в клуб — шаг 2 из 2</span><span class="wb"><i data-close="ov2" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
+    <div class="bar"><span class="t" id="t2">Мастер запуска — шаг 3 из 3</span><span class="wb"><i data-close="ov2" role="button" tabindex="0" aria-label="Закрыть">✕</i></span></div>
     <div id="sending">
       <div class="dlgb"><span class="g" aria-hidden="true">↯</span><div>
         <h3 id="sh">Отправляем заявку</h3>
@@ -776,6 +895,7 @@ footer a{color:var(--xp1)}
   function render(a,kind){
     if(kind==='switch'){ flip=1-flip; if(flip) tone(a,[[987.77,0],[1318.51,.085]],'triangle',.15,.26); else tone(a,[[880,0],[659.25,.08]],'square',.09,.2); return; }
     if(kind==='tick'){ tone(a,[[1244.51,0]],'square',.05,.055); return; }
+    if(kind==='err'){ tone(a,[[466.16,0],[349.23,.15],[293.66,.3]],'triangle',.15,.32); return; }
     if(kind==='boot'){
       var t=a.currentTime+.01;
       [[261.63,0],[392.00,.26],[523.25,.5],[659.25,.72]].forEach(function(x){
@@ -854,8 +974,13 @@ footer a{color:var(--xp1)}
 
   /* ---------- окна ---------- */
   var last=null;
-  function open(id,kind){ var o=$(id); o.classList.add('on'); sfx(kind||'switch'); var f=o.querySelector('input:checked')||o.querySelector('button'); if(f) f.focus(); }
-  function close(id){ $(id).classList.remove('on'); if(last) last.focus(); }
+  function open(id,kind){
+    var o=$(id); o.classList.add('on'); sfx(kind||'switch');
+    var f=o.querySelector('input:checked')||o.querySelector('button'); if(f) f.focus();
+    if(id==='ovu') startUniverse();
+  }
+  function close(id){ $(id).classList.remove('on'); if(id==='ovu') stopUniverse(); if(last) last.focus(); }
+  function swap(from,to,kind){ $(from).classList.remove('on'); if(from==='ovu') stopUniverse(); open(to,kind); }
   document.querySelectorAll('[data-close]').forEach(function(el){
     function g(){ close(el.getAttribute('data-close')); }
     el.addEventListener('click',g);
@@ -872,8 +997,70 @@ footer a{color:var(--xp1)}
     });
   });
   document.querySelectorAll('[data-start]').forEach(function(b){
-    b.addEventListener('click',function(){ last=b; open('ov1'); });
+    b.addEventListener('click',function(){ last=b; open('ov0'); });
   });
+
+  /* цель → шутка про кнопку → вселенная → пакет */
+  var goals={
+    gin:['Скромно и по делу','Система оценила реализм. Джин будет в любом случае, но он идёт бонусом к выручке, а не вместо неё.','"бутылка джина"'],
+    '100':['Подозрительно похоже на план','Обычно на этом месте пишут «свобода и рост», и это ничем не заканчивается. Тут хотя бы есть число.','"100 000 ₽"'],
+    '500':['Принято, считаем','Пятнадцать команд, много кофе и ни одной пропущенной пятницы. Выглядит достижимо.','"500 000 ₽"'],
+    '1000':['Амбиции перезагружены','Перезагрузка выполнена успешно. Копилка на выпускной получится неприлично приличной.','"1 000 000 ₽"']
+  };
+  $('next0').addEventListener('click',function(){
+    var v=(document.querySelector('input[name=goal]:checked')||{}).value||'100';
+    $('errh').textContent=goals[v][0]+', но кнопкой цель не ставится';
+    $('errp').textContent=goals[v][1]+' Для продолжения требуется: команда, 90 дней и первая пятница.';
+    $('tgoal').textContent=goals[v][2];
+    swap('ov0','ovj','err');
+  });
+  $('backGoal').addEventListener('click',function(){ swap('ovj','ov0'); });
+  $('toUni').addEventListener('click',function(){ swap('ovj','ovu'); });
+  $('backJoke').addEventListener('click',function(){ swap('ovu','ovj'); });
+  $('toPkg').addEventListener('click',function(){ swap('ovu','ov1'); });
+
+  /* матрица и обратный отсчёт до выпускного */
+  var mxTimer=null, cdTimer=null, loadTimer=null;
+  function startUniverse(){
+    var cv=$('mxc');
+    if(cv){
+      var w=cv.width=cv.offsetWidth||360, h=cv.height=100;
+      var c2=cv.getContext('2d'), cols=Math.max(1,Math.floor(w/13)), y=[];
+      for(var i=0;i<cols;i++) y[i]=Math.random()*10;
+      var ch='АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЭЮЯ01АЙ';
+      var frame=function(){
+        c2.fillStyle='rgba(3,16,10,.14)'; c2.fillRect(0,0,w,h);
+        c2.font='12px monospace';
+        for(var i=0;i<cols;i++){
+          c2.fillStyle = Math.random()>.94 ? '#CFFFE0' : '#3FC96F';
+          c2.fillText(ch[Math.floor(Math.random()*ch.length)], i*13, y[i]*14);
+          if(y[i]*14>h && Math.random()>.965) y[i]=0;
+          y[i]++;
+        }
+      };
+      c2.fillStyle='#03100A'; c2.fillRect(0,0,w,h);
+      if(reduce){ for(var k=0;k<26;k++) frame(); } else { mxTimer=setInterval(frame,70); }
+    }
+    var target=Date.now()+90*24*3600*1000, st=$('mxs'), pct=0;
+    if(st) st.textContent='ОБРАБОТКА ЗАПРОСА...';
+    loadTimer=setInterval(function(){
+      pct+=7+Math.random()*11;
+      if(pct>=100){ clearInterval(loadTimer); loadTimer=null; if(st) st.textContent='ЦЕЛЬ БУДЕТ ВЫПОЛНЕНА ЧЕРЕЗ'; }
+      else if(st) st.textContent='ОБРАБОТКА ЗАПРОСА... '+Math.floor(pct)+'%';
+    },170);
+    function tick(){
+      var d=Math.max(0,target-Date.now()), day=Math.floor(d/86400000);
+      var hh=Math.floor(d%86400000/3600000), mm=Math.floor(d%3600000/60000), ss=Math.floor(d%60000/1000);
+      var pad=function(x){return (x<10?'0':'')+x};
+      var el=$('mxt'); if(el) el.textContent=day+'д '+pad(hh)+':'+pad(mm)+':'+pad(ss);
+    }
+    tick(); cdTimer=setInterval(tick,1000);
+  }
+  function stopUniverse(){
+    if(mxTimer){clearInterval(mxTimer);mxTimer=null;}
+    if(cdTimer){clearInterval(cdTimer);cdTimer=null;}
+    if(loadTimer){clearInterval(loadTimer);loadTimer=null;}
+  }
 
   var texts={
     club:['Держим место в CLUB','Пакет CLUB на первый месяц по цене старта сезона.'],
