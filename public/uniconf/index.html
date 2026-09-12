@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>STARTUP UNICONF Бали 2.0 — конференция для фаундеров, инвесторов и предпринимателей</title>
+  <meta name="description" content="STARTUP UNICONF Бали 2.0 — бизнес-конференция для фаундеров проектов, инвесторов и предпринимателей. 15 декабря, Parq Ubud, Убуд, Бали. Спикеры с общей капитализацией проектов более $100 млн, питч-сессия перед инвесторами, нетворкинг и афтепати." />
+  <meta name="theme-color" content="#0B0B0F" />
+  <meta property="og:title" content="STARTUP UNICONF Бали 2.0" />
+  <meta property="og:description" content="Конференция для фаундеров, инвесторов и предпринимателей. 15 декабря, Parq Ubud, Бали." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B0B0F'/%3E%3Ctext x='32' y='43' font-size='30' font-family='Arial' font-weight='700' text-anchor='middle' fill='%23E4B85C'%3EU%3C/text%3E%3C/svg%3E" />
+
+  <style>
+    /* ---------- Шрифты (локальные, из проекта) ---------- */
+    @font-face{font-family:'Manrope';font-style:normal;font-weight:400;font-display:swap;src:url(../fonts/manrope-400-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+    @font-face{font-family:'Manrope';font-style:normal;font-weight:400;font-display:swap;src:url(../fonts/manrope-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+    @font-face{font-family:'Manrope';font-style:normal;font-weight:500;font-display:swap;src:url(../fonts/manrope-500-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+    @font-face{font-family:'Manrope';font-style:normal;font-weight:500;font-display:swap;src:url(../fonts/manrope-500-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+    @font-face{font-family:'Manrope';font-style:normal;font-weight:600;font-display:swap;src:url(../fonts/manrope-600-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+    @font-face{font-family:'Manrope';font-style:normal;font-weight:600;font-display:swap;src:url(../fonts/manrope-600-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+    @font-face{font-family:'Manrope';font-style:normal;font-weight:700;font-display:swap;src:url(../fonts/manrope-700-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+    @font-face{font-family:'Manrope';font-style:normal;font-weight:700;font-display:swap;src:url(../fonts/manrope-700-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+    @font-face{font-family:'Manrope';font-style:normal;font-weight:800;font-display:swap;src:url(../fonts/manrope-800-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+    @font-face{font-family:'Manrope';font-style:normal;font-weight:800;font-display:swap;src:url(../fonts/manrope-800-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+
+    /* ---------- Токены ---------- */
+    :root{
+      --bg:#0B0B0F;
+      --bg-2:#12121A;
+      --bg-3:#1A1A24;
+      --line:rgba(255,255,255,.08);
+      --text:#F4F2EC;
+      --muted:#A9A7A0;
+      --gold:#E4B85C;
+      --gold-2:#F3D48A;
+      --gold-dark:#B98F35;
+      --violet:#6C4CF1;
+      --radius:20px;
+      --container:1180px;
+      --gutter:20px;
+    }
+
+    *,*::before,*::after{box-sizing:border-box;}
+    html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+      font-size:17px;
+      line-height:1.55;
+      -webkit-font-smoothing:antialiased;
+      overflow-x:hidden;
+    }
+    img{max-width:100%;display:block;}
+    a{color:inherit;text-decoration:none;}
+    h1,h2,h3,h4{margin:0;line-height:1.1;font-weight:800;letter-spacing:-.02em;}
+    p{margin:0;}
+    ul{margin:0;padding:0;list-style:none;}
+
+    .container{max-width:var(--container);margin:0 auto;padding-inline:var(--gutter);}
+    .section{padding-block:96px;}
+    .section--tight{padding-block:64px;}
+    .section--alt{background:var(--bg-2);}
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:10px;
+      font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);
+      margin-bottom:18px;
+    }
+    .eyebrow::before{content:"";width:28px;height:2px;background:var(--gold);}
+    .h2{font-size:clamp(30px,4.2vw,52px);margin-bottom:22px;}
+    .lead{font-size:clamp(17px,1.4vw,20px);color:var(--muted);max-width:720px;}
+    .center{text-align:center;}
+    .center .lead{margin-inline:auto;}
+    .center .eyebrow{justify-content:center;}
+
+    /* ---------- Кнопки ---------- */
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:10px;
+      padding:16px 30px;border-radius:999px;
+      font-weight:700;font-size:16px;line-height:1;white-space:nowrap;
+      border:1px solid transparent;cursor:pointer;
+      transition:transform .15s ease,box-shadow .15s ease,background .15s ease,color .15s ease;
+    }
+    .btn:hover{transform:translateY(-2px);}
+    .btn--gold{background:linear-gradient(135deg,var(--gold-2),var(--gold) 55%,var(--gold-dark));color:#1A1405;box-shadow:0 12px 40px rgba(228,184,92,.28);}
+    .btn--gold:hover{box-shadow:0 16px 48px rgba(228,184,92,.4);}
+    .btn--ghost{background:transparent;border-color:rgba(255,255,255,.22);color:var(--text);}
+    .btn--ghost:hover{background:rgba(255,255,255,.06);}
+    .btn--sm{padding:12px 20px;font-size:14px;}
+
+    /* ---------- Шапка ---------- */
+    .header{
+      position:sticky;top:0;z-index:50;
+      background:rgba(11,11,15,.72);
+      backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+      border-bottom:1px solid var(--line);
+    }
+    .header__inner{display:flex;align-items:center;justify-content:space-between;gap:20px;height:72px;}
+    .logo{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.06em;font-size:15px;}
+    .logo__mark{
+      width:36px;height:36px;border-radius:10px;display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--gold-2),var(--gold-dark));color:#1A1405;font-size:18px;
+    }
+    .logo span small{display:block;font-size:10px;letter-spacing:.24em;color:var(--muted);font-weight:600;}
+    .nav{display:flex;gap:26px;font-size:14px;font-weight:600;color:var(--muted);}
+    .nav a:hover{color:var(--text);}
+    .header .btn{display:none;}
+    .burger{display:none;width:44px;height:44px;border:0;background:transparent;color:var(--text);cursor:pointer;}
+    .burger svg{width:26px;height:26px;}
+    @media (min-width:900px){
+      .header .btn{display:inline-flex;}
+    }
+    @media (max-width:899px){
+      .nav{
+        position:fixed;inset:72px 0 auto 0;flex-direction:column;gap:0;
+        background:var(--bg-2);border-bottom:1px solid var(--line);
+        padding:10px 20px 20px;display:none;
+      }
+      .nav.is-open{display:flex;}
+      .nav a{padding:14px 0;border-bottom:1px solid var(--line);font-size:16px;color:var(--text);}
+      .burger{display:block;}
+    }
+
+    /* ---------- Hero ---------- */
+    .hero{
+      position:relative;overflow:hidden;
+      padding-block:96px 80px;
+      background:
+        radial-gradient(900px 500px at 15% -10%,rgba(108,76,241,.35),transparent 60%),
+        radial-gradient(700px 420px at 90% 10%,rgba(228,184,92,.22),transparent 60%),
+        var(--bg);
+    }
+    .hero::after{
+      content:"";position:absolute;inset:0;pointer-events:none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+      background-size:64px 64px;
+      mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%);
+      -webkit-mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%);
+    }
+    .hero__inner{position:relative;z-index:1;display:grid;gap:40px;align-items:center;}
+    @media (min-width:960px){.hero__inner{grid-template-columns:1.25fr .9fr;}}
+    .hero__tag{
+      display:inline-flex;align-items:center;gap:10px;padding:8px 16px;border-radius:999px;
+      background:rgba(255,255,255,.06);border:1px solid var(--line);
+      font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-2);
+      margin-bottom:26px;
+    }
+    .hero__tag i{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px rgba(228,184,92,.2);}
+    .hero__title{font-size:clamp(44px,7.4vw,96px);line-height:.98;letter-spacing:-.03em;}
+    .hero__title em{
+      font-style:normal;
+      background:linear-gradient(135deg,var(--gold-2),var(--gold) 50%,var(--gold-dark));
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+    }
+    .hero__sub{font-size:clamp(18px,1.9vw,24px);color:var(--muted);margin-top:22px;max-width:620px;}
+    .hero__sub b{color:var(--text);font-weight:700;}
+    .hero__cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:36px;}
+    .hero__note{margin-top:16px;font-size:14px;color:var(--muted);}
+
+    .hero__card{
+      background:linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
+      border:1px solid var(--line);border-radius:28px;padding:30px;
+      box-shadow:0 30px 80px rgba(0,0,0,.45);
+    }
+    .hero__card h3{font-size:14px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:22px;}
+    .fact{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;padding:16px 0;border-top:1px solid var(--line);}
+    .fact:first-of-type{border-top:0;padding-top:0;}
+    .fact__icon{width:44px;height:44px;border-radius:12px;background:rgba(228,184,92,.12);display:grid;place-items:center;color:var(--gold);}
+    .fact__icon svg{width:22px;height:22px;}
+    .fact__label{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;}
+    .fact__value{font-size:19px;font-weight:700;margin-top:4px;}
+    .fact__value small{display:block;font-size:14px;font-weight:500;color:var(--muted);margin-top:4px;line-height:1.4;}
+
+    /* ---------- Цифры ---------- */
+    .stats{display:grid;gap:16px;grid-template-columns:repeat(2,1fr);}
+    @media (min-width:800px){.stats{grid-template-columns:repeat(4,1fr);}}
+    .stat{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:28px 24px;}
+    .stat__num{font-size:clamp(34px,4vw,50px);font-weight:800;letter-spacing:-.03em;color:var(--gold);line-height:1;}
+    .stat__label{margin-top:10px;color:var(--muted);font-size:15px;}
+
+    /* ---------- О конференции ---------- */
+    .about{display:grid;gap:40px;align-items:start;}
+    @media (min-width:960px){.about{grid-template-columns:1fr 1fr;gap:64px;}}
+    .about__text p + p{margin-top:16px;}
+    .about__text p{color:var(--muted);}
+    .about__text p strong{color:var(--text);}
+    .checklist li{display:grid;grid-template-columns:28px 1fr;gap:14px;padding:16px 0;border-bottom:1px solid var(--line);color:var(--text);}
+    .checklist li:last-child{border-bottom:0;}
+    .checklist svg{width:24px;height:24px;color:var(--gold);margin-top:2px;}
+
+    /* ---------- Для кого ---------- */
+    .cards{display:grid;gap:18px;}
+    @media (min-width:720px){.cards{grid-template-columns:repeat(3,1fr);}}
+    .card{
+      background:var(--bg-3);border:1px solid var(--line);border-radius:var(--radius);padding:30px 26px;
+      transition:transform .2s ease,border-color .2s ease;
+    }
+    .card:hover{transform:translateY(-4px);border-color:rgba(228,184,92,.4);}
+    .card__icon{width:52px;height:52px;border-radius:14px;background:rgba(228,184,92,.12);display:grid;place-items:center;color:var(--gold);margin-bottom:20px;}
+    .card__icon svg{width:26px;height:26px;}
+    .card h3{font-size:22px;margin-bottom:10px;}
+    .card p{color:var(--muted);font-size:15px;}
+
+    /* ---------- Спикеры ---------- */
+    .speakers{display:grid;gap:18px;grid-template-columns:repeat(2,1fr);}
+    @media (min-width:720px){.speakers{grid-template-columns:repeat(3,1fr);}}
+    @media (min-width:1000px){.speakers{grid-template-columns:repeat(4,1fr);}}
+    .speaker{background:var(--bg-3);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+    .speaker__photo{
+      aspect-ratio:1/1;display:grid;place-items:center;position:relative;
+      background:linear-gradient(160deg,#25253A,#141420);
+    }
+    .speaker__photo::after{
+      content:"";position:absolute;inset:auto 0 0 0;height:50%;
+      background:linear-gradient(to top,rgba(11,11,15,.85),transparent);
+    }
+    .speaker__ph{
+      width:42%;aspect-ratio:1/1;border-radius:50%;
+      background:radial-gradient(circle at 35% 30%,rgba(228,184,92,.55),rgba(108,76,241,.35) 70%);
+      display:grid;place-items:center;font-size:clamp(22px,3vw,36px);font-weight:800;color:rgba(255,255,255,.85);
+    }
+    .speaker__body{padding:18px 18px 22px;}
+    .speaker__name{font-size:17px;font-weight:800;}
+    .speaker__role{font-size:14px;color:var(--muted);margin-top:6px;line-height:1.4;}
+    .speaker__tag{display:inline-block;margin-top:12px;padding:5px 10px;border-radius:999px;background:rgba(228,184,92,.12);color:var(--gold);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+
+    /* ---------- Программа ---------- */
+    .timeline{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--bg-2);}
+    .slot{display:grid;grid-template-columns:120px 1fr;gap:18px;padding:22px 26px;border-top:1px solid var(--line);}
+    .slot:first-child{border-top:0;}
+    .slot__time{font-weight:800;color:var(--gold);font-size:18px;letter-spacing:-.01em;}
+    .slot__title{font-weight:700;font-size:18px;}
+    .slot__desc{color:var(--muted);font-size:15px;margin-top:6px;}
+    .slot--accent{background:linear-gradient(90deg,rgba(228,184,92,.09),transparent 70%);}
+    @media (max-width:600px){.slot{grid-template-columns:1fr;gap:6px;padding:18px 18px;}}
+    .notice{
+      margin-top:22px;padding:18px 22px;border-radius:16px;
+      background:rgba(108,76,241,.12);border:1px solid rgba(108,76,241,.35);
+      color:var(--text);font-size:15px;display:flex;gap:12px;align-items:flex-start;
+    }
+    .notice svg{width:22px;height:22px;flex:none;color:#B3A3FF;margin-top:1px;}
+
+    /* ---------- Питч ---------- */
+    .pitch{
+      border-radius:32px;padding:clamp(30px,5vw,64px);
+      background:
+        radial-gradient(600px 300px at 100% 0%,rgba(108,76,241,.45),transparent 65%),
+        radial-gradient(500px 300px at 0% 100%,rgba(228,184,92,.28),transparent 65%),
+        var(--bg-3);
+      border:1px solid var(--line);
+      display:grid;gap:36px;align-items:center;
+    }
+    @media (min-width:960px){.pitch{grid-template-columns:1.1fr .9fr;}}
+    .pitch .h2{margin-bottom:16px;}
+    .pitch__tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;}
+    .pitch__tags span{padding:9px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.2);font-weight:700;font-size:14px;letter-spacing:.08em;}
+    .pitch__box{background:rgba(11,11,15,.6);border:1px solid var(--line);border-radius:24px;padding:30px;}
+    .pitch__box .big{font-size:clamp(34px,4.5vw,56px);font-weight:800;letter-spacing:-.03em;color:var(--gold);line-height:1;}
+    .pitch__box .big small{display:block;font-size:14px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+    .pitch__box ul{margin-top:22px;}
+    .pitch__box li{padding:12px 0;border-top:1px solid var(--line);color:var(--muted);font-size:15px;display:flex;gap:12px;}
+    .pitch__box li::before{content:"→";color:var(--gold);font-weight:800;}
+
+    /* ---------- Билеты ---------- */
+    .tickets{display:grid;gap:18px;align-items:stretch;}
+    @media (min-width:900px){.tickets{grid-template-columns:repeat(3,1fr);}}
+    .ticket{
+      position:relative;display:flex;flex-direction:column;
+      background:var(--bg-3);border:1px solid var(--line);border-radius:26px;padding:32px 28px;
+    }
+    .ticket--featured{border-color:rgba(228,184,92,.6);box-shadow:0 30px 80px rgba(228,184,92,.12);}
+    .ticket__badge{
+      position:absolute;top:-14px;left:28px;padding:6px 14px;border-radius:999px;
+      background:linear-gradient(135deg,var(--gold-2),var(--gold-dark));color:#1A1405;
+      font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    }
+    .ticket__name{font-size:14px;letter-spacing:.2em;text-transform:uppercase;font-weight:800;color:var(--gold);}
+    .ticket__seat{font-size:26px;font-weight:800;margin-top:10px;letter-spacing:-.02em;}
+    .ticket__price{margin-top:18px;display:flex;align-items:baseline;gap:8px;}
+    .ticket__price b{font-size:40px;font-weight:800;letter-spacing:-.03em;line-height:1;}
+    .ticket__price span{color:var(--muted);font-size:14px;}
+    .ticket__list{margin-top:22px;flex:1;}
+    .ticket__list li{display:grid;grid-template-columns:20px 1fr;gap:10px;padding:9px 0;color:var(--muted);font-size:15px;border-top:1px solid var(--line);}
+    .ticket__list li:first-child{border-top:0;}
+    .ticket__list svg{width:18px;height:18px;color:var(--gold);margin-top:3px;}
+    .ticket__list li.is-plus{color:var(--text);}
+    .ticket .btn{margin-top:26px;width:100%;}
+    .tickets__note{margin-top:28px;color:var(--muted);font-size:15px;max-width:820px;}
+    .tickets__note p + p{margin-top:8px;}
+    .tickets__note a{color:var(--gold);font-weight:700;}
+
+    /* ---------- Место ---------- */
+    .venue{display:grid;gap:30px;align-items:stretch;}
+    @media (min-width:960px){.venue{grid-template-columns:.9fr 1.1fr;}}
+    .venue__info{background:var(--bg-3);border:1px solid var(--line);border-radius:var(--radius);padding:34px 30px;}
+    .venue__info h3{font-size:30px;margin-bottom:8px;}
+    .venue__info .city{color:var(--gold);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:13px;margin-bottom:22px;}
+    .venue__row{display:grid;grid-template-columns:24px 1fr;gap:14px;padding:14px 0;border-top:1px solid var(--line);color:var(--muted);font-size:15px;}
+    .venue__row svg{width:22px;height:22px;color:var(--gold);}
+    .venue__row b{color:var(--text);display:block;margin-bottom:2px;}
+    .venue__map{border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);min-height:320px;background:var(--bg-3);}
+    .venue__map iframe{width:100%;height:100%;min-height:320px;border:0;display:block;filter:grayscale(.25) contrast(1.05);}
+
+    /* ---------- Организатор ---------- */
+    .org{display:grid;gap:40px;align-items:center;}
+    @media (min-width:960px){.org{grid-template-columns:1fr 1fr;gap:64px;}}
+    .org__text p{color:var(--muted);}
+    .org__text p + p{margin-top:14px;}
+    .org__events{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr));}
+    @media (max-width:480px){.org__events{grid-template-columns:1fr;}}
+    .org__events li{
+      padding:18px 20px;border-radius:16px;background:var(--bg-3);border:1px solid var(--line);
+      font-weight:800;letter-spacing:.06em;font-size:15px;min-width:0;overflow-wrap:anywhere;
+    }
+    .org__events li small{display:block;font-weight:500;letter-spacing:0;color:var(--muted);font-size:13px;margin-top:4px;}
+    .org__cities{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;}
+    .org__cities span{padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:14px;font-weight:600;}
+
+    /* ---------- FAQ ---------- */
+    .faq{max-width:820px;margin-inline:auto;}
+    .faq details{border-top:1px solid var(--line);}
+    .faq details:last-child{border-bottom:1px solid var(--line);}
+    .faq summary{
+      cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:20px;align-items:center;
+      padding:22px 0;font-weight:700;font-size:18px;
+    }
+    .faq summary::-webkit-details-marker{display:none;}
+    .faq summary::after{content:"+";font-size:26px;color:var(--gold);font-weight:400;flex:none;transition:transform .2s;}
+    .faq details[open] summary::after{transform:rotate(45deg);}
+    .faq .answer{padding:0 0 22px;color:var(--muted);}
+    .faq .answer a{color:var(--gold);font-weight:700;}
+
+    /* ---------- CTA ---------- */
+    .cta{
+      border-radius:32px;padding:clamp(36px,6vw,72px);text-align:center;
+      background:
+        radial-gradient(700px 300px at 50% 0%,rgba(228,184,92,.3),transparent 65%),
+        var(--bg-3);
+      border:1px solid rgba(228,184,92,.3);
+    }
+    .cta .h2{margin-bottom:12px;}
+    .cta .lead{margin-inline:auto;}
+    .cta .btn{margin-top:30px;}
+
+    /* ---------- Футер ---------- */
+    .footer{border-top:1px solid var(--line);padding-block:44px;color:var(--muted);font-size:14px;}
+    .footer__inner{display:grid;gap:26px;}
+    @media (min-width:800px){.footer__inner{grid-template-columns:1.2fr 1fr 1fr;}}
+    .footer h4{color:var(--text);font-size:13px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px;}
+    .footer li{padding:5px 0;}
+    .footer a:hover{color:var(--gold);}
+    .footer__bottom{margin-top:34px;padding-top:22px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;font-size:13px;}
+
+    /* ---------- Плавающая кнопка ---------- */
+    .fab{
+      position:fixed;right:16px;bottom:16px;z-index:40;display:none;
+    }
+    @media (max-width:899px){.fab{display:inline-flex;}}
+
+    .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease;}
+    .reveal.is-in{opacity:1;transform:none;}
+    @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none;}}
+  </style>
+</head>
+<body>
+
+  <!-- ================= ШАПКА ================= -->
+  <header class="header">
+    <div class="container header__inner">
+      <a class="logo" href="#top" aria-label="STARTUP UNICONF">
+        <span class="logo__mark">U</span>
+        <span>STARTUP UNICONF<small>VIZART EVENTS</small></span>
+      </a>
+      <nav class="nav" id="nav">
+        <a href="#about">О конференции</a>
+        <a href="#speakers">Спикеры</a>
+        <a href="#program">Программа</a>
+        <a href="#pitch">Питч-сессия</a>
+        <a href="#tickets">Билеты</a>
+        <a href="#venue">Место</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <a class="btn btn--gold btn--sm" href="#tickets">Купить билет</a>
+      <button class="burger" id="burger" aria-label="Меню" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <!-- ================= HERO ================= -->
+    <section class="hero">
+      <div class="container hero__inner">
+        <div>
+          <div class="hero__tag"><i></i> Бали · Убуд · 15 декабря</div>
+          <h1 class="hero__title">STARTUP<br /><em>UNICONF</em><br />Бали 2.0</h1>
+          <p class="hero__sub">
+            Конференция для <b>фаундеров проектов, инвесторов и предпринимателей</b>.
+            Топовые спикеры, питч-сессия перед инвесторами, нетворкинг и афтепати.
+          </p>
+          <div class="hero__cta">
+            <a class="btn btn--gold" href="#tickets">Купить билет</a>
+            <a class="btn btn--ghost" href="#program">Смотреть программу</a>
+          </div>
+          <p class="hero__note">Цена билетов растёт по мере приближения даты. На входе — значительно дороже.</p>
+        </div>
+
+        <aside class="hero__card">
+          <h3>Ключевые факты</h3>
+          <div class="fact">
+            <div class="fact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/></svg></div>
+            <div><div class="fact__label">Дата</div><div class="fact__value">15 декабря, четверг</div></div>
+          </div>
+          <div class="fact">
+            <div class="fact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+            <div><div class="fact__label">Время</div><div class="fact__value">10:00 — 19:00</div></div>
+          </div>
+          <div class="fact">
+            <div class="fact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
+            <div><div class="fact__label">Место</div><div class="fact__value">Parq Ubud<small>Конференц-зал, Убуд, Бали</small></div></div>
+          </div>
+          <div class="fact">
+            <div class="fact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 11a4 4 0 1 0-8 0M3 21a7 7 0 0 1 14 0M17 3a4 4 0 0 1 0 8M21 21a7 7 0 0 0-4-6.3"/></svg></div>
+            <div><div class="fact__label">Формат</div><div class="fact__value">Конференция + питч + афтепати</div></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ================= ЦИФРЫ ================= -->
+    <section class="section--tight">
+      <div class="container">
+        <div class="stats reveal">
+          <div class="stat"><div class="stat__num">$100M+</div><div class="stat__label">общая капитализация проектов спикеров</div></div>
+          <div class="stat"><div class="stat__num">$25K – $1.5M</div><div class="stat__label">диапазон инвестиций, за которыми идут проекты на питч</div></div>
+          <div class="stat"><div class="stat__num">9 часов</div><div class="stat__label">выступлений, питчей и нетворкинга</div></div>
+          <div class="stat"><div class="stat__num">8 лет</div><div class="stat__label">команда VIZART Events проводит бизнес-конференции</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= О КОНФЕРЕНЦИИ ================= -->
+    <section class="section" id="about">
+      <div class="container about">
+        <div class="about__text reveal">
+          <div class="eyebrow">О конференции</div>
+          <h2 class="h2">Одна площадка для фаундеров, инвесторов и предпринимателей</h2>
+          <p><strong>STARTUP UNICONF</strong> — бизнес-конференция от команды, которая делает iNVESTFORUM, GLOBALCONF и WOMANCONF. Второй выпуск проходит на Бали, в конференц-зале Parq Ubud.</p>
+          <p>Спикеры — фаундеры и CEO международных проектов с общей капитализацией более $100 млн. Они делятся практикой: как запускать, масштабировать и привлекать деньги в проекты сегодня.</p>
+          <p>Отдельный блок — питч-сессия: фаундеры представляют свои проекты перед инвесторами с целью привлечения финансирования от $25 000 до $1 500 000.</p>
+        </div>
+        <ul class="checklist reveal">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Выступления фаундеров и CEO международных проектов</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Питч-сессия проектов в сферах Blockchain, NFT и META перед инвесторами</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Нетворкинг-чат участников и закрытая lounge-зона со спикерами, фаундерами и инвесторами</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Видеозаписи всех выступлений после конференции</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Welcome coffee, ланч со спикерами для премиум-участников и афтепати с DJ</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= ДЛЯ КОГО ================= -->
+    <section class="section section--alt" id="audience">
+      <div class="container">
+        <div class="center reveal">
+          <div class="eyebrow">Для кого</div>
+          <h2 class="h2">Кому будет полезно</h2>
+          <p class="lead">Три роли, одна цель — найти партнёров, деньги и идеи для роста.</p>
+        </div>
+        <div class="cards reveal" style="margin-top:44px">
+          <div class="card">
+            <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 5.6L20 8.4l-4.4 4 1.2 6L12 15.6 7.2 18.4l1.2-6-4.4-4 5.6-.8z"/></svg></div>
+            <h3>Фаундерам проектов</h3>
+            <p>Представить проект инвесторам на питч-сессии, получить обратную связь от практиков и найти партнёров для запуска и масштабирования.</p>
+          </div>
+          <div class="card">
+            <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></div>
+            <h3>Инвесторам</h3>
+            <p>Увидеть отобранные проекты в Blockchain, NFT и META с запросом от $25K до $1.5M и познакомиться с фаундерами напрямую в lounge-зоне.</p>
+          </div>
+          <div class="card">
+            <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></div>
+            <h3>Предпринимателям</h3>
+            <p>Услышать, как строят международные проекты, перенять инструменты роста и расширить круг деловых контактов на Бали.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= СПИКЕРЫ ================= -->
+    <section class="section" id="speakers">
+      <div class="container">
+        <div class="center reveal">
+          <div class="eyebrow">Спикеры</div>
+          <h2 class="h2">Фаундеры и CEO международных проектов</h2>
+          <p class="lead">Общая капитализация проектов спикеров — более $100 млн. Состав спикеров дополняется, следите за обновлениями.</p>
+        </div>
+        <!-- Карточки спикеров: замените инициалы, имя, роль и тему на реальные данные -->
+        <div class="speakers reveal" style="margin-top:44px">
+          <article class="speaker">
+            <div class="speaker__photo"><div class="speaker__ph">01</div></div>
+            <div class="speaker__body">
+              <div class="speaker__name">Спикер будет объявлен</div>
+              <div class="speaker__role">Фаундер международного проекта</div>
+              <span class="speaker__tag">Стартапы</span>
+            </div>
+          </article>
+          <article class="speaker">
+            <div class="speaker__photo"><div class="speaker__ph">02</div></div>
+            <div class="speaker__body">
+              <div class="speaker__name">Спикер будет объявлен</div>
+              <div class="speaker__role">CEO, инвестиции и масштабирование</div>
+              <span class="speaker__tag">Инвестиции</span>
+            </div>
+          </article>
+          <article class="speaker">
+            <div class="speaker__photo"><div class="speaker__ph">03</div></div>
+            <div class="speaker__body">
+              <div class="speaker__name">Спикер будет объявлен</div>
+              <div class="speaker__role">Фаундер Web3-проекта</div>
+              <span class="speaker__tag">Blockchain</span>
+            </div>
+          </article>
+          <article class="speaker">
+            <div class="speaker__photo"><div class="speaker__ph">04</div></div>
+            <div class="speaker__body">
+              <div class="speaker__name">Спикер будет объявлен</div>
+              <div class="speaker__role">Фаундер NFT / META-проекта</div>
+              <span class="speaker__tag">NFT · META</span>
+            </div>
+          </article>
+          <article class="speaker">
+            <div class="speaker__photo"><div class="speaker__ph">05</div></div>
+            <div class="speaker__body">
+              <div class="speaker__name">Спикер будет объявлен</div>
+              <div class="speaker__role">Инвестор, венчурные сделки</div>
+              <span class="speaker__tag">Инвестор</span>
+            </div>
+          </article>
+          <article class="speaker">
+            <div class="speaker__photo"><div class="speaker__ph">06</div></div>
+            <div class="speaker__body">
+              <div class="speaker__name">Спикер будет объявлен</div>
+              <div class="speaker__role">CEO международного проекта</div>
+              <span class="speaker__tag">Масштабирование</span>
+            </div>
+          </article>
+          <article class="speaker">
+            <div class="speaker__photo"><div class="speaker__ph">07</div></div>
+            <div class="speaker__body">
+              <div class="speaker__name">Спикер будет объявлен</div>
+              <div class="speaker__role">Фаундер, маркетинг и продажи</div>
+              <span class="speaker__tag">Рост</span>
+            </div>
+          </article>
+          <article class="speaker">
+            <div class="speaker__photo"><div class="speaker__ph">08</div></div>
+            <div class="speaker__body">
+              <div class="speaker__name">Спикер будет объявлен</div>
+              <div class="speaker__role">Предприниматель, международный бизнес</div>
+              <span class="speaker__tag">Бизнес</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= ПРОГРАММА ================= -->
+    <section class="section section--alt" id="program">
+      <div class="container">
+        <div class="center reveal">
+          <div class="eyebrow">Программа</div>
+          <h2 class="h2">15 декабря, 10:00 — 19:00</h2>
+          <p class="lead">Один день, три блока: выступления спикеров, питч-сессия и нетворкинг.</p>
+        </div>
+        <div class="timeline reveal" style="margin-top:44px">
+          <div class="slot">
+            <div class="slot__time">10:00</div>
+            <div><div class="slot__title">Регистрация и welcome coffee</div><div class="slot__desc">Отдельная стойка регистрации для премиум-участников. Знакомство, нетворкинг-чат, выдача бейджей.</div></div>
+          </div>
+          <div class="slot slot--accent">
+            <div class="slot__time">11:00</div>
+            <div><div class="slot__title">Открытие конференции</div><div class="slot__desc">Приветствие организаторов и первый блок выступлений спикеров.</div></div>
+          </div>
+          <div class="slot">
+            <div class="slot__time">11:30</div>
+            <div><div class="slot__title">Выступления спикеров. Блок 1</div><div class="slot__desc">Фаундеры и CEO международных проектов — о запуске, привлечении инвестиций и росте.</div></div>
+          </div>
+          <div class="slot">
+            <div class="slot__time">14:00</div>
+            <div><div class="slot__title">Ланч</div><div class="slot__desc">Для премиум-участников — ланч со спикерами и доступ в закрытую lounge-зону.</div></div>
+          </div>
+          <div class="slot slot--accent">
+            <div class="slot__time">15:00</div>
+            <div><div class="slot__title">Питч-сессия перед инвесторами</div><div class="slot__desc">Проекты в сферах Blockchain, NFT и META. Запрос на финансирование от $25 000 до $1 500 000.</div></div>
+          </div>
+          <div class="slot">
+            <div class="slot__time">17:00</div>
+            <div><div class="slot__title">Выступления спикеров. Блок 2</div><div class="slot__desc">Панельная дискуссия, вопросы из зала, доступ к спикерам.</div></div>
+          </div>
+          <div class="slot slot--accent">
+            <div class="slot__time">19:00</div>
+            <div><div class="slot__title">Афтепати с DJ</div><div class="slot__desc">Неформальный нетворкинг со спикерами, фаундерами и инвесторами.</div></div>
+          </div>
+        </div>
+        <div class="notice reveal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+          <span>Более точное расписание с таймингом выступлений спикеров появится на сайте за 1–2 дня до конференции.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= ПИТЧ-СЕССИЯ ================= -->
+    <section class="section" id="pitch">
+      <div class="container">
+        <div class="pitch reveal">
+          <div>
+            <div class="eyebrow">Питч-сессия</div>
+            <h2 class="h2">Представь проект инвесторам</h2>
+            <p class="lead">Фаундеры презентуют pitch deck своих проектов перед инвесторами конференции. Цель — привлечение финансирования в проект.</p>
+            <div class="pitch__tags">
+              <span>BLOCKCHAIN</span><span>NFT</span><span>META</span>
+            </div>
+            <div class="hero__cta">
+              <a class="btn btn--gold" href="https://t.me/manager_vizart" target="_blank" rel="noopener">Подать заявку на питч</a>
+            </div>
+          </div>
+          <div class="pitch__box">
+            <div class="big"><small>Размер привлечения</small>$25 000 — $1 500 000</div>
+            <ul>
+              <li>Выступление перед инвесторами конференции</li>
+              <li>Обратная связь от фаундеров и CEO с опытом привлечения</li>
+              <li>Личное знакомство с инвесторами в lounge-зоне</li>
+              <li>Видеозапись питча для дальнейшей рассылки</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= БИЛЕТЫ ================= -->
+    <section class="section section--alt" id="tickets">
+      <div class="container">
+        <div class="center reveal">
+          <div class="eyebrow">Билеты</div>
+          <h2 class="h2">Выбери формат участия</h2>
+          <p class="lead">Чем ближе к дате — тем дороже. На входе билеты значительно дороже, чем при покупке заранее.</p>
+        </div>
+        <!-- Цены: заполните реальные значения в блоках .ticket__price -->
+        <div class="tickets reveal" style="margin-top:44px">
+
+          <article class="ticket">
+            <div class="ticket__name">Standard</div>
+            <div class="ticket__seat">Места 11–20 ряд</div>
+            <div class="ticket__price"><b>по запросу</b></div>
+            <ul class="ticket__list">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Место в зале, ряды 11–20</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Все выступления спикеров и питч-сессия</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Нетворкинг-чат участников</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Видеозаписи всех выступлений</li>
+            </ul>
+            <a class="btn btn--ghost" href="https://t.me/manager_vizart" target="_blank" rel="noopener">Купить Standard</a>
+          </article>
+
+          <article class="ticket ticket--featured">
+            <div class="ticket__badge">Популярный</div>
+            <div class="ticket__name">Gold</div>
+            <div class="ticket__seat">Места 6–10 ряд</div>
+            <div class="ticket__price"><b>по запросу</b></div>
+            <ul class="ticket__list">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Место в зале, ряды 6–10</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Все выступления спикеров и питч-сессия</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Нетворкинг-чат участников</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Видеозаписи всех выступлений</li>
+              <li class="is-plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Welcome coffee</li>
+              <li class="is-plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Афтепати с DJ</li>
+            </ul>
+            <a class="btn btn--gold" href="https://t.me/manager_vizart" target="_blank" rel="noopener">Купить Gold</a>
+          </article>
+
+          <article class="ticket">
+            <div class="ticket__name">Premium</div>
+            <div class="ticket__seat">Места 1–5 ряд</div>
+            <div class="ticket__price"><b>по запросу</b></div>
+            <ul class="ticket__list">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Место в первых рядах</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Всё, что входит в Gold</li>
+              <li class="is-plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Отдельная стойка регистрации</li>
+              <li class="is-plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Ланч со спикерами и премиум-участниками</li>
+              <li class="is-plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Закрытая lounge-зона со спикерами, фаундерами и инвесторами</li>
+            </ul>
+            <a class="btn btn--ghost" href="https://t.me/manager_vizart" target="_blank" rel="noopener">Купить Premium</a>
+          </article>
+
+        </div>
+        <div class="tickets__note reveal">
+          <p>Билеты можно купить и на входе, но цена на входе будет значительно выше, чем при покупке заранее.</p>
+          <p>Если у вас только наличные и вы хотите купить билет заранее — напишите в Telegram: <a href="https://t.me/manager_vizart" target="_blank" rel="noopener">@manager_vizart</a>.</p>
+          <p>Не сможете быть лично? Доступна видеозапись конференции с хорошим качеством картинки и звука.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= МЕСТО ПРОВЕДЕНИЯ ================= -->
+    <section class="section" id="venue">
+      <div class="container">
+        <div class="center reveal">
+          <div class="eyebrow">Место проведения</div>
+          <h2 class="h2">Parq Ubud, Бали</h2>
+        </div>
+        <div class="venue reveal" style="margin-top:44px">
+          <div class="venue__info">
+            <h3>Конференц-зал Parq Ubud</h3>
+            <div class="city">Убуд · Бали · Индонезия</div>
+            <div class="venue__row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+              <div><b>Адрес</b>Jl. Sri Wedari No.24, Tegallalang, Kecamatan Ubud, Kabupaten Gianyar, Bali 80571</div>
+            </div>
+            <div class="venue__row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+              <div><b>Дата и время</b>15 декабря, четверг, с 10:00 до 19:00</div>
+            </div>
+            <div class="venue__row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H4zM8 20h8M12 16v4"/></svg>
+              <div><b>Формат</b>Офлайн-конференция в зале + видеозапись для тех, кто не сможет приехать</div>
+            </div>
+            <div class="hero__cta">
+              <a class="btn btn--ghost btn--sm" href="https://maps.google.com/?q=Parq+Ubud,+Jl.+Sri+Wedari+No.24,+Tegallalang,+Ubud,+Bali" target="_blank" rel="noopener">Открыть в картах</a>
+            </div>
+          </div>
+          <div class="venue__map">
+            <iframe
+              title="Parq Ubud на карте"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              src="https://www.google.com/maps?q=Parq%20Ubud%2C%20Jl.%20Sri%20Wedari%20No.24%2C%20Tegallalang%2C%20Ubud%2C%20Bali&output=embed"></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= ОРГАНИЗАТОР ================= -->
+    <section class="section section--alt" id="organizer">
+      <div class="container org">
+        <div class="org__text reveal">
+          <div class="eyebrow">Организатор</div>
+          <h2 class="h2">VIZART Events</h2>
+          <p>Event-компания, которая уже 8 лет организует крупные бизнес-конференции для тысяч участников. Среди проектов — WOMANCONF, iNVESTFORUM, STARTUP UNICONF, GLOBALCONF, RESTOCONF, SALES&amp;DIGITALCONF и другие.</p>
+          <p>Конференции проходят на Бали, в Дубае и на Пхукете, а география постоянно расширяется: Северный Кипр, Турция, Казахстан.</p>
+          <div class="org__cities">
+            <span>🌴 Бали</span><span>🏙️ Дубай</span><span>🏝️ Пхукет</span><span>Северный Кипр</span><span>Турция</span><span>Казахстан</span>
+          </div>
+        </div>
+        <ul class="org__events reveal">
+          <li>iNVESTFORUM<small>инвестиции и недвижимость</small></li>
+          <li>WOMANCONF<small>конференция для женщин</small></li>
+          <li>STARTUP UNICONF<small>стартапы и инвесторы</small></li>
+          <li>GLOBALCONF<small>международный бизнес</small></li>
+          <li>RESTOCONF<small>ресторанный бизнес</small></li>
+          <li>SALES&amp;DIGITALCONF<small>продажи и digital</small></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= FAQ ================= -->
+    <section class="section" id="faq">
+      <div class="container">
+        <div class="center reveal">
+          <div class="eyebrow">FAQ</div>
+          <h2 class="h2">Частые вопросы</h2>
+        </div>
+        <div class="faq reveal" style="margin-top:36px">
+          <details>
+            <summary>Можно ли купить билет на входе?</summary>
+            <div class="answer">Да, но цена на входе будет значительно выше, чем при покупке заранее на сайте.</div>
+          </details>
+          <details>
+            <summary>У меня только наличные. Как купить заранее?</summary>
+            <div class="answer">Напишите менеджеру в Telegram — <a href="https://t.me/manager_vizart" target="_blank" rel="noopener">@manager_vizart</a> — и договоритесь об оплате.</div>
+          </details>
+          <details>
+            <summary>Когда появится точное расписание?</summary>
+            <div class="answer">Расписание с таймингом выступлений спикеров публикуется на сайте за 1–2 дня до конференции.</div>
+          </details>
+          <details>
+            <summary>Чем Gold и Premium отличаются от Standard?</summary>
+            <div class="answer">Gold — места ближе к сцене (ряды 6–10), welcome coffee и афтепати с DJ. Premium — первые ряды, отдельная стойка регистрации, ланч со спикерами и доступ в закрытую lounge-зону со спикерами, фаундерами и инвесторами.</div>
+          </details>
+          <details>
+            <summary>Как попасть на питч-сессию с проектом?</summary>
+            <div class="answer">Отправьте pitch deck менеджеру в Telegram. Отбираются проекты в сферах Blockchain, NFT и META с запросом на финансирование от $25 000 до $1 500 000.</div>
+          </details>
+          <details>
+            <summary>Будет ли видеозапись?</summary>
+            <div class="answer">Да. Видеозаписи всех выступлений входят в билет, а для тех, кто не сможет приехать, доступна отдельная покупка записи конференции.</div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CTA ================= -->
+    <section class="section--tight">
+      <div class="container">
+        <div class="cta reveal">
+          <div class="eyebrow">15 декабря · Parq Ubud · Бали</div>
+          <h2 class="h2">Забронируй место на STARTUP UNICONF Бали 2.0</h2>
+          <p class="lead">Цена растёт по мере приближения даты. Успей купить билет по текущей стоимости.</p>
+          <a class="btn btn--gold" href="#tickets">Купить билет</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= ФУТЕР ================= -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div>
+        <a class="logo" href="#top"><span class="logo__mark">U</span><span>STARTUP UNICONF<small>Бали 2.0</small></span></a>
+        <p style="margin-top:16px;max-width:360px">Конференция для фаундеров проектов, инвесторов и предпринимателей. Организатор — VIZART Events.</p>
+      </div>
+      <div>
+        <h4>Навигация</h4>
+        <ul>
+          <li><a href="#about">О конференции</a></li>
+          <li><a href="#speakers">Спикеры</a></li>
+          <li><a href="#program">Программа</a></li>
+          <li><a href="#tickets">Билеты</a></li>
+          <li><a href="#venue">Место проведения</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Контакты</h4>
+        <ul>
+          <li><a href="https://t.me/manager_vizart" target="_blank" rel="noopener">Telegram: @manager_vizart</a></li>
+          <li><a href="https://www.instagram.com/vizart_events/" target="_blank" rel="noopener">Instagram: @vizart_events</a></li>
+          <li><a href="https://www.youtube.com/channel/UCsi9AL3Vd9SuioXCQu2NRHw" target="_blank" rel="noopener">YouTube: VIZART Events</a></li>
+          <li><a href="https://vizart.events/" target="_blank" rel="noopener">vizart.events</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer__bottom">
+      <span>© VIZART Events. Все права защищены.</span>
+      <span>Parq Ubud · Jl. Sri Wedari No.24, Ubud, Bali</span>
+    </div>
+  </footer>
+
+  <a class="btn btn--gold fab" href="#tickets">Купить билет</a>
+
+  <script>
+    // Мобильное меню
+    (function () {
+      var burger = document.getElementById('burger');
+      var nav = document.getElementById('nav');
+      burger.addEventListener('click', function () {
+        var open = nav.classList.toggle('is-open');
+        burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      nav.addEventListener('click', function (e) {
+        if (e.target.tagName === 'A') {
+          nav.classList.remove('is-open');
+          burger.setAttribute('aria-expanded', 'false');
+        }
+      });
+    })();
+
+    // Плавное появление блоков
+    (function () {
+      var items = document.querySelectorAll('.reveal');
+      if (!('IntersectionObserver' in window)) {
+        items.forEach(function (el) { el.classList.add('is-in'); });
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); }
+        });
+      }, { rootMargin: '0px 0px -10% 0px', threshold: 0.08 });
+      items.forEach(function (el) { io.observe(el); });
+    })();
+  </script>
+</body>
+</html>
