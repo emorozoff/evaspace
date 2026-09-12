@@ -1684,6 +1684,103 @@
   .btn.danger{background:var(--rust); color:#fff;}
   .btn.danger:hover{background:#9C4A22;}
   .est-pay.armed, .est-done.armed{box-shadow:0 0 0 2px var(--gold-ink); border-style:solid; position:relative; z-index:1;}
+  /* ---------------- Cash Flow до запуска ---------------- */
+  section.block.cf6 > h2{font-size:26px; padding-left:16px; border-left-width:4px; margin-bottom:10px;}
+  .cf6-controls{display:flex; flex-direction:column; gap:12px; margin:0 0 18px;}
+  .cf6-ctl{
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px 14px;
+  }
+  .cf6-ctl-l{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); font-weight:600; min-width:150px;}
+  .cf6-ctl .toggle-row{gap:6px;}
+  .cf6-ctl .toggle-row button{padding:7px 13px; font-size:12.5px;}
+  .cf6-ctl-note{flex:1 1 260px; font-size:11.5px; color:var(--ink-faint); line-height:1.45;}
+  .cf6-rwcmp{display:flex; gap:8px; flex-wrap:wrap; flex-basis:100%; padding-top:4px; border-top:1px dashed var(--line); margin-top:2px;}
+  .cf6-rw{
+    display:inline-flex; flex-direction:column; gap:1px; padding:6px 10px; border-radius:9px;
+    border:1px solid var(--line); background:var(--paper); font-size:11.5px; color:var(--ink-soft); min-width:150px;
+  }
+  .cf6-rw b{color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:12.5px;}
+  .cf6-rw span{font-size:10.5px; color:var(--ink-faint);}
+  .cf6-rw.cur{border-color:var(--gold-ink); background:var(--gold-bg); color:var(--gold-ink);}
+  .cf6-rw.cur b{color:var(--gold-ink);}
+
+  .cf6-card{padding:0; overflow:hidden;}
+  .cf6-card .cf6-table{margin:0;}
+  table.cf6-table{width:100%; border-collapse:collapse; font-size:12.5px; table-layout:fixed;}
+  table.cf6-table th, table.cf6-table td{border:1px solid #D8D2C2; padding:7px 9px; text-align:right; vertical-align:middle;}
+  table.cf6-table th{
+    font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:10px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--ink-faint); background:var(--paper);
+  }
+  table.cf6-table th:first-child, table.cf6-table td:first-child{text-align:left;}
+  table.cf6-table th:first-child{width:27%;}
+  table.cf6-table th.cf6-tot{width:12%;}
+  table.cf6-table td{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink); background:var(--panel);}
+  table.cf6-table td:first-child{font-family:'Inter',sans-serif; font-size:12.5px; white-space:normal;}
+  table.cf6-table td.cf6-tot{font-weight:600; background:#F4F1EA;}
+  table.cf6-table td.pos{color:var(--green);} table.cf6-table td.neg{color:var(--wine);}
+  .cf6-hint{display:block; font-size:10.5px; color:var(--ink-faint); font-weight:400; line-height:1.35; margin-top:1px; font-family:'Inter',sans-serif;}
+  /* фазы над месяцами */
+  tr.cf6-phase th{font-family:'Inter',sans-serif; text-transform:none; letter-spacing:0; font-size:11.5px; font-weight:600; text-align:center; padding:6px 8px;}
+  tr.cf6-phase th.ph-prep{background:#ECE8DD; color:var(--ink-soft);}
+  tr.cf6-phase th.ph-launch{background:var(--gold-bg); color:var(--gold-ink);}
+  tr.cf6-phase th.ph-adj{background:var(--navy-bg); color:var(--navy);}
+  table.cf6-table th.cf6-ny, table.cf6-table td.cf6-ny{border-right:2px solid var(--gold-ink);}
+  /* разделы */
+  tr.cf6-sec td{
+    background:#ECE8DD; color:var(--ink-soft); font-family:'Inter',sans-serif; font-weight:700; font-size:10.5px;
+    text-transform:uppercase; letter-spacing:.07em; padding:8px 9px;
+  }
+  .cf6-sec-hint{font-weight:400; text-transform:none; letter-spacing:0; font-size:11px; margin-left:10px; color:var(--ink-faint);}
+  tr.cf6-sec.in td{background:#D6E7DA; color:#2F5438;}
+  tr.cf6-sec.in .cf6-sec-hint{color:#4E7A58;}
+  tr.cf6-sec.out td{background:#EAD3DB; color:#6B2F48;}
+  tr.cf6-sec.out .cf6-sec-hint{color:#8A5468;}
+  tr.cf6-sec.flow td{background:#E3E0D5; color:var(--ink);}
+  /* приходы — зелёные, расходы — мягкий бордовый; строки чередуются */
+  tr.cf6-in td{background:#EAF3EC;}
+  tr.cf6-in.alt td{background:#F3F8F4;}
+  tr.cf6-in td:first-child{color:#2F5438;}
+  tr.cf6-total.in td{background:#D6E7DA; color:#2F5438; font-weight:700;}
+  tr.cf6-out td{background:#F6E8EC;}
+  tr.cf6-out.alt td{background:#FBF2F5;}
+  tr.cf6-out td:first-child{color:#6B2F48;}
+  tr.cf6-total.out td{background:#EAD3DB; color:#6B2F48; font-weight:700;}
+  tr.cf6-total.in td.cf6-tot{background:#CBDFD0;}
+  tr.cf6-total.out td.cf6-tot{background:#E2C7D0;}
+  tr.cf6-sub td{font-weight:600;}
+  tr.cf6-key td{font-weight:700; background:#FBF7EC;}
+  tr.cf6-conv td{color:var(--ink-soft); font-size:11.5px; background:#FAF8F3;}
+  tr.cf6-flow td{font-weight:700; font-size:12.5px; background:var(--panel);}
+  tr.cf6-flow.cum td{background:#F4F1EA;}
+  tr.cf6-flow td:first-child{color:var(--ink);}
+  /* параметры */
+  .cf6-params{max-width:none; margin:-4px 0 18px;}
+  .cf6-params .how-body{padding-top:10px;}
+  .cf6-pgroup{margin-bottom:14px;}
+  .cf6-pgroup h4{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--gold-ink); margin:0 0 8px;}
+  .cf6-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:10px 14px;}
+  .cf6-grid .field{min-width:0;}
+  .cf6-grid .field label{font-size:11.5px; margin-bottom:4px;}
+  .cf6-grid input, .cf6-grid select{padding:6px 9px; font-size:13px;}
+  .cf6-unit{display:flex; align-items:center; gap:6px;}
+  .cf6-unit input{flex:1; min-width:0;}
+  .cf6-unit span{font-size:12px; color:var(--ink-faint);}
+  .cf6-fhint{display:block; font-size:10.5px; color:var(--ink-faint); margin-top:3px; line-height:1.35;}
+  /* сравнение сценариев */
+  .cf6-h3{font-size:16px; margin:26px 0 10px; padding-left:12px; border-left:3px solid var(--gold);}
+  .cf6-h3 span{font-weight:400; font-size:12.5px; color:var(--ink-faint); margin-left:8px;}
+  table.cf6-cmp td{vertical-align:top;}
+  table.cf6-cmp tr.cur td{background:var(--gold-bg);}
+  table.cf6-cmp td .cf6-hint{max-width:34ch;}
+  @media (max-width:900px){
+    section.block.cf6 > h2{font-size:21px;}
+    .cf6-card{overflow-x:auto;}
+    table.cf6-table{table-layout:auto; min-width:820px;}
+    table.cf6-table th:first-child{min-width:220px;}
+    .cf6-ctl-l{min-width:0; flex-basis:100%;}
+  }
   /* источники трафика */
   .src-table td{vertical-align:middle;}
   .src-share{min-width:170px;}
@@ -6541,6 +6638,420 @@ function stratGuideHtml(){
     </details>`;
 }
 
+/* ============================================================
+   CASH FLOW ДО ЗАПУСКА — ШЕСТЬ МЕСЯЦЕВ
+   Отдельная модель первых шести месяцев, до февраля. Один продукт —
+   месячная программа за 2 900 ₽. Два источника трафика — эксперты
+   и рекомендации пользователей: каждый эксперт и каждый платящий
+   дают охват, охват даёт регистрации, регистрации — оплаты. Три
+   механики вознаграждения за трафик переключаются, модель
+   пересчитывается. Расходы приходят из сметы по направлениям
+   (ФОТ, регулярные, единоразовые), сверху — эквайринг и налог
+   с оборота. Сценарии различаются конверсиями и тем, что делаем
+   с января: сворачиваемся до одного менеджера, продолжаем или
+   расширяемся.
+   ============================================================ */
+const CF6_H = 6;              /* Сент — Февр */
+const CF6_ADJUST_FROM = 5;    /* с января — корректировка по сценарию */
+const CF6_NY = 4;             /* декабрь: «дожить до Нового года» */
+const CF6_DEFAULT = {
+  scenario:'base', reward:'first30',
+  p:{ price:2900, salesStart:2, reachPerExpert:700, reachPerUser:4,
+      crExpReg:0.02, crRefReg:0.10, crRegPay:0.10, churn:0.12,
+      acq:0.029, tax:null,
+      keepSalary:120000, baseHires:1, baseSalary:100000, optHires:2, optSalary:100000 },
+};
+const CF6_SCENARIOS = [
+  {id:'pess', name:'Пессимистичный', conv:0.8, churnAdd:0.03,
+   adj:'поддержание: один менеджер, инфраструктура и бухгалтерия',
+   note:'конверсии −20%, отток +3 п.п.; с января сворачиваемся до поддержания — если денег не будет'},
+  {id:'base', name:'Базовый', conv:1.0, churnAdd:0,
+   adj:'продолжаем, +1 человек',
+   note:'конверсии и отток как в параметрах; с января продолжаем по смете и добавляем одного человека'},
+  {id:'opt',  name:'Оптимистичный', conv:1.2, churnAdd:-0.03,
+   adj:'расширяемся, +2 человека',
+   note:'конверсии +20%, отток −3 п.п.; с января продолжаем по смете и расширяем команду на двоих'},
+];
+const CF6_REWARDS = [
+  {id:'first30',   name:'30% за первый месяц', note:'партнёр получает 30% с первой оплаты приведённого — и всё'},
+  {id:'monthly15', name:'15% каждый месяц',    note:'партнёр получает 15% с каждой оплаты приведённого, пока тот платит'},
+  {id:'three20',   name:'20% первые три месяца', note:'наш вариант: 20% с первых трёх оплат — партнёру выгодно, чтобы человек остался, а наша выплата ограничена'},
+];
+const CF6_KEEP_CATS = new Set(['infra','legal','support']);   /* что остаётся на поддержании */
+
+async function getCf6(){
+  if(!('eva-club-cf6' in _cache)){
+    const stored = await loadShared('eva-club-cf6', null) || {};
+    const o = Object.assign({}, CF6_DEFAULT, stored);
+    o.p = Object.assign({}, CF6_DEFAULT.p, stored.p||{});
+    _cache['eva-club-cf6'] = o;
+  }
+  return _cache['eva-club-cf6'];
+}
+function saveCf6(o){ setCacheLocal('eva-club-cf6', o); persistCache('eva-club-cf6'); }
+
+/* экспертов в сети по месяцам — из плана в ганте; пропуск — последнее известное */
+function cf6Experts(planRows){
+  let last = 0;
+  return Array.from({length:CF6_H},(_,i)=>{
+    const v = planAt(planRows, i+1, 'experts');
+    if(v!==null){ last = v; return v; }
+    if(!last && DEFAULT_STRAT_PLAN[i+1]) last = DEFAULT_STRAT_PLAN[i+1].experts;
+    return last;
+  });
+}
+/* расходы по направлениям из сметы + корректировка с января по сценарию */
+function cf6Expenses(groups, scenarioId, p, insRate){
+  const months = Array.from({length:CF6_H},(_,i)=>i+1);
+  const pick = (gid, filter)=>months.map(m=>{
+    const g = groups.find(x=>x.id===gid);
+    return g ? g.rows.filter(filter||(()=>true)).reduce((a,r)=>a+(r.arr[m-1]||0),0) : 0;
+  });
+  const fot = pick('people'), reg = pick('monthly'), once = pick('once');
+  const regKeep = pick('monthly', r=>CF6_KEEP_CATS.has(r.cat));
+  for(let m=CF6_ADJUST_FROM; m<=CF6_H; m++){
+    const i = m-1;
+    if(scenarioId==='pess'){ fot[i] = p.keepSalary*(1+insRate); reg[i] = regKeep[i]; once[i] = 0; }
+    else if(scenarioId==='base'){ fot[i] += p.baseHires*p.baseSalary*(1+insRate); }
+    else { fot[i] += p.optHires*p.optSalary*(1+insRate); }
+  }
+  return {fot, reg, once};
+}
+/* сколько в среднем отдаём партнёру за одного платящего за всё время */
+function cf6RewardPerUser(rewardId, p, churn){
+  if(rewardId==='first30') return 0.30*p.price;
+  if(rewardId==='monthly15') return 0.15*p.price*(churn>0 ? 1/churn : CF6_H);
+  return 0.20*p.price*(1+(1-churn)+Math.pow(1-churn,2));
+}
+function cf6Compute(cfg, ctx){
+  const p  = cfg.p;
+  const sc = CF6_SCENARIOS.find(s=>s.id===cfg.scenario) || CF6_SCENARIOS[1];
+  const conv  = sc.conv;
+  const churn = Math.max(0, Math.min(0.5, p.churn + sc.churnAdd));
+  const taxRate = (p.tax===null || p.tax===undefined) ? ctx.taxAuto : p.tax;
+  const exp = cf6Expenses(ctx.groups, sc.id, p, ctx.insRate);
+  const o = {scenario:sc, reward: CF6_REWARDS.find(r=>r.id===cfg.reward)||CF6_REWARDS[0], churn, conv, taxRate, months:[]};
+  let active = 0, backlog = 0, cum = 0;
+  const newHist = [];
+  for(let m=1; m<=CF6_H; m++){
+    const E  = ctx.experts[m-1] || 0;
+    const U0 = active;
+    const reachExp = E*p.reachPerExpert, reachRef = U0*p.reachPerUser;
+    const regExp = reachExp*p.crExpReg*conv, regRef = reachRef*p.crRefReg*conv;
+    const regs = regExp + regRef;
+    let fromRegs = 0, fromBacklog = 0;
+    if(m < p.salesStart){ backlog += regs; }
+    else {
+      fromRegs = regs*p.crRegPay*conv;
+      if(m===p.salesStart){ fromBacklog = backlog*p.crRegPay*conv; backlog = 0; }
+    }
+    const newPay  = fromRegs + fromBacklog;
+    const churned = U0*churn;
+    active = U0 - churned + newPay;
+    newHist.push(newPay);
+    const renewals = Math.max(0, active - newPay);
+    const cashNew = newPay*p.price, cashRen = renewals*p.price, cashIn = cashNew + cashRen;
+    let reward = 0;
+    if(o.reward.id==='first30')        reward = 0.30*p.price*newPay;
+    else if(o.reward.id==='monthly15') reward = 0.15*p.price*active;
+    else { const k = newHist.length;
+      reward = 0.20*p.price*((newHist[k-1]||0) + (newHist[k-2]||0)*(1-churn) + (newHist[k-3]||0)*Math.pow(1-churn,2)); }
+    const fot = exp.fot[m-1], reg = exp.reg[m-1], once = exp.once[m-1];
+    const acq = cashIn*p.acq;
+    /* УСН «доходы»: 6% с оборота минус страховые взносы за людей, но не больше
+       чем наполовину — со штатом взносы всегда перекрывают половину, выходит 3%.
+       УСН «доходы минус расходы» до запуска убыточна — платится минимальный 1%.
+       Ставка, заданная вручную, считается как есть. */
+    const contrib = fot - fot/(1+ctx.insRate);
+    const tax = (p.tax===null || p.tax===undefined) && ctx.taxMode==='usn6'
+      ? Math.max(0.06*cashIn - contrib, 0.03*cashIn)
+      : cashIn*taxRate;
+    const outflow = fot + reg + once + reward + acq + tax;
+    const flow = cashIn - outflow; cum += flow;
+    o.months.push({m, E, U0, reachExp, reachRef, reach:reachExp+reachRef, regExp, regRef, regs,
+      fromRegs, fromBacklog, newPay, churned, active, renewals,
+      cashNew, cashRen, cashIn, fot, reg, once, reward, acq, tax, outflow, flow, cum,
+      crReach: (reachExp+reachRef) ? regs/(reachExp+reachRef) : null,
+      crPay: regs ? fromRegs/regs : null});
+  }
+  const cums = o.months.map(x=>x.cum);
+  const minCum = Math.min(...cums);
+  o.need      = Math.max(0, -minCum);
+  o.needMonth = o.months[cums.indexOf(minCum)].m;
+  o.needNY    = Math.max(0, -o.months[CF6_NY-1].cum);
+  o.cashTotal = o.months.reduce((a,x)=>a+x.cashIn, 0);
+  o.cashNY    = o.months.slice(0, CF6_NY).reduce((a,x)=>a+x.cashIn, 0);
+  o.outTotal  = o.months.reduce((a,x)=>a+x.outflow, 0);
+  o.outNY     = o.months.slice(0, CF6_NY).reduce((a,x)=>a+x.outflow, 0);
+  o.rewardTotal = o.months.reduce((a,x)=>a+x.reward, 0);
+  o.newTotal  = o.months.reduce((a,x)=>a+x.newPay, 0);
+  o.regsTotal = o.months.reduce((a,x)=>a+x.regs, 0);
+  o.reachTotal= o.months.reduce((a,x)=>a+x.reach, 0);
+  o.activeEnd = o.months[CF6_H-1].active;
+  const fp = o.months.find(x=>x.m>=p.salesStart && x.flow>0);
+  o.firstPlus = fp ? fp.m : null;
+  o.rewardPerUser = cf6RewardPerUser(o.reward.id, p, churn);
+  return o;
+}
+async function cf6Context(){
+  const [planRows, groups, tax] = await Promise.all([getStratPlan(), estimateRows(CF6_H), getTaxCfg()]);
+  return {
+    experts: cf6Experts(planRows), groups,
+    insRate: tax.it ? 0.076 : 0.30,
+    taxMode: tax.base==='usn15' ? 'usn15' : 'usn6',
+    taxAuto: tax.base==='usn15' ? 0.01 : 0.03,
+    taxName: tax.base==='usn15' ? 'минимальный налог 1% с доходов — до запуска мы в убытке' : 'УСН «доходы» 6% минус страховые взносы, но не меньше 3%',
+  };
+}
+
+let _cf6ParamsOpen = false;
+async function renderCf6(container){
+  if(!container || !document.body.contains(container)) return;
+  const cfg = await getCf6();
+  const ctx = await cf6Context();
+  const R   = cf6Compute(cfg, ctx);
+  const p   = cfg.p;
+  const months = R.months;
+  const nyIdx = CF6_NY-1;
+  const cls = (i, extra)=>`${extra||''} ${i===nyIdx?'cf6-ny':''}`;
+
+  /* --- строка таблицы: подпись, значения по месяцам, итог --- */
+  const row = (label, vals, opt)=>{
+    opt = opt||{};
+    const fmt = opt.fmt || cfMoney;
+    let total = '';
+    if(opt.total==='sum')  total = fmt(vals.reduce((a,b)=>a+(b||0),0));
+    else if(opt.total==='last') total = fmt(vals[vals.length-1]);
+    else if(opt.total==='avg')  { const v = vals.filter(x=>x!==null&&x!==undefined); total = v.length ? fmt(v.reduce((a,b)=>a+b,0)/v.length) : '—'; }
+    else if(opt.total && opt.total!=='none') total = opt.total;
+    const cell = (v,i)=>{
+      if(v===null || v===undefined || (opt.zeroDash && !v)) return `<td class="${cls(i)}"><span class="soft">—</span></td>`;
+      const sign = opt.signed ? (v>0?'pos':(v<0?'neg':'')) : '';
+      return `<td class="${cls(i, sign)}">${opt.signed && v>0 ? '+' : ''}${fmt(v)}</td>`;
+    };
+    return `<tr class="${opt.cls||''}">
+      <td>${label}${opt.hint?`<span class="cf6-hint">${opt.hint}</span>`:''}</td>
+      ${vals.map(cell).join('')}
+      <td class="cf6-tot">${total}</td>
+    </tr>`;
+  };
+  const sec = (label, kind, hint)=>`<tr class="cf6-sec ${kind||''}"><td colspan="${CF6_H+2}">${label}${hint?`<span class="cf6-sec-hint">${hint}</span>`:''}</td></tr>`;
+  const v = key=>months.map(x=>x[key]);
+  const pct = x=>x===null||x===undefined ? '—' : cfPct(x);
+  const n0  = x=>num(x);
+
+  const salesLabel = finMonthShort(p.salesStart);
+  const funnelRows = [
+    sec('Воронка', '', 'эксперты и пользователи дают охват → регистрации → оплаты'),
+    row('Экспертов в сети', v('E'), {fmt:n0, total:'last', hint:'из плана в ганте: строка «Экспертов в сети»'}),
+    row('Охват от экспертов', v('reachExp'), {fmt:n0, total:'sum', hint:`${num(p.reachPerExpert)} охватов на эксперта в месяц`}),
+    row('Платящих на начало месяца', v('U0'), {fmt:n0, total:'none', zeroDash:true}),
+    row('Охват по рекомендациям', v('reachRef'), {fmt:n0, total:'sum', zeroDash:true, hint:`${num(p.reachPerUser)} охвата на платящего в месяц`}),
+    row('Охват всего', v('reach'), {fmt:n0, total:'sum', cls:'cf6-sub'}),
+    row('Регистрации', v('regs'), {fmt:n0, total:'sum', hint:`эксперты ${cfPct(p.crExpReg*R.conv)}, рекомендации ${cfPct(p.crRefReg*R.conv)} от охвата`}),
+    row('Новых оплат', v('newPay'), {fmt:n0, total:'sum', zeroDash:true, cls:'cf6-sub', hint:`продажи с ${salesLabel}; ${cfPct(p.crRegPay*R.conv)} от регистраций`}),
+    row('· из листа ожидания', v('fromBacklog'), {fmt:n0, total:'sum', zeroDash:true, hint:'регистрации до старта продаж конвертируются в первый месяц'}),
+    row('Ушли (отток)', v('churned'), {fmt:n0, total:'sum', zeroDash:true, hint:`${cfPct(R.churn)} платящих в месяц`}),
+    row('Платящих на конец месяца', v('active'), {fmt:n0, total:'last', zeroDash:true, cls:'cf6-key'}),
+    row('Конверсия охват → регистрация', v('crReach'), {fmt:pct, total:'avg', cls:'cf6-conv'}),
+    row('Конверсия регистрация → оплата', v('crPay').map((x,i)=>months[i].m<p.salesStart?null:x), {fmt:pct, total:'avg', cls:'cf6-conv'}),
+  ].join('');
+
+  const inRows = [
+    sec('Приходы', 'in', `месячная программа ${money(p.price)}`),
+    row('Оплаты новых', v('cashNew'), {total:'sum', zeroDash:true, cls:'cf6-in'}),
+    row('Продления', v('cashRen'), {total:'sum', zeroDash:true, cls:'cf6-in alt', hint:'платящие прошлых месяцев, оставшиеся после оттока'}),
+    row('Итого приход', v('cashIn'), {total:'sum', zeroDash:true, cls:'cf6-total in'}),
+  ].join('');
+
+  const outRows = [
+    sec('Расходы', 'out', 'по направлениям из сметы + то, что считается от оборота'),
+    row('ФОТ со взносами', v('fot'), {total:'sum', cls:'cf6-out', hint:'из сметы; с января — по сценарию'}),
+    row('Регулярные платежи', v('reg'), {total:'sum', cls:'cf6-out alt', zeroDash:true}),
+    row('Единоразовые', v('once'), {total:'sum', cls:'cf6-out', zeroDash:true}),
+    row(`Вознаграждение за трафик`, v('reward'), {total:'sum', cls:'cf6-out alt', zeroDash:true, hint:`${R.reward.name} · ≈ ${money(R.rewardPerUser)} на платящего за всё время`}),
+    row(`Эквайринг ${cfPct(p.acq)}`, v('acq'), {total:'sum', cls:'cf6-out', zeroDash:true}),
+    row(`Налог с оборота${p.tax===null ? '' : ' '+cfPct(R.taxRate)}`, v('tax'), {total:'sum', cls:'cf6-out alt', zeroDash:true, hint:(p.tax===null ? ctx.taxName : 'ставка задана вручную')}),
+    row('Итого расход', v('outflow'), {total:'sum', cls:'cf6-total out'}),
+  ].join('');
+
+  const flowRows = [
+    sec('Итог', 'flow'),
+    row('Поток за месяц', v('flow'), {total:'sum', signed:true, cls:'cf6-flow'}),
+    row('Накопленный поток', v('cum'), {total:'last', signed:true, cls:'cf6-flow cum', hint:'сколько денег нужно иметь на счету к этому месяцу'}),
+  ].join('');
+
+  const phaseAdj = `Корректировка · ${R.scenario.adj}`;
+  const headPhase = `<tr class="cf6-phase">
+      <th></th>
+      <th class="ph-prep">Подготовка</th>
+      <th colspan="3" class="ph-launch">Съёмки и тест-версия — первые деньги</th>
+      <th colspan="2" class="ph-adj">${phaseAdj}</th>
+      <th></th></tr>`;
+  const headMonths = `<tr>
+      <th>Показатель</th>
+      ${months.map((x,i)=>`<th class="${cls(i)}">${finMonthShort(x.m)}${i===nyIdx?'<div class="est-th-sub">Новый год</div>':''}</th>`).join('')}
+      <th class="cf6-tot">Итого</th></tr>`;
+
+  /* --- сводка --- */
+  const coverNY = R.outNY ? R.cashNY/R.outNY : 0;
+  const cover   = R.outTotal ? R.cashTotal/R.outTotal : 0;
+  const cards = metricCards([
+    {l:'До Нового года нужно из инвестиций', v:money(R.needNY), cls:'neg',
+     sub:`расходы до ${finMonthLabel(CF6_NY)} ${money(R.outNY)} · продажи закроют ${cfPct(coverNY)}`},
+    {l:'Всего за 6 месяцев', v:money(R.need), cls:'neg',
+     sub:`дно кассы в ${finMonthLabel(R.needMonth)} · ${R.scenario.name.toLowerCase()} сценарий`},
+    {l:'Придёт с продаж за 6 месяцев', v:money(R.cashTotal), cls:'pos',
+     sub:`${num(R.newTotal)} новых оплат · покрывает ${cfPct(cover)} расходов`},
+    {l:'Платящих к февралю', v:num(R.activeEnd)+' чел.', cls:R.firstPlus?'pos':'',
+     sub: R.firstPlus ? `первый плюсовой месяц — ${finMonthLabel(R.firstPlus)}` : 'плюсового месяца до февраля нет'},
+  ]);
+
+  const verdictCls = R.firstPlus && R.firstPlus<=CF6_NY ? 'good' : (coverNY>=0.3 ? 'neutral' : 'warn');
+  const verdict = `<div class="verdict ${verdictCls}">
+    Чтобы дожить до Нового года, нужно <b>${money(R.needNY)}</b> вложений: до декабря включительно тратим ${money(R.outNY)},
+    продажи приносят ${money(R.cashNY)}. ${R.firstPlus
+      ? `Первый месяц, когда приход перекрывает расход, — <b>${finMonthLabel(R.firstPlus)}</b>.`
+      : 'До февраля ни один месяц не выходит в плюс — либо больше экспертов и охвата, либо меньше расходов.'}
+    В ${R.scenario.name.toLowerCase()} сценарии с января — ${R.scenario.adj}.
+  </div>`;
+
+  /* --- три сценария рядом при текущей механике вознаграждения --- */
+  const cmp = CF6_SCENARIOS.map(s=>{
+    const r = cf6Compute(Object.assign({}, cfg, {scenario:s.id}), ctx);
+    return `<tr class="${s.id===cfg.scenario?'cur':''}">
+      <td>${s.name}${s.id===cfg.scenario?'<span class="var-now">сейчас</span>':''}<span class="cf6-hint">${s.note}</span></td>
+      <td class="num neg">${money(r.needNY)}</td>
+      <td class="num neg">${money(r.need)}<span class="cf6-hint">дно в ${finMonthLabel(r.needMonth)}</span></td>
+      <td class="num pos">${money(r.cashTotal)}</td>
+      <td class="num">${num(r.activeEnd)}</td>
+      <td class="num">${r.firstPlus ? finMonthLabel(r.firstPlus) : '<span class="soft">нет</span>'}</td>
+    </tr>`;
+  }).join('');
+  /* три механики рядом: сколько отдадим за 6 месяцев и во что обходится один
+     платящий за всё время — за полгода «15% каждый месяц» кажется дешевле,
+     а на длинной дистанции это самый дорогой вариант */
+  const rewardCmp = CF6_REWARDS.map(rw=>{
+    const r = cf6Compute(Object.assign({}, cfg, {reward:rw.id}), ctx);
+    return `<span class="cf6-rw ${rw.id===cfg.reward?'cur':''}">${rw.name}: <b>${cfMoney(r.rewardTotal)}</b> за 6 мес.
+      <span>≈ ${money(r.rewardPerUser)} на платящего за всё время</span></span>`;
+  }).join('');
+
+  /* --- параметры --- */
+  const pctIn = (id, val, label, hint)=>`<div class="field"><label>${label}</label>
+      <div class="cf6-unit"><input type="number" step="0.1" min="0" max="100" id="${id}" data-cf6="${id}" data-kind="pct" value="${(val*100).toFixed(1).replace(/\.0$/,'')}"><span>%</span></div>
+      ${hint?`<span class="cf6-fhint">${hint}</span>`:''}</div>`;
+  const numIn = (id, val, label, hint, step)=>`<div class="field"><label>${label}</label>
+      <input type="number" step="${step||1}" min="0" id="${id}" data-cf6="${id}" data-kind="num" value="${val}">
+      ${hint?`<span class="cf6-fhint">${hint}</span>`:''}</div>`;
+  const moneyIn = (id, val, label, hint)=>`<div class="field"><label>${label}</label>
+      <div class="cf6-unit"><input type="text" class="money-fmt-input" id="${id}" data-cf6="${id}" data-kind="money" value="${fmtThousands(val)}"><span>₽</span></div>
+      ${hint?`<span class="cf6-fhint">${hint}</span>`:''}</div>`;
+  const paramsSummary = `${money(p.price)} · продажи с ${salesLabel} · ${num(p.reachPerExpert)} охватов на эксперта · ${cfPct(p.crExpReg)} → ${cfPct(p.crRegPay)} · отток ${cfPct(p.churn)}`;
+  const params = `
+    <details class="how cf6-params" id="cf6Params" ${_cf6ParamsOpen?'open':''}>
+      <summary>Параметры модели — ${paramsSummary}</summary>
+      <div class="how-body">
+        <div class="cf6-pgroup"><h4>Воронка</h4>
+          <div class="cf6-grid">
+            ${moneyIn('price', p.price, 'Цена программы в месяц')}
+            <div class="field"><label>Первые оплаты</label>
+              <select id="salesStart" data-cf6="salesStart" data-kind="num">${months.map(x=>`<option value="${x.m}" ${x.m===p.salesStart?'selected':''}>${finMonthLabel(x.m)}</option>`).join('')}</select>
+              <span class="cf6-fhint">до этого месяца регистрации копятся в лист ожидания</span></div>
+            ${numIn('reachPerExpert', p.reachPerExpert, 'Охват на эксперта, в месяц', 'посты и сторис эксперта о клубе: 500–1 500 реалистично', 50)}
+            ${numIn('reachPerUser', p.reachPerUser, 'Охват на платящего, в месяц', 'скольким людям пользователь показывает клуб', 1)}
+            ${pctIn('crExpReg', p.crExpReg, 'Охват от экспертов → регистрация', 'тёплая, но чужая аудитория: 1–3%')}
+            ${pctIn('crRefReg', p.crRefReg, 'Охват по рекомендации → регистрация', 'личная рекомендация: 5–15%')}
+            ${pctIn('crRegPay', p.crRegPay, 'Регистрация → оплата', 'тест-версия за 2 900 ₽: 8–15%')}
+            ${pctIn('churn', p.churn, 'Отток платящих в месяц', 'сценарий добавляет ±3 п.п.')}
+          </div></div>
+        <div class="cf6-pgroup"><h4>От оборота</h4>
+          <div class="cf6-grid">
+            ${pctIn('acq', p.acq, 'Эквайринг', 'комиссия с каждой оплаты')}
+            <div class="field"><label>Налог с оборота</label>
+              <div class="cf6-unit"><input type="number" step="0.1" min="0" max="100" id="tax" data-cf6="tax" data-kind="pct-null" value="${p.tax===null?'':(p.tax*100).toFixed(1).replace(/\.0$/,'')}" placeholder="${(ctx.taxAuto*100).toFixed(0)}"><span>%</span></div>
+              <span class="cf6-fhint">пусто — по настройкам налогов: ${ctx.taxName}</span></div>
+          </div></div>
+        <div class="cf6-pgroup"><h4>С января — по сценарию</h4>
+          <div class="cf6-grid">
+            ${moneyIn('keepSalary', p.keepSalary, 'Пессимистичный: оклад менеджера', 'один человек на поддержании, взносы добавятся')}
+            ${numIn('baseHires', p.baseHires, 'Базовый: сколько людей добавить', '', 1)}
+            ${moneyIn('baseSalary', p.baseSalary, 'Базовый: оклад каждого')}
+            ${numIn('optHires', p.optHires, 'Оптимистичный: сколько людей добавить', '', 1)}
+            ${moneyIn('optSalary', p.optSalary, 'Оптимистичный: оклад каждого')}
+          </div></div>
+      </div>
+    </details>`;
+
+  container.innerHTML = `
+    <section class="block cf6" id="cf6">
+      <h2>Cash Flow до запуска — шесть месяцев</h2>
+      <p class="block-sub">Отдельная модель до февраля: один продукт — месячная программа за ${money(p.price)}, трафик только от экспертов и по рекомендациям, вознаграждение за трафик переключается. Расходы берутся из сметы по направлениям, сверху эквайринг и налог. Главный вопрос таблицы — сколько денег нужно, чтобы дожить до Нового года, и сколько может прийти с продаж.</p>
+
+      <div class="cf6-controls">
+        <div class="cf6-ctl">
+          <span class="cf6-ctl-l">Сценарий</span>
+          <div class="toggle-row inline">
+            ${CF6_SCENARIOS.map(s=>`<button type="button" data-cf6-scenario="${s.id}" class="${s.id===cfg.scenario?'active':''}" title="${esc(s.note)}">${s.name}</button>`).join('')}
+          </div>
+          <span class="cf6-ctl-note">${esc(R.scenario.note)}</span>
+        </div>
+        <div class="cf6-ctl">
+          <span class="cf6-ctl-l">Вознаграждение за трафик</span>
+          <div class="toggle-row inline">
+            ${CF6_REWARDS.map(r=>`<button type="button" data-cf6-reward="${r.id}" class="${r.id===cfg.reward?'active':''}" title="${esc(r.note)}">${r.name}</button>`).join('')}
+          </div>
+          <span class="cf6-ctl-note">${esc(R.reward.note)}</span>
+          <div class="cf6-rwcmp">${rewardCmp}</div>
+        </div>
+      </div>
+
+      ${cards}
+      ${verdict}
+      ${params}
+
+      <div class="card table-card cf6-card">
+        <table class="cf6-table">
+          <thead>${headPhase}${headMonths}</thead>
+          <tbody>${funnelRows}${inRows}${outRows}${flowRows}</tbody>
+        </table>
+      </div>
+
+      <h3 class="cf6-h3">Три сценария рядом <span>при вознаграждении «${R.reward.name}»</span></h3>
+      <div class="card table-card">
+        <table class="calc-table cf6-cmp">
+          <thead><tr><th>Сценарий</th><th>Нужно до Нового года</th><th>Нужно всего за 6 мес.</th><th>Придёт с продаж</th><th>Платящих к февралю</th><th>Первый плюс</th></tr></thead>
+          <tbody>${cmp}</tbody>
+        </table>
+      </div>
+      ${howHtml('Как считается эта модель', `
+        <b>Охват.</b> Каждый эксперт из плана в ганте даёт ${num(p.reachPerExpert)} охватов в месяц, каждый платящий — ${num(p.reachPerUser)}. Больше экспертов — больше охвата и регистраций.<br>
+        <b>Регистрации и оплаты.</b> От охвата экспертов регистрируется ${cfPct(p.crExpReg)}, от рекомендаций — ${cfPct(p.crRefReg)}; ${cfPct(p.crRegPay)} зарегистрированных оплачивают программу. До старта продаж регистрации копятся и конвертируются в первый месяц.<br>
+        <b>Приход.</b> Все платящие на конец месяца × ${money(p.price)}: новые оплаты плюс продления оставшихся после оттока ${cfPct(R.churn)}.<br>
+        <b>Расход.</b> ФОТ, регулярные и единоразовые — ровно те суммы, что в смете выше. Вознаграждение партнёрам, эквайринг ${cfPct(p.acq)} и налог (${p.tax===null ? ctx.taxName : cfPct(R.taxRate)}) считаются от оборота. С января расходы меняются по сценарию.<br>
+        <b>Нужно из инвестиций</b> — самая глубокая точка накопленного потока; «до Нового года» — накопленный поток на декабрь.`)}
+    </section>`;
+
+  /* --- механики --- */
+  const rerender = withFocus(()=>renderCf6(container));
+  const update = async (fn)=>{ const c = await getCf6(); fn(c); saveCf6(c); rerender(); };
+  container.querySelectorAll('[data-cf6-scenario]').forEach(b=>{ b.onclick = ()=>update(c=>{ c.scenario = b.dataset.cf6Scenario; }); });
+  container.querySelectorAll('[data-cf6-reward]').forEach(b=>{ b.onclick = ()=>update(c=>{ c.reward = b.dataset.cf6Reward; }); });
+  container.querySelectorAll('.money-fmt-input').forEach(wireThousandsInput);
+  const det = container.querySelector('#cf6Params');
+  if(det) det.addEventListener('toggle', ()=>{ _cf6ParamsOpen = det.open; });
+  container.querySelectorAll('[data-cf6]').forEach(inp=>{
+    inp.addEventListener('change', ()=>update(c=>{
+      const k = inp.dataset.cf6, kind = inp.dataset.kind;
+      if(kind==='money') c.p[k] = parseThousands(inp.value);
+      else if(kind==='pct') c.p[k] = Math.max(0, Math.min(100, parseFloat(String(inp.value).replace(',','.'))||0))/100;
+      else if(kind==='pct-null'){ const s = String(inp.value).trim(); c.p[k] = s==='' ? null : Math.max(0, Math.min(100, parseFloat(s.replace(',','.'))||0))/100; }
+      else c.p[k] = Math.max(0, parseFloat(String(inp.value).replace(',','.'))||0);
+      if(k==='salesStart') c.p[k] = Math.max(1, Math.min(CF6_H, parseInt(inp.value)||1));
+    }));
+  });
+}
+
 /* раскрыты ли нижние блоки: их состояние переживает перерисовку страницы */
 let _stratDetailsOpen = false;
 let _stratFounderOpen = false;
@@ -6556,6 +7067,7 @@ async function renderStrategy(body){
     <div id="stratBudget"></div>
     <div id="stratMoney"></div>
     <div id="stratEstimate"></div>
+    <div id="stratCf6"></div>
     <section class="block">
       <h2>Как идут задачи</h2>
       <p class="block-sub">Сводка по рабочей доске. Сами задачи — на соседней вкладке.</p>
@@ -6594,6 +7106,7 @@ async function renderStrategy(body){
   document.getElementById('stratMoney').innerHTML = moneyBlocks.top;
   document.getElementById('stratEstimate').innerHTML = await estimateHtml(modelPlan);
   wireEstimate(rerender);
+  await renderCf6(document.getElementById('stratCf6'));
   /* Стратегия основателя: считает свою модель, поэтому рисуем при раскрытии */
   const fnd = document.getElementById('stratFounder');
   if(fnd){
