@@ -19,14 +19,13 @@ const TONE_TAG = { online: 'blue', offline: 'accent', team: 'violet', summit: 'w
  * кнопка записи. Аватарки никогда не ложатся на обложку.
  */
 export default function EventCard({ event, now = Date.now() }) {
-  const { state, me, dispatch } = useStore();
+  const { state, me } = useStore();
   const [play, setPlay] = useState(false);
   const mine = rsvpOf(state, event.id, me.id);
   const going = goingUsers(state, event.id);
   const friends = friendsGoing(state, event.id, me.id);
   const city = event.cityId ? cityById(state, event.cityId) : null;
   const past = event.startsAt + event.duration * MINUTE < now;
-  const joinable = canJoin(event, now);
   const open = () => go(`/event/${event.id}`);
 
   const meta = eventMeta(event);
@@ -67,28 +66,47 @@ export default function EventCard({ event, now = Date.now() }) {
             </span>
           </div>
 
-          {past ? (
-            event.recordUrl ? (
-              <Btn variant="ghost" size="sm" icon="play" onClick={() => setPlay(true)}>Запись</Btn>
-            ) : null
-          ) : joinable ? (
-            <a className="btn btn--accent btn--sm" href={event.joinUrl} target="_blank" rel="noreferrer">
-              Подключиться
-            </a>
-          ) : (
-            <Btn
-              variant={mine === 'going' ? 'soft' : 'accent'}
-              size="sm"
-              icon={mine === 'going' ? 'check' : undefined}
-              onClick={() => dispatch({ type: 'rsvp', eventId: event.id, status: 'going' })}
-            >
-              {mine === 'going' ? 'Иду' : 'Пойду'}
-            </Btn>
-          )}
+          <RsvpButton event={event} now={now} onPlay={() => setPlay(true)} />
         </div>
       </div>
       {play && <VideoModal url={event.recordUrl} title={event.title} onClose={() => setPlay(false)} />}
     </article>
+  );
+}
+
+/**
+ * Кнопка события. У онлайна запись в один тап — там решать нечего.
+ * У офлайна ведёт внутрь: адрес, стоимость и «иду / не смогу» человек
+ * выбирает, когда увидел, куда именно идти.
+ */
+export function RsvpButton({ event, now = Date.now(), size = 'sm', onPlay }) {
+  const { state, me, dispatch } = useStore();
+  const mine = rsvpOf(state, event.id, me.id);
+  const past = event.startsAt + event.duration * MINUTE < now;
+  const meta = eventMeta(event);
+
+  if (past) {
+    return event.recordUrl && onPlay ? <Btn variant="ghost" size={size} icon="play" onClick={onPlay}>Запись</Btn> : null;
+  }
+  if (canJoin(event, now)) {
+    return <a className={`btn btn--accent${size === 'sm' ? ' btn--sm' : ''}`} href={event.joinUrl} target="_blank" rel="noreferrer">Подключиться</a>;
+  }
+  if (meta.offline) {
+    return (
+      <Btn variant={mine === 'going' ? 'soft' : 'ghost'} size={size} icon={mine === 'going' ? 'check' : undefined} onClick={() => go(`/event/${event.id}`)}>
+        {mine === 'going' ? 'Иду' : 'Открыть'}
+      </Btn>
+    );
+  }
+  return (
+    <Btn
+      variant={mine === 'going' ? 'soft' : 'accent'}
+      size={size}
+      icon={mine === 'going' ? 'check' : undefined}
+      onClick={() => dispatch({ type: 'rsvp', eventId: event.id, status: 'going' })}
+    >
+      {mine === 'going' ? 'Иду' : 'Пойду'}
+    </Btn>
   );
 }
 

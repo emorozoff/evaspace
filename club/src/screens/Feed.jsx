@@ -4,7 +4,7 @@ import { go } from '../lib/router.jsx';
 import { feedPosts, repliesOf, tagOf, userById, POST_TAGS, POINTS } from '../lib/logic.js';
 import { relative } from '../lib/time.js';
 import { readImage } from '../lib/image.js';
-import { Avatar, Btn, Empty, Note, Sheet, Tag, TopBar } from '../components/UI.jsx';
+import { Avatar, Btn, Empty, Note, PhotoInput, Sheet, Tag, TopBar } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 
 /* Лента клуба: короткие посты с фото и разговор под каждым.
@@ -139,9 +139,7 @@ export function PostForm({ onDone }) {
   const [photo, setPhoto] = useState('');
   const [error, setError] = useState('');
 
-  const pick = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const pick = async ([file]) => {
     try { setPhoto(await readImage(file)); setError(''); } catch (err) { setError(err.message); }
   };
 
@@ -164,10 +162,10 @@ export function PostForm({ onDone }) {
       {error && <div className="t-xs" style={{ color: 'var(--red)' }}>{error}</div>}
 
       <div className="row" style={{ gap: 8 }}>
-        <label className="clipbtn" title="Прикрепить фото">
+        {/* Скрепка берёт и снимок с камеры, и готовое фото из галереи */}
+        <PhotoInput className="clipbtn" onFiles={pick}>
           <Icon name="clip" size={19} />
-          <input type="file" accept="image/*" onChange={pick} style={{ display: 'none' }} />
-        </label>
+        </PhotoInput>
         <Btn variant="accent" wide className="grow" disabled={text.trim().length < 5} onClick={() => { dispatch({ type: 'postAdd', text, photo, tag }); onDone(); }}>
           Выложить
         </Btn>

@@ -39,9 +39,18 @@ export default function Chat({ id }) {
 
   const lead = info.kind === 'team' ? <TeamAvatar team={info.team} size={34} radius={0.32} />
     : info.kind === 'dm' ? <Avatar user={info.user} size={34} />
-    : <div className="item__ic" style={{ width: 34, height: 34, borderRadius: 11 }}><Icon name="city" size={17} /></div>;
+    : <div className="item__ic" style={{ width: 34, height: 34, borderRadius: 11 }}><Icon name={info.kind === 'com' ? info.community.icon : 'city'} size={17} /></div>;
 
-  const sub = info.kind === 'team' ? 'Чат команды' : info.kind === 'city' ? 'Чат города' : 'Личный чат';
+  const openSide = () =>
+    info.kind === 'dm' ? go(`/person/${info.user.id}`)
+      : info.kind === 'team' ? go('/team')
+      : info.kind === 'com' ? go(`/community/${info.community.id}`)
+      : go(`/city/${info.city.id}`);
+
+  const sub = info.kind === 'team' ? 'Чат команды'
+    : info.kind === 'city' ? 'Чат города'
+    : info.kind === 'com' ? 'Сообщество'
+    : 'Личный чат';
 
   return (
     <div className="screen screen--chat" style={{ paddingTop: 0 }}>
@@ -50,7 +59,7 @@ export default function Chat({ id }) {
         title={<button onClick={() => info.kind !== 'dm' && setAbout(true)}>{info.title}</button>}
         sub={info.kind === 'dm' ? sub : `${sub} · правила и ведущие`}
         backTo="/"
-        right={<button className="iconbtn" onClick={() => info.kind === 'dm' ? go(`/person/${info.user.id}`) : info.kind === 'team' ? go('/team') : go(`/city/${info.city.id}`)}>{lead}</button>}
+        right={<button className="iconbtn" onClick={openSide}>{lead}</button>}
       />
 
       {pinned && (
@@ -158,7 +167,7 @@ export function Chats() {
   const team = teamOf(state, me.id);
   return (
     <div className="screen" style={{ paddingTop: 0 }}>
-      <TopBar title="Сообщения" sub="Команда, город и знакомства" backTo="/" />
+      <TopBar title="Сообщения" sub="Команда, сообщества и знакомства" backTo="/" />
       {list.length === 0 ? (
         <Empty icon="message" title="Разговоров пока нет" text="Чат появится вместе с командой, городом или первым метчем." />
       ) : (
@@ -166,7 +175,7 @@ export function Chats() {
           {list.map((c) => {
             const lead = c.kind === 'team' ? <TeamAvatar team={c.team} size={44} />
               : c.kind === 'dm' ? <Avatar user={c.user} size={44} />
-              : <div className="item__ic" style={{ width: 44, height: 44 }}><Icon name="city" size={20} /></div>;
+              : <div className="item__ic" style={{ width: 44, height: 44 }}><Icon name={c.kind === 'com' ? c.community.icon : 'city'} size={20} /></div>;
             return (
               <button key={c.key} className="item" onClick={() => go(`/chat/${encodeURIComponent(c.key)}`)}>
                 {lead}

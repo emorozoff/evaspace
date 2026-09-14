@@ -75,6 +75,13 @@ export default function Base({ now = Date.now() }) {
                   meta={<Tag tone="warm">словарь</Tag>}
                   onClick={() => go('/dict')}
                 />
+                <Item
+                  icon="spark"
+                  title="Библиотека промптов"
+                  sub="Готовые запросы под продажи, контент, продукт и деньги"
+                  meta={<Tag tone="violet">промпты</Tag>}
+                  onClick={() => go('/prompts')}
+                />
               </List>
             </Section>
 

@@ -1,6 +1,7 @@
 import { DAY, HOUR, MINUTE, plural, startOfWeek, weekKey } from './time.js';
 import { hash, uid } from './format.js';
 import { cityMembers } from './events.js';
+import { COMMUNITIES } from '../data/communities.js';
 
 /* Правила клуба: кто что видит, как считается рейтинг,
    как города превращаются в пятничные встречи. */
@@ -84,6 +85,29 @@ export function goingUsers(state, eventId) {
   return goingIds(state, eventId)
     .map((id) => userById(state, id))
     .filter(Boolean);
+}
+
+/** Кто отказался. Видно только куратору — участникам это знать незачем. */
+export function notGoingUsers(state, eventId) {
+  const prefix = eventId + ':';
+  return Object.keys(state.rsvp)
+    .filter((k) => k.startsWith(prefix) && state.rsvp[k] === 'not_going')
+    .map((k) => userById(state, k.slice(prefix.length)))
+    .filter(Boolean);
+}
+
+/** Свод по событию для админки: кто идёт, кто отказался, кто молчит. */
+export function eventTally(state, event) {
+  const invited = state.users.filter((u) => u.active !== false && canSeeEvent(state, u, event));
+  const going = goingIds(state, event.id);
+  const no = notGoingUsers(state, event.id).map((u) => u.id);
+  return {
+    invited: invited.length,
+    going: going.length,
+    no: no.length,
+    silent: Math.max(0, invited.length - going.length - no.length),
+    share: invited.length ? Math.round((going.length / invited.length) * 100) : 0,
+  };
 }
 
 /** Кнопка «Подключиться» оживает за 15 минут до начала и гаснет после конца. */
@@ -919,6 +943,11 @@ export function chatCrew(state, key) {
     const city = cityById(state, rest);
     if (city) push(city.organizerId, 'keeper');
   }
+  if (kind === 'com') {
+    // Хранитель сообщества — тот, кто вступил первым: он его и держит
+    const first = (state.communityMembers || []).filter((m) => m.communityId === rest).sort((a, b) => a.at - b.at)[0];
+    if (first) push(first.userId, 'keeper');
+  }
   if (kind !== 'dm') state.users.filter((u) => u.admin).forEach((u) => push(u.id, 'admin'));
   return crew;
 }
@@ -977,6 +1006,10 @@ export function greetInChats(state, now = Date.now()) {
     if (cityMembers(state, city.id).length < 2) return;
     cityMembers(state, city.id).forEach((user) => greet(chatKey('city', [city.id]), user));
   });
+  (state.communityMembers || []).forEach((m) => {
+    const user = userById(state, m.userId);
+    if (user) greet(communityChat(m.communityId), user);
+  });
 
   if (!added.length) return state;
   return { ...state, messages: [...state.messages, ...added], welcomed: [...(state.welcomed || []), ...marks] };
@@ -1003,10 +1036,64 @@ export function chatsOf(state, userId) {
   if (team) list.push({ key: chatKey('team', [team.id]), kind: 'team', title: `Команда «${team.name}»`, team });
   const city = cityById(state, userById(state, userId)?.cityId);
   if (city && cityMembers(state, city.id).length >= 2) list.push({ key: chatKey('city', [city.id]), kind: 'city', title: `${city.name} · город`, city });
+  communitiesOf(state, userId).forEach((c) =>
+    list.push({ key: communityChat(c.id), kind: 'com', title: c.name, community: c })
+  );
   matchedWith(state, userId).forEach((u) => list.push({ key: chatKey('dm', [userId, u.id]), kind: 'dm', title: u.name, user: u }));
   return list
     .map((c) => ({ ...c, last: lastMessage(state, c.key), unread: unreadIn(state, c.key, userId) }))
     .sort((a, b) => (b.last?.at || 0) - (a.last?.at || 0));
+}
+
+/* ---------- сообщества ---------- */
+
+/**
+ * Сообщество — это чат с описанием и составом. Клубное одно и включает
+ * всех; в остальные вступают сами. Города живут отдельной механикой
+ * (пятницы, организатор), поэтому сюда не попадают.
+ */
+export function communityById(id) {
+  return COMMUNITIES.find((c) => c.id === id) || null;
+}
+
+export const communityChat = (id) => chatKey('com', [id]);
+
+export function communityMembers(state, id) {
+  const community = communityById(id);
+  if (!community) return [];
+  if (community.kind === 'club') return state.users.filter((u) => u.active !== false);
+  const ids = new Set((state.communityMembers || []).filter((m) => m.communityId === id).map((m) => m.userId));
+  return state.users.filter((u) => ids.has(u.id) && u.active !== false);
+}
+
+export function inCommunity(state, id, userId) {
+  if (communityById(id)?.kind === 'club') return true;
+  return (state.communityMembers || []).some((m) => m.communityId === id && m.userId === userId);
+}
+
+/** Сообщества участника: клубное всегда, дальше те, куда он вступил. */
+export function communitiesOf(state, userId) {
+  return COMMUNITIES.filter((c) => inCommunity(state, c.id, userId));
+}
+
+/** Подсказка «вам сюда»: по увлечениям и сфере из анкеты. */
+const COMMUNITY_HINTS = {
+  ai: ['Автоматизация', 'Программист', 'ИТ-продукты', 'Научиться ИИ'],
+  sales: ['Продажи', 'Маркетолог', 'Услуги и агентство'],
+  content: ['Блогер', 'Креатор', 'Контент и блогинг', 'Фото и видео'],
+  money: ['Инвестор', 'Финансы', 'Торговля'],
+  sport: ['Падл и теннис', 'Горы и походы', 'Зал и бег'],
+  night: ['Вино и рестораны', 'Караоке', 'Клубы и вечеринки'],
+};
+
+export function suggestedCommunities(state, userId) {
+  const user = userById(state, userId);
+  const mine = new Set(Object.values(user?.facts || {}).flat());
+  return COMMUNITIES.filter((c) => c.kind === 'interest' && !inCommunity(state, c.id, userId))
+    .map((c) => ({ community: c, hits: (COMMUNITY_HINTS[c.id] || []).filter((h) => mine.has(h)).length }))
+    .filter((x) => x.hits > 0)
+    .sort((a, b) => b.hits - a.hits)
+    .map((x) => x.community);
 }
 
 /* ---------- города: главное правило ---------- */

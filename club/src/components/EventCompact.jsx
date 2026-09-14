@@ -1,10 +1,11 @@
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { canJoin, goingUsers, rsvpOf } from '../lib/logic.js';
-import { whenLabel, plural, MINUTE } from '../lib/time.js';
+import { goingUsers } from '../lib/logic.js';
+import { whenLabel, plural } from '../lib/time.js';
 import { EVENT_TYPES } from '../lib/events.js';
 import Cover from './Cover.jsx';
-import { Btn, Tag } from './UI.jsx';
+import { RsvpButton } from './EventCard.jsx';
+import { Tag } from './UI.jsx';
 
 const TONE_TAG = { online: 'blue', offline: 'accent', team: 'violet', summit: 'warm' };
 
@@ -13,11 +14,8 @@ const TONE_TAG = { online: 'blue', offline: 'accent', team: 'violet', summit: 'w
  * Занимает вчетверо меньше места, чем большая карточка.
  */
 export default function EventCompact({ event, now = Date.now(), onPlay }) {
-  const { state, me, dispatch } = useStore();
-  const mine = rsvpOf(state, event.id, me.id);
+  const { state } = useStore();
   const count = goingUsers(state, event.id).length;
-  const joinable = canJoin(event, now);
-  const past = event.startsAt + event.duration * MINUTE < now;
 
   return (
     <div className="card row" style={{ padding: 10, gap: 12 }}>
@@ -37,20 +35,7 @@ export default function EventCompact({ event, now = Date.now(), onPlay }) {
       </button>
 
       <div style={{ flex: 'none' }}>
-        {past ? (
-          event.recordUrl && onPlay ? <Btn variant="ghost" size="sm" icon="play" onClick={() => onPlay(event)}>Запись</Btn> : null
-        ) : joinable ? (
-          <a className="btn btn--accent btn--sm" href={event.joinUrl} target="_blank" rel="noreferrer">Подключиться</a>
-        ) : (
-          <Btn
-            variant={mine === 'going' ? 'soft' : 'accent'}
-            size="sm"
-            icon={mine === 'going' ? 'check' : undefined}
-            onClick={() => dispatch({ type: 'rsvp', eventId: event.id, status: 'going' })}
-          >
-            {mine === 'going' ? 'Иду' : 'Пойду'}
-          </Btn>
-        )}
+        <RsvpButton event={event} now={now} onPlay={onPlay && (() => onPlay(event))} />
       </div>
     </div>
   );

@@ -367,7 +367,7 @@ export function buildSeed(now = Date.now()) {
   }
 
   const state = {
-    v: 6,
+    v: 7,
     seededAt: now,
     season,
     cities,
@@ -391,13 +391,16 @@ export function buildSeed(now = Date.now()) {
     // Закреплённые материалы: приветствие, видео недели, дальше — словарь
     pinned: ['m1', 'm2'],
     terms: [],
+    prompts: [],
     pins: {},
     postReplies: [],
+    communityMembers: [],
     // Демо-участники в клубе давно — здороваться с ними заново незачем
     welcomed: [
       ...members.map((m) => `team:${m.teamId}|${m.userId}`),
       ...cities.flatMap((c) => users.filter((u) => u.cityId === c.id).map((u) => `city:${c.id}|${u.id}`)),
     ],
+    // Клубное сообщество включает всех — приветствие в нём только новичкам
     events: [],
     rsvp: {},
     views: {},
@@ -476,6 +479,57 @@ export function buildSeed(now = Date.now()) {
         userId: members[(k + i) % members.length]?.id,
         text,
         at: now - (3 - k) * 4 * HOUR,
+      });
+    });
+  });
+
+  // Сообщества по интересам: участники распределяются по своим увлечениям
+  const HINTS = {
+    ai: ['Автоматизация', 'Программист', 'ИТ-продукты', 'Научиться ИИ'],
+    sales: ['Продажи', 'Маркетолог', 'Услуги и агентство'],
+    content: ['Блогер', 'Креатор', 'Контент и блогинг', 'Фото и видео'],
+    money: ['Инвестор', 'Финансы', 'Торговля'],
+    sport: ['Падл и теннис', 'Горы и походы', 'Зал и бег'],
+    night: ['Вино и рестораны', 'Караоке', 'Клубы и вечеринки'],
+  };
+  users.forEach((u, i) => {
+    const mine = new Set(Object.values(u.facts || {}).flat());
+    Object.entries(HINTS).forEach(([id, hints]) => {
+      if (!hints.some((h) => mine.has(h))) return;
+      state.communityMembers.push({ communityId: id, userId: u.id, at: season.startsAt + (i % 20) * DAY });
+      state.welcomed.push(`com:${id}|${u.id}`);
+    });
+  });
+
+  // Разговоры в сообществах: клубный чат и два самых живых по интересам
+  const talks = {
+    club: [
+      'Всем привет! Кто на эфире в среду — захватите свои вопросы заранее, разберём по очереди.',
+      'Подскажите, кто уже подключал оплату через СБП в боте? Нужен совет на пять минут.',
+      'Коллеги, в четверг в Москве освободилось место на падл — пишите, если кто хочет.',
+      'Спасибо клубу: за неделю тут ответили на то, что я месяц гуглил.',
+    ],
+    ai: [
+      'Собрал агента на разбор входящих заявок: 40 минут в день освободилось.',
+      'А какой у вас счёт за токены выходит? У меня около 4 тысяч в месяц на всё.',
+      'Выложил в библиотеку промпт под разбор созвонов — забирайте.',
+    ],
+    sport: [
+      'Есть кто на корт в субботу утром? Нужен четвёртый.',
+      'В воскресенье идём на Ай-Петри, выезд в шесть. Двоих ещё возьмём.',
+    ],
+  };
+  Object.entries(talks).forEach(([id, lines]) => {
+    const pool = id === 'club' ? users : state.communityMembers.filter((m) => m.communityId === id).map((m) => users.find((u) => u.id === m.userId));
+    lines.forEach((text, k) => {
+      const author = pool[(k * 4 + 2) % pool.length];
+      if (!author) return;
+      state.messages.push({
+        id: `msg_com_${id}_${k}`,
+        chat: `com:${id}`,
+        userId: author.id,
+        text,
+        at: now - (lines.length - k) * 5 * HOUR,
       });
     });
   });

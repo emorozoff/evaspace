@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import Icon from './Icons.jsx';
 import { back as backNav } from '../lib/router.jsx';
 import { hash, initials } from '../lib/format.js';
+import { IMAGE_ACCEPT } from '../lib/image.js';
 
 /* Общие кирпичики: заголовки, списки, кнопки, шторки, аватары. */
 
@@ -274,14 +275,37 @@ export function Field({ label, hint, children }) {
 /* ---------- аватар: сквиркл, оттенок от имени ---------------------------- */
 const TONES = ['#6d9bff', '#8e7bf5', '#79d2bf', '#e9b872', '#f2789b', '#58d68d', '#5fb8e0', '#d98ae6'];
 
+/**
+ * Выбор картинки: одна точка входа на всё приложение. Принимает и снимок
+ * с камеры, и файл из галереи; после выбора очищает input, иначе повторный
+ * выбор того же файла не вызывает change и кнопка «не работает».
+ */
+export function PhotoInput({ multiple = false, onFiles, children, className = 'filebtn' }) {
+  return (
+    <label className={className}>
+      {children}
+      <input
+        type="file"
+        accept={IMAGE_ACCEPT}
+        multiple={multiple}
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const files = [...(e.target.files || [])];
+          e.target.value = '';
+          if (files.length) onFiles(files);
+        }}
+      />
+    </label>
+  );
+}
+
 /** Выбор файла: своя кнопка вместо системной «Choose file». */
 export function FileButton({ label = 'Выбрать файл', icon = 'download', onFile }) {
   return (
-    <label className="filebtn">
+    <PhotoInput onFiles={(files) => onFile(files[0])}>
       <Icon name={icon} size={17} />
       <span>{label}</span>
-      <input type="file" accept="image/*" onChange={(e) => onFile(e.target.files?.[0])} />
-    </label>
+    </PhotoInput>
   );
 }
 

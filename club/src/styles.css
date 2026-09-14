@@ -101,6 +101,9 @@ h1, h2, h3, p { margin: 0; }
 
 /* --- шапка экрана -------------------------------------------------------- */
 .top { display: flex; align-items: center; gap: 12px; padding: 6px 0 14px; }
+/* Шапка без заголовка: строка сезона и кнопки в один ряд */
+.top--slim { padding: 4px 0 12px; }
+.season-line { font-size: 12.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
 .top .h1 { flex: 1; min-width: 0; }
 .topbar {
   position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 10px;
@@ -469,6 +472,10 @@ select.field { background-image: linear-gradient(45deg, transparent 50%, var(--i
 .gain { display: flex; gap: 12px; align-items: center; }
 .gain__ic { width: 38px; height: 38px; flex: none; border-radius: 13px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
 
+/* Полоса явки: идут / отказались / молчат одной строкой */
+.tally { display: flex; gap: 3px; height: 6px; margin-top: 10px; }
+.tally__b { border-radius: 3px; }
+
 .rules { display: grid; gap: 10px; }
 .rules__i { display: flex; gap: 11px; align-items: flex-start; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
 .rules__n { flex: none; width: 22px; height: 22px; border-radius: 8px; display: grid; place-items: center; background: var(--surface-2); color: var(--ink-3); font-size: 11.5px; font-weight: 800; margin-top: 1px; }
@@ -583,12 +590,34 @@ select.field { background-image: linear-gradient(45deg, transparent 50%, var(--i
 .term__f { font-size: 12.5px; color: var(--ink-3); }
 .term__x { font-size: 13.5px; line-height: 1.55; color: var(--ink-2); margin-top: 8px; }
 .term--static { cursor: default; }
+.prompt__text { margin-top: 10px; padding: 12px; border-radius: var(--r-sm); background: var(--bg); font-size: 13px; line-height: 1.6; color: var(--ink-2); white-space: pre-wrap; }
 .code__ic { width: 30px; height: 30px; flex: none; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); color: var(--accent); }
 
 /* --- программа события ------------------------------------------------------ */
 .agenda { display: grid; gap: 12px; }
 .agenda li { display: flex; gap: 11px; align-items: flex-start; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
 .agenda__n { flex: none; width: 22px; height: 22px; border-radius: 8px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-size: 11.5px; font-weight: 800; margin-top: 1px; }
+
+/* --- сообщества ------------------------------------------------------------- */
+.com { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: var(--r-md); background: var(--surface); text-align: left; transition: 0.14s; }
+.com:active { transform: scale(0.99); background: var(--surface-2); }
+.com--pin { padding: 16px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent); }
+.com__ic { width: 44px; height: 44px; flex: none; border-radius: 15px; display: grid; place-items: center; background: var(--surface-2); color: var(--ink-2); }
+.com--pin .com__ic { width: 54px; height: 54px; border-radius: 18px; }
+.com__ic--accent { background: var(--accent-soft); color: var(--accent); }
+.com__ic--violet { background: var(--violet-soft); color: var(--violet); }
+.com__ic--warm { background: var(--warm-soft); color: var(--warm); }
+.com__ic--blue { background: var(--blue-soft); color: var(--blue); }
+.com__tag { display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 3px; }
+.com__name { display: block; font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.com__s { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.com-hero { border-radius: var(--r-lg); padding: 22px 18px; background: var(--surface); text-align: center; }
+.com-hero__ic { width: 62px; height: 62px; margin: 0 auto 14px; border-radius: 20px; display: grid; place-items: center; background: var(--surface-2); color: var(--ink-2); }
+.com-hero--accent .com-hero__ic { background: var(--accent-soft); color: var(--accent); }
+.com-hero--violet .com-hero__ic { background: var(--violet-soft); color: var(--violet); }
+.com-hero--warm .com-hero__ic { background: var(--warm-soft); color: var(--warm); }
+.com-hero--blue .com-hero__ic { background: var(--blue-soft); color: var(--blue); }
 
 /* --- новости на главной ---------------------------------------------------- */
 .news { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: var(--r-md); background: var(--surface); text-align: left; transition: 0.14s; }

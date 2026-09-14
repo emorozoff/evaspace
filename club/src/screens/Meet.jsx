@@ -7,7 +7,7 @@ import {
 } from '../lib/logic.js';
 import { weekKey, dateShort } from '../lib/time.js';
 import { readImage } from '../lib/image.js';
-import { Avatar, Btn, Empty, Field, List, Item, Note, Section, Sheet, Tag, TopBar } from '../components/UI.jsx';
+import { Avatar, Btn, Empty, Field, List, Item, Note, PhotoInput, Section, Sheet, Tag, TopBar } from '../components/UI.jsx';
 import Choice from '../components/Choice.jsx';
 import Icon from '../components/Icons.jsx';
 
@@ -206,10 +206,9 @@ function MyForm({ onDone }) {
   const [own, setOwn] = useState('');
   const [error, setError] = useState('');
 
-  const add = async (e) => {
-    const files = [...(e.target.files || [])].slice(0, MEET_PHOTOS - photos.length);
+  const add = async (picked) => {
     const next = [...photos];
-    for (const file of files) {
+    for (const file of picked.slice(0, MEET_PHOTOS - photos.length)) {
       try { next.push(await readImage(file, { maxSide: 640, maxBytes: 180 * 1024 })); setError(''); } catch (err) { setError(err.message); }
     }
     setPhotos(next.slice(0, MEET_PHOTOS));
@@ -229,10 +228,9 @@ function MyForm({ onDone }) {
             </div>
           ))}
           {photos.length < MEET_PHOTOS && (
-            <label className="shots__add">
+            <PhotoInput className="shots__add" multiple onFiles={add}>
               <Icon name="plus" size={20} />
-              <input type="file" accept="image/*" multiple onChange={add} style={{ display: 'none' }} />
-            </label>
+            </PhotoInput>
           )}
         </div>
       </Field>

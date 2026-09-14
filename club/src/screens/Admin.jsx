@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { cityStats, cityName, goingUsers, leaderboard, teamRoster, teamSize, teamBalance, factOf, isPinned, suggestTeamPlan, userById, PACKAGES, MAX_PINNED, MAX_TEAM, MIN_TEAM } from '../lib/logic.js';
+import { cityStats, cityName, eventTally, goingUsers, leaderboard, teamRoster, teamSize, teamBalance, factOf, isPinned, suggestTeamPlan, userById, PACKAGES, MAX_PINNED, MAX_TEAM, MIN_TEAM } from '../lib/logic.js';
 import { dateShort, inputValue, isoDate, timeOf, relative } from '../lib/time.js';
 import { money, downloadCsv } from '../lib/format.js';
 import { Avatar, Btn, Card, Empty, Field, List, Item, Note, Scroller, Section, Sheet, Stat, Tag, TopBar } from '../components/UI.jsx';
@@ -251,12 +251,38 @@ function Events({ now }) {
   return (
     <>
       <Btn variant="accent" wide icon="plus" onClick={() => setAdd(true)}>Создать событие</Btn>
-      <List>
-        {list.map((e) => (
-          <Item key={e.id} icon="calendar" title={e.title} sub={`${isoDate(e.startsAt)} ${timeOf(e.startsAt)} · ${e.type}${e.canceled ? ' · отменено' : ''} · идут ${goingUsers(state, e.id).length}`} chev={false}
-            meta={<div className="row" style={{ gap: 4 }}><button className="chip" style={{ height: 30 }} onClick={() => go(`/event/${e.id}`)}>открыть</button><button className="chip" style={{ height: 30 }} onClick={() => dispatch({ type: 'eventPatch', eventId: e.id, patch: { canceled: !e.canceled } })}>{e.canceled ? 'вернуть' : 'отменить'}</button></div>} />
-        ))}
-      </List>
+
+      {/* Свод по мероприятиям: кто идёт, кто отказался, кто молчит */}
+      <Section title="Свод по мероприятиям" sub="Отказы видит только куратор">
+        <div className="stack-8">
+          {list.map((e) => {
+            const t = eventTally(state, e);
+            return (
+              <Card key={e.id}>
+                <div className="row">
+                  <div className="grow" style={{ minWidth: 0 }}>
+                    <div className="t-md ell">{e.title}{e.canceled ? ' · отменено' : ''}</div>
+                    <div className="t-xs dim-2 ell">{isoDate(e.startsAt)} {timeOf(e.startsAt)} · {e.type} · {t.invited} приглашены</div>
+                  </div>
+                  <Tag tone={t.share >= 50 ? 'accent' : t.share >= 25 ? 'warm' : undefined}>{t.share}%</Tag>
+                </div>
+                <div className="tally">
+                  <span className="tally__b" style={{ flexGrow: Math.max(t.going, 0.01), background: 'var(--accent)' }} />
+                  <span className="tally__b" style={{ flexGrow: Math.max(t.no, 0.01), background: 'var(--red)' }} />
+                  <span className="tally__b" style={{ flexGrow: Math.max(t.silent, 0.01), background: 'var(--surface-3)' }} />
+                </div>
+                <div className="spread t-xs dim-2" style={{ marginTop: 8 }}>
+                  <span><b className="accent">{t.going}</b> идут · <b className="red">{t.no}</b> отказ · {t.silent} молчат</span>
+                  <span className="row" style={{ gap: 4 }}>
+                    <button className="chip" style={{ height: 28 }} onClick={() => go(`/event/${e.id}`)}>открыть</button>
+                    <button className="chip" style={{ height: 28 }} onClick={() => dispatch({ type: 'eventPatch', eventId: e.id, patch: { canceled: !e.canceled } })}>{e.canceled ? 'вернуть' : 'отменить'}</button>
+                  </span>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </Section>
       <Sheet open={add} onClose={() => setAdd(false)} title="Новое событие"><EventForm onDone={() => setAdd(false)} /></Sheet>
     </>
   );

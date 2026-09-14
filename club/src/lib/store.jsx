@@ -7,6 +7,7 @@ import {
   chatKey,
   buildNotifications,
   canPin,
+  communityById,
   greetInChats,
   MAX_PINNED,
   MEET_PHOTOS,
@@ -20,7 +21,7 @@ import {
 import { uid, hash } from './format.js';
 import { DAY, weekKey } from './time.js';
 
-const KEY = 'iaiclub.state.v6';
+const KEY = 'iaiclub.state.v7';
 
 /* Задержки демо-режима: куратор и участники отвечают сами,
    иначе в одиночном демо некому распределить и принять. */
@@ -216,6 +217,24 @@ function reducer(state, action) {
     case 'postReplyDelete':
       return { ...state, postReplies: (state.postReplies || []).filter((r) => r.id !== action.id) };
 
+    /* ---------- сообщества ---------- */
+
+    case 'community': {
+      if (!user) return state;
+      const list = state.communityMembers || [];
+      const inside = list.some((m) => m.communityId === action.id && m.userId === user.id);
+      const name = communityById(action.id)?.name || 'сообщество';
+      return withToast(
+        {
+          ...state,
+          communityMembers: inside
+            ? list.filter((m) => !(m.communityId === action.id && m.userId === user.id))
+            : [...list, { communityId: action.id, userId: user.id, at: now }],
+        },
+        inside ? `Вышли из «${name}»` : `Вы в «${name}»`
+      );
+    }
+
     /* ---------- чаты: закреп и приветствие ---------- */
 
     case 'pinMessage': {
@@ -254,6 +273,26 @@ function reducer(state, action) {
         'Слово добавлено'
       );
     }
+
+    /** Свой промпт в библиотеку — как и слово в словарь, виден всем. */
+    case 'promptAdd': {
+      const title = (action.title || '').trim();
+      const text = (action.text || '').trim();
+      if (!title || !text) return state;
+      return withToast(
+        {
+          ...state,
+          prompts: [
+            ...(state.prompts || []),
+            { id: uid('pm'), cat: action.cat || 'sales', title, about: (action.about || '').trim(), text, userId: user?.id || null, at: now },
+          ],
+        },
+        'Промпт добавлен'
+      );
+    }
+
+    case 'promptDelete':
+      return withToast({ ...state, prompts: (state.prompts || []).filter((p) => p.id !== action.id) }, 'Удалено');
 
     case 'termDelete':
       return withToast({ ...state, terms: (state.terms || []).filter((t) => t.id !== action.id) }, 'Удалено');

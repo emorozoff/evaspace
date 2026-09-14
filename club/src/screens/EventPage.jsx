@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { canJoin, chatKey, cityById, goingUsers, rsvpOf, friendsGoing, eventMeta } from '../lib/logic.js';
+import { canJoin, chatKey, cityById, goingUsers, notGoingUsers, rsvpOf, friendsGoing, eventMeta, eventTally } from '../lib/logic.js';
 import { whenLabel, dayName, timeOf, inputValue, MINUTE, relative, plural } from '../lib/time.js';
 import { EVENT_TYPES } from '../lib/events.js';
 import { money } from '../lib/format.js';
 import Cover from '../components/Cover.jsx';
-import { Avatar, Btn, Card, Empty, Field, List, Item, Note, Section, Sheet, Tag, TopBar } from '../components/UI.jsx';
+import { Avatar, Btn, Card, Empty, Field, List, Item, Note, Section, Sheet, Stat, Tag, TopBar } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 import VideoModal from '../components/VideoModal.jsx';
 
@@ -28,6 +28,8 @@ export default function EventPage({ id, now }) {
   const mine = rsvpOf(state, event.id, me.id);
   const past = event.startsAt + event.duration * MINUTE < now;
   const meta = eventMeta(event);
+  const tally = eventTally(state, event);
+  const declined = notGoingUsers(state, event.id);
   const isOrganizer = city?.organizerId === me.id;
   const canEdit = (isOrganizer || state.session.admin || (team && team.captainId === me.id)) && !past;
 
@@ -123,6 +125,32 @@ export default function EventPage({ id, now }) {
           )}
         </Section>
 
+        {/* Отказавшихся видит только куратор: участникам это знать незачем */}
+        {state.session.admin && (
+          <Section title="Свод для куратора" sub="Видно только в админском входе">
+            <Card>
+              <div className="stats">
+                <Stat v={tally.going} l="идут" tone="var(--accent)" />
+                <Stat v={tally.no} l="отказались" tone="var(--red)" />
+                <Stat v={tally.silent} l="молчат" />
+              </div>
+              {declined.length > 0 && (
+                <>
+                  <div className="hdr" style={{ marginTop: 14, padding: 0 }}>Не придут</div>
+                  <div className="scroller" style={{ marginTop: 8 }}>
+                    {declined.map((u) => (
+                      <button key={u.id} className="center" style={{ width: 60 }} onClick={() => go(`/person/${u.id}`)}>
+                        <Avatar user={u} size={38} style={{ margin: '0 auto', opacity: 0.6 }} />
+                        <div className="t-xs dim-2 ell" style={{ marginTop: 5 }}>{u.name.split(' ')[0]}</div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </Card>
+          </Section>
+        )}
+
         {past && event.recordUrl && (
           <Btn variant="ghost" wide icon="play" onClick={() => setPlay(true)}>Смотреть запись</Btn>
         )}
@@ -131,12 +159,22 @@ export default function EventPage({ id, now }) {
           <div className="sticky-cta stack-8">
             {canJoin(event, now) ? (
               <a className="btn btn--accent btn--wide" href={event.joinUrl} target="_blank" rel="noreferrer">Подключиться</a>
+            ) : meta.offline ? (
+              /* У офлайна выбор делают здесь, увидев адрес и стоимость */
+              <div className="pair">
+                <Btn variant={mine === 'going' ? 'soft' : 'accent'} icon={mine === 'going' ? 'check' : undefined} onClick={() => dispatch({ type: 'rsvp', eventId: event.id, status: 'going' })}>
+                  {mine === 'going' ? 'Иду' : 'Иду'}
+                </Btn>
+                <Btn variant={mine === 'not_going' ? 'danger' : 'quiet'} icon={mine === 'not_going' ? 'x' : undefined} onClick={() => dispatch({ type: 'rsvp', eventId: event.id, status: 'not_going' })}>
+                  Не иду
+                </Btn>
+              </div>
             ) : (
               <Btn variant={mine === 'going' ? 'soft' : 'accent'} wide icon={mine === 'going' ? 'check' : undefined} onClick={() => dispatch({ type: 'rsvp', eventId: event.id, status: 'going' })}>
                 {mine === 'going' ? 'Вы идёте · отменить' : 'Пойду'}
               </Btn>
             )}
-            {mine !== 'going' && !canJoin(event, now) && (
+            {mine !== 'going' && !canJoin(event, now) && !meta.offline && (
               <button className="t-sm center" style={{ color: mine === 'not_going' ? 'var(--red)' : 'var(--ink-3)', fontWeight: 600, padding: 6 }} onClick={() => dispatch({ type: 'rsvp', eventId: event.id, status: 'not_going' })}>
                 {mine === 'not_going' ? 'Вы отметили, что не сможете' : 'Не смогу'}
               </button>

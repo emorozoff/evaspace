@@ -34,10 +34,10 @@ export default function Home({ now }) {
 
   return (
     <div className="screen stack-20">
-      <div className="top">
+      <div className="top top--slim">
+        {/* Без приветствия: карточка резидента и цифры сезона поднимаются выше */}
         <div className="grow">
-          <div className="eyebrow">{state.season.title} · месяц {season.monthIndex} из 3</div>
-          <h1 className="h1" style={{ marginTop: 4 }}>{greet()}, {me.name.split(' ')[0]}</h1>
+          <div className="season-line">{state.season.title} · месяц {season.monthIndex} из 3</div>
         </div>
         <button className="iconbtn" onClick={() => go('/chats')} aria-label="Сообщения">
           <Icon name="message" size={19} />
@@ -86,7 +86,7 @@ export default function Home({ now }) {
         items={[
           { icon: 'book', title: 'База знаний', onClick: () => go('/base') },
           { icon: 'cup', title: 'Рейтинг', onClick: () => go('/rating') },
-          { icon: 'city', title: city.city?.name || 'Город', onClick: () => go(`/city/${me.cityId}`) },
+          { icon: 'city', title: 'Сообщества', onClick: () => go('/communities') },
           { icon: 'gift', title: 'Пригласить', onClick: () => go('/invite') },
         ]}
       />
@@ -182,10 +182,3 @@ function InviteCard({ invite }) {
   );
 }
 
-function greet() {
-  const h = new Date().getHours();
-  if (h < 5) return 'Доброй ночи';
-  if (h < 12) return 'Доброе утро';
-  if (h < 18) return 'Добрый день';
-  return 'Добрый вечер';
-}
