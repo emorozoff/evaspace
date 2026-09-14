@@ -133,9 +133,16 @@ function EditForm({ onDone }) {
   const [form, setForm] = useState({ name: me.name, city: cityName(state, me.cityId), about: me.about, lookingFor: me.lookingFor || '', tg: me.tg || '', links: me.links || '', photo: me.photo || '', skills: me.skills || [] });
   const [error, setError] = useState('');
   const field = (key) => ({ value: form[key], onChange: (e) => setForm({ ...form, [key]: e.target.value }) });
+  // Аватар нигде не показывается крупнее сотни точек — незачем держать в памяти
+  // браузера снимок на 700 пикселей: он лежит в сохранённом состоянии целиком
   const pickPhoto = async (file) => {
     if (!file) return;
-    try { setForm({ ...form, photo: await readImage(file) }); setError(''); } catch (err) { setError(err.message); }
+    try {
+      setForm({ ...form, photo: await readImage(file, { maxSide: 256, maxBytes: 60 * 1024 }) });
+      setError('');
+    } catch (err) {
+      setError(err.message);
+    }
   };
   const toggleSkill = (s) => setForm({ ...form, skills: form.skills.includes(s) ? form.skills.filter((x) => x !== s) : [...form.skills, s].slice(0, 5) });
 
