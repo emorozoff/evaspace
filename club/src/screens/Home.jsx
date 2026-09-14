@@ -159,7 +159,7 @@ export default function Home({ now }) {
             icon="city"
             title={city.city?.name}
             sub={city.ready
-              ? `${city.count} чел. · ${friday ? `пятница ${whenLabel(friday.startsAt, now).toLowerCase()}` : 'встреча раз в неделю'}`
+              ? `${city.count} чел. · ${friday ? `пятница ${dayAndTime(friday.startsAt, now)}` : 'встреча раз в неделю'}`
               : 'Пока вы один — позовите второго, и появится пятница'}
             onClick={() => go(`/city/${me.cityId}`)}
           />
@@ -170,6 +170,12 @@ export default function Home({ now }) {
 }
 
 /** Предложение познакомиться: пришло в уведомления, отвечают здесь же. */
+/** «Пятница завтра, 19:30» — без повторного «пт» в подписи. */
+function dayAndTime(at, now) {
+  const label = whenLabel(at, now).toLowerCase();
+  return /^(сегодня|завтра)/.test(label) ? label : label.replace(/^[а-я]{2}, /, '');
+}
+
 function OfferCard({ offer }) {
   const { state, dispatch } = useStore();
   const from = userById(state, offer.fromId);

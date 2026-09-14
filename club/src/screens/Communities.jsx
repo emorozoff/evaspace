@@ -53,7 +53,7 @@ export default function Communities() {
                     <span className="com__name">{c.name}</span>
                     <span className="com__s">{c.short} · {members.length} {plural(members.length, 'участник', 'участника', 'участников')}</span>
                   </span>
-                  {mine ? <Unread id={c.id} fallback={<Tag tone="accent">вы здесь</Tag>} /> : <AvatarStack users={members.slice(0, 3)} max={3} size={24} />}
+                  {mine ? <Unread id={c.id} fallback={<Tag tone="accent">вы здесь</Tag>} /> : <AvatarStack users={members.slice(0, 3)} max={3} size={22} />}
                   <Icon name="right" size={16} className="chev" />
                 </button>
               );

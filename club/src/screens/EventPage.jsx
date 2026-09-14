@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import { canJoin, chatKey, cityById, goingUsers, notGoingUsers, rsvpOf, friendsGoing, eventMeta, eventTally } from '../lib/logic.js';
-import { whenLabel, dayName, timeOf, inputValue, MINUTE, relative, plural } from '../lib/time.js';
+import { whenLabel, inputValue, MINUTE, relative, plural } from '../lib/time.js';
 import { EVENT_TYPES } from '../lib/events.js';
 import { money } from '../lib/format.js';
 import Cover from '../components/Cover.jsx';
@@ -61,11 +61,16 @@ export default function EventPage({ id, now }) {
           <Item
             icon="calendar"
             title={event.flexible ? 'Время выбирает команда' : `${whenLabel(event.startsAt, now)} · ${event.duration} мин`}
-            sub={event.flexible ? 'Договоритесь в чате команды' : `${dayName(event.startsAt)}, ${timeOf(event.startsAt)}`}
+            sub={event.flexible ? 'Договоритесь в чате команды' : past ? 'Уже прошло' : relative(event.startsAt, now)}
             chev={false}
           />
           {meta.offline ? (
-            <Item icon="pin" title={event.place || 'Адрес ещё не выбран'} sub={city ? `${city.name} · открыть город` : 'Офлайн'} onClick={city ? () => go(`/city/${city.id}`) : undefined} />
+            <Item
+              icon="pin"
+              title={<span style={{ whiteSpace: 'normal', lineHeight: 1.3 }}>{event.place || 'Адрес ещё не выбран'}</span>}
+              sub={city ? `${city.name} · открыть город` : 'Офлайн'}
+              onClick={city ? () => go(`/city/${city.id}`) : undefined}
+            />
           ) : (
             <Item icon="video" title="Онлайн" sub={event.joinUrl ? 'Кнопка «Подключиться» появится за 15 минут до начала' : 'Ссылка появится ближе к началу'} chev={false} />
           )}
