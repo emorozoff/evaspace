@@ -251,6 +251,35 @@ export function leaderboard(state, now = Date.now()) {
     .map((row, i) => ({ ...row, place: i + 1, award: awardOf(i + 1) }));
 }
 
+/**
+ * Личный результат за сезон: своя внесённая выручка и баллы за активность.
+ * Команда — это сумма, но участнику важно видеть и свой вклад отдельно.
+ */
+export function personalResult(state, userId, now = Date.now()) {
+  const entries = state.revenue.filter((r) => r.userId === userId);
+  return {
+    revenue: entries.reduce((sum, r) => sum + r.amount, 0),
+    entries: entries.length,
+    points: pointsOf(state, userId),
+    attendance: attendanceOf(state, userId, now).percent,
+  };
+}
+
+/** Личный рейтинг: сначала выручка, при равной — баллы активности. */
+export function personalBoard(state, now = Date.now()) {
+  return state.users
+    .filter((u) => u.active !== false)
+    .map((user) => ({ user, ...personalResult(state, user.id, now) }))
+    .filter((row) => row.revenue > 0 || row.points > 0)
+    .sort((a, b) => b.revenue - a.revenue || b.points - a.points)
+    .map((row, i) => ({ ...row, place: i + 1, award: awardOf(i + 1) }));
+}
+
+export function personalPlace(state, userId) {
+  const row = personalBoard(state).find((r) => r.user.id === userId);
+  return row ? row.place : null;
+}
+
 export function teamPlace(state, teamId) {
   const row = leaderboard(state).find((r) => r.team.id === teamId);
   return row ? row.place : null;
@@ -831,6 +860,20 @@ export function recommendPeople(state, userId, limit = 6) {
     .slice(0, limit);
 }
 
+/* Прямое предложение знакомства: минуя недельную подборку. Отложенное
+   возвращается через неделю — «не сейчас» редко значит «никогда». */
+const OFFER_SNOOZE = 7 * DAY;
+
+export function offerBetween(state, fromId, toId) {
+  return (state.meetOffers || []).find((o) => o.fromId === fromId && o.toId === toId) || null;
+}
+
+export function incomingOffers(state, userId, now = Date.now()) {
+  return (state.meetOffers || [])
+    .filter((o) => o.toId === userId && (o.status === 'new' || (o.status === 'later' && now - o.at > OFFER_SNOOZE)))
+    .sort((a, b) => b.at - a.at);
+}
+
 export function meetsFor(state, userId, week) {
   return state.meets.filter((m) => m.week === week && (m.a === userId || m.b === userId));
 }
@@ -1043,6 +1086,45 @@ export function chatsOf(state, userId) {
   return list
     .map((c) => ({ ...c, last: lastMessage(state, c.key), unread: unreadIn(state, c.key, userId) }))
     .sort((a, b) => (b.last?.at || 0) - (a.last?.at || 0));
+}
+
+/* ---------- голосования команды ---------- */
+
+/**
+ * Командные решения принимаются единогласно. Так задумано: цель и время
+ * созвона касаются каждого, и решение большинством здесь означало бы,
+ * что кто-то ходит на встречи, которые ему не подходят.
+ */
+export const VOTE_KINDS = {
+  goal: { title: 'Цель команды', icon: 'target' },
+  call: { title: 'Время созвона', icon: 'calendar' },
+};
+
+export function votesOf(state, teamId, status = 'open') {
+  return (state.votes || [])
+    .filter((v) => v.teamId === teamId && (!status || v.status === status))
+    .sort((a, b) => b.at - a.at);
+}
+
+export function openVotes(state, teamId) {
+  return votesOf(state, teamId, 'open');
+}
+
+/** Сколько голосов собрано и кого ещё ждём. */
+export function voteTally(state, vote) {
+  const roster = teamRoster(state, vote.teamId);
+  const yes = roster.filter((m) => vote.votes[m.userId] === 'yes');
+  const no = roster.filter((m) => vote.votes[m.userId] === 'no');
+  const waiting = roster.filter((m) => !vote.votes[m.userId]);
+  return { roster, yes, no, waiting, need: roster.length, done: yes.length === roster.length && roster.length > 0 };
+}
+
+/** Что именно предлагают — одной строкой для списка и уведомления. */
+export function voteSummary(vote) {
+  if (vote.kind === 'goal') return vote.proposal.goal;
+  const { weekday, hour, minute } = vote.proposal;
+  const days = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'];
+  return `${days[weekday - 1]}, ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
 /* ---------- сообщества ---------- */

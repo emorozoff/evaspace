@@ -1,20 +1,26 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { leaderboard, seasonPot, teamOf, teamRoster, isPro } from '../lib/logic.js';
+import { leaderboard, personalBoard, seasonPot, teamOf, teamRoster, isPro } from '../lib/logic.js';
 import { money, moneyShort } from '../lib/format.js';
-import { AvatarStack, Empty, KV, Note, Section, Tag, TopBar } from '../components/UI.jsx';
+import { Avatar, AvatarStack, Empty, KV, Note, Section, Seg, Tag, TopBar } from '../components/UI.jsx';
 import TeamAvatar from '../components/TeamAvatar.jsx';
 import { SponsorArt } from './Sponsor.jsx';
 import Icon from '../components/Icons.jsx';
 
 /* Рейтинг — простой список: кубок за первые три места, дальше медали. */
 
+const MODES = [
+  { value: 'teams', label: 'Команды' },
+  { value: 'people', label: 'Люди' },
+];
+
 export default function Rating() {
   const { state, me } = useStore();
   const board = leaderboard(state);
   const myTeam = teamOf(state, me.id);
   const [open, setOpen] = useState(myTeam?.id || null);
+  const [mode, setMode] = useState('teams');
 
   if (!isPro(me)) {
     return (
@@ -42,7 +48,12 @@ export default function Rating() {
           </div>
         </div>
 
-        {board.length === 0 ? (
+        {/* Два рейтинга: командный — по копилке, личный — по своему вкладу */}
+        <Seg value={mode} onChange={setMode} options={MODES} />
+
+        {mode === 'people' ? (
+          <PersonalBoard />
+        ) : board.length === 0 ? (
           <Empty icon="cup" title="Рейтинг пуст" text="Команда попадает сюда, когда в ней хотя бы трое." />
         ) : (
           <div className="list">
@@ -90,6 +101,10 @@ export default function Rating() {
           </div>
         )}
 
+        {mode === 'teams' && (
+          <Note icon="eye">Выручка без взноса в копилку не засчитывается: команда сама отмечает перевод и прикладывает подтверждение.</Note>
+        )}
+
         <Section title="Партнёры сезона">
           <div className="stack">
             {state.sponsors.map((s) => (
@@ -110,8 +125,53 @@ export default function Rating() {
           </div>
         </Section>
 
-        <Note icon="eye">Выручка без взноса в копилку не засчитывается: команда сама отмечает перевод и прикладывает подтверждение.</Note>
       </div>
     </div>
+  );
+}
+
+/** Личный рейтинг: свой вклад в выручку и баллы за активность. */
+function PersonalBoard() {
+  const { state, me } = useStore();
+  const rows = personalBoard(state);
+  const mineIndex = rows.findIndex((r) => r.user.id === me.id);
+
+  if (rows.length === 0) {
+    return <Empty icon="cup" title="Пока пусто" text="Сюда попадают те, кто вносит выручку или набирает баллы за активность." />;
+  }
+
+  return (
+    <>
+      {mineIndex > 9 && (
+        <Note icon="spark">Вы на {mineIndex + 1}-м месте. Ближайшие впереди — {rows[mineIndex - 1]?.user.name.split(' ')[0]} и {rows[mineIndex - 2]?.user.name.split(' ')[0]}.</Note>
+      )}
+      <div className="list">
+        {rows.slice(0, 30).map((row) => {
+          const top = row.place <= 3;
+          const mine = row.user.id === me.id;
+          return (
+            <button key={row.user.id} className="rank" onClick={() => go(`/person/${row.user.id}`)}>
+              <span className="award" style={{ background: top ? `${row.award.tone}1f` : 'var(--surface-2)' }}>
+                <Icon name={row.award.icon} size={top ? 22 : 19} color={top ? row.award.tone : 'var(--ink-3)'} />
+                <span className="award__n">{row.place}</span>
+              </span>
+              <Avatar user={row.user} size={38} ring={mine ? 'var(--accent)' : undefined} />
+              <div className="grow">
+                <div className="row" style={{ gap: 6 }}>
+                  <span className="t-md ell rank__t">{row.user.name}</span>
+                  {mine && <Tag tone="accent">вы</Tag>}
+                </div>
+                <div className="t-xs dim-2" style={{ marginTop: 3 }}>{row.points} баллов · {row.attendance}% встреч</div>
+              </div>
+              <div className="item__meta">
+                <div className="figure rank__v" style={{ fontSize: 15 }}>{moneyShort(row.revenue)}</div>
+                <span className="t-xs dim-2">свой вклад</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <Note icon="eye">Личный рейтинг считает вашу внесённую выручку и баллы за активность: встречи, сообщения, посты и метчи.</Note>
+    </>
   );
 }

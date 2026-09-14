@@ -3,11 +3,11 @@ import { go } from '../lib/router.jsx';
 import {
   nextEvent, visibleEvents, teamOf, teamStats, teamPlace, seasonProgress, cityStats, nextFridayEvent,
   userById, isPro, unreadCount, applicationOf,
-  attendanceOf, inviteFor, awardOf, chatsOf, newsFor,
+  attendanceOf, inviteFor, awardOf, chatsOf, newsFor, teamRoster, openVotes, incomingOffers,
 } from '../lib/logic.js';
 import { plural, whenLabel, DAY } from '../lib/time.js';
 import { moneyShort } from '../lib/format.js';
-import { Avatar, Actions, Btn, Card, List, Item, Section, Stat } from '../components/UI.jsx';
+import { Avatar, AvatarStack, Actions, Btn, Card, List, Item, Section, Stat, Tag } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 import ResidentCard from '../components/ResidentCard.jsx';
 import Circle from '../components/Circle.jsx';
@@ -31,6 +31,9 @@ export default function Home({ now }) {
   const offer = city.city?.organizerOfferTo === me.id && !city.city?.organizerId;
   const place = team ? teamPlace(state, team.id) : null;
   const news = newsFor(state, me, now);
+  const roster = team ? teamRoster(state, team.id) : [];
+  const votes = team ? openVotes(state, team.id).length : 0;
+  const offers = incomingOffers(state, me.id, now).slice(0, 2);
 
   return (
     <div className="screen stack-20">
@@ -61,6 +64,9 @@ export default function Home({ now }) {
 
       {/* Зовут в команду — это важнее всего остального */}
       {invite && <InviteCard invite={invite} />}
+
+      {/* Предложили познакомиться — ответ в два нажатия, не выходя с главной */}
+      {offers.map((offer) => <OfferCard key={offer.id} offer={offer} />)}
 
       {offer && (
         <Card variant="accent">
@@ -113,6 +119,12 @@ export default function Home({ now }) {
                 <div className="stat" style={{ background: 'var(--surface-2)' }}><div className="stat__v" style={{ fontSize: 16 }}>{stats.activity}%</div><div className="stat__l">активность</div></div>
                 <div className="stat" style={{ background: 'var(--surface-2)' }}><div className="stat__v" style={{ fontSize: 16, color: stats.debt ? 'var(--warm)' : 'var(--accent)' }}>{stats.debt ? moneyShort(stats.debt) : 'ок'}</div><div className="stat__l">копилка</div></div>
               </div>
+              {/* Состав тут же: одним блоком видно и результат, и кто его делает */}
+              <div className="row" style={{ gap: 10, marginTop: 12 }}>
+                <AvatarStack users={roster.map((r) => r.user)} max={5} size={26} />
+                <span className="t-xs dim-2 grow ell">{roster.map((r) => r.user.name.split(' ')[0]).join(', ')}</span>
+                {votes > 0 && <Tag tone="warm">голосование</Tag>}
+              </div>
             </button>
           ) : (
             <button className="card tap" onClick={() => go('/team')}>
@@ -154,6 +166,28 @@ export default function Home({ now }) {
         </div>
       </Section>
     </div>
+  );
+}
+
+/** Предложение познакомиться: пришло в уведомления, отвечают здесь же. */
+function OfferCard({ offer }) {
+  const { state, dispatch } = useStore();
+  const from = userById(state, offer.fromId);
+  if (!from) return null;
+  return (
+    <Card variant="accent">
+      <div className="row-t">
+        <Avatar user={from} size={44} />
+        <div className="grow">
+          <div className="t-lg">{from.name} предлагает познакомиться</div>
+          <div className="t-sm dim" style={{ marginTop: 4, lineHeight: 1.5 }}>{from.about}</div>
+        </div>
+      </div>
+      <div className="pair" style={{ marginTop: 14 }}>
+        <Btn variant="accent" size="sm" onClick={() => dispatch({ type: 'meetOfferAnswer', id: offer.id, accept: true })}>Принять</Btn>
+        <Btn variant="quiet" size="sm" onClick={() => dispatch({ type: 'meetOfferAnswer', id: offer.id, accept: false })}>Отложить</Btn>
+      </div>
+    </Card>
   );
 }
 

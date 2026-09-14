@@ -3,11 +3,12 @@ import { go } from '../lib/router.jsx';
 import {
   chatKey, cityName, friendStatus, friendIds, matchPercent, matchReasons, matchedWith,
   teamOf, factOf, pointsOf, attendanceOf, feedPosts, titleOf, TEAM_TITLES,
+  incomingOffers, offerBetween,
 } from '../lib/logic.js';
 import { dateShort } from '../lib/time.js';
 import { FACT_LABELS } from '../data/onboarding.js';
 import { hash } from '../lib/format.js';
-import { Actions, Avatar, Card, Empty, List, Item, Note, Section, Tag, TopBar, toneOf } from '../components/UI.jsx';
+import { Actions, Avatar, Btn, Card, Empty, List, Item, Note, Section, Tag, TopBar, toneOf } from '../components/UI.jsx';
 import { Post } from './Feed.jsx';
 import Icon from '../components/Icons.jsx';
 
@@ -28,6 +29,8 @@ export default function PersonPage({ id, now = Date.now() }) {
   const matched = matchedWith(state, me.id).some((u) => u.id === user.id);
   const dm = chatKey('dm', [me.id, user.id]);
   const percent = matchPercent(me, user);
+  const incoming = incomingOffers(state, me.id).find((o) => o.fromId === user.id) || null;
+  const sent = offerBetween(state, me.id, user.id);
   const reasons = matchReasons(me, user);
   const been = attendanceOf(state, user.id, now);
   const posts = feedPosts(state).filter((p) => p.userId === user.id).slice(0, 2);
@@ -78,11 +81,32 @@ export default function PersonPage({ id, now = Date.now() }) {
           )}
         </div>
 
+        {/* Встречное предложение — отвечают прямо здесь */}
+        {incoming && (
+          <Card variant="accent">
+            <div className="row-t">
+              <div className="item__ic" style={{ color: 'var(--accent)' }}><Icon name="spark" size={19} /></div>
+              <div className="grow">
+                <div className="t-lg">{user.name.split(' ')[0]} предлагает познакомиться</div>
+                <div className="t-sm dim" style={{ marginTop: 4, lineHeight: 1.5 }}>
+                  Примете — откроется общий чат. Отложите — предложение вернётся через неделю.
+                </div>
+              </div>
+            </div>
+            <div className="pair" style={{ marginTop: 14 }}>
+              <Btn variant="accent" size="sm" onClick={() => dispatch({ type: 'meetOfferAnswer', id: incoming.id, accept: true })}>Принять</Btn>
+              <Btn variant="quiet" size="sm" onClick={() => dispatch({ type: 'meetOfferAnswer', id: incoming.id, accept: false })}>Отложить</Btn>
+            </div>
+          </Card>
+        )}
+
         {!mine && (
           <Actions items={[
             matched
               ? { icon: 'message', title: 'Написать', onClick: () => go(`/chat/${encodeURIComponent(dm)}`) }
-              : { icon: 'spark', title: 'Познакомиться', onClick: () => go('/meet') },
+              : sent
+              ? { icon: 'clock', title: 'Предложено', onClick: undefined, disabled: true }
+              : { icon: 'spark', title: 'Предложить знакомство', onClick: () => dispatch({ type: 'meetOffer', toId: user.id }) },
             friendAction,
             { icon: 'people', title: 'В круг', onClick: () => dispatch({ type: 'circleAdd', userId: user.id }) },
           ]} />

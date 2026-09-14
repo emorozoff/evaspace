@@ -26,6 +26,42 @@ function weekdayAt(from, weekday, hour, minute = 0) {
   return d.getTime();
 }
 
+/* Созвон команды по умолчанию — вторая и четвёртая пятница месяца,
+   18:00–19:30. Раз в две недели: еженедельный созвон команды не тянут,
+   а раз в месяц забывают, о чём договаривались. */
+export const DEFAULT_CALL = { weekday: 5, hour: 18, minute: 0, duration: 90 };
+
+/** Какая это по счёту такая-то пятница в своём месяце. */
+function weekdayIndexInMonth(at) {
+  return Math.floor((new Date(at).getDate() - 1) / 7) + 1;
+}
+
+export const isCallWeek = (at) => [2, 4].includes(weekdayIndexInMonth(at));
+
+/** Расписание созвонов команды: своё, если команда его меняла. */
+export const callPlan = (team) => ({ ...DEFAULT_CALL, ...(team?.call || {}) });
+
+/* «Вторая и четвёртая пятница, 18:00» — одной строкой. Род у дней разный,
+   поэтому порядковые числительные хранятся вместе с названием. */
+const WEEKDAYS = [
+  ['понедельник', 'второй и четвёртый'],
+  ['вторник', 'второй и четвёртый'],
+  ['среда', 'вторая и четвёртая'],
+  ['четверг', 'второй и четвёртый'],
+  ['пятница', 'вторая и четвёртая'],
+  ['суббота', 'вторая и четвёртая'],
+  ['воскресенье', 'второе и четвёртое'],
+];
+
+export function callLabel(team) {
+  const plan = callPlan(team);
+  const pad = (n) => String(n).padStart(2, '0');
+  const from = plan.hour * 60 + plan.minute;
+  const to = from + plan.duration;
+  const [day, form] = WEEKDAYS[plan.weekday - 1];
+  return `${form} ${day} месяца, ${pad(plan.hour)}:${pad(plan.minute)}–${pad(Math.floor(to / 60) % 24)}:${pad(to % 60)}`;
+}
+
 function makeEvent(series, startsAt, patch) {
   return {
     id: `ev_${series}_${isoDate(startsAt)}`,
@@ -143,19 +179,21 @@ export function ensureEvents(state, now = Date.now()) {
       );
     }
 
-    // Командные созвоны — время команда выбирает сама
+    // Командные созвоны: вторая и четвёртая пятница месяца, время меняется голосованием
     for (const team of state.teams) {
+      const plan = callPlan(team);
+      const at = weekdayAt(w, plan.weekday, plan.hour, plan.minute);
+      if (!isCallWeek(at)) continue;
       push(
-        makeEvent(`team-${team.id}`, weekdayAt(w, 1, 20), {
+        makeEvent(`team-${team.id}`, at, {
           title: 'Командный созвон',
-          topic: 'Недельный статус команды',
+          topic: 'Статус команды за две недели',
           description: 'Что сделали, что не получилось, что дальше.',
-          agenda: ['Что сделали за неделю', 'Где застряли', 'План на следующую неделю'],
+          agenda: ['Что сделали с прошлого созвона', 'Где застряли', 'План до следующего'],
           type: 'team',
           teamId: team.id,
-          flexible: true,
           joinUrl: 'https://meet.google.com/iai-club-team',
-          duration: 60,
+          duration: plan.duration,
         })
       );
     }

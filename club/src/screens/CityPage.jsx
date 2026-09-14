@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { chatKey, cityStats, nextFridayEvent } from '../lib/logic.js';
+import { chatKey, cityStats, matchPercent, nextFridayEvent, unreadIn } from '../lib/logic.js';
 import { dateShort } from '../lib/time.js';
-import { Avatar, Btn, Card, Empty, List, Item, Note, Section, Sheet, Stat, TopBar } from '../components/UI.jsx';
+import { Avatar, Btn, Card, Empty, List, Item, Note, Section, Sheet, Stat, Tag, TopBar } from '../components/UI.jsx';
 import EventCard from '../components/EventCard.jsx';
 
 /* Город: двое участников — уже чат и пятница. Дальше они договариваются сами. */
@@ -18,16 +18,31 @@ export default function CityPage({ id, now }) {
   const friday = nextFridayEvent(state, id, now);
   const offer = stats.city.organizerOfferTo === me.id && !stats.city.organizerId;
   const proposals = state.proposals.filter((p) => p.cityId === id).slice(-5).reverse();
+  const unread = unreadIn(state, chatKey('city', [id]), me.id);
+  // Свои сверху, дальше по совпадению: в городе интереснее близкие по духу
+  const members = stats.members
+    .map((u) => ({ u, percent: matchPercent(me, u) }))
+    .sort((a, b) => (b.u.id === stats.city.organizerId) - (a.u.id === stats.city.organizerId) || b.percent - a.percent);
 
   return (
     <div className="screen" style={{ paddingTop: 0 }}>
-      <TopBar title={stats.city.name} sub={me.cityId === id ? 'Ваш город' : 'Город клуба'} />
+      <TopBar title={stats.city.name} sub={me.cityId === id ? 'Ваш город' : 'Город клуба'} backTo="/communities" />
       <div className="stack-20">
         <div className="stats">
           <Stat v={stats.count} l="участников" />
-          <Stat v={stats.organizer ? stats.organizer.name.split(' ')[0] : '—'} l="организатор" />
+          <Stat v={stats.organizer ? stats.organizer.name.split(' ')[0] : '—'} l="хранитель" />
           <Stat v={friday ? dateShort(friday.startsAt).split(' ')[0] : '—'} l={friday ? dateShort(friday.startsAt).split(' ')[1] : 'ближайшая'} />
         </div>
+
+        {/* Чат города — то же сообщество, только со своей пятницей */}
+        {stats.ready && (
+          <div className="pair">
+            <Btn variant="accent" icon="message" onClick={() => go(`/chat/${encodeURIComponent(chatKey('city', [id]))}`)}>
+              Чат города{unread > 0 ? ` · ${unread}` : ''}
+            </Btn>
+            <Btn variant="ghost" icon="pin" onClick={() => setPropose(true)}>Предложить место</Btn>
+          </div>
+        )}
 
         {!stats.ready && (
           <Card>
@@ -61,10 +76,6 @@ export default function CityPage({ id, now }) {
           </Note>
         )}
 
-        {stats.ready && (
-          <Btn variant="ghost" wide icon="message" onClick={() => go(`/chat/${encodeURIComponent(chatKey('city', [id]))}`)}>Чат города</Btn>
-        )}
-
         {proposals.length > 0 && (
           <Section title="Предложения">
             <List>
@@ -76,10 +87,19 @@ export default function CityPage({ id, now }) {
           </Section>
         )}
 
-        <Section title={`Участники · ${stats.count}`}>
+        <Section title={`Участники · ${stats.count}`} sub="Сначала те, с кем у вас больше общего">
           <List>
-            {stats.members.map((u) => (
-              <Item key={u.id} lead={<Avatar user={u} size={40} />} title={u.name} sub={u.about} meta={u.id === stats.city.organizerId ? <span className="accent">организатор</span> : undefined} onClick={() => go(`/person/${u.id}`)} />
+            {members.map(({ u, percent }) => (
+              <Item
+                key={u.id}
+                lead={<Avatar user={u} size={44} ring={u.id === stats.city.organizerId ? 'var(--accent)' : undefined} />}
+                title={u.name}
+                sub={`${u.facts?.role?.[0] || u.package.toUpperCase()} · ${u.about}`}
+                meta={u.id === stats.city.organizerId
+                  ? <Tag tone="accent">хранитель</Tag>
+                  : u.id !== me.id ? <span className="t-xs dim-2">{percent}%</span> : <Tag>вы</Tag>}
+                onClick={() => go(`/person/${u.id}`)}
+              />
             ))}
           </List>
         </Section>

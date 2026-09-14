@@ -527,18 +527,20 @@ select.field { background-image: linear-gradient(45deg, transparent 50%, var(--i
 .spark__l { font-size: 10px; color: var(--ink-4); font-weight: 600; }
 
 /* --- карточки людей -------------------------------------------------------- */
-.people { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.pcard { position: relative; display: grid; gap: 8px; padding: 14px 12px 12px; border-radius: var(--r-md); background: var(--surface); text-align: center; justify-items: center; transition: 0.14s; }
-.pcard:active { transform: scale(0.97); background: var(--surface-2); }
-.pcard__name { font-size: 14.5px; font-weight: 700; line-height: 1.2; }
-.pcard__role { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); }
-.pcard__line { font-size: 11.5px; line-height: 1.35; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.pcard__pct { position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; gap: 3px; padding: 3px 7px; border-radius: 999px; background: var(--surface-2); color: var(--ink-3); font-size: 10.5px; font-weight: 800; }
-/* Сильное совпадение видно с первого взгляда — к таким людям и идут первыми */
-.pcard--strong { background: var(--accent-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent); }
-.pcard--strong .pcard__pct { background: var(--accent); color: #0d1512; }
-.pcard--strong .pcard__name { color: var(--accent); }
-.pcard__tags { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+/* Крупная карточка человека: фото, теги и дело — всё, чтобы решить,
+   писать ли, не открывая страницу */
+.big { display: block; width: 100%; padding: 14px; border-radius: var(--r-md); background: var(--surface); text-align: left; transition: 0.14s; }
+.big:active { transform: scale(0.99); background: var(--surface-2); }
+.big__top { display: flex; gap: 14px; align-items: flex-start; }
+.big__photo { width: 84px; height: 84px; flex: none; border-radius: 26px; object-fit: cover; display: block; }
+.big__name { font-size: 16.5px; font-weight: 800; letter-spacing: -0.01em; }
+.big__pct { flex: none; display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-3); font-size: 11px; font-weight: 800; }
+.big__pct--on { background: var(--accent); color: var(--accent-ink); }
+.big__role { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); margin-top: 4px; }
+.big__line { font-size: 13.5px; line-height: 1.4; color: var(--ink-2); margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.big--strong { background: var(--accent-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 32%, transparent); }
+.big--strong .big__name { color: var(--accent); }
+
 
 /* --- лента ---------------------------------------------------------------- */
 .post { border-radius: var(--r-md); background: var(--surface); overflow: hidden; }
@@ -597,6 +599,10 @@ select.field { background-image: linear-gradient(45deg, transparent 50%, var(--i
 .agenda { display: grid; gap: 12px; }
 .agenda li { display: flex; gap: 11px; align-items: flex-start; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
 .agenda__n { flex: none; width: 22px; height: 22px; border-radius: 8px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-size: 11.5px; font-weight: 800; margin-top: 1px; }
+
+/* Кнопка-переход «все команды» — как архив в событиях */
+.allbtn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 11px; background: var(--surface); color: var(--ink-2); font-size: 12.5px; font-weight: 700; transition: 0.14s; }
+.allbtn:active { transform: scale(0.96); background: var(--surface-2); }
 
 /* --- сообщества ------------------------------------------------------------- */
 .com { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: var(--r-md); background: var(--surface); text-align: left; transition: 0.14s; }

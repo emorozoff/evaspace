@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { cityName, matchPercent, meetsFor, MATCH_STRONG } from '../lib/logic.js';
+import { cityName, matchPercent, meetPhotos, meetsFor, MATCH_STRONG } from '../lib/logic.js';
 import { weekKey, plural } from '../lib/time.js';
 import { Avatar, Btn, Empty, Seg, Sheet, Tag, Top } from '../components/UI.jsx';
 import { FeedList, PostForm } from './Feed.jsx';
@@ -77,25 +77,33 @@ export default function People({ now }) {
       {list.length === 0 ? (
         <Empty icon="people" title="Никого не нашлось" text="Попробуйте другую сортировку." />
       ) : (
-        <div className="people">
-          {list.map(({ u, percent }) => (
-            <button key={u.id} className={`pcard${percent >= MATCH_STRONG ? ' pcard--strong' : ''}`} onClick={() => go(`/person/${u.id}`)}>
-              <span className="pcard__pct"><Icon name="spark" size={10} /> {percent}%</span>
-              <Avatar user={u} size={64} radius={0.3} ring={percent >= MATCH_STRONG ? 'var(--accent)' : undefined} />
-              <div>
-                <div className="pcard__name">{u.name}</div>
-                <div className="pcard__role" style={{ marginTop: 3 }}>{u.facts?.role?.[0] || u.package.toUpperCase()}</div>
-              </div>
-              <div className="pcard__line">{u.about}</div>
-              <div className="pcard__tags">
-                <Tag>{cityName(state, u.cityId)}</Tag>
-                {u.facts?.sphere?.[0] && <Tag>{u.facts.sphere[0]}</Tag>}
-                {(u.facts?.hobby || []).slice(0, 1).map((h) => (
-                  <Tag key={h} tone={(me.facts?.hobby || []).includes(h) ? 'accent' : undefined}>{h}</Tag>
-                ))}
-              </div>
-            </button>
-          ))}
+        <div className="stack">
+          {list.map(({ u, percent }) => {
+            const photo = meetPhotos(u)[0];
+            const strong = percent >= MATCH_STRONG;
+            const tags = [u.facts?.role?.[0], u.facts?.sphere?.[0], ...(u.facts?.hobby || []).slice(0, 3)].filter(Boolean);
+            return (
+              <button key={u.id} className={`big${strong ? ' big--strong' : ''}`} onClick={() => go(`/person/${u.id}`)}>
+                <div className="big__top">
+                  {photo ? <img className="big__photo" src={photo} alt="" loading="lazy" /> : <Avatar user={u} size={84} radius={0.3} />}
+                  <div className="grow" style={{ minWidth: 0 }}>
+                    <div className="row" style={{ gap: 8 }}>
+                      <span className="big__name ell">{u.name}</span>
+                      <span className={`big__pct${strong ? ' big__pct--on' : ''}`}><Icon name="spark" size={11} /> {percent}%</span>
+                    </div>
+                    <div className="big__role">{u.facts?.role?.join(', ') || u.package.toUpperCase()}</div>
+                    <div className="big__line">{u.about}</div>
+                    <div className="t-xs dim-2" style={{ marginTop: 6 }}>{cityName(state, u.cityId)}</div>
+                  </div>
+                </div>
+                <div className="wrap" style={{ marginTop: 12 }}>
+                  {tags.map((t) => (
+                    <Tag key={t} tone={(me.facts?.hobby || []).includes(t) || (me.facts?.role || []).includes(t) ? 'accent' : undefined}>{t}</Tag>
+                  ))}
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
       </>

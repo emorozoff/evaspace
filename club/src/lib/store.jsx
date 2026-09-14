@@ -8,6 +8,10 @@ import {
   buildNotifications,
   canPin,
   communityById,
+  matchPercent,
+  userById,
+  voteSummary,
+  voteTally,
   greetInChats,
   MAX_PINNED,
   MEET_PHOTOS,
@@ -73,6 +77,51 @@ function save(state) {
   } catch {
     /* приватный режим — молча продолжаем */
   }
+}
+
+/** Уведомление всей команде: в личные уведомления и в общий чат. */
+function notifyTeam(state, team, from, title, text, to, now) {
+  const roster = state.members.filter((m) => m.teamId === team.id);
+  const key = `vote-${team.id}-${now}`;
+  return {
+    ...state,
+    notes: [...state.notes, ...roster.map((m) => note(`${key}-${m.userId}`, m.userId, title, text, to, now))],
+    messages: [...state.messages, { id: uid('ms'), chat: chatKey('team', [team.id]), userId: 'system', text: `${title}. ${from.name}: ${text}`, at: now }],
+  };
+}
+
+/**
+ * Проверяем голосование после каждого голоса. Единогласно «за» — решение
+ * применяется; хотя бы один «против» — предложение закрывается.
+ */
+function settleVote(state, voteId, now) {
+  const vote = state.votes.find((v) => v.id === voteId);
+  if (!vote || vote.status !== 'open') return state;
+  const tally = voteTally(state, vote);
+  const team = state.teams.find((t) => t.id === vote.teamId);
+  if (!team) return state;
+  const author = me(state) || { name: 'Участник' };
+
+  if (tally.no.length > 0) {
+    const closed = { ...state, votes: state.votes.map((v) => (v.id === voteId ? { ...v, status: 'failed' } : v)) };
+    return notifyTeam(closed, team, author, 'Предложение не прошло', `«${voteSummary(vote)}» — кто-то из команды против. Решения принимаются единогласно.`, '/team', now);
+  }
+  if (!tally.done) return state;
+
+  let next = {
+    ...state,
+    votes: state.votes.map((v) => (v.id === voteId ? { ...v, status: 'passed' } : v)),
+  };
+  if (vote.kind === 'goal') {
+    next = { ...next, teams: next.teams.map((t) => (t.id === team.id ? { ...t, goal: vote.proposal.goal } : t)) };
+  } else {
+    // Меняем расписание и пересобираем будущие созвоны под новое время
+    next = { ...next, teams: next.teams.map((t) => (t.id === team.id ? { ...t, call: vote.proposal } : t)) };
+    next = { ...next, events: next.events.filter((e) => !(e.teamId === team.id && e.type === 'team' && e.startsAt > now)) };
+    next = { ...next, events: [...next.events, ...ensureEvents(next, now)] };
+  }
+  const what = vote.kind === 'goal' ? 'Цель команды изменилась' : 'Время созвона изменилось';
+  return notifyTeam(next, team, author, what, `Команда согласилась единогласно: ${voteSummary(vote)}.`, '/team', now);
 }
 
 /** Баллы за активность: копятся у участника и видны в профиле. */
@@ -216,6 +265,47 @@ function reducer(state, action) {
 
     case 'postReplyDelete':
       return { ...state, postReplies: (state.postReplies || []).filter((r) => r.id !== action.id) };
+
+    /* ---------- голосования команды ---------- */
+
+    /** Предложение выносится на голосование. Голос автора сразу «за». */
+    case 'voteStart': {
+      if (!user) return state;
+      const team = state.teams.find((t) => t.id === action.teamId);
+      if (!team) return state;
+      const vote = {
+        id: uid('vt'),
+        teamId: team.id,
+        kind: action.kind,
+        proposal: action.proposal,
+        byId: user.id,
+        at: now,
+        votes: { [user.id]: 'yes' },
+        status: 'open',
+      };
+      const title = action.kind === 'goal' ? 'Предложена новая цель' : 'Предложено новое время созвона';
+      let next = { ...state, votes: [...(state.votes || []), vote] };
+      next = notifyTeam(next, team, user, title, `${user.name} предлагает: ${voteSummary(vote)}. Решение принимается единогласно.`, '/team', now);
+      // Голос автора может оказаться единственным — тогда решение сразу принято
+      return withToast(settleVote(next, vote.id, now), 'Отправили команде на голосование');
+    }
+
+    case 'voteCast': {
+      if (!user) return state;
+      const vote = (state.votes || []).find((v) => v.id === action.id);
+      if (!vote || vote.status !== 'open') return state;
+      const next = {
+        ...state,
+        votes: state.votes.map((v) => (v.id === vote.id ? { ...v, votes: { ...v.votes, [user.id]: action.yes ? 'yes' : 'no' } } : v)),
+      };
+      return withToast(settleVote(next, vote.id, now), action.yes ? 'Голос «за» учтён' : 'Голос «против» учтён');
+    }
+
+    case 'voteCancel': {
+      const vote = (state.votes || []).find((v) => v.id === action.id);
+      if (!vote || vote.byId !== user?.id) return state;
+      return withToast({ ...state, votes: state.votes.filter((v) => v.id !== action.id) }, 'Предложение снято');
+    }
 
     /* ---------- сообщества ---------- */
 
@@ -554,6 +644,81 @@ function reducer(state, action) {
           ],
         },
         'Метч! Чат уже открыт'
+      );
+    }
+
+    /**
+     * Предложить знакомство напрямую, не дожидаясь недельной подборки.
+     * Получателю приходит уведомление и карточка с двумя ответами.
+     */
+    case 'meetOffer': {
+      if (!user || action.toId === user.id) return state;
+      const already = (state.meetOffers || []).some(
+        (o) => o.fromId === user.id && o.toId === action.toId && o.status !== 'declined'
+      );
+      if (already) return withToast(state, 'Предложение уже отправлено');
+      const to = userById(state, action.toId);
+      const offer = { id: uid('of'), fromId: user.id, toId: action.toId, at: now, status: 'new' };
+      return withToast(
+        {
+          ...state,
+          meetOffers: [...(state.meetOffers || []), offer],
+          notes: [
+            ...state.notes,
+            note(`offer-${offer.id}`, action.toId, 'Вам предложили знакомство', `${user.name} хочет познакомиться. Принять или отложить — решать вам.`, `/person/${user.id}`, now),
+          ],
+        },
+        `Предложение ушло ${to?.name.split(' ')[0] || 'участнику'}`
+      );
+    }
+
+    case 'meetOfferAnswer': {
+      const offer = (state.meetOffers || []).find((o) => o.id === action.id);
+      if (!offer || !user || offer.toId !== user.id) return state;
+      if (!action.accept) {
+        return withToast(
+          { ...state, meetOffers: state.meetOffers.map((o) => (o.id === offer.id ? { ...o, status: 'later', at: now } : o)) },
+          'Отложили — предложение вернётся через неделю'
+        );
+      }
+
+      // Принято — это тот же метч: общий чат, баллы обоим, уведомления
+      const chat = chatKey('dm', [offer.fromId, offer.toId]);
+      const from = userById(state, offer.fromId);
+      const week = weekKey(now);
+      const exists = state.meets.find(
+        (m) => m.week === week && [m.a, m.b].includes(offer.fromId) && [m.a, m.b].includes(offer.toId)
+      );
+      const percent = exists?.percent ?? matchPercent(from, user);
+      const meet = exists
+        ? { ...exists, status: 'matched', likedBy: [offer.fromId, offer.toId] }
+        : {
+            id: uid('mt'),
+            week,
+            a: offer.fromId,
+            b: offer.toId,
+            percent,
+            online: from?.cityId !== user.cityId,
+            status: 'matched',
+            likedBy: [offer.fromId, offer.toId],
+            at: now,
+          };
+      const rewarded = award(award(state, offer.fromId, 'match'), offer.toId, 'match');
+      return withToast(
+        {
+          ...rewarded,
+          meetOffers: rewarded.meetOffers.map((o) => (o.id === offer.id ? { ...o, status: 'accepted', at: now } : o)),
+          meets: exists ? rewarded.meets.map((m) => (m.id === exists.id ? meet : m)) : [...rewarded.meets, meet],
+          messages: [
+            ...rewarded.messages,
+            { id: uid('ms'), chat, userId: 'system', text: `Знакомство принято: совпадение интересов ${percent}%. Договоритесь, где и когда.`, at: now },
+          ],
+          notes: [
+            ...rewarded.notes,
+            note(`offer-ok-${offer.id}`, offer.fromId, 'Знакомство принято', `${user.name} согласился познакомиться. Чат уже открыт.`, `/chat/${chat}`, now),
+          ],
+        },
+        'Чат открыт'
       );
     }
 

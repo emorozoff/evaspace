@@ -392,6 +392,8 @@ export function buildSeed(now = Date.now()) {
     pinned: ['m1', 'm2'],
     terms: [],
     prompts: [],
+    votes: [],
+    meetOffers: [],
     pins: {},
     postReplies: [],
     communityMembers: [],

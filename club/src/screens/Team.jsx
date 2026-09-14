@@ -4,11 +4,12 @@ import { go } from '../lib/router.jsx';
 import {
   teamOf, teamRoster, teamStats, teamPlace, lastReport, applicationOf, isPro, awardOf,
   MIN_TEAM, MAX_TEAM, TEAM_ROLES, TEAM_AIMS, TEAM_FIELDS, TEAM_TITLES, titleOf, invitableUsers, invitesFrom,
-  attendanceOf, userById, cityName, chatKey, unreadIn,
+  attendanceOf, userById, cityName, chatKey, unreadIn, votesOf, openVotes, voteTally, voteSummary, VOTE_KINDS,
 } from '../lib/logic.js';
+import { callLabel, callPlan } from '../lib/events.js';
 import { weekKey, dateShort, startOfWeek, weekTitle, relative, WEEK } from '../lib/time.js';
 import { money, moneyShort } from '../lib/format.js';
-import { Avatar, Btn, Card, Empty, Field, List, Item, Note, Search, Section, Sheet, Top, Tag } from '../components/UI.jsx';
+import { Avatar, AvatarStack, Btn, Card, Empty, Field, List, Item, Note, Search, Section, Seg, Sheet, Top, Tag } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 import TeamAvatar from '../components/TeamAvatar.jsx';
 import TeamCover, { COVERS } from '../components/TeamCover.jsx';
@@ -19,9 +20,12 @@ import { STEPS } from '../data/onboarding.js';
 
 const ROLE_ICON = Object.fromEntries(STEPS[1].questions[1].options.map((o) => [o.id, o.icon]));
 
-export default function Team({ now }) {
+export default function Team({ id, now }) {
   const { state, me } = useStore();
-  const team = teamOf(state, me.id);
+  const mine = teamOf(state, me.id);
+  // По id открывается чужая команда — из списка всех команд или из рейтинга
+  const team = id ? state.teams.find((t) => t.id === id) || null : mine;
+  if (id === 'all') return <AllTeams now={now} />;
 
   if (!isPro(me)) {
     return (
@@ -31,8 +35,9 @@ export default function Team({ now }) {
       </div>
     );
   }
+  if (id && !team) return <div className="screen stack-20"><Top title="Команда" back backTo="/team" /><Empty icon="team" title="Команда не найдена" /></div>;
   if (!team) return <Waiting now={now} />;
-  return <TeamScreen team={team} now={now} />;
+  return <TeamScreen key={team.id} team={team} mine={mine?.id === team.id} now={now} />;
 }
 
 /* ---------- без команды ---------- */
@@ -112,8 +117,50 @@ function Waiting({ now }) {
   );
 }
 
+/* ---------- все команды сезона ---------- */
+function AllTeams({ now }) {
+  const { state, me } = useStore();
+  const mine = teamOf(state, me.id);
+  return (
+    <div className="screen stack-20">
+      <Top title="Команды сезона" sub={`${state.teams.length} команд`} back backTo={mine ? '/team' : '/'} />
+      <div className="stack-8">
+        {state.teams.map((t) => {
+          const roster = teamRoster(state, t.id);
+          const stats = teamStats(state, t.id, now);
+          const place = teamPlace(state, t.id);
+          return (
+            <button key={t.id} className="card tap" onClick={() => go(`/team/${t.id}`)}>
+              <div className="row">
+                <TeamAvatar team={t} size={46} />
+                <div className="grow" style={{ minWidth: 0 }}>
+                  <div className="row" style={{ gap: 6 }}>
+                    <span className="t-md ell">{t.name}</span>
+                    {mine?.id === t.id && <Tag tone="accent">ваша</Tag>}
+                  </div>
+                  <div className="t-xs dim-2 ell" style={{ marginTop: 2 }}>{t.goal || t.idea}</div>
+                </div>
+                {place && (
+                  <span className="award" style={{ background: `${awardOf(place).tone}22` }}>
+                    <Icon name={awardOf(place).icon} size={19} color={awardOf(place).tone} />
+                    <span className="award__n">{place}</span>
+                  </span>
+                )}
+              </div>
+              <div className="row" style={{ gap: 10, marginTop: 10 }}>
+                <AvatarStack users={roster.map((r) => r.user)} max={5} size={24} />
+                <span className="t-xs dim-2">{roster.length} чел. · {moneyShort(stats.total)} · {stats.activity}% актив.</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ---------- экран команды ---------- */
-function TeamScreen({ team, now }) {
+function TeamScreen({ team, mine, now }) {
   const { state, me, dispatch } = useStore();
   const roster = teamRoster(state, team.id);
   const stats = teamStats(state, team.id, now);
@@ -121,19 +168,36 @@ function TeamScreen({ team, now }) {
   const award = place ? awardOf(place) : null;
   const report = lastReport(state, team.id);
   const [sheet, setSheet] = useState(null);
+  const [tab, setTab] = useState('team');
   const isCaptain = team.captainId === me.id;
+  const inTeam = roster.some((m) => m.userId === me.id);
   const pending = invitesFrom(state, team.id);
   const chat = chatKey('team', [team.id]);
   const unread = unreadIn(state, chat, me.id);
+  const open = openVotes(state, team.id);
   const call = state.events
     .filter((e) => e.teamId === team.id && !e.canceled && e.startsAt > now - 2 * 3600 * 1000)
     .sort((a, b) => a.startsAt - b.startsAt)[0];
 
   return (
     <div className="screen stack-20">
+      {/* Своя команда сверху, рядом вход во все команды сезона */}
+      <div className="spread" style={{ padding: '2px 2px 0' }}>
+        {mine ? (
+          <span className="t-xs dim-2">Ваша команда</span>
+        ) : (
+          <button className="backbtn" style={{ height: 32 }} onClick={() => go('/team')}>
+            <Icon name="back" size={16} /><span>Моя команда</span>
+          </button>
+        )}
+        <button className="allbtn" onClick={() => go('/team/all')}>
+          <Icon name="grid" size={15} /><span>Все команды</span>
+        </button>
+      </div>
+
       {/* Обложка — лицо команды, её меняет капитан */}
       <TeamCover team={team} height={150}>
-        {isCaptain && (
+        {isCaptain && mine && (
           <button className="iconbtn tcover__edit" onClick={() => setSheet('cover')} aria-label="Сменить обложку"><Icon name="edit" size={16} /></button>
         )}
         <div className="tcover__body">
@@ -151,6 +215,21 @@ function TeamScreen({ team, now }) {
         </div>
       </TeamCover>
 
+      {inTeam && (
+        <Seg
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'team', label: 'Команда' },
+            { value: 'votes', label: open.length ? `Голосования · ${open.length}` : 'Голосования' },
+          ]}
+        />
+      )}
+
+      {tab === 'votes' ? (
+        <Votes team={team} now={now} />
+      ) : (
+      <>
       {/* Чат и созвон — первое, что нужно каждый день */}
       <div className="pair">
         <Btn variant="ghost" icon="message" onClick={() => go(`/chat/${encodeURIComponent(chat)}`)}>
@@ -158,6 +237,16 @@ function TeamScreen({ team, now }) {
         </Btn>
         <Btn variant="ghost" icon="calendar" onClick={() => call && go(`/event/${call.id}`)} disabled={!call}>Созвон</Btn>
       </div>
+
+      {/* Расписание созвонов меняется голосованием, а не решением капитана */}
+      <button className="card tap row" onClick={() => inTeam && setSheet('call')}>
+        <div className="item__ic"><Icon name="calendar" size={19} /></div>
+        <div className="grow" style={{ minWidth: 0 }}>
+          <div className="t-xs dim-2">Созвон команды</div>
+          <div className="t-md" style={{ lineHeight: 1.3 }}>{callLabel(team)}</div>
+        </div>
+        {inTeam && <span className="t-xs accent" style={{ fontWeight: 700 }}>изменить</span>}
+      </button>
 
       {/* Выручка: одна плашка, подробности — по нажатию */}
       <button className="card tap" onClick={() => setSheet('money')}>
@@ -176,12 +265,22 @@ function TeamScreen({ team, now }) {
 
       {roster.length < MIN_TEAM && <Note icon="team" tone="var(--warm)">В команде меньше {MIN_TEAM} человек — в рейтинг она пока не попадает. ИИ-куратор доберёт людей из новых заявок.</Note>}
 
-      <Section title="Цель сезона" more={isCaptain ? 'Изменить' : undefined} onMore={() => setSheet('goal')}>
+      <Section title="Цель команды на сезон">
         <Card variant="violet">
           <div className="row-t">
             <div className="item__ic" style={{ color: 'var(--violet)' }}><Icon name="target" size={19} /></div>
             <div className="grow t-md" style={{ lineHeight: 1.4 }}>{team.goal || 'Цель ещё не записана'}</div>
+            {inTeam && (
+              <button className="iconbtn" style={{ width: 32, height: 32 }} onClick={() => setSheet('goal')} aria-label="Предложить цель">
+                <Icon name="edit" size={15} />
+              </button>
+            )}
           </div>
+          {inTeam && (
+            <div className="t-xs dim-2" style={{ marginTop: 10, lineHeight: 1.5 }}>
+              Цель меняет вся команда: любой предлагает свою, она уходит на голосование и меняется только при единогласном «за».
+            </div>
+          )}
         </Card>
       </Section>
 
@@ -232,6 +331,9 @@ function TeamScreen({ team, now }) {
         )}
       </Section>
 
+      </>
+      )}
+
       {sheet === 'money' && <MoneySheet team={team} stats={stats} now={now} onClose={() => setSheet(null)} onAdd={() => setSheet('revenue')} onPay={() => setSheet('contribution')} onEdit={(entry) => setSheet({ edit: entry })} />}
       {sheet === 'revenue' && <RevenueSheet open teamId={team.id} onClose={() => setSheet(null)} />}
       {sheet?.edit && <RevenueSheet open teamId={team.id} entry={sheet.edit} onClose={() => setSheet(null)} />}
@@ -239,8 +341,11 @@ function TeamScreen({ team, now }) {
       <Sheet open={sheet === 'report'} onClose={() => setSheet(null)} title="Недельный отчёт" sub="Три строки, честно">
         <ReportForm teamId={team.id} report={report} onDone={() => setSheet(null)} />
       </Sheet>
-      <Sheet open={sheet === 'goal'} onClose={() => setSheet(null)} title="Цель сезона" sub="Одна строка, к которой идёте все вместе">
-        <GoalForm team={team} onDone={() => setSheet(null)} />
+      <Sheet open={sheet === 'goal'} onClose={() => setSheet(null)} title="Предложить цель" sub="Команда решает единогласно">
+        {sheet === 'goal' && <GoalForm team={team} onDone={() => { setSheet(null); setTab('votes'); }} />}
+      </Sheet>
+      <Sheet open={sheet === 'call'} onClose={() => setSheet(null)} title="Время созвона" sub="Новое время утверждает вся команда">
+        {sheet === 'call' && <CallForm team={team} onDone={() => { setSheet(null); setTab('votes'); }} />}
       </Sheet>
       <Sheet open={sheet === 'cover'} onClose={() => setSheet(null)} title="Обложка команды" sub="Видна всем в клубе">
         <div className="stack">
@@ -376,13 +481,169 @@ function InviteForm({ team, onDone }) {
   );
 }
 
+/* ---------- голосования команды ---------- */
+
+/** Единогласно — значит каждый видит, чей голос ещё не пришёл. */
+function Votes({ team, now }) {
+  const { state, me, dispatch } = useStore();
+  const open = openVotes(state, team.id);
+  const closed = [...votesOf(state, team.id, 'passed'), ...votesOf(state, team.id, 'failed')].sort((a, b) => b.at - a.at).slice(0, 6);
+
+  return (
+    <div className="stack-20">
+      {open.length === 0 ? (
+        <Empty
+          icon="hand"
+          title="Открытых голосований нет"
+          text="Предложите новую цель команды или другое время созвона — предложение уйдёт всем сразу."
+        />
+      ) : (
+        <div className="stack-8">
+          {open.map((vote) => {
+            const tally = voteTally(state, vote);
+            const author = userById(state, vote.byId);
+            const my = vote.votes[me.id];
+            return (
+              <Card key={vote.id}>
+                <div className="row">
+                  <div className="item__ic"><Icon name={VOTE_KINDS[vote.kind].icon} size={19} /></div>
+                  <div className="grow" style={{ minWidth: 0 }}>
+                    <div className="t-xs dim-2">{VOTE_KINDS[vote.kind].title} · предложил {author?.name.split(' ')[0]}</div>
+                    <div className="t-md" style={{ marginTop: 2, lineHeight: 1.35 }}>{voteSummary(vote)}</div>
+                  </div>
+                  <Tag tone="warm">{tally.yes.length} из {tally.need}</Tag>
+                </div>
+
+                <div className="row" style={{ gap: 8, marginTop: 12 }}>
+                  <AvatarStack users={tally.yes.map((m) => m.user)} max={6} size={26} />
+                  <span className="t-xs dim-2 grow">
+                    {tally.waiting.length ? `ждём: ${tally.waiting.map((m) => m.user.name.split(' ')[0]).join(', ')}` : 'все проголосовали'}
+                  </span>
+                </div>
+
+                {my ? (
+                  <div className="t-sm dim" style={{ marginTop: 12 }}>
+                    Ваш голос: <b className={my === 'yes' ? 'accent' : 'red'}>{my === 'yes' ? 'за' : 'против'}</b>
+                    {vote.byId === me.id && (
+                      <>
+                        {' · '}
+                        <button className="t-xs dim-2" onClick={() => dispatch({ type: 'voteCancel', id: vote.id })}>снять предложение</button>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="pair" style={{ marginTop: 12 }}>
+                    <Btn variant="accent" size="sm" icon="check" onClick={() => dispatch({ type: 'voteCast', id: vote.id, yes: true })}>За</Btn>
+                    <Btn variant="quiet" size="sm" onClick={() => dispatch({ type: 'voteCast', id: vote.id, yes: false })}>Против</Btn>
+                  </div>
+                )}
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <Note icon="hand">
+        Решение принимается только единогласно: один голос «против» закрывает предложение. Так никто не остаётся
+        с целью или временем, которые ему не подходят.
+      </Note>
+
+      {closed.length > 0 && (
+        <Section title="Уже решили">
+          <List>
+            {closed.map((vote) => (
+              <Item
+                key={vote.id}
+                icon={VOTE_KINDS[vote.kind].icon}
+                title={voteSummary(vote)}
+                sub={`${VOTE_KINDS[vote.kind].title} · ${relative(vote.at, now)}`}
+                meta={<Tag tone={vote.status === 'passed' ? 'accent' : undefined}>{vote.status === 'passed' ? 'принято' : 'не прошло'}</Tag>}
+                chev={false}
+              />
+            ))}
+          </List>
+        </Section>
+      )}
+    </div>
+  );
+}
+
 function GoalForm({ team, onDone }) {
-  const { dispatch } = useStore();
+  const { state, me, dispatch } = useStore();
   const [goal, setGoal] = useState(team.goal || '');
+  const alone = teamRoster(state, team.id).length <= 1;
   return (
     <div className="stack">
-      <Field label="Цель сезона"><textarea className="field" placeholder="Дойти до миллиона выручки и нанять первого сотрудника" value={goal} onChange={(e) => setGoal(e.target.value)} /></Field>
-      <Btn variant="accent" wide disabled={goal.trim().length < 5} onClick={() => { dispatch({ type: 'teamPatch', teamId: team.id, patch: { goal } }); onDone(); }}>Сохранить</Btn>
+      <Field label="Цель команды на сезон" hint="Одна строка, к которой идёте все вместе">
+        <textarea className="field" placeholder="Дойти до миллиона выручки и нанять первого сотрудника" value={goal} onChange={(e) => setGoal(e.target.value)} />
+      </Field>
+      <Note icon="hand">
+        {alone
+          ? 'Вы пока одни в команде — цель применится сразу.'
+          : 'Предложение уйдёт всем в команде. Цель поменяется, только если все ответят «за».'}
+      </Note>
+      <Btn
+        variant="accent"
+        wide
+        disabled={goal.trim().length < 5 || goal.trim() === (team.goal || '').trim()}
+        onClick={() => { dispatch({ type: 'voteStart', teamId: team.id, kind: 'goal', proposal: { goal: goal.trim() } }); onDone(); }}
+      >
+        {alone ? 'Записать цель' : 'Отправить на голосование'}
+      </Btn>
+      {me.id === team.captainId && !alone && (
+        <div className="t-xs dim-2 center">Капитан предлагает так же, как все: команда решает вместе.</div>
+      )}
+    </div>
+  );
+}
+
+const WEEKDAY_OPTIONS = [
+  { id: 1, label: 'Пн' }, { id: 2, label: 'Вт' }, { id: 3, label: 'Ср' }, { id: 4, label: 'Чт' },
+  { id: 5, label: 'Пт' }, { id: 6, label: 'Сб' }, { id: 7, label: 'Вс' },
+];
+const HOUR_OPTIONS = [9, 11, 13, 15, 17, 18, 19, 20, 21];
+
+/** Новое время созвона: день недели и час, дальше решает команда. */
+function CallForm({ team, onDone }) {
+  const { state, dispatch } = useStore();
+  const plan = callPlan(team);
+  const [weekday, setWeekday] = useState(plan.weekday);
+  const [hour, setHour] = useState(plan.hour);
+  const [minute, setMinute] = useState(plan.minute);
+  const alone = teamRoster(state, team.id).length <= 1;
+  const same = weekday === plan.weekday && hour === plan.hour && minute === plan.minute;
+
+  return (
+    <div className="stack">
+      <Note icon="calendar">Сейчас: {callLabel(team)}. Созвон всегда раз в две недели — меняются только день и время.</Note>
+
+      <Field label="День недели">
+        <div className="wrap">
+          {WEEKDAY_OPTIONS.map((d) => (
+            <button key={d.id} className={`chip${weekday === d.id ? ' chip--on' : ''}`} onClick={() => setWeekday(d.id)}>{d.label}</button>
+          ))}
+        </div>
+      </Field>
+
+      <Field label="Начало">
+        <div className="wrap">
+          {HOUR_OPTIONS.map((h) => (
+            <button key={h} className={`chip${hour === h && minute === 0 ? ' chip--on' : ''}`} onClick={() => { setHour(h); setMinute(0); }}>
+              {String(h).padStart(2, '0')}:00
+            </button>
+          ))}
+          <button className={`chip${minute === 30 ? ' chip--on' : ''}`} onClick={() => setMinute(minute === 30 ? 0 : 30)}>+30 минут</button>
+        </div>
+      </Field>
+
+      <Btn
+        variant="accent"
+        wide
+        disabled={same}
+        onClick={() => { dispatch({ type: 'voteStart', teamId: team.id, kind: 'call', proposal: { ...plan, weekday, hour, minute } }); onDone(); }}
+      >
+        {alone ? 'Поставить это время' : 'Отправить команде на голосование'}
+      </Btn>
     </div>
   );
 }
