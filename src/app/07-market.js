@@ -517,6 +517,13 @@ function pgSettings(){
         <button class="sw ${S[k]?'on':''}" onclick="toggle('${attJs(k)}')"><i></i></button>
       </div></div>`).join('')}
 
+    ${typeof demoAllowed === 'function' && demoAllowed() ? `<div class="sec-h"><h2 class="serif" style="font-size:18px">Eva V3 Demo</h2></div>
+    <div class="demoset">
+      <b style="font-size:14px">Посмотреть с другой стороны</b>
+      <div class="small muted" style="margin-top:2px">Временный переключатель для проверки: роли настоящие, меняется только сторона показа. Сейчас: ${(DEMO_ROLES.find(x => x[0] === S.role) || DEMO_ROLES[0])[1].toLowerCase()}.</div>
+      <div class="roles">${DEMO_ROLES.map(([k,l]) => `<button class="${S.role===k?'on':''}" onclick="setRole('${attJs(k)}')">${l}</button>`).join('')}</div>
+    </div>` : ''}
+
     <div class="sec-h"><h2 class="serif" style="font-size:18px">Помощь</h2></div>
     <div class="card">
       <button class="uline" style="border:none;padding-top:0;width:100%;text-align:left" onclick="openSheet('support')">
@@ -550,22 +557,25 @@ function addCard(){ toast('Оплата картой подключится по
 function pickAvatar(){
   const mail = S.user && S.user.email;
   if(!mail) return toast('Сначала войди в аккаунт');
-  const key = mailKey(mail);
-  pickImage(key, data => {
-    S.avatar = data;
-    AVATARS[mail.toLowerCase()] = data;
-    render(); schedulePersist();
-    /* когда файл уедет на сервер, подменим на ссылку и раздадим всем */
-    setTimeout(() => {
-      const url = MEDIA[key];
-      if(url && !String(url).startsWith('data:')){
-        AVATARS[mail.toLowerCase()] = url;
-        S.avatar = url;
-        syncPush(['avatars', 'media']);
-        render(); schedulePersist();
-      }
-    }, 2600);
-  });
+  pickImage(mailKey(mail), data => applyAvatar(mail, data), url => applyAvatar(mail, url));
+}
+/* Аватар привязан к почте и живёт в трёх местах: справочник AVATARS (его
+   видят все в лентах и чатах), общий раздел на сервере и сам аккаунт —
+   чтобы при входе с другого телефона фото нашлось даже до первой
+   синхронизации. Пока файл едет на сервер, показываем данные из памяти;
+   когда вернётся ссылка — подменяем и раздаём. Раньше тут стоял таймер
+   на 2,6 секунды, и на медленной связи ссылка просто не успевала. */
+function applyAvatar(mail, src){
+  const key = String(mail || '').toLowerCase();
+  if(!key || !src) return;
+  AVATARS[key] = src; MEDIA[mailKey(key)] = src;
+  if(S.user && String(S.user.email).toLowerCase() === key) S.avatar = src;
+  render(); schedulePersist();
+  if(String(src).startsWith('data:')) return;             // ссылка ещё не готова
+  if(typeof syncPush === 'function') syncPush(['avatars', 'media'], true);
+  const u = DB.find(key);
+  if(u) DB.upsert(Object.assign({}, u, {avatar:src}));   // уедет в аккаунт (user_save)
+  else if(typeof syncUser === 'function') syncUser({email:key, name:S.name, avatar:src});
 }
 function toggle(k){ S[k] = !S[k]; if(k === 'gentle') return gentle(S[k]); render(); schedulePersist(); }
 

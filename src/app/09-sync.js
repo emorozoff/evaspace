@@ -38,9 +38,12 @@ function mirrorUser(u){
     verified: !!u.verified, created: u.created || Date.now(),
     /* доступ, открытый администратором, живёт в аккаунте на сервере */
     gift: !!u.gift, access_until: +u.access_until || 0, trial_days: +u.trial_days || 0,
-    courses: Array.isArray(u.courses) ? u.courses.map(String) : []
+    courses: Array.isArray(u.courses) ? u.courses.map(String) : [],
+    avatar: u.avatar || (all[mail] && all[mail].avatar) || ''
   });
   DB.saveUsers(all);
+  /* фото из аккаунта — в общий справочник: списки и чаты берут его оттуда */
+  if(u.avatar && typeof AVATARS !== 'undefined' && !AVATARS[mail]) AVATARS[mail] = u.avatar;
 }
 
 /* сервер сказал, что токен больше не годится */

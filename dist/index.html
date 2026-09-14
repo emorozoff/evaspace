@@ -280,11 +280,22 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .mini-sel{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);color:#fff;
   border-radius:999px;padding:6px 10px;font-size:11.5px;font-weight:600;max-width:150px}
 .mini-sel option{color:var(--ink)}
-.rolesw{position:fixed;left:50%;transform:translateX(-50%);z-index:80;display:flex;gap:2px;
-  bottom:calc(var(--nav-h) + 4px + env(safe-area-inset-bottom));
-  background:rgba(17,16,20,.9);backdrop-filter:blur(10px);border-radius:999px;padding:3px}
-.rolesw button{padding:5px 10px;border-radius:999px;font-size:10px;font-weight:600;color:rgba(255,255,255,.55)}
-.rolesw button.on{background:rgba(255,255,255,.16);color:#fff}
+/* Eva V3 Demo: временный переключатель ролей (флаг EVA_DEMO в 01-data.js) */
+.demobtn{position:fixed;right:0;top:42%;z-index:80;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:9px 7px 9px 9px;border-radius:12px 0 0 12px;background:#D8213A;color:#fff;
+  box-shadow:0 6px 18px rgba(216,33,58,.38);font-size:9px;line-height:1;letter-spacing:.04em;max-width:66px}
+.demobtn b{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.demobtn span{opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px}
+.demopanel{position:fixed;right:10px;top:calc(42% + 56px);z-index:81;width:256px;background:var(--surface);
+  border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:0 14px 40px rgba(0,0,0,.18)}
+.demopanel button{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:10px;border:1px solid var(--line);margin-top:6px;background:#fff}
+.demopanel button.on{border-color:#D8213A;background:#FFF1F3}
+.demopanel button b{display:block;font-size:13px}
+.demopanel button span{display:block;font-size:11px;color:var(--muted);margin-top:1px}
+.demoset{border:1px solid #F3C2CA;background:#FFF5F6;border-radius:var(--r);padding:12px 14px;margin-bottom:12px}
+.demoset .roles{display:flex;gap:6px;margin-top:10px}
+.demoset .roles button{flex:1;padding:9px 6px;border-radius:10px;background:#D8213A;color:#fff;font-size:12px;font-weight:700}
+.demoset .roles button.on{background:#7A0F1E}
 
 .tbl{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
 .trow{display:flex;gap:10px;align-items:center;padding:11px 12px;border-top:1px solid var(--line)}
@@ -1278,9 +1289,41 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 <body>
 <div id="app"></div>
 <script>
+/* Если приложение не смогло запуститься — старый браузер, обрыв загрузки, файл
+   открыт не с сайта, — показываем причину вместо пустой страницы. Как только
+   приложение нарисовало хоть что-то, эта заглушка больше не вмешивается. */
+(function(){
+  var shown = false;
+  function boom(msg){
+    if(shown) return;
+    var app = document.getElementById('app');
+    if(!app || app.childElementCount) return;
+    shown = true;
+    var why = location.protocol === 'file:'
+      ? 'Файл открыт с телефона напрямую. Приложение работает с сайта — открой его по адресу хостинга.'
+      : 'Похоже, браузер устарел или страница загрузилась не полностью. Обнови страницу; если не помогло — открой Eva Space в Safari или Chrome последней версии.';
+    app.innerHTML = '<div style="font:15px/1.5 -apple-system,Inter,Arial,sans-serif;padding:48px 24px;max-width:420px;margin:0 auto;color:#111014">'
+      + '<div style="font-size:22px;font-weight:700;margin-bottom:10px">Eva Space не запустилась</div>'
+      + '<p style="margin:0 0 14px;color:#6E6579">' + why + '</p>'
+      + '<button onclick="location.reload()" style="padding:12px 18px;border:0;border-radius:999px;background:#111014;color:#fff;font-weight:600;font-size:14px">Обновить</button>'
+      + '<p style="margin-top:18px;font-size:11px;color:#9B93A6;word-break:break-word">' + String(msg || '').replace(/[<>&]/g, '') + '</p></div>';
+  }
+  window.addEventListener('error', function(e){ boom(e && e.message); });
+})();
+</script>
+<script>
 /* =====================================================================
    EVA SPACE v2 — один файл, без сборки.
    ===================================================================== */
+
+/* ---------- Eva V3 Demo ----------
+   Временный режим показа: красная кнопка сбоку и блок в настройках
+   переключают роль прямо в приложении — посмотреть платформу глазами
+   пользовательницы, эксперта и администратора. Роли при этом настоящие:
+   права выдаёт сервер, переключатель меняет только сторону показа.
+   Для рабочей версии достаточно поставить false — кнопка, блок и setRole
+   отключаются целиком, больше ничего трогать не нужно. */
+const EVA_DEMO = true;
 
 /* ---------- утилиты ---------- */
 const el = document.getElementById('app');
@@ -3879,16 +3922,35 @@ function page(){
   return ({home:pgHome, content:pgContent, courses:pgCourses, market:pgMarket, club:pgClub})[S.tab]();
 }
 
-/* ---------- переключатель ролей (для разработки) ---------- */
-/* инструмент разработки: с сервером его видит только администратор */
+/* ---------- Eva V3 Demo: переключатель ролей ----------
+   Временный инструмент показа (флаг EVA_DEMO в 01-data.js). С сервером его
+   видит только администратор: серверные права от переключения не меняются,
+   меняется только сторона, с которой показывается приложение. */
+function demoAllowed(){
+  if(typeof EVA_DEMO === 'undefined' || !EVA_DEMO) return false;
+  return SYNC.alive === false || !!(S.user && S.user.role === 'admin');
+}
+/* права аккаунта, а не стороны показа: администратор остаётся администратором,
+   даже когда смотрит приложение глазами пользовательницы */
+function realAdmin(){ return !!(S.user && S.user.role === 'admin'); }
+const DEMO_ROLES = [['user','Пользователь','как видит женщина после теста'],
+                    ['expert','Эксперт','кабинет, заявки, свои материалы'],
+                    ['admin','Админ','панель управления']];
 function roleSwitch(){
-  if(SYNC.alive !== false && !(S.user && S.user.role === 'admin')) return '';
-  const R = [['user','Пользователь'],['expert','Эксперт'],['admin','Админ']];
-  return `<div class="rolesw">
-    ${R.map(([k,l]) => `<button class="${S.role===k?'on':''}" onclick="setRole('${attJs(k)}')">${l}</button>`).join('')}
-  </div>`;
+  if(!demoAllowed() || S.screen !== 'app') return '';
+  const cur = DEMO_ROLES.find(r => r[0] === S.role) || DEMO_ROLES[0];
+  return `<button class="demobtn" onclick="S.demoOpen=!S.demoOpen;render()" aria-label="Eva V3 Demo: сменить роль">
+      <b>demo</b><span>${esc(cur[1])}</span></button>
+    ${S.demoOpen ? `<div class="demopanel">
+      <div class="small" style="font-weight:800;color:#D8213A;letter-spacing:.04em">EVA V3 DEMO</div>
+      <div class="small muted" style="margin:2px 0 4px">Посмотреть платформу с другой стороны. Роли настоящие — переключатель временный, для проверки.</div>
+      ${DEMO_ROLES.map(([k,l,d]) => `<button class="${S.role===k?'on':''}" onclick="setRole('${attJs(k)}')">
+        <b>${l}</b><span>${d}</span></button>`).join('')}
+    </div>` : ''}`;
 }
 function setRole(r){
+  if(!demoAllowed()) return;
+  S.demoOpen = false;
   S.role = r; S.page = null; S.viewExpert = null; S.sheet = null; S.course = null;
   if(S.chat) S.chat.open = null;
   S.tab = 'home'; S.adminTab = 'content'; S.expTab = 'profile';
@@ -4213,6 +4275,7 @@ async function signIn(u){
   if(!S.name) S.name = u.name;
   const known = typeof avatarOf === 'function' ? avatarOf(u.email) : '';
   if(known) S.avatar = known;
+  else if(u.avatar){ AVATARS[String(u.email).toLowerCase()] = u.avatar; S.avatar = u.avatar; }
   applyGrants();
   /* письма, пришедшие пока её тут не было, забираем сразу: ждать
      полминуты до следующей проверки — значит показать пустой ящик */
@@ -4402,6 +4465,7 @@ function tryAutoLogin(){
   if(!S.name) S.name = u.name;
   const known = typeof avatarOf === 'function' ? avatarOf(u.email) : '';
   if(known) S.avatar = known;
+  else if(u.avatar){ AVATARS[String(u.email).toLowerCase()] = u.avatar; S.avatar = u.avatar; }
   applyGrants();
   if(typeof pullDm === 'function') pullDm().then(ch => { if(ch) softRender(); });
   S.screen = 'app';
@@ -4607,7 +4671,7 @@ function hasAlpha(ctx, w, h){
 }
 const kb = n => n > 1e6 ? (n/1048576).toFixed(1)+' МБ' : Math.round(n/1024)+' КБ';
 
-function pickImage(key, after){
+function pickImage(key, after, uploaded){
   const inp = document.createElement('input');
   inp.type = 'file';
   inp.accept = 'image/*';
@@ -4625,7 +4689,8 @@ function pickImage(key, after){
         const url = await uploadImage(key, data);
         if(url && url !== data){ MEDIA[key] = url; render(); }
         if(typeof syncPush === 'function') syncPush();
-      }
+        if(uploaded) uploaded(url || data);
+      } else if(uploaded) uploaded(data);
     });
   };
   inp.click();
@@ -5155,7 +5220,10 @@ function evDay(d){
 function evShort(e){
   const t = String(e.about || '').trim();
   if(!t) return '';
-  const first = t.split(/(?<=[.!?])\s/)[0] || t;
+  /* Без lookbehind: Safari до 16.4 такую регулярку не разбирает и роняет
+     весь скрипт, а это единственный файл приложения. */
+  const m = t.match(/^[\s\S]*?[.!?](?=\s|$)/);
+  const first = (m ? m[0] : t) || t;
   return first.length > 64 ? first.slice(0, 63).replace(/[\s,;:-]+$/, '') + '…' : first;
 }
 
@@ -5386,7 +5454,7 @@ const authorMail = x => (x && x.email) || (x && !x.curator && !x.exp && demoMail
 function wallCard(w){
   const liked = (S.starred||[]).includes(w.id);
   const mine = isMine(w);
-  const canDrop = mine || S.role === 'admin';
+  const canDrop = mine || S.role === 'admin' || realAdmin();
   const col = authorColor(w.email || w.a);
   const cmts = w.comments || [];
   const open = (S.openCmts||[]).includes(w.id);
@@ -5440,7 +5508,7 @@ function commentRow(w, c, ci){
   const mine = isMine(c);
   const author = !!(c.email && w.email && String(c.email).toLowerCase() === String(w.email).toLowerCase());
   const starred = (S.starredCmts||[]).includes(w.id + ':' + ci);
-  const canDrop = mine || S.role === 'admin';
+  const canDrop = mine || S.role === 'admin' || realAdmin();
   return `<div class="cmt${mine?' own':''}" style="--ac:${safeColor(col)}">
     ${chatAva(c.a, col, mine, 28, authorMail(c))}
     <div style="flex:1;min-width:0">
@@ -6104,7 +6172,7 @@ function delPost(id){
   const w = WALL.find(x => x.id === id);
   if(!w) return;
   /* своё послание женщина убирает сама, чужое — только администратор */
-  if(!isMine(w) && S.role !== 'admin') return toast('Убрать послание может только автор');
+  if(!isMine(w) && S.role !== 'admin' && !realAdmin()) return toast('Убрать послание может только автор');
   if(!confirm('Удалить послание «' + String(w.t).slice(0, 60) + '…»? Вернуть будет нельзя.')) return;
   WALL.splice(WALL.indexOf(w), 1);
   tombWall(id);
@@ -6115,7 +6183,7 @@ function delPost(id){
 function delComment(pid, ci){
   const w = WALL.find(x => x.id === pid);
   if(!w || !w.comments || !w.comments[ci]) return;
-  if(!isMine(w.comments[ci]) && S.role !== 'admin') return toast('Убрать ответ может только автор');
+  if(!isMine(w.comments[ci]) && S.role !== 'admin' && !realAdmin()) return toast('Убрать ответ может только автор');
   if(!confirm('Удалить ответ?')) return;
   w.comments.splice(ci, 1);
   S.starredCmts = (S.starredCmts||[]).filter(x => x.indexOf(pid + ':') !== 0);
@@ -7954,6 +8022,13 @@ function pgSettings(){
         <button class="sw ${S[k]?'on':''}" onclick="toggle('${attJs(k)}')"><i></i></button>
       </div></div>`).join('')}
 
+    ${typeof demoAllowed === 'function' && demoAllowed() ? `<div class="sec-h"><h2 class="serif" style="font-size:18px">Eva V3 Demo</h2></div>
+    <div class="demoset">
+      <b style="font-size:14px">Посмотреть с другой стороны</b>
+      <div class="small muted" style="margin-top:2px">Временный переключатель для проверки: роли настоящие, меняется только сторона показа. Сейчас: ${(DEMO_ROLES.find(x => x[0] === S.role) || DEMO_ROLES[0])[1].toLowerCase()}.</div>
+      <div class="roles">${DEMO_ROLES.map(([k,l]) => `<button class="${S.role===k?'on':''}" onclick="setRole('${attJs(k)}')">${l}</button>`).join('')}</div>
+    </div>` : ''}
+
     <div class="sec-h"><h2 class="serif" style="font-size:18px">Помощь</h2></div>
     <div class="card">
       <button class="uline" style="border:none;padding-top:0;width:100%;text-align:left" onclick="openSheet('support')">
@@ -7987,22 +8062,25 @@ function addCard(){ toast('Оплата картой подключится по
 function pickAvatar(){
   const mail = S.user && S.user.email;
   if(!mail) return toast('Сначала войди в аккаунт');
-  const key = mailKey(mail);
-  pickImage(key, data => {
-    S.avatar = data;
-    AVATARS[mail.toLowerCase()] = data;
-    render(); schedulePersist();
-    /* когда файл уедет на сервер, подменим на ссылку и раздадим всем */
-    setTimeout(() => {
-      const url = MEDIA[key];
-      if(url && !String(url).startsWith('data:')){
-        AVATARS[mail.toLowerCase()] = url;
-        S.avatar = url;
-        syncPush(['avatars', 'media']);
-        render(); schedulePersist();
-      }
-    }, 2600);
-  });
+  pickImage(mailKey(mail), data => applyAvatar(mail, data), url => applyAvatar(mail, url));
+}
+/* Аватар привязан к почте и живёт в трёх местах: справочник AVATARS (его
+   видят все в лентах и чатах), общий раздел на сервере и сам аккаунт —
+   чтобы при входе с другого телефона фото нашлось даже до первой
+   синхронизации. Пока файл едет на сервер, показываем данные из памяти;
+   когда вернётся ссылка — подменяем и раздаём. Раньше тут стоял таймер
+   на 2,6 секунды, и на медленной связи ссылка просто не успевала. */
+function applyAvatar(mail, src){
+  const key = String(mail || '').toLowerCase();
+  if(!key || !src) return;
+  AVATARS[key] = src; MEDIA[mailKey(key)] = src;
+  if(S.user && String(S.user.email).toLowerCase() === key) S.avatar = src;
+  render(); schedulePersist();
+  if(String(src).startsWith('data:')) return;             // ссылка ещё не готова
+  if(typeof syncPush === 'function') syncPush(['avatars', 'media'], true);
+  const u = DB.find(key);
+  if(u) DB.upsert(Object.assign({}, u, {avatar:src}));   // уедет в аккаунт (user_save)
+  else if(typeof syncUser === 'function') syncUser({email:key, name:S.name, avatar:src});
 }
 function toggle(k){ S[k] = !S[k]; if(k === 'gentle') return gentle(S[k]); render(); schedulePersist(); }
 
@@ -9299,7 +9377,45 @@ function adCommunity(){
   const sub = S.commSub || 'groups';
   if(sub === 'events') return commTabs(sub) + adEvents();
   if(sub === 'ideas') return commTabs(sub) + adIdeas();
+  if(sub === 'wall') return commTabs(sub) + adWall();
   return commTabs(sub) + adGroups();
+}
+
+/* ---------- послания: лента участниц глазами администратора ----------
+   Та же лента, что в «Сообществе → Участницы», но списком и с удалением
+   у каждого послания и ответа: раньше убрать чужое можно было только
+   из ленты, а панель администратора ленту не показывала. */
+function adWall(){
+  const list = WALL.slice();
+  return `
+  <p class="small muted" style="margin:0 0 12px">Послания участниц. Удалённое пропадает у всех сразу
+    и не возвращается после обновления.</p>
+  <div class="sec-h" style="margin-top:0"><h2 class="serif" style="font-size:18px">Лента</h2>
+    <span class="small muted">${plural(list.length, 'послание', 'послания', 'посланий')}</span></div>
+  ${list.length ? `<div class="adwall">${list.map(w => {
+    const cm = w.comments || [];
+    const open = (S.adWallOpen || []).includes(w.id);
+    return `<div class="card" style="padding:12px 14px">
+      <div class="spread" style="align-items:flex-start;gap:10px">
+        <div style="flex:1;min-width:0">
+          <b style="font-size:13.5px">${esc(w.a)}</b>
+          <span class="small muted" style="margin-left:6px">${esc(w.city || '')}${w.city ? ' · ' : ''}${esc(w.ago || '')}</span>
+          <p class="small" style="margin:5px 0 0;line-height:1.45">${esc(w.t)}</p>
+        </div>
+        <button class="wdel" title="Удалить послание" onclick="delPost('${attJs(w.id)}')">✕</button>
+      </div>
+      <div class="row" style="gap:8px;margin-top:8px">
+        <span class="chip pale" style="padding:3px 8px;font-size:10px">★ ${+w.st || 0}</span>
+        ${cm.length ? `<button class="chip pale" style="padding:3px 8px;font-size:10px"
+          onclick="S.adWallOpen=(S.adWallOpen||[]).includes('${attJs(w.id)}')?S.adWallOpen.filter(x=>x!=='${attJs(w.id)}'):(S.adWallOpen||[]).concat('${attJs(w.id)}');render()">
+          ${open ? 'скрыть ответы' : plural(cm.length, 'ответ', 'ответа', 'ответов')}</button>` : ''}
+      </div>
+      ${open ? cm.map((c, ci) => `<div class="trow" style="padding:8px 0;border-top:1px solid var(--line)">
+          <div style="flex:1;min-width:0"><b style="font-size:12px">${esc(c.a)}</b>
+            <div class="small" style="line-height:1.4">${esc(c.t)}</div></div>
+          <button class="wdel" title="Удалить ответ" onclick="delComment('${attJs(w.id)}',${ci})">✕</button>
+        </div>`).join('') : ''}
+    </div>`; }).join('')}</div>` : '<div class="empty">Посланий пока нет</div>'}`;
 }
 function commTabs(sub){
   const pend = EVENTS.filter(e => e.status === 'pending').length;
@@ -9308,6 +9424,7 @@ function commTabs(sub){
     <button class="${sub==='groups'?'on':''}" onclick="S.commSub='groups';render()">Группы</button>
     <button class="${sub==='events'?'on':''}" onclick="S.commSub='events';render()">Мероприятия${pend?' · '+pend:''}</button>
     <button class="${sub==='ideas'?'on':''}" onclick="S.commSub='ideas';render()">Идеи${news?' · '+news:''}</button>
+    <button class="${sub==='wall'?'on':''}" onclick="S.commSub='wall';render()">Послания</button>
   </div>`;
 }
 function adGroups(){
@@ -10451,9 +10568,12 @@ function mirrorUser(u){
     verified: !!u.verified, created: u.created || Date.now(),
     /* доступ, открытый администратором, живёт в аккаунте на сервере */
     gift: !!u.gift, access_until: +u.access_until || 0, trial_days: +u.trial_days || 0,
-    courses: Array.isArray(u.courses) ? u.courses.map(String) : []
+    courses: Array.isArray(u.courses) ? u.courses.map(String) : [],
+    avatar: u.avatar || (all[mail] && all[mail].avatar) || ''
   });
   DB.saveUsers(all);
+  /* фото из аккаунта — в общий справочник: списки и чаты берут его оттуда */
+  if(u.avatar && typeof AVATARS !== 'undefined' && !AVATARS[mail]) AVATARS[mail] = u.avatar;
 }
 
 /* сервер сказал, что токен больше не годится */

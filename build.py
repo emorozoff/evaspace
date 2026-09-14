@@ -10,7 +10,7 @@
 Разработка при этом идёт по кускам в src/ — правки видно в маленьком диффе.
 """
 
-import io, os, sys, hashlib
+import io, os, re, sys, hashlib
 
 ROOT   = os.path.dirname(os.path.abspath(__file__))
 SRC    = os.path.join(ROOT, 'src')
@@ -38,7 +38,42 @@ def modules():
     return [os.path.join(APP_DIR, n) for n in names]
 
 
+# Что старый Safari не разбирает или не знает. Приложение — один файл, поэтому
+# одна такая конструкция роняет всё целиком: страница на айфоне остаётся пустой.
+# Первый список — стоп для сборки, второй — предупреждение.
+STOP_PATTERNS = [
+    (r'\(\?<[=!]', 'lookbehind в регулярке (?<= … ) — Safari до 16.4 не разбирает'),
+    (r'\?\?=|\|\|=|&&=', 'логическое присваивание ??= ||= &&= — Safari до 14'),
+    (r'\bstatic\s*\{', 'static-блок класса — Safari до 16.4'),
+]
+WARN_PATTERNS = [
+    (r'\bstructuredClone\(', 'structuredClone — Safari до 15.4'),
+    (r'\.randomUUID\(', 'crypto.randomUUID — Safari до 15.4'),
+    (r'\.(findLast|findLastIndex)\(', 'findLast — Safari до 15.4'),
+    (r'\.(toSorted|toReversed|toSpliced)\(', 'toSorted/toReversed — Safari до 16'),
+    (r'\bObject\.(hasOwn|groupBy)\(', 'Object.hasOwn/groupBy — Safari до 15.4/17.4'),
+    (r'\brequestIdleCallback\(', 'requestIdleCallback — Safari до 16.4'),
+]
+
+
+def lint(paths):
+    """Ищем в исходниках то, что ломает запуск на старых айфонах."""
+    stop = []
+    for path in paths:
+        src = read(path)
+        for i, line in enumerate(src.split('\n'), 1):
+            for pat, why in STOP_PATTERNS:
+                if re.search(pat, line):
+                    stop.append('%s:%d — %s' % (os.path.basename(path), i, why))
+            for pat, why in WARN_PATTERNS:
+                if re.search(pat, line):
+                    print('предупреждение: %s:%d — %s' % (os.path.basename(path), i, why))
+    if stop:
+        sys.exit('сборка остановлена, это не запустится на старом Safari:\n  ' + '\n  '.join(stop))
+
+
 def build():
+    lint(modules())
     html = read(TEMPLATE)
     for mark in (MARK_CSS, MARK_JS):
         if html.count(mark) != 1:

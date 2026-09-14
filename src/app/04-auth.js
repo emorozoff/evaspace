@@ -255,6 +255,7 @@ async function signIn(u){
   if(!S.name) S.name = u.name;
   const known = typeof avatarOf === 'function' ? avatarOf(u.email) : '';
   if(known) S.avatar = known;
+  else if(u.avatar){ AVATARS[String(u.email).toLowerCase()] = u.avatar; S.avatar = u.avatar; }
   applyGrants();
   /* письма, пришедшие пока её тут не было, забираем сразу: ждать
      полминуты до следующей проверки — значит показать пустой ящик */
@@ -444,6 +445,7 @@ function tryAutoLogin(){
   if(!S.name) S.name = u.name;
   const known = typeof avatarOf === 'function' ? avatarOf(u.email) : '';
   if(known) S.avatar = known;
+  else if(u.avatar){ AVATARS[String(u.email).toLowerCase()] = u.avatar; S.avatar = u.avatar; }
   applyGrants();
   if(typeof pullDm === 'function') pullDm().then(ch => { if(ch) softRender(); });
   S.screen = 'app';
@@ -649,7 +651,7 @@ function hasAlpha(ctx, w, h){
 }
 const kb = n => n > 1e6 ? (n/1048576).toFixed(1)+' МБ' : Math.round(n/1024)+' КБ';
 
-function pickImage(key, after){
+function pickImage(key, after, uploaded){
   const inp = document.createElement('input');
   inp.type = 'file';
   inp.accept = 'image/*';
@@ -667,7 +669,8 @@ function pickImage(key, after){
         const url = await uploadImage(key, data);
         if(url && url !== data){ MEDIA[key] = url; render(); }
         if(typeof syncPush === 'function') syncPush();
-      }
+        if(uploaded) uploaded(url || data);
+      } else if(uploaded) uploaded(data);
     });
   };
   inp.click();

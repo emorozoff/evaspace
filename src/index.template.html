@@ -22,6 +22,29 @@
 <body>
 <div id="app"></div>
 <script>
+/* Если приложение не смогло запуститься — старый браузер, обрыв загрузки, файл
+   открыт не с сайта, — показываем причину вместо пустой страницы. Как только
+   приложение нарисовало хоть что-то, эта заглушка больше не вмешивается. */
+(function(){
+  var shown = false;
+  function boom(msg){
+    if(shown) return;
+    var app = document.getElementById('app');
+    if(!app || app.childElementCount) return;
+    shown = true;
+    var why = location.protocol === 'file:'
+      ? 'Файл открыт с телефона напрямую. Приложение работает с сайта — открой его по адресу хостинга.'
+      : 'Похоже, браузер устарел или страница загрузилась не полностью. Обнови страницу; если не помогло — открой Eva Space в Safari или Chrome последней версии.';
+    app.innerHTML = '<div style="font:15px/1.5 -apple-system,Inter,Arial,sans-serif;padding:48px 24px;max-width:420px;margin:0 auto;color:#111014">'
+      + '<div style="font-size:22px;font-weight:700;margin-bottom:10px">Eva Space не запустилась</div>'
+      + '<p style="margin:0 0 14px;color:#6E6579">' + why + '</p>'
+      + '<button onclick="location.reload()" style="padding:12px 18px;border:0;border-radius:999px;background:#111014;color:#fff;font-weight:600;font-size:14px">Обновить</button>'
+      + '<p style="margin-top:18px;font-size:11px;color:#9B93A6;word-break:break-word">' + String(msg || '').replace(/[<>&]/g, '') + '</p></div>';
+  }
+  window.addEventListener('error', function(e){ boom(e && e.message); });
+})();
+</script>
+<script>
 <!--{{app}}--></script>
 </body>
 </html>

@@ -475,7 +475,10 @@ function evDay(d){
 function evShort(e){
   const t = String(e.about || '').trim();
   if(!t) return '';
-  const first = t.split(/(?<=[.!?])\s/)[0] || t;
+  /* Без lookbehind: Safari до 16.4 такую регулярку не разбирает и роняет
+     весь скрипт, а это единственный файл приложения. */
+  const m = t.match(/^[\s\S]*?[.!?](?=\s|$)/);
+  const first = (m ? m[0] : t) || t;
   return first.length > 64 ? first.slice(0, 63).replace(/[\s,;:-]+$/, '') + '…' : first;
 }
 
@@ -706,7 +709,7 @@ const authorMail = x => (x && x.email) || (x && !x.curator && !x.exp && demoMail
 function wallCard(w){
   const liked = (S.starred||[]).includes(w.id);
   const mine = isMine(w);
-  const canDrop = mine || S.role === 'admin';
+  const canDrop = mine || S.role === 'admin' || realAdmin();
   const col = authorColor(w.email || w.a);
   const cmts = w.comments || [];
   const open = (S.openCmts||[]).includes(w.id);
@@ -760,7 +763,7 @@ function commentRow(w, c, ci){
   const mine = isMine(c);
   const author = !!(c.email && w.email && String(c.email).toLowerCase() === String(w.email).toLowerCase());
   const starred = (S.starredCmts||[]).includes(w.id + ':' + ci);
-  const canDrop = mine || S.role === 'admin';
+  const canDrop = mine || S.role === 'admin' || realAdmin();
   return `<div class="cmt${mine?' own':''}" style="--ac:${safeColor(col)}">
     ${chatAva(c.a, col, mine, 28, authorMail(c))}
     <div style="flex:1;min-width:0">
@@ -1424,7 +1427,7 @@ function delPost(id){
   const w = WALL.find(x => x.id === id);
   if(!w) return;
   /* своё послание женщина убирает сама, чужое — только администратор */
-  if(!isMine(w) && S.role !== 'admin') return toast('Убрать послание может только автор');
+  if(!isMine(w) && S.role !== 'admin' && !realAdmin()) return toast('Убрать послание может только автор');
   if(!confirm('Удалить послание «' + String(w.t).slice(0, 60) + '…»? Вернуть будет нельзя.')) return;
   WALL.splice(WALL.indexOf(w), 1);
   tombWall(id);
@@ -1435,7 +1438,7 @@ function delPost(id){
 function delComment(pid, ci){
   const w = WALL.find(x => x.id === pid);
   if(!w || !w.comments || !w.comments[ci]) return;
-  if(!isMine(w.comments[ci]) && S.role !== 'admin') return toast('Убрать ответ может только автор');
+  if(!isMine(w.comments[ci]) && S.role !== 'admin' && !realAdmin()) return toast('Убрать ответ может только автор');
   if(!confirm('Удалить ответ?')) return;
   w.comments.splice(ci, 1);
   S.starredCmts = (S.starredCmts||[]).filter(x => x.indexOf(pid + ':') !== 0);

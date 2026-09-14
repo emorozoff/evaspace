@@ -827,7 +827,45 @@ function adCommunity(){
   const sub = S.commSub || 'groups';
   if(sub === 'events') return commTabs(sub) + adEvents();
   if(sub === 'ideas') return commTabs(sub) + adIdeas();
+  if(sub === 'wall') return commTabs(sub) + adWall();
   return commTabs(sub) + adGroups();
+}
+
+/* ---------- послания: лента участниц глазами администратора ----------
+   Та же лента, что в «Сообществе → Участницы», но списком и с удалением
+   у каждого послания и ответа: раньше убрать чужое можно было только
+   из ленты, а панель администратора ленту не показывала. */
+function adWall(){
+  const list = WALL.slice();
+  return `
+  <p class="small muted" style="margin:0 0 12px">Послания участниц. Удалённое пропадает у всех сразу
+    и не возвращается после обновления.</p>
+  <div class="sec-h" style="margin-top:0"><h2 class="serif" style="font-size:18px">Лента</h2>
+    <span class="small muted">${plural(list.length, 'послание', 'послания', 'посланий')}</span></div>
+  ${list.length ? `<div class="adwall">${list.map(w => {
+    const cm = w.comments || [];
+    const open = (S.adWallOpen || []).includes(w.id);
+    return `<div class="card" style="padding:12px 14px">
+      <div class="spread" style="align-items:flex-start;gap:10px">
+        <div style="flex:1;min-width:0">
+          <b style="font-size:13.5px">${esc(w.a)}</b>
+          <span class="small muted" style="margin-left:6px">${esc(w.city || '')}${w.city ? ' · ' : ''}${esc(w.ago || '')}</span>
+          <p class="small" style="margin:5px 0 0;line-height:1.45">${esc(w.t)}</p>
+        </div>
+        <button class="wdel" title="Удалить послание" onclick="delPost('${attJs(w.id)}')">✕</button>
+      </div>
+      <div class="row" style="gap:8px;margin-top:8px">
+        <span class="chip pale" style="padding:3px 8px;font-size:10px">★ ${+w.st || 0}</span>
+        ${cm.length ? `<button class="chip pale" style="padding:3px 8px;font-size:10px"
+          onclick="S.adWallOpen=(S.adWallOpen||[]).includes('${attJs(w.id)}')?S.adWallOpen.filter(x=>x!=='${attJs(w.id)}'):(S.adWallOpen||[]).concat('${attJs(w.id)}');render()">
+          ${open ? 'скрыть ответы' : plural(cm.length, 'ответ', 'ответа', 'ответов')}</button>` : ''}
+      </div>
+      ${open ? cm.map((c, ci) => `<div class="trow" style="padding:8px 0;border-top:1px solid var(--line)">
+          <div style="flex:1;min-width:0"><b style="font-size:12px">${esc(c.a)}</b>
+            <div class="small" style="line-height:1.4">${esc(c.t)}</div></div>
+          <button class="wdel" title="Удалить ответ" onclick="delComment('${attJs(w.id)}',${ci})">✕</button>
+        </div>`).join('') : ''}
+    </div>`; }).join('')}</div>` : '<div class="empty">Посланий пока нет</div>'}`;
 }
 function commTabs(sub){
   const pend = EVENTS.filter(e => e.status === 'pending').length;
@@ -836,6 +874,7 @@ function commTabs(sub){
     <button class="${sub==='groups'?'on':''}" onclick="S.commSub='groups';render()">Группы</button>
     <button class="${sub==='events'?'on':''}" onclick="S.commSub='events';render()">Мероприятия${pend?' · '+pend:''}</button>
     <button class="${sub==='ideas'?'on':''}" onclick="S.commSub='ideas';render()">Идеи${news?' · '+news:''}</button>
+    <button class="${sub==='wall'?'on':''}" onclick="S.commSub='wall';render()">Послания</button>
   </div>`;
 }
 function adGroups(){

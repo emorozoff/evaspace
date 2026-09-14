@@ -962,16 +962,35 @@ function page(){
   return ({home:pgHome, content:pgContent, courses:pgCourses, market:pgMarket, club:pgClub})[S.tab]();
 }
 
-/* ---------- переключатель ролей (для разработки) ---------- */
-/* инструмент разработки: с сервером его видит только администратор */
+/* ---------- Eva V3 Demo: переключатель ролей ----------
+   Временный инструмент показа (флаг EVA_DEMO в 01-data.js). С сервером его
+   видит только администратор: серверные права от переключения не меняются,
+   меняется только сторона, с которой показывается приложение. */
+function demoAllowed(){
+  if(typeof EVA_DEMO === 'undefined' || !EVA_DEMO) return false;
+  return SYNC.alive === false || !!(S.user && S.user.role === 'admin');
+}
+/* права аккаунта, а не стороны показа: администратор остаётся администратором,
+   даже когда смотрит приложение глазами пользовательницы */
+function realAdmin(){ return !!(S.user && S.user.role === 'admin'); }
+const DEMO_ROLES = [['user','Пользователь','как видит женщина после теста'],
+                    ['expert','Эксперт','кабинет, заявки, свои материалы'],
+                    ['admin','Админ','панель управления']];
 function roleSwitch(){
-  if(SYNC.alive !== false && !(S.user && S.user.role === 'admin')) return '';
-  const R = [['user','Пользователь'],['expert','Эксперт'],['admin','Админ']];
-  return `<div class="rolesw">
-    ${R.map(([k,l]) => `<button class="${S.role===k?'on':''}" onclick="setRole('${attJs(k)}')">${l}</button>`).join('')}
-  </div>`;
+  if(!demoAllowed() || S.screen !== 'app') return '';
+  const cur = DEMO_ROLES.find(r => r[0] === S.role) || DEMO_ROLES[0];
+  return `<button class="demobtn" onclick="S.demoOpen=!S.demoOpen;render()" aria-label="Eva V3 Demo: сменить роль">
+      <b>demo</b><span>${esc(cur[1])}</span></button>
+    ${S.demoOpen ? `<div class="demopanel">
+      <div class="small" style="font-weight:800;color:#D8213A;letter-spacing:.04em">EVA V3 DEMO</div>
+      <div class="small muted" style="margin:2px 0 4px">Посмотреть платформу с другой стороны. Роли настоящие — переключатель временный, для проверки.</div>
+      ${DEMO_ROLES.map(([k,l,d]) => `<button class="${S.role===k?'on':''}" onclick="setRole('${attJs(k)}')">
+        <b>${l}</b><span>${d}</span></button>`).join('')}
+    </div>` : ''}`;
 }
 function setRole(r){
+  if(!demoAllowed()) return;
+  S.demoOpen = false;
   S.role = r; S.page = null; S.viewExpert = null; S.sheet = null; S.course = null;
   if(S.chat) S.chat.open = null;
   S.tab = 'home'; S.adminTab = 'content'; S.expTab = 'profile';
