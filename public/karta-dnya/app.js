@@ -34,9 +34,9 @@ function el() { return sign().el; }
 /* ---------- история и серия ---------- */
 function history() { return store.get('history', []); }
 function logDay(variant, id) {
-  const h = history().filter((x) => !(x.date === TODAY && x.v === variant));
+  const h = history().filter((x) => !(x.date === TODAY && x.v === variant && x.id === id));
   h.push({ date: TODAY, v: variant, id });
-  store.set('history', h.slice(-90));
+  store.set('history', h.slice(-120));
   renderStreak();
 }
 function streak() {
@@ -73,7 +73,7 @@ function moonSVG(illum, waxing, size = 200, id = 'm') {
   const outer = waxing ? 1 : 0;
   const inner = waxing ? (illum < 0.5 ? 0 : 1) : (illum < 0.5 ? 1 : 0);
   const lit = illum < 0.01 ? '' : illum > 0.99 ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#lit-${id})"/>` : `<path d="M${cx} ${cy - r}A${r} ${r} 0 0 ${outer} ${cx} ${cy + r}A${rx.toFixed(2)} ${r} 0 0 ${inner} ${cx} ${cy - r}Z" fill="url(#lit-${id})"/>`;
-  return `<svg class="moon" viewBox="0 0 ${size} ${size}" aria-hidden="true"><defs><radialGradient id="lit-${id}" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fffdf6"/><stop offset="1" stop-color="#d9d3c2"/></radialGradient><radialGradient id="dark-${id}" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#23213a"/><stop offset="1" stop-color="#15142a"/></radialGradient></defs><circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#dark-${id})" stroke="rgba(242,238,227,0.14)"/>${lit}<g fill="rgba(0,0,0,0.08)"><circle cx="${cx - r * 0.3}" cy="${cy - r * 0.2}" r="${r * 0.12}"/><circle cx="${cx + r * 0.25}" cy="${cy + r * 0.3}" r="${r * 0.17}"/><circle cx="${cx + r * 0.1}" cy="${cy - r * 0.45}" r="${r * 0.08}"/><circle cx="${cx - r * 0.15}" cy="${cy + r * 0.45}" r="${r * 0.06}"/></g></svg>`;
+  return `<svg class="moon" viewBox="0 0 ${size} ${size}" aria-hidden="true"><defs><radialGradient id="lit-${id}" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fffdf6"/><stop offset="1" stop-color="#d9d3c2"/></radialGradient><radialGradient id="dark-${id}" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#23213a"/><stop offset="1" stop-color="#15142a"/></radialGradient></defs><circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#dark-${id})" stroke="rgba(242,238,227,0.28)"/>${lit}<g fill="rgba(0,0,0,0.08)"><circle cx="${cx - r * 0.3}" cy="${cy - r * 0.2}" r="${r * 0.12}"/><circle cx="${cx + r * 0.25}" cy="${cy + r * 0.3}" r="${r * 0.17}"/><circle cx="${cx + r * 0.1}" cy="${cy - r * 0.45}" r="${r * 0.08}"/><circle cx="${cx - r * 0.15}" cy="${cy + r * 0.45}" r="${r * 0.06}"/></g></svg>`;
 }
 
 /* ---------- тост и открытка ---------- */
@@ -114,7 +114,7 @@ function route() {
   window.scrollTo({ top: 0 });
 }
 addEventListener('hashchange', route);
-document.querySelectorAll('.nav button').forEach((b) => b.addEventListener('click', () => go(b.dataset.go)));
+document.querySelectorAll('.nav button').forEach((b) => b.addEventListener('click', () => { pendingA = false; pendingB = false; go(b.dataset.go); }));
 
 /* =====================================================================
    ОНБОРДИНГ
@@ -159,19 +159,20 @@ function renderWelcome() {
 function renderHome() {
   const p = profile(); const z = sign(); const mi = window.moonInfo(new Date());
   const moonSign = window.signById(window.MOON_SIGN_ORDER[mi.signIndex]);
-  const a = store.get('a.' + TODAY, null), b = store.get('b.' + TODAY, null), m = store.get('m.' + TODAY, null);
-  const done = (x) => x && x.pick != null;
+  const a = getA(), b = getB(), m = store.get('m.' + TODAY, null);
+  const cnt = (st) => st.rounds.filter((r) => r.pick != null).length;
+  const label = (st) => { const n = cnt(st); return n === 0 ? 'вытянуть' : n === 1 ? 'открыта · ещё' : n + ' карты · ещё'; };
   view.innerHTML = `
     <div class="hero"><div class="eyebrow">${esc(fmtDate(TODAY))}</div><h1 class="display">${esc(greeting())}, ${esc(p.name)}</h1><p class="lead">${esc(dayLead(mi, z))}</p></div>
     <div class="today-card"><div class="mini-moon">${moonSVG(mi.illum, mi.waxing, 84, 'h')}</div><div><h3 class="display">${esc(mi.phase)}</h3><p>${mi.day}-й лунный день · ${esc(window.LUNAR_DAYS[mi.day - 1].sym)}</p><div class="chips"><span class="tag gold">${z.glyph} ${esc(z.name)}</span><span class="tag violet">Луна в ${esc(inSign(moonSign))}</span></div></div></div>
     <div class="sect"><div class="eyebrow">Послания на сегодня</div><div class="mech">
-      <button class="mech-card ${done(a) ? 'done' : ''}" data-go="silhouettes"><div class="ic">${window.SIL.lantern}</div><div><b>Три силуэта</b><span>Выбери тему и фигуру, которая про тебя</span></div><div class="st">${done(a) ? 'открыта' : 'ждёт'}</div></button>
-      <button class="mech-card ${done(b) ? 'done' : ''}" data-go="deck"><div class="ic">${window.SYM.key}</div><div><b>Колода Евы</b><span>Состояние, веер и вопрос для дневника</span></div><div class="st">${done(b) ? 'открыта' : 'ждёт'}</div></button>
-      <button class="mech-card ${m ? 'done' : ''}" data-go="moon"><div class="ic">${moonSVG(mi.illum, mi.waxing, 40, 'hm')}</div><div><b>Лунный день</b><span>Фаза, ${mi.day}-й день и подсказка для ${esc(z.gen)}</span></div><div class="st">${m ? 'прочитана' : 'ждёт'}</div></button>
+      <button class="mech-card ${cnt(a) ? 'done' : ''}" data-go="silhouettes"><div class="ic">${window.SIL.lantern}</div><div><b>Три силуэта</b><span>Выбери тему и фигуру, которая про тебя</span></div><div class="st">${label(a)}</div></button>
+      <button class="mech-card ${cnt(b) ? 'done' : ''}" data-go="deck"><div class="ic">${window.SYM.key}</div><div><b>Колода Евы</b><span>Состояние, веер и вопрос для дневника</span></div><div class="st">${label(b)}</div></button>
+      <button class="mech-card ${m ? 'done' : ''}" data-go="moon"><div class="ic">${moonSVG(mi.illum, mi.waxing, 40, 'hm')}</div><div><b>Лунный день</b><span>Фаза, ${mi.day}-й день и подсказка для ${esc(z.gen)}</span></div><div class="st">${m ? 'прочитан' : 'открыть'}</div></button>
     </div></div>
     <div class="sect history" id="home-history"></div>
     <p class="proto-note">Оракул не предсказывает будущее. Он помогает услышать то, что ты уже знаешь.</p>`;
-  document.querySelectorAll('.mech-card').forEach((c) => c.addEventListener('click', () => go(c.dataset.go)));
+  document.querySelectorAll('.mech-card').forEach((c) => c.addEventListener('click', () => { pendingA = false; pendingB = false; go(c.dataset.go); }));
   renderHistory($('#home-history'));
 }
 function inSign(z) { const m = { aries: 'Овне', taurus: 'Тельце', gemini: 'Близнецах', cancer: 'Раке', leo: 'Льве', virgo: 'Деве', libra: 'Весах', scorpio: 'Скорпионе', sagittarius: 'Стрельце', capricorn: 'Козероге', aquarius: 'Водолее', pisces: 'Рыбах' }; return m[z.id]; }
@@ -189,92 +190,162 @@ function renderHistory(wrap) {
 }
 
 /* =====================================================================
-   ТРИ СИЛУЭТА
+   ТРИ СИЛУЭТА (можно добирать карты в течение дня)
    ===================================================================== */
 const findA = (id) => window.DECK_A.find((c) => c.id === id);
+let pendingA = false;
+
+function getA() {
+  let st = store.get('a.' + TODAY, null);
+  if (!st) return { rounds: [], view: 0 };
+  if (st.ids) st = { rounds: [{ theme: st.theme, ids: st.ids, pick: st.pick }], view: 0 }; // старый формат
+  if (!Array.isArray(st.rounds)) st.rounds = [];
+  if (typeof st.view !== 'number' || st.view >= st.rounds.length) st.view = Math.max(0, st.rounds.length - 1);
+  return st;
+}
+const saveA = (st) => store.set('a.' + TODAY, st);
+
 function renderSilhouettes() {
-  const s = store.get('a.' + TODAY, null);
-  if (s) { view.innerHTML = playA(); mountA(s); return; }
-  view.innerHTML = `<div class="hero"><div class="eyebrow">Три силуэта</div><h1 class="display">О чём сегодня твой вопрос?</h1><p class="lead">Выбери тему. Три фигуры выйдут навстречу, и та, к которой первой потянется рука, и есть ответ.</p></div>
-    <div class="choice-grid">${Object.entries(window.THEMES).map(([k, t]) => `<button class="choice" data-theme="${k}"><b>${esc(t.label)}</b><span>${esc(t.hint)}</span></button>`).join('')}</div>
-    <p class="pad small muted" style="margin-top:14px">Метафорические карты ничего не предсказывают. Они зеркало: ты выбираешь то, что уже знаешь о себе.</p>`;
+  const st = getA();
+  const cur = st.rounds[st.view];
+  if (pendingA || !cur) { chooseThemeA(st); return; }
+  view.innerHTML = playA();
+  mountA(st);
+}
+function chooseThemeA(st) {
+  const extra = st.rounds.length > 0;
+  view.innerHTML = `<div class="hero"><div class="eyebrow">${extra ? 'Ещё одна карта' : 'Три силуэта'}</div><h1 class="display">${extra ? 'О чём спросишь теперь?' : 'О чём сегодня твой вопрос?'}</h1><p class="lead">${extra ? 'Выбери другую тему, и колода выложит три новые фигуры. Первая карта дня остаётся с тобой.' : 'Выбери тему. Три фигуры выйдут навстречу, и та, к которой первой потянется рука, и есть ответ.'}</p></div>
+    <div class="choice-grid">${Object.entries(window.THEMES).map(([k, t]) => `<button class="choice${extra && st.rounds.some((r) => r.theme === k) ? ' used' : ''}" data-theme="${k}"><b>${esc(t.label)}</b><span>${esc(t.hint)}</span></button>`).join('')}</div>
+    ${extra ? `<div class="demo"><button class="textlink" id="a-back">Вернуться к открытым картам</button></div>` : `<p class="pad small muted" style="margin-top:14px">Метафорические карты ничего не предсказывают. Они зеркало: ты выбираешь то, что уже знаешь о себе.</p>`}`;
   document.querySelectorAll('.choice').forEach((b) => b.addEventListener('click', () => {
     b.classList.add('on');
-    const ids = shuffled(window.DECK_A, hash(TODAY + deviceId + 'a')).slice(0, 3).map((c) => c.id);
-    const st = { theme: b.dataset.theme, ids, pick: null };
-    store.set('a.' + TODAY, st);
+    const n = st.rounds.length;
+    const used = new Set(st.rounds.filter((r) => r.pick != null).map((r) => r.ids[r.pick]));
+    const pool = window.DECK_A.filter((c) => !used.has(c.id));
+    const deck = pool.length >= 3 ? pool : window.DECK_A;
+    const ids = shuffled(deck, hash(TODAY + deviceId + 'a' + n)).slice(0, 3).map((c) => c.id);
+    st.rounds.push({ theme: b.dataset.theme, ids, pick: null });
+    st.view = st.rounds.length - 1;
+    pendingA = false; saveA(st);
     setTimeout(() => { view.innerHTML = playA(); mountA(st); }, 220);
   }));
+  const back = $('#a-back');
+  if (back) back.addEventListener('click', () => { pendingA = false; renderSilhouettes(); });
 }
 function playA() {
-  return `<div class="night"><div class="cap"><div class="eyebrow" id="a-cap-eyebrow"></div><p id="a-cap-text"></p></div><div class="spread" id="a-spread"></div></div><div id="a-sheet"></div><div class="demo"><button class="textlink" id="a-reset">Сбросить и выбрать заново (демо)</button></div>`;
+  return `<div class="night"><div class="cap"><div class="eyebrow" id="a-cap-eyebrow"></div><p id="a-cap-text"></p></div><div class="spread" id="a-spread"></div></div><div id="a-strip"></div><div id="a-sheet"></div>`;
 }
 function mountA(st) {
-  $('#a-cap-eyebrow').textContent = window.THEMES[st.theme].label;
-  $('#a-cap-text').textContent = st.pick == null ? 'Какая фигура сегодня про тебя? Не думай. Коснись.' : 'Твоя карта на сегодня уже открыта.';
+  const r = st.rounds[st.view];
+  $('#a-cap-eyebrow').textContent = window.THEMES[r.theme].label;
+  $('#a-cap-text').textContent = r.pick == null ? 'Какая фигура сегодня про тебя? Не думай. Коснись.' : (st.view === 0 ? 'Твоя карта дня открыта.' : 'Дополнительная карта открыта.');
   const sp = $('#a-spread');
-  sp.innerHTML = st.ids.map((id) => { const c = findA(id); return `<div class="card3" data-id="${id}" role="button" tabindex="0" aria-label="Карта"><div class="inner"><div class="face back">${window.SIL[id]}</div><div class="face front"><span class="orn">${STAR}</span><b>${esc(c.name)}</b><i>${esc(c.key)}</i></div></div></div>`; }).join('');
+  sp.innerHTML = r.ids.map((id) => { const c = findA(id); return `<div class="card3" data-id="${id}" role="button" tabindex="0" aria-label="Карта"><div class="inner"><div class="face back">${window.SIL[id]}</div><div class="face front"><span class="orn">${STAR}</span><b>${esc(c.name)}</b><i>${esc(c.key)}</i></div></div></div>`; }).join('');
   sp.querySelectorAll('.card3').forEach((elm, i) => {
     const pick = () => {
-      if (st.pick != null) return;
-      st.pick = i; store.set('a.' + TODAY, st); logDay('a', st.ids[i]);
+      if (r.pick != null) return;
+      r.pick = i; saveA(st); logDay('a', r.ids[i]);
       elm.classList.add('flipped'); sp.classList.add('done');
       $('#a-cap-text').textContent = 'Рука знала. Читай ниже.';
-      setTimeout(() => { sheetA(st); $('#a-sheet').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 900);
+      setTimeout(() => { stripA(st); sheetA(st); $('#a-sheet').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 900);
     };
     elm.addEventListener('click', pick);
     elm.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
   });
-  if (st.pick != null) { sp.children[st.pick].classList.add('flipped'); sp.classList.add('done'); sheetA(st); }
-  $('#a-reset').addEventListener('click', () => { store.del('a.' + TODAY); store.set('history', history().filter((x) => !(x.date === TODAY && x.v === 'a'))); renderSilhouettes(); });
+  if (r.pick != null) { sp.children[r.pick].classList.add('flipped'); sp.classList.add('done'); stripA(st); sheetA(st); }
+  else stripA(st);
+}
+function stripA(st) {
+  const done = st.rounds.filter((r) => r.pick != null);
+  const wrap = $('#a-strip'); if (!wrap) return;
+  if (done.length < 1) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<div class="today-strip">${st.rounds.map((r, i) => {
+    if (r.pick == null) return '';
+    const c = findA(r.ids[r.pick]);
+    return `<button data-view="${i}" class="${i === st.view ? 'on' : ''}"><div class="m">${window.SIL[c.id]}</div><small>${i === 0 ? 'карта дня' : '+' + i}</small></button>`;
+  }).join('')}<button class="add" id="a-more"><div class="m">+</div><small>ещё</small></button></div>`;
+  wrap.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => {
+    st.view = +b.dataset.view; saveA(st); view.innerHTML = playA(); mountA(st); window.scrollTo({ top: 0, behavior: 'smooth' });
+  }));
+  $('#a-more').addEventListener('click', () => { pendingA = true; renderSilhouettes(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
 }
 function sheetA(st) {
-  const c = findA(st.ids[st.pick]); const th = window.THEMES[st.theme]; const pos = window.POS[st.pick]; const z = sign();
-  const others = st.ids.filter((_, j) => j !== st.pick).map(findA);
+  const r = st.rounds[st.view];
+  const c = findA(r.ids[r.pick]); const th = window.THEMES[r.theme]; const pos = window.POS[r.pick]; const z = sign();
+  const others = r.ids.filter((_, j) => j !== r.pick).map(findA);
   $('#a-sheet').innerHTML = `<div class="sheet">
-      <div class="eyebrow">Твоя карта · ${esc(fmtDate(TODAY))}</div>
+      <div class="eyebrow">${st.view === 0 ? 'Твоя карта' : 'Дополнительная карта'} · ${esc(fmtDate(TODAY))}</div>
       <h2 class="name display">${esc(c.name)}</h2><div class="key">${esc(c.key)}</div>
       <div class="tags"><span class="tag gold">${esc(th.label)}</span><span class="tag">${esc(pos.label)} · ${esc(pos.tag)}</span></div>
-      <div class="msg"><p>${esc(c.p1)}</p><p>${esc(c.p2)}</p><p>${esc(c.t[st.theme])}</p>
+      <div class="msg"><p>${esc(c.p1)}</p><p>${esc(c.p2)}</p><p>${esc(c.t[r.theme])}</p>
         <div class="note"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg><span>${esc(pos.line)}</span></div></div>
       <div class="box zodiac"><div class="eyebrow">${z.glyph} Для ${esc(z.gen)} · стихия ${esc(window.ELEMENTS[z.el].name.toLowerCase())}</div><p>${esc(c.el[z.el])}</p></div>
       <div class="box"><div class="eyebrow">Сегодня попробуй</div><p>${esc(c.act)}</p></div>
       <div class="box quote"><div class="eyebrow">Фраза дня</div><p>«${esc(c.phrase)}»</p><div class="btn-row"><button class="btn primary sm" id="a-post">Открытка в сторис</button><button class="btn sm" id="a-copy">Скопировать</button></div></div>
       <details><summary>Две фигуры, которые ты обошла</summary><div class="shadow-list">${others.map((o) => `<div class="shadow-item"><div class="mini">${window.SIL[o.id]}</div><div><b>${esc(o.name)}</b><span>${esc(o.shadow)}</span></div></div>`).join('')}</div></details>
-      <div class="foot"><span>Следующие три силуэта через ${untilTomorrow()}</span><span>Серия: ${streak()} дн.</span></div></div>`;
+      <div class="draw-again"><button class="btn block" id="a-again">Вытянуть ещё карту</button><div class="hint">Можно доставать сколько захочется. Главной остаётся первая карта дня.</div></div>
+      <div class="foot"><span>Новый расклад дня через ${untilTomorrow()}</span><span>Серия: ${streak()} дн.</span></div></div>`;
   $('#a-post').addEventListener('click', () => openPost({ art: window.SIL[c.id], name: c.name, quote: c.phrase }));
   $('#a-copy').addEventListener('click', () => share(`${c.name}\n«${c.phrase}»\n\nОракул Евы · Eva Space`));
+  $('#a-again').addEventListener('click', () => { pendingA = true; renderSilhouettes(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
 }
 
 /* =====================================================================
-   КОЛОДА ЕВЫ
+   КОЛОДА ЕВЫ (можно добирать карты в течение дня)
    ===================================================================== */
 const findB = (id) => window.DECK_B.find((c) => c.id === id);
+let pendingB = false;
+
+function getB() {
+  let st = store.get('b.' + TODAY, null);
+  if (!st) return { rounds: [], view: 0 };
+  if (st.ids) st = { rounds: [{ mood: st.mood, ids: st.ids, pick: st.pick, note: st.note || '' }], view: 0 };
+  if (!Array.isArray(st.rounds)) st.rounds = [];
+  if (typeof st.view !== 'number' || st.view >= st.rounds.length) st.view = Math.max(0, st.rounds.length - 1);
+  return st;
+}
+const saveB = (st) => store.set('b.' + TODAY, st);
+
 function renderDeck() {
-  const s = store.get('b.' + TODAY, null);
-  if (s) { view.innerHTML = playB(); mountB(s); return; }
-  view.innerHTML = `<div class="hero"><div class="eyebrow">Колода Евы</div><h1 class="display">Как ты сейчас?</h1><p class="lead">Одно честное слово о своём состоянии. Карта ответит именно на него, а вечером можно вернуться и записать, что сбылось.</p></div>
-    <div class="chips">${Object.entries(window.MOODS).map(([k, m]) => `<button class="chip" data-mood="${k}" style="--dot:${m.dot}"><i></i>${m.label}</button>`).join('')}</div>`;
+  const st = getB();
+  const cur = st.rounds[st.view];
+  if (pendingB || !cur) { chooseMoodB(st); return; }
+  view.innerHTML = playB();
+  mountB(st);
+}
+function chooseMoodB(st) {
+  const extra = st.rounds.length > 0;
+  view.innerHTML = `<div class="hero"><div class="eyebrow">${extra ? 'Ещё одна карта' : 'Колода Евы'}</div><h1 class="display">${extra ? 'А сейчас как ты?' : 'Как ты сейчас?'}</h1><p class="lead">${extra ? 'Состояние меняется в течение дня. Скажи, какое оно сейчас, и колода ответит заново.' : 'Одно честное слово о своём состоянии. Карта ответит именно на него, а вечером можно вернуться и записать, что сбылось.'}</p></div>
+    <div class="chips">${Object.entries(window.MOODS).map(([k, m]) => `<button class="chip" data-mood="${k}" style="--dot:${m.dot}"><i></i>${m.label}</button>`).join('')}</div>
+    ${extra ? `<div class="demo"><button class="textlink" id="b-back">Вернуться к открытым картам</button></div>` : ''}`;
   document.querySelectorAll('.chip').forEach((b) => b.addEventListener('click', () => {
     b.classList.add('on');
-    const ids = shuffled(window.DECK_B, hash(TODAY + deviceId + 'b')).slice(0, 7).map((c) => c.id);
-    const st = { mood: b.dataset.mood, ids, pick: null, note: '' };
-    store.set('b.' + TODAY, st);
+    const n = st.rounds.length;
+    const used = new Set(st.rounds.filter((r) => r.pick != null).map((r) => r.ids[r.pick]));
+    const pool = window.DECK_B.filter((c) => !used.has(c.id));
+    const deck = pool.length >= 7 ? pool : window.DECK_B;
+    const ids = shuffled(deck, hash(TODAY + deviceId + 'b' + n)).slice(0, 7).map((c) => c.id);
+    st.rounds.push({ mood: b.dataset.mood, ids, pick: null, note: '' });
+    st.view = st.rounds.length - 1;
+    pendingB = false; saveB(st);
     setTimeout(() => { view.innerHTML = playB(); mountB(st); }, 220);
   }));
+  const back = $('#b-back');
+  if (back) back.addEventListener('click', () => { pendingB = false; renderDeck(); });
 }
 function playB() {
-  return `<div class="night"><div class="cap"><div class="eyebrow" id="b-cap-eyebrow"></div><p id="b-cap-text"></p></div><div class="fan-wrap" id="b-fanwrap"><div class="fan" id="b-fan"></div></div><div class="reveal" id="b-reveal" hidden></div></div><div id="b-sheet"></div><div class="demo"><button class="textlink" id="b-reset">Сбросить и вытянуть заново (демо)</button></div>`;
+  return `<div class="night"><div class="cap"><div class="eyebrow" id="b-cap-eyebrow"></div><p id="b-cap-text"></p></div><div class="fan-wrap" id="b-fanwrap"><div class="fan" id="b-fan"></div></div><div class="reveal" id="b-reveal" hidden></div></div><div id="b-strip"></div><div id="b-sheet"></div>`;
 }
 function mountB(st) {
-  $('#b-cap-eyebrow').textContent = window.MOODS[st.mood].label;
+  const r = st.rounds[st.view];
+  $('#b-cap-eyebrow').textContent = window.MOODS[r.mood].label;
   $('#b-cap-text').textContent = 'Проведи взглядом по вееру и коснись карты, которая откликнулась.';
-  const fan = $('#b-fan'); const n = st.ids.length;
-  fan.innerHTML = st.ids.map((id, i) => { const a = -29 + (58 / (n - 1)) * i; return `<div class="fcard" data-i="${i}" role="button" tabindex="0" aria-label="Карта ${i + 1}" style="--a:${a.toFixed(1)}deg;--d:${(i * 0.06).toFixed(2)}s"><div class="b">${STAR}</div></div>`; }).join('');
+  const fan = $('#b-fan'); const n = r.ids.length;
+  fan.innerHTML = r.ids.map((id, i) => { const a = -29 + (58 / (n - 1)) * i; return `<div class="fcard" data-i="${i}" role="button" tabindex="0" aria-label="Карта ${i + 1}" style="--a:${a.toFixed(1)}deg;--d:${(i * 0.06).toFixed(2)}s"><div class="b">${STAR}</div></div>`; }).join('');
   fan.querySelectorAll('.fcard').forEach((elm) => {
     const pick = () => {
-      if (st.pick != null) return;
-      st.pick = +elm.dataset.i; store.set('b.' + TODAY, st); logDay('b', st.ids[st.pick]);
+      if (r.pick != null) return;
+      r.pick = +elm.dataset.i; saveB(st); logDay('b', r.ids[r.pick]);
       elm.classList.add('lift'); fan.classList.add('picking');
       $('#b-cap-text').textContent = 'Эта. Смотри, что на ней.';
       setTimeout(() => revealB(st, true), 520);
@@ -282,34 +353,52 @@ function mountB(st) {
     elm.addEventListener('click', pick);
     elm.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
   });
-  if (st.pick != null) { $('#b-cap-text').textContent = 'Твоя карта на сегодня уже открыта.'; revealB(st, false); }
-  $('#b-reset').addEventListener('click', () => { store.del('b.' + TODAY); store.set('history', history().filter((x) => !(x.date === TODAY && x.v === 'b'))); renderDeck(); });
+  if (r.pick != null) { $('#b-cap-text').textContent = st.view === 0 ? 'Твоя карта дня открыта.' : 'Дополнительная карта открыта.'; revealB(st, false); }
+  else stripB(st);
 }
 function revealB(st, animate) {
-  const c = findB(st.ids[st.pick]);
+  const r = st.rounds[st.view];
+  const c = findB(r.ids[r.pick]);
   $('#b-fanwrap').hidden = true;
   const rv = $('#b-reveal'); rv.hidden = false;
   rv.innerHTML = `<div class="bigcard"><div class="face back"><span style="width:40%;color:var(--gold-2)">${STAR}</span></div><div class="face front"><div class="sym">${window.SYM[c.id]}</div><b>${esc(c.name)}</b><i>${esc(c.key)}</i></div></div>`;
   const big = $('.bigcard', rv);
-  if (animate) { requestAnimationFrame(() => requestAnimationFrame(() => big.classList.add('flipped'))); setTimeout(() => { sheetB(st); $('#b-sheet').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 1000); }
-  else { big.style.transition = 'none'; big.classList.add('flipped'); sheetB(st); }
+  if (animate) { requestAnimationFrame(() => requestAnimationFrame(() => big.classList.add('flipped'))); setTimeout(() => { stripB(st); sheetB(st); $('#b-sheet').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 1000); }
+  else { big.style.transition = 'none'; big.classList.add('flipped'); stripB(st); sheetB(st); }
+}
+function stripB(st) {
+  const wrap = $('#b-strip'); if (!wrap) return;
+  const done = st.rounds.filter((r) => r.pick != null);
+  if (!done.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<div class="today-strip">${st.rounds.map((r, i) => {
+    if (r.pick == null) return '';
+    const c = findB(r.ids[r.pick]);
+    return `<button data-view="${i}" class="${i === st.view ? 'on' : ''}"><div class="m">${window.SYM[c.id]}</div><small>${i === 0 ? 'карта дня' : '+' + i}</small></button>`;
+  }).join('')}<button class="add" id="b-more"><div class="m">+</div><small>ещё</small></button></div>`;
+  wrap.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => {
+    st.view = +b.dataset.view; saveB(st); view.innerHTML = playB(); mountB(st); window.scrollTo({ top: 0, behavior: 'smooth' });
+  }));
+  $('#b-more').addEventListener('click', () => { pendingB = true; renderDeck(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
 }
 function sheetB(st) {
-  const c = findB(st.ids[st.pick]); const m = window.MOODS[st.mood]; const z = sign();
+  const r = st.rounds[st.view];
+  const c = findB(r.ids[r.pick]); const m = window.MOODS[r.mood]; const z = sign();
   $('#b-sheet').innerHTML = `<div class="sheet">
-      <div class="eyebrow">Карта дня · ${esc(fmtDate(TODAY))}</div>
+      <div class="eyebrow">${st.view === 0 ? 'Карта дня' : 'Дополнительная карта'} · ${esc(fmtDate(TODAY))}</div>
       <h2 class="name display">${esc(c.name)}</h2><div class="key">${esc(c.key)}</div>
       <div class="tags"><span class="tag gold">${esc(m.label)}</span><span class="tag">Колода Евы</span></div>
-      <div class="msg"><p>${esc(c.p1)}</p><p><strong>${esc(m.said)}</strong> ${esc(c.m[st.mood])}</p></div>
+      <div class="msg"><p>${esc(c.p1)}</p><p><strong>${esc(m.said)}</strong> ${esc(c.m[r.mood])}</p></div>
       <div class="box zodiac"><div class="eyebrow">${z.glyph} Совет для ${esc(z.gen)}</div><p>${esc(z.advice)} ${esc(c.name)} сегодня напоминает именно об этом.</p></div>
-      <div class="box"><div class="eyebrow">Вопрос для дневника</div><p>${esc(c.q)}</p><textarea id="b-note" placeholder="Напиши пару строк, только для себя. Сохранится на этом телефоне.">${esc(st.note || '')}</textarea><div class="saved" id="b-saved">${st.note ? 'Сохранено' : ''}</div></div>
+      <div class="box"><div class="eyebrow">Вопрос для дневника</div><p>${esc(c.q)}</p><textarea id="b-note" placeholder="Напиши пару строк, только для себя. Сохранится на этом телефоне.">${esc(r.note || '')}</textarea><div class="saved" id="b-saved">${r.note ? 'Сохранено' : ''}</div></div>
       <div class="box quote"><div class="eyebrow">Аффирмация дня</div><p>«${esc(c.aff)}»</p><div class="btn-row"><button class="btn primary sm" id="b-post">Открытка в сторис</button><button class="btn sm" id="b-copy">Скопировать</button></div></div>
       <div class="box"><div class="eyebrow">Маленький ритуал</div><p>${esc(c.rit)}</p></div>
-      <div class="foot"><span>Новая карта через ${untilTomorrow()}</span><span>Серия: ${streak()} дн.</span></div></div>`;
+      <div class="draw-again"><button class="btn block" id="b-again">Вытянуть ещё карту</button><div class="hint">Состояние меняется — карта тоже. Первая остаётся картой дня.</div></div>
+      <div class="foot"><span>Новая колода через ${untilTomorrow()}</span><span>Серия: ${streak()} дн.</span></div></div>`;
   let t;
-  $('#b-note').addEventListener('input', (e) => { clearTimeout(t); $('#b-saved').textContent = 'Пишу…'; t = setTimeout(() => { st.note = e.target.value; store.set('b.' + TODAY, st); $('#b-saved').textContent = 'Сохранено'; }, 500); });
+  $('#b-note').addEventListener('input', (e) => { clearTimeout(t); $('#b-saved').textContent = 'Пишу…'; t = setTimeout(() => { r.note = e.target.value; saveB(st); $('#b-saved').textContent = 'Сохранено'; }, 500); });
   $('#b-post').addEventListener('click', () => openPost({ art: window.SYM[c.id], name: c.name, quote: c.aff }));
   $('#b-copy').addEventListener('click', () => share(`${c.name}\n«${c.aff}»\n\nОракул Евы · Eva Space`));
+  $('#b-again').addEventListener('click', () => { pendingB = true; renderDeck(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
 }
 
 /* =====================================================================
