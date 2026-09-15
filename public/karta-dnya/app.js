@@ -308,7 +308,15 @@ function chooseThemeA(st) {
   if (back) back.addEventListener('click', () => { pendingA = false; renderSilhouettes(); });
 }
 function playA() {
-  return `<div class="night"><div class="cap"><div class="eyebrow" id="a-cap-eyebrow"></div><p id="a-cap-text"></p></div><div class="spread" id="a-spread"></div></div><div id="a-strip"></div><div id="a-sheet"></div>`;
+  return `<div class="night"><div class="cap"><div class="eyebrow" id="a-cap-eyebrow"></div><p id="a-cap-text"></p></div><div class="spread" id="a-spread"></div><div class="reveal" id="a-reveal" hidden></div></div><div id="a-strip"></div><div id="a-sheet"></div>`;
+}
+function showPickedA(st, animate) {
+  const r = st.rounds[st.view];
+  const c = findA(r.ids[r.pick]);
+  $('#a-spread').hidden = true;
+  const rv = $('#a-reveal');
+  rv.hidden = false;
+  rv.innerHTML = `<div class="picked-card${animate ? ' rise' : ''}"><span class="art">${window.SIL[c.id]}</span><b>${esc(c.name)}</b><i>${esc(c.key)}</i></div>`;
 }
 function mountA(st) {
   const r = st.rounds[st.view];
@@ -322,12 +330,18 @@ function mountA(st) {
       r.pick = i; saveA(st); logDay('a', r.ids[i]);
       elm.classList.add('flipped'); sp.classList.add('done');
       $('#a-cap-text').textContent = 'Рука знала. Читай ниже.';
-      setTimeout(() => { stripA(st); sheetA(st); $('#a-sheet').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 900);
+      setTimeout(() => {
+        sp.classList.add('away');
+        setTimeout(() => {
+          showPickedA(st, true); stripA(st); sheetA(st);
+          $('#a-sheet').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 340);
+      }, 1000);
     };
     elm.addEventListener('click', pick);
     elm.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
   });
-  if (r.pick != null) { sp.children[r.pick].classList.add('flipped'); sp.classList.add('done'); stripA(st); sheetA(st); }
+  if (r.pick != null) { showPickedA(st, false); stripA(st); sheetA(st); }
   else stripA(st);
 }
 function stripA(st) {

@@ -1,23 +1,237 @@
 /* Колоды: силуэты (три карты) и символы (веер Евы) */
+/* ---------- силуэты: единая анатомия, фигуры строятся из общих частей ---------- */
 const S_ = 'stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none"';
 
+const F = (n) => (Math.round(n * 10) / 10).toString();
+const bez = (p0, p1, p2, t) => { const u = 1 - t; return [u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0], u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1]]; };
+
+/* мягкая конечность: осевая линия Безье, плавно сужающаяся по толщине */
+function limb(p0, p1, p2, w0, w1, n) {
+  n = n || 16;
+  const L = [], R = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const c = bez(p0, p1, p2, t);
+    const a = bez(p0, p1, p2, Math.max(0, t - 0.02));
+    const b = bez(p0, p1, p2, Math.min(1, t + 0.02));
+    let dx = b[0] - a[0], dy = b[1] - a[1];
+    const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
+    const w = (w0 + (w1 - w0) * t) / 2;
+    L.push([c[0] - dy * w, c[1] + dx * w]);
+    R.push([c[0] + dy * w, c[1] - dx * w]);
+  }
+  const pts = L.concat(R.reverse());
+  return OVER + '<path d="M' + pts.map((q) => F(q[0]) + ' ' + F(q[1])).join('L') + 'Z"/>' +
+    '<circle cx="' + F(p2[0]) + '" cy="' + F(p2[1]) + '" r="' + F(w1 * 0.52) + '"/></g>';
+}
+
+/* голова: волосы обтекают лицо и падают на плечи */
+function head(cx, cy, r, o) {
+  o = o || {};
+  if (o.hair === false) return '<circle cx="' + F(cx) + '" cy="' + F(cy) + '" r="' + F(r) + '"/>';
+  const R = r + 3.2;
+  const fall = o.fall == null ? 30 : o.fall;
+  const ri = r * 0.96;
+  const d = [
+    'M' + F(cx - R) + ' ' + F(cy),
+    'A' + F(R) + ' ' + F(R) + ' 0 0 1 ' + F(cx + R) + ' ' + F(cy),
+    'C' + F(cx + R) + ' ' + F(cy + fall * 0.45) + ' ' + F(cx + R - 1) + ' ' + F(cy + fall * 0.8) + ' ' + F(cx + R - 2.5) + ' ' + F(cy + fall),
+    'L' + F(cx + ri * 0.62) + ' ' + F(cy + fall - 3),
+    'C' + F(cx + ri * 0.86) + ' ' + F(cy + fall * 0.6) + ' ' + F(cx + ri) + ' ' + F(cy + fall * 0.3) + ' ' + F(cx + ri) + ' ' + F(cy + 1),
+    'A' + F(ri) + ' ' + F(ri) + ' 0 0 0 ' + F(cx - ri) + ' ' + F(cy + 1),
+    'C' + F(cx - ri) + ' ' + F(cy + fall * 0.3) + ' ' + F(cx - ri * 0.86) + ' ' + F(cy + fall * 0.6) + ' ' + F(cx - ri * 0.62) + ' ' + F(cy + fall - 3),
+    'L' + F(cx - R + 2.5) + ' ' + F(cy + fall),
+    'C' + F(cx - R + 1) + ' ' + F(cy + fall * 0.8) + ' ' + F(cx - R) + ' ' + F(cy + fall * 0.45) + ' ' + F(cx - R) + ' ' + F(cy),
+    'Z',
+  ].join('');
+  return '<path d="' + d + '"/><circle cx="' + F(cx) + '" cy="' + F(cy) + '" r="' + F(r) + '"/>';
+}
+
+/* платье: плечи, талия, подол с лёгким движением */
+function gown(o) {
+  o = o || {};
+  const top = o.top == null ? 56 : o.top;
+  const hem = o.hem == null ? 192 : o.hem;
+  const sh = o.sh == null ? 15 : o.sh;
+  const waist = o.waist == null ? 9.5 : o.waist;
+  const flare = o.flare == null ? 27 : o.flare;
+  const sway = o.sway || 0;
+  const wy = top + (hem - top) * 0.34;
+  const cx = 80;
+  return '<path d="M' + F(cx - sh) + ' ' + F(top) +
+    'C' + F(cx - sh - 1) + ' ' + F(top + 14) + ' ' + F(cx - waist - 2) + ' ' + F(wy - 8) + ' ' + F(cx - waist) + ' ' + F(wy) +
+    'C' + F(cx - waist - 4) + ' ' + F(wy + 26) + ' ' + F(cx - flare + sway * 0.5) + ' ' + F(hem - 22) + ' ' + F(cx - flare + sway) + ' ' + F(hem) +
+    'q' + F(flare) + ' ' + F(o.hemCurve == null ? 7 : o.hemCurve) + ' ' + F(flare * 2) + ' 0' +
+    'C' + F(cx + flare + sway * 0.5) + ' ' + F(hem - 22) + ' ' + F(cx + waist + 4) + ' ' + F(wy + 26) + ' ' + F(cx + waist) + ' ' + F(wy) +
+    'C' + F(cx + waist + 2) + ' ' + F(wy - 8) + ' ' + F(cx + sh + 1) + ' ' + F(top + 14) + ' ' + F(cx + sh) + ' ' + F(top) +
+    'q-' + F(sh) + ' -5 -' + F(sh * 2) + ' 0z"/>';
+}
+const ground = (y, w) => '<path d="M' + F(80 - (w || 56)) + ' ' + F(y) + 'h' + F((w || 56) * 2) + '" ' + S_ + ' stroke-width="4" opacity=".28"/>';
+const OVER = '<g paint-order="stroke fill" stroke="#0f0e1f" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round">';
+const over = (inner) => OVER + inner + '</g>';
+const svg = (inner) => '<svg viewBox="0 0 160 220" fill="currentColor">' + inner + '</svg>';
+
 window.SIL = {
-  lantern: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="78" cy="42" r="16"/><path d="M66 60h24l24 112H42z"/><path d="M70 70 52 112M88 70l34 26" ${S_} stroke-width="10"/><path d="M124 98v12" ${S_} stroke-width="4"/><rect x="116" y="110" width="18" height="24" rx="4"/><circle cx="125" cy="122" r="18" opacity=".18"/><path d="M70 172 60 212M90 172l14 40" ${S_} stroke-width="10"/></svg>`,
-  knees: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="62" cy="66" r="16"/><path d="M62 90Q50 122 50 176" ${S_} stroke-width="34"/><path d="M60 176l44-44" ${S_} stroke-width="24"/><path d="M104 132v46" ${S_} stroke-width="18"/><path d="M62 104q34 0 44 30" ${S_} stroke-width="10"/><path d="M34 190h96" ${S_} stroke-width="6" opacity=".35"/></svg>`,
-  dance: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="80" cy="40" r="16"/><path d="M66 58h28l36 120Q80 160 30 178z"/><path d="M70 66 44 30M90 66l28-44" ${S_} stroke-width="10"/><path d="M76 178l-6 34M94 178l18 26" ${S_} stroke-width="10"/></svg>`,
-  door: `<svg viewBox="0 0 160 220" fill="currentColor"><path d="M100 210V60q0-40 22-40t22 40v150" ${S_} stroke-width="6"/><path d="M104 208V62q0-34 18-34t18 34v146z" opacity=".16"/><circle cx="64" cy="50" r="16"/><path d="M52 68h24l16 112H36z"/><path d="M74 78l28-8M56 78 44 120" ${S_} stroke-width="10"/><path d="M60 180l-2 32M74 180l4 32" ${S_} stroke-width="10"/></svg>`,
-  bird: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="70" cy="44" r="16"/><path d="M56 62h28l24 118H34z"/><path d="M82 72l46-22M60 74 48 118" ${S_} stroke-width="10"/><path d="M118 34q10-12 18-2 8-10 18 2" ${S_} stroke-width="4"/><path d="M62 180l-4 32M80 180l6 32" ${S_} stroke-width="10"/></svg>`,
-  stars: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="32" cy="150" r="15"/><path d="M46 140l94 10 6 18H44z"/><path d="M46 146l-12-18" ${S_} stroke-width="9"/><path d="M140 150l14-12" ${S_} stroke-width="8"/><path d="M34 178h100" ${S_} stroke-width="6" opacity=".35"/><circle cx="40" cy="40" r="3"/><circle cx="76" cy="26" r="2"/><circle cx="118" cy="44" r="3.5"/><circle cx="96" cy="66" r="2"/><circle cx="140" cy="86" r="2.5"/><circle cx="24" cy="86" r="2"/><path d="M128 18a14 14 0 1 0 14 20 11 11 0 1 1-14-20z"/></svg>`,
-  open: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="80" cy="40" r="16"/><path d="M66 58h28l24 122H42z"/><path d="M70 66 22 38M90 66l48-28" ${S_} stroke-width="10"/><path d="M72 180l-4 32M88 180l4 32" ${S_} stroke-width="10"/></svg>`,
-  cup: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="80" cy="42" r="16"/><path d="M66 60h28l22 120H44z"/><path d="M70 70l-6 36 16 12M90 70l6 36-16 12" ${S_} stroke-width="9"/><path d="M64 112h32l-4 20H68z"/><path d="M74 100q-2-6 2-10M84 100q-2-6 2-10" ${S_} stroke-width="2.5" opacity=".7"/><path d="M70 180l-2 32M90 180l2 32" ${S_} stroke-width="10"/></svg>`,
-  mirror: `<svg viewBox="0 0 160 220" fill="currentColor"><ellipse cx="122" cy="90" rx="24" ry="36" ${S_} stroke-width="5"/><ellipse cx="122" cy="90" rx="18" ry="29" opacity=".18"/><path d="M122 126v50M104 178h36" ${S_} stroke-width="5"/><circle cx="56" cy="48" r="16"/><path d="M42 66h28l20 114H24z"/><path d="M68 76l28 14M44 76 34 120" ${S_} stroke-width="10"/><path d="M50 180l-4 32M68 180l6 32" ${S_} stroke-width="10"/></svg>`,
-  road: `<svg viewBox="0 0 160 220" fill="currentColor"><path d="M80 214v-60M80 154 28 50M80 154l52-104" ${S_} stroke-width="9" opacity=".35"/><circle cx="80" cy="92" r="15"/><path d="M68 108h24l16 68H52z"/><path d="M70 116l-10 34M90 116l10 34" ${S_} stroke-width="9"/><path d="M72 176l-2 26M88 176l2 26" ${S_} stroke-width="9"/></svg>`,
-  seed: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="66" cy="70" r="15"/><path d="M66 88Q52 112 56 154" ${S_} stroke-width="32"/><path d="M74 104l30 44" ${S_} stroke-width="10"/><path d="M28 160h104" ${S_} stroke-width="6" opacity=".35"/><path d="M110 156v-20" ${S_} stroke-width="4"/><path d="M110 142q-12-2-12-14 12 2 12 14zM110 138q12-2 12-14-12 2-12 14z"/></svg>`,
-  crown: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="80" cy="56" r="16"/><path d="M58 30l8-16 14 10 14-10 8 16z"/><path d="M66 74h28l22 108H44z"/><path d="M70 82 60 40M90 82l10-42" ${S_} stroke-width="10"/><path d="M70 182l-2 30M90 182l2 30" ${S_} stroke-width="10"/></svg>`,
-  veil: `<svg viewBox="0 0 160 220" fill="currentColor"><path d="M44 40q36-36 72 0v66q-36 22-72 0z" opacity=".22"/><circle cx="80" cy="48" r="16"/><path d="M66 66h28l22 116H44z"/><path d="M70 74 50 44M90 74l20-30" ${S_} stroke-width="10"/><path d="M70 182l-2 30M90 182l2 30" ${S_} stroke-width="10"/></svg>`,
-  wave: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="80" cy="50" r="16"/><path d="M66 68h28l18 96H48z"/><path d="M70 76 50 122M90 76l22 44" ${S_} stroke-width="10"/><path d="M6 168q20-12 40 0t40 0 40 0 40 0M6 190q20-12 40 0t40 0 40 0 40 0" ${S_} stroke-width="6" opacity=".55"/></svg>`,
-  letter: `<svg viewBox="0 0 160 220" fill="currentColor"><path d="M26 142h110" ${S_} stroke-width="6" opacity=".5"/><circle cx="62" cy="64" r="15"/><path d="M62 82Q52 104 56 142" ${S_} stroke-width="30"/><path d="M70 102l36 34" ${S_} stroke-width="10"/><path d="M98 126h30v16H98z"/><path d="M112 118l16-26" ${S_} stroke-width="4"/><path d="M128 92q8-6 4 6" ${S_} stroke-width="3"/><path d="M66 142v50M106 142v50" ${S_} stroke-width="7" opacity=".5"/></svg>`,
-  harvest: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="80" cy="44" r="16"/><path d="M66 62h28l22 118H44z"/><path d="M70 72 56 116M90 72l14 44" ${S_} stroke-width="10"/><path d="M50 118h60l-8 26H58z"/><circle cx="62" cy="112" r="6"/><circle cx="78" cy="108" r="6"/><circle cx="94" cy="112" r="6"/><path d="M70 180l-2 32M90 180l2 32" ${S_} stroke-width="10"/></svg>`,
+  /* идёт с фонарём */
+  lantern: svg(
+    head(74, 36, 13, { fall: 30 }) +
+    gown({ top: 58, hem: 190, sway: -3, flare: 26 }) +
+    limb([62, 64], [52, 92], [50, 118], 9, 4.5) +
+    limb([90, 64], [108, 84], [116, 104], 9, 4.5) +
+    '<path d="M116 108v7" ' + S_ + ' stroke-width="2.5"/>' +
+    '<circle cx="116" cy="125" r="22" opacity=".16"/><circle cx="116" cy="125" r="13" opacity=".22"/>' +
+    over('<path d="M108 115h16l3 20h-22z"/>') +
+    ground(196)
+  ),
+  /* обняла колени */
+  knees: svg(
+    head(62, 74, 13, { fall: 32 }) +
+    '<path d="M50 96c-4 22-2 44 4 62h24c-6-20-8-40-4-62-6-8-18-8-24 0z"/>' +
+    '<path d="M74 158c14 0 26-10 30-26 3-11 2-22-2-30-8-3-15 1-17 9-3 12-6 22-15 27z"/>' +
+    limb([58, 100], [76, 118], [96, 128], 8.5, 4.5) +
+    '<path d="M50 158h58l-2 10H52z" opacity=".9"/>' +
+    ground(174, 46)
+  ),
+  /* танцующая */
+  dance: svg(
+    head(84, 34, 13, { fall: 34 }) +
+    gown({ top: 56, hem: 188, sway: 15, flare: 38, hemCurve: 16 }) +
+    limb([70, 60], [46, 44], [33, 25], 9, 4) +
+    limb([98, 60], [122, 46], [133, 24], 9, 4) +
+    ground(206, 52)
+  ),
+  /* у двери */
+  door: svg(
+    '<path d="M112 206V64q0-34 20-34t20 34v142z" opacity=".14"/>' +
+    '<path d="M112 206V64q0-34 20-34t20 34v142" ' + S_ + ' stroke-width="4" opacity=".55"/>' +
+    '<circle cx="120" cy="140" r="3.5" opacity=".7"/>' +
+    head(66, 38, 13, { fall: 32 }) +
+    gown({ top: 60, hem: 192, sway: -6, flare: 25 }) +
+    limb([54, 66], [44, 92], [42, 116], 9, 4.5) +
+    limb([82, 64], [102, 66], [112, 70], 9, 4.5) +
+    ground(198, 48)
+  ),
+  /* отпускает птицу */
+  bird: svg(
+    head(72, 40, 13, { fall: 32 }) +
+    gown({ top: 62, hem: 192, sway: -2, flare: 26 }) +
+    limb([60, 68], [50, 94], [48, 118], 9, 4.5) +
+    limb([88, 66], [110, 54], [122, 40], 9, 4.5) +
+    '<path d="M122 26q7-9 13-2 6-7 13 2-7-3-13 3-6-6-13-3z"/>' +
+    '<path d="M104 18q5-6 9-1 4-5 9 1-5-2-9 2-4-4-9-2z" opacity=".55"/>' +
+    ground(198, 48)
+  ),
+  /* смотрит на звёзды */
+  stars: svg(
+    '<circle cx="42" cy="40" r="3"/><circle cx="80" cy="26" r="2"/><circle cx="118" cy="46" r="3.5"/><circle cx="98" cy="66" r="2"/><circle cx="138" cy="84" r="2.5"/><circle cx="26" cy="80" r="2"/>' +
+    '<path d="M122 20a15 15 0 1 0 15 21 12 12 0 1 1-15-21z"/>' +
+    head(36, 146, 12, { fall: 20 }) +
+    '<path d="M48 136c28-6 58-3 82 6 6 2 8 7 5 11-3 5-9 6-15 4-22-7-48-8-70-4-7 1-11-2-11-8 0-5 4-8 9-9z"/>' +
+    limb([72, 140], [92, 124], [100, 104], 8, 4) +
+    ground(166, 62)
+  ),
+  /* раскрыла руки */
+  open: svg(
+    head(80, 36, 13, { fall: 28 }) +
+    gown({ top: 58, hem: 192, flare: 27 }) +
+    limb([66, 62], [42, 58], [22, 46], 9, 4) +
+    limb([94, 62], [118, 58], [138, 46], 9, 4) +
+    ground(198, 52)
+  ),
+  /* держит чашу */
+  cup: svg(
+    head(80, 34, 13, { fall: 28 }) +
+    gown({ top: 56, hem: 192, flare: 26 }) +
+    limb([66, 62], [50, 78], [66, 90], 9, 4.5) +
+    limb([94, 62], [110, 78], [94, 90], 9, 4.5) +
+    over('<path d="M64 80h32l-7 18H71z"/><path d="M77 98h6v10h-6z"/><path d="M68 108h24v5H68z"/>') +
+    '<path d="M74 74q-2-8 2-13M86 74q-2-8 2-13" ' + S_ + ' stroke-width="2.2" opacity=".6"/>' +
+    ground(198, 50)
+  ),
+  /* смотрит в зеркало */
+  mirror: svg(
+    '<ellipse cx="124" cy="86" rx="21" ry="30" ' + S_ + ' stroke-width="4"/>' +
+    '<ellipse cx="124" cy="86" rx="15" ry="24" opacity=".16"/>' +
+    '<path d="M124 118v46M108 166h32" ' + S_ + ' stroke-width="4"/>' +
+    head(62, 40, 13, { fall: 32 }) +
+    gown({ top: 62, hem: 192, sway: -4, flare: 24 }) +
+    limb([50, 68], [42, 92], [40, 114], 9, 4.5) +
+    limb([78, 66], [96, 70], [106, 78], 9, 4.5) +
+    ground(198, 48)
+  ),
+  /* на развилке */
+  road: svg(
+    '<path d="M80 206v-52" ' + S_ + ' stroke-width="5" opacity=".3"/>' +
+    '<path d="M80 154 34 52" ' + S_ + ' stroke-width="4" stroke-dasharray="9 10" opacity=".3"/>' +
+    '<path d="M80 154l46-102" ' + S_ + ' stroke-width="4" opacity=".3"/>' +
+    head(80, 68, 13, { fall: 28 }) +
+    gown({ top: 90, hem: 196, flare: 26, waist: 9 }) +
+    limb([67, 94], [58, 114], [56, 134], 8.5, 4.5) +
+    limb([93, 94], [102, 114], [104, 134], 8.5, 4.5) +
+    ground(198, 44)
+  ),
+  /* сажает семя */
+  seed: svg(
+    head(56, 60, 13, { fall: 30 }) +
+    '<path d="M44 84c-8 14-12 34-12 52 0 4 3 6 7 6h50c5 0 7-4 5-8-8-16-13-34-14-48-9-9-28-9-36-2z"/>' +
+    limb([64, 90], [86, 106], [100, 122], 8.5, 4.5) +
+    '<path d="M106 124v-18" ' + S_ + ' stroke-width="3.5"/>' +
+    '<path d="M106 110q-13-2-13-14 13 2 13 14zM106 106q13-2 13-14-13 2-13 14z"/>' +
+    ground(144, 58)
+  ),
+  /* надевает корону */
+  crown: svg(
+    over('<path d="M60 32l9-16 11 9 11-9 9 16z"/><path d="M58 36h44v7H58z"/>') +
+    head(80, 56, 13, { hair: false }) +
+    '<path d="M65 60c-3-14 3-22 15-22s18 8 15 22c-2-8-7-11-15-11s-13 3-15 11z" opacity=".92"/>' +
+    gown({ top: 76, hem: 194, flare: 27 }) +
+    limb([67, 80], [55, 60], [63, 42], 9, 4.5) +
+    limb([93, 80], [105, 60], [97, 42], 9, 4.5) +
+    ground(200, 52)
+  ),
+  /* снимает вуаль */
+  veil: svg(
+    '<path d="M44 44q36-34 72 0v62q-36 18-72 0z" opacity=".2"/>' +
+    '<path d="M44 44q36-34 72 0" ' + S_ + ' stroke-width="3" opacity=".5"/>' +
+    head(80, 48, 13, { hair: false }) +
+    '<path d="M65 52c-3-14 3-22 15-22s18 8 15 22c-2-8-7-11-15-11s-13 3-15 11z" opacity=".92"/>' +
+    gown({ top: 70, hem: 194, flare: 26 }) +
+    limb([67, 74], [54, 58], [58, 40], 9, 4) +
+    limb([93, 74], [106, 58], [102, 40], 9, 4) +
+    ground(200, 50)
+  ),
+  /* входит в воду */
+  wave: svg(
+    head(80, 38, 13, { fall: 30 }) +
+    gown({ top: 60, hem: 178, flare: 25 }) +
+    limb([66, 66], [52, 92], [50, 116], 9, 4.5) +
+    limb([94, 66], [108, 92], [110, 116], 9, 4.5) +
+    '<path d="M4 168q19-11 38 0t38 0 38 0 38 0" ' + S_ + ' stroke-width="5" opacity=".75"/>' +
+    '<path d="M4 186q19-11 38 0t38 0 38 0 38 0" ' + S_ + ' stroke-width="5" opacity=".55"/>' +
+    '<path d="M4 202q19-11 38 0t38 0 38 0 38 0" ' + S_ + ' stroke-width="5" opacity=".35"/>'
+  ),
+  /* пишет письмо */
+  letter: svg(
+    head(52, 50, 13, { fall: 30 }) +
+    '<path d="M40 74c-9 14-13 30-13 46h36c-3-16-3-32 1-44-7-8-18-8-24-2z"/>' +
+    '<path d="M27 118c-5 24-7 48-7 70h46c0-22-2-46-6-70z"/>' +
+    '<path d="M18 128h124" ' + S_ + ' stroke-width="5" opacity=".65"/>' +
+    '<path d="M18 134h124" ' + S_ + ' stroke-width="3" opacity=".25"/>' +
+    limb([60, 82], [82, 100], [98, 114], 8.5, 4.5) +
+    over('<path d="M88 116h40v9H88z"/>') +
+    over('<path d="M106 114l16-26" ' + S_ + ' stroke-width="3.5" stroke="currentColor"/><path d="M122 88q8-6 4 6" ' + S_ + ' stroke-width="2.5" stroke="currentColor"/>') +
+    ground(194, 62)
+  ),
+  /* собирает урожай */
+  harvest: svg(
+    head(74, 34, 13, { fall: 32 }) +
+    gown({ top: 56, hem: 190, sway: -2, flare: 26 }) +
+    limb([62, 62], [52, 84], [56, 106], 9, 4.5) +
+    limb([90, 62], [102, 84], [100, 104], 9, 4.5) +
+    over('<circle cx="66" cy="100" r="6"/><circle cx="82" cy="96" r="6.5"/><circle cx="97" cy="100" r="6"/>') +
+    over('<path d="M50 106h60l-9 30H59z"/>') +
+    ground(196, 50)
+  ),
 };
 
 window.THEMES = {

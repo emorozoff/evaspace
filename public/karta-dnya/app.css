@@ -454,3 +454,24 @@ details[open] summary::after { content: '–'; }
 .sigil .spark.s3 { top: 22%; left: 80%; width: 10%; height: 10%; }
 @keyframes spark-twinkle { 0%, 100% { opacity: 0; transform: scale(0.5) rotate(-20deg); } 50% { opacity: 0.95; transform: scale(1) rotate(0deg); } }
 @media (prefers-reduced-motion: reduce) { .sigil .spark { opacity: 0.8; } }
+
+/* ============================================================
+   Выбранный силуэт: крупная карта вместо тесной в раскладе
+   ============================================================ */
+.spread.away { opacity: 0; transform: scale(0.94); transition: opacity 0.32s ease, transform 0.32s ease; }
+.picked-card {
+  position: relative; width: min(205px, 60%); aspect-ratio: 2 / 3;
+  border-radius: 18px; overflow: hidden;
+  background: linear-gradient(180deg, #1c1a36 0%, #12111f 100%);
+  border: 1px solid var(--gold);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), 0 0 34px rgba(217, 181, 111, 0.18);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 16px 14px 20px; text-align: center; color: var(--gold-2);
+}
+.picked-card::after { content: ''; position: absolute; top: 7px; left: 7px; width: calc(100% - 14px); height: calc(100% - 14px); border-radius: 13px; border: 1px solid rgba(217, 181, 111, 0.24); pointer-events: none; }
+.picked-card .art { display: block; width: 84%; height: 52%; color: #fff6e2; filter: drop-shadow(0 0 14px rgba(143, 124, 243, 0.85)); }
+.picked-card .art svg { width: 100%; height: 100%; }
+.picked-card b { font-family: 'Forum', serif; font-weight: 400; font-size: 23px; line-height: 1.08; text-wrap: balance; }
+.picked-card i { font-style: normal; font-size: 10.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); line-height: 1.35; }
+.picked-card.rise { animation: picked-in 0.6s cubic-bezier(0.2, 0.85, 0.25, 1) both; }
+@keyframes picked-in { from { opacity: 0; transform: translateY(18px) scale(0.86); } to { opacity: 1; transform: none; } }
