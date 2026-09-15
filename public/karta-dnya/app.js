@@ -65,6 +65,25 @@ function renderStreak() { const e = $('#streak-n'); if (e) e.textContent = strea
   size(); addEventListener('resize', size); draw(0);
 })();
 
+
+/* ---------- логотип Евы в магическом обличии ---------- */
+const EVA_STAR_PATH = 'M12 1.6c.5 4.5 1.4 7.1 3 8.6 1.5 1.5 4.1 2.3 7.4 1.8-3.3.5-5.9 1.3-7.4 2.8-1.6 1.5-2.5 4.1-3 8.6-.5-4.5-1.4-7.1-3-8.6-1.5-1.5-4.1-2.3-7.4-2.8 3.3.5 5.9-.3 7.4-1.8 1.6-1.5 2.5-4.1 3-8.6Z';
+function evaSigil(size = 176) {
+  const spark = (cls, d) => `<span class="spark ${cls}" style="--d:${d}s"><svg viewBox="0 0 24 24" fill="currentColor"><path d="${EVA_STAR_PATH}"/></svg></span>`;
+  return `<div class="sigil" style="--s:${size}px" aria-hidden="true">
+    <span class="halo"></span>
+    <span class="ring ring-a"></span>
+    <span class="ring ring-b"></span>
+    <svg class="eva-star" viewBox="0 0 24 24">
+      <defs><linearGradient id="evag" x1="20%" y1="0%" x2="80%" y2="100%">
+        <stop offset="0" stop-color="#fffdf6"/><stop offset="45%" stop-color="#f6e6bd"/><stop offset="1" stop-color="#d9b56f"/>
+      </linearGradient></defs>
+      <path d="${EVA_STAR_PATH}" fill="url(#evag)"/>
+    </svg>
+    ${spark('s1', 0)}${spark('s2', 1.3)}${spark('s3', 2.6)}
+  </div>`;
+}
+
 /* ---------- Луна: рисунок ---------- */
 function moonSVG(illum, waxing, size = 200, id = 'm') {
   const r = size / 2 - 6, cx = size / 2, cy = size / 2;
@@ -127,7 +146,7 @@ function renderWelcome() {
   const draw = () => {
     const steps = `<div class="steps">${[0, 1, 2].map((i) => `<i class="${i <= step ? 'on' : ''}"></i>`).join('')}</div>`;
     if (step === 0) {
-      view.innerHTML = `<div class="welcome">${steps}<div class="moon-hero">${moonSVG(0.72, true, 150, 'w')}</div><div class="eyebrow">Оракул Евы</div><h1 class="display">Добро пожаловать в мир магии и подсказок</h1><p>Каждый день здесь ждёт послание: карты, символы и Луна говорят с тобой на языке, который понимает только ты.</p><button class="btn primary block" id="w-next" style="margin-top:14px">Войти</button></div>`;
+      view.innerHTML = `<div class="welcome">${steps}${evaSigil(176)}<div class="eyebrow">Оракул Евы</div><h1 class="display">Добро пожаловать в мир магии и подсказок</h1><p>Каждый день здесь ждёт послание: карты, символы и Луна говорят с тобой на языке, который понимает только ты.</p><button class="btn primary block" id="w-next" style="margin-top:14px">Войти</button></div>`;
     } else if (step === 1) {
       view.innerHTML = `<div class="welcome">${steps}<div class="eyebrow">Знакомство</div><h1 class="display">Как к тебе обращаться?</h1><p>Так Оракул будет называть тебя в посланиях.</p><input class="field" id="w-name" type="text" maxlength="24" placeholder="Твоё имя" autocomplete="given-name" value="${esc(draft.name)}"><button class="btn primary block" id="w-next" ${draft.name.trim() ? '' : 'disabled'}>Дальше</button></div>`;
       const inp = $('#w-name'); inp.focus();

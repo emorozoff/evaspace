@@ -418,3 +418,39 @@ details[open] summary::after { content: '–'; }
 .steps-list .n { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #17130a; background: linear-gradient(135deg, var(--gold-2), var(--gold)); }
 .steps-list .gl { display: inline-grid; place-items: center; width: 22px; height: 22px; vertical-align: -6px; margin: 0 2px; color: var(--gold-2); }
 .steps-list .gl svg { width: 100%; height: 100%; }
+
+/* ============================================================
+   Логотип Евы: путеводная звезда в орбитах
+   ============================================================ */
+.sigil { position: relative; width: var(--s, 176px); height: var(--s, 176px); margin: 0 auto 4px; display: grid; place-items: center; }
+.sigil .halo {
+  position: absolute; top: 50%; left: 50%; width: 132%; height: 132%; transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(143, 124, 243, 0.42) 0%, rgba(217, 181, 111, 0.14) 38%, rgba(143, 124, 243, 0) 68%);
+  animation: halo-breathe 5.5s ease-in-out infinite;
+}
+@keyframes halo-breathe { 0%, 100% { transform: translate(-50%, -50%) scale(0.92); opacity: 0.75; } 50% { transform: translate(-50%, -50%) scale(1.08); opacity: 1; } }
+.sigil .ring { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; }
+.sigil .ring-a { border: 1px solid rgba(217, 181, 111, 0.34); animation: spin 46s linear infinite; }
+.sigil .ring-a::after {
+  content: ''; position: absolute; top: -4px; left: 50%; width: 7px; height: 7px; margin-left: -3.5px;
+  border-radius: 50%; background: var(--gold-2); box-shadow: 0 0 14px var(--gold), 0 0 26px rgba(217, 181, 111, 0.6);
+}
+.sigil .ring-b {
+  top: 12%; left: 12%; width: 76%; height: 76%;
+  border: 1px dashed rgba(217, 181, 111, 0.26);
+  animation: spin 34s linear infinite reverse;
+}
+.sigil .eva-star {
+  position: relative; z-index: 1; width: 52%; height: 52%;
+  filter: drop-shadow(0 0 16px rgba(246, 230, 189, 0.75)) drop-shadow(0 0 40px rgba(143, 124, 243, 0.8));
+  animation: star-pulse 4.5s ease-in-out infinite;
+}
+@keyframes star-pulse { 0%, 100% { transform: scale(0.97); } 50% { transform: scale(1.05); } }
+.sigil .spark { position: absolute; width: 13%; height: 13%; color: var(--gold-2); opacity: 0; animation: spark-twinkle 4.2s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.sigil .spark svg { width: 100%; height: 100%; filter: drop-shadow(0 0 8px rgba(217, 181, 111, 0.9)); }
+.sigil .spark.s1 { top: 8%; left: 14%; }
+.sigil .spark.s2 { top: 68%; left: 6%; width: 9%; height: 9%; }
+.sigil .spark.s3 { top: 22%; left: 80%; width: 10%; height: 10%; }
+@keyframes spark-twinkle { 0%, 100% { opacity: 0; transform: scale(0.5) rotate(-20deg); } 50% { opacity: 0.95; transform: scale(1) rotate(0deg); } }
+@media (prefers-reduced-motion: reduce) { .sigil .spark { opacity: 0.8; } }
