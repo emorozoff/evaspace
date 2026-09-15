@@ -8,13 +8,16 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Оракул Евы" />
-<link rel="icon" type="image/png" href="../icons/favicon-64.png" />
-<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="icons/favicon-64.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="manifest" href="manifest.webmanifest" />
+<meta property="og:title" content="Оракул Евы" />
+<meta property="og:description" content="Карта дня, колода символов и лунный день. Открой своё послание." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="icons/og.png" />
 <!--ARTIFACT-START-->
 <title>Оракул Евы</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Forum&family=Manrope:wght@400;500;600;700;800&display=swap" />
+<link rel="stylesheet" href="fonts.css" />
 <link rel="stylesheet" href="app.css" />
 <!--ARTIFACT-HEAD-END-->
 </head>
@@ -41,6 +44,7 @@
   <div class="post" id="post"></div>
   <div class="actions"><div class="btn-row"><button class="btn primary sm" id="share-btn">Поделиться</button><button class="btn sm" id="share-close">Закрыть</button></div><span>Сделай скриншот и в сторис</span></div>
 </div>
+<div class="install" id="install" hidden></div>
 <div class="toast" id="toast"></div>
 
 <script src="data/zodiac.js"></script>

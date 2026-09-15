@@ -195,7 +195,7 @@ function renderGreeting() {
       <div class="sign display">${esc(g.sign)}</div>
       <button class="btn primary block" id="g-done" style="margin-top:18px">${seen ? 'Вернуться' : 'Войти в Оракул'}</button></div>`;
     body.innerHTML = g.cards.map(blockHTML).join('') + outroHTML;
-    $('#g-done').addEventListener('click', () => { store.set('greeting', true); go(seen ? 'profile' : ''); });
+    $('#g-done').addEventListener('click', () => { store.set('greeting', true); go(seen ? 'profile' : ''); if (!seen) maybeOfferInstall(900); });
 
     if (!animate) { cards.forEach((el) => el.classList.add('flipped')); $('#g-spread').classList.add('done'); return; }
     const show = (i) => { const el = body.querySelector(`[data-b="${i}"]`); if (!el) return; el.hidden = false; requestAnimationFrame(() => el.classList.remove('soft')); };
@@ -229,6 +229,7 @@ function renderHome() {
     <p class="proto-note">Оракул не предсказывает будущее. Он помогает услышать то, что ты уже знаешь.</p>`;
   document.querySelectorAll('.mech-card').forEach((c) => c.addEventListener('click', () => { pendingA = false; pendingB = false; go(c.dataset.go); }));
   renderHistory($('#home-history'));
+  maybeOfferInstall();
 }
 function inSign(z) { const m = { aries: 'Овне', taurus: 'Тельце', gemini: 'Близнецах', cancer: 'Раке', leo: 'Льве', virgo: 'Деве', libra: 'Весах', scorpio: 'Скорпионе', sagittarius: 'Стрельце', capricorn: 'Козероге', aquarius: 'Водолее', pisces: 'Рыбах' }; return m[z.id]; }
 function dayLead(mi, z) {
@@ -505,12 +506,106 @@ function renderProfile() {
     <div class="prof"><div class="glyph">${z.glyph}</div><div><h2 class="display">${esc(z.name)}</h2><p>${p.d} ${['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'][p.m - 1]} ${p.y} · стихия ${esc(e.name.toLowerCase())}</p></div></div>
     <div class="stats"><div><b>${streak()}</b><span>дней подряд</span></div><div><b>${cards}</b><span>карт открыто</span></div><div><b>${days}</b><span>дней с Оракулом</span></div></div>
     <div class="box zodiac" style="margin:16px 18px 0"><div class="eyebrow">${z.glyph} ${esc(z.name)}</div><p>${esc(z.trait)}</p><p class="muted small" style="margin-top:8px">Сильная сторона: ${esc(z.strength)}. Тень: ${esc(z.shadow)}.</p></div>
-    <div class="list"><button id="p-greet">Перечитать приветственный расклад <span>→</span></button><button id="p-edit">Изменить имя или дату рождения <span>→</span></button><button id="p-today" class="danger">Сбросить сегодняшние карты (демо) <span>→</span></button><button id="p-reset" class="danger">Удалить все данные <span>→</span></button></div>
+    <div class="list"><button id="p-install">Установить на телефон <span>→</span></button><button id="p-greet">Перечитать приветственный расклад <span>→</span></button><button id="p-edit">Изменить имя или дату рождения <span>→</span></button><button id="p-today" class="danger">Сбросить сегодняшние карты (демо) <span>→</span></button><button id="p-reset" class="danger">Удалить все данные <span>→</span></button></div>
     <p class="proto-note">Все данные хранятся только в этом браузере. Ничего не отправляется на сервер.</p>`;
+  $('#p-install').addEventListener('click', () => openInstall(true));
   $('#p-greet').addEventListener('click', () => go('greeting'));
   $('#p-edit').addEventListener('click', () => go('welcome'));
   $('#p-today').addEventListener('click', () => { ['a', 'b', 'm'].forEach((v) => store.del(v + '.' + TODAY)); store.set('history', history().filter((x) => x.date !== TODAY)); toast('Сегодняшние карты сброшены'); renderProfile(); });
   $('#p-reset').addEventListener('click', () => { if (confirm('Удалить профиль, историю и заметки?')) { store.clear(); location.hash = '#/welcome'; location.reload(); } });
+}
+
+
+/* =====================================================================
+   УСТАНОВКА НА ТЕЛЕФОН
+   ===================================================================== */
+const UA = navigator.userAgent || '';
+const isIOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/.test(UA);
+const inAppBrowser = /FBAN|FBAV|FB_IAB|Instagram|MicroMessenger|VKClient|WhatsApp|Telegram|TikTok|OKApp|Line\//i.test(UA) || (isIOS && !/Safari/.test(UA));
+function isStandalone() {
+  try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch { return false; }
+}
+let installEvent = null;
+let installShown = false;
+
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvent = e; });
+addEventListener('appinstalled', () => { store.set('install.done', true); closeInstall(); toast('Готово, Оракул на твоём экране'); });
+
+const IC_SHARE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M8.5 6.5 12 3l3.5 3.5"/><path d="M6 12H5a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7a1 1 0 0 0-1-1h-1"/></svg>';
+const IC_PLUS_BOX = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><path d="M12 8v8M8 12h8"/></svg>';
+const IC_DOTS = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>';
+
+function installVariant() {
+  if (isStandalone()) return null;
+  if (installEvent) return 'prompt';
+  if (inAppBrowser) return 'inapp';
+  if (isIOS) return 'ios';
+  if (isAndroid) return 'android';
+  return null;
+}
+function maybeOfferInstall(delay = 1400) {
+  if (installShown || isStandalone() || store.get('install.done', false)) return;
+  const later = store.get('install.later', 0);
+  if (later && Date.now() - later < 3 * 86400000) return;
+  if (!installVariant()) return;
+  installShown = true;
+  setTimeout(() => { if (!isStandalone()) openInstall(); }, delay);
+}
+function closeInstall() { const el = $('#install'); if (el) { el.classList.remove('on'); setTimeout(() => { el.hidden = true; }, 260); } }
+
+function openInstall(manual) {
+  const v = installVariant();
+  const el = $('#install');
+  if (!v) { if (manual) toast(isStandalone() ? 'Оракул уже установлен' : 'Добавь страницу в закладки'); return; }
+  const icon = `<span class="app-ic"><img src="icons/icon-192.png" alt=""></span>`;
+  let body = '';
+  if (v === 'prompt' || v === 'android') {
+    body = `<h3 class="display">Пусть Оракул живёт на твоём экране</h3>
+      <p>Приложение откроется на весь экран, без адресной строки, и будет работать даже без интернета.</p>
+      <button class="btn primary block" id="ins-go">Установить</button>`;
+  } else if (v === 'ios') {
+    body = `<h3 class="display">Добавь Оракула на экран «Домой»</h3>
+      <p>Три касания, и он будет открываться как обычное приложение, на весь экран и без интернета.</p>
+      <ol class="steps-list">
+        <li><span class="n">1</span><span>Нажми <i class="gl">${IC_SHARE}</i> внизу экрана</span></li>
+        <li><span class="n">2</span><span>Пролистай и выбери <i class="gl">${IC_PLUS_BOX}</i> «На экран «Домой»</span></li>
+        <li><span class="n">3</span><span>Нажми «Добавить» справа вверху</span></li>
+      </ol>
+      <button class="btn block" id="ins-later">Понятно</button>`;
+  } else {
+    body = `<h3 class="display">Открой Оракула в браузере</h3>
+      <p>Сейчас страница открыта внутри мессенджера, отсюда приложение не установить.</p>
+      <ol class="steps-list">
+        <li><span class="n">1</span><span>Нажми <i class="gl">${IC_DOTS}</i> в углу экрана</span></li>
+        <li><span class="n">2</span><span>Выбери «Открыть в ${isIOS ? 'Safari' : 'браузере'}»</span></li>
+        <li><span class="n">3</span><span>Там появится подсказка, как добавить на экран</span></li>
+      </ol>
+      <button class="btn block" id="ins-copy">Скопировать ссылку</button>`;
+  }
+  el.innerHTML = `<div class="install-back"></div><div class="install-card">${icon}${body}<button class="textlink" id="ins-dismiss">Не сейчас</button></div>`;
+  el.hidden = false;
+  requestAnimationFrame(() => el.classList.add('on'));
+  const dismiss = () => { store.set('install.later', Date.now()); closeInstall(); };
+  $('#ins-dismiss').addEventListener('click', dismiss);
+  $('.install-back', el).addEventListener('click', dismiss);
+  const go = $('#ins-go');
+  if (go) go.addEventListener('click', async () => {
+    if (!installEvent) { toast('Открой меню браузера и выбери «Установить приложение»'); return; }
+    closeInstall();
+    installEvent.prompt();
+    try { const r = await installEvent.userChoice; if (r && r.outcome !== 'accepted') store.set('install.later', Date.now()); } catch {}
+    installEvent = null;
+  });
+  const later = $('#ins-later'); if (later) later.addEventListener('click', dismiss);
+  const copy = $('#ins-copy'); if (copy) copy.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(location.href); toast('Ссылка скопирована'); } catch { toast(location.href); }
+  });
+}
+
+/* регистрация офлайн-оболочки */
+if ('serviceWorker' in navigator && location.protocol.startsWith('http') && document.querySelector('link[rel="manifest"]')) {
+  addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
 }
 
 route();

@@ -326,7 +326,7 @@ details[open] summary::after { content: '–'; }
 .today-strip .m svg { width: 86%; height: 80%; }
 .today-strip button.on .m { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-dim); }
 .today-strip small { display: block; font-size: 10px; color: var(--muted); margin-top: 5px; line-height: 1.15; }
-.today-strip button.add .m { border-style: dashed; color: var(--gold); font-size: 26px; font-weight: 300; }
+.today-strip button.add .m { border-style: dashed; color: var(--gold); font-size: 26px; font-weight: 400; }
 .round-label { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); }
 .choice.used { opacity: 0.62; }
 .choice.used b::after { content: ' ·'; color: var(--gold); }
@@ -387,3 +387,34 @@ details[open] summary::after { content: '–'; }
 .greet-outro p { font-size: 15.5px; line-height: 1.6; color: var(--text); }
 .greet-outro p + p { margin-top: 10px; }
 .greet-outro .sign { margin-top: 18px; font-size: 22px; color: var(--gold-2); }
+
+/* ============================================================
+   Установка на телефон
+   ============================================================ */
+.install { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; display: flex; align-items: flex-end; justify-content: center; }
+.install[hidden] { display: none; }
+.install-back { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(4, 4, 10, 0.7); opacity: 0; transition: opacity 0.26s ease; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.install.on .install-back { opacity: 1; }
+.install-card {
+  position: relative; width: 100%; max-width: 460px;
+  background: linear-gradient(170deg, #1b1936 0%, #12112360 40%, #101020 100%), #101020;
+  border: 1px solid var(--line-2); border-bottom: 0;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  padding: 24px 22px calc(var(--safe-b) + 20px);
+  text-align: center;
+  transform: translateY(102%); transition: transform 0.34s cubic-bezier(0.2, 0.85, 0.25, 1);
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.6);
+}
+.install.on .install-card { transform: none; }
+@media (min-width: 720px) { .install { align-items: center; } .install-card { max-width: 400px; border-radius: var(--r-lg); border-bottom: 1px solid var(--line-2); transform: translateY(20px) scale(0.96); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; } .install.on .install-card { transform: none; opacity: 1; } }
+.install-card .app-ic { display: block; width: 74px; height: 74px; margin: 0 auto 14px; border-radius: 20px; overflow: hidden; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--gold-dim), 0 0 40px var(--violet-dim); }
+.install-card .app-ic img { width: 100%; height: 100%; display: block; }
+.install-card h3 { font-size: 25px; line-height: 1.15; text-wrap: balance; color: var(--gold-2); }
+.install-card > p { margin-top: 10px; font-size: 14px; line-height: 1.55; color: var(--text-2); max-width: 32ch; margin-left: auto; margin-right: auto; }
+.install-card .btn { margin-top: 18px; }
+.install-card .textlink { display: block; margin: 14px auto 0; }
+.steps-list { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 10px; text-align: left; }
+.steps-list li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); font-size: 14px; line-height: 1.4; }
+.steps-list .n { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #17130a; background: linear-gradient(135deg, var(--gold-2), var(--gold)); }
+.steps-list .gl { display: inline-grid; place-items: center; width: 22px; height: 22px; vertical-align: -6px; margin: 0 2px; color: var(--gold-2); }
+.steps-list .gl svg { width: 100%; height: 100%; }
