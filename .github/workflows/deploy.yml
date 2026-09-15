@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/eva-space-app-ho4tcy
+      - claude/lucid-feynman-2vq7le
       - main
   workflow_dispatch:
 
