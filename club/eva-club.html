@@ -42,7 +42,7 @@
   }
   .topbar-inner{
     max-width:1180px; margin:0 auto;
-    display:flex; align-items:center; gap:24px;
+    display:flex; align-items:center; gap:14px;
     padding:14px 24px;
   }
   .brand{display:flex; align-items:baseline; gap:9px; flex-shrink:0;}
@@ -69,7 +69,7 @@
   .primary-nav::-webkit-scrollbar{display:none;}
   @media (min-width:940px){ .primary-nav{flex-wrap:wrap; overflow:visible; row-gap:2px;} }
   .primary-nav a{
-    padding:8px 13px; border-radius:7px; font-size:13.5px; color:var(--ink-soft);
+    padding:7px 10px; border-radius:7px; font-size:13px; color:var(--ink-soft);
     white-space:nowrap; font-weight:500;
   }
   .primary-nav a:hover{color:var(--ink); background:rgba(0,0,0,0.03);}
@@ -1781,6 +1781,114 @@
     table.cf6-table th:first-child{min-width:220px;}
     .cf6-ctl-l{min-width:0; flex-basis:100%;}
   }
+  /* ---------------- вход, кабинеты, доступы ---------------- */
+  .auth-wrap{
+    display:grid; grid-template-columns:minmax(0,420px) minmax(0,1fr); gap:28px;
+    align-items:start; max-width:900px; margin:4vh auto 0;
+  }
+  .auth-card{background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:28px; box-shadow:0 8px 32px rgba(28,27,24,0.07);}
+  .auth-brand{display:flex; align-items:center; gap:12px; margin-bottom:22px;}
+  .auth-brand .mark{
+    width:38px; height:38px; border-radius:10px; background:var(--ink); color:var(--gold);
+    display:inline-flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:19px; flex:0 0 38px;
+  }
+  .auth-brand b{display:block; font-family:'Space Grotesk',sans-serif; font-size:19px; line-height:1.2;}
+  .auth-brand span{font-size:11.5px; color:var(--ink-faint);}
+  .auth-lead h2{font-size:19px; margin-bottom:6px;}
+  .auth-lead p{font-size:13px; color:var(--ink-soft); line-height:1.55; margin-bottom:18px;}
+  .auth-tabs{margin-bottom:18px;}
+  .auth-card .field{margin-bottom:12px;}
+  .auth-go{width:100%; justify-content:center; padding:11px 18px; font-size:14px; margin-top:6px;}
+  .auth-msg{border-radius:10px; padding:10px 13px; font-size:13px; margin-bottom:14px; line-height:1.45;}
+  .auth-msg.err{background:var(--rust-bg); color:var(--rust);}
+  .auth-msg.ok{background:var(--green-bg); color:var(--green);}
+  .auth-hint{font-size:12px; color:var(--ink-faint); margin-top:10px; line-height:1.45;}
+  .auth-note{font-size:11.5px; color:var(--ink-faint); margin-top:18px; padding-top:14px; border-top:1px solid var(--line); line-height:1.5;}
+  .auth-side{padding-top:8px;}
+  .auth-side h3{font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); margin-bottom:14px;}
+  .auth-role{display:flex; gap:12px; align-items:baseline; margin-bottom:12px; font-size:12.5px; color:var(--ink-soft); line-height:1.5;}
+  .auth-role .role-chip{flex:0 0 auto;}
+  @media (max-width:760px){ .auth-wrap{grid-template-columns:1fr; margin-top:0;} .auth-side{display:none;} }
+
+  .role-chip{
+    display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px;
+    font-size:11.5px; font-weight:600; white-space:nowrap;
+  }
+  .role-gold{background:var(--gold-bg); color:var(--gold-ink);}
+  .role-navy{background:var(--navy-bg); color:var(--navy);}
+  .role-green{background:var(--green-bg); color:var(--green);}
+  .role-wine{background:var(--wine-bg); color:var(--wine);}
+  .role-rust{background:var(--rust-bg); color:var(--rust);}
+
+  /* шапка: кто вошёл */
+  .topbar-me{display:flex; align-items:center; gap:8px; flex:0 0 auto; margin-left:auto;}
+  .topbar-me a{
+    display:flex; align-items:center; gap:8px; padding:5px 10px 5px 6px; border-radius:20px;
+    border:1px solid var(--line); background:var(--panel); white-space:nowrap;
+  }
+  .topbar-me a:hover{border-color:var(--gold);}
+  .topbar-me .tm-av{
+    width:24px; height:24px; border-radius:50%; background:var(--gold-bg); color:var(--gold-ink);
+    display:inline-flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:11px; flex:0 0 24px;
+  }
+  .topbar-me .tm-name{font-size:12.5px; font-weight:500; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .topbar-me .tm-role{
+    font-size:10px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em;
+    padding-left:8px; border-left:1px solid var(--line);
+  }
+  .topbar-me .tm-out{
+    background:none; border:1px solid var(--line); border-radius:50%; width:28px; height:28px;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:13px; line-height:1; color:var(--ink-faint); cursor:pointer; font-family:inherit; flex:0 0 28px;
+  }
+  .topbar-me .tm-out:hover{border-color:var(--rust); color:var(--rust);}
+  @media (max-width:980px){ .topbar-me .tm-name{display:none;} }
+
+  /* кабинет */
+  .cab-head{display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:30px;}
+  .cab-head .page-title{margin-bottom:6px;}
+  .cab-quick{display:flex; gap:8px; flex-wrap:wrap;}
+  .cab-decisions{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px;}
+  .cab-decision{
+    display:flex; align-items:baseline; gap:12px; padding:16px 18px; border-radius:12px;
+    border:1px solid var(--line); background:var(--panel); box-shadow:var(--shadow);
+  }
+  .cab-decision:hover{border-color:var(--gold);}
+  .cab-decision b{font-family:'Space Grotesk',sans-serif; font-size:26px; font-weight:700; line-height:1;}
+  .cab-decision span{font-size:12.5px; color:var(--ink-soft); line-height:1.4;}
+  .cab-decision.review b{color:var(--gold-ink);}
+  .cab-decision.budget b{color:var(--navy);}
+  .cab-decision.blocked b{color:var(--rust);}
+  .cab-tasks{display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+  .cab-task{display:flex; align-items:center; gap:12px; padding:11px 14px; background:var(--panel);}
+  .cab-task:hover{background:var(--gold-bg);}
+  .cab-task-title{flex:1; font-size:13.5px; min-width:0;}
+  .cab-task-title.done{color:var(--ink-faint); text-decoration:line-through;}
+  .cab-task-who{font-size:11.5px; color:var(--ink-faint); white-space:nowrap;}
+  .cab-goal .goal-text{font-size:17px; line-height:1.45;}
+  .cab-mission{font-size:15px; line-height:1.5; color:var(--gold-ink); font-style:italic; margin-bottom:14px;}
+  .cab-kv{margin-top:12px; padding-top:12px; border-top:1px solid var(--line);}
+  .cab-kv:first-child{margin-top:0; padding-top:0; border-top:0;}
+  .cab-kv p{font-size:13.5px; color:var(--ink-soft); line-height:1.55; margin-top:4px;}
+  .cab-report{display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; border-left:3px solid var(--rust);}
+  .cab-report.done{border-left-color:var(--green);}
+  .cab-acc-row{display:flex; align-items:baseline; gap:14px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13.5px;}
+  .cab-acc-row .k-label{flex:0 0 190px; margin-bottom:0;}
+  .cab-acc-actions{display:flex; gap:8px; flex-wrap:wrap; padding-top:16px;}
+  @media (max-width:600px){ .cab-acc-row{flex-direction:column; gap:2px;} .cab-acc-row .k-label{flex:none;} }
+
+  /* доступы */
+  table.acc-table td{vertical-align:middle;}
+  tr.acc-off td{opacity:0.5;}
+  .inv-code{
+    font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:600; letter-spacing:.08em;
+    background:var(--gold-bg); color:var(--gold-ink); padding:4px 10px; border-radius:7px;
+  }
+  .no-access{max-width:520px; margin:8vh auto; text-align:center;}
+  .no-access h1{font-size:22px; margin-bottom:10px;}
+  .no-access p{color:var(--ink-soft); font-size:14px; line-height:1.6; margin-bottom:20px;}
   /* источники трафика */
   .src-table td{vertical-align:middle;}
   .src-share{min-width:170px;}
@@ -1835,14 +1943,8 @@
 <div class="topbar">
   <div class="topbar-inner">
     <a href="#home" class="brand"><span class="mark">E</span><span class="wordmark">Eva Club</span><span class="save-status" id="saveStatus"></span></a>
-    <nav class="primary-nav" id="primaryNav">
-      <a href="#home" data-route="home">Обзор</a>
-      <a href="#roadmap" data-route="roadmap">Дорожная карта</a>
-      <a href="#model" data-route="model">Модель</a>
-      <a href="#fact" data-route="fact">Факт</a>
-      <a href="#team" data-route="team">Команда</a>
-      <a href="#about" data-route="about">О проекте</a>
-    </nav>
+    <nav class="primary-nav" id="primaryNav"></nav>
+    <div class="topbar-me" id="topbarMe"></div>
   </div>
 </div>
 
@@ -2671,6 +2773,960 @@ document.addEventListener('keydown', (e)=>{
 });
 
 /* ============================================================
+   УЧЁТНЫЕ ЗАПИСИ, РОЛИ И ДОСТУП
+   Команда — это пользователи штаба. У каждого своя учётка,
+   привязанная к карточке человека, и роль, которая решает, что
+   он видит и что может. Первый вход создаёт основателя, дальше
+   люди заходят по коду приглашения.
+
+   Про безопасность честно: настоящий контур доступа — это сама
+   ссылка на штаб и права на артефакт. Пароли здесь разделяют
+   кабинеты и права между своими, а не защищают данные от
+   постороннего: общее хранилище читает любой, кто открыл штаб.
+   Поэтому пароль хранится только как PBKDF2-хеш с солью, и в
+   интерфейсе прямо сказано, что это не сейф.
+   ============================================================ */
+const ROLES = [
+  {id:'owner', name:'Основатель', icon:'◆', color:'gold',
+   desc:'Полный доступ: деньги, стратегия, команда, выдача доступов.'},
+  {id:'lead', name:'Руководитель', icon:'▲', color:'navy',
+   desc:'Свой отдел и его задачи, деньги и модель, согласование работы.'},
+  {id:'member', name:'Сотрудник', icon:'●', color:'green',
+   desc:'Свои задачи, ежедневный отчёт, свой KPI и договорённости.'},
+  {id:'expert', name:'Эксперт', icon:'✳', color:'wine',
+   desc:'Свой профиль, мастер-классы и график съёмок.'},
+  {id:'investor', name:'Инвестор', icon:'◇', color:'rust',
+   desc:'Метрики, модель и отчётность — только чтение.'},
+];
+const ROLE_MAP = Object.fromEntries(ROLES.map(r=>[r.id, r]));
+/* Что доступно роли. money — деньги проекта, teamPay — суммы по людям,
+   tasksAll — чужие задачи, factEdit — правка фактических данных,
+   access — выдача доступов. */
+const ROLE_PERMS = {
+  owner:    {money:1, roadmap:1, tasks:1, tasksAll:1, team:1, teamPay:1, fact:1, factEdit:1, access:1, edit:1},
+  lead:     {money:1, roadmap:1, tasks:1, tasksAll:1, team:1, teamPay:0, fact:1, factEdit:1, access:0, edit:1},
+  member:   {money:0, roadmap:1, tasks:1, tasksAll:0, team:1, teamPay:0, fact:1, factEdit:1, access:0, edit:0},
+  expert:   {money:0, roadmap:0, tasks:0, tasksAll:0, team:0, teamPay:0, fact:0, factEdit:0, access:0, edit:0},
+  investor: {money:1, roadmap:1, tasks:0, tasksAll:0, team:1, teamPay:0, fact:1, factEdit:0, access:0, edit:0},
+};
+/* Меню под роль: порядок пунктов и какие маршруты в них входят */
+const ROLE_NAV = {
+  owner:    ['me','home','roadmap','model','fact','team','access','about'],
+  lead:     ['me','home','roadmap','model','fact','team','about'],
+  member:   ['me','roadmap','fact','team','about'],
+  expert:   ['me','about'],
+  investor: ['me','home','model','fact','about'],
+};
+const NAV_ITEMS = {
+  me:     {href:'#me',      label:'Мой кабинет'},
+  home:   {href:'#home',    label:'Обзор'},
+  roadmap:{href:'#roadmap', label:'Дорожная карта'},
+  model:  {href:'#model',   label:'Модель'},
+  fact:   {href:'#fact',    label:'Факт'},
+  team:   {href:'#team',    label:'Команда'},
+  access: {href:'#access',  label:'Доступы'},
+  about:  {href:'#about',   label:'О проекте'},
+};
+/* Какое право нужно маршруту. Чего нет в списке — открыто всем вошедшим. */
+const ROUTE_PERM = {
+  home:'', roadmap:'roadmap', model:'money', statistics:'money', finance:'money',
+  fact:'fact', reports:'fact', pnl:'fact',
+  team:'team', person:'team', departments:'team', department:'team',
+  voting:'team', discussions:'team', discussion:'team',
+  access:'access',
+};
+
+let _session = null;        /* учётка текущего входа */
+const SESSION_KEY = 'eva-club-session';
+
+async function getAccounts(){
+  if(!('eva-club-accounts' in _cache)){
+    const stored = await loadShared('eva-club-accounts', null);
+    _cache['eva-club-accounts'] = Array.isArray(stored) ? stored : [];
+  }
+  return _cache['eva-club-accounts'];
+}
+function saveAccounts(list){ setCacheLocal('eva-club-accounts', list); persistCache('eva-club-accounts'); }
+async function getInvites(){
+  if(!('eva-club-invites' in _cache)){
+    const stored = await loadShared('eva-club-invites', null);
+    _cache['eva-club-invites'] = Array.isArray(stored) ? stored : [];
+  }
+  return _cache['eva-club-invites'];
+}
+function saveInvites(list){ setCacheLocal('eva-club-invites', list); persistCache('eva-club-invites'); }
+
+/* --- пароль: PBKDF2-SHA256 с солью; запасной путь, если WebCrypto нет --- */
+function _b64(buf){ return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))); }
+function _randSalt(){
+  const a = new Uint8Array(16);
+  if((window.crypto||{}).getRandomValues) window.crypto.getRandomValues(a);
+  else for(let i=0;i<a.length;i++) a[i] = Math.floor(Math.random()*256);
+  return _b64(a.buffer);
+}
+async function hashPassword(pw, salt){
+  const enc = new TextEncoder();
+  const subtle = (window.crypto||{}).subtle;
+  if(subtle && subtle.importKey){
+    try{
+      const key = await subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+      const bits = await subtle.deriveBits(
+        {name:'PBKDF2', salt:enc.encode(salt), iterations:150000, hash:'SHA-256'}, key, 256);
+      return 'pbkdf2$'+_b64(bits);
+    }catch(e){ /* ниже запасной путь */ }
+  }
+  /* Без WebCrypto (старый браузер, небезопасный контекст) — слабее,
+     но пароль всё равно не лежит открытым. */
+  let h = 5381;
+  const s = salt+'|'+pw;
+  for(let r=0;r<20000;r++){ for(let i=0;i<s.length;i++){ h = ((h*33) ^ s.charCodeAt(i)) >>> 0; } }
+  return 'weak$'+h.toString(36);
+}
+function normEmail(s){ return String(s||'').trim().toLowerCase(); }
+function inviteCode(){
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s = '';
+  for(let i=0;i<8;i++) s += abc[Math.floor(Math.random()*abc.length)];
+  return s.slice(0,4)+'-'+s.slice(4);
+}
+
+/* --- сессия --- */
+function sessionId(){ try{ return localStorage.getItem(SESSION_KEY) || null; }catch(e){ return null; } }
+function setSessionId(id){
+  try{ id ? localStorage.setItem(SESSION_KEY, id) : localStorage.removeItem(SESSION_KEY); }catch(e){}
+}
+async function loadSession(){
+  const id = sessionId();
+  if(!id){ _session = null; return null; }
+  const accounts = await getAccounts();
+  const acc = accounts.find(a=>a.id===id && a.active!==false);
+  if(!acc){ setSessionId(null); _session = null; return null; }
+  /* отметка последнего входа — не чаще раза в час, чтобы не дёргать хранилище */
+  const now = Date.now();
+  if(!acc.lastSeen || now - acc.lastSeen > 3600000){ acc.lastSeen = now; saveAccounts(accounts); }
+  _session = acc;
+  return acc;
+}
+function me(){ return _session; }
+function can(perm){
+  if(!_session) return false;
+  if(!perm) return true;
+  return !!(ROLE_PERMS[_session.role]||{})[perm];
+}
+function myPersonId(){ return _session ? _session.personId : null; }
+
+/* Кандидаты на привязку: люди без учётки. Эксперты и инвесторы тоже люди. */
+async function freePeople(role){
+  const people = await getPeople();
+  const accounts = await getAccounts();
+  const taken = new Set(accounts.map(a=>a.personId).filter(Boolean));
+  const wanted = role==='expert' ? ['expert'] : (role==='investor' ? ['investor'] : ['founder','team']);
+  return people.filter(p=>wanted.indexOf(p.type)>=0 && !taken.has(p.id));
+}
+
+/* ============================================================
+   ЭКРАН ВХОДА
+   ============================================================ */
+let _authTab = 'in';       /* in | up */
+let _authMsg = null;
+
+async function renderAuth(){
+  const accounts = await getAccounts();
+  const first = accounts.length===0;
+  const people = await getPeople();
+  const msg = _authMsg; _authMsg = null;
+
+  const founder = people.find(p=>p.type==='founder');
+  const form = first ? `
+    <div class="auth-lead">
+      <h2>Создайте штаб</h2>
+      <p>В штабе ещё нет ни одной учётной записи. Первая станет записью основателя — с полным доступом и правом выдавать доступы остальным.</p>
+    </div>
+    <div class="field"><label>Как вас зовут</label>
+      <input type="text" id="auName" value="${esc((founder && founder.name) || '')}" placeholder="Имя и фамилия" autocomplete="name"></div>
+    <div class="field"><label>Почта — по ней будете входить</label>
+      <input type="email" id="auEmail" placeholder="you@evaspace.ru" autocomplete="username"></div>
+    <div class="field"><label>Пароль</label>
+      <input type="password" id="auPass" placeholder="не короче шести символов" autocomplete="new-password"></div>
+    <button class="btn auth-go" id="auCreate">Создать штаб</button>` : (_authTab==='up' ? `
+    <div class="field"><label>Код приглашения</label>
+      <input type="text" id="auCode" placeholder="XXXX-XXXX" autocomplete="off" style="text-transform:uppercase;"></div>
+    <div class="field"><label>Как вас зовут</label>
+      <input type="text" id="auName" placeholder="Имя и фамилия" autocomplete="name"></div>
+    <div class="field"><label>Почта</label>
+      <input type="email" id="auEmail" placeholder="you@evaspace.ru" autocomplete="username"></div>
+    <div class="field"><label>Пароль</label>
+      <input type="password" id="auPass" placeholder="не короче шести символов" autocomplete="new-password"></div>
+    <button class="btn auth-go" id="auJoin">Присоединиться</button>
+    <p class="auth-hint">Код выдаёт основатель на странице «Доступы».</p>` : `
+    <div class="field"><label>Почта</label>
+      <input type="email" id="auEmail" placeholder="you@evaspace.ru" autocomplete="username"></div>
+    <div class="field"><label>Пароль</label>
+      <input type="password" id="auPass" placeholder="ваш пароль" autocomplete="current-password"></div>
+    <button class="btn auth-go" id="auIn">Войти</button>`);
+
+  app.innerHTML = `
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div class="auth-brand"><span class="mark">E</span><div><b>Eva Club</b><span>внутренний штаб проекта Eva Space</span></div></div>
+        ${first ? '' : `
+        <div class="toggle-row auth-tabs">
+          <button type="button" data-auth-tab="in" class="${_authTab==='in'?'active':''}">Вход</button>
+          <button type="button" data-auth-tab="up" class="${_authTab==='up'?'active':''}">По приглашению</button>
+        </div>`}
+        ${msg ? `<div class="auth-msg ${msg.kind}">${esc(msg.text)}</div>` : ''}
+        ${form}
+        <p class="auth-note">Вход разделяет кабинеты и права внутри команды. Сам доступ к штабу даёт ссылка на него — не используйте здесь пароль от почты или банка.</p>
+      </div>
+      <div class="auth-side">
+        <h3>Роли в штабе</h3>
+        ${ROLES.map(r=>`<div class="auth-role"><span class="role-chip role-${r.color}">${r.icon} ${r.name}</span><span>${r.desc}</span></div>`).join('')}
+      </div>
+    </div>`;
+
+  document.querySelectorAll('[data-auth-tab]').forEach(b=>{
+    b.onclick = ()=>{ _authTab = b.dataset.authTab; renderAuth(); };
+  });
+  const fail = (text)=>{ _authMsg = {kind:'err', text}; renderAuth(); };
+  const val = (id)=>{ const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+
+  const doCreate = async ()=>{
+    const name = val('auName'), email = normEmail(val('auEmail')), pass = val('auPass');
+    if(!name) return fail('Напишите, как вас зовут.');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail('Почта выглядит неправильно.');
+    if(pass.length < 6) return fail('Пароль короче шести символов.');
+    const salt = _randSalt();
+    const list = await getAccounts();
+    const founderPerson = (await getPeople()).find(p=>p.type==='founder');
+    const acc = {id:uid(), personId: founderPerson ? founderPerson.id : null, name, email, role:'owner',
+      salt, hash: await hashPassword(pass, salt), createdAt: Date.now(), lastSeen: Date.now(), active:true};
+    list.push(acc); saveAccounts(list);
+    if(founderPerson && !founderPerson.name){
+      const people2 = await getPeople();
+      const p = people2.find(x=>x.id===founderPerson.id);
+      if(p){ p.name = name; setCacheLocal('eva-club-people', people2); persistCache('eva-club-people'); }
+    }
+    setSessionId(acc.id); _session = acc;
+    location.hash = 'me'; render();
+  };
+  const doIn = async ()=>{
+    const email = normEmail(val('auEmail')), pass = val('auPass');
+    const list = await getAccounts();
+    const acc = list.find(a=>a.email===email);
+    if(!acc) return fail('Учётной записи с такой почтой нет.');
+    if(acc.active===false) return fail('Доступ для этой учётной записи закрыт. Обратитесь к основателю.');
+    const h = await hashPassword(pass, acc.salt);
+    if(h !== acc.hash) return fail('Неверный пароль.');
+    acc.lastSeen = Date.now(); saveAccounts(list);
+    setSessionId(acc.id); _session = acc;
+    location.hash = 'me'; render();
+  };
+  const doJoin = async ()=>{
+    const code = val('auCode').toUpperCase(), name = val('auName'), email = normEmail(val('auEmail')), pass = val('auPass');
+    const invites = await getInvites();
+    const inv = invites.find(i=>i.code===code && !i.usedBy);
+    if(!inv) return fail('Код не найден или уже использован.');
+    if(!name) return fail('Напишите, как вас зовут.');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail('Почта выглядит неправильно.');
+    if(pass.length < 6) return fail('Пароль короче шести символов.');
+    const list = await getAccounts();
+    if(list.some(a=>a.email===email)) return fail('С такой почтой уже есть учётная запись — войдите.');
+    const salt = _randSalt();
+    const acc = {id:uid(), personId: inv.personId||null, name, email, role: inv.role,
+      salt, hash: await hashPassword(pass, salt), createdAt: Date.now(), lastSeen: Date.now(), active:true, invitedBy: inv.by};
+    list.push(acc); saveAccounts(list);
+    inv.usedBy = acc.id; inv.usedAt = Date.now(); saveInvites(invites);
+    if(inv.personId){
+      const people2 = await getPeople();
+      const p = people2.find(x=>x.id===inv.personId);
+      if(p && !p.name){ p.name = name; setCacheLocal('eva-club-people', people2); persistCache('eva-club-people'); }
+    }
+    setSessionId(acc.id); _session = acc;
+    location.hash = 'me'; render();
+  };
+  const bind = (id, fn)=>{ const el = document.getElementById(id); if(el) el.onclick = fn; };
+  bind('auCreate', doCreate); bind('auIn', doIn); bind('auJoin', doJoin);
+  const passEl = document.getElementById('auPass');
+  if(passEl) passEl.addEventListener('keydown', e=>{
+    if(e.key!=='Enter') return;
+    e.preventDefault();
+    if(first) doCreate(); else if(_authTab==='up') doJoin(); else doIn();
+  });
+  const firstField = document.getElementById(first ? 'auName' : (_authTab==='up' ? 'auCode' : 'auEmail'));
+  if(firstField) firstField.focus();
+}
+
+/* Стенду нужно уметь перечитать учётки после подмены роли. */
+window.__resetAuthCache = async function(){
+  delete _cache['eva-club-accounts'];
+  _session = null;
+  await loadSession();
+  await render();
+};
+function logout(){
+  setSessionId(null); _session = null;
+  _authTab = 'in'; _authMsg = {kind:'ok', text:'Вы вышли из штаба.'};
+  location.hash = 'home';
+  render();
+}
+
+/* ============================================================
+   МОЙ КАБИНЕТ
+   У каждой роли своя стартовая страница: основателю — что ждёт
+   решения и сколько денег нужно, руководителю — его отдел,
+   сотруднику — его задачи и отчёт, эксперту — его мастер-классы,
+   инвестору — метрики и доля. Одна функция-диспетчер и пять
+   разных наполнений.
+   ============================================================ */
+async function getExpertClasses(){
+  if(!('eva-club-expert-classes' in _cache)){
+    const stored = await loadShared('eva-club-expert-classes', null);
+    _cache['eva-club-expert-classes'] = (stored && typeof stored==='object' && !Array.isArray(stored)) ? stored : {};
+  }
+  return _cache['eva-club-expert-classes'];
+}
+function saveExpertClasses(o){ setCacheLocal('eva-club-expert-classes', o); persistCache('eva-club-expert-classes'); }
+const CLASS_STATUS = [
+  {id:'idea',    name:'Идея',      cls:'status-todo'},
+  {id:'planned', name:'Запланирован', cls:'status-doing'},
+  {id:'shot',    name:'Отснят',    cls:'status-review'},
+  {id:'live',    name:'Опубликован', cls:'status-done'},
+];
+
+function cabHead(title, sub, extra){
+  return `<div class="cab-head">
+    <div><h1 class="page-title">${title}</h1><p class="page-sub" style="margin-bottom:0;">${sub}</p></div>
+    ${extra||''}
+  </div>`;
+}
+function cabTaskRow(t, people, showWho){
+  const who = showWho ? people.find(p=>p.id===t.assignee) : null;
+  return `<a class="cab-task" href="#roadmap/tasks">
+    <span class="tc-status-badge status-${t.status}">${({todo:'Не начато', doing:'В работе', review:'На проверке', done:'Готово'})[t.status]||t.status}</span>
+    <span class="cab-task-title ${t.status==='done'?'done':''}">${esc(t.title)}</span>
+    ${t.priority==='high'?'<span class="priority-chip priority-high" title="Высокий приоритет"></span>':''}
+    ${who && who.name ? `<span class="cab-task-who">${esc(who.name.split(' ')[0])}</span>` : ''}
+  </a>`;
+}
+/* Кабинет — не доска: показываем ближайшие задачи, остальное живёт на доске.
+   Сначала то, что в работе и горит, потом на проверке, потом остальное. */
+const CAB_TASK_ORDER = {doing:0, review:1, todo:2, done:3};
+function cabTaskList(tasks, people, opts){
+  opts = opts||{};
+  const limit = opts.limit || 8;
+  const sorted = tasks.slice().sort((a,b)=>
+    (CAB_TASK_ORDER[a.status]??9) - (CAB_TASK_ORDER[b.status]??9) ||
+    (b.priority==='high') - (a.priority==='high'));
+  const shown = sorted.slice(0, limit);
+  const rest = sorted.length - shown.length;
+  return `<div class="cab-tasks">${shown.map(t=>cabTaskRow(t, people, opts.who)).join('')}</div>
+    ${rest>0 ? `<p class="note-sm">Показаны ближайшие ${shown.length}. Ещё ${rest} — <a href="#roadmap/tasks">на доске задач</a>.</p>` : ''}`;
+}
+
+async function renderCabinet(){
+  const acc = me();
+  if(!acc){ await renderAuth(); return; }
+  const role = ROLE_MAP[acc.role] || ROLE_MAP.member;
+  const people = await getPeople();
+  const person = people.find(p=>p.id===acc.personId) || null;
+  const box = {acc, role, people, person};
+  if(acc.role==='owner')         await cabOwner(box);
+  else if(acc.role==='lead')     await cabLead(box);
+  else if(acc.role==='expert')   await cabExpert(box);
+  else if(acc.role==='investor') await cabInvestor(box);
+  else                           await cabMember(box);
+  wireCabinetCommon();
+}
+function wireCabinetCommon(){
+  const b = document.getElementById('cabLogout');
+  if(b) b.onclick = logout;
+  const pw = document.getElementById('cabPassBtn');
+  if(pw) pw.onclick = openPasswordEditor;
+}
+
+/* --- общий хвост: моя учётка и выход --- */
+function cabAccountCard(acc, person){
+  const role = ROLE_MAP[acc.role];
+  return `
+    <section class="block">
+      <h2>Моя учётная запись</h2>
+      <div class="card cab-acc">
+        <div class="cab-acc-row"><span class="k-label">Имя</span><b>${esc(acc.name)}</b></div>
+        <div class="cab-acc-row"><span class="k-label">Почта</span><span>${esc(acc.email)}</span></div>
+        <div class="cab-acc-row"><span class="k-label">Роль</span><span class="role-chip role-${role.color}">${role.icon} ${role.name}</span></div>
+        <div class="cab-acc-row"><span class="k-label">Карточка в команде</span>
+          ${person ? `<a href="#person/${person.id}">${esc(person.name || person.role)}</a>` : '<span class="soft">не привязана</span>'}</div>
+        <div class="cab-acc-actions">
+          <button class="btn ghost" id="cabPassBtn">Сменить пароль</button>
+          <button class="btn ghost" id="cabLogout">Выйти из штаба</button>
+        </div>
+      </div>
+    </section>`;
+}
+function openPasswordEditor(){
+  const {el, close} = stratOverlay(`
+    <div class="tm-header"><span class="tm-header-label">Смена пароля</span>
+      <button class="tm-close" data-modal-close="1">✕</button></div>
+    <div class="tm-body">
+      <div class="field"><label>Текущий пароль</label><input type="password" id="pwOld" class="v-input"></div>
+      <div class="field" style="margin-top:10px;"><label>Новый пароль</label><input type="password" id="pwNew" class="v-input" placeholder="не короче шести символов"></div>
+      <div class="prio-now" id="pwMsg" style="display:none;"></div>
+      <div class="tm-actions">
+        <button class="btn" id="pwSave">Сохранить</button>
+        <button class="btn ghost" data-modal-close="1">Отмена</button>
+      </div>
+    </div>`);
+  const msg = el.querySelector('#pwMsg');
+  const say = (t)=>{ msg.style.display=''; msg.textContent = t; };
+  el.querySelector('#pwSave').onclick = async ()=>{
+    const acc = me(); if(!acc) return;
+    const oldPw = el.querySelector('#pwOld').value;
+    const newPw = el.querySelector('#pwNew').value.trim();
+    if(await hashPassword(oldPw, acc.salt) !== acc.hash) return say('Текущий пароль не подходит.');
+    if(newPw.length < 6) return say('Новый пароль короче шести символов.');
+    const list = await getAccounts();
+    const rec = list.find(a=>a.id===acc.id);
+    rec.salt = _randSalt();
+    rec.hash = await hashPassword(newPw, rec.salt);
+    saveAccounts(list); _session = rec;
+    close();
+  };
+}
+
+/* --- ОСНОВАТЕЛЬ --- */
+async function cabOwner(box){
+  const {acc, people, person} = box;
+  const tasks = await getTasks();
+  const st = await getStrategy();
+  const cf = await getCf6();
+  const ctx = await cf6Context();
+  const R = cf6Compute(cf, ctx);
+  const stats = taskStats(tasks);
+
+  const review = tasks.filter(t=>t.status==='review');
+  const budgetPending = tasks.filter(t=>t.budget>0 && t.budgetNeedsApproval && !t.budgetApproved);
+  const blocked = tasks.filter(t=>isBlocked(t, tasks) && t.status!=='done');
+  const decisions = [
+    {n: review.length, label:'задач ждут приёмки', href:'#roadmap/tasks', kind:'review'},
+    {n: budgetPending.length, label:'бюджетов на согласовании', href:'#roadmap/tasks', kind:'budget'},
+    {n: blocked.length, label:'задач стоят из-за зависимостей', href:'#roadmap/tasks', kind:'blocked'},
+  ].filter(d=>d.n>0);
+
+  /* кто чем занят прямо сейчас */
+  const busy = people.filter(p=>p.type==='team' || p.type==='founder').map(p=>{
+    const mine = tasks.filter(t=>t.assignee===p.id);
+    const doing = mine.filter(t=>t.status==='doing');
+    return {p, doing, total: mine.filter(t=>t.status!=='done').length};
+  }).filter(x=>x.total>0 || x.doing.length>0);
+
+  const myTasks = tasks.filter(t=>t.assignee===acc.personId && t.status!=='done');
+  const accounts = await getAccounts();
+  const noAccount = people.filter(p=>(p.type==='team') && !accounts.some(a=>a.personId===p.id));
+
+  app.innerHTML = `
+    ${cabHead('Кабинет основателя', `${esc(acc.name)} · полный доступ к штабу`,
+      `<div class="cab-quick">
+         <a class="btn" href="#roadmap">Дорожная карта</a>
+         <a class="btn ghost" href="#access">Доступы</a>
+       </div>`)}
+
+    <section class="block">
+      <h2>Деньги до запуска</h2>
+      ${metricCards([
+        {l:'Нужно до Нового года', v:money(R.needNY), cls:'neg', sub:`${R.scenario.name.toLowerCase()} сценарий · дно в ${finMonthLabel(R.needMonth)}`},
+        {l:'Придёт с продаж за 6 мес.', v:money(R.cashTotal), cls:'pos', sub:`${num(R.newTotal)} новых оплат`},
+        {l:'Платящих к февралю', v:num(R.activeEnd)+' чел.', sub: R.firstPlus ? `первый плюс — ${finMonthLabel(R.firstPlus)}` : 'плюсового месяца пока нет'},
+        {l:'Задачи команды', v:stats.pct+'%', sub:`${stats.done} из ${stats.total} готово · ${stats.doing} в работе`},
+      ])}
+    </section>
+
+    <section class="block">
+      <h2>Ждёт вашего решения</h2>
+      ${decisions.length ? `<div class="cab-decisions">
+        ${decisions.map(d=>`<a class="cab-decision ${d.kind}" href="${d.href}"><b>${d.n}</b><span>${d.label}</span></a>`).join('')}
+      </div>` : `<div class="card"><p class="soft">Ничего не ждёт: приёмок нет, бюджеты согласованы, блокировок нет.</p></div>`}
+      ${noAccount.length ? `<p class="note-sm">Без доступа в штаб пока ${noAccount.length} ${noAccount.length===1?'человек':'человека'}: ${noAccount.map(p=>esc(p.name||p.role)).join(', ')}. <a href="#access">Выдать приглашение</a>.</p>` : ''}
+    </section>
+
+    <section class="block">
+      <h2>Цель года</h2>
+      <div class="card cab-goal">
+        <p class="goal-text">${st.vision ? esc(st.vision) : '<span class="soft">Цель не задана</span>'}</p>
+        <p class="note-sm" style="margin-top:10px;">Приоритеты и рамки — в блоке «Стратегия основателя» на <a href="#roadmap">дорожной карте</a>.</p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>Кто чем занят</h2>
+      <div class="card table-card">
+        <table class="calc-table">
+          <thead><tr><th>Человек</th><th>В работе сейчас</th><th class="num">Открытых задач</th></tr></thead>
+          <tbody>${busy.length ? busy.map(x=>`<tr>
+            <td><a href="#person/${x.p.id}">${esc(x.p.name || x.p.role)}</a>${x.p.name?`<div class="pb-sub">${esc(x.p.role)}</div>`:''}</td>
+            <td>${x.doing.length ? x.doing.map(t=>esc(t.title)).join('<br>') : '<span class="soft">ничего не взято в работу</span>'}</td>
+            <td class="num">${x.total}</td></tr>`).join('')
+            : '<tr><td colspan="3" class="empty-note">Задач в работе нет.</td></tr>'}</tbody>
+        </table>
+      </div>
+    </section>
+
+    ${myTasks.length ? `<section class="block">
+      <h2>Мои задачи</h2>
+      ${cabTaskList(myTasks, people)}
+    </section>` : ''}
+
+    ${cabAccountCard(acc, person)}`;
+}
+
+/* --- РУКОВОДИТЕЛЬ --- */
+async function cabLead(box){
+  const {acc, people, person} = box;
+  const tasks = await getTasks();
+  const positions = await getPositions();
+  const myPos = positions.find(p=>p.personId===acc.personId);
+  const dept = myPos ? myPos.dept : null;
+  const deptInfo = DEPARTMENTS.find(d=>d.id===dept);
+  /* мои люди: те, кто отчитывается мне, плюс все из моего отдела */
+  const mine = positions.filter(p=>p.personId && (p.reportsTo===acc.personId || (dept && p.dept===dept && p.personId!==acc.personId)));
+  const team = mine.map(p=>people.find(x=>x.id===p.personId)).filter(Boolean);
+  const teamIds = new Set(team.map(p=>p.id));
+
+  const deptTasks = tasks.filter(t=>teamIds.has(t.assignee));
+  const dStats = taskStats(deptTasks);
+  const myTasks = tasks.filter(t=>t.assignee===acc.personId);
+  const myOpen = myTasks.filter(t=>t.status!=='done');
+  const toApprove = tasks.filter(t=>t.creator===acc.personId && t.status==='review');
+
+  app.innerHTML = `
+    ${cabHead('Кабинет руководителя', `${esc(acc.name)}${person?' · '+esc(person.role):''}${deptInfo?' · '+esc(deptInfo.name):''}`,
+      `<div class="cab-quick"><a class="btn" href="#roadmap/tasks">Доска задач</a>${dept?`<a class="btn ghost" href="#department/${dept}">Мой отдел</a>`:''}</div>`)}
+
+    <section class="block">
+      <h2>Мой участок</h2>
+      ${metricCards([
+        {l:'Людей в подчинении', v:num(team.length), sub: team.length ? team.map(p=>esc((p.name||p.role).split(' ')[0])).join(', ') : 'пока никого'},
+        {l:'Задачи отдела', v: dStats.total ? dStats.pct+'%' : '—', sub:`${dStats.done} готово · ${dStats.doing} в работе · ${dStats.todo} не начато`},
+        {l:'Моих открытых задач', v:num(myOpen.length), cls: myOpen.length ? '' : 'pos', sub: myOpen.filter(t=>t.priority==='high').length ? myOpen.filter(t=>t.priority==='high').length+' с высоким приоритетом' : 'срочного нет'},
+        {l:'Ждут моей приёмки', v:num(toApprove.length), cls: toApprove.length ? 'neg' : 'pos', sub: toApprove.length ? 'задачи в статусе «на проверке»' : 'всё принято'},
+      ])}
+    </section>
+
+    ${toApprove.length ? `<section class="block">
+      <h2>Ждёт приёмки</h2>
+      ${cabTaskList(toApprove, people, {who:true})}
+    </section>` : ''}
+
+    <section class="block">
+      <h2>Люди и их загрузка</h2>
+      <div class="card table-card">
+        <table class="calc-table">
+          <thead><tr><th>Человек</th><th>Роль</th><th class="num">В работе</th><th class="num">Открыто</th><th class="num">Готово</th></tr></thead>
+          <tbody>${team.length ? team.map(p=>{
+            const t = tasks.filter(x=>x.assignee===p.id);
+            return `<tr><td><a href="#person/${p.id}">${esc(p.name || 'Не назначен')}</a></td>
+              <td>${esc(p.role)}</td>
+              <td class="num">${t.filter(x=>x.status==='doing').length}</td>
+              <td class="num">${t.filter(x=>x.status!=='done').length}</td>
+              <td class="num">${t.filter(x=>x.status==='done').length}</td></tr>`;
+          }).join('') : '<tr><td colspan="5" class="empty-note">За вами пока никто не закреплён.</td></tr>'}</tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>Мои задачи</h2>
+      ${myOpen.length ? cabTaskList(myOpen, people)
+        : '<div class="card"><p class="soft">Открытых задач нет.</p></div>'}
+    </section>
+
+    ${person && (person.mission || person.kpi) ? `<section class="block">
+      <h2>Моя зона ответственности</h2>
+      <div class="card">
+        ${person.mission?`<p class="cab-mission">«${esc(person.mission)}»</p>`:''}
+        ${person.duties?`<div class="cab-kv"><span class="k-label">Обязанности</span><p>${esc(person.duties)}</p></div>`:''}
+        ${person.kpi?`<div class="cab-kv"><span class="k-label">По чему меня оценивают</span><p>${esc(person.kpi)}</p></div>`:''}
+      </div>
+    </section>` : ''}
+
+    ${cabAccountCard(acc, person)}`;
+}
+
+/* --- СОТРУДНИК --- */
+async function cabMember(box){
+  const {acc, people, person} = box;
+  const tasks = await getTasks();
+  const myTasks = tasks.filter(t=>t.assignee===acc.personId);
+  const stats = taskStats(myTasks);
+  const byStatus = (s)=>myTasks.filter(t=>t.status===s);
+  const blocked = myTasks.filter(t=>isBlocked(t, tasks) && t.status!=='done');
+
+  /* новое от основателя */
+  const annAll = await getAnnouncements();
+  const annRead = await getAnnRead();
+  const pid = acc.personId;
+  const annNew = pid ? annAll.filter(a=>!annRead[pid] || a.at > annRead[pid]) : [];
+
+  const today = new Date().toISOString().slice(0,10);
+  const days = await getDailyMetrics();
+  const reported = days.some(d=>d.d===today);
+
+  app.innerHTML = `
+    ${cabHead('Мой кабинет', `${esc(acc.name)}${person?' · '+esc(person.role):''}`,
+      `<div class="cab-quick"><a class="btn" href="#roadmap/tasks">Доска задач</a><a class="btn ghost" href="#fact/day">Отчёт за день</a></div>`)}
+
+    ${annNew.length ? `<div class="ann-personal">
+      <div class="ann-personal-head">🔔 Новое от основателя <span class="ann-count">${annNew.length}</span>
+        <button class="btn ghost sm-del" id="cabAnnRead">Прочитано</button></div>
+      ${annNew.slice(0,5).map(a=>`
+        <div class="ann-row">
+          <span class="ann-ico ${a.kind}">${a.kind==='goal'?'◎':'▲'}</span>
+          <div class="ann-main">
+            <div class="ann-title">${esc(a.title)} <span class="ann-when">${annTimeAgo(a.at)}</span></div>
+            <div class="ann-text">${esc(a.text)}</div>
+          </div>
+        </div>`).join('')}
+    </div>` : ''}
+
+    <section class="block">
+      <h2>Мои задачи</h2>
+      ${metricCards([
+        {l:'В работе', v:num(byStatus('doing').length), sub: byStatus('doing').length ? 'взято мной' : 'ничего не взято'},
+        {l:'Не начато', v:num(byStatus('todo').length), sub: blocked.length ? blocked.length+' ждут другие задачи' : 'можно брать'},
+        {l:'На проверке', v:num(byStatus('review').length), sub:'ждут приёмки'},
+        {l:'Готово', v:num(byStatus('done').length), cls:'pos', sub: stats.total ? stats.pct+'% моих задач' : ''},
+      ])}
+      ${myTasks.filter(t=>t.status!=='done').length
+        ? cabTaskList(myTasks.filter(t=>t.status!=='done'), people)
+        : '<div class="card"><p class="soft">Открытых задач нет — всё закрыто.</p></div>'}
+    </section>
+
+    <section class="block">
+      <h2>Отчёт за сегодня</h2>
+      <div class="card cab-report ${reported?'done':''}">
+        <div>
+          <b>${reported ? 'Отчёт за сегодня уже внесён' : 'Отчёт за сегодня ещё не внесён'}</b>
+          <p class="note-sm" style="margin-top:4px;">Ежедневные цифры — визиты, регистрации, оплаты, съёмки — собираются в разделе «Факт» и питают всю отчётность.</p>
+        </div>
+        <a class="btn ${reported?'ghost':''}" href="#fact/day">${reported ? 'Посмотреть' : 'Внести отчёт'}</a>
+      </div>
+    </section>
+
+    ${person ? `<section class="block">
+      <h2>Что от меня ждут</h2>
+      <div class="card">
+        ${person.mission?`<p class="cab-mission">«${esc(person.mission)}»</p>`:''}
+        ${person.duties?`<div class="cab-kv"><span class="k-label">Обязанности</span><p>${esc(person.duties)}</p></div>`:''}
+        ${person.kpi?`<div class="cab-kv"><span class="k-label">По чему меня оценивают</span><p>${esc(person.kpi)}</p></div>`:''}
+        ${person.salary?`<div class="cab-kv"><span class="k-label">Оклад по договорённости</span><p class="num">${money(person.salary)} в месяц</p></div>`:''}
+      </div>
+    </section>` : ''}
+
+    ${cabAccountCard(acc, person)}`;
+
+  const ar = document.getElementById('cabAnnRead');
+  if(ar) ar.onclick = async ()=>{
+    const read = await getAnnRead();
+    read[pid] = Date.now(); saveAnnRead(read);
+    renderCabinet();
+  };
+}
+
+/* --- ЭКСПЕРТ --- */
+async function cabExpert(box){
+  const {acc, person} = box;
+  const all = await getExpertClasses();
+  const list = (acc.personId && all[acc.personId]) || [];
+  const cnt = (s)=>list.filter(c=>c.status===s).length;
+  const income = person ? (person.students||0)*(person.price||0) : 0;
+
+  app.innerHTML = `
+    ${cabHead('Кабинет эксперта', `${esc(acc.name)}${person?' · '+esc(person.role):''}`, '')}
+
+    <section class="block">
+      <h2>Мои мастер-классы</h2>
+      ${metricCards([
+        {l:'Опубликовано', v:num(cnt('live')), cls:'pos', sub:'доступны участницам клуба'},
+        {l:'Отснято, на монтаже', v:num(cnt('shot')), sub:'ждут публикации'},
+        {l:'Запланировано', v:num(cnt('planned')), sub:'есть дата съёмки'},
+        {l:'Идеи', v:num(cnt('idea')), sub:'ещё не в графике'},
+      ])}
+      <div class="card table-card">
+        <table class="calc-table">
+          <thead><tr><th>Мастер-класс</th><th>Статус</th><th>Дата съёмки</th><th></th></tr></thead>
+          <tbody>
+            ${list.length ? list.map(c=>`<tr>
+              <td><input type="text" class="v-input" data-cls-field="title" data-id="${c.id}" value="${esc(c.title)}"></td>
+              <td><select class="tc-mini ${(CLASS_STATUS.find(s=>s.id===c.status)||{}).cls||''}" data-cls-field="status" data-id="${c.id}">
+                ${CLASS_STATUS.map(s=>`<option value="${s.id}" ${c.status===s.id?'selected':''}>${s.name}</option>`).join('')}
+              </select></td>
+              <td><input type="date" class="v-input" data-cls-field="date" data-id="${c.id}" value="${c.date||''}"></td>
+              <td class="num"><button class="btn ghost sm-del" data-cls-del="${c.id}" title="Убрать">✕</button></td>
+            </tr>`).join('') : '<tr><td colspan="4" class="empty-note">Пока ни одного мастер-класса. Добавьте первый — он появится в графике съёмок.</td></tr>'}
+            <tr class="bud-add"><td colspan="4">
+              <div class="field-row">
+                <div class="field grow"><label>Тема мастер-класса</label><input type="text" id="clsNewTitle" placeholder="Например, дыхание при тревоге"></div>
+                <div class="field"><label>Статус</label><select id="clsNewStatus">${CLASS_STATUS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>
+                <div class="field"><label>Дата съёмки</label><input type="date" id="clsNewDate"></div>
+                <div class="field" style="flex:0 0 auto; display:flex; align-items:flex-end;"><button class="btn ghost" id="clsAdd">+ Мастер-класс</button></div>
+              </div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    ${person ? `<section class="block">
+      <h2>Мой профиль в клубе</h2>
+      <div class="card">
+        <div class="meta">
+          <div class="item"><div class="k">Направление</div><div class="v">${esc(person.role)}</div></div>
+          <div class="item"><div class="k">Опыт</div><div class="v">${esc(person.exp||'—')}</div></div>
+          <div class="item"><div class="k">Учениц</div><div class="v num">${num(person.students||0)}</div></div>
+          <div class="item"><div class="k">Стоимость консультации</div><div class="v num">${person.price?money(person.price):'—'}</div></div>
+        </div>
+        ${person.mission?`<p class="cab-mission">«${esc(person.mission)}»</p>`:''}
+        ${person.bio?`<div class="cab-kv"><span class="k-label">О себе</span><p>${esc(person.bio)}</p></div>`:''}
+        ${income?`<p class="note-sm">Ориентир по личной практике вне клуба: ${num(person.students)} × ${money(person.price)} — это накопленный объём, а не доход за месяц.</p>`:''}
+      </div>
+    </section>` : ''}
+
+    ${cabAccountCard(acc, person)}`;
+
+  const save = async (fn)=>{
+    const all2 = await getExpertClasses();
+    const arr = all2[acc.personId] || (all2[acc.personId] = []);
+    fn(arr); saveExpertClasses(all2); renderCabinet();
+  };
+  document.querySelectorAll('[data-cls-field]').forEach(inp=>{
+    inp.addEventListener('change', ()=>save(arr=>{
+      const c = arr.find(x=>x.id===inp.dataset.id); if(c) c[inp.dataset.clsField] = inp.value;
+    }));
+  });
+  document.querySelectorAll('[data-cls-del]').forEach(b=>{
+    b.onclick = ()=>save(arr=>{ const i = arr.findIndex(x=>x.id===b.dataset.clsDel); if(i>=0) arr.splice(i,1); });
+  });
+  const add = document.getElementById('clsAdd');
+  if(add) add.onclick = ()=>{
+    const title = document.getElementById('clsNewTitle').value.trim();
+    if(!title){ document.getElementById('clsNewTitle').focus(); return; }
+    const status = document.getElementById('clsNewStatus').value;
+    const date = document.getElementById('clsNewDate').value;
+    save(arr=>arr.push({id:uid(), title, status, date}));
+  };
+}
+
+/* --- ИНВЕСТОР --- */
+async function cabInvestor(box){
+  const {acc, person} = box;
+  const cfg = await buildFinCfg({});
+  const model = computeFinModel(cfg);
+  const cf = await getCf6();
+  const ctx = await cf6Context();
+  const R = cf6Compute(cf, ctx);
+  const ann = await getAnnouncements();
+  const st = await getStrategy();
+  const y1 = cfSumRange(model.revenue, 1, 12), y3 = cfSumRange(model.revenue, 25, 36);
+
+  app.innerHTML = `
+    ${cabHead('Кабинет инвестора', `${esc(acc.name)}${person?' · '+esc(person.role):''}`,
+      `<div class="cab-quick"><a class="btn" href="#model">Финансовая модель</a><a class="btn ghost" href="#fact">Факт</a></div>`)}
+
+    ${person && (person.amount || person.share) ? `<section class="block">
+      <h2>Моё участие</h2>
+      ${metricCards([
+        {l:'Сумма вложения', v: person.amount ? money(person.amount) : '—', sub: esc(person.role)},
+        {l:'Доля', v: person.share || '—', sub:'по условиям раунда'},
+        {l:'Оценка компании к году 3', v: cfMoney(y3*5), sub:'ориентир: пятикратная годовая выручка'},
+        {l:'Выход в плюс', v: model.breakevenMonth ? finMonthLabel(model.breakevenMonth) : 'за горизонтом', sub:'операционная окупаемость'},
+      ])}
+    </section>` : ''}
+
+    <section class="block">
+      <h2>Где проект сейчас</h2>
+      ${metricCards([
+        {l:'Нужно до Нового года', v:money(R.needNY), cls:'neg', sub:'бюджет до запуска, базовый сценарий'},
+        {l:'Платящих к февралю', v:num(R.activeEnd)+' чел.', sub:`${num(R.newTotal)} оплат за 6 месяцев`},
+        {l:'Выручка Год 1', v:cfMoney(y1), cls:'pos', sub:'по утверждённой модели'},
+        {l:'Выручка Год 3', v:cfMoney(y3), cls:'pos', sub:`оборот ${cfMoney(cfSumRange(model.turnover, 25, 36))}`},
+      ])}
+    </section>
+
+    <section class="block">
+      <h2>Куда идёт компания</h2>
+      <div class="card cab-goal">
+        <p class="goal-text">${st.vision ? esc(st.vision) : '<span class="soft">Цель не задана</span>'}</p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>Последние изменения</h2>
+      <div class="card">
+        ${ann.length ? `<div class="ann-feed">${ann.slice(0,6).map(a=>`
+          <div class="ann-row">
+            <span class="ann-ico ${a.kind}">${a.kind==='goal'?'◎':'▲'}</span>
+            <div class="ann-main">
+              <div class="ann-title">${esc(a.title)} <span class="ann-when">${annTimeAgo(a.at)}</span></div>
+              <div class="ann-text">${esc(a.text)}</div>
+            </div>
+          </div>`).join('')}</div>`
+          : '<p class="soft">Пока без изменений — основатель не публиковал обновлений.</p>'}
+      </div>
+    </section>
+
+    ${cabAccountCard(acc, person)}`;
+}
+
+/* ============================================================
+   ДОСТУПЫ — только для основателя
+   ============================================================ */
+async function renderAccess(){
+  const accounts = await getAccounts();
+  const invites = await getInvites();
+  const people = await getPeople();
+  const acc = me();
+  const owners = accounts.filter(a=>a.role==='owner' && a.active!==false);
+  const open = invites.filter(i=>!i.usedBy);
+
+  const personName = (id)=>{
+    const p = people.find(x=>x.id===id);
+    return p ? (p.name || p.role) : null;
+  };
+  const when = (ts)=>ts ? annTimeAgo(ts) : '—';
+
+  app.innerHTML = `
+    <h1 class="page-title">Доступы</h1>
+    <p class="page-sub">Кто заходит в штаб, под какой ролью и что видит. Роль решает, какие разделы человек открывает и может ли он править цифры. Права меняются сразу — человеку достаточно обновить страницу.</p>
+
+    <section class="block">
+      <h2>Учётные записи</h2>
+      <div class="card table-card">
+        <table class="calc-table acc-table">
+          <thead><tr><th>Человек</th><th>Почта</th><th>Роль</th><th>Карточка в команде</th><th>Последний вход</th><th>Доступ</th><th></th></tr></thead>
+          <tbody>
+            ${accounts.map(a=>{
+              const r = ROLE_MAP[a.role] || ROLE_MAP.member;
+              const isMe = acc && a.id===acc.id;
+              const lastOwner = a.role==='owner' && owners.length<=1;
+              return `<tr class="${a.active===false?'acc-off':''}">
+                <td><b>${esc(a.name)}</b>${isMe?'<span class="var-now">это вы</span>':''}</td>
+                <td class="soft">${esc(a.email)}</td>
+                <td><select class="tc-mini" data-acc-role="${a.id}" ${lastOwner?'disabled title="Единственный основатель — сначала назначьте второго"':''}>
+                  ${ROLES.map(x=>`<option value="${x.id}" ${a.role===x.id?'selected':''}>${x.name}</option>`).join('')}
+                </select></td>
+                <td>${a.personId
+                  ? `<a href="#person/${a.personId}">${esc(personName(a.personId)||a.personId)}</a>`
+                  : '<span class="soft">не привязана</span>'}</td>
+                <td class="soft">${when(a.lastSeen)}</td>
+                <td>${isMe ? '<span class="soft">—</span>' : `<button class="btn ghost sm-del" data-acc-toggle="${a.id}" ${lastOwner?'disabled':''}>${a.active===false?'Открыть':'Закрыть'}</button>`}</td>
+                <td class="num">${isMe || lastOwner ? '' : `<button class="btn ghost sm-del" data-acc-del="${a.id}" data-armed="0" title="Удалить учётную запись">✕</button>`}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <p class="note-sm">Закрытый доступ оставляет учётную запись в списке, но человек не войдёт. Единственного основателя нельзя ни разжаловать, ни отключить — иначе штаб останется без хозяина.</p>
+    </section>
+
+    <section class="block">
+      <h2>Приглашения</h2>
+      <p class="block-sub">Выпустите код и передайте человеку. Он откроет штаб, выберет «По приглашению» и создаст себе вход — роль и карточка в команде подставятся сами.</p>
+      <div class="card">
+        <div class="field-row">
+          <div class="field"><label>Роль</label>
+            <select id="invRole">${ROLES.filter(r=>r.id!=='owner').map(r=>`<option value="${r.id}">${r.name}</option>`).join('')}</select></div>
+          <div class="field grow"><label>Привязать к человеку</label>
+            <select id="invPerson"><option value="">— без привязки —</option></select></div>
+          <div class="field" style="flex:0 0 auto; display:flex; align-items:flex-end;"><button class="btn" id="invAdd">Выпустить код</button></div>
+        </div>
+      </div>
+      ${open.length ? `<div class="card table-card" style="margin-top:14px;">
+        <table class="calc-table">
+          <thead><tr><th>Код</th><th>Роль</th><th>Кому</th><th>Выпущен</th><th></th></tr></thead>
+          <tbody>${open.map(i=>`<tr>
+            <td><code class="inv-code">${i.code}</code></td>
+            <td>${(ROLE_MAP[i.role]||{}).name||i.role}</td>
+            <td>${i.personId ? esc(personName(i.personId)||'') : '<span class="soft">без привязки</span>'}</td>
+            <td class="soft">${when(i.createdAt)}</td>
+            <td class="num"><button class="btn ghost sm-del" data-inv-del="${i.code}">Отозвать</button></td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>` : '<p class="note-sm">Неиспользованных кодов нет.</p>'}
+    </section>
+
+    <section class="block">
+      <h2>Что видит каждая роль</h2>
+      <div class="card table-card">
+        <table class="calc-table">
+          <thead><tr><th>Роль</th><th>Разделы</th><th>Может править</th><th>Видит зарплаты</th></tr></thead>
+          <tbody>${ROLES.map(r=>{
+            const perms = ROLE_PERMS[r.id];
+            return `<tr>
+              <td><span class="role-chip role-${r.color}">${r.icon} ${r.name}</span><div class="pb-sub">${r.desc}</div></td>
+              <td>${ROLE_NAV[r.id].map(k=>NAV_ITEMS[k].label).join(' · ')}</td>
+              <td>${perms.edit ? 'да' : '<span class="soft">только смотрит</span>'}</td>
+              <td>${perms.teamPay ? 'да' : '<span class="soft">нет</span>'}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+      <p class="note-sm">Вход разделяет кабинеты и права между своими. Настоящая граница доступа — сама ссылка на штаб: у кого она есть, тот видит данные. Не храните здесь пароли от других сервисов.</p>
+    </section>`;
+
+  /* список людей для привязки зависит от выбранной роли */
+  const roleSel = document.getElementById('invRole');
+  const personSel = document.getElementById('invPerson');
+  const fillPeople = async ()=>{
+    const list = await freePeople(roleSel.value);
+    personSel.innerHTML = '<option value="">— без привязки —</option>' +
+      list.map(p=>`<option value="${p.id}">${esc(p.name || p.role)}${p.name?' · '+esc(p.role):''}</option>`).join('');
+  };
+  if(roleSel){ roleSel.onchange = fillPeople; await fillPeople(); }
+
+  const add = document.getElementById('invAdd');
+  if(add) add.onclick = async ()=>{
+    const list = await getInvites();
+    list.push({code: inviteCode(), role: roleSel.value, personId: personSel.value || null,
+      createdAt: Date.now(), by: acc ? acc.id : null});
+    saveInvites(list); renderAccess();
+  };
+  document.querySelectorAll('[data-inv-del]').forEach(b=>{
+    b.onclick = async ()=>{
+      const list = await getInvites();
+      saveInvites(list.filter(i=>i.code!==b.dataset.invDel));
+      renderAccess();
+    };
+  });
+  document.querySelectorAll('[data-acc-role]').forEach(sel=>{
+    sel.onchange = async ()=>{
+      const list = await getAccounts();
+      const a = list.find(x=>x.id===sel.dataset.accRole);
+      if(a){ a.role = sel.value; saveAccounts(list); if(acc && a.id===acc.id) _session = a; }
+      render();
+    };
+  });
+  document.querySelectorAll('[data-acc-toggle]').forEach(b=>{
+    b.onclick = async ()=>{
+      const list = await getAccounts();
+      const a = list.find(x=>x.id===b.dataset.accToggle);
+      if(a){ a.active = a.active===false; saveAccounts(list); }
+      renderAccess();
+    };
+  });
+  document.querySelectorAll('[data-acc-del]').forEach(b=>{
+    b.onclick = async ()=>{
+      if(b.dataset.armed!=='1'){
+        b.dataset.armed = '1'; b.textContent = 'Точно?'; b.classList.add('armed');
+        setTimeout(()=>{ if(document.body.contains(b)){ b.dataset.armed='0'; b.textContent='✕'; b.classList.remove('armed'); } }, 5000);
+        return;
+      }
+      const list = await getAccounts();
+      saveAccounts(list.filter(x=>x.id!==b.dataset.accDel));
+      renderAccess();
+    };
+  });
+}
+
+/* ============================================================
    ROUTER
    ============================================================ */
 const app = document.getElementById('app');
@@ -2684,17 +3740,48 @@ function getRoute(){
 /* Несколько маршрутов подсвечивают один пункт меню: страницы раздела
    «О проекте» и карточки внутри разделов. */
 const NAV_GROUP = {
+  me:'me', access:'access',
   about:'about', platform:'about', community:'about', metrics:'about', documents:'about', doc:'about',
   roadmap:'roadmap', team:'team', person:'team',
   statistics:'model', finance:'model', model:'model',
   fact:'fact', reports:'fact', pnl:'fact',
   departments:'team', department:'team', voting:'team', discussions:'team', discussion:'team',
 };
-function setActiveNav(routeName){
+/* Меню собирается под роль: сотрудник не видит «Модель», эксперт —
+   только свой кабинет, доступы открыты одному основателю. */
+function renderNav(routeName){
+  const nav = document.getElementById('primaryNav');
+  const box = document.getElementById('topbarMe');
+  const acc = me();
+  if(!nav || !box) return;
+  if(!acc){ nav.innerHTML = ''; box.innerHTML = ''; return; }
+  const keys = ROLE_NAV[acc.role] || ROLE_NAV.member;
+  nav.innerHTML = keys.map(k=>{
+    const it = NAV_ITEMS[k];
+    return `<a href="${it.href}" data-route="${k}">${it.label}</a>`;
+  }).join('');
+  const role = ROLE_MAP[acc.role] || ROLE_MAP.member;
+  const initials = (acc.name||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+  box.innerHTML = `
+    <a href="#me" title="Мой кабинет · ${role.name}">
+      <span class="tm-av">${esc(initials)}</span>
+      <span class="tm-name">${esc(acc.name)}</span>
+    </a>
+    <button type="button" class="tm-out" id="navLogout" title="Выйти из штаба" aria-label="Выйти из штаба">⏻</button>`;
+  const out = document.getElementById('navLogout');
+  if(out) out.onclick = logout;
   const group = NAV_GROUP[routeName] || routeName;
-  document.querySelectorAll('.primary-nav a').forEach(a=>{
-    a.classList.toggle('active', a.dataset.route === group);
-  });
+  nav.querySelectorAll('a').forEach(a=>a.classList.toggle('active', a.dataset.route === group));
+}
+function setActiveNav(routeName){ renderNav(routeName); }
+function noAccessHtml(perm){
+  const acc = me();
+  const role = acc ? (ROLE_MAP[acc.role]||{}).name : '';
+  return `<div class="no-access">
+    <h1>Этот раздел вам не открыт</h1>
+    <p>Роль «${esc(role)}» не даёт доступа к этому разделу. Если он нужен для работы — попросите основателя изменить роль на странице «Доступы».</p>
+    <a class="btn" href="#me">В мой кабинет</a>
+  </div>`;
 }
 
 async function render(){
@@ -2703,12 +3790,29 @@ async function render(){
     if(el) el.remove();
   });
   const {name, param} = getRoute();
+  /* Штаб закрыт до входа: без учётной записи показываем только экран входа. */
+  if(!me()) await loadSession();
+  if(!me()){
+    setActiveNav(null);
+    window.scrollTo(0,0);
+    await renderAuth();
+    return;
+  }
   _modelPage = (name==='model' || name==='statistics' || name==='finance');
   if(_modelPage) _modelOpen = {};   /* при заходе на страницу разделы свёрнуты */
   setActiveNav(name);
   window.scrollTo(0,0);
+  /* Роль решает, какие маршруты открыты; чужой раздел не рисуем вовсе. */
+  const need = ROUTE_PERM[name];
+  if(need !== undefined && need && !can(need)){
+    app.innerHTML = noAccessHtml(need);
+    attachHandlers();
+    return;
+  }
   try{
-    if(name==='home'){ app.innerHTML = await renderHome(); }
+    if(name==='me'){ app.innerHTML = '<div class="loading">Открываем кабинет…</div>'; await renderCabinet(); }
+    else if(name==='access'){ app.innerHTML = '<div class="loading">Загрузка доступов…</div>'; await renderAccess(); }
+    else if(name==='home'){ app.innerHTML = await renderHome(); }
     else if(name==='about') app.innerHTML = renderAbout(param);
     else if(name==='platform') app.innerHTML = renderAbout('platform');
     else if(name==='community') app.innerHTML = renderAbout('community');
@@ -2743,7 +3847,10 @@ async function render(){
 }
 
 window.addEventListener('hashchange', render);
-window.addEventListener('DOMContentLoaded', ()=>{
+/* Старт: в артефакте и в обычной странице событие ещё впереди, а при
+   подстановке штаба в готовый документ (club/index.html) оно уже прошло —
+   тогда запускаемся сразу, иначе страница осталась бы пустой. */
+function bootClub(){
   /* Все перерисовки финансовых страниц возвращают фокус тому полю,
      в котором был пользователь: без этого клик по соседней ячейке
      после правки пропадал. Оборачиваем по имени — объявления функций
@@ -2751,13 +3858,16 @@ window.addEventListener('DOMContentLoaded', ()=>{
   ['renderFinDashboard','renderFinPlan','renderFinGoals','renderFinExpenses','renderFinRevenue','renderFinLaunch',
    'renderFinCashflow','renderFinUnit','renderPnl','renderRepDay','renderRepWeek','renderRepMonth','renderRepLedger',
    'renderRepJournal','renderStatistics','renderModelPage','renderReports','renderFact','renderFactBody','renderRoadmap','renderStrategy','renderTasksBoard','renderTeam',
-   'renderPersonDetail','renderDepartmentDetail','renderVoting','renderDiscussions','renderDiscussionDetail'].forEach(name=>{
+   'renderPersonDetail','renderDepartmentDetail','renderVoting','renderDiscussions','renderDiscussionDetail',
+   'renderCabinet','renderAccess'].forEach(name=>{
     if(typeof window[name]==='function' && !window[name].__focusWrapped){
       const wrapped = withFocus(window[name]); wrapped.__focusWrapped = true; window[name] = wrapped;
     }
   });
   render();
-});
+}
+if(document.readyState === 'loading') window.addEventListener('DOMContentLoaded', bootClub);
+else bootClub();
 
 /* ============================================================
    PAGE: HOME
@@ -3665,8 +4775,9 @@ function staffRosterHtml(positions, people){
     <div class="stat-box"><div class="sv">${activePositions.length}</div><div class="sl">штатных позиций</div></div>
     <div class="stat-box pos"><div class="sv">${filledPositions.length}</div><div class="sl">нанято</div></div>
     <div class="stat-box"><div class="sv">${fillPct}%</div><div class="sl">штат заполнен (${filledPositions.length} из ${activePositions.length})</div></div>
+    ${can('teamPay') ? `
     <div class="stat-box"><div class="sv">${money(totalPayroll)}</div><div class="sl">ФОТ общий — со всеми вакансиями</div></div>
-    <div class="stat-box neg"><div class="sv">${money(actualPayroll)}</div><div class="sl">ФОТ актуальный — по факту платим</div></div>
+    <div class="stat-box neg"><div class="sv">${money(actualPayroll)}</div><div class="sl">ФОТ актуальный — по факту платим</div></div>` : ''}
   </div>`;
 
   const rows = positions.map(pos=>{
@@ -3683,7 +4794,9 @@ function staffRosterHtml(positions, people){
         <option value="archived" ${pos.status==='archived'?'selected':''}>В архиве</option>
       </select>
       <span class="vacancy-person">${person ? esc(person.name||person.role) : '—'}</span>
-      <input type="number" class="vacancy-salary" data-pos="${pos.id}" value="${positionSalary(pos, people)||''}" placeholder="Оклад">
+      ${can('teamPay')
+        ? `<input type="number" class="vacancy-salary" data-pos="${pos.id}" value="${positionSalary(pos, people)||''}" placeholder="Оклад">`
+        : `<span class="soft" title="Суммы по людям видят основатель и руководители">—</span>`}
       <select class="vacancy-rate" data-pos="${pos.id}">${RATE_OPTIONS.map(r=>`<option ${pos.rate===r?'selected':''}>${r}</option>`).join('')}</select>
       <select class="vacancy-format" data-pos="${pos.id}">${FORMAT_OPTIONS.map(f=>`<option ${pos.format===f?'selected':''}>${f}</option>`).join('')}</select>
       <span class="vacancy-manager">${esc(managerName)}</span>
@@ -4056,11 +5169,13 @@ async function renderPersonDetail(id){
   const metaViewHtml = `<div class="meta" style="margin:0;">
     <div class="item"><div class="k">Тип</div><div class="v">${TYPE_LABEL[p.type]}</div></div>
     <div class="item"><div class="k">Когда устроился</div><div class="v">${esc(p.joined) || '—'}</div></div>
-    <div class="item"><div class="k">Оклад, ₽/мес</div><div class="v">${p.salary?money(p.salary):'—'}</div></div>
+    ${can('teamPay') || p.id===myPersonId()
+      ? `<div class="item"><div class="k">Оклад, ₽/мес</div><div class="v">${p.salary?money(p.salary):'—'}</div></div>`
+      : ''}
   </div>`;
   const metaEditHtml = `<div class="field-row">
     <div class="field"><label>Когда устроился</label><input class="v-input" data-field="joined" type="text" placeholder="напр. Сен 2026" value="${esc(p.joined||'')}"></div>
-    <div class="field"><label>Оклад, ₽/мес</label><input class="v-input" data-field="salary" data-numeric type="number" placeholder="—" value="${p.salary||''}"></div>
+    ${can('teamPay') ? `<div class="field"><label>Оклад, ₽/мес</label><input class="v-input" data-field="salary" data-numeric type="number" placeholder="—" value="${p.salary||''}"></div>` : ''}
   </div>`;
   const dutiesViewHtml = `<p style="font-size:14.5px; color:var(--ink-soft);">${p.duties?esc(p.duties):'<span style="color:var(--ink-faint);">Не заполнено.</span>'}</p>`;
   const dutiesEditHtml = `<textarea class="v-input" data-field="duties" style="min-height:70px;">${esc(p.duties||'')}</textarea>`;
