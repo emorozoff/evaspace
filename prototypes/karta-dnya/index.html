@@ -1,0 +1,968 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#fff8f4" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" />
+</head>
+<body>
+<!--ARTIFACT-START-->
+<title>Карта дня Евы</title>
+<style>
+  :root {
+    --cream: #fff8f4;
+    --cream-2: #fdf1ec;
+    --blush: #fbe7ea;
+    --rose: #d9739b;
+    --rose-soft: #f3c5d6;
+    --rose-deep: #b64f7c;
+    --plum: #3b1e4e;
+    --plum-2: #58305f;
+    --lilac: #a98ad4;
+    --lilac-soft: #e6dcf7;
+    --gold: #cd9a4e;
+    --gold-soft: #f4dcae;
+    --ink: #2e1b36;
+    --muted: #8a7590;
+    --line: rgba(59, 30, 78, 0.08);
+    --white: #ffffff;
+    --grad-night: linear-gradient(160deg, #2c1440 0%, #4a1f56 55%, #7b3164 100%);
+    --grad-hero: linear-gradient(140deg, #3a1a4a 0%, #7c2f69 48%, #ce6c8a 100%);
+    --grad-page: radial-gradient(1200px 600px at 50% -10%, #fdeaf1 0%, rgba(253, 234, 241, 0) 60%), var(--cream);
+    --sh-sm: 0 2px 10px rgba(59, 30, 78, 0.06);
+    --sh: 0 10px 30px rgba(59, 30, 78, 0.1);
+    --sh-lg: 0 20px 50px rgba(59, 30, 78, 0.16);
+    --r-sm: 12px;
+    --r: 18px;
+    --r-lg: 26px;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; min-height: 100%; }
+  body {
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink);
+    background: #efe6ee;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+  }
+  button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; padding: 0; }
+  button:focus-visible, textarea:focus-visible { outline: 2px solid var(--rose); outline-offset: 2px; }
+  h1, h2, h3, p { margin: 0; }
+  .serif { font-family: 'Cormorant Garamond', 'Times New Roman', serif; font-weight: 600; letter-spacing: 0.2px; }
+
+  /* ---------- каркас телефона ---------- */
+  .app {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    margin: 0 auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--grad-page);
+    overflow-x: hidden;
+    isolation: isolate;
+    padding-bottom: calc(var(--safe-b) + 28px);
+  }
+  @media (min-width: 720px) {
+    body {
+      background: radial-gradient(900px 600px at 20% 0%, #4a2150 0%, #2a1338 45%, #1d0f28 100%);
+      background-attachment: fixed;
+    }
+    .app {
+      max-width: 430px;
+      margin: 26px auto;
+      min-height: calc(100vh - 52px);
+      border-radius: 44px;
+      box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55), 0 0 0 10px #1b1024, 0 0 0 11px rgba(255, 255, 255, 0.12);
+    }
+  }
+  .pad { padding-left: 18px; padding-right: 18px; }
+
+  /* ---------- шапка ---------- */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    padding: calc(var(--safe-t) + 14px) 18px 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(180deg, rgba(255, 248, 244, 0.96) 60%, rgba(255, 248, 244, 0));
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+  }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 17px; letter-spacing: -0.2px; flex: 1; }
+  .brand .logo {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: grid; place-items: center; color: #fff;
+    background: var(--grad-hero); box-shadow: var(--sh-sm);
+  }
+  .brand small { font-weight: 600; color: var(--muted); font-size: 12px; margin-left: 2px; }
+  .streak {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 32px; padding: 0 12px 0 9px; border-radius: 999px;
+    background: #fff; box-shadow: var(--sh-sm);
+    font-size: 13px; font-weight: 800; color: var(--rose-deep);
+  }
+  .streak svg { color: var(--gold); }
+
+  /* ---------- переключатель вариантов ---------- */
+  .tabs {
+    margin: 4px 18px 0;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+    padding: 4px; border-radius: 999px;
+    background: rgba(59, 30, 78, 0.06);
+  }
+  .tabs button {
+    height: 40px; border-radius: 999px; font-weight: 700; font-size: 14px; color: var(--muted);
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .tabs button.on { background: #fff; color: var(--plum); box-shadow: var(--sh-sm); }
+  .tabs-note { margin: 8px 18px 0; font-size: 12px; color: var(--muted); text-align: center; min-height: 18px; }
+  .tab { display: none; }
+  .tab.on { display: block; }
+
+  /* ---------- общие блоки ---------- */
+  .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; color: var(--rose-deep); opacity: 0.85; }
+  .title { font-size: 30px; line-height: 1.1; text-wrap: balance; margin-top: 6px; }
+  .lead { color: var(--muted); font-size: 14px; margin-top: 8px; max-width: 34ch; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; line-height: 1.5; }
+  .hero { padding: 22px 18px 6px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 50px; padding: 0 22px; border-radius: 999px;
+    font-weight: 800; font-size: 15px; background: var(--plum); color: #fff;
+    box-shadow: 0 10px 24px rgba(59, 30, 78, 0.22);
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn.primary { background: linear-gradient(135deg, #d9739b, #b64f7c); box-shadow: 0 12px 30px rgba(200, 90, 140, 0.28); }
+  .btn.ghost { background: #fff; color: var(--plum); box-shadow: var(--sh-sm); }
+  .btn.sm { height: 40px; padding: 0 16px; font-size: 13px; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .textlink { font-size: 12.5px; font-weight: 700; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ---------- шаг 1: выбор темы / состояния ---------- */
+  .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px 18px 0; }
+  .choice {
+    display: flex; flex-direction: column; gap: 10px; align-items: flex-start; text-align: left;
+    padding: 16px 14px 14px; min-height: 108px;
+    border-radius: var(--r); background: #fff; box-shadow: var(--sh-sm);
+    border: 1.5px solid transparent;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .choice:active { transform: scale(0.97); }
+  .choice.on { border-color: var(--rose); box-shadow: var(--sh); }
+  .choice .ico { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; color: var(--rose-deep); background: var(--blush); }
+  .choice b { font-size: 15px; font-weight: 800; line-height: 1.2; }
+  .choice span { font-size: 12px; color: var(--muted); line-height: 1.35; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 18px 0; }
+  .chip {
+    height: 42px; padding: 0 16px; border-radius: 999px; background: #fff; box-shadow: var(--sh-sm);
+    font-weight: 700; font-size: 14px; border: 1.5px solid transparent;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .chip:active { transform: scale(0.96); }
+  .chip.on { border-color: var(--rose); background: var(--blush); color: var(--rose-deep); }
+  .chip i { width: 10px; height: 10px; border-radius: 50%; background: var(--dot, var(--rose)); display: inline-block; }
+
+  /* ---------- ночная панель с картами ---------- */
+  .night {
+    margin: 18px 18px 0;
+    position: relative;
+    border-radius: var(--r-lg);
+    background: var(--grad-night);
+    color: #fff;
+    box-shadow: var(--sh-lg);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .night .sky { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+  .night .sky span { position: absolute; border-radius: 50%; background: #fff; animation: twinkle 3.6s ease-in-out infinite; }
+  @keyframes twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.9; } }
+  .night .cap { position: relative; z-index: 1; padding: 18px 18px 0; text-align: center; }
+  .night .cap .eyebrow { color: var(--gold-soft); }
+  .night .cap p { margin-top: 6px; font-size: 14px; color: rgba(255, 255, 255, 0.8); text-wrap: balance; }
+
+  /* три карты */
+  .spread { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 20px 14px 22px; perspective: 1100px; }
+  .card3 { position: relative; aspect-ratio: 2 / 3; cursor: pointer; transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.5s ease; transform: rotate(var(--tilt, 0deg)) translateY(var(--lift, 0px)); animation: deal 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: var(--delay, 0s); }
+  .card3:nth-child(1) { --tilt: -5deg; --lift: 8px; --delay: 0s; --shift: 9%; }
+  .card3:nth-child(2) { --tilt: 0deg; --lift: 0px; --delay: 0.08s; }
+  .card3:nth-child(3) { --tilt: 5deg; --lift: 8px; --delay: 0.16s; --shift: -9%; }
+  @keyframes deal { from { opacity: 0; transform: translateY(40px) rotate(0deg) scale(0.9); } to { opacity: 1; transform: rotate(var(--tilt, 0deg)) translateY(var(--lift, 0px)); } }
+  .card3 .inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 0.9s cubic-bezier(0.3, 0.9, 0.3, 1); }
+  .card3.flipped .inner { transform: rotateY(180deg); }
+  .face { position: absolute; inset: 0; border-radius: 16px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
+  .face.back {
+    background: linear-gradient(170deg, #4a2160 0%, #2b1340 100%);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 4px rgba(255, 255, 255, 0.04);
+    display: grid; place-items: center;
+  }
+  .face.back svg { width: 76%; height: auto; color: #fbeee9; filter: drop-shadow(0 0 14px rgba(255, 210, 230, 0.55)); }
+  .face.back::after { content: ''; position: absolute; inset: 6px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.14); pointer-events: none; }
+  .face.front {
+    transform: rotateY(180deg);
+    background: linear-gradient(180deg, #fff8f4 0%, #fbe7ea 100%);
+    color: var(--plum);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 8px; text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+  }
+  .face.front .orn { width: 26px; height: 26px; color: var(--gold); }
+  .face.front b { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 15px; line-height: 1.1; text-wrap: balance; }
+  .face.front i { font-style: normal; font-size: 9.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--rose-deep); }
+  .spread.done .card3 { cursor: default; }
+  .spread.done .card3:not(.flipped) { opacity: 0.32; filter: saturate(0.6); transform: scale(0.88) rotate(var(--tilt, 0deg)) translateY(12px); }
+  .spread.done .card3.flipped { transform: translateX(var(--shift, 0%)) scale(1.14) rotate(0deg) translateY(-4px); z-index: 2; }
+
+  /* веер (вариант 2) */
+  .fan-wrap { position: relative; z-index: 1; height: 250px; overflow: hidden; }
+  .fan { position: absolute; left: 50%; bottom: -146px; width: 0; height: 0; }
+  .fcard {
+    position: absolute; left: -42px; bottom: 0; width: 84px; height: 128px; margin-bottom: 170px;
+    transform-origin: 50% calc(100% + 170px);
+    transform: rotate(var(--a)) translateY(0);
+    transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease;
+    animation: fanin 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: var(--d);
+    cursor: pointer;
+  }
+  @keyframes fanin { from { transform: rotate(0deg) translateY(120px); opacity: 0; } to { transform: rotate(var(--a)) translateY(0); opacity: 1; } }
+  .fcard .b {
+    position: absolute; inset: 0; border-radius: 12px;
+    background: linear-gradient(170deg, #4a2160 0%, #2b1340 100%);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: -6px 6px 18px rgba(0, 0, 0, 0.35);
+    display: grid; place-items: center; color: rgba(255, 234, 240, 0.85);
+  }
+  .fcard .b::after { content: ''; position: absolute; inset: 5px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, 0.16); }
+  .fcard .b svg { width: 34px; height: 34px; }
+  .fcard:hover { transform: rotate(var(--a)) translateY(-10px); }
+  .fan.picking .fcard { pointer-events: none; }
+  .fan.picking .fcard:not(.lift) { transform: rotate(var(--a)) translateY(160px); opacity: 0; }
+  .fan.picking .fcard.lift { transform: rotate(0deg) translateY(-30px) scale(1.15); z-index: 3; }
+
+  .reveal { position: relative; z-index: 1; display: grid; place-items: center; padding: 18px 18px 24px; perspective: 1100px; }
+  .bigcard { position: relative; width: 190px; aspect-ratio: 2 / 3; transform-style: preserve-3d; transition: transform 1s cubic-bezier(0.3, 0.9, 0.3, 1); }
+  .bigcard.flipped { transform: rotateY(180deg); }
+  .bigcard .face.front { gap: 10px; padding: 18px 14px; }
+  .bigcard .face.front .sym { width: 96px; height: 96px; color: var(--rose-deep); }
+  .bigcard .face.front b { font-size: 26px; }
+  .bigcard .face.front i { font-size: 10.5px; }
+  .bigcard .face.back svg { width: 40%; }
+
+  /* ---------- окно с посланием ---------- */
+  .sheet {
+    margin: -22px 18px 0;
+    position: relative; z-index: 2;
+    background: #fff; border-radius: var(--r-lg);
+    box-shadow: var(--sh);
+    padding: 22px 20px 20px;
+    animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+  .sheet .name { font-size: 30px; line-height: 1.05; margin-top: 6px; text-wrap: balance; }
+  .sheet .key { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500; font-size: 19px; color: var(--rose-deep); margin-top: 4px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .tag { font-size: 11.5px; font-weight: 700; padding: 5px 10px; border-radius: 999px; background: var(--lilac-soft); color: var(--plum-2); }
+  .tag.rose { background: var(--blush); color: var(--rose-deep); }
+  .msg { margin-top: 16px; display: grid; gap: 12px; }
+  .msg p { font-size: 15px; line-height: 1.6; max-width: 62ch; }
+  .msg p:first-child::first-letter { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 2.1em; float: left; line-height: 0.85; padding: 4px 6px 0 0; color: var(--rose-deep); }
+  .note { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--r-sm); background: var(--cream-2); font-size: 13.5px; line-height: 1.5; color: var(--plum-2); }
+  .note svg { flex: none; color: var(--gold); margin-top: 2px; }
+  .box { margin-top: 16px; padding: 16px; border-radius: var(--r); background: var(--cream); border: 1px solid var(--line); }
+  .box .eyebrow { margin-bottom: 6px; }
+  .box p { font-size: 14.5px; line-height: 1.55; }
+  .box.quote { background: var(--grad-night); color: #fff; border: 0; text-align: center; padding: 22px 18px; }
+  .box.quote .eyebrow { color: var(--gold-soft); }
+  .box.quote p { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 22px; line-height: 1.25; text-wrap: balance; }
+  .box.quote .btn-row { justify-content: center; margin-top: 14px; }
+  .box.quote .btn.ghost { background: rgba(255, 255, 255, 0.14); color: #fff; box-shadow: none; }
+  textarea {
+    width: 100%; min-height: 96px; resize: vertical; margin-top: 10px;
+    border: 1.5px solid var(--line); border-radius: var(--r-sm); padding: 12px;
+    font: inherit; font-size: 14.5px; line-height: 1.5; color: var(--ink); background: #fff;
+  }
+  .saved { font-size: 12px; color: var(--muted); margin-top: 6px; min-height: 16px; }
+  details { margin-top: 16px; }
+  summary { cursor: pointer; font-weight: 800; font-size: 14px; color: var(--plum); list-style: none; display: flex; align-items: center; justify-content: space-between; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; font-size: 20px; color: var(--muted); }
+  details[open] summary::after { content: '–'; }
+  .shadow-list { display: grid; gap: 10px; margin-top: 12px; }
+  .shadow-item { display: flex; gap: 12px; align-items: flex-start; }
+  .shadow-item .mini { flex: none; width: 40px; height: 60px; border-radius: 8px; background: linear-gradient(170deg, #4a2160, #2b1340); display: grid; place-items: center; color: #fbeee9; }
+  .shadow-item .mini svg { width: 70%; }
+  .shadow-item b { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 17px; display: block; line-height: 1.1; }
+  .shadow-item span { font-size: 13px; color: var(--muted); line-height: 1.45; }
+  .foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; font-size: 12.5px; color: var(--muted); }
+
+  /* история */
+  .history { margin: 18px 18px 0; }
+  .history .row { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
+  .history .row::-webkit-scrollbar { display: none; }
+  .hcard { flex: none; width: 64px; text-align: center; }
+  .hcard .m { width: 64px; height: 88px; border-radius: 10px; background: linear-gradient(180deg, #fff8f4, #fbe7ea); border: 1px solid var(--line); display: grid; place-items: center; color: var(--rose-deep); box-shadow: var(--sh-sm); }
+  .hcard .m svg { width: 34px; height: 34px; }
+  .hcard.sil .m { background: linear-gradient(170deg, #4a2160, #2b1340); color: #fbeee9; }
+  .hcard.sil .m svg { width: 60%; height: auto; }
+  .hcard small { display: block; font-size: 10.5px; color: var(--muted); margin-top: 5px; line-height: 1.2; }
+  .hcard.today .m { border-color: var(--rose); box-shadow: 0 0 0 2px var(--rose-soft); }
+
+  .demo { text-align: center; padding: 22px 18px 0; }
+  .proto-note { margin: 28px 18px 0; font-size: 11.5px; color: var(--muted); text-align: center; line-height: 1.5; }
+
+  /* ---------- открытка для сторис ---------- */
+  .ov { position: fixed; inset: 0; z-index: 100; background: rgba(20, 8, 28, 0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: grid; place-items: center; padding: 20px; }
+  .ov[hidden] { display: none; }
+  .post { width: min(320px, 100%); aspect-ratio: 4 / 5; border-radius: 24px; background: var(--grad-hero); color: #fff; position: relative; overflow: hidden; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 26px 22px; gap: 10px; }
+  .post .sky { position: absolute; inset: 0; z-index: 0; }
+  .post .sky span { position: absolute; border-radius: 50%; background: #fff; }
+  .post > * { position: relative; z-index: 1; }
+  .post .art { width: 110px; height: 110px; color: #fff; filter: drop-shadow(0 0 16px rgba(255, 210, 230, 0.6)); display: grid; place-items: center; }
+  .post .art svg { width: 100%; height: 100%; }
+  .post .date { font-size: 11px; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase; color: var(--gold-soft); }
+  .post .n { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 28px; line-height: 1.05; text-wrap: balance; }
+  .post .q { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500; font-size: 18px; line-height: 1.3; opacity: 0.95; text-wrap: balance; }
+  .post .wm { position: absolute; bottom: 16px; left: 0; right: 0; font-size: 11px; font-weight: 700; letter-spacing: 1px; opacity: 0.7; }
+  .ov .actions { position: absolute; left: 0; right: 0; bottom: calc(var(--safe-b) + 22px); display: flex; flex-direction: column; align-items: center; gap: 10px; color: rgba(255, 255, 255, 0.75); font-size: 12.5px; }
+  .toast { position: fixed; left: 50%; bottom: calc(var(--safe-b) + 24px); transform: translateX(-50%) translateY(20px); z-index: 200; background: var(--plum); color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; opacity: 0; transition: opacity 0.25s, transform 0.25s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateX(-50%); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>
+      </span>
+      Карта дня <small>Eva Space</small>
+    </div>
+    <div class="streak" id="streak" title="Дней подряд">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 5 6 7 6 13a6 6 0 0 1-12 0c0-3 1.5-5 3-6.5.5 2 1.5 3 2.5 3.5C11 9 11 5 12 2z"/></svg>
+      <span id="streak-n">0</span>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" data-tab="a" class="on">Три силуэта</button>
+    <button role="tab" data-tab="b">Колода Евы</button>
+  </div>
+  <div class="tabs-note" id="tabs-note">Вариант 1 · твоя механика: три силуэта, одна переворачивается</div>
+
+  <!-- ================= ВАРИАНТ 1: ТРИ СИЛУЭТА ================= -->
+  <section class="tab on" id="tab-a">
+    <div id="a-ask">
+      <div class="hero">
+        <div class="eyebrow">Три силуэта</div>
+        <h1 class="title serif">О чём сегодня твой вопрос?</h1>
+        <p class="lead">Выбери тему. Потом три фигуры выйдут навстречу — та, к которой потянется рука первой, и есть ответ.</p>
+      </div>
+      <div class="choice-grid" id="a-themes"></div>
+      <p class="pad small muted" style="margin-top:14px">Метафорические карты ничего не предсказывают. Они — зеркало: ты выбираешь то, что уже знаешь о себе.</p>
+    </div>
+
+    <div id="a-play" hidden>
+      <div class="night">
+        <div class="sky" data-sky="a"></div>
+        <div class="cap">
+          <div class="eyebrow" id="a-cap-eyebrow">Твоя тема</div>
+          <p id="a-cap-text">Какая фигура сегодня — про тебя? Не думай. Коснись.</p>
+        </div>
+        <div class="spread" id="a-spread"></div>
+      </div>
+      <div id="a-sheet"></div>
+      <div class="demo"><button class="textlink" data-reset="a">Сбросить и выбрать заново (демо)</button></div>
+    </div>
+  </section>
+
+  <!-- ================= ВАРИАНТ 2: КОЛОДА ЕВЫ ================= -->
+  <section class="tab" id="tab-b">
+    <div id="b-ask">
+      <div class="hero">
+        <div class="eyebrow">Колода Евы</div>
+        <h1 class="title serif">Как ты сейчас?</h1>
+        <p class="lead">Одно честное слово о своём состоянии. Карта ответит именно на него — а вечером можно вернуться и записать, что сбылось.</p>
+      </div>
+      <div class="chips" id="b-moods"></div>
+    </div>
+
+    <div id="b-play" hidden>
+      <div class="night">
+        <div class="sky" data-sky="b"></div>
+        <div class="cap">
+          <div class="eyebrow" id="b-cap-eyebrow">Колода перемешана</div>
+          <p id="b-cap-text">Проведи взглядом по вееру и коснись карты, которая откликнулась.</p>
+        </div>
+        <div class="fan-wrap" id="b-fanwrap"><div class="fan" id="b-fan"></div></div>
+        <div class="reveal" id="b-reveal" hidden></div>
+      </div>
+      <div id="b-sheet"></div>
+      <div class="history" id="b-history" hidden>
+        <div class="eyebrow">Твои карты</div>
+        <div class="row" id="b-history-row"></div>
+      </div>
+      <div class="demo"><button class="textlink" data-reset="b">Сбросить и вытянуть заново (демо)</button></div>
+    </div>
+  </section>
+
+  <p class="proto-note">Прототип механики «Карта дня». Одна карта в день — прогресс хранится в этом браузере. Тексты — авторские заготовки для оценки формата.</p>
+</div>
+
+<div class="ov" id="share" hidden>
+  <div class="post" id="post"></div>
+  <div class="actions">
+    <div class="btn-row">
+      <button class="btn primary sm" id="share-btn">Поделиться</button>
+      <button class="btn ghost sm" id="share-close">Закрыть</button>
+    </div>
+    <span>Сделай скриншот — и в сторис</span>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   КОЛОДА 1 — СИЛУЭТЫ (механика «три карты»)
+   ===================================================================== */
+const S = 'stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none"';
+const SIL = {
+  lantern: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="78" cy="42" r="16"/><path d="M66 60h24l24 112H42z"/><path d="M70 70 52 112M88 70l34 26" ${S} stroke-width="10"/><path d="M124 98v12" ${S} stroke-width="4"/><rect x="116" y="110" width="18" height="24" rx="4"/><circle cx="125" cy="122" r="18" opacity=".18"/><path d="M70 172 60 212M90 172l14 40" ${S} stroke-width="10"/></svg>`,
+  knees: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="62" cy="66" r="16"/><path d="M62 90Q50 122 50 176" ${S} stroke-width="34"/><path d="M60 176l44-44" ${S} stroke-width="24"/><path d="M104 132v46" ${S} stroke-width="18"/><path d="M62 104q34 0 44 30" ${S} stroke-width="10"/><path d="M34 190h96" ${S} stroke-width="6" opacity=".35"/></svg>`,
+  dance: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="80" cy="40" r="16"/><path d="M66 58h28l36 120Q80 160 30 178z"/><path d="M70 66 44 30M90 66l28-44" ${S} stroke-width="10"/><path d="M76 178l-6 34M94 178l18 26" ${S} stroke-width="10"/></svg>`,
+  door: `<svg viewBox="0 0 160 220" fill="currentColor"><path d="M100 210V60q0-40 22-40t22 40v150" ${S} stroke-width="6"/><path d="M104 208V62q0-34 18-34t18 34v146z" opacity=".16"/><circle cx="64" cy="50" r="16"/><path d="M52 68h24l16 112H36z"/><path d="M74 78l28-8M56 78 44 120" ${S} stroke-width="10"/><path d="M60 180l-2 32M74 180l4 32" ${S} stroke-width="10"/></svg>`,
+  bird: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="70" cy="44" r="16"/><path d="M56 62h28l24 118H34z"/><path d="M82 72l46-22M60 74 48 118" ${S} stroke-width="10"/><path d="M118 34q10-12 18-2 8-10 18 2" ${S} stroke-width="4"/><path d="M62 180l-4 32M80 180l6 32" ${S} stroke-width="10"/></svg>`,
+  stars: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="32" cy="150" r="15"/><path d="M46 140l94 10 6 18H44z"/><path d="M46 146l-12-18" ${S} stroke-width="9"/><path d="M140 150l14-12" ${S} stroke-width="8"/><path d="M34 178h100" ${S} stroke-width="6" opacity=".35"/><circle cx="40" cy="40" r="3"/><circle cx="76" cy="26" r="2"/><circle cx="118" cy="44" r="3.5"/><circle cx="96" cy="66" r="2"/><circle cx="140" cy="86" r="2.5"/><circle cx="24" cy="86" r="2"/><path d="M128 18a14 14 0 1 0 14 20 11 11 0 1 1-14-20z"/></svg>`,
+  open: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="80" cy="40" r="16"/><path d="M66 58h28l24 122H42z"/><path d="M70 66 22 38M90 66l48-28" ${S} stroke-width="10"/><path d="M72 180l-4 32M88 180l4 32" ${S} stroke-width="10"/></svg>`,
+  cup: `<svg viewBox="0 0 160 220" fill="currentColor"><circle cx="80" cy="42" r="16"/><path d="M66 60h28l22 120H44z"/><path d="M70 70l-6 36 16 12M90 70l6 36-16 12" ${S} stroke-width="9"/><path d="M64 112h32l-4 20H68z"/><path d="M74 100q-2-6 2-10M84 100q-2-6 2-10" ${S} stroke-width="2.5" opacity=".7"/><path d="M70 180l-2 32M90 180l2 32" ${S} stroke-width="10"/></svg>`,
+  mirror: `<svg viewBox="0 0 160 220" fill="currentColor"><ellipse cx="122" cy="90" rx="24" ry="36" ${S} stroke-width="5"/><ellipse cx="122" cy="90" rx="18" ry="29" opacity=".18"/><path d="M122 126v50M104 178h36" ${S} stroke-width="5"/><circle cx="56" cy="48" r="16"/><path d="M42 66h28l20 114H24z"/><path d="M68 76l28 14M44 76 34 120" ${S} stroke-width="10"/><path d="M50 180l-4 32M68 180l6 32" ${S} stroke-width="10"/></svg>`,
+};
+
+const THEMES = {
+  love:   { label: 'Любовь и отношения', short: 'Любовь', hint: 'он, мы, близость, одиночество', ico: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.6-9.5-9A5.4 5.4 0 0 1 12 6a5.4 5.4 0 0 1 9.5 6c-2.5 4.4-9.5 9-9.5 9z"/></svg>' },
+  work:   { label: 'Дело и деньги', short: 'Дело', hint: 'работа, проект, доход, смелость', ico: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M4 7h16v12H4zM9 7V5h6v2M4 12h16" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>' },
+  self:   { label: 'Я и мой ресурс', short: 'Я', hint: 'силы, тело, отдых, самоценность', ico: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' },
+  change: { label: 'Выбор и перемены', short: 'Перемены', hint: 'решение, переезд, новое, страх', ico: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12h13M13 6l6 6-6 6"/></svg>' },
+};
+
+const POS = [
+  { label: 'Левая карта', tag: 'то, что уже знакомо', line: 'Левую фигуру чаще выбирают те, кто опирается на знакомое. Это послание о том, что ты уже знаешь, но ещё не признала вслух.' },
+  { label: 'Центральная карта', tag: 'то, что происходит сейчас', line: 'Центр выбирают те, кто в гуще происходящего. Это послание о том, что с тобой происходит прямо сейчас — и просит внимания сегодня.' },
+  { label: 'Правая карта', tag: 'то, что зовёт вперёд', line: 'Правую выбирают те, кто смотрит вперёд. Это послание о том, куда тебя зовёт — и куда ты уже потихоньку движешься.' },
+];
+
+const DECK_A = [
+  { id: 'lantern', name: 'Та, что идёт с фонарём', key: 'Свет на один шаг',
+    p1: 'Ты выбрала фигуру, которая идёт в темноте, но не останавливается. У неё нет карты всего пути — только фонарь, который освещает следующий шаг. Похоже, сегодня ты именно такая: не всё ясно, но ты уже в движении.',
+    p2: 'Эта карта о том, что не нужно видеть весь путь, чтобы идти. Тревога часто рождается из попытки разглядеть финал заранее. Фонарь освещает ровно столько, сколько нужно, чтобы поставить ногу. Остальное проявится, когда ты дойдёшь.',
+    t: { love: 'В отношениях сейчас важно не требовать от себя и от него гарантий «навсегда». Достаточно честного «здесь и сейчас»: что я чувствую сегодня, что мне нужно сегодня. Скажи об этом одним простым предложением — без прелюдий и без обвинений.',
+         work: 'В деле не строй план на год — сделай один шаг, который можно завершить до вечера. Письмо, звонок, черновик, цена. Маленький завершённый шаг даёт больше уверенности, чем большая незавершённая стратегия.',
+         self: 'Твой ресурс сейчас — не в ясности, а в движении. Тело хочет идти, а голова хочет сначала всё понять. Дай телу победить: прогулка, уборка одной полки, десять минут любого дела руками. Ясность придёт вдогонку.',
+         change: 'Перемены не требуют от тебя сегодня решения «всё или ничего». Они просят согласия на один шаг. Спроси себя: какой самый маленький шаг в сторону нового я могу сделать до конца дня — и сделай только его.' },
+    act: 'Запиши один шаг на сегодня. Не цель, не план — шаг. И сделай его до того, как откроешь соцсети.',
+    phrase: 'Мне не нужно видеть весь путь. Мне нужно видеть следующий шаг.',
+    shadow: 'Возможно, сегодня не хочется двигаться вслепую — и это нормально: иногда нужно сначала постоять.' },
+  { id: 'knees', name: 'Та, что обняла колени', key: 'Разрешение на паузу',
+    p1: 'Ты выбрала фигуру, которая сидит, обняв себя. Это не слабость и не поражение — это поза, в которой человек возвращается к себе. Кажется, часть тебя очень давно просит: остановись, я устала быть сильной.',
+    p2: 'Карта говорит о том, что отдых — не награда за сделанное, а условие, чтобы сделать. Ты можешь выдержать многое, но «могу» не значит «должна». Сегодня твоя задача — не тянуть, а перестать тянуть хотя бы одно.',
+    t: { love: 'В отношениях ты, возможно, держишь больше, чем твоя половина. Заботишься, сглаживаешь, помнишь за двоих. Сегодня попробуй не сглаживать. Позволь паузе повиснуть — пусть другой тоже почувствует, что ему есть что держать.',
+         work: 'В деле сейчас не время для рывка. То, что ты называешь ленью, скорее всего — истощение. Сними с сегодняшнего списка треть задач. Мир не рухнет, а ты вечером впервые за долгое время не будешь чувствовать вину за то, что не успела.',
+         self: 'Твой ресурс на нуле не потому, что ты плохо стараешься, а потому что ты слишком долго стараешься без передышки. Сегодня разрешено: спать днём, не отвечать сразу, есть тёплое, ничего в себе не улучшать.',
+         change: 'Перемены сейчас лучше не начинать — их лучше вынашивать. Обнять колени — это и есть поза, в которой рождается новое. Не заставляй себя решать. Позволь себе просто побыть с вопросом, не отвечая на него.' },
+    act: 'Найди в сегодняшнем дне двадцать минут, где ты никому ничего не должна. Поставь таймер. Не бери телефон. Просто сиди — можно в этой самой позе.',
+    phrase: 'Я имею право остановиться раньше, чем упаду.',
+    shadow: 'Возможно, усталость — это то, на что ты сегодня решила не смотреть. Загляни туда хотя бы на минуту.' },
+  { id: 'dance', name: 'Танцующая', key: 'Радость без причины',
+    p1: 'Ты выбрала фигуру, которая танцует — не для зрителей, а потому что тело этого хочет. Внутри тебя, похоже, накопилось что-то живое, что просится наружу. Слишком долго ты была правильной и собранной.',
+    p2: 'Карта напоминает: радость — не результат, к которому нужно прийти, а состояние, к которому можно вернуться. Она не требует повода. Ей нужно только разрешение и немного места в теле.',
+    t: { love: 'В любви сегодня стоит перестать анализировать и позволить себе лёгкость. Не выяснять, не сверять ожидания. Пойти на свидание — с собой или с ним — и просто радоваться, что вы есть. Лёгкость притягивает сильнее, чем серьёзные разговоры.',
+         work: 'В деле ты, возможно, стала слишком серьёзной. Идеи не приходят к тем, кто зажат. Добавь игры: сделай задачу под музыку, поменяй место, придумай самый глупый вариант решения — иногда именно он оказывается самым свежим.',
+         self: 'Твой ресурс — в теле, а не в мыслях. Ты давно не двигалась просто так, для удовольствия. Сегодня включи одну песню и танцуй так, будто тебя никто никогда не увидит. Три минуты — и ты почувствуешь, как изнутри что-то отпускает.',
+         change: 'Перемены, которых ты ждёшь, любят весёлых. Не потому что серьёзным не достаётся, а потому что радость делает тебя заметнее — для людей, для возможностей, для себя. Сделай сегодня то, что давно хотела «просто так».' },
+    act: 'Одна песня. Громко. Танцуй. Не пропускай этот пункт из-за того, что он кажется несерьёзным — именно поэтому он и работает.',
+    phrase: 'Мне не нужен повод, чтобы радоваться. Мне нужно только разрешение.',
+    shadow: 'Возможно, радость сейчас кажется неуместной — «сначала дела». Но она не ждёт, пока дела закончатся. Она просто ждёт.' },
+  { id: 'door', name: 'Та, что стоит у двери', key: 'Порог',
+    p1: 'Ты выбрала фигуру, которая стоит у двери и держит руку на косяке. Она ещё не вошла и ещё не ушла. Кажется, ты знаешь эту точку очень хорошо — ты стоишь в ней уже какое-то время.',
+    p2: 'Карта говорит о решении, которое ты откладываешь. Не потому что не знаешь ответ — а потому что знаешь. Порог тяжёл не выбором, а прощанием с тем, что останется по эту сторону.',
+    t: { love: 'В отношениях ты давно чувствуешь, что стоишь на пороге: сказать, спросить, уйти или, наоборот, войти глубже. Сегодня не нужно делать шаг. Нужно честно признать себе, в какую сторону ты уже смотришь.',
+         work: 'В деле есть дверь, в которую ты боишься постучать: попросить о повышении, назвать цену, предложить себя. Страх — не знак, что рано. Он знак, что это важно. Сегодня — только постучать. Открывать необязательно.',
+         self: 'Ты стоишь на пороге новой версии себя и держишься за косяк, потому что старая версия — привычная. Спроси себя честно: что я потеряю, если войду? И что я теряю каждый день, пока стою?',
+         change: 'Эта карта — самая прямая из всех: перемена уже здесь, ты просто её ещё не признала. Дверь открыта. Сегодня не нужно входить — нужно перестать делать вид, что двери нет.' },
+    act: 'Допиши предложение: «Я уже знаю, что…» — и не редактируй то, что напишется первым.',
+    phrase: 'Я уже знаю ответ. Мне осталось перестать делать вид, что не знаю.',
+    shadow: 'Возможно, сегодня не хочется думать о решении, которое зреет. Оно подождёт — но недолго.' },
+  { id: 'bird', name: 'Та, что отпускает птицу', key: 'Отпустить',
+    p1: 'Ты выбрала фигуру с раскрытой ладонью, с которой взлетает птица. Не сжимает, не ловит — отпускает. В тебе, похоже, есть что-то, что ты держишь слишком крепко, и рука уже устала.',
+    p2: 'Карта говорит об освобождении: от ожиданий, от человека, от старой обиды, от роли, которую ты давно переросла. Отпустить — не значит потерять. Это значит перестать тратить силы на то, чтобы удержать то, что не твоё.',
+    t: { love: 'В отношениях ты держишь: контроль, ожидание, старую обиду, человека, который давно ушёл, или того, кто рядом, но не по-настоящему. Сегодня спроси: что я боюсь отпустить, потому что тогда придётся признать, что оно не моё?',
+         work: 'В деле есть то, что пора отпустить: проект, который тянешь из упрямства, клиента, который выжигает, идею, которая «должна была» взлететь. Освободи руки — новое не приходит к тем, у кого заняты обе.',
+         self: 'Ты держишь образ себя: сильной, удобной, всё успевающей. Он тяжёлый. Отпусти сегодня одно «должна» — не навсегда, на день. Посмотри, что произойдёт. Скорее всего, ничего. Кроме облегчения.',
+         change: 'Перемены не могут прийти, пока место занято. Птица на ладони — это то, чему ты не даёшь улететь, боясь пустоты. Но пустота — это не дыра. Это пространство, куда придёт новое.' },
+    act: 'Напиши на бумаге одну вещь, которую готова отпустить. Порви бумагу. Да, это простой ритуал — и да, он работает.',
+    phrase: 'Отпуская, я не теряю. Я освобождаю руки для нового.',
+    shadow: 'Возможно, ты ещё не готова разжать руку — и это честно. Просто заметь, что рука устала.' },
+  { id: 'stars', name: 'Та, что смотрит на звёзды', key: 'Масштаб мечты',
+    p1: 'Ты выбрала фигуру, которая лежит и смотрит вверх, на небо. Не бежит, не решает, не спасает. Смотрит вдаль. Кажется, тебе давно не хватало именно этого — поднять глаза от списка дел и вспомнить, зачем всё это.',
+    p2: 'Карта — о мечте, которую ты уменьшила, чтобы она поместилась в реальность. Звёзды не требуют, чтобы ты их достала. Они требуют, чтобы ты не переставала на них смотреть — иначе шаги теряют направление.',
+    t: { love: 'В любви ты, возможно, согласилась на меньшее, чем мечтала, — потому что «так бывает у всех». Сегодня вспомни, какие отношения ты хотела в самом начале, пока не стала практичной. Это не наивность. Это ориентир.',
+         work: 'В деле ты застряла в мелких задачах и забыла о большой картине. Сегодня выпиши, куда хочешь прийти через три года — без цензуры и без «реалистично ли это». А потом посмотри, ведёт ли туда хотя бы одно дело из сегодняшнего списка.',
+         self: 'Твой ресурс — в смысле. Усталость приходит не от объёма, а от бессмысленности. Найди сегодня десять минут, чтобы вспомнить свою большую мечту. Не план — мечту. Ту, от которой сжимается в груди.',
+         change: 'Перемена, которую ты обдумываешь, кажется слишком большой — и именно поэтому она настоящая. Маленькие перемены не пугают. Разреши себе хотеть по-крупному хотя бы сегодня. Способы найдутся после.' },
+    act: 'Вечером выйди на улицу или подойди к окну и посмотри на небо две минуты. Без телефона. Просто вверх. Заметь, как меняется дыхание.',
+    phrase: 'Я разрешаю себе хотеть больше, чем кажется разумным.',
+    shadow: 'Возможно, мечтать сейчас кажется роскошью. Но ориентир нужен как раз тогда, когда трудно.' },
+  { id: 'open', name: 'Та, что раскрыла руки', key: 'Принимать',
+    p1: 'Ты выбрала фигуру с широко раскрытыми руками — она не защищается, не просит, не прячется. Она принимает. Похоже, ты умеешь давать гораздо лучше, чем брать, — и карта сегодня про вторую половину.',
+    p2: 'Карта о способности получать: помощь, комплименты, деньги, любовь, отдых. Многие женщины отталкивают хорошее рефлекторно — «да ладно, не стоило». Раскрытые руки — это навык. Он тренируется, как любой другой.',
+    t: { love: 'В любви сегодня попробуй не отдавать, а принимать. Когда тебе сделают приятное — не отмахивайся, не отвечай сразу тем же. Скажи «спасибо» и остановись. Позволь себе побыть той, о ком заботятся.',
+         work: 'В деле — принимай помощь и деньги без вины. Не снижай цену, когда клиент уже согласился. Не делай «ещё чуть-чуть бесплатно». Раскрытые руки в бизнесе — это готовность получать столько, сколько стоит твоя работа.',
+         self: 'Твой ресурс придёт извне, если ты перестанешь его отталкивать. Сегодня прими одно предложение помощи, которое обычно отклоняешь. Пусть кто-то донесёт сумку, приготовит ужин, посидит с ребёнком. Ты не обязана всё сама.',
+         change: 'Перемены приходят к тем, кто готов их принять, а не выстрадать. Ты привыкла, что хорошее надо заслужить. Сегодня попробуй другую гипотезу: хорошее можно просто взять, когда его дают.' },
+    act: 'Сегодня на любую похвалу отвечай только «спасибо». Без «да это ерунда», без «это не я, это повезло». Просто «спасибо» — и пауза.',
+    phrase: 'Я умею не только давать. Я умею принимать.',
+    shadow: 'Возможно, принимать сейчас страшнее, чем давать. Это частая история — и она меняется.' },
+  { id: 'cup', name: 'Та, что держит чашу', key: 'Наполненность и границы',
+    p1: 'Ты выбрала фигуру, которая бережно держит чашу двумя руками. Не проливает, не раздаёт всем подряд, не выпивает залпом. Держит. Кажется, ты знаешь, что твоя чаша сейчас не полна, и хочется её защитить.',
+    p2: 'Карта о границах и наполнении: нельзя наливать из пустой чаши, но ты пытаешься. Она напоминает, что «нет» — это не отказ от близости, а способ сохранить то, чем потом сможешь делиться.',
+    t: { love: 'В отношениях ты, возможно, отдаёшь из последнего и злишься, что не возвращается. Сегодня не отдавай. Скажи прямо: «Мне сейчас нужно, чтобы позаботились обо мне». Это не требование — это честность о своей чаше.',
+         work: 'В деле пора пересмотреть, кому ты наливаешь: клиенты, которые выпивают тебя досуха, задачи, за которые никто не благодарит. Сегодня одно «нет» или одно «давайте обсудим условия». Твоя чаша — твоя ответственность.',
+         self: 'Твой ресурс сегодня — простые вещи: вода, еда, сон, тишина. Не духовный рост, не саморазвитие. Сначала наполнить чашу самым базовым. Спроси: что моё тело просило вчера, а я не дала?',
+         change: 'Перемены требуют сил, а сил нет — потому что чаша пуста. Прежде чем менять жизнь, наполни её. Неделя нормального сна изменит больше, чем любое решение, принятое на голодной усталости.' },
+    act: 'Составь список из трёх вещей, которые тебя наполняют, и трёх, которые опустошают. Сегодня — плюс одно из первого списка и минус одно из второго.',
+    phrase: 'Я не могу наливать из пустой чаши — и не буду.',
+    shadow: 'Возможно, тема границ сейчас неудобная. Но чаша не станет полнее оттого, что ты на неё не смотришь.' },
+  { id: 'mirror', name: 'Та, что смотрит в зеркало', key: 'Честность с собой',
+    p1: 'Ты выбрала фигуру, которая смотрит в зеркало. Не поправляет причёску — смотрит в глаза. Это самый смелый из силуэтов: встретиться с собой без фильтров. Кажется, тебе давно хочется правды — о себе, не о других.',
+    p2: 'Карта о самоценности. Не о самооценке, которая скачет от чужих слов, а о ценности, которая просто есть. Зеркало не оценивает. Оно показывает. И то, что ты в нём видишь, зависит от того, чьими глазами смотришь.',
+    t: { love: 'В любви ты, возможно, ищешь в другом подтверждение, что тебя можно любить. Но чужие глаза — плохое зеркало: они замутнены его собственными страхами. Сегодня попробуй сама сказать себе то, что ждёшь от него.',
+         work: 'В деле ты недооцениваешь себя, и это видно в цене, в тоне писем, в «извините, что беспокою». Посмотри в зеркало и перечисли пять вещей, которые умеешь лучше многих. Потом перепиши одно письмо из этой позиции.',
+         self: 'Твой ресурс — в честности. Ты тратишь много сил на то, чтобы казаться. Сегодня попробуй быть: сказать, что устала, когда устала; что не хочешь, когда не хочешь. Быть дешевле, чем казаться.',
+         change: 'Перемены начинаются с признания: «я не та, кем стараюсь выглядеть, и это нормально». Зеркало сегодня спрашивает: кем ты стала бы, если бы никто не смотрел? Ответ — и есть направление.' },
+    act: 'Подойди к зеркалу, посмотри себе в глаза тридцать секунд и скажи вслух: «Я вижу тебя. Ты справляешься». Будет неловко. Сделай всё равно.',
+    phrase: 'Я не обязана казаться. Мне достаточно быть.',
+    shadow: 'Возможно, встречаться с собой сегодня не хочется. Зеркало подождёт — оно никуда не денется.' },
+];
+
+/* =====================================================================
+   КОЛОДА 2 — СИМВОЛЫ ЕВЫ (механика «состояние → веер → карта»)
+   ===================================================================== */
+const SYM = {
+  key: `<svg viewBox="0 0 120 120" ${S} stroke-width="8"><circle cx="40" cy="60" r="18"/><path d="M58 60h48M94 60v16M106 60v22"/></svg>`,
+  moon: `<svg viewBox="0 0 120 120" fill="currentColor"><path d="M72 14a46 46 0 1 0 0 92 38 38 0 1 1 0-92z"/><circle cx="28" cy="30" r="3"/><circle cx="20" cy="66" r="2.4"/></svg>`,
+  river: `<svg viewBox="0 0 120 120" ${S} stroke-width="7"><path d="M10 38q20-18 40 0t40 0 20 0M10 62q20-18 40 0t40 0 20 0M10 86q20-18 40 0t40 0 20 0"/></svg>`,
+  window: `<svg viewBox="0 0 120 120" ${S} stroke-width="7"><rect x="26" y="16" width="68" height="88" rx="10"/><path d="M60 16v88M26 60h68"/><path d="M78 30l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="currentColor" stroke="none"/></svg>`,
+  sprout: `<svg viewBox="0 0 120 120" fill="currentColor"><path d="M60 106V52" ${S} stroke-width="7"/><path d="M60 72q-34-4-34-36 30 2 34 36z"/><path d="M60 58q34-4 34-36-30 2-34 36z"/><path d="M28 106h64" ${S} stroke-width="7"/></svg>`,
+  flame: `<svg viewBox="0 0 120 120" fill="currentColor"><path d="M60 12c8 22 30 32 30 58a30 30 0 1 1-60 0c0-14 8-22 14-32 4 8 8 12 10 14-2-14 2-28 6-40z"/><path d="M60 62c6 10 12 14 12 24a12 12 0 1 1-24 0c0-8 6-12 12-24z" fill="#fff" opacity=".55"/></svg>`,
+  thread: `<svg viewBox="0 0 120 120" ${S} stroke-width="6"><path d="M12 88C28 20 50 120 66 44s34 40 42-30"/><path d="M100 22l8-8" stroke-width="5"/></svg>`,
+  stairs: `<svg viewBox="0 0 120 120" ${S} stroke-width="7"><path d="M14 104h18V86h18V68h18V50h18V32h18V14"/></svg>`,
+  nest: `<svg viewBox="0 0 120 120" ${S} stroke-width="7"><path d="M18 62q42 44 84 0"/><path d="M28 74q32 20 64 0M40 86q20 8 40 0" stroke-width="5" opacity=".7"/><ellipse cx="46" cy="54" rx="9" ry="12" fill="currentColor" stroke="none"/><ellipse cx="74" cy="54" rx="9" ry="12" fill="currentColor" stroke="none"/><ellipse cx="60" cy="46" rx="9" ry="12" fill="currentColor" stroke="none"/></svg>`,
+};
+
+const MOODS = {
+  calm:    { label: 'Спокойно',   dot: '#7fb69a', said: 'Ты сказала, что тебе спокойно.' },
+  anxious: { label: 'Тревожно',   dot: '#d9739b', said: 'Ты сказала, что тебе тревожно.' },
+  tired:   { label: 'Устала',     dot: '#a98ad4', said: 'Ты сказала, что устала.' },
+  high:    { label: 'На подъёме', dot: '#cd9a4e', said: 'Ты сказала, что ты на подъёме.' },
+  lost:    { label: 'Запуталась', dot: '#8a7590', said: 'Ты сказала, что запуталась.' },
+};
+
+const DECK_B = [
+  { id: 'key', name: 'Ключ', key: 'У тебя уже есть то, что открывает',
+    p1: 'Ключ — это не то, что нужно найти. Это то, что уже лежит в кармане, пока ты обыскиваешь весь дом. Ева напоминает: решение ближе, чем кажется, и оно не снаружи. Обычно ключом оказывается очень простое действие, которое ты откладываешь, потому что оно «слишком простое, чтобы сработать».',
+    m: { calm: 'Это лучшее состояние для ключа: в спокойствии видно, какая дверь на самом деле твоя. Не торопись открывать все подряд — выбери одну.',
+         anxious: 'Тревога заставляет искать ключ везде, кроме кармана. Остановись. Спроси: что я уже знаю о своей ситуации, но не хочу признавать? Там и ключ.',
+         tired: 'Ключ сегодня — не ещё одно усилие. Это разрешение перестать подбирать отмычки к двери, которую, возможно, не нужно открывать. Отдых тоже открывает.',
+         high: 'Ключ в руках. Сегодня хороший день сделать то, к чему давно подбиралась: написать, позвонить, отправить. Энергия есть, дверь видна. Не жди «ещё лучшего момента».',
+         lost: 'Значит, дверей слишком много, и все кажутся одинаковыми. Ключ подходит только к одной. Спроси себя: если бы можно было открыть только одну дверь в этом году — какую? Ответ упростит остальное.' },
+    q: 'Какое простое действие я откладываю, потому что оно кажется «слишком простым»?',
+    aff: 'Всё, что мне нужно, чтобы открыть эту дверь, уже у меня в руках.',
+    rit: 'Возьми любой ключ, который есть рядом. Подержи в ладони минуту, вспоминая, какую дверь хочешь открыть. Положи туда, где будешь видеть весь день.' },
+  { id: 'moon', name: 'Луна', key: 'У всего есть фазы',
+    p1: 'Луна не бывает неправильной: ни новая, ни полная, ни убывающая. Она не извиняется за то, что сегодня видна не вся. Эта карта приходит, когда ты требуешь от себя быть постоянной — одинаково энергичной, красивой, продуктивной каждый день. А ты — циклична. И это не сбой, это природа.',
+    m: { calm: 'Это твоё тихое полнолуние, и оно хорошо само по себе. Побудь в этом, не пытаясь «использовать состояние продуктивно». Спокойствие — уже результат.',
+         anxious: 'Возможно, тревога — часть фазы, а не факт о жизни. Посмотри на календарь цикла, на количество сна, на то, сколько дней ты без выходных. Тревога часто говорит не о будущем, а о теле.',
+         tired: 'Луна говорит: это убывающая фаза, она такая и должна быть. Убывающая Луна не борется за свет. Она отпускает и ждёт. Сегодня — минимум, без чувства вины.',
+         high: 'Полнолуние. Свет есть, видно далеко. Сделай сегодня что-то заметное, выйди к людям, покажи работу. Но помни: за полной идёт убывающая, поэтому не обещай себе, что так будет всегда.',
+         lost: 'Это новолуние — тёмная фаза, когда ничего не видно и кажется, что ничего и нет. Но именно в темноте закладывается новое. Не ищи ясности силой. Дай ей прорасти.' },
+    q: 'В какой фазе я сейчас — и что бы я себе разрешила, если бы честно это признала?',
+    aff: 'Я не обязана светить одинаково каждый день. У меня есть фазы, и все они мои.',
+    rit: 'Сегодня вечером найди Луну на небе или посмотри её фазу в телефоне. Скажи вслух, какая она сегодня — и какая ты.' },
+  { id: 'river', name: 'Река', key: 'Не грести против',
+    p1: 'Река не спрашивает разрешения течь и не тратит силы на споры с камнями — она их обтекает. Эта карта приходит, когда ты слишком долго гребёшь против течения: заставляешь, доказываешь, удерживаешь. Ева спрашивает: а что, если перестать грести и посмотреть, куда несёт?',
+    m: { calm: 'Ты на воде, а не в борьбе с ней. Отличный день заметить, куда течёт твоя жизнь без усилий: что получается легко, кто приходит сам, что само складывается. Это и есть твоё течение.',
+         anxious: 'Возможно, потому что ты пытаешься контролировать реку. Тревога — это гребля против. Сегодня выбери одну ситуацию, которую не можешь изменить, и отпусти вёсла. Просто посмотри, что произойдёт без твоего участия.',
+         tired: 'Потому что гребёшь. Река говорит: ложись на спину. Сегодня не двигай ничего, что не двигается само. Пусть течение сделает свою часть.',
+         high: 'Течение с тобой. Не сопротивляйся из осторожности. Если что-то сейчас идёт легко — иди туда, даже если в плане было другое. Лёгкость — это не подозрительно. Это знак.',
+         lost: 'Ты стоишь посреди реки и не понимаешь, где берег. Спроси не «куда мне», а «куда несёт». Что в твоей жизни в последнее время происходит само, без усилий? Туда и течёт.' },
+    q: 'Где в моей жизни я гребу против течения — и что произойдёт, если я перестану?',
+    aff: 'Я разрешаю жизни нести меня туда, где мне будет легче.',
+    rit: 'Выпей стакан воды медленно, за целую минуту. Пока пьёшь — представь, что вместе с водой уходит напряжение из плеч.' },
+  { id: 'window', name: 'Окно', key: 'Другой угол зрения',
+    p1: 'Окно — это не выход. Это возможность увидеть, что снаружи есть мир, пока ты сидишь внутри своей задачи, своих мыслей, своей комнаты. Карта приходит, когда ты слишком близко к проблеме и не видишь её целиком. Отойти — не значит сдаться. Иногда это единственный способ разглядеть.',
+    m: { calm: 'Самое время выглянуть в окно. Посмотри на свою жизнь как на чужую: что бы ты посоветовала подруге в этой ситуации? Спокойный взгляд со стороны видит больше, чем вовлечённый изнутри.',
+         anxious: 'Ты слишком близко. Тревога сужает поле зрения до одной точки. Сегодня физически смени место: другая комната, кафе, улица. Тело переместилось — мысли переместятся следом.',
+         tired: 'Потому что давно не смотрела в окно. Сегодня просто сядь у окна с чаем и смотри наружу десять минут. Не думай. Не планируй. Это не отдых «ради продуктивности» — это просто отдых.',
+         high: 'Через окно видно далеко. Хороший день посмотреть на себя со стороны и заметить, как ты выросла. Запиши три вещи, которые год назад казались невозможными, а сейчас — обычные.',
+         lost: 'Значит, стоишь лицом к стене. Окно рядом, надо только повернуться. Спроси: что бы я увидела в своей ситуации с расстояния в пять лет? Что покажется важным, а что — шумом?' },
+    q: 'Что я увижу в своей ситуации, если посмотрю на неё из окна, а не изнутри?',
+    aff: 'Я могу отойти на шаг — и увидеть больше.',
+    rit: 'Подойди к окну. Найди пять вещей, которых раньше не замечала. Это тренировка того же взгляда, который нужен тебе для твоей задачи.' },
+  { id: 'sprout', name: 'Росток', key: 'Растёт, даже когда не видно',
+    p1: 'Росток большую часть времени растёт под землёй — и никто, включая его самого, не видит результата. Эта карта приходит, когда ты сомневаешься: «я так много делаю, а ничего не меняется». Меняется. Просто корни видны не сразу. Ева просит не выкапывать семечко, чтобы проверить, проросло ли.',
+    m: { calm: 'Росток любит такую погоду. Продолжай то, что делаешь, без рывков и без проверок. Спокойная регулярность — самое питательное, что есть.',
+         anxious: 'И хочется выкопать семечко и проверить. Не надо. Тревога хочет результата сейчас, а рост идёт по своему графику. Сегодня полей — то есть сделай одно маленькое дело — и оставь в покое.',
+         tired: 'Потому что ждёшь всходов, а их не видно. Но росток растёт и тогда, когда ты отдыхаешь. Сегодня отдохни от контроля. Ты уже посадила. Можно не стоять над грядкой.',
+         high: 'Росток пробился. Заметь и отпразднуй это. Женщины часто пропускают момент, когда что-то начало получаться, потому что сразу смотрят на следующее. Остановись. Ты выросла.',
+         lost: 'Не понимаешь, что растёт, а что стоит бросить. Спроси: что я поливала последний месяц? Что из этого хочу видеть выросшим через год? Остальное — можно не поливать.' },
+    q: 'Что во мне растёт прямо сейчас, хотя результата ещё не видно?',
+    aff: 'Я расту, даже когда не вижу этого. Особенно тогда.',
+    rit: 'Полей цветок — настоящий, если он есть. Если нет — поставь стакан воды у окна как обещание завести. И да, это про тебя.' },
+  { id: 'flame', name: 'Огонь', key: 'Что тебя зажигает',
+    p1: 'Огонь — это то, что горит в тебе, когда никто не просит. Карта приходит, когда ты слишком долго горела для других: проектов, семьи, чужих ожиданий — и забыла, что зажигает лично тебя. Огонь не спрашивает «полезно ли это». Он просто горит. И тебе нужно место, где можно ему разрешить.',
+    m: { calm: 'Огонь ровный, как в камине. Хороший день вспомнить, что тебя зажигало в детстве, в юности, в лучшие периоды. Одно из этого можно вернуть уже на этой неделе.',
+         anxious: 'Огонь горит, но не туда: он сжигает тебя изнутри. Тревога — это огонь без выхода. Дай ему выход: любое действие с усилием — быстрая ходьба, уборка, громкое пение. Сожги тревогу в движении.',
+         tired: 'Огонь почти погас, потому что в него давно не подкладывали дров. Дрова — это то, что ты любишь без пользы: книга, сериал, разговор с подругой, рисование. Сегодня одно полено. Обязательно.',
+         high: 'Огонь ярко горит. Направь его: сегодня сделай то, что требует смелости. Скажи, что думаешь. Покажи, что сделала. Попроси, что хочешь. Огонь дан, чтобы им светить.',
+         lost: 'Не знаешь, что твоё. Огонь подскажет: вспомни, о чём ты можешь говорить часами, не уставая. Где загораются глаза. Это и есть направление — оно всегда там, где тепло.' },
+    q: 'О чём я могу говорить часами, не уставая? Как давно я этим занималась?',
+    aff: 'Я имею право гореть для себя, а не только для других.',
+    rit: 'Зажги свечу — любую. Пока горит, подумай об одном деле, которое ты бросила, потому что «не до этого». Может, до этого?' },
+  { id: 'thread', name: 'Нить', key: 'Всё связано',
+    p1: 'Нить тянется из прошлого в будущее, и всё, что происходит с тобой, — на одной нити, даже если кажется, что жизнь разорвана на куски. Карта приходит, когда ты чувствуешь, что события случайны, а усилия не складываются в целое. Складываются. Ева просит посмотреть на нить, а не на отдельные узелки.',
+    m: { calm: 'Самое время увидеть нить. Вспомни три события за последний год, которые казались случайными, и найди, что их связывает. Это твой узор. Он есть.',
+         anxious: 'Нить кажется запутанной, и хочется распутать всё сразу. Не нужно. Найди один конец — одну задачу, один разговор, одно решение. Потяни за него. Остальное распутается само.',
+         tired: 'Потому что несёшь весь клубок сразу. Сегодня положи его. Клубок не распутается быстрее оттого, что ты его сжимаешь. Отложи — и вернись завтра со свежими руками.',
+         high: 'Нить в руках, и ты видишь, куда она ведёт. Свяжи сегодня два дела, которые давно ждали друг друга: знакомого и знакомого, идею и человека, навык и проект. Ты сейчас — соединяющая.',
+         lost: 'Нить потерялась в клубке. Не ищи весь узор. Спроси: что связывает то, чем я занималась в пятнадцать, в двадцать пять и сейчас? Ответ обычно — одно-два слова. И это твоё направление.' },
+    q: 'Что связывает три самых важных события моего последнего года?',
+    aff: 'В моей жизни нет случайного. Всё — на одной нити, и я держу её.',
+    rit: 'Возьми любую нитку или шнурок. Завяжи узелок — это сегодняшний день. Положи в кошелёк. Через неделю посчитаешь узелки и удивишься, что все они на одной нити.' },
+  { id: 'stairs', name: 'Лестница', key: 'Одна ступень',
+    p1: 'На лестницу не запрыгивают. Её проходят ступень за ступенью — и, стоя на третьей, невозможно быть на десятой, как бы ни хотелось. Карта приходит, когда ты сравниваешь себя с теми, кто выше, и обесцениваешь ступени, которые уже прошла. Ева напоминает: посмотри вниз — там уже целый пролёт.',
+    m: { calm: 'Ты стоишь на ступени и не спешишь. Это редкое умение. Спокойно оглянись: сколько ступеней позади? Порадуйся им. Потом — одна вверх, не больше.',
+         anxious: 'Потому что смотришь на верх лестницы и понимаешь, как далеко. Опусти глаза на ближайшую ступень. Только на неё. Что нужно, чтобы поставить на неё ногу? Это и есть план на сегодня.',
+         tired: 'Лестница показалась бесконечной. Сядь на ступеньку. Серьёзно. Никто не говорил, что подниматься нужно без остановок. Отдых на лестнице — часть подъёма.',
+         high: 'Можно пройти две ступени сразу. Сегодня возьми задачу чуть больше, чем обычно. Но не десять ступеней — две. Энергию тратят, а не разбрасывают.',
+         lost: 'Не видишь, куда ведёт лестница. Это нормально: с середины пролёта верха не видно. Но видно направление — вверх. Сегодня не нужно знать, что наверху. Нужно сделать одну ступень.' },
+    q: 'Сколько ступеней я уже прошла — и почему я их не считаю?',
+    aff: 'Одна ступень сегодня — это и есть путь.',
+    rit: 'Поднимись сегодня по любой лестнице пешком вместо лифта. На каждой ступени называй одно дело, которое уже сделала в жизни. Не хватит ступеней — значит, ты много прошла.' },
+  { id: 'nest', name: 'Гнездо', key: 'Твоё безопасное место',
+    p1: 'Гнездо — это не клетка и не бегство. Это место, из которого можно вылетать и куда можно вернуться. Карта приходит, когда ты слишком долго в полёте — без опоры, без дома внутри себя, без места, где можно быть не сильной. Ева спрашивает: где твоё гнездо? И если его нет — что нужно, чтобы свить?',
+    m: { calm: 'Ты в гнезде. Заметь, что его создаёт: место, люди, ритуалы. Запиши. Это твой рецепт возвращения к себе, когда будет трудно.',
+         anxious: 'Значит, ты вылетела и не видишь, куда возвращаться. Сегодня свей гнездо на скорую руку: плед, тёплое, тишина, одна близкая подруга. Не решай ничего. Просто вернись в безопасное.',
+         tired: 'Потому что давно не была в гнезде. Не отдыхала, а лежала между делами. Сегодня отдохни по-настоящему: выключи уведомления, закрой дверь, сделай себе тепло. Гнездо — это когда можно не быть начеку.',
+         high: 'Можно вылетать далеко. Но перед этим проверь гнездо: есть ли куда возвращаться? Хорошие полёты бывают у тех, кто знает, что дом на месте. Сегодня — и полёт, и вечером возвращение.',
+         lost: 'Потому что нет точки отсчёта. Гнездо — это она. Спроси: где и с кем я чувствую себя собой без усилий? Начни с этого места. Оттуда путаница видна лучше.' },
+    q: 'Где моё безопасное место — и как давно я там была?',
+    aff: 'У меня есть куда вернуться. Я сама — своё гнездо.',
+    rit: 'Сделай сегодня одно место в доме уютнее: свеча, плед, порядок на одной полке. Маленькое гнездо — тоже гнездо.' },
+];
+</script>
+
+<script>
+/* =====================================================================
+   ЛОГИКА
+   ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* --- хранилище (терпит приватный режим) --- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('kd.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('kd.' + k, JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem('kd.' + k); } catch {} },
+};
+
+/* --- день и случайность, привязанная ко дню и к устройству --- */
+const pad2 = (n) => String(n).padStart(2, '0');
+const todayKey = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
+const TODAY = todayKey();
+let deviceId = store.get('device', null);
+if (!deviceId) { deviceId = Math.random().toString(36).slice(2, 10); store.set('device', deviceId); }
+function hash(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed) { let a = seed; return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function shuffled(arr, seed) { const r = rng(seed); const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+const fmtDate = (key) => { const [y, m, d] = key.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }); };
+const fmtShort = (key) => { const [y, m, d] = key.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', ''); };
+function untilTomorrow() { const n = new Date(); const t = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1); const ms = t - n; const h = Math.floor(ms / 3.6e6), m = Math.floor((ms % 3.6e6) / 6e4); return h ? `${h} ч ${m} мин` : `${m} мин`; }
+
+/* --- звёздное небо --- */
+function sky(el, n = 34, seed = 7) {
+  const r = rng(seed); let html = '';
+  for (let i = 0; i < n; i++) { const s = (r() * 2 + 1).toFixed(1); html += `<span style="left:${(r() * 100).toFixed(1)}%;top:${(r() * 100).toFixed(1)}%;width:${s}px;height:${s}px;opacity:${(r() * .5 + .3).toFixed(2)};animation-delay:${(r() * 4).toFixed(1)}s"></span>`; }
+  el.innerHTML = html;
+}
+document.querySelectorAll('.sky[data-sky]').forEach((el, i) => sky(el, 34, 11 + i * 3));
+
+/* --- история и серия дней --- */
+function history() { return store.get('history', []); }
+function logDay(variant, cardId) {
+  const h = history().filter((x) => !(x.date === TODAY && x.v === variant));
+  h.push({ date: TODAY, v: variant, id: cardId });
+  store.set('history', h.slice(-60));
+  renderStreak();
+}
+function streak() {
+  const days = new Set(history().map((x) => x.date));
+  let n = 0; const d = new Date();
+  if (!days.has(todayKey())) d.setDate(d.getDate() - 1);
+  for (;;) { const k = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; if (!days.has(k)) break; n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function renderStreak() { const n = streak(); $('#streak-n').textContent = n; $('#streak').title = n ? `${n} дн. подряд` : 'Начни серию сегодня'; }
+renderStreak();
+
+/* --- вкладки --- */
+const NOTES = { a: 'Вариант 1 · твоя механика: три силуэта, одна переворачивается', b: 'Вариант 2 · вариант Евы: состояние → веер → карта и дневник' };
+document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.id === 'tab-' + b.dataset.tab));
+  $('#tabs-note').textContent = NOTES[b.dataset.tab];
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}));
+
+/* --- тост и открытка --- */
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1800); }
+let shareText = '';
+function openPost({ art, name, quote, dark }) {
+  const post = $('#post');
+  post.innerHTML = `<div class="sky"></div><div class="date">${esc(fmtDate(TODAY))} · карта дня</div><div class="art">${art}</div><div class="n">${esc(name)}</div><div class="q">«${esc(quote)}»</div><div class="wm">EVA SPACE</div>`;
+  sky($('.sky', post), 40, 21);
+  post.style.background = dark ? 'var(--grad-night)' : 'var(--grad-hero)';
+  shareText = `${name}\n«${quote}»\n\nКарта дня · Eva Space`;
+  $('#share').hidden = false;
+}
+$('#share-close').addEventListener('click', () => { $('#share').hidden = true; });
+$('#share').addEventListener('click', (e) => { if (e.target === e.currentTarget) $('#share').hidden = true; });
+async function share(text) {
+  try { if (navigator.share) { await navigator.share({ text }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(text); toast('Текст скопирован'); } catch { toast('Выдели и скопируй текст вручную'); }
+}
+$('#share-btn').addEventListener('click', () => share(shareText));
+
+/* =====================================================================
+   ВАРИАНТ 1 — ТРИ СИЛУЭТА
+   ===================================================================== */
+const A = { theme: null, ids: [], pick: null };
+const findA = (id) => DECK_A.find((c) => c.id === id);
+
+function renderThemes() {
+  $('#a-themes').innerHTML = Object.entries(THEMES).map(([k, t]) => `<button class="choice" data-theme="${k}"><span class="ico">${t.ico}</span><b>${t.label}</b><span>${t.hint}</span></button>`).join('');
+  document.querySelectorAll('#a-themes .choice').forEach((b) => b.addEventListener('click', () => {
+    b.classList.add('on');
+    A.theme = b.dataset.theme;
+    setTimeout(startA, 220);
+  }));
+}
+function startA() {
+  A.ids = shuffled(DECK_A, hash(TODAY + deviceId + 'a')).slice(0, 3).map((c) => c.id);
+  store.set('a.' + TODAY, { theme: A.theme, ids: A.ids, pick: null });
+  showSpreadA();
+}
+function showSpreadA() {
+  $('#a-ask').hidden = true; $('#a-play').hidden = false;
+  $('#a-cap-eyebrow').textContent = THEMES[A.theme].label;
+  $('#a-cap-text').textContent = 'Какая фигура сегодня — про тебя? Не думай. Коснись.';
+  const sp = $('#a-spread');
+  sp.classList.remove('done');
+  sp.innerHTML = A.ids.map((id) => { const c = findA(id); return `<div class="card3" data-id="${id}" role="button" tabindex="0" aria-label="Карта"><div class="inner"><div class="face back">${SIL[id]}</div><div class="face front"><svg class="orn" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg><b>${esc(c.name)}</b><i>${esc(c.key)}</i></div></div></div>`; }).join('');
+  sp.querySelectorAll('.card3').forEach((el, i) => {
+    const go = () => { if (A.pick != null) return; pickA(i, el); };
+    el.addEventListener('click', go);
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+  $('#a-sheet').innerHTML = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function pickA(i, el) {
+  A.pick = i;
+  store.set('a.' + TODAY, { theme: A.theme, ids: A.ids, pick: i });
+  logDay('a', A.ids[i]);
+  el.classList.add('flipped');
+  $('#a-spread').classList.add('done');
+  $('#a-cap-text').textContent = 'Рука знала. Читай ниже.';
+  setTimeout(() => { renderSheetA(); $('#a-sheet').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 900);
+}
+function renderSheetA() {
+  const c = findA(A.ids[A.pick]); const th = THEMES[A.theme]; const pos = POS[A.pick];
+  const others = A.ids.filter((_, j) => j !== A.pick).map(findA);
+  $('#a-sheet').innerHTML = `
+    <div class="sheet">
+      <div class="eyebrow">Твоя карта · ${esc(fmtDate(TODAY))}</div>
+      <h2 class="name serif">${esc(c.name)}</h2>
+      <div class="key">${esc(c.key)}</div>
+      <div class="tags"><span class="tag rose">${esc(th.label)}</span><span class="tag">${esc(pos.label)} — ${esc(pos.tag)}</span></div>
+      <div class="msg">
+        <p>${esc(c.p1)}</p>
+        <p>${esc(c.p2)}</p>
+        <p>${esc(c.t[A.theme])}</p>
+        <div class="note"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg><span>${esc(pos.line)}</span></div>
+      </div>
+      <div class="box"><div class="eyebrow">Сегодня попробуй</div><p>${esc(c.act)}</p></div>
+      <div class="box quote"><div class="eyebrow">Фраза дня</div><p>«${esc(c.phrase)}»</p>
+        <div class="btn-row"><button class="btn primary sm" id="a-post">Открытка в сторис</button><button class="btn ghost sm" id="a-copy">Скопировать</button></div>
+      </div>
+      <details><summary>Две фигуры, которые ты обошла</summary>
+        <div class="shadow-list">${others.map((o) => `<div class="shadow-item"><div class="mini">${SIL[o.id]}</div><div><b>${esc(o.name)}</b><span>${esc(o.shadow)}</span></div></div>`).join('')}</div>
+      </details>
+      <div class="foot"><span>Следующие три силуэта — через ${untilTomorrow()}</span><span>Серия: ${streak()} дн.</span></div>
+    </div>`;
+  $('#a-post').addEventListener('click', () => openPost({ art: SIL[c.id], name: c.name, quote: c.phrase, dark: true }));
+  $('#a-copy').addEventListener('click', () => share(`${c.name}\n«${c.phrase}»\n\nКарта дня · Eva Space`));
+}
+function restoreA() {
+  const s = store.get('a.' + TODAY, null);
+  if (!s) return;
+  A.theme = s.theme; A.ids = s.ids; A.pick = null;
+  showSpreadA();
+  if (s.pick != null) {
+    A.pick = s.pick;
+    const el = $('#a-spread').children[s.pick];
+    el.classList.add('flipped'); $('#a-spread').classList.add('done');
+    $('#a-cap-text').textContent = 'Твоя карта на сегодня уже открыта.';
+    renderSheetA();
+  }
+}
+
+/* =====================================================================
+   ВАРИАНТ 2 — КОЛОДА ЕВЫ
+   ===================================================================== */
+const B = { mood: null, ids: [], pick: null };
+const findB = (id) => DECK_B.find((c) => c.id === id);
+
+function renderMoods() {
+  $('#b-moods').innerHTML = Object.entries(MOODS).map(([k, m]) => `<button class="chip" data-mood="${k}" style="--dot:${m.dot}"><i></i>${m.label}</button>`).join('');
+  document.querySelectorAll('#b-moods .chip').forEach((b) => b.addEventListener('click', () => {
+    b.classList.add('on'); B.mood = b.dataset.mood; setTimeout(startB, 220);
+  }));
+}
+function startB() {
+  B.ids = shuffled(DECK_B, hash(TODAY + deviceId + 'b')).slice(0, 7).map((c) => c.id);
+  store.set('b.' + TODAY, { mood: B.mood, ids: B.ids, pick: null, note: '' });
+  showFanB();
+}
+function showFanB() {
+  $('#b-ask').hidden = true; $('#b-play').hidden = false;
+  $('#b-cap-eyebrow').textContent = MOODS[B.mood].label;
+  $('#b-cap-text').textContent = 'Проведи взглядом по вееру и коснись карты, которая откликнулась.';
+  $('#b-fanwrap').hidden = false; $('#b-reveal').hidden = true; $('#b-sheet').innerHTML = '';
+  const fan = $('#b-fan'); fan.classList.remove('picking');
+  const n = B.ids.length;
+  fan.innerHTML = B.ids.map((id, i) => { const a = -29 + (58 / (n - 1)) * i; return `<div class="fcard" data-i="${i}" role="button" tabindex="0" aria-label="Карта ${i + 1}" style="--a:${a.toFixed(1)}deg;--d:${(i * 0.06).toFixed(2)}s"><div class="b"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg></div></div>`; }).join('');
+  fan.querySelectorAll('.fcard').forEach((el) => {
+    const go = () => { if (B.pick != null) return; pickB(+el.dataset.i, el); };
+    el.addEventListener('click', go);
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+  renderHistoryB();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function pickB(i, el) {
+  B.pick = i;
+  const s = store.get('b.' + TODAY, {}); store.set('b.' + TODAY, { ...s, mood: B.mood, ids: B.ids, pick: i });
+  logDay('b', B.ids[i]);
+  el.classList.add('lift'); $('#b-fan').classList.add('picking');
+  $('#b-cap-text').textContent = 'Эта. Смотри, что на ней.';
+  setTimeout(() => { revealB(true); }, 520);
+}
+function revealB(animate) {
+  const c = findB(B.ids[B.pick]);
+  $('#b-fanwrap').hidden = true;
+  const rv = $('#b-reveal'); rv.hidden = false;
+  rv.innerHTML = `<div class="bigcard"><div class="face back"><svg viewBox="0 0 24 24" fill="currentColor" style="color:rgba(255,234,240,.85)"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg></div><div class="face front"><div class="sym">${SYM[c.id]}</div><b>${esc(c.name)}</b><i>${esc(c.key)}</i></div></div>`;
+  const big = $('.bigcard', rv);
+  if (animate) { requestAnimationFrame(() => requestAnimationFrame(() => big.classList.add('flipped'))); setTimeout(() => { renderSheetB(); $('#b-sheet').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 1000); }
+  else { big.style.transition = 'none'; big.classList.add('flipped'); renderSheetB(); }
+}
+function renderSheetB() {
+  const c = findB(B.ids[B.pick]); const m = MOODS[B.mood];
+  const s = store.get('b.' + TODAY, {});
+  $('#b-sheet').innerHTML = `
+    <div class="sheet">
+      <div class="eyebrow">Карта дня · ${esc(fmtDate(TODAY))}</div>
+      <h2 class="name serif">${esc(c.name)}</h2>
+      <div class="key">${esc(c.key)}</div>
+      <div class="tags"><span class="tag rose">${esc(m.label)}</span><span class="tag">Колода Евы</span></div>
+      <div class="msg">
+        <p>${esc(c.p1)}</p>
+        <p><strong>${esc(m.said)}</strong> ${esc(c.m[B.mood])}</p>
+      </div>
+      <div class="box"><div class="eyebrow">Вопрос для дневника</div><p>${esc(c.q)}</p>
+        <textarea id="b-note" placeholder="Напиши пару строк — только для себя. Сохранится на этом телефоне.">${esc(s.note || '')}</textarea>
+        <div class="saved" id="b-saved">${s.note ? 'Сохранено' : ''}</div>
+      </div>
+      <div class="box quote"><div class="eyebrow">Аффирмация дня</div><p>«${esc(c.aff)}»</p>
+        <div class="btn-row"><button class="btn primary sm" id="b-post">Открытка в сторис</button><button class="btn ghost sm" id="b-copy">Скопировать</button></div>
+      </div>
+      <div class="box"><div class="eyebrow">Маленький ритуал</div><p>${esc(c.rit)}</p></div>
+      <div class="foot"><span>Новая карта — через ${untilTomorrow()}</span><span>Серия: ${streak()} дн.</span></div>
+    </div>`;
+  let t;
+  $('#b-note').addEventListener('input', (e) => {
+    clearTimeout(t); $('#b-saved').textContent = 'Пишу…';
+    t = setTimeout(() => { const cur = store.get('b.' + TODAY, {}); store.set('b.' + TODAY, { ...cur, note: e.target.value }); $('#b-saved').textContent = 'Сохранено'; }, 500);
+  });
+  $('#b-post').addEventListener('click', () => openPost({ art: SYM[c.id], name: c.name, quote: c.aff, dark: false }));
+  $('#b-copy').addEventListener('click', () => share(`${c.name}\n«${c.aff}»\n\nКарта дня · Eva Space`));
+  renderHistoryB();
+}
+function renderHistoryB() {
+  const h = history().slice(-14).reverse();
+  const wrap = $('#b-history');
+  if (!h.length) { wrap.hidden = true; return; }
+  wrap.hidden = false;
+  $('#b-history-row').innerHTML = h.map((x) => {
+    const sil = x.v === 'a'; const c = sil ? findA(x.id) : findB(x.id); if (!c) return '';
+    return `<div class="hcard ${sil ? 'sil' : ''} ${x.date === TODAY ? 'today' : ''}"><div class="m">${sil ? SIL[x.id] : SYM[x.id]}</div><small>${esc(c.name)}<br>${esc(fmtShort(x.date))}</small></div>`;
+  }).join('');
+}
+function restoreB() {
+  const s = store.get('b.' + TODAY, null);
+  if (!s) { renderHistoryB(); return; }
+  B.mood = s.mood; B.ids = s.ids; B.pick = null;
+  showFanB();
+  if (s.pick != null) { B.pick = s.pick; $('#b-cap-text').textContent = 'Твоя карта на сегодня уже открыта.'; revealB(false); }
+}
+
+/* --- демо-сброс --- */
+document.querySelectorAll('[data-reset]').forEach((b) => b.addEventListener('click', () => {
+  const v = b.dataset.reset;
+  store.del(v + '.' + TODAY);
+  store.set('history', history().filter((x) => !(x.date === TODAY && x.v === v)));
+  renderStreak();
+  if (v === 'a') { A.theme = null; A.ids = []; A.pick = null; $('#a-play').hidden = true; $('#a-ask').hidden = false; renderThemes(); }
+  else { B.mood = null; B.ids = []; B.pick = null; $('#b-play').hidden = true; $('#b-ask').hidden = false; renderMoods(); }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}));
+
+/* --- старт --- */
+renderThemes();
+renderMoods();
+restoreA();
+restoreB();
+</script>
+<!--ARTIFACT-END-->
+</body>
+</html>
