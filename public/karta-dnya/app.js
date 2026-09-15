@@ -321,7 +321,7 @@ function showPickedA(st, animate) {
 function mountA(st) {
   const r = st.rounds[st.view];
   $('#a-cap-eyebrow').textContent = window.THEMES[r.theme].label;
-  $('#a-cap-text').textContent = r.pick == null ? 'Какая фигура сегодня про тебя? Не думай. Коснись.' : (st.view === 0 ? 'Твоя карта дня открыта.' : 'Дополнительная карта открыта.');
+  $('#a-cap-text').textContent = r.pick == null ? 'Выбирай не умом, а взглядом: какая из трёх тянет к себе.' : (st.view === 0 ? 'Твоя карта дня открыта.' : 'Дополнительная карта открыта.');
   const sp = $('#a-spread');
   sp.innerHTML = r.ids.map((id) => { const c = findA(id); return `<div class="card3" data-id="${id}" role="button" tabindex="0" aria-label="Карта"><div class="inner"><div class="face back">${window.SIL[id]}</div><div class="face front"><span class="orn">${STAR}</span><b>${esc(c.name)}</b><i>${esc(c.key)}</i></div></div></div>`; }).join('');
   sp.querySelectorAll('.card3').forEach((elm, i) => {
@@ -329,7 +329,7 @@ function mountA(st) {
       if (r.pick != null) return;
       r.pick = i; saveA(st); logDay('a', r.ids[i]);
       elm.classList.add('flipped'); sp.classList.add('done');
-      $('#a-cap-text').textContent = 'Рука знала. Читай ниже.';
+      $('#a-cap-text').textContent = 'Рука знала. Вот что она выбрала.';
       setTimeout(() => {
         sp.classList.add('away');
         setTimeout(() => {

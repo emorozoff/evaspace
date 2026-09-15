@@ -162,7 +162,7 @@ h1, h2, h3, p { margin: 0; }
 .face { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 16px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
 .face.back { background: linear-gradient(165deg, #1c1a33 0%, #0e0d1c 100%); border: 1px solid var(--gold-dim); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55), inset 0 0 40px rgba(143, 124, 243, 0.12); display: grid; place-items: center; }
 .face.back::after { content: ''; position: absolute; top: 6px; left: 6px; width: calc(100% - 12px); height: calc(100% - 12px); border-radius: 12px; border: 1px solid rgba(217, 181, 111, 0.22); pointer-events: none; }
-.face.back svg { width: 94%; height: 88%; color: #fff6e2; filter: drop-shadow(0 0 14px rgba(143, 124, 243, 0.85)) drop-shadow(0 0 3px rgba(255, 246, 226, 0.5)); position: relative; z-index: 1; }
+.face.back svg { width: 90%; height: 86%; color: #fff6e2; filter: drop-shadow(0 0 14px rgba(143, 124, 243, 0.85)) drop-shadow(0 0 3px rgba(255, 246, 226, 0.5)); position: relative; z-index: 1; }
 .face.back::before { content: ''; position: absolute; left: 50%; top: 52%; width: 120%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgba(143, 124, 243, 0.4) 0%, rgba(143, 124, 243, 0.12) 45%, rgba(143, 124, 243, 0) 70%); pointer-events: none; }
 .face.front { transform: rotateY(180deg); background: linear-gradient(180deg, #1a1830 0%, #12111f 100%); border: 1px solid var(--gold); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55), 0 0 30px rgba(217, 181, 111, 0.15); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 10px 8px; text-align: center; color: var(--gold-2); }
 .face.front .orn { width: 22px; height: 22px; color: var(--gold); }
@@ -170,7 +170,7 @@ h1, h2, h3, p { margin: 0; }
 .face.front i { font-style: normal; font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
 
 /* три карты */
-.spread { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; padding: 20px 10px 24px; perspective: 1100px; }
+.spread { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 18px 8px 22px; perspective: 1100px; }
 .card3 { position: relative; aspect-ratio: 2 / 3; cursor: pointer; transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.5s ease; transform: rotate(var(--tilt, 0deg)) translateY(var(--lift, 0px)); animation: deal 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: var(--delay, 0s); }
 .card3:nth-child(1) { --tilt: -5deg; --lift: 8px; --delay: 0s; --shift: 9%; }
 .card3:nth-child(2) { --tilt: 0deg; --lift: 0px; --delay: 0.08s; }
