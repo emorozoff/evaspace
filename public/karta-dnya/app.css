@@ -330,3 +330,60 @@ details[open] summary::after { content: '–'; }
 .round-label { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); }
 .choice.used { opacity: 0.62; }
 .choice.used b::after { content: ' ·'; color: var(--gold); }
+
+/* ============================================================
+   Приветственный расклад
+   ============================================================ */
+.greet-ready {
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: calc(var(--safe-t) + 40px) 26px calc(var(--safe-b) + 36px);
+  text-align: center; gap: 16px;
+}
+.greet-ready h1 { font-size: 32px; line-height: 1.1; text-wrap: balance; }
+.greet-ready p { color: var(--text-2); font-size: 15px; line-height: 1.6; max-width: 33ch; margin: 0 auto; }
+.greet-ready .btn { margin-top: 14px; }
+.greet-ready .orb { position: relative; width: 132px; height: 132px; margin: 0 auto 6px; }
+.greet-ready .orb span {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  border-radius: 50%; border: 1px solid rgba(217, 181, 111, 0.3);
+  animation: pulse 3.6s ease-in-out infinite;
+}
+.greet-ready .orb span:nth-child(2) { animation-delay: 1.2s; }
+.greet-ready .orb span:nth-child(3) { animation-delay: 2.4s; }
+.greet-ready .orb::after {
+  content: ''; position: absolute; top: 50%; left: 50%; width: 46px; height: 46px;
+  margin: -23px 0 0 -23px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff6e2, var(--gold));
+  box-shadow: 0 0 40px rgba(217, 181, 111, 0.55), 0 0 90px var(--violet-dim);
+  animation: breathe 4.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(0.34); opacity: 0; }
+  25% { opacity: 0.9; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+.greet-head { padding: 22px 18px 0; text-align: center; }
+.greet-head h1 { font-size: 30px; line-height: 1.1; margin-top: 6px; }
+.greet-head .lead { margin: 12px auto 0; max-width: 34ch; color: var(--text-2); font-size: 14px; }
+.greet-night { margin-top: 16px; }
+.greet-spread { padding: 22px 12px 26px; }
+.greet-card { cursor: default; }
+.greet-card .face.front { gap: 8px; padding: 14px 6px 16px; justify-content: center; }
+.greet-card .face.front .art { display: block; width: 84%; height: 56%; color: var(--gold-2); filter: drop-shadow(0 0 13px var(--violet)); }
+.greet-card .face.front .art svg { width: 100%; height: 100%; }
+.greet-card .face.front b { font-size: 17px; line-height: 1.05; }
+.greet-spread.done .card3 { opacity: 1; filter: none; transform: rotate(var(--tilt, 0deg)) translateY(var(--lift, 0px)); }
+
+.greet-block { margin-top: 18px; transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); animation: none; }
+.greet-block.soft { opacity: 0; transform: translateY(26px); }
+.greet-mark { display: flex; gap: 14px; align-items: center; }
+.greet-mark .ic { flex: none; width: 46px; height: 62px; border-radius: 10px; border: 1px solid var(--gold-dim); background: linear-gradient(165deg, #1c1a33, #0e0d1c); display: grid; place-items: center; color: var(--gold-2); overflow: hidden; }
+.greet-mark .ic svg { width: 86%; height: 84%; }
+.greet-mark .name { margin-top: 2px; font-size: 26px; }
+.greet-mark .key { font-size: 13px; margin-top: 2px; }
+.greet-outro { text-align: center; background: radial-gradient(130% 120% at 50% 0%, rgba(143, 124, 243, 0.22), #14132a 70%); border-color: var(--gold-dim); }
+.greet-outro p { font-size: 15.5px; line-height: 1.6; color: var(--text); }
+.greet-outro p + p { margin-top: 10px; }
+.greet-outro .sign { margin-top: 18px; font-size: 22px; color: var(--gold-2); }

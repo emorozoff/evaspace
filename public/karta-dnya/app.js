@@ -97,14 +97,15 @@ $('#share-btn').addEventListener('click', () => share(shareText));
 
 /* ---------- роутер ---------- */
 const view = $('#view');
-const ROUTES = { '': renderHome, 'welcome': renderWelcome, 'silhouettes': renderSilhouettes, 'deck': renderDeck, 'moon': renderMoon, 'profile': renderProfile };
+const ROUTES = { '': renderHome, 'welcome': renderWelcome, 'greeting': renderGreeting, 'silhouettes': renderSilhouettes, 'deck': renderDeck, 'moon': renderMoon, 'profile': renderProfile };
 function go(path) { location.hash = '#/' + path; }
 function route() {
   const path = location.hash.replace(/^#\/?/, '').split('?')[0];
   if (!profile() && path !== 'welcome') { location.replace('#/welcome'); return; }
+  if (profile() && !store.get('greeting', false) && path !== 'welcome' && path !== 'greeting') { location.replace('#/greeting'); return; }
   const fn = ROUTES[path] || renderHome;
   document.querySelectorAll('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.go === path));
-  const noNav = path === 'welcome';
+  const noNav = path === 'welcome' || path === 'greeting';
   $('#nav').hidden = noNav; $('#topbar').hidden = noNav;
   $('#app').classList.toggle('no-nav', noNav);
   view.innerHTML = '';
@@ -141,16 +142,70 @@ function renderWelcome() {
       ['#w-d', '#w-m', '#w-y'].forEach((s) => $(s).addEventListener('change', upd)); upd();
     } else {
       const z = window.signFromDate(+draft.m, +draft.d); const e = window.ELEMENTS[z.el];
-      view.innerHTML = `<div class="welcome">${steps}<div class="sign-reveal"><div class="glyph">${z.glyph}</div><div class="eyebrow">${esc(draft.name.trim())}, ты</div><h2 class="display">${esc(z.name)}</h2><span class="el-chip" style="--el:${e.color}"><i></i>стихия: ${esc(e.name)}</span><p>${esc(z.trait)}</p><p class="muted small">Сильная сторона: ${esc(z.strength)}. Тень: ${esc(z.shadow)}.</p></div><button class="btn primary block" id="w-next">Начать</button></div>`;
+      view.innerHTML = `<div class="welcome">${steps}<div class="sign-reveal"><div class="glyph">${z.glyph}</div><div class="eyebrow">${esc(draft.name.trim())}, ты</div><h2 class="display">${esc(z.name)}</h2><span class="el-chip" style="--el:${e.color}"><i></i>стихия: ${esc(e.name)}</span><p>${esc(z.trait)}</p><p class="muted small">Сильная сторона: ${esc(z.strength)}. Тень: ${esc(z.shadow)}.</p></div><button class="btn primary block" id="w-next">${store.get('greeting', false) ? 'Начать' : 'Дальше'}</button></div>`;
     }
     $('#w-next').addEventListener('click', () => {
       if (step < 3) { step++; draw(); return; }
       const z = window.signFromDate(+draft.m, +draft.d);
       store.set('profile', { name: draft.name.trim(), d: +draft.d, m: +draft.m, y: +draft.y, sign: z.id, created: p.created || TODAY });
-      go('');
+      go(store.get('greeting', false) ? '' : 'greeting');
     });
   };
   draw();
+}
+
+
+/* =====================================================================
+   ПРИВЕТСТВЕННЫЙ РАСКЛАД (один раз, после знакомства)
+   ===================================================================== */
+function renderGreeting() {
+  const p = profile(); const g = window.GREETING;
+  const seen = store.get('greeting', false);
+  const sigil = `<svg viewBox="0 0 160 220" fill="currentColor" aria-hidden="true"><path d="M96 74a34 34 0 1 0 0 66 27 34 0 1 1 0-66z" opacity=".9"/><circle cx="52" cy="58" r="3.2"/><circle cx="44" cy="150" r="2.4"/><circle cx="112" cy="168" r="2.6"/><path d="M50 96l2 5.6 5.6 2-5.6 2-2 5.6-2-5.6-5.6-2 5.6-2z"/></svg>`;
+  const cardsHTML = g.cards.map((c, i) => `<div class="card3 greet-card" data-i="${i}"><div class="inner"><div class="face back">${sigil}</div><div class="face front"><span class="art">${window.GREET_ART[c.art]}</span><b>${esc(c.name)}</b></div></div></div>`).join('');
+
+  if (!seen) {
+    view.innerHTML = `<div class="greet-ready">
+      <div class="orb" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="eyebrow">Приветственный расклад</div>
+      <h1 class="display">${esc(p.name)}, это только для тебя</h1>
+      <p>${esc(g.ready)}</p>
+      <button class="btn primary block" id="g-start">Получить</button>
+    </div>`;
+    $('#g-start').addEventListener('click', () => { layout(true); });
+    return;
+  }
+  layout(false);
+
+  function layout(animate) {
+    view.innerHTML = `<div class="greet">
+      <div class="greet-head"><div class="eyebrow">Послание для ${esc(p.name)}</div><h1 class="display">Приветственный расклад</h1><p class="lead" id="g-intro">${esc(g.intro)}</p></div>
+      <div class="night greet-night"><div class="spread greet-spread" id="g-spread">${cardsHTML}</div></div>
+      <div id="g-body"></div>
+    </div>`;
+    const cards = [...document.querySelectorAll('#g-spread .card3')];
+    const body = $('#g-body');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const blockHTML = (c, i) => `<div class="sheet greet-block${animate ? ' soft' : ''}" data-b="${i}"${animate ? ' hidden' : ''}>
+      <div class="greet-mark"><span class="ic">${window.GREET_ART[c.art]}</span><div><div class="eyebrow">Карта ${i + 1}</div><h2 class="name display">${esc(c.name)}</h2><div class="key">${esc(c.key)}</div></div></div>
+      <div class="msg">${c.text.map((t) => `<p>${esc(t)}</p>`).join('')}</div></div>`;
+    const outroHTML = `<div class="sheet greet-block greet-outro${animate ? ' soft' : ''}" data-b="${g.cards.length}"${animate ? ' hidden' : ''}>
+      ${g.outro.map((t) => `<p>${esc(t)}</p>`).join('')}
+      <div class="sign display">${esc(g.sign)}</div>
+      <button class="btn primary block" id="g-done" style="margin-top:18px">${seen ? 'Вернуться' : 'Войти в Оракул'}</button></div>`;
+    body.innerHTML = g.cards.map(blockHTML).join('') + outroHTML;
+    $('#g-done').addEventListener('click', () => { store.set('greeting', true); go(seen ? 'profile' : ''); });
+
+    if (!animate) { cards.forEach((el) => el.classList.add('flipped')); $('#g-spread').classList.add('done'); return; }
+    const show = (i) => { const el = body.querySelector(`[data-b="${i}"]`); if (!el) return; el.hidden = false; requestAnimationFrame(() => el.classList.remove('soft')); };
+    const step = reduce ? 60 : 1150;
+    cards.forEach((el, i) => setTimeout(() => {
+      el.classList.add('flipped');
+      setTimeout(() => { show(i); if (i === 0) window.scrollTo({ top: 0, behavior: 'smooth' }); }, reduce ? 20 : 700);
+    }, 400 + i * step));
+    setTimeout(() => show(g.cards.length), 400 + g.cards.length * step + (reduce ? 20 : 700));
+  }
 }
 
 /* =====================================================================
@@ -450,8 +505,9 @@ function renderProfile() {
     <div class="prof"><div class="glyph">${z.glyph}</div><div><h2 class="display">${esc(z.name)}</h2><p>${p.d} ${['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'][p.m - 1]} ${p.y} · стихия ${esc(e.name.toLowerCase())}</p></div></div>
     <div class="stats"><div><b>${streak()}</b><span>дней подряд</span></div><div><b>${cards}</b><span>карт открыто</span></div><div><b>${days}</b><span>дней с Оракулом</span></div></div>
     <div class="box zodiac" style="margin:16px 18px 0"><div class="eyebrow">${z.glyph} ${esc(z.name)}</div><p>${esc(z.trait)}</p><p class="muted small" style="margin-top:8px">Сильная сторона: ${esc(z.strength)}. Тень: ${esc(z.shadow)}.</p></div>
-    <div class="list"><button id="p-edit">Изменить имя или дату рождения <span>→</span></button><button id="p-today" class="danger">Сбросить сегодняшние карты (демо) <span>→</span></button><button id="p-reset" class="danger">Удалить все данные <span>→</span></button></div>
+    <div class="list"><button id="p-greet">Перечитать приветственный расклад <span>→</span></button><button id="p-edit">Изменить имя или дату рождения <span>→</span></button><button id="p-today" class="danger">Сбросить сегодняшние карты (демо) <span>→</span></button><button id="p-reset" class="danger">Удалить все данные <span>→</span></button></div>
     <p class="proto-note">Все данные хранятся только в этом браузере. Ничего не отправляется на сервер.</p>`;
+  $('#p-greet').addEventListener('click', () => go('greeting'));
   $('#p-edit').addEventListener('click', () => go('welcome'));
   $('#p-today').addEventListener('click', () => { ['a', 'b', 'm'].forEach((v) => store.del(v + '.' + TODAY)); store.set('history', history().filter((x) => x.date !== TODAY)); toast('Сегодняшние карты сброшены'); renderProfile(); });
   $('#p-reset').addEventListener('click', () => { if (confirm('Удалить профиль, историю и заметки?')) { store.clear(); location.hash = '#/welcome'; location.reload(); } });
