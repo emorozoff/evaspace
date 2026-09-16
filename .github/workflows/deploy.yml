@@ -36,18 +36,42 @@ jobs:
 
       # Публикация в ветку gh-pages — основной способ.
       # GitHub Pages подхватывает эту ветку и сайт открывается по ссылке.
+      #
+      # На этой ветке рядом с Евой живут другие приложения: club, klub, u, upass.
+      # Раньше публикация собирала ветку заново и пушила её с -f, поэтому каждая
+      # сборка стирала соседей — их адреса начинали отдавать 404.html, а это копия
+      # оболочки Евы, и вместо приложения открывалась Ева. Теперь берём ветку как
+      # есть и заменяем только то, что собрала эта сборка.
       - name: Публикация в ветку gh-pages
         run: |
+          set -eu
           touch dist/.nojekyll
           cp dist/index.html dist/404.html
-          cd dist
-          git init -q
-          git checkout -qb gh-pages
+          REMOTE="https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          if git clone --quiet --depth 1 --branch gh-pages "$REMOTE" published; then
+            cd published
+          else
+            echo "Ветки gh-pages ещё нет — создаём"
+            mkdir published && cd published
+            git init -q && git checkout -qb gh-pages
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Убираем только то, что принадлежит этой сборке: список берём из dist,
+          # поэтому он не разъедется, если сборка начнёт отдавать что-то ещё.
+          (cd ../dist && find . -mindepth 1 -maxdepth 1 -printf '%f\0') \
+            | while IFS= read -r -d '' item; do rm -rf -- "./$item"; done
+          cp -a ../dist/. .
+
           git add -A
-          git commit -q -m "Сборка сайта из ${GITHUB_SHA}"
-          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+          if git diff --cached --quiet; then
+            echo "Сайт не изменился, публиковать нечего"
+          else
+            git commit -q -m "Сборка сайта из ${GITHUB_SHA}"
+            git push "$REMOTE" gh-pages
+          fi
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
