@@ -1,7 +1,7 @@
 /* Eva Space — service worker.
    Приложение открывается даже без интернета: свежая версия берётся из сети,
    а если сети нет — из кэша. */
-const VERSION = 'eva-v5';   // поднимаем номер, чтобы старый кэш очистился
+const VERSION = 'eva-v5-apps';   // поднимаем номер, чтобы старый кэш очистился
 const BASE = new URL('./', self.location).pathname;      // /evaspace/ на GitHub Pages
 /* Без BASE: это тот же файл, что BASE + 'index.html', и при установке
    приложение скачивалось дважды. Из кэша его берут по полному имени. */
@@ -10,6 +10,13 @@ const FONTS = ['manrope-400','manrope-500','manrope-600','manrope-700','manrope-
   .flatMap((f) => [BASE + 'fonts/' + f + '-cyrillic.woff2', BASE + 'fonts/' + f + '-latin.woff2']);
 const SHELL = [BASE + 'index.html', BASE + 'manifest.json', BASE + 'icon.svg',
                BASE + 'icon-192.png', BASE + 'icon-512.png'].concat(FONTS);
+
+/* На том же адресе рядом с Евой живут самостоятельные приложения: клуб,
+   UPASS, «Оракул дня», видео. У каждого свой service worker и свой кэш,
+   а этот обслуживает весь /evaspace/ — без исключения он перехватывал бы
+   переходы в них и отдавал вместо них оболочку Евы. */
+const STANDALONE = ['club/', 'klub/', 'u/', 'upass/', 'karta-dnya/', 'video/'];
+const isStandalone = (pathname) => STANDALONE.some((name) => pathname.startsWith(BASE + name));
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
@@ -32,6 +39,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;   // шрифты и прочее с других доменов — мимо
   if (url.pathname.endsWith('.php')) return;         // обращения к серверу синхронизации не кэшируем
+  if (isStandalone(url.pathname)) return;            // соседние приложения обслуживают себя сами
 
   // Открытие приложения: сначала кэш, обновление — фоном.
   // Раньше здесь была сеть: приложение при каждом запуске ждало восемьсот
@@ -44,7 +52,7 @@ self.addEventListener('fetch', (e) => {
       caches.match(BASE + 'index.html').then((cached) => {
         const fresh = fetch(req)
           .then((res) => {
-            if (res && res.status === 200) {
+            if (res && res.status === 200 && (url.pathname === BASE || url.pathname === BASE + 'index.html')) {
               const copy = res.clone();
               caches.open(VERSION).then((c) => c.put(BASE + 'index.html', copy));
               if (cached) tellIfNew(cached.clone(), res.clone());

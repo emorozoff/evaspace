@@ -44,14 +44,36 @@ jobs:
       # GitHub Pages подхватывает эту ветку и сайт открывается по ссылке.
       - name: Публикация в ветку gh-pages
         run: |
-          cd site
-          git init -q
-          git checkout -qb gh-pages
+          set -eu
+          REMOTE="https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          # На gh-pages рядом с этим сайтом лежат другие приложения. Забираем ветку
+          # как есть и заменяем в ней только то, что принадлежит этой сборке:
+          # push -f стирал ветку целиком вместе с соседями.
+          rm -rf published
+          if git clone --quiet --depth 1 --branch gh-pages "$REMOTE" published; then
+            cd published
+          else
+            echo "Ветки gh-pages ещё нет — создаём"
+            rm -rf published && mkdir published && cd published
+            git init -q && git checkout -qb gh-pages
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Список того, что принадлежит сборке, берём из самой папки сборки,
+          # чтобы он не разъехался, если её состав изменится.
+          (cd ../site && find . -mindepth 1 -maxdepth 1 -printf '%f\0') \
+            | while IFS= read -r -d '' item; do rm -rf -- "./$item"; done
+          cp -a ../site/. .
+
           git add -A
-          git commit -q -m "Сборка сайта из ${GITHUB_SHA}"
-          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+          if git diff --cached --quiet; then
+            echo "Сайт не изменился, публиковать нечего"
+          else
+            git commit -q -m "Сборка сайта из ${GITHUB_SHA}"
+            git push "$REMOTE" gh-pages
+          fi
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
