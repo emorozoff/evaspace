@@ -335,6 +335,11 @@ function evActions(m){
     <button class="btn xs" onclick="S.thread=null;go('home')">К моей неделе</button></div>`;
   if(m.act === 'weekBlock') return `<div class="macts">${BLOCKS.map(x =>
     `<button class="btn xs" onclick="weekBlock('${attJs(x.k)}')">${esc(x.n)}</button>`).join('')}</div>`;
+  /* письма помощницы: у неё один ответ — открыть разговор */
+  if(m.act === 'evaTalk') return `<div class="macts">
+    <button class="btn xs acc" onclick="S.thread=null;openSheet('eva')">Открыть Еву</button></div>`;
+  if(m.act === 'evaBack') return `<div class="macts">
+    <button class="btn xs acc" onclick="S.thread=null;openSheet('eva')">Ответить Еве</button></div>`;
   if(m.act === 'rebuild') return `<div class="macts">
     <button class="btn xs acc" onclick="S.thread=null;openSheet('rebuild')">Пересобрать программу</button></div>`;
   if(m.act === 'support') return `<div class="macts">

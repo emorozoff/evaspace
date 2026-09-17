@@ -733,16 +733,12 @@ function evaHi(){
 
 function evaOpen(){
   const m = EM();
-  m.unread = 0;
-  const ping = m.ping, gap = Date.now() - (m.seenAt || 0);
-  m.ping = null; m.seenAt = Date.now();
-  if(ping && ping.k === 'ask' && !m.ask){
-    setTimeout(() => { if(S.sheet === 'eva') evaAskNow(ping.id); }, 520);
-  } else if(ping && ping.k === 'fact'){
-    setTimeout(() => { if(S.sheet === 'eva') evaReply(evaFact()); }, 520);
-  } else if(gap > 10 * 3600e3 && (S.eva || []).length > 1){
+  const had = m.unread || 0, gap = Date.now() - (m.seenAt || 0);
+  m.unread = 0; m.seenAt = Date.now();
+  /* Если Ева уже что-то написала, пока окно было закрыто, это сообщение
+     и есть приветствие — второй раз здороваться незачем. */
+  if(!had && gap > 10 * 3600e3 && (S.eva || []).length > 1)
     setTimeout(() => { if(S.sheet === 'eva') evaReply(evaHi()); }, 420);
-  }
   schedulePersist();
 }
 
@@ -755,15 +751,20 @@ function evaLeave(){
 }
 
 /* ---------- когда Ева подаёт голос сама ----------
-   Раз в несколько часов, не больше двух раз в день и только когда
-   приложение открыто, а окно Евы закрыто: точка на звёздочке, а не
-   всплывающее окно поверх дела. */
+   Раз в несколько часов, не больше двух раз в день и только пока
+   приложение открыто, а окно Евы закрыто. Никаких всплывающих окон
+   поверх дела: сообщение просто ложится в разговор, а на звёздочке
+   появляется цифра.
+
+   И то же сообщение уходит письмом в «Послания» — не чаще раза в день.
+   Точка на звёздочке видна, только пока приложение открыто; письмо
+   дождётся её и через неделю, и его видно по значку на конверте. */
 const EVA_GAP = 4 * 3600e3;
 const EVA_MAX_DAY = 2;
 function evaWake(){
   if(S.screen !== 'app' || !S.user || (S.role && S.role !== 'user')) return false;
   const m = EM();
-  if(S.sheet || m.ping || m.ask) return false;
+  if(S.sheet || m.ask) return false;                     // окно открыто или вопрос уже висит
   const now = Date.now();
   if(!m.at){ m.at = now; return false; }                 // в первый заход не дёргаем
   if(now - m.at < EVA_GAP) return false;
@@ -771,17 +772,35 @@ function evaWake(){
   if(!m.day || m.day.d !== today) m.day = {d:today, n:0};
   if(m.day.n >= EVA_MAX_DAY) return false;
   m.turn = (m.turn || 0) + 1;
-  const id = (m.turn % 2) ? evaNextAsk() : null;
-  m.ping = id ? {k:'ask', id:id} : {k:'fact'};
   m.at = now; m.day.n++;
+
+  const id = (m.turn % 2) ? evaNextAsk() : null;
+  const q = id ? EVA_ASKS.find(x => x.id === id) : null;
+  if(q){
+    m.ask = id; m.asked[id] = now; m.n = 0;
+    evaPush({r:'eva', t:q.t, q:true, a:q.o.map((o, i) => [o.l, `evaPickOpt(${i})`])});
+    evaMail(q.t, 'evaBack');
+  } else {
+    const ans = evaMsg(evaFact());
+    evaPush(ans);
+    evaMail(ans.t, 'evaTalk');
+  }
   persistQuiet();
   return true;
 }
-/* цифра на звёздочке: непрочитанное или «у меня для тебя кое-что есть» */
-function evaBadge(){
-  const m = EM();
-  return (m.unread || 0) || (m.ping ? 1 : 0);
+
+/* Письмо в «Послания» — то же самое, что Ева положила в разговор. Раз в
+   день: два письма в сутки от помощницы читаются уже как рассылка. */
+function evaMail(text, act){
+  if(typeof evaSay !== 'function') return;
+  const m = EM(), today = new Date().toDateString();
+  if(m.mail === today) return;
+  m.mail = today;
+  try { evaSay(text, act); } catch(e){ console.error('[Eva] письмо не ушло:', e); }
 }
+
+/* цифра на звёздочке: сколько Ева написала, пока окно было закрыто */
+function evaBadge(){ return EM().unread || 0; }
 
 /* =====================================================================
    ОКНО ЕВЫ
