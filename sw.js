@@ -1,12 +1,15 @@
 /* Eva Space — service worker.
    Приложение открывается даже без интернета: свежая версия берётся из сети,
    а если сети нет — из кэша. */
-const VERSION = 'eva-v8-apps';   // поднимаем номер, чтобы старый кэш очистился
+const VERSION = 'eva-v5-apps';   // поднимаем номер, чтобы старый кэш очистился
 const BASE = new URL('./', self.location).pathname;      // /evaspace/ на GitHub Pages
 /* Без BASE: это тот же файл, что BASE + 'index.html', и при установке
    приложение скачивалось дважды. Из кэша его берут по полному имени. */
+const FONTS = ['manrope-400','manrope-500','manrope-600','manrope-700','manrope-800',
+               'cormorant-garamond-500','cormorant-garamond-600','cormorant-garamond-700']
+  .flatMap((f) => [BASE + 'fonts/' + f + '-cyrillic.woff2', BASE + 'fonts/' + f + '-latin.woff2']);
 const SHELL = [BASE + 'index.html', BASE + 'manifest.json', BASE + 'icon.svg',
-               BASE + 'icon-192.png', BASE + 'icon-512.png'];
+               BASE + 'icon-192.png', BASE + 'icon-512.png'].concat(FONTS);
 
 /* На том же адресе рядом с Евой живут самостоятельные приложения: клуб,
    UPASS, «Оракул дня», видео. У каждого свой service worker и свой кэш,
