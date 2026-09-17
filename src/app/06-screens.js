@@ -55,9 +55,13 @@ function nav(){
 }
 
 function fab(){
-  return `<button class="fab" onclick="openSheet('eva')" aria-label="Ева">
+  /* Ева иногда сама хочет что-то спросить или рассказать. Она не лезет
+     поверх экрана окном — ставит точку на звёздочке и ждёт. */
+  const n = typeof evaBadge === 'function' ? evaBadge() : 0;
+  return `<button class="fab${n ? ' has' : ''}" onclick="openSheet('eva')"
+    aria-label="${n ? 'Ева, есть новое' : 'Ева'}">
     <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true">
-      <path d="${STAR_PATH}" fill="#fff"/></svg></button>`;
+      <path d="${STAR_PATH}" fill="#fff"/></svg>${n ? `<i class="fabdot">${n > 9 ? '9+' : n}</i>` : ''}</button>`;
 }
 
 const backBtn = t => `<button class="backbtn" onclick="back()">‹ ${t}</button>`;

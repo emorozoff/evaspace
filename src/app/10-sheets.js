@@ -118,77 +118,24 @@ function shRebuild(){
     <button class="btn" style="margin-top:16px" ${S.tags.length?'':'disabled'} onclick="rebuild()">Собрать заново</button>`;
 }
 
-/* ---------- Ева ---------- */
-function shEva(){
-  return `<div class="row" style="margin-bottom:14px">
-      <div class="dot-ava" style="background:var(--grad-hero);width:42px;height:42px;font-size:17px">✦</div>
-      <div style="flex:1"><b style="font-size:16px">Ева</b><div class="small muted">твоя помощница</div></div>
-      <button class="chip" onclick="closeSheet()">Закрыть</button>
-    </div>
-    <div id="chat" style="max-height:42vh;overflow-y:auto;margin-bottom:12px">
-      ${(S.eva||[]).map(m => `<div class="bubble ${m.r==='me'?'me':''}">${esc(m.t)}</div>`).join('')}
-    </div>
-    <div class="chips">${['Что мне сегодня делать?','Почему такая программа?','Нет времени на себя','Прочитай аффирмацию','Сколько у меня баллов?']
-      .map(q => `<button class="chip" onclick="ask('${attJs(q)}')">${q}</button>`).join('')}</div>
-    <div class="row" style="gap:8px">
-      <input class="field" id="vin" style="margin:0" placeholder="Напиши Еве" onkeydown="if(event.key==='Enter')ask(this.value)">
-      <button class="btn" style="width:auto;padding:13px 17px" onclick="ask($('#vin').value)">→</button>
-      <button class="btn ghost" style="width:auto;padding:13px 15px" onclick="listen()">🎙</button>
-    </div>`;
-}
-
-function ask(q){
-  if(!q || !q.trim()) return;
-  S.eva = S.eva || []; S.eva.push({r:'me', t:q.trim()});
-  const a = evaAnswer(q.toLowerCase());
-  S.eva.push({r:'eva', t:a});
-  render();
-  const c = $('#chat'); if(c) c.scrollTop = c.scrollHeight;
-  speak(a);
-}
-
-function evaAnswer(q){
-  const day = (S.program || [])[S.day] || {tasks:[]}, left = day.tasks.filter(t => !t.done);
-  if(/аффирмац|прочит/.test(q)){
-    const af = day.tasks.find(t => t.type === 'affirm') || day.tasks[0];
-    return af && af.text ? af.text : 'На сегодня аффирмации нет — загляни в библиотеку, там их много.';
-  }
-  if(/балл|звёзд|звезд|статус|уровен/.test(q)){
-    const {next} = levelNow();
-    return `У тебя ${S.points} баллов и ${S.stars} из ${starsTotal()} звёзд на этой неделе.` + (next ? ` До статуса «${esc(next.n)}» осталось ${next.from - S.points}.` : '');
-  }
-  if(/почему|как.*собра|подобра/.test(q))
-    return `Я собрала программу по твоим темам: ${((S.goals||[]).length ? S.goals : S.tags).slice(0,4).join(', ')}. Из ${LIB.length} уроков библиотеки выбрала те, где совпадение выше всего — среднее по программе ${S.match}%.`;
-  if(/нет времени|не успева|некогда|нет сил|устал|тяжел/.test(q)){
-    S.gentle = true;
-    return 'Включила мягкий режим: сегодня только аффирмация на одну минуту. Остальное подождёт, программа никуда не денется.';
-  }
-  if(/сегодня|делать|задани|план/.test(q))
-    return left.length ? `Осталось ${plural(left.length,'задание','задания','заданий')}: ${left.map(t => t.title).join(', ')}. Начни с самого короткого - это ${left.slice().sort((a,b)=>a.min-b.min)[0].title}.`
-                       : 'Всё на сегодня закрыто. Три звезды твои, можно выдохнуть.';
-  if(/пересобра|нов.*программ|друг.*программ/.test(q)){ setTimeout(() => openSheet('rebuild'), 500); return 'Открываю настройки программы.'; }
-  if(/сплю|сон|бессонниц/.test(q)) return 'Посмотри «Йога-нидра перед сном» у Марины Ясной - двадцать минут лёжа, многие засыпают на середине. Найдёшь в контенте по тегу «сон».';
-  if(/тревог|паник|страшно/.test(q)) return 'В моменте помогает удлинённый выдох: вдох на четыре, выдох на восемь. В библиотеке это «Дыхание при тревоге», шесть минут.';
-  if(/курс/.test(q)) return `Под твои темы ближе всего «${COURSES[0].t}» от ${COURSES[0].e}. Открой вкладку Курсы.`;
-  if(/привет|здравств|как дела/.test(q)) return `${hello()}, ${S.name || 'Ева'}. Чем помочь?`;
-  return 'Я умею рассказать про сегодняшний день, объяснить логику программы, включить мягкий режим и прочитать аффирмацию вслух. Спроси что-то из этого.';
-}
-
-function listen(){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR) return toast('Распознавание речи работает в Chrome и Safari');
-  const r = new SR(); r.lang = 'ru-RU'; r.interimResults = false;
-  r.onresult = e => ask(e.results[0][0].transcript);
-  r.onerror = () => toast('Не расслышала, попробуй ещё раз');
-  r.start(); toast('Слушаю...');
-}
+/* Окно Евы, разбор фраз, её вопросы и голосовой ввод живут в 17-eva.js —
+   там же вся таблица смыслов. Здесь остаётся только вызов из sheet(). */
 
 /* =====================================================================
    ДЕЙСТВИЯ
    ===================================================================== */
-function openSheet(k){ S.sheet = k; render(); }
+function openSheet(k){
+  S.sheet = k;
+  /* Ева при открытии отдаёт накопленное: свой вопрос или интересное */
+  if(k === 'eva' && typeof evaOpen === 'function') evaOpen();
+  render();
+}
 function openIdea(){ S.sheet = 'idea'; render(); }
-function closeSheet(){ S.sheet = null; render(); }
+function closeSheet(){
+  S.sheet = null;
+  if(typeof evaLeave === 'function') evaLeave();   // замолчать и отпустить микрофон
+  render();
+}
 function openLesson(id){ S.sheet = {k:'lesson', id}; render(); }
 function tgTag(t){
   S.tagw = S.tagw || {};

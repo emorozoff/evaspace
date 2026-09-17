@@ -507,6 +507,8 @@ function watchCalendar(){
       /* заодно двигаем письма Eva Events по настоящему расписанию */
       if(typeof tickEvChain === 'function' && tickEvChain()) need = true;
       if(typeof maybeShowWeek === 'function' && maybeShowWeek()) need = true;
+      /* заодно смотрим, не пора ли Еве подать голос: вопрос или интересное */
+      if(typeof evaWake === 'function' && evaWake()) need = true;
       if(need) render();
     } catch(e){ console.error('[Eva] смена дня:', e); }
   }, 60000);
@@ -553,16 +555,67 @@ function toast(msg){
   setTimeout(() => t.remove(), 2100);
 }
 
+/* ---------- голос ----------
+   Читаем тем голосом, что уже стоит в системе: он бесплатный, работает
+   без интернета и не отправляет наружу ни слова. Качество у системных
+   голосов очень разное, поэтому берём лучший из русских (у женских имён
+   приоритет, у встроенных — тоже: сетевые звучат беднее), ждём список
+   голосов — в Chrome он приходит не сразу, — и читаем по предложениям:
+   одной длинной фразой движок проглатывает паузы и звучит как диктор
+   объявлений на вокзале. */
+const VOICE_RANK = ['milena', 'google русский', 'microsoft svetlana', 'microsoft darya',
+                    'microsoft irina', 'katya', 'alyona', 'alena', 'tatyana', 'yandex'];
+let VOICE_PICK = null;
+function voiceRu(){
+  if(VOICE_PICK) return VOICE_PICK;
+  if(!('speechSynthesis' in window)) return null;
+  const ru = speechSynthesis.getVoices()
+    .filter(v => String(v.lang || '').toLowerCase().indexOf('ru') === 0);
+  if(!ru.length) return null;               // список ещё не пришёл — прочитаем голосом по умолчанию
+  let best = null, rank = 99;
+  ru.forEach(v => {
+    const n = String(v.name || '').toLowerCase();
+    let r = VOICE_RANK.findIndex(x => n.indexOf(x) >= 0);
+    if(r < 0) r = VOICE_RANK.length + (/male|yuri|pavel|dmitr|maxim/.test(n) ? 2 : 0);
+    if(v.localService) r -= 0.5;
+    if(r < rank){ rank = r; best = v; }
+  });
+  VOICE_PICK = best;
+  return best;
+}
+if('speechSynthesis' in window && speechSynthesis.addEventListener)
+  speechSynthesis.addEventListener('voiceschanged', () => { VOICE_PICK = null; });
+
+/* Текст на экране и текст для чтения — разные вещи: «·», «₽» и значки
+   вслух превращаются в мусор. */
+const SAY_FIX = [[/₽/g, ' рублей'], [/%/g, ' процентов'], [/№/g, ' номер '],
+  [/[·•—–]/g, ', '], [/[«»"]/g, ''], [/\bмин\b/g, 'минут'],
+  [/\s*\n+\s*/g, '. '], [/\.{2,}/g, '.'], [/\s+/g, ' '], [/\s+([,.!?])/g, '$1']];
+function sayPrep(text){
+  let s = String(text == null ? '' : text)
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/gu, ' ');
+  SAY_FIX.forEach(f => { s = s.replace(f[0], f[1]); });
+  return s.trim();
+}
+
 function speak(text){
   if(!S.voice || !('speechSynthesis' in window)) return;
+  const clean = sayPrep(text);
+  if(!clean) return;
   speechSynthesis.cancel();
-  const clean = String(text).replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'').replace(/\s+/g,' ');
-  const u = new SpeechSynthesisUtterance(clean);
-  u.lang = 'ru-RU'; u.rate = .98; u.pitch = 1.08;
-  const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith('ru'));
-  const f = vs.find(v => /Milena|Alyona|Katya|Female|Google/i.test(v.name)) || vs[0];
-  if(f) u.voice = f;
-  speechSynthesis.speak(u);
+  const v = voiceRu();
+  /* деление по предложениям без lookbehind: старый Safari его не разбирает */
+  const parts = (clean.match(/[^.!?…]+[.!?…]*/g) || [clean])
+    .map(p => p.trim()).filter(Boolean);
+  parts.forEach(p => {
+    const u = new SpeechSynthesisUtterance(p);
+    u.lang = 'ru-RU'; u.rate = .97; u.pitch = 1.04;
+    if(v) u.voice = v;
+    speechSynthesis.speak(u);
+  });
+}
+function speechStop(){
+  try { if('speechSynthesis' in window) speechSynthesis.cancel(); } catch(e){}
 }
 
 const hello = () => { const h = new Date().getHours();
@@ -687,7 +740,10 @@ function setApp(body, sh){
 }
 
 /* Что делаем после каждой пересборки разметки. */
-function after(){ deskArrows(); growFields(); }
+function after(){
+  deskArrows(); growFields();
+  if(typeof evaAfter === 'function') evaAfter();   // лента чата Евы — всегда на последнем сообщении
+}
 
 /* Поля, которые растут под текст: после пересборки их надо померить заново,
    иначе набранное послание схлопывается в одну строку. */
