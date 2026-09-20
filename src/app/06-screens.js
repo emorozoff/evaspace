@@ -130,14 +130,15 @@ function pgHome(){
       <div class="sec-h"><h2 class="serif">Мои курсы</h2><button class="link" onclick="go('courses')">Каталог</button></div>
       ${S.courses.map(id => {
         const c = COURSES.find(x => x.id === id); if(!c) return '';
-        const ls = lessonsOf(c.id), done = ls.filter(l => l.done).length;
-        return `<button class="crow" onclick="openCourseLanding('${attJs(c.id)}')">
+        const pr = courseProgress(c.id);
+        return `<button class="crow" onclick="openCourse('${attJs(c.id)}')">
           <div class="mini">${cover(c.id,'course')}</div>
           <div style="flex:1;min-width:0">
-            <b style="font-size:13.5px">${esc(c.t)}</b>
-            <div class="small muted">${esc(c.e)} · ${done} из ${ls.length} уроков</div>
-            <div class="bar" style="margin-top:6px"><i style="width:${done/ls.length*100}%"></i></div>
-          </div></button>`;
+            <b style="font-size:13.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.t)}</b>
+            <div class="small muted">${pr.all ? 'Пройден целиком' : pr.done ? `Урок ${esc(pr.ls[pr.next].n)} из ${pr.total} · дальше` : 'Начать первый урок'}</div>
+            <div class="bar" style="margin-top:6px"><i style="width:${pr.pct}%"></i></div>
+          </div>
+          <span class="chip pale">${pr.all ? '✓' : '›'}</span></button>`;
       }).join('')}` : `
       <div class="sec-h"><h2 class="serif">Мои курсы</h2></div>
       <button class="card" style="width:100%;text-align:left" onclick="go('courses')">
@@ -365,26 +366,26 @@ function pgCourses(){
     <div class="sec-h"><h2 class="serif">Все курсы</h2><span class="small muted">${list.length} шт.</span></div>
     <div class="seg">${kinds.map(k => `<button class="${S.courseSort===k?'on':''}" onclick="S.courseSort='${attJs(k)}';render()">${k}</button>`).join('')}</div>
 
-    ${list.map(c => `
-      <div class="lesson">
-        <div class="cov" style="height:158px" onclick="openCourseLanding('${attJs(c.id)}')">
+    ${list.map(c => {
+      /* Карточка одной высоты у всех курсов: обложка и название. Описание
+         разной длины растягивало карточки вразнобой — оно теперь на
+         странице курса, после промо-ролика. */
+      const own = courseOwned(c.id), pr = own ? courseProgress(c.id) : null;
+      return `<div class="ccard">
+        <div class="cov" onclick="openCourse('${attJs(c.id)}')">
           ${cover(c.id,'course')}
           <div class="badge">${esc(COURSE_KIND[c.id])}</div>
           ${rec(c) ? `<div class="badge" style="left:auto;right:12px;background:var(--grad-gold);color:var(--plum)">✦ тебе подойдёт</div>` : ''}
-          <div class="cap"><b>${esc(c.t)}</b><span>${esc(c.e)} · ${plural(c.n,'урок','урока','уроков')}</span></div>
+          <div class="cap"><b>${esc(c.t)}</b><span>${esc(c.e)} · ${plural(lessonsOf(c.id).length || c.n,'урок','урока','уроков')}</span></div>
         </div>
-        <div class="body">
-          <p class="small muted" style="margin:0 0 10px">${esc(c.d)}</p>
-          <div class="chips wrap" style="padding-bottom:6px">${(COURSE_TAGS[c.id]||[]).map(t => `<span class="chip pale">${esc(t)}</span>`).join('')}</div>
-          <div class="spread">
-            <div><span class="price">${money(c.p)}</span><span class="old">${money(c.old)}</span></div>
-            <div class="row starline"><span class="small muted">★ ${c.r} · ${c.s.toLocaleString('ru-RU')} учениц</span>${starBtn(c.id, 14)}</div>
-          </div>
-          <button class="btn ${S.courses.includes(c.id)?'done':''}" style="margin-top:12px"
-            onclick="${S.courses.includes(c.id)?'':`openCourseLanding('${attJs(c.id)}')`}">
-            ${S.courses.includes(c.id) ? '✓ Курс открыт' : 'Подробнее'}</button>
+        <div class="cfoot">
+          ${own ? `<div class="bar" style="flex:1"><i style="width:${pr.pct}%"></i></div><span class="small muted">${pr.all ? 'пройден' : pr.done + ' из ' + pr.total}</span>`
+                : `<span class="price">${money(c.p)}</span><span class="old">${money(c.old)}</span><span class="small muted">★ ${c.r}</span>`}
+          ${starBtn(c.id, 14)}
+          <button class="btn sm ${own?'done':''}" onclick="openCourse('${attJs(c.id)}')">${own ? (pr.all ? 'Открыть' : 'Продолжить') : 'Подробнее'}</button>
         </div>
-      </div>`).join('')}
+      </div>`;
+    }).join('')}
   </div>`;
 }
 
@@ -813,7 +814,7 @@ function pgProfile(){
   const spent = S.purchases.reduce((a,p) => a + p.p, 0);
   const doneTasks = (S.program || []).reduce((a,d) => a + d.tasks.filter(t => t.done).length, 0);
   const hw = Object.keys(S.homework||{}).length;
-  const lessons = Object.values(S.lessons||{}).flat().filter(l => l.done).length;
+  const lessons = Object.keys(S.courseDone || {}).length;
   return `<div class="view">
     <div class="hero">
       ${sceneSVG(daypart())}

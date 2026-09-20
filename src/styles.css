@@ -1295,3 +1295,29 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .adamsay{font-size:16.5px;line-height:1.45;font-weight:500;letter-spacing:-.01em;padding:14px 15px;border-radius:var(--r);
   background:linear-gradient(135deg,rgba(63,125,98,.10),rgba(63,125,98,.03));border:1px solid rgba(63,125,98,.22)}
 .segdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:5px;vertical-align:middle}
+
+/* ---------- курсы: ровные карточки и прохождение ---------- */
+.ccard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:10px}
+.ccard .cov{position:relative;height:150px;cursor:pointer}
+.ccard .cov > svg,.ccard .cov > img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover}
+.ccard .cap b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cfoot{display:flex;align-items:center;gap:8px;padding:9px 12px;min-height:52px}
+.cfoot .price{font-size:15px}
+.cfoot .btn.sm{width:auto;margin-left:auto;padding:8px 13px;flex:none}
+.unit .ttl{flex:1;min-width:0}
+.unit .ttl b{font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.unit.cur{border-color:var(--ink)}
+.unit.edrow{padding:6px 8px 6px 6px;gap:6px}
+.unit.edrow .hit{display:flex;gap:9px;align-items:center;flex:1;min-width:0;text-align:left}
+.unit.edrow .mv{display:flex;flex-direction:column;gap:2px;flex:none}
+.unit.edrow .mv button{width:24px;height:17px;border-radius:6px;background:var(--surface-2);font-size:8px;color:var(--muted)}
+.unit.edrow .mv button:disabled{opacity:.3}
+.lhead{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:11px 13px;margin-bottom:12px}
+.lnav{display:flex;gap:8px;margin:14px 0 6px}
+.lnav .btn{flex:1}
+.lnav .btn.sq{flex:none;width:48px;padding:0}
+.card.cont{border-color:var(--accent)}
+.card.fin{background:var(--ink);color:#fff;border-color:transparent}
+/* обложка в карточках админа и эксперта — фиксированной высоты, как в каталоге */
+.acard .cov{position:relative;overflow:hidden;display:block}
+.acard .cov > svg,.acard .cov > img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover}

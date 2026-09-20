@@ -95,6 +95,8 @@ function persist(){
     /* переписка с Евой и её память: без этого после перезагрузки она забывает
        заданный вопрос и рассказывает одно и то же интересное по кругу */
     eva:S.eva, evaMem:S.evaMem, adamMem:S.adamMem,
+    /* отметки «пройден» по урокам курсов — её личные, уроки общие */
+    courseDone:S.courseDone,
     savedAt:Date.now()
   });
 }
@@ -109,7 +111,7 @@ const PERSONAL = ['name','tags','topics','time','slot','answers','extra','points
   'gentle','seen','tagw','goals','level','taste','subAsked','courseAsked',
   'anonNick','anonPast','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
   'weekMood','nudgedWeek','gdraft','quietRun','askedBlock','pushOn','pushAsked','tipStars','follows','mates','expSeen','about','city','show',
-  'qi','picked','eva','evaMem','adamMem'];
+  'qi','picked','eva','evaMem','adamMem','courseDone'];
 
 let PRISTINE = null;
 /* снимок нетронутого состояния - делается один раз, при загрузке */

@@ -99,7 +99,7 @@ function shCourse(){
       <div class="row"><div class="pcirc" style="width:42px;height:42px">${expPic(e)}</div>
       <div style="flex:1"><b style="font-size:14px">${esc(e.n)}</b><div class="small muted">${esc(e.r)}</div></div>
       <span class="muted">›</span></div></button>
-    <button class="btn" onclick="buyCourse('${attJs(c.id)}')">Записаться за ${money(c.p - bonus)}</button>`;
+    <button class="btn" onclick="buyCourse('${attJs(c.id)}')">Купить за ${money(c.p - bonus)}</button>`;
 }
 
 function shRebuild(){
@@ -190,9 +190,13 @@ function checkout(){
    поддержке, открывает курс в карточке пользователя — и он появляется
    у женщины при следующем входе. */
 function buyCourse(id){
-  if(S.courses.includes(id)) return;
+  if(S.courses.includes(id)) return openCourseLearn(id, courseProgress(id).next);
   const c = COURSES.find(x => x.id === id);
   if(!c) return;
+  /* Демонстрация и локальный режим: курс открывается сразу, без заявки.
+     Иначе показать прохождение некому — заявку на демо никто не обработает. */
+  const instant = (typeof EVA_DEMO !== 'undefined' && EVA_DEMO) || (typeof SYNC !== 'undefined' && SYNC.alive === false);
+  if(instant) return grantCourseNow(c);
   S.courseAsked = S.courseAsked || [];
   if(S.courseAsked.includes(id)){ S.sheet = null; render(); return toast('Заявка на этот курс уже у нас'); }
   const tk = toSupport('Курс: ' + c.t, 'Хочу курс «' + c.t + '» (' + money(c.p) + '). Оплата картой ещё не подключена — прошу открыть доступ.', 'course', {course:c.id});
@@ -203,6 +207,23 @@ function buyCourse(id){
     `можно не ждать и начать сегодня.`, 'openCourses', 'experts', tk.id);
   S.sheet = null; render(); schedulePersist();
   toast('Заявка отправлена. Подтверждение — в сообщениях');
+}
+/* покупка без заявки: бонусы списаны, курс в «Моих курсах», письмо о доступе, и сразу первый урок */
+function grantCourseNow(c){
+  const bonus = Math.min(S.bonus || 0, Math.round(c.p * 0.3));
+  const paid = c.p - bonus, cb = Math.round(paid * 0.05);
+  S.bonus = (S.bonus || 0) - bonus + cb;
+  S.points += Math.min(50, Math.round(paid / 200));
+  S.courses.push(c.id);
+  S.purchases = S.purchases || [];
+  S.purchases.unshift({t:'Курс «' + c.t + '»', p:paid, cb, date:'сегодня'});
+  platformSay(`${S.name ? S.name + ', курс' : 'Курс'} «${c.t}» открыт — он уже в «Моих курсах» на главной. ` +
+    `Начни с первого урока, домашние задания появятся после видео. Если что-то не откроется — напиши сюда.`,
+    'openCourses', 'experts');
+  S.sheet = null;
+  schedulePersist();
+  toast('Курс открыт' + (bonus ? ', списано ' + money(bonus) + ' бонусов' : ''));
+  openCourseLearn(c.id, 0);
 }
 function join(id){
   const g = GROUPS.find(x => x.id === id);

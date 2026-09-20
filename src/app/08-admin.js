@@ -190,6 +190,22 @@ function reject(id){
 }
 
 /* ---------- курсы ---------- */
+/* Готовность курса одной строкой: что уже загружено, чего не хватает.
+   Эксперту это важнее дохода: пустой урок она увидит здесь, а не по жалобе. */
+function courseReadiness(c){
+  const ls = lessonsOf(c.id);
+  const v = ls.filter(l => l.video).length, d = ls.filter(l => l.d).length, h = ls.filter(l => l.hw).length, f = ls.filter(l => l.free).length;
+  const promo = !!(S.videos && S.videos[c.id + '_promo']);
+  const miss = [];
+  if(!ls.length) miss.push('нет уроков');
+  if(ls.length && v < ls.length) miss.push('видео у ' + v + ' из ' + ls.length);
+  if(ls.length && d < ls.length) miss.push('описание у ' + d + ' из ' + ls.length);
+  if(!promo) miss.push('нет промо');
+  if(ls.length && !f) miss.push('нет открытого урока');
+  return `<div class="small muted" style="margin-top:5px">${ls.length ? `${plural(ls.length,'урок','урока','уроков')} · открытых ${f} · с домашним ${h}` : 'Уроки ещё не добавлены'}</div>
+    <div class="small" style="margin-top:3px;color:${miss.length ? 'var(--warn)' : 'var(--ok)'}">${miss.length ? 'Не хватает: ' + miss.join(', ') : 'Готов к показу: видео, описания, промо, открытый урок'}</div>`;
+}
+
 function adCourses(){
   return `
   ${adRequests('expert')}
@@ -206,11 +222,11 @@ function adCourses(){
       <div style="padding:12px">
         <div class="spread"><span class="price">${money(c.p)}</span>
           <span class="small muted">${c.s.toLocaleString('ru-RU')} продаж · ★ ${c.r}</span></div>
-        <div class="small muted" style="margin-top:5px">
-          Открытых уроков: ${ls.filter(l => l.free).length} · промо: ${(S.videos&&S.videos[c.id+'_promo'])?'есть':'нет'}</div>
+        ${courseReadiness(c)}
         <div class="acts">
           <button class="btn ghost sm" onclick="openCourseEditor('${attJs(c.id)}')">Редактировать</button>
-          <button class="btn ghost sm" onclick="openCourseLanding('${attJs(c.id)}')">Просмотр</button>
+          <button class="btn ghost sm" onclick="openCourseLanding('${attJs(c.id)}')">Страница</button>
+          <button class="btn ghost sm" onclick="openCourseLearn('${attJs(c.id)}',0)">Как ученица</button>
           <button class="btn ghost sm" style="color:var(--accent)" onclick="delCourse('${attJs(c.id)}')">Удалить</button>
         </div>
       </div>
@@ -1193,8 +1209,10 @@ function pgEditCourse(){
 
     <label class="lbl">Название</label>
     <input class="field" value="${esc(c.t)}" oninput="setCourse('${attJs(c.id)}','t',this.value)">
-    <label class="lbl">Короткое описание</label>
-    <textarea class="field" rows="3" oninput="setCourse('${attJs(c.id)}','d',this.value)">${esc(c.d)}</textarea>
+    <label class="lbl">Короткое описание <span class="muted">— одна-две фразы, идёт в письма и подсказки Евы</span></label>
+    <textarea class="field" rows="2" oninput="setCourse('${attJs(c.id)}','d',this.value)">${esc(c.d)}</textarea>
+    <label class="lbl">Описание на странице курса <span class="muted">— показывается после промо-ролика</span></label>
+    <textarea class="field" rows="5" placeholder="О чём курс, как устроен, что будет на выходе" oninput="setCourseAbout('${attJs(c.id)}',this.value)">${esc(info.about || '')}</textarea>
     <div class="g2">
       <div><label class="lbl">Цена, ₽</label><input class="field" type="number" value="${c.p}" oninput="setCourse('${attJs(c.id)}','p',+this.value)"></div>
       <div><label class="lbl">Старая цена</label><input class="field" type="number" value="${c.old}" oninput="setCourse('${attJs(c.id)}','old',+this.value)"></div>
@@ -1224,18 +1242,23 @@ function pgEditCourse(){
             onclick="delModule('${attJs(c.id)}',${mi})">✕</button>
         </span></div>
       <div style="padding:9px">
-        ${m.units.map(un => {
+        ${m.units.map((un, ui) => {
           const l = ls.find(x => x.n === un);
           if(!l) return '';
-          return `<button class="unit" onclick="openUnitEditor('${attJs(c.id)}','${attJs(l.id)}')">
-            <div class="n">${esc(l.n)}</div>
-            <div class="mini">${cover(l.id,'practice')}</div>
-            <div style="flex:1;min-width:0">
-              <b style="font-size:13px;display:block">${esc(l.t)}</b>
-              <div class="small muted">${l.min} мин · ${l.video?'видео есть':'без видео'}</div>
-            </div>
+          const lack = [!l.video && 'без видео', !l.d && 'без описания'].filter(Boolean).join(', ');
+          return `<div class="unit edrow">
+            <button class="hit" onclick="openUnitEditor('${attJs(c.id)}','${attJs(l.id)}')">
+              <div class="n">${esc(l.n)}</div>
+              <div class="mini">${cover(l.id,'practice')}</div>
+              <div class="ttl"><b>${esc(l.t)}</b>
+                <div class="small muted">${l.min} мин${l.hw ? ' · домашнее' : ''}${lack ? ' · <span style="color:var(--warn)">' + lack + '</span>' : ''}</div></div>
+            </button>
             <span class="pill ${l.free?'free':'paid'}">${l.free?'free':'🔒'}</span>
-          </button>`;
+            <span class="mv">
+              <button onclick="moveUnit('${attJs(c.id)}',${mi},${ui},-1)" aria-label="Выше" ${ui===0?'disabled':''}>▲</button>
+              <button onclick="moveUnit('${attJs(c.id)}',${mi},${ui},1)" aria-label="Ниже" ${ui===m.units.length-1?'disabled':''}>▼</button>
+            </span>
+          </div>`;
         }).join('')}
         <button class="btn ghost sm" style="width:100%" onclick="addUnitTo('${attJs(c.id)}',${mi})">＋ Добавить урок в модуль</button>
       </div>
@@ -1247,6 +1270,33 @@ function pgEditCourse(){
 }
 
 function setCourse(id, f, v){ const c = COURSES.find(x => x.id === id); c[f] = v; }
+function setCourseAbout(id, v){
+  COURSE_INFO[id] = COURSE_INFO[id] || {who:[], gives:[], promo:''};
+  COURSE_INFO[id].about = v;
+}
+
+/* Порядок уроков. Модули хранят номера уроков, номера видны ученице,
+   поэтому после перестановки нумеруем заново по порядку модулей. Номера
+   уроков — это не их id: домашние и отметки привязаны к id и не теряются. */
+function renumberLessons(cid){
+  const ls = lessonsOf(cid), mods = modulesOf(cid);
+  const seq = [];
+  mods.forEach(m => (m.units || []).forEach(n => { const l = ls.find(x => x.n === n); if(l && seq.indexOf(l) < 0) seq.push(l); }));
+  ls.forEach(l => { if(seq.indexOf(l) < 0) seq.push(l); });          // уроки вне модулей — в хвост
+  const was = seq.map(l => l.n);
+  seq.forEach((l, k) => { l.n = k + 1; });
+  mods.forEach(m => { m.units = (m.units || []).map(n => { const k = was.indexOf(n); return k < 0 ? n : seq[k].n; }); });
+  ls.length = 0; seq.forEach(l => ls.push(l));
+}
+function moveUnit(cid, mi, ui, dir){
+  const m = modulesOf(cid)[mi];
+  if(!m) return;
+  const j = ui + dir;
+  if(j < 0 || j >= m.units.length) return;
+  const tmp = m.units[ui]; m.units[ui] = m.units[j]; m.units[j] = tmp;
+  renumberLessons(cid);
+  render(); syncPush(['lessons','modules'], true);
+}
 /* Удаление курса: вместе с уроками, модулями и описанием — иначе они
    остаются висеть в данных и всплывают в других списках. */
 function delCourse(cid){
@@ -1322,8 +1372,8 @@ function pgEditUnit(){
 
     <label class="lbl">Название урока</label>
     <input class="field" value="${esc(l.t)}" oninput="setUnit('${attJs(c.id)}','${attJs(l.id)}','t',this.value)">
-    <label class="lbl">Описание урока</label>
-    <textarea class="field" rows="4" oninput="setUnit('${attJs(c.id)}','${attJs(l.id)}','d',this.value)">${esc(l.d||'')}</textarea>
+    <label class="lbl">Описание урока <span class="muted">— ученица видит его внутри урока, под видео</span></label>
+    <textarea class="field" rows="4" placeholder="О чём урок и что сделать после него" oninput="setUnit('${attJs(c.id)}','${attJs(l.id)}','d',this.value)">${esc(l.d||'')}</textarea>
     <div class="g2">
       <div><label class="lbl">Длительность, мин</label>
         <input class="field" type="number" value="${l.min}" oninput="setUnit('${attJs(c.id)}','${attJs(l.id)}','min',+this.value)"></div>
@@ -1631,11 +1681,12 @@ function exCourses(){
       <div style="padding:12px">
         <div class="spread"><span class="price">${money(c.p)}</span>
           <span class="small muted">${c.s.toLocaleString('ru-RU')} учениц · ★ ${c.r}</span></div>
-        <div class="small muted" style="margin-top:5px">Открытых уроков: ${ls.filter(l=>l.free).length} · доход за месяц ${money(Math.round(c.p*c.s*0.02))}</div>
+        ${courseReadiness(c)}
+        <div class="small muted" style="margin-top:4px">Доход за месяц ${money(Math.round(c.p*c.s*0.02))}</div>
         <div class="acts">
           <button class="btn ghost sm" onclick="openCourseEditor('${attJs(c.id)}')">Редактировать</button>
           <button class="btn ghost sm" onclick="addUnitTo('${attJs(c.id)}',0)">＋ Урок</button>
-          <button class="btn ghost sm" onclick="openCourseLanding('${attJs(c.id)}')">Просмотр</button>
+          <button class="btn ghost sm" onclick="openCourseLearn('${attJs(c.id)}',0)">Как ученица</button>
         </div>
       </div>
     </div>`;

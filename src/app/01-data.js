@@ -850,7 +850,7 @@ Object.assign(S, {
   ideas:IDEAS.map(x => ({...x})),
   courseSort:'Рекомендованные',
   weekly:{exchanged:false},
-  lessons:{}, course:null, chats:null, chat:{open:null,unread:{}}, owned:['gr2'],
+  lessons:{}, courseDone:{}, course:null, chats:null, chat:{open:null,unread:{}}, owned:['gr2'],
   cType:'practice', cQuery:'', tagSort:null, statPeriod:'месяц', userFilter:'все', uQuery:'',
   newTags:[], sugTags:[], newType:'practice'
 });
