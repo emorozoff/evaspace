@@ -232,7 +232,7 @@ async function flushSync(){
   if(okAll){
     SYNC.lastSaved = Date.now();
     updateSyncBadge('saved');
-    if(S.role !== 'user' && !S.sheet) render();
+    if(S.role !== 'user' && !S.sheet) softRender();
     return;
   }
   /* Запрет не лечится повтором: раньше такая ветка возвращалась в очередь,

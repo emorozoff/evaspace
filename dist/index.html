@@ -55,6 +55,8 @@ h2.serif{font-size:19px;margin:0}
 .shell{max-width:var(--shell);margin:0 auto;min-height:100vh;padding-bottom:calc(var(--nav-h) + 58px + env(safe-area-inset-bottom))}
 .pad{padding:0 16px}
 .view{animation:up .3s cubic-bezier(.2,.75,.3,1) forwards}
+/* тихая перерисовка по таймеру: страница обновляется без выезда */
+#pagebox.quiet .view{animation:none}
 @keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .anim-up{animation:up .45s cubic-bezier(.2,.75,.3,1) forwards}
@@ -1305,6 +1307,13 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   background:var(--accent);color:#fff;font-size:10px;font-weight:700;font-style:normal;
   display:grid;place-items:center;padding:0 4px;border:2px solid var(--paper);animation:beat 1.9s infinite}
 @keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+.ebtn.on{background:var(--ink);color:#fff}
+.evafaq{background:var(--surface-2);border-radius:var(--r);padding:10px 11px 4px;margin-bottom:10px}
+/* ---------- Адам: вкладка «Комплимент» ---------- */
+.adamcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 15px 15px}
+.adamsay{font-size:16.5px;line-height:1.45;font-weight:500;letter-spacing:-.01em;padding:14px 15px;border-radius:var(--r);
+  background:linear-gradient(135deg,rgba(63,125,98,.10),rgba(63,125,98,.03));border:1px solid rgba(63,125,98,.22)}
+.segdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:5px;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -2420,7 +2429,7 @@ function persist(){
     follows:S.follows, mates:S.mates, expSeen:S.expSeen, about:S.about, city:S.city, show:S.show,
     /* переписка с Евой и её память: без этого после перезагрузки она забывает
        заданный вопрос и рассказывает одно и то же интересное по кругу */
-    eva:S.eva, evaMem:S.evaMem,
+    eva:S.eva, evaMem:S.evaMem, adamMem:S.adamMem,
     savedAt:Date.now()
   });
 }
@@ -2435,7 +2444,7 @@ const PERSONAL = ['name','tags','topics','time','slot','answers','extra','points
   'gentle','seen','tagw','goals','level','taste','subAsked','courseAsked',
   'anonNick','anonPast','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
   'weekMood','nudgedWeek','gdraft','quietRun','askedBlock','pushOn','pushAsked','tipStars','follows','mates','expSeen','about','city','show',
-  'qi','picked','eva','evaMem'];
+  'qi','picked','eva','evaMem','adamMem'];
 
 let PRISTINE = null;
 /* снимок нетронутого состояния - делается один раз, при загрузке */
@@ -3493,7 +3502,8 @@ function watchCalendar(){
       if(typeof maybeShowWeek === 'function' && maybeShowWeek()) need = true;
       /* заодно смотрим, не пора ли Еве подать голос: вопрос или интересное */
       if(typeof evaWake === 'function' && evaWake()) need = true;
-      if(need) render();
+      if(typeof adamWake === 'function' && adamWake()) need = true;
+      if(need) softRender();
     } catch(e){ console.error('[Eva] смена дня:', e); }
   }, 60000);
 }
@@ -3637,10 +3647,17 @@ function render(){
    Обычный render() пересобирает разметку, и браузер прокручивает наверх —
    женщина читала послание, а её выбросило в начало ленты. Со стороны это
    и выглядело как самопроизвольная перезагрузка. */
+let QUIET = false;
 function softRender(){
+  /* Пока она печатает, страницу не трогаем: пересборка съест набранное.
+     Изменение никуда не денется — его подхватит следующая перерисовка. */
+  const a = document.activeElement;
+  if(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA') && a.value) return false;
   const y = window.scrollY;
-  render();
+  QUIET = true;                        // без выезда страницы: это не переход, а обновление
+  try { render(); } finally { QUIET = false; }
   if(Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y);
+  return true;
 }
 
 function crashScreen(e){
@@ -3693,6 +3710,10 @@ function setApp(body, sh){
   if(body === shownHTML) window.__skipped++;
   else {
     const memo = keepFocus();
+    /* Тихая перерисовка — по таймеру или ответу сервера — не должна
+       выглядеть как переход: страница обновляется на месте, без анимации.
+       Иначе каждое письмо цепочки мероприятий «перезагружало» экран. */
+    pageBox.classList.toggle('quiet', QUIET);
     shownHTML = body; pageBox.innerHTML = body; window.__renders++;
     after(); memo();
   }
@@ -3707,18 +3728,35 @@ function setApp(body, sh){
      перезагрузили. Поэтому запоминаем прокрутку и фокус, а выезд играем
      только когда шторка действительно новая. */
   if(sh !== shownSheet){
-    const was = sheetBox.querySelector('.sheet');
+    const wasBg = sheetBox.querySelector('.bg');
+    const was = wasBg ? wasBg.querySelector('.sheet') : null;
     const top = was ? was.scrollTop : 0;
     const key = S.sheet ? (typeof S.sheet === 'string' ? S.sheet : S.sheet.k) : '';
     const same = !!sh && key === shownSheetKey;
     const memo = same ? keepFocus() : (() => {});
     shownSheet = sh; shownSheetKey = key;
-    sheetBox.innerHTML = sh;
-    if(sh){
+    /* Та же шторка с новым содержимым — ответ Евы, отметка в списке,
+       клик по чипу. Меняем только внутренности карточки: фон и сама
+       карточка остаются на месте. Раньше пересоздавалось всё, и затемнение
+       вспыхивало заново — со стороны это выглядело как перезагрузка окна. */
+    let swapped = false;
+    if(same && was){
+      const tpl = document.createElement('template');
+      tpl.innerHTML = sh;
+      const nb = tpl.content.querySelector('.bg'), ns = nb ? nb.querySelector('.sheet') : null;
+      if(ns && nb.className === wasBg.className){
+        was.className = ns.className + ' noanim';
+        was.innerHTML = ns.innerHTML;
+        if(top) was.scrollTop = top;
+        swapped = true;
+      }
+    }
+    if(!swapped){
+      sheetBox.innerHTML = sh;
       const now = sheetBox.querySelector('.sheet');
       if(now && same){ now.classList.add('noanim'); if(top) now.scrollTop = top; }
-      after(); memo();
     }
+    if(sh){ after(); memo(); }
   }
   return true;
 }
@@ -4662,8 +4700,9 @@ function payPlan(){
       'Хочу оформить подписку на ' + plan + '. Оплата картой ещё не подключена — прошу открыть доступ.', 'sub');
   if(!tk) return toast('Не отправилось, попробуй позже');
   S.subAsked = true;
-  platformSay(`Заявка на подписку (${plan}) получена. Оплата картой пока не подключена, поэтому доступ откроем вручную ` +
-    'и напишем сюда — обычно в течение дня. Программа и библиотека станут доступны сразу после этого.', '', 'space', tk.id);
+  platformSay(`${S.name ? S.name + ', заявка' : 'Заявка'} на подписку (${plan}) получена. Оплата картой ещё подключается, ` +
+    'поэтому доступ откроем руками и напишем сюда — обычно в течение дня. Сразу после этого откроются вся библиотека, ' +
+    'курсы и клуб — ничего дополнительно нажимать не придётся.', '', 'space', tk.id);
   render(); schedulePersist();
   toast('Заявка отправлена. Подтверждение — в сообщениях');
 }
@@ -6289,6 +6328,8 @@ function scrollChat(){ setTimeout(() => { const l = $('#clist'); if(l) window.sc
 const CHANNELS = {
   eva:     {id:'eva_week',   from:'Ева',           kind:'программа',   c:'#A8375C',
             s:'программа, итоги недели и разговоры о том, как идёт'},
+  adam:    {id:'ch_adam',    from:'Адам',          kind:'настроение',  c:'#3F7D62',
+            s:'комплимент дня и слова поддержки — про тебя, а не про дела'},
   events:  {id:'ch_events',  from:'Eva Events',    kind:'мероприятия', c:'#5E5FA8',
             s:'встречи, билеты и напоминания'},
   market:  {id:'ch_market',  from:'Eva Маркет',    kind:'маркет',      c:'#B8894A',
@@ -6316,6 +6357,33 @@ function chanThread(key){
     t.chan = key; t.from = c.from; t.c = c.c; t.kind = c.kind; t.sys = true;
   }
   return t;
+}
+
+/* Ответ канала на её сообщение. Раньше на всё было одно «Передали
+   команде» — как автоответчик. Теперь каждый отправитель отвечает как
+   тот, кто он есть: Eva Events знает про встречи, Eva Эксперты — про
+   ответы экспертов. Это всё ещё автоответ, но не безликий. */
+function chanAck(chan, text){
+  const n = S.name ? S.name + ', ' : '';
+  const ws = String(text || '').toLowerCase();
+  const pick = arr => arr[(S.inbox || []).length % arr.length];
+  if(chan === 'events'){
+    if(/не смогу|не приду|отмен/.test(ws)) return n + 'поняла, сниму тебя с записи и отдам место той, кто ждёт. Спасибо, что сказала заранее — это правда важно.';
+    if(/опозда|задерж/.test(ws)) return n + 'не переживай — предупрежу ведущую, тебя дождутся. Заходи тихо, как получится.';
+    if(/ссылк|где|адрес|как добрать/.test(ws)) return n + 'всё про место и ссылку — в письме с билетом выше. Если чего-то нет, уточню у ведущей и напишу сюда в течение часа.';
+    return pick([n + 'записала. Если это про время, место или ссылку — уточню у ведущей и вернусь сюда.',
+                 n + 'спасибо, передала организаторам. Ответ будет здесь же — обычно в течение дня.']);
+  }
+  if(chan === 'experts'){
+    return pick([n + 'передала эксперту лично. Она обычно отвечает в течение суток — напишу сюда, как только придёт ответ.',
+                 n + 'спасибо, вопрос у эксперта. Ответ придёт сюда — можно закрыть приложение и не ждать у экрана.']);
+  }
+  if(chan === 'market'){
+    return n + 'вижу. Менеджер маркета ответит сюда — обычно в течение дня. Если это про заказ, номер из письма поможет найти его быстрее.';
+  }
+  if(/спасиб|благодар/.test(ws)) return n + 'и тебе спасибо. Мы здесь.';
+  return pick([n + 'спасибо, увидели. Ответим здесь же — обычно в течение дня, живой человек, не робот.',
+               n + 'получили. Разберёмся и напишем сюда. Если срочно — так и напиши, поднимем выше в очереди.']);
 }
 
 /* Письмо от платформы. act — кнопка под письмом, tid — обращение,
@@ -6399,9 +6467,17 @@ function pullMarketReplies(){
 function pgInbox(){
   initInbox();
   if(S.thread) return pgThread();
+  const tab = S.inboxTab === 'adam' ? 'adam' : 'all';
+  const adamUnread = S.inbox.some(t => t.chan === 'adam' && t.unread);
   return `<div class="view pad">${backBtn('Назад')}
     <h1 class="serif" style="font-size:26px;margin:10px 0 4px">Сообщения</h1>
-    <p class="small muted" style="margin:0 0 14px">Приглашения от участниц, ответы экспертов и напоминания о мероприятиях.</p>
+    <p class="small muted" style="margin:0 0 12px">Приглашения от участниц, ответы экспертов и напоминания о мероприятиях.</p>
+    <div class="seg">
+      <button class="${tab === 'all' ? 'on' : ''}" onclick="S.inboxTab='all';render()">Письма</button>
+      <button class="${tab === 'adam' ? 'on' : ''}" onclick="S.inboxTab='adam';render()">Комплимент${adamUnread ? ' <i class="segdot"></i>' : ''}</button>
+    </div>
+    ${tab === 'adam' && typeof pgAdamTab === 'function' ? pgAdamTab() + '</div>' : ''}
+    ${tab === 'adam' ? '' : `
     ${S.inbox.some(x => x.kind === 'мероприятие') && S.evFast !== false ? `
       <div class="evfast"><span>⏱</span>
         <div><b>Ускоренный показ включён</b>
@@ -6430,12 +6506,13 @@ function pgInbox(){
         <div><b style="font-size:13px">${esc(CHANNELS[k].from)}</b>
           <div class="small muted">${esc(CHANNELS[k].s)}</div></div></div>`).join('')}</div>
       <p class="small muted" style="margin:10px 0 0">Здесь же переписка с участницами и ответы экспертов.
-        На письмо от Евы можно ответить прямо в нём — прочитаем.</p>
+        Еве и Адаму можно ответить прямо в письме — ответят там же.</p>
     </div>
-  </div>`;
+  </div>`}`;
 }
 const CHAN_ICO = {
   eva:     `<svg viewBox="0 0 100 100" width="19" height="19" aria-hidden="true"><path d="${STAR_PATH}" fill="currentColor"/></svg>`,
+  adam:    `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"/></svg>`,
   events:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3.5v3M16 3.5v3"/></svg>`,
   market:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16l-1.2 11a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>`,
   experts: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.4 3.1-5.6 7-5.6 1.5 0 2.9.3 4 .9"/><path d="m16.5 19.2 1.7 1.7 3.3-3.6"/></svg>`,
@@ -6507,6 +6584,22 @@ function sendDM(id){
      дописывается в то самое обращение, на которое она отвечает. Раньше он
      оставался в телефоне, потом заводил новое обращение без связи с первым,
      и администратор видел обрывки вместо разговора. */
+  /* Еве и Адаму отвечать за них не нужно — они отвечают сами */
+  if(t.chan === 'eva' && typeof evaThink === 'function'){
+    inp.value = '';
+    const ans = evaMsg(evaThink(v));
+    t.msgs.push({me:false, t:ans.t, act:(ans.a && ans.a.length) ? 'evaTalk' : '', tm});
+    t.ago = 'только что';
+    render(); schedulePersist();
+    return;
+  }
+  if(t.chan === 'adam' && typeof adamReply === 'function'){
+    inp.value = '';
+    adamReply(v);
+    t.unread = false;
+    render(); schedulePersist();
+    return;
+  }
   if(t.chan && typeof toSupport === 'function'){
     const tid = t.tid || [...t.msgs].reverse().map(m => m.tid).find(Boolean);
     const tk = tid && typeof INBOX !== 'undefined' ? INBOX.find(x => x.id === tid) : null;
@@ -6519,7 +6612,7 @@ function sendDM(id){
       const fresh = toSupport('Ответ: ' + (t.from || 'Eva Space'), v, 'reply');
       if(fresh) t.tid = fresh.id;
     }
-    t.msgs.push({me:false, t:'Передали команде. Ответим здесь же.', tm});
+    t.msgs.push({me:false, t:chanAck(t.chan, v), tm});
     t.ago = 'только что';
     render(); schedulePersist();
     return toast('Передали команде');
@@ -7506,7 +7599,8 @@ function withdraw(sum){
     'Прошу вывести ' + money(sum) + '. Реквизиты пришлю в ответ на это письмо.', 'sub');
   if(!tk) return toast('Не отправилось, попробуй позже');
   if(typeof platformSay === 'function')
-    platformSay('Заявка на вывод ' + money(sum) + ' принята. Реквизиты можно прислать ответом на это сообщение. Ответим в течение трёх дней.',
+    platformSay('Заявка на вывод ' + money(sum) + ' принята. Реквизиты — карту или счёт — пришли ответом на это письмо. ' +
+      'Переводим в течение трёх рабочих дней и напишем сюда, когда отправили.',
       '', 'space', tk.id);
   toast('Заявка отправлена. Подтверждение — в сообщениях');
 }
@@ -10846,7 +10940,7 @@ async function flushSync(){
   if(okAll){
     SYNC.lastSaved = Date.now();
     updateSyncBadge('saved');
-    if(S.role !== 'user' && !S.sheet) render();
+    if(S.role !== 'user' && !S.sheet) softRender();
     return;
   }
   /* Запрет не лечится повтором: раньше такая ветка возвращалась в очередь,
@@ -11553,10 +11647,10 @@ function checkout(){
     mail:S.user ? S.user.email : '—', items:_items, sum:total, bonus:used, st:'новый',
     d:'сегодня', city:(S.datingProfile && S.datingProfile.city) || 'Москва', phone:S.phone || ''});
   const oid = S.orders[0].id;
-  platformSay(`Заказ принят: ${items.map(i => i.t + (i.n > 1 ? ' × ' + i.n : '')).join(', ')}. ` +
-    `Сумма ${money(total)}${used ? ', из них бонусами ' + used : ''}. ` +
-    `Номер заказа ${oid}. Менеджер напишет сюда, как оплатить и когда доставим — обычно в течение дня. ` +
-    `Если нужно что-то поменять или отменить, ответь на это сообщение. Кэшбэк ${cb} бонусов уже начислен.`,
+  platformSay(`${S.name ? S.name + ', заказ' : 'Заказ'} у нас: ${items.map(i => i.t + (i.n > 1 ? ' × ' + i.n : '')).join(', ')}. ` +
+    `Сумма ${money(total)}${used ? ', из них бонусами ' + used : ''}. Номер ${oid} — по нему найдём за секунду.\n\n` +
+    `Менеджер напишет сюда, как оплатить и когда привезём, — обычно в тот же день. Передумала или хочешь ` +
+    `что-то добавить — просто ответь на это письмо. Кэшбэк ${cb} бонусов уже на счету.`,
     '', 'market');
   S.cart = []; S.page = 'profile'; render(); schedulePersist();
   if(typeof syncPush === 'function') syncPush(['orders']);
@@ -11575,8 +11669,9 @@ function buyCourse(id){
   const tk = toSupport('Курс: ' + c.t, 'Хочу курс «' + c.t + '» (' + money(c.p) + '). Оплата картой ещё не подключена — прошу открыть доступ.', 'course', {course:c.id});
   if(!tk) return toast('Не отправилось, попробуй позже');
   S.courseAsked.push(id);
-  platformSay(`Заявка на курс «${c.t}» у нас. Оплата картой пока не подключена, поэтому курс откроем вручную ` +
-    `и напишем сюда — обычно в течение дня. Первые уроки уже открыты, можно начинать.`, 'openCourses', 'experts', tk.id);
+  platformSay(`${S.name ? S.name + ', заявка' : 'Заявка'} на «${c.t}» у нас. Оплата картой ещё подключается, поэтому ` +
+    `доступ откроем руками и напишем сюда — обычно в течение дня. А первые уроки открыты уже сейчас: ` +
+    `можно не ждать и начать сегодня.`, 'openCourses', 'experts', tk.id);
   S.sheet = null; render(); schedulePersist();
   toast('Заявка отправлена. Подтверждение — в сообщениях');
 }
@@ -11699,8 +11794,9 @@ function sendConsult(eid){
   const t = toSupport('Заявка на консультацию: ' + (e ? e.n : ''),
     ['Имя: ' + ((($('#cs_name')||{}).value || S.name || '').trim()), 'Связь: ' + contact,
      'Удобно: ' + S.slot, '', text || 'Запрос не описан'].join('\n'), 'consult');
-  platformSay(`Заявка на консультацию к ${e ? e.n : 'эксперту'} передана. ` +
-    `Свяжемся по контакту «${contact}» и напишем сюда — обычно в течение дня.`,
+  platformSay(`${S.name ? S.name + ', передала' : 'Передала'} ${e ? e.n : 'эксперту'} — она увидит заявку сегодня. ` +
+    `Свяжемся по «${contact}» и напишем сюда, когда договоримся о времени. ` +
+    `Если удобно только в определённые часы — напиши их ответом на это письмо.`,
     '', 'experts', t && t.id);
   S.sheet = null; render();
   toast('Заявка отправлена. Подтверждение — в сообщениях');
@@ -11719,8 +11815,8 @@ function sendExpertQuestion(eid){
   const text = (($('#wq_text')||{}).value || '').trim();
   if(!text) return toast('Напиши вопрос');
   const tk = toSupport('Вопрос эксперту: ' + (e ? e.n : ''), text, 'question');
-  platformSay(`Вопрос для ${e ? e.n : 'эксперта'} передан: «${text.length > 90 ? text.slice(0, 88) + '…' : text}». ` +
-    `Ответ придёт сюда — обычно в течение суток.`, '', 'experts', tk && tk.id);
+  platformSay(`Передала ${e ? e.n : 'эксперту'} лично: «${text.length > 90 ? text.slice(0, 88) + '…' : text}». ` +
+    `Она отвечает обычно в течение суток — ответ придёт сюда, сидеть у экрана не нужно.`, '', 'experts', tk && tk.id);
   S.sheet = null; render();
   toast('Вопрос отправлен. Ответ придёт в сообщения');
 }
@@ -13013,8 +13109,8 @@ function askGood(gid){
   }
   th.msgs.push({me:true, t:`Вопрос о товаре «${g ? g.t : ''}»: ${t}`, tm});
   th.qid = id;
-  platformSay(`Вопрос о товаре «${g ? g.t : ''}» передан. Ответим сюда — обычно в течение дня. ` +
-    'Если это про заказ, напиши его номер, так найдём быстрее.', '', 'market');
+  platformSay(`Вопрос про «${g ? g.t : 'товар'}» ушёл менеджеру маркета — ответит сюда, обычно в течение дня. ` +
+    'Если это про уже сделанный заказ, напиши его номер: так найдём быстрее.', '', 'market');
 
   S.sheet = null; S.viewGood = null; S.page = 'inbox'; S.thread = th.id;
   render(); schedulePersist(); syncPush(['questions']);
@@ -13079,7 +13175,8 @@ function sendSupport(){
   const t = (($('#sup_t')||{}).value || '').trim();
   if(!t) return toast('Опиши вопрос');
   const tk = toSupport(S.supTopic || 'Другое', t, 'support');
-  platformSay(`Получили обращение «${S.supTopic || 'Другое'}». Обычно отвечаем в течение дня — ответ придёт сюда.`,
+  platformSay(`${S.name ? S.name + ', получили' : 'Получили'} обращение «${S.supTopic || 'Другое'}». Читает живой человек, ` +
+    `отвечаем обычно в течение дня — ответ придёт сюда. Если срочно, напиши «срочно» ответом: поднимем выше в очереди.`,
     '', 'space', tk && tk.id);
   S.sheet = null; render(); toast('Отправлено в поддержку. Подтверждение — в сообщениях');
 }
@@ -13186,8 +13283,9 @@ function sendExpertApply(){
   };
   INBOX.unshift(tk);
   S.expApply = null;
-  platformSay('Заявка на роль эксперта у нас. Прочитаем внимательно и ответим сюда в течение недели. ' +
-    'Спасибо, что хотите делиться опытом — из таких заявок и растёт Ева.', '', 'experts', tk.id);
+  platformSay('Заявка на роль эксперта у нас — спасибо, что решились. Прочитаем внимательно, не по диагонали, ' +
+    'и ответим сюда в течение недели. Дальше один шаг — встреча в Zoom с куратором: полчаса разговора о том, ' +
+    'что вы делаете и для кого. Из таких заявок и растёт Ева.', '', 'experts', tk.id);
   S.sheet = null; render(); syncPush(['support']);
   toast('Заявка отправлена. Подтверждение — в сообщениях');
 }
@@ -13238,8 +13336,9 @@ function sendPartnerApply(){
     ].filter(Boolean).join('\n'), 'partner', {brand:d.brand.trim(), contact:d.contact.trim()});
   if(!t) return toast('Не отправилось, попробуйте позже');
   S.partnerApply = null;
-  platformSay(`Заявка партнёра «${d.brand.trim()}» получена. Посмотрим товар и ответим сюда в течение трёх дней. ` +
-    'Спасибо — мы собираем маркет из вещей, которые сами бы выбрали.', '', 'market', t.id);
+  platformSay(`Заявка партнёра «${d.brand.trim()}» получена. Посмотрим товар глазами покупательницы и ответим сюда ` +
+    'в течение трёх дней. Маркет мы собираем из вещей, которые купили бы сами, — поэтому и смотрим внимательно, ' +
+    'а не для галочки.', '', 'market', t.id);
   S.sheet = null; render();
   toast('Заявка отправлена. Подтверждение — в сообщениях');
 }
@@ -13294,8 +13393,8 @@ function sendEventApply(){
   if(!t) return toast('Не отправилось, попробуйте позже');
   S.eventApply = {own, t:'', d:'', where:'', link:'', about:'', contact:''};
   platformSay(own
-    ? `Мероприятие «${d.t.trim()}» получено. Проверим и, если всё сходится с правилами, опубликуем — напишем сюда в течение трёх дней.`
-    : `Спасибо за рекомендацию «${d.t.trim()}». Свяжемся с организаторами и, если подойдёт, добавим в раздел. Напишем сюда.`,
+    ? `Мероприятие «${d.t.trim()}» получено. Проверим по правилам площадки — безопасность, формат, кто ведёт — и, если всё сходится, опубликуем. Напишем сюда в течение трёх дней; если чего-то не хватит, спросим здесь же.`
+    : `Спасибо за наводку на «${d.t.trim()}» — такие рекомендации для нас дороже рекламы. Свяжемся с организаторами и, если подойдёт, добавим в раздел. Напишем сюда, чем кончилось.`,
     '', 'events', t.id);
   S.sheet = null; render();
   toast(own ? 'Отправлено на проверку. Подтверждение — в сообщениях' : 'Спасибо, передали команде');
@@ -13623,29 +13722,32 @@ function evMessage(e, k){
   const st = evStateSet(e.id, {});
   const when = evWhenText(e), place = evPlaceText(e);
   const bring = e.bring ? '\nЧто взять: ' + e.bring : '';
+  const name = S.name ? S.name + ', ' : '';
+  const Name = S.name ? S.name + ', ' : '';
 
   if(k === 'booked') return {t:
-    (evPaid(e) ? 'Билет у тебя. ' : 'Место за тобой. ') + '«' + e.t + '»\n\n' +
+    (evPaid(e) ? Name + 'билет у тебя. ' : Name + 'место за тобой. ') + '«' + e.t + '»\n\n' +
     '📅 ' + when + '\n📍 ' + place +
     (evPaid(e) ? '\n🎟 ' + money(e.price) + ', оплачено' : '\n🎟 бесплатно') + '\n\n' +
     (evPaid(e)
       ? 'Подтверждать ничего не нужно — просто приходи. Напомню накануне и в день встречи.'
       : 'За три дня попрошу подтвердить, что идёшь: на бесплатных местах всегда есть очередь.') +
-    '\n\nСкажи, придёшь одна или с подругой?', act:'plusone', ticket:true};
+    '\n\nИ один вопрос, чтобы ведущая знала, сколько вас ждать: придёшь одна или с подругой?', act:'plusone', ticket:true};
 
   if(k === 'invite') return st.plusOne
     ? {t:'Держи приглашение для подруги на «' + e.t + '».\n\n' +
          'Она открывает ссылку, вводит код и попадает на то же место рядом с тобой.\n' +
          'Код: ' + evInviteCode(e) + '\n\n' +
          'Если подруга передумала — просто не отправляй код, на записи это не скажется.', act:''}
-    : {t:'Через неделю «' + e.t + '».\n\n' +
-         'Вдвоём доходят чаще — если хочешь, возьми подругу. Для неё будет скидка по приглашению.',
+    : {t:name + 'через неделю «' + e.t + '».\n\n' +
+         'Маленькое наблюдение: вдвоём доходят чаще, чем в одиночку. Если есть кого позвать — возьми подругу, ' +
+         'для неё будет скидка по приглашению. Если нет — тоже нормально, тебя ждут и одну.',
        act:'invite'};
 
   if(k === 'confirm') return {t:
-    'Через три дня «' + e.t + '», ' + when + '.\n\n' +
-    'Скажи, идёшь? Если планы поменялись — так тоже бывает, просто нажми «не смогу», ' +
-    'и место достанется той, кто ждёт. Никто не расстроится, честный ответ дороже.', act:'confirm'};
+    name + 'через три дня «' + e.t + '», ' + when + '.\n\n' +
+    'Скажи, идёшь? Если планы поменялись — так бывает у всех, просто нажми «не смогу», ' +
+    'и место достанется той, кто ждёт в очереди. Никто не расстроится: честный ответ дороже вежливого.', act:'confirm'};
 
   if(k === 'hold') return {t:
     'Через три дня «' + e.t + '», ' + when + '.\n\n' +
@@ -13661,14 +13763,14 @@ function evMessage(e, k){
     act:'', ticket:true};
 
   if(k === 'today') return {t:
-    'Сегодня в ' + (e.tm || '') + '. Ждём тебя.\n\n' +
+    'Сегодня в ' + (e.tm || '') + ' — ждём тебя' + (S.name ? ', ' + S.name : '') + '.\n\n' +
     (e.mode === 'онлайн' ? '🔗 Ссылка открыта, заходи за пять минут до начала.' : '📍 ' + place) +
     '\n\nЕсли день сложился иначе — напиши сюда, это нормально.', act:'', ticket:true};
 
   if(k === 'after') return {t:
-    'Ну как «' + e.t + '»?\n\n' +
-    'Сначала главное: получилось прийти? Отвечай честно — по этому мы понимаем, ' +
-    'какие встречи собирают, а какие только выглядят красиво.', act:'came'};
+    name + 'ну как вчера — «' + e.t + '»?\n\n' +
+    'Сначала главное: получилось прийти? Отвечай честно, это не экзамен: по таким ответам мы понимаем, ' +
+    'какие встречи собирают людей, а какие только красиво выглядят в афише.', act:'came'};
 
   return null;
 }
@@ -13744,7 +13846,7 @@ function evDemoTimer(){
       const next = evSteps(e).find(s => s.h !== null && st.sent.indexOf(s.k) < 0);
       if(next && evFire(e, next.k)) moved = true;
     });
-    if(moved && S.screen === 'app'){ try { render(); } catch(err){ console.error('[Eva] цепочка:', err); } }
+    if(moved && S.screen === 'app'){ try { softRender(); } catch(err){ console.error('[Eva] цепочка:', err); } }
   }, 10000);
 }
 
@@ -13867,6 +13969,10 @@ function evActions(m){
     <button class="btn xs" onclick="S.thread=null;go('home')">К моей неделе</button></div>`;
   if(m.act === 'weekBlock') return `<div class="macts">${BLOCKS.map(x =>
     `<button class="btn xs" onclick="weekBlock('${attJs(x.k)}')">${esc(x.n)}</button>`).join('')}</div>`;
+  /* письмо Адама: ещё одно — прямо здесь */
+  if(m.act === 'adamMore') return `<div class="macts">
+    <button class="btn xs acc" onclick="adamAsk()">Ещё комплимент</button>
+    <button class="btn xs" onclick="adamAsk('insp')">Вдохнови</button></div>`;
   /* письма помощницы: у неё один ответ — открыть разговор */
   if(m.act === 'evaTalk') return `<div class="macts">
     <button class="btn xs acc" onclick="S.thread=null;openSheet('eva')">Открыть Еву</button></div>`;
@@ -15966,7 +16072,7 @@ const EVA_I = [
     'В моменте помогает одно: удлинить выдох. Вдох на четыре, выдох на восемь — на выдохе сердце само замедляется, это рефлекс, а не самовнушение.',
     ['тревога', 'спокойствие', 'дыхание'], ['practice'], 12)},
 
-  {id:'sleep', k:['сон*', 'спат', 'сплю', 'спал', 'бессонн', 'уснут', 'засыпа', 'просыпа', 'выспа', 'недосып', 'плохо спл'], f:() => evaWith(
+  {id:'sleep', k:['сон*', 'сна', 'спат', 'сплю', 'спал', 'бессонн', 'уснут', 'засыпа', 'просыпа', 'выспа', 'недосып', 'плохо спл'], f:() => evaWith(
     'Со сном работает скучное: прохлада, темнота и одно и то же время отбоя. А из практик — те, что делают лёжа, чтобы тело перестало держать день.',
     ['сон', 'расслабление', 'медитация'])},
 
@@ -16019,7 +16125,7 @@ const EVA_I = [
     return S.cycle ? evaWith(t, ['тело', 'спокойствие']) : {t:t + '\n\nЕсли отметишь даты цикла в кабинете, я буду учитывать их в подборе.', a:[['Кабинет', "closeSheet();openPage('profile')"]]};
   }},
 
-  {id:'gentle', k:['мягк режим', 'поменьш', 'слишком мног', 'много задан', 'не справля', 'убав', 'сократ'], f:() => {
+  {id:'gentle', k:['мягкий режим', 'мягком режиме', 'поменьш', 'слишком мног', 'много задан', 'не справля', 'убав', 'сократ'], f:() => {
     S.gentle = true;
     return {t:'Убавила: в мягком режиме остаётся аффирмация и одно короткое дело в день. Вернуть полную неделю можно в любой момент — скажи «полный режим».',
       a:[['На главную', "closeSheet();go('home')"]]};
@@ -16029,7 +16135,7 @@ const EVA_I = [
     return {t:'Вернула полную неделю: три дела в день. Если окажется много — скажи, снова убавлю.', a:[['На главную', "closeSheet();go('home')"]]};
   }},
 
-  {id:'rebuild', k:['пересобра', 'замен', 'нов программ', 'друг программ', 'не подходит', 'другое хочу', 'надоел'], f:() => {
+  {id:'rebuild', k:['пересобра', 'замен', 'новую программ', 'новая программ', 'другую программ', 'не подходит', 'другое хочу', 'надоел'], f:() => {
     EM().offer = 'rebuild';
     return {t:'Могу пересобрать неделю заново — по свежим темам и по тому, что ты успела доделать. Отметки обнулятся, баллы и звёзды останутся.',
       a:[['Пересобрать', "closeSheet();openSheet('rebuild')"], ['Не надо', "ask('не надо')"]]};
@@ -16043,15 +16149,11 @@ const EVA_I = [
     t:`Бонусы — внутренние рубли: ими закрывают до 30% заказа в маркете или курса. Сейчас у тебя ${money(S.bonus || 0)}. Кэшбэк 5% приходит с каждой покупки, плюс раз в неделю можно обменять баллы.`,
     a:[['Маркет', "closeSheet();go('market')"]]})},
 
-  {id:'courses', k:['курс', 'обучен', 'програм на нед'], f:() => {
-    const c = COURSES[0];
-    return {t:`Курсы — это уже не один урок, а путь на несколько недель с домашними заданиями. Под твои темы ближе всего «${c.t}» у ${c.e}, ${plural(c.n, 'неделя', 'недели', 'недель')}.`,
-      a:[['Курсы', "closeSheet();go('courses')"]]};
-  }},
+  {id:'courses', k:['курс', 'обучен', 'какие курс', 'про курс'], f:(ws) => evaCourses(ws)},
 
-  {id:'experts', k:['эксперт', 'специалист', 'психолог', 'кто ведет', 'автор', 'консультац', 'наставн'], f:() => ({
-    t:'Материалы ведут эксперты платформы — у каждой своя страница с направлением, опытом и записью на личную консультацию. Отбор проходят не все: сначала анкета, потом встреча с куратором.',
-    a:[['Эксперты', "closeSheet();go('content')"]]})},
+  {id:'practice', k:['практик', 'мастер класс', 'мастеркласс', 'урок', 'что за', 'о чем', 'медитация для', 'какие есть'], f:(ws) => evaPractice(ws)},
+
+  {id:'experts', k:['эксперт', 'специалист', 'психолог', 'кто ведет', 'автор', 'наставн', 'кто поможет', 'к кому'], f:(ws) => evaExperts(ws)},
 
   {id:'club', k:['клуб', 'групп', 'сообществ', 'чат', 'девочк', 'подели', 'анонимн'], f:() => ({
     t:'В клубе есть открытые группы по темам, закрытые клубы и анонимные комнаты — там можно написать под ником, если говорить своим именем пока не хочется.',
@@ -16061,9 +16163,9 @@ const EVA_I = [
     t:'В маркете — то, что поддерживает практику: дневники, свечи, коврики. Бонусами можно закрыть до 30% заказа.',
     a:[['Маркет', "closeSheet();go('market')"]]})},
 
-  {id:'events', k:['мероприят', 'встреч', 'оффлайн', 'событ', 'билет', 'ретрит'], f:() => ({
-    t:'Встречи бывают онлайн и в городах. После записи я пришлю подтверждение и напомню за день — билет будет в разделе мероприятий.',
-    a:[['Мероприятия', "closeSheet();openPage('calendar')"]]})},
+  {id:'events', k:['мероприят', 'встреч', 'оффлайн', 'офлайн', 'событ', 'билет', 'ретрит', 'куда сходить', 'что интересного', 'на этой неделе', 'на выходных', 'записат'], f:() => evaEvents()},
+
+  {id:'faq', k:['частые вопрос', 'faq', 'какие вопрос', 'что спрашива', 'список вопрос'], f:() => evaFaqList()},
 
   {id:'sub', k:['подписк', 'оплат', 'тариф', 'продлен', 'отписа', 'стоит', 'бесплатн', 'доступ'], f:() => ({
     t:'Часть материалов открыта всегда — все аффирмации и каждый третий материал. Полный доступ к библиотеке, курсам и клубу даёт подписка; отменить её можно в кабинете в один клик, доступ дойдёт до конца оплаченного срока.',
@@ -16073,7 +16175,7 @@ const EVA_I = [
     t:'У тебя есть личная ссылка: подруга приходит по ней, доходит до своей программы — тебе 100 баллов, ей неделя доступа. Ссылка в кабинете.',
     a:[['Взять ссылку', "closeSheet();openPage('profile')"]]})},
 
-  {id:'slot', k:['удобн врем', 'утр', 'вечер', 'днем', 'напомин'], f:(ws) => {
+  {id:'slot', k:['удобное время', 'удобнее', 'утр', 'вечер', 'днем'], f:(ws) => {
     const set = evaHas(ws, ['утр']) ? 'утро' : evaHas(ws, ['вечер']) ? 'вечер' : evaHas(ws, ['днем', 'дне']) ? 'день' : null;
     if(!set) return {t:'Я могу ставить дела на утро, день или вечер. Когда тебе удобнее?', a:[['Утро', "ask('удобнее утром')"], ['День', "ask('удобнее днем')"], ['Вечер', "ask('удобнее вечером')"]]};
     S.slot = set;
@@ -16197,8 +16299,16 @@ function evaThink(q){
   const ws = evaWords(q);
   if(!ws.length) return 'Напиши словами — я разберусь.';
   const ns = ' ' + ws.join(' ') + ' ';
-  const rank = EVA_I.map(i => ({i, s:evaScore(i, ws, ns)}))
+  /* название курса, практики, встречи или имя эксперта — точнее любой темы */
+  const ent = evaEntity(ws);
+  if(ent){ EM().topic = null; return ent; }
+  let rank = EVA_I.map(i => ({i, s:evaScore(i, ws, ns)}))
     .filter(x => x.s >= 1).sort((a, b) => b.s - a.s);
+  /* «курс про сон», «практика от тревоги»: слово-контейнер говорит, ЧТО
+     она ищет, тема — про что. Контейнер важнее, тему подхватит сам ответ. */
+  const box = [['курс', 'courses'], ['практик', 'practice'], ['мастер', 'practice'], ['эксперт', 'experts'], ['мероприят', 'events'], ['встреч', 'events']]
+    .find(b => evaHas(ws, [b[0]]) && rank.some(x => x.i.id === b[1]));
+  if(box && rank[0].s < 2.5) rank = rank.filter(x => x.i.id === box[1]).concat(rank.filter(x => x.i.id !== box[1]));
   /* «да» и «нет» — короткий ответ на предложение Евы. В длинной фразе
      («не умею говорить нет») они значат совсем другое, поэтому там мы их
      не слушаем и берём следующий по точности смысл. */
@@ -16605,14 +16715,17 @@ function evaWake(){
   m.turn = (m.turn || 0) + 1;
   m.at = now; m.day.n++;
 
-  const id = (m.turn % 2) ? evaNextAsk() : null;
+  /* по очереди: вопрос → интересное → встреча из календаря */
+  const step = m.turn % 3;
+  const id = step === 1 ? evaNextAsk() : null;
   const q = id ? EVA_ASKS.find(x => x.id === id) : null;
   if(q){
     m.ask = id; m.asked[id] = now; m.n = 0;
     evaPush({r:'eva', t:q.t, q:true, a:q.o.map((o, i) => [o.l, `evaPickOpt(${i})`])});
     evaMail(q.t, 'evaBack');
   } else {
-    const ans = evaMsg(evaFact());
+    const tip = step === 0 ? evaEventTip() : null;
+    const ans = evaMsg(tip || evaFact());
     evaPush(ans);
     evaMail(ans.t, 'evaTalk');
   }
@@ -16650,9 +16763,10 @@ function evaBubble(mm){
 const EVA_TIPS_DEF = [
   ['Что мне сегодня делать?', "ask('что мне сегодня делать')"],
   ['Я устала', "ask('я устала')"],
+  ['Какие мероприятия скоро?', "ask('какие мероприятия')"],
   ['Расскажи интересное', "ask('расскажи интересное')"],
-  ['Почему такая программа?', "ask('почему такая программа')"],
-  ['Мои баллы', "ask('сколько у меня баллов')"]
+  ['Подбери курс', "ask('какие курсы')"],
+  ['Частые вопросы', 'evaFaqToggle()']
 ];
 const EVA_TIPS_BY = {
   today:  [['Почему такая программа?', "ask('почему такая программа')"], ['Слишком много', "ask('слишком много заданий')"]],
@@ -16665,6 +16779,10 @@ const EVA_TIPS_BY = {
   mom:    [['Пять минут для мамы', "ask('нет времени')"], ['Про вину', "ask('чувство вины')"]],
   body:   [['Про энергию', "ask('энергия')"], ['Про принятие', "ask('принятие тела')"]],
   fact:   [['Ещё интересное', "ask('еще интересное')"], ['Что сегодня', "ask('что мне сегодня делать')"]],
+  events: [['Онлайн или офлайн?', "ask('как проходят онлайн встречи')"], ['Подбери курс', "ask('какие курсы')"]],
+  courses:[['Кто из экспертов', "ask('кто ведет материалы')"], ['Практику на сегодня', "ask('какие есть практики')"]],
+  experts:[['Как записаться на консультацию', "ask('как записаться на консультацию')"], ['Курсы', "ask('какие курсы')"]],
+  practice:[['Мастер-класс', "ask('какие мастер классы')"], ['Что сегодня', "ask('что мне сегодня делать')"]],
   points: [['Как считаются баллы', "ask('как считаются баллы')"], ['Бонусы', "ask('бонусы')"]],
   help:   [['Что сегодня', "ask('что мне сегодня делать')"], ['Интересное', "ask('расскажи интересное')"]]
 };
@@ -16694,6 +16812,7 @@ function shEva(){
       </div>
       <button class="ebtn" onclick="evaSound()" aria-label="${S.voice ? 'Выключить голос' : 'Включить голос'}"
         title="Голос">${S.voice ? '🔊' : '🔇'}</button>
+      <button class="ebtn${S.evaFaq ? ' on' : ''}" onclick="evaFaqToggle()" aria-label="Частые вопросы" title="Частые вопросы">?</button>
       <button class="ebtn" onclick="evaClear()" aria-label="Очистить разговор" title="Начать заново">↺</button>
       <button class="chip" onclick="closeSheet()">Закрыть</button>
     </div>
@@ -16701,6 +16820,9 @@ function shEva(){
       ${msgs.map(evaBubble).join('')}
       ${S.evaTyping ? '<div class="bubble typing"><i></i><i></i><i></i></div>' : ''}
     </div>
+    ${S.evaFaq ? `<div class="evafaq"><div class="eyebrow" style="margin-bottom:6px">Частые вопросы</div>
+      <div class="chips wrap">${EVA_FAQ.map(f => `<button class="chip pale" onclick="askFaq('${attJs(f.id)}')">${esc(f.q)}</button>`).join('')}
+      ${EVA_FAQ_MORE.map(x => `<button class="chip pale" onclick="ask('${attJs(x[1])}')">${esc(x[0])}</button>`).join('')}</div></div>` : ''}
     ${tips ? `<div class="chips wrap evatips">${tips}</div>` : ''}
     <div class="row" style="gap:8px">
       <input class="field" id="vin" style="margin:0" placeholder="Напиши Еве" autocomplete="off"
@@ -16769,6 +16891,490 @@ function listen(){
   r.onerror = e => toast(EVA_MIC_ERR[e.error] || 'Не расслышала, попробуй ещё раз');
   r.onend = () => { EVA_REC = null; S.evaMic = false; render(); };
   try { r.start(); } catch(e){ EVA_REC = null; S.evaMic = false; toast('Микрофон занят'); }
+}
+
+/* =====================================================================
+   МЕРОПРИЯТИЯ, КУРСЫ, ПРАКТИКИ, ЭКСПЕРТЫ
+   Ева знает всё, что лежит в приложении, и отдаёт это не ссылкой «смотри
+   в разделе», а карточкой с кнопкой: открыть, записаться, посмотреть.
+   ===================================================================== */
+const evaShort = (t, n) => { t = String(t); n = n || 26; return t.length > n ? t.slice(0, n - 1) + '…' : t; };
+const EVA_GO_EVENTS = "closeSheet();S.clubTab='events';go('club')";
+const evaLow = s => String(s == null ? '' : s).toLowerCase().replace(/ё/g, 'е');
+
+/* ---------- мероприятия ---------- */
+/* Ближайшие по дате; если впереди пусто — последние прошедшие, честно
+   подписанные как прошедшие. Первыми — те, что ведёт эксперт по её темам. */
+function evaUpcoming(n){
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const live = EVENTS.filter(e => e.status === 'live');
+  const soon = live.filter(e => { const d = evDay(e.d); return d && d >= today; })
+    .sort((a, b) => evDay(a.d) - evDay(b.d));
+  const mine = S.tags || [];
+  const fit = e => { const ex = EXPERTS.find(x => x.n === e.by); return ex && ex.t.some(t => mine.indexOf(t) >= 0) ? 1 : 0; };
+  const pool = soon.length ? soon : live.slice().sort((a, b) => evDay(b.d) - evDay(a.d));
+  return {past: !soon.length, list: pool.slice().sort((a, b) => fit(b) - fit(a)).slice(0, n || 3)};
+}
+function evaEventLine(e){
+  const going = (S.myEvents || []).indexOf(e.id) >= 0;
+  return `«${e.t}» — ${evWhenText(e)}, ${evPlaceText(e)}, ${e.price ? money(e.price) : 'бесплатно'}` +
+    (going ? ' · ты записана' : '') + `. ${e.about}`;
+}
+const evaEventAct = e => [evaShort(e.t), `closeSheet();openSheet({k:'event',id:'${attJs(e.id)}'})`];
+
+function evaEvents(){
+  const up = evaUpcoming(3);
+  if(!up.list.length) return {t:'В календаре пока пусто. Как только появится встреча — скажу первой.',
+    a:[['Мероприятия', EVA_GO_EVENTS]]};
+  const head = up.past
+    ? 'Ближайших дат сейчас нет — вот что было недавно, такие встречи обычно повторяются:'
+    : ((S.tags || []).length ? 'Вот что ближе всего по датам — первым то, что по твоим темам:' : 'Вот что ближе всего по датам:');
+  return {t: head + '\n\n' + up.list.map(e => '• ' + evaEventLine(e)).join('\n\n'),
+    a: up.list.map(evaEventAct).concat([['Все мероприятия', EVA_GO_EVENTS]])};
+}
+/* одно мероприятие по её теме, на которое она ещё не записана — для письма */
+function evaEventTip(){
+  const up = evaUpcoming(6);
+  if(up.past) return null;
+  const e = up.list.find(x => (S.myEvents || []).indexOf(x.id) < 0);
+  if(!e) return null;
+  const ex = EXPERTS.find(x => x.n === e.by);
+  const why = ex && ex.t.some(t => (S.tags || []).indexOf(t) >= 0) ? 'по твоей теме' : 'которая может понравиться';
+  return {t:`В календаре есть встреча ${why}: ${evaEventLine(e)}\n\nОткрыть и посмотреть подробности?`,
+    a:[evaEventAct(e), ['Все мероприятия', EVA_GO_EVENTS]]};
+}
+
+/* ---------- курсы ---------- */
+function evaCourseRank(){
+  const mine = S.tags || [];
+  return COURSES.map(c => {
+    const ex = EXPERTS.find(x => x.n === c.e);
+    return {c, hit: ex ? ex.t.filter(t => mine.indexOf(t) >= 0).length : 0};
+  }).sort((a, b) => b.hit - a.hit || b.c.r - a.c.r).map(x => x.c);
+}
+const evaCourseAct = c => [evaShort(c.t), `closeSheet();openCourseLanding('${attJs(c.id)}')`];
+function evaCourseCard(c){
+  const mine = (S.courses || []).indexOf(c.id) >= 0;
+  return {t:`«${c.t}» — ведёт ${c.e}. ${c.d}\n\n${plural(c.n, 'неделя', 'недели', 'недель')} с заданиями, ${money(c.p)}` +
+      (c.old ? ` вместо ${money(c.old)}` : '') + `. Оценка ${c.r}.` + (mine ? ' Ты уже на этом курсе.' : ''),
+    a:[[mine ? 'Продолжить курс' : 'Открыть курс', `closeSheet();openCourseLanding('${attJs(c.id)}')`], ['Все курсы', "closeSheet();go('courses')"]]};
+}
+function evaCourses(ws){
+  const byTitle = COURSES.map(c => ({c, n: evaTitleHits(ws, c.t)})).filter(r => r.n >= 2).sort((a, b) => b.n - a.n)[0];
+  if(byTitle) return evaCourseCard(byTitle.c);
+  /* тема названа словами — «курс про сон»: сначала курс, в названии или
+     у эксперта которого эта тема */
+  const asked = evaTagsIn(ws);
+  if(asked.length){
+    const hit = COURSES.map(c => {
+      const ex = EXPERTS.find(x => x.n === c.e);
+      const inTitle = asked.filter(t => evaLow(c.t).indexOf(t.slice(0, Math.max(3, t.length - 2))) >= 0).length * 3;
+      const inExp = ex ? ex.t.filter(t => asked.indexOf(t) >= 0).length : 0;
+      return {c, s: inTitle + inExp};
+    }).filter(r => r.s).sort((a, b) => b.s - a.s)[0];
+    if(hit) return evaCourseCard(hit.c);
+  }
+  const top = evaCourseRank().slice(0, 3);
+  return {t:'Курс — это не один урок, а путь на несколько недель с заданиями. Под твои темы ближе всего:\n\n' +
+      top.map(c => `• «${c.t}» — ${c.e}, ${plural(c.n, 'неделя', 'недели', 'недель')}, ${money(c.p)}. ${c.d}`).join('\n\n'),
+    a: top.map(evaCourseAct).concat([['Все курсы', "closeSheet();go('courses')"]])};
+}
+
+/* ---------- практики и мастер-классы ---------- */
+function evaLessonCard(x){
+  const done = (S.program || []).some(d => (d.tasks || []).some(t => t.id === x.id && t.done));
+  return {t:`${EVA_KIND[x.type]} «${x.title}» — ${x.expert}, ${evaMin(x.min)}. ${x.text}\n\nПро что: ${x.tags.join(', ')}.` +
+      (done ? ' Ты её уже делала — можно повторить.' : ''), a:evaActs(x)};
+}
+/* Сколько слов фразы совпало с названием — по началам слов, чтобы «нидру»
+   нашло «Йога-нидра», а «стыда» — «Деньги без стыда». */
+const EVA_STOP = ['себя', 'тебя', 'меня', 'себе', 'тебе', 'мне', 'как', 'что', 'для', 'про', 'перед', 'после',
+  'без', 'при', 'или', 'это', 'эти', 'все', 'всех', 'есть', 'быть', 'хочу', 'надо', 'можно', 'нужно', 'мой', 'моя',
+  'мое', 'свой', 'своя', 'свое', 'свои', 'твой', 'твоя', 'твое', 'день', 'дня', 'дней', 'сегодня', 'очень', 'просто',
+  'опять', 'снова', 'постоянно', 'всегда', 'никогда', 'который', 'которая', 'чтобы', 'когда', 'если', 'может'];
+function evaTitleHits(ws, title){
+  const tw = evaLow(title).replace(/[^a-zа-я0-9]+/g, ' ').trim().split(' ')
+    .filter(w => w.length > 2 && EVA_STOP.indexOf(w) < 0);
+  /* четыре первые буквы: русское слово меняет хвост, а не начало;
+     служебные слова («себя», «как») названием не считаются */
+  return ws.filter(w => w.length > 3 && EVA_STOP.indexOf(w) < 0 && tw.some(t => t.slice(0, 4) === w.slice(0, 4))).length;
+}
+function evaFindLesson(ws){
+  const rank = LIB.filter(x => x.status === 'live').map(x => ({x, n: evaTitleHits(ws, x.title)}))
+    .filter(r => r.n).sort((a, b) => b.n - a.n);
+  const best = rank[0];
+  if(!best) return null;
+  /* одно совпавшее слово — только если оно длинное и редкое: «нидра», «заземлен» */
+  if(best.n === 1 && !ws.some(w => w.length >= 5 && evaLow(best.x.title).indexOf(w.slice(0, 4)) >= 0 && !/^(практ|расск|мастер|аффир|медит|котор)/.test(w))) return null;
+  return best.x;
+}
+/* темы библиотеки, названные во фразе своими словами */
+function evaTagsIn(ws){
+  return allTags().map(t => t[0]).filter(t => evaHas(ws, [t.slice(0, Math.max(3, t.length - 2))]));
+}
+function evaPractice(ws){
+  const one = evaFindLesson(ws);
+  if(one) return evaLessonCard(one);
+  const types = evaHas(ws, ['мастер', 'класс', 'лекц']) ? ['class'] : evaHas(ws, ['аффирм']) ? ['affirm'] : ['practice'];
+  const asked = evaTagsIn(ws);
+  const mine = asked.length ? asked : (S.tags || []).length ? S.tags : ['спокойствие', 'энергия'];
+  const p = profileOf();
+  const list = LIB.filter(x => x.status === 'live' && types.indexOf(x.type) >= 0 && allowed(x, p))
+    .map(x => ({x, s: scoreItem(x, p).score + x.tags.filter(t => mine.indexOf(t) >= 0).length * 7}))
+    .sort((a, b) => b.s - a.s).slice(0, 3).map(r => r.x);
+  if(!list.length) return {t:'В библиотеке пока нет такого — загляни в «Контент», там всё по темам.', a:[['Контент', "closeSheet();go('content')"]]};
+  const what = types[0] === 'class' ? 'мастер-классов' : types[0] === 'affirm' ? 'аффирмаций' : 'практик';
+  return {t:`Из ${what} под твои темы ближе всего:\n\n` + list.map(x => '• ' + evaItem(x) + ' ' + x.text).join('\n\n'),
+    a: list.map(x => [evaShort(x.title), `openLesson('${attJs(x.id)}')`]).concat([['Вся библиотека', "closeSheet();go('content')"]])};
+}
+
+/* ---------- эксперты ---------- */
+function evaExpertCard(ex){
+  const n = LIB.filter(x => x.status === 'live' && x.expert === ex.n).length;
+  const cs = COURSES.filter(c => c.e === ex.n);
+  return {t:`${ex.n} — ${ex.r.toLowerCase()}. Оценка ${ex.rate}. Темы: ${ex.t.join(', ')}. В библиотеке ${plural(n, 'материал', 'материала', 'материалов')}` +
+      (cs.length ? `, ведёт ${cs.length === 1 ? 'курс «' + cs[0].t + '»' : plural(cs.length, 'курс', 'курса', 'курсов')}` : '') +
+      '.\n\nНа её странице — консультация и кнопка «Написать»: вопрос уходит ей лично.',
+    a:[['Страница эксперта', `closeSheet();openExpert('${attJs(ex.id)}')`],
+       ['Написать', `closeSheet();openSheet({k:'write',id:'${attJs(ex.id)}'})`]]};
+}
+function evaExperts(ws){
+  const byName = EXPERTS.find(ex => evaLow(ex.n).split(' ').some(part => part.length >= 4 && evaHas(ws, [part.slice(0, 4)])));
+  if(byName) return evaExpertCard(byName);
+  const byTag = EXPERTS.find(ex => ex.t.some(t => evaHas(ws, [t.slice(0, Math.max(4, t.length - 2))])));
+  if(byTag) return evaExpertCard(byTag);
+  return {t:'Материалы ведут эксперты платформы — у каждой своя тема:\n\n' +
+      EXPERTS.map(ex => `• ${ex.n} — ${ex.r.toLowerCase()}`).join('\n') +
+      '\n\nОтбор проходят не все: сначала анкета, потом встреча с куратором. Скажи тему — подскажу, к кому.',
+    a: EXPERTS.slice(0, 3).map(ex => [ex.n.split(' ')[0], `closeSheet();openExpert('${attJs(ex.id)}')`])};
+}
+
+/* Если во фразе есть название курса, практики, эксперта или встречи —
+   это важнее общей темы: «расскажи про курс деньги без стыда» — про курс,
+   а не про деньги вообще. */
+function evaEntity(ws){
+  const sig = ws.filter(w => w.length > 3);
+  if(!sig.length) return null;
+  const hits = (title, need) => evaTitleHits(ws, title) >= need;
+  const c = COURSES.find(x => hits(x.t, 2));
+  if(c) return evaCourseCard(c);
+  const e = EVENTS.find(x => x.status === 'live' && hits(x.t, 2));
+  if(e) return {t:evaEventLine(e) + (e.who ? '\n\nКому: ' + e.who : ''), a:[evaEventAct(e), ['Все мероприятия', EVA_GO_EVENTS]]};
+  const ex = EXPERTS.find(x => hits(x.n, 2));
+  if(ex) return evaExpertCard(ex);
+  const l = LIB.find(x => x.status === 'live' && hits(x.title, 2));
+  if(l) return evaLessonCard(l);
+  return null;
+}
+
+/* =====================================================================
+   ЧАСТЫЕ ВОПРОСЫ
+   То, что спрашивают у поддержки, а могла бы ответить Ева. Каждый — и
+   смысл для разбора фразы, и кнопка в панели «?» окна.
+   ===================================================================== */
+const EVA_FAQ = [
+  {id:'cancel', q:'Как отменить подписку?', k:['отменить подписк', 'отмена подписк', 'отписат', 'отключить подписк', 'не списыва'],
+   t:'Кабинет → Оплаты → «Управлять» → «Отменить подписку». Доступ останется до конца оплаченного срока, баллы и звёзды никуда не денутся.',
+   a:[['Управлять подпиской', "closeSheet();openPage('sub')"]]},
+  {id:'refund', q:'Можно ли вернуть деньги?', k:['вернуть деньг', 'возврат', 'верните'],
+   t:'Напиши в поддержку с темой «Оплата» — разберём по-человечески, а не по регламенту. Сейчас оплата картой ещё подключается, доступ открывается по заявке вручную.',
+   a:[['Написать в поддержку', "closeSheet();openSheet('support')"]]},
+  {id:'consult', q:'Как записаться на консультацию?', k:['записаться на консульт', 'консультац', 'встреча с эксперт', 'встречу с эксперт'],
+   t:'На странице эксперта — «Консультация»: выбираешь услугу, оставляешь телефон или телеграм, и Eva Эксперты напишут сюда, когда договорятся о времени. Скажи тему — подскажу, к кому.',
+   a:[['Кто из экспертов', "ask('кто ведет материалы')"]]},
+  {id:'write', q:'Как написать эксперту?', k:['написать эксперт', 'задать вопрос эксперт', 'связаться с эксперт'],
+   t:'На странице эксперта есть «Написать». Вопрос уходит ей лично, ответ придёт в «Послания» от Eva Экспертов — обычно в течение суток.',
+   a:[['Кто из экспертов', "ask('кто ведет материалы')"]]},
+  {id:'profile', q:'Как поменять имя, фото или почту?', k:['поменять имя', 'сменить имя', 'поменять фото', 'аватар', 'поменять почт', 'сменить парол', 'поменять парол'],
+   t:'Кабинет → Настройки: там имя, фото, почта, пароль, телефон и телеграм. Имя можно поменять и здесь — скажи «меня зовут …».',
+   a:[['Настройки', "closeSheet();openPage('settings')"]]},
+  {id:'notif', q:'Как включить напоминания?', k:['напомина', 'уведомлен', 'пуш'],
+   t:'Кабинет → Настройки → Уведомления: напоминание о практике в удобное время, итоги недели, новые встречи. Время напоминания выбираешь сама.',
+   a:[['Настройки', "closeSheet();openPage('settings')"]]},
+  {id:'anon', q:'Что такое анонимные комнаты?', k:['анонимн', 'под ником', 'без имени'],
+   t:'Комнаты в Сообществе, где ни имён, ни лиц: входишь под ником, который сама выбираешь, ведёт редакция Евы. Для того, о чём пока не хочется говорить своим именем.',
+   a:[['Сообщество', "closeSheet();go('club')"]]},
+  {id:'city', q:'Как найти встречу в моём городе?', k:['в моем город', 'в моём город', 'рядом со мной', 'офлайн встреч', 'в москве', 'в питере', 'в петербурге'],
+   t:'Сообщество → Мероприятия: там фильтр по городу и по формату — офлайн или онлайн. Онлайн идёт в Zoom, ссылка приходит в «Послания» за час до начала.',
+   a:[['Мероприятия', EVA_GO_EVENTS]]},
+  {id:'code', q:'Не приходит письмо с кодом', k:['не приходит код', 'не пришел код', 'не пришло письмо', 'не приходит письмо', 'код подтвержден', 'не могу войти'],
+   t:'Проверь папку «Спам» и что почта написана без опечатки. В окне входа есть «Отправить ещё раз». Если и так не приходит — напиши в поддержку, откроем вход вручную.',
+   a:[['Написать в поддержку', "closeSheet();openSheet('support')"]]},
+  {id:'data', q:'Мои данные в безопасности?', k:['мои данные', 'безопасн', 'конфиденц', 'кто видит'],
+   t:'Ответы теста, отметки и наша переписка хранятся в твоём аккаунте на платформе. Видишь их ты — и команда поддержки, только когда ты сама ей пишешь. Анонимные комнаты не показывают имя даже редакции.',
+   a:[]},
+  {id:'stars', q:'Когда обнуляются звёзды?', k:['обнуля', 'сгора', 'когда сброс', 'звезды пропал', 'звёзды пропал'],
+   t:'В понедельник: неделя пересобирается, и звёзды начинаются заново. Баллы не обнуляются никогда — от них зависит статус.',
+   a:[['Как считаются баллы', "ask('как считаются баллы')"]]},
+  {id:'topics', q:'Как поменять темы программы?', k:['поменять тем', 'сменить тем', 'другие тем', 'изменить программ'],
+   t:'Скажи мне, что сейчас важнее, — я подниму тему в подборе. Или «Пересобрать программу»: там заново выбираешь темы, минуты в день и удобное время.',
+   a:[['Пересобрать программу', "closeSheet();openSheet('rebuild')"]]},
+  {id:'become', q:'Как стать экспертом?', k:['стать эксперт', 'хочу быть эксперт', 'заявка эксперт', 'заявку эксперт', 'вести практик'],
+   t:'В Кабинете — «Стать экспертом». Два этапа: короткая анкета и встреча в Zoom с куратором. Ответ приходит в «Послания» в течение недели.',
+   a:[['Кабинет', "closeSheet();openPage('profile')"]]},
+  {id:'adam', q:'Кто такой Адам?', k:['адам'],
+   t:'Адам — мой напарник в «Посланиях». Он не про программу: его дело — сказать тебе что-то хорошее и напомнить, какая ты. Пишет раз в день, а если нужно прямо сейчас — вкладка «Комплимент» в сообщениях.',
+   a:[['Открыть Адама', "closeSheet();openAdam()"]]},
+  {id:'support', q:'Как связаться с поддержкой?', k:['поддержк', 'связаться с вами', 'живой человек', 'написать вам', 'техподдерж'],
+   t:'Кнопка ниже — или Кабинет → Поддержка. Отвечаем в «Посланиях», обычно в течение дня. Если что-то сломалось — опиши, что нажимала: так починим быстрее.',
+   a:[['Написать в поддержку', "closeSheet();openSheet('support')"]]},
+  {id:'voice', q:'Как выключить голос?', k:['выключи голос', 'выключить голос', 'не читай вслух', 'без звука', 'озвучк'],
+   t:'Кнопка со звуком в шапке этого окна. То же самое — Кабинет → Настройки → «Голос Евы».',
+   a:[['Переключить голос', 'evaSound()']]},
+  {id:'trial', q:'Что входит в бесплатный доступ?', k:['бесплатный доступ', 'что бесплатно', 'бесплатно ли', 'пробный период', 'три дня', 'без подписк'],
+   t:'Первые три дня открыто всё. Потом бесплатными остаются аффирмации и каждый третий материал библиотеки, а полный доступ к библиотеке, курсам и клубу даёт подписка.',
+   a:[['Подписка', "closeSheet();openPage('sub')"]]},
+  {id:'letters', q:'Почему Ева пишет в «Послания»?', k:['почему пишешь', 'зачем письм', 'письма от тебя', 'ты писала'],
+   t:'Когда ты не заходишь в это окно, я оставляю письмо — свой вопрос или интересное, не чаще раза в день. Ответить можно прямо в письме, я отвечу там же.',
+   a:[]},
+  {id:'online', q:'Как проходят онлайн-встречи?', k:['онлайн встреч', 'по зуму', 'zoom', 'зум', 'ссылка на встреч'],
+   t:'В Zoom. Ссылка приходит в «Послания» за час, камеру включать не обязательно. За три дня попрошу подтвердить, что придёшь: на бесплатных местах есть очередь.',
+   a:[['Мероприятия', EVA_GO_EVENTS]]},
+  {id:'order', q:'Как оплатить заказ в маркете?', k:['оплатить заказ', 'доставк', 'где мой заказ', 'статус заказ'],
+   t:'После заказа Eva Маркет пишет в «Послания», как оплатить и когда доставим — обычно в течение дня. Бонусами можно закрыть до 30% суммы. Номер заказа есть в письме.',
+   a:[['Сообщения', "closeSheet();openPage('inbox')"]]},
+  {id:'gentle_what', q:'Что такое мягкий режим?', k:['что такое мягк', 'мягкий режим это', 'зачем мягк'],
+   t:'Режим на дни, когда сил нет: в дне остаётся аффирмация и одно короткое дело вместо трёх. Звёзды за такой день тоже считаются. Включается словами «устала» или «поменьше», выключается — «полный режим».',
+   a:[['Включить мягкий режим', "ask('мягкий режим')"]]}
+];
+/* быстрые вопросы к смыслам, которые уже есть */
+const EVA_FAQ_MORE = [
+  ['Как считаются баллы?', 'как считаются баллы'], ['Что такое бонусы?', 'что такое бонусы'],
+  ['Как пригласить подругу?', 'как пригласить подругу'], ['Как собрана программа?', 'почему такая программа'],
+  ['Какие мероприятия скоро?', 'какие мероприятия'], ['Какие есть курсы?', 'какие курсы'],
+  ['Кто из экспертов?', 'кто ведет материалы'], ['Что ты умеешь?', 'что ты умеешь']
+];
+/* частые вопросы встают первыми: их приметы точные, из нескольких слов */
+EVA_FAQ.slice().reverse().forEach(f => EVA_I.unshift({id:'faq_' + f.id, k:f.k, f:() => ({t:f.t, a:f.a})}));
+
+function evaFaqList(){
+  const all = EVA_FAQ.map(f => [f.q, `ask('${attJs(f.q)}')`]).concat(EVA_FAQ_MORE.map(x => [x[0], `ask('${attJs(x[1])}')`]));
+  return {t:'Вот что спрашивают чаще всего — нажми на вопрос:', a:all};
+}
+
+/* панель «?»: вопрос нажатием — без разбора фразы, ответ точно тот */
+function evaFaqToggle(){ S.evaFaq = !S.evaFaq; render(); evaScroll(); }
+function askFaq(id){
+  const f = EVA_FAQ.find(x => x.id === id);
+  if(!f) return;
+  S.evaFaq = false;
+  evaPush({r:'me', t:f.q});
+  EM().topic = 'faq_' + id;
+  render(); evaScroll();
+  evaReply({t:f.t, a:f.a});
+}
+/* =====================================================================
+   АДАМ — НАПАРНИК В «ПОСЛАНИЯХ»
+   Ева ведёт программу и отвечает на вопросы. У Адама задача другая, и
+   она одна: сказать женщине что-то хорошее — про неё, а не про дела.
+   Комплимент, слово поддержки, напоминание, какая она. Пишет сам раз в
+   день, отвечает, когда ему пишут, и всегда под рукой во вкладке
+   «Комплимент» в сообщениях.
+
+   Правило тона: без флирта и без сравнений с другими. Хвалим характер,
+   усилия и выбор, а не внешность. Где можно — опираемся на её данные:
+   серию дней, звёзды, темы. Такой комплимент невозможно перепутать
+   с рассылкой.
+   ===================================================================== */
+
+const ADAM_NAME = 'Адам';
+
+/* тридцать комплиментов: универсальные, но не пустые */
+const ADAM_LINES = [
+  'Ты умеешь возвращаться. Это редкое умение — большинство людей после паузы просто исчезает, а ты приходишь снова.',
+  'В тебе есть спокойная сила: не та, что громко, а та, что каждый день. Её замечают не сразу — зато навсегда.',
+  'Ты берёшься за то, от чего другие отмахиваются: за себя. Это самое трудное дело из всех, и ты его делаешь.',
+  'У тебя хороший вкус на людей и на слова. Заметь: те, кто рядом с тобой, обычно становятся спокойнее.',
+  'Ты не идеальная — и это лучшее, что в тебе есть. Идеальные не растут, а ты растёшь.',
+  'Знаешь, что в тебе подкупает? Ты честная с собой. Мало кто на это решается.',
+  'Ты умеешь слышать — и людей, и себя. Это дар, который не купишь ни на одном курсе.',
+  'Сегодня ты уже сделала главное — открыла глаза и решила жить дальше. Всё остальное — бонус.',
+  'Ты держишь на себе больше, чем показываешь. И всё равно находишь силы на доброту. Это впечатляет.',
+  'Твоя способность начинать заново — не слабость и не хаос. Это смелость, просто в бытовой упаковке.',
+  'Ты замечаешь мелочи: интонацию, взгляд, паузу. Люди с таким слухом делают мир мягче.',
+  'Ты не обязана быть удобной. И там, где ты перестаёшь быть удобной, ты становишься собой — это красиво.',
+  'Ты умеешь радоваться простому: чаю, тишине, чужой удаче. Это признак не простоты, а зрелости.',
+  'Есть люди, рядом с которыми хочется быть лучше. Не потому, что они требуют, а потому что они такие. Ты из них.',
+  'Ты сомневаешься — значит, думаешь. Уверенные во всём обычно давно перестали.',
+  'То, как ты бережёшь других, видно издалека. Пусть сегодня хоть немного этого достанется тебе.',
+  'Ты умная. Не «начитанная» — именно умная: видишь суть раньше, чем её объяснят.',
+  'Твоё «нет» стоит дорого, и ты правильно его не раздаёшь. А твоё «да» — по-настоящему.',
+  'Ты не сдалась там, где имела полное право сдаться. Я это помню, даже если ты забыла.',
+  'В тебе есть юмор, который спасает в самые серые дни. Береги его — он у тебя настоящий.',
+  'Ты умеешь ждать, не переставая идти. Это редко встречается: обычно люди либо бегут, либо стоят.',
+  'Ты добрая не потому, что слабая, а потому что сильная. Слабые добрыми быть не могут — у них не хватает на это сил.',
+  'У тебя есть внутренний компас. Он иногда молчит, но никогда не врёт. Доверяй ему чаще.',
+  'Ты много даёшь и мало просишь. Сегодня разрешаю себе сказать: попроси. Тебе тоже положено.',
+  'Твоя усталость — не слабость, а счёт за всё, что ты вынесла. Ты имеешь право отдохнуть, а не заслужить отдых.',
+  'Ты интересная. С тобой есть о чём молчать — а это выше, чем «есть о чём поговорить».',
+  'Ты меняешься — и остаёшься собой. Это самое трудное сочетание из всех, и у тебя оно получается.',
+  'Ты умеешь прощать — и себя тоже, хоть и медленнее, чем других. Это тоже работа, и ты её делаешь.',
+  'В тебе больше света, чем ты видишь в зеркале по утрам. Зеркало просто не туда смотрит.',
+  'Ты — человек, на которого можно положиться. Знаешь, как это редко? Обычно на таких и держится всё вокруг.'
+];
+
+/* строки, которые вдохновляют — когда нужно не «ты хорошая», а «вперёд» */
+const ADAM_INSPIRE = [
+  'Сегодня не надо всё. Надо одно. Выбери его — и оно уже наполовину сделано.',
+  'Никто не ждёт от тебя идеального дня. Живой день лучше идеального.',
+  'То, что ты сделаешь сегодня для себя, завтра станет твоей опорой. Так и накапливается.',
+  'Начни с пяти минут. Пять минут — это не «мало», это «уже».',
+  'Ты не отстаёшь. Ты идёшь своим темпом, а это единственный темп, который доводит до конца.',
+  'Плохой день — это день, а не диагноз. Завтра ты снова будешь собой.',
+  'Всё, что ты сейчас чувствуешь, можно. Даже если это злость. Даже если ничего.',
+  'Твоё «потом» тоже имеет право на существование. Но сегодня — это сегодня, и ты в нём.',
+  'Не нужно быть готовой. Готовых не бывает. Бывают те, кто начал.',
+  'Самое смелое, что можно сделать утром, — выбрать себя. Ты это умеешь.',
+  'Ты уже прошла дни, которые казались непроходимыми. Этот тоже пройдёшь.',
+  'Если сегодня не получилось — значит, сегодня ты училась. Это тоже засчитывается.'
+];
+
+/* ---------- память ---------- */
+function AM(){
+  const m = S.adamMem;
+  if(!m || typeof m !== 'object' || Array.isArray(m)) S.adamMem = {seen:[], insp:[], at:0, n:0};
+  if(!S.adamMem.seen) S.adamMem.seen = [];
+  if(!S.adamMem.insp) S.adamMem.insp = [];
+  return S.adamMem;
+}
+
+/* ---------- о ней самой ----------
+   Лучший комплимент — из её же данных: он не может быть рассылкой. */
+function adamPersonal(){
+  const out = [];
+  const n = S.name ? S.name : '';
+  const st = typeof streak === 'function' ? streak() : 0;
+  if(st >= 2) out.push(`${plural(st, 'день', 'дня', 'дней')} подряд закрыты полностью. Знаешь, что это значит? Что на тебя можно положиться — и в первую очередь тебе самой.`);
+  const sw = typeof starsWeek === 'function' ? starsWeek() : 0;
+  if(sw >= 6) out.push(`${sw} звёзд за неделю — и ни одной за «просто зашла». Каждая — это дело, которое ты довела. Я такое замечаю.`);
+  const all = S.starsAll || 0;
+  if(all >= 15) out.push(`У тебя ${plural(all, 'звезда', 'звезды', 'звёзд')} за всё время. Это не про приложение — это про то, сколько раз ты выбрала себя, когда могла не выбирать.`);
+  const taste = S.taste || {};
+  const fav = Object.keys(taste).sort((a, b) => taste[b] - taste[a])[0];
+  if(fav && taste[fav] >= 2) out.push(`Ты раз за разом доделываешь материалы про ${fav}. Не бросаешь на половине. Так поступают те, кто решил всерьёз.`);
+  if((S.likes || []).length >= 3) out.push(`Ты ставишь звёзды тому, что откликнулось, — значит, слушаешь себя, а не «надо». Это и есть вкус.`);
+  if((S.joined || []).length >= 2) out.push(`Ты в ${plural((S.joined || []).length, 'группе', 'группах', 'группах')} сразу. Люди тянутся туда, где живёт тепло, — и часто его туда приносят. Это про тебя.`);
+  if(!out.length) return null;
+  const t = out[Math.floor(Math.random() * out.length)];
+  return n ? `${n}, ${t.charAt(0).toLowerCase() + t.slice(1)}` : t;
+}
+
+/* новый комплимент: сначала о ней, потом из списка без повторов */
+function adamPick(kind){
+  const m = AM();
+  if(kind !== 'insp' && Math.random() < 0.4){
+    const own = adamPersonal();
+    if(own) return own;
+  }
+  const pool = kind === 'insp' ? ADAM_INSPIRE : ADAM_LINES;
+  const seen = kind === 'insp' ? m.insp : m.seen;
+  let free = pool.map((t, i) => i).filter(i => seen.indexOf(i) < 0);
+  if(!free.length){ seen.length = 0; free = pool.map((t, i) => i); }
+  const i = free[Math.floor(Math.random() * free.length)];
+  seen.push(i);
+  const t = pool[i];
+  return (S.name && kind !== 'insp' && Math.random() < 0.5) ? `${S.name}, ${t.charAt(0).toLowerCase()}${t.slice(1)}` : t;
+}
+
+/* ---------- переписка ---------- */
+function adamThread(){
+  if(typeof initInbox === 'function') initInbox();
+  return chanThread('adam');
+}
+function adamSay(text, act){
+  const t = adamThread();
+  const d = new Date();
+  t.msgs.push({me:false, t:text, act:act || '',
+    tm:String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')});
+  if(t.msgs.length > 40) t.msgs = t.msgs.slice(-40);
+  t.unread = true; t.ago = 'только что';
+  S.inbox = [t].concat(S.inbox.filter(x => x !== t));
+  schedulePersist();
+  return t;
+}
+
+/* Сам пишет раз в день: не раньше девяти утра и только когда приложение
+   открыто. Первое письмо — знакомство, дальше — комплимент дня. */
+let ADAM_HOUR = 9;                 // let, а не const: в тесте час подменяют
+function adamWake(){
+  if(S.screen !== 'app' || !S.user || (S.role && S.role !== 'user')) return false;
+  const m = AM(), now = new Date();
+  if(now.getHours() < ADAM_HOUR) return false;
+  const today = now.toDateString();
+  if(m.day === today) return false;
+  m.day = today; m.n = (m.n || 0) + 1;
+  if(m.n === 1){
+    adamSay((S.name ? S.name + ', привет. ' : 'Привет. ') +
+      'Я Адам. Ева ведёт твою программу, а я здесь ради другого: раз в день говорить тебе что-то хорошее — про тебя, а не про дела. ' +
+      'Начну сегодня.\n\n' + adamPick(), 'adamMore');
+  } else {
+    adamSay(adamPick(), 'adamMore');
+  }
+  return true;
+}
+
+/* по кнопке — прямо сейчас */
+function adamAsk(kind){
+  const t = adamSay(adamPick(kind), 'adamMore');
+  t.unread = false;                                  // она сама попросила — это прочитано
+  if(S.page === 'inbox') S.inboxTab = 'adam';
+  render();
+  toast(kind === 'insp' ? 'От Адама' : 'Комплимент от Адама');
+}
+
+/* ответ, когда ему пишут: благодарность, грусть, всё остальное */
+function adamReply(text){
+  const ws = evaWords(text), ns = ' ' + ws.join(' ') + ' ';
+  const has = arr => arr.some(p => p.indexOf(' ') >= 0 ? ns.indexOf(p) >= 0 : evaHas(ws, [p]));
+  let t;
+  if(has(['спасиб', 'благодар', 'приятн']))
+    t = ['Не за что. Это просто правда — я её только произнёс.',
+         'Пожалуйста. Приходи за этим, когда захочешь: у меня не кончается.',
+         'Обращайся. И запомни это на завтра — завтра тоже пригодится.'][Math.floor(Math.random() * 3)];
+  else if(has(['плох', 'грустн', 'устал', 'тяжел', 'слез', 'плач', 'одинок', 'не могу']))
+    t = 'Слышу. Не буду говорить «всё будет хорошо» — скажу другое: ' + adamPick('insp') +
+        '\n\nЕсли захочешь не слов, а дела, — Ева подберёт что-то на пять минут. Но это потом. Сейчас просто побудь.';
+  else if(has(['привет', 'здравств', 'добр', 'хай']))
+    t = (S.name ? 'Привет, ' + S.name + '. ' : 'Привет. ') + adamPick();
+  else if(has(['кто ты', 'ты кто', 'ты робот', 'ты настоящ']))
+    t = 'Я Адам — напарник Евы. Не человек и не притворяюсь: я знаю, что ты делаешь на платформе, и умею об этом сказать по-хорошему. Больше ничего не умею — и не собираюсь.';
+  else if(has(['неправд', 'не верю', 'врешь', 'льстишь', 'подхалим']))
+    t = 'Понимаю недоверие. Тогда без красивых слов, только факт: ' + (adamPersonal() || 'ты здесь и читаешь это — уже больше, чем делает большинство в такой день.');
+  else
+    t = adamPick(Math.random() < 0.5 ? 'insp' : '');
+  adamSay(t, 'adamMore');
+  return t;
+}
+
+/* открыть вкладку «Комплимент» из любого места */
+function openAdam(){
+  resetViews(); S.page = 'inbox'; S.thread = null; S.inboxTab = 'adam';
+  render(); window.scrollTo(0, 0);
+}
+
+/* ---------- вкладка «Комплимент» в сообщениях ---------- */
+function pgAdamTab(){
+  const t = adamThread();
+  const last = t.msgs.slice().reverse().find(m => !m.me);
+  const hist = t.msgs.filter(m => m !== last).slice(-6);      // то, что в карточке, второй раз не показываем
+  return `<div class="adamcard">
+      <div class="row" style="align-items:center;gap:12px;margin-bottom:12px">
+        ${threadAva(t, 46)}
+        <div><b style="font-size:16px">Адам</b>
+          <div class="small muted">говорит тебе хорошее. Раз в день сам — и когда попросишь</div></div>
+      </div>
+      <div class="adamsay">${last ? esc(last.t).replace(/\n/g, '<br>') : 'Нажми — и он скажет.'}</div>
+      <div class="acts" style="margin-top:12px">
+        <button class="btn" onclick="adamAsk()">Хочу комплимент</button>
+        <button class="btn ghost" onclick="adamAsk('insp')">Вдохнови</button>
+      </div>
+    </div>
+    ${hist.length ? `<div class="sec-h" style="margin-top:16px"><h2 class="serif" style="font-size:18px">Что он говорил</h2>
+      <button class="link" onclick="openThread('${attJs(t.id)}')">Ответить ему</button></div>
+    <div class="chatlist">${hist.map(m => `<div class="cmsg ${m.me ? 'own' : ''}">
+      ${!m.me ? threadAva(t, 30) : ''}
+      <div class="txt"><div class="mtext">${esc(m.t)}</div><div class="tm">${esc(m.tm)}</div></div></div>`).join('')}</div>` : ''}
+    <p class="small muted" style="margin-top:12px">Адам не оценивает внешность и не сравнивает с другими — только то, что ты делаешь и какая ты. Если захочешь, чтобы он писал реже, скажи ему «пиши реже».</p>`;
 }
 </script>
 </body>

@@ -36,6 +36,8 @@ h2.serif{font-size:19px;margin:0}
 .shell{max-width:var(--shell);margin:0 auto;min-height:100vh;padding-bottom:calc(var(--nav-h) + 58px + env(safe-area-inset-bottom))}
 .pad{padding:0 16px}
 .view{animation:up .3s cubic-bezier(.2,.75,.3,1) forwards}
+/* тихая перерисовка по таймеру: страница обновляется без выезда */
+#pagebox.quiet .view{animation:none}
 @keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .anim-up{animation:up .45s cubic-bezier(.2,.75,.3,1) forwards}
@@ -1286,3 +1288,10 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
   background:var(--accent);color:#fff;font-size:10px;font-weight:700;font-style:normal;
   display:grid;place-items:center;padding:0 4px;border:2px solid var(--paper);animation:beat 1.9s infinite}
 @keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+.ebtn.on{background:var(--ink);color:#fff}
+.evafaq{background:var(--surface-2);border-radius:var(--r);padding:10px 11px 4px;margin-bottom:10px}
+/* ---------- Адам: вкладка «Комплимент» ---------- */
+.adamcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 15px 15px}
+.adamsay{font-size:16.5px;line-height:1.45;font-weight:500;letter-spacing:-.01em;padding:14px 15px;border-radius:var(--r);
+  background:linear-gradient(135deg,rgba(63,125,98,.10),rgba(63,125,98,.03));border:1px solid rgba(63,125,98,.22)}
+.segdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:5px;vertical-align:middle}

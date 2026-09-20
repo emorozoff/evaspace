@@ -91,29 +91,32 @@ function evMessage(e, k){
   const st = evStateSet(e.id, {});
   const when = evWhenText(e), place = evPlaceText(e);
   const bring = e.bring ? '\nЧто взять: ' + e.bring : '';
+  const name = S.name ? S.name + ', ' : '';
+  const Name = S.name ? S.name + ', ' : '';
 
   if(k === 'booked') return {t:
-    (evPaid(e) ? 'Билет у тебя. ' : 'Место за тобой. ') + '«' + e.t + '»\n\n' +
+    (evPaid(e) ? Name + 'билет у тебя. ' : Name + 'место за тобой. ') + '«' + e.t + '»\n\n' +
     '📅 ' + when + '\n📍 ' + place +
     (evPaid(e) ? '\n🎟 ' + money(e.price) + ', оплачено' : '\n🎟 бесплатно') + '\n\n' +
     (evPaid(e)
       ? 'Подтверждать ничего не нужно — просто приходи. Напомню накануне и в день встречи.'
       : 'За три дня попрошу подтвердить, что идёшь: на бесплатных местах всегда есть очередь.') +
-    '\n\nСкажи, придёшь одна или с подругой?', act:'plusone', ticket:true};
+    '\n\nИ один вопрос, чтобы ведущая знала, сколько вас ждать: придёшь одна или с подругой?', act:'plusone', ticket:true};
 
   if(k === 'invite') return st.plusOne
     ? {t:'Держи приглашение для подруги на «' + e.t + '».\n\n' +
          'Она открывает ссылку, вводит код и попадает на то же место рядом с тобой.\n' +
          'Код: ' + evInviteCode(e) + '\n\n' +
          'Если подруга передумала — просто не отправляй код, на записи это не скажется.', act:''}
-    : {t:'Через неделю «' + e.t + '».\n\n' +
-         'Вдвоём доходят чаще — если хочешь, возьми подругу. Для неё будет скидка по приглашению.',
+    : {t:name + 'через неделю «' + e.t + '».\n\n' +
+         'Маленькое наблюдение: вдвоём доходят чаще, чем в одиночку. Если есть кого позвать — возьми подругу, ' +
+         'для неё будет скидка по приглашению. Если нет — тоже нормально, тебя ждут и одну.',
        act:'invite'};
 
   if(k === 'confirm') return {t:
-    'Через три дня «' + e.t + '», ' + when + '.\n\n' +
-    'Скажи, идёшь? Если планы поменялись — так тоже бывает, просто нажми «не смогу», ' +
-    'и место достанется той, кто ждёт. Никто не расстроится, честный ответ дороже.', act:'confirm'};
+    name + 'через три дня «' + e.t + '», ' + when + '.\n\n' +
+    'Скажи, идёшь? Если планы поменялись — так бывает у всех, просто нажми «не смогу», ' +
+    'и место достанется той, кто ждёт в очереди. Никто не расстроится: честный ответ дороже вежливого.', act:'confirm'};
 
   if(k === 'hold') return {t:
     'Через три дня «' + e.t + '», ' + when + '.\n\n' +
@@ -129,14 +132,14 @@ function evMessage(e, k){
     act:'', ticket:true};
 
   if(k === 'today') return {t:
-    'Сегодня в ' + (e.tm || '') + '. Ждём тебя.\n\n' +
+    'Сегодня в ' + (e.tm || '') + ' — ждём тебя' + (S.name ? ', ' + S.name : '') + '.\n\n' +
     (e.mode === 'онлайн' ? '🔗 Ссылка открыта, заходи за пять минут до начала.' : '📍 ' + place) +
     '\n\nЕсли день сложился иначе — напиши сюда, это нормально.', act:'', ticket:true};
 
   if(k === 'after') return {t:
-    'Ну как «' + e.t + '»?\n\n' +
-    'Сначала главное: получилось прийти? Отвечай честно — по этому мы понимаем, ' +
-    'какие встречи собирают, а какие только выглядят красиво.', act:'came'};
+    name + 'ну как вчера — «' + e.t + '»?\n\n' +
+    'Сначала главное: получилось прийти? Отвечай честно, это не экзамен: по таким ответам мы понимаем, ' +
+    'какие встречи собирают людей, а какие только красиво выглядят в афише.', act:'came'};
 
   return null;
 }
@@ -212,7 +215,7 @@ function evDemoTimer(){
       const next = evSteps(e).find(s => s.h !== null && st.sent.indexOf(s.k) < 0);
       if(next && evFire(e, next.k)) moved = true;
     });
-    if(moved && S.screen === 'app'){ try { render(); } catch(err){ console.error('[Eva] цепочка:', err); } }
+    if(moved && S.screen === 'app'){ try { softRender(); } catch(err){ console.error('[Eva] цепочка:', err); } }
   }, 10000);
 }
 
@@ -335,6 +338,10 @@ function evActions(m){
     <button class="btn xs" onclick="S.thread=null;go('home')">К моей неделе</button></div>`;
   if(m.act === 'weekBlock') return `<div class="macts">${BLOCKS.map(x =>
     `<button class="btn xs" onclick="weekBlock('${attJs(x.k)}')">${esc(x.n)}</button>`).join('')}</div>`;
+  /* письмо Адама: ещё одно — прямо здесь */
+  if(m.act === 'adamMore') return `<div class="macts">
+    <button class="btn xs acc" onclick="adamAsk()">Ещё комплимент</button>
+    <button class="btn xs" onclick="adamAsk('insp')">Вдохнови</button></div>`;
   /* письма помощницы: у неё один ответ — открыть разговор */
   if(m.act === 'evaTalk') return `<div class="macts">
     <button class="btn xs acc" onclick="S.thread=null;openSheet('eva')">Открыть Еву</button></div>`;

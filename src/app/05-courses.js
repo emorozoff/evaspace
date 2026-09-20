@@ -1464,6 +1464,8 @@ function scrollChat(){ setTimeout(() => { const l = $('#clist'); if(l) window.sc
 const CHANNELS = {
   eva:     {id:'eva_week',   from:'Ева',           kind:'программа',   c:'#A8375C',
             s:'программа, итоги недели и разговоры о том, как идёт'},
+  adam:    {id:'ch_adam',    from:'Адам',          kind:'настроение',  c:'#3F7D62',
+            s:'комплимент дня и слова поддержки — про тебя, а не про дела'},
   events:  {id:'ch_events',  from:'Eva Events',    kind:'мероприятия', c:'#5E5FA8',
             s:'встречи, билеты и напоминания'},
   market:  {id:'ch_market',  from:'Eva Маркет',    kind:'маркет',      c:'#B8894A',
@@ -1491,6 +1493,33 @@ function chanThread(key){
     t.chan = key; t.from = c.from; t.c = c.c; t.kind = c.kind; t.sys = true;
   }
   return t;
+}
+
+/* Ответ канала на её сообщение. Раньше на всё было одно «Передали
+   команде» — как автоответчик. Теперь каждый отправитель отвечает как
+   тот, кто он есть: Eva Events знает про встречи, Eva Эксперты — про
+   ответы экспертов. Это всё ещё автоответ, но не безликий. */
+function chanAck(chan, text){
+  const n = S.name ? S.name + ', ' : '';
+  const ws = String(text || '').toLowerCase();
+  const pick = arr => arr[(S.inbox || []).length % arr.length];
+  if(chan === 'events'){
+    if(/не смогу|не приду|отмен/.test(ws)) return n + 'поняла, сниму тебя с записи и отдам место той, кто ждёт. Спасибо, что сказала заранее — это правда важно.';
+    if(/опозда|задерж/.test(ws)) return n + 'не переживай — предупрежу ведущую, тебя дождутся. Заходи тихо, как получится.';
+    if(/ссылк|где|адрес|как добрать/.test(ws)) return n + 'всё про место и ссылку — в письме с билетом выше. Если чего-то нет, уточню у ведущей и напишу сюда в течение часа.';
+    return pick([n + 'записала. Если это про время, место или ссылку — уточню у ведущей и вернусь сюда.',
+                 n + 'спасибо, передала организаторам. Ответ будет здесь же — обычно в течение дня.']);
+  }
+  if(chan === 'experts'){
+    return pick([n + 'передала эксперту лично. Она обычно отвечает в течение суток — напишу сюда, как только придёт ответ.',
+                 n + 'спасибо, вопрос у эксперта. Ответ придёт сюда — можно закрыть приложение и не ждать у экрана.']);
+  }
+  if(chan === 'market'){
+    return n + 'вижу. Менеджер маркета ответит сюда — обычно в течение дня. Если это про заказ, номер из письма поможет найти его быстрее.';
+  }
+  if(/спасиб|благодар/.test(ws)) return n + 'и тебе спасибо. Мы здесь.';
+  return pick([n + 'спасибо, увидели. Ответим здесь же — обычно в течение дня, живой человек, не робот.',
+               n + 'получили. Разберёмся и напишем сюда. Если срочно — так и напиши, поднимем выше в очереди.']);
 }
 
 /* Письмо от платформы. act — кнопка под письмом, tid — обращение,
@@ -1574,9 +1603,17 @@ function pullMarketReplies(){
 function pgInbox(){
   initInbox();
   if(S.thread) return pgThread();
+  const tab = S.inboxTab === 'adam' ? 'adam' : 'all';
+  const adamUnread = S.inbox.some(t => t.chan === 'adam' && t.unread);
   return `<div class="view pad">${backBtn('Назад')}
     <h1 class="serif" style="font-size:26px;margin:10px 0 4px">Сообщения</h1>
-    <p class="small muted" style="margin:0 0 14px">Приглашения от участниц, ответы экспертов и напоминания о мероприятиях.</p>
+    <p class="small muted" style="margin:0 0 12px">Приглашения от участниц, ответы экспертов и напоминания о мероприятиях.</p>
+    <div class="seg">
+      <button class="${tab === 'all' ? 'on' : ''}" onclick="S.inboxTab='all';render()">Письма</button>
+      <button class="${tab === 'adam' ? 'on' : ''}" onclick="S.inboxTab='adam';render()">Комплимент${adamUnread ? ' <i class="segdot"></i>' : ''}</button>
+    </div>
+    ${tab === 'adam' && typeof pgAdamTab === 'function' ? pgAdamTab() + '</div>' : ''}
+    ${tab === 'adam' ? '' : `
     ${S.inbox.some(x => x.kind === 'мероприятие') && S.evFast !== false ? `
       <div class="evfast"><span>⏱</span>
         <div><b>Ускоренный показ включён</b>
@@ -1605,12 +1642,13 @@ function pgInbox(){
         <div><b style="font-size:13px">${esc(CHANNELS[k].from)}</b>
           <div class="small muted">${esc(CHANNELS[k].s)}</div></div></div>`).join('')}</div>
       <p class="small muted" style="margin:10px 0 0">Здесь же переписка с участницами и ответы экспертов.
-        На письмо от Евы можно ответить прямо в нём — прочитаем.</p>
+        Еве и Адаму можно ответить прямо в письме — ответят там же.</p>
     </div>
-  </div>`;
+  </div>`}`;
 }
 const CHAN_ICO = {
   eva:     `<svg viewBox="0 0 100 100" width="19" height="19" aria-hidden="true"><path d="${STAR_PATH}" fill="currentColor"/></svg>`,
+  adam:    `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"/></svg>`,
   events:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3.5v3M16 3.5v3"/></svg>`,
   market:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16l-1.2 11a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>`,
   experts: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.4 3.1-5.6 7-5.6 1.5 0 2.9.3 4 .9"/><path d="m16.5 19.2 1.7 1.7 3.3-3.6"/></svg>`,
@@ -1682,6 +1720,22 @@ function sendDM(id){
      дописывается в то самое обращение, на которое она отвечает. Раньше он
      оставался в телефоне, потом заводил новое обращение без связи с первым,
      и администратор видел обрывки вместо разговора. */
+  /* Еве и Адаму отвечать за них не нужно — они отвечают сами */
+  if(t.chan === 'eva' && typeof evaThink === 'function'){
+    inp.value = '';
+    const ans = evaMsg(evaThink(v));
+    t.msgs.push({me:false, t:ans.t, act:(ans.a && ans.a.length) ? 'evaTalk' : '', tm});
+    t.ago = 'только что';
+    render(); schedulePersist();
+    return;
+  }
+  if(t.chan === 'adam' && typeof adamReply === 'function'){
+    inp.value = '';
+    adamReply(v);
+    t.unread = false;
+    render(); schedulePersist();
+    return;
+  }
   if(t.chan && typeof toSupport === 'function'){
     const tid = t.tid || [...t.msgs].reverse().map(m => m.tid).find(Boolean);
     const tk = tid && typeof INBOX !== 'undefined' ? INBOX.find(x => x.id === tid) : null;
@@ -1694,7 +1748,7 @@ function sendDM(id){
       const fresh = toSupport('Ответ: ' + (t.from || 'Eva Space'), v, 'reply');
       if(fresh) t.tid = fresh.id;
     }
-    t.msgs.push({me:false, t:'Передали команде. Ответим здесь же.', tm});
+    t.msgs.push({me:false, t:chanAck(t.chan, v), tm});
     t.ago = 'только что';
     render(); schedulePersist();
     return toast('Передали команде');

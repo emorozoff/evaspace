@@ -509,7 +509,8 @@ function watchCalendar(){
       if(typeof maybeShowWeek === 'function' && maybeShowWeek()) need = true;
       /* заодно смотрим, не пора ли Еве подать голос: вопрос или интересное */
       if(typeof evaWake === 'function' && evaWake()) need = true;
-      if(need) render();
+      if(typeof adamWake === 'function' && adamWake()) need = true;
+      if(need) softRender();
     } catch(e){ console.error('[Eva] смена дня:', e); }
   }, 60000);
 }
@@ -653,10 +654,17 @@ function render(){
    Обычный render() пересобирает разметку, и браузер прокручивает наверх —
    женщина читала послание, а её выбросило в начало ленты. Со стороны это
    и выглядело как самопроизвольная перезагрузка. */
+let QUIET = false;
 function softRender(){
+  /* Пока она печатает, страницу не трогаем: пересборка съест набранное.
+     Изменение никуда не денется — его подхватит следующая перерисовка. */
+  const a = document.activeElement;
+  if(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA') && a.value) return false;
   const y = window.scrollY;
-  render();
+  QUIET = true;                        // без выезда страницы: это не переход, а обновление
+  try { render(); } finally { QUIET = false; }
   if(Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y);
+  return true;
 }
 
 function crashScreen(e){
@@ -709,6 +717,10 @@ function setApp(body, sh){
   if(body === shownHTML) window.__skipped++;
   else {
     const memo = keepFocus();
+    /* Тихая перерисовка — по таймеру или ответу сервера — не должна
+       выглядеть как переход: страница обновляется на месте, без анимации.
+       Иначе каждое письмо цепочки мероприятий «перезагружало» экран. */
+    pageBox.classList.toggle('quiet', QUIET);
     shownHTML = body; pageBox.innerHTML = body; window.__renders++;
     after(); memo();
   }
@@ -723,18 +735,35 @@ function setApp(body, sh){
      перезагрузили. Поэтому запоминаем прокрутку и фокус, а выезд играем
      только когда шторка действительно новая. */
   if(sh !== shownSheet){
-    const was = sheetBox.querySelector('.sheet');
+    const wasBg = sheetBox.querySelector('.bg');
+    const was = wasBg ? wasBg.querySelector('.sheet') : null;
     const top = was ? was.scrollTop : 0;
     const key = S.sheet ? (typeof S.sheet === 'string' ? S.sheet : S.sheet.k) : '';
     const same = !!sh && key === shownSheetKey;
     const memo = same ? keepFocus() : (() => {});
     shownSheet = sh; shownSheetKey = key;
-    sheetBox.innerHTML = sh;
-    if(sh){
+    /* Та же шторка с новым содержимым — ответ Евы, отметка в списке,
+       клик по чипу. Меняем только внутренности карточки: фон и сама
+       карточка остаются на месте. Раньше пересоздавалось всё, и затемнение
+       вспыхивало заново — со стороны это выглядело как перезагрузка окна. */
+    let swapped = false;
+    if(same && was){
+      const tpl = document.createElement('template');
+      tpl.innerHTML = sh;
+      const nb = tpl.content.querySelector('.bg'), ns = nb ? nb.querySelector('.sheet') : null;
+      if(ns && nb.className === wasBg.className){
+        was.className = ns.className + ' noanim';
+        was.innerHTML = ns.innerHTML;
+        if(top) was.scrollTop = top;
+        swapped = true;
+      }
+    }
+    if(!swapped){
+      sheetBox.innerHTML = sh;
       const now = sheetBox.querySelector('.sheet');
       if(now && same){ now.classList.add('noanim'); if(top) now.scrollTop = top; }
-      after(); memo();
     }
+    if(sh){ after(); memo(); }
   }
   return true;
 }
