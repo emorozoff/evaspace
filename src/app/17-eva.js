@@ -1020,7 +1020,7 @@ function evaCourseCard(c){
   const mine = (S.courses || []).indexOf(c.id) >= 0;
   return {t:`«${c.t}» — ведёт ${c.e}. ${c.d}\n\n${plural(c.n, 'неделя', 'недели', 'недель')} с заданиями, ${money(c.p)}` +
       (c.old ? ` вместо ${money(c.old)}` : '') + `. Оценка ${c.r}.` + (mine ? ' Ты уже на этом курсе.' : ''),
-    a:[[mine ? 'Продолжить курс' : 'Открыть курс', `closeSheet();openCourseLanding('${attJs(c.id)}')`], ['Все курсы', "closeSheet();go('courses')"]]};
+    a:[[mine ? 'Продолжить курс' : 'Открыть курс', `closeSheet();openCourse('${attJs(c.id)}')`], ['Все курсы', "closeSheet();go('courses')"]]};
 }
 function evaCourses(ws){
   const byTitle = COURSES.map(c => ({c, n: evaTitleHits(ws, c.t)})).filter(r => r.n >= 2).sort((a, b) => b.n - a.n)[0];

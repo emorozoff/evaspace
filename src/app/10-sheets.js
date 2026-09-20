@@ -31,7 +31,7 @@ function sheet(){
     units:shUnits, groupInfo:shGroupInfo, newGroup:shNewGroup, fix:shFix, video:shVideo,
     invite:shInvite, hello:shHello, askGroup:shAskGroup, weekSum:shWeekSum,
     myPage:shMyPage, toMate:shToMate,
-    hw:shHW, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
+    hw:shHW, unit:shUnit, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
     expertApply:shExpertApply, install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
     service:shService, editUser:shEditUser,
     partnerApply:shPartnerApply, eventApply:shEventApply, rules:shRules, anonNick:shAnonNick,
@@ -762,7 +762,12 @@ function shHW(){
     <label class="lbl">Заметка для себя</label>
     <textarea class="field" id="hw_note" rows="3" placeholder="Что получилось, что было сложно">${esc((done&&done.note)||'')}</textarea>
     <button class="btn ${done?'done':''}" onclick="doneHW('${attJs(id)}','${attJs(cid)}')">${done ? '✓ Выполнено, сохранить заметку' : 'Выполнила'}</button>
-    <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Закрыть</button>`;
+    <button class="btn ghost" style="margin-top:8px" onclick="hwBack()">${S.sheet.back ? '‹ К уроку' : 'Закрыть'}</button>`;
+}
+/* задание открыли из урока — туда и возвращаемся, а не на страницу курса */
+function hwBack(){
+  const b = S.sheet && S.sheet.back;
+  S.sheet = b || null; render();
 }
 function doneHW(id, cid){
   const note = (($('#hw_note')||{}).value || '').trim();
@@ -770,7 +775,7 @@ function doneHW(id, cid){
   const first = !S.homework[id];
   S.homework[id] = {done:true, note, at:Date.now()};
   if(first) S.points += 30;
-  S.sheet = null; render(); schedulePersist();
+  S.sheet = (S.sheet && S.sheet.back) || null; render(); schedulePersist();
   toast(first ? 'Задание выполнено. +30 баллов' : 'Заметка сохранена');
 }
 
@@ -905,7 +910,12 @@ function shEvent(){
     ${evDetails(e)}
     <div class="spread" style="margin-bottom:12px">
       <span class="price" style="font-size:19px">${e.price ? money(e.price) : 'бесплатно'}</span>
-      ${e.price ? '<span class="small muted">оплата на месте или картой</span>' : ''}</div>
+      ${e.price ? `<span class="small muted">${e.mode === 'онлайн' ? 'оплата картой, ссылка после оплаты' : 'оплата на месте или картой'}</span>` : ''}</div>
+    ${going && e.mode === 'онлайн' ? `<div class="card" style="background:var(--surface-2);border-color:transparent;padding:12px 14px">
+      <b style="font-size:13.5px">Как подключиться</b>
+      <div class="small muted" style="margin-top:3px">${e.link ? 'Ссылка на встречу уже здесь — она же придёт в письме за час до начала.' : 'Ссылка придёт в письме от Eva Events за час до начала.'}</div>
+      ${e.link ? `<a class="btn ghost" style="margin-top:9px;display:block;text-align:center;text-decoration:none" href="${safeUrl(e.link)}" target="_blank" rel="noopener">Открыть ссылку на встречу</a>` : ''}
+    </div>` : ''}
     ${isAdm && e.status === 'pending' ? `
       <div class="card" style="border-color:var(--accent)">
         <b style="font-size:14.5px">Мероприятие на согласовании</b>
@@ -1049,7 +1059,7 @@ function setEvD(f, v){ evDraft()[f] = v; }
 /* снимаем всё, что сейчас в полях, в черновик — вызывается перед перерисовкой */
 function keepEventFields(){
   const d = evDraft();
-  [['ev_t','t'], ['ev_d','d'], ['ev_tm','tm'], ['ev_c','city'], ['ev_pl','place'],
+  [['ev_t','t'], ['ev_d','d'], ['ev_tm','tm'], ['ev_c','city'], ['ev_pl','place'], ['ev_lk','link'],
    ['ev_a','about'], ['ev_f','full'], ['ev_w','who'], ['ev_b','bring']].forEach(([id, f]) => {
     const e = $('#' + id); if(e && e.value !== undefined && e.value !== '') d[f] = e.value;
   });
@@ -1112,6 +1122,12 @@ function shNewEvent(){
       <input class="field" id="ev_pl" placeholder="Чистые пруды, студия «Тихая»"
         value="${esc(d.place || '')}" oninput="setEvD('place', this.value)">
     </div>
+    <div id="ev_linkbox" ${d.mode==='онлайн' ? '' : 'hidden'}>
+      <label class="lbl">Ссылка на встречу</label>
+      <p class="tiny muted" style="margin:-4px 0 6px">Участницы получат её в письме за час до начала и в билете. Можно добавить позже.</p>
+      <input class="field" id="ev_lk" placeholder="https://zoom.us/j/…"
+        value="${esc(d.link || '')}" oninput="setEvD('link', this.value)">
+    </div>
     <div class="g2">
       <div><label class="lbl">Цена, ₽</label>
         <input class="field" id="ev_p" type="number" value="${d.price || 0}" oninput="setEvD('price', +this.value || 0)"></div>
@@ -1162,6 +1178,7 @@ function pickMode(btn, mode){
   if(lbl)   lbl.textContent = mode === 'онлайн' ? 'Платформа' : 'Город';
   if(city)  city.placeholder = mode === 'онлайн' ? 'Zoom' : 'Москва';
   if(place) place.hidden = mode !== 'офлайн';
+  const link = $('#ev_linkbox'); if(link) link.hidden = mode !== 'онлайн';
   schedulePersist();
 }
 function addEvPhoto(){
@@ -1208,6 +1225,7 @@ function saveEvent(){
     tm:dr.tm || '19:00', mode:dr.mode || 'офлайн',
     city:dr.city || (dr.mode === 'онлайн' ? 'Zoom' : 'Москва'),
     place:dr.place || '',
+    link:dr.mode === 'онлайн' ? (dr.link || '') : '',
     price:+dr.price || 0,
     by:S.role === 'expert' ? me().n : 'Eva Space',
     seats, left:seats, unlimited:!!dr.unlimited, closed:!!dr.closed, gallery,
@@ -1233,6 +1251,10 @@ function shEventEdit(){
     </div>
     <label class="lbl">Город или платформа</label>
     <input class="field" value="${esc(x.city)}" oninput="setEv('${attJs(x.id)}','city',this.value)">
+    ${x.mode === 'онлайн' ? `<label class="lbl">Ссылка на встречу</label>
+    <input class="field" placeholder="https://zoom.us/j/…" value="${esc(x.link || '')}" oninput="setEv('${attJs(x.id)}','link',this.value)">`
+    : `<label class="lbl">Адрес или место</label>
+    <input class="field" value="${esc(x.place || '')}" oninput="setEv('${attJs(x.id)}','place',this.value)">`}
     <div class="g2">
       <div><label class="lbl">Цена, ₽</label><input class="field" type="number" value="${x.price}" oninput="setEv('${attJs(x.id)}','price',+this.value||0)"></div>
       <div><label class="lbl">Мест</label><input class="field" type="number" value="${x.seats}" oninput="setEv('${attJs(x.id)}','seats',+this.value||10)"></div>
@@ -1747,6 +1769,20 @@ function sendSupport(){
    Заводить ради этого отдельный ящик незачем — обращения уже читают.
    ===================================================================== */
 const EXP_WANT = ['Практики и медитации', 'Мастер-классы', 'Курс', 'Личные консультации', 'Встречи офлайн'];
+/* Стаж выбирают, а не пишут: в свободном поле одни писали «8», другие
+   «с 2016-го», третьи «давно» — сравнивать это было нельзя. */
+const EXP_YEARS = ['до года', '1–3 года', '3–5 лет', '5–10 лет', 'больше 10 лет'];
+
+/* Три формы заявок собраны одинаково: цветная шапка со значком роли и
+   пронумерованные разделы. У каждой роли свой цвет — тот же, что у её
+   приглашения в разделе, — чтобы формы не сливались в одну серую анкету. */
+function formHead(kind, title, text){
+  const ico = (typeof INVITE_ICO !== 'undefined') ? INVITE_ICO[{expert:'star', partner:'bag', event:'cal'}[kind]] || '' : '';
+  return `<div class="fhead ${kind}"><span class="fico">${ico}</span>
+    <h2 class="serif" style="font-size:22px;margin:0 0 5px">${title}</h2>
+    <p class="small" style="margin:0;opacity:.82">${text}</p></div>`;
+}
+const fsec = (kind, n, title, body) => `<div class="fsec ${kind}"><div class="fsec-h"><i>${n}</i>${title}</div>${body}</div>`;
 
 /* ссылка на правила — одна строка под любой формой заявки */
 const rulesLine = kind => `<p class="tiny muted" style="margin:10px 0 0">Отправляя заявку, вы соглашаетесь
@@ -1766,31 +1802,30 @@ function shExpertApply(){
   if(sent) return sentCard('Заявка отправлена',
     'Прочитаем и ответим в течение недели — ответ придёт в «Сообщения». Если нужно что-то добавить, напишите в поддержку.');
 
-  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Стать экспертом Евы</h2>
-    <p class="small muted" style="margin:0 0 14px">Практики, мастер-классы, курс или консультации — расскажите,
-      чем делитесь. Пять полей, две минуты. Диплом на этом шаге не нужен: документы посмотрим потом,
-      когда договоримся по сути.</p>
+  return `${formHead('expert', 'Стать экспертом Евы',
+      'Практики, мастер-классы, курс или консультации — расскажите, чем делитесь. Три коротких шага, две минуты. ' +
+      'Диплом на этом шаге не нужен: документы посмотрим потом, когда договоримся по сути.')}
 
-    <label class="lbl">Чем занимаетесь</label>
-    <input class="field" id="ea_area" placeholder="Телесный терапевт, преподаю йогу"
-      value="${esc(d.area)}" oninput="S.expApply.area=this.value">
+    ${fsec('expert', 1, 'О вас', `
+      <label class="lbl">Чем занимаетесь</label>
+      <input class="field" id="ea_area" placeholder="Телесный терапевт, преподаю йогу"
+        value="${esc(d.area)}" oninput="S.expApply.area=this.value">
+      <label class="lbl">Сколько лет в практике</label>
+      <div class="chips wrap">${EXP_YEARS.map(y =>
+        `<button class="chip ${d.exp === y ? 'on' : ''}" onclick="expYears(this,'${attJs(y)}')">${y}</button>`).join('')}</div>`)}
 
-    <label class="lbl">Сколько лет практикуете</label>
-    <input class="field" id="ea_exp" placeholder="Например, восемь"
-      value="${esc(d.exp)}" oninput="S.expApply.exp=this.value">
+    ${fsec('expert', 2, 'Что хотели бы вести', `
+      <div class="chips wrap">${EXP_WANT.map(w =>
+        `<button class="chip ${d.want.indexOf(w) >= 0 ? 'on' : ''}"
+          onclick="expWant(this,'${attJs(w)}')">${w}</button>`).join('')}</div>`)}
 
-    <label class="lbl">Что хотели бы вести</label>
-    <div class="chips wrap" style="margin-bottom:12px">${EXP_WANT.map(w =>
-      `<button class="chip ${d.want.indexOf(w) >= 0 ? 'on' : ''}"
-        onclick="expWant(this,'${attJs(w)}')">${w}</button>`).join('')}</div>
-
-    <label class="lbl">Где вас можно посмотреть</label>
-    <input class="field" id="ea_link" placeholder="Сайт, телеграм-канал или профиль в соцсети"
-      value="${esc(d.link)}" oninput="S.expApply.link=this.value">
-
-    <label class="lbl">Пара слов о подходе</label>
-    <textarea class="field" rows="4" placeholder="С чем к вам приходят и что меняется у женщин после работы с вами"
-      oninput="S.expApply.about=this.value">${esc(d.about)}</textarea>
+    ${fsec('expert', 3, 'Где посмотреть и о подходе', `
+      <label class="lbl">Где вас можно посмотреть</label>
+      <input class="field" id="ea_link" placeholder="Сайт, телеграм-канал или профиль в соцсети"
+        value="${esc(d.link)}" oninput="S.expApply.link=this.value">
+      <label class="lbl">Пара слов о подходе</label>
+      <textarea class="field" rows="4" placeholder="С чем к вам приходят и что меняется у женщин после работы с вами"
+        oninput="S.expApply.about=this.value">${esc(d.about)}</textarea>`)}
 
     <div class="card" style="background:var(--surface-2);border-color:transparent;margin-top:4px">
       <span class="small muted">Отправим от имени <b>${esc(S.name || '—')}</b>,
@@ -1802,6 +1837,13 @@ function shExpertApply(){
 }
 /* Отметка «что хотела бы вести» меняется на месте: перерисовывать всю
    форму ради одного чипа незачем — она набирает текст в соседнем поле. */
+/* стаж — одна фишка из ряда; повторное нажатие снимает выбор */
+function expYears(btn, y){
+  const d = S.expApply = S.expApply || {want:[]};
+  d.exp = d.exp === y ? '' : y;
+  if(btn && btn.parentElement) [...btn.parentElement.children].forEach(b => b.classList.toggle('on', b === btn && d.exp === y));
+  schedulePersist();
+}
 function expWant(btn, w){
   const d = S.expApply = S.expApply || {want:[]};
   const on = d.want.indexOf(w) >= 0;
@@ -1852,20 +1894,21 @@ function shPartnerApply(){
     INBOX.some(t => t.kind === 'partner' && t.mail === (S.user ? S.user.email : '') && t.st !== 'закрыто');
   if(sent) return sentCard('Заявка партнёра отправлена',
     'Посмотрим товар и ответим в течение трёх дней — ответ придёт в «Сообщения».');
-  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">Стать партнёром маркета</h2>
-    <p class="small muted" style="margin:0 0 14px">Мы собираем маркет из вещей для заботы о себе, которые
-      сами бы выбрали. Расскажите о товаре — пять полей, две минуты.</p>
-    <label class="lbl">Бренд или имя</label>
-    <input class="field" id="pa_brand" placeholder="Мастерская «Тихий час»" value="${esc(d.brand)}" oninput="S.partnerApply.brand=this.value">
-    <label class="lbl">Что за товар</label>
-    <textarea class="field" id="pa_goods" rows="3" placeholder="Свечи из соевого воска, коврики, травяные чаи…"
-      oninput="S.partnerApply.goods=this.value">${esc(d.goods)}</textarea>
-    <label class="lbl">Где посмотреть</label>
-    <input class="field" id="pa_link" placeholder="Сайт, маркетплейс или соцсеть" value="${esc(d.link)}" oninput="S.partnerApply.link=this.value">
-    <label class="lbl">Почему это для Евы</label>
-    <input class="field" id="pa_why" placeholder="Состав, производство, для каких практик" value="${esc(d.why)}" oninput="S.partnerApply.why=this.value">
-    <label class="lbl">Как связаться</label>
-    <input class="field" id="pa_contact" placeholder="Телефон или телеграм" value="${esc(d.contact)}" oninput="S.partnerApply.contact=this.value">
+  return `${formHead('partner', 'Стать партнёром маркета',
+      'Мы собираем маркет из вещей для заботы о себе, которые сами бы выбрали. Расскажите о товаре — два шага, две минуты.')}
+    ${fsec('partner', 1, 'Товар', `
+      <label class="lbl">Бренд или имя</label>
+      <input class="field" id="pa_brand" placeholder="Мастерская «Тихий час»" value="${esc(d.brand)}" oninput="S.partnerApply.brand=this.value">
+      <label class="lbl">Что за товар</label>
+      <textarea class="field" id="pa_goods" rows="3" placeholder="Свечи из соевого воска, коврики, травяные чаи…"
+        oninput="S.partnerApply.goods=this.value">${esc(d.goods)}</textarea>
+      <label class="lbl">Почему это для Евы</label>
+      <input class="field" id="pa_why" placeholder="Состав, производство, для каких практик" value="${esc(d.why)}" oninput="S.partnerApply.why=this.value">`)}
+    ${fsec('partner', 2, 'Где посмотреть и как связаться', `
+      <label class="lbl">Где посмотреть</label>
+      <input class="field" id="pa_link" placeholder="Сайт, маркетплейс или соцсеть" value="${esc(d.link)}" oninput="S.partnerApply.link=this.value">
+      <label class="lbl">Как связаться</label>
+      <input class="field" id="pa_contact" placeholder="Телефон или телеграм" value="${esc(d.contact)}" oninput="S.partnerApply.contact=this.value">`)}
     <div class="card" style="background:var(--surface-2);border-color:transparent;margin-top:4px">
       <span class="small muted">Отправим от имени <b>${esc(S.name || '—')}</b>,
         ${S.user ? esc(S.user.email) : 'почта не указана'}. Ответ придёт в «Сообщения».</span>
@@ -1900,29 +1943,30 @@ function shEventApply(){
   if(last && !d.more) return sentCard('Мероприятие отправлено',
     'Проверим и, если всё сходится с правилами, опубликуем — напишем в «Сообщения» в течение трёх дней.',
     "S.eventApply.more=true;render()");
-  return `<h2 class="serif" style="font-size:22px;margin:0 0 6px">${d.own ? 'Добавить своё мероприятие' : 'Порекомендовать мероприятие'}</h2>
+  return `${formHead('event', d.own ? 'Добавить своё мероприятие' : 'Порекомендовать мероприятие', d.own
+      ? 'Женский круг, практика, лекция или встреча — расскажите коротко, мы проверим и опубликуем.'
+      : 'Знаете хорошее мероприятие? Напишите, что и откуда знаете, — мы свяжемся с организаторами сами.')}
     <div class="seg" style="margin:0 0 12px">
       <button class="${d.own ? 'on' : ''}" onclick="S.eventApply.own=true;render()">Провожу сама</button>
       <button class="${d.own ? '' : 'on'}" onclick="S.eventApply.own=false;render()">Рекомендую</button>
     </div>
-    <p class="small muted" style="margin:0 0 14px">${d.own
-      ? 'Женский круг, практика, лекция или встреча — расскажите коротко, мы проверим и опубликуем.'
-      : 'Знаете хорошее мероприятие? Напишите, что и откуда знаете, — мы свяжемся с организаторами сами.'}</p>
-    <label class="lbl">Название</label>
-    <input class="field" id="ea2_t" placeholder="Женский круг «Тихая пятница»" value="${esc(d.t)}" oninput="S.eventApply.t=this.value">
-    <div class="g2">
-      <div><label class="lbl">Дата</label>
-        <input class="field" id="ea2_d" type="date" value="${esc(d.d)}" oninput="S.eventApply.d=this.value"></div>
-      <div><label class="lbl">Город или онлайн</label>
-        <input class="field" id="ea2_w" placeholder="Москва / Zoom" value="${esc(d.where)}" oninput="S.eventApply.where=this.value"></div>
-    </div>
-    <label class="lbl">Ссылка</label>
-    <input class="field" id="ea2_l" placeholder="Страница, канал или анонс" value="${esc(d.link)}" oninput="S.eventApply.link=this.value">
-    <label class="lbl">${d.own ? 'О чём и для кого' : 'Что там и откуда знаете'}</label>
-    <textarea class="field" id="ea2_a" rows="3" placeholder="${d.own ? 'Что будет, сколько длится, сколько стоит' : 'Были сами или советовали подруги — так и напишите'}"
-      oninput="S.eventApply.about=this.value">${esc(d.about)}</textarea>
-    ${d.own ? `<label class="lbl">Как связаться</label>
-    <input class="field" id="ea2_c" placeholder="Телефон или телеграм" value="${esc(d.contact)}" oninput="S.eventApply.contact=this.value">` : ''}
+    ${fsec('event', 1, 'Что и когда', `
+      <label class="lbl">Название</label>
+      <input class="field" id="ea2_t" placeholder="Женский круг «Тихая пятница»" value="${esc(d.t)}" oninput="S.eventApply.t=this.value">
+      <div class="g2">
+        <div><label class="lbl">Дата</label>
+          <input class="field" id="ea2_d" type="date" value="${esc(d.d)}" oninput="S.eventApply.d=this.value"></div>
+        <div><label class="lbl">Город или онлайн</label>
+          <input class="field" id="ea2_w" placeholder="Москва / Zoom" value="${esc(d.where)}" oninput="S.eventApply.where=this.value"></div>
+      </div>
+      <label class="lbl">Ссылка</label>
+      <input class="field" id="ea2_l" placeholder="Страница, канал или анонс" value="${esc(d.link)}" oninput="S.eventApply.link=this.value">`)}
+    ${fsec('event', 2, d.own ? 'О чём и как связаться' : 'Откуда знаете', `
+      <label class="lbl">${d.own ? 'О чём и для кого' : 'Что там и откуда знаете'}</label>
+      <textarea class="field" id="ea2_a" rows="3" placeholder="${d.own ? 'Что будет, сколько длится, сколько стоит' : 'Были сами или советовали подруги — так и напишите'}"
+        oninput="S.eventApply.about=this.value">${esc(d.about)}</textarea>
+      ${d.own ? `<label class="lbl">Как связаться</label>
+      <input class="field" id="ea2_c" placeholder="Телефон или телеграм" value="${esc(d.contact)}" oninput="S.eventApply.contact=this.value">` : ''}`)}
     <button class="btn" style="margin-top:8px" onclick="sendEventApply()">${d.own ? 'Отправить на проверку' : 'Порекомендовать'}</button>
     ${rulesLine('event')}`;
 }

@@ -413,21 +413,23 @@ const INVITE_ICO = {
 function inviteRow(kind){
   if(S.role !== 'user') return '';
   const r = {
-    expert:  {ico:'star', sheet:'expertApply',  h:'Хотите стать экспертом Евы?',
+    expert:  {ico:'star', sheet:'expertApply',  k:'Экспертам', h:'Хотите стать экспертом Евы?',
               p:'Практики, мастер-классы, курсы или консультации — расскажите о себе'},
-    partner: {ico:'bag',  sheet:'partnerApply', h:'Хотите стать партнёром маркета?',
+    partner: {ico:'bag',  sheet:'partnerApply', k:'Партнёрам', h:'Хотите стать партнёром маркета?',
               p:'Разместим ваш товар, если он про заботу о себе'},
-    event:   {ico:'cal',  sheet:'eventApply',   h:'Проводите встречи или знаете хорошие?',
+    event:   {ico:'cal',  sheet:'eventApply',   k:'Организаторам', h:'Проводите встречи или знаете хорошие?',
               p:'Добавим ваше мероприятие или то, что советуете'}
   }[kind];
   if(!r) return '';
-  return `<button class="applyrow" onclick="openSheet('${attJs(r.sheet)}')">
+  /* у каждого приглашения свой цвет — тот же, что у его формы */
+  return `<button class="applyrow ${kind}" onclick="openSheet('${attJs(r.sheet)}')">
       <span class="aico">${INVITE_ICO[r.ico]}</span>
       <div style="flex:1;min-width:0">
+        <span class="akind">${r.k}</span>
         <b style="font-size:13.5px;display:block">${r.h}</b>
         <span class="small muted">${r.p}</span>
       </div>
-      <span class="muted" style="font-size:17px">›</span>
+      <span class="aarr">›</span>
     </button>`;
 }
 
