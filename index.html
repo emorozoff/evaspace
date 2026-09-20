@@ -1314,6 +1314,32 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .adamsay{font-size:16.5px;line-height:1.45;font-weight:500;letter-spacing:-.01em;padding:14px 15px;border-radius:var(--r);
   background:linear-gradient(135deg,rgba(63,125,98,.10),rgba(63,125,98,.03));border:1px solid rgba(63,125,98,.22)}
 .segdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:5px;vertical-align:middle}
+
+/* ---------- курсы: ровные карточки и прохождение ---------- */
+.ccard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:10px}
+.ccard .cov{position:relative;height:150px;cursor:pointer}
+.ccard .cov > svg,.ccard .cov > img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover}
+.ccard .cap b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cfoot{display:flex;align-items:center;gap:8px;padding:9px 12px;min-height:52px}
+.cfoot .price{font-size:15px}
+.cfoot .btn.sm{width:auto;margin-left:auto;padding:8px 13px;flex:none}
+.unit .ttl{flex:1;min-width:0}
+.unit .ttl b{font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.unit.cur{border-color:var(--ink)}
+.unit.edrow{padding:6px 8px 6px 6px;gap:6px}
+.unit.edrow .hit{display:flex;gap:9px;align-items:center;flex:1;min-width:0;text-align:left}
+.unit.edrow .mv{display:flex;flex-direction:column;gap:2px;flex:none}
+.unit.edrow .mv button{width:24px;height:17px;border-radius:6px;background:var(--surface-2);font-size:8px;color:var(--muted)}
+.unit.edrow .mv button:disabled{opacity:.3}
+.lhead{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:11px 13px;margin-bottom:12px}
+.lnav{display:flex;gap:8px;margin:14px 0 6px}
+.lnav .btn{flex:1}
+.lnav .btn.sq{flex:none;width:48px;padding:0}
+.card.cont{border-color:var(--accent)}
+.card.fin{background:var(--ink);color:#fff;border-color:transparent}
+/* обложка в карточках админа и эксперта — фиксированной высоты, как в каталоге */
+.acard .cov{position:relative;overflow:hidden;display:block}
+.acard .cov > svg,.acard .cov > img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover}
 </style>
 </head>
 <body>
@@ -2194,7 +2220,7 @@ Object.assign(S, {
   ideas:IDEAS.map(x => ({...x})),
   courseSort:'Рекомендованные',
   weekly:{exchanged:false},
-  lessons:{}, course:null, chats:null, chat:{open:null,unread:{}}, owned:['gr2'],
+  lessons:{}, courseDone:{}, course:null, chats:null, chat:{open:null,unread:{}}, owned:['gr2'],
   cType:'practice', cQuery:'', tagSort:null, statPeriod:'месяц', userFilter:'все', uQuery:'',
   newTags:[], sugTags:[], newType:'practice'
 });
@@ -2430,6 +2456,8 @@ function persist(){
     /* переписка с Евой и её память: без этого после перезагрузки она забывает
        заданный вопрос и рассказывает одно и то же интересное по кругу */
     eva:S.eva, evaMem:S.evaMem, adamMem:S.adamMem,
+    /* отметки «пройден» по урокам курсов — её личные, уроки общие */
+    courseDone:S.courseDone,
     savedAt:Date.now()
   });
 }
@@ -2444,7 +2472,7 @@ const PERSONAL = ['name','tags','topics','time','slot','answers','extra','points
   'gentle','seen','tagw','goals','level','taste','subAsked','courseAsked',
   'anonNick','anonPast','weekly','evChain','evFast','reviews','tourDone','tour','lastWeek','weekShown',
   'weekMood','nudgedWeek','gdraft','quietRun','askedBlock','pushOn','pushAsked','tipStars','follows','mates','expSeen','about','city','show',
-  'qi','picked','eva','evaMem','adamMem'];
+  'qi','picked','eva','evaMem','adamMem','courseDone'];
 
 let PRISTINE = null;
 /* снимок нетронутого состояния - делается один раз, при загрузке */
@@ -4916,32 +4944,84 @@ function lessonsOf(cid){
   return S.lessons[cid];
 }
 
+/* Отметка «пройден» — её личный прогресс, а не свойство урока: уроки
+   общие для всех и приезжают с сервера, при каждой синхронизации они
+   заменяются. Раньше флаг лежал прямо в уроке и терялся вместе с ним. */
+const lessonDone = id => !!((S.courseDone || {})[id]);
+function courseProgress(cid){
+  const ls = lessonsOf(cid);
+  const done = ls.filter(l => lessonDone(l.id)).length;
+  const next = ls.findIndex(l => !lessonDone(l.id));
+  return {ls, done, total:ls.length, pct: ls.length ? Math.round(done / ls.length * 100) : 0,
+          next: next < 0 ? ls.length - 1 : next, all: !!ls.length && done === ls.length};
+}
+const courseOwned = cid => (S.courses || []).indexOf(cid) >= 0;
+/* модуль, в котором лежит урок */
+function moduleOfLesson(cid, n){
+  const mods = (typeof modulesOf === 'function') ? modulesOf(cid) : [];
+  return mods.find(m => (m.units || []).indexOf(n) >= 0) || null;
+}
+
 function openCourseLanding(id){ S.course = {id, mode:'landing'}; S.sheet = null; S.page = null; render(); window.scrollTo(0,0); }
-function openCourseLearn(id, unit){ S.course = {id, mode:'learn', unit:unit || 0}; S.sheet = null; render(); window.scrollTo(0,0); }
+function openCourseLearn(id, unit){ S.course = {id, mode:'learn', unit:unit || 0}; S.sheet = null; S.page = null; render(); window.scrollTo(0,0); }
+/* Купленный курс открывается сразу на обучении, с того урока, где
+   остановилась; чужой — на странице курса. Одна кнопка на все случаи. */
+function openCourse(id){
+  if(courseOwned(id)) return openCourseLearn(id, courseProgress(id).next);
+  openCourseLanding(id);
+}
 function closeCourse(){ S.course = null; render(); window.scrollTo(0,0); }
+
+/* ровная строка урока: обложка, название, минуты — описание внутри урока */
+function unitRow(c, l, opts){
+  const o = opts || {};
+  const open = courseOwned(c.id) || l.free || o.force;
+  const done = lessonDone(l.id);
+  const idx = lessonsOf(c.id).indexOf(l);
+  const click = open ? `openCourseLearn('${attJs(c.id)}',${idx})` : `toast('Урок откроется после покупки')`;
+  const tail = o.current ? '<span class="chip pale">сейчас</span>'
+    : done ? '<span class="pill free">пройден</span>'
+    : open ? '<span class="muted">›</span>' : '<span class="lockmini">🔒</span>';
+  return `<button class="unit${done ? ' done' : ''}${o.current ? ' cur' : ''}" onclick="${click}">
+    <div class="n">${done ? '✓' : esc(l.n)}</div>
+    <div class="mini">${cover(l.id, 'practice')}</div>
+    <div class="ttl"><b>${esc(l.t)}</b>
+      <div class="small muted">${l.min} мин${l.hw ? ' · домашнее' : ''}${l.free && !courseOwned(c.id) ? ' · открыт' : ''}</div></div>
+    ${tail}
+  </button>`;
+}
 
 function pgCourseLanding(){
   const c = COURSES.find(x => x.id === S.course.id);
   const e = expBy(c.e);
   const ls = lessonsOf(c.id);
   const mods = (typeof modulesOf === 'function') ? modulesOf(c.id) : [{n:1,t:'Программа',units:ls.map(l=>l.n)}];
-  const own = S.courses.includes(c.id);
+  const own = courseOwned(c.id);
+  const pr = courseProgress(c.id);
   const bonus = Math.min(S.bonus, Math.round(c.p*0.3));
   const total = ls.reduce((a,l) => a + l.min, 0);
   const info = COURSE_INFO[c.id] || {who:[],gives:[],promo:''};
   const rev = REVIEWS[c.id] || [];
-  const back = S.demo || S.role === 'user' ? "closeCourse()" : "closeCourse()";
+  const about = (info.about || '').trim() || c.d;
   return `<div class="view pad">
-    <button class="backbtn" onclick="${back}">‹ Курсы</button>
+    <button class="backbtn" onclick="closeCourse()">‹ Курсы</button>
 
     <div class="chead">
       ${cover(c.id,'course')}
       <div class="badge">${COURSE_KIND[c.id]} курс</div>
       <div class="ctext">
-        <h1 class="serif" style="font-size:24px;margin:0 0 6px;color:#fff">${esc(c.t)}</h1>
-        <p style="font-size:13.5px;line-height:1.45;color:rgba(255,255,255,.82);margin:0">${esc(info.promo || c.d)}</p>
+        <h1 class="serif" style="font-size:24px;margin:0;color:#fff">${esc(c.t)}</h1>
+        <div style="font-size:12.5px;color:rgba(255,255,255,.78);margin-top:6px">${esc(c.e)} · ${plural(ls.length,'урок','урока','уроков')}</div>
       </div>
     </div>
+
+    ${own ? `<div class="card cont">
+      <div class="spread"><div style="flex:1"><b style="font-size:14.5px">${pr.all ? 'Курс пройден' : 'Ты на курсе'}</b>
+        <div class="small muted" style="margin-top:3px">Пройдено ${pr.done} из ${pr.total} уроков</div></div>
+        <b style="font-size:18px">${pr.pct}%</b></div>
+      <div class="bar" style="margin:10px 0 12px"><i style="width:${pr.pct}%"></i></div>
+      <button class="btn" onclick="openCourseLearn('${attJs(c.id)}',${pr.next})">${pr.all ? 'Открыть уроки' : (pr.done ? 'Продолжить: урок ' + esc(ls[pr.next].n) : 'Начать первый урок')}</button>
+    </div>` : ''}
 
     <button class="card" style="width:100%;text-align:left;padding:12px" onclick="openExpert('${attJs(e.id)}')">
       <div class="row"><div class="pcirc" style="width:46px;height:46px">${expPic(e)}</div>
@@ -4959,34 +5039,30 @@ function pgCourseLanding(){
     <div class="sec-h" style="margin-top:16px"><h2 class="serif">О курсе за две минуты</h2></div>
     <div class="promo${hasPlayer(c.id+'_promo') ? ' live' : ''}">${videoBlock(c.id+'_promo','course')}</div>
 
-    <div class="sec-h"><h2 class="serif">Для кого этот курс</h2></div>
-    ${info.who.map((w,i) => `<div class="sellcard">
-      <div class="num">${i+1}</div><div style="flex:1;font-size:13.5px;line-height:1.45">${esc(w)}</div></div>`).join('')}
+    <div class="card">
+      <b style="font-size:14.5px">О курсе</b>
+      <p style="font-size:14px;line-height:1.55;margin:7px 0 0;white-space:pre-line">${esc(about)}</p>
+      ${info.promo && info.promo !== about ? `<p class="small muted" style="margin:8px 0 0">${esc(info.promo)}</p>` : ''}
+      <div class="chips wrap" style="margin-top:10px;padding-bottom:0">${(COURSE_TAGS[c.id]||[]).map(t => `<span class="chip pale">${esc(t)}</span>`).join('')}</div>
+    </div>
 
-    <div class="sellwrap">
+    ${info.who.length ? `<div class="sec-h"><h2 class="serif">Для кого этот курс</h2></div>
+    ${info.who.map((w,i) => `<div class="sellcard">
+      <div class="num">${i+1}</div><div style="flex:1;font-size:13.5px;line-height:1.45">${esc(w)}</div></div>`).join('')}` : ''}
+
+    ${info.gives.length ? `<div class="sellwrap">
       <h3>Что ты получишь</h3>
       ${info.gives.map(w => `<div class="sellcard dark">
         <div class="num">✓</div><div style="flex:1;font-size:13.5px;line-height:1.45">${esc(w)}</div></div>`).join('')}
-    </div>
+    </div>` : ''}
 
     <div class="sec-h"><h2 class="serif">Программа</h2>
-      <span class="small muted">${mods.length} модуля · ${ls.length} уроков</span></div>
+      <span class="small muted">${plural(mods.length,'модуль','модуля','модулей')} · ${plural(ls.length,'урок','урока','уроков')}</span></div>
     ${mods.map(m => `<div class="modbox">
       <div class="mh"><span>Модуль ${esc(m.n)}. ${esc(m.t)}</span>
-        <span class="lockmini">${m.units.length} уроков</span></div>
-      <div style="padding:8px">
-        ${m.units.map(un => {
-          const l = ls.find(x => x.n === un); if(!l) return '';
-          const open = own || l.free;
-          return `<button class="unit ${l.done?'done':''}" onclick="${open?`openCourseLearn('${attJs(c.id)}',${ls.indexOf(l)})`:`toast('Урок откроется после покупки')`}">
-            <div class="n">${l.done?'✓':l.n}</div>
-            <div class="mini">${cover(l.id,'practice')}</div>
-            <div style="flex:1;min-width:0">
-              <b style="font-size:13px;display:block">${esc(l.t)}</b>
-              <div class="small muted">${l.d ? esc(l.d)+' · ' : ''}${l.min} мин</div></div>
-            ${open ? '<span class="pill free">открыт</span>' : '<span class="lockmini">🔒</span>'}
-          </button>`;
-        }).join('')}
+        <span class="lockmini">${plural(m.units.length,'урок','урока','уроков')}</span></div>
+      <div style="padding:8px 8px 1px">
+        ${m.units.map(un => { const l = ls.find(x => x.n === un); return l ? unitRow(c, l) : ''; }).join('')}
       </div>
     </div>`).join('')}
 
@@ -4997,80 +5073,104 @@ function pgCourseLanding(){
           <span class="stars5">${'★'.repeat(st)}</span></div>
         <p class="small muted" style="margin:6px 0 0">${t}</p></div>`).join('')}` : ''}
 
-    <div class="card" style="margin-top:14px">
+    ${own ? '' : `<div class="card" style="margin-top:14px">
       <div class="spread"><span class="small muted">Цена</span>
         <div><span class="price" style="font-size:19px">${money(c.p)}</span><span class="old">${money(c.old)}</span></div></div>
       <div class="spread" style="margin-top:8px"><span class="small muted">Списать бонусами</span>
         <b style="color:var(--accent)">−${money(bonus)}</b></div>
       <div class="spread" style="margin-top:8px"><span class="small muted">Доступ</span><b>навсегда</b></div>
-      ${own ? `<button class="btn done" style="margin-top:12px" onclick="openCourseLearn('${attJs(c.id)}',0)">Продолжить обучение</button>`
-            : `<button class="btn acc" style="margin-top:12px" onclick="buyCourse('${attJs(c.id)}')">Купить за ${money(c.p - bonus)}</button>
-               <p class="small muted" style="text-align:center;margin:8px 0 0">Открытые уроки можно посмотреть до покупки</p>`}
-    </div>
+      <button class="btn acc" style="margin-top:12px" onclick="buyCourse('${attJs(c.id)}')">Купить за ${money(c.p - bonus)}</button>
+      <p class="small muted" style="text-align:center;margin:8px 0 0">Открытые уроки можно посмотреть до покупки</p>
+    </div>`}
   </div>`;
 }
 
 function pgCourseLearn(){
   const c = COURSES.find(x => x.id === S.course.id);
   const ls = lessonsOf(c.id);
+  if(!ls.length) return pgCourseLanding();
   const i = Math.min(S.course.unit || 0, ls.length-1);
   const l = ls[i];
-  const done = ls.filter(x => x.done).length;
+  const own = courseOwned(c.id);
+  const pr = courseProgress(c.id);
+  const done = lessonDone(l.id);
   const hwDone = S.homework && S.homework[l.id];
+  const mods = (typeof modulesOf === 'function') ? modulesOf(c.id) : [{n:1,t:'Программа',units:ls.map(x=>x.n)}];
+  const mod = moduleOfLesson(c.id, l.n);
+  const nextI = ls.findIndex((x, k) => k > i && !lessonDone(x.id));
+  const nextAny = i < ls.length - 1 ? i + 1 : -1;
+  const goNext = nextI >= 0 ? nextI : nextAny;
   return `<div class="view pad">
-    <button class="backbtn" onclick="openCourseLanding('${attJs(c.id)}')">‹ ${esc(c.t)}</button>
+    <div class="spread" style="margin-bottom:8px">
+      <button class="backbtn" style="margin:0" onclick="closeCourse()">‹ Курсы</button>
+      <button class="link" onclick="openCourseLanding('${attJs(c.id)}')">О курсе</button>
+    </div>
 
-    <div class="eyebrow" style="margin-top:6px">Урок ${esc(l.n)} из ${ls.length} · ${l.min} мин</div>
-    <h1 class="serif" style="font-size:23px;margin:7px 0 12px">${esc(l.t)}</h1>
+    <div class="lhead">
+      <div class="spread"><div style="flex:1;min-width:0">
+          <div class="eyebrow">${esc(c.t)}</div>
+          <div class="small muted" style="margin-top:3px">${pr.all ? 'Курс пройден целиком' : `Пройдено ${pr.done} из ${pr.total}`}${mod ? ' · модуль ' + esc(mod.n) + ': ' + esc(mod.t) : ''}</div></div>
+        <b style="font-size:17px">${pr.pct}%</b></div>
+      <div class="bar" style="margin-top:9px"><i style="width:${pr.pct}%"></i></div>
+    </div>
 
     ${videoBlock(l.id)}
 
-    <div class="card" style="margin-top:12px">
-      <b style="font-size:14.5px">Об уроке</b>
-      <p class="small muted" style="margin:7px 0 0;white-space:pre-line">${esc(l.d || 'Описание урока появится здесь.')}</p>
-    </div>
+    <div class="eyebrow" style="margin-top:12px">Урок ${esc(l.n)} из ${ls.length} · ${l.min} мин${done ? ' · пройден' : ''}</div>
+    <h1 class="serif" style="font-size:23px;margin:6px 0 10px">${esc(l.t)}</h1>
+    ${l.d ? `<p style="font-size:14px;line-height:1.55;margin:0 0 12px;white-space:pre-line">${esc(l.d)}</p>` : ''}
 
     ${l.hw ? `<div class="card" style="border-color:${hwDone?'var(--ok)':'var(--line-2)'}">
       <div class="spread">
         <div style="flex:1"><b style="font-size:14.5px">Домашнее задание</b>
-          <div class="small muted" style="margin-top:3px">${esc(l.hw.title || 'Практика после урока')}</div></div>
+          <div class="small muted" style="margin-top:3px">${esc(l.hw.title || 'Практика после урока')}${l.hw.min ? ' · ~' + l.hw.min + ' мин' : ''}</div></div>
         ${hwDone ? '<span class="pill free">выполнено</span>' : ''}
       </div>
       <button class="btn ${hwDone?'ghost':''}" style="margin-top:10px" onclick="openSheet({k:'hw',id:'${attJs(l.id)}',cid:'${attJs(c.id)}'})">
-        ${hwDone ? 'Открыть задание' : 'Открыть задание'}</button>
+        ${hwDone ? 'Открыть задание' : 'Сделать задание'}</button>
     </div>` : ''}
 
-    <div class="bar" style="margin:14px 0 6px"><i style="width:${done/ls.length*100}%"></i></div>
-    <div class="small muted" style="margin-bottom:12px">Пройдено ${done} из ${ls.length}</div>
+    ${!own && !l.free ? `<div class="card" style="border-color:var(--accent)">
+      <b style="font-size:14.5px">Этот урок открывается после покупки</b>
+      <div class="small muted" style="margin-top:4px">Открытые уроки помечены в списке ниже.</div>
+      <button class="btn acc" style="margin-top:10px" onclick="openCourseLanding('${attJs(c.id)}')">Купить курс</button>
+    </div>` : `<div class="lnav">
+      <button class="btn ghost sq" ${i===0?'disabled':''} onclick="openCourseLearn('${attJs(c.id)}',${i-1})" aria-label="Предыдущий урок">←</button>
+      ${done
+        ? (goNext >= 0 ? `<button class="btn" onclick="openCourseLearn('${attJs(c.id)}',${goNext})">Следующий урок →</button>`
+                       : `<button class="btn done" onclick="openCourseLanding('${attJs(c.id)}')">✓ Курс пройден</button>`)
+        : `<button class="btn acc" onclick="doneUnit('${attJs(c.id)}',${i})">Пройден${goNext >= 0 ? ' — дальше' : ''}</button>`}
+      <button class="btn ghost sq" ${nextAny<0?'disabled':''} onclick="openCourseLearn('${attJs(c.id)}',${nextAny})" aria-label="Следующий урок">→</button>
+    </div>`}
 
-    <div class="acts" style="margin-bottom:14px">
-      <button class="btn ghost" ${i===0?'disabled':''} onclick="openCourseLearn('${attJs(c.id)}',${i-1})">←</button>
-      <button class="btn ${l.done?'done':''}" onclick="doneUnit('${attJs(c.id)}',${i})">${l.done?'✓ Пройден':'Отметить пройденным'}</button>
-      <button class="btn ghost" ${i===ls.length-1?'disabled':''} onclick="openCourseLearn('${attJs(c.id)}',${i+1})">→</button>
-    </div>
+    ${pr.all ? `<div class="card fin"><b style="font-size:15px">Курс пройден целиком</b>
+      <div class="small" style="margin-top:4px;opacity:.85">${pr.total} уроков позади. Уроки остаются открытыми — к ним можно возвращаться.</div></div>` : ''}
 
-    <div class="sec-h"><h2 class="serif">Все уроки</h2></div>
-    ${ls.map((u,k) => {
-      const open = S.courses.includes(c.id) || u.free;
-      return `<button class="unit ${u.done?'done':''}" style="${k===i?'border-color:var(--ink)':''}"
-        onclick="${open?`openCourseLearn('${attJs(c.id)}',${k})`:`toast('Урок откроется после покупки')`}">
-        <div class="n">${u.done?'✓':u.n}</div>
-        <div style="flex:1;min-width:0"><b style="font-size:13px;display:block">${esc(u.t)}</b>
-          <div class="small muted">${u.min} мин${u.hw?' · есть домашнее':''}</div></div>
-        ${k===i?'<span class="chip pale">сейчас</span>':open?'<span class="muted">›</span>':'<span class="lockmini">🔒</span>'}
-      </button>`;
-    }).join('')}
+    <div class="sec-h"><h2 class="serif">Уроки</h2><span class="small muted">${pr.done} из ${pr.total}</span></div>
+    ${mods.map(m => `<div class="modbox">
+      <div class="mh"><span>Модуль ${esc(m.n)}. ${esc(m.t)}</span>
+        <span class="lockmini">${m.units.filter(un => { const x = ls.find(y => y.n === un); return x && lessonDone(x.id); }).length} / ${m.units.length}</span></div>
+      <div style="padding:8px 8px 1px">
+        ${m.units.map(un => { const x = ls.find(y => y.n === un); return x ? unitRow(c, x, {current: x === l}) : ''; }).join('')}
+      </div>
+    </div>`).join('')}
   </div>`;
 }
 
 function doneUnit(cid, i){
-  const ls = lessonsOf(cid);
-  if(ls[i].done) return;
-  ls[i].done = true; S.points += 20;
-  const all = ls.every(x => x.done);
-  render();
-  toast(all ? 'Курс пройден полностью. +150 баллов' : '+20 баллов');
-  if(all) S.points += 130;
+  const ls = lessonsOf(cid), l = ls[i];
+  if(!l || lessonDone(l.id)) return;
+  S.courseDone = S.courseDone || {};
+  S.courseDone[l.id] = Date.now();
+  S.points += 20;
+  const pr = courseProgress(cid);
+  if(pr.all) S.points += 130;
+  /* дальше — к следующему непройденному, чтобы не искать его в списке */
+  const next = ls.findIndex((x, k) => k > i && !lessonDone(x.id));
+  if(next >= 0) S.course = {id:cid, mode:'learn', unit:next};
+  render(); schedulePersist();
+  if(next >= 0) window.scrollTo(0, 0);
+  toast(pr.all ? 'Курс пройден полностью. +150 баллов' : '+20 баллов');
 }
 
 /* открытые уроки курсов дополняют мастер-классы, когда библиотека исчерпана */
@@ -6783,14 +6883,15 @@ function pgHome(){
       <div class="sec-h"><h2 class="serif">Мои курсы</h2><button class="link" onclick="go('courses')">Каталог</button></div>
       ${S.courses.map(id => {
         const c = COURSES.find(x => x.id === id); if(!c) return '';
-        const ls = lessonsOf(c.id), done = ls.filter(l => l.done).length;
-        return `<button class="crow" onclick="openCourseLanding('${attJs(c.id)}')">
+        const pr = courseProgress(c.id);
+        return `<button class="crow" onclick="openCourse('${attJs(c.id)}')">
           <div class="mini">${cover(c.id,'course')}</div>
           <div style="flex:1;min-width:0">
-            <b style="font-size:13.5px">${esc(c.t)}</b>
-            <div class="small muted">${esc(c.e)} · ${done} из ${ls.length} уроков</div>
-            <div class="bar" style="margin-top:6px"><i style="width:${done/ls.length*100}%"></i></div>
-          </div></button>`;
+            <b style="font-size:13.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.t)}</b>
+            <div class="small muted">${pr.all ? 'Пройден целиком' : pr.done ? `Урок ${esc(pr.ls[pr.next].n)} из ${pr.total} · дальше` : 'Начать первый урок'}</div>
+            <div class="bar" style="margin-top:6px"><i style="width:${pr.pct}%"></i></div>
+          </div>
+          <span class="chip pale">${pr.all ? '✓' : '›'}</span></button>`;
       }).join('')}` : `
       <div class="sec-h"><h2 class="serif">Мои курсы</h2></div>
       <button class="card" style="width:100%;text-align:left" onclick="go('courses')">
@@ -7018,26 +7119,26 @@ function pgCourses(){
     <div class="sec-h"><h2 class="serif">Все курсы</h2><span class="small muted">${list.length} шт.</span></div>
     <div class="seg">${kinds.map(k => `<button class="${S.courseSort===k?'on':''}" onclick="S.courseSort='${attJs(k)}';render()">${k}</button>`).join('')}</div>
 
-    ${list.map(c => `
-      <div class="lesson">
-        <div class="cov" style="height:158px" onclick="openCourseLanding('${attJs(c.id)}')">
+    ${list.map(c => {
+      /* Карточка одной высоты у всех курсов: обложка и название. Описание
+         разной длины растягивало карточки вразнобой — оно теперь на
+         странице курса, после промо-ролика. */
+      const own = courseOwned(c.id), pr = own ? courseProgress(c.id) : null;
+      return `<div class="ccard">
+        <div class="cov" onclick="openCourse('${attJs(c.id)}')">
           ${cover(c.id,'course')}
           <div class="badge">${esc(COURSE_KIND[c.id])}</div>
           ${rec(c) ? `<div class="badge" style="left:auto;right:12px;background:var(--grad-gold);color:var(--plum)">✦ тебе подойдёт</div>` : ''}
-          <div class="cap"><b>${esc(c.t)}</b><span>${esc(c.e)} · ${plural(c.n,'урок','урока','уроков')}</span></div>
+          <div class="cap"><b>${esc(c.t)}</b><span>${esc(c.e)} · ${plural(lessonsOf(c.id).length || c.n,'урок','урока','уроков')}</span></div>
         </div>
-        <div class="body">
-          <p class="small muted" style="margin:0 0 10px">${esc(c.d)}</p>
-          <div class="chips wrap" style="padding-bottom:6px">${(COURSE_TAGS[c.id]||[]).map(t => `<span class="chip pale">${esc(t)}</span>`).join('')}</div>
-          <div class="spread">
-            <div><span class="price">${money(c.p)}</span><span class="old">${money(c.old)}</span></div>
-            <div class="row starline"><span class="small muted">★ ${c.r} · ${c.s.toLocaleString('ru-RU')} учениц</span>${starBtn(c.id, 14)}</div>
-          </div>
-          <button class="btn ${S.courses.includes(c.id)?'done':''}" style="margin-top:12px"
-            onclick="${S.courses.includes(c.id)?'':`openCourseLanding('${attJs(c.id)}')`}">
-            ${S.courses.includes(c.id) ? '✓ Курс открыт' : 'Подробнее'}</button>
+        <div class="cfoot">
+          ${own ? `<div class="bar" style="flex:1"><i style="width:${pr.pct}%"></i></div><span class="small muted">${pr.all ? 'пройден' : pr.done + ' из ' + pr.total}</span>`
+                : `<span class="price">${money(c.p)}</span><span class="old">${money(c.old)}</span><span class="small muted">★ ${c.r}</span>`}
+          ${starBtn(c.id, 14)}
+          <button class="btn sm ${own?'done':''}" onclick="openCourse('${attJs(c.id)}')">${own ? (pr.all ? 'Открыть' : 'Продолжить') : 'Подробнее'}</button>
         </div>
-      </div>`).join('')}
+      </div>`;
+    }).join('')}
   </div>`;
 }
 
@@ -7466,7 +7567,7 @@ function pgProfile(){
   const spent = S.purchases.reduce((a,p) => a + p.p, 0);
   const doneTasks = (S.program || []).reduce((a,d) => a + d.tasks.filter(t => t.done).length, 0);
   const hw = Object.keys(S.homework||{}).length;
-  const lessons = Object.values(S.lessons||{}).flat().filter(l => l.done).length;
+  const lessons = Object.keys(S.courseDone || {}).length;
   return `<div class="view">
     <div class="hero">
       ${sceneSVG(daypart())}
@@ -8918,6 +9019,22 @@ function reject(id){
 }
 
 /* ---------- курсы ---------- */
+/* Готовность курса одной строкой: что уже загружено, чего не хватает.
+   Эксперту это важнее дохода: пустой урок она увидит здесь, а не по жалобе. */
+function courseReadiness(c){
+  const ls = lessonsOf(c.id);
+  const v = ls.filter(l => l.video).length, d = ls.filter(l => l.d).length, h = ls.filter(l => l.hw).length, f = ls.filter(l => l.free).length;
+  const promo = !!(S.videos && S.videos[c.id + '_promo']);
+  const miss = [];
+  if(!ls.length) miss.push('нет уроков');
+  if(ls.length && v < ls.length) miss.push('видео у ' + v + ' из ' + ls.length);
+  if(ls.length && d < ls.length) miss.push('описание у ' + d + ' из ' + ls.length);
+  if(!promo) miss.push('нет промо');
+  if(ls.length && !f) miss.push('нет открытого урока');
+  return `<div class="small muted" style="margin-top:5px">${ls.length ? `${plural(ls.length,'урок','урока','уроков')} · открытых ${f} · с домашним ${h}` : 'Уроки ещё не добавлены'}</div>
+    <div class="small" style="margin-top:3px;color:${miss.length ? 'var(--warn)' : 'var(--ok)'}">${miss.length ? 'Не хватает: ' + miss.join(', ') : 'Готов к показу: видео, описания, промо, открытый урок'}</div>`;
+}
+
 function adCourses(){
   return `
   ${adRequests('expert')}
@@ -8934,11 +9051,11 @@ function adCourses(){
       <div style="padding:12px">
         <div class="spread"><span class="price">${money(c.p)}</span>
           <span class="small muted">${c.s.toLocaleString('ru-RU')} продаж · ★ ${c.r}</span></div>
-        <div class="small muted" style="margin-top:5px">
-          Открытых уроков: ${ls.filter(l => l.free).length} · промо: ${(S.videos&&S.videos[c.id+'_promo'])?'есть':'нет'}</div>
+        ${courseReadiness(c)}
         <div class="acts">
           <button class="btn ghost sm" onclick="openCourseEditor('${attJs(c.id)}')">Редактировать</button>
-          <button class="btn ghost sm" onclick="openCourseLanding('${attJs(c.id)}')">Просмотр</button>
+          <button class="btn ghost sm" onclick="openCourseLanding('${attJs(c.id)}')">Страница</button>
+          <button class="btn ghost sm" onclick="openCourseLearn('${attJs(c.id)}',0)">Как ученица</button>
           <button class="btn ghost sm" style="color:var(--accent)" onclick="delCourse('${attJs(c.id)}')">Удалить</button>
         </div>
       </div>
@@ -9921,8 +10038,10 @@ function pgEditCourse(){
 
     <label class="lbl">Название</label>
     <input class="field" value="${esc(c.t)}" oninput="setCourse('${attJs(c.id)}','t',this.value)">
-    <label class="lbl">Короткое описание</label>
-    <textarea class="field" rows="3" oninput="setCourse('${attJs(c.id)}','d',this.value)">${esc(c.d)}</textarea>
+    <label class="lbl">Короткое описание <span class="muted">— одна-две фразы, идёт в письма и подсказки Евы</span></label>
+    <textarea class="field" rows="2" oninput="setCourse('${attJs(c.id)}','d',this.value)">${esc(c.d)}</textarea>
+    <label class="lbl">Описание на странице курса <span class="muted">— показывается после промо-ролика</span></label>
+    <textarea class="field" rows="5" placeholder="О чём курс, как устроен, что будет на выходе" oninput="setCourseAbout('${attJs(c.id)}',this.value)">${esc(info.about || '')}</textarea>
     <div class="g2">
       <div><label class="lbl">Цена, ₽</label><input class="field" type="number" value="${c.p}" oninput="setCourse('${attJs(c.id)}','p',+this.value)"></div>
       <div><label class="lbl">Старая цена</label><input class="field" type="number" value="${c.old}" oninput="setCourse('${attJs(c.id)}','old',+this.value)"></div>
@@ -9952,18 +10071,23 @@ function pgEditCourse(){
             onclick="delModule('${attJs(c.id)}',${mi})">✕</button>
         </span></div>
       <div style="padding:9px">
-        ${m.units.map(un => {
+        ${m.units.map((un, ui) => {
           const l = ls.find(x => x.n === un);
           if(!l) return '';
-          return `<button class="unit" onclick="openUnitEditor('${attJs(c.id)}','${attJs(l.id)}')">
-            <div class="n">${esc(l.n)}</div>
-            <div class="mini">${cover(l.id,'practice')}</div>
-            <div style="flex:1;min-width:0">
-              <b style="font-size:13px;display:block">${esc(l.t)}</b>
-              <div class="small muted">${l.min} мин · ${l.video?'видео есть':'без видео'}</div>
-            </div>
+          const lack = [!l.video && 'без видео', !l.d && 'без описания'].filter(Boolean).join(', ');
+          return `<div class="unit edrow">
+            <button class="hit" onclick="openUnitEditor('${attJs(c.id)}','${attJs(l.id)}')">
+              <div class="n">${esc(l.n)}</div>
+              <div class="mini">${cover(l.id,'practice')}</div>
+              <div class="ttl"><b>${esc(l.t)}</b>
+                <div class="small muted">${l.min} мин${l.hw ? ' · домашнее' : ''}${lack ? ' · <span style="color:var(--warn)">' + lack + '</span>' : ''}</div></div>
+            </button>
             <span class="pill ${l.free?'free':'paid'}">${l.free?'free':'🔒'}</span>
-          </button>`;
+            <span class="mv">
+              <button onclick="moveUnit('${attJs(c.id)}',${mi},${ui},-1)" aria-label="Выше" ${ui===0?'disabled':''}>▲</button>
+              <button onclick="moveUnit('${attJs(c.id)}',${mi},${ui},1)" aria-label="Ниже" ${ui===m.units.length-1?'disabled':''}>▼</button>
+            </span>
+          </div>`;
         }).join('')}
         <button class="btn ghost sm" style="width:100%" onclick="addUnitTo('${attJs(c.id)}',${mi})">＋ Добавить урок в модуль</button>
       </div>
@@ -9975,6 +10099,33 @@ function pgEditCourse(){
 }
 
 function setCourse(id, f, v){ const c = COURSES.find(x => x.id === id); c[f] = v; }
+function setCourseAbout(id, v){
+  COURSE_INFO[id] = COURSE_INFO[id] || {who:[], gives:[], promo:''};
+  COURSE_INFO[id].about = v;
+}
+
+/* Порядок уроков. Модули хранят номера уроков, номера видны ученице,
+   поэтому после перестановки нумеруем заново по порядку модулей. Номера
+   уроков — это не их id: домашние и отметки привязаны к id и не теряются. */
+function renumberLessons(cid){
+  const ls = lessonsOf(cid), mods = modulesOf(cid);
+  const seq = [];
+  mods.forEach(m => (m.units || []).forEach(n => { const l = ls.find(x => x.n === n); if(l && seq.indexOf(l) < 0) seq.push(l); }));
+  ls.forEach(l => { if(seq.indexOf(l) < 0) seq.push(l); });          // уроки вне модулей — в хвост
+  const was = seq.map(l => l.n);
+  seq.forEach((l, k) => { l.n = k + 1; });
+  mods.forEach(m => { m.units = (m.units || []).map(n => { const k = was.indexOf(n); return k < 0 ? n : seq[k].n; }); });
+  ls.length = 0; seq.forEach(l => ls.push(l));
+}
+function moveUnit(cid, mi, ui, dir){
+  const m = modulesOf(cid)[mi];
+  if(!m) return;
+  const j = ui + dir;
+  if(j < 0 || j >= m.units.length) return;
+  const tmp = m.units[ui]; m.units[ui] = m.units[j]; m.units[j] = tmp;
+  renumberLessons(cid);
+  render(); syncPush(['lessons','modules'], true);
+}
 /* Удаление курса: вместе с уроками, модулями и описанием — иначе они
    остаются висеть в данных и всплывают в других списках. */
 function delCourse(cid){
@@ -10050,8 +10201,8 @@ function pgEditUnit(){
 
     <label class="lbl">Название урока</label>
     <input class="field" value="${esc(l.t)}" oninput="setUnit('${attJs(c.id)}','${attJs(l.id)}','t',this.value)">
-    <label class="lbl">Описание урока</label>
-    <textarea class="field" rows="4" oninput="setUnit('${attJs(c.id)}','${attJs(l.id)}','d',this.value)">${esc(l.d||'')}</textarea>
+    <label class="lbl">Описание урока <span class="muted">— ученица видит его внутри урока, под видео</span></label>
+    <textarea class="field" rows="4" placeholder="О чём урок и что сделать после него" oninput="setUnit('${attJs(c.id)}','${attJs(l.id)}','d',this.value)">${esc(l.d||'')}</textarea>
     <div class="g2">
       <div><label class="lbl">Длительность, мин</label>
         <input class="field" type="number" value="${l.min}" oninput="setUnit('${attJs(c.id)}','${attJs(l.id)}','min',+this.value)"></div>
@@ -10359,11 +10510,12 @@ function exCourses(){
       <div style="padding:12px">
         <div class="spread"><span class="price">${money(c.p)}</span>
           <span class="small muted">${c.s.toLocaleString('ru-RU')} учениц · ★ ${c.r}</span></div>
-        <div class="small muted" style="margin-top:5px">Открытых уроков: ${ls.filter(l=>l.free).length} · доход за месяц ${money(Math.round(c.p*c.s*0.02))}</div>
+        ${courseReadiness(c)}
+        <div class="small muted" style="margin-top:4px">Доход за месяц ${money(Math.round(c.p*c.s*0.02))}</div>
         <div class="acts">
           <button class="btn ghost sm" onclick="openCourseEditor('${attJs(c.id)}')">Редактировать</button>
           <button class="btn ghost sm" onclick="addUnitTo('${attJs(c.id)}',0)">＋ Урок</button>
-          <button class="btn ghost sm" onclick="openCourseLanding('${attJs(c.id)}')">Просмотр</button>
+          <button class="btn ghost sm" onclick="openCourseLearn('${attJs(c.id)}',0)">Как ученица</button>
         </div>
       </div>
     </div>`;
@@ -11570,7 +11722,7 @@ function shCourse(){
       <div class="row"><div class="pcirc" style="width:42px;height:42px">${expPic(e)}</div>
       <div style="flex:1"><b style="font-size:14px">${esc(e.n)}</b><div class="small muted">${esc(e.r)}</div></div>
       <span class="muted">›</span></div></button>
-    <button class="btn" onclick="buyCourse('${attJs(c.id)}')">Записаться за ${money(c.p - bonus)}</button>`;
+    <button class="btn" onclick="buyCourse('${attJs(c.id)}')">Купить за ${money(c.p - bonus)}</button>`;
 }
 
 function shRebuild(){
@@ -11661,9 +11813,13 @@ function checkout(){
    поддержке, открывает курс в карточке пользователя — и он появляется
    у женщины при следующем входе. */
 function buyCourse(id){
-  if(S.courses.includes(id)) return;
+  if(S.courses.includes(id)) return openCourseLearn(id, courseProgress(id).next);
   const c = COURSES.find(x => x.id === id);
   if(!c) return;
+  /* Демонстрация и локальный режим: курс открывается сразу, без заявки.
+     Иначе показать прохождение некому — заявку на демо никто не обработает. */
+  const instant = (typeof EVA_DEMO !== 'undefined' && EVA_DEMO) || (typeof SYNC !== 'undefined' && SYNC.alive === false);
+  if(instant) return grantCourseNow(c);
   S.courseAsked = S.courseAsked || [];
   if(S.courseAsked.includes(id)){ S.sheet = null; render(); return toast('Заявка на этот курс уже у нас'); }
   const tk = toSupport('Курс: ' + c.t, 'Хочу курс «' + c.t + '» (' + money(c.p) + '). Оплата картой ещё не подключена — прошу открыть доступ.', 'course', {course:c.id});
@@ -11674,6 +11830,23 @@ function buyCourse(id){
     `можно не ждать и начать сегодня.`, 'openCourses', 'experts', tk.id);
   S.sheet = null; render(); schedulePersist();
   toast('Заявка отправлена. Подтверждение — в сообщениях');
+}
+/* покупка без заявки: бонусы списаны, курс в «Моих курсах», письмо о доступе, и сразу первый урок */
+function grantCourseNow(c){
+  const bonus = Math.min(S.bonus || 0, Math.round(c.p * 0.3));
+  const paid = c.p - bonus, cb = Math.round(paid * 0.05);
+  S.bonus = (S.bonus || 0) - bonus + cb;
+  S.points += Math.min(50, Math.round(paid / 200));
+  S.courses.push(c.id);
+  S.purchases = S.purchases || [];
+  S.purchases.unshift({t:'Курс «' + c.t + '»', p:paid, cb, date:'сегодня'});
+  platformSay(`${S.name ? S.name + ', курс' : 'Курс'} «${c.t}» открыт — он уже в «Моих курсах» на главной. ` +
+    `Начни с первого урока, домашние задания появятся после видео. Если что-то не откроется — напиши сюда.`,
+    'openCourses', 'experts');
+  S.sheet = null;
+  schedulePersist();
+  toast('Курс открыт' + (bonus ? ', списано ' + money(bonus) + ' бонусов' : ''));
+  openCourseLearn(c.id, 0);
 }
 function join(id){
   const g = GROUPS.find(x => x.id === id);
