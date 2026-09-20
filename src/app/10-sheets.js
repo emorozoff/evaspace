@@ -31,7 +31,7 @@ function sheet(){
     units:shUnits, groupInfo:shGroupInfo, newGroup:shNewGroup, fix:shFix, video:shVideo,
     invite:shInvite, hello:shHello, askGroup:shAskGroup, weekSum:shWeekSum,
     myPage:shMyPage, toMate:shToMate,
-    hw:shHW, unit:shUnit, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
+    hw:shHW, unit:shUnit, bought:shBought, event:shEvent, newEvent:shNewEvent, eventEdit:shEventEdit, evReview:shEvReview, write2:shWrite2, hwEdit:shHwEdit,
     expertApply:shExpertApply, install:shInstall, diag:shDiag, askGood:shAskGood, photo:shPhoto, ticket:shTicket, dating:shDating, dropProfile:shDropProfile, newInt:shNewInt, pickPhrase:shPickPhrase, exMail:shExMail, exPass:shExPass, changeMail:shChangeMail, changePass:shChangePass, support:shSupport, expTags:shExpTags, newEdu:shNewEdu, addUser:shAddUser, grant:shGrant, eduCheck:shEduCheck,
     service:shService, editUser:shEditUser,
     partnerApply:shPartnerApply, eventApply:shEventApply, rules:shRules, anonNick:shAnonNick,
@@ -43,7 +43,7 @@ function sheet(){
   return `<div class="bg${mid ? ' mid' : ''}" onclick="if(event.target===this)closeSheet()">
     <div class="sheet${mid ? ' modal' : ''}">${mid ? '' : '<div class="grab"></div>'}${body}</div></div>`;
 }
-const MODAL_SHEETS = ['anonNick'];
+const MODAL_SHEETS = ['anonNick', 'bought'];
 
 function shLesson(){
   const x = LIB.find(i => i.id === S.sheet.id);
@@ -220,10 +220,10 @@ function grantCourseNow(c){
   platformSay(`${S.name ? S.name + ', курс' : 'Курс'} «${c.t}» открыт — он уже в «Моих курсах» на главной. ` +
     `Начни с первого урока, домашние задания появятся после видео. Если что-то не откроется — напиши сюда.`,
     'openCourses', 'experts');
-  S.sheet = null;
-  schedulePersist();
-  toast('Курс открыт' + (bonus ? ', списано ' + money(bonus) + ' бонусов' : ''));
-  openCourseLearn(c.id, 0);
+  /* не в урок, а сначала поздравление: где курс лежит и кнопка «Приступить» */
+  S.sheet = {k:'bought', id:c.id, bonus, cb};
+  S.course = null;
+  render(); schedulePersist();
 }
 function join(id){
   const g = GROUPS.find(x => x.id === id);

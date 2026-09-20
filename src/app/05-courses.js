@@ -85,6 +85,49 @@ function openCourse(id){
   openCourseLanding(id);
 }
 function closeCourse(){ S.course = null; S.sheet = null; render(); window.scrollTo(0,0); }
+
+/* Строка «моего курса» — одна и та же на главной и во вкладке курсов:
+   обложка, название, где остановилась, полоска прогресса. */
+function myCourseRow(c){
+  const pr = courseProgress(c.id);
+  const fresh = S.courseFresh === c.id;
+  return `<button class="crow${fresh ? ' fresh' : ''}" onclick="openCourse('${attJs(c.id)}')">
+    <div class="mini">${cover(c.id,'course')}</div>
+    <div style="flex:1;min-width:0">
+      <b style="font-size:13.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.t)}</b>
+      <div class="small muted">${pr.all ? 'Пройден целиком' : pr.done ? `Урок ${esc(pr.ls[pr.next].n)} из ${pr.total} · дальше` : fresh ? 'Новый · начать первый урок' : 'Начать первый урок'}</div>
+      <div class="bar" style="margin-top:6px"><i style="width:${pr.pct}%"></i></div>
+    </div>
+    <span class="chip pale">${pr.all ? '✓' : '›'}</span></button>`;
+}
+
+/* Окно после покупки. Не бросаем её сразу в урок — сначала поздравляем,
+   говорим, где курс лежит, и даём одну кнопку «Приступить». */
+function shBought(){
+  const c = COURSES.find(x => x.id === S.sheet.id);
+  if(!c) return gone('Этого курса');
+  const ls = lessonsOf(c.id);
+  const total = ls.reduce((a, l) => a + l.min, 0);
+  const hwN = ls.filter(l => l.hw).length;
+  const b = S.sheet.bonus || 0, cb = S.sheet.cb || 0;
+  return `<div class="bought">
+    <div class="bicon">${starMark(30, '#fff')}</div>
+    <div class="eyebrow" style="color:var(--violet)">Курс открыт</div>
+    <h2 class="serif" style="font-size:24px;margin:6px 0 8px">Поздравляем${S.name ? ', ' + esc(S.name) : ''}!</h2>
+    <p style="font-size:14.5px;line-height:1.55;margin:0 0 12px">«${esc(c.t)}» теперь твой — целиком и навсегда.
+      Он уже лежит в «Моих курсах»: ${plural(ls.length,'урок','урока','уроков')}, ${Math.round(total/60*10)/10} ч видео${hwN ? ', ' + plural(hwN,'задание','задания','заданий') + ' после уроков' : ''}.
+      Проходи в своём темпе — прогресс сохраняется.</p>
+    ${b || cb ? `<div class="bline">${b ? 'Списано ' + money(b) + ' бонусов' : ''}${b && cb ? ' · ' : ''}${cb ? 'кэшбэк ' + money(cb) + ' начислен' : ''}</div>` : ''}
+    <button class="btn vio" onclick="startBought('${attJs(c.id)}')">Приступить</button>
+    <button class="btn ghost" style="margin-top:9px" onclick="closeSheet()">Позже</button>
+  </div>`;
+}
+/* «Приступить» ведёт в «Мои курсы» — там курс лежит первым и подсвечен */
+function startBought(id){
+  S.courseFresh = id;
+  S.sheet = null; S.course = null; S.page = null; S.tab = 'courses';
+  render(); window.scrollTo(0, 0);
+}
 /* Урок живёт в отдельном окне: видео, описание, задание и две понятные
    кнопки — «Урок пройден» и «Следующий урок». Страница курса под ним
    остаётся на месте, к списку возвращаешься одним движением. */
@@ -224,9 +267,10 @@ function pgCourseLearn(){
   const hwN = ls.filter(l => l.hw).length;
   const nxt = ls[pr.next];
   const force = S.role === 'admin' || S.role === 'expert';
+  if(S.courseFresh === c.id) S.courseFresh = null;           // открыла — подсветка «новый» больше не нужна
   const mainBtn = pr.all
     ? `<button class="btn ghost" onclick="openUnit('${attJs(c.id)}',0)">Пересмотреть с первого урока</button>`
-    : `<button class="btn acc" onclick="openUnit('${attJs(c.id)}',${pr.next})">${pr.done ? 'Следующий урок' : 'Начать'}: ${esc(nxt.n)}. ${esc(nxt.t)}</button>`;
+    : `<button class="btn vio" onclick="openUnit('${attJs(c.id)}',${pr.next})">${pr.done ? 'Следующий урок' : 'Начать'}: ${esc(nxt.n)}. ${esc(nxt.t)}</button>`;
   return `<div class="view pad">
     <div class="spread" style="margin-bottom:8px">
       <button class="backbtn" style="margin:0" onclick="closeCourse()">‹ Курсы</button>
@@ -314,9 +358,9 @@ function shUnit(){
           ? `<div class="row" style="gap:8px"><span class="pill free">✓ урок пройден</span>
                <span class="small muted">${pr.all ? 'курс пройден целиком' : 'пройдено ' + pr.done + ' из ' + pr.total}</span></div>
              ${goNext >= 0
-               ? `<button class="btn acc" style="margin-top:10px" onclick="${jump(goNext)}">Следующий урок: ${esc(ls[goNext].n)}. ${esc(ls[goNext].t)} →</button>`
+               ? `<button class="btn vio" style="margin-top:10px" onclick="${jump(goNext)}">Следующий урок: ${esc(ls[goNext].n)}. ${esc(ls[goNext].t)} →</button>`
                : `<button class="btn" style="margin-top:10px" onclick="closeSheet()">К списку уроков</button>`}`
-          : `<button class="btn acc" onclick="doneUnit('${attJs(cid)}',${i})">Урок пройден ✓</button>
+          : `<button class="btn vio" onclick="doneUnit('${attJs(cid)}',${i})">Урок пройден ✓</button>
              <div class="small muted" style="text-align:center;margin-top:7px">Отметь, когда посмотришь, — появится кнопка «Следующий урок»</div>`}
       </div>
       <div class="unav">

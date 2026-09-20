@@ -7,6 +7,7 @@
   --muted:#7E7A85; --line:rgba(17,16,20,.09); --line-2:rgba(17,16,20,.16);
   --accent:#A8375C; --accent-2:#C2506F; --accent-soft:#F7E9EE;
   --gold:#B8894A; --ok:#3F7D62; --warn:#B4642A; --lilac:#6C5CE0;
+  --violet:#4A2D7A; --violet-2:#3B2363; --violet-soft:#EDE7F6;
   --grad-dark:linear-gradient(155deg,#1A171F 0%,#2B2233 55%,#4A2C42 100%);
   --sh-1:0 1px 2px rgba(17,16,20,.05);
   --sh-2:0 4px 18px rgba(17,16,20,.07);
@@ -80,6 +81,9 @@ h2.serif{font-size:19px;margin:0}
 .btn:hover{background:var(--ink-3)}
 .btn.acc{background:var(--accent)}
 .btn.acc:hover{background:var(--accent-2)}
+/* тёмно-фиолетовая — для хода по курсу: «Начать», «Следующий урок», «Урок пройден» */
+.btn.vio{background:var(--violet)}
+.btn.vio:hover{background:var(--violet-2)}
 .btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line-2)}
 .btn.ghost:hover{background:var(--surface-2)}
 .btn.done{background:#EAF2ED;color:var(--ok)}
@@ -1232,17 +1236,12 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 
 /* Вход в заявку эксперта: строка под рядом экспертов, там, где женщина
    смотрит на чужие карточки и думает «я тоже так могу». */
-.applyrow{--ac:var(--accent);--ab:#F7E9EE;display:flex;align-items:center;gap:11px;width:100%;text-align:left;
-  background:linear-gradient(120deg,var(--ab),var(--surface) 68%);border:1px solid var(--line);border-radius:var(--r);
+.applyrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  background:var(--surface);border:1px dashed var(--line-2);border-radius:var(--r);
   padding:13px 14px;margin-top:10px;transition:.15s}
-.applyrow.partner{--ac:var(--gold);--ab:#F3EEE4}
-.applyrow.event{--ac:var(--lilac);--ab:#EEECFA}
-.applyrow:hover{border-color:var(--ac)}
-.applyrow .aico{width:36px;height:36px;border-radius:12px;flex:none;display:grid;place-items:center;
-  background:var(--ac);color:#fff;box-shadow:0 4px 12px rgba(17,16,20,.12)}
-.applyrow .akind{display:block;font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ac);margin-bottom:2px}
-.applyrow .aarr{width:26px;height:26px;border-radius:50%;background:var(--surface);border:1px solid var(--line);
-  display:grid;place-items:center;color:var(--ac);font-size:15px;flex:none}
+.applyrow:hover{border-style:solid;border-color:var(--ink)}
+.applyrow .aico{width:34px;height:34px;border-radius:12px;flex:none;display:grid;place-items:center;
+  background:var(--surface-2);color:var(--accent)}
 /* формы заявок: цветная шапка и пронумерованные разделы */
 .fhead{--ac:var(--accent);--ab:#F7E9EE;border-radius:var(--r-lg);padding:15px 15px 14px;margin:0 0 12px;
   background:linear-gradient(135deg,var(--ab),var(--surface) 88%);border:1px solid var(--line)}
@@ -1325,16 +1324,22 @@ i.lg{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:
 .cfoot .btn.sm{width:auto;margin-left:auto;padding:8px 13px;flex:none}
 .unit .ttl{flex:1;min-width:0}
 .unit .ttl b{font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.unit.next{border-color:var(--accent)}
-.unit.next .n{background:var(--accent);color:#fff}
-.pill.next{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.unit.next{border-color:var(--violet)}
+.unit.next .n{background:var(--violet);color:#fff}
+.pill.next{background:var(--violet-soft);color:var(--violet);border-color:transparent}
 .unit.edrow{padding:6px 8px 6px 6px;gap:6px}
 .unit.edrow .hit{display:flex;gap:9px;align-items:center;flex:1;min-width:0;text-align:left}
 .unit.edrow .mv{display:flex;flex-direction:column;gap:2px;flex:none}
 .unit.edrow .mv button{width:24px;height:17px;border-radius:6px;background:var(--surface-2);font-size:8px;color:var(--muted)}
 .unit.edrow .mv button:disabled{opacity:.3}
 .expcard{width:100%;text-align:left;padding:12px}
-.card.cont{border-color:var(--accent)}
+.card.cont{border-color:var(--violet)}
+/* окно после покупки и подсветка нового курса в «Моих курсах» */
+.bought{text-align:center;padding:4px 2px 0}
+.bought .bicon{width:64px;height:64px;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;
+  background:linear-gradient(150deg,var(--violet),#7A4FB3);box-shadow:0 12px 30px rgba(74,45,122,.35)}
+.bought .bline{background:var(--violet-soft);color:var(--violet);font-size:12.5px;font-weight:600;border-radius:var(--r);padding:9px 12px;margin-bottom:12px}
+.crow.fresh{border-color:var(--violet);box-shadow:0 0 0 3px var(--violet-soft)}
 /* окно урока: состояние «пройден» и переходы между уроками */
 .hwcard{border-color:var(--gold);margin-top:14px}
 .hwcard.ok{border-color:var(--ok)}

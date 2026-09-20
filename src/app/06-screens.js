@@ -128,18 +128,7 @@ function pgHome(){
 
     ${S.courses.length ? `
       <div class="sec-h"><h2 class="serif">Мои курсы</h2><button class="link" onclick="go('courses')">Каталог</button></div>
-      ${S.courses.map(id => {
-        const c = COURSES.find(x => x.id === id); if(!c) return '';
-        const pr = courseProgress(c.id);
-        return `<button class="crow" onclick="openCourse('${attJs(c.id)}')">
-          <div class="mini">${cover(c.id,'course')}</div>
-          <div style="flex:1;min-width:0">
-            <b style="font-size:13.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.t)}</b>
-            <div class="small muted">${pr.all ? 'Пройден целиком' : pr.done ? `Урок ${esc(pr.ls[pr.next].n)} из ${pr.total} · дальше` : 'Начать первый урок'}</div>
-            <div class="bar" style="margin-top:6px"><i style="width:${pr.pct}%"></i></div>
-          </div>
-          <span class="chip pale">${pr.all ? '✓' : '›'}</span></button>`;
-      }).join('')}` : `
+      ${S.courses.map(id => { const c = COURSES.find(x => x.id === id); return c ? myCourseRow(c) : ''; }).join('')}` : `
       <div class="sec-h"><h2 class="serif">Мои курсы</h2></div>
       <button class="card" style="width:100%;text-align:left" onclick="go('courses')">
         <b style="font-size:14.5px">Пока ни одного курса</b>
@@ -355,6 +344,10 @@ function pgCourses(){
     <div class="eyebrow">Обучение</div>
     <h1 class="serif" style="font-size:29px;margin:6px 0 14px">Курсы экспертов</h1>
 
+    ${S.courses.length ? `<div class="sec-h" style="margin-top:0"><h2 class="serif">Мои курсы</h2><span class="small muted">${S.courses.length}</span></div>
+      ${S.courses.slice().reverse().map(id => { const c = COURSES.find(x => x.id === id); return c ? myCourseRow(c) : ''; }).join('')}
+      <div style="height:6px"></div>` : ''}
+
     <div class="card" style="background:linear-gradient(150deg,#2E2145,#4B2A4E);color:#fff;border-color:transparent">
       <h3 class="serif" style="font-size:20px;margin:0 0 8px;color:#fff">Понравилась бесплатная практика?</h3>
       <p class="small" style="margin:0;color:rgba(255,255,255,.78)">У каждого эксперта есть полный курс - продолжение того,
@@ -421,15 +414,14 @@ function inviteRow(kind){
               p:'Добавим ваше мероприятие или то, что советуете'}
   }[kind];
   if(!r) return '';
-  /* у каждого приглашения свой цвет — тот же, что у его формы */
+  /* строка на странице спокойная, цвет роли живёт внутри формы */
   return `<button class="applyrow ${kind}" onclick="openSheet('${attJs(r.sheet)}')">
       <span class="aico">${INVITE_ICO[r.ico]}</span>
       <div style="flex:1;min-width:0">
-        <span class="akind">${r.k}</span>
         <b style="font-size:13.5px;display:block">${r.h}</b>
         <span class="small muted">${r.p}</span>
       </div>
-      <span class="aarr">›</span>
+      <span class="muted" style="font-size:17px">›</span>
     </button>`;
 }
 
