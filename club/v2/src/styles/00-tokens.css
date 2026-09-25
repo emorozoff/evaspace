@@ -1,0 +1,83 @@
+/* Цвета и шрифты — из Книги стандартов Eva Space:
+   Ночь #14111A — основа, Роза #E4A0B8 — акцент, Золото #E7C58B — числа,
+   Фиалка #8C83DE — схемы. Unbounded — заголовки и числа, Inter — текст.
+   На светлом фоне фирменные оттенки темнее, чтобы текст читался. */
+:root{
+  --bg:#F5F3F7;
+  --surface:#FFFFFF;
+  --surface-2:#FAF9FC;
+  --sunken:#EFECF3;
+  --line:#E4DFEA;
+  --line-strong:#CEC7D8;
+  --ink:#17131F;
+  --ink-2:#4B4557;
+  --ink-3:#7A7386;
+
+  --night:#14111A;
+  --night-2:#1E1926;
+  --night-line:#2E2738;
+  --night-ink:#EEE9F4;
+  --night-ink-2:#A39CB0;
+
+  --rose:#AD4C74;
+  --rose-brand:#E4A0B8;
+  --rose-soft:#F8E6EE;
+  --on-rose:#FFFFFF;
+  --gold:#8F6B27;
+  --gold-brand:#E7C58B;
+  --gold-soft:#F6EEDC;
+  --violet:#5A50C0;
+  --violet-soft:#ECEAFB;
+
+  --good:#2C7753;
+  --good-soft:#E1F1E8;
+  --bad:#A03A4B;
+  --bad-soft:#F8E5E8;
+  --warn:#9C6410;
+  --warn-soft:#FAEFD9;
+
+  --in-row:#EEF7F1;
+  --out-row:#FBF0F2;
+
+  --shadow:0 1px 2px rgba(23,19,31,.05), 0 4px 16px rgba(23,19,31,.05);
+  --shadow-pop:0 12px 40px rgba(23,19,31,.18);
+  --radius:12px;
+  --radius-sm:8px;
+
+  --f-display:'Unbounded', 'Inter', system-ui, sans-serif;
+  --f-text:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121017; --surface:#1B1722; --surface-2:#1F1A27; --sunken:#16121C;
+    --line:#2E2737; --line-strong:#43394F;
+    --ink:#F0ECF5; --ink-2:#C1B9CC; --ink-3:#8F879C;
+    --night:#0D0B11; --night-2:#18141F; --night-line:#28222F;
+    --rose:#E4A0B8; --rose-soft:#3A2431; --on-rose:#14111A;
+    --gold:#E7C58B; --gold-soft:#33291B;
+    --violet:#A9A2F3; --violet-soft:#262243;
+    --good:#7DCBA3; --good-soft:#1B3027;
+    --bad:#EF929F; --bad-soft:#3B2027;
+    --warn:#E8B463; --warn-soft:#352819;
+    --in-row:#18261F; --out-row:#2A1C22;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.25);
+    --shadow-pop:0 12px 40px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121017; --surface:#1B1722; --surface-2:#1F1A27; --sunken:#16121C;
+  --line:#2E2737; --line-strong:#43394F;
+  --ink:#F0ECF5; --ink-2:#C1B9CC; --ink-3:#8F879C;
+  --night:#0D0B11; --night-2:#18141F; --night-line:#28222F;
+  --rose:#E4A0B8; --rose-soft:#3A2431; --on-rose:#14111A;
+  --gold:#E7C58B; --gold-soft:#33291B;
+  --violet:#A9A2F3; --violet-soft:#262243;
+  --good:#7DCBA3; --good-soft:#1B3027;
+  --bad:#EF929F; --bad-soft:#3B2027;
+  --warn:#E8B463; --warn-soft:#352819;
+  --in-row:#18261F; --out-row:#2A1C22;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.25);
+  --shadow-pop:0 12px 40px rgba(0,0,0,.55);
+}

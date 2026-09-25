@@ -1,0 +1,21 @@
+/* ── команда ── */
+.team-group{margin-bottom:22px;}
+.team-gh{display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; margin-bottom:10px;}
+.team-gh span{font-weight:400; color:var(--ink-3); font-size:12.5px;}
+.people{display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:12px;}
+.person{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; display:flex; flex-direction:column; gap:10px;}
+.person-h{display:flex; gap:12px; align-items:center;}
+.person-n{flex:1; min-width:0; display:flex; flex-direction:column;}
+.person-n b{font-size:14px;}
+.person-n span{font-size:12.5px; color:var(--ink-3);}
+.person-tags{display:flex; gap:6px; flex-wrap:wrap;}
+.person-f{display:flex; align-items:center; gap:10px; font-size:12.5px; margin-top:auto; padding-top:8px; border-top:1px solid var(--line); white-space:nowrap; flex-wrap:wrap;}
+.person-f .btn{margin-left:auto;}
+table.acc tr.off td{opacity:.5;}
+table.acc .select{width:auto;}
+.inv-h{margin-top:18px;}
+.inv-code{font-family:var(--f-text); font-weight:700; letter-spacing:.12em; background:var(--gold-soft); color:var(--gold); padding:3px 9px; border-radius:7px; font-variant-numeric:tabular-nums;}
+.inv-code.big-code{font-size:22px; display:inline-block; padding:8px 16px;}
+.invite-out{display:flex; flex-direction:column; gap:8px; align-items:flex-start; padding:14px; border-radius:10px; background:var(--surface-2); border:1px solid var(--line);}
+.invite-out .inv-code{font-size:20px; padding:6px 14px;}
+.help-ico{width:18px; height:18px; stroke:var(--violet); fill:none; stroke-width:1.8; flex:0 0 18px; margin-top:2px;}

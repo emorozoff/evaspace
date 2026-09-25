@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Штаб Eva Club V2</title>
+<meta name="description" content="Рабочий штаб команды Eva Space: задачи, деньги, продажи и отчёты до конца года.">
+<meta name="theme-color" content="#14111A">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2314111A'/%3E%3Cpath d='M16 3l2.4 7.6L25 6.9l-3.7 6.7L29 16l-7.7 2.4 3.7 6.7-6.6-3.7L16 29l-2.4-7.6-6.6 3.7 3.7-6.7L3 16l7.7-2.4L7 6.9l6.6 3.7z' fill='%23E4A0B8'/%3E%3C/svg%3E">
+<style>
+  :root{color-scheme:light;}
+  html,body{margin:0;padding:0;background:#F5F3F7;color:#17131F;}
+  @media (prefers-color-scheme: dark){ html,body{background:#121017;color:#F0ECF5;} :root{color-scheme:dark;} }
+  body{font:14px/1.5 'Inter',-apple-system,BlinkMacSystemFont,sans-serif;}
+  img{max-width:100%;}
+  [hidden]{display:none !important;}
+  #wrapBoot{max-width:520px;margin:18vh auto;padding:0 24px;text-align:center;color:#7A7386;}
+  #wrapBoot b{display:block;font-size:18px;color:inherit;margin-bottom:8px;}
+  #wrapBoot code{background:rgba(125,118,137,.18);padding:2px 6px;border-radius:5px;font-size:13px;}
+</style>
+</head>
+<body>
+<div id="wrapBoot"><b>Eva Club</b>Загружаем штаб…</div>
+<script>
+/* Штаб V2 собирается в один файл eva-club-v2.html — это тело страницы без
+   обёртки, потому что тот же файл публикуется артефактом Claude. Здесь
+   обёртку подставляем сами: забираем файл, вставляем разметку и заново
+   создаём <script> — innerHTML их не выполняет. Вне артефакта данные
+   живут в этом браузере (в шапке штаба горит «Только этот браузер»). */
+(async function(){
+  const boot = document.getElementById('wrapBoot');
+  let html;
+  try{
+    const res = await fetch('eva-club-v2.html', {cache:'no-cache'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    html = await res.text();
+  }catch(e){
+    boot.innerHTML = '<b>Не удалось загрузить штаб</b>Файл <code>eva-club-v2.html</code> не отдался: ' + String(e.message||e) +
+      '.<br><br>Если страница открыта двойным кликом с диска, поднимите локальный сервер: <code>python3 -m http.server</code> в папке проекта.';
+    return;
+  }
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const scripts = [];
+  tpl.content.querySelectorAll('script').forEach(s => { scripts.push(s); s.remove(); });
+  tpl.content.querySelectorAll('title, meta[name="description"]').forEach(n => n.remove());
+  tpl.content.querySelectorAll('link').forEach(l => document.head.appendChild(l));
+  boot.remove();
+  document.body.appendChild(tpl.content);
+  for(const old of scripts){
+    const s = document.createElement('script');
+    for(const a of old.attributes) s.setAttribute(a.name, a.value);
+    s.textContent = old.textContent;
+    document.body.appendChild(s);
+  }
+})();
+</script>
+</body>
+</html>
