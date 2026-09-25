@@ -429,12 +429,12 @@ table.grid-lines td:last-child, table.grid-lines th:last-child{border-right:0;}
 }
 
 /* ── 10-v2.css ── */
-/* ── CRM 2.0: проще, дружелюбнее, с эмодзи ── */
+/* ── CRM 2.0: проще и спокойнее. Смайл — только «лицо» раздела (меню,
+   заголовок группы, карточка человека). Цифры, статусы, кнопки и графики —
+   без смайлов, чтобы читались с первого взгляда. ── */
 .page{max-width:1240px;}
 .nav-emo{width:20px; flex:0 0 20px; text-align:center; font-size:15px; line-height:1;}
 .nav .nav-n{margin-left:auto; font-size:11.5px; color:var(--night-ink-2); font-variant-numeric:tabular-nums;}
-.nav .nav-n + .badge{margin-left:6px;}
-.nav a .badge:only-of-type{margin-left:auto;}
 .emo{font-size:1.15em; line-height:1;}
 .muted{color:var(--ink-3);}
 .sp{flex:1;}
@@ -446,15 +446,20 @@ table.grid-lines td:last-child, table.grid-lines th:last-child{border-right:0;}
 a.card.as-link{text-decoration:none; color:inherit; transition:border-color .12s, background .12s;}
 a.card.as-link:hover{border-color:var(--line-strong); background:var(--surface-2);}
 
-/* большие дружелюбные кнопки-действия на главной */
+/* главная: три шага «что сделать» */
+.h-sm{font-size:13px; font-weight:600; color:var(--ink-3); text-transform:uppercase; letter-spacing:.04em; margin:18px 0 10px;}
+.h-sm:first-of-type{margin-top:4px;}
 .todo{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px;}
 @media (max-width:760px){ .todo{grid-template-columns:1fr;} }
-.todo-i{display:flex; gap:12px; align-items:center; padding:14px 16px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--line); text-decoration:none; color:inherit;}
+.todo-i{display:flex; flex-direction:column; gap:2px; padding:14px 16px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--line); text-decoration:none; color:inherit;}
 .todo-i:hover{border-color:var(--line-strong);}
-.todo-i .big-emo{font-size:26px; line-height:1;}
-.todo-i b{display:block; font-size:22px; font-weight:600; font-variant-numeric:tabular-nums; line-height:1.1;}
-.todo-i span{font-size:13px; color:var(--ink-2);}
+.todo-step{display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--ink-3); margin-bottom:4px;}
+.todo-step i{font-style:normal; width:20px; height:20px; border-radius:50%; background:var(--sunken); display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink-2);}
+.todo-i b{font:600 30px/1.1 var(--f-display); font-variant-numeric:tabular-nums;}
+.todo-t{font-size:14px; font-weight:500;}
+.todo-i small{font-size:12.5px; color:var(--ink-3);}
 .todo-i.hot{background:var(--rose-soft); border-color:transparent;}
+.todo-i.hot .todo-step i{background:var(--rose); color:#fff;}
 
 /* плитки групп с тремя шагами */
 .aud{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px;}
@@ -462,21 +467,44 @@ a.card.as-link:hover{border-color:var(--line-strong); background:var(--surface-2
 @media (max-width:560px){ .aud{grid-template-columns:1fr;} }
 .aud-c{display:flex; flex-direction:column; gap:10px; padding:16px 18px; text-decoration:none; color:inherit;}
 .aud-h{display:flex; align-items:center; gap:10px;}
-.aud-h .e{font-size:26px; line-height:1;}
+.aud-h .e{font-size:22px; line-height:1;}
 .aud-h b{font-size:15px;}
 .aud-h .n{margin-left:auto; font:600 24px/1 var(--f-display); font-variant-numeric:tabular-nums;}
 .steps3{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:6px;}
-.steps3 div{background:var(--surface-2); border-radius:8px; padding:6px 8px; font-size:11.5px; color:var(--ink-3); display:flex; flex-direction:column;}
-.steps3 b{font-size:15px; color:var(--ink); font-variant-numeric:tabular-nums;}
+.steps3 div{background:var(--surface-2); border-radius:8px; padding:7px 9px; font-size:12px; color:var(--ink-3); display:flex; flex-direction:column; gap:1px;}
+.steps3 b{font-size:17px; color:var(--ink); font-variant-numeric:tabular-nums;}
 .aud-f{font-size:12.5px; color:var(--ink-2);}
+.aud-f b{font-variant-numeric:tabular-nums;}
+.aud-note{margin-top:8px;}
 
-/* рекомендации */
+/* рекомендации: текст, под ним группа и почему */
+.rec-h{font-size:12px; font-weight:600; color:var(--ink-3); text-transform:uppercase; letter-spacing:.04em; margin:4px 0 8px;}
+.recs + .rec-h{margin-top:16px;}
 .recs{display:flex; flex-direction:column; gap:8px;}
-.rec{display:grid; grid-template-columns:34px minmax(0,1fr); gap:10px; align-items:start; padding:12px 14px; border-radius:10px; background:var(--surface); border:1px solid var(--line); text-decoration:none; color:inherit;}
+.rec{display:block; padding:11px 14px; border-radius:10px; background:var(--surface); border:1px solid var(--line); text-decoration:none; color:inherit;}
 .rec:hover{border-color:var(--line-strong);}
-.rec .e{font-size:22px; line-height:1.2; text-align:center;}
 .rec b{display:block; font-weight:500; font-size:13.5px; line-height:1.45;}
-.rec small{display:block; color:var(--ink-3); font-size:12px; margin-top:3px;}
+.rec small{display:flex; flex-wrap:wrap; gap:4px 8px; align-items:center; color:var(--ink-3); font-size:12px; margin-top:5px;}
+.rec-g{padding:1px 8px; border-radius:9px; background:var(--sunken); color:var(--ink-2); font-weight:600; font-size:11.5px;}
+
+/* ближайшие созвоны: время слева, кто — справа */
+.calls{display:flex; flex-direction:column;}
+.call{display:grid; grid-template-columns:118px minmax(0,1fr); gap:10px; padding:9px 2px; border-bottom:1px solid var(--line); text-decoration:none; color:inherit; align-items:baseline;}
+.call:last-child{border-bottom:0;}
+.call:hover b{color:var(--link);}
+.call time{font-size:12.5px; font-weight:600; color:var(--violet); font-variant-numeric:tabular-nums;}
+.call b{display:block; font-size:13.5px; font-weight:600;}
+.call small{display:block; font-size:12px; color:var(--ink-3);}
+
+/* крупные цифры с подписью под ними */
+.kpis{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px;}
+.kpis > div{display:flex; flex-direction:column; gap:2px;}
+.kpis b{font:600 26px/1.1 var(--f-display); font-variant-numeric:tabular-nums;}
+.kpis span{font-size:12.5px; color:var(--ink-3);}
+.kpis.kpis-4{grid-template-columns:repeat(4, minmax(0,1fr)); padding:16px 20px;}
+.two .kpis{grid-template-columns:repeat(2, minmax(0,1fr));}
+@media (max-width:640px){ .kpis.kpis-4{grid-template-columns:repeat(2, minmax(0,1fr)); row-gap:14px;} }
+a.known .card-head .note{color:var(--link);}
 
 /* полосы ответов */
 .hbl{display:flex; flex-direction:column; gap:7px;}
@@ -489,10 +517,13 @@ a.card.as-link:hover{border-color:var(--line-strong); background:var(--surface-2
 @media (max-width:520px){ .hbl-r{grid-template-columns:110px minmax(0,1fr) auto;} .hbl-r small{display:none;} }
 .qstats{display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:12px;}
 @media (max-width:420px){ .qstats{grid-template-columns:1fr;} }
-.qstat h3{font-size:13.5px; font-weight:600; margin-bottom:10px; line-height:1.4;}
-.qstat .n{font-size:11.5px; color:var(--ink-3); font-weight:500;}
+.qstat-h{display:flex; gap:10px; align-items:baseline; justify-content:space-between; margin-bottom:10px;}
+.qstat h3{font-size:13.5px; font-weight:600; line-height:1.4;}
+.qstat-h span{font-size:12px; color:var(--ink-3); white-space:nowrap; font-variant-numeric:tabular-nums;}
+.qstat-avg{font-size:12.5px; color:var(--ink-3); margin:-4px 0 10px;}
+.qstat-avg b{color:var(--ink); font-size:14px;}
 .coverage{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px;}
-.cov{border-radius:10px; padding:9px 11px; border:1px solid var(--line); background:var(--surface); font-size:12.5px; display:flex; flex-direction:column; gap:2px;}
+.cov{border-radius:10px; padding:9px 11px; border:1px solid var(--line); background:var(--surface); font-size:12.5px; display:flex; flex-direction:column; gap:1px;}
 .cov b{font-size:13px; font-weight:600;}
 .cov.zero{background:var(--rose-soft); border-color:transparent;}
 .cov.zero small{color:var(--rose); font-weight:600;}
@@ -520,14 +551,17 @@ a.card.as-link:hover{border-color:var(--line-strong); background:var(--surface-2
 .pc-top .av{width:28px; height:28px; flex-basis:28px; font-size:11px;}
 .pc-top b{font-size:13.5px; font-weight:600; line-height:1.3; flex:1; min-width:0; overflow-wrap:anywhere;}
 .pc-sub{font-size:12px; color:var(--ink-3); line-height:1.4;}
+.pc-ref{color:var(--violet); font-weight:600;}
 .pc-acts{display:flex; gap:6px; flex-wrap:wrap;}
-.pc .st{display:inline-flex; align-items:center; gap:5px; height:22px; padding:0 8px; border-radius:11px; font-size:11.5px; font-weight:600; background:var(--sunken); color:var(--ink-2); white-space:nowrap;}
+.st{display:inline-flex; align-items:center; gap:5px; height:22px; padding:0 8px; border-radius:11px; font-size:11.5px; font-weight:600; background:var(--sunken); color:var(--ink-2); white-space:nowrap;}
 .st.good{background:var(--good-soft); color:var(--good);} .st.warn{background:var(--warn-soft); color:var(--warn);} .st.bad{background:var(--bad-soft); color:var(--bad);} .st.violet{background:var(--violet-soft); color:var(--violet);}
 .chip-row{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; align-items:center;}
 .chip{height:30px; padding:0 11px; border-radius:15px; border:1px solid var(--line-strong); background:var(--surface); font-size:12.5px; font-weight:500; color:var(--ink-2); display:inline-flex; align-items:center; gap:6px; white-space:nowrap; cursor:pointer;}
 .chip:hover{border-color:var(--ink-3); color:var(--ink);}
 .chip.on{background:var(--ink); border-color:var(--ink); color:var(--bg);}
 .chip b{font-weight:700;}
+.chip-n{min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--sunken); color:var(--ink-2); font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; font-variant-numeric:tabular-nums;}
+.chip.on .chip-n{background:color-mix(in srgb, var(--bg) 25%, transparent); color:var(--bg);}
 
 /* выбор ответа: крупные чипы */
 .ans{display:flex; flex-wrap:wrap; gap:6px;}
@@ -538,6 +572,9 @@ a.card.as-link:hover{border-color:var(--line-strong); background:var(--surface-2
 .scale button{width:46px; height:46px; border-radius:12px; border:1px solid var(--line-strong); background:var(--surface); font-size:22px; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1;}
 .scale button small{font-size:10px; color:var(--ink-3); margin-top:2px;}
 .scale button.on{border-color:var(--link); background:var(--link-soft); box-shadow:0 0 0 2px var(--link) inset;}
+.num-scale{flex-wrap:wrap; align-items:center;}
+.num-scale button{width:40px; height:40px; font-size:15px; font-weight:600; font-variant-numeric:tabular-nums;}
+.num-scale .scale-ends{font-size:12px; color:var(--ink-3); margin-left:6px;}
 .fq{display:flex; flex-direction:column; gap:8px; padding:14px 0; border-bottom:1px solid var(--line);}
 .fq:last-child{border-bottom:0;}
 .fq-t{display:flex; gap:10px; font-size:14px; font-weight:600; line-height:1.4;}
@@ -566,6 +603,8 @@ a.card.as-link:hover{border-color:var(--line-strong); background:var(--surface-2
 .b3-t .step-n{width:22px; height:22px; border-radius:50%; background:var(--sunken); display:inline-flex; align-items:center; justify-content:center; font-size:11.5px; color:var(--ink-2);}
 .b3.done .step-n{background:var(--good); color:#fff;}
 .b3-s{font-size:15px; font-weight:600;}
+.b3-when{display:block; font-size:12.5px; font-weight:400; color:var(--ink-3); margin-top:2px;}
+a.b3-when{color:var(--link); display:inline-block;}
 .b3 .row{gap:6px;}
 .link-box{display:flex; gap:6px; align-items:center; padding:8px 10px; border-radius:9px; background:var(--surface-2); border:1px dashed var(--line-strong); font:12px ui-monospace, Menlo, monospace; color:var(--ink-2); overflow:hidden;}
 .link-box span{flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
@@ -579,9 +618,12 @@ a.card.as-link:hover{border-color:var(--line-strong); background:var(--surface-2
 .tq-h i{font-style:normal; color:var(--ink-3); min-width:22px; font-weight:600;}
 .tq-why{font-size:12px; color:var(--ink-3); padding-left:32px;}
 .tq .textarea{min-height:56px; margin-left:32px; width:calc(100% - 32px);}
-.star{border:0; background:none; font-size:18px; line-height:1; padding:2px; filter:grayscale(1); opacity:.45;}
-.star.on{filter:none; opacity:1;}
-.timer{font:600 14px ui-monospace, Menlo, monospace; padding:4px 10px; border-radius:8px; background:var(--sunken);}
+.star{border:0; background:none; line-height:0; padding:3px; color:var(--ink-3); border-radius:6px;}
+.star:hover{background:var(--sunken); color:var(--gold);}
+.star svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linejoin:round;}
+.star.on{color:var(--gold);}
+.star.on svg{fill:currentColor;}
+.timer{font:600 14px ui-monospace, Menlo, monospace; padding:4px 10px; border-radius:8px; background:var(--sunken); font-variant-numeric:tabular-nums;}
 .tagpick{display:flex; flex-wrap:wrap; gap:6px;}
 .tagpick button{height:30px; padding:0 11px; border-radius:15px; border:1px solid var(--line-strong); background:var(--surface); font-size:12.5px;}
 .tagpick button.on{background:var(--violet); border-color:var(--violet); color:#fff;}
@@ -591,15 +633,20 @@ a.card.as-link:hover{border-color:var(--line-strong); background:var(--surface-2
 
 /* вопросы */
 .ql{display:flex; flex-direction:column; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); overflow:hidden;}
-.qi{display:grid; grid-template-columns:28px 30px minmax(0,1fr) auto; gap:10px; align-items:start; padding:11px 14px; border-bottom:1px solid var(--line);}
+.qi{display:grid; grid-template-columns:24px minmax(0,1fr) auto; gap:10px; align-items:start; padding:11px 14px; border-bottom:1px solid var(--line);}
 .qi:last-child{border-bottom:0;}
 .qi.hid{opacity:.45;}
 .qi .n{font-size:12px; color:var(--ink-3); font-weight:600; padding-top:2px;}
-.qi .k{font-size:16px; line-height:1.2;}
+.qk{display:inline-block; margin-right:8px; padding:0 7px; border-radius:8px; background:var(--sunken); color:var(--ink-2); font-weight:600; font-size:11px;}
 .qi b{font-size:13.5px; font-weight:500; line-height:1.45; display:block;}
 .qi small{display:block; font-size:12px; color:var(--ink-3); margin-top:3px; line-height:1.4;}
 .qi .acts{display:flex; gap:2px;}
-.qi .acts .icon-btn{width:28px; height:28px; flex-basis:28px; font-size:13px;}
+.qi .acts .icon-btn{width:28px; height:28px; flex-basis:28px;}
+.qi .acts .icon-btn svg{width:15px; height:15px;}
+.qi .acts .icon-btn.up svg{transform:rotate(180deg);}
+.qi .acts .icon-btn.on{color:var(--link); background:var(--link-soft);}
+.qi .acts .icon-btn:disabled{opacity:.3;}
+.h-n{font-size:12.5px; font-weight:500; color:var(--ink-3); margin-left:6px;}
 .pill.custom{background:var(--violet-soft); color:var(--violet);}
 .opt-lines{font:13px/1.6 var(--f-text);}
 .kinds{display:flex; flex-wrap:wrap; gap:6px;}
@@ -735,6 +782,9 @@ const MONTHS_GEN = ['января', 'февраля', 'марта', 'апрел�
 const MONTHS_SH = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 const WD_SH = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'];
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+/* убрать эмодзи из подписи: в CRM они мешают читать цифры и списки,
+   а в анкете для людей остаются */
+const noEmo = s => String(s ?? '').replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\u200d\uFE0F\u20E3]/gu, '').replace(/\s{2,}/g, ' ').trim();
 
 const monthIdx = m => Number(m.slice(5, 7)) - 1;
 /* 'Октябрь' · с годом, если он не текущий квартальный: 'Январь 2027' */
@@ -890,42 +940,48 @@ const PERMS = {
   'team':   ['owner'],
 };
 
+/* смайл — только «лицо» раздела в меню; в статусах, кнопках и у цифр их нет */
 const NAV = [
   {id: 'home',    emo: '🏠', name: 'Главная'},
   {id: 'client',  emo: '🌸', name: 'Кастдев'},
   {id: 'expert',  emo: '🎓', name: 'Эксперты'},
   {id: 'partner', emo: '🤝', name: 'Партнёры'},
   {id: 'amb',     emo: '📣', name: 'Амбассадоры'},
+  {id: 'stats',   emo: '📊', name: 'Статистика'},
   {id: 'questions', emo: '❓', name: 'Вопросы'},
   {id: 'settings',  emo: '⚙️', name: 'Настройки'},
 ];
+/* одно имя группы везде: в меню, вкладках, выгрузке, «назад» */
+const groupName = type => (type === 'client' ? 'Кастдев' : TYPES[type].name);
 
-/* шаг 1 — анкета, шаг 2 — созвон, шаг 3 — итог */
+/* шаг 1 — анкета, шаг 2 — созвон, шаг 3 — итог. Названия — состояние,
+   а не действие: действие написано на кнопке рядом. emo остаётся только
+   для записей истории, на экран не выводится. */
 const S1 = {
-  new:  {emo: '✉️', name: 'Отправить ссылку', tone: ''},
-  sent: {emo: '⏳', name: 'Ждём ответы',      tone: 'warn'},
-  done: {emo: '✅', name: 'Анкета заполнена', tone: 'good'},
-  skip: {emo: '⏭', name: 'Без анкеты',       tone: ''},
+  new:  {emo: '✉️', name: 'Ссылка не отправлена', tone: ''},
+  sent: {emo: '⏳', name: 'Ждём ответы',          tone: 'warn'},
+  done: {emo: '✅', name: 'Анкета заполнена',     tone: 'good'},
+  skip: {emo: '⏭', name: 'Без анкеты',           tone: ''},
 };
 const S2 = {
-  none:   {emo: '📅', name: 'Назначить созвон', tone: ''},
-  set:    {emo: '🗓', name: 'Созвон назначен',  tone: 'violet'},
-  done:   {emo: '✅', name: 'Созвон прошёл',    tone: 'good'},
-  noshow: {emo: '🙈', name: 'Не пришла',        tone: 'bad'},
-  skip:   {emo: '⏭', name: 'Без созвона',      tone: ''},
+  none:   {emo: '📅', name: 'Созвон не назначен', tone: ''},
+  set:    {emo: '🗓', name: 'Созвон назначен',    tone: 'violet'},
+  done:   {emo: '✅', name: 'Созвон прошёл',      tone: 'good'},
+  noshow: {emo: '🙈', name: 'Созвон не состоялся', tone: 'bad'},
+  skip:   {emo: '⏭', name: 'Без созвона',        tone: ''},
 };
-/* итог: для кастдева — собраны ли инсайты, для остальных — решение */
+/* итог: для кастдева — разобрано ли интервью, для остальных — решение */
 const S3 = {
   client: {
-    none: {emo: '✍️', name: 'Разобрать инсайты', tone: ''},
-    done: {emo: '💡', name: 'Инсайты собраны',   tone: 'good'},
+    none: {emo: '✍️', name: 'Ждёт разбора',        tone: ''},
+    done: {emo: '💡', name: 'Инсайты собраны',     tone: 'good'},
     fan:  {emo: '💜', name: 'Готова помогать ещё', tone: 'violet'},
   },
   other: {
-    none:  {emo: '🤔', name: 'Решаем',      tone: ''},
-    yes:   {emo: '🚀', name: 'Подключаем',  tone: 'good'},
-    think: {emo: '⏳', name: 'Думает',      tone: 'warn'},
-    no:    {emo: '💤', name: 'Не сейчас',   tone: 'bad'},
+    none:  {emo: '🤔', name: 'Решения нет',  tone: ''},
+    yes:   {emo: '🚀', name: 'Подключаем',   tone: 'good'},
+    think: {emo: '⏳', name: 'Думает',       tone: 'warn'},
+    no:    {emo: '💤', name: 'Не сейчас',    tone: 'bad'},
   },
 };
 const s3Map = type => (type === 'client' ? S3.client : S3.other);
@@ -1121,10 +1177,10 @@ const Q_DEFAULT = {
 
 /* группы людей и три шага общения */
 const TYPES = {
-  client:  {name: 'Клиентки', one: 'Клиентка', emo: '🌸', letter: 'k', you: 'ты', about: 'Кастдев: что болит, что нравится и что улучшить в Еве', steps: ['📝 Анкета', '🎤 Интервью', '💡 Инсайты']},
-  expert:  {name: 'Эксперты', one: 'Эксперт', emo: '🎓', letter: 'e', you: 'вы', about: 'Подключаем экспертов: что снимаем, когда и на каких условиях', steps: ['📝 Анкета', '📞 Созвон', '🚀 Подключение']},
-  partner: {name: 'Партнёры', one: 'Партнёр', emo: '🤝', letter: 'p', you: 'вы', about: 'Салоны, студии и бренды: взаимный промо и спецпредложения', steps: ['📝 Анкета', '🤝 Встреча', '🚀 Запуск']},
-  amb:     {name: 'Амбассадоры', one: 'Амбассадор', emo: '📣', letter: 'a', you: 'ты', about: 'Те, кто рассказывает о Еве и приводит подруг', steps: ['📝 Анкета', '📞 Созвон', '🚀 Старт']},
+  client:  {name: 'Клиентки', one: 'Клиентка', emo: '🌸', letter: 'k', you: 'ты', about: 'Кастдев: что болит, что нравится и что улучшить в Еве', steps: ['Анкета', 'Интервью', 'Итог']},
+  expert:  {name: 'Эксперты', one: 'Эксперт', emo: '🎓', letter: 'e', you: 'вы', about: 'Подключаем экспертов: что снимаем, когда и на каких условиях', steps: ['Анкета', 'Созвон', 'Итог']},
+  partner: {name: 'Партнёры', one: 'Партнёр', emo: '🤝', letter: 'p', you: 'вы', about: 'Салоны, студии и бренды: взаимный промо и спецпредложения', steps: ['Анкета', 'Встреча', 'Итог']},
+  amb:     {name: 'Амбассадоры', one: 'Амбассадор', emo: '📣', letter: 'a', you: 'ты', about: 'Те, кто рассказывает о Еве и приводит подруг', steps: ['Анкета', 'Созвон', 'Итог']},
 };
 const TYPE_BY_LETTER = Object.fromEntries(Object.entries(TYPES).map(([k, t]) => [t.letter, k]));
 const KIND_EMO = {one: '🔘', many: '☑️', scale: '😍', short: '✏️', text: '💬'};
@@ -1852,10 +1908,10 @@ const App = {
   },
 
   paintNav(active) {
+    /* у группы одна цифра — сколько в ней людей; что делать, видно на главной */
     $('#nav').innerHTML = NAV.map(n => {
-      const f = TYPES[n.id] ? Stats.funnel(n.id) : null;
-      const b = f ? Store.all('people').filter(p => p.type === n.id && p.s1 === 'done' && p.s2 === 'none').length : 0;
-      return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${f ? `<span class="nav-n">${f.all}</span>` : ''}${b ? `<span class="badge" title="Заполнили анкету, созвон не назначен">${b}</span>` : ''}</a>`;
+      const cnt = TYPES[n.id] ? People.all(n.id).length : null;
+      return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${cnt ? `<span class="nav-n">${cnt}</span>` : ''}</a>`;
     }).join('');
     const m = Who.member();
     $('#meChip').innerHTML = `${m ? Team.av(m) : avatar('Гость')}<div class="who"><b>${esc(m ? Team.name(m) : 'Гость')}</b><span>${esc(ROLES[Who.role()] ? ROLES[Who.role()].name : 'Наблюдатель')}</span></div>`;
@@ -1950,12 +2006,13 @@ const People = {
     return 2;
   },
   connected(p) { return p.type === 'client' ? ['done', 'fan'].includes(p.s3) : p.s3 === 'yes'; },
+  /* строка под именем: без смайлов, чтобы читалась с одного взгляда */
   sub(p) {
     const a = p.answers || {};
-    if (p.type === 'expert') return [(p.dirs || []).map(d => d.split(' ')[0]).join(' '), p.topic || a.topic || '', p.city].filter(Boolean).join(' · ');
-    if (p.type === 'partner') return [p.cat, p.city].filter(Boolean).join(' · ');
-    if (p.type === 'amb') return [a.size ? `👥 ${a.size}` : '', p.city].filter(Boolean).join(' · ');
-    return [a.age ? a.age : '', p.city, a.stage ? String(a.stage) : ''].filter(Boolean).join(' · ');
+    if (p.type === 'expert') return [p.topic || a.topic || (p.dirs || []).map(noEmo).join(', '), p.city].filter(Boolean).join(' · ');
+    if (p.type === 'partner') return [noEmo(p.cat), p.city].filter(Boolean).join(' · ');
+    if (p.type === 'amb') return [a.size ? `аудитория ${noEmo(a.size)}` : '', p.city].filter(Boolean).join(' · ');
+    return [a.age ? noEmo(a.age) : '', p.city, a.stage ? noEmo(a.stage) : ''].filter(Boolean).join(' · ');
   },
   uniqueCode(name) {
     let code = refCodeFor(name || 'eva');
@@ -2015,6 +2072,8 @@ const Import = {
 };
 
 /* ── статистика ответов ── */
+/* шкала 1–5 цифрами: крайние значения с подписью, без смайлов */
+const scaleName = (q, i) => (i === 0 ? `1 — ${q.lo || 'совсем нет'}` : i === 4 ? `5 — ${q.hi || 'очень'}` : String(i + 1));
 const Stats = {
   agg(type, list = People.all(type)) {
     const answered = list.filter(p => p.answers && Object.keys(p.answers).length);
@@ -2029,7 +2088,7 @@ const Stats = {
         answerLabels(q, v).forEach(l => { counts[l] = (counts[l] || 0) + 1; });
       });
       const opts = q.k === 'scale' ? [1, 2, 3, 4, 5].map(String) : (q.o || []);
-      const rows = opts.map((o, i) => ({i, name: q.k === 'scale' ? `${SCALE_EMO[i]} ${o}` : o, v: counts[o] || 0})).filter(r => r.v || q.k !== 'many');
+      const rows = opts.map((o, i) => ({i, name: q.k === 'scale' ? scaleName(q, i) : o, v: counts[o] || 0})).filter(r => r.v || q.k !== 'many');
       Object.keys(counts).forEach(k => { if (q.k !== 'scale' && !opts.includes(k)) rows.push({i: -1, name: k, v: counts[k]}); });
       return {q, n, rows, avg: q.k === 'scale' && n ? total / n : null};
     });
@@ -2055,12 +2114,26 @@ const Stats = {
   catCoverage() { return PARTNER_CATS.map(c => ({c, n: People.all('partner').filter(p => p.cat === c).length, yes: People.all('partner').filter(p => p.cat === c && People.connected(p)).length})); },
 };
 
-/* ── рекомендации: из ответов и из того, где люди застряли ── */
+/* ── рекомендации двух видов: «сделать сейчас» (где люди застряли) и
+   «что улучшить» (из ответов и пробелов в экспертах и партнёрах) ── */
 const REACH = {'До 500': 300, '500–3 000': 1500, '3–10 тыс.': 6000, '10–50 тыс.': 25000, 'Больше 50 тыс.': 60000};
+/* группа, где таких людей больше всего, — туда ведёт ссылка */
+const topType = (list, def = 'client') => { const m = {}; list.forEach(p => { m[p.type] = (m[p.type] || 0) + 1; }); return Object.keys(m).sort((a, b) => m[b] - m[a])[0] || def; };
+const names3 = list => list.slice(0, 3).map(People.name).join(', ') + (list.length > 3 ? ` и ещё ${list.length - 3}` : '');
 function recommendations() {
   const out = [];
+  const add = (kind, type, text, why, w, href = type) => out.push({kind, type, text: noEmo(text), why: noEmo(why), w, href});
   const t0 = Date.now();
-  /* по ответам: самый частый вариант, если он набрал заметную долю */
+  /* сделать сейчас */
+  const stuck2 = Store.all('people').filter(p => p.s1 === 'done' && p.s2 === 'none' && (t0 - (p.answeredAt || p.touchedAt || 0)) > 2 * 864e5);
+  if (stuck2.length) add('now', 'all', `Назначьте созвон: ${stuck2.length} ${plural(stuck2.length, 'человек заполнил', 'человека заполнили', 'человек заполнили')} анкету больше двух дней назад. Пока интерес тёплый.`, names3(stuck2), 1.2, topType(stuck2));
+  const stuck3 = Store.all('people').filter(p => p.type !== 'client' && ['done', 'skip'].includes(p.s2) && (p.s3 || 'none') === 'none');
+  if (stuck3.length) add('now', 'all', `Запишите решение после созвона: ${stuck3.length} ${plural(stuck3.length, 'человек', 'человека', 'человек')} без итога.`, names3(stuck3), 1.1, topType(stuck3, 'expert'));
+  const clientsNoInsight = People.all('client').filter(p => ['done', 'skip'].includes(p.s2) && (p.s3 || 'none') === 'none');
+  if (clientsNoInsight.length) add('now', 'client', `Разберите ${clientsNoInsight.length} ${plural(clientsNoInsight.length, 'интервью', 'интервью', 'интервью')}, пока разговор свежий: отметьте, что услышали.`, names3(clientsNoInsight), 1.05);
+  const noTax = People.all('amb').filter(p => /Пока нет/.test(String((p.answers || {}).tax || '')) && /карту/.test(String((p.answers || {}).pay || '')));
+  if (noTax.length) add('now', 'amb', `Отправьте памятку про «Мой налог»: ${noTax.length} ${plural(noTax.length, 'амбассадор хочет', 'амбассадора хотят', 'амбассадоров хотят')} выплаты на карту, но без статуса. Или предложите баланс Евы +10%.`, names3(noTax), 0.7);
+  /* что улучшить: самый частый вариант ответа, если он набрал заметную долю */
   Object.keys(TYPES).forEach(type => {
     Stats.agg(type).forEach(a => {
       if (!a.q.rec || a.n < 3) return;
@@ -2068,31 +2141,19 @@ function recommendations() {
       if (!top || top.i < 0 || !a.q.rec[top.i]) return;
       const share = top.v / a.n;
       if (share < 0.3) return;
-      out.push({type, emo: TYPES[type].emo, text: a.q.rec[top.i], why: `${pct(share)} ответили «${top.name}» · ${a.n} ${plural(a.n, 'анкета', 'анкеты', 'анкет')}`, w: share + (type === 'client' ? 0.3 : 0), href: type});
+      add('idea', type, a.q.rec[top.i], `${top.v} из ${a.n} ответили «${noEmo(top.name)}»`, share + (type === 'client' ? 0.3 : 0));
     });
   });
-  /* цена против подписки 2 900 ₽ */
-  /* покрытие направлений */
-  const cov = Stats.dirCoverage();
-  const empty = cov.filter(x => !x.n).map(x => x.d);
-  if (empty.length) out.push({type: 'expert', emo: '🔎', text: `Нет ни одного эксперта: ${empty.slice(0, 5).join(', ')}${empty.length > 5 ? ` и ещё ${empty.length - 5}` : ''}. Ищите в первую очередь.`, why: `закрыто ${DIRECTIONS.length - empty.length} из ${DIRECTIONS.length} направлений`, w: 0.9, href: 'expert'});
+  const sleepPain = People.all('client').filter(p => ((p.answers || {}).pain || []).some(x => /сплю/.test(x))).length;
+  if (sleepPain >= 2 && !DIRECTIONS.some(d => /Сон/.test(d))) add('idea', 'client', 'Плохой сон — частая боль, а направления «Сон» среди 14 нет. Добавьте направление и найдите эксперта.', `${sleepPain} ${plural(sleepPain, 'клиентка жалуется', 'клиентки жалуются', 'клиенток жалуются')} на сон`, 0.95);
+  const empty = Stats.dirCoverage().filter(x => !x.n).map(x => noEmo(x.d));
+  if (empty.length) add('idea', 'expert', `Найдите экспертов по направлениям: ${empty.slice(0, 5).join(', ')}${empty.length > 5 ? ` и ещё ${empty.length - 5}` : ''}. Пока там никого.`, `закрыто ${DIRECTIONS.length - empty.length} из ${DIRECTIONS.length} направлений`, 0.9);
   const wantCourse = People.all('expert').filter(p => /Да, уже есть идея/.test(String((p.answers || {}).course || '')));
-  if (wantCourse.length) out.push({type: 'expert', emo: '🎥', text: `${wantCourse.length} ${plural(wantCourse.length, 'эксперт хочет', 'эксперта хотят', 'экспертов хотят')} снять курс — поставьте съёмочные дни в план месяца.`, why: wantCourse.slice(0, 3).map(People.name).join(', '), w: 0.8, href: 'expert'});
-  const sleepPain = People.all('client').filter(p => (p.answers.pain || []).some(x => /сплю/.test(x))).length;
-  if (sleepPain >= 2 && !DIRECTIONS.some(d => /Сон/.test(d))) out.push({type: 'client', emo: '🌙', text: 'Плохой сон — частая боль, а направления «Сон» среди 14 нет. Добавьте направление и найдите эксперта.', why: `${sleepPain} ${plural(sleepPain, 'клиентка жалуется', 'клиентки жалуются', 'клиенток жалуются')} на сон`, w: 0.95, href: 'client'});
-  const emptyCats = Stats.catCoverage().filter(x => !x.n).map(x => x.c);
-  if (emptyCats.length && People.all('partner').length) out.push({type: 'partner', emo: '🗺', text: `Нет партнёров в категориях: ${emptyCats.slice(0, 4).join(', ')}${emptyCats.length > 4 ? '…' : ''}.`, why: `охвачено ${PARTNER_CATS.length - emptyCats.length} из ${PARTNER_CATS.length} категорий`, w: 0.5, href: 'partner'});
-  /* где застряли */
-  const stuck2 = Store.all('people').filter(p => p.s1 === 'done' && p.s2 === 'none' && (t0 - (p.answeredAt || p.touchedAt || 0)) > 2 * 864e5);
-  if (stuck2.length) out.push({type: 'all', emo: '📅', text: `${stuck2.length} ${plural(stuck2.length, 'человек заполнил', 'человека заполнили', 'человек заполнили')} анкету больше двух дней назад, а созвон не назначен. Пока интерес тёплый — назначьте.`, why: stuck2.slice(0, 3).map(People.name).join(', '), w: 1.2, href: 'home'});
-  const stuck3 = Store.all('people').filter(p => p.type !== 'client' && p.s2 === 'done' && p.s3 === 'none');
-  if (stuck3.length) out.push({type: 'all', emo: '🤔', text: `После созвона без решения: ${stuck3.length}. Зафиксируйте итог — «Подключаем», «Думает» или «Не сейчас».`, why: stuck3.slice(0, 3).map(People.name).join(', '), w: 1.1, href: 'home'});
-  const clientsNoInsight = People.all('client').filter(p => p.s2 === 'done' && p.s3 === 'none');
-  if (clientsNoInsight.length) out.push({type: 'client', emo: '✍️', text: `${clientsNoInsight.length} ${plural(clientsNoInsight.length, 'интервью ждёт', 'интервью ждут', 'интервью ждут')} разбора: отметьте инсайты, пока разговор свежий.`, why: clientsNoInsight.slice(0, 3).map(People.name).join(', '), w: 1.05, href: 'client'});
-  const noTax = People.all('amb').filter(p => /Пока нет/.test(String((p.answers || {}).tax || '')) && /карту/.test(String((p.answers || {}).pay || '')));
-  if (noTax.length) out.push({type: 'amb', emo: '🧾', text: `${noTax.length} ${plural(noTax.length, 'амбассадор хочет', 'амбассадора хотят', 'амбассадоров хотят')} выплаты на карту, но без статуса. Отправьте памятку про «Мой налог» или предложите баланс Евы +10%.`, why: noTax.map(People.name).join(', '), w: 0.7, href: 'amb'});
+  if (wantCourse.length) add('idea', 'expert', `Поставьте съёмочные дни в план: ${wantCourse.length} ${plural(wantCourse.length, 'эксперт хочет', 'эксперта хотят', 'экспертов хотят')} снять курс.`, names3(wantCourse), 0.8);
+  const emptyCats = Stats.catCoverage().filter(x => !x.n).map(x => noEmo(x.c));
+  if (emptyCats.length && People.all('partner').length) add('idea', 'partner', `Нет партнёров в категориях: ${emptyCats.slice(0, 4).join(', ')}${emptyCats.length > 4 ? ` и ещё ${emptyCats.length - 4}` : ''}.`, `охвачено ${PARTNER_CATS.length - emptyCats.length} из ${PARTNER_CATS.length} категорий`, 0.5);
   const reach = sum(People.all('amb'), p => REACH[(p.answers || {}).size] || 0);
-  if (reach) out.push({type: 'amb', emo: '📣', text: `Общий охват амбассадоров — около ${fmt(reach)} человек. При конверсии 1% это ${fmt(Math.round(reach * 0.01))} ${plural(Math.round(reach * 0.01), 'регистрация', 'регистрации', 'регистраций')}.`, why: 'по ответам «Сколько людей тебя читает»', w: 0.4, href: 'amb'});
+  if (reach) add('idea', 'amb', `Амбассадоры читают около ${fmt(reach)} человек. Даже 1% — это ${fmt(Math.round(reach * 0.01))} ${plural(Math.round(reach * 0.01), 'регистрация', 'регистрации', 'регистраций')}.`, 'по ответам «Сколько людей тебя читает»', 0.4);
   return out.sort((a, b) => b.w - a.w);
 }
 
@@ -2296,103 +2357,186 @@ const Demo = {
 };
 
 /* ── 10-home.js ── */
-/* Главная: что сделать сегодня, четыре группы по трём шагам, ключевые
-   рекомендации, что говорят клиентки, покрытие 14 направлений экспертами,
-   партнёры по категориям, охват амбассадоров и яркие цитаты. */
+/* Главная — что сделать сегодня. Три плитки повторяют три шага общения
+   (анкета → созвон → итог), ниже — четыре группы, рекомендации и ближайшие
+   созвоны. Графики ответов живут в «Статистике», чтобы главная читалась
+   за полминуты. */
 
 App.register('home', {
   title: 'Главная',
   render(root) {
     const all = Store.all('people');
-    const now = Date.now();
     const toSend = all.filter(p => (p.s1 || 'new') === 'new');
     const waiting = all.filter(p => p.s1 === 'sent');
-    const callsToday = all.filter(p => p.s2 === 'set' && p.callAt && isoTs(p.callAt) === today());
-    const needCall = all.filter(p => p.s1 === 'done' && p.s2 === 'none');
+    const needCall = all.filter(p => People.col(p) === 2 && ['none', 'noshow'].includes(p.s2 || 'none'));
+    const callsSet = all.filter(p => People.col(p) === 2 && p.s2 === 'set');
+    const callsToday = callsSet.filter(p => p.callAt && isoTs(p.callAt) === today());
     const decide = all.filter(p => People.col(p) === 3 && (p.s3 || 'none') === 'none');
     const recs = recommendations();
+    const now = recs.filter(r => r.kind === 'now').slice(0, 4);
+    const ideas = recs.filter(r => r.kind === 'idea').slice(0, 5);
     const me = Who.member();
+    const first = me ? Team.first(me) : '';
     const hour = new Date().getHours();
     const hello = hour < 5 ? 'Доброй ночи' : hour < 12 ? 'Доброе утро' : hour < 18 ? 'Добрый день' : 'Добрый вечер';
-    const clientAgg = Stats.agg('client');
-    const pick = id => clientAgg.find(a => a.q.id === id && a.n);
-    const keyQs = ['pain', 'goal', 'time', 'formats', 'price', 'when'].map(pick).filter(Boolean);
-    const cov = Stats.dirCoverage();
-    const cats = Stats.catCoverage().filter(x => x.n);
-    const quotes = Stats.quotes().slice(0, 6);
-    const tags = Stats.insightTags();
-    const ambs = People.all('amb');
-    const reach = sum(ambs, p => REACH[(p.answers || {}).size] || 0);
-    const platforms = {};
-    ambs.forEach(p => ((p.answers || {}).where || []).forEach(w => { platforms[w] = (platforms[w] || 0) + 1; }));
-    const upcoming = all.filter(p => p.s2 === 'set' && p.callAt && p.callAt > now - 3600e3).sort((a, b) => a.callAt - b.callAt).slice(0, 5);
+    const upcoming = callsSet.filter(p => p.callAt && p.callAt > Date.now() - 3600e3).sort((a, b) => a.callAt - b.callAt).slice(0, 5);
+    const known = {answers: all.filter(p => p.s1 === 'done').length, talks: all.filter(p => p.s2 === 'done').length, quotes: Stats.quotes().length};
+
+    const tile = (n, step, list, text, small) => `<a class="todo-i ${list.length ? 'hot' : ''}" href="#${topType(list)}">
+        <span class="todo-step"><i>${n}</i>${step}</span><b>${list.length}</b><span class="todo-t">${text}</span><small>${small}</small></a>`;
+    const rec = r => `<a class="rec" href="#${r.href}"><b>${esc(r.text)}</b><small><span class="rec-g">${r.type === 'all' ? 'Все группы' : groupName(r.type)}</span>${esc(r.why)}</small></a>`;
 
     root.innerHTML = `
-      ${pageHead(`${hello}${me ? ', ' + esc(Team.first(me)) : ''} 👋`, `${cap(dayWd(today()))} · в базе ${all.length} ${plural(all.length, 'человек', 'человека', 'человек')}: клиентки, эксперты, партнёры и амбассадоры`,
-        People.canEdit() ? `<button class="btn" data-paste>📥 Вставить ответы</button>` : '')}
-      ${!all.length ? `<div class="welcome"><span class="e">🌱</span><div><b>Начнём?</b><p>Загрузите пример в «⚙️ Настройках», чтобы посмотреть, как всё работает, или добавьте первого человека в любом разделе.</p>
-        <div class="how3"><div><b>1. 📝 Анкета</b>Ссылка → человек отвечает сам за 3 минуты</div><div><b>2. 📞 Созвон</b>20–30 минут в Zoom по готовым вопросам</div><div><b>3. 🚀 Итог</b>Инсайты или решение о сотрудничестве</div></div></div></div>` : ''}
+      ${pageHead(`${hello}${first && first !== 'Вы' ? ', ' + esc(first) : ''} 👋`, `${cap(dayWd(today()))} · в базе ${all.length} ${plural(all.length, 'человек', 'человека', 'человек')}`,
+        People.canEdit() ? `<button class="btn" data-paste>${icon('inbox')}Вставить ответы</button>` : '')}
+      ${!all.length ? `<div class="welcome"><span class="e">🌱</span><div><b>Начнём?</b><p>Добавьте первого человека в любом разделе или загрузите пример в настройках, чтобы посмотреть, как всё работает.</p></div></div>` : ''}
+      <h2 class="h-sm">Что сделать</h2>
       <div class="todo">
-        <a class="todo-i ${toSend.length ? 'hot' : ''}" href="#${(toSend[0] || {}).type || 'client'}"><span class="big-emo">✉️</span><div><b>${toSend.length}</b><span>отправить ссылку на анкету${waiting.length ? ` · ⏳ ждём ответы от ${waiting.length}` : ''}</span></div></a>
-        <a class="todo-i ${needCall.length ? 'hot' : ''}" href="#${(needCall[0] || {}).type || 'client'}"><span class="big-emo">📅</span><div><b>${needCall.length}</b><span>назначить созвон — анкета уже есть${callsToday.length ? ` · сегодня ${callsToday.length}` : ''}</span></div></a>
-        <a class="todo-i ${decide.length ? 'hot' : ''}" href="#${(decide[0] || {}).type || 'expert'}"><span class="big-emo">🚀</span><div><b>${decide.length}</b><span>подвести итог после созвона</span></div></a>
+        ${tile(1, 'Анкета', toSend, 'отправить ссылку на анкету', waiting.length ? `ещё ${waiting.length} ${plural(waiting.length, 'ждёт', 'ждут', 'ждут')} ответа` : 'человек ответит сам за 3 минуты')}
+        ${tile(2, 'Созвон', needCall, 'назначить созвон', callsToday.length ? `сегодня ${callsToday.length} ${plural(callsToday.length, 'созвон', 'созвона', 'созвонов')}` : callsSet.length ? `уже назначено: ${callsSet.length}` : 'анкета уже заполнена')}
+        ${tile(3, 'Итог', decide, 'подвести итог', 'созвон прошёл — запишите, что решили')}
       </div>
-      <section class="section aud">${Object.entries(TYPES).map(([k, T]) => { const f = Stats.funnel(k); return `<a class="card aud-c as-link" href="#${k}">
-          <div class="aud-h"><span class="e">${T.emo}</span><b>${k === 'client' ? 'Кастдев' : T.name}</b><span class="n">${f.all}</span></div>
-          <div class="steps3"><div><b>${f.c1}</b>${T.steps[0]}</div><div><b>${f.c2}</b>${T.steps[1]}</div><div><b>${f.c3}</b>${T.steps[2]}</div></div>
-          <div class="aud-f">${k === 'client' ? `💡 разобрано интервью: <b>${f.yes}</b>` : `🚀 подключаем: <b>${f.yes}</b>`} · 📝 анкет: <b>${f.answered}</b></div></a>`; }).join('')}</section>
+      <h2 class="h-sm">Группы</h2>
+      <section class="aud">${Object.entries(TYPES).map(([k, T]) => { const f = Stats.funnel(k); return `<a class="card aud-c as-link" href="#${k}">
+          <div class="aud-h"><span class="e">${T.emo}</span><b>${groupName(k)}</b><span class="n">${f.all}</span></div>
+          <div class="steps3">${T.steps.map((s, i) => `<div><b>${f['c' + (i + 1)]}</b>${s}</div>`).join('')}</div>
+          <div class="aud-f">${k === 'client' ? 'Разобрано интервью' : 'Подключаем'}: <b>${f.yes}</b></div></a>`; }).join('')}</section>
+      <p class="note aud-note">Цифры в плитке — сколько людей сейчас на каждом шаге.</p>
       <div class="split section">
-        <div class="card"><div class="card-head"><h2>💡 Ключевые рекомендации</h2><span class="note">из ответов и того, где люди застряли</span></div>
-          ${recs.length ? `<div class="recs">${recs.slice(0, 8).map(r => `<a class="rec" href="#${r.href}"><span class="e">${r.emo}</span><div><b>${esc(r.text)}</b><small>${esc(r.why)}</small></div></a>`).join('')}</div>` : '<p class="note">Рекомендации появятся, когда придут первые анкеты (от трёх в группе).</p>'}
+        <div class="card"><div class="card-head"><h2>Рекомендации</h2></div>
+          ${!now.length && !ideas.length ? '<p class="note">Появятся, когда придут первые анкеты — от трёх в группе.</p>' : ''}
+          ${now.length ? `<h3 class="rec-h">Сделать сейчас</h3><div class="recs">${now.map(rec).join('')}</div>` : ''}
+          ${ideas.length ? `<h3 class="rec-h">Что улучшить</h3><div class="recs">${ideas.map(rec).join('')}</div>` : ''}
         </div>
         <div class="stack">
-          <div class="card"><div class="card-head"><h2>📅 Ближайшие созвоны</h2></div>
-            ${upcoming.length ? `<div class="recs">${upcoming.map(p => `<a class="rec" href="#p-${p.id}"><span class="e">${TYPES[p.type].emo}</span><div><b>${esc(People.name(p))}</b><small>${esc(when(p.callAt))}${p.zoom ? ' · Zoom' : ''}</small></div></a>`).join('')}</div>` : '<p class="note">Созвонов не назначено.</p>'}</div>
-          <div class="card"><div class="card-head"><h2>⭐ Цитаты из интервью</h2></div>
-            ${quotes.length ? `<div class="stack">${quotes.map(x => `<div class="quote">«${esc(x.text.length > 220 ? x.text.slice(0, 220) + '…' : x.text)}»<small><a href="#p-${x.p.id}">${TYPES[x.p.type].emo} ${esc(People.name(x.p))}</a></small></div>`).join('')}</div>` : '<p class="note">Отмечайте ⭐ яркие ответы в режиме созвона — они соберутся здесь.</p>'}</div>
+          <div class="card"><div class="card-head"><h2>Ближайшие созвоны</h2></div>
+            ${upcoming.length ? `<div class="calls">${upcoming.map(p => `<a class="call" href="#p-${p.id}"><time>${esc(when(p.callAt))}</time><span><b>${esc(People.name(p))}</b><small>${groupName(p.type)}${p.zoom ? ' · есть ссылка на Zoom' : ''}</small></span></a>`).join('')}</div>` : '<p class="note">Созвонов не назначено.</p>'}</div>
+          <a class="card as-link known" href="#stats"><div class="card-head"><h2>Что уже знаем</h2><span class="note">Статистика →</span></div>
+            <div class="kpis">${[[known.answers, 'анкет'], [known.talks, 'созвонов'], [known.quotes, 'цитат']].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div></a>
         </div>
-      </div>
-      ${keyQs.length ? `<section class="section"><div class="section-head"><h2>🌸 Что говорят клиентки</h2><span class="hint-inline">${Stats.funnel('client').answered} ${plural(Stats.funnel('client').answered, 'анкета', 'анкеты', 'анкет')} · полная статистика — в «Кастдеве»</span></div>
-        <div class="qstats">${keyQs.map(qStatCard).join('')}</div>
-        ${tags.length ? `<div class="card" style="margin-top:12px"><div class="card-head"><h2>🏷 Метки из интервью</h2></div><div class="cloud">${tags.map(t => `<span>${esc(t.name)} <b>${t.v}</b></span>`).join('')}</div></div>` : ''}</section>` : ''}
-      <section class="section card"><div class="card-head"><h2>🎓 14 направлений: кто есть</h2><span class="note">розовые — экспертов пока нет · 🎥 — хотят снять курс</span></div>
-        <div class="coverage">${cov.map(x => `<div class="cov ${x.n ? '' : 'zero'}"><b>${esc(x.d)}</b><small>${x.n ? `${x.n} ${plural(x.n, 'эксперт', 'эксперта', 'экспертов')}${x.yes ? ` · 🚀 ${x.yes}` : ''}${x.course ? ` · 🎥 ${x.course}` : ''}` : 'ищем'}</small></div>`).join('')}</div></section>
-      <div class="two section">
-        <div class="card"><div class="card-head"><h2>🤝 Партнёры по категориям</h2></div>
-          ${cats.length ? hbarList(cats.map(x => ({name: x.c, v: x.n})), {color: 'var(--good)', sub: r => { const c = cats.find(y => y.c === r.name); return c && c.yes ? `🚀 ${c.yes}` : ''; }}) : '<p class="note">Пока нет партнёров.</p>'}</div>
-        <div class="card"><div class="card-head"><h2>📣 Амбассадоры</h2><span class="note">охват ≈ ${fmt(reach)}</span></div>
-          ${Object.keys(platforms).length ? hbarList(Object.entries(platforms).map(([name, v]) => ({name, v})).sort((a, b) => b.v - a.v), {color: 'var(--rose)'}) : '<p class="note">Пока нет анкет амбассадоров.</p>'}
-          ${ambs.length ? `<p class="note" style="margin-top:10px">По ссылкам амбассадоров пришли: <b>${sum(ambs, p => People.invited(p).length)}</b></p>` : ''}</div>
       </div>`;
 
     on(root, 'click', '[data-paste]', () => openPaste());
   },
 });
 
-/* ── 20-board.js ── */
-/* Страница группы (клиентки, эксперты, партнёры, амбассадоры): три шага
-   общения колонками — 📝 анкета → 📞 созвон → 🚀 итог. На карточке — одна-две
-   кнопки следующего действия, без лишних полей. */
+/* ── 15-stats.js ── */
+/* Статистика по группам: главные цифры, что слышим на интервью, покрытие
+   14 направлений экспертами, партнёры по категориям, охват амбассадоров и
+   графики по каждому вопросу анкеты. Подписи без смайлов — так цифры
+   читаются с первого взгляда. */
 
-function stChip(map, key) { const s = map[key] || Object.values(map)[0]; return `<span class="st ${s.tone}">${s.emo} ${esc(s.name)}</span>`; }
-function stepChip(p) {
-  const c = People.col(p);
-  if (c === 1) return stChip(S1, p.s1 || 'new');
-  if (c === 2) return stChip(S2, p.s2 || 'none') + (p.s2 === 'set' && p.callAt ? ` <span class="st violet">${esc(when(p.callAt))}</span>` : '');
-  return stChip(s3Map(p.type), p.s3 || 'none');
+App.register('stats', {
+  title: 'Статистика',
+  render(root) {
+    const type = TYPES[View.get('st.type', 'client')] ? View.get('st.type', 'client') : 'client';
+    const L = People.all(type);
+    const f = Stats.funnel(type);
+    const talks = L.filter(p => p.s2 === 'done').length;
+    const agg = Stats.agg(type).filter(a => a.n);
+    const kpis = [[f.all, 'в базе'], [f.answered, plural(f.answered, 'анкета заполнена', 'анкеты заполнены', 'анкет заполнено')],
+      [talks, type === 'client' ? 'интервью проведено' : plural(talks, 'созвон проведён', 'созвона проведено', 'созвонов проведено')],
+      [f.yes, type === 'client' ? 'интервью разобрано' : 'подключаем']];
+
+    let extra = '';
+    if (type === 'client') {
+      const tags = Stats.insightTags();
+      const quotes = Stats.quotes().filter(x => x.p.type === 'client').slice(0, 8);
+      extra = `<div class="two section">
+        <div class="card"><div class="card-head"><h2>Что слышим на интервью</h2><span class="note">метки из разбора</span></div>
+          ${tags.length ? hbarList(tags.map(t => ({name: noEmo(t.name), v: t.v})), {color: 'var(--violet)'}) : '<p class="note">Метки появятся, когда разберёте первые интервью.</p>'}</div>
+        <div class="card"><div class="card-head"><h2>Цитаты</h2><span class="note">отмечены звёздочкой на созвоне</span></div>
+          ${quotes.length ? `<div class="stack">${quotes.map(x => `<div class="quote">«${esc(x.text.length > 220 ? x.text.slice(0, 220) + '…' : x.text)}»<small><a href="#p-${x.p.id}">${esc(People.name(x.p))}</a></small></div>`).join('')}</div>` : '<p class="note">Во время интервью нажимайте звёздочку у яркого ответа — он появится здесь.</p>'}</div>
+      </div>`;
+    } else if (type === 'expert') {
+      const cov = Stats.dirCoverage();
+      const closed = cov.filter(x => x.n).length;
+      extra = `<section class="section card"><div class="card-head"><h2>14 направлений</h2><span class="note">закрыто ${closed} из ${cov.length} · розовые — экспертов пока нет</span></div>
+        <div class="coverage">${cov.map(x => `<div class="cov ${x.n ? '' : 'zero'}"><b>${esc(noEmo(x.d))}</b>${x.n
+          ? `<small>${x.n} ${plural(x.n, 'эксперт', 'эксперта', 'экспертов')}</small>${x.yes ? `<small>подключаем: ${x.yes}</small>` : ''}${x.course ? `<small>хотят курс: ${x.course}</small>` : ''}`
+          : '<small>ищем</small>'}</div>`).join('')}</div></section>`;
+    } else if (type === 'partner') {
+      const cats = Stats.catCoverage().filter(x => x.n);
+      extra = `<section class="section card"><div class="card-head"><h2>Партнёры по категориям</h2><span class="note">${cats.length} из ${PARTNER_CATS.length} категорий</span></div>
+        ${cats.length ? hbarList(cats.map(x => ({name: noEmo(x.c), v: x.n, yes: x.yes})), {color: 'var(--good)', sub: r => (r.yes ? `подключаем ${r.yes}` : '')}) : '<p class="note">Пока нет партнёров.</p>'}</section>`;
+    } else {
+      const reach = sum(L, p => REACH[(p.answers || {}).size] || 0);
+      const platforms = {};
+      L.forEach(p => ((p.answers || {}).where || []).forEach(w => { platforms[w] = (platforms[w] || 0) + 1; }));
+      const invited = sum(L, p => People.invited(p).length);
+      extra = `<div class="two section">
+        <div class="card"><div class="card-head"><h2>Охват</h2></div>
+          <div class="kpis">${[[`≈ ${fmt(reach)}`, 'читают амбассадоров'], [invited, 'пришли по их ссылкам']].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+          <p class="note" style="margin-top:10px">Охват — сумма ответов «Сколько людей тебя читает», по середине диапазона.</p></div>
+        <div class="card"><div class="card-head"><h2>Где рассказывают</h2></div>
+          ${Object.keys(platforms).length ? hbarList(Object.entries(platforms).map(([name, v]) => ({name: noEmo(name), v})).sort((a, b) => b.v - a.v), {color: 'var(--rose)'}) : '<p class="note">Пока нет анкет амбассадоров.</p>'}</div>
+      </div>`;
+    }
+
+    root.innerHTML = `
+      ${pageHead('Статистика', 'Ответы из анкет и итоги созвонов. Всё считается само, когда приходят ответы.')}
+      ${tabsHtml('st.type', Object.keys(TYPES).map(k => [k, groupName(k), People.all(k).length || null]), type)}
+      <div class="kpis kpis-4 card">${kpis.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+      ${extra}
+      <section class="section"><div class="section-head"><h2>Ответы анкеты</h2><span class="hint-inline">по ${f.answered} ${plural(f.answered, 'анкете', 'анкетам', 'анкетам')} · где можно выбрать несколько, сумма больше 100%</span></div>
+        ${agg.length ? `<div class="qstats">${agg.map(qStatCard).join('')}</div>` : '<p class="note">Графики появятся, когда придут первые анкеты.</p>'}</section>`;
+
+    wireTabs(root);
+  },
+});
+
+/* один вопрос анкеты: вариант — полоса — сколько человек — доля.
+   Один ответ (возраст, цена, время) — в порядке вариантов, чтобы шкала
+   читалась слева направо; несколько ответов — от частых к редким. */
+function qStatCard(a) {
+  const colors = ['var(--link)', 'var(--rose)', 'var(--good)', 'var(--gold)'];
+  const color = colors[hashStr(a.q.id) % colors.length];
+  const rows = a.q.k === 'many' ? a.rows.slice().sort((x, y) => y.v - x.v) : a.rows;
+  return `<div class="card qstat"><div class="qstat-h"><h3>${esc(noEmo(a.q.t))}</h3><span>${a.n} ${plural(a.n, 'ответ', 'ответа', 'ответов')}${a.q.k === 'many' ? ' · несколько' : ''}</span></div>
+    ${a.q.k === 'scale' && a.avg !== null ? `<p class="qstat-avg">В среднем <b>${fmt(a.avg, 1)}</b> из 5</p>` : ''}
+    ${hbarList(rows.map(r => ({name: noEmo(r.name), v: r.v})), {color, sub: r => (a.n ? pct(r.v / a.n) : '')})}</div>`;
 }
-/* кнопки следующего шага: одни и те же на доске и в карточке */
+
+/* ── 20-board.js ── */
+/* Страница группы (кастдев, эксперты, партнёры, амбассадоры): три шага
+   общения колонками — анкета → созвон → итог. На карточке — имя, одна
+   строка о человеке, статус (только если он что-то добавляет) и одна-две
+   кнопки следующего действия. */
+
+const stChip = (tone, text) => `<span class="st ${tone}">${esc(text)}</span>`;
+/* 'сегодня' · 'вчера' · '3 дня' */
+function sinceDays(ts) {
+  const d = Math.floor((Date.now() - ts) / 864e5);
+  return d <= 0 ? 'сегодня' : d === 1 ? 'вчера' : `${d} ${plural(d, 'день', 'дня', 'дней')}`;
+}
+/* статус на карточке: пусто, если кнопка рядом и так говорит, что делать */
+function statusLine(p) {
+  const c = People.col(p);
+  if (c === 1) return p.s1 === 'sent' ? stChip('warn', `Ждём ответы${p.sentAt ? ' · ' + sinceDays(p.sentAt) : ''}`) : '';
+  if (c === 2) {
+    if (p.s2 === 'set') return stChip('violet', p.callAt ? `Созвон ${when(p.callAt)}` : 'Созвон назначен');
+    if (p.s2 === 'noshow') return stChip('bad', 'Созвон не состоялся');
+    return '';
+  }
+  const s = s3Map(p.type)[p.s3 || 'none'];
+  return (p.s3 || 'none') !== 'none' ? stChip(s.tone, s.name) : '';
+}
+/* кнопки следующего шага: одни и те же на доске и в карточке (big — в карточке, больше вариантов) */
 function nextActs(p, big = false) {
   if (!People.canEdit()) return '';
   const b = (act, label, primary = false) => `<button class="btn ${big ? 'sm' : 'xs'} ${primary ? 'primary' : ''}" data-act="${act}" data-pid="${p.id}">${label}</button>`;
+  const talk = p.type === 'client' ? 'интервью' : 'созвон';
   const c = People.col(p);
-  if (c === 1) return b('link', '🔗 Ссылка', p.s1 === 'new') + b('fill', '✍️ Заполнить') + (big ? b('skip1', '⏭ Без анкеты') : '');
+  if (c === 1) return (p.s1 === 'sent' ? b('link', 'Ссылка ещё раз') : b('link', 'Отправить анкету', true)) + b('fill', 'Заполнить') + (big ? b('skip1', 'Без анкеты') : '');
   if (c === 2) {
-    if (p.s2 === 'set') return b('talk', `🎤 ${p.type === 'client' ? 'Интервью' : 'Созвон'}`, true) + b('done2', '✅ Прошёл') + (big ? b('noshow', '🙈 Не пришла') + b('time', '📅 Перенести') : '');
-    return b('time', '📅 Назначить', true) + (big ? b('talk', '🎤 Начать сейчас') + b('skip2', '⏭ Без созвона') : '');
+    if (p.s2 === 'set') return b('talk', `Начать ${talk}`, true) + b('done2', p.type === 'client' ? 'Прошло' : 'Прошёл') + (big ? b('time', 'Перенести') + b('noshow', 'Не состоялся') : '');
+    return b('time', 'Назначить созвон', true) + (big ? b('talk', `Начать ${talk} сейчас`) + b('skip2', 'Без созвона') : '');
   }
-  if (p.type === 'client') return p.s3 === 'none' ? b('result', '💡 Разобрать', true) : b('result', '✏️ Инсайты');
-  return p.s3 === 'none' ? b('yes', '🚀 Подключаем', true) + b('think', '⏳ Думает') + b('no', '💤') : b('result', '✏️ Итог');
+  const s3 = p.s3 || 'none';
+  if (p.type === 'client') return s3 === 'none' ? b('result', 'Разобрать интервью', true) : '';
+  if (s3 === 'none') return b('yes', 'Подключаем', true) + b('think', 'Думает') + b('no', 'Не сейчас');
+  if (s3 === 'think') return b('yes', 'Подключаем', true) + b('no', 'Не сейчас');
+  return '';
 }
 /* обработчик всех кнопок шагов */
 function wireActs(root) {
@@ -2423,12 +2567,12 @@ function openTimePicker(p) {
   if (!p.callAt) d.setHours(12, 0, 0, 0);
   const local = `${isoOf(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   const pref = (p.answers || {}).call || (p.answers || {}).when || '';
-  openModal({title: `📅 Созвон: ${People.name(p)}`, body: `
-      ${pref ? `<div class="warnline" style="background:var(--violet-soft);color:var(--violet)">💬 В анкете: «${esc(Array.isArray(pref) ? pref.join(', ') : pref)}»</div>` : ''}
+  openModal({title: `Созвон: ${People.name(p)}`, body: `
+      ${pref ? `<div class="warnline" style="background:var(--violet-soft);color:var(--violet)">В анкете удобно: «${esc(noEmo(Array.isArray(pref) ? pref.join(', ') : pref))}»</div>` : ''}
       <label class="field"><span>Когда</span><input class="input" type="datetime-local" id="tpWhen" value="${local}"></label>
       <div class="chip-row">${[['Завтра 12:00', 1, 12], ['Завтра 19:00', 1, 19], ['Послезавтра 12:00', 2, 12], ['Через неделю', 7, 12]].map(([n, dd, hh]) => `<button class="chip" data-quick="${dd}|${hh}">${n}</button>`).join('')}</div>
       <label class="field"><span>Ссылка на Zoom (необязательно)</span><input class="input" id="tpZoom" value="${esc(p.zoom || '')}" placeholder="https://zoom.us/j/…"></label>`,
-    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>📅 Назначить</button>',
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Назначить</button>',
     onMount(el, close) {
       on(el, 'click', '[data-quick]', (ev, b) => { const [dd, hh] = b.dataset.quick.split('|').map(Number); const x = new Date(); x.setDate(x.getDate() + dd); x.setHours(hh, 0, 0, 0); $('#tpWhen', el).value = `${isoOf(x)}T${pad(hh)}:00`; });
       $('[data-ok]', el).onclick = () => {
@@ -2437,7 +2581,7 @@ function openTimePicker(p) {
         const ts = new Date(v).getTime();
         People.patch(p.id, {s2: 'set', callAt: ts, zoom: $('#tpZoom', el).value.trim()}, `Созвон назначен на ${when(ts)}`, '📅');
         close();
-        toast(`📅 Созвон назначен: ${when(ts)}`);
+        toast(`Созвон назначен: ${when(ts)}`);
       };
     }});
 }
@@ -2445,15 +2589,15 @@ function openTimePicker(p) {
 /* быстро добавить человека: имя, контакт — и сразу ссылка */
 function openAdd(type) {
   const T = TYPES[type];
-  const extra = type === 'expert' ? `<div class="field"><span>Направление</span><div class="ans" id="adDirs">${DIRECTIONS.map(d => `<button type="button" data-v="${esc(d)}">${esc(d)}</button>`).join('')}</div></div>`
-    : type === 'partner' ? `<label class="field"><span>Категория</span><select class="select" id="adCat">${PARTNER_CATS.map(c => `<option>${esc(c)}</option>`).join('')}</select></label><label class="field"><span>Контактное лицо</span><input class="input" id="adContact" placeholder="Ирина, управляющая"></label>` : '';
-  openModal({title: `${T.emo} ${T.one}: добавить`, body: `
+  const extra = type === 'expert' ? `<div class="field"><span>Направление</span><div class="ans" id="adDirs">${DIRECTIONS.map(d => `<button type="button" data-v="${esc(d)}">${esc(noEmo(d))}</button>`).join('')}</div></div>`
+    : type === 'partner' ? `<label class="field"><span>Категория</span><select class="select" id="adCat">${PARTNER_CATS.map(c => `<option value="${esc(c)}">${esc(noEmo(c))}</option>`).join('')}</select></label><label class="field"><span>Контактное лицо</span><input class="input" id="adContact" placeholder="Ирина, управляющая"></label>` : '';
+  openModal({title: `${T.one}: добавить`, body: `
       <label class="field"><span>${type === 'partner' ? 'Название' : 'Имя'}</span><input class="input" id="adName" placeholder="${type === 'partner' ? 'Студия «Баланс»' : 'Анна Иванова'}"></label>
       <div class="grid2"><label class="field"><span>Telegram или телефон</span><input class="input" id="adTg" placeholder="@username"></label>
       <label class="field"><span>Город</span><input class="input" id="adCity" placeholder="Москва"></label></div>
       ${extra}
-      <p class="note">После добавления ссылка на анкету скопируется — отправьте её человеку. Ответы сами попадут в карточку.</p>`,
-    foot: '<button class="btn" data-close>Отмена</button><button class="btn" data-only>Просто добавить</button><button class="btn primary" data-ok>✨ Добавить и скопировать ссылку</button>',
+      <p class="note">Ссылка на анкету скопируется сама — отправьте её человеку. Ответы попадут в карточку.</p>`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn" data-only>Просто добавить</button><button class="btn primary" data-ok>Добавить и скопировать ссылку</button>',
     onMount(el, close) {
       on(el, 'click', '#adDirs button', (ev, b) => b.classList.toggle('on'));
       const save = async withLink => {
@@ -2468,7 +2612,7 @@ function openAdd(type) {
           const p = People.get(id);
           await copyOrShow(People.link(p), 'Ссылка скопирована 💌 Отправьте её человеку');
           People.patch(id, {s1: 'sent', sentAt: Date.now()}, 'Отправили ссылку на анкету', '🔗');
-        } else toast(`${T.emo} ${name} добавлен(а)`);
+        } else toast(`${name}: добавлено ✨`);
       };
       $('[data-ok]', el).onclick = () => save(true);
       $('[data-only]', el).onclick = () => save(false);
@@ -2477,70 +2621,61 @@ function openAdd(type) {
 
 function audiencePage(type) {
   return {
-    title: TYPES[type].name,
+    title: groupName(type),
     render(root) {
       const T = TYPES[type];
       const q = View.get(type + '.q', '').trim().toLowerCase();
       const f = View.get(type + '.f', '');
-      let list = People.all(type);
+      const everyone = People.all(type);
+      let list = everyone;
       if (q) list = list.filter(p => (People.name(p) + ' ' + (p.city || '') + ' ' + (p.code || '') + ' ' + (p.topic || '')).toLowerCase().includes(q));
-      if (f) list = list.filter(p => (type === 'expert' ? (p.dirs || []).includes(f) : type === 'partner' ? p.cat === f : f === 'yes' ? People.connected(p) : true));
+      if (f) list = list.filter(p => (type === 'expert' ? (p.dirs || []).includes(f) : type === 'partner' ? p.cat === f : true));
       const cols = [1, 2, 3].map(c => list.filter(p => People.col(p) === c));
       const hints = [
         'Отправьте ссылку — человек ответит сам за 3 минуты. Или заполните за него.',
-        type === 'client' ? 'Интервью в Zoom 20–30 минут: вопросы и заметки — в карточке.' : 'Созвон 30 минут: знакомимся и договариваемся.',
-        type === 'client' ? 'Отметьте инсайты — они соберутся на главной.' : 'Решение: подключаем, думает или не сейчас.',
+        type === 'client' ? 'Интервью в Zoom, 20–30 минут. Вопросы и заметки — в карточке.' : 'Созвон 30 минут: знакомимся и договариваемся.',
+        type === 'client' ? 'Отметьте, что услышали, — это попадёт в статистику.' : 'Запишите решение: подключаем, думает или не сейчас.',
       ];
-      const filters = type === 'expert' ? DIRECTIONS.map(d => [d, d, People.all(type).filter(p => (p.dirs || []).includes(d)).length])
-        : type === 'partner' ? PARTNER_CATS.map(c => [c, c, People.all(type).filter(p => p.cat === c).length]).filter(x => x[2])
+      const filters = type === 'expert' ? DIRECTIONS.map(d => [d, everyone.filter(p => (p.dirs || []).includes(d)).length])
+        : type === 'partner' ? PARTNER_CATS.map(c => [c, everyone.filter(p => p.cat === c).length]).filter(x => x[1])
         : [];
-      const agg = Stats.agg(type).filter(a => a.n).slice(0, type === 'client' ? 12 : 8);
       const canEdit = People.canEdit();
 
       root.innerHTML = `
-        ${pageHead(`${T.emo} ${type === 'client' ? 'Кастдев · клиентки' : T.name}`, esc(T.about),
-          `${canEdit ? `<button class="btn" data-paste>📥 Вставить ответы</button><button class="btn primary" data-add>➕ ${T.one}</button>` : ''}`)}
-        ${!People.all(type).length ? `<div class="welcome"><span class="e">${T.emo}</span><div><b>Здесь пока никого</b><p>Добавьте первого человека — ссылка на анкету скопируется сама. ${type === 'client' ? 'Для кастдева хватит 10–15 интервью, чтобы увидеть закономерности.' : ''}</p></div></div>` : ''}
-        <div class="t-bar"><input class="input sm t-search" id="bq" placeholder="🔍 Поиск по имени, городу, коду" value="${esc(View.get(type + '.q', ''))}"><span class="t-bar-sp"></span>
-          <span class="note">${list.length} из ${People.all(type).length}</span></div>
-        ${filters.length ? `<div class="chip-row"><button class="chip ${!f ? 'on' : ''}" data-f="">Все</button>${filters.map(([v, n, c]) => `<button class="chip ${f === v ? 'on' : ''}" data-f="${esc(v)}">${esc(n)}${c ? ` <b>${c}</b>` : ''}</button>`).join('')}</div>` : ''}
+        ${pageHead(`${T.emo} ${groupName(type)}`, esc(T.about),
+          `<button class="btn" data-stats>${icon('chart')}Статистика</button>${canEdit ? `<button class="btn" data-paste>${icon('inbox')}Вставить ответы</button><button class="btn primary" data-add>${icon('plus')}${type === 'client' ? 'Клиентка' : T.one}</button>` : ''}`)}
+        ${!everyone.length ? `<div class="welcome"><span class="e">${T.emo}</span><div><b>Здесь пока никого</b><p>Добавьте первого человека — ссылка на анкету скопируется сама. ${type === 'client' ? 'Для кастдева хватит 10–15 интервью, чтобы увидеть закономерности.' : ''}</p></div></div>` : ''}
+        <div class="t-bar"><input class="input sm t-search" id="bq" placeholder="Поиск: имя, город, код" value="${esc(View.get(type + '.q', ''))}"><span class="t-bar-sp"></span>
+          <span class="note">${list.length === everyone.length ? `${everyone.length} ${plural(everyone.length, 'человек', 'человека', 'человек')}` : `найдено ${list.length} из ${everyone.length}`}</span></div>
+        ${filters.length ? `<div class="chip-row"><button class="chip ${!f ? 'on' : ''}" data-f="">Все</button>${filters.map(([v, c]) => `<button class="chip ${f === v ? 'on' : ''}" data-f="${esc(v)}">${esc(noEmo(v))}<span class="chip-n">${c}</span></button>`).join('')}</div>` : ''}
         <div class="board3">${[0, 1, 2].map(i => `
           <div class="b3-col"><div class="b3-h"><span class="num">${i + 1}</span><b>${T.steps[i]}</b><span class="kb-n">${cols[i].length}</span></div>
             <div class="b3-hint">${esc(hints[i])}</div>
-            <div class="b3-list">${cols[i].map(p => `<div class="pc" data-open="${p.id}">
-              <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b>${p.ref ? '<span title="Пришла по ссылке">🔗</span>' : ''}</div>
-              ${People.sub(p) ? `<div class="pc-sub">${esc(People.sub(p))}</div>` : ''}
-              <div>${stepChip(p)}</div>
-              <div class="pc-acts">${nextActs(p)}</div>
-            </div>`).join('') || '<p class="note" style="padding:6px 4px">Пусто</p>'}</div>
-          </div>`).join('')}</div>
-        ${agg.length ? `<section class="section"><div class="section-head"><h2>📊 Что отвечают</h2><span class="hint-inline">${Stats.funnel(type).answered} ${plural(Stats.funnel(type).answered, 'анкета', 'анкеты', 'анкет')}</span></div>
-          <div class="qstats">${agg.map(qStatCard).join('')}</div></section>` : ''}`;
+            <div class="b3-list">${cols[i].map(p => { const st = statusLine(p), acts = nextActs(p); return `<div class="pc" data-open="${p.id}">
+              <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b></div>
+              ${People.sub(p) || p.ref ? `<div class="pc-sub">${esc(People.sub(p))}${p.ref ? `${People.sub(p) ? ' · ' : ''}<span class="pc-ref">по приглашению</span>` : ''}</div>` : ''}
+              ${st ? `<div>${st}</div>` : ''}
+              ${acts ? `<div class="pc-acts">${acts}</div>` : ''}
+            </div>`; }).join('') || '<p class="note" style="padding:6px 4px">Пусто</p>'}</div>
+          </div>`).join('')}</div>`;
 
       let qt;
       $('#bq', root).oninput = e => { clearTimeout(qt); const v = e.target.value; qt = setTimeout(() => { View.set(type + '.q', v); App.render({focus: 'bq'}); }, 250); };
       on(root, 'click', '[data-f]', (e, el) => { View.set(type + '.f', el.dataset.f); App.render(); });
       on(root, 'click', '[data-add]', () => openAdd(type));
       on(root, 'click', '[data-paste]', () => openPaste());
+      on(root, 'click', '[data-stats]', () => { View.set('st.type', type); App.go('stats'); });
       on(root, 'click', '[data-open]', (e, el) => { if (e.target.closest('button')) return; App.go('p-' + el.dataset.open); });
       wireActs(root);
     },
   };
 }
-function qStatCard(a) {
-  const colors = ['var(--link)', 'var(--rose)', 'var(--good)', 'var(--gold)'];
-  const color = colors[hashStr(a.q.id) % colors.length];
-  const rows = a.rows.slice().sort((x, y) => (a.q.k === 'scale' ? 0 : y.v - x.v));
-  return `<div class="card qstat"><h3>${esc(a.q.t)} <span class="n">· ${a.n}</span></h3>
-    ${a.q.k === 'scale' && a.avg !== null ? `<p class="note" style="margin:-4px 0 8px">в среднем ${SCALE_EMO[Math.round(a.avg) - 1] || ''} ${fmt(a.avg, 1)} из 5</p>` : ''}
-    ${hbarList(rows.map(r => ({name: r.name, v: r.v})), {color, sub: r => (a.n ? pct(r.v / a.n) : '')})}</div>`;
-}
 Object.keys(TYPES).forEach(type => App.register(type, audiencePage(type)));
 
 /* ── 21-person.js ── */
 /* Карточка человека: три шага крупно, анкета (ответы кнопками), режим
-   созвона (вопросы + заметки + ⭐ цитаты), итог и история. Всё сохраняется
-   само — кнопки «Сохранить» почти нигде не нужны. */
+   созвона (вопросы + заметки + звёздочка у яркой цитаты), итог и история.
+   Всё сохраняется само — кнопки «Сохранить» почти нигде не нужны. */
 
 /* ── анкета кнопками: общая для ручного заполнения ── */
 function fillFormHtml(type, answers, prefix = 'fa') {
@@ -2551,7 +2686,7 @@ function fillFormHtml(type, answers, prefix = 'fa') {
       const sel = answerLabels(q, v);
       ctl = `<div class="ans" data-q="${q.id}" data-k="${q.k}" data-max="${q.max || 0}">${(q.o || []).map(o => `<button type="button" class="${sel.includes(o) ? 'on' : ''}" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
     } else if (q.k === 'scale') {
-      ctl = `<div class="scale" data-q="${q.id}" data-k="scale">${SCALE_EMO.map((e, j) => `<button type="button" class="${Number(v) === j + 1 ? 'on' : ''}" data-v="${j + 1}">${e}<small>${j + 1}</small></button>`).join('')}</div>`;
+      ctl = `<div class="scale num-scale" data-q="${q.id}" data-k="scale">${[1, 2, 3, 4, 5].map(j => `<button type="button" class="${Number(v) === j ? 'on' : ''}" data-v="${j}">${j}</button>`).join('')}<span class="scale-ends">1 — ${esc(q.lo || 'совсем нет')}, 5 — ${esc(q.hi || 'очень')}</span></div>`;
     } else if (q.k === 'text') {
       ctl = `<textarea class="textarea" data-q="${q.id}" data-k="text" placeholder="${esc(q.ph || '')}">${esc(v || '')}</textarea>`;
     } else {
@@ -2587,20 +2722,20 @@ function answersView(type, answers) {
   if (!ids.length) return '';
   const ordered = [...qs.filter(q => ids.includes(q.id)), ...ids.filter(id => !qs.some(q => q.id === id)).map(id => ({id, t: id, k: 'short'}))];
   return ordered.map((q, i) => {
-    const labels = answerLabels(q, answers[q.id]);
-    return `<div class="fq"><div class="fq-t"><i>${i + 1}</i><span>${esc(q.t)}${q.hidden ? ' <span class="fq-hint">· скрытый вопрос</span>' : ''}</span></div>
+    const labels = q.k === 'scale' ? [`${answers[q.id]} из 5`] : answerLabels(q, answers[q.id]).map(noEmo);
+    return `<div class="fq"><div class="fq-t"><i>${i + 1}</i><span>${esc(noEmo(q.t))}${q.hidden ? ' <span class="fq-hint">· скрытый вопрос</span>' : ''}</span></div>
       <div class="fq-v answer-val">${['short', 'text'].includes(q.k) ? `<em>${esc(labels.join(''))}</em>` : labels.map(l => `<span>${esc(l)}</span>`).join('')}</div></div>`;
   }).join('');
 }
 
 /* ── таймер созвона: только в этой вкладке ── */
-const Timer = {start: 0, id: null, tick(el) { if (!el) return; const s = Math.floor((Date.now() - this.start) / 1000); el.textContent = `⏱ ${Math.floor(s / 60)}:${pad(s % 60)}`; }};
+const Timer = {start: 0, id: null, tick(el) { if (!el) return; const s = Math.floor((Date.now() - this.start) / 1000); el.textContent = `${Math.floor(s / 60)}:${pad(s % 60)}`; }};
 
 App.register('person', {
   title: id => People.name(People.get(id)),
   render(root, id) {
     const p = People.get(id);
-    if (!p) { root.innerHTML = `<a class="back-link" href="#home">${icon('back')}Назад</a><div class="empty"><b>Карточка не найдена 🤷‍♀️</b>Возможно, её удалили.</div>`; return; }
+    if (!p) { root.innerHTML = `<a class="back-link" href="#home">${icon('back')}Назад</a><div class="empty"><b>Карточка не найдена</b>Возможно, её удалили.</div>`; return; }
     const T = TYPES[p.type];
     const canEdit = People.canEdit();
     /* режим правки анкеты не переносится на другую карточку */
@@ -2611,13 +2746,14 @@ App.register('person', {
     const ref = p.ref ? People.byCode(p.ref) : null;
     const tgUrl = p.tg && !/^\+?\d[\d\s()-]+$/.test(p.tg) ? 'https://t.me/' + encodeURIComponent(tgUser(p.tg)) : '';
 
-    /* три шага крупно */
-    const box = (n, title, statusHtml, acts, done, cur) => `<div class="b3 ${done ? 'done' : ''} ${cur ? 'cur' : ''}"><div class="b3-t"><span class="step-n">${done ? '✓' : n}</span>${esc(title)}</div><div class="b3-s">${statusHtml}</div><div class="row">${acts}</div></div>`;
+    /* три шага крупно: номер, название, состояние простым текстом */
+    const box = (n, title, statusHtml, acts, done, cur) => `<div class="b3 ${done ? 'done' : ''} ${cur ? 'cur' : ''}"><div class="b3-t"><span class="step-n">${done ? '✓' : n}</span>Шаг ${n} · ${esc(title)}</div><div class="b3-s">${statusHtml}</div>${acts ? `<div class="row">${acts}</div>` : ''}</div>`;
     const s1 = S1[p.s1 || 'new'], s2 = S2[p.s2 || 'none'], s3 = s3Map(p.type)[p.s3 || 'none'];
+    const small = t => ` <span class="b3-when">${t}</span>`;
     const steps = `<div class="big3">
-      ${box(1, T.steps[0], `${s1.emo} ${esc(s1.name)}${p.answeredAt ? ` <span class="note">· ${when(p.answeredAt)}${p.answeredBy === 'self' ? ', сама' : ''}</span>` : ''}`, col === 1 ? nextActs(p, true) : canEdit ? `<button class="btn xs ghost" data-act="link" data-pid="${p.id}">🔗 Ссылка ещё раз</button>` : '', ['done', 'skip'].includes(p.s1), col === 1)}
-      ${box(2, T.steps[1], `${s2.emo} ${esc(s2.name)}${p.callAt && p.s2 === 'set' ? ` <span class="note">· ${when(p.callAt)}</span>` : ''}${p.zoom && p.s2 === 'set' ? ` <a class="note" href="${esc(p.zoom)}" target="_blank" rel="noopener">Zoom ↗</a>` : ''}`, col === 2 ? nextActs(p, true) : '', ['done', 'skip'].includes(p.s2), col === 2)}
-      ${box(3, T.steps[2], `${s3.emo} ${esc(s3.name)}`, col === 3 ? nextActs(p, true) : '', People.connected(p), col === 3)}
+      ${box(1, T.steps[0], `${esc(s1.name)}${p.s1 === 'done' && p.answeredAt ? small(`${when(p.answeredAt)} · ${p.answeredBy === 'self' ? 'по ссылке' : 'заполнила команда'}`) : p.s1 === 'sent' && p.sentAt ? small(`ссылка отправлена ${sinceDays(p.sentAt)}`) : ''}`, col === 1 ? nextActs(p, true) : '', ['done', 'skip'].includes(p.s1), col === 1)}
+      ${box(2, T.steps[1], `${esc(s2.name)}${p.callAt && p.s2 === 'set' ? small(when(p.callAt)) : ''}${p.zoom && p.s2 === 'set' ? ` <a class="b3-when" href="${esc(p.zoom)}" target="_blank" rel="noopener">Zoom ↗</a>` : ''}`, col === 2 ? nextActs(p, true) : '', ['done', 'skip'].includes(p.s2), col === 2)}
+      ${box(3, T.steps[2], esc(s3.name), col === 3 && tab !== 'result' ? nextActs(p, true) : '', People.connected(p), col === 3)}
     </div>`;
 
     let pane = '';
@@ -2626,62 +2762,64 @@ App.register('person', {
       pane = edit && canEdit
         ? `<p class="note" style="margin-bottom:6px">Заполните за человека — например, по ходу звонка. Или отправьте ссылку: ответы придут сами.</p>
            <div id="fillBox">${fillFormHtml(p.type, p.answers || {})}</div>
-           <div class="row" style="margin-top:12px"><button class="btn primary" data-save-fill>✅ Сохранить ответы</button>${Object.keys(p.answers || {}).length ? '<button class="btn ghost" data-cancel-fill>Отмена</button>' : ''}</div>`
-        : `<div class="row" style="margin-bottom:6px"><span class="note">${p.answeredBy === 'self' ? '📝 Заполнила сама по ссылке' : '✍️ Заполнено командой'}${p.answeredAt ? ' · ' + when(p.answeredAt) : ''}</span><span class="sp"></span>${canEdit ? '<button class="btn xs" data-edit-fill>✏️ Изменить</button>' : ''}</div>${answersView(p.type, p.answers)}`;
+           <div class="row" style="margin-top:12px"><button class="btn primary" data-save-fill>Сохранить ответы</button>${Object.keys(p.answers || {}).length ? '<button class="btn ghost" data-cancel-fill>Отмена</button>' : ''}</div>`
+        : `<div class="row" style="margin-bottom:6px"><span class="note">${p.answeredBy === 'self' ? 'Заполнено самим человеком по ссылке' : 'Заполнено командой'}${p.answeredAt ? ' · ' + when(p.answeredAt) : ''}</span><span class="sp"></span>${canEdit ? `<button class="btn xs" data-edit-fill>${icon('edit')}Изменить</button>` : ''}</div>${answersView(p.type, p.answers)}`;
     } else if (tab === 'talk') {
       const qs = Questions.talk(p.type);
       const talk = p.talk || {};
       pane = `<div class="row" style="margin-bottom:10px;align-items:center">
-          <span class="note">Задавайте вопросы своими словами, записывайте коротко. ⭐ — яркая цитата, попадёт на главную.</span><span class="sp"></span>
-          <span class="timer" id="timer">${Timer.id ? '' : '⏱ 0:00'}</span>
-          ${canEdit ? `<button class="btn sm" data-timer>${Timer.id ? '⏸ Стоп' : '▶️ Старт'}</button>` : ''}
-          <button class="btn sm ghost" data-copy-q>📋 Вопросы</button>
+          <span class="note">Задавайте вопросы своими словами, записывайте коротко. Звёздочка — яркая цитата, она попадёт в статистику.</span><span class="sp"></span>
+          <span class="timer" id="timer" title="Длительность созвона">${Timer.id ? '' : '0:00'}</span>
+          ${canEdit ? `<button class="btn sm" data-timer>${Timer.id ? `${icon('pause')}Стоп` : `${icon('play')}Старт`}</button>` : ''}
+          <button class="btn sm ghost" data-copy-q>${icon('copy')}Скопировать вопросы</button>
         </div>
         <div class="talk">${qs.map((q, i) => { const x = talk[q.id] || {}; return `<div class="tq ${x.a ? 'filled' : ''}">
-          <div class="tq-h"><i>${i + 1}</i><b>${esc(q.t)}</b>${canEdit ? `<button class="star ${x.star ? 'on' : ''}" data-star="${q.id}" title="Яркая цитата">⭐</button>` : x.star ? '⭐' : ''}</div>
-          ${q.why ? `<div class="tq-why">🎯 ${esc(q.why)}</div>` : ''}
+          <div class="tq-h"><i>${i + 1}</i><b>${esc(q.t)}</b>${canEdit ? `<button class="star ${x.star ? 'on' : ''}" data-star="${q.id}" title="${x.star ? 'Убрать из цитат' : 'Яркая цитата'}">${icon('star')}</button>` : x.star ? `<span class="star on">${icon('star')}</span>` : ''}</div>
+          ${q.why ? `<div class="tq-why">Зачем: ${esc(q.why)}</div>` : ''}
           <textarea class="textarea" data-talk="${q.id}" placeholder="Что ответила…" ${canEdit ? '' : 'readonly'}>${esc(x.a || '')}</textarea></div>`; }).join('')}
           <div class="tq"><div class="tq-h"><i>＋</i><b>Что ещё важного прозвучало</b></div><textarea class="textarea" data-talk="_extra" placeholder="Всё, что не попало в вопросы">${esc((talk._extra || {}).a || '')}</textarea></div>
         </div>
-        ${canEdit && p.s2 !== 'done' ? `<div class="row" style="margin-top:12px"><button class="btn primary" data-act="done2" data-pid="${p.id}">✅ ${p.type === 'client' ? 'Интервью' : 'Созвон'} прошёл</button></div>` : ''}`;
+        ${canEdit && p.s2 !== 'done' ? `<div class="row" style="margin-top:12px"><button class="btn primary" data-act="done2" data-pid="${p.id}">${p.type === 'client' ? 'Интервью прошло' : 'Созвон прошёл'}</button></div>` : ''}`;
     } else if (tab === 'result') {
       const res = p.res || {tags: []};
       if (p.type === 'client') {
         pane = `<div class="stack">
-          <div class="field"><span>Что услышали — отметьте метки</span><div class="tagpick" data-tags>${INSIGHT_TAGS.map(t => `<button type="button" class="${(res.tags || []).includes(t) ? 'on' : ''}" data-v="${esc(t)}" ${canEdit ? '' : 'disabled'}>${esc(t)}</button>`).join('')}</div></div>
-          <label class="field"><span>💡 Главный инсайт — одной фразой</span><textarea class="textarea" data-res="main" placeholder="Например: бросает практики, когда болеет ребёнок — нужен режим «пауза без чувства вины»">${esc(res.main || '')}</textarea></label>
-          <label class="field"><span>🛠 Что улучшить в Еве</span><textarea class="textarea" data-res="idea" placeholder="Идеи и просьбы">${esc(res.idea || '')}</textarea></label>
-          ${canEdit ? `<div class="row"><button class="btn primary" data-s3="done">💡 Инсайты собраны</button><button class="btn" data-s3="fan">💜 Готова помогать ещё</button></div>` : ''}</div>`;
+          <div class="field"><span>Что услышали — отметьте</span><div class="tagpick" data-tags>${INSIGHT_TAGS.map(t => `<button type="button" class="${(res.tags || []).includes(t) ? 'on' : ''}" data-v="${esc(t)}" ${canEdit ? '' : 'disabled'}>${esc(noEmo(t))}</button>`).join('')}</div></div>
+          <label class="field"><span>Главный инсайт — одной фразой</span><textarea class="textarea" data-res="main" placeholder="Например: бросает практики, когда болеет ребёнок — нужен режим «пауза без чувства вины»">${esc(res.main || '')}</textarea></label>
+          <label class="field"><span>Что улучшить в Еве</span><textarea class="textarea" data-res="idea" placeholder="Идеи и просьбы">${esc(res.idea || '')}</textarea></label>
+          ${canEdit ? `<div class="row"><button class="btn ${p.s3 === 'done' ? 'primary' : p.s3 === 'fan' ? '' : 'primary'}" data-s3="done">Инсайты собраны</button><button class="btn ${p.s3 === 'fan' ? 'primary' : ''}" data-s3="fan">Готова помогать ещё</button></div>` : ''}</div>`;
       } else {
         pane = `<div class="stack">
-          <div class="field"><span>Решение</span><div class="row">${Object.entries(S3.other).filter(([k]) => k !== 'none').map(([k, s]) => `<button class="btn ${p.s3 === k ? 'primary' : ''}" data-s3="${k}" ${canEdit ? '' : 'disabled'}>${s.emo} ${esc(s.name)}</button>`).join('')}</div></div>
-          <div class="field"><span>О чём договорились</span><div class="tagpick" data-tags>${RESULT_TAGS[p.type].map(t => `<button type="button" class="${(res.tags || []).includes(t) ? 'on' : ''}" data-v="${esc(t)}" ${canEdit ? '' : 'disabled'}>${esc(t)}</button>`).join('')}</div></div>
-          <div class="grid2"><label class="field"><span>👉 Следующий шаг</span><input class="input" data-res="next" value="${esc(res.next || '')}" placeholder="${p.type === 'expert' ? 'Съёмка 3 практик' : p.type === 'partner' ? 'Прислать макет стойки' : 'Выдать материалы'}"></label>
-          <label class="field"><span>📅 Когда</span><input class="input" type="date" data-res="date" value="${esc(res.date || '')}"></label></div>
-          <label class="field"><span>📝 Заметка</span><textarea class="textarea" data-res="note" placeholder="Условия, договорённости, что важно помнить">${esc(res.note || '')}</textarea></label>
-          ${p.type === 'amb' ? `<div class="okline">🔗 Реферальная ссылка амбассадора — та же, что и для анкеты. Кто придёт по ней, появится с пометкой «пришла по ссылке ${esc(p.code)}». Пришли: <b>${invited.length}</b></div>` : ''}</div>`;
+          <div class="field"><span>Решение</span><div class="row">${Object.entries(S3.other).filter(([k]) => k !== 'none').map(([k, s]) => `<button class="btn ${p.s3 === k ? 'primary' : ''}" data-s3="${k}" ${canEdit ? '' : 'disabled'}>${esc(s.name)}</button>`).join('')}</div></div>
+          <div class="field"><span>О чём договорились</span><div class="tagpick" data-tags>${RESULT_TAGS[p.type].map(t => `<button type="button" class="${(res.tags || []).includes(t) ? 'on' : ''}" data-v="${esc(t)}" ${canEdit ? '' : 'disabled'}>${esc(noEmo(t))}</button>`).join('')}</div></div>
+          <div class="grid2"><label class="field"><span>Следующий шаг</span><input class="input" data-res="next" value="${esc(res.next || '')}" placeholder="${p.type === 'expert' ? 'Съёмка 3 практик' : p.type === 'partner' ? 'Прислать макет стойки' : 'Выдать материалы'}"></label>
+          <label class="field"><span>Когда</span><input class="input" type="date" data-res="date" value="${esc(res.date || '')}"></label></div>
+          <label class="field"><span>Заметка</span><textarea class="textarea" data-res="note" placeholder="Условия, договорённости, что важно помнить">${esc(res.note || '')}</textarea></label>
+          ${p.type === 'amb' ? `<div class="okline">Реферальная ссылка амбассадора — та же, что и для анкеты. Кто придёт по ней, появится с пометкой «по приглашению». Уже пришли: <b>${invited.length}</b></div>` : ''}</div>`;
       }
     } else {
       const log = Object.values(p.log || {}).sort((a, b) => b.t - a.t);
-      pane = `<div class="log">${log.map(l => `<div><time>${when(l.t)}</time><span>${esc(l.emo || '•')} ${esc(l.text)}${l.by && Team.get(l.by) ? ` <span class="muted">· ${esc(Team.first(Team.get(l.by)))}</span>` : ''}</span></div>`).join('') || '<p class="note">Пока пусто</p>'}</div>`;
+      pane = `<div class="log">${log.map(l => `<div><time>${when(l.t)}</time><span>${esc(noEmo(l.text))}${l.by && Team.get(l.by) ? ` <span class="muted">· ${esc(Team.first(Team.get(l.by)))}</span>` : ''}</span></div>`).join('') || '<p class="note">Пока пусто</p>'}</div>`;
     }
 
     const talkN = Object.values(p.talk || {}).filter(x => x && x.a).length;
+    const tgLink = p.tg ? (tgUrl ? `<a href="${esc(tgUrl)}" target="_blank" rel="noopener">@${esc(tgUser(p.tg))}</a>` : `<span>${esc(p.tg)}</span>`) : '';
     root.innerHTML = `
-      <a class="back-link" href="#${p.type}">${icon('back')}${T.emo} ${T.name}</a>
-      <div class="ph"><span class="type-emo">${T.emo}</span>
+      <a class="back-link" href="#${p.type}">${icon('back')}${groupName(p.type)}</a>
+      <div class="ph"><span class="type-emo" title="${esc(T.one)}">${T.emo}</span>
         <div><h1>${esc(People.name(p))}</h1>
-          <div class="ph-sub"><span class="code" title="Уникальный код: анкета и реферальная ссылка">${esc(p.code)}</span>
+          <div class="ph-sub"><span class="code" title="Личный код: в ссылке на анкету и в реферальной ссылке">${esc(p.code)}</span>
+            <span>${esc(T.one)}</span>
             ${People.sub(p) ? `<span>${esc(People.sub(p))}</span>` : ''}
-            ${p.tg ? (tgUrl ? `<a href="${esc(tgUrl)}" target="_blank" rel="noopener">✈️ @${esc(tgUser(p.tg))}</a>` : `<span>📞 ${esc(p.tg)}</span>`) : ''}
-            ${p.contact ? `<span>👤 ${esc(p.contact)}</span>` : ''}
-            ${ref ? `<a href="#p-${ref.id}">🔗 пришла от ${esc(People.name(ref))}</a>` : p.ref ? `<span>🔗 по ссылке ${esc(p.ref)}</span>` : ''}
-            ${invited.length ? `<span>👭 привела ${invited.length}</span>` : ''}</div></div>
-        <div class="ph-acts">${canEdit ? `<button class="btn sm" data-act="link" data-pid="${p.id}">🔗 Ссылка на анкету</button><button class="btn sm" data-edit-person>✏️</button>` : ''}${Who.can('delete') ? `<button class="icon-btn" data-del title="Удалить">${icon('trash')}</button>` : ''}</div>
+            ${tgLink}
+            ${p.contact ? `<span>контакт: ${esc(p.contact)}</span>` : ''}
+            ${ref ? `<span>по приглашению <a href="#p-${ref.id}">${esc(People.name(ref))}</a></span>` : p.ref ? `<span>по приглашению ${esc(p.ref)}</span>` : ''}
+            ${invited.length ? `<span>по ссылке пришли: ${invited.length}</span>` : ''}</div></div>
+        <div class="ph-acts">${canEdit ? `<button class="btn sm" data-act="link" data-pid="${p.id}">${icon('link')}Скопировать ссылку</button><button class="icon-btn" data-edit-person title="Изменить данные">${icon('edit')}</button>` : ''}${Who.can('delete') ? `<button class="icon-btn" data-del title="Удалить">${icon('trash')}</button>` : ''}</div>
       </div>
       ${steps}
       <div class="card" style="padding:0;overflow:hidden">
-        <div style="padding:0 12px;background:var(--surface-2)">${tabsHtml('pp.tab', [['anketa', '📝 Анкета', Object.keys(p.answers || {}).length || null], ['talk', `🎤 ${p.type === 'client' ? 'Интервью' : 'Созвон'}`, talkN || null], ['result', p.type === 'client' ? '💡 Инсайты' : '🚀 Итог'], ['log', '🕒 История']], tab)}</div>
+        <div style="padding:0 12px;background:var(--surface-2)">${tabsHtml('pp.tab', [['anketa', 'Анкета', Object.keys(p.answers || {}).length || null], ['talk', p.type === 'client' ? 'Интервью' : 'Созвон', talkN || null], ['result', 'Итог'], ['log', 'История']], tab)}</div>
         <div style="padding:14px 18px">${pane}</div>
       </div>`;
 
@@ -2696,7 +2834,7 @@ App.register('person', {
       if (!Object.keys(answers).length) { toast('Отметьте хотя бы один ответ'); return; }
       People.patch(p.id, {answers, s1: 'done', answeredAt: Date.now(), answeredBy: 'team', ...keyPatch(p, p.type, answers)}, 'Анкету заполнила команда', '✍️');
       View.set('pp.edit', false);
-      toast('✅ Ответы сохранены');
+      toast('Ответы сохранены ✅');
     });
     /* заметки созвона сохраняются сами */
     let tt = {};
@@ -2714,7 +2852,7 @@ App.register('person', {
       const cur = (p.talk || {})[qid] || {};
       People.patch(p.id, {talk: {[qid]: {...cur, star: !cur.star, t: Date.now()}}});
     });
-    on(root, 'click', '[data-copy-q]', () => copyOrShow(Questions.talk(p.type).map((q, i) => `${i + 1}. ${q.t}`).join('\n'), '📋 Вопросы скопированы — можно вставить в заметки Zoom'));
+    on(root, 'click', '[data-copy-q]', () => copyOrShow(Questions.talk(p.type).map((q, i) => `${i + 1}. ${q.t}`).join('\n'), 'Вопросы скопированы — можно вставить в заметки Zoom 📋'));
     on(root, 'click', '[data-timer]', () => {
       if (Timer.id) { clearInterval(Timer.id); Timer.id = null; App.render(); return; }
       Timer.start = Date.now();
@@ -2735,7 +2873,7 @@ App.register('person', {
       const k = el.dataset.s3, s = s3Map(p.type)[k];
       $$('[data-res]', root).forEach(n => { if (n.value !== ((p.res || {})[n.dataset.res] || '')) People.patch(p.id, {res: {[n.dataset.res]: n.value}}); });
       People.patch(p.id, {s3: k, s2: ['done', 'skip'].includes(p.s2) ? p.s2 : 'done'}, `Итог: ${s.name}`, s.emo);
-      toast(`${s.emo} ${s.name}`);
+      toast(`${s.name} ${s.emo}`);
     });
     on(root, 'click', '[data-edit-person]', () => openEditPerson(p));
     on(root, 'click', '[data-del]', async (e, el) => {
@@ -2749,16 +2887,16 @@ App.register('person', {
 
 function openEditPerson(p) {
   const T = TYPES[p.type];
-  openModal({title: `✏️ ${People.name(p)}`, body: `
+  openModal({title: People.name(p), body: `
       <label class="field"><span>${p.type === 'partner' ? 'Название' : 'Имя'}</span><input class="input" id="epName" value="${esc(p.name || '')}"></label>
       <div class="grid2"><label class="field"><span>Telegram или телефон</span><input class="input" id="epTg" value="${esc(p.tg || '')}"></label>
       <label class="field"><span>Город</span><input class="input" id="epCity" value="${esc(p.city || '')}"></label></div>
-      ${p.type === 'expert' ? `<div class="field"><span>Направления</span><div class="ans" id="epDirs">${DIRECTIONS.map(d => `<button type="button" class="${(p.dirs || []).includes(d) ? 'on' : ''}" data-v="${esc(d)}">${esc(d)}</button>`).join('')}</div></div>
+      ${p.type === 'expert' ? `<div class="field"><span>Направления</span><div class="ans" id="epDirs">${DIRECTIONS.map(d => `<button type="button" class="${(p.dirs || []).includes(d) ? 'on' : ''}" data-v="${esc(d)}">${esc(noEmo(d))}</button>`).join('')}</div></div>
         <label class="field"><span>Тема экспертизы</span><input class="input" id="epTopic" value="${esc(p.topic || (p.answers || {}).topic || '')}"></label>` : ''}
-      ${p.type === 'partner' ? `<label class="field"><span>Категория</span><select class="select" id="epCat">${PARTNER_CATS.map(c => `<option ${p.cat === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
+      ${p.type === 'partner' ? `<label class="field"><span>Категория</span><select class="select" id="epCat">${PARTNER_CATS.map(c => `<option value="${esc(c)}" ${p.cat === c ? 'selected' : ''}>${esc(noEmo(c))}</option>`).join('')}</select></label>
         <label class="field"><span>Контактное лицо</span><input class="input" id="epContact" value="${esc(p.contact || '')}"></label>` : ''}
       <label class="field"><span>Кто ведёт</span><select class="select" id="epOwner"><option value="">—</option>${Team.all().map(m => `<option value="${m.id}" ${p.owner === m.id ? 'selected' : ''}>${esc(Team.name(m))}</option>`).join('')}</select></label>
-      <label class="field"><span>Тип</span><select class="select" id="epType">${Object.entries(TYPES).map(([k, t]) => `<option value="${k}" ${p.type === k ? 'selected' : ''}>${t.emo} ${t.one}</option>`).join('')}</select></label>`,
+      <label class="field"><span>Группа</span><select class="select" id="epType">${Object.keys(TYPES).map(k => `<option value="${k}" ${p.type === k ? 'selected' : ''}>${groupName(k)}</option>`).join('')}</select></label>`,
     foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Сохранить</button>',
     onMount(el, close) {
       on(el, 'click', '#epDirs button', (e, b) => b.classList.toggle('on'));
@@ -2776,7 +2914,7 @@ function openEditPerson(p) {
 /* ── 22-import.js ── */
 /* Ответы, присланные по ссылке. Человек заполнил анкету и нажал
    «Отправить» — менеджер получил в Telegram ссылку вида <CRM>#in.… и открыл
-   её (или вставил текст в «📥 Вставить ответы»). Показываем, что пришло,
+   её (или вставил текст в «Вставить ответы»). Показываем, что пришло,
    и одним нажатием кладём в карточку. */
 
 async function openImport(raw) {
@@ -2794,22 +2932,22 @@ function showImport(pl) {
   const name = (pl.a || {}).name || (target ? People.name(target) : 'Новый человек');
   const n = Object.keys(pl.a || {}).length;
   const canEdit = People.canEdit();
-  openModal({title: `📥 Ответы: ${name}`, wide: true, body: `
-      <div class="${target ? 'okline' : 'warnline'}">${T.emo} <span>${target ? `Анкета «${T.one}» для карточки <b>${esc(People.name(target))}</b> (${esc(target.code)})` : pl.r && owner ? `Новый человек пришёл по ссылке <b>${esc(People.name(owner))}</b> — создадим карточку и отметим, кто пригласил` : `Карточки с кодом ${esc(pl.c || '—')} нет — создадим новую`} · ${n} ${plural(n, 'ответ', 'ответа', 'ответов')}${pl.at ? ` · ${when(pl.at)}` : ''}</span></div>
+  openModal({title: `Ответы: ${name}`, wide: true, body: `
+      <div class="${target ? 'okline' : 'warnline'}"><span>${target ? `Анкета «${groupName(type)}» для карточки <b>${esc(People.name(target))}</b> (${esc(target.code)})` : pl.r && owner ? `Новый человек пришёл по ссылке <b>${esc(People.name(owner))}</b> — создадим карточку и отметим, кто пригласил` : `Карточки с кодом ${esc(pl.c || '—')} нет — создадим новую`} · ${n} ${plural(n, 'ответ', 'ответа', 'ответов')}${pl.at ? ` · ${when(pl.at)}` : ''}</span></div>
       <div>${answersView(type, pl.a || {})}</div>`,
-    foot: canEdit ? `<button class="btn" data-close>Не сейчас</button><button class="btn primary" data-ok>✅ Сохранить в карточку</button>` : '<button class="btn" data-close>Закрыть</button>',
+    foot: canEdit ? `<button class="btn" data-close>Не сейчас</button><button class="btn primary" data-ok>Сохранить в карточку</button>` : '<button class="btn" data-close>Закрыть</button>',
     onMount(el, close) {
       const ok = $('[data-ok]', el);
       if (ok) ok.onclick = () => {
         const id = Import.apply(pl);
         close();
-        toast('📝 Ответы в карточке');
+        toast('Ответы в карточке 📝');
         App.go('p-' + id);
       };
     }});
 }
 function openPaste() {
-  openModal({title: '📥 Вставить ответы', body: `
+  openModal({title: 'Вставить ответы', body: `
       <p class="note">Вставьте сообщение, которое прислал человек после анкеты, — ссылку целиком или код ответов. Лишний текст не мешает.</p>
       <textarea class="textarea" id="pasteBox" placeholder="Привет! Это мои ответы для Eva 💜 https://claude.ai/…#in.z…" style="min-height:120px"></textarea>`,
     foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Показать ответы</button>',
@@ -2837,31 +2975,31 @@ App.register('questions', {
     const set = Questions.set(type);
     const canEdit = People.canEdit();
     const defIds = new Set([...Q_DEFAULT[type].test, ...Q_DEFAULT[type].talk].map(q => q.id));
+    /* строка вопроса: номер, текст, как отвечать (словами), варианты, действия значками */
     const row = (q, i, part) => `<div class="qi ${q.hidden ? 'hid' : ''}">
-        <span class="n">${i + 1}</span><span class="k" title="${esc(part === 'test' ? KIND_NAME[q.k] : 'Открытый вопрос')}">${part === 'test' ? KIND_EMO[q.k] : '🎤'}</span>
+        <span class="n">${i + 1}</span>
         <div><b>${esc(q.t)}${!defIds.has(q.id) ? ' <span class="pill custom">новый</span>' : ''}${q.hidden ? ' <span class="pill">скрыт</span>' : ''}</b>
-          ${part === 'test' && q.o ? `<small>${esc(q.o.join(' · '))}${q.k === 'many' && q.max ? ` · до ${q.max}` : ''}</small>` : ''}
-          ${part === 'test' && q.k === 'scale' ? `<small>${SCALE_EMO.join(' ')} · ${esc(q.lo || '')} → ${esc(q.hi || '')}</small>` : ''}
-          ${q.why ? `<small>🎯 ${esc(q.why)}</small>` : ''}${q.key ? `<small>↪ заполняет поле карточки</small>` : ''}</div>
+          ${part === 'test' ? `<small><span class="qk">${esc(KIND_NAME[q.k] || '')}${q.k === 'many' && q.max ? `, до ${q.max}` : ''}</span>${q.o ? esc(q.o.map(noEmo).join(' · ')) : q.k === 'scale' ? `1 — ${esc(q.lo || 'совсем нет')}, 5 — ${esc(q.hi || 'очень')}` : ''}</small>` : ''}
+          ${q.why ? `<small>Зачем: ${esc(q.why)}</small>` : ''}${q.key ? '<small>Ответ сам попадает в карточку</small>' : ''}</div>
         ${canEdit ? `<div class="acts">
-          <button class="icon-btn" data-mv="${part}|${i}|-1" title="Выше" ${i ? '' : 'disabled'}>▲</button>
-          <button class="icon-btn" data-mv="${part}|${i}|1" title="Ниже" ${i < set[part].length - 1 ? '' : 'disabled'}>▼</button>
-          <button class="icon-btn" data-ed="${part}|${i}" title="Изменить">✏️</button>
-          <button class="icon-btn" data-hide="${part}|${i}" title="${q.hidden ? 'Показать' : 'Скрыть'}">${q.hidden ? '👁' : '🙈'}</button>
-          ${!defIds.has(q.id) ? `<button class="icon-btn" data-rm="${part}|${i}" title="Удалить">🗑</button>` : ''}</div>` : ''}
+          <button class="icon-btn up" data-mv="${part}|${i}|-1" title="Выше" ${i ? '' : 'disabled'}>${icon('down')}</button>
+          <button class="icon-btn" data-mv="${part}|${i}|1" title="Ниже" ${i < set[part].length - 1 ? '' : 'disabled'}>${icon('down')}</button>
+          <button class="icon-btn" data-ed="${part}|${i}" title="Изменить">${icon('edit')}</button>
+          <button class="icon-btn ${q.hidden ? 'on' : ''}" data-hide="${part}|${i}" title="${q.hidden ? 'Показать снова' : 'Скрыть из анкеты'}">${icon('eye')}</button>
+          ${!defIds.has(q.id) ? `<button class="icon-btn" data-rm="${part}|${i}" title="Удалить">${icon('trash')}</button>` : ''}</div>` : ''}
       </div>`;
     const previewUrl = `${settings().anketaUrl || LINKS.anketa}#${T.letter}.DEMO${Questions.diff(type) ? '.q' + Codec.encJson(Questions.diff(type)) : ''}`;
 
     root.innerHTML = `
-      ${pageHead('❓ База вопросов', 'Анкета — быстрые ответы кнопками: человек заполняет сам по ссылке, из неё собирается статистика. Вопросы для созвона — открытые, для Zoom: из них рождаются инсайты.',
-        `<a class="btn" href="${esc(previewUrl)}" target="_blank" rel="noopener">👀 Как видит человек</a><button class="btn" data-copy-all>📋 Скопировать всё</button>`)}
-      ${tabsHtml('qs.type', Object.entries(TYPES).map(([k, t]) => [k, `${t.emo} ${t.name}`, Questions.test(k).length + Questions.talk(k).length]), type)}
+      ${pageHead('База вопросов', 'Два набора на каждую группу. Анкета — ответы кнопками, человек заполняет сам по ссылке, из неё строится статистика. Вопросы для созвона — открытые, для Zoom.',
+        `<a class="btn" href="${esc(previewUrl)}" target="_blank" rel="noopener">${icon('eye')}Как видит человек</a><button class="btn" data-copy-all>${icon('copy')}Скопировать всё</button>`)}
+      ${tabsHtml('qs.type', Object.keys(TYPES).map(k => [k, groupName(k)]), type)}
       <div class="two">
-        <section><div class="section-head"><h2>📝 Анкета · ${Questions.test(type).length}</h2>${canEdit ? '<button class="btn sm primary" data-add="test">➕ Вопрос</button>' : ''}</div>
-          <p class="note" style="margin-bottom:10px">${T.you === 'ты' ? 'Обращаемся на «ты», как в приложении.' : 'Обращаемся на «вы».'} Держите анкету короткой: 10–15 вопросов, 3 минуты. Вопросы с вариантами дают статистику.</p>
+        <section><div class="section-head"><h2>Анкета <span class="h-n">${Questions.test(type).length} ${plural(Questions.test(type).length, 'вопрос', 'вопроса', 'вопросов')}</span></h2>${canEdit ? `<button class="btn sm primary" data-add="test">${icon('plus')}Вопрос</button>` : ''}</div>
+          <p class="note" style="margin-bottom:10px">${T.you === 'ты' ? 'Обращаемся на «ты», как в приложении.' : 'Обращаемся на «вы».'} Держите анкету короткой: 10–15 вопросов, 3 минуты. Смайлы в вопросах видит человек — в анкете они к месту.</p>
           <div class="ql">${set.test.map((q, i) => row(q, i, 'test')).join('')}</div></section>
-        <section><div class="section-head"><h2>🎤 Для созвона · ${Questions.talk(type).length}</h2>${canEdit ? '<button class="btn sm primary" data-add="talk">➕ Вопрос</button>' : ''}</div>
-          <p class="note" style="margin-bottom:10px">Спрашивайте про прошлый опыт, а не «купили бы вы». Слушайте больше, чем говорите. 🎯 — зачем вопрос.</p>
+        <section><div class="section-head"><h2>Для созвона <span class="h-n">${Questions.talk(type).length} ${plural(Questions.talk(type).length, 'вопрос', 'вопроса', 'вопросов')}</span></h2>${canEdit ? `<button class="btn sm primary" data-add="talk">${icon('plus')}Вопрос</button>` : ''}</div>
+          <p class="note" style="margin-bottom:10px">Спрашивайте про прошлый опыт, а не «купили бы вы». Слушайте больше, чем говорите.</p>
           <div class="ql">${set.talk.map((q, i) => row(q, i, 'talk')).join('')}</div></section>
       </div>
       ${Questions.edited(type) && canEdit ? `<p class="note" style="margin-top:14px">Набор изменён — новые ссылки уже несут правки. <button class="link-btn" data-reset>Вернуть стартовый набор</button></p>` : ''}`;
@@ -2875,8 +3013,8 @@ App.register('questions', {
     on(root, 'click', '[data-add]', (e, el) => openQuestion(type, el.dataset.add, -1));
     on(root, 'click', '[data-reset]', async (e, el) => { if (await confirmPop(el, {text: 'Вернуть стартовые вопросы этой группы? Новые вопросы удалятся.', yes: 'Вернуть', danger: true})) Questions.reset(type); });
     on(root, 'click', '[data-copy-all]', () => {
-      const txt = [`${T.emo} ${T.name} — анкета`, ...Questions.test(type).map((q, i) => `${i + 1}. ${q.t}${q.o ? '\n   ' + q.o.join(' / ') : ''}`), '', `${T.emo} ${T.name} — вопросы для созвона`, ...Questions.talk(type).map((q, i) => `${i + 1}. ${q.t}${q.why ? ` (${q.why})` : ''}`)].join('\n');
-      copyOrShow(txt, '📋 Все вопросы скопированы');
+      const txt = [`${groupName(type)} — анкета`, ...Questions.test(type).map((q, i) => `${i + 1}. ${q.t}${q.o ? '\n   ' + q.o.join(' / ') : ''}`), '', `${groupName(type)} — вопросы для созвона`, ...Questions.talk(type).map((q, i) => `${i + 1}. ${q.t}${q.why ? ` (${q.why})` : ''}`)].join('\n');
+      copyOrShow(txt, 'Все вопросы скопированы 📋');
     });
   },
 });
@@ -2885,13 +3023,13 @@ function openQuestion(type, part, i) {
   const set = Questions.set(type);
   const q = i >= 0 ? clone(set[part][i]) : (part === 'test' ? {id: 'c' + uid().slice(-5), k: 'one', t: '', o: []} : {id: 'tc' + uid().slice(-5), t: '', why: ''});
   const isTest = part === 'test';
-  openModal({title: i >= 0 ? '✏️ Вопрос' : '➕ Новый вопрос', wide: true, body: `
-      <label class="field"><span>Вопрос</span><textarea class="textarea" id="qT" style="min-height:64px" placeholder="${isTest ? 'Сколько раз в неделю ты занимаешься собой?' : 'Расскажи, как прошла твоя последняя неделя?'}">${esc(q.t)}</textarea><small>Эмодзи приветствуются ✨</small></label>
-      ${isTest ? `<div class="field"><span>Как отвечать</span><div class="kinds">${Object.entries(KIND_NAME).map(([k, n]) => `<button type="button" data-k="${k}" class="${q.k === k ? 'on' : ''}">${KIND_EMO[k]} ${n}</button>`).join('')}</div></div>
+  openModal({title: i >= 0 ? 'Вопрос' : 'Новый вопрос', wide: true, body: `
+      <label class="field"><span>Вопрос</span><textarea class="textarea" id="qT" style="min-height:64px" placeholder="${isTest ? 'Сколько раз в неделю ты занимаешься собой?' : 'Расскажи, как прошла твоя последняя неделя?'}">${esc(q.t)}</textarea><small>${isTest ? 'Этот текст увидит человек в анкете — смайл в конце вопроса делает её живее.' : 'Задавайте про прошлый опыт: «когда последний раз…», «как это было».'}</small></label>
+      ${isTest ? `<div class="field"><span>Как отвечать</span><div class="kinds">${Object.entries(KIND_NAME).map(([k, n]) => `<button type="button" data-k="${k}" class="${q.k === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
         <label class="field" id="qOptsF"><span>Варианты — каждый с новой строки</span><textarea class="textarea opt-lines" id="qO" style="min-height:120px" placeholder="🌅 Утром&#10;🌆 Вечером">${esc((q.o || []).join('\n'))}</textarea></label>
         <div class="grid2"><label class="field" id="qMaxF"><span>Сколько можно выбрать</span><input class="input num" id="qMax" value="${q.max || ''}" placeholder="без ограничения"></label>
         <label class="field" id="qPhF"><span>Подсказка в поле</span><input class="input" id="qPh" value="${esc(q.ph || '')}"></label></div>` : `
-        <label class="field"><span>🎯 Зачем спрашиваем</span><input class="input" id="qW" value="${esc(q.why || '')}" placeholder="Что хотим понять из ответа"></label>`}`,
+        <label class="field"><span>Зачем спрашиваем</span><input class="input" id="qW" value="${esc(q.why || '')}" placeholder="Что хотим понять из ответа"></label>`}`,
     foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Сохранить</button>',
     onMount(el, close) {
       const sync = () => {
@@ -2924,7 +3062,7 @@ function openQuestion(type, part, i) {
         if (i >= 0) s[part][i] = out; else s[part].push(out);
         Questions.save(type, s);
         close();
-        toast(isTest ? '✅ Вопрос в анкете — новые ссылки уже с ним' : '✅ Вопрос добавлен');
+        toast(isTest ? 'Вопрос в анкете — новые ссылки уже с ним ✅' : 'Вопрос сохранён ✅');
       };
     }});
 }
@@ -2941,27 +3079,27 @@ App.register('settings', {
     const s = settings();
     const team = Team.all(true);
     root.innerHTML = `
-      ${pageHead('⚙️ Настройки', 'Команда, единая ссылка, пример данных и выгрузка ответов.')}
+      ${pageHead('Настройки', 'Команда, единая ссылка, пример данных и выгрузка ответов.')}
       <div class="two">
-        <div class="card"><div class="card-head"><h2>🔗 Одна ссылка на человека</h2></div>
+        <div class="card"><div class="card-head"><h2>Одна ссылка на человека</h2></div>
           <p class="note" style="margin-bottom:8px">У каждого человека свой код, например <span class="code">ANNA482</span>. Ссылка с ним работает для всего сразу:</p>
-          <ul class="legal"><li>📝 <b>анкета</b> — человек открывает ссылку и отвечает на вопросы кнопками;</li>
-            <li>💌 <b>ответы возвращаются</b> — в конце он нажимает «Отправить» и присылает менеджеру ссылку, которая одним нажатием кладёт ответы в карточку;</li>
-            <li>👭 <b>рефералка</b> — если по ссылке придёт подруга, она выберет «Меня пригласили», и в её карточке будет видно, кто её привёл.</li></ul>
+          <ol class="legal"><li><b>Анкета.</b> Человек открывает ссылку и отвечает на вопросы кнопками.</li>
+            <li><b>Ответы возвращаются.</b> В конце он нажимает «Отправить» и присылает менеджеру ссылку, которая одним нажатием кладёт ответы в карточку.</li>
+            <li><b>Рефералка.</b> Если по ссылке придёт подруга, она выберет «Меня пригласили», и в её карточке будет видно, кто её привёл.</li></ol>
           <label class="field" style="margin-top:10px"><span>Адрес публичной анкеты</span><input class="input" id="stAnk" value="${esc(s.anketaUrl || '')}" ${own ? '' : 'disabled'}><small>Анкета — отдельная страница: откройте к ней доступ по ссылке, чтобы её видели люди вне команды.</small></label>
         </div>
-        <div class="card"><div class="card-head"><h2>👥 Команда</h2></div>
+        <div class="card"><div class="card-head"><h2>Команда</h2></div>
           <div class="stack">${team.map(m => `<div class="row" style="align-items:center;flex-wrap:nowrap">${Team.av(m)}<span style="flex:1">${esc(Team.name(m))}${m.uid === Who.uid ? ' <span class="muted">· это вы</span>' : ''}</span>
             ${own && m.uid !== Who.uid ? `<select class="select sm" data-role="${m.id}" style="width:auto">${Object.entries(ROLES).map(([k, r]) => `<option value="${k}" ${roleOf(m.role) === k ? 'selected' : ''}>${r.name}</option>`).join('')}</select>` : `<span class="pill ${ROLES[roleOf(m.role)].tone}">${ROLES[roleOf(m.role)].name}</span>`}</div>`).join('')}</div>
           <p class="note" style="margin-top:10px">Чтобы добавить коллегу, откройте ей доступ к этой странице через «Поделиться». При первом входе она появится здесь.</p>
-          ${own ? `<form class="row" id="stAdd" style="margin-top:8px"><input class="input sm" id="stName" placeholder="Имя без входа, например стажёр" style="flex:1"><button class="btn sm" type="submit">➕</button></form>` : ''}
+          ${own ? `<form class="row" id="stAdd" style="margin-top:8px"><input class="input sm" id="stName" placeholder="Имя без входа, например стажёр" style="flex:1"><button class="btn sm" type="submit">${icon('plus')}Добавить</button></form>` : ''}
         </div>
-        <div class="card"><div class="card-head"><h2>📤 Выгрузить ответы</h2></div>
+        <div class="card"><div class="card-head"><h2>Выгрузить ответы</h2></div>
           <p class="note" style="margin-bottom:10px">Таблица CSV для Excel или Google Таблиц: одна строка — один человек, столбцы — вопросы анкеты и заметки созвона.</p>
-          <div class="row">${Object.entries(TYPES).map(([k, t]) => `<button class="btn sm" data-csv="${k}">${t.emo} ${t.name}</button>`).join('')}</div></div>
-        <div class="card"><div class="card-head"><h2>🧪 Пример данных</h2>${Demo.present() ? '<span class="pill violet">загружен</span>' : ''}</div>
+          <div class="row">${Object.keys(TYPES).map(k => `<button class="btn sm" data-csv="${k}">${icon('download')}${groupName(k)}</button>`).join('')}</div></div>
+        <div class="card"><div class="card-head"><h2>Пример данных</h2>${Demo.present() ? '<span class="pill violet">загружен</span>' : ''}</div>
           <p class="note" style="margin-bottom:10px">Вымышленные клиентки, эксперты, партнёры и амбассадоры на разных шагах — посмотреть, как всё работает. Ваши записи не трогаем.</p>
-          ${canEdit ? `<div class="row">${Demo.present() ? '<button class="btn danger sm" data-demo-clear>🗑 Удалить пример</button>' : ''}<button class="btn sm ${Demo.present() ? '' : 'primary'}" data-demo-load>🧪 ${Demo.present() ? 'Загрузить заново' : 'Загрузить пример'}</button></div>` : ''}</div>
+          ${canEdit ? `<div class="row">${Demo.present() ? `<button class="btn danger sm" data-demo-clear>${icon('trash')}Удалить пример</button>` : ''}<button class="btn sm ${Demo.present() ? '' : 'primary'}" data-demo-load>${Demo.present() ? 'Загрузить заново' : 'Загрузить пример'}</button></div>` : ''}</div>
       </div>
       <p class="note" style="margin-top:16px">Первая, подробная версия CRM сохранена как черновик. Роли разделяют интерфейс, а не данные: у кого есть доступ к странице, тот видит общую базу. Реальные персональные данные в рабочей версии храните на сервере в России.</p>`;
 
@@ -2979,10 +3117,10 @@ App.register('settings', {
 function exportCsv(type) {
   const qs = Questions.set(type).test, talk = Questions.set(type).talk;
   const list = People.all(type);
-  const head = ['Имя', 'Код', 'Город', 'Шаг', 'Анкета', 'Созвон', 'Итог', ...qs.map(q => q.t), ...talk.map(q => '🎤 ' + q.t), 'Метки', 'Главное', 'Заметка'];
+  const head = ['Имя', 'Код', 'Город', 'Шаг', 'Анкета', 'Созвон', 'Итог', ...qs.map(q => noEmo(q.t)), ...talk.map(q => 'Созвон: ' + q.t), 'Метки', 'Главное', 'Заметка'];
   const rows = list.map(p => [People.name(p), p.code, p.city || '', ['', 'Анкета', 'Созвон', 'Итог'][People.col(p)], (S1[p.s1] || {}).name || '', (S2[p.s2] || {}).name || '', (s3Map(type)[p.s3] || {}).name || '',
-    ...qs.map(q => answerLabels(q, (p.answers || {})[q.id]).join(', ')), ...talk.map(q => ((p.talk || {})[q.id] || {}).a || ''),
-    ((p.res || {}).tags || []).join(', '), (p.res || {}).main || (p.res || {}).next || '', (p.res || {}).note || (p.res || {}).idea || '']);
+    ...qs.map(q => answerLabels(q, (p.answers || {})[q.id]).map(noEmo).join(', ')), ...talk.map(q => ((p.talk || {})[q.id] || {}).a || ''),
+    ((p.res || {}).tags || []).map(noEmo).join(', '), (p.res || {}).main || (p.res || {}).next || '', (p.res || {}).note || (p.res || {}).idea || '']);
   const data = csvOf([head, ...rows]);
   (async () => {
     let dl = null;

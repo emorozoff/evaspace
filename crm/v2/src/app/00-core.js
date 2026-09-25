@@ -90,6 +90,9 @@ const MONTHS_GEN = ['января', 'февраля', 'марта', 'апрел�
 const MONTHS_SH = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 const WD_SH = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'];
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+/* убрать эмодзи из подписи: в CRM они мешают читать цифры и списки,
+   а в анкете для людей остаются */
+const noEmo = s => String(s ?? '').replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\u200d\uFE0F\u20E3]/gu, '').replace(/\s{2,}/g, ' ').trim();
 
 const monthIdx = m => Number(m.slice(5, 7)) - 1;
 /* 'Октябрь' · с годом, если он не текущий квартальный: 'Январь 2027' */

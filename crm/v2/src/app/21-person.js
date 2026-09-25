@@ -1,6 +1,6 @@
 /* Карточка человека: три шага крупно, анкета (ответы кнопками), режим
-   созвона (вопросы + заметки + ⭐ цитаты), итог и история. Всё сохраняется
-   само — кнопки «Сохранить» почти нигде не нужны. */
+   созвона (вопросы + заметки + звёздочка у яркой цитаты), итог и история.
+   Всё сохраняется само — кнопки «Сохранить» почти нигде не нужны. */
 
 /* ── анкета кнопками: общая для ручного заполнения ── */
 function fillFormHtml(type, answers, prefix = 'fa') {
@@ -11,7 +11,7 @@ function fillFormHtml(type, answers, prefix = 'fa') {
       const sel = answerLabels(q, v);
       ctl = `<div class="ans" data-q="${q.id}" data-k="${q.k}" data-max="${q.max || 0}">${(q.o || []).map(o => `<button type="button" class="${sel.includes(o) ? 'on' : ''}" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
     } else if (q.k === 'scale') {
-      ctl = `<div class="scale" data-q="${q.id}" data-k="scale">${SCALE_EMO.map((e, j) => `<button type="button" class="${Number(v) === j + 1 ? 'on' : ''}" data-v="${j + 1}">${e}<small>${j + 1}</small></button>`).join('')}</div>`;
+      ctl = `<div class="scale num-scale" data-q="${q.id}" data-k="scale">${[1, 2, 3, 4, 5].map(j => `<button type="button" class="${Number(v) === j ? 'on' : ''}" data-v="${j}">${j}</button>`).join('')}<span class="scale-ends">1 — ${esc(q.lo || 'совсем нет')}, 5 — ${esc(q.hi || 'очень')}</span></div>`;
     } else if (q.k === 'text') {
       ctl = `<textarea class="textarea" data-q="${q.id}" data-k="text" placeholder="${esc(q.ph || '')}">${esc(v || '')}</textarea>`;
     } else {
@@ -47,20 +47,20 @@ function answersView(type, answers) {
   if (!ids.length) return '';
   const ordered = [...qs.filter(q => ids.includes(q.id)), ...ids.filter(id => !qs.some(q => q.id === id)).map(id => ({id, t: id, k: 'short'}))];
   return ordered.map((q, i) => {
-    const labels = answerLabels(q, answers[q.id]);
-    return `<div class="fq"><div class="fq-t"><i>${i + 1}</i><span>${esc(q.t)}${q.hidden ? ' <span class="fq-hint">· скрытый вопрос</span>' : ''}</span></div>
+    const labels = q.k === 'scale' ? [`${answers[q.id]} из 5`] : answerLabels(q, answers[q.id]).map(noEmo);
+    return `<div class="fq"><div class="fq-t"><i>${i + 1}</i><span>${esc(noEmo(q.t))}${q.hidden ? ' <span class="fq-hint">· скрытый вопрос</span>' : ''}</span></div>
       <div class="fq-v answer-val">${['short', 'text'].includes(q.k) ? `<em>${esc(labels.join(''))}</em>` : labels.map(l => `<span>${esc(l)}</span>`).join('')}</div></div>`;
   }).join('');
 }
 
 /* ── таймер созвона: только в этой вкладке ── */
-const Timer = {start: 0, id: null, tick(el) { if (!el) return; const s = Math.floor((Date.now() - this.start) / 1000); el.textContent = `⏱ ${Math.floor(s / 60)}:${pad(s % 60)}`; }};
+const Timer = {start: 0, id: null, tick(el) { if (!el) return; const s = Math.floor((Date.now() - this.start) / 1000); el.textContent = `${Math.floor(s / 60)}:${pad(s % 60)}`; }};
 
 App.register('person', {
   title: id => People.name(People.get(id)),
   render(root, id) {
     const p = People.get(id);
-    if (!p) { root.innerHTML = `<a class="back-link" href="#home">${icon('back')}Назад</a><div class="empty"><b>Карточка не найдена 🤷‍♀️</b>Возможно, её удалили.</div>`; return; }
+    if (!p) { root.innerHTML = `<a class="back-link" href="#home">${icon('back')}Назад</a><div class="empty"><b>Карточка не найдена</b>Возможно, её удалили.</div>`; return; }
     const T = TYPES[p.type];
     const canEdit = People.canEdit();
     /* режим правки анкеты не переносится на другую карточку */
@@ -71,13 +71,14 @@ App.register('person', {
     const ref = p.ref ? People.byCode(p.ref) : null;
     const tgUrl = p.tg && !/^\+?\d[\d\s()-]+$/.test(p.tg) ? 'https://t.me/' + encodeURIComponent(tgUser(p.tg)) : '';
 
-    /* три шага крупно */
-    const box = (n, title, statusHtml, acts, done, cur) => `<div class="b3 ${done ? 'done' : ''} ${cur ? 'cur' : ''}"><div class="b3-t"><span class="step-n">${done ? '✓' : n}</span>${esc(title)}</div><div class="b3-s">${statusHtml}</div><div class="row">${acts}</div></div>`;
+    /* три шага крупно: номер, название, состояние простым текстом */
+    const box = (n, title, statusHtml, acts, done, cur) => `<div class="b3 ${done ? 'done' : ''} ${cur ? 'cur' : ''}"><div class="b3-t"><span class="step-n">${done ? '✓' : n}</span>Шаг ${n} · ${esc(title)}</div><div class="b3-s">${statusHtml}</div>${acts ? `<div class="row">${acts}</div>` : ''}</div>`;
     const s1 = S1[p.s1 || 'new'], s2 = S2[p.s2 || 'none'], s3 = s3Map(p.type)[p.s3 || 'none'];
+    const small = t => ` <span class="b3-when">${t}</span>`;
     const steps = `<div class="big3">
-      ${box(1, T.steps[0], `${s1.emo} ${esc(s1.name)}${p.answeredAt ? ` <span class="note">· ${when(p.answeredAt)}${p.answeredBy === 'self' ? ', сама' : ''}</span>` : ''}`, col === 1 ? nextActs(p, true) : canEdit ? `<button class="btn xs ghost" data-act="link" data-pid="${p.id}">🔗 Ссылка ещё раз</button>` : '', ['done', 'skip'].includes(p.s1), col === 1)}
-      ${box(2, T.steps[1], `${s2.emo} ${esc(s2.name)}${p.callAt && p.s2 === 'set' ? ` <span class="note">· ${when(p.callAt)}</span>` : ''}${p.zoom && p.s2 === 'set' ? ` <a class="note" href="${esc(p.zoom)}" target="_blank" rel="noopener">Zoom ↗</a>` : ''}`, col === 2 ? nextActs(p, true) : '', ['done', 'skip'].includes(p.s2), col === 2)}
-      ${box(3, T.steps[2], `${s3.emo} ${esc(s3.name)}`, col === 3 ? nextActs(p, true) : '', People.connected(p), col === 3)}
+      ${box(1, T.steps[0], `${esc(s1.name)}${p.s1 === 'done' && p.answeredAt ? small(`${when(p.answeredAt)} · ${p.answeredBy === 'self' ? 'по ссылке' : 'заполнила команда'}`) : p.s1 === 'sent' && p.sentAt ? small(`ссылка отправлена ${sinceDays(p.sentAt)}`) : ''}`, col === 1 ? nextActs(p, true) : '', ['done', 'skip'].includes(p.s1), col === 1)}
+      ${box(2, T.steps[1], `${esc(s2.name)}${p.callAt && p.s2 === 'set' ? small(when(p.callAt)) : ''}${p.zoom && p.s2 === 'set' ? ` <a class="b3-when" href="${esc(p.zoom)}" target="_blank" rel="noopener">Zoom ↗</a>` : ''}`, col === 2 ? nextActs(p, true) : '', ['done', 'skip'].includes(p.s2), col === 2)}
+      ${box(3, T.steps[2], esc(s3.name), col === 3 && tab !== 'result' ? nextActs(p, true) : '', People.connected(p), col === 3)}
     </div>`;
 
     let pane = '';
@@ -86,62 +87,64 @@ App.register('person', {
       pane = edit && canEdit
         ? `<p class="note" style="margin-bottom:6px">Заполните за человека — например, по ходу звонка. Или отправьте ссылку: ответы придут сами.</p>
            <div id="fillBox">${fillFormHtml(p.type, p.answers || {})}</div>
-           <div class="row" style="margin-top:12px"><button class="btn primary" data-save-fill>✅ Сохранить ответы</button>${Object.keys(p.answers || {}).length ? '<button class="btn ghost" data-cancel-fill>Отмена</button>' : ''}</div>`
-        : `<div class="row" style="margin-bottom:6px"><span class="note">${p.answeredBy === 'self' ? '📝 Заполнила сама по ссылке' : '✍️ Заполнено командой'}${p.answeredAt ? ' · ' + when(p.answeredAt) : ''}</span><span class="sp"></span>${canEdit ? '<button class="btn xs" data-edit-fill>✏️ Изменить</button>' : ''}</div>${answersView(p.type, p.answers)}`;
+           <div class="row" style="margin-top:12px"><button class="btn primary" data-save-fill>Сохранить ответы</button>${Object.keys(p.answers || {}).length ? '<button class="btn ghost" data-cancel-fill>Отмена</button>' : ''}</div>`
+        : `<div class="row" style="margin-bottom:6px"><span class="note">${p.answeredBy === 'self' ? 'Заполнено самим человеком по ссылке' : 'Заполнено командой'}${p.answeredAt ? ' · ' + when(p.answeredAt) : ''}</span><span class="sp"></span>${canEdit ? `<button class="btn xs" data-edit-fill>${icon('edit')}Изменить</button>` : ''}</div>${answersView(p.type, p.answers)}`;
     } else if (tab === 'talk') {
       const qs = Questions.talk(p.type);
       const talk = p.talk || {};
       pane = `<div class="row" style="margin-bottom:10px;align-items:center">
-          <span class="note">Задавайте вопросы своими словами, записывайте коротко. ⭐ — яркая цитата, попадёт на главную.</span><span class="sp"></span>
-          <span class="timer" id="timer">${Timer.id ? '' : '⏱ 0:00'}</span>
-          ${canEdit ? `<button class="btn sm" data-timer>${Timer.id ? '⏸ Стоп' : '▶️ Старт'}</button>` : ''}
-          <button class="btn sm ghost" data-copy-q>📋 Вопросы</button>
+          <span class="note">Задавайте вопросы своими словами, записывайте коротко. Звёздочка — яркая цитата, она попадёт в статистику.</span><span class="sp"></span>
+          <span class="timer" id="timer" title="Длительность созвона">${Timer.id ? '' : '0:00'}</span>
+          ${canEdit ? `<button class="btn sm" data-timer>${Timer.id ? `${icon('pause')}Стоп` : `${icon('play')}Старт`}</button>` : ''}
+          <button class="btn sm ghost" data-copy-q>${icon('copy')}Скопировать вопросы</button>
         </div>
         <div class="talk">${qs.map((q, i) => { const x = talk[q.id] || {}; return `<div class="tq ${x.a ? 'filled' : ''}">
-          <div class="tq-h"><i>${i + 1}</i><b>${esc(q.t)}</b>${canEdit ? `<button class="star ${x.star ? 'on' : ''}" data-star="${q.id}" title="Яркая цитата">⭐</button>` : x.star ? '⭐' : ''}</div>
-          ${q.why ? `<div class="tq-why">🎯 ${esc(q.why)}</div>` : ''}
+          <div class="tq-h"><i>${i + 1}</i><b>${esc(q.t)}</b>${canEdit ? `<button class="star ${x.star ? 'on' : ''}" data-star="${q.id}" title="${x.star ? 'Убрать из цитат' : 'Яркая цитата'}">${icon('star')}</button>` : x.star ? `<span class="star on">${icon('star')}</span>` : ''}</div>
+          ${q.why ? `<div class="tq-why">Зачем: ${esc(q.why)}</div>` : ''}
           <textarea class="textarea" data-talk="${q.id}" placeholder="Что ответила…" ${canEdit ? '' : 'readonly'}>${esc(x.a || '')}</textarea></div>`; }).join('')}
           <div class="tq"><div class="tq-h"><i>＋</i><b>Что ещё важного прозвучало</b></div><textarea class="textarea" data-talk="_extra" placeholder="Всё, что не попало в вопросы">${esc((talk._extra || {}).a || '')}</textarea></div>
         </div>
-        ${canEdit && p.s2 !== 'done' ? `<div class="row" style="margin-top:12px"><button class="btn primary" data-act="done2" data-pid="${p.id}">✅ ${p.type === 'client' ? 'Интервью' : 'Созвон'} прошёл</button></div>` : ''}`;
+        ${canEdit && p.s2 !== 'done' ? `<div class="row" style="margin-top:12px"><button class="btn primary" data-act="done2" data-pid="${p.id}">${p.type === 'client' ? 'Интервью прошло' : 'Созвон прошёл'}</button></div>` : ''}`;
     } else if (tab === 'result') {
       const res = p.res || {tags: []};
       if (p.type === 'client') {
         pane = `<div class="stack">
-          <div class="field"><span>Что услышали — отметьте метки</span><div class="tagpick" data-tags>${INSIGHT_TAGS.map(t => `<button type="button" class="${(res.tags || []).includes(t) ? 'on' : ''}" data-v="${esc(t)}" ${canEdit ? '' : 'disabled'}>${esc(t)}</button>`).join('')}</div></div>
-          <label class="field"><span>💡 Главный инсайт — одной фразой</span><textarea class="textarea" data-res="main" placeholder="Например: бросает практики, когда болеет ребёнок — нужен режим «пауза без чувства вины»">${esc(res.main || '')}</textarea></label>
-          <label class="field"><span>🛠 Что улучшить в Еве</span><textarea class="textarea" data-res="idea" placeholder="Идеи и просьбы">${esc(res.idea || '')}</textarea></label>
-          ${canEdit ? `<div class="row"><button class="btn primary" data-s3="done">💡 Инсайты собраны</button><button class="btn" data-s3="fan">💜 Готова помогать ещё</button></div>` : ''}</div>`;
+          <div class="field"><span>Что услышали — отметьте</span><div class="tagpick" data-tags>${INSIGHT_TAGS.map(t => `<button type="button" class="${(res.tags || []).includes(t) ? 'on' : ''}" data-v="${esc(t)}" ${canEdit ? '' : 'disabled'}>${esc(noEmo(t))}</button>`).join('')}</div></div>
+          <label class="field"><span>Главный инсайт — одной фразой</span><textarea class="textarea" data-res="main" placeholder="Например: бросает практики, когда болеет ребёнок — нужен режим «пауза без чувства вины»">${esc(res.main || '')}</textarea></label>
+          <label class="field"><span>Что улучшить в Еве</span><textarea class="textarea" data-res="idea" placeholder="Идеи и просьбы">${esc(res.idea || '')}</textarea></label>
+          ${canEdit ? `<div class="row"><button class="btn ${p.s3 === 'done' ? 'primary' : p.s3 === 'fan' ? '' : 'primary'}" data-s3="done">Инсайты собраны</button><button class="btn ${p.s3 === 'fan' ? 'primary' : ''}" data-s3="fan">Готова помогать ещё</button></div>` : ''}</div>`;
       } else {
         pane = `<div class="stack">
-          <div class="field"><span>Решение</span><div class="row">${Object.entries(S3.other).filter(([k]) => k !== 'none').map(([k, s]) => `<button class="btn ${p.s3 === k ? 'primary' : ''}" data-s3="${k}" ${canEdit ? '' : 'disabled'}>${s.emo} ${esc(s.name)}</button>`).join('')}</div></div>
-          <div class="field"><span>О чём договорились</span><div class="tagpick" data-tags>${RESULT_TAGS[p.type].map(t => `<button type="button" class="${(res.tags || []).includes(t) ? 'on' : ''}" data-v="${esc(t)}" ${canEdit ? '' : 'disabled'}>${esc(t)}</button>`).join('')}</div></div>
-          <div class="grid2"><label class="field"><span>👉 Следующий шаг</span><input class="input" data-res="next" value="${esc(res.next || '')}" placeholder="${p.type === 'expert' ? 'Съёмка 3 практик' : p.type === 'partner' ? 'Прислать макет стойки' : 'Выдать материалы'}"></label>
-          <label class="field"><span>📅 Когда</span><input class="input" type="date" data-res="date" value="${esc(res.date || '')}"></label></div>
-          <label class="field"><span>📝 Заметка</span><textarea class="textarea" data-res="note" placeholder="Условия, договорённости, что важно помнить">${esc(res.note || '')}</textarea></label>
-          ${p.type === 'amb' ? `<div class="okline">🔗 Реферальная ссылка амбассадора — та же, что и для анкеты. Кто придёт по ней, появится с пометкой «пришла по ссылке ${esc(p.code)}». Пришли: <b>${invited.length}</b></div>` : ''}</div>`;
+          <div class="field"><span>Решение</span><div class="row">${Object.entries(S3.other).filter(([k]) => k !== 'none').map(([k, s]) => `<button class="btn ${p.s3 === k ? 'primary' : ''}" data-s3="${k}" ${canEdit ? '' : 'disabled'}>${esc(s.name)}</button>`).join('')}</div></div>
+          <div class="field"><span>О чём договорились</span><div class="tagpick" data-tags>${RESULT_TAGS[p.type].map(t => `<button type="button" class="${(res.tags || []).includes(t) ? 'on' : ''}" data-v="${esc(t)}" ${canEdit ? '' : 'disabled'}>${esc(noEmo(t))}</button>`).join('')}</div></div>
+          <div class="grid2"><label class="field"><span>Следующий шаг</span><input class="input" data-res="next" value="${esc(res.next || '')}" placeholder="${p.type === 'expert' ? 'Съёмка 3 практик' : p.type === 'partner' ? 'Прислать макет стойки' : 'Выдать материалы'}"></label>
+          <label class="field"><span>Когда</span><input class="input" type="date" data-res="date" value="${esc(res.date || '')}"></label></div>
+          <label class="field"><span>Заметка</span><textarea class="textarea" data-res="note" placeholder="Условия, договорённости, что важно помнить">${esc(res.note || '')}</textarea></label>
+          ${p.type === 'amb' ? `<div class="okline">Реферальная ссылка амбассадора — та же, что и для анкеты. Кто придёт по ней, появится с пометкой «по приглашению». Уже пришли: <b>${invited.length}</b></div>` : ''}</div>`;
       }
     } else {
       const log = Object.values(p.log || {}).sort((a, b) => b.t - a.t);
-      pane = `<div class="log">${log.map(l => `<div><time>${when(l.t)}</time><span>${esc(l.emo || '•')} ${esc(l.text)}${l.by && Team.get(l.by) ? ` <span class="muted">· ${esc(Team.first(Team.get(l.by)))}</span>` : ''}</span></div>`).join('') || '<p class="note">Пока пусто</p>'}</div>`;
+      pane = `<div class="log">${log.map(l => `<div><time>${when(l.t)}</time><span>${esc(noEmo(l.text))}${l.by && Team.get(l.by) ? ` <span class="muted">· ${esc(Team.first(Team.get(l.by)))}</span>` : ''}</span></div>`).join('') || '<p class="note">Пока пусто</p>'}</div>`;
     }
 
     const talkN = Object.values(p.talk || {}).filter(x => x && x.a).length;
+    const tgLink = p.tg ? (tgUrl ? `<a href="${esc(tgUrl)}" target="_blank" rel="noopener">@${esc(tgUser(p.tg))}</a>` : `<span>${esc(p.tg)}</span>`) : '';
     root.innerHTML = `
-      <a class="back-link" href="#${p.type}">${icon('back')}${T.emo} ${T.name}</a>
-      <div class="ph"><span class="type-emo">${T.emo}</span>
+      <a class="back-link" href="#${p.type}">${icon('back')}${groupName(p.type)}</a>
+      <div class="ph"><span class="type-emo" title="${esc(T.one)}">${T.emo}</span>
         <div><h1>${esc(People.name(p))}</h1>
-          <div class="ph-sub"><span class="code" title="Уникальный код: анкета и реферальная ссылка">${esc(p.code)}</span>
+          <div class="ph-sub"><span class="code" title="Личный код: в ссылке на анкету и в реферальной ссылке">${esc(p.code)}</span>
+            <span>${esc(T.one)}</span>
             ${People.sub(p) ? `<span>${esc(People.sub(p))}</span>` : ''}
-            ${p.tg ? (tgUrl ? `<a href="${esc(tgUrl)}" target="_blank" rel="noopener">✈️ @${esc(tgUser(p.tg))}</a>` : `<span>📞 ${esc(p.tg)}</span>`) : ''}
-            ${p.contact ? `<span>👤 ${esc(p.contact)}</span>` : ''}
-            ${ref ? `<a href="#p-${ref.id}">🔗 пришла от ${esc(People.name(ref))}</a>` : p.ref ? `<span>🔗 по ссылке ${esc(p.ref)}</span>` : ''}
-            ${invited.length ? `<span>👭 привела ${invited.length}</span>` : ''}</div></div>
-        <div class="ph-acts">${canEdit ? `<button class="btn sm" data-act="link" data-pid="${p.id}">🔗 Ссылка на анкету</button><button class="btn sm" data-edit-person>✏️</button>` : ''}${Who.can('delete') ? `<button class="icon-btn" data-del title="Удалить">${icon('trash')}</button>` : ''}</div>
+            ${tgLink}
+            ${p.contact ? `<span>контакт: ${esc(p.contact)}</span>` : ''}
+            ${ref ? `<span>по приглашению <a href="#p-${ref.id}">${esc(People.name(ref))}</a></span>` : p.ref ? `<span>по приглашению ${esc(p.ref)}</span>` : ''}
+            ${invited.length ? `<span>по ссылке пришли: ${invited.length}</span>` : ''}</div></div>
+        <div class="ph-acts">${canEdit ? `<button class="btn sm" data-act="link" data-pid="${p.id}">${icon('link')}Скопировать ссылку</button><button class="icon-btn" data-edit-person title="Изменить данные">${icon('edit')}</button>` : ''}${Who.can('delete') ? `<button class="icon-btn" data-del title="Удалить">${icon('trash')}</button>` : ''}</div>
       </div>
       ${steps}
       <div class="card" style="padding:0;overflow:hidden">
-        <div style="padding:0 12px;background:var(--surface-2)">${tabsHtml('pp.tab', [['anketa', '📝 Анкета', Object.keys(p.answers || {}).length || null], ['talk', `🎤 ${p.type === 'client' ? 'Интервью' : 'Созвон'}`, talkN || null], ['result', p.type === 'client' ? '💡 Инсайты' : '🚀 Итог'], ['log', '🕒 История']], tab)}</div>
+        <div style="padding:0 12px;background:var(--surface-2)">${tabsHtml('pp.tab', [['anketa', 'Анкета', Object.keys(p.answers || {}).length || null], ['talk', p.type === 'client' ? 'Интервью' : 'Созвон', talkN || null], ['result', 'Итог'], ['log', 'История']], tab)}</div>
         <div style="padding:14px 18px">${pane}</div>
       </div>`;
 
@@ -156,7 +159,7 @@ App.register('person', {
       if (!Object.keys(answers).length) { toast('Отметьте хотя бы один ответ'); return; }
       People.patch(p.id, {answers, s1: 'done', answeredAt: Date.now(), answeredBy: 'team', ...keyPatch(p, p.type, answers)}, 'Анкету заполнила команда', '✍️');
       View.set('pp.edit', false);
-      toast('✅ Ответы сохранены');
+      toast('Ответы сохранены ✅');
     });
     /* заметки созвона сохраняются сами */
     let tt = {};
@@ -174,7 +177,7 @@ App.register('person', {
       const cur = (p.talk || {})[qid] || {};
       People.patch(p.id, {talk: {[qid]: {...cur, star: !cur.star, t: Date.now()}}});
     });
-    on(root, 'click', '[data-copy-q]', () => copyOrShow(Questions.talk(p.type).map((q, i) => `${i + 1}. ${q.t}`).join('\n'), '📋 Вопросы скопированы — можно вставить в заметки Zoom'));
+    on(root, 'click', '[data-copy-q]', () => copyOrShow(Questions.talk(p.type).map((q, i) => `${i + 1}. ${q.t}`).join('\n'), 'Вопросы скопированы — можно вставить в заметки Zoom 📋'));
     on(root, 'click', '[data-timer]', () => {
       if (Timer.id) { clearInterval(Timer.id); Timer.id = null; App.render(); return; }
       Timer.start = Date.now();
@@ -195,7 +198,7 @@ App.register('person', {
       const k = el.dataset.s3, s = s3Map(p.type)[k];
       $$('[data-res]', root).forEach(n => { if (n.value !== ((p.res || {})[n.dataset.res] || '')) People.patch(p.id, {res: {[n.dataset.res]: n.value}}); });
       People.patch(p.id, {s3: k, s2: ['done', 'skip'].includes(p.s2) ? p.s2 : 'done'}, `Итог: ${s.name}`, s.emo);
-      toast(`${s.emo} ${s.name}`);
+      toast(`${s.name} ${s.emo}`);
     });
     on(root, 'click', '[data-edit-person]', () => openEditPerson(p));
     on(root, 'click', '[data-del]', async (e, el) => {
@@ -209,16 +212,16 @@ App.register('person', {
 
 function openEditPerson(p) {
   const T = TYPES[p.type];
-  openModal({title: `✏️ ${People.name(p)}`, body: `
+  openModal({title: People.name(p), body: `
       <label class="field"><span>${p.type === 'partner' ? 'Название' : 'Имя'}</span><input class="input" id="epName" value="${esc(p.name || '')}"></label>
       <div class="grid2"><label class="field"><span>Telegram или телефон</span><input class="input" id="epTg" value="${esc(p.tg || '')}"></label>
       <label class="field"><span>Город</span><input class="input" id="epCity" value="${esc(p.city || '')}"></label></div>
-      ${p.type === 'expert' ? `<div class="field"><span>Направления</span><div class="ans" id="epDirs">${DIRECTIONS.map(d => `<button type="button" class="${(p.dirs || []).includes(d) ? 'on' : ''}" data-v="${esc(d)}">${esc(d)}</button>`).join('')}</div></div>
+      ${p.type === 'expert' ? `<div class="field"><span>Направления</span><div class="ans" id="epDirs">${DIRECTIONS.map(d => `<button type="button" class="${(p.dirs || []).includes(d) ? 'on' : ''}" data-v="${esc(d)}">${esc(noEmo(d))}</button>`).join('')}</div></div>
         <label class="field"><span>Тема экспертизы</span><input class="input" id="epTopic" value="${esc(p.topic || (p.answers || {}).topic || '')}"></label>` : ''}
-      ${p.type === 'partner' ? `<label class="field"><span>Категория</span><select class="select" id="epCat">${PARTNER_CATS.map(c => `<option ${p.cat === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
+      ${p.type === 'partner' ? `<label class="field"><span>Категория</span><select class="select" id="epCat">${PARTNER_CATS.map(c => `<option value="${esc(c)}" ${p.cat === c ? 'selected' : ''}>${esc(noEmo(c))}</option>`).join('')}</select></label>
         <label class="field"><span>Контактное лицо</span><input class="input" id="epContact" value="${esc(p.contact || '')}"></label>` : ''}
       <label class="field"><span>Кто ведёт</span><select class="select" id="epOwner"><option value="">—</option>${Team.all().map(m => `<option value="${m.id}" ${p.owner === m.id ? 'selected' : ''}>${esc(Team.name(m))}</option>`).join('')}</select></label>
-      <label class="field"><span>Тип</span><select class="select" id="epType">${Object.entries(TYPES).map(([k, t]) => `<option value="${k}" ${p.type === k ? 'selected' : ''}>${t.emo} ${t.one}</option>`).join('')}</select></label>`,
+      <label class="field"><span>Группа</span><select class="select" id="epType">${Object.keys(TYPES).map(k => `<option value="${k}" ${p.type === k ? 'selected' : ''}>${groupName(k)}</option>`).join('')}</select></label>`,
     foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Сохранить</button>',
     onMount(el, close) {
       on(el, 'click', '#epDirs button', (e, b) => b.classList.toggle('on'));

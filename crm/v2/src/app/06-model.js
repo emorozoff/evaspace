@@ -59,12 +59,13 @@ const People = {
     return 2;
   },
   connected(p) { return p.type === 'client' ? ['done', 'fan'].includes(p.s3) : p.s3 === 'yes'; },
+  /* строка под именем: без смайлов, чтобы читалась с одного взгляда */
   sub(p) {
     const a = p.answers || {};
-    if (p.type === 'expert') return [(p.dirs || []).map(d => d.split(' ')[0]).join(' '), p.topic || a.topic || '', p.city].filter(Boolean).join(' · ');
-    if (p.type === 'partner') return [p.cat, p.city].filter(Boolean).join(' · ');
-    if (p.type === 'amb') return [a.size ? `👥 ${a.size}` : '', p.city].filter(Boolean).join(' · ');
-    return [a.age ? a.age : '', p.city, a.stage ? String(a.stage) : ''].filter(Boolean).join(' · ');
+    if (p.type === 'expert') return [p.topic || a.topic || (p.dirs || []).map(noEmo).join(', '), p.city].filter(Boolean).join(' · ');
+    if (p.type === 'partner') return [noEmo(p.cat), p.city].filter(Boolean).join(' · ');
+    if (p.type === 'amb') return [a.size ? `аудитория ${noEmo(a.size)}` : '', p.city].filter(Boolean).join(' · ');
+    return [a.age ? noEmo(a.age) : '', p.city, a.stage ? noEmo(a.stage) : ''].filter(Boolean).join(' · ');
   },
   uniqueCode(name) {
     let code = refCodeFor(name || 'eva');
@@ -124,6 +125,8 @@ const Import = {
 };
 
 /* ── статистика ответов ── */
+/* шкала 1–5 цифрами: крайние значения с подписью, без смайлов */
+const scaleName = (q, i) => (i === 0 ? `1 — ${q.lo || 'совсем нет'}` : i === 4 ? `5 — ${q.hi || 'очень'}` : String(i + 1));
 const Stats = {
   agg(type, list = People.all(type)) {
     const answered = list.filter(p => p.answers && Object.keys(p.answers).length);
@@ -138,7 +141,7 @@ const Stats = {
         answerLabels(q, v).forEach(l => { counts[l] = (counts[l] || 0) + 1; });
       });
       const opts = q.k === 'scale' ? [1, 2, 3, 4, 5].map(String) : (q.o || []);
-      const rows = opts.map((o, i) => ({i, name: q.k === 'scale' ? `${SCALE_EMO[i]} ${o}` : o, v: counts[o] || 0})).filter(r => r.v || q.k !== 'many');
+      const rows = opts.map((o, i) => ({i, name: q.k === 'scale' ? scaleName(q, i) : o, v: counts[o] || 0})).filter(r => r.v || q.k !== 'many');
       Object.keys(counts).forEach(k => { if (q.k !== 'scale' && !opts.includes(k)) rows.push({i: -1, name: k, v: counts[k]}); });
       return {q, n, rows, avg: q.k === 'scale' && n ? total / n : null};
     });
@@ -164,12 +167,26 @@ const Stats = {
   catCoverage() { return PARTNER_CATS.map(c => ({c, n: People.all('partner').filter(p => p.cat === c).length, yes: People.all('partner').filter(p => p.cat === c && People.connected(p)).length})); },
 };
 
-/* ── рекомендации: из ответов и из того, где люди застряли ── */
+/* ── рекомендации двух видов: «сделать сейчас» (где люди застряли) и
+   «что улучшить» (из ответов и пробелов в экспертах и партнёрах) ── */
 const REACH = {'До 500': 300, '500–3 000': 1500, '3–10 тыс.': 6000, '10–50 тыс.': 25000, 'Больше 50 тыс.': 60000};
+/* группа, где таких людей больше всего, — туда ведёт ссылка */
+const topType = (list, def = 'client') => { const m = {}; list.forEach(p => { m[p.type] = (m[p.type] || 0) + 1; }); return Object.keys(m).sort((a, b) => m[b] - m[a])[0] || def; };
+const names3 = list => list.slice(0, 3).map(People.name).join(', ') + (list.length > 3 ? ` и ещё ${list.length - 3}` : '');
 function recommendations() {
   const out = [];
+  const add = (kind, type, text, why, w, href = type) => out.push({kind, type, text: noEmo(text), why: noEmo(why), w, href});
   const t0 = Date.now();
-  /* по ответам: самый частый вариант, если он набрал заметную долю */
+  /* сделать сейчас */
+  const stuck2 = Store.all('people').filter(p => p.s1 === 'done' && p.s2 === 'none' && (t0 - (p.answeredAt || p.touchedAt || 0)) > 2 * 864e5);
+  if (stuck2.length) add('now', 'all', `Назначьте созвон: ${stuck2.length} ${plural(stuck2.length, 'человек заполнил', 'человека заполнили', 'человек заполнили')} анкету больше двух дней назад. Пока интерес тёплый.`, names3(stuck2), 1.2, topType(stuck2));
+  const stuck3 = Store.all('people').filter(p => p.type !== 'client' && ['done', 'skip'].includes(p.s2) && (p.s3 || 'none') === 'none');
+  if (stuck3.length) add('now', 'all', `Запишите решение после созвона: ${stuck3.length} ${plural(stuck3.length, 'человек', 'человека', 'человек')} без итога.`, names3(stuck3), 1.1, topType(stuck3, 'expert'));
+  const clientsNoInsight = People.all('client').filter(p => ['done', 'skip'].includes(p.s2) && (p.s3 || 'none') === 'none');
+  if (clientsNoInsight.length) add('now', 'client', `Разберите ${clientsNoInsight.length} ${plural(clientsNoInsight.length, 'интервью', 'интервью', 'интервью')}, пока разговор свежий: отметьте, что услышали.`, names3(clientsNoInsight), 1.05);
+  const noTax = People.all('amb').filter(p => /Пока нет/.test(String((p.answers || {}).tax || '')) && /карту/.test(String((p.answers || {}).pay || '')));
+  if (noTax.length) add('now', 'amb', `Отправьте памятку про «Мой налог»: ${noTax.length} ${plural(noTax.length, 'амбассадор хочет', 'амбассадора хотят', 'амбассадоров хотят')} выплаты на карту, но без статуса. Или предложите баланс Евы +10%.`, names3(noTax), 0.7);
+  /* что улучшить: самый частый вариант ответа, если он набрал заметную долю */
   Object.keys(TYPES).forEach(type => {
     Stats.agg(type).forEach(a => {
       if (!a.q.rec || a.n < 3) return;
@@ -177,30 +194,18 @@ function recommendations() {
       if (!top || top.i < 0 || !a.q.rec[top.i]) return;
       const share = top.v / a.n;
       if (share < 0.3) return;
-      out.push({type, emo: TYPES[type].emo, text: a.q.rec[top.i], why: `${pct(share)} ответили «${top.name}» · ${a.n} ${plural(a.n, 'анкета', 'анкеты', 'анкет')}`, w: share + (type === 'client' ? 0.3 : 0), href: type});
+      add('idea', type, a.q.rec[top.i], `${top.v} из ${a.n} ответили «${noEmo(top.name)}»`, share + (type === 'client' ? 0.3 : 0));
     });
   });
-  /* цена против подписки 2 900 ₽ */
-  /* покрытие направлений */
-  const cov = Stats.dirCoverage();
-  const empty = cov.filter(x => !x.n).map(x => x.d);
-  if (empty.length) out.push({type: 'expert', emo: '🔎', text: `Нет ни одного эксперта: ${empty.slice(0, 5).join(', ')}${empty.length > 5 ? ` и ещё ${empty.length - 5}` : ''}. Ищите в первую очередь.`, why: `закрыто ${DIRECTIONS.length - empty.length} из ${DIRECTIONS.length} направлений`, w: 0.9, href: 'expert'});
+  const sleepPain = People.all('client').filter(p => ((p.answers || {}).pain || []).some(x => /сплю/.test(x))).length;
+  if (sleepPain >= 2 && !DIRECTIONS.some(d => /Сон/.test(d))) add('idea', 'client', 'Плохой сон — частая боль, а направления «Сон» среди 14 нет. Добавьте направление и найдите эксперта.', `${sleepPain} ${plural(sleepPain, 'клиентка жалуется', 'клиентки жалуются', 'клиенток жалуются')} на сон`, 0.95);
+  const empty = Stats.dirCoverage().filter(x => !x.n).map(x => noEmo(x.d));
+  if (empty.length) add('idea', 'expert', `Найдите экспертов по направлениям: ${empty.slice(0, 5).join(', ')}${empty.length > 5 ? ` и ещё ${empty.length - 5}` : ''}. Пока там никого.`, `закрыто ${DIRECTIONS.length - empty.length} из ${DIRECTIONS.length} направлений`, 0.9);
   const wantCourse = People.all('expert').filter(p => /Да, уже есть идея/.test(String((p.answers || {}).course || '')));
-  if (wantCourse.length) out.push({type: 'expert', emo: '🎥', text: `${wantCourse.length} ${plural(wantCourse.length, 'эксперт хочет', 'эксперта хотят', 'экспертов хотят')} снять курс — поставьте съёмочные дни в план месяца.`, why: wantCourse.slice(0, 3).map(People.name).join(', '), w: 0.8, href: 'expert'});
-  const sleepPain = People.all('client').filter(p => (p.answers.pain || []).some(x => /сплю/.test(x))).length;
-  if (sleepPain >= 2 && !DIRECTIONS.some(d => /Сон/.test(d))) out.push({type: 'client', emo: '🌙', text: 'Плохой сон — частая боль, а направления «Сон» среди 14 нет. Добавьте направление и найдите эксперта.', why: `${sleepPain} ${plural(sleepPain, 'клиентка жалуется', 'клиентки жалуются', 'клиенток жалуются')} на сон`, w: 0.95, href: 'client'});
-  const emptyCats = Stats.catCoverage().filter(x => !x.n).map(x => x.c);
-  if (emptyCats.length && People.all('partner').length) out.push({type: 'partner', emo: '🗺', text: `Нет партнёров в категориях: ${emptyCats.slice(0, 4).join(', ')}${emptyCats.length > 4 ? '…' : ''}.`, why: `охвачено ${PARTNER_CATS.length - emptyCats.length} из ${PARTNER_CATS.length} категорий`, w: 0.5, href: 'partner'});
-  /* где застряли */
-  const stuck2 = Store.all('people').filter(p => p.s1 === 'done' && p.s2 === 'none' && (t0 - (p.answeredAt || p.touchedAt || 0)) > 2 * 864e5);
-  if (stuck2.length) out.push({type: 'all', emo: '📅', text: `${stuck2.length} ${plural(stuck2.length, 'человек заполнил', 'человека заполнили', 'человек заполнили')} анкету больше двух дней назад, а созвон не назначен. Пока интерес тёплый — назначьте.`, why: stuck2.slice(0, 3).map(People.name).join(', '), w: 1.2, href: 'home'});
-  const stuck3 = Store.all('people').filter(p => p.type !== 'client' && p.s2 === 'done' && p.s3 === 'none');
-  if (stuck3.length) out.push({type: 'all', emo: '🤔', text: `После созвона без решения: ${stuck3.length}. Зафиксируйте итог — «Подключаем», «Думает» или «Не сейчас».`, why: stuck3.slice(0, 3).map(People.name).join(', '), w: 1.1, href: 'home'});
-  const clientsNoInsight = People.all('client').filter(p => p.s2 === 'done' && p.s3 === 'none');
-  if (clientsNoInsight.length) out.push({type: 'client', emo: '✍️', text: `${clientsNoInsight.length} ${plural(clientsNoInsight.length, 'интервью ждёт', 'интервью ждут', 'интервью ждут')} разбора: отметьте инсайты, пока разговор свежий.`, why: clientsNoInsight.slice(0, 3).map(People.name).join(', '), w: 1.05, href: 'client'});
-  const noTax = People.all('amb').filter(p => /Пока нет/.test(String((p.answers || {}).tax || '')) && /карту/.test(String((p.answers || {}).pay || '')));
-  if (noTax.length) out.push({type: 'amb', emo: '🧾', text: `${noTax.length} ${plural(noTax.length, 'амбассадор хочет', 'амбассадора хотят', 'амбассадоров хотят')} выплаты на карту, но без статуса. Отправьте памятку про «Мой налог» или предложите баланс Евы +10%.`, why: noTax.map(People.name).join(', '), w: 0.7, href: 'amb'});
+  if (wantCourse.length) add('idea', 'expert', `Поставьте съёмочные дни в план: ${wantCourse.length} ${plural(wantCourse.length, 'эксперт хочет', 'эксперта хотят', 'экспертов хотят')} снять курс.`, names3(wantCourse), 0.8);
+  const emptyCats = Stats.catCoverage().filter(x => !x.n).map(x => noEmo(x.c));
+  if (emptyCats.length && People.all('partner').length) add('idea', 'partner', `Нет партнёров в категориях: ${emptyCats.slice(0, 4).join(', ')}${emptyCats.length > 4 ? ` и ещё ${emptyCats.length - 4}` : ''}.`, `охвачено ${PARTNER_CATS.length - emptyCats.length} из ${PARTNER_CATS.length} категорий`, 0.5);
   const reach = sum(People.all('amb'), p => REACH[(p.answers || {}).size] || 0);
-  if (reach) out.push({type: 'amb', emo: '📣', text: `Общий охват амбассадоров — около ${fmt(reach)} человек. При конверсии 1% это ${fmt(Math.round(reach * 0.01))} ${plural(Math.round(reach * 0.01), 'регистрация', 'регистрации', 'регистраций')}.`, why: 'по ответам «Сколько людей тебя читает»', w: 0.4, href: 'amb'});
+  if (reach) add('idea', 'amb', `Амбассадоры читают около ${fmt(reach)} человек. Даже 1% — это ${fmt(Math.round(reach * 0.01))} ${plural(Math.round(reach * 0.01), 'регистрация', 'регистрации', 'регистраций')}.`, 'по ответам «Сколько людей тебя читает»', 0.4);
   return out.sort((a, b) => b.w - a.w);
 }

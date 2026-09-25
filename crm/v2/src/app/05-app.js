@@ -84,10 +84,10 @@ const App = {
   },
 
   paintNav(active) {
+    /* у группы одна цифра — сколько в ней людей; что делать, видно на главной */
     $('#nav').innerHTML = NAV.map(n => {
-      const f = TYPES[n.id] ? Stats.funnel(n.id) : null;
-      const b = f ? Store.all('people').filter(p => p.type === n.id && p.s1 === 'done' && p.s2 === 'none').length : 0;
-      return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${f ? `<span class="nav-n">${f.all}</span>` : ''}${b ? `<span class="badge" title="Заполнили анкету, созвон не назначен">${b}</span>` : ''}</a>`;
+      const cnt = TYPES[n.id] ? People.all(n.id).length : null;
+      return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${cnt ? `<span class="nav-n">${cnt}</span>` : ''}</a>`;
     }).join('');
     const m = Who.member();
     $('#meChip').innerHTML = `${m ? Team.av(m) : avatar('Гость')}<div class="who"><b>${esc(m ? Team.name(m) : 'Гость')}</b><span>${esc(ROLES[Who.role()] ? ROLES[Who.role()].name : 'Наблюдатель')}</span></div>`;

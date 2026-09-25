@@ -13,42 +13,48 @@ const PERMS = {
   'team':   ['owner'],
 };
 
+/* смайл — только «лицо» раздела в меню; в статусах, кнопках и у цифр их нет */
 const NAV = [
   {id: 'home',    emo: '🏠', name: 'Главная'},
   {id: 'client',  emo: '🌸', name: 'Кастдев'},
   {id: 'expert',  emo: '🎓', name: 'Эксперты'},
   {id: 'partner', emo: '🤝', name: 'Партнёры'},
   {id: 'amb',     emo: '📣', name: 'Амбассадоры'},
+  {id: 'stats',   emo: '📊', name: 'Статистика'},
   {id: 'questions', emo: '❓', name: 'Вопросы'},
   {id: 'settings',  emo: '⚙️', name: 'Настройки'},
 ];
+/* одно имя группы везде: в меню, вкладках, выгрузке, «назад» */
+const groupName = type => (type === 'client' ? 'Кастдев' : TYPES[type].name);
 
-/* шаг 1 — анкета, шаг 2 — созвон, шаг 3 — итог */
+/* шаг 1 — анкета, шаг 2 — созвон, шаг 3 — итог. Названия — состояние,
+   а не действие: действие написано на кнопке рядом. emo остаётся только
+   для записей истории, на экран не выводится. */
 const S1 = {
-  new:  {emo: '✉️', name: 'Отправить ссылку', tone: ''},
-  sent: {emo: '⏳', name: 'Ждём ответы',      tone: 'warn'},
-  done: {emo: '✅', name: 'Анкета заполнена', tone: 'good'},
-  skip: {emo: '⏭', name: 'Без анкеты',       tone: ''},
+  new:  {emo: '✉️', name: 'Ссылка не отправлена', tone: ''},
+  sent: {emo: '⏳', name: 'Ждём ответы',          tone: 'warn'},
+  done: {emo: '✅', name: 'Анкета заполнена',     tone: 'good'},
+  skip: {emo: '⏭', name: 'Без анкеты',           tone: ''},
 };
 const S2 = {
-  none:   {emo: '📅', name: 'Назначить созвон', tone: ''},
-  set:    {emo: '🗓', name: 'Созвон назначен',  tone: 'violet'},
-  done:   {emo: '✅', name: 'Созвон прошёл',    tone: 'good'},
-  noshow: {emo: '🙈', name: 'Не пришла',        tone: 'bad'},
-  skip:   {emo: '⏭', name: 'Без созвона',      tone: ''},
+  none:   {emo: '📅', name: 'Созвон не назначен', tone: ''},
+  set:    {emo: '🗓', name: 'Созвон назначен',    tone: 'violet'},
+  done:   {emo: '✅', name: 'Созвон прошёл',      tone: 'good'},
+  noshow: {emo: '🙈', name: 'Созвон не состоялся', tone: 'bad'},
+  skip:   {emo: '⏭', name: 'Без созвона',        tone: ''},
 };
-/* итог: для кастдева — собраны ли инсайты, для остальных — решение */
+/* итог: для кастдева — разобрано ли интервью, для остальных — решение */
 const S3 = {
   client: {
-    none: {emo: '✍️', name: 'Разобрать инсайты', tone: ''},
-    done: {emo: '💡', name: 'Инсайты собраны',   tone: 'good'},
+    none: {emo: '✍️', name: 'Ждёт разбора',        tone: ''},
+    done: {emo: '💡', name: 'Инсайты собраны',     tone: 'good'},
     fan:  {emo: '💜', name: 'Готова помогать ещё', tone: 'violet'},
   },
   other: {
-    none:  {emo: '🤔', name: 'Решаем',      tone: ''},
-    yes:   {emo: '🚀', name: 'Подключаем',  tone: 'good'},
-    think: {emo: '⏳', name: 'Думает',      tone: 'warn'},
-    no:    {emo: '💤', name: 'Не сейчас',   tone: 'bad'},
+    none:  {emo: '🤔', name: 'Решения нет',  tone: ''},
+    yes:   {emo: '🚀', name: 'Подключаем',   tone: 'good'},
+    think: {emo: '⏳', name: 'Думает',       tone: 'warn'},
+    no:    {emo: '💤', name: 'Не сейчас',    tone: 'bad'},
   },
 };
 const s3Map = type => (type === 'client' ? S3.client : S3.other);
