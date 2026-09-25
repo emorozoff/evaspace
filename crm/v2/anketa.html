@@ -1,0 +1,536 @@
+<title>Анкета Eva</title>
+<meta name="description" content="Короткая анкета Eva Space: несколько вопросов кнопками — помогите нам сделать Еву лучше.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Анкета Eva: мягкая, мобильная, одна мысль на экран. Цвета бренда:
+   слива, роза и золото; фон — тёплый светлый или ночной. */
+:root{
+  --bg:#FBF6F8; --bg-2:#F4EAF0; --card:#FFFFFF; --ink:#1D1624; --ink-2:#5B5166; --ink-3:#8C8296;
+  --line:#EADFE6; --rose:#A8456F; --rose-soft:#F8E4EC; --plum:#3B2150; --gold:#B48533; --violet:#5B4FD0; --violet-soft:#ECEAFB;
+  --shadow:0 10px 40px rgba(59,33,80,.10);
+  --f-display:'Unbounded', 'Inter', system-ui, sans-serif;
+  --f-text:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#131018; --bg-2:#1B1622; --card:#1E1926; --ink:#F1ECF5; --ink-2:#C8BFD2; --ink-3:#958CA2;
+    --line:#2F2739; --rose:#E4A0B8; --rose-soft:#3A2431; --plum:#E7C58B; --gold:#E7C58B; --violet:#A9A3F4; --violet-soft:#26234A;
+    --shadow:0 10px 40px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#131018; --bg-2:#1B1622; --card:#1E1926; --ink:#F1ECF5; --ink-2:#C8BFD2; --ink-3:#958CA2;
+  --line:#2F2739; --rose:#E4A0B8; --rose-soft:#3A2431; --plum:#E7C58B; --gold:#E7C58B; --violet:#A9A3F4; --violet-soft:#26234A;
+  --shadow:0 10px 40px rgba(0,0,0,.45);
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{min-height:100%;}
+body{margin:0; background:radial-gradient(900px 420px at 90% -10%, var(--bg-2), transparent 70%), var(--bg); color:var(--ink); font:16px/1.5 var(--f-text); -webkit-font-smoothing:antialiased;}
+button,input,textarea{font:inherit; color:inherit;}
+button{cursor:pointer;}
+:focus-visible{outline:2px solid var(--violet); outline-offset:2px;}
+[hidden]{display:none !important;}
+.wrap{max-width:560px; margin:0 auto; padding-inline:16px; padding-block:24px 48px; display:flex; flex-direction:column; gap:14px;}
+.top{display:flex; align-items:center; gap:12px;}
+.mark{width:34px; height:34px; border-radius:10px; flex:0 0 34px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#3B2150,#94527F); color:#F3CD8C; font-size:18px;}
+.brand{font:600 14px var(--f-display); letter-spacing:.02em;}
+.count{margin-left:auto; font-size:13px; color:var(--ink-3); font-variant-numeric:tabular-nums;}
+.bar{height:6px; border-radius:3px; background:var(--line); overflow:hidden;}
+.bar i{display:block; height:100%; border-radius:3px; background:linear-gradient(90deg, var(--rose), var(--violet)); transition:width .3s ease;}
+.card{background:var(--card); border-radius:22px; box-shadow:var(--shadow); padding:26px 22px; display:flex; flex-direction:column; gap:16px;}
+h1{margin:0; font:600 24px/1.25 var(--f-display); letter-spacing:-.01em; text-wrap:balance;}
+h2{margin:0; font:600 20px/1.35 var(--f-display); letter-spacing:-.01em; text-wrap:balance;}
+p{margin:0;}
+.lead{color:var(--ink-2); font-size:15px;}
+.small{font-size:12.5px; color:var(--ink-3); line-height:1.5;}
+.intro{text-align:center; align-items:center;}
+.big{font-size:52px; line-height:1;}
+.opts{display:flex; flex-direction:column; gap:8px;}
+.opt{min-height:52px; width:100%; text-align:left; padding:12px 16px; border-radius:16px; border:1.5px solid var(--line); background:var(--card); font-size:15.5px; font-weight:500; display:flex; align-items:center; gap:10px; transition:border-color .12s, background .12s, transform .08s;}
+.opt:hover{border-color:var(--rose);}
+.opt:active{transform:scale(.99);}
+.opt.on{border-color:var(--violet); background:var(--violet-soft);}
+.opt .tick{margin-left:auto; width:22px; height:22px; border-radius:50%; border:1.5px solid var(--line); display:inline-flex; align-items:center; justify-content:center; font-size:12px; flex:0 0 22px;}
+.opt.on .tick{background:var(--violet); border-color:var(--violet); color:#fff;}
+.scale{display:grid; grid-template-columns:repeat(5, 1fr); gap:8px;}
+.scale button{aspect-ratio:1; max-width:100%; border-radius:16px; border:1.5px solid var(--line); background:var(--card); font-size:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;}
+.scale button small{font-size:11px; color:var(--ink-3);}
+.scale button.on{border-color:var(--violet); background:var(--violet-soft);}
+.scale-ends{display:flex; justify-content:space-between; font-size:12px; color:var(--ink-3);}
+.inp{width:100%; min-height:52px; padding:12px 16px; border-radius:16px; border:1.5px solid var(--line); background:var(--card); font-size:16px;}
+textarea.inp{min-height:110px; resize:vertical;}
+.inp:focus{outline:none; border-color:var(--violet); box-shadow:0 0 0 4px var(--violet-soft);}
+.go{min-height:54px; border:0; border-radius:16px; background:linear-gradient(135deg,#3B2150,#7A3B6E); color:#fff; font-weight:600; font-size:16px; padding:0 22px; width:100%;}
+.go:disabled{opacity:.45; cursor:default;}
+.go.alt{background:var(--card); color:var(--ink); border:1.5px solid var(--line);}
+.nav{display:flex; justify-content:space-between; align-items:center; gap:10px;}
+.link{border:0; background:none; color:var(--ink-3); font-size:14px; padding:8px 0; text-decoration:underline; text-underline-offset:3px;}
+.hint{font-size:13px; color:var(--ink-3);}
+.types{display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;}
+.types button{border:1.5px solid var(--line); background:var(--card); border-radius:18px; padding:18px 12px; display:flex; flex-direction:column; align-items:center; gap:6px; font-weight:600;}
+.types button span{font-size:34px;}
+.types button:hover{border-color:var(--rose);}
+.send{display:flex; flex-direction:column; gap:8px;}
+.send a{min-height:52px; border-radius:16px; display:flex; align-items:center; justify-content:center; gap:8px; font-weight:600; text-decoration:none; font-size:15.5px;}
+.send .tg{background:#2A9FD8; color:#fff;}
+.send .wa{background:#1FA855; color:#fff;}
+.linkbox{width:100%; min-height:80px; font:12px/1.4 ui-monospace, Menlo, monospace; border-radius:12px; border:1px solid var(--line); background:var(--bg); padding:10px; color:var(--ink-2);}
+.note{padding:12px 14px; border-radius:14px; background:var(--rose-soft); font-size:14px; line-height:1.5;}
+.fade{animation:fade .22s ease-out;}
+@keyframes fade{from{opacity:0; transform:translateY(6px);}}
+@media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
+</style>
+<main class="wrap" id="app">
+  <div class="card intro"><div class="big">🌸</div><h1>Eva</h1><p>Загружаю анкету…</p></div>
+</main>
+<script>
+(() => {
+'use strict';
+/* ── 10-questions.js ── */
+/* База вопросов Eva CRM 2.0 — общая для CRM и публичной анкеты.
+   У каждой группы два набора:
+   • test — анкета: быстрые ответы кнопками, человек заполняет сам по ссылке
+     или менеджер за него. Из неё собирается статистика на дашборде;
+   • talk — вопросы для созвона в Zoom: открытые, отвечают своими словами.
+   Виды вопросов: one — один вариант, many — несколько (max — сколько),
+   scale — шкала 1–5, short — короткий текст, text — развёрнутый ответ.
+   key — ответ заполняет поле карточки (имя, город, контакт…).
+   rec — рекомендация, если этот вариант выбирают чаще всего (по номеру варианта).
+   Вопросы редактируются в CRM («❓ Вопросы»); здесь — стартовый набор. */
+
+const DIRECTIONS = [
+  '🏋️‍♀️ Фитнес', '🤸‍♀️ Растяжка', '🧠 Психология', '☯️ Цигун', '💌 Аффирмации', '🌬 Медитация и дыхание', '👶 Для мам',
+  '💄 Красота и здоровье', '🧭 Предназначение', '💗 Отношения', '🧘‍♀️ Йога', '🤰 Для беременных', '🌺 Женские практики', '💰 Финансы',
+];
+const PARTNER_CATS = [
+  '💅 Салон красоты', '🤸‍♀️ Студия пилатеса', '🧘‍♀️ Йога-студия', '🏋️‍♀️ Фитнес-клуб', '✨ Косметология', '💆‍♀️ SPA и массаж',
+  '🥗 Здоровое питание', '🧠 Психологический центр', '🏥 Женское здоровье', '👶 Центр для мам и детей', '🏠 Пространство для встреч',
+  '🛍 Бренд для маркета', '🎤 Организатор мероприятий', '⭐ Спонсор', '📱 Медиа и блогеры', '📚 Образование',
+];
+
+const Q_DEFAULT = {
+  /* ── клиентки: кастдев ── */
+  client: {
+    test: [
+      {id: 'name', k: 'short', key: 'name', t: 'Как тебя зовут? 🌸', ph: 'Имя'},
+      {id: 'age', k: 'one', t: 'Сколько тебе лет?', o: ['до 25', '25–34', '35–44', '45+']},
+      {id: 'city', k: 'one', key: 'city', t: 'Где ты живёшь? 📍', o: ['Москва', 'Санкт-Петербург', 'Город-миллионник', 'Небольшой город', 'Не в России']},
+      {id: 'stage', k: 'one', t: 'Какой у тебя сейчас этап жизни?', o: ['🤰 Беременность', '👶 Мама малыша', '🎒 Мама школьника', '💼 Карьера', '🚀 Своё дело', '🧭 Ищу своё направление', '🌷 Просто хочу для себя'],
+        rec: {1: '👶 Много мам малышей — сделайте режим «пока ребёнок спит»: практики по 5 минут, можно без коврика и с ребёнком рядом.', 4: '🚀 Много предпринимательниц — поднимите «Финансы» и «Предназначение» и позовите их в клуб «Своё дело».'}},
+      {id: 'goal', k: 'many', max: 2, t: 'Что для тебя сейчас важнее всего? Выбери до двух', o: ['👑 Уверенность в себе', '🌊 Спокойствие', '🔥 Энергия и силы', '💗 Отношения', '💎 Деньги и своё дело', '🌸 Тело и здоровье'],
+        rec: {0: '👑 Главный запрос — уверенность: мастер-классы по психологии и аффирмации — на первый экран программы.', 1: '🌊 Главный запрос — спокойствие: дыхание и медитации в первую неделю каждой программы.', 2: '🔥 Главный запрос — энергия: утренние практики фитнеса, растяжки и цигуна в начале дня.', 4: '💎 Запрос на деньги и своё дело: курс по финансам — в приоритет съёмок.'}},
+      {id: 'pain', k: 'many', max: 2, t: 'Что беспокоит чаще всего? Выбери до двух', o: ['🌫 Тревога', '🫧 Усталость и выгорание', '🪞 Постоянно себя ругаю', '🌜 Плохо сплю', '⏳ Нет времени на себя', '🤍 Одиночество'],
+        rec: {0: '🌫 Тревога в топе: «скорую помощь при тревоге» и дыхательные практики — на главный экран.', 1: '🫧 Выгорание в топе: сделайте 7-дневную программу восстановления и бережные напоминания без давления.', 2: '🪞 Самокритика в топе: мастер-классы по психологии вперёд, в пушах — только поддержка, никакого «ты забросила».', 3: '🌜 Плохой сон в топе, а направления «Сон» в контенте нет — найдите эксперта и снимите 5 вечерних практик.', 4: '⏳ Главная боль — нет времени: сделайте стартовым режим «5 минут» — одна практика и одна аффирмация.', 5: '🤍 Одиночество в топе: сделайте группы по интересам и офлайн-встречи заметнее в приложении.'}},
+      {id: 'time', k: 'one', t: 'Сколько минут в день реально готова уделять себе? ⏱', o: ['5–10 минут', '15–20 минут', '30 минут и больше'],
+        rec: {0: '⏱ Чаще всего готовы на 5–10 минут в день — программа первой недели должна укладываться в 10 минут.'}},
+      {id: 'when', k: 'one', t: 'Когда тебе удобнее заниматься собой?', o: ['🌅 Утром', '☀️ Днём', '🌆 Вечером', '🌙 Перед сном'],
+        rec: {2: '🌆 Чаще всего удобно вечером — перенесите напоминания на 19–20 часов.', 3: '🌙 Чаще всего удобно перед сном — вечерние ритуалы и йога-нидра должны быть в каждой программе.', 0: '🌅 Чаще всего удобно утром — присылайте программу дня в 7–8 утра.'}},
+      {id: 'tried', k: 'many', t: 'Что ты уже пробовала? ✨', o: ['📱 Приложения медитаций', '🧘‍♀️ Йога или фитнес', '🛋 Психолог', '🎓 Онлайн-курсы', '📣 Марафоны блогеров', '🙅‍♀️ Пока ничего'],
+        rec: {0: '📱 Многие уже пробовали приложения медитаций — в интервью спросите, почему бросили, и покажите, чем Ева другая.', 5: '🙅‍♀️ Многие ещё ничего не пробовали — онбординг должен быть очень простым, без терминов.'}},
+      {id: 'spend', k: 'one', t: 'Сколько в месяц тратишь на себя: курсы, практики, спорт? 💳', o: ['Ничего', 'До 1 000 ₽', '1 000–3 000 ₽', '3 000–7 000 ₽', 'Больше 7 000 ₽']},
+      {id: 'formats', k: 'many', max: 3, t: 'Что было бы интересно в Еве? Выбери до трёх', o: ['🧘‍♀️ Короткие практики', '🎓 Мастер-классы экспертов', '📚 Курсы', '📡 Живые эфиры', '👭 Сообщество', '🏠 Офлайн-встречи', '🤖 Ева — ИИ-помощница', '🌙 Календарь цикла'],
+        rec: {0: '🧘‍♀️ Самый желанный формат — короткие практики: на съёмках больше практик по 5–10 минут.', 1: '🎓 Хотят мастер-классы экспертов — ускорьте подключение экспертов и съёмки.', 4: '👭 Хотят сообщество — запустите 2–3 живые группы с ведущими.', 5: '🏠 Хотят офлайн — проводите встречи Eva Events на площадках партнёров.', 6: '🤖 Интересна Ева-помощница — развивайте голосовой режим и советы по настроению.'}},
+      {id: 'price', k: 'one', t: 'Сколько было бы комфортно платить за подписку в месяц? 💸', o: ['До 500 ₽', '500–1 500 ₽', '1 500–3 000 ₽', 'Больше 3 000 ₽'],
+        rec: {0: '💸 Чаще всего готовы платить до 500 ₽ — при цене 2 900 ₽ нужен бесплатный уровень или тариф «Лайт».', 1: '💸 Чаще всего готовы платить до 1 500 ₽ — показывайте годовой тариф (2 075 ₽ в месяц) первым и протестируйте «Лайт» за 990 ₽.'}},
+      {id: 'fit', k: 'scale', t: 'Насколько тебе откликается идея Евы — помощницы, которая каждый день подбирает практики под тебя?', lo: 'совсем нет', hi: 'очень!'},
+      {id: 'source', k: 'one', t: 'Откуда ты узнала о Еве? 👀', o: ['Telegram', 'ВКонтакте', 'Блогер', 'Подруга', 'Эксперт', 'Студия или салон', 'Мероприятие', 'Другое'],
+        rec: {2: '👀 Чаще всего приходят от блогеров — посчитайте, какие интеграции окупаются, и зовите этих блогеров в амбассадоры.', 3: '👭 Чаще всего приходят от подруг — запускайте «Приведи подругу» с уникальными ссылками.', 5: '💅 Много приходят из студий и салонов — партнёрства работают, ищите ещё.'}},
+      {id: 'call', k: 'one', t: 'Готова созвониться на 20–30 минут в Zoom? 🎤 Нам очень важно твоё мнение', o: ['📅 Да, в будни днём', '🌆 Да, в будни вечером', '🗓 Да, в выходные', '💬 Лучше перепишемся', '🙅‍♀️ Нет, спасибо']},
+      {id: 'tg', k: 'short', key: 'tg', t: 'Твой Telegram или телефон — чтобы договориться о звонке 📲', ph: '@username или +7…'},
+    ],
+    talk: [
+      {id: 't1', t: 'Расскажи немного о себе: чем занимаешься и как выглядит твой обычный день?', why: 'Контекст: где в дне есть время для себя'},
+      {id: 't2', t: 'Когда ты последний раз специально делала что-то для себя — практику, спорт, курс? Как это было?', why: 'Реальное поведение, а не намерения'},
+      {id: 't3', t: 'Что сейчас больше всего забирает твои силы или настроение? Когда это было в последний раз?', why: 'Настоящая боль и как часто она бывает'},
+      {id: 't4', t: 'Что ты уже пробовала, чтобы с этим справиться? Что сработало, а что бросила — и почему?', why: 'Альтернативы и почему от них уходят'},
+      {id: 't5', t: 'Какими приложениями, каналами или курсами «про себя» ты пользуешься? За что платила последний раз и сколько?', why: 'Конкуренты и реальный чек'},
+      {id: 't6', t: 'Вспомни момент, когда ты бросила практику или курс. Что тогда произошло?', why: 'Барьеры: почему люди уходят'},
+      {id: 't7', t: 'Кому ты доверяешь в этих темах — эксперту, блогеру, подруге? Что тебя отталкивает?', why: 'Доверие и выбор экспертов'},
+      {id: 't8', t: 'Представь помощницу, которая каждый день заботится о тебе. Что она делает утром, днём и вечером?', why: 'Идеальный день — ориентир для программы'},
+      {id: 't9', t: 'Если уже пробовала Еву: что было самым полезным? Что раздражало или было непонятно?', why: 'Прямая обратная связь о продукте'},
+      {id: 't10', t: 'Какой формат тебе ближе: короткая практика, мастер-класс, эфир, общение с девушками, офлайн-встреча? Почему?', why: 'Что снимать в первую очередь'},
+      {id: 't11', t: 'Когда тебе удобно получать напоминания? Какие уведомления тебя бесят?', why: 'Пуши, которые не раздражают'},
+      {id: 't12', t: 'Сколько, по-твоему, должна стоить такая подписка? При какой цене это «дорого», а при какой — «подозрительно дёшево»?', why: 'Коридор цены'},
+      {id: 't13', t: 'Что должно произойти, чтобы ты сказала подруге «попробуй Еву»? Кому бы ты её посоветовала?', why: 'Рекомендации и реферальная программа'},
+      {id: 't14', t: 'Если бы Ева была твоей: что бы ты добавила, а что убрала?', why: 'Идеи улучшений'},
+      {id: 't15', t: 'Можно написать тебе через месяц? Кого из подруг нам стоит расспросить?', why: 'Следующие респондентки'},
+    ],
+  },
+
+  /* ── эксперты ── */
+  expert: {
+    test: [
+      {id: 'name', k: 'short', key: 'name', t: 'Как вас зовут? ✨', ph: 'Имя и фамилия'},
+      {id: 'city', k: 'short', key: 'city', t: 'Ваш город 📍', ph: 'Москва'},
+      {id: 'dirs', k: 'many', max: 3, key: 'dirs', t: 'Ваше направление в Еве — выберите до трёх', o: [...DIRECTIONS, '✨ Другое']},
+      {id: 'topic', k: 'short', t: 'В какой теме вы эксперт? Одной фразой', ph: 'Например: дыхание при тревоге'},
+      {id: 'exp', k: 'one', t: 'Сколько лет в профессии?', o: ['до года', '1–3 года', '3–5 лет', '5–10 лет', 'больше 10 лет']},
+      {id: 'edu', k: 'one', t: 'Образование по профилю 🎓', o: ['Диплом по профилю', 'Сертификаты и курсы', 'Большая практика без документов']},
+      {id: 'have', k: 'many', t: 'Что у вас уже есть? 📦', o: ['🎬 Записанный курс', '📡 Живой курс или марафон', '🎓 Мастер-классы', '🧘‍♀️ Практики и медитации', '💬 Консультации', '🏠 Офлайн-встречи и ретриты', '✨ Пока ничего'],
+        rec: {0: '📦 У многих экспертов уже есть записанные курсы — разместите их без съёмок: это быстрый контент.'}},
+      {id: 'course', k: 'one', t: 'Хотите снять курс вместе с Евой? 🎥', o: ['🔥 Да, уже есть идея', '🤔 Возможно, обсудим', '📦 Есть готовый — хочу разместить', '🙅‍♀️ Пока нет']},
+      {id: 'record', k: 'many', t: 'Что можем записать с вами? 🎬', o: ['💌 Послания и аффирмации (1–2 мин)', '🧘‍♀️ Короткие практики (5–15 мин)', '🎓 Мастер-класс (20–40 мин)', '📚 Курс', '📡 Эфир или вопрос-ответ', '🏠 Офлайн-встречу']},
+      {id: 'where', k: 'one', t: 'Где удобнее снимать?', o: ['🏙 Приеду в студию в Москве', '🎥 Есть своя качественная съёмка', '💻 Только онлайн', '🤝 Обсудим']},
+      {id: 'days', k: 'one', t: 'Сколько времени готовы выделить на съёмки? 📅', o: ['1 день', '2–3 дня', 'Регулярно, раз в месяц']},
+      {id: 'aud', k: 'one', t: 'Ваша аудитория в соцсетях 👥', o: ['Пока нет', 'До 1 тыс.', '1–10 тыс.', '10–50 тыс.', 'Больше 50 тыс.']},
+      {id: 'aud_where', k: 'many', t: 'Где ваша аудитория?', o: ['Telegram', 'ВКонтакте', 'YouTube', 'Instagram*', 'Дзен', 'Офлайн']},
+      {id: 'deal', k: 'many', t: 'Какой формат сотрудничества интересен? 🤝', o: ['💰 Доля с продаж курсов', '💵 Фикс за съёмку', '💬 Консультации через Еву', '📣 Продвижение моего бренда', '🤷‍♀️ Всё обсуждаемо']},
+      {id: 'check', k: 'one', t: 'Сколько стоит ваша консультация?', o: ['До 3 000 ₽', '3 000–6 000 ₽', '6 000–10 000 ₽', 'Больше 10 000 ₽', 'Не консультирую']},
+      {id: 'social', k: 'short', t: 'Где посмотреть на вашу работу? 🔗', ph: 'Ссылка на канал или сайт'},
+      {id: 'tg', k: 'short', key: 'tg', t: 'Telegram или телефон для связи 📲', ph: '@username или +7…'},
+    ],
+    talk: [
+      {id: 't1', t: 'С чем к вам чаще всего приходят женщины? Какой результат они получают?', why: 'Ценность эксперта для нашей аудитории'},
+      {id: 't2', t: 'Как сейчас устроена ваша работа: откуда клиенты, что продаёте, что приносит больше всего?', why: 'Бизнес эксперта и его мотивация'},
+      {id: 't3', t: 'Какие продукты у вас уже есть — курсы, мастер-классы, практики? Что лучше всего покупают?', why: 'Готовый контент для Евы'},
+      {id: 't4', t: 'Что вы давно хотели снять, но пока не сняли? Что мешает?', why: 'Идеи для совместных съёмок'},
+      {id: 't5', t: 'Какой опыт был с онлайн-школами и платформами? Что понравилось, что нет?', why: 'Ожидания и страхи'},
+      {id: 't6', t: 'Как вы относитесь к коротким форматам: практика на 7 минут, послание на 1 минуту?', why: 'Подходит ли формат Евы'},
+      {id: 't7', t: 'Кто ваш идеальный клиент? Похож ли он на наших участниц — женщины 25–45?', why: 'Совпадение аудиторий'},
+      {id: 't8', t: 'Какие темы в вашем направлении сейчас спрашивают чаще всего?', why: 'Темы курсов с гарантированным спросом'},
+      {id: 't9', t: 'Сколько времени в месяц вы готовы отдавать Еве: съёмки, эфиры, ответы в сообществе?', why: 'Реальная загрузка'},
+      {id: 't10', t: 'Что для вас важно в сотрудничестве: деньги, аудитория, бренд, свобода?', why: 'На чём строить условия'},
+      {id: 't11', t: 'Готовы рассказать своей аудитории про Еву? Как бы вы это сделали?', why: 'Эксперт как канал привлечения'},
+      {id: 't12', t: 'Что должно быть в договоре, чтобы вам было спокойно?', why: 'Снять страхи заранее'},
+      {id: 't13', t: 'Кого из коллег вы бы нам порекомендовали?', why: 'Следующие эксперты'},
+    ],
+  },
+
+  /* ── партнёры ── */
+  partner: {
+    test: [
+      {id: 'name', k: 'short', key: 'name', t: 'Как называется ваша компания? 🏷', ph: 'Студия «Баланс»'},
+      {id: 'cat', k: 'one', key: 'cat', t: 'Категория', o: PARTNER_CATS},
+      {id: 'city', k: 'short', key: 'city', t: 'Город 📍', ph: 'Москва'},
+      {id: 'addr', k: 'short', t: 'Адрес или «онлайн»', ph: 'ул. Покровка, 17'},
+      {id: 'contact', k: 'short', key: 'contact', t: 'Контактное лицо и должность 👤', ph: 'Ирина, управляющая'},
+      {id: 'clients', k: 'one', t: 'Сколько клиенток у вас в месяц?', o: ['До 100', '100–500', '500–2 000', 'Больше 2 000']},
+      {id: 'ages', k: 'many', t: 'Возраст ваших клиенток', o: ['до 25', '25–34', '35–44', '45+']},
+      {id: 'want', k: 'many', t: 'Что вам интересно? 🤝', o: ['🔁 Взаимный промо', '🎁 Спецпредложение для участниц Евы', '💰 Комиссия за приведённых клиенток', '🏢 Корпоративная подписка для сотрудниц', '🎬 Площадка для съёмок или встреч', '🛍 Товары в маркете Евы', '🎉 Совместное мероприятие', '⭐ Спонсорство'],
+        rec: {0: '🔁 Партнёры чаще хотят взаимный промо — подготовьте один набор материалов: пост, сторис, стойку с QR.', 1: '🎁 Партнёры готовы давать спецпредложения — соберите витрину «Предложения рядом» в приложении.', 4: '🎬 Много площадок для съёмок и встреч — перенесите Eva Events к партнёрам.'}},
+      {id: 'give', k: 'many', t: 'Что можете дать участницам Евы? 🎁', o: ['Скидку', 'Пробное занятие', 'Подарок', 'Бесплатную консультацию', 'Пока не знаю']},
+      {id: 'tell', k: 'many', t: 'Где можете рассказать о Еве? 📣', o: ['Соцсети', 'Рассылка клиентам', 'Администратор на ресепшене', 'Стойка или листовки', 'Мероприятия']},
+      {id: 'aud', k: 'one', t: 'Аудитория в соцсетях 👥', o: ['Пока нет', 'До 1 тыс.', '1–10 тыс.', 'Больше 10 тыс.']},
+      {id: 'when', k: 'one', t: 'Когда удобно встретиться?', o: ['В будни утром', 'В будни днём', 'Вечером', 'Лучше в переписке']},
+      {id: 'tg', k: 'short', key: 'tg', t: 'Telegram или телефон 📲', ph: '@username или +7…'},
+    ],
+    talk: [
+      {id: 't1', t: 'Расскажите о ваших клиентках: кто они, с чем приходят, что их волнует помимо вашей услуги?', why: 'Совпадение с аудиторией Евы'},
+      {id: 't2', t: 'Как вы сейчас удерживаете клиенток между визитами?', why: 'Где Ева может помочь партнёру'},
+      {id: 't3', t: 'Какие партнёрства у вас уже были? Что сработало, а что нет?', why: 'Опыт и ожидания'},
+      {id: 't4', t: 'Что для вас выгодное партнёрство: деньги, новые клиентки, контент, имидж?', why: 'Формат сотрудничества'},
+      {id: 't5', t: 'Как вы обычно рассказываете клиенткам о партнёрах? Кто это делает?', why: 'Реальный канал рекомендации'},
+      {id: 't6', t: 'Какое спецпредложение вы готовы дать участницам Евы?', why: 'Оффер для витрины'},
+      {id: 't7', t: 'Нужны ли вам практики или мастер-класс от Евы для ваших клиенток?', why: 'Что даём мы'},
+      {id: 't8', t: 'Кто у вас принимает решение о партнёрстве и сколько это обычно занимает?', why: 'Скорость запуска'},
+      {id: 't9', t: 'Что может вас остановить?', why: 'Риски'},
+      {id: 't10', t: 'Как мы поймём через 3 месяца, что партнёрство удалось?', why: 'Общий критерий успеха'},
+    ],
+  },
+
+  /* ── амбассадоры ── */
+  amb: {
+    test: [
+      {id: 'name', k: 'short', key: 'name', t: 'Как тебя зовут? 💜', ph: 'Имя'},
+      {id: 'city', k: 'short', key: 'city', t: 'Твой город 📍', ph: 'Казань'},
+      {id: 'use', k: 'one', t: 'Ты пользуешься Евой?', o: ['💜 Да, давно', '🌱 Недавно начала', '👀 Ещё нет'],
+        rec: {2: '👀 Многие амбассадоры ещё не пользуются Евой — дайте им месяц подписки до старта: рекомендуют то, что попробовали сами.'}},
+      {id: 'where', k: 'many', t: 'Где твоя аудитория? 📱', o: ['Telegram', 'ВКонтакте', 'YouTube', 'Instagram*', 'TikTok', 'Дзен', 'Мамские и женские чаты', 'Офлайн-сообщество', 'Коллеги и друзья'],
+        rec: {0: '📱 Главная площадка амбассадоров — Telegram: сделайте готовые посты и кружки для каналов.', 6: '👶 Много амбассадоров в мамских чатах — нужен короткий текст-рекомендация и промокод на пробный месяц.'}},
+      {id: 'size', k: 'one', t: 'Сколько людей тебя читает? 👥', o: ['До 500', '500–3 000', '3–10 тыс.', '10–50 тыс.', 'Больше 50 тыс.']},
+      {id: 'topic', k: 'many', max: 3, t: 'О чём твой блог или сообщество?', o: ['👶 Материнство', '💄 Красота', '🏃‍♀️ Спорт', '🧠 Психология', '💼 Бизнес', '🌿 Лайфстайл', '✈️ Путешествия', '📚 Образование']},
+      {id: 'women', k: 'one', t: 'Кто тебя читает?', o: ['В основном женщины', 'Примерно поровну', 'В основном мужчины']},
+      {id: 'how', k: 'many', t: 'Как хочешь рассказывать о Еве? 📣', o: ['📸 Посты и сторис', '💬 Личные рекомендации', '👭 В чатах', '📡 Эфиры', '🏠 Офлайн-встречи', '⭐ Отзывы']},
+      {id: 'hours', k: 'one', t: 'Сколько времени в неделю готова уделять?', o: ['1 час', '2–4 часа', 'Больше 4 часов']},
+      {id: 'motive', k: 'many', max: 2, t: 'Что для тебя главное? ✨', o: ['💰 Деньги', '💜 Бесплатная подписка', '🏆 Статус и признание', '👭 Сообщество', '🎓 Рост и обучение'],
+        rec: {1: '💜 Амбассадоров больше мотивирует подписка, чем деньги — дайте бесплатный доступ за первых 3 приглашённых.', 2: '🏆 Амбассадоров мотивирует статус — сделайте рейтинг и значок амбассадора в профиле.'}},
+      {id: 'tax', k: 'one', t: 'Твой статус — это нужно для выплат 🧾', o: ['Самозанятая', 'ИП', 'Пока нет'],
+        rec: {2: '🧾 У многих нет статуса — пришлите памятку: самозанятость в «Мой налог» оформляется за 10 минут. Без статуса — только баланс Евы.'}},
+      {id: 'pay', k: 'one', t: 'Как удобнее получать вознаграждение?', o: ['💳 На карту', '💜 На баланс Евы (+10%)']},
+      {id: 'before', k: 'one', t: 'Был опыт партнёрских программ?', o: ['Да', 'Нет']},
+      {id: 'tg', k: 'short', key: 'tg', t: 'Твой Telegram или телефон 📲', ph: '@username или +7…'},
+    ],
+    talk: [
+      {id: 't1', t: 'Почему тебе откликается Ева? Что лично тебе она дала или могла бы дать?', why: 'Искренняя мотивация — основа рекомендаций'},
+      {id: 't2', t: 'Кто твоя аудитория и что у неё сейчас болит?', why: 'Какой оффер ей зайдёт'},
+      {id: 't3', t: 'Как ты обычно рекомендуешь продукты? Что никогда не стала бы рекламировать?', why: 'Формат и границы'},
+      {id: 't4', t: 'Какие материалы тебе нужны: тексты, видео, промокоды, эфир с экспертом?', why: 'Набор амбассадора'},
+      {id: 't5', t: 'Что тебя мотивирует больше: деньги, подписка, статус, сообщество?', why: 'Как вознаграждать'},
+      {id: 't6', t: 'Какой опыт партнёрских программ у тебя был? Что раздражало?', why: 'Чего не повторять'},
+      {id: 't7', t: 'Сколько человек ты можешь привести за месяц — честно?', why: 'Реальный прогноз'},
+      {id: 't8', t: 'Как тебе удобнее отчитываться и получать выплаты?', why: 'Простая механика выплат'},
+      {id: 't9', t: 'Что может тебя разочаровать в сотрудничестве с нами?', why: 'Риски'},
+      {id: 't10', t: 'Кого ещё ты бы позвала в амбассадоры?', why: 'Следующие амбассадоры'},
+    ],
+  },
+};
+
+/* группы людей и три шага общения */
+const TYPES = {
+  client:  {name: 'Клиентки', one: 'Клиентка', emo: '🌸', letter: 'k', you: 'ты', about: 'Кастдев: что болит, что нравится и что улучшить в Еве', steps: ['📝 Анкета', '🎤 Интервью', '💡 Инсайты']},
+  expert:  {name: 'Эксперты', one: 'Эксперт', emo: '🎓', letter: 'e', you: 'вы', about: 'Подключаем экспертов: что снимаем, когда и на каких условиях', steps: ['📝 Анкета', '📞 Созвон', '🚀 Подключение']},
+  partner: {name: 'Партнёры', one: 'Партнёр', emo: '🤝', letter: 'p', you: 'вы', about: 'Салоны, студии и бренды: взаимный промо и спецпредложения', steps: ['📝 Анкета', '🤝 Встреча', '🚀 Запуск']},
+  amb:     {name: 'Амбассадоры', one: 'Амбассадор', emo: '📣', letter: 'a', you: 'ты', about: 'Те, кто рассказывает о Еве и приводит подруг', steps: ['📝 Анкета', '📞 Созвон', '🚀 Старт']},
+};
+const TYPE_BY_LETTER = Object.fromEntries(Object.entries(TYPES).map(([k, t]) => [t.letter, k]));
+const KIND_EMO = {one: '🔘', many: '☑️', scale: '😍', short: '✏️', text: '💬'};
+const KIND_NAME = {one: 'Один вариант', many: 'Несколько вариантов', scale: 'Шкала 1–5', short: 'Короткий ответ', text: 'Развёрнутый ответ'};
+const SCALE_EMO = ['😞', '😕', '😐', '🙂', '😍'];
+
+/* ── 20-codec.js ── */
+/* Одна ссылка на человека — и для анкеты, и для рефералки.
+   Ссылка анкеты:  <анкета>#k.ANNA482          k — клиентка, e — эксперт, p — партнёр, a — амбассадор
+                   <анкета>#k.ANNA482.q…       хвост .q… — вопросы, которые команда добавила или скрыла
+   Ответы назад:   <CRM>#in.z…                 z — сжатые ответы, j — без сжатия
+   В адресе после # разрешены только буквы, цифры и . _ ~ - — поэтому
+   данные упакованы в base64url. */
+
+const Codec = {
+  b64(bytes) {
+    let bin = '';
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  },
+  unb64(str) {
+    let b = String(str).replace(/-/g, '+').replace(/_/g, '/');
+    while (b.length % 4) b += '=';
+    const bin = atob(b);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  },
+  encJson(obj) { return this.b64(new TextEncoder().encode(JSON.stringify(obj))); },
+  decJson(str) { return JSON.parse(new TextDecoder().decode(this.unb64(str))); },
+  /* сжатие, где браузер умеет (CompressionStream); иначе — как есть */
+  async pack(obj) {
+    const raw = new TextEncoder().encode(JSON.stringify(obj));
+    try {
+      if (typeof CompressionStream === 'function') {
+        const cs = new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+        const buf = new Uint8Array(await new Response(cs).arrayBuffer());
+        if (buf.length < raw.length) return 'z' + this.b64(buf);
+      }
+    } catch (e) { /* ниже — без сжатия */ }
+    return 'j' + this.b64(raw);
+  },
+  async unpack(str) {
+    const s = String(str || '').trim();
+    const body = s.slice(1);
+    if (s[0] === 'j') return JSON.parse(new TextDecoder().decode(this.unb64(body)));
+    if (s[0] === 'z') {
+      const ds = new Blob([this.unb64(body)]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      return JSON.parse(await new Response(ds).text());
+    }
+    throw new Error('Не похоже на ответы анкеты');
+  },
+  /* разбор хвоста ссылки анкеты: k.ANNA482.q… */
+  parseAnketaHash(h) {
+    const parts = String(h || '').replace(/^#/, '').split('.');
+    const type = TYPE_BY_LETTER[parts[0]] || null;
+    const code = parts[1] && /^[A-Za-z0-9_-]{2,40}$/.test(parts[1]) ? parts[1].toUpperCase() : '';
+    let diff = null;
+    const q = parts.find((p, i) => i >= 2 && p[0] === 'q');
+    if (q) { try { diff = this.decJson(q.slice(1)); } catch (e) { diff = null; } }
+    return {type, code, diff};
+  },
+  /* найти ответы в любом тексте: ссылке, сообщении из Telegram, чистом коде */
+  findPayload(text) {
+    const s = String(text || '');
+    const m = s.match(/#in\.([zj][A-Za-z0-9_-]+)/) || s.match(/\bin\.([zj][A-Za-z0-9_-]{20,})/) || s.match(/^\s*([zj][A-Za-z0-9_-]{20,})\s*$/);
+    return m ? m[1] : null;
+  },
+};
+
+/* вопросы анкеты с учётом правок команды: скрытые убираем, изменённые
+   подменяем, новые добавляем в конец */
+function applyDiff(type, diff) {
+  const base = (Q_DEFAULT[type] || {test: []}).test.map(q => ({...q}));
+  if (!diff) return base;
+  const hide = new Set(diff.h || []);
+  const changed = Object.fromEntries((diff.c || []).map(q => [q.id, q]));
+  const out = base.filter(q => !hide.has(q.id)).map(q => (changed[q.id] ? {...q, ...changed[q.id]} : q));
+  (diff.c || []).forEach(q => { if (!base.some(b => b.id === q.id) && !hide.has(q.id)) out.push(q); });
+  if (Array.isArray(diff.s)) { const pos = id => { const i = diff.s.indexOf(id); return i < 0 ? 999 : i; }; out.sort((a, b) => pos(a.id) - pos(b.id)); }
+  return out;
+}
+/* ответ вопроса «как текст»: индексы вариантов → подписи */
+function answerLabels(q, v) {
+  if (v === undefined || v === null || v === '') return [];
+  if (q.k === 'one') return [typeof v === 'number' ? (q.o || [])[v] : v].filter(x => x !== undefined);
+  if (q.k === 'many') return (Array.isArray(v) ? v : [v]).map(x => (typeof x === 'number' ? (q.o || [])[x] : x)).filter(x => x !== undefined);
+  if (q.k === 'scale') return [`${SCALE_EMO[(v | 0) - 1] || ''} ${v} из 5`];
+  return [String(v)];
+}
+
+/* ── app.js ── */
+/* Публичная анкета Eva. Ссылка: <анкета>#k.ANNA482 — тип и код человека.
+   Один вопрос на экран, варианты — крупные кнопки, один выбор листает
+   дальше сам. Ответы помнятся в этом браузере до отправки. В конце —
+   «Отправить»: человек пересылает менеджеру ссылку, которая кладёт ответы
+   в карточку CRM. Эта же ссылка — реферальная: подруга выберет «Меня
+   пригласили», и CRM запишет, кто её привёл. */
+
+const CRM_URL = 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA';
+const $ = (s, r = document) => r.querySelector(s);
+const ESC = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'};
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ESC[c]);
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* приватное окно */ } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { /* ничего */ } },
+};
+const INTRO = {
+  client:  {emo: '🌸', title: 'Привет! Помоги нам сделать Еву лучше 💜', lead: 'Пара минут и почти только кнопки. Здесь нет правильных ответов — нам важен твой честный опыт.'},
+  expert:  {emo: '🎓', title: 'Давайте знакомиться ✨', lead: 'Несколько вопросов о вашем опыте и о том, что можно создать вместе с Евой. 3–4 минуты.'},
+  partner: {emo: '🤝', title: 'Давайте дружить 🤝', lead: 'Расскажите о себе — подберём формат, выгодный обеим сторонам. 3 минуты.'},
+  amb:     {emo: '📣', title: 'Стань голосом Евы 💜', lead: 'Расскажи о себе и своей аудитории — придумаем, как тебе удобнее делиться Евой. 3 минуты.'},
+};
+
+const S = {type: null, code: '', invited: false, qs: [], i: -1, a: {}, key: ''};
+
+function init() {
+  const h = Codec.parseAnketaHash(location.hash);
+  S.type = h.type;
+  S.code = h.code;
+  S.qs = h.type ? applyDiff(h.type, h.diff) : [];
+  S.key = `eva-anketa:${h.type || ''}:${h.code || 'new'}`;
+  const saved = store.get(S.key);
+  if (saved && saved.a) { S.a = saved.a; S.invited = !!saved.invited; }
+  if (!S.type) return renderChooser();
+  S.i = -1;
+  render();
+}
+function save() { store.set(S.key, {a: S.a, invited: S.invited}); }
+function total() { return S.qs.length; }
+
+function shell(inner, withTop = true) {
+  const pct = S.i < 0 ? 0 : Math.round(((S.i) / total()) * 100);
+  $('#app').innerHTML = `${withTop ? `<div class="top"><span class="mark">✦</span><span class="brand">Eva</span>${S.i >= 0 && S.i < total() ? `<span class="count">${S.i + 1} из ${total()}</span>` : ''}</div>
+    ${S.i >= 0 && S.i < total() ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ''}` : ''}${inner}`;
+}
+
+function renderChooser() {
+  S.i = -1;
+  shell(`<div class="card intro fade"><div class="big">✦</div><h1>Кто вы?</h1><p class="lead">Выберите — и покажем вопросы для вас</p>
+    <div class="types">${Object.entries(TYPES).map(([k, t]) => `<button data-t="${k}"><span>${t.emo}</span>${t.one}</button>`).join('')}</div></div>`);
+  $('#app').onclick = e => {
+    const b = e.target.closest('[data-t]');
+    if (!b) return;
+    S.type = b.dataset.t;
+    S.qs = applyDiff(S.type, null);
+    S.key = `eva-anketa:${S.type}:new`;
+    const saved = store.get(S.key);
+    S.a = saved && saved.a ? saved.a : {};
+    S.i = -1;
+    render();
+  };
+}
+
+function render() {
+  if (S.i < 0) return renderIntro();
+  if (S.i >= total()) return renderDone();
+  const q = S.qs[S.i];
+  const v = S.a[q.id];
+  let ctl = '';
+  if (q.k === 'one' || q.k === 'many') {
+    const sel = q.k === 'one' ? [v] : (v || []);
+    ctl = `<div class="opts">${q.o.map((o, j) => `<button class="opt ${sel.includes(o) ? 'on' : ''}" data-o="${j}"><span>${esc(o)}</span>${q.k === 'many' ? `<span class="tick">${sel.includes(o) ? '✓' : ''}</span>` : ''}</button>`).join('')}</div>
+      ${q.k === 'many' ? `<p class="hint">${q.max ? `Можно выбрать до ${q.max}` : 'Можно выбрать несколько'}</p>` : ''}`;
+  } else if (q.k === 'scale') {
+    ctl = `<div class="scale">${SCALE_EMO.map((e, j) => `<button class="${Number(v) === j + 1 ? 'on' : ''}" data-s="${j + 1}" aria-label="${j + 1} из 5">${e}<small>${j + 1}</small></button>`).join('')}</div>
+      <div class="scale-ends"><span>${esc(q.lo || '')}</span><span>${esc(q.hi || '')}</span></div>`;
+  } else if (q.k === 'text') {
+    ctl = `<textarea class="inp" id="inp" placeholder="${esc(q.ph || 'Напишите, как есть')}">${esc(v || '')}</textarea>`;
+  } else {
+    ctl = `<input class="inp" id="inp" value="${esc(v || '')}" placeholder="${esc(q.ph || '')}" ${q.key === 'tg' ? 'autocomplete="tel"' : q.key === 'name' ? 'autocomplete="given-name"' : ''}>`;
+  }
+  const needNext = q.k !== 'one' && q.k !== 'scale';
+  const optional = q.k === 'short' && q.key !== 'name';
+  shell(`<div class="card fade"><h2>${esc(q.t)}</h2>${ctl}
+    ${needNext ? `<button class="go" id="next">${S.i === total() - 1 ? 'Готово 🎉' : 'Дальше →'}</button>` : ''}
+    <div class="nav"><button class="link" id="back">← Назад</button>${optional || q.k === 'many' ? '<button class="link" id="skip">Пропустить</button>' : '<span></span>'}</div></div>`);
+  const inp = $('#inp');
+  if (inp) { inp.focus(); inp.addEventListener('keydown', e => { if (e.key === 'Enter' && (q.k === 'short' || e.ctrlKey || e.metaKey)) { e.preventDefault(); next(); } }); }
+  $('#app').onclick = e => {
+    const o = e.target.closest('[data-o]');
+    const s = e.target.closest('[data-s]');
+    if (o) {
+      const label = q.o[Number(o.dataset.o)];
+      if (q.k === 'one') { S.a[q.id] = label; save(); render(); setTimeout(() => { S.i++; render(); }, 220); return; }
+      const cur = new Set(S.a[q.id] || []);
+      if (cur.has(label)) cur.delete(label);
+      else { if (q.max && cur.size >= q.max) { flash(`Можно выбрать до ${q.max}`); return; } cur.add(label); }
+      S.a[q.id] = [...cur];
+      save();
+      render();
+      return;
+    }
+    if (s) { S.a[q.id] = Number(s.dataset.s); save(); render(); setTimeout(() => { S.i++; render(); }, 220); return; }
+    if (e.target.closest('#next')) next();
+    if (e.target.closest('#back')) { S.i--; render(); }
+    if (e.target.closest('#skip')) { delete S.a[q.id]; save(); S.i++; render(); }
+  };
+  function next() {
+    if (inp) {
+      const val = inp.value.trim();
+      if (!val && q.key === 'name') { inp.focus(); flash('Как к вам обращаться? 🙂'); return; }
+      if (val) S.a[q.id] = val.slice(0, q.k === 'text' ? 600 : 160); else delete S.a[q.id];
+      save();
+    }
+    S.i++;
+    render();
+  }
+}
+function flash(text) {
+  let el = $('#flash');
+  if (!el) { el = document.createElement('p'); el.id = 'flash'; el.className = 'note'; $('.card').appendChild(el); }
+  el.textContent = text;
+}
+
+function renderIntro() {
+  const I = INTRO[S.type];
+  const started = Object.keys(S.a).length;
+  shell(`<div class="card intro fade"><div class="big">${I.emo}</div><h1>${esc(I.title)}</h1><p class="lead">${esc(I.lead)}</p>
+    ${S.invited ? '<div class="note">👭 Вы пришли по приглашению — мы сохраним, кто вас позвал.</div>' : ''}
+    <button class="go" id="start">${started ? 'Продолжить 🚀' : 'Начать 🚀'}</button>
+    ${S.code && !S.invited ? '<button class="link" id="inv">Меня пригласили по этой ссылке 👭</button>' : ''}
+    <p class="small">Нажимая «Начать», вы соглашаетесь, что команда Eva Space увидит ваши ответы и сможет связаться с вами. Ответы нужны, чтобы сделать продукт лучше, и никуда не публикуются.</p></div>`);
+  $('#app').onclick = e => {
+    if (e.target.closest('#start')) { S.i = started ? Math.min(total() - 1, S.qs.findIndex(q => S.a[q.id] === undefined) >= 0 ? S.qs.findIndex(q => S.a[q.id] === undefined) : 0) : 0; render(); }
+    if (e.target.closest('#inv')) { S.invited = true; S.a = {}; S.key += ':inv'; save(); render(); }
+  };
+}
+
+async function renderDone() {
+  const payload = {v: 1, t: TYPES[S.type].letter, c: S.code || '', r: S.invited ? 1 : 0, a: S.a, at: Date.now()};
+  const packed = await Codec.pack(payload);
+  const link = `${CRM_URL}#in.${packed}`;
+  const text = `Привет! Это мои ответы для Eva 💜`;
+  const tg = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+  const wa = `https://wa.me/?text=${encodeURIComponent(text + ' ' + link)}`;
+  const own = S.code && !S.invited && ['client', 'amb'].includes(S.type);
+  shell(`<div class="card intro fade"><div class="big">🎉</div><h1>Спасибо${S.a.name ? ', ' + esc(String(S.a.name).split(' ')[0]) : ''}!</h1>
+    <p class="lead">Остался один шаг: отправьте ответы менеджеру Евы, который прислал вам ссылку. Одно нажатие — и выберите чат с ним.</p>
+    <div class="send" style="width:100%"><a class="tg" href="${esc(tg)}" target="_blank" rel="noopener">✈️ Отправить в Telegram</a><a class="wa" href="${esc(wa)}" target="_blank" rel="noopener">💬 Отправить в WhatsApp</a>
+      <button class="go alt" id="copy">📋 Скопировать ссылку с ответами</button></div>
+    <textarea class="linkbox" id="lb" readonly hidden>${esc(link)}</textarea>
+    ${own ? `<div class="note">👭 Эту же страницу можно переслать подруге: она выберет «Меня пригласили», а мы узнаем, что она от тебя.</div>` : ''}
+    <button class="link" id="edit">← Поменять ответы</button></div>`);
+  $('#app').onclick = async e => {
+    if (e.target.closest('#copy')) {
+      const lb = $('#lb');
+      try { await navigator.clipboard.writeText(link); e.target.closest('#copy').textContent = '✅ Скопировано — вставьте в чат с менеджером'; }
+      catch (err) { lb.hidden = false; lb.focus(); lb.select(); }
+    }
+    if (e.target.closest('#edit')) { S.i = total() - 1; render(); }
+  };
+}
+
+window.addEventListener('hashchange', init);
+init();
+})();
+</script>
