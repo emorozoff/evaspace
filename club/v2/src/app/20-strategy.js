@@ -133,8 +133,8 @@ App.register('strategy', {
       </section>
 
       <section class="section">
-        <div class="section-head"><h2>Дорожная карта</h2><span class="hint-inline">Этапы года, вехи и работы по направлениям. ${canEdit ? 'Нажмите на полосу, чтобы изменить.' : 'Нажмите на полосу — покажет связанные задачи.'}</span>
-          ${canEdit ? `<div class="row"><button class="btn sm" data-item-add>${icon('plus')}Работа</button><button class="btn sm" data-mile-add>${icon('flag')}Веха</button></div>` : ''}</div>
+        <div class="section-head"><h2>Дорожная карта</h2><span class="hint-inline">Этапы года, ключевые точки и работы по направлениям. ${canEdit ? 'Тяните полосу — сдвиг, за край — длительность, нажатие — подробности.' : 'Нажмите на полосу — покажет связанные задачи.'}</span>
+          ${canEdit ? `<div class="row"><button class="btn sm" data-item-add="product">${icon('plus')}Работа</button><button class="btn sm" data-mile-add>${icon('flag')}Ключевая точка</button></div>` : ''}</div>
         ${ganttHtml(allTasks)}
       </section>
 
@@ -175,52 +175,154 @@ App.register('strategy', {
     on(root, 'change', 'input[name=scPick]', (e, el) => { saveSettings({scenario: el.value}); toast(`План ведём по сценарию «${SCENARIOS[el.value].name}»`); });
     on(root, 'click', '[data-sc-edit]', () => editScenarios());
     on(root, 'change', '[data-whale]', (e, el) => Strategy.save({whales: {[el.dataset.whale]: {lead: el.value || null}}}));
-    on(root, 'click', '[data-item]', (e, el) => openItem(el.dataset.item));
-    on(root, 'click', '[data-item-add]', () => openItem(null));
-    on(root, 'click', '[data-mile]', (e, el) => canEdit && editMile(el.dataset.mile));
+    on(root, 'click', '[data-item-add]', (e, el) => openItem(null, {dir: el.dataset.itemAdd || 'product'}));
     on(root, 'click', '[data-mile-add]', () => editMile(null));
+    wireGantt(root);
   },
 });
 
-/* ── гант: месяцы по полумесяцам, этапы года, вехи, работы по направлениям ── */
+/* ── дорожная карта: расчерченная сетка кварталов, месяцев и полумесяцев.
+   Полосы работ двигаются зажатием, края растягиваются, ключевые точки
+   переезжают по шкале. Шаг — полмесяца. Правит основатель, остальные
+   смотрят и открывают связанные задачи. ── */
+const G_MONTHS = GANTT_HALVES / 2;
+const gPct = h => (h / GANTT_HALVES * 100).toFixed(3) + '%';
+const gShort = h => `${h % 2 ? '2-я' : '1-я'} пол. ${MONTHS_SH[monthIdx(hMonth(h))]}${hMonth(h).slice(0, 4) !== '2026' ? ' ' + hMonth(h).slice(2, 4) : ''}`;
+const gRange = (a, b) => (a === b ? gShort(a) : `${gShort(a)} → ${gShort(b)}`);
+
 function ganttHtml(allTasks) {
   const items = Strategy.items(), miles = Strategy.miles(), stages = Strategy.stages();
+  const canEdit = Auth.can('strategy.edit');
   const months = [];
-  for (let h = 0; h < GANTT_HALVES; h += 2) months.push(hMonth(h));
-  const nowH = hOfDate(today());
-  const col = h => `grid-column:${h + 2} / span 1`;
-  const span = (a, b) => `grid-column:${clamp(a, 0, GANTT_HALVES - 1) + 2} / ${clamp(b, 0, GANTT_HALVES - 1) + 3}`;
-  let rows = `<div class="g-lab g-head">Месяц</div>${months.map((m, i) => `<div class="g-month ${m.endsWith('-01') ? 'year' : ''}" style="grid-column:${i * 2 + 2} / span 2">${monthShort(m)}${m.endsWith('-01') ? `<small>${m.slice(0, 4)}</small>` : ''}</div>`).join('')}`;
-  if (stages.length) {
-    rows += `<div class="g-lab">Этапы года</div>` + stages.map((st, i) => {
-      const a = hOfDate(st.from + '-01'), b = hOfDate(monthEnd(st.to)) ;
-      const here = nowH >= a && nowH <= b;
-      return `<div class="g-stage s${i % 3} ${here ? 'here' : ''}" style="${span(a, b)}" title="${esc(st.text || '')}"><b>${esc(st.title)}</b>${here ? '<small>мы здесь</small>' : ''}</div>`;
-    }).join('');
-  }
-  if (miles.length) {
-    rows += `<div class="g-lab">Вехи</div><div class="g-miles" style="grid-column:2 / ${GANTT_HALVES + 2}">${miles.map((ml, i) =>
-      `<button class="g-mile lane${i % 3} ${ml.h <= nowH ? 'past' : ''}" data-mile="${ml.id}" style="left:${((ml.h + 0.5) / GANTT_HALVES * 100).toFixed(2)}%" title="${esc(ml.title)} · ${hLabel(ml.h)}"><i></i><span>${esc(ml.title)}</span></button>`).join('')}</div>`;
-  }
-  Object.entries(DIRS).forEach(([k, d]) => {
-    const list = items.filter(x => (x.dir || 'ops') === k);
-    if (!list.length) return;
-    rows += `<div class="g-dir" style="--c:${d.color}">${d.name}</div>`;
-    list.forEach(x => {
-      const linked = allTasks.filter(t => t.stratId === x.id);
-      const done = linked.filter(t => t.status === 'done').length;
-      rows += `<div class="g-lab g-item-lab" title="${esc(x.title)}">${esc(x.title)}</div>
-        <button class="g-bar ${x.status || 'plan'}" data-item="${x.id}" style="${span(x.from, x.to)};--c:${d.color}" title="${esc(x.title)} · ${hLabel(x.from)} → ${hLabel(x.to)}">
-          <span>${esc(x.title)}</span>${linked.length ? `<em>${done}/${linked.length}</em>` : ''}</button>`;
-    });
+  for (let i = 0; i < G_MONTHS; i++) months.push(addMonths(GANTT_START, i));
+  /* кварталы для верхней строки */
+  const qs = [];
+  months.forEach((m, i) => {
+    const q = Math.floor(monthIdx(m) / 3), key = m.slice(0, 4) + 'q' + q;
+    const last = qs[qs.length - 1];
+    if (last && last.key === key) last.n++;
+    else qs.push({key, i, n: 1, label: `${['I', 'II', 'III', 'IV'][q]} кв. ${m.slice(0, 4)}`});
   });
-  if (!items.length && !stages.length && !miles.length) return '<div class="empty"><b>Дорожная карта пуста</b>Основатель добавит этапы и работы.</div>';
-  /* положение «сегодня» внутри полумесяца: 1–15 число и 16–конец месяца */
+  const nowH = hOfDate(today());
   const dd = Number(today().slice(8)), dim = daysInMonth(monthOf(today()));
   const nowPos = nowH + (dd <= 15 ? (dd - 1) / 15 : (dd - 16) / (dim - 15));
-  const nowLine = nowH >= 0 && nowH < GANTT_HALVES ? `<div class="g-now" style="left:calc(var(--lab) + (100% - var(--lab)) * ${(nowPos / GANTT_HALVES).toFixed(4)})" title="Сегодня, ${dayLong(today())}"></div>` : '';
-  return `<div class="gantt-wrap"><div class="gantt" style="grid-template-columns:var(--lab) repeat(${GANTT_HALVES}, minmax(22px, 1fr))">${rows}${nowLine}</div></div>
-    <div class="legend g-legend"><span><i style="background:var(--ink-3)"></i>В плане</span><span><i style="background:var(--violet)"></i>Идёт</span><span><i style="background:var(--good)"></i>Сделано</span><span><i class="g-leg-now"></i>Сегодня</span></div>`;
+  const lines = qs.slice(1).map(q => `<i class="gt-ql ${months[q.i].endsWith('-01') ? 'year' : ''}" style="left:${(q.i / G_MONTHS * 100).toFixed(3)}%"></i>`).join('')
+    + miles.map(ml => `<i class="gt-ml" style="left:${gPct(ml.h + 0.5)}"></i>`).join('')
+    + (nowH >= 0 && nowH < GANTT_HALVES ? `<i class="gt-now" style="left:${gPct(nowPos)}"></i>` : '');
+  const nowTag = nowH >= 0 && nowH < GANTT_HALVES ? `<i class="gt-now-tag" style="left:${gPct(nowPos)}">${dayShort(today())}</i>` : '';
+
+  const head = `<div class="gt-head"><div class="gt-lab gt-corner">${canEdit ? 'Тяните полосу — сдвиг,<br>край — длительность' : 'Нажмите на полосу — задачи'}</div><div class="gt-tl">
+      <div class="gt-qrow">${qs.map(q => `<div style="width:${(q.n / G_MONTHS * 100).toFixed(3)}%">${q.label}</div>`).join('')}</div>
+      <div class="gt-mrow">${months.map(m => `<div class="${m === monthOf(today()) ? 'now' : ''}">${cap(MONTHS_SH[monthIdx(m)])}</div>`).join('')}</div>
+      ${nowTag}
+    </div></div>`;
+  const stageRow = stages.length ? `<div class="gt-row gt-stage-row"><div class="gt-lab"><b>Этапы года</b></div><div class="gt-tl grid">${stages.map((st, i) => {
+      const a = hOfDate(st.from + '-01'), b = hOfDate(monthEnd(st.to));
+      const here = nowH >= a && nowH <= b;
+      return `<div class="gt-stage s${i % 3} ${here ? 'here' : ''}" style="left:${gPct(a)};width:${gPct(b - a + 1)}" title="${esc(st.title)}: ${esc(st.text || '')}"><b>${esc(st.title)}</b>${here ? '<small>мы здесь</small>' : ''}</div>`;
+    }).join('')}</div></div>` : '';
+  const doneMiles = miles.filter(ml => ml.done).length;
+  const mileRow = `<div class="gt-row gt-mile-row"><div class="gt-lab gt-lab-col"><b>Ключевые точки</b><small>${doneMiles} из ${miles.length} достигнуто</small>${canEdit ? `<button class="gt-add" data-mile-add>${icon('plus')}точка</button>` : ''}</div><div class="gt-tl grid" id="gtMiles">${miles.map(ml => {
+      const state = ml.done ? 'done' : ml.h < nowH ? 'late' : '';
+      return `<div class="gt-mile ${state} ${canEdit ? 'can' : ''}" data-mile="${ml.id}" style="left:${gPct(ml.h + 0.5)}" title="${esc(ml.title)} · ${gShort(ml.h)}${ml.done ? ' · достигнута' : state === 'late' ? ' · срок прошёл' : ''}"><i></i><span>${ml.done ? '✓ ' : ''}${esc(ml.title)}</span></div>`;
+    }).join('')}</div></div>`;
+
+  const groups = Object.entries(DIRS).map(([k, d]) => {
+    const list = items.filter(x => (x.dir || 'ops') === k);
+    const rows = list.map(x => {
+      const linked = allTasks.filter(t => t.stratId === x.id);
+      const done = linked.filter(t => t.status === 'done').length;
+      return `<div class="gt-row"><div class="gt-lab" title="${esc(x.title)}"><span>${esc(x.title)}</span></div><div class="gt-tl grid">
+        <div class="gt-bar ${x.status || 'plan'} ${canEdit ? 'can' : ''}" data-item="${x.id}" style="left:${gPct(x.from)};width:${gPct(x.to - x.from + 1)};--c:${d.color}" title="${esc(x.title)} · ${gRange(x.from, x.to)}">
+          ${canEdit ? '<i class="gt-hl" data-edge="l"></i><i class="gt-hr" data-edge="r"></i>' : ''}
+          <span class="gt-bt">${esc(x.title)}</span>${linked.length ? `<em>${done}/${linked.length}</em>` : ''}</div></div></div>`;
+    }).join('');
+    return `<div class="gt-dir" style="--c:${d.color}"><div class="gt-lab"><b>${d.name}</b><span>${list.length}</span>${canEdit ? `<button class="gt-add" data-item-add="${k}">${icon('plus')}работа</button>` : ''}</div><div class="gt-tl grid"></div></div>${rows}`;
+  }).join('');
+
+  return `<div class="gt-wrap"><div class="gt" id="gantt">${head}<div class="gt-body">${stageRow}${mileRow}${groups}<div class="gt-over">${lines}</div></div></div></div>
+    <div class="legend g-legend"><span><i style="background:var(--ink-3)"></i>В плане</span><span><i style="background:var(--violet)"></i>Идёт</span><span><i style="background:var(--good)"></i>Сделано</span><span><i class="g-leg-now"></i>Сегодня</span><span><i class="g-leg-mile"></i>Ключевая точка</span></div>`;
+}
+
+/* подписи ключевых точек — по дорожкам, чтобы не наезжали друг на друга */
+function layoutMiles(root) {
+  const box = $('#gtMiles', root);
+  if (!box) return;
+  const lanes = [];
+  $$('.gt-mile', box).map(el => ({el, x: el.offsetLeft})).sort((a, b) => a.x - b.x).forEach(({el, x}) => {
+    const w = el.offsetWidth;
+    let lane = lanes.findIndex(r => r < x - 6);
+    if (lane < 0) { lane = lanes.length; lanes.push(0); }
+    lanes[lane] = x + w;
+    el.style.top = (6 + lane * 22) + 'px';
+  });
+  box.style.height = Math.max(36, 12 + lanes.length * 22) + 'px';
+}
+
+function wireGantt(root) {
+  const gt = $('#gantt', root);
+  if (!gt) return;
+  layoutMiles(root);
+  const canEdit = Auth.can('strategy.edit');
+  let st = null;
+  const unit = el => el.closest('.gt-tl').getBoundingClientRect().width / GANTT_HALVES;
+  gt.addEventListener('pointerdown', e => {
+    const bar = e.target.closest('.gt-bar'), mile = e.target.closest('.gt-mile');
+    if (!bar && !mile) return;
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    if (bar) {
+      const x = Strategy.items().find(i => i.id === bar.dataset.item);
+      if (!x) return;
+      st = {kind: 'bar', el: bar, id: x.id, mode: e.target.dataset.edge || 'm', from: x.from, to: x.to, nf: x.from, nt: x.to, x0: e.clientX, u: unit(bar), moved: false};
+    } else {
+      const ml = Strategy.miles().find(m => m.id === mile.dataset.mile);
+      if (!ml) return;
+      st = {kind: 'mile', el: mile, id: ml.id, h: ml.h, nh: ml.h, x0: e.clientX, u: unit(mile), moved: false};
+    }
+    if (canEdit) { try { st.el.setPointerCapture(e.pointerId); } catch (err) { /* ничего */ } e.preventDefault(); }
+  });
+  gt.addEventListener('pointermove', e => {
+    if (!st || !canEdit) return;
+    const dh = Math.round((e.clientX - st.x0) / st.u);
+    if (Math.abs(e.clientX - st.x0) > 3) st.moved = true;
+    if (!st.moved) return;
+    if (st.kind === 'bar') {
+      const len = st.to - st.from;
+      if (st.mode === 'm') { st.nf = clamp(st.from + dh, 0, GANTT_HALVES - 1 - len); st.nt = st.nf + len; }
+      if (st.mode === 'l') { st.nf = clamp(st.from + dh, 0, st.to); st.nt = st.to; }
+      if (st.mode === 'r') { st.nt = clamp(st.to + dh, st.from, GANTT_HALVES - 1); st.nf = st.from; }
+      st.el.style.left = gPct(st.nf);
+      st.el.style.width = gPct(st.nt - st.nf + 1);
+      st.el.classList.add('moving');
+      st.el.dataset.tip = gRange(st.nf, st.nt);
+    } else {
+      st.nh = clamp(st.h + dh, 0, GANTT_HALVES - 1);
+      st.el.style.left = gPct(st.nh + 0.5);
+      st.el.classList.add('moving');
+      st.el.dataset.tip = gShort(st.nh);
+    }
+  });
+  const finish = e => {
+    if (!st) return;
+    const s = st;
+    st = null;
+    s.el.classList.remove('moving');
+    delete s.el.dataset.tip;
+    if (!s.moved) {
+      if (s.kind === 'bar') openItem(s.id); else if (canEdit) editMile(s.id);
+      return;
+    }
+    if (s.kind === 'bar' && (s.nf !== s.from || s.nt !== s.to)) {
+      Strategy.save({items: {[s.id]: {from: s.nf, to: s.nt}}});
+      toast(`${Strategy.items().find(i => i.id === s.id).title}: ${gRange(s.nf, s.nt)}`, {undo: () => Strategy.save({items: {[s.id]: {from: s.from, to: s.to}}})});
+    }
+    if (s.kind === 'mile' && s.nh !== s.h) {
+      Strategy.save({miles: {[s.id]: {h: s.nh}}});
+      toast(`Ключевая точка: ${gShort(s.nh)}`, {undo: () => Strategy.save({miles: {[s.id]: {h: s.h}}})});
+    }
+  };
+  gt.addEventListener('pointerup', finish);
+  gt.addEventListener('pointercancel', () => { if (st) { st.el.classList.remove('moving'); st = null; App.render(); } });
 }
 
 const halfOptions = cur => {
@@ -229,7 +331,7 @@ const halfOptions = cur => {
   return o;
 };
 
-function openItem(id) {
+function openItem(id, preset = {}) {
   const x = id ? Strategy.items().find(i => i.id === id) : null;
   const canEdit = Auth.can('strategy.edit');
   const linked = x && Auth.can('tasks.view') ? Tasks.sort(Tasks.all().filter(t => t.stratId === x.id)) : [];
@@ -239,7 +341,7 @@ function openItem(id) {
       onMount: el => wireTaskCards(el)});
     return;
   }
-  const v = x || {title: '', dir: 'product', from: Math.max(0, hOfDate(today())), to: Math.max(1, hOfDate(today()) + 3), status: 'plan', note: ''};
+  const v = x || {title: '', dir: preset.dir || 'product', from: Math.max(0, hOfDate(today())), to: Math.max(1, hOfDate(today()) + 3), status: 'plan', note: ''};
   openModal({
     title: x ? 'Работа на дорожной карте' : 'Новая работа',
     body: `<label class="field"><span>Название</span><input class="input" id="giTitle" value="${esc(v.title)}"></label>
@@ -278,20 +380,22 @@ function editMile(id) {
   const ml = id ? Strategy.miles().find(m => m.id === id) : null;
   const v = ml || {title: '', h: Math.max(0, hOfDate(today()) + 2)};
   openModal({
-    title: ml ? 'Веха' : 'Новая веха',
+    title: ml ? 'Ключевая точка' : 'Новая ключевая точка',
     body: `<label class="field"><span>Что должно случиться</span><input class="input" id="gmTitle" value="${esc(v.title)}" placeholder="Например: первые 100 платящих"></label>
-      <label class="field"><span>Когда</span><select class="select" id="gmH">${halfOptions(v.h)}</select></label>`,
+      <label class="field"><span>Когда</span><select class="select" id="gmH">${halfOptions(v.h)}</select></label>
+      <label class="field"><span>Что считаем достижением</span><input class="input" id="gmNote" value="${esc(v.note || '')}" placeholder="Например: 100 оплат по подписке"></label>
+      <label class="check"><input type="checkbox" id="gmDone" ${v.done ? 'checked' : ''}>Достигнута</label>`,
     foot: `${ml ? `<button class="btn danger left" id="gmDel">${icon('trash')}Удалить</button>` : ''}<button class="btn" data-close>Отмена</button><button class="btn primary" id="gmSave">Сохранить</button>`,
     onMount(el, close) {
       $('#gmSave', el).onclick = () => {
         const title = $('#gmTitle', el).value.trim();
         if (!title) return $('#gmTitle', el).focus();
-        Strategy.save({miles: {[ml ? ml.id : uid()]: {title, h: Number($('#gmH', el).value), deleted: false}}});
+        Strategy.save({miles: {[ml ? ml.id : uid()]: {title, h: Number($('#gmH', el).value), note: $('#gmNote', el).value.trim(), done: $('#gmDone', el).checked, deleted: false}}});
         close();
       };
       const del = $('#gmDel', el);
       if (del) del.onclick = async () => {
-        if (!(await confirmPop(del, {text: 'Удалить веху?', yes: 'Да, удалить', danger: true}))) return;
+        if (!(await confirmPop(del, {text: 'Удалить ключевую точку?', yes: 'Да, удалить', danger: true}))) return;
         Strategy.save({miles: {[ml.id]: {deleted: true}}});
         close();
       };

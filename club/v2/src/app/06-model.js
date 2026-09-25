@@ -105,6 +105,8 @@ const Money = {
   },
   planAmount(item, m) {
     if (!(item.months || []).includes(m)) return 0;
+    const who = item.personId ? personById(item.personId) : null;
+    if (who && (who.status === 'inactive' || who.archived)) return 0;   // не активирован — не платим
     const base = Number(item.amount) || 0;
     return item.group === 'payroll' && item.insurance !== false ? Math.round(base * (1 + settings().insurance)) : base;
   },

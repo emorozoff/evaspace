@@ -2,7 +2,7 @@
 
 (async function boot() {
   const mark = $('.boot-mark');
-  if (mark) mark.innerHTML = starSvg();
+  if (mark) mark.innerHTML = brandIcon();
   const msg = $('#bootMsg');
   const slow = setTimeout(() => { if (msg) msg.textContent = 'База отвечает медленно — ещё пара секунд…'; }, 4000);
   try { await Store.init(); } catch (e) { console.error('Хранилище не поднялось', e); }

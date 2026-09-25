@@ -27,6 +27,7 @@ const App = {
   parse() {
     const h = decodeURIComponent(location.hash.replace(/^#/, ''));
     if (h.startsWith('m-')) return {id: 'material', param: h.slice(2)};
+    if (h.startsWith('p-')) return {id: 'person', param: h.slice(2)};
     return {id: h || 'home', param: null};
   },
   go(hash) { if (location.hash === '#' + hash) this.render(); else location.hash = hash; },
@@ -81,7 +82,7 @@ const App = {
   buildShell() {
     $('#app').innerHTML = `<div class="shell">
       <aside class="side">
-        <a class="brand" href="#home">${starSvg('brand-mark')}<div><b>Eva Club</b><span>штаб команды · V2</span></div></a>
+        <a class="brand" href="#home">${brandIcon('brand-mark')}<div><b>Eva Club</b><span>штаб команды · V2</span></div></a>
         <nav class="nav" id="nav" aria-label="Разделы"></nav>
         <div class="side-foot">
           <div class="sync" id="sync"><i></i><span></span></div>
@@ -102,7 +103,9 @@ const App = {
       return `<a href="#${n.id}" class="${n.id === active || (active === 'material' && n.id === 'home') ? 'on' : ''}">${icon(n.icon)}<span>${n.name}</span>${b ? `<span class="badge" title="Требуют внимания">${b}</span>` : ''}</a>`;
     }).join('');
     const me = Auth.me(), p = Auth.person();
-    $('#meChip').innerHTML = `${avatar(p || {name: me.name})}<div class="who"><b>${esc(me.name)}</b><span>${ROLES[roleOf(me.role)].name}</span></div>
+    const chip = $('#meChip');
+    chip.classList.toggle('on', active === 'me' || (active === 'person' && this.parse().param === Auth.personId()));
+    chip.innerHTML = `<a class="me-link" href="#me" title="Моя страница">${avatar(p || {name: me.name})}<div class="who"><b>${esc(p && p.name ? p.name : me.name)}</b><span>${esc(p && p.title ? p.title : ROLES[roleOf(me.role)].name)}</span></div></a>
       <button data-logout title="Выйти" aria-label="Выйти">${icon('logout')}</button>`;
   },
 

@@ -154,7 +154,7 @@ function renderAuth(root) {
 
   root.innerHTML = `<div class="auth">
     <form class="auth-card card" id="authForm" novalidate>
-      <div class="auth-brand">${starSvg('auth-mark')}<div><b>Eva Club</b><span>штаб команды Eva Space · V2</span></div></div>
+      <div class="auth-brand">${brandIcon('auth-mark')}<div><b>Eva Club</b><span>штаб команды Eva Space · V2</span></div></div>
       ${tabs}
       <h1>${title}</h1>
       <p class="auth-lead">${lead}</p>
@@ -201,5 +201,6 @@ function renderAuth(root) {
     }
   });
   const first = $('input', form);
-  if (first) setTimeout(() => first.focus(), 30);
+  /* фокус в первое поле — только если человек ещё никуда не нажал */
+  if (first) setTimeout(() => { if (!document.activeElement || document.activeElement === document.body) first.focus(); }, 30);
 }

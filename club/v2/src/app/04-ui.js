@@ -29,17 +29,24 @@ const ICONS = {
 };
 const icon = (name, cls = '') => `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 
-/* восьмилучевая звезда Евы — знак из Книги стандартов */
-function starPath(cx, cy, R, r) {
-  let d = '';
-  for (let i = 0; i < 16; i++) {
-    const a = (Math.PI / 8) * i - Math.PI / 2, rad = i % 2 ? r : R;
-    d += (i ? 'L' : 'M') + (cx + rad * Math.cos(a)).toFixed(2) + ' ' + (cy + rad * Math.sin(a)).toFixed(2);
-  }
-  return d + 'Z';
+/* Знак Евы — как иконка приложения Eva Space: золотая звезда с мягким
+   свечением на сливовом градиенте и три искры. Рисуем вектором, чтобы
+   значок был чётким в меню, на входе и во вкладке браузера. */
+let brandSeq = 0;
+function brandIcon(cls = '') {
+  const n = ++brandSeq, g = 'evg' + n, r = 'evr' + n;
+  const spark = (x, y, s) => `<path d="M${x} ${y - s}C${x + s * .18} ${y - s * .18} ${x + s * .18} ${y - s * .18} ${x + s} ${y}C${x + s * .18} ${y + s * .18} ${x + s * .18} ${y + s * .18} ${x} ${y + s}C${x - s * .18} ${y + s * .18} ${x - s * .18} ${y + s * .18} ${x - s} ${y}C${x - s * .18} ${y - s * .18} ${x - s * .18} ${y - s * .18} ${x} ${y - s}Z" fill="#FFF3DA"/>`;
+  return `<svg viewBox="0 0 48 48" class="${cls}" aria-hidden="true">
+    <defs>
+      <linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3B2150"/><stop offset=".55" stop-color="#5E2F66"/><stop offset="1" stop-color="#94527F"/></linearGradient>
+      <radialGradient id="${r}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFE3B0" stop-opacity=".55"/><stop offset="1" stop-color="#FFE3B0" stop-opacity="0"/></radialGradient>
+    </defs>
+    <rect width="48" height="48" rx="11" fill="url(#${g})"/>
+    <circle cx="23" cy="25" r="15" fill="url(#${r})"/>
+    <path d="M23 9C24.1 19.2 26.8 21.9 37 23C26.8 24.1 24.1 26.8 23 37C21.9 26.8 19.2 24.1 9 23C19.2 21.9 21.9 19.2 23 9Z" fill="#F3CD8C"/>
+    ${spark(37, 9.5, 2.2)}${spark(9.5, 36, 1.6)}${spark(38, 37, 1.3)}
+  </svg>`;
 }
-const STAR = starPath(16, 16, 15, 6.2);
-const starSvg = (cls = '') => `<svg viewBox="0 0 32 32" class="${cls}" aria-hidden="true"><path d="${STAR}" fill="#E4A0B8"/><circle cx="16" cy="16" r="3.2" fill="#E7C58B"/></svg>`;
 
 /* ── аватар по имени ── */
 function initials(p) {
@@ -102,13 +109,13 @@ function openModal({title, body, foot = '', wide = false, focus = true, onMount,
   document.addEventListener('keydown', key);
   if (onMount) onMount(el, close);
   const first = $('input:not([type=checkbox]):not([disabled]), textarea, select', el);
-  if (first && focus) setTimeout(() => first.focus(), 30);
+  if (first && focus) setTimeout(() => { if (!el.contains(document.activeElement)) first.focus(); }, 30);
   return {el, close};
 }
 const modalOpen = () => !!$('#modalRoot .modal-back');
 
 /* ── подтверждение «Да / Нет» рядом с кнопкой (confirm() в артефакте не работает) ── */
-function closePops() { $$('.pop').forEach(p => p._done ? p._done(false) : p.remove()); }
+function closePops() { $$('.pop').forEach(p => (p._done ? p._done(false) : p.remove())); }
 function confirmPop(anchor, {text, yes = 'Да', no = 'Нет', danger = false}) {
   return new Promise(resolve => {
     closePops();
@@ -141,6 +148,45 @@ function confirmPop(anchor, {text, yes = 'Да', no = 'Нет', danger = false})
     $('[data-yes]', pop).onclick = () => done(true);
     $('[data-no]', pop).onclick = () => done(false);
     $('[data-yes]', pop).focus();
+  });
+}
+
+/* ── выбор из списка рядом с кнопкой (исполнитель на карточке и т. п.) ── */
+function pickPop(anchor, items, current) {
+  return new Promise(resolve => {
+    closePops();
+    const pop = document.createElement('div');
+    pop.className = 'pop pick';
+    pop.setAttribute('role', 'listbox');
+    items.forEach(([v, n]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pick-i' + (String(v) === String(current) ? ' on' : '');
+      b.textContent = n;
+      b.onclick = () => done(v);
+      pop.appendChild(b);
+    });
+    document.body.appendChild(pop);
+    const r = anchor.getBoundingClientRect();
+    const w = pop.offsetWidth, h = pop.offsetHeight;
+    let top = r.bottom + 4, left = r.right - w;
+    if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 4);
+    left = clamp(left, 8, window.innerWidth - w - 8);
+    pop.style.top = (top + window.scrollY) + 'px';
+    pop.style.left = (left + window.scrollX) + 'px';
+    function done(v) {
+      pop.remove();
+      document.removeEventListener('mousedown', outside, true);
+      document.removeEventListener('keydown', key, true);
+      resolve(v);
+    }
+    pop._done = () => done(null);
+    const outside = e => { if (!pop.contains(e.target)) done(null); };
+    const key = e => { if (e.key === 'Escape') { e.stopPropagation(); done(null); } };
+    setTimeout(() => document.addEventListener('mousedown', outside, true), 0);
+    document.addEventListener('keydown', key, true);
+    const on = $('.pick-i.on', pop) || $('.pick-i', pop);
+    if (on) on.focus();
   });
 }
 

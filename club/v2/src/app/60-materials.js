@@ -47,7 +47,7 @@ function materialsHtml() {
   const more = Auth.role() === 'investor' ? [] : MORE_LINKS;
   const ownMore = custom.filter(l => !l.group || l.group === 'more' || l.group === 'standards');
   return `<div class="mats">
-    ${std ? `<a class="mat-hero" href="#m-${std.id}">${starSvg('mat-star')}<div><span class="label">Стандарты</span><b>${esc(std.title)}</b><p>${esc(std.sub)}</p></div><span class="btn primary sm">Открыть${icon('arrow')}</span></a>` : ''}
+    ${std ? `<a class="mat-hero" href="#m-${std.id}">${brandIcon('mat-star')}<div><span class="label">Стандарты</span><b>${esc(std.title)}</b><p>${esc(std.sub)}</p></div><span class="btn primary sm">Открыть${icon('arrow')}</span></a>` : ''}
     <div class="mat-groups">${groups}</div>
     ${more.length || ownMore.length ? `<div class="mat-more"><span class="label">${MAT_GROUPS.more.name}</span>${more.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.title)}${icon('ext')}</a>`).join('')}${ownMore.map(l => `<a href="${esc(safeUrl(l.url))}" target="_blank" rel="noopener">${esc(l.title)}${icon('ext')}</a>`).join('')}</div>` : ''}
     ${Auth.isOwner() ? `<button class="btn sm ghost mat-add" data-link-add>${icon('plus')}Добавить материал по ссылке</button>` : ''}

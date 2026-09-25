@@ -39,7 +39,7 @@ const Tasks = {
       title: fields.title.trim(), desc: fields.desc || '', result: fields.result || '',
       status: fields.status || 'todo', assignee: assignee || null,
       dir: fields.dir || (p && p.dir) || '', priority: fields.priority || 'normal',
-      due: fields.due || null, month: fields.due ? monthOf(fields.due) : (fields.month || monthOf(today())),
+      due: fields.due || null, month: fields.due ? monthOf(fields.due) : (fields.month !== undefined ? fields.month : monthOf(today())),
       goalId: fields.goalId || null, stratId: fields.stratId || null,
       createdBy: k, createdAt: now, updatedAt: now, updatedBy: k, comments: {},
     };
@@ -95,8 +95,10 @@ function taskBadge() {
 }
 
 /* ── страница ── */
+const DIR_CODE = {product: 'ПР', content: 'КН', audience: 'АУ', ops: 'УП'};
 const TaskUI = {
-  draft: {title: '', assignee: undefined, due: ''},
+  composer: null,        // открытая строка добавления в колонке: {col, title, assignee, due}
+  showDone: false,
   months() {
     const t = monthOf(today());
     const set = new Set(Tasks.all().map(x => x.month).filter(Boolean));
@@ -107,145 +109,134 @@ const TaskUI = {
   filters() {
     return {
       who: View.get('t.who', Auth.personId() ? 'me' : 'all'),
-      chip: View.get('t.chip', 'open'),
+      late: View.get('t.late', false),
+      done: View.get('t.done', false),
       dir: View.get('t.dir', ''),
       goal: View.get('t.goal', ''),
       q: View.get('t.q', ''),
     };
   },
+  /* люди, направление, цель, поиск — общие для всех видов */
   filtered(opts = {}) {
     const f = this.filters(), q = f.q.trim().toLowerCase(), me = Auth.personId();
     return Tasks.all().filter(t => {
       if (f.who === 'me' && t.assignee !== me) return false;
-      if (f.who !== 'me' && f.who !== 'all' && f.who !== 'none' && t.assignee !== f.who) return false;
       if (f.who === 'none' && t.assignee) return false;
+      if (!['me', 'all', 'none'].includes(f.who) && t.assignee !== f.who) return false;
       if (f.dir && t.dir !== f.dir) return false;
       if (f.goal && t.goalId !== f.goal) return false;
+      if (f.late && !opts.ignoreLate && !Tasks.overdue(t)) return false;
       if (q && !(t.title + ' ' + (t.desc || '')).toLowerCase().includes(q)) return false;
-      if (opts.ignoreChip) return true;
-      if (f.chip === 'open') return Tasks.isOpen(t);
-      if (f.chip === 'review') return t.status === 'review';
-      if (f.chip === 'overdue') return Tasks.overdue(t);
-      if (f.chip === 'done') return t.status === 'done';
       return true;
     });
   },
 };
+/* порядок внутри колонки: ручной (перетаскиванием), иначе — по времени создания */
+const effOrder = t => (typeof t.order === 'number' ? t.order : (t.createdAt || 0));
+const byOrder = list => list.slice().sort((a, b) => effOrder(a) - effOrder(b));
+function orderBetween(afterId, beforeId) {
+  const a = afterId ? Tasks.get(afterId) : null, b = beforeId ? Tasks.get(beforeId) : null;
+  if (a && b) return (effOrder(a) + effOrder(b)) / 2;
+  if (a) return effOrder(a) + 1000;
+  if (b) return effOrder(b) - 1000;
+  return Date.now();
+}
 
 App.register('tasks', {
   title: 'Задачи',
   render(root) {
-    const view = View.get('t.view', 'list');
+    const view = View.get('t.view', 'board');
     const f = TaskUI.filters();
-    const base = TaskUI.filtered({ignoreChip: true});
-    const cnt = {
-      open: base.filter(t => Tasks.isOpen(t)).length,
-      review: base.filter(t => t.status === 'review').length,
-      overdue: base.filter(t => Tasks.overdue(t)).length,
-      done: base.filter(t => t.status === 'done').length,
-    };
     const ppl = people();
     const goals = Strategy.goals();
-    const whoOpts = [['me', 'Мои'], ['all', 'Все люди'], ...ppl.map(p => [p.id, personName(p)]), ['none', 'Без исполнителя']]
-      .filter(([v]) => v !== 'me' || Auth.personId())
-      .map(([v, n]) => `<option value="${v}" ${f.who === v ? 'selected' : ''}>${esc(n)}</option>`).join('');
-    const dirOpts = `<option value="">Все направления</option>` + Object.entries(DIRS).map(([k, d]) => `<option value="${k}" ${f.dir === k ? 'selected' : ''}>${d.name}</option>`).join('');
-    const goalOpts = `<option value="">Все цели</option>` + goals.map(g => `<option value="${g.id}" ${f.goal === g.id ? 'selected' : ''}>${esc(g.short || g.title)}</option>`).join('');
-    const chip = (k, name) => `<button class="chip ${f.chip === k ? 'on' : ''}" data-chip="${k}">${name}${cnt[k] !== undefined ? ` <b>${cnt[k]}</b>` : ''}</button>`;
-    const assOpts = [['', 'Себе'], ...ppl.filter(p => p.id !== Auth.personId()).map(p => [p.id, personName(p)])]
-      .map(([v, n]) => `<option value="${v}" ${(TaskUI.draft.assignee || '') === v ? 'selected' : ''}>${esc(n)}</option>`).join('');
+    const list = TaskUI.filtered();
+    const lateN = TaskUI.filtered({ignoreLate: true}).filter(t => Tasks.overdue(t)).length;
+    const reviewN = list.filter(t => t.status === 'review').length;
+    const opt = (v, n, cur) => `<option value="${esc(v)}" ${cur === v ? 'selected' : ''}>${esc(n)}</option>`;
+    const whoOpts = [['me', 'Мои задачи'], ['all', 'Вся команда'], ...ppl.map(p => [p.id, personName(p)]), ['none', 'Без исполнителя']]
+      .filter(([v]) => v !== 'me' || Auth.personId()).map(([v, n]) => opt(v, n, f.who)).join('');
+    const views = [['board', 'Доска'], ['month', 'По месяцам'], ['week', 'По неделям'], ['list', 'Список']];
 
     root.innerHTML = `
-      ${pageHead('Задачи', 'Кто что делает и к какому дню. Поставьте задачу коллеге — она сразу появится у него с отметкой «новое».',
-        `${helpBtn('tasks')}<button class="btn primary" data-new>${icon('plus')}Задача</button>`)}
-      ${helpBox('tasks', `<b>Как работаем с задачами.</b><ol>
-        <li>Добавьте задачу строкой сверху: что сделать, кому и к какому дню. Enter — сохранить.</li>
-        <li>Взяли в работу — нажмите «В работу» в карточке. Сделали — поставьте галочку: если задачу ставил другой человек, она уйдёт ему на проверку.</li>
-        <li>Автор или руководитель принимает работу или возвращает с комментарием — всё видно в истории карточки.</li>
-        <li>«По неделям» — для планёрки в понедельник: перетащите задачу в нужную неделю, срок поставится сам.</li></ol>`)}
-      <form class="qa card flat" id="qaForm" autocomplete="off">
-        <input class="input qa-title" id="qaTitle" placeholder="Новая задача — что нужно сделать?" value="${esc(TaskUI.draft.title)}" maxlength="200">
-        <select class="select qa-who" id="qaWho" aria-label="Кому">${assOpts}</select>
-        <input class="input qa-due" id="qaDue" type="date" value="${esc(TaskUI.draft.due)}" aria-label="Срок" min="2026-01-01" max="2028-12-31">
-        <button class="btn dark" type="submit">Добавить</button>
-      </form>
-      <div class="t-toolbar">
-        <div class="seg" role="tablist">
-          <button data-view="list" class="${view === 'list' ? 'on' : ''}">Список</button>
-          <button data-view="month" class="${view === 'month' ? 'on' : ''}">По месяцам</button>
-          <button data-view="week" class="${view === 'week' ? 'on' : ''}">По неделям</button>
-        </div>
-        <div class="chips">${chip('open', 'Открытые')}${chip('review', 'На проверке')}${chip('overdue', 'Просрочено')}${chip('done', 'Готово')}${chip('all', 'Все')}</div>
-        <div class="t-selects">
-          <select class="select sm" id="fWho" aria-label="Чьи задачи">${whoOpts}</select>
-          <select class="select sm" id="fDir" aria-label="Направление">${dirOpts}</select>
-          ${goals.length ? `<select class="select sm" id="fGoal" aria-label="Цель квартала">${goalOpts}</select>` : ''}
-          <input class="input sm" id="fQ" type="search" placeholder="Поиск" value="${esc(f.q)}">
-        </div>
+      ${pageHead('Задачи', 'Кто что делает и к какому дню. Карточки перетаскиваются зажатием — между колонками и внутри колонки.',
+        `${helpBtn('tasks')}<button class="btn primary" data-quick>${icon('plus')}Задача</button>`)}
+      ${helpBox('tasks', `<b>Как работаем с задачами.</b> «+ Добавить задачу» внизу колонки — название и Enter, можно сразу следующую. Зажмите карточку и перетащите: в «В работе», «На проверке», в другой месяц или неделю. Если задачу ставил другой человек, из «Готово» она попадёт к нему на проверку — он примет или вернёт с комментарием. Клик по карточке — все поля, обсуждение и история; по аватару — сменить исполнителя.`)}
+      <div class="t-bar">
+        <div class="seg" role="tablist">${views.map(([k, n]) => `<button data-view="${k}" class="${view === k ? 'on' : ''}">${n}</button>`).join('')}</div>
+        <select class="select sm" id="fWho" aria-label="Чьи задачи">${whoOpts}</select>
+        <select class="select sm" id="fDir" aria-label="Направление">${opt('', 'Все направления', f.dir)}${Object.entries(DIRS).map(([k, d]) => opt(k, d.name, f.dir)).join('')}</select>
+        ${goals.length ? `<select class="select sm" id="fGoal" aria-label="Цель квартала">${opt('', 'Все цели', f.goal)}${goals.map(g => opt(g.id, g.short || g.title, f.goal)).join('')}</select>` : ''}
+        <input class="input sm t-search" id="fQ" type="search" placeholder="Поиск" value="${esc(f.q)}">
+        <span class="t-bar-sp"></span>
+        <button class="chip ${f.late ? 'on' : ''}" data-late>Просрочено <b>${lateN}</b></button>
+        ${reviewN ? `<span class="pill gold">${reviewN} на проверке</span>` : ''}
+        ${view !== 'board' ? `<label class="check t-done-t"><input type="checkbox" id="fDone" ${f.done ? 'checked' : ''}>Показывать готовые</label>` : ''}
       </div>
       <div id="taskView"></div>`;
 
-    const list = TaskUI.filtered();
     const box = $('#taskView', root);
     if (view === 'month') renderTaskMonths(box, list);
     else if (view === 'week') renderTaskWeeks(box, list);
-    else renderTaskList(box, list);
+    else if (view === 'list') renderTaskList(box, list);
+    else renderTaskBoard(box, list);
 
     wireHelp(root);
-    on(root, 'click', '[data-view]', (e, el) => { View.set('t.view', el.dataset.view); App.render(); });
-    on(root, 'click', '[data-chip]', (e, el) => { View.set('t.chip', el.dataset.chip); App.render(); });
-    on(root, 'click', '[data-new]', () => openTask(null));
+    on(root, 'click', '[data-view]', (e, el) => { View.set('t.view', el.dataset.view); TaskUI.composer = null; App.render(); });
+    on(root, 'click', '[data-late]', () => { View.set('t.late', !f.late); App.render(); });
+    on(root, 'click', '[data-quick]', () => quickTask({}));
     $('#fWho', root).onchange = e => { View.set('t.who', e.target.value); App.render(); };
     $('#fDir', root).onchange = e => { View.set('t.dir', e.target.value); App.render(); };
     if ($('#fGoal', root)) $('#fGoal', root).onchange = e => { View.set('t.goal', e.target.value); App.render(); };
+    if ($('#fDone', root)) $('#fDone', root).onchange = e => { View.set('t.done', e.target.checked); App.render(); };
     let qt;
     $('#fQ', root).oninput = e => { clearTimeout(qt); const v = e.target.value; qt = setTimeout(() => { View.set('t.q', v); App.render({focus: 'fQ'}); const el = $('#fQ'); if (el) el.setSelectionRange(v.length, v.length); }, 250); };
-
-    const qa = $('#qaForm', root);
-    $('#qaTitle', root).oninput = e => { TaskUI.draft.title = e.target.value; };
-    $('#qaWho', root).onchange = e => { TaskUI.draft.assignee = e.target.value; };
-    $('#qaDue', root).onchange = e => { TaskUI.draft.due = e.target.value; };
-    qa.onsubmit = e => {
-      e.preventDefault();
-      const title = $('#qaTitle', root).value.trim();
-      if (!title) { $('#qaTitle', root).focus(); return; }
-      const who = $('#qaWho', root).value || Auth.personId();
-      const due = $('#qaDue', root).value || null;
-      const month = due ? monthOf(due) : (view === 'week' ? View.get('t.weekMonth', monthOf(today())) : monthOf(today()));
-      Tasks.create({title, assignee: who, due, month});
-      TaskUI.draft.title = '';
-      const p = personById(who);
-      toast(who && who !== Auth.personId() ? `Задача поставлена: ${firstName(p)}` : 'Задача добавлена');
-      App.render({focus: 'qaTitle'});
-    };
     wireTaskCards(root);
+    wireComposer(root);
   },
 });
 
-/* ── строка и карточка задачи ── */
+/* ── карточка на доске (по мотивам первой версии: код направления, аватар, срок) ── */
 function dueChip(t) {
   const d = Tasks.due(t);
   if (!d) return '<span class="due none">без срока</span>';
   const label = t.due ? dayShort(t.due) : monthShort(t.month);
   if (t.status === 'done') return `<span class="due">${label}</span>`;
-  if (d < today()) return `<span class="due late" title="Срок прошёл">${label}</span>`;
-  if (t.due && daysBetween(today(), t.due) <= 2) return `<span class="due soon">${t.due === today() ? 'сегодня' : label}</span>`;
-  return `<span class="due">${label}</span>`;
+  if (d < today()) return `<span class="due late" title="Срок прошёл">${icon('cal')}${label}</span>`;
+  if (t.due && daysBetween(today(), t.due) <= 2) return `<span class="due soon">${icon('cal')}${t.due === today() ? 'сегодня' : label}</span>`;
+  return `<span class="due">${icon('cal')}${label}</span>`;
 }
 function taskMeta(t) {
   const g = t.goalId ? Strategy.goal(t.goalId) : null;
   const n = Object.values(t.comments || {}).filter(c => c.kind !== 'system').length;
   return [
-    g ? `<span class="t-goal">${esc(g.short || g.title)}</span>` : '',
+    g ? `<span class="t-goal" title="Цель квартала">${esc(g.short || g.title)}</span>` : '',
     t.dir && DIRS[t.dir] ? `<span class="t-dir"><i class="dot" style="background:${DIRS[t.dir].color}"></i>${DIRS[t.dir].name}</span>` : '',
     n ? `<span class="t-cm">${icon('msg')}${n}</span>` : '',
     Tasks.unseen(t) ? '<span class="pill rose">новое</span>' : '',
   ].join('');
 }
+function taskCard(t, opts = {}) {
+  const p = personById(t.assignee);
+  const can = Tasks.canEdit(t);
+  const g = t.goalId ? Strategy.goal(t.goalId) : null;
+  const n = Object.values(t.comments || {}).filter(c => c.kind !== 'system').length;
+  const code = DIR_CODE[t.dir];
+  return `<div class="kc ${t.status} ${Tasks.unseen(t) ? 'fresh' : ''} ${can ? 'can' : ''}" data-task="${t.id}" tabindex="0">
+    <div class="kc-top">
+      ${code ? `<span class="kc-dir" style="--c:${DIRS[t.dir].color}" title="${DIRS[t.dir].name}">${code}</span>` : '<span class="kc-dir none">—</span>'}
+      ${t.priority === 'high' ? '<span class="kc-prio" title="Важная задача">!</span>' : ''}
+      ${Tasks.unseen(t) ? '<span class="pill rose">новое</span>' : ''}
+      <button class="kc-av" ${can ? `data-assign="${t.id}"` : 'disabled'} title="${esc(p ? personName(p) : 'Назначить исполнителя')}">${avatar(p)}</button>
+    </div>
+    <div class="kc-title">${esc(t.title)}</div>
+    <div class="kc-foot">${dueChip(t)}${n ? `<span class="t-cm">${icon('msg')}${n}</span>` : ''}${g ? `<span class="t-goal">${esc(g.short || g.title)}</span>` : ''}${opts.status ? `<span class="pill ${STATUSES[t.status].tone} kc-st">${STATUSES[t.status].name}</span>` : ''}</div>
+  </div>`;
+}
+/* строка — для списка, главной и дорожной карты */
 function taskRow(t) {
   const p = personById(t.assignee);
   const can = Tasks.canEdit(t);
-  return `<div class="t-row ${t.status === 'done' ? 'done' : ''} ${Tasks.unseen(t) ? 'fresh' : ''}" data-task="${t.id}" draggable="${can}">
+  return `<div class="t-row ${t.status === 'done' ? 'done' : ''} ${Tasks.unseen(t) ? 'fresh' : ''}" data-task="${t.id}">
     <button class="t-check ${t.status}" data-done="${t.id}" ${can ? '' : 'disabled'} aria-label="${t.status === 'done' ? 'Вернуть в работу' : 'Отметить сделанной'}" title="${t.status === 'done' ? 'Вернуть в работу' : t.status === 'review' ? 'На проверке' : 'Сделано'}">${icon('tick')}</button>
     <div class="t-main">
       <div class="t-title">${t.priority === 'high' ? '<i class="prio" title="Важно"></i>' : ''}${esc(t.title)}</div>
@@ -256,126 +247,191 @@ function taskRow(t) {
     <span class="pill ${STATUSES[t.status].tone} t-st">${STATUSES[t.status].name}</span>
   </div>`;
 }
-function taskCard(t) {
-  const p = personById(t.assignee);
-  return `<div class="t-card ${t.status} ${Tasks.unseen(t) ? 'fresh' : ''}" data-task="${t.id}" draggable="${Tasks.canEdit(t)}">
-    <div class="t-title">${t.priority === 'high' ? '<i class="prio" title="Важно"></i>' : ''}${esc(t.title)}</div>
-    <div class="t-card-foot">${avatar(p)}${dueChip(t)}<span class="pill ${STATUSES[t.status].tone}">${STATUSES[t.status].name}</span></div>
-  </div>`;
-}
 
-function renderTaskList(box, list) {
-  if (!list.length) { box.innerHTML = taskEmpty(); return; }
-  const groups = ['review', 'doing', 'todo', 'done'];
-  const openDone = View.get('t.showDone', false) || TaskUI.filters().chip === 'done';
-  box.innerHTML = groups.map(st => {
-    let items = Tasks.sort(list.filter(t => t.status === st));
-    if (!items.length) return '';
-    const total = items.length;
-    if (st === 'done') {
-      items = items.sort((a, b) => (b.doneAt || b.updatedAt || 0) - (a.doneAt || a.updatedAt || 0));
-      if (!openDone) return `<section class="t-group"><button class="t-group-head as-btn" data-show-done>${STATUSES.done.name} <span>${total}</span> — показать</button></section>`;
-      items = items.slice(0, 60);
-    }
-    return `<section class="t-group"><div class="t-group-head">${STATUSES[st].name} <span>${total}</span>${st === 'review' ? '<em>ждут приёмки автора или руководителя</em>' : ''}</div>
-      <div class="t-list grouped">${items.map(taskRow).join('')}</div></section>`;
-  }).join('');
-  on(box, 'click', '[data-show-done]', () => { View.set('t.showDone', true); App.render(); });
+/* колонка доски с добавлением внизу */
+function kbCol({key, title, sub = '', items, add = null, now = false, tone = '', extra = ''}) {
+  const comp = TaskUI.composer && TaskUI.composer.col === key ? TaskUI.composer : null;
+  return `<section class="kb-col ${now ? 'now' : ''} ${tone}" data-col="${key}">
+    <header class="kb-h"><b>${title}</b>${sub}<span class="kb-n">${items.length}</span></header>
+    <div class="kb-list">
+      ${items.map(t => taskCard(t, {status: key.startsWith('m:') || key.startsWith('w:')})).join('')}
+      ${extra}
+      ${add ? (comp ? composerHtml(comp) : `<button class="kb-add" data-add="${key}">${icon('plus')}Добавить задачу</button>`) : ''}
+    </div>
+  </section>`;
 }
-function taskEmpty() {
-  const f = TaskUI.filters();
-  return `<div class="empty"><b>${f.chip === 'overdue' ? 'Просроченных задач нет' : f.chip === 'review' ? 'На проверке ничего нет' : 'Задач по этому фильтру нет'}</b>
-    ${f.who === 'me' ? 'Показаны только ваши задачи — выберите «Все люди», чтобы увидеть задачи команды.' : 'Поменяйте фильтр или добавьте задачу строкой выше.'}</div>`;
+function composerHtml(c) {
+  const ppl = people();
+  return `<form class="kb-composer" data-composer="${c.col}" autocomplete="off">
+    <textarea class="textarea" id="kbTitle" rows="2" placeholder="Что нужно сделать? Enter — добавить" maxlength="200">${esc(c.title || '')}</textarea>
+    <div class="kb-comp-row">
+      <select class="select sm" id="kbWho" aria-label="Кому">${[['', 'Не назначено'], ...ppl.map(p => [p.id, personName(p)])].map(([v, n]) => `<option value="${v}" ${(c.assignee ?? Auth.personId() ?? '') === v ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
+      <input class="input sm" id="kbDue" type="date" value="${esc(c.due || '')}" aria-label="Срок">
+    </div>
+    <div class="kb-comp-row"><button class="btn sm primary" type="submit">Добавить</button><button class="btn sm ghost" type="button" data-comp-close>Отмена</button><button class="btn sm ghost kb-more" type="button" data-comp-more>Подробнее…</button></div>
+  </form>`;
 }
-
-function renderTaskMonths(box, list) {
-  const months = TaskUI.months();
-  const cols = [...months.map(m => ({key: m, name: monthName(m), items: list.filter(t => t.month === m)})),
-    {key: 'none', name: 'Без срока', items: list.filter(t => !t.month)}];
-  const base = TaskUI.filtered({ignoreChip: true});
-  box.innerHTML = `<div class="board">${cols.map(c => {
-    const all = base.filter(t => (c.key === 'none' ? !t.month : t.month === c.key));
-    const done = all.filter(t => t.status === 'done').length;
-    const now = c.key === monthOf(today());
-    return `<div class="col ${now ? 'now' : ''}" data-drop-month="${c.key}">
-      <div class="col-head"><b>${c.name}</b>${now ? '<span class="pill rose">сейчас</span>' : ''}<span class="col-n">${done}/${all.length}</span></div>
-      ${all.length ? progress(done / all.length, 'good') : ''}
-      <div class="col-body">${Tasks.sort(c.items).map(taskCard).join('') || '<div class="col-empty">Перетащите сюда задачу</div>'}</div>
-    </div>`;
-  }).join('')}</div>`;
-  wireDrop(box, '[data-drop-month]', (t, el) => {
-    const m = el.dataset.dropMonth === 'none' ? null : el.dataset.dropMonth;
-    if (t.month === m) return;
-    const patch = {month: m};
-    if (!m || (t.due && monthOf(t.due) !== m)) patch.due = null;
-    Tasks.update(t.id, patch, `Перенесено на ${m ? monthName(m).toLowerCase() : '«без срока»'}`);
+/* что означает колонка для новой задачи */
+function colPreset(key) {
+  if (key.startsWith('s:')) return {status: key.slice(2)};
+  if (key.startsWith('m:')) return key === 'm:none' ? {month: null} : {month: key.slice(2)};
+  if (key.startsWith('w:')) {
+    const w = key.slice(2), m = View.get('t.weekMonth', monthOf(today()));
+    if (w === 'none') return {month: m};
+    let d = addDays(w, 4);
+    if (d < monthStart(m)) d = monthStart(m);
+    if (d > monthEnd(m)) d = monthEnd(m);
+    return {due: d};
+  }
+  return {};
+}
+function wireComposer(root) {
+  on(root, 'click', '[data-add]', (e, el) => {
+    const pre = colPreset(el.dataset.add);
+    TaskUI.composer = {col: el.dataset.add, title: '', assignee: undefined, due: pre.due || ''};
+    App.render({focus: 'kbTitle'});
   });
+  on(root, 'click', '[data-comp-close]', () => { TaskUI.composer = null; App.render(); });
+  const form = $('.kb-composer', root);
+  if (!form) return;
+  const c = TaskUI.composer;
+  const ta = $('#kbTitle', form);
+  ta.addEventListener('input', () => { c.title = ta.value; });
+  $('#kbWho', form).onchange = e => { c.assignee = e.target.value; };
+  $('#kbDue', form).onchange = e => { c.due = e.target.value; };
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+    if (e.key === 'Escape') { TaskUI.composer = null; App.render(); }
+  });
+  const make = () => {
+    const title = ta.value.trim();
+    if (!title) { ta.focus(); return null; }
+    const pre = colPreset(c.col);
+    const due = $('#kbDue', form).value || null;
+    const col = $$(`[data-col="${c.col}"] [data-task]`, root).map(x => Tasks.get(x.dataset.task)).filter(Boolean);
+    const id = Tasks.create({title, assignee: $('#kbWho', form).value || null, due, month: due ? monthOf(due) : (pre.month !== undefined ? pre.month : undefined), status: pre.status});
+    Store.patch('tasks', id, {order: col.length ? effOrder(col[col.length - 1]) + 1000 : Date.now()});
+    return id;
+  };
+  form.onsubmit = e => {
+    e.preventDefault();
+    if (!make()) return;
+    c.title = '';
+    App.render({focus: 'kbTitle'});
+  };
+  $('[data-comp-more]', form).onclick = () => {
+    const id = make();
+    if (!id) return;
+    TaskUI.composer = null;
+    App.render();
+    openTask(id);
+  };
+  setTimeout(() => { const t = $('#kbTitle'); if (t && document.activeElement !== t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }, 0);
 }
 
+/* ── доска по статусам ── */
+function renderTaskBoard(box, list) {
+  const doneAll = list.filter(t => t.status === 'done').sort((a, b) => (b.doneAt || b.updatedAt || 0) - (a.doneAt || a.updatedAt || 0));
+  const doneShown = TaskUI.showDone ? doneAll : doneAll.slice(0, 8);
+  const cols = [
+    kbCol({key: 's:todo', title: 'К работе', items: byOrder(list.filter(t => t.status === 'todo')), add: true}),
+    kbCol({key: 's:doing', title: 'В работе', items: byOrder(list.filter(t => t.status === 'doing')), add: true, tone: 'doing'}),
+    kbCol({key: 's:review', title: 'На проверке', sub: '<em>принимает автор</em>', items: byOrder(list.filter(t => t.status === 'review')), tone: 'review'}),
+    kbCol({key: 's:done', title: 'Готово', items: doneShown, tone: 'done',
+      extra: doneAll.length > doneShown.length ? `<button class="kb-more-done" data-more-done>Показать ещё ${doneAll.length - doneShown.length}</button>` : ''}),
+  ];
+  box.innerHTML = `<div class="kb kb-status">${cols.join('')}</div>`;
+  on(box, 'click', '[data-more-done]', () => { TaskUI.showDone = true; App.render(); });
+  Drag.board(box, {canDrag: id => { const t = Tasks.get(id); return t && Tasks.canEdit(t); }, onDrop: dropOnStatus});
+}
+function dropOnStatus(id, key, pos) {
+  const t = Tasks.get(id);
+  if (!t) return;
+  let st = key.slice(2);
+  const order = orderBetween(pos.afterId, pos.beforeId);
+  if (st === t.status) { Store.patch('tasks', id, {order}); return; }
+  if (t.status === 'review' && st === 'done' && !Tasks.canJudge(t)) { toast('Принять задачу может автор или руководитель'); return; }
+  if (st === 'done' && t.status !== 'review' && Tasks.needsReview(t)) { st = 'review'; toast('Задачу ставил другой человек — она ушла ему на проверку'); }
+  Store.patch('tasks', id, {order});
+  Tasks.setStatus(t, st, st === 'done' && t.status === 'review' ? `${firstName(Auth.person() || {})}: принято` : null);
+}
+
+/* ── по месяцам ── */
+function renderTaskMonths(box, list) {
+  const showDone = TaskUI.filters().done;
+  const vis = list.filter(t => showDone || t.status !== 'done');
+  const cur = monthOf(today());
+  const cols = [...TaskUI.months().map(m => {
+      const all = list.filter(t => t.month === m);
+      const done = all.filter(t => t.status === 'done').length;
+      return kbCol({key: 'm:' + m, title: monthName(m), now: m === cur, add: true,
+        sub: `<span class="kb-prog" title="Готово ${done} из ${all.length}">${all.length ? `${done}/${all.length}` : ''}</span>`,
+        items: byOrder(vis.filter(t => t.month === m))});
+    }),
+    kbCol({key: 'm:none', title: 'Без срока', add: true, items: byOrder(vis.filter(t => !t.month))})];
+  box.innerHTML = `<div class="kb kb-wide">${cols.join('')}</div>`;
+  Drag.board(box, {canDrag: id => { const t = Tasks.get(id); return t && Tasks.canEdit(t); }, onDrop: (id, key, pos) => {
+    const t = Tasks.get(id);
+    const m = key === 'm:none' ? null : key.slice(2);
+    const patch = {order: orderBetween(pos.afterId, pos.beforeId)};
+    if (t.month !== m) {
+      patch.month = m;
+      if (!m || (t.due && monthOf(t.due) !== m)) patch.due = null;
+      Tasks.update(id, patch, `Перенесено на ${m ? monthName(m).toLowerCase() : '«без срока»'}`);
+    } else Store.patch('tasks', id, patch);
+  }});
+}
+
+/* ── по неделям ── */
 function renderTaskWeeks(box, list) {
   const months = TaskUI.months();
   let m = View.get('t.weekMonth', monthOf(today()));
   if (!months.includes(m)) m = monthOf(today());
+  const showDone = TaskUI.filters().done;
   const weeks = [];
   for (let w = weekStart(monthStart(m)); w <= monthEnd(m); w = addDays(w, 7)) weeks.push(w);
-  const inMonth = list.filter(t => (t.due ? monthOf(t.due) === m : t.month === m));
+  const inMonth = list.filter(t => (t.due ? monthOf(t.due) === m : t.month === m) && (showDone || t.status !== 'done'));
   const thisWeek = weekStart(today());
-  box.innerHTML = `<div class="tabs week-tabs">${months.map(x => `<button data-wm="${x}" class="${x === m ? 'on' : ''}">${monthName(x)}<span class="n">${list.filter(t => (t.due ? monthOf(t.due) === x : t.month === x)).length}</span></button>`).join('')}</div>
-    <div class="board weeks">
-    <div class="col undated" data-drop-week="none">
-      <div class="col-head"><b>Без даты</b><span class="col-n">${inMonth.filter(t => !t.due).length}</span></div>
-      <div class="col-body">${Tasks.sort(inMonth.filter(t => !t.due)).map(taskCard).join('') || '<div class="col-empty">Всё распределено по неделям</div>'}</div>
-    </div>${weeks.map(w => {
-      const end = addDays(w, 6);
-      const items = inMonth.filter(t => t.due && t.due >= w && t.due <= end);
-      return `<div class="col ${w === thisWeek ? 'now' : ''}" data-drop-week="${w}">
-        <div class="col-head"><b>${weekLabel(w)}</b>${w === thisWeek ? '<span class="pill rose">эта неделя</span>' : ''}<span class="col-n">${items.length}</span></div>
-        <div class="col-body">${Tasks.sort(items).map(taskCard).join('') || '<div class="col-empty">Свободно</div>'}</div>
-      </div>`;
-    }).join('')}</div>
-    <p class="note">Слева — задачи месяца без даты. Перетащите задачу в неделю — срок встанет на пятницу этой недели (или на тот же день недели, если срок уже был).</p>`;
-  on(box, 'click', '[data-wm]', (e, el) => { View.set('t.weekMonth', el.dataset.wm); App.render(); });
-  wireDrop(box, '[data-drop-week]', (t, el) => {
-    const w = el.dataset.dropWeek;
-    if (w === 'none') { if (t.due) Tasks.update(t.id, {due: null, month: m}, 'Срок снят'); return; }
-    const wd = t.due ? weekday(t.due) : 4;
-    let d = addDays(w, wd);
+  const cols = [kbCol({key: 'w:none', title: 'Без даты', sub: '<em>разложите по неделям</em>', add: true, tone: 'backlog', items: byOrder(inMonth.filter(t => !t.due))}),
+    ...weeks.map(w => kbCol({key: 'w:' + w, title: weekLabel(w), now: w === thisWeek, add: true,
+      items: byOrder(inMonth.filter(t => t.due && t.due >= w && t.due <= addDays(w, 6)))}))];
+  box.innerHTML = `<div class="tabs week-tabs">${months.map(x => `<button data-wm="${x}" class="${x === m ? 'on' : ''}">${monthName(x)}<span class="n">${list.filter(t => (t.due ? monthOf(t.due) === x : t.month === x) && t.status !== 'done').length}</span></button>`).join('')}</div>
+    <div class="kb kb-weeks">${cols.join('')}</div>`;
+  on(box, 'click', '[data-wm]', (e, el) => { View.set('t.weekMonth', el.dataset.wm); TaskUI.composer = null; App.render(); });
+  Drag.board(box, {canDrag: id => { const t = Tasks.get(id); return t && Tasks.canEdit(t); }, onDrop: (id, key, pos) => {
+    const t = Tasks.get(id);
+    const w = key.slice(2);
+    const order = orderBetween(pos.afterId, pos.beforeId);
+    if (w === 'none') { if (t.due) Tasks.update(id, {due: null, month: m, order}, 'Срок снят'); else Store.patch('tasks', id, {order}); return; }
+    let d = addDays(w, t.due ? weekday(t.due) : 4);
     if (d < monthStart(m)) d = monthStart(m);
     if (d > monthEnd(m)) d = monthEnd(m);
-    if (d === t.due) return;
-    Tasks.update(t.id, {due: d, month: monthOf(d)}, `Срок: ${dayLong(d)}`);
-  });
+    if (d === t.due) { Store.patch('tasks', id, {order}); return; }
+    Tasks.update(id, {due: d, month: monthOf(d), order}, `Срок: ${dayLong(d)}`);
+  }});
 }
 
-/* перетаскивание карточек между колонками */
-function wireDrop(box, colSel, onDrop) {
-  let dragId = null;
-  box.addEventListener('dragstart', e => {
-    const card = e.target.closest('[data-task]');
-    if (!card) return;
-    dragId = card.dataset.task;
-    card.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    try { e.dataTransfer.setData('text/plain', dragId); } catch (err) { /* старые браузеры */ }
-  });
-  box.addEventListener('dragend', e => { const c = e.target.closest('[data-task]'); if (c) c.classList.remove('dragging'); $$('.drop-on', box).forEach(x => x.classList.remove('drop-on')); });
-  box.addEventListener('dragover', e => {
-    const col = e.target.closest(colSel);
-    if (!col || !dragId) return;
-    e.preventDefault();
-    $$('.drop-on', box).forEach(x => x !== col && x.classList.remove('drop-on'));
-    col.classList.add('drop-on');
-  });
-  box.addEventListener('drop', e => {
-    const col = e.target.closest(colSel);
-    if (!col || !dragId) return;
-    e.preventDefault();
-    col.classList.remove('drop-on');
-    const t = Tasks.get(dragId);
-    dragId = null;
-    if (t && Tasks.canEdit(t)) onDrop(t, col);
-  });
+/* ── список ── */
+function renderTaskList(box, list) {
+  const showDone = TaskUI.filters().done;
+  const groups = ['review', 'doing', 'todo', ...(showDone ? ['done'] : [])];
+  const comp = TaskUI.composer && TaskUI.composer.col === 's:todo' ? TaskUI.composer : null;
+  const html = groups.map(st => {
+    let items = st === 'done' ? list.filter(t => t.status === 'done').sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 60) : Tasks.sort(list.filter(t => t.status === st));
+    if (!items.length && st !== 'todo') return '';
+    return `<section class="t-group"><div class="t-group-head">${STATUSES[st].name} <span>${items.length}</span>${st === 'review' ? '<em>ждут приёмки автора или руководителя</em>' : ''}</div>
+      ${st === 'todo' ? `<div class="kb-col list-add" data-col="s:todo"><div class="kb-list">${comp ? composerHtml(comp) : '<button class="kb-add" data-add="s:todo">' + icon('plus') + 'Добавить задачу</button>'}</div></div>` : ''}
+      ${items.length ? `<div class="t-list grouped">${items.map(taskRow).join('')}</div>` : ''}</section>`;
+  }).join('');
+  box.innerHTML = html || taskEmpty();
 }
+function taskEmpty() {
+  const f = TaskUI.filters();
+  return `<div class="empty"><b>${f.late ? 'Просроченных задач нет' : 'Задач по этому фильтру нет'}</b>
+    ${f.who === 'me' ? 'Показаны только ваши задачи — выберите «Вся команда», чтобы увидеть задачи всех.' : 'Поменяйте фильтр или добавьте задачу.'}</div>`;
+}
+
+/* клики по карточкам и строкам: галочка, смена исполнителя, открытие */
 function wireTaskCards(root) {
   on(root, 'click', '[data-done]', (e, el) => {
     e.stopPropagation();
@@ -385,9 +441,45 @@ function wireTaskCards(root) {
     else if (t.status === 'review') { if (Tasks.canJudge(t)) Tasks.setStatus(t, 'done', `${firstName(Auth.person() || {})}: принято`); else toast('Задача ждёт приёмки автора или руководителя'); }
     else Tasks.complete(t);
   });
+  on(root, 'click', '[data-assign]', async (e, el) => {
+    e.stopPropagation();
+    const t = Tasks.get(el.dataset.assign);
+    if (!t) return;
+    const v = await pickPop(el, [['', 'Не назначено'], ...people().map(p => [p.id, personName(p) + (p.title && p.name ? ' · ' + p.title : '')])], t.assignee || '');
+    if (v === null || v === (t.assignee || '')) return;
+    const p = personById(v);
+    Tasks.update(t.id, {assignee: v || null, ...(p && p.dir && !t.dir ? {dir: p.dir} : {})}, `Исполнитель: ${p ? personName(p) : 'не назначен'}`);
+  });
   on(root, 'click', '[data-task]', (e, el) => {
-    if (e.target.closest('[data-done], button, a, input, select')) return;
+    if (e.target.closest('[data-done], button, a, input, select, textarea')) return;
     openTask(el.dataset.task);
+  });
+  on(root, 'keydown', '[data-task]', (e, el) => { if (e.key === 'Enter' && e.target === el) openTask(el.dataset.task); });
+}
+
+/* быстрое окно, как в первой версии: название, кто, срок → Добавить или Подробнее… */
+function quickTask(preset) {
+  const ppl = people();
+  openModal({
+    title: 'Новая задача',
+    body: `<input class="input t-m-title" id="qtTitle" placeholder="Название задачи" maxlength="200">
+      <div class="grid3">
+        <label class="field"><span>Кто делает</span><select class="select" id="qtWho">${[['', 'Не назначено'], ...ppl.map(p => [p.id, personName(p)])].map(([v, n]) => `<option value="${v}" ${(Auth.personId() || '') === v ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+        <label class="field"><span>Срок</span><input class="input" id="qtDue" type="date" value="${esc(preset.due || '')}"></label>
+        <label class="field"><span>Направление</span><select class="select" id="qtDir"><option value="">Как у исполнителя</option>${Object.entries(DIRS).map(([k, d]) => `<option value="${k}">${d.name}</option>`).join('')}</select></label>
+      </div>`,
+    foot: `<button class="btn ghost left" id="qtMore">Подробнее…</button><button class="btn" data-close>Отмена</button><button class="btn primary" id="qtAdd">Добавить</button>`,
+    onMount(el, close) {
+      const make = () => {
+        const title = $('#qtTitle', el).value.trim();
+        if (!title) { $('#qtTitle', el).focus(); $('#qtTitle', el).classList.add('need'); return null; }
+        const due = $('#qtDue', el).value || null;
+        return Tasks.create({title, assignee: $('#qtWho', el).value || null, due, dir: $('#qtDir', el).value || undefined});
+      };
+      $('#qtAdd', el).onclick = () => { if (make()) { close(); toast('Задача добавлена'); } };
+      $('#qtMore', el).onclick = () => { const id = make(); if (id) { close(); openTask(id); } };
+      $('#qtTitle', el).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#qtAdd', el).click(); } });
+    },
   });
 }
 
