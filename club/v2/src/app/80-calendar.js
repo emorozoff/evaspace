@@ -39,17 +39,28 @@ function mergeIv(list) {
   return out;
 }
 
-/* ── почта для приглашений: календарь Google → карточка в «Команде» → почта входа ── */
+/* ── почта для приглашений: своя для календаря → карточка в «Команде» →
+   почта подключённого Google → почта входа в штаб ── */
 const accountOf = pid => Store.all('accounts').find(a => a.personId === pid && a.active !== false) || null;
-function inviteEmail(p) {
-  if (!p) return '';
-  return String(p.gcalEmail || p.email || (accountOf(p.id) || {}).email || '').trim();
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAIL_SRC = {cal: 'своя для календаря', card: 'из карточки в «Команде»', google: 'из подключённого Google', login: 'почта входа в штаб'};
+function inviteMail(p) {
+  if (!p) return {mail: '', src: ''};
+  const acc = accountOf(p.id);
+  for (const [src, v] of [['cal', p.calEmail], ['card', p.email], ['google', p.gcalEmail], ['login', acc && acc.email]]) {
+    if (v && EMAIL_RE.test(String(v).trim())) return {mail: String(v).trim(), src};
+  }
+  return {mail: '', src: ''};
 }
+const inviteEmail = p => inviteMail(p).mail;
 function personByEmail(email) {
   const e = normEmail(email);
   if (!e) return null;
-  return people().find(p => [p.gcalEmail, p.email, (accountOf(p.id) || {}).email].some(x => x && normEmail(x) === e)) || null;
+  return people().find(p => [p.calEmail, p.email, p.gcalEmail, (accountOf(p.id) || {}).email].some(x => x && normEmail(x) === e)) || null;
 }
+/* какой календарь читает штаб и куда кладёт собрания: выбранный человеком или основной */
+const myCalId = () => { const p = personById(Auth.personId()); return (p && p.calId) || ''; };
+const canEditMail = pid => Auth.can('team.manage') || pid === Auth.personId();
 const calPeople = () => people().filter(p => p.name && (p.status || 'active') === 'active');
 
 /* ── ошибки коннектора: у каждого кода своё действие ── */
@@ -85,7 +96,9 @@ const Cal = {
   conn: 'checking',     // checking · ready · prompt · denied · off · error
   err: null,            // {code, text} — ошибка подключения для всей страницы
   hint: '',             // мягкая подсказка по списку коннекторов
-  calEmail: '',         // почта основного календаря того, кто смотрит
+  hostEmail: '',        // почта календаря, который сейчас читает штаб
+  calendars: null,      // календари подключённого аккаунта (list_calendars) — только в памяти
+  calLoading: false,
   week: {},             // понедельник → {events, at} | {loading} | {err} — свои события, только в памяти
   syncing: false,
   _init: null,
@@ -142,16 +155,42 @@ const Cal = {
 
   async events(from, to) {
     const input = {startTime: `${from}T00:00:00${TZ_OFF}`, endTime: `${addDays(to, 1)}T00:00:00${TZ_OFF}`, orderBy: 'startTime', pageSize: 250, timeZone: TZ};
+    const cid = myCalId();
+    if (cid) input.calendarId = cid;
     let list = [], token = null;
     for (let page = 0; page < 4; page++) {
       const res = await this.call('list_events', token ? {...input, pageToken: token} : input, true);
       list = list.concat(Array.isArray(res) ? res : (res && (res.events || res.items)) || []);
       /* название основного календаря — это почта владельца */
-      if (res && /^\S+@\S+\.\S+$/.test(res.summary || '')) this.calEmail = res.summary;
+      if (res && EMAIL_RE.test(res.summary || '')) this.hostEmail = res.summary;
       token = res && res.nextPageToken;
       if (!token) break;
     }
     return list.filter(ev => ev && ev.status !== 'cancelled');
+  },
+
+  /* календари, доступные подключённому аккаунту Google: основной, общие, чужие с доступом */
+  async loadCalendars() {
+    if (this.calLoading) return;
+    this.calLoading = true;
+    App.renderSoon();
+    try {
+      let list = [], token = null;
+      for (let page = 0; page < 3; page++) {
+        const res = await this.call('list_calendars', token ? {pageSize: 100, pageToken: token} : {pageSize: 100}, true);
+        list = list.concat((res && (res.calendars || res.items)) || []);
+        token = res && res.nextPageToken;
+        if (!token) break;
+      }
+      this.calendars = list.filter(c => c && c.id).map(c => ({id: String(c.id), name: String(c.summary || c.summaryOverride || c.id), primary: !!c.primary}));
+    } catch (e) {
+      this.calendars = null;
+      const x = calErr(e);
+      if (!x.conn && !x.off) toast(x.text, {error: true});
+    } finally {
+      this.calLoading = false;
+      App.renderSoon();
+    }
   },
 
   /* свои события недели — для сетки «Неделя» */
@@ -182,8 +221,8 @@ const Cal = {
       }
       const slots = mergeIv(events.filter(evBusy).filter(ev => !meetingOfEvent(ev)).map(evRange).filter(Boolean).map(r => [r.start, r.end]));
       Store.put('busy', pid, {slots, from, to, at: Date.now(), share: true});
-      const email = selfEmail(events) || this.calEmail || '', p = personById(pid);
-      if (email && p && normEmail(p.gcalEmail) !== normEmail(email)) Store.patch('people', pid, {gcalEmail: email});
+      const email = selfEmail(events) || this.hostEmail || '', p = personById(pid);
+      if (!myCalId() && email && p && normEmail(p.gcalEmail) !== normEmail(email)) Store.patch('people', pid, {gcalEmail: email});
       syncRsvp(events);
       if (!silent) toast('Календарь обновлён: команда видит вашу занятость на 4 недели вперёд');
       return true;
@@ -377,15 +416,16 @@ App.register('calendar', {
     root.innerHTML = `
       ${pageHead('Календарь', 'Занятость команды, общие свободные окна и собрания. Приглашения приходят участникам прямо в их Google Календарь.',
         `${helpBtn('calendar')}${canMeet ? `<button class="btn primary" data-new-meet>${icon('plus')}Собрание</button>` : ''}`)}
-      ${helpBox('calendar', `<b>Как это работает.</b> Нажмите «Подключить мой Google Календарь» — один раз. Вы увидите свои события в сетке недели, а команда — только когда вы <b>заняты</b>: названия, места и участники ваших встреч в штаб не попадают. <b>Собрание</b>: кнопка сверху или клик по сетке → название, время, участники → «Создать и отправить приглашения» — событие появится в вашем Google Календаре, участникам придёт приглашение на почту и в их календарь, со ссылкой на Google Meet. Вкладка «Занятость команды» показывает, кто когда занят, и зелёным — окна, где свободны все выбранные: нажмите на окно, и собрание создастся на это время. Приглашение уходит на почту из карточки человека в «Команде» (после подключения — на почту его Google Календаря).`)}
+      ${helpBox('calendar', `<b>Как это работает.</b> Нажмите «Подключить мой Google Календарь» — один раз. Вы увидите свои события в сетке недели, а команда — только когда вы <b>заняты</b>: названия, места и участники ваших встреч в штаб не попадают. <b>Собрание</b>: кнопка сверху или клик по сетке → название, время, участники → «Создать и отправить приглашения» — событие появится в вашем Google Календаре, участникам придёт приглашение на почту и в их календарь, со ссылкой на Google Meet. Вкладка «Занятость команды» показывает, кто когда занят, и зелёным — окна, где свободны все выбранные: нажмите на окно, и собрание создастся на это время. Приглашение уходит на почту из вкладки <b>«Почты»</b>: по умолчанию это почта из карточки в «Команде», но каждый может вписать свою — например, другой аккаунт Google. Там же выбирается, какой календарь читает штаб.`)}
       ${connCard()}
       <div class="cal-bar">
         <div class="tabs cal-tabs" role="tablist">
           <button data-ctab="week" class="${tab === 'week' ? 'on' : ''}">Неделя</button>
           <button data-ctab="team" class="${tab === 'team' ? 'on' : ''}">Занятость команды</button>
           <button data-ctab="list" class="${tab === 'list' ? 'on' : ''}">Собрания <span class="n">${upcomingMeetings().length || ''}</span></button>
+          <button data-ctab="mail" class="${tab === 'mail' ? 'on' : ''}">Почты${(n => n ? ` <span class="n warn-t" title="без почты — приглашения не придут">${n} без почты</span>` : '')(calPeople().filter(x => !inviteEmail(x)).length)}</button>
         </div>
-        ${tab !== 'list' ? `<div class="cal-nav">
+        ${tab === 'week' || tab === 'team' ? `<div class="cal-nav">
           <button class="icon-btn" data-wk="-7" aria-label="Предыдущая неделя">${icon('back')}</button>
           <b class="cal-wk">${weekLabel(ws)}</b>
           <button class="icon-btn" data-wk="7" aria-label="Следующая неделя" style="transform:scaleX(-1)">${icon('back')}</button>
@@ -393,7 +433,7 @@ App.register('calendar', {
           ${tab === 'week' ? `<div class="seg"><button data-days="5" class="${wkDays === 5 ? 'on' : ''}">Пн–Пт</button><button data-days="7" class="${wkDays === 7 ? 'on' : ''}">7 дней</button></div>` : ''}
         </div>` : ''}
       </div>
-      <div id="calView">${tab === 'team' ? calTeamView(ws) : tab === 'list' ? calListView() : calWeekView(ws, wkDays)}</div>`;
+      <div id="calView">${tab === 'team' ? calTeamView(ws) : tab === 'list' ? calListView() : tab === 'mail' ? calMailView() : calWeekView(ws, wkDays)}</div>`;
 
     wireHelp(root);
     on(root, 'click', '[data-ctab]', (e, el) => { View.set('cal.tab', el.dataset.ctab); App.render(); });
@@ -423,6 +463,8 @@ App.register('calendar', {
     on(root, 'click', '[data-mine]', (e, el) => { View.set('cal.mine', el.dataset.mine === '1'); App.render(); });
     if (tab === 'week') calWireWeek(root, ws);
     if (tab === 'team') calWireTeam(root, ws);
+    if (tab === 'mail') calWireMail(root);
+    if (tab === 'mail' && Cal.conn === 'ready' && Cal.calendars === null && !Cal.calLoading) Cal.loadCalendars();
     if (tab === 'week' && Cal.conn === 'ready' && !Cal.week[ws]) Cal.loadWeek(ws);
     Cal.autoSync();
   },
@@ -446,8 +488,9 @@ function connCard() {
         ${Cal.hint ? `<p class="warn-t">${esc(Cal.hint)}</p>` : ''}</div>
       <button class="btn primary" data-cal-connect ${Cal.syncing ? 'disabled' : ''}>${Cal.syncing ? 'Подключаю…' : 'Подключить мой Google Календарь'}</button>
     </div>`;
+  const cid = myCalId(), im = inviteMail(p);
   return `<div class="cal-conn slim ok"><i class="dot"></i>
-      <span><b>Google Календарь подключён</b>${p && p.gcalEmail ? ` · ${esc(p.gcalEmail)}` : ''} · занятость ${Cal.syncing ? 'обновляется…' : 'обновлена ' + timeAgo(doc.at)}</span>
+      <span><b>Google Календарь подключён</b> · календарь: ${esc(cid ? calName(cid) : (p && p.gcalEmail) || 'основной')} · приглашения: ${im.mail ? esc(im.mail) : '<b class="warn-t">почта не указана</b>'} <button class="link-btn" data-ctab="mail">изменить</button> · занятость ${Cal.syncing ? 'обновляется…' : 'обновлена ' + timeAgo(doc.at)}</span>
       <button class="btn xs ghost" data-cal-sync ${Cal.syncing ? 'disabled' : ''}>${icon('refresh')}Обновить</button>
       <button class="btn xs ghost" data-cal-stop>Не показывать занятость</button>
     </div>`;
@@ -609,6 +652,91 @@ function calWireTeam(root) {
   });
 }
 
+/* ── почты: куда приходят приглашения и какой календарь читает штаб ── */
+function calMailView() {
+  const pid = Auth.personId(), me = personById(pid);
+  const usable = Cal.usable();
+  let myCard = '';
+  if (me) {
+    const mine = inviteMail(me), acc = accountOf(me.id), cid = myCalId();
+    const cands = [['card', me.email], ['google', me.gcalEmail], ['login', acc && acc.email]]
+      .filter(([, v], i, a) => v && EMAIL_RE.test(v) && normEmail(v) !== normEmail(me.calEmail || '') && a.findIndex(x => normEmail(x[1] || '') === normEmail(v)) === i);
+    const host = me.gcalEmail || Cal.hostEmail;
+    const cals = (Cal.calendars || []).filter(c => normEmail(c.id) !== normEmail(host || '') && !c.primary);
+    myCard = `<section class="card ml-me">
+      <div class="card-head"><h2>Мой календарь</h2><span class="note">${esc(personName(me))}</span></div>
+      <div class="ml-grid">
+        <div class="ml-block">
+          <label class="field"><span>Почта для приглашений</span>
+            <input class="input" id="mlMine" type="email" autocomplete="email" value="${esc(me.calEmail || '')}" placeholder="${esc(mine.src && mine.src !== 'cal' ? mine.mail : 'name@gmail.com')}"></label>
+          <p class="note">Сейчас приглашения на собрания штаба приходят на <b>${mine.mail ? esc(mine.mail) : 'никуда — почта не указана'}</b>${mine.src ? ` — ${MAIL_SRC[mine.src]}` : ''}. Нужен другой аккаунт — впишите его почту. Пустое поле — почта из карточки в «Команде».</p>
+          ${cands.length ? `<div class="chips ml-cands">${cands.map(([src, v]) => `<button type="button" class="chip" data-ml-pick="${esc(v)}">${esc(v)}<small>${MAIL_SRC[src]}</small></button>`).join('')}</div>` : ''}
+        </div>
+        <div class="ml-block">
+          <label class="field"><span>Календарь для штаба</span>
+            <select class="select" id="mlCal" ${usable ? '' : 'disabled'}>
+              <option value="">Основной календарь подключённого Google${host ? ' — ' + esc(host) : ''}</option>
+              ${cals.map(c => `<option value="${esc(c.id)}" ${c.id === cid ? 'selected' : ''}>${esc(c.name)}${c.name !== c.id && EMAIL_RE.test(c.id) ? ' — ' + esc(c.id) : ''}</option>`).join('')}
+              ${cid && !cals.some(c => c.id === cid) ? `<option value="${esc(cid)}" selected>${esc(cid)}</option>` : ''}
+            </select></label>
+          <p class="note">Из этого календаря штаб берёт вашу занятость и в него ставит собрания, которые создаёте вы. ${!usable ? 'Выбор появится, когда штаб открыт в Claude с подключённым Google Календарём.' : Cal.calLoading ? 'Загружаю список календарей…' : Cal.calendars ? `В списке — календари, которые видит подключённый аккаунт. <button type="button" class="link-btn" data-ml-cals>Обновить список</button>` : '<button type="button" class="link-btn" data-ml-cals>Загрузить список календарей</button>'}</p>
+          <details class="ml-other"><summary>Нужного аккаунта нет в списке?</summary>
+            <p class="note">Коннектор Google Calendar в Claude работает с одним аккаунтом Google. Два пути: <b>1)</b> в нужном аккаунте откройте Google Календарь → Настройки → «Доступ для отдельных пользователей» и добавьте ${host ? esc(host) : 'подключённый аккаунт'} с правом вносить изменения — календарь появится в списке выше; <b>2)</b> переподключите Google Calendar в claude.ai → Настройки → Коннекторы уже к нужному аккаунту и обновите страницу.</p>
+          </details>
+        </div>
+      </div>
+      <div class="ml-foot"><button class="btn primary" id="mlSave">Сохранить</button></div>
+    </section>`;
+  }
+  const rows = calPeople().map(p => {
+    const m = inviteMail(p), b = Store.get('busy', p.id);
+    return `<tr>
+      <td><a class="ml-person" href="#p-${p.id}">${avatar(p)}<span><b>${esc(personName(p))}</b><small>${esc(p.title || '')}</small></span></a></td>
+      <td>${canEditMail(p.id) ? `<input class="input sm" type="email" data-ml-pid="${p.id}" value="${esc(p.calEmail || '')}" placeholder="${esc(m.src && m.src !== 'cal' ? m.mail : 'почта для приглашений')}">` : (p.calEmail ? esc(p.calEmail) : '<span class="muted">—</span>')}</td>
+      <td>${m.mail ? `<b>${esc(m.mail)}</b><small class="ml-src">${MAIL_SRC[m.src]}</small>` : '<span class="pill warn">приглашения не придут</span>'}</td>
+      <td class="soft nowrap">${b && b.share !== false && b.from ? `подключён · ${timeAgo(b.at)}` : 'не подключён'}</td>
+    </tr>`;
+  }).join('');
+  return `${myCard}
+    <section class="section">
+      <div class="section-head"><h2>Почты команды</h2><span class="hint-inline">По умолчанию — почта из карточки в «Команде». ${Auth.can('team.manage') ? 'Впишите другую, если человеку нужны приглашения на другой аккаунт.' : 'Свою можно поменять здесь, чужие меняет основатель.'}</span></div>
+      <div class="table-wrap"><table class="t ml-table">
+        <thead><tr><th>Человек</th><th>Своя почта для календаря</th><th>Приглашения уходят на</th><th>Google Календарь</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>
+      <p class="note">Пустое поле — берём почту из карточки в «Команде», если её нет — почту подключённого Google, затем почту входа в штаб. Сохраняется, когда выходите из поля.</p>
+    </section>`;
+}
+function calWireMail(root) {
+  on(root, 'change', '[data-ml-pid]', (e, el) => {
+    const v = el.value.trim(), p = personById(el.dataset.mlPid);
+    if (v && !EMAIL_RE.test(v)) { el.classList.add('bad'); toast('Почта выглядит неправильно'); return; }
+    el.classList.remove('bad');
+    if ((p.calEmail || '') === v) return;
+    Store.patch('people', p.id, {calEmail: v});
+    toast(v ? `${firstName(p)}: приглашения — на ${v}` : `${firstName(p)}: снова почта из карточки`);
+  });
+  on(root, 'click', '[data-ml-pick]', (e, el) => { const i = $('#mlMine', root); if (i) { i.value = el.dataset.mlPick; i.focus(); } });
+  on(root, 'click', '[data-ml-cals]', () => { Cal.calendars = null; Cal.loadCalendars(); });
+  const btn = $('#mlSave', root);
+  if (btn) btn.onclick = () => {
+    const pid = Auth.personId(), p = personById(pid);
+    const mail = $('#mlMine', root).value.trim();
+    if (mail && !EMAIL_RE.test(mail)) { toast('Почта выглядит неправильно'); $('#mlMine', root).focus(); return; }
+    const sel = $('#mlCal', root);
+    const cid = sel && !sel.disabled ? sel.value : (p.calId || '');
+    const calChanged = cid !== (p.calId || '');
+    Store.patch('people', pid, {calEmail: mail, calId: cid});
+    if (!calChanged) { toast('Сохранено'); return; }
+    Cal.week = {};
+    Cal.hostEmail = '';
+    const doc = Store.get('busy', pid);
+    if (doc && doc.share !== false && doc.from) {
+      toast('Сохранено. Беру занятость из выбранного календаря…');
+      Cal.sync({silent: true}).then(ok => toast(ok ? 'Занятость обновлена из выбранного календаря' : 'Не получилось прочитать выбранный календарь — проверьте доступ к нему', ok ? {} : {error: true}));
+    } else toast('Сохранено');
+  };
+}
+
 /* ── список собраний ── */
 function upcomingMeetings() {
   const now = nowMs();
@@ -707,9 +835,9 @@ function openMeeting(id, preset = {}) {
     return;
   }
 
-  const chip = p => {
-    const on = d.attendees.includes(p.id), mail = inviteEmail(p);
-    return `<button type="button" class="chip mt-chip ${on ? 'on' : ''} ${mail ? '' : 'nomail'}" data-att="${p.id}" title="${mail ? esc(mail) : 'нет почты — приглашение не придёт; впишите почту в «Команде»'}">${avatar(p)}${esc(firstName(p))}${mail ? '' : ' <span class="mt-nomail">нет почты</span>'}</button>`;
+  const chip = (p, on = d.attendees.includes(p.id)) => {
+    const mail = inviteEmail(p);
+    return `<button type="button" class="chip mt-chip ${on ? 'on' : ''} ${mail ? '' : 'nomail'}" data-att="${p.id}" title="${mail ? esc(mail) : 'нет почты — приглашение не придёт; впишите её ниже или во вкладке «Почты»'}">${avatar(p)}${esc(firstName(p))}${mail ? '' : ' <span class="mt-nomail">нет почты</span>'}</button>`;
   };
   const foot = `${m && canEdit ? `<button class="btn ghost danger left" id="mtDel">${inGoogle && isOrg ? 'Отменить собрание' : 'Удалить'}</button>` : ''}
     <button class="btn" data-close>Отмена</button>
@@ -727,9 +855,10 @@ function openMeeting(id, preset = {}) {
         <label class="field"><span>Повтор</span><select class="select" id="mtRepeat" ${inGoogle ? 'disabled title="Повтор меняется только новым собранием"' : ''}>${Object.entries(REPEATS).map(([k, n]) => `<option value="${k}" ${k === (d.repeat || '') ? 'selected' : ''}>${n}${k ? ' до 31 декабря' : ''}</option>`).join('')}</select></label>
       </div>
       <div class="field"><span>Участники <small class="note">организатор — ${esc(orgP ? firstName(orgP) : 'вы')}</small></span>
-        <div class="chips mt-chips">${all.filter(p => p.id !== organizer).map(chip).join('')}<button type="button" class="chip ghost" id="mtAll">Все</button></div>
+        <div class="chips mt-chips">${all.filter(p => p.id !== organizer).map(p => chip(p)).join('')}<button type="button" class="chip ghost" id="mtAll">Все</button></div>
       </div>
       <label class="field"><span>Гости не из команды <small class="note">почты через запятую</small></span><input class="input" id="mtGuests" value="${esc((d.guests || []).join(', '))}" placeholder="partner@mail.ru"></label>
+      <div class="mt-mail" id="mtMail"></div>
       <div class="mt-help" id="mtHelp"></div>
       <label class="field"><span>Повестка</span><textarea class="textarea" id="mtAgenda" rows="3" placeholder="1. Цифры недели · 2. Что мешает · 3. Решения">${esc(d.agenda || '')}</textarea></label>
       <div class="mt-opts">
@@ -767,12 +896,37 @@ function openMeeting(id, preset = {}) {
             ? `В это время заняты: ${busy.map(x => `<b>${esc(firstName(personById(x.pid)))}</b>${x.hit.m ? ` (${esc(x.hit.m.title)})` : ''}`).join(', ')}`
             : `${dayWd(v.date)}, ${v.start}–${hmMs(e)} — ${known.length > 1 ? 'свободны все, у кого подключён календарь' : 'пересечений не видно'}`}${unknown.length ? `<small>Нет данных календаря: ${unknown.map(x => esc(firstName(personById(x.pid)))).join(', ')}</small>` : ''}</span></div>
           ${slots.length ? `<div class="mt-slots"><span class="label">Свободно у всех</span>${slots.map(t => `<button type="button" class="chip" data-slot="${t}">${dayWd(mskDate(t))}, ${hmMs(t)}</button>`).join('')}${google && pids.length > 1 ? '<button type="button" class="chip ghost" id="mtAskG">Спросить Google</button>' : ''}</div>` : google && pids.length > 1 ? '<div class="mt-slots"><button type="button" class="chip ghost" id="mtAskG">Подобрать время в Google</button></div>' : ''}
-          <div class="mt-gslots" id="mtG"></div>
-          ${noMail.length ? `<p class="note warn-t">Без почты — приглашение не придёт: ${noMail.map(pid => esc(firstName(personById(pid)))).join(', ')}. Почту вписывают в «Команде».</p>` : ''}`;
+          <div class="mt-gslots" id="mtG"></div>`;
+      };
+      /* почты прямо здесь: у кого из выбранных нет адреса для приглашения */
+      const paintMail = () => {
+        const box = $('#mtMail', el);
+        const typed = Object.fromEntries($$('[data-mt-mail]', box).map(i => [i.dataset.mtMail, i.value]));
+        const noMail = val().attendees.filter(pid => !inviteEmail(personById(pid)));
+        if (!noMail.length) { box.innerHTML = ''; return; }
+        const editable = noMail.filter(canEditMail);
+        box.innerHTML = `<p class="note warn-t">Без почты приглашение не придёт: ${noMail.map(pid => esc(firstName(personById(pid)))).join(', ')}.${editable.length < noMail.length ? ' Почту остальных впишет основатель во вкладке «Почты».' : ''}</p>
+          ${editable.length ? `<div class="mt-mail-row">${editable.map(pid => `<label class="field"><span>${esc(firstName(personById(pid)))}</span><input class="input sm" type="email" data-mt-mail="${pid}" placeholder="name@gmail.com" value="${esc(typed[pid] || '')}"></label>`).join('')}
+            <button type="button" class="btn sm" id="mtMailSave">Сохранить почты</button></div>` : ''}`;
       };
       paint();
-      on(el, 'click', '[data-att]', (e, b) => { b.classList.toggle('on'); paint(); });
-      $('#mtAll', el).onclick = () => { const btns = $$('[data-att]', el); const allOn = btns.every(b => b.classList.contains('on')); btns.forEach(b => b.classList.toggle('on', !allOn)); paint(); };
+      paintMail();
+      on(el, 'click', '[data-att]', (e, b) => { b.classList.toggle('on'); paint(); paintMail(); });
+      $('#mtAll', el).onclick = () => { const btns = $$('[data-att]', el); const allOn = btns.every(b => b.classList.contains('on')); btns.forEach(b => b.classList.toggle('on', !allOn)); paint(); paintMail(); };
+      on(el, 'click', '#mtMailSave', () => {
+        let n = 0, bad = false;
+        $$('[data-mt-mail]', el).forEach(i => {
+          const v = i.value.trim();
+          if (!v) return;
+          if (!EMAIL_RE.test(v)) { bad = true; i.classList.add('bad'); return; }
+          Store.patch('people', i.dataset.mtMail, {calEmail: v});
+          const b = $(`[data-att="${i.dataset.mtMail}"]`, el);
+          if (b) b.outerHTML = chip(personById(i.dataset.mtMail), b.classList.contains('on'));
+          n++;
+        });
+        if (bad) toast('Проверьте почту — она выглядит неправильно');
+        if (n) { toast(`Почты сохранены: ${n}. Их видно во вкладке «Почты»`); paintMail(); }
+      });
       on(el, 'click', '[data-dur]', (e, b) => { $$('[data-dur]', el).forEach(x => x.classList.toggle('on', x === b)); paint(); });
       on(el, 'click', '[data-slot]', (e, b) => {
         const t = Number(b.dataset.slot);
@@ -817,7 +971,7 @@ function openMeeting(id, preset = {}) {
         const body = {...v, until: v.repeat ? Q.end : null};
         if (!m) {
           const nid = uid();
-          Store.put('meetings', nid, {...body, organizer, by: Auth.me().id, at: Date.now(), invite: send ? 'sending' : 'none'});
+          Store.put('meetings', nid, {...body, organizer, calId: myCalId() || null, by: Auth.me().id, at: Date.now(), invite: send ? 'sending' : 'none'});
           close();
           if (send) await pushMeeting(nid); else toast('Собрание сохранено в штабе');
           return;
@@ -833,19 +987,28 @@ function openMeeting(id, preset = {}) {
   });
 }
 
-/* участники для Google: почты команды (без организатора) и гости */
+/* участники для Google: почты команды и гости. Хозяину календаря, в котором
+   создаётся событие, приглашение не нужно; если организатор вписал для
+   календаря другую почту — пригласим и её, чтобы собрание было и там. */
 function inviteList(m) {
   const seen = new Set(), out = [];
   const org = personById(m.organizer);
-  const orgMails = [org && org.gcalEmail, org && org.email, org && (accountOf(org.id) || {}).email].filter(Boolean).map(normEmail);
-  (m.attendees || []).forEach(pid => {
-    const p = personById(pid), mail = inviteEmail(p);
-    if (!mail || seen.has(normEmail(mail)) || orgMails.includes(normEmail(mail))) return;
-    seen.add(normEmail(mail));
-    out.push({email: mail, displayName: personName(p)});
-  });
-  (m.guests || []).forEach(mail => { if (!seen.has(normEmail(mail))) { seen.add(normEmail(mail)); out.push({email: mail}); } });
+  const host = normEmail(EMAIL_RE.test(m.calId || '') ? m.calId : (org && org.gcalEmail) || (m.organizer === Auth.personId() ? Cal.hostEmail : ''));
+  const add = (mail, name) => {
+    const k = normEmail(mail);
+    if (!mail || seen.has(k) || k === host) return;
+    seen.add(k);
+    out.push(name ? {email: mail, displayName: name} : {email: mail});
+  };
+  if (org && host) add(inviteEmail(org), personName(org));
+  (m.attendees || []).forEach(pid => { const p = personById(pid); add(inviteEmail(p), personName(p)); });
+  (m.guests || []).forEach(mail => add(mail));
   return out;
+}
+/* название календаря для подписи */
+function calName(id) {
+  const c = (Cal.calendars || []).find(x => x.id === id);
+  return c ? c.name + (c.name !== id && EMAIL_RE.test(id) ? ` (${id})` : '') : id;
 }
 function descOf(m) {
   return `${m.agenda ? m.agenda + '\n\n' : ''}Собрание из штаба Eva Club.`;
@@ -866,6 +1029,7 @@ async function pushMeeting(id) {
     attendees: att, description: descOf(m), addGoogleMeetUrl: !!m.meet,
     notificationLevel: 'ALL', useDefaultReminders: true,
   };
+  if (m.calId) input.calendarId = m.calId;
   if (m.repeat) input.recurrenceData = [rruleOf(m)];
   try {
     const ev = eventOf(await Cal.call('create_event', input));
@@ -888,6 +1052,7 @@ async function updateInGoogle(id, before) {
   const removed = was.filter(x => !lower(now).includes(normEmail(x)));
   const s = tMs(m.date, m.start), e = s + (Number(m.dur) || 60) * 60e3;
   const input = {eventId: m.gcalId, summary: m.title, description: descOf(m), startTime: isoMs(s), endTime: isoMs(e), timeZone: TZ, notificationLevel: 'ALL'};
+  if (m.calId) input.calendarId = m.calId;
   if (added.length) input.addedAttendees = added;
   if (removed.length) input.removedAttendeeEmails = removed;
   if (m.meet && !m.meetUrl) input.addGoogleMeetUrl = true;
@@ -925,7 +1090,7 @@ async function cancelMeeting(id, anchor) {
   if (m.gcalId && isOrg && Cal.conn !== 'off') {
     if (!(await confirmPop(anchor, {text: 'Отменить собрание? Участникам придёт отмена в Google Календаре.', yes: 'Да, отменить', danger: true}))) return false;
     try {
-      await Cal.call('delete_event', {eventId: m.gcalId, notificationLevel: 'ALL'});
+      await Cal.call('delete_event', m.calId ? {eventId: m.gcalId, calendarId: m.calId, notificationLevel: 'ALL'} : {eventId: m.gcalId, notificationLevel: 'ALL'});
       Store.remove('meetings', id);
       toast('Собрание отменено, участникам ушла отмена');
       return true;

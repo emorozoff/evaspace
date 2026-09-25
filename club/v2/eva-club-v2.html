@@ -1232,70 +1232,62 @@ a.ct-name:hover b{text-decoration:underline;}
 .tm-row a:not(.btn){color:var(--ink); text-decoration:none; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .tm-row a:not(.btn):hover{text-decoration:underline;}
 
-/* ── Метрики ── */
-.mx-grid{display:grid; grid-template-columns:minmax(0,440px) minmax(0,1fr); gap:16px; align-items:start;}
-@media (max-width:1100px){ .mx-grid{grid-template-columns:1fr;} }
-.mx-in{position:sticky; top:16px; display:flex; flex-direction:column; gap:16px;}
-@media (max-width:1100px){ .mx-in{position:static;} }
-.mx-in .card-head{margin-bottom:0;}
-.mx-reach-row{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-top:6px;}
-.mx-reach-row .input{font-weight:600;}
-.mx-quick{margin-top:8px;}
-.mx-quick .chip{height:26px; font-size:12px;}
-.mx-target{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px; margin:6px 0;}
-.mx-target div{background:var(--surface-2); border:1px solid var(--line); border-radius:7px; padding:7px 10px;}
-.mx-target span{display:block; font-size:11.5px; color:var(--ink-3);}
-.mx-target b{font-size:17px; font-variant-numeric:tabular-nums;}
-.mx-convs{display:flex; flex-direction:column; border-top:1px solid var(--line);}
-.mx-conv{display:grid; grid-template-columns:minmax(0,1fr) 110px 78px 46px; gap:10px; align-items:center; padding:9px 0; border-bottom:1px solid var(--line);}
-.mx-conv.head{padding:6px 0 4px; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-3); font-weight:600;}
-.mx-conv.head span:nth-child(3), .mx-conv.head span:nth-child(4){text-align:right;}
-.mx-cl b{display:block; font-size:13.5px;}
-.mx-cl small{display:block; font-size:11.5px; color:var(--ink-3); line-height:1.35;}
-.mx-range{width:100%; accent-color:var(--link);}
-.mx-num{display:flex; align-items:center; gap:4px;}
-.mx-num .input{font-weight:600;}
-.mx-num span{font-size:12px; color:var(--ink-3);}
-.mx-team{font-size:12px; color:var(--ink-3); text-align:right; font-variant-numeric:tabular-nums;}
-@media (max-width:520px){
-  .mx-conv{grid-template-columns:minmax(0,1fr) 78px 40px;}
-  .mx-conv .mx-range{grid-column:1 / -1; grid-row:2;}
-  .mx-conv.head span:nth-child(2){display:none;}
-}
-.mx-price{display:flex; flex-direction:column; gap:6px;}
-.mx-price .field{max-width:220px;}
-.mx-actions{display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding-top:4px; border-top:1px solid var(--line); padding-top:14px;}
-.mx-actions .pill{margin-right:auto;}
-.mx-out{display:flex; flex-direction:column; gap:14px; min-width:0;}
-.mx-tiles{grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px;}
-.mx-tiles .stat{padding:14px 16px;}
-.mx-tiles .stat .big{font-size:22px;}
-@media (max-width:760px){ .mx-tiles{grid-template-columns:repeat(2, minmax(0,1fr));} }
-.mx-tiles .foot b.good{color:var(--good);} .mx-tiles .foot b.bad{color:var(--bad);} .mx-tiles .foot b.warn{color:var(--warn);}
-.mf-row{display:grid; grid-template-columns:110px minmax(0,1fr) 54px; gap:10px; align-items:center; padding:5px 0;}
-.mf-n{font-size:13px; font-weight:500; color:var(--ink-2);}
-.mf-bar{position:relative; height:28px;}
-.mf-bar i{position:absolute; left:0; top:0; bottom:0; border-radius:5px; background:linear-gradient(90deg, var(--link), color-mix(in srgb, var(--link) 60%, var(--rose)));}
-.mf-bar b{position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:13px; color:#fff; font-variant-numeric:tabular-nums; text-shadow:0 1px 2px rgba(0,0,0,.25);}
-.mf-row:nth-last-of-type(2) .mf-bar i{background:var(--good);}
-.mf-row.renew .mf-bar i{background:var(--gold-brand);}
-.mf-row.renew .mf-bar b{color:var(--ink); text-shadow:none;}
-.mf-c{font-size:12.5px; color:var(--ink-2); text-align:right; font-variant-numeric:tabular-nums;}
-.mx-table td small{font-size:11px;}
-.mx-toplan{margin-top:-4px;}
-.lv-row{display:grid; grid-template-columns:190px minmax(0,1fr) 210px; gap:12px; align-items:center; padding:6px 0; border-bottom:1px solid var(--line);}
-.lv-row:last-child{border-bottom:0;}
-.lv-n{font-size:13px;}
-.lv-bar{height:8px; border-radius:4px; background:var(--sunken); overflow:hidden;}
-.lv-bar i{display:block; height:100%; background:var(--good); border-radius:4px;}
-.lv-v{font-size:12.5px; color:var(--ink-2); text-align:right; font-variant-numeric:tabular-nums;}
+/* ── Метрики: одна воронка сверху вниз ── */
+.mx-mode{margin-bottom:14px;}
+.mx2{display:grid; grid-template-columns:minmax(0,1.55fr) minmax(280px,1fr); gap:16px; align-items:start;}
+@media (max-width:1000px){ .mx2{grid-template-columns:1fr;} }
+.mx-flow{padding:10px 20px 14px;}
+.mf2-row{display:grid; grid-template-columns:150px minmax(0,1fr) 120px; gap:14px; align-items:center; padding:9px 0;}
+.mf2-name b{display:block; font-size:14px;}
+.mf2-name small{display:block; font-size:11.5px; color:var(--ink-3); line-height:1.3;}
+.mf2-bar{height:26px; background:var(--sunken); border-radius:6px; overflow:hidden;}
+.mf2-bar i{display:block; height:100%; border-radius:6px; background:color-mix(in srgb, var(--link) 78%, var(--surface)); transition:width .18s ease;}
+.mf2-row.main .mf2-bar i{background:var(--good);}
+.mf2-row.renew .mf2-bar i{background:var(--gold-brand);}
+.mf2-val{text-align:right;}
+.mf2-val b{font-size:18px; font-weight:600; font-variant-numeric:tabular-nums;}
+.mf2-row.main .mf2-val b{font-size:22px; color:var(--good);}
+.mf2-row.main .mf2-name b{color:var(--good);}
+.mx-reach-in{height:36px; font-size:16px; font-weight:600;}
+.mf2-conv{display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-height:40px; margin-left:164px; padding:2px 0 2px 14px; border-left:2px dashed var(--line-strong);}
+.mf2-arr{display:none;}
+.mx-pct{display:inline-flex; align-items:center; border:1px solid var(--line-strong); border-radius:8px; background:var(--surface); overflow:hidden;}
+.mx-pct button{width:30px; height:32px; border:0; background:var(--surface-2); color:var(--ink-2); font-size:16px; font-weight:600; line-height:1;}
+.mx-pct button:hover{background:var(--sunken); color:var(--ink);}
+.mx-pct .input{width:58px; height:32px; border:0; border-radius:0; text-align:right; font-weight:700; font-size:15px; padding:0 2px 0 6px; box-shadow:none;}
+.mx-pct span{font-size:13px; color:var(--ink-3); padding-right:6px; font-weight:600;}
+.mf2-verb{font-size:13px; color:var(--ink-2);}
+.mf2-hint{font-size:12px; color:var(--ink-3); margin-left:auto;}
 @media (max-width:640px){
-  .lv-row{grid-template-columns:minmax(0,1fr) auto;}
-  .lv-bar{grid-column:1 / -1; grid-row:2;}
-  .mf-row{grid-template-columns:86px minmax(0,1fr) 44px;}
-  .mx-target{grid-template-columns:repeat(2, minmax(0,1fr));}
+  .mx-flow{padding:6px 14px 10px;}
+  .mf2-row{grid-template-columns:minmax(0,1fr) auto; gap:4px 10px;}
+  .mf2-bar{grid-column:1 / -1; grid-row:2; height:14px;}
+  .mf2-conv{margin-left:10px; padding-left:12px;}
+  .mf2-hint{margin-left:0; flex-basis:100%;}
 }
-.mx-factfoot{justify-content:space-between; align-items:center; margin-top:10px;}
+.mx-side{display:flex; flex-direction:column; gap:12px; position:sticky; top:16px;}
+@media (max-width:1000px){ .mx-side{position:static;} }
+.mx-res .label{display:block; margin-bottom:6px;}
+.mx-big{font:600 40px/1.05 var(--f-display); letter-spacing:-.02em; font-variant-numeric:tabular-nums;}
+.mx-big small{font:500 15px var(--f-text); color:var(--ink-3); letter-spacing:0; margin-left:8px;}
+.mx-vs{margin-top:6px; font-size:13.5px; font-weight:600; color:var(--ink-2);}
+.mx-vs.good{color:var(--good);} .mx-vs.warn{color:var(--warn);} .mx-vs.bad{color:var(--bad);}
+.mx-dl{margin:14px 0 0; display:flex; flex-direction:column; border-top:1px solid var(--line);}
+.mx-dl div{display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid var(--line); font-size:13.5px;}
+.mx-dl div:last-child{border-bottom:0;}
+.mx-dl dt{color:var(--ink-2);}
+.mx-dl dd{margin:0; font-weight:600; font-variant-numeric:tabular-nums;}
+.mx-set{display:flex; flex-direction:column; gap:12px;}
+.mx-set .field .input{max-width:160px;}
+.mx-act{display:flex; flex-direction:column; align-items:flex-start; gap:8px; padding-top:12px; border-top:1px solid var(--line);}
+.mx-act .row{gap:6px;}
+.mx-fact{font-size:12.5px; color:var(--ink-3); line-height:1.5;}
+.mx-levs{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:8px;}
+.mx-levs li{font-size:13.5px; display:flex; gap:8px; flex-wrap:wrap; align-items:baseline;}
+.mx-levs li::marker{color:var(--ink-3); font-weight:600;}
+.mx-lv-v{margin-left:auto; color:var(--good); font-weight:600; font-variant-numeric:tabular-nums;}
+.mx-months summary{cursor:pointer; font-weight:600; font-size:14px; margin-bottom:10px;}
+.mx-months .input{max-width:130px; margin-left:auto;}
 .ct-tools .chip.on{background:var(--link-soft); border-color:var(--link); color:var(--ink);}
 @media (max-width:640px){
   .ct-row{grid-template-columns:118px minmax(0,1fr);}
@@ -1304,6 +1296,31 @@ a.ct-name:hover b{text-decoration:underline;}
   .cal-team{min-width:640px;}
   .cal-conn.slim .btn{flex:1;}
 }
+
+/* вкладка «Почты» */
+.ml-me{margin-bottom:6px;}
+.ml-grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:18px 28px;}
+@media (max-width:860px){ .ml-grid{grid-template-columns:1fr;} }
+.ml-block{display:flex; flex-direction:column; gap:8px; min-width:0;}
+.ml-block .note b{color:var(--ink);}
+.ml-cands .chip{height:auto; min-height:28px; padding:4px 10px; flex-direction:column; align-items:flex-start; gap:0;}
+.ml-cands .chip small{font-size:10.5px; color:var(--ink-3); font-weight:400;}
+.ml-other summary{cursor:pointer; font-size:12.5px; color:var(--link); font-weight:500;}
+.ml-other p{margin-top:6px;}
+.ml-foot{display:flex; justify-content:flex-end; margin-top:14px; padding-top:14px; border-top:1px solid var(--line);}
+.ml-person{display:flex; align-items:center; gap:9px; color:inherit; text-decoration:none; min-width:0;}
+.ml-person b{display:block; font-size:13px;}
+.ml-person small{display:block; font-size:11.5px; color:var(--ink-3);}
+.ml-table td{vertical-align:middle;}
+.ml-table .input{min-width:200px;}
+.ml-src{display:block; font-size:11px; color:var(--ink-3);}
+.input.bad{border-color:var(--bad); box-shadow:0 0 0 3px var(--bad-soft);}
+.cal-tabs .n.warn-t{color:var(--warn);}
+.mt-mail:empty{display:none;}
+.mt-mail{display:flex; flex-direction:column; gap:8px; padding:10px 12px; border-radius:8px; background:var(--warn-soft);}
+.mt-mail .note{color:var(--warn);}
+.mt-mail-row{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;}
+.mt-mail-row .field{min-width:190px; flex:1;}
 </style>
 <div id="app" class="app">
   <div class="boot" id="boot">
@@ -4986,7 +5003,8 @@ function editPerson(id) {
       <div class="form-sec"><span class="label">Контакты</span>
       <div class="grid3"><label class="field"><span>Почта</span><input class="input" id="peEmail" value="${esc(v.email || '')}"></label>
       <label class="field"><span>Телефон</span><input class="input" id="pePhone" value="${esc(v.phone || '')}"></label>
-      <label class="field"><span>Телеграм</span><input class="input" id="peTg" value="${esc(v.telegram || '')}" placeholder="@name"></label></div></div>
+      <label class="field"><span>Телеграм</span><input class="input" id="peTg" value="${esc(v.telegram || '')}" placeholder="@name"></label></div>
+      <label class="field"><span>Почта для календаря <small class="note">если приглашения нужны на другую почту</small></span><input class="input" id="peCal" type="email" value="${esc(v.calEmail || '')}" placeholder="пусто — возьмём почту выше"></label></div>
       <div class="form-sec"><span class="label">Зона ответственности</span>
       <label class="field"><span>Обязанности</span><textarea class="textarea" id="peDuties" rows="2">${esc(v.duties || '')}</textarea></label>
       <label class="field"><span>Результат, по которому оцениваем (KPI)</span><textarea class="textarea" id="peKpi" rows="2">${esc(v.kpi || '')}</textarea></label></div>
@@ -4998,7 +5016,7 @@ function editPerson(id) {
         if (!name && !title) return $('#peName', el).focus();
         const data = {name, title, dir: $('#peDir', el).value, status: $('#peStatus', el).value, rate: $('#peRate', el).value,
           format: $('#peFormat', el).value, salary: Math.max(0, Math.round(parseNum($('#peSalary', el).value))), startMonth: $('#peStart', el).value,
-          email: $('#peEmail', el).value.trim(), phone: $('#pePhone', el).value.trim(), telegram: $('#peTg', el).value.trim(),
+          email: $('#peEmail', el).value.trim(), phone: $('#pePhone', el).value.trim(), telegram: $('#peTg', el).value.trim(), calEmail: $('#peCal', el).value.trim(),
           duties: $('#peDuties', el).value.trim(), kpi: $('#peKpi', el).value.trim()};
         let pid = p ? p.id : null;
         if (p) Store.patch('people', p.id, data); else pid = Store.add('people', {...data, order: 50});
@@ -5469,17 +5487,28 @@ function mergeIv(list) {
   return out;
 }
 
-/* ── почта для приглашений: календарь Google → карточка в «Команде» → почта входа ── */
+/* ── почта для приглашений: своя для календаря → карточка в «Команде» →
+   почта подключённого Google → почта входа в штаб ── */
 const accountOf = pid => Store.all('accounts').find(a => a.personId === pid && a.active !== false) || null;
-function inviteEmail(p) {
-  if (!p) return '';
-  return String(p.gcalEmail || p.email || (accountOf(p.id) || {}).email || '').trim();
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAIL_SRC = {cal: 'своя для календаря', card: 'из карточки в «Команде»', google: 'из подключённого Google', login: 'почта входа в штаб'};
+function inviteMail(p) {
+  if (!p) return {mail: '', src: ''};
+  const acc = accountOf(p.id);
+  for (const [src, v] of [['cal', p.calEmail], ['card', p.email], ['google', p.gcalEmail], ['login', acc && acc.email]]) {
+    if (v && EMAIL_RE.test(String(v).trim())) return {mail: String(v).trim(), src};
+  }
+  return {mail: '', src: ''};
 }
+const inviteEmail = p => inviteMail(p).mail;
 function personByEmail(email) {
   const e = normEmail(email);
   if (!e) return null;
-  return people().find(p => [p.gcalEmail, p.email, (accountOf(p.id) || {}).email].some(x => x && normEmail(x) === e)) || null;
+  return people().find(p => [p.calEmail, p.email, p.gcalEmail, (accountOf(p.id) || {}).email].some(x => x && normEmail(x) === e)) || null;
 }
+/* какой календарь читает штаб и куда кладёт собрания: выбранный человеком или основной */
+const myCalId = () => { const p = personById(Auth.personId()); return (p && p.calId) || ''; };
+const canEditMail = pid => Auth.can('team.manage') || pid === Auth.personId();
 const calPeople = () => people().filter(p => p.name && (p.status || 'active') === 'active');
 
 /* ── ошибки коннектора: у каждого кода своё действие ── */
@@ -5515,7 +5544,9 @@ const Cal = {
   conn: 'checking',     // checking · ready · prompt · denied · off · error
   err: null,            // {code, text} — ошибка подключения для всей страницы
   hint: '',             // мягкая подсказка по списку коннекторов
-  calEmail: '',         // почта основного календаря того, кто смотрит
+  hostEmail: '',        // почта календаря, который сейчас читает штаб
+  calendars: null,      // календари подключённого аккаунта (list_calendars) — только в памяти
+  calLoading: false,
   week: {},             // понедельник → {events, at} | {loading} | {err} — свои события, только в памяти
   syncing: false,
   _init: null,
@@ -5572,16 +5603,42 @@ const Cal = {
 
   async events(from, to) {
     const input = {startTime: `${from}T00:00:00${TZ_OFF}`, endTime: `${addDays(to, 1)}T00:00:00${TZ_OFF}`, orderBy: 'startTime', pageSize: 250, timeZone: TZ};
+    const cid = myCalId();
+    if (cid) input.calendarId = cid;
     let list = [], token = null;
     for (let page = 0; page < 4; page++) {
       const res = await this.call('list_events', token ? {...input, pageToken: token} : input, true);
       list = list.concat(Array.isArray(res) ? res : (res && (res.events || res.items)) || []);
       /* название основного календаря — это почта владельца */
-      if (res && /^\S+@\S+\.\S+$/.test(res.summary || '')) this.calEmail = res.summary;
+      if (res && EMAIL_RE.test(res.summary || '')) this.hostEmail = res.summary;
       token = res && res.nextPageToken;
       if (!token) break;
     }
     return list.filter(ev => ev && ev.status !== 'cancelled');
+  },
+
+  /* календари, доступные подключённому аккаунту Google: основной, общие, чужие с доступом */
+  async loadCalendars() {
+    if (this.calLoading) return;
+    this.calLoading = true;
+    App.renderSoon();
+    try {
+      let list = [], token = null;
+      for (let page = 0; page < 3; page++) {
+        const res = await this.call('list_calendars', token ? {pageSize: 100, pageToken: token} : {pageSize: 100}, true);
+        list = list.concat((res && (res.calendars || res.items)) || []);
+        token = res && res.nextPageToken;
+        if (!token) break;
+      }
+      this.calendars = list.filter(c => c && c.id).map(c => ({id: String(c.id), name: String(c.summary || c.summaryOverride || c.id), primary: !!c.primary}));
+    } catch (e) {
+      this.calendars = null;
+      const x = calErr(e);
+      if (!x.conn && !x.off) toast(x.text, {error: true});
+    } finally {
+      this.calLoading = false;
+      App.renderSoon();
+    }
   },
 
   /* свои события недели — для сетки «Неделя» */
@@ -5612,8 +5669,8 @@ const Cal = {
       }
       const slots = mergeIv(events.filter(evBusy).filter(ev => !meetingOfEvent(ev)).map(evRange).filter(Boolean).map(r => [r.start, r.end]));
       Store.put('busy', pid, {slots, from, to, at: Date.now(), share: true});
-      const email = selfEmail(events) || this.calEmail || '', p = personById(pid);
-      if (email && p && normEmail(p.gcalEmail) !== normEmail(email)) Store.patch('people', pid, {gcalEmail: email});
+      const email = selfEmail(events) || this.hostEmail || '', p = personById(pid);
+      if (!myCalId() && email && p && normEmail(p.gcalEmail) !== normEmail(email)) Store.patch('people', pid, {gcalEmail: email});
       syncRsvp(events);
       if (!silent) toast('Календарь обновлён: команда видит вашу занятость на 4 недели вперёд');
       return true;
@@ -5807,15 +5864,16 @@ App.register('calendar', {
     root.innerHTML = `
       ${pageHead('Календарь', 'Занятость команды, общие свободные окна и собрания. Приглашения приходят участникам прямо в их Google Календарь.',
         `${helpBtn('calendar')}${canMeet ? `<button class="btn primary" data-new-meet>${icon('plus')}Собрание</button>` : ''}`)}
-      ${helpBox('calendar', `<b>Как это работает.</b> Нажмите «Подключить мой Google Календарь» — один раз. Вы увидите свои события в сетке недели, а команда — только когда вы <b>заняты</b>: названия, места и участники ваших встреч в штаб не попадают. <b>Собрание</b>: кнопка сверху или клик по сетке → название, время, участники → «Создать и отправить приглашения» — событие появится в вашем Google Календаре, участникам придёт приглашение на почту и в их календарь, со ссылкой на Google Meet. Вкладка «Занятость команды» показывает, кто когда занят, и зелёным — окна, где свободны все выбранные: нажмите на окно, и собрание создастся на это время. Приглашение уходит на почту из карточки человека в «Команде» (после подключения — на почту его Google Календаря).`)}
+      ${helpBox('calendar', `<b>Как это работает.</b> Нажмите «Подключить мой Google Календарь» — один раз. Вы увидите свои события в сетке недели, а команда — только когда вы <b>заняты</b>: названия, места и участники ваших встреч в штаб не попадают. <b>Собрание</b>: кнопка сверху или клик по сетке → название, время, участники → «Создать и отправить приглашения» — событие появится в вашем Google Календаре, участникам придёт приглашение на почту и в их календарь, со ссылкой на Google Meet. Вкладка «Занятость команды» показывает, кто когда занят, и зелёным — окна, где свободны все выбранные: нажмите на окно, и собрание создастся на это время. Приглашение уходит на почту из вкладки <b>«Почты»</b>: по умолчанию это почта из карточки в «Команде», но каждый может вписать свою — например, другой аккаунт Google. Там же выбирается, какой календарь читает штаб.`)}
       ${connCard()}
       <div class="cal-bar">
         <div class="tabs cal-tabs" role="tablist">
           <button data-ctab="week" class="${tab === 'week' ? 'on' : ''}">Неделя</button>
           <button data-ctab="team" class="${tab === 'team' ? 'on' : ''}">Занятость команды</button>
           <button data-ctab="list" class="${tab === 'list' ? 'on' : ''}">Собрания <span class="n">${upcomingMeetings().length || ''}</span></button>
+          <button data-ctab="mail" class="${tab === 'mail' ? 'on' : ''}">Почты${(n => n ? ` <span class="n warn-t" title="без почты — приглашения не придут">${n} без почты</span>` : '')(calPeople().filter(x => !inviteEmail(x)).length)}</button>
         </div>
-        ${tab !== 'list' ? `<div class="cal-nav">
+        ${tab === 'week' || tab === 'team' ? `<div class="cal-nav">
           <button class="icon-btn" data-wk="-7" aria-label="Предыдущая неделя">${icon('back')}</button>
           <b class="cal-wk">${weekLabel(ws)}</b>
           <button class="icon-btn" data-wk="7" aria-label="Следующая неделя" style="transform:scaleX(-1)">${icon('back')}</button>
@@ -5823,7 +5881,7 @@ App.register('calendar', {
           ${tab === 'week' ? `<div class="seg"><button data-days="5" class="${wkDays === 5 ? 'on' : ''}">Пн–Пт</button><button data-days="7" class="${wkDays === 7 ? 'on' : ''}">7 дней</button></div>` : ''}
         </div>` : ''}
       </div>
-      <div id="calView">${tab === 'team' ? calTeamView(ws) : tab === 'list' ? calListView() : calWeekView(ws, wkDays)}</div>`;
+      <div id="calView">${tab === 'team' ? calTeamView(ws) : tab === 'list' ? calListView() : tab === 'mail' ? calMailView() : calWeekView(ws, wkDays)}</div>`;
 
     wireHelp(root);
     on(root, 'click', '[data-ctab]', (e, el) => { View.set('cal.tab', el.dataset.ctab); App.render(); });
@@ -5853,6 +5911,8 @@ App.register('calendar', {
     on(root, 'click', '[data-mine]', (e, el) => { View.set('cal.mine', el.dataset.mine === '1'); App.render(); });
     if (tab === 'week') calWireWeek(root, ws);
     if (tab === 'team') calWireTeam(root, ws);
+    if (tab === 'mail') calWireMail(root);
+    if (tab === 'mail' && Cal.conn === 'ready' && Cal.calendars === null && !Cal.calLoading) Cal.loadCalendars();
     if (tab === 'week' && Cal.conn === 'ready' && !Cal.week[ws]) Cal.loadWeek(ws);
     Cal.autoSync();
   },
@@ -5876,8 +5936,9 @@ function connCard() {
         ${Cal.hint ? `<p class="warn-t">${esc(Cal.hint)}</p>` : ''}</div>
       <button class="btn primary" data-cal-connect ${Cal.syncing ? 'disabled' : ''}>${Cal.syncing ? 'Подключаю…' : 'Подключить мой Google Календарь'}</button>
     </div>`;
+  const cid = myCalId(), im = inviteMail(p);
   return `<div class="cal-conn slim ok"><i class="dot"></i>
-      <span><b>Google Календарь подключён</b>${p && p.gcalEmail ? ` · ${esc(p.gcalEmail)}` : ''} · занятость ${Cal.syncing ? 'обновляется…' : 'обновлена ' + timeAgo(doc.at)}</span>
+      <span><b>Google Календарь подключён</b> · календарь: ${esc(cid ? calName(cid) : (p && p.gcalEmail) || 'основной')} · приглашения: ${im.mail ? esc(im.mail) : '<b class="warn-t">почта не указана</b>'} <button class="link-btn" data-ctab="mail">изменить</button> · занятость ${Cal.syncing ? 'обновляется…' : 'обновлена ' + timeAgo(doc.at)}</span>
       <button class="btn xs ghost" data-cal-sync ${Cal.syncing ? 'disabled' : ''}>${icon('refresh')}Обновить</button>
       <button class="btn xs ghost" data-cal-stop>Не показывать занятость</button>
     </div>`;
@@ -6039,6 +6100,91 @@ function calWireTeam(root) {
   });
 }
 
+/* ── почты: куда приходят приглашения и какой календарь читает штаб ── */
+function calMailView() {
+  const pid = Auth.personId(), me = personById(pid);
+  const usable = Cal.usable();
+  let myCard = '';
+  if (me) {
+    const mine = inviteMail(me), acc = accountOf(me.id), cid = myCalId();
+    const cands = [['card', me.email], ['google', me.gcalEmail], ['login', acc && acc.email]]
+      .filter(([, v], i, a) => v && EMAIL_RE.test(v) && normEmail(v) !== normEmail(me.calEmail || '') && a.findIndex(x => normEmail(x[1] || '') === normEmail(v)) === i);
+    const host = me.gcalEmail || Cal.hostEmail;
+    const cals = (Cal.calendars || []).filter(c => normEmail(c.id) !== normEmail(host || '') && !c.primary);
+    myCard = `<section class="card ml-me">
+      <div class="card-head"><h2>Мой календарь</h2><span class="note">${esc(personName(me))}</span></div>
+      <div class="ml-grid">
+        <div class="ml-block">
+          <label class="field"><span>Почта для приглашений</span>
+            <input class="input" id="mlMine" type="email" autocomplete="email" value="${esc(me.calEmail || '')}" placeholder="${esc(mine.src && mine.src !== 'cal' ? mine.mail : 'name@gmail.com')}"></label>
+          <p class="note">Сейчас приглашения на собрания штаба приходят на <b>${mine.mail ? esc(mine.mail) : 'никуда — почта не указана'}</b>${mine.src ? ` — ${MAIL_SRC[mine.src]}` : ''}. Нужен другой аккаунт — впишите его почту. Пустое поле — почта из карточки в «Команде».</p>
+          ${cands.length ? `<div class="chips ml-cands">${cands.map(([src, v]) => `<button type="button" class="chip" data-ml-pick="${esc(v)}">${esc(v)}<small>${MAIL_SRC[src]}</small></button>`).join('')}</div>` : ''}
+        </div>
+        <div class="ml-block">
+          <label class="field"><span>Календарь для штаба</span>
+            <select class="select" id="mlCal" ${usable ? '' : 'disabled'}>
+              <option value="">Основной календарь подключённого Google${host ? ' — ' + esc(host) : ''}</option>
+              ${cals.map(c => `<option value="${esc(c.id)}" ${c.id === cid ? 'selected' : ''}>${esc(c.name)}${c.name !== c.id && EMAIL_RE.test(c.id) ? ' — ' + esc(c.id) : ''}</option>`).join('')}
+              ${cid && !cals.some(c => c.id === cid) ? `<option value="${esc(cid)}" selected>${esc(cid)}</option>` : ''}
+            </select></label>
+          <p class="note">Из этого календаря штаб берёт вашу занятость и в него ставит собрания, которые создаёте вы. ${!usable ? 'Выбор появится, когда штаб открыт в Claude с подключённым Google Календарём.' : Cal.calLoading ? 'Загружаю список календарей…' : Cal.calendars ? `В списке — календари, которые видит подключённый аккаунт. <button type="button" class="link-btn" data-ml-cals>Обновить список</button>` : '<button type="button" class="link-btn" data-ml-cals>Загрузить список календарей</button>'}</p>
+          <details class="ml-other"><summary>Нужного аккаунта нет в списке?</summary>
+            <p class="note">Коннектор Google Calendar в Claude работает с одним аккаунтом Google. Два пути: <b>1)</b> в нужном аккаунте откройте Google Календарь → Настройки → «Доступ для отдельных пользователей» и добавьте ${host ? esc(host) : 'подключённый аккаунт'} с правом вносить изменения — календарь появится в списке выше; <b>2)</b> переподключите Google Calendar в claude.ai → Настройки → Коннекторы уже к нужному аккаунту и обновите страницу.</p>
+          </details>
+        </div>
+      </div>
+      <div class="ml-foot"><button class="btn primary" id="mlSave">Сохранить</button></div>
+    </section>`;
+  }
+  const rows = calPeople().map(p => {
+    const m = inviteMail(p), b = Store.get('busy', p.id);
+    return `<tr>
+      <td><a class="ml-person" href="#p-${p.id}">${avatar(p)}<span><b>${esc(personName(p))}</b><small>${esc(p.title || '')}</small></span></a></td>
+      <td>${canEditMail(p.id) ? `<input class="input sm" type="email" data-ml-pid="${p.id}" value="${esc(p.calEmail || '')}" placeholder="${esc(m.src && m.src !== 'cal' ? m.mail : 'почта для приглашений')}">` : (p.calEmail ? esc(p.calEmail) : '<span class="muted">—</span>')}</td>
+      <td>${m.mail ? `<b>${esc(m.mail)}</b><small class="ml-src">${MAIL_SRC[m.src]}</small>` : '<span class="pill warn">приглашения не придут</span>'}</td>
+      <td class="soft nowrap">${b && b.share !== false && b.from ? `подключён · ${timeAgo(b.at)}` : 'не подключён'}</td>
+    </tr>`;
+  }).join('');
+  return `${myCard}
+    <section class="section">
+      <div class="section-head"><h2>Почты команды</h2><span class="hint-inline">По умолчанию — почта из карточки в «Команде». ${Auth.can('team.manage') ? 'Впишите другую, если человеку нужны приглашения на другой аккаунт.' : 'Свою можно поменять здесь, чужие меняет основатель.'}</span></div>
+      <div class="table-wrap"><table class="t ml-table">
+        <thead><tr><th>Человек</th><th>Своя почта для календаря</th><th>Приглашения уходят на</th><th>Google Календарь</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>
+      <p class="note">Пустое поле — берём почту из карточки в «Команде», если её нет — почту подключённого Google, затем почту входа в штаб. Сохраняется, когда выходите из поля.</p>
+    </section>`;
+}
+function calWireMail(root) {
+  on(root, 'change', '[data-ml-pid]', (e, el) => {
+    const v = el.value.trim(), p = personById(el.dataset.mlPid);
+    if (v && !EMAIL_RE.test(v)) { el.classList.add('bad'); toast('Почта выглядит неправильно'); return; }
+    el.classList.remove('bad');
+    if ((p.calEmail || '') === v) return;
+    Store.patch('people', p.id, {calEmail: v});
+    toast(v ? `${firstName(p)}: приглашения — на ${v}` : `${firstName(p)}: снова почта из карточки`);
+  });
+  on(root, 'click', '[data-ml-pick]', (e, el) => { const i = $('#mlMine', root); if (i) { i.value = el.dataset.mlPick; i.focus(); } });
+  on(root, 'click', '[data-ml-cals]', () => { Cal.calendars = null; Cal.loadCalendars(); });
+  const btn = $('#mlSave', root);
+  if (btn) btn.onclick = () => {
+    const pid = Auth.personId(), p = personById(pid);
+    const mail = $('#mlMine', root).value.trim();
+    if (mail && !EMAIL_RE.test(mail)) { toast('Почта выглядит неправильно'); $('#mlMine', root).focus(); return; }
+    const sel = $('#mlCal', root);
+    const cid = sel && !sel.disabled ? sel.value : (p.calId || '');
+    const calChanged = cid !== (p.calId || '');
+    Store.patch('people', pid, {calEmail: mail, calId: cid});
+    if (!calChanged) { toast('Сохранено'); return; }
+    Cal.week = {};
+    Cal.hostEmail = '';
+    const doc = Store.get('busy', pid);
+    if (doc && doc.share !== false && doc.from) {
+      toast('Сохранено. Беру занятость из выбранного календаря…');
+      Cal.sync({silent: true}).then(ok => toast(ok ? 'Занятость обновлена из выбранного календаря' : 'Не получилось прочитать выбранный календарь — проверьте доступ к нему', ok ? {} : {error: true}));
+    } else toast('Сохранено');
+  };
+}
+
 /* ── список собраний ── */
 function upcomingMeetings() {
   const now = nowMs();
@@ -6137,9 +6283,9 @@ function openMeeting(id, preset = {}) {
     return;
   }
 
-  const chip = p => {
-    const on = d.attendees.includes(p.id), mail = inviteEmail(p);
-    return `<button type="button" class="chip mt-chip ${on ? 'on' : ''} ${mail ? '' : 'nomail'}" data-att="${p.id}" title="${mail ? esc(mail) : 'нет почты — приглашение не придёт; впишите почту в «Команде»'}">${avatar(p)}${esc(firstName(p))}${mail ? '' : ' <span class="mt-nomail">нет почты</span>'}</button>`;
+  const chip = (p, on = d.attendees.includes(p.id)) => {
+    const mail = inviteEmail(p);
+    return `<button type="button" class="chip mt-chip ${on ? 'on' : ''} ${mail ? '' : 'nomail'}" data-att="${p.id}" title="${mail ? esc(mail) : 'нет почты — приглашение не придёт; впишите её ниже или во вкладке «Почты»'}">${avatar(p)}${esc(firstName(p))}${mail ? '' : ' <span class="mt-nomail">нет почты</span>'}</button>`;
   };
   const foot = `${m && canEdit ? `<button class="btn ghost danger left" id="mtDel">${inGoogle && isOrg ? 'Отменить собрание' : 'Удалить'}</button>` : ''}
     <button class="btn" data-close>Отмена</button>
@@ -6157,9 +6303,10 @@ function openMeeting(id, preset = {}) {
         <label class="field"><span>Повтор</span><select class="select" id="mtRepeat" ${inGoogle ? 'disabled title="Повтор меняется только новым собранием"' : ''}>${Object.entries(REPEATS).map(([k, n]) => `<option value="${k}" ${k === (d.repeat || '') ? 'selected' : ''}>${n}${k ? ' до 31 декабря' : ''}</option>`).join('')}</select></label>
       </div>
       <div class="field"><span>Участники <small class="note">организатор — ${esc(orgP ? firstName(orgP) : 'вы')}</small></span>
-        <div class="chips mt-chips">${all.filter(p => p.id !== organizer).map(chip).join('')}<button type="button" class="chip ghost" id="mtAll">Все</button></div>
+        <div class="chips mt-chips">${all.filter(p => p.id !== organizer).map(p => chip(p)).join('')}<button type="button" class="chip ghost" id="mtAll">Все</button></div>
       </div>
       <label class="field"><span>Гости не из команды <small class="note">почты через запятую</small></span><input class="input" id="mtGuests" value="${esc((d.guests || []).join(', '))}" placeholder="partner@mail.ru"></label>
+      <div class="mt-mail" id="mtMail"></div>
       <div class="mt-help" id="mtHelp"></div>
       <label class="field"><span>Повестка</span><textarea class="textarea" id="mtAgenda" rows="3" placeholder="1. Цифры недели · 2. Что мешает · 3. Решения">${esc(d.agenda || '')}</textarea></label>
       <div class="mt-opts">
@@ -6197,12 +6344,37 @@ function openMeeting(id, preset = {}) {
             ? `В это время заняты: ${busy.map(x => `<b>${esc(firstName(personById(x.pid)))}</b>${x.hit.m ? ` (${esc(x.hit.m.title)})` : ''}`).join(', ')}`
             : `${dayWd(v.date)}, ${v.start}–${hmMs(e)} — ${known.length > 1 ? 'свободны все, у кого подключён календарь' : 'пересечений не видно'}`}${unknown.length ? `<small>Нет данных календаря: ${unknown.map(x => esc(firstName(personById(x.pid)))).join(', ')}</small>` : ''}</span></div>
           ${slots.length ? `<div class="mt-slots"><span class="label">Свободно у всех</span>${slots.map(t => `<button type="button" class="chip" data-slot="${t}">${dayWd(mskDate(t))}, ${hmMs(t)}</button>`).join('')}${google && pids.length > 1 ? '<button type="button" class="chip ghost" id="mtAskG">Спросить Google</button>' : ''}</div>` : google && pids.length > 1 ? '<div class="mt-slots"><button type="button" class="chip ghost" id="mtAskG">Подобрать время в Google</button></div>' : ''}
-          <div class="mt-gslots" id="mtG"></div>
-          ${noMail.length ? `<p class="note warn-t">Без почты — приглашение не придёт: ${noMail.map(pid => esc(firstName(personById(pid)))).join(', ')}. Почту вписывают в «Команде».</p>` : ''}`;
+          <div class="mt-gslots" id="mtG"></div>`;
+      };
+      /* почты прямо здесь: у кого из выбранных нет адреса для приглашения */
+      const paintMail = () => {
+        const box = $('#mtMail', el);
+        const typed = Object.fromEntries($$('[data-mt-mail]', box).map(i => [i.dataset.mtMail, i.value]));
+        const noMail = val().attendees.filter(pid => !inviteEmail(personById(pid)));
+        if (!noMail.length) { box.innerHTML = ''; return; }
+        const editable = noMail.filter(canEditMail);
+        box.innerHTML = `<p class="note warn-t">Без почты приглашение не придёт: ${noMail.map(pid => esc(firstName(personById(pid)))).join(', ')}.${editable.length < noMail.length ? ' Почту остальных впишет основатель во вкладке «Почты».' : ''}</p>
+          ${editable.length ? `<div class="mt-mail-row">${editable.map(pid => `<label class="field"><span>${esc(firstName(personById(pid)))}</span><input class="input sm" type="email" data-mt-mail="${pid}" placeholder="name@gmail.com" value="${esc(typed[pid] || '')}"></label>`).join('')}
+            <button type="button" class="btn sm" id="mtMailSave">Сохранить почты</button></div>` : ''}`;
       };
       paint();
-      on(el, 'click', '[data-att]', (e, b) => { b.classList.toggle('on'); paint(); });
-      $('#mtAll', el).onclick = () => { const btns = $$('[data-att]', el); const allOn = btns.every(b => b.classList.contains('on')); btns.forEach(b => b.classList.toggle('on', !allOn)); paint(); };
+      paintMail();
+      on(el, 'click', '[data-att]', (e, b) => { b.classList.toggle('on'); paint(); paintMail(); });
+      $('#mtAll', el).onclick = () => { const btns = $$('[data-att]', el); const allOn = btns.every(b => b.classList.contains('on')); btns.forEach(b => b.classList.toggle('on', !allOn)); paint(); paintMail(); };
+      on(el, 'click', '#mtMailSave', () => {
+        let n = 0, bad = false;
+        $$('[data-mt-mail]', el).forEach(i => {
+          const v = i.value.trim();
+          if (!v) return;
+          if (!EMAIL_RE.test(v)) { bad = true; i.classList.add('bad'); return; }
+          Store.patch('people', i.dataset.mtMail, {calEmail: v});
+          const b = $(`[data-att="${i.dataset.mtMail}"]`, el);
+          if (b) b.outerHTML = chip(personById(i.dataset.mtMail), b.classList.contains('on'));
+          n++;
+        });
+        if (bad) toast('Проверьте почту — она выглядит неправильно');
+        if (n) { toast(`Почты сохранены: ${n}. Их видно во вкладке «Почты»`); paintMail(); }
+      });
       on(el, 'click', '[data-dur]', (e, b) => { $$('[data-dur]', el).forEach(x => x.classList.toggle('on', x === b)); paint(); });
       on(el, 'click', '[data-slot]', (e, b) => {
         const t = Number(b.dataset.slot);
@@ -6247,7 +6419,7 @@ function openMeeting(id, preset = {}) {
         const body = {...v, until: v.repeat ? Q.end : null};
         if (!m) {
           const nid = uid();
-          Store.put('meetings', nid, {...body, organizer, by: Auth.me().id, at: Date.now(), invite: send ? 'sending' : 'none'});
+          Store.put('meetings', nid, {...body, organizer, calId: myCalId() || null, by: Auth.me().id, at: Date.now(), invite: send ? 'sending' : 'none'});
           close();
           if (send) await pushMeeting(nid); else toast('Собрание сохранено в штабе');
           return;
@@ -6263,19 +6435,28 @@ function openMeeting(id, preset = {}) {
   });
 }
 
-/* участники для Google: почты команды (без организатора) и гости */
+/* участники для Google: почты команды и гости. Хозяину календаря, в котором
+   создаётся событие, приглашение не нужно; если организатор вписал для
+   календаря другую почту — пригласим и её, чтобы собрание было и там. */
 function inviteList(m) {
   const seen = new Set(), out = [];
   const org = personById(m.organizer);
-  const orgMails = [org && org.gcalEmail, org && org.email, org && (accountOf(org.id) || {}).email].filter(Boolean).map(normEmail);
-  (m.attendees || []).forEach(pid => {
-    const p = personById(pid), mail = inviteEmail(p);
-    if (!mail || seen.has(normEmail(mail)) || orgMails.includes(normEmail(mail))) return;
-    seen.add(normEmail(mail));
-    out.push({email: mail, displayName: personName(p)});
-  });
-  (m.guests || []).forEach(mail => { if (!seen.has(normEmail(mail))) { seen.add(normEmail(mail)); out.push({email: mail}); } });
+  const host = normEmail(EMAIL_RE.test(m.calId || '') ? m.calId : (org && org.gcalEmail) || (m.organizer === Auth.personId() ? Cal.hostEmail : ''));
+  const add = (mail, name) => {
+    const k = normEmail(mail);
+    if (!mail || seen.has(k) || k === host) return;
+    seen.add(k);
+    out.push(name ? {email: mail, displayName: name} : {email: mail});
+  };
+  if (org && host) add(inviteEmail(org), personName(org));
+  (m.attendees || []).forEach(pid => { const p = personById(pid); add(inviteEmail(p), personName(p)); });
+  (m.guests || []).forEach(mail => add(mail));
   return out;
+}
+/* название календаря для подписи */
+function calName(id) {
+  const c = (Cal.calendars || []).find(x => x.id === id);
+  return c ? c.name + (c.name !== id && EMAIL_RE.test(id) ? ` (${id})` : '') : id;
 }
 function descOf(m) {
   return `${m.agenda ? m.agenda + '\n\n' : ''}Собрание из штаба Eva Club.`;
@@ -6296,6 +6477,7 @@ async function pushMeeting(id) {
     attendees: att, description: descOf(m), addGoogleMeetUrl: !!m.meet,
     notificationLevel: 'ALL', useDefaultReminders: true,
   };
+  if (m.calId) input.calendarId = m.calId;
   if (m.repeat) input.recurrenceData = [rruleOf(m)];
   try {
     const ev = eventOf(await Cal.call('create_event', input));
@@ -6318,6 +6500,7 @@ async function updateInGoogle(id, before) {
   const removed = was.filter(x => !lower(now).includes(normEmail(x)));
   const s = tMs(m.date, m.start), e = s + (Number(m.dur) || 60) * 60e3;
   const input = {eventId: m.gcalId, summary: m.title, description: descOf(m), startTime: isoMs(s), endTime: isoMs(e), timeZone: TZ, notificationLevel: 'ALL'};
+  if (m.calId) input.calendarId = m.calId;
   if (added.length) input.addedAttendees = added;
   if (removed.length) input.removedAttendeeEmails = removed;
   if (m.meet && !m.meetUrl) input.addGoogleMeetUrl = true;
@@ -6355,7 +6538,7 @@ async function cancelMeeting(id, anchor) {
   if (m.gcalId && isOrg && Cal.conn !== 'off') {
     if (!(await confirmPop(anchor, {text: 'Отменить собрание? Участникам придёт отмена в Google Календаре.', yes: 'Да, отменить', danger: true}))) return false;
     try {
-      await Cal.call('delete_event', {eventId: m.gcalId, notificationLevel: 'ALL'});
+      await Cal.call('delete_event', m.calId ? {eventId: m.gcalId, calendarId: m.calId, notificationLevel: 'ALL'} : {eventId: m.gcalId, notificationLevel: 'ALL'});
       Store.remove('meetings', id);
       toast('Собрание отменено, участникам ушла отмена');
       return true;
@@ -6385,11 +6568,11 @@ function todayMeetingsHtml() {
 }
 
 /* ── 85-metrics.js ── */
-/* Метрики: воронка продаж, которую можно крутить руками.
-   Охват → просмотр → переход → регистрация → покупка → продление.
-   Меняете любую цифру — квартал пересчитывается сразу. Два расчёта:
-   «от охвата» (сколько продаж даст такой охват) и «от цели» (какой охват
-   нужен под план продаж сценария). Черновик у каждого свой; основатель
+/* Метрики: воронка продаж квартала одной лентой сверху вниз.
+   Охват → просмотры → переходы → регистрации → покупки → продления.
+   Проценты между шагами правятся прямо на ленте, числа пересчитываются
+   сразу, итог — справа. Два вопроса: «сколько продаж даст охват» и
+   «какой охват нужен под план». Черновик у каждого свой; основатель
    сохраняет удачный вариант как план команды — тогда «Стратегия»,
    «Отчёты» и Cash Flow считают по нему. */
 
@@ -6481,96 +6664,132 @@ function mxFact(from, to) {
   return {a, view: conv(a.views, a.reach), click: conv(a.clicks, a.views), reg: conv(a.regs, a.clicks || 0), regFromReach: conv(a.regs, a.reach), pay: conv(a.pays, a.regs), renew: renewRate};
 }
 
+/* шаги ленты и глаголы переходов между ними */
+const MX_STEPS = [
+  {k: 'reach',    name: 'Охват',       hint: 'увидели нас'},
+  {k: 'views',    name: 'Просмотры',   hint: 'посмотрели ролик или пост',     c: 'view',  verb: 'посмотрят',             d: 1,   min: 1},
+  {k: 'clicks',   name: 'Переходы',    hint: 'перешли на сайт или в приложение', c: 'click', verb: 'перейдут',          d: 0.5, min: 0.1},
+  {k: 'regs',     name: 'Регистрации', hint: 'создали учётку',                c: 'reg',   verb: 'зарегистрируются',      d: 1,   min: 1},
+  {k: 'pays',     name: 'Покупки',     hint: 'первая оплата — это продажа',   c: 'pay',   verb: 'купят',                 d: 0.5, min: 0.1},
+  {k: 'renewals', name: 'Продления',   hint: 'за квартал',                    c: 'renew', verb: 'продлят в след. месяце', d: 5,   min: 0},
+];
+const mxPct = v => fmt(v * 100, v * 100 < 10 && Math.abs(v * 1000 - Math.round(v * 100) * 10) > 0.01 ? 1 : 0);
+/* факт — за квартал, а до его старта — за сентябрь */
+function mxFactRange() {
+  const t = today();
+  if (t >= Q.start) return {from: Q.start, to: t < Q.end ? t : Q.end, name: 'за квартал'};
+  return {from: '2026-09-01', to: t, name: 'за сентябрь'};
+}
+
 App.register('metrics', {
   title: 'Метрики',
   render(root) {
-    const s = settings();
     const sc = MxUI.sc, mode = MxUI.mode;
     const f = MxUI.load();
     const canSave = Auth.can('settings.edit');
-    const team = funnelOf(s);
+    const rev = mode === 'reverse';
 
-    const convRow = st => {
-      const v = f[st.c] * 100;
-      return `<div class="mx-conv">
-        <div class="mx-cl"><b>${st.name}</b><small>% ${st.of} · ${st.about}</small></div>
-        <input type="range" class="mx-range" data-mr="${st.c}" min="${st.min}" max="${st.max}" step="${st.step}" value="${clamp(v, st.min, st.max)}" aria-label="${st.name}, %">
-        <label class="mx-num"><input class="input num sm" data-mc="${st.c}" inputmode="decimal" value="${fmt(v, v < 10 ? 1 : 0)}"><span>%</span></label>
-        <span class="mx-team" title="план команды">${pct(team[st.c], team[st.c] < 0.1 ? 1 : 0)}</span>
+    const row = st => `<div class="mf2-row ${st.k === 'pays' ? 'main' : ''} ${st.k === 'renewals' ? 'renew' : ''}">
+        <div class="mf2-name"><b>${st.name}</b><small>${st.hint}</small></div>
+        <div class="mf2-bar"><i id="mxb-${st.k}"></i></div>
+        <div class="mf2-val">${st.k === 'reach' && !rev
+          ? `<input class="input num mx-reach-in" data-mreach-total inputmode="numeric" aria-label="Охват за квартал">`
+          : `<b id="mxv-${st.k}"></b>`}</div>
       </div>`;
-    };
+    const conv = st => `<div class="mf2-conv">
+        <span class="mf2-arr" aria-hidden="true">↓</span>
+        <div class="mx-pct"><button type="button" data-mstep="${st.c}" data-d="-1" aria-label="меньше">−</button><input class="input num" data-mc="${st.c}" inputmode="decimal" value="${mxPct(f[st.c])}" aria-label="${st.name}, %"><span>%</span><button type="button" data-mstep="${st.c}" data-d="1" aria-label="больше">+</button></div>
+        <span class="mf2-verb">${st.verb}</span>
+        <small class="mf2-hint" id="mxh-${st.c}"></small>
+      </div>`;
 
     root.innerHTML = `
-      ${pageHead('Метрики', 'Воронка продаж: охват → просмотр → переход → регистрация → покупка → продление. Двигайте цифры — квартал пересчитывается сразу.',
-        `<div class="seg" title="Сценарий для сравнения">${Object.entries(SCENARIOS).map(([k, x]) => `<button data-msc="${k}" class="${k === sc ? 'on' : ''}">${x.name} ${fmt(Plan.total(k))}</button>`).join('')}</div>${helpBtn('metrics')}`)}
-      ${helpBox('metrics', `<b>Как пользоваться.</b> Слева — ключевые цифры: охват по месяцам и конверсия каждого шага воронки. Справа — что из этого выходит: продажи, продления, платящие и выручка по месяцам против плана сценария. <b>«От охвата»</b> — вы задаёте охват и видите продажи. <b>«От цели»</b> — наоборот: берём план продаж сценария и считаем, сколько нужно регистраций, переходов, просмотров и охвата. Ниже — факт из «Цифр дня» и какие рычаги дают больше всего. Ваши правки видны только вам${canSave ? '; кнопка «Сделать планом команды» сохраняет их для всех — по ним считают «Стратегия», «Отчёты» и Cash Flow' : ' — сохранить их как план команды может основатель'}.`)}
-      <div class="mx-grid">
-        <section class="card mx-in">
-          <div class="card-head"><h2>Ключевые цифры</h2>
-            <div class="seg"><button data-mmode="forward" class="${mode === 'forward' ? 'on' : ''}">От охвата</button><button data-mmode="reverse" class="${mode === 'reverse' ? 'on' : ''}">От цели</button></div></div>
-          ${mode === 'forward' ? `<div class="mx-reach"><span class="label">Охват в месяц, человек</span>
-            <div class="mx-reach-row">${Q.months.map(m => `<label class="field"><span>${monthName(m)}</span><input class="input num" data-mreach="${m}" inputmode="numeric" value="${fmt(Math.round(f.reach[m] || 0))}"></label>`).join('')}</div>
-            <div class="chips mx-quick"><button class="chip" data-mq="1.1">+10%</button><button class="chip" data-mq="0.9">−10%</button><button class="chip" data-mq="plan">под план «${SCENARIOS[sc].name}»</button></div></div>`
-            : `<div class="mx-reach"><span class="label">План продаж «${SCENARIOS[sc].name}»</span><div class="mx-target">${Q.months.map(m => `<div><span>${monthName(m)}</span><b>${fmt(scenarioSales(sc)[m])}</b></div>`).join('')}<div><span>квартал</span><b>${fmt(Plan.total(sc))}</b></div></div><p class="note">Меняется в «Стратегии» → сценарии. Здесь считаем, что нужно на каждом шаге.</p></div>`}
-          <div class="mx-convs"><div class="mx-conv head"><span></span><span></span><span>ваш вариант</span><span>план</span></div>${FUNNEL.map(convRow).join('')}</div>
-          <div class="mx-price"><label class="field"><span>Цена подписки в месяц, ₽</span><input class="input num" data-mprice inputmode="numeric" value="${fmt(f.price)}"></label>
-            <div class="note">Охват → регистрация: <b id="mxR2R">${pct(f.view * f.click * f.reg, 2)}</b> · в плане команды ${pct(team.view * team.click * team.reg, 2)}</div></div>
-          <div class="mx-actions" id="mxAct">${mxActHtml(f, sc)}</div>
-        </section>
-        <section class="mx-out" id="mxOut">${mxOutHtml(f, mode, sc)}</section>
+      ${pageHead('Метрики', 'Воронка продаж за квартал. Меняйте проценты между шагами — всё пересчитается сразу.',
+        `<div class="seg" title="С каким планом сравнивать">${Object.entries(SCENARIOS).map(([k, x]) => `<button data-msc="${k}" class="${k === sc ? 'on' : ''}">${x.name} ${fmt(Plan.total(k))}</button>`).join('')}</div>${helpBtn('metrics')}`)}
+      ${helpBox('metrics', `<b>Как читать.</b> Сверху вниз — путь человека: увидел → посмотрел → перешёл → зарегистрировался → купил → продлил. Между шагами — какой процент доходит до следующего; меняйте его кнопками − / + или числом. Под процентом — план команды и факт из «Цифр дня». Справа — итог квартала. Ваши правки видны только вам${canSave ? '; «Сделать планом команды» сохранит их для всех' : ''}.`)}
+      <div class="seg mx-mode">
+        <button data-mmode="forward" class="${!rev ? 'on' : ''}">Сколько продаж даст охват</button>
+        <button data-mmode="reverse" class="${rev ? 'on' : ''}">Какой охват нужен под план «${SCENARIOS[sc].name}»</button>
       </div>
-      <section class="section" id="mxFact">${mxFactHtml(f)}</section>`;
+      <div class="mx2">
+        <section class="card mx-flow">${MX_STEPS.map((st, i) => (i ? conv(st) : '') + row(st)).join('')}</section>
+        <aside class="mx-side">
+          <section class="card mx-res" id="mxRes"></section>
+          <section class="card mx-set">
+            <label class="field"><span>Цена подписки, ₽ в месяц</span><input class="input num" data-mprice inputmode="numeric" value="${fmt(f.price)}"></label>
+            <div class="mx-act" id="mxAct"></div>
+            <div class="mx-fact" id="mxFactLine"></div>
+          </section>
+        </aside>
+      </div>
+      <section class="card mx-lev section" id="mxLev"></section>
+      <details class="section mx-months">
+        <summary>По месяцам</summary>
+        <div class="table-wrap"><table class="t grid-lines">
+          <thead><tr><th></th>${Q.months.map(m => `<th class="r">${monthName(m)}</th>`).join('')}<th class="r">Квартал</th></tr></thead>
+          ${!rev ? `<tbody><tr><td>Охват <span class="note">можно поправить</span></td>${Q.months.map(m => `<td class="r"><input class="input num sm" data-mreach="${m}" inputmode="numeric" value="${fmt(Math.round(f.reach[m] || 0))}"></td>`).join('')}<td class="r" id="mxMonReach"></td></tr></tbody>` : ''}
+          <tbody id="mxMon"></tbody>
+        </table></div>
+        ${!rev && canSave ? `<p class="note">Нравится результат? <button class="link-btn" data-mtoplan>Записать эти продажи в план «${SCENARIOS[sc].name}»</button> — сценарий в «Стратегии» поменяется.</p>` : ''}
+      </details>`;
 
     wireHelp(root);
+    const paint = () => mxPaint(root, f, mode, sc);
+    paint();
+    const reachIn = $('[data-mreach-total]', root);
+    if (reachIn) reachIn.value = fmt(Math.round(sum(Q.months, m => f.reach[m] || 0)));
+
     on(root, 'click', '[data-msc]', (e, el) => { View.set('mx.sc', el.dataset.msc); App.render(); });
     on(root, 'click', '[data-mmode]', (e, el) => { View.set('mx.mode', el.dataset.mmode); App.render(); });
-    const repaint = () => {
+    const setConv = (k, v) => {
+      const st = MX_STEPS.find(x => x.c === k);
+      f[k] = clamp(v, st.min / 100, 1);
       MxUI.save();
-      $('#mxOut', root).innerHTML = mxOutHtml(f, MxUI.mode, sc);
-      $('#mxFact', root).innerHTML = mxFactHtml(f);
-      $('#mxAct', root).innerHTML = mxActHtml(f, sc);
-      const r2r = $('#mxR2R', root); if (r2r) r2r.textContent = pct(f.view * f.click * f.reg, 2);
+      paint();
     };
-    on(root, 'input', '[data-mr]', (e, el) => {
-      const k = el.dataset.mr;
-      f[k] = Number(el.value) / 100;
-      const num = $(`[data-mc="${k}"]`, root);
-      num.value = fmt(Number(el.value), Number(el.value) < 10 ? 1 : 0);
-      repaint();
+    on(root, 'click', '[data-mstep]', (e, el) => {
+      const k = el.dataset.mstep, st = MX_STEPS.find(x => x.c === k);
+      const cur = Math.round(f[k] * 1000) / 10;
+      const next = Math.round((cur + Number(el.dataset.d) * st.d) / st.d) * st.d;
+      setConv(k, next / 100);
+      $(`[data-mc="${k}"]`, root).value = mxPct(f[k]);
     });
-    on(root, 'input', '[data-mc]', (e, el) => {
-      const k = el.dataset.mc;
-      const v = clamp(parseNum(el.value), 0, 100);
-      if (!el.value.trim()) return;
-      f[k] = Math.max(k === 'renew' ? 0 : 0.0001, v / 100);
-      const r = $(`[data-mr="${k}"]`, root); if (r) r.value = v;
-      repaint();
-    });
-    on(root, 'input', '[data-mreach]', (e, el) => { f.reach[el.dataset.mreach] = Math.max(0, parseNum(el.value)); repaint(); });
-    on(root, 'input', '[data-mprice]', (e, el) => { if (el.value.trim()) { f.price = Math.max(1, parseNum(el.value)); repaint(); } });
-    /* по уходу из поля — число в привычном виде */
-    on(root, 'change', '[data-mreach]', (e, el) => { el.value = fmt(Math.round(f.reach[el.dataset.mreach] || 0)); });
-    on(root, 'change', '[data-mprice]', (e, el) => { el.value = fmt(f.price); });
-    on(root, 'change', '[data-mc]', (e, el) => { const v = f[el.dataset.mc] * 100; el.value = fmt(v, v < 10 ? 1 : 0); });
-    on(root, 'click', '[data-mfp]', (e, el) => { View.set('mx.fact', el.dataset.mfp); $('#mxFact', root).innerHTML = mxFactHtml(f); });
-    on(root, 'click', '[data-mq]', (e, el) => {
-      const q = el.dataset.mq;
-      Q.months.forEach(m => { f.reach[m] = q === 'plan' ? mxPlanDraftReach(f, sc, m) : Math.round((f.reach[m] || 0) * Number(q) / 1000) * 1000; });
+    on(root, 'input', '[data-mc]', (e, el) => { if (el.value.trim()) setConv(el.dataset.mc, parseNum(el.value) / 100); });
+    on(root, 'change', '[data-mc]', (e, el) => { el.value = mxPct(f[el.dataset.mc]); });
+    /* охват за квартал раскладываем по месяцам в прежней пропорции */
+    on(root, 'input', '[data-mreach-total]', (e, el) => {
+      const total = Math.max(0, parseNum(el.value));
+      const cur = sum(Q.months, m => f.reach[m] || 0);
+      const shape = cur > 0 ? Q.months.map(m => (f.reach[m] || 0) / cur) : Q.months.map(m => scenarioSales(sc)[m] / Plan.total(sc));
+      Q.months.forEach((m, i) => {
+        f.reach[m] = Math.round(total * shape[i]);
+        const mi = $(`[data-mreach="${m}"]`, root); if (mi) mi.value = fmt(f.reach[m]);
+      });
       MxUI.save();
-      App.render();
+      paint();
     });
+    on(root, 'change', '[data-mreach-total]', (e, el) => { el.value = fmt(Math.round(sum(Q.months, m => f.reach[m] || 0))); });
+    on(root, 'input', '[data-mreach]', (e, el) => {
+      f.reach[el.dataset.mreach] = Math.max(0, parseNum(el.value));
+      if (reachIn) reachIn.value = fmt(Math.round(sum(Q.months, m => f.reach[m] || 0)));
+      MxUI.save();
+      paint();
+    });
+    on(root, 'change', '[data-mreach]', (e, el) => { el.value = fmt(Math.round(f.reach[el.dataset.mreach] || 0)); });
+    on(root, 'input', '[data-mprice]', (e, el) => { if (el.value.trim()) { f.price = Math.max(1, parseNum(el.value)); MxUI.save(); paint(); } });
+    on(root, 'change', '[data-mprice]', (e, el) => { el.value = fmt(f.price); });
     on(root, 'click', '[data-mreset]', () => { MxUI.reset(); App.render(); });
-    on(root, 'click', '[data-mfact]', (e, el) => {
-      const fx = mxFact(el.dataset.from, el.dataset.to);
+    on(root, 'click', '[data-mfact]', () => {
+      const r = mxFactRange(), fx = mxFact(r.from, r.to);
       let n = 0;
       ['view', 'click', 'reg', 'pay', 'renew'].forEach(k => { if (fx[k] !== null && fx[k] > 0 && fx[k] <= 1) { f[k] = fx[k]; n++; } });
       MxUI.save();
-      toast(n ? `Взял из факта: ${n} ${plural(n, 'конверсию', 'конверсии', 'конверсий')}` : 'Для конверсий пока мало данных в «Цифрах дня»');
+      toast(n ? `Взял из факта: ${n} ${plural(n, 'процент', 'процента', 'процентов')}` : 'Для процентов пока мало данных в «Цифрах дня»');
       App.render();
     });
     on(root, 'click', '[data-msave]', async (e, save) => {
       const c = mxCalc(f, mode, sc);
-      if (!(await confirmPop(save, {text: `Сделать планом команды? «Стратегия», «Отчёты» и Cash Flow будут считать по этой воронке${mode === 'forward' ? ` и охвату ${rubK(c.tot.reach).replace(NB + '₽', '')}` : ''}.`, yes: 'Да, сохранить'}))) return;
+      if (!(await confirmPop(save, {text: 'Сделать планом команды? «Стратегия», «Отчёты» и Cash Flow будут считать по этой воронке.', yes: 'Да, сохранить'}))) return;
       const reachPlan = Object.fromEntries(c.rows.map(r => [r.m, Math.round(r.reach)]));
       saveSettings({funnel: {view: f.view, click: f.click}, convReg: f.view * f.click * f.reg, convPay: f.pay, retention: f.renew, price: Math.round(f.price), reachPlan});
       toast('Воронка сохранена как план команды');
@@ -6588,114 +6807,68 @@ App.register('metrics', {
     });
   },
 });
-/* черновик против плана команды и кнопки сохранения */
-function mxActHtml(f, sc) {
+
+/* перерисовка чисел без пересоздания полей ввода — фокус остаётся на месте */
+function mxPaint(root, f, mode, sc) {
+  const c = mxCalc(f, mode, sc), t = c.tot, rev = mode === 'reverse';
   const team = funnelOf();
-  const planReach = mxPlanDraft(sc).reach;
-  const dirty = MX_KEYS.some(k => Math.abs((f[k] || 0) - (team[k] || 0)) > 1e-9) || Q.months.some(m => Math.round(f.reach[m] || 0) !== Math.round(planReach[m] || 0));
-  return `${dirty ? '<span class="pill warn">черновик отличается от плана команды</span>' : '<span class="pill good">совпадает с планом команды</span>'}
-    <button class="btn sm ghost" data-mreset ${dirty ? '' : 'disabled'}>Вернуть план команды</button>
-    ${Auth.can('settings.edit') ? `<button class="btn sm primary" data-msave ${dirty ? '' : 'disabled'}>Сделать планом команды</button>` : ''}`;
-}
-/* охват месяца, который нужен под план сценария при текущих конверсиях */
-function mxPlanDraftReach(f, sc, m) {
-  return Math.round(scenarioSales(sc)[m] / Math.max(f.pay * f.reg * f.click * f.view, 1e-9) / 1000) * 1000;
-}
-
-function mxOutHtml(f, mode, sc) {
-  const c = mxCalc(f, mode, sc);
-  const t = c.tot;
+  const fr = mxFactRange(), fx = mxFact(fr.from, fr.to);
+  /* полосы: логарифмическая шкала, чтобы и 500 000, и 500 были видны */
+  const lo = Math.log10(Math.max(1, Math.min(t.pays, t.renewals || t.pays))), hi = Math.log10(Math.max(10, t.reach));
+  const w = v => clamp(hi > lo ? 10 + 90 * (Math.log10(Math.max(1, v)) - lo) / (hi - lo) : 100, 6, 100);
+  MX_STEPS.forEach(st => {
+    const v = t[st.k];
+    const bar = $(`#mxb-${st.k}`, root); if (bar) bar.style.width = w(v).toFixed(1) + '%';
+    const val = $(`#mxv-${st.k}`, root); if (val) val.textContent = fmt(Math.round(v));
+    if (!st.c) return;
+    const h = $(`#mxh-${st.c}`, root);
+    if (!h) return;
+    const parts = [];
+    if (Math.abs(f[st.c] - team[st.c]) > 1e-6) parts.push(`план ${mxPct(team[st.c])}%`);
+    /* продлений в факте ещё нет, пока некому продлевать — ноль не показываем */
+    const fv = st.c === 'renew' && !fx[st.c] ? null : fx[st.c];
+    if (fv !== null && fv !== undefined && fx.a.days) parts.push(`факт ${mxPct(fv)}%`);
+    h.textContent = parts.join(' · ');
+  });
   const gap = Math.round(t.pays) - Math.round(t.plan);
-  const tone = mode === 'reverse' ? '' : paceTone(t.pays, t.plan);
-  const steps = [
-    ['Охват', t.reach, null],
-    ['Просмотры', t.views, f.view],
-    ['Переходы', t.clicks, f.click],
-    ['Регистрации', t.regs, f.reg],
-    ['Покупки', t.pays, f.pay],
-  ];
-  const lo = Math.log10(Math.max(1, t.pays)), hi = Math.log10(Math.max(10, t.reach));
-  const w = v => clamp(hi > lo ? 16 + 84 * (Math.log10(Math.max(1, v)) - lo) / (hi - lo) : 100, 14, 100);
-  const tiles = mode === 'reverse'
-    ? [['Охват под план', fmt(Math.round(t.reach)), `в среднем ${fmt(Math.round(t.reach / 3))} в месяц`],
-       ['Регистраций нужно', fmt(Math.ceil(t.regs)), `при покупке ${pct(f.pay, 1)}`],
-       ['Выручка квартала', rubK(t.revenue), `продления — ${rubK(t.revRenew)}`],
-       ['Платящих на 31 декабря', fmt(Math.round(t.active)), `удержание ${pct(f.renew)}`]]
-    : [['Продаж за квартал', fmt(Math.round(t.pays)), `план «${SCENARIOS[sc].name}» ${fmt(t.plan)} · <b class="${tone}">${gap > 0 ? '+' : ''}${fmt(gap)}</b>`],
-       ['Выручка квартала', rubK(t.revenue), `первые оплаты ${rubK(t.revNew)} · продления ${rubK(t.revRenew)}`],
-       ['Платящих на 31 декабря', fmt(Math.round(t.active)), `удержание ${pct(f.renew)}`],
-       ['Охват за квартал', fmt(Math.round(t.reach)), `на одну продажу — ${t.pays ? fmt(Math.round(t.reach / t.pays)) : '—'}`]];
+  $('#mxRes', root).innerHTML = rev
+    ? `<span class="label">Под план «${SCENARIOS[sc].name}» — ${fmt(t.plan)} продаж</span>
+      <div class="mx-big">${fmt(Math.round(t.reach))}<small>охвата за квартал</small></div>
+      <div class="mx-vs">≈ ${fmt(Math.round(t.reach / 3))} в месяц · ${fmt(Math.ceil(t.regs))} ${plural(Math.ceil(t.regs), 'регистрация', 'регистрации', 'регистраций')}</div>
+      <dl class="mx-dl"><div><dt>Выручка квартала</dt><dd>${rubK(t.revenue)}</dd></div><div><dt>Платят на 31 декабря</dt><dd>${fmt(Math.round(t.active))}</dd></div></dl>`
+    : `<span class="label">Итог квартала</span>
+      <div class="mx-big">${fmt(Math.round(t.pays))}<small>${plural(Math.round(t.pays), 'продажа', 'продажи', 'продаж')}</small></div>
+      <div class="mx-vs ${paceTone(Math.round(t.pays), Math.round(t.plan))}">план «${SCENARIOS[sc].name}» ${fmt(t.plan)} · ${gap === 0 ? 'ровно по плану' : (gap > 0 ? '+' : '') + fmt(gap)}</div>
+      <dl class="mx-dl"><div><dt>Выручка квартала</dt><dd>${rubK(t.revenue)}</dd></div><div><dt>Платят на 31 декабря</dt><dd>${fmt(Math.round(t.active))}</dd></div><div><dt>Охват на одну продажу</dt><dd>${t.pays ? fmt(Math.round(t.reach / t.pays)) : '—'}</dd></div></dl>`;
+  const planReach = mxPlanDraft(sc).reach;
+  const dirty = MX_KEYS.some(k => Math.abs((f[k] || 0) - (team[k] || 0)) > 1e-9) || (!rev && Q.months.some(m => Math.round(f.reach[m] || 0) !== Math.round(planReach[m] || 0)));
+  $('#mxAct', root).innerHTML = `${dirty ? '<span class="pill warn">ваш вариант — не план команды</span>' : '<span class="pill good">это план команды</span>'}
+    <div class="row">${dirty ? '<button class="btn sm ghost" data-mreset>Вернуть план</button>' : ''}${Auth.can('settings.edit') && dirty ? '<button class="btn sm primary" data-msave>Сделать планом команды</button>' : ''}</div>`;
+  $('#mxFactLine', root).innerHTML = fx.a.days
+    ? `<span>Факт ${fr.name}: ${fmt(fx.a.pays)} ${plural(fx.a.pays, 'продажа', 'продажи', 'продаж')} из ${fmt(fx.a.regs)} регистраций, ${fx.a.days} ${plural(fx.a.days, 'день', 'дня', 'дней')} с цифрами.</span> <button class="link-btn" data-mfact>Подставить факт</button>`
+    : `<span>Факта ${fr.name} ещё нет — цифры вносят в «Отчётах» → «Цифры дня».</span>`;
 
-  const row = (name, get, f2 = v => fmt(Math.round(v)), cls = '') => `<tr class="${cls}"><td>${name}</td>${c.rows.map(r => `<td class="r">${f2(get(r))}</td>`).join('')}<td class="r"><b>${f2(get(t))}</b></td></tr>`;
-
-  /* рычаги: что даёт каждый шаг, если подвинуть его на несколько пунктов */
-  const fwd = {...f, reach: mode === 'reverse' ? Object.fromEntries(c.rows.map(r => [r.m, r.reach])) : f.reach};
-  const baseF = mxCalc(fwd, 'forward', sc).tot;
+  /* где искать рост: три самых сильных рычага */
+  const fwd = {...f, reach: rev ? Object.fromEntries(c.rows.map(r => [r.m, r.reach])) : f.reach};
+  const base = mxCalc(fwd, 'forward', sc).tot;
   const levers = [
-    {name: 'Охват +10%', t: mxCalc({...fwd, reach: Object.fromEntries(Q.months.map(m => [m, (fwd.reach[m] || 0) * 1.1]))}, 'forward', sc).tot},
-    ...FUNNEL.map(st => ({name: `${st.name} +${fmt(LEVERS[st.c] * 100)} п.п.`, t: mxCalc({...fwd, [st.c]: Math.min(1, fwd[st.c] + LEVERS[st.c])}, 'forward', sc).tot})),
-  ].map(x => ({...x, dSales: x.t.pays - baseF.pays, dRev: x.t.revenue - baseF.revenue})).sort((a, b) => b.dRev - a.dRev);
-  const maxRev = Math.max(1, ...levers.map(x => x.dRev));
+    {name: 'Охват +10%', from: '', t: mxCalc({...fwd, reach: Object.fromEntries(Q.months.map(m => [m, (fwd.reach[m] || 0) * 1.1]))}, 'forward', sc).tot},
+    ...MX_STEPS.filter(st => st.c).map(st => ({name: `${FUNNEL.find(x => x.c === st.c).name} +${fmt(LEVERS[st.c] * 100)} п.п.`,
+      from: `${mxPct(fwd[st.c])}% → ${mxPct(Math.min(1, fwd[st.c] + LEVERS[st.c]))}%`,
+      t: mxCalc({...fwd, [st.c]: Math.min(1, fwd[st.c] + LEVERS[st.c])}, 'forward', sc).tot})),
+  ].map(x => ({...x, dS: x.t.pays - base.pays, dR: x.t.revenue - base.revenue})).sort((a, b) => b.dR - a.dR).slice(0, 3);
+  $('#mxLev', root).innerHTML = `<div class="card-head"><h2>Где искать рост</h2><span class="note">что даст больше всего, если подвинуть один шаг</span></div>
+    <ol class="mx-levs">${levers.map(x => `<li><b>${x.name}</b>${x.from ? ` <span class="note">${x.from}</span>` : ''}<span class="mx-lv-v">+${fmt(Math.round(x.dS))} ${plural(Math.round(x.dS), 'продажа', 'продажи', 'продаж')} · +${rubK(x.dR)}</span></li>`).join('')}</ol>`;
 
-  return `<div class="cards mx-tiles">${tiles.map(([l, b, foot]) => `<div class="card stat"><span class="label">${l}</span><div class="big">${b}</div><div class="foot">${foot}</div></div>`).join('')}</div>
-    <div class="card mx-funnel">
-      <div class="card-head"><h2>Воронка квартала</h2><span class="note">${mode === 'reverse' ? 'сколько нужно на каждом шаге под план' : 'что даёт ваш охват'}</span></div>
-      ${steps.map(([name, v, conv], i) => `<div class="mf-row"><span class="mf-n">${name}</span><div class="mf-bar"><i style="width:${w(v).toFixed(1)}%"></i><b>${fmt(Math.round(v))}</b></div><span class="mf-c">${i ? pct(conv, conv < 0.1 ? 1 : 0) : ''}</span></div>`).join('')}
-      <div class="mf-row renew"><span class="mf-n">Продления</span><div class="mf-bar"><i style="width:${w(t.renewals).toFixed(1)}%"></i><b>${fmt(Math.round(t.renewals))}</b></div><span class="mf-c">${pct(f.renew)}</span></div>
-      <p class="note">Проценты справа — конверсия из предыдущего шага; продления — доля платящих, которые продлевают в следующем месяце.</p>
-    </div>
-    <div class="table-wrap mx-table"><table class="t grid-lines">
-      <thead><tr><th>По месяцам</th>${c.rows.map(r => `<th class="r">${monthName(r.m)}</th>`).join('')}<th class="r">Квартал</th></tr></thead>
-      <tbody>
-        ${row('Охват', r => r.reach)}
-        ${row('Просмотры', r => r.views)}
-        ${row('Переходы', r => r.clicks)}
-        ${row('Регистрации', r => r.regs)}
-        ${row('<b>Покупки</b> <span class="note">продажи</span>', r => r.pays, undefined, 'sub')}
-        ${row('Продления', r => r.renewals)}
-        <tr><td>Платящих в месяце</td>${c.rows.map(r => `<td class="r">${fmt(Math.round(r.active))}</td>`).join('')}<td class="r"><b>${fmt(Math.round(t.active))}</b><small class="note"> на конец</small></td></tr>
-        ${row('Выручка', r => r.revenue, rubK, 'total')}
-        ${mode === 'forward' ? `<tr><td>План продаж «${SCENARIOS[sc].name}»</td>${c.rows.map(r => `<td class="r muted">${fmt(r.plan)}</td>`).join('')}<td class="r muted">${fmt(t.plan)}</td></tr>
-        <tr><td>Разница</td>${c.rows.map(r => `${(d => `<td class="r ${d >= 0 ? 'good' : 'bad'}">${d > 0 ? '+' : ''}${fmt(d)}</td>`)(Math.round(r.pays) - Math.round(r.plan))}`).join('')}<td class="r ${gap >= 0 ? 'good' : 'bad'}"><b>${gap > 0 ? '+' : ''}${fmt(gap)}</b></td></tr>` : ''}
-      </tbody></table></div>
-    ${mode === 'forward' && Auth.can('settings.edit') ? `<p class="note mx-toplan">Нравится результат? <button class="link-btn" data-mtoplan>Записать эти продажи в план «${SCENARIOS[sc].name}»</button> — сценарий в «Стратегии» поменяется.</p>` : ''}
-    <div class="card mx-levers">
-      <div class="card-head"><h2>Что даст больше всего</h2><span class="note">если подвинуть один шаг, остальное — как сейчас</span></div>
-      ${levers.map(x => `<div class="lv-row"><span class="lv-n">${x.name}</span><div class="lv-bar"><i style="width:${(Math.max(0, x.dRev) / maxRev * 100).toFixed(1)}%"></i></div><span class="lv-v"><b>+${fmt(Math.round(x.dSales))}</b> продаж · <b>+${rubK(x.dRev)}</b></span></div>`).join('')}
-    </div>`;
-}
-
-function mxFactHtml(f) {
-  const t = today();
-  const opts = [];
-  if (t >= Q.start) opts.push(['q', 'Квартал', Q.start, t < Q.end ? t : Q.end]);
-  Q.months.filter(m => monthStart(m) <= t).forEach(m => opts.push([m, monthName(m), monthStart(m), monthEnd(m) < t ? monthEnd(m) : t]));
-  if (!opts.length) opts.push(['sep', 'Сентябрь', '2026-09-01', t < '2026-09-30' ? t : '2026-09-30']);
-  let pick = View.get('mx.fact', opts[0][0]);
-  const o = opts.find(x => x[0] === pick) || opts[0];
-  pick = o[0];
-  const fx = mxFact(o[2], o[3]);
-  const a = fx.a;
-  const cell = (fact, plan) => {
-    if (fact === null) return '<td class="r muted">—</td><td></td>';
-    const tone = fact >= plan ? 'good' : fact >= plan * 0.8 ? 'warn' : 'bad';
-    return `<td class="r"><b>${pct(fact, fact < 0.1 ? 1 : 0)}</b></td><td class="r ${tone}">${fact >= plan ? '+' : ''}${fmt((fact - plan) * 100, 1)} п.п.</td>`;
-  };
-  const noData = !a.days;
-  return `<div class="section-head"><h2>Факт воронки по «Цифрам дня»</h2>
-      <div class="seg">${opts.map(x => `<button data-mfp="${x[0]}" class="${x[0] === pick ? 'on' : ''}">${x[1]}</button>`).join('')}</div></div>
-    ${noData ? `<div class="empty"><b>Цифр за этот период ещё нет</b>Их вносят каждый день в «Отчётах» → «Цифры дня»: охват, просмотры, переходы, регистрации, оплаты, продления.</div>` : `<div class="table-wrap"><table class="t mx-fact">
-      <thead><tr><th>Шаг</th><th class="r">Факт, чел.</th><th class="r">Конверсия факт</th><th class="r">к вашему варианту</th><th class="r">Ваш вариант</th></tr></thead>
-      <tbody>
-        <tr><td>Охват</td><td class="r">${fmt(a.reach)}</td><td></td><td></td><td></td></tr>
-        <tr><td>Просмотры</td><td class="r">${a.views ? fmt(a.views) : '<span class="muted">не вносили</span>'}</td>${cell(fx.view, f.view)}<td class="r muted">${pct(f.view)}</td></tr>
-        <tr><td>Переходы</td><td class="r">${a.clicks ? fmt(a.clicks) : '<span class="muted">не вносили</span>'}</td>${cell(fx.click, f.click)}<td class="r muted">${pct(f.click, 1)}</td></tr>
-        <tr><td>Регистрации</td><td class="r">${fmt(a.regs)}</td>${a.clicks ? cell(fx.reg, f.reg) : `<td class="r" title="от охвата: переходы не вносили">${pct(fx.regFromReach, 2)} <small class="note">от охвата</small></td><td class="r ${fx.regFromReach === null ? '' : fx.regFromReach >= f.view * f.click * f.reg ? 'good' : 'bad'}">${fx.regFromReach === null ? '' : `план ${pct(f.view * f.click * f.reg, 2)}`}</td>`}<td class="r muted">${pct(f.reg)}</td></tr>
-        <tr class="sub"><td>Покупки</td><td class="r">${fmt(a.pays)}</td>${cell(fx.pay, f.pay)}<td class="r muted">${pct(f.pay, 1)}</td></tr>
-        <tr><td>Продления</td><td class="r">${fmt(a.renewals)}</td>${cell(fx.renew, f.renew)}<td class="r muted">${pct(f.renew)}</td></tr>
-      </tbody></table></div>
-      <div class="row mx-factfoot"><span class="note">${a.days} ${plural(a.days, 'день', 'дня', 'дней')} с цифрами · выручка ${rubK(a.revenue)}. Продление — продления месяца ÷ платящие прошлого месяца.</span>
-        <button class="btn sm" data-mfact data-from="${o[2]}" data-to="${o[3]}">Подставить факт в расчёт</button></div>`}`;
+  const mr = $('#mxMonReach', root); if (mr) mr.innerHTML = `<b>${fmt(Math.round(t.reach))}</b>`;
+  const line = (name, get, fm = v => fmt(Math.round(v)), cls = '') => `<tr class="${cls}"><td>${name}</td>${c.rows.map(r => `<td class="r">${fm(get(r))}</td>`).join('')}<td class="r"><b>${fm(get(t))}</b></td></tr>`;
+  $('#mxMon', root).innerHTML = `
+    ${rev ? line('Охват', r => r.reach) : ''}
+    ${line('Регистрации', r => r.regs)}
+    ${line('Продажи', r => r.pays, undefined, 'sub')}
+    ${!rev ? line(`План «${SCENARIOS[sc].name}»`, r => r.plan, v => `<span class="muted">${fmt(Math.round(v))}</span>`) : ''}
+    ${line('Продления', r => r.renewals)}
+    ${line('Выручка', r => r.revenue, rubK, 'total')}`;
 }
 
 /* ── 99-boot.js ── */

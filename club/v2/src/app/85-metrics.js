@@ -1,8 +1,8 @@
-/* Метрики: воронка продаж, которую можно крутить руками.
-   Охват → просмотр → переход → регистрация → покупка → продление.
-   Меняете любую цифру — квартал пересчитывается сразу. Два расчёта:
-   «от охвата» (сколько продаж даст такой охват) и «от цели» (какой охват
-   нужен под план продаж сценария). Черновик у каждого свой; основатель
+/* Метрики: воронка продаж квартала одной лентой сверху вниз.
+   Охват → просмотры → переходы → регистрации → покупки → продления.
+   Проценты между шагами правятся прямо на ленте, числа пересчитываются
+   сразу, итог — справа. Два вопроса: «сколько продаж даст охват» и
+   «какой охват нужен под план». Черновик у каждого свой; основатель
    сохраняет удачный вариант как план команды — тогда «Стратегия»,
    «Отчёты» и Cash Flow считают по нему. */
 
@@ -94,96 +94,132 @@ function mxFact(from, to) {
   return {a, view: conv(a.views, a.reach), click: conv(a.clicks, a.views), reg: conv(a.regs, a.clicks || 0), regFromReach: conv(a.regs, a.reach), pay: conv(a.pays, a.regs), renew: renewRate};
 }
 
+/* шаги ленты и глаголы переходов между ними */
+const MX_STEPS = [
+  {k: 'reach',    name: 'Охват',       hint: 'увидели нас'},
+  {k: 'views',    name: 'Просмотры',   hint: 'посмотрели ролик или пост',     c: 'view',  verb: 'посмотрят',             d: 1,   min: 1},
+  {k: 'clicks',   name: 'Переходы',    hint: 'перешли на сайт или в приложение', c: 'click', verb: 'перейдут',          d: 0.5, min: 0.1},
+  {k: 'regs',     name: 'Регистрации', hint: 'создали учётку',                c: 'reg',   verb: 'зарегистрируются',      d: 1,   min: 1},
+  {k: 'pays',     name: 'Покупки',     hint: 'первая оплата — это продажа',   c: 'pay',   verb: 'купят',                 d: 0.5, min: 0.1},
+  {k: 'renewals', name: 'Продления',   hint: 'за квартал',                    c: 'renew', verb: 'продлят в след. месяце', d: 5,   min: 0},
+];
+const mxPct = v => fmt(v * 100, v * 100 < 10 && Math.abs(v * 1000 - Math.round(v * 100) * 10) > 0.01 ? 1 : 0);
+/* факт — за квартал, а до его старта — за сентябрь */
+function mxFactRange() {
+  const t = today();
+  if (t >= Q.start) return {from: Q.start, to: t < Q.end ? t : Q.end, name: 'за квартал'};
+  return {from: '2026-09-01', to: t, name: 'за сентябрь'};
+}
+
 App.register('metrics', {
   title: 'Метрики',
   render(root) {
-    const s = settings();
     const sc = MxUI.sc, mode = MxUI.mode;
     const f = MxUI.load();
     const canSave = Auth.can('settings.edit');
-    const team = funnelOf(s);
+    const rev = mode === 'reverse';
 
-    const convRow = st => {
-      const v = f[st.c] * 100;
-      return `<div class="mx-conv">
-        <div class="mx-cl"><b>${st.name}</b><small>% ${st.of} · ${st.about}</small></div>
-        <input type="range" class="mx-range" data-mr="${st.c}" min="${st.min}" max="${st.max}" step="${st.step}" value="${clamp(v, st.min, st.max)}" aria-label="${st.name}, %">
-        <label class="mx-num"><input class="input num sm" data-mc="${st.c}" inputmode="decimal" value="${fmt(v, v < 10 ? 1 : 0)}"><span>%</span></label>
-        <span class="mx-team" title="план команды">${pct(team[st.c], team[st.c] < 0.1 ? 1 : 0)}</span>
+    const row = st => `<div class="mf2-row ${st.k === 'pays' ? 'main' : ''} ${st.k === 'renewals' ? 'renew' : ''}">
+        <div class="mf2-name"><b>${st.name}</b><small>${st.hint}</small></div>
+        <div class="mf2-bar"><i id="mxb-${st.k}"></i></div>
+        <div class="mf2-val">${st.k === 'reach' && !rev
+          ? `<input class="input num mx-reach-in" data-mreach-total inputmode="numeric" aria-label="Охват за квартал">`
+          : `<b id="mxv-${st.k}"></b>`}</div>
       </div>`;
-    };
+    const conv = st => `<div class="mf2-conv">
+        <span class="mf2-arr" aria-hidden="true">↓</span>
+        <div class="mx-pct"><button type="button" data-mstep="${st.c}" data-d="-1" aria-label="меньше">−</button><input class="input num" data-mc="${st.c}" inputmode="decimal" value="${mxPct(f[st.c])}" aria-label="${st.name}, %"><span>%</span><button type="button" data-mstep="${st.c}" data-d="1" aria-label="больше">+</button></div>
+        <span class="mf2-verb">${st.verb}</span>
+        <small class="mf2-hint" id="mxh-${st.c}"></small>
+      </div>`;
 
     root.innerHTML = `
-      ${pageHead('Метрики', 'Воронка продаж: охват → просмотр → переход → регистрация → покупка → продление. Двигайте цифры — квартал пересчитывается сразу.',
-        `<div class="seg" title="Сценарий для сравнения">${Object.entries(SCENARIOS).map(([k, x]) => `<button data-msc="${k}" class="${k === sc ? 'on' : ''}">${x.name} ${fmt(Plan.total(k))}</button>`).join('')}</div>${helpBtn('metrics')}`)}
-      ${helpBox('metrics', `<b>Как пользоваться.</b> Слева — ключевые цифры: охват по месяцам и конверсия каждого шага воронки. Справа — что из этого выходит: продажи, продления, платящие и выручка по месяцам против плана сценария. <b>«От охвата»</b> — вы задаёте охват и видите продажи. <b>«От цели»</b> — наоборот: берём план продаж сценария и считаем, сколько нужно регистраций, переходов, просмотров и охвата. Ниже — факт из «Цифр дня» и какие рычаги дают больше всего. Ваши правки видны только вам${canSave ? '; кнопка «Сделать планом команды» сохраняет их для всех — по ним считают «Стратегия», «Отчёты» и Cash Flow' : ' — сохранить их как план команды может основатель'}.`)}
-      <div class="mx-grid">
-        <section class="card mx-in">
-          <div class="card-head"><h2>Ключевые цифры</h2>
-            <div class="seg"><button data-mmode="forward" class="${mode === 'forward' ? 'on' : ''}">От охвата</button><button data-mmode="reverse" class="${mode === 'reverse' ? 'on' : ''}">От цели</button></div></div>
-          ${mode === 'forward' ? `<div class="mx-reach"><span class="label">Охват в месяц, человек</span>
-            <div class="mx-reach-row">${Q.months.map(m => `<label class="field"><span>${monthName(m)}</span><input class="input num" data-mreach="${m}" inputmode="numeric" value="${fmt(Math.round(f.reach[m] || 0))}"></label>`).join('')}</div>
-            <div class="chips mx-quick"><button class="chip" data-mq="1.1">+10%</button><button class="chip" data-mq="0.9">−10%</button><button class="chip" data-mq="plan">под план «${SCENARIOS[sc].name}»</button></div></div>`
-            : `<div class="mx-reach"><span class="label">План продаж «${SCENARIOS[sc].name}»</span><div class="mx-target">${Q.months.map(m => `<div><span>${monthName(m)}</span><b>${fmt(scenarioSales(sc)[m])}</b></div>`).join('')}<div><span>квартал</span><b>${fmt(Plan.total(sc))}</b></div></div><p class="note">Меняется в «Стратегии» → сценарии. Здесь считаем, что нужно на каждом шаге.</p></div>`}
-          <div class="mx-convs"><div class="mx-conv head"><span></span><span></span><span>ваш вариант</span><span>план</span></div>${FUNNEL.map(convRow).join('')}</div>
-          <div class="mx-price"><label class="field"><span>Цена подписки в месяц, ₽</span><input class="input num" data-mprice inputmode="numeric" value="${fmt(f.price)}"></label>
-            <div class="note">Охват → регистрация: <b id="mxR2R">${pct(f.view * f.click * f.reg, 2)}</b> · в плане команды ${pct(team.view * team.click * team.reg, 2)}</div></div>
-          <div class="mx-actions" id="mxAct">${mxActHtml(f, sc)}</div>
-        </section>
-        <section class="mx-out" id="mxOut">${mxOutHtml(f, mode, sc)}</section>
+      ${pageHead('Метрики', 'Воронка продаж за квартал. Меняйте проценты между шагами — всё пересчитается сразу.',
+        `<div class="seg" title="С каким планом сравнивать">${Object.entries(SCENARIOS).map(([k, x]) => `<button data-msc="${k}" class="${k === sc ? 'on' : ''}">${x.name} ${fmt(Plan.total(k))}</button>`).join('')}</div>${helpBtn('metrics')}`)}
+      ${helpBox('metrics', `<b>Как читать.</b> Сверху вниз — путь человека: увидел → посмотрел → перешёл → зарегистрировался → купил → продлил. Между шагами — какой процент доходит до следующего; меняйте его кнопками − / + или числом. Под процентом — план команды и факт из «Цифр дня». Справа — итог квартала. Ваши правки видны только вам${canSave ? '; «Сделать планом команды» сохранит их для всех' : ''}.`)}
+      <div class="seg mx-mode">
+        <button data-mmode="forward" class="${!rev ? 'on' : ''}">Сколько продаж даст охват</button>
+        <button data-mmode="reverse" class="${rev ? 'on' : ''}">Какой охват нужен под план «${SCENARIOS[sc].name}»</button>
       </div>
-      <section class="section" id="mxFact">${mxFactHtml(f)}</section>`;
+      <div class="mx2">
+        <section class="card mx-flow">${MX_STEPS.map((st, i) => (i ? conv(st) : '') + row(st)).join('')}</section>
+        <aside class="mx-side">
+          <section class="card mx-res" id="mxRes"></section>
+          <section class="card mx-set">
+            <label class="field"><span>Цена подписки, ₽ в месяц</span><input class="input num" data-mprice inputmode="numeric" value="${fmt(f.price)}"></label>
+            <div class="mx-act" id="mxAct"></div>
+            <div class="mx-fact" id="mxFactLine"></div>
+          </section>
+        </aside>
+      </div>
+      <section class="card mx-lev section" id="mxLev"></section>
+      <details class="section mx-months">
+        <summary>По месяцам</summary>
+        <div class="table-wrap"><table class="t grid-lines">
+          <thead><tr><th></th>${Q.months.map(m => `<th class="r">${monthName(m)}</th>`).join('')}<th class="r">Квартал</th></tr></thead>
+          ${!rev ? `<tbody><tr><td>Охват <span class="note">можно поправить</span></td>${Q.months.map(m => `<td class="r"><input class="input num sm" data-mreach="${m}" inputmode="numeric" value="${fmt(Math.round(f.reach[m] || 0))}"></td>`).join('')}<td class="r" id="mxMonReach"></td></tr></tbody>` : ''}
+          <tbody id="mxMon"></tbody>
+        </table></div>
+        ${!rev && canSave ? `<p class="note">Нравится результат? <button class="link-btn" data-mtoplan>Записать эти продажи в план «${SCENARIOS[sc].name}»</button> — сценарий в «Стратегии» поменяется.</p>` : ''}
+      </details>`;
 
     wireHelp(root);
+    const paint = () => mxPaint(root, f, mode, sc);
+    paint();
+    const reachIn = $('[data-mreach-total]', root);
+    if (reachIn) reachIn.value = fmt(Math.round(sum(Q.months, m => f.reach[m] || 0)));
+
     on(root, 'click', '[data-msc]', (e, el) => { View.set('mx.sc', el.dataset.msc); App.render(); });
     on(root, 'click', '[data-mmode]', (e, el) => { View.set('mx.mode', el.dataset.mmode); App.render(); });
-    const repaint = () => {
+    const setConv = (k, v) => {
+      const st = MX_STEPS.find(x => x.c === k);
+      f[k] = clamp(v, st.min / 100, 1);
       MxUI.save();
-      $('#mxOut', root).innerHTML = mxOutHtml(f, MxUI.mode, sc);
-      $('#mxFact', root).innerHTML = mxFactHtml(f);
-      $('#mxAct', root).innerHTML = mxActHtml(f, sc);
-      const r2r = $('#mxR2R', root); if (r2r) r2r.textContent = pct(f.view * f.click * f.reg, 2);
+      paint();
     };
-    on(root, 'input', '[data-mr]', (e, el) => {
-      const k = el.dataset.mr;
-      f[k] = Number(el.value) / 100;
-      const num = $(`[data-mc="${k}"]`, root);
-      num.value = fmt(Number(el.value), Number(el.value) < 10 ? 1 : 0);
-      repaint();
+    on(root, 'click', '[data-mstep]', (e, el) => {
+      const k = el.dataset.mstep, st = MX_STEPS.find(x => x.c === k);
+      const cur = Math.round(f[k] * 1000) / 10;
+      const next = Math.round((cur + Number(el.dataset.d) * st.d) / st.d) * st.d;
+      setConv(k, next / 100);
+      $(`[data-mc="${k}"]`, root).value = mxPct(f[k]);
     });
-    on(root, 'input', '[data-mc]', (e, el) => {
-      const k = el.dataset.mc;
-      const v = clamp(parseNum(el.value), 0, 100);
-      if (!el.value.trim()) return;
-      f[k] = Math.max(k === 'renew' ? 0 : 0.0001, v / 100);
-      const r = $(`[data-mr="${k}"]`, root); if (r) r.value = v;
-      repaint();
-    });
-    on(root, 'input', '[data-mreach]', (e, el) => { f.reach[el.dataset.mreach] = Math.max(0, parseNum(el.value)); repaint(); });
-    on(root, 'input', '[data-mprice]', (e, el) => { if (el.value.trim()) { f.price = Math.max(1, parseNum(el.value)); repaint(); } });
-    /* по уходу из поля — число в привычном виде */
-    on(root, 'change', '[data-mreach]', (e, el) => { el.value = fmt(Math.round(f.reach[el.dataset.mreach] || 0)); });
-    on(root, 'change', '[data-mprice]', (e, el) => { el.value = fmt(f.price); });
-    on(root, 'change', '[data-mc]', (e, el) => { const v = f[el.dataset.mc] * 100; el.value = fmt(v, v < 10 ? 1 : 0); });
-    on(root, 'click', '[data-mfp]', (e, el) => { View.set('mx.fact', el.dataset.mfp); $('#mxFact', root).innerHTML = mxFactHtml(f); });
-    on(root, 'click', '[data-mq]', (e, el) => {
-      const q = el.dataset.mq;
-      Q.months.forEach(m => { f.reach[m] = q === 'plan' ? mxPlanDraftReach(f, sc, m) : Math.round((f.reach[m] || 0) * Number(q) / 1000) * 1000; });
+    on(root, 'input', '[data-mc]', (e, el) => { if (el.value.trim()) setConv(el.dataset.mc, parseNum(el.value) / 100); });
+    on(root, 'change', '[data-mc]', (e, el) => { el.value = mxPct(f[el.dataset.mc]); });
+    /* охват за квартал раскладываем по месяцам в прежней пропорции */
+    on(root, 'input', '[data-mreach-total]', (e, el) => {
+      const total = Math.max(0, parseNum(el.value));
+      const cur = sum(Q.months, m => f.reach[m] || 0);
+      const shape = cur > 0 ? Q.months.map(m => (f.reach[m] || 0) / cur) : Q.months.map(m => scenarioSales(sc)[m] / Plan.total(sc));
+      Q.months.forEach((m, i) => {
+        f.reach[m] = Math.round(total * shape[i]);
+        const mi = $(`[data-mreach="${m}"]`, root); if (mi) mi.value = fmt(f.reach[m]);
+      });
       MxUI.save();
-      App.render();
+      paint();
     });
+    on(root, 'change', '[data-mreach-total]', (e, el) => { el.value = fmt(Math.round(sum(Q.months, m => f.reach[m] || 0))); });
+    on(root, 'input', '[data-mreach]', (e, el) => {
+      f.reach[el.dataset.mreach] = Math.max(0, parseNum(el.value));
+      if (reachIn) reachIn.value = fmt(Math.round(sum(Q.months, m => f.reach[m] || 0)));
+      MxUI.save();
+      paint();
+    });
+    on(root, 'change', '[data-mreach]', (e, el) => { el.value = fmt(Math.round(f.reach[el.dataset.mreach] || 0)); });
+    on(root, 'input', '[data-mprice]', (e, el) => { if (el.value.trim()) { f.price = Math.max(1, parseNum(el.value)); MxUI.save(); paint(); } });
+    on(root, 'change', '[data-mprice]', (e, el) => { el.value = fmt(f.price); });
     on(root, 'click', '[data-mreset]', () => { MxUI.reset(); App.render(); });
-    on(root, 'click', '[data-mfact]', (e, el) => {
-      const fx = mxFact(el.dataset.from, el.dataset.to);
+    on(root, 'click', '[data-mfact]', () => {
+      const r = mxFactRange(), fx = mxFact(r.from, r.to);
       let n = 0;
       ['view', 'click', 'reg', 'pay', 'renew'].forEach(k => { if (fx[k] !== null && fx[k] > 0 && fx[k] <= 1) { f[k] = fx[k]; n++; } });
       MxUI.save();
-      toast(n ? `Взял из факта: ${n} ${plural(n, 'конверсию', 'конверсии', 'конверсий')}` : 'Для конверсий пока мало данных в «Цифрах дня»');
+      toast(n ? `Взял из факта: ${n} ${plural(n, 'процент', 'процента', 'процентов')}` : 'Для процентов пока мало данных в «Цифрах дня»');
       App.render();
     });
     on(root, 'click', '[data-msave]', async (e, save) => {
       const c = mxCalc(f, mode, sc);
-      if (!(await confirmPop(save, {text: `Сделать планом команды? «Стратегия», «Отчёты» и Cash Flow будут считать по этой воронке${mode === 'forward' ? ` и охвату ${rubK(c.tot.reach).replace(NB + '₽', '')}` : ''}.`, yes: 'Да, сохранить'}))) return;
+      if (!(await confirmPop(save, {text: 'Сделать планом команды? «Стратегия», «Отчёты» и Cash Flow будут считать по этой воронке.', yes: 'Да, сохранить'}))) return;
       const reachPlan = Object.fromEntries(c.rows.map(r => [r.m, Math.round(r.reach)]));
       saveSettings({funnel: {view: f.view, click: f.click}, convReg: f.view * f.click * f.reg, convPay: f.pay, retention: f.renew, price: Math.round(f.price), reachPlan});
       toast('Воронка сохранена как план команды');
@@ -201,112 +237,66 @@ App.register('metrics', {
     });
   },
 });
-/* черновик против плана команды и кнопки сохранения */
-function mxActHtml(f, sc) {
+
+/* перерисовка чисел без пересоздания полей ввода — фокус остаётся на месте */
+function mxPaint(root, f, mode, sc) {
+  const c = mxCalc(f, mode, sc), t = c.tot, rev = mode === 'reverse';
   const team = funnelOf();
-  const planReach = mxPlanDraft(sc).reach;
-  const dirty = MX_KEYS.some(k => Math.abs((f[k] || 0) - (team[k] || 0)) > 1e-9) || Q.months.some(m => Math.round(f.reach[m] || 0) !== Math.round(planReach[m] || 0));
-  return `${dirty ? '<span class="pill warn">черновик отличается от плана команды</span>' : '<span class="pill good">совпадает с планом команды</span>'}
-    <button class="btn sm ghost" data-mreset ${dirty ? '' : 'disabled'}>Вернуть план команды</button>
-    ${Auth.can('settings.edit') ? `<button class="btn sm primary" data-msave ${dirty ? '' : 'disabled'}>Сделать планом команды</button>` : ''}`;
-}
-/* охват месяца, который нужен под план сценария при текущих конверсиях */
-function mxPlanDraftReach(f, sc, m) {
-  return Math.round(scenarioSales(sc)[m] / Math.max(f.pay * f.reg * f.click * f.view, 1e-9) / 1000) * 1000;
-}
-
-function mxOutHtml(f, mode, sc) {
-  const c = mxCalc(f, mode, sc);
-  const t = c.tot;
+  const fr = mxFactRange(), fx = mxFact(fr.from, fr.to);
+  /* полосы: логарифмическая шкала, чтобы и 500 000, и 500 были видны */
+  const lo = Math.log10(Math.max(1, Math.min(t.pays, t.renewals || t.pays))), hi = Math.log10(Math.max(10, t.reach));
+  const w = v => clamp(hi > lo ? 10 + 90 * (Math.log10(Math.max(1, v)) - lo) / (hi - lo) : 100, 6, 100);
+  MX_STEPS.forEach(st => {
+    const v = t[st.k];
+    const bar = $(`#mxb-${st.k}`, root); if (bar) bar.style.width = w(v).toFixed(1) + '%';
+    const val = $(`#mxv-${st.k}`, root); if (val) val.textContent = fmt(Math.round(v));
+    if (!st.c) return;
+    const h = $(`#mxh-${st.c}`, root);
+    if (!h) return;
+    const parts = [];
+    if (Math.abs(f[st.c] - team[st.c]) > 1e-6) parts.push(`план ${mxPct(team[st.c])}%`);
+    /* продлений в факте ещё нет, пока некому продлевать — ноль не показываем */
+    const fv = st.c === 'renew' && !fx[st.c] ? null : fx[st.c];
+    if (fv !== null && fv !== undefined && fx.a.days) parts.push(`факт ${mxPct(fv)}%`);
+    h.textContent = parts.join(' · ');
+  });
   const gap = Math.round(t.pays) - Math.round(t.plan);
-  const tone = mode === 'reverse' ? '' : paceTone(t.pays, t.plan);
-  const steps = [
-    ['Охват', t.reach, null],
-    ['Просмотры', t.views, f.view],
-    ['Переходы', t.clicks, f.click],
-    ['Регистрации', t.regs, f.reg],
-    ['Покупки', t.pays, f.pay],
-  ];
-  const lo = Math.log10(Math.max(1, t.pays)), hi = Math.log10(Math.max(10, t.reach));
-  const w = v => clamp(hi > lo ? 16 + 84 * (Math.log10(Math.max(1, v)) - lo) / (hi - lo) : 100, 14, 100);
-  const tiles = mode === 'reverse'
-    ? [['Охват под план', fmt(Math.round(t.reach)), `в среднем ${fmt(Math.round(t.reach / 3))} в месяц`],
-       ['Регистраций нужно', fmt(Math.ceil(t.regs)), `при покупке ${pct(f.pay, 1)}`],
-       ['Выручка квартала', rubK(t.revenue), `продления — ${rubK(t.revRenew)}`],
-       ['Платящих на 31 декабря', fmt(Math.round(t.active)), `удержание ${pct(f.renew)}`]]
-    : [['Продаж за квартал', fmt(Math.round(t.pays)), `план «${SCENARIOS[sc].name}» ${fmt(t.plan)} · <b class="${tone}">${gap > 0 ? '+' : ''}${fmt(gap)}</b>`],
-       ['Выручка квартала', rubK(t.revenue), `первые оплаты ${rubK(t.revNew)} · продления ${rubK(t.revRenew)}`],
-       ['Платящих на 31 декабря', fmt(Math.round(t.active)), `удержание ${pct(f.renew)}`],
-       ['Охват за квартал', fmt(Math.round(t.reach)), `на одну продажу — ${t.pays ? fmt(Math.round(t.reach / t.pays)) : '—'}`]];
+  $('#mxRes', root).innerHTML = rev
+    ? `<span class="label">Под план «${SCENARIOS[sc].name}» — ${fmt(t.plan)} продаж</span>
+      <div class="mx-big">${fmt(Math.round(t.reach))}<small>охвата за квартал</small></div>
+      <div class="mx-vs">≈ ${fmt(Math.round(t.reach / 3))} в месяц · ${fmt(Math.ceil(t.regs))} ${plural(Math.ceil(t.regs), 'регистрация', 'регистрации', 'регистраций')}</div>
+      <dl class="mx-dl"><div><dt>Выручка квартала</dt><dd>${rubK(t.revenue)}</dd></div><div><dt>Платят на 31 декабря</dt><dd>${fmt(Math.round(t.active))}</dd></div></dl>`
+    : `<span class="label">Итог квартала</span>
+      <div class="mx-big">${fmt(Math.round(t.pays))}<small>${plural(Math.round(t.pays), 'продажа', 'продажи', 'продаж')}</small></div>
+      <div class="mx-vs ${paceTone(Math.round(t.pays), Math.round(t.plan))}">план «${SCENARIOS[sc].name}» ${fmt(t.plan)} · ${gap === 0 ? 'ровно по плану' : (gap > 0 ? '+' : '') + fmt(gap)}</div>
+      <dl class="mx-dl"><div><dt>Выручка квартала</dt><dd>${rubK(t.revenue)}</dd></div><div><dt>Платят на 31 декабря</dt><dd>${fmt(Math.round(t.active))}</dd></div><div><dt>Охват на одну продажу</dt><dd>${t.pays ? fmt(Math.round(t.reach / t.pays)) : '—'}</dd></div></dl>`;
+  const planReach = mxPlanDraft(sc).reach;
+  const dirty = MX_KEYS.some(k => Math.abs((f[k] || 0) - (team[k] || 0)) > 1e-9) || (!rev && Q.months.some(m => Math.round(f.reach[m] || 0) !== Math.round(planReach[m] || 0)));
+  $('#mxAct', root).innerHTML = `${dirty ? '<span class="pill warn">ваш вариант — не план команды</span>' : '<span class="pill good">это план команды</span>'}
+    <div class="row">${dirty ? '<button class="btn sm ghost" data-mreset>Вернуть план</button>' : ''}${Auth.can('settings.edit') && dirty ? '<button class="btn sm primary" data-msave>Сделать планом команды</button>' : ''}</div>`;
+  $('#mxFactLine', root).innerHTML = fx.a.days
+    ? `<span>Факт ${fr.name}: ${fmt(fx.a.pays)} ${plural(fx.a.pays, 'продажа', 'продажи', 'продаж')} из ${fmt(fx.a.regs)} регистраций, ${fx.a.days} ${plural(fx.a.days, 'день', 'дня', 'дней')} с цифрами.</span> <button class="link-btn" data-mfact>Подставить факт</button>`
+    : `<span>Факта ${fr.name} ещё нет — цифры вносят в «Отчётах» → «Цифры дня».</span>`;
 
-  const row = (name, get, f2 = v => fmt(Math.round(v)), cls = '') => `<tr class="${cls}"><td>${name}</td>${c.rows.map(r => `<td class="r">${f2(get(r))}</td>`).join('')}<td class="r"><b>${f2(get(t))}</b></td></tr>`;
-
-  /* рычаги: что даёт каждый шаг, если подвинуть его на несколько пунктов */
-  const fwd = {...f, reach: mode === 'reverse' ? Object.fromEntries(c.rows.map(r => [r.m, r.reach])) : f.reach};
-  const baseF = mxCalc(fwd, 'forward', sc).tot;
+  /* где искать рост: три самых сильных рычага */
+  const fwd = {...f, reach: rev ? Object.fromEntries(c.rows.map(r => [r.m, r.reach])) : f.reach};
+  const base = mxCalc(fwd, 'forward', sc).tot;
   const levers = [
-    {name: 'Охват +10%', t: mxCalc({...fwd, reach: Object.fromEntries(Q.months.map(m => [m, (fwd.reach[m] || 0) * 1.1]))}, 'forward', sc).tot},
-    ...FUNNEL.map(st => ({name: `${st.name} +${fmt(LEVERS[st.c] * 100)} п.п.`, t: mxCalc({...fwd, [st.c]: Math.min(1, fwd[st.c] + LEVERS[st.c])}, 'forward', sc).tot})),
-  ].map(x => ({...x, dSales: x.t.pays - baseF.pays, dRev: x.t.revenue - baseF.revenue})).sort((a, b) => b.dRev - a.dRev);
-  const maxRev = Math.max(1, ...levers.map(x => x.dRev));
+    {name: 'Охват +10%', from: '', t: mxCalc({...fwd, reach: Object.fromEntries(Q.months.map(m => [m, (fwd.reach[m] || 0) * 1.1]))}, 'forward', sc).tot},
+    ...MX_STEPS.filter(st => st.c).map(st => ({name: `${FUNNEL.find(x => x.c === st.c).name} +${fmt(LEVERS[st.c] * 100)} п.п.`,
+      from: `${mxPct(fwd[st.c])}% → ${mxPct(Math.min(1, fwd[st.c] + LEVERS[st.c]))}%`,
+      t: mxCalc({...fwd, [st.c]: Math.min(1, fwd[st.c] + LEVERS[st.c])}, 'forward', sc).tot})),
+  ].map(x => ({...x, dS: x.t.pays - base.pays, dR: x.t.revenue - base.revenue})).sort((a, b) => b.dR - a.dR).slice(0, 3);
+  $('#mxLev', root).innerHTML = `<div class="card-head"><h2>Где искать рост</h2><span class="note">что даст больше всего, если подвинуть один шаг</span></div>
+    <ol class="mx-levs">${levers.map(x => `<li><b>${x.name}</b>${x.from ? ` <span class="note">${x.from}</span>` : ''}<span class="mx-lv-v">+${fmt(Math.round(x.dS))} ${plural(Math.round(x.dS), 'продажа', 'продажи', 'продаж')} · +${rubK(x.dR)}</span></li>`).join('')}</ol>`;
 
-  return `<div class="cards mx-tiles">${tiles.map(([l, b, foot]) => `<div class="card stat"><span class="label">${l}</span><div class="big">${b}</div><div class="foot">${foot}</div></div>`).join('')}</div>
-    <div class="card mx-funnel">
-      <div class="card-head"><h2>Воронка квартала</h2><span class="note">${mode === 'reverse' ? 'сколько нужно на каждом шаге под план' : 'что даёт ваш охват'}</span></div>
-      ${steps.map(([name, v, conv], i) => `<div class="mf-row"><span class="mf-n">${name}</span><div class="mf-bar"><i style="width:${w(v).toFixed(1)}%"></i><b>${fmt(Math.round(v))}</b></div><span class="mf-c">${i ? pct(conv, conv < 0.1 ? 1 : 0) : ''}</span></div>`).join('')}
-      <div class="mf-row renew"><span class="mf-n">Продления</span><div class="mf-bar"><i style="width:${w(t.renewals).toFixed(1)}%"></i><b>${fmt(Math.round(t.renewals))}</b></div><span class="mf-c">${pct(f.renew)}</span></div>
-      <p class="note">Проценты справа — конверсия из предыдущего шага; продления — доля платящих, которые продлевают в следующем месяце.</p>
-    </div>
-    <div class="table-wrap mx-table"><table class="t grid-lines">
-      <thead><tr><th>По месяцам</th>${c.rows.map(r => `<th class="r">${monthName(r.m)}</th>`).join('')}<th class="r">Квартал</th></tr></thead>
-      <tbody>
-        ${row('Охват', r => r.reach)}
-        ${row('Просмотры', r => r.views)}
-        ${row('Переходы', r => r.clicks)}
-        ${row('Регистрации', r => r.regs)}
-        ${row('<b>Покупки</b> <span class="note">продажи</span>', r => r.pays, undefined, 'sub')}
-        ${row('Продления', r => r.renewals)}
-        <tr><td>Платящих в месяце</td>${c.rows.map(r => `<td class="r">${fmt(Math.round(r.active))}</td>`).join('')}<td class="r"><b>${fmt(Math.round(t.active))}</b><small class="note"> на конец</small></td></tr>
-        ${row('Выручка', r => r.revenue, rubK, 'total')}
-        ${mode === 'forward' ? `<tr><td>План продаж «${SCENARIOS[sc].name}»</td>${c.rows.map(r => `<td class="r muted">${fmt(r.plan)}</td>`).join('')}<td class="r muted">${fmt(t.plan)}</td></tr>
-        <tr><td>Разница</td>${c.rows.map(r => `${(d => `<td class="r ${d >= 0 ? 'good' : 'bad'}">${d > 0 ? '+' : ''}${fmt(d)}</td>`)(Math.round(r.pays) - Math.round(r.plan))}`).join('')}<td class="r ${gap >= 0 ? 'good' : 'bad'}"><b>${gap > 0 ? '+' : ''}${fmt(gap)}</b></td></tr>` : ''}
-      </tbody></table></div>
-    ${mode === 'forward' && Auth.can('settings.edit') ? `<p class="note mx-toplan">Нравится результат? <button class="link-btn" data-mtoplan>Записать эти продажи в план «${SCENARIOS[sc].name}»</button> — сценарий в «Стратегии» поменяется.</p>` : ''}
-    <div class="card mx-levers">
-      <div class="card-head"><h2>Что даст больше всего</h2><span class="note">если подвинуть один шаг, остальное — как сейчас</span></div>
-      ${levers.map(x => `<div class="lv-row"><span class="lv-n">${x.name}</span><div class="lv-bar"><i style="width:${(Math.max(0, x.dRev) / maxRev * 100).toFixed(1)}%"></i></div><span class="lv-v"><b>+${fmt(Math.round(x.dSales))}</b> продаж · <b>+${rubK(x.dRev)}</b></span></div>`).join('')}
-    </div>`;
-}
-
-function mxFactHtml(f) {
-  const t = today();
-  const opts = [];
-  if (t >= Q.start) opts.push(['q', 'Квартал', Q.start, t < Q.end ? t : Q.end]);
-  Q.months.filter(m => monthStart(m) <= t).forEach(m => opts.push([m, monthName(m), monthStart(m), monthEnd(m) < t ? monthEnd(m) : t]));
-  if (!opts.length) opts.push(['sep', 'Сентябрь', '2026-09-01', t < '2026-09-30' ? t : '2026-09-30']);
-  let pick = View.get('mx.fact', opts[0][0]);
-  const o = opts.find(x => x[0] === pick) || opts[0];
-  pick = o[0];
-  const fx = mxFact(o[2], o[3]);
-  const a = fx.a;
-  const cell = (fact, plan) => {
-    if (fact === null) return '<td class="r muted">—</td><td></td>';
-    const tone = fact >= plan ? 'good' : fact >= plan * 0.8 ? 'warn' : 'bad';
-    return `<td class="r"><b>${pct(fact, fact < 0.1 ? 1 : 0)}</b></td><td class="r ${tone}">${fact >= plan ? '+' : ''}${fmt((fact - plan) * 100, 1)} п.п.</td>`;
-  };
-  const noData = !a.days;
-  return `<div class="section-head"><h2>Факт воронки по «Цифрам дня»</h2>
-      <div class="seg">${opts.map(x => `<button data-mfp="${x[0]}" class="${x[0] === pick ? 'on' : ''}">${x[1]}</button>`).join('')}</div></div>
-    ${noData ? `<div class="empty"><b>Цифр за этот период ещё нет</b>Их вносят каждый день в «Отчётах» → «Цифры дня»: охват, просмотры, переходы, регистрации, оплаты, продления.</div>` : `<div class="table-wrap"><table class="t mx-fact">
-      <thead><tr><th>Шаг</th><th class="r">Факт, чел.</th><th class="r">Конверсия факт</th><th class="r">к вашему варианту</th><th class="r">Ваш вариант</th></tr></thead>
-      <tbody>
-        <tr><td>Охват</td><td class="r">${fmt(a.reach)}</td><td></td><td></td><td></td></tr>
-        <tr><td>Просмотры</td><td class="r">${a.views ? fmt(a.views) : '<span class="muted">не вносили</span>'}</td>${cell(fx.view, f.view)}<td class="r muted">${pct(f.view)}</td></tr>
-        <tr><td>Переходы</td><td class="r">${a.clicks ? fmt(a.clicks) : '<span class="muted">не вносили</span>'}</td>${cell(fx.click, f.click)}<td class="r muted">${pct(f.click, 1)}</td></tr>
-        <tr><td>Регистрации</td><td class="r">${fmt(a.regs)}</td>${a.clicks ? cell(fx.reg, f.reg) : `<td class="r" title="от охвата: переходы не вносили">${pct(fx.regFromReach, 2)} <small class="note">от охвата</small></td><td class="r ${fx.regFromReach === null ? '' : fx.regFromReach >= f.view * f.click * f.reg ? 'good' : 'bad'}">${fx.regFromReach === null ? '' : `план ${pct(f.view * f.click * f.reg, 2)}`}</td>`}<td class="r muted">${pct(f.reg)}</td></tr>
-        <tr class="sub"><td>Покупки</td><td class="r">${fmt(a.pays)}</td>${cell(fx.pay, f.pay)}<td class="r muted">${pct(f.pay, 1)}</td></tr>
-        <tr><td>Продления</td><td class="r">${fmt(a.renewals)}</td>${cell(fx.renew, f.renew)}<td class="r muted">${pct(f.renew)}</td></tr>
-      </tbody></table></div>
-      <div class="row mx-factfoot"><span class="note">${a.days} ${plural(a.days, 'день', 'дня', 'дней')} с цифрами · выручка ${rubK(a.revenue)}. Продление — продления месяца ÷ платящие прошлого месяца.</span>
-        <button class="btn sm" data-mfact data-from="${o[2]}" data-to="${o[3]}">Подставить факт в расчёт</button></div>`}`;
+  const mr = $('#mxMonReach', root); if (mr) mr.innerHTML = `<b>${fmt(Math.round(t.reach))}</b>`;
+  const line = (name, get, fm = v => fmt(Math.round(v)), cls = '') => `<tr class="${cls}"><td>${name}</td>${c.rows.map(r => `<td class="r">${fm(get(r))}</td>`).join('')}<td class="r"><b>${fm(get(t))}</b></td></tr>`;
+  $('#mxMon', root).innerHTML = `
+    ${rev ? line('Охват', r => r.reach) : ''}
+    ${line('Регистрации', r => r.regs)}
+    ${line('Продажи', r => r.pays, undefined, 'sub')}
+    ${!rev ? line(`План «${SCENARIOS[sc].name}»`, r => r.plan, v => `<span class="muted">${fmt(Math.round(v))}</span>`) : ''}
+    ${line('Продления', r => r.renewals)}
+    ${line('Выручка', r => r.revenue, rubK, 'total')}`;
 }

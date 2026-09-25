@@ -126,7 +126,8 @@ function editPerson(id) {
       <div class="form-sec"><span class="label">Контакты</span>
       <div class="grid3"><label class="field"><span>Почта</span><input class="input" id="peEmail" value="${esc(v.email || '')}"></label>
       <label class="field"><span>Телефон</span><input class="input" id="pePhone" value="${esc(v.phone || '')}"></label>
-      <label class="field"><span>Телеграм</span><input class="input" id="peTg" value="${esc(v.telegram || '')}" placeholder="@name"></label></div></div>
+      <label class="field"><span>Телеграм</span><input class="input" id="peTg" value="${esc(v.telegram || '')}" placeholder="@name"></label></div>
+      <label class="field"><span>Почта для календаря <small class="note">если приглашения нужны на другую почту</small></span><input class="input" id="peCal" type="email" value="${esc(v.calEmail || '')}" placeholder="пусто — возьмём почту выше"></label></div>
       <div class="form-sec"><span class="label">Зона ответственности</span>
       <label class="field"><span>Обязанности</span><textarea class="textarea" id="peDuties" rows="2">${esc(v.duties || '')}</textarea></label>
       <label class="field"><span>Результат, по которому оцениваем (KPI)</span><textarea class="textarea" id="peKpi" rows="2">${esc(v.kpi || '')}</textarea></label></div>
@@ -138,7 +139,7 @@ function editPerson(id) {
         if (!name && !title) return $('#peName', el).focus();
         const data = {name, title, dir: $('#peDir', el).value, status: $('#peStatus', el).value, rate: $('#peRate', el).value,
           format: $('#peFormat', el).value, salary: Math.max(0, Math.round(parseNum($('#peSalary', el).value))), startMonth: $('#peStart', el).value,
-          email: $('#peEmail', el).value.trim(), phone: $('#pePhone', el).value.trim(), telegram: $('#peTg', el).value.trim(),
+          email: $('#peEmail', el).value.trim(), phone: $('#pePhone', el).value.trim(), telegram: $('#peTg', el).value.trim(), calEmail: $('#peCal', el).value.trim(),
           duties: $('#peDuties', el).value.trim(), kpi: $('#peKpi', el).value.trim()};
         let pid = p ? p.id : null;
         if (p) Store.patch('people', p.id, data); else pid = Store.add('people', {...data, order: 50});
