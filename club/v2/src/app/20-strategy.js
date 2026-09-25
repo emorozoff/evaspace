@@ -111,8 +111,8 @@ App.register('strategy', {
         </div>
         <div class="north-side">
           <div><span class="label">Выручка по плану</span><b>${rubK(pace.total * s.price)}</b><small>первые платежи</small></div>
-          <div><span class="label">Регистраций нужно</span><b>${fmt(Plan.regs(pace.total))}</b><small>при конверсии ${pct(s.convPay)}</small></div>
-          <div><span class="label">Охват нужен</span><b>${rubK(Plan.reach(pace.total)).replace(NB + '₽', '')}</b><small>при ${pct(s.convReg)} в регистрацию</small></div>
+          <div><span class="label">Регистраций нужно</span><b>${fmt(Plan.regs(pace.total))}</b><small>при конверсии ${pctA(s.convPay)}</small></div>
+          <div><span class="label">Охват нужен</span><b>${rubK(Plan.reach(pace.total)).replace(NB + '₽', '')}</b><small>при ${pctA(s.convReg)} в регистрацию</small></div>
         </div>
       </section>
 
@@ -128,7 +128,7 @@ App.register('strategy', {
         <div class="table-wrap"><table class="t sc-table">
           <thead><tr><th>Сценарий</th>${Q.months.map(m => `<th class="r">${monthName(m)}</th>`).join('')}<th class="r">Квартал</th></tr></thead>
           <tbody>${scRows}</tbody></table></div>
-        <p class="note sc-note">Регистрации = продажи ÷ ${pct(s.convPay)} · охват = регистрации ÷ ${pct(s.convReg)} · удержание ${pct(s.retention)} добавляет продления сверху. Премия команды — ${pct(s.premium)} чистого дохода квартала, если продаж не меньше ${s.premiumMin}.</p>
+        <p class="note sc-note">Регистрации = продажи ÷ ${pctA(s.convPay)} · охват = регистрации ÷ ${pctA(s.convReg)} · удержание ${pctA(s.retention)} добавляет продления сверху. Воронку по шагам меняют в <a href="#metrics">«Метриках»</a>. Премия команды — ${pct(s.premium)} чистого дохода квартала, если продаж не меньше ${s.premiumMin}.</p>
         ${driverCards ? `<div class="drivers">${driverCards}</div>` : ''}
       </section>
 

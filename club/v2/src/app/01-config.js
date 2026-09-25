@@ -39,8 +39,10 @@ const NAV = [
   {id: 'home',     name: 'Главная',   icon: 'home'},
   {id: 'strategy', name: 'Стратегия', icon: 'target'},
   {id: 'tasks',    name: 'Задачи',    icon: 'check', perm: 'tasks.view'},
+  {id: 'calendar', name: 'Календарь', icon: 'cal', perm: 'tasks.view'},
   {id: 'money',    name: 'Деньги',    icon: 'wallet', perm: 'money.view'},
   {id: 'reports',  name: 'Отчёты',    icon: 'chart'},
+  {id: 'metrics',  name: 'Метрики',   icon: 'funnel'},
   {id: 'team',     name: 'Команда',   icon: 'users', perm: 'tasks.view'},
 ];
 
@@ -110,8 +112,10 @@ const DEFAULT_SETTINGS = {
   scenario: 'goal',
   price: 2900,          // месячная подписка, ₽
   convPay: 0.05,        // регистрация → оплата
-  convReg: 0.02,        // охват → регистрация
+  convReg: 0.02,        // охват → регистрация (= просмотр × переход × регистрация)
   retention: 0.5,       // продлевают в следующем месяце
+  funnel: {view: 0.4, click: 0.1},  // охват → просмотр, просмотр → переход; шаг «переход → регистрация» выводится из convReg
+  reachPlan: null,      // план охвата по месяцам из «Метрик» {'2026-10': 750000}
   referral: 0.3,        // амбассадорам и «приведи подругу»
   acquiring: 0.029,     // комиссия эквайринга
   taxRate: 0.01,        // минимальный налог УСН 15% при убытке

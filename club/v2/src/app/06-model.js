@@ -13,9 +13,11 @@ const Sales = {
   day(iso) { return Store.get('sales', iso); },
   agg(list) {
     const price = settings().price;
-    const a = {reach: 0, regs: 0, pays: 0, renewals: 0, revenue: 0, revNew: 0, revRenew: 0, experts: 0, mk: 0, days: 0};
+    const a = {reach: 0, views: 0, clicks: 0, regs: 0, pays: 0, renewals: 0, revenue: 0, revNew: 0, revRenew: 0, experts: 0, mk: 0, days: 0};
     list.forEach(s => {
       a.reach += Number(s.reach) || 0;
+      a.views += Number(s.views) || 0;
+      a.clicks += Number(s.clicks) || 0;
       a.regs += Number(s.regs) || 0;
       a.pays += Number(s.pays) || 0;
       a.renewals += Number(s.renewals) || 0;
@@ -45,6 +47,9 @@ const Plan = {
   },
   regs(sales) { return sales / (settings().convPay || 0.05); },
   reach(sales) { return this.regs(sales) / (settings().convReg || 0.02); },
+  /* шаги воронки из «Метрик»: переходы и просмотры под план */
+  clicks(sales) { return this.regs(sales) / funnelOf().reg; },
+  views(sales) { return this.clicks(sales) / funnelOf().click; },
   total(sc) { return sum(Q.months, m => this.sales(sc, m)); },
   /* цепочка по плану: новые + продления при удержании */
   chain(sc) {

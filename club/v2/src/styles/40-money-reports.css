@@ -71,7 +71,7 @@ table.led tr.click:hover td{background:var(--surface-2);}
 .entry-head{display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap;}
 .entry-date{display:flex; align-items:center; gap:4px;}
 .entry-date .input{width:150px;}
-.entry-grid{display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:10px;}
+.entry-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(118px,1fr)); gap:10px;}
 .entry-grid .input{height:40px; font-size:15px; font-weight:600;}
 .entry-note{grid-column:span 3;}
 .entry-note .input{font-weight:400; font-size:14px;}

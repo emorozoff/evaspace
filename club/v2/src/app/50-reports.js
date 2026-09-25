@@ -4,6 +4,8 @@
 
 const SALES_FIELDS = [
   ['reach', 'Охват', 'сколько людей увидели нас'],
+  ['views', 'Просмотры', 'посмотрели ролик или пост'],
+  ['clicks', 'Переходы', 'перешли на сайт или в приложение'],
   ['regs', 'Регистрации', 'новые учётки в приложении'],
   ['pays', 'Оплаты', 'первые оплаты — это продажи'],
   ['renewals', 'Продления', 'повторные оплаты подписки'],
@@ -103,7 +105,7 @@ function entryHtml() {
         <label class="field entry-note"><span>Заметка</span><input class="input" id="se-note" data-sf="note" value="${esc(val('note'))}" placeholder="Что повлияло на цифры: эфир, рассылка, сбой оплаты" maxlength="200"></label></div>
     </details>
     <div class="entry-foot">
-      <span class="note">${dr.regs && dr.pays ? `конверсия в оплату ${pct(dr.pays / dr.regs, 1)}` : ''}${dr.reach && dr.regs ? ` · охват → регистрация ${pct(dr.regs / dr.reach, 1)}` : ''}</span>
+      <span class="note">${[dr.reach && dr.views ? `просмотр ${pct(dr.views / dr.reach, 1)}` : '', dr.views && dr.clicks ? `переход ${pct(dr.clicks / dr.views, 1)}` : '', dr.clicks && dr.regs ? `регистрация ${pct(dr.regs / dr.clicks, 1)}` : dr.reach && dr.regs ? `охват → регистрация ${pct(dr.regs / dr.reach, 1)}` : '', dr.regs && dr.pays ? `покупка ${pct(dr.pays / dr.regs, 1)}` : ''].filter(Boolean).join(' · ')}</span>
       ${rec && Auth.can('tasks.manage') ? '<button type="button" class="btn ghost sm" id="seDel">Удалить день</button>' : ''}
       <button class="btn primary" type="submit">${rec ? 'Обновить' : 'Сохранить'} цифры за ${dayLong(d)}</button>
     </div>
@@ -171,7 +173,7 @@ function dayView(sc) {
   });
   const rows = days.filter(d => d <= t || byDay[d]).reverse();
   const table = rows.length ? `<div class="table-wrap"><table class="t days">
-    <thead><tr><th>День</th><th class="r">Охват</th><th class="r">Регистрации</th><th class="r">Оплаты</th><th class="r">Продления</th><th class="r">Выручка</th><th class="r">Рег. → оплата</th><th class="r">План оплат</th><th class="r">±</th><th>Внёс</th></tr></thead>
+    <thead><tr><th>День</th><th class="r">Охват</th><th class="r">Просм.</th><th class="r">Перех.</th><th class="r">Регистрации</th><th class="r">Оплаты</th><th class="r">Продления</th><th class="r">Выручка</th><th class="r">Рег. → оплата</th><th class="r">План оплат</th><th class="r">±</th><th>Внёс</th></tr></thead>
     <tbody>${rows.map(d => {
       const r = byDay[d];
       const plan = Plan.day(sc, d);
@@ -180,8 +182,8 @@ function dayView(sc) {
       const p = r ? personById(r.by) : null;
       return `<tr class="${d === t ? 'now' : ''} ${Auth.can('sales.edit') ? 'click' : ''}" data-day="${d}">
         <td class="nowrap">${dayWd(d)}${r && r.note ? ` <span class="pill line" title="${esc(r.note)}">заметка</span>` : ''}</td>
-        ${r ? `<td class="r">${fmt(r.reach || 0)}</td><td class="r">${fmt(r.regs || 0)}</td><td class="r"><b>${fmt(pays)}</b></td><td class="r">${fmt(r.renewals || 0)}</td><td class="r">${rub(revenueOf(r))}</td><td class="r">${r.regs ? pct(pays / r.regs, 1) : '—'}</td>`
-          : `<td class="r muted" colspan="6">${Auth.can('sales.edit') ? 'не внесено — нажмите, чтобы внести' : 'не внесено'}</td>`}
+        ${r ? `<td class="r">${fmt(r.reach || 0)}</td><td class="r">${r.views ? fmt(r.views) : '—'}</td><td class="r">${r.clicks ? fmt(r.clicks) : '—'}</td><td class="r">${fmt(r.regs || 0)}</td><td class="r"><b>${fmt(pays)}</b></td><td class="r">${fmt(r.renewals || 0)}</td><td class="r">${rub(revenueOf(r))}</td><td class="r">${r.regs ? pct(pays / r.regs, 1) : '—'}</td>`
+          : `<td class="r muted" colspan="8">${Auth.can('sales.edit') ? 'не внесено — нажмите, чтобы внести' : 'не внесено'}</td>`}
         <td class="r muted">${plan ? fmt(plan, 1) : '—'}</td>
         <td class="r ${!plan ? '' : diff >= 0 ? 'good' : 'bad'}">${plan ? (diff >= 0 ? '+' : '') + fmt(diff, 1) : ''}</td>
         <td class="soft nowrap">${p ? esc(firstName(p)) : ''}</td></tr>`;
@@ -240,6 +242,8 @@ function monthView(sc) {
     <tbody>
       ${row('Продажи <span class="note">первые оплаты</span>', f => f.pays, c => c.plan)}
       ${row('Регистрации', f => f.regs, c => Plan.regs(c.plan))}
+      ${row('Переходы', f => f.clicks, c => Plan.clicks(c.plan))}
+      ${row('Просмотры', f => f.views, c => Plan.views(c.plan))}
       ${row('Охват', f => f.reach, c => Plan.reach(c.plan))}
       ${row('Выручка первых платежей', f => f.revNew, c => c.plan * s.price, rubK)}
       ${row('Продления', f => f.revRenew, c => (chain[c.m] ? chain[c.m].revRenew : 0), rubK)}

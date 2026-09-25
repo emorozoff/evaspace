@@ -3,11 +3,12 @@
      документ, правки расходятся по команде вживую (onSnapshot);
    • везде ещё (GitHub Pages, локальный сервер) — localStorage этого браузера.
    Коллекции: люди, учётки, приглашения, задачи, операции, план расходов,
-   продажи по дням, ссылки на материалы и docs — одиночные документы
-   (docs/strategy, docs/settings). */
+   продажи по дням, ссылки на материалы, собрания, занятость по людям
+   (только интервалы «занят») и docs — одиночные документы
+   (docs/strategy, docs/settings, docs/learning). */
 
 const Store = (() => {
-  const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs'];
+  const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy'];
   const LS = 'eva-hq:';
   const data = Object.fromEntries(COLS.map(c => [c, new Map()]));
   const subs = new Set();

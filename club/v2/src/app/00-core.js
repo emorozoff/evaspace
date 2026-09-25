@@ -46,6 +46,8 @@ function rubK(n) {
   return s + fmt(Math.round(a)) + NB + '₽';
 }
 const signed = (n, f = rubK) => (n > 0 ? '+' : n < 0 ? '' : '') + f(n);
+/* доля без лишних знаков: 5% · 5,3% · 1,9% */
+const pctA = x => (Number.isFinite(x) && Math.abs(x * 100 - Math.round(x * 100)) >= 0.05 ? pct(x, 1) : pct(x));
 const pct = (x, d = 0) => (x === null || x === undefined || !Number.isFinite(x) ? '—' : fmt(x * 100, d) + '%');
 const parseNum = s => {
   const v = parseFloat(String(s ?? '').replace(/\s| /g, '').replace(',', '.'));

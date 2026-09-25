@@ -913,7 +913,7 @@ table.led tr.click:hover td{background:var(--surface-2);}
 .entry-head{display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap;}
 .entry-date{display:flex; align-items:center; gap:4px;}
 .entry-date .input{width:150px;}
-.entry-grid{display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:10px;}
+.entry-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(118px,1fr)); gap:10px;}
 .entry-grid .input{height:40px; font-size:15px; font-weight:600;}
 .entry-note{grid-column:span 3;}
 .entry-note .input{font-weight:400; font-size:14px;}
@@ -1040,6 +1040,270 @@ table.plan tr.dim td{color:var(--ink-3);}
 .lr.done .lr-t a, .lr.done .lr-t span{color:var(--ink-3); text-decoration:line-through;}
 .learn-add{margin-top:10px; gap:8px;}
 .pf-pw .input{flex:1 1 170px; width:auto;}
+
+/* ── 80-calendar-metrics.css ── */
+/* ── Календарь ── */
+.cal-conn{
+  display:flex; align-items:center; gap:14px; padding:14px 18px; margin-bottom:16px;
+  background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--link); border-radius:var(--radius);
+}
+.cal-conn > div:first-child svg{width:28px; height:28px; stroke:var(--link); fill:none; stroke-width:1.6;}
+.cal-conn > div:nth-child(2){flex:1; min-width:0;}
+.cal-conn p{color:var(--ink-2); font-size:13px; margin-top:3px; max-width:78ch;}
+.cal-conn.warn{border-left-color:var(--warn);}
+.cal-conn.warn > div:first-child svg{stroke:var(--warn);}
+.cal-conn.slim{padding:9px 14px; gap:10px; font-size:13px; color:var(--ink-2); flex-wrap:wrap;}
+.cal-conn.slim > span{flex:1; min-width:200px;}
+.cal-conn.slim .dot{background:var(--ink-3);}
+.cal-conn.slim.ok{border-left-color:var(--good);}
+.cal-conn.slim.ok .dot{background:var(--good);}
+.cal-conn.slim.off{border-left-color:var(--line-strong);}
+@media (max-width:640px){ .cal-conn{flex-wrap:wrap;} .cal-conn > .btn{width:100%;} }
+
+.cal-bar{display:flex; align-items:flex-end; justify-content:space-between; gap:10px 16px; flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:14px;}
+.cal-bar .tabs{border-bottom:0; margin-bottom:0;}
+.cal-nav{display:flex; align-items:center; gap:6px; padding-bottom:6px; flex-wrap:wrap;}
+.cal-wk{min-width:118px; text-align:center; font-size:14px;}
+.cal-legend{display:flex; gap:8px 16px; flex-wrap:wrap; align-items:center; font-size:12px; color:var(--ink-2); margin-bottom:10px;}
+.cal-legend > span{display:inline-flex; align-items:center; gap:6px;}
+.cal-legend i{width:12px; height:12px; border-radius:3px; display:inline-block;}
+.cal-legend .note{margin-left:auto;}
+.lg-own{background:var(--link-soft); border:1px solid color-mix(in srgb, var(--link) 45%, transparent);}
+.lg-meet{background:var(--accent);}
+.lg-off{background:repeating-linear-gradient(135deg, var(--sunken) 0 3px, transparent 3px 6px); border:1px solid var(--line);}
+
+.cal-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface);}
+.cal-week{
+  --hh:46px; display:grid; grid-template-columns:52px repeat(var(--days), minmax(96px, 1fr));
+  min-width:calc(52px + var(--days) * 96px);
+}
+.cw-corner{border-bottom:1px solid var(--line); background:var(--surface-2);}
+.cw-dh{
+  display:flex; align-items:baseline; gap:5px; padding:8px 10px; border-bottom:1px solid var(--line); border-left:1px solid var(--line);
+  background:var(--surface-2); position:sticky; top:0;
+}
+.cw-dh span{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-3); font-weight:600;}
+.cw-dh b{font-size:17px; font-weight:600;}
+.cw-dh small{font-size:11.5px; color:var(--ink-3);}
+.cw-dh{white-space:nowrap;}
+.cw-dh.is-today b{background:var(--link); color:#fff; border-radius:6px; padding:0 6px;}
+.cw-dh.we span, .cw-dh.we b{color:var(--ink-3);}
+.cw-adl{font-size:10.5px; color:var(--ink-3); padding:6px 4px; text-align:right; border-bottom:1px solid var(--line);}
+.cw-ad{border-left:1px solid var(--line); border-bottom:1px solid var(--line); padding:4px; display:flex; flex-direction:column; gap:3px; min-width:0;}
+.cw-adi{font-size:11.5px; background:var(--link-soft); color:var(--link); border-radius:4px; padding:1px 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.cw-times{position:relative; height:calc(var(--hh) * 13);}
+.cw-times span{position:absolute; right:8px; transform:translateY(-50%); font-size:11px; color:var(--ink-3); font-variant-numeric:tabular-nums;}
+.cw-times span:first-child{transform:none; top:2px !important;}
+.cw-col{
+  position:relative; height:calc(var(--hh) * 13); border-left:1px solid var(--line); cursor:pointer;
+  background-image:linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(var(--g-alt) 1px, transparent 1px);
+  background-size:100% var(--hh), 100% calc(var(--hh) / 2);
+}
+.cw-col.we{background-color:var(--surface-2);}
+.cw-col.past{background-color:color-mix(in srgb, var(--sunken) 45%, transparent);}
+.cw-col:hover{background-color:color-mix(in srgb, var(--link-soft) 35%, transparent);}
+.cw-off{position:absolute; left:0; right:0; pointer-events:none; background:repeating-linear-gradient(135deg, var(--g-alt) 0 4px, transparent 4px 8px);}
+.cw-now{position:absolute; left:0; right:0; height:2px; background:var(--bad); z-index:3; pointer-events:none;}
+.cw-now::before{content:''; position:absolute; left:-4px; top:-3px; width:8px; height:8px; border-radius:50%; background:var(--bad);}
+.cw-ev{
+  position:absolute; z-index:2; overflow:hidden; border-radius:5px; padding:3px 6px; text-align:left; text-decoration:none;
+  display:flex; flex-direction:column; gap:1px; font-size:11.5px; line-height:1.25; border:1px solid transparent; min-height:18px;
+}
+.cw-ev.short{flex-direction:row; align-items:center; gap:6px; padding-top:1px; padding-bottom:1px;}
+.cw-ev b{font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.cw-ev small{font-size:10.5px; opacity:.8; white-space:nowrap;}
+.cw-ev.own{background:var(--link-soft); color:var(--ink); border-color:color-mix(in srgb, var(--link) 40%, transparent); border-left:3px solid var(--link);}
+.cw-ev.own.free{background:var(--surface); border-style:dashed; color:var(--ink-3);}
+.cw-ev.meet{background:color-mix(in srgb, var(--accent) 82%, var(--link)); color:var(--on-accent); border-left:3px solid var(--gold-brand);}
+.cw-ev.meet:not(.mine){background:var(--sunken); color:var(--ink-2); border-color:var(--line-strong); border-left:3px solid var(--ink-3);}
+.cw-ev:hover{filter:brightness(1.06); z-index:4;}
+
+/* занятость команды */
+.ct-days{display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; margin-bottom:12px; scrollbar-width:none;}
+.ct-days button{
+  flex:1 0 108px; border:1px solid var(--line); background:var(--surface); border-radius:8px; padding:7px 10px; text-align:left;
+  display:flex; flex-direction:column; gap:2px;
+}
+.ct-days button span{font-size:13px; font-weight:600;}
+.ct-days button small{font-size:11.5px; color:var(--good);}
+.ct-days button.past{opacity:.55;}
+.ct-days button.on{border-color:var(--link); box-shadow:0 0 0 2px var(--link-soft);}
+.ct-tools{display:flex; align-items:center; gap:10px 18px; flex-wrap:wrap; margin-bottom:12px;}
+.ct-tools .chips{flex:1; min-width:240px;}
+.ct-nd{color:var(--warn); font-weight:700;}
+.chip.ghost{border-style:dashed;}
+.ct-wh{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-2);}
+.ct-wh .select{width:84px;}
+.cal-team{min-width:760px;}
+.ct-row{display:grid; grid-template-columns:170px minmax(0,1fr); border-bottom:1px solid var(--line); min-height:46px;}
+.ct-row:last-child{border-bottom:0;}
+.ct-name{display:flex; align-items:center; gap:9px; padding:6px 12px; text-decoration:none; color:inherit; min-width:0; background:var(--surface); position:sticky; left:0; z-index:3; border-right:1px solid var(--line);}
+.ct-name > span:last-child{min-width:0;}
+.ct-name b{display:block; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ct-name small{display:block; font-size:11px; color:var(--ink-3); white-space:nowrap;}
+a.ct-name:hover b{text-decoration:underline;}
+.ct-fico{width:26px; height:26px; border-radius:50%; background:var(--good-soft); display:inline-flex; align-items:center; justify-content:center; flex:0 0 26px;}
+.ct-fico svg{width:15px; height:15px; stroke:var(--good); fill:none; stroke-width:2.2;}
+.ct-track{
+  position:relative; cursor:pointer;
+  background-image:linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:calc(100% / 13) 100%;
+}
+.ct-head{min-height:28px; background:var(--surface-2);}
+.ct-head .ct-name{background:var(--surface-2);}
+.ct-head .ct-track{cursor:default; background:none;}
+.ct-head .ct-track span{position:absolute; top:7px; transform:translateX(-50%); font-size:11px; color:var(--ink-3); font-variant-numeric:tabular-nums;}
+.ct-head .ct-track span:first-child{transform:none; padding-left:3px;}
+.ct-head .ct-track span:last-child{transform:translateX(-100%); padding-right:3px;}
+.ct-off{position:absolute; top:0; bottom:0; pointer-events:none; background:repeating-linear-gradient(135deg, var(--g-alt) 0 4px, transparent 4px 8px); background-color:var(--g-alt);}
+.ct-now{position:absolute; top:0; bottom:0; width:2px; background:var(--bad); z-index:2; pointer-events:none;}
+.ct-b{position:absolute; top:7px; bottom:7px; border-radius:5px; overflow:hidden; display:flex; align-items:center; padding:0 6px; min-width:3px;}
+.ct-b em{font-style:normal; font-size:11px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ct-b.busy{background:repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink-3) 42%, transparent) 0 5px, color-mix(in srgb, var(--ink-3) 30%, transparent) 5px 10px); cursor:default;}
+.ct-b.meet{background:color-mix(in srgb, var(--accent) 82%, var(--link)); color:var(--on-accent); cursor:pointer;}
+.ct-b.free{background:var(--good-soft); border:1px solid color-mix(in srgb, var(--good) 45%, transparent); color:var(--good); cursor:pointer; z-index:1;}
+.ct-b.free:hover{background:color-mix(in srgb, var(--good) 22%, var(--surface));}
+.ct-free{background:color-mix(in srgb, var(--good-soft) 35%, transparent);}
+.ct-row.nodata .ct-track{background-color:var(--surface-2);}
+.ct-row.nodata .ct-name small{color:var(--warn);}
+.ct-nodata{margin-top:10px;}
+
+/* список собраний */
+.mt-tools{display:flex; gap:10px 16px; align-items:center; flex-wrap:wrap; margin-bottom:12px;}
+.mt-list{padding:0; overflow:hidden;}
+.mt-row{display:grid; grid-template-columns:86px minmax(0,1fr) auto auto auto; gap:14px; align-items:center; padding:12px 16px; border-bottom:1px solid var(--line);}
+.mt-row:last-child{border-bottom:0;}
+.mt-row.mine{box-shadow:inset 3px 0 0 var(--gold-brand);}
+.mt-when b{display:block; font-size:16px; font-variant-numeric:tabular-nums;}
+.mt-when small{font-size:11.5px; color:var(--ink-3);}
+.mt-main{background:none; border:0; padding:0; text-align:left; min-width:0; display:flex; flex-direction:column; gap:2px; color:inherit;}
+.mt-main b{font-size:14px;}
+.mt-main:hover b{text-decoration:underline; text-underline-offset:3px;}
+.mt-main small{font-size:12px; color:var(--ink-3);}
+.mt-agenda{font-size:12.5px; color:var(--ink-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.mt-ppl{display:flex; align-items:center;}
+.mt-p{position:relative; margin-left:-5px; border-radius:50%; box-shadow:0 0 0 2px var(--surface);}
+.mt-p:first-child{margin-left:0;}
+.mt-p i{position:absolute; right:-4px; bottom:-4px; width:14px; height:14px; border-radius:50%; font-style:normal; font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; background:var(--surface); color:var(--ink-3); box-shadow:0 0 0 1px var(--line-strong);}
+.mt-p.good i{background:var(--good); color:#fff; box-shadow:none;}
+.mt-p.bad i{background:var(--bad); color:#fff; box-shadow:none;}
+.mt-p.warn i{background:var(--warn); color:#fff; box-shadow:none;}
+.mt-act{display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;}
+.mt-past summary{cursor:pointer; font-weight:600; font-size:13.5px; color:var(--ink-2); margin-bottom:10px;}
+@media (max-width:900px){
+  .mt-row{grid-template-columns:64px minmax(0,1fr); gap:8px 12px;}
+  .mt-ppl, .mt-st, .mt-act{grid-column:2;}
+  .mt-act{justify-content:flex-start;}
+}
+
+/* окно собрания */
+.mt-time{display:grid; grid-template-columns:150px 110px auto minmax(150px,1fr); gap:12px; align-items:end;}
+@media (max-width:760px){ .mt-time{grid-template-columns:1fr 1fr;} .mt-time > :nth-child(3){grid-column:1 / -1;} }
+.mt-chips .chip{height:32px; padding:0 10px 0 4px;}
+.mt-chips .chip .av{width:22px; height:22px; flex-basis:22px; font-size:9.5px;}
+.mt-chip.on{background:var(--link-soft); border-color:var(--link); color:var(--ink);}
+.mt-chip.nomail{border-style:dashed;}
+.mt-nomail{font-size:10.5px; color:var(--warn); font-weight:600;}
+.mt-help{display:flex; flex-direction:column; gap:10px;}
+.mt-help:empty{display:none;}
+.mt-state{display:flex; gap:10px; align-items:flex-start; padding:9px 12px; border-radius:8px; font-size:13px;}
+.mt-state svg{width:17px; height:17px; flex:0 0 17px; fill:none; stroke:currentColor; stroke-width:2.2; margin-top:1px;}
+.mt-state small{display:block; color:var(--ink-3); margin-top:2px; font-size:12px;}
+.mt-state.good{background:var(--good-soft); color:var(--good);}
+.mt-state.good span{color:var(--ink);}
+.mt-state.bad{background:var(--bad-soft); color:var(--bad);}
+.mt-state.bad span{color:var(--ink);}
+.mt-slots, .mt-gslots{display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+.mt-slots .label, .mt-gslots .label{margin-right:4px;}
+.mt-gslots:empty{display:none;}
+.mt-opts{display:flex; flex-direction:column; gap:8px; padding:12px 14px; background:var(--surface-2); border:1px solid var(--line); border-radius:8px;}
+.warn-t{color:var(--warn);}
+.mt-view{display:flex; flex-direction:column; gap:12px;}
+.mt-agenda-full{white-space:pre-wrap; background:var(--surface-2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13.5px;}
+.mt-ppl.big{flex-wrap:wrap; gap:8px 14px;}
+.mt-pl{display:inline-flex; align-items:center; gap:6px; font-size:13px;}
+.mt-pl small{font-size:11.5px; color:var(--ink-3);}
+.mt-pl small.good{color:var(--good);} .mt-pl small.bad{color:var(--bad);} .mt-pl small.warn{color:var(--warn);}
+
+/* собрания сегодня на главной */
+.today-meet{margin-top:12px; padding-top:12px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:6px;}
+.tm-row{display:flex; align-items:center; gap:10px; font-size:13.5px;}
+.tm-row b{font-variant-numeric:tabular-nums; min-width:44px;}
+.tm-row a:not(.btn){color:var(--ink); text-decoration:none; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.tm-row a:not(.btn):hover{text-decoration:underline;}
+
+/* ── Метрики ── */
+.mx-grid{display:grid; grid-template-columns:minmax(0,440px) minmax(0,1fr); gap:16px; align-items:start;}
+@media (max-width:1100px){ .mx-grid{grid-template-columns:1fr;} }
+.mx-in{position:sticky; top:16px; display:flex; flex-direction:column; gap:16px;}
+@media (max-width:1100px){ .mx-in{position:static;} }
+.mx-in .card-head{margin-bottom:0;}
+.mx-reach-row{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-top:6px;}
+.mx-reach-row .input{font-weight:600;}
+.mx-quick{margin-top:8px;}
+.mx-quick .chip{height:26px; font-size:12px;}
+.mx-target{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px; margin:6px 0;}
+.mx-target div{background:var(--surface-2); border:1px solid var(--line); border-radius:7px; padding:7px 10px;}
+.mx-target span{display:block; font-size:11.5px; color:var(--ink-3);}
+.mx-target b{font-size:17px; font-variant-numeric:tabular-nums;}
+.mx-convs{display:flex; flex-direction:column; border-top:1px solid var(--line);}
+.mx-conv{display:grid; grid-template-columns:minmax(0,1fr) 110px 78px 46px; gap:10px; align-items:center; padding:9px 0; border-bottom:1px solid var(--line);}
+.mx-conv.head{padding:6px 0 4px; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-3); font-weight:600;}
+.mx-conv.head span:nth-child(3), .mx-conv.head span:nth-child(4){text-align:right;}
+.mx-cl b{display:block; font-size:13.5px;}
+.mx-cl small{display:block; font-size:11.5px; color:var(--ink-3); line-height:1.35;}
+.mx-range{width:100%; accent-color:var(--link);}
+.mx-num{display:flex; align-items:center; gap:4px;}
+.mx-num .input{font-weight:600;}
+.mx-num span{font-size:12px; color:var(--ink-3);}
+.mx-team{font-size:12px; color:var(--ink-3); text-align:right; font-variant-numeric:tabular-nums;}
+@media (max-width:520px){
+  .mx-conv{grid-template-columns:minmax(0,1fr) 78px 40px;}
+  .mx-conv .mx-range{grid-column:1 / -1; grid-row:2;}
+  .mx-conv.head span:nth-child(2){display:none;}
+}
+.mx-price{display:flex; flex-direction:column; gap:6px;}
+.mx-price .field{max-width:220px;}
+.mx-actions{display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding-top:4px; border-top:1px solid var(--line); padding-top:14px;}
+.mx-actions .pill{margin-right:auto;}
+.mx-out{display:flex; flex-direction:column; gap:14px; min-width:0;}
+.mx-tiles{grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px;}
+.mx-tiles .stat{padding:14px 16px;}
+.mx-tiles .stat .big{font-size:22px;}
+@media (max-width:760px){ .mx-tiles{grid-template-columns:repeat(2, minmax(0,1fr));} }
+.mx-tiles .foot b.good{color:var(--good);} .mx-tiles .foot b.bad{color:var(--bad);} .mx-tiles .foot b.warn{color:var(--warn);}
+.mf-row{display:grid; grid-template-columns:110px minmax(0,1fr) 54px; gap:10px; align-items:center; padding:5px 0;}
+.mf-n{font-size:13px; font-weight:500; color:var(--ink-2);}
+.mf-bar{position:relative; height:28px;}
+.mf-bar i{position:absolute; left:0; top:0; bottom:0; border-radius:5px; background:linear-gradient(90deg, var(--link), color-mix(in srgb, var(--link) 60%, var(--rose)));}
+.mf-bar b{position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:13px; color:#fff; font-variant-numeric:tabular-nums; text-shadow:0 1px 2px rgba(0,0,0,.25);}
+.mf-row:nth-last-of-type(2) .mf-bar i{background:var(--good);}
+.mf-row.renew .mf-bar i{background:var(--gold-brand);}
+.mf-row.renew .mf-bar b{color:var(--ink); text-shadow:none;}
+.mf-c{font-size:12.5px; color:var(--ink-2); text-align:right; font-variant-numeric:tabular-nums;}
+.mx-table td small{font-size:11px;}
+.mx-toplan{margin-top:-4px;}
+.lv-row{display:grid; grid-template-columns:190px minmax(0,1fr) 210px; gap:12px; align-items:center; padding:6px 0; border-bottom:1px solid var(--line);}
+.lv-row:last-child{border-bottom:0;}
+.lv-n{font-size:13px;}
+.lv-bar{height:8px; border-radius:4px; background:var(--sunken); overflow:hidden;}
+.lv-bar i{display:block; height:100%; background:var(--good); border-radius:4px;}
+.lv-v{font-size:12.5px; color:var(--ink-2); text-align:right; font-variant-numeric:tabular-nums;}
+@media (max-width:640px){
+  .lv-row{grid-template-columns:minmax(0,1fr) auto;}
+  .lv-bar{grid-column:1 / -1; grid-row:2;}
+  .mf-row{grid-template-columns:86px minmax(0,1fr) 44px;}
+  .mx-target{grid-template-columns:repeat(2, minmax(0,1fr));}
+}
+.mx-factfoot{justify-content:space-between; align-items:center; margin-top:10px;}
+.ct-tools .chip.on{background:var(--link-soft); border-color:var(--link); color:var(--ink);}
+@media (max-width:640px){
+  .ct-row{grid-template-columns:118px minmax(0,1fr);}
+  .ct-name{padding:6px 8px; gap:7px;}
+  .ct-name small{white-space:normal; line-height:1.2;}
+  .cal-team{min-width:640px;}
+  .cal-conn.slim .btn{flex:1;}
+}
 </style>
 <div id="app" class="app">
   <div class="boot" id="boot">
@@ -1102,6 +1366,8 @@ function rubK(n) {
   return s + fmt(Math.round(a)) + NB + '₽';
 }
 const signed = (n, f = rubK) => (n > 0 ? '+' : n < 0 ? '' : '') + f(n);
+/* доля без лишних знаков: 5% · 5,3% · 1,9% */
+const pctA = x => (Number.isFinite(x) && Math.abs(x * 100 - Math.round(x * 100)) >= 0.05 ? pct(x, 1) : pct(x));
 const pct = (x, d = 0) => (x === null || x === undefined || !Number.isFinite(x) ? '—' : fmt(x * 100, d) + '%');
 const parseNum = s => {
   const v = parseFloat(String(s ?? '').replace(/\s| /g, '').replace(',', '.'));
@@ -1230,8 +1496,10 @@ const NAV = [
   {id: 'home',     name: 'Главная',   icon: 'home'},
   {id: 'strategy', name: 'Стратегия', icon: 'target'},
   {id: 'tasks',    name: 'Задачи',    icon: 'check', perm: 'tasks.view'},
+  {id: 'calendar', name: 'Календарь', icon: 'cal', perm: 'tasks.view'},
   {id: 'money',    name: 'Деньги',    icon: 'wallet', perm: 'money.view'},
   {id: 'reports',  name: 'Отчёты',    icon: 'chart'},
+  {id: 'metrics',  name: 'Метрики',   icon: 'funnel'},
   {id: 'team',     name: 'Команда',   icon: 'users', perm: 'tasks.view'},
 ];
 
@@ -1301,8 +1569,10 @@ const DEFAULT_SETTINGS = {
   scenario: 'goal',
   price: 2900,          // месячная подписка, ₽
   convPay: 0.05,        // регистрация → оплата
-  convReg: 0.02,        // охват → регистрация
+  convReg: 0.02,        // охват → регистрация (= просмотр × переход × регистрация)
   retention: 0.5,       // продлевают в следующем месяце
+  funnel: {view: 0.4, click: 0.1},  // охват → просмотр, просмотр → переход; шаг «переход → регистрация» выводится из convReg
+  reachPlan: null,      // план охвата по месяцам из «Метрик» {'2026-10': 750000}
   referral: 0.3,        // амбассадорам и «приведи подругу»
   acquiring: 0.029,     // комиссия эквайринга
   taxRate: 0.01,        // минимальный налог УСН 15% при убытке
@@ -1323,11 +1593,12 @@ const DEFAULT_SETTINGS = {
      документ, правки расходятся по команде вживую (onSnapshot);
    • везде ещё (GitHub Pages, локальный сервер) — localStorage этого браузера.
    Коллекции: люди, учётки, приглашения, задачи, операции, план расходов,
-   продажи по дням, ссылки на материалы и docs — одиночные документы
-   (docs/strategy, docs/settings). */
+   продажи по дням, ссылки на материалы, собрания, занятость по людям
+   (только интервалы «занят») и docs — одиночные документы
+   (docs/strategy, docs/settings, docs/learning). */
 
 const Store = (() => {
-  const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs'];
+  const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy'];
   const LS = 'eva-hq:';
   const data = Object.fromEntries(COLS.map(c => [c, new Map()]));
   const subs = new Set();
@@ -1727,6 +1998,10 @@ const ICONS = {
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7"/><path d="M12 17h.01"/>',
   copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
   key: '<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3"/>',
+  funnel: '<path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/>',
+  video: '<rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10 6-3v10l-6-3"/>',
+  refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
 };
 const icon = (name, cls = '') => `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 
@@ -2188,9 +2463,11 @@ const Sales = {
   day(iso) { return Store.get('sales', iso); },
   agg(list) {
     const price = settings().price;
-    const a = {reach: 0, regs: 0, pays: 0, renewals: 0, revenue: 0, revNew: 0, revRenew: 0, experts: 0, mk: 0, days: 0};
+    const a = {reach: 0, views: 0, clicks: 0, regs: 0, pays: 0, renewals: 0, revenue: 0, revNew: 0, revRenew: 0, experts: 0, mk: 0, days: 0};
     list.forEach(s => {
       a.reach += Number(s.reach) || 0;
+      a.views += Number(s.views) || 0;
+      a.clicks += Number(s.clicks) || 0;
       a.regs += Number(s.regs) || 0;
       a.pays += Number(s.pays) || 0;
       a.renewals += Number(s.renewals) || 0;
@@ -2220,6 +2497,9 @@ const Plan = {
   },
   regs(sales) { return sales / (settings().convPay || 0.05); },
   reach(sales) { return this.regs(sales) / (settings().convReg || 0.02); },
+  /* шаги воронки из «Метрик»: переходы и просмотры под план */
+  clicks(sales) { return this.regs(sales) / funnelOf().reg; },
+  views(sales) { return this.clicks(sales) / funnelOf().click; },
   total(sc) { return sum(Q.months, m => this.sales(sc, m)); },
   /* цепочка по плану: новые + продления при удержании */
   chain(sc) {
@@ -2632,6 +2912,7 @@ App.register('home', {
         <div>${icon('cal')}<span><b>Созвон — ${weekday(t) === 0 && t === nextCall() ? 'сегодня' : dayWd(nextCall())}, 11:00</b><small>45 минут, цифры заранее</small></span></div>
         <div>${icon('flag')}<span><b>Сверка месяца — ${dayLong(nextReview())}</b><small>последний понедельник месяца</small></span></div>
       </div>
+      ${teamRoles ? todayMeetingsHtml() : ''}
       ${feed.length ? `<div class="feed"><span class="label">Что нового в задачах</span>${feed.map(x => { const p = personById(x.updatedBy); return `<button class="feed-row" data-open-task="${x.id}">${avatar(p)}<span><span><b>${esc(p ? firstName(p) : 'Кто-то')}</b> · ${esc(x.title)}</span><small>${STATUSES[x.status].name} · ${timeAgo(x.updatedAt)}</small></span></button>`; }).join('')}</div>` : ''}
     </div>`;
 
@@ -2783,8 +3064,8 @@ App.register('strategy', {
         </div>
         <div class="north-side">
           <div><span class="label">Выручка по плану</span><b>${rubK(pace.total * s.price)}</b><small>первые платежи</small></div>
-          <div><span class="label">Регистраций нужно</span><b>${fmt(Plan.regs(pace.total))}</b><small>при конверсии ${pct(s.convPay)}</small></div>
-          <div><span class="label">Охват нужен</span><b>${rubK(Plan.reach(pace.total)).replace(NB + '₽', '')}</b><small>при ${pct(s.convReg)} в регистрацию</small></div>
+          <div><span class="label">Регистраций нужно</span><b>${fmt(Plan.regs(pace.total))}</b><small>при конверсии ${pctA(s.convPay)}</small></div>
+          <div><span class="label">Охват нужен</span><b>${rubK(Plan.reach(pace.total)).replace(NB + '₽', '')}</b><small>при ${pctA(s.convReg)} в регистрацию</small></div>
         </div>
       </section>
 
@@ -2800,7 +3081,7 @@ App.register('strategy', {
         <div class="table-wrap"><table class="t sc-table">
           <thead><tr><th>Сценарий</th>${Q.months.map(m => `<th class="r">${monthName(m)}</th>`).join('')}<th class="r">Квартал</th></tr></thead>
           <tbody>${scRows}</tbody></table></div>
-        <p class="note sc-note">Регистрации = продажи ÷ ${pct(s.convPay)} · охват = регистрации ÷ ${pct(s.convReg)} · удержание ${pct(s.retention)} добавляет продления сверху. Премия команды — ${pct(s.premium)} чистого дохода квартала, если продаж не меньше ${s.premiumMin}.</p>
+        <p class="note sc-note">Регистрации = продажи ÷ ${pctA(s.convPay)} · охват = регистрации ÷ ${pctA(s.convReg)} · удержание ${pctA(s.retention)} добавляет продления сверху. Воронку по шагам меняют в <a href="#metrics">«Метриках»</a>. Премия команды — ${pct(s.premium)} чистого дохода квартала, если продаж не меньше ${s.premiumMin}.</p>
         ${driverCards ? `<div class="drivers">${driverCards}</div>` : ''}
       </section>
 
@@ -4151,6 +4432,8 @@ function wireMoneySettings(root) {
 
 const SALES_FIELDS = [
   ['reach', 'Охват', 'сколько людей увидели нас'],
+  ['views', 'Просмотры', 'посмотрели ролик или пост'],
+  ['clicks', 'Переходы', 'перешли на сайт или в приложение'],
   ['regs', 'Регистрации', 'новые учётки в приложении'],
   ['pays', 'Оплаты', 'первые оплаты — это продажи'],
   ['renewals', 'Продления', 'повторные оплаты подписки'],
@@ -4250,7 +4533,7 @@ function entryHtml() {
         <label class="field entry-note"><span>Заметка</span><input class="input" id="se-note" data-sf="note" value="${esc(val('note'))}" placeholder="Что повлияло на цифры: эфир, рассылка, сбой оплаты" maxlength="200"></label></div>
     </details>
     <div class="entry-foot">
-      <span class="note">${dr.regs && dr.pays ? `конверсия в оплату ${pct(dr.pays / dr.regs, 1)}` : ''}${dr.reach && dr.regs ? ` · охват → регистрация ${pct(dr.regs / dr.reach, 1)}` : ''}</span>
+      <span class="note">${[dr.reach && dr.views ? `просмотр ${pct(dr.views / dr.reach, 1)}` : '', dr.views && dr.clicks ? `переход ${pct(dr.clicks / dr.views, 1)}` : '', dr.clicks && dr.regs ? `регистрация ${pct(dr.regs / dr.clicks, 1)}` : dr.reach && dr.regs ? `охват → регистрация ${pct(dr.regs / dr.reach, 1)}` : '', dr.regs && dr.pays ? `покупка ${pct(dr.pays / dr.regs, 1)}` : ''].filter(Boolean).join(' · ')}</span>
       ${rec && Auth.can('tasks.manage') ? '<button type="button" class="btn ghost sm" id="seDel">Удалить день</button>' : ''}
       <button class="btn primary" type="submit">${rec ? 'Обновить' : 'Сохранить'} цифры за ${dayLong(d)}</button>
     </div>
@@ -4318,7 +4601,7 @@ function dayView(sc) {
   });
   const rows = days.filter(d => d <= t || byDay[d]).reverse();
   const table = rows.length ? `<div class="table-wrap"><table class="t days">
-    <thead><tr><th>День</th><th class="r">Охват</th><th class="r">Регистрации</th><th class="r">Оплаты</th><th class="r">Продления</th><th class="r">Выручка</th><th class="r">Рег. → оплата</th><th class="r">План оплат</th><th class="r">±</th><th>Внёс</th></tr></thead>
+    <thead><tr><th>День</th><th class="r">Охват</th><th class="r">Просм.</th><th class="r">Перех.</th><th class="r">Регистрации</th><th class="r">Оплаты</th><th class="r">Продления</th><th class="r">Выручка</th><th class="r">Рег. → оплата</th><th class="r">План оплат</th><th class="r">±</th><th>Внёс</th></tr></thead>
     <tbody>${rows.map(d => {
       const r = byDay[d];
       const plan = Plan.day(sc, d);
@@ -4327,8 +4610,8 @@ function dayView(sc) {
       const p = r ? personById(r.by) : null;
       return `<tr class="${d === t ? 'now' : ''} ${Auth.can('sales.edit') ? 'click' : ''}" data-day="${d}">
         <td class="nowrap">${dayWd(d)}${r && r.note ? ` <span class="pill line" title="${esc(r.note)}">заметка</span>` : ''}</td>
-        ${r ? `<td class="r">${fmt(r.reach || 0)}</td><td class="r">${fmt(r.regs || 0)}</td><td class="r"><b>${fmt(pays)}</b></td><td class="r">${fmt(r.renewals || 0)}</td><td class="r">${rub(revenueOf(r))}</td><td class="r">${r.regs ? pct(pays / r.regs, 1) : '—'}</td>`
-          : `<td class="r muted" colspan="6">${Auth.can('sales.edit') ? 'не внесено — нажмите, чтобы внести' : 'не внесено'}</td>`}
+        ${r ? `<td class="r">${fmt(r.reach || 0)}</td><td class="r">${r.views ? fmt(r.views) : '—'}</td><td class="r">${r.clicks ? fmt(r.clicks) : '—'}</td><td class="r">${fmt(r.regs || 0)}</td><td class="r"><b>${fmt(pays)}</b></td><td class="r">${fmt(r.renewals || 0)}</td><td class="r">${rub(revenueOf(r))}</td><td class="r">${r.regs ? pct(pays / r.regs, 1) : '—'}</td>`
+          : `<td class="r muted" colspan="8">${Auth.can('sales.edit') ? 'не внесено — нажмите, чтобы внести' : 'не внесено'}</td>`}
         <td class="r muted">${plan ? fmt(plan, 1) : '—'}</td>
         <td class="r ${!plan ? '' : diff >= 0 ? 'good' : 'bad'}">${plan ? (diff >= 0 ? '+' : '') + fmt(diff, 1) : ''}</td>
         <td class="soft nowrap">${p ? esc(firstName(p)) : ''}</td></tr>`;
@@ -4387,6 +4670,8 @@ function monthView(sc) {
     <tbody>
       ${row('Продажи <span class="note">первые оплаты</span>', f => f.pays, c => c.plan)}
       ${row('Регистрации', f => f.regs, c => Plan.regs(c.plan))}
+      ${row('Переходы', f => f.clicks, c => Plan.clicks(c.plan))}
+      ${row('Просмотры', f => f.views, c => Plan.views(c.plan))}
       ${row('Охват', f => f.reach, c => Plan.reach(c.plan))}
       ${row('Выручка первых платежей', f => f.revNew, c => c.plan * s.price, rubK)}
       ${row('Продления', f => f.revRenew, c => (chain[c.m] ? chain[c.m].revRenew : 0), rubK)}
@@ -5140,6 +5425,1277 @@ function shrinkImage(file, size) {
     };
     r.readAsDataURL(file);
   });
+}
+
+/* ── 80-calendar.js ── */
+/* Календарь команды. Google Календарь подключается через коннектор Claude
+   (capability mcp) и работает от имени того, кто смотрит штаб:
+   • каждый видит свои события с названиями — они не сохраняются в штабе;
+   • в общую базу уходят только интервалы «занят» на 4 недели вперёд — без
+     названий, мест и участников, — чтобы команда видела занятость друг
+     друга и общие свободные окна;
+   • собрание создаётся в Google Календаре организатора, участникам сразу
+     приходит приглашение, а в штабе видно, кто принял.
+   Без коннектора (GitHub Pages, другое окно) собрания живут в штабе —
+   просто без приглашений. Время команды — московское. */
+
+const GCAL = 'Google Calendar';
+const TZ = 'Europe/Moscow', TZ_OFF = '+03:00', TZ_MS = 3 * 3600e3;
+const CAL_H0 = 8, CAL_H1 = 21;          // сетка дня: 8:00–21:00
+const SYNC_DAYS = 28;                   // занятость в базе — на 4 недели
+const DURS = [15, 30, 45, 60, 90, 120];
+const REPEATS = {'': 'Не повторять', weekly: 'Каждую неделю', biweekly: 'Раз в две недели'};
+const RSVP = {
+  accepted:    {name: 'идёт',       tone: 'good', mark: '✓'},
+  tentative:   {name: 'возможно',   tone: 'warn', mark: '?'},
+  declined:    {name: 'не идёт',    tone: 'bad',  mark: '✕'},
+  needsAction: {name: 'нет ответа', tone: '',     mark: '·'},
+};
+
+/* ── время: всё в московском, чтобы у команды совпадали часы ── */
+const tMs = (d, hm) => Date.parse(`${d}T${hm}:00${TZ_OFF}`);
+const mskDate = ms => new Date(ms + TZ_MS).toISOString().slice(0, 10);
+const mskMin = ms => { const d = new Date(ms + TZ_MS); return d.getUTCHours() * 60 + d.getUTCMinutes(); };
+const hmOf = min => `${pad(Math.floor(min / 60) % 24)}:${pad(min % 60)}`;
+const hmMs = ms => hmOf(mskMin(ms));
+const isoMs = ms => `${mskDate(ms)}T${hmMs(ms)}:00${TZ_OFF}`;
+/* «сейчас» — для проверок подменяется вместе с «сегодня» */
+const nowMs = () => window.__EVA_NOW || (window.__EVA_TODAY ? tMs(window.__EVA_TODAY, '09:30') : Date.now());
+const ceil15 = ms => Math.ceil(ms / 9e5) * 9e5;
+const wait = ms => new Promise(r => setTimeout(r, ms));
+function mergeIv(list) {
+  const a = list.filter(x => x[1] > x[0]).sort((x, y) => x[0] - y[0]), out = [];
+  a.forEach(([s, e]) => { const l = out[out.length - 1]; if (l && s <= l[1]) l[1] = Math.max(l[1], e); else out.push([s, e]); });
+  return out;
+}
+
+/* ── почта для приглашений: календарь Google → карточка в «Команде» → почта входа ── */
+const accountOf = pid => Store.all('accounts').find(a => a.personId === pid && a.active !== false) || null;
+function inviteEmail(p) {
+  if (!p) return '';
+  return String(p.gcalEmail || p.email || (accountOf(p.id) || {}).email || '').trim();
+}
+function personByEmail(email) {
+  const e = normEmail(email);
+  if (!e) return null;
+  return people().find(p => [p.gcalEmail, p.email, (accountOf(p.id) || {}).email].some(x => x && normEmail(x) === e)) || null;
+}
+const calPeople = () => people().filter(p => p.name && (p.status || 'active') === 'active');
+
+/* ── ошибки коннектора: у каждого кода своё действие ── */
+const CAL_ERR = {
+  needs_reauth: 'Доступ к Google Календарю истёк. Переподключите его: claude.ai → Настройки → Коннекторы → Google Calendar — и обновите страницу.',
+  server_not_connected: 'Google Календарь не подключён к вашему Claude. Добавьте его: claude.ai → Настройки → Коннекторы → Google Calendar — и обновите страницу.',
+  selection_required: 'У вас подключено несколько Google Календарей — Claude попросит выбрать один. Если окно закрыли, обновите страницу.',
+  not_in_manifest: 'Доступ к календарю для этой страницы выключен или отклонён. Разрешите Google Календарь в настройках артефакта и обновите страницу.',
+  blocked_by_policy: 'Организация запретила этот инструмент Google Календаря.',
+  approval_required: 'Нужно разрешение администратора организации на Google Календарь.',
+  server_not_found: 'Коннектор Google Календаря не найден. Подключите его заново: claude.ai → Настройки → Коннекторы.',
+  consent_required: 'Штабу нужен доступ к Google Календарю — нажмите «Подключить» ещё раз и подтвердите.',
+  server_unavailable: 'Google Календарь сейчас не отвечает. Попробуйте через минуту.',
+  rate_limited: 'Слишком много запросов к календарю — подождите немного.',
+  cancelled: 'Действие отменено.',
+};
+const CAL_OFF = ['not_granted', 'capability_disabled', 'capability_removed'];
+const CAL_CONN = ['needs_reauth', 'server_not_connected', 'selection_required', 'not_in_manifest', 'blocked_by_policy', 'approval_required', 'server_not_found', 'consent_required'];
+function calErr(e) {
+  const code = (e && e.code) || 'upstream_error';
+  let text = CAL_ERR[code];
+  if (!text && CAL_OFF.includes(code)) text = 'Google Календарь недоступен в этом окне — откройте штаб в Claude.';
+  if (!text && code === 'tool_error') text = 'Google ответил ошибкой: ' + ((e && e.message) || 'без подробностей');
+  if (!text) text = 'Не получилось связаться с Google Календарём' + (e && e.message ? ': ' + e.message : '') + '.';
+  /* для записи «не ответил» не значит «не сделал» — повторять только после проверки */
+  const ambiguous = code === 'server_unavailable' || code === 'upstream_error' || !(code in CAL_ERR || CAL_OFF.includes(code) || code === 'tool_error' || code === 'bad_request');
+  return {code, text, conn: CAL_CONN.includes(code), off: CAL_OFF.includes(code), ambiguous};
+}
+
+/* ── связь с Google ── */
+const Cal = {
+  api: undefined,
+  conn: 'checking',     // checking · ready · prompt · denied · off · error
+  err: null,            // {code, text} — ошибка подключения для всей страницы
+  hint: '',             // мягкая подсказка по списку коннекторов
+  calEmail: '',         // почта основного календаря того, кто смотрит
+  week: {},             // понедельник → {events, at} | {loading} | {err} — свои события, только в памяти
+  syncing: false,
+  _init: null,
+  _auto: false,
+
+  init() {
+    if (this._init) return this._init;
+    this._init = (async () => {
+      try { this.api = window.claude && typeof window.claude.use === 'function' ? await window.claude.use('mcp') : null; }
+      catch (e) { this.api = null; }
+      if (!this.api) { this.conn = 'off'; App.renderSoon(); return; }
+      let st = 'prompt';
+      try {
+        const perms = await window.claude.use('permissions');
+        if (perms) st = await perms.state('mcp:' + GCAL).catch(() => 'unavailable');
+      } catch (e) { st = 'prompt'; }
+      /* список коннекторов — только подсказка: окончательно решает ответ на вызов */
+      try {
+        const lt = await this.api.listTools(GCAL);
+        const srv = ((lt && lt.servers) || []).find(x => x.server === GCAL);
+        if (srv && srv.authStatus === 'needs_reauth') this.setErr({code: 'needs_reauth'});
+        else if (!srv || !(srv.tools || []).length) this.hint = 'Похоже, Google Календарь ещё не подключён к вашему Claude (claude.ai → Настройки → Коннекторы → Google Calendar) или подключено несколько и нужно выбрать один. Если он подключён — просто нажмите кнопку.';
+      } catch (e) { /* решат коды вызовов */ }
+      if (!this.err) this.conn = st === 'unavailable' ? 'off' : st === 'denied' ? 'denied' : st === 'granted' ? 'ready' : 'prompt';
+      App.renderSoon();
+    })();
+    return this._init;
+  },
+  usable() { return this.conn === 'ready' || this.conn === 'prompt'; },
+  setErr(e) {
+    const x = calErr(e);
+    if (x.off) { this.conn = 'off'; this.err = null; }
+    else if (x.conn) { this.conn = 'error'; this.err = x; }
+    return x;
+  },
+
+  /* read — чтение: одна тихая повторная попытка, если Google разрешил; запись не повторяем */
+  async call(tool, input, read = false) {
+    await this.init();
+    if (!this.api) throw {code: 'capability_disabled'};
+    const run = () => this.api.callTool(GCAL, tool, input, read ? undefined : {cache: false});
+    let r;
+    try { r = await run(); }
+    catch (e) {
+      if (!(read && e && e.retryable)) { this.setErr(e); throw e; }
+      await wait(Math.min(60000, e.retryAfterMs || 700 + Math.random() * 1300));
+      try { r = await run(); } catch (e2) { this.setErr(e2); throw e2; }
+    }
+    this.conn = 'ready';
+    this.err = null;
+    this.hint = '';
+    return r && r.payload !== undefined ? r.payload : r;
+  },
+
+  async events(from, to) {
+    const input = {startTime: `${from}T00:00:00${TZ_OFF}`, endTime: `${addDays(to, 1)}T00:00:00${TZ_OFF}`, orderBy: 'startTime', pageSize: 250, timeZone: TZ};
+    let list = [], token = null;
+    for (let page = 0; page < 4; page++) {
+      const res = await this.call('list_events', token ? {...input, pageToken: token} : input, true);
+      list = list.concat(Array.isArray(res) ? res : (res && (res.events || res.items)) || []);
+      /* название основного календаря — это почта владельца */
+      if (res && /^\S+@\S+\.\S+$/.test(res.summary || '')) this.calEmail = res.summary;
+      token = res && res.nextPageToken;
+      if (!token) break;
+    }
+    return list.filter(ev => ev && ev.status !== 'cancelled');
+  },
+
+  /* свои события недели — для сетки «Неделя» */
+  async loadWeek(ws) {
+    if (this.week[ws] && !this.week[ws].err) return;
+    this.week[ws] = {loading: true};
+    try {
+      this.week[ws] = {events: await this.events(ws, addDays(ws, 6)), at: Date.now()};
+    } catch (e) {
+      this.week[ws] = {err: calErr(e)};
+    }
+    App.renderSoon();
+  },
+
+  /* синхронизация: свои события на 4 недели → интервалы «занят» в базу,
+     почта календаря в карточку и ответы на приглашения штаба */
+  async sync({silent = false} = {}) {
+    const pid = Auth.personId();
+    if (!pid || this.syncing) return false;
+    this.syncing = true;
+    App.renderSoon();
+    const from = weekStart(today()), to = addDays(from, SYNC_DAYS - 1);
+    try {
+      const events = await this.events(from, to);
+      for (let w = from; w <= to; w = addDays(w, 7)) {
+        const a = tMs(w, '00:00'), b = tMs(addDays(w, 7), '00:00');
+        this.week[w] = {events: events.filter(ev => { const r = evRange(ev); return r && r.end > a && r.start < b; }), at: Date.now()};
+      }
+      const slots = mergeIv(events.filter(evBusy).filter(ev => !meetingOfEvent(ev)).map(evRange).filter(Boolean).map(r => [r.start, r.end]));
+      Store.put('busy', pid, {slots, from, to, at: Date.now(), share: true});
+      const email = selfEmail(events) || this.calEmail || '', p = personById(pid);
+      if (email && p && normEmail(p.gcalEmail) !== normEmail(email)) Store.patch('people', pid, {gcalEmail: email});
+      syncRsvp(events);
+      if (!silent) toast('Календарь обновлён: команда видит вашу занятость на 4 недели вперёд');
+      return true;
+    } catch (e) {
+      const x = calErr(e);
+      if (!silent && !x.conn && !x.off) toast(x.text, {error: true});
+      return false;
+    } finally {
+      this.syncing = false;
+      App.renderSoon();
+    }
+  },
+
+  /* тихое обновление занятости раз в полчаса — только если человек уже поделился и доступ дан */
+  autoSync() {
+    const pid = Auth.personId();
+    if (this._auto || !pid) return;
+    const doc = Store.get('busy', pid);
+    if (!doc || doc.share === false || Date.now() - (doc.at || 0) < 30 * 60e3) return;
+    this._auto = true;
+    this.init().then(() => { if (this.conn === 'ready') this.sync({silent: true}); });
+  },
+
+  stopSharing() {
+    const pid = Auth.personId();
+    if (!pid) return;
+    Store.put('busy', pid, {slots: [], share: false, at: Date.now()});
+    toast('Занятость больше не видна команде. Собрания штаба остаются.');
+  },
+};
+
+/* ── события Google ── */
+function evRange(ev) {
+  const s = ev.start || {}, e = ev.end || {};
+  if (s.dateTime) { const a = Date.parse(s.dateTime); return {start: a, end: Date.parse(e.dateTime || s.dateTime) || a, allDay: false}; }
+  /* день события приходит и как «2026-10-10», и как «2026-10-10T00:00:00Z» — берём дату */
+  if (s.date) { const d0 = String(s.date).slice(0, 10), d1 = e.date ? String(e.date).slice(0, 10) : addDays(d0, 1); return {start: tMs(d0, '00:00'), end: tMs(d1 > d0 ? d1 : addDays(d0, 1), '00:00'), allDay: true, d0, d1: d1 > d0 ? d1 : addDays(d0, 1)}; }
+  return null;
+}
+const evType = ev => String(ev.eventType || '').toLowerCase().replace(/[_\s]/g, '');
+/* занимает ли событие время: не «свободен», не отклонено, не место работы и не день рождения */
+const evDeclined = ev => { const me = (ev.attendees || []).find(a => a.self); return !!(me && me.responseStatus === 'declined'); };
+function evBusy(ev) {
+  if (ev.transparency === 'transparent' || ev.availability === 'AVAILABILITY_FREE') return false;
+  if (['workinglocation', 'birthday'].includes(evType(ev))) return false;
+  return !evDeclined(ev);
+}
+function selfEmail(events) {
+  for (const ev of events) {
+    const a = (ev.attendees || []).find(x => x.self && x.email);
+    if (a) return a.email;
+    if (ev.organizer && ev.organizer.self && ev.organizer.email) return ev.organizer.email;
+    if (ev.creator && ev.creator.self && ev.creator.email) return ev.creator.email;
+  }
+  return '';
+}
+function meetingOfEvent(ev) {
+  const id = String(ev.id || ''), rid = String(ev.recurringEventId || '');
+  return Store.all('meetings').find(m => m.gcalId && (id === m.gcalId || rid === m.gcalId || id.startsWith(m.gcalId + '_'))) || null;
+}
+/* кто принял приглашение: статусы участников из своей копии события */
+function syncRsvp(events) {
+  events.forEach(ev => {
+    const m = meetingOfEvent(ev);
+    if (!m || !Array.isArray(ev.attendees)) return;
+    const resp = {};
+    ev.attendees.forEach(a => { const p = personByEmail(a.email); if (p && a.responseStatus) resp[p.id] = a.responseStatus; });
+    const cur = m.responses || {};
+    if (Object.keys(resp).some(k => cur[k] !== resp[k])) Store.patch('meetings', m.id, {responses: resp});
+  });
+}
+const eventOf = res => (res && (res.event || res.createdEvent || res.updatedEvent)) || res || {};
+function meetUrlOf(ev) {
+  if (!ev) return '';
+  if (ev.hangoutLink) return ev.hangoutLink;
+  const ep = ((ev.conferenceData || {}).entryPoints || []).find(x => x.entryPointType === 'video' && x.uri);
+  return ep ? ep.uri : (ev.meetUrl || ev.googleMeetUrl || '');
+}
+
+/* ── собрания штаба ── */
+const Meetings = {
+  all() { return Store.all('meetings').filter(m => m.date && m.start); },
+  step(m) { return m.repeat === 'weekly' ? 7 : m.repeat === 'biweekly' ? 14 : 0; },
+  /* вхождения в диапазон дат, с повторами */
+  occ(from, to) {
+    const out = [];
+    this.all().forEach(m => {
+      const step = this.step(m);
+      if (!step) { if (m.date >= from && m.date <= to) out.push({m, date: m.date}); return; }
+      let d = m.date;
+      if (d < from) d = addDays(d, Math.ceil(daysBetween(d, from) / step) * step);
+      for (; d <= to && d <= (m.until || Q.end); d = addDays(d, step)) out.push({m, date: d});
+    });
+    return out.map(o => { const s = tMs(o.date, o.m.start); return {...o, s, e: s + (Number(o.m.dur) || 60) * 60e3}; }).sort((a, b) => a.s - b.s);
+  },
+  next(m) { const t = today(); return this.occ(t, addDays(t, 120)).find(o => o.m.id === m.id && o.e > nowMs()) || null; },
+  people(m) { return [m.organizer, ...(m.attendees || [])].filter((x, i, a) => x && a.indexOf(x) === i); },
+  mine(m) { const pid = Auth.personId(); return !!pid && this.people(m).includes(pid); },
+  when(m) {
+    const step = this.step(m);
+    const t = `${m.start}–${hmMs(tMs(m.date, m.start) + (Number(m.dur) || 60) * 60e3)}`;
+    if (!step) return `${dayWd(m.date)}, ${t}`;
+    const wd = ['по понедельникам', 'по вторникам', 'по средам', 'по четвергам', 'по пятницам', 'по субботам', 'по воскресеньям'][weekday(m.date)];
+    return `${step === 7 ? '' : 'раз в две недели, '}${wd}, ${t}`;
+  },
+};
+
+/* занятость человека за дни: интервалы Google (без названий) + собрания штаба */
+function busyOf(pid, from, to) {
+  const doc = Store.get('busy', pid);
+  const shared = !!(doc && doc.share !== false && doc.from);
+  const a = tMs(from, '00:00'), b = tMs(addDays(to, 1), '00:00');
+  const list = [];
+  if (shared) (doc.slots || []).forEach(([s, e]) => { if (e > a && s < b) list.push({s, e, kind: 'busy'}); });
+  Meetings.occ(from, to).forEach(o => {
+    if (Meetings.people(o.m).includes(pid) && (o.m.responses || {})[pid] !== 'declined') list.push({s: o.s, e: o.e, kind: 'meet', m: o.m});
+  });
+  return {has: shared && doc.from <= from && doc.to >= to, shared, at: doc ? doc.at : 0, list: list.sort((x, y) => x.s - y.s)};
+}
+/* общие свободные окна: рабочие часы минус чья-то занятость */
+function freeWindows(pids, date, wh, minDur = 30) {
+  const d0 = tMs(date, '00:00');
+  let lo = d0 + wh[0] * 36e5;
+  const hi = d0 + wh[1] * 36e5, now = nowMs();
+  if (hi <= now) return [];
+  if (lo < now) lo = ceil15(now);
+  const busy = mergeIv(pids.flatMap(pid => busyOf(pid, date, date).list.map(x => [x.s, x.e])));
+  const out = [];
+  let cur = lo;
+  for (const [s, e] of busy) {
+    if (e <= cur) continue;
+    if (s >= hi) break;
+    if (s - cur >= minDur * 60e3) out.push([cur, Math.min(s, hi)]);
+    cur = Math.max(cur, e);
+  }
+  if (hi - cur >= minDur * 60e3) out.push([cur, hi]);
+  return out;
+}
+/* ближайшие удобные начала для собрания */
+function suggestSlots(pids, dur, wh, fromDate, n = 8) {
+  const out = [];
+  for (let i = 0, d = fromDate; i < 21 && out.length < n; i++, d = addDays(d, 1)) {
+    if (weekday(d) > 4) continue;
+    freeWindows(pids, d, wh, dur).forEach(([s, e]) => {
+      for (let t = s, k = 0; t + dur * 60e3 <= e && k < 2 && out.length < n; t += 60 * 60e3, k++) out.push(t);
+    });
+  }
+  return out;
+}
+/* кто занят в выбранное время */
+function conflictsAt(pids, s, e, skipId) {
+  const d = mskDate(s);
+  return pids.map(pid => {
+    const b = busyOf(pid, d, d);
+    const hit = b.list.find(x => x.s < e && x.e > s && !(x.m && x.m.id === skipId));
+    return hit ? {pid, hit} : (!b.has ? {pid, unknown: true} : null);
+  }).filter(Boolean);
+}
+
+/* ── раскладка пересекающихся блоков в дорожки ── */
+function lanes(items) {
+  items.sort((a, b) => a.s - b.s || b.e - a.e);
+  let group = [], ends = [], groupEnd = -Infinity;
+  const finish = () => { const n = ends.length || 1; group.forEach(x => { x.lanes = n; }); };
+  items.forEach(it => {
+    if (it.s >= groupEnd && group.length) { finish(); group = []; ends = []; }
+    let c = ends.findIndex(end => end <= it.s);
+    if (c < 0) { c = ends.length; ends.push(0); }
+    ends[c] = it.e;
+    it.lane = c;
+    group.push(it);
+    groupEnd = Math.max(groupEnd, it.e);
+  });
+  if (group.length) finish();
+  return items;
+}
+
+/* ── страница ── */
+const CalUI = {ws: null, day: null};
+
+App.register('calendar', {
+  title: 'Календарь',
+  render(root) {
+    Cal.init();
+    const t = today();
+    const tab = View.get('cal.tab', 'week');
+    const ws = CalUI.ws || weekStart(t);
+    const canMeet = Auth.can('tasks.edit');
+    const wkDays = View.get('cal.days', 7);
+
+    root.innerHTML = `
+      ${pageHead('Календарь', 'Занятость команды, общие свободные окна и собрания. Приглашения приходят участникам прямо в их Google Календарь.',
+        `${helpBtn('calendar')}${canMeet ? `<button class="btn primary" data-new-meet>${icon('plus')}Собрание</button>` : ''}`)}
+      ${helpBox('calendar', `<b>Как это работает.</b> Нажмите «Подключить мой Google Календарь» — один раз. Вы увидите свои события в сетке недели, а команда — только когда вы <b>заняты</b>: названия, места и участники ваших встреч в штаб не попадают. <b>Собрание</b>: кнопка сверху или клик по сетке → название, время, участники → «Создать и отправить приглашения» — событие появится в вашем Google Календаре, участникам придёт приглашение на почту и в их календарь, со ссылкой на Google Meet. Вкладка «Занятость команды» показывает, кто когда занят, и зелёным — окна, где свободны все выбранные: нажмите на окно, и собрание создастся на это время. Приглашение уходит на почту из карточки человека в «Команде» (после подключения — на почту его Google Календаря).`)}
+      ${connCard()}
+      <div class="cal-bar">
+        <div class="tabs cal-tabs" role="tablist">
+          <button data-ctab="week" class="${tab === 'week' ? 'on' : ''}">Неделя</button>
+          <button data-ctab="team" class="${tab === 'team' ? 'on' : ''}">Занятость команды</button>
+          <button data-ctab="list" class="${tab === 'list' ? 'on' : ''}">Собрания <span class="n">${upcomingMeetings().length || ''}</span></button>
+        </div>
+        ${tab !== 'list' ? `<div class="cal-nav">
+          <button class="icon-btn" data-wk="-7" aria-label="Предыдущая неделя">${icon('back')}</button>
+          <b class="cal-wk">${weekLabel(ws)}</b>
+          <button class="icon-btn" data-wk="7" aria-label="Следующая неделя" style="transform:scaleX(-1)">${icon('back')}</button>
+          ${ws !== weekStart(t) ? '<button class="btn xs ghost" data-wk="0">Сегодня</button>' : ''}
+          ${tab === 'week' ? `<div class="seg"><button data-days="5" class="${wkDays === 5 ? 'on' : ''}">Пн–Пт</button><button data-days="7" class="${wkDays === 7 ? 'on' : ''}">7 дней</button></div>` : ''}
+        </div>` : ''}
+      </div>
+      <div id="calView">${tab === 'team' ? calTeamView(ws) : tab === 'list' ? calListView() : calWeekView(ws, wkDays)}</div>`;
+
+    wireHelp(root);
+    on(root, 'click', '[data-ctab]', (e, el) => { View.set('cal.tab', el.dataset.ctab); App.render(); });
+    on(root, 'click', '[data-wk]', (e, el) => {
+      const n = Number(el.dataset.wk);
+      CalUI.ws = n ? addDays(ws, n) : weekStart(t);
+      CalUI.day = null;
+      App.render();
+    });
+    on(root, 'click', '[data-days]', (e, el) => { View.set('cal.days', Number(el.dataset.days)); App.render(); });
+    on(root, 'click', '[data-new-meet]', () => openMeeting(null));
+    on(root, 'click', '[data-meet]', (e, el) => { e.stopPropagation(); openMeeting(el.dataset.meet); });
+    on(root, 'click', '[data-cal-connect]', async (e, el) => {
+      el.disabled = true;
+      el.textContent = 'Подключаю…';
+      await Cal.sync();
+      App.render();
+    });
+    on(root, 'click', '[data-cal-sync]', () => Cal.sync());
+    on(root, 'click', '[data-cal-stop]', async (e, el) => {
+      if (await confirmPop(el, {text: 'Перестать показывать команде вашу занятость?', yes: 'Да, перестать'})) Cal.stopSharing();
+    });
+    on(root, 'click', '[data-cal-retry]', () => { Cal._init = null; Cal.err = null; Cal.hint = ''; Cal.conn = 'checking'; Cal.week = {}; App.render(); });
+    on(root, 'click', '[data-verify]', (e, el) => verifyMeeting(el.dataset.verify));
+    on(root, 'click', '[data-push]', (e, el) => { el.disabled = true; pushMeeting(el.dataset.push); });
+    on(root, 'click', '[data-cancel-meet]', (e, el) => cancelMeeting(el.dataset.cancelMeet, el));
+    on(root, 'click', '[data-mine]', (e, el) => { View.set('cal.mine', el.dataset.mine === '1'); App.render(); });
+    if (tab === 'week') calWireWeek(root, ws);
+    if (tab === 'team') calWireTeam(root, ws);
+    if (tab === 'week' && Cal.conn === 'ready' && !Cal.week[ws]) Cal.loadWeek(ws);
+    Cal.autoSync();
+  },
+});
+
+/* ── подключение ── */
+function connCard() {
+  const pid = Auth.personId();
+  const doc = pid ? Store.get('busy', pid) : null;
+  const shared = doc && doc.share !== false && doc.from;
+  const p = personById(pid);
+  if (Cal.conn === 'checking') return '<div class="cal-conn slim"><i class="dot"></i><span>Проверяю Google Календарь…</span></div>';
+  if (Cal.conn === 'off') return `<div class="cal-conn slim off"><i class="dot"></i><span><b>Google Календарь подключается, когда штаб открыт в Claude.</b> Здесь собрания сохраняются в штабе и видны команде, но приглашения не уходят, а своя занятость не подтягивается.</span></div>`;
+  if (Cal.conn === 'error' && Cal.err) return `<div class="cal-conn warn"><div>${icon('cal')}</div><div><b>Google Календарь не отвечает штабу</b><p>${esc(Cal.err.text)}</p></div><button class="btn sm" data-cal-retry>Проверить снова</button></div>`;
+  if (Cal.conn === 'denied') return `<div class="cal-conn warn"><div>${icon('cal')}</div><div><b>Доступ к календарю не разрешён</b><p>Вы отказали в доступе в этот раз. Обновите страницу и нажмите «Разрешить», когда Claude спросит.</p></div></div>`;
+  if (!pid) return '<div class="cal-conn slim off"><i class="dot"></i><span>Ваша учётка не связана с карточкой в «Команде» — занятость не с чем связать. Напишите основателю.</span></div>';
+  if (!shared) return `<div class="cal-conn">
+      <div>${icon('cal')}</div>
+      <div><b>Подключите свой Google Календарь</b>
+        <p>Вы увидите свои события в сетке недели, а команда — только интервалы «занят» на 4 недели вперёд. Названия, места и участники ваших встреч в штаб не попадают. Claude спросит разрешение на доступ — нажмите «Разрешить».</p>
+        ${Cal.hint ? `<p class="warn-t">${esc(Cal.hint)}</p>` : ''}</div>
+      <button class="btn primary" data-cal-connect ${Cal.syncing ? 'disabled' : ''}>${Cal.syncing ? 'Подключаю…' : 'Подключить мой Google Календарь'}</button>
+    </div>`;
+  return `<div class="cal-conn slim ok"><i class="dot"></i>
+      <span><b>Google Календарь подключён</b>${p && p.gcalEmail ? ` · ${esc(p.gcalEmail)}` : ''} · занятость ${Cal.syncing ? 'обновляется…' : 'обновлена ' + timeAgo(doc.at)}</span>
+      <button class="btn xs ghost" data-cal-sync ${Cal.syncing ? 'disabled' : ''}>${icon('refresh')}Обновить</button>
+      <button class="btn xs ghost" data-cal-stop>Не показывать занятость</button>
+    </div>`;
+}
+
+/* ── неделя: свои события + собрания штаба ── */
+function calWeekView(ws, nDays) {
+  const t = today();
+  const dates = Array.from({length: nDays}, (_, i) => addDays(ws, i));
+  const H = CAL_H1 - CAL_H0;
+  const wk = Cal.week[ws];
+  const own = wk && wk.events ? wk.events.filter(ev => !meetingOfEvent(ev)) : [];
+  const occ = Meetings.occ(dates[0], dates[dates.length - 1]);
+  const pct0 = ms => clamp((mskMin(ms) - CAL_H0 * 60) / (H * 60) * 100, 0, 100);
+  const allDay = dates.map(d => own.filter(ev => { const r = evRange(ev); return r && r.allDay && r.d0 <= d && r.d1 > d && !evDeclined(ev); }));
+  const hasAllDay = allDay.some(x => x.length);
+
+  const col = (d, i) => {
+    const a = tMs(d, hmOf(CAL_H0 * 60)), b = tMs(d, hmOf(CAL_H1 * 60));
+    const items = [];
+    own.forEach(ev => {
+      const r = evRange(ev);
+      if (!r || r.allDay || r.end <= a || r.start >= b || evDeclined(ev)) return;
+      items.push({s: Math.max(r.start, a), e: Math.min(r.end, b), rs: r.start, re: r.end, ev, busy: evBusy(ev)});
+    });
+    occ.forEach(o => { if (o.date === d && o.e > a && o.s < b) items.push({s: Math.max(o.s, a), e: Math.min(o.e, b), rs: o.s, re: o.e, m: o.m}); });
+    lanes(items);
+    const blocks = items.map(it => {
+      const top = pct0(it.s), h = Math.max(pct0(it.e) - top, 2.2);
+      const style = `top:${top.toFixed(2)}%;height:${h.toFixed(2)}%;left:calc(${(it.lane / it.lanes * 100).toFixed(2)}% + 2px);width:calc(${(100 / it.lanes).toFixed(2)}% - 4px)`;
+      const time = `${hmMs(it.rs)}–${hmMs(it.re)}`;
+      const short = it.e - it.s <= 35 * 60e3 ? ' short' : '';
+      if (it.m) {
+        const mine = Meetings.mine(it.m);
+        return `<button class="cw-ev meet${short} ${mine ? 'mine' : ''}" style="${style}" data-meet="${it.m.id}" title="${esc(it.m.title)} · ${time}"><b>${esc(it.m.title)}</b><small>${time}${it.m.meetUrl ? ' · Meet' : ''}</small></button>`;
+      }
+      const title = it.ev.summary || 'Без названия';
+      return `<a class="cw-ev own${short} ${it.busy ? '' : 'free'}" style="${style}" ${it.ev.htmlLink ? `href="${esc(it.ev.htmlLink)}" target="_blank" rel="noopener"` : ''} title="${esc(title)} · ${time}${it.busy ? '' : ' · не занимает время'}"><b>${esc(title)}</b><small>${time}</small></a>`;
+    }).join('');
+    const nowLine = d === t && mskDate(nowMs()) === d ? `<i class="cw-now" style="top:${pct0(nowMs()).toFixed(2)}%"></i>` : '';
+    const offHours = `<i class="cw-off" style="top:0;height:${((10 - CAL_H0) / H * 100).toFixed(2)}%"></i><i class="cw-off" style="top:${((19 - CAL_H0) / H * 100).toFixed(2)}%;bottom:0"></i>`;
+    return `<div class="cw-col ${weekday(d) > 4 ? 'we' : ''} ${d < t ? 'past' : ''}" data-date="${d}">${offHours}${blocks}${nowLine}</div>`;
+  };
+
+  let status = '';
+  if (Cal.conn === 'ready' || Cal.conn === 'prompt') {
+    if (!wk) status = Cal.conn === 'ready' ? 'Загружаю ваши события…' : 'Свои события появятся после подключения Google Календаря.';
+    else if (wk.loading) status = 'Загружаю ваши события…';
+    else if (wk.err) status = wk.err.text;
+    else status = `Ваших событий: ${own.length} · собраний штаба: ${occ.length}`;
+  } else status = `Собраний штаба на неделе: ${occ.length}`;
+
+  return `<div class="cal-legend"><span><i class="lg-own"></i>ваши события из Google</span><span><i class="lg-meet"></i>собрания штаба</span><span><i class="lg-off"></i>вне рабочих часов</span><span class="note">${esc(status)}</span></div>
+    <div class="cal-wrap"><div class="cal-week" style="--days:${nDays}">
+      <div class="cw-corner"></div>
+      ${dates.map(d => `<div class="cw-dh ${d === t ? 'is-today' : ''} ${weekday(d) > 4 ? 'we' : ''}"><span>${WD_SH[weekday(d)]}</span><b>${Number(d.slice(8))}</b><small>${MONTHS_SH[dateOf(d).getMonth()]}</small></div>`).join('')}
+      ${hasAllDay ? `<div class="cw-adl">весь день</div>${allDay.map(list => `<div class="cw-ad">${list.map(ev => `<span class="cw-adi" title="${esc(ev.summary || '')}">${esc(ev.summary || 'Событие')}</span>`).join('')}</div>`).join('')}` : ''}
+      <div class="cw-times">${Array.from({length: H}, (_, i) => `<span style="top:${(i / H * 100).toFixed(2)}%">${pad(CAL_H0 + i)}:00</span>`).join('')}</div>
+      ${dates.map(col).join('')}
+    </div></div>
+    ${Auth.can('tasks.edit') ? '<p class="note">Нажмите на свободное место в сетке — откроется новое собрание на это время.</p>' : ''}`;
+}
+function calWireWeek(root) {
+  if (!Auth.can('tasks.edit')) return;
+  on(root, 'click', '.cw-col', (e, el) => {
+    if (e.target.closest('.cw-ev')) return;
+    const r = el.getBoundingClientRect();
+    const min = CAL_H0 * 60 + (e.clientY - r.top) / r.height * (CAL_H1 - CAL_H0) * 60;
+    const start = clamp(Math.floor(min / 30) * 30, CAL_H0 * 60, CAL_H1 * 60 - 30);
+    openMeeting(null, {date: el.dataset.date, start: hmOf(start)});
+  });
+}
+
+/* ── занятость команды: люди × часы одного дня ── */
+function calTeamView(ws) {
+  const t = today();
+  const days = Array.from({length: 7}, (_, i) => addDays(ws, i));
+  let day = CalUI.day && days.includes(CalUI.day) ? CalUI.day : (days.includes(t) ? t : days[0]);
+  CalUI.day = day;
+  const wh = View.get('cal.wh', [10, 19]);
+  const all = calPeople();
+  let sel = View.get('cal.sel', null);
+  sel = (sel || all.map(p => p.id)).filter(id => all.some(p => p.id === id));
+  const H = CAL_H1 - CAL_H0;
+  const px = ms => clamp((mskMin(ms) - CAL_H0 * 60) / (H * 60) * 100, 0, 100);
+  const withData = sel.filter(pid => busyOf(pid, day, day).has);
+  const noData = sel.filter(pid => !withData.includes(pid));
+  const free = weekday(day) > 4 && !View.get('cal.we', false) ? [] : freeWindows(withData, day, wh, 30);
+  const d0 = tMs(day, '00:00');
+
+  const seg = (s, e, cls, attrs = '', inner = '') => {
+    const a = Math.max(s, d0 + CAL_H0 * 36e5), b = Math.min(e, d0 + CAL_H1 * 36e5);
+    if (b <= a) return '';
+    const l = px(a), w = Math.max(px(b) - l, .8);
+    return `<span class="${cls}" style="left:${l.toFixed(2)}%;width:${w.toFixed(2)}%" ${attrs}>${inner}</span>`;
+  };
+  const offHours = `<i class="ct-off" style="left:0;width:${((wh[0] - CAL_H0) / H * 100).toFixed(2)}%"></i><i class="ct-off" style="left:${((wh[1] - CAL_H0) / H * 100).toFixed(2)}%;right:0"></i>`;
+  const now = nowMs();
+  const nowLine = mskDate(now) === day ? `<i class="ct-now" style="left:${px(now).toFixed(2)}%"></i>` : '';
+  const rows = sel.map(pid => {
+    const p = personById(pid);
+    const b = busyOf(pid, day, day);
+    const stale = b.shared && b.at && Date.now() - b.at > 3 * 864e5;
+    const blocks = b.list.map(x => x.kind === 'meet'
+      ? seg(x.s, x.e, 'ct-b meet', `data-meet="${x.m.id}" title="${esc(x.m.title)} · ${hmMs(x.s)}–${hmMs(x.e)}"`, `<em>${esc(x.m.title)}</em>`)
+      : seg(x.s, x.e, 'ct-b busy', `title="Занят · ${hmMs(x.s)}–${hmMs(x.e)}"`)).join('');
+    return `<div class="ct-row ${b.has ? '' : 'nodata'}">
+      <a class="ct-name" href="#p-${pid}">${avatar(p)}<span><b>${esc(firstName(p))}</b><small>${b.has ? (stale ? 'обновлено ' + timeAgo(b.at) : 'календарь подключён') : 'нет данных календаря'}</small></span></a>
+      <div class="ct-track" data-pid="${pid}">${offHours}${blocks}${nowLine}</div></div>`;
+  }).join('');
+
+  return `<div class="ct-days">${days.map(d => {
+      const n = freeWindows(withData, d, wh, 30).length;
+      return `<button data-cday="${d}" class="${d === day ? 'on' : ''} ${d < t ? 'past' : ''}"><span>${WD_SH[weekday(d)]}, ${dayShort(d)}</span><small>${d < t ? '' : weekday(d) > 4 && !View.get('cal.we', false) ? 'выходной' : n ? `${n} ${plural(n, 'окно', 'окна', 'окон')}` : 'нет окон'}</small></button>`;
+    }).join('')}</div>
+    <div class="ct-tools">
+      <div class="chips" id="ctSel">${all.map(p => `<button class="chip ${sel.includes(p.id) ? 'on' : ''}" data-sel="${p.id}">${esc(firstName(p))}${busyOf(p.id, day, day).has ? '' : ' <span class="ct-nd" title="нет данных календаря">•</span>'}</button>`).join('')}
+        <button class="chip ghost" data-sel-all>${sel.length === all.length ? 'Сбросить' : 'Все'}</button></div>
+      <label class="ct-wh">Рабочие часы <select class="select sm" id="whFrom">${Array.from({length: 8}, (_, i) => i + 7).map(h => `<option value="${h}" ${h === wh[0] ? 'selected' : ''}>${pad(h)}:00</option>`).join('')}</select>–<select class="select sm" id="whTo">${Array.from({length: 9}, (_, i) => i + 14).map(h => `<option value="${h}" ${h === wh[1] ? 'selected' : ''}>${pad(h)}:00</option>`).join('')}</select></label>
+      <label class="check"><input type="checkbox" id="ctWe" ${View.get('cal.we', false) ? 'checked' : ''}> выходные</label>
+    </div>
+    ${sel.length ? `<div class="cal-wrap"><div class="cal-team">
+      <div class="ct-row ct-head"><div class="ct-name"></div><div class="ct-track">${Array.from({length: H + 1}, (_, i) => `<span style="left:${(i / H * 100).toFixed(2)}%">${pad(CAL_H0 + i)}</span>`).join('')}</div></div>
+      <div class="ct-row ct-free"><div class="ct-name"><span class="ct-fico">${icon('tick')}</span><span><b>Свободны все</b><small>${withData.length ? `${withData.length} из ${sel.length} с календарём` : 'нет данных'}</small></span></div>
+        <div class="ct-track">${offHours}${free.map(([s, e]) => seg(s, e, 'ct-b free', `data-free="${s}" title="Свободны все: ${hmMs(s)}–${hmMs(e)} — нажмите, чтобы назначить собрание"`, `<em>${hmMs(s)}–${hmMs(e)}</em>`)).join('')}${nowLine}</div></div>
+      ${rows}
+    </div></div>` : '<div class="empty"><b>Выберите людей</b>Отметьте, чью занятость показать.</div>'}
+    ${noData.length ? `<p class="note ct-nodata">Нет данных календаря: <b>${noData.map(pid => esc(firstName(personById(pid)))).join(', ')}</b> — их занятость не учитывается в окнах. Попросите их один раз открыть «Календарь» и нажать «Подключить мой Google Календарь».</p>` : ''}
+    <p class="note">Серым — занят по Google Календарю (без подробностей), фиолетовым — собрания штаба, зелёным — окна от 30 минут, где свободны все выбранные. Нажмите на зелёное окно или на шкалу — откроется собрание на это время.</p>`;
+}
+function calWireTeam(root) {
+  on(root, 'click', '[data-cday]', (e, el) => { CalUI.day = el.dataset.cday; App.render(); });
+  const all = calPeople().map(p => p.id);
+  const cur = () => (View.get('cal.sel', null) || all).filter(id => all.includes(id));
+  on(root, 'click', '[data-sel]', (e, el) => {
+    const s = new Set(cur());
+    if (s.has(el.dataset.sel)) s.delete(el.dataset.sel); else s.add(el.dataset.sel);
+    View.set('cal.sel', [...s]);
+    App.render();
+  });
+  on(root, 'click', '[data-sel-all]', () => { View.set('cal.sel', cur().length === all.length ? [] : all); App.render(); });
+  const whF = $('#whFrom', root), whT = $('#whTo', root);
+  const setWh = () => { const a = Number(whF.value), b = Math.max(a + 1, Number(whT.value)); View.set('cal.wh', [a, b]); App.render(); };
+  if (whF) { whF.onchange = setWh; whT.onchange = setWh; }
+  const we = $('#ctWe', root);
+  if (we) we.onchange = () => { View.set('cal.we', we.checked); App.render(); };
+  if (!Auth.can('tasks.edit')) return;
+  on(root, 'click', '[data-free]', (e, el) => {
+    e.stopPropagation();
+    const s = Number(el.dataset.free);
+    openMeeting(null, {date: mskDate(s), start: hmMs(s), attendees: cur().filter(id => id !== Auth.personId())});
+  });
+  on(root, 'click', '.ct-track[data-pid], .ct-free .ct-track', (e, el) => {
+    if (e.target.closest('.ct-b')) return;
+    const r = el.getBoundingClientRect();
+    const min = CAL_H0 * 60 + (e.clientX - r.left) / r.width * (CAL_H1 - CAL_H0) * 60;
+    const start = clamp(Math.floor(min / 30) * 30, CAL_H0 * 60, CAL_H1 * 60 - 30);
+    openMeeting(null, {date: CalUI.day, start: hmOf(start), attendees: cur().filter(id => id !== Auth.personId())});
+  });
+}
+
+/* ── список собраний ── */
+function upcomingMeetings() {
+  const now = nowMs();
+  return Meetings.all().map(m => ({m, o: Meetings.next(m)})).filter(x => x.o && x.o.e > now).sort((a, b) => a.o.s - b.o.s);
+}
+function inviteState(m) {
+  if (m.invite === 'sent') return `<span class="pill good" title="${esc((m.sentTo || []).join(', '))}">приглашения ушли${m.sentTo ? ': ' + m.sentTo.length : ''}</span>`;
+  if (m.invite === 'sending') return '<span class="pill warn">отправляю…</span>';
+  if (m.invite === 'unknown') return '<span class="pill warn" title="Google не ответил вовремя">не ясно, создалось ли</span>';
+  if (m.invite === 'failed') return `<span class="pill bad" title="${esc(CAL_ERR[m.inviteErr] || m.inviteErr || '')}">приглашения не ушли</span>`;
+  return '<span class="pill line">только в штабе</span>';
+}
+function meetRow(m, o) {
+  const pid = Auth.personId();
+  const org = personById(m.organizer);
+  const isOrg = m.organizer === pid;
+  const resp = m.responses || {};
+  const ppl = Meetings.people(m).map(id => {
+    const p = personById(id);
+    const st = id === m.organizer ? 'accepted' : resp[id] || (m.invite === 'sent' ? 'needsAction' : '');
+    const r = RSVP[st];
+    return `<span class="mt-p ${r ? r.tone : ''}" title="${esc(personName(p))}${id === m.organizer ? ' · организатор' : r ? ' · ' + r.name : ''}">${avatar(p)}${r && id !== m.organizer ? `<i>${r.mark}</i>` : ''}</span>`;
+  }).join('');
+  const guests = (m.guests || []).length;
+  const actions = [];
+  if (m.meetUrl) actions.push(`<a class="btn xs" href="${esc(m.meetUrl)}" target="_blank" rel="noopener">${icon('video')}Meet</a>`);
+  if (m.link) actions.push(`<a class="btn xs ghost" href="${esc(m.link)}" target="_blank" rel="noopener">${icon('ext')}Google</a>`);
+  if (isOrg && m.invite === 'unknown' && Cal.usable()) actions.push(`<button class="btn xs" data-verify="${m.id}">Проверить в Google</button>`);
+  if (isOrg && m.invite === 'failed' && Cal.usable()) actions.push(`<button class="btn xs primary" data-push="${m.id}">Отправить приглашения</button>`);
+  if (isOrg && (!m.invite || m.invite === 'none') && Cal.usable()) actions.push(`<button class="btn xs" data-push="${m.id}">Отправить в Google</button>`);
+  if (isOrg || Auth.isOwner()) actions.push(`<button class="btn xs ghost" data-cancel-meet="${m.id}">${m.gcalId && isOrg ? 'Отменить' : 'Удалить'}</button>`);
+  return `<div class="mt-row ${Meetings.mine(m) ? 'mine' : ''}">
+    <div class="mt-when"><b>${o ? hmMs(o.s) : m.start}</b><small>${o ? dayWd(o.date) : dayWd(m.date)}</small></div>
+    <button class="mt-main" data-meet="${m.id}"><b>${esc(m.title)}</b>
+      <small>${Meetings.step(m) ? esc(REPEATS[m.repeat]) + ' · ' : ''}${m.dur} мин · организатор ${esc(org ? firstName(org) : '—')}${guests ? ` · гостей: ${guests}` : ''}</small>
+      ${m.agenda ? `<span class="mt-agenda">${esc(m.agenda.split('\n')[0]).slice(0, 140)}</span>` : ''}</button>
+    <div class="mt-ppl">${ppl}</div>
+    <div class="mt-st">${inviteState(m)}</div>
+    <div class="mt-act">${actions.join('')}</div>
+  </div>`;
+}
+function calListView() {
+  const up = upcomingMeetings();
+  const now = nowMs();
+  const past = Meetings.all().filter(m => !Meetings.next(m) && tMs(m.date, m.start) < now).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 12);
+  const mineOnly = View.get('cal.mine', false);
+  const list = mineOnly ? up.filter(x => Meetings.mine(x.m)) : up;
+  return `<div class="mt-tools"><div class="seg"><button data-mine="0" class="${mineOnly ? '' : 'on'}">Все собрания</button><button data-mine="1" class="${mineOnly ? 'on' : ''}">Где я участвую</button></div>
+      <span class="note">✓ идёт · ? возможно · ✕ не идёт · · нет ответа — ответы подтягиваются из Google, когда организатор или участник обновляет календарь</span></div>
+    ${list.length ? `<div class="mt-list card flat">${list.map(x => meetRow(x.m, x.o)).join('')}</div>` : `<div class="empty"><b>Ближайших собраний нет</b>${Auth.can('tasks.edit') ? 'Нажмите «Собрание» сверху или выберите окно во вкладке «Занятость команды».' : ''}</div>`}
+    ${past.length ? `<details class="section mt-past"><summary>Прошедшие собрания · ${past.length}</summary><div class="mt-list card flat">${past.map(m => meetRow(m, null)).join('')}</div></details>` : ''}`;
+}
+
+/* ── окно собрания ── */
+function nextWorkday() {
+  const now = nowMs();
+  let d = today();
+  if (mskMin(now) > 17 * 60 || weekday(d) > 4) d = addDays(d, 1);
+  while (weekday(d) > 4) d = addDays(d, 1);
+  return d;
+}
+const parseGuests = s => String(s || '').split(/[\s,;]+/).map(x => x.trim()).filter(x => /^\S+@\S+\.\S+$/.test(x));
+
+function openMeeting(id, preset = {}) {
+  const m = id ? Store.get('meetings', id) : null;
+  const me = Auth.personId();
+  if (!m && !Auth.can('tasks.edit')) return;
+  const isOrg = !m || m.organizer === me;
+  const canEdit = !m || isOrg || Auth.isOwner();
+  const inGoogle = !!(m && m.gcalId);
+  const d = {title: '', date: nextWorkday(), start: '11:00', dur: 60, attendees: [], guests: [], agenda: '', meet: true, repeat: '', ...(m ? clone(m) : {}), ...preset};
+  const organizer = m ? m.organizer : me;
+  d.attendees = (d.attendees || []).filter(x => x !== organizer);
+  const all = calPeople();
+  const times = [];
+  for (let x = 7 * 60; x <= 22 * 60; x += 15) times.push(hmOf(x));
+  if (!times.includes(d.start)) times.push(d.start);
+  times.sort();
+  const google = Cal.usable();
+  const orgP = personById(organizer);
+
+  if (m && !canEdit) {
+    /* участник смотрит собрание */
+    const o = Meetings.next(m);
+    openModal({
+      title: m.title,
+      body: `<div class="mt-view">
+        <p><b>${o ? `${dayWd(o.date)}, ${hmMs(o.s)}–${hmMs(o.e)}` : Meetings.when(m)}</b>${Meetings.step(m) ? ` · ${esc(REPEATS[m.repeat].toLowerCase())}` : ''}</p>
+        <p class="note">Организатор — ${esc(personName(orgP))}. ${m.invite === 'sent' ? 'Приглашение пришло вам в Google Календарь — ответьте там, ответ появится в штабе.' : 'Собрание сохранено в штабе.'}</p>
+        ${m.agenda ? `<div class="mt-agenda-full">${esc(m.agenda)}</div>` : ''}
+        <div class="mt-ppl big">${Meetings.people(m).map(id => { const p = personById(id); const r = RSVP[(m.responses || {})[id] || '']; return `<span class="mt-pl">${avatar(p)}${esc(firstName(p))}${id === m.organizer ? ' <small>организатор</small>' : r ? ` <small class="${r.tone}">${r.name}</small>` : ''}</span>`; }).join('')}</div>
+        <div class="row">${m.meetUrl ? `<a class="btn primary" href="${esc(m.meetUrl)}" target="_blank" rel="noopener">${icon('video')}Войти в Google Meet</a>` : ''}${m.link ? `<a class="btn" href="${esc(m.link)}" target="_blank" rel="noopener">${icon('ext')}Открыть в Google</a>` : ''}</div>
+      </div>`,
+      foot: '<button class="btn" data-close>Закрыть</button>',
+    });
+    return;
+  }
+
+  const chip = p => {
+    const on = d.attendees.includes(p.id), mail = inviteEmail(p);
+    return `<button type="button" class="chip mt-chip ${on ? 'on' : ''} ${mail ? '' : 'nomail'}" data-att="${p.id}" title="${mail ? esc(mail) : 'нет почты — приглашение не придёт; впишите почту в «Команде»'}">${avatar(p)}${esc(firstName(p))}${mail ? '' : ' <span class="mt-nomail">нет почты</span>'}</button>`;
+  };
+  const foot = `${m && canEdit ? `<button class="btn ghost danger left" id="mtDel">${inGoogle && isOrg ? 'Отменить собрание' : 'Удалить'}</button>` : ''}
+    <button class="btn" data-close>Отмена</button>
+    <button class="btn primary" id="mtSave">${m ? 'Сохранить' : 'Создать собрание'}</button>`;
+
+  openModal({
+    title: m ? 'Собрание' : 'Новое собрание',
+    wide: true,
+    focus: !m,
+    body: `<label class="field"><span>Название</span><input class="input" id="mtTitle" maxlength="120" placeholder="Созвон команды · разбор цифр недели" value="${esc(d.title)}"></label>
+      <div class="mt-time">
+        <label class="field"><span>Дата</span><input class="input" type="date" id="mtDate" value="${d.date}"></label>
+        <label class="field"><span>Начало</span><select class="select" id="mtStart">${times.map(x => `<option ${x === d.start ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+        <div class="field"><span>Длительность</span><div class="seg" id="mtDur">${DURS.map(x => `<button type="button" data-dur="${x}" class="${Number(d.dur) === x ? 'on' : ''}">${x < 60 ? x + ' мин' : x / 60 + ' ч'}</button>`).join('').replace('1.5 ч', '1,5 ч')}</div></div>
+        <label class="field"><span>Повтор</span><select class="select" id="mtRepeat" ${inGoogle ? 'disabled title="Повтор меняется только новым собранием"' : ''}>${Object.entries(REPEATS).map(([k, n]) => `<option value="${k}" ${k === (d.repeat || '') ? 'selected' : ''}>${n}${k ? ' до 31 декабря' : ''}</option>`).join('')}</select></label>
+      </div>
+      <div class="field"><span>Участники <small class="note">организатор — ${esc(orgP ? firstName(orgP) : 'вы')}</small></span>
+        <div class="chips mt-chips">${all.filter(p => p.id !== organizer).map(chip).join('')}<button type="button" class="chip ghost" id="mtAll">Все</button></div>
+      </div>
+      <label class="field"><span>Гости не из команды <small class="note">почты через запятую</small></span><input class="input" id="mtGuests" value="${esc((d.guests || []).join(', '))}" placeholder="partner@mail.ru"></label>
+      <div class="mt-help" id="mtHelp"></div>
+      <label class="field"><span>Повестка</span><textarea class="textarea" id="mtAgenda" rows="3" placeholder="1. Цифры недели · 2. Что мешает · 3. Решения">${esc(d.agenda || '')}</textarea></label>
+      <div class="mt-opts">
+        <label class="check"><input type="checkbox" id="mtMeet" ${d.meet ? 'checked' : ''} ${inGoogle && m.meetUrl ? 'disabled' : ''}> Ссылка Google Meet</label>
+        <label class="check"><input type="checkbox" id="mtSend" ${google && (!m || isOrg) ? 'checked' : ''} ${google && isOrg ? '' : 'disabled'}> ${inGoogle ? 'Отправить изменения участникам через Google' : 'Создать в моём Google Календаре и отправить приглашения'}</label>
+        <p class="note">${!google ? 'Google Календарь недоступен в этом окне — собрание сохранится в штабе, приглашения не уйдут.' : !isOrg ? `Изменения в Google отправляет организатор — ${esc(personName(orgP))}. Здесь поправится только запись в штабе.` : 'Участникам придёт письмо-приглашение и событие в их календарь; ответ «иду / не иду» появится в штабе.'}</p>
+      </div>`,
+    foot,
+    onMount(el, close) {
+      const val = () => ({
+        title: $('#mtTitle', el).value.trim(),
+        date: $('#mtDate', el).value,
+        start: $('#mtStart', el).value,
+        dur: Number(($('#mtDur .on', el) || {}).dataset?.dur || d.dur),
+        attendees: $$('[data-att].on', el).map(b => b.dataset.att),
+        guests: parseGuests($('#mtGuests', el).value),
+        agenda: $('#mtAgenda', el).value.trim(),
+        meet: $('#mtMeet', el).checked,
+        repeat: $('#mtRepeat', el).value,
+      });
+      const paint = () => {
+        const v = val();
+        const pids = [organizer, ...v.attendees];
+        const wh = View.get('cal.wh', [10, 19]);
+        const box = $('#mtHelp', el);
+        if (!v.date || !v.start) { box.innerHTML = ''; return; }
+        const s = tMs(v.date, v.start), e = s + v.dur * 60e3;
+        const cf = conflictsAt(pids, s, e, m && m.id);
+        const busy = cf.filter(x => x.hit), unknown = cf.filter(x => x.unknown);
+        const known = pids.filter(pid => !unknown.some(u => u.pid === pid));
+        const slots = suggestSlots(known, v.dur, wh, today());
+        const noMail = v.attendees.filter(pid => !inviteEmail(personById(pid)));
+        box.innerHTML = `
+          <div class="mt-state ${busy.length ? 'bad' : 'good'}">${icon(busy.length ? 'x' : 'tick')}<span>${busy.length
+            ? `В это время заняты: ${busy.map(x => `<b>${esc(firstName(personById(x.pid)))}</b>${x.hit.m ? ` (${esc(x.hit.m.title)})` : ''}`).join(', ')}`
+            : `${dayWd(v.date)}, ${v.start}–${hmMs(e)} — ${known.length > 1 ? 'свободны все, у кого подключён календарь' : 'пересечений не видно'}`}${unknown.length ? `<small>Нет данных календаря: ${unknown.map(x => esc(firstName(personById(x.pid)))).join(', ')}</small>` : ''}</span></div>
+          ${slots.length ? `<div class="mt-slots"><span class="label">Свободно у всех</span>${slots.map(t => `<button type="button" class="chip" data-slot="${t}">${dayWd(mskDate(t))}, ${hmMs(t)}</button>`).join('')}${google && pids.length > 1 ? '<button type="button" class="chip ghost" id="mtAskG">Спросить Google</button>' : ''}</div>` : google && pids.length > 1 ? '<div class="mt-slots"><button type="button" class="chip ghost" id="mtAskG">Подобрать время в Google</button></div>' : ''}
+          <div class="mt-gslots" id="mtG"></div>
+          ${noMail.length ? `<p class="note warn-t">Без почты — приглашение не придёт: ${noMail.map(pid => esc(firstName(personById(pid)))).join(', ')}. Почту вписывают в «Команде».</p>` : ''}`;
+      };
+      paint();
+      on(el, 'click', '[data-att]', (e, b) => { b.classList.toggle('on'); paint(); });
+      $('#mtAll', el).onclick = () => { const btns = $$('[data-att]', el); const allOn = btns.every(b => b.classList.contains('on')); btns.forEach(b => b.classList.toggle('on', !allOn)); paint(); };
+      on(el, 'click', '[data-dur]', (e, b) => { $$('[data-dur]', el).forEach(x => x.classList.toggle('on', x === b)); paint(); });
+      on(el, 'click', '[data-slot]', (e, b) => {
+        const t = Number(b.dataset.slot);
+        $('#mtDate', el).value = mskDate(t);
+        const hm = hmMs(t), sel = $('#mtStart', el);
+        if (![...sel.options].some(o => o.value === hm)) sel.add(new Option(hm, hm));
+        sel.value = hm;
+        paint();
+      });
+      on(el, 'click', '#mtAskG', async (e, b) => {
+        const v = val();
+        const emails = [organizer, ...v.attendees].map(pid => inviteEmail(personById(pid))).filter(Boolean).concat(v.guests);
+        const box = $('#mtG', el);
+        b.disabled = true;
+        box.innerHTML = '<span class="note">Спрашиваю Google…</span>';
+        const wh = View.get('cal.wh', [10, 19]);
+        const from = Math.max(nowMs(), tMs(today(), '00:00'));
+        try {
+          const res = await Cal.call('suggest_time', {
+            attendeeEmails: emails, startTime: isoMs(ceil15(from)), endTime: isoMs(tMs(addDays(today(), 10), '23:00')),
+            durationMinutes: v.dur, timeZone: TZ, preferences: {startHour: hmOf(wh[0] * 60), endHour: hmOf(wh[1] * 60), excludeWeekends: true, pageSize: 6},
+          }, true);
+          /* Google отдаёт свободные периоды целиком: показываем диапазон, клик ставит начало */
+          const list = ((res && (res.timeSlots || res.slots)) || []).map(x => ({s: Date.parse(x.startTime || (x.start || {}).dateTime), e: Date.parse(x.endTime || (x.end || {}).dateTime)})).filter(x => x.s);
+          box.innerHTML = list.length
+            ? `<span class="label">Google: свободно</span>${list.map(x => `<button type="button" class="chip" data-slot="${x.s}">${dayWd(mskDate(x.s))}, ${hmMs(x.s)}${x.e && mskDate(x.e) === mskDate(x.s) ? '–' + hmMs(x.e) : ''}</button>`).join('')}<small class="note">учтены календари, которые Google вам показывает</small>`
+            : '<span class="note">Google не нашёл общего окна на ближайшие 10 дней.</span>';
+        } catch (err) {
+          box.innerHTML = `<span class="note bad">${esc(calErr(err).text)}</span>`;
+        }
+        b.disabled = false;
+      });
+      ['#mtDate', '#mtStart'].forEach(s => { $(s, el).onchange = paint; });
+      $('#mtGuests', el).onchange = paint;
+      const del = $('#mtDel', el);
+      if (del) del.onclick = async () => { if (await cancelMeeting(m.id, del)) close(); };
+      $('#mtSave', el).onclick = async () => {
+        const v = val();
+        if (!v.title) { $('#mtTitle', el).focus(); toast('Напишите название собрания'); return; }
+        if (!v.date || !v.start) { toast('Выберите дату и время'); return; }
+        const send = $('#mtSend', el).checked && !$('#mtSend', el).disabled;
+        const body = {...v, until: v.repeat ? Q.end : null};
+        if (!m) {
+          const nid = uid();
+          Store.put('meetings', nid, {...body, organizer, by: Auth.me().id, at: Date.now(), invite: send ? 'sending' : 'none'});
+          close();
+          if (send) await pushMeeting(nid); else toast('Собрание сохранено в штабе');
+          return;
+        }
+        const before = clone(m);
+        Store.patch('meetings', m.id, {...body, guests: v.guests, attendees: v.attendees, editedAt: Date.now()});
+        close();
+        if (send && before.gcalId && isOrg) await updateInGoogle(m.id, before);
+        else if (send && !before.gcalId) await pushMeeting(m.id);
+        else toast('Собрание обновлено');
+      };
+    },
+  });
+}
+
+/* участники для Google: почты команды (без организатора) и гости */
+function inviteList(m) {
+  const seen = new Set(), out = [];
+  const org = personById(m.organizer);
+  const orgMails = [org && org.gcalEmail, org && org.email, org && (accountOf(org.id) || {}).email].filter(Boolean).map(normEmail);
+  (m.attendees || []).forEach(pid => {
+    const p = personById(pid), mail = inviteEmail(p);
+    if (!mail || seen.has(normEmail(mail)) || orgMails.includes(normEmail(mail))) return;
+    seen.add(normEmail(mail));
+    out.push({email: mail, displayName: personName(p)});
+  });
+  (m.guests || []).forEach(mail => { if (!seen.has(normEmail(mail))) { seen.add(normEmail(mail)); out.push({email: mail}); } });
+  return out;
+}
+function descOf(m) {
+  return `${m.agenda ? m.agenda + '\n\n' : ''}Собрание из штаба Eva Club.`;
+}
+function rruleOf(m) {
+  return `RRULE:FREQ=WEEKLY;${m.repeat === 'biweekly' ? 'INTERVAL=2;' : ''}UNTIL=${(m.until || Q.end).replace(/-/g, '')}T205959Z`;
+}
+
+/* создать событие в Google Календаре организатора — приглашения уходят сами */
+async function pushMeeting(id) {
+  const m = Store.get('meetings', id);
+  if (!m) return;
+  const att = inviteList(m);
+  const s = tMs(m.date, m.start), e = s + (Number(m.dur) || 60) * 60e3;
+  Store.patch('meetings', id, {invite: 'sending', inviteErr: null});
+  const input = {
+    summary: m.title, startTime: isoMs(s), endTime: isoMs(e), timeZone: TZ,
+    attendees: att, description: descOf(m), addGoogleMeetUrl: !!m.meet,
+    notificationLevel: 'ALL', useDefaultReminders: true,
+  };
+  if (m.repeat) input.recurrenceData = [rruleOf(m)];
+  try {
+    const ev = eventOf(await Cal.call('create_event', input));
+    Store.patch('meetings', id, {invite: 'sent', gcalId: ev.id || ev.eventId || null, link: ev.htmlLink || null, meetUrl: meetUrlOf(ev) || null, sentTo: att.map(a => a.email), sentAt: Date.now()});
+    toast(att.length ? `Собрание в Google Календаре, приглашения ушли: ${att.length}` : 'Собрание добавлено в ваш Google Календарь');
+  } catch (err) {
+    const x = calErr(err);
+    Store.patch('meetings', id, {invite: x.ambiguous ? 'unknown' : 'failed', inviteErr: x.code});
+    toast(x.ambiguous ? 'Google не ответил вовремя. Проверьте календарь, прежде чем отправлять ещё раз — кнопка «Проверить в Google» в «Собраниях».' : x.text, {error: true});
+  }
+}
+/* поменять время, название, участников — Google сам разошлёт обновление */
+async function updateInGoogle(id, before) {
+  const m = Store.get('meetings', id);
+  if (!m || !m.gcalId) return;
+  const now = inviteList(m).map(a => a.email);
+  const was = before.sentTo || inviteList(before).map(a => a.email);
+  const lower = x => x.map(normEmail);
+  const added = inviteList(m).filter(a => !lower(was).includes(normEmail(a.email)));
+  const removed = was.filter(x => !lower(now).includes(normEmail(x)));
+  const s = tMs(m.date, m.start), e = s + (Number(m.dur) || 60) * 60e3;
+  const input = {eventId: m.gcalId, summary: m.title, description: descOf(m), startTime: isoMs(s), endTime: isoMs(e), timeZone: TZ, notificationLevel: 'ALL'};
+  if (added.length) input.addedAttendees = added;
+  if (removed.length) input.removedAttendeeEmails = removed;
+  if (m.meet && !m.meetUrl) input.addGoogleMeetUrl = true;
+  try {
+    const ev = eventOf(await Cal.call('update_event', input));
+    Store.patch('meetings', id, {invite: 'sent', sentTo: now, sentAt: Date.now(), meetUrl: meetUrlOf(ev) || m.meetUrl || null, link: ev.htmlLink || m.link || null});
+    toast('Собрание обновлено, участникам ушло изменение');
+  } catch (err) {
+    const x = calErr(err);
+    toast(x.ambiguous ? 'Google не ответил вовремя — проверьте событие в календаре.' : 'В штабе поменяли, в Google — нет. ' + x.text, {error: true});
+  }
+}
+/* после неясного ответа: ищем событие в своём календаре, прежде чем создавать заново */
+async function verifyMeeting(id) {
+  const m = Store.get('meetings', id);
+  if (!m) return;
+  try {
+    const list = await Cal.events(m.date, m.date);
+    const s = tMs(m.date, m.start);
+    const ev = list.find(x => x.summary === m.title && Math.abs((evRange(x) || {}).start - s) < 60e3);
+    if (ev) {
+      Store.patch('meetings', id, {invite: 'sent', gcalId: String(ev.recurringEventId || ev.id), link: ev.htmlLink || null, meetUrl: meetUrlOf(ev) || null, sentTo: inviteList(m).map(a => a.email), sentAt: Date.now()});
+      toast('Нашёл событие в Google — приглашения ушли');
+    } else {
+      Store.patch('meetings', id, {invite: 'failed', inviteErr: 'not_found'});
+      toast('В Google такого события нет — можно отправить приглашения ещё раз');
+    }
+  } catch (err) { toast(calErr(err).text, {error: true}); }
+}
+/* отменить: у организатора — через Google (участникам придёт отмена), иначе — только из штаба */
+async function cancelMeeting(id, anchor) {
+  const m = Store.get('meetings', id);
+  if (!m) return false;
+  const isOrg = m.organizer === Auth.personId();
+  if (m.gcalId && isOrg && Cal.conn !== 'off') {
+    if (!(await confirmPop(anchor, {text: 'Отменить собрание? Участникам придёт отмена в Google Календаре.', yes: 'Да, отменить', danger: true}))) return false;
+    try {
+      await Cal.call('delete_event', {eventId: m.gcalId, notificationLevel: 'ALL'});
+      Store.remove('meetings', id);
+      toast('Собрание отменено, участникам ушла отмена');
+      return true;
+    } catch (err) {
+      const x = calErr(err);
+      if (x.code !== 'tool_error') { toast(x.ambiguous ? 'Google не ответил вовремя — проверьте календарь, прежде чем отменять ещё раз.' : x.text, {error: true}); return false; }
+      if (!(await confirmPop(anchor, {text: `Google не отменил событие (${x.text.replace('Google ответил ошибкой: ', '')}). Удалить собрание только из штаба?`, yes: 'Удалить из штаба', danger: true}))) return false;
+      Store.remove('meetings', id);
+      return true;
+    }
+  }
+  const org = personById(m.organizer);
+  const text = m.gcalId && !isOrg ? `Удалить из штаба? В Google Календаре собрание отменит только организатор — ${personName(org)}.` : 'Удалить собрание?';
+  if (!(await confirmPop(anchor, {text, yes: 'Удалить', danger: true}))) return false;
+  const copy = clone(m);
+  Store.remove('meetings', id);
+  toast('Собрание удалено', {undo: () => Store.put('meetings', copy.id, copy)});
+  return true;
+}
+
+/* собрания сегодня — для главной */
+function todayMeetingsHtml() {
+  const t = today(), pid = Auth.personId();
+  const list = Meetings.occ(t, t).filter(o => Meetings.people(o.m).includes(pid) && o.e > nowMs());
+  if (!list.length) return '';
+  return `<div class="today-meet"><span class="label">Собрания сегодня</span>${list.map(o => `<div class="tm-row"><b>${hmMs(o.s)}</b><a href="#calendar">${esc(o.m.title)}</a>${o.m.meetUrl ? `<a class="btn xs" href="${esc(o.m.meetUrl)}" target="_blank" rel="noopener">${icon('video')}Meet</a>` : ''}</div>`).join('')}</div>`;
+}
+
+/* ── 85-metrics.js ── */
+/* Метрики: воронка продаж, которую можно крутить руками.
+   Охват → просмотр → переход → регистрация → покупка → продление.
+   Меняете любую цифру — квартал пересчитывается сразу. Два расчёта:
+   «от охвата» (сколько продаж даст такой охват) и «от цели» (какой охват
+   нужен под план продаж сценария). Черновик у каждого свой; основатель
+   сохраняет удачный вариант как план команды — тогда «Стратегия»,
+   «Отчёты» и Cash Flow считают по нему. */
+
+const FUNNEL = [
+  {k: 'views',  c: 'view',  name: 'Просмотр',    of: 'охвата',      about: 'посмотрели ролик или пост', min: 1, max: 100, step: 1},
+  {k: 'clicks', c: 'click', name: 'Переход',     of: 'просмотров',  about: 'перешли по ссылке на сайт или в приложение', min: 0.1, max: 40, step: 0.1},
+  {k: 'regs',   c: 'reg',   name: 'Регистрация', of: 'переходов',   about: 'создали учётку в приложении', min: 1, max: 100, step: 1},
+  {k: 'pays',   c: 'pay',   name: 'Покупка',     of: 'регистраций', about: 'первая оплата подписки — это продажа', min: 0.1, max: 40, step: 0.1},
+  {k: 'renew',  c: 'renew', name: 'Продление',   of: 'платящих',    about: 'продлевают подписку в следующем месяце', min: 0, max: 100, step: 1},
+];
+/* шаги «что даст больше всего»: на сколько пунктов подвинуть каждую конверсию */
+const LEVERS = {view: 0.05, click: 0.01, reg: 0.05, pay: 0.01, renew: 0.1};
+
+/* воронка плана команды: шаг «переход → регистрация» выводится из convReg,
+   поэтому старые настройки и «Стратегия» считают так же */
+function funnelOf(s = settings()) {
+  const f = s.funnel || {};
+  const view = clamp(Number(f.view) || 0.4, 0.001, 1), click = clamp(Number(f.click) || 0.1, 0.0001, 1);
+  return {view, click, reg: clamp((Number(s.convReg) || 0.02) / (view * click), 0.0001, 1), pay: Number(s.convPay) || 0.05, renew: clamp(Number(s.retention) || 0, 0, 1), price: Number(s.price) || 2900};
+}
+function mxPlanDraft(sc) {
+  const s = settings(), f = funnelOf(s);
+  const reach = Object.fromEntries(Q.months.map(m => {
+    const own = s.reachPlan && s.reachPlan[m];
+    return [m, own !== undefined && own !== null ? Number(own) : Math.round(Plan.reach(scenarioSales(sc)[m]) / 1000) * 1000];
+  }));
+  return {...f, reach};
+}
+const MX_KEYS = ['view', 'click', 'reg', 'pay', 'renew', 'price'];
+
+const MxUI = {
+  draft: null,
+  get sc() { return View.get('mx.sc', settings().scenario); },
+  get mode() { return View.get('mx.mode', 'forward'); },
+  load() {
+    if (!this.draft) {
+      const saved = View.get('mx.draft', null);
+      this.draft = saved && saved.reach ? saved : mxPlanDraft(this.sc);
+    }
+    return this.draft;
+  },
+  save() { View.set('mx.draft', this.draft); },
+  reset() { this.draft = mxPlanDraft(this.sc); this.save(); },
+};
+
+/* расчёт квартала по воронке */
+function mxCalc(f, mode, sc) {
+  const plan = scenarioSales(sc);
+  let prev = 0;
+  const rows = Q.months.map(m => {
+    let reach, views, clicks, regs, pays;
+    if (mode === 'reverse') {
+      pays = plan[m];
+      regs = pays / Math.max(f.pay, 1e-6);
+      clicks = regs / Math.max(f.reg, 1e-6);
+      views = clicks / Math.max(f.click, 1e-6);
+      reach = views / Math.max(f.view, 1e-6);
+    } else {
+      reach = Number(f.reach[m]) || 0;
+      views = reach * f.view;
+      clicks = views * f.click;
+      regs = clicks * f.reg;
+      pays = regs * f.pay;
+    }
+    const renewals = prev * f.renew;
+    const active = pays + renewals;
+    prev = active;
+    return {m, reach, views, clicks, regs, pays, renewals, active, revNew: pays * f.price, revRenew: renewals * f.price, revenue: active * f.price, plan: plan[m]};
+  });
+  const tot = {};
+  ['reach', 'views', 'clicks', 'regs', 'pays', 'renewals', 'revNew', 'revRenew', 'revenue', 'plan'].forEach(k => { tot[k] = sum(rows, r => r[k]); });
+  tot.active = rows[rows.length - 1].active;
+  return {rows, tot};
+}
+/* факт воронки за период из «Цифр дня» */
+function mxFact(from, to) {
+  const a = Sales.range(from, to);
+  const conv = (x, y) => (y > 0 && x >= 0 ? x / y : null);
+  /* продление: продления месяца ÷ платящие прошлого месяца */
+  let renewRate = null;
+  const months = Q.months.filter(m => monthStart(m) <= to && monthEnd(m) >= from);
+  let ren = 0, base = 0;
+  months.forEach(m => {
+    const prev = Sales.month(addMonths(m, -1));
+    const cur = Sales.month(m);
+    if (prev.pays + prev.renewals > 0) { ren += cur.renewals; base += prev.pays + prev.renewals; }
+  });
+  if (base > 0) renewRate = ren / base;
+  return {a, view: conv(a.views, a.reach), click: conv(a.clicks, a.views), reg: conv(a.regs, a.clicks || 0), regFromReach: conv(a.regs, a.reach), pay: conv(a.pays, a.regs), renew: renewRate};
+}
+
+App.register('metrics', {
+  title: 'Метрики',
+  render(root) {
+    const s = settings();
+    const sc = MxUI.sc, mode = MxUI.mode;
+    const f = MxUI.load();
+    const canSave = Auth.can('settings.edit');
+    const team = funnelOf(s);
+
+    const convRow = st => {
+      const v = f[st.c] * 100;
+      return `<div class="mx-conv">
+        <div class="mx-cl"><b>${st.name}</b><small>% ${st.of} · ${st.about}</small></div>
+        <input type="range" class="mx-range" data-mr="${st.c}" min="${st.min}" max="${st.max}" step="${st.step}" value="${clamp(v, st.min, st.max)}" aria-label="${st.name}, %">
+        <label class="mx-num"><input class="input num sm" data-mc="${st.c}" inputmode="decimal" value="${fmt(v, v < 10 ? 1 : 0)}"><span>%</span></label>
+        <span class="mx-team" title="план команды">${pct(team[st.c], team[st.c] < 0.1 ? 1 : 0)}</span>
+      </div>`;
+    };
+
+    root.innerHTML = `
+      ${pageHead('Метрики', 'Воронка продаж: охват → просмотр → переход → регистрация → покупка → продление. Двигайте цифры — квартал пересчитывается сразу.',
+        `<div class="seg" title="Сценарий для сравнения">${Object.entries(SCENARIOS).map(([k, x]) => `<button data-msc="${k}" class="${k === sc ? 'on' : ''}">${x.name} ${fmt(Plan.total(k))}</button>`).join('')}</div>${helpBtn('metrics')}`)}
+      ${helpBox('metrics', `<b>Как пользоваться.</b> Слева — ключевые цифры: охват по месяцам и конверсия каждого шага воронки. Справа — что из этого выходит: продажи, продления, платящие и выручка по месяцам против плана сценария. <b>«От охвата»</b> — вы задаёте охват и видите продажи. <b>«От цели»</b> — наоборот: берём план продаж сценария и считаем, сколько нужно регистраций, переходов, просмотров и охвата. Ниже — факт из «Цифр дня» и какие рычаги дают больше всего. Ваши правки видны только вам${canSave ? '; кнопка «Сделать планом команды» сохраняет их для всех — по ним считают «Стратегия», «Отчёты» и Cash Flow' : ' — сохранить их как план команды может основатель'}.`)}
+      <div class="mx-grid">
+        <section class="card mx-in">
+          <div class="card-head"><h2>Ключевые цифры</h2>
+            <div class="seg"><button data-mmode="forward" class="${mode === 'forward' ? 'on' : ''}">От охвата</button><button data-mmode="reverse" class="${mode === 'reverse' ? 'on' : ''}">От цели</button></div></div>
+          ${mode === 'forward' ? `<div class="mx-reach"><span class="label">Охват в месяц, человек</span>
+            <div class="mx-reach-row">${Q.months.map(m => `<label class="field"><span>${monthName(m)}</span><input class="input num" data-mreach="${m}" inputmode="numeric" value="${fmt(Math.round(f.reach[m] || 0))}"></label>`).join('')}</div>
+            <div class="chips mx-quick"><button class="chip" data-mq="1.1">+10%</button><button class="chip" data-mq="0.9">−10%</button><button class="chip" data-mq="plan">под план «${SCENARIOS[sc].name}»</button></div></div>`
+            : `<div class="mx-reach"><span class="label">План продаж «${SCENARIOS[sc].name}»</span><div class="mx-target">${Q.months.map(m => `<div><span>${monthName(m)}</span><b>${fmt(scenarioSales(sc)[m])}</b></div>`).join('')}<div><span>квартал</span><b>${fmt(Plan.total(sc))}</b></div></div><p class="note">Меняется в «Стратегии» → сценарии. Здесь считаем, что нужно на каждом шаге.</p></div>`}
+          <div class="mx-convs"><div class="mx-conv head"><span></span><span></span><span>ваш вариант</span><span>план</span></div>${FUNNEL.map(convRow).join('')}</div>
+          <div class="mx-price"><label class="field"><span>Цена подписки в месяц, ₽</span><input class="input num" data-mprice inputmode="numeric" value="${fmt(f.price)}"></label>
+            <div class="note">Охват → регистрация: <b id="mxR2R">${pct(f.view * f.click * f.reg, 2)}</b> · в плане команды ${pct(team.view * team.click * team.reg, 2)}</div></div>
+          <div class="mx-actions" id="mxAct">${mxActHtml(f, sc)}</div>
+        </section>
+        <section class="mx-out" id="mxOut">${mxOutHtml(f, mode, sc)}</section>
+      </div>
+      <section class="section" id="mxFact">${mxFactHtml(f)}</section>`;
+
+    wireHelp(root);
+    on(root, 'click', '[data-msc]', (e, el) => { View.set('mx.sc', el.dataset.msc); App.render(); });
+    on(root, 'click', '[data-mmode]', (e, el) => { View.set('mx.mode', el.dataset.mmode); App.render(); });
+    const repaint = () => {
+      MxUI.save();
+      $('#mxOut', root).innerHTML = mxOutHtml(f, MxUI.mode, sc);
+      $('#mxFact', root).innerHTML = mxFactHtml(f);
+      $('#mxAct', root).innerHTML = mxActHtml(f, sc);
+      const r2r = $('#mxR2R', root); if (r2r) r2r.textContent = pct(f.view * f.click * f.reg, 2);
+    };
+    on(root, 'input', '[data-mr]', (e, el) => {
+      const k = el.dataset.mr;
+      f[k] = Number(el.value) / 100;
+      const num = $(`[data-mc="${k}"]`, root);
+      num.value = fmt(Number(el.value), Number(el.value) < 10 ? 1 : 0);
+      repaint();
+    });
+    on(root, 'input', '[data-mc]', (e, el) => {
+      const k = el.dataset.mc;
+      const v = clamp(parseNum(el.value), 0, 100);
+      if (!el.value.trim()) return;
+      f[k] = Math.max(k === 'renew' ? 0 : 0.0001, v / 100);
+      const r = $(`[data-mr="${k}"]`, root); if (r) r.value = v;
+      repaint();
+    });
+    on(root, 'input', '[data-mreach]', (e, el) => { f.reach[el.dataset.mreach] = Math.max(0, parseNum(el.value)); repaint(); });
+    on(root, 'input', '[data-mprice]', (e, el) => { if (el.value.trim()) { f.price = Math.max(1, parseNum(el.value)); repaint(); } });
+    /* по уходу из поля — число в привычном виде */
+    on(root, 'change', '[data-mreach]', (e, el) => { el.value = fmt(Math.round(f.reach[el.dataset.mreach] || 0)); });
+    on(root, 'change', '[data-mprice]', (e, el) => { el.value = fmt(f.price); });
+    on(root, 'change', '[data-mc]', (e, el) => { const v = f[el.dataset.mc] * 100; el.value = fmt(v, v < 10 ? 1 : 0); });
+    on(root, 'click', '[data-mfp]', (e, el) => { View.set('mx.fact', el.dataset.mfp); $('#mxFact', root).innerHTML = mxFactHtml(f); });
+    on(root, 'click', '[data-mq]', (e, el) => {
+      const q = el.dataset.mq;
+      Q.months.forEach(m => { f.reach[m] = q === 'plan' ? mxPlanDraftReach(f, sc, m) : Math.round((f.reach[m] || 0) * Number(q) / 1000) * 1000; });
+      MxUI.save();
+      App.render();
+    });
+    on(root, 'click', '[data-mreset]', () => { MxUI.reset(); App.render(); });
+    on(root, 'click', '[data-mfact]', (e, el) => {
+      const fx = mxFact(el.dataset.from, el.dataset.to);
+      let n = 0;
+      ['view', 'click', 'reg', 'pay', 'renew'].forEach(k => { if (fx[k] !== null && fx[k] > 0 && fx[k] <= 1) { f[k] = fx[k]; n++; } });
+      MxUI.save();
+      toast(n ? `Взял из факта: ${n} ${plural(n, 'конверсию', 'конверсии', 'конверсий')}` : 'Для конверсий пока мало данных в «Цифрах дня»');
+      App.render();
+    });
+    on(root, 'click', '[data-msave]', async (e, save) => {
+      const c = mxCalc(f, mode, sc);
+      if (!(await confirmPop(save, {text: `Сделать планом команды? «Стратегия», «Отчёты» и Cash Flow будут считать по этой воронке${mode === 'forward' ? ` и охвату ${rubK(c.tot.reach).replace(NB + '₽', '')}` : ''}.`, yes: 'Да, сохранить'}))) return;
+      const reachPlan = Object.fromEntries(c.rows.map(r => [r.m, Math.round(r.reach)]));
+      saveSettings({funnel: {view: f.view, click: f.click}, convReg: f.view * f.click * f.reg, convPay: f.pay, retention: f.renew, price: Math.round(f.price), reachPlan});
+      toast('Воронка сохранена как план команды');
+      MxUI.draft = null;
+      View.set('mx.draft', null);
+      App.render();
+    });
+    on(root, 'click', '[data-mtoplan]', async (e, toPlan) => {
+      const c = mxCalc(f, 'forward', sc);
+      const next = Object.fromEntries(c.rows.map(r => [r.m, Math.round(r.pays)]));
+      if (!(await confirmPop(toPlan, {text: `Записать в сценарий «${SCENARIOS[sc].name}» продажи ${Q.months.map(m => fmt(next[m])).join(' / ')}?`, yes: 'Записать'}))) return;
+      saveSettings({plans: {[sc]: next}});
+      toast(`План «${SCENARIOS[sc].name}» обновлён: ${fmt(sum(Object.values(next)))} продаж за квартал`);
+      App.render();
+    });
+  },
+});
+/* черновик против плана команды и кнопки сохранения */
+function mxActHtml(f, sc) {
+  const team = funnelOf();
+  const planReach = mxPlanDraft(sc).reach;
+  const dirty = MX_KEYS.some(k => Math.abs((f[k] || 0) - (team[k] || 0)) > 1e-9) || Q.months.some(m => Math.round(f.reach[m] || 0) !== Math.round(planReach[m] || 0));
+  return `${dirty ? '<span class="pill warn">черновик отличается от плана команды</span>' : '<span class="pill good">совпадает с планом команды</span>'}
+    <button class="btn sm ghost" data-mreset ${dirty ? '' : 'disabled'}>Вернуть план команды</button>
+    ${Auth.can('settings.edit') ? `<button class="btn sm primary" data-msave ${dirty ? '' : 'disabled'}>Сделать планом команды</button>` : ''}`;
+}
+/* охват месяца, который нужен под план сценария при текущих конверсиях */
+function mxPlanDraftReach(f, sc, m) {
+  return Math.round(scenarioSales(sc)[m] / Math.max(f.pay * f.reg * f.click * f.view, 1e-9) / 1000) * 1000;
+}
+
+function mxOutHtml(f, mode, sc) {
+  const c = mxCalc(f, mode, sc);
+  const t = c.tot;
+  const gap = Math.round(t.pays) - Math.round(t.plan);
+  const tone = mode === 'reverse' ? '' : paceTone(t.pays, t.plan);
+  const steps = [
+    ['Охват', t.reach, null],
+    ['Просмотры', t.views, f.view],
+    ['Переходы', t.clicks, f.click],
+    ['Регистрации', t.regs, f.reg],
+    ['Покупки', t.pays, f.pay],
+  ];
+  const lo = Math.log10(Math.max(1, t.pays)), hi = Math.log10(Math.max(10, t.reach));
+  const w = v => clamp(hi > lo ? 16 + 84 * (Math.log10(Math.max(1, v)) - lo) / (hi - lo) : 100, 14, 100);
+  const tiles = mode === 'reverse'
+    ? [['Охват под план', fmt(Math.round(t.reach)), `в среднем ${fmt(Math.round(t.reach / 3))} в месяц`],
+       ['Регистраций нужно', fmt(Math.ceil(t.regs)), `при покупке ${pct(f.pay, 1)}`],
+       ['Выручка квартала', rubK(t.revenue), `продления — ${rubK(t.revRenew)}`],
+       ['Платящих на 31 декабря', fmt(Math.round(t.active)), `удержание ${pct(f.renew)}`]]
+    : [['Продаж за квартал', fmt(Math.round(t.pays)), `план «${SCENARIOS[sc].name}» ${fmt(t.plan)} · <b class="${tone}">${gap > 0 ? '+' : ''}${fmt(gap)}</b>`],
+       ['Выручка квартала', rubK(t.revenue), `первые оплаты ${rubK(t.revNew)} · продления ${rubK(t.revRenew)}`],
+       ['Платящих на 31 декабря', fmt(Math.round(t.active)), `удержание ${pct(f.renew)}`],
+       ['Охват за квартал', fmt(Math.round(t.reach)), `на одну продажу — ${t.pays ? fmt(Math.round(t.reach / t.pays)) : '—'}`]];
+
+  const row = (name, get, f2 = v => fmt(Math.round(v)), cls = '') => `<tr class="${cls}"><td>${name}</td>${c.rows.map(r => `<td class="r">${f2(get(r))}</td>`).join('')}<td class="r"><b>${f2(get(t))}</b></td></tr>`;
+
+  /* рычаги: что даёт каждый шаг, если подвинуть его на несколько пунктов */
+  const fwd = {...f, reach: mode === 'reverse' ? Object.fromEntries(c.rows.map(r => [r.m, r.reach])) : f.reach};
+  const baseF = mxCalc(fwd, 'forward', sc).tot;
+  const levers = [
+    {name: 'Охват +10%', t: mxCalc({...fwd, reach: Object.fromEntries(Q.months.map(m => [m, (fwd.reach[m] || 0) * 1.1]))}, 'forward', sc).tot},
+    ...FUNNEL.map(st => ({name: `${st.name} +${fmt(LEVERS[st.c] * 100)} п.п.`, t: mxCalc({...fwd, [st.c]: Math.min(1, fwd[st.c] + LEVERS[st.c])}, 'forward', sc).tot})),
+  ].map(x => ({...x, dSales: x.t.pays - baseF.pays, dRev: x.t.revenue - baseF.revenue})).sort((a, b) => b.dRev - a.dRev);
+  const maxRev = Math.max(1, ...levers.map(x => x.dRev));
+
+  return `<div class="cards mx-tiles">${tiles.map(([l, b, foot]) => `<div class="card stat"><span class="label">${l}</span><div class="big">${b}</div><div class="foot">${foot}</div></div>`).join('')}</div>
+    <div class="card mx-funnel">
+      <div class="card-head"><h2>Воронка квартала</h2><span class="note">${mode === 'reverse' ? 'сколько нужно на каждом шаге под план' : 'что даёт ваш охват'}</span></div>
+      ${steps.map(([name, v, conv], i) => `<div class="mf-row"><span class="mf-n">${name}</span><div class="mf-bar"><i style="width:${w(v).toFixed(1)}%"></i><b>${fmt(Math.round(v))}</b></div><span class="mf-c">${i ? pct(conv, conv < 0.1 ? 1 : 0) : ''}</span></div>`).join('')}
+      <div class="mf-row renew"><span class="mf-n">Продления</span><div class="mf-bar"><i style="width:${w(t.renewals).toFixed(1)}%"></i><b>${fmt(Math.round(t.renewals))}</b></div><span class="mf-c">${pct(f.renew)}</span></div>
+      <p class="note">Проценты справа — конверсия из предыдущего шага; продления — доля платящих, которые продлевают в следующем месяце.</p>
+    </div>
+    <div class="table-wrap mx-table"><table class="t grid-lines">
+      <thead><tr><th>По месяцам</th>${c.rows.map(r => `<th class="r">${monthName(r.m)}</th>`).join('')}<th class="r">Квартал</th></tr></thead>
+      <tbody>
+        ${row('Охват', r => r.reach)}
+        ${row('Просмотры', r => r.views)}
+        ${row('Переходы', r => r.clicks)}
+        ${row('Регистрации', r => r.regs)}
+        ${row('<b>Покупки</b> <span class="note">продажи</span>', r => r.pays, undefined, 'sub')}
+        ${row('Продления', r => r.renewals)}
+        <tr><td>Платящих в месяце</td>${c.rows.map(r => `<td class="r">${fmt(Math.round(r.active))}</td>`).join('')}<td class="r"><b>${fmt(Math.round(t.active))}</b><small class="note"> на конец</small></td></tr>
+        ${row('Выручка', r => r.revenue, rubK, 'total')}
+        ${mode === 'forward' ? `<tr><td>План продаж «${SCENARIOS[sc].name}»</td>${c.rows.map(r => `<td class="r muted">${fmt(r.plan)}</td>`).join('')}<td class="r muted">${fmt(t.plan)}</td></tr>
+        <tr><td>Разница</td>${c.rows.map(r => `${(d => `<td class="r ${d >= 0 ? 'good' : 'bad'}">${d > 0 ? '+' : ''}${fmt(d)}</td>`)(Math.round(r.pays) - Math.round(r.plan))}`).join('')}<td class="r ${gap >= 0 ? 'good' : 'bad'}"><b>${gap > 0 ? '+' : ''}${fmt(gap)}</b></td></tr>` : ''}
+      </tbody></table></div>
+    ${mode === 'forward' && Auth.can('settings.edit') ? `<p class="note mx-toplan">Нравится результат? <button class="link-btn" data-mtoplan>Записать эти продажи в план «${SCENARIOS[sc].name}»</button> — сценарий в «Стратегии» поменяется.</p>` : ''}
+    <div class="card mx-levers">
+      <div class="card-head"><h2>Что даст больше всего</h2><span class="note">если подвинуть один шаг, остальное — как сейчас</span></div>
+      ${levers.map(x => `<div class="lv-row"><span class="lv-n">${x.name}</span><div class="lv-bar"><i style="width:${(Math.max(0, x.dRev) / maxRev * 100).toFixed(1)}%"></i></div><span class="lv-v"><b>+${fmt(Math.round(x.dSales))}</b> продаж · <b>+${rubK(x.dRev)}</b></span></div>`).join('')}
+    </div>`;
+}
+
+function mxFactHtml(f) {
+  const t = today();
+  const opts = [];
+  if (t >= Q.start) opts.push(['q', 'Квартал', Q.start, t < Q.end ? t : Q.end]);
+  Q.months.filter(m => monthStart(m) <= t).forEach(m => opts.push([m, monthName(m), monthStart(m), monthEnd(m) < t ? monthEnd(m) : t]));
+  if (!opts.length) opts.push(['sep', 'Сентябрь', '2026-09-01', t < '2026-09-30' ? t : '2026-09-30']);
+  let pick = View.get('mx.fact', opts[0][0]);
+  const o = opts.find(x => x[0] === pick) || opts[0];
+  pick = o[0];
+  const fx = mxFact(o[2], o[3]);
+  const a = fx.a;
+  const cell = (fact, plan) => {
+    if (fact === null) return '<td class="r muted">—</td><td></td>';
+    const tone = fact >= plan ? 'good' : fact >= plan * 0.8 ? 'warn' : 'bad';
+    return `<td class="r"><b>${pct(fact, fact < 0.1 ? 1 : 0)}</b></td><td class="r ${tone}">${fact >= plan ? '+' : ''}${fmt((fact - plan) * 100, 1)} п.п.</td>`;
+  };
+  const noData = !a.days;
+  return `<div class="section-head"><h2>Факт воронки по «Цифрам дня»</h2>
+      <div class="seg">${opts.map(x => `<button data-mfp="${x[0]}" class="${x[0] === pick ? 'on' : ''}">${x[1]}</button>`).join('')}</div></div>
+    ${noData ? `<div class="empty"><b>Цифр за этот период ещё нет</b>Их вносят каждый день в «Отчётах» → «Цифры дня»: охват, просмотры, переходы, регистрации, оплаты, продления.</div>` : `<div class="table-wrap"><table class="t mx-fact">
+      <thead><tr><th>Шаг</th><th class="r">Факт, чел.</th><th class="r">Конверсия факт</th><th class="r">к вашему варианту</th><th class="r">Ваш вариант</th></tr></thead>
+      <tbody>
+        <tr><td>Охват</td><td class="r">${fmt(a.reach)}</td><td></td><td></td><td></td></tr>
+        <tr><td>Просмотры</td><td class="r">${a.views ? fmt(a.views) : '<span class="muted">не вносили</span>'}</td>${cell(fx.view, f.view)}<td class="r muted">${pct(f.view)}</td></tr>
+        <tr><td>Переходы</td><td class="r">${a.clicks ? fmt(a.clicks) : '<span class="muted">не вносили</span>'}</td>${cell(fx.click, f.click)}<td class="r muted">${pct(f.click, 1)}</td></tr>
+        <tr><td>Регистрации</td><td class="r">${fmt(a.regs)}</td>${a.clicks ? cell(fx.reg, f.reg) : `<td class="r" title="от охвата: переходы не вносили">${pct(fx.regFromReach, 2)} <small class="note">от охвата</small></td><td class="r ${fx.regFromReach === null ? '' : fx.regFromReach >= f.view * f.click * f.reg ? 'good' : 'bad'}">${fx.regFromReach === null ? '' : `план ${pct(f.view * f.click * f.reg, 2)}`}</td>`}<td class="r muted">${pct(f.reg)}</td></tr>
+        <tr class="sub"><td>Покупки</td><td class="r">${fmt(a.pays)}</td>${cell(fx.pay, f.pay)}<td class="r muted">${pct(f.pay, 1)}</td></tr>
+        <tr><td>Продления</td><td class="r">${fmt(a.renewals)}</td>${cell(fx.renew, f.renew)}<td class="r muted">${pct(f.renew)}</td></tr>
+      </tbody></table></div>
+      <div class="row mx-factfoot"><span class="note">${a.days} ${plural(a.days, 'день', 'дня', 'дней')} с цифрами · выручка ${rubK(a.revenue)}. Продление — продления месяца ÷ платящие прошлого месяца.</span>
+        <button class="btn sm" data-mfact data-from="${o[2]}" data-to="${o[3]}">Подставить факт в расчёт</button></div>`}`;
 }
 
 /* ── 99-boot.js ── */

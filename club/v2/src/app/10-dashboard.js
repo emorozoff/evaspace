@@ -115,6 +115,7 @@ App.register('home', {
         <div>${icon('cal')}<span><b>Созвон — ${weekday(t) === 0 && t === nextCall() ? 'сегодня' : dayWd(nextCall())}, 11:00</b><small>45 минут, цифры заранее</small></span></div>
         <div>${icon('flag')}<span><b>Сверка месяца — ${dayLong(nextReview())}</b><small>последний понедельник месяца</small></span></div>
       </div>
+      ${teamRoles ? todayMeetingsHtml() : ''}
       ${feed.length ? `<div class="feed"><span class="label">Что нового в задачах</span>${feed.map(x => { const p = personById(x.updatedBy); return `<button class="feed-row" data-open-task="${x.id}">${avatar(p)}<span><span><b>${esc(p ? firstName(p) : 'Кто-то')}</b> · ${esc(x.title)}</span><small>${STATUSES[x.status].name} · ${timeAgo(x.updatedAt)}</small></span></button>`; }).join('')}</div>` : ''}
     </div>`;
 

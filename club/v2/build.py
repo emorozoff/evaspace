@@ -14,7 +14,9 @@
 Запуск:  python3 build.py          — собрать
          python3 build.py --check  — собрать и проверить синтаксис JS через node
 """
+from collections import defaultdict
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -40,7 +42,26 @@ def build() -> str:
             f"<script>\n(() => {{\n'use strict';\n{js}}})();\n</script>\n")
 
 
+def check_names() -> None:
+    """Модули живут в одной области видимости: одинаковое имя верхнего уровня
+    в двух файлах молча перекрывает одно другим (function) — ловим заранее."""
+    seen = defaultdict(list)
+    pat = re.compile(r'^(?:async\s+)?function\s+(\w+)|^(?:const|let|var|class)\s+(\w+)')
+    for p in sorted((SRC / 'app').glob('*.js')):
+        for line in read(p).splitlines():
+            m = pat.match(line)
+            if m:
+                seen[m.group(1) or m.group(2)].append(p.name)
+    dup = {k: v for k, v in seen.items() if len(v) > 1}
+    if dup:
+        for k, v in dup.items():
+            print(f'имя {k} объявлено дважды: {", ".join(v)}')
+        sys.exit(1)
+    print('имена модулей не пересекаются')
+
+
 def check(html: str) -> None:
+    check_names()
     node = shutil.which('node')
     if not node:
         print('node не найден — проверка синтаксиса пропущена')
