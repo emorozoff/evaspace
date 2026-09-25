@@ -1,0 +1,78 @@
+/* Оболочка: тёмная боковая панель «Ночь» + рабочая область */
+.app{min-height:100%;}
+.shell{display:grid; grid-template-columns:236px minmax(0,1fr); min-height:100vh;}
+.side{
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+  background:var(--night); color:var(--night-ink);
+  display:flex; flex-direction:column; padding:20px 14px 16px;
+}
+.brand{display:flex; align-items:center; gap:10px; padding:2px 8px 22px; text-decoration:none;}
+.brand-mark{width:34px; height:34px; flex:0 0 34px; border-radius:9px; box-shadow:0 2px 8px rgba(0,0,0,.35);}
+.brand b{display:block; font:500 14.5px/1.1 var(--f-brand); color:#fff; letter-spacing:.02em;}
+.brand span{display:block; font-size:11px; color:var(--night-ink-2); margin-top:3px;}
+.nav{display:flex; flex-direction:column; gap:2px;}
+.nav a{
+  display:flex; align-items:center; gap:11px; padding:8px 10px; border-radius:7px;
+  color:var(--night-ink-2); text-decoration:none; font-weight:500; font-size:14px;
+}
+.nav a svg{width:18px; height:18px; flex:0 0 18px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;}
+.nav a:hover{background:var(--night-2); color:var(--night-ink);}
+.nav a.on{background:var(--night-2); color:#fff; box-shadow:inset 2px 0 0 var(--gold-brand);}
+.nav .badge{
+  margin-left:auto; min-width:20px; height:20px; padding:0 6px; border-radius:10px;
+  background:var(--rose-brand); color:var(--night); font-size:11.5px; font-weight:700;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+.side-foot{margin-top:auto; padding-top:18px; display:flex; flex-direction:column; gap:10px;}
+.me-chip{
+  display:flex; align-items:center; gap:10px; padding:8px; border-radius:9px;
+  background:var(--night-2); border:1px solid var(--night-line);
+}
+.me-link{display:flex; align-items:center; gap:10px; flex:1; min-width:0; text-decoration:none; color:inherit; border-radius:7px;}
+.me-link:hover b{text-decoration:underline; text-underline-offset:3px;}
+.me-chip.on{border-color:var(--gold-brand);}
+.me-chip .who{min-width:0; flex:1;}
+.me-chip b{display:block; font-size:13px; color:#fff; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.me-chip .who span{display:block; font-size:11.5px; color:var(--night-ink-2);}
+.me-chip button{
+  background:none; border:1px solid var(--night-line); color:var(--night-ink-2); border-radius:8px;
+  width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; flex:0 0 30px;
+}
+.me-chip button:hover{color:#fff; border-color:var(--rose-brand);}
+.me-chip button svg{width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.8;}
+.sync{display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--night-ink-2); padding:0 4px;}
+.sync i{width:7px; height:7px; border-radius:50%; background:#6FC49A; flex:0 0 7px;}
+.sync.local i{background:var(--gold-brand);}
+.sync.busy i{background:var(--gold-brand); animation:pulse 1s ease-in-out infinite;}
+.sync.err i{background:#EF929F;}
+@keyframes pulse{50%{opacity:.35;}}
+
+.main{min-width:0; padding:26px 36px 64px;}
+.page{max-width:1200px; margin:0 auto;}
+.page-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px 24px; flex-wrap:wrap; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--line);}
+.page-head .sub{color:var(--ink-3); margin-top:6px; max-width:62ch;}
+.page-actions{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+.section{margin-top:30px;}
+.section-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:12px;}
+.section-head .hint-inline{color:var(--ink-3); font-size:12.5px;}
+
+/* узкие экраны: панель становится шапкой с прокручиваемым меню */
+@media (max-width:880px){
+  .shell{grid-template-columns:minmax(0,1fr);}
+  .side{min-width:0;
+    position:sticky; top:env(safe-area-inset-top,0px); z-index:40; height:auto; overflow:visible;
+    flex-direction:row; flex-wrap:wrap; align-items:center; padding:10px 16px; gap:8px 12px;
+  }
+  .brand{padding:0; flex:1 1 auto;}
+  .brand span{display:none;}
+  .side-foot{margin:0; padding:0; flex-direction:row; align-items:center;}
+  .sync span{display:none;}
+  .me-chip{padding:4px 4px 4px 4px; background:none; border:0;}
+  .me-chip .who{display:none;}
+  .nav{order:3; flex:1 0 100%; flex-direction:row; overflow-x:auto; gap:4px; margin:0 -16px; padding:0 16px 2px; scrollbar-width:none;}
+  .nav::-webkit-scrollbar{display:none;}
+  .nav a{padding:7px 10px; white-space:nowrap; font-size:13px;}
+  .nav a.on{box-shadow:inset 0 -2px 0 var(--rose-brand);}
+  .main{padding:20px 16px 56px;}
+  h1{font-size:20px;}
+}
