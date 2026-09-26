@@ -66,7 +66,7 @@ App.register('stats', {
    Один ответ (возраст, цена, время) — в порядке вариантов, чтобы шкала
    читалась слева направо; несколько ответов — от частых к редким. */
 function qStatCard(a) {
-  const colors = ['var(--link)', 'var(--rose)', 'var(--good)', 'var(--gold)'];
+  const colors = ['var(--link)', 'var(--violet)', 'var(--good)', 'var(--gold)'];
   const color = colors[hashStr(a.q.id) % colors.length];
   const rows = a.q.k === 'many' ? a.rows.slice().sort((x, y) => y.v - x.v) : a.rows;
   return `<div class="card qstat"><div class="qstat-h"><h3>${esc(noEmo(a.q.t))}</h3><span>${a.n} ${plural(a.n, 'ответ', 'ответа', 'ответов')}${a.q.k === 'many' ? ' · несколько' : ''}</span></div>

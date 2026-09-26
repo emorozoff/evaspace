@@ -3,12 +3,12 @@
 .shell{display:grid; grid-template-columns:236px minmax(0,1fr); min-height:100vh;}
 .side{
   position:sticky; top:0; height:100vh; overflow-y:auto;
-  background:var(--night); color:var(--night-ink);
+  background:var(--night-grad); color:var(--night-ink);
   display:flex; flex-direction:column; padding:20px 14px 16px;
 }
 .brand{display:flex; align-items:center; gap:10px; padding:2px 8px 22px; text-decoration:none;}
 .brand-mark{width:34px; height:34px; flex:0 0 34px; border-radius:9px; box-shadow:0 2px 8px rgba(0,0,0,.35);}
-.brand b{display:block; font:500 14.5px/1.1 var(--f-brand); color:#fff; letter-spacing:.02em;}
+.brand b{display:block; font:400 13.5px/1.1 var(--f-brand); color:#fff; letter-spacing:.16em; text-transform:uppercase;}
 .brand span{display:block; font-size:11px; color:var(--night-ink-2); margin-top:3px;}
 .nav{display:flex; flex-direction:column; gap:2px;}
 .nav a{
@@ -16,8 +16,8 @@
   color:var(--night-ink-2); text-decoration:none; font-weight:500; font-size:14px;
 }
 .nav a svg{width:18px; height:18px; flex:0 0 18px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;}
-.nav a:hover{background:var(--night-2); color:var(--night-ink);}
-.nav a.on{background:var(--night-2); color:#fff; box-shadow:inset 2px 0 0 var(--gold-brand);}
+.nav a:hover{background:rgba(255,255,255,.06); color:var(--night-ink);}
+.nav a.on{background:rgba(255,255,255,.08); color:#fff; box-shadow:inset 2px 0 0 var(--rose-brand);}
 .nav .badge{
   margin-left:auto; min-width:20px; height:20px; padding:0 6px; border-radius:10px;
   background:var(--rose-brand); color:var(--night); font-size:11.5px; font-weight:700;
@@ -26,7 +26,7 @@
 .side-foot{margin-top:auto; padding-top:18px; display:flex; flex-direction:column; gap:10px;}
 .me-chip{
   display:flex; align-items:center; gap:10px; padding:8px; border-radius:9px;
-  background:var(--night-2); border:1px solid var(--night-line);
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
 }
 .me-link{display:flex; align-items:center; gap:10px; flex:1; min-width:0; text-decoration:none; color:inherit; border-radius:7px;}
 .me-link:hover b{text-decoration:underline; text-underline-offset:3px;}

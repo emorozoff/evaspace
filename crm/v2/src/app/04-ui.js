@@ -64,24 +64,8 @@ const ICONS = {
 };
 const icon = (name, cls = '') => `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 
-/* Знак Евы — как иконка приложения Eva Space: золотая звезда с мягким
-   свечением на сливовом градиенте и три искры. Рисуем вектором, чтобы
-   значок был чётким в меню, на входе и во вкладке браузера. */
-let brandSeq = 0;
-function brandIcon(cls = '') {
-  const n = ++brandSeq, g = 'evg' + n, r = 'evr' + n;
-  const spark = (x, y, s) => `<path d="M${x} ${y - s}C${x + s * .18} ${y - s * .18} ${x + s * .18} ${y - s * .18} ${x + s} ${y}C${x + s * .18} ${y + s * .18} ${x + s * .18} ${y + s * .18} ${x} ${y + s}C${x - s * .18} ${y + s * .18} ${x - s * .18} ${y + s * .18} ${x - s} ${y}C${x - s * .18} ${y - s * .18} ${x - s * .18} ${y - s * .18} ${x} ${y - s}Z" fill="#FFF3DA"/>`;
-  return `<svg viewBox="0 0 48 48" class="${cls}" aria-hidden="true">
-    <defs>
-      <linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3B2150"/><stop offset=".55" stop-color="#5E2F66"/><stop offset="1" stop-color="#94527F"/></linearGradient>
-      <radialGradient id="${r}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFE3B0" stop-opacity=".55"/><stop offset="1" stop-color="#FFE3B0" stop-opacity="0"/></radialGradient>
-    </defs>
-    <rect width="48" height="48" rx="11" fill="url(#${g})"/>
-    <circle cx="23" cy="25" r="15" fill="url(#${r})"/>
-    <path d="M23 9C24.1 19.2 26.8 21.9 37 23C26.8 24.1 24.1 26.8 23 37C21.9 26.8 19.2 24.1 9 23C19.2 21.9 21.9 19.2 23 9Z" fill="#F3CD8C"/>
-    ${spark(37, 9.5, 2.2)}${spark(9.5, 36, 1.6)}${spark(38, 37, 1.3)}
-  </svg>`;
-}
+/* знак Евы — общий рисунок из shared/05-brand.js */
+const brandIcon = (cls = '') => brandMark(cls);
 
 
 /* ── уведомления ── */

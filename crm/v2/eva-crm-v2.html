@@ -10,56 +10,59 @@
    бренда (знак, отметки, деньги), Фиалка — ссылки и выбранное.
    Шрифт — Inter; Unbounded остаётся только в названии штаба. */
 :root{
-  --bg:#F3F3F6;
+  /* Eva Space, дизайн-система v2: графит + приглушённая фуксия (как приложение
+     и «Книга стандартов»). Фуксия — выбранное и ссылки, графит — главные
+     кнопки, золото и зелень — только смысловые отметки. */
+  --bg:#F7F6F4;
   --surface:#FFFFFF;
-  --surface-2:#F8F8FA;
-  --sunken:#EEEEF2;
-  --line:#E2E2E8;
-  --line-strong:#CBCBD4;
-  --ink:#16141C;
-  --ink-2:#4A4856;
-  --ink-3:#7B7987;
+  --surface-2:#FAF9F7;
+  --sunken:#F1EFEC;
+  --line:#E6E2DE;
+  --line-strong:#D2CDC8;
+  --ink:#111014;
+  --ink-2:#4A4650;
+  --ink-3:#7E7A85;
 
-  --night:#15121B;
-  --night-2:#211C29;
-  --night-line:#2F2838;
-  --night-ink:#ECE9F1;
-  --night-ink-2:#9F99AB;
+  --night:#1A171F;
+  --night-2:#2B2233;
+  --night-line:#3A2F42;
+  --night-ink:#F3EFF4;
+  --night-ink-2:#B3AAB9;
+  --night-grad:linear-gradient(170deg,#1A171F 0%,#2B2233 62%,#4A2C42 100%);
 
-  --accent:#1D1828;          /* главные кнопки */
+  --accent:#111014;          /* главные кнопки */
   --on-accent:#FFFFFF;
-  --link:#4F46B8;            /* ссылки, выбранные вкладки, фокус */
-  --link-soft:#ECEBFA;
+  --link:#A8375C;            /* ссылки, выбранные вкладки, фокус */
+  --link-soft:#F7E9EE;
 
-  --rose:#A8456F;
-  --rose-brand:#E4A0B8;
-  --rose-soft:#F7E6EE;
-  --gold:#8A6420;
+  --rose:#A8375C;
+  --rose-brand:#C2506F;
+  --rose-soft:#F7E9EE;
+  --gold:#8C6528;
   --gold-brand:#E7C58B;
-  --gold-soft:#F5EDDC;
-  --violet:#4F46B8;
-  --violet-soft:#ECEBFA;
+  --gold-soft:#F6EEDF;
+  --violet:#5B4BD0;
+  --violet-soft:#EFECFC;
 
-  --good:#23734F;
-  --good-soft:#E0F0E7;
-  --bad:#A23A4A;
-  --bad-soft:#F7E4E7;
-  --warn:#94600E;
-  --warn-soft:#F9EED8;
+  --good:#3F7D62;
+  --good-soft:#E4F1EA;
+  --bad:#B03A48;
+  --bad-soft:#F8E6E8;
+  --warn:#B4642A;
+  --warn-soft:#FAEEDF;
 
   --in-row:#F1F8F4;
   --out-row:#FCF3F4;
 
-  /* сетка дорожной карты */
-  --g-alt:rgba(22,20,28,.028);
-  --g-half:rgba(22,20,28,.06);
-  --g-month:rgba(22,20,28,.13);
-  --g-quarter:rgba(22,20,28,.28);
+  --g-alt:rgba(17,16,20,.028);
+  --g-half:rgba(17,16,20,.06);
+  --g-month:rgba(17,16,20,.13);
+  --g-quarter:rgba(17,16,20,.28);
 
-  --shadow:0 1px 2px rgba(22,20,28,.05);
-  --shadow-pop:0 16px 44px rgba(22,20,28,.18), 0 2px 6px rgba(22,20,28,.08);
-  --radius:10px;
-  --radius-sm:7px;
+  --shadow:0 1px 2px rgba(17,16,20,.05);
+  --shadow-pop:0 16px 44px rgba(17,16,20,.16), 0 2px 6px rgba(17,16,20,.07);
+  --radius:12px;
+  --radius-sm:8px;
 
   --f-display:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --f-text:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -68,15 +71,16 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-    --bg:#111016; --surface:#1A1820; --surface-2:#1F1D26; --sunken:#15131A;
-    --line:#2C2A34; --line-strong:#403D4B;
-    --ink:#EFEDF3; --ink-2:#BEBBC8; --ink-3:#8D8A99;
-    --night:#0C0B10; --night-2:#18161E; --night-line:#27242E;
-    --accent:#ECE9F3; --on-accent:#15121B;
-    --link:#A9A3F4; --link-soft:#26234A;
-    --rose:#E4A0B8; --rose-soft:#3A2431;
+    --bg:#121014; --surface:#1B181F; --surface-2:#211D26; --sunken:#16131A;
+    --line:#2E2934; --line-strong:#453E4D;
+    --ink:#F3EFF4; --ink-2:#C4BCC9; --ink-3:#938B9A;
+    --night:#0E0C11; --night-2:#221C29; --night-line:#2F2836;
+    --night-grad:linear-gradient(170deg,#0E0C11 0%,#1B1622 62%,#2E1F2B 100%);
+    --accent:#F3EFF4; --on-accent:#111014;
+    --link:#E693B0; --link-soft:#3A2230;
+    --rose:#E693B0; --rose-soft:#3A2230;
     --gold:#E7C58B; --gold-soft:#33291B;
-    --violet:#A9A3F4; --violet-soft:#26234A;
+    --violet:#ABA2F2; --violet-soft:#29254A;
     --good:#7DCBA3; --good-soft:#1B3027;
     --bad:#EF929F; --bad-soft:#3B2027;
     --warn:#E8B463; --warn-soft:#352819;
@@ -88,15 +92,16 @@
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --bg:#111016; --surface:#1A1820; --surface-2:#1F1D26; --sunken:#15131A;
-  --line:#2C2A34; --line-strong:#403D4B;
-  --ink:#EFEDF3; --ink-2:#BEBBC8; --ink-3:#8D8A99;
-  --night:#0C0B10; --night-2:#18161E; --night-line:#27242E;
-  --accent:#ECE9F3; --on-accent:#15121B;
-  --link:#A9A3F4; --link-soft:#26234A;
-  --rose:#E4A0B8; --rose-soft:#3A2431;
+  --bg:#121014; --surface:#1B181F; --surface-2:#211D26; --sunken:#16131A;
+  --line:#2E2934; --line-strong:#453E4D;
+  --ink:#F3EFF4; --ink-2:#C4BCC9; --ink-3:#938B9A;
+  --night:#0E0C11; --night-2:#221C29; --night-line:#2F2836;
+  --night-grad:linear-gradient(170deg,#0E0C11 0%,#1B1622 62%,#2E1F2B 100%);
+  --accent:#F3EFF4; --on-accent:#111014;
+  --link:#E693B0; --link-soft:#3A2230;
+  --rose:#E693B0; --rose-soft:#3A2230;
   --gold:#E7C58B; --gold-soft:#33291B;
-  --violet:#A9A3F4; --violet-soft:#26234A;
+  --violet:#ABA2F2; --violet-soft:#29254A;
   --good:#7DCBA3; --good-soft:#1B3027;
   --bad:#EF929F; --bad-soft:#3B2027;
   --warn:#E8B463; --warn-soft:#352819;
@@ -153,12 +158,12 @@ img{max-width:100%;}
 .shell{display:grid; grid-template-columns:236px minmax(0,1fr); min-height:100vh;}
 .side{
   position:sticky; top:0; height:100vh; overflow-y:auto;
-  background:var(--night); color:var(--night-ink);
+  background:var(--night-grad); color:var(--night-ink);
   display:flex; flex-direction:column; padding:20px 14px 16px;
 }
 .brand{display:flex; align-items:center; gap:10px; padding:2px 8px 22px; text-decoration:none;}
 .brand-mark{width:34px; height:34px; flex:0 0 34px; border-radius:9px; box-shadow:0 2px 8px rgba(0,0,0,.35);}
-.brand b{display:block; font:500 14.5px/1.1 var(--f-brand); color:#fff; letter-spacing:.02em;}
+.brand b{display:block; font:400 13.5px/1.1 var(--f-brand); color:#fff; letter-spacing:.16em; text-transform:uppercase;}
 .brand span{display:block; font-size:11px; color:var(--night-ink-2); margin-top:3px;}
 .nav{display:flex; flex-direction:column; gap:2px;}
 .nav a{
@@ -166,8 +171,8 @@ img{max-width:100%;}
   color:var(--night-ink-2); text-decoration:none; font-weight:500; font-size:14px;
 }
 .nav a svg{width:18px; height:18px; flex:0 0 18px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;}
-.nav a:hover{background:var(--night-2); color:var(--night-ink);}
-.nav a.on{background:var(--night-2); color:#fff; box-shadow:inset 2px 0 0 var(--gold-brand);}
+.nav a:hover{background:rgba(255,255,255,.06); color:var(--night-ink);}
+.nav a.on{background:rgba(255,255,255,.08); color:#fff; box-shadow:inset 2px 0 0 var(--rose-brand);}
 .nav .badge{
   margin-left:auto; min-width:20px; height:20px; padding:0 6px; border-radius:10px;
   background:var(--rose-brand); color:var(--night); font-size:11.5px; font-weight:700;
@@ -176,7 +181,7 @@ img{max-width:100%;}
 .side-foot{margin-top:auto; padding-top:18px; display:flex; flex-direction:column; gap:10px;}
 .me-chip{
   display:flex; align-items:center; gap:10px; padding:8px; border-radius:9px;
-  background:var(--night-2); border:1px solid var(--night-line);
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
 }
 .me-link{display:flex; align-items:center; gap:10px; flex:1; min-width:0; text-decoration:none; color:inherit; border-radius:7px;}
 .me-link:hover b{text-decoration:underline; text-underline-offset:3px;}
@@ -676,6 +681,19 @@ a.b3-when{color:var(--link); display:inline-block;}
 .back-link:hover{color:var(--link);}
 .legal{font-size:12.5px; color:var(--ink-2); line-height:1.6;}
 .legal li{margin-bottom:4px;}
+
+/* ── перетаскивание карточек между шагами ── */
+.can-drag .pc{cursor:grab; touch-action:pan-y;}
+.drag-ghost{position:fixed; left:0; top:0; z-index:300; pointer-events:none; box-shadow:0 18px 40px rgba(17,16,20,.28); border-color:var(--link) !important; opacity:.96; cursor:grabbing;}
+.drag-ph{border:2px dashed var(--link); border-radius:10px; background:color-mix(in srgb, var(--link-soft) 60%, transparent); flex:0 0 auto;}
+.pc.drag-src{display:none;}
+body.dragging-now, body.dragging-now *{cursor:grabbing !important; user-select:none !important;}
+.b3-col.drop-on:not(.drag-from){border-color:var(--link); background:color-mix(in srgb, var(--link-soft) 70%, var(--sunken));}
+.b3-zones{display:none; gap:6px; padding:0 10px 4px; grid-template-columns:repeat(auto-fit, minmax(90px,1fr));}
+body.dragging-now .b3-zones{display:grid;}
+.b3-zone{border:1.5px dashed var(--line-strong); border-radius:9px; padding:9px 8px; text-align:center; font-size:12px; font-weight:600; color:var(--ink-2); background:var(--surface);}
+.b3-zone.good{color:var(--good);} .b3-zone.warn{color:var(--warn);} .b3-zone.bad{color:var(--bad);} .b3-zone.violet{color:var(--violet);}
+.b3-zone.drop-on{border-style:solid; border-color:currentColor; background:color-mix(in srgb, currentColor 10%, var(--surface));}
 </style>
 <div id="app" class="app">
   <div class="boot" id="boot">
@@ -995,6 +1013,28 @@ const RESULT_TAGS = {
   partner: ['🔁 Взаимный промо', '🎁 Спецпредложение', '💰 Комиссия', '🏢 Корпоративная подписка', '🎬 Площадка', '🛍 Маркет', '🎉 Мероприятие', '⭐ Спонсорство'],
   amb:     ['🔗 Ссылка выдана', '📦 Материалы отправлены', '💜 Подписка в подарок', '🧾 Оформляет самозанятость', '📡 Эфир с экспертом', '👭 Позовёт подруг-амбассадоров'],
 };
+
+/* ── 05-brand.js ── */
+/* Знак Eva Space — как иконка приложения и «Книга стандартов»: белая
+   путеводная звезда и две искры на сливовом градиенте с фуксиевым
+   свечением. Один рисунок на CRM, анкету и вкладку браузера. */
+const BRAND_STAR = 'M50 2c1.6 16.4 4.4 27.4 8.8 33.6C63.2 41.8 73.6 45.6 90 48c-16.4 2.4-26.8 6.2-31.2 12.4C54.4 66.6 51.6 79 50 98c-1.6-19-4.4-31.4-8.8-37.6C36.8 54.2 26.4 50.4 10 48c16.4-2.4 26.8-6.2 31.2-12.4C45.6 29.4 48.4 18.4 50 2z';
+const BRAND_SPARK_A = 'M78 22c.4 4 1.1 6.7 2.2 8.2 1.1 1.5 3.6 2.5 7.6 3.1-4 .6-6.5 1.5-7.6 3.1-1.1 1.5-1.8 4.6-2.2 9.2-.4-4.6-1.1-7.7-2.2-9.2-1.1-1.6-3.6-2.5-7.6-3.1 4-.6 6.5-1.6 7.6-3.1 1.1-1.5 1.8-4.2 2.2-8.2z';
+const BRAND_SPARK_B = 'M22 68c.3 3 .8 5 1.6 6.1.8 1.1 2.7 1.9 5.7 2.3-3 .5-4.9 1.2-5.7 2.3-.8 1.2-1.3 3.5-1.6 6.9-.3-3.4-.8-5.7-1.6-6.9-.8-1.1-2.7-1.8-5.7-2.3 3-.4 4.9-1.2 5.7-2.3.8-1.1 1.3-3.1 1.6-6.1z';
+let brandSeq = 0;
+function brandMark(cls = '') {
+  const n = ++brandSeq, g = 'evg' + n, r = 'evr' + n;
+  return `<svg viewBox="0 0 100 100" class="${cls}" aria-hidden="true">
+    <defs>
+      <linearGradient id="${g}" x1="0" y1="0" x2=".72" y2="1"><stop offset="0" stop-color="#1A171F"/><stop offset=".55" stop-color="#2B2233"/><stop offset="1" stop-color="#4A2C42"/></linearGradient>
+      <radialGradient id="${r}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#C2506F" stop-opacity=".55"/><stop offset="1" stop-color="#C2506F" stop-opacity="0"/></radialGradient>
+    </defs>
+    <rect width="100" height="100" rx="22" fill="url(#${g})"/>
+    <circle cx="50" cy="50" r="34" fill="url(#${r})"/>
+    <path d="${BRAND_STAR}" fill="#fff" transform="translate(50 50) scale(.62) translate(-50 -50)"/>
+    <g fill="#fff" opacity=".85"><path d="${BRAND_SPARK_A}" transform="scale(.55) translate(63 62)"/><path d="${BRAND_SPARK_B}" transform="scale(.72) translate(6 8)"/></g>
+  </svg>`;
+}
 
 /* ── 10-questions.js ── */
 /* База вопросов Eva CRM 2.0 — общая для CRM и публичной анкеты.
@@ -1608,24 +1648,8 @@ const ICONS = {
 };
 const icon = (name, cls = '') => `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 
-/* Знак Евы — как иконка приложения Eva Space: золотая звезда с мягким
-   свечением на сливовом градиенте и три искры. Рисуем вектором, чтобы
-   значок был чётким в меню, на входе и во вкладке браузера. */
-let brandSeq = 0;
-function brandIcon(cls = '') {
-  const n = ++brandSeq, g = 'evg' + n, r = 'evr' + n;
-  const spark = (x, y, s) => `<path d="M${x} ${y - s}C${x + s * .18} ${y - s * .18} ${x + s * .18} ${y - s * .18} ${x + s} ${y}C${x + s * .18} ${y + s * .18} ${x + s * .18} ${y + s * .18} ${x} ${y + s}C${x - s * .18} ${y + s * .18} ${x - s * .18} ${y + s * .18} ${x - s} ${y}C${x - s * .18} ${y - s * .18} ${x - s * .18} ${y - s * .18} ${x} ${y - s}Z" fill="#FFF3DA"/>`;
-  return `<svg viewBox="0 0 48 48" class="${cls}" aria-hidden="true">
-    <defs>
-      <linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3B2150"/><stop offset=".55" stop-color="#5E2F66"/><stop offset="1" stop-color="#94527F"/></linearGradient>
-      <radialGradient id="${r}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFE3B0" stop-opacity=".55"/><stop offset="1" stop-color="#FFE3B0" stop-opacity="0"/></radialGradient>
-    </defs>
-    <rect width="48" height="48" rx="11" fill="url(#${g})"/>
-    <circle cx="23" cy="25" r="15" fill="url(#${r})"/>
-    <path d="M23 9C24.1 19.2 26.8 21.9 37 23C26.8 24.1 24.1 26.8 23 37C21.9 26.8 19.2 24.1 9 23C19.2 21.9 21.9 19.2 23 9Z" fill="#F3CD8C"/>
-    ${spark(37, 9.5, 2.2)}${spark(9.5, 36, 1.6)}${spark(38, 37, 1.3)}
-  </svg>`;
-}
+/* знак Евы — общий рисунок из shared/05-brand.js */
+const brandIcon = (cls = '') => brandMark(cls);
 
 
 /* ── уведомления ── */
@@ -1956,8 +1980,8 @@ function memo(fn) { let v = -1, val; return () => (v === MV ? val : (v = MV, val
 
 /* адреса опубликованных страниц; руководитель может поменять в настройках */
 const LINKS = {
-  crm: 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA',
-  anketa: 'https://claude.ai/artifact/XtnwZ7txmRKpUAeGEnqwBT',
+  crm: 'http://localhost:8766/crm/v2/index.html',
+  anketa: 'http://localhost:8766/crm/v2/a/index.html',
 };
 const settings = memo(() => ({anketaUrl: LINKS.anketa, ...(Store.get('cfg', 'settings') || {})}));
 
@@ -2040,6 +2064,23 @@ const People = {
     return `${base}#${TYPES[p.type].letter}.${p.code}${d ? '.q' + Codec.encJson(d) : ''}`;
   },
   canEdit() { return Who.can('edit') && !Who.readOnly(); },
+  /* перенос между шагами на доске: статусы подстраиваются под колонку,
+     zone — точный итог («Подключаем», «Думает»…). Возвращает прежние
+     статусы для «Отменить» или null, если ничего не поменялось. */
+  moveTo(p, col, zone = null) {
+    const before = {s1: p.s1 || 'new', s2: p.s2 || 'none', s3: p.s3 || 'none'};
+    const done1 = ['done', 'skip'].includes(before.s1) ? before.s1 : Object.keys(p.answers || {}).length ? 'done' : 'skip';
+    let next;
+    if (col === 1) next = {s1: before.s1 === 'new' ? 'new' : 'sent', s2: 'none', s3: 'none'};
+    else if (col === 2) next = {s1: done1, s2: ['set', 'noshow'].includes(before.s2) ? before.s2 : 'none', s3: 'none'};
+    else next = {s1: done1, s2: before.s2 === 'skip' ? 'skip' : 'done', s3: zone || (this.col(p) === 3 ? before.s3 : 'none')};
+    if (next.s1 === before.s1 && next.s2 === before.s2 && next.s3 === before.s3) return null;
+    const T = TYPES[p.type];
+    const extra = col === 3 && next.s2 === 'done' && !p.talkAt ? {talkAt: Date.now()} : {};
+    const zoneName = zone ? s3Map(p.type)[zone].name : '';
+    this.patch(p.id, {...next, ...extra}, `Перенесли на шаг «${T.steps[col - 1]}»${zoneName ? ': ' + zoneName.toLowerCase() : ''}`, '↔');
+    return before;
+  },
   invited(p) { return Store.all('people').filter(x => x.ref && x.ref === p.code); },
 };
 
@@ -2156,6 +2197,128 @@ function recommendations() {
   if (reach) add('idea', 'amb', `Амбассадоры читают около ${fmt(reach)} человек. Даже 1% — это ${fmt(Math.round(reach * 0.01))} ${plural(Math.round(reach * 0.01), 'регистрация', 'регистрации', 'регистраций')}.`, 'по ответам «Сколько людей тебя читает»', 0.4);
   return out.sort((a, b) => b.w - a.w);
 }
+
+/* ── 07-drag.js ── */
+/* Перетаскивание карточек между шагами — мышью и пальцем (как в штабе).
+   Мышь: зажали и повели (от 5 px). Палец: подержали ~0,3 с и повели —
+   так обычная прокрутка не превращается в перетаскивание. Карточка едет
+   за указателем, на месте вставки — пустая рамка, у краёв окна страница
+   прокручивается сама. Зоны [data-zone] внутри колонки (например,
+   «Подключаем» в «Итоге») ловят карточку точнее, чем колонка целиком. */
+
+const Drag = {
+  active: null,
+  justDropped: 0,
+  wired: false,
+
+  /* root — доска; карточки [data-drag], колонки [data-col] со списком .b3-list */
+  board(root, {canDrag, onDrop}) {
+    root.addEventListener('pointerdown', e => {
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
+      const card = e.target.closest('[data-drag]');
+      if (!card || !root.contains(card) || e.target.closest('button, a, input, select, textarea, [data-nodrag]')) return;
+      if (canDrag && !canDrag(card.dataset.drag)) return;
+      Drag.arm(e, card, root, onDrop);
+    });
+    if (Drag.wired) return;
+    Drag.wired = true;
+    document.addEventListener('pointermove', e => Drag.move(e), {passive: false});
+    document.addEventListener('pointerup', e => Drag.end(e, true));
+    document.addEventListener('pointercancel', e => Drag.end(e, false));
+    document.addEventListener('touchmove', e => { if (Drag.active && Drag.active.on) e.preventDefault(); }, {passive: false});
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && Drag.active) Drag.end(null, false); });
+    /* клик сразу после отпускания карточки не должен её открывать */
+    document.addEventListener('click', e => { if (Date.now() - Drag.justDropped < 350 && e.target.closest && e.target.closest('[data-drag]')) { e.stopPropagation(); e.preventDefault(); } }, true);
+  },
+
+  arm(e, card, root, onDrop) {
+    const touch = e.pointerType !== 'mouse';
+    const st = {card, root, onDrop, on: false, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, id: e.pointerId, touch, timer: null, from: card.closest('[data-col]')};
+    if (touch) st.timer = setTimeout(() => { if (Drag.active === st) Drag.start(st); }, 300);
+    Drag.active = st;
+  },
+
+  start(st) {
+    const r = st.card.getBoundingClientRect();
+    st.on = true;
+    st.dx = st.x0 - r.left;
+    st.dy = st.y0 - r.top;
+    const ghost = st.card.cloneNode(true);
+    ghost.classList.add('drag-ghost');
+    ghost.style.width = r.width + 'px';
+    document.body.appendChild(ghost);
+    st.ghost = ghost;
+    const ph = document.createElement('div');
+    ph.className = 'drag-ph';
+    ph.style.height = r.height + 'px';
+    st.card.after(ph);
+    st.card.classList.add('drag-src');
+    st.ph = ph;
+    document.body.classList.add('dragging-now');
+    if (st.from) st.from.classList.add('drag-from');
+    if (navigator.vibrate && st.touch) { try { navigator.vibrate(12); } catch (err) { /* ничего */ } }
+    Drag.place(st);
+  },
+
+  move(e) {
+    const st = Drag.active;
+    if (!st || e.pointerId !== st.id) return;
+    st.x = e.clientX; st.y = e.clientY;
+    if (!st.on) {
+      const d = Math.hypot(st.x - st.x0, st.y - st.y0);
+      if (st.touch) { if (d > 10) { clearTimeout(st.timer); Drag.active = null; } return; }
+      if (d < 5) return;
+      Drag.start(st);
+    }
+    e.preventDefault();
+    Drag.place(st);
+    Drag.autoscroll(st);
+  },
+
+  place(st) {
+    st.ghost.style.transform = `translate(${st.x - st.dx}px, ${st.y - st.dy}px) rotate(1.5deg)`;
+    st.ghost.style.visibility = 'hidden';
+    const under = document.elementFromPoint(st.x, st.y);
+    st.ghost.style.visibility = '';
+    const col = under && under.closest('[data-col]');
+    const zone = under && under.closest('[data-zone]');
+    $$('.drop-on', st.root).forEach(c => c !== col && c !== zone && c.classList.remove('drop-on'));
+    st.zone = zone && st.root.contains(zone) ? zone : null;
+    if (st.zone) st.zone.classList.add('drop-on');
+    if (!col || !st.root.contains(col)) { st.col = null; return; }
+    col.classList.add('drop-on');
+    const list = $('.b3-list', col);
+    const cards = $$('[data-drag]', list).filter(c => c !== st.card);
+    let before = null;
+    for (const c of cards) {
+      const r = c.getBoundingClientRect();
+      if (st.y < r.top + r.height / 2) { before = c; break; }
+    }
+    if (before) list.insertBefore(st.ph, before); else list.appendChild(st.ph);
+    st.col = col;
+  },
+
+  autoscroll(st) {
+    const edge = 60, speed = 14;
+    if (st.y < edge) window.scrollBy(0, -speed);
+    else if (st.y > window.innerHeight - edge) window.scrollBy(0, speed);
+  },
+
+  end(e, drop) {
+    const st = Drag.active;
+    if (!st || (e && e.pointerId !== st.id)) return;
+    clearTimeout(st.timer);
+    Drag.active = null;
+    if (!st.on) return;
+    Drag.justDropped = Date.now();
+    st.ghost.remove();
+    st.ph.remove();
+    st.card.classList.remove('drag-src');
+    document.body.classList.remove('dragging-now');
+    $$('.drop-on, .drag-from', st.root).forEach(c => c.classList.remove('drop-on', 'drag-from'));
+    if (drop && st.col) st.onDrop(st.card.dataset.drag, st.col.dataset.col, st.zone ? st.zone.dataset.zone : null);
+  },
+};
 
 /* ── 08-seed.js ── */
 /* Пример данных: вымышленные люди на разных шагах. Все записи с demo: true —
@@ -2489,7 +2652,7 @@ App.register('stats', {
    Один ответ (возраст, цена, время) — в порядке вариантов, чтобы шкала
    читалась слева направо; несколько ответов — от частых к редким. */
 function qStatCard(a) {
-  const colors = ['var(--link)', 'var(--rose)', 'var(--good)', 'var(--gold)'];
+  const colors = ['var(--link)', 'var(--violet)', 'var(--good)', 'var(--gold)'];
   const color = colors[hashStr(a.q.id) % colors.length];
   const rows = a.q.k === 'many' ? a.rows.slice().sort((x, y) => y.v - x.v) : a.rows;
   return `<div class="card qstat"><div class="qstat-h"><h3>${esc(noEmo(a.q.t))}</h3><span>${a.n} ${plural(a.n, 'ответ', 'ответа', 'ответов')}${a.q.k === 'many' ? ' · несколько' : ''}</span></div>
@@ -2640,6 +2803,7 @@ function audiencePage(type) {
         : type === 'partner' ? PARTNER_CATS.map(c => [c, everyone.filter(p => p.cat === c).length]).filter(x => x[1])
         : [];
       const canEdit = People.canEdit();
+      if (canEdit) hints[0] += ' Карточку можно зажать и перенести в другой шаг.';
 
       root.innerHTML = `
         ${pageHead(`${T.emo} ${groupName(type)}`, esc(T.about),
@@ -2648,10 +2812,11 @@ function audiencePage(type) {
         <div class="t-bar"><input class="input sm t-search" id="bq" placeholder="Поиск: имя, город, код" value="${esc(View.get(type + '.q', ''))}"><span class="t-bar-sp"></span>
           <span class="note">${list.length === everyone.length ? `${everyone.length} ${plural(everyone.length, 'человек', 'человека', 'человек')}` : `найдено ${list.length} из ${everyone.length}`}</span></div>
         ${filters.length ? `<div class="chip-row"><button class="chip ${!f ? 'on' : ''}" data-f="">Все</button>${filters.map(([v, c]) => `<button class="chip ${f === v ? 'on' : ''}" data-f="${esc(v)}">${esc(noEmo(v))}<span class="chip-n">${c}</span></button>`).join('')}</div>` : ''}
-        <div class="board3">${[0, 1, 2].map(i => `
-          <div class="b3-col"><div class="b3-h"><span class="num">${i + 1}</span><b>${T.steps[i]}</b><span class="kb-n">${cols[i].length}</span></div>
+        <div class="board3 ${canEdit ? 'can-drag' : ''}">${[0, 1, 2].map(i => `
+          <div class="b3-col" data-col="${i + 1}"><div class="b3-h"><span class="num">${i + 1}</span><b>${T.steps[i]}</b><span class="kb-n">${cols[i].length}</span></div>
             <div class="b3-hint">${esc(hints[i])}</div>
-            <div class="b3-list">${cols[i].map(p => { const st = statusLine(p), acts = nextActs(p); return `<div class="pc" data-open="${p.id}">
+            ${i === 2 && canEdit ? `<div class="b3-zones">${Object.entries(s3Map(type)).filter(([k]) => k !== 'none').map(([k, z]) => `<div class="b3-zone ${z.tone}" data-zone="${k}">${esc(z.name)}</div>`).join('')}</div>` : ''}
+            <div class="b3-list">${cols[i].map(p => { const st = statusLine(p), acts = nextActs(p); return `<div class="pc" data-open="${p.id}" data-drag="${p.id}">
               <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b></div>
               ${People.sub(p) || p.ref ? `<div class="pc-sub">${esc(People.sub(p))}${p.ref ? `${People.sub(p) ? ' · ' : ''}<span class="pc-ref">по приглашению</span>` : ''}</div>` : ''}
               ${st ? `<div>${st}</div>` : ''}
@@ -2667,6 +2832,15 @@ function audiencePage(type) {
       on(root, 'click', '[data-stats]', () => { View.set('st.type', type); App.go('stats'); });
       on(root, 'click', '[data-open]', (e, el) => { if (e.target.closest('button')) return; App.go('p-' + el.dataset.open); });
       wireActs(root);
+      /* зажать карточку и перенести в другой шаг — статус меняется сам */
+      if (canEdit) Drag.board($('.board3', root), {onDrop: (id, col, zone) => {
+        const p = People.get(id);
+        if (!p) return;
+        const before = People.moveTo(p, Number(col), zone);
+        if (!before) { App.render(); return; }
+        const zn = zone ? ' · ' + s3Map(type)[zone].name.toLowerCase() : '';
+        toast(`${People.name(p)} → ${T.steps[Number(col) - 1]}${zn}`, {undo: () => People.patch(id, before, 'Отменили перенос', '↩')});
+      }});
     },
   };
 }

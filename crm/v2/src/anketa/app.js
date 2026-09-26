@@ -40,13 +40,13 @@ function total() { return S.qs.length; }
 
 function shell(inner, withTop = true) {
   const pct = S.i < 0 ? 0 : Math.round(((S.i) / total()) * 100);
-  $('#app').innerHTML = `${withTop ? `<div class="top"><span class="mark">✦</span><span class="brand">Eva</span>${S.i >= 0 && S.i < total() ? `<span class="count">${S.i + 1} из ${total()}</span>` : ''}</div>
+  $('#app').innerHTML = `${withTop ? `<div class="top"><span class="mark">${brandMark()}</span><span class="brand">Eva Space</span>${S.i >= 0 && S.i < total() ? `<span class="count">${S.i + 1} из ${total()}</span>` : ''}</div>
     ${S.i >= 0 && S.i < total() ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ''}` : ''}${inner}`;
 }
 
 function renderChooser() {
   S.i = -1;
-  shell(`<div class="card intro fade"><div class="big">✦</div><h1>Кто вы?</h1><p class="lead">Выберите — и покажем вопросы для вас</p>
+  shell(`<div class="card intro fade"><div class="big mark-big">${brandMark()}</div><h1>Кто вы?</h1><p class="lead">Выберите — и покажем вопросы для вас</p>
     <div class="types">${Object.entries(TYPES).map(([k, t]) => `<button data-t="${k}"><span>${t.emo}</span>${t.one}</button>`).join('')}</div></div>`);
   $('#app').onclick = e => {
     const b = e.target.closest('[data-t]');

@@ -140,6 +140,7 @@ function audiencePage(type) {
         : type === 'partner' ? PARTNER_CATS.map(c => [c, everyone.filter(p => p.cat === c).length]).filter(x => x[1])
         : [];
       const canEdit = People.canEdit();
+      if (canEdit) hints[0] += ' Карточку можно зажать и перенести в другой шаг.';
 
       root.innerHTML = `
         ${pageHead(`${T.emo} ${groupName(type)}`, esc(T.about),
@@ -148,10 +149,11 @@ function audiencePage(type) {
         <div class="t-bar"><input class="input sm t-search" id="bq" placeholder="Поиск: имя, город, код" value="${esc(View.get(type + '.q', ''))}"><span class="t-bar-sp"></span>
           <span class="note">${list.length === everyone.length ? `${everyone.length} ${plural(everyone.length, 'человек', 'человека', 'человек')}` : `найдено ${list.length} из ${everyone.length}`}</span></div>
         ${filters.length ? `<div class="chip-row"><button class="chip ${!f ? 'on' : ''}" data-f="">Все</button>${filters.map(([v, c]) => `<button class="chip ${f === v ? 'on' : ''}" data-f="${esc(v)}">${esc(noEmo(v))}<span class="chip-n">${c}</span></button>`).join('')}</div>` : ''}
-        <div class="board3">${[0, 1, 2].map(i => `
-          <div class="b3-col"><div class="b3-h"><span class="num">${i + 1}</span><b>${T.steps[i]}</b><span class="kb-n">${cols[i].length}</span></div>
+        <div class="board3 ${canEdit ? 'can-drag' : ''}">${[0, 1, 2].map(i => `
+          <div class="b3-col" data-col="${i + 1}"><div class="b3-h"><span class="num">${i + 1}</span><b>${T.steps[i]}</b><span class="kb-n">${cols[i].length}</span></div>
             <div class="b3-hint">${esc(hints[i])}</div>
-            <div class="b3-list">${cols[i].map(p => { const st = statusLine(p), acts = nextActs(p); return `<div class="pc" data-open="${p.id}">
+            ${i === 2 && canEdit ? `<div class="b3-zones">${Object.entries(s3Map(type)).filter(([k]) => k !== 'none').map(([k, z]) => `<div class="b3-zone ${z.tone}" data-zone="${k}">${esc(z.name)}</div>`).join('')}</div>` : ''}
+            <div class="b3-list">${cols[i].map(p => { const st = statusLine(p), acts = nextActs(p); return `<div class="pc" data-open="${p.id}" data-drag="${p.id}">
               <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b></div>
               ${People.sub(p) || p.ref ? `<div class="pc-sub">${esc(People.sub(p))}${p.ref ? `${People.sub(p) ? ' · ' : ''}<span class="pc-ref">по приглашению</span>` : ''}</div>` : ''}
               ${st ? `<div>${st}</div>` : ''}
@@ -167,6 +169,15 @@ function audiencePage(type) {
       on(root, 'click', '[data-stats]', () => { View.set('st.type', type); App.go('stats'); });
       on(root, 'click', '[data-open]', (e, el) => { if (e.target.closest('button')) return; App.go('p-' + el.dataset.open); });
       wireActs(root);
+      /* зажать карточку и перенести в другой шаг — статус меняется сам */
+      if (canEdit) Drag.board($('.board3', root), {onDrop: (id, col, zone) => {
+        const p = People.get(id);
+        if (!p) return;
+        const before = People.moveTo(p, Number(col), zone);
+        if (!before) { App.render(); return; }
+        const zn = zone ? ' · ' + s3Map(type)[zone].name.toLowerCase() : '';
+        toast(`${People.name(p)} → ${T.steps[Number(col) - 1]}${zn}`, {undo: () => People.patch(id, before, 'Отменили перенос', '↩')});
+      }});
     },
   };
 }

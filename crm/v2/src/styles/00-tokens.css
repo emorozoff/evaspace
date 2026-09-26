@@ -3,56 +3,59 @@
    бренда (знак, отметки, деньги), Фиалка — ссылки и выбранное.
    Шрифт — Inter; Unbounded остаётся только в названии штаба. */
 :root{
-  --bg:#F3F3F6;
+  /* Eva Space, дизайн-система v2: графит + приглушённая фуксия (как приложение
+     и «Книга стандартов»). Фуксия — выбранное и ссылки, графит — главные
+     кнопки, золото и зелень — только смысловые отметки. */
+  --bg:#F7F6F4;
   --surface:#FFFFFF;
-  --surface-2:#F8F8FA;
-  --sunken:#EEEEF2;
-  --line:#E2E2E8;
-  --line-strong:#CBCBD4;
-  --ink:#16141C;
-  --ink-2:#4A4856;
-  --ink-3:#7B7987;
+  --surface-2:#FAF9F7;
+  --sunken:#F1EFEC;
+  --line:#E6E2DE;
+  --line-strong:#D2CDC8;
+  --ink:#111014;
+  --ink-2:#4A4650;
+  --ink-3:#7E7A85;
 
-  --night:#15121B;
-  --night-2:#211C29;
-  --night-line:#2F2838;
-  --night-ink:#ECE9F1;
-  --night-ink-2:#9F99AB;
+  --night:#1A171F;
+  --night-2:#2B2233;
+  --night-line:#3A2F42;
+  --night-ink:#F3EFF4;
+  --night-ink-2:#B3AAB9;
+  --night-grad:linear-gradient(170deg,#1A171F 0%,#2B2233 62%,#4A2C42 100%);
 
-  --accent:#1D1828;          /* главные кнопки */
+  --accent:#111014;          /* главные кнопки */
   --on-accent:#FFFFFF;
-  --link:#4F46B8;            /* ссылки, выбранные вкладки, фокус */
-  --link-soft:#ECEBFA;
+  --link:#A8375C;            /* ссылки, выбранные вкладки, фокус */
+  --link-soft:#F7E9EE;
 
-  --rose:#A8456F;
-  --rose-brand:#E4A0B8;
-  --rose-soft:#F7E6EE;
-  --gold:#8A6420;
+  --rose:#A8375C;
+  --rose-brand:#C2506F;
+  --rose-soft:#F7E9EE;
+  --gold:#8C6528;
   --gold-brand:#E7C58B;
-  --gold-soft:#F5EDDC;
-  --violet:#4F46B8;
-  --violet-soft:#ECEBFA;
+  --gold-soft:#F6EEDF;
+  --violet:#5B4BD0;
+  --violet-soft:#EFECFC;
 
-  --good:#23734F;
-  --good-soft:#E0F0E7;
-  --bad:#A23A4A;
-  --bad-soft:#F7E4E7;
-  --warn:#94600E;
-  --warn-soft:#F9EED8;
+  --good:#3F7D62;
+  --good-soft:#E4F1EA;
+  --bad:#B03A48;
+  --bad-soft:#F8E6E8;
+  --warn:#B4642A;
+  --warn-soft:#FAEEDF;
 
   --in-row:#F1F8F4;
   --out-row:#FCF3F4;
 
-  /* сетка дорожной карты */
-  --g-alt:rgba(22,20,28,.028);
-  --g-half:rgba(22,20,28,.06);
-  --g-month:rgba(22,20,28,.13);
-  --g-quarter:rgba(22,20,28,.28);
+  --g-alt:rgba(17,16,20,.028);
+  --g-half:rgba(17,16,20,.06);
+  --g-month:rgba(17,16,20,.13);
+  --g-quarter:rgba(17,16,20,.28);
 
-  --shadow:0 1px 2px rgba(22,20,28,.05);
-  --shadow-pop:0 16px 44px rgba(22,20,28,.18), 0 2px 6px rgba(22,20,28,.08);
-  --radius:10px;
-  --radius-sm:7px;
+  --shadow:0 1px 2px rgba(17,16,20,.05);
+  --shadow-pop:0 16px 44px rgba(17,16,20,.16), 0 2px 6px rgba(17,16,20,.07);
+  --radius:12px;
+  --radius-sm:8px;
 
   --f-display:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --f-text:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -61,15 +64,16 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-    --bg:#111016; --surface:#1A1820; --surface-2:#1F1D26; --sunken:#15131A;
-    --line:#2C2A34; --line-strong:#403D4B;
-    --ink:#EFEDF3; --ink-2:#BEBBC8; --ink-3:#8D8A99;
-    --night:#0C0B10; --night-2:#18161E; --night-line:#27242E;
-    --accent:#ECE9F3; --on-accent:#15121B;
-    --link:#A9A3F4; --link-soft:#26234A;
-    --rose:#E4A0B8; --rose-soft:#3A2431;
+    --bg:#121014; --surface:#1B181F; --surface-2:#211D26; --sunken:#16131A;
+    --line:#2E2934; --line-strong:#453E4D;
+    --ink:#F3EFF4; --ink-2:#C4BCC9; --ink-3:#938B9A;
+    --night:#0E0C11; --night-2:#221C29; --night-line:#2F2836;
+    --night-grad:linear-gradient(170deg,#0E0C11 0%,#1B1622 62%,#2E1F2B 100%);
+    --accent:#F3EFF4; --on-accent:#111014;
+    --link:#E693B0; --link-soft:#3A2230;
+    --rose:#E693B0; --rose-soft:#3A2230;
     --gold:#E7C58B; --gold-soft:#33291B;
-    --violet:#A9A3F4; --violet-soft:#26234A;
+    --violet:#ABA2F2; --violet-soft:#29254A;
     --good:#7DCBA3; --good-soft:#1B3027;
     --bad:#EF929F; --bad-soft:#3B2027;
     --warn:#E8B463; --warn-soft:#352819;
@@ -81,15 +85,16 @@
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --bg:#111016; --surface:#1A1820; --surface-2:#1F1D26; --sunken:#15131A;
-  --line:#2C2A34; --line-strong:#403D4B;
-  --ink:#EFEDF3; --ink-2:#BEBBC8; --ink-3:#8D8A99;
-  --night:#0C0B10; --night-2:#18161E; --night-line:#27242E;
-  --accent:#ECE9F3; --on-accent:#15121B;
-  --link:#A9A3F4; --link-soft:#26234A;
-  --rose:#E4A0B8; --rose-soft:#3A2431;
+  --bg:#121014; --surface:#1B181F; --surface-2:#211D26; --sunken:#16131A;
+  --line:#2E2934; --line-strong:#453E4D;
+  --ink:#F3EFF4; --ink-2:#C4BCC9; --ink-3:#938B9A;
+  --night:#0E0C11; --night-2:#221C29; --night-line:#2F2836;
+  --night-grad:linear-gradient(170deg,#0E0C11 0%,#1B1622 62%,#2E1F2B 100%);
+  --accent:#F3EFF4; --on-accent:#111014;
+  --link:#E693B0; --link-soft:#3A2230;
+  --rose:#E693B0; --rose-soft:#3A2230;
   --gold:#E7C58B; --gold-soft:#33291B;
-  --violet:#A9A3F4; --violet-soft:#26234A;
+  --violet:#ABA2F2; --violet-soft:#29254A;
   --good:#7DCBA3; --good-soft:#1B3027;
   --bad:#EF929F; --bad-soft:#3B2027;
   --warn:#E8B463; --warn-soft:#352819;

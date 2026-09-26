@@ -93,6 +93,23 @@ const People = {
     return `${base}#${TYPES[p.type].letter}.${p.code}${d ? '.q' + Codec.encJson(d) : ''}`;
   },
   canEdit() { return Who.can('edit') && !Who.readOnly(); },
+  /* перенос между шагами на доске: статусы подстраиваются под колонку,
+     zone — точный итог («Подключаем», «Думает»…). Возвращает прежние
+     статусы для «Отменить» или null, если ничего не поменялось. */
+  moveTo(p, col, zone = null) {
+    const before = {s1: p.s1 || 'new', s2: p.s2 || 'none', s3: p.s3 || 'none'};
+    const done1 = ['done', 'skip'].includes(before.s1) ? before.s1 : Object.keys(p.answers || {}).length ? 'done' : 'skip';
+    let next;
+    if (col === 1) next = {s1: before.s1 === 'new' ? 'new' : 'sent', s2: 'none', s3: 'none'};
+    else if (col === 2) next = {s1: done1, s2: ['set', 'noshow'].includes(before.s2) ? before.s2 : 'none', s3: 'none'};
+    else next = {s1: done1, s2: before.s2 === 'skip' ? 'skip' : 'done', s3: zone || (this.col(p) === 3 ? before.s3 : 'none')};
+    if (next.s1 === before.s1 && next.s2 === before.s2 && next.s3 === before.s3) return null;
+    const T = TYPES[p.type];
+    const extra = col === 3 && next.s2 === 'done' && !p.talkAt ? {talkAt: Date.now()} : {};
+    const zoneName = zone ? s3Map(p.type)[zone].name : '';
+    this.patch(p.id, {...next, ...extra}, `Перенесли на шаг «${T.steps[col - 1]}»${zoneName ? ': ' + zoneName.toLowerCase() : ''}`, '↔');
+    return before;
+  },
   invited(p) { return Store.all('people').filter(x => x.ref && x.ref === p.code); },
 };
 
