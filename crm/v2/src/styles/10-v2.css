@@ -58,9 +58,11 @@ a.card.as-link:hover{border-color:var(--line-strong); background:var(--surface-2
 
 /* ближайшие созвоны: время слева, кто — справа */
 .calls{display:flex; flex-direction:column;}
-.call{display:grid; grid-template-columns:118px minmax(0,1fr); gap:10px; padding:9px 2px; border-bottom:1px solid var(--line); text-decoration:none; color:inherit; align-items:baseline;}
+.call{display:grid; grid-template-columns:118px minmax(0,1fr) auto; gap:10px; padding:9px 2px; border-bottom:1px solid var(--line); color:inherit; align-items:center;}
+.call > a{text-decoration:none; color:inherit; min-width:0;}
+.call.soon time{color:var(--rose);}
 .call:last-child{border-bottom:0;}
-.call:hover b{color:var(--link);}
+.call > a:hover b{color:var(--link);}
 .call time{font-size:12.5px; font-weight:600; color:var(--violet); font-variant-numeric:tabular-nums;}
 .call b{display:block; font-size:13.5px; font-weight:600;}
 .call small{display:block; font-size:12px; color:var(--ink-3);}

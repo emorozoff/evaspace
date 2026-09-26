@@ -50,13 +50,14 @@ App.register('home', {
           ${ideas.length ? `<h3 class="rec-h">Что улучшить</h3><div class="recs">${ideas.map(rec).join('')}</div>` : ''}
         </div>
         <div class="stack">
-          <div class="card"><div class="card-head"><h2>Ближайшие созвоны</h2></div>
-            ${upcoming.length ? `<div class="calls">${upcoming.map(p => `<a class="call" href="#p-${p.id}"><time>${esc(when(p.callAt))}</time><span><b>${esc(People.name(p))}</b><small>${groupName(p.type)}${p.zoom ? ' · есть ссылка на Zoom' : ''}</small></span></a>`).join('')}</div>` : '<p class="note">Созвонов не назначено.</p>'}</div>
+          <div class="card"><div class="card-head"><h2>Ближайшие созвоны</h2><a class="note" href="#calendar">Календарь →</a></div>
+            ${upcoming.length ? `<div class="calls">${upcoming.map(p => { const soon = Math.abs(p.callAt - Date.now()) < 40 * 60e3 || (p.callAt < Date.now() && p.callAt + callMin(p) * 60e3 > Date.now()); return `<div class="call ${soon ? 'soon' : ''}"><time>${esc(when(p.callAt))}</time><a href="#p-${p.id}"><b>${esc(People.name(p))}</b><small>${groupName(p.type)}${p.zoom ? ' · есть ссылка на Zoom' : ''}</small></a>${People.canEdit() ? `<button class="btn xs ${soon ? 'primary' : ''}" data-act="talk" data-pid="${p.id}">${soon ? 'Начать' : 'Открыть'}</button>` : ''}</div>`; }).join('')}</div>` : '<p class="note">Созвонов не назначено.</p>'}</div>
           <a class="card as-link known" href="#stats"><div class="card-head"><h2>Что уже знаем</h2><span class="note">Статистика →</span></div>
             <div class="kpis">${[[known.answers, 'анкет'], [known.talks, 'созвонов'], [known.quotes, 'цитат']].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div></a>
         </div>
       </div>`;
 
     on(root, 'click', '[data-paste]', () => openPaste());
+    wireActs(root);
   },
 });
