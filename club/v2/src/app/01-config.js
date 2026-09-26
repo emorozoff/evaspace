@@ -44,6 +44,8 @@ const NAV = [
   {id: 'reports',  name: 'Отчёты',    icon: 'chart'},
   {id: 'metrics',  name: 'Метрики',   icon: 'funnel'},
   {id: 'team',     name: 'Команда',   icon: 'users', perm: 'tasks.view'},
+  /* Eva CRM — отдельный артефакт; в меню — ссылка и число созвонов недели */
+  {id: 'crm',      name: 'CRM',       icon: 'ext', perm: 'tasks.view', href: 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA'},
 ];
 
 /* ── три кита и управление ── */

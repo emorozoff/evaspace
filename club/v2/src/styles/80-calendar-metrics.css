@@ -277,3 +277,11 @@ a.ct-name:hover b{text-decoration:underline;}
 .mt-mail .note{color:var(--warn);}
 .mt-mail-row{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;}
 .mt-mail-row .field{min-width:190px; flex:1;}
+
+/* ── созвоны из Eva CRM: полупрозрачные — время занято, но это не собрание штаба ── */
+.lg-crm{background:color-mix(in srgb, #C2506F 22%, transparent); border:1px dashed color-mix(in srgb, #C2506F 70%, transparent);}
+.cw-ev.own.crm{background:color-mix(in srgb, #C2506F 12%, transparent); border:1px dashed color-mix(in srgb, #C2506F 55%, transparent); border-left:3px solid color-mix(in srgb, #C2506F 70%, transparent); color:var(--ink-2); opacity:.78;}
+.cw-ev.own.crm:hover{opacity:1;}
+.ct-b.crm{background:color-mix(in srgb, #C2506F 16%, transparent); border:1px dashed color-mix(in srgb, #C2506F 60%, transparent); color:color-mix(in srgb, #C2506F 85%, var(--ink)); opacity:.8; cursor:default;}
+.crm-today .tm-row{gap:10px; align-items:center; flex-wrap:wrap;}
+.crm-today .tm-row span{color:var(--ink-3); font-size:13px;}

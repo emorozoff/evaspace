@@ -99,6 +99,10 @@ const App = {
   paintNav(active) {
     const items = NAV.filter(n => !n.perm || Auth.can(n.perm));
     $('#nav').innerHTML = items.map(n => {
+      if (n.href) {
+        const k = crmWeek().length;
+        return `<a href="${n.href}" target="_blank" rel="noopener" class="nav-ext" title="Eva CRM — кастдев и подключение. Число — созвоны CRM на этой неделе">${icon(n.icon)}<span>${n.name}</span>${k ? `<span class="nav-n">${k}</span>` : ''}</a>`;
+      }
       const b = n.id === 'tasks' ? taskBadge() : 0;
       return `<a href="#${n.id}" class="${n.id === active || (active === 'material' && n.id === 'home') ? 'on' : ''}">${icon(n.icon)}<span>${n.name}</span>${b ? `<span class="badge" title="Требуют внимания">${b}</span>` : ''}</a>`;
     }).join('');
