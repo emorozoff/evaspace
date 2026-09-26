@@ -33,6 +33,8 @@ const Demo = {
       if (f.s3 && f.s3 !== 'none') log.l6 = {t: ago(1), by: f.owner || null, emo: '🚀', text: 'Итог записан'};
       out.people[id] = {demo: true, type, name, code: codeOf(name), s1: 'new', s2: 'none', s3: 'none', answers: {}, talk: {}, res: {tags: []}, createdAt: ago(created), touchedAt: ago(Math.max(0, created - 4)), log, ...f};
       const doc = out.people[id];
+      /* ссылку отправили за 1–3 дня до ответов — чтобы было видно, сколько человек думает */
+      if (doc.s1 === 'done' && doc.answeredBy === 'self' && doc.answeredAt && !doc.sentAt) doc.sentAt = doc.answeredAt - (1 + (k % 3)) * DAY + 3 * 3600e3;
       if (doc.callAt) doc.callMin = type === 'partner' ? 45 : 30;
       if (doc.s2 === 'done' && doc.callAt) doc.callDur = Math.round(doc.callMin * 60 * (0.75 + R.next() * 0.55));
       return id;
