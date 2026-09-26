@@ -52,7 +52,7 @@ function wireActs(root) {
     } else if (act === 'fill') { View.set('pp.last', p.id); View.set('pp.tab', 'anketa'); View.set('pp.edit', true); App.go('p-' + p.id); }
     else if (act === 'skip1') People.patch(p.id, {s1: 'skip'}, 'Решили без анкеты', '⏭');
     else if (act === 'time') openTimePicker(p);
-    else if (act === 'talk') { View.set('pp.last', p.id); View.set('pp.tab', 'talk'); App.go('p-' + p.id); }
+    else if (act === 'talk') { Timer.start(p.id); View.set('pp.last', p.id); View.set('pp.tab', 'talk'); App.go('p-' + p.id); }
     else if (act === 'done2') { People.patch(p.id, {s2: 'done', talkAt: p.talkAt || Date.now()}, `${p.type === 'client' ? 'Интервью' : 'Созвон'} прошёл`, '✅'); syncCall(p.id); }
     else if (act === 'noshow') People.patch(p.id, {s2: 'noshow'}, 'Не пришла на созвон', '🙈');
     else if (act === 'skip2') People.patch(p.id, {s2: 'skip'}, 'Без созвона', '⏭');

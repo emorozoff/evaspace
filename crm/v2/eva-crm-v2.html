@@ -800,6 +800,47 @@ body.dragging-now .b3-zones{display:grid;}
 .kv span{color:var(--ink-3);}
 .kv b{font-weight:500;}
 .kv a{color:var(--link);}
+
+/* ── режим интервью: вопросы слева, подсказки справа ── */
+.iv{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:16px; align-items:start;}
+@media (max-width:1100px){ .iv{grid-template-columns:1fr;} .iv-side{position:static !important;} }
+.iv-bar{position:sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; padding:10px 12px; margin:-4px -6px 12px; border-radius:12px; background:color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter:blur(8px); border:1px solid var(--line); box-shadow:var(--shadow);}
+.timer.on{background:var(--rose-soft); color:var(--rose);}
+.iv-prog{display:inline-flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-2);}
+.iv-prog b{font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums;}
+.iv-pbar{width:90px; height:6px; border-radius:3px; background:var(--sunken); overflow:hidden; display:inline-block;}
+.iv-pbar i{display:block; height:100%; background:var(--good); border-radius:3px;}
+.iv-script{border:1px dashed var(--line-strong); border-radius:12px; padding:10px 14px; margin-bottom:10px; background:var(--surface-2); font-size:13.5px;}
+.iv-script summary{cursor:pointer; font-weight:600; color:var(--ink-2);}
+.iv-script ol{margin:8px 0 6px; padding-left:20px; display:flex; flex-direction:column; gap:4px; color:var(--ink);}
+.iv-script .btn{margin-top:4px;}
+.tq-n{min-width:24px; height:24px; border-radius:50%; border:1.5px solid var(--line-strong); background:var(--surface); font-size:11.5px; font-weight:700; color:var(--ink-3); display:inline-flex; align-items:center; justify-content:center; flex:0 0 24px; padding:0;}
+.tq-n:hover{border-color:var(--good); color:var(--good);}
+.tq.asked .tq-n{background:var(--good); border-color:var(--good); color:#fff;}
+.tq.cur{border-color:var(--link); box-shadow:0 0 0 3px var(--link-soft);}
+.tq.asked:not(.filled) textarea{min-height:40px;}
+.iv-side{position:sticky; top:12px; display:flex; flex-direction:column; gap:10px;}
+.iv-card{padding:14px 16px;}
+.iv-card h3{font-size:13.5px; margin-bottom:8px;}
+.iv-card .note{margin-bottom:8px;}
+.iv-known{display:flex; flex-direction:column; gap:7px;}
+.iv-known div{display:flex; flex-direction:column; gap:1px;}
+.iv-known span{font-size:11.5px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.04em; font-weight:600;}
+.iv-known b{font-size:13px; font-weight:500; line-height:1.4;}
+.iv-probes{margin:0 0 8px; padding-left:18px; display:flex; flex-direction:column; gap:4px; font-size:13px;}
+.iv-side .tagpick button{height:28px; font-size:12px;}
+
+/* ── черновик итога от Claude ── */
+.ai-box{border:1px solid color-mix(in srgb, var(--link) 30%, var(--line)); border-radius:14px; padding:14px 16px; background:linear-gradient(135deg, var(--link-soft), var(--surface) 60%);}
+.ai-h{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+.ai-h b{display:block; font-size:14px;}
+.ai-mark svg{width:30px; height:30px; display:block; border-radius:8px;}
+.ai-rows{display:flex; flex-direction:column; gap:8px; margin-top:12px;}
+.ai-rows > div{display:grid; grid-template-columns:130px minmax(0,1fr); gap:10px; font-size:13.5px;}
+.ai-rows > div > span{color:var(--ink-3); font-size:12.5px;}
+.ai-tags{display:flex; flex-wrap:wrap; gap:5px;}
+.ai-tags i{font-style:normal; padding:2px 9px; border-radius:10px; background:var(--violet-soft); color:var(--violet); font-size:12px; font-weight:600;}
+@media (max-width:640px){ .ai-rows > div{grid-template-columns:1fr; gap:2px;} }
 </style>
 <div id="app" class="app">
   <div class="boot" id="boot">
@@ -2829,7 +2870,7 @@ function wireActs(root) {
     } else if (act === 'fill') { View.set('pp.last', p.id); View.set('pp.tab', 'anketa'); View.set('pp.edit', true); App.go('p-' + p.id); }
     else if (act === 'skip1') People.patch(p.id, {s1: 'skip'}, 'Решили без анкеты', '⏭');
     else if (act === 'time') openTimePicker(p);
-    else if (act === 'talk') { View.set('pp.last', p.id); View.set('pp.tab', 'talk'); App.go('p-' + p.id); }
+    else if (act === 'talk') { Timer.start(p.id); View.set('pp.last', p.id); View.set('pp.tab', 'talk'); App.go('p-' + p.id); }
     else if (act === 'done2') { People.patch(p.id, {s2: 'done', talkAt: p.talkAt || Date.now()}, `${p.type === 'client' ? 'Интервью' : 'Созвон'} прошёл`, '✅'); syncCall(p.id); }
     else if (act === 'noshow') People.patch(p.id, {s2: 'noshow'}, 'Не пришла на созвон', '🙈');
     else if (act === 'skip2') People.patch(p.id, {s2: 'skip'}, 'Без созвона', '⏭');
@@ -2993,8 +3034,26 @@ function answersView(type, answers) {
   }).join('');
 }
 
-/* ── таймер созвона: только в этой вкладке ── */
-const Timer = {start: 0, id: null, tick(el) { if (!el) return; const s = Math.floor((Date.now() - this.start) / 1000); el.textContent = `${Math.floor(s / 60)}:${pad(s % 60)}`; }};
+/* черновики итога от Claude — только в этом окне, пока не применили */
+const Drafts = {};
+function draftHtml(p) {
+  const d = Drafts[p.id];
+  const talkQs = Questions.talk(p.type);
+  const head = `<div class="ai-h"><span class="ai-mark">${brandMark()}</span><div><b>Черновик итога от Claude</b><span class="note">по анкете и заметкам созвона — вы проверяете и сохраняете</span></div><span class="sp"></span>
+    <button class="btn sm ${d && d.data ? '' : 'primary'}" data-ai ${d && d.loading ? 'disabled' : ''}>${d && d.loading ? 'Claude думает…' : d && d.data ? 'Ещё раз' : 'Разобрать с Claude'}</button></div>`;
+  if (!d || (!d.data && !d.err)) return `<div class="ai-box">${head}</div>`;
+  if (d.err) return `<div class="ai-box">${head}<p class="warnline" style="margin-top:10px">${esc(d.err)}</p></div>`;
+  const x = d.data;
+  const rows = p.type === 'client'
+    ? [x.main ? ['Главный инсайт', esc(x.main)] : null, x.idea ? ['Что улучшить', esc(x.idea)] : null,
+       (x.quotes || []).length ? ['Яркие цитаты', x.quotes.map(id => { const q = talkQs.find(t => t.id === id); const a = ((p.talk || {})[id] || {}).a || ''; return `«${esc(a.length > 140 ? a.slice(0, 140) + '…' : a)}»${q ? ` <span class="note">— ${esc(q.t.slice(0, 60))}…</span>` : ''}`; }).join('<br>')] : null]
+    : [x.decision ? ['Решение', esc(S3.other[x.decision].name)] : null, x.next ? ['Следующий шаг', esc(x.next)] : null, x.note ? ['Заметка', esc(x.note)] : null];
+  return `<div class="ai-box">${head}
+    <div class="ai-rows">${rows.filter(Boolean).map(([k, v]) => `<div><span>${k}</span><div>${v}</div></div>`).join('')}
+      ${(x.tags || []).length ? `<div><span>Метки</span><div class="ai-tags">${x.tags.map(t => `<i>${esc(noEmo(t))}</i>`).join('')}</div></div>` : ''}
+      ${x.why ? `<div><span>Почему так</span><div class="note">${esc(x.why)}</div></div>` : ''}</div>
+    <div class="row" style="margin-top:10px"><button class="btn sm primary" data-ai-apply>Применить — заполнить пустые поля и метки</button><button class="btn sm ghost" data-ai-hide>Скрыть</button></div></div>`;
+}
 
 App.register('person', {
   title: id => People.name(People.get(id)),
@@ -3030,31 +3089,18 @@ App.register('person', {
            <div class="row" style="margin-top:12px"><button class="btn primary" data-save-fill>Сохранить ответы</button>${Object.keys(p.answers || {}).length ? '<button class="btn ghost" data-cancel-fill>Отмена</button>' : ''}</div>`
         : `<div class="row" style="margin-bottom:6px"><span class="note">${p.answeredBy === 'self' ? 'Заполнено самим человеком по ссылке' : 'Заполнено командой'}${p.answeredAt ? ' · ' + when(p.answeredAt) : ''}</span><span class="sp"></span>${canEdit ? `<button class="btn xs" data-edit-fill>${icon('edit')}Изменить</button>` : ''}</div>${answersView(p.type, p.answers)}`;
     } else if (tab === 'talk') {
-      const qs = Questions.talk(p.type);
-      const talk = p.talk || {};
-      pane = `<div class="row" style="margin-bottom:10px;align-items:center">
-          <span class="note">Задавайте вопросы своими словами, записывайте коротко. Звёздочка — яркая цитата, она попадёт в статистику.</span><span class="sp"></span>
-          <span class="timer" id="timer" title="Длительность созвона">${Timer.id ? '' : '0:00'}</span>
-          ${canEdit ? `<button class="btn sm" data-timer>${Timer.id ? `${icon('pause')}Стоп` : `${icon('play')}Старт`}</button>` : ''}
-          <button class="btn sm ghost" data-copy-q>${icon('copy')}Скопировать вопросы</button>
-        </div>
-        <div class="talk">${qs.map((q, i) => { const x = talk[q.id] || {}; return `<div class="tq ${x.a ? 'filled' : ''}">
-          <div class="tq-h"><i>${i + 1}</i><b>${esc(q.t)}</b>${canEdit ? `<button class="star ${x.star ? 'on' : ''}" data-star="${q.id}" title="${x.star ? 'Убрать из цитат' : 'Яркая цитата'}">${icon('star')}</button>` : x.star ? `<span class="star on">${icon('star')}</span>` : ''}</div>
-          ${q.why ? `<div class="tq-why">Зачем: ${esc(q.why)}</div>` : ''}
-          <textarea class="textarea" data-talk="${q.id}" placeholder="Что ответила…" ${canEdit ? '' : 'readonly'}>${esc(x.a || '')}</textarea></div>`; }).join('')}
-          <div class="tq"><div class="tq-h"><i>＋</i><b>Что ещё важного прозвучало</b></div><textarea class="textarea" data-talk="_extra" placeholder="Всё, что не попало в вопросы">${esc((talk._extra || {}).a || '')}</textarea></div>
-        </div>
-        ${canEdit && p.s2 !== 'done' ? `<div class="row" style="margin-top:12px"><button class="btn primary" data-act="done2" data-pid="${p.id}">${p.type === 'client' ? 'Интервью прошло' : 'Созвон прошёл'}</button></div>` : ''}`;
+      pane = interviewPane(p, canEdit);
     } else if (tab === 'result') {
       const res = p.res || {tags: []};
+      const ai = canEdit && (Object.values(p.talk || {}).some(x => x && x.a) || Object.keys(p.answers || {}).length) ? draftHtml(p) : '';
       if (p.type === 'client') {
-        pane = `<div class="stack">
+        pane = `<div class="stack">${ai}
           <div class="field"><span>Что услышали — отметьте</span><div class="tagpick" data-tags>${INSIGHT_TAGS.map(t => `<button type="button" class="${(res.tags || []).includes(t) ? 'on' : ''}" data-v="${esc(t)}" ${canEdit ? '' : 'disabled'}>${esc(noEmo(t))}</button>`).join('')}</div></div>
           <label class="field"><span>Главный инсайт — одной фразой</span><textarea class="textarea" data-res="main" placeholder="Например: бросает практики, когда болеет ребёнок — нужен режим «пауза без чувства вины»">${esc(res.main || '')}</textarea></label>
           <label class="field"><span>Что улучшить в Еве</span><textarea class="textarea" data-res="idea" placeholder="Идеи и просьбы">${esc(res.idea || '')}</textarea></label>
           ${canEdit ? `<div class="row"><button class="btn ${p.s3 === 'done' ? 'primary' : p.s3 === 'fan' ? '' : 'primary'}" data-s3="done">Инсайты собраны</button><button class="btn ${p.s3 === 'fan' ? 'primary' : ''}" data-s3="fan">Готова помогать ещё</button></div>` : ''}</div>`;
       } else {
-        pane = `<div class="stack">
+        pane = `<div class="stack">${ai}
           <div class="field"><span>Решение</span><div class="row">${Object.entries(S3.other).filter(([k]) => k !== 'none').map(([k, s]) => `<button class="btn ${p.s3 === k ? 'primary' : ''}" data-s3="${k}" ${canEdit ? '' : 'disabled'}>${esc(s.name)}</button>`).join('')}</div></div>
           <div class="field"><span>О чём договорились</span><div class="tagpick" data-tags>${RESULT_TAGS[p.type].map(t => `<button type="button" class="${(res.tags || []).includes(t) ? 'on' : ''}" data-v="${esc(t)}" ${canEdit ? '' : 'disabled'}>${esc(noEmo(t))}</button>`).join('')}</div></div>
           <div class="grid2"><label class="field"><span>Следующий шаг</span><input class="input" data-res="next" value="${esc(res.next || '')}" placeholder="${p.type === 'expert' ? 'Съёмка 3 практик' : p.type === 'partner' ? 'Прислать макет стойки' : 'Выдать материалы'}"></label>
@@ -3118,14 +3164,28 @@ App.register('person', {
       People.patch(p.id, {talk: {[qid]: {...cur, star: !cur.star, t: Date.now()}}});
     });
     on(root, 'click', '[data-copy-q]', () => copyOrShow(Questions.talk(p.type).map((q, i) => `${i + 1}. ${q.t}`).join('\n'), 'Вопросы скопированы — можно вставить в заметки Zoom 📋'));
-    on(root, 'click', '[data-timer]', () => {
-      if (Timer.id) { clearInterval(Timer.id); Timer.id = null; App.render(); return; }
-      Timer.start = Date.now();
-      Timer.id = setInterval(() => Timer.tick($('#timer')), 1000);
-      if (p.s2 !== 'done' && p.s2 !== 'set') People.patch(p.id, {s2: 'set', callAt: Date.now()});
+    if (tab === 'talk') wireInterview(root, p);
+    /* черновик итога от Claude */
+    on(root, 'click', '[data-ai]', async () => {
+      Drafts[p.id] = {loading: true};
+      App.render();
+      try { Drafts[p.id] = {data: await claudeDraft(People.get(p.id))}; }
+      catch (e) { Drafts[p.id] = {err: CLAUDE_ERR[e && e.code] || (e && e.text) || 'Claude не ответил: ' + ((e && e.message) || 'попробуйте ещё раз')}; }
       App.render();
     });
-    if (Timer.id) Timer.tick($('#timer', root));
+    on(root, 'click', '[data-ai-hide]', () => { delete Drafts[p.id]; App.render(); });
+    on(root, 'click', '[data-ai-apply]', () => {
+      const x = (Drafts[p.id] || {}).data;
+      if (!x) return;
+      const cur = People.get(p.id), res = cur.res || {};
+      const patch = {tags: [...new Set([...(res.tags || []), ...(x.tags || [])])]};
+      ['main', 'idea', 'next', 'note'].forEach(k => { if (x[k] && !String(res[k] || '').trim()) patch[k] = x[k]; });
+      const talkPatch = {};
+      (x.quotes || []).forEach(id => { talkPatch[id] = {...((cur.talk || {})[id] || {}), star: true}; });
+      People.patch(p.id, {res: patch, ...(Object.keys(talkPatch).length ? {talk: talkPatch} : {})}, 'Итог дополнен черновиком Claude', '✨');
+      delete Drafts[p.id];
+      toast(x.decision ? `Готово. Claude предлагает решение «${S3.other[x.decision].name}» — выберите его кнопкой, если согласны` : 'Готово: поля и метки заполнены, проверьте формулировки');
+    });
     /* итог */
     on(root, 'click', '[data-tags] button', (e, el) => {
       const res = (People.get(p.id).res) || {tags: []};
@@ -3225,6 +3285,196 @@ function openPaste() {
       };
     }});
 }
+
+/* ── 23-interview.js ── */
+/* Режим интервью: всё, что нужно в Zoom, на одном экране.
+   Слева — сценарий начала, вопросы с заметками (задан / звёздочка — яркая
+   цитата), «что ещё прозвучало» и сценарий завершения. Справа — что уже
+   знаем из анкеты, метки на лету и шпаргалка уточняющих вопросов. Таймер
+   помнится в этом браузере и не сбрасывается от перерисовки; «Завершить
+   интервью» сохраняет длительность и открывает итог. */
+
+/* ── таймер: {start, acc} в состоянии вида — переживает перерисовку и перезагрузку ── */
+const Timer = {
+  id: null,
+  get(pid) { return View.get('tm.' + pid, null); },
+  secs(pid) { const t = this.get(pid); return t ? Math.floor(((t.start ? Date.now() - t.start : 0) + (t.acc || 0)) / 1000) : 0; },
+  running(pid) { const t = this.get(pid); return !!(t && t.start); },
+  start(pid) { const t = this.get(pid) || {acc: 0}; if (!t.start) { t.start = Date.now(); View.set('tm.' + pid, t); } },
+  toggle(pid) {
+    const t = this.get(pid) || {acc: 0};
+    if (t.start) { t.acc = (t.acc || 0) + Date.now() - t.start; t.start = null; } else t.start = Date.now();
+    View.set('tm.' + pid, t);
+  },
+  reset(pid) { View.set('tm.' + pid, null); },
+  /* одна секундная стрелка на всё окно: обновляет все таймеры на экране */
+  wire() {
+    if (this.id) return;
+    this.id = setInterval(() => $$('[data-timer-for]').forEach(el => { el.textContent = dur(Timer.secs(el.dataset.timerFor)); }), 1000);
+  },
+};
+
+/* что показать из анкеты перед созвоном — самое полезное для разговора */
+const KNOWN = {
+  client: [['stage', 'Этап жизни'], ['age', 'Возраст'], ['city', 'Город'], ['pain', 'Болит'], ['goal', 'Важно'], ['time', 'Время в день'], ['when', 'Когда удобно'], ['tried', 'Уже пробовала'], ['spend', 'Тратит на себя'], ['formats', 'Интересно в Еве'], ['price', 'Готова платить'], ['fit', 'Идея Евы'], ['source', 'Откуда узнала']],
+  expert: [['dirs', 'Направления'], ['topic', 'Тема'], ['exp', 'Стаж'], ['edu', 'Образование'], ['have', 'Уже есть'], ['course', 'Курс с Евой'], ['record', 'Можно записать'], ['where', 'Где снимать'], ['days', 'Время на съёмки'], ['aud', 'Аудитория'], ['deal', 'Формат'], ['check', 'Консультация']],
+  partner: [['cat', 'Категория'], ['city', 'Город'], ['clients', 'Клиенток в месяц'], ['ages', 'Возраст клиенток'], ['want', 'Интересно'], ['give', 'Могут дать'], ['tell', 'Где расскажут'], ['aud', 'Соцсети'], ['when', 'Когда удобно']],
+  amb: [['use', 'Пользуется Евой'], ['where', 'Где аудитория'], ['size', 'Читают'], ['topic', 'О чём блог'], ['women', 'Кто читает'], ['how', 'Как расскажет'], ['hours', 'Время в неделю'], ['motive', 'Главное'], ['tax', 'Статус'], ['pay', 'Выплаты']],
+};
+/* сценарий: что сказать в начале и в конце */
+const SCRIPT = {
+  client: {
+    intro: ['Спасибо, что нашла время! Займёт минут 25.', 'Мы делаем Еву и хотим понять твой настоящий опыт. Правильных ответов нет, критика очень помогает.', 'Можно я буду коротко записывать? Ответы увидит только команда.', 'Буду спрашивать про то, что уже было, а не про «купила бы ты».'],
+    outro: ['Что я не спросила, а стоило бы?', 'Можно написать тебе через месяц и показать, что получилось?', 'Кого из подруг нам стоит расспросить? Могу прислать ссылку.', 'Спасибо! Ты очень помогла.'],
+  },
+  expert: {
+    intro: ['Спасибо за время! За две минуты расскажу, что такое Ева, дальше — о вас.', 'У нас 30 минут: знакомимся и ищем формат, выгодный обеим сторонам.', 'Можно я буду записывать ключевое?'],
+    outro: ['Резюмирую: о чём договорились и какой следующий шаг.', 'Кто и к какому сроку делает следующий шаг?', 'Кого из коллег вы бы нам порекомендовали?', 'Спасибо! Пришлю итоги в Telegram сегодня.'],
+  },
+  partner: {
+    intro: ['Спасибо за встречу! Коротко о Еве и наших участницах, дальше — о вас.', 'Цель — найти формат, который приведёт вам клиенток, а нам — участниц.', 'Можно я буду записывать ключевое?'],
+    outro: ['Резюмирую договорённости: предложение, промо, сроки.', 'Кто у вас принимает решение и когда вернёмся с ответом?', 'Какие материалы вам прислать?', 'Спасибо! Пришлю итоги сегодня.'],
+  },
+  amb: {
+    intro: ['Спасибо, что откликнулась! Созвон минут на 20.', 'Хочу понять твою аудиторию и как тебе удобнее рассказывать о Еве.', 'Можно я буду коротко записывать?'],
+    outro: ['Резюмирую: как рассказываешь, что тебе нужно от нас, как получаешь вознаграждение.', 'Твоя ссылка — та же, что для анкеты: по ней мы видим, кого ты привела.', 'Кого ещё позвать в амбассадоры?', 'Спасибо! Пришлю материалы сегодня.'],
+  },
+};
+const PROBES = {
+  ty: ['Можешь вспомнить конкретный случай?', 'Почему это было важно?', 'А что было дальше?', 'Как ты решала это раньше?', 'Сколько это стоило — времени или денег?', 'Что бы ты сделала на месте Евы?'],
+  vy: ['Можете привести пример?', 'Почему это важно для вас?', 'Что было дальше?', 'Как вы решаете это сейчас?', 'Сколько это стоит — времени или денег?', 'Что для вас было бы идеально?'],
+};
+
+function knownRows(p) {
+  const a = p.answers || {};
+  const qs = Questions.set(p.type).test;
+  const seen = new Set();
+  const val = (q, v) => (q && q.k === 'scale' ? `${v} из 5` : (q ? answerLabels(q, v) : [].concat(v)).map(noEmo).join(', '));
+  const rows = (KNOWN[p.type] || []).filter(([id]) => a[id] !== undefined && a[id] !== '' && !(Array.isArray(a[id]) && !a[id].length)).map(([id, label]) => { seen.add(id); return [label, val(qs.find(q => q.id === id), a[id])]; });
+  qs.forEach(q => { if (!seen.has(q.id) && !['name', 'tg', 'call', 'social', 'addr', 'contact'].includes(q.id) && a[q.id] !== undefined && a[q.id] !== '') rows.push([noEmo(q.t).replace(/\?.*$/, ''), val(q, a[q.id])]); });
+  return rows;
+}
+
+function interviewPane(p, canEdit) {
+  const qs = Questions.talk(p.type);
+  const talk = p.talk || {};
+  const T = TYPES[p.type];
+  const asked = q => !!((talk[q.id] || {}).a || (talk[q.id] || {}).asked);
+  const n = qs.filter(asked).length;
+  const cur = qs.find(q => !asked(q));
+  const secs = Timer.secs(p.id), run = Timer.running(p.id);
+  const known = knownRows(p);
+  const tags = p.type === 'client' ? INSIGHT_TAGS : RESULT_TAGS[p.type];
+  const res = p.res || {tags: []};
+  const S = SCRIPT[p.type] || SCRIPT.client;
+  const word = p.type === 'client' ? 'интервью' : p.type === 'partner' ? 'встречу' : 'созвон';
+  const done = p.s2 === 'done';
+  return `<div class="iv">
+    <div class="iv-main">
+      <div class="iv-bar">
+        <span class="timer ${run ? 'on' : ''}" data-timer-for="${p.id}" title="Длительность">${dur(secs)}</span>
+        ${canEdit ? `<button class="btn sm" data-iv-timer>${run ? `${icon('pause')}Пауза` : `${icon('play')}${secs ? 'Продолжить' : 'Старт'}`}</button>` : ''}
+        <span class="iv-prog"><b>${n}</b> из ${qs.length} вопросов<span class="iv-pbar"><i style="width:${qs.length ? (n / qs.length * 100).toFixed(0) : 0}%"></i></span></span>
+        <span class="sp"></span>
+        ${p.zoom ? `<a class="btn sm" href="${esc(p.zoom)}" target="_blank" rel="noopener">${icon('cam')}Zoom</a>` : ''}
+        <button class="btn sm ghost" data-copy-q title="Скопировать вопросы в заметки Zoom">${icon('copy')}</button>
+        ${canEdit && !done ? `<button class="btn sm primary" data-iv-finish>Завершить ${word}</button>` : ''}
+        ${done ? `<span class="st good">${p.callDur ? `прошёл · ${Math.round(p.callDur / 60)} мин` : 'прошёл'}</span>` : ''}
+      </div>
+      <details class="iv-script" ${secs || n ? '' : 'open'}><summary>Начало разговора</summary><ol>${S.intro.map(x => `<li>${esc(x)}</li>`).join('')}</ol></details>
+      <div class="talk">${qs.map((q, i) => { const x = talk[q.id] || {}; const isAsked = asked(q); return `<div class="tq ${x.a ? 'filled' : ''} ${cur && cur.id === q.id ? 'cur' : ''} ${isAsked ? 'asked' : ''}">
+        <div class="tq-h">${canEdit ? `<button class="tq-n" data-asked="${q.id}" title="${isAsked ? 'Задан' : 'Отметить, что вопрос задан'}">${isAsked ? '✓' : i + 1}</button>` : `<i>${i + 1}</i>`}<b>${esc(q.t)}</b>${canEdit ? `<button class="star ${x.star ? 'on' : ''}" data-star="${q.id}" title="${x.star ? 'Убрать из цитат' : 'Яркая цитата — попадёт в статистику'}">${icon('star')}</button>` : x.star ? `<span class="star on">${icon('star')}</span>` : ''}</div>
+        ${q.why ? `<div class="tq-why">Зачем: ${esc(q.why)}</div>` : ''}
+        <textarea class="textarea" data-talk="${q.id}" placeholder="${T.you === 'ты' ? 'Что ответила' : 'Что ответили'}…" ${canEdit ? '' : 'readonly'}>${esc(x.a || '')}</textarea></div>`; }).join('')}
+        <div class="tq"><div class="tq-h"><i>＋</i><b>Что ещё важного прозвучало</b></div><textarea class="textarea" data-talk="_extra" placeholder="Всё, что не попало в вопросы" ${canEdit ? '' : 'readonly'}>${esc((talk._extra || {}).a || '')}</textarea></div>
+      </div>
+      <details class="iv-script" open><summary>Завершение</summary><ol>${S.outro.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+        ${['client', 'amb'].includes(p.type) && canEdit ? `<button class="btn sm" data-act="link" data-pid="${p.id}">${icon('link')}Скопировать ссылку для подруги</button>` : ''}</details>
+      ${canEdit && !done ? `<div class="row" style="margin-top:12px"><button class="btn primary" data-iv-finish>Завершить ${word} и перейти к итогу</button></div>` : ''}
+    </div>
+    <aside class="iv-side">
+      <div class="card iv-card"><h3>Что знаем из анкеты</h3>
+        ${known.length ? `<div class="iv-known">${known.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>`
+          : `<p class="note">Анкеты нет. Задайте первые вопросы анкеты в начале разговора${canEdit ? ` или <button class="link-btn" data-act="fill" data-pid="${p.id}">заполните её за человека</button>` : ''}.</p>`}</div>
+      <div class="card iv-card"><h3>Метки на лету</h3><p class="note">Отмечайте, пока слышите, — они уйдут в итог и статистику.</p>
+        <div class="tagpick" data-tags>${tags.map(t => `<button type="button" class="${(res.tags || []).includes(t) ? 'on' : ''}" data-v="${esc(t)}" ${canEdit ? '' : 'disabled'}>${esc(noEmo(t))}</button>`).join('')}</div></div>
+      <div class="card iv-card"><h3>Если ответ короткий</h3><ul class="iv-probes">${PROBES[T.you === 'ты' ? 'ty' : 'vy'].map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+        <p class="note">Держите паузу 3 секунды — самое важное часто звучит после неё. Не подсказывайте ответ.</p></div>
+    </aside>
+  </div>`;
+}
+
+function wireInterview(root, p) {
+  Timer.wire();
+  on(root, 'click', '[data-iv-timer]', () => {
+    Timer.toggle(p.id);
+    if (Timer.running(p.id) && p.s2 !== 'done' && p.s2 !== 'set') People.patch(p.id, {s2: 'set', callAt: Date.now(), callMin: callMin(p)});
+    App.render();
+  });
+  on(root, 'click', '[data-asked]', (e, el) => {
+    const qid = el.dataset.asked;
+    const cur = (People.get(p.id).talk || {})[qid] || {};
+    People.patch(p.id, {talk: {[qid]: {...cur, asked: !cur.asked, t: Date.now()}}});
+  });
+  on(root, 'click', '[data-iv-finish]', () => finishInterview(p.id));
+}
+
+/* завершить: длительность по таймеру, шаг 2 — «прошёл», дальше — итог */
+function finishInterview(id) {
+  const p = People.get(id);
+  if (!p) return;
+  const secs = Timer.secs(id);
+  const patch = {s2: 'done', talkAt: p.talkAt || Date.now()};
+  if (secs >= 60) patch.callDur = secs;
+  if (!p.callAt) { patch.callAt = Date.now() - secs * 1000; patch.callMin = callMin(p); }
+  People.patch(id, patch, `${p.type === 'client' ? 'Интервью' : 'Созвон'} прошёл${secs >= 60 ? ` · ${Math.round(secs / 60)} мин` : ''}`, '✅');
+  Timer.reset(id);
+  syncCall(id);
+  View.set('pp.last', id);
+  View.set('pp.tab', 'result');
+  App.render();
+  toast(p.type === 'client' ? 'Интервью завершено. Отметьте главное, пока разговор свежий 💡' : 'Созвон завершён. Запишите решение и следующий шаг');
+}
+
+/* ── разбор с Claude: черновик итога по анкете и заметкам (платит тот, кто нажал) ── */
+async function claudeDraft(p) {
+  let sample = null;
+  try { sample = window.claude && typeof window.claude.use === 'function' ? await window.claude.use('sample') : null; } catch (e) { sample = null; }
+  if (!sample) throw {code: 'unavailable'};
+  const qs = Questions.set(p.type).test, tq = Questions.talk(p.type);
+  const ans = Object.entries(p.answers || {}).map(([id, v]) => { const q = qs.find(x => x.id === id); return q ? `- ${noEmo(q.t)}: ${answerLabels(q, v).map(noEmo).join(', ')}` : ''; }).filter(Boolean).join('\n');
+  const notes = tq.map(q => ((p.talk || {})[q.id] || {}).a ? `- [${q.id}] ${q.t}\n  ${(p.talk[q.id].a || '').trim()}` : '').filter(Boolean).join('\n');
+  const extra = ((p.talk || {})._extra || {}).a || '';
+  const tags = p.type === 'client' ? INSIGHT_TAGS : RESULT_TAGS[p.type];
+  const who = p.type === 'client' ? 'кастдев-интервью с потенциальной клиенткой' : `созвон с ${TYPES[p.type].one.toLowerCase() === 'партнёр' ? 'партнёром' : TYPES[p.type].one.toLowerCase() === 'эксперт' ? 'экспертом' : 'амбассадором'}`;
+  const shape = p.type === 'client'
+    ? `{"main": "главный инсайт одной фразой, до 160 знаков", "idea": "что улучшить в продукте: 1–3 пункта через «; »", "tags": ["до 4 меток строго из списка"], "quotes": ["id вопросов (t1, t2…) с самыми яркими ответами, не больше 2"], "why": "одно предложение: на каких ответах основан вывод"}`
+    : `{"decision": "yes | think | no — подключаем, думает или не сейчас", "tags": ["до 4 меток строго из списка"], "next": "следующий шаг одной фразой", "note": "договорённости и условия, 1–3 предложения", "why": "одно предложение: на каких ответах основан вывод"}`;
+  const input = `Ты помогаешь команде Eva Space разобрать ${who}. Eva Space — приложение для женщин 25–45: программа коротких практик под этап жизни, проверенные эксперты, сообщество; подписка 2 900 ₽ в месяц.
+Опирайся только на то, что сказал человек, ничего не выдумывай. Пиши по-русски, коротко и без канцелярита.
+
+Анкета:
+${ans || '— нет'}
+
+Заметки созвона:
+${notes || '— нет'}
+${extra ? `\nЕщё прозвучало:\n${extra}` : ''}
+
+Метки (выбирай только из этого списка, пиши точно так же): ${tags.map(t => `«${t}»`).join(', ')}
+
+Верни только JSON такого вида: ${shape}`;
+  const out = await sample.json(input, {modelTier: 'default'});
+  const clean = {...out};
+  clean.tags = (Array.isArray(out.tags) ? out.tags : []).map(t => tags.find(x => x === t || noEmo(x) === noEmo(String(t)))).filter(Boolean).slice(0, 4);
+  if (Array.isArray(out.quotes)) clean.quotes = out.quotes.filter(id => ((p.talk || {})[id] || {}).a).slice(0, 2);
+  if (clean.decision && !['yes', 'think', 'no'].includes(clean.decision)) delete clean.decision;
+  return clean;
+}
+const CLAUDE_ERR = {
+  unavailable: 'Claude недоступен в этом окне — откройте CRM в Claude.',
+  not_granted: 'Доступ к Claude для этой страницы не разрешён.',
+  rate_limited: 'Слишком много запросов к Claude — попробуйте через минуту.',
+};
 
 /* ── 24-gcal.js ── */
 /* Google Календарь — через коннектор Claude (capability mcp) и от имени
@@ -3552,7 +3802,7 @@ function openCallCard(p) {
         const a = b.dataset.cc;
         close();
         if (a === 'time') setTimeout(() => openTimePicker(People.get(p.id)), 80);
-        else if (a === 'talk') { View.set('pp.last', p.id); View.set('pp.tab', 'talk'); App.go('p-' + p.id); }
+        else if (a === 'talk') { Timer.start(p.id); View.set('pp.last', p.id); View.set('pp.tab', 'talk'); App.go('p-' + p.id); }
         else if (a === 'result') { View.set('pp.last', p.id); View.set('pp.tab', 'result'); App.go('p-' + p.id); }
         else if (a === 'done') People.patch(p.id, {s2: 'done', talkAt: p.talkAt || Date.now()}, `${p.type === 'client' ? 'Интервью' : 'Созвон'} прошёл`, '✅');
         else if (a === 'noshow') { People.patch(p.id, {s2: 'noshow'}, 'Созвон не состоялся', '🙈'); toast('Отметили. Назначьте новое время, пока человек на связи', {undo: () => People.patch(p.id, {s2: 'set'})}); }

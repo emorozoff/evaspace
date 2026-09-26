@@ -102,3 +102,44 @@
 .kv span{color:var(--ink-3);}
 .kv b{font-weight:500;}
 .kv a{color:var(--link);}
+
+/* ── режим интервью: вопросы слева, подсказки справа ── */
+.iv{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:16px; align-items:start;}
+@media (max-width:1100px){ .iv{grid-template-columns:1fr;} .iv-side{position:static !important;} }
+.iv-bar{position:sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; padding:10px 12px; margin:-4px -6px 12px; border-radius:12px; background:color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter:blur(8px); border:1px solid var(--line); box-shadow:var(--shadow);}
+.timer.on{background:var(--rose-soft); color:var(--rose);}
+.iv-prog{display:inline-flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-2);}
+.iv-prog b{font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums;}
+.iv-pbar{width:90px; height:6px; border-radius:3px; background:var(--sunken); overflow:hidden; display:inline-block;}
+.iv-pbar i{display:block; height:100%; background:var(--good); border-radius:3px;}
+.iv-script{border:1px dashed var(--line-strong); border-radius:12px; padding:10px 14px; margin-bottom:10px; background:var(--surface-2); font-size:13.5px;}
+.iv-script summary{cursor:pointer; font-weight:600; color:var(--ink-2);}
+.iv-script ol{margin:8px 0 6px; padding-left:20px; display:flex; flex-direction:column; gap:4px; color:var(--ink);}
+.iv-script .btn{margin-top:4px;}
+.tq-n{min-width:24px; height:24px; border-radius:50%; border:1.5px solid var(--line-strong); background:var(--surface); font-size:11.5px; font-weight:700; color:var(--ink-3); display:inline-flex; align-items:center; justify-content:center; flex:0 0 24px; padding:0;}
+.tq-n:hover{border-color:var(--good); color:var(--good);}
+.tq.asked .tq-n{background:var(--good); border-color:var(--good); color:#fff;}
+.tq.cur{border-color:var(--link); box-shadow:0 0 0 3px var(--link-soft);}
+.tq.asked:not(.filled) textarea{min-height:40px;}
+.iv-side{position:sticky; top:12px; display:flex; flex-direction:column; gap:10px;}
+.iv-card{padding:14px 16px;}
+.iv-card h3{font-size:13.5px; margin-bottom:8px;}
+.iv-card .note{margin-bottom:8px;}
+.iv-known{display:flex; flex-direction:column; gap:7px;}
+.iv-known div{display:flex; flex-direction:column; gap:1px;}
+.iv-known span{font-size:11.5px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.04em; font-weight:600;}
+.iv-known b{font-size:13px; font-weight:500; line-height:1.4;}
+.iv-probes{margin:0 0 8px; padding-left:18px; display:flex; flex-direction:column; gap:4px; font-size:13px;}
+.iv-side .tagpick button{height:28px; font-size:12px;}
+
+/* ── черновик итога от Claude ── */
+.ai-box{border:1px solid color-mix(in srgb, var(--link) 30%, var(--line)); border-radius:14px; padding:14px 16px; background:linear-gradient(135deg, var(--link-soft), var(--surface) 60%);}
+.ai-h{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+.ai-h b{display:block; font-size:14px;}
+.ai-mark svg{width:30px; height:30px; display:block; border-radius:8px;}
+.ai-rows{display:flex; flex-direction:column; gap:8px; margin-top:12px;}
+.ai-rows > div{display:grid; grid-template-columns:130px minmax(0,1fr); gap:10px; font-size:13.5px;}
+.ai-rows > div > span{color:var(--ink-3); font-size:12.5px;}
+.ai-tags{display:flex; flex-wrap:wrap; gap:5px;}
+.ai-tags i{font-style:normal; padding:2px 9px; border-radius:10px; background:var(--violet-soft); color:var(--violet); font-size:12px; font-weight:600;}
+@media (max-width:640px){ .ai-rows > div{grid-template-columns:1fr; gap:2px;} }

@@ -116,7 +116,7 @@ function openCallCard(p) {
         const a = b.dataset.cc;
         close();
         if (a === 'time') setTimeout(() => openTimePicker(People.get(p.id)), 80);
-        else if (a === 'talk') { View.set('pp.last', p.id); View.set('pp.tab', 'talk'); App.go('p-' + p.id); }
+        else if (a === 'talk') { Timer.start(p.id); View.set('pp.last', p.id); View.set('pp.tab', 'talk'); App.go('p-' + p.id); }
         else if (a === 'result') { View.set('pp.last', p.id); View.set('pp.tab', 'result'); App.go('p-' + p.id); }
         else if (a === 'done') People.patch(p.id, {s2: 'done', talkAt: p.talkAt || Date.now()}, `${p.type === 'client' ? 'Интервью' : 'Созвон'} прошёл`, '✅');
         else if (a === 'noshow') { People.patch(p.id, {s2: 'noshow'}, 'Созвон не состоялся', '🙈'); toast('Отметили. Назначьте новое время, пока человек на связи', {undo: () => People.patch(p.id, {s2: 'set'})}); }

@@ -53,8 +53,26 @@ function answersView(type, answers) {
   }).join('');
 }
 
-/* ── таймер созвона: только в этой вкладке ── */
-const Timer = {start: 0, id: null, tick(el) { if (!el) return; const s = Math.floor((Date.now() - this.start) / 1000); el.textContent = `${Math.floor(s / 60)}:${pad(s % 60)}`; }};
+/* черновики итога от Claude — только в этом окне, пока не применили */
+const Drafts = {};
+function draftHtml(p) {
+  const d = Drafts[p.id];
+  const talkQs = Questions.talk(p.type);
+  const head = `<div class="ai-h"><span class="ai-mark">${brandMark()}</span><div><b>Черновик итога от Claude</b><span class="note">по анкете и заметкам созвона — вы проверяете и сохраняете</span></div><span class="sp"></span>
+    <button class="btn sm ${d && d.data ? '' : 'primary'}" data-ai ${d && d.loading ? 'disabled' : ''}>${d && d.loading ? 'Claude думает…' : d && d.data ? 'Ещё раз' : 'Разобрать с Claude'}</button></div>`;
+  if (!d || (!d.data && !d.err)) return `<div class="ai-box">${head}</div>`;
+  if (d.err) return `<div class="ai-box">${head}<p class="warnline" style="margin-top:10px">${esc(d.err)}</p></div>`;
+  const x = d.data;
+  const rows = p.type === 'client'
+    ? [x.main ? ['Главный инсайт', esc(x.main)] : null, x.idea ? ['Что улучшить', esc(x.idea)] : null,
+       (x.quotes || []).length ? ['Яркие цитаты', x.quotes.map(id => { const q = talkQs.find(t => t.id === id); const a = ((p.talk || {})[id] || {}).a || ''; return `«${esc(a.length > 140 ? a.slice(0, 140) + '…' : a)}»${q ? ` <span class="note">— ${esc(q.t.slice(0, 60))}…</span>` : ''}`; }).join('<br>')] : null]
+    : [x.decision ? ['Решение', esc(S3.other[x.decision].name)] : null, x.next ? ['Следующий шаг', esc(x.next)] : null, x.note ? ['Заметка', esc(x.note)] : null];
+  return `<div class="ai-box">${head}
+    <div class="ai-rows">${rows.filter(Boolean).map(([k, v]) => `<div><span>${k}</span><div>${v}</div></div>`).join('')}
+      ${(x.tags || []).length ? `<div><span>Метки</span><div class="ai-tags">${x.tags.map(t => `<i>${esc(noEmo(t))}</i>`).join('')}</div></div>` : ''}
+      ${x.why ? `<div><span>Почему так</span><div class="note">${esc(x.why)}</div></div>` : ''}</div>
+    <div class="row" style="margin-top:10px"><button class="btn sm primary" data-ai-apply>Применить — заполнить пустые поля и метки</button><button class="btn sm ghost" data-ai-hide>Скрыть</button></div></div>`;
+}
 
 App.register('person', {
   title: id => People.name(People.get(id)),
@@ -90,31 +108,18 @@ App.register('person', {
            <div class="row" style="margin-top:12px"><button class="btn primary" data-save-fill>Сохранить ответы</button>${Object.keys(p.answers || {}).length ? '<button class="btn ghost" data-cancel-fill>Отмена</button>' : ''}</div>`
         : `<div class="row" style="margin-bottom:6px"><span class="note">${p.answeredBy === 'self' ? 'Заполнено самим человеком по ссылке' : 'Заполнено командой'}${p.answeredAt ? ' · ' + when(p.answeredAt) : ''}</span><span class="sp"></span>${canEdit ? `<button class="btn xs" data-edit-fill>${icon('edit')}Изменить</button>` : ''}</div>${answersView(p.type, p.answers)}`;
     } else if (tab === 'talk') {
-      const qs = Questions.talk(p.type);
-      const talk = p.talk || {};
-      pane = `<div class="row" style="margin-bottom:10px;align-items:center">
-          <span class="note">Задавайте вопросы своими словами, записывайте коротко. Звёздочка — яркая цитата, она попадёт в статистику.</span><span class="sp"></span>
-          <span class="timer" id="timer" title="Длительность созвона">${Timer.id ? '' : '0:00'}</span>
-          ${canEdit ? `<button class="btn sm" data-timer>${Timer.id ? `${icon('pause')}Стоп` : `${icon('play')}Старт`}</button>` : ''}
-          <button class="btn sm ghost" data-copy-q>${icon('copy')}Скопировать вопросы</button>
-        </div>
-        <div class="talk">${qs.map((q, i) => { const x = talk[q.id] || {}; return `<div class="tq ${x.a ? 'filled' : ''}">
-          <div class="tq-h"><i>${i + 1}</i><b>${esc(q.t)}</b>${canEdit ? `<button class="star ${x.star ? 'on' : ''}" data-star="${q.id}" title="${x.star ? 'Убрать из цитат' : 'Яркая цитата'}">${icon('star')}</button>` : x.star ? `<span class="star on">${icon('star')}</span>` : ''}</div>
-          ${q.why ? `<div class="tq-why">Зачем: ${esc(q.why)}</div>` : ''}
-          <textarea class="textarea" data-talk="${q.id}" placeholder="Что ответила…" ${canEdit ? '' : 'readonly'}>${esc(x.a || '')}</textarea></div>`; }).join('')}
-          <div class="tq"><div class="tq-h"><i>＋</i><b>Что ещё важного прозвучало</b></div><textarea class="textarea" data-talk="_extra" placeholder="Всё, что не попало в вопросы">${esc((talk._extra || {}).a || '')}</textarea></div>
-        </div>
-        ${canEdit && p.s2 !== 'done' ? `<div class="row" style="margin-top:12px"><button class="btn primary" data-act="done2" data-pid="${p.id}">${p.type === 'client' ? 'Интервью прошло' : 'Созвон прошёл'}</button></div>` : ''}`;
+      pane = interviewPane(p, canEdit);
     } else if (tab === 'result') {
       const res = p.res || {tags: []};
+      const ai = canEdit && (Object.values(p.talk || {}).some(x => x && x.a) || Object.keys(p.answers || {}).length) ? draftHtml(p) : '';
       if (p.type === 'client') {
-        pane = `<div class="stack">
+        pane = `<div class="stack">${ai}
           <div class="field"><span>Что услышали — отметьте</span><div class="tagpick" data-tags>${INSIGHT_TAGS.map(t => `<button type="button" class="${(res.tags || []).includes(t) ? 'on' : ''}" data-v="${esc(t)}" ${canEdit ? '' : 'disabled'}>${esc(noEmo(t))}</button>`).join('')}</div></div>
           <label class="field"><span>Главный инсайт — одной фразой</span><textarea class="textarea" data-res="main" placeholder="Например: бросает практики, когда болеет ребёнок — нужен режим «пауза без чувства вины»">${esc(res.main || '')}</textarea></label>
           <label class="field"><span>Что улучшить в Еве</span><textarea class="textarea" data-res="idea" placeholder="Идеи и просьбы">${esc(res.idea || '')}</textarea></label>
           ${canEdit ? `<div class="row"><button class="btn ${p.s3 === 'done' ? 'primary' : p.s3 === 'fan' ? '' : 'primary'}" data-s3="done">Инсайты собраны</button><button class="btn ${p.s3 === 'fan' ? 'primary' : ''}" data-s3="fan">Готова помогать ещё</button></div>` : ''}</div>`;
       } else {
-        pane = `<div class="stack">
+        pane = `<div class="stack">${ai}
           <div class="field"><span>Решение</span><div class="row">${Object.entries(S3.other).filter(([k]) => k !== 'none').map(([k, s]) => `<button class="btn ${p.s3 === k ? 'primary' : ''}" data-s3="${k}" ${canEdit ? '' : 'disabled'}>${esc(s.name)}</button>`).join('')}</div></div>
           <div class="field"><span>О чём договорились</span><div class="tagpick" data-tags>${RESULT_TAGS[p.type].map(t => `<button type="button" class="${(res.tags || []).includes(t) ? 'on' : ''}" data-v="${esc(t)}" ${canEdit ? '' : 'disabled'}>${esc(noEmo(t))}</button>`).join('')}</div></div>
           <div class="grid2"><label class="field"><span>Следующий шаг</span><input class="input" data-res="next" value="${esc(res.next || '')}" placeholder="${p.type === 'expert' ? 'Съёмка 3 практик' : p.type === 'partner' ? 'Прислать макет стойки' : 'Выдать материалы'}"></label>
@@ -143,7 +148,7 @@ App.register('person', {
         <div class="ph-acts">${canEdit ? `<button class="btn sm" data-act="link" data-pid="${p.id}">${icon('link')}Скопировать ссылку</button><button class="icon-btn" data-edit-person title="Изменить данные">${icon('edit')}</button>` : ''}${Who.can('delete') ? `<button class="icon-btn" data-del title="Удалить">${icon('trash')}</button>` : ''}</div>
       </div>
       ${steps}
-      <div class="card" style="padding:0;overflow:hidden">
+      <div class="card" style="padding:0;overflow:clip">
         <div style="padding:0 12px;background:var(--surface-2)">${tabsHtml('pp.tab', [['anketa', 'Анкета', Object.keys(p.answers || {}).length || null], ['talk', p.type === 'client' ? 'Интервью' : 'Созвон', talkN || null], ['result', 'Итог'], ['log', 'История']], tab)}</div>
         <div style="padding:14px 18px">${pane}</div>
       </div>`;
@@ -178,14 +183,28 @@ App.register('person', {
       People.patch(p.id, {talk: {[qid]: {...cur, star: !cur.star, t: Date.now()}}});
     });
     on(root, 'click', '[data-copy-q]', () => copyOrShow(Questions.talk(p.type).map((q, i) => `${i + 1}. ${q.t}`).join('\n'), 'Вопросы скопированы — можно вставить в заметки Zoom 📋'));
-    on(root, 'click', '[data-timer]', () => {
-      if (Timer.id) { clearInterval(Timer.id); Timer.id = null; App.render(); return; }
-      Timer.start = Date.now();
-      Timer.id = setInterval(() => Timer.tick($('#timer')), 1000);
-      if (p.s2 !== 'done' && p.s2 !== 'set') People.patch(p.id, {s2: 'set', callAt: Date.now()});
+    if (tab === 'talk') wireInterview(root, p);
+    /* черновик итога от Claude */
+    on(root, 'click', '[data-ai]', async () => {
+      Drafts[p.id] = {loading: true};
+      App.render();
+      try { Drafts[p.id] = {data: await claudeDraft(People.get(p.id))}; }
+      catch (e) { Drafts[p.id] = {err: CLAUDE_ERR[e && e.code] || (e && e.text) || 'Claude не ответил: ' + ((e && e.message) || 'попробуйте ещё раз')}; }
       App.render();
     });
-    if (Timer.id) Timer.tick($('#timer', root));
+    on(root, 'click', '[data-ai-hide]', () => { delete Drafts[p.id]; App.render(); });
+    on(root, 'click', '[data-ai-apply]', () => {
+      const x = (Drafts[p.id] || {}).data;
+      if (!x) return;
+      const cur = People.get(p.id), res = cur.res || {};
+      const patch = {tags: [...new Set([...(res.tags || []), ...(x.tags || [])])]};
+      ['main', 'idea', 'next', 'note'].forEach(k => { if (x[k] && !String(res[k] || '').trim()) patch[k] = x[k]; });
+      const talkPatch = {};
+      (x.quotes || []).forEach(id => { talkPatch[id] = {...((cur.talk || {})[id] || {}), star: true}; });
+      People.patch(p.id, {res: patch, ...(Object.keys(talkPatch).length ? {talk: talkPatch} : {})}, 'Итог дополнен черновиком Claude', '✨');
+      delete Drafts[p.id];
+      toast(x.decision ? `Готово. Claude предлагает решение «${S3.other[x.decision].name}» — выберите его кнопкой, если согласны` : 'Готово: поля и метки заполнены, проверьте формулировки');
+    });
     /* итог */
     on(root, 'click', '[data-tags] button', (e, el) => {
       const res = (People.get(p.id).res) || {tags: []};
