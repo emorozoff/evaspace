@@ -4,6 +4,13 @@
 
 **Открыть приложение:** https://emorozoff.github.io/evaspace/
 
+**Штаб команды V2:** https://emorozoff.github.io/evaspace/club/v2/ — задачи, деньги,
+продажи и отчёты до конца года, стратегия квартала и материалы команды. Описание и
+инструкция — в [`club/v2/README.md`](club/v2/README.md).
+
+**Первая версия штаба:** https://emorozoff.github.io/evaspace/club/ — дорожная карта,
+финансовая модель, смета и кабинеты; описание — в [`club/README.md`](club/README.md).
+
 На iPhone: открыть ссылку в Safari → «Поделиться» → «На экран Домой». Приложение появится иконкой с путеводной звездой и будет открываться на весь экран, без адресной строки.
 
 **Eva CRM 2.0 — кастдев и подключение:** [crm/v2/README.md](crm/v2/README.md), база вопросов — [crm/v2/QUESTIONS.md](crm/v2/QUESTIONS.md). Черновик первой версии с подробным ТЗ — [crm/README.md](crm/README.md).
