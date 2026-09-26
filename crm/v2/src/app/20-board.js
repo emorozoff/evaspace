@@ -53,37 +53,13 @@ function wireActs(root) {
     else if (act === 'skip1') People.patch(p.id, {s1: 'skip'}, 'Решили без анкеты', '⏭');
     else if (act === 'time') openTimePicker(p);
     else if (act === 'talk') { View.set('pp.last', p.id); View.set('pp.tab', 'talk'); App.go('p-' + p.id); }
-    else if (act === 'done2') People.patch(p.id, {s2: 'done', talkAt: p.talkAt || Date.now()}, `${p.type === 'client' ? 'Интервью' : 'Созвон'} прошёл`, '✅');
+    else if (act === 'done2') { People.patch(p.id, {s2: 'done', talkAt: p.talkAt || Date.now()}, `${p.type === 'client' ? 'Интервью' : 'Созвон'} прошёл`, '✅'); syncCall(p.id); }
     else if (act === 'noshow') People.patch(p.id, {s2: 'noshow'}, 'Не пришла на созвон', '🙈');
     else if (act === 'skip2') People.patch(p.id, {s2: 'skip'}, 'Без созвона', '⏭');
     else if (act === 'result') { View.set('pp.last', p.id); View.set('pp.tab', 'result'); App.go('p-' + p.id); }
     else if (['yes', 'think', 'no'].includes(act)) { const s = S3.other[act]; People.patch(p.id, {s3: act}, `Итог: ${s.name}`, s.emo); toast(`${s.emo} ${People.name(p)}: ${s.name.toLowerCase()}`); }
     void T;
   });
-}
-
-function openTimePicker(p) {
-  const d = p.callAt ? new Date(p.callAt) : new Date(Date.now() + 864e5);
-  if (!p.callAt) d.setHours(12, 0, 0, 0);
-  const local = `${isoOf(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  const pref = (p.answers || {}).call || (p.answers || {}).when || '';
-  openModal({title: `Созвон: ${People.name(p)}`, body: `
-      ${pref ? `<div class="warnline" style="background:var(--violet-soft);color:var(--violet)">В анкете удобно: «${esc(noEmo(Array.isArray(pref) ? pref.join(', ') : pref))}»</div>` : ''}
-      <label class="field"><span>Когда</span><input class="input" type="datetime-local" id="tpWhen" value="${local}"></label>
-      <div class="chip-row">${[['Завтра 12:00', 1, 12], ['Завтра 19:00', 1, 19], ['Послезавтра 12:00', 2, 12], ['Через неделю', 7, 12]].map(([n, dd, hh]) => `<button class="chip" data-quick="${dd}|${hh}">${n}</button>`).join('')}</div>
-      <label class="field"><span>Ссылка на Zoom (необязательно)</span><input class="input" id="tpZoom" value="${esc(p.zoom || '')}" placeholder="https://zoom.us/j/…"></label>`,
-    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Назначить</button>',
-    onMount(el, close) {
-      on(el, 'click', '[data-quick]', (ev, b) => { const [dd, hh] = b.dataset.quick.split('|').map(Number); const x = new Date(); x.setDate(x.getDate() + dd); x.setHours(hh, 0, 0, 0); $('#tpWhen', el).value = `${isoOf(x)}T${pad(hh)}:00`; });
-      $('[data-ok]', el).onclick = () => {
-        const v = $('#tpWhen', el).value;
-        if (!v) return;
-        const ts = new Date(v).getTime();
-        People.patch(p.id, {s2: 'set', callAt: ts, zoom: $('#tpZoom', el).value.trim()}, `Созвон назначен на ${when(ts)}`, '📅');
-        close();
-        toast(`Созвон назначен: ${when(ts)}`);
-      };
-    }});
 }
 
 /* быстро добавить человека: имя, контакт — и сразу ссылка */
@@ -175,6 +151,7 @@ function audiencePage(type) {
         if (!p) return;
         const before = People.moveTo(p, Number(col), zone);
         if (!before) { App.render(); return; }
+        syncCall(id);
         const zn = zone ? ' · ' + s3Map(type)[zone].name.toLowerCase() : '';
         toast(`${People.name(p)} → ${T.steps[Number(col) - 1]}${zn}`, {undo: () => People.patch(id, before, 'Отменили перенос', '↩')});
       }});

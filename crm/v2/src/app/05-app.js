@@ -86,7 +86,7 @@ const App = {
   paintNav(active) {
     /* у группы одна цифра — сколько в ней людей; что делать, видно на главной */
     $('#nav').innerHTML = NAV.map(n => {
-      const cnt = TYPES[n.id] ? People.all(n.id).length : null;
+      const cnt = TYPES[n.id] ? People.all(n.id).length : n.id === 'calendar' ? callsBetween(Date.now() - 3600e3, dateOf(addDays(weekStart(today()), 7)).getTime()).filter(p => p.s2 === 'set').length || null : null;
       return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${cnt ? `<span class="nav-n">${cnt}</span>` : ''}</a>`;
     }).join('');
     const m = Who.member();

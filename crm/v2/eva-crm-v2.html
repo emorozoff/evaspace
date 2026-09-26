@@ -694,6 +694,112 @@ body.dragging-now .b3-zones{display:grid;}
 .b3-zone{border:1.5px dashed var(--line-strong); border-radius:9px; padding:9px 8px; text-align:center; font-size:12px; font-weight:600; color:var(--ink-2); background:var(--surface);}
 .b3-zone.good{color:var(--good);} .b3-zone.warn{color:var(--warn);} .b3-zone.bad{color:var(--bad);} .b3-zone.violet{color:var(--violet);}
 .b3-zone.drop-on{border-style:solid; border-color:currentColor; background:color-mix(in srgb, currentColor 10%, var(--surface));}
+
+/* ── 20-calendar.css ── */
+/* ── календарь созвонов: сетка недели как в штабе, цвет — по группе ── */
+.g-client{--g:var(--link);} .g-expert{--g:var(--violet);} .g-partner{--g:var(--good);} .g-amb{--g:var(--gold);} .g-google{--g:var(--ink-3);}
+.cb-dot{width:10px; height:10px; border-radius:3px; display:inline-block; flex:0 0 10px; background:var(--g, var(--ink-3));}
+.cal-bar{display:flex; align-items:flex-end; justify-content:space-between; gap:10px 16px; flex-wrap:wrap; border-bottom:1px solid var(--line); margin:18px 0 12px;}
+.cal-bar .tabs{border-bottom:0; margin-bottom:0;}
+.cal-nav{display:flex; align-items:center; gap:6px; padding-bottom:6px; flex-wrap:wrap;}
+.cal-nav b{font-size:14px; min-width:120px; text-align:center;}
+.icon-btn.flip svg{transform:scaleX(-1);}
+.cal-legend{display:flex; gap:8px 16px; flex-wrap:wrap; align-items:center; font-size:12px; color:var(--ink-2); margin-bottom:10px;}
+.cal-legend > span{display:inline-flex; align-items:center; gap:6px;}
+.cal-legend .note{margin-left:auto;}
+.cal-kpis{margin-top:14px;}
+.cal-late{margin-top:12px; align-items:center; flex-wrap:wrap;}
+
+.cal-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface);}
+.cal-week{--hh:44px; display:grid; grid-template-columns:52px repeat(7, minmax(104px, 1fr)); min-width:calc(52px + 7 * 104px);}
+.cw-corner{border-bottom:1px solid var(--line); background:var(--surface-2);}
+.cw-dh{display:flex; align-items:baseline; gap:5px; padding:8px 10px; border-bottom:1px solid var(--line); border-left:1px solid var(--line); background:var(--surface-2); white-space:nowrap;}
+.cw-dh span{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-3); font-weight:600;}
+.cw-dh b{font-size:17px; font-weight:600;}
+.cw-dh small{font-size:11.5px; color:var(--ink-3);}
+.cw-dh.is-today b{background:var(--link); color:#fff; border-radius:6px; padding:0 6px;}
+.cw-dh.we span, .cw-dh.we b{color:var(--ink-3);}
+.cw-times{position:relative; height:calc(var(--hh) * 14);}
+.cw-times span{position:absolute; right:8px; transform:translateY(-50%); font-size:11px; color:var(--ink-3); font-variant-numeric:tabular-nums;}
+.cw-times span:first-child{transform:none; top:2px !important;}
+.cw-col{position:relative; height:calc(var(--hh) * 14); border-left:1px solid var(--line); cursor:copy;
+  background-image:linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(var(--g-alt) 1px, transparent 1px);
+  background-size:100% var(--hh), 100% calc(var(--hh) / 2);}
+.cw-col.we{background-color:var(--surface-2);}
+.cw-col.past{background-color:color-mix(in srgb, var(--sunken) 45%, transparent);}
+.cw-col:hover{background-color:color-mix(in srgb, var(--link-soft) 35%, transparent);}
+.cw-now{position:absolute; left:0; right:0; height:2px; background:var(--bad); z-index:3; pointer-events:none;}
+.cw-now::before{content:''; position:absolute; left:-4px; top:-3px; width:8px; height:8px; border-radius:50%; background:var(--bad);}
+.cb{position:absolute; z-index:2; overflow:hidden; border-radius:6px; padding:3px 6px; display:flex; flex-direction:column; gap:1px; font-size:11.5px; line-height:1.25; min-height:18px; cursor:pointer;
+  background:color-mix(in srgb, var(--g) 16%, var(--surface)); border:1px solid color-mix(in srgb, var(--g) 35%, transparent); border-left:3px solid var(--g); color:var(--ink); touch-action:none;}
+.cb b{font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.cb small{font-size:10.5px; color:var(--ink-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.cb.short{flex-direction:row; align-items:center; gap:6px;}
+.cb:hover{z-index:4; box-shadow:0 4px 14px rgba(17,16,20,.14);}
+.cb.st-done{opacity:.62;}
+.cb.st-noshow{opacity:.55; background:var(--surface); border-style:dashed;}
+.cb.st-noshow b{text-decoration:line-through;}
+.cb.st-late{border-left-color:var(--warn); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--warn) 40%, transparent);}
+.cb.gcal{--g:var(--ink-3); background:repeating-linear-gradient(135deg, var(--sunken) 0 5px, var(--surface) 5px 10px); border-color:var(--line-strong); border-left-color:var(--ink-3); color:var(--ink-2); cursor:default; z-index:1; opacity:.9;}
+.cb.cb-drag{z-index:10; box-shadow:0 12px 30px rgba(17,16,20,.3); opacity:1; outline:2px solid var(--link);}
+
+/* месяц */
+.cal-month{display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; background:var(--surface);}
+.cm-h{padding:8px 10px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-3); background:var(--surface-2); border-bottom:1px solid var(--line);}
+.cm-d{min-height:96px; border:0; border-top:1px solid var(--line); border-left:1px solid var(--line); background:var(--surface); padding:6px 7px; display:flex; flex-direction:column; gap:3px; text-align:left; align-items:stretch; min-width:0;}
+.cm-d:nth-child(7n+8){border-left:0;}
+.cm-d:hover{background:color-mix(in srgb, var(--link-soft) 40%, var(--surface));}
+.cm-d.out{background:var(--surface-2); color:var(--ink-3);}
+.cm-d.past .cm-c{opacity:.6;}
+.cm-n{font-size:12.5px; font-weight:600;}
+.cm-d.is-today .cm-n{background:var(--link); color:#fff; border-radius:6px; padding:0 6px; align-self:flex-start;}
+.cm-c{font-size:11px; padding:1px 5px; border-radius:4px; background:color-mix(in srgb, var(--g) 15%, var(--surface)); border-left:2px solid var(--g); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.cm-c.st-noshow{text-decoration:line-through;}
+.cm-more{font-size:11px; color:var(--ink-3);}
+@media (max-width:640px){ .cm-d{min-height:64px; padding:4px;} .cm-c{font-size:10px;} }
+
+/* список */
+.cl-card .cl-day + .cl-day{margin-top:10px;}
+.cl-row{display:grid; grid-template-columns:48px 12px minmax(0,1fr) auto; gap:10px; align-items:center; width:100%; padding:8px 4px; border:0; border-top:1px solid var(--line); background:none; text-align:left;}
+.cl-row:hover{background:var(--surface-2);}
+.cl-row time{font-weight:600; font-variant-numeric:tabular-nums; font-size:13px;}
+.cl-n b{display:block; font-size:13.5px;}
+.cl-n small{display:block; font-size:12px; color:var(--ink-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+/* статистика созвонов */
+.cs-groups{display:flex; flex-direction:column; gap:10px;}
+.cs-g{display:grid; grid-template-columns:12px 110px minmax(0,1fr) auto; gap:10px; align-items:center; font-size:13px;}
+.cs-bar{display:flex; height:10px; border-radius:5px; overflow:hidden; background:var(--sunken);}
+.cs-bar i{display:block; height:100%;}
+.cs-bar i.good{background:var(--good);} .cs-bar i.bad{background:var(--bad);} .cs-bar i.set{background:color-mix(in srgb, var(--link) 45%, var(--surface));}
+.cs-n{font-size:12px; color:var(--ink-3); font-variant-numeric:tabular-nums; white-space:nowrap;}
+.hours{display:grid; grid-template-columns:repeat(14, minmax(0,1fr)); gap:4px; align-items:end; height:120px;}
+.hours div{display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:4px;}
+.hours i{display:block; width:100%; min-height:2px; border-radius:4px 4px 0 0; background:var(--link);}
+.hours small{font-size:10px; color:var(--ink-3);}
+
+/* Google Календарь */
+.gc-card{display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:12px 16px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--line); font-size:13px; color:var(--ink-2); margin-bottom:4px;}
+.gc-card b{color:var(--ink);}
+.gc-card .dot{background:var(--ink-3);}
+.gc-card.ok .dot{background:var(--good);}
+.gc-card.off .dot{background:var(--gold-brand);}
+.gc-card.warn{border-color:color-mix(in srgb, var(--warn) 45%, var(--line)); background:var(--warn-soft);}
+.gc-card.slim{padding:9px 14px;}
+
+/* окна созвона */
+.slot-list{display:flex; flex-direction:column; gap:4px; max-height:52vh; overflow:auto; margin-top:4px;}
+.slot-p{display:flex; gap:10px; align-items:center; padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:var(--surface); text-align:left;}
+.slot-p:hover{border-color:var(--link);}
+.slot-p b{display:block; font-size:13.5px;}
+.slot-p small{display:block; font-size:12px; color:var(--ink-3);}
+.call-head{display:flex; align-items:center; gap:8px; font-size:13.5px;}
+.call-head .st{margin-left:auto;}
+.kv-list{display:flex; flex-direction:column; gap:6px; margin-top:4px;}
+.kv{display:grid; grid-template-columns:110px minmax(0,1fr); gap:10px; font-size:13.5px;}
+.kv span{color:var(--ink-3);}
+.kv b{font-weight:500;}
+.kv a{color:var(--link);}
 </style>
 <div id="app" class="app">
   <div class="boot" id="boot">
@@ -965,6 +1071,7 @@ const NAV = [
   {id: 'expert',  emo: '🎓', name: 'Эксперты'},
   {id: 'partner', emo: '🤝', name: 'Партнёры'},
   {id: 'amb',     emo: '📣', name: 'Амбассадоры'},
+  {id: 'calendar', emo: '🗓', name: 'Календарь'},
   {id: 'stats',   emo: '📊', name: 'Статистика'},
   {id: 'questions', emo: '❓', name: 'Вопросы'},
   {id: 'settings',  emo: '⚙️', name: 'Настройки'},
@@ -1934,7 +2041,7 @@ const App = {
   paintNav(active) {
     /* у группы одна цифра — сколько в ней людей; что делать, видно на главной */
     $('#nav').innerHTML = NAV.map(n => {
-      const cnt = TYPES[n.id] ? People.all(n.id).length : null;
+      const cnt = TYPES[n.id] ? People.all(n.id).length : n.id === 'calendar' ? callsBetween(Date.now() - 3600e3, dateOf(addDays(weekStart(today()), 7)).getTime()).filter(p => p.s2 === 'set').length || null : null;
       return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${cnt ? `<span class="nav-n">${cnt}</span>` : ''}</a>`;
     }).join('');
     const m = Who.member();
@@ -2331,6 +2438,10 @@ const Demo = {
     const ago = (d, h = 12) => { const x = new Date(T - d * DAY); x.setHours(h, R.int(0, 59), 0, 0); return Math.min(x.getTime(), T - 60e3); };
     const inDays = (d, h = 12) => { const x = new Date(T + d * DAY); x.setHours(h, 0, 0, 0); return x.getTime(); };
     const out = {team: {}, people: {}, cfg: {}};
+    /* прошедшие созвоны — в разные дни и часы последних двух недель, без наложений */
+    const HOURS = [10, 11, 12, 13, 15, 16, 17, 18, 19];
+    let si = 0;
+    const pastCall = () => { const n = si++; const x = new Date(T - (1 + (n * 4) % 13) * DAY); x.setHours(HOURS[(n * 7) % HOURS.length], n % 2 ? 30 : 0, 0, 0); return Math.min(x.getTime(), T - 2 * 3600e3); };
     out.team.dm_anna = {demo: true, name: 'Анна Смирнова', role: 'member', joinedAt: ago(60), order: 1, color: '#5A50C0'};
     out.team.dm_vera = {demo: true, name: 'Вера Орлова', role: 'member', joinedAt: ago(60), order: 2, color: '#8F6B27'};
     const team = ['dm_anna', 'dm_vera'];
@@ -2351,6 +2462,9 @@ const Demo = {
       if (f.s2 === 'done') log.l5 = {t: f.callAt || ago(2), by: f.owner || null, emo: '✅', text: type === 'client' ? 'Интервью прошёл' : 'Созвон прошёл'};
       if (f.s3 && f.s3 !== 'none') log.l6 = {t: ago(1), by: f.owner || null, emo: '🚀', text: 'Итог записан'};
       out.people[id] = {demo: true, type, name, code: codeOf(name), s1: 'new', s2: 'none', s3: 'none', answers: {}, talk: {}, res: {tags: []}, createdAt: ago(created), touchedAt: ago(Math.max(0, created - 4)), log, ...f};
+      const doc = out.people[id];
+      if (doc.callAt) doc.callMin = type === 'partner' ? 45 : 30;
+      if (doc.s2 === 'done' && doc.callAt) doc.callDur = Math.round(doc.callMin * 60 * (0.75 + R.next() * 0.55));
       return id;
     };
 
@@ -2384,7 +2498,7 @@ const Demo = {
       ['Ирина Павлова', {s1: 'done', s2: 'none', answeredAt: ago(4)}],
       ['Светлана Орлова', {s1: 'done', s2: 'none', answeredAt: ago(3)}],
       ['Полина Лебедева', {s1: 'done', s2: 'none', answeredAt: ago(0.4), answeredBy: 'team'}],
-      ['Ксения Новикова', {s1: 'done', s2: 'noshow', callAt: ago(1)}],
+      ['Ксения Новикова', {s1: 'done', s2: 'noshow', callAt: pastCall()}],
       ['Вероника Семёнова', {s1: 'sent', sentAt: ago(1)}],
       ['Анастасия Фёдорова', {s1: 'sent', sentAt: ago(2)}],
       ['Елена Григорьева', {s1: 'new'}],
@@ -2422,7 +2536,7 @@ const Demo = {
       }
       const {talk: _t, tags, main, idea, ...rest} = f;
       clientIds.push(person('client', name, {...rest, answers: a, answeredAt: f.answeredAt || (answered ? ago(6 - (i % 5)) : undefined), answeredBy: f.answeredBy || (answered ? 'self' : undefined), talk, talkAt: f.talk ? ago(2) : undefined,
-        callAt: f.callAt || (f.s2 === 'done' ? ago(2, 19) : undefined), res: {tags: tags || [], main: main || '', idea: idea || ''}, city: a.city || '', tg: a.tg || '', owner: team[i % 2], created: 12 - (i % 8)}));
+        callAt: f.callAt || (f.s2 === 'done' ? pastCall() : undefined), res: {tags: tags || [], main: main || '', idea: idea || ''}, city: a.city || '', tg: a.tg || '', owner: team[i % 2], created: 12 - (i % 8)}));
     });
 
     /* ── эксперты ── */
@@ -2452,7 +2566,7 @@ const Demo = {
       }
       const talk = f.s2 === 'done' ? Object.fromEntries(Object.entries(TALK_E).map(([q, t]) => [q, {a: t, t: ago(3)}])) : {};
       if (i === 0) talk.t4.star = true;
-      person('expert', name, {s1: f.s1, s2: f.s2 || 'none', s3: f.s3 || 'none', sentAt: f.sentAt, callAt: f.callAt || (f.s2 === 'done' ? ago(3, 15) : undefined), dirs, topic, city, answers: a,
+      person('expert', name, {s1: f.s1, s2: f.s2 || 'none', s3: f.s3 || 'none', sentAt: f.sentAt, callAt: f.callAt || (f.s2 === 'done' ? pastCall() : undefined), dirs, topic, city, answers: a,
         answeredAt: f.s1 === 'done' ? ago(5) : undefined, answeredBy: f.s1 === 'done' ? (i % 3 ? 'self' : 'team') : undefined, talk, talkAt: f.s2 === 'done' ? ago(3) : undefined,
         res: {tags: f.tags || [], next: f.next || '', note: f.note || '', date: f.next ? isoTs(inDays(10 + i)) : ''}, tg: a.tg || '', owner: 'dm_vera', created: 20 - i});
     });
@@ -2473,7 +2587,7 @@ const Demo = {
       const a = {};
       if (f.s1 === 'done') Object.assign(a, {name, cat, city, addr: 'центр города', contact, clients: one(qp.clients, [1, 4, 3, 1]), ages: many(qp.ages, [1, 5, 4, 2], 2),
         want: many(qp.want, [5, 4, 2, 1, 3, 1, 2, 1], 2), give: many(qp.give, [4, 3, 2, 2, 1], 2), tell: many(qp.tell, [4, 3, 3, 2, 1], 2), aud: one(qp.aud, [1, 2, 4, 2]), when: one(qp.when, [2, 3, 2, 1]), tg: '@' + refCodeFor(name).toLowerCase().replace(/\d+$/, '')});
-      person('partner', name, {s1: f.s1, s2: f.s2 || 'none', s3: f.s3 || 'none', sentAt: f.sentAt, callAt: f.callAt || (f.s2 === 'done' ? ago(4, 11) : undefined), cat, city, contact, answers: a,
+      person('partner', name, {s1: f.s1, s2: f.s2 || 'none', s3: f.s3 || 'none', sentAt: f.sentAt, callAt: f.callAt || (f.s2 === 'done' ? pastCall() : undefined), cat, city, contact, answers: a,
         answeredAt: f.s1 === 'done' ? ago(6) : undefined, answeredBy: f.s1 === 'done' ? 'self' : undefined, res: {tags: f.tags || [], next: f.next || '', note: f.note || '', date: f.next ? isoTs(inDays(7 + i)) : ''}, tg: a.tg || '', owner: 'dm_vera', created: 25 - i});
     });
 
@@ -2493,7 +2607,7 @@ const Demo = {
       if (f.s1 === 'done') Object.assign(a, {name, city: R.pick(['Москва', 'Казань', 'Сочи', 'Новосибирск']), use: one(qa.use, [3, 3, 2]), where: many(qa.where, [5, 3, 1, 2, 1, 1, 3, 1, 2], 3),
         size: qa.size.o[f.size ?? 1], topic: many(qa.topic, [4, 2, 2, 3, 1, 3, 1, 1], 2), women: one(qa.women, [6, 1, 0]), how: many(qa.how, [5, 4, 3, 2, 1, 2], 3),
         hours: one(qa.hours, [2, 3, 1]), motive: many(qa.motive, [3, 4, 2, 2, 1], 2), tax: i === 1 ? 'Самозанятая' : one(qa.tax, [2, 1, 3]), pay: one(qa.pay, [3, 2]), before: one(qa.before, [1, 2]), tg: '@' + refCodeFor(name).toLowerCase().replace(/\d+$/, '')});
-      const id = person('amb', name, {s1: f.s1, s2: f.s2 || 'none', s3: f.s3 || 'none', sentAt: f.sentAt, callAt: f.callAt || (f.s2 === 'done' ? ago(5, 16) : undefined), city: a.city || '', answers: a,
+      const id = person('amb', name, {s1: f.s1, s2: f.s2 || 'none', s3: f.s3 || 'none', sentAt: f.sentAt, callAt: f.callAt || (f.s2 === 'done' ? pastCall() : undefined), city: a.city || '', answers: a,
         answeredAt: f.s1 === 'done' ? ago(7) : undefined, answeredBy: f.s1 === 'done' ? 'self' : undefined, res: {tags: f.tags || [], next: f.s3 === 'yes' ? 'Первый пост в канале' : '', note: ''}, tg: a.tg || '', owner: 'dm_anna', created: 18 - i});
       ambCodes.push(out.people[id].code);
     });
@@ -2716,37 +2830,13 @@ function wireActs(root) {
     else if (act === 'skip1') People.patch(p.id, {s1: 'skip'}, 'Решили без анкеты', '⏭');
     else if (act === 'time') openTimePicker(p);
     else if (act === 'talk') { View.set('pp.last', p.id); View.set('pp.tab', 'talk'); App.go('p-' + p.id); }
-    else if (act === 'done2') People.patch(p.id, {s2: 'done', talkAt: p.talkAt || Date.now()}, `${p.type === 'client' ? 'Интервью' : 'Созвон'} прошёл`, '✅');
+    else if (act === 'done2') { People.patch(p.id, {s2: 'done', talkAt: p.talkAt || Date.now()}, `${p.type === 'client' ? 'Интервью' : 'Созвон'} прошёл`, '✅'); syncCall(p.id); }
     else if (act === 'noshow') People.patch(p.id, {s2: 'noshow'}, 'Не пришла на созвон', '🙈');
     else if (act === 'skip2') People.patch(p.id, {s2: 'skip'}, 'Без созвона', '⏭');
     else if (act === 'result') { View.set('pp.last', p.id); View.set('pp.tab', 'result'); App.go('p-' + p.id); }
     else if (['yes', 'think', 'no'].includes(act)) { const s = S3.other[act]; People.patch(p.id, {s3: act}, `Итог: ${s.name}`, s.emo); toast(`${s.emo} ${People.name(p)}: ${s.name.toLowerCase()}`); }
     void T;
   });
-}
-
-function openTimePicker(p) {
-  const d = p.callAt ? new Date(p.callAt) : new Date(Date.now() + 864e5);
-  if (!p.callAt) d.setHours(12, 0, 0, 0);
-  const local = `${isoOf(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  const pref = (p.answers || {}).call || (p.answers || {}).when || '';
-  openModal({title: `Созвон: ${People.name(p)}`, body: `
-      ${pref ? `<div class="warnline" style="background:var(--violet-soft);color:var(--violet)">В анкете удобно: «${esc(noEmo(Array.isArray(pref) ? pref.join(', ') : pref))}»</div>` : ''}
-      <label class="field"><span>Когда</span><input class="input" type="datetime-local" id="tpWhen" value="${local}"></label>
-      <div class="chip-row">${[['Завтра 12:00', 1, 12], ['Завтра 19:00', 1, 19], ['Послезавтра 12:00', 2, 12], ['Через неделю', 7, 12]].map(([n, dd, hh]) => `<button class="chip" data-quick="${dd}|${hh}">${n}</button>`).join('')}</div>
-      <label class="field"><span>Ссылка на Zoom (необязательно)</span><input class="input" id="tpZoom" value="${esc(p.zoom || '')}" placeholder="https://zoom.us/j/…"></label>`,
-    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Назначить</button>',
-    onMount(el, close) {
-      on(el, 'click', '[data-quick]', (ev, b) => { const [dd, hh] = b.dataset.quick.split('|').map(Number); const x = new Date(); x.setDate(x.getDate() + dd); x.setHours(hh, 0, 0, 0); $('#tpWhen', el).value = `${isoOf(x)}T${pad(hh)}:00`; });
-      $('[data-ok]', el).onclick = () => {
-        const v = $('#tpWhen', el).value;
-        if (!v) return;
-        const ts = new Date(v).getTime();
-        People.patch(p.id, {s2: 'set', callAt: ts, zoom: $('#tpZoom', el).value.trim()}, `Созвон назначен на ${when(ts)}`, '📅');
-        close();
-        toast(`Созвон назначен: ${when(ts)}`);
-      };
-    }});
 }
 
 /* быстро добавить человека: имя, контакт — и сразу ссылка */
@@ -2838,6 +2928,7 @@ function audiencePage(type) {
         if (!p) return;
         const before = People.moveTo(p, Number(col), zone);
         if (!before) { App.render(); return; }
+        syncCall(id);
         const zn = zone ? ' · ' + s3Map(type)[zone].name.toLowerCase() : '';
         toast(`${People.name(p)} → ${T.steps[Number(col) - 1]}${zn}`, {undo: () => People.patch(id, before, 'Отменили перенос', '↩')});
       }});
@@ -3133,6 +3224,608 @@ function openPaste() {
         openImport(raw);
       };
     }});
+}
+
+/* ── 24-gcal.js ── */
+/* Google Календарь — через коннектор Claude (capability mcp) и от имени
+   того, кто открыл CRM. Что делает:
+   • назначенный созвон становится событием в Google Календаре того, кто
+     его назначил: «CRM · Интервью: Ольга Миронова», в описании — ссылка на
+     карточку и метка #eva-crm. По этой метке штаб узнаёт созвоны CRM и
+     рисует их у себя полупрозрачными;
+   • перенос и отмена созвона меняют и удаляют это событие; если созвон
+     перенёс коллега, событие у автора обновится, когда он откроет CRM;
+   • свои события недели видны в календаре CRM серым — чтобы не назначить
+     созвон на занятое время. Они не сохраняются в базе.
+   Без коннектора (GitHub Pages, чужое окно) календарь CRM работает сам по
+   себе, просто без Google. */
+
+const GCAL = 'Google Calendar';
+const CRM_TAG = '#eva-crm';
+const TZ_LOCAL = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Moscow'; } catch (e) { return 'Europe/Moscow'; } })();
+const GCAL_ERR = {
+  needs_reauth: 'Доступ к Google Календарю истёк. Переподключите его: claude.ai → Настройки → Коннекторы → Google Calendar — и обновите страницу.',
+  server_not_connected: 'Google Календарь не подключён к вашему Claude. Добавьте его: claude.ai → Настройки → Коннекторы → Google Calendar — и обновите страницу.',
+  selection_required: 'У вас подключено несколько Google Календарей — Claude попросит выбрать один. Если окно закрыли, обновите страницу.',
+  not_in_manifest: 'Доступ к календарю для этой страницы выключен или отклонён. Разрешите Google Календарь в настройках артефакта и обновите страницу.',
+  blocked_by_policy: 'Организация запретила этот инструмент Google Календаря.',
+  approval_required: 'Нужно разрешение администратора организации на Google Календарь.',
+  server_not_found: 'Коннектор Google Календаря не найден. Подключите его заново: claude.ai → Настройки → Коннекторы.',
+  consent_required: 'CRM нужен доступ к Google Календарю — нажмите «Подключить» ещё раз и подтвердите.',
+  server_unavailable: 'Google Календарь сейчас не отвечает. Попробуйте через минуту.',
+  rate_limited: 'Слишком много запросов к календарю — подождите немного.',
+  cancelled: 'Действие отменено.',
+};
+const GCAL_OFF = ['not_granted', 'capability_disabled', 'capability_removed'];
+const GCAL_CONN = ['needs_reauth', 'server_not_connected', 'selection_required', 'not_in_manifest', 'blocked_by_policy', 'approval_required', 'server_not_found', 'consent_required'];
+function gcalErr(e) {
+  const code = (e && e.code) || 'upstream_error';
+  let text = GCAL_ERR[code];
+  if (!text && GCAL_OFF.includes(code)) text = 'Google Календарь недоступен в этом окне — откройте CRM в Claude.';
+  if (!text && code === 'tool_error') text = 'Google ответил ошибкой: ' + ((e && e.message) || 'без подробностей');
+  if (!text) text = 'Не получилось связаться с Google Календарём' + (e && e.message ? ': ' + e.message : '') + '.';
+  /* для записи «не ответил» не значит «не сделал» — повторять только после проверки */
+  const ambiguous = code === 'server_unavailable' || code === 'upstream_error' || !(code in GCAL_ERR || GCAL_OFF.includes(code) || code === 'tool_error' || code === 'bad_request');
+  return {code, text, conn: GCAL_CONN.includes(code), off: GCAL_OFF.includes(code), ambiguous};
+}
+const gwait = ms => new Promise(r => setTimeout(r, ms));
+const gEventOf = res => (res && (res.event || res.createdEvent || res.updatedEvent)) || res || {};
+function gRange(ev) {
+  const s = ev.start || {}, e = ev.end || {};
+  if (s.dateTime) { const a = Date.parse(s.dateTime); return {start: a, end: Date.parse(e.dateTime || s.dateTime) || a, allDay: false}; }
+  if (s.date) { const d0 = String(s.date).slice(0, 10); const d1 = e.date ? String(e.date).slice(0, 10) : addDays(d0, 1); return {start: dateOf(d0).getTime(), end: dateOf(d1 > d0 ? d1 : addDays(d0, 1)).getTime(), allDay: true}; }
+  return null;
+}
+const gIsCrm = ev => String(ev.description || '').includes(CRM_TAG) || /^CRM ·/.test(String(ev.summary || ''));
+function gBusy(ev) {
+  if (ev.transparency === 'transparent' || ev.availability === 'AVAILABILITY_FREE') return false;
+  const me = (ev.attendees || []).find(a => a.self);
+  return !(me && me.responseStatus === 'declined');
+}
+
+const Gcal = {
+  api: undefined,
+  conn: 'checking',     // checking · ready · prompt · denied · off · error
+  err: null,
+  week: {},             // понедельник → {events, at} | {loading} | {err} — только в памяти этого окна
+  busy: false,
+  _init: null,
+  _reconciled: false,
+
+  init() {
+    if (this._init) return this._init;
+    this._init = (async () => {
+      try { this.api = window.claude && typeof window.claude.use === 'function' ? await window.claude.use('mcp') : null; }
+      catch (e) { this.api = null; }
+      if (!this.api) { this.conn = 'off'; App.renderSoon(); return; }
+      let st = 'prompt';
+      try {
+        const perms = await window.claude.use('permissions');
+        if (perms) st = await perms.state('mcp:' + GCAL).catch(() => 'unavailable');
+      } catch (e) { st = 'prompt'; }
+      this.conn = st === 'unavailable' ? 'off' : st === 'denied' ? 'denied' : st === 'granted' ? 'ready' : 'prompt';
+      App.renderSoon();
+      if (this.conn === 'ready') this.reconcile();
+    })();
+    return this._init;
+  },
+  usable() { return this.conn === 'ready' || this.conn === 'prompt'; },
+  /* ставить ли созвоны в Google по умолчанию — выбор каждого в своём браузере */
+  auto() { return this.conn === 'ready' && View.get('gcal.auto', true) !== false; },
+  setErr(e) {
+    const x = gcalErr(e);
+    if (x.off) { this.conn = 'off'; this.err = null; }
+    else if (x.conn) { this.conn = 'error'; this.err = x; }
+    return x;
+  },
+
+  /* read — чтение: одна тихая повторная попытка, если Google разрешил; запись не повторяем */
+  async call(tool, input, read = false) {
+    await this.init();
+    if (!this.api) throw {code: 'capability_disabled'};
+    const run = () => this.api.callTool(GCAL, tool, input, read ? undefined : {cache: false});
+    let r;
+    try { r = await run(); }
+    catch (e) {
+      if (!(read && e && e.retryable)) { this.setErr(e); throw e; }
+      await gwait(Math.min(60000, e.retryAfterMs || 700 + Math.random() * 1300));
+      try { r = await run(); } catch (e2) { this.setErr(e2); throw e2; }
+    }
+    const wasReady = this.conn === 'ready';
+    this.conn = 'ready';
+    this.err = null;
+    if (!wasReady) { App.renderSoon(); this.reconcile(); }
+    return r && r.payload !== undefined ? r.payload : r;
+  },
+
+  async events(fromMs, toMs) {
+    const input = {startTime: new Date(fromMs).toISOString(), endTime: new Date(toMs).toISOString(), orderBy: 'startTime', pageSize: 250, timeZone: TZ_LOCAL};
+    let list = [], token = null;
+    for (let page = 0; page < 4; page++) {
+      const res = await this.call('list_events', token ? {...input, pageToken: token} : input, true);
+      list = list.concat(Array.isArray(res) ? res : (res && (res.events || res.items)) || []);
+      token = res && res.nextPageToken;
+      if (!token) break;
+    }
+    return list.filter(ev => ev && ev.status !== 'cancelled');
+  },
+
+  /* свои события недели — только для сетки, в базу не попадают */
+  async loadWeek(ws, force = false) {
+    if (!force && this.week[ws] && !this.week[ws].err) return;
+    this.week[ws] = {loading: true};
+    try {
+      const a = dateOf(ws).getTime(), b = dateOf(addDays(ws, 7)).getTime();
+      this.week[ws] = {events: await this.events(a, b), at: Date.now()};
+    } catch (e) {
+      this.week[ws] = {err: gcalErr(e)};
+    }
+    App.renderSoon();
+  },
+  /* подключить: первое чтение само спросит разрешение */
+  async connect(ws) {
+    this.week = {};
+    await this.loadWeek(ws, true);
+    const w = this.week[ws];
+    if (w && w.err && !w.err.conn && !w.err.off) toast(w.err.text, {error: true});
+    else if (this.conn === 'ready') toast('Google Календарь подключён: новые созвоны будут появляться в нём сами');
+  },
+
+  /* событие созвона */
+  title(p) { return `CRM · ${p.type === 'client' ? 'Интервью' : p.type === 'partner' ? 'Встреча' : 'Созвон'}: ${People.name(p)}${p.type === 'client' ? '' : ' (' + TYPES[p.type].one.toLowerCase() + ')'}`; },
+  desc(p) {
+    const url = (settings().crmUrl || LINKS.crm) + '#p-' + p.id;
+    const lines = [`Созвон из Eva CRM — ${groupName(p.type)}.`, `Карточка: ${url}`];
+    if (p.zoom) lines.push(`Zoom: ${p.zoom}`);
+    if (p.tg) lines.push(`Контакт: ${p.tg}`);
+    return [...lines, '', CRM_TAG].join('\n');
+  },
+  sig(p) { return [p.callAt, callMin(p), this.title(p), p.zoom || ''].join('|'); },
+  mine(p) { return !!(p.gcal && p.gcal.id && p.gcal.by === Who.id()); },
+  wanted(p) { return !!p.callAt && ['set', 'done', 'noshow'].includes(p.s2); },
+
+  /* поставить или обновить событие; true — получилось */
+  async push(p, {silent = false} = {}) {
+    if (!p || !this.wanted(p)) return false;
+    const input = {summary: this.title(p), description: this.desc(p), startTime: new Date(p.callAt).toISOString(), endTime: new Date(p.callAt + callMin(p) * 60e3).toISOString(), timeZone: TZ_LOCAL, colorId: '4', notificationLevel: 'NONE'};
+    if (p.zoom) input.location = p.zoom;
+    try {
+      let ev;
+      if (this.mine(p)) ev = gEventOf(await this.call('update_event', {eventId: p.gcal.id, ...input}));
+      else ev = gEventOf(await this.call('create_event', {...input, useDefaultReminders: true}));
+      const id = ev.id || ev.eventId || (p.gcal && p.gcal.id) || null;
+      People.patch(p.id, {gcal: {id, by: Who.id(), sig: this.sig(p), link: ev.htmlLink || (p.gcal && p.gcal.link) || null, at: Date.now()}});
+      if (!silent) toast('Созвон в вашем Google Календаре 📅');
+      return true;
+    } catch (e) {
+      const x = gcalErr(e);
+      if (!silent) toast(x.ambiguous ? 'Google не ответил вовремя — проверьте календарь, прежде чем добавлять ещё раз.' : x.text, {error: true});
+      return false;
+    }
+  },
+  async drop(p, {silent = false} = {}) {
+    if (!this.mine(p)) return false;
+    try {
+      await this.call('delete_event', {eventId: p.gcal.id, notificationLevel: 'NONE'});
+    } catch (e) {
+      const x = gcalErr(e);
+      if (x.code !== 'tool_error') { if (!silent) toast(x.text, {error: true}); return false; }
+      /* событие уже удалили в самом Google — просто забываем о нём */
+    }
+    People.patch(p.id, {gcal: null});
+    if (!silent) toast('Событие убрано из Google Календаря');
+    return true;
+  },
+  /* после переноса или отмены — привести своё событие к карточке */
+  async sync(p) {
+    if (!p || !this.mine(p) || this.conn !== 'ready') return;
+    if (!this.wanted(p)) return this.drop(p, {silent: true});
+    if (p.gcal.sig !== this.sig(p)) return this.push(p, {silent: true});
+  },
+  /* при открытии CRM: мои события, которые коллеги перенесли или отменили */
+  async reconcile() {
+    if (this._reconciled || this.conn !== 'ready') return;
+    this._reconciled = true;
+    const list = Store.all('people').filter(p => this.mine(p) && (!this.wanted(p) || p.gcal.sig !== this.sig(p))).slice(0, 20);
+    for (const p of list) { await this.sync(p); await gwait(250); }
+  },
+};
+/* длительность созвона в минутах */
+const callMin = p => Number(p.callMin) || (p.type === 'partner' ? 45 : 30);
+
+/* ── 25-calendar.js ── */
+/* Календарь созвонов: неделя сеткой, месяц и список, статистика созвонов —
+   общая, по группам, по 14 направлениям экспертов, по категориям партнёров
+   и по людям в команде. Созвон переносится перетаскиванием, клик по
+   пустому месту — назначить созвон на это время. Серым — свои события из
+   Google Календаря, если он подключён. */
+
+const CAL_H0 = 8, CAL_H1 = 22;
+const DURS = [20, 30, 45, 60, 90];
+const GROUP_TONE = {client: 'g-client', expert: 'g-expert', partner: 'g-partner', amb: 'g-amb'};
+const CallUI = {ws: null, month: null};
+
+/* ── созвоны ── */
+const hasCall = p => !!p.callAt && ['set', 'done', 'noshow'].includes(p.s2 || 'none');
+function callState(p) {
+  if (p.s2 === 'done') return 'done';
+  if (p.s2 === 'noshow') return 'noshow';
+  return p.callAt + callMin(p) * 60e3 < Date.now() ? 'late' : 'set';
+}
+const CALL_STATE = {set: 'назначен', late: 'прошёл? отметьте', done: 'прошёл', noshow: 'не состоялся'};
+const callsBetween = (a, b) => Store.all('people').filter(p => hasCall(p) && p.callAt >= a && p.callAt < b).sort((x, y) => x.callAt - y.callAt);
+const minOfDay = ts => { const d = new Date(ts); return d.getHours() * 60 + d.getMinutes(); };
+const tsOf = (iso, min) => { const d = dateOf(iso); d.setHours(Math.floor(min / 60), min % 60, 0, 0); return d.getTime(); };
+const hmMin = m => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+/* после любой смены времени или статуса — привести своё событие в Google */
+const syncCall = id => setTimeout(() => Gcal.sync(People.get(id)), 60);
+
+/* ── назначить или перенести созвон ── */
+function openTimePicker(p, preset = null) {
+  Gcal.init();
+  const base = preset ? preset.ts : p.callAt || (() => { const d = new Date(Date.now() + 864e5); d.setHours(12, 0, 0, 0); return d.getTime(); })();
+  const d = new Date(base);
+  const local = `${isoOf(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const pref = (p.answers || {}).call || (p.answers || {}).when || '';
+  const dur = callMin(p);
+  const gOn = Gcal.usable();
+  const busyWith = ts => {
+    const e = ts + Number(($('#tpDur') || {}).value || dur) * 60e3;
+    const crm = Store.all('people').filter(x => x.id !== p.id && hasCall(x) && x.s2 === 'set' && x.callAt < e && x.callAt + callMin(x) * 60e3 > ts).map(x => `${hmMin(minOfDay(x.callAt))} ${People.name(x)}`);
+    const ws = weekStart(isoTs(ts));
+    const g = ((Gcal.week[ws] || {}).events || []).filter(ev => !gIsCrm(ev) && gBusy(ev)).map(ev => ({ev, r: gRange(ev)})).filter(x => x.r && !x.r.allDay && x.r.start < e && x.r.end > ts).map(x => `${hmMin(minOfDay(x.r.start))} ${x.ev.summary || 'занято'}`);
+    return [...crm.map(x => 'CRM: ' + x), ...g.map(x => 'Google: ' + x)];
+  };
+  openModal({title: `${p.callAt && p.s2 === 'set' ? 'Перенести' : 'Назначить'} созвон: ${People.name(p)}`, body: `
+      ${pref ? `<div class="warnline" style="background:var(--violet-soft);color:var(--violet)">В анкете удобно: «${esc(noEmo(Array.isArray(pref) ? pref.join(', ') : pref))}»</div>` : ''}
+      <div class="grid2"><label class="field"><span>Когда</span><input class="input" type="datetime-local" id="tpWhen" value="${local}" step="900"></label>
+      <label class="field"><span>Сколько</span><select class="select" id="tpDur">${DURS.map(m => `<option value="${m}" ${m === dur ? 'selected' : ''}>${m} минут</option>`).join('')}</select></label></div>
+      <div class="chip-row">${[['Завтра 12:00', 1, 12], ['Завтра 19:00', 1, 19], ['Послезавтра 12:00', 2, 12], ['Через неделю', 7, 12]].map(([n, dd, hh]) => `<button class="chip" data-quick="${dd}|${hh}">${n}</button>`).join('')}</div>
+      <div id="tpBusy"></div>
+      <label class="field"><span>Ссылка на Zoom (необязательно)</span><input class="input" id="tpZoom" value="${esc(p.zoom || '')}" placeholder="https://zoom.us/j/…"></label>
+      ${gOn ? `<label class="check"><input type="checkbox" id="tpG" ${Gcal.auto() || Gcal.mine(p) ? 'checked' : ''}> Поставить в мой Google Календарь${Gcal.mine(p) ? ' (событие уже есть — обновится)' : ''}</label>` : ''}`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Сохранить</button>',
+    onMount(el, close) {
+      const paintBusy = () => {
+        const v = $('#tpWhen', el).value;
+        const list = v ? busyWith(new Date(v).getTime()) : [];
+        $('#tpBusy', el).innerHTML = list.length ? `<div class="warnline">В это время уже: ${esc(list.slice(0, 3).join(' · '))}</div>` : '';
+      };
+      paintBusy();
+      $('#tpWhen', el).oninput = paintBusy;
+      $('#tpDur', el).onchange = paintBusy;
+      on(el, 'click', '[data-quick]', (ev, b) => { const [dd, hh] = b.dataset.quick.split('|').map(Number); const x = new Date(); x.setDate(x.getDate() + dd); x.setHours(hh, 0, 0, 0); $('#tpWhen', el).value = `${isoOf(x)}T${pad(hh)}:00`; paintBusy(); });
+      $('[data-ok]', el).onclick = async () => {
+        const v = $('#tpWhen', el).value;
+        if (!v) return;
+        const ts = new Date(v).getTime();
+        const moved = p.callAt && p.s2 === 'set' && p.callAt !== ts;
+        People.patch(p.id, {s2: 'set', callAt: ts, callMin: Number($('#tpDur', el).value) || 30, zoom: $('#tpZoom', el).value.trim(), s1: ['done', 'skip'].includes(p.s1) ? p.s1 : 'skip'}, `${moved ? 'Созвон перенесён' : 'Созвон назначен'} на ${when(ts)}`, '📅');
+        const wantG = $('#tpG', el) && $('#tpG', el).checked;
+        close();
+        toast(`Созвон ${moved ? 'перенесён' : 'назначен'}: ${when(ts)}`);
+        if (wantG) { View.set('gcal.auto', true); await Gcal.push(People.get(p.id)); }
+        else { if ($('#tpG', el)) View.set('gcal.auto', false); syncCall(p.id); }
+      };
+    }});
+}
+
+/* кого позвать на свободное время: кому нужен созвон — сверху */
+function openSlotPicker(ts) {
+  const need = Store.all('people').filter(p => People.col(p) === 2 && ['none', 'noshow'].includes(p.s2 || 'none'));
+  const rest = Store.all('people').filter(p => !need.includes(p) && !(p.s2 === 'set'));
+  const row = p => `<button class="slot-p" data-pick="${p.id}">${avatar(People.name(p))}<span><b>${esc(People.name(p))}</b><small>${groupName(p.type)}${People.sub(p) ? ' · ' + esc(People.sub(p)) : ''}</small></span></button>`;
+  openModal({title: `Созвон ${when(ts)}`, body: `
+      <input class="input" id="spQ" placeholder="Поиск: имя, город">
+      <div class="slot-list" id="spList">
+        ${need.length ? `<p class="rec-h">Ждут созвона · ${need.length}</p>${need.map(row).join('')}` : ''}
+        <p class="rec-h">Остальные</p>${rest.slice(0, 60).map(row).join('')}
+      </div>`,
+    foot: '<button class="btn" data-close>Отмена</button>',
+    onMount(el, close) {
+      $('#spQ', el).oninput = e => { const q = e.target.value.trim().toLowerCase(); $$('[data-pick]', el).forEach(b => { b.hidden = q && !b.textContent.toLowerCase().includes(q); }); };
+      on(el, 'click', '[data-pick]', (e, b) => { close(); setTimeout(() => openTimePicker(People.get(b.dataset.pick), {ts}), 80); });
+    }});
+}
+
+/* созвон по клику: что с ним сделать */
+function openCallCard(p) {
+  const st = callState(p);
+  const canEdit = People.canEdit();
+  const owner = p.owner ? Team.get(p.owner) : null;
+  openModal({title: People.name(p), body: `
+      <div class="call-head"><span class="cb-dot ${GROUP_TONE[p.type]}"></span><b>${groupName(p.type)}</b><span class="st ${st === 'done' ? 'good' : st === 'noshow' ? 'bad' : st === 'late' ? 'warn' : 'violet'}">${CALL_STATE[st]}</span></div>
+      <div class="kv-list">
+        ${kv('Когда', esc(`${cap(dayWd(isoTs(p.callAt)))}, ${hmMin(minOfDay(p.callAt))}–${hmMin(minOfDay(p.callAt + callMin(p) * 60e3))}`))}
+        ${People.sub(p) ? kv('Кто это', esc(People.sub(p))) : ''}
+        ${owner ? kv('Ведёт', esc(Team.name(owner))) : ''}
+        ${p.zoom ? kv('Zoom', `<a href="${esc(p.zoom)}" target="_blank" rel="noopener">открыть ↗</a>`) : ''}
+        ${p.gcal && p.gcal.id ? kv('Google', p.gcal.link ? `<a href="${esc(p.gcal.link)}" target="_blank" rel="noopener">событие в календаре ↗</a>` : 'событие в календаре') : ''}
+      </div>`,
+    foot: `<button class="btn" data-go>Карточка</button>${canEdit ? `
+      ${st === 'set' || st === 'late' ? `<button class="btn" data-cc="time">Перенести</button><button class="btn" data-cc="noshow">Не состоялся</button><button class="btn" data-cc="done">Прошёл</button><button class="btn primary" data-cc="talk">Начать ${p.type === 'client' ? 'интервью' : 'созвон'}</button>` : ''}
+      ${st === 'noshow' ? '<button class="btn primary" data-cc="time">Назначить заново</button>' : ''}
+      ${st === 'done' ? '<button class="btn primary" data-cc="result">Итог</button>' : ''}` : ''}`,
+    onMount(el, close) {
+      $('[data-go]', el).onclick = () => { close(); App.go('p-' + p.id); };
+      on(el, 'click', '[data-cc]', (e, b) => {
+        const a = b.dataset.cc;
+        close();
+        if (a === 'time') setTimeout(() => openTimePicker(People.get(p.id)), 80);
+        else if (a === 'talk') { View.set('pp.last', p.id); View.set('pp.tab', 'talk'); App.go('p-' + p.id); }
+        else if (a === 'result') { View.set('pp.last', p.id); View.set('pp.tab', 'result'); App.go('p-' + p.id); }
+        else if (a === 'done') People.patch(p.id, {s2: 'done', talkAt: p.talkAt || Date.now()}, `${p.type === 'client' ? 'Интервью' : 'Созвон'} прошёл`, '✅');
+        else if (a === 'noshow') { People.patch(p.id, {s2: 'noshow'}, 'Созвон не состоялся', '🙈'); toast('Отметили. Назначьте новое время, пока человек на связи', {undo: () => People.patch(p.id, {s2: 'set'})}); }
+      });
+    }});
+}
+
+/* ── статистика созвонов за период ── */
+function callStats(list) {
+  const done = list.filter(p => p.s2 === 'done'), noshow = list.filter(p => p.s2 === 'noshow');
+  const future = list.filter(p => callState(p) === 'set'), late = list.filter(p => callState(p) === 'late');
+  const durs = done.map(p => p.callDur ? p.callDur / 60 : 0).filter(Boolean);
+  const byGroup = Object.keys(TYPES).map(k => { const L = list.filter(p => p.type === k); return {k, all: L.length, done: L.filter(p => p.s2 === 'done').length, noshow: L.filter(p => p.s2 === 'noshow').length, set: L.filter(p => p.s2 === 'set').length}; });
+  const byDir = DIRECTIONS.map(d => { const L = list.filter(p => p.type === 'expert' && (p.dirs || []).includes(d)); return {name: noEmo(d), v: L.length, done: L.filter(p => p.s2 === 'done').length}; });
+  const byCat = PARTNER_CATS.map(c => { const L = list.filter(p => p.type === 'partner' && p.cat === c); return {name: noEmo(c), v: L.length, done: L.filter(p => p.s2 === 'done').length}; }).filter(x => x.v);
+  const byOwner = Team.all().map(m => { const L = list.filter(p => p.owner === m.id); return {name: Team.name(m), v: L.length, done: L.filter(p => p.s2 === 'done').length}; }).filter(x => x.v);
+  const noOwner = list.filter(p => !p.owner || !Team.get(p.owner)).length;
+  if (noOwner) byOwner.push({name: 'Не назначен', v: noOwner, done: list.filter(p => (!p.owner || !Team.get(p.owner)) && p.s2 === 'done').length});
+  const byHour = Array.from({length: CAL_H1 - CAL_H0}, (_, i) => ({name: `${pad(CAL_H0 + i)}:00`, v: list.filter(p => new Date(p.callAt).getHours() === CAL_H0 + i).length}));
+  const byWd = WD_SH.map((w, i) => ({name: w, v: list.filter(p => weekday(isoTs(p.callAt)) === i).length}));
+  const closed = done.length + noshow.length;
+  return {all: list.length, done: done.length, noshow: noshow.length, future: future.length, late: late.length, show: closed ? done.length / closed : null,
+    avg: durs.length ? Math.round(durs.reduce((a, b) => a + b, 0) / durs.length) : null, byGroup, byDir, byCat, byOwner, byHour, byWd};
+}
+
+App.register('calendar', {
+  title: 'Календарь',
+  render(root) {
+    Gcal.init();
+    const t = today();
+    const tab = View.get('cal.tab', 'week');
+    const ws = CallUI.ws || weekStart(t);
+    const month = CallUI.month || monthOf(t);
+    const range = tab === 'month' ? [dateOf(monthStart(month)).getTime(), dateOf(addDays(monthEnd(month), 1)).getTime()]
+      : tab === 'week' ? [dateOf(ws).getTime(), dateOf(addDays(ws, 7)).getTime()] : [0, Infinity];
+    const period = View.get('cal.period', 'view');
+    const statList = period === 'all' ? Store.all('people').filter(hasCall) : callsBetween(range[0], range[1]);
+    const S = callStats(statList);
+    const canEdit = People.canEdit();
+    const late = Store.all('people').filter(p => hasCall(p) && callState(p) === 'late');
+
+    root.innerHTML = `
+      ${pageHead('Календарь созвонов', 'Все созвоны CRM по дням. Перетащите созвон, чтобы перенести; нажмите на свободное время, чтобы назначить.',
+        canEdit ? `<button class="btn primary" data-slot-now>${icon('plus')}Назначить созвон</button>` : '')}
+      ${gcalCard(ws)}
+      ${late.length ? `<div class="warnline cal-late"><span><b>${late.length} ${plural(late.length, 'созвон прошёл', 'созвона прошли', 'созвонов прошли')} без отметки.</b> Отметьте, состоялись ли они — это нужно для статистики.</span><span class="sp"></span>${late.slice(0, 3).map(p => `<button class="btn xs" data-call="${p.id}">${esc(People.name(p))}</button>`).join('')}</div>` : ''}
+      <div class="kpis kpis-4 card cal-kpis">${[
+        [S.all, period === 'all' ? 'созвонов всего' : tab === 'week' ? 'созвонов на неделе' : tab === 'month' ? 'созвонов в месяце' : 'созвонов всего'],
+        [S.done, 'прошли'],
+        [S.noshow, 'не состоялись'],
+        [S.show === null ? '—' : pct(S.show), 'доходимость'],
+      ].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+      <div class="cal-bar">
+        ${tabsHtml('cal.tab', [['week', 'Неделя'], ['month', 'Месяц'], ['list', 'Список']], tab)}
+        ${tab === 'week' ? `<div class="cal-nav"><button class="icon-btn" data-wk="-7" aria-label="Предыдущая неделя">${icon('back')}</button><b>${weekLabel(ws)}</b><button class="icon-btn flip" data-wk="7" aria-label="Следующая неделя">${icon('back')}</button>${ws !== weekStart(t) ? '<button class="btn xs ghost" data-wk="0">Сегодня</button>' : ''}</div>` : ''}
+        ${tab === 'month' ? `<div class="cal-nav"><button class="icon-btn" data-mo="-1" aria-label="Предыдущий месяц">${icon('back')}</button><b>${monthName(month, true)}</b><button class="icon-btn flip" data-mo="1" aria-label="Следующий месяц">${icon('back')}</button>${month !== monthOf(t) ? '<button class="btn xs ghost" data-mo="0">Сегодня</button>' : ''}</div>` : ''}
+      </div>
+      <div class="cal-legend">${Object.keys(TYPES).map(k => `<span><i class="cb-dot ${GROUP_TONE[k]}"></i>${groupName(k)}</span>`).join('')}${Gcal.conn === 'ready' ? '<span><i class="cb-dot g-google"></i>ваш Google Календарь</span>' : ''}<span class="note">бледные — прошедшие</span></div>
+      <div id="calView">${tab === 'month' ? monthView(month) : tab === 'list' ? listView() : weekView(ws)}</div>
+      <section class="section">
+        <div class="section-head"><h2>Статистика созвонов</h2>
+          <div class="seg">${[['view', tab === 'week' ? 'Эта неделя' : tab === 'month' ? 'Этот месяц' : 'Список'], ['all', 'Всё время']].map(([v, n]) => `<button data-period="${v}" class="${period === v ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+        ${S.all ? callStatsHtml(S) : '<p class="note">В этом периоде созвонов нет.</p>'}
+      </section>`;
+
+    wireTabs(root);
+    on(root, 'click', '[data-wk]', (e, el) => { const n = Number(el.dataset.wk); CallUI.ws = n ? addDays(ws, n) : weekStart(t); App.render(); });
+    on(root, 'click', '[data-mo]', (e, el) => { const n = Number(el.dataset.mo); CallUI.month = n ? addMonths(month, n) : monthOf(t); App.render(); });
+    on(root, 'click', '[data-period]', (e, el) => { View.set('cal.period', el.dataset.period); App.render(); });
+    on(root, 'click', '[data-call]', (e, el) => { e.stopPropagation(); if (Date.now() - CalDrag.dropped < 350) return; openCallCard(People.get(el.dataset.call)); });
+    on(root, 'click', '[data-day]', (e, el) => { CallUI.ws = weekStart(el.dataset.day); View.set('cal.tab', 'week'); App.render(); });
+    on(root, 'click', '[data-slot-now]', () => { const d = new Date(Date.now() + 864e5); d.setHours(12, 0, 0, 0); openSlotPicker(d.getTime()); });
+    on(root, 'click', '[data-gcal-connect]', async (e, el) => { el.disabled = true; el.textContent = 'Подключаю…'; await Gcal.connect(ws); App.render(); });
+    on(root, 'click', '[data-gcal-auto]', (e, el) => { View.set('gcal.auto', el.dataset.gcalAuto === '1'); App.render(); });
+    on(root, 'click', '[data-gcal-refresh]', () => { Gcal.loadWeek(ws, true); });
+    on(root, 'click', '[data-gcal-retry]', () => { Gcal._init = null; Gcal.err = null; Gcal.conn = 'checking'; Gcal.week = {}; App.render(); });
+    if (tab === 'week') wireWeek(root, canEdit);
+    if (tab === 'week' && Gcal.conn === 'ready' && !Gcal.week[ws]) Gcal.loadWeek(ws);
+  },
+});
+
+function gcalCard(ws) {
+  const c = Gcal.conn;
+  if (c === 'checking') return '<div class="gc-card slim"><i class="dot"></i><span>Проверяю Google Календарь…</span></div>';
+  if (c === 'off') return '<div class="gc-card slim off"><i class="dot"></i><span><b>Google Календарь подключается, когда CRM открыта в Claude.</b> Здесь созвоны живут только в CRM.</span></div>';
+  if (c === 'error' && Gcal.err) return `<div class="gc-card warn"><span><b>Google Календарь не отвечает</b><br>${esc(Gcal.err.text)}</span><span class="sp"></span><button class="btn sm" data-gcal-retry>Проверить снова</button></div>`;
+  if (c === 'denied') return '<div class="gc-card warn"><span><b>Доступ к календарю не разрешён.</b> Обновите страницу и нажмите «Разрешить», когда Claude спросит.</span></div>';
+  if (c === 'prompt') return `<div class="gc-card"><span><b>Подключите свой Google Календарь</b><br>Созвоны сами встанут в ваш календарь с пометкой «CRM», а в сетке будет видно, когда вы заняты. Штаб увидит созвоны CRM в общем календаре. Claude спросит разрешение — нажмите «Разрешить».</span><span class="sp"></span><button class="btn primary" data-gcal-connect>Подключить Google Календарь</button></div>`;
+  const w = Gcal.week[ws];
+  const mine = Store.all('people').filter(p => Gcal.mine(p)).length;
+  return `<div class="gc-card slim ok"><i class="dot"></i><span><b>Google Календарь подключён</b> · ваших созвонов CRM в нём: ${mine} · ${w && w.loading ? 'загружаю неделю…' : w && w.err ? esc(w.err.text) : w ? 'неделя обновлена ' + timeAgo(w.at) : ''}</span><span class="sp"></span>
+    <button class="btn xs ghost" data-gcal-refresh>${icon('refresh')}Обновить</button>
+    <button class="btn xs ${Gcal.auto() ? '' : 'ghost'}" data-gcal-auto="${Gcal.auto() ? '0' : '1'}">${Gcal.auto() ? 'Новые созвоны ставлю в Google' : 'Не ставлю созвоны в Google'}</button></div>`;
+}
+
+/* ── неделя ── */
+function weekView(ws) {
+  const t = today();
+  const dates = Array.from({length: 7}, (_, i) => addDays(ws, i));
+  const H = CAL_H1 - CAL_H0;
+  const pctOf = min => clamp((min - CAL_H0 * 60) / (H * 60) * 100, 0, 100);
+  const calls = callsBetween(dateOf(ws).getTime(), dateOf(addDays(ws, 7)).getTime());
+  const gw = Gcal.week[ws];
+  const gev = gw && gw.events ? gw.events.filter(ev => !gIsCrm(ev) && gBusy(ev)).map(ev => ({ev, r: gRange(ev)})).filter(x => x.r && !x.r.allDay) : [];
+  const col = d => {
+    const items = [];
+    calls.filter(p => isoTs(p.callAt) === d).forEach(p => items.push({s: p.callAt, e: p.callAt + callMin(p) * 60e3, p}));
+    gev.filter(x => isoTs(x.r.start) === d).forEach(x => items.push({s: x.r.start, e: x.r.end, g: x.ev}));
+    lanesOf(items);
+    const blocks = items.map(it => {
+      const top = pctOf(minOfDay(it.s)), h = Math.max(pctOf(minOfDay(it.s) + (it.e - it.s) / 60e3) - top, 3);
+      const style = `top:${top.toFixed(2)}%;height:${h.toFixed(2)}%;left:calc(${(it.lane / it.lanes * 100).toFixed(2)}% + 2px);width:calc(${(100 / it.lanes).toFixed(2)}% - 4px)`;
+      const time = `${hmMin(minOfDay(it.s))}–${hmMin(minOfDay(it.e))}`;
+      if (it.g) return `<div class="cb gcal" style="${style}" title="${esc(it.g.summary || 'Занято')} · ${time} · из вашего Google Календаря"><b>${esc(it.g.summary || 'Занято')}</b><small>${time}</small></div>`;
+      const st = callState(it.p);
+      return `<div class="cb ${GROUP_TONE[it.p.type]} st-${st} ${it.e - it.s <= 35 * 60e3 ? 'short' : ''}" style="${style}" data-call="${it.p.id}" data-cdrag="${it.p.id}" title="${esc(People.name(it.p))} · ${time} · ${CALL_STATE[st]}"><b>${esc(People.name(it.p))}</b><small>${time} · ${groupName(it.p.type)}${st === 'done' ? ' · прошёл' : st === 'noshow' ? ' · не состоялся' : st === 'late' ? ' · отметьте' : ''}</small></div>`;
+    }).join('');
+    const now = new Date();
+    const nowLine = d === t ? `<i class="cw-now" style="top:${pctOf(now.getHours() * 60 + now.getMinutes()).toFixed(2)}%"></i>` : '';
+    return `<div class="cw-col ${weekday(d) > 4 ? 'we' : ''} ${d < t ? 'past' : ''}" data-date="${d}">${blocks}${nowLine}</div>`;
+  };
+  return `<div class="cal-wrap"><div class="cal-week">
+      <div class="cw-corner"></div>
+      ${dates.map(d => { const n = calls.filter(p => isoTs(p.callAt) === d).length; return `<div class="cw-dh ${d === t ? 'is-today' : ''} ${weekday(d) > 4 ? 'we' : ''}"><span>${WD_SH[weekday(d)]}</span><b>${Number(d.slice(8))}</b><small>${n ? `${n} ${plural(n, 'созвон', 'созвона', 'созвонов')}` : MONTHS_SH[dateOf(d).getMonth()]}</small></div>`; }).join('')}
+      <div class="cw-times">${Array.from({length: H}, (_, i) => `<span style="top:${(i / H * 100).toFixed(2)}%">${pad(CAL_H0 + i)}:00</span>`).join('')}</div>
+      ${dates.map(col).join('')}
+    </div></div>`;
+}
+/* пересекающиеся блоки — рядом, дорожками */
+function lanesOf(items) {
+  items.sort((a, b) => a.s - b.s || b.e - a.e);
+  let group = [], ends = [], groupEnd = -Infinity;
+  const finish = () => { const n = ends.length || 1; group.forEach(x => { x.lanes = n; }); };
+  items.forEach(it => {
+    if (it.s >= groupEnd && group.length) { finish(); group = []; ends = []; }
+    let c = ends.findIndex(end => end <= it.s);
+    if (c < 0) { c = ends.length; ends.push(0); }
+    ends[c] = it.e;
+    it.lane = c;
+    group.push(it);
+    groupEnd = Math.max(groupEnd, it.e);
+  });
+  if (group.length) finish();
+  return items;
+}
+
+/* клик по пустому месту — назначить; зажать созвон и перенести — сменить время */
+const CalDrag = {st: null, dropped: 0};
+function wireWeek(root, canEdit) {
+  const grid = $('.cal-week', root);
+  if (!grid || !canEdit) return;
+  const H = CAL_H1 - CAL_H0;
+  const minAt = (colEl, y) => { const r = colEl.getBoundingClientRect(); return clamp(Math.round((CAL_H0 * 60 + (y - r.top) / r.height * H * 60) / 15) * 15, CAL_H0 * 60, CAL_H1 * 60 - 15); };
+  on(grid, 'click', '.cw-col', (e, el) => {
+    if (e.target.closest('.cb') || Date.now() - CalDrag.dropped < 350) return;
+    const min = Math.floor(minAt(el, e.clientY) / 30) * 30;
+    openSlotPicker(tsOf(el.dataset.date, min));
+  });
+  grid.addEventListener('pointerdown', e => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    const blk = e.target.closest('[data-cdrag]');
+    if (!blk) return;
+    const p = People.get(blk.dataset.cdrag);
+    if (!p || p.s2 !== 'set') return;
+    const touch = e.pointerType !== 'mouse';
+    const r = blk.getBoundingClientRect();
+    const st = {blk, p, x0: e.clientX, y0: e.clientY, id: e.pointerId, touch, on: false, dy: e.clientY - r.top, timer: null};
+    if (touch) st.timer = setTimeout(() => { if (CalDrag.st === st) calDragStart(st); }, 300);
+    CalDrag.st = st;
+  });
+  const move = e => {
+    const st = CalDrag.st;
+    if (!st || e.pointerId !== st.id) return;
+    if (!st.on) {
+      const d = Math.hypot(e.clientX - st.x0, e.clientY - st.y0);
+      if (st.touch) { if (d > 10) { clearTimeout(st.timer); CalDrag.st = null; } return; }
+      if (d < 5) return;
+      calDragStart(st);
+    }
+    e.preventDefault();
+    st.blk.style.visibility = 'hidden';
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    st.blk.style.visibility = '';
+    const colEl = under && under.closest('.cw-col');
+    if (!colEl) return;
+    const min = minAt(colEl, e.clientY - st.dy);
+    const top = (min - CAL_H0 * 60) / (H * 60) * 100;
+    if (st.blk.parentNode !== colEl) colEl.appendChild(st.blk);
+    st.blk.style.top = top.toFixed(2) + '%';
+    st.blk.style.left = '2px';
+    st.blk.style.width = 'calc(100% - 4px)';
+    st.target = {date: colEl.dataset.date, min};
+    $('small', st.blk).textContent = `${hmMin(min)}–${hmMin(min + callMin(st.p))} · перенести сюда`;
+  };
+  const end = (e, drop) => {
+    const st = CalDrag.st;
+    if (!st || (e && e.pointerId !== st.id)) return;
+    clearTimeout(st.timer);
+    CalDrag.st = null;
+    if (!st.on) return;
+    CalDrag.dropped = Date.now();
+    document.body.classList.remove('dragging-now');
+    st.blk.classList.remove('cb-drag');
+    if (!drop || !st.target) { App.render(); return; }
+    const ts = tsOf(st.target.date, st.target.min);
+    if (ts === st.p.callAt) { App.render(); return; }
+    const before = st.p.callAt;
+    People.patch(st.p.id, {callAt: ts}, `Созвон перенесён на ${when(ts)}`, '📅');
+    syncCall(st.p.id);
+    toast(`${People.name(st.p)}: ${when(ts)}`, {undo: () => { People.patch(st.p.id, {callAt: before}, 'Отменили перенос созвона', '↩'); syncCall(st.p.id); }});
+  };
+  if (!CalDrag.wired) {
+    CalDrag.wired = true;
+    document.addEventListener('pointermove', move, {passive: false});
+    document.addEventListener('pointerup', e => end(e, true));
+    document.addEventListener('pointercancel', e => end(e, false));
+    document.addEventListener('touchmove', e => { if (CalDrag.st && CalDrag.st.on) e.preventDefault(); }, {passive: false});
+  }
+}
+function calDragStart(st) {
+  st.on = true;
+  st.blk.classList.add('cb-drag');
+  document.body.classList.add('dragging-now');
+  if (navigator.vibrate && st.touch) { try { navigator.vibrate(12); } catch (err) { /* ничего */ } }
+}
+
+/* ── месяц ── */
+function monthView(month) {
+  const t = today();
+  const first = monthStart(month), start = weekStart(first);
+  const days = Array.from({length: 42}, (_, i) => addDays(start, i));
+  const weeks = days[35] > monthEnd(month) ? days.slice(0, 35) : days;
+  const calls = callsBetween(dateOf(start).getTime(), dateOf(addDays(start, weeks.length)).getTime());
+  return `<div class="cal-month">${WD_SH.map(w => `<div class="cm-h">${w}</div>`).join('')}${weeks.map(d => {
+    const L = calls.filter(p => isoTs(p.callAt) === d);
+    return `<button class="cm-d ${d.slice(0, 7) !== month ? 'out' : ''} ${d === t ? 'is-today' : ''} ${d < t ? 'past' : ''}" data-day="${d}">
+      <span class="cm-n">${Number(d.slice(8))}</span>
+      ${L.slice(0, 3).map(p => `<span class="cm-c ${GROUP_TONE[p.type]} st-${callState(p)}">${hmMin(minOfDay(p.callAt))} ${esc(People.name(p).split(' ')[0])}</span>`).join('')}
+      ${L.length > 3 ? `<span class="cm-more">ещё ${L.length - 3}</span>` : ''}</button>`;
+  }).join('')}</div>`;
+}
+
+/* ── список ── */
+function listView() {
+  const t = today();
+  const all = Store.all('people').filter(hasCall).sort((a, b) => a.callAt - b.callAt);
+  const upcoming = all.filter(p => isoTs(p.callAt) >= t);
+  const past = all.filter(p => isoTs(p.callAt) < t).reverse().slice(0, 30);
+  const byDay = list => { const m = {}; list.forEach(p => { const d = isoTs(p.callAt); (m[d] = m[d] || []).push(p); }); return Object.entries(m); };
+  const row = p => { const st = callState(p); return `<button class="cl-row" data-call="${p.id}"><time>${hmMin(minOfDay(p.callAt))}</time><span class="cb-dot ${GROUP_TONE[p.type]}"></span><span class="cl-n"><b>${esc(People.name(p))}</b><small>${groupName(p.type)}${People.sub(p) ? ' · ' + esc(People.sub(p)) : ''}</small></span><span class="st ${st === 'done' ? 'good' : st === 'noshow' ? 'bad' : st === 'late' ? 'warn' : ''}">${CALL_STATE[st]}</span></button>`; };
+  const block = (title, list) => `<div class="card cl-card"><div class="card-head"><h2>${title}</h2><span class="note">${list.length}</span></div>${list.length ? byDay(list).map(([d, L]) => `<div class="cl-day"><p class="rec-h">${cap(dayOrWhen(d) === dayShort(d) ? dayWd(d) : dayOrWhen(d) + ', ' + dayWd(d))}</p>${L.map(row).join('')}</div>`).join('') : '<p class="note">Пусто.</p>'}</div>`;
+  return `<div class="two">${block('Впереди', upcoming)}${block('Прошедшие', past)}</div>`;
+}
+
+function callStatsHtml(S) {
+  return `<div class="two">
+    <div class="card"><div class="card-head"><h2>По группам</h2><span class="note">прошли · не состоялись · впереди</span></div>
+      <div class="cs-groups">${S.byGroup.filter(g => g.all).map(g => `<div class="cs-g"><span class="cb-dot ${GROUP_TONE[g.k]}"></span><b>${groupName(g.k)}</b>
+        <span class="cs-bar"><i class="good" style="width:${(g.done / g.all * 100).toFixed(1)}%"></i><i class="bad" style="width:${(g.noshow / g.all * 100).toFixed(1)}%"></i><i class="set" style="width:${(g.set / g.all * 100).toFixed(1)}%"></i></span>
+        <span class="cs-n">${g.done} · ${g.noshow} · ${g.set}</span></div>`).join('') || '<p class="note">Нет созвонов.</p>'}</div>
+      <div class="kpis" style="margin-top:14px">${[[S.future, 'впереди'], [S.late, 'ждут отметки'], [S.avg === null ? '—' : S.avg + ' мин', 'средняя длина']].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div></div>
+    <div class="card"><div class="card-head"><h2>Кто ведёт</h2><span class="note">созвонов · из них прошли</span></div>
+      ${S.byOwner.length ? hbarList(S.byOwner, {color: 'var(--link)', sub: r => `прошли ${r.done}`}) : '<p class="note">Созвоны без ведущего.</p>'}</div>
+    <div class="card"><div class="card-head"><h2>Эксперты по направлениям</h2><span class="note">созвоны в периоде</span></div>
+      ${S.byDir.some(x => x.v) ? hbarList(S.byDir.filter(x => x.v).sort((a, b) => b.v - a.v), {color: 'var(--violet)', sub: r => `прошли ${r.done}`}) : '<p class="note">С экспертами созвонов нет.</p>'}
+      ${S.byDir.some(x => !x.v) ? `<p class="note" style="margin-top:8px">Без созвонов: ${S.byDir.filter(x => !x.v).map(x => x.name).join(', ')}</p>` : ''}</div>
+    <div class="card"><div class="card-head"><h2>Партнёры по категориям</h2></div>
+      ${S.byCat.length ? hbarList(S.byCat.sort((a, b) => b.v - a.v), {color: 'var(--good)', sub: r => `прошли ${r.done}`}) : '<p class="note">С партнёрами созвонов нет.</p>'}</div>
+    <div class="card"><div class="card-head"><h2>Когда созваниваемся</h2><span class="note">по часам начала</span></div>
+      <div class="hours">${S.byHour.map(h => `<div title="${h.name}: ${h.v}"><i style="height:${(h.v / Math.max(1, ...S.byHour.map(x => x.v)) * 100).toFixed(0)}%"></i><small>${h.name.slice(0, 2)}</small></div>`).join('')}</div></div>
+    <div class="card"><div class="card-head"><h2>По дням недели</h2></div>
+      ${hbarList(S.byWd, {color: 'var(--gold)'})}</div>
+  </div>`;
 }
 
 /* ── 30-questions.js ── */

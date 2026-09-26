@@ -8,6 +8,10 @@ const Demo = {
     const ago = (d, h = 12) => { const x = new Date(T - d * DAY); x.setHours(h, R.int(0, 59), 0, 0); return Math.min(x.getTime(), T - 60e3); };
     const inDays = (d, h = 12) => { const x = new Date(T + d * DAY); x.setHours(h, 0, 0, 0); return x.getTime(); };
     const out = {team: {}, people: {}, cfg: {}};
+    /* прошедшие созвоны — в разные дни и часы последних двух недель, без наложений */
+    const HOURS = [10, 11, 12, 13, 15, 16, 17, 18, 19];
+    let si = 0;
+    const pastCall = () => { const n = si++; const x = new Date(T - (1 + (n * 4) % 13) * DAY); x.setHours(HOURS[(n * 7) % HOURS.length], n % 2 ? 30 : 0, 0, 0); return Math.min(x.getTime(), T - 2 * 3600e3); };
     out.team.dm_anna = {demo: true, name: 'Анна Смирнова', role: 'member', joinedAt: ago(60), order: 1, color: '#5A50C0'};
     out.team.dm_vera = {demo: true, name: 'Вера Орлова', role: 'member', joinedAt: ago(60), order: 2, color: '#8F6B27'};
     const team = ['dm_anna', 'dm_vera'];
@@ -28,6 +32,9 @@ const Demo = {
       if (f.s2 === 'done') log.l5 = {t: f.callAt || ago(2), by: f.owner || null, emo: '✅', text: type === 'client' ? 'Интервью прошёл' : 'Созвон прошёл'};
       if (f.s3 && f.s3 !== 'none') log.l6 = {t: ago(1), by: f.owner || null, emo: '🚀', text: 'Итог записан'};
       out.people[id] = {demo: true, type, name, code: codeOf(name), s1: 'new', s2: 'none', s3: 'none', answers: {}, talk: {}, res: {tags: []}, createdAt: ago(created), touchedAt: ago(Math.max(0, created - 4)), log, ...f};
+      const doc = out.people[id];
+      if (doc.callAt) doc.callMin = type === 'partner' ? 45 : 30;
+      if (doc.s2 === 'done' && doc.callAt) doc.callDur = Math.round(doc.callMin * 60 * (0.75 + R.next() * 0.55));
       return id;
     };
 
@@ -61,7 +68,7 @@ const Demo = {
       ['Ирина Павлова', {s1: 'done', s2: 'none', answeredAt: ago(4)}],
       ['Светлана Орлова', {s1: 'done', s2: 'none', answeredAt: ago(3)}],
       ['Полина Лебедева', {s1: 'done', s2: 'none', answeredAt: ago(0.4), answeredBy: 'team'}],
-      ['Ксения Новикова', {s1: 'done', s2: 'noshow', callAt: ago(1)}],
+      ['Ксения Новикова', {s1: 'done', s2: 'noshow', callAt: pastCall()}],
       ['Вероника Семёнова', {s1: 'sent', sentAt: ago(1)}],
       ['Анастасия Фёдорова', {s1: 'sent', sentAt: ago(2)}],
       ['Елена Григорьева', {s1: 'new'}],
@@ -99,7 +106,7 @@ const Demo = {
       }
       const {talk: _t, tags, main, idea, ...rest} = f;
       clientIds.push(person('client', name, {...rest, answers: a, answeredAt: f.answeredAt || (answered ? ago(6 - (i % 5)) : undefined), answeredBy: f.answeredBy || (answered ? 'self' : undefined), talk, talkAt: f.talk ? ago(2) : undefined,
-        callAt: f.callAt || (f.s2 === 'done' ? ago(2, 19) : undefined), res: {tags: tags || [], main: main || '', idea: idea || ''}, city: a.city || '', tg: a.tg || '', owner: team[i % 2], created: 12 - (i % 8)}));
+        callAt: f.callAt || (f.s2 === 'done' ? pastCall() : undefined), res: {tags: tags || [], main: main || '', idea: idea || ''}, city: a.city || '', tg: a.tg || '', owner: team[i % 2], created: 12 - (i % 8)}));
     });
 
     /* ── эксперты ── */
@@ -129,7 +136,7 @@ const Demo = {
       }
       const talk = f.s2 === 'done' ? Object.fromEntries(Object.entries(TALK_E).map(([q, t]) => [q, {a: t, t: ago(3)}])) : {};
       if (i === 0) talk.t4.star = true;
-      person('expert', name, {s1: f.s1, s2: f.s2 || 'none', s3: f.s3 || 'none', sentAt: f.sentAt, callAt: f.callAt || (f.s2 === 'done' ? ago(3, 15) : undefined), dirs, topic, city, answers: a,
+      person('expert', name, {s1: f.s1, s2: f.s2 || 'none', s3: f.s3 || 'none', sentAt: f.sentAt, callAt: f.callAt || (f.s2 === 'done' ? pastCall() : undefined), dirs, topic, city, answers: a,
         answeredAt: f.s1 === 'done' ? ago(5) : undefined, answeredBy: f.s1 === 'done' ? (i % 3 ? 'self' : 'team') : undefined, talk, talkAt: f.s2 === 'done' ? ago(3) : undefined,
         res: {tags: f.tags || [], next: f.next || '', note: f.note || '', date: f.next ? isoTs(inDays(10 + i)) : ''}, tg: a.tg || '', owner: 'dm_vera', created: 20 - i});
     });
@@ -150,7 +157,7 @@ const Demo = {
       const a = {};
       if (f.s1 === 'done') Object.assign(a, {name, cat, city, addr: 'центр города', contact, clients: one(qp.clients, [1, 4, 3, 1]), ages: many(qp.ages, [1, 5, 4, 2], 2),
         want: many(qp.want, [5, 4, 2, 1, 3, 1, 2, 1], 2), give: many(qp.give, [4, 3, 2, 2, 1], 2), tell: many(qp.tell, [4, 3, 3, 2, 1], 2), aud: one(qp.aud, [1, 2, 4, 2]), when: one(qp.when, [2, 3, 2, 1]), tg: '@' + refCodeFor(name).toLowerCase().replace(/\d+$/, '')});
-      person('partner', name, {s1: f.s1, s2: f.s2 || 'none', s3: f.s3 || 'none', sentAt: f.sentAt, callAt: f.callAt || (f.s2 === 'done' ? ago(4, 11) : undefined), cat, city, contact, answers: a,
+      person('partner', name, {s1: f.s1, s2: f.s2 || 'none', s3: f.s3 || 'none', sentAt: f.sentAt, callAt: f.callAt || (f.s2 === 'done' ? pastCall() : undefined), cat, city, contact, answers: a,
         answeredAt: f.s1 === 'done' ? ago(6) : undefined, answeredBy: f.s1 === 'done' ? 'self' : undefined, res: {tags: f.tags || [], next: f.next || '', note: f.note || '', date: f.next ? isoTs(inDays(7 + i)) : ''}, tg: a.tg || '', owner: 'dm_vera', created: 25 - i});
     });
 
@@ -170,7 +177,7 @@ const Demo = {
       if (f.s1 === 'done') Object.assign(a, {name, city: R.pick(['Москва', 'Казань', 'Сочи', 'Новосибирск']), use: one(qa.use, [3, 3, 2]), where: many(qa.where, [5, 3, 1, 2, 1, 1, 3, 1, 2], 3),
         size: qa.size.o[f.size ?? 1], topic: many(qa.topic, [4, 2, 2, 3, 1, 3, 1, 1], 2), women: one(qa.women, [6, 1, 0]), how: many(qa.how, [5, 4, 3, 2, 1, 2], 3),
         hours: one(qa.hours, [2, 3, 1]), motive: many(qa.motive, [3, 4, 2, 2, 1], 2), tax: i === 1 ? 'Самозанятая' : one(qa.tax, [2, 1, 3]), pay: one(qa.pay, [3, 2]), before: one(qa.before, [1, 2]), tg: '@' + refCodeFor(name).toLowerCase().replace(/\d+$/, '')});
-      const id = person('amb', name, {s1: f.s1, s2: f.s2 || 'none', s3: f.s3 || 'none', sentAt: f.sentAt, callAt: f.callAt || (f.s2 === 'done' ? ago(5, 16) : undefined), city: a.city || '', answers: a,
+      const id = person('amb', name, {s1: f.s1, s2: f.s2 || 'none', s3: f.s3 || 'none', sentAt: f.sentAt, callAt: f.callAt || (f.s2 === 'done' ? pastCall() : undefined), city: a.city || '', answers: a,
         answeredAt: f.s1 === 'done' ? ago(7) : undefined, answeredBy: f.s1 === 'done' ? 'self' : undefined, res: {tags: f.tags || [], next: f.s3 === 'yes' ? 'Первый пост в канале' : '', note: ''}, tg: a.tg || '', owner: 'dm_anna', created: 18 - i});
       ambCodes.push(out.people[id].code);
     });

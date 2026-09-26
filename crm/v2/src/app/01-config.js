@@ -20,6 +20,7 @@ const NAV = [
   {id: 'expert',  emo: '🎓', name: 'Эксперты'},
   {id: 'partner', emo: '🤝', name: 'Партнёры'},
   {id: 'amb',     emo: '📣', name: 'Амбассадоры'},
+  {id: 'calendar', emo: '🗓', name: 'Календарь'},
   {id: 'stats',   emo: '📊', name: 'Статистика'},
   {id: 'questions', emo: '❓', name: 'Вопросы'},
   {id: 'settings',  emo: '⚙️', name: 'Настройки'},
