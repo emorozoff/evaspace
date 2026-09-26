@@ -83,8 +83,14 @@ function toast(text, opts = {}) {
     b.onclick = () => { close(); opts.undo(); };
     el.appendChild(b);
   }
+  if (opts.action) {
+    const b = document.createElement('button');
+    b.textContent = opts.action.label;
+    b.onclick = () => { close(); opts.action.fn(); };
+    el.appendChild(b);
+  }
   root.appendChild(el);
-  timer = setTimeout(close, opts.undo ? 7000 : 4200);
+  timer = setTimeout(close, opts.undo || opts.action ? 8000 : 4200);
   while (root.children.length > 3) root.firstChild.remove();
 }
 

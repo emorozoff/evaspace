@@ -59,7 +59,7 @@ const dirName = d => (DIRS[d] ? DIRS[d].name : 'Без направления');
 const STATUSES = {
   todo:   {name: 'К работе',    tone: ''},
   doing:  {name: 'В работе',    tone: 'violet'},
-  review: {name: 'На проверке', tone: 'gold'},
+  review: {name: 'На согласовании', tone: 'gold'},
   done:   {name: 'Готово',      tone: 'good'},
 };
 

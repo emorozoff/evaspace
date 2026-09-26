@@ -116,8 +116,12 @@ const Store = (() => {
     return Promise.resolve();
   }
   function add(c, obj, id = uid()) { put(c, id, obj); return id; }
-  function patch(c, id, partial) {
+  /* mustExist: правка документа, которого уже нет (удалили с другого
+     устройства), ничего не пишет — иначе из обрывка правки родится
+     «призрак» без названия */
+  function patch(c, id, partial, opts = {}) {
     const cur = data[c].get(id);
+    if (opts.mustExist && !cur) return Promise.resolve(false);
     const next = deepMerge(cur ? strip(cur) : {}, partial);
     data[c].set(id, {...next, id});
     commitLocal(c);
@@ -128,7 +132,7 @@ const Store = (() => {
       try { await ref.update(clone(partial)); }
       catch (e) {
         /* документа уже нет в базе (удалили с другого устройства) — записываем целиком */
-        if (e && e.code === 'invalid_argument') await ref.set(strip(data[c].get(id) || next));
+        if (e && e.code === 'invalid_argument') { if (!opts.mustExist) await ref.set(strip(data[c].get(id) || next)); }
         else throw e;
       }
     });
