@@ -4,6 +4,8 @@ import { REGIONS } from '../data/regions.js';
 import { byId } from '../data/people.js';
 import { dayShift, monthShort, whenLabel } from '../lib/format.js';
 import { goingCount } from '../lib/select.js';
+import { usefulAt } from '../lib/intro.js';
+import { plural } from '../lib/format.js';
 import { EventCover } from './Covers.jsx';
 import { AvaStack } from './Art.jsx';
 import Icon from './Icons.jsx';
@@ -27,6 +29,7 @@ export function EventCard({ app, event: e, height = 150 }) {
   const mine = app.going[e.id];
   const people = e.going.map(byId).filter(Boolean);
   const special = e.kind === 'closed' || e.kind === 'partner';
+  const useful = usefulAt(app, e);
   return (
     <button className="evcard" onClick={() => go(`/event/${e.id}`)}>
       <EventCover event={e} height={height} radius={0}>
@@ -44,7 +47,8 @@ export function EventCard({ app, event: e, height = 150 }) {
         <div className="t-sm dim-2">{whenLabel(e.inDays, e.time)} · {e.price}</div>
         <div className="row" style={{ marginTop: 10, gap: 8 }}>
           <AvaStack people={people} size={26} max={4} />
-          <span className="t-xs dim-2">{goingCount(app, e)} идут</span>
+          <span className="t-xs dim-2 grow">{goingCount(app, e)} идут</span>
+          {useful > 0 && <span className="t-xs gold"><Icon name="handshake" size={13} style={{ verticalAlign: -2, marginRight: 4 }} />{useful} {plural(useful, 'полезное знакомство', 'полезных знакомства', 'полезных знакомств')}</span>}
         </div>
       </div>
     </button>

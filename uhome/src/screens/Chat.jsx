@@ -1,17 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import { messagesOf } from '../lib/select.js';
+import { groupById } from '../lib/groups.js';
 import { byId } from '../data/people.js';
 import { communityById } from '../data/communities.js';
 import { REGIONS } from '../data/regions.js';
 import { seeded } from '../lib/art.js';
 import { TopBar, Empty } from '../components/UI.jsx';
-import { Avatar } from '../components/Art.jsx';
+import { Avatar, GroupAva } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
 
-/* Переписка: личная, с командой клуба или чат сообщества.
-   Таб-бара здесь нет — поле ввода стоит у нижнего края и не уезжает. */
+/* Переписка: личная, с командой клуба, своя группа (команда, мастер-группа)
+   или чат сообщества. Таб-бара здесь нет — поле ввода стоит у нижнего края. */
 
 const REPLIES = ['Отлично, договорились!', 'Сейчас гляну и отвечу', 'Давай созвонимся вечером?', 'Супер, спасибо!', 'Звучит интересно, расскажи подробнее'];
 
@@ -31,35 +32,39 @@ const dayLabel = (ms) => {
 export default function Chat({ id }) {
   const app = useApp();
   const [text, setText] = useState('');
-  const end = useRef(null);
   const person = byId(id);
   const community = communityById(id);
+  const group = id?.startsWith('g-') ? groupById(app.me, id) : null;
   const messages = messagesOf(app, id);
 
+  // открытый чат прочитан — и то, что пришло, пока он открыт, тоже
   useEffect(() => {
     app.markRead(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, messages.length]);
 
   useEffect(() => {
-    end.current?.scrollIntoView({ block: 'end' });
+    window.scrollTo({ top: document.documentElement.scrollHeight });
   }, [messages.length]);
 
-  if (!person && !community) return <div className="screen screen--nested"><TopBar backTo="/chats" /><Empty title="Чат не найден" /></div>;
+  if (!person && !community && !group) return <div className="screen screen--nested"><TopBar backTo="/chats" /><Empty title="Чат не найден" /></div>;
 
   const send = () => {
     const t = text.trim();
     if (!t) return;
     const n = (app.sent[id] || []).length;
-    const reply = person && id !== 'team' && n % 2 === 0 ? REPLIES[Math.floor(seeded(id + n)() * REPLIES.length)] : undefined;
-    app.send(id, t, { reply });
+    const r = seeded(id + n)();
+    const reply = (person || group) && id !== 'team' && n % 2 === 0 ? REPLIES[Math.floor(r * REPLIES.length)] : undefined;
+    const who = group ? group.members[Math.floor(r * group.members.length)]?.id : undefined;
+    app.send(id, t, { reply, who });
     setText('');
   };
 
-  const title = person ? person.name : community.name;
+  const title = person ? person.name : group ? group.name : community.name;
   const sub = person
     ? id === 'team' ? 'Отвечаем за 15 минут' : `${person.online ? 'онлайн' : 'не в сети'} · ${REGIONS[person.region].flag} ${person.city}`
-    : `${community.members} участников`;
+    : group ? `${group.members.length + 1} участников · ${group.when}` : `${community.members} участников`;
+  const to = person ? (id === 'team' ? '/profile' : `/p/${id}`) : group ? `/group/${id}` : `/community/${id}`;
 
   let lastDay = '';
 
@@ -70,8 +75,8 @@ export default function Chat({ id }) {
         sub={sub}
         backTo="/chats"
         right={
-          <button onClick={() => go(person ? (id === 'team' ? '/profile' : `/p/${id}`) : `/community/${id}`)} aria-label="Профиль">
-            {person ? <Avatar person={person} size={38} /> : <span className="iconbtn"><Icon name="users" size={18} /></span>}
+          <button onClick={() => go(to)} aria-label="Профиль">
+            {person ? <Avatar person={person} size={38} /> : group ? <GroupAva members={group.members} size={38} /> : <span className="iconbtn"><Icon name="users" size={18} /></span>}
           </button>
         }
       />
@@ -83,6 +88,12 @@ export default function Chat({ id }) {
             <div>Команда UHOME: события, услуги, знакомства, визы, жильё. Пишите как другу — разберёмся.</div>
           </div>
         )}
+        {group && (
+          <button className="note" style={{ marginBottom: 8, textAlign: 'left' }} onClick={() => go(`/group/${id}`)}>
+            <Icon name={group.icon} size={16} color="var(--gold)" />
+            <div>{group.about} <span className="gold">Состав и встречи →</span></div>
+          </button>
+        )}
         {messages.length === 0 && (
           <div className="t-sm dim-2 center" style={{ padding: '40px 20px', lineHeight: 1.5 }}>
             Здесь пока пусто. Напишите первым — {person ? 'в клубе принято отвечать' : 'сообщество увидит сообщение сразу'}.
@@ -93,7 +104,15 @@ export default function Chat({ id }) {
           const showDay = day !== lastDay;
           lastDay = day;
           const out = m.from === 'me';
-          const author = community && !out ? byId(m.who) : null;
+          const author = (community || group) && !out ? byId(m.who) : null;
+          if (m.from === 'sys') {
+            return (
+              <div key={i} style={{ display: 'contents' }}>
+                {showDay && <div className="chat__day">{day}</div>}
+                <div className="chat__sys"><Icon name="spark" size={14} color="var(--gold)" />{m.text}</div>
+              </div>
+            );
+          }
           return (
             <div key={i} style={{ display: 'contents' }}>
               {showDay && <div className="chat__day">{day}</div>}
@@ -106,7 +125,6 @@ export default function Chat({ id }) {
             </div>
           );
         })}
-        <div ref={end} />
       </div>
 
       <form className="composer" onSubmit={(e) => { e.preventDefault(); send(); }}>

@@ -5,12 +5,12 @@ export const ROLES = ['Основатель', 'Инвестор', 'Предпр�
 
 /* Цвет аватара — от роли: инвестора видно от основателя одним взглядом. */
 export const ROLE_TONE = {
-  'Основатель': '#7DB3FF',
-  'Инвестор': '#E6C27A',
-  'Предприниматель': '#6EE7B7',
-  'Эксперт': '#A78BFA',
-  'Творец': '#F9A8C0',
-  'Управляющий': '#67E8F9',
+  'Основатель': '#8FA8C9',
+  'Инвестор': '#C9A96E',
+  'Предприниматель': '#8FB8A0',
+  'Эксперт': '#A99BC9',
+  'Творец': '#C99AAA',
+  'Управляющий': '#8BB8B8',
 };
 
 export const ROLE_EN = {
@@ -22,7 +22,7 @@ export const ROLE_EN = {
   'Управляющий': 'MANAGER',
 };
 
-export const toneOf = (p) => (p?.id === 'team' ? '#E6C27A' : ROLE_TONE[p?.role] || '#A78BFA');
+export const toneOf = (p) => (p?.id === 'team' ? '#C9A96E' : ROLE_TONE[p?.role] || '#A99BC9');
 export const roleEn = (p) => ROLE_EN[p?.role] || 'RESIDENT';
 
 /* Один словарь на два вопроса: «что ищу» и «чем полезен». Совпадение
@@ -266,7 +266,44 @@ export const PEOPLE = [
   },
 ];
 
+/* Сфера бизнеса — по ней тест собирает мастер-группы из людей с похожими задачами. */
+export const SPHERES = [
+  { id: 'it', name: 'IT и продукт' },
+  { id: 'finance', name: 'Финансы и инвестиции' },
+  { id: 'realty', name: 'Недвижимость' },
+  { id: 'trade', name: 'Торговля и e-commerce' },
+  { id: 'services', name: 'Услуги и консалтинг' },
+  { id: 'media', name: 'Медиа и бренд' },
+  { id: 'life', name: 'Гостеприимство и lifestyle' },
+  { id: 'prod', name: 'Производство' },
+];
+
+const SPHERE_OF = {
+  r1: 'life', r2: 'finance', r3: 'services', r4: 'life', r5: 'finance', r6: 'services', r7: 'it', r8: 'realty',
+  r9: 'media', r10: 'it', r11: 'it', r12: 'prod', r13: 'services', r14: 'it', r15: 'life', r16: 'finance',
+  r17: 'life', r18: 'life', r19: 'realty', r20: 'media', r21: 'media', r22: 'it', r23: 'realty', r24: 'services',
+  r25: 'media', r26: 'life', r27: 'finance', r28: 'it',
+};
+for (const p of PEOPLE) p.sphere = SPHERE_OF[p.id];
+
+/* Ближайшие поездки резидентов: куда летят и через сколько дней.
+   Прилёт в ваш регион — один из лучших поводов пересечься вживую. */
+export const TRIPS = [
+  { who: 'r2', to: 'bali', inDays: 5, days: 10 },
+  { who: 'r13', to: 'bali', inDays: 4, days: 7 },
+  { who: 'r14', to: 'bali', inDays: 9, days: 14 },
+  { who: 'r5', to: 'moscow', inDays: 6, days: 5 },
+  { who: 'r21', to: 'dubai', inDays: 7, days: 6 },
+  { who: 'r16', to: 'dubai', inDays: 11, days: 4 },
+  { who: 'r27', to: 'moscow', inDays: 3, days: 5 },
+  { who: 'r10', to: 'europe', inDays: 12, days: 8 },
+  { who: 'r7', to: 'dubai', inDays: 8, days: 10 },
+  { who: 'r22', to: 'dubai', inDays: 14, days: 5 },
+  { who: 'r11', to: 'bali', inDays: 16, days: 21 },
+];
+
 export const byId = (id) => (id === 'team' ? TEAM : PEOPLE.find((p) => p.id === id));
+export const firstNameOf = (p) => (p?.name || '').split(' ')[0];
 
 /* Кого добавить в ближний круг по умолчанию. */
 export const DEFAULT_CIRCLE = ['r4', 'r9', 'r3', 'r2', 'r8', 'r22', 'r12', 'r17'];

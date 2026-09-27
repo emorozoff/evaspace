@@ -34,7 +34,7 @@ export default function CommunityPage({ id }) {
       </div>
     </Scene>
   ) : (
-    <div className="scene" style={{ height: 170, display: 'grid', placeItems: 'center', background: `radial-gradient(80% 90% at 50% 15%, ${c.tone}33, #141417 72%)` }}>
+    <div className="scene" style={{ height: 170, display: 'grid', placeItems: 'center', background: `radial-gradient(80% 90% at 50% 15%, ${c.tone}33, #151412 72%)` }}>
       <Tile icon={c.icon} tone={c.tone} size={84} radius={26} />
     </div>
   );

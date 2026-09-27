@@ -18,9 +18,9 @@ function Landmark({ region, x, y, scale, stroke = 1.7 }) {
     <g transform={`translate(${x} ${y}) scale(${scale})`}>
       {lm.parts.map((p, i) =>
         p.c ? (
-          <circle key={i} cx={p.c[0]} cy={p.c[1]} r={p.c[2]} fill={p.fill ? '#E6C27A' : 'none'} fillOpacity={p.fill ? 0.25 : 1} stroke="#E6C27A" strokeWidth={stroke} />
+          <circle key={i} cx={p.c[0]} cy={p.c[1]} r={p.c[2]} fill={p.fill ? '#C9A96E' : 'none'} fillOpacity={p.fill ? 0.25 : 1} stroke="#C9A96E" strokeWidth={stroke} />
         ) : (
-          <path key={i} d={p.d} fill={p.fill ? '#E6C27A' : 'none'} fillOpacity={p.fill ? 0.2 : 1} stroke="#E6C27A" strokeWidth={p.thin ? stroke * 0.55 : stroke} strokeOpacity={p.thin ? 0.7 : 1} strokeLinecap="round" strokeLinejoin="round" />
+          <path key={i} d={p.d} fill={p.fill ? '#C9A96E' : 'none'} fillOpacity={p.fill ? 0.2 : 1} stroke="#C9A96E" strokeWidth={p.thin ? stroke * 0.55 : stroke} strokeOpacity={p.thin ? 0.7 : 1} strokeLinecap="round" strokeLinejoin="round" />
         )
       )}
     </g>
@@ -30,7 +30,7 @@ function Landmark({ region, x, y, scale, stroke = 1.7 }) {
 /* Регион: плита своего цвета, звёзды, луна и силуэт у правого края. */
 export function Scene({ region, height = 160, radius, children, style }) {
   const id = useId().replace(/:/g, '');
-  const plate = REGIONS[region]?.plate || '#1d1d22';
+  const plate = REGIONS[region]?.plate || '#1f1d19';
   const stars = useMemo(() => {
     const rnd = seeded('scene-' + region);
     return Array.from({ length: 24 }, () => [rnd() * 320, rnd() * 80, 0.5 + rnd() * 1.1, 0.25 + rnd() * 0.55]);
@@ -54,9 +54,9 @@ export function Scene({ region, height = 160, radius, children, style }) {
         <rect width={W} height={H} fill={`url(#sg${id})`} />
         <rect width={W} height={H} fill={`url(#dt${id})`} />
         {stars.map(([x, y, r, o], i) => <circle key={i} cx={x} cy={y} r={r} fill="#fff" fillOpacity={o} />)}
-        <circle cx={W - 54} cy={34} r={17} fill="#E6C27A" fillOpacity="0.14" />
-        <circle cx={W - 54} cy={34} r={9} fill="#E6C27A" fillOpacity="0.55" />
-        <line x1="0" y1={ly + 84 * scale} x2={W} y2={ly + 84 * scale} stroke="#E6C27A" strokeOpacity="0.35" />
+        <circle cx={W - 54} cy={34} r={17} fill="#C9A96E" fillOpacity="0.14" />
+        <circle cx={W - 54} cy={34} r={9} fill="#C9A96E" fillOpacity="0.55" />
+        <line x1="0" y1={ly + 84 * scale} x2={W} y2={ly + 84 * scale} stroke="#C9A96E" strokeOpacity="0.35" />
         <rect x="0" y={ly + 84 * scale} width={W} height={H} fill="#000" fillOpacity="0.2" />
         <Landmark region={region} x={lx} y={ly} scale={scale} />
       </svg>
@@ -67,7 +67,7 @@ export function Scene({ region, height = 160, radius, children, style }) {
 }
 
 /* Эфир в Zoom: орбита, волны сигнала и точка «в эфире». */
-export function Live({ seed = 'x', tone = '#7DB3FF', height = 160, radius, children }) {
+export function Live({ seed = 'x', tone = '#8FA8C9', height = 160, radius, children }) {
   const id = useId().replace(/:/g, '');
   const W = 320, H = 160;
   const waves = useMemo(() => {
@@ -86,7 +86,7 @@ export function Live({ seed = 'x', tone = '#7DB3FF', height = 160, radius, child
     });
   }, [seed]);
   return (
-    <div className="scene" style={{ height, borderRadius: radius, background: '#121216' }}>
+    <div className="scene" style={{ height, borderRadius: radius, background: '#141311' }}>
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice">
         <defs>
           <radialGradient id={`lg${id}`} cx="74%" cy="30%" r="70%">
@@ -99,7 +99,7 @@ export function Live({ seed = 'x', tone = '#7DB3FF', height = 160, radius, child
             <stop offset="100%" stopColor={tone} stopOpacity="0" />
           </linearGradient>
         </defs>
-        <rect width={W} height={H} fill="#121216" />
+        <rect width={W} height={H} fill="#141311" />
         <rect width={W} height={H} fill={`url(#lg${id})`} />
         {waves.map((w, i) => <path key={i} d={w.d} fill="none" stroke={`url(#lw${id})`} strokeWidth={i === 0 ? 1.8 : 1} strokeOpacity={w.o} />)}
         <circle cx="238" cy="54" r="36" fill="none" stroke={tone} strokeOpacity="0.3" />
@@ -123,8 +123,8 @@ export function EventCover({ event, height = 160, radius, children }) {
 export function Thumb({ region, online, size = 48, radius = 13 }) {
   if (online || !REGIONS[region]) {
     return (
-      <div style={{ width: size, height: size, flex: 'none', borderRadius: radius, background: 'linear-gradient(145deg, #22325e, #121216)', display: 'grid', placeItems: 'center', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.08)' }}>
-        <Icon name="video" size={size * 0.44} color="#9cc4ff" />
+      <div style={{ width: size, height: size, flex: 'none', borderRadius: radius, background: 'linear-gradient(145deg, #22325e, #141311)', display: 'grid', placeItems: 'center', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.08)' }}>
+        <Icon name="video" size={size * 0.44} color="#b3c5dd" />
       </div>
     );
   }
@@ -140,41 +140,42 @@ export function Thumb({ region, online, size = 48, radius = 13 }) {
   );
 }
 
-/* Обложка компании: тон категории, мягкая сетка и монограмма. */
+/* Обложка компании: тон категории, мягкая сетка и монограмма антиквой. */
 export function Brand({ company, height = 150, radius, children, size }) {
   const id = useId().replace(/:/g, '');
   const cat = catById(company.cat);
-  const tone = cat?.tone || '#E6C27A';
+  const tone = cat?.tone || '#C9A96E';
   const W = 320, H = 160;
   const rings = useMemo(() => {
     const rnd = seeded('brand' + company.id);
     return Array.from({ length: 6 }, (_, i) => ({ cx: 60 + rnd() * 220, cy: 20 + rnd() * 110, r: 20 + rnd() * 70, o: 0.06 + i * 0.012 }));
   }, [company.id]);
 
-  // миниатюра: монограмма тоном категории на мягкой плашке, как аватар
   if (size) {
     return (
-      <div style={{ width: size, height: size, flex: 'none', borderRadius: radius ?? size * 0.3, background: `linear-gradient(${tone}2e, ${tone}17), #1b1b1f`, display: 'grid', placeItems: 'center' }}>
-        <span style={{ fontFamily: 'var(--display)', fontWeight: 600, fontSize: size * 0.4, color: tone, lineHeight: 1 }}>{company.name[0]}</span>
+      <div style={{ width: size, height: size, flex: 'none', borderRadius: radius ?? size * 0.3, background: `linear-gradient(145deg, ${tone}55, #151412 80%)`, boxShadow: `inset 0 0 0 1px ${tone}40`, display: 'grid', placeItems: 'center' }}>
+        <span className="display" style={{ fontSize: size * 0.46, color: '#fff', lineHeight: 1 }}>{company.name[0]}</span>
       </div>
     );
   }
 
   return (
-    <div className="scene" style={{ height, borderRadius: radius, background: '#141417' }}>
+    <div className="scene" style={{ height, borderRadius: radius, background: '#151412' }}>
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice">
         <defs>
-          <radialGradient id={`bg${id}`} cx="85%" cy="10%" r="95%">
-            <stop offset="0%" stopColor={tone} stopOpacity="0.42" />
-            <stop offset="100%" stopColor="#141417" stopOpacity="0" />
-          </radialGradient>
+          <linearGradient id={`bg${id}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={tone} stopOpacity="0.5" />
+            <stop offset="70%" stopColor="#151412" />
+          </linearGradient>
         </defs>
-        <rect width={W} height={H} fill="#141417" />
         <rect width={W} height={H} fill={`url(#bg${id})`} />
-        {rings.slice(0, 3).map((r, i) => <circle key={i} cx={r.cx} cy={r.cy} r={r.r} fill="none" stroke={tone} strokeOpacity={0.12} />)}
-        <text x={W - 26} y={H - 34} textAnchor="end" fontSize="64" fontFamily="Unbounded, Onest, sans-serif" fontWeight="600" fill={tone} fillOpacity="0.9">
-          {company.name[0]}
-        </text>
+        {rings.map((r, i) => <circle key={i} cx={r.cx} cy={r.cy} r={r.r} fill="none" stroke="#fff" strokeOpacity={r.o} />)}
+        <g transform={`translate(${W - 118} 26)`}>
+          <circle cx="46" cy="46" r="46" fill="#000" fillOpacity="0.18" stroke="#fff" strokeOpacity="0.14" />
+          <text x="46" y="61" textAnchor="middle" fontSize="44" fontFamily="Prata, Georgia, serif" fill="#fff" fillOpacity="0.92">
+            {company.name[0]}
+          </text>
+        </g>
       </svg>
       <div className="scene__shade" />
       {children}
@@ -185,9 +186,9 @@ export function Brand({ company, height = 150, radius, children, size }) {
 /* Обложка материала базы: запись эфира или гайд. */
 export function MaterialCover({ material, height = 64, radius = 14, big = false, children }) {
   const zoom = material.kind === 'zoom';
-  const tone = zoom ? '#7DB3FF' : '#E6C27A';
+  const tone = zoom ? '#8FA8C9' : '#C9A96E';
   return (
-    <div className="scene" style={{ height, borderRadius: radius, background: zoom ? 'linear-gradient(145deg, #1e2a48, #131317)' : 'linear-gradient(145deg, #372d1a, #131317)' }}>
+    <div className="scene" style={{ height, borderRadius: radius, background: zoom ? 'linear-gradient(145deg, #1f2635, #141311)' : 'linear-gradient(145deg, #352b1a, #141311)' }}>
       <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
         <circle cx="78" cy="22" r="30" fill="none" stroke={tone} strokeOpacity="0.25" />
         <circle cx="78" cy="22" r="18" fill="none" stroke={tone} strokeOpacity="0.35" />

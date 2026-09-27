@@ -1,14 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import Icon from './Icons.jsx';
 import { Sheet, Item } from './UI.jsx';
-import { CITIES, REGIONS, REGION_CITY } from '../data/regions.js';
+import { CITIES, REGIONS, REGION_CITY, REGION_KEYS } from '../data/regions.js';
+import { regionStats, COMMUNITIES } from '../data/communities.js';
+import { go } from '../lib/router.jsx';
+import { plural, count } from '../lib/format.js';
 import { PAIRS, CURRENCIES } from '../data/currencies.js';
 import { localParts, hhmm, diffLabel, dayPart } from '../lib/time.js';
 import { useRates, pairValue, money, moneyParts, freshness } from '../lib/rates.js';
 
 /* Живой блок под картой резидента — как в UPASS: листается сам, как табло,
-   и пальцем. Два слайда: время в трёх городах и три курса валют.
-   Нажатие на город или курс открывает список — выбранное встаёт на это место. */
+   и пальцем. Четыре слайда: время в трёх городах, три курса валют, сколько
+   резидентов в каждой стране и сколько там сообществ. Нажатие на город или
+   курс открывает список, на страну — людей или сообщества этой страны. */
+
+const SLIDES = [
+  { id: 'clocks', name: 'Время' },
+  { id: 'rates', name: 'Курсы' },
+  { id: 'people', name: 'Люди' },
+  { id: 'communities', name: 'Сообщества' },
+];
 
 const EVERY = 7000;
 const OUT = 900; // столько же длится анимация в стилях
@@ -21,7 +32,7 @@ export default function Pulse({ app }) {
   const drag = useRef(null);
   const rates = useRates();
 
-  const slides = ['clocks', 'rates'];
+  const slides = SLIDES.map((x) => x.id);
   const at = (n) => ((n % slides.length) + slides.length) % slides.length;
 
   // минуты идут сами — иначе блок выглядит скриншотом
@@ -67,6 +78,11 @@ export default function Pulse({ app }) {
       move(dx < 0 ? 1 : -1);
       return;
     }
+    const link = e.target.closest('[data-go]');
+    if (link) {
+      go(link.dataset.go);
+      return;
+    }
     const cell = e.target.closest('[data-slot]');
     if (cell) {
       hold.current = Date.now() + 20000;
@@ -78,11 +94,16 @@ export default function Pulse({ app }) {
   const hereCity = REGION_CITY[app.me.region];
 
   const render = (kind) =>
-    kind === 'clocks' ? (
-      <Clocks list={app.clocks} now={now} baseTz={baseTz} here={hereCity} />
-    ) : (
-      <Rates list={app.rates} rates={rates} />
-    );
+    kind === 'clocks' ? <Clocks list={app.clocks} now={now} baseTz={baseTz} here={hereCity} />
+      : kind === 'rates' ? <Rates list={app.rates} rates={rates} />
+        : <Geo kind={kind} mine={app.me.region} />;
+
+  const hint = {
+    clocks: 'нажмите на город',
+    rates: freshness(rates),
+    people: count(REGION_KEYS.reduce((n, k) => n + regionStats(k).members, 0), 'резидент', 'резидента', 'резидентов'),
+    communities: `${COMMUNITIES.length} ${plural(COMMUNITIES.length, 'сообщество', 'сообщества', 'сообществ')} в клубе`,
+  };
 
   const cur = slides[at(view.cur)];
   const prev = view.prev === null ? null : slides[at(view.prev)];
@@ -103,20 +124,21 @@ export default function Pulse({ app }) {
       >
         <div className="pulse__head">
           <div className="pulse__tabs">
-            <button className="pulse__tab" data-on={cur === 'clocks'} onClick={() => goTo(0)}>Время</button>
-            <button className="pulse__tab" data-on={cur === 'rates'} onClick={() => goTo(1)}>Курсы</button>
+            {SLIDES.map((x, n) => (
+              <button key={x.id} className="pulse__tab" data-on={cur === x.id} onClick={() => goTo(n)}>{x.name}</button>
+            ))}
           </div>
-          <span className="pulse__hint">{cur === 'rates' ? freshness(rates) : 'нажмите на город'}</span>
         </div>
         <div className="pulse__view">
           {prev && <div className="pulse__slide pulse__slide--out" key={`o${view.prev}`}>{render(prev)}</div>}
           <div className="pulse__slide pulse__slide--in" key={`i${view.cur}`}>{render(cur)}</div>
         </div>
         <div className="pulse__dots">
-          {slides.map((s, n) => (
-            <button key={s} data-on={n === at(view.cur)} onClick={() => goTo(n)} aria-label={s === 'clocks' ? 'Время' : 'Курсы'} />
+          {SLIDES.map((x, n) => (
+            <button key={x.id} data-on={n === at(view.cur)} onClick={() => goTo(n)} aria-label={x.name} />
           ))}
         </div>
+        <div className="pulse__foot">{hint[cur]}</div>
       </div>
 
       <Sheet
@@ -140,6 +162,24 @@ export default function Pulse({ app }) {
       </Sheet>
     </>
   );
+}
+
+/* Страны клуба: флаг, число и город. Люди — сколько резидентов,
+   сообщества — сколько сообществ в стране. Ваша страна — золотом. */
+function Geo({ kind, mine }) {
+  return REGION_KEYS.map((k) => {
+    const st = regionStats(k);
+    const n = kind === 'people' ? st.members : st.communities;
+    const local = COMMUNITIES.find((c) => c.kind === 'local' && c.region === k);
+    const to = kind === 'people' ? `/people?tab=list&region=${k}` : `/community/${local?.id}`;
+    return (
+      <button key={k} className="pulse__geo" data-go={to} data-on={k === mine}>
+        <span className="pulse__flag">{REGIONS[k].flag}</span>
+        <span className="pulse__n">{n}</span>
+        <span className="pulse__c">{REGIONS[k].name}</span>
+      </button>
+    );
+  });
 }
 
 function Clocks({ list, now, baseTz, here }) {

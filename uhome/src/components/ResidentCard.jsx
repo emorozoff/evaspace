@@ -52,7 +52,7 @@ export default function ResidentCard({ me, stats = {}, hint = true, onFlip }) {
         >
           {/* ЛИЦЕВАЯ */}
           <div className="pass__face">
-            <div className="pass__bg" style={{ background: 'linear-gradient(150deg, #222228 0%, #141418 50%, #0c0c0f 100%)' }} />
+            <div className="pass__bg" style={{ background: 'linear-gradient(150deg, #23211d 0%, #151412 50%, #0c0b09 100%)' }} />
             <div className="pass__guilloche"><Guilloche opacity={0.4} seed={number} size={280} /></div>
             <div className="pass__guilloche pass__guilloche--spin"><Guilloche opacity={0.25} seed={`${number}b`} size={280} /></div>
             <div className="pass__edge" />
@@ -69,7 +69,7 @@ export default function ResidentCard({ me, stats = {}, hint = true, onFlip }) {
               </div>
 
               <div className="pass__id">
-                <Avatar person={me} size={50} ring="#E6C27A" />
+                <Avatar person={me} size={50} ring="#C9A96E" />
                 <div className="grow" style={{ minWidth: 0 }}>
                   <div className="pass__name ell" style={{ fontSize: nameEn.length > 17 ? 16 : nameEn.length > 13 ? 18 : 20 }}>{nameEn}</div>
                   <div className="pass__role ell">{roleEn(me)}{org ? ` · ${org}` : ''}</div>
@@ -92,7 +92,7 @@ export default function ResidentCard({ me, stats = {}, hint = true, onFlip }) {
 
           {/* ОБОРОТ */}
           <div className="pass__face pass__face--back">
-            <div className="pass__bg" style={{ background: 'linear-gradient(150deg, #1c1c21, #0c0c0f)' }} />
+            <div className="pass__bg" style={{ background: 'linear-gradient(150deg, #1c1b18, #0c0b09)' }} />
             <div className="pass__edge" />
             <div className="pass__band" />
             <div className="pass__body">

@@ -42,7 +42,7 @@ export default function People({ query }) {
         />
       </div>
       {tab === 'meet' && <Meet app={app} />}
-      {tab === 'list' && <Residents app={app} sort={query.sort} />}
+      {tab === 'list' && <Residents app={app} sort={query.sort} region={query.region} />}
       {tab === 'map' && <MapTab app={app} />}
     </div>
   );
@@ -244,9 +244,9 @@ function MeetForm({ app, onDone }) {
 
 /* ——— база резидентов ——— */
 
-function Residents({ app, sort: initialSort }) {
+function Residents({ app, sort: initialSort, region: initialRegion }) {
   const [q, setQ] = useState('');
-  const [region, setRegion] = useState('all');
+  const [region, setRegion] = useState(REGIONS[initialRegion] ? initialRegion : 'all');
   const [role, setRole] = useState('all');
   const [sort, setSort] = useState(initialSort === 'new' ? 'new' : 'match');
 
@@ -300,27 +300,32 @@ function Residents({ app, sort: initialSort }) {
   );
 }
 
+/* Карточка резидента во всю ширину: кто он, польза знакомства,
+   что даёт и что ищет — совпадения с вами подсвечены. */
 export function PersonCard({ app, x }) {
-  const { p, pct, reasons } = x;
+  const { p, pct, toMe, fromMe } = x;
   const inCircle = app.circle.includes(p.id);
   return (
     <button className="pcard" onClick={() => go(`/p/${p.id}`)}>
       <div className="row" style={{ gap: 13, alignItems: 'flex-start' }}>
-        <Avatar person={p} size={50} dot={p.online} ring={inCircle ? 'var(--sea)' : null} />
+        <Avatar person={p} size={54} dot={p.online} ring={inCircle ? 'var(--gold)' : null} />
         <div className="grow">
-          <div className="spread">
-            <span className="t-md ell">{p.name}</span>
-            <span className={`pct${pct >= 75 ? ' pct--hi' : ''}`}>{pct}%</span>
+          <div className="spread" style={{ alignItems: 'flex-start' }}>
+            <span className="t-md ell" style={{ paddingTop: 2 }}>{p.name}</span>
+            <span className="use"><span className="use__v">{pct}%</span><span className="use__l">польза</span></span>
           </div>
           <div className="t-sm dim ell" style={{ marginTop: 2 }}>{p.title} · {p.company}</div>
           <div className="t-xs dim-2" style={{ marginTop: 3 }}>{REGIONS[p.region].flag} {p.city}{p.joined <= 30 ? ' · новый резидент' : ''}</div>
         </div>
       </div>
-      {reasons[0] && (
-        <div className="t-sm" style={{ marginTop: 12, paddingTop: 11, borderTop: '1px solid var(--line)', color: pct >= 75 ? 'var(--gold)' : 'var(--ink-2)', lineHeight: 1.45 }}>
-          {reasons[0][0].toUpperCase() + reasons[0].slice(1)}
-        </div>
-      )}
+      <div className="pcard__row" style={{ marginTop: 14 }}>
+        <span className="pcard__k">Даёт</span>
+        <div className="wrap">{p.gives.map((g) => <span key={g} className={`tag${toMe.includes(g) ? ' tag--gold' : ''}`}>{EXCHANGE[g].name}</span>)}</div>
+      </div>
+      <div className="pcard__row">
+        <span className="pcard__k">Ищет</span>
+        <div className="wrap">{p.needs.map((g) => <span key={g} className={`tag${fromMe.includes(g) ? ' tag--sea' : ''}`}>{EXCHANGE[g].name}</span>)}</div>
+      </div>
     </button>
   );
 }

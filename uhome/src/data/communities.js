@@ -48,31 +48,31 @@ export const COMMUNITIES = [
     ],
   },
   {
-    id: 'i-invest', kind: 'interest', name: 'Инвестиции и сделки', icon: 'chart', tone: '#E6C27A', members: 96,
+    id: 'i-invest', kind: 'interest', name: 'Инвестиции и сделки', icon: 'chart', tone: '#C9A96E', members: 96, chapters: ['moscow', 'dubai', 'europe', 'miami'],
     about: 'Сделки внутри клуба, синдикаты и разбор проектов. Раз в месяц — питч-сессия.',
     hosts: ['r2', 'r27'],
     chat: [{ who: 'r2', text: 'Собираем синдикат в AI для продаж, чек от $10 тысяч.', mins: 140 }],
   },
   {
-    id: 'i-realty', kind: 'interest', name: 'Недвижимость', icon: 'home', tone: '#FDBA74', members: 88,
+    id: 'i-realty', kind: 'interest', name: 'Недвижимость', icon: 'home', tone: '#C9A27E', members: 88, chapters: ['bali', 'dubai', 'miami'],
     about: 'Аренда и покупка на Бали, в Дубае и Майами. Честные отзывы о застройщиках.',
     hosts: ['r8', 'r19'],
     chat: [{ who: 'r8', text: 'Освобождается вилла на 3 спальни в Семиньяке с ноября.', mins: 90 }],
   },
   {
-    id: 'i-family', kind: 'interest', name: 'Семьи с детьми', icon: 'kids', tone: '#F9A8C0', members: 71,
+    id: 'i-family', kind: 'interest', name: 'Семьи с детьми', icon: 'kids', tone: '#C99AAA', members: 71, chapters: ['bali', 'dubai', 'moscow'],
     about: 'Сады, школы, врачи и детские праздники во всех регионах клуба.',
     hosts: ['r15', 'r26'],
     chat: [{ who: 'r15', text: 'В субботу семейный день в Little Sun — ждём всех!', mins: 200 }],
   },
   {
-    id: 'i-sport', kind: 'interest', name: 'Спорт: серф, падел, бег', icon: 'wave', tone: '#67E8F9', members: 104,
+    id: 'i-sport', kind: 'interest', name: 'Спорт: серф, падел, бег', icon: 'wave', tone: '#8BB8B8', members: 104, chapters: ['bali', 'dubai', 'moscow', 'europe'],
     about: 'Тренировки вместе в каждом регионе: серф на Бали, падел в Дубае, бег в Москве.',
     hosts: ['r22', 'r5'],
     chat: [{ who: 'r22', text: 'Турнир по паделу через три недели, запись открыта.', mins: 30 }],
   },
   {
-    id: 'i-ai', kind: 'interest', name: 'AI и технологии', icon: 'spark', tone: '#A78BFA', members: 118,
+    id: 'i-ai', kind: 'interest', name: 'AI и технологии', icon: 'spark', tone: '#A99BC9', members: 118, chapters: ['moscow', 'bali', 'europe', 'miami'],
     about: 'Автоматизации, ассистенты и продукты на AI. Делимся тем, что работает.',
     hosts: ['r14', 'r22'],
     chat: [{ who: 'r14', text: 'Выложил в Базу запись про ассистентов продаж.', mins: 160 }],
@@ -81,3 +81,10 @@ export const COMMUNITIES = [
 
 export const communityById = (id) => COMMUNITIES.find((c) => c.id === id);
 export const localOf = (region) => COMMUNITIES.find((c) => c.kind === 'local' && c.region === region);
+
+/* Сколько резидентов и сообществ в регионе: локальное плюс главы сообществ по интересам. */
+export function regionStats(region) {
+  const local = localOf(region);
+  const chapters = COMMUNITIES.filter((c) => c.kind === 'interest' && c.chapters?.includes(region));
+  return { members: local?.members || 0, communities: (local ? 1 : 0) + chapters.length, list: local ? [local, ...chapters] : chapters };
+}

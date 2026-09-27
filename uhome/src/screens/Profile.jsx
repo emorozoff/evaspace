@@ -9,6 +9,11 @@ import { whenLabel } from '../lib/format.js';
 import ResidentCard from '../components/ResidentCard.jsx';
 import RegionSheet from '../components/RegionSheet.jsx';
 import Install from '../components/Install.jsx';
+import { AvatarPortrait } from '../components/AvatarArt.jsx';
+import { assistantOf } from '../lib/assistant.js';
+import { groupsOf } from '../lib/groups.js';
+import { TONES } from '../data/avatars.js';
+import { GroupAva } from '../components/Art.jsx';
 import { TopBar, Section, List, Item, Btn, Sheet, Field, Note } from '../components/UI.jsx';
 
 /* Профиль: карта резидента, главная привязка — регион, анкета, мои события
@@ -20,6 +25,8 @@ export default function Profile() {
   const [edit, setEdit] = useState(false);
   const r = REGIONS[app.me.region];
   const going = EVENTS.filter((e) => app.going[e.id]).sort((a, b) => a.inDays - b.inDays);
+  const A = assistantOf(app);
+  const mm = groupsOf(app.me)[0];
 
   return (
     <div className="screen screen--nested">
@@ -37,6 +44,24 @@ export default function Profile() {
           <Item icon="edit" title="Анкета" sub={`${app.me.title || app.me.role}${app.me.company ? ` · ${app.me.company}` : ''}`} onClick={() => setEdit(true)} />
           <Item icon="message" title="Сообщения" sub="Команда клуба, резиденты, сообщества" onClick={() => go('/chats')} />
         </List>
+
+        <Section title="Ассистент и группа">
+          <List>
+            <Item
+              lead={<AvatarPortrait who={A.id} size={44} />}
+              title={A.name}
+              sub={`Тон: ${TONES.find((t) => t.id === (app.me.tone || 'warm'))?.name.toLowerCase()} · что знает о вас`}
+              onClick={() => go('/ai?tab=me')}
+            />
+            <Item
+              lead={<GroupAva members={mm.members} size={44} />}
+              title={mm.name}
+              sub={`10 участников · ${mm.when}`}
+              onClick={() => go('/group/g-mm')}
+            />
+            <Item icon="spark" title={app.me.tested ? 'Пройти тест заново' : 'Пройти тест'} sub="Минута — и подбор людей и событий точнее" onClick={() => go('/test')} />
+          </List>
+        </Section>
 
         <Section title="Мои события" more="Афиша" onMore={() => go('/events')}>
           {going.length ? (

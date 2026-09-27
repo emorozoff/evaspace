@@ -14,9 +14,10 @@ export default function Welcome() {
   const app = useApp();
   const [apply, setApply] = useState(false);
 
+  // после входа — короткий тест: по нему ассистент собирает группу и знакомства
   const enter = () => {
     app.enter();
-    go('/', true);
+    go(app.me.tested ? '/' : '/test', true);
   };
 
   return (
@@ -44,7 +45,7 @@ export default function Welcome() {
       </div>
 
       <Sheet open={apply} onClose={() => setApply(false)} title="Заявка в клуб" sub="Три вопроса. Остальное — потом, в профиле.">
-        <Apply onDone={(me) => { app.enter(me); app.say('Заявка принята — пока открыли демо-доступ'); go('/', true); }} />
+        <Apply onDone={(me) => { app.enter(me); app.say('Заявка принята — пока открыли демо-доступ'); go('/test', true); }} />
       </Sheet>
     </div>
   );

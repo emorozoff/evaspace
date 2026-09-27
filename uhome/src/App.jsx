@@ -17,9 +17,15 @@ import Chats from './screens/Chats.jsx';
 import Chat from './screens/Chat.jsx';
 import Profile from './screens/Profile.jsx';
 import NewsPage from './screens/NewsPage.jsx';
+import Assistant from './screens/Assistant.jsx';
+import Test from './screens/Test.jsx';
+import Group from './screens/Group.jsx';
+import AiFab from './components/AiFab.jsx';
 
-/* Внутри переписки таб-бара нет: поле ввода стоит на его месте. */
-const FULLSCREEN = new Set(['chat']);
+/* Внутри переписки, чата с ассистентом и теста таб-бара нет. */
+const FULLSCREEN = new Set(['chat', 'ai', 'test']);
+/* Кнопка ассистента — на корнях вкладок; на главной он и так в круге и в карточке. */
+const TABS = new Set(['events', 'services', 'people', 'base']);
 
 export default function App() {
   const app = useApp();
@@ -43,6 +49,7 @@ export default function App() {
       <div className="aura" />
       <div className="app">
         <main key={full}>{screen(root, id, query)}</main>
+        {TABS.has(root) && <AiFab app={app} />}
         {!FULLSCREEN.has(root) && <Nav root={root} badge={totalUnread(app)} />}
         {app.toast && <div className="toast" key={app.toast.at} style={FULLSCREEN.has(root) ? { bottom: 90 } : undefined}>{app.toast.text}</div>}
       </div>
@@ -66,6 +73,9 @@ function screen(root, id, query) {
     case 'chat': return <Chat id={id} />;
     case 'profile': return <Profile />;
     case 'news': return <NewsPage id={id} />;
+    case 'ai': return <Assistant query={query} />;
+    case 'test': return <Test />;
+    case 'group': return <Group id={id} />;
     default: return <Home />;
   }
 }

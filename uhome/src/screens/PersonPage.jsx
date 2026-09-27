@@ -1,12 +1,16 @@
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { byId, EXCHANGE, MEET_GOALS } from '../data/people.js';
+import { byId, EXCHANGE, MEET_GOALS, TRIPS } from '../data/people.js';
 import { REGIONS } from '../data/regions.js';
 import { EVENTS } from '../data/events.js';
 import { COMMUNITIES } from '../data/communities.js';
 import { companiesOf } from '../data/services.js';
 import { match } from '../lib/match.js';
-import { whenLabel } from '../lib/format.js';
+import { whenLabel, relDay } from '../lib/format.js';
+import { whyText } from '../lib/intro.js';
+import { assistantOf } from '../lib/assistant.js';
+import { introduce } from '../components/Intros.jsx';
+import { AvatarPortrait } from '../components/AvatarArt.jsx';
 import { localParts, hhmm } from '../lib/time.js';
 import { Avatar } from '../components/Art.jsx';
 import { Brand } from '../components/Covers.jsx';
@@ -29,6 +33,16 @@ export default function PersonPage({ id }) {
   const events = EVENTS.filter((e) => e.going.includes(p.id) || e.host === p.id).slice(0, 4);
   const hosts = COMMUNITIES.filter((c) => c.hosts.includes(p.id));
   const local = hhmm(localParts(r.tz));
+  const A = assistantOf(app);
+  const introed = app.intros?.[p.id];
+  // поводы встретиться вживую: одно событие, прилёт, один город
+  const both = EVENTS.filter((e) => app.going[e.id] && e.going.includes(p.id));
+  const trip = TRIPS.find((t) => t.who === p.id && t.to === app.me.region);
+  const povody = [
+    ...both.map((e) => ({ icon: 'calendar', text: `Вы оба идёте на «${e.title}» — ${whenLabel(e.inDays, e.time).toLowerCase()}` })),
+    ...(trip ? [{ icon: 'plane', text: `Прилетает ${REGIONS[trip.to].loc} ${relDay(trip.inDays)} на ${trip.days} дн.` }] : []),
+    ...(p.region === app.me.region ? [{ icon: 'pin', text: `Тоже ${r.loc}, ${p.city} — можно встретиться на кофе` }] : []),
+  ];
 
   return (
     <div className="screen screen--nested">
@@ -65,7 +79,7 @@ export default function PersonPage({ id }) {
             <div className="figure" style={{ fontSize: 34, color: m.pct >= 75 ? 'var(--gold)' : 'var(--ink)' }}>{m.pct}%</div>
             <div className="grow">
               <div className="t-md">{m.pct >= 75 ? 'Стоит познакомиться' : m.pct >= 55 ? 'Есть что обсудить' : 'Пока мало общего'}</div>
-              <div className="t-xs dim-2" style={{ marginTop: 2 }}>Совпадение с вами</div>
+              <div className="t-xs dim-2" style={{ marginTop: 2 }}>Польза знакомства для вас</div>
             </div>
           </div>
           {m.reasons.length > 0 && (
@@ -73,6 +87,28 @@ export default function PersonPage({ id }) {
               {m.reasons.map((x) => <li key={x}>{x[0].toUpperCase() + x.slice(1)}</li>)}
             </ul>
           )}
+          {povody.length > 0 && (
+            <div className="stack-8" style={{ marginTop: 14 }}>
+              {povody.map((x) => (
+                <div key={x.text} className="row t-sm" style={{ gap: 10, color: 'var(--ink-2)' }}>
+                  <Icon name={x.icon} size={16} color="var(--gold)" />
+                  <span>{x.text}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <button
+            className="row"
+            style={{ gap: 10, marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--line)', width: '100%', textAlign: 'left' }}
+            disabled={!!introed}
+            onClick={() => introduce(app, p, povody[0]?.text ? `${povody[0].text}. ${whyText(m)}` : whyText(m))}
+          >
+            <AvatarPortrait who={A.id} size={32} />
+            <span className="grow t-sm" style={{ color: introed ? 'var(--sea)' : 'var(--gold)', fontWeight: 600 }}>
+              {introed ? `${A.name} уже ${A.she ? 'познакомила' : 'познакомил'} вас — чат открыт` : `${A.name} познакомит вас — напишет обоим`}
+            </span>
+            {!introed && <Icon name="right" size={16} color="var(--gold)" />}
+          </button>
         </div>
 
         <Section title="О себе">

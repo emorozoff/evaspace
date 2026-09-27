@@ -4,12 +4,12 @@
    карточками самих компаний. */
 
 export const CATEGORIES = [
-  { id: 'visa', name: 'Визы', icon: 'passport', tone: '#7DB3FF', hint: 'ВНЖ, продления, золотые визы' },
-  { id: 'bikes', name: 'Байки', icon: 'bike', tone: '#FDBA74', hint: 'С доставкой к дому' },
-  { id: 'realty', name: 'Недвижимость', icon: 'home', tone: '#E6C27A', hint: 'Аренда, покупка, управление' },
-  { id: 'kids', name: 'Детский сад', icon: 'kids', tone: '#F9A8C0', hint: 'Сады и школы' },
-  { id: 'food', name: 'Рестораны', icon: 'food', tone: '#6EE7B7', hint: 'Столы и кейтеринг' },
-  { id: 'services', name: 'Услуги', icon: 'briefcase', tone: '#A78BFA', hint: 'Юристы, налоги, съёмка, переезд' },
+  { id: 'visa', name: 'Визы', icon: 'passport', tone: '#8FA8C9', hint: 'ВНЖ, продления, золотые визы' },
+  { id: 'bikes', name: 'Байки', icon: 'bike', tone: '#C9A27E', hint: 'С доставкой к дому' },
+  { id: 'realty', name: 'Недвижимость', icon: 'home', tone: '#C9A96E', hint: 'Аренда, покупка, управление' },
+  { id: 'kids', name: 'Детский сад', icon: 'kids', tone: '#C99AAA', hint: 'Сады и школы' },
+  { id: 'food', name: 'Рестораны', icon: 'food', tone: '#8FB8A0', hint: 'Столы и кейтеринг' },
+  { id: 'services', name: 'Услуги', icon: 'briefcase', tone: '#A99BC9', hint: 'Юристы, налоги, съёмка, переезд' },
 ];
 
 export const catById = (id) => CATEGORIES.find((c) => c.id === id);

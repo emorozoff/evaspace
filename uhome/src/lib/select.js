@@ -3,6 +3,7 @@ import { EVENTS } from '../data/events.js';
 import { PEOPLE, byId } from '../data/people.js';
 import { COMMUNITIES } from '../data/communities.js';
 import { COMPANIES } from '../data/services.js';
+import { groupsOf, groupThread, GROUP_UNREAD } from './groups.js';
 
 /* Выборки поверх данных и стора. Экраны только показывают результат —
    правила порядка и видимости живут здесь. */
@@ -14,56 +15,74 @@ const at = (mins) => OPENED - mins * 60000;
 export function messagesOf(app, chat) {
   const seed = THREADS.find((t) => t.with === chat);
   const community = COMMUNITIES.find((c) => c.id === chat);
+  const group = chat === 'g-mm' ? groupsOf(app.me).find((g) => g.id === chat) : null;
   const base = seed
     ? seed.messages.map((m) => ({ ...m, at: at(m.mins) }))
     : community
-      ? community.chat.map((m) => ({ from: 'them', who: m.who, text: m.text, at: at(m.mins) })).reverse()
-      : [];
+      ? community.chat.map((m) => ({ from: 'them', who: m.who, text: m.text, at: at(m.mins) }))
+      : group
+        ? groupThread(app.me, group).map((m) => ({ ...m, at: at(m.mins) }))
+        : [];
   return [...base, ...(app.sent[chat] || [])].sort((a, b) => a.at - b.at);
 }
 
+/* Непрочитанное: заготовка из данных, пока чат не открывали, плюс всё,
+   что пришло после последнего открытия. */
 export function unreadOf(app, chat) {
-  if (app.read[chat]) return 0;
-  return THREADS.find((t) => t.with === chat)?.unread || 0;
+  if (chat === 'ai') return app.ai?.messages?.length ? 0 : 1;
+  const last = app.read[chat] || 0;
+  const seed = last ? 0 : THREADS.find((t) => t.with === chat)?.unread || GROUP_UNREAD[chat] || 0;
+  const fresh = (app.sent[chat] || []).filter((m) => m.from === 'them' && m.at > last).length;
+  return seed + fresh;
 }
 
+/** Личные — красным, группы — белым, как в телеграме. */
+export const isGroupChat = (id) => id === 'g-mm' || COMMUNITIES.some((c) => c.id === id);
+
 export function totalUnread(app) {
-  return THREADS.reduce((n, t) => n + unreadOf(app, t.with), 0);
+  const ids = new Set([...THREADS.map((t) => t.with), ...Object.keys(app.sent), ...app.joined, 'g-mm', 'ai']);
+  return [...ids].reduce((n, id) => n + unreadOf(app, id), 0);
 }
 
 /** Последнее сообщение и его время — для списков и порядка. */
 export function lastOf(app, chat) {
+  if (chat === 'ai') {
+    const m = app.ai?.messages || [];
+    return m[m.length - 1] || null;
+  }
   const list = messagesOf(app, chat);
   return list[list.length - 1] || null;
 }
 
-/* Ближний круг: первой — команда клуба, дальше люди. Кто написал и ещё
-   не прочитан — поднимается в самое начало, свежие выше. */
+/* Ближний круг: команда клуба, мастер-группа, ассистент, дальше люди.
+   Кто написал и ещё не прочитан — поднимается в самое начало. */
+const PINNED = ['team', 'g-mm', 'ai'];
 export function circleOrder(app) {
-  const ids = ['team', ...app.circle.filter((id) => byId(id))];
+  const ids = [...PINNED, ...app.circle.filter((id) => id !== 'team' && byId(id))];
   const items = ids.map((id, i) => {
     const last = lastOf(app, id);
-    return { id, person: byId(id), unread: unreadOf(app, id), lastAt: last?.at || 0, order: i };
+    return { id, person: byId(id), unread: unreadOf(app, id), lastAt: last?.at || 0, order: i, group: id.startsWith('g-') };
   });
   const fresh = items.filter((x) => x.unread > 0).sort((a, b) => b.lastAt - a.lastAt);
   const rest = items.filter((x) => x.unread === 0).sort((a, b) => {
-    if (a.id === 'team') return -1;
-    if (b.id === 'team') return 1;
+    const pa = PINNED.indexOf(a.id), pb = PINNED.indexOf(b.id);
+    if (pa >= 0 || pb >= 0) return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb);
     return b.lastAt - a.lastAt || a.order - b.order;
   });
   return [...fresh, ...rest];
 }
 
-/** Все разговоры для списка сообщений: личные и сообщества, где вы участник. */
+/** Все разговоры: личные, группы и сообщества, где вы участник. */
 export function chatList(app) {
   const dms = THREADS.map((t) => t.with)
     .concat(Object.keys(app.sent).filter((k) => byId(k)))
     .filter((v, i, a) => a.indexOf(v) === i)
     .map((id) => ({ id, kind: 'dm', person: byId(id), unread: unreadOf(app, id), last: lastOf(app, id) }));
+  const mine = groupsOf(app.me).map((g) => ({ id: g.id, kind: 'squad', group: g, unread: unreadOf(app, g.id), last: lastOf(app, g.id) }));
   const groups = COMMUNITIES.filter((c) => app.joined.includes(c.id)).map((c) => ({
-    id: c.id, kind: 'group', community: c, unread: 0, last: lastOf(app, c.id),
+    id: c.id, kind: 'group', community: c, unread: unreadOf(app, c.id), last: lastOf(app, c.id),
   }));
-  return [...dms, ...groups].sort((a, b) => (b.unread > 0) - (a.unread > 0) || (b.last?.at || 0) - (a.last?.at || 0));
+  return [...dms, ...mine, ...groups].sort((a, b) => (b.unread > 0) - (a.unread > 0) || (b.last?.at || 0) - (a.last?.at || 0));
 }
 
 /* ——— события ——— */

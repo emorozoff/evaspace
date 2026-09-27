@@ -6,6 +6,9 @@ import { REGIONS } from '../data/regions.js';
 import { companyById } from '../data/services.js';
 import { localOf } from '../data/communities.js';
 import { goingCount } from '../lib/select.js';
+import { eventIntros } from '../lib/intro.js';
+import { assistantOf } from '../lib/assistant.js';
+import { introduce } from '../components/Intros.jsx';
 import { whenLabel, dateLong, dayShift, weekdayLong } from '../lib/format.js';
 import { timeForMe, downloadIcs } from '../lib/calendar.js';
 import { EventCover, Brand } from '../components/Covers.jsx';
@@ -15,7 +18,8 @@ import { TopBar, Section, List, Item, Btn, Note, Empty } from '../components/UI.
 import Icon from '../components/Icons.jsx';
 
 /* Страница события: всё, чтобы решить «иду или нет», — время в вашем поясе,
-   место, цена, кто ведёт, программа и кто уже идёт. На закрытое — заявка. */
+   место, цена, кто ведёт, программа, кто идёт и с кем там стоит
+   познакомиться (польза в процентах). На закрытое — заявка. */
 
 export default function EventPage({ id }) {
   const app = useApp();
@@ -33,6 +37,8 @@ export default function EventPage({ id }) {
   const mineTime = timeForMe(e, app.me.region);
   const d = dayShift(e.inDays);
   const community = e.region ? localOf(e.region) : null;
+  const A = assistantOf(app);
+  const meet = eventIntros(app, e).slice(0, 4);
 
   const share = async () => {
     const text = `${e.title} — ${whenLabel(e.inDays, e.time)}, ${e.place}`;
@@ -146,6 +152,34 @@ export default function EventPage({ id }) {
             </div>
           </div>
         </Section>
+
+        {meet.length > 0 && (
+          <Section title="С кем познакомиться" note={`${A.name} ${A.found} по пользе для вас`}>
+            <List>
+              {meet.map((x) => {
+                const done = app.intros?.[x.p.id];
+                return (
+                  <div key={x.p.id} className="item">
+                    <button className="row grow" style={{ gap: 14, minWidth: 0, textAlign: 'left' }} onClick={() => go(`/p/${x.p.id}`)}>
+                      <Avatar person={x.p} size={46} dot={x.p.online} />
+                      <span className="item__body">
+                        <span className="item__t" style={{ display: 'block' }}>{x.p.name}</span>
+                        <span className="item__s item__s--wrap" style={{ display: 'block' }}>{x.why}</span>
+                      </span>
+                    </button>
+                    <div className="item__meta">
+                      <span className={`pct${x.pct >= 75 ? ' pct--hi' : ''}`}>{x.pct}%</span>
+                      {done
+                        ? <span className="t-xs" style={{ color: 'var(--sea)' }}>интро</span>
+                        : <button className="t-xs gold" style={{ fontWeight: 600 }} onClick={() => introduce(app, x.p, `Вы оба идёте на «${e.title}». ${x.why}`)}>Познакомить</button>}
+                    </div>
+                  </div>
+                );
+              })}
+            </List>
+            {!going && !closed && <div className="t-xs dim-2">Отметьтесь «Иду» — {A.name} предупредит их, что вы тоже будете.</div>}
+          </Section>
+        )}
 
         {closed && !going && (
           <Note icon="lock" tone="var(--violet)">

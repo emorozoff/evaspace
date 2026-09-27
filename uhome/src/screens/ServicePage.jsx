@@ -32,19 +32,19 @@ export default function ServicePage({ id }) {
 
       <div className="stack-24">
         <div className="stack">
-          <Brand company={c} height={150}>
+          <Brand company={c} height={176}>
             <div className="scene__top">
               <span className="glass" style={{ color: cat.tone }}><Icon name={cat.icon} size={13} />{cat.name}</span>
               <span className="glass">{c.regions.map((k) => REGIONS[k].flag).join(' ')}</span>
             </div>
+            <div className="scene__over">
+              <h1 className="h1" style={{ fontSize: 38 }}>{c.name}</h1>
+              <div className="t-sm" style={{ color: 'rgba(255,255,255,.8)', marginTop: 4 }}>{c.tagline}</div>
+            </div>
           </Brand>
-          <div>
-            <h1 className="h2">{c.name}</h1>
-            <div className="t-sm dim" style={{ marginTop: 6 }}>{c.tagline}</div>
-          </div>
 
           <div className="stats">
-            <div className="stat"><div className="stat__v">{c.rating.toFixed(1)}</div><div className="stat__l">оценка</div></div>
+            <div className="stat"><div className="stat__v" style={{ color: 'var(--gold)' }}>★ {c.rating.toFixed(1)}</div><div className="stat__l">оценка резидентов</div></div>
             <div className="stat"><div className="stat__v">{nf(c.done)}</div><div className="stat__l">заказов</div></div>
             <div className="stat"><div className="stat__v">{c.regions.length}</div><div className="stat__l">{c.regions.length === 1 ? 'регион' : 'региона'}</div></div>
           </div>
@@ -65,7 +65,7 @@ export default function ServicePage({ id }) {
           </div>
         </Section>
 
-        <Section title="Что предлагают">
+        <Section title="Что предлагают" note="Нажмите — заявка на это предложение">
           <div className="list">
             {c.offers.map((o, i) => (
               <button key={o.name} className="offer" style={{ width: '100%' }} onClick={() => setOrder(i)}>

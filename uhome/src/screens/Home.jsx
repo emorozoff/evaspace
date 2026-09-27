@@ -8,6 +8,9 @@ import { NEWS } from '../data/news.js';
 import ResidentCard from '../components/ResidentCard.jsx';
 import Pulse from '../components/Pulse.jsx';
 import Circle from '../components/Circle.jsx';
+import Intros from '../components/Intros.jsx';
+import { AvatarPortrait } from '../components/AvatarArt.jsx';
+import { assistantOf, insight } from '../lib/assistant.js';
 import Install from '../components/Install.jsx';
 import { RegionButton } from '../components/RegionSheet.jsx';
 import { EventCard, EventRow } from '../components/EventCards.jsx';
@@ -15,8 +18,9 @@ import { Avatar } from '../components/Art.jsx';
 import { Section, List, Empty } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 
-/* Главная — порядок из клуба: карта резидента, живой блок (время и курсы),
-   ближний круг начиная с команды, ближайшие события, новые резиденты, новости. */
+/* Главная — порядок из клуба: карта резидента, живой блок (время, курсы,
+   люди, сообщества), ближний круг начиная с команды, повод познакомиться
+   от ассистента, ближайшие события, новые резиденты, новости. */
 
 export default function Home() {
   const app = useApp();
@@ -25,6 +29,8 @@ export default function Home() {
   const unread = totalUnread(app);
   const [first, ...rest] = events;
   const fresh = newResidents(8);
+  const A = assistantOf(app);
+  const tip = insight(app);
 
   return (
     <div className="screen stack-24 rise-in">
@@ -52,6 +58,28 @@ export default function Home() {
       <Pulse app={app} />
 
       <Circle app={app} />
+
+      {!app.me.tested ? (
+        <button className="aicard" onClick={() => go('/test')}>
+          <AvatarPortrait who={A.id} size={54} />
+          <span className="grow" style={{ textAlign: 'left', minWidth: 0 }}>
+            <span className="aicard__k">{A.name} · минута</span>
+            <span className="aicard__t" style={{ display: 'block' }}>Ответьте на восемь вопросов — соберу вашу мастер-группу и людей, которые вам нужны.</span>
+          </span>
+          <Icon name="right" size={18} color="var(--ink-3)" />
+        </button>
+      ) : (
+        <button className="aicard" onClick={() => go('/ai')}>
+          <AvatarPortrait who={A.id} size={54} />
+          <span className="grow" style={{ textAlign: 'left', minWidth: 0 }}>
+            <span className="aicard__k">{A.name} · ваш ассистент</span>
+            <span className="aicard__t clamp-3">{tip.text}</span>
+          </span>
+          <Icon name="right" size={18} color="var(--ink-3)" />
+        </button>
+      )}
+
+      <Intros app={app} />
 
       <Section title="Ближайшие события" note={`${r.name} и эфиры`} more="Все" onMore={() => go('/events')}>
         {first ? <EventCard app={app} event={first} /> : <Empty icon="calendar" title="Пока тихо" text="В вашем регионе ближайших событий нет — загляните в афишу других." />}

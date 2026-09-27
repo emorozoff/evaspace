@@ -4,7 +4,7 @@ import { initials } from '../lib/format.js';
 import { toneOf } from '../data/people.js';
 import Icon from './Icons.jsx';
 
-export const GOLD = '#E6C27A';
+export const GOLD = '#C9A96E';
 
 /* ---------- знак UHOME ---------------------------------------------------- */
 /* Дом и буква U в одном контуре: крыша-шеврон над подковой, внутри точка —
@@ -36,7 +36,7 @@ export function Avatar({ person, size = 44, ring = null, dot = false, style, rad
       style={{
         width: size, height: size, fontSize: size * 0.36, borderRadius: r, color: tone,
         // крупный аватар (карточка знакомства, профиль) — тон насыщеннее
-        background: size >= 72 ? `linear-gradient(${tone}40, ${tone}24), #1b1b1f` : `linear-gradient(${tone}2b, ${tone}1c), #1b1b1f`, ...style,
+        background: size >= 72 ? `linear-gradient(${tone}40, ${tone}24), #1c1b18` : `linear-gradient(${tone}2b, ${tone}1c), #1c1b18`, ...style,
       }}
     >
       {team ? <Mark size={size * 0.6} /> : initials(person?.name)}
@@ -52,11 +52,31 @@ export function Tile({ icon, tone = GOLD, size = 44, radius }) {
     <span
       style={{
         width: size, height: size, flex: 'none', borderRadius: radius ?? size * 0.3, display: 'grid', placeItems: 'center',
-        color: tone, background: `linear-gradient(${tone}26, ${tone}14), #1b1b1f`,
+        color: tone, background: `linear-gradient(${tone}26, ${tone}14), #1c1b18`,
       }}
     >
       <Icon name={icon} size={size * 0.46} />
     </span>
+  );
+}
+
+/* Аватар группы: четыре участника в одном сквиркле — сразу видно, что это люди, а не канал. */
+export function GroupAva({ members = [], size = 56, ring = null }) {
+  const four = members.slice(0, 4);
+  return (
+    <div style={{ position: 'relative', width: size, height: size, flex: 'none' }}>
+      <div className="gava" style={{ width: size, height: size }}>
+        {four.map((p) => {
+          const tone = toneOf(p);
+          return (
+            <span key={p.id} style={{ color: tone, fontSize: size * 0.2, background: `linear-gradient(${tone}33, ${tone}1c), #1c1b18` }}>
+              {initials(p.name)}
+            </span>
+          );
+        })}
+      </div>
+      {ring && <i className="ava__ring" style={{ borderColor: ring, borderRadius: size * 0.32 + 3 }} />}
+    </div>
   );
 }
 
@@ -89,7 +109,7 @@ export function Guilloche({ color = GOLD, opacity = 0.3, seed = 1, size = 220 })
 
 /* ---------- код на входе -------------------------------------------------- */
 /* Тёмная плашка, светлые скруглённые модули и золотые угловые метки. */
-export function QR({ value, size = 92, tone = GOLD, ink = '#EDE3CC', bg = '#101013', radius = 12 }) {
+export function QR({ value, size = 92, tone = GOLD, ink = '#EDE4D0', bg = '#12110f', radius = 12 }) {
   const id = useId().replace(/:/g, '');
   const n = 25;
   const grid = useMemo(() => qrMatrix(value, n), [value]);

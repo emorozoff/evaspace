@@ -66,17 +66,18 @@ export default function Services({ query }) {
       </div>
 
       {browsing && featured.length > 0 && (
-        <Section title="Рекомендуем" note={`Популярное ${REGIONS[app.me.region].loc}`}>
+        <Section title="Рекомендуем" note={`Резиденты пользуются ${REGIONS[app.me.region].loc}`}>
           <div className="scroller">
             {featured.map((c) => (
               <button key={c.id} className="feat" onClick={() => go(`/service/${c.id}`)}>
                 <Brand company={c} height={128} radius={0}>
                   <div className="scene__top">
                     <span className="glass">{catById(c.cat).name}</span>
+                    <span className="glass" style={{ color: 'var(--gold)' }}>★ {c.rating.toFixed(1)}</span>
                   </div>
                 </Brand>
                 <div className="feat__body">
-                  <div className="spread"><span className="t-lg">{c.name}</span><Stars value={c.rating} /></div>
+                  <div className="t-lg">{c.name}</div>
                   <div className="t-xs dim ell">{c.tagline}</div>
                   <div className="perk" style={{ marginTop: 4 }}><Icon name="gift" size={13} /><span>{c.perk}</span></div>
                 </div>
@@ -121,7 +122,12 @@ export function CompanyRow({ c }) {
           <Stars value={c.rating} />
         </div>
         <div className="t-xs dim ell">{c.tagline}</div>
-        <span className="perk" style={{ marginTop: 2 }}><Icon name="gift" size={13} /><span>{c.perk}</span></span>
+        <div className="spread" style={{ marginTop: 2 }}>
+          <span className="perk"><Icon name="gift" size={12} /><span>{c.perk}</span></span>
+          <span className="t-xs dim-2" style={{ flex: 'none' }}>
+            {c.regions.length > 3 ? 'все регионы' : c.regions.map((k) => REGIONS[k].flag).join(' ')}
+          </span>
+        </div>
       </div>
     </button>
   );

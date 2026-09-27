@@ -4,12 +4,14 @@ import { DEFAULT_RATES } from '../data/currencies.js';
 import { DEFAULT_CIRCLE } from '../data/people.js';
 import { TEAM_REPLY } from '../data/chats.js';
 import { memberNumber, seeded } from './art.js';
+import { reply, assistantOf } from './assistant.js';
+import { AVATARS } from '../data/avatars.js';
 
 /* Состояние приложения: один стор, одно место сохранения (localStorage,
-   ключ uhome.v1). Экраны не пишут в хранилище напрямую — только через
+   ключ uhome.v2). Экраны не пишут в хранилище напрямую — только через
    действия отсюда. Ключ поднимается, если меняется форма данных. */
 
-const KEY = 'uhome.v1';
+const KEY = 'uhome.v2';
 
 export const DEMO_ME = {
   id: 'me',
@@ -26,6 +28,13 @@ export const DEMO_ME = {
   interests: ['Серфинг', 'Падел', 'Кофе', 'Путешествия'],
   goals: ['partner', 'friends', 'sport'],
   langs: ['RU', 'EN'],
+  // ответы теста: по ним ассистент учится и собирает группы
+  assistant: 'eva',
+  tone: 'flirt',
+  sphere: 'it',
+  regionsOften: ['bali', 'moscow', 'dubai'],
+  formats: ['coffee', 'sport', 'dinner'],
+  tested: false,
 };
 
 /** Неделя вида 2026-39: по ней обновляется подборка знакомств. */
@@ -54,6 +63,8 @@ function fresh() {
     orders: [],
     watched: {},
     hidden: {},
+    intros: {},
+    ai: { messages: [], count: 0, memory: { topics: {} } },
   };
 }
 
@@ -138,13 +149,13 @@ export function StoreProvider({ children }) {
       toggleJoin: (id) =>
         patch((s) => ({ joined: s.joined.includes(id) ? s.joined.filter((x) => x !== id) : [...s.joined, id] })),
 
-      markRead: (chat) => patch((s) => (s.read[chat] ? {} : { read: { ...s.read, [chat]: Date.now() } })),
+      markRead: (chat) => patch((s) => ({ read: { ...s.read, [chat]: Date.now() } })),
 
-      send: (chat, text, { reply } = {}) => {
+      send: (chat, text, { reply, who } = {}) => {
         push(chat, { from: 'me', text });
         // команда клуба отвечает сама, люди — иногда, чтобы переписка была живой
         const answer = chat === 'team' ? TEAM_REPLY : reply;
-        if (answer) setTimeout(() => push(chat, { from: 'them', text: answer }), 1400);
+        if (answer) setTimeout(() => push(chat, { from: 'them', text: answer, ...(who ? { who } : {}) }), 1400);
       },
 
       /* Взаимность в демо решается детерминированно от человека и недели,
@@ -158,6 +169,49 @@ export function StoreProvider({ children }) {
         return result;
       },
       meetRestart: () => patch((s) => ({ meet: { ...s.meet, status: {} } })),
+
+      finishTest: (answers) => patch((s) => ({ me: { ...s.me, ...answers, tested: true } })),
+
+      /* Ассистент: вопрос уходит сразу, ответ — через «печатает…».
+         Каждая тема запоминается: так он учится, что вам важно. */
+      aiAsk: (text) => {
+        patch((s) => ({ ai: { ...s.ai, messages: [...s.ai.messages, { from: 'me', text, at: Date.now() }] } }));
+        setTimeout(() => {
+          patch((s) => {
+            const r = reply(s, text);
+            const topics = { ...s.ai.memory.topics, [r.topic]: (s.ai.memory.topics[r.topic] || 0) + 1 };
+            const handoff = r.handoff
+              ? { sent: { ...s.sent, team: [...(s.sent.team || []), { from: 'me', text: `Вопрос через ассистента: ${text}`, at: Date.now() }] } }
+              : {};
+            return {
+              ...handoff,
+              ai: { messages: [...s.ai.messages, { from: 'ai', ...r, at: Date.now() }], count: s.ai.count + 1, memory: { ...s.ai.memory, topics } },
+            };
+          });
+        }, 900);
+      },
+      aiOpen: () =>
+        patch((s) => (s.ai.messages.length ? {} : { ai: { ...s.ai, messages: [{ from: 'ai', ...reply(s, 'привет'), at: Date.now() }] } })),
+      aiReset: () => patch(() => ({ ai: { messages: [], count: 0, memory: { topics: {} } } })),
+
+      /* Интро: ассистент пишет обоим, почему стоит поговорить, открывает
+         общий чат и кладёт человека в ближний круг. */
+      intro: (pid, why) => {
+        patch((s) => {
+          const A = assistantOf(s);
+          const note = `${A.name} ${A.she ? 'познакомила' : 'познакомил'} вас. ${why || ''}`.trim();
+          return {
+            intros: { ...s.intros, [pid]: Date.now() },
+            circle: s.circle.includes(pid) ? s.circle : [...s.circle, pid],
+            sent: { ...s.sent, [pid]: [...(s.sent[pid] || []), { from: 'sys', text: note, at: Date.now() }] },
+          };
+        });
+        setTimeout(() => patch((s) => {
+          const A = AVATARS[s.me.assistant] || AVATARS.eva;
+          const text = `Привет! ${A.name} ${A.she ? 'рассказала' : 'рассказал'} о вас — кажется, нам есть что обсудить. Созвонимся на неделе?`;
+          return { sent: { ...s.sent, [pid]: [...(s.sent[pid] || []), { from: 'them', text, at: Date.now() }] }, read: { ...s.read, [pid]: 0 } };
+        }), 2200);
+      },
 
       order: (company, offer, note) =>
         patch((s) => ({ orders: [{ id: `o${Date.now()}`, company, offer, note, at: Date.now() }, ...s.orders] })),
