@@ -1,0 +1,27 @@
+{
+  "id": "/evaspace/uhome/",
+  "name": "UHOME CLUB",
+  "short_name": "UHOME",
+  "description": "Клуб резидентов, которые живут между странами: карта резидента, события, услуги своих, знакомства и база знаний.",
+  "start_url": "/evaspace/uhome/",
+  "scope": "/evaspace/uhome/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#07080c",
+  "theme_color": "#07080c",
+  "lang": "ru",
+  "dir": "ltr",
+  "categories": ["social", "lifestyle", "travel"],
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "/evaspace/uhome/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/evaspace/uhome/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/evaspace/uhome/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "События", "short_name": "События", "url": "/evaspace/uhome/#/events", "icons": [{ "src": "/evaspace/uhome/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Услуги", "short_name": "Услуги", "url": "/evaspace/uhome/#/services", "icons": [{ "src": "/evaspace/uhome/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Люди", "short_name": "Люди", "url": "/evaspace/uhome/#/people", "icons": [{ "src": "/evaspace/uhome/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -12,7 +12,7 @@ const SHELL = [BASE + 'index.html', BASE + 'manifest.json', BASE + 'icon.svg',
    UPASS, «Оракул дня», видео. У каждого свой service worker и свой кэш,
    а этот обслуживает весь /evaspace/ — без исключения он перехватывал бы
    переходы в них и отдавал вместо них оболочку Евы. */
-const STANDALONE = ['club/', 'klub/', 'u/', 'upass/', 'karta-dnya/', 'video/'];
+const STANDALONE = ['uhome/', 'club/', 'klub/', 'u/', 'upass/', 'karta-dnya/', 'video/'];
 const isStandalone = (pathname) => STANDALONE.some((name) => pathname.startsWith(BASE + name));
 
 self.addEventListener('install', (e) => {
