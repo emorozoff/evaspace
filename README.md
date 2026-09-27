@@ -1,3 +1,6 @@
+> **UHOME CLUB** — приложение клуба резидентов (структура И АЙ КЛАБ, оформление UPASS):
+> https://emorozoff.github.io/evaspace/uhome/ · описание — [uhome/README.md](uhome/README.md)
+
 # Eva Space — MVP
 
 Платформа женского развития с индивидуальной программой обучения.

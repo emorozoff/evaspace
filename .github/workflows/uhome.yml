@@ -1,0 +1,91 @@
+name: Публикация UHOME CLUB
+
+# UHOME CLUB публикуется отдельно от остального сайта: сборка кладётся только
+# в папку /uhome/ ветки gh-pages, соседние приложения (Eva Space, клуб, UPASS)
+# остаются как были.
+
+on:
+  push:
+    branches:
+      - claude/laughing-albattani-ablgxw
+    paths:
+      - 'uhome/**'
+      - 'vite.uhome.config.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/uhome.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Установка зависимостей
+        run: npm ci
+
+      - name: Сборка UHOME
+        run: npm run build:uhome
+
+      - name: Публикация папки /uhome/ в gh-pages
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          REMOTE="https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          for attempt in 1 2 3; do
+            rm -rf site
+            if git clone -q --depth 1 --branch gh-pages "$REMOTE" site; then
+              echo "Ветка gh-pages получена"
+            else
+              echo "Ветки gh-pages ещё нет — создаём"
+              mkdir site && cd site && git init -q && git checkout -qb gh-pages && cd ..
+            fi
+
+            rm -rf site/uhome
+            mkdir -p site/uhome
+            cp -r dist-uhome/. site/uhome/
+            cp dist-uhome/index.html site/uhome/404.html
+            touch site/.nojekyll
+
+            # Service worker Eva Space в корне обслуживает всю папку /evaspace/
+            # и без исключения подменил бы UHOME своей оболочкой. Дописываем
+            # uhome/ в его список соседних приложений, если его там ещё нет.
+            if [ -f site/sw.js ] && grep -q "const STANDALONE = \[" site/sw.js && ! grep -q "'uhome/'" site/sw.js; then
+              sed -i "s#const STANDALONE = \[#const STANDALONE = ['uhome/', #" site/sw.js
+              echo "В sw.js Eva Space добавлено исключение для uhome/"
+            fi
+
+            cd site
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            if git diff --cached --quiet; then
+              echo "Изменений нет"
+              exit 0
+            fi
+            git commit -q -m "UHOME CLUB из ${GITHUB_SHA}"
+            if git push -q "$REMOTE" gh-pages; then
+              echo "Опубликовано: /uhome/"
+              exit 0
+            fi
+            echo "Кто-то опубликовался параллельно, пробуем ещё раз"
+            cd ..
+            sleep 5
+          done
+          echo "Не удалось опубликовать после трёх попыток" >&2
+          exit 1
