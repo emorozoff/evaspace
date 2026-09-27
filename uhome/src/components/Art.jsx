@@ -2,11 +2,14 @@ import { useId, useMemo } from 'react';
 import { guillochePath, qrMatrix, seeded } from '../lib/art.js';
 import { initials } from '../lib/format.js';
 import { toneOf } from '../data/people.js';
+import Icon from './Icons.jsx';
+
+export const GOLD = '#E6C27A';
 
 /* ---------- знак UHOME ---------------------------------------------------- */
 /* Дом и буква U в одном контуре: крыша-шеврон над подковой, внутри точка —
    свет в окне. Одна линия, читается и в 17 пикселях, и на иконке. */
-export function Mark({ size = 40, color = '#D9B26B', ring = false, glow = false }) {
+export function Mark({ size = 40, color = GOLD, ring = false, glow = false }) {
   return (
     <svg
       viewBox="0 0 100 100" width={size} height={size} aria-hidden="true"
@@ -21,30 +24,39 @@ export function Mark({ size = 40, color = '#D9B26B', ring = false, glow = false 
 }
 
 /* ---------- аватар -------------------------------------------------------- */
-/* Сквиркл, цвет — от роли. У команды клуба вместо инициалов знак UHOME. */
+/* Сквиркл мягкого тона роли, инициалы тем же цветом — спокойно и читается
+   даже в 24 пикселях. У команды клуба вместо инициалов знак UHOME. */
 export function Avatar({ person, size = 44, ring = null, dot = false, style, radius = 0.32 }) {
-  const tone = toneOf(person);
-  const id = useId().replace(/:/g, '');
   const team = person?.id === 'team';
+  const tone = team ? GOLD : toneOf(person);
+  const r = size * radius;
   return (
-    <div className="ava" style={{ width: size, height: size, fontSize: size * 0.34, ...style }}>
-      <div className="ava__img" style={{ borderRadius: size * radius }}>
-        <svg width={size} height={size} viewBox="0 0 100 100">
-          <defs>
-            <linearGradient id={`av${id}`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor={team ? '#2a2417' : tone} stopOpacity={team ? 1 : 0.95} />
-              <stop offset="100%" stopColor="#0b0d14" />
-            </linearGradient>
-          </defs>
-          <rect width="100" height="100" fill={`url(#av${id})`} />
-          {!team && <circle cx="76" cy="22" r="30" fill="#fff" opacity="0.09" />}
-          {team && <rect x="1" y="1" width="98" height="98" rx={100 * radius} fill="none" stroke="#D9B26B" strokeOpacity="0.45" strokeWidth="2" />}
-        </svg>
-      </div>
-      {team ? <span style={{ position: 'relative' }}><Mark size={size * 0.62} /></span> : <span style={{ position: 'relative' }}>{initials(person?.name)}</span>}
-      {ring && <i className="ava__ring" style={{ borderColor: ring, borderRadius: size * radius + 3 }} />}
+    <div
+      className="ava"
+      style={{
+        width: size, height: size, fontSize: size * 0.36, borderRadius: r, color: tone,
+        // крупный аватар (карточка знакомства, профиль) — тон насыщеннее
+        background: size >= 72 ? `linear-gradient(${tone}40, ${tone}24), #1b1b1f` : `linear-gradient(${tone}2b, ${tone}1c), #1b1b1f`, ...style,
+      }}
+    >
+      {team ? <Mark size={size * 0.6} /> : initials(person?.name)}
+      {ring && <i className="ava__ring" style={{ borderColor: ring, borderRadius: r + 3 }} />}
       {dot && <i className="ava__dot" />}
     </div>
+  );
+}
+
+/* Плитка с иконкой на мягком тоне: сообщества, темы базы, новости. */
+export function Tile({ icon, tone = GOLD, size = 44, radius }) {
+  return (
+    <span
+      style={{
+        width: size, height: size, flex: 'none', borderRadius: radius ?? size * 0.3, display: 'grid', placeItems: 'center',
+        color: tone, background: `linear-gradient(${tone}26, ${tone}14), #1b1b1f`,
+      }}
+    >
+      <Icon name={icon} size={size * 0.46} />
+    </span>
   );
 }
 
@@ -58,7 +70,7 @@ export function AvaStack({ people, size = 26, max = 5 }) {
 }
 
 /* ---------- гильош -------------------------------------------------------- */
-export function Guilloche({ color = '#D9B26B', opacity = 0.3, seed = 1, size = 220 }) {
+export function Guilloche({ color = GOLD, opacity = 0.3, seed = 1, size = 220 }) {
   const rings = useMemo(() => {
     const rnd = seeded('g' + seed);
     return [0, 1, 2].map((i) => ({
@@ -77,7 +89,7 @@ export function Guilloche({ color = '#D9B26B', opacity = 0.3, seed = 1, size = 2
 
 /* ---------- код на входе -------------------------------------------------- */
 /* Тёмная плашка, светлые скруглённые модули и золотые угловые метки. */
-export function QR({ value, size = 92, tone = '#D9B26B', ink = '#EBDFC4', bg = '#0A0C12', radius = 12 }) {
+export function QR({ value, size = 92, tone = GOLD, ink = '#EDE3CC', bg = '#101013', radius = 12 }) {
   const id = useId().replace(/:/g, '');
   const n = 25;
   const grid = useMemo(() => qrMatrix(value, n), [value]);

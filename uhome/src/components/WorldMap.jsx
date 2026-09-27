@@ -139,7 +139,7 @@ export default function WorldMap({ people = [], selected = null, onSelect, onPer
         onWheel={onWheel}
       >
         <g transform={`translate(${view.x} ${view.y}) scale(${k})`}>
-          <path d={dotsPath} fill="#8b97b3" fillOpacity="0.24" />
+          <path d={dotsPath} fill="#8a8a96" fillOpacity="0.24" />
 
           {pins.map((p) => {
             const on = selected === p.key;
@@ -171,22 +171,23 @@ export default function WorldMap({ people = [], selected = null, onSelect, onPer
                         className="pin"
                         onClick={(e) => { e.stopPropagation(); if (!moved.current) onPerson?.(r.id); }}
                       >
-                        <rect x={-a} y={-a} width={a * 2} height={a * 2} rx={a * 0.62} fill={toneOf(r)} stroke="#0a0d15" strokeWidth={1.2 / k} />
-                        <text y={a * 0.36} textAnchor="middle" fontSize={a * 0.8} fontWeight="700" fill="#fff" fontFamily="Manrope, sans-serif">{initials(r.name)}</text>
-                        {r.online && <circle cx={a * 0.8} cy={a * 0.8} r={a * 0.26} fill="#58D68D" stroke="#0a0d15" strokeWidth={0.6 / k} />}
+                        <rect x={-a} y={-a} width={a * 2} height={a * 2} rx={a * 0.62} fill="#1b1b1f" stroke="#0f0f12" strokeWidth={1.2 / k} />
+                        <rect x={-a} y={-a} width={a * 2} height={a * 2} rx={a * 0.62} fill={toneOf(r)} fillOpacity="0.26" />
+                        <text y={a * 0.36} textAnchor="middle" fontSize={a * 0.8} fontWeight="650" fill={toneOf(r)} fontFamily="Onest, sans-serif">{initials(r.name)}</text>
+                        {r.online && <circle cx={a * 0.8} cy={a * 0.8} r={a * 0.26} fill="#6EE7B7" stroke="#0f0f12" strokeWidth={0.6 / k} />}
                       </g>
                     );
                   });
                 })()}
 
                 <g className="pin" onClick={(e) => { e.stopPropagation(); if (!moved.current) onSelect?.(p.key); }}>
-                  {mine && !on && <circle className="pin__halo" r="3" fill="none" stroke="#5FD3C0" strokeWidth={0.9 / k} />}
-                  <circle r={R} fill="#12141b" stroke={on ? '#F3E0B3' : mine ? '#5FD3C0' : '#D9B26B'} strokeWidth={(on ? 1.8 : 1.1) / Math.sqrt(k)} />
+                  {mine && !on && <circle className="pin__halo" r="3" fill="none" stroke="#6EE7B7" strokeWidth={0.9 / k} />}
+                  <circle r={R} fill="#141417" stroke={on ? '#F3DCA8' : mine ? '#6EE7B7' : '#E6C27A'} strokeWidth={(on ? 1.8 : 1.1) / Math.sqrt(k)} />
                   <Silhouette region={p.key} size={R * 1.5} />
                   <text
                     y={R + 8.5 / Math.sqrt(k)}
-                    textAnchor="middle" fontSize={7.6 / Math.sqrt(k)} fontWeight="700" fill="#EEF0F6" fontFamily="Manrope, sans-serif"
-                    style={{ paintOrder: 'stroke' }} stroke="#0a0d15" strokeWidth={2.4 / k}
+                    textAnchor="middle" fontSize={7.6 / Math.sqrt(k)} fontWeight="700" fill="#F4F4F5" fontFamily="Onest, sans-serif"
+                    style={{ paintOrder: 'stroke' }} stroke="#0f0f12" strokeWidth={2.4 / k}
                   >
                     {p.name}{count ? ` · ${count}` : ''}
                   </text>
@@ -214,9 +215,9 @@ function Silhouette({ region, size }) {
     <g transform={`translate(${-size / 2} ${-size / 2 - size * 0.02}) scale(${s})`}>
       {lm.parts.map((p, i) =>
         p.c ? (
-          <circle key={i} cx={p.c[0]} cy={p.c[1]} r={p.c[2]} fill={p.fill ? '#D9B26B' : 'none'} fillOpacity={p.fill ? 0.3 : 1} stroke="#D9B26B" strokeWidth="3.2" />
+          <circle key={i} cx={p.c[0]} cy={p.c[1]} r={p.c[2]} fill={p.fill ? '#E6C27A' : 'none'} fillOpacity={p.fill ? 0.3 : 1} stroke="#E6C27A" strokeWidth="3.2" />
         ) : (
-          <path key={i} d={p.d} fill={p.fill ? '#D9B26B' : 'none'} fillOpacity={p.fill ? 0.25 : 1} stroke="#D9B26B" strokeWidth={p.thin ? 1.6 : 3.2} strokeLinecap="round" strokeLinejoin="round" />
+          <path key={i} d={p.d} fill={p.fill ? '#E6C27A' : 'none'} fillOpacity={p.fill ? 0.25 : 1} stroke="#E6C27A" strokeWidth={p.thin ? 1.6 : 3.2} strokeLinecap="round" strokeLinejoin="round" />
         )
       )}
     </g>

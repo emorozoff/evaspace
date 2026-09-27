@@ -23,16 +23,16 @@ export default function Welcome() {
     <div className="welcome">
       <div />
       <div className="welcome__mark">
-        <Mark size={96} ring glow />
+        <Mark size={88} ring glow />
         <div>
-          <h1 className="welcome__title">UHOME <span>CLUB</span></h1>
+          <h1 className="welcome__title">UHOME<span>CLUB</span></h1>
           <p className="lead" style={{ marginTop: 14, maxWidth: 330 }}>
             Клуб резидентов, которые живут между странами. События, услуги своих, знакомства и база знаний — в одном приложении.
           </p>
         </div>
         <div className="welcome__hubs">
           {REGION_KEYS.map((k) => (
-            <span key={k} className="chip" style={{ height: 30, fontSize: 12.5 }}>{REGIONS[k].flag} {REGIONS[k].name}</span>
+            <span key={k} className="chip" style={{ height: 32, fontSize: 13 }}>{REGIONS[k].flag} {REGIONS[k].name}</span>
           ))}
         </div>
       </div>

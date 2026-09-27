@@ -5,12 +5,12 @@ export const ROLES = ['Основатель', 'Инвестор', 'Предпр�
 
 /* Цвет аватара — от роли: инвестора видно от основателя одним взглядом. */
 export const ROLE_TONE = {
-  'Основатель': '#5B8CFF',
-  'Инвестор': '#D9B26B',
-  'Предприниматель': '#58D68D',
-  'Эксперт': '#8E7BF5',
-  'Творец': '#F2789B',
-  'Управляющий': '#5FD3C0',
+  'Основатель': '#7DB3FF',
+  'Инвестор': '#E6C27A',
+  'Предприниматель': '#6EE7B7',
+  'Эксперт': '#A78BFA',
+  'Творец': '#F9A8C0',
+  'Управляющий': '#67E8F9',
 };
 
 export const ROLE_EN = {
@@ -22,7 +22,7 @@ export const ROLE_EN = {
   'Управляющий': 'MANAGER',
 };
 
-export const toneOf = (p) => (p?.id === 'team' ? '#D9B26B' : ROLE_TONE[p?.role] || '#8E7BF5');
+export const toneOf = (p) => (p?.id === 'team' ? '#E6C27A' : ROLE_TONE[p?.role] || '#A78BFA');
 export const roleEn = (p) => ROLE_EN[p?.role] || 'RESIDENT';
 
 /* Один словарь на два вопроса: «что ищу» и «чем полезен». Совпадение

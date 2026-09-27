@@ -53,9 +53,12 @@ const P = {
   crown: 'M4 17 3 7l5 4 4-6 4 6 5-4-1 10H4Zm0 3h16',
   wave: 'M3 15c2 0 2-2 4.5-2S10 15 12 15s2.5-2 4.5-2 2.5 2 4.5 2M3 19c2 0 2-2 4.5-2S10 19 12 19s2.5-2 4.5-2 2.5 2 4.5 2M8 11c0-3.5 2.5-6 6-6 1.5 0 3 .5 4 1.5-3 0-5 2-5 4.5',
   download: 'M12 4v11m0 0-4-4m4 4 4-4M5 19h14',
+  wallet: 'M4 7.5A1.5 1.5 0 0 1 5.5 6H18a1 1 0 0 1 1 1v1.5M4 7.5v10A1.5 1.5 0 0 0 5.5 19h13a1 1 0 0 0 1-1v-2.5M4 7.5h14.5a1 1 0 0 1 1 1v3.5m0 0H16a2 2 0 0 0 0 4h3.5v-4Z',
+  chart: 'M4 19.5h16M7 15.5l4-4.5 3 3 5-6.5M15 7.5h4v4',
+  flip: 'M4 12a8 8 0 0 1 13.7-5.6L20 8.5M20 4.5v4h-4M20 12a8 8 0 0 1-13.7 5.6L4 15.5M4 19.5v-4h4',
 };
 
-export default function Icon({ name, size = 22, color = 'currentColor', width = 1.6, style, className, fill = 'none' }) {
+export default function Icon({ name, size = 22, color = 'currentColor', width = 1.75, style, className, fill = 'none' }) {
   const d = P[name] || P.grid;
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={style} className={className} aria-hidden="true">

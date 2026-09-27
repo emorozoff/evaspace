@@ -84,14 +84,14 @@ export default function PersonPage({ id }) {
             <div>
               <div className="hdr" style={{ padding: 0 }}>Даёт</div>
               <div className="wrap" style={{ marginTop: 8 }}>
-                {p.gives.map((g) => <span key={g} className={`tag${m.toMe.includes(g) ? ' tag--gold' : ''}`}>{EXCHANGE[g].emoji} {EXCHANGE[g].name}</span>)}
+                {p.gives.map((g) => <span key={g} className={`tag${m.toMe.includes(g) ? ' tag--gold' : ''}`}>{EXCHANGE[g].name}</span>)}
               </div>
             </div>
             <div className="divider" />
             <div>
               <div className="hdr" style={{ padding: 0 }}>Ищет</div>
               <div className="wrap" style={{ marginTop: 8 }}>
-                {p.needs.map((g) => <span key={g} className={`tag${m.fromMe.includes(g) ? ' tag--sea' : ''}`}>{EXCHANGE[g].emoji} {EXCHANGE[g].name}</span>)}
+                {p.needs.map((g) => <span key={g} className={`tag${m.fromMe.includes(g) ? ' tag--sea' : ''}`}>{EXCHANGE[g].name}</span>)}
               </div>
             </div>
             <div className="divider" />

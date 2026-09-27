@@ -3,7 +3,7 @@ import { go } from '../lib/router.jsx';
 import { chatList } from '../lib/select.js';
 import { REGIONS } from '../data/regions.js';
 import { TopBar, List, Item } from '../components/UI.jsx';
-import { Avatar } from '../components/Art.jsx';
+import { Avatar, Tile } from '../components/Art.jsx';
 import { Thumb } from '../components/Covers.jsx';
 
 /* Сообщения: личные разговоры и чаты сообществ одним списком.
@@ -33,7 +33,7 @@ export default function Chats() {
             ) : c.community.kind === 'local' ? (
               <Thumb region={c.community.region} size={50} radius={16} />
             ) : (
-              <span style={{ width: 50, height: 50, flex: 'none', borderRadius: 16, display: 'grid', placeItems: 'center', fontSize: 23, background: `${c.community.tone}26` }}>{c.community.emoji}</span>
+              <Tile icon={c.community.icon} tone={c.community.tone} size={50} radius={16} />
             );
           return (
             <Item

@@ -6,7 +6,7 @@ import { REGIONS } from '../data/regions.js';
 import { EVENTS } from '../data/events.js';
 import { messagesOf } from '../lib/select.js';
 import { Scene } from '../components/Covers.jsx';
-import { Avatar } from '../components/Art.jsx';
+import { Avatar, Tile } from '../components/Art.jsx';
 import { EventRow } from '../components/EventCards.jsx';
 import { TopBar, Section, List, Item, Btn, Empty } from '../components/UI.jsx';
 
@@ -34,8 +34,8 @@ export default function CommunityPage({ id }) {
       </div>
     </Scene>
   ) : (
-    <div className="scene" style={{ height: 170, display: 'grid', placeItems: 'center', background: `radial-gradient(80% 90% at 50% 20%, ${c.tone}55, #10121a 75%)` }}>
-      <span style={{ fontSize: 64 }}>{c.emoji}</span>
+    <div className="scene" style={{ height: 170, display: 'grid', placeItems: 'center', background: `radial-gradient(80% 90% at 50% 15%, ${c.tone}33, #141417 72%)` }}>
+      <Tile icon={c.icon} tone={c.tone} size={84} radius={26} />
     </div>
   );
 

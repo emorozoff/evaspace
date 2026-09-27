@@ -8,7 +8,7 @@ import { byId } from '../data/people.js';
 import { count, ago } from '../lib/format.js';
 import { Top, Seg, Search, Picker, Section, Empty, Btn } from '../components/UI.jsx';
 import { MaterialCover, Scene, Thumb } from '../components/Covers.jsx';
-import { AvaStack } from '../components/Art.jsx';
+import { AvaStack, Tile } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
 
 /* База: две вкладки. «Знания» — записи Zoom-эфиров и гайды с таймкодами
@@ -67,8 +67,8 @@ function Knowledge({ app }) {
           <Picker label="Формат" summary={MATERIAL_KINDS.find((k) => k.id === kind).name} options={MATERIAL_KINDS} value={kind} onChange={setKind} />
           <Picker
             label="Тема"
-            summary={topic === 'all' ? 'Все темы' : `${TOPICS.find((t) => t.id === topic).emoji} ${TOPICS.find((t) => t.id === topic).name}`}
-            options={[{ id: 'all', name: 'Все темы', lead: '✦' }, ...TOPICS.map((t) => ({ id: t.id, name: t.name, lead: t.emoji, meta: <span className="t-xs dim-2">{MATERIALS.filter((m) => m.topic === t.id).length}</span> }))]}
+            summary={topic === 'all' ? 'Все темы' : TOPICS.find((t) => t.id === topic).name}
+            options={[{ id: 'all', name: 'Все темы', lead: <Icon name="grid" size={18} /> }, ...TOPICS.map((t) => ({ id: t.id, name: t.name, lead: <Icon name={t.icon} size={18} />, meta: <span className="t-xs dim-2">{MATERIALS.filter((m) => m.topic === t.id).length}</span> }))]}
             value={topic}
             onChange={setTopic}
           />
@@ -76,7 +76,7 @@ function Knowledge({ app }) {
       </div>
 
       {!filtered && (
-        <Section title="Главное сейчас" note="Закрепила команда клуба">
+        <Section title="Главное сейчас">
           <div className="scroller">
             {pinned.map((m) => (
               <button key={m.id} className="feat" onClick={() => go(`/material/${m.id}`)}>
@@ -144,7 +144,7 @@ function Communities({ app }) {
   return (
     <div className="stack-24">
       {mine && (
-        <Section title="Ваш регион" note="Меняется вместе с регионом на главной">
+        <Section title="Ваш регион">
           <button className="evcard" onClick={() => go(`/community/${mine.id}`)}>
             <Scene region={mine.region} height={140} radius={0}>
               <div className="scene__top">
@@ -164,7 +164,7 @@ function Communities({ app }) {
         </Section>
       )}
 
-      <Section title="Локальные" note="Москва, Бали, Дубай, США, Европа">
+      <Section title="Локальные">
         <div className="stack-8">
           {locals.map((c) => <CommunityRow key={c.id} app={app} c={c} />)}
         </div>
@@ -187,7 +187,7 @@ function CommunityRow({ app, c }) {
         {c.kind === 'local' ? (
           <Thumb region={c.region} size={52} radius={15} />
         ) : (
-          <span style={{ width: 52, height: 52, flex: 'none', borderRadius: 15, display: 'grid', placeItems: 'center', fontSize: 24, background: `linear-gradient(145deg, ${c.tone}40, var(--surface-2))`, boxShadow: `inset 0 0 0 1px ${c.tone}30` }}>{c.emoji}</span>
+          <Tile icon={c.icon} tone={c.tone} size={52} radius={16} />
         )}
         <span className="grow" style={{ minWidth: 0 }}>
           <span className="t-md ell" style={{ display: 'block' }}>{c.name}</span>

@@ -2,12 +2,12 @@
    оседает здесь — с таймкодами и главными мыслями, чтобы не пересматривать час. */
 
 export const TOPICS = [
-  { id: 'move', name: 'Переезд и визы', emoji: '🛂' },
-  { id: 'money', name: 'Налоги и финансы', emoji: '💼' },
-  { id: 'realty', name: 'Недвижимость', emoji: '🏡' },
-  { id: 'biz', name: 'Бизнес и сделки', emoji: '📈' },
-  { id: 'ai', name: 'AI и технологии', emoji: '🧠' },
-  { id: 'family', name: 'Семья и дети', emoji: '🧸' },
+  { id: 'move', name: 'Переезд и визы', icon: 'passport' },
+  { id: 'money', name: 'Налоги и финансы', icon: 'wallet' },
+  { id: 'realty', name: 'Недвижимость', icon: 'home' },
+  { id: 'biz', name: 'Бизнес и сделки', icon: 'chart' },
+  { id: 'ai', name: 'AI и технологии', icon: 'spark' },
+  { id: 'family', name: 'Семья и дети', icon: 'kids' },
 ];
 
 export const MATERIAL_KINDS = [

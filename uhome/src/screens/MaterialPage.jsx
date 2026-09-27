@@ -46,7 +46,7 @@ export default function MaterialPage({ id }) {
           </button>
           <h1 className="h2">{m.title}</h1>
           <div className="t-xs dim-2">
-            {topic.emoji} {topic.name} · {ago(m.daysAgo)}{zoom ? ` · ${nf(m.views)} просмотров` : ''}
+            {topic.name} · {ago(m.daysAgo)}{zoom ? ` · ${nf(m.views)} просмотров` : ''}
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Guilloche, QR, Avatar, Mark } from './Art.jsx';
+import Icon from './Icons.jsx';
 import { mrz } from '../lib/art.js';
 import { translit } from '../lib/format.js';
 import { roleEn } from '../data/people.js';
@@ -10,7 +11,7 @@ import { REGIONS } from '../data/regions.js';
    для входа на события. Сама медленно качается, доворачивается за пальцем
    и переворачивается по нажатию. */
 
-export default function ResidentCard({ me, stats = {}, hint = true }) {
+export default function ResidentCard({ me, stats = {}, hint = true, onFlip }) {
   const [flip, setFlip] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const ref = useRef(null);
@@ -44,14 +45,14 @@ export default function ResidentCard({ me, stats = {}, hint = true }) {
       <div className="pass-float">
         <div
           className={`pass${flip ? ' pass--flip' : ''}`}
-          onClick={() => setFlip((f) => !f)}
+          onClick={() => { setFlip((f) => !f); onFlip?.(); }}
           style={{ '--tx': `${tilt.x * 7}deg`, '--ty': `${-tilt.y * 7}deg` }}
           role="button"
           aria-label="Перевернуть карту резидента"
         >
           {/* ЛИЦЕВАЯ */}
           <div className="pass__face">
-            <div className="pass__bg" style={{ background: 'linear-gradient(148deg, #1c1f2a 0%, #0f1118 52%, #08090e 100%)' }} />
+            <div className="pass__bg" style={{ background: 'linear-gradient(150deg, #222228 0%, #141418 50%, #0c0c0f 100%)' }} />
             <div className="pass__guilloche"><Guilloche opacity={0.4} seed={number} size={280} /></div>
             <div className="pass__guilloche pass__guilloche--spin"><Guilloche opacity={0.25} seed={`${number}b`} size={280} /></div>
             <div className="pass__edge" />
@@ -60,17 +61,17 @@ export default function ResidentCard({ me, stats = {}, hint = true }) {
 
             <div className="pass__body">
               <div className="pass__head">
-                <div className="row" style={{ gap: 7 }}>
-                  <Mark size={18} />
+                <div className="row" style={{ gap: 8 }}>
+                  <Mark size={20} />
                   <span className="pass__mark">UHOME<small>CLUB</small></span>
                 </div>
                 <span className="pass__tier">RESIDENT</span>
               </div>
 
               <div className="pass__id">
-                <Avatar person={me} size={50} ring="#D9B26B" />
+                <Avatar person={me} size={50} ring="#E6C27A" />
                 <div className="grow" style={{ minWidth: 0 }}>
-                  <div className="pass__name ell" style={{ fontSize: nameEn.length > 17 ? 18 : nameEn.length > 12 ? 20.5 : 24 }}>{nameEn}</div>
+                  <div className="pass__name ell" style={{ fontSize: nameEn.length > 17 ? 16 : nameEn.length > 13 ? 18 : 20 }}>{nameEn}</div>
                   <div className="pass__role ell">{roleEn(me)}{org ? ` · ${org}` : ''}</div>
                 </div>
                 <QR value={`uhome:${number}`} size={48} radius={10} />
@@ -91,7 +92,7 @@ export default function ResidentCard({ me, stats = {}, hint = true }) {
 
           {/* ОБОРОТ */}
           <div className="pass__face pass__face--back">
-            <div className="pass__bg" style={{ background: 'linear-gradient(148deg, #151822, #08090e)' }} />
+            <div className="pass__bg" style={{ background: 'linear-gradient(150deg, #1c1c21, #0c0c0f)' }} />
             <div className="pass__edge" />
             <div className="pass__band" />
             <div className="pass__body">
@@ -120,7 +121,7 @@ export default function ResidentCard({ me, stats = {}, hint = true }) {
           </div>
         </div>
       </div>
-      {hint && <div className="pass__hint">{flip ? 'Нажмите, чтобы вернуть лицевую сторону' : 'Нажмите на карту — на обороте пропуск'}</div>}
+      {hint && !flip && <div className="pass__hint"><Icon name="flip" size={14} />Нажмите на карту — на обороте пропуск</div>}
     </div>
   );
 }

@@ -22,34 +22,37 @@ export function KindTag({ kind }) {
 
 export const placeOf = (e) => (e.kind === 'online' ? 'Zoom' : `${REGIONS[e.region]?.flag} ${REGIONS[e.region]?.name}`);
 
-/* Большая карточка: ближайшее событие с обложкой, датой и кто идёт. */
+/* Большая карточка: ближайшее событие — обложка, название, когда и кто идёт. */
 export function EventCard({ app, event: e, height = 150 }) {
   const mine = app.going[e.id];
   const people = e.going.map(byId).filter(Boolean);
+  const special = e.kind === 'closed' || e.kind === 'partner';
   return (
     <button className="evcard" onClick={() => go(`/event/${e.id}`)}>
       <EventCover event={e} height={height} radius={0}>
         <div className="scene__top">
           <span className="glass">{placeOf(e)}</span>
-          {mine ? <span className="glass" style={{ color: 'var(--sea)' }}><Icon name="check" size={12} /> вы идёте</span> : <span className="glass">{e.price}</span>}
+          {mine ? (
+            <span className="glass" style={{ color: 'var(--sea)' }}><Icon name="check" size={13} width={2} /> вы идёте</span>
+          ) : special ? (
+            <span className="glass" style={{ color: KINDS[e.kind].tone }}>{e.kind === 'closed' && <Icon name="lock" size={12} />}{KINDS[e.kind].name}</span>
+          ) : null}
         </div>
       </EventCover>
       <div className="evcard__body">
-        <div className="row" style={{ gap: 6 }}>
-          <KindTag kind={e.kind} />
-          <span className="t-xs dim-2">{whenLabel(e.inDays, e.time)}</span>
-        </div>
-        <div className="t-lg" style={{ marginTop: 4 }}>{e.title}</div>
-        <div className="row" style={{ marginTop: 8, gap: 8 }}>
-          <AvaStack people={people} size={24} max={5} />
-          <span className="t-xs dim-2">{goingCount(app, e)} идут · мест {e.cap}</span>
+        <div className="t-lg">{e.title}</div>
+        <div className="t-sm dim-2">{whenLabel(e.inDays, e.time)} · {e.price}</div>
+        <div className="row" style={{ marginTop: 10, gap: 8 }}>
+          <AvaStack people={people} size={26} max={4} />
+          <span className="t-xs dim-2">{goingCount(app, e)} идут</span>
         </div>
       </div>
     </button>
   );
 }
 
-/* Строка события: дата плиткой слева, как в календаре. */
+/* Строка события: дата плиткой, название и одна метка справа —
+   ваш статус, если он есть, иначе цена. Тип события — на его странице. */
 export function EventRow({ app, event: e }) {
   const d = dayShift(e.inDays);
   const mine = app.going[e.id];
@@ -61,12 +64,14 @@ export function EventRow({ app, event: e }) {
         <span className="evdate__m">{monthShort(d)}</span>
       </div>
       <div className="item__body">
-        <div className="item__t">{e.title}</div>
+        <div className="item__t">
+          {e.kind === 'closed' && <Icon name="lock" size={13} color="var(--violet)" style={{ marginRight: 5, verticalAlign: -1 }} />}
+          {e.title}
+        </div>
         <div className="item__s">{whenLabel(e.inDays, e.time)} · {placeOf(e)}</div>
       </div>
       <div className="item__meta">
-        {mine ? <span className="tag tag--sea"><Icon name="check" size={11} />иду</span> : asked ? <span className="tag tag--violet">заявка</span> : <KindTag kind={e.kind} />}
-        <span>{e.price}</span>
+        {mine ? <span className="tag tag--sea"><Icon name="check" size={12} width={2} />иду</span> : asked ? <span className="tag tag--violet">заявка</span> : <span>{e.price}</span>}
       </div>
     </button>
   );

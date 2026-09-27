@@ -41,19 +41,24 @@ export default function Home() {
       </div>
 
       <div style={{ marginTop: -14 }}>
-        <ResidentCard me={app.me} stats={{ circle: app.circle.length, events: Object.keys(app.going).length }} />
+        <ResidentCard
+          me={app.me}
+          stats={{ circle: app.circle.length, events: Object.keys(app.going).length }}
+          hint={!app.hidden.flip}
+          onFlip={() => app.hide('flip')}
+        />
       </div>
 
       <Pulse app={app} />
 
       <Circle app={app} />
 
-      <Section title="Ближайшие события" note={`${r.name} и эфиры в Zoom`} more="Все" onMore={() => go('/events')}>
+      <Section title="Ближайшие события" note={`${r.name} и эфиры`} more="Все" onMore={() => go('/events')}>
         {first ? <EventCard app={app} event={first} /> : <Empty icon="calendar" title="Пока тихо" text="В вашем регионе ближайших событий нет — загляните в афишу других." />}
         {rest.length > 0 && <List>{rest.map((e) => <EventRow key={e.id} app={app} event={e} />)}</List>}
       </Section>
 
-      <Section title="Новые резиденты" note="Познакомьтесь, пока они только осваиваются" more="Все люди" onMore={() => go('/people?tab=list&sort=new')}>
+      <Section title="Новые резиденты" more="Все" onMore={() => go('/people?tab=list&sort=new')}>
         <div className="scroller">
           {fresh.map((p) => {
             const m = match(app.me, p);
@@ -65,19 +70,16 @@ export default function Home() {
                 </div>
                 <div>
                   <div className="t-md clamp-2" style={{ lineHeight: 1.25 }}>{p.name}</div>
-                  <div className="t-xs dim-2 ell" style={{ marginTop: 3 }}>{p.title} · {p.company}</div>
+                  <div className="t-xs dim ell" style={{ marginTop: 4 }}>{p.company}</div>
                 </div>
-                <div className="spread">
-                  <span className="t-xs dim ell">{REGIONS[p.region].flag} {p.city}</span>
-                  <span className="tag tag--sea" style={{ height: 20, fontSize: 10 }}>{p.joined <= 1 ? 'сегодня' : `${p.joined} дн.`}</span>
-                </div>
+                <div className="t-xs dim-2 ell">{REGIONS[p.region].flag} {p.city} · {p.joined <= 1 ? 'сегодня' : `${p.joined} дн.`}</div>
               </button>
             );
           })}
         </div>
       </Section>
 
-      <Section title="Новости клуба">
+      <Section title="Новости">
         <div className="stack-8">
           {NEWS.map((n) => (
             <button key={n.id} className="news" onClick={() => go(`/news/${n.id}`)}>

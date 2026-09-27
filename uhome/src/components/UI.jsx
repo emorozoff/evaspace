@@ -20,9 +20,8 @@ export function Top({ title, sub, right }) {
 export function TopBar({ title, sub, backTo = '/', right }) {
   return (
     <div className="topbar">
-      <button className="backbtn" onClick={() => backNav(backTo)}>
-        <Icon name="back" size={18} />
-        <span>Назад</span>
+      <button className="backbtn" onClick={() => backNav(backTo)} aria-label="Назад">
+        <Icon name="back" size={20} width={2} />
       </button>
       <div className="grow" style={{ minWidth: 0 }}>
         {title && <div className="topbar__title ell">{title}</div>}
@@ -211,7 +210,7 @@ export function Picker({ label, summary, title, sub, options, value, onChange, l
 export function Stars({ value }) {
   return (
     <span className="stars">
-      <Icon name="star" size={13} color="var(--gold)" fill="var(--gold)" width={1.2} />
+      <Icon name="star" size={13} color="var(--gold)" fill="var(--gold)" width={1} />
       {value.toFixed(1)}
     </span>
   );

@@ -4,10 +4,10 @@
    partner — проводит компания резидента, online — эфир в Zoom. */
 
 export const KINDS = {
-  club: { name: 'Клуб', tone: '#D9B26B' },
-  closed: { name: 'Закрытое', tone: '#8E7BF5' },
-  partner: { name: 'Партнёр', tone: '#5FD3C0' },
-  online: { name: 'Zoom', tone: '#5B8CFF' },
+  club: { name: 'Клуб', tone: '#E6C27A' },
+  closed: { name: 'Закрытое', tone: '#A78BFA' },
+  partner: { name: 'Партнёр', tone: '#6EE7B7' },
+  online: { name: 'Zoom', tone: '#7DB3FF' },
 };
 
 /* Фильтр по типу — ровно три варианта, как просили: все, закрытые, партнёров. */

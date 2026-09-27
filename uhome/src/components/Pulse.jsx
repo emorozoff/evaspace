@@ -106,7 +106,7 @@ export default function Pulse({ app }) {
             <button className="pulse__tab" data-on={cur === 'clocks'} onClick={() => goTo(0)}>Время</button>
             <button className="pulse__tab" data-on={cur === 'rates'} onClick={() => goTo(1)}>Курсы</button>
           </div>
-          <span className="pulse__hint">{cur === 'rates' ? freshness(rates) : 'нажмите, чтобы сменить город'}</span>
+          <span className="pulse__hint">{cur === 'rates' ? freshness(rates) : 'нажмите на город'}</span>
         </div>
         <div className="pulse__view">
           {prev && <div className="pulse__slide pulse__slide--out" key={`o${view.prev}`}>{render(prev)}</div>}

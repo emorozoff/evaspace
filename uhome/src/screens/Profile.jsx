@@ -31,8 +31,7 @@ export default function Profile() {
           <Item
             lead={<span className="picker__lead" style={{ width: 44, height: 44, borderRadius: 14, fontSize: 22 }}>{r.flag}</span>}
             title={`Я сейчас: ${r.name}`}
-            sub="Главная привязка — меняйте, когда летите"
-            meta={<span className="tag tag--gold">сменить</span>}
+            sub="Меняйте, когда летите"
             onClick={() => setRegion(true)}
           />
           <Item icon="edit" title="Анкета" sub={`${app.me.title || app.me.role}${app.me.company ? ` · ${app.me.company}` : ''}`} onClick={() => setEdit(true)} />
@@ -110,7 +109,7 @@ function EditForm({ app, onDone }) {
         <span className="label">Чем можете помочь · до трёх</span>
         <div className="wrap">
           {Object.entries(EXCHANGE).map(([id, x]) => (
-            <button key={id} className={`chip${f.gives.includes(id) ? ' chip--on' : ''}`} onClick={() => toggle(id)}>{x.emoji} {x.name}</button>
+            <button key={id} className={`chip${f.gives.includes(id) ? ' chip--on' : ''}`} onClick={() => toggle(id)}>{x.name}</button>
           ))}
         </div>
       </div>

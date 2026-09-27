@@ -6,27 +6,27 @@
 export const REGIONS = {
   moscow: {
     name: 'Москва', en: 'MOSCOW', country: 'Россия', flag: '🇷🇺', tz: 'Europe/Moscow',
-    lat: 55.75, lon: 37.62, loc: 'в Москве', plate: '#3a2f5e',
+    lat: 55.75, lon: 37.62, loc: 'в Москве', plate: '#2d2750',
     about: 'Домашняя база клуба: здесь больше всего резидентов, бизнес-завтраки и закрытые ужины.',
   },
   bali: {
     name: 'Бали', en: 'BALI', country: 'Индонезия', flag: '🇮🇩', tz: 'Asia/Makassar',
-    lat: -8.65, lon: 115.13, loc: 'на Бали', plate: '#1f5646',
+    lat: -8.65, lon: 115.13, loc: 'на Бали', plate: '#193d34',
     about: 'Самая большая зимовка клуба: серф по утрам, работа днём, общий стол вечером.',
   },
   dubai: {
     name: 'Дубай', en: 'DUBAI', country: 'ОАЭ', flag: '🇦🇪', tz: 'Asia/Dubai',
-    lat: 25.2, lon: 55.27, loc: 'в Дубае', plate: '#5e4a22',
+    lat: 25.2, lon: 55.27, loc: 'в Дубае', plate: '#41341d',
     about: 'Деловая столица клуба: компании, счета, резидентские визы и сделки.',
   },
   miami: {
     name: 'Майами', en: 'MIAMI', country: 'США', flag: '🇺🇸', tz: 'America/New_York',
-    lat: 25.76, lon: -80.19, loc: 'в Майами', plate: '#4f2640',
+    lat: 25.76, lon: -80.19, loc: 'в Майами', plate: '#3d2236',
     about: 'Новый регион клуба: Майами, Нью-Йорк и Лос-Анджелес. Собираемся раз в две недели.',
   },
   europe: {
     name: 'Европа', en: 'EUROPE', country: 'Лиссабон · Барселона · Берлин', flag: '🇪🇺', tz: 'Europe/Berlin',
-    lat: 44.5, lon: 4.5, loc: 'в Европе', plate: '#26356a',
+    lat: 44.5, lon: 4.5, loc: 'в Европе', plate: '#1f2a4b',
     about: 'Резиденты в Лиссабоне, Барселоне, Берлине и на Кипре. Встречи — по городам, эфиры — вместе.',
   },
 };

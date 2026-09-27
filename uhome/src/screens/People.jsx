@@ -194,7 +194,7 @@ function MeetCard({ app, item, onAnswer }) {
             {p.interests.map((t) => <span key={t} className={`tag${hobbies.includes(t) ? ' tag--sea' : ''}`}>{t}</span>)}
           </div>
         </div>
-        {reasons.length > 0 && <div className="t-sm dim center" style={{ lineHeight: 1.5 }}>{reasons.slice(0, 2).join(' · ')}</div>}
+        {reasons.length > 0 && <div className="t-sm dim center" style={{ lineHeight: 1.5 }}>{reasons[0][0].toUpperCase() + reasons.slice(0, 2).join(' · ').slice(1)}</div>}
         <div className="pair pair--wide">
           <Btn variant="gold" icon="handshake" onClick={() => onAnswer(true)}>Познакомиться</Btn>
           <Btn variant="quiet" onClick={() => onAnswer(false)}>Пропустить</Btn>
@@ -225,7 +225,7 @@ function MeetForm({ app, onDone }) {
         <span className="label">Что ищете · до трёх</span>
         <div className="wrap">
           {Object.entries(EXCHANGE).map(([id, x]) => (
-            <button key={id} className={`chip${needs.includes(id) ? ' chip--on' : ''}`} onClick={() => toggle(needs, setNeeds, id, 3)}>{x.emoji} {x.name}</button>
+            <button key={id} className={`chip${needs.includes(id) ? ' chip--on' : ''}`} onClick={() => toggle(needs, setNeeds, id, 3)}>{x.name}</button>
           ))}
         </div>
       </div>
@@ -301,29 +301,26 @@ function Residents({ app, sort: initialSort }) {
 }
 
 export function PersonCard({ app, x }) {
-  const { p, pct, toMe } = x;
+  const { p, pct, reasons } = x;
   const inCircle = app.circle.includes(p.id);
   return (
     <button className="pcard" onClick={() => go(`/p/${p.id}`)}>
-      <div className="row" style={{ gap: 12, alignItems: 'flex-start' }}>
+      <div className="row" style={{ gap: 13, alignItems: 'flex-start' }}>
         <Avatar person={p} size={50} dot={p.online} ring={inCircle ? 'var(--sea)' : null} />
         <div className="grow">
           <div className="spread">
             <span className="t-md ell">{p.name}</span>
             <span className={`pct${pct >= 75 ? ' pct--hi' : ''}`}>{pct}%</span>
           </div>
-          <div className="t-xs dim ell" style={{ marginTop: 2 }}>{p.title} · {p.company}</div>
-          <div className="t-xs dim-2" style={{ marginTop: 2 }}>{REGIONS[p.region].flag} {p.city}{p.joined <= 30 ? ' · новый резидент' : ''}</div>
+          <div className="t-sm dim ell" style={{ marginTop: 2 }}>{p.title} · {p.company}</div>
+          <div className="t-xs dim-2" style={{ marginTop: 3 }}>{REGIONS[p.region].flag} {p.city}{p.joined <= 30 ? ' · новый резидент' : ''}</div>
         </div>
       </div>
-      <div className="pcard__row">
-        <span className="pcard__k">Даёт</span>
-        <div className="wrap">{p.gives.map((g) => <span key={g} className={`tag${toMe.includes(g) ? ' tag--gold' : ''}`}>{EXCHANGE[g].emoji} {EXCHANGE[g].name}</span>)}</div>
-      </div>
-      <div className="pcard__row" style={{ marginTop: 6 }}>
-        <span className="pcard__k">Ищет</span>
-        <div className="wrap">{p.needs.map((g) => <span key={g} className="tag">{EXCHANGE[g].emoji} {EXCHANGE[g].name}</span>)}</div>
-      </div>
+      {reasons[0] && (
+        <div className="t-sm" style={{ marginTop: 12, paddingTop: 11, borderTop: '1px solid var(--line)', color: pct >= 75 ? 'var(--gold)' : 'var(--ink-2)', lineHeight: 1.45 }}>
+          {reasons[0][0].toUpperCase() + reasons[0].slice(1)}
+        </div>
+      )}
     </button>
   );
 }
