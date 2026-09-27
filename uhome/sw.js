@@ -3,7 +3,7 @@
    в имени не меняются, поэтому их берём из кэша сразу.
    Курсы валют ходят на чужие адреса — их не трогаем вовсе. */
 
-const CACHE = 'uhome-v2';
+const CACHE = 'uhome-v3';
 const BASE = new URL('./', self.location).pathname; // /evaspace/uhome/
 const SHELL = [BASE, BASE + 'index.html', BASE + 'manifest.webmanifest', BASE + 'icons/icon-192.png'];
 
