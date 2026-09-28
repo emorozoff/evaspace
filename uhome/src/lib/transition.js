@@ -1,6 +1,10 @@
+import { flushSync } from 'react-dom';
+
 /* Плавные переходы между состояниями: элементы с одним и тем же
    view-transition-name перетекают из старого положения в новое, остальное
    мягко проявляется. Где браузер не умеет — состояние меняется сразу.
+   Обновление React делается синхронно (flushSync): иначе браузер снимает
+   «новый» кадр раньше, чем React успевает поменять DOM, и переход пропадает.
    Использование: transition(() => setStep(step + 1)). */
 
 export const canTransition = () => typeof document !== 'undefined' && typeof document.startViewTransition === 'function' && !prefersReduced();
@@ -14,11 +18,8 @@ export function transition(update) {
     update();
     return Promise.resolve();
   }
-  // flushSync внутри React не нужен: startViewTransition ждёт микрозадачу,
-  // а состояние React обновится в ней же
   const t = document.startViewTransition(() => {
-    update();
-    return new Promise((r) => setTimeout(r, 0));
+    flushSync(update);
   });
   return t.finished.catch(() => {});
 }

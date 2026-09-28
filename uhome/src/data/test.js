@@ -1,13 +1,11 @@
 import { TONES } from './avatars.js';
 import { EXCHANGE, INTERESTS, SPHERES } from './people.js';
-import { REGIONS, REGION_KEYS } from './regions.js';
 
-/* Тест на входе. Короткий, всё нажатием: по ответам ассистент учится,
-   собирает команду и мастер-группу и считает пользу знакомств.
-   Каждый ответ становится узлом живой фигуры резидента: сначала орбита
-   (тон и сфера), потом квадрат обмена (что ищете и что даёте), потом
-   сеть (интересы, маршруты, каналы). em — слово, которое выделяется в
-   заголовке, place — куда ляжет узел (моноширинная подсказка). */
+/* Регистрация — семь шагов одной карточкой. Кроме профиля (имя, роль,
+   компания, регион) карточка собирает ответы теста, по которым ассистент
+   учится, собирает мастер-группу и считает пользу знакомств:
+   assistant, tone, sphere, needs[], gives[], interests[], regions[] (в
+   профиле — regionsOften), formats[]. */
 
 export const FORMATS = [
   { id: 'coffee', name: 'Кофе один на один' },
@@ -19,17 +17,33 @@ export const FORMATS = [
 
 const exchange = Object.entries(EXCHANGE).map(([id, x]) => ({ id, name: x.name }));
 
-export const TEST = [
-  {
-    id: 'assistant', kind: 'avatar', title: 'Кто будет вашим ассистентом?', em: 'ассистентом',
-    sub: 'Ева и Адам знают всех в клубе и подбирают людей, встречи и сделки под вас. Сменить можно в любой момент.',
-    place: 'Цифровой ассистент · обучен на базе клуба',
-  },
-  { id: 'tone', kind: 'one', title: 'Как с вами общаться?', em: 'общаться', sub: 'Тон ассистента. Поменять можно в профиле.', place: 'Первый узел орбиты', options: TONES },
-  { id: 'sphere', kind: 'one', title: 'Ваша сфера', em: 'сфера', sub: 'По ней соберём мастер-группу из людей с похожими задачами.', place: 'Замыкает орбиту', options: SPHERES },
-  { id: 'needs', kind: 'many', max: 3, title: 'Что вы ищете в клубе?', em: 'ищете', sub: 'До трёх. Приведём тех, кто это даёт.', place: 'Левая грань квадрата', options: exchange },
-  { id: 'gives', kind: 'many', max: 3, title: 'Чем вы полезны другим?', em: 'полезны', sub: 'До трёх. Так вас найдут те, кому вы нужны.', place: 'Правая грань · обмен', options: exchange },
-  { id: 'interests', kind: 'many', max: 5, title: 'Что вы любите вне работы?', em: 'любите', sub: 'До пяти. Общее помогает начать разговор.', place: 'Верхняя дуга сети', options: INTERESTS.map((x) => ({ id: x, name: x })) },
-  { id: 'regions', kind: 'many', max: 5, title: 'Где вы бываете?', em: 'бываете', sub: 'Позовём на встречи там и предупредим, кто прилетает.', place: 'Маршруты сети', options: REGION_KEYS.map((k) => ({ id: k, name: REGIONS[k].name, cc: REGIONS[k].cc })) },
-  { id: 'formats', kind: 'many', max: 5, title: 'Как вам удобнее знакомиться?', em: 'знакомиться', sub: 'Такие поводы ассистент и будет предлагать.', place: 'Каналы связи', options: FORMATS },
+/* Одна строка о каждом ассистенте — для выбора. */
+export const ASSISTANTS = [
+  { id: 'eva', line: 'Знает всех резидентов и подбирает людей под ваши задачи.' },
+  { id: 'adam', line: 'Знает рынок и сделки клуба. Коротко, точно, с юмором.' },
 ];
+
+export const STEPS = [
+  { id: 'who', kind: 'who', title: 'Кто вы', sub: 'Так вас увидят резиденты — и так напечатаем паспорт.' },
+  { id: 'sphere', kind: 'one', title: 'Чем занимаетесь', sub: 'По сфере соберём мастер-группу из людей с похожими задачами.', options: SPHERES },
+  { id: 'region', kind: 'region', title: 'Где вы сейчас', sub: 'Афиша, услуги и люди рядом подстроятся под регион.' },
+  { id: 'assistant', kind: 'avatar', title: 'Ваш ассистент', sub: 'Знает всех в клубе. Сменить можно в любой момент.', options: ASSISTANTS },
+  { id: 'tone', kind: 'one', title: 'Как общаться', sub: 'Тон ассистента. Поменять можно в профиле.', options: TONES, rows: true },
+  {
+    id: 'exchange', kind: 'groups', title: 'Что ищете и чем полезны', sub: 'До трёх в каждой группе — знакомим по взаимной пользе.',
+    groups: [
+      { id: 'needs', label: 'Ищу в клубе', max: 3, options: exchange },
+      { id: 'gives', label: 'Могу дать другим', max: 3, options: exchange },
+    ],
+  },
+  {
+    id: 'social', kind: 'groups', title: 'Интересы и встречи', sub: 'Общее вне работы помогает начать разговор.',
+    groups: [
+      { id: 'interests', label: 'Вне работы', max: 5, options: INTERESTS.map((x) => ({ id: x, name: x })) },
+      { id: 'formats', label: 'Как удобнее знакомиться', max: 5, options: FORMATS },
+    ],
+  },
+];
+
+/* Строки сборки профиля перед выпуском паспорта. */
+export const ANALYSIS = ['Сверяю с резидентами', 'Собираю мастер-группу', 'Выпускаю паспорт'];
