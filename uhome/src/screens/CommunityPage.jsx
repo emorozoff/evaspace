@@ -3,8 +3,7 @@ import { go } from '../lib/router.jsx';
 import { communityById, COMMUNITIES } from '../data/communities.js';
 import { byId } from '../data/people.js';
 import { REGIONS } from '../data/regions.js';
-import { EVENTS } from '../data/events.js';
-import { messagesOf } from '../lib/select.js';
+import { messagesOf, eventsForCommunity } from '../lib/select.js';
 import { plural } from '../lib/format.js';
 import { Scene } from '../components/Covers.jsx';
 import { Avatar, Tile } from '../components/Art.jsx';
@@ -14,16 +13,6 @@ import Flag from '../components/Flag.jsx';
 
 /* Сообщество: о чём оно, кто ведёт, ближайшие встречи и чат.
    Локальное — привязано к региону клуба, по интересам — к отделениям в регионах. */
-
-/* События сообщества по интересам — по теме, а не по типу. */
-const TOPIC_WORDS = {
-  'i-invest': ['инвест', 'сделк', 'основател', 'фаундер', 'капитал'],
-  'i-realty': ['недвиж', 'аренд', 'застройщ', 'квартир', 'ejari'],
-  'i-family': ['семей', 'детей', 'детск', 'школ', 'little sun'],
-  'i-sport': ['серф', 'падел', 'бег', 'байк', 'турнир', 'прогулк'],
-  'i-ai': ['ai', 'ассистент', 'автоматиз', 'технолог'],
-};
-const onTopic = (c, e) => (TOPIC_WORDS[c.id] || []).some((w) => `${e.title} ${e.about}`.toLowerCase().includes(w));
 
 const ago = (at) => {
   const m = Math.max(1, Math.round((Date.now() - at) / 60000));
@@ -40,8 +29,8 @@ export default function CommunityPage({ id }) {
   const local = c.kind === 'local';
   const R = local ? REGIONS[c.region] : null;
   const joined = app.joined.includes(c.id);
-  const allEvents = EVENTS.filter((e) => (local ? e.region === c.region : onTopic(c, e)));
-  const events = [...allEvents].sort((a, b) => a.inDays - b.inDays).slice(0, 3);
+  const allEvents = eventsForCommunity(c);
+  const events = allEvents.slice(0, 3);
   const last = messagesOf(app, c.id).slice(-3);
   const chapters = local ? COMMUNITIES.filter((x) => x.kind === 'interest' && x.chapters?.includes(c.region)) : (c.chapters || []);
 

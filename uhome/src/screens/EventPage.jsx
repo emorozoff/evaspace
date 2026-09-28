@@ -36,7 +36,7 @@ export default function EventPage({ id }) {
   const people = e.going.map(byId).filter(Boolean);
   const n = goingCount(app, e);
   const left = Math.max(0, e.cap - n);
-  const mine = myTime(e, app.me.region);
+  const mine = myTime(e, app.me.region); // только у эфиров: пояс организатора и ваш
   const d = dayShift(e.inDays);
   const community = e.region ? localOf(e.region) : null;
   const A = assistantOf(app);
@@ -99,7 +99,7 @@ export default function EventPage({ id }) {
           {mine && (
             <div className="rows__r">
               <span className="rows__k">Время у вас<i>{REGIONS[app.me.region].name}</i></span>
-              <span className="rows__v">{mine.replace('у вас ', '')}</span>
+              <span className="rows__v">{mine.time}{mine.dayShift ? <u>{mine.dayShift > 0 ? '+' : '−'}{Math.abs(mine.dayShift)} день</u> : null}</span>
             </div>
           )}
           <div className="rows__r">

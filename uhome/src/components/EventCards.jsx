@@ -5,8 +5,7 @@ import { byId } from '../data/people.js';
 import { dayShift, monthShort, weekday, plural } from '../lib/format.js';
 import { goingCount } from '../lib/select.js';
 import { usefulAt } from '../lib/intro.js';
-import { eventStart, eventTz } from '../lib/calendar.js';
-import { localParts, hhmm } from '../lib/time.js';
+import { timeForMe, timeForMeParts } from '../lib/calendar.js';
 import { EventCover } from './Covers.jsx';
 import { AvaStack } from './Art.jsx';
 import Icon from './Icons.jsx';
@@ -22,24 +21,14 @@ export function KindTag({ kind }) {
 
 export const placeOf = (e) => (e.kind === 'online' ? 'Zoom' : <><Flag cc={REGIONS[e.region]?.cc} size={13} /> {REGIONS[e.region]?.name}</>);
 
-/** «у вас 00:00 (+1 день)» — когда пояс события не совпадает с вашим. */
-export function myTime(e, region) {
-  const tz = eventTz(e);
-  const mine = REGIONS[region]?.tz;
-  if (!mine || mine === tz) return null;
-  const start = eventStart(e);
-  const t = localParts(mine, new Date(start));
-  const wall = new Date(start + t.offset * 60000);
-  const day = dayShift(e.inDays);
-  const diff = Math.round((Date.UTC(wall.getUTCFullYear(), wall.getUTCMonth(), wall.getUTCDate()) - Date.UTC(day.getFullYear(), day.getMonth(), day.getDate())) / 86400000);
-  const hm = hhmm(t);
-  if (hm === e.time && diff === 0) return null;
-  return `у вас ${hm}${diff > 0 ? ' (+1 день)' : diff < 0 ? ' (−1 день)' : ''}`;
-}
+/** Ваше время для эфира: { time, dayShift, label } или null, если пояс совпадает. */
+export const myTime = (e, region) => (e.kind === 'online' ? timeForMeParts(e, region) : null);
 
-/** Время в строке списка — в вашем поясе: «у вас 00:00 (+1 день)», иначе «19:00». */
+/** Время в строке: у эфира — пояс организатора и ваше время, у встречи — местное. */
 export function timeLine(e, region) {
-  return myTime(e, region) || e.time;
+  if (e.kind !== 'online') return e.time;
+  const mine = timeForMe(e, region);
+  return `${e.time}${e.tzName ? ` ${e.tzName}` : ''}${mine ? ` · ${mine}` : ''}`;
 }
 
 /* Дата плиткой: число крупно, месяц мелко. Сегодня — золотая линия. */
@@ -95,7 +84,7 @@ export function EventRow({ app, event: e }) {
       <DateTile days={e.inDays} />
       <span className="item__body">
         <span className="item__t">{e.title}</span>
-        <span className="item__s">{timeLine(e, app.me.region)} · {placeOf(e)}</span>
+        <span className={`item__s${e.kind === 'online' ? ' item__s--wrap' : ''}`}>{timeLine(e, app.me.region)} · {placeOf(e)}</span>
       </span>
       <span className="item__meta">
         {mine ? <span className="tag tag--sea">иду</span> : asked ? <span className="tag tag--violet">заявка</span> : <span>{e.price}</span>}

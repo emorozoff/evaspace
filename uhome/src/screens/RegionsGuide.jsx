@@ -95,7 +95,7 @@ function RegionCard({ g, mine }) {
       <p style={{ marginTop: 14 }}>{g.does}</p>
 
       <div className="strip" style={{ marginTop: 16 }}>
-        <div><span className="strip__v">{g.stats.members}</span><span className="strip__k">{plural(g.stats.members, 'участник', 'участника', 'участников')}</span></div>
+        <div><span className="strip__v">{g.stats.residents}</span><span className="strip__k">{plural(g.stats.residents, 'резидент', 'резидента', 'резидентов')}</span></div>
         <div><span className="strip__v">{g.stats.communities}</span><span className="strip__k">{plural(g.stats.communities, 'сообщество', 'сообщества', 'сообществ')}</span></div>
         <div><span className="strip__v">{g.events}</span><span className="strip__k">{plural(g.events, 'событие', 'события', 'событий')}</span></div>
       </div>
@@ -130,7 +130,7 @@ const names = (keys) => {
 function valueOf(metric, g, mine) {
   const now = new Date();
   if (metric.kind === 'scale') return { raw: g[metric.id], node: <Dots v={g[metric.id]} />, word: metric.words[g[metric.id]] };
-  if (metric.kind === 'count') return { raw: g.stats.members, node: String(g.stats.members), word: `${g.stats.communities} ${plural(g.stats.communities, 'сообщество', 'сообщества', 'сообществ')}` };
+  if (metric.kind === 'count') return { raw: g.stats.residents, node: String(g.stats.residents), word: `${g.stats.members} ${plural(g.stats.members, 'участник', 'участника', 'участников')} в сообществе` };
   if (metric.kind === 'tz') {
     const d = (localParts(REGIONS[g.key].tz, now).offset - localParts(REGIONS[mine].tz, now).offset) / 60;
     return { raw: Math.abs(d), node: d === 0 ? '0 ч' : `${d > 0 ? '+' : '−'}${Math.abs(d)} ч`, word: hhmm(localParts(REGIONS[g.key].tz, now)) };
@@ -146,7 +146,7 @@ function summary(metric, rows, guides, mine) {
     case 'cost': return `Дешевле всего — ${names(by((r) => r.raw === min))}, дороже — ${names(by((r) => r.raw === max))}.`;
     case 'visa': return `Проще всего — ${names(by((r) => r.raw === max))}, сложнее — ${names(by((r) => r.raw === min))}.`;
     case 'biz': return `Мягче всего — ${names(by((r) => r.raw === max))}, строже — ${names(by((r) => r.raw === min))}.`;
-    case 'people': return `Больше всего участников — ${names(by((r) => r.raw === max))}, самое молодое сообщество — ${names(by((r) => r.raw === min))}.`;
+    case 'people': return `Больше всего резидентов — ${names(by((r) => r.raw === max))}, меньше всего — ${names(by((r) => r.raw === min))}.`;
     case 'tz': {
       const others = rows.filter((r) => r.k !== mine);
       const far = Math.max(...others.map((r) => r.raw));

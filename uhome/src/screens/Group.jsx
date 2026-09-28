@@ -1,6 +1,6 @@
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
-import { groupById } from '../lib/groups.js';
+import { groupById, nextMeeting } from '../lib/groups.js';
 import { match } from '../lib/match.js';
 import { whyText } from '../lib/intro.js';
 import { unreadOf } from '../lib/select.js';
@@ -23,6 +23,7 @@ export default function Group({ id }) {
   const people = g.members.map((p) => ({ p, m: match(app.me, p) })).sort((a, b) => b.m.pct - a.m.pct);
   const avg = Math.round(people.reduce((n, x) => n + x.m.pct, 0) / people.length);
   const unread = unreadOf(app, id);
+  const next = nextMeeting(g);
 
   return (
     <div className="screen screen--nested">
@@ -46,7 +47,7 @@ export default function Group({ id }) {
 
         <div className="stack-8">
           <Btn variant="gold" wide icon="message" onClick={() => go(`/chat/${id}`)}>Чат группы{unread ? ` · ${unread} новых` : ''}</Btn>
-          <div className="note-line">Встречи {g.when}. Каждый раз разбираете запрос одного участника, после — 15 минут на интро.</div>
+          <div className="note-line">Следующая встреча — {next.text}; дальше — {g.when.split(',')[0]}. Разбираете запрос одного участника, после — 15 минут на интро.</div>
         </div>
 
         <Section title="Участники" note={`${A.name} ${A.she ? 'собрала' : 'собрал'} по вашим ответам в тесте`}>

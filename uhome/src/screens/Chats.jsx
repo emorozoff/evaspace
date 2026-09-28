@@ -50,7 +50,8 @@ export default function Chats() {
 
         <section className="sect">
           <div className="sect__eye">Разговоры</div>
-          <List>
+          {list.length === 0 && <div className="note-line">Пока только команда клуба и ассистент. Напишите резиденту из раздела «Люди» — разговор появится здесь.</div>}
+          {list.length > 0 && <List>
             {list.map((c) => {
               const title = c.kind === 'dm' ? c.person.name : c.kind === 'squad' ? c.group.name : c.community.name;
               const author = c.last?.from === 'me' ? 'Вы: ' : c.kind !== 'dm' && c.last?.who && byId(c.last.who) ? `${firstNameOf(byId(c.last.who))}: ` : '';
@@ -71,7 +72,7 @@ export default function Chats() {
                 />
               );
             })}
-          </List>
+          </List>}
         </section>
       </div>
     </div>

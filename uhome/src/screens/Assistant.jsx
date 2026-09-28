@@ -96,7 +96,7 @@ function ChatTab({ app, A }) {
         <div className="s-ai-head">
           <AvatarPortrait who={A.id} size={72} />
           <div className="h2" style={{ marginTop: 12 }}>{A.name}</div>
-          <p className="lead" style={{ marginTop: 8 }}>{A.about}</p>
+          <p className="lead" style={{ marginTop: 8 }}>{A.aboutMe || A.about}</p>
         </div>
         {msgs.map((m, i) => (m.from === 'me' ? (
           <div key={i} className="s-row s-row--out">
