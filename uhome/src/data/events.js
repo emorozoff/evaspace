@@ -1,7 +1,19 @@
-/* Афиша клуба. Даты задаются смещением от сегодняшнего дня, поэтому
+/* Афиша клуба. Даты задаются смещением от сегодняшнего дня (inDays), поэтому
    демонстрация не устаревает. Время — местное для региона события.
    kind: club — открытая встреча клуба, closed — закрытая (по заявке),
-   partner — проводит компания резидента, online — эфир в Zoom. */
+   partner — проводит компания резидента, online — эфир в Zoom.
+
+   Если событие привязано к дню недели (в названии или в чатах: «Семейная
+   суббота», «завтрак в четверг»), у него задан weekday (0 — воскресенье … 6 —
+   суббота) и minDays — не раньше чем через столько дней; inDays тогда
+   считается сам: ближайший такой день недели. Так суббота в названии всегда
+   выпадает на субботу, а сообщения «в субботу едем на Батур» остаются правдой. */
+
+/** Через сколько дней ближайший weekday, но не раньше чем через minDays (диапазон minDays…minDays+6). */
+export function inDaysFor(weekday, minDays = 1, now = new Date()) {
+  const start = (now.getDay() + minDays) % 7;
+  return minDays + ((weekday - start + 7) % 7);
+}
 
 export const KINDS = {
   club: { name: 'Клуб', tone: '#C9A96E' },
@@ -27,7 +39,7 @@ export const EVENTS = [
     going: ['r22', 'r4', 'r9', 'r3', 'r1'], cap: 24,
   },
   {
-    id: 'e2', kind: 'partner', region: 'bali', inDays: 2, time: '05:30', dur: '6 часов', partner: 'butler',
+    id: 'e2', kind: 'partner', region: 'bali', weekday: 6, minDays: 2, time: '05:30', dur: '6 часов', partner: 'butler',
     title: 'Байк-трип к рассвету на Батуре',
     place: 'Старт: Butler Bike, Чангу', price: '$45', host: 'r4',
     about: 'Выезжаем колонной до рассвета, встречаем солнце на смотровой, завтракаем с видом на вулкан. Байки, шлемы и сопровождение — от Butler Bike.',
@@ -43,7 +55,7 @@ export const EVENTS = [
     going: ['r6', 'r7', 'r12', 'r28', 'r22', 'r10', 'r14'], cap: 300,
   },
   {
-    id: 'e4', kind: 'club', region: 'moscow', inDays: 3, time: '09:00', dur: '2 часа',
+    id: 'e4', kind: 'club', region: 'moscow', weekday: 4, minDays: 2, time: '09:00', dur: '2 часа',
     title: 'Бизнес-завтрак резидентов',
     place: 'Каша & Вино, Патриаршие', price: '2 500 ₽', host: 'r12', partner: 'kasha',
     about: 'Двенадцать человек за одним столом, у каждого три минуты: чем занимаюсь, что ищу, чем могу помочь. Дальше — разговоры.',
@@ -67,7 +79,7 @@ export const EVENTS = [
     going: ['r3', 'r22', 'r9', 'r15'], cap: 40,
   },
   {
-    id: 'e7', kind: 'club', region: 'dubai', inDays: 6, time: '19:30', dur: '3 часа',
+    id: 'e7', kind: 'club', region: 'dubai', weekday: 5, minDays: 5, time: '19:30', dur: '3 часа',
     title: 'Нетворкинг на крыше Марины',
     place: 'Dubai Marina, крыша отеля', price: '$40', host: 'r5',
     about: 'Главная встреча месяца в Дубае: закат, лёгкий ужин и сорок резидентов.',
@@ -75,7 +87,7 @@ export const EVENTS = [
     going: ['r5', 'r13', 'r19', 'r24', 'r26', 'r18'], cap: 60,
   },
   {
-    id: 'e8', kind: 'club', region: 'miami', inDays: 6, time: '09:30', dur: '2 часа',
+    id: 'e8', kind: 'club', region: 'miami', weekday: 6, minDays: 3, time: '09:30', dur: '2 часа',
     title: 'Coffee & Deals в Брикелле',
     place: 'Brickell, кофейня у залива', price: 'бесплатно', host: 'r10',
     about: 'Утренний кофе резидентов в США. Приходите с одной задачей — уйдёте с контактами.',
@@ -83,7 +95,7 @@ export const EVENTS = [
     going: ['r10', 'r23'], cap: 20,
   },
   {
-    id: 'e9', kind: 'partner', region: 'bali', inDays: 7, time: '10:00', dur: '3 часа', partner: 'sun',
+    id: 'e9', kind: 'partner', region: 'bali', weekday: 6, minDays: 5, time: '10:00', dur: '3 часа', partner: 'sun',
     title: 'Семейная суббота в Little Sun',
     place: 'Little Sun, Чангу', price: 'бесплатно', host: 'r15',
     about: 'Открытый день для семей клуба: мастер-классы для детей, кофе для родителей и экскурсия по саду.',
@@ -115,7 +127,7 @@ export const EVENTS = [
     going: ['r22', 'r14', 'r28', 'r7', 'r10', 'r9'], cap: 300,
   },
   {
-    id: 'e13', kind: 'partner', region: 'dubai', inDays: 11, time: '18:30', dur: '2 часа', partner: 'skyline',
+    id: 'e13', kind: 'partner', region: 'dubai', inDays: 12, time: '18:30', dur: '2 часа', partner: 'skyline',
     title: 'Недвижимость Дубая: что покупать сейчас',
     place: 'Skyline Homes, Даунтаун', price: 'бесплатно', host: 'r19',
     about: 'Районы, цены и доходность аренды. Как купить на этапе стройки и не ошибиться с застройщиком.',
@@ -152,7 +164,7 @@ export const EVENTS = [
     place: 'Сбор у Саграды Фамилии', price: 'бесплатно', host: 'r20',
     about: 'Неспешная прогулка по Эшампле и обед. Для тех, кто живёт в Барселоне и прилетает в гости.',
     program: ['11:00 — прогулка', '13:00 — обед'],
-    going: ['r20', 'r11'], cap: 20,
+    going: ['r20', 'r11', 'r10'], cap: 20,
   },
   {
     id: 'e18', kind: 'club', region: 'bali', inDays: 19, time: '17:00', dur: '4 часа',
@@ -163,5 +175,17 @@ export const EVENTS = [
     going: ['r22', 'r4', 'r9'], cap: 32,
   },
 ];
+
+// события с днём недели получают inDays здесь — один раз при загрузке
+for (const e of EVENTS) if (e.weekday !== undefined) e.inDays = inDaysFor(e.weekday, e.minDays ?? 1);
+
+/* К каким сообществам по интересам относится событие (data/communities.js):
+   страница сообщества показывает только своё, а не всё подряд по типу.
+   Локальные сообщества берут события своего региона. */
+const EVENT_COMMUNITIES = {
+  e1: ['i-sport'], e2: ['i-sport'], e5: ['i-invest'], e9: ['i-family'], e11: ['i-invest'], e12: ['i-ai'],
+  e13: ['i-realty', 'i-invest'], e15: ['i-invest'], e18: ['i-sport'],
+};
+for (const e of EVENTS) e.communities = EVENT_COMMUNITIES[e.id] || [];
 
 export const eventById = (id) => EVENTS.find((e) => e.id === id);

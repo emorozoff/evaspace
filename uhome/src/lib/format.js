@@ -40,6 +40,7 @@ export const weekday = (d) => WEEK[d.getDay()];
 export const weekdayLong = (d) => WEEK_LONG[d.getDay()];
 export const monthShort = (d) => MONTHS_SHORT[d.getMonth()];
 
+/** Именительный падеж — для подписей и заголовков: «пятница», «12 октября». */
 export function relDay(days) {
   if (days === 0) return 'сегодня';
   if (days === 1) return 'завтра';
@@ -50,11 +51,29 @@ export function relDay(days) {
   return dateLong(dayShift(days));
 }
 
+const WEEK_IN = ['в воскресенье', 'в понедельник', 'во вторник', 'в среду', 'в четверг', 'в пятницу', 'в субботу'];
+
+/** Внутри фразы — «когда»: «завтра», «в пятницу», «через 12 дней».
+    Ответ: «прилетает в пятницу», «следующая встреча в среду». */
+export function relDayIn(days) {
+  if (days === 0) return 'сегодня';
+  if (days === 1) return 'завтра';
+  if (days === 2) return 'послезавтра';
+  if (days === -1) return 'вчера';
+  if (days < 0) return `${-days} ${plural(-days, 'день', 'дня', 'дней')} назад`;
+  if (days < 7) return WEEK_IN[dayShift(days).getDay()];
+  return `через ${days} ${plural(days, 'день', 'дня', 'дней')}`;
+}
+
 /** «Сегодня, 19:00», «пятница, 19:00», «12 октября, 19:00». */
 export const whenLabel = (days, time) => {
   const r = relDay(days);
   return `${r[0].toUpperCase()}${r.slice(1)}${time ? `, ${time}` : ''}`;
 };
+
+/* Строчная первая буква для середины фразы — но не у аббревиатур и латиницы:
+   «Инвестиции» → «инвестиции», «AI и автоматизация» остаётся как есть. */
+export const lowerFirst = (s) => (!s || /^[A-ZА-ЯЁ]{2}/.test(s) || /^[A-Za-z]/.test(s) ? s : s[0].toLowerCase() + s.slice(1));
 
 export function ago(days) {
   if (days <= 0) return 'сегодня';

@@ -2,7 +2,7 @@ import { PEOPLE, TRIPS, EXCHANGE, byId, firstNameOf } from '../data/people.js';
 import { EVENTS } from '../data/events.js';
 import { REGIONS } from '../data/regions.js';
 import { match } from './match.js';
-import { whenLabel, relDay, plural } from './format.js';
+import { whenLabel, relDayIn, plural, lowerFirst } from './format.js';
 
 /* Поводы познакомиться. Клуб каждый день даёт резиденту причину
    написать конкретному человеку: вы идёте на одно событие, он прилетает
@@ -33,7 +33,9 @@ export function reasons(app, limit = 8) {
     const m = match(me, p);
     if (m.pct < 50) return;
     seen.add(p.id);
-    out.push({ id: `${kind}-${p.id}`, p, pct: m.pct, kind, label: KIND_LABEL[kind], text, why: whyText(m), ...extra });
+    // у повода «закроет ваш запрос» сам текст уже про это — в «почему» идёт следующая причина
+    const why = kind === 'need' && m.reasons[1] ? cap(m.reasons[1]) + '.' : whyText(m);
+    out.push({ id: `${kind}-${p.id}`, p, pct: m.pct, kind, label: KIND_LABEL[kind], text, why, ...extra });
   };
 
   // 1. на одном событии — самый сильный повод
@@ -46,12 +48,12 @@ export function reasons(app, limit = 8) {
   // 2. прилетает в ваш регион
   for (const t of TRIPS.filter((x) => x.to === me.region).sort((a, b) => a.inDays - b.inDays)) {
     const p = byId(t.who);
-    push(p, 'arrival', `${firstNameOf(p)} будет ${REGIONS[t.to].loc} ${relDay(t.inDays)} на ${t.days} ${plural(t.days, 'день', 'дня', 'дней')}.`);
+    push(p, 'arrival', `${firstNameOf(p)} прилетает ${REGIONS[t.to].loc} ${relDayIn(t.inDays)} — на ${t.days} ${plural(t.days, 'день', 'дня', 'дней')}.`);
   }
   // 3. закрывает ваш запрос
   const helpers = PEOPLE.map((p) => ({ p, m: match(me, p) })).filter((x) => x.m.toMe.length).sort((a, b) => b.m.pct - a.m.pct);
   for (const { p, m } of helpers.slice(0, 4)) {
-    push(p, 'need', `${firstNameOf(p)} даёт то, что вы ищете: ${m.toMe.map((x) => EXCHANGE[x].name.toLowerCase()).join(', ')}.`);
+    push(p, 'need', `${firstNameOf(p)} даёт то, что вы ищете: ${m.toMe.map((x) => lowerFirst(EXCHANGE[x].name)).join(', ')}.`);
   }
   // 4. рядом, в вашем регионе
   const near = PEOPLE.filter((p) => p.region === me.region).map((p) => ({ p, m: match(me, p) })).sort((a, b) => b.m.pct - a.m.pct);

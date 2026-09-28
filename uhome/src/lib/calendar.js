@@ -16,14 +16,27 @@ export function eventStart(e) {
   return wall - offset * 60000;
 }
 
-/** «19:00 по Москве · у вас 00:00» — когда пояса расходятся. */
-export function timeForMe(e, myRegion) {
+/* Время события в поясе резидента, когда пояса расходятся.
+   { time: '00:00', dayShift: 1, label: '00:00, +1 день' } — dayShift показывает,
+   что у вас это уже следующий (или ещё предыдущий) день. null — пояса совпадают. */
+export function timeForMeParts(e, myRegion) {
   const tz = eventTz(e);
   const mine = REGIONS[myRegion]?.tz;
   if (!mine || mine === tz) return null;
-  const t = localParts(mine, new Date(eventStart(e)));
-  if (hhmm(t) === e.time) return null;
-  return `у вас ${hhmm(t)}`;
+  const start = eventStart(e);
+  const t = localParts(mine, new Date(start));
+  const wall = dayShift(e.inDays);
+  const shift = Math.round((Date.UTC(t.y, t.mo, t.d) - Date.UTC(wall.getFullYear(), wall.getMonth(), wall.getDate())) / 86400000);
+  const time = hhmm(t);
+  if (time === e.time && shift === 0) return null;
+  const marker = shift === 0 ? '' : shift === 1 ? ', +1 день' : shift === -1 ? ', −1 день' : `, ${shift > 0 ? '+' : '−'}${Math.abs(shift)} дня`;
+  return { time, dayShift: shift, label: `${time}${marker}` };
+}
+
+/** «у вас 00:00, +1 день» — строка для подписи; null, если пояса совпадают. */
+export function timeForMe(e, myRegion) {
+  const p = timeForMeParts(e, myRegion);
+  return p ? `у вас ${p.label}` : null;
 }
 
 const DUR_H = (e) => {

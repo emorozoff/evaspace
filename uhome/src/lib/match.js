@@ -1,5 +1,6 @@
 import { EXCHANGE } from '../data/people.js';
 import { REGIONS } from '../data/regions.js';
+import { lowerFirst } from './format.js';
 
 /* Совместимость считается встречно: он даёт то, что я ищу, и наоборот.
    Общие интересы, цели и регион только добавляют — сами по себе метча не делают. */
@@ -23,8 +24,9 @@ export function match(me, p) {
   const pct = Math.max(35, Math.min(97, score));
 
   const reasons = [];
-  if (toMe.length) reasons.push(`даёт то, что вы ищете: ${toMe.map((x) => EXCHANGE[x].name.toLowerCase()).join(', ')}`);
-  if (fromMe.length) reasons.push(`ищет то, чем вы сильны: ${fromMe.map((x) => EXCHANGE[x].name.toLowerCase()).join(', ')}`);
+  // строчная только первая буква: «AI и автоматизация» остаётся с «AI»
+  if (toMe.length) reasons.push(`даёт то, что вы ищете: ${toMe.map((x) => lowerFirst(EXCHANGE[x].name)).join(', ')}`);
+  if (fromMe.length) reasons.push(`ищет то, чем вы сильны: ${fromMe.map((x) => lowerFirst(EXCHANGE[x].name)).join(', ')}`);
   if (hobbies.length) reasons.push(`общее: ${hobbies.map((x) => x.toLowerCase()).join(', ')}`);
   if (near) reasons.push(`оба ${REGIONS[me.region].loc}`);
   return { pct, reasons, toMe, fromMe, hobbies, near };

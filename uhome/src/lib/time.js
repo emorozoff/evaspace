@@ -11,17 +11,19 @@ function fmt(tz) {
   return cache[tz];
 }
 
-/** Части местного времени: часы, минуты и смещение от UTC в минутах. */
+/** Части местного времени: часы, минуты, смещение от UTC в минутах
+    и местная дата (y, mo — с нуля, d) — чтобы понять, что там уже другой день. */
 export function localParts(tz, now = new Date()) {
   try {
     const p = Object.fromEntries(fmt(tz).formatToParts(now).map((x) => [x.type, x.value]));
     const h = Number(p.hour) % 24;
     const m = Number(p.minute);
-    const asUtc = Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day), h, m);
+    const y = Number(p.year), mo = Number(p.month) - 1, d = Number(p.day);
+    const asUtc = Date.UTC(y, mo, d, h, m);
     const offset = Math.round((asUtc - Math.floor(now.getTime() / 60000) * 60000) / 60000);
-    return { h, m, offset };
+    return { h, m, offset, y, mo, d };
   } catch {
-    return { h: now.getHours(), m: now.getMinutes(), offset: -now.getTimezoneOffset() };
+    return { h: now.getHours(), m: now.getMinutes(), offset: -now.getTimezoneOffset(), y: now.getFullYear(), mo: now.getMonth(), d: now.getDate() };
   }
 }
 

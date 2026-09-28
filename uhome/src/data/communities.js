@@ -1,5 +1,11 @@
+import { PEOPLE } from './people.js';
+
 /* Сообщества: пять локальных — по регионам клуба — и пять по интересам.
-   Своё локальное сообщество определяется регионом резидента и стоит первым. */
+   Своё локальное сообщество определяется регионом резидента и стоит первым.
+   members — участники чата сообщества (демо-цифра); резиденты региона —
+   это профили из data/people.js, см. residentsIn() и regionStats().
+   Тексты чатов не называют дни недели, кроме событий, привязанных к дню
+   недели в data/events.js (weekday): «завтрак в четверг», «на Батур в субботу». */
 
 export const COMMUNITIES = [
   {
@@ -26,7 +32,7 @@ export const COMMUNITIES = [
     about: 'Сделки, компании, резидентские визы. Встречи на крыше Марины раз в месяц.',
     hosts: ['r5', 'r13'],
     chat: [
-      { who: 'r5', text: 'На крыше в пятницу будет 40 человек, ужин включён.', mins: 70 },
+      { who: 'r5', text: 'На крыше Марины в пятницу будет 40 человек, ужин включён.', mins: 70 },
       { who: 'r13', text: 'Напоминаю: до конца месяца подать отчётность по ESR.', mins: 300 },
     ],
   },
@@ -75,16 +81,29 @@ export const COMMUNITIES = [
     id: 'i-ai', kind: 'interest', name: 'AI и технологии', icon: 'spark', tone: '#A99BC9', members: 118, chapters: ['moscow', 'bali', 'europe', 'miami'],
     about: 'Автоматизации, ассистенты и продукты на AI. Делимся тем, что работает.',
     hosts: ['r14', 'r22'],
-    chat: [{ who: 'r14', text: 'Выложил в Базу запись про ассистентов продаж.', mins: 160 }],
+    chat: [{ who: 'r14', text: 'Скоро эфир Егора про AI-ассистентов в продажах — живое демо, приходите с вопросами. Запись потом ляжет в Базу.', mins: 160 }],
   },
 ];
 
 export const communityById = (id) => COMMUNITIES.find((c) => c.id === id);
 export const localOf = (region) => COMMUNITIES.find((c) => c.kind === 'local' && c.region === region);
 
-/* Сколько резидентов и сообществ в регионе: локальное плюс главы сообществ по интересам. */
+/** Резиденты региона — профили из базы (data/people.js). Это те же люди, что в списке «Люди». */
+export const residentsIn = (region) => PEOPLE.filter((p) => p.region === region).length;
+
+/* Цифры региона одним объектом. Чистая функция от данных, результат
+   одинаков при каждом вызове:
+   residents   — резидентов в регионе (профили в приложении) → подпись «резидентов»;
+   members     — участников локального сообщества (чат UHOME Москва и т. п.) → «участников»;
+   communities — сообществ в регионе: локальное плюс главы сообществ по интересам;
+   list        — сами сообщества, локальное первым. */
 export function regionStats(region) {
   const local = localOf(region);
   const chapters = COMMUNITIES.filter((c) => c.kind === 'interest' && c.chapters?.includes(region));
-  return { members: local?.members || 0, communities: (local ? 1 : 0) + chapters.length, list: local ? [local, ...chapters] : chapters };
+  return {
+    residents: residentsIn(region),
+    members: local?.members || 0,
+    communities: (local ? 1 : 0) + chapters.length,
+    list: local ? [local, ...chapters] : chapters,
+  };
 }

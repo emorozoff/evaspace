@@ -3,16 +3,16 @@ import { PEOPLE, TRIPS, EXCHANGE, SPHERES, byId, firstNameOf } from '../data/peo
 import { EVENTS } from '../data/events.js';
 import { COMPANIES } from '../data/services.js';
 import { MATERIALS, TOPICS } from '../data/base.js';
-import { COMMUNITIES } from '../data/communities.js';
+import { COMMUNITIES, residentsIn } from '../data/communities.js';
 import { NEWS } from '../data/news.js';
 import { DICT, findTerm } from '../data/dictionary.js';
 import { REGIONS } from '../data/regions.js';
 import { FORMATS } from '../data/test.js';
 import { match } from './match.js';
 import { reasons, eventIntros, whyText } from './intro.js';
-import { groupsOf } from './groups.js';
+import { groupsOf, nextMeeting } from './groups.js';
 import { localParts } from './time.js';
-import { plural, relDay, whenLabel } from './format.js';
+import { plural, relDayIn, whenLabel, lowerFirst, today } from './format.js';
 
 /* Мозг Евы и Адама. Отвечает только по проверенной базе клуба:
    резиденты, события, услуги, база знаний, сообщества и словарь.
@@ -24,9 +24,13 @@ import { plural, relDay, whenLabel } from './format.js';
 export const assistantOf = (app) => AVATARS[app.me.assistant] || AVATARS.eva;
 
 const norm = (t) => (t || '').toLowerCase().replace(/ё/g, 'е');
-const has = (t, ...w) => w.some((x) => t.includes(x));
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/* Тема узнаётся по началу слова, а не по подстроке: «дет» — это «дети»
+   и «детский», но не «будет»; «виз» — «виза», но не «телевизор». */
+const has = (t, ...stems) => stems.some((s) => new RegExp(`(^|[^а-яa-z0-9])${esc(s)}`).test(t));
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 const nameTail = (app) => (app.me.name ? `, ${firstNameOf(app.me)}` : '');
+const words = (t) => t.split(/[^а-яa-z0-9-]+/).filter(Boolean).length;
 
 const REGION_WORDS = {
   moscow: ['москв', 'мск'],
@@ -36,7 +40,15 @@ const REGION_WORDS = {
   europe: ['европ', 'лиссабон', 'барселон', 'берлин', 'кипр', 'лимасол', 'португал', 'испан'],
 };
 export function regionIn(t) {
-  return Object.keys(REGION_WORDS).find((k) => REGION_WORDS[k].some((w) => t.includes(w))) || null;
+  return Object.keys(REGION_WORDS).find((k) => has(t, ...REGION_WORDS[k])) || null;
+}
+
+/* Событие, названное в вопросе: по значимым словам названия («серф-утр»,
+   «батур», «крыш»). Общие слова (ужин, завтрак, эфир, резиденты) не считаются. */
+const GENERIC = new Set(['резидентов', 'резиденты', 'закрытый', 'закрытая', 'закрытое', 'бизнес', 'завтрак', 'завтрака', 'вечер', 'ужин', 'эфир', 'клуб', 'клуба', 'сезона', 'итоги', 'кто', 'что', 'для', 'тех', 'живет', 'трех', 'странах', 'сейчас', 'семейная', 'разбор', 'нетворкинг', 'прогулка']);
+export function eventIn(t) {
+  return EVENTS.find((e) =>
+    norm(e.title).split(/[^а-яa-z0-9-]+/).filter((w) => w.length >= 5 && !GENERIC.has(w)).some((w) => has(t, w.slice(0, 5))));
 }
 
 /* ——— голос ——— */
@@ -78,15 +90,35 @@ export function scoreEvent(app, e, region = app.me.region) {
   return (e.region === region ? 24 : e.kind === 'online' ? 10 : 0) + useful * 7 + likes * 6 + investBoost - e.inDays * 0.6;
 }
 
+const byTime = (a, b) => a.inDays - b.inDays || a.time.localeCompare(b.time);
+
+const eventCard = (app) => (e) => {
+  const useful = eventIntros(app, e).filter((x) => x.pct >= 60);
+  return {
+    type: 'event', id: e.id,
+    note: useful.length
+      ? `${whenLabel(e.inDays, e.time)} · ${useful.length} ${plural(useful.length, 'полезное знакомство', 'полезных знакомства', 'полезных знакомств')}: ${useful.slice(0, 2).map((x) => firstNameOf(x.p)).join(', ')}`
+      : whenLabel(e.inDays, e.time),
+  };
+};
+
+const forRegion = (region) => (e) => !region || e.region === region || e.kind === 'online';
+
 function topEvents(app, region, n = 3) {
   return [...EVENTS]
-    .filter((e) => !region || e.region === region || e.kind === 'online')
+    .filter(forRegion(region))
     .sort((a, b) => scoreEvent(app, b, region || app.me.region) - scoreEvent(app, a, region || app.me.region))
     .slice(0, n)
-    .map((e) => {
-      const useful = eventIntros(app, e).filter((x) => x.pct >= 60);
-      return { type: 'event', id: e.id, note: useful.length ? `Там ${useful.length} ${plural(useful.length, 'полезное знакомство', 'полезных знакомства', 'полезных знакомств')}: ${useful.slice(0, 2).map((x) => firstNameOf(x.p)).join(', ')}` : whenLabel(e.inDays, e.time) };
-    });
+    .map(eventCard(app));
+}
+
+/* События до конца текущей недели (воскресенье включительно), по времени.
+   Если неделя почти кончилась и в ней меньше двух событий — берём семь дней. */
+function weekEvents(app, region) {
+  const toSunday = (7 - today().getDay()) % 7;
+  const list = EVENTS.filter(forRegion(region)).sort(byTime);
+  const thisWeek = list.filter((e) => e.inDays <= toSunday);
+  return thisWeek.length >= 2 ? { list: thisWeek, label: 'до конца недели' } : { list: list.filter((e) => e.inDays <= 7), label: 'на ближайшие семь дней' };
 }
 
 const companiesIn = (app, cat, region) =>
@@ -107,27 +139,34 @@ const CHIPS = {
   move: ['Виза на Бали', 'Жильё на сезон', 'Байк с доставкой'],
 };
 
-function topicOf(t) {
-  if (has(t, 'спасибо', 'благодар', 'супер', 'отлично', 'класс')) return 'thanks';
-  if (/^(привет|здравств|добр(ое|ый)|хай|hello|hi|ева|адам)\b/.test(t) || t === 'привет') return 'hello';
-  if (has(t, 'кто ты', 'что ты умеешь', 'что умеешь', 'как ты работаешь', 'откуда ты', 'чему обуч', 'что ты знаешь')) return 'about';
-  if (has(t, 'что такое', 'что значит', 'что означает', 'расшифр', 'термин', 'словар')) return 'term';
-  if (has(t, 'мастер', 'групп')) return 'groups';
-  if (t.trim() === 'команда' || has(t, 'команда клуба', 'команде клуба', 'команду клуба', 'uhome', 'менеджер', 'поддержк', 'живой человек', 'оператор')) return 'team';
-  if (has(t, 'прилет', 'прилёт', 'приедет', 'прилетает', 'кто будет у', 'кто приезжа')) return 'arrivals';
-  if (has(t, 'инвест', 'капитал', 'деньг', 'раунд', 'фонд', 'синдикат', 'сделк', 'привлечь')) return 'invest';
-  if (has(t, 'налог', 'бухгалт', 'банк', 'юрист', 'фризон', 'llc', 'открыть компан', 'резидентств')) return 'taxes';
-  if (has(t, 'виз', 'внж', 'kitas', 'b211', 'золот', 'переезд', 'релокац', 'продлен')) return 'visa';
-  if (has(t, 'вилл', 'квартир', 'жиль', 'недвиж', 'аренд', 'снять дом')) return 'realty';
-  if (has(t, 'байк', 'скутер', 'мото', 'транспорт', 'nmax', 'vespa')) return 'bikes';
-  if (has(t, 'детск', 'сад', 'школ', 'ребен', 'дет')) return 'kids';
-  if (has(t, 'ресторан', 'поесть', 'кухн', 'кейтеринг', 'ужин где', 'где поужинать')) return 'food';
-  if (has(t, 'событ', 'мероприят', 'ивент', 'сходить', 'выходн', 'на неделе', 'афиш', 'закрыт', 'ужин')) return 'events';
-  if (has(t, 'эфир', 'запис', 'zoom', 'зум', 'база', 'гайд', 'материал', 'почитать', 'посмотреть', 'учить')) return 'base';
-  if (has(t, 'новост', 'что нового', 'что происходит')) return 'news';
-  if (has(t, 'познаком', 'знаком', 'кого', 'кто мне', 'нетворк', 'контакт', 'партнер', 'людей', 'люди', 'связ', 'полезн')) return 'people';
-  if (has(t, 'как дела', 'как ты', 'скучно', 'устал', 'настроени', 'комплимент', 'нрав')) return 'mood';
-  if (regionIn(t)) return 'region';
+/* Порядок важен: сначала точные формулы («что ты знаешь обо мне»), потом
+   темы по корням слов. Регион сам по себе — тема, только если вопрос о нём
+   («что в Дубае?»); «какая погода на Бали?» — не о клубе, уходит команде. */
+export function topicOf(t) {
+  const q = t.trim();
+  if (has(q, 'спасибо', 'благодар', 'супер', 'отлично', 'класс')) return 'thanks';
+  // \b не знает кириллицы — граница слова проверяется явно
+  if (/^(привет|здравств|добр(ое|ый|ого)|хай|hello|hi|ева|адам)([^а-яa-z]|$)/.test(q)) return 'hello';
+  if (has(q, 'обо мне', 'о мне', 'про меня', 'что ты знаешь о', 'что знаешь о', 'что ты помнишь', 'моя память')) return 'me';
+  if (has(q, 'кто ты', 'ты кто', 'что ты умеешь', 'что умеешь', 'как ты работаешь', 'откуда ты', 'чему обуч', 'представься', 'расскажи о себе')) return 'about';
+  if (has(q, 'что такое', 'что значит', 'что означает', 'расшифр', 'термин', 'словар')) return 'term';
+  if (has(q, 'мастер', 'групп')) return 'groups';
+  if (q === 'команда' || has(q, 'команда клуба', 'команде клуба', 'команду клуба', 'uhome', 'менеджер', 'поддержк', 'живой человек', 'оператор')) return 'team';
+  if (has(q, 'кто будет на', 'кто идет на', 'кто пойдет на', 'кто будет там', 'кто там будет', 'кто идет', 'с кем там')) return 'who';
+  if (has(q, 'прилет', 'приедет', 'прилетает', 'приезжа', 'кто будет у')) return 'arrivals';
+  if (has(q, 'инвест', 'капитал', 'раунд', 'фонд', 'синдикат', 'сделк', 'ангел', 'привлечь деньги', 'привлечь инвест')) return 'invest';
+  if (has(q, 'налог', 'бухгалт', 'банк', 'юрист', 'фризон', 'llc', 'открыть компан', 'резидентств')) return 'taxes';
+  if (has(q, 'виз', 'внж', 'kitas', 'b211', 'золот', 'переезд', 'релокац', 'продлен', 'продлить')) return 'visa';
+  if (has(q, 'вилл', 'квартир', 'жиль', 'недвиж', 'аренд', 'снять дом')) return 'realty';
+  if (has(q, 'байк', 'скутер', 'мото', 'транспорт', 'nmax', 'vespa')) return 'bikes';
+  if (has(q, 'дети', 'детск', 'детей', 'детям', 'ребен', 'сад', 'садик', 'школ')) return 'kids';
+  if (has(q, 'ресторан', 'поесть', 'кухн', 'кейтеринг', 'поужинать', 'позавтракать', 'кофейн', 'где ужин')) return 'food';
+  if (has(q, 'событ', 'мероприят', 'ивент', 'сходить', 'выходн', 'на неделе', 'этой неделе', 'афиш', 'закрыт', 'ужин', 'встреч')) return 'events';
+  if (has(q, 'эфир', 'запись', 'записи', 'zoom', 'зум', 'база', 'базе', 'базу', 'базы', 'гайд', 'материал', 'почитать', 'посмотреть', 'обуч', 'научи')) return 'base';
+  if (has(q, 'новост', 'что нового', 'что происходит')) return 'news';
+  if (has(q, 'познаком', 'знаком', 'кого', 'кто мне', 'нетворк', 'контакт', 'партнер', 'людей', 'люди', 'связ', 'полезн')) return 'people';
+  if (has(q, 'как дела', 'как ты', 'как вы', 'скучно', 'устал', 'настроени', 'комплимент', 'нрав')) return 'mood';
+  if (regionIn(q) && (words(q) <= 3 || has(q, 'расскажи', 'что в ', 'что есть', 'как там', 'кто в ', 'кто сейчас'))) return 'region';
   return 'unknown';
 }
 
@@ -140,29 +179,46 @@ export function reply(app, raw) {
   const topic = topicOf(t);
   const R = region ? REGIONS[region] : null;
   const c = compliment(app, n);
+  const tone = app.me.tone || 'warm';
 
   switch (topic) {
     case 'hello': {
-      const rs = reasons(app, 3);
+      const rs = reasons(app, 2);
       const ev = topEvents(app, app.me.region, 1);
+      const lead = rs.length
+        ? `Сегодня у меня для вас ${rs.length} ${plural(rs.length, 'повод', 'повода', 'поводов')} познакомиться и лучшее событие недели.`
+        : app.me.tested
+          ? 'Поводов познакомиться пока нет — зато есть лучшее событие недели.'
+          : 'Пройдите короткий тест — и я подберу вам людей и события. Пока покажу лучшее событие недели.';
       return {
-        topic, text: `${greeting(app)}${c}\n\nСегодня у меня для вас ${rs.length} ${plural(rs.length, 'повод', 'повода', 'поводов')} познакомиться и лучшее событие недели.`,
-        cards: [...rs.slice(0, 2).map((r) => ({ type: 'person', id: r.p.id, pct: r.pct, note: r.text })), ...ev], chips: CHIPS.start,
+        topic, text: `${greeting(app)}${c}\n\n${lead}`,
+        cards: [...rs.map((r) => ({ type: 'person', id: r.p.id, pct: r.pct, note: r.text })), ...ev], chips: CHIPS.start,
       };
     }
     case 'thanks':
-      return { topic, text: `${A.she ? 'Всегда рада' : 'Всегда рад'} помочь${nameTail(app)}.${c} ${A.signoff[app.me.tone || 'warm']}`, cards: [], chips: CHIPS.start };
+      return { topic, text: `${A.she ? 'Всегда рада' : 'Всегда рад'} помочь${nameTail(app)}.${c} ${A.signoff[tone]}`, cards: [], chips: CHIPS.start };
     case 'about': {
       return {
         topic,
-        text: `${A.about}\n\nЯ знаю только проверенное: ${PEOPLE.length} ${plural(PEOPLE.length, 'резидент', 'резидента', 'резидентов')}, ${EVENTS.length} событий, ${COMPANIES.length} компаний клуба, ${MATERIALS.length} материалов базы и ${DICT.length} терминов словаря. О вас — ${knownFacts(app).length} фактов, и с каждым вашим выбором их больше.`,
+        text: `${A.aboutMe || A.about}\n\nГоворю только проверенное: ${PEOPLE.length} ${plural(PEOPLE.length, 'резидент', 'резидента', 'резидентов')}, ${EVENTS.length} ${plural(EVENTS.length, 'событие', 'события', 'событий')}, ${COMPANIES.length} ${plural(COMPANIES.length, 'компания', 'компании', 'компаний')} клуба, ${MATERIALS.length} ${plural(MATERIALS.length, 'материал', 'материала', 'материалов')} базы и ${DICT.length} ${plural(DICT.length, 'термин', 'термина', 'терминов')} словаря. О вас знаю ${knownFacts(app).length} ${plural(knownFacts(app).length, 'факт', 'факта', 'фактов')} — и с каждым вашим выбором их больше.`,
         cards: [], chips: ['Что ты знаешь обо мне?', ...CHIPS.start.slice(0, 2)],
+      };
+    }
+    case 'me': {
+      const facts = knownFacts(app);
+      if (!facts.length) {
+        return { topic, text: `Пока почти ничего: вы не проходили тест. Восемь вопросов — и я буду знать вашу сферу, что вы ищете и чем полезны, а дальше учусь на ваших выборах.`, cards: [], chips: ['Кто ты?', ...CHIPS.start.slice(0, 2)] };
+      }
+      return {
+        topic,
+        text: `Вот что я о вас знаю:\n\n${facts.map((f) => `· ${f.k}: ${f.v}`).join('\n')}\n\nЭто из теста и ваших выборов в клубе. Что-то не так — пройдите тест заново, я всё пересчитаю.`,
+        cards: [], chips: ['Кого мне стоит знать?', 'Куда сходить на неделе?'],
       };
     }
     case 'term': {
       const d = findTerm(t);
       if (!d) return { topic, text: 'Такого слова в словаре клуба пока нет. Могу объяснить, например, что такое мастер-группа, интро, синдикат или KITAS.', cards: [], chips: ['Что такое интро?', 'Что такое синдикат?', 'Что такое KITAS?'] };
-      return { topic, text: `«${d.term}» — ${d.text}`, cards: [], chips: ['Кого мне стоит знать?', 'Что такое польза знакомства?'] };
+      return { topic, text: `«${d.term}»${d.full && d.full !== d.term ? ` (${d.full})` : ''} — ${lowerFirstWord(d.text)}`, cards: [], chips: ['Кого мне стоит знать?', 'Что такое польза знакомства?'] };
     }
     case 'team':
       return {
@@ -170,28 +226,42 @@ export function reply(app, raw) {
         cards: [], chips: CHIPS.start, team: true,
       };
     case 'groups': {
-      const gs = groupsOf(app.me);
-      return {
-        topic, text: `Ваши группы собраны по тесту — из людей, которым вы нужны и которые нужны вам.${c}`,
-        cards: gs.map((g) => ({ type: 'group', id: g.id })), chips: CHIPS.people,
-      };
+      const [g] = groupsOf(app.me);
+      const next = nextMeeting(g);
+      const text = app.me.tested
+        ? `Ваша мастер-группа — «${g.theme.name}»: ${g.members.length + 1} человек с похожими задачами, я ${A.found} их по тесту. Следующая встреча — ${next.text}.${c}`
+        : `Мастер-группу я собираю по тесту — пока у вас нейтральная группа «${g.theme.name}». Пройдите тест, и в ней будут люди под ваши задачи. Ближайшая встреча — ${next.text}.`;
+      return { topic, text, cards: [{ type: 'group', id: g.id }], chips: CHIPS.people };
     }
     case 'arrivals': {
       const to = region || app.me.region;
       const list = TRIPS.filter((x) => x.to === to).sort((a, b) => a.inDays - b.inDays);
-      if (!list.length) return { topic, text: `В ближайшие две недели ${REGIONS[to].loc} никто не заявил прилёт. Я предупрежу, как только появится.`, cards: [], chips: CHIPS.people };
+      if (!list.length) return { topic, text: `В ближайшие недели ${REGIONS[to].loc} никто не заявил прилёт. Я предупрежу, как только появится.`, cards: [], chips: CHIPS.people };
       return {
-        topic, text: `Кто будет ${REGIONS[to].loc} в ближайшие дни — самое время договориться о встрече:`,
+        topic, text: `Кто будет ${REGIONS[to].loc} в ближайшие недели — самое время договориться о встрече:`,
         cards: list.slice(0, 4).map((x) => {
           const p = byId(x.who);
-          return { type: 'person', id: p.id, pct: match(app.me, p).pct, note: `Прилетает ${relDay(x.inDays)} на ${x.days} ${plural(x.days, 'день', 'дня', 'дней')}` };
+          return { type: 'person', id: p.id, pct: match(app.me, p).pct, note: `Прилетает ${relDayIn(x.inDays)} на ${x.days} ${plural(x.days, 'день', 'дня', 'дней')}` };
         }),
         chips: CHIPS.people,
       };
     }
+    case 'who': {
+      const e = eventIn(t);
+      if (!e) return reply(app, 'куда сходить на неделе');
+      const people = eventIntros(app, e);
+      const all = e.going.map(byId).filter(Boolean);
+      const shown = (people.length ? people : all.map((p) => ({ p, ...match(app.me, p) }))).slice(0, 4);
+      return {
+        topic,
+        text: `На «${e.title}» (${whenLabel(e.inDays, e.time).toLowerCase()}) ${all.length === 1 ? 'идёт' : 'идут'} ${all.length} ${plural(all.length, 'резидент', 'резидента', 'резидентов')}${e.cap ? ` из ${e.cap} мест` : ''}. ${people.length ? 'Самые полезные вам:' : 'Вот кто там будет:'}`,
+        cards: [...shown.map((x) => ({ type: 'person', id: x.p.id, pct: x.pct, note: whyText(x) })), { type: 'event', id: e.id, note: whenLabel(e.inDays, e.time) }],
+        chips: ['Познакомь меня там', 'Куда сходить на неделе?', 'Кто прилетает ко мне?'],
+      };
+    }
     case 'invest': {
       const people = topPeople(app, (p) => p.gives.includes('invest') && (!region || p.region === region), 3);
-      const closed = EVENTS.filter((e) => e.kind === 'closed' && /инвест|фаундер|основател/i.test(`${e.title} ${e.about}`)).slice(0, 2).map((e) => ({ type: 'event', id: e.id, note: whenLabel(e.inDays, e.time) }));
+      const closed = EVENTS.filter((e) => e.kind === 'closed' && /инвест|фаундер|основател/i.test(`${e.title} ${e.about}`)).sort(byTime).slice(0, 2).map((e) => ({ type: 'event', id: e.id, note: whenLabel(e.inDays, e.time) }));
       return {
         topic, text: `Инвесторы клуба, которым интересен ваш профиль, и где с ними встретиться лично.${c}`,
         cards: [...people, ...closed, { type: 'material', id: 'm5' }], chips: CHIPS.money,
@@ -206,17 +276,29 @@ export function reply(app, raw) {
     case 'realty':
       return { topic, text: `Жильё ${R ? R.loc : 'в регионах клуба'} — только через резидентов, с проверкой договора.${c}`, cards: [...companiesIn(app, 'realty', region), ...materialsFor('realty', 1)], chips: CHIPS.move };
     case 'bikes':
-      return { topic, text: 'Butler Bike привезёт байк к дому за час — шлемы и страховка включены, резидентам −15%.', cards: [{ type: 'service', id: 'butler', note: '−15% резидентам' }, { type: 'event', id: 'e2', note: 'Байк-трип к рассвету' }], chips: CHIPS.move };
+      return { topic, text: 'Butler Bike привезёт байк к дому за час — шлемы и страховка включены, резидентам −15%.', cards: [{ type: 'service', id: 'butler', note: '−15% резидентам' }, { type: 'event', id: 'e2', note: `Байк-трип к рассвету — ${relDayIn(EVENTS.find((e) => e.id === 'e2').inDays)}` }], chips: CHIPS.move };
     case 'kids':
       return { topic, text: `Сады и школы, которым доверяют резиденты.${c}`, cards: [...companiesIn(app, 'kids', region), { type: 'material', id: 'g3' }], chips: CHIPS.move };
     case 'food':
       return { topic, text: `Где поужинать ${R ? R.loc : REGIONS[app.me.region].loc} — рестораны резидентов, для своих держат стол.${c}`, cards: companiesIn(app, 'food', region || app.me.region).length ? companiesIn(app, 'food', region || app.me.region) : companiesIn(app, 'food'), chips: CHIPS.events };
     case 'events': {
-      const wantClosed = t.includes('закрыт');
-      const cards = wantClosed
-        ? EVENTS.filter((e) => e.kind === 'closed' && (!region || e.region === region)).slice(0, 3).map((e) => ({ type: 'event', id: e.id, note: whenLabel(e.inDays, e.time) }))
-        : topEvents(app, region || app.me.region, 3);
-      return { topic, text: `${A.found === 'подобрала' ? 'Подобрала' : 'Подобрал'} события ${R ? R.loc : 'под вас'} — с учётом людей, которые там будут.${c}`, cards, chips: CHIPS.events };
+      const wantClosed = has(t, 'закрыт');
+      const wantWeek = has(t, 'на неделе', 'этой неделе', 'эту неделю', 'на этой');
+      const wantWeekend = has(t, 'выходн');
+      if (wantClosed) {
+        const cards = EVENTS.filter((e) => e.kind === 'closed' && (!region || e.region === region)).sort(byTime).slice(0, 3).map((e) => ({ type: 'event', id: e.id, note: whenLabel(e.inDays, e.time) }));
+        return { topic, text: `Закрытые встречи ${R ? R.loc : 'клуба'} — по заявке, мест мало, адрес после подтверждения.${c}`, cards, chips: CHIPS.events };
+      }
+      if (wantWeek || wantWeekend) {
+        const { list, label } = weekEvents(app, region || app.me.region);
+        const picked = wantWeekend ? list.filter((e) => [0, 6].includes((today().getDay() + e.inDays) % 7)) : list;
+        if (!picked.length) return { topic, text: `${wantWeekend ? 'В выходные' : 'До конца недели'} ${R ? R.loc : 'у вас'} событий нет. Вот ближайшие:`, cards: topEvents(app, region || app.me.region, 3), chips: CHIPS.events };
+        return {
+          topic, text: `${wantWeekend ? 'В выходные' : `События ${label}`} ${R ? R.loc : 'для вас'} — по порядку, с людьми, которые там будут.${c}`,
+          cards: picked.slice(0, 5).map(eventCard(app)), chips: CHIPS.events,
+        };
+      }
+      return { topic, text: `${cap(A.found)} события ${R ? R.loc : 'под вас'} — с учётом людей, которые там будут.${c}`, cards: topEvents(app, region || app.me.region, 3), chips: CHIPS.events };
     }
     case 'base': {
       const tops = (app.me.needs || []).map((x) => ({ invest: 'money', law: 'money', realty: 'realty', relocation: 'move', ai: 'ai', kids: 'family' }[x])).filter(Boolean);
@@ -226,16 +308,14 @@ export function reply(app, raw) {
     case 'news':
       return { topic, text: `Главное в клубе:\n\n${NEWS.slice(0, 3).map((x) => `· ${x.title}`).join('\n')}`, cards: [], chips: CHIPS.start };
     case 'mood': {
-      const tone = app.me.tone || 'warm';
-      const A2 = assistantOf(app);
-      const line = tone === 'business' ? 'Всё под контролем. Чем помочь?' : A2.compliments[tone === 'flirt' ? 'flirt' : 'warm'][n % 3];
+      const line = tone === 'business' ? 'Всё под контролем. Чем помочь?' : (A.mood || {})[tone === 'flirt' ? 'flirt' : 'warm'] || 'Всё хорошо, я на связи.';
       return { topic, text: `${line}\n\nХотите, найду вам интересного собеседника на этот вечер?`, cards: [], chips: ['Кого мне стоит знать?', 'Куда сходить на неделе?'] };
     }
     case 'region': {
-      const people = PEOPLE.filter((p) => p.region === region).length;
+      const people = residentsIn(region);
       const comm = COMMUNITIES.filter((x) => x.region === region || x.chapters?.includes(region)).length;
       return {
-        topic, text: `${R.name}: ${people} ${plural(people, 'резидент', 'резидента', 'резидентов')} в базе и ${comm} ${plural(comm, 'сообщество', 'сообщества', 'сообществ')}. Вот с кем и куда стоит сходить:`,
+        topic, text: `${R.name}: ${people} ${plural(people, 'резидент', 'резидента', 'резидентов')} и ${comm} ${plural(comm, 'сообщество', 'сообщества', 'сообществ')} в приложении. Вот с кем и куда стоит сходить:`,
         cards: [...topPeople(app, (p) => p.region === region, 2), ...topEvents(app, region, 2)], chips: [`Кто прилетает ко мне?`, 'Куда сходить на неделе?'],
       };
     }
@@ -244,8 +324,11 @@ export function reply(app, raw) {
         return { topic, text: `Самые полезные знакомства ${R.loc}:${c}`, cards: topPeople(app, (p) => p.region === region, 3), chips: CHIPS.people };
       }
       const rs = reasons(app, 3);
+      if (!rs.length) {
+        return { topic, text: app.me.tested ? `Новых поводов пока нет — все, кого я ${A.found}, уже в вашем круге. Загляните в подборку недели.` : 'Чтобы подобрать вам людей, мне нужен тест: сфера, что ищете и чем полезны. Одна минута.', cards: topPeople(app, (p) => p.region === app.me.region, 3), chips: CHIPS.people };
+      }
       return {
-        topic, text: `Я ${A.found} ${rs.length} ${plural(rs.length, 'человека', 'человек', 'человек')}, с кем вам стоит поговорить в первую очередь — у каждого есть повод.${c}`,
+        topic, text: `Я ${A.found} ${rs.length} ${plural(rs.length, 'человека', 'человека', 'человек')}, с кем вам стоит поговорить в первую очередь — у каждого есть повод.${c}`,
         cards: rs.map((r) => ({ type: 'person', id: r.p.id, pct: r.pct, note: `${r.label}. ${r.why}` })), chips: CHIPS.people,
       };
     }
@@ -256,6 +339,14 @@ export function reply(app, raw) {
         cards: [], chips: CHIPS.start, handoff: true,
       };
   }
+}
+
+/* Строчная первая буква у определения после тире — кроме имён и латиницы:
+   «KITAS» — вид на жительство…; «Цифровой аватар» — Ева и Адам… */
+const PROPER = /^(Ева|Адам|Москв|Бали|Дуба|Майами|Европ|Индонез|ОАЭ|США|Россия)/;
+function lowerFirstWord(s) {
+  if (!s || PROPER.test(s) || !/^[А-ЯЁ][а-яё]/.test(s)) return s;
+  return s[0].toLowerCase() + s.slice(1);
 }
 
 /* ——— что ассистент знает о резиденте ——— */
@@ -269,13 +360,13 @@ export function knownFacts(app) {
   if (me.gives?.length) out.push({ k: 'Полезны', v: me.gives.map((x) => EXCHANGE[x]?.name).join(', ') });
   if (me.interests?.length) out.push({ k: 'Любите', v: me.interests.join(', ') });
   if (me.regionsOften?.length) out.push({ k: 'Бываете', v: me.regionsOften.map((k) => REGIONS[k]?.name).join(', ') });
-  if (me.formats?.length) out.push({ k: 'Знакомитесь', v: me.formats.map((f) => FORMATS.find((x) => x.id === f)?.name.toLowerCase()).join(', ') });
+  if (me.formats?.length) out.push({ k: 'Знакомитесь', v: me.formats.map((f) => lowerFirst(FORMATS.find((x) => x.id === f)?.name || '')).join(', ') });
   const going = EVENTS.filter((e) => app.going[e.id]);
   if (going.length) out.push({ k: 'Идёте', v: going.map((e) => e.title).join('; ') });
   const intros = Object.keys(app.intros || {}).length;
   if (intros) out.push({ k: 'Интро', v: `${intros} ${plural(intros, 'знакомство', 'знакомства', 'знакомств')} через меня` });
-  const topics = Object.entries(app.ai?.memory?.topics || {}).filter(([k]) => !['hello', 'thanks', 'unknown', 'mood'].includes(k)).sort((a, b) => b[1] - a[1]);
-  const TOPIC_NAME = { people: 'знакомства', invest: 'инвестиции', events: 'события', visa: 'визы', realty: 'недвижимость', taxes: 'налоги', base: 'база знаний', groups: 'группы', arrivals: 'кто прилетает', kids: 'дети', food: 'рестораны', bikes: 'транспорт', term: 'словарь', region: 'регионы', news: 'новости', about: 'обо мне' };
+  const topics = Object.entries(app.ai?.memory?.topics || {}).filter(([k]) => !['hello', 'thanks', 'unknown', 'mood', 'me', 'about'].includes(k)).sort((a, b) => b[1] - a[1]);
+  const TOPIC_NAME = { people: 'знакомства', who: 'кто идёт', invest: 'инвестиции', events: 'события', visa: 'визы', realty: 'недвижимость', taxes: 'налоги', base: 'база знаний', groups: 'группы', arrivals: 'кто прилетает', kids: 'дети', food: 'рестораны', bikes: 'транспорт', term: 'словарь', region: 'регионы', news: 'новости', team: 'команда' };
   if (topics.length) out.push({ k: 'Чаще спрашиваете', v: topics.slice(0, 3).map(([k, v]) => `${TOPIC_NAME[k] || k} (${v})`).join(', ') });
   return out;
 }
@@ -295,7 +386,7 @@ export function sources() {
 /** Короткая мысль ассистента на главную: лучший повод дня. */
 export function insight(app) {
   const r = reasons(app, 1)[0];
-  if (!r) return { text: `${greeting(app)} Спросите меня о людях, событиях или сделках — я знаю всех в клубе.`, reason: null };
+  if (!r) return { text: `${greeting(app)} Спросите меня о людях, событиях или сделках — я знаю клуб.`, reason: null };
   return { text: `${r.text} ${r.why} Польза знакомства — ${r.pct}%.`, reason: r };
 }
 

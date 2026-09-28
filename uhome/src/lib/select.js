@@ -11,9 +11,15 @@ import { groupsOf, groupThread, GROUP_UNREAD } from './groups.js';
 const OPENED = Date.now();
 const at = (mins) => OPENED - mins * 60000;
 
+/* Заготовки переписок — только у демо-резидента (app.demo !== false).
+   У кандидата, подавшего заявку, своих чатов ещё нет: он видит лишь то,
+   что пришло в приложении (sent), плюс чаты сообществ и группы. */
+const isDemo = (app) => app.demo !== false;
+const seedThreads = (app) => (isDemo(app) ? THREADS : []);
+
 /** Все сообщения чата: заготовка из данных плюс отправленное в приложении. */
 export function messagesOf(app, chat) {
-  const seed = THREADS.find((t) => t.with === chat);
+  const seed = seedThreads(app).find((t) => t.with === chat);
   const community = COMMUNITIES.find((c) => c.id === chat);
   const group = chat === 'g-mm' ? groupsOf(app.me).find((g) => g.id === chat) : null;
   const base = seed
@@ -27,11 +33,13 @@ export function messagesOf(app, chat) {
 }
 
 /* Непрочитанное: заготовка из данных, пока чат не открывали, плюс всё,
-   что пришло после последнего открытия. */
+   что пришло после последнего открытия. У ассистента непрочитанное —
+   одно приглашение, пока с ним ни разу не разговаривали; после «забыть чат»
+   (ai.seen) счётчик не возвращается. */
 export function unreadOf(app, chat) {
-  if (chat === 'ai') return app.ai?.messages?.length ? 0 : 1;
+  if (chat === 'ai') return app.ai?.messages?.length || app.ai?.seen || app.ai?.count > 0 ? 0 : 1;
   const last = app.read[chat] || 0;
-  const seed = last ? 0 : THREADS.find((t) => t.with === chat)?.unread || GROUP_UNREAD[chat] || 0;
+  const seed = last || !isDemo(app) ? 0 : seedThreads(app).find((t) => t.with === chat)?.unread || GROUP_UNREAD[chat] || 0;
   const fresh = (app.sent[chat] || []).filter((m) => m.from === 'them' && m.at > last).length;
   return seed + fresh;
 }
@@ -40,7 +48,7 @@ export function unreadOf(app, chat) {
 export const isGroupChat = (id) => id === 'g-mm' || COMMUNITIES.some((c) => c.id === id);
 
 export function totalUnread(app) {
-  const ids = new Set([...THREADS.map((t) => t.with), ...Object.keys(app.sent), ...app.joined, 'g-mm', 'ai']);
+  const ids = new Set([...seedThreads(app).map((t) => t.with), ...Object.keys(app.sent), ...app.joined, 'g-mm', 'ai']);
   return [...ids].reduce((n, id) => n + unreadOf(app, id), 0);
 }
 
@@ -74,7 +82,7 @@ export function circleOrder(app) {
 
 /** Все разговоры: личные, группы и сообщества, где вы участник. */
 export function chatList(app) {
-  const dms = THREADS.map((t) => t.with)
+  const dms = seedThreads(app).map((t) => t.with)
     .concat(Object.keys(app.sent).filter((k) => byId(k)))
     .filter((v, i, a) => a.indexOf(v) === i)
     .map((id) => ({ id, kind: 'dm', person: byId(id), unread: unreadOf(app, id), last: lastOf(app, id) }));
@@ -96,6 +104,12 @@ export function eventsFiltered({ region = 'all', type = 'all' } = {}) {
     if (type !== 'all' && e.kind !== type) return false;
     return true;
   }).sort(byTime);
+}
+
+/** События сообщества: у локального — его регион, у сообщества по интересам — только отмеченные его темой. */
+export function eventsForCommunity(c) {
+  if (!c) return [];
+  return EVENTS.filter((e) => (c.kind === 'local' ? e.region === c.region : (e.communities || []).includes(c.id))).sort(byTime);
 }
 
 /** На главную: свой регион и эфиры, ближайшие первыми. */

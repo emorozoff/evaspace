@@ -287,19 +287,22 @@ const SPHERE_OF = {
 for (const p of PEOPLE) p.sphere = SPHERE_OF[p.id];
 
 /* Ближайшие поездки резидентов: куда летят и через сколько дней.
-   Прилёт в ваш регион — один из лучших поводов пересечься вживую. */
+   Прилёт в ваш регион — один из лучших поводов пересечься вживую.
+   Окна поездок согласованы с афишей (data/events.js): человек не может
+   вести или посещать событие в одном регионе, находясь в другом. События
+   с днём недели плавают в диапазоне minDays…minDays+6 — поездки лежат вне него. */
 export const TRIPS = [
-  { who: 'r2', to: 'bali', inDays: 5, days: 10 },
-  { who: 'r13', to: 'bali', inDays: 4, days: 7 },
-  { who: 'r14', to: 'bali', inDays: 9, days: 14 },
-  { who: 'r5', to: 'moscow', inDays: 6, days: 5 },
-  { who: 'r21', to: 'dubai', inDays: 7, days: 6 },
-  { who: 'r16', to: 'dubai', inDays: 11, days: 4 },
+  { who: 'r2', to: 'bali', inDays: 5, days: 5 },       // ужин с инвестором в Дубае — день 4, недвижимость Дубая — день 12
+  { who: 'r13', to: 'bali', inDays: 12, days: 7 },     // ужин (4) и крыша Марины (пятница, до 11) — до отлёта
+  { who: 'r14', to: 'bali', inDays: 9, days: 14 },     // ужин в Лиссабоне — день 8
+  { who: 'r5', to: 'moscow', inDays: 14, days: 4 },    // ведёт крышу Марины (до 11), недвижимость Дубая — 12
+  { who: 'r21', to: 'dubai', inDays: 9, days: 5 },     // завтрак в четверг (до 8), итоги сезона — 15
+  { who: 'r16', to: 'dubai', inDays: 16, days: 4 },    // ведёт ужин фаундеров в Майами — 13
   { who: 'r27', to: 'moscow', inDays: 3, days: 5 },
-  { who: 'r10', to: 'europe', inDays: 12, days: 8 },
-  { who: 'r7', to: 'dubai', inDays: 8, days: 10 },
-  { who: 'r22', to: 'dubai', inDays: 14, days: 5 },
-  { who: 'r11', to: 'bali', inDays: 16, days: 21 },
+  { who: 'r10', to: 'europe', inDays: 15, days: 6 },   // ужин фаундеров — 13; в Барселоне на прогулке — 17
+  { who: 'r7', to: 'dubai', inDays: 10, days: 4 },     // ведёт закрытый клуб в Москве — 9, итоги сезона — 15
+  { who: 'r22', to: 'dubai', inDays: 9, days: 4 },     // эфир по Дубаю (9) ведёт оттуда; падел на Бали — 19
+  { who: 'r11', to: 'bali', inDays: 19, days: 21 },    // Барселона — 17
 ];
 
 export const byId = (id) => (id === 'team' ? TEAM : PEOPLE.find((p) => p.id === id));

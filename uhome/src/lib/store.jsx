@@ -2,19 +2,52 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { DEFAULT_CLOCKS, REGIONS } from '../data/regions.js';
 import { DEFAULT_RATES } from '../data/currencies.js';
 import { DEFAULT_CIRCLE } from '../data/people.js';
-import { TEAM_REPLY } from '../data/chats.js';
+import { TEAM_REPLY, CLOSED_REPLY, APPLICANT_WELCOME } from '../data/chats.js';
+import { localOf } from '../data/communities.js';
+import { eventById } from '../data/events.js';
 import { memberNumber, seeded } from './art.js';
 import { reply, assistantOf } from './assistant.js';
+import { whenLabel, firstName } from './format.js';
 import { AVATARS } from '../data/avatars.js';
 
 /* Состояние приложения: один стор, одно место сохранения (localStorage,
    ключ uhome.v2). Экраны не пишут в хранилище напрямую — только через
-   действия отсюда. Ключ поднимается, если меняется форма данных. */
+   действия отсюда. Ключ поднимается, если меняется форма данных.
+
+   Два входа: enter() — демо-резидент Андрей с готовым профилем, кругом,
+   переписками и записями (demo: true); apply(me) — кандидат, подавший
+   заявку: чистый профиль из трёх ответов анкеты, без чужих чатов, записей
+   и ответов теста (demo: false). enter(me) — то же, что apply(me). */
 
 const KEY = 'uhome.v2';
 
-export const DEMO_ME = {
+/* Пустой профиль — с него начинается кандидат. Тон нейтральный («тёплый»),
+   ассистент — Ева, ответов теста нет: их даст сам тест. */
+export const BLANK_ME = {
   id: 'me',
+  name: '',
+  role: 'Резидент',
+  title: '',
+  company: '',
+  region: 'bali',
+  city: '',
+  since: new Date().getFullYear(),
+  about: '',
+  gives: [],
+  needs: [],
+  interests: [],
+  goals: [],
+  langs: ['RU'],
+  assistant: 'eva',
+  tone: 'warm',
+  sphere: undefined,
+  regionsOften: [],
+  formats: [],
+  tested: false,
+};
+
+export const DEMO_ME = {
+  ...BLANK_ME,
   name: 'Андрей Соколов',
   role: 'Основатель',
   title: 'Основатель',
@@ -30,7 +63,7 @@ export const DEMO_ME = {
   langs: ['RU', 'EN'],
   // ответы теста: по ним ассистент учится и собирает группы
   assistant: 'eva',
-  tone: 'flirt',
+  tone: 'warm',
   sphere: 'it',
   regionsOften: ['bali', 'moscow', 'dubai'],
   formats: ['coffee', 'sport', 'dinner'],
@@ -47,9 +80,14 @@ export function weekKey(d = new Date()) {
   return `${y}-${w}`;
 }
 
+const freshAi = () => ({ messages: [], count: 0, memory: { topics: {} } });
+
+/* Демо-резидент: заполненный профиль, круг, записи и переписки — чтобы
+   приложение можно было посмотреть живым. */
 function fresh() {
   return {
     stage: 'welcome',
+    demo: true,
     me: { ...DEMO_ME, number: memberNumber('demo', DEMO_ME.since) },
     clocks: DEFAULT_CLOCKS,
     rates: DEFAULT_RATES,
@@ -64,7 +102,31 @@ function fresh() {
     watched: {},
     hidden: {},
     intros: {},
-    ai: { messages: [], count: 0, memory: { topics: {} } },
+    ai: freshAi(),
+  };
+}
+
+/* Кандидат: только то, что он сам сказал в анкете. Ни чужих переписок,
+   ни записей на события, ни ответов теста — их нет, пока он их не даст.
+   В круге пока только команда клуба (она закреплена в select.js), из
+   сообществ — локальное своего региона, в чате команды — ответ на заявку. */
+export function applicantState(form = {}) {
+  // пустые поля анкеты не затирают чистый профиль: тон, ассистент и ответы теста берутся из BLANK_ME
+  const given = Object.fromEntries(Object.entries(form).filter(([, v]) => v !== '' && v != null && !(Array.isArray(v) && !v.length)));
+  const region = REGIONS[given.region] ? given.region : 'bali';
+  const me = { ...BLANK_ME, ...given, region, tested: !!given.tested };
+  if (!me.city) me.city = REGIONS[region].name;
+  if (!me.number) me.number = memberNumber(me.name || 'applicant', me.since);
+  const now = Date.now();
+  return {
+    ...fresh(),
+    stage: 'member',
+    demo: false,
+    me,
+    circle: [],
+    going: {},
+    joined: [localOf(region)?.id].filter(Boolean),
+    sent: { team: [{ from: 'them', who: 'Анна · менеджер клуба', text: APPLICANT_WELCOME(firstName(me.name)), at: now }] },
   };
 }
 
@@ -110,8 +172,13 @@ export function StoreProvider({ children }) {
     const push = (chat, msg) =>
       patch((s) => ({ sent: { ...s.sent, [chat]: [...(s.sent[chat] || []), { ...msg, at: Date.now() }] } }));
 
+    /** Кандидат подал заявку: чистое состояние с его ответами. */
+    const apply = (form) => setState(applicantState(form));
+
     return {
-      enter: (me) => patch((s) => ({ stage: 'member', me: me ? { ...s.me, ...me } : s.me })),
+      /** Вход демо-резидента. С аргументом — то же, что apply(me) (совместимость). */
+      enter: (me) => (me ? apply(me) : patch(() => ({ stage: 'member' }))),
+      apply,
       leave: () => {
         setState(fresh());
       },
@@ -144,7 +211,17 @@ export function StoreProvider({ children }) {
           return { going };
         }),
 
-      askClosed: (id) => patch((s) => ({ asked: { ...s.asked, [id]: Date.now() } })),
+      /* Заявка на закрытое событие: отметка на событии плюс сообщение
+         в чат команды — и ответ команды через пару секунд, чтобы обещание
+         «придёт сообщение» было правдой. */
+      askClosed: (id) => {
+        const e = eventById(id);
+        patch((s) => ({ asked: { ...s.asked, [id]: Date.now() } }));
+        if (e) {
+          push('team', { from: 'me', text: `Заявка на «${e.title}» — ${whenLabel(e.inDays, e.time)}.` });
+          setTimeout(() => push('team', { from: 'them', text: CLOSED_REPLY }), 1800);
+        }
+      },
 
       toggleJoin: (id) =>
         patch((s) => ({ joined: s.joined.includes(id) ? s.joined.filter((x) => x !== id) : [...s.joined, id] })),
@@ -185,17 +262,20 @@ export function StoreProvider({ children }) {
               : {};
             return {
               ...handoff,
-              ai: { messages: [...s.ai.messages, { from: 'ai', ...r, at: Date.now() }], count: s.ai.count + 1, memory: { ...s.ai.memory, topics } },
+              ai: { ...s.ai, messages: [...s.ai.messages, { from: 'ai', ...r, at: Date.now() }], count: s.ai.count + 1, memory: { ...s.ai.memory, topics }, seen: true },
             };
           });
         }, 900);
       },
       aiOpen: () =>
-        patch((s) => (s.ai.messages.length ? {} : { ai: { ...s.ai, messages: [{ from: 'ai', ...reply(s, 'привет'), at: Date.now() }] } })),
-      aiReset: () => patch(() => ({ ai: { messages: [], count: 0, memory: { topics: {} } } })),
+        patch((s) => (s.ai.messages.length ? {} : { ai: { ...s.ai, seen: true, messages: [{ from: 'ai', ...reply(s, 'привет'), at: Date.now() }] } })),
+      // «забыть чат»: история и память тем очищаются, но приглашение «1» не возвращается (seen)
+      aiReset: () => patch(() => ({ ai: { ...freshAi(), seen: true } })),
 
       /* Интро: ассистент пишет обоим, почему стоит поговорить, открывает
-         общий чат и кладёт человека в ближний круг. */
+         общий чат и кладёт человека в ближний круг. Отметка прочтения
+         не трогается: новое сообщение и так новее неё, а старые
+         непрочитанные не должны воскресать. */
       intro: (pid, why) => {
         patch((s) => {
           const A = assistantOf(s);
@@ -209,7 +289,7 @@ export function StoreProvider({ children }) {
         setTimeout(() => patch((s) => {
           const A = AVATARS[s.me.assistant] || AVATARS.eva;
           const text = `Привет! ${A.name} ${A.she ? 'рассказала' : 'рассказал'} о вас — кажется, нам есть что обсудить. Созвонимся на неделе?`;
-          return { sent: { ...s.sent, [pid]: [...(s.sent[pid] || []), { from: 'them', text, at: Date.now() }] }, read: { ...s.read, [pid]: 0 } };
+          return { sent: { ...s.sent, [pid]: [...(s.sent[pid] || []), { from: 'them', text, at: Date.now() }] } };
         }), 2200);
       },
 

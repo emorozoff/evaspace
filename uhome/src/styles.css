@@ -200,6 +200,8 @@ img { display: block; max-width: 100%; }
 .item__s--wrap { white-space: normal; line-height: 1.45; }
 .item__meta { flex: none; text-align: right; font-size: 12.5px; color: var(--ink-3); display: grid; justify-items: end; gap: 6px; }
 .item__ic { width: 42px; height: 42px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--hair); background: var(--tint); color: var(--gold); }
+.item__t > span:only-child, .item__s > span:only-child { display: block; min-width: 0; }
+.item__meta > span { white-space: nowrap; }
 .chev { color: var(--ink-4); flex: none; }
 
 /* --- карточки колоды ----------------------------------------------------- */
@@ -424,6 +426,7 @@ textarea.field { min-height: 96px; resize: vertical; line-height: 1.5; }
 .scene__shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(6, 7, 11, 0.1) 0%, transparent 40%, rgba(6, 7, 11, 0.72) 100%); }
 .scene__over { position: absolute; left: 0; right: 0; bottom: 0; padding: 16px; }
 .scene__top { position: absolute; left: 12px; right: 12px; top: 12px; display: flex; justify-content: space-between; gap: 6px; }
+.glass.sea { color: var(--sea); }
 .glass { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 500; color: var(--ink); background: rgba(6, 7, 11, 0.55); border: 1px solid var(--line-2); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); white-space: nowrap; }
 
 /* --- установка ----------------------------------------------------------- */
