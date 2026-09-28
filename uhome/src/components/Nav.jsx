@@ -3,11 +3,11 @@ import Icon from './Icons.jsx';
 
 /* Пять вкладок — каркас клуба: главная, события, услуги, люди, база. */
 const TABS = [
-  { to: '/', icon: 'home', label: 'Главная', match: ['', 'chats', 'chat', 'profile', 'news'] },
+  { to: '/', icon: 'home', label: 'Главная', match: ['', 'chats', 'chat', 'profile', 'news', 'ai', 'group'] },
   { to: '/events', icon: 'calendar', label: 'События', match: ['events', 'event'] },
   { to: '/services', icon: 'bag', label: 'Услуги', match: ['services', 'service'] },
   { to: '/people', icon: 'users', label: 'Люди', match: ['people', 'p'] },
-  { to: '/base', icon: 'book', label: 'База', match: ['base', 'material', 'community'] },
+  { to: '/base', icon: 'book', label: 'База', match: ['base', 'material', 'community', 'dict', 'regions'] },
 ];
 
 export default function Nav({ root, badge = 0 }) {

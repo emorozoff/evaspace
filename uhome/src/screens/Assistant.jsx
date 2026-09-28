@@ -11,9 +11,10 @@ import { companyById } from '../data/services.js';
 import { materialById, TOPICS } from '../data/base.js';
 import { REGIONS } from '../data/regions.js';
 import { plural } from '../lib/format.js';
-import { Seg, List, Item, Sheet, Search, Section, Btn } from '../components/UI.jsx';
+import { Seg, Sheet, Search, Section, Btn } from '../components/UI.jsx';
 import { Avatar, Tile, GroupAva } from '../components/Art.jsx';
-import { AvatarPortrait } from '../components/AvatarArt.jsx';
+import { HoloPortrait } from '../components/AiFab.jsx';
+import { PctRing, DateTile } from '../components/EventCards.jsx';
 import { Brand } from '../components/Covers.jsx';
 import { introduce } from '../components/Intros.jsx';
 import Icon from '../components/Icons.jsx';
@@ -24,6 +25,11 @@ import Flag from '../components/Flag.jsx';
    материалов и следующими шагами; «Обо мне» — что ассистент знает о вас
    и чему научился; «Знания» — на чём он обучен: проверенные источники,
    правила и словарь клуба. */
+
+const hm = (ms) => {
+  const d = new Date(ms || Date.now());
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
 
 export default function Assistant({ query }) {
   const app = useApp();
@@ -37,20 +43,20 @@ export default function Assistant({ query }) {
   }, []);
 
   return (
-    <div className="screen screen--nested screen--chat">
-      <div className="topbar">
+    <div className="screen screen--nested screen--chat xai">
+      <div className="topbar xai-bar">
         <button className="backbtn" onClick={() => back('/')} aria-label="Назад"><Icon name="back" size={20} width={2} /></button>
-        <button className="row grow" style={{ gap: 10, minWidth: 0, textAlign: 'left' }} onClick={() => setTab('me')}>
-          <AvatarPortrait who={A.id} size={38} />
+        <button className="row grow" style={{ gap: 12, minWidth: 0, textAlign: 'left' }} onClick={() => setTab('me')}>
+          <HoloPortrait who={A.id} size={34} />
           <span style={{ minWidth: 0 }}>
             <span className="topbar__title ell" style={{ display: 'block' }}>{A.name}</span>
-            <span className="aistat"><i />в сети · знает {PEOPLE.length} резидентов</span>
+            <span className="xai-stat"><i />онлайн · знает {PEOPLE.length} резидентов</span>
           </span>
         </button>
         <button className="iconbtn" onClick={() => setSettings(true)} aria-label="Настройки ассистента"><Icon name="settings" size={18} /></button>
       </div>
 
-      <div style={{ marginBottom: 12 }}>
+      <div className="xai-seg">
         <Seg value={tab} onChange={setTab} options={[{ value: 'chat', label: 'Чат' }, { value: 'me', label: 'Обо мне' }, { value: 'know', label: 'Знания' }]} />
       </div>
 
@@ -86,41 +92,55 @@ function ChatTab({ app, A }) {
     setText('');
   };
 
+  const src = sources();
   return (
     <>
-      <div className="chat" style={{ gap: 12 }}>
-        <div className="aihead" style={{ padding: '10px 0 6px' }}>
-          <AvatarPortrait who={A.id} size={88} />
-          <div className="aihead__name">{A.name}</div>
-          <div className="t-sm dim-2" style={{ maxWidth: 320, lineHeight: 1.5 }}>{A.about}</div>
+      <div className="xai-feed">
+        <div className="xai-head">
+          <HoloPortrait who={A.id} size={92} scan />
+          <div className="xai-head__name">{A.name}</div>
+          <div className="xtele xai-head__tele"><b>{src[0].n}</b> резидентов<i /><b>{src[1].n}</b> событий<i /><b>{src[2].n}</b> компаний</div>
+          <div className="xai-head__about">{A.about}</div>
         </div>
         {msgs.map((m, i) => (m.from === 'me' ? (
-          <div key={i} className="bubble bubble--out">{m.text}</div>
+          <div key={i} className="xb xb--out">
+            <span className="xb__text">{m.text}</span>
+            <span className="xb__sp" aria-hidden="true" />
+            <span className="xb__time">{hm(m.at)}</span>
+          </div>
         ) : (
-          <div key={i} className="aimsg">
-            <div className="bubble bubble--in" style={{ maxWidth: '100%' }}>{m.text}</div>
+          <div key={i} className="xai-msg">
+            <div className="xai-msg__t">
+              <span className="xai-msg__k"><i />{A.name}<span>{hm(m.at)}</span></span>
+              {m.text}
+            </div>
             {m.cards?.length > 0 && (
-              <div className="aicards">
-                {m.cards.map((c, j) => <AiCard key={`${c.type}${c.id}${j}`} app={app} c={c} />)}
+              <div className="xai-cards">
+                {m.cards.map((c, j) => <AiCard key={`${c.type}${c.id}${j}`} app={app} c={c} i={j} />)}
               </div>
             )}
             {(m.handoff || m.team) && (
-              <button className="t-xs gold" style={{ justifySelf: 'start', fontWeight: 600 }} onClick={() => go('/chat/team')}>Открыть чат с командой →</button>
+              <button className="xai-link" onClick={() => go('/chat/team')}>Открыть чат с командой →</button>
             )}
           </div>
         )))}
-        {waiting && <div className="typing" aria-label={`${A.name} печатает`}><i /><i /><i /></div>}
-      </div>
-
-      <div className="composer" style={{ display: 'grid', gap: 10 }}>
-        {chips.length > 0 && (
-          <div className="aichips">
-            {chips.map((c) => <button key={c} className="chip" onClick={() => ask(c)}>{c}</button>)}
+        {waiting && (
+          <div className="xai-typing" aria-label={`${A.name} печатает`}>
+            <span className="xai-typing__bar"><i /><i /><i /></span>
+            {A.name} думает над ответом
           </div>
         )}
-        <form className="row" style={{ gap: 8 }} onSubmit={(e) => { e.preventDefault(); ask(); }}>
-          <input className="field grow" value={text} onChange={(e) => setText(e.target.value)} placeholder={`Спросите ${A.acc} о людях, событиях, сделках`} enterKeyHint="send" />
-          <button className="sendbtn" type="submit" disabled={!text.trim() || waiting} aria-label="Отправить"><Icon name="send" size={19} /></button>
+      </div>
+
+      <div className="xcomp xai-comp">
+        {chips.length > 0 && (
+          <div className="xai-chips">
+            {chips.map((c, i) => <button key={c} className="xai-chip" style={{ '--i': i }} onClick={() => ask(c)}>{c}</button>)}
+          </div>
+        )}
+        <form className="xcomp__bar" onSubmit={(e) => { e.preventDefault(); ask(); }}>
+          <input className="xcomp__in" value={text} onChange={(e) => setText(e.target.value)} placeholder={`Спросите ${A.acc} о людях, событиях, сделках`} enterKeyHint="send" aria-label="Вопрос ассистенту" />
+          <button className="xcomp__send" type="submit" disabled={!text.trim() || waiting} aria-label="Отправить"><Icon name="send" size={18} /></button>
         </form>
       </div>
     </>
@@ -128,24 +148,24 @@ function ChatTab({ app, A }) {
 }
 
 /* Карточка в ответе: всё кликабельно, у людей — польза и «Познакомить». */
-function AiCard({ app, c }) {
+function AiCard({ app, c, i = 0 }) {
   if (c.type === 'person') {
     const p = byId(c.id);
     if (!p) return null;
     const done = app.intros?.[p.id];
     return (
-      <div className="aicard2">
-        <button className="row grow" style={{ gap: 12, minWidth: 0, textAlign: 'left' }} onClick={() => go(`/p/${p.id}`)}>
-          <Avatar person={p} size={44} dot={p.online} />
-          <span style={{ minWidth: 0 }}>
-            <span className="ell" style={{ display: 'block', fontWeight: 600, fontSize: 15 }}>{p.name}</span>
-            <span className="t-xs dim-2 clamp-2" style={{ marginTop: 2 }}><Flag cc={REGIONS[p.region].cc} size={12} /> {c.note || p.company}</span>
-          </span>
+      <div className="xai-card xai-card--p" style={{ '--i': i }}>
+        <button className="xai-card__lead" onClick={() => go(`/p/${p.id}`)} aria-label={p.name}>
+          <Avatar person={p} size={42} dot={p.online} />
         </button>
-        <span style={{ display: 'grid', justifyItems: 'end', gap: 6, flex: 'none' }}>
-          {c.pct != null && <span className={`pct${c.pct >= 75 ? ' pct--hi' : ''}`}>{c.pct}%</span>}
-          {done ? <span className="t-xs" style={{ color: 'var(--sea)' }}>интро</span> : <button className="t-xs gold" style={{ fontWeight: 600 }} onClick={() => introduce(app, p, c.note)}>Познакомить</button>}
+        <span className="xai-card__body">
+          <button className="xai-card__t" onClick={() => go(`/p/${p.id}`)}>{p.name}</button>
+          <span className="xai-card__s clamp-2"><Flag cc={REGIONS[p.region].cc} size={11} /> {c.note || p.company}</span>
+          {done
+            ? <span className="xmeet__done"><Icon name="check" size={12} width={2.2} /> интро отправлено</span>
+            : <button className="xmeet__act" onClick={() => introduce(app, p, c.note)}><Icon name="handshake" size={14} /> Познакомить</button>}
         </span>
+        {c.pct != null && <PctRing pct={c.pct} size={44} />}
       </div>
     );
   }
@@ -154,13 +174,13 @@ function AiCard({ app, c }) {
     if (!e) return null;
     const going = app.going[e.id];
     return (
-      <button className="aicard2" onClick={() => go(`/event/${e.id}`)}>
-        <Tile icon={e.kind === 'online' ? 'video' : e.kind === 'closed' ? 'lock' : 'calendar'} size={44} />
-        <span className="grow" style={{ minWidth: 0 }}>
-          <span className="clamp-2" style={{ fontWeight: 600, fontSize: 15 }}>{e.title}</span>
-          <span className="t-xs dim-2 clamp-2" style={{ marginTop: 2 }}>{c.note}</span>
+      <button className="xai-card" style={{ '--i': i }} onClick={() => go(`/event/${e.id}`)}>
+        <DateTile days={e.inDays} />
+        <span className="xai-card__body">
+          <span className="xai-card__t clamp-2">{e.title}</span>
+          <span className="xai-card__s clamp-2">{c.note}</span>
         </span>
-        {going ? <span className="tag tag--sea">иду</span> : <Icon name="right" size={16} color="var(--ink-3)" />}
+        {going ? <span className="tag tag--sea">иду</span> : <Icon name="right" size={16} className="chev" />}
       </button>
     );
   }
@@ -168,13 +188,13 @@ function AiCard({ app, c }) {
     const co = companyById(c.id);
     if (!co) return null;
     return (
-      <button className="aicard2" onClick={() => go(`/service/${co.id}`)}>
+      <button className="xai-card" style={{ '--i': i }} onClick={() => go(`/service/${co.id}`)}>
         <Brand company={co} size={44} radius={13} />
-        <span className="grow" style={{ minWidth: 0 }}>
-          <span className="ell" style={{ display: 'block', fontWeight: 600, fontSize: 15 }}>{co.name}</span>
-          <span className="t-xs dim-2 ell" style={{ display: 'block', marginTop: 2 }}>{c.note || co.tagline}</span>
+        <span className="xai-card__body">
+          <span className="xai-card__t ell">{co.name}</span>
+          <span className="xai-card__s ell">{c.note || co.tagline}</span>
         </span>
-        <Icon name="right" size={16} color="var(--ink-3)" />
+        <Icon name="right" size={16} className="chev" />
       </button>
     );
   }
@@ -183,13 +203,13 @@ function AiCard({ app, c }) {
     if (!m) return null;
     const t = TOPICS.find((x) => x.id === m.topic);
     return (
-      <button className="aicard2" onClick={() => go(`/material/${m.id}`)}>
+      <button className="xai-card" style={{ '--i': i }} onClick={() => go(`/material/${m.id}`)}>
         <Tile icon={m.kind === 'zoom' ? 'play' : 'book'} tone={t?.tone} size={44} />
-        <span className="grow" style={{ minWidth: 0 }}>
-          <span className="clamp-2" style={{ fontWeight: 600, fontSize: 15 }}>{m.title}</span>
-          <span className="t-xs dim-2 ell" style={{ display: 'block', marginTop: 2 }}>{m.kind === 'zoom' ? 'Запись эфира' : 'Гайд'} · {m.dur || m.read || ''}</span>
+        <span className="xai-card__body">
+          <span className="xai-card__t clamp-2">{m.title}</span>
+          <span className="xai-card__m">{m.kind === 'zoom' ? 'Запись эфира' : 'Гайд'}{m.dur || m.read ? ` · ${m.dur || m.read}` : ''}</span>
         </span>
-        <Icon name="right" size={16} color="var(--ink-3)" />
+        <Icon name="right" size={16} className="chev" />
       </button>
     );
   }
@@ -197,13 +217,13 @@ function AiCard({ app, c }) {
     const g = groupById(app.me, c.id);
     if (!g) return null;
     return (
-      <button className="aicard2" onClick={() => go(`/group/${g.id}`)}>
+      <button className="xai-card" style={{ '--i': i }} onClick={() => go(`/group/${g.id}`)}>
         <GroupAva members={g.members} size={44} />
-        <span className="grow" style={{ minWidth: 0 }}>
-          <span className="ell" style={{ display: 'block', fontWeight: 600, fontSize: 15 }}>{g.name}</span>
-          <span className="t-xs dim-2 ell" style={{ display: 'block', marginTop: 2 }}>10 участников · {g.when}</span>
+        <span className="xai-card__body">
+          <span className="xai-card__t ell">{g.name}</span>
+          <span className="xai-card__m">10 участников · {g.when}</span>
         </span>
-        <Icon name="right" size={16} color="var(--ink-3)" />
+        <Icon name="right" size={16} className="chev" />
       </button>
     );
   }
@@ -217,24 +237,24 @@ function MeTab({ app, A, onSettings }) {
   const intros = Object.keys(app.intros || {}).length;
   return (
     <div className="stack-24" style={{ paddingBottom: 24 }}>
-      <div className="aihead">
-        <AvatarPortrait who={A.id} size={112} />
-        <div className="aihead__name">{A.name}</div>
-        <div className="t-sm dim-2" style={{ maxWidth: 320, lineHeight: 1.5 }}>
+      <div className="xai-head xai-head--me">
+        <HoloPortrait who={A.id} size={104} scan />
+        <div className="xai-head__name">{A.name}</div>
+        <div className="xai-head__about">
           Я учусь на ваших ответах и выборах: куда вы идёте, с кем знакомитесь, о чём спрашиваете. Чем больше вы со мной говорите, тем точнее подбор.
         </div>
       </div>
 
-      <div className="stats">
+      <div className="stats xai-stats">
         <div className="stat"><div className="stat__v gold">{facts.length}</div><div className="stat__l">{plural(facts.length, 'факт', 'факта', 'фактов')} о вас</div></div>
         <div className="stat"><div className="stat__v">{app.ai.count}</div><div className="stat__l">{plural(app.ai.count, 'вопрос', 'вопроса', 'вопросов')}</div></div>
         <div className="stat"><div className="stat__v">{intros}</div><div className="stat__l">интро</div></div>
       </div>
 
-      <Section title="Что я знаю о вас">
-        <div className="card">
-          {facts.map((f) => (
-            <div key={f.k} className="kv"><span className="kv__k">{f.k}</span><span className="kv__v" style={{ fontWeight: 500 }}>{f.v}</span></div>
+      <Section title="Что я знаю о вас" note="Собрано из теста и ваших действий">
+        <div className="xfacts">
+          {facts.map((f, i) => (
+            <div key={f.k} className="xfacts__r" style={{ '--i': i }}><span className="xfacts__k">{f.k}</span><span className="xfacts__v">{f.v}</span></div>
           ))}
         </div>
       </Section>
@@ -259,19 +279,26 @@ function KnowTab({ A }) {
   return (
     <div className="stack-24" style={{ paddingBottom: 24 }}>
       <Section title="Проверенная база" note={`${A.name} отвечает только по ней. Нет в базе — вопрос уходит команде.`}>
-        <List>
-          {sources().map((s) => (
-            <Item key={s.name} icon={s.icon} title={s.name} sub={s.sub} meta={<span className="t-md" style={{ color: 'var(--ink)', fontWeight: 600 }}>{s.n}</span>} chev={false} />
+        <div className="xsrc">
+          {sources().map((s, i) => (
+            <div key={s.name} className="xsrc__r" style={{ '--i': i }}>
+              <span className="xsrc__ic"><Icon name={s.icon} size={17} /></span>
+              <span className="grow" style={{ minWidth: 0 }}>
+                <span className="xsrc__t">{s.name}</span>
+                <span className="xsrc__s">{s.sub}</span>
+              </span>
+              <span className="xsrc__n">{String(s.n).padStart(2, '0')}</span>
+            </div>
           ))}
-        </List>
+        </div>
       </Section>
 
       <Section title="Правила">
-        <div className="card steps">
+        <ol className="xtl xtl--n">
           {AVATAR_RULES.map((r, i) => (
-            <div key={i} className="step"><span className="step__n">{i + 1}</span><span className="step__t">{r}</span></div>
+            <li key={i} className="xtl__i" style={{ '--i': i }}><span className="xtl__t">{String(i + 1).padStart(2, '0')}</span><span className="xtl__d">{r}</span></li>
           ))}
-        </div>
+        </ol>
       </Section>
 
       <Section title="Словарь клуба" note={`${DICT.length} ${plural(DICT.length, 'термин', 'термина', 'терминов')} — спросите «что такое…»`}>
@@ -281,8 +308,8 @@ function KnowTab({ A }) {
           if (!list.length) return null;
           return (
             <div key={l.id} className="stack-8">
-              <div className="label" style={{ margin: '6px 0 0' }}>{l.title}</div>
-              <div className="card" style={{ padding: '4px 16px' }}>
+              <div className="xai-lvl">{l.title}<span>{String(list.length).padStart(2, '0')}</span></div>
+              <div className="xterms">
                 {list.map((d) => (
                   <div key={d.id} className="term">
                     <div className="term__t">{d.term}</div>
@@ -302,14 +329,14 @@ function KnowTab({ A }) {
 
 function Settings({ app }) {
   return (
-    <div className="stack" style={{ gap: 18 }}>
+    <div className="stack xset" style={{ gap: 18 }}>
       <div className="pair">
         {['eva', 'adam'].map((id) => {
           const x = AVATARS[id];
           const on = app.me.assistant === id;
           return (
-            <button key={id} className={`opt${on ? ' opt--on' : ''}`} style={{ flexDirection: 'column', gap: 10, padding: 16 }} onClick={() => app.updateMe({ assistant: id })}>
-              <AvatarPortrait who={id} size={72} />
+            <button key={id} className={`opt xset__ava${on ? ' opt--on' : ''}`} style={{ flexDirection: 'column', gap: 12, padding: 16 }} onClick={() => app.updateMe({ assistant: id })} aria-pressed={on}>
+              <HoloPortrait who={id} size={64} still={!on} />
               <span className="opt__name" style={{ fontFamily: 'var(--display)', fontWeight: 400, fontSize: 22 }}>{x.name}</span>
             </button>
           );

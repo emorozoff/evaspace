@@ -5,11 +5,11 @@ import { REGIONS } from '../data/regions.js';
 import { ROLES, EXCHANGE } from '../data/people.js';
 import { EVENTS } from '../data/events.js';
 import { companyById } from '../data/services.js';
-import { whenLabel } from '../lib/format.js';
 import ResidentCard from '../components/ResidentCard.jsx';
 import RegionSheet from '../components/RegionSheet.jsx';
 import Install from '../components/Install.jsx';
-import { AvatarPortrait } from '../components/AvatarArt.jsx';
+import { HoloPortrait } from '../components/AiFab.jsx';
+import { DateTile } from '../components/EventCards.jsx';
 import { assistantOf } from '../lib/assistant.js';
 import { groupsOf } from '../lib/groups.js';
 import { TONES } from '../data/avatars.js';
@@ -30,16 +30,17 @@ export default function Profile() {
   const mm = groupsOf(app.me)[0];
 
   return (
-    <div className="screen screen--nested">
+    <div className="screen screen--nested xpf">
       <TopBar title="Профиль" sub={app.me.name} backTo="/" />
       <div className="stack-24">
         <ResidentCard me={app.me} stats={{ circle: app.circle.length, events: going.length }} />
 
         <List>
           <Item
-            lead={<span className="picker__lead" style={{ width: 44, height: 44, borderRadius: 14 }}><Flag cc={r.cc} size={26} /></span>}
-            title={`Я сейчас: ${r.name}`}
-            sub="Меняйте, когда летите"
+            lead={<span className="xpf__flag"><Flag cc={r.cc} size={24} /></span>}
+            title={<>Я сейчас: {r.name}</>}
+            sub={<span className="xpf__geo">{r.en} · {Math.abs(r.lat).toFixed(2)}°{r.lat >= 0 ? 'N' : 'S'} {Math.abs(r.lon).toFixed(2)}°{r.lon >= 0 ? 'E' : 'W'}</span>}
+            meta={<span className="xpf__chg">сменить</span>}
             onClick={() => setRegion(true)}
           />
           <Item icon="edit" title="Анкета" sub={`${app.me.title || app.me.role}${app.me.company ? ` · ${app.me.company}` : ''}`} onClick={() => setEdit(true)} />
@@ -49,7 +50,7 @@ export default function Profile() {
         <Section title="Ассистент и группа">
           <List>
             <Item
-              lead={<AvatarPortrait who={A.id} size={44} />}
+              lead={<HoloPortrait who={A.id} size={40} />}
               title={A.name}
               sub={`Тон: ${TONES.find((t) => t.id === (app.me.tone || 'warm'))?.name.toLowerCase()} · что знает о вас`}
               onClick={() => go('/ai?tab=me')}
@@ -64,11 +65,11 @@ export default function Profile() {
           </List>
         </Section>
 
-        <Section title="Мои события" more="Афиша" onMore={() => go('/events')}>
+        <Section title="Мои события" note={going.length ? `${going.length} ${going.length === 1 ? 'отметка' : going.length < 5 ? 'отметки' : 'отметок'} «иду»` : undefined} more="Афиша" onMore={() => go('/events')}>
           {going.length ? (
             <List>
               {going.map((e) => (
-                <Item key={e.id} icon="calendar" title={e.title} sub={`${whenLabel(e.inDays, e.time)} · ${e.kind === 'online' ? 'Zoom' : REGIONS[e.region].name}`} onClick={() => go(`/event/${e.id}`)} />
+                <Item key={e.id} lead={<DateTile days={e.inDays} />} title={e.title} sub={<><span className="xrow__time">{e.time}</span> · {e.kind === 'online' ? 'Zoom' : <><Flag cc={REGIONS[e.region].cc} size={12} /> {REGIONS[e.region].name}</>}</>} onClick={() => go(`/event/${e.id}`)} />
               ))}
             </List>
           ) : (

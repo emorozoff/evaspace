@@ -9,8 +9,8 @@ import ResidentCard from '../components/ResidentCard.jsx';
 import Pulse from '../components/Pulse.jsx';
 import Circle from '../components/Circle.jsx';
 import Intros from '../components/Intros.jsx';
-import { AvatarPortrait } from '../components/AvatarArt.jsx';
-import { assistantOf, insight } from '../lib/assistant.js';
+import AiBrief from '../components/home/AiBrief.jsx';
+import { Ring } from '../components/home/Gauge.jsx';
 import Install from '../components/Install.jsx';
 import { RegionButton } from '../components/RegionSheet.jsx';
 import { EventCard, EventRow } from '../components/EventCards.jsx';
@@ -20,8 +20,8 @@ import Icon from '../components/Icons.jsx';
 import Flag from '../components/Flag.jsx';
 
 /* Главная — порядок из клуба: карта резидента, живой блок (время, курсы,
-   люди, сообщества), ближний круг начиная с команды, повод познакомиться
-   от ассистента, ближайшие события, новые резиденты, новости. */
+   люди, сообщества), ближний круг начиная с команды, сводка ассистента,
+   ближайшие события, новые резиденты, знакомства дня, новости. */
 
 export default function Home() {
   const app = useApp();
@@ -30,11 +30,9 @@ export default function Home() {
   const unread = totalUnread(app);
   const [first, ...rest] = events;
   const fresh = newResidents(8);
-  const A = assistantOf(app);
-  const tip = insight(app);
 
   return (
-    <div className="screen stack-24 rise-in">
+    <div className="screen stack-24 rise-in home">
       <div className="hometop">
         <RegionButton app={app} />
         <div className="grow" />
@@ -42,7 +40,7 @@ export default function Home() {
           <Icon name="message" size={19} />
           {unread > 0 && <span className="badge">{unread}</span>}
         </button>
-        <button onClick={() => go('/profile')} aria-label="Профиль">
+        <button className="home__me" onClick={() => go('/profile')} aria-label="Профиль">
           <Avatar person={app.me} size={40} />
         </button>
       </div>
@@ -60,65 +58,48 @@ export default function Home() {
 
       <Circle app={app} />
 
-      {!app.me.tested ? (
-        <button className="aicard" onClick={() => go('/test')}>
-          <AvatarPortrait who={A.id} size={54} />
-          <span className="grow" style={{ textAlign: 'left', minWidth: 0 }}>
-            <span className="aicard__k">{A.name} · минута</span>
-            <span className="aicard__t" style={{ display: 'block' }}>Ответьте на восемь вопросов — соберу вашу мастер-группу и людей, которые вам нужны.</span>
-          </span>
-          <Icon name="right" size={18} color="var(--ink-3)" />
-        </button>
-      ) : (
-        <button className="aicard" onClick={() => go('/ai')}>
-          <AvatarPortrait who={A.id} size={54} />
-          <span className="grow" style={{ textAlign: 'left', minWidth: 0 }}>
-            <span className="aicard__k">{A.name} · ваш ассистент</span>
-            <span className="aicard__t clamp-3">{tip.text}</span>
-          </span>
-          <Icon name="right" size={18} color="var(--ink-3)" />
-        </button>
-      )}
-
-      <Intros app={app} />
+      <AiBrief app={app} />
 
       <Section title="Ближайшие события" note={`${r.name} и эфиры`} more="Все" onMore={() => go('/events')}>
-        {first ? <EventCard app={app} event={first} /> : <Empty icon="calendar" title="Пока тихо" text="В вашем регионе ближайших событий нет — загляните в афишу других." />}
+        {first ? <EventCard app={app} event={first} height={132} /> : <Empty icon="calendar" title="Пока тихо" text="В вашем регионе ближайших событий нет — загляните в афишу других." />}
         {rest.length > 0 && <List>{rest.map((e) => <EventRow key={e.id} app={app} event={e} />)}</List>}
       </Section>
 
-      <Section title="Новые резиденты" more="Все" onMore={() => go('/people?tab=list&sort=new')}>
-        <div className="scroller">
-          {fresh.map((p) => {
+      <Section title="Новые резиденты" note="По дате вступления" more="Все" onMore={() => go('/people?tab=list&sort=new')}>
+        <div className="scroller hn">
+          {fresh.map((p, n) => {
             const m = match(app.me, p);
             return (
-              <button key={p.id} className="newbie" onClick={() => go(`/p/${p.id}`)}>
-                <div className="spread" style={{ alignItems: 'flex-start' }}>
-                  <Avatar person={p} size={48} dot={p.online} />
-                  <span className={`pct${m.pct >= 75 ? ' pct--hi' : ''}`}>{m.pct}%</span>
-                </div>
-                <div>
-                  <div className="t-md clamp-2" style={{ lineHeight: 1.25 }}>{p.name}</div>
-                  <div className="t-xs dim ell" style={{ marginTop: 4 }}>{p.company}</div>
-                </div>
-                <div className="t-xs dim-2 ell"><Flag cc={REGIONS[p.region].cc} size={12} /> {p.city} · {p.joined <= 1 ? 'сегодня' : `${p.joined} дн.`}</div>
+              <button key={p.id} className="hn__card" style={{ '--i': n }} onClick={() => go(`/p/${p.id}`)}>
+                <span className="hn__top">
+                  <Avatar person={p} size={40} dot={p.online} />
+                  <Ring pct={m.pct} size={34} stroke={1.6}><span className="hn__pct">{m.pct}</span></Ring>
+                </span>
+                <span className="hn__name">{p.name}</span>
+                <span className="hn__co">{p.company}</span>
+                <span className="hn__meta">
+                  <Flag cc={REGIONS[p.region].cc} size={11} />
+                  <span className="ell">{p.city}</span>
+                  <span className="hn__d">{p.joined <= 1 ? 'сегодня' : `${p.joined} дн.`}</span>
+                </span>
               </button>
             );
           })}
         </div>
       </Section>
 
-      <Section title="Новости">
-        <div className="stack-8">
+      <Intros app={app} />
+
+      <Section title="Новости" note="Клуб, партнёры и база">
+        <div className="hnews">
           {NEWS.map((n) => (
-            <button key={n.id} className="news" onClick={() => go(`/news/${n.id}`)}>
-              <span className={`news__ic tone-${n.tone}`}><Icon name={n.icon} size={19} /></span>
-              <span className="grow" style={{ minWidth: 0 }}>
-                <span className="news__tag">{n.tag} · {ago(n.daysAgo)}</span>
-                <span className="news__t">{n.title}</span>
-                <span className="news__s">{n.sub}</span>
+            <button key={n.id} className="hnews__row" onClick={() => go(`/news/${n.id}`)}>
+              <span className={`hnews__ic tone-${n.tone}`}><Icon name={n.icon} size={16} /></span>
+              <span className="hnews__body">
+                <span className="hnews__tag">{n.tag}<i>·</i>{ago(n.daysAgo)}</span>
+                <span className="hnews__t">{n.title}</span>
               </span>
-              <Icon name="right" size={16} className="chev" />
+              <Icon name="right" size={15} className="chev" />
             </button>
           ))}
         </div>

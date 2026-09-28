@@ -4,8 +4,8 @@ import { go } from '../lib/router.jsx';
 import { companiesFor } from '../lib/select.js';
 import { CATEGORIES, COMPANIES, catById } from '../data/services.js';
 import { REGIONS, REGION_KEYS } from '../data/regions.js';
-import { count } from '../lib/format.js';
-import { Top, Search, Picker, Section, Empty, Btn, Stars, Note } from '../components/UI.jsx';
+import { count, plural } from '../lib/format.js';
+import { Top, Search, Picker, Section, Empty, Btn, Note } from '../components/UI.jsx';
 import { Brand } from '../components/Covers.jsx';
 import Icon from '../components/Icons.jsx';
 import Flag from '../components/Flag.jsx';
@@ -13,6 +13,9 @@ import Flag from '../components/Flag.jsx';
 /* Маркетплейс только из компаний резидентов. Сверху категории плитками,
    дальше — что рекомендуем в вашем регионе, и все компании списком.
    Регион по умолчанию — ваш: сначала то, чем можно воспользоваться сейчас. */
+
+/* Длинное слово в узкой плитке переносится по слогу, а не по букве. */
+const soft = (s) => (s.length > 10 && !s.includes(' ') ? `${s.slice(0, -5)}\u00ad${s.slice(-5)}` : s);
 
 export default function Services({ query }) {
   const app = useApp();
@@ -32,16 +35,19 @@ export default function Services({ query }) {
   ];
 
   return (
-    <div className="screen stack-24 rise-in">
+    <div className="screen stack-24 rise-in xsv">
       <div>
-        <Top title="Услуги" sub={`Только компании резидентов · ${count(COMPANIES.length, 'компания', 'компании', 'компаний')}`} />
+        <Top
+          title="Услуги"
+          sub={<span className="xtele"><b>{COMPANIES.length}</b> {plural(COMPANIES.length, 'компания', 'компании', 'компаний')}<i />только резиденты клуба</span>}
+        />
         <div className="stack">
           <Search value={q} onChange={setQ} placeholder="Виза, байк, вилла, сад, ужин…" />
           <div className="filters">
             <Picker
               label="Регион"
               title="Где нужна услуга"
-              summary={r === 'all' ? 'Все регионы' : <><Flag cc={REGIONS[r].cc} size={14} /> {REGIONS[r].name}</>}
+              summary={r === 'all' ? <><Icon name="globe" size={16} /> Все регионы</> : <><Flag cc={REGIONS[r].cc} size={16} /> {REGIONS[r].name}{region === 'mine' ? <span className="xsv__mine">ваш регион</span> : null}</>}
               options={regionOptions}
               value={region}
               def="mine"
@@ -51,16 +57,15 @@ export default function Services({ query }) {
         </div>
       </div>
 
-      <div className="cats">
-        {CATEGORIES.map((c) => {
+      <div className="cats xcats">
+        {CATEGORIES.map((c, i) => {
           const on = cat === c.id;
           const n = companiesFor(app, { cat: c.id, region }).length;
           return (
-            <button key={c.id} className={`cat${on ? ' cat--on' : ''}`} onClick={() => setCat(on ? 'all' : c.id)}>
-              <span className="cat__glow" style={{ background: c.tone }} />
-              <span className="cat__ic" style={{ background: `${c.tone}22`, color: c.tone }}><Icon name={c.icon} size={20} /></span>
-              <span className="cat__t">{c.name}</span>
-              <span className="cat__n">{n ? count(n, 'компания', 'компании', 'компаний') : 'нет в регионе'}</span>
+            <button key={c.id} className={`xcat${on ? ' is-on' : ''}${n ? '' : ' is-empty'}`} style={{ '--t': c.tone, '--i': i }} onClick={() => setCat(on ? 'all' : c.id)} aria-pressed={on}>
+              <span className="xcat__ic"><Icon name={c.icon} size={19} /></span>
+              <span className="xcat__t">{soft(c.name)}</span>
+              <span className="xcat__n">{n ? count(n, 'компания', 'компании', 'компаний') : 'нет в регионе'}</span>
             </button>
           );
         })}
@@ -70,17 +75,17 @@ export default function Services({ query }) {
         <Section title="Рекомендуем" note={`Резиденты пользуются ${REGIONS[app.me.region].loc}`}>
           <div className="scroller">
             {featured.map((c) => (
-              <button key={c.id} className="feat" onClick={() => go(`/service/${c.id}`)}>
-                <Brand company={c} height={128} radius={0}>
+              <button key={c.id} className="feat xfeat" onClick={() => go(`/service/${c.id}`)}>
+                <Brand company={c} height={124} radius={0}>
                   <div className="scene__top">
-                    <span className="glass">{catById(c.cat).name}</span>
-                    <span className="glass" style={{ color: 'var(--gold)' }}>★ {c.rating.toFixed(1)}</span>
+                    <span className="cv-chip" style={{ color: catById(c.cat).tone }}><Icon name={catById(c.cat).icon} size={12} />{catById(c.cat).name}</span>
+                    <span className="cv-chip cv-chip--gold"><Icon name="star" size={11} fill="currentColor" width={1} />{c.rating.toFixed(1)}</span>
                   </div>
                 </Brand>
-                <div className="feat__body">
-                  <div className="t-lg">{c.name}</div>
-                  <div className="t-xs dim ell">{c.tagline}</div>
-                  <div className="perk" style={{ marginTop: 4 }}><Icon name="gift" size={13} /><span>{c.perk}</span></div>
+                <div className="xfeat__body">
+                  <div className="xfeat__t">{c.name}</div>
+                  <div className="xfeat__s">{c.tagline}</div>
+                  <div className="perk xperk"><Icon name="gift" size={13} /><span>{c.perk}</span></div>
                 </div>
               </button>
             ))}
@@ -90,7 +95,7 @@ export default function Services({ query }) {
 
       <Section
         title={cat === 'all' ? (q ? 'Нашлось' : 'Все компании') : catById(cat).name}
-        note={cat !== 'all' ? catById(cat).hint : undefined}
+        note={cat !== 'all' ? catById(cat).hint : `${count(list.length, 'компания', 'компании', 'компаний')} · сначала ваш регион`}
         more={cat !== 'all' ? 'Сбросить' : undefined}
         onMore={() => setCat('all')}
       >
@@ -102,7 +107,7 @@ export default function Services({ query }) {
             action={<Btn size="sm" variant="ghost" onClick={() => { setRegion('all'); setQ(''); }}>Все регионы</Btn>}
           />
         ) : (
-          <div className="stack-8">{list.map((c) => <CompanyRow key={c.id} c={c} />)}</div>
+          <div className="xcos">{list.map((c, i) => <CompanyRow key={c.id} c={c} i={i} />)}</div>
         )}
       </Section>
 
@@ -113,23 +118,23 @@ export default function Services({ query }) {
   );
 }
 
-export function CompanyRow({ c }) {
+export function CompanyRow({ c, i = 0 }) {
   return (
-    <button className="co" onClick={() => go(`/service/${c.id}`)}>
-      <Brand company={c} size={58} radius={16} />
-      <div className="co__body">
-        <div className="spread">
-          <span className="t-md ell">{c.name}</span>
-          <Stars value={c.rating} />
-        </div>
-        <div className="t-xs dim ell">{c.tagline}</div>
-        <div className="spread" style={{ marginTop: 2 }}>
-          <span className="perk"><Icon name="gift" size={12} /><span>{c.perk}</span></span>
-          <span className="t-xs dim-2" style={{ flex: 'none' }}>
-            {c.regions.length > 3 ? 'все регионы' : c.regions.map((k) => <Flag key={k} cc={REGIONS[k].cc} size={13} style={{ marginRight: 3 }} />)}
+    <button className="xco" style={{ '--i': i }} onClick={() => go(`/service/${c.id}`)}>
+      <Brand company={c} size={52} radius={15} />
+      <span className="xco__body">
+        <span className="xco__top">
+          <span className="xco__t">{c.name}</span>
+          <span className="xstar"><Icon name="star" size={11} fill="currentColor" width={1} />{c.rating.toFixed(1)}</span>
+        </span>
+        <span className="xco__s">{c.tagline}</span>
+        <span className="xco__foot">
+          <span className="perk xperk"><Icon name="gift" size={12} /><span>{c.perk}</span></span>
+          <span className="xco__geo">
+            {c.regions.length > 3 ? 'все регионы' : c.regions.map((k) => <Flag key={k} cc={REGIONS[k].cc} size={13} />)}
           </span>
-        </div>
-      </div>
+        </span>
+      </span>
     </button>
   );
 }

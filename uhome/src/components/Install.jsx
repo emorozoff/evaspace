@@ -32,20 +32,20 @@ export default function Install({ app, compact }) {
   return (
     <>
       {compact ? (
-        <div className="card">
-          <div className="row" style={{ gap: 12, alignItems: 'flex-start' }}>
-            <Mark size={34} ring />
-            <div className="grow">
-              <div className="t-md">Поставьте UHOME на телефон</div>
-              <div className="t-xs dim" style={{ marginTop: 3, lineHeight: 1.45 }}>Своя иконка, полный экран, работает без интернета</div>
-            </div>
-            <button className="iconbtn iconbtn--sm" aria-label="Скрыть" onClick={() => app.hide('install')}>
-              <Icon name="x" size={14} />
+        <div className="xinst">
+          <span className="xinst__mark"><Mark size={30} /></span>
+          <div className="grow" style={{ minWidth: 0 }}>
+            <div className="xinst__k">На экран «Домой»</div>
+            <div className="xinst__t">Поставьте UHOME на телефон</div>
+            <div className="xinst__s">Своя иконка, полный экран, работает без интернета</div>
+            <button className="xinst__go" disabled={busy} onClick={run}>
+              <Icon name="download" size={14} />
+              {busy ? 'Устанавливаем…' : ready ? 'Установить' : TITLES[platform]}
             </button>
           </div>
-          <Btn size="sm" variant="gold" wide style={{ marginTop: 12 }} disabled={busy} onClick={run}>
-            {busy ? 'Устанавливаем…' : ready ? 'Установить' : TITLES[platform]}
-          </Btn>
+          <button className="xinst__x" aria-label="Скрыть" onClick={() => app.hide('install')}>
+            <Icon name="x" size={14} />
+          </button>
         </div>
       ) : (
         <List>
@@ -60,7 +60,7 @@ export default function Install({ app, compact }) {
             {STEPS[platform].map((s, i) => (
               <Item
                 key={i}
-                lead={<div className="item__ic display" style={{ fontSize: 18 }}>{i + 1}</div>}
+                lead={<div className="item__ic xinst__n">{String(i + 1).padStart(2, '0')}</div>}
                 title={<span style={{ whiteSpace: 'normal', fontWeight: 500, fontSize: 14, lineHeight: 1.45 }}>{s}</span>}
                 chev={false}
               />

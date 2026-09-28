@@ -17,6 +17,9 @@ import Flag from './Flag.jsx';
    и ассистент, дальше свои люди. Кто написал и не прочитан — встаёт в начало со счётчиком:
    личное — красным, группы — белым. */
 
+const S = 54;
+const RING = 'rgba(217, 178, 107, 0.62)';
+
 export default function Circle({ app }) {
   const [add, setAdd] = useState(false);
   const items = circleOrder(app);
@@ -25,13 +28,13 @@ export default function Circle({ app }) {
   const unread = items.reduce((n, x) => n + x.unread, 0);
 
   const view = (x) => {
-    if (x.id === 'ai') return { name: A.name, ava: <AvatarPortrait who={A.id} size={58} />, to: '/ai' };
+    if (x.id === 'ai') return { name: A.name, ava: <AvatarPortrait who={A.id} size={S} />, to: '/ai' };
     if (x.group) {
       const g = groups.find((y) => y.id === x.id);
-      return { name: g.short, ava: <GroupAva members={g.members} size={58} ring={x.unread ? 'var(--gold)' : null} />, to: `/chat/${x.id}` };
+      return { name: g.short, ava: <GroupAva members={g.members} size={S} ring={x.unread ? RING : null} />, to: `/chat/${x.id}` };
     }
-    if (x.id === 'team') return { name: 'Команда', ava: <Avatar person={x.person} size={58} ring={x.unread ? 'var(--gold)' : null} />, to: '/chat/team' };
-    return { name: firstName(x.person.name), ava: <Avatar person={x.person} size={58} ring={x.unread ? 'var(--gold)' : null} dot={!x.unread && x.person.online} />, to: `/chat/${x.id}` };
+    if (x.id === 'team') return { name: 'Команда', ava: <Avatar person={x.person} size={S} ring={x.unread ? RING : null} />, to: '/chat/team' };
+    return { name: firstName(x.person.name), ava: <Avatar person={x.person} size={S} ring={x.unread ? RING : null} dot={!x.unread && x.person.online} />, to: `/chat/${x.id}` };
   };
 
   return (
@@ -41,22 +44,22 @@ export default function Circle({ app }) {
       more="Сообщения"
       onMore={() => go('/chats')}
     >
-      <div className="scroller">
-        {items.map((x) => {
+      <div className="scroller hc">
+        {items.map((x, n) => {
           const v = view(x);
           return (
-            <button key={x.id} className={`circle${x.unread ? ' circle--new' : ''}`} onClick={() => go(v.to)}>
-              <span className="circle__ava">
+            <button key={x.id} className={`hc__i${x.unread ? ' hc__i--new' : ''}${x.id === 'ai' ? ' hc__i--ai' : ''}`} style={{ '--i': n }} onClick={() => go(v.to)}>
+              <span className="hc__ava">
                 {v.ava}
                 {x.unread > 0 && <span className={`badge${x.group ? ' badge--muted' : ''}`}>{x.unread}</span>}
               </span>
-              <span className="circle__t">{v.name}</span>
+              <span className="hc__t">{v.name}</span>
             </button>
           );
         })}
-        <button className="circle" onClick={() => setAdd(true)}>
-          <span className="circle-add"><Icon name="plus" size={20} /></span>
-          <span className="circle__t">Добавить</span>
+        <button className="hc__i" style={{ '--i': items.length }} onClick={() => setAdd(true)}>
+          <span className="hc__add"><Icon name="plus" size={18} /></span>
+          <span className="hc__t">Добавить</span>
         </button>
       </div>
 

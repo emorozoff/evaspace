@@ -3,7 +3,7 @@ import { REGIONS, REGION_KEYS } from '../data/regions.js';
 import { regionStats } from '../data/communities.js';
 import { plural, count } from '../lib/format.js';
 import { localParts, hhmm } from '../lib/time.js';
-import { Sheet, List, Item } from './UI.jsx';
+import { Sheet } from './UI.jsx';
 import Icon from './Icons.jsx';
 import Flag from './Flag.jsx';
 
@@ -15,13 +15,13 @@ export function RegionButton({ app }) {
   const r = REGIONS[app.me.region];
   return (
     <>
-      <button className="regionbtn" onClick={() => setOpen(true)} aria-label="Сменить регион">
-        <span className="regionbtn__flag"><Flag cc={r.cc} size={24} /></span>
-        <span style={{ minWidth: 0 }}>
-          <span className="regionbtn__k" style={{ display: 'block' }}>Я сейчас</span>
-          <span className="regionbtn__v">
+      <button className="hreg" onClick={() => setOpen(true)} aria-label={`Сейчас: ${r.name}. Сменить регион`}>
+        <span className="hreg__flag"><Flag cc={r.cc} size={26} /></span>
+        <span className="hreg__txt">
+          <span className="hreg__k">Я сейчас</span>
+          <span className="hreg__v">
             <span className="ell">{r.name}</span>
-            <Icon name="down" size={14} color="var(--ink-3)" />
+            <Icon name="down" size={13} color="var(--ink-3)" />
           </span>
         </span>
       </button>
@@ -39,23 +39,31 @@ export default function RegionSheet({ app, open, onClose }) {
       title="Где вы сейчас"
       sub="От региона зависят карта резидента, афиша, услуги и кого показывать рядом. Переключайте, когда летите."
     >
-      <List>
-        {REGION_KEYS.map((key) => {
+      <div className="rsh">
+        {REGION_KEYS.map((key, n) => {
           const r = REGIONS[key];
+          const st = regionStats(key);
           const on = app.me.region === key;
           return (
-            <Item
-              key={key}
-              lead={<span className="picker__lead" style={{ width: 44, height: 44, borderRadius: 14 }}><Flag cc={r.cc} size={26} /></span>}
-              title={r.name}
-              sub={`${hhmm(localParts(r.tz, now))} · ${count(regionStats(key).members, 'резидент', 'резидента', 'резидентов')} · ${regionStats(key).communities} ${plural(regionStats(key).communities, 'сообщество', 'сообщества', 'сообществ')}`}
-              meta={on ? <span className="tag tag--gold">вы здесь</span> : undefined}
-              chev={false}
+            <button
+              key={key} className="rsh__row" data-on={on} style={{ '--i': n }}
               onClick={() => { if (!on) app.setRegion(key); onClose(); }}
-            />
+            >
+              <span className="rsh__flag"><Flag cc={r.cc} size={30} /></span>
+              <span className="rsh__body">
+                <span className="rsh__name">{r.name}<span className="rsh__country">{r.country}</span></span>
+                <span className="rsh__meta">
+                  {count(st.members, 'резидент', 'резидента', 'резидентов')} · {st.communities} {plural(st.communities, 'сообщество', 'сообщества', 'сообществ')}
+                </span>
+              </span>
+              <span className="rsh__side">
+                <span className="rsh__time">{hhmm(localParts(r.tz, now))}</span>
+                {on ? <span className="rsh__here">вы здесь</span> : <span className="rsh__go">выбрать</span>}
+              </span>
+            </button>
           );
         })}
-      </List>
+      </div>
     </Sheet>
   );
 }

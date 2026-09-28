@@ -3,7 +3,7 @@ import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import { messagesOf } from '../lib/select.js';
 import { groupById } from '../lib/groups.js';
-import { byId } from '../data/people.js';
+import { byId, toneOf } from '../data/people.js';
 import { communityById } from '../data/communities.js';
 import { REGIONS } from '../data/regions.js';
 import { seeded } from '../lib/art.js';
@@ -68,35 +68,37 @@ export default function Chat({ id }) {
   const to = person ? (id === 'team' ? '/profile' : `/p/${id}`) : group ? `/group/${id}` : `/community/${id}`;
 
   let lastDay = '';
+  let prev = null;
 
   return (
-    <div className="screen screen--nested screen--chat">
+    <div className="screen screen--nested screen--chat xc">
       <TopBar
         title={title}
         sub={sub}
         backTo="/chats"
         right={
-          <button onClick={() => go(to)} aria-label="Профиль">
+          <button className="xc__who" onClick={() => go(to)} aria-label="Профиль">
             {person ? <Avatar person={person} size={38} /> : group ? <GroupAva members={group.members} size={38} /> : <span className="iconbtn"><Icon name="users" size={18} /></span>}
           </button>
         }
       />
 
-      <div className="chat">
+      <div className="xc__feed">
         {id === 'team' && (
-          <div className="note" style={{ marginBottom: 8 }}>
-            <Icon name="spark" size={16} color="var(--gold)" />
-            <div>Команда UHOME: события, услуги, знакомства, визы, жильё. Пишите как другу — разберёмся.</div>
+          <div className="xc__note">
+            <span className="xc__note-k"><Icon name="spark" size={12} /> Команда UHOME</span>
+            <span>События, услуги, знакомства, визы, жильё. Пишите как другу — разберёмся.</span>
           </div>
         )}
         {group && (
-          <button className="note" style={{ marginBottom: 8, textAlign: 'left' }} onClick={() => go(`/group/${id}`)}>
-            <Icon name={group.icon} size={16} color="var(--gold)" />
-            <div>{group.about} <span className="gold">Состав и встречи →</span></div>
+          <button className="xc__note" onClick={() => go(`/group/${id}`)}>
+            <span className="xc__note-k"><Icon name={group.icon} size={12} /> {group.short || 'Группа'}</span>
+            <span>{group.about} <span className="gold">Состав и встречи →</span></span>
           </button>
         )}
         {messages.length === 0 && (
-          <div className="t-sm dim-2 center" style={{ padding: '40px 20px', lineHeight: 1.5 }}>
+          <div className="xc__empty">
+            <span className="xc__empty-k">Канал открыт</span>
             Здесь пока пусто. Напишите первым — {person ? 'в клубе принято отвечать' : 'сообщество увидит сообщение сразу'}.
           </div>
         )}
@@ -106,33 +108,52 @@ export default function Chat({ id }) {
           lastDay = day;
           const out = m.from === 'me';
           const author = (community || group) && !out ? byId(m.who) : null;
+          const cont = !showDay && prev && prev.from === m.from && prev.who === m.who && m.from !== 'sys';
+          prev = m;
           if (m.from === 'sys') {
             return (
               <div key={i} style={{ display: 'contents' }}>
-                {showDay && <div className="chat__day">{day}</div>}
-                <div className="chat__sys"><Icon name="spark" size={14} color="var(--gold)" />{m.text}</div>
+                {showDay && <div className="xc__day"><span>{day}</span></div>}
+                <div className="xc__sys">
+                  <span className="xc__sys-k"><Icon name="spark" size={12} /> Интро · UHOME</span>
+                  <span>{m.text}</span>
+                </div>
               </div>
             );
           }
+          const bubble = (
+            <div className={`xb ${out ? 'xb--out' : 'xb--in'}${cont ? ' xb--cont' : ''}`}>
+              {author && !cont && <span className="xb__who" style={{ color: toneOf(author) }}>{author.name}</span>}
+              {!out && m.who && !author && !cont && <span className="xb__who">{m.who}</span>}
+              <span className="xb__text">{m.text}</span>
+              <span className="xb__sp" aria-hidden="true" />
+              <span className="xb__time">{hm(m.at)}{out && <Icon name="check" size={11} width={2.2} />}</span>
+            </div>
+          );
+          // в группе у последнего сообщения серии — лицо автора, как в мессенджере
+          const next = messages[i + 1];
+          const lastOfRun = !next || next.from !== m.from || next.who !== m.who || dayLabel(next.at) !== day;
           return (
             <div key={i} style={{ display: 'contents' }}>
-              {showDay && <div className="chat__day">{day}</div>}
-              <div className={`bubble ${out ? 'bubble--out' : 'bubble--in'}`}>
-                {author && <span className="bubble__who">{author.name}</span>}
-                {!out && m.who && !author && <span className="bubble__who">{m.who}</span>}
-                {m.text}
-                <div className="bubble__time">{hm(m.at)}</div>
-              </div>
+              {showDay && <div className="xc__day"><span>{day}</span></div>}
+              {author ? (
+                <div className={`xb-row${cont ? ' xb-row--cont' : ''}`}>
+                  {lastOfRun ? <button className="xb-row__ava" onClick={() => go(`/p/${author.id}`)} aria-label={author.name}><Avatar person={author} size={28} /></button> : <span className="xb-row__sp" />}
+                  {bubble}
+                </div>
+              ) : bubble}
             </div>
           );
         })}
       </div>
 
-      <form className="composer" onSubmit={(e) => { e.preventDefault(); send(); }}>
-        <input className="field grow" value={text} onChange={(e) => setText(e.target.value)} placeholder="Сообщение" enterKeyHint="send" />
-        <button className="sendbtn" type="submit" disabled={!text.trim()} aria-label="Отправить">
-          <Icon name="send" size={19} />
-        </button>
+      <form className="xcomp" onSubmit={(e) => { e.preventDefault(); send(); }}>
+        <div className="xcomp__bar">
+          <input className="xcomp__in" value={text} onChange={(e) => setText(e.target.value)} placeholder="Сообщение" enterKeyHint="send" aria-label="Сообщение" />
+          <button className="xcomp__send" type="submit" disabled={!text.trim()} aria-label="Отправить">
+            <Icon name="send" size={18} />
+          </button>
+        </div>
       </form>
     </div>
   );

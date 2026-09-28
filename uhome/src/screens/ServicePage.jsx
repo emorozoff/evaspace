@@ -9,6 +9,7 @@ import { nf, whenLabel } from '../lib/format.js';
 import { Brand } from '../components/Covers.jsx';
 import { Avatar } from '../components/Art.jsx';
 import { TopBar, Section, List, Item, Btn, Sheet, Empty, Field } from '../components/UI.jsx';
+import { DateTile } from '../components/EventCards.jsx';
 import Icon from '../components/Icons.jsx';
 import Flag from '../components/Flag.jsx';
 
@@ -28,34 +29,46 @@ export default function ServicePage({ id }) {
   const mine = app.orders.filter((o) => o.company === c.id);
 
   return (
-    <div className="screen screen--nested">
+    <div className="screen screen--nested xsvp">
       <TopBar title={c.name} sub={cat.name} backTo="/services" />
 
       <div className="stack-24">
         <div className="stack">
-          <Brand company={c} height={176}>
+          <Brand company={c} height={184}>
             <div className="scene__top">
-              <span className="glass" style={{ color: cat.tone }}><Icon name={cat.icon} size={13} />{cat.name}</span>
-              <span className="glass" style={{ gap: 4 }}>{c.regions.map((k) => <Flag key={k} cc={REGIONS[k].cc} size={14} />)}</span>
+              <span className="cv-chip" style={{ color: cat.tone }}><Icon name={cat.icon} size={12} />{cat.name}</span>
+              <span className="cv-chip" style={{ gap: 4 }}>{c.regions.map((k) => <Flag key={k} cc={REGIONS[k].cc} size={13} />)}</span>
             </div>
-            <div className="scene__over">
-              <h1 className="h1" style={{ fontSize: 38 }}>{c.name}</h1>
-              <div className="t-sm" style={{ color: 'rgba(255,255,255,.8)', marginTop: 4 }}>{c.tagline}</div>
+            <div className="scene__over xsvp__over">
+              <h1 className="xsvp__name">{c.name}</h1>
+              <div className="xsvp__tag">{c.tagline}</div>
             </div>
           </Brand>
 
-          <div className="stats">
-            <div className="stat"><div className="stat__v" style={{ color: 'var(--gold)' }}>★ {c.rating.toFixed(1)}</div><div className="stat__l">оценка резидентов</div></div>
-            <div className="stat"><div className="stat__v">{nf(c.done)}</div><div className="stat__l">заказов</div></div>
-            <div className="stat"><div className="stat__v">{c.regions.length}</div><div className="stat__l">{c.regions.length === 1 ? 'регион' : 'региона'}</div></div>
+          <div className="xticket xticket--3">
+            <div className="xticket__c">
+              <span className="xticket__k">Оценка</span>
+              <span className="xticket__v xsvp__rate"><Icon name="star" size={13} fill="currentColor" width={1} />{c.rating.toFixed(1)}</span>
+              <span className="xticket__s">резидентов</span>
+            </div>
+            <div className="xticket__c">
+              <span className="xticket__k">Заказов</span>
+              <span className="xticket__v">{nf(c.done)}</span>
+              <span className="xticket__s">через клуб</span>
+            </div>
+            <div className="xticket__c">
+              <span className="xticket__k">Регионы</span>
+              <span className="xticket__v">{String(c.regions.length).padStart(2, '0')}</span>
+              <span className="xticket__s">{c.regions.map((k) => REGIONS[k].name).join(', ')}</span>
+            </div>
           </div>
 
-          <div className="card card--sea row" style={{ gap: 12 }}>
-            <div className="item__ic" style={{ background: 'var(--sea-soft)', color: 'var(--sea)' }}><Icon name="gift" size={19} /></div>
-            <div className="grow">
-              <div className="eyebrow" style={{ color: 'var(--sea)' }}>Для резидентов</div>
-              <div className="t-md" style={{ marginTop: 3 }}>{c.perk}</div>
-            </div>
+          <div className="xperkcard">
+            <span className="xperkcard__ic"><Icon name="gift" size={18} /></span>
+            <span className="grow">
+              <span className="xperkcard__k">Для резидентов</span>
+              <span className="xperkcard__t">{c.perk}</span>
+            </span>
           </div>
         </div>
 
@@ -67,28 +80,29 @@ export default function ServicePage({ id }) {
         </Section>
 
         <Section title="Что предлагают" note="Нажмите — заявка на это предложение">
-          <div className="list">
+          <div className="xoffers">
             {c.offers.map((o, i) => (
-              <button key={o.name} className="offer" style={{ width: '100%' }} onClick={() => setOrder(i)}>
-                <div className="grow">
-                  <div className="t-md" style={{ lineHeight: 1.3 }}>{o.name}</div>
-                  <div className="t-xs dim-2" style={{ marginTop: 3 }}>{o.time}</div>
-                </div>
-                <div className="offer__price">{o.price}</div>
+              <button key={o.name} className="xoffer" style={{ '--i': i }} onClick={() => setOrder(i)}>
+                <span className="xoffer__n">{String(i + 1).padStart(2, '0')}</span>
+                <span className="grow" style={{ minWidth: 0 }}>
+                  <span className="xoffer__t">{o.name}</span>
+                  <span className="xoffer__s">{o.time}</span>
+                </span>
+                <span className="xoffer__p">{o.price}</span>
               </button>
             ))}
           </div>
         </Section>
 
         <Section title="Как это работает">
-          <div className="card steps">
-            {c.steps.map((s, i) => (
-              <div key={i} className="step">
-                <span className="step__n">{i + 1}</span>
-                <span className="step__t">{s}</span>
-              </div>
+          <ol className="xtl xtl--n">
+            {c.steps.map((st, i) => (
+              <li key={i} className="xtl__i" style={{ '--i': i }}>
+                <span className="xtl__t">{String(i + 1).padStart(2, '0')}</span>
+                <span className="xtl__d">{st}</span>
+              </li>
             ))}
-          </div>
+          </ol>
         </Section>
 
         {owner && (
@@ -105,16 +119,16 @@ export default function ServicePage({ id }) {
         )}
 
         {c.reviews?.length > 0 && (
-          <Section title="Отзывы резидентов">
+          <Section title="Отзывы резидентов" note={`${c.reviews.length} ${c.reviews.length === 1 ? 'отзыв' : c.reviews.length < 5 ? 'отзыва' : 'отзывов'} · только резиденты`}>
             <div className="stack-8">
               {c.reviews.map((r, i) => {
                 const p = byId(r.who);
                 return (
-                  <div key={i} className="quote">
-                    <div className="quote__t">«{r.text}»</div>
+                  <div key={i} className="xquote">
+                    <div className="xquote__t">{r.text}</div>
                     <button className="row" style={{ gap: 8 }} onClick={() => go(`/p/${p.id}`)}>
-                      <Avatar person={p} size={26} />
-                      <span className="t-xs dim">{p.name} · {p.company}</span>
+                      <Avatar person={p} size={24} />
+                      <span className="xquote__who">{p.name} · {p.company}</span>
                     </button>
                   </div>
                 );
@@ -127,7 +141,7 @@ export default function ServicePage({ id }) {
           <Section title="События компании">
             <List>
               {events.map((e) => (
-                <Item key={e.id} icon="calendar" title={e.title} sub={`${whenLabel(e.inDays, e.time)} · ${e.price}`} onClick={() => go(`/event/${e.id}`)} />
+                <Item key={e.id} lead={<DateTile days={e.inDays} />} title={e.title} sub={`${whenLabel(e.inDays, e.time)} · ${e.price}`} onClick={() => go(`/event/${e.id}`)} />
               ))}
             </List>
           </Section>
@@ -137,9 +151,11 @@ export default function ServicePage({ id }) {
           <div className="note"><Icon name="check" size={16} color="var(--sea)" /><div>Ваши заявки: {mine.map((o) => o.offer).join('; ')}. Ответ — в сообщениях.</div></div>
         )}
 
-        <div className="pair pair--wide">
-          <Btn variant="gold" onClick={() => setOrder(0)}>Оставить заявку</Btn>
-          <Btn variant="ghost" icon="message" onClick={() => go(`/chat/${c.owner}`)}>Написать</Btn>
+        <div className="xcta">
+          <Btn variant="gold" className="xcta__main" onClick={() => setOrder(0)}>Оставить заявку</Btn>
+          <button className="xcta__ic xcta__ic--wide" onClick={() => go(`/chat/${c.owner}`)} aria-label={`Написать ${owner?.name || 'владельцу'}`}>
+            <Icon name="message" size={18} /><span>Написать</span>
+          </button>
         </div>
       </div>
 
@@ -164,14 +180,14 @@ function OrderForm({ app, c, owner, start, onDone }) {
   };
 
   return (
-    <div className="stack" style={{ gap: 16 }}>
+    <div className="stack xorder" style={{ gap: 16 }}>
       <div className="list list--plain">
         {c.offers.map((o, i) => (
           <Item
             key={o.name}
             title={o.name}
-            sub={`${o.price} · ${o.time}`}
-            meta={i === pick ? <Icon name="check" size={18} color="var(--gold)" /> : undefined}
+            sub={<><span className="xoffer__p xoffer__p--sm">{o.price}</span> · {o.time}</>}
+            meta={<span className={`xpick${i === pick ? ' is-on' : ''}`}>{i === pick && <Icon name="check" size={13} width={2.2} />}</span>}
             chev={false}
             onClick={() => setPick(i)}
           />
