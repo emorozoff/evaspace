@@ -36,7 +36,7 @@ export function Avatar({ person, size = 44, ring = null, dot = false, style, rad
       style={{
         width: size, height: size, fontSize: size * 0.36, borderRadius: r, color: tone,
         // крупный аватар (карточка знакомства, профиль) — тон насыщеннее
-        background: size >= 72 ? `linear-gradient(${tone}40, ${tone}24), #1c1b18` : `linear-gradient(${tone}2b, ${tone}1c), #1c1b18`, ...style,
+        background: size >= 72 ? `linear-gradient(${tone}40, ${tone}24), #141720` : `linear-gradient(${tone}2b, ${tone}1c), #141720`, ...style,
       }}
     >
       {team ? <Mark size={size * 0.6} /> : initials(person?.name)}
@@ -52,7 +52,7 @@ export function Tile({ icon, tone = GOLD, size = 44, radius }) {
     <span
       style={{
         width: size, height: size, flex: 'none', borderRadius: radius ?? size * 0.3, display: 'grid', placeItems: 'center',
-        color: tone, background: `linear-gradient(${tone}26, ${tone}14), #1c1b18`,
+        color: tone, background: `linear-gradient(${tone}26, ${tone}14), #141720`,
       }}
     >
       <Icon name={icon} size={size * 0.46} />
@@ -69,7 +69,7 @@ export function GroupAva({ members = [], size = 56, ring = null }) {
         {four.map((p) => {
           const tone = toneOf(p);
           return (
-            <span key={p.id} style={{ color: tone, fontSize: size * 0.2, background: `linear-gradient(${tone}33, ${tone}1c), #1c1b18` }}>
+            <span key={p.id} style={{ color: tone, fontSize: size * 0.2, background: `linear-gradient(${tone}33, ${tone}1c), #141720` }}>
               {initials(p.name)}
             </span>
           );
@@ -109,7 +109,7 @@ export function Guilloche({ color = GOLD, opacity = 0.3, seed = 1, size = 220 })
 
 /* ---------- код на входе -------------------------------------------------- */
 /* Тёмная плашка, светлые скруглённые модули и золотые угловые метки. */
-export function QR({ value, size = 92, tone = GOLD, ink = '#EDE4D0', bg = '#12110f', radius = 12 }) {
+export function QR({ value, size = 92, tone = GOLD, ink = '#EDE4D0', bg = '#0e1016', radius = 12 }) {
   const id = useId().replace(/:/g, '');
   const n = 25;
   const grid = useMemo(() => qrMatrix(value, n), [value]);

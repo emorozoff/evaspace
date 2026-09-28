@@ -171,7 +171,7 @@ export default function WorldMap({ people = [], selected = null, onSelect, onPer
                         className="pin"
                         onClick={(e) => { e.stopPropagation(); if (!moved.current) onPerson?.(r.id); }}
                       >
-                        <rect x={-a} y={-a} width={a * 2} height={a * 2} rx={a * 0.62} fill="#1c1b18" stroke="#100f0d" strokeWidth={1.2 / k} />
+                        <rect x={-a} y={-a} width={a * 2} height={a * 2} rx={a * 0.62} fill="#141720" stroke="#100f0d" strokeWidth={1.2 / k} />
                         <rect x={-a} y={-a} width={a * 2} height={a * 2} rx={a * 0.62} fill={toneOf(r)} fillOpacity="0.26" />
                         <text y={a * 0.36} textAnchor="middle" fontSize={a * 0.8} fontWeight="650" fill={toneOf(r)} fontFamily="Onest, sans-serif">{initials(r.name)}</text>
                         {r.online && <circle cx={a * 0.8} cy={a * 0.8} r={a * 0.26} fill="#8FB8A0" stroke="#100f0d" strokeWidth={0.6 / k} />}
@@ -182,7 +182,7 @@ export default function WorldMap({ people = [], selected = null, onSelect, onPer
 
                 <g className="pin" onClick={(e) => { e.stopPropagation(); if (!moved.current) onSelect?.(p.key); }}>
                   {mine && !on && <circle className="pin__halo" r="3" fill="none" stroke="#8FB8A0" strokeWidth={0.9 / k} />}
-                  <circle r={R} fill="#151412" stroke={on ? '#E3CB98' : mine ? '#8FB8A0' : '#C9A96E'} strokeWidth={(on ? 1.8 : 1.1) / Math.sqrt(k)} />
+                  <circle r={R} fill="#0e1016" stroke={on ? '#E3CB98' : mine ? '#8FB8A0' : '#C9A96E'} strokeWidth={(on ? 1.8 : 1.1) / Math.sqrt(k)} />
                   <Silhouette region={p.key} size={R * 1.5} />
                   <text
                     y={R + 8.5 / Math.sqrt(k)}

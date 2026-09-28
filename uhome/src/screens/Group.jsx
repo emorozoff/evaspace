@@ -10,6 +10,7 @@ import { SPHERES } from '../data/people.js';
 import { TopBar, Btn, List, Item, Empty, Section } from '../components/UI.jsx';
 import { Avatar, GroupAva } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
+import Flag from '../components/Flag.jsx';
 
 /* Мастер-группа: десять резидентов с похожими задачами. Состав собран
    тестом, у каждого участника видно, чем он полезен именно вам. */
@@ -40,7 +41,7 @@ export default function Group({ id }) {
 
         <div className="stats">
           <div className="stat"><div className="stat__v gold">{avg}%</div><div className="stat__l">польза в среднем</div></div>
-          <div className="stat"><div className="stat__v">{regions.length}</div><div className="stat__l">{regions.map((r) => REGIONS[r]?.flag).join(' ')}</div></div>
+          <div className="stat"><div className="stat__v">{regions.length}</div><div className="stat__l">{regions.map((r) => <Flag key={r} cc={REGIONS[r]?.cc} size={13} style={{ margin: '0 1px' }} />)}</div></div>
           <div className="stat"><div className="stat__v">2</div><div className="stat__l">встречи в месяц</div></div>
         </div>
 
@@ -62,7 +63,7 @@ export default function Group({ id }) {
                 key={p.id}
                 lead={<Avatar person={p} size={46} dot={p.online} />}
                 title={p.name}
-                sub={`${REGIONS[p.region].flag} ${p.company} · ${whyText(m)}`}
+                sub={<><Flag cc={REGIONS[p.region].cc} size={12} /> {p.company} · {whyText(m)}</>}
                 meta={<span className={`pct${m.pct >= 75 ? ' pct--hi' : ''}`}>{m.pct}%</span>}
                 onClick={() => go(`/p/${p.id}`)}
               />

@@ -153,19 +153,19 @@ export function Brand({ company, height = 150, radius, children, size }) {
 
   if (size) {
     return (
-      <div style={{ width: size, height: size, flex: 'none', borderRadius: radius ?? size * 0.3, background: `linear-gradient(145deg, ${tone}55, #151412 80%)`, boxShadow: `inset 0 0 0 1px ${tone}40`, display: 'grid', placeItems: 'center' }}>
+      <div style={{ width: size, height: size, flex: 'none', borderRadius: radius ?? size * 0.3, background: `linear-gradient(145deg, ${tone}55, #0e1016 80%)`, boxShadow: `inset 0 0 0 1px ${tone}40`, display: 'grid', placeItems: 'center' }}>
         <span className="display" style={{ fontSize: size * 0.46, color: '#fff', lineHeight: 1 }}>{company.name[0]}</span>
       </div>
     );
   }
 
   return (
-    <div className="scene" style={{ height, borderRadius: radius, background: '#151412' }}>
+    <div className="scene" style={{ height, borderRadius: radius, background: '#0e1016' }}>
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice">
         <defs>
           <linearGradient id={`bg${id}`} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor={tone} stopOpacity="0.5" />
-            <stop offset="70%" stopColor="#151412" />
+            <stop offset="70%" stopColor="#0e1016" />
           </linearGradient>
         </defs>
         <rect width={W} height={H} fill={`url(#bg${id})`} />

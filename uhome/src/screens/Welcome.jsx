@@ -6,6 +6,7 @@ import { REGIONS, REGION_KEYS } from '../data/regions.js';
 import { ROLES } from '../data/people.js';
 import { Mark } from '../components/Art.jsx';
 import { Btn, Sheet, Field } from '../components/UI.jsx';
+import Flag from '../components/Flag.jsx';
 
 /* Вход: два пути. Резидент заходит сразу (в демо — с заполненным профилем),
    кандидат оставляет заявку из трёх вопросов: имя, чем занимается, где сейчас. */
@@ -33,7 +34,7 @@ export default function Welcome() {
         </div>
         <div className="welcome__hubs">
           {REGION_KEYS.map((k) => (
-            <span key={k} className="chip" style={{ height: 32, fontSize: 13 }}>{REGIONS[k].flag} {REGIONS[k].name}</span>
+            <span key={k} className="chip" style={{ height: 32, fontSize: 13 }}><Flag cc={REGIONS[k].cc} size={14} /> {REGIONS[k].name}</span>
           ))}
         </div>
       </div>
@@ -75,7 +76,7 @@ function Apply({ onDone }) {
         <div className="wrap">
           {REGION_KEYS.map((k) => (
             <button key={k} className={`chip${region === k ? ' chip--on' : ''}`} onClick={() => setRegion(k)}>
-              {REGIONS[k].flag} {REGIONS[k].name}
+              <Flag cc={REGIONS[k].cc} size={14} /> {REGIONS[k].name}
             </button>
           ))}
         </div>

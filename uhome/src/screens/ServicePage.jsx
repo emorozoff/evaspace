@@ -10,6 +10,7 @@ import { Brand } from '../components/Covers.jsx';
 import { Avatar } from '../components/Art.jsx';
 import { TopBar, Section, List, Item, Btn, Sheet, Empty, Field } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
+import Flag from '../components/Flag.jsx';
 
 /* Карточка компании резидента: что предлагают и почём, бонус для своих,
    как это работает, кто владелец и что говорят резиденты. Заявка уходит
@@ -35,7 +36,7 @@ export default function ServicePage({ id }) {
           <Brand company={c} height={176}>
             <div className="scene__top">
               <span className="glass" style={{ color: cat.tone }}><Icon name={cat.icon} size={13} />{cat.name}</span>
-              <span className="glass">{c.regions.map((k) => REGIONS[k].flag).join(' ')}</span>
+              <span className="glass" style={{ gap: 4 }}>{c.regions.map((k) => <Flag key={k} cc={REGIONS[k].cc} size={14} />)}</span>
             </div>
             <div className="scene__over">
               <h1 className="h1" style={{ fontSize: 38 }}>{c.name}</h1>
@@ -61,7 +62,7 @@ export default function ServicePage({ id }) {
         <Section title="О компании">
           <p className="lead">{c.about}</p>
           <div className="wrap">
-            {c.regions.map((k) => <span key={k} className="tag tag--line">{REGIONS[k].flag} {REGIONS[k].name}</span>)}
+            {c.regions.map((k) => <span key={k} className="tag tag--line"><Flag cc={REGIONS[k].cc} size={12} /> {REGIONS[k].name}</span>)}
           </div>
         </Section>
 
@@ -96,7 +97,7 @@ export default function ServicePage({ id }) {
               <Item
                 lead={<Avatar person={owner} size={46} dot={owner.online} />}
                 title={owner.name}
-                sub={`${owner.title} · ${REGIONS[owner.region].flag} ${owner.city}`}
+                sub={<>{owner.title} · <Flag cc={REGIONS[owner.region].cc} size={12} /> {owner.city}</>}
                 onClick={() => go(`/p/${owner.id}`)}
               />
             </List>

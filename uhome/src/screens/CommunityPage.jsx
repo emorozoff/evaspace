@@ -9,6 +9,7 @@ import { Scene } from '../components/Covers.jsx';
 import { Avatar, Tile } from '../components/Art.jsx';
 import { EventRow } from '../components/EventCards.jsx';
 import { TopBar, Section, List, Item, Btn, Empty } from '../components/UI.jsx';
+import Flag from '../components/Flag.jsx';
 
 /* Сообщество: о чём оно, кто ведёт, ближайшие встречи и живой чат.
    Локальное — привязано к региону клуба, по интересам — ко всем регионам. */
@@ -30,11 +31,11 @@ export default function CommunityPage({ id }) {
   const cover = c.kind === 'local' ? (
     <Scene region={c.region} height={170}>
       <div className="scene__over">
-        <span className="glass">{REGIONS[c.region].flag} {REGIONS[c.region].name} · {REGIONS[c.region].country}</span>
+        <span className="glass"><Flag cc={REGIONS[c.region].cc} size={14} /> {REGIONS[c.region].name} · {REGIONS[c.region].country}</span>
       </div>
     </Scene>
   ) : (
-    <div className="scene" style={{ height: 170, display: 'grid', placeItems: 'center', background: `radial-gradient(80% 90% at 50% 15%, ${c.tone}33, #151412 72%)` }}>
+    <div className="scene" style={{ height: 170, display: 'grid', placeItems: 'center', background: `radial-gradient(80% 90% at 50% 15%, ${c.tone}33, #0e1016 72%)` }}>
       <Tile icon={c.icon} tone={c.tone} size={84} radius={26} />
     </div>
   );

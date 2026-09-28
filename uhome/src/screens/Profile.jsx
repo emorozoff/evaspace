@@ -15,6 +15,7 @@ import { groupsOf } from '../lib/groups.js';
 import { TONES } from '../data/avatars.js';
 import { GroupAva } from '../components/Art.jsx';
 import { TopBar, Section, List, Item, Btn, Sheet, Field, Note } from '../components/UI.jsx';
+import Flag from '../components/Flag.jsx';
 
 /* Профиль: карта резидента, главная привязка — регион, анкета, мои события
    и заявки в услуги. Всё правится здесь же, без отдельных экранов. */
@@ -36,7 +37,7 @@ export default function Profile() {
 
         <List>
           <Item
-            lead={<span className="picker__lead" style={{ width: 44, height: 44, borderRadius: 14, fontSize: 22 }}>{r.flag}</span>}
+            lead={<span className="picker__lead" style={{ width: 44, height: 44, borderRadius: 14 }}><Flag cc={r.cc} size={26} /></span>}
             title={`Я сейчас: ${r.name}`}
             sub="Меняйте, когда летите"
             onClick={() => setRegion(true)}

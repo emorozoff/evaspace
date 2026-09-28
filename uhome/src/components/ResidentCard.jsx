@@ -5,6 +5,7 @@ import { mrz } from '../lib/art.js';
 import { translit } from '../lib/format.js';
 import { roleEn } from '../data/people.js';
 import { REGIONS } from '../data/regions.js';
+import Flag from './Flag.jsx';
 
 /* Карта резидента — из UPASS: заполнена латиницей, как проездной документ.
    Лицевая сторона — кто это и где сейчас, оборот — пропуск с большим кодом
@@ -38,7 +39,7 @@ export default function ResidentCard({ me, stats = {}, hint = true, onFlip }) {
     };
   }, []);
 
-  const regionVal = `${region.flag || ''} ${region.en || ''}`;
+  const regionVal = <><Flag cc={region.cc} size={11} style={{ marginRight: 5 }} />{region.en || ''}</>;
 
   return (
     <div className="pass-scene" ref={ref}>
@@ -52,7 +53,7 @@ export default function ResidentCard({ me, stats = {}, hint = true, onFlip }) {
         >
           {/* ЛИЦЕВАЯ */}
           <div className="pass__face">
-            <div className="pass__bg" style={{ background: 'linear-gradient(150deg, #23211d 0%, #151412 50%, #0c0b09 100%)' }} />
+            <div className="pass__bg" style={{ background: 'linear-gradient(150deg, #1a1e29 0%, #0e1016 50%, #08090e 100%)' }} />
             <div className="pass__guilloche"><Guilloche opacity={0.4} seed={number} size={280} /></div>
             <div className="pass__guilloche pass__guilloche--spin"><Guilloche opacity={0.25} seed={`${number}b`} size={280} /></div>
             <div className="pass__edge" />
@@ -92,7 +93,7 @@ export default function ResidentCard({ me, stats = {}, hint = true, onFlip }) {
 
           {/* ОБОРОТ */}
           <div className="pass__face pass__face--back">
-            <div className="pass__bg" style={{ background: 'linear-gradient(150deg, #1c1b18, #0c0b09)' }} />
+            <div className="pass__bg" style={{ background: 'linear-gradient(150deg, #141720, #08090e)' }} />
             <div className="pass__edge" />
             <div className="pass__band" />
             <div className="pass__body">

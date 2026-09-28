@@ -67,7 +67,7 @@ export default function EventPage({ id }) {
     <div className="screen screen--nested">
       <TopBar
         title={e.title}
-        sub={`${KINDS[e.kind].name} · ${placeOf(e)}`}
+        sub={<>{KINDS[e.kind].name} · {placeOf(e)}</>}
         backTo="/events"
         right={<button className="iconbtn" onClick={share} aria-label="Поделиться"><Icon name="share" size={18} /></button>}
       />

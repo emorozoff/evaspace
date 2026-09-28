@@ -9,6 +9,7 @@ import { plural } from '../lib/format.js';
 import { EventCover } from './Covers.jsx';
 import { AvaStack } from './Art.jsx';
 import Icon from './Icons.jsx';
+import Flag from './Flag.jsx';
 
 /* Метка типа события: цвет и слово, без лишних деталей. */
 export function KindTag({ kind }) {
@@ -22,7 +23,7 @@ export function KindTag({ kind }) {
   );
 }
 
-export const placeOf = (e) => (e.kind === 'online' ? 'Zoom' : `${REGIONS[e.region]?.flag} ${REGIONS[e.region]?.name}`);
+export const placeOf = (e) => (e.kind === 'online' ? 'Zoom' : <><Flag cc={REGIONS[e.region]?.cc} size={13} /> {REGIONS[e.region]?.name}</>);
 
 /* Большая карточка: ближайшее событие — обложка, название, когда и кто идёт. */
 export function EventCard({ app, event: e, height = 150 }) {

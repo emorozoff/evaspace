@@ -5,6 +5,7 @@ import { plural, count } from '../lib/format.js';
 import { localParts, hhmm } from '../lib/time.js';
 import { Sheet, List, Item } from './UI.jsx';
 import Icon from './Icons.jsx';
+import Flag from './Flag.jsx';
 
 /* Главная привязка резидента — регион, где он сейчас. Меняется одним
    нажатием: карта резидента, афиша, услуги и «кто рядом» подстраиваются сразу. */
@@ -15,7 +16,7 @@ export function RegionButton({ app }) {
   return (
     <>
       <button className="regionbtn" onClick={() => setOpen(true)} aria-label="Сменить регион">
-        <span className="regionbtn__flag">{r.flag}</span>
+        <span className="regionbtn__flag"><Flag cc={r.cc} size={24} /></span>
         <span style={{ minWidth: 0 }}>
           <span className="regionbtn__k" style={{ display: 'block' }}>Я сейчас</span>
           <span className="regionbtn__v">
@@ -45,7 +46,7 @@ export default function RegionSheet({ app, open, onClose }) {
           return (
             <Item
               key={key}
-              lead={<span className="picker__lead" style={{ fontSize: 22, width: 44, height: 44, borderRadius: 14 }}>{r.flag}</span>}
+              lead={<span className="picker__lead" style={{ width: 44, height: 44, borderRadius: 14 }}><Flag cc={r.cc} size={26} /></span>}
               title={r.name}
               sub={`${hhmm(localParts(r.tz, now))} · ${count(regionStats(key).members, 'резидент', 'резидента', 'резидентов')} · ${regionStats(key).communities} ${plural(regionStats(key).communities, 'сообщество', 'сообщества', 'сообществ')}`}
               meta={on ? <span className="tag tag--gold">вы здесь</span> : undefined}

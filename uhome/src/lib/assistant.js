@@ -235,7 +235,7 @@ export function reply(app, raw) {
       const people = PEOPLE.filter((p) => p.region === region).length;
       const comm = COMMUNITIES.filter((x) => x.region === region || x.chapters?.includes(region)).length;
       return {
-        topic, text: `${R.flag} ${R.name}: ${people} ${plural(people, 'резидент', 'резидента', 'резидентов')} в базе и ${comm} ${plural(comm, 'сообщество', 'сообщества', 'сообществ')}. Вот с кем и куда стоит сходить:`,
+        topic, text: `${R.name}: ${people} ${plural(people, 'резидент', 'резидента', 'резидентов')} в базе и ${comm} ${plural(comm, 'сообщество', 'сообщества', 'сообществ')}. Вот с кем и куда стоит сходить:`,
         cards: [...topPeople(app, (p) => p.region === region, 2), ...topEvents(app, region, 2)], chips: [`Кто прилетает ко мне?`, 'Куда сходить на неделе?'],
       };
     }

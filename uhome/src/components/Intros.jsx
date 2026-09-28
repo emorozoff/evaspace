@@ -6,6 +6,7 @@ import { Avatar } from './Art.jsx';
 import { AvatarPortrait } from './AvatarArt.jsx';
 import { Section } from './UI.jsx';
 import Icon from './Icons.jsx';
+import Flag from './Flag.jsx';
 
 /* Поводы познакомиться: каждый день — конкретный человек, конкретная
    причина (одно событие, прилетает к вам, рядом, закроет запрос, новичок)
@@ -31,7 +32,7 @@ export function IntroCard({ app, r }) {
         <Avatar person={p} size={48} dot={p.online} />
         <span className="grow" style={{ minWidth: 0 }}>
           <span className="t-md ell" style={{ display: 'block', fontWeight: 600 }}>{p.name}</span>
-          <span className="t-xs dim-2 ell" style={{ display: 'block', marginTop: 3 }}>{REGIONS[p.region].flag} {p.company}</span>
+          <span className="t-xs dim-2 ell" style={{ display: 'block', marginTop: 3 }}><Flag cc={REGIONS[p.region].cc} size={13} /> {p.company}</span>
         </span>
         <span className="use"><span className="use__v">{r.pct}%</span><span className="use__l">польза</span></span>
       </button>

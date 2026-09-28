@@ -7,6 +7,8 @@ import { REGIONS } from '../data/regions.js';
 import { count } from '../lib/format.js';
 import { Top, Picker, List, Empty, Btn } from '../components/UI.jsx';
 import { EventCard, EventRow } from '../components/EventCards.jsx';
+import Flag from '../components/Flag.jsx';
+import Icon from '../components/Icons.jsx';
 
 /* Афиша: лёгкий фильтр в одну строку — регион списком и тип:
    все, закрытые, партнёров. Ближайшее — большой карточкой, дальше
@@ -21,9 +23,9 @@ export default function Events({ query }) {
   const list = useMemo(() => eventsFiltered({ region, type }), [region, type]);
 
   const regionOptions = [
-    { id: 'all', name: 'Все регионы', lead: '🌍' },
+    { id: 'all', name: 'Все регионы', lead: <Icon name="globe" size={20} /> },
     ...REGION_FILTER.map((k) => ({
-      id: k, name: REGIONS[k].name, lead: REGIONS[k].flag,
+      id: k, name: REGIONS[k].name, lead: <Flag cc={REGIONS[k].cc} size={24} />,
       sub: k === app.me.region ? 'вы здесь' : undefined,
       meta: <span className="t-xs dim-2">{eventsFiltered({ region: k, type }).length}</span>,
     })),

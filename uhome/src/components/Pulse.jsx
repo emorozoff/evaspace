@@ -8,6 +8,7 @@ import { plural, count } from '../lib/format.js';
 import { PAIRS, CURRENCIES } from '../data/currencies.js';
 import { localParts, hhmm, diffLabel, dayPart } from '../lib/time.js';
 import { useRates, pairValue, money, moneyParts, freshness } from '../lib/rates.js';
+import Flag from './Flag.jsx';
 
 /* Живой блок под картой резидента — как в UPASS: листается сам, как табло,
    и пальцем. Четыре слайда: время в трёх городах, три курса валют, сколько
@@ -174,7 +175,7 @@ function Geo({ kind, mine }) {
     const to = kind === 'people' ? `/people?tab=list&region=${k}` : `/community/${local?.id}`;
     return (
       <button key={k} className="pulse__geo" data-go={to} data-on={k === mine}>
-        <span className="pulse__flag">{REGIONS[k].flag}</span>
+        <span className="pulse__flag"><Flag cc={REGIONS[k].cc} size={26} /></span>
         <span className="pulse__n">{n}</span>
         <span className="pulse__c">{REGIONS[k].name}</span>
       </button>
@@ -191,7 +192,7 @@ function Clocks({ list, now, baseTz, here }) {
     return (
       <button key={key + i} className="pulse__cell" data-slot={i} data-field="clocks">
         <div className="pulse__big">{hhmm(t)}</div>
-        <div className="pulse__place"><span>{c.flag}</span><span>{c.name}</span></div>
+        <div className="pulse__place"><Flag cc={c.cc} size={13} /><span>{c.name}</span></div>
         <div className="pulse__meta">
           <Icon name={part === 'ночь' || part === 'вечер' ? 'moon' : 'sun'} size={11} />
           {key === here ? <span className="pulse__here">вы здесь</span> : <span>{diffLabel(c.tz, baseTz, now)}</span>}
@@ -232,7 +233,7 @@ function CityList({ app, slot, now, baseTz, onDone }) {
         return (
           <Item
             key={key}
-            lead={<span className="picker__lead">{c.flag}</span>}
+            lead={<span className="picker__lead"><Flag cc={c.cc} size={24} /></span>}
             title={c.name}
             sub={`${hhmm(localParts(c.tz, now))} · ${diffLabel(c.tz, baseTz, now)}${elsewhere ? ' · уже на главной' : ''}`}
             meta={on ? <Icon name="check" size={18} color="var(--gold)" /> : elsewhere ? <Icon name="swap" size={16} color="var(--ink-3)" /> : undefined}

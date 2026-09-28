@@ -17,6 +17,7 @@ import { AvatarPortrait } from '../components/AvatarArt.jsx';
 import { Brand } from '../components/Covers.jsx';
 import { introduce } from '../components/Intros.jsx';
 import Icon from '../components/Icons.jsx';
+import Flag from '../components/Flag.jsx';
 
 /* Ева и Адам — цифровые ассистенты клуба. Три вкладки:
    «Чат» — вопрос словами, ответ с карточками людей, событий, услуг и
@@ -138,7 +139,7 @@ function AiCard({ app, c }) {
           <Avatar person={p} size={44} dot={p.online} />
           <span style={{ minWidth: 0 }}>
             <span className="ell" style={{ display: 'block', fontWeight: 600, fontSize: 15 }}>{p.name}</span>
-            <span className="t-xs dim-2 clamp-2" style={{ marginTop: 2 }}>{REGIONS[p.region].flag} {c.note || p.company}</span>
+            <span className="t-xs dim-2 clamp-2" style={{ marginTop: 2 }}><Flag cc={REGIONS[p.region].cc} size={12} /> {c.note || p.company}</span>
           </span>
         </button>
         <span style={{ display: 'grid', justifyItems: 'end', gap: 6, flex: 'none' }}>

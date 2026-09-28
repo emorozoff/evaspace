@@ -11,6 +11,7 @@ import { Avatar } from '../components/Art.jsx';
 import WorldMap from '../components/WorldMap.jsx';
 import RegionSheet from '../components/RegionSheet.jsx';
 import Icon from '../components/Icons.jsx';
+import Flag from '../components/Flag.jsx';
 
 /* Люди — механика знакомств из клуба: раз в неделю программа предлагает
    несколько человек, совпало с обеих сторон — открывается чат.
@@ -117,7 +118,7 @@ function Meet({ app }) {
                 key={p.id}
                 lead={<Avatar person={p} size={44} ring="var(--gold)" dot={p.online} />}
                 title={p.name}
-                sub={`${pct}% · ${REGIONS[p.region].flag} ${p.city}`}
+                sub={<>{pct}% · <Flag cc={REGIONS[p.region].cc} size={12} /> {p.city}</>}
                 meta={<span className="tag tag--gold">чат</span>}
                 onClick={() => go(`/chat/${p.id}`)}
               />
@@ -169,7 +170,7 @@ function MeetCard({ app, item, onAnswer }) {
       <div className="meet__shot" style={{ background: `radial-gradient(80% 70% at 50% 30%, ${r.plate}, #0c0e14)` }}>
         <Avatar person={p} size={124} radius={0.3} />
         <div className="scene__top">
-          <span className="glass">{near ? 'рядом с вами' : `${r.flag} ${r.name} · созвон`}</span>
+          <span className="glass">{near ? 'рядом с вами' : <><Flag cc={r.cc} size={13} /> {r.name} · созвон</>}</span>
           <span className="glass" style={{ color: 'var(--gold)' }}><Icon name="spark" size={12} /> {pct}%</span>
         </div>
         <div className="meet__over">
@@ -268,8 +269,8 @@ function Residents({ app, sort: initialSort, region: initialRegion }) {
       <div className="filters">
         <Picker
           label="Регион"
-          summary={region === 'all' ? '🌍 Везде' : `${REGIONS[region].flag} ${REGIONS[region].name}`}
-          options={[{ id: 'all', name: 'Все регионы', lead: '🌍' }, ...REGION_KEYS.map((k) => ({ id: k, name: REGIONS[k].name, lead: REGIONS[k].flag, meta: <span className="t-xs dim-2">{peopleIn(k).length}</span> }))]}
+          summary={region === 'all' ? 'Везде' : <><Flag cc={REGIONS[region].cc} size={14} /> {REGIONS[region].name}</>}
+          options={[{ id: 'all', name: 'Все регионы', lead: <Icon name="globe" size={20} /> }, ...REGION_KEYS.map((k) => ({ id: k, name: REGIONS[k].name, lead: <Flag cc={REGIONS[k].cc} size={24} />, meta: <span className="t-xs dim-2">{peopleIn(k).length}</span> }))]}
           value={region}
           onChange={setRegion}
         />
@@ -315,7 +316,7 @@ export function PersonCard({ app, x }) {
             <span className="use"><span className="use__v">{pct}%</span><span className="use__l">польза</span></span>
           </div>
           <div className="t-sm dim ell" style={{ marginTop: 2 }}>{p.title} · {p.company}</div>
-          <div className="t-xs dim-2" style={{ marginTop: 3 }}>{REGIONS[p.region].flag} {p.city}{p.joined <= 30 ? ' · новый резидент' : ''}</div>
+          <div className="t-xs dim-2" style={{ marginTop: 3 }}><Flag cc={REGIONS[p.region].cc} size={12} /> {p.city}{p.joined <= 30 ? ' · новый резидент' : ''}</div>
         </div>
       </div>
       <div className="pcard__row" style={{ marginTop: 14 }}>
@@ -349,7 +350,7 @@ function MapTab({ app }) {
           height={210}
         />
         <button className="card tap row" style={{ display: 'flex', gap: 12 }} onClick={() => setRegionSheet(true)}>
-          <span className="picker__lead">{REGIONS[app.me.region].flag}</span>
+          <span className="picker__lead"><Flag cc={REGIONS[app.me.region].cc} size={24} /></span>
           <div className="grow">
             <div className="t-md">Вы {REGIONS[app.me.region].loc}</div>
             <div className="t-xs dim-2" style={{ marginTop: 2 }}>Бирюзовый значок на карте. Нажмите, чтобы сменить регион</div>
@@ -359,7 +360,7 @@ function MapTab({ app }) {
       </div>
 
       {sel ? (
-        <Section title={`${REGIONS[sel].flag} ${REGIONS[sel].name}`} note={`${count(here.length, 'резидент', 'резидента', 'резидентов')} · ${REGIONS[sel].country}`} more="Все регионы" onMore={() => setSel(null)}>
+        <Section title={<><Flag cc={REGIONS[sel].cc} size={20} /> {REGIONS[sel].name}</>} note={`${count(here.length, 'резидент', 'резидента', 'резидентов')} · ${REGIONS[sel].country}`} more="Все регионы" onMore={() => setSel(null)}>
           <List>
             {here.map(({ p, pct }) => (
               <Item
@@ -382,7 +383,7 @@ function MapTab({ app }) {
               return (
                 <Item
                   key={k}
-                  lead={<span className="picker__lead" style={{ width: 44, height: 44, borderRadius: 14, fontSize: 22 }}>{REGIONS[k].flag}</span>}
+                  lead={<span className="picker__lead" style={{ width: 44, height: 44, borderRadius: 14 }}><Flag cc={REGIONS[k].cc} size={26} /></span>}
                   title={`${REGIONS[k].name}${k === app.me.region ? ' · вы здесь' : ''}`}
                   sub={`${count(folks.length, 'резидент', 'резидента', 'резидентов')} · ${online} онлайн`}
                   meta={

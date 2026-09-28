@@ -20,6 +20,8 @@ import NewsPage from './screens/NewsPage.jsx';
 import Assistant from './screens/Assistant.jsx';
 import Test from './screens/Test.jsx';
 import Group from './screens/Group.jsx';
+import Dict from './screens/Dict.jsx';
+import RegionsGuide from './screens/RegionsGuide.jsx';
 import AiFab from './components/AiFab.jsx';
 
 /* Внутри переписки, чата с ассистентом и теста таб-бара нет. */
@@ -76,6 +78,8 @@ function screen(root, id, query) {
     case 'ai': return <Assistant query={query} />;
     case 'test': return <Test />;
     case 'group': return <Group id={id} />;
+    case 'dict': return <Dict />;
+    case 'regions': return <RegionsGuide />;
     default: return <Home />;
   }
 }

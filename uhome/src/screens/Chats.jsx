@@ -2,7 +2,6 @@ import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import { chatList, lastOf, unreadOf } from '../lib/select.js';
 import { assistantOf } from '../lib/assistant.js';
-import { REGIONS } from '../data/regions.js';
 import { byId, firstNameOf } from '../data/people.js';
 import { TopBar, List, Item } from '../components/UI.jsx';
 import { Avatar, Tile, GroupAva } from '../components/Art.jsx';
@@ -57,7 +56,7 @@ export default function Chats() {
               key={c.id}
               lead={lead}
               title={<span style={{ fontWeight: c.unread ? 700 : 600 }}>{title}</span>}
-              sub={c.last?.from === 'sys' ? c.last.text : `${author}${c.last?.text || (c.kind === 'group' ? `${REGIONS[c.community.region]?.flag || ''} сообщество` : '')}`}
+              sub={c.last?.from === 'sys' ? c.last.text : `${author}${c.last?.text || (c.kind === 'group' ? 'сообщество' : '')}`}
               meta={
                 <>
                   <span>{timeOf(c.last?.at)}</span>

@@ -3,15 +3,19 @@ import { createPortal } from 'react-dom';
 import Icon from './Icons.jsx';
 import { back as backNav } from '../lib/router.jsx';
 
-/* Заголовок вкладки: крупная антиква, подпись и одно-два действия справа. */
-export function Top({ title, sub, right }) {
+/* Заголовок вкладки: моноширинная строка-«шапка» с огоньком, название,
+   подпись и одно-два действия справа. */
+export function Top({ title, sub, right, eyebrow = 'UHOME CLUB' }) {
   return (
     <div className="top">
-      <div className="grow" style={{ minWidth: 0 }}>
-        <h1 className="h1">{title}</h1>
-        {sub && <div className="top__sub">{sub}</div>}
+      {eyebrow && <div className="top__eye">{eyebrow}</div>}
+      <div className="top__row">
+        <div className="grow" style={{ minWidth: 0 }}>
+          <h1 className="h1">{title}</h1>
+          {sub && <div className="top__sub" style={{ marginTop: 6 }}>{sub}</div>}
+        </div>
+        {right}
       </div>
-      {right}
     </div>
   );
 }
@@ -182,7 +186,7 @@ export function Picker({ label, summary, title, sub, options, value, onChange, l
   return (
     <>
       <button className={`picker${active ? ' picker--on' : ''}`} onClick={() => setOpen(true)}>
-        <span className="picker__t ell">{lead ? `${lead} ` : ''}{summary || label}</span>
+        <span className="picker__t ell">{lead && <>{lead} </>}{summary || label}</span>
         <Icon name="down" size={15} />
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title={title || label} sub={sub}>

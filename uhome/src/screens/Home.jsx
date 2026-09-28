@@ -17,6 +17,7 @@ import { EventCard, EventRow } from '../components/EventCards.jsx';
 import { Avatar } from '../components/Art.jsx';
 import { Section, List, Empty } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
+import Flag from '../components/Flag.jsx';
 
 /* Главная — порядок из клуба: карта резидента, живой блок (время, курсы,
    люди, сообщества), ближний круг начиная с команды, повод познакомиться
@@ -100,7 +101,7 @@ export default function Home() {
                   <div className="t-md clamp-2" style={{ lineHeight: 1.25 }}>{p.name}</div>
                   <div className="t-xs dim ell" style={{ marginTop: 4 }}>{p.company}</div>
                 </div>
-                <div className="t-xs dim-2 ell">{REGIONS[p.region].flag} {p.city} · {p.joined <= 1 ? 'сегодня' : `${p.joined} дн.`}</div>
+                <div className="t-xs dim-2 ell"><Flag cc={REGIONS[p.region].cc} size={12} /> {p.city} · {p.joined <= 1 ? 'сегодня' : `${p.joined} дн.`}</div>
               </button>
             );
           })}

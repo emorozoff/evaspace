@@ -10,6 +10,7 @@ import { Top, Seg, Search, Picker, Section, Empty, Btn } from '../components/UI.
 import { MaterialCover, Scene, Thumb } from '../components/Covers.jsx';
 import { AvaStack, Tile } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
+import Flag from '../components/Flag.jsx';
 
 /* База: две вкладки. «Знания» — записи Zoom-эфиров и гайды с таймкодами
    и главными мыслями. «Сообщества» — пять локальных по регионам клуба
@@ -148,7 +149,7 @@ function Communities({ app }) {
           <button className="evcard" onClick={() => go(`/community/${mine.id}`)}>
             <Scene region={mine.region} height={140} radius={0}>
               <div className="scene__top">
-                <span className="glass">{REGIONS[mine.region].flag} {REGIONS[mine.region].name}</span>
+                <span className="glass"><Flag cc={REGIONS[mine.region].cc} size={14} /> {REGIONS[mine.region].name}</span>
                 <span className="glass" style={joinedMine ? { color: 'var(--sea)' } : undefined}>{joinedMine ? '✓ вы участник' : `${mine.members} участников`}</span>
               </div>
             </Scene>

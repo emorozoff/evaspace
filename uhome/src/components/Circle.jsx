@@ -11,6 +11,7 @@ import { Avatar, GroupAva } from './Art.jsx';
 import { AvatarPortrait } from './AvatarArt.jsx';
 import { Section, Sheet, List, Item, Search } from './UI.jsx';
 import Icon from './Icons.jsx';
+import Flag from './Flag.jsx';
 
 /* Ближний круг — как в телеграме: первыми команда клуба, мастер-группа
    и ассистент, дальше свои люди. Кто написал и не прочитан — встаёт в начало со счётчиком:
@@ -81,7 +82,7 @@ function AddList({ app }) {
               key={p.id}
               lead={<Avatar person={p} size={42} dot={p.online} />}
               title={p.name}
-              sub={`${REGIONS[p.region].flag} ${p.city} · ${p.company}`}
+              sub={<><Flag cc={REGIONS[p.region].cc} size={13} /> {p.city} · {p.company}</>}
               meta={on ? <span className="tag tag--sea">в круге</span> : <span className={`pct${pct >= 75 ? ' pct--hi' : ''}`}>{pct}%</span>}
               chev={false}
               onClick={() => app.toggleCircle(p.id)}

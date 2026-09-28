@@ -10,6 +10,7 @@ import { seeded } from '../lib/art.js';
 import { TopBar, Empty } from '../components/UI.jsx';
 import { Avatar, GroupAva } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
+import Flag from '../components/Flag.jsx';
 
 /* Переписка: личная, с командой клуба, своя группа (команда, мастер-группа)
    или чат сообщества. Таб-бара здесь нет — поле ввода стоит у нижнего края. */
@@ -62,7 +63,7 @@ export default function Chat({ id }) {
 
   const title = person ? person.name : group ? group.name : community.name;
   const sub = person
-    ? id === 'team' ? 'Отвечаем за 15 минут' : `${person.online ? 'онлайн' : 'не в сети'} · ${REGIONS[person.region].flag} ${person.city}`
+    ? id === 'team' ? 'Отвечаем за 15 минут' : <>{person.online ? 'онлайн' : 'не в сети'} · <Flag cc={REGIONS[person.region].cc} size={12} /> {person.city}</>
     : group ? `${group.members.length + 1} участников · ${group.when}` : `${community.members} участников`;
   const to = person ? (id === 'team' ? '/profile' : `/p/${id}`) : group ? `/group/${id}` : `/community/${id}`;
 

@@ -16,6 +16,7 @@ import { Avatar } from '../components/Art.jsx';
 import { Brand } from '../components/Covers.jsx';
 import { TopBar, Section, List, Item, Btn, KV, Empty, Stars } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
+import Flag from '../components/Flag.jsx';
 
 /* Профиль резидента: кто он, почему вам стоит познакомиться (встречное
    совпадение словами), чем полезен, что ищет, его компания в маркетплейсе
@@ -56,7 +57,7 @@ export default function PersonPage({ id }) {
           <h1 className="h2" style={{ marginTop: 14 }}>{p.name}</h1>
           <div className="t-sm dim" style={{ marginTop: 4 }}>{p.title} · {p.company}</div>
           <div className="wrap" style={{ justifyContent: 'center', marginTop: 12 }}>
-            <span className="tag tag--line">{r.flag} {p.city}</span>
+            <span className="tag tag--line"><Flag cc={r.cc} size={12} /> {p.city}</span>
             <span className="tag tag--line"><Icon name="clock" size={11} /> местное {local}</span>
             <span className="tag tag--line">в клубе с {p.since}</span>
             {p.online && <span className="tag tag--sea">онлайн</span>}
@@ -192,7 +193,7 @@ export default function PersonPage({ id }) {
 
         <div className="card" style={{ paddingTop: 4, paddingBottom: 4 }}>
           <KV k="Языки" v={p.langs.join(' · ')} />
-          <KV k="Регион" v={`${r.flag} ${r.name}, ${p.city}`} />
+          <KV k="Регион" v={<><Flag cc={r.cc} size={13} /> {r.name}, {p.city}</>} />
           {p.contact && <KV k="Телеграм" v={p.contact} />}
         </div>
       </div>

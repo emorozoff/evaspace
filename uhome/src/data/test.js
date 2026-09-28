@@ -20,6 +20,6 @@ export const TEST = [
   { id: 'needs', kind: 'many', max: 3, title: 'Что вы ищете в клубе?', sub: 'До трёх — ассистент будет приводить к вам тех, кто это даёт.', options: Object.entries(EXCHANGE).map(([id, x]) => ({ id, name: x.name })) },
   { id: 'gives', kind: 'many', max: 3, title: 'Чем вы можете быть полезны?', sub: 'До трёх — так вас найдут те, кому вы нужны.', options: Object.entries(EXCHANGE).map(([id, x]) => ({ id, name: x.name })) },
   { id: 'interests', kind: 'many', max: 5, title: 'Что вы любите вне работы?', sub: 'До пяти — общее помогает начать разговор.', options: INTERESTS.map((x) => ({ id: x, name: x })) },
-  { id: 'regions', kind: 'many', max: 5, title: 'Где вы бываете?', sub: 'Позовём на встречи там и предупредим, кто прилетает.', options: REGION_KEYS.map((k) => ({ id: k, name: `${REGIONS[k].flag} ${REGIONS[k].name}` })) },
+  { id: 'regions', kind: 'many', max: 5, title: 'Где вы бываете?', sub: 'Позовём на встречи там и предупредим, кто прилетает.', options: REGION_KEYS.map((k) => ({ id: k, name: REGIONS[k].name, cc: REGIONS[k].cc })) },
   { id: 'formats', kind: 'many', max: 5, title: 'Как вам удобнее знакомиться?', sub: 'Ассистент будет предлагать именно такие поводы.', options: FORMATS },
 ];

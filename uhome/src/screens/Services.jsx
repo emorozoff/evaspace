@@ -8,6 +8,7 @@ import { count } from '../lib/format.js';
 import { Top, Search, Picker, Section, Empty, Btn, Stars, Note } from '../components/UI.jsx';
 import { Brand } from '../components/Covers.jsx';
 import Icon from '../components/Icons.jsx';
+import Flag from '../components/Flag.jsx';
 
 /* Маркетплейс только из компаний резидентов. Сверху категории плитками,
    дальше — что рекомендуем в вашем регионе, и все компании списком.
@@ -25,9 +26,9 @@ export default function Services({ query }) {
   const browsing = cat === 'all' && !q;
 
   const regionOptions = [
-    { id: 'mine', name: `Мой регион · ${REGIONS[app.me.region].name}`, lead: REGIONS[app.me.region].flag },
-    ...REGION_KEYS.filter((k) => k !== app.me.region).map((k) => ({ id: k, name: REGIONS[k].name, lead: REGIONS[k].flag })),
-    { id: 'all', name: 'Все регионы', lead: '🌍' },
+    { id: 'mine', name: `Мой регион · ${REGIONS[app.me.region].name}`, lead: <Flag cc={REGIONS[app.me.region].cc} size={24} /> },
+    ...REGION_KEYS.filter((k) => k !== app.me.region).map((k) => ({ id: k, name: REGIONS[k].name, lead: <Flag cc={REGIONS[k].cc} size={24} /> })),
+    { id: 'all', name: 'Все регионы', lead: <Icon name="globe" size={20} /> },
   ];
 
   return (
@@ -40,7 +41,7 @@ export default function Services({ query }) {
             <Picker
               label="Регион"
               title="Где нужна услуга"
-              summary={r === 'all' ? '🌍 Все регионы' : `${REGIONS[r].flag} ${REGIONS[r].name}`}
+              summary={r === 'all' ? 'Все регионы' : <><Flag cc={REGIONS[r].cc} size={14} /> {REGIONS[r].name}</>}
               options={regionOptions}
               value={region}
               def="mine"
@@ -125,7 +126,7 @@ export function CompanyRow({ c }) {
         <div className="spread" style={{ marginTop: 2 }}>
           <span className="perk"><Icon name="gift" size={12} /><span>{c.perk}</span></span>
           <span className="t-xs dim-2" style={{ flex: 'none' }}>
-            {c.regions.length > 3 ? 'все регионы' : c.regions.map((k) => REGIONS[k].flag).join(' ')}
+            {c.regions.length > 3 ? 'все регионы' : c.regions.map((k) => <Flag key={k} cc={REGIONS[k].cc} size={13} style={{ marginRight: 3 }} />)}
           </span>
         </div>
       </div>
