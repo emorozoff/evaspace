@@ -50,7 +50,7 @@ export default function Events({ query }) {
             label="Регион"
             title="Регион"
             sub="Эфиры в Zoom — отдельной строкой"
-            summary={`${regionLabel.lead} ${regionLabel.name}`}
+            summary={<>{regionLabel.lead} {regionLabel.name}</>}
             options={regionOptions}
             value={region}
             onChange={setRegion}
