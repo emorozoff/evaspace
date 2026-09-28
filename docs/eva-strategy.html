@@ -1,0 +1,1463 @@
+<title>Стратегия Евы</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500&family=Unbounded:wght@500;700;800&display=swap">
+<style>
+/* Eva Space · идея и стратегия. Тот же зал, что у колоды UPASS: чёрный зал, стекло и свет. Вся графика — живое 3D на холсте: своя маленькая
+   проекция без библиотек, чтобы презентация не зависела от сети в зале.
+   Текст — в разметке поверх, чтобы оставаться резким на любом проекторе. */
+:root{
+  --fg:#F3F0E8; --fg2:#A5A198; --fg3:#5F5C57; --gold:#D9B26B;
+  --e:cubic-bezier(.2,.7,.2,1); --ed:cubic-bezier(.65,0,.35,1);
+  --ff:'Jost','Futura','Century Gothic','Avenir Next',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0; height:100%; background:#000; color:var(--fg); font-family:var(--ff); overflow:hidden;
+  -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent}
+body.idle{cursor:none}
+.vp{position:fixed; inset:0; overflow:hidden; background:#000; touch-action:pan-y}
+.stage{position:absolute; left:50%; top:50%; width:1600px; height:900px; overflow:hidden;
+  transform:translate(-50%,-50%) scale(var(--s,1));
+  background:radial-gradient(120% 95% at 50% 36%,#12131a 0%,#08080b 52%,#030304 100%)}
+.gl{position:absolute; left:0; top:0; width:1600px; height:900px; display:block}
+/* Переход между слайдами — наезд камеры: уходящий пролетает мимо, новый приближается */
+.slide{position:absolute; inset:0; opacity:0; visibility:hidden; transform:scale(.965);
+  transition:opacity .85s var(--e), transform .85s var(--e), visibility 0s linear .85s}
+.slide.active{opacity:1; visibility:visible; transform:none; transition:opacity .85s var(--e), transform .85s var(--e), visibility 0s}
+.slide.gone{transform:scale(1.045)}
+/* Сквозной переход: соседние слайды продолжают один кадр, поэтому без наезда камеры */
+.slide.flow, .slide.flow.gone{transform:none}
+.nt{display:none}
+
+.tx{position:absolute; margin:0}
+.cx{left:0; width:1600px; text-align:center}
+.eb{font-size:18px; font-weight:500; letter-spacing:.34em; text-transform:uppercase; color:var(--fg3)}
+.h1{font-size:122px; font-weight:200; letter-spacing:-.01em; line-height:1}
+.huge{font-size:200px; font-weight:200; letter-spacing:-.02em; line-height:1}
+.st{font-size:56px; font-weight:300; line-height:1.14; letter-spacing:-.01em}
+.cap{font-size:40px; font-weight:300; line-height:1.25}
+.cap-s{font-size:26px; font-weight:400; color:var(--fg2); letter-spacing:.02em}
+.t40{font-size:40px; font-weight:400; line-height:1.15}
+.t34{font-size:34px; font-weight:300; line-height:1.3}
+.sub{font-size:24px; font-weight:400; color:var(--fg2); line-height:1.4}
+.gd{color:var(--gold)}
+.row .t34{font-weight:400}
+.row .sub{font-size:22px; margin-top:2px}
+.slide .row.m{opacity:.42}
+
+/* Механика шагов: [data-s] открывается, [data-x] гаснет, [data-m] меняет состояние */
+.slide [data-s], .slide [data-x]{transition:opacity .9s var(--e) var(--d,0s), transform 1.3s var(--e) var(--d,0s)}
+.slide [data-s]:not(.on){opacity:0}
+.slide .off{opacity:0 !important; transition-delay:0s !important}
+.slide .up[data-s]:not(.on){transform:translateY(28px)}
+.slide.instant, .slide.instant *{transition:none !important}
+.af{opacity:0; animation:afade 1.4s var(--e) var(--a,0s) forwards}
+@keyframes afade{from{opacity:0; transform:translateY(16px)} to{opacity:1; transform:none}}
+.slide:not(.active) .af{animation-play-state:paused}
+
+/* Заголовок новой фигуры — та же строка, что потом живёт слева сверху.
+   Сначала она крупно стоит по центру, по клику медленно уезжает на место, и только тогда строится фигура. */
+.slide .eb.hd{transform-origin:0 50%; transition:opacity 1s var(--e), transform 1.8s var(--ed), color 1.8s var(--ed)}
+.slide .eb.hd:not(.m){transform:translate(var(--hx,0),var(--hy,0)) scale(var(--hk,1.45))}
+.slide .eb.hd:not(.on){opacity:0}
+.eb .n{color:var(--gold); margin-right:1.1em}
+.slide[data-h] [data-s="1"].on:not(.hd){transition-delay:calc(var(--d,0s) + .55s)}
+/* UHT — отдельный знак: широкий тяжёлый гротеск, как надпись на слитке */
+.uht{font-family:'Unbounded',var(--ff); font-weight:700; font-size:.78em; letter-spacing:.03em}
+.mark{font-family:'Unbounded',var(--ff); font-weight:500; font-size:.74em; letter-spacing:.08em}
+.uht-mark{font-family:'Unbounded',var(--ff); font-weight:800; font-size:164px; line-height:.92; letter-spacing:.015em;
+  background:linear-gradient(180deg,#FBEFD0 0%,#E4C27E 38%,#B88D45 72%,#7E5E2A 100%); -webkit-background-clip:text; background-clip:text; color:transparent}
+/* Отель: справа — что за пространство, какой сервис и какие люди */
+.hb{width:580px}
+.hb__k{font-size:16px; font-weight:500; letter-spacing:.32em; text-transform:uppercase; color:var(--gold); margin:0 0 16px}
+.hb__t{font-size:54px; font-weight:300; line-height:1.08; margin:0 0 30px}
+.hb__r{display:grid; grid-template-columns:100px 1fr; gap:4px 16px; align-items:baseline; padding:14px 0; border-top:1px solid rgba(243,240,232,.12)}
+.hb__r b{font-size:13px; font-weight:500; letter-spacing:.22em; text-transform:uppercase; color:var(--fg3)}
+.hb__r span{font-size:27px; font-weight:300; line-height:1.3}
+.leg{text-align:center}
+/* План: шесть колонок под узлами линии */
+.pl{width:220px; text-align:center}
+.pl > b{display:block; font-size:15px; font-weight:500; letter-spacing:.3em; color:var(--gold); margin-bottom:10px}
+.pl span{display:block; font-size:32px; font-weight:400; line-height:1.15}
+.pl i{display:block; font-style:normal; font-size:18px; color:var(--fg2); margin-top:8px; line-height:1.35}
+.leg .t34{font-weight:400}
+
+/* Стратегия: розовый Евы, колонки действий, ключевые числа, подписи шагов */
+.rs{color:#E8A4C6}
+.rd{color:#D66256}
+.sub2{font-size:22px; font-weight:300; color:var(--fg2); line-height:1.45}
+.pl3{width:300px; text-align:center}
+.pl3 > b{display:block; font-size:15px; font-weight:500; letter-spacing:.3em; color:var(--gold); margin-bottom:10px}
+.pl3 > span{display:block; font-size:34px; font-weight:400; line-height:1.15}
+.pl3 > i{display:block; font-style:normal; font-size:18px; color:var(--fg2); margin-top:8px; line-height:1.4}
+.nd{width:190px; text-align:center}
+.nd > span{display:block; font-size:25px; font-weight:400; line-height:1.2}
+.nd > i{display:block; font-style:normal; font-size:16px; color:var(--fg2); margin-top:6px; line-height:1.4}
+.col{width:400px}
+.col > b{display:block; font-size:15px; font-weight:500; letter-spacing:.3em; text-transform:uppercase; color:var(--gold); margin-bottom:10px}
+.col > span{display:block; font-size:36px; font-weight:400; line-height:1.1; margin-bottom:20px}
+.acts{list-style:none; margin:0; padding:0; display:grid; gap:11px}
+.acts li{position:relative; padding-left:24px; font-size:21px; font-weight:300; line-height:1.35}
+.acts li::before{content:''; position:absolute; left:2px; top:.5em; width:8px; height:8px; border-radius:50%; border:1.5px solid var(--gold)}
+.kpi{width:320px; text-align:center}
+.kpi > b{display:block; font-family:'Unbounded',var(--ff); font-weight:500; font-size:44px; letter-spacing:.01em; line-height:1.1}
+.kpi > i{display:block; font-style:normal; font-size:18px; color:var(--fg2); margin-top:10px; line-height:1.4}
+.mo{width:440px}
+.mo > b{display:block; font-size:15px; font-weight:500; letter-spacing:.3em; text-transform:uppercase; color:var(--gold); margin-bottom:18px}
+.mo .acts{gap:14px}
+.mo .acts li{font-size:20px; padding-left:106px}
+.mo .tg{position:absolute; left:26px; top:.34em}
+.tg{display:inline-block; min-width:78px; font-style:normal; font-size:12px; font-weight:500; letter-spacing:.16em; color:var(--gold)}
+.tg.rs{color:#E8A4C6}
+.tg.iv{color:var(--fg2)}
+
+/* Интерфейс ведущего */
+.hud{position:fixed; left:0; right:0; bottom:0; display:flex; align-items:center; gap:14px; padding:12px 18px;
+  font:500 13px/1 var(--ff); letter-spacing:.06em; color:var(--fg2); z-index:10;
+  background:linear-gradient(to top,rgba(0,0,0,.72),transparent); opacity:0; transition:opacity .4s}
+.hud.show{opacity:1}
+.hud__n{min-width:64px; font-variant-numeric:tabular-nums}
+.hud__bar{flex:1; display:flex; align-items:center; gap:5px; height:24px}
+/* Пунктир: один штрих — один слайд. Клик по штриху открывает слайд с начала */
+.hud__d{all:unset; flex:1; min-width:6px; height:24px; cursor:pointer; position:relative}
+.hud__d::before{content:''; position:absolute; left:0; right:0; top:11px; height:2px; border-radius:2px; background:rgba(243,240,232,.16); transition:background .3s, transform .3s}
+.hud__d:hover::before{background:rgba(243,240,232,.6); transform:scaleY(2)}
+.hud__d.done::before{background:rgba(217,178,107,.55)}
+.hud__d.cur::before{background:linear-gradient(90deg,var(--gold) var(--p,0%),rgba(217,178,107,.28) var(--p,0%)); transform:scaleY(1.5)}
+.hud__d:focus-visible{outline:2px solid var(--gold); outline-offset:2px; border-radius:3px}
+.hud > button{all:unset; cursor:pointer; width:34px; height:34px; display:grid; place-items:center; border-radius:50%; color:var(--fg)}
+.hud > button:hover{background:rgba(243,240,232,.1)}
+.hud > button:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+.hud svg{width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
+.notes{position:fixed; left:0; right:0; bottom:0; z-index:11; max-height:42vh; overflow:auto;
+  background:rgba(8,8,10,.95); border-top:1px solid rgba(217,178,107,.35); padding:16px clamp(16px,4vw,48px) 22px;
+  transform:translateY(100%); transition:transform .45s var(--e)}
+.notes.show{transform:none}
+.notes__h{display:flex; justify-content:space-between; gap:12px; font:500 12px/1 var(--ff); letter-spacing:.16em;
+  text-transform:uppercase; color:var(--fg3); margin-bottom:12px}
+.notes__h b{color:var(--gold); font-weight:500}
+.notes__now{font:400 clamp(17px,2.2vw,23px)/1.5 var(--ff); color:var(--fg); max-width:70ch}
+.notes__next{font:400 15px/1.5 var(--ff); color:var(--fg3); margin-top:12px; max-width:80ch}
+.notes__next:empty{display:none}
+.hint{position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:9; white-space:nowrap;
+  font:400 13px/1 var(--ff); letter-spacing:.08em; color:var(--fg3); transition:opacity .8s}
+.hint.gone{opacity:0}
+.hint kbd{font:inherit; color:var(--fg2); border:1px solid rgba(243,240,232,.18); border-radius:4px; padding:3px 6px; margin:0 2px}
+.toast{position:fixed; left:50%; top:22px; transform:translateX(-50%); z-index:12; font:400 14px/1.4 var(--ff);
+  background:rgba(20,20,24,.95); border:1px solid rgba(243,240,232,.14); border-radius:8px; padding:10px 14px;
+  color:var(--fg2); opacity:0; transition:opacity .3s; pointer-events:none; max-width:calc(100vw - 32px); text-align:center}
+.toast.show{opacity:1}
+.black{position:fixed; inset:0; background:#000; z-index:8; opacity:0; pointer-events:none; transition:opacity .5s}
+.black.show{opacity:1}
+.rotate{position:fixed; left:16px; right:16px; bottom:16px; text-align:center; font:400 14px/1.4 var(--ff); color:var(--fg3); display:none}
+@media (orientation:portrait) and (max-width:700px){.rotate{display:block} .hint{display:none}}
+@media (prefers-reduced-motion:reduce){
+  .slide, .slide *{transition-duration:.01s !important; animation:none !important}
+  .af{opacity:1}
+}
+</style>
+<div class="vp" id="vp"><div class="stage" id="stage">
+<canvas class="gl" id="gl" aria-hidden="true"></canvas>
+
+<section class="slide" data-scene="etitle" data-name="Eva Space">
+  <h1 class="tx cx h1 af" style="top:250px; --a:1.2s">Eva Space</h1>
+  <p class="tx cx eb af" style="top:404px; --a:1.8s">Идея и стратегия · 2026 → 2027</p>
+  <aside class="nt">
+    <p>(Слайд на экране, пока зал рассаживается.) Сегодня без таблиц. Сегодня — идея: зачем мы делаем Еву, почему именно сейчас и куда идём. Цифры и детали — потом, в презентации квартала.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="ethree" data-name="Что нас объединяет" data-h="Что нас объединяет">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">Что нас объединяет</p>
+  <p class="tx cx cap up" style="top:792px" data-s="0" data-x="1">Общее дело — мы строим компанию, а не проект.</p>
+  <p class="tx cx cap up" style="top:792px" data-s="1" data-x="2">Идея — <span class="rs">программа под неё</span> и проверенные эксперты.</p>
+  <p class="tx cx cap up" style="top:792px" data-s="2" data-x="3">Деньги — команда зарабатывает <span class="gd">вместе с бизнесом.</span></p>
+  <p class="tx cx st up" style="top:780px" data-s="3">Три опоры — <span class="gd">одна команда.</span></p>
+  <aside class="nt">
+    <p>Начну с главного: что нас объединяет. Таких вещей три.</p>
+    <p>Первое — общее дело. Мы строим компанию, а не делаем очередной проект. У компании есть будущее, у проекта — только дедлайн.</p>
+    <p>Второе — идея. Женщина получает программу под свой этап жизни и проверенных экспертов в одном месте. В это мы верим, это и строим.</p>
+    <p>Третье — деньги. Команда зарабатывает, когда зарабатывает бизнес: квартальная премия и свой продукт у каждого.</p>
+    <p>Общее дело, идея и деньги. Три опоры — одна команда. А теперь — почему это важно именно сейчас.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="ztrend" data-name="Время ИИ" data-h="Время ИИ">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">Время ИИ</p>
+  <p class="tx cx cap up" style="top:792px" data-s="0" data-x="1">Каждая новая технология приходит быстрее предыдущей.</p>
+  <p class="tx cx cap up" style="top:792px" data-s="1" data-x="2">ИИ набрал 100 млн пользователей <span class="gd">за два месяца.</span></p>
+  <p class="tx cx st up" style="top:780px" data-s="2">ИИ — главный тренд <span class="gd">нашего времени.</span></p>
+  <aside class="nt">
+    <p>Посмотрим, что происходит вокруг нас.</p>
+    <p>Телефону понадобилось семьдесят пять лет, чтобы дойти до ста миллионов пользователей. Мобильной связи — шестнадцать лет, интернету — семь, Instagram — два с половиной года.</p>
+    <p>ChatGPT, по открытым оценкам, набрал сто миллионов пользователей за два месяца. Это самая быстрая технология в истории.</p>
+    <p>Искусственный интеллект — главный тренд нашего времени. И учится он на нас: на том, что мы пишем, спрашиваем и выбираем.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="zfoot" data-name="Цифровой след" data-h="Цифровой след">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">Цифровой след</p>
+  <p class="tx cx cap up" style="top:792px" data-s="0" data-x="1">Мы — первое поколение, которое оставляет <span class="gd">цифровой след.</span></p>
+  <p class="tx cx cap up" style="top:792px" data-s="1" data-x="2">Сообщения, фото, отзывы, решения — всё остаётся в сети.</p>
+  <p class="tx cx cap up" style="top:792px" data-s="2" data-x="3">На этом следе <span class="gd">учится искусственный интеллект.</span></p>
+  <p class="tx cx st up" style="top:780px" data-s="3">Каким станет ИИ — <span class="gd">зависит от нас.</span></p>
+  <aside class="nt">
+    <p>Мы — особенное поколение.</p>
+    <p>Наши родители почти не оставили цифрового следа. Мы — первые, чья жизнь записана почти целиком.</p>
+    <p>Переписки, фото, отзывы, покупки, решения — всё это остаётся в сети и не исчезает.</p>
+    <p>И именно на этом следе учатся нейросети. Сами того не замечая, мы стали учителями искусственного интеллекта.</p>
+    <p>Значит, каким станет ИИ, зависит от нас — от того, что именно мы ему оставим.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="egen" data-name="Следующее поколение" data-h="Следующее поколение">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">Следующее поколение</p>
+  <p class="tx cx cap up" style="top:792px" data-s="0" data-x="1">Женщина — <span class="rs">первый учитель</span> в семье.</p>
+  <p class="tx cx cap up" style="top:792px" data-s="1" data-x="2">Чему учится она — тому учатся её дети и внуки.</p>
+  <p class="tx cx cap up" style="top:792px" data-s="2" data-x="3">Дети вырастут рядом с ИИ — <span class="gd">это их второй учитель.</span></p>
+  <p class="tx cx st up" style="top:780px" data-s="3">Учим женщину — <span class="gd">учим следующее поколение.</span></p>
+  <aside class="nt">
+    <p>А теперь — о тех, кто придёт после нас.</p>
+    <p>Женщина — первый учитель в семье. Она решает, чем семья питается, как отдыхает, чему и где учатся дети.</p>
+    <p>Чему учится она, тому потом учатся её дети. Привычки, знания, спокойствие передаются дальше — детям и внукам.</p>
+    <p>И наши дети вырастут рядом с ИИ. Он станет их вторым учителем: они будут спрашивать его обо всём — от уроков до отношений.</p>
+    <p>Поэтому для нас важны две вещи: чему учится женщина и на чём учится ИИ. Учим женщину — учим следующее поколение.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="zdiet" data-name="Важность обучения" data-h="Важность обучения">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">Важность обучения</p>
+  <p class="tx cx cap up" style="top:792px" data-s="0" data-x="1">В сети рядом лежат знания, шум и фейки.</p>
+  <p class="tx cx cap up" style="top:792px" data-s="1" data-x="2">ИИ, который учится на всём подряд, <span class="rd">повторяет всё подряд.</span></p>
+  <p class="tx cx cap up" style="top:792px" data-s="2" data-x="3">ИИ на проверенных знаниях <span class="gd">помогает и объясняет.</span></p>
+  <p class="tx cx st up" style="top:780px" data-s="3">Важно не сколько знаний, <span class="gd">а каких.</span></p>
+  <aside class="nt">
+    <p>Отсюда главный вопрос: на чём учиться.</p>
+    <p>В интернете рядом лежат настоящие знания, шум, фейки и агрессия. Советы о здоровье, отношениях и детях — вперемешку. Для машины всё это просто текст.</p>
+    <p>Модель, которая учится на всём подряд, повторяет всё подряд: ошибки, предвзятость, агрессию.</p>
+    <p>Модель, которая учится на проверенных знаниях, помогает, объясняет и не вводит в заблуждение.</p>
+    <p>С людьми так же, как с ИИ: важно не сколько знаний, а каких. Качество знаний — это качество жизни и качество интеллекта.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="eidea" data-name="Идея Евы" data-h="Идея Евы">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">Идея Евы</p>
+  <p class="tx cx cap up" style="top:792px" data-s="0" data-x="1">35,7 млн женщин говорят по‑русски <span class="gd">и хотят меняться.</span></p>
+  <p class="tx cx cap up" style="top:792px" data-s="1" data-x="2">Никто не даёт ей программу под её этап жизни.</p>
+  <p class="tx cx cap up" style="top:792px" data-s="2" data-x="3">И нет места, где собраны проверенные эксперты.</p>
+  <p class="tx cx st up" style="top:780px" data-s="3">Всё это в одном месте — <span class="rs">это и есть Ева.</span></p>
+  <aside class="nt">
+    <p>Теперь — сама идея Евы.</p>
+    <p>Тридцать пять миллионов женщин говорят по-русски, и многие хотят меняться: лучше себя чувствовать, строить отношения, расти в деле. Привычка платить за себя уже есть.</p>
+    <p>Но никто не даёт ей программу под её этап жизни. Она собирает себя по кусочкам: курс там, психолог здесь, советы в чатах.</p>
+    <p>И нет места, где собраны проверенные эксперты. Хорошие специалисты есть, но они разбросаны по всему миру.</p>
+    <p>Программа под неё и проверенные люди в одном месте — это и есть Ева. Семь дней, три урока в день и эксперты, которым можно доверять.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="zavatars" data-name="Адам и Ева" data-h="Адам и Ева">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">Адам и Ева</p>
+  <p class="tx cx cap up" style="top:792px" data-s="0" data-x="1">На проверенных знаниях — <span class="gd">первые цифровые аватары.</span></p>
+  <p class="tx cx cap up" style="top:792px" data-s="1" data-x="2"><span class="rs">Ева</span> растёт вместе с женщиной: здоровье, отношения, развитие.</p>
+  <p class="tx cx cap up" style="top:792px" data-s="2" data-x="3"><span class="gd">Адам</span> строит мир вокруг: путешествия, бизнес, инвестиции.</p>
+  <p class="tx cx st up" style="top:780px" data-s="3">Два аватара — <span class="gd">одни правила и одна база знаний.</span></p>
+  <aside class="nt">
+    <p>Так появляются Адам и Ева.</p>
+    <p>На проверенных знаниях мы создаём первых цифровых аватаров сообщества — двух ИИ-помощников.</p>
+    <p>Ева — помощница в Eva Space. Она растёт вместе с женщиной: здоровье, отношения, личное развитие. Подбирает программу, отвечает, поддерживает.</p>
+    <p>Адам — помощник в UPASS. Он помогает строить мир вокруг: путешествия, бизнес, инвестиции.</p>
+    <p>У них одни правила и одна база знаний. И главное отличие от других ИИ: они учатся только на проверенном.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="zfeed" data-name="Как учится Ева" data-h="Как учится Ева">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">Как учится Ева</p>
+  <p class="tx cx cap up" style="top:800px" data-s="0" data-x="1">Источники — эксперты с проверенной практикой.</p>
+  <p class="tx cx cap up" style="top:800px" data-s="1" data-x="2">Каждое знание проходит проверку: <span class="gd">автор, источник, практика.</span></p>
+  <p class="tx cx cap up" style="top:800px" data-s="2" data-x="3">Проверенное — в обучение <span class="rs">Евы</span> и <span class="gd">Адама.</span></p>
+  <p class="tx cx cap up" style="top:800px" data-s="3" data-x="4">Каждое знание — в журнале: <span class="gd">кто, когда, кем подтверждено.</span></p>
+  <p class="tx cx st up" style="top:788px" data-s="4">Больше проверенных знаний — <span class="gd">умнее аватары.</span></p>
+  <aside class="nt">
+    <p>Как мы их обучаем.</p>
+    <p>Источники знаний — только проверенные: эксперты, у которых мы проверили образование и практику, мастер-классы нашей библиотеки, опыт самих женщин и программы, которые реально помогли.</p>
+    <p>Каждое знание проходит проверку: кто автор, откуда источник, подтверждено ли практикой. Непроверенное и токсичное отсекается.</p>
+    <p>Проверенное идёт в обучение Евы и Адама. С каждым новым знанием они становятся точнее.</p>
+    <p>Каждое знание записывается в журнал: кто его дал, когда и кто подтвердил. Автор получает репутацию, а база — историю, которую нельзя подделать.</p>
+    <p>Больше проверенных знаний — умнее аватары. Сообщество растёт, и вместе с ним растёт его интеллект.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="eloop" data-name="Круг обучения" data-h="Круг обучения">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">Круг обучения</p>
+  <p class="tx cx cap up" style="top:792px" data-s="0" data-x="1">Женщина проходит свою программу: <span class="gd">7 дней × 3 урока.</span></p>
+  <p class="tx cx cap up" style="top:792px" data-s="1" data-x="2">Её выбор, звёзды и отзывы <span class="rs">учат Еву.</span></p>
+  <p class="tx cx cap up" style="top:792px" data-s="2" data-x="3">Ева точнее подбирает программу следующей.</p>
+  <p class="tx cx cap up" style="top:792px" data-s="3" data-x="4">Эксперты видят, что помогает, <span class="gd">и делают лучше.</span></p>
+  <p class="tx cx st up" style="top:780px" data-s="4">Каждая, кто учится, <span class="gd">делает Еву умнее для всех.</span></p>
+  <aside class="nt">
+    <p>И поэтому обучение — сердце всей системы.</p>
+    <p>Женщина проходит свою программу: семь дней, по три урока в день — аффирмация, утренняя практика, мастер-класс.</p>
+    <p>Её выбор, звёзды и отзывы учат Еву: что помогает, что досматривают до конца, а что нет.</p>
+    <p>Ева точнее подбирает программу следующей женщине — с похожим запросом и похожим этапом жизни.</p>
+    <p>Эксперты видят, какие уроки реально работают, и делают их лучше. А лучшие уроки снова попадают в программы.</p>
+    <p>Круг замыкается: каждая, кто учится, делает Еву умнее для всех. Обучение — не раздел приложения, это двигатель всей системы.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="ewhales" data-name="Eva 2027" data-h="Eva 2027">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">Eva 2027</p>
+  <div class="tx pl3 up" data-s="0" style="left:250px; top:640px; --d:.7s"><b>01</b><span>Продукт</span><i>платформа, подбор программы,<br>оплата без нас</i></div>
+  <div class="tx pl3 up" data-s="1" style="left:650px; top:640px; --d:.7s"><b>02</b><span>Контент</span><i>эксперты и мастер-классы<br>по всем направлениям</i></div>
+  <div class="tx pl3 up" data-s="2" style="left:1050px; top:640px; --d:.7s"><b>03</b><span>Аудитория</span><i>партнёры, амбассадоры,<br>сообщество</i></div>
+  <p class="tx cx st up" style="top:800px; --d:1.2s" data-s="3">Eva 2027 — <span class="gd">бизнес с системной прибылью.</span></p>
+  <aside class="nt">
+    <p>Куда мы идём. Eva 2027 — это работающий бизнес. Держат его три кита.</p>
+    <p>Первый — продукт: платформа, которая сама подбирает программу и сама принимает оплату. Развиваем по кайдзен — маленькими улучшениями каждый месяц.</p>
+    <p>Второй — контент: эксперты и мастер-классы по всем направлениям жизни женщины.</p>
+    <p>Третий — аудитория: эксперты, партнёры, амбассадоры и сообщество — все, кто приводит женщин и остаётся с нами.</p>
+    <p>Работающий — значит, оплата приходит без нас, эксперты приходят сами, а команда платит себе из прибыли. На трёх китах стоит Ева.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="eroad" data-name="Пять этапов" data-h="Пять этапов">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">Пять этапов</p>
+  <p class="tx cx cap up" style="top:792px" data-s="0" data-x="1">IV кв. 2026 — подготовка. <span class="rs">Мы здесь.</span></p>
+  <p class="tx cx cap up" style="top:792px" data-s="1" data-x="2">I кв. 2027 — тест: правим продукт и находим первых фанатов.</p>
+  <p class="tx cx cap up" style="top:792px" data-s="2" data-x="3">II кв. 2027 — <span class="gd">официальный запуск.</span></p>
+  <p class="tx cx cap up" style="top:792px" data-s="3" data-x="4">III кв. 2027 — масштаб: регионы и новые продукты.</p>
+  <p class="tx cx cap up" style="top:792px" data-s="4" data-x="5">IV кв. 2027 — оптимизация <span class="gd">и первая прибыль.</span></p>
+  <p class="tx cx st up" style="top:780px" data-s="5">Каждый квартал — <span class="gd">своя цель и своя кварталка.</span></p>
+  <aside class="nt">
+    <p>Как мы туда идём. Пять этапов — по одному на квартал.</p>
+    <p>Четвёртый квартал 2026 года — подготовка. Мы здесь: оформляем компанию, подключаем оплату, собираем экспертов и делаем первые продажи.</p>
+    <p>Первый квартал 2027-го — тест: правим программу, онбординг и цену по обратной связи и находим первых фанатов бренда.</p>
+    <p>Второй квартал — официальный запуск: широкий PR, блогеры, сплочённая команда и надёжные технологии.</p>
+    <p>Третий квартал — масштаб: регионы, амбассадоры, съёмки и второй слой выручки — курсы экспертов, маркет, события.</p>
+    <p>Четвёртый квартал — оптимизация: процессы, стандарты, юнит-экономика и первая прибыль.</p>
+    <p>Каждый квартал — своя цель и своя кварталка. Этот квартал — подготовка: мы делаем так, чтобы следующие четыре вообще случились.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="egoals" data-name="Цели 2027" data-h="Цели 2027">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">Цели 2027</p>
+  <p class="tx cx cap up" style="top:800px" data-s="0" data-x="1">Прозрачная компания и растущая аудитория.</p>
+  <p class="tx cx cap up" style="top:800px" data-s="1" data-x="2">Эксперты и регионы: <span class="gd">сообщество со своими правилами.</span></p>
+  <p class="tx cx cap up" style="top:800px" data-s="2" data-x="3">Деньги и команда: seed-раунд и сильный общий бренд.</p>
+  <p class="tx cx st up" style="top:788px" data-s="3">Шесть целей — <span class="gd">один ориентир на декабрь 2027.</span></p>
+  <aside class="nt">
+    <p>К концу 2027 года у нас шесть ориентиров.</p>
+    <p>Компания прозрачна и соответствует требованиям ИТ-отрасли, продукт растёт по кайдзен. Платящих подписчиц — две тысячи и больше, метрики растут каждый месяц.</p>
+    <p>Сто пятьдесят экспертов и пятьсот единиц контента — сообщество со своими правилами и стандартом качества. Амбассадоры и клубы в десяти городах.</p>
+    <p>Закрыт seed-раунд, есть ресурс на год, продукт приносит прибыль. И сильная команда с общей культурой и общим брендом.</p>
+    <p>Шесть целей — один ориентир на декабрь 2027-го. Сверяемся с ними на каждой кварталке.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="eq" data-name="До 31 декабря" data-h="До 31 декабря">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">До 31 декабря</p>
+  <div class="tx nd up" data-s="0" style="left:105px; top:518px; --d:0.35s"><span>Запуск</span><i>компания, оплата, платформа</i></div>
+  <div class="tx nd up" data-s="0" style="left:405px; top:518px; --d:0.65s"><span>Продукт</span><i>эксперты и мастер-классы</i></div>
+  <div class="tx nd up" data-s="0" style="left:705px; top:518px; --d:0.95s"><span>Пользователи</span><i>первые фанатки и продажи</i></div>
+  <div class="tx nd up" data-s="1" style="left:1005px; top:518px; --d:0.35s"><span>Раунд</span><i>pre-seed на данных теста</i></div>
+  <div class="tx nd up" data-s="1" style="left:1305px; top:518px; --d:0.65s"><span>Стратегия</span><i>EVA 2027 — один документ</i></div>
+  <p class="tx cx cap up" style="top:792px" data-s="0" data-x="1">Запуск, продукт и первые пользовательницы.</p>
+  <p class="tx cx cap up" style="top:792px" data-s="1" data-x="2">Раунд pre-seed и стратегия EVA 2027.</p>
+  <p class="tx cx st up" style="top:780px" data-s="2">Цель квартала — <span class="gd">500 продаж к 31 декабря.</span></p>
+  <aside class="nt">
+    <p>А теперь — ближайшие девяносто дней.</p>
+    <p>Запуск: компания, оплата и платформа на рабочем адресе. Продукт: пятьдесят экспертов и сто пятьдесят мастер-классов. Пользователи: первые фанатки и первые продажи.</p>
+    <p>Раунд pre-seed на данных теста и стратегия EVA 2027 — один документ, по которому живёт команда.</p>
+    <p>Цель квартала — пятьсот продаж к тридцать первому декабря. Как мы её разложили по месяцам — в презентации квартала.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="emoney" data-name="Деньги" data-h="Деньги">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">Деньги</p>
+  <p class="tx cx cap up" style="top:792px" data-s="0" data-x="1">Команда зарабатывает, <span class="gd">когда зарабатывает бизнес.</span></p>
+  <p class="tx cx cap up" style="top:792px" data-s="1" data-x="2">Первый квартал — от оборота: <span class="gd">с первой продажи.</span></p>
+  <p class="tx cx cap up" style="top:792px" data-s="2" data-x="3">С 2027 года — из прибыли. Формула та же.</p>
+  <p class="tx cx st up" style="top:780px" data-s="3">Общая премия × <span class="gd">личный вклад.</span></p>
+  <aside class="nt">
+    <p>И о деньгах — одной идеей.</p>
+    <p>Команда зарабатывает, когда зарабатывает бизнес. Каждый рубль делится на три русла: рефералам, бизнесу и команде.</p>
+    <p>Прибыли в запуске ещё нет, поэтому первый квартал считаем от оборота — и команда зарабатывает с первой продажи.</p>
+    <p>С 2027 года премия идёт из прибыли. Формула та же — меняется только база.</p>
+    <p>Внутри команды всё решает личный вклад: доля роли и оценка квартала. Общая премия, умноженная на вклад каждого.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="zseq" data-name="Ева открывает путь" data-h="Ева открывает путь">
+  <p class="tx eb hd" style="left:96px; top:80px" data-s="0">Ева открывает путь</p>
+  <p class="tx cx cap up" style="top:800px" data-s="0" data-x="1">Сначала — женское: <span class="rs">Eva Space</span>.</p>
+  <p class="tx cx cap up" style="top:800px" data-s="1" data-x="2">Затем — тревел: <span class="gd mark">UPASS</span> Travel.</p>
+  <p class="tx cx cap up" style="top:800px" data-s="2" data-x="3">Потом — бизнес: деловые круги и услуги.</p>
+  <p class="tx cx cap up" style="top:800px" data-s="3" data-x="4">И инвестиции: кооператив и <b class="gd uht">UHT</b>.</p>
+  <p class="tx cx st up" style="top:788px" data-s="4">Ева — <span class="gd">первая ступень всей системы.</span></p>
+  <aside class="nt">
+    <p>И последнее — зачем всё это в большой картине.</p>
+    <p>Первое направление — женское, Eva Space. С него начинается аудитория: женщины решают, где семья живёт, учится и отдыхает.</p>
+    <p>Второе — тревел: UPASS Travel. Паспорт, который едет с человеком по всем странам.</p>
+    <p>Третье — бизнес: деловые круги, связи и услуги для предпринимателей.</p>
+    <p>Четвёртое — инвестиции: кооператив и UHT. К этому моменту у нас уже есть аудитория и доверие.</p>
+    <p>Ева — первая ступень всей системы. От того, как мы проведём этот квартал, зависит всё остальное.</p>
+  </aside>
+</section>
+
+<section class="slide" data-scene="zfinal" data-name="Начинаем">
+  <p class="tx cx t40 up" style="top:560px" data-s="0">Женщина учится.</p>
+  <p class="tx cx t40 up" style="top:620px" data-s="1"><span class="rs">Ева</span> учится вместе с ней.</p>
+  <p class="tx cx st up" style="top:684px" data-s="2"><span class="gd">Учится следующее поколение.</span></p>
+  <p class="tx cx eb up" style="top:792px; color:var(--fg2); --d:1.2s" data-s="2">Стартуем 1 октября</p>
+  <aside class="nt">
+    <p>Соберу всё в одну мысль. Женщина учится — у проверенных экспертов, по своей программе.</p>
+    <p>Ева учится вместе с ней — на проверенных знаниях — и становится умнее для каждой следующей. Рядом с ней — Адам.</p>
+    <p>А вместе с ними учится следующее поколение. Стартуем первого октября. Цифры, премию и ритм разберём в презентации квартала.</p>
+  </aside>
+</section>
+
+</div></div>
+
+<div class="black" id="black"></div>
+<div class="hud" id="hud">
+  <span class="hud__n" id="hudN">1 / 17</span>
+  <div class="hud__bar" id="hudBar"></div>
+  <button type="button" id="bPrev" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <button type="button" id="bNext" aria-label="Дальше"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+  <button type="button" id="bNotes" aria-label="Заметки докладчика (N)"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></button>
+  <button type="button" id="bFull" aria-label="Полный экран (F)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+</div>
+<div class="notes" id="notes" aria-live="polite">
+  <div class="notes__h"><span id="notesPos">Слайд 1</span><b id="notesTime">00:00</b></div>
+  <div class="notes__now" id="notesNow"></div>
+  <div class="notes__next" id="notesNext"></div>
+</div>
+<div class="hint" id="hint"><kbd>→</kbd> <kbd>пробел</kbd> или клик — дальше · <kbd>←</kbd> назад · <kbd>F</kbd> полный экран · <kbd>N</kbd> заметки</div>
+<div class="toast" id="toast"></div>
+<div class="rotate">Поверните телефон горизонтально</div>
+<script>
+(() => {
+'use strict';
+const $ = (id) => document.getElementById(id);
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const TAU = Math.PI * 2;
+const clamp = (v, a = 0, b = 1) => (v < a ? a : v > b ? b : v);
+const lerp = (a, b, t) => a + (b - a) * t;
+const EO = (t) => 1 - Math.pow(1 - t, 3);
+const EIO = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const EB = (t) => { const c1 = 1.6, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+const rng = (seed) => () => {
+  seed = (seed + 0x6D2B79F5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+
+/* ── Холст. Рисуем в логических координатах сцены 1600×900,
+   а подложку держим в реальных пикселях проектора — поэтому линии резкие. */
+const cv = $('gl'), ctx = cv.getContext('2d');
+let K = 1, GA = 1;
+const IV = [243, 240, 232], GD = [217, 178, 107], G2 = [242, 221, 174], MU = [165, 161, 152], DK = [10, 10, 13];
+const UF = 'Unbounded, Jost, sans-serif';
+const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${clamp(a * GA).toFixed(3)})`;
+const mix = (a, b, t) => [Math.round(lerp(a[0], b[0], t)), Math.round(lerp(a[1], b[1], t)), Math.round(lerp(a[2], b[2], t))];
+const sprite = (c) => {
+  const s = document.createElement('canvas'); s.width = s.height = 128;
+  const g = s.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, `rgba(${c},1)`); gr.addColorStop(0.16, `rgba(${c},.55)`); gr.addColorStop(0.42, `rgba(${c},.13)`); gr.addColorStop(1, `rgba(${c},0)`);
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return s;
+};
+const SG = sprite('217,178,107'), SW = sprite('243,240,232');
+function glow(x, y, r, spr, a) {
+  if (a <= 0.004 || r <= 0.5) return;
+  ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = clamp(a * GA);
+  ctx.drawImage(spr || SG, x - r, y - r, r * 2, r * 2);
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+}
+function dot(x, y, r, c, a) { if (a <= 0.004) return; ctx.fillStyle = rgba(c, a); ctx.beginPath(); ctx.arc(x, y, Math.max(0.4, r), 0, TAU); ctx.fill(); }
+function seg(x1, y1, x2, y2, c, a, w) { if (a <= 0.004) return; ctx.strokeStyle = rgba(c, a); ctx.lineWidth = w || 1.5; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
+function txt(s, x, y, o) {
+  o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.004) return;
+  ctx.font = `${o.w || 400} ${o.size || 24}px ${o.f || "Jost, 'Century Gothic', 'Avenir Next', sans-serif"}`;
+  ctx.textAlign = o.align || 'center'; ctx.textBaseline = 'middle';
+  if ('letterSpacing' in ctx) ctx.letterSpacing = o.ls || '0px';
+  ctx.fillStyle = rgba(o.c || IV, a); ctx.fillText(s, x, y);
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+}
+
+/* ── Камера: поворот вокруг вертикали (yaw), наклон (pitch), перспектива */
+function cam(o) {
+  o = o || {}; const yaw = o.yaw || 0, pitch = o.pitch || 0, dist = o.dist || 2000;
+  return { cy: Math.cos(yaw), sy: Math.sin(yaw), cp: Math.cos(pitch), sp: Math.sin(pitch), dist, f: dist * (o.zoom || 1), ox: o.ox == null ? 800 : o.ox, oy: o.oy == null ? 450 : o.oy };
+}
+function pj(c, p) {
+  const x = p[0], y = p[1], z = p[2];
+  const X = x * c.cy + z * c.sy, Z1 = -x * c.sy + z * c.cy;
+  const Y = y * c.cp + Z1 * c.sp, Z = -y * c.sp + Z1 * c.cp;
+  const s = c.f / Math.max(80, c.dist + Z);
+  return [c.ox + X * s, c.oy - Y * s, Z, s];
+}
+function tf(p, o) {
+  if (!o) return p;
+  const k = o.s == null ? 1 : o.s; let x = p[0] * k, y = p[1] * k, z = p[2] * k, c, s, t;
+  if (o.rz) { c = Math.cos(o.rz); s = Math.sin(o.rz); t = x * c - y * s; y = x * s + y * c; x = t; }
+  if (o.rx) { c = Math.cos(o.rx); s = Math.sin(o.rx); t = y * c - z * s; z = y * s + z * c; y = t; }
+  if (o.ry) { c = Math.cos(o.ry); s = Math.sin(o.ry); t = x * c + z * s; z = -x * s + z * c; x = t; }
+  return [x + (o.x || 0), y + (o.y || 0), z + (o.z || 0)];
+}
+const P3 = (c, p, o) => pj(c, tf(p, o));
+
+/* ── Сетки-модели: вершины, рёбра (порядок = порядок прорисовки), грани */
+const Mesh = (v, e, f) => ({ v, e: e || [], f: f || [] });
+function merge() { const v = [], e = [], f = []; for (const m of arguments) { const o = v.length; v.push(...m.v); m.e.forEach(([a, b]) => e.push([a + o, b + o])); m.f.forEach((fc) => f.push(fc.map((i) => i + o))); } return Mesh(v, e, f); }
+function boxM(w, h, d, x0, y0, z0) {
+  x0 = x0 || 0; y0 = y0 || 0; z0 = z0 || 0; const a = w / 2, c = d / 2;
+  const v = [[x0 - a, y0, z0 - c], [x0 + a, y0, z0 - c], [x0 + a, y0, z0 + c], [x0 - a, y0, z0 + c],
+    [x0 - a, y0 + h, z0 - c], [x0 + a, y0 + h, z0 - c], [x0 + a, y0 + h, z0 + c], [x0 - a, y0 + h, z0 + c]];
+  return Mesh(v, [[0, 1], [1, 2], [2, 3], [3, 0], [0, 4], [1, 5], [2, 6], [3, 7], [4, 5], [5, 6], [6, 7], [7, 4]],
+    [[0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]]);
+}
+const cubeM = (a) => boxM(a, a, a, 0, -a / 2, 0);
+function tetraM(a) {
+  const H = a * Math.sqrt(2 / 3), R = a / Math.sqrt(3), v = [[0, H / 2, 0]];
+  for (let i = 0; i < 3; i++) { const t = (i * TAU) / 3; v.push([R * Math.sin(t), -H / 2, R * Math.cos(t)]); }
+  return Mesh(v, [[0, 1], [0, 2], [0, 3], [1, 2], [2, 3], [3, 1]], [[0, 1, 2], [0, 2, 3], [0, 3, 1], [1, 3, 2]]);
+}
+function roofM(w, h, d, x0, y0, z0) {
+  const a = w / 2, c = d / 2;
+  const v = [[x0 - a, y0, z0 - c], [x0 + a, y0, z0 - c], [x0, y0 + h, z0 - c], [x0 - a, y0, z0 + c], [x0 + a, y0, z0 + c], [x0, y0 + h, z0 + c]];
+  return Mesh(v, [[0, 1], [1, 2], [2, 0], [3, 4], [4, 5], [5, 3], [0, 3], [1, 4], [2, 5]], [[0, 1, 2], [3, 4, 5], [0, 2, 5, 3], [1, 2, 5, 4]]);
+}
+function octaM(r) {
+  return Mesh([[0, r, 0], [r, 0, 0], [0, 0, r], [-r, 0, 0], [0, 0, -r], [0, -r, 0]],
+    [[0, 1], [0, 2], [0, 3], [0, 4], [1, 2], [2, 3], [3, 4], [4, 1], [5, 1], [5, 2], [5, 3], [5, 4]],
+    [[0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 1], [5, 2, 1], [5, 3, 2], [5, 4, 3], [5, 1, 4]]);
+}
+function extrudeM(pr, d) {
+  const n = pr.length, v = [], e = [], f = [];
+  pr.forEach(([x, y]) => v.push([x, y, -d / 2])); pr.forEach(([x, y]) => v.push([x, y, d / 2]));
+  for (let i = 0; i < n; i++) { const j = (i + 1) % n; e.push([i, j], [i, i + n], [i + n, j + n]); f.push([i, j, j + n, i + n]); }
+  f.push([...Array(n).keys()], [...Array(n).keys()].map((i) => i + n));
+  return Mesh(v, e, f);
+}
+function sphereL(r, nLat, nLon, sg) {
+  const L = [];
+  for (let i = 1; i <= nLat; i++) { const la = -Math.PI / 2 + (i * Math.PI) / (nLat + 1), y = r * Math.sin(la), rr = r * Math.cos(la), pts = [];
+    for (let k = 0; k <= sg; k++) { const t = (k / sg) * TAU; pts.push([rr * Math.cos(t), y, rr * Math.sin(t)]); } L.push(pts); }
+  for (let j = 0; j < nLon; j++) { const lo = (j * Math.PI) / nLon, pts = [];
+    for (let k = 0; k <= sg; k++) { const t = (k / sg) * TAU; pts.push([r * Math.cos(t) * Math.cos(lo), r * Math.sin(t), r * Math.cos(t) * Math.sin(lo)]); } L.push(pts); }
+  return L;
+}
+
+/* Стекло: грани от дальних к ближним, рёбра с «туманом» по глубине и прорисовкой */
+function drawMesh(c, m, o) {
+  o = o || {}; const A = o.a == null ? 1 : o.a; const P = m.v.map((p) => pj(c, tf(p, o)));
+  if (A <= 0.004) return P;
+  if (o.fa !== 0 && m.f.length) {
+    const F = m.f.map((f) => { let z = 0; for (const i of f) z += P[i][2]; return [f, z / f.length]; }).sort((a, b) => b[1] - a[1]);
+    for (const [f] of F) {
+      ctx.beginPath(); f.forEach((i, k) => (k ? ctx.lineTo(P[i][0], P[i][1]) : ctx.moveTo(P[i][0], P[i][1]))); ctx.closePath();
+      ctx.fillStyle = rgba(o.fc || IV, (o.fa == null ? 0.045 : o.fa) * A); ctx.fill();
+    }
+  }
+  const n = m.e.length, pg = clamp(o.prog == null ? 1 : o.prog) * n; ctx.lineWidth = o.lw || 1.6; ctx.lineCap = 'round';
+  for (let i = 0; i < n && i < pg; i++) {
+    const [a, b] = m.e[i], t = Math.min(1, pg - i), pa = P[a], pb = P[b];
+    const fog = o.fog ? clamp(0.62 - (pa[2] + pb[2]) / 2 / o.fog, 0.26, 1) : 1;
+    ctx.strokeStyle = rgba(o.sc || IV, (o.sa == null ? 0.85 : o.sa) * A * fog);
+    ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(lerp(pa[0], pb[0], t), lerp(pa[1], pb[1], t)); ctx.stroke();
+  }
+  return P;
+}
+function drawLines(c, L, o) {
+  o = o || {}; const A = o.a == null ? 1 : o.a; if (A <= 0.004) return;
+  const tot = L.length, pg = clamp(o.prog == null ? 1 : o.prog) * tot; ctx.lineWidth = o.lw || 1.2; ctx.lineCap = 'round';
+  for (let i = 0; i < tot && i < pg; i++) {
+    const pts = L[i], m = Math.max(2, Math.ceil(pts.length * Math.min(1, pg - i))); let prev = null;
+    for (let k = 0; k < m; k++) {
+      const q = pj(c, tf(pts[k], o));
+      if (prev) { const fog = o.fog ? clamp(0.62 - (prev[2] + q[2]) / 2 / o.fog, 0.18, 1) : 1;
+        ctx.strokeStyle = rgba(o.sc || IV, (o.sa == null ? 0.6 : o.sa) * A * fog); ctx.beginPath(); ctx.moveTo(prev[0], prev[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); }
+      prev = q;
+    }
+  }
+}
+/* Ломаная в 3D с прорисовкой; дальняя часть бледнее */
+function stroke3(c, pts, o) {
+  o = o || {}; const A = o.a == null ? 1 : o.a, n = pts.length - 1; if (A <= 0.004 || n < 1) return;
+  const m = n * clamp(o.prog == null ? 1 : o.prog); if (m <= 0) return;
+  ctx.lineWidth = o.w || 1.6; ctx.lineCap = 'round'; let prev = pj(c, tf(pts[0], o.t));
+  for (let k = 1; k <= Math.ceil(m); k++) {
+    let q = pj(c, tf(pts[k], o.t)); const part = Math.min(1, m - k + 1);
+    if (part < 1) q = [lerp(prev[0], q[0], part), lerp(prev[1], q[1], part), q[2], q[3]];
+    if (!o.dash || k % 3) { const fog = o.fog ? clamp(0.62 - (prev[2] + q[2]) / 2 / o.fog, 0.25, 1) : 1;
+      ctx.strokeStyle = rgba(o.c || IV, A * fog); ctx.beginPath(); ctx.moveTo(prev[0], prev[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); }
+    prev = q;
+  }
+  return prev;
+}
+function circ(r, n, y, a0, span) { const pts = []; a0 = a0 == null ? -Math.PI / 2 : a0; span = span == null ? TAU : span; for (let k = 0; k <= n; k++) { const t = a0 + (span * k) / n; pts.push([r * Math.cos(t), y || 0, r * Math.sin(t)]); } return pts; }
+function fillPts(c, pts, style, o) { ctx.beginPath(); pts.forEach((p, i) => { const q = pj(c, tf(p, o)); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath(); ctx.fillStyle = style; ctx.fill(); }
+/* Пол с сеткой: даёт сцене глубину, гаснет к краям */
+function grid(c, o) {
+  const y = o.y || 0, h = o.h || 900, st = o.st || 90, A = o.a == null ? 0.06 : o.a; if (A <= 0.004) return; ctx.lineWidth = 1;
+  for (let v = -h; v <= h + 0.1; v += st) for (let dir = 0; dir < 2; dir++) {
+    let prev = null;
+    for (let u = -h; u <= h + 0.1; u += st) {
+      const p = dir ? [v, y, u] : [u, y, v], q = pj(c, p);
+      if (prev) { const d = Math.hypot(v, u - st / 2) / h; seg(prev[0], prev[1], q[0], q[1], IV, A * clamp(1 - d * d), 1); }
+      prev = q;
+    }
+  }
+}
+/* Пыль в пространстве — общий фон всех слайдов, чтобы зал ощущался объёмным */
+const DUST = (() => { const r = rng(99), a = []; for (let i = 0; i < 150; i++) a.push([(r() - 0.5) * 2800, (r() - 0.5) * 1700, (r() - 0.5) * 2800, r() * TAU, 0.6 + r() * 1.4]); return a; })();
+function dust(t) {
+  const c = cam({ yaw: t * 0.018, pitch: 0.08, dist: 1900 });
+  for (const d of DUST) { const q = pj(c, [d[0], d[1] + Math.sin(t * 0.2 + d[3]) * 26, d[2]]); if (q[2] < -1500) continue;
+    dot(q[0], q[1], d[4] * q[3], IV, 0.11 * clamp(q[3]) * (0.6 + 0.4 * Math.sin(t * 0.7 + d[3]))); }
+}
+/* Мини-иконки для узлов пути: рисуются в 2D вокруг центра */
+function icon(kind, x, y, k, col, a) {
+  if (a <= 0.004) return; ctx.save(); ctx.translate(x, y); ctx.scale(k, k); ctx.strokeStyle = rgba(col, a); ctx.fillStyle = rgba(col, a); ctx.lineWidth = 1.8 / k * Math.min(k, 1.2); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.beginPath();
+  if (kind === 'visa') { ctx.rect(-11, -15, 22, 30); ctx.moveTo(5, -3); ctx.arc(0, -3, 5, 0, TAU); ctx.moveTo(-6, 9); ctx.lineTo(6, 9); }
+  if (kind === 'plane') { ctx.moveTo(-15, 3); ctx.lineTo(15, -3); ctx.moveTo(4, -1); ctx.lineTo(-4, -13); ctx.moveTo(1, 0); ctx.lineTo(-6, 12); ctx.moveTo(-13, 3); ctx.lineTo(-16, -5); }
+  if (kind === 'home') { ctx.moveTo(-14, -1); ctx.lineTo(0, -14); ctx.lineTo(14, -1); ctx.moveTo(-10, -4); ctx.lineTo(-10, 13); ctx.lineTo(10, 13); ctx.lineTo(10, -4); ctx.moveTo(-3, 13); ctx.lineTo(-3, 5); ctx.lineTo(3, 5); ctx.lineTo(3, 13); }
+  if (kind === 'pin') { ctx.moveTo(0, 15); ctx.bezierCurveTo(-5, 6, -12, 0, -12, -5); ctx.arc(0, -5, 12, Math.PI, 0); ctx.bezierCurveTo(12, 0, 5, 6, 0, 15); ctx.moveTo(4, -5); ctx.arc(0, -5, 4, 0, TAU); }
+  if (kind === 'yacht') { ctx.moveTo(1, -16); ctx.lineTo(1, 5); ctx.lineTo(13, 5); ctx.closePath(); ctx.moveTo(-2, -10); ctx.lineTo(-2, 5); ctx.lineTo(-11, 5); ctx.closePath(); ctx.moveTo(-15, 9); ctx.lineTo(15, 9); ctx.lineTo(10, 14); ctx.lineTo(-10, 14); ctx.closePath(); }
+  if (kind === 'loop') { ctx.arc(0, 0, 13, -0.3, 4.6); ctx.moveTo(10, -13); ctx.lineTo(12, -4); ctx.lineTo(3, -4); }
+  if (kind === 'coin') { ctx.arc(0, 0, 13, 0, TAU); ctx.moveTo(5, 0); ctx.arc(0, 0, 5, 0, TAU); }
+  if (kind === 'up') { ctx.moveTo(-14, 11); ctx.lineTo(-4, 1); ctx.lineTo(3, 6); ctx.lineTo(14, -8); ctx.moveTo(6, -8); ctx.lineTo(14, -8); ctx.lineTo(14, 0); }
+  if (kind === 'bed') { ctx.moveTo(-15, 10); ctx.lineTo(-15, -8); ctx.moveTo(-15, 3); ctx.lineTo(15, 3); ctx.lineTo(15, 10); ctx.moveTo(-9, 3); ctx.lineTo(-9, -3); ctx.lineTo(13, -3); ctx.lineTo(15, 3); }
+  ctx.stroke(); ctx.restore();
+}
+
+/* ── Данные ─────────────────────────────────────────────────── */
+// Суша Natural Earth на сетке широт; шаг по долготе растёт к полюсам, чтобы точки лежали ровно
+const GLOBE = (() => {
+  const rows = '|1d.3|1d.3|1e.3,1l.1|1f.3|1h.4,3h.1|1i.5|1k.4|1l.4,57.2|1n.5,5c.2|1p.4,54.1,5i.1|1p.6,57.2,5m.2|1r.6|1s.7,5w.2|1t.a,5f.5,60.1|1v.a,5i.7|1w.a,5l.7,66.1|1y.b,3j.3,59.5,5m.a|1z.c,3l.7,5c.6,5o.c|20.d,3n.7,5f.o|21.e,3o.9,5h.p|22.f,3p.b,5j.r|23.f,3q.c,5l.r|24.f,3r.c,5n.s|25.g,3s.e,4d.2,5q.r|26.i,3u.e,4e.3,5s.q|27.k,3v.f,4g.3,5u.q,6v.1|27.m,3v.g,4h.4,5x.o,6w.1|28.m,3w.g,4j.3,63.j|29.m,3x.i,4k.4,65.i|28.o,3y.j,4l.4,67.c,6l.3|27.q,3z.l,4o.3,6a.9,6n.2|26.s,40.l,4q.2,6c.2,6f.5,6o.2|26.s,41.l,4s.1,6h.5,6p.2|26.u,42.k,6k.1,6r.1|26.v,43.k,6y.1|25.x,43.k,6f.2,6t.1,6x.2,77.1|25.y,44.k,65.4,6r.4,6x.1|25.y,44.k,63.2,6s.7|24.z,44.k,62.1,6e.1,6g.1,6s.6,72.1|24.x,43.m,61.3,6e.1,6g.1,6q.8|25.t,42.o,61.3,67.5,6e.3,6p.1,6r.4|25.r,42.p,60.3,67.6,6f.2,6o.2|25.n,42.q,60.3,67.6|26.n,42.r,5z.3,67.7,6l.1|26.m,42.s,5y.2,61.2,68.5|27.k,42.t,5x.2,60.2,6a.3|27.j,3n.3,3s.2,3y.y,5v.2,5z.3,6a.4|27.f,3m.1a,5j.1,5z.1,6b.1,6h.1|24.1,26.f,3k.1c,5j.1,5x.1,6f.3|22.1,24.2,27.c,3j.1d,5f.2,5i.1,5w.1,61.1|20.2,28.2,2b.4,2g.1,2i.1,3i.1d,5e.3,5v.1,60.2,6e.1|1z.2,29.1,2b.1,3g.18,4u.1,5d.3,5u.1,5y.4,6e.1|1y.3,3f.1a,5c.4,5t.1,5v.6,6a.1,6c.1|1u.7,3e.18,4n.4,5a.5,5s.8,69.1|1t.7,3d.16,4m.6,59.4,5q.9,67.1|1n.9,3d.15,4k.9,57.7,5n.1,5p.7,66.1|1l.b,23.1,2b.1,3c.14,4j.a,56.7,5l.9,64.2|i.1,1j.6,1t.3,26.2,3b.13,4h.c,54.9,5j.9,5u.1|h.1,1i.6,1t.2,22.2,3a.13,4e.e,52.b,5g.b,5t.1|1i.5,1w.1,1z.3,39.12,4d.e,4y.e,5e.g|1g.7,38.11,4b.e,4w.y|1c.1,1f.7,38.z,48.a,4l.1,4t.10,5v.1|1b.1,1d.9,1w.2,37.y,46.b,4l.17|19.2,1c.9,1v.2,36.x,44.9,4g.1a|19.1,1b.a,1u.2,37.t,42.9,4d.1c|17.1,19.g,1t.1,36.13,4a.1c|16.1,19.k,35.h,3o.1v|15.o,33.g,3n.1,3w.1k,5m.1|14.p,33.c,3u.1j,5j.1,5l.2|12.s,32.b,3q.1,3t.1g,5e.1,5h.5|11.s,30.1,34.7,3m.1,3o.1,3q.1h,5a.2,5g.3|10.s,2x.5,3a.1,3f.1,3j.d,3z.14,57.2,5f.1|y.s,2v.5,3d.1,3g.e,3x.12,53.2,5c.1|x.u,2t.5,33.1,37.1,3a.3,3e.e,3t.14,4y.4,58.2|x.v,2r.7,31.1,33.2,37.6,3f.2,3k.4,3r.18|w.u,2p.7,30.2,34.6,3h.4,3o.18,51.2|v.v,1r.1,2r.5,2x.2,30.8,3d.5,3k.1b,4y.2|v.y,2p.7,2x.9,37.2,3a.5,3i.1a|u.w,1r.1,2m.s,3f.19,4q.1|t.s,1m.2,1r.3,2j.22,4m.1|r.1,t.s,1n.1,1q.2,2i.1z,4i.1|r.w,1o.1,2e.1,2h.1w,4e.1|p.m,1c.b,29.1,2b.4,2g.1u,4g.1|m.1,o.m,1b.b,27.5,2e.1r,4b.2|7.1,n.l,19.a,25.1,27.2,2d.1,2g.1,2i.1g,46.3|8.2,l.k,19.7,24.1,2a.3,2f.1e,42.2|9.1,b.1,k.i,18.6,21.2,27.1,29.2,2e.1c,3x.3|a.1,i.i,16.6,1z.1,26.2,2b.1b,3t.1|7.5,g.i,14.3,19.1,20.6,29.1d,3p.1|6.5,c.l,13.3,1e.2,1y.4,24.1e,3j.1,3l.3|6.q,11.2,14.1,1b.3,1v.4,20.1f,3g.4|3.1,7.o,w.1,y.1,11.3,18.4,1j.1,1t.4,1y.1h|2.1,5.r,y.4,16.4,1f.4,1r.3,1v.1e|0.3,5.p,x.2,10.1,14.5,1d.3,1o.7,1w.17|0.2,5.g,m.8,w.3,12.6,1m.9,1w.11|0.1,4.g,o.1,r.1,t.3,10.7,1j.6,1t.1,1v.2,1y.u|5.5,d.1,h.4,m.2,p.5,x.9,1h.3,1t.o|e.1,g.3,k.2,n.3,w.7,1l.1,1p.1,1r.d,26.4|d.2,g.3,l.2,t.8,1l.1,1o.b|c.2,r.7,1e.1,1l.5|d.2,g.1,i.2,o.8,1b.1,1h.5,1q.3|b.1,f.1,h.2,k.9,18.1,1f.1|b.1,g.1,i.8,w.1|d.3,h.7,s.1,14.1'.split('|'), out = [];
+  rows.forEach((row, r) => {
+    if (!row) return; const lat = -56 + r * 1.3, st = 1.3 / Math.cos((lat * Math.PI) / 180), phi = (lat * Math.PI) / 180;
+    row.split(',').forEach((run) => { const [a, l] = run.split('.').map((v) => parseInt(v, 36));
+      for (let i = a; i < a + l; i++) { const lam = ((-180 + i * st) * Math.PI) / 180; out.push([Math.cos(phi) * Math.sin(lam), Math.sin(phi), Math.cos(phi) * Math.cos(lam)]); } });
+  });
+  return out;
+})();
+const CITY = { dubai: [25.2, 55.27], bali: [-8.65, 115.13], moscow: [55.75, 37.62], phuket: [7.89, 98.3], istanbul: [41.01, 28.98], tbilisi: [41.72, 44.78],
+  yerevan: [40.18, 44.51], almaty: [43.24, 76.89], belgrade: [44.79, 20.45], lisbon: [38.72, -9.14], barcelona: [41.39, 2.17], london: [51.51, -0.13],
+  newyork: [40.71, -74.01], miami: [25.76, -80.19], mexico: [19.43, -99.13], saopaulo: [-23.55, -46.63], capetown: [-33.92, 18.42], bangkok: [13.76, 100.5],
+  singapore: [1.35, 103.82], tokyo: [35.68, 139.65], cyprus: [34.68, 33.04] };
+const unit = ([la, lo]) => { const p = (la * Math.PI) / 180, l = (lo * Math.PI) / 180; return [Math.cos(p) * Math.sin(l), Math.sin(p), Math.cos(p) * Math.cos(l)]; };
+
+/* ── Люди, иконки, паспорт ─────────────────────────────────── */
+// Человек: туловище — толстая скруглённая линия, голова — точка. Размер следует за перспективой.
+function fig(c, p, o) {
+  o = o || {}; const h = o.h || 28, a = o.a == null ? 1 : o.a; if (a <= 0.004) return;
+  const col = o.col || IV, b = pj(c, p), t = pj(c, [p[0], p[1] + h * 0.7, p[2]]), hd = pj(c, [p[0], p[1] + h, p[2]]);
+  ctx.lineCap = 'round'; ctx.strokeStyle = rgba(col, 0.85 * a); ctx.lineWidth = Math.max(1.4, 8 * b[3] * (h / 28));
+  ctx.beginPath(); ctx.moveTo(b[0], b[1] - 3 * b[3]); ctx.lineTo(t[0], t[1]); ctx.stroke();
+  dot(hd[0], hd[1], 4.4 * hd[3] * (h / 28), col, a);
+  if (o.g) glow(hd[0], hd[1], 18 * hd[3], col === IV || col === MU ? SW : SG, o.g * a);
+}
+function icon2(kind, x, y, k, col, a) {
+  if (a <= 0.004) return; const map = { finger: 1, eye: 1, steps: 1, chain: 1, tree: 1, shield: 1, star: 1, ring: 1, diamond: 1, biz: 1, ball: 1, art: 1, chip: 1, kid: 1 };
+  if (!map[kind]) return icon(kind, x, y, k, col, a);
+  ctx.save(); ctx.translate(x, y); ctx.scale(k, k); ctx.strokeStyle = rgba(col, a); ctx.fillStyle = rgba(col, a); ctx.lineWidth = 1.8; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath();
+  if (kind === 'finger') [4, 8, 12].forEach((r) => { ctx.moveTo(-r, 13); ctx.lineTo(-r, 1); ctx.arc(0, 1, r, Math.PI, 0); ctx.lineTo(r, 13); });
+  if (kind === 'eye') { ctx.moveTo(-15, 0); ctx.quadraticCurveTo(0, -13, 15, 0); ctx.quadraticCurveTo(0, 13, -15, 0); ctx.moveTo(5, 0); ctx.arc(0, 0, 5, 0, TAU); }
+  if (kind === 'steps') { ctx.ellipse(-5, 5, 4.5, 7.5, -0.2, 0, TAU); ctx.moveTo(10.5, -6); ctx.ellipse(6, -6, 4.5, 7.5, 0.2, 0, TAU); }
+  if (kind === 'chain') { const rr = (x0, y0, w, h, r) => { ctx.moveTo(x0 + r, y0); ctx.arcTo(x0 + w, y0, x0 + w, y0 + h, r); ctx.arcTo(x0 + w, y0 + h, x0, y0 + h, r); ctx.arcTo(x0, y0 + h, x0, y0, r); ctx.arcTo(x0, y0, x0 + w, y0, r); }; rr(-16, -6, 18, 12, 6); rr(-2, -6, 18, 12, 6); }
+  if (kind === 'tree') { ctx.moveTo(0, 15); ctx.lineTo(0, -2); ctx.moveTo(0, 4); ctx.lineTo(-10, -6); ctx.moveTo(0, 4); ctx.lineTo(10, -6); ctx.moveTo(0, -2); ctx.lineTo(0, -12);
+    [[-10, -6], [10, -6], [0, -12]].forEach(([px, py]) => { ctx.moveTo(px + 2.6, py); ctx.arc(px, py, 2.6, 0, TAU); }); }
+  if (kind === 'shield') { ctx.moveTo(0, -15); ctx.lineTo(12, -10); ctx.lineTo(12, 1); ctx.quadraticCurveTo(12, 11, 0, 16); ctx.quadraticCurveTo(-12, 11, -12, 1); ctx.lineTo(-12, -10); ctx.closePath(); ctx.moveTo(-5, 1); ctx.lineTo(-1, 5); ctx.lineTo(6, -3); }
+  if (kind === 'star') { for (let i = 0; i < 10; i++) { const r = i % 2 ? 6.5 : 15, t = -Math.PI / 2 + (i * Math.PI) / 5; i ? ctx.lineTo(r * Math.cos(t), r * Math.sin(t)) : ctx.moveTo(r * Math.cos(t), r * Math.sin(t)); } ctx.closePath(); }
+  if (kind === 'ring') { ctx.arc(0, 0, 11, 0, TAU); ctx.moveTo(3.5, 0); ctx.arc(0, 0, 3.5, 0, TAU); }
+  if (kind === 'diamond') { ctx.moveTo(0, -13); ctx.lineTo(12, 0); ctx.lineTo(0, 13); ctx.lineTo(-12, 0); ctx.closePath(); }
+  if (kind === 'biz') { ctx.rect(-13, -6, 26, 18); ctx.moveTo(-5, -6); ctx.lineTo(-5, -11); ctx.lineTo(5, -11); ctx.lineTo(5, -6); ctx.moveTo(-13, 2); ctx.lineTo(13, 2); }
+  if (kind === 'ball') { ctx.arc(0, 0, 12, 0, TAU); ctx.moveTo(-12, 0); ctx.quadraticCurveTo(0, -7, 12, 0); ctx.moveTo(0, -12); ctx.quadraticCurveTo(7, 0, 0, 12); }
+  if (kind === 'art') { ctx.arc(0, 0, 12, 0.5, TAU - 0.2); ctx.quadraticCurveTo(4, 2, 10.5, 5.8); [[-5, -4], [3, -7], [-6, 4]].forEach(([px, py]) => { ctx.moveTo(px + 2.2, py); ctx.arc(px, py, 2.2, 0, TAU); }); }
+  if (kind === 'chip') { ctx.rect(-8, -8, 16, 16); [-4, 4].forEach((d) => { ctx.moveTo(d, -8); ctx.lineTo(d, -13); ctx.moveTo(d, 8); ctx.lineTo(d, 13); ctx.moveTo(-8, d); ctx.lineTo(-13, d); ctx.moveTo(8, d); ctx.lineTo(13, d); }); }
+  if (kind === 'kid') { ctx.arc(0, -4, 9, 0, TAU); ctx.moveTo(0, 5); ctx.quadraticCurveTo(-4, 10, 0, 15); }
+  ctx.stroke(); ctx.restore();
+}
+
+/* ── Общие приёмы сцен ─────────────────────────────────────── */
+function pathStroke(c, pts, o) {
+  const n = pts.length - 1, m = n * clamp(o.prog == null ? 1 : o.prog); if (m <= 0) return null;
+  ctx.beginPath(); let q = pj(c, tf(pts[0], o.t)); ctx.moveTo(q[0], q[1]);
+  for (let k = 1; k <= Math.ceil(m); k++) { let r = pj(c, tf(pts[k], o.t)); const part = Math.min(1, m - k + 1); if (part < 1) r = [lerp(q[0], r[0], part), lerp(q[1], r[1], part), r[2], r[3]]; ctx.lineTo(r[0], r[1]); q = r; }
+  ctx.strokeStyle = rgba(o.c || IV, o.a == null ? 1 : o.a); ctx.lineWidth = o.w || 1.6; ctx.lineCap = o.cap || 'round'; ctx.lineJoin = 'round'; ctx.stroke(); return q;
+}
+function ringFog(c, r, o) { return stroke3(c, circ(r, 120, o.y || 0, -Math.PI / 2 + (o.spin || 0)), { prog: o.prog, a: o.a, w: o.w || 1.6, c: o.c, fog: r * 1.4, dash: o.dash }); }
+function disc(c, r, a, col, y) {
+  if (a <= 0.004) return; const q0 = pj(c, [0, y || 0, 0]), g = ctx.createRadialGradient(q0[0], q0[1], 0, q0[0], q0[1], r * q0[3] * 1.1);
+  g.addColorStop(0, rgba(col || IV, a)); g.addColorStop(1, rgba(col || IV, a * 0.3)); fillPts(c, circ(r, 64, y || 0), g);
+}
+function annulus(c, r0, r1, col, a) {
+  if (a <= 0.004) return; ctx.beginPath();
+  [circ(r1, 72, 0), circ(r0, 72, 0).reverse()].forEach((pts) => pts.forEach((p, i) => { const q = pj(c, p); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }));
+  ctx.fillStyle = rgba(col, a); ctx.fill('evenodd');
+}
+const OCT = octaM(1);
+function gem(c, p, r, a, t) { const q = pj(c, p); glow(q[0], q[1], r * 3.4 * q[3], SG, 0.6 * a); drawMesh(c, OCT, { s: r, x: p[0], y: p[1], z: p[2], ry: t * 1.2, rx: 0.35, fc: GD, fa: 0.4 * a, sc: G2, sa: 0.95 * a, lw: 1.4 }); }
+function beam(c, p, h, a) {
+  const b = pj(c, p), t = pj(c, [p[0], p[1] + h, p[2]]), w = 10 * b[3], g = ctx.createLinearGradient(b[0], b[1], t[0], t[1]);
+  g.addColorStop(0, rgba(GD, 0.55 * a)); g.addColorStop(1, rgba(GD, 0)); ctx.fillStyle = g;
+  ctx.beginPath(); ctx.moveTo(b[0] - w, b[1]); ctx.lineTo(b[0] + w, b[1]); ctx.lineTo(t[0] + w * 0.3, t[1]); ctx.lineTo(t[0] - w * 0.3, t[1]); ctx.closePath(); ctx.fill();
+  glow(b[0], b[1], 70 * b[3], SG, 0.55 * a);
+}
+function cone(c, apex, r, a) {
+  const A = pj(c, apex), base = circ(r, 60, 0).map((p) => pj(c, p)); let L = base[0], R = base[0];
+  base.forEach((q) => { if (q[0] < L[0]) L = q; if (q[0] > R[0]) R = q; });
+  const g = ctx.createLinearGradient(A[0], A[1], A[0], (L[1] + R[1]) / 2);
+  g.addColorStop(0, rgba(IV, 0)); g.addColorStop(0.2, rgba(IV, 0.09 * a)); g.addColorStop(1, rgba(IV, 0.035 * a));
+  ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(L[0], L[1]); base.filter((q) => q[2] < 0).sort((p, q) => p[0] - q[0]).forEach((q) => ctx.lineTo(q[0], q[1])); ctx.lineTo(R[0], R[1]); ctx.closePath(); ctx.fillStyle = g; ctx.fill();
+  const q0 = pj(c, [0, 0, 0]), sp = ctx.createRadialGradient(q0[0], q0[1], 0, q0[0], q0[1], r * q0[3] * 1.1);
+  sp.addColorStop(0, rgba(IV, 0.15 * a)); sp.addColorStop(1, rgba(IV, 0)); fillPts(c, circ(r, 60, 0), sp);
+}
+const SQ = (h) => [[-h, 0, -h], [h, 0, -h], [h, 0, h], [-h, 0, h], [-h, 0, -h]];
+const MSPH = sphereL(14, 2, 4, 20), MTET = tetraM(32), MCUB = cubeM(24);
+
+const SC = {};
+const SPH = sphereL(64, 5, 8, 48), CUBE = cubeM(116), TET = tetraM(150);
+const STARS = (() => { const r = rng(515), a = []; for (let i = 0; i < 280; i++) a.push([r() * 1600, r() * 900, 0.4 + r() * 1.3, r() * TAU, 0.4 + r() * 1.6]); return a; })();
+function nebula(cx, cy, a, t) {
+  ctx.globalCompositeOperation = 'lighter';
+  [[0, 0, 300, [217, 178, 107], 0.17], [-150 + Math.sin(t * 0.1) * 30, -80, 600, [60, 100, 210], 0.12], [180, 90 + Math.cos(t * 0.12) * 24, 540, [150, 80, 205], 0.1], [60, -170, 400, [80, 170, 205], 0.07]]
+    .forEach(([dx, dy, r, col, al]) => { const g = ctx.createRadialGradient(cx + dx, cy + dy, 0, cx + dx, cy + dy, r); g.addColorStop(0, rgba(col, al * a)); g.addColorStop(1, rgba(col, 0)); ctx.fillStyle = g; ctx.fillRect(cx + dx - r, cy + dy - r, r * 2, r * 2); });
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+/* 11, 14 · Глобус из точек суши, города и дуги-перелёты */
+function gview(lon0, lat0, R, cx, cy) { const l = (lon0 * Math.PI) / 180, a = (lat0 * Math.PI) / 180; return { cl: Math.cos(l), sl: Math.sin(l), ca: Math.cos(a), sa: Math.sin(a), R, cx, cy, D: R * 5 }; }
+function gp(g, u) { const x = u[0] * g.cl - u[2] * g.sl, z0 = -(u[2] * g.cl + u[0] * g.sl), y = u[1], y2 = y * g.ca + z0 * g.sa, z2 = -y * g.sa + z0 * g.ca, s = g.D / (g.D + z2 * g.R); return [g.cx + x * g.R * s, g.cy - y2 * g.R * s, z2, s]; }
+function drawGlobe(g, A, la) {
+  if (A <= 0.004) return; la = la == null ? 1 : la;
+  const at = ctx.createRadialGradient(g.cx, g.cy, g.R * 0.92, g.cx, g.cy, g.R * 1.3);
+  at.addColorStop(0, rgba([150, 170, 220], 0.1 * A)); at.addColorStop(1, rgba([150, 170, 220], 0)); ctx.fillStyle = at; ctx.beginPath(); ctx.arc(g.cx, g.cy, g.R * 1.3, 0, TAU); ctx.fill();
+  const body = ctx.createRadialGradient(g.cx - g.R * 0.3, g.cy - g.R * 0.35, 0, g.cx, g.cy, g.R);
+  body.addColorStop(0, rgba([30, 32, 40], 0.92 * A)); body.addColorStop(1, rgba([9, 9, 12], 0.92 * A)); ctx.fillStyle = body; ctx.beginPath(); ctx.arc(g.cx, g.cy, g.R, 0, TAU); ctx.fill();
+  ctx.strokeStyle = rgba(IV, 0.12 * A); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(g.cx, g.cy, g.R, 0, TAU); ctx.stroke();
+  const B = [[], [], [], []];
+  for (const u of GLOBE) { const q = gp(g, u); if (q[2] > 0 || q[1] > 906 || q[1] < -6 || q[0] < -6 || q[0] > 1606) continue; const f = -q[2]; B[f > 0.72 ? 3 : f > 0.46 ? 2 : f > 0.2 ? 1 : 0].push(q); }
+  [0.14, 0.26, 0.4, 0.56].forEach((al, i) => { ctx.fillStyle = rgba(IV, al * A * la); for (const q of B[i]) { const r = 1.45 * q[3]; ctx.fillRect(q[0] - r, q[1] - r, r * 2, r * 2); } });
+}
+
+/* 19 · Монета пая: толщина, свет на ребре, знак из трёх фигур */
+function drawCoin(c, R, T, o, prog, glowA) {
+  const n = 72, ring = (z) => { const a = []; for (let k = 0; k < n; k++) { const t = (k / n) * TAU; a.push(pj(c, tf([R * Math.cos(t), R * Math.sin(t), z], o))); } return a; };
+  const PF = ring(-T / 2), PB = ring(T / 2), cf = pj(c, tf([0, 0, -T / 2], o)), cb = pj(c, tf([0, 0, T / 2], o)), front = cf[2] <= cb[2];
+  if (glowA) glow((cf[0] + cb[0]) / 2, (cf[1] + cb[1]) / 2, R * 2, SG, glowA);
+  const L = [-0.45, 0.6, -0.66], quads = [];
+  for (let k = 0; k < n; k++) { const j = (k + 1) % n, t = ((k + 0.5) / n) * TAU, nv = tf([Math.cos(t), Math.sin(t), 0], { rx: o.rx, ry: o.ry }); quads.push([k, j, (PF[k][2] + PF[j][2] + PB[k][2] + PB[j][2]) / 4, nv]); }
+  quads.sort((a, b) => b[2] - a[2]);
+  for (const [k, j, , nv] of quads) { const lit = clamp(0.2 + 0.8 * Math.max(0, nv[0] * L[0] + nv[1] * L[1] + nv[2] * L[2]));
+    ctx.beginPath(); ctx.moveTo(PF[k][0], PF[k][1]); ctx.lineTo(PF[j][0], PF[j][1]); ctx.lineTo(PB[j][0], PB[j][1]); ctx.lineTo(PB[k][0], PB[k][1]); ctx.closePath();
+    ctx.fillStyle = rgba(mix([66, 50, 22], G2, lit), 1); ctx.fill(); ctx.strokeStyle = rgba(mix([66, 50, 22], G2, lit), 1); ctx.lineWidth = 0.8; ctx.stroke();
+    if (k % 3 === 0) seg(PF[k][0], PF[k][1], PB[k][0], PB[k][1], [50, 38, 16], 0.45, 1); }
+  const face = front ? PF : PB, cc = front ? cf : cb, fz = front ? -T / 2 - 0.5 : T / 2 + 0.5;
+  ctx.beginPath(); face.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.closePath();
+  const gr = ctx.createRadialGradient(cc[0] - R * 0.35 * cc[3], cc[1] - R * 0.4 * cc[3], 0, cc[0], cc[1], R * 1.2 * cc[3]);
+  gr.addColorStop(0, rgba([40, 35, 25], 1)); gr.addColorStop(1, rgba([12, 11, 9], 1)); ctx.fillStyle = gr; ctx.fill(); ctx.strokeStyle = rgba(G2, 0.95); ctx.lineWidth = 2.4; ctx.stroke();
+  const em = (pts, p) => { if (p > 0) stroke3(c, pts.map(([x, y]) => tf([x, y, fz], o)), { prog: p, a: 0.95, w: Math.max(1.2, 2.2 * cc[3] * R / 196), c: GD }); };
+  const r2 = R * 0.88, h = R * 0.6, circle = []; for (let k = 0; k <= 72; k++) { const t = Math.PI / 2 + (k / 72) * TAU; circle.push([r2 * Math.cos(t), r2 * Math.sin(t)]); }
+  em(circle, clamp(prog * 3)); em([[-h, h], [h, h], [h, -h], [-h, -h], [-h, h]], clamp(prog * 3 - 1)); em([[0, h], [h, -h], [-h, -h], [0, h]], clamp(prog * 3 - 2));
+  // Гравировка: насечка по краю и знак UHT поверх эмблемы. Рисуем в плоскости лицевой стороны —
+  // плоский холст сдвигаем аффинно по трём точкам монеты, поэтому надпись поворачивается вместе с ней.
+  const mA = clamp((prog - 0.72) / 0.28), sr = R * cc[3]; if (mA <= 0 || sr < 26) return;
+  const px = pj(c, tf([R, 0, fz], o)), py = pj(c, tf([0, R, fz], o)), fl = front ? 1 : -1;
+  ctx.save(); ctx.transform(((px[0] - cc[0]) / R) * fl, ((px[1] - cc[1]) / R) * fl, -(py[0] - cc[0]) / R, -(py[1] - cc[1]) / R, cc[0], cc[1]);
+  ctx.strokeStyle = rgba(G2, 0.4 * mA); ctx.lineWidth = R * 0.01; ctx.beginPath();
+  for (let k = 0; k < 120; k++) { const t = (k / 120) * TAU; ctx.moveTo(R * 0.925 * Math.cos(t), R * 0.925 * Math.sin(t)); ctx.lineTo(R * 0.965 * Math.cos(t), R * 0.965 * Math.sin(t)); } ctx.stroke();
+  const fs = R * 0.29, ty = R * 0.07; ctx.font = `800 ${fs.toFixed(1)}px ${UF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if ('letterSpacing' in ctx) ctx.letterSpacing = (fs * 0.04).toFixed(1) + 'px';
+  ctx.lineJoin = 'round'; ctx.strokeStyle = rgba([17, 15, 11], mA); ctx.lineWidth = fs * 0.16; ctx.strokeText('UHT', 0, ty);
+  ctx.fillStyle = rgba([6, 5, 3], 0.9 * mA); ctx.fillText('UHT', fs * 0.02, ty + fs * 0.06);
+  const gg = ctx.createLinearGradient(0, ty - fs * 0.42, 0, ty + fs * 0.42); gg.addColorStop(0, rgba([252, 241, 212], mA)); gg.addColorStop(0.45, rgba([228, 194, 126], mA)); gg.addColorStop(1, rgba([150, 112, 52], mA));
+  ctx.fillStyle = gg; ctx.fillText('UHT', 0, ty); if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'; ctx.restore();
+}
+
+/* ══════════ Стратегия 2026–2028 ══════════ */
+const ROSE = [232, 164, 198], RED = [214, 98, 86], SRO = sprite('232,164,198'), SRD = sprite('214,98,86');
+
+// Цифровой аватар — бюст из точек. Голова медленно поворачивается, по силуэту бежит строка скана.
+function mkBust(fem, q) {
+  // q — плотность точек: крупным аватарам нужно больше, чтобы силуэт не рассыпался
+  const pts = [], N = (n) => Math.round(n * (q || 1)), fib = (n, f) => { for (let i = 0; i < n; i++) { const y = 1 - (2 * (i + 0.5)) / n, r = Math.sqrt(1 - y * y), t = i * 2.39996, p = f([Math.cos(t) * r, y, Math.sin(t) * r]); if (p) pts.push(p); } };
+  fib(N(360), ([x, y, z]) => [x * 0.25, 0.2 + y * 0.32, z * 0.28]);
+  for (let i = 0, n = N(40); i < n; i++) { const t = i * 2.39996; pts.push([Math.cos(t) * 0.1, -0.1 - (i / n) * 0.2, Math.sin(t) * 0.1]); }
+  fib(N(460), ([x, y, z]) => (y > -0.05 ? [x * (fem ? 0.54 : 0.64), -0.8 + y * 0.48, z * 0.3] : null));
+  if (fem) fib(N(420), ([x, y, z]) => (z < 0.25 || y > 0.5 ? [x * 0.31, 0.1 + y * 0.48, z * 0.33 - 0.03] : null));
+  return pts.filter(([x, y]) => x * x + y * y < 0.9);
+}
+const BUSTF = mkBust(true), BUSTM = mkBust(false), BUSTF2 = mkBust(true, 1.7), BUSTM2 = mkBust(false, 1.7), BUSTN2 = mkBust(false, 1.4);
+function bust(cx, cy, r, P, col, a, t, ph) {
+  // точки собираем в пять слоёв по яркости и заливаем каждый слой одним путём — иначе тысячи заливок на кадр
+  const ry = Math.sin(t * 0.33 + ph) * 0.6, cr = Math.cos(ry), sr = Math.sin(ry), scan = ((t * 0.22 + ph * 0.3) % 1) * 1.9 - 0.95, k = Math.max(0.55, r / 86), step = r < 50 ? 2 : 1, L = [[], [], [], [], []], H = [];
+  for (let i = 0; i < P.length; i += step) { const [x, y, z] = P[i], X = x * cr + z * sr, Z = -x * sr + z * cr, d = clamp((Z + 0.32) / 0.64), px = cx + X * r, py = cy - y * r, rad = (0.75 + 0.95 * d) * k;
+    (Math.abs(y - scan) < 0.035 ? H : L[Math.min(4, Math.floor(d * 5))]).push(px, py, rad); }
+  L.forEach((B, i) => dotsFill(B, col, a * (0.12 + 0.62 * (i + 0.5) / 5))); dotsFill(H, G2, 0.95 * a);
+  const w = Math.sqrt(Math.max(0, 0.9 - scan * scan)) * r; seg(cx - w, cy - scan * r, cx + w, cy - scan * r, col, 0.16 * a, 1);
+}
+function avatar(cx, cy, r, col, spr, a, t, fem) {
+  if (a <= 0.004 || r < 2) return;
+  glow(cx, cy, r * 2.4, spr, 0.26 * a);
+  const AU = [new Path2D(), new Path2D(), new Path2D()];
+  for (let i = 0; i < 48; i++) { const u = (i * 0.618034) % 1, v = (i * 0.37) % 1, orb = r * (1.14 + 0.36 * u), th = (i / 48) * TAU + t * (0.16 + 0.14 * v) * (i % 2 ? 1 : -1), x = cx + orb * Math.cos(th), y = cy + orb * Math.sin(th) * 0.94, rr = (1 + 1.5 * v) * Math.max(0.6, r / 86);
+    AU[Math.min(2, Math.floor(u * 3))].moveTo(x + rr, y); AU[Math.min(2, Math.floor(u * 3))].arc(x, y, rr, 0, TAU); }
+  AU.forEach((pth, i) => { ctx.fillStyle = rgba(col, a * (0.28 + 0.17 * i)); ctx.fill(pth); });
+  const g = ctx.createRadialGradient(cx, cy - r * 0.2, 0, cx, cy, r); g.addColorStop(0, rgba(col, 0.16 * a)); g.addColorStop(1, rgba(col, 0.02 * a));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fill();
+  bust(cx, cy, r, fem ? BUSTF : BUSTM, col, a, t, fem ? 0 : 2.1);
+  ctx.strokeStyle = rgba(col, 0.9 * a); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();
+  ctx.save(); ctx.setLineDash([2, 8]); ctx.lineDashOffset = -t * 14; ctx.strokeStyle = rgba(col, 0.45 * a); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, cy, r * 1.09, 0, TAU); ctx.stroke(); ctx.restore();
+}
+// Иконки стратегии — линией, в той же руке, что и остальные
+function icon3(kind, x, y, k, col, a) {
+  if (kind === 'link') kind = 'chain';
+  const own = { plus: 1, ppl: 1, book: 1, heart: 1, scale: 1, chart: 1, vote: 1, hexa: 1, card: 1, build: 1, target: 1, play: 1, db: 1, pen: 1, key: 1, flag: 1, pie: 1, rocket: 1, lock: 1, gauge: 1, duo: 1, msg: 1, photo: 1 };
+  if (!own[kind]) return icon2(kind, x, y, k, col, a);
+  if (a <= 0.004) return; ctx.save(); ctx.translate(x, y); ctx.scale(k, k); ctx.strokeStyle = rgba(col, a); ctx.fillStyle = rgba(col, a); ctx.lineWidth = 1.8; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath();
+  if (kind === 'plus') { ctx.arc(0, 0, 13, 0, TAU); ctx.moveTo(-7, 0); ctx.lineTo(7, 0); ctx.moveTo(0, -7); ctx.lineTo(0, 7); }
+  if (kind === 'ppl') { [[-9, -3, 3.6], [0, -6, 4.2], [9, -3, 3.6]].forEach(([px, py, r]) => { ctx.moveTo(px + r, py); ctx.arc(px, py, r, 0, TAU); }); ctx.moveTo(-15, 12); ctx.quadraticCurveTo(-9, 2, -3, 12); ctx.moveTo(-6, 13); ctx.quadraticCurveTo(0, 0, 6, 13); ctx.moveTo(3, 12); ctx.quadraticCurveTo(9, 2, 15, 12); }
+  if (kind === 'book') { ctx.moveTo(0, -9); ctx.quadraticCurveTo(-7, -13, -15, -10); ctx.lineTo(-15, 11); ctx.quadraticCurveTo(-7, 8, 0, 12); ctx.quadraticCurveTo(7, 8, 15, 11); ctx.lineTo(15, -10); ctx.quadraticCurveTo(7, -13, 0, -9); ctx.lineTo(0, 12); }
+  if (kind === 'heart') { ctx.moveTo(0, 12); ctx.bezierCurveTo(-16, 1, -12, -13, 0, -5); ctx.bezierCurveTo(12, -13, 16, 1, 0, 12); }
+  if (kind === 'scale') { ctx.moveTo(0, -13); ctx.lineTo(0, 12); ctx.moveTo(-8, 12); ctx.lineTo(8, 12); ctx.moveTo(-13, -8); ctx.lineTo(13, -8); ctx.moveTo(-13, -8); ctx.lineTo(-17, 2); ctx.lineTo(-9, 2); ctx.closePath(); ctx.moveTo(13, -8); ctx.lineTo(9, 2); ctx.lineTo(17, 2); ctx.closePath(); }
+  if (kind === 'chart') { ctx.moveTo(-14, 12); ctx.lineTo(14, 12); [[-10, 4], [-3, -2], [4, -7], [11, -12]].forEach(([bx, by]) => { ctx.moveTo(bx, 12); ctx.lineTo(bx, by); }); }
+  if (kind === 'vote') { ctx.rect(-13, -2, 26, 14); ctx.moveTo(-6, -2); ctx.lineTo(-6, -12); ctx.lineTo(6, -12); ctx.lineTo(6, -2); ctx.moveTo(-3, -7); ctx.lineTo(0, -4); ctx.lineTo(4, -9); }
+  if (kind === 'hexa') { for (let i = 0; i <= 6; i++) { const t = Math.PI / 6 + (i * TAU) / 6; i ? ctx.lineTo(14 * Math.cos(t), 14 * Math.sin(t)) : ctx.moveTo(14 * Math.cos(t), 14 * Math.sin(t)); } ctx.moveTo(5, 0); ctx.arc(0, 0, 5, 0, TAU); }
+  if (kind === 'card') { ctx.rect(-15, -10, 30, 20); ctx.moveTo(-10, -3); ctx.lineTo(0, -3); ctx.moveTo(-10, 3); ctx.lineTo(4, 3); ctx.rect(6, -5, 6, 6); }
+  if (kind === 'build') { ctx.moveTo(-15, -6); ctx.lineTo(0, -14); ctx.lineTo(15, -6); ctx.closePath(); ctx.moveTo(-14, 12); ctx.lineTo(14, 12); [-9, -3, 3, 9].forEach((bx) => { ctx.moveTo(bx, -4); ctx.lineTo(bx, 10); }); }
+  if (kind === 'target') { ctx.arc(0, 0, 13, 0, TAU); ctx.moveTo(8, 0); ctx.arc(0, 0, 8, 0, TAU); ctx.moveTo(3, 0); ctx.arc(0, 0, 3, 0, TAU); }
+  if (kind === 'play') { ctx.arc(0, 0, 13, 0, TAU); ctx.moveTo(-4, -7); ctx.lineTo(8, 0); ctx.lineTo(-4, 7); ctx.closePath(); }
+  if (kind === 'db') { ctx.ellipse(0, -9, 12, 4, 0, 0, TAU); ctx.moveTo(-12, -9); ctx.lineTo(-12, 9); ctx.moveTo(12, -9); ctx.lineTo(12, 9); ctx.moveTo(-12, 9); ctx.ellipse(0, 9, 12, 4, 0, Math.PI, 0, true); ctx.moveTo(-12, 0); ctx.ellipse(0, 0, 12, 4, 0, Math.PI, 0, true); }
+  if (kind === 'pen') { ctx.moveTo(-12, 10); ctx.lineTo(-9, 3); ctx.lineTo(7, -13); ctx.lineTo(12, -8); ctx.lineTo(-4, 8); ctx.closePath(); ctx.moveTo(-14, 14); ctx.lineTo(14, 14); }
+  if (kind === 'key') { ctx.arc(-6, 0, 6, 0, TAU); ctx.moveTo(0, 0); ctx.lineTo(14, 0); ctx.moveTo(9, 0); ctx.lineTo(9, 5); ctx.moveTo(13, 0); ctx.lineTo(13, 4); }
+  if (kind === 'flag') { ctx.moveTo(-10, 14); ctx.lineTo(-10, -13); ctx.lineTo(12, -8); ctx.lineTo(-10, -2); }
+  if (kind === 'pie') { ctx.moveTo(-1, 1); ctx.lineTo(11, 1); ctx.arc(-1, 1, 12, 0, Math.PI * 1.5); ctx.closePath(); ctx.moveTo(2, -2); ctx.lineTo(2, -14); ctx.arc(2, -2, 12, -Math.PI / 2, 0); ctx.closePath(); }
+  if (kind === 'rocket') { ctx.moveTo(0, -15); ctx.quadraticCurveTo(9, -6, 6, 8); ctx.lineTo(-6, 8); ctx.quadraticCurveTo(-9, -6, 0, -15); ctx.moveTo(2.6, -3); ctx.arc(0, -3, 2.6, 0, TAU); ctx.moveTo(-6, 4); ctx.lineTo(-11, 11); ctx.lineTo(-5, 9); ctx.moveTo(6, 4); ctx.lineTo(11, 11); ctx.lineTo(5, 9); ctx.moveTo(-2, 11); ctx.lineTo(0, 15); ctx.lineTo(2, 11); }
+  if (kind === 'lock') { ctx.rect(-10, -2, 20, 15); ctx.moveTo(-6, -2); ctx.lineTo(-6, -7); ctx.arc(0, -7, 6, Math.PI, 0); ctx.lineTo(6, -2); }
+  if (kind === 'gauge') { ctx.arc(0, 6, 14, Math.PI, TAU); ctx.moveTo(-17, 6); ctx.lineTo(17, 6); ctx.moveTo(0, 6); ctx.lineTo(7, -4); ctx.moveTo(-10, -4); ctx.lineTo(-8, -2); ctx.moveTo(0, -8); ctx.lineTo(0, -5); }
+  if (kind === 'duo') { ctx.arc(-6, 0, 10, 0, TAU); ctx.moveTo(16, 0); ctx.arc(6, 0, 10, 0, TAU); }
+  if (kind === 'msg') { ctx.moveTo(-9, -10); ctx.lineTo(9, -10); ctx.quadraticCurveTo(14, -10, 14, -5); ctx.lineTo(14, 3); ctx.quadraticCurveTo(14, 8, 9, 8); ctx.lineTo(0, 8); ctx.lineTo(-7, 14); ctx.lineTo(-6, 8); ctx.lineTo(-9, 8); ctx.quadraticCurveTo(-14, 8, -14, 3); ctx.lineTo(-14, -5); ctx.quadraticCurveTo(-14, -10, -9, -10); }
+  if (kind === 'photo') { ctx.rect(-13, -10, 26, 20); ctx.moveTo(8, -3); ctx.arc(5, -3, 3, 0, TAU); ctx.moveTo(-11, 8); ctx.lineTo(-3, -1); ctx.lineTo(3, 5); ctx.lineTo(6, 2); ctx.lineTo(11, 8); }
+  ctx.stroke(); ctx.restore();
+}
+function cylM(r, h, n) {
+  const v = [], e = [], f = [];
+  for (let i = 0; i < n; i++) { const t = (i / n) * TAU; v.push([r * Math.cos(t), 0, r * Math.sin(t)]); }
+  for (let i = 0; i < n; i++) { const t = (i / n) * TAU; v.push([r * Math.cos(t), h, r * Math.sin(t)]); }
+  for (let i = 0; i < n; i++) { const j = (i + 1) % n; e.push([i, j], [i + n, j + n]); if (i % 4 === 0) e.push([i, i + n]); f.push([i, j, j + n, i + n]); }
+  f.push([...Array(n).keys()], [...Array(n).keys()].map((i) => i + n)); return Mesh(v, e, f);
+}
+
+/* 05 · Последовательность: ступени женское → тревел → бизнес → инвестиции; вокруг каждой — свои клубы */
+const ZSEQ = [['Женское', 'Eva Space · 2026'], ['Тревел', 'UPASS Travel · 2026 — 27'], ['Бизнес', 'UPASS Business · 2027'], ['Инвестиции', 'кооператив · UHT · 2028']];
+SC.zseq = (S) => {
+  const c = cam({ yaw: -0.2 + Math.sin(S.t * 0.15) * 0.02, pitch: 0.3, dist: 2600, zoom: 0.95, oy: 610 }), orb = S.at(4, 0, 1.6, EIO);
+  grid(c, { y: 0, h: 1100, st: 110, a: 0.04 });
+  ZSEQ.forEach(([t1, t2], i) => {
+    const a = S.at(i, 0, 1.3, EIO); if (a <= 0) return;
+    const x = -540 + i * 360, H = Math.max(1, (60 + i * 75) * a), A = clamp(a * 2), col = i ? GD : ROSE;
+    drawMesh(c, boxM(280, H, 200, x, 0, 0), { fc: col, fa: 0.07, sc: col, sa: 0.8 * A, lw: 1.3 });
+    const r = rng(700 + i * 50); for (let k = 0; k < 5 + i * 4; k++) { const px = x + (r() - 0.5) * 230, pz = (r() - 0.5) * 150; fig(c, [px, H, pz], { h: 18, col: k % 4 ? IV : col, a: A * clamp(S.at(i, 0.6 + k * 0.03, 0.5)) }); }
+    const q = pj(c, [x, H + 125, 0]), sq = pj(c, [x, H, 0]); seg(sq[0], sq[1], q[0], q[1] + 40, col, 0.28 * A, 1);
+    if (orb > 0) { ctx.strokeStyle = rgba(col, 0.3 * orb); ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(q[0], q[1], 74, 21, -0.12, 0, TAU); ctx.stroke(); }
+    if (i === 0) avatar(q[0], q[1], 38 * A, ROSE, SRO, A, S.t, true);
+    else if (i === 3) { glow(q[0], q[1], 70, SG, 0.35 * A); const g0 = GA; GA = g0 * A; drawCoin(cam({ pitch: 0.1, dist: 1200, ox: q[0], oy: q[1] }), 38, 7, { ry: Math.sin(S.t * 0.5) * 0.5, rx: 0.1 }, 1, 0.2); GA = g0; }
+    else badge(q[0], q[1], 33, i === 1 ? 'plane' : 'biz', A, { g: 0.45, sa: 0.85, ic: G2, k: 1 });
+    if (orb > 0) for (let k = 0; k < 3; k++) { const t = S.t * (0.5 + i * 0.07) + (k * TAU) / 3 + i, cs = Math.cos(-0.12), sn = Math.sin(-0.12), ex = 74 * Math.cos(t), ey = 21 * Math.sin(t);
+      const sx = q[0] + ex * cs - ey * sn, sy = q[1] + ex * sn + ey * cs; glow(sx, sy, 14, i ? SG : SRO, 0.7 * orb); dot(sx, sy, 3, k ? IV : i ? G2 : ROSE, orb); }
+    const lq = pj(c, [x, 0, -100]); txt(t1, lq[0], lq[1] + 32, { size: 27, a: A }); txt(t2, lq[0], lq[1] + 60, { size: 16, c: MU, a: A });
+  });
+};
+
+/* ── Начало: время ИИ, цифровой след, сортировка, Адам и Ева ── */
+const LIN = (t) => t;
+// Точки одним путём на цвет и яркость — тысячи точек без тысячи заливок
+function dotsFill(B, col, al) { if (!B.length || al <= 0.004) return; ctx.fillStyle = rgba(col, al); ctx.beginPath(); for (let j = 0; j < B.length; j += 3) { ctx.moveTo(B[j] + B[j + 2], B[j + 1]); ctx.arc(B[j], B[j + 1], B[j + 2], 0, TAU); } ctx.fill(); }
+function diamond(x, y, s, col, a) { if (a <= 0.004) return; ctx.fillStyle = rgba(col, a); ctx.beginPath(); ctx.moveTo(x, y - s); ctx.lineTo(x + s, y); ctx.lineTo(x, y + s); ctx.lineTo(x - s, y); ctx.closePath(); ctx.fill(); }
+const qb = (a, c, b, u) => (1 - u) * (1 - u) * a + 2 * u * (1 - u) * c + u * u * b;
+
+/* 02 · Время ИИ: сколько лет технологии шли к 100 млн пользователей */
+const ZTECH = [['Телефон', 75, '75 лет'], ['Мобильная связь', 16, '16 лет'], ['Интернет', 7, '7 лет'], ['Instagram', 2.5, '2,5 года'], ['ChatGPT', 2 / 12, '2 месяца']];
+SC.ztrend = (S) => {
+  const X0 = 400, K = 1000 / 75, a0 = S.at(0, 0, 1), ai = S.at(1, 0, 1.2, EIO), fin = S.at(2, 0, 1.6, EIO);
+  txt('ЛЕТ ДО 100 МЛН ПОЛЬЗОВАТЕЛЕЙ', X0, 200, { size: 13, w: 500, c: MU, ls: '.24em', align: 'left', a: a0 });
+  for (let y = 0; y <= 70; y += 10) { const x = X0 + y * K; seg(x, 224, x, 650, IV, 0.06 * a0, 1); txt(String(y), x, 674, { size: 13, c: MU, a: 0.8 * a0 }); }
+  ZTECH.forEach(([name, yrs, lab], i) => {
+    const y = 262 + i * 88, last = i === 4, e = last ? ai : S.at(0, 0.25 + i * 0.4, 1.4, EIO); if (e <= 0) return;
+    txt(name, X0 - 32, y, { size: 24, align: 'right', c: last ? G2 : IV, a: clamp(e * 3) });
+    if (!last) { const L = yrs * K * e, g = ctx.createLinearGradient(X0, 0, X0 + Math.max(1, L), 0); g.addColorStop(0, rgba(GD, 0.18)); g.addColorStop(1, rgba(GD, 0.85));
+      ctx.strokeStyle = g; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(X0, y); ctx.lineTo(X0 + L, y); ctx.stroke();
+      glow(X0 + L, y, 26, SG, 0.8 * e * (1 - 0.5 * fin)); txt(lab, X0 + L + 24, y, { size: 21, align: 'left', c: MU, a: clamp(e * 2 - 1) }); }
+    else { const x = X0 + 3; glow(x, y, 100 * e, SG, (0.7 + 0.3 * fin) * e); dot(x, y, 7 * e, G2, 1);
+      for (let k = 0; k < 3; k++) { const u = (S.t * 0.45 + k / 3) % 1; ring2(x, y, 10 + u * 80, G2, 0.5 * (1 - u) * e, 1.2); }
+      txt(lab, x + 44, y + 1, { size: 30, w: 500, f: UF, c: G2, align: 'left', a: clamp(e * 2 - 1) }); }
+  });
+};
+
+/* 03 · Цифровой след: оцифрованные люди идут и оставляют светящийся след; след поднимается в облако, облако собирается в ИИ */
+// Человек в полный рост из точек; руки и ноги качаются в такт шагу
+const BODY = (() => { const r = rng(77), P = { core: [], arm: [[], []], leg: [[], []] };
+  const fibS = (n, cy, rx, ry, rz) => { for (let i = 0; i < n; i++) { const y = 1 - (2 * (i + 0.5)) / n, s = Math.sqrt(1 - y * y), t = i * 2.39996; P.core.push([Math.cos(t) * s * rx, cy + y * ry, Math.sin(t) * s * rz]); } };
+  fibS(90, 1.63, 0.1, 0.12, 0.11); fibS(170, 1.23, 0.17, 0.29, 0.12); fibS(50, 0.94, 0.15, 0.1, 0.11);
+  for (let s = 0; s < 2; s++) { for (let i = 0; i < 46; i++) P.arm[s].push([r(), (r() - 0.5) * 0.08, (r() - 0.5) * 0.08]); for (let i = 0; i < 64; i++) P.leg[s].push([r(), (r() - 0.5) * 0.11, (r() - 0.5) * 0.1]); }
+  return P; })();
+function walker(c, bx, bz, H, ph, col, a) {
+  if (a <= 0.004) return; const K = H / 1.75, sw = Math.sin(ph), L = [[], [], [], []];
+  const put = (x, y, z) => { const q = pj(c, [bx + x * K, y * K, bz + z * K]); L[Math.min(3, Math.max(0, Math.floor((0.5 - z * 2.2) * 4)))].push(q[0], q[1], Math.max(0.8, 1.9 * q[3] * K / 97)); };
+  for (const [x, y, z] of BODY.core) put(x, y, z);
+  const limb = (pts, A, B, C, t1, t2) => { for (const [u, ox, oz] of pts) { const up = u < 0.5, P0 = up ? A : B, P1 = up ? B : C, f = up ? u * 2 : u * 2 - 1, an = up ? t1 : t2; put(lerp(P0[0], P1[0], f) + Math.cos(an) * ox, lerp(P0[1], P1[1], f) + Math.sin(an) * ox, P0[2] + oz); } };
+  for (let s = 0; s < 2; s++) { const sg = s ? 1 : -1, th = 0.42 * sw * sg, kn = 0.7 * Math.max(0, Math.sin(ph + (s ? 0 : Math.PI) - 0.4)), hz = 0.09 * sg, a2 = th - kn;
+    const Hp = [0, 0.93, hz], Kp = [0.45 * Math.sin(th), 0.93 - 0.45 * Math.cos(th), hz], Ap = [Kp[0] + 0.45 * Math.sin(a2), Kp[1] - 0.45 * Math.cos(a2), hz]; limb(BODY.leg[s], Hp, Kp, Ap, th, a2);
+    const al = -0.38 * sw * sg, sz = 0.21 * sg, b2 = al + 0.35, Sp = [0, 1.45, sz], Ep = [0.3 * Math.sin(al), 1.45 - 0.3 * Math.cos(al), sz], Wp = [Ep[0] + 0.28 * Math.sin(b2), Ep[1] - 0.28 * Math.cos(b2), sz]; limb(BODY.arm[s], Sp, Ep, Wp, al, b2); }
+  L.forEach((B, i) => dotsFill(B, col, a * (0.3 + 0.55 * (i + 0.5) / 4)));
+}
+const ZICO = ['msg', 'photo', 'star', 'heart'];
+const ZWALK = [[-200, 84, 0.1, IV], [-40, 72, 0.55, GD], [120, 90, 0.32, IV], [260, 78, 0.8, IV], [380, 70, 0.66, ROSE]];
+const ZCLOUD = (() => { const r = rng(2025), a = []; for (let i = 0; i < 180; i++) { const t = r() * TAU, rr = Math.sqrt(r()), u = r() * 2 - 1, th = r() * TAU, s = Math.sqrt(1 - u * u); a.push({ dx: Math.cos(t) * rr * 330, dy: Math.sin(t) * rr * 78, sp: [92 * s * Math.cos(th), 92 * u, 92 * s * Math.sin(th)], ph: r() * TAU }); } return a; })();
+const ZAI2 = sphereL(92, 4, 8, 40);
+SC.zfoot = (S) => {
+  const c = cam({ pitch: 0.3, dist: 2200, oy: 600 }), a0 = S.at(0, 0, 1.2), up = S.at(1, 0, 1.8, EIO), cd = S.at(2, 0, 2.6, EIO), fin = S.at(3, 0, 1.4, EIO), CX = 800, CY = 226, H = 170, STEP = 72, TR = 760;
+  const cs = cam({ pitch: 0.12, dist: 1300, ox: CX, oy: CY }), o = { ry: S.t * 0.35 };
+  grid(c, { y: 0, h: 1100, st: 110, a: 0.05 * a0 });
+  const cloud = (j) => { const P = ZCLOUD[j], q = P3(cs, P.sp, o); return [lerp(CX + P.dx, q[0], cd), lerp(CY + P.dy, q[1], cd)]; };
+  const W = ZWALK.map(([z, v, off, col], i) => ({ z, col, i, x: -1050 + ((S.t * v + off * 2100) % 2100) })).sort((p, q) => q.z - p.z);
+  W.forEach(({ z, col, i, x }) => {
+    const A = a0 * clamp(S.at(0, i * 0.15, 0.9)) * clamp((x + 1050) / 120) * clamp((1050 - x) / 120);
+    for (let n = Math.floor(x / STEP); n * STEP > x - TR && n * STEP > -1050; n--) { const fx = n * STEP, age = (x - fx) / TR, q = pj(c, [fx, 0, z + (n % 2 ? 9 : -9)]), f = (1 - age) * A;
+      ctx.fillStyle = rgba(G2, 0.75 * f); ctx.beginPath(); ctx.ellipse(q[0], q[1], 7 * q[3], 2.6 * q[3], 0, 0, TAU); ctx.fill(); if (age < 0.12) glow(q[0], q[1], 22 * q[3], SG, 0.8 * f);
+      if (up > 0) for (let k = 0; k < 2; k++) { const u = (S.t * 0.2 + n * 0.37 + k * 0.5 + i * 0.13) % 1, p = cloud((n * 7 + i * 13 + k * 29 + 1800) % 180), e = EIO(u), g = Math.sin(Math.PI * u) * up * (1 - age);
+        const px = lerp(q[0], p[0], e), py = lerp(q[1], p[1], e), m = (n * 2 + k + i) % 6;
+        if (m < 4 && k === 0) { glow(px, py, 20, SG, 0.45 * g); icon3(ZICO[m], px, py, 0.62, G2, g); } else { glow(px, py, 10, SG, 0.6 * g); dot(px, py, 2, G2, g); } } }
+    walker(c, x, z, H, (x / STEP) * Math.PI, col, A);
+  });
+  const ca = clamp(up * 1.4); if (ca > 0) { const L = [[], [], []]; ZCLOUD.forEach((P, j) => { const p = cloud(j), tw = 0.5 + 0.5 * Math.sin(S.t * 1.3 + P.ph); L[Math.min(2, Math.floor(tw * 3))].push(p[0], p[1], 1.9); }); L.forEach((B, k) => dotsFill(B, k === 2 ? G2 : IV, ca * (0.25 + 0.22 * k + 0.2 * cd))); }
+  if (cd > 0) { glow(CX, CY, 190, SG, 0.3 * cd + 0.15 * fin); drawLines(cs, ZAI2, Object.assign({ a: cd, sa: 0.5, sc: G2, lw: 1, fog: 150 }, o)); txt('ИИ', CX, CY + 132, { size: 16, w: 500, c: G2, ls: '.45em', a: clamp(cd * 2 - 1) }); }
+};
+
+/* 04 · На чём он учится: одна модель ест всё подряд, другая — только проверенное */
+function aiHead(cx, cy, r, a, t, ph, noisy) {
+  if (a <= 0.004) return; const ry = Math.sin(t * 0.3 + ph) * 0.5, cr = Math.cos(ry), sr = Math.sin(ry), k = Math.min(1.5, Math.max(0.6, r / 100)), L = [[], [], [], [], []], R = [], G = [];
+  const gl = (t * 0.7) % 1 < 0.12, gy = ((Math.floor(t * 0.7) * 0.37) % 1) - 0.4;
+  BUSTN2.forEach(([x, y, z], i) => { let X = x * cr + z * sr, Y = y; const Z = -x * sr + z * cr, d = clamp((Z + 0.32) / 0.64);
+    if (noisy) { X += Math.sin(t * 7 + i * 1.7) * 0.012; Y += Math.cos(t * 6 + i * 2.3) * 0.012; if (gl && Math.abs(y - gy) < 0.06) X += 0.07; }
+    const px = cx + X * r, py = cy - Y * r, rad = (0.7 + 0.8 * d) * k;
+    if (noisy && i % 5 === 0) R.push(px, py, rad); else if (noisy && i % 5 < 3) G.push(px, py, rad); else L[Math.min(4, Math.floor(d * 5))].push(px, py, rad); });
+  L.forEach((B, i) => dotsFill(B, GD, a * (0.14 + 0.6 * (i + 0.5) / 5) * (noisy ? 0.7 : 1)));
+  if (noisy) { dotsFill(G, MU, a * 0.5); dotsFill(R, RED, a * (0.6 + 0.3 * Math.sin(t * 5))); }
+  else { const s = ((t * 0.22 + ph) % 1) * 1.9 - 0.95, w = (s > -0.32 ? 0.3 : Math.sqrt(Math.max(0, 0.9 - s * s))) * r; seg(cx - w, cy - s * r, cx + w, cy - s * r, G2, 0.3 * a, 1); }
+}
+const ZFLOW = (() => { const r = rng(3030), a = []; for (let i = 0; i < 120; i++) a.push({ k: i % 10 < 4 ? 0 : i % 10 < 8 ? 1 : 2, y: (r() - 0.5) * 44, v: 0.05 + r() * 0.05, ph: r(), d: (r() - 0.5) * 60 }); return a; })();
+function tok(x, y, k, a) { if (a <= 0.004) return; if (k === 0) { glow(x, y, 10, SG, 0.5 * a); diamond(x, y, 4.2, G2, a); } else if (k === 1) dot(x, y, 2.4, MU, 0.8 * a); else { glow(x, y, 10, SRD, 0.5 * a); dot(x, y, 3, RED, a); } }
+SC.zdiet = (S) => {
+  const a0 = S.at(0, 0, 1), l1 = S.at(1, 0, 1.6, EIO), l2 = S.at(2, 0, 1.6, EIO), fin = S.at(3, 0, 1.4, EIO), BY = 206, HL = [470, 472], HR = [1130, 472], RR = 172, GY = 296;
+  [[GD, 'знания', 614], [MU, 'шум', 754], [RED, 'фейки и агрессия', 856]].forEach(([col, s, x]) => { dot(x, 146, 4.5, col, a0); txt(s, x + 14, 146, { size: 16, c: MU, align: 'left', a: a0 }); });
+  txt('ИНТЕРНЕТ', 340, BY, { size: 13, w: 500, c: MU, ls: '.28em', align: 'right', a: a0 });
+  ZFLOW.forEach((P) => { const u = (S.t * P.v + P.ph) % 1; tok(lerp(370, 1250, u), BY + P.y, P.k, a0 * clamp(u * 8) * clamp((1 - u) * 8)); });
+  if (l1 > 0) { for (let i = 0; i < 60; i++) { const P = ZFLOW[i], u = (S.t * 0.3 + i / 60) % 1, x0 = 520 + P.d, x1 = HL[0] + P.d * 0.6, y1 = HL[1] - RR * 0.5; tok(qb(x0, x0 - 30, x1, u), qb(BY + 24, (BY + y1) / 2, y1, u), P.k, l1 * Math.sin(Math.PI * u)); }
+    aiHead(HL[0], HL[1], RR * (0.6 + 0.4 * l1), l1, S.t, 0.7, true);
+    txt('Учится на всём подряд', HL[0], 676, { size: 24, a: l1 }); txt('повторяет ошибки и агрессию', HL[0], 706, { size: 17, c: RED, a: l1 }); }
+  if (l2 > 0) {
+    for (let i = 0; i < 70; i++) { const P = ZFLOW[i + 30], u = (S.t * 0.3 + i / 70) % 1, x0 = 1080 + P.d * 0.6;
+      if (u < 0.5) { const f = u / 0.5; tok(lerp(x0, HR[0] + P.d * 0.2, f), lerp(BY + 24, GY - 30, f), P.k, l2 * clamp(f * 5)); }
+      else if (P.k === 0) { const f = (u - 0.5) / 0.5; tok(HR[0] + P.d * 0.2 * (1 - f), lerp(GY + 30, HR[1] - RR * 0.5, f), 0, l2 * (1 - f * f)); }
+      else { const f = (u - 0.5) / 0.5, s = P.d > 0 ? 1 : -1; tok(HR[0] + s * (40 + f * 150), GY - 20 + f * f * 120, P.k, l2 * (1 - f)); } }
+    glow(HR[0], GY, 70, SG, 0.35 * l2); hexP(HR[0], GY, 30 * l2, Math.PI / 6); ctx.fillStyle = rgba(DK, 0.95 * l2); ctx.fill(); ctx.strokeStyle = rgba(G2, 0.9 * l2); ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.strokeStyle = rgba(G2, l2); ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(HR[0] - 9, GY); ctx.lineTo(HR[0] - 2, GY + 7); ctx.lineTo(HR[0] + 10, GY - 7); ctx.stroke();
+    glow(HR[0], HR[1], 260, SG, (0.1 + 0.1 * fin) * l2); aiHead(HR[0], HR[1], RR * (0.6 + 0.4 * l2), l2, S.t, 2.2, false);
+    txt('Учится на проверенном', HR[0], 676, { size: 24, c: G2, a: l2 }); txt('помогает и объясняет', HR[0], 706, { size: 17, c: GD, a: l2 }); }
+};
+
+/* 06 · Адам и Ева собираются из частиц — крупно */
+const ZSW = (P, seed) => { const r = rng(seed); return P.map(() => [r() * TAU, 90 + Math.pow(r(), 0.7) * 430, r(), 0.06 + r() * 0.1]); };
+const ZSWF = ZSW(BUSTF2, 71), ZSWM = ZSW(BUSTM2, 72);
+function bustAsm(cx, cy, r, P, SWp, col, a, t, ph, e) {
+  const ry = Math.sin(t * 0.33 + ph) * 0.6 * clamp(e * 2 - 1), cr = Math.cos(ry), sr = Math.sin(ry), k = Math.min(1.4, Math.max(0.55, r / 86)), L = [[], [], [], [], []], F = [];
+  for (let i = 0; i < P.length; i++) { const [x, y, z] = P[i], [th, rr, dl, w] = SWp[i], X = x * cr + z * sr, Z = -x * sr + z * cr, d = clamp((Z + 0.32) / 0.64);
+    const pe = EIO(clamp((e - dl * 0.45) / 0.55)), ang = th + t * w, sx = 800 + rr * Math.cos(ang), sy = 430 + rr * Math.sin(ang) * 0.55;
+    const px = lerp(sx, cx + X * r, pe), py = lerp(sy, cy - y * r, pe), rad = lerp(1.35, (0.7 + 0.8 * d) * k, pe);
+    if (pe < 1) F.push(px, py, rad); else L[Math.min(4, Math.floor(d * 5))].push(px, py, rad); }
+  dotsFill(F, col, a * 0.62); L.forEach((B, i) => dotsFill(B, col, a * (0.14 + 0.66 * (i + 0.5) / 5)));
+  if (e >= 1) { const s = ((t * 0.22 + ph * 0.3) % 1) * 1.9 - 0.95, w = Math.sqrt(Math.max(0, 0.9 - s * s)) * r; seg(cx - w, cy - s * r, cx + w, cy - s * r, col, 0.2 * a, 1); }
+}
+SC.zavatars = (S) => {
+  const a0 = S.at(0, 0, 1.4), e1 = S.at(1, 0, 3, LIN), e2 = S.at(2, 0, 3, LIN), fin = S.at(3, 0, 1.6, EIO), R = 180, EV = [500, 420], AD = [1100, 420];
+  glow(800, 430, 520, SG, 0.06 * a0);
+  [[EV, e1, ROSE, SRO, BUSTF2, ZSWF, 0, 'ЕВА', 'Eva Space'], [AD, e2, GD, SG, BUSTM2, ZSWM, 2.1, 'АДАМ', 'UPASS']].forEach(([P, e, col, spr, B, SWp, ph, n1, n2]) => {
+    const ra = clamp((e - 0.65) / 0.35);
+    if (ra > 0) { glow(P[0], P[1], R * 2.2, spr, 0.2 * ra + 0.12 * fin); ring2(P[0], P[1], R, col, 0.7 * ra, 1.6); ctx.save(); ctx.setLineDash([2, 9]); ctx.lineDashOffset = -S.t * 14; ring2(P[0], P[1], R * 1.07, col, 0.4 * ra, 1.2); ctx.restore(); }
+    bustAsm(P[0], P[1], R, B, SWp, col, a0, S.t, ph, e);
+    if (ra > 0) { txt(n1, P[0], P[1] + R + 46, { size: 22, w: 500, c: col, ls: '.35em', a: ra }); txt(n2, P[0], P[1] + R + 76, { size: 17, c: MU, a: ra }); }
+  });
+  if (fin > 0) { const x0 = EV[0] + R + 16, x1 = AD[0] - R - 16, cy = EV[1] - 110; ctx.strokeStyle = rgba(G2, 0.45 * fin); ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(x0, EV[1]); ctx.quadraticCurveTo(800, cy, x1, AD[1]); ctx.stroke();
+    for (let k = 0; k < 5; k++) { const u = (S.t * 0.3 + k / 5) % 1, x = qb(x0, 800, x1, u), y = qb(EV[1], cy, AD[1], u); glow(x, y, 14, SG, 0.8 * fin); dot(x, y, 2.4, G2, fin); } }
+};
+
+/* 07 · Как мы их обучаем: источники → проверка → Ева и Адам; каждое знание — в журнал */
+const ZSRC = [['ppl', 'Эксперты', 'образование и практика проверены'], ['play', 'Мастер-классы', 'библиотека по всем направлениям'], ['star', 'Опыт женщин', 'звёзды и отзывы под уроками'], ['heart', 'Программы', 'что реально помогает']];
+const ZCARD = (() => { const r = rng(6060), a = []; for (let i = 0; i < 44; i++) a.push({ s: i % 4, bad: r() < 0.22, ph: r(), v: 0.14 + r() * 0.07, to: i % 2 }); return a; })();
+function bustLearn(cx, cy, r, P, col, a, t, ph, L) {
+  // необученные точки тусклые; граница обучения поднимается снизу вверх
+  const ry = Math.sin(t * 0.33 + ph) * 0.6, cr = Math.cos(ry), sr = Math.sin(ry), lv = -0.95 + L * 1.55, k = Math.min(1.4, Math.max(0.55, r / 86)), D = [], B = [[], [], [], []], E = [];
+  for (let i = 0; i < P.length; i++) { const [x, y, z] = P[i], X = x * cr + z * sr, Z = -x * sr + z * cr, d = clamp((Z + 0.32) / 0.64), px = cx + X * r, py = cy - y * r, rad = (0.75 + 0.95 * d) * k;
+    if (y > lv) D.push(px, py, rad * 0.9); else if (y > lv - 0.05 && L < 1) E.push(px, py, rad * 1.25); else B[Math.min(3, Math.floor(d * 4))].push(px, py, rad); }
+  dotsFill(D, IV, a * 0.17); B.forEach((Q, i) => dotsFill(Q, col, a * (0.22 + 0.6 * (i + 0.5) / 4))); dotsFill(E, G2, a);
+}
+SC.zfeed = (S) => {
+  const a0 = S.at(0, 0, 1), fl = S.at(1, 0, 1.2, EIO), lr = S.at(2, 0, 1, EIO), L = S.at(2, 0.5, 4.5, LIN), ch = S.at(3, 0, 1), fin = S.at(4, 0, 1.4, EIO);
+  const SX = 420, SY = (i) => 250 + i * 120, GX = 680, GY = 430, R = 116, AV = [[1040, 400, ROSE, SRO, BUSTF, 0, 'ЕВА'], [1340, 400, GD, SG, BUSTM, 2.1, 'АДАМ']];
+  ZSRC.forEach(([ic, t1, t2], i) => { const e = S.at(0, 0.2 + i * 0.15, 0.8, EIO); if (e <= 0) return; const y = SY(i);
+    if (fl > 0) { ctx.strokeStyle = rgba(GD, 0.16 * fl); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(SX + 28, y); ctx.quadraticCurveTo(560, (y + GY) / 2, GX - 62, GY); ctx.stroke(); }
+    badge(SX, y, 27, ic, e, { g: 0.25, sa: 0.7 }); txt(t1, SX - 44, y - 11, { size: 22, align: 'right', a: e }); txt(t2, SX - 44, y + 16, { size: 15, c: MU, align: 'right', a: e }); });
+  if (lr > 0) AV.forEach(([x, y]) => { ctx.strokeStyle = rgba(GD, 0.14 * lr); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(GX + 62, GY); ctx.quadraticCurveTo((GX + x) / 2, Math.min(GY, y) - 90, x - R * 0.3, y - R * 0.2); ctx.stroke(); });
+  if (fl > 0) ZCARD.forEach((P) => { const u = (S.t * P.v + P.ph) % 1, y0 = SY(P.s);
+    if (u < 0.45) { const f = u / 0.45; diamond(qb(SX + 28, 560, GX - 62, f), qb(y0, (y0 + GY) / 2, GY, f), 4.4, P.bad ? RED : G2, fl * clamp(f * 6)); return; }
+    const f = (u - 0.45) / 0.55;
+    if (P.bad) { if (f < 0.5) { const g = f / 0.5; diamond(GX - 62 - g * 60, GY + g * g * 150, 4.4, RED, fl * (1 - g)); } return; }
+    if (lr <= 0) { if (f < 0.15) diamond(GX + 62 + f * 80, GY, 4.4, G2, fl * (1 - f / 0.15)); return; }
+    const [x, y] = AV[P.to], tx = x - R * 0.3, ty = y - R * 0.2, cx2 = (GX + x) / 2, cy2 = Math.min(GY, y) - 90; diamond(qb(GX + 62, cx2, tx, f), qb(GY, cy2, ty, f), 4.4, G2, lr * clamp((1 - f) * 8)); });
+  if (fl > 0) { glow(GX, GY, 130, SG, 0.3 * fl); hexP(GX, GY, 60 * (0.6 + 0.4 * fl), Math.PI / 6); ctx.fillStyle = rgba(DK, 0.95 * fl); ctx.fill(); ctx.strokeStyle = rgba(G2, 0.9 * fl); ctx.lineWidth = 1.8; ctx.stroke();
+    hexP(GX, GY, 72, Math.PI / 6); ctx.strokeStyle = rgba(GD, 0.2 * fl); ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = rgba(G2, fl); ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(GX - 18, GY + 1); ctx.lineTo(GX - 5, GY + 14); ctx.lineTo(GX + 20, GY - 13); ctx.stroke();
+    txt('ПРОВЕРКА', GX, GY + 98, { size: 14, w: 500, c: GD, ls: '.3em', a: fl }); txt('автор · источник · практика', GX, GY + 124, { size: 15, c: MU, a: fl }); }
+  AV.forEach(([x, y, col, spr, B, ph, n]) => { glow(x, y, R * 2, spr, (0.08 + 0.25 * L) * a0); ring2(x, y, R, col, (0.3 + 0.4 * L) * a0, 1.3); bustLearn(x, y, R, B, col, a0, S.t, ph, L);
+    txt(n, x, y + R + 36, { size: 18, w: 500, c: col, ls: '.35em', a: a0 });
+    const bw = 150, by = y + R + 66; ctx.fillStyle = rgba(IV, 0.1 * a0); rrect(x - bw / 2, by - 3, bw, 6, 3); ctx.fill(); if (L > 0) { ctx.fillStyle = rgba(col, 0.9 * a0); rrect(x - bw / 2, by - 3, Math.max(6, bw * L), 6, 3); ctx.fill(); } });
+  if (ch > 0) { const Y = 700, n = 9; ctx.save(); ctx.setLineDash([3, 7]); seg(GX, GY + 140, GX, Y - 18, GD, 0.35 * ch, 1); ctx.restore();
+    txt('ЖУРНАЛ ЗНАНИЙ', 610, Y, { size: 13, w: 500, c: GD, ls: '.24em', align: 'right', a: ch });
+    for (let k = 0; k < n; k++) { const e = S.at(3, k * 0.14, 0.45, EB); if (e <= 0) continue; const x = GX + k * 88, s = 15 * Math.min(1, e);
+      if (k) seg(x - 88 + 17, Y, x - 17, Y, GD, 0.45 * clamp(e), 1.2); const hot = k === n - 1 ? 0.5 + 0.5 * Math.sin(S.t * 3) : 0;
+      glow(x, Y, 30, SG, (0.25 + 0.4 * hot) * clamp(e)); ctx.fillStyle = rgba(DK, 0.95); rrect(x - s, Y - s, s * 2, s * 2, 4); ctx.fill(); ctx.strokeStyle = rgba(G2, 0.85 * clamp(e)); ctx.lineWidth = 1.4; ctx.stroke(); dot(x, Y, 2.4, G2, clamp(e)); } }
+};
+
+/* ── Шесть направлений ── */
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function ring2(x, y, r, col, a, w) { if (a <= 0.004 || r <= 0) return; ctx.strokeStyle = rgba(col, a); ctx.lineWidth = w || 1.3; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke(); }
+// Тёмный круг с иконкой или суммой — общий узел для всех схем
+function badge(x, y, r, ic, a, o) {
+  o = o || {}; if (a <= 0.004) return; const col = o.c || GD;
+  if (o.g) glow(x, y, r * 2.6, SG, o.g * a);
+  ctx.fillStyle = rgba(DK, 0.95 * a); ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+  ctx.strokeStyle = rgba(col, (o.sa || 0.65) * a); ctx.lineWidth = o.w || 1.3; ctx.stroke();
+  if (o.val) txt(o.val, x, y + 1, { size: o.vs || 17, w: 500, f: UF, c: G2, a }); else icon3(ic, x, y, o.k || r / 30, o.ic || col, a);
+}
+function hexP(x, y, r, rot) { ctx.beginPath(); for (let i = 0; i < 6; i++) { const t = (rot || 0) + (i * TAU) / 6, px = x + r * Math.cos(t), py = y + r * Math.sin(t); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.closePath(); }
+// Свет, бегущий по ломаной: u от 0 до 1 по всей длине
+function runPt(P, u) { const L = []; let T = 0; for (let k = 1; k < P.length; k++) { const l = Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]); L.push(l); T += l; }
+  let d = u * T, k = 0; while (k < L.length - 1 && d > L[k]) { d -= L[k]; k++; } const f = L[k] ? d / L[k] : 0; return [lerp(P[k][0], P[k + 1][0], f), lerp(P[k][1], P[k + 1][1], f)]; }
+
+/* Линия этапов: узлы по порядку, над блоками — периоды, крупные узлы — деньги и цели */
+function zchain(S, N, K, fin) {
+  const Y = 460, blk = K.map(([b]) => S.at(b, 0.2, 1.3, EIO)); ctx.lineCap = 'round';
+  K.forEach(([b, x0, x1, lab], i) => {
+    const e = blk[i]; if (e <= 0) return; const from = i ? K[i - 1][2] : x0 - 70;
+    const g = ctx.createLinearGradient(from, 0, x1, 0); g.addColorStop(0, rgba(GD, 0.35)); g.addColorStop(1, rgba(GD, 0.85));
+    ctx.strokeStyle = g; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(from, Y); ctx.lineTo(lerp(from, x1, e), Y); ctx.stroke();
+    const by = Y - 122, xa = x0 - 46, xb = x1 + 46;
+    ctx.strokeStyle = rgba(GD, 0.42 * e); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(xa, by + 14); ctx.lineTo(xa, by); ctx.lineTo(lerp(xa, xb, e), by); if (e > 0.98) ctx.lineTo(xb, by + 14); ctx.stroke();
+    txt(lab, (x0 + x1) / 2, by - 28, { size: 15, w: 500, c: GD, ls: '.32em', a: e });
+  });
+  let x1d = null; K.forEach(([, , x1], i) => { if (blk[i] >= 1) x1d = x1; });
+  if (x1d != null) { const x0 = K[0][1] - 70, u = (S.t * 0.13) % 1, x = lerp(x0, x1d, u), f = Math.sin(Math.PI * u); glow(x, Y, 28, SG, 0.9 * f); dot(x, Y, 3, G2, f); }
+  if (fin && fin.arrow != null) { const e = S.at(fin.arrow, 0, 1.3, EIO); if (e > 0) { const x0 = K[K.length - 1][2] + 40, x1 = lerp(x0, 1530, e);
+    ctx.save(); ctx.setLineDash([3, 10]); ctx.lineDashOffset = -S.t * 22; seg(x0, Y, x1, Y, G2, 0.85, 2); ctx.restore();
+    ctx.strokeStyle = rgba(G2, e); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x1 - 13, Y - 10); ctx.lineTo(x1, Y); ctx.lineTo(x1 - 13, Y + 10); ctx.stroke(); glow(x1, Y, 70, SG, 0.55 * e); } }
+  N.forEach(([x, b, j, ic, val, big]) => {
+    const e = S.at(b, 0.35 + 0.3 * j, 0.8, EB); if (e <= 0) return; const A = clamp(e), B = big || val, r = (B ? 38 : 28) * (0.55 + 0.45 * e);
+    const hot = fin && fin.pulseAt === x ? S.at(fin.pulse, 0, 1) : 0;
+    badge(x, Y, r, ic, A, { g: B ? 0.55 + 0.45 * hot : 0.22, sa: B ? 0.95 : 0.6, w: B ? 2 : 1.3, c: B ? G2 : GD, val, k: 0.95 });
+    if (B) { ctx.save(); ctx.setLineDash([2, 7]); ctx.lineDashOffset = -S.t * 12; ring2(x, Y, r + 10, GD, 0.5 * A, 1.1); ctx.restore(); }
+    if (hot > 0) for (let k = 0; k < 2; k++) { const u = (S.t * 0.5 + k / 2) % 1; ring2(x, Y, r + 12 + u * 50, G2, 0.55 * hot * (1 - u), 1.2); }
+  });
+}
+
+/* 21 · Финал: планета, вокруг неё — Ева и Адам */
+SC.zfinal = (S) => {
+  const cx = 800, cy = 292, R = 116, a0 = S.at(0, 0, 1.8, EIO), av = S.at(1, 0, 1.6, EIO), fin = S.at(2, 0, 2, EIO), RX = 330, RY = 70, OY = cy + 36;
+  nebula(cx, cy, 0.45 * a0 + 0.45 * fin, S.t);
+  const SP = [new Path2D(), new Path2D(), new Path2D()]; for (const [x, y, r, ph, sp] of STARS) { if (y > 520) continue; const k = Math.min(2, Math.floor((0.5 + 0.5 * Math.sin(S.t * sp + ph)) * 3)); SP[k].moveTo(x + r * 0.8, y); SP[k].arc(x, y, r * 0.8, 0, TAU); }
+  SP.forEach((pth, k) => { ctx.fillStyle = rgba(IV, a0 * (0.17 + 0.1 * k)); ctx.fill(pth); });
+  const th = S.t * 0.22, P = (ph) => { const t = th + ph; return [cx + RX * Math.cos(t), OY + RY * Math.sin(t), Math.sin(t)]; }, E = P(0), A = P(Math.PI);
+  const who = (Q, fem) => { const d = Q[2] * 0.5 + 0.5, s = 0.72 + 0.28 * d, a = av * (0.5 + 0.5 * d); avatar(Q[0], Q[1], 54 * s * clamp(av * 1.4), fem ? ROSE : GD, fem ? SRO : SG, a, S.t, fem);
+    txt(fem ? 'ЕВА' : 'АДАМ', Q[0], Q[1] + 76 * s, { size: 13, w: 500, c: fem ? ROSE : GD, ls: '.3em', a: a * d }); };
+  const thread = (Q, col) => { if (av <= 0) return; const a = av * 0.4 * (0.5 + 0.5 * (Q[2] * 0.5 + 0.5)); ctx.strokeStyle = rgba(col, a); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(Q[0], Q[1]); ctx.quadraticCurveTo((Q[0] + cx) / 2, Q[1] - 60, cx, cy); ctx.stroke(); };
+  ctx.strokeStyle = rgba(GD, 0.28 * a0); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(cx, OY, RX, RY, 0, Math.PI, TAU); ctx.stroke();
+  if (E[2] < 0) { thread(E, ROSE); who(E, true); } if (A[2] < 0) { thread(A, GD); who(A, false); }
+  glow(cx, cy, R * 3.2, SG, 0.16 * a0 + 0.2 * fin);
+  drawGlobe(gview(40 + S.t * 5, 18, R, cx, cy), a0, 0.62);
+  if (fin > 0) for (let k = 0; k < 16; k++) { const t = (k / 16) * TAU + S.t * 0.05, r0 = R + 16, r1 = R + 16 + 40 * fin * (0.6 + 0.4 * Math.sin(S.t * 1.4 + k)); seg(cx + r0 * Math.cos(t), cy + r0 * Math.sin(t), cx + r1 * Math.cos(t), cy + r1 * Math.sin(t), G2, 0.35 * fin, 1.2); }
+  ctx.strokeStyle = rgba(GD, 0.45 * a0); ctx.lineWidth = 1.3; ctx.beginPath(); ctx.ellipse(cx, OY, RX, RY, 0, 0, Math.PI); ctx.stroke();
+  if (E[2] >= 0) { thread(E, ROSE); who(E, true); } if (A[2] >= 0) { thread(A, GD); who(A, false); }
+};
+/* ══════════ Ева: идея и стратегия ══════════ */
+// Путеводная звезда — знак приложения Евы: четыре длинных луча, четыре коротких
+function star4(x, y, r, col, a) {
+  if (a <= 0.004 || r <= 0.5) return; ctx.beginPath();
+  for (let i = 0; i < 16; i++) { const t = (i * Math.PI) / 8 - Math.PI / 2, rr = i % 4 === 0 ? r : i % 2 === 0 ? r * 0.38 : r * 0.12, px = x + rr * Math.cos(t), py = y + rr * Math.sin(t); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+  ctx.closePath(); ctx.fillStyle = rgba(col, a); ctx.fill();
+}
+// S-образная связь между точками: вертикальная — поколения, горизонтальная (hz) — потоки
+function sPt(x0, y0, x1, y1, u, hz) {
+  const v = 1 - u, A = v * v * v, B = 3 * v * v * u, C = 3 * v * u * u, D = u * u * u;
+  if (hz) { const mx = (x0 + x1) / 2; return [A * x0 + (B + C) * mx + D * x1, (A + B) * y0 + (C + D) * y1]; }
+  const my = (y0 + y1) / 2; return [(A + B) * x0 + (C + D) * x1, A * y0 + (B + C) * my + D * y1];
+}
+function sCurve(x0, y0, x1, y1, prog, col, a, w, hz) {
+  if (a <= 0.004 || prog <= 0) return; const n = 28, m = Math.ceil(n * clamp(prog));
+  ctx.strokeStyle = rgba(col, a); ctx.lineWidth = w || 1.3; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x0, y0);
+  for (let k = 1; k <= m; k++) { const p = sPt(x0, y0, x1, y1, Math.min(k / n, prog), hz); ctx.lineTo(p[0], p[1]); } ctx.stroke();
+}
+// Человек в 2D: голова и плечи
+function pers(x, y, s, col, a) {
+  if (a <= 0.004) return; dot(x, y - 10 * s, 6.5 * s, col, a);
+  ctx.strokeStyle = rgba(col, a); ctx.lineWidth = 2.4 * s; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(x, y + 16 * s, 13 * s, Math.PI * 1.12, Math.PI * 1.88); ctx.stroke();
+}
+
+/* 01 · Титул: горизонт планеты, над ним встаёт путеводная звезда Евы */
+SC.etitle = (S) => {
+  const T = S.tIn, a = clamp(T / 2.4), s = EO(clamp((T - 1.0) / 2.4)), y = lerp(662, 560, s);
+  drawGlobe(gview(40 + S.t * 2.5, 16, 1000, 800, 1650), a, 0.55);
+  glow(800, 650, 820, SRO, 0.1 * a); glow(800, 640, 380, SG, 0.06 * a);
+  if (s > 0) {
+    for (let k = 0; k < 32; k++) { const th = (k / 32) * TAU + S.t * 0.02, L = (40 + 70 * (0.5 + 0.5 * Math.sin(S.t * 0.8 + k * 2.3))) * s;
+      seg(800 + 30 * Math.cos(th), y + 30 * Math.sin(th), 800 + (30 + L) * Math.cos(th), y + (30 + L) * Math.sin(th), G2, 0.1 * s, 1); }
+    glow(800, y, 170, SRO, 0.55 * s); glow(800, y, 56, SW, 0.6 * s); star4(800, y, 40 * s, [255, 240, 246], s);
+  }
+  const arc = clamp((T - 2.4) / 1.6);
+  if (arc > 0) { ctx.strokeStyle = rgba(GD, 0.4 * arc); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(300, 760); ctx.quadraticCurveTo(800, 610, 1300, 760); ctx.stroke(); }
+  [['2026', 470, 718], ['2027', 800, 685], ['2028', 1130, 718]].forEach(([t, x, yy], i) => { const p = clamp((T - 2.8 - i * 0.45) / 0.9); if (p <= 0) return;
+    glow(x, yy, 44, SG, 0.8 * p); dot(x, yy, 5 * EO(p), G2, 1); txt(t, x, yy + 34, { size: 16, w: 500, c: MU, ls: '.3em', a: p }); });
+};
+
+/* 02 · Три опоры: шар — общее дело, куб — идея, тетраэдр — деньги; в конце их обводит одно кольцо */
+const ETH = [[SPH, -340, 'Общее дело', IV, SW], [CUBE, 0, 'Идея', ROSE, SRO], [TET, 340, 'Деньги', GD, SG]];
+SC.ethree = (S) => {
+  const c = cam({ pitch: 0.3, dist: 1700, oy: 400 }), fin = S.at(3, 0, 2, EIO);
+  if (fin > 0) { ringFog(c, 340, { prog: fin, a: 0.5, w: 1.4, c: GD, y: -12 });
+    for (let k = 0; k < 6; k++) { const t = S.t * 0.25 + (k * TAU) / 6, q = pj(c, [340 * Math.cos(t), -12, 340 * Math.sin(t)]); glow(q[0], q[1], 16 * q[3], SG, 0.8 * fin); dot(q[0], q[1], 2.6 * q[3], G2, fin); } }
+  ETH.forEach(([m, x, lab, col, spr], i) => {
+    const p = S.at(i, 0, 1.8, EIO); if (p <= 0) return;
+    const o = { x, y: Math.sin(S.t * 0.7 + i * 2) * 7, ry: S.t * 0.3 + i * 0.9, rx: i === 1 ? 0.42 : 0.16, prog: p, fog: 110 };
+    const q = pj(c, [x, o.y, 0]); glow(q[0], q[1], 170, spr, (0.06 + 0.08 * fin) * p);
+    if (i === 0) drawLines(c, m, Object.assign(o, { sa: 0.55, lw: 1.1, sc: col }));
+    else drawMesh(c, m, Object.assign(o, { fa: 0.05 * p, fc: col, sc: col, lw: 1.8, sa: 0.9 }));
+    const l = pj(c, [x, -150, 0]); txt(lab, l[0], l[1] + 20, { size: 30, w: 300, c: col, a: clamp(p * 2 - 0.6) });
+  });
+};
+
+/* 05 · Следующее поколение: знания идут от неё к детям и внукам; рядом появляется ИИ — второй учитель */
+const EGW = [800, 250], EGK = [[540, 450], [800, 450], [1060, 450]], EGG = [[450, 620], [630, 620], [710, 620], [890, 620], [970, 620], [1150, 620]], EGAI = [1370, 330];
+const EGE = [...EGK.map((K) => [EGW, K, 0]), ...EGG.map((G, j) => [EGK[j >> 1], G, 1])];
+SC.egen = (S) => {
+  const a0 = S.at(0, 0, 1.2), k1 = S.at(1, 0, 2.4, EIO), ai = S.at(2, 0, 1.6, EIO), fin = S.at(3, 0, 1.6, EIO), W = EGW;
+  const kOn = clamp((k1 - 0.3) / 0.3), gOn = clamp((k1 - 0.7) / 0.3);
+  [['ОНА', W[1], a0, ROSE], ['ДЕТИ', 450, Math.max(0.35 * a0, kOn), MU], ['ВНУКИ', 620, Math.max(0.35 * a0, gOn), MU]].forEach(([s, y, a, col]) => txt(s, 250, y, { size: 13, w: 500, c: col, ls: '.3em', align: 'left', a }));
+  if (fin > 0) for (let k = 0; k < 3; k++) { const u = (S.t * 0.22 + k / 3) % 1; ring2(W[0], W[1], 56 + u * 520, ROSE, 0.22 * (1 - u) * fin, 1.2); }
+  // связи поколений: сначала бледный контур, потом загорается путь от неё вниз
+  EGE.forEach(([P, Q, g]) => { const y0 = P[1] + (g ? 26 : 38), y1 = Q[1] - 26;
+    sCurve(P[0], y0, Q[0], y1, 1, IV, 0.07 * a0, 1); sCurve(P[0], y0, Q[0], y1, clamp(k1 * 2 - g), g ? GD : ROSE, 0.5, 1.4); });
+  if (k1 > 0) EGE.forEach(([P, Q, g], j) => { if (k1 * 2 - g < 1) return; const y0 = P[1] + (g ? 26 : 38), y1 = Q[1] - 26;
+    for (let k = 0; k < 2; k++) { const u = (S.t * 0.3 + k * 0.5 + j * 0.13) % 1, p = sPt(P[0], y0, Q[0], y1, u), f = Math.sin(Math.PI * u);
+      glow(p[0], p[1], 12, g ? SG : SRO, 0.7 * f); dot(p[0], p[1], 2.2, mix(ROSE, G2, g * 0.5 + u * 0.5), f); } });
+  // ИИ: второй учитель — пунктиром к каждому ребёнку и внуку
+  if (ai > 0) {
+    const cs = cam({ pitch: 0.12, dist: 1300, ox: EGAI[0], oy: EGAI[1] }), AX = EGAI[0] - 76, AY = EGAI[1] + 18;
+    [...EGK, ...EGG].forEach(([x, y], j) => { const pr = clamp(ai * 1.6 - j * 0.06);
+      ctx.save(); ctx.setLineDash([3, 8]); ctx.lineDashOffset = -S.t * 10; sCurve(AX, AY, x + 20, y - 6, pr, GD, 0.26, 1.1, true); ctx.restore();
+      if (pr >= 1) { const u = (S.t * 0.22 + j * 0.17) % 1, p = sPt(AX, AY, x + 20, y - 6, u, true), f = Math.sin(Math.PI * u) * ai; glow(p[0], p[1], 12, SG, 0.7 * f); dot(p[0], p[1], 2, G2, f); } });
+    glow(EGAI[0], EGAI[1], 170, SG, 0.3 * ai); drawLines(cs, ZAI2, { a: ai, sa: 0.5, sc: G2, lw: 1, fog: 150, s: 0.72, ry: S.t * 0.35 });
+    txt('ИИ', EGAI[0], EGAI[1] + 100, { size: 15, w: 500, c: G2, ls: '.45em', a: ai });
+  }
+  // люди
+  EGK.forEach(([x, y]) => { glow(x, y, 60, SG, 0.3 * kOn + 0.15 * fin); pers(x, y, 1.05, mix(MU, IV, kOn), Math.max(0.35 * a0, kOn)); });
+  EGG.forEach(([x, y]) => { glow(x, y, 44, SG, 0.25 * gOn + 0.12 * fin); pers(x, y, 0.78, mix(MU, IV, gOn), Math.max(0.3 * a0, gOn)); });
+  glow(W[0], W[1], 150, SRO, 0.35 * a0 + 0.2 * fin); ring2(W[0], W[1], 48, ROSE, 0.6 * a0, 1.4);
+  ctx.save(); ctx.setLineDash([2, 8]); ctx.lineDashOffset = -S.t * 12; ring2(W[0], W[1], 57, ROSE, 0.35 * a0, 1.1); ctx.restore();
+  pers(W[0], W[1] + 4, 1.45, ROSE, a0);
+};
+
+/* 07 · Идея: миллионы женщин на карте; одна — в хаосе советов; эксперты разбросаны; Ева собирает всё вокруг неё */
+const EAUD = (() => { const a = []; GLOBE.forEach((u, i) => { const la = (Math.asin(u[1]) * 180) / Math.PI, lo = (Math.atan2(u[0], u[2]) * 180) / Math.PI; if (la > 41 && la < 64 && lo > 24 && lo < 100 && i % 3 === 0) a.push(i); }); return a; })();
+const EEXP = (() => { const r = rng(1414), a = []; while (a.length < 14) { const i = Math.floor(r() * GLOBE.length), u = GLOBE[i], lo = (Math.atan2(u[0], u[2]) * 180) / Math.PI; if (lo > -10 && lo < 115) a.push(i); } return a; })();
+const ENOISE = (() => { const r = rng(2323), a = []; for (let i = 0; i < 46; i++) a.push({ r: 70 + r() * 140, th: r() * TAU, v: (r() - 0.5) * 1.2, ph: r() * TAU, bad: r() < 0.3, ic: r() < 0.2 ? ['play', 'msg', 'photo'][i % 3] : null }); return a; })();
+SC.eidea = (S) => {
+  const g = gview(52 + Math.sin(S.t * 0.07) * 4, 38, 240, 520, 430), H = [1160, 430];
+  const a0 = S.at(0, 0, 1.4), sh = S.at(1, 0, 1.4, EIO), ex = S.at(2, 0, 1.4, EIO), ev = S.at(3, 0, 2.2, EIO), noise = sh * (1 - S.at(3, 0, 1.2));
+  glow(520, 430, 460, SRO, 0.06 * a0); drawGlobe(g, a0, 0.45);
+  EAUD.forEach((i, k) => { const q = gp(g, GLOBE[i]); if (q[2] > -0.02) return; dot(q[0], q[1], 2.2, ROSE, a0 * clamp(-q[2] * 4) * (0.35 + 0.4 * (0.5 + 0.5 * Math.sin(S.t * 1.7 + k)))); });
+  txt('35,7 МЛН', 520, 704, { size: 22, w: 500, f: UF, c: ROSE, a: a0 }); txt('русскоязычных женщин', 520, 734, { size: 16, c: MU, a: a0 });
+  // она выходит из общей массы
+  const M = gp(g, unit(CITY.moscow));
+  if (sh > 0) { const cxm = (M[0] + H[0]) / 2, cym = Math.min(M[1], H[1]) - 150;
+    if (sh < 1) for (let i = 0; i < 8; i++) { const u = Math.max(0, sh - i * 0.02); dot(qb(M[0], cxm, H[0], u), qb(M[1], cym, H[1], u), 3 * (1 - i / 8), ROSE, 0.6 * (1 - i / 8)); }
+    else { ctx.save(); ctx.setLineDash([2, 8]); ctx.strokeStyle = rgba(ROSE, 0.22 * (1 - ev)); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(M[0], M[1]); ctx.quadraticCurveTo(cxm, cym, H[0], H[1]); ctx.stroke(); ctx.restore(); }
+    const hx = qb(M[0], cxm, H[0], sh), hy = qb(M[1], cym, H[1], sh); glow(hx, hy, 40, SRO, 0.8 * sh * (1 - ev)); dot(hx, hy, 5, ROSE, sh * (1 - ev)); }
+  // хаос: курсы, чаты, советы — вперемешку
+  if (noise > 0) ENOISE.forEach((P) => { const th = P.th + S.t * P.v * 0.4, rr = P.r + Math.sin(S.t * 1.3 + P.ph) * 18, x = H[0] + rr * Math.cos(th) + Math.sin(S.t * 9 + P.ph) * 1.5, y = H[1] + rr * Math.sin(th) * 0.8;
+    if (P.ic) icon3(P.ic, x, y, 0.6, MU, 0.5 * noise); else dot(x, y, P.bad ? 2.8 : 2.2, P.bad ? RED : MU, (P.bad ? 0.75 : 0.5) * noise); });
+  // эксперты: сначала разбросаны по миру, потом собираются вокруг неё
+  EEXP.forEach((i, k) => { const q = gp(g, GLOBE[i]), vis = q[2] < 0 ? clamp(-q[2] * 4) : 0, e = EIO(clamp((ev - k * 0.02) / 0.8)), th = (k / EEXP.length) * TAU + S.t * 0.08;
+    const A = ex * lerp(vis, 1, e); if (A <= 0.01) return;
+    const x = lerp(q[0], H[0] + 210 * Math.cos(th), e), y = lerp(q[1], H[1] + 180 * Math.sin(th), e) - Math.sin(Math.PI * e) * 60;
+    glow(x, y, 16, SG, 0.6 * A); dot(x, y, 3.2, G2, A); ring2(x, y, 7, GD, 0.7 * A, 1.1); });
+  // программа: 7 дней по 3 урока, в центре — Ева
+  if (ev > 0) { const pr = clamp(ev * 1.4 - 0.2), R = 132;
+    if (pr > 0) { ctx.strokeStyle = rgba(GD, 0.55); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(H[0], H[1], R, -Math.PI / 2, -Math.PI / 2 + TAU * pr); ctx.stroke(); }
+    for (let d = 0; d < 7; d++) { const t = -Math.PI / 2 + (d / 7) * TAU, on = clamp(pr * 7 - d); if (on <= 0) continue; const x = H[0] + R * Math.cos(t), y = H[1] + R * Math.sin(t);
+      glow(x, y, 20, SG, 0.6 * on); ctx.fillStyle = rgba(DK, 0.95 * on); ctx.beginPath(); ctx.arc(x, y, 12, 0, TAU); ctx.fill(); ring2(x, y, 12, G2, 0.9 * on, 1.3); txt(String(d + 1), x, y + 1, { size: 12, w: 500, c: G2, a: on });
+      for (let l = 0; l < 3; l++) { const tt = t + (l - 1) * 0.12; dot(H[0] + (R + 26) * Math.cos(tt), H[1] + (R + 26) * Math.sin(tt), 2.4, ROSE, 0.9 * on); } }
+    txt('ПРОГРАММА · 7 ДНЕЙ × 3 УРОКА', H[0], 186, { size: 13, w: 500, c: GD, ls: '.28em', a: clamp(ev * 2 - 0.4) });
+    avatar(H[0], H[1], 66 * ev, ROSE, SRO, ev, S.t, true); txt('ЕВА', H[0], 680, { size: 16, w: 500, c: ROSE, ls: '.35em', a: clamp(ev * 2 - 1) }); }
+};
+
+/* 10 · Круг обучения: программа → выбор и отзывы → подбор → эксперты; в центре Ева, которая умнеет с каждым кругом */
+const ELST = [['play', 'Программа', '7 дней × 3 урока'], ['star', 'Выбор и отзывы', 'звёзды, лайки, что досмотрено'], ['target', 'Подбор', 'точнее для следующей'], ['ppl', 'Эксперты', 'улучшают то, что помогает']];
+const ELTH = (k) => (3 * Math.PI) / 4 - (k * Math.PI) / 2;
+SC.eloop = (S) => {
+  const c = cam({ pitch: 1.0, dist: 2100, ox: 760, oy: 440 }), R = 240, st = ELST.map((_, k) => S.at(k, 0, 1.2, EIO)), fin = S.at(4, 0, 1.8, EIO);
+  const n = st.reduce((s, v) => s + v, 0) + fin, C = [760, 410], P = (th) => pj(c, [R * Math.cos(th), 0, R * Math.sin(th)]);
+  ringFog(c, R, { prog: st[0], a: 0.16, dash: true });
+  // дуги круга: каждая загорается своим шагом
+  ELST.forEach((_, k) => { const p = st[k]; if (p <= 0) return; const t0 = ELTH(k), pts = []; for (let i = 0; i <= 40; i++) { const t = t0 - (i / 40) * (Math.PI / 2); pts.push([R * Math.cos(t), 0, R * Math.sin(t)]); }
+    stroke3(c, pts, { prog: p, a: 0.85, w: 1.8, c: k === 1 ? ROSE : GD, fog: R * 1.4 }); });
+  // свет бежит по уже замкнутым дугам
+  ELST.forEach((_, k) => { if (st[k] < 1) return; for (let j = 0; j < 2; j++) { const u = (S.t * 0.22 + j / 2 + k * 0.1) % 1, t = ELTH(k) - u * (Math.PI / 2), q = P(t); glow(q[0], q[1], 16 * q[3], SG, 0.8); dot(q[0], q[1], 2.6 * q[3], G2, 1); } });
+  // знания каждой станции уходят в Еву
+  ELST.forEach((_, k) => { const e = st[k]; if (e < 1) return; const q = P(ELTH(k)); seg(q[0], q[1], C[0], C[1], GD, 0.12 + 0.1 * fin, 1);
+    const u = (S.t * 0.35 + k * 0.25) % 1, f = Math.sin(Math.PI * u); glow(lerp(q[0], C[0], u), lerp(q[1], C[1], u), 12, k === 1 ? SRO : SG, 0.8 * f); dot(lerp(q[0], C[0], u), lerp(q[1], C[1], u), 2.2, k === 1 ? ROSE : G2, f); });
+  // Ева в центре: с каждым шагом ярче и крупнее
+  if (fin > 0) for (let k = 0; k < 3; k++) { const u = (S.t * 0.3 + k / 3) % 1; ring2(C[0], C[1], 90 + u * 120, ROSE, 0.3 * (1 - u) * fin, 1.2); }
+  const ea = S.at(0, 0, 1.4); avatar(C[0], C[1], 50 + 7 * n, ROSE, SRO, ea * (0.55 + 0.09 * n), S.t, true);
+  txt('ЕВА', C[0], C[1] + 70 + 10 * n, { size: 14, w: 500, c: ROSE, ls: '.35em', a: ea });
+  // станции и подписи: справа — влево от станции не заходят
+  ELST.forEach(([ic, t1, t2], k) => { const e = st[k]; if (e <= 0) return; const q = P(ELTH(k)), right = q[0] > C[0], lx = q[0] + (right ? 50 : -50);
+    badge(q[0], q[1], 30, ic, e, { g: 0.45 + 0.3 * fin, sa: 0.85, c: k === 1 ? ROSE : GD, ic: k === 1 ? ROSE : G2, k: 0.95 });
+    txt(t1, lx, q[1] - 12, { size: 27, align: right ? 'left' : 'right', a: e }); txt(t2, lx, q[1] + 18, { size: 17, c: MU, align: right ? 'left' : 'right', a: e }); });
+};
+
+/* 11 · Три кита Евы: продукт, контент, аудитория держат платформу; на ней — Ева */
+const ZPIL = [[-400, 'chip'], [0, 'play'], [400, 'ppl']], ZPLAT = cylM(560, 12, 72);
+SC.ewhales = (S) => {
+  const c = cam({ pitch: 0.2, yaw: Math.sin(S.t * 0.2) * 0.05, dist: 2400, oy: 600 }), top = S.at(3, 0, 1.8, EIO);
+  grid(c, { y: -1, h: 1000, st: 100, a: 0.045 });
+  ZPIL.forEach(([x, ic], i) => { const a = S.at(i, 0, 1.6, EIO); if (a <= 0) return; const h = 240 * a, A = clamp(a);
+    const base = circ(98, 48, 0).map((p) => [p[0] + x, 0, p[2]]); stroke3(c, base, { a: 0.35 * A, w: 1, c: GD }); fillPts(c, base, rgba(GD, 0.03 * A));
+    drawMesh(c, cylM(70, h, 28), { x, fc: GD, fa: 0.05 + 0.04 * top, sc: mix(IV, GD, 0.35 + 0.45 * top), sa: 0.8, lw: 1.3 });
+    const q = pj(c, [x, h * 0.55, -72]); glow(q[0], q[1], 46, SG, 0.45 * A); ctx.fillStyle = rgba(DK, 0.9 * A); ctx.beginPath(); ctx.arc(q[0], q[1], 30, 0, TAU); ctx.fill();
+    ctx.strokeStyle = rgba(GD, 0.7 * A); ctx.lineWidth = 1.4; ctx.stroke(); icon3(ic, q[0], q[1], 1, G2, A); });
+  if (top > 0) { const y = lerp(470, 252, top); drawMesh(c, ZPLAT, { y, fc: ROSE, fa: 0.05 * top, sc: GD, sa: 0.65 * top, lw: 1.2 });
+    const q = pj(c, [0, y + 150, 0]); glow(q[0], q[1], 260, SRO, 0.18 * top); avatar(q[0], q[1], 88 * q[3], ROSE, SRO, top, S.t, true); }
+};
+
+/* 12 · Пять этапов: ступени из стекла, на каждой больше людей; первая — «мы здесь» */
+const EROAD = [['Подготовка', 'IV КВ. 2026', 'build'], ['Тест', 'I КВ. 2027', 'target'], ['Запуск', 'II КВ. 2027', 'rocket'], ['Масштаб', 'III КВ. 2027', 'pin'], ['Прибыль', 'IV КВ. 2027', 'chart']];
+SC.eroad = (S) => {
+  const c = cam({ yaw: -0.2 + Math.sin(S.t * 0.15) * 0.02, pitch: 0.3, dist: 2700, zoom: 0.95, oy: 600 }), fin = S.at(5, 0, 1.8, EIO), tops = [];
+  grid(c, { y: 0, h: 1200, st: 110, a: 0.04 });
+  EROAD.forEach(([t1, t2, ic], i) => {
+    const a = S.at(i, 0, 1.3, EIO); if (a <= 0) return;
+    const x = -620 + i * 310, H = Math.max(1, (40 + i * 62) * a), A = clamp(a * 2), col = i ? GD : ROSE;
+    drawMesh(c, boxM(240, H, 180, x, 0, 0), { fc: col, fa: 0.07, sc: col, sa: 0.8 * A, lw: 1.3 });
+    const r = rng(800 + i * 50); for (let k = 0; k < 3 + i * 4; k++) { const px = x + (r() - 0.5) * 200, pz = (r() - 0.5) * 130; fig(c, [px, H, pz], { h: 16, col: k % 3 ? IV : ROSE, a: A * clamp(S.at(i, 0.6 + k * 0.03, 0.5)) }); }
+    const q = pj(c, [x, H + 115, 0]), sq = pj(c, [x, H, 0]); tops.push(q); seg(sq[0], sq[1], q[0], q[1] + 34, col, 0.28 * A, 1);
+    if (!i) { for (let k = 0; k < 2; k++) { const u = (S.t * 0.4 + k / 2) % 1; ring2(q[0], q[1], 34 + u * 50, ROSE, 0.5 * (1 - u) * A, 1.2); }
+      txt('МЫ ЗДЕСЬ', q[0], q[1] - 74, { size: 13, w: 500, c: ROSE, ls: '.3em', a: A }); }
+    badge(q[0], q[1], 30, ic, A, { g: i ? 0.4 : 0.6, sa: 0.85, c: col, ic: i ? G2 : ROSE, k: 0.95 });
+    const lq = pj(c, [x, 0, -90]); txt(t1, lq[0], lq[1] + 30, { size: 26, a: A }); txt(t2, lq[0], lq[1] + 58, { size: 13, w: 500, c: GD, ls: '.24em', a: A });
+  });
+  if (fin > 0 && tops.length === 5) { const P = tops.map((q) => [q[0], q[1] - 46]), m = 4 * fin;
+    ctx.save(); ctx.setLineDash([4, 8]); ctx.lineDashOffset = -S.t * 18; ctx.strokeStyle = rgba(G2, 0.7); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(P[0][0], P[0][1]);
+    for (let k = 1; k <= Math.ceil(m); k++) { const f = Math.min(1, m - k + 1); ctx.lineTo(lerp(P[k - 1][0], P[k][0], f), lerp(P[k - 1][1], P[k][1], f)); } ctx.stroke(); ctx.restore();
+    if (fin >= 1) { const p = runPt(P, (S.t * 0.12) % 1); glow(p[0], p[1], 24, SG, 0.9); dot(p[0], p[1], 3, G2, 1); } }
+};
+
+/* 13 · Цели 2027: шесть целей вокруг Евы, каждая — на своей спице */
+const EGL = [[560, 250, -1, 'build', 'Компания', 'прозрачная, растёт по кайдзен', 0], [1040, 250, 1, 'ppl', '2 000+ подписчиц', 'рост метрик каждый месяц', 0],
+  [440, 430, -1, 'book', '150+ экспертов', '500+ единиц контента', 1], [1160, 430, 1, 'pin', '10 городов', 'амбассадоры и клубы', 1],
+  [560, 610, -1, 'coin', 'Seed-раунд', 'ресурс на год и прибыль', 2], [1040, 610, 1, 'duo', 'Команда', 'культура и общий бренд', 2]];
+SC.egoals = (S) => {
+  const cx = 800, cy = 430, a0 = S.at(0, 0, 1.2), fin = S.at(3, 0, 1.8, EIO);
+  if (fin > 0) { const o = [0, 1, 3, 5, 4, 2].map((i) => EGL[i]); ctx.strokeStyle = rgba(GD, 0.4 * fin); ctx.lineWidth = 1.2; ctx.beginPath(); o.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.stroke();
+    for (let k = 0; k < 6; k++) { const P = o.map(([x, y]) => [x, y]).concat([[o[0][0], o[0][1]]]), p = runPt(P, (S.t * 0.06 + k / 6) % 1); glow(p[0], p[1], 16, SG, 0.8 * fin); dot(p[0], p[1], 2.4, G2, fin); } }
+  EGL.forEach(([x, y, side, ic, t1, t2, st], i) => {
+    const e = S.at(st, 0.15 + (i % 2) * 0.25, 1, EIO); if (e <= 0) return;
+    const dx = x - cx, dy = y - cy, L = Math.hypot(dx, dy), sx = cx + (dx / L) * 126, sy = cy + (dy / L) * 126, ex = x - (dx / L) * 50, ey = y - (dy / L) * 50;
+    seg(sx, sy, lerp(sx, ex, e), lerp(sy, ey, e), GD, 0.38, 1.2);
+    if (e >= 1) { const u = (S.t * 0.4 + i * 0.17) % 1; glow(lerp(sx, ex, u), lerp(sy, ey, u), 14, SG, 0.8 * Math.sin(Math.PI * u)); }
+    const r = 46 * (0.6 + 0.4 * EB(Math.min(1, e))); glow(x, y, 110, SG, (0.18 + 0.2 * fin) * e);
+    hexP(x, y, r); ctx.fillStyle = rgba(DK, 0.95 * e); ctx.fill(); ctx.strokeStyle = rgba(GD, (0.7 + 0.25 * fin) * e); ctx.lineWidth = 1.5; ctx.stroke();
+    hexP(x, y, r + 8); ctx.strokeStyle = rgba(GD, 0.18 * e); ctx.lineWidth = 1; ctx.stroke(); icon3(ic, x, y, 1.05, G2, e);
+    txt(t1, x + side * 72, y - 13, { size: 27, align: side < 0 ? 'right' : 'left', a: e }); txt(t2, x + side * 72, y + 18, { size: 17, c: MU, align: side < 0 ? 'right' : 'left', a: e });
+  });
+  if (a0 > 0) { glow(cx, cy, 220, SRO, 0.18 * a0 + 0.14 * fin); avatar(cx, cy, 78 + 8 * fin, ROSE, SRO, a0, S.t, true); }
+};
+
+/* 14 · До 31 декабря: пять целей квартала на одной линии */
+const EQN = [[200, 0, 0, 'rocket'], [500, 0, 1, 'play'], [800, 0, 2, 'ppl'], [1100, 1, 0, 'coin'], [1400, 1, 1, 'target', null, 1]];
+SC.eq = (S) => zchain(S, EQN, [[0, 200, 800, 'ПРОДУКТ И ЛЮДИ'], [1, 1100, 1400, 'ДЕНЬГИ И ПЛАН']], { arrow: 2 });
+
+/* 15 · Деньги: поток делится на три русла; русло команды доходит до каждого по личному вкладу */
+const EMCH = [[230, ROSE, '30%', 'рефералам', 'амбассадоры и «приведи подругу»'], [400, IV, '40%', 'бизнесу', 'съёмки, штаб, трафик'], [570, GD, '30%', 'команде', 'квартальная премия']];
+const EMP = (() => { const r = rng(4242), a = []; for (let i = 0; i < 84; i++) a.push({ ch: i % 10 < 3 ? 0 : i % 10 < 7 ? 1 : 2, v: 0.1 + r() * 0.05, ph: r(), d: (r() - 0.5) * 18 }); return a; })();
+const EMPX = [1300, 1390, 1480];
+SC.emoney = (S) => {
+  const SX = 250, SY = 400, JX = 600, BX = 900, a0 = S.at(0, 0, 1.4, EIO), ob = S.at(1, 0, 1), pr = S.at(2, 0, 1.2, EIO), pp = S.at(3, 0, 1.6, EIO);
+  seg(SX + 66, SY, lerp(SX + 66, JX, a0), SY, GD, 0.55, 2);
+  EMCH.forEach(([y, col]) => sCurve(JX, SY, BX - 44, y, clamp(a0 * 1.6 - 0.5), col, 0.45, 1.6, true));
+  if (a0 >= 0.6) EMP.forEach((P) => { const u = (S.t * P.v + P.ph) % 1, [y, col] = EMCH[P.ch]; let x, yy;
+    if (u < 0.35) { const f = u / 0.35; x = lerp(SX + 66, JX, f); yy = SY + P.d * (1 - f); } else { const p = sPt(JX, SY, BX - 44, y, (u - 0.35) / 0.65, true); x = p[0]; yy = p[1]; }
+    const al = clamp(u * 12) * clamp((1 - u) * 10) * clamp(a0 * 2 - 1); glow(x, yy, 9, P.ch === 2 ? SG : P.ch ? SW : SRO, 0.4 * al); diamond(x, yy, 3.6, col, al); });
+  // источник: сначала оборот, с 2027 года — прибыль
+  const hot = ob * (1 - pr); glow(SX, SY, 150, SG, 0.3 * a0 + 0.25 * hot);
+  if (hot > 0) for (let k = 0; k < 2; k++) { const u = (S.t * 0.4 + k / 2) % 1; ring2(SX, SY, 70 + u * 70, G2, 0.5 * (1 - u) * hot, 1.2); }
+  ctx.fillStyle = rgba(DK, 0.95 * a0); ctx.beginPath(); ctx.arc(SX, SY, 66, 0, TAU); ctx.fill(); ring2(SX, SY, 66, G2, 0.85 * a0, 1.8);
+  ctx.save(); ctx.setLineDash([2, 7]); ctx.lineDashOffset = -S.t * 12; ring2(SX, SY, 78, GD, 0.45 * a0, 1.1); ctx.restore();
+  txt('ОБОРОТ', SX, SY + 1, { size: 15, w: 500, c: G2, ls: '.24em', a: a0 * (1 - pr) }); txt('ПРИБЫЛЬ', SX, SY + 1, { size: 15, w: 500, c: G2, ls: '.24em', a: pr });
+  txt('IV кв. 2026', SX, SY + 112, { size: 17, c: MU, a: ob * (1 - pr) }); txt('с 2027 года', SX, SY + 112, { size: 17, c: MU, a: pr });
+  EMCH.forEach(([y, col, pct, t1, t2], i) => { const e = clamp(a0 * 1.6 - 0.6 - i * 0.1); if (e <= 0) return;
+    glow(BX, y, 70, col === IV ? SW : col === ROSE ? SRO : SG, (0.25 + (i === 2 ? 0.3 * pp : 0)) * e); ctx.fillStyle = rgba(DK, 0.95 * e); ctx.beginPath(); ctx.arc(BX, y, 42, 0, TAU); ctx.fill(); ring2(BX, y, 42, col, 0.8 * e, 1.5);
+    txt(pct, BX, y + 1, { size: 20, w: 500, f: UF, c: col, a: e }); txt(t1, BX + 66, y - 12, { size: 27, align: 'left', a: e }); txt(t2, BX + 66, y + 18, { size: 17, c: MU, align: 'left', a: e }); });
+  if (pp > 0) { const y0 = 570, sx = BX + 42, sy = y0 + 10;
+    txt('ЛИЧНЫЙ ВКЛАД', 1390, 470, { size: 13, w: 500, c: GD, ls: '.28em', a: pp }); txt('доля роли × кварталка', 1390, 498, { size: 16, c: MU, a: pp });
+    EMPX.forEach((x, j) => { const e = clamp(pp * 1.5 - j * 0.2); if (e <= 0) return; const cx2 = (sx + x) / 2 + 40, cy2 = 700, ty = y0 + 34;
+      ctx.strokeStyle = rgba(GD, 0.4 * e); ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(sx, sy); const m = 24; for (let k = 1; k <= Math.ceil(m * e); k++) { const u = Math.min(1, k / m); ctx.lineTo(qb(sx, cx2, x, u), qb(sy, cy2, ty, u)); } ctx.stroke();
+      if (e >= 1) { const u = (S.t * 0.3 + j * 0.3) % 1, f = Math.sin(Math.PI * u); glow(qb(sx, cx2, x, u), qb(sy, cy2, ty, u), 12, SG, 0.8 * f); dot(qb(sx, cx2, x, u), qb(sy, cy2, ty, u), 2.2, G2, f); }
+      glow(x, y0, 50, SG, 0.3 * e); pers(x, y0, 1, IV, e); });
+  }
+};
+/* ── Показ ───────────────────────────────────────────────── */
+const slides = [...document.querySelectorAll('.slide')], N = slides.length;
+const LEAD = slides.map((s) => {
+  if (s.dataset.h === undefined) return 0;
+  s.querySelectorAll('[data-s],[data-x],[data-m]').forEach((e) => ['s', 'x', 'm'].forEach((k) => { if (e.dataset[k] !== undefined && e.dataset[k] !== '') e.dataset[k] = +e.dataset[k] + 1; }));
+  if (s.dataset.steps) s.dataset.steps = +s.dataset.steps + 1;
+  let h = s.querySelector('.eb.hd');
+  if (!h) { h = document.createElement('p'); h.className = 'tx eb hd'; h.style.left = '96px'; h.style.top = '80px'; h.textContent = s.dataset.h; s.prepend(h); }
+  if (s.dataset.hscene !== undefined) { h.classList.remove('hd'); h.dataset.s = 1; return 1; }
+  h.dataset.s = 0; h.dataset.m = 1;
+  return 1;
+});
+// Центровка заголовка считается по его настоящей ширине — пересчитываем, когда догрузится шрифт
+function centerHeads() { slides.forEach((s, i) => { const h = LEAD[i] && s.querySelector('.eb.hd'); if (!h) return; const k = 1.45, ls = parseFloat(getComputedStyle(h).letterSpacing) || 0, w = h.offsetWidth - ls;
+  h.style.setProperty('--hk', k); h.style.setProperty('--hx', (800 - (w * k) / 2 - h.offsetLeft).toFixed(1) + 'px'); h.style.setProperty('--hy', (438 - h.offsetTop - h.offsetHeight / 2).toFixed(1) + 'px'); }); }
+const stage = $('stage'), vp = $('vp'), hud = $('hud'), notes = $('notes'), hint = $('hint'), black = $('black'), toastEl = $('toast');
+const maxOf = slides.map((s) => { let m = +(s.dataset.steps || 0);
+  s.querySelectorAll('[data-s],[data-x],[data-m]').forEach((e) => { for (const k of ['s', 'x', 'm']) if (e.dataset[k] !== undefined && e.dataset[k] !== '') m = Math.max(m, +e.dataset[k]); });
+  const nn = s.querySelectorAll('.nt p').length; if (nn !== m + 1) console.warn('Заметки не совпадают с шагами:', s.dataset.name, nn, 'из', m + 1);
+  if (!SC[s.dataset.scene]) console.warn('Нет сцены:', s.dataset.scene); return m; });
+const dashes = slides.map((s, i) => { const d = document.createElement('button'); d.type = 'button'; d.className = 'hud__d'; d.setAttribute('aria-label', `Слайд ${i + 1}: ${s.dataset.name}`);
+  d.addEventListener('click', (ev) => { ev.stopPropagation(); d.blur(); if (i !== cur) show(i, 0, 'jump'); else if (step) show(i, 0); }); $('hudBar').appendChild(d); return d; });
+centerHeads(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(centerHeads);
+// ST: когда начался каждый шаг (null — ещё не дошли, отрицательное — показан сразу готовым)
+const ST = slides.map(() => []), LS = slides.map(() => 0), ENT = slides.map(() => -1);
+let cur = -1, step = 0, t0 = 0, fade = null;
+
+function apply(i, k, instant) {
+  const s = slides[i], now = performance.now(), st = ST[i];
+  for (let j = 0; j <= maxOf[i]; j++) { if (j <= k) { if (st[j] == null) st[j] = instant ? -1 : now; } else st[j] = null; }
+  LS[i] = k;
+  if (instant) s.classList.add('instant');
+  s.querySelectorAll('[data-s]').forEach((e) => e.classList.toggle('on', k >= +e.dataset.s));
+  s.querySelectorAll('[data-x]').forEach((e) => e.classList.toggle('off', k >= +e.dataset.x));
+  s.querySelectorAll('[data-m]').forEach((e) => e.classList.toggle('m', k >= +e.dataset.m));
+  if (instant) { void s.offsetWidth; s.classList.remove('instant'); }
+}
+function show(i, k, mode) {
+  const s = slides[i];
+  if (i !== cur) {
+    const old = cur, dir = mode === 'back' || (mode === 'jump' && i < old) ? -1 : 1, anim = mode === 'fwd' || mode === 'jump';
+    // сквозной переход: слайд с data-flow начинается ровно тем кадром, которым закончился предыдущий
+    const flow = old >= 0 && ((i === old + 1 && slides[i].dataset.flow !== undefined && mode === 'fwd') || (i === old - 1 && slides[old].dataset.flow !== undefined && mode === 'back'));
+    slides.forEach((x) => x.classList.remove('flow')); if (flow) { s.classList.add('flow'); slides[old].classList.add('flow'); }
+    apply(i, anim ? -1 : k, true);
+    ENT[i] = anim ? performance.now() : -1;
+    s.classList.add('instant'); s.classList.toggle('gone', dir < 0); void s.offsetWidth; s.classList.remove('instant');
+    if (old >= 0) { const o = slides[old]; o.classList.remove('active'); o.classList.toggle('gone', dir > 0); o.setAttribute('aria-hidden', 'true'); fade = { i: old, t0: performance.now(), dir, flow }; }
+    s.classList.remove('gone'); s.classList.add('active'); s.removeAttribute('aria-hidden'); cur = i;
+    if (anim) requestAnimationFrame(() => requestAnimationFrame(() => { if (cur === i) apply(i, k); }));
+  } else apply(i, k);
+  step = k; sync();
+}
+function next() { if (!t0) t0 = Date.now(); if (step < maxOf[cur]) show(cur, step + 1); else if (cur < N - 1) show(cur + 1, 0, 'fwd'); }
+function prev() { if (step > 0) show(cur, step - 1); else if (cur > 0) show(cur - 1, maxOf[cur - 1], 'back'); }
+
+function mkS(i, now) {
+  const st = ST[i], L = LEAD[i], lag = (k) => (L && k === 0 ? HLAG : 0);
+  return { t: RM ? 0 : now / 1000, tIn: ENT[i] < 0 || RM ? 1e6 : (now - ENT[i]) / 1000, step: LS[i] - L,
+    at: (k, d, dur, e) => { const s0 = st[k + L]; if (s0 == null) return 0; if (RM || s0 < 0) return 1; return (e || EO)(clamp(((now - s0) / 1000 - (d || 0) - lag(k)) / (dur || 1.2))); },
+    since: (k) => { const s0 = st[k + L]; return s0 == null ? -1 : s0 < 0 || RM ? 1e6 : (now - s0) / 1000 - lag(k); } };
+}
+// Пока заголовок стоит по центру, сцена пуста; фигура проявляется, когда он уезжает
+const HLAG = 0.55;
+function figA(i, now) { if (!LEAD[i] || slides[i].dataset.hscene !== undefined) return 1; const s0 = ST[i][1]; return s0 == null ? 0 : s0 < 0 || RM ? 1 : EO(clamp(((now - s0) / 1000 - HLAG) / 1.1)); }
+function draw(i, now, a, z) {
+  const fn = SC[slides[i].dataset.scene]; if (!fn || a <= 0.004) return;
+  a *= figA(i, now); if (a <= 0.004) return;
+  GA = a; ctx.setTransform(K * z, 0, 0, K * z, K * 800 * (1 - z), K * 450 * (1 - z));
+  try { fn(mkS(i, now)); } catch (err) { if (!draw.err) { draw.err = 1; console.error(err); } }
+  ctx.setTransform(K, 0, 0, K, 0, 0); GA = 1; ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+}
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (document.hidden || cur < 0) return;
+  ctx.setTransform(K, 0, 0, K, 0, 0); ctx.clearRect(0, 0, 1600, 900); GA = 1;
+  dust(RM ? 0 : now / 1000);
+  let p = 1; if (fade) { p = clamp((now - fade.t0) / 850); if (p >= 1) fade = null; }
+  const e = EO(p);
+  if (fade && fade.flow) { draw(cur, now, 1, 1); return; }
+  if (fade) draw(fade.i, now, 1 - e, fade.dir > 0 ? lerp(1, 1.045, e) : lerp(1, 0.965, e));
+  draw(cur, now, fade ? e : 1, fade ? (fade.dir > 0 ? lerp(0.965, 1, e) : lerp(1.045, 1, e)) : 1);
+}
+
+function sync() {
+  $('hudN').textContent = `${cur + 1} / ${N}`;
+  dashes.forEach((d, j) => { d.classList.toggle('done', j < cur); d.classList.toggle('cur', j === cur); }); dashes[cur].style.setProperty('--p', (((step + 1) / (maxOf[cur] + 1)) * 100).toFixed(1) + '%');
+  try { history.replaceState(null, '', `#${cur + 1}${step ? '.' + step : ''}`); } catch (_) {}
+  const ps = slides[cur].querySelectorAll('.nt p'); $('notesNow').textContent = ps[step] ? ps[step].textContent : '';
+  let nx = ps[step + 1] && ps[step + 1].textContent; if (!nx && cur < N - 1) { const q = slides[cur + 1].querySelector('.nt p'); nx = q && q.textContent; }
+  $('notesNext').textContent = nx ? 'Далее: ' + nx : '';
+  $('notesPos').textContent = `Слайд ${cur + 1} из ${N} · шаг ${step + 1} из ${maxOf[cur] + 1} · ${slides[cur].dataset.name}`;
+}
+setInterval(() => { if (!t0) return; const s = Math.floor((Date.now() - t0) / 1000); $('notesTime').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }, 1000);
+
+function fit() { const s = Math.min(innerWidth / 1600, innerHeight / 900); stage.style.setProperty('--s', s); K = Math.min(2, Math.max(0.5, s * (window.devicePixelRatio || 1))); cv.width = Math.round(1600 * K); cv.height = Math.round(900 * K); }
+addEventListener('resize', fit); fit();
+if (document.fonts) { Promise.all(['200 40px Jost', '300 40px Jost', '400 24px Jost', '500 20px Jost', '700 40px Unbounded', '800 40px Unbounded'].map((f) => document.fonts.load(f).catch(() => {}))).then(centerHeads);
+  if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', centerHeads); }
+
+let toastT; const toast = (m) => { toastEl.textContent = m; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 3200); };
+function full() {
+  const d = document, el = d.documentElement;
+  if (d.fullscreenElement || d.webkitFullscreenElement) { (d.exitFullscreen || d.webkitExitFullscreen).call(d); return; }
+  const req = el.requestFullscreen || el.webkitRequestFullscreen, no = () => toast('Полный экран здесь недоступен — откройте страницу в отдельной вкладке или нажмите F11');
+  if (!req) return no(); try { const r = req.call(el); if (r && r.catch) r.catch(no); } catch (_) { no(); }
+}
+const toggleNotes = () => notes.classList.toggle('show'), hideHint = () => hint.classList.add('gone');
+setTimeout(hideHint, 8000);
+let idleT, overHud = false; hud.addEventListener('mouseenter', () => { overHud = true; }); hud.addEventListener('mouseleave', () => { overHud = false; });
+addEventListener('mousemove', () => { hud.classList.add('show'); document.body.classList.remove('idle'); clearTimeout(idleT); const hide = () => { if (overHud) { idleT = setTimeout(hide, 1200); return; } hud.classList.remove('show'); document.body.classList.add('idle'); }; idleT = setTimeout(hide, 2400); });
+addEventListener('keydown', (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return; if (e.target.closest && e.target.closest('button')) return; const c = e.code;
+  if (['ArrowRight', 'ArrowDown', 'PageDown', 'Space', 'Enter', 'NumpadEnter'].includes(c)) { e.preventDefault(); next(); }
+  else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(c)) { e.preventDefault(); prev(); }
+  else if (c === 'Home') { e.preventDefault(); show(0, 0, 'fwd'); }
+  else if (c === 'End') { e.preventDefault(); show(N - 1, maxOf[N - 1], 'back'); }
+  else if (c === 'KeyF') full(); else if (c === 'KeyN') toggleNotes(); else if (c === 'KeyB' || c === 'Period') black.classList.toggle('show'); else return;
+  hideHint();
+});
+// Мышь: клик — дальше. Палец: свайп или касание левой трети — назад, остального — вперёд.
+let p0 = null;
+vp.addEventListener('pointerdown', (e) => { p0 = { x: e.clientX, y: e.clientY, type: e.pointerType }; });
+vp.addEventListener('pointerup', (e) => { if (!p0) return; const dx = e.clientX - p0.x, dy = e.clientY - p0.y, type = p0.type; p0 = null; hideHint();
+  if (type === 'mouse') { if (e.button === 0 && Math.hypot(dx, dy) < 8) next(); return; }
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) { dx < 0 ? next() : prev(); return; }
+  if (Math.hypot(dx, dy) < 14) (e.clientX < innerWidth * 0.3 ? prev : next)(); });
+$('bPrev').addEventListener('click', prev); $('bNext').addEventListener('click', next); $('bNotes').addEventListener('click', toggleNotes); $('bFull').addEventListener('click', full);
+
+slides.forEach((s, i) => { s.setAttribute('role', 'group'); s.setAttribute('aria-roledescription', 'слайд'); s.setAttribute('aria-label', `${i + 1}. ${s.dataset.name}`); s.setAttribute('aria-hidden', 'true'); });
+const mh = /^#(\d+)(?:\.(\d+))?$/.exec(location.hash);
+if (mh) { const i = Math.min(N, Math.max(1, +mh[1])) - 1; show(i, Math.min(maxOf[i], +(mh[2] || 0)), 'back'); fade = null; } else show(0, 0, 'fwd');
+requestAnimationFrame(frame);
+})();
+</script>
