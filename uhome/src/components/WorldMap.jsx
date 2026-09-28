@@ -7,7 +7,8 @@ import { initials } from '../lib/format.js';
 
 /* Карта резидентов — из UPASS. Мир точками, пять регионов клуба значками
    с силуэтом. Приблизьте — над значком дугой встанут резиденты: дуга
-   держится в верхних 150°, поэтому люди не наезжают ни на значок, ни на подпись. */
+   держится в верхних 150°, поэтому люди не наезжают ни на значок, ни на подпись.
+   Рамка и подпись — у экрана «Люди», здесь только карта и две кнопки масштаба. */
 
 const W = 720;
 const H = 276;
@@ -127,7 +128,7 @@ export default function WorldMap({ people = [], selected = null, onSelect, onPer
   const showPeople = k >= 2.6;
 
   return (
-    <div className="mapwrap" style={{ height }} ref={box}>
+    <div className="p-mapwrap" style={{ height }} ref={box}>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         preserveAspectRatio="xMidYMid slice"
@@ -199,10 +200,9 @@ export default function WorldMap({ people = [], selected = null, onSelect, onPer
       </svg>
 
       <div style={{ position: 'absolute', right: 10, top: 10, display: 'grid', gap: 6 }}>
-        <button className="mapbtn" onClick={() => zoomBy(1.5)} aria-label="Приблизить">+</button>
-        <button className="mapbtn" onClick={() => zoomBy(1 / 1.5)} aria-label="Отдалить">−</button>
+        <button className="p-mapbtn" onClick={() => zoomBy(1.5)} aria-label="Приблизить">+</button>
+        <button className="p-mapbtn" onClick={() => zoomBy(1 / 1.5)} aria-label="Отдалить">−</button>
       </div>
-      <div className="maplabel">{showPeople ? 'Нажмите на человека — откроется профиль' : 'Приблизьте или нажмите на регион'}</div>
     </div>
   );
 }

@@ -51,7 +51,8 @@ export default function App() {
       <div className="aura" />
       <div className="app">
         <main key={full}>{screen(root, id, query)}</main>
-        {TABS.has(root) && <AiFab app={app} />}
+        {/* на вкладке знакомств Ева уже в ряду кнопок — плавающая ей не нужна */}
+        {TABS.has(root) && !(root === 'people' && (!query.tab || query.tab === 'meet')) && <AiFab app={app} />}
         {!FULLSCREEN.has(root) && <Nav root={root} badge={totalUnread(app)} />}
         {app.toast && <div className="toast" key={app.toast.at} style={FULLSCREEN.has(root) ? { bottom: 90 } : undefined}>{app.toast.text}</div>}
       </div>

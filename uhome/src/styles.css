@@ -293,7 +293,7 @@ button.card { display: block; width: 100%; }
 
 /* Переключатель: подчёркивание золотом, без плашек */
 .seg { display: flex; gap: 0; border-bottom: 1px solid var(--line); }
-.seg button { position: relative; flex: 1; height: 40px; font-size: 14px; font-weight: 500; color: var(--ink-3); text-align: center; transition: color 0.2s; }
+.seg button { position: relative; flex: 1; min-width: 0; height: 40px; font-size: 14px; font-weight: 500; color: var(--ink-3); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.2s; }
 .seg button[data-on='true'] { color: var(--ink); }
 .seg button::after { content: ''; position: absolute; left: 12%; right: 12%; bottom: -1px; height: 1.5px; background: var(--gold); transform: scaleX(0); transition: transform 0.3s var(--ease); }
 .seg button[data-on='true']::after { transform: scaleX(1); }
