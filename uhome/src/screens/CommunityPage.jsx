@@ -9,14 +9,21 @@ import { plural } from '../lib/format.js';
 import { Scene } from '../components/Covers.jsx';
 import { Avatar, Tile } from '../components/Art.jsx';
 import { EventRow } from '../components/EventCards.jsx';
-import { TopBar, Section, List, Btn, Empty } from '../components/UI.jsx';
-import Icon from '../components/Icons.jsx';
+import { TopBar, Section, List, Item, Btn, Empty } from '../components/UI.jsx';
 import Flag from '../components/Flag.jsx';
 
-/* Сообщество: о чём оно, кто ведёт, ближайшие встречи и живой чат.
-   Локальное — привязано к региону клуба, по интересам — к главам в регионах. */
+/* Сообщество: о чём оно, кто ведёт, ближайшие встречи и чат.
+   Локальное — привязано к региону клуба, по интересам — к отделениям в регионах. */
 
-const INTEREST_KINDS = { 'i-invest': ['closed'], 'i-realty': ['partner'], 'i-family': ['partner'], 'i-sport': ['club'], 'i-ai': ['online'] };
+/* События сообщества по интересам — по теме, а не по типу. */
+const TOPIC_WORDS = {
+  'i-invest': ['инвест', 'сделк', 'основател', 'фаундер', 'капитал'],
+  'i-realty': ['недвиж', 'аренд', 'застройщ', 'квартир', 'ejari'],
+  'i-family': ['семей', 'детей', 'детск', 'школ', 'little sun'],
+  'i-sport': ['серф', 'падел', 'бег', 'байк', 'турнир', 'прогулк'],
+  'i-ai': ['ai', 'ассистент', 'автоматиз', 'технолог'],
+};
+const onTopic = (c, e) => (TOPIC_WORDS[c.id] || []).some((w) => `${e.title} ${e.about}`.toLowerCase().includes(w));
 
 const ago = (at) => {
   const m = Math.max(1, Math.round((Date.now() - at) / 60000));
@@ -33,14 +40,10 @@ export default function CommunityPage({ id }) {
   const local = c.kind === 'local';
   const R = local ? REGIONS[c.region] : null;
   const joined = app.joined.includes(c.id);
-  const allEvents = local
-    ? EVENTS.filter((e) => e.region === c.region)
-    : EVENTS.filter((e) => INTEREST_KINDS[c.id]?.includes(e.kind));
+  const allEvents = EVENTS.filter((e) => (local ? e.region === c.region : onTopic(c, e)));
   const events = [...allEvents].sort((a, b) => a.inDays - b.inDays).slice(0, 3);
   const last = messagesOf(app, c.id).slice(-3);
-  const chapters = local
-    ? COMMUNITIES.filter((x) => x.kind === 'interest' && x.chapters?.includes(c.region))
-    : (c.chapters || []);
+  const chapters = local ? COMMUNITIES.filter((x) => x.kind === 'interest' && x.chapters?.includes(c.region)) : (c.chapters || []);
 
   const toggle = () => {
     app.toggleJoin(c.id);
@@ -48,95 +51,66 @@ export default function CommunityPage({ id }) {
   };
 
   return (
-    <div className="screen screen--nested cmp">
+    <div className="screen screen--nested">
       <TopBar title={c.name} sub={`${c.members} ${plural(c.members, 'участник', 'участника', 'участников')}${joined ? ' · вы участник' : ''}`} backTo="/base?tab=comm" />
 
       <div className="stack-24">
-        <div className="cmp-hero">
+        <div className="stack">
           {local ? (
-            <Scene region={c.region} height={140} radius={0}>
-              <span className="cmp-hero__eye kb-glass"><Flag cc={R.cc} size={14} /> {R.name} · {R.country}</span>
+            <Scene region={c.region} height={130}>
+              <div className="scene__top"><span className="glass"><Flag cc={R.cc} size={13} /> {R.name} · {R.country}</span></div>
             </Scene>
           ) : (
-            <div className="cmp-hero__art" style={{ '--tone-a': `${c.tone}38`, '--tone-b': `${c.tone}40` }}>
-              <span className="cmp-hero__rings" aria-hidden="true"><i /><i /><i /></span>
-              <span className="cmp-hero__tile" style={{ boxShadow: `0 0 0 1px ${c.tone}55, 0 0 40px -6px ${c.tone}88` }}><Tile icon={c.icon} tone={c.tone} size={64} radius={20} /></span>
-              <span className="cmp-hero__eye kb-glass"><Icon name="globe" size={13} /> По интересам · {chapters.length} {plural(chapters.length, 'регион', 'региона', 'регионов')}</span>
+            <div className="row" style={{ gap: 14 }}>
+              <Tile icon={c.icon} tone={c.tone} size={56} radius={28} />
+              <span className="sect__eye" style={{ margin: 0 }}>По интересам · {chapters.length} {plural(chapters.length, 'регион', 'региона', 'регионов')}</span>
             </div>
           )}
-          <div className="cmp-hero__body">
-            <span className="cmp-hero__k">{local ? 'Локальное сообщество' : 'Сообщество по интересам'}</span>
-            <h1 className="h2">{c.name}</h1>
-            <p className="cmp-hero__about">{c.about}</p>
-            <div className="cmp-stats">
-              <div><b>{c.members}</b><span>{plural(c.members, 'участник', 'участника', 'участников')}</span></div>
-              <div><b>{allEvents.length}</b><span>{plural(allEvents.length, 'событие', 'события', 'событий')}</span></div>
-              <div><b>{local ? chapters.length : chapters.length}</b><span>{local ? 'по интересам' : plural(chapters.length, 'регион', 'региона', 'регионов')}</span></div>
-            </div>
+          <h1 className="h2" style={{ marginTop: 6 }}>{c.name}</h1>
+          <p className="lead">{c.about}</p>
+          <div className="strip">
+            <div><span className="strip__v">{c.members}</span><span className="strip__k">{plural(c.members, 'участник', 'участника', 'участников')}</span></div>
+            <div><span className="strip__v">{allEvents.length}</span><span className="strip__k">{plural(allEvents.length, 'событие', 'события', 'событий')}</span></div>
+            <div><span className="strip__v">{chapters.length}</span><span className="strip__k">{local ? plural(chapters.length, 'отделение', 'отделения', 'отделений') : plural(chapters.length, 'регион', 'региона', 'регионов')}</span></div>
           </div>
         </div>
 
         <div className="pair">
-          <Btn variant={joined ? 'done' : 'gold'} icon={joined ? 'check' : 'plus'} onClick={toggle}>
-            {joined ? 'Вы участник' : 'Вступить'}
-          </Btn>
+          <Btn variant={joined ? 'done' : 'gold'} icon={joined ? 'check' : 'plus'} onClick={toggle}>{joined ? 'Вы участник' : 'Вступить'}</Btn>
           <Btn variant="ghost" icon="message" onClick={() => go(`/chat/${c.id}`)}>Чат</Btn>
         </div>
 
         {chapters.length > 0 && (
-          <Section title={local ? 'Главы в регионе' : 'Главы по регионам'} note={local ? 'Сообщества по интересам в регионе' : 'Где сообщество встречается вживую'}>
-            <div className="cmp-chapters">
+          <Section title={local ? 'Отделения в регионе' : 'Отделения по регионам'} note={local ? 'Сообщества по интересам, которые встречаются здесь' : 'Где сообщество встречается вживую'}>
+            <div className="wrap">
               {local
-                ? chapters.map((x) => (
-                  <button key={x.id} className="cmp-chip" onClick={() => go(`/community/${x.id}`)}>
-                    <Tile icon={x.icon} tone={x.tone} size={22} radius={7} /> {x.name}
-                  </button>
-                ))
-                : chapters.map((k) => (
-                  <span key={k} className="cmp-chip cmp-chip--static">
-                    <Flag cc={REGIONS[k].cc} size={16} /> {REGIONS[k].name}
-                  </span>
-                ))}
+                ? chapters.map((x) => <button key={x.id} className="chip" onClick={() => go(`/community/${x.id}`)}>{x.name}</button>)
+                : chapters.map((k) => <span key={k} className="chip"><Flag cc={REGIONS[k].cc} size={15} /> {REGIONS[k].name}</span>)}
             </div>
           </Section>
         )}
 
         <Section title="Ведущие">
-          <div className="mtp-people">
+          <List>
             {c.hosts.map(byId).map((p) => (
-              <button key={p.id} className="mtp-person" onClick={() => go(`/p/${p.id}`)}>
-                <Avatar person={p} size={40} dot={p.online} />
-                <span className="grow" style={{ minWidth: 0 }}>
-                  <span className="mtp-person__t">{p.name}</span>
-                  <span className="mtp-person__s">{p.title} · {p.company}</span>
-                </span>
-                <Icon name="right" size={16} className="chev" />
-              </button>
+              <Item key={p.id} lead={<Avatar person={p} size={42} dot={p.online} />} title={p.name} sub={`${p.title} · ${p.company}`} onClick={() => go(`/p/${p.id}`)} />
             ))}
-          </div>
+          </List>
         </Section>
 
         {last.length > 0 && (
           <Section title="В чате" note="Последние сообщения" more="Открыть" onMore={() => go(`/chat/${c.id}`)}>
-            <button className="cmp-feed" onClick={() => go(`/chat/${c.id}`)}>
+            <List>
               {last.map((m, i) => {
                 const p = m.from === 'me' ? app.me : byId(m.who);
-                return (
-                  <span key={i} className="cmp-msg" style={{ '--i': i }}>
-                    <Avatar person={p} size={28} />
-                    <span className="grow" style={{ minWidth: 0 }}>
-                      <span className="cmp-msg__who">{m.from === 'me' ? 'Вы' : p?.name}<em>{ago(m.at)}</em></span>
-                      <span className="cmp-msg__t">{m.text}</span>
-                    </span>
-                  </span>
-                );
+                return <Item key={i} lead={<Avatar person={p} size={36} />} title={m.from === 'me' ? 'Вы' : p?.name} sub={m.text} subWrap meta={ago(m.at)} chev={false} onClick={() => go(`/chat/${c.id}`)} />;
               })}
-            </button>
+            </List>
           </Section>
         )}
 
         {events.length > 0 && (
-          <Section title="Ближайшие встречи" note={local ? `Всё, что ${R.loc}` : 'Во всех регионах клуба'}>
+          <Section title="Ближайшие встречи" note={local ? `Всё, что ${R.loc}` : 'По теме сообщества, во всех регионах'}>
             <List>{events.map((e) => <EventRow key={e.id} app={app} event={e} />)}</List>
           </Section>
         )}

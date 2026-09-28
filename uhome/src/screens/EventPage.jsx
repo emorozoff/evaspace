@@ -1,7 +1,7 @@
 import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import { eventById, KINDS } from '../data/events.js';
-import { byId } from '../data/people.js';
+import { byId, firstNameOf } from '../data/people.js';
 import { REGIONS } from '../data/regions.js';
 import { companyById } from '../data/services.js';
 import { localOf } from '../data/communities.js';
@@ -9,19 +9,17 @@ import { goingCount } from '../lib/select.js';
 import { eventIntros } from '../lib/intro.js';
 import { assistantOf } from '../lib/assistant.js';
 import { introduce } from '../components/Intros.jsx';
-import { whenLabel, dayShift, weekdayLong, monthShort } from '../lib/format.js';
-import { timeForMe, downloadIcs } from '../lib/calendar.js';
+import { whenLabel, dayShift, weekdayLong, dateLong, plural } from '../lib/format.js';
+import { downloadIcs } from '../lib/calendar.js';
 import { EventCover, Brand } from '../components/Covers.jsx';
-import { KindTag, placeOf, PctRing } from '../components/EventCards.jsx';
+import { placeOf, myTime } from '../components/EventCards.jsx';
 import { Avatar, AvaStack } from '../components/Art.jsx';
-import { TopBar, Section, List, Item, Btn, Note, Empty } from '../components/UI.jsx';
+import { TopBar, Section, List, Item, Btn, Empty } from '../components/UI.jsx';
 import Icon from '../components/Icons.jsx';
 
-/* Страница события: всё, чтобы решить «иду или нет». Сверху — сцена и
-   «билет» моноширинными полями: дата, начало, длительность, места.
-   Дальше место и вход, программа линией времени, кто ведёт, зал
-   по местам и с кем стоит познакомиться (польза кольцом). Главное
-   действие всегда под рукой — в стеклянной панели внизу. */
+/* Страница события: всё, чтобы решить «иду или нет». Обложка, заголовок
+   антиквой, факты строками, программа шагами, кто идёт и с кем стоит
+   познакомиться. Главное действие — в панели у нижнего края. */
 
 export default function EventPage({ id }) {
   const app = useApp();
@@ -34,15 +32,17 @@ export default function EventPage({ id }) {
   const asked = app.asked[e.id];
   const closed = e.kind === 'closed';
   const online = e.kind === 'online';
+  const free = /бесплатно/i.test(e.price);
   const people = e.going.map(byId).filter(Boolean);
   const n = goingCount(app, e);
   const left = Math.max(0, e.cap - n);
-  const mineTime = timeForMe(e, app.me.region);
+  const mine = myTime(e, app.me.region);
   const d = dayShift(e.inDays);
   const community = e.region ? localOf(e.region) : null;
   const A = assistantOf(app);
   const meet = eventIntros(app, e).slice(0, 4);
   const R = REGIONS[e.region];
+  const canCalendar = !closed || going;
 
   const share = async () => {
     const text = `${e.title} — ${whenLabel(e.inDays, e.time)}, ${e.place}`;
@@ -59,8 +59,9 @@ export default function EventPage({ id }) {
 
   const main = () => {
     if (closed && !going) {
+      // заявка уходит в чат с командой (store.askClosed) — обещание «придёт сообщение» держим
       app.askClosed(e.id);
-      app.say('Заявка отправлена — команда ответит в течение дня');
+      app.say('Заявка отправлена — ответ команды придёт в сообщения');
       return;
     }
     app.toggleGoing(e.id);
@@ -68,9 +69,10 @@ export default function EventPage({ id }) {
   };
 
   const openMap = online || closed ? undefined : () => window.open(`https://maps.google.com/?q=${encodeURIComponent(`${e.place}, ${R.name}`)}`, '_blank', 'noopener');
+  const introWhy = (x) => (going ? `Вы оба идёте на «${e.title}». ${x.why}` : `На этом событии будет ${firstNameOf(x.p)}: «${e.title}». ${x.why}`);
 
   return (
-    <div className="screen screen--nested xevp">
+    <div className="screen screen--nested s-hascta">
       <TopBar
         title={e.title}
         sub={online ? 'Эфир · Zoom' : <>{KINDS[e.kind].name} · {placeOf(e)}</>}
@@ -79,193 +81,126 @@ export default function EventPage({ id }) {
       />
 
       <div className="stack-24">
-        <div className="xevp__hero">
-          <EventCover event={e} height={188}>
+        <div className="stack">
+          <EventCover event={e} height={170}>
             <div className="scene__top">
-              <span className="cv-chip">{placeOf(e)}</span>
-              {going ? <span className="cv-chip cv-chip--sea"><Icon name="check" size={12} width={2} /> вы идёте</span> : <KindTag kind={e.kind} />}
+              <span className="glass">{placeOf(e)}</span>
+              {going ? <span className="glass sea"><Icon name="check" size={12} width={2} /> вы идёте</span> : e.kind !== 'club' ? <span className="glass">{KINDS[e.kind].name}</span> : null}
             </div>
           </EventCover>
-          <h1 className="h2 xevp__title">{e.title}</h1>
+          <h1 className="h2" style={{ marginTop: 6 }}>{e.title}</h1>
+        </div>
 
-          <div className="xticket">
-            <div className="xticket__c">
-              <span className="xticket__k">Дата</span>
-              <span className="xticket__v">{String(d.getDate()).padStart(2, '0')} {monthShort(d)}</span>
-              <span className="xticket__s">{weekdayLong(d)}</span>
-            </div>
-            <div className="xticket__c">
-              <span className="xticket__k">Начало</span>
-              <span className="xticket__v">{e.time}</span>
-              <span className="xticket__s">{e.tzName || 'местное'}</span>
-            </div>
-            <div className="xticket__c">
-              <span className="xticket__k">Длится</span>
-              <span className="xticket__v">{String(e.dur).replace(/\s*час(а|ов)?$/, ' ч')}</span>
-              <span className="xticket__s">до {endOf(e)}</span>
-            </div>
-            <div className="xticket__c">
-              <span className="xticket__k">Места</span>
-              <span className="xticket__v">{left ? left : '—'}<small>/{e.cap}</small></span>
-              <span className="xticket__s">{left ? 'свободно' : 'мест нет'}</span>
-            </div>
+        <div className="rows">
+          <div className="rows__r">
+            <span className="rows__k">Когда<i>{weekdayLong(d)}, {dateLong(d)}</i></span>
+            <span className="rows__v">{e.time}{e.tzName && <u>{e.tzName}</u>}</span>
           </div>
-          {mineTime && (
-            <div className="xevp__tz"><Icon name="clock" size={13} /> В вашем поясе — {mineTime.replace('у вас ', '')}</div>
+          {mine && (
+            <div className="rows__r">
+              <span className="rows__k">Время у вас<i>{REGIONS[app.me.region].name}</i></span>
+              <span className="rows__v">{mine.replace('у вас ', '')}</span>
+            </div>
           )}
+          <div className="rows__r">
+            <span className="rows__k">Цена<i>{free ? 'Бесплатно для резидентов — нужна только отметка «Иду»' : closed ? 'Участников подтверждает команда' : 'Оплата на месте или по ссылке от команды'}</i></span>
+            <span className="rows__v">{free ? 'бесплатно' : e.price}</span>
+          </div>
+          <div className="rows__r">
+            <span className="rows__k">Места</span>
+            <span className="rows__v">{left || '—'}<u>из {e.cap}</u></span>
+          </div>
         </div>
 
         <List>
           <Item
-            icon={online ? 'video' : 'pin'}
-            title={e.place}
-            sub={online ? 'Ссылка придёт в сообщения за час до начала' : `${R.name}, ${R.country}`}
-            onClick={openMap}
+            icon={online ? 'video' : closed && !going ? 'lock' : 'pin'}
+            title={closed && !going ? 'Адрес — после подтверждения' : e.place}
+            sub={online ? 'Ссылка придёт в сообщения за час до начала' : closed && !going ? `${R.name}, ${R.country} · закрытое событие` : `${R.name}, ${R.country}`}
+            subWrap
             meta={openMap ? <Icon name="external" size={15} color="var(--ink-3)" /> : undefined}
             chev={false}
+            onClick={openMap}
           />
-          <Item icon="gift" title={e.price} sub={closed ? 'Закрытое событие: мест мало, участников подтверждает команда' : 'Оплата на месте или по ссылке от команды'} />
         </List>
 
         <Section title="О событии">
           <p className="lead">{e.about}</p>
-          {e.program?.length > 0 && (
-            <ol className={`xtl${e.program.some((x) => /^\d{1,2}:\d{2}/.test(x)) ? '' : ' xtl--n'}`}>
+        </Section>
+
+        {e.program?.length > 0 && (
+          <Section title="Программа" note={`Длится ${e.dur}`}>
+            <div className="steps">
               {e.program.map((s, i) => {
                 const m = /^(\d{1,2}:\d{2})\s*[—–-]\s*(.+)$/.exec(s);
                 return (
-                  <li key={i} className="xtl__i" style={{ '--i': i }}>
-                    <span className="xtl__t">{m ? m[1] : String(i + 1).padStart(2, '0')}</span>
-                    <span className="xtl__d">{m ? m[2] : s}</span>
-                  </li>
+                  <div key={i} className="step">
+                    <span className={`step__n${m ? ' s-time' : ''}`}>{m ? m[1] : String(i + 1).padStart(2, '0')}</span>
+                    <span className="step__t">{m ? m[2] : s}</span>
+                  </div>
                 );
               })}
-            </ol>
-          )}
-        </Section>
+            </div>
+          </Section>
+        )}
 
         <Section title="Кто ведёт">
           <List>
-            {host && (
-              <Item
-                lead={<Avatar person={host} size={44} dot={host.online} />}
-                title={host.name}
-                sub={`${host.title} · ${host.company}`}
-                onClick={() => go(`/p/${host.id}`)}
-              />
-            )}
-            {partner && (
-              <Item
-                lead={<Brand company={partner} size={44} radius={13} />}
-                title={partner.name}
-                sub={`Партнёр события · ${partner.tagline}`}
-                onClick={() => go(`/service/${partner.id}`)}
-              />
-            )}
+            {host && <Item lead={<Avatar person={host} size={42} dot={host.online} />} title={host.name} sub={`${host.title} · ${host.company}`} onClick={() => go(`/p/${host.id}`)} />}
+            {partner && <Item lead={<Brand company={partner} size={42} radius={21} />} title={partner.name} sub={`Партнёр события · ${partner.tagline}`} onClick={() => go(`/service/${partner.id}`)} />}
           </List>
         </Section>
 
         <Section title="Кто идёт" note={`${n} из ${e.cap} · ${left ? `свободно ${left}` : 'все места заняты'}`}>
-          <div className="xhall">
-            <Seats n={n} cap={e.cap} mine={going} />
-            <div className="xhall__who">
-              <AvaStack people={going ? [app.me, ...people] : people} size={30} max={6} />
-              <span className="xhall__names">
-                {going && 'Вы, '}{people.slice(0, going ? 2 : 3).map((p) => p.name.split(' ')[0]).join(', ')}
-                {people.length > (going ? 2 : 3) ? ` и\u00a0ещё\u00a0${people.length - (going ? 2 : 3)}` : ''}
-              </span>
-            </div>
+          <div className="row" style={{ gap: 12 }}>
+            <AvaStack people={going ? [app.me, ...people] : people} size={30} max={6} />
+            <span className="t-sm dim">
+              {going && 'Вы, '}{people.slice(0, going ? 2 : 3).map((p) => p.name.split(' ')[0]).join(', ')}
+              {people.length > (going ? 2 : 3) ? ` и ещё ${people.length - (going ? 2 : 3)}` : ''}
+            </span>
           </div>
         </Section>
 
         {meet.length > 0 && (
           <Section title="С кем познакомиться" note={`${A.name} ${A.found} по пользе для вас`}>
-            <div className="xmeet">
-              {meet.map((x, i) => {
+            <List>
+              {meet.map((x) => {
                 const done = app.intros?.[x.p.id];
                 return (
-                  <div key={x.p.id} className="xmeet__row" style={{ '--i': i }}>
-                    <button className="xmeet__ava" onClick={() => go(`/p/${x.p.id}`)} aria-label={x.p.name}>
-                      <Avatar person={x.p} size={42} dot={x.p.online} />
-                    </button>
-                    <div className="xmeet__body">
-                      <button className="xmeet__name" onClick={() => go(`/p/${x.p.id}`)}>{x.p.name}</button>
-                      <div className="xmeet__why">{x.why}</div>
-                      {done ? (
-                        <span className="xmeet__done"><Icon name="check" size={12} width={2.2} /> интро отправлено</span>
-                      ) : (
-                        <button className="xmeet__act" onClick={() => introduce(app, x.p, `Вы оба идёте на «${e.title}». ${x.why}`)}>
-                          <Icon name="handshake" size={14} /> Познакомить
-                        </button>
-                      )}
-                    </div>
-                    <PctRing pct={x.pct} size={46} />
+                  <div key={x.p.id} className="item" style={{ alignItems: 'flex-start' }}>
+                    <button onClick={() => go(`/p/${x.p.id}`)} aria-label={x.p.name}><Avatar person={x.p} size={42} dot={x.p.online} /></button>
+                    <span className="item__body">
+                      <button className="item__t" style={{ display: 'block', maxWidth: '100%' }} onClick={() => go(`/p/${x.p.id}`)}>{x.p.name}</button>
+                      <span className="item__s item__s--wrap">{x.why}</span>
+                      {done
+                        ? <span className="t-xs sea" style={{ display: 'block', marginTop: 6 }}>Интро отправлено</span>
+                        : <button className="s-act" onClick={() => introduce(app, x.p, introWhy(x))}>Познакомить</button>}
+                    </span>
+                    <span className="s-pct">{x.pct}<small>%</small></span>
                   </div>
                 );
               })}
-            </div>
-            {!going && !closed && <div className="xevp__hint">Отметьтесь «Иду» — {A.name} предупредит их, что вы тоже будете.</div>}
+            </List>
+            {!going && !closed && <div className="note-line">Отметьтесь «Иду» — {A.name} предупредит их, что вы тоже будете.</div>}
           </Section>
         )}
 
         {closed && !going && (
-          <Note icon="lock" tone="var(--violet)">
-            {asked ? 'Заявка у команды. Как только подтвердят — придёт сообщение, а адрес появится здесь.' : 'Адрес откроется после подтверждения. Команда смотрит заявки каждый день.'}
-          </Note>
+          <div className="note-line">
+            {asked ? 'Заявка у команды. Как только подтвердят — придёт сообщение, а адрес появится здесь.' : 'Закрытое событие: мест мало, участников подтверждает команда. Адрес откроется после подтверждения.'}
+          </div>
         )}
-
-        <div className="xcta">
-          <Btn
-            variant={going ? 'done' : 'gold'}
-            className="xcta__main"
-            icon={going ? 'check' : closed ? 'lock' : undefined}
-            disabled={closed && asked && !going}
-            onClick={main}
-          >
-            {going ? 'Вы идёте · отменить' : closed ? (asked ? 'Заявка отправлена' : 'Подать заявку') : online ? 'Записаться на эфир' : 'Иду'}
-          </Btn>
-          <button className="xcta__ic" onClick={() => downloadIcs(e)} aria-label="Добавить в календарь" title="В календарь">
-            <Icon name="calendar" size={19} />
-          </button>
-          <button
-            className="xcta__ic"
-            onClick={() => go(community ? `/community/${community.id}` : '/chat/team')}
-            aria-label={community ? 'Чат региона' : 'Спросить команду'}
-            title={community ? 'Чат региона' : 'Спросить'}
-          >
-            <Icon name="message" size={19} />
-          </button>
-        </div>
       </div>
-    </div>
-  );
-}
 
-/* Когда закончится: начало плюс длительность — «до 10:00». */
-function endOf(e) {
-  const [h, m] = e.time.split(':').map(Number);
-  const dur = parseFloat(String(e.dur).replace(',', '.')) || 2;
-  const t = (h * 60 + m + Math.round(dur * 60)) % 1440;
-  return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
-}
-
-/* Зал по местам: до сорока мест — каждое деление, больше — шкала
-   с отметками по десяткам процентов. Ваше место — зелёным. */
-function Seats({ n, cap, mine }) {
-  if (cap <= 40) {
-    return (
-      <div className="xseats" style={{ '--cols': cap > 20 ? Math.ceil(cap / 2) : cap }} aria-label={`Занято ${n} из ${cap}`}>
-        {Array.from({ length: cap }, (_, i) => (
-          <i key={i} className={i < n ? (mine && i === 0 ? 'is-me' : 'is-on') : ''} style={{ '--i': i }} />
-        ))}
+      <div className="s-cta">
+        <Btn variant={going ? 'done' : 'gold'} className="grow" icon={going ? 'check' : undefined} disabled={closed && asked && !going} onClick={main}>
+          {going ? 'Вы идёте · отменить' : closed ? (asked ? 'Заявка отправлена' : 'Подать заявку') : online ? 'Записаться на эфир' : 'Иду'}
+        </Btn>
+        {canCalendar && (
+          <button className="s-cta__ic" onClick={() => downloadIcs(e)} aria-label="Добавить в календарь" title="В календарь"><Icon name="calendar" size={19} /></button>
+        )}
+        <button className="s-cta__ic" onClick={() => go(community ? `/community/${community.id}` : '/chat/team')} aria-label={community ? 'Чат региона' : 'Спросить команду'}><Icon name="message" size={19} /></button>
       </div>
-    );
-  }
-  return (
-    <div className="xgaugebar" aria-label={`Занято ${n} из ${cap}`}>
-      <span className="xgaugebar__fill" style={{ '--f': Math.max(0.015, n / cap) }} />
-      {Array.from({ length: 9 }, (_, i) => <i key={i} style={{ left: `${(i + 1) * 10}%` }} />)}
-      <span className="xgaugebar__l">занято {Math.max(1, Math.round((n / cap) * 100))}%</span>
     </div>
   );
 }

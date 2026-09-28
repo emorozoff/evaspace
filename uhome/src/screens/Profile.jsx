@@ -8,17 +8,18 @@ import { companyById } from '../data/services.js';
 import ResidentCard from '../components/ResidentCard.jsx';
 import RegionSheet from '../components/RegionSheet.jsx';
 import Install from '../components/Install.jsx';
-import { HoloPortrait } from '../components/AiFab.jsx';
-import { DateTile } from '../components/EventCards.jsx';
+import { AvatarPortrait } from '../components/AvatarArt.jsx';
+import { EventRow } from '../components/EventCards.jsx';
 import { assistantOf } from '../lib/assistant.js';
 import { groupsOf } from '../lib/groups.js';
+import { plural } from '../lib/format.js';
 import { TONES } from '../data/avatars.js';
 import { GroupAva } from '../components/Art.jsx';
-import { TopBar, Section, List, Item, Btn, Sheet, Field, Note } from '../components/UI.jsx';
+import { TopBar, Section, List, Item, Btn, Sheet, Field } from '../components/UI.jsx';
 import Flag from '../components/Flag.jsx';
 
-/* Профиль: карта резидента, главная привязка — регион, анкета, мои события
-   и заявки в услуги. Всё правится здесь же, без отдельных экранов. */
+/* Профиль: карта резидента, регион, анкета, ассистент и группа, мои
+   события и заявки. Всё правится здесь же, без отдельных экранов. */
 
 export default function Profile() {
   const app = useApp();
@@ -30,50 +31,30 @@ export default function Profile() {
   const mm = groupsOf(app.me)[0];
 
   return (
-    <div className="screen screen--nested xpf">
+    <div className="screen screen--nested">
       <TopBar title="Профиль" sub={app.me.name} backTo="/" />
       <div className="stack-24">
         <ResidentCard me={app.me} stats={{ circle: app.circle.length, events: going.length }} />
 
         <List>
-          <Item
-            lead={<span className="xpf__flag"><Flag cc={r.cc} size={24} /></span>}
-            title={<>Я сейчас: {r.name}</>}
-            sub={<span className="xpf__geo">{r.en} · {Math.abs(r.lat).toFixed(2)}°{r.lat >= 0 ? 'N' : 'S'} {Math.abs(r.lon).toFixed(2)}°{r.lon >= 0 ? 'E' : 'W'}</span>}
-            meta={<span className="xpf__chg">сменить</span>}
-            onClick={() => setRegion(true)}
-          />
+          <Item lead={<span className="disc"><Flag cc={r.cc} size={22} /></span>} title={`Я сейчас: ${r.name}`} sub={r.country} meta={<span className="gold">сменить</span>} chev={false} onClick={() => setRegion(true)} />
           <Item icon="edit" title="Анкета" sub={`${app.me.title || app.me.role}${app.me.company ? ` · ${app.me.company}` : ''}`} onClick={() => setEdit(true)} />
           <Item icon="message" title="Сообщения" sub="Команда клуба, резиденты, сообщества" onClick={() => go('/chats')} />
         </List>
 
         <Section title="Ассистент и группа">
           <List>
-            <Item
-              lead={<HoloPortrait who={A.id} size={40} />}
-              title={A.name}
-              sub={`Тон: ${TONES.find((t) => t.id === (app.me.tone || 'warm'))?.name.toLowerCase()} · что знает о вас`}
-              onClick={() => go('/ai?tab=me')}
-            />
-            <Item
-              lead={<GroupAva members={mm.members} size={44} />}
-              title={mm.name}
-              sub={`10 участников · ${mm.when}`}
-              onClick={() => go('/group/g-mm')}
-            />
+            <Item lead={<AvatarPortrait who={A.id} size={42} />} title={A.name} sub={`Тон: ${TONES.find((t) => t.id === (app.me.tone || 'warm'))?.name.toLowerCase()} · что знает о вас`} onClick={() => go('/ai?tab=me')} />
+            <Item lead={<GroupAva members={mm.members} size={42} />} title={mm.name} sub={`${mm.members.length + 1} ${plural(mm.members.length + 1, 'участник', 'участника', 'участников')} · ${mm.when}`} onClick={() => go('/group/g-mm')} />
             <Item icon="spark" title={app.me.tested ? 'Пройти тест заново' : 'Пройти тест'} sub="Минута — и подбор людей и событий точнее" onClick={() => go('/test')} />
           </List>
         </Section>
 
-        <Section title="Мои события" note={going.length ? `${going.length} ${going.length === 1 ? 'отметка' : going.length < 5 ? 'отметки' : 'отметок'} «иду»` : undefined} more="Афиша" onMore={() => go('/events')}>
+        <Section title="Мои события" note={going.length ? `${going.length} ${plural(going.length, 'отметка', 'отметки', 'отметок')} «иду»` : undefined} more="Афиша" onMore={() => go('/events')}>
           {going.length ? (
-            <List>
-              {going.map((e) => (
-                <Item key={e.id} lead={<DateTile days={e.inDays} />} title={e.title} sub={<><span className="xrow__time">{e.time}</span> · {e.kind === 'online' ? 'Zoom' : <><Flag cc={REGIONS[e.region].cc} size={12} /> {REGIONS[e.region].name}</>}</>} onClick={() => go(`/event/${e.id}`)} />
-              ))}
-            </List>
+            <List>{going.map((e) => <EventRow key={e.id} app={app} event={e} />)}</List>
           ) : (
-            <Note icon="calendar">Пока никуда не записаны — загляните в афишу.</Note>
+            <div className="note-line">Пока никуда не записаны — загляните в афишу.</div>
           )}
         </Section>
 
@@ -124,7 +105,7 @@ function EditForm({ app, onDone }) {
       <div>
         <span className="label">Роль</span>
         <div className="wrap">
-          {ROLES.map((r) => <button key={r} className={`chip${f.role === r ? ' chip--on' : ''}`} onClick={() => setF({ ...f, role: r })}>{r}</button>)}
+          {ROLES.map((x) => <button key={x} className={`chip${f.role === x ? ' chip--on' : ''}`} onClick={() => setF({ ...f, role: x })}>{x}</button>)}
         </div>
       </div>
       <div className="pair">
@@ -140,12 +121,7 @@ function EditForm({ app, onDone }) {
           ))}
         </div>
       </div>
-      <Btn
-        variant="gold"
-        wide
-        disabled={f.name.trim().length < 3}
-        onClick={() => { app.updateMe({ ...f, name: f.name.trim() }); app.say('Анкета сохранена'); onDone(); }}
-      >
+      <Btn variant="gold" wide disabled={f.name.trim().length < 3} onClick={() => { app.updateMe({ ...f, name: f.name.trim() }); app.say('Анкета сохранена'); onDone(); }}>
         Сохранить
       </Btn>
     </div>

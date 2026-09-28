@@ -5,129 +5,100 @@ import { byId } from '../data/people.js';
 import { dayShift, monthShort, weekday, plural } from '../lib/format.js';
 import { goingCount } from '../lib/select.js';
 import { usefulAt } from '../lib/intro.js';
+import { eventStart, eventTz } from '../lib/calendar.js';
+import { localParts, hhmm } from '../lib/time.js';
 import { EventCover } from './Covers.jsx';
 import { AvaStack } from './Art.jsx';
 import Icon from './Icons.jsx';
 import Flag from './Flag.jsx';
 
-/* Метка типа события: моноширинная, цвет — тонкой кромкой и текстом. */
+/* Событие в списке и карточкой: дата плиткой, название, время и место.
+   Одна метка справа — ваш статус, если он есть, иначе цена. */
+
 export function KindTag({ kind }) {
   const k = KINDS[kind];
-  return (
-    <span className="tag xkind" style={{ color: k.tone, '--k': k.tone }}>
-      {kind === 'closed' && <Icon name="lock" size={11} />}
-      {kind === 'online' && <Icon name="video" size={11} />}
-      {k.name}
-    </span>
-  );
+  return <span className={`tag${kind === 'closed' ? ' tag--violet' : kind === 'online' ? ' tag--blue' : ''}`}>{k.name}</span>;
 }
 
 export const placeOf = (e) => (e.kind === 'online' ? 'Zoom' : <><Flag cc={REGIONS[e.region]?.cc} size={13} /> {REGIONS[e.region]?.name}</>);
 
-/* Кольцо «польза»: делениями — шкала, золотой дугой — процент.
-   Дуга прорисовывается при появлении, цифра — моноширинная. */
-export function PctRing({ pct, size = 42, stroke = 1.6 }) {
-  const r = size / 2 - stroke - 1.5;
-  const c = 2 * Math.PI * r;
-  const off = c * (1 - Math.max(0, Math.min(100, pct)) / 100);
-  const lvl = pct >= 75 ? 'hi' : pct >= 55 ? 'mid' : 'lo';
-  const h = size / 2;
-  return (
-    <span className={`xring xring--${lvl}`} style={{ width: size, height: size, '--c': c, '--rs': `${size}px` }} role="img" aria-label={`Польза ${pct}%`}>
-      <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} aria-hidden="true">
-        <circle className="xring__track" cx={h} cy={h} r={r + 2.6} strokeWidth="2" strokeDasharray={`0.8 ${(2 * Math.PI * (r + 2.6)) / 36 - 0.8}`} />
-        <circle className="xring__base" cx={h} cy={h} r={r} strokeWidth={stroke} />
-        <circle className="xring__arc" cx={h} cy={h} r={r} strokeWidth={stroke} strokeDasharray={c} strokeDashoffset={off} transform={`rotate(-90 ${h} ${h})`} />
-      </svg>
-      <span className="xring__v">{pct}<i>%</i></span>
-    </span>
-  );
+/** «у вас 00:00 (+1 день)» — когда пояс события не совпадает с вашим. */
+export function myTime(e, region) {
+  const tz = eventTz(e);
+  const mine = REGIONS[region]?.tz;
+  if (!mine || mine === tz) return null;
+  const start = eventStart(e);
+  const t = localParts(mine, new Date(start));
+  const wall = new Date(start + t.offset * 60000);
+  const day = dayShift(e.inDays);
+  const diff = Math.round((Date.UTC(wall.getUTCFullYear(), wall.getUTCMonth(), wall.getUTCDate()) - Date.UTC(day.getFullYear(), day.getMonth(), day.getDate())) / 86400000);
+  const hm = hhmm(t);
+  if (hm === e.time && diff === 0) return null;
+  return `у вас ${hm}${diff > 0 ? ' (+1 день)' : diff < 0 ? ' (−1 день)' : ''}`;
 }
 
-/* Дата плиткой, как на табло: день недели (или «сегодня»), число, месяц. */
+/** Время в строке списка — в вашем поясе: «у вас 00:00 (+1 день)», иначе «19:00». */
+export function timeLine(e, region) {
+  return myTime(e, region) || e.time;
+}
+
+/* Дата плиткой: число крупно, месяц мелко. Сегодня — золотая линия. */
 export function DateTile({ days }) {
   const d = dayShift(days);
-  const w = days === 0 ? 'сегодня' : days === 1 ? 'завтра' : weekday(d);
   return (
-    <span className={`xdate${days === 0 ? ' xdate--today' : days === 1 ? ' xdate--soon' : ''}`}>
-      <span className="xdate__w">{w}</span>
-      <span className="xdate__d">{String(d.getDate()).padStart(2, '0')}</span>
-      <span className="xdate__m">{monthShort(d)}</span>
+    <span className={`s-date${days === 0 ? ' s-date--today' : ''}`} aria-label={`${d.getDate()} ${monthShort(d)}`}>
+      <span className="s-date__w">{weekday(d)}</span>
+      <span className="s-date__d">{d.getDate()}</span>
+      <span className="s-date__m">{monthShort(d)}</span>
     </span>
   );
 }
 
 const durShort = (dur) => String(dur || '').replace(/\s*час(а|ов)?$/, ' ч');
 
-/* Большая карточка: ближайшее событие — сцена, дата плиткой, время,
-   кто идёт и сколько там полезных знакомств. Нижняя кромка сцены —
-   шкала заполненности зала. */
-export function EventCard({ app, event: e, height = 150 }) {
+/* Карточка ближайшего события: обложка, дата, название, кто идёт. */
+export function EventCard({ app, event: e, height = 140 }) {
   const mine = app.going[e.id];
   const people = e.going.map(byId).filter(Boolean);
-  const special = e.kind === 'closed' || e.kind === 'partner';
   const useful = usefulAt(app, e);
   const n = goingCount(app, e);
-  const fill = Math.min(1, n / e.cap);
   return (
-    <button className="evcard xev" onClick={() => go(`/event/${e.id}`)}>
+    <button className="s-ev tap" onClick={() => go(`/event/${e.id}`)}>
       <EventCover event={e} height={height} radius={0}>
         <div className="scene__top">
-          <span className="cv-chip">{placeOf(e)}</span>
-          {mine ? (
-            <span className="cv-chip cv-chip--sea"><Icon name="check" size={12} width={2} /> вы идёте</span>
-          ) : special ? (
-            <span className="cv-chip" style={{ color: KINDS[e.kind].tone }}>{e.kind === 'closed' && <Icon name="lock" size={11} />}{KINDS[e.kind].name}</span>
-          ) : null}
+          <span className="glass">{placeOf(e)}</span>
+          {mine ? <span className="glass sea"><Icon name="check" size={12} width={2} /> вы идёте</span> : e.kind !== 'club' ? <span className="glass">{KINDS[e.kind].name}</span> : null}
         </div>
-        <i className="xev__cap" style={{ '--f': fill }} aria-hidden="true" />
       </EventCover>
-      <span className="xev__body">
+      <span className="s-ev__body">
         <DateTile days={e.inDays} />
-        <span className="xev__main">
-          <span className="xev__t">{e.title}</span>
-          <span className="xev__meta">
-            <span>{e.time}</span><i />
-            <span>{durShort(e.dur)}</span><i />
-            <span>{e.price}</span>
-          </span>
+        <span className="grow" style={{ minWidth: 0 }}>
+          <span className="s-ev__t">{e.title}</span>
+          <span className="s-ev__m">{timeLine(e, app.me.region)} · {durShort(e.dur)} · {e.price}</span>
         </span>
       </span>
-      <span className="xev__foot">
+      <span className="s-ev__foot">
         <AvaStack people={people} size={22} max={4} />
-        <span className="xev__n">{n} {plural(n, 'идёт', 'идут', 'идут')}</span>
-        {useful > 0 && (
-          <span className="xev__use">
-            <Icon name="handshake" size={13} />
-            {useful} {plural(useful, 'полезное знакомство', 'полезных знакомства', 'полезных знакомств')}
-          </span>
-        )}
+        <span>{n} {plural(n, 'идёт', 'идут', 'идут')}</span>
+        {useful > 0 && <span className="gold" style={{ marginLeft: 'auto' }}>{useful} {plural(useful, 'полезное знакомство', 'полезных знакомства', 'полезных знакомств')}</span>}
       </span>
     </button>
   );
 }
 
-/* Строка события: дата плиткой, название, время моноширинным и одна
-   метка справа — ваш статус, если он есть, иначе цена. */
+/* Строка события в списке. */
 export function EventRow({ app, event: e }) {
   const mine = app.going[e.id];
   const asked = app.asked[e.id];
   return (
-    <button className="item xrow" onClick={() => go(`/event/${e.id}`)}>
+    <button className="item" onClick={() => go(`/event/${e.id}`)}>
       <DateTile days={e.inDays} />
       <span className="item__body">
-        <span className="item__t" style={{ display: 'block' }}>
-          {e.kind === 'closed' && <Icon name="lock" size={13} color="var(--violet)" style={{ marginRight: 5, verticalAlign: -1 }} />}
-          {e.title}
-        </span>
-        <span className="item__s xrow__s" style={{ display: 'flex' }}>
-          <span className="xrow__time">{e.time}</span>
-          <span className="xrow__dot" />
-          <span className="xrow__place">{placeOf(e)}</span>
-        </span>
+        <span className="item__t">{e.title}</span>
+        <span className="item__s">{timeLine(e, app.me.region)} · {placeOf(e)}</span>
       </span>
       <span className="item__meta">
-        {mine ? <span className="tag tag--sea"><Icon name="check" size={11} width={2.2} />иду</span> : asked ? <span className="tag tag--violet">заявка</span> : <span className="xprice">{e.price}</span>}
+        {mine ? <span className="tag tag--sea">иду</span> : asked ? <span className="tag tag--violet">заявка</span> : <span>{e.price}</span>}
       </span>
     </button>
   );

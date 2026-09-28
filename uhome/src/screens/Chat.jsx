@@ -3,25 +3,27 @@ import { useApp } from '../lib/store.jsx';
 import { go } from '../lib/router.jsx';
 import { messagesOf } from '../lib/select.js';
 import { groupById } from '../lib/groups.js';
-import { byId, toneOf } from '../data/people.js';
+import { byId } from '../data/people.js';
 import { communityById } from '../data/communities.js';
 import { REGIONS } from '../data/regions.js';
 import { seeded } from '../lib/art.js';
+import { plural } from '../lib/format.js';
 import { TopBar, Empty } from '../components/UI.jsx';
 import { Avatar, GroupAva } from '../components/Art.jsx';
 import Icon from '../components/Icons.jsx';
 import Flag from '../components/Flag.jsx';
 
-/* Переписка: личная, с командой клуба, своя группа (команда, мастер-группа)
-   или чат сообщества. Таб-бара здесь нет — поле ввода стоит у нижнего края. */
+/* Переписка: личная, с командой клуба, мастер-группа или чат сообщества.
+   Входящие — панелью, свои — на золотой подложке с тонкой кромкой.
+   Таб-бара здесь нет — поле ввода стоит у нижнего края. */
 
-const REPLIES = ['Отлично, договорились!', 'Сейчас гляну и отвечу', 'Давай созвонимся вечером?', 'Супер, спасибо!', 'Звучит интересно, расскажи подробнее'];
+const REPLIES = ['Отлично, договорились!', 'Сейчас гляну и отвечу', 'Давайте созвонимся вечером?', 'Супер, спасибо!', 'Звучит интересно, расскажите подробнее'];
 
-const hm = (ms) => {
+export const hm = (ms) => {
   const d = new Date(ms);
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
-const dayLabel = (ms) => {
+export const dayLabel = (ms) => {
   const d = new Date(ms);
   const t = new Date();
   if (d.toDateString() === t.toDateString()) return 'Сегодня';
@@ -61,98 +63,71 @@ export default function Chat({ id }) {
     setText('');
   };
 
+  const team = id === 'team';
   const title = person ? person.name : group ? group.name : community.name;
+  const members = group ? group.members.length + 1 : community?.members;
   const sub = person
-    ? id === 'team' ? 'Отвечаем за 15 минут' : <>{person.online ? 'онлайн' : 'не в сети'} · <Flag cc={REGIONS[person.region].cc} size={12} /> {person.city}</>
-    : group ? `${group.members.length + 1} участников · ${group.when}` : `${community.members} участников`;
-  const to = person ? (id === 'team' ? '/profile' : `/p/${id}`) : group ? `/group/${id}` : `/community/${id}`;
+    ? team ? 'Отвечаем за 15 минут' : <>{person.online ? 'онлайн' : 'не в сети'} · <Flag cc={REGIONS[person.region].cc} size={12} /> {person.city}</>
+    : `${members} ${plural(members, 'участник', 'участника', 'участников')}${group ? ` · ${group.when}` : ''}`;
+  const to = person ? (team ? null : `/p/${id}`) : group ? `/group/${id}` : `/community/${id}`;
+  const face = person ? <Avatar person={person} size={38} /> : group ? <GroupAva members={group.members} size={38} /> : <span className="iconbtn"><Icon name="users" size={18} /></span>;
 
   let lastDay = '';
-  let prev = null;
 
   return (
-    <div className="screen screen--nested screen--chat xc">
+    <div className="screen screen--nested screen--chat">
       <TopBar
         title={title}
         sub={sub}
         backTo="/chats"
-        right={
-          <button className="xc__who" onClick={() => go(to)} aria-label="Профиль">
-            {person ? <Avatar person={person} size={38} /> : group ? <GroupAva members={group.members} size={38} /> : <span className="iconbtn"><Icon name="users" size={18} /></span>}
-          </button>
-        }
+        right={to ? <button onClick={() => go(to)} aria-label={group ? 'О группе' : community ? 'О сообществе' : 'Профиль'}>{face}</button> : face}
       />
 
-      <div className="xc__feed">
-        {id === 'team' && (
-          <div className="xc__note">
-            <span className="xc__note-k"><Icon name="spark" size={12} /> Команда UHOME</span>
-            <span>События, услуги, знакомства, визы, жильё. Пишите как другу — разберёмся.</span>
-          </div>
-        )}
+      <div className="s-feed">
+        {team && <div className="note-line">Команда UHOME: события, услуги, знакомства, визы, жильё. Пишите как другу — разберёмся.</div>}
         {group && (
-          <button className="xc__note" onClick={() => go(`/group/${id}`)}>
-            <span className="xc__note-k"><Icon name={group.icon} size={12} /> {group.short || 'Группа'}</span>
-            <span>{group.about} <span className="gold">Состав и встречи →</span></span>
+          <button className="note-line" style={{ textAlign: 'left' }} onClick={() => go(`/group/${id}`)}>
+            {group.short}: {group.about} <span className="gold">Состав и встречи →</span>
           </button>
         )}
         {messages.length === 0 && (
-          <div className="xc__empty">
-            <span className="xc__empty-k">Канал открыт</span>
-            Здесь пока пусто. Напишите первым — {person ? 'в клубе принято отвечать' : 'сообщество увидит сообщение сразу'}.
-          </div>
+          <div className="note-line">Здесь пока пусто. Напишите первым — {person ? 'в клубе принято отвечать' : 'сообщество увидит сообщение сразу'}.</div>
         )}
         {messages.map((m, i) => {
           const day = dayLabel(m.at);
           const showDay = day !== lastDay;
           lastDay = day;
           const out = m.from === 'me';
-          const author = (community || group) && !out ? byId(m.who) : null;
-          const cont = !showDay && prev && prev.from === m.from && prev.who === m.who && m.from !== 'sys';
-          prev = m;
-          if (m.from === 'sys') {
-            return (
-              <div key={i} style={{ display: 'contents' }}>
-                {showDay && <div className="xc__day"><span>{day}</span></div>}
-                <div className="xc__sys">
-                  <span className="xc__sys-k"><Icon name="spark" size={12} /> Интро · UHOME</span>
-                  <span>{m.text}</span>
-                </div>
-              </div>
-            );
-          }
-          const bubble = (
-            <div className={`xb ${out ? 'xb--out' : 'xb--in'}${cont ? ' xb--cont' : ''}`}>
-              {author && !cont && <span className="xb__who" style={{ color: toneOf(author) }}>{author.name}</span>}
-              {!out && m.who && !author && !cont && <span className="xb__who">{m.who}</span>}
-              <span className="xb__text">{m.text}</span>
-              <span className="xb__sp" aria-hidden="true" />
-              <span className="xb__time">{hm(m.at)}{out && <Icon name="check" size={11} width={2.2} />}</span>
-            </div>
-          );
-          // в группе у последнего сообщения серии — лицо автора, как в мессенджере
+          const prev = messages[i - 1];
           const next = messages[i + 1];
-          const lastOfRun = !next || next.from !== m.from || next.who !== m.who || dayLabel(next.at) !== day;
+          const same = (a, b) => a && b && a.from === b.from && a.who === b.who && a.from !== 'sys' && dayLabel(a.at) === dayLabel(b.at);
+          const cont = !showDay && same(prev, m);
+          const lastOfRun = !same(m, next);
+          const author = (community || group) && !out ? byId(m.who) : null;
           return (
             <div key={i} style={{ display: 'contents' }}>
-              {showDay && <div className="xc__day"><span>{day}</span></div>}
-              {author ? (
-                <div className={`xb-row${cont ? ' xb-row--cont' : ''}`}>
-                  {lastOfRun ? <button className="xb-row__ava" onClick={() => go(`/p/${author.id}`)} aria-label={author.name}><Avatar person={author} size={28} /></button> : <span className="xb-row__sp" />}
-                  {bubble}
+              {showDay && <div className="s-day">{day}</div>}
+              {m.from === 'sys' ? (
+                <div className="note-line s-sys">{m.text}</div>
+              ) : (
+                <div className={`s-row${out ? ' s-row--out' : ''}${cont ? ' s-row--cont' : ''}`}>
+                  {author && (lastOfRun ? <button className="s-row__ava" onClick={() => go(`/p/${author.id}`)} aria-label={author.name}><Avatar person={author} size={28} /></button> : <span className="s-row__ava" />)}
+                  <div className={`s-b ${out ? 's-b--out' : 's-b--in'}`}>
+                    {!out && !cont && (author || m.who) && <span className="s-b__who">{author ? author.name : m.who}</span>}
+                    <span className="s-b__text">{m.text}</span>
+                    <span className="s-b__time">{hm(m.at)}</span>
+                  </div>
                 </div>
-              ) : bubble}
+              )}
             </div>
           );
         })}
       </div>
 
-      <form className="xcomp" onSubmit={(e) => { e.preventDefault(); send(); }}>
-        <div className="xcomp__bar">
-          <input className="xcomp__in" value={text} onChange={(e) => setText(e.target.value)} placeholder="Сообщение" enterKeyHint="send" aria-label="Сообщение" />
-          <button className="xcomp__send" type="submit" disabled={!text.trim()} aria-label="Отправить">
-            <Icon name="send" size={18} />
-          </button>
+      <form className="s-comp" onSubmit={(e) => { e.preventDefault(); send(); }}>
+        <div className="s-comp__bar">
+          <input className="s-comp__in" value={text} onChange={(e) => setText(e.target.value)} placeholder="Сообщение" enterKeyHint="send" aria-label="Сообщение" />
+          <button className="s-comp__send" type="submit" disabled={!text.trim()} aria-label="Отправить"><Icon name="send" size={18} /></button>
         </div>
       </form>
     </div>

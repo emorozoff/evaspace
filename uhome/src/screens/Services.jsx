@@ -5,17 +5,13 @@ import { companiesFor } from '../lib/select.js';
 import { CATEGORIES, COMPANIES, catById } from '../data/services.js';
 import { REGIONS, REGION_KEYS } from '../data/regions.js';
 import { count, plural } from '../lib/format.js';
-import { Top, Search, Picker, Section, Empty, Btn, Note } from '../components/UI.jsx';
+import { Top, Search, Picker, Section, Empty, Btn, List, Item } from '../components/UI.jsx';
 import { Brand } from '../components/Covers.jsx';
 import Icon from '../components/Icons.jsx';
 import Flag from '../components/Flag.jsx';
 
-/* Маркетплейс только из компаний резидентов. Сверху категории плитками,
-   дальше — что рекомендуем в вашем регионе, и все компании списком.
-   Регион по умолчанию — ваш: сначала то, чем можно воспользоваться сейчас. */
-
-/* Длинное слово в узкой плитке переносится по слогу, а не по букве. */
-const soft = (s) => (s.length > 10 && !s.includes(' ') ? `${s.slice(0, -5)}\u00ad${s.slice(-5)}` : s);
+/* Услуги — только компании резидентов. Поиск, регион, категории чипами,
+   что рекомендуем в вашем регионе и все компании списком. */
 
 export default function Services({ query }) {
   const app = useApp();
@@ -24,7 +20,6 @@ export default function Services({ query }) {
   const [q, setQ] = useState('');
   const list = useMemo(() => companiesFor(app, { cat, region, q }), [app, cat, region, q]);
   const r = region === 'mine' ? app.me.region : region;
-  // рекомендации — в порядке, в каком их расставила команда клуба
   const featured = COMPANIES.filter((c) => c.featured && c.regions.includes(app.me.region));
   const browsing = cat === 'all' && !q;
 
@@ -35,37 +30,31 @@ export default function Services({ query }) {
   ];
 
   return (
-    <div className="screen stack-24 rise-in xsv">
-      <div>
-        <Top
-          title="Услуги"
-          sub={<span className="xtele"><b>{COMPANIES.length}</b> {plural(COMPANIES.length, 'компания', 'компании', 'компаний')}<i />только резиденты клуба</span>}
-        />
-        <div className="stack">
-          <Search value={q} onChange={setQ} placeholder="Виза, байк, вилла, сад, ужин…" />
-          <div className="filters">
-            <Picker
-              label="Регион"
-              title="Где нужна услуга"
-              summary={r === 'all' ? <><Icon name="globe" size={16} /> Все регионы</> : <><Flag cc={REGIONS[r].cc} size={16} /> {REGIONS[r].name}{region === 'mine' ? <span className="xsv__mine">ваш регион</span> : null}</>}
-              options={regionOptions}
-              value={region}
-              def="mine"
-              onChange={setRegion}
-            />
-          </div>
+    <div className="screen stack-24 rise-in">
+      <div className="stack">
+        <Top title="Услуги" mark={String(COMPANIES.length).padStart(2, '0')} sub={`${COMPANIES.length} ${plural(COMPANIES.length, 'компания', 'компании', 'компаний')} · только резиденты клуба`} />
+        <Search value={q} onChange={setQ} placeholder="Виза, байк, вилла, сад, ужин…" />
+        <div className="filters">
+          <Picker
+            label="Регион"
+            title="Где нужна услуга"
+            summary={r === 'all' ? <><Icon name="globe" size={16} /> Все регионы</> : <><Flag cc={REGIONS[r].cc} size={16} /> {REGIONS[r].name}</>}
+            options={regionOptions}
+            value={region}
+            def="mine"
+            onChange={setRegion}
+          />
         </div>
       </div>
 
-      <div className="cats xcats">
-        {CATEGORIES.map((c, i) => {
+      <div className="scroller">
+        <button className={`chip${cat === 'all' ? ' chip--on' : ''}`} onClick={() => setCat('all')}>Все</button>
+        {CATEGORIES.map((c) => {
           const on = cat === c.id;
           const n = companiesFor(app, { cat: c.id, region }).length;
           return (
-            <button key={c.id} className={`xcat${on ? ' is-on' : ''}${n ? '' : ' is-empty'}`} style={{ '--t': c.tone, '--i': i }} onClick={() => setCat(on ? 'all' : c.id)} aria-pressed={on}>
-              <span className="xcat__ic"><Icon name={c.icon} size={19} /></span>
-              <span className="xcat__t">{soft(c.name)}</span>
-              <span className="xcat__n">{n ? count(n, 'компания', 'компании', 'компаний') : 'нет в регионе'}</span>
+            <button key={c.id} className={`chip${on ? ' chip--on' : ''}`} style={n ? undefined : { opacity: 0.5 }} onClick={() => setCat(on ? 'all' : c.id)} aria-pressed={on}>
+              <Icon name={c.icon} size={15} /> {c.name}{n ? <span className="dim-2"> {n}</span> : null}
             </button>
           );
         })}
@@ -75,18 +64,11 @@ export default function Services({ query }) {
         <Section title="Рекомендуем" note={`Резиденты пользуются ${REGIONS[app.me.region].loc}`}>
           <div className="scroller">
             {featured.map((c) => (
-              <button key={c.id} className="feat xfeat" onClick={() => go(`/service/${c.id}`)}>
-                <Brand company={c} height={124} radius={0}>
-                  <div className="scene__top">
-                    <span className="cv-chip" style={{ color: catById(c.cat).tone }}><Icon name={catById(c.cat).icon} size={12} />{catById(c.cat).name}</span>
-                    <span className="cv-chip cv-chip--gold"><Icon name="star" size={11} fill="currentColor" width={1} />{c.rating.toFixed(1)}</span>
-                  </div>
-                </Brand>
-                <div className="xfeat__body">
-                  <div className="xfeat__t">{c.name}</div>
-                  <div className="xfeat__s">{c.tagline}</div>
-                  <div className="perk xperk"><Icon name="gift" size={13} /><span>{c.perk}</span></div>
-                </div>
+              <button key={c.id} className="card tap s-feat" onClick={() => go(`/service/${c.id}`)}>
+                <span className="spread"><Brand company={c} size={44} radius={22} /><span className="s-star"><Icon name="star" size={12} fill="currentColor" width={1} />{c.rating.toFixed(1)}</span></span>
+                <span className="h3" style={{ display: 'block', marginTop: 14 }}>{c.name}</span>
+                <span className="t-xs dim-2 clamp-2" style={{ display: 'block', marginTop: 3 }}>{c.tagline}</span>
+                <span className="s-perk"><Icon name="gift" size={12} /> {c.perk}</span>
               </button>
             ))}
           </div>
@@ -107,34 +89,24 @@ export default function Services({ query }) {
             action={<Btn size="sm" variant="ghost" onClick={() => { setRegion('all'); setQ(''); }}>Все регионы</Btn>}
           />
         ) : (
-          <div className="xcos">{list.map((c, i) => <CompanyRow key={c.id} c={c} i={i} />)}</div>
+          <List>{list.map((c) => <CompanyRow key={c.id} c={c} />)}</List>
         )}
       </Section>
 
-      <Note icon="shield" tone="var(--gold)">
-        Здесь только компании резидентов. Если что-то пошло не так — напишите команде, разберёмся лично.
-      </Note>
+      <div className="note-line">Здесь только компании резидентов. Если что-то пошло не так — напишите команде, разберёмся лично.</div>
     </div>
   );
 }
 
-export function CompanyRow({ c, i = 0 }) {
+export function CompanyRow({ c }) {
   return (
-    <button className="xco" style={{ '--i': i }} onClick={() => go(`/service/${c.id}`)}>
-      <Brand company={c} size={52} radius={15} />
-      <span className="xco__body">
-        <span className="xco__top">
-          <span className="xco__t">{c.name}</span>
-          <span className="xstar"><Icon name="star" size={11} fill="currentColor" width={1} />{c.rating.toFixed(1)}</span>
-        </span>
-        <span className="xco__s">{c.tagline}</span>
-        <span className="xco__foot">
-          <span className="perk xperk"><Icon name="gift" size={12} /><span>{c.perk}</span></span>
-          <span className="xco__geo">
-            {c.regions.length > 3 ? 'все регионы' : c.regions.map((k) => <Flag key={k} cc={REGIONS[k].cc} size={13} />)}
-          </span>
-        </span>
-      </span>
-    </button>
+    <Item
+      lead={<Brand company={c} size={44} radius={22} />}
+      title={c.name}
+      sub={c.tagline}
+      meta={<><span className="s-star"><Icon name="star" size={11} fill="currentColor" width={1} />{c.rating.toFixed(1)}</span><span className="row" style={{ gap: 3 }}>{c.regions.length > 3 ? 'везде' : c.regions.map((k) => <Flag key={k} cc={REGIONS[k].cc} size={12} />)}</span></>}
+      chev={false}
+      onClick={() => go(`/service/${c.id}`)}
+    />
   );
 }
