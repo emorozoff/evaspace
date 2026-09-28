@@ -275,7 +275,7 @@ export function Brand({ company, height = 150, radius, children, size }) {
           <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={long ? tone : '#EDE6D8'} strokeOpacity={long ? 0.7 : 0.22} strokeWidth="0.7" />
         ))}
         <circle cx={cx} cy={cy} r="28" fill="#090b10" fillOpacity="0.5" stroke={tone} strokeOpacity="0.55" strokeWidth="0.8" />
-        <text x={cx} y={cy + 11} textAnchor="middle" fontSize="31" fontWeight="600" fontFamily="Onest, -apple-system, sans-serif" fill="#EDE6D8" letterSpacing="-1">
+        <text x={cx} y={cy + 11} textAnchor="middle" fontSize="31" fontWeight="600" fontFamily="Manrope, -apple-system, sans-serif" fill="#EDE6D8" letterSpacing="-1">
           {company.name[0]}
         </text>
       </svg>

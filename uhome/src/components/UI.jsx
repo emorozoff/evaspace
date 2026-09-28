@@ -3,16 +3,17 @@ import { createPortal } from 'react-dom';
 import Icon from './Icons.jsx';
 import { back as backNav } from '../lib/router.jsx';
 
-/* Заголовок вкладки: моноширинная строка-«шапка» с огоньком, название,
+/* Заголовок вкладки — как слайд колоды: строка-«шапка» моно (подпись слева,
+   номер или метка справа, линия под ними), ниже заголовок антиквой,
    подпись и одно-два действия справа. */
-export function Top({ title, sub, right, eyebrow = 'UHOME CLUB' }) {
+export function Top({ title, sub, right, eyebrow = 'UHOME CLUB', mark }) {
   return (
     <div className="top">
-      {eyebrow && <div className="top__eye">{eyebrow}</div>}
+      {eyebrow && <div className="chrome"><span>{eyebrow}</span>{mark && <b>{mark}</b>}</div>}
       <div className="top__row">
         <div className="grow" style={{ minWidth: 0 }}>
           <h1 className="h1">{title}</h1>
-          {sub && <div className="top__sub" style={{ marginTop: 6 }}>{sub}</div>}
+          {sub && <div className="top__sub">{sub}</div>}
         </div>
         {right}
       </div>
@@ -75,12 +76,15 @@ export function Item({ lead, icon, iconTone, title, sub, subWrap, meta, chev = t
   );
 }
 
-export function Section({ title, note, more, onMore, children, id }) {
+/* Секция: моно-подпись над заголовком (необязательно), заголовок антиквой,
+   пояснение и одно действие справа. */
+export function Section({ title, eye, note, more, onMore, children, id }) {
   return (
     <section className="sect" id={id}>
       {title && (
         <div className="sect__head">
           <div style={{ minWidth: 0 }}>
+            {eye && <div className="sect__eye">{eye}</div>}
             <div className="sect__title">{title}</div>
             {note && <div className="sect__note">{note}</div>}
           </div>

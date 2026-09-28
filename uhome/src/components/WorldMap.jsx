@@ -173,7 +173,7 @@ export default function WorldMap({ people = [], selected = null, onSelect, onPer
                       >
                         <rect x={-a} y={-a} width={a * 2} height={a * 2} rx={a * 0.62} fill="#141720" stroke="#100f0d" strokeWidth={1.2 / k} />
                         <rect x={-a} y={-a} width={a * 2} height={a * 2} rx={a * 0.62} fill={toneOf(r)} fillOpacity="0.26" />
-                        <text y={a * 0.36} textAnchor="middle" fontSize={a * 0.8} fontWeight="650" fill={toneOf(r)} fontFamily="Onest, sans-serif">{initials(r.name)}</text>
+                        <text y={a * 0.36} textAnchor="middle" fontSize={a * 0.8} fontWeight="650" fill={toneOf(r)} fontFamily="Manrope, sans-serif">{initials(r.name)}</text>
                         {r.online && <circle cx={a * 0.8} cy={a * 0.8} r={a * 0.26} fill="#8FB8A0" stroke="#100f0d" strokeWidth={0.6 / k} />}
                       </g>
                     );
@@ -186,7 +186,7 @@ export default function WorldMap({ people = [], selected = null, onSelect, onPer
                   <Silhouette region={p.key} size={R * 1.5} />
                   <text
                     y={R + 8.5 / Math.sqrt(k)}
-                    textAnchor="middle" fontSize={7.6 / Math.sqrt(k)} fontWeight="700" fill="#F2EEE6" fontFamily="Onest, sans-serif"
+                    textAnchor="middle" fontSize={7.6 / Math.sqrt(k)} fontWeight="700" fill="#F2EEE6" fontFamily="Manrope, sans-serif"
                     style={{ paintOrder: 'stroke' }} stroke="#100f0d" strokeWidth={2.4 / k}
                   >
                     {p.name}{count ? ` · ${count}` : ''}
