@@ -38,7 +38,8 @@ App.register('home', {
     const allT = teamRoles ? Tasks.all() : [];
     const myOpen = allT.filter(x => Tasks.mine(x) && Tasks.isOpen(x));
     const overdueAll = allT.filter(x => Tasks.overdue(x));
-    const review = allT.filter(x => x.status === 'review' && (Tasks.manager() || (x.createdBy === Tasks.meKey() && !Tasks.mine(x))));
+    const acts = teamRoles ? Inbox.actions() : {review: [], budget: [], late: [], soon: []};
+    const review = acts.review;
 
     /* показатели */
     const tiles = [];
@@ -66,7 +67,7 @@ App.register('home', {
       const late = mgr ? overdueAll.length : myOpen.filter(x => Tasks.overdue(x)).length;
       tiles.push(`<a class="card stat as-link" href="#tasks"><span class="label">${mgr ? 'Задачи команды' : 'Мои задачи'}</span>
         <div class="big">${fmt(open)} <small>открыто</small></div>
-        <div class="foot"><span class="${late ? 'bad' : ''}">${late} просрочено</span> · ${review.length} на проверке</div></a>`);
+        <div class="foot"><span class="${late ? 'bad' : ''}">${late} просрочено</span> · ${review.length} ждут вашего согласования</div></a>`);
     }
     if (role === 'member') {
       const prem = premiumOf(qStat.pays, qStat.revNew);
@@ -80,11 +81,12 @@ App.register('home', {
     if (Tasks.manager()) {
       const unpaid = Auth.can('money.edit') ? Money.planItems().filter(it => Money.planAmount(it, monthOf(t)) && !Money.paid(it, monthOf(t))) : [];
       const rows = [
-        ...review.slice(0, 5).map(x => ({html: `<span class="pill gold">на проверке</span>${esc(x.title)}`, who: personById(x.assignee), id: x.id})),
+        ...review.slice(0, 5).map(x => ({html: `<span class="pill gold">на согласовании</span>${esc(x.title)}`, who: personById(x.assignee), id: x.id})),
+        ...acts.budget.slice(0, 4).map(x => ({html: `<span class="pill gold">бюджет ${rubK(Number(x.budget))}</span>${esc(x.title)}`, who: personById(x.createdBy), id: x.id})),
         ...overdueAll.filter(x => x.status !== 'review').sort((a, b) => (Tasks.due(a) < Tasks.due(b) ? -1 : 1)).slice(0, 5).map(x => ({html: `<span class="pill bad">срок ${dayShort(Tasks.due(x))}</span>${esc(x.title)}`, who: personById(x.assignee), id: x.id})),
       ];
       focus = `<div class="card"><div class="card-head"><h2>Ждут решения</h2><a class="link-btn" href="#tasks">Все задачи</a></div>
-        ${rows.length ? `<div class="focus-list">${rows.map(r => `<button class="focus-row" data-open-task="${r.id}"><span class="fr-t">${r.html}</span>${avatar(r.who)}</button>`).join('')}</div>` : '<p class="note">Ничего не ждёт приёмки и нет просроченных задач.</p>'}
+        ${rows.length ? `<div class="focus-list">${rows.map(r => `<button class="focus-row" data-open-task="${r.id}"><span class="fr-t">${r.html}</span>${avatar(r.who)}</button>`).join('')}</div>` : '<p class="note">Ничего не ждёт согласования и нет просроченных задач.</p>'}
         ${unpaid.length ? `<div class="focus-pay"><span class="label">Платежи ${MONTHS_GEN[monthIdx(monthOf(t))]} по плану</span>${unpaid.slice(0, 4).map(it => `<a href="#money" class="fp-row"><span>${esc(it.group === 'payroll' && !Auth.can('payroll.view') ? 'Оплата труда' : it.title)}</span><b>${rub(Money.planAmount(it, monthOf(t)))}</b></a>`).join('')}${unpaid.length > 4 ? `<a href="#money" class="note">ещё ${unpaid.length - 4}</a>` : ''}</div>` : ''}
       </div>`;
     } else if (teamRoles) {
@@ -125,7 +127,7 @@ App.register('home', {
     const showStart = teamRoles && role !== 'owner' && !started && (Date.now() - (me.createdAt || 0) < 30 * 864e5);
     const start = showStart ? `<div class="help start"><div><b>С чего начать в штабе</b><ol>
         <li>Прочитайте <a href="#m-standards">Книгу стандартов</a> и пройдите тест в конце — это час.</li>
-        <li>Откройте <a href="#tasks">свои задачи</a>: новые помечены «новое». Сделали — галочка, задача уйдёт автору на проверку.</li>
+        <li>Откройте <a href="#tasks">свои задачи</a>: всё новое для вас — в блоке «Для вас». Сделали — «Готово», задача уйдёт постановщику на согласование.</li>
         <li>Если ведёте продажи или трафик — вносите цифры дня в <a href="#reports">«Отчётах»</a> до созвона.</li>
         <li>Созвон — каждый понедельник в 11:00. «Квартал команды» — в материалах ниже.</li></ol></div>
       <button class="btn xs ghost x" data-start-hide>Понятно</button></div>` : '';

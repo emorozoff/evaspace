@@ -76,7 +76,8 @@ const App = {
     else window.scrollTo(0, 0);
     this.cur = key;
     if (opts.focus) { const el = document.getElementById(opts.focus); if (el) el.focus(); }
-    document.title = (id === 'home' ? '' : (this.pages[id].title || '') + ' · ') + 'Штаб Eva Club V2';
+    const n = taskBadge();
+    document.title = (n ? `(${n}) ` : '') + (id === 'home' ? '' : (this.pages[id].title || '') + ' · ') + 'Штаб Eva Club V2';
   },
 
   buildShell() {
