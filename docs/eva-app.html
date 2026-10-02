@@ -1,0 +1,385 @@
+<title>Ева — приложение</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Unbounded:wght@500&display=swap">
+<style>
+/* Один тёмный зал, как в презентации: страница намеренно одна тема. Телефоны — живые макеты:
+   аватар Евы рисуется на холсте, уроки, выбор и орбита нажимаются. */
+:root{
+  --bg:#050507; --ink:#F3F0E8; --mu:#A5A198; --dim:#8F8A82; --gold:#D9B26B; --gold2:#F2DDAE; --rose:#E8A4C6; --line:rgba(243,240,232,.10);
+  --f:Jost,'Century Gothic','Avenir Next',system-ui,sans-serif; --u:Unbounded,Jost,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);-webkit-font-smoothing:antialiased}
+body{background:radial-gradient(120% 60% at 50% -10%,#16121b 0%,#050507 60%) fixed,var(--bg)}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:clamp(16px,4vw,48px);padding-block:clamp(40px,7vw,90px) 80px}
+.eb{font-size:12px;font-weight:500;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin:0 0 14px}
+h1{font-weight:200;font-size:clamp(44px,8vw,96px);line-height:.98;letter-spacing:-.01em;margin:0;text-wrap:balance}
+h1 em{font-style:normal;color:var(--rose)}
+.lede{font-size:clamp(17px,2vw,21px);font-weight:300;line-height:1.5;color:var(--mu);max-width:60ch;margin:22px 0 0}
+.lede b{color:var(--ink);font-weight:400}
+.toc{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px}
+.toc a{color:var(--ink);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:10px 18px;font-size:15px}
+.toc a:hover,.toc a:focus-visible{border-color:var(--rose);outline:none}
+.toc a span{color:var(--gold);margin-right:8px;font-family:var(--u);font-size:12px}
+section{margin-top:clamp(60px,9vw,110px)}
+.sh{display:grid;grid-template-columns:auto 1fr;gap:6px 24px;align-items:baseline;border-top:1px solid var(--line);padding-top:22px}
+.sh .k{font-family:var(--u);font-size:clamp(28px,4vw,44px);color:var(--gold2);line-height:1}
+.sh h2{font-weight:300;font-size:clamp(28px,4vw,44px);margin:0;line-height:1.05}
+.sh p{grid-column:2;margin:6px 0 0;color:var(--mu);font-size:17px;font-weight:300;line-height:1.5;max-width:62ch}
+@media (max-width:600px){.sh{grid-template-columns:1fr}.sh p{grid-column:1}}
+.row{display:flex;gap:28px;overflow-x:auto;padding:30px 4px 18px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.row::-webkit-scrollbar{height:8px}.row::-webkit-scrollbar-thumb{background:rgba(243,240,232,.14);border-radius:4px}
+figure{margin:0;flex:0 0 auto;scroll-snap-align:start;display:flex;flex-direction:column;gap:14px}
+figcaption{font-size:14px;color:var(--mu);line-height:1.4;max-width:390px}
+figcaption b{color:var(--ink);font-weight:500;display:block;font-size:15px;margin-bottom:2px}
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;box-shadow:0 40px 90px -40px rgba(0,0,0,.9),0 0 0 1px rgba(243,240,232,.14)}
+.hint{font-size:12px;color:var(--rose);letter-spacing:.06em}
+.solo{width:390px;height:390px;border-radius:32px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 45%,#1a1420,#050507 70%);box-shadow:0 0 0 1px rgba(243,240,232,.14)}
+/* экраны */
+.s{width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden;font-family:var(--f)}
+.s button{font-family:inherit;cursor:pointer}
+.s button:focus-visible,.s a:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
+.cap{font-size:12px;font-weight:500;letter-spacing:.24em;text-transform:uppercase}
+.nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid rgba(243,240,232,.08);padding-top:8px;margin-top:auto}
+.nav a{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;color:var(--dim);text-decoration:none;font-size:12px}
+.nav a.on{color:var(--rose)}
+.lt .nav{border:none;padding:6px;border-radius:26px;background:#fff;box-shadow:0 10px 30px -18px rgba(90,40,80,.4)}
+.lt .nav a{color:#5E5866;gap:3px}.lt .nav a.on{background:#F6E8EF;color:#B5487A;border-radius:20px}
+.ask{display:flex;gap:10px;align-items:center}
+.ask input{flex:1;min-width:0;height:48px;border-radius:24px;border:1px solid rgba(232,164,198,.35);background:rgba(243,240,232,.04);color:var(--ink);font-family:inherit;font-size:16px;padding:0 18px}
+.ask button{width:48px;height:48px;border-radius:50%;border:none;background:var(--rose);color:#1a0f16;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+canvas.av{display:block}
+/* описание */
+.vis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:18px;margin-top:30px}
+.card{border:1px solid var(--line);border-radius:22px;padding:22px 24px;background:rgba(14,13,18,.7)}
+.card h3{margin:0 0 10px;font-weight:400;font-size:21px}
+.card p,.card li{color:var(--mu);font-size:16px;line-height:1.55;font-weight:300}
+.card p{margin:0}.card ul,.card ol{margin:0;padding-left:20px;display:grid;gap:8px}
+.card b{color:var(--ink);font-weight:400}
+.card.big{grid-column:1/-1;border-color:rgba(232,164,198,.35);background:linear-gradient(180deg,rgba(232,164,198,.07),rgba(14,13,18,.7))}
+.card.big p{font-size:clamp(18px,2.2vw,24px);color:var(--ink);line-height:1.45}
+.card.big p em{font-style:normal;color:var(--rose)}
+.note{margin-top:26px;color:var(--dim);font-size:14px;line-height:1.6;max-width:80ch}
+@media (prefers-reduced-motion:reduce){.row{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eb">Eva Space · дизайн приложения</p>
+    <h1>Ева — <em>приложение</em>, где не нужно ничего искать</h1>
+    <p class="lede">Три варианта дизайна на языке презентации: чёрный зал, золото, розовый Евы, живой аватар из частиц. Механики те же, что на слайдах: <b>дуга дня и звёзды, «Ева принесла сама», круг обучения, путь по жизни, орбита экосистемы.</b> Уроки, выбор и орбиту можно нажимать. Ряды листаются вбок.</p>
+    <nav class="toc" aria-label="Варианты">
+      <a href="#a"><span>A</span>Зал</a><a href="#b"><span>B</span>Перламутр</a><a href="#c"><span>C</span>Орбита</a><a href="#vision"><span>→</span>Как я вижу продукт</a>
+    </nav>
+  </header>
+
+  <section id="a" aria-labelledby="ha">
+    <div class="sh"><span class="k">A</span><h2 id="ha">Зал</h2><p>Один в один язык презентации. Ева — в центре главной, день — дуга со звёздами, всё нужное Ева приносит сама.</p></div>
+    <div class="row">
+      <figure><div class="phone" id="pA1"></div><figcaption><b>Знакомство</b>Шесть вопросов — и программа собрана. <span class="hint">Нажимается</span></figcaption></figure>
+      <figure><div class="phone" id="pA2"></div><figcaption><b>Главная</b>Ева, дуга дня и три урока. <span class="hint">Отметьте урок — загорится звезда</span></figcaption></figure>
+      <figure><div class="phone" id="pA3"></div><figcaption><b>Ева нашла для тебя</b>Поиск не нужен: курс, встреча, товар и знакомство — проверено.</figcaption></figure>
+      <figure><div class="phone" id="pA4"></div><figcaption><b>Неделя</b>7 × 3 звезды, совпадение и «Ева учится вместе с тобой».</figcaption></figure>
+      <figure><div class="solo"><canvas class="av" data-size="330" data-tone="#E8A4C6" data-speak="1" width="660" height="660" style="width:330px;height:330px" role="img" aria-label="Ева — цифровой аватар"></canvas></div><figcaption><b>Аватар Евы</b>Бюст из точек: поворачивает голову, по силуэту бежит скан, когда говорит — расходятся волны. Один компонент от героя до иконки.</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="b" aria-labelledby="hb">
+    <div class="sh"><span class="k">B</span><h2 id="hb">Перламутр</h2><p>Светлая дневная версия тех же механик. Включается днём сама, вечером приложение уходит в «Зал».</p></div>
+    <div class="row">
+      <figure><div class="phone" id="pB1"></div><figcaption><b>Главная</b>Три урока дня, встреча рядом, советы Евы.</figcaption></figure>
+      <figure><div class="phone" id="pB2"></div><figcaption><b>Разговор с Евой</b>Ева отвечает действием и знает свою границу — по здоровью ведёт к врачу.</figcaption></figure>
+      <figure><div class="phone" id="pB3"></div><figcaption><b>Путь по жизни</b>Программа меняется вместе с этапом: сейчас — 24-я неделя беременности.</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="c" aria-labelledby="hc">
+    <div class="sh"><span class="k">C</span><h2 id="hc">Орбита</h2><p>Главная — это экосистема вокруг Евы: программа, эксперты, маркет, события, круг. Нажмите на планету — Ева покажет, что там для вас сейчас.</p></div>
+    <div class="row">
+      <figure><div class="phone" id="pC1"></div><figcaption><b>Орбита</b>Пять орбит вокруг Евы. <span class="hint">Нажмите на планету</span></figcaption></figure>
+      <figure><div class="phone" id="pC2"></div><figcaption><b>Суббота с Евой</b>День по часам через всю экосистему.</figcaption></figure>
+      <figure><div class="phone" id="pC3"></div><figcaption><b>Круг</b>Подруги, приглашения, знакомства и клубы рядом.</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="vision" aria-labelledby="hv">
+    <div class="sh"><span class="k">→</span><h2 id="hv">Как я вижу продукт</h2><p>Моя версия приложения для женщин с ИИ-аватаром.</p></div>
+    <div class="vis">
+      <div class="card big"><p>В приложении нет меню — <em>есть Ева</em>. Женщина ничего не ищет: она разговаривает с Евой, а Ева приносит нужное — проверенное и по лучшей цене. Курсы, маркет, события и сообщество остаются, но это места, куда ведёт Ева, а не то, с чего начинается день.</p></div>
+      <div class="card"><h3>Три слоя отношений</h3><ol>
+        <li><b>Каждый день — ритм.</b> Аффирмация, практика, мастер-класс и три звезды. Привычка открывать приложение; платится подпиской.</li>
+        <li><b>Когда нужно глубже — Ева предлагает сама.</b> Курс эксперта, встреча, товар, знакомство. Каждая карточка проверена и объясняет, почему она для неё. Доход с продаж — без рекламы и каталога.</li>
+        <li><b>На всю жизнь — путь.</b> Ева знает её этап и меняет программу вместе с ним: беременность по неделям, материнство, потом EVA KIDS.</li></ol></div>
+      <div class="card"><h3>Характер Евы</h3><ul>
+        <li>Тёплая, на «ты», говорит коротко.</li>
+        <li>Каждый ответ заканчивается действием: «напомнить?», «познакомить?», «иду».</li>
+        <li>Знает свою границу: по здоровью ведёт к проверенному врачу. Это и есть доверие.</li>
+        <li>Учится открыто: «вечерние уроки ты досматриваешь чаще — переставлю их на вечер».</li></ul></div>
+      <div class="card"><h3>Почему аватар, а не чат-бот</h3><p>Живая фигура из частиц — лицо бренда. Она «дышит», когда слушает, расходится волнами, когда говорит, становится ярче, когда учится — та же механика, что в «Круге обучения» на слайдах. Её узнают на главной, в карточке, в уведомлении и на стене Long Stay Hotel.</p></div>
+      <div class="card"><h3>Что бы я выбрал</h3><p><b>Главную — из A</b>: Ева в центре и дуга дня. <b>Светлую тему — из B</b>, днём включается сама. <b>Орбиту C</b> — отдельным экраном «Моя экосистема», а не главной: в первый день она перегружает. Следующий шаг — кликабельный прототип от знакомства до покупки курса.</p></div>
+    </div>
+    <p class="note">Имена экспертов, цены и адреса стоят в квадратных скобках. Имена подруг, проценты совпадения и число участниц клубов даны для примера.</p>
+  </section>
+</div>
+
+<script>
+(() => {
+'use strict';
+const STAR = 'M12 1 L13.6 10.4 L23 12 L13.6 13.6 L12 23 L10.4 13.6 L1 12 L10.4 10.4 Z';
+const I = {
+  path: '<path d="M4 19c4 0 4-6 8-6s4-6 8-6"/><circle cx="4" cy="19" r="1.6"/><circle cx="20" cy="7" r="1.6"/>',
+  ppl: '<circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 19c0-3 2.5-5 5-5s5 2 5 5M11 19c0-3 2.5-5 5-5s5 2 5 5"/>',
+  me: '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/>',
+  msg: '<path d="M5 5h14v10H9l-4 4z"/>', wave: '<path d="M3 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/>',
+  play: '<circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/>', cal: '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>', check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  search: '<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/>', lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>', heart: '<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
+  body: '<circle cx="12" cy="4.5" r="2"/><path d="M8 22l2-8-3-3 5-3 5 3-3 3 2 8"/>', chart: '<path d="M4 20h16M7 16V9M12 16V5M17 16v-4"/>',
+  kid: '<circle cx="12" cy="7" r="3"/><path d="M6 21c0-4 2.7-7 6-7s6 3 6 7"/>', back: '<path d="M15 5l-7 7 7 7"/>',
+  book: '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/>',
+  mask: '<path d="M3 12c3-4 6-4 9-4s6 0 9 4c-3 3-6 3-9 3s-6 0-9-3z"/><path d="M3 12h18"/>', bag: '<path d="M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0"/>',
+  expert: '<circle cx="12" cy="8" r="3"/><path d="M6 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/>', run: '<circle cx="13" cy="4.5" r="2"/><path d="M7 21l3-6 3 2 1 4M10 15l1-5 4 2 3-1"/>',
+  chev: '<path d="M9 5l7 7-7 7"/>'
+};
+const ic = (k, s = 20, w = 1.6) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[k]}</svg>`;
+const star = (s, fill) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR}" fill="${fill || 'currentColor'}"/></svg>`;
+const av = (size, tone, speak) => `<canvas class="av" data-size="${size}" data-tone="${tone}" data-speak="${speak ? 1 : 0}" width="${size * 2}" height="${size * 2}" style="width:${size}px;height:${size}px" role="img" aria-label="Ева"></canvas>`;
+const nav = (items, on) => `<nav class="nav" aria-label="Разделы">${items.map(([k, l], i) => `<a href="#" class="${i === on ? 'on' : ''}"${i === on ? ' aria-current="page"' : ''}>${k === 'eva' ? star(22) : ic(k, 22)}${l}</a>`).join('')}</nav>`;
+const NA = [['eva', 'Ева'], ['path', 'Путь'], ['ppl', 'Круг'], ['me', 'Я']], NB = [['eva', 'Ева'], ['path', 'Путь'], ['msg', 'Чат'], ['ppl', 'Круг']], NC = [['eva', 'Ева'], ['cal', 'День'], ['ppl', 'Круг'], ['me', 'Я']];
+const askBar = (id) => `<div class="ask"><label class="sr" for="${id}">Спросить Еву</label><input id="${id}" type="text" placeholder="Спросить Еву…"><button type="button" aria-label="Сказать голосом">${ic('mic', 20, 1.8)}</button></div>`;
+const DK = 'color:#F3F0E8;background:radial-gradient(120% 70% at 50% 18%,#17131c 0%,#08080b 55%,#030304 100%)';
+const LT = 'color:#1E1A24;background:linear-gradient(180deg,#F6F1F6 0%,#EFEAF1 100%)';
+const chip = (t, c, b) => `<span style="font-size:12px;padding:4px 10px;border-radius:12px;background:${b};color:${c}">${t}</span>`;
+const $ = (id) => document.getElementById(id);
+
+/* ── A1 · Знакомство ── */
+const A1 = { on: [true, false, true, false, false, false] };
+const A1C = [['Спокойствие', 'wave'], ['Энергия', 'bolt'], ['Отношения', 'heart'], ['Тело и здоровье', 'body'], ['Дело и деньги', 'chart'], ['Материнство', 'kid']];
+function rA1() {
+  $('pA1').innerHTML = `<div class="s" style="${DK};padding:28px 22px 26px;gap:16px">
+  <div style="display:flex;align-items:center;gap:12px"><div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;flex:1" aria-hidden="true">${[1, 1, 0, 0, 0, 0].map((v) => `<span style="height:3px;border-radius:2px;background:${v ? '#E8A4C6' : 'rgba(243,240,232,.15)'}"></span>`).join('')}</div><span class="cap" style="color:#8F8A82;letter-spacing:.2em">2 из 6</span></div>
+  <div style="display:flex;justify-content:center">${av(176, '#E8A4C6', 1)}</div>
+  <div style="text-align:center;font-size:17px;font-weight:300;line-height:1.45;color:#CFCAC2;padding:0 8px">Я Ева. Шесть вопросов — и&nbsp;я&nbsp;соберу программу под&nbsp;тебя.</div>
+  <div style="margin-top:6px;font-size:28px;font-weight:300;line-height:1.15">Что для тебя сейчас важнее всего?</div>
+  <div style="font-size:14px;color:#8F8A82;margin-top:-8px">Можно выбрать несколько</div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">${A1C.map(([l, k], i) => { const o = A1.on[i]; return `<button type="button" data-a1="${i}" aria-pressed="${o}" style="display:flex;align-items:center;gap:10px;min-height:52px;padding:0 14px;border-radius:16px;font-size:16px;text-align:left;color:${o ? '#F3F0E8' : '#CFCAC2'};background:${o ? 'rgba(232,164,198,.12)' : 'rgba(243,240,232,.03)'};border:1px solid ${o ? '#E8A4C6' : 'rgba(243,240,232,.12)'}">${ic(k, 18)}<span>${l}</span></button>`; }).join('')}</div>
+  <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px"><a href="#pA2" style="height:54px;border-radius:27px;background:#D9B26B;color:#15120c;font-size:17px;font-weight:500;display:flex;align-items:center;justify-content:center;text-decoration:none">Дальше</a>
+  <div style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:#8F8A82">${ic('lock', 14, 1.8)}Ответы видишь только ты и Ева</div></div></div>`;
+}
+$('pA1').addEventListener('click', (e) => { const b = e.target.closest('[data-a1]'); if (!b) return; const i = +b.dataset.a1; A1.on[i] = !A1.on[i]; rA1(); });
+
+/* ── A2 · Главная ── */
+const A2 = { done: [true, false, false] };
+const A2L = [['Аффирмация «Я в своём ритме»', 'утро · 3 мин', '#E8A4C6', 'msg'], ['Практика «Дыхание 4-7-8»', 'день · 12 мин', '#F3F0E8', 'wave'], ['Мастер-класс «Сон без тревоги»', 'вечер · эксперт · 24 мин', '#D9B26B', 'play']];
+function rA2() {
+  const d = A2.done, n = d.filter(Boolean).length, lit = d[2] ? 'M20 62 Q175 -10 330 62' : d[1] ? 'M20 62 Q97 24 175 26' : d[0] ? 'M20 62 Q46 48 60 44' : '';
+  const pos = [[6, 34], [158, 0], [306, 34]];
+  $('pA2').innerHTML = `<div class="s" style="${DK};padding:28px 20px 14px;gap:12px">
+  <div style="display:flex;justify-content:space-between;align-items:center"><span class="cap" style="color:#8F8A82">Пятница · 2 октября</span><button type="button" aria-label="Профиль" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(232,164,198,.5);background:rgba(232,164,198,.08);color:#E8A4C6;font-size:14px;font-weight:500">АН</button></div>
+  <div style="font-size:30px;font-weight:300;line-height:1.1">Доброе утро, Анна</div>
+  <div style="display:flex;justify-content:center;margin-top:-6px">${av(190, '#E8A4C6', 1)}</div>
+  <div style="text-align:center;font-size:18px;font-weight:300;line-height:1.4;padding:0 12px;margin-top:-8px">Сегодня мягкий день. Начнём со&nbsp;спокойной практики — <span style="color:#E8A4C6">12 минут</span>.</div>
+  <div style="position:relative;height:70px"><svg width="350" height="70" viewBox="0 0 350 70" aria-hidden="true" style="position:absolute;left:0;top:0"><path d="M20 62 Q175 -10 330 62" fill="none" stroke="rgba(243,240,232,.14)" stroke-width="1.2"/>${lit ? `<path d="${lit}" fill="none" stroke="#D9B26B" stroke-width="1.8"/>` : ''}</svg>
+  ${['утро', 'день', 'вечер'].map((l, i) => `<div style="position:absolute;left:${pos[i][0] - 2}px;top:${pos[i][1]}px;width:40px;display:flex;flex-direction:column;align-items:center;gap:2px">${star(18, d[i] ? '#F2DDAE' : 'rgba(243,240,232,.22)')}<span style="font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:${d[i] ? '#F2DDAE' : '#8F8A82'}">${l}</span></div>`).join('')}</div>
+  <div style="display:flex;flex-direction:column;gap:8px">${A2L.map(([t, m, c, k], i) => `<button type="button" data-a2="${i}" aria-pressed="${d[i]}" style="display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:18px;text-align:left;color:inherit;background:${d[i] ? 'rgba(217,178,107,.08)' : 'rgba(243,240,232,.03)'};border:1px solid ${d[i] ? 'rgba(217,178,107,.45)' : 'rgba(243,240,232,.10)'}">
+    <span style="width:38px;height:38px;flex:0 0 auto;border-radius:50%;border:1px solid ${c};display:flex;align-items:center;justify-content:center;color:${c}">${ic(k, 18)}</span>
+    <span style="display:flex;flex-direction:column;gap:2px;flex:1"><span style="font-size:16px;color:#F3F0E8">${t}</span><span style="font-size:13px;color:#8F8A82">${m}</span></span>
+    <span style="width:26px;height:26px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#08080b;${d[i] ? 'background:#D9B26B;border:1px solid #D9B26B' : 'border:1px solid rgba(243,240,232,.25)'}">${d[i] ? ic('check', 14, 2.6) : ''}</span></button>`).join('')}</div>
+  <div style="font-size:13px;color:#8F8A82;text-align:center">Звёзд сегодня: <span style="color:#F2DDAE;font-family:var(--u);font-size:12px">${n} из 3</span></div>
+  ${askBar('askA')}${nav(NA, 0)}</div>`;
+}
+$('pA2').addEventListener('click', (e) => { const b = e.target.closest('[data-a2]'); if (!b) return; const i = +b.dataset.a2; A2.done[i] = !A2.done[i]; rA2(); });
+
+/* ── A3 · Ева нашла для тебя ── */
+function rA3() {
+  const cardS = 'padding:14px;border-radius:20px;background:#0E0D12;border:1px solid rgba(243,240,232,.12);display:flex;gap:12px;align-items:center';
+  $('pA3').innerHTML = `<div class="s" style="${DK};padding:28px 18px 14px;gap:12px">
+  <span class="cap" style="color:#8F8A82">Ева нашла для тебя</span>
+  <div style="display:flex;gap:12px;align-items:center">${av(72, '#E8A4C6', 1)}<div style="flex:1;font-size:16px;font-weight:300;line-height:1.4;padding:10px 14px;border-radius:4px 18px 18px 18px;background:rgba(232,164,198,.08);border:1px solid rgba(232,164,198,.3)">Ты писала, что плохо спишь. Вот что поможет на этой неделе.</div></div>
+  <div style="display:flex;align-items:center;gap:10px;height:38px;padding:0 14px;border-radius:19px;border:1px solid rgba(243,240,232,.1);color:#77726B;font-size:14px">${ic('search', 15, 1.8)}<span style="text-decoration:line-through">курсы, эксперты, товары, события…</span><span style="margin-left:auto;color:#D9B26B;font-size:12px;font-weight:500;letter-spacing:.12em">НЕ НУЖНО</span></div>
+  <div style="padding:14px;border-radius:20px;background:#0E0D12;border:1px solid rgba(217,178,107,.4);display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;font-weight:500;letter-spacing:.22em;color:#D9B26B">КУРС ЭКСПЕРТА</span><span style="display:flex;align-items:center;gap:4px;font-size:12px;color:#D9B26B"><span style="width:14px;height:14px;border-radius:50%;background:#D9B26B;color:#15120c;display:flex;align-items:center;justify-content:center">${ic('check', 10, 3)}</span>проверено</span></div>
+    <div style="font-size:19px;line-height:1.2">«Сон без тревоги» · 6 уроков</div><div style="font-size:13px;color:#8F8A82">[Имя эксперта], сомнолог · образование и практика проверены</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${chip('совпадение 96%', '#E8A4C6', 'rgba(232,164,198,.12)')}${chip('лучшая цена · [ЦЕНА]', '#F2DDAE', 'rgba(217,178,107,.12)')}</div></div>
+  <div style="${cardS}"><div style="width:52px;flex:0 0 auto;text-align:center;padding:6px 0;border-radius:12px;border:1px solid rgba(217,178,107,.45)"><div style="font-size:11px;letter-spacing:.14em;color:#D9B26B">СБ</div><div style="font-family:var(--u);font-size:18px;color:#F2DDAE">3</div></div>
+    <div style="display:flex;flex-direction:column;gap:3px;flex:1"><span style="font-size:11px;font-weight:500;letter-spacing:.22em;color:#8F8A82">ВСТРЕЧА</span><span style="font-size:17px">«Утренний круг» · 10:00</span><span style="font-size:13px;color:#E8A4C6">идут 3 подруги · рядом с домом</span></div></div>
+  <div style="${cardS}"><div style="width:52px;height:52px;flex:0 0 auto;border-radius:14px;background:rgba(243,240,232,.05);display:flex;align-items:center;justify-content:center;color:#F2DDAE">${ic('mask', 24)}</div>
+    <div style="display:flex;flex-direction:column;gap:3px;flex:1"><span style="font-size:11px;font-weight:500;letter-spacing:.22em;color:#8F8A82">МАРКЕТ · СОВЕТУЕТ ЭКСПЕРТ</span><span style="font-size:17px">Шёлковая маска для сна</span><span style="font-size:13px;color:#F2DDAE">часть оплаты — баллами</span></div></div>
+  <div style="padding:14px;border-radius:20px;background:rgba(232,164,198,.06);border:1px solid rgba(232,164,198,.3);display:flex;gap:12px;align-items:center"><div style="width:52px;height:52px;flex:0 0 auto;border-radius:50%;background:rgba(232,164,198,.18);color:#E8A4C6;display:flex;align-items:center;justify-content:center;font-size:17px">В</div>
+    <div style="display:flex;flex-direction:column;gap:3px;flex:1"><span style="font-size:11px;font-weight:500;letter-spacing:.22em;color:#E8A4C6">КРУГ</span><span style="font-size:16px;line-height:1.3">Вера тоже налаживает сон. Познакомить?</span></div>
+    <button type="button" style="height:40px;padding:0 14px;border-radius:20px;border:1px solid #E8A4C6;background:transparent;color:#E8A4C6;font-size:14px">Да</button></div>
+  ${nav(NA, 2)}</div>`;
+}
+
+/* ── A4 · Неделя ── */
+function rA4() {
+  const filled = [3, 3, 2, 1, 0, 0, 0], days = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'], tones = ['#E8A4C6', '#F3F0E8', '#F2DDAE'], rows = ['аффирм.', 'практика', 'мастер-кл.'];
+  let grid = '<span></span>' + days.map((l, i) => `<span style="text-align:center;font-size:12px;font-weight:500;letter-spacing:.1em;color:${i === 4 ? '#E8A4C6' : '#8F8A82'}">${l}</span>`).join('');
+  rows.forEach((l, r) => { grid += `<span style="font-size:12px;color:${r === 1 ? '#CFCAC2' : tones[r]}">${l}</span>` + filled.map((n) => `<span style="display:flex;justify-content:center;padding:6px 0">${star(20, r < n ? tones[r] : 'rgba(243,240,232,.12)')}</span>`).join(''); });
+  const pill = (t, b, c) => `<span style="font-size:13px;padding:6px 12px;border-radius:14px;border:1px solid ${b};color:${c}">${t}</span>`;
+  $('pA4').innerHTML = `<div class="s" style="color:#F3F0E8;background:radial-gradient(120% 60% at 70% 12%,#1a1612 0%,#08080b 55%,#030304 100%);padding:28px 20px 14px;gap:14px">
+  <span class="cap" style="color:#8F8A82">Путь · неделя 2</span>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end"><div style="font-size:30px;font-weight:300;line-height:1.1">Твоя неделя</div><div style="text-align:right"><div style="font-family:var(--u);font-size:26px;color:#F2DDAE;line-height:1">94%</div><div style="font-size:12px;color:#8F8A82">совпадение</div></div></div>
+  <div style="padding:16px 14px;border-radius:22px;background:#0E0D12;border:1px solid rgba(243,240,232,.1);display:flex;flex-direction:column;gap:10px">
+    <div style="display:grid;grid-template-columns:74px repeat(7,minmax(0,1fr));gap:4px;align-items:center">${grid}</div>
+    <div style="height:6px;border-radius:3px;background:rgba(243,240,232,.08);overflow:hidden"><div style="width:43%;height:100%;background:linear-gradient(90deg,#E8A4C6,#F2DDAE)"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:#8F8A82"><span><span style="color:#F2DDAE">9</span> звёзд из 21</span><span>суперзвезда — +200 баллов</span></div></div>
+  <div style="padding:16px;border-radius:22px;background:rgba(232,164,198,.06);border:1px solid rgba(232,164,198,.3);display:flex;gap:12px">${av(56, '#E8A4C6', 0)}
+    <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;font-weight:500;letter-spacing:.22em;color:#E8A4C6">ЕВА УЧИТСЯ ВМЕСТЕ С ТОБОЙ</span><span style="font-size:15px;line-height:1.45;color:#E6E1D9">Вечерние мастер-классы ты досматриваешь чаще — на следующей неделе поставлю их на вечер.</span></div></div>
+  <div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:11px;font-weight:500;letter-spacing:.22em;color:#8F8A82">СЛЕДУЮЩАЯ НЕДЕЛЯ</span><span style="font-size:20px;font-weight:300">Тело и энергия</span>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${pill('7 аффирмаций', 'rgba(232,164,198,.4)', '#E8A4C6')}${pill('7 практик', 'rgba(243,240,232,.25)', '#E6E1D9')}${pill('7 мастер-классов', 'rgba(217,178,107,.45)', '#F2DDAE')}</div></div>
+  ${nav(NA, 1)}</div>`;
+}
+
+/* ── B1 · Главная, светлая ── */
+function rB1() {
+  const tile = (bg, col, mut, icn, meta, t) => `<div style="padding:12px;border-radius:18px;background:${bg};color:${col};display:flex;flex-direction:column;gap:22px;min-height:120px">${icn}<span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:${mut}">${meta}</span><span style="font-size:15px;line-height:1.2">${t}</span></span></div>`;
+  const w = 'background:#fff;border-radius:20px;padding:14px';
+  $('pB1').innerHTML = `<div class="s lt" style="${LT};padding:24px 18px 14px;gap:14px">
+  <div style="display:flex;align-items:center;gap:10px">${av(92, '#B5487A', 1)}<div style="display:flex;flex-direction:column;gap:2px"><span class="cap" style="color:#5E5866;letter-spacing:.2em">Пятница · 2 октября</span><span style="font-size:26px;font-weight:300;line-height:1.1">Доброе утро, Анна</span></div></div>
+  <div style="padding:16px 18px;border-radius:22px;background:#fff;box-shadow:0 10px 30px -18px rgba(90,40,80,.35);font-size:17px;font-weight:300;line-height:1.45">Сегодня мягкий день. Утром — дыхание, вечером — короткий урок о&nbsp;сне. <span style="color:#B5487A">Я&nbsp;напомню.</span></div>
+  <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:20px">Сегодня</span><span style="font-size:14px;color:#5E5866">звёзд: <span style="color:#8E6A2E">1 из 3</span></span></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${tile('#B5487A', '#fff', 'rgba(255,255,255,.85)', star(18, '#fff'), 'утро · 3 мин', 'Аффирмация')}${tile('#fff', '#1E1A24', '#5E5866', `<span style="color:#5E5866">${ic('wave', 18, 1.7)}</span>`, 'день · 12 мин', 'Дыхание 4-7-8')}${tile('#fff', '#1E1A24', '#5E5866', `<span style="color:#8E6A2E">${ic('play', 18, 1.7)}</span>`, 'вечер · 24 мин', 'Сон без тревоги')}</div>
+  <div style="font-size:20px;margin-top:4px">Рядом с тобой</div>
+  <div style="${w};display:flex;gap:12px;align-items:center"><div style="width:54px;flex:0 0 auto;text-align:center;padding:8px 0;border-radius:14px;background:#F6E8EF"><div style="font-size:11px;letter-spacing:.14em;color:#B5487A">СБ</div><div style="font-family:var(--u);font-size:18px;color:#7E2C52">3</div></div>
+    <div style="display:flex;flex-direction:column;gap:3px;flex:1"><span style="font-size:16px">«Утренний круг» · 10:00</span><span style="font-size:13px;color:#5E5866">идут Вера, Мария и ещё 1 подруга</span></div><button type="button" style="height:40px;padding:0 14px;border-radius:20px;border:none;background:#1E1A24;color:#fff;font-size:14px">Иду</button></div>
+  <div style="font-size:20px;margin-top:4px">Ева советует</div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${[['КУРС', 'Сон без тревоги', 'совпадение 96% · проверено'], ['МАРКЕТ', 'Маска для сна', 'часть — баллами']].map(([k, t, m]) => `<div style="${w};display:flex;flex-direction:column;gap:6px"><span style="font-size:11px;font-weight:500;letter-spacing:.2em;color:#8E6A2E">${k}</span><span style="font-size:15px;line-height:1.25">${t}</span><span style="font-size:12px;color:#5E5866">${m}</span></div>`).join('')}</div>
+  ${nav(NB, 0)}</div>`;
+}
+
+/* ── B2 · Разговор ── */
+function rB2() {
+  const bub = (t, me) => `<div style="align-self:${me ? 'flex-end' : 'flex-start'};max-width:${me ? 78 : 86}%;padding:${me ? '10px 14px' : '12px 14px'};border-radius:${me ? '18px 18px 4px 18px' : '4px 18px 18px 18px'};background:${me ? '#1E1A24' : '#fff'};color:${me ? '#fff' : '#1E1A24'};font-size:16px;line-height:1.45">${t}</div>`;
+  const att = (bd, ib, icl, icn, t, m, right) => `<div style="align-self:flex-start;width:86%;padding:12px;border-radius:18px;background:#fff;border:1px solid ${bd};display:flex;gap:10px;align-items:center"><div style="width:44px;height:44px;border-radius:12px;background:${ib};color:${icl};display:flex;align-items:center;justify-content:center;flex:0 0 auto">${icn}</div><div style="display:flex;flex-direction:column;flex:1"><span style="font-size:15px">${t}</span><span style="font-size:12px;color:#5E5866">${m}</span></div>${right}</div>`;
+  $('pB2').innerHTML = `<div class="s lt" style="${LT};padding:20px 16px 14px;gap:12px">
+  <div style="display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid rgba(30,26,36,.08)"><a href="#pB1" aria-label="Назад" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:#1E1A24">${ic('back', 20, 1.8)}</a>${av(52, '#B5487A', 1)}<div style="display:flex;flex-direction:column"><span style="font-size:18px">Ева</span><span style="font-size:13px;color:#5E5866">знает твою программу и цели</span></div></div>
+  ${bub('Неделю не могу нормально уснуть. Что делать?', 1)}${bub('Понимаю, это выматывает. Начнём с простого: сегодня в 22:00 — дыхание 4-7-8, двенадцать минут. Я напомню.')}
+  ${att('#E9D3DF', '#F6E8EF', '#B5487A', ic('wave', 20, 1.7), 'Дыхание 4-7-8', 'сегодня · 22:00 · 12 мин', '<button type="button" style="height:36px;padding:0 12px;border-radius:18px;border:none;background:#B5487A;color:#fff;font-size:13px">Напомнить</button>')}
+  ${att('#E8DDC6', '#F4ECDD', '#8E6A2E', ic('book', 20, 1.7), 'Курс «Сон без тревоги»', 'эксперт проверен · совпадение 96%', '<span role="img" aria-label="Проверено" style="width:22px;height:22px;border-radius:50%;background:#8E6A2E;color:#fff;display:flex;align-items:center;justify-content:center">' + ic('check', 13, 3) + '</span>')}
+  <div style="align-self:flex-start;max-width:86%;padding:12px 14px;border-radius:4px 18px 18px 18px;background:#fff;font-size:15px;line-height:1.45;color:#3A3442">Если бессонница держится дольше месяца, лучше обсудить это с врачом. Подобрать проверенного специалиста?</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto"><button type="button" style="height:36px;padding:0 14px;border-radius:18px;border:1px solid #B5487A;background:transparent;color:#B5487A;font-size:14px">Да, подбери врача</button><button type="button" style="height:36px;padding:0 14px;border-radius:18px;border:1px solid rgba(30,26,36,.2);background:transparent;color:#1E1A24;font-size:14px">Расскажи про курс</button></div>
+  <div class="ask"><label class="sr" for="askB">Сообщение Еве</label><input id="askB" type="text" placeholder="Написать Еве…" style="border-color:rgba(30,26,36,.12);background:#fff;color:#1E1A24"><button type="button" aria-label="Сказать голосом" style="background:#B5487A;color:#fff">${ic('mic', 20, 1.8)}</button></div></div>`;
+}
+
+/* ── B3 · Путь по жизни ── */
+function rB3() {
+  const done = (t, m) => `<div style="position:relative;display:flex;flex-direction:column;gap:2px"><span style="position:absolute;left:-30px;top:2px;width:18px;height:18px;border-radius:50%;background:#8E6A2E;color:#fff;display:flex;align-items:center;justify-content:center">${ic('check', 11, 3)}</span><span style="font-size:17px">${t}</span><span style="font-size:13px;color:#5E5866">${m}</span></div>`;
+  const row = (t, m, bg) => `<div style="display:flex;justify-content:space-between;font-size:14px;padding:8px 10px;border-radius:12px;background:${bg}"><span>${t}</span><span style="color:#5E5866">${m}</span></div>`;
+  $('pB3').innerHTML = `<div class="s lt" style="${LT};padding:26px 20px 14px;gap:12px">
+  <span class="cap" style="color:#5E5866">Твой путь</span><div style="font-size:28px;font-weight:300;line-height:1.1">Ева рядом на&nbsp;каждом этапе</div>
+  <div style="display:flex;flex-direction:column;position:relative;padding-left:34px;gap:14px;margin-top:6px">
+    <div style="position:absolute;left:12px;top:10px;bottom:10px;width:2px;background:linear-gradient(180deg,#8E6A2E 0%,#B5487A 50%,rgba(30,26,36,.12) 62%)"></div>
+    ${done('Найти себя', 'своё дело, хобби, состояние · пройдено')}${done('Отношения', 'программы для пары · пройдено')}
+    <div style="position:relative;padding:16px;border-radius:22px;background:#fff;box-shadow:0 14px 34px -20px rgba(120,40,90,.5);display:flex;flex-direction:column;gap:10px"><span style="position:absolute;left:-34px;top:16px;width:26px;height:26px;border-radius:50%;background:#B5487A;box-shadow:0 0 0 6px rgba(181,72,122,.18)"></span>
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;font-weight:500;letter-spacing:.22em;color:#B5487A">СЕЙЧАС</span><span style="font-family:var(--u);font-size:13px;color:#7E2C52">24 неделя</span></div>
+      <span style="font-size:21px;line-height:1.15">Беременность</span><span style="font-size:14px;color:#5E5866">Программа этой недели: сон и спина</span>
+      <div style="display:flex;flex-direction:column;gap:6px">${row('Аффирмация «Мы вдвоём»', '3 мин', '#F6E8EF')}${row('Мягкая практика для спины', '15 мин', '#F3F0F4')}${row('Эфир с акушером [Имя]', 'чт 19:00', '#F4ECDD')}</div>
+      <span style="font-size:13px;color:#5E5866">В твоём городе — клуб будущих мам</span></div>
+    <div style="position:relative;display:flex;flex-direction:column;gap:2px;opacity:.75"><span style="position:absolute;left:-30px;top:2px;width:18px;height:18px;border-radius:50%;border:2px solid rgba(30,26,36,.3);background:#F3EFF4"></span><span style="font-size:17px">Материнство</span><span style="font-size:13px;color:#5E5866">восстановление · как растить детей</span></div>
+    <div style="position:relative;display:flex;flex-direction:column;gap:4px;opacity:.75"><span style="position:absolute;left:-30px;top:2px;width:18px;height:18px;border-radius:50%;border:2px dashed #8E6A2E;background:#F3EFF4"></span><span style="font-family:var(--u);font-size:15px;color:#7A5A22">EVA KIDS</span><span style="font-size:13px;color:#5E5866">осознанное образование для детей · в планах</span></div></div>
+  ${nav(NB, 1)}</div>`;
+}
+
+/* ── C1 · Орбита ── */
+const C1 = { sel: 0 };
+const C1R = [[86, 52], [112, 74], [136, 98], [156, 124], [174, 150]], C1A = [180, -50, 130, 25, 250];
+const C1P = [
+  ['Программа', '#E8A4C6', 'play', 'ПРОГРАММА · СЕГОДНЯ', 'Практика «Дыхание 4-7-8»', 'день · 12 минут', 'Начать'],
+  ['Эксперты', '#D9B26B', 'expert', 'ЭКСПЕРТ · ПРОВЕРЕН', 'Сомнолог [Имя] — эфир о сне', 'четверг · 19:00', 'Записаться'],
+  ['Маркет', '#F3F0E8', 'bag', 'МАРКЕТ · СОВЕТУЕТ ЭКСПЕРТ', 'Шёлковая маска для сна', 'часть оплаты — баллами', 'Смотреть'],
+  ['События', '#D9B26B', 'cal', 'ВСТРЕЧА · РЯДОМ С ДОМОМ', '«Утренний круг» · суббота, 10:00', 'идут 3 подруги', 'Иду'],
+  ['Круг', '#E8A4C6', 'ppl', 'КРУГ', 'Вера зовёт на кофе в субботу', '12:00 · после встречи', 'Ответить']];
+function rC1() {
+  const s = C1.sel, P = C1P[s];
+  const rings = C1R.map(([rx, ry], i) => `<ellipse cx="175" cy="180" rx="${rx}" ry="${ry}" fill="none" stroke="${i === s ? C1P[i][1] : 'rgba(243,240,232,.14)'}" stroke-width="${i === s ? 1.6 : 1}"${i === 4 && i !== s ? ' stroke-dasharray="3 6"' : ''}/>`).join('');
+  const planets = C1P.map(([l, c, k], i) => { const a = (C1A[i] * Math.PI) / 180, x = 175 + C1R[i][0] * Math.cos(a), y = 180 + C1R[i][1] * Math.sin(a), on = i === s;
+    return `<div style="position:absolute;left:${(x - 30).toFixed(0)}px;top:${(y - 22).toFixed(0)}px;width:60px;display:flex;flex-direction:column;align-items:center;gap:2px"><button type="button" data-c1="${i}" aria-pressed="${on}" aria-label="${l}" style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:${on ? '#120e14' : c};background:${on ? c : '#0E0D12'};border:1px solid ${c};box-shadow:${on ? '0 0 24px ' + c : 'none'}">${ic(k, 20)}</button><span style="font-size:12px;color:${on ? c : '#A5A198'};white-space:nowrap">${l}</span></div>`; }).join('');
+  $('pC1').innerHTML = `<div class="s" style="color:#F3F0E8;background:radial-gradient(90% 55% at 50% 38%,#1d1420 0%,#09080c 60%,#030304 100%);padding:26px 20px 14px;gap:10px">
+  <div style="display:flex;justify-content:space-between;align-items:center"><div style="display:flex;flex-direction:column"><span class="cap" style="color:#8F8A82">Твоя экосистема</span><span style="font-size:26px;font-weight:300">Анна</span></div><div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:18px;border:1px solid rgba(217,178,107,.4);color:#F2DDAE">${star(14)}<span style="font-family:var(--u);font-size:12px">1 / 3</span></div></div>
+  <div style="position:relative;width:350px;height:360px;align-self:center"><svg width="350" height="360" viewBox="0 0 350 360" aria-hidden="true" style="position:absolute;left:0;top:0">${rings}</svg><div style="position:absolute;left:115px;top:120px">${av(120, '#E8A4C6', 1)}</div>${planets}</div>
+  <div style="padding:16px;border-radius:22px;background:rgba(14,13,18,.9);border:1px solid ${P[1]};display:flex;flex-direction:column;gap:8px"><span style="font-size:11px;font-weight:500;letter-spacing:.22em;color:${P[1]}">${P[3]}</span><span style="font-size:18px;line-height:1.3">${P[4]}</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:13px;color:#8F8A82">${P[5]}</span><button type="button" style="height:40px;padding:0 16px;border-radius:20px;border:none;background:${P[1]};color:#120e14;font-size:14px;font-weight:500;flex:0 0 auto">${P[6]}</button></div></div>
+  ${askBar('askC')}<div style="margin-top:-4px">${nav(NC, 0)}</div></div>`;
+}
+$('pC1').addEventListener('click', (e) => { const b = e.target.closest('[data-c1]'); if (!b) return; C1.sel = +b.dataset.c1; rC1(); });
+
+/* ── C2 · Суббота ── */
+function rC2() {
+  const S = [['08:00', 'Практика и аффирмация', 'ПРОГРАММА', 'утро с Евой', '#E8A4C6', 0], ['10:00', 'Коврик и витамины', 'МАРКЕТ', 'часть — баллами', '#F3F0E8', 0], ['12:00', 'Кофе с Верой', 'КРУГ', 'сейчас · познакомились в Еве', '#E8A4C6', 1], ['15:00', 'Мастер-класс вживую', 'СОБЫТИЕ', 'в твоём городе', '#D9B26B', 2], ['19:00', 'Урок курса о сне', 'КУРС', 'эксперт проверен', '#D9B26B', 2], ['22:00', 'Итог дня с Евой', 'ЕВА', 'три звезды и план', '#E8A4C6', 2]];
+  $('pC2').innerHTML = `<div class="s" style="color:#F3F0E8;background:linear-gradient(180deg,#120f16 0%,#08080b 45%,#0c0810 100%);padding:26px 20px 14px;gap:14px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="display:flex;flex-direction:column"><span class="cap" style="color:#8F8A82">Суббота · 3 октября</span><span style="font-size:28px;font-weight:300">Твой день с Евой</span></div><div style="width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#FFF2D6,#E2BF7A 55%,rgba(217,178,107,0) 72%)" aria-hidden="true"></div></div>
+  <div style="display:flex;flex-direction:column;position:relative;padding-left:70px;gap:6px"><div style="position:absolute;left:56px;top:12px;bottom:12px;width:2px;background:linear-gradient(180deg,#D9B26B 0%,#D9B26B 38%,rgba(243,240,232,.12) 40%)"></div>
+  ${S.map(([t, ti, tag, m, c, st]) => `<div style="position:relative;display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:16px;${st === 1 ? 'background:rgba(232,164,198,.1);border:1px solid rgba(232,164,198,.5)' : 'border:1px solid transparent'}">
+    <span style="position:absolute;left:-70px;top:12px;width:48px;text-align:right;font-family:var(--u);font-size:12px;color:${st === 1 ? '#E8A4C6' : st === 0 ? '#D9B26B' : '#8F8A82'}">${t}</span>
+    <span style="position:absolute;left:-20px;top:14px;width:12px;height:12px;border-radius:50%;${st === 0 ? 'background:#D9B26B' : st === 1 ? 'background:#E8A4C6;box-shadow:0 0 0 5px rgba(232,164,198,.22)' : 'background:#08080b;border:2px solid rgba(243,240,232,.3)'}"></span>
+    <span style="font-size:16px;color:${st === 2 ? '#CFCAC2' : '#F3F0E8'}">${ti}</span><span style="display:flex;gap:8px;align-items:center"><span style="font-size:10px;font-weight:500;letter-spacing:.2em;padding:3px 8px;border-radius:10px;border:1px solid ${c};color:${c}">${tag}</span><span style="font-size:13px;color:#8F8A82">${m}</span></span></div>`).join('')}</div>
+  <div style="margin-top:auto;padding:14px;border-radius:20px;background:rgba(232,164,198,.07);border:1px solid rgba(232,164,198,.3);display:flex;gap:12px;align-items:center">${av(56, '#E8A4C6', 1)}<span style="font-size:15px;line-height:1.4;color:#E6E1D9">Вера уже в пути. На мастер-класс возьми коврик — он приедет к 13:00.</span></div>
+  <div style="margin-top:-4px">${nav(NC, 1)}</div></div>`;
+}
+
+/* ── C3 · Круг ── */
+function rC3() {
+  const F = [['Вера', 'В', 1], ['Мария', 'М', 2], ['Оля', 'О', 0], ['Катя', 'К', 0], ['Лена', 'Л', 0]];
+  const ring = (s) => (s === 1 ? 'background:rgba(232,164,198,.18);color:#E8A4C6;box-shadow:0 0 0 2px #E8A4C6' : s === 2 ? 'background:rgba(217,178,107,.14);color:#F2DDAE;box-shadow:0 0 0 2px rgba(217,178,107,.6)' : 'background:rgba(243,240,232,.06);color:#CFCAC2;box-shadow:0 0 0 1px rgba(243,240,232,.18)');
+  const clubs = [['Мамы рядом', 'встреча в четверг · 10 минут от дома', '#E8A4C6', 'kid'], ['Бег по утрам', 'суббота · парк у реки', '#F3F0E8', 'run'], ['Своё дело', 'разбор идей · эфир по средам', '#D9B26B', 'chart']];
+  $('pC3').innerHTML = `<div class="s" style="color:#F3F0E8;background:radial-gradient(110% 55% at 50% 20%,#1c1219 0%,#09080c 60%,#030304 100%);padding:26px 20px 14px;gap:14px">
+  <div style="display:flex;flex-direction:column"><span class="cap" style="color:#8F8A82">Круг</span><span style="font-size:28px;font-weight:300">Подруги и единомышленницы</span></div>
+  <div style="display:flex;gap:12px">${F.map(([n, i, s]) => `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:58px"><span style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;${ring(s)}">${i}</span><span style="font-size:12px;color:#CFCAC2">${n}</span></div>`).join('')}</div>
+  <div style="padding:16px;border-radius:22px;background:rgba(232,164,198,.08);border:1px solid rgba(232,164,198,.45);display:flex;flex-direction:column;gap:10px"><span style="font-size:11px;font-weight:500;letter-spacing:.22em;color:#E8A4C6">ПРИГЛАШЕНИЕ</span><span style="font-size:18px;line-height:1.3">Вера зовёт на кофе в субботу, 12:00</span>
+    <div style="display:flex;gap:8px"><button type="button" style="height:42px;padding:0 18px;border-radius:21px;border:none;background:#E8A4C6;color:#1a0f16;font-size:15px;font-weight:500">Пойду</button><button type="button" style="height:42px;padding:0 18px;border-radius:21px;border:1px solid rgba(243,240,232,.25);background:transparent;color:#F3F0E8;font-size:15px">Позже</button></div></div>
+  <div style="display:flex;gap:12px;align-items:center;padding:14px;border-radius:20px;background:#0E0D12;border:1px solid rgba(243,240,232,.1)">${av(56, '#E8A4C6', 1)}<span style="font-size:15px;line-height:1.4;color:#E6E1D9;flex:1">Ты и Мария проходите курс о сне и живёте рядом. Познакомить?</span></div>
+  <span style="font-size:11px;font-weight:500;letter-spacing:.22em;color:#8F8A82;margin-top:4px">КЛУБЫ РЯДОМ</span>
+  <div style="display:flex;flex-direction:column;gap:8px">${clubs.map(([n, m, c, k]) => `<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:#0E0D12;border:1px solid rgba(243,240,232,.1)"><span style="width:40px;height:40px;border-radius:12px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:1px solid ${c};color:${c}">${ic(k, 18)}</span><span style="display:flex;flex-direction:column;gap:2px;flex:1"><span style="font-size:16px">${n}</span><span style="font-size:13px;color:#8F8A82">${m}</span></span><span style="color:#8F8A82">${ic('chev', 16, 1.8)}</span></div>`).join('')}</div>
+  ${nav(NC, 2)}</div>`;
+}
+
+[rA1, rA2, rA3, rA4, rB1, rB2, rB3, rC1, rC2, rC3].forEach((f) => f());
+document.querySelectorAll('.nav a[href="#"]').forEach((a) => a.addEventListener('click', (e) => e.preventDefault()));
+document.addEventListener('click', (e) => { const a = e.target.closest('.nav a'); if (a) e.preventDefault(); });
+
+/* ── Живой аватар: бюст из точек, как в презентации ── */
+const PTS = (() => { const pts = [], q = 1.8, N = (n) => Math.round(n * q);
+  const fib = (n, f) => { for (let i = 0; i < n; i++) { const y = 1 - (2 * (i + 0.5)) / n, r = Math.sqrt(1 - y * y), t = i * 2.39996, p = f([Math.cos(t) * r, y, Math.sin(t) * r]); if (p) pts.push(p); } };
+  fib(N(360), ([x, y, z]) => [x * 0.25, 0.2 + y * 0.32, z * 0.28]);
+  for (let i = 0, n = N(40); i < n; i++) { const t = i * 2.39996; pts.push([Math.cos(t) * 0.1, -0.1 - (i / n) * 0.2, Math.sin(t) * 0.1]); }
+  fib(N(460), ([x, y, z]) => (y > -0.05 ? [x * 0.54, -0.8 + y * 0.48, z * 0.3] : null));
+  fib(N(420), ([x, y, z]) => (z < 0.25 || y > 0.5 ? [x * 0.31, 0.1 + y * 0.48, z * 0.33 - 0.03] : null));
+  return pts.filter(([x, y]) => x * x + y * y < 0.9); })();
+const rgb = (h) => { const v = parseInt(String(h).replace('#', ''), 16) || 0xE8A4C6; return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; };
+const cl = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+function drawAv(c, t) {
+  const g = c.getContext('2d'), W = c.width, cx = W / 2, cy = W / 2, r = W * 0.29, col = rgb(c.dataset.tone), sp = c.dataset.speak === '1', ph = (+c.dataset.size % 7) * 0.9;
+  const A = (a) => `rgba(${col[0]},${col[1]},${col[2]},${cl(a).toFixed(3)})`;
+  g.clearRect(0, 0, W, W);
+  const gl = g.createRadialGradient(cx, cy, 0, cx, cy, r * 1.7); gl.addColorStop(0, A(0.2)); gl.addColorStop(1, A(0)); g.fillStyle = gl; g.fillRect(0, 0, W, W);
+  if (sp) for (let k = 0; k < 3; k++) { const u = (t * 0.3 + k / 3) % 1; g.strokeStyle = A(0.3 * (1 - u)); g.lineWidth = Math.max(1, W / 300); g.beginPath(); g.arc(cx, cy, r * (1.12 + u * 0.55), 0, Math.PI * 2); g.stroke(); }
+  const k0 = Math.max(0.6, r / 86) * 0.9;
+  for (let i = 0; i < 48; i++) { const u = (i * 0.618034) % 1, v = (i * 0.37) % 1, orb = r * (1.14 + 0.32 * u), th = (i / 48) * Math.PI * 2 + t * (0.16 + 0.14 * v) * (i % 2 ? 1 : -1);
+    g.fillStyle = A(0.3 + 0.2 * v); g.beginPath(); g.arc(cx + orb * Math.cos(th), cy + orb * Math.sin(th) * 0.94, (1 + 1.4 * v) * k0, 0, Math.PI * 2); g.fill(); }
+  const dg = g.createRadialGradient(cx, cy - r * 0.2, 0, cx, cy, r); dg.addColorStop(0, A(0.16)); dg.addColorStop(1, A(0.02)); g.fillStyle = dg; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
+  const ry = Math.sin(t * 0.33 + ph) * 0.6, cr = Math.cos(ry), sr = Math.sin(ry), scan = ((t * 0.22 + ph * 0.3) % 1) * 1.9 - 0.95, L = [[], [], [], [], []], H = [], step = W < 160 ? 3 : W < 300 ? 2 : 1;
+  for (let i = 0; i < PTS.length; i += step) { const [x, y, z] = PTS[i], X = x * cr + z * sr, Z = -x * sr + z * cr, d = cl((Z + 0.32) / 0.64);
+    (Math.abs(y - scan) < 0.035 ? H : L[Math.min(4, Math.floor(d * 5))]).push(cx + X * r, cy - y * r, (0.75 + 0.95 * d) * k0 * (step > 1 ? 1.25 : 1)); }
+  const fb = (B, s) => { if (!B.length) return; g.fillStyle = s; g.beginPath(); for (let j = 0; j < B.length; j += 3) { g.moveTo(B[j] + B[j + 2], B[j + 1]); g.arc(B[j], B[j + 1], B[j + 2], 0, Math.PI * 2); } g.fill(); };
+  L.forEach((B, i) => fb(B, A(0.12 + 0.64 * (i + 0.5) / 5))); fb(H, 'rgba(242,221,174,.95)');
+  g.strokeStyle = A(0.9); g.lineWidth = Math.max(1, W / 240); g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
+  g.save(); g.setLineDash([W / 200, W / 50]); g.lineDashOffset = -t * W / 30; g.strokeStyle = A(0.45); g.lineWidth = Math.max(1, W / 320); g.beginPath(); g.arc(cx, cy, r * 1.09, 0, Math.PI * 2); g.stroke(); g.restore();
+}
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const seen = new WeakMap();
+const io = 'IntersectionObserver' in window ? new IntersectionObserver((es) => es.forEach((e) => seen.set(e.target, e.isIntersecting)), { rootMargin: '100px' }) : null;
+function frame(now) {
+  const t = now / 1000;
+  document.querySelectorAll('canvas.av').forEach((c) => { if (io && !c.dataset.obs) { c.dataset.obs = 1; io.observe(c); drawAv(c, t); return; } if (!io || seen.get(c)) drawAv(c, t); });
+  if (!still) requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+// После перерисовки экрана (нажатия) новые холсты нужно нарисовать сразу, даже при reduced motion
+['pA1', 'pA2', 'pC1'].forEach((id) => $(id).addEventListener('click', () => requestAnimationFrame(() => $(id).querySelectorAll('canvas.av').forEach((c) => { if (io) { c.dataset.obs = 1; io.observe(c); seen.set(c, true); } drawAv(c, performance.now() / 1000); }))));
+})();
+</script>
