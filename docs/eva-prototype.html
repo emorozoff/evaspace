@@ -14,14 +14,14 @@
   --card:#0E0D12; --card2:rgba(243,240,232,.04); --line:rgba(243,240,232,.10); --line2:rgba(243,240,232,.18);
   --ink:#F3F0E8; --ink2:#E2DDD5; --mu:#9C978F; --rose:#E8A4C6; --rose-a:rgba(232,164,198,.12); --rose-b:rgba(232,164,198,.4);
   --gold:#D9B26B; --gold2:#F2DDAE; --gold-a:rgba(217,178,107,.12); --gold-b:rgba(217,178,107,.45); --on-rose:#1a0f16; --on-gold:#15120c;
-  --shadow:none; color-scheme:dark;
+  --shadow:none; --live:#E5484D; color-scheme:dark;
 }
 .app[data-skin="light"]{
   --bg:#F3EFF4; --bgx:linear-gradient(180deg,#F7F2F7 0%,#EEE9F0 100%);
   --card:#FFFFFF; --card2:#FFFFFF; --line:rgba(30,26,36,.09); --line2:rgba(30,26,36,.18);
   --ink:#1E1A24; --ink2:#3A3442; --mu:#5E5866; --rose:#B5487A; --rose-a:#F6E8EF; --rose-b:#E3BCD0;
   --gold:#8E6A2E; --gold2:#7A5A22; --gold-a:#F4ECDD; --gold-b:#DCC9A4; --on-rose:#FFFFFF; --on-gold:#FFFFFF;
-  --shadow:0 12px 30px -20px rgba(90,40,80,.45); color-scheme:light;
+  --shadow:0 12px 30px -20px rgba(90,40,80,.45); --live:#C9343A; color-scheme:light;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--page);color:#F3F0E8;font-family:var(--f);-webkit-font-smoothing:antialiased}
@@ -47,6 +47,7 @@ body{background:radial-gradient(90% 70% at 70% 0%,#15111a 0%,#040406 60%) fixed,
 /* экраны */
 .scr{position:absolute;inset:0;display:flex;flex-direction:column;animation:in .35s cubic-bezier(.2,.7,.2,1)}
 .scr.back{animation:inb .35s cubic-bezier(.2,.7,.2,1)}
+.scr.quiet{animation:none}
 @keyframes in{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
 @keyframes inb{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
 .body{flex:1;overflow-y:auto;overflow-x:hidden;padding:26px 20px 18px;display:flex;flex-direction:column;gap:14px;scrollbar-width:none}
@@ -86,7 +87,7 @@ body{background:radial-gradient(90% 70% at 70% 0%,#15111a 0%,#040406 60%) fixed,
 .ask input{flex:1;min-width:0;height:48px;border-radius:24px;border:1px solid var(--rose-b);background:var(--card2);color:var(--ink);font-family:inherit;font-size:16px;padding:0 18px}
 .ask input::placeholder{color:var(--mu)}
 .ask button.mic{width:48px;height:48px;border-radius:50%;border:none;background:var(--rose);color:var(--on-rose);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
-.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line);padding:6px 8px 10px;background:var(--bg)}
+.tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:1px solid var(--line);padding:6px 8px 10px;background:var(--bg)}
 .app[data-skin="light"] .tabs{background:#FFFFFF;border:none;box-shadow:0 -10px 30px -24px rgba(90,40,80,.5)}
 .tabs button{border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;font-size:12px;color:var(--mu);border-radius:16px}
 .tabs button[aria-current="page"]{color:var(--rose)}
@@ -115,26 +116,65 @@ body{background:radial-gradient(90% 70% at 70% 0%,#15111a 0%,#040406 60%) fixed,
 .breath{width:230px;height:230px;border-radius:50%;margin:10px auto;display:flex;align-items:center;justify-content:center;position:relative}
 .breath .ring{position:absolute;inset:0;border-radius:50%;border:1.5px solid var(--rose);background:radial-gradient(circle,var(--rose-a),transparent 70%);transform:scale(.55);transition:transform linear}
 .bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--rose),var(--gold2));transition:width .4s}
-canvas.av{display:block}
-@media (prefers-reduced-motion:reduce){.scr,.scr.back,.over{animation:none}.breath .ring{transition:none}}
+canvas.av{display:block;flex:0 0 auto}
+/* видео и плеер */
+.vbox{position:relative;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:16/9;user-select:none;-webkit-user-select:none}
+.vbox canvas{display:block;width:100%;height:100%;object-fit:contain}
+.vbox:fullscreen{border-radius:0;aspect-ratio:auto;width:100vw;height:100vh}
+.vbox.theater{position:absolute;inset:0;z-index:50;border-radius:0;aspect-ratio:auto}
+.vctl{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:8px;background:linear-gradient(rgba(0,0,0,.4),transparent 32%,transparent 58%,rgba(0,0,0,.65));transition:opacity .3s}
+.vctl.hide{opacity:0}.vctl.hide > *{pointer-events:none}
+.vrow{display:flex;align-items:center;gap:6px}
+.app .vb{height:32px;min-width:32px;padding:0 9px;border-radius:16px;border:none;background:rgba(0,0,0,.5);color:#F3F0E8;font-size:12px;font-weight:500;letter-spacing:.06em;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+.app .vb[aria-pressed="false"]{opacity:.5}
+.vmid{display:flex;align-items:center;justify-content:center;gap:28px}
+.app .vbig{width:58px;height:58px;border-radius:50%;border:none;background:rgba(243,240,232,.94);color:#0b0a0f;display:flex;align-items:center;justify-content:center}
+.app .vskip{width:44px;height:44px;border-radius:50%;border:none;background:rgba(0,0,0,.45);color:#F3F0E8;font-size:13px;font-weight:500}
+.vrange{flex:1;min-width:0;accent-color:#E8A4C6;height:22px;margin:0}
+.vt{font-size:12px;font-variant-numeric:tabular-nums;min-width:34px;text-align:center;color:#F3F0E8}
+.vend{position:absolute;inset:0;background:rgba(5,5,7,.86);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#F3F0E8;text-align:center;padding:12px}
+.vend[hidden]{display:none}
+.chrow{display:flex;gap:12px;align-items:center;width:100%;padding:9px 10px;border-radius:14px;border:1px solid transparent;background:transparent;text-align:left}
+.chrow .vt{color:var(--mu)}
+.chrow.on{background:var(--rose-a);border-color:var(--rose-b)}
+.thumb{position:relative;height:126px;border-radius:16px;overflow:hidden;display:flex;align-items:center;padding-left:6px;background:#0b0a0f}
+.thumb .dur{position:absolute;right:8px;bottom:8px;font-size:12px;padding:2px 8px;border-radius:10px;background:rgba(0,0,0,.6);color:#F3F0E8}
+.thumb .pl{position:absolute;right:14px;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;background:rgba(243,240,232,.92);color:#0b0a0f;display:flex;align-items:center;justify-content:center;border:none}
+.thumb .tp{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.15)}.thumb .tp i{display:block;height:100%;background:#E8A4C6}
+.mini{position:absolute;left:10px;right:10px;z-index:20;display:flex;align-items:center;gap:6px;padding:8px 6px 10px 10px;border-radius:18px;background:var(--card);border:1px solid var(--line2);box-shadow:0 14px 30px -14px rgba(0,0,0,.7);animation:up .3s}
+.mini .pg{position:absolute;left:16px;right:16px;bottom:4px;height:2px;border-radius:1px;background:var(--line)}.mini .pg i{display:block;height:100%;background:var(--rose)}
+.sheetw{position:absolute;inset:0;z-index:45;background:rgba(4,4,6,.55);display:flex;align-items:flex-end;animation:fade .25s}
+.sheet{width:100%;background:var(--bg);background-image:var(--bgx);border-radius:26px 26px 0 0;padding:10px 20px 22px;display:flex;flex-direction:column;gap:12px;animation:up .3s cubic-bezier(.2,.7,.2,1)}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line2);align-self:center}
+@keyframes up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}}
+.lrow{display:flex;align-items:center;gap:12px;width:100%;padding:10px 2px;border:none;border-bottom:1px solid var(--line);background:transparent;text-align:left}
+.lrow .num{width:30px;height:30px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-family:var(--u);font-size:12px;border:1px solid var(--line2)}
+.lrow.done .num{background:var(--gold);border-color:var(--gold);color:var(--on-gold)}
+.livedot{position:absolute;right:2px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--live);box-shadow:0 0 0 3px var(--bg);animation:bl 1.4s infinite}
+.slot{height:44px;border-radius:14px;border:1px solid var(--line2);background:var(--card2);font-size:15px}
+.slot[aria-pressed="true"]{background:var(--rose);border-color:var(--rose);color:var(--on-rose)!important}
+.slot:disabled{opacity:.35;text-decoration:line-through;cursor:default}
+@media (prefers-reduced-motion:reduce){.scr,.scr.back,.over,.sheet,.sheetw,.mini{animation:none}.breath .ring{transition:none}}
 </style>
 
 <div class="stage">
   <aside class="side" aria-label="О прототипе">
     <p class="eb">Eva Space · прототип</p>
     <h1>Ева — <em>кликабельная</em> версия</h1>
-    <p>Лучшее из трёх вариантов: Ева в центре главной и дуга дня из «Зала», светлая тема из «Перламутра» — днём включается сама, орбита — отдельным экраном «Моя экосистема».</p>
+    <p>У Евы и у каждого эксперта — свой живой аватар. Аватар эксперта ведёт уроки, отвечает на вопросы по его материалам и показывает нужную минуту видео.</p>
     <p style="color:#E2DDD5">Попробуйте:</p>
     <ol>
       <li><button type="button" data-jump="splash">Познакомиться с Евой</button> — 6 вопросов и сборка программы</li>
-      <li><button type="button" data-jump="lesson:1">Пройти практику</button> — дыхание 4-7-8, звезда и баллы</li>
-      <li><button type="button" data-jump="chat">Написать Еве</button> «плохо сплю» или «хочу встретиться с подругами»</li>
-      <li><button type="button" data-jump="course">Купить курс</button> с баллами</li>
-      <li><button type="button" data-jump="eco">Открыть экосистему</button> и нажать на планету</li>
-      <li><button type="button" data-jump="path:sat">Собрать субботу</button> — встреча, кофе с подругой, маркет, курс</li>
-      <li><button type="button" data-jump="me">Переключить тему</button> — «Зал» или «Перламутр»</li>
+      <li><button type="button" data-jump="player:mc_breath">Посмотреть мастер-класс</button> — видео с субтитрами, голосом, главами и конспектом</li>
+      <li><button type="button" data-jump="expert:marina">Открыть эксперта</button> и спросить её аватар «просыпаюсь в 3 ночи»</li>
+      <li><button type="button" data-jump="course:sleep">Купить курс</button> — урок 1 бесплатно, остальные после покупки</li>
+      <li><button type="button" data-jump="player:live_olga">Зайти в прямой эфир</button> с чатом</li>
+      <li><button type="button" data-jump="learn">Все знания</button>: курсы, мастер-классы, эфиры, эксперты</li>
+      <li><button type="button" data-jump="chat">Написать Еве</button> «как попросить мужа помочь?»</li>
+      <li><button type="button" data-jump="path:sat">Собрать субботу</button> и <button type="button" data-jump="me">переключить тему</button></li>
     </ol>
-    <small>Оплаты, адреса и имена экспертов — заглушки. Прогресс хранится в этом браузере; «Начать заново» — в профиле.</small>
+    <small>Эксперты, их тексты и цены — демонстрационные. Видео здесь рисуется кодом и озвучивается голосом браузера; в продукте на этом месте будут записи экспертов в том же плеере. Прогресс хранится в этом браузере.</small>
   </aside>
   <div class="device" id="device"><div class="app" id="app" data-skin="dark"></div></div>
 </div>
@@ -160,11 +200,14 @@ const I = {
   chev: '<path d="M9 5l7 7-7 7"/>', send: '<path d="M4 12l16-8-6 16-2-7z"/>', orbit: '<circle cx="12" cy="12" r="2.5"/><ellipse cx="12" cy="12" rx="9" ry="5"/><ellipse cx="12" cy="12" rx="9" ry="5" transform="rotate(60 12 12)"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>',
   moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>', pin: '<path d="M12 21s-6-5.3-6-10.5a6 6 0 0 1 12 0C18 15.7 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/>',
-  gift: '<rect x="4" y="9" width="16" height="11" rx="2"/><path d="M4 13h16M12 9v11M12 9c-2-4-6-3-5-1s5 1 5 1 4 1 5-1-3-3-5 1"/>', trash: '<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/>'
+  gift: '<rect x="4" y="9" width="16" height="11" rx="2"/><path d="M4 13h16M12 9v11M12 9c-2-4-6-3-5-1s5 1 5 1 4 1 5-1-3-3-5 1"/>', trash: '<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/>',
+  pause: '<path d="M9 6v12M15 6v12"/>', playf: '<path d="M8 5.5v13l11-6.5z" fill="currentColor"/>', full: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  vol: '<path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>', mute: '<path d="M4 10v4h4l5 4V6L8 10z"/><path d="M17 10l4 4M21 10l-4 4"/>',
+  note: '<path d="M5 4h10l4 4v12H5z"/><path d="M9 12h6M9 16h4"/>', shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>'
 };
 const ic = (k, s = 20, w = 1.6) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[k]}</svg>`;
 const star = (s, fill) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR}" fill="${fill || 'currentColor'}"/></svg>`;
-const av = (size, speak = 1) => `<canvas class="av" data-size="${size}" data-speak="${speak ? 1 : 0}" width="${size * 2}" height="${size * 2}" style="width:${size}px;height:${size}px" role="img" aria-label="Ева"></canvas>`;
+const av = (size, speak = 1, who = 'eva', dark = 0) => `<canvas class="av" data-who="${who}" data-dark="${dark ? 1 : 0}" data-speak="${speak ? 1 : 0}" width="${size * 2}" height="${size * 2}" style="width:${size}px;height:${size}px" role="img" aria-label="${who === 'eva' ? 'Ева' : 'Аватар эксперта'}"></canvas>`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 /* ── Данные ── */
@@ -177,9 +220,9 @@ const Q = [
   { id: 'fmt', t: 'Как тебе удобнее заниматься?', multi: 0, o: [['Видео', 'play'], ['Аудио', 'mic'], ['Текст', 'book'], ['Вживую', 'ppl']], eva: 'Последний вопрос — и я соберу программу.' }
 ];
 const PROG = {
-  'Спокойствие': ['«Я в своём ритме»', 'Дыхание 4-7-8', 'Сон без тревоги'], 'Энергия': ['«Во мне достаточно сил»', 'Утренняя зарядка', 'Энергия без кофе'],
-  'Отношения': ['«Я открыта близости»', 'Практика благодарности', 'Разговор без обид'], 'Тело и здоровье': ['«Моё тело — мой дом»', 'Мягкая растяжка', 'Питание по сезону'],
-  'Дело и деньги': ['«Я ценю свой труд»', 'Фокус на главном', 'Первые клиенты'], 'Материнство': ['«Я достаточно хорошая мама»', 'Дыхание для двоих', 'Сон малыша и мамы']
+  'Спокойствие': ['«Я в своём ритме»', 'Дыхание 4-7-8', 'Дыхание для глубокого сна'], 'Энергия': ['«Во мне достаточно сил»', 'Утренняя зарядка', 'Энергия без кофе'],
+  'Отношения': ['«Я открыта близости»', 'Практика благодарности', 'Как просить о помощи'], 'Тело и здоровье': ['«Моё тело — мой дом»', 'Мягкая растяжка', 'Мягкая йога: утро'],
+  'Дело и деньги': ['«Я ценю свой труд»', 'Фокус на главном', 'Как назвать свою цену'], 'Материнство': ['«Я достаточно хорошая мама»', 'Дыхание для двоих', 'Первые 40 дней после родов']
 };
 const LTYPE = [['Аффирмация', 'утро · 3 мин', 'msg', 'rose'], ['Практика', 'день · 12 мин', 'wave', 'ink'], ['Мастер-класс', 'вечер · эксперт · 24 мин', 'play', 'gold']];
 const STAGES = [['Найти себя', 'своё дело, хобби, состояние'], ['Отношения', 'программы для пары, психолог'], ['Беременность', 'программа на каждую неделю'], ['Материнство', 'восстановление, как растить детей']];
@@ -189,9 +232,11 @@ const PAST = [3, 3, 2, 3, 1, 2, 3];
 /* ── Состояние: хранится в этом браузере ── */
 const KEY = 'eva-proto-v1';
 const fresh = () => ({ name: '', ans: { stage: null, focus: [], mood: null, time: null, int: [], fmt: null }, onboarded: false, done: [false, false, false], points: 0, superstar: false,
-  bought: { course: false, product: false }, going: false, vera: false, coffee: null, clubs: {}, skin: 'auto', chat: [], today: new Date().toDateString() });
+  bought: { course: false, product: false }, going: false, vera: false, coffee: null, clubs: {}, skin: 'auto', chat: [], today: new Date().toDateString(),
+  owned: {}, plus: 'trial', prog: {}, vdone: {}, notes: {}, remind: {}, bookings: [], xchat: {} });
 let S = fresh();
 try { const raw = localStorage.getItem(KEY); if (raw) { const o = JSON.parse(raw); if (o && o.ans) S = Object.assign(fresh(), o); } } catch (_) {}
+if (S.bought && S.bought.course) S.owned.sleep = true;
 if (S.today !== new Date().toDateString()) { S.done = [false, false, false]; S.today = new Date().toDateString(); }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (_) {} };
 
@@ -211,9 +256,10 @@ const tone = () => getComputedStyle(app).getPropertyValue('--rose').trim() || '#
 
 /* ── Навигация ── */
 let stack = [], cur = null, back = false, timers = [];
-const TABS = ['home', 'path', 'circle', 'me'];
+const TABS = ['home', 'learn', 'path', 'circle', 'me'];
 function go(id, arg, opts) {
   opts = opts || {}; timers.forEach(clearTimeout); timers = [];
+  if (id === 'player') { arg = openPlayer(arg); if (cur && cur.id === 'player') opts.replace = true; }
   if (TABS.includes(id) && !opts.keep) stack = [];
   else if (cur && !opts.replace) stack.push(cur);
   back = false; cur = { id, arg }; render();
@@ -224,7 +270,7 @@ const later = (fn, ms) => timers.push(setTimeout(fn, ms));
 let toastT;
 function toast(html) { let t = app.querySelector('.toast'); if (!t) { t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); app.appendChild(t); } t.innerHTML = html; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
 
-const tabs = (on) => `<nav class="tabs" aria-label="Разделы">${[['home', 'Ева'], ['path', 'Путь'], ['circle', 'Круг'], ['me', 'Я']].map(([id, l]) => `<button type="button" data-go="${id}"${id === on ? ' aria-current="page"' : ''}>${id === 'home' ? star(22) : ic({ path: 'path', circle: 'ppl', me: 'me' }[id], 22)}${l}</button>`).join('')}</nav>`;
+const tabs = (on) => `<nav class="tabs" aria-label="Разделы">${[['home', 'Ева'], ['learn', 'Знания'], ['path', 'Путь'], ['circle', 'Круг'], ['me', 'Я']].map(([id, l]) => `<button type="button" data-go="${id}"${id === on ? ' aria-current="page"' : ''}>${id === 'home' ? star(22) : ic({ learn: 'play', path: 'path', circle: 'ppl', me: 'me' }[id], 22)}${l}</button>`).join('')}</nav>`;
 const topbar = (title, right) => `<div class="top"><button type="button" class="iconbtn" data-act="back" aria-label="Назад">${ic('back', 22, 1.8)}</button><div class="grow" style="font-size:17px">${title || ''}</div>${right || ''}</div>`;
 const verified = '<span class="ok"><i>' + ic('check', 10, 3) + '</i>проверено</span>';
 
@@ -276,7 +322,7 @@ V.result = () => { const L = lessons();
   <div class="row" style="justify-content:space-between;align-items:flex-end"><h1 class="h1">Твоя неделя, ${esc(name())}</h1><div style="text-align:right"><div style="font-family:var(--u);font-size:28px;color:var(--gold2);line-height:1">${match()}%</div><div class="mu" style="font-size:12px">совпадение</div></div></div>
   <div class="card">${weekGrid(true)}</div>
   <div class="k mu">Завтра и каждый день</div>
-  ${L.map((t, i) => `<div class="row card" style="padding:12px"><span style="width:38px;height:38px;border-radius:50%;border:1px solid ${['var(--rose)', 'var(--ink)', 'var(--gold)'][i]};color:${['var(--rose)', 'var(--ink)', 'var(--gold)'][i]};display:flex;align-items:center;justify-content:center">${ic(LTYPE[i][2], 18)}</span><div class="col grow"><span style="font-size:16px">${t}</span><span class="mu" style="font-size:13px">${LTYPE[i][0].toLowerCase()} · ${LTYPE[i][1]}</span></div></div>`).join('')}
+  ${L.map((t, i) => `<div class="row card" style="padding:12px"><span style="width:38px;height:38px;border-radius:50%;border:1px solid ${['var(--rose)', 'var(--ink)', 'var(--gold)'][i]};color:${['var(--rose)', 'var(--ink)', 'var(--gold)'][i]};display:flex;align-items:center;justify-content:center">${ic(LTYPE[i][2], 18)}</span><div class="col grow"><span style="font-size:16px">${t}</span><span class="mu" style="font-size:13px">${lsub(i)}</span></div></div>`).join('')}
   <div style="margin-top:auto"><button type="button" class="btn" data-act="finish">Начать</button></div></div>`; };
 
 function weekGrid(preview) {
@@ -298,7 +344,8 @@ V.home = () => { const L = lessons(), d = S.done, n = starsToday(), h = new Date
   <p style="text-align:center;font-size:18px;font-weight:300;line-height:1.4;margin:-8px 8px 0">${line}</p>
   <div style="position:relative;height:70px;width:350px;align-self:center"><svg width="350" height="70" viewBox="0 0 350 70" aria-hidden="true" style="position:absolute;inset:0"><path d="M20 62 Q175 -10 330 62" fill="none" stroke="var(--line2)" stroke-width="1.2"/>${lit ? `<path d="${lit}" fill="none" stroke="var(--gold)" stroke-width="1.8"/>` : ''}</svg>
   ${['утро', 'день', 'вечер'].map((l, i) => `<div style="position:absolute;left:${pos[i][0] - 2}px;top:${pos[i][1]}px;width:40px;display:flex;flex-direction:column;align-items:center;gap:2px">${star(18, d[i] ? 'var(--gold2)' : 'var(--line2)')}<span style="font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:${d[i] ? 'var(--gold2)' : 'var(--mu)'}">${l}</span></div>`).join('')}</div>
-  <div style="display:flex;flex-direction:column;gap:8px">${L.map((t, i) => `<button type="button" class="lesson${d[i] ? ' done' : ''}" data-go="lesson" data-arg="${i}"><span class="ico" style="color:${['var(--rose)', 'var(--ink)', 'var(--gold)'][i]}">${ic(LTYPE[i][2], 18)}</span><span class="col grow"><span style="font-size:16px">${t}</span><span class="mu" style="font-size:13px">${LTYPE[i][0].toLowerCase()} · ${LTYPE[i][1]}</span></span><span class="chk">${d[i] ? ic('check', 14, 2.6) : ''}</span></button>`).join('')}</div>
+  <div style="display:flex;flex-direction:column;gap:8px">${L.map((t, i) => `<button type="button" class="lesson${d[i] ? ' done' : ''}" ${i === 2 ? `data-go="player" data-arg="${mcId()}"` : `data-go="lesson" data-arg="${i}"`}><span class="ico" style="color:${['var(--rose)', 'var(--ink)', 'var(--gold)'][i]}">${ic(LTYPE[i][2], 18)}</span><span class="col grow"><span style="font-size:16px">${t}</span><span class="mu" style="font-size:13px">${lsub(i)}</span></span><span class="chk">${d[i] ? ic('check', 14, 2.6) : ''}</span></button>`).join('')}</div>
+  ${contList().slice(0, 1).map((id) => { const v = VID[id]; return `<button type="button" class="card row" data-go="player" data-arg="${id}" style="text-align:left;width:100%;margin-top:6px">${av(48, 0, v.ex)}<span class="col grow"><span class="k mu">Продолжить · ${fmt(S.prog[id])} из ${fmt(v.dur)}</span><span style="font-size:16px">${v.t}</span><span class="bar" style="margin-top:6px"><i style="width:${(S.prog[id] / v.dur) * 100}%"></i></span></span><span style="color:var(--rose)">${ic('playf', 20)}</span></button>`; }).join('')}
   <div class="row" style="justify-content:space-between;margin-top:8px"><span class="h2">Ева нашла для тебя</span><span class="mu" style="font-size:13px;display:flex;gap:5px;align-items:center;white-space:nowrap">${ic('search', 14, 1.8)}<s>поиск</s></span></div>
   <div class="hs">${picks()}</div>
   <button type="button" class="card row" data-go="eco" style="text-align:left;width:100%"><span style="color:var(--rose)">${ic('orbit', 26)}</span><span class="col grow"><span style="font-size:16px">Моя экосистема</span><span class="mu" style="font-size:13px">программа, эксперты, маркет, события, круг</span></span><span class="mu">${ic('chev', 16, 1.8)}</span></button>
@@ -306,7 +353,9 @@ V.home = () => { const L = lessons(), d = S.done, n = starsToday(), h = new Date
 
 function picks() {
   const P = [];
-  P.push(`<button type="button" class="card gold pick" data-go="course"><span class="row" style="justify-content:space-between"><span class="k" style="color:var(--gold)">Курс</span>${S.bought.course ? '<span class="tag g">куплен</span>' : verified}</span><span style="font-size:17px;line-height:1.2">«Сон без тревоги»</span><span class="mu" style="font-size:13px">[Имя эксперта] · 6 уроков</span><span class="tag" style="align-self:flex-start">совпадение 96%</span></button>`);
+  const fc = COURSES[courseId()], fe = EXP[fc.ex];
+  P.push(`<button type="button" class="card gold pick" data-go="course" data-arg="${fc.id}"><span class="row" style="justify-content:space-between"><span class="k" style="color:var(--gold)">Курс · ${fe.short}</span>${S.owned[fc.id] ? '<span class="tag g">твой</span>' : verified}</span><span style="font-size:17px;line-height:1.2">«${fc.t}»</span><span class="mu" style="font-size:13px">${fe.role} · ${fc.ls.length} уроков</span><span class="tag" style="align-self:flex-start">совпадение ${fc.m}%</span></button>`);
+  P.push(`<button type="button" class="card pick" data-go="player" data-arg="live_olga" style="border-color:var(--rose-b)"><span class="k" style="color:var(--live)">● Сейчас в эфире</span><span style="font-size:17px;line-height:1.2">«Ссоры из-за быта»</span><span class="mu" style="font-size:13px">Ольга · ${LV.viewers} смотрят</span></button>`);
   P.push(`<button type="button" class="card pick" data-go="event"><span class="k mu">Встреча · сб 10:00</span><span style="font-size:17px;line-height:1.2">«Утренний круг»</span><span style="font-size:13px;color:var(--rose)">${S.going ? 'ты идёшь' : 'идут 3 подруги · рядом'}</span></button>`);
   P.push(`<button type="button" class="card pick" data-go="product"><span class="k mu">Маркет · советует эксперт</span><span style="font-size:17px;line-height:1.2">Шёлковая маска для сна</span><span style="font-size:13px;color:var(--gold2)">${S.bought.product ? 'заказ оформлен' : 'часть — баллами'}</span></button>`);
   if (!S.vera) P.push(`<button type="button" class="card rose pick" data-go="intro"><span class="k" style="color:var(--rose)">Круг</span><span style="font-size:17px;line-height:1.2">Вера тоже налаживает сон</span><span class="mu" style="font-size:13px">живёт рядом · познакомить?</span></button>`);
@@ -321,40 +370,39 @@ V.lesson = (i) => { i = +i; const L = lessons(), t = LTYPE[i];
   if (i === 1) inner = `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center"><div class="breath"><span class="ring" id="ring"></span><div class="col" style="align-items:center;position:relative"><span id="phase" style="font-size:28px;font-weight:300">Готова?</span><span id="cnt" class="mu" style="font-family:var(--u);font-size:14px">4 · 7 · 8</span></div></div>
     <p class="mu" style="margin:0;max-width:30ch;line-height:1.5">Вдох через нос на 4 счёта, задержка на 7, медленный выдох на 8. Три круга.</p>
     <button type="button" class="pill fill" data-act="breathe" id="bstart" style="height:52px;padding:0 28px;font-size:16px">Начать</button></div>`;
-  if (i === 2) inner = `<div style="flex:1;display:flex;flex-direction:column;gap:14px;padding-top:10px"><div style="aspect-ratio:9/12;max-height:330px;border-radius:24px;background:radial-gradient(circle at 50% 35%,var(--gold-a),var(--card) 70%);border:1px solid var(--gold-b);display:flex;align-items:center;justify-content:center;position:relative">
-    <button type="button" data-act="play" id="playb" aria-label="Смотреть" style="width:76px;height:76px;border-radius:50%;border:none;background:var(--gold);color:var(--on-gold);display:flex;align-items:center;justify-content:center">${ic('play', 34, 1.6)}</button>
-    <span style="position:absolute;left:16px;bottom:14px" class="tag g">[Имя эксперта] · проверен</span></div>
-    <div class="bar"><i id="vp" style="width:0"></i></div><div class="row mu" style="justify-content:space-between;font-size:13px"><span id="vt">0:00</span><span>24:00</span></div>
-    <p class="mu" style="margin:0;line-height:1.5">В прототипе урок «проигрывается» за несколько секунд.</p></div>`;
   return `${topbar(`<span class="k" style="color:${['var(--rose)', 'var(--mu)', 'var(--gold)'][i]}">${t[0]} · ${t[1]}</span>`)}<div class="body" style="padding-top:4px"><h1 class="h1" style="font-size:26px">${L[i]}</h1>${inner}</div>`; };
 
 V.chat = () => { if (!S.chat.length) S.chat.push({ e: 1, t: `Привет, ${esc(name())}! Я рядом. Расскажи, что сейчас важно — подберу практику, эксперта, встречу или подругу.` });
   return `${topbar(`<div class="row" style="gap:10px">${av(44)}<div class="col"><span>Ева</span><span class="mu" style="font-size:12px">знает твою программу и цели</span></div></div>`)}
   <div class="body" id="log" style="padding-top:8px;gap:10px">${S.chat.map(msg).join('')}</div>
   <div style="padding:8px 16px 14px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line)">
-    <div class="hs" style="margin:0 -16px;padding:0 16px">${['Плохо сплю', 'Хочу встретиться с подругами', 'Что купить для практик?', 'Что ты обо мне знаешь?'].map((c) => `<button type="button" class="pill" data-act="say" data-v="${c}">${c}</button>`).join('')}</div>
+    <div class="hs" style="margin:0 -16px;padding:0 16px">${['Плохо сплю', 'Как попросить мужа помочь?', 'Хочу встретиться с подругами', 'Что ты обо мне знаешь?'].map((c) => `<button type="button" class="pill" data-act="say" data-v="${c}">${c}</button>`).join('')}</div>
     <div class="ask"><label class="sr" for="askc">Сообщение Еве</label><input id="askc" type="text" placeholder="Написать Еве…" data-enter="send"><button type="button" class="mic" data-act="send" aria-label="Отправить">${ic('send', 20, 1.8)}</button></div></div>`; };
 
 function msg(m) {
   if (m.typing) return `<div class="bub typing" aria-label="Ева печатает"><span></span><span></span><span></span></div>`;
   if (!m.e) return `<div class="bub me">${esc(m.t)}</div>`;
   let h = `<div class="bub">${m.t}</div>`;
-  (m.cards || []).forEach(([go, arg, kind, title, sub, col]) => { h += `<button type="button" class="card row" data-go="${go}" data-arg="${arg || ''}" style="width:86%;align-self:flex-start;text-align:left;border-color:${col === 'gold' ? 'var(--gold-b)' : 'var(--rose-b)'}"><span class="col grow"><span class="k" style="color:var(--${col === 'gold' ? 'gold' : 'rose'})">${kind}</span><span style="font-size:15px">${title}</span><span class="mu" style="font-size:12px">${sub}</span></span><span class="mu">${ic('chev', 16, 1.8)}</span></button>`; });
+  (m.cards || []).forEach(([go, arg, kind, title, sub, col]) => { h += `<button type="button" class="card row" data-go="${go}" data-arg="${arg ?? ''}" style="width:86%;align-self:flex-start;text-align:left;border-color:${col === 'gold' ? 'var(--gold-b)' : 'var(--rose-b)'}"><span class="col grow"><span class="k" style="color:var(--${col === 'gold' ? 'gold' : 'rose'})">${kind}</span><span style="font-size:15px">${title}</span><span class="mu" style="font-size:12px">${sub}</span></span><span class="mu">${ic('chev', 16, 1.8)}</span></button>`; });
   return h;
 }
 
 function reply(q) {
   const s = q.toLowerCase(), L = lessons();
   if (/сон|спать|уснуть|бессон|сплю/.test(s)) return { t: 'Понимаю, это выматывает. Начнём с простого: дыхание 4-7-8 перед сном. Если захочешь глубже — у проверенного сомнолога есть курс. А если бессонница держится дольше месяца, лучше обсудить это с врачом — подберу специалиста.',
-    cards: [['lesson', 1, 'Практика · 12 мин', 'Дыхание 4-7-8', 'можно прямо сейчас', 'rose'], ['course', '', 'Курс · проверено', '«Сон без тревоги»', 'совпадение 96%', 'gold']] };
+    cards: [['player', 'mc_breath', 'Мастер-класс · Марина', 'Дыхание для глубокого сна', `видео · ${fmt(VID.mc_breath.dur)}`, 'rose'], ['course', 'sleep', 'Курс · проверено', '«Сон без тревоги»', 'урок 1 — бесплатно', 'gold'], ['xchat', 'marina', 'Аватар эксперта', 'Спросить Марину, сомнолога', 'ответит по её урокам', 'rose']] };
+  if (/попрос|помощ|помоч|муж|ссор|обид/.test(s)) return { t: 'У Ольги, психолога отношений, есть короткий мастер-класс ровно об этом — с простой формулой просьбы. А сегодня вечером она в прямом эфире про ссоры из-за быта.',
+    cards: [['player', 'mc_talk', 'Мастер-класс · Ольга', 'Как просить о помощи', `видео · ${fmt(VID.mc_talk.dur)}`, 'rose'], ['player', 'live_olga', 'Сейчас в эфире', 'Ссоры из-за быта', `${LV.viewers} смотрят`, 'gold']] };
   if (/подруг|встреч|одинок|скучно|люд|знаком/.test(s)) return { t: 'В субботу «Утренний круг» рядом с домом — идут три подруги. А ещё Вера, она тоже налаживает сон и живёт недалеко. Познакомить?',
     cards: [['event', '', 'Встреча · сб 10:00', '«Утренний круг»', S.going ? 'ты идёшь' : 'идут 3 подруги', 'rose'], ['intro', '', 'Круг', 'Вера', 'общая тема — сон', 'rose']] };
   if (/куп|маркет|товар|коврик|маск|подар/.test(s)) return { t: 'Эксперт по сну советует шёлковую маску — часть можно оплатить баллами за уроки.', cards: [['product', '', 'Маркет · советует эксперт', 'Шёлковая маска для сна', `у тебя ${S.points} баллов`, 'gold']] };
-  if (/курс|эксперт|научи|углуб/.test(s)) return { t: 'Под твою программу лучше всего подходит этот курс. Эксперт проверен: образование, практика и отзывы.', cards: [['course', '', 'Курс · проверено', '«Сон без тревоги»', 'совпадение 96%', 'gold']] };
+  if (/курс|эксперт|научи|углуб|аватар|видео|мастер|урок/.test(s)) { const c = COURSES[courseId()], e = EXP[c.ex]; return { t: `Под твою программу лучше всего подходит курс «${c.t}». ${e.short} проверена: образование, практика, отзывы и этика. Первый урок — бесплатно, а её аватар ответит на вопросы по курсу.`,
+    cards: [['course', c.id, 'Курс · проверено', `«${c.t}»`, `совпадение ${c.m}%`, 'gold'], ['expert', c.ex, 'Эксперт', `${e.short} · ${e.role}`, 'аватар · курсы · эфиры', 'rose'], ['learn', '', 'Знания', 'Все курсы и мастер-классы', 'подобраны под тебя', 'rose']] }; }
   if (/устал|сил|энерг|выгор/.test(s)) return { t: 'Давай бережно. Сегодня — только практика, без мастер-класса. Двенадцать минут, и я не буду напоминать о большем.', cards: [['lesson', 1, 'Практика · 12 мин', L[1], 'день', 'rose']] };
   if (/беремен|ребён|ребен|малыш|мам|дет/.test(s)) return { t: 'Я рядом на каждом этапе: программа по неделям беременности, потом восстановление и знания о том, как растить детей. А дальше — EVA KIDS для твоих детей.', cards: [['path', 'life', 'Путь', 'Мой путь по жизни', 'этапы и программа', 'gold']] };
   if (/знаешь|обо мне|память/.test(s)) return { t: 'Вот что я знаю: ' + facts().join('; ') + '. Всё это видно в профиле — там же можно попросить меня забыть переписку.', cards: [['me', '', 'Профиль', 'Что Ева знает обо мне', 'и как это стереть', 'gold']] };
   if (/привет|здравств|добр/.test(s)) return { t: `Привет, ${esc(name())}! Как ты сегодня?` };
+  const f = findIn(q, Object.keys(VID)); if (f) { const e = EXP[f.v.ex]; return { t: `Нашла у эксперта: ${e.short}, ${e.role}, говорит об этом в «${f.v.t}», с ${fmt(f.a)}: «${f.tx}»`, cards: [['player', `${f.v.id}@${f.a.toFixed(1)}`, `Смотреть с ${fmt(f.a)}`, f.v.t, `${e.short} · ${e.role}`, 'rose']] }; }
   return { t: 'Я пока учусь и не на всё отвечаю сама — передам вопрос команде. А пока могу предложить практику на сегодня или встречу рядом.', cards: [['lesson', 1, 'Практика', L[1], '12 минут', 'rose']] };
 }
 function facts() {
@@ -370,18 +418,6 @@ function send(text) {
   later(() => { S.chat = S.chat.filter((m) => !m.typing); const r = reply(text); S.chat.push({ e: 1, t: r.t, cards: r.cards }); save(); renderLog(); }, 900);
 }
 function renderLog() { const log = document.getElementById('log'); if (!log) return; log.innerHTML = S.chat.map(msg).join(''); log.scrollTop = log.scrollHeight; }
-
-V.course = () => {
-  return `${topbar('Курс эксперта')}<div class="body" style="padding-top:4px">
-  <div class="row" style="justify-content:space-between"><span class="k" style="color:var(--gold)">Курс · 6 уроков</span>${verified}</div>
-  <h1 class="h1">«Сон без тревоги»</h1>
-  <div class="card row"><span style="width:52px;height:52px;border-radius:50%;background:var(--gold-a);color:var(--gold2);display:flex;align-items:center;justify-content:center;flex:0 0 auto">${ic('expert', 24)}</span><div class="col grow"><span style="font-size:16px">[Имя эксперта], сомнолог</span><span class="mu" style="font-size:13px">проверены образование, практика и отзывы учениц</span></div></div>
-  <div class="row" style="gap:6px;flex-wrap:wrap"><span class="tag">совпадение 96%</span><span class="tag g">лучшая цена · [ЦЕНА]</span></div>
-  <div class="card rose row" style="align-items:flex-start">${av(48, 0)}<p style="margin:0;font-size:15px;line-height:1.45">Я выбрала этот курс, потому что ты пишешь о сне и чаще досматриваешь вечерние уроки.</p></div>
-  <div class="k mu" style="margin-top:4px">Уроки</div>
-  ${['Почему мы не спим', 'Вечерний ритуал', 'Тревожные мысли ночью', 'Сон и гормоны', 'Спальня для сна', 'План на 21 день'].map((t, i) => `<div class="row" style="padding:8px 2px;border-bottom:1px solid var(--line)"><span style="font-family:var(--u);font-size:12px;color:var(--gold);width:24px">${i + 1}</span><span class="grow" style="font-size:15px">${t}</span>${S.bought.course ? ic('play', 18) : `<span class="mu">${ic('lock', 16, 1.8)}</span>`}</div>`).join('')}
-  ${S.bought.course ? `<div class="card gold" style="text-align:center">Курс твой — он уже в «Пути»</div>` : `<div class="card"><label class="row" style="justify-content:space-between;cursor:pointer"><span class="col"><span style="font-size:16px">Списать баллы</span><span class="mu" style="font-size:13px">у тебя ${S.points} · до 30% цены</span></span><input type="checkbox" id="usepts" ${S.points ? 'checked' : 'disabled'} style="width:22px;height:22px;accent-color:#D9B26B"></label></div>
-  <button type="button" class="btn" data-act="buy" data-v="course">Купить · [ЦЕНА]</button>`}</div>`; };
 
 V.event = () => `${topbar('Встреча')}<div class="body" style="padding-top:4px">
   <span class="k mu">Встреча · рядом с домом</span><h1 class="h1">«Утренний круг»</h1>
@@ -411,7 +447,7 @@ V.intro = () => `${topbar('Знакомство')}<div class="body" style="paddi
 V.eco = () => { const sel = cur.arg != null ? +cur.arg : 0;
   const R = [[86, 52], [112, 74], [136, 98], [156, 124], [174, 150]], A = [180, -50, 130, 25, 250];
   const P = [['Программа', 'rose', 'play', 'Программа · сегодня', `${LTYPE[1][0]} «${lessons()[1]}»`, 'день · 12 минут', 'Начать', 'lesson:1'],
-    ['Эксперты', 'gold', 'expert', 'Эксперт · проверен', '[Имя эксперта] — курс о сне', '6 уроков · совпадение 96%', 'Открыть', 'course'],
+    ['Эксперты', 'gold', 'expert', 'Эксперт · проверен', `${EXP[COURSES[courseId()].ex].short} — ${EXP[COURSES[courseId()].ex].role}`, 'аватар 24/7 · курс · эфиры', 'Открыть', `expert:${COURSES[courseId()].ex}`],
     ['Маркет', 'ink', 'bag', 'Маркет · советует эксперт', 'Шёлковая маска для сна', 'часть оплаты — баллами', 'Смотреть', 'product'],
     ['События', 'gold', 'cal', 'Встреча · рядом с домом', '«Утренний круг» · сб, 10:00', S.going ? 'ты идёшь' : 'идут 3 подруги', 'Подробнее', 'event'],
     ['Круг', 'rose', 'ppl', 'Круг', S.vera ? 'Вера зовёт на кофе в субботу' : 'Вера тоже налаживает сон', S.vera ? '12:00 · после встречи' : 'живёт рядом', 'Открыть', S.vera ? 'circle' : 'intro']];
@@ -429,7 +465,9 @@ V.path = () => { const tab = cur.arg === 'life' || cur.arg === 'sat' ? cur.arg :
   const week = `<div class="row" style="justify-content:space-between;align-items:flex-end"><h1 class="h1">Твоя неделя</h1><div style="text-align:right"><div style="font-family:var(--u);font-size:26px;color:var(--gold2);line-height:1">${match()}%</div><div class="mu" style="font-size:12px">совпадение</div></div></div>
     <div class="card" style="display:flex;flex-direction:column;gap:10px">${weekGrid(false)}<div class="bar"><i style="width:${Math.round((ws / 21) * 100)}%"></i></div><div class="row mu" style="justify-content:space-between;font-size:13px"><span><span style="color:var(--gold2)">${ws}</span> звёзд из 21</span><span>${S.superstar ? 'суперзвезда получена' : 'суперзвезда — +200 баллов'}</span></div></div>
     <div class="card rose row" style="align-items:flex-start">${av(52, 0)}<div class="col"><span class="k" style="color:var(--rose)">Ева учится вместе с тобой</span><span style="font-size:15px;line-height:1.45">Вечерние мастер-классы ты досматриваешь чаще — на следующей неделе поставлю их на вечер.</span></div></div>
-    ${S.bought.course ? `<div class="k mu">Мои курсы</div><button type="button" class="card gold row" data-go="course" style="text-align:left;width:100%"><span style="color:var(--gold)">${ic('book', 22)}</span><span class="col grow"><span>«Сон без тревоги»</span><span class="mu" style="font-size:13px">урок 1 из 6</span></span>${ic('chev', 16, 1.8)}</button>` : ''}
+    ${owned().length ? `<div class="k mu">Мои курсы</div>${owned().map((k) => ccard(COURSES[k])).join('')}` : ''}
+    ${contList().length ? `<div class="k mu">Продолжить смотреть</div><div class="hs">${contList().map((id) => thumb(VID[id])).join('')}</div>` : ''}
+    ${S.bookings.length ? `<div class="k mu">Мои записи</div>${S.bookings.map((b) => `<div class="card row">${av(44, 0, b.ex)}<span class="col grow"><span style="font-size:16px">Консультация · ${EXP[b.ex].short}</span><span class="mu" style="font-size:13px">${b.d}, ${b.t} · ${b.f.toLowerCase()}</span></span></div>`).join('')}` : ''}
     <div class="k mu">Следующая неделя</div><div class="h2" style="font-weight:300">${S.ans.focus[1] || 'Тело и энергия'}</div>`;
   const life = `<h1 class="h1">Ева рядом на каждом этапе</h1><div style="display:flex;flex-direction:column;position:relative;padding-left:34px;gap:14px;margin-top:4px"><div style="position:absolute;left:12px;top:10px;bottom:10px;width:2px;background:linear-gradient(180deg,var(--gold) 0%,var(--rose) ${(si / 4) * 100 + 10}%,var(--line2) ${(si / 4) * 100 + 14}%)"></div>
     ${STAGES.map(([t, m], i) => i < si ? `<div style="position:relative" class="col"><span style="position:absolute;left:-30px;top:2px;width:18px;height:18px;border-radius:50%;background:var(--gold);color:var(--on-gold);display:flex;align-items:center;justify-content:center">${ic('check', 11, 3)}</span><span style="font-size:17px">${t}</span><span class="mu" style="font-size:13px">${m} · пройдено</span></div>`
@@ -445,7 +483,7 @@ function saturday() {
     ['10:00', '«Утренний круг»', 'Событие', S.going ? 'ты идёшь · билет в приложении' : 'идут 3 подруги — записаться?', 'gold', S.going ? 'ok' : 'todo', 'event'],
     ['12:00', 'Кофе с Верой', 'Круг', S.coffee ? 'договорились · после встречи' : S.vera ? 'Вера ждёт ответа' : 'познакомиться с Верой', 'rose', S.coffee ? 'ok' : 'todo', S.vera ? 'circle' : 'intro'],
     ['13:00', 'Шёлковая маска для сна', 'Маркет', S.bought.product ? 'привезут к 13:00' : 'советует эксперт · часть баллами', 'ink', S.bought.product ? 'ok' : 'todo', 'product'],
-    ['19:00', 'Урок «Вечерний ритуал»', 'Курс', S.bought.course ? 'курс твой · 24 минуты' : 'из курса «Сон без тревоги»', 'gold', S.bought.course ? 'ok' : 'todo', 'course'],
+    ['19:00', 'Урок «Вечерний ритуал»', 'Курс', S.owned.sleep ? 'курс твой · смотреть в Еве' : 'из курса «Сон без тревоги»', 'gold', S.owned.sleep ? 'ok' : 'todo', S.owned.sleep ? 'player:sleep2' : 'course:sleep'],
     ['22:00', 'Итог дня с Евой', 'Ева', 'три звезды и план на неделю', 'rose', 'ok', 'chat']
   ], n = sl.filter((x) => x[5] === 'ok').length, col = (c) => (c === 'ink' ? 'var(--ink)' : `var(--${c})`);
   return `<div class="row" style="justify-content:space-between;align-items:flex-end"><h1 class="h1">Суббота с Евой</h1><span class="mu" style="font-size:13px">${n} из 6 в планах</span></div>
@@ -467,6 +505,7 @@ V.circle = () => { const F = [...(S.vera ? [['Вера', 'В', 1]] : []), ['Ма
 V.me = () => `<div class="body"><span class="cap">Профиль</span>
   <div class="row"><span style="width:64px;height:64px;border-radius:50%;background:var(--rose-a);color:var(--rose);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 0 2px var(--rose-b)">${esc(name().slice(0, 2).toUpperCase())}</span><div class="col"><span class="h2">${esc(name())}</span><span class="mu" style="font-size:14px">${esc(S.ans.stage || 'знакомство не пройдено')}</span></div></div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${[['звёзд за неделю', weekStars()], ['баллов', S.points], ['совпадение', match() + '%']].map(([l, v]) => `<div class="card" style="text-align:center;padding:12px 6px"><div style="font-family:var(--u);font-size:20px;color:var(--gold2)">${v}</div><div class="mu" style="font-size:12px;margin-top:4px">${l}</div></div>`).join('')}</div>
+  ${plusCard()}
   <div class="k mu" style="margin-top:4px">Оформление</div>
   <div class="seg" role="group" aria-label="Тема">${[['auto', 'Авто'], ['dark', 'Зал'], ['light', 'Перламутр']].map(([v, l]) => `<button type="button" data-act="skin" data-v="${v}" aria-pressed="${S.skin === v}">${l}</button>`).join('')}</div>
   <p class="mu" style="margin:-4px 0 0;font-size:13px">«Авто» — светлая днём, тёмная с семи вечера.</p>
@@ -476,12 +515,383 @@ V.me = () => `<div class="body"><span class="cap">Профиль</span>
   <button type="button" class="card row" data-go="eco" style="text-align:left;width:100%"><span style="color:var(--rose)">${ic('orbit', 24)}</span><span class="grow">Моя экосистема</span>${ic('chev', 16, 1.8)}</button>
   <button type="button" class="btn ghost" data-act="reset">${ic('trash', 18, 1.6)}Начать заново</button></div>${tabs('me')}`;
 
+/* ── Знания: эксперты, курсы, мастер-классы, эфиры ── */
+const EXP = {
+  marina: { gen: 'Марины', short: 'Марина', role: 'сомнолог', yrs: 12, tone: ['#B9A6F0', '#6A55B8'], hair: 'long', rate: '4,9', st: '8 400',
+    checks: ['Диплом врача-невролога', '12 лет практики', 'Рейтинг 4,9 · 2 300 отзывов', 'Подписала этический кодекс Евы'],
+    bio: 'Помогает наладить сон без таблеток: ритуалы, дыхание и работа с тревожными мыслями.', asks: ['Просыпаюсь в 3 ночи', 'Как быстро уснуть?', 'Можно ли снотворное?'] },
+  olga: { gen: 'Ольги', short: 'Ольга', role: 'психолог отношений', yrs: 9, tone: ['#F0A58A', '#B4573A'], hair: 'bob', rate: '4,8', st: '6 100',
+    checks: ['Магистр психологии', '9 лет частной практики', 'Супервизия каждый месяц', 'Подписала этический кодекс Евы'],
+    bio: 'Учит говорить о важном без обид: просьбы, границы и договорённости в паре.', asks: ['Как попросить о помощи?', 'Ссоримся из-за быта', 'Как не копить обиды?'] },
+  dasha: { gen: 'Дарьи', short: 'Дарья', role: 'нутрициолог', yrs: 7, tone: ['#8ED1C1', '#2F7F6E'], hair: 'bun', rate: '4,9', st: '5 200',
+    checks: ['Диплом нутрициолога', '7 лет практики', 'Рейтинг 4,9 · 980 отзывов', 'Подписала этический кодекс Евы'],
+    bio: 'Собирает питание, которое даёт ровную энергию на весь день, — без диет и запретов.', asks: ['Нет сил после обеда', 'Сколько кофе можно?', 'Что на завтрак?'] },
+  alena: { gen: 'Алёны', short: 'Алёна', role: 'акушер-гинеколог', yrs: 15, tone: ['#F2C38B', '#9A6420'], hair: 'long', rate: '5,0', st: '7 300',
+    checks: ['Врач высшей категории', '15 лет практики', 'Рейтинг 5,0 · 1 200 отзывов', 'Подписала этический кодекс Евы'],
+    bio: 'Ведёт беременных и мам: от первого триместра до восстановления после родов.', asks: ['Что важно после родов?', 'Как восстановиться?', 'Когда к врачу?'] },
+  liza: { gen: 'Лизы', short: 'Лиза', role: 'йога-терапевт', yrs: 8, tone: ['#9CC7F0', '#2F6A9E'], hair: 'bun', rate: '4,9', st: '4 600',
+    checks: ['Сертификат йога-терапевта', '8 лет практики', 'Рейтинг 4,9 · 870 отзывов', 'Подписала этический кодекс Евы'],
+    bio: 'Мягкие практики для тела: утренняя йога, здоровая спина, йога для беременных.', asks: ['Йога по утрам', 'Что делать, если больно?', 'Можно ли беременным?'] },
+  ksenia: { gen: 'Ксении', short: 'Ксения', role: 'бизнес-наставник', yrs: 10, tone: ['#D9B26B', '#8E6A2E'], hair: 'bob', rate: '4,8', st: '3 900',
+    checks: ['Основала три своих проекта', '10 лет в бизнесе', 'Рейтинг 4,8 · 1 040 отзывов', 'Подписала этический кодекс Евы'],
+    bio: 'Помогает превратить умение в своё дело: предложение, цена, первые клиенты.', asks: ['Как назвать цену?', 'Где найти клиентов?', 'Боюсь продавать'] }
+};
+
+/* Видео описываются сценарием: строка — фраза (субтитр и голос), {ch} — глава, {pt} — пункт конспекта на «слайде». */
+const VID = {};
+function vdef(id, kind, ex, t, src, extra) {
+  const v = Object.assign({ id, kind, ex, t }, extra || {}); let x = 0.6; v.cues = []; v.chs = []; v.pts = [];
+  src.forEach((s) => { if (typeof s === 'string') { const d = Math.max(2.4, s.length / 13.5) + 0.35; v.cues.push([x, x + d, s]); x += d; } else if (s.ch) v.chs.push([x, s.ch]); else v.pts.push([x, s.pt]); });
+  v.dur = x + 1; VID[id] = v; return v;
+}
+const tpl = (ex, title, k, n) => [{ ch: 'Вступление' }, `Здравствуйте! Это ${EXP[ex].short}, урок ${k} из ${n}.`, { pt: title }, `Сегодня — «${title}». Сначала разберём, почему это важно именно сейчас.`,
+  { ch: 'Главное' }, { pt: 'Одна идея, которую легко применить сегодня' }, 'Я дам одну главную идею — её легко применить уже сегодня, без подготовки.',
+  { ch: 'Задание' }, { pt: 'Короткое задание — Ева напомнит вечером' }, 'В конце — короткое задание. Ева напомнит о нём вечером.', 'Если появятся вопросы, спросите моего аватара — он знает весь курс.'];
+
+vdef('mc_breath', 'mc', 'marina', 'Дыхание для глубокого сна', [{ ch: 'Вступление' }, 'Здравствуйте, это Марина. Сейчас мы вместе подышим так, чтобы тело само захотело спать.',
+  { pt: 'Длинный выдох включает режим отдыха' }, 'Секрет в выдохе: когда он длиннее вдоха, нервная система переключается в режим отдыха.',
+  { ch: 'Практика 4-7-8' }, { pt: 'Вдох 4 · задержка 7 · выдох 8' }, 'Сядьте удобно или лягте. Положите ладонь на живот.', 'Вдох через нос на четыре счёта.', 'Задержите дыхание на семь.',
+  'И медленно выдыхайте ртом на восемь счётов.', 'Ещё раз. Вдох… задержка… и длинный, мягкий выдох.', 'Хорошо. Последний круг — в своём темпе.',
+  { ch: 'После практики' }, { pt: 'Каждый вечер, уже в постели' }, 'Делайте это каждый вечер уже в постели. Через неделю тело начнёт засыпать быстрее.'], { breath: 1 });
+vdef('mc_energy', 'mc', 'dasha', 'Энергия без кофе', [{ ch: 'Вступление' }, 'Привет! Я Дарья, нутрициолог. Поговорим, где брать энергию, если кофе уже не помогает.',
+  { ch: 'Утро' }, { pt: 'Стакан воды и белок на завтрак' }, 'Начните утро со стакана воды, а в завтрак добавьте белок: яйца, творог или йогурт.', 'Белок даёт ровную энергию — без скачков сахара и сонливости к обеду.',
+  { ch: 'День' }, { pt: 'Перекус каждые 3–4 часа' }, 'Днём ешьте каждые три-четыре часа. Голод — частая причина усталости и раздражения.',
+  { pt: 'Кофе — до 14:00' }, 'Кофе оставьте, но до двух часов дня. Иначе он отнимет у вас вечерний сон.',
+  { ch: 'Задание' }, { pt: '3 дня отмечать энергию в Еве' }, 'Три дня отмечайте в Еве энергию утром и после обеда. Я посмотрю, что работает именно для вас.']);
+vdef('mc_talk', 'mc', 'olga', 'Как просить о помощи', [{ ch: 'Вступление' }, 'Здравствуйте, я Ольга, психолог отношений. Сегодня о том, что многим из нас даётся труднее всего: просить.',
+  { pt: 'Просьба — не слабость' }, 'Просьба — не слабость и не долг. Это способ дать близким шанс быть рядом.',
+  { ch: 'Формула просьбы' }, { pt: 'Я чувствую… Мне нужно… Можешь ли ты…' }, 'Простая формула: я чувствую, мне нужно, можешь ли ты.',
+  'Например: я устала к вечеру, мне нужен час тишины, можешь уложить детей сегодня?', { pt: 'Без «ты никогда» и «ты всегда»' }, 'Уберите слова «никогда» и «всегда». Они превращают просьбу в обвинение.',
+  { ch: 'Задание' }, { pt: 'Одна маленькая просьба сегодня' }, 'Сегодня попросите о чём-то маленьком. И заметьте, что вы почувствовали.']);
+vdef('mc_yoga', 'mc', 'liza', 'Мягкая йога: утро', [{ ch: 'Вступление' }, 'Доброе утро! Я Лиза, йога-терапевт. Десять минут — и тело проснётся мягко.',
+  { ch: 'Практика' }, { pt: 'Кошка-корова: 6 медленных повторов' }, 'Встаньте на четвереньки. На вдохе прогнитесь, на выдохе округлите спину.',
+  { pt: 'Поза ребёнка: 5 дыханий' }, 'Теперь опустите таз на пятки и вытяните руки вперёд. Пять спокойных дыханий.',
+  { pt: 'Скрутка лёжа: по 30 секунд' }, 'Лягте на спину, колени вместе, опустите их вправо. Полминуты — и в другую сторону.',
+  { ch: 'Завершение' }, { pt: 'Больно — остановитесь' }, 'Если где-то больно, остановитесь. Йога — это забота, а не преодоление.', 'Отметьте практику в Еве, и завтра продолжим.']);
+vdef('mc_mama', 'mc', 'alena', 'Первые 40 дней после родов', [{ ch: 'Вступление' }, 'Здравствуйте, я Алёна, акушер-гинеколог. Поговорим о первых сорока днях после родов.',
+  { pt: 'Восстановление — это нормально и небыстро' }, 'Это время восстановления. Телу нужно около шести недель, и торопить его не нужно.',
+  { ch: 'Что важно' }, { pt: 'Спать, когда спит малыш' }, 'Спите, когда спит малыш. Дела подождут, а силы мамы — главное.',
+  { pt: 'Помощь близких — по списку' }, 'Составьте список, чем могут помочь близкие: еда, стирка, прогулка с коляской.',
+  { ch: 'Когда к врачу' }, { pt: 'Температура, сильная боль, кровотечение — к врачу сразу' }, 'Если поднялась температура, сильная боль или обильное кровотечение — сразу к врачу. Не ждите.',
+  { pt: 'Грусть дольше двух недель — повод поговорить' }, 'А если грусть и слёзы держатся дольше двух недель, это повод поговорить со специалистом. Вы не одна.']);
+vdef('mc_price', 'mc', 'ksenia', 'Как назвать свою цену', [{ ch: 'Вступление' }, 'Привет, я Ксения. Помогаю женщинам запускать своё дело. Сегодня — о цене.',
+  { ch: 'Из чего цена' }, { pt: 'Цена = время + опыт + результат клиента' }, 'Цена складывается из трёх частей: ваше время, ваш опыт и результат, который получает клиент.',
+  { pt: 'Сравните 5 похожих предложений' }, 'Найдите пять похожих предложений и посмотрите, где вы среди них.',
+  { ch: 'Как говорить' }, { pt: 'Назовите цену и замолчите' }, 'Назовите цену спокойно и замолчите. Не оправдывайтесь и не делайте скидку заранее.',
+  { ch: 'Задание' }, { pt: 'Произнесите цену вслух 3 раза' }, 'Напишите свою цену и проговорите её вслух три раза. Да, это работает.']);
+vdef('live_olga', 'live', 'olga', 'Ссоры из-за быта', ['Мы в эфире, всем привет! Сегодня говорим о ссорах из-за быта.',
+  { pt: 'Ссора о посуде — редко о посуде' }, 'Обычно ссора из-за посуды — вовсе не о посуде, а о том, что вас не видят.',
+  { pt: 'Договаривайтесь в спокойный момент' }, 'Договоритесь о правилах заранее, в спокойный момент, а не во время конфликта.',
+  'Вижу вопрос от Кати: что делать, если муж говорит «ты просто устала»?', { pt: 'Назовите чувство и просьбу' }, 'Катя, назовите своё чувство и конкретную просьбу. С этим сложно спорить.',
+  'Пишите вопросы в чат, я отвечаю по очереди.'], { live: 1 });
+
+const COURSES = {};
+function course(id, ex, t, d, m, titles, scripts) {
+  const ls = titles.map((tt, i) => { const vid = id + (i + 1); vdef(vid, 'lesson', ex, tt, (scripts && scripts[i]) || tpl(ex, tt, i + 1, titles.length), { course: id, n: i }); return vid; });
+  COURSES[id] = { id, ex, t, d, m, ls };
+}
+course('sleep', 'marina', 'Сон без тревоги', 'Шесть уроков, чтобы засыпать быстрее и просыпаться отдохнувшей — без таблеток.', 96,
+  ['Почему мы не спим', 'Вечерний ритуал', 'Тревожные мысли ночью', 'Сон и гормоны', 'Спальня для сна', 'План на 21 день'], [
+  [{ ch: 'Вступление' }, 'Здравствуйте! Я Марина, врач-сомнолог.', 'За двенадцать лет я видела сотни женщин, которые просыпаются в три часа ночи и больше не могут уснуть.',
+    { pt: 'Бессонница — привычка нервной системы' }, 'Хорошая новость: бессонница — это не черта характера. Это привычка нервной системы, и её можно переучить.',
+    { ch: 'Три причины' }, { pt: '1. Свет экрана перед сном' }, 'Первая причина — свет. Яркий экран за час до сна говорит мозгу, что сейчас день.',
+    { pt: '2. Тревожные мысли' }, 'Вторая — мысли. Мы ложимся и наконец остаёмся наедине с делами, которые не успели.',
+    { pt: '3. Сбитый ритм' }, 'Третья — ритм. Если каждый день ложиться в разное время, телу не на что опереться.',
+    { ch: 'Задание' }, { pt: 'Неделю ложиться в одно время ±30 минут' }, 'Задание на эту неделю простое: ложиться в одно и то же время, плюс-минус полчаса.',
+    'Ева напомнит вам за сорок минут до сна. А в следующем уроке соберём вечерний ритуал.'],
+  [{ ch: 'Вступление' }, 'Добрый вечер. Сегодня соберём ваш вечерний ритуал — сорок минут, которые готовят тело ко сну.',
+    { ch: 'За сорок минут' }, { pt: '−40 мин: тёплый свет, телефон в сторону' }, 'За сорок минут до сна приглушите свет и отложите телефон. Ева сама переключится в ночной режим.',
+    { pt: '−30 мин: тёплый душ' }, 'За полчаса — тёплый душ. Когда температура тела потом снижается, приходит сонливость.',
+    { pt: '−15 мин: три дела на бумагу' }, 'За пятнадцать минут запишите три дела на завтра. Так мозгу не нужно держать их в голове.',
+    { ch: 'Практика' }, { pt: 'Дыхание 4-7-8 в постели' }, 'И уже в постели — дыхание четыре-семь-восемь. Вдох на четыре счёта, задержка на семь, выдох на восемь.',
+    'Трёх кругов обычно достаточно. Если уснули раньше — значит, всё получилось.',
+    { ch: 'Задание' }, { pt: '5 вечеров подряд' }, 'Повторите ритуал пять вечеров подряд и отмечайте в Еве, как спали.'],
+  [{ ch: 'Вступление' }, 'Что делать, если проснулись ночью и мысли закрутились? Об этом сегодняшний урок.',
+    { ch: 'Правило двадцати минут' }, { pt: 'Не спится 20 минут — встаньте' }, 'Если не спится больше двадцати минут, не лежите и не боритесь. Встаньте и перейдите в другую комнату.',
+    { pt: 'Тусклый свет и скучное дело' }, 'Включите тусклый свет и займитесь чем-то скучным: сложите бельё, почитайте бумажную книгу.',
+    { ch: 'Отложить тревогу' }, { pt: 'Запишите мысль и время, когда к ней вернётесь' }, 'Тревожную мысль запишите и рядом поставьте время, когда к ней вернётесь. Например, завтра в двенадцать.',
+    'Мозг успокаивается, когда знает, что о проблеме не забудут.',
+    { ch: 'Когда к врачу' }, { pt: 'Дольше месяца — к врачу' }, 'И важно: если бессонница длится больше месяца, обратитесь к врачу. Это не слабость, а забота о себе.']]);
+course('pair', 'olga', 'Разговор без обид', 'Пять уроков о том, как говорить о важном и быть услышанной — без упрёков и молчаливых обид.', 94,
+  ['Почему мы ссоримся', 'Язык просьб', 'Когда я злюсь', 'Договор о быте', 'Ритуалы пары']);
+course('preg', 'alena', '40 недель спокойно', 'Программа по неделям беременности: тело, питание, анализы, подготовка к родам и первые дни дома.', 95,
+  ['Первый триместр', 'Питание и анализы', 'Тело меняется', 'Подготовка к родам', 'Роды: что важно знать', 'Первые дни дома']);
+course('food', 'dasha', 'Энергия на тарелке', 'Пять уроков о питании, которое даёт ровную энергию на весь день, — без диет и запретов.', 93,
+  ['Завтрак, который держит', 'Сахар и усталость', 'Вода и кофе', 'Перекусы без вины', 'Меню на неделю']);
+course('biz', 'ksenia', 'Первые клиенты', 'Пять уроков, чтобы превратить своё умение в дело: предложение, цена и первые десять клиентов.', 92,
+  ['Твоё предложение', 'Цена', 'Первые 10 клиентов', 'Соцсети без выгорания', 'Повторные продажи']);
+
+const MCS = ['mc_breath', 'mc_energy', 'mc_talk', 'mc_yoga', 'mc_mama', 'mc_price'];
+const UPC = [{ id: 'up_marina', ex: 'marina', t: 'Вопросы о сне', when: 'чт, 19:00' }, { id: 'up_ksenia', ex: 'ksenia', t: 'Разбор ваших идей', when: 'ср, 20:00' }, { id: 'up_dasha', ex: 'dasha', t: 'Завтраки на неделю', when: 'пн, 9:00' }];
+const FOCUS_MC = { 'Спокойствие': 'mc_breath', 'Энергия': 'mc_energy', 'Отношения': 'mc_talk', 'Тело и здоровье': 'mc_yoga', 'Дело и деньги': 'mc_price', 'Материнство': 'mc_mama' };
+const FOCUS_COURSE = { 'Спокойствие': 'sleep', 'Энергия': 'food', 'Отношения': 'pair', 'Тело и здоровье': 'food', 'Дело и деньги': 'biz', 'Материнство': 'preg' };
+const mcId = () => FOCUS_MC[focus()] || 'mc_breath';
+const courseId = () => FOCUS_COURSE[focus()] || 'sleep';
+const LIVE_MSGS = [['Катя', 'Очень откликается, спасибо'], ['Таня', 'У нас так же каждый вечер'], ['Оля', 'А если муж не хочет договариваться?'], ['Лена', 'Записываю формулу'], ['Аня', 'Спасибо за эфир!'], ['Вика', 'Запись потом будет?']];
+
+const fmt = (s) => { s = Math.max(0, Math.floor(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const xt = (ex) => EXP[ex].tone[app.dataset.skin === 'light' ? 1 : 0];
+const xa = (ex, a) => { const [r, g, b] = rgb(EXP[ex].tone[0]); return `rgba(${r},${g},${b},${a})`; };
+const lsub = (i) => (i === 2 ? `мастер-класс · ${EXP[VID[mcId()].ex].short} · ${fmt(VID[mcId()].dur)}` : `${LTYPE[i][0].toLowerCase()} · ${LTYPE[i][1]}`);
+const contList = () => Object.keys(S.prog).filter((id) => VID[id] && !VID[id].live && S.prog[id] > 2 && S.prog[id] < VID[id].dur - 1.5);
+const owned = () => Object.keys(S.owned).filter((k) => S.owned[k] && COURSES[k]);
+
+/* Поиск по сказанному в видео: так Ева и аватары экспертов отвечают ссылкой на нужную минуту */
+const STOP = new Set(['если', 'меня', 'делать', 'можно', 'когда', 'почему', 'очень', 'хочу', 'надо', 'нужно', 'чтобы', 'какой', 'какая', 'только', 'тебя', 'быть', 'сколько', 'после', 'есть', 'этот', 'просто', 'теперь']);
+const norm = (s) => s.toLowerCase().replace(/ё/g, 'е');
+function findIn(q, ids) {
+  const ws = (norm(q).match(/[а-яa-z]{4,}/g) || []).filter((w) => !STOP.has(w)); if (!ws.length) return null; let best = null;
+  ids.forEach((id) => VID[id].cues.forEach(([a, , tx]) => { const T = norm(tx); let sc = 0;
+    ws.forEach((w) => { if (T.includes(w.slice(0, Math.max(4, Math.min(6, w.length - 2))))) sc += 1; else if (T.includes(w.slice(0, 4))) sc += 0.5; });
+    if (sc >= 1 && (!best || sc > best.sc)) best = { v: VID[id], a, tx, sc }; }));
+  return best;
+}
+const exV = (ex) => Object.keys(VID).filter((id) => VID[id].ex === ex);
+
+/* ── Плеер: голос, субтитры, главы, мини-плеер ── */
+const SY = 'speechSynthesis' in window ? window.speechSynthesis : null; let ruV = null;
+const pickV = () => { try { const vs = SY.getVoices(); ruV = vs.find((v) => /^ru/i.test(v.lang) && /google|milena|katya|irina|svetlana|dariya|natalia/i.test(v.name)) || vs.find((v) => /^ru/i.test(v.lang)) || null; } catch (_) {} };
+if (SY) { pickV(); try { SY.addEventListener('voiceschanged', pickV); } catch (_) { SY.onvoiceschanged = pickV; } }
+let PL = { id: null };
+const LV = { msgs: [], next: 0, nextAt: 0, ver: 0, hearts: [], viewers: 312 };
+const cueIdx = (v, t) => v.cues.findIndex(([a, b]) => t >= a && t < b);
+const unlock = () => { try { if (SY && ruV) SY.speak(new SpeechSynthesisUtterance(' ')); } catch (_) {} };
+function newPL(id, at) { const v = VID[id], p = S.prog[id] || 0;
+  return { id, t: at != null ? +at : v.live ? 0.6 : p > 2 && p < v.dur - 2 ? p : 0, playing: true, rate: PL.rate || 1, cc: PL.cc ?? true, voice: PL.voice ?? true,
+    ci: -2, ended: false, closed: false, tab: 'ch', ctl: performance.now(), hold: 0, saved: 0, ans: '' }; }
+function openPlayer(arg) {
+  const s = String(arg), k = s.indexOf('@'), id = k < 0 ? s : s.slice(0, k), at = k < 0 ? null : +s.slice(k + 1); if (!VID[id]) return id;
+  if (PL.id !== id || PL.ended) { if (SY) SY.cancel(); PL = newPL(id, at); } else if (at != null) seek(at);
+  PL.playing = true; PL.closed = false; PL.ctl = performance.now(); if (VID[id].live && !LV.msgs.length) LV.nextAt = 0; unlock(); return id;
+}
+function seek(t) { const v = VID[PL.id]; PL.t = Math.max(0, Math.min(v.dur - 0.05, t)); PL.ended = false; PL.ci = -2; PL.hold = 0; if (SY) SY.cancel(); }
+function speakCue(i) { if (!SY || !ruV || !PL.voice) return; const v = VID[PL.id]; SY.cancel(); const u = new SpeechSynthesisUtterance(v.cues[i][2]); u.voice = ruV; u.lang = ruV.lang; u.rate = PL.rate; SY.speak(u); }
+function tickPlayer(dt, now) {
+  if (!PL.id || !PL.playing) return; const v = VID[PL.id]; let nt = PL.t + dt * PL.rate;
+  // голос ведёт видео: если фраза ещё звучит, кадр ждёт её конца (но не дольше 4 секунд)
+  if (PL.voice && ruV && SY && SY.speaking && PL.hold < 4) { const ci = cueIdx(v, PL.t), end = ci >= 0 ? v.cues[ci][1] : null;
+    if (end != null && nt >= end - 0.02) { nt = Math.max(PL.t, end - 0.02); PL.hold += dt; } } else PL.hold = 0;
+  PL.t = nt;
+  if (PL.t >= v.dur) { if (v.live) { PL.t = 0.6; PL.ci = -2; } else { PL.t = v.dur; PL.playing = false; PL.ended = true; finishVideo(v); return; } }
+  const i = cueIdx(v, PL.t); if (i !== PL.ci) { PL.ci = i; PL.hold = 0; if (i >= 0) speakCue(i); }
+  if (!v.live && now - PL.saved > 2000) { PL.saved = now; S.prog[v.id] = PL.t; save(); }
+}
+function finishVideo(v) {
+  if (SY) SY.cancel(); delete S.prog[v.id]; const first = !S.vdone[v.id]; S.vdone[v.id] = true; let m = '';
+  if (v.id === mcId() && !S.done[2]) { S.done[2] = true; S.points += 10; if (S.done.every(Boolean)) setTimeout(celebrate, 600); else m = 'Мастер-класс дня пройден · звезда и +10 баллов'; }
+  else if (first) { S.points += 10; m = (v.course ? 'Урок пройден' : 'Мастер-класс пройден') + ' · +10 баллов'; }
+  save(); if (m) toast(`<span style="color:var(--gold)">${star(18)}</span>${m}`);
+  if (cur.id !== 'player') { PL.closed = true; app.querySelectorAll('.mini').forEach((n) => n.remove()); }
+}
+function nextOf(v) {
+  if (v.live) return null;
+  if (v.course) { const c = COURSES[v.course], n = c.ls[v.n + 1]; return n ? { id: n, open: !!S.owned[c.id] } : null; }
+  return { id: MCS[(MCS.indexOf(v.id) + 1) % MCS.length], open: true };
+}
+
+/* ── Кирпичики разметки ── */
+const liveCard = () => `<button type="button" class="card row" data-go="player" data-arg="live_olga" style="text-align:left;width:100%;border-color:var(--rose-b)"><span style="position:relative">${av(56, 1, 'olga')}<span class="livedot"></span></span><span class="col grow"><span class="k" style="color:var(--live)">Сейчас в эфире · ${LV.viewers}</span><span style="font-size:17px">«Ссоры из-за быта»</span><span class="mu" style="font-size:13px">Ольга · психолог отношений</span></span><span class="mu">${ic('chev', 16, 1.8)}</span></button>`;
+const thumb = (v, w = 230) => { const e = EXP[v.ex], p = S.prog[v.id], dn = S.vdone[v.id];
+  return `<button type="button" data-go="player" data-arg="${v.id}" style="width:${w}px;border:none;background:transparent;padding:0;text-align:left;display:flex;flex-direction:column;gap:6px"><span class="thumb" style="background:radial-gradient(circle at 24% 50%,${xa(v.ex, 0.34)},#0b0a0f 72%),#0b0a0f">${av(98, 0, v.ex, 1)}<span class="pl">${ic('playf', 18)}</span><span class="dur">${dn ? '✓ ' : ''}${fmt(v.dur)}</span>${p ? `<span class="tp"><i style="width:${Math.min(100, (p / v.dur) * 100)}%"></i></span>` : ''}</span><span style="font-size:16px;line-height:1.25">${v.t}</span><span class="mu" style="font-size:13px">${e.short} · ${e.role}</span></button>`; };
+const ccard = (c) => { const e = EXP[c.ex], dn = c.ls.filter((v) => S.vdone[v]).length, own = S.owned[c.id];
+  return `<button type="button" class="card row" data-go="course" data-arg="${c.id}" style="text-align:left;width:100%">${av(56, 0, c.ex)}<span class="col grow"><span class="k" style="color:${xt(c.ex)}">Курс · ${c.ls.length} уроков</span><span style="font-size:17px">${c.t}</span><span class="mu" style="font-size:13px">${e.short} · ${e.role}</span>${own ? `<span class="bar" style="margin-top:6px"><i style="width:${(dn / c.ls.length) * 100}%"></i></span>` : ''}</span>${own ? '<span class="tag g">твой</span>' : `<span class="mu">${ic('chev', 16, 1.8)}</span>`}</button>`; };
+const bigCourse = (c) => { const e = EXP[c.ex];
+  return `<button type="button" class="card" data-go="course" data-arg="${c.id}" style="text-align:left;display:flex;flex-direction:column;gap:10px;width:100%;border-color:${xt(c.ex)}"><span class="row">${av(68, 1, c.ex)}<span class="col grow"><span class="k" style="color:${xt(c.ex)}">Курс · ${c.ls.length} уроков</span><span style="font-size:20px;line-height:1.2">${c.t}</span><span class="mu" style="font-size:13px">${e.short} · ${e.role}</span></span></span><span style="font-size:15px;line-height:1.45">${c.d}</span><span class="row" style="gap:6px;flex-wrap:wrap"><span class="tag">совпадение ${c.m}%</span><span class="tag g">${S.owned[c.id] ? 'курс твой' : 'урок 1 — бесплатно'}</span></span></button>`; };
+const exTile = (id) => { const e = EXP[id]; return `<button type="button" data-go="expert" data-arg="${id}" style="width:98px;display:flex;flex-direction:column;align-items:center;gap:4px;border:none;background:transparent;padding:0">${av(88, 0, id)}<span style="font-size:15px">${e.short}</span><span class="mu" style="font-size:12px;text-align:center;line-height:1.2">${e.role}</span></button>`; };
+const exRow = (id) => { const e = EXP[id]; return `<button type="button" class="card row" data-go="expert" data-arg="${id}" style="text-align:left;width:100%">${av(60, 0, id)}<span class="col grow"><span style="font-size:17px">${e.short}</span><span class="mu" style="font-size:13px">${e.role} · ${e.yrs} лет практики</span><span class="ok"><i>${ic('check', 10, 3)}</i>проверена Евой · ${e.rate}</span></span><span class="mu">${ic('chev', 16, 1.8)}</span></button>`; };
+const upcard = (u) => `<div class="card row">${av(48, 0, u.ex)}<span class="col grow"><span class="k" style="color:${xt(u.ex)}">Эфир · ${u.when}</span><span style="font-size:16px">${u.t}</span><span class="mu" style="font-size:13px">${EXP[u.ex].short} · ${EXP[u.ex].role}</span></span><button type="button" class="pill ${S.remind[u.id] ? 'on' : 'gold'}" data-act="remind" data-v="${u.id}" aria-pressed="${!!S.remind[u.id]}">${S.remind[u.id] ? 'Напомню' : 'Напомнить'}</button></div>`;
+const plusCard = () => `<div class="card gold" style="display:flex;flex-direction:column;gap:8px"><span class="row" style="justify-content:space-between"><span class="k" style="color:var(--gold)">Ева Плюс</span><span class="tag g">${S.plus === 'paid' ? 'подписка активна' : 'пробный период · 7 дней'}</span></span><span style="font-size:15px;line-height:1.5">Программа на каждый день, все мастер-классы, эфиры и аватары экспертов. Курсы — отдельно, навсегда.</span><span class="row" style="justify-content:space-between"><span style="font-family:var(--u);font-size:16px;color:var(--gold2)">2 900 ₽ / мес</span>${S.plus === 'paid' ? '' : '<button type="button" class="pill gold" data-act="plus">Оформить</button>'}</span></div>`;
+
+/* ── Экраны «Знаний» ── */
+V.learn = () => { const f = cur.arg || 'all', sh = (k) => f === 'all' || f === k, fc = COURSES[courseId()], cont = contList();
+  const F = [['all', 'Всё'], ['course', 'Курсы'], ['mc', 'Мастер-классы'], ['live', 'Эфиры'], ['ex', 'Эксперты']];
+  return `<div class="body"><span class="cap">Знания</span><h1 class="h1">Учиться у проверенных</h1>
+  <p class="mu" style="margin:-4px 0 0;font-size:15px;line-height:1.5">Каждого эксперта Ева проверяет: образование, практика, отзывы, этика. У каждого есть цифровой аватар — он отвечает по её материалам в любое время.</p>
+  <div class="hs" role="group" aria-label="Что показать">${F.map(([k, l]) => `<button type="button" class="pill${f === k ? ' fill' : ''}" data-act="lfilt" data-v="${k}" aria-pressed="${f === k}">${l}</button>`).join('')}</div>
+  ${sh('live') ? liveCard() : ''}
+  ${f === 'all' && cont.length ? `<div class="h2">Продолжить</div><div class="hs">${cont.map((id) => thumb(VID[id])).join('')}</div>` : ''}
+  ${f === 'all' ? `<div class="h2">Ева подобрала курс</div>${bigCourse(fc)}` : ''}
+  ${sh('mc') ? `<div class="h2">Мастер-классы</div>${f === 'all' ? `<div class="hs">${MCS.map((m) => thumb(VID[m])).join('')}</div>` : MCS.map((m) => thumb(VID[m], 350)).join('')}` : ''}
+  ${sh('ex') ? `<div class="h2">Эксперты</div>${f === 'all' ? `<div class="hs">${Object.keys(EXP).map(exTile).join('')}</div>` : Object.keys(EXP).map(exRow).join('')}` : ''}
+  ${sh('course') ? `<div class="h2">${f === 'all' ? 'Ещё курсы' : 'Курсы'}</div>${Object.values(COURSES).filter((c) => f !== 'all' || c.id !== fc.id).map(ccard).join('')}` : ''}
+  ${sh('live') ? `<div class="h2">Скоро в эфире</div>${UPC.map(upcard).join('')}` : ''}
+  ${f === 'all' ? plusCard() : ''}</div>${tabs('learn')}`; };
+
+V.expert = (id) => { const e = EXP[id], cs = Object.values(COURSES).filter((c) => c.ex === id), ms = MCS.filter((m) => VID[m].ex === id), ups = UPC.filter((u) => u.ex === id);
+  return `${topbar('Эксперт')}<div class="body" style="padding-top:0;gap:14px">
+  <div class="col" style="align-items:center;text-align:center;gap:4px">${av(170, 1, id)}<h1 class="h1" style="font-size:30px">${e.short}</h1><span class="mu">${e.role} · ${e.yrs} лет практики</span></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${[[e.rate, 'рейтинг'], [e.st, 'учениц'], [cs.length + ms.length, 'программ']].map(([v, l]) => `<div class="card" style="text-align:center;padding:10px 4px"><div style="font-family:var(--u);font-size:17px;color:${xt(id)}">${v}</div><div class="mu" style="font-size:12px;margin-top:3px">${l}</div></div>`).join('')}</div>
+  <p style="margin:0;font-size:16px;line-height:1.5">${e.bio}</p>
+  <div class="card" style="display:flex;flex-direction:column;gap:8px"><span class="row k" style="color:var(--gold);gap:6px">${ic('shield', 16)}Проверено командой Евы</span>${e.checks.map((c) => `<span class="row" style="gap:8px;font-size:15px"><span style="color:var(--gold)">${ic('check', 14, 2.4)}</span>${c}</span>`).join('')}</div>
+  <button type="button" class="btn rose" data-go="xchat" data-arg="${id}">${ic('msg', 18)}Спросить аватар ${e.gen}</button><button type="button" class="btn ghost" data-go="book" data-arg="${id}" style="margin-top:-4px">${ic('cal', 18)}Записаться на консультацию</button>
+  <p class="mu" style="margin:-6px 0 0;font-size:13px;line-height:1.45">Аватар обучен на курсах и эфирах ${e.gen} и отвечает 24/7. Сложные вопросы он передаёт ей лично.</p>
+  ${id === 'olga' ? liveCard() : ''}
+  ${cs.length ? `<div class="k mu">Курсы</div>${cs.map(ccard).join('')}` : ''}
+  ${ms.length ? `<div class="k mu">Мастер-классы</div><div class="hs">${ms.map((m) => thumb(VID[m])).join('')}</div>` : ''}
+  ${ups.length ? `<div class="k mu">Эфиры</div>${ups.map(upcard).join('')}` : ''}</div>`; };
+
+const why = (c) => (c.id === 'sleep' ? 'Я выбрала этот курс, потому что ты пишешь о сне и чаще досматриваешь вечерние уроки.' : `Я выбрала этот курс под твою цель «${focus().toLowerCase()}». У ${EXP[c.ex].gen} один из самых высоких рейтингов в Еве.`);
+const lrow = (vid) => { const v = VID[vid], c = COURSES[v.course], open = v.n === 0 || S.owned[c.id], dn = S.vdone[vid], p = S.prog[vid];
+  return `<button type="button" class="lrow${dn ? ' done' : ''}" ${open ? `data-go="player" data-arg="${vid}"` : `data-act="buysheet" data-v="${c.id}"`}><span class="num">${dn ? ic('check', 14, 2.6) : v.n + 1}</span><span class="col grow"><span style="font-size:15px">${v.t}</span><span class="mu" style="font-size:12px">${fmt(v.dur)}${v.n === 0 && !S.owned[c.id] ? ' · бесплатно' : ''}${p && !dn ? ' · остановилась на ' + fmt(p) : ''}</span></span><span class="mu">${open ? ic('playf', 16) : ic('lock', 16, 1.8)}</span></button>`; };
+
+V.course = (id) => { const c = COURSES[id] || COURSES[courseId()], e = EXP[c.ex], own = !!S.owned[c.id], dn = c.ls.filter((v) => S.vdone[v]).length, nxt = c.ls.find((v) => !S.vdone[v]) || c.ls[0];
+  return `${topbar('Курс')}<div class="body" style="padding-top:2px">
+  <div class="thumb" style="height:172px;background:radial-gradient(circle at 24% 50%,${xa(c.ex, 0.36)},#0b0a0f 72%),#0b0a0f;padding-left:8px">${av(150, 1, c.ex, 1)}<span class="col" style="position:absolute;left:162px;right:14px;top:20px;gap:6px;color:#F3F0E8"><span class="k" style="color:${e.tone[0]}">Курс · ${c.ls.length} уроков</span><span style="font-size:22px;line-height:1.15;font-weight:300">${c.t}</span><span style="font-size:13px;color:#A5A198">видео · субтитры · голос</span></span><span class="pl" data-go="player" data-arg="${c.ls[0]}" role="button" tabindex="0" aria-label="Смотреть урок 1" style="top:auto;bottom:14px;right:14px;transform:none;cursor:pointer">${ic('playf', 18)}</span></div>
+  <button type="button" class="row" data-go="expert" data-arg="${c.ex}" style="border:none;background:transparent;padding:0;text-align:left">${av(48, 0, c.ex)}<span class="col grow"><span style="font-size:16px">${e.short} · ${e.role}</span><span class="ok"><i>${ic('check', 10, 3)}</i>проверена Евой · ${e.rate} · ${e.st} учениц</span></span><span class="mu">${ic('chev', 16, 1.8)}</span></button>
+  <p style="margin:0;font-size:16px;line-height:1.5">${c.d}</p>
+  <div class="card rose row" style="align-items:flex-start">${av(44, 0)}<p style="margin:0;font-size:15px;line-height:1.45">${why(c)}</p></div>
+  ${own ? `<div class="col" style="gap:6px"><div class="row mu" style="justify-content:space-between;font-size:13px"><span>Пройдено ${dn} из ${c.ls.length}</span><span>${Math.round((dn / c.ls.length) * 100)}%</span></div><div class="bar"><i style="width:${(dn / c.ls.length) * 100}%"></i></div></div>` : ''}
+  <div class="k mu">Уроки</div><div>${c.ls.map(lrow).join('')}</div>
+  <div class="k mu">Что внутри</div>
+  <div class="card" style="display:flex;flex-direction:column;gap:10px">${[[ic('play', 18), 'Видео прямо в Еве: субтитры, голос, скорость, главы'], [ic('msg', 18), `Аватар эксперта отвечает по курсу 24/7`], [ic('note', 18), 'Конспект и заметки к каждому уроку'], [ic('ppl', 18), 'Чат потока — 140 учениц'], [star(18), 'Звёзды и баллы за каждый урок']].map(([i, t]) => `<span class="row" style="gap:10px;font-size:15px"><span style="color:${xt(c.ex)}">${i}</span>${t}</span>`).join('')}</div>
+  ${own ? `<button type="button" class="btn" data-go="player" data-arg="${nxt}">${ic('playf', 18)}Продолжить: урок ${c.ls.indexOf(nxt) + 1}</button>`
+    : `<button type="button" class="btn" data-act="buysheet" data-v="${c.id}">Купить курс · [ЦЕНА]</button><button type="button" class="btn ghost" data-go="player" data-arg="${c.ls[0]}">${ic('playf', 16)}Урок 1 — бесплатно</button>`}</div>`; };
+
+function vbox(v) {
+  return `<div class="vbox" id="vbox"><canvas id="vcan" width="700" height="394" role="img" aria-label="Видео: ${esc(v.t)}"></canvas>
+  <div class="vctl" id="vctl"><div class="vrow">${v.live ? '<span class="vb" style="background:var(--live)">● В ЭФИРЕ</span>' : ''}<span class="grow"></span>
+    <button type="button" class="vb" data-act="cc" aria-pressed="${PL.cc}" aria-label="Субтитры">CC</button>
+    <button type="button" class="vb" data-act="voice" id="vvoice" aria-pressed="${PL.voice && !!ruV}" aria-label="Голос">${ic(PL.voice && ruV ? 'vol' : 'mute', 16, 1.8)}</button>
+    ${v.live ? '' : `<button type="button" class="vb" data-act="rate" id="vrate" aria-label="Скорость">${PL.rate}×</button>`}</div>
+  <div class="vmid">${v.live ? '' : '<button type="button" class="vskip" data-act="skip" data-v="-15" aria-label="Назад на 15 секунд">−15</button>'}<button type="button" class="vbig" data-act="pp" id="vpp" aria-label="Пауза">${ic('pause', 26, 2.4)}</button>${v.live ? '' : '<button type="button" class="vskip" data-act="skip" data-v="15" aria-label="Вперёд на 15 секунд">+15</button>'}</div>
+  <div class="vrow">${v.live ? `<span class="vt" id="lviewers2">${LV.viewers} смотрят</span><span class="grow"></span>` : `<span class="vt" id="vcur">0:00</span><input type="range" class="vrange" id="vrange" min="0" max="${v.dur.toFixed(1)}" step="0.1" value="${PL.t}" aria-label="Перемотка"><span class="vt">${fmt(v.dur)}</span>`}<button type="button" class="vb" data-act="fs" aria-label="Во весь экран">${ic('full', 16, 1.8)}</button></div></div>
+  <div class="vend" id="vend" hidden></div></div>`;
+}
+function vtab(v) {
+  const e = EXP[v.ex];
+  if (PL.tab === 'ch') return `<div class="col" style="gap:4px">${(v.chs.length ? v.chs : [[0, v.t]]).map(([a, t], i) => `<button type="button" class="chrow" data-act="seek" data-v="${a}" data-ch="${i}"><span class="vt mu" style="text-align:left">${fmt(a)}</span><span class="grow" style="font-size:15px">${t}</span>${ic('playf', 14)}</button>`).join('')}</div>`;
+  if (PL.tab === 'pt') return `<div class="card" style="display:flex;flex-direction:column;gap:10px"><span class="row k" style="gap:8px;color:var(--rose)">${av(32, 0)}Ева собрала конспект урока</span>${v.pts.map(([a, t]) => `<button type="button" class="row" data-act="seek" data-v="${a}" style="border:none;background:transparent;padding:0;text-align:left;gap:10px;align-items:flex-start"><span style="color:${xt(v.ex)};margin-top:3px">${star(12)}</span><span class="grow" style="font-size:15px;line-height:1.4">${t}</span><span class="mu" style="font-size:12px">${fmt(a)}</span></button>`).join('')}</div>`;
+  if (PL.tab === 'ask') return `<div class="col" style="gap:10px"><div class="ask"><label class="sr" for="vq">Вопрос по уроку</label><input id="vq" type="text" placeholder="Спросить аватар ${e.gen}…" data-enter="vask"><button type="button" class="mic" data-act="vask" aria-label="Спросить">${ic('send', 20, 1.8)}</button></div>
+    <div class="hs">${e.asks.map((a) => `<button type="button" class="pill" data-act="vsay" data-v="${a}">${a}</button>`).join('')}</div><div id="va">${PL.ans || `<p class="mu" style="margin:0;font-size:14px;line-height:1.5">Аватар знает всё, что ${e.short} говорит в своих уроках и эфирах, и покажет нужную минуту.</p>`}</div></div>`;
+  const N = S.notes[v.id] || [];
+  return `<div class="col" style="gap:10px"><label class="sr" for="ntx">Заметка</label><textarea id="ntx" rows="2" placeholder="Мысль, которую хочется сохранить…" style="border-radius:16px;border:1px solid var(--line2);background:var(--card2);color:var(--ink);font-family:inherit;font-size:15px;padding:12px;resize:none"></textarea>
+    <button type="button" class="pill fill" data-act="note" style="align-self:flex-start">Сохранить к текущей минуте</button>
+    ${N.map(([a, t]) => `<button type="button" class="card row" data-act="seek" data-v="${a}" style="text-align:left;width:100%;align-items:flex-start"><span class="vt" style="color:var(--gold)">${fmt(a)}</span><span class="grow" style="font-size:15px;line-height:1.4">${esc(t)}</span></button>`).join('')}</div>`;
+}
+function endHtml() { const v = VID[PL.id], n = nextOf(v);
+  return `<span style="color:#F2DDAE">${star(30)}</span><span style="font-size:19px;font-weight:300">${v.course ? 'Урок пройден' : 'Мастер-класс пройден'} · +10 баллов</span>${n ? `<button type="button" class="vb" ${n.open ? `data-go="player" data-arg="${n.id}"` : `data-act="buysheet" data-v="${v.course}"`} style="height:40px;padding:0 16px;font-size:14px;background:#E8A4C6;color:#1a0f16!important">${n.open ? 'Дальше: ' + VID[n.id].t : 'Открыть курс целиком'}</button>` : ''}<button type="button" class="vb" data-act="replay" style="height:34px;padding:0 14px">Пересмотреть</button>`; }
+function nextCard(v) { const n = nextOf(v); if (!n) return ''; const nv = VID[n.id], e = EXP[nv.ex];
+  return `<div class="k mu">${v.course ? 'Следующий урок' : 'Ещё мастер-класс'}</div><button type="button" class="card row" ${n.open ? `data-go="player" data-arg="${n.id}"` : `data-act="buysheet" data-v="${v.course}"`} style="text-align:left;width:100%">${av(48, 0, nv.ex)}<span class="col grow"><span style="font-size:16px">${nv.t}</span><span class="mu" style="font-size:13px">${e.short} · ${fmt(nv.dur)}${n.open ? '' : ' · откроется после покупки'}</span></span><span class="mu">${n.open ? ic('playf', 16) : ic('lock', 16, 1.8)}</span></button>`; }
+
+V.player = (id) => { const v = VID[id], e = EXP[v.ex], c = v.course && COURSES[v.course];
+  const kind = v.live ? 'Прямой эфир' : c ? `Курс · урок ${v.n + 1} из ${c.ls.length}` : 'Мастер-класс';
+  const tabsH = `<div class="hs" role="group" aria-label="Под видео">${[['ch', 'Главы'], ['pt', 'Конспект'], ['ask', 'Спросить аватар'], ['nt', 'Заметки']].map(([k, l]) => `<button type="button" class="pill${PL.tab === k ? ' fill' : ''}" data-act="vtab" data-v="${k}" aria-pressed="${PL.tab === k}">${l}</button>`).join('')}</div><div id="vtab">${vtab(v)}</div>`;
+  const live = `<div class="card" style="display:flex;flex-direction:column;gap:8px;padding:12px"><div class="row" style="justify-content:space-between"><span class="k" style="color:var(--rose)">Чат эфира</span><span class="mu" style="font-size:13px" id="lviewers">${LV.viewers} смотрят</span></div><div id="lchat" class="col" style="gap:6px;min-height:150px;justify-content:flex-end"></div></div>
+    <div class="ask"><label class="sr" for="lin">Вопрос в эфир</label><input id="lin" type="text" placeholder="Вопрос Ольге…" data-enter="lsend"><button type="button" class="mic" data-act="heart" aria-label="Поддержать" style="background:var(--gold);color:var(--on-gold)">${star(20)}</button><button type="button" class="mic" data-act="lsend" aria-label="Отправить">${ic('send', 20, 1.8)}</button></div>`;
+  return `${topbar(`<span class="k" style="color:${v.live ? 'var(--live)' : xt(v.ex)}">${kind}</span>`, `<button type="button" class="iconbtn" data-go="xchat" data-arg="${v.ex}" aria-label="Спросить аватар эксперта">${ic('msg', 21)}</button>`)}
+  <div class="body" style="padding-top:2px;gap:12px">${vbox(v)}
+  <h1 class="h1" style="font-size:23px">${v.t}</h1>
+  <button type="button" class="row" data-go="expert" data-arg="${v.ex}" style="border:none;background:transparent;padding:0;text-align:left">${av(44, 0, v.ex)}<span class="col grow"><span style="font-size:16px">${e.short} · ${e.role}</span><span class="ok"><i>${ic('check', 10, 3)}</i>эксперт проверен Евой</span></span><span class="mu">${ic('chev', 16, 1.8)}</span></button>
+  ${v.live ? live : tabsH + nextCard(v)}</div>`; };
+
+V.xchat = (id) => { const e = EXP[id];
+  if (!S.xchat[id]) S.xchat[id] = [{ e: 1, t: `Здравствуйте! Я цифровой аватар: ${e.short}, ${e.role}. Отвечаю по её курсам, мастер-классам и эфирам и показываю нужную минуту видео. ${e.short} сама проверяет, чему я учусь. Диагнозы не ставлю — с этим к ней лично или к врачу.` }];
+  return `${topbar(`<div class="row" style="gap:10px">${av(44, 1, id)}<div class="col"><span>Аватар · ${e.short}</span><span class="mu" style="font-size:12px">${e.role} · по её материалам</span></div></div>`)}
+  <div class="body" id="xlog" style="padding-top:8px;gap:10px">${S.xchat[id].map(msg).join('')}</div>
+  <div style="padding:8px 16px 14px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line)"><div class="hs" style="margin:0 -16px;padding:0 16px">${e.asks.map((a) => `<button type="button" class="pill" data-act="xsay" data-v="${a}">${a}</button>`).join('')}</div>
+  <div class="ask"><label class="sr" for="xin">Вопрос аватару</label><input id="xin" type="text" placeholder="Спросить…" data-enter="xsend"><button type="button" class="mic" data-act="xsend" aria-label="Отправить">${ic('send', 20, 1.8)}</button></div></div>`; };
+function xreply(id, q) { const e = EXP[id], s = norm(q);
+  if (/таблет|лекарств|снотвор|кровотеч|температур|диагноз|анализ/.test(s)) return { t: `На такой вопрос безопасно ответить только лично: лекарства и диагнозы я не обсуждаю. ${e.short} разберёт его на консультации, а при острых симптомах — сразу к врачу.`, cards: [['book', id, 'Консультация', `${e.short} · онлайн или вживую`, 'выбрать время', 'gold']] };
+  const f = findIn(q, exV(id));
+  if (f) return { t: `${e.short} говорит об этом ${f.v.live ? 'в эфире' : f.v.course ? 'в уроке' : 'в мастер-классе'} «${f.v.t}», с ${fmt(f.a)}: «${f.tx}»`, cards: [['player', `${f.v.id}@${f.a.toFixed(1)}`, `Смотреть с ${fmt(f.a)}`, f.v.t, `${e.short} · ${fmt(f.v.dur)}`, 'rose']] };
+  return { t: `Точного ответа в материалах ${e.gen} пока нет. Я передала вопрос ей — она ответит в ближайшем эфире, а Ева пришлёт запись. Если важно сейчас — запишитесь на консультацию.`, cards: [['book', id, 'Консультация', `${e.short} · ${e.role}`, 'выбрать время', 'gold']] };
+}
+function xsend(id, text) { text = (text || '').trim(); if (!text) return; const L = S.xchat[id];
+  L.push({ e: 0, t: text }, { e: 1, typing: 1 }); save(); xlog(id);
+  later(() => { S.xchat[id] = S.xchat[id].filter((m) => !m.typing); const r = xreply(id, text); S.xchat[id].push({ e: 1, t: r.t, cards: r.cards }); save(); xlog(id); }, 900);
+}
+function xlog(id) { const log = document.getElementById('xlog'); if (!log) return; log.innerHTML = S.xchat[id].map(msg).join(''); log.scrollTop = log.scrollHeight; }
+
+let BK = { ex: null, d: 0, t: null, f: 'Онлайн' };
+const bdays = () => [1, 2, 3, 4, 5].map((k) => { const d = new Date(); d.setDate(d.getDate() + k); return [d.toLocaleDateString('ru-RU', { weekday: 'short' }), d.getDate(), d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })]; });
+V.book = (id) => { if (BK.ex !== id) BK = { ex: id, d: 0, t: null, f: 'Онлайн' }; const e = EXP[id], days = bdays();
+  return `${topbar('Консультация')}<div class="body" style="padding-top:2px">
+  <div class="row">${av(64, 1, id)}<div class="col"><span class="h2">${e.short}</span><span class="mu">${e.role} · 50 минут · [ЦЕНА]</span></div></div>
+  <div class="seg" role="group" aria-label="Формат">${['Онлайн', 'Вживую'].map((f) => `<button type="button" data-act="bkf" data-v="${f}" aria-pressed="${BK.f === f}">${f}</button>`).join('')}</div>
+  <div class="k mu">День</div><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">${days.map(([w, n], i) => `<button type="button" class="slot" data-act="bkd" data-v="${i}" aria-pressed="${BK.d === i}" style="height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-size:12px">${w}</span><span style="font-size:19px">${n}</span></button>`).join('')}</div>
+  <div class="k mu">Время</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${['10:00', '12:30', '16:00', '19:00', '20:30'].map((t, i) => `<button type="button" class="slot" data-act="bkt" data-v="${t}" aria-pressed="${BK.t === t}" ${(BK.d + i) % 3 === 0 ? 'disabled aria-label="' + t + ', занято"' : ''}>${t}</button>`).join('')}</div>
+  <div class="card mu" style="font-size:14px;line-height:1.5">${BK.f === 'Онлайн' ? 'Видеозвонок прямо в Еве. Перед встречей аватар соберёт для эксперта твой запрос — не придётся пересказывать с начала.' : 'Кабинет эксперта: [АДРЕС]. Ева построит маршрут и напомнит за час.'}</div>
+  <button type="button" class="btn" data-act="book" ${BK.t ? '' : 'disabled'}>Записаться${BK.t ? ` · ${days[BK.d][2]}, ${BK.t}` : ''}</button></div>`; };
+
+function buySheet(cid) { const c = COURSES[cid], e = EXP[c.ex];
+  const el = document.createElement('div'); el.className = 'sheetw'; el.dataset.act = 'sheetx';
+  el.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="Покупка курса"><span class="grab"></span>
+  <div class="row">${av(52, 0, c.ex)}<div class="col grow"><span class="k mu">Курс · ${e.short}</span><span style="font-size:19px">${c.t}</span></div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:10px"><div class="row" style="justify-content:space-between;font-size:15px"><span>${c.ls.length} уроков навсегда</span><span>[ЦЕНА]</span></div>
+  <label class="row" style="justify-content:space-between;cursor:pointer;font-size:15px"><span class="col"><span>Списать баллы</span><span class="mu" style="font-size:13px">у тебя ${S.points} · до 30% цены</span></span><input type="checkbox" id="usepts" ${S.points ? 'checked' : 'disabled'} style="width:22px;height:22px;accent-color:#D9B26B"></label></div>
+  <p class="mu" style="margin:0;font-size:13px">Прототип: деньги не списываются.</p>
+  <button type="button" class="btn" data-act="pay" data-v="${cid}">Оплатить</button><button type="button" class="btn ghost" data-act="sheetx">Не сейчас</button></div>`;
+  app.appendChild(el); }
+
+function miniHtml() { const v = VID[PL.id], e = EXP[v.ex];
+  return `<div class="mini" role="region" aria-label="Мини-плеер"><button type="button" class="row grow" data-go="player" data-arg="${v.id}" style="border:none;background:transparent;padding:0;text-align:left;gap:10px;min-width:0">${av(40, 1, v.ex)}<span class="col grow" style="min-width:0"><span style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.t}</span><span class="mu" style="font-size:12px">${e.short}${v.live ? ' · в эфире' : ''}</span></span></button><button type="button" class="iconbtn" data-act="pp" id="mpp" aria-label="Пауза">${ic('pause', 20, 2.2)}</button><button type="button" class="iconbtn" data-act="minix" aria-label="Закрыть плеер">${ic('close', 18)}</button><span class="pg"><i></i></span></div>`; }
+
+/* Кадр «видео»: в продукте здесь будет запись эксперта; в прототипе урок ведёт его цифровой аватар */
+const STARP = typeof Path2D !== 'undefined' ? new Path2D(STAR) : null;
+function wrap(g, text, maxW) { const ws = text.split(' '), L = []; let line = ''; ws.forEach((w) => { const t = line ? line + ' ' + w : w; if (g.measureText(t).width > maxW && line) { L.push(line); line = w; } else line = t; }); if (line) L.push(line); return L; }
+function drawVideo(c, v, t, now) {
+  const g = c.getContext('2d'), W = c.width, H = c.height, e = EXP[v.ex], col = rgb(e.tone[0]), A = (a) => `rgba(${col[0]},${col[1]},${col[2]},${a})`;
+  g.fillStyle = '#07060a'; g.fillRect(0, 0, W, H);
+  const gr = g.createRadialGradient(W * 0.26, H * 0.52, 0, W * 0.26, H * 0.52, W * 0.5); gr.addColorStop(0, A(0.2)); gr.addColorStop(1, A(0)); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  const ci = cueIdx(v, t);
+  bust(g, W * 0.25, H * 0.53, H * 0.29, now, col, false, PL.playing && ci >= 0, PTSV[e.hair], 'rgba(242,221,174,.95)');
+  g.textAlign = 'left'; g.textBaseline = 'alphabetic'; try { g.letterSpacing = '3px'; } catch (_) {}
+  g.font = `500 ${H * 0.042}px Jost, sans-serif`; g.fillStyle = 'rgba(217,178,107,.95)'; g.fillText('EVA SPACE', W * 0.035, H * 0.085);
+  g.fillStyle = 'rgba(243,240,232,.7)'; g.fillText(`${e.short} · ${e.role}`.toUpperCase(), W * 0.035 + g.measureText('EVA SPACE').width + W * 0.025, H * 0.085);
+  const chI = v.chs.reduce((k, [a], i) => (t >= a ? i : k), -1), ch = chI >= 0 ? v.chs[chI][1] : v.live ? 'Прямой эфир' : 'Мастер-класс';
+  const pt = v.pts.reduce((k, p) => (t >= p[0] ? p : k), null), x0 = W * 0.5, mw = W * 0.45;
+  g.font = `500 ${H * 0.045}px Jost, sans-serif`; g.fillStyle = A(0.95); g.fillText(ch.toUpperCase(), x0, H * 0.25);
+  try { g.letterSpacing = '0px'; } catch (_) {}
+  if (v.breath && /практика/i.test(ch)) {
+    const cy = (t - v.chs[chI][0]) % 19, s = cy < 4 ? cy / 4 : cy < 11 ? 1 : 1 - (cy - 11) / 8, ph = cy < 4 ? 'Вдох' : cy < 11 ? 'Задержка' : 'Выдох', R = H * (0.09 + 0.13 * s), bx = W * 0.71, by = H * 0.47;
+    g.fillStyle = A(0.14 + 0.1 * s); g.beginPath(); g.arc(bx, by, R, 0, Math.PI * 2); g.fill(); g.strokeStyle = A(0.9); g.lineWidth = 2; g.stroke();
+    g.textAlign = 'center'; g.fillStyle = '#F3F0E8'; g.font = `300 ${H * 0.07}px Jost, sans-serif`; g.fillText(ph, bx, by + H * 0.025); g.textAlign = 'left';
+  } else {
+    const text = pt ? pt[1] : v.t, al = pt ? Math.min(1, (t - pt[0]) / 0.6) : 1;
+    g.font = `300 ${H * 0.082}px Jost, sans-serif`; g.fillStyle = `rgba(243,240,232,${al})`; wrap(g, text, mw).slice(0, 4).forEach((l, k) => g.fillText(l, x0, H * 0.37 + k * H * 0.095));
+  }
+  if (v.chs.length > 1) v.chs.forEach((_, i) => { g.fillStyle = i <= chI ? A(0.95) : 'rgba(243,240,232,.2)'; g.fillRect(x0 + i * (mw / v.chs.length), H * 0.13, mw / v.chs.length - 6, 3); });
+  if (v.live) { const nowS = performance.now(); LV.hearts = LV.hearts.filter((h) => nowS - h < 2200);
+    LV.hearts.forEach((h, i) => { const a = (nowS - h) / 2200, x = W * 0.92 + Math.sin(a * 6 + i) * W * 0.02, y = H * 0.8 - a * H * 0.55, s = H * 0.0045 * (1 + 0.4 * a);
+      if (STARP) { g.save(); g.translate(x, y); g.scale(s, s); g.translate(-12, -12); g.fillStyle = `rgba(232,164,198,${1 - a})`; g.fill(STARP); g.restore(); } }); }
+  if (PL.cc && ci >= 0) {
+    const up = !(PL.playing && performance.now() - PL.ctl > 2600) ? H * 0.16 : 0;
+    g.font = `400 ${H * 0.066}px Jost, sans-serif`; const L = wrap(g, v.cues[ci][2], W * 0.88).slice(0, 3), lh = H * 0.085;
+    L.forEach((l, k) => { const y = H * 0.95 - up - (L.length - 1 - k) * lh, w = g.measureText(l).width; g.fillStyle = 'rgba(0,0,0,.66)'; g.fillRect(W / 2 - w / 2 - 10, y - lh * 0.78, w + 20, lh); g.fillStyle = '#FFFFFF'; g.textAlign = 'center'; g.fillText(l, W / 2, y); g.textAlign = 'left'; });
+  }
+}
+function uiPlayer(now) {
+  if (PL.id && VID[PL.id].live && PL.playing && now > LV.nextAt) { LV.msgs.push(LIVE_MSGS[LV.next++ % LIVE_MSGS.length]); LV.nextAt = now + 2400 + ((LV.next * 977) % 1800); LV.ver++; LV.viewers += (LV.next % 3) - 1; }
+  const c = document.getElementById('vcan'); if (c && PL.id) drawVideo(c, VID[PL.id], PL.t, now / 1000);
+  const ctl = document.getElementById('vctl');
+  if (ctl) {
+    ctl.classList.toggle('hide', PL.playing && now - PL.ctl > 2600);
+    const vc = document.getElementById('vcur'); if (vc) vc.textContent = fmt(PL.t);
+    const r = document.getElementById('vrange'); if (r && !PL.drag) r.value = PL.t;
+    const ve = document.getElementById('vend'); if (ve) { if (PL.ended && ve.hidden) { ve.innerHTML = endHtml(); ve.hidden = false; } else if (!PL.ended && !ve.hidden) ve.hidden = true; }
+    const v = VID[PL.id], chI = v.chs.reduce((k, [a], i) => (PL.t >= a ? i : k), 0); app.querySelectorAll('[data-ch]').forEach((b) => b.classList.toggle('on', +b.dataset.ch === chI));
+  }
+  ['vpp', 'mpp'].forEach((id) => { const b = document.getElementById(id); if (!b) return; const want = PL.playing ? 'pause' : 'playf'; if (b.dataset.s !== want) { b.dataset.s = want; b.innerHTML = ic(want, id === 'vpp' ? 26 : 20, 2.2); b.setAttribute('aria-label', PL.playing ? 'Пауза' : 'Смотреть'); } });
+  const m = app.querySelector('.mini .pg i'); if (m && PL.id) m.style.width = (VID[PL.id].live ? 100 : (PL.t / VID[PL.id].dur) * 100) + '%';
+  const lc = document.getElementById('lchat');
+  if (lc && lc.dataset.v !== String(LV.ver)) { lc.dataset.v = LV.ver; lc.innerHTML = LV.msgs.slice(-6).map(([n, t, me]) => `<div style="font-size:14px;line-height:1.35"><span style="color:${me === 1 ? 'var(--gold)' : me === 2 ? 'var(--live)' : 'var(--rose)'}">${esc(n)}</span> ${esc(t)}</div>`).join('');
+    ['lviewers', 'lviewers2'].forEach((id) => { const el = document.getElementById(id); if (el) el.textContent = LV.viewers + ' смотрят'; }); }
+}
+
+
 /* ── Отрисовка ── */
-function render() {
+function render(quiet) {
   skin();
+  if (cur.id === 'player' && PL.id !== cur.arg) openPlayer(cur.arg);
+  const top = quiet && app.querySelector('.scr .body') ? app.querySelector('.scr .body').scrollTop : 0;
   const fn = V[cur.id] || V.home, html = fn(cur.arg);
-  app.querySelectorAll('.scr').forEach((n) => n.remove());
-  const s = document.createElement('div'); s.className = 'scr' + (back ? ' back' : ''); s.innerHTML = html; app.insertBefore(s, app.firstChild);
+  app.querySelectorAll('.scr,.mini,.sheetw').forEach((n) => n.remove());
+  const s = document.createElement('div'); s.className = 'scr' + (quiet ? ' quiet' : back ? ' back' : ''); s.innerHTML = html; app.insertBefore(s, app.firstChild);
+  if (quiet && top) { const b = s.querySelector('.body'); if (b) b.scrollTop = top; }
+  if (PL.id && !PL.closed && !PL.ended && cur.id !== 'player' && !['splash', 'name', 'q', 'analyze', 'result'].includes(cur.id)) {
+    const w = document.createElement('div'); w.innerHTML = miniHtml(); const m = w.firstElementChild, tb = s.querySelector('.tabs');
+    m.style.bottom = (tb ? tb.offsetHeight + 8 : 12) + 'px'; app.appendChild(m); s.querySelectorAll('.body').forEach((b) => (b.style.paddingBottom = '86px'));
+  }
   after();
 }
 function after() {
@@ -491,6 +901,7 @@ function after() {
     later(lib, 600); later(() => go('result', null, { replace: true }), 3600);
   }
   if (cur.id === 'chat') { renderLog(); }
+  if (cur.id === 'xchat') { xlog(cur.arg); }
 }
 
 /* ── Действия ── */
@@ -518,8 +929,11 @@ function breathe() {
 }
 
 app.addEventListener('click', (e) => {
-  const g = e.target.closest('[data-go],[data-goto],[data-act]'); if (!g || !app.contains(g)) return;
-  if (g.dataset.goto) { const [id, arg] = g.dataset.goto.split(':'); go(id, arg); return; }
+  let g = e.target.closest('[data-go],[data-goto],[data-act]'); if (!g || !app.contains(g)) return;
+  if (g.classList.contains('sheetw') && e.target !== g) return;
+  const vc = e.target.closest('#vctl'); if (vc && !e.target.closest('button,input')) { PL.ctl = vc.classList.contains('hide') || !PL.playing ? performance.now() : -1e9; return; }
+  if (g.closest('#vctl')) PL.ctl = performance.now();
+  if (g.dataset.goto) { const k = g.dataset.goto.indexOf(':'); go(k < 0 ? g.dataset.goto : g.dataset.goto.slice(0, k), k < 0 ? null : g.dataset.goto.slice(k + 1)); return; }
   if (g.dataset.go) { go(g.dataset.go, g.dataset.arg || null); return; }
   const a = g.dataset.act, v = g.dataset.v;
   if (a === 'back') goBack();
@@ -533,8 +947,6 @@ app.addEventListener('click', (e) => {
   else if (a === 'rep') { const reps = app.querySelectorAll('[data-rep]'); const n = [...reps].findIndex((r) => r.style.color !== 'var(--gold2)'); if (n >= 0) reps[n].style.color = 'var(--gold2)'; if (n === 2 || n < 0) later(() => complete(0), 450); }
   else if (a === 'breathe') breathe();
   else if (a === 'endbreath') { breathT.forEach(clearTimeout); breathT = []; complete(1); }
-  else if (a === 'play') { const bt = document.getElementById('playb'), vp = document.getElementById('vp'), vt = document.getElementById('vt'); if (!bt) return; bt.style.visibility = 'hidden'; let p = 0;
-    const tick = () => { if (!document.getElementById('vp')) return; p += 4; vp.style.width = p + '%'; const s = Math.round((p / 100) * 1440); vt.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); if (p < 100) later(tick, 120); else later(() => complete(2), 400); }; tick(); }
   else if (a === 'buy') { const pts = document.getElementById('usepts'); if (v === 'course' && pts && pts.checked) S.points = 0; if (v === 'product') S.points = Math.max(0, S.points - 30); S.bought[v] = true; save(); go(v, null, { replace: true });
     toast(v === 'course' ? `${ic('check', 18, 2.4)}Курс твой — первый урок уже в «Пути»` : `${ic('gift', 18)}Заказ оформлен — привезём к субботе`); }
   else if (a === 'go') { S.going = true; save(); go('event', null, { replace: true }); toast(`${ic('cal', 18)}Ты идёшь — Ева напомнит в пятницу вечером`); }
@@ -542,51 +954,99 @@ app.addEventListener('click', (e) => {
   else if (a === 'meet') { S.vera = true; save(); go('intro', null, { replace: true }); toast(`${ic('ppl', 18)}Вера в твоём круге — она уже написала «привет»`); }
   else if (a === 'coffee') { S.coffee = v === '1'; save(); go('circle', null, { keep: true, replace: true }); }
   else if (a === 'club') { S.clubs[v] = !S.clubs[v]; save(); go('circle', null, { keep: true, replace: true }); }
-  else if (a === 'planet') { cur.arg = +v; render(); }
-  else if (a === 'ptab') { cur.arg = v; render(); }
-  else if (a === 'skin') { S.skin = v; save(); render(); }
+  else if (a === 'planet') { cur.arg = +v; render(1); }
+  else if (a === 'ptab' || a === 'lfilt') { cur.arg = v; render(1); }
+  else if (a === 'skin') { S.skin = v; save(); render(1); }
+  else if (a === 'pp') { if (!PL.id) return; if (PL.ended) seek(0); PL.playing = !PL.playing; if (PL.playing) { unlock(); PL.ci = -2; PL.closed = false; } else if (SY) SY.cancel(); PL.ctl = performance.now(); }
+  else if (a === 'skip') { seek(PL.t + +v); }
+  else if (a === 'replay') { seek(0); PL.playing = true; unlock(); }
+  else if (a === 'rate') { const R = [1, 1.25, 1.5, 2, 0.75]; PL.rate = R[(R.indexOf(PL.rate) + 1) % R.length]; g.textContent = PL.rate + '×'; PL.ci = -2; }
+  else if (a === 'cc') { PL.cc = !PL.cc; g.setAttribute('aria-pressed', PL.cc); }
+  else if (a === 'voice') { if (!ruV) { PL.cc = true; toast('В этом браузере нет русского голоса — включены субтитры'); return; } PL.voice = !PL.voice; if (SY) SY.cancel(); PL.ci = -2; g.setAttribute('aria-pressed', PL.voice); g.innerHTML = ic(PL.voice ? 'vol' : 'mute', 16, 1.8); }
+  else if (a === 'fs') { const b = document.getElementById('vbox'); if (document.fullscreenElement) document.exitFullscreen(); else if (b.requestFullscreen && innerWidth > 520) b.requestFullscreen().catch(() => b.classList.toggle('theater')); else b.classList.toggle('theater'); }
+  else if (a === 'vtab') { PL.tab = v; const el = document.getElementById('vtab'); if (el) el.innerHTML = vtab(VID[PL.id]); app.querySelectorAll('[data-act="vtab"]').forEach((b) => { const on = b.dataset.v === v; b.classList.toggle('fill', on); b.setAttribute('aria-pressed', on); }); }
+  else if (a === 'seek') { seek(+v); PL.playing = true; PL.ctl = performance.now(); const b = app.querySelector('.scr .body'); if (b) b.scrollTo({ top: 0, behavior: 'smooth' }); }
+  else if (a === 'vsay' || a === 'vask') { const el = document.getElementById('vq'); const q = a === 'vsay' ? v : el && el.value; if (!q || !q.trim()) return; if (el) el.value = q; const vv = VID[PL.id], e2 = EXP[vv.ex];
+    const f = findIn(q, [PL.id]) || findIn(q, exV(vv.ex));
+    PL.ans = f ? `<div class="card" style="display:flex;flex-direction:column;gap:8px"><span class="row k" style="gap:8px;color:${xt(vv.ex)}">${av(32, 0, vv.ex)}Аватар · ${e2.short}</span><span style="font-size:15px;line-height:1.45">${f.v.id === PL.id ? 'В этом уроке' : `В «${f.v.t}»`}, с ${fmt(f.a)}: «${f.tx}»</span><button type="button" class="pill fill" data-act="${f.v.id === PL.id ? 'seek' : 'goto'}" data-v="${f.v.id === PL.id ? f.a : f.v.id + '@' + f.a.toFixed(1)}" style="align-self:flex-start">${ic('playf', 14)} Смотреть с ${fmt(f.a)}</button></div>`
+      : `<div class="card" style="font-size:15px;line-height:1.45">В материалах эксперта точного ответа нет. Вопрос передан: ${e2.short} ответит в эфире, а Ева пришлёт запись.</div>`;
+    const va = document.getElementById('va'); if (va) va.innerHTML = PL.ans; }
+  else if (a === 'goto') { go('player', v); }
+  else if (a === 'note') { const el = document.getElementById('ntx'), t = el && el.value.trim(); if (!t) return; (S.notes[PL.id] = S.notes[PL.id] || []).push([PL.t, t]); S.notes[PL.id].sort((x, y) => x[0] - y[0]); save(); document.getElementById('vtab').innerHTML = vtab(VID[PL.id]); toast(`${ic('note', 18)}Заметка сохранена на ${fmt(PL.t)}`); }
+  else if (a === 'minix') { PL.playing = false; PL.closed = true; if (SY) SY.cancel(); if (!VID[PL.id].live) { S.prog[PL.id] = PL.t; save(); } app.querySelectorAll('.mini').forEach((n) => n.remove()); app.querySelectorAll('.scr .body').forEach((b) => (b.style.paddingBottom = '')); }
+  else if (a === 'heart') { LV.hearts.push(performance.now()); }
+  else if (a === 'lsend') { const el = document.getElementById('lin'), t = el && el.value.trim(); if (!t) return; el.value = ''; LV.msgs.push([name(), t, 1]); LV.ver++; setTimeout(() => { LV.msgs.push(['Ольга', 'Вижу ваш вопрос — отвечу следующим', 2]); LV.ver++; }, 2500); }
+  else if (a === 'remind') { S.remind[v] = !S.remind[v]; save(); g.classList.toggle('on', S.remind[v]); g.classList.toggle('gold', !S.remind[v]); g.textContent = S.remind[v] ? 'Напомню' : 'Напомнить'; g.setAttribute('aria-pressed', S.remind[v]); if (S.remind[v]) toast(`${ic('cal', 18)}Ева напомнит за 15 минут до эфира`); }
+  else if (a === 'buysheet') { if (document.fullscreenElement) document.exitFullscreen(); if (PL.playing) { PL.playing = false; if (SY) SY.cancel(); } buySheet(v); }
+  else if (a === 'sheetx') { if (e.target === g || g.tagName === 'BUTTON') app.querySelectorAll('.sheetw').forEach((n) => n.remove()); }
+  else if (a === 'pay') { const pts = document.getElementById('usepts'); if (pts && pts.checked) S.points = Math.max(0, S.points - Math.min(S.points, 300)); S.owned[v] = true; save(); app.querySelectorAll('.sheetw').forEach((n) => n.remove());
+    if (cur.id === 'player') { PL.ended = false; render(1); } else go('course', v, cur.id === 'course' ? { replace: true } : {}); toast(`${ic('check', 18, 2.4)}Курс твой — все ${COURSES[v].ls.length} уроков открыты`); }
+  else if (a === 'plus') { S.plus = 'paid'; save(); render(1); toast(`${star(18)}Ева Плюс оформлена · прототип, без оплаты`); }
+  else if (a === 'bkf') { BK.f = v; render(1); }
+  else if (a === 'bkd') { BK.d = +v; BK.t = null; render(1); }
+  else if (a === 'bkt') { BK.t = v; render(1); }
+  else if (a === 'book') { const d = bdays()[BK.d]; S.bookings.push({ ex: BK.ex, d: d[2], t: BK.t, f: BK.f }); save(); const n = EXP[BK.ex].short; BK = { ex: null }; goBack(); toast(`${ic('cal', 18)}${n}: ${d[2]}, ${S.bookings[S.bookings.length - 1].t}. Запись в «Пути»`); }
+  else if (a === 'xsend') { const el = document.getElementById('xin'), t = el && el.value; if (el) el.value = ''; xsend(cur.arg, t); }
+  else if (a === 'xsay') xsend(cur.arg, v);
   else if (a === 'forget') { S.chat = []; save(); render(); toast('Переписка забыта. Ответы знакомства остались.'); }
-  else if (a === 'reset') { S = fresh(); save(); stack = []; go('splash'); }
+  else if (a === 'reset') { S = fresh(); save(); stack = []; PL = { id: null }; if (SY) SY.cancel(); go('splash'); }
   else if (a === 'closeover') { const o = app.querySelector('.over'); if (o) o.remove(); }
 });
-app.addEventListener('keydown', (e) => { if (e.key !== 'Enter') return; const t = e.target; if (t.dataset && t.dataset.enter) { e.preventDefault(); const b = t.parentElement.querySelector('[data-act]'); if (b) b.click(); } if (t.id === 'nm') { e.preventDefault(); app.querySelector('[data-act="name"]').click(); } });
-document.querySelectorAll('[data-jump]').forEach((b) => b.addEventListener('click', () => { const [id, arg] = b.dataset.jump.split(':'); if (id !== 'splash' && !S.onboarded) { S.onboarded = true; if (!S.ans.focus.length) S.ans.focus = ['Спокойствие']; save(); } go(id, arg || null); }));
+app.addEventListener('keydown', (e) => { if (e.key !== 'Enter') return; const t = e.target; if (t.dataset && t.dataset.enter) { e.preventDefault(); const b = t.parentElement.querySelector(`[data-act="${t.dataset.enter}"]`); if (b) b.click(); } if (t.id === 'nm') { e.preventDefault(); app.querySelector('[data-act="name"]').click(); } });
+app.addEventListener('input', (e) => { if (e.target.id === 'vrange') { PL.drag = true; seek(+e.target.value); PL.ctl = performance.now(); } });
+app.addEventListener('change', (e) => { if (e.target.id === 'vrange') { PL.drag = false; PL.ctl = performance.now(); } });
+document.addEventListener('keydown', (e) => { if (cur.id !== 'player' || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+  if (e.key === ' ' || e.key === 'k') { e.preventDefault(); const b = document.getElementById('vpp'); if (b) b.click(); }
+  else if (e.key === 'ArrowRight') seek(PL.t + 5); else if (e.key === 'ArrowLeft') seek(PL.t - 5); });
+document.querySelectorAll('[data-jump]').forEach((b) => b.addEventListener('click', () => { const k = b.dataset.jump.indexOf(':'), id = k < 0 ? b.dataset.jump : b.dataset.jump.slice(0, k), arg = k < 0 ? null : b.dataset.jump.slice(k + 1); if (id !== 'splash' && !S.onboarded) { S.onboarded = true; if (!S.ans.focus.length) S.ans.focus = ['Спокойствие']; save(); } go(id, arg || null); }));
 
 /* ── Размер телефона: вписываем в окно ── */
 const device = document.getElementById('device');
 function fit() { if (innerWidth <= 520) { device.style.transform = ''; return; } const s = Math.min(1, (innerHeight - 40) / 862); device.style.transform = s < 1 ? `scale(${s})` : ''; device.style.margin = s < 1 ? `${(-844 * (1 - s)) / 2}px ${(-390 * (1 - s)) / 2}px` : ''; }
 addEventListener('resize', fit); fit();
 
-/* ── Живой аватар Евы: бюст из точек ── */
-const PTS = (() => { const pts = [], q = 1.8, N = (n) => Math.round(n * q);
+/* ── Живые аватары: бюст из точек. Ева — розовая, у каждого эксперта свой цвет и силуэт ── */
+function buildPts(hair) {
+  const pts = [], q = 1.8, N = (n) => Math.round(n * q);
   const fib = (n, f) => { for (let i = 0; i < n; i++) { const y = 1 - (2 * (i + 0.5)) / n, r = Math.sqrt(1 - y * y), t = i * 2.39996, p = f([Math.cos(t) * r, y, Math.sin(t) * r]); if (p) pts.push(p); } };
   fib(N(360), ([x, y, z]) => [x * 0.25, 0.2 + y * 0.32, z * 0.28]);
   for (let i = 0, n = N(40); i < n; i++) { const t = i * 2.39996; pts.push([Math.cos(t) * 0.1, -0.1 - (i / n) * 0.2, Math.sin(t) * 0.1]); }
   fib(N(460), ([x, y, z]) => (y > -0.05 ? [x * 0.54, -0.8 + y * 0.48, z * 0.3] : null));
-  fib(N(420), ([x, y, z]) => (z < 0.25 || y > 0.5 ? [x * 0.31, 0.1 + y * 0.48, z * 0.33 - 0.03] : null));
-  return pts.filter(([x, y]) => x * x + y * y < 0.9); })();
-const rgb = (h) => { h = String(h).trim().replace('#', ''); const v = parseInt(h.length === 6 ? h : 'E8A4C6', 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; };
+  if (hair === 'eva') fib(N(420), ([x, y, z]) => (z < 0.25 || y > 0.5 ? [x * 0.31, 0.1 + y * 0.48, z * 0.33 - 0.03] : null));
+  if (hair === 'long') { fib(N(360), ([x, y, z]) => (z < 0.1 || y > 0.45 ? [x * 0.3, 0.24 + y * 0.36, z * 0.32 - 0.02] : null));
+    for (let i = 0, n = N(260); i < n; i++) { const s = i % 2 ? 1 : -1, u = (i * 0.618034) % 1, w = (i * 0.381966) % 1; pts.push([s * (0.2 + 0.09 * w), 0.22 - u * 0.6, -0.04 - 0.14 * w]); } }
+  if (hair === 'bob') fib(N(420), ([x, y, z]) => ((z < 0.12 || y > 0.4) && y > -0.4 ? [x * 0.33, 0.18 + y * 0.38, z * 0.34 - 0.02] : null));
+  if (hair === 'bun') { fib(N(300), ([x, y, z]) => (z < 0.05 || y > 0.35 ? [x * 0.27, 0.22 + y * 0.34, z * 0.3 - 0.02] : null)); fib(N(110), ([x, y, z]) => [x * 0.11, 0.6 + y * 0.1, -0.1 + z * 0.11]); }
+  return pts.filter(([x, y]) => x * x + y * y < 0.9);
+}
+const PTSV = { eva: buildPts('eva'), long: buildPts('long'), bob: buildPts('bob'), bun: buildPts('bun') };
+function rgb(h) { h = String(h).trim().replace('#', ''); const v = parseInt(h.length === 6 ? h : 'E8A4C6', 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; }
 const cl = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
-function drawAv(c, t, col, light) {
-  const g = c.getContext('2d'), W = c.width, cx = W / 2, cy = W / 2, r = W * 0.29, sp = c.dataset.speak === '1';
-  const A = (a) => `rgba(${col[0]},${col[1]},${col[2]},${cl(a).toFixed(3)})`, hi = light ? 'rgba(142,106,46,.95)' : 'rgba(242,221,174,.95)';
-  g.clearRect(0, 0, W, W);
-  const gl = g.createRadialGradient(cx, cy, 0, cx, cy, r * 1.7); gl.addColorStop(0, A(light ? 0.14 : 0.2)); gl.addColorStop(1, A(0)); g.fillStyle = gl; g.fillRect(0, 0, W, W);
-  if (sp) for (let k = 0; k < 3; k++) { const u = (t * 0.3 + k / 3) % 1; g.strokeStyle = A(0.32 * (1 - u)); g.lineWidth = Math.max(1, W / 300); g.beginPath(); g.arc(cx, cy, r * (1.12 + u * 0.55), 0, Math.PI * 2); g.stroke(); }
+function bust(g, cx, cy, r, t, col, light, sp, P, hi) {
+  const A = (a) => `rgba(${col[0]},${col[1]},${col[2]},${cl(a).toFixed(3)})`;
+  const gl = g.createRadialGradient(cx, cy, 0, cx, cy, r * 1.7); gl.addColorStop(0, A(light ? 0.14 : 0.2)); gl.addColorStop(1, A(0)); g.fillStyle = gl; g.fillRect(cx - r * 1.8, cy - r * 1.8, r * 3.6, r * 3.6);
+  if (sp) for (let k = 0; k < 3; k++) { const u = (t * 0.3 + k / 3) % 1; g.strokeStyle = A(0.32 * (1 - u)); g.lineWidth = Math.max(1, r * 0.0115); g.beginPath(); g.arc(cx, cy, r * (1.12 + u * 0.55), 0, Math.PI * 2); g.stroke(); }
   const k0 = Math.max(0.6, r / 86) * 0.9;
   for (let i = 0; i < 48; i++) { const u = (i * 0.618034) % 1, v = (i * 0.37) % 1, orb = r * (1.14 + 0.32 * u), th = (i / 48) * Math.PI * 2 + t * (0.16 + 0.14 * v) * (i % 2 ? 1 : -1);
     g.fillStyle = A(0.3 + 0.2 * v); g.beginPath(); g.arc(cx + orb * Math.cos(th), cy + orb * Math.sin(th) * 0.94, (1 + 1.4 * v) * k0, 0, Math.PI * 2); g.fill(); }
   const dg = g.createRadialGradient(cx, cy - r * 0.2, 0, cx, cy, r); dg.addColorStop(0, A(0.16)); dg.addColorStop(1, A(0.02)); g.fillStyle = dg; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
-  const ry = Math.sin(t * 0.33) * 0.6, cr = Math.cos(ry), sr = Math.sin(ry), scan = ((t * 0.22) % 1) * 1.9 - 0.95, L = [[], [], [], [], []], H = [], step = W < 160 ? 3 : W < 300 ? 2 : 1;
-  for (let i = 0; i < PTS.length; i += step) { const [x, y, z] = PTS[i], X = x * cr + z * sr, Z = -x * sr + z * cr, d = cl((Z + 0.32) / 0.64);
+  const ry = Math.sin(t * 0.33) * 0.6, cr = Math.cos(ry), sr = Math.sin(ry), scan = ((t * 0.22) % 1) * 1.9 - 0.95, L = [[], [], [], [], []], H = [], step = r < 46 ? 3 : r < 87 ? 2 : 1;
+  for (let i = 0; i < P.length; i += step) { const [x, y, z] = P[i], X = x * cr + z * sr, Z = -x * sr + z * cr, d = cl((Z + 0.32) / 0.64);
     (Math.abs(y - scan) < 0.035 ? H : L[Math.min(4, Math.floor(d * 5))]).push(cx + X * r, cy - y * r, (0.75 + 0.95 * d) * k0 * (step > 1 ? 1.25 : 1)); }
   const fb = (B, s) => { if (!B.length) return; g.fillStyle = s; g.beginPath(); for (let j = 0; j < B.length; j += 3) { g.moveTo(B[j] + B[j + 2], B[j + 1]); g.arc(B[j], B[j + 1], B[j + 2], 0, Math.PI * 2); } g.fill(); };
   L.forEach((B, i) => fb(B, A(0.14 + 0.64 * (i + 0.5) / 5))); fb(H, hi);
-  g.strokeStyle = A(0.9); g.lineWidth = Math.max(1, W / 240); g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
-  g.save(); g.setLineDash([W / 200, W / 50]); g.lineDashOffset = -t * W / 30; g.strokeStyle = A(0.45); g.lineWidth = Math.max(1, W / 320); g.beginPath(); g.arc(cx, cy, r * 1.09, 0, Math.PI * 2); g.stroke(); g.restore();
+  g.strokeStyle = A(0.9); g.lineWidth = Math.max(1, r * 0.0144); g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
+  g.save(); g.setLineDash([r * 0.0172, r * 0.069]); g.lineDashOffset = -t * r * 0.115; g.strokeStyle = A(0.45); g.lineWidth = Math.max(1, r * 0.0108); g.beginPath(); g.arc(cx, cy, r * 1.09, 0, Math.PI * 2); g.stroke(); g.restore();
 }
-const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-function frame(now) { const col = rgb(tone()), light = app.dataset.skin === 'light', t = still ? 2 : now / 1000; app.querySelectorAll('canvas.av').forEach((c) => drawAv(c, t, col, light)); requestAnimationFrame(frame); }
+function drawAv(c, t, col, light, P) { const g = c.getContext('2d'), W = c.width; g.clearRect(0, 0, W, W); bust(g, W / 2, W / 2, W * 0.29, t, col, light, c.dataset.speak === '1', P, light ? 'rgba(142,106,46,.95)' : 'rgba(242,221,174,.95)'); }
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches; let last = 0;
+function frame(now) {
+  const dt = last ? Math.min(0.1, (now - last) / 1000) : 0; last = now; tickPlayer(dt, now);
+  const lt = app.dataset.skin === 'light', ev = rgb(tone()), t = still ? 2 : now / 1000;
+  app.querySelectorAll('canvas.av').forEach((c) => { const w = c.dataset.who || 'eva', dk = c.dataset.dark === '1', l = lt && !dk;
+    drawAv(c, t, w === 'eva' ? (dk ? rgb('#E8A4C6') : ev) : rgb(EXP[w].tone[l ? 1 : 0]), l, w === 'eva' ? PTSV.eva : PTSV[EXP[w].hair]); });
+  uiPlayer(now); requestAnimationFrame(frame);
+}
 
 /* ── Старт ── */
 cur = { id: S.onboarded ? 'home' : 'splash' }; render(); requestAnimationFrame(frame);
