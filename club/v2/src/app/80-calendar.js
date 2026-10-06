@@ -10,6 +10,14 @@
    просто без приглашений. Время команды — московское. */
 
 const GCAL = 'Google Calendar';
+/* Созвоны из Eva CRM: CRM ставит их в Google Календарь того, кто назначил,
+   с названием «CRM · …» и меткой #eva-crm в описании. Штаб узнаёт их по
+   метке и рисует полупрозрачными — это чужие для штаба встречи, но время
+   занято. Ссылка из описания ведёт прямо в карточку человека в CRM. */
+const CRM_URL = 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA';
+const CRM_TAG = '#eva-crm';
+const evCrm = ev => String(ev.description || '').includes(CRM_TAG) || /^CRM ·/.test(String(ev.summary || ''));
+const crmLinkOf = ev => { const m = String(ev.description || '').match(/https:\/\/claude\.ai\/artifact\/[A-Za-z0-9]+#p-[A-Za-z0-9_-]+/); return m ? m[0] : CRM_URL; };
 const TZ = 'Europe/Moscow', TZ_OFF = '+03:00', TZ_MS = 3 * 3600e3;
 const CAL_H0 = 8, CAL_H1 = 21;          // сетка дня: 8:00–21:00
 const SYNC_DAYS = 28;                   // занятость в базе — на 4 недели
@@ -219,8 +227,11 @@ const Cal = {
         const a = tMs(w, '00:00'), b = tMs(addDays(w, 7), '00:00');
         this.week[w] = {events: events.filter(ev => { const r = evRange(ev); return r && r.end > a && r.start < b; }), at: Date.now()};
       }
-      const slots = mergeIv(events.filter(evBusy).filter(ev => !meetingOfEvent(ev)).map(evRange).filter(Boolean).map(r => [r.start, r.end]));
-      Store.put('busy', pid, {slots, from, to, at: Date.now(), share: true});
+      const busyEv = events.filter(evBusy).filter(ev => !meetingOfEvent(ev));
+      const slots = mergeIv(busyEv.filter(ev => !evCrm(ev)).map(evRange).filter(Boolean).map(r => [r.start, r.end]));
+      /* созвоны CRM — без названий, только время: команда видит их отдельно и полупрозрачными */
+      const crm = busyEv.filter(evCrm).map(evRange).filter(r => r && !r.allDay).map(r => [r.start, r.end]).sort((x, y) => x[0] - y[0]);
+      Store.put('busy', pid, {slots, crm, from, to, at: Date.now(), share: true});
       const email = selfEmail(events) || this.hostEmail || '', p = personById(pid);
       if (!myCalId() && email && p && normEmail(p.gcalEmail) !== normEmail(email)) Store.patch('people', pid, {gcalEmail: email});
       syncRsvp(events);
@@ -337,6 +348,7 @@ function busyOf(pid, from, to) {
   const a = tMs(from, '00:00'), b = tMs(addDays(to, 1), '00:00');
   const list = [];
   if (shared) (doc.slots || []).forEach(([s, e]) => { if (e > a && s < b) list.push({s, e, kind: 'busy'}); });
+  if (shared) (doc.crm || []).forEach(([s, e]) => { if (e > a && s < b) list.push({s, e, kind: 'crm'}); });
   Meetings.occ(from, to).forEach(o => {
     if (Meetings.people(o.m).includes(pid) && (o.m.responses || {})[pid] !== 'declined') list.push({s: o.s, e: o.e, kind: 'meet', m: o.m});
   });
@@ -528,6 +540,7 @@ function calWeekView(ws, nDays) {
         return `<button class="cw-ev meet${short} ${mine ? 'mine' : ''}" style="${style}" data-meet="${it.m.id}" title="${esc(it.m.title)} · ${time}"><b>${esc(it.m.title)}</b><small>${time}${it.m.meetUrl ? ' · Meet' : ''}</small></button>`;
       }
       const title = it.ev.summary || 'Без названия';
+      if (evCrm(it.ev)) return `<a class="cw-ev own crm${short}" style="${style}" href="${esc(crmLinkOf(it.ev))}" target="_blank" rel="noopener" title="${esc(title)} · ${time} · открыть в CRM"><b>${esc(title.replace(/^CRM · /, ''))}</b><small>${time} · CRM</small></a>`;
       return `<a class="cw-ev own${short} ${it.busy ? '' : 'free'}" style="${style}" ${it.ev.htmlLink ? `href="${esc(it.ev.htmlLink)}" target="_blank" rel="noopener"` : ''} title="${esc(title)} · ${time}${it.busy ? '' : ' · не занимает время'}"><b>${esc(title)}</b><small>${time}</small></a>`;
     }).join('');
     const nowLine = d === t && mskDate(nowMs()) === d ? `<i class="cw-now" style="top:${pct0(nowMs()).toFixed(2)}%"></i>` : '';
@@ -543,7 +556,8 @@ function calWeekView(ws, nDays) {
     else status = `Ваших событий: ${own.length} · собраний штаба: ${occ.length}`;
   } else status = `Собраний штаба на неделе: ${occ.length}`;
 
-  return `<div class="cal-legend"><span><i class="lg-own"></i>ваши события из Google</span><span><i class="lg-meet"></i>собрания штаба</span><span><i class="lg-off"></i>вне рабочих часов</span><span class="note">${esc(status)}</span></div>
+  const crmN = crmCalls(tMs(dates[0], '00:00'), tMs(addDays(dates[dates.length - 1], 1), '00:00')).length;
+  return `<div class="cal-legend"><span><i class="lg-own"></i>ваши события из Google</span><span><i class="lg-crm"></i>созвоны CRM${crmN ? ` · ${crmN}` : ''}</span><span><i class="lg-meet"></i>собрания штаба</span><span><i class="lg-off"></i>вне рабочих часов</span><span class="note">${esc(status)}</span></div>
     <div class="cal-wrap"><div class="cal-week" style="--days:${nDays}">
       <div class="cw-corner"></div>
       ${dates.map(d => `<div class="cw-dh ${d === t ? 'is-today' : ''} ${weekday(d) > 4 ? 'we' : ''}"><span>${WD_SH[weekday(d)]}</span><b>${Number(d.slice(8))}</b><small>${MONTHS_SH[dateOf(d).getMonth()]}</small></div>`).join('')}
@@ -596,6 +610,7 @@ function calTeamView(ws) {
     const stale = b.shared && b.at && Date.now() - b.at > 3 * 864e5;
     const blocks = b.list.map(x => x.kind === 'meet'
       ? seg(x.s, x.e, 'ct-b meet', `data-meet="${x.m.id}" title="${esc(x.m.title)} · ${hmMs(x.s)}–${hmMs(x.e)}"`, `<em>${esc(x.m.title)}</em>`)
+      : x.kind === 'crm' ? seg(x.s, x.e, 'ct-b crm', `title="Созвон CRM · ${hmMs(x.s)}–${hmMs(x.e)}"`, '<em>CRM</em>')
       : seg(x.s, x.e, 'ct-b busy', `title="Занят · ${hmMs(x.s)}–${hmMs(x.e)}"`)).join('');
     return `<div class="ct-row ${b.has ? '' : 'nodata'}">
       <a class="ct-name" href="#p-${pid}">${avatar(p)}<span><b>${esc(firstName(p))}</b><small>${b.has ? (stale ? 'обновлено ' + timeAgo(b.at) : 'календарь подключён') : 'нет данных календаря'}</small></span></a>
@@ -619,7 +634,7 @@ function calTeamView(ws) {
       ${rows}
     </div></div>` : '<div class="empty"><b>Выберите людей</b>Отметьте, чью занятость показать.</div>'}
     ${noData.length ? `<p class="note ct-nodata">Нет данных календаря: <b>${noData.map(pid => esc(firstName(personById(pid)))).join(', ')}</b> — их занятость не учитывается в окнах. Попросите их один раз открыть «Календарь» и нажать «Подключить мой Google Календарь».</p>` : ''}
-    <p class="note">Серым — занят по Google Календарю (без подробностей), фиолетовым — собрания штаба, зелёным — окна от 30 минут, где свободны все выбранные. Нажмите на зелёное окно или на шкалу — откроется собрание на это время.</p>`;
+    <p class="note">Серым — занят по Google Календарю (без подробностей), полупрозрачным «CRM» — созвоны из Eva CRM, фиолетовым — собрания штаба, зелёным — окна от 30 минут, где свободны все выбранные. Нажмите на зелёное окно или на шкалу — откроется собрание на это время.</p>`;
 }
 function calWireTeam(root) {
   on(root, 'click', '[data-cday]', (e, el) => { CalUI.day = el.dataset.cday; App.render(); });
@@ -1109,6 +1124,25 @@ async function cancelMeeting(id, anchor) {
   Store.remove('meetings', id);
   toast('Собрание удалено', {undo: () => Store.put('meetings', copy.id, copy)});
   return true;
+}
+
+/* созвоны CRM за период: по занятости всей команды (у кого подключён
+   календарь) и по своим событиям в этом окне; одинаковые — один раз */
+function crmCalls(a, b) {
+  const seen = new Set(), out = [];
+  const add = (s, e) => { const k = s + ':' + e; if (e > a && s < b && !seen.has(k)) { seen.add(k); out.push([s, e]); } };
+  Store.all('busy').forEach(doc => { if (doc && doc.share !== false) (doc.crm || []).forEach(([s, e]) => add(s, e)); });
+  Object.values(Cal.week).forEach(w => (w && w.events || []).filter(evCrm).forEach(ev => { const r = evRange(ev); if (r && !r.allDay) add(r.start, r.end); }));
+  return out.sort((x, y) => x[0] - y[0]);
+}
+const crmWeek = () => { const ws = weekStart(today()); return crmCalls(tMs(ws, '00:00'), tMs(addDays(ws, 7), '00:00')); };
+function crmTodayHtml() {
+  const t = today(), now = nowMs();
+  const list = crmCalls(tMs(t, '00:00'), tMs(addDays(t, 1), '00:00'));
+  const week = crmWeek();
+  if (!week.length) return '';
+  const next = list.filter(([, e]) => e > now);
+  return `<div class="today-meet crm-today"><span class="label">Созвоны CRM</span><div class="tm-row"><b>${list.length ? `сегодня ${list.length}` : 'сегодня нет'}</b><span>на неделе ${week.length}${next.length ? ` · ближайший в ${hmMs(next[0][0])}` : ''}</span><a class="btn xs" href="${CRM_URL}#calendar" target="_blank" rel="noopener">${icon('ext')}Открыть CRM</a></div></div>`;
 }
 
 /* собрания сегодня — для главной */

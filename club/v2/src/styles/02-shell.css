@@ -76,3 +76,6 @@
   .main{padding:20px 16px 56px;}
   h1{font-size:20px;}
 }
+/* пункт меню «CRM» ведёт в другой артефакт; число — созвоны CRM на неделе */
+.nav .nav-n{margin-left:auto; min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:rgba(255,255,255,.1); color:var(--night-ink); font-size:11.5px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; font-variant-numeric:tabular-nums;}
+.nav a.nav-ext{opacity:.9;}
