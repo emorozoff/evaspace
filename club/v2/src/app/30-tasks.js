@@ -320,12 +320,12 @@ const TaskUI = {
     const t = monthOf(today());
     const set = new Set(Tasks.all().map(x => x.month).filter(Boolean));
     let from = addMonths(t, -1), to = addMonths(t, 4);
-    set.forEach(m => { if (m < from && Tasks.all().some(x => x.month === m && Tasks.isOpen(x))) from = m; if (m > to) to = m; });
+    set.forEach(m => { if (m < from) from = m; if (m > to) to = m; });
     return monthRange(from, to);
   },
   filters() {
     return {
-      who: View.get('t.who', Auth.personId() ? 'me' : 'all'),
+      who: View.get('t.whom', 'all'),
       late: View.get('t.late', false),
       done: View.get('t.done', false),
       dir: View.get('t.dir', ''),
@@ -370,8 +370,12 @@ App.register('tasks', {
     const lateN = TaskUI.filtered({ignoreLate: true}).filter(t => Tasks.overdue(t)).length;
     const dups = Tasks.dupGroups();
     const opt = (v, n, cur) => `<option value="${esc(v)}" ${cur === v ? 'selected' : ''}>${esc(n)}</option>`;
-    const whoOpts = [['me', 'Мои задачи'], ['all', 'Вся команда'], ...ppl.map(p => [p.id, personName(p)]), ['none', 'Без исполнителя']]
-      .filter(([v]) => v !== 'me' || Auth.personId()).map(([v, n]) => opt(v, n, f.who)).join('');
+    const allT = Tasks.all();
+    const cnt = v => (v === 'all' ? allT.length : v === 'me' ? allT.filter(t => t.assignee && t.assignee === Auth.personId()).length : v === 'none' ? allT.filter(t => !t.assignee).length : allT.filter(t => t.assignee === v).length);
+    const whoOpts = [['all', 'Вся команда'], ['me', 'Мои задачи'], ...ppl.map(p => [p.id, personName(p)]), ['none', 'Без исполнителя']]
+      .filter(([v]) => v !== 'me' || Auth.personId()).map(([v, n]) => opt(v, `${n} · ${cnt(v)}`, f.who)).join('');
+    const filtered = f.who !== 'all' || f.dir || f.goal || f.q.trim() || f.late;
+    const shownN = TaskUI.filtered().length;
     const views = [['board', 'Доска'], ['month', 'По месяцам'], ['week', 'По неделям'], ['list', 'Список']];
     TaskUI.dupIds = new Set(dups.flat().map(t => t.id));
 
@@ -391,6 +395,7 @@ App.register('tasks', {
         ${dups.length ? `<button class="chip warn-chip" data-dups title="Задачи с одинаковым названием">Дубли <b>${dups.length}</b></button>` : ''}
         ${view !== 'board' ? `<label class="check t-done-t"><input type="checkbox" id="fDone" ${f.done ? 'checked' : ''}>Показывать готовые</label>` : ''}
       </div>
+      ${filtered ? `<div class="t-shown">Показано <b>${shownN}</b> из <b>${allT.length}</b> задач — по фильтру${f.who !== 'all' ? ` «${esc(f.who === 'me' ? 'Мои задачи' : f.who === 'none' ? 'Без исполнителя' : personName(personById(f.who)))}»` : ''}. <button class="link-btn" data-show-all>Показать все</button></div>` : ''}
       <div id="taskView"></div>`;
 
     const box = $('#taskView', root);
@@ -404,7 +409,8 @@ App.register('tasks', {
     on(root, 'click', '[data-late]', () => { View.set('t.late', !f.late); App.render(); });
     on(root, 'click', '[data-quick]', () => quickTask({}));
     on(root, 'click', '[data-dups]', () => dupModal());
-    $('#fWho', root).onchange = e => { View.set('t.who', e.target.value); App.render(); };
+    on(root, 'click', '[data-show-all]', () => { View.set('t.whom', 'all'); View.set('t.dir', ''); View.set('t.goal', ''); View.set('t.q', ''); View.set('t.late', false); App.render(); });
+    $('#fWho', root).onchange = e => { View.set('t.whom', e.target.value); App.render(); };
     $('#fDir', root).onchange = e => { View.set('t.dir', e.target.value); App.render(); };
     if ($('#fGoal', root)) $('#fGoal', root).onchange = e => { View.set('t.goal', e.target.value); App.render(); };
     if ($('#fDone', root)) $('#fDone', root).onchange = e => { View.set('t.done', e.target.checked); App.render(); };
@@ -446,7 +452,7 @@ function inboxHtml() {
 function wireInbox(root) {
   on(root, 'click', '[data-ib-toggle]', () => { View.set('t.inboxHide', !View.get('t.inboxHide', false)); App.render(); });
   on(root, 'click', '[data-ib-read]', () => { Inbox.readAll(); toast('Все события отмечены прочитанными'); });
-  on(root, 'click', '[data-ib-late]', () => { View.set('t.late', true); View.set('t.who', 'me'); App.render(); });
+  on(root, 'click', '[data-ib-late]', () => { View.set('t.late', true); View.set('t.whom', 'me'); App.render(); });
   on(root, 'click', '[data-ib-accept]', (e, el) => { e.stopPropagation(); const t = Tasks.get(el.dataset.ibAccept); if (t) { Tasks.setStatus(t, 'done'); toast('Согласовано, задача закрыта'); } });
   on(root, 'click', '[data-ib-budget]', (e, el) => { e.stopPropagation(); const t = Tasks.get(el.dataset.ibBudget); if (t) approveBudget(t, true); });
 }
@@ -636,7 +642,7 @@ function wireComposer(root) {
 /* ── доска по статусам ── */
 function renderTaskBoard(box, list) {
   const doneAll = list.filter(t => t.status === 'done').sort((a, b) => (b.doneAt || b.updatedAt || 0) - (a.doneAt || a.updatedAt || 0));
-  const doneShown = TaskUI.showDone ? doneAll : doneAll.slice(0, 8);
+  const doneShown = TaskUI.showDone ? doneAll : doneAll.slice(0, 30);
   const cols = [
     kbCol({key: 's:todo', title: 'К работе', items: byOrder(list.filter(t => t.status === 'todo')), add: true}),
     kbCol({key: 's:doing', title: 'В работе', items: byOrder(list.filter(t => t.status === 'doing')), add: true, tone: 'doing'}),

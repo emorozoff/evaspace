@@ -82,7 +82,7 @@ App.register('team', {
       ${owner ? accessHtml(accs, invs) : ''}`;
 
     on(root, 'click', '[data-tv]', (e, el) => { View.set('team.view', el.dataset.tv); App.render(); });
-    on(root, 'click', '[data-person-tasks]', (e, el) => { View.set('t.who', el.dataset.personTasks); View.set('t.late', false); View.set('t.dir', ''); View.set('t.goal', ''); App.go('tasks'); });
+    on(root, 'click', '[data-person-tasks]', (e, el) => { View.set('t.whom', el.dataset.personTasks); View.set('t.late', false); View.set('t.dir', ''); View.set('t.goal', ''); App.go('tasks'); });
     on(root, 'click', '[data-person-edit]', (e, el) => editPerson(el.dataset.personEdit));
     on(root, 'click', '[data-person-add]', () => editPerson(null));
     on(root, 'click', '[data-invite-for]', (e, el) => { e.preventDefault(); issueInvite(el.dataset.inviteFor); });

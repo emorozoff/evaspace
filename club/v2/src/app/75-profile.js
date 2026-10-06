@@ -125,7 +125,7 @@ function renderProfile(root, pid) {
   $$('.pf-goals li', root).forEach((li, i) => { $('span', li).textContent = goals[i].t; });
 
   wireTaskCards(root);
-  on(root, 'click', '[data-my-tasks]', () => { View.set('t.who', pid); View.set('t.late', false); });
+  on(root, 'click', '[data-my-tasks]', () => { View.set('t.whom', pid); View.set('t.late', false); });
   on(root, 'click', '[data-person-edit]', (e, el) => editPerson(el.dataset.personEdit));
   on(root, 'click', '[data-copy]', (e, el) => copyText(el.dataset.copy, $('b', el)));
   on(root, 'click', '[data-logout-me]', () => Auth.logout());

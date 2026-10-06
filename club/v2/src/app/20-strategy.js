@@ -170,8 +170,8 @@ App.register('strategy', {
     on(root, 'change', '[data-goal-st]', (e, el) => Strategy.save({goals: {[el.dataset.goalSt]: {status: el.value}}}));
     on(root, 'click', '[data-goal-edit]', (e, el) => editGoal(el.dataset.goalEdit));
     on(root, 'click', '[data-goal-add]', () => editGoal(null));
-    on(root, 'click', '[data-goal-tasks]', (e, el) => { View.set('t.goal', el.dataset.goalTasks); View.set('t.who', 'all'); View.set('t.chip', 'all'); App.go('tasks'); });
-    on(root, 'click', '[data-dir-tasks]', (e, el) => { View.set('t.dir', el.dataset.dirTasks); View.set('t.who', 'all'); View.set('t.chip', 'open'); View.set('t.goal', ''); App.go('tasks'); });
+    on(root, 'click', '[data-goal-tasks]', (e, el) => { View.set('t.goal', el.dataset.goalTasks); View.set('t.whom', 'all'); View.set('t.chip', 'all'); App.go('tasks'); });
+    on(root, 'click', '[data-dir-tasks]', (e, el) => { View.set('t.dir', el.dataset.dirTasks); View.set('t.whom', 'all'); View.set('t.chip', 'open'); View.set('t.goal', ''); App.go('tasks'); });
     on(root, 'change', 'input[name=scPick]', (e, el) => { saveSettings({scenario: el.value}); toast(`План ведём по сценарию «${SCENARIOS[el.value].name}»`); });
     on(root, 'click', '[data-sc-edit]', () => editScenarios());
     on(root, 'change', '[data-whale]', (e, el) => Strategy.save({whales: {[el.dataset.whale]: {lead: el.value || null}}}));
