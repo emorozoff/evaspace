@@ -10,5 +10,5 @@
   App.start();
   TaskNotify.init();
   /* для проверок и отладки из консоли */
-  window.__eva = {Store, Auth, App, Tasks, Inbox, settings, Sales, Plan, Money, cashFlow, pnl, quarterPace};
+  window.__eva = {Store, Auth, App, Tasks, Inbox, settings, Sales, Plan, Money, cashFlow, pnl, quarterPace, Sound, Strategy, openWelcome, inviteLink, inviteText};
 })();

@@ -59,13 +59,13 @@ const Auth = {
 
   async login(email, pw) {
     const acc = this.findByEmail(email);
-    if (!acc) throw new Error('Нет учётки с такой почтой. Если вас пригласили — войдите по коду приглашения.');
+    if (!acc) throw new Error('Нет учётки с такой почтой. Если вас пригласили — откройте ссылку из приглашения или введите код во вкладке «У меня приглашение».');
     if (acc.active === false) throw new Error('Учётка отключена. Напишите основателю.');
     if ((await hashPassword(pw, acc.salt)) !== acc.hash) throw new Error('Пароль не подошёл. Проверьте раскладку или попросите у основателя код сброса.');
     this.start(acc);
   },
 
-  async createAccount({name, email, pw, role, personId}) {
+  async createAccount({name, email, pw, role, personId, welcomed}) {
     if (!name.trim()) throw new Error('Напишите имя и фамилию.');
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) throw new Error('Почта выглядит неправильно.');
     if (pw.length < 6) throw new Error('Пароль — не короче 6 символов.');
@@ -73,8 +73,10 @@ const Auth = {
     const salt = randSalt();
     const acc = {name: name.trim(), email: normEmail(email), role, personId: personId || null,
       salt, hash: await hashPassword(pw, salt), active: true, createdAt: Date.now(), lastSeen: Date.now()};
-    const id = Store.add('accounts', acc);
-    return {...acc, id};
+    if (welcomed === false) acc.welcomed = false;   // новичку при первом входе — приветствие
+    const id = uid();
+    const wrote = Store.put('accounts', id, acc);
+    return {...acc, id, wrote};
   },
 
   /* первый вход в пустой штаб — учётка основателя и его карточка в команде */
@@ -87,17 +89,36 @@ const Auth = {
     this.start(acc);
   },
 
+  /* регистрация по приглашению: анкета из ссылки ложится в карточку человека
+     в «Команде» — то, что заполнил основатель, человек мог поправить */
   async acceptInvite(f) {
     const code = normCode(f.code);
     const inv = Store.get('invites', code);
-    if (!inv || inv.usedBy) throw new Error('Код не найден или уже использован. Попросите у основателя новый.');
+    if (!inv || inv.usedBy) throw new Error('Приглашение не найдено или уже использовано. Попросите у основателя новую ссылку.');
+    const given = String(f.given || '').trim(), surname = String(f.surname || '').trim();
+    if (!given) throw new Error('Напишите имя.');
+    if (!surname) throw new Error('Напишите фамилию.');
+    const name = joinName(given, surname);
+    if (f.birthDate && !/^\d{4}-\d\d-\d\d$/.test(f.birthDate)) throw new Error('Дата рождения выглядит неправильно.');
     let pid = inv.personId;
-    if (!pid || !personById(pid)) pid = Store.add('people', {name: f.name.trim(), title: inv.title || '', dir: inv.dir || '', order: 50});
-    const acc = await this.createAccount({...f, role: roleOf(inv.role), personId: pid});
-    const p = personById(pid);
-    if (p && !p.name) Store.patch('people', pid, {name: f.name.trim()});
+    if (!pid || !personById(pid)) pid = Store.add('people', {name, title: inv.title || '', dir: inv.dir || '', order: 50});
+    const acc = await this.createAccount({name, email: f.email, pw: f.pw, role: roleOf(inv.role), personId: pid, welcomed: false});
+    /* запись в общую базу могли не пустить: штаб открыт человеку только на просмотр */
+    await acc.wrote;
+    if (Store.state.mode === 'db' && Store.state.readOnly) {
+      throw new Error('Регистрация не сохранилась: штаб открыт вам только на просмотр. Попросите основателя дать доступ на редактирование (меню «Поделиться» у штаба) и откройте ссылку ещё раз.');
+    }
+    delete acc.wrote;
+    const p = personById(pid) || {};
+    const card = {name, givenName: given, surname, email: normEmail(f.email), joinedAt: Date.now()};
+    ['title', 'dir', 'phone', 'telegram', 'birthDate', 'birthTime', 'birthCity', 'hdType', 'hdProfile'].forEach(k => {
+      if (f[k] !== undefined) card[k] = String(f[k] || '').trim();
+    });
+    if (p.status === 'vacancy') card.status = 'active';   // вакансия закрыта
+    Store.patch('people', pid, card);
     Store.patch('invites', code, {usedBy: acc.id, usedAt: Date.now()});
     this.start(acc);
+    return acc;
   },
 
   async resetWithCode(f) {
@@ -121,20 +142,22 @@ const Auth = {
 
 /* ── экран входа ── */
 function renderAuth(root) {
+  const join = App.parse();
+  if (join.id === 'join' && Store.count('accounts')) { renderJoin(root, join.param); return; }
   const empty = !Store.count('accounts');
   let mode = empty ? 'owner' : View.get('authMode', 'login');
   if (mode === 'owner' && !empty) mode = 'login';
 
   const titles = {
-    owner:  ['Создайте штаб', 'Вы первый: эта учётка станет учёткой основателя. Команду пригласите кодами из раздела «Команда».'],
+    owner:  ['Создайте штаб', 'Вы первый: эта учётка станет учёткой основателя. Команду пригласите ссылками из раздела «Команда».'],
     login:  ['Вход в штаб', 'Почта и пароль, которые вы задали при регистрации.'],
-    invite: ['Вход по приглашению', 'Код выдаёт основатель. Роль и кабинет подставятся сами.'],
+    invite: ['Вход по приглашению', 'Проще всего — открыть ссылку из приглашения. Если ссылка не открылась, введите код из того же сообщения: дальше будет короткая анкета, роль подставится сама.'],
     reset:  ['Новый пароль', 'Попросите у основателя код сброса — он действует сутки.'],
   };
   const fields = {
     owner:  ['name', 'email', 'pw', 'pw2'],
     login:  ['email', 'pw'],
-    invite: ['code', 'name', 'email', 'pw', 'pw2'],
+    invite: ['code'],
     reset:  ['email', 'code', 'pw', 'pw2'],
   };
   const F = {
@@ -160,7 +183,7 @@ function renderAuth(root) {
       <p class="auth-lead">${lead}</p>
       <div class="auth-msg" id="authMsg" hidden></div>
       <div class="auth-fields">${fields[mode].map(k => F[k]).join('')}</div>
-      <button class="btn primary auth-go" type="submit" id="authGo">${mode === 'owner' ? 'Создать штаб' : mode === 'invite' ? 'Войти и получить кабинет' : mode === 'reset' ? 'Сохранить пароль и войти' : 'Войти'}</button>
+      <button class="btn primary auth-go" type="submit" id="authGo">${mode === 'owner' ? 'Создать штаб' : mode === 'invite' ? 'Дальше — к анкете' : mode === 'reset' ? 'Сохранить пароль и войти' : 'Войти'}</button>
       <div class="auth-links">
         ${mode === 'login' ? '<button type="button" class="link-btn" data-mode="reset">Забыли пароль?</button>' : ''}
         ${mode === 'reset' ? '<button type="button" class="link-btn" data-mode="login">Вернуться ко входу</button>' : ''}
@@ -170,7 +193,7 @@ function renderAuth(root) {
     <aside class="auth-side">
       <p class="label">Кто что видит</p>
       <ul class="auth-roles">${roles}</ul>
-      <p class="note">Роль назначает основатель, когда выдаёт код приглашения. Поменять её можно в разделе «Команда».</p>
+      <p class="note">Роль назначает основатель, когда отправляет ссылку-приглашение. Поменять её можно в разделе «Команда».</p>
     </aside>
   </div>`;
 
@@ -182,13 +205,18 @@ function renderAuth(root) {
     e.preventDefault();
     msg.hidden = true;
     const f = {name: val('a-name'), email: val('a-email'), pw: val('a-pw'), code: val('a-code')};
+    if (mode === 'invite') {
+      const code = normCode(f.code), inv = Store.get('invites', code);
+      if (!inv || inv.usedBy) { msg.textContent = inv ? 'По этому коду уже зарегистрировались — войдите своей почтой и паролем.' : 'Код не найден. Проверьте его или попросите у основателя новую ссылку.'; msg.hidden = false; return; }
+      location.hash = 'join=' + code;
+      return;
+    }
     if (fields[mode].includes('pw2') && f.pw !== val('a-pw2')) { msg.textContent = 'Пароли не совпадают.'; msg.hidden = false; return; }
     const go = $('#authGo', root);
     go.disabled = true;
     go.textContent = 'Проверяю…';
     try {
       if (mode === 'owner') await Auth.createOwner(f);
-      else if (mode === 'invite') await Auth.acceptInvite(f);
       else if (mode === 'reset') await Auth.resetWithCode(f);
       else await Auth.login(f.email, f.pw);
       View.set('authMode', 'login');

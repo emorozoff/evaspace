@@ -1139,6 +1139,171 @@ table.plan tr.dim td{color:var(--ink-3);}
 .learn-add{margin-top:10px; gap:8px;}
 .pf-pw .input{flex:1 1 170px; width:auto;}
 
+/* ── 72-join.css ── */
+/* ── колокольчик звука в меню ── */
+.side-row{display:flex; align-items:center; gap:6px; justify-content:space-between;}
+.snd-btn{width:28px; height:28px; flex:0 0 28px; border-radius:7px; border:1px solid var(--night-line); background:none; color:var(--night-ink); display:inline-flex; align-items:center; justify-content:center;}
+.snd-btn svg{width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+.snd-btn:hover{border-color:var(--rose-brand);}
+.snd-btn.off{color:var(--night-ink-2); opacity:.7;}
+@media (max-width:880px){ .side-row{gap:4px;} }
+
+/* заметное уведомление: новая задача, согласование */
+.toast.ring{background:linear-gradient(135deg, var(--night) 0%, #3A2236 100%); box-shadow:0 0 0 1px color-mix(in srgb, var(--rose-brand) 55%, transparent), var(--shadow-pop); animation:rise .16s ease-out, ring-glow 1.6s ease-out 1;}
+.toast-ico{width:18px; height:18px; flex:0 0 18px; stroke:var(--rose-brand); fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; animation:ring-bell .9s ease-in-out 2;}
+@keyframes ring-bell{0%,100%{transform:rotate(0);} 20%{transform:rotate(16deg);} 40%{transform:rotate(-14deg);} 60%{transform:rotate(9deg);} 80%{transform:rotate(-5deg);}}
+@keyframes ring-glow{0%{box-shadow:0 0 0 6px color-mix(in srgb, var(--rose-brand) 45%, transparent), var(--shadow-pop);}}
+
+/* ── искры: тихо мерцают на тёмном ── */
+.wl-sparks{position:absolute; inset:0; pointer-events:none; overflow:hidden;}
+.wl-sparks svg{position:absolute; fill:#fff; opacity:.0; animation:twinkle 3.2s ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:0; transform:scale(.6);} 45%{opacity:.85; transform:scale(1);} 70%{opacity:.25;}}
+@media (prefers-reduced-motion: reduce){ .wl-sparks svg{opacity:.5; animation:none;} }
+
+/* ── анкета по ссылке ── */
+.auth.one{grid-template-columns:minmax(0,440px); justify-content:center;}
+.join{width:100%; max-width:760px; display:flex; flex-direction:column; gap:0;}
+.join-hero{position:relative; overflow:hidden; border-radius:var(--radius) var(--radius) 0 0; padding:28px 28px 24px; color:#fff;
+  background:radial-gradient(420px 260px at 82% 10%, rgba(194,80,111,.55), transparent 70%), radial-gradient(360px 220px at 10% 110%, rgba(94,47,102,.6), transparent 70%), var(--night);}
+.join-mark{width:52px; height:52px; border-radius:13px; position:relative; box-shadow:0 6px 22px rgba(194,80,111,.35);}
+.join-hero h1{position:relative; font:600 24px/1.25 var(--f-display); margin:10px 0 6px; color:#fff; letter-spacing:-.01em;}
+.join-hero p{position:relative; color:var(--night-ink); font-size:14px; max-width:58ch;}
+.join-hero b{color:#fff;}
+.wl-kicker{position:relative; margin-top:14px; font-size:11.5px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--rose-brand);}
+.join-role{position:relative; display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px; font-size:13px; color:var(--night-ink-2);}
+.join-form{border-radius:0 0 var(--radius) var(--radius); border-top:0; padding:22px 28px 24px; display:flex; flex-direction:column; gap:18px;}
+.join-lead{font-size:14px; color:var(--ink-2);}
+.jf-sec{display:flex; flex-direction:column; gap:12px;}
+.jf-sec + .jf-sec{border-top:1px solid var(--line); padding-top:16px;}
+.jf-sec h3{font:600 14.5px var(--f-display); display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+.jf-sec h3 small{font:400 12px var(--f-text); color:var(--ink-3);}
+.jf-src{font-style:normal; font-size:10.5px; font-weight:600; color:var(--good); background:var(--good-soft); border-radius:5px; padding:1px 6px; margin-left:6px; white-space:nowrap;}
+.hd-types{display:flex; flex-wrap:wrap; gap:6px;}
+.hd-chip{height:32px; padding:0 12px;}
+.hd-chip.on{background:var(--violet); border-color:var(--violet); color:#fff;}
+.hd-chip[disabled]{cursor:default;}
+.hd-hint{min-height:16px; color:var(--violet) !important;}
+.hd-prof{max-width:360px;}
+.join-go{height:46px; font-size:15px;}
+.join-go svg{width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:1.9;}
+.join.preview{max-width:none;}
+.join.preview .join-hero{border-radius:var(--radius) var(--radius) 0 0;}
+.join.preview .join-form{border:1px solid var(--line); background:var(--surface); padding:18px 20px;}
+.join-in{display:flex; flex-direction:column; gap:12px; max-width:640px;}
+@media (max-width:640px){
+  .join-hero{padding:22px 18px 20px;}
+  .join-hero h1{font-size:20px;}
+  .join-form{padding:18px 16px 20px;}
+}
+
+/* ── окно приглашения ── */
+.iv-who{display:flex; align-items:center; gap:12px;}
+.iv-who b{display:block; font-size:15px;}
+.iv-who small{font-size:12.5px; color:var(--ink-3);}
+.iv-roles{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px;}
+.iv-role{display:flex; flex-direction:column; gap:3px; padding:10px 12px; border:1px solid var(--line-strong); border-radius:9px; cursor:pointer; position:relative; background:var(--surface);}
+.iv-role input{position:absolute; opacity:0; pointer-events:none;}
+.iv-role b{font-size:13.5px;}
+.iv-role small{font-size:12px; color:var(--ink-3); line-height:1.4;}
+.iv-role.on{border-color:var(--link); box-shadow:0 0 0 3px var(--link-soft);}
+.iv-role:focus-within{outline:2px solid var(--link); outline-offset:2px;}
+.iv-fill{display:flex; flex-direction:column; gap:10px; padding:12px 14px; border-radius:10px; background:var(--surface-2); border:1px solid var(--line);}
+.iv-fill .label{display:block; margin-bottom:6px;}
+.iv-fill .link-btn{align-self:flex-start;}
+.invite-out{align-items:stretch;}
+.iv-link{display:flex; gap:8px; flex-wrap:wrap;}
+.iv-link .input{flex:1 1 260px; font-size:13px; background:var(--surface);}
+.iv-msg{margin:0; white-space:pre-wrap; font:13px/1.55 var(--f-text); color:var(--ink-2); background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:10px 12px; max-height:180px; overflow:auto;}
+
+/* ── приветствие ── */
+.modal.wl-modal{max-width:780px; overflow:hidden; position:relative;}
+.wl-modal .modal-head{position:absolute; right:10px; top:10px; padding:0; z-index:3;}
+.wl-modal .modal-head h2{display:none;}
+.wl-modal .modal-head .icon-btn{color:var(--night-ink); background:rgba(255,255,255,.08);}
+.wl-modal .modal-head .icon-btn:hover{background:rgba(255,255,255,.18); color:#fff;}
+.wl-modal .modal-body{padding-top:0;}
+.wl-hero{position:relative; overflow:hidden; margin:0 -20px; padding:30px 28px 24px; text-align:center; color:#fff;
+  background:radial-gradient(460px 260px at 50% 0%, rgba(194,80,111,.55), transparent 70%), radial-gradient(320px 200px at 0% 100%, rgba(94,47,102,.55), transparent 70%), var(--night);}
+.wl-mark{width:64px; height:64px; border-radius:16px; position:relative; box-shadow:0 8px 28px rgba(194,80,111,.4); animation:wl-pop .5s cubic-bezier(.2,1.4,.4,1) both;}
+@keyframes wl-pop{from{transform:scale(.6); opacity:0;}}
+.wl-hero .wl-kicker{margin-top:12px;}
+.wl-title{position:relative; font:600 25px/1.25 var(--f-display); color:#fff; margin:6px auto 4px; max-width:24ch; letter-spacing:-.01em;}
+.wl-lead{position:relative; font-size:16px; color:var(--night-ink);}
+.wl-text{font-size:14.5px; line-height:1.6; color:var(--ink); margin-top:4px;}
+.wl-grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px;}
+@media (max-width:640px){ .wl-grid{grid-template-columns:1fr;} .wl-title{font-size:21px;} .wl-hero{padding:26px 18px 20px;} }
+.wl-card{background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; gap:8px;}
+.wl-year{font-size:14.5px; font-weight:600; color:var(--ink);}
+.wl-stages{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px;}
+.wl-stages li{display:flex; flex-direction:column; padding-left:12px; border-left:2px solid var(--line-strong);}
+.wl-stages li.here{border-left-color:var(--rose);}
+.wl-stages b{font-size:13.5px;}
+.wl-stages small{font-size:12px; color:var(--ink-3);}
+.wl-stages li.here small{color:var(--rose); font-weight:600;}
+.wl-miles{font-size:12.5px; color:var(--ink-2);}
+.wl-miles span{color:var(--ink-3);}
+.wl-num{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+.wl-num b{font:600 30px/1 var(--f-display); letter-spacing:-.02em;}
+.wl-num span{font-size:12.5px; color:var(--ink-3);}
+.wl-goals{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--ink-2);}
+.wl-goals b{color:var(--ink);}
+.wl-hd{display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:10px; background:var(--violet-soft);}
+.wl-hd svg{width:20px; height:20px; flex:0 0 20px; stroke:var(--violet); fill:none; stroke-width:1.8; margin-top:2px;}
+.wl-hd b{color:var(--violet);}
+.wl-hd p{font-size:13.5px; color:var(--ink-2); margin-top:2px;}
+.wl-start{display:flex; flex-direction:column; gap:6px;}
+.wl-start ol{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:4px; font-size:13.5px;}
+.wl-start a{color:var(--link); text-decoration:none;}
+.wl-start a:hover{text-decoration:underline;}
+.modal-foot svg{width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.9;}
+
+/* редактор приветствия у основателя */
+.onb{display:flex; flex-direction:column; gap:12px;}
+.onb .card-head{margin-bottom:0;}
+
+/* ── командный дух на главной ── */
+.spirit{display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:0; padding:0; overflow:hidden; margin-bottom:16px;}
+@media (max-width:900px){ .spirit{grid-template-columns:1fr;} }
+.sp-main{position:relative; overflow:hidden; padding:20px 22px; color:#fff; display:flex; flex-direction:column; gap:10px;
+  background:radial-gradient(380px 220px at 90% 0%, rgba(194,80,111,.5), transparent 70%), radial-gradient(300px 200px at 0% 120%, rgba(94,47,102,.55), transparent 70%), var(--night);}
+.spirit.bday .sp-main{background:radial-gradient(380px 220px at 90% 0%, rgba(231,197,139,.55), transparent 70%), radial-gradient(300px 200px at 0% 120%, rgba(194,80,111,.55), transparent 70%), var(--night);}
+.sp-kicker{position:relative; display:inline-flex; align-items:center; gap:7px; font-size:11.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--rose-brand);}
+.spirit.bday .sp-kicker{color:var(--gold-brand);}
+.sp-kicker svg{width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.8;}
+.sp-text{position:relative; font:500 19px/1.4 var(--f-display); color:#fff; max-width:44ch; text-wrap:pretty;}
+.sp-text.pop{animation:sp-in .35s ease-out;}
+@keyframes sp-in{from{opacity:0; transform:translateY(6px);}}
+.sp-foot{position:relative; margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap; padding-top:4px;}
+.sp-slogan{font-size:12.5px; color:var(--night-ink-2); font-style:italic;}
+.sp-more{background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); color:#fff; border-radius:7px; height:28px; padding:0 10px; font-size:12.5px; font-weight:500;}
+.sp-more:hover{background:rgba(255,255,255,.16);}
+.sp-side{padding:16px 20px; display:flex; flex-direction:column; gap:12px; background:var(--surface);}
+.sp-stats{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px;}
+.sp-stats > div{display:flex; flex-direction:column; padding:8px 10px; border-radius:8px; background:var(--surface-2); border:1px solid var(--line);}
+.sp-stats b{font:600 20px/1.1 var(--f-display); font-variant-numeric:tabular-nums;}
+.sp-stats span{font-size:11.5px; color:var(--ink-3); line-height:1.3;}
+.sp-heroes{display:flex; align-items:center; gap:6px 12px; flex-wrap:wrap;}
+.sp-h-l{font-size:12px; font-weight:600; color:var(--ink-2); margin-right:2px;}
+.sp-hero{display:inline-flex; align-items:center; gap:6px; text-decoration:none; color:var(--ink); font-size:13px;}
+.sp-hero b{font-weight:600;}
+.sp-hero em{font-style:normal; font-size:11px; font-weight:700; color:var(--good); background:var(--good-soft); border-radius:9px; padding:0 6px; line-height:18px;}
+.sp-hero:hover b{text-decoration:underline;}
+.sp-empty{margin:0;}
+.sp-bdays{display:flex; gap:8px; align-items:flex-start; font-size:13px; color:var(--ink-2);}
+.sp-bdays svg{width:16px; height:16px; flex:0 0 16px; stroke:var(--gold); fill:none; stroke-width:1.8; margin-top:1px;}
+.sp-bdays.now{background:var(--gold-soft); border-radius:8px; padding:8px 10px; color:var(--ink);}
+.pill svg{width:12px; height:12px; stroke:currentColor; fill:none; stroke-width:2;}
+
+/* ── рождение и дизайн на странице человека ── */
+.pf-bd{display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-bottom:10px;}
+.pf-bd > div{display:flex; flex-direction:column; padding:8px 12px; border-radius:8px; background:var(--surface-2); border:1px solid var(--line);}
+.pf-bd b{font-size:14px; font-weight:600;}
+.pf-bd small{font-size:11.5px; color:var(--ink-3);}
+.pf-hd{display:flex; flex-direction:column; gap:6px;}
+.pf-hd p{font-size:13.5px; color:var(--ink-2);}
+.pf-snd{align-items:center; justify-content:space-between;}
+.pf-snd .btn svg{width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.8;}
+
 /* ── 80-calendar-metrics.css ── */
 /* ── Календарь ── */
 .cal-conn{
@@ -1952,13 +2117,13 @@ const Auth = {
 
   async login(email, pw) {
     const acc = this.findByEmail(email);
-    if (!acc) throw new Error('Нет учётки с такой почтой. Если вас пригласили — войдите по коду приглашения.');
+    if (!acc) throw new Error('Нет учётки с такой почтой. Если вас пригласили — откройте ссылку из приглашения или введите код во вкладке «У меня приглашение».');
     if (acc.active === false) throw new Error('Учётка отключена. Напишите основателю.');
     if ((await hashPassword(pw, acc.salt)) !== acc.hash) throw new Error('Пароль не подошёл. Проверьте раскладку или попросите у основателя код сброса.');
     this.start(acc);
   },
 
-  async createAccount({name, email, pw, role, personId}) {
+  async createAccount({name, email, pw, role, personId, welcomed}) {
     if (!name.trim()) throw new Error('Напишите имя и фамилию.');
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) throw new Error('Почта выглядит неправильно.');
     if (pw.length < 6) throw new Error('Пароль — не короче 6 символов.');
@@ -1966,8 +2131,10 @@ const Auth = {
     const salt = randSalt();
     const acc = {name: name.trim(), email: normEmail(email), role, personId: personId || null,
       salt, hash: await hashPassword(pw, salt), active: true, createdAt: Date.now(), lastSeen: Date.now()};
-    const id = Store.add('accounts', acc);
-    return {...acc, id};
+    if (welcomed === false) acc.welcomed = false;   // новичку при первом входе — приветствие
+    const id = uid();
+    const wrote = Store.put('accounts', id, acc);
+    return {...acc, id, wrote};
   },
 
   /* первый вход в пустой штаб — учётка основателя и его карточка в команде */
@@ -1980,17 +2147,36 @@ const Auth = {
     this.start(acc);
   },
 
+  /* регистрация по приглашению: анкета из ссылки ложится в карточку человека
+     в «Команде» — то, что заполнил основатель, человек мог поправить */
   async acceptInvite(f) {
     const code = normCode(f.code);
     const inv = Store.get('invites', code);
-    if (!inv || inv.usedBy) throw new Error('Код не найден или уже использован. Попросите у основателя новый.');
+    if (!inv || inv.usedBy) throw new Error('Приглашение не найдено или уже использовано. Попросите у основателя новую ссылку.');
+    const given = String(f.given || '').trim(), surname = String(f.surname || '').trim();
+    if (!given) throw new Error('Напишите имя.');
+    if (!surname) throw new Error('Напишите фамилию.');
+    const name = joinName(given, surname);
+    if (f.birthDate && !/^\d{4}-\d\d-\d\d$/.test(f.birthDate)) throw new Error('Дата рождения выглядит неправильно.');
     let pid = inv.personId;
-    if (!pid || !personById(pid)) pid = Store.add('people', {name: f.name.trim(), title: inv.title || '', dir: inv.dir || '', order: 50});
-    const acc = await this.createAccount({...f, role: roleOf(inv.role), personId: pid});
-    const p = personById(pid);
-    if (p && !p.name) Store.patch('people', pid, {name: f.name.trim()});
+    if (!pid || !personById(pid)) pid = Store.add('people', {name, title: inv.title || '', dir: inv.dir || '', order: 50});
+    const acc = await this.createAccount({name, email: f.email, pw: f.pw, role: roleOf(inv.role), personId: pid, welcomed: false});
+    /* запись в общую базу могли не пустить: штаб открыт человеку только на просмотр */
+    await acc.wrote;
+    if (Store.state.mode === 'db' && Store.state.readOnly) {
+      throw new Error('Регистрация не сохранилась: штаб открыт вам только на просмотр. Попросите основателя дать доступ на редактирование (меню «Поделиться» у штаба) и откройте ссылку ещё раз.');
+    }
+    delete acc.wrote;
+    const p = personById(pid) || {};
+    const card = {name, givenName: given, surname, email: normEmail(f.email), joinedAt: Date.now()};
+    ['title', 'dir', 'phone', 'telegram', 'birthDate', 'birthTime', 'birthCity', 'hdType', 'hdProfile'].forEach(k => {
+      if (f[k] !== undefined) card[k] = String(f[k] || '').trim();
+    });
+    if (p.status === 'vacancy') card.status = 'active';   // вакансия закрыта
+    Store.patch('people', pid, card);
     Store.patch('invites', code, {usedBy: acc.id, usedAt: Date.now()});
     this.start(acc);
+    return acc;
   },
 
   async resetWithCode(f) {
@@ -2014,20 +2200,22 @@ const Auth = {
 
 /* ── экран входа ── */
 function renderAuth(root) {
+  const join = App.parse();
+  if (join.id === 'join' && Store.count('accounts')) { renderJoin(root, join.param); return; }
   const empty = !Store.count('accounts');
   let mode = empty ? 'owner' : View.get('authMode', 'login');
   if (mode === 'owner' && !empty) mode = 'login';
 
   const titles = {
-    owner:  ['Создайте штаб', 'Вы первый: эта учётка станет учёткой основателя. Команду пригласите кодами из раздела «Команда».'],
+    owner:  ['Создайте штаб', 'Вы первый: эта учётка станет учёткой основателя. Команду пригласите ссылками из раздела «Команда».'],
     login:  ['Вход в штаб', 'Почта и пароль, которые вы задали при регистрации.'],
-    invite: ['Вход по приглашению', 'Код выдаёт основатель. Роль и кабинет подставятся сами.'],
+    invite: ['Вход по приглашению', 'Проще всего — открыть ссылку из приглашения. Если ссылка не открылась, введите код из того же сообщения: дальше будет короткая анкета, роль подставится сама.'],
     reset:  ['Новый пароль', 'Попросите у основателя код сброса — он действует сутки.'],
   };
   const fields = {
     owner:  ['name', 'email', 'pw', 'pw2'],
     login:  ['email', 'pw'],
-    invite: ['code', 'name', 'email', 'pw', 'pw2'],
+    invite: ['code'],
     reset:  ['email', 'code', 'pw', 'pw2'],
   };
   const F = {
@@ -2053,7 +2241,7 @@ function renderAuth(root) {
       <p class="auth-lead">${lead}</p>
       <div class="auth-msg" id="authMsg" hidden></div>
       <div class="auth-fields">${fields[mode].map(k => F[k]).join('')}</div>
-      <button class="btn primary auth-go" type="submit" id="authGo">${mode === 'owner' ? 'Создать штаб' : mode === 'invite' ? 'Войти и получить кабинет' : mode === 'reset' ? 'Сохранить пароль и войти' : 'Войти'}</button>
+      <button class="btn primary auth-go" type="submit" id="authGo">${mode === 'owner' ? 'Создать штаб' : mode === 'invite' ? 'Дальше — к анкете' : mode === 'reset' ? 'Сохранить пароль и войти' : 'Войти'}</button>
       <div class="auth-links">
         ${mode === 'login' ? '<button type="button" class="link-btn" data-mode="reset">Забыли пароль?</button>' : ''}
         ${mode === 'reset' ? '<button type="button" class="link-btn" data-mode="login">Вернуться ко входу</button>' : ''}
@@ -2063,7 +2251,7 @@ function renderAuth(root) {
     <aside class="auth-side">
       <p class="label">Кто что видит</p>
       <ul class="auth-roles">${roles}</ul>
-      <p class="note">Роль назначает основатель, когда выдаёт код приглашения. Поменять её можно в разделе «Команда».</p>
+      <p class="note">Роль назначает основатель, когда отправляет ссылку-приглашение. Поменять её можно в разделе «Команда».</p>
     </aside>
   </div>`;
 
@@ -2075,13 +2263,18 @@ function renderAuth(root) {
     e.preventDefault();
     msg.hidden = true;
     const f = {name: val('a-name'), email: val('a-email'), pw: val('a-pw'), code: val('a-code')};
+    if (mode === 'invite') {
+      const code = normCode(f.code), inv = Store.get('invites', code);
+      if (!inv || inv.usedBy) { msg.textContent = inv ? 'По этому коду уже зарегистрировались — войдите своей почтой и паролем.' : 'Код не найден. Проверьте его или попросите у основателя новую ссылку.'; msg.hidden = false; return; }
+      location.hash = 'join=' + code;
+      return;
+    }
     if (fields[mode].includes('pw2') && f.pw !== val('a-pw2')) { msg.textContent = 'Пароли не совпадают.'; msg.hidden = false; return; }
     const go = $('#authGo', root);
     go.disabled = true;
     go.textContent = 'Проверяю…';
     try {
       if (mode === 'owner') await Auth.createOwner(f);
-      else if (mode === 'invite') await Auth.acceptInvite(f);
       else if (mode === 'reset') await Auth.resetWithCode(f);
       else await Auth.login(f.email, f.pw);
       View.set('authMode', 'login');
@@ -2131,6 +2324,12 @@ const ICONS = {
   video: '<rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10 6-3v10l-6-3"/>',
   refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  bellOff: '<path d="M6 16V11a6 6 0 0 1 9.5-4.9M18 11v5l1.5 2H8"/><path d="M10 20.5a2 2 0 0 0 4 0"/><path d="M4 4l16 16"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  gift: '<rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8h14v-8M12 8v12"/><path d="M12 8C10 4 6.5 5 7.5 7.2 8 8 12 8 12 8s4 0 4.5-.8C17.5 5 14 4 12 8z"/>',
+  spark: '<path d="M12 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/><path d="M19 15.5c.2 1.6.9 2.3 2.5 2.5-1.6.2-2.3.9-2.5 2.5-.2-1.6-.9-2.3-2.5-2.5 1.6-.2 2.3-.9 2.5-2.5z"/>',
+  heart: '<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/>',
 };
 const icon = (name, cls = '') => `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 
@@ -2172,7 +2371,8 @@ function toast(text, opts = {}) {
   const root = $('#toastRoot');
   if (!root) return;
   const el = document.createElement('div');
-  el.className = 'toast' + (opts.error ? ' err' : '');
+  el.className = 'toast' + (opts.error ? ' err' : '') + (opts.ring ? ' ring' : '');
+  if (opts.ring) el.insertAdjacentHTML('afterbegin', icon('bell', 'toast-ico'));
   const span = document.createElement('span');
   span.textContent = text;
   el.appendChild(span);
@@ -2191,9 +2391,59 @@ function toast(text, opts = {}) {
     el.appendChild(b);
   }
   root.appendChild(el);
-  timer = setTimeout(close, opts.undo || opts.action ? 8000 : 4200);
+  timer = setTimeout(close, opts.ring ? 12000 : opts.undo || opts.action ? 8000 : 4200);
   while (root.children.length > 3) root.firstChild.remove();
 }
+
+/* ── звук уведомлений: короткий аккорд, без файлов (Web Audio).
+   Браузер разрешает звук только после первого нажатия на странице —
+   поэтому контекст «будим» на любом нажатии. Выключается колокольчиком
+   внизу меню; выбор помнится в этом браузере. ── */
+const SOUND_NOTES = {
+  task:    {notes: [659.25, 987.77], gap: .12, vol: .16},           // новая задача
+  control: {notes: [783.99, 987.77, 1318.51], gap: .11, vol: .16},  // на согласование, возврат, бюджет
+  sent:    {notes: [880, 1174.66], gap: .07, vol: .07},              // своё отправлено
+  info:    {notes: [740], gap: 0, vol: .07},                         // комментарий, закрыто
+  hello:   {notes: [523.25, 659.25, 783.99, 1046.5], gap: .09, vol: .12}, // приветствие новичка
+};
+const Sound = {
+  ctx: null,
+  last: 0,
+  log: [],
+  on() { return Local.get('eva-hq-sound', true) !== false; },
+  set(v) { Local.set('eva-hq-sound', !!v); },
+  unlock() {
+    try {
+      if (!this.ctx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return; this.ctx = new C(); }
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+    } catch (e) { /* звука не будет — не страшно */ }
+  },
+  play(kind = 'info', force = false) {
+    if (!force && !this.on()) return false;
+    const now = Date.now();
+    if (!force && now - this.last < 1200) return false;
+    this.last = now;
+    this.log.push(kind);
+    this.unlock();
+    const ctx = this.ctx, cfg = SOUND_NOTES[kind] || SOUND_NOTES.info;
+    if (!ctx) return false;
+    try {
+      const t0 = ctx.currentTime + .02;
+      cfg.notes.forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain(), at = t0 + i * cfg.gap;
+        o.type = 'sine';
+        o.frequency.value = f;
+        g.gain.setValueAtTime(.0001, at);
+        g.gain.exponentialRampToValueAtTime(cfg.vol, at + .015);
+        g.gain.exponentialRampToValueAtTime(.0001, at + .6);
+        o.connect(g).connect(ctx.destination);
+        o.start(at);
+        o.stop(at + .65);
+      });
+    } catch (e) { return false; }
+    return true;
+  },
+};
 
 /* ── окно ── */
 function openModal({title, body, foot = '', wide = false, focus = true, onMount, onClose}) {
@@ -2466,7 +2716,7 @@ const App = {
     Store.subscribe(() => this.renderSoon());
     Store.onStatus(s => this.paintSync(s));
     window.addEventListener('hashchange', () => this.render());
-    document.addEventListener('pointerdown', () => { this._pointer = true; }, true);
+    document.addEventListener('pointerdown', () => { this._pointer = true; Sound.unlock(); }, true);
     document.addEventListener('pointerup', () => { this._pointer = false; if (this._pending) this.renderSoon(); }, true);
     document.addEventListener('focusout', () => { if (this._pending) this.renderSoon(250); });
     wireCharts();
@@ -2477,6 +2727,8 @@ const App = {
     const h = decodeURIComponent(location.hash.replace(/^#/, ''));
     if (h.startsWith('m-')) return {id: 'material', param: h.slice(2)};
     if (h.startsWith('p-')) return {id: 'person', param: h.slice(2)};
+    /* ссылка-приглашение: #join=ABCD-2345 */
+    if (h.startsWith('join=')) return {id: 'join', param: h.slice(5)};
     return {id: h || 'home', param: null};
   },
   go(hash) { if (location.hash === '#' + hash) this.render(); else location.hash = hash; },
@@ -2498,8 +2750,10 @@ const App = {
     const root = $('#app');
     const me = Auth.me();
     if (!me) {
-      /* экран входа не перерисовываем от чужих правок — только если штаб перестал быть пустым */
-      const mode = Store.count('accounts') ? 'has' : 'empty';
+      /* экран входа не перерисовываем от чужих правок — только если штаб перестал
+         быть пустым или открыли другую ссылку-приглашение */
+      const j = this.parse();
+      const mode = (Store.count('accounts') ? 'has' : 'empty') + (j.id === 'join' ? ':' + j.param : '');
       if (!opts.force && $('#authRoot') && this._authMode === mode) return;
       this._authMode = mode;
       this.shell = false;
@@ -2527,6 +2781,11 @@ const App = {
     if (opts.focus) { const el = document.getElementById(opts.focus); if (el) el.focus(); }
     const n = taskBadge();
     document.title = (n ? `(${n}) ` : '') + (id === 'home' ? '' : (this.pages[id].title || '') + ' · ') + 'Штаб Eva Club V2';
+    /* первый вход новичка — приветствие, один раз на учётку */
+    if (me.welcomed === false && this._welcomed !== me.id && id !== 'join') {
+      this._welcomed = me.id;
+      setTimeout(() => { if (!modalOpen()) openWelcome(); }, 180);
+    }
   },
 
   buildShell() {
@@ -2535,13 +2794,20 @@ const App = {
         <a class="brand" href="#home">${brandIcon('brand-mark')}<div><b>Eva Club</b><span>штаб команды · V2</span></div></a>
         <nav class="nav" id="nav" aria-label="Разделы"></nav>
         <div class="side-foot">
-          <div class="sync" id="sync"><i></i><span></span></div>
+          <div class="side-row"><div class="sync" id="sync"><i></i><span></span></div><button class="snd-btn" id="sndBtn" type="button"></button></div>
           <div class="me-chip" id="meChip"></div>
         </div>
       </aside>
       <main class="main"><div class="page" id="page"></div></main>
     </div>`;
     on($('#meChip'), 'click', '[data-logout]', () => Auth.logout());
+    $('#sndBtn').onclick = () => {
+      Sound.set(!Sound.on());
+      if (Sound.on()) Sound.play('task', true);
+      this.paintSound();
+      toast(Sound.on() ? 'Звук уведомлений включён: новые задачи и согласования прозвучат' : 'Звук уведомлений выключен');
+    };
+    this.paintSound();
     this.shell = true;
     this.paintSync(Store.state);
   },
@@ -2561,6 +2827,17 @@ const App = {
     chip.classList.toggle('on', active === 'me' || (active === 'person' && this.parse().param === Auth.personId()));
     chip.innerHTML = `<a class="me-link" href="#me" title="Моя страница">${avatar(p || {name: me.name})}<div class="who"><b>${esc(p && p.name ? p.name : me.name)}</b><span>${esc(p && p.title ? p.title : ROLES[roleOf(me.role)].name)}</span></div></a>
       <button data-logout title="Выйти" aria-label="Выйти">${icon('logout')}</button>`;
+  },
+
+  paintSound() {
+    const b = $('#sndBtn');
+    if (!b) return;
+    const v = Sound.on();
+    b.innerHTML = icon(v ? 'bell' : 'bellOff');
+    b.classList.toggle('off', !v);
+    b.title = v ? 'Звук уведомлений включён — нажмите, чтобы выключить' : 'Звук уведомлений выключен — нажмите, чтобы включить';
+    b.setAttribute('aria-label', b.title);
+    b.setAttribute('aria-pressed', String(v));
   },
 
   paintSync(s) {
@@ -3072,6 +3349,7 @@ App.register('home', {
     root.innerHTML = `
       ${pageHead(`${hello}, ${esc(name)}`, `${cap(dayWd(t))} · ${Q.name}: ${pace.started ? (pace.over ? 'квартал закрыт' : `день ${pace.daysGone} из ${pace.daysAll}`) : `до старта ${pace.toStart} ${plural(pace.toStart, 'день', 'дня', 'дней')}`} · ведём план «${SCENARIOS[sc].name}»`,
         `${Auth.can('sales.edit') ? `<a class="btn" href="#reports">${icon('chart')}Цифры дня</a>` : ''}${teamRoles ? `<button class="btn primary" data-new-task>${icon('plus')}Задача</button>` : ''}`)}
+      ${teamRoles ? spiritHtml() : ''}
       ${start}
       <div class="cards tiles">${tiles.join('')}</div>
       <div class="split section">${focus}${side}</div>
@@ -3089,6 +3367,7 @@ App.register('home', {
     on(root, 'click', '[data-start-hide]', () => { Local.set(startKey, 1); App.render(); });
     wireTaskCards(root);
     wireMaterials(root);
+    wireSpirit(root);
   },
 });
 
@@ -3686,6 +3965,12 @@ const Tasks = {
     t.comments = log;
     const id = Store.add('tasks', t);
     this.syncBudget(id);
+    /* поставили задачу другому — короткий звук и подтверждение, что он узнает */
+    if (assignee && assignee !== k) {
+      Sound.play('sent');
+      toast(`Задача поставлена. ${whoName(assignee)} получит уведомление со звуком`);
+      this._told = Date.now();
+    }
     return id;
   },
   /* правка с записью в историю; ev — кому сообщить */
@@ -3709,6 +3994,7 @@ const Tasks = {
     if (status === 'review') {
       patch.submittedAt = Date.now();
       ev = {type: 'review', to: [this.approver(cur)]};
+      if (this.approver(cur) && this.approver(cur) !== this.meKey()) Sound.play('sent');
       text = note || `${who}: сдал(а) на согласование`;
     } else if (status === 'done') {
       patch.doneAt = Date.now();
@@ -3737,6 +4023,7 @@ const Tasks = {
     if (r.msg) toast(r.msg);
     if (r.needReturn) { openTask(t.id, {focus: 'return'}); return false; }
     if (!r.st) return false;
+    if (r.st === 'review' && !r.msg) { const ap = (r.patch && r.patch.approver) || this.approver(t); if (ap) toast(`Отправлено на согласование — ${whoName(ap)} получит уведомление`); }
     if (r.patch) Store.patch('tasks', t.id, r.patch, {mustExist: true});
     if ((r.st === 'doing' || r.st === 'done') && this.blocked(t)) toast(`Задача ждёт: «${this.blockers(t).find(b => b.status !== 'done').title}»`);
     this.setStatus({...t, ...(r.patch || {})}, r.st);
@@ -3861,6 +4148,8 @@ const Inbox = {
 function taskBadge() { return Inbox.count(); }
 
 /* всплывающие уведомления о свежих событиях, пока штаб открыт */
+const TN_CONTROL = ['review', 'return', 'budget'];
+const TN_TASK = ['assign', 'unblock'];
 const TaskNotify = {
   since: 0,
   wired: false,
@@ -3875,7 +4164,11 @@ const TaskNotify = {
     const fresh = Inbox.events().filter(e => (e.c.at || 0) > this.since);
     if (!fresh.length) return;
     this.since = Math.max(this.since, ...fresh.map(e => e.c.at || 0));
-    fresh.slice(0, 3).reverse().forEach(e => toast(Inbox.text(e), {action: {label: 'Открыть', fn: () => openTask(e.t.id)}}));
+    /* звук: на согласование, возврат и бюджет — аккорд «контроль», новая задача — свой, остальное — тихий */
+    const evs = fresh.map(e => e.c.ev);
+    const kind = evs.some(x => TN_CONTROL.includes(x)) ? 'control' : evs.some(x => TN_TASK.includes(x)) ? 'task' : 'info';
+    Sound.play(kind);
+    fresh.slice(0, 3).reverse().forEach(e => toast(Inbox.text(e), {ring: TN_CONTROL.includes(e.c.ev) || TN_TASK.includes(e.c.ev), action: {label: 'Открыть', fn: () => openTask(e.t.id)}}));
   },
 };
 
@@ -4372,7 +4665,7 @@ function quickTask(preset) {
         const due = $('#qtDue', el).value || null;
         return Tasks.create({title, force, assignee: $('#qtWho', el).value || null, due, dir: $('#qtDir', el).value || undefined});
       };
-      $('#qtAdd', el).onclick = () => { if (make()) { close(); toast('Задача добавлена'); } };
+      $('#qtAdd', el).onclick = () => { if (make()) { close(); if (Date.now() - (Tasks._told || 0) > 800) toast('Задача добавлена'); } };
       $('#qtMore', el).onclick = () => { const id = make(); if (id) { close(); openTask(id); } };
       $('#qtTitle', el).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#qtAdd', el).click(); } });
     },
@@ -4575,7 +4868,7 @@ function openTask(id, opts = {}) {
             dir: $('#tmDir', el).value, priority: $('#tmPrio', el).value, goalId: $('#tmGoal', el).value || null, stratId: $('#tmStrat', el) ? $('#tmStrat', el).value || null : null,
             createdBy: draft.createdBy || undefined});
           close();
-          toast('Задача создана');
+          if (Date.now() - (Tasks._told || 0) > 800) toast('Задача создана');
         };
       } else {
         const cf = $('#tmCForm', el);
@@ -5554,8 +5847,8 @@ App.register('team', {
     const access = p => {
       const acc = accOf(p.id), inv = invOf(p.id);
       if (acc) return `${rolePill(acc.role)}<small>${acc.lastSeen ? 'был ' + timeAgo(acc.lastSeen) : ''}</small>`;
-      if (inv) return `<span class="pill warn">код выдан</span>${owner ? `<button class="link-btn" data-invite-for="${p.id}">код</button>` : ''}`;
-      return owner && pStatus(p) !== 'vacancy' ? `<button class="btn xs" data-invite-for="${p.id}">${icon('key')}Пригласить</button>` : '<span class="muted">нет входа</span>';
+      if (inv) return `<span class="pill warn">ссылка отправлена</span>${owner ? `<button class="link-btn" data-invite-for="${p.id}">ссылка</button>` : ''}<small>${ROLES[roleOf(inv.role)].name} · ${timeAgo(inv.at)}</small>`;
+      return owner ? `<button class="btn xs" data-invite-for="${p.id}">${icon('link')}Пригласить</button>` : '<span class="muted">нет входа</span>';
     };
 
     const table = `<div class="table-wrap"><table class="t team-t">
@@ -5581,7 +5874,7 @@ App.register('team', {
       const lead = Object.entries(Strategy.whales()).find(([, w]) => w.lead === p.id);
       return `<a class="person" href="#p-${p.id}">
         <div class="person-h">${avatar(p, 'lg')}<div class="person-n"><b>${esc(p.name || 'Имя не указано')}</b><span>${esc(p.title || '')}</span></div></div>
-        <div class="person-tags">${pStatus(p) !== 'active' ? `<span class="pill ${PERSON_STATUS[pStatus(p)].tone}">${PERSON_STATUS[pStatus(p)].name}</span>` : ''}${lead ? `<span class="pill gold">ведёт «${DIRS[lead[0]].name}»</span>` : ''}${acc ? rolePill(acc.role) : ''}</div>
+        <div class="person-tags">${pStatus(p) !== 'active' ? `<span class="pill ${PERSON_STATUS[pStatus(p)].tone}">${PERSON_STATUS[pStatus(p)].name}</span>` : ''}${lead ? `<span class="pill gold">ведёт «${DIRS[lead[0]].name}»</span>` : ''}${acc ? rolePill(acc.role) : ''}${HD_TYPES[p.hdType] ? `<span class="pill violet">${HD_TYPES[p.hdType].name}${p.hdProfile ? ' ' + esc(p.hdProfile) : ''}</span>` : ''}${isBirthday(p) ? `<span class="pill rose">${icon('gift')}день рождения</span>` : ''}</div>
         <div class="person-f"><span>${l.open} ${plural(l.open, 'задача', 'задачи', 'задач')}</span>${l.late ? `<span class="bad">${l.late} просрочено</span>` : ''}</div>
       </a>`;
     };
@@ -5594,20 +5887,20 @@ App.register('team', {
 
     root.innerHTML = `
       ${pageHead('Команда', 'Люди, должности, условия и доступ в штаб. Нажмите на человека — откроется его страница.',
-        `${owner ? `<button class="btn primary" data-person-add>${icon('plus')}Человек</button>` : ''}`)}
+        `${owner ? `<button class="btn" data-invite-new>${icon('link')}Пригласить по ссылке</button><button class="btn primary" data-person-add>${icon('plus')}Человек</button>` : ''}`)}
       <div class="team-bar">
         <div class="seg"><button data-tv="list" class="${view === 'list' ? 'on' : ''}">Список</button><button data-tv="dirs" class="${view === 'dirs' ? 'on' : ''}">По направлениям</button></div>
         <span class="team-sum">${ppl.length} ${plural(ppl.length, 'человек', 'человека', 'человек')} · в команде ${active.length}${seePay ? ` · ФОТ ${rubK(fot)} в месяц` : ''}</span>
       </div>
       ${ppl.length ? (view === 'dirs' ? groups : table) : '<div class="empty"><b>В команде пока никого</b>Добавьте людей кнопкой «Человек».</div>'}
-      ${owner ? accessHtml(accs, invs) : ''}`;
+      ${owner ? onboardHtml() + accessHtml(accs, invs) : ''}`;
 
     on(root, 'click', '[data-tv]', (e, el) => { View.set('team.view', el.dataset.tv); App.render(); });
     on(root, 'click', '[data-person-tasks]', (e, el) => { View.set('t.whom', el.dataset.personTasks); View.set('t.late', false); View.set('t.dir', ''); View.set('t.goal', ''); App.go('tasks'); });
     on(root, 'click', '[data-person-edit]', (e, el) => editPerson(el.dataset.personEdit));
     on(root, 'click', '[data-person-add]', () => editPerson(null));
     on(root, 'click', '[data-invite-for]', (e, el) => { e.preventDefault(); issueInvite(el.dataset.inviteFor); });
-    if (owner) wireAccess(root);
+    if (owner) { wireAccess(root); wireOnboard(root); }
   },
 });
 
@@ -5626,17 +5919,20 @@ function syncPayroll(pid) {
   }
 }
 
-function editPerson(id) {
+function editPerson(id, opts = {}) {
   const p = id ? personById(id) : null;
   const v = p || {name: '', title: '', dir: 'product', status: 'active', rate: 'Полная', format: 'Удалённо', startMonth: monthOf(today())};
+  const np = nameParts(v);
+  const hasAcc = p && Store.all('accounts').some(a => a.personId === p.id && a.active !== false);
   const opt = (list, cur) => list.map(x => `<option ${x === cur ? 'selected' : ''}>${esc(x)}</option>`).join('');
   const months = monthRange('2026-08', '2027-12');
   openModal({
     title: p ? personName(p) : 'Новый человек',
     wide: true,
     body: `<div class="form-sec"><span class="label">Кто</span>
-      <div class="grid3"><label class="field"><span>Имя и фамилия</span><input class="input" id="peName" value="${esc(v.name || '')}" placeholder="Пусто — вакансия"></label>
-      <label class="field"><span>Должность</span><input class="input" id="peTitle" value="${esc(v.title || '')}" placeholder="Финансовый директор"></label>
+      <div class="grid2"><label class="field"><span>Имя</span><input class="input" id="peGiven" value="${esc(np.given)}" placeholder="Пусто — вакансия"></label>
+      <label class="field"><span>Фамилия</span><input class="input" id="peSurname" value="${esc(np.surname)}"></label></div>
+      <div class="grid2"><label class="field"><span>Должность</span><input class="input" id="peTitle" value="${esc(v.title || '')}" placeholder="Финансовый директор"></label>
       <label class="field"><span>Направление</span><select class="select" id="peDir"><option value="">Без направления</option>${Object.entries(DIRS).map(([k, d]) => `<option value="${k}" ${k === v.dir ? 'selected' : ''}>${d.name}</option>`).join('')}</select></label></div></div>
       <div class="form-sec"><span class="label">Условия</span>
       <div class="grid3"><label class="field"><span>Статус</span><select class="select" id="peStatus">${Object.entries(PERSON_STATUS).map(([k, s]) => `<option value="${k}" ${k === pStatus(v) ? 'selected' : ''}>${s.name}</option>`).join('')}</select><small>«Не активирован» — в плане платежей не считается</small></label>
@@ -5649,16 +5945,24 @@ function editPerson(id) {
       <label class="field"><span>Телефон</span><input class="input" id="pePhone" value="${esc(v.phone || '')}"></label>
       <label class="field"><span>Телеграм</span><input class="input" id="peTg" value="${esc(v.telegram || '')}" placeholder="@name"></label></div>
       <label class="field"><span>Почта для календаря <small class="note">если приглашения нужны на другую почту</small></span><input class="input" id="peCal" type="email" value="${esc(v.calEmail || '')}" placeholder="пусто — возьмём почту выше"></label></div>
+      <div class="form-sec"><span class="label">Рождение и Human Design <small class="note">подтянется в анкету по ссылке — человек сможет поправить</small></span>
+      <div class="grid3"><label class="field"><span>Дата рождения</span><input class="input" type="date" id="peBirth" value="${esc(v.birthDate || '')}" min="1940-01-01" max="${today()}"></label>
+      <label class="field"><span>Время рождения</span><input class="input" type="time" id="peBirthTime" value="${esc(v.birthTime || '')}"></label>
+      <label class="field"><span>Город рождения</span><input class="input" id="peBirthCity" value="${esc(v.birthCity || '')}"></label></div>
+      <div class="grid2"><label class="field"><span>Тип по Human Design</span><select class="select" id="peHd"><option value="">Не знаю</option>${Object.entries(HD_TYPES).map(([k, t]) => `<option value="${k}" ${k === v.hdType ? 'selected' : ''}>${t.name}</option>`).join('')}</select></label>
+      <label class="field"><span>Профиль</span><select class="select" id="peHdProf"><option value="">Не знаю</option>${HD_PROFILES.map(pr => `<option value="${pr}" ${pr === v.hdProfile ? 'selected' : ''}>${pr} — ${hdProfileName(pr)}</option>`).join('')}</select></label></div></div>
       <div class="form-sec"><span class="label">Зона ответственности</span>
       <label class="field"><span>Обязанности</span><textarea class="textarea" id="peDuties" rows="2">${esc(v.duties || '')}</textarea></label>
       <label class="field"><span>Результат, по которому оцениваем (KPI)</span><textarea class="textarea" id="peKpi" rows="2">${esc(v.kpi || '')}</textarea></label></div>
       ${p ? '<p class="note">Если человек ушёл из команды, уберите его: задачи останутся, учётка будет отключена.</p>' : ''}`,
-    foot: `${p && !p.founder ? '<button class="btn danger left" id="peDel">Убрать из команды</button>' : ''}${p ? `<a class="btn ghost" href="#p-${p.id}" data-close>Страница</a>` : ''}<button class="btn" data-close>Отмена</button><button class="btn primary" id="peSave">Сохранить</button>`,
+    foot: `${p && !p.founder ? '<button class="btn danger left" id="peDel">Убрать из команды</button>' : ''}${p ? `<a class="btn ghost" href="#p-${p.id}" data-close>Страница</a>` : ''}<button class="btn" data-close>Отмена</button>${!hasAcc ? `<button class="btn" id="peInvite">${icon('link')}Сохранить и пригласить</button>` : ''}<button class="btn primary" id="peSave">Сохранить</button>`,
     onMount(el, close) {
-      $('#peSave', el).onclick = () => {
-        const name = $('#peName', el).value.trim(), title = $('#peTitle', el).value.trim();
-        if (!name && !title) return $('#peName', el).focus();
-        const data = {name, title, dir: $('#peDir', el).value, status: $('#peStatus', el).value, rate: $('#peRate', el).value,
+      const save = then => {
+        const given = $('#peGiven', el).value.trim(), surname = $('#peSurname', el).value.trim(), title = $('#peTitle', el).value.trim();
+        const name = joinName(given, surname);
+        if (!name && !title) return $('#peGiven', el).focus();
+        const data = {name, givenName: given, surname, title, dir: $('#peDir', el).value, status: $('#peStatus', el).value, rate: $('#peRate', el).value,
+          birthDate: $('#peBirth', el).value, birthTime: $('#peBirthTime', el).value, birthCity: $('#peBirthCity', el).value.trim(), hdType: $('#peHd', el).value, hdProfile: $('#peHdProf', el).value,
           format: $('#peFormat', el).value, salary: Math.max(0, Math.round(parseNum($('#peSalary', el).value))), startMonth: $('#peStart', el).value,
           email: $('#peEmail', el).value.trim(), phone: $('#pePhone', el).value.trim(), telegram: $('#peTg', el).value.trim(), calEmail: $('#peCal', el).value.trim(),
           duties: $('#peDuties', el).value.trim(), kpi: $('#peKpi', el).value.trim()};
@@ -5666,8 +5970,12 @@ function editPerson(id) {
         if (p) Store.patch('people', p.id, data); else pid = Store.add('people', {...data, order: 50});
         syncPayroll(pid);
         close();
-        toast(p ? 'Сохранено' : 'Человек добавлен');
+        if (then === 'invite') issueInvite(pid);
+        else toast(p ? 'Сохранено' : 'Человек добавлен');
       };
+      $('#peSave', el).onclick = () => save(opts.then);
+      const iv = $('#peInvite', el);
+      if (iv) iv.onclick = () => save('invite');
       const del = $('#peDel', el);
       if (del) del.onclick = async () => {
         if (!(await confirmPop(del, {text: `Убрать ${personName(p)} из команды? Учётка, если есть, будет отключена.`, yes: 'Да, убрать', danger: true}))) return;
@@ -5680,10 +5988,7 @@ function editPerson(id) {
   });
 }
 
-/* ── приглашения ── */
-function inviteText(code) {
-  return `Код приглашения в штаб Eva Club: ${code}. Откройте штаб по ссылке, нажмите «У меня приглашение» и введите код.`;
-}
+/* ── копирование ── */
 function copyText(text, btn) {
   const done = () => { if (btn) { const o = btn.innerHTML; btn.textContent = 'Скопировано'; setTimeout(() => { btn.innerHTML = o; }, 1500); } };
   try {
@@ -5699,44 +6004,8 @@ function fallbackCopy(text, done) {
   let ok = false;
   try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
   ta.remove();
-  if (ok) done(); else toast('Скопируйте код вручную: выделите его и нажмите Ctrl+C');
+  if (ok) done(); else toast('Не получилось скопировать — выделите текст и нажмите Ctrl+C');
 }
-function issueInvite(pid) {
-  const p = pid ? personById(pid) : null;
-  const existing = p ? Store.all('invites').find(i => i.personId === pid && !i.usedBy) : null;
-  openModal({
-    title: p ? `Вход для: ${personName(p)}` : 'Код приглашения',
-    body: `${p ? '' : `<div class="grid2"><label class="field"><span>Имя (если знаете)</span><input class="input" id="ivName" placeholder="Анна Смирнова"></label>
-      <label class="field"><span>Роль в команде</span><input class="input" id="ivTitle" placeholder="SMM-менеджер"></label></div>
-      <label class="field"><span>Направление</span><select class="select" id="ivDir"><option value="">Без направления</option>${Object.entries(DIRS).map(([k, d]) => `<option value="${k}">${d.name}</option>`).join('')}</select></label>`}
-      <label class="field"><span>Доступ в штабе</span><select class="select" id="ivRole">${Object.entries(ROLES).filter(([k]) => k !== 'owner').map(([k, r]) => `<option value="${k}" ${k === (existing ? existing.role : 'member') ? 'selected' : ''}>${r.name} — ${r.about}</option>`).join('')}</select></label>
-      <div class="invite-out" id="ivOut" ${existing ? '' : 'hidden'}>
-        <span class="label">Код</span><b class="inv-code" id="ivCode">${existing ? esc(existing.id) : ''}</b>
-        <p class="note" id="ivText">${existing ? esc(inviteText(existing.id)) : ''}</p>
-        <button class="btn sm" id="ivCopy">${icon('copy')}Скопировать сообщение</button>
-      </div>`,
-    foot: `<button class="btn" data-close>Готово</button><button class="btn primary" id="ivGo">${existing ? 'Выдать новый код' : 'Создать код'}</button>`,
-    onMount(el) {
-      $('#ivGo', el).onclick = () => {
-        let personId = pid;
-        if (!p) {
-          const name = $('#ivName', el).value.trim(), title = $('#ivTitle', el).value.trim();
-          personId = Store.add('people', {name, title: title || 'Новый человек', dir: $('#ivDir', el).value, order: 50});
-        }
-        if (existing) Store.remove('invites', existing.id);
-        const code = makeCode();
-        const pp = personById(personId) || {};
-        Store.put('invites', code, {role: $('#ivRole', el).value, personId, title: pp.title || '', dir: pp.dir || '', by: Tasks.meKey(), at: Date.now()});
-        $('#ivCode', el).textContent = code;
-        $('#ivText', el).textContent = inviteText(code);
-        $('#ivOut', el).hidden = false;
-        $('#ivGo', el).textContent = 'Выдать новый код';
-      };
-      $('#ivCopy', el).onclick = e => copyText(inviteText($('#ivCode', el).textContent), e.currentTarget);
-    },
-  });
-}
-
 /* ── доступы (основатель) ── */
 function accessHtml(accs, invs) {
   const me = Auth.me();
@@ -5744,7 +6013,7 @@ function accessHtml(accs, invs) {
   const pending = invs.filter(i => !i.usedBy).sort((a, b) => (b.at || 0) - (a.at || 0));
   return `<section class="section">
     <div class="section-head"><h2>Вход в штаб</h2><span class="hint-inline">Роль решает, что человек видит. Пароли хранятся только в виде хеша.</span>
-      <button class="btn sm" data-invite-new>${icon('key')}Новый код приглашения</button></div>
+      <button class="btn sm" data-invite-new>${icon('link')}Пригласить по ссылке</button></div>
     <div class="table-wrap"><table class="t acc">
       <thead><tr><th>Человек</th><th>Почта</th><th>Роль</th><th>Был в штабе</th><th></th></tr></thead>
       <tbody>${accs.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).map(a => {
@@ -5755,10 +6024,10 @@ function accessHtml(accs, invs) {
           <td class="soft nowrap">${a.lastSeen ? timeAgo(a.lastSeen) : '—'}</td>
           <td class="r nowrap">${self ? '' : `<button class="btn xs" data-acc-reset="${a.id}">Код сброса</button> <button class="btn xs ${off ? '' : 'danger'}" data-acc-toggle="${a.id}">${off ? 'Включить' : 'Отключить'}</button>`}</td></tr>`;
       }).join('')}</tbody></table></div>
-    ${pending.length ? `<div class="section-head inv-h"><h3>Коды, которые ещё не использовали</h3></div>
-      <div class="table-wrap"><table class="t inv"><thead><tr><th>Код</th><th>Для кого</th><th>Роль</th><th>Выдан</th><th></th></tr></thead>
-      <tbody>${pending.map(i => { const p = personById(i.personId); return `<tr><td><span class="inv-code">${esc(i.id)}</span></td><td>${esc(p ? personName(p) : i.title || '—')}</td><td>${rolePill(i.role)}</td><td class="soft">${timeAgo(i.at)}</td>
-        <td class="r nowrap"><button class="btn xs" data-inv-copy="${esc(i.id)}">${icon('copy')}Сообщение</button> <button class="btn xs danger" data-inv-del="${esc(i.id)}">Отозвать</button></td></tr>`; }).join('')}</tbody></table></div>` : ''}
+    ${pending.length ? `<div class="section-head inv-h"><h3>Приглашения, по которым ещё не зарегистрировались</h3></div>
+      <div class="table-wrap"><table class="t inv"><thead><tr><th>Для кого</th><th>Роль</th><th>Код</th><th>Выдано</th><th></th></tr></thead>
+      <tbody>${pending.map(i => { const p = personById(i.personId); return `<tr><td>${esc(p ? personName(p) : i.title || '—')}</td><td>${rolePill(i.role)}</td><td><span class="inv-code">${esc(i.id)}</span></td><td class="soft">${timeAgo(i.at)}</td>
+        <td class="r nowrap"><button class="btn xs" data-inv-link="${esc(i.id)}">${icon('link')}Ссылка</button> <button class="btn xs" data-inv-copy="${esc(i.id)}">${icon('copy')}Приглашение</button> <button class="btn xs ghost" data-inv-open="${esc(i.personId || '')}">Роль</button> <button class="btn xs danger" data-inv-del="${esc(i.id)}">Отозвать</button></td></tr>`; }).join('')}</tbody></table></div>` : ''}
     <p class="note">Честно о безопасности: вход разделяет кабинеты внутри команды. Настоящая граница — доступ к самому штабу: кому открыт штаб, тот может прочитать общую базу. Не используйте здесь пароли от почты или банка.</p>
   </section>`;
 }
@@ -5783,9 +6052,519 @@ function wireAccess(root) {
       onMount(m) { $('#rsCopy', m).onclick = ev => copyText(text, ev.currentTarget); }});
   });
   on(root, 'click', '[data-inv-copy]', (e, el) => copyText(inviteText(el.dataset.invCopy), el));
+  on(root, 'click', '[data-inv-link]', (e, el) => copyText(inviteLink(el.dataset.invLink), el));
+  on(root, 'click', '[data-inv-open]', (e, el) => { if (el.dataset.invOpen) issueInvite(el.dataset.invOpen); });
   on(root, 'click', '[data-inv-del]', async (e, el) => {
-    if (!(await confirmPop(el, {text: 'Отозвать код? По нему больше нельзя будет войти.', yes: 'Да, отозвать', danger: true}))) return;
+    if (!(await confirmPop(el, {text: 'Отозвать приглашение? По ссылке и коду больше нельзя будет зарегистрироваться.', yes: 'Да, отозвать', danger: true}))) return;
     Store.remove('invites', el.dataset.invDel);
+  });
+}
+
+/* ── 72-join.js ── */
+/* Новые люди в команде: приглашение ссылкой с ролью, регистрация по ней
+   с данными из карточки (их можно поправить и дописать), приветствие
+   новичка и командный дух на главной — комплимент дня, неделя команды,
+   герои недели и дни рождения.
+   Ссылка — адрес штаба с #join=КОД. Если площадка не передаст часть после #,
+   в том же сообщении есть код: «У меня приглашение» → код → та же анкета. */
+
+const HQ_URL = 'https://claude.ai/artifact/3KYL4dL825LveSe7AHEAeR';
+
+/* ── Human Design: тип и профиль ── */
+const HD_TYPES = {
+  generator:  {name: 'Генератор', strategy: 'откликаться на то, что по-настоящему зажигает', sign: 'удовлетворение',
+    gift: 'твоя энергия — двигатель команды: когда дело откликается, оно горит в руках.',
+    about: 'Энергия, которая строит: лучше всего работает, когда дело по-настоящему откликается.'},
+  mg:         {name: 'Манифестирующий генератор', strategy: 'откликаться и сообщать, прежде чем действовать', sign: 'удовлетворение и покой',
+    gift: 'ты успеваешь за троих и находишь короткий путь там, где другие его не видят.',
+    about: 'Скорость и многозадачность: находит короткий путь и успевает за троих.'},
+  manifestor: {name: 'Манифестор', strategy: 'сообщать о решениях до того, как действовать', sign: 'покой',
+    gift: 'ты умеешь начинать то, на что другие не решаются, — без этого компанию на миллиард не построить.',
+    about: 'Инициатор: запускает новое и задаёт команде движение.'},
+  projector:  {name: 'Проектор', strategy: 'ждать приглашения и признания', sign: 'успех',
+    gift: 'ты видишь людей и процессы насквозь — твой взгляд помогает всей команде работать умнее.',
+    about: 'Видит людей и процессы насквозь и помогает команде работать умнее.'},
+  reflector:  {name: 'Рефлектор', strategy: 'давать важным решениям время — около лунного цикла', sign: 'удивление',
+    gift: 'ты чувствуешь команду как никто: по тебе видно, где нам хорошо и что пора менять.',
+    about: 'Зеркало команды: чувствует, где всем хорошо и что пора менять.'},
+};
+const HD_PROFILES = ['1/3', '1/4', '2/4', '2/5', '3/5', '3/6', '4/6', '4/1', '5/1', '5/2', '6/2', '6/3'];
+const HD_LINES = ['', 'Исследователь', 'Отшельник', 'Экспериментатор', 'Оппортунист', 'Еретик', 'Ролевая модель'];
+const hdProfileName = pr => { const [a, b] = String(pr || '').split('/').map(Number); return HD_LINES[a] && HD_LINES[b] ? `${HD_LINES[a]} / ${HD_LINES[b]}` : ''; };
+const capFirst = s => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
+/* ── имя: в карточке храним целиком и по частям ── */
+function nameParts(p) {
+  if (!p) return {given: '', surname: ''};
+  if (p.givenName || p.surname) return {given: p.givenName || '', surname: p.surname || ''};
+  const [given = '', ...rest] = String(p.name || '').trim().split(/\s+/);
+  return {given, surname: rest.join(' ')};
+}
+const joinName = (given, surname) => [given, surname].map(x => String(x || '').trim()).filter(Boolean).join(' ');
+const givenOf = p => nameParts(p).given || firstName(p);
+
+/* ближайший день рождения: дата, через сколько дней */
+function nextBirthday(iso, from = today()) {
+  if (!/^\d{4}-\d\d-\d\d$/.test(iso || '')) return null;
+  const y = Number(from.slice(0, 4));
+  let d = isoOf(dateOf(`${y}-${iso.slice(5)}`));
+  if (d < from) d = isoOf(dateOf(`${y + 1}-${iso.slice(5)}`));
+  return {date: d, days: daysBetween(from, d)};
+}
+const isBirthday = (p, d = today()) => !!(p && p.birthDate && p.birthDate.slice(5) === d.slice(5));
+
+/* ── большая цель и обращение к новичку: правит основатель в «Команде» ── */
+const VISION_DEFAULT = {
+  big: 'Компания на миллиард',
+  welcome: 'Мы строим Eva Space — и строим её как компанию на миллиард. Здесь каждый отвечает за свой участок, доводит дела до конца и подставляет плечо соседу. Мы рады, что теперь ты с нами.',
+  year: '',
+};
+const vision = () => ({...VISION_DEFAULT, ...((Strategy.doc() || {}).vision || {})});
+
+/* ── приглашение ── */
+const JOIN_FIELDS = [
+  ['given', 'Имя'], ['surname', 'Фамилия'], ['title', 'Должность'], ['email', 'Почта'], ['phone', 'Телефон'], ['telegram', 'Телеграм'],
+  ['birthDate', 'День рождения'], ['birthTime', 'Время рождения'], ['birthCity', 'Город рождения'], ['hdType', 'Тип по Human Design'], ['hdProfile', 'Профиль'],
+];
+/* что знает карточка: эти поля подтянутся в анкету */
+function cardValues(p, inv = {}) {
+  const n = nameParts(p);
+  const title = p && p.title && p.title !== 'Новый человек' ? p.title : (inv.title && inv.title !== 'Новый человек' ? inv.title : '');
+  const v = {given: n.given, surname: n.surname, title, dir: (p && p.dir) || inv.dir || ''};
+  ['email', 'phone', 'telegram', 'birthDate', 'birthTime', 'birthCity', 'hdType', 'hdProfile'].forEach(k => { v[k] = (p && p[k]) || ''; });
+  if (v.hdType && !HD_TYPES[v.hdType]) v.hdType = '';
+  return v;
+}
+const pendingInvite = pid => Store.all('invites').find(i => i.personId === pid && !i.usedBy) || null;
+function inviteLink(code) {
+  /* в артефакте Claude адрес страницы изнутри не виден — берём адрес штаба */
+  const base = Store.state.mode === 'db' ? HQ_URL : location.href.split('#')[0];
+  return `${base}#join=${code}`;
+}
+function inviteText(code) {
+  const inv = Store.get('invites', code) || {};
+  const g = givenOf(personById(inv.personId));
+  return `${g ? g + ', привет' : 'Привет'}! Приглашаю тебя в штаб Eva Space — нашу команду, которая строит компанию на миллиард.
+
+Ссылка: ${inviteLink(code)}
+Доступ: ${ROLES[roleOf(inv.role)].name}.
+
+По ссылке откроется короткая анкета — часть данных уже заполнена, проверь и допиши остальное. Если вместо анкеты откроется вход, нажми «У меня приглашение» и введи код ${code}.`;
+}
+function fillHtml(p) {
+  const v = cardValues(p);
+  const has = JOIN_FIELDS.filter(([k]) => v[k]), miss = JOIN_FIELDS.filter(([k]) => !v[k]);
+  return `<div class="iv-fill">
+    <div><span class="label">Подтянется в анкету</span><div class="chips">${has.length ? has.map(([, n]) => `<span class="pill good">${n}</span>`).join('') : '<span class="note">пока ничего</span>'}</div></div>
+    ${miss.length ? `<div><span class="label">Человек заполнит сам</span><div class="chips">${miss.map(([, n]) => `<span class="pill line">${n}</span>`).join('')}</div></div>` : ''}
+    ${Auth.can('team.manage') ? `<button type="button" class="link-btn" data-iv-edit>${miss.length ? 'Дополнить карточку сейчас' : 'Изменить карточку'}</button>` : ''}
+  </div>`;
+}
+function issueInvite(pid) {
+  const p = pid ? personById(pid) : null;
+  let inv = p ? pendingInvite(pid) : null;
+  const roles = Object.entries(ROLES).filter(([k]) => k !== 'owner');
+  const curRole = inv ? roleOf(inv.role) : 'member';
+  const out = code => `<span class="label">Ссылка-приглашение</span>
+    <div class="iv-link"><input class="input" id="ivLink" readonly value="${esc(inviteLink(code))}" aria-label="Ссылка-приглашение"><button type="button" class="btn sm primary" data-iv-copy-link>${icon('copy')}Скопировать ссылку</button></div>
+    <pre class="iv-msg" id="ivMsg"></pre>
+    <div class="row"><button type="button" class="btn sm" data-iv-copy-msg>${icon('copy')}Скопировать приглашение целиком</button><button type="button" class="btn sm ghost" data-iv-preview>Как увидит человек</button></div>
+    <p class="note">Ссылка одноразовая: после регистрации она перестанет работать. Запасной код из сообщения — <span class="inv-code">${esc(code)}</span>.</p>`;
+  openModal({
+    title: p ? `Пригласить: ${personName(p)}` : 'Пригласить в команду',
+    wide: true,
+    body: `${p ? `<div class="iv-who">${avatar(p, 'lg')}<div><b>${esc(personName(p))}</b><small>${esc([p.title, DIRS[p.dir] ? DIRS[p.dir].name : ''].filter(Boolean).join(' · ') || 'должность не указана')}</small></div></div>`
+      : `<div class="grid2"><label class="field"><span>Имя</span><input class="input" id="ivGiven" placeholder="Анна"></label>
+          <label class="field"><span>Фамилия</span><input class="input" id="ivSurname" placeholder="Смирнова"></label></div>
+        <div class="grid2"><label class="field"><span>Должность</span><input class="input" id="ivTitle" placeholder="SMM-менеджер"></label>
+          <label class="field"><span>Направление</span><select class="select" id="ivDir"><option value="">Без направления</option>${Object.entries(DIRS).map(([k, d]) => `<option value="${k}">${d.name}</option>`).join('')}</select></label></div>`}
+      <div class="field"><span>Доступ в штабе</span><div class="iv-roles" role="radiogroup">${roles.map(([k, r]) => `<label class="iv-role ${k === curRole ? 'on' : ''}"><input type="radio" name="ivRole" value="${k}" ${k === curRole ? 'checked' : ''}><b>${r.name}</b><small>${esc(r.about)}</small></label>`).join('')}</div></div>
+      ${p ? fillHtml(p) : '<p class="note">Остальное — день рождения, контакты, Human Design — человек допишет сам в анкете по ссылке.</p>'}
+      <div class="invite-out" id="ivOut" ${inv ? '' : 'hidden'}>${inv ? out(inv.id) : ''}</div>`,
+    foot: `<button class="btn" data-close>Готово</button><button class="btn primary" id="ivGo">${inv ? 'Выдать новую ссылку' : `${icon('link')}Создать ссылку`}</button>`,
+    onMount(el, close) {
+      const role = () => ($('input[name=ivRole]:checked', el) || {}).value || 'member';
+      const paintOut = () => {
+        $('#ivOut', el).innerHTML = out(inv.id);
+        $('#ivOut', el).hidden = false;
+        $('#ivMsg', el).textContent = inviteText(inv.id);
+      };
+      if (inv) $('#ivMsg', el).textContent = inviteText(inv.id);
+      on(el, 'change', 'input[name=ivRole]', (e, i) => {
+        $$('.iv-role', el).forEach(x => x.classList.toggle('on', x.contains(i)));
+        /* роль в уже выданной ссылке меняется сразу — ссылка та же */
+        if (inv) { Store.patch('invites', inv.id, {role: i.value}); inv = Store.get('invites', inv.id); paintOut(); toast(`Доступ по ссылке: ${ROLES[i.value].name}`); }
+      });
+      $('#ivGo', el).onclick = () => {
+        let personId = pid;
+        if (!p) {
+          const given = $('#ivGiven', el).value.trim(), surname = $('#ivSurname', el).value.trim(), title = $('#ivTitle', el).value.trim();
+          if (!given && !title) { $('#ivGiven', el).focus(); toast('Напишите имя или должность'); return; }
+          personId = Store.add('people', {name: joinName(given, surname), givenName: given, surname, title, dir: $('#ivDir', el).value, order: 50});
+        }
+        if (inv) Store.remove('invites', inv.id);
+        const code = makeCode();
+        const pp = personById(personId) || {};
+        Store.put('invites', code, {role: role(), personId, title: pp.title || '', dir: pp.dir || '', by: Tasks.meKey(), at: Date.now()});
+        inv = Store.get('invites', code);
+        paintOut();
+        $('#ivGo', el).textContent = 'Выдать новую ссылку';
+        if (!p) $$('#ivGiven, #ivSurname, #ivTitle, #ivDir', el).forEach(x => { x.disabled = true; });
+        toast('Ссылка готова — отправьте её человеку');
+      };
+      on(el, 'click', '[data-iv-copy-link]', (e, b) => copyText(inviteLink(inv.id), b));
+      on(el, 'click', '[data-iv-copy-msg]', (e, b) => copyText(inviteText(inv.id), b));
+      on(el, 'click', '[data-iv-preview]', () => previewJoin(inv.id));
+      on(el, 'click', '[data-iv-edit]', () => { close(); editPerson(pid, {then: 'invite'}); });
+    },
+  });
+}
+
+/* ── анкета по ссылке ── */
+function joinFormHtml(v, src, preview = false) {
+  const tag = k => (src[k] ? '<em class="jf-src" title="Заполнено основателем — можно поправить">из карточки</em>' : '');
+  const dis = preview ? 'disabled' : '';
+  const inp = (k, label, type = 'text', attrs = '') => `<label class="field"><span>${label}${tag(k)}</span><input class="input" id="j-${k}" type="${type}" value="${esc(v[k] || '')}" ${attrs} ${dis}></label>`;
+  return `<section class="jf-sec"><h3>О тебе</h3>
+      <div class="grid2">${inp('given', 'Имя', 'text', 'autocomplete="given-name" maxlength="60"')}${inp('surname', 'Фамилия', 'text', 'autocomplete="family-name" maxlength="80"')}</div>
+      <div class="grid2">${inp('title', 'Должность', 'text', 'placeholder="Например: SMM-менеджер" maxlength="80"')}
+        <label class="field"><span>Направление${tag('dir')}</span><select class="select" id="j-dir" ${dis}><option value="">Без направления</option>${Object.entries(DIRS).map(([k, d]) => `<option value="${k}" ${k === v.dir ? 'selected' : ''}>${d.name}</option>`).join('')}</select></label></div>
+    </section>
+    <section class="jf-sec"><h3>Как с тобой связаться</h3>
+      <div class="grid3">${inp('email', 'Почта — она же для входа', 'email', 'autocomplete="email" inputmode="email" placeholder="name@mail.ru"')}${inp('phone', 'Телефон', 'tel', 'autocomplete="tel" inputmode="tel" placeholder="+7 900 000-00-00"')}${inp('telegram', 'Телеграм', 'text', 'placeholder="@name"')}</div>
+    </section>
+    <section class="jf-sec"><h3>Рождение и Human Design <small>по желанию — чтобы команда знала тебя лучше</small></h3>
+      <div class="grid3">${inp('birthDate', 'Дата рождения', 'date', `min="1940-01-01" max="${today()}"`)}${inp('birthTime', 'Время рождения', 'time')}${inp('birthCity', 'Город рождения', 'text', 'placeholder="Москва" maxlength="80"')}</div>
+      <div class="field"><span>Кто ты по Human Design${tag('hdType')}</span>
+        <div class="hd-types" role="radiogroup" aria-label="Тип по Human Design">${[...Object.entries(HD_TYPES), ['', {name: 'Не знаю'}]].map(([k, t]) => `<button type="button" class="chip hd-chip ${(v.hdType || '') === k ? 'on' : ''}" data-hd="${k}" role="radio" aria-checked="${(v.hdType || '') === k}" ${dis}>${t.name}</button>`).join('')}</div>
+        <small class="hd-hint" id="jHdHint">${HD_TYPES[v.hdType] ? `Стратегия — ${HD_TYPES[v.hdType].strategy}.` : ''}</small></div>
+      <label class="field hd-prof"><span>Профиль — две цифры из карты, например 3/5${tag('hdProfile')}</span><select class="select" id="j-hdProfile" ${dis}><option value="">Не знаю</option>${HD_PROFILES.map(pr => `<option value="${pr}" ${pr === v.hdProfile ? 'selected' : ''}>${pr} — ${hdProfileName(pr)}</option>`).join('')}</select></label>
+      <p class="note">Тип и профиль считаются по дате, времени и месту рождения в любом калькуляторе Human Design. Не знаешь — оставь пустым, допишешь потом на своей странице.</p>
+    </section>
+    ${preview ? '' : `<section class="jf-sec"><h3>Пароль для входа</h3>
+      <div class="grid2"><label class="field"><span>Пароль — от 6 символов</span><input class="input" id="j-pw" type="password" autocomplete="new-password"></label>
+        <label class="field"><span>Пароль ещё раз</span><input class="input" id="j-pw2" type="password" autocomplete="new-password"></label></div>
+      <p class="note">Не используй пароль от почты или банка: вход разделяет кабинеты внутри команды.</p></section>`}`;
+}
+function joinHeroHtml(inv, p, v) {
+  const role = roleOf(inv.role);
+  const by = inv.by ? whoName(inv.by) : '';
+  return `<div class="join-hero">
+    <div class="wl-sparks" aria-hidden="true">${sparksHtml()}</div>
+    ${brandIcon('join-mark')}
+    <p class="wl-kicker">Eva Space · ${esc(vision().big)}</p>
+    <h1>${v.given ? `${esc(v.given)}, тебя` : 'Тебя'} приглашают в команду Eva Space</h1>
+    <p>Мы строим компанию на миллиард — и хотим строить её вместе с тобой.${by && by !== 'кто-то' ? ` Приглашение от <b>${esc(by)}</b>.` : ''}</p>
+    <div class="join-role"><span class="pill ${ROLES[role].tone}">${ROLES[role].name}</span><span>${esc(ROLES[role].about)}</span></div>
+  </div>`;
+}
+function renderJoin(root, code) {
+  const c = normCode(code), inv = Store.get('invites', c);
+  if (!inv || inv.usedBy) {
+    root.innerHTML = `<div class="auth one"><div class="auth-card card">
+      <div class="auth-brand">${brandIcon('auth-mark')}<div><b>Eva Club</b><span>штаб команды Eva Space</span></div></div>
+      <h1>${inv ? 'По этой ссылке уже зарегистрировались' : 'Ссылка-приглашение не работает'}</h1>
+      <p class="auth-lead">${inv ? 'Войдите своей почтой и паролем.' : 'Приглашение отозвали или в ссылке опечатка. Попросите у основателя новую ссылку — или введите код из сообщения.'}</p>
+      <div class="row"><button class="btn primary" data-join-mode="login">Войти</button>${inv ? '' : '<button class="btn" data-join-mode="invite">Ввести код</button>'}</div>
+    </div></div>`;
+    on(root, 'click', '[data-join-mode]', (e, b) => { View.set('authMode', b.dataset.joinMode); location.hash = ''; App.render({force: true}); });
+    return;
+  }
+  const p = personById(inv.personId);
+  const v = cardValues(p, inv);
+  const src = Object.fromEntries(Object.entries(v).filter(([, x]) => x).map(([k]) => [k, true]));
+  root.innerHTML = `<div class="join">
+    ${joinHeroHtml(inv, p, v)}
+    <form class="card join-form" id="joinForm" novalidate autocomplete="on">
+      <p class="join-lead">Проверь данные — часть мы уже заполнили. Всё можно поправить сейчас или потом на своей странице в штабе.</p>
+      ${joinFormHtml(v, src)}
+      <div class="auth-msg" id="joinMsg" hidden></div>
+      <button class="btn primary join-go" type="submit" id="joinGo">${icon('heart')}Присоединиться к команде</button>
+      <p class="auth-note">Анкету видят все в команде штаба. Уже есть учётка? <button type="button" class="link-btn" data-join-mode="login">Войти</button></p>
+    </form>
+  </div>`;
+  wireJoinForm(root, c);
+  on(root, 'click', '[data-join-mode]', (e, b) => { View.set('authMode', b.dataset.joinMode); location.hash = ''; App.render({force: true}); });
+  const first = $('#j-given', root);
+  if (first && !first.value) setTimeout(() => { if (!document.activeElement || document.activeElement === document.body) first.focus(); }, 30);
+}
+function wireJoinForm(root, code) {
+  let hd = (($('.hd-chip.on', root) || {}).dataset || {}).hd || '';
+  on(root, 'click', '[data-hd]', (e, b) => {
+    hd = b.dataset.hd;
+    $$('.hd-chip', root).forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', String(x === b)); });
+    $('#jHdHint', root).textContent = HD_TYPES[hd] ? `Стратегия — ${HD_TYPES[hd].strategy}.` : '';
+  });
+  const form = $('#joinForm', root), msg = $('#joinMsg', root), go = $('#joinGo', root);
+  const val = k => (($('#j-' + k, root) || {}).value || '').trim();
+  const fail = (text, k) => { msg.textContent = text; msg.hidden = false; const i = k && $('#j-' + k, root); if (i) { i.classList.add('bad'); i.focus(); } else msg.scrollIntoView({block: 'center', behavior: 'smooth'}); };
+  on(form, 'input', '.input', (e, i) => i.classList.remove('bad'));
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    msg.hidden = true;
+    Sound.unlock();
+    const f = {code, hdType: hd};
+    ['given', 'surname', 'title', 'dir', 'email', 'phone', 'telegram', 'birthDate', 'birthTime', 'birthCity', 'hdProfile'].forEach(k => { f[k] = val(k); });
+    f.pw = ($('#j-pw', root) || {}).value || '';
+    if (!f.given) return fail('Напиши имя.', 'given');
+    if (!f.surname) return fail('Напиши фамилию.', 'surname');
+    if (!/^\S+@\S+\.\S+$/.test(f.email)) return fail('Почта выглядит неправильно — по ней ты будешь входить в штаб.', 'email');
+    if (Auth.findByEmail(f.email)) return fail('С этой почтой уже есть учётка — войди или укажи другую почту.', 'email');
+    if (f.pw.length < 6) return fail('Пароль — не короче 6 символов.', 'pw');
+    if (f.pw !== (($('#j-pw2', root) || {}).value || '')) return fail('Пароли не совпадают.', 'pw2');
+    go.disabled = true;
+    go.textContent = 'Создаю учётку…';
+    try {
+      await Auth.acceptInvite(f);
+      try { history.replaceState(null, '', '#home'); } catch (err) { location.hash = 'home'; }
+      App.render({force: true});
+    } catch (err) {
+      fail(err.message || String(err));
+      go.disabled = false;
+      go.innerHTML = `${icon('heart')}Попробовать ещё раз`;
+    }
+  });
+}
+/* основатель смотрит, что подтянется в анкету */
+function previewJoin(code) {
+  const inv = Store.get('invites', code);
+  if (!inv) return;
+  const p = personById(inv.personId), v = cardValues(p, inv);
+  const src = Object.fromEntries(Object.entries(v).filter(([, x]) => x).map(([k]) => [k, true]));
+  openModal({
+    title: 'Анкета по ссылке — как увидит человек',
+    wide: true,
+    focus: false,
+    body: `<div class="join preview">${joinHeroHtml(inv, p, v)}<div class="join-form">${joinFormHtml(v, src, true)}</div></div>
+      <p class="note">Поля с пометкой «из карточки» человек увидит заполненными и сможет поправить. Пустые допишет сам; дальше — пароль и приветствие.</p>`,
+    foot: '<button class="btn primary" data-close>Понятно</button>',
+  });
+}
+
+/* открыл ссылку, уже войдя в штаб (например, основатель проверяет) */
+App.register('join', {
+  title: 'Приглашение',
+  render(root, code) {
+    const c = normCode(code), inv = Store.get('invites', c), me = Auth.me();
+    if (inv && inv.usedBy === me.id) { App.go('home'); return; }
+    const p = inv ? personById(inv.personId) : null;
+    root.innerHTML = `${pageHead('Ссылка-приглашение', '')}
+      <div class="card join-in">
+        ${inv && !inv.usedBy ? `<p>Это приглашение в штаб${p ? ` для <b>${esc(personName(p))}</b>` : ''}. Вы вошли как <b>${esc(me.name)}</b>.</p>
+          <p class="note">Чтобы зарегистрироваться по ссылке, выйдите из своей учётки — откроется анкета. Посмотреть её, не выходя, можно кнопкой «Как увидит человек».</p>
+          <div class="row"><button class="btn" data-join-preview>Как увидит человек</button><button class="btn" data-join-out>Выйти и зарегистрироваться</button><a class="btn primary" href="#home">Остаться в штабе</a></div>`
+        : `<p>${inv ? 'По этой ссылке уже зарегистрировались.' : 'Приглашение не найдено — его отозвали или в ссылке опечатка.'}</p><div class="row"><a class="btn primary" href="#home">На главную</a></div>`}
+      </div>`;
+    on(root, 'click', '[data-join-out]', () => Auth.logout());
+    on(root, 'click', '[data-join-preview]', () => previewJoin(c));
+  },
+});
+
+/* ── приветствие новичка ── */
+const WELCOME_STEPS = {
+  owner: [['#team', 'Пригласите команду ссылками из «Команды» — у каждого своя роль'], ['#strategy', 'Проверьте цели квартала и этапы года в «Стратегии»'], ['#tasks', 'Раздайте задачи — исполнителю придёт уведомление со звуком']],
+  lead: [['#m-standards', 'Прочитай Книгу стандартов — это час'], ['#tasks', 'Открой задачи своего направления: всё новое — в блоке «Для вас»'], ['#reports', 'К созвону в понедельник, 11:00, — цифры недели в «Отчётах»'], ['#me', 'Заполни свою страницу: фото, пара слов о себе, цели на квартал']],
+  member: [['#m-standards', 'Прочитай Книгу стандартов и пройди тест в конце'], ['#tasks', 'Открой свои задачи: новое — в блоке «Для вас», сделано — жми «Готово»'], ['#me', 'Заполни свою страницу: фото, пара слов о себе, цели на квартал'], ['#calendar', 'Подключи Google Календарь — команда увидит, когда ты занят']],
+  investor: [['#strategy', 'Стратегия: цели квартала и дорожная карта'], ['#reports', 'Отчёты: продажи и Cash Flow до Нового года'], ['#home', 'Материалы для инвесторов — на главной']],
+};
+function sparksHtml() {
+  return [[8, 18, 14], [86, 12, 10], [72, 62, 16], [18, 70, 9], [48, 8, 8], [93, 48, 7]]
+    .map(([x, y, s], i) => `<svg viewBox="0 0 24 24" style="left:${x}%;top:${y}%;width:${s}px;height:${s}px;animation-delay:${(i * .45).toFixed(2)}s"><path d="M12 2c.7 5.6 2.4 7.3 8 8-5.6.7-7.3 2.4-8 8-.7-5.6-2.4-7.3-8-8 5.6-.7 7.3-2.4 8-8z"/></svg>`).join('');
+}
+function yearHtml(v) {
+  const stages = Strategy.stages(), nowH = hOfDate(today());
+  const miles = Strategy.miles().filter(m => !m.done && m.h >= nowH).slice(0, 3);
+  const st = stages.map(s => {
+    const a = hOfDate(s.from + '-01'), b = hOfDate(monthEnd(s.to));
+    return `<li class="${nowH >= a && nowH <= b ? 'here' : ''}"><b>${esc(s.title)}</b><small>${monthShort(s.from)} — ${monthShort(s.to)}${nowH >= a && nowH <= b ? ' · мы здесь' : ''}</small></li>`;
+  }).join('');
+  if (!v.year && !st && !miles.length) return '<p class="note">Цели года появятся в «Стратегии».</p>';
+  return `${v.year ? '<p class="wl-year"></p>' : ''}${st ? `<ul class="wl-stages">${st}</ul>` : ''}
+    ${miles.length ? `<p class="wl-miles"><span>Ближайшие точки:</span> ${miles.map(m => `${esc(m.title)} — ${gShort(m.h)}`).join(' · ')}</p>` : ''}`;
+}
+function openWelcome({preview = false} = {}) {
+  const me = Auth.me();
+  if (!me) return;
+  const p = Auth.person() || {name: me.name};
+  const v = vision(), sc = settings().scenario, role = roleOf(me.role);
+  const goals = Strategy.goals().slice(0, 5);
+  const hd = HD_TYPES[p.hdType];
+  openModal({
+    title: 'Добро пожаловать',
+    wide: true,
+    focus: false,
+    body: `<div class="wl-hero">
+        <div class="wl-sparks" aria-hidden="true">${sparksHtml()}</div>
+        ${brandIcon('wl-mark')}
+        <p class="wl-kicker">Eva Space · ${esc(v.big)}</p>
+        <h2 class="wl-title">Добро пожаловать в ярдную команду, ${esc(givenOf(p))}!</h2>
+        <p class="wl-lead">Мы рады, что ты с нами.</p>
+      </div>
+      <p class="wl-text" id="wlText"></p>
+      <div class="wl-grid">
+        <section class="wl-card"><span class="label">Цель года</span>${yearHtml(v)}</section>
+        <section class="wl-card"><span class="label">${Q.name}</span>
+          <div class="wl-num"><b>${fmt(Plan.total(sc))}</b><span>продаж до 31 декабря · план «${SCENARIOS[sc].name}»</span></div>
+          ${goals.length ? `<ol class="wl-goals">${goals.map(g => `<li><b>${esc(g.short || '')}</b>${g.title ? ` — ${esc(g.title)}` : ''}</li>`).join('')}</ol>` : '<p class="note">Цели квартала — в «Стратегии».</p>'}
+        </section>
+      </div>
+      ${hd ? `<div class="wl-hd">${icon('spark')}<div><b>Ты — ${hd.name}${p.hdProfile ? ` · ${esc(p.hdProfile)}` : ''}</b><p>${capFirst(hd.gift)} Твоя стратегия — ${hd.strategy}.</p></div></div>` : ''}
+      <div class="wl-start"><span class="label">С чего начать · ${ROLES[role].name}</span>
+        <ol>${(WELCOME_STEPS[role] || WELCOME_STEPS.member).map(([href, text]) => `<li><a href="${href}">${esc(text)}</a></li>`).join('')}</ol></div>`,
+    foot: `<button class="btn ghost" data-wl-go="strategy">Открыть стратегию</button><button class="btn primary" data-close>${icon('heart')}Поехали!</button>`,
+    onMount(el, close) {
+      el.classList.add('wl-modal');
+      $('#wlText', el).textContent = v.welcome;
+      const y = $('.wl-year', el); if (y) y.textContent = v.year;
+      on(el, 'click', 'a[href^="#"]', () => close());
+      on(el, 'click', '[data-wl-go]', (e, b) => { close(); App.go(b.dataset.wlGo); });
+      Sound.play('hello');
+    },
+    onClose() { if (!preview && Auth.me() && Auth.me().welcomed === false) Store.patch('accounts', me.id, {welcomed: true, welcomedAt: Date.now()}); },
+  });
+}
+
+/* основатель правит большую цель и обращение — их видит каждый новичок */
+function onboardHtml() {
+  const v = vision();
+  return `<section class="section card onb">
+    <div class="card-head"><h2>Приветствие новичков</h2><span class="note">его видит каждый, кто зарегистрировался по ссылке</span></div>
+    <div class="grid2"><label class="field"><span>Большая цель</span><input class="input" id="vbBig" maxlength="60" value="${esc(v.big)}"></label>
+      <label class="field"><span>Цель года <small class="note">пусто — покажем этапы года из «Стратегии»</small></span><input class="input" id="vbYear" maxlength="200" value="${esc(v.year)}" placeholder="Например: 10 000 платящих и выход на окупаемость"></label></div>
+    <label class="field"><span>Обращение к новичку</span><textarea class="textarea" id="vbText" rows="3" maxlength="700"></textarea></label>
+    <div class="row"><button class="btn primary sm" id="vbSave">Сохранить</button><button class="btn sm ghost" data-wl-preview>${icon('spark')}Посмотреть приветствие</button></div>
+  </section>`;
+}
+function wireOnboard(root) {
+  const ta = $('#vbText', root);
+  if (!ta) return;
+  ta.value = vision().welcome;
+  $('#vbSave', root).onclick = () => {
+    Strategy.save({vision: {big: $('#vbBig', root).value.trim() || VISION_DEFAULT.big, year: $('#vbYear', root).value.trim(), welcome: ta.value.trim() || VISION_DEFAULT.welcome}});
+    toast('Приветствие сохранено');
+  };
+  on(root, 'click', '[data-wl-preview]', () => openWelcome({preview: true}));
+}
+
+/* ── командный дух на главной ── */
+const COMPLIMENTS = [
+  'с тобой даже сложные задачи выглядят решаемыми.',
+  'твоя работа двигает всю команду вперёд — это видно.',
+  'ты делаешь Еву сильнее каждый день.',
+  'на тебя можно положиться — и это дорогого стоит.',
+  'у тебя талант доводить дела до конца.',
+  'команде повезло, что ты с нами.',
+  'твои идеи делают продукт лучше.',
+  'ты умеешь превращать хаос в понятный план.',
+  'с тобой работать — одно удовольствие.',
+  'ты задаёшь планку, до которой хочется дотянуться.',
+  'спасибо за твою энергию — она заряжает всех вокруг.',
+  'ты — часть того, из чего строится компания на миллиард.',
+  'твоё внимание к деталям спасает нас чаще, чем кажется.',
+  'у тебя отлично получается слышать людей.',
+  'ты не боишься браться за новое — это и есть дух стартапа.',
+  'каждая закрытая тобой задача — кирпич в нашем ярде.',
+  'твоя честность помогает команде расти.',
+  'рядом с тобой хочется работать лучше.',
+  'ты находишь решение там, где другие видят стену.',
+  'твой вклад заметен, даже когда о нём не говорят вслух.',
+  'ты приносишь в команду спокойствие и уверенность.',
+  'ты растёшь быстрее, чем успевает смениться квартал.',
+  'ты помогаешь коллегам, не дожидаясь просьбы, — это ценно.',
+  'ты — тот человек, с которым хочется строить большое.',
+];
+const SLOGANS = [
+  'Компания на миллиард начинается с задачи, которую ты закроешь сегодня.',
+  'Мы — команда, которая доводит до конца.',
+  'Сильные вместе: помогаем друг другу и празднуем каждую победу.',
+  'Каждый день — на шаг ближе к ярду.',
+  'Мы строим то, чем будем гордиться.',
+  'Маленькие победы каждый день складываются в большую компанию.',
+];
+const hashStr = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; return h; };
+function teamWeek() {
+  const since = Date.now() - 7 * 864e5, t = today();
+  const closed = Tasks.all().filter(x => x.status === 'done' && (x.doneAt || 0) >= since);
+  const by = {};
+  closed.forEach(x => { if (x.assignee && personById(x.assignee)) by[x.assignee] = (by[x.assignee] || 0) + 1; });
+  const heroes = Object.entries(by).map(([pid, n]) => ({p: personById(pid), n})).sort((a, b) => b.n - a.n || personName(a.p).localeCompare(personName(b.p), 'ru')).slice(0, 3);
+  let days = 0;
+  for (let i = 0; i < 7; i++) if (Sales.day(addDays(t, -i))) days++;
+  return {closed: closed.length, accepted: closed.filter(x => x.acceptedBy).length, days, heroes};
+}
+function birthdaysSoon(within = 14) {
+  return people().filter(p => p.birthDate && pStatus(p) === 'active').map(p => ({p, b: nextBirthday(p.birthDate)})).filter(x => x.b && x.b.days <= within).sort((a, b) => a.b.days - b.b.days);
+}
+function spiritHtml() {
+  const me = Auth.me(), p = Auth.person();
+  const t = today(), g = p ? givenOf(p) : String(me.name || '').split(' ')[0];
+  const bday = isBirthday(p, t);
+  const hd = p && HD_TYPES[p.hdType];
+  const pool = hd ? [hd.gift, ...COMPLIMENTS] : COMPLIMENTS;
+  const seed = hashStr(((p && p.id) || me.id) + t);
+  const k = View.get('sp.k', 0);
+  const text = pool[(seed + k) % pool.length];
+  const slogan = SLOGANS[hashStr(t) % SLOGANS.length];
+  const w = teamWeek();
+  const soon = birthdaysSoon().filter(x => !(p && x.p.id === p.id && x.b.days === 0));
+  const todayB = soon.filter(x => x.b.days === 0), later = soon.filter(x => x.b.days > 0).slice(0, 3);
+  return `<section class="spirit card ${bday ? 'bday' : ''}">
+    <div class="sp-main">
+      <div class="wl-sparks" aria-hidden="true">${sparksHtml()}</div>
+      <span class="sp-kicker">${icon(bday ? 'gift' : 'spark')}${bday ? 'С днём рождения!' : 'Комплимент дня'}</span>
+      <p class="sp-text" id="spText">${esc(bday ? `${g}, с днём рождения! Вся команда Eva Space рядом — пусть этот год будет самым смелым и счастливым.` : `${g}, ${text}`)}</p>
+      <div class="sp-foot"><span class="sp-slogan">${esc(slogan)}</span>${bday ? '' : '<button type="button" class="sp-more" data-sp-next>Ещё комплимент</button>'}</div>
+    </div>
+    <div class="sp-side">
+      <span class="label">Неделя команды</span>
+      <div class="sp-stats"><div><b>${w.closed}</b><span>${plural(w.closed, 'задача закрыта', 'задачи закрыто', 'задач закрыто')}</span></div><div><b>${w.accepted}</b><span>согласовано</span></div><div><b>${w.days}/7</b><span>дней с цифрами</span></div></div>
+      ${w.heroes.length ? `<div class="sp-heroes"><span class="sp-h-l">Герои недели</span>${w.heroes.map(h => `<a class="sp-hero" href="#p-${h.p.id}" title="${esc(personName(h.p))}: закрыто задач — ${h.n}">${avatar(h.p)}<b>${esc(firstName(h.p))}</b><em>${h.n}</em></a>`).join('')}</div>`
+        : '<p class="note sp-empty">Закрой первую задачу недели — и попадёшь в герои.</p>'}
+      ${todayB.length ? `<div class="sp-bdays now">${icon('gift')}<span>Сегодня день рождения: <b>${todayB.map(x => esc(personName(x.p))).join(', ')}</b> — поздравь!</span></div>` : ''}
+      ${later.length ? `<div class="sp-bdays">${icon('gift')}<span>Скоро дни рождения: ${later.map(x => `<b>${esc(firstName(x.p))}</b> — ${dayShort(x.b.date)}`).join(', ')}</span></div>` : ''}
+    </div>
+  </section>`;
+}
+function wireSpirit(root) {
+  on(root, 'click', '[data-sp-next]', () => {
+    View.set('sp.k', View.get('sp.k', 0) + 1);
+    const p = Auth.person(), me = Auth.me(), hd = p && HD_TYPES[p.hdType];
+    const pool = hd ? [hd.gift, ...COMPLIMENTS] : COMPLIMENTS;
+    const el = $('#spText', root);
+    if (el) { el.textContent = `${p ? givenOf(p) : String(me.name || '').split(' ')[0]}, ${pool[(hashStr(((p && p.id) || me.id) + today()) + View.get('sp.k', 0)) % pool.length]}`; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+  });
+}
+
+/* ── рождение и дизайн на странице человека ── */
+function birthHdHtml(p, edit) {
+  const hd = HD_TYPES[p.hdType], nb = nextBirthday(p.birthDate);
+  const rows = [
+    p.birthDate ? `<div><span class="label">День рождения</span><b>${dayLong(p.birthDate)}</b><small>${nb && nb.days === 0 ? 'сегодня!' : nb ? `через ${nb.days} ${plural(nb.days, 'день', 'дня', 'дней')}` : ''}</small></div>` : '',
+    p.birthTime ? `<div><span class="label">Время рождения</span><b>${esc(p.birthTime)}</b></div>` : '',
+    p.birthCity ? `<div><span class="label">Город рождения</span><b>${esc(p.birthCity)}</b></div>` : '',
+  ].filter(Boolean).join('');
+  const body = rows || hd || p.hdProfile ? `${rows ? `<div class="pf-bd">${rows}</div>` : ''}
+    ${hd || p.hdProfile ? `<div class="pf-hd"><div class="pf-tags">${hd ? `<span class="pill violet">${hd.name}</span>` : ''}${p.hdProfile ? `<span class="pill line">Профиль ${esc(p.hdProfile)} · ${hdProfileName(p.hdProfile)}</span>` : ''}</div>
+      ${hd ? `<p>${p.id === Auth.personId() ? capFirst(hd.gift) : hd.about}</p><p class="note">Стратегия — ${hd.strategy}. Признак, что всё идёт верно, — ${hd.sign}.</p>` : ''}</div>` : ''}` : '';
+  return `<section class="card pf-sec"><div class="card-head"><h2>Рождение и Human Design</h2>${edit ? `<button class="link-btn" data-pf-birth>${body ? 'Изменить' : 'Заполнить'}</button>` : ''}</div>
+    ${body || `<p class="note">${edit ? 'День, время и город рождения, тип и профиль по Human Design — команде проще понять, как с тобой работать.' : 'Пока не заполнено.'}</p>`}</section>`;
+}
+function editBirth(p) {
+  openModal({
+    title: 'Рождение и Human Design',
+    body: `<div class="grid3"><label class="field"><span>Дата рождения</span><input class="input" type="date" id="bdDate" value="${esc(p.birthDate || '')}" min="1940-01-01" max="${today()}"></label>
+      <label class="field"><span>Время рождения</span><input class="input" type="time" id="bdTime" value="${esc(p.birthTime || '')}"></label>
+      <label class="field"><span>Город рождения</span><input class="input" id="bdCity" value="${esc(p.birthCity || '')}" maxlength="80"></label></div>
+      <div class="grid2"><label class="field"><span>Тип по Human Design</span><select class="select" id="bdHd"><option value="">Не знаю</option>${Object.entries(HD_TYPES).map(([k, t]) => `<option value="${k}" ${k === p.hdType ? 'selected' : ''}>${t.name}</option>`).join('')}</select></label>
+      <label class="field"><span>Профиль</span><select class="select" id="bdProf"><option value="">Не знаю</option>${HD_PROFILES.map(pr => `<option value="${pr}" ${pr === p.hdProfile ? 'selected' : ''}>${pr} — ${hdProfileName(pr)}</option>`).join('')}</select></label></div>`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" id="bdSave">Сохранить</button>',
+    onMount(el, close) {
+      $('#bdSave', el).onclick = () => {
+        Store.patch('people', p.id, {birthDate: $('#bdDate', el).value, birthTime: $('#bdTime', el).value, birthCity: $('#bdCity', el).value.trim(), hdType: $('#bdHd', el).value, hdProfile: $('#bdProf', el).value});
+        close();
+        toast('Сохранено');
+      };
+    },
   });
 }
 
@@ -5867,7 +6646,7 @@ function renderProfile(root, pid) {
       <div class="pf-main">
         <div class="pf-name"><h1>${esc(p.name || 'Имя не указано')}</h1>${own ? '<span class="pill line">это вы</span>' : ''}</div>
         <p class="pf-title">${esc(p.title || 'Должность не указана')}${p.dir && DIRS[p.dir] ? ` · ${DIRS[p.dir].name}` : ''}</p>
-        <div class="pf-tags"><span class="pill ${st.tone}">${st.name}</span>${acc ? rolePill(acc.role) : '<span class="pill line">без входа в штаб</span>'}${p.rate ? `<span class="pill line">${esc(p.rate)}</span>` : ''}${p.format ? `<span class="pill line">${esc(p.format)}</span>` : ''}</div>
+        <div class="pf-tags"><span class="pill ${st.tone}">${st.name}</span>${acc ? rolePill(acc.role) : '<span class="pill line">без входа в штаб</span>'}${p.rate ? `<span class="pill line">${esc(p.rate)}</span>` : ''}${p.format ? `<span class="pill line">${esc(p.format)}</span>` : ''}${HD_TYPES[p.hdType] ? `<span class="pill violet">${HD_TYPES[p.hdType].name}${p.hdProfile ? ' · ' + esc(p.hdProfile) : ''}</span>` : ''}${isBirthday(p) ? `<span class="pill rose">${icon('gift')}сегодня день рождения</span>` : ''}</div>
         ${contacts.length ? `<div class="pf-contacts">${contacts.map(([k, v]) => `<button class="pf-ct" data-copy="${esc(v)}" title="Скопировать"><span>${k}</span><b>${esc(v)}</b></button>`).join('')}</div>` : ''}
       </div>
       <div class="pf-stats">
@@ -5883,6 +6662,7 @@ function renderProfile(root, pid) {
       <div class="pf-col">
         ${sec('about', 'О себе', p.about ? '<p class="pf-text" data-f="about"></p>' : '', 'Пара предложений: откуда вы, чем занимались, что умеете лучше всего.')}
         ${sec('mission', 'Миссия', p.mission ? '<p class="pf-text pf-mission" data-f="mission"></p>' : '', 'Зачем вы в Еве — одной фразой.')}
+        ${birthHdHtml(p, edit)}
         <section class="card pf-sec"><div class="card-head"><h2>Увлечения</h2></div>
           <div class="tags" id="pfTags">${(p.interests || []).map((t, i) => `<span class="tag">${esc(t)}${edit ? `<button data-tag-del="${i}" aria-label="Убрать">×</button>` : ''}</span>`).join('') || (edit ? '' : '<p class="note">Пока не заполнено.</p>')}
           ${edit ? '<input class="tag-in" id="pfTagIn" placeholder="+ добавить: йога, горы, книги… Enter" maxlength="40">' : ''}</div></section>
@@ -5903,6 +6683,10 @@ function renderProfile(root, pid) {
         </section>
       </div>
     </div>
+    ${own ? `<section class="section card pf-sec"><div class="card-head"><h2>Уведомления</h2></div>
+      <div class="row pf-snd"><label class="check"><input type="checkbox" id="pfSound" ${Sound.on() ? 'checked' : ''}> Звук, когда мне ставят задачу, присылают на согласование или возвращают</label><button class="btn sm ghost" id="pfSoundTest">${icon('bell')}Проверить звук</button></div>
+      <p class="note">Уведомление всплывает, пока штаб открыт. Выбор помнится в этом браузере; то же переключает колокольчик внизу меню.</p>
+    </section>` : ''}
     ${own ? `<section class="section card pf-sec"><div class="card-head"><h2>Вход и пароль</h2></div>
       <p class="note">Почта для входа: <b>${esc((Auth.me() || {}).email || '')}</b></p>
       <div class="row pf-pw"><input class="input" type="password" id="pwOld" placeholder="Текущий пароль" autocomplete="current-password"><input class="input" type="password" id="pwNew" placeholder="Новый, от 6 символов" autocomplete="new-password"><input class="input" type="password" id="pwNew2" placeholder="Новый ещё раз" autocomplete="new-password"><button class="btn" id="pwSave">Сменить пароль</button><button class="btn ghost" data-logout-me>${icon('logout')}Выйти</button></div>
@@ -5921,7 +6705,12 @@ function renderProfile(root, pid) {
   on(root, 'click', '[data-person-edit]', (e, el) => editPerson(el.dataset.personEdit));
   on(root, 'click', '[data-copy]', (e, el) => copyText(el.dataset.copy, $('b', el)));
   on(root, 'click', '[data-logout-me]', () => Auth.logout());
+  const snd = $('#pfSound', root);
+  if (snd) snd.onchange = () => { Sound.set(snd.checked); App.paintSound(); if (snd.checked) Sound.play('task', true); };
+  const sndT = $('#pfSoundTest', root);
+  if (sndT) sndT.onclick = () => { Sound.play('control', true); toast('Так звучит задача на согласование', {ring: true}); };
   if (!edit) return;
+  on(root, 'click', '[data-pf-birth]', () => editBirth(p));
 
   const save = patch => Store.patch('people', pid, patch);
   on(root, 'click', '[data-pf-edit]', (e, el) => {
@@ -7562,7 +8351,7 @@ function mxPaint(root, f, mode, sc) {
   App.start();
   TaskNotify.init();
   /* для проверок и отладки из консоли */
-  window.__eva = {Store, Auth, App, Tasks, Inbox, settings, Sales, Plan, Money, cashFlow, pnl, quarterPace};
+  window.__eva = {Store, Auth, App, Tasks, Inbox, settings, Sales, Plan, Money, cashFlow, pnl, quarterPace, Sound, Strategy, openWelcome, inviteLink, inviteText};
 })();
 })();
 </script>

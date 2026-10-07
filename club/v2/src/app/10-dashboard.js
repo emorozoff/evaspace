@@ -135,6 +135,7 @@ App.register('home', {
     root.innerHTML = `
       ${pageHead(`${hello}, ${esc(name)}`, `${cap(dayWd(t))} · ${Q.name}: ${pace.started ? (pace.over ? 'квартал закрыт' : `день ${pace.daysGone} из ${pace.daysAll}`) : `до старта ${pace.toStart} ${plural(pace.toStart, 'день', 'дня', 'дней')}`} · ведём план «${SCENARIOS[sc].name}»`,
         `${Auth.can('sales.edit') ? `<a class="btn" href="#reports">${icon('chart')}Цифры дня</a>` : ''}${teamRoles ? `<button class="btn primary" data-new-task>${icon('plus')}Задача</button>` : ''}`)}
+      ${teamRoles ? spiritHtml() : ''}
       ${start}
       <div class="cards tiles">${tiles.join('')}</div>
       <div class="split section">${focus}${side}</div>
@@ -152,5 +153,6 @@ App.register('home', {
     on(root, 'click', '[data-start-hide]', () => { Local.set(startKey, 1); App.render(); });
     wireTaskCards(root);
     wireMaterials(root);
+    wireSpirit(root);
   },
 });

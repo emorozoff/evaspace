@@ -118,6 +118,12 @@ const Tasks = {
     t.comments = log;
     const id = Store.add('tasks', t);
     this.syncBudget(id);
+    /* поставили задачу другому — короткий звук и подтверждение, что он узнает */
+    if (assignee && assignee !== k) {
+      Sound.play('sent');
+      toast(`Задача поставлена. ${whoName(assignee)} получит уведомление со звуком`);
+      this._told = Date.now();
+    }
     return id;
   },
   /* правка с записью в историю; ev — кому сообщить */
@@ -141,6 +147,7 @@ const Tasks = {
     if (status === 'review') {
       patch.submittedAt = Date.now();
       ev = {type: 'review', to: [this.approver(cur)]};
+      if (this.approver(cur) && this.approver(cur) !== this.meKey()) Sound.play('sent');
       text = note || `${who}: сдал(а) на согласование`;
     } else if (status === 'done') {
       patch.doneAt = Date.now();
@@ -169,6 +176,7 @@ const Tasks = {
     if (r.msg) toast(r.msg);
     if (r.needReturn) { openTask(t.id, {focus: 'return'}); return false; }
     if (!r.st) return false;
+    if (r.st === 'review' && !r.msg) { const ap = (r.patch && r.patch.approver) || this.approver(t); if (ap) toast(`Отправлено на согласование — ${whoName(ap)} получит уведомление`); }
     if (r.patch) Store.patch('tasks', t.id, r.patch, {mustExist: true});
     if ((r.st === 'doing' || r.st === 'done') && this.blocked(t)) toast(`Задача ждёт: «${this.blockers(t).find(b => b.status !== 'done').title}»`);
     this.setStatus({...t, ...(r.patch || {})}, r.st);
@@ -293,6 +301,8 @@ const Inbox = {
 function taskBadge() { return Inbox.count(); }
 
 /* всплывающие уведомления о свежих событиях, пока штаб открыт */
+const TN_CONTROL = ['review', 'return', 'budget'];
+const TN_TASK = ['assign', 'unblock'];
 const TaskNotify = {
   since: 0,
   wired: false,
@@ -307,7 +317,11 @@ const TaskNotify = {
     const fresh = Inbox.events().filter(e => (e.c.at || 0) > this.since);
     if (!fresh.length) return;
     this.since = Math.max(this.since, ...fresh.map(e => e.c.at || 0));
-    fresh.slice(0, 3).reverse().forEach(e => toast(Inbox.text(e), {action: {label: 'Открыть', fn: () => openTask(e.t.id)}}));
+    /* звук: на согласование, возврат и бюджет — аккорд «контроль», новая задача — свой, остальное — тихий */
+    const evs = fresh.map(e => e.c.ev);
+    const kind = evs.some(x => TN_CONTROL.includes(x)) ? 'control' : evs.some(x => TN_TASK.includes(x)) ? 'task' : 'info';
+    Sound.play(kind);
+    fresh.slice(0, 3).reverse().forEach(e => toast(Inbox.text(e), {ring: TN_CONTROL.includes(e.c.ev) || TN_TASK.includes(e.c.ev), action: {label: 'Открыть', fn: () => openTask(e.t.id)}}));
   },
 };
 
@@ -804,7 +818,7 @@ function quickTask(preset) {
         const due = $('#qtDue', el).value || null;
         return Tasks.create({title, force, assignee: $('#qtWho', el).value || null, due, dir: $('#qtDir', el).value || undefined});
       };
-      $('#qtAdd', el).onclick = () => { if (make()) { close(); toast('Задача добавлена'); } };
+      $('#qtAdd', el).onclick = () => { if (make()) { close(); if (Date.now() - (Tasks._told || 0) > 800) toast('Задача добавлена'); } };
       $('#qtMore', el).onclick = () => { const id = make(); if (id) { close(); openTask(id); } };
       $('#qtTitle', el).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#qtAdd', el).click(); } });
     },
@@ -1007,7 +1021,7 @@ function openTask(id, opts = {}) {
             dir: $('#tmDir', el).value, priority: $('#tmPrio', el).value, goalId: $('#tmGoal', el).value || null, stratId: $('#tmStrat', el) ? $('#tmStrat', el).value || null : null,
             createdBy: draft.createdBy || undefined});
           close();
-          toast('Задача создана');
+          if (Date.now() - (Tasks._told || 0) > 800) toast('Задача создана');
         };
       } else {
         const cf = $('#tmCForm', el);

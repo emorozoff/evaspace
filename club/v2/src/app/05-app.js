@@ -17,7 +17,7 @@ const App = {
     Store.subscribe(() => this.renderSoon());
     Store.onStatus(s => this.paintSync(s));
     window.addEventListener('hashchange', () => this.render());
-    document.addEventListener('pointerdown', () => { this._pointer = true; }, true);
+    document.addEventListener('pointerdown', () => { this._pointer = true; Sound.unlock(); }, true);
     document.addEventListener('pointerup', () => { this._pointer = false; if (this._pending) this.renderSoon(); }, true);
     document.addEventListener('focusout', () => { if (this._pending) this.renderSoon(250); });
     wireCharts();
@@ -28,6 +28,8 @@ const App = {
     const h = decodeURIComponent(location.hash.replace(/^#/, ''));
     if (h.startsWith('m-')) return {id: 'material', param: h.slice(2)};
     if (h.startsWith('p-')) return {id: 'person', param: h.slice(2)};
+    /* ссылка-приглашение: #join=ABCD-2345 */
+    if (h.startsWith('join=')) return {id: 'join', param: h.slice(5)};
     return {id: h || 'home', param: null};
   },
   go(hash) { if (location.hash === '#' + hash) this.render(); else location.hash = hash; },
@@ -49,8 +51,10 @@ const App = {
     const root = $('#app');
     const me = Auth.me();
     if (!me) {
-      /* экран входа не перерисовываем от чужих правок — только если штаб перестал быть пустым */
-      const mode = Store.count('accounts') ? 'has' : 'empty';
+      /* экран входа не перерисовываем от чужих правок — только если штаб перестал
+         быть пустым или открыли другую ссылку-приглашение */
+      const j = this.parse();
+      const mode = (Store.count('accounts') ? 'has' : 'empty') + (j.id === 'join' ? ':' + j.param : '');
       if (!opts.force && $('#authRoot') && this._authMode === mode) return;
       this._authMode = mode;
       this.shell = false;
@@ -78,6 +82,11 @@ const App = {
     if (opts.focus) { const el = document.getElementById(opts.focus); if (el) el.focus(); }
     const n = taskBadge();
     document.title = (n ? `(${n}) ` : '') + (id === 'home' ? '' : (this.pages[id].title || '') + ' · ') + 'Штаб Eva Club V2';
+    /* первый вход новичка — приветствие, один раз на учётку */
+    if (me.welcomed === false && this._welcomed !== me.id && id !== 'join') {
+      this._welcomed = me.id;
+      setTimeout(() => { if (!modalOpen()) openWelcome(); }, 180);
+    }
   },
 
   buildShell() {
@@ -86,13 +95,20 @@ const App = {
         <a class="brand" href="#home">${brandIcon('brand-mark')}<div><b>Eva Club</b><span>штаб команды · V2</span></div></a>
         <nav class="nav" id="nav" aria-label="Разделы"></nav>
         <div class="side-foot">
-          <div class="sync" id="sync"><i></i><span></span></div>
+          <div class="side-row"><div class="sync" id="sync"><i></i><span></span></div><button class="snd-btn" id="sndBtn" type="button"></button></div>
           <div class="me-chip" id="meChip"></div>
         </div>
       </aside>
       <main class="main"><div class="page" id="page"></div></main>
     </div>`;
     on($('#meChip'), 'click', '[data-logout]', () => Auth.logout());
+    $('#sndBtn').onclick = () => {
+      Sound.set(!Sound.on());
+      if (Sound.on()) Sound.play('task', true);
+      this.paintSound();
+      toast(Sound.on() ? 'Звук уведомлений включён: новые задачи и согласования прозвучат' : 'Звук уведомлений выключен');
+    };
+    this.paintSound();
     this.shell = true;
     this.paintSync(Store.state);
   },
@@ -112,6 +128,17 @@ const App = {
     chip.classList.toggle('on', active === 'me' || (active === 'person' && this.parse().param === Auth.personId()));
     chip.innerHTML = `<a class="me-link" href="#me" title="Моя страница">${avatar(p || {name: me.name})}<div class="who"><b>${esc(p && p.name ? p.name : me.name)}</b><span>${esc(p && p.title ? p.title : ROLES[roleOf(me.role)].name)}</span></div></a>
       <button data-logout title="Выйти" aria-label="Выйти">${icon('logout')}</button>`;
+  },
+
+  paintSound() {
+    const b = $('#sndBtn');
+    if (!b) return;
+    const v = Sound.on();
+    b.innerHTML = icon(v ? 'bell' : 'bellOff');
+    b.classList.toggle('off', !v);
+    b.title = v ? 'Звук уведомлений включён — нажмите, чтобы выключить' : 'Звук уведомлений выключен — нажмите, чтобы включить';
+    b.setAttribute('aria-label', b.title);
+    b.setAttribute('aria-pressed', String(v));
   },
 
   paintSync(s) {

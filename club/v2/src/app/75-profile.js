@@ -75,7 +75,7 @@ function renderProfile(root, pid) {
       <div class="pf-main">
         <div class="pf-name"><h1>${esc(p.name || 'Имя не указано')}</h1>${own ? '<span class="pill line">это вы</span>' : ''}</div>
         <p class="pf-title">${esc(p.title || 'Должность не указана')}${p.dir && DIRS[p.dir] ? ` · ${DIRS[p.dir].name}` : ''}</p>
-        <div class="pf-tags"><span class="pill ${st.tone}">${st.name}</span>${acc ? rolePill(acc.role) : '<span class="pill line">без входа в штаб</span>'}${p.rate ? `<span class="pill line">${esc(p.rate)}</span>` : ''}${p.format ? `<span class="pill line">${esc(p.format)}</span>` : ''}</div>
+        <div class="pf-tags"><span class="pill ${st.tone}">${st.name}</span>${acc ? rolePill(acc.role) : '<span class="pill line">без входа в штаб</span>'}${p.rate ? `<span class="pill line">${esc(p.rate)}</span>` : ''}${p.format ? `<span class="pill line">${esc(p.format)}</span>` : ''}${HD_TYPES[p.hdType] ? `<span class="pill violet">${HD_TYPES[p.hdType].name}${p.hdProfile ? ' · ' + esc(p.hdProfile) : ''}</span>` : ''}${isBirthday(p) ? `<span class="pill rose">${icon('gift')}сегодня день рождения</span>` : ''}</div>
         ${contacts.length ? `<div class="pf-contacts">${contacts.map(([k, v]) => `<button class="pf-ct" data-copy="${esc(v)}" title="Скопировать"><span>${k}</span><b>${esc(v)}</b></button>`).join('')}</div>` : ''}
       </div>
       <div class="pf-stats">
@@ -91,6 +91,7 @@ function renderProfile(root, pid) {
       <div class="pf-col">
         ${sec('about', 'О себе', p.about ? '<p class="pf-text" data-f="about"></p>' : '', 'Пара предложений: откуда вы, чем занимались, что умеете лучше всего.')}
         ${sec('mission', 'Миссия', p.mission ? '<p class="pf-text pf-mission" data-f="mission"></p>' : '', 'Зачем вы в Еве — одной фразой.')}
+        ${birthHdHtml(p, edit)}
         <section class="card pf-sec"><div class="card-head"><h2>Увлечения</h2></div>
           <div class="tags" id="pfTags">${(p.interests || []).map((t, i) => `<span class="tag">${esc(t)}${edit ? `<button data-tag-del="${i}" aria-label="Убрать">×</button>` : ''}</span>`).join('') || (edit ? '' : '<p class="note">Пока не заполнено.</p>')}
           ${edit ? '<input class="tag-in" id="pfTagIn" placeholder="+ добавить: йога, горы, книги… Enter" maxlength="40">' : ''}</div></section>
@@ -111,6 +112,10 @@ function renderProfile(root, pid) {
         </section>
       </div>
     </div>
+    ${own ? `<section class="section card pf-sec"><div class="card-head"><h2>Уведомления</h2></div>
+      <div class="row pf-snd"><label class="check"><input type="checkbox" id="pfSound" ${Sound.on() ? 'checked' : ''}> Звук, когда мне ставят задачу, присылают на согласование или возвращают</label><button class="btn sm ghost" id="pfSoundTest">${icon('bell')}Проверить звук</button></div>
+      <p class="note">Уведомление всплывает, пока штаб открыт. Выбор помнится в этом браузере; то же переключает колокольчик внизу меню.</p>
+    </section>` : ''}
     ${own ? `<section class="section card pf-sec"><div class="card-head"><h2>Вход и пароль</h2></div>
       <p class="note">Почта для входа: <b>${esc((Auth.me() || {}).email || '')}</b></p>
       <div class="row pf-pw"><input class="input" type="password" id="pwOld" placeholder="Текущий пароль" autocomplete="current-password"><input class="input" type="password" id="pwNew" placeholder="Новый, от 6 символов" autocomplete="new-password"><input class="input" type="password" id="pwNew2" placeholder="Новый ещё раз" autocomplete="new-password"><button class="btn" id="pwSave">Сменить пароль</button><button class="btn ghost" data-logout-me>${icon('logout')}Выйти</button></div>
@@ -129,7 +134,12 @@ function renderProfile(root, pid) {
   on(root, 'click', '[data-person-edit]', (e, el) => editPerson(el.dataset.personEdit));
   on(root, 'click', '[data-copy]', (e, el) => copyText(el.dataset.copy, $('b', el)));
   on(root, 'click', '[data-logout-me]', () => Auth.logout());
+  const snd = $('#pfSound', root);
+  if (snd) snd.onchange = () => { Sound.set(snd.checked); App.paintSound(); if (snd.checked) Sound.play('task', true); };
+  const sndT = $('#pfSoundTest', root);
+  if (sndT) sndT.onclick = () => { Sound.play('control', true); toast('Так звучит задача на согласование', {ring: true}); };
   if (!edit) return;
+  on(root, 'click', '[data-pf-birth]', () => editBirth(p));
 
   const save = patch => Store.patch('people', pid, patch);
   on(root, 'click', '[data-pf-edit]', (e, el) => {

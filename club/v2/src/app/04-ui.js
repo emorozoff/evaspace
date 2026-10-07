@@ -30,6 +30,12 @@ const ICONS = {
   video: '<rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10 6-3v10l-6-3"/>',
   refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  bellOff: '<path d="M6 16V11a6 6 0 0 1 9.5-4.9M18 11v5l1.5 2H8"/><path d="M10 20.5a2 2 0 0 0 4 0"/><path d="M4 4l16 16"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  gift: '<rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8h14v-8M12 8v12"/><path d="M12 8C10 4 6.5 5 7.5 7.2 8 8 12 8 12 8s4 0 4.5-.8C17.5 5 14 4 12 8z"/>',
+  spark: '<path d="M12 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/><path d="M19 15.5c.2 1.6.9 2.3 2.5 2.5-1.6.2-2.3.9-2.5 2.5-.2-1.6-.9-2.3-2.5-2.5 1.6-.2 2.3-.9 2.5-2.5z"/>',
+  heart: '<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/>',
 };
 const icon = (name, cls = '') => `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 
@@ -71,7 +77,8 @@ function toast(text, opts = {}) {
   const root = $('#toastRoot');
   if (!root) return;
   const el = document.createElement('div');
-  el.className = 'toast' + (opts.error ? ' err' : '');
+  el.className = 'toast' + (opts.error ? ' err' : '') + (opts.ring ? ' ring' : '');
+  if (opts.ring) el.insertAdjacentHTML('afterbegin', icon('bell', 'toast-ico'));
   const span = document.createElement('span');
   span.textContent = text;
   el.appendChild(span);
@@ -90,9 +97,59 @@ function toast(text, opts = {}) {
     el.appendChild(b);
   }
   root.appendChild(el);
-  timer = setTimeout(close, opts.undo || opts.action ? 8000 : 4200);
+  timer = setTimeout(close, opts.ring ? 12000 : opts.undo || opts.action ? 8000 : 4200);
   while (root.children.length > 3) root.firstChild.remove();
 }
+
+/* ── звук уведомлений: короткий аккорд, без файлов (Web Audio).
+   Браузер разрешает звук только после первого нажатия на странице —
+   поэтому контекст «будим» на любом нажатии. Выключается колокольчиком
+   внизу меню; выбор помнится в этом браузере. ── */
+const SOUND_NOTES = {
+  task:    {notes: [659.25, 987.77], gap: .12, vol: .16},           // новая задача
+  control: {notes: [783.99, 987.77, 1318.51], gap: .11, vol: .16},  // на согласование, возврат, бюджет
+  sent:    {notes: [880, 1174.66], gap: .07, vol: .07},              // своё отправлено
+  info:    {notes: [740], gap: 0, vol: .07},                         // комментарий, закрыто
+  hello:   {notes: [523.25, 659.25, 783.99, 1046.5], gap: .09, vol: .12}, // приветствие новичка
+};
+const Sound = {
+  ctx: null,
+  last: 0,
+  log: [],
+  on() { return Local.get('eva-hq-sound', true) !== false; },
+  set(v) { Local.set('eva-hq-sound', !!v); },
+  unlock() {
+    try {
+      if (!this.ctx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return; this.ctx = new C(); }
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+    } catch (e) { /* звука не будет — не страшно */ }
+  },
+  play(kind = 'info', force = false) {
+    if (!force && !this.on()) return false;
+    const now = Date.now();
+    if (!force && now - this.last < 1200) return false;
+    this.last = now;
+    this.log.push(kind);
+    this.unlock();
+    const ctx = this.ctx, cfg = SOUND_NOTES[kind] || SOUND_NOTES.info;
+    if (!ctx) return false;
+    try {
+      const t0 = ctx.currentTime + .02;
+      cfg.notes.forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain(), at = t0 + i * cfg.gap;
+        o.type = 'sine';
+        o.frequency.value = f;
+        g.gain.setValueAtTime(.0001, at);
+        g.gain.exponentialRampToValueAtTime(cfg.vol, at + .015);
+        g.gain.exponentialRampToValueAtTime(.0001, at + .6);
+        o.connect(g).connect(ctx.destination);
+        o.start(at);
+        o.stop(at + .65);
+      });
+    } catch (e) { return false; }
+    return true;
+  },
+};
 
 /* ── окно ── */
 function openModal({title, body, foot = '', wide = false, focus = true, onMount, onClose}) {
