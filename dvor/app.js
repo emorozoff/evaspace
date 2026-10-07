@@ -1,4 +1,4 @@
-/* КРОНА — интерактив и векторные «чертежи».
+/* Живой двор — интерактив и векторные «чертежи».
    Вся графика сайта рисуется здесь: генплан, разрез, питомник, планы проектов,
    аватары команды. Внешних картинок нет — страница лёгкая и не «ломается». */
 (() => {
@@ -20,8 +20,8 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const C = {
-    ink: '#111513', ink2: '#39413C', muted: '#737B75', green: '#1D4634', green2: '#2E6A4E',
-    green3: '#8DB59A', lime: '#C9F26B', water: '#6E9BC2', paper: '#F6F5F0', sand: '#E2C892',
+    ink: '#1C211D', ink2: '#4B534D', muted: '#858D86', green: '#2E5C40', green2: '#3F7A56',
+    green3: '#8DB59A', lime: '#E8884E', sage: '#BFD0B5', water: '#7FA8C9', paper: '#FFFFFF', sand: '#E2C892',
   };
 
   // Контур «облака» (крона, куст) — окружность с волнами
@@ -48,7 +48,7 @@
       return `<g class="pop" ${st}><polygon points="${pts.join(' ')}" fill="rgba(29,70,52,.22)" stroke="${C.green}" stroke-width=".8"/><circle cx="${f1(x)}" cy="${f1(y)}" r="1.4" fill="${C.green}"/></g>`;
     }
     if (kind === 'flw') {                        // цветущее — пунктир + лайм
-      return `<g class="pop" ${st}><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="rgba(201,242,107,.45)" stroke="${C.green2}" stroke-width=".8" stroke-dasharray="2 2"/><circle cx="${f1(x)}" cy="${f1(y)}" r="1.4" fill="${C.green}"/></g>`;
+      return `<g class="pop" ${st}><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="rgba(232,136,78,.28)" stroke="${C.green2}" stroke-width=".8" stroke-dasharray="2 2"/><circle cx="${f1(x)}" cy="${f1(y)}" r="1.4" fill="${C.green}"/></g>`;
     }
     let spokes = '';
     for (let i = 0; i < 6; i++) {
@@ -124,12 +124,12 @@
 
     // Зонирование
     s += `<g data-g="zones">
-      <circle cx="225" cy="290" r="118" fill="${C.lime}" opacity=".28"/>
+      <circle cx="225" cy="290" r="118" fill="${C.sage}" opacity=".5"/>
       <ellipse cx="500" cy="330" rx="205" ry="135" fill="${C.green3}" opacity=".22"/>
       <rect x="668" y="372" width="196" height="138" rx="18" fill="${C.sand}" opacity=".38"/>
       <circle cx="330" cy="488" r="72" fill="${C.water}" opacity=".16"/>
       <g font-family="JetBrains Mono, monospace" font-size="10" font-weight="500" fill="${C.ink}">
-        ${zoneTag(150, 182, 'Z1 · Детская 0–7')}${zoneTag(560, 205, 'Z2 · Тихий отдых')}${zoneTag(700, 362, 'Z3 · Спорт')}${zoneTag(268, 565, 'Z4 · Сообщество')}
+        ${zoneTag(150, 182, 'Детская площадка')}${zoneTag(560, 205, 'Тихий отдых')}${zoneTag(700, 362, 'Спорт')}${zoneTag(268, 565, 'Соседская гостиная')}
       </g></g>`;
 
     // Мощение (полосы дорожек — контур + покрытие)
@@ -235,7 +235,7 @@
       dh += treeSym(t.x, t.y, t.r, t.k, f1(d));
     });
     $('#h-dendro', svg).innerHTML = dh;
-    const tc = $('#treeCount'); if (tc) tc.textContent = trees.length + ' шт';
+    const tc = $('#treeCount'); if (tc) tc.textContent = trees.length + ' деревьев';
 
     // Освещение — опоры вдоль дорожек
     let lh = '';
@@ -258,15 +258,15 @@
       <rect x="742" y="168" width="26" height="18" fill="${C.paper}" stroke="${C.green}" stroke-width="1"/><text x="755" y="181" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="${C.green}">УП</text>`;
     mh.forEach(([x, y]) => { eh += `<g stroke="${C.water}" stroke-width="1"><circle cx="${x}" cy="${y}" r="6" fill="${C.paper}"/><path d="M${x - 4},${y}H${x + 4}M${x},${y - 4}V${y + 4}"/></g>`; });
     [380, 440, 500, 560, 620].forEach((x) => { eh += `<circle cx="${x}" cy="330" r="22" fill="rgba(110,155,194,.12)" stroke="${C.water}" stroke-width=".6" stroke-dasharray="2 2"/><circle cx="${x}" cy="330" r="2.4" fill="${C.green}"/>`; });
-    eh += noteLabel(150, 548, 'К1 · ливнёвка Ø200', C.water) + noteLabel(372, 356, 'В1 · полив ПЭ 32', C.green);
+    eh += noteLabel(150, 548, 'Ливневая канализация', C.water) + noteLabel(372, 356, 'Автополив', C.green);
     $('#h-eng', svg).innerHTML = eh;
 
     // Выноски
     $('#h-notes', svg).innerHTML =
-      callout(450, 312, 300, 180, 'Д1 · Tilia cordata · ств. 12–14 см') +
-      callout(600, 505, 640, 606, 'Дождевой сад · 240 м² · биодренаж') +
-      callout(225, 250, 140, 420, 'Детская 3–7 лет · резина 40 мм') +
-      callout(800, 420, 760, 300, 'Мультикорт 26×15 м');
+      callout(450, 312, 300, 180, 'Липа · крупномер 7 м') +
+      callout(600, 505, 640, 606, 'Дождевой сад') +
+      callout(225, 250, 140, 420, 'Детская площадка') +
+      callout(800, 420, 760, 300, 'Спортивный корт');
 
     // Анимация прорисовки + координаты под курсором
     requestAnimationFrame(() => svg.classList.add('drawn'));
@@ -307,14 +307,14 @@
      2. РАЗРЕЗ 1–1
      ===================================================================== */
   const SD_MARKS = [
-    [150, 300, 'Покрытие: плитка 80 мм, ЦПС 40 мм, щебень 200 мм, геотекстиль'],
-    [330, 372, 'Структурный грунт с ячеистой системой — 18 м³ для корней под мощением'],
-    [458, 316, 'Ком 1,2×0,7 м — крупномер из питомника КРОНА, 3 года акклиматизации'],
-    [488, 62, 'Липа мелколистная h 7–8 м — тень и «взрослый» двор с первого дня'],
-    [688, 352, 'Дождевой сад: биофильтр 600 мм, принимает сток с 1 200 м² покрытий'],
-    [790, 368, 'Перфорированный дренаж Ø110 в щебёночной обсыпке'],
-    [945, 214, 'Луг из злаков и многолетников: 2 полива за сезон вместо 40 у газона'],
-    [1112, 282, 'Резиновое покрытие 40 мм — безопасность при падении с высоты до 1,5 м'],
+    [150, 300, 'Мощение на щебёночном основании — не проседает и не пучится зимой'],
+    [330, 372, 'Структурный грунт под дорожками: корням есть куда расти'],
+    [458, 316, 'Крупномер из нашего питомника с комом земли — приживается в 97% случаев'],
+    [488, 62, 'Взрослое дерево 7–8 м даёт тень уже в первое лето'],
+    [688, 352, 'Дождевой сад впитывает ливень вместо луж и ливнёвки'],
+    [790, 368, 'Дренаж отводит лишнюю воду от корней и фундаментов'],
+    [945, 214, 'Луг вместо газона: два полива за сезон вместо сорока'],
+    [1112, 282, 'Мягкое покрытие площадки — безопасно при падении'],
   ];
   function sectionDrawing() {
     const host = $('#sectionDrawing');
@@ -386,7 +386,7 @@
     s += `<rect x="860" y="${G}" width="170" height="30" fill="url(#s-soil)"/>`;
     for (let x = 866, i = 0; x < 1026; x += 11, i++) {
       s += `<path d="${tuft(x, G, 40 + (i * 37) % 34, 5, i + 50)}" fill="none" stroke="${C.green2}" stroke-width=".8"/>`;
-      if (i % 3 === 0) s += `<circle cx="${x + 3}" cy="${G - 52 - (i * 13) % 18}" r="3" fill="${i % 2 ? C.lime : '#E5A9C0'}" stroke="${C.ink}" stroke-width=".5"/>`;
+      if (i % 3 === 0) s += `<circle cx="${x + 3}" cy="${G - 52 - (i * 13) % 18}" r="3" fill="${i % 2 ? '#F2B280' : '#E5A9C0'}" stroke="${C.ink}" stroke-width=".5"/>`;
     }
 
     // Детская площадка
@@ -432,12 +432,12 @@
   function nurseryPlan() {
     const host = $('#nurseryPlan');
     if (!host) return;
-    const L = 'rgba(238,243,236,.55)', LL = 'rgba(238,243,236,.3)';
+    const L = 'rgba(46,92,64,.7)', LL = 'rgba(28,33,29,.22)';
     let s = `<svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Схема собственного питомника">
-      <path d="M0,200H600M300,0V400" stroke="rgba(238,243,236,.18)" stroke-width="18"/>
+      <path d="M0,200H600M300,0V400" stroke="#EEEBE2" stroke-width="18"/>
       <path d="M0,200H600M300,0V400" stroke="${LL}" stroke-width="1" stroke-dasharray="10 8"/>`;
     SECTORS.forEach((c) => {
-      let g = `<rect class="bg" x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" fill="rgba(238,243,236,.03)" stroke="${LL}" stroke-width="1"/>`;
+      let g = `<rect class="bg" x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" rx="8" fill="#F6F4EE" stroke="${LL}" stroke-width="1"/>`;
       const R = rng(c.id.charCodeAt(0) * 7 + +c.id[1]);
       const ix = c.x + 10, iy = c.y + 26, iw = c.w - 20, ih = c.h - 34;
       if (c.k === 'dec' || c.k === 'dec2' || c.k === 'flw') {
@@ -445,13 +445,13 @@
         for (let y = iy + st / 2; y < iy + ih; y += st) for (let x = ix + st / 2; x < ix + iw; x += st) {
           const r = st * (0.3 + R() * 0.12);
           g += c.k === 'flw'
-            ? `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="rgba(201,242,107,.35)" stroke="${C.lime}" stroke-width=".6" stroke-dasharray="1.5 1.5"/>`
-            : `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="rgba(238,243,236,.08)" stroke="${L}" stroke-width=".7"/><circle cx="${f1(x)}" cy="${f1(y)}" r="1" fill="${L}"/>`;
+            ? `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="rgba(232,136,78,.25)" stroke="${C.lime}" stroke-width=".6" stroke-dasharray="1.5 1.5"/>`
+            : `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="rgba(63,122,86,.12)" stroke="${L}" stroke-width=".7"/><circle cx="${f1(x)}" cy="${f1(y)}" r="1" fill="${L}"/>`;
         }
       } else if (c.k === 'con') {
         for (let y = iy + 9; y < iy + ih; y += 17) for (let x = ix + 8 + ((y / 17) % 2) * 6; x < ix + iw; x += 15) {
           const h = 5 + R() * 2.5;
-          g += `<path d="M${f1(x)},${f1(y - h)}L${f1(x + h * 0.8)},${f1(y + h * 0.7)}H${f1(x - h * 0.8)}Z" fill="rgba(238,243,236,.12)" stroke="${L}" stroke-width=".7"/>`;
+          g += `<path d="M${f1(x)},${f1(y - h)}L${f1(x + h * 0.8)},${f1(y + h * 0.7)}H${f1(x - h * 0.8)}Z" fill="rgba(63,122,86,.15)" stroke="${L}" stroke-width=".7"/>`;
         }
       } else if (c.k === 'shr' || c.k === 'shr2') {
         const st = c.k === 'shr' ? 9 : 7;
@@ -461,25 +461,24 @@
       } else if (c.k === 'gh') {
         for (let i = 0; i < 4; i++) {
           const y = iy + 2 + i * (ih / 4);
-          g += `<rect x="${ix}" y="${f1(y)}" width="${iw}" height="${f1(ih / 4 - 7)}" fill="rgba(238,243,236,.06)" stroke="${L}" stroke-width=".7"/>`;
+          g += `<rect x="${ix}" y="${f1(y)}" width="${iw}" height="${f1(ih / 4 - 7)}" fill="rgba(63,122,86,.08)" stroke="${L}" stroke-width=".7"/>`;
           for (let x = ix + 6; x < ix + iw; x += 8) g += `<line x1="${x}" y1="${f1(y)}" x2="${x}" y2="${f1(y + ih / 4 - 7)}" stroke="${LL}" stroke-width=".5"/>`;
         }
       } else if (c.k === 'pond') {
-        g += `<path d="${blob(c.x + c.w / 2, c.y + 88, 44, 5, 0.1, 3, 40)}" fill="rgba(110,155,194,.35)" stroke="#9CC0DD" stroke-width="1"/>`;
-        for (let i = 0; i < 4; i++) g += `<path d="M${c.x + 34 + i * 4},${c.y + 74 + i * 9}q6,-3 12,0t12,0t12,0" fill="none" stroke="#BCD6EA" stroke-width=".7"/>`;
+        g += `<path d="${blob(c.x + c.w / 2, c.y + 88, 44, 5, 0.1, 3, 40)}" fill="rgba(127,168,201,.35)" stroke="${C.water}" stroke-width="1"/>`;
+        for (let i = 0; i < 4; i++) g += `<path d="M${c.x + 34 + i * 4},${c.y + 74 + i * 9}q6,-3 12,0t12,0t12,0" fill="none" stroke="${C.water}" stroke-width=".7" opacity=".7"/>`;
       }
-      g += `<text x="${c.x + 8}" y="${c.y + 16}" font-family="JetBrains Mono, monospace" font-size="11" font-weight="500" fill="${C.lime}">${c.id}</text>`;
+      g += `<text x="${c.x + 8}" y="${c.y + 16}" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600" fill="${C.green}">${c.id}</text>`;
       s += `<g class="np-sector" data-id="${c.id}" tabindex="0">${g}</g>`;
     });
-    s += `<g font-family="JetBrains Mono, monospace" font-size="9" fill="rgba(238,243,236,.6)"><text x="580" y="196" text-anchor="end">ДОРОГА · 6 М</text>
-      <g transform="translate(578 384)"><circle r="9" fill="none" stroke="${LL}"/><path d="M0,-8L3.5,4L0,1.5L-3.5,4Z" fill="${C.lime}"/></g></g></svg>`;
+    s += `<g transform="translate(578 384)"><circle r="9" fill="none" stroke="${LL}"/><path d="M0,-8L3.5,4L0,1.5L-3.5,4Z" fill="${C.green}"/></g></svg>`;
     host.innerHTML = s;
 
     const info = $('#npInfo');
     const pick = (g) => {
       $$('.np-sector', host).forEach((x) => x.classList.toggle('on', x === g));
       const c = SECTORS.find((x) => x.id === g.dataset.id);
-      info.textContent = `${c.id} · ${c.t} · ${c.n}`;
+      info.textContent = `${c.id} · ${c.t}`;
     };
     $$('.np-sector', host).forEach((g) => {
       g.addEventListener('pointerenter', () => pick(g));
@@ -491,12 +490,9 @@
 
   /* ---------- сравнение цен ---------- */
   const PRICES = [
-    ['Липа мелколистная', 'ств. 12–14 см, ком 1,2×0,7', 48000, 31200],
-    ['Клён остролистный «Globosum»', 'ств. 10–12 см', 42000, 27500],
-    ['Сосна обыкновенная', 'h 4–5 м, ком 1,5×0,8', 65000, 42300],
-    ['Яблоня декоративная ‘Royalty’', 'ств. 8–10 см', 26000, 17200],
-    ['Дёрен белый ‘Sibirica’', 'C7, h 0,8–1,0 м', 1650, 1080],
-    ['Многолетники и злаки', 'P9–C2, микс', 420, 275],
+    ['Липа, крупномер 7 м', 'ствол 12–14 см, с комом', 48000, 31200],
+    ['Сосна обыкновенная 4–5 м', 'с комом', 65000, 42300],
+    ['Кустарники и многолетники', 'за м² посадок', 4200, 2750],
   ];
   function priceRows() {
     const host = $('#priceRows');
@@ -516,17 +512,17 @@
      4. ПРОЕКТЫ
      ===================================================================== */
   const PROJECTS = [
-    { type: 'court', f: 'zhk', tag: 'ЖК', code: 'П-24-117', t: 'Двор-парк ЖК бизнес-класса', d: 'Двор без машин на стилобате и грунте, 4 сценария досуга, дождевые сады вдоль главной аллеи.', m: [['2,9 га', 'площадь'], ['214', 'деревьев'], ['2025', 'сдача']] },
-    { type: 'roof', f: 'zhk', tag: 'ЖК · кровля', code: 'П-25-031', t: 'Сад на стилобате ЖК премиум-класса', d: 'Эксплуатируемая кровля над паркингом: деревья в кадках до 6 м, деки, приватные патио.', m: [['0,6 га', 'площадь'], ['1,2 м', 'грунта'], ['2025', 'сдача']] },
-    { type: 'park', f: 'pub', tag: 'Город', code: 'П-23-064', t: 'Городской парк у воды', d: 'Реконструкция заброшенной территории: пруд, луга, тропы, площадки для всех возрастов.', m: [['12 га', 'площадь'], ['1 860', 'деревьев'], ['2024', 'сдача']] },
-    { type: 'embank', f: 'pub', tag: 'Город', code: 'П-24-009', t: 'Набережная и прогулочный маршрут', d: 'Многоуровневая набережная с понтонами, амфитеатром и аллеей из крупномеров.', m: [['1,8 км', 'длина'], ['540', 'деревьев'], ['2024', 'сдача']] },
-    { type: 'school', f: 'infra', tag: 'Инфраструктура', code: 'П-25-078', t: 'Территория школы на 1 100 мест', d: 'Стадион, учебные огороды, тихие дворики и безопасные маршруты от остановок.', m: [['3,4 га', 'площадь'], ['310', 'деревьев'], ['2025', 'сдача']] },
-    { type: 'boulevard', f: 'infra', tag: 'Инфраструктура', code: 'П-26-012', t: 'Бульвар у транспортного узла', d: 'Двухрядная аллея, велодорожка, биодренаж вдоль проезжей части, площадь у входа в метро.', m: [['960 м', 'длина'], ['286', 'деревьев'], ['2026', 'сдача']] },
+    { type: 'court', f: 'zhk', tag: 'Жилой комплекс', t: 'Двор-парк бизнес-класса', d: 'Двор без машин, четыре сценария досуга и дождевые сады вдоль главной аллеи.', m: ['2,9 га', '2025'] },
+    { type: 'roof', f: 'zhk', tag: 'Жилой комплекс', t: 'Сад на кровле паркинга', d: 'Деревья до 6 м в кадках, деревянные деки и приватные патио над подземной парковкой.', m: ['0,6 га', '2025'] },
+    { type: 'park', f: 'pub', tag: 'Парк', t: 'Городской парк у воды', d: 'Заброшенная территория стала парком с прудом, лугами, тропами и площадками для всех возрастов.', m: ['12 га', '2024'] },
+    { type: 'embank', f: 'pub', tag: 'Набережная', t: 'Набережная и прогулочный маршрут', d: 'Несколько уровней у воды, понтоны, амфитеатр и аллея из взрослых деревьев.', m: ['1,8 км', '2024'] },
+    { type: 'school', f: 'infra', tag: 'Школа', t: 'Территория школы на 1 100 мест', d: 'Стадион, учебные огороды, тихие дворики и безопасные маршруты от остановок.', m: ['3,4 га', '2025'] },
+    { type: 'boulevard', f: 'infra', tag: 'Бульвар', t: 'Бульвар у станции метро', d: 'Двухрядная аллея, велодорожка, биодренаж вдоль проезжей части и площадь у входа в метро.', m: ['960 м', '2026'] },
   ];
   function projPlan(type, seed) {
     const R = rng(seed);
     const p = `p${seed}-`;
-    let s = `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs>${PATTERNS(p)}</defs><rect width="400" height="300" fill="#F6F5F0"/>`;
+    let s = `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs>${PATTERNS(p)}</defs><rect width="400" height="300" fill="#FBFAF7"/>`;
     const grid = `<path d="${Array.from({ length: 9 }, (_, i) => `M${i * 50},0V300`).join('')}${Array.from({ length: 7 }, (_, i) => `M0,${i * 50}H400`).join('')}" stroke="${C.ink}" stroke-width=".3" opacity=".12"/>`;
     s += grid;
     const trees = [];
@@ -574,7 +570,7 @@
       s += band('M0,170H140M210,120H400M330,0V300', 8);
       scatter(70, (x, y, r) => (x < 140 && y < 160) || (x > 320 + r && y < 110) || (x > 210 && x < 320 && y > 130 + r && y < 190 - r) || (y > 290), 6, 11);
     } else {
-      s += `<rect x="0" y="0" width="400" height="70" fill="#E3E1D9"/><rect x="0" y="230" width="400" height="70" fill="#E3E1D9"/>`;
+      s += `<rect x="0" y="0" width="400" height="70" fill="#E9E6DE"/><rect x="0" y="230" width="400" height="70" fill="#E9E6DE"/>`;
       s += `<path d="M0,35H400M0,265H400" stroke="#fff" stroke-width="1.5" stroke-dasharray="12 10"/>`;
       s += band('M0,118H400', 22) + `<path d="M0,170H400" stroke="${C.lime}" stroke-width="12"/><path d="M0,170H400" stroke="${C.ink}" stroke-width=".6" stroke-dasharray="6 6"/>`;
       s += `<rect x="0" y="198" width="400" height="22" fill="url(#${p}water)" stroke="${C.water}" stroke-width=".6"/>`;
@@ -591,62 +587,13 @@
     if (!host) return;
     host.innerHTML = PROJECTS.map((p, i) => `
       <article class="pcard reveal" data-f="${p.f}">
-        <div class="pcard__img">${projPlan(p.type, i + 3)}<span class="pcard__tag">${p.tag}</span><span class="pcard__code">${p.code}</span></div>
+        <div class="pcard__img">${projPlan(p.type, i + 3)}<span class="pcard__tag">${p.tag}</span></div>
         <div class="pcard__body"><h3>${p.t}</h3><p>${p.d}</p>
-          <div class="pcard__meta">${p.m.map(([b, s]) => `<div><b>${b}</b><span>${s}</span></div>`).join('')}</div></div>
+          <div class="pcard__meta">${p.m.map((m) => `<span>${m}</span>`).join('')}</div></div>
       </article>`).join('');
     $$('.filters button').forEach((b) => b.addEventListener('click', () => {
       $$('.filters button').forEach((x) => x.classList.toggle('on', x === b));
       $$('.pcard', host).forEach((c) => c.classList.toggle('hide', b.dataset.f !== 'all' && c.dataset.f !== b.dataset.f));
-    }));
-  }
-
-  /* =====================================================================
-     5. СМЕТА И БАЛАНС
-     ===================================================================== */
-  const COST = [
-    ['Подготовительные и земляные работы', '12 000', 'м²', 14.4, 0.05],
-    ['Инженерные сети: дренаж, полив, освещение', '1', 'компл.', 27.0, 0],
-    ['Мощение: гранит, бетонная плитка, бортовой камень', '3 600', 'м²', 41.4, 0.05],
-    ['Детские и спортивные площадки', '1 680', 'м²', 23.4, 0.05],
-    ['МАФ, перголы, навигация', '1', 'компл.', 18.0, 0],
-    ['Посадочный материал', '7 845', 'шт', 34.2, 0.35],
-    ['Посадка, газоны, цветники', '5 520', 'м²', 12.6, 0.05],
-    ['Проектирование и авторский надзор', '1', 'компл.', 9.0, 0],
-  ];
-  function estimate() {
-    const body = $('#costRows');
-    if (!body) return;
-    const total = COST.reduce((a, r) => a + r[3], 0);
-    const ours = COST.reduce((a, r) => a + r[3] * (1 - r[4]), 0);
-    body.innerHTML = COST.map((r, i) => `<tr><td>${String(i + 1).padStart(2, '0')}</td><td>${r[0]}${r[4] >= 0.3 ? ' <b style="color:var(--green-2)">· питомник −35%</b>' : ''}</td><td>${r[1]}</td><td>${r[2]}</td><td class="r">${nf(r[3] * 1e6)}</td><td class="r">${Math.round(r[3] / total * 100)}%<span class="share"><i style="width:${r[3] / total * 100 * 3}%"></i></span></td></tr>`).join('');
-    $('#costMarket').textContent = nf(total * 1e6);
-    $('#costOurs').textContent = nf(Math.round(ours * 10) / 10 * 1e6);
-    $('#costSave').textContent = '−' + nf((1 - ours / total) * 100, 1) + '%';
-
-    // Баланс территории — кольцевая диаграмма
-    const parts = [
-      ['Озеленение: газоны, луга, посадки', 5520, C.green2],
-      ['Мощение и дорожки', 3600, '#CFCABB'],
-      ['Детские и спортивные площадки', 1680, C.lime],
-      ['МАФ, перголы, отмостка', 720, C.ink2],
-      ['Дождевые сады, вода', 480, C.water],
-    ];
-    const sum = parts.reduce((a, p) => a + p[1], 0);
-    let a0 = -Math.PI / 2, arcs = '';
-    parts.forEach(([, v, col]) => {
-      const a1 = a0 + (v / sum) * Math.PI * 2, r = 80, ri = 50, cx = 100, cy = 100;
-      const big = a1 - a0 > Math.PI ? 1 : 0;
-      const P = (a, rr) => `${f1(cx + Math.cos(a) * rr)},${f1(cy + Math.sin(a) * rr)}`;
-      arcs += `<path d="M${P(a0, r)}A${r},${r} 0 ${big} 1 ${P(a1, r)}L${P(a1, ri)}A${ri},${ri} 0 ${big} 0 ${P(a0, ri)}Z" fill="${col}" stroke="#F8F7F2" stroke-width="2"/>`;
-      a0 = a1;
-    });
-    $('#balance').innerHTML = `<svg viewBox="0 0 200 200">${arcs}<text x="100" y="98" text-anchor="middle" font-family="Manrope" font-size="22" font-weight="600" fill="${C.ink}">1,2 га</text><text x="100" y="116" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="${C.muted}">БАЛАНС</text></svg>
-      <ul>${parts.map(([n, v, col]) => `<li><i style="background:${col}"></i>${n}<b>${nf(v)} м²</b><span>${nf(v / sum * 100, 0)}%</span></li>`).join('')}</ul>`;
-
-    $$('.sheet__tabs button').forEach((b) => b.addEventListener('click', () => {
-      $$('.sheet__tabs button').forEach((x) => x.classList.toggle('on', x === b));
-      $$('.tab').forEach((t) => t.classList.toggle('on', t.dataset.pane === b.dataset.tab));
     }));
   }
 
@@ -658,7 +605,7 @@
     business: { rate: 15000, uplift: 0.07 },
     premium: { rate: 26000, uplift: 0.09 },
   };
-  const SAVING = 0.092;                // экономия КРОНА: питомник + свои бригады (см. смету)
+  const SAVING = 0.09;                 // экономия студии: свой питомник и свои бригады
   function money(v) {
     if (v >= 1e9) return nf(v / 1e9, 2) + ' млрд ₽';
     if (v >= 1e6) return nf(v / 1e6, v >= 1e8 ? 0 : 1) + ' млн ₽';
@@ -674,10 +621,9 @@
       $('#vSale').textContent = nf(sale); $('#vPrice').textContent = nf(price); $('#vLand').textContent = nf(land);
       const market = land * c.rate, ours = market * (1 - SAVING), rev = sale * price * c.uplift;
       $('#oRevenue').textContent = '+' + money(rev);
-      $('#oMarket').textContent = money(market);
       $('#oOurs').textContent = money(ours);
+      $('#oSave').textContent = nf(SAVING * 100, 0) + '%';
       $('#oRoi').textContent = '×' + nf(rev / ours, 1);
-      $('#oShare').textContent = nf(ours / (sale * price) * 100, 2) + '%';
       [iSale, iPrice, iLand].forEach(paint);
     };
     [iSale, iPrice, iLand].forEach((el) => el.addEventListener('input', upd));
@@ -693,50 +639,36 @@
      7. КОМАНДА, ЭТАПЫ, ГРАФИК
      ===================================================================== */
   const TEAM = [
-    ['Анна Северина', 'Главный архитектор, партнёр', 'Автор концепций для 60+ жилых комплексов. Магистр ландшафтной архитектуры, стажировки в бюро Нидерландов и Дании.', '16 лет в профессии'],
-    ['Михаил Громов', 'Главный инженер проекта', 'Вертикальная планировка, дренаж и эксплуатируемые кровли. Ведёт экспертизу и согласования.', '14 лет в профессии'],
-    ['Елена Вяземская', 'Главный дендролог', 'Ассортимент и акклиматизация, обследование существующих насаждений, гарантийный надзор.', '19 лет в профессии'],
-    ['Дмитрий Ольхов', 'Руководитель питомника', '42 га полей и 214 видов. Отвечает за качество посадочного материала и логистику до объекта.', '12 лет в профессии'],
-    ['Ксения Белова', 'Руководитель отдела концепций', 'Исследования аудитории, сценарии жизни во дворе, визуализации для отделов продаж девелоперов.', '9 лет в профессии'],
-    ['Артём Лесков', 'Директор по строительству', '12 собственных бригад, график с контрольными точками, качество и безопасность на объекте.', '15 лет в профессии'],
+    ['Анна Северина', 'Главный архитектор', 'Автор концепций для 60+ жилых комплексов. Стажировалась в ландшафтных бюро Нидерландов и Дании.'],
+    ['Михаил Громов', 'Главный инженер', 'Вертикальная планировка, дренаж, эксплуатируемые кровли. Ведёт экспертизу и согласования с городом.'],
+    ['Елена Вяземская', 'Главный дендролог', 'Подбирает и акклиматизирует растения, обследует существующие деревья, отвечает за гарантию.'],
+    ['Артём Лесков', 'Директор по строительству', 'Собственные бригады, график с контрольными точками, качество и безопасность на объекте.'],
   ];
   function avatar(name, seed) {
     const R = rng(seed * 97 + 13);
     const cx = 30 + R() * 52, cy = 30 + R() * 50;
     let rings = '';
-    for (let i = 0; i < 11; i++) rings += `<path d="${blob(cx, cy, 8 + i * 9, 3 + (i % 3), 0.09 + R() * 0.05, seed * 10 + i, (8 + i * 9) * (0.85 + R() * 0.2))}" fill="none" stroke="${C.lime}" stroke-width="${i % 4 === 0 ? 1 : 0.5}" opacity="${i % 4 === 0 ? 0.65 : 0.3}"/>`;
+    for (let i = 0; i < 11; i++) rings += `<path d="${blob(cx, cy, 8 + i * 9, 3 + (i % 3), 0.09 + R() * 0.05, seed * 10 + i, (8 + i * 9) * (0.85 + R() * 0.2))}" fill="none" stroke="${C.green}" stroke-width="${i % 4 === 0 ? 1 : 0.5}" opacity="${i % 4 === 0 ? 0.6 : 0.28}"/>`;
     const ini = name.split(' ').map((w) => w[0]).join('');
-    return `<svg viewBox="0 0 112 136" aria-hidden="true"><rect width="112" height="136" fill="#1B2420"/>${rings}
+    return `<svg viewBox="0 0 112 124" aria-hidden="true"><rect width="112" height="124" fill="#DDE6D5"/>${rings}
       <circle cx="${f1(cx)}" cy="${f1(cy)}" r="2.5" fill="${C.lime}"/>
-      <text x="10" y="124" font-family="Manrope" font-size="34" font-weight="600" letter-spacing="-1" fill="#F2F4EE">${ini}</text></svg>`;
+      <text x="12" y="110" font-family="Unbounded, Manrope" font-size="26" font-weight="400" fill="${C.green}">${ini}</text></svg>`;
   }
   function team() {
     const host = $('#teamGrid'); if (!host) return;
-    host.innerHTML = TEAM.map(([n, r, t, e], i) => `<article class="member reveal">${avatar(n, i + 1)}<div><div class="member__role">${r}</div><h3>${n}</h3><p>${t}</p><p class="member__exp">${e}</p></div></article>`).join('');
+    host.innerHTML = TEAM.map(([n, r, t], i) => `<article class="member reveal">${avatar(n, i + 1)}<div class="member__role">${r}</div><h3>${n}</h3><p>${t}</p></article>`).join('');
   }
 
   const STEPS = [
-    ['Заявка и выезд', 'Встреча, выезд на участок, сбор исходных данных и задач по продажам.', '1–3 дня'],
-    ['Предпроектный анализ', 'Обследование, инсоляция, аудитория, конкуренты. ТЗ и бюджет-ориентир.', '1–2 недели'],
-    ['Концепция', 'Мастер-план, зонирование, визуализации. Две итерации правок включены.', '3–5 недель'],
-    ['Смета и договор', 'Фиксированная цена и график с контрольными точками в договоре.', '5 дней'],
-    ['Проектирование', 'ПД и РД, дендроплан, инженерные разделы, сопровождение экспертизы.', '6–10 недель'],
-    ['Питомник и стройка', 'Резерв растений на полях, собственные бригады, еженедельные отчёты.', '3–6 месяцев'],
-    ['Сдача объекта', 'Приёмка, исполнительная документация, паспорт объекта для УК.', '1–2 недели'],
-    ['Уход и гарантия', 'Сезонный уход по регламенту, замена растений по гарантии.', '24 месяца'],
-  ];
-  const GANTT = [
-    ['Анализ и выезд', 0, 0.6, ''], ['Концепция', 0.5, 2, ''], ['Смета и договор', 1.8, 2.3, 'lime'],
-    ['Проект ПД / РД', 2.2, 4.6, ''], ['Согласования', 3.6, 5.4, 'hatch'], ['Резерв в питомнике', 2.4, 6.5, 'lime'],
-    ['Строительство', 5, 9.2, ''], ['Озеленение', 7, 10, 'lime'], ['Сдача', 9.8, 10.4, ''], ['Уход и гарантия', 10.4, 12, 'hatch'],
+    ['Встреча и выезд', 'Смотрим участок, слушаем задачи по продажам, собираем исходные данные.', '1–3 дня'],
+    ['Концепция', 'Зонирование, сценарии жизни во дворе, визуализации и бюджет-ориентир.', '3–5 недель'],
+    ['Смета и договор', 'Фиксируем цену и график с контрольными точками.', '5 дней'],
+    ['Проект и стройка', 'Рабочая документация, согласования, резерв растений в питомнике, собственные бригады.', '4–9 месяцев'],
+    ['Сдача и уход', 'Приёмка, паспорт объекта для УК, два года гарантийного ухода.', '24 месяца'],
   ];
   function process() {
     const host = $('#steps'); if (!host) return;
-    host.innerHTML = STEPS.map(([h, p, t], i) => `<li class="step reveal"><span class="step__n">${String(i + 1).padStart(2, '0')}</span><h3>${h}</h3><p>${p}</p><span class="step__t">Срок: <b>${t}</b></span></li>`).join('');
-    $('#gantt').innerHTML = `<div class="gantt__inner">
-      <div class="gantt__head"><span>ГР-09 · Типовой график, мес.</span><div class="gantt__months">${Array.from({ length: 12 }, (_, i) => `<span>М${i + 1}</span>`).join('')}</div></div>
-      ${GANTT.map(([n, a, b, c], i) => `<div class="gantt__row"><span>${n}</span><div class="gantt__track"><i class="gantt__bar ${c}" style="left:${a / 12 * 100}%;width:${(b - a) / 12 * 100}%;--d:${i * 0.08}s"></i></div></div>`).join('')}
-      <p class="gantt__note">Объект 1–3 га · сроки зависят от сезона посадок и стадии исходной документации · гарантийный уход продолжается 24 месяца</p></div>`;
+    host.innerHTML = STEPS.map(([h, p, t], i) => `<li class="step reveal"><span class="step__n">Шаг ${i + 1}</span><h3>${h}</h3><p>${p}</p><span class="step__t">${t}</span></li>`).join('');
   }
 
   /* =====================================================================
@@ -777,13 +709,11 @@
       $$('.prow__bar i', el).forEach((i) => { i.style.width = i.dataset.w + '%'; });
       io.unobserve(el);
     }), { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-    $$('.reveal, .gantt, .prices').forEach((el) => io.observe(el));
+    $$('.reveal, .prices').forEach((el) => io.observe(el));
   }
 
   function form() {
     const f = $('#leadForm'); if (!f) return;
-    const no = 'Ф-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-' + String(Math.floor(Math.random() * 900) + 100);
-    $('#formNo').textContent = '№ ' + no;
     const mail = $('#cMail').textContent.trim();
     f.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -793,11 +723,11 @@
         inp.closest('.fld').classList.toggle('err', bad); if (bad) ok = false;
       });
       const msg = $('#formMsg');
-      if (!ok) { msg.style.color = '#FF8A6B'; msg.textContent = 'Заполните имя и контакт — этого достаточно, чтобы мы связались.'; return; }
+      if (!ok) { msg.style.color = '#E8884E'; msg.textContent = 'Заполните имя и контакт — этого достаточно, чтобы мы связались.'; return; }
       const d = Object.fromEntries(new FormData(f));
-      const body = `Заявка ${no}\n\nИмя: ${d.name}\nКомпания: ${d.company || '—'}\nКонтакт: ${d.contact}\nОбъект: ${d.type}\nПлощадь: ${d.area || '—'} м²\nСтадия: ${d.stage}\n\n${d.note || ''}`;
-      location.href = `mailto:${mail}?subject=${encodeURIComponent('Заявка на проект ' + no)}&body=${encodeURIComponent(body)}`;
-      msg.style.color = ''; msg.textContent = `Заявка ${no} подготовлена в почтовом приложении — отправьте письмо, и менеджер ответит в течение 2 часов.`;
+      const body = `Имя: ${d.name}\nКомпания: ${d.company || '—'}\nКонтакт: ${d.contact}\nОбъект: ${d.type}\n\n${d.note || ''}`;
+      location.href = `mailto:${mail}?subject=${encodeURIComponent('Заявка на проект — Живой двор')}&body=${encodeURIComponent(body)}`;
+      msg.style.color = ''; msg.textContent = 'Письмо подготовлено в почтовом приложении — отправьте его, и мы ответим в течение рабочего дня.';
     });
   }
 
@@ -807,7 +737,6 @@
   nurseryPlan();
   priceRows();
   projects();
-  estimate();
   calc();
   team();
   process();

@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Живой двор — ландшафтная студия. Дворы ЖК и городские пространства</title>
+<meta name="description" content="Ландшафтная студия полного цикла: проектируем, строим и озеленяем дворы жилых комплексов и городские пространства. Собственный питомник — растения без наценок посредников.">
+<meta name="theme-color" content="#F6F4EE">
+<meta property="og:title" content="Живой двор — ландшафтная студия">
+<meta property="og:description" content="Дворы ЖК и городские пространства полного цикла: концепция, проект, стройка, озеленение, уход. Свой питомник.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Unbounded:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=2">
+</head>
+<body>
+
+<header class="nav" id="top">
+  <div class="nav__in">
+    <a class="logo" href="#top" aria-label="Живой двор — на главную">
+      <svg class="logo__mark" viewBox="0 0 40 40" aria-hidden="true">
+        <path d="M20 36c0-11 4-19 14-24-2 10-6 17-14 24Z"/>
+        <path d="M20 36C20 25 16 17 6 12c2 10 6 17 14 24Z"/>
+        <path d="M20 36V18"/>
+      </svg>
+      <span class="logo__text"><b>Живой двор</b><small>ландшафтная студия</small></span>
+    </a>
+    <nav class="nav__links" aria-label="Разделы">
+      <a href="#why">Почему двор</a>
+      <a href="#value">Экономика</a>
+      <a href="#services">Услуги</a>
+      <a href="#nursery">Питомник</a>
+      <a href="#projects">Проекты</a>
+      <a href="#how">Как работаем</a>
+    </nav>
+    <a class="btn btn--sm btn--accent nav__cta" href="#contact">Обсудить проект</a>
+    <button class="nav__burger" aria-label="Меню" aria-expanded="false"><span></span><span></span></button>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ ГЛАВНЫЙ ЭКРАН ============ -->
+<section class="hero">
+  <div class="wrap hero__grid">
+    <div class="hero__text">
+      <p class="eyebrow reveal">Ландшафтная студия · дворы ЖК и городские пространства</p>
+      <h1 class="hero__title reveal">Двор, в котором хочется жить</h1>
+      <p class="hero__lead reveal">Проектируем, строим и озеленяем дворы жилых комплексов, парки, бульвары и школы. Один подрядчик на весь путь — от первого эскиза до ухода за посадками. Растения — из собственного питомника.</p>
+      <div class="hero__actions reveal">
+        <a class="btn btn--accent" href="#contact">Обсудить проект <span class="arr">→</span></a>
+        <a class="btn btn--ghost" href="#projects">Смотреть проекты</a>
+      </div>
+      <dl class="hero__kpi reveal">
+        <div><dt><span class="count" data-to="180">0</span>+</dt><dd>дворов и парков построено</dd></div>
+        <div><dt><span class="count" data-to="12">0</span> лет</dt><dd>работаем с девелоперами и городом</dd></div>
+        <div><dt><span class="count" data-to="42">0</span> га</dt><dd>собственный питомник растений</dd></div>
+      </dl>
+    </div>
+
+    <div class="hero__plan reveal">
+      <div class="plan-card">
+        <div class="plan-card__bar">
+          <span>Генплан двора ЖК · фрагмент проекта</span>
+          <span class="plan-card__xy" id="xy">X 000.0 · Y 000.0</span>
+        </div>
+        <div class="plan-card__layers" role="group" aria-label="Слои чертежа">
+          <button class="layer on" data-layer="zones">Зоны</button>
+          <button class="layer on" data-layer="dendro">Деревья</button>
+          <button class="layer on" data-layer="paving">Дорожки</button>
+          <button class="layer" data-layer="eng">Вода и полив</button>
+          <button class="layer" data-layer="light">Свет</button>
+        </div>
+        <div class="plan-card__svg" id="heroPlan"></div>
+        <div class="stamp">
+          <span>Двор-парк · 2,9 га</span>
+          <span id="treeCount">— деревьев</span>
+          <span>М 1:500</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ПОЧЕМУ ДВОР ============ -->
+<section class="section" id="why">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="sec-num reveal">01 — Почему двор</p>
+      <h2 class="sec-title reveal">Квартиры похожи. <br>Выбирают двор.</h2>
+    </div>
+    <div class="why">
+      <div class="why__text reveal">
+        <p class="big">Планировки и отделка у соседних жилых комплексов почти одинаковые. Конкуренция растёт, и решает то, что происходит за порогом подъезда.</p>
+        <p>Покупатель приходит не за метрами, а за образом жизни: утренняя пробежка во дворе, площадка под окнами кухни, тень взрослых деревьев в июле, тишина вместо парковки. Двор стал продолжением квартиры — и главным аргументом в споре проектов одного класса.</p>
+      </div>
+      <div class="why__stats reveal">
+        <div class="stat"><b><span class="count" data-to="72">0</span>%</b><span>покупателей называют двор одним из главных факторов выбора ЖК</span></div>
+        <div class="stat"><b>+<span class="count" data-to="12">0</span>%</b><span>к цене квадратного метра даёт продуманное благоустройство</span></div>
+      </div>
+    </div>
+    <div class="life">
+      <article class="life-card reveal">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 30h32M14 30v-8h20v8M20 22v-6h8v6"/><circle cx="16" cy="36" r="3"/><circle cx="32" cy="36" r="3"/><path d="M4 30l6-8M44 30l-6-8" stroke-dasharray="2 3"/></svg>
+        <h3>Двор без машин</h3><p>Пешеходная среда, безопасная для детей. Транспорт — под землю и по периметру.</p>
+      </article>
+      <article class="life-card reveal">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="14" cy="14" r="4"/><circle cx="34" cy="12" r="5"/><circle cx="24" cy="30" r="3"/><path d="M8 32c0-6 3-9 6-9s6 3 6 9M26 30c0-9 4-13 8-13s8 4 8 13M18 42c0-4 3-6 6-6s6 2 6 6"/></svg>
+        <h3>Для всех возрастов</h3><p>Площадки для малышей, подростков и спорт для взрослых, тихие места для старших.</p>
+      </article>
+      <article class="life-card reveal">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 42V24"/><path d="M24 26c-9 0-14-5-14-12 0-5 5-9 14-9s14 4 14 9c0 7-5 12-14 12Z"/><path d="M10 42h28" stroke-dasharray="2 3"/></svg>
+        <h3>Тень и прохлада</h3><p>Крупномеры с первого дня, перголы и вода. Двор комфортен даже в +30.</p>
+      </article>
+      <article class="life-card reveal">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 40c8-2 12-8 12-16 0-4-2-8-6-10 10 0 16 6 16 16 0 6-4 10-10 10"/><path d="M42 40c-6-2-10-6-10-12 0-4 2-6 6-8-6 0-10 4-10 10 0 4 2 8 6 10"/><path d="M4 42h40"/></svg>
+        <h3>Природа в городе</h3><p>Луга вместо газонов, дождевые сады, птицы и бабочки. Двор живой в любой сезон.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ЭКОНОМИКА ============ -->
+<section class="section section--deep" id="value">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="sec-num reveal">02 — Экономика</p>
+      <h2 class="sec-title reveal">Озеленение, которое окупается</h2>
+      <p class="sec-lead reveal">Данные по нашим объектам за последние пять лет. Диапазон зависит от класса и локации — точные цифры по вашему проекту покажем на встрече.</p>
+    </div>
+    <div class="effects">
+      <div class="effect reveal"><b>+5–12%</b><span>к цене квадратного метра относительно аналогов в локации</span></div>
+      <div class="effect reveal"><b>+18–25%</b><span>конверсия визита в офис продаж в сделку</span></div>
+      <div class="effect reveal"><b>+15–30%</b><span>темп продаж после открытия двора первой очереди</span></div>
+    </div>
+
+    <div class="calc reveal" id="calc">
+      <div class="calc__inputs">
+        <h3>Посчитайте эффект для своего ЖК</h3>
+        <label class="field">
+          <span class="field__k">Продаваемая площадь квартир</span>
+          <span class="field__v"><b id="vSale">60 000</b> м²</span>
+          <input type="range" id="iSale" min="5000" max="300000" step="1000" value="60000">
+        </label>
+        <label class="field">
+          <span class="field__k">Средняя цена м²</span>
+          <span class="field__v"><b id="vPrice">250 000</b> ₽</span>
+          <input type="range" id="iPrice" min="90000" max="900000" step="5000" value="250000">
+        </label>
+        <label class="field">
+          <span class="field__k">Площадь благоустройства</span>
+          <span class="field__v"><b id="vLand">12 000</b> м²</span>
+          <input type="range" id="iLand" min="1000" max="80000" step="500" value="12000">
+        </label>
+        <div class="field">
+          <span class="field__k">Класс объекта</span>
+          <div class="seg" role="group" aria-label="Класс объекта">
+            <button data-cls="comfort">Комфорт</button>
+            <button data-cls="business" class="on">Бизнес</button>
+            <button data-cls="premium">Премиум</button>
+          </div>
+        </div>
+      </div>
+      <div class="calc__out">
+        <div class="out out--main"><span>Дополнительная выручка проекта</span><b id="oRevenue">—</b></div>
+        <div class="out"><span>Бюджет благоустройства</span><b id="oOurs">—</b><small>на <em id="oSave">—</em> меньше рынка за счёт своего питомника</small></div>
+        <div class="out"><span>Окупаемость вложений</span><b id="oRoi">—</b></div>
+        <p class="note">Модельный расчёт по нашей статистике. Не является офертой.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ УСЛУГИ ============ -->
+<section class="section" id="services">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="sec-num reveal">03 — Что делаем</p>
+      <h2 class="sec-title reveal">Полный цикл. Один подрядчик.</h2>
+    </div>
+    <div class="svc">
+      <article class="svc-card reveal">
+        <span class="svc-card__n">01</span>
+        <h3>Исследование и концепция</h3>
+        <p>Анализ участка, инсоляции и аудитории. Мастер-план, сценарии жизни во дворе, визуализации для отдела продаж, укрупнённый бюджет.</p>
+      </article>
+      <article class="svc-card reveal">
+        <span class="svc-card__n">02</span>
+        <h3>Проект и согласования</h3>
+        <p>Проектная и рабочая документация, дендроплан, дренаж, полив, освещение. Сопровождение экспертизы и согласования с городскими службами.</p>
+      </article>
+      <article class="svc-card reveal">
+        <span class="svc-card__n">03</span>
+        <h3>Строительство и озеленение</h3>
+        <p>Собственные бригады: мощение, площадки, малые формы, свет. Посадка крупномеров и природоподобных цветников из нашего питомника.</p>
+      </article>
+      <article class="svc-card reveal">
+        <span class="svc-card__n">04</span>
+        <h3>Уход и гарантия</h3>
+        <p>Сезонный уход по регламенту, обслуживание полива, замена растений по гарантии. Паспорт объекта и понятный бюджет для управляющей компании.</p>
+      </article>
+    </div>
+
+    <div class="drawing reveal">
+      <div class="drawing__head"><span>Как устроен живой двор · разрез</span><span class="drawing__hint">наведите на цифры</span></div>
+      <div class="drawing__svg" id="sectionDrawing"></div>
+      <ol class="drawing__legend" id="sdLegend"></ol>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ПИТОМНИК ============ -->
+<section class="section section--sage" id="nursery">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="sec-num reveal">04 — Свой питомник</p>
+      <h2 class="sec-title reveal">Растения с наших полей — без наценок посредников</h2>
+    </div>
+    <div class="nursery">
+      <div class="nursery__plan reveal">
+        <div class="np__bar"><span>Питомник · 42 га</span><span id="npInfo">Выберите сектор</span></div>
+        <div id="nurseryPlan"></div>
+      </div>
+      <div class="nursery__text reveal">
+        <p class="big">Мы выращиваем то, что сажаем. Каждое дерево три года акклиматизируется в нашем климате, а заказчик выбирает и маркирует растения на поле лично.</p>
+        <ul class="ticks">
+          <li>Цена растений фиксируется на весь срок проекта</li>
+          <li>Экономия до 35% на посадочном материале</li>
+          <li>Приживаемость крупномеров 97%, гарантия два года</li>
+        </ul>
+      </div>
+    </div>
+    <div class="prices reveal">
+      <div class="prices__head"><span>Сравнение цен на посадочный материал</span><span class="legend"><i class="m"></i>Рынок<i class="o"></i>Живой двор</span></div>
+      <div id="priceRows"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ПРОЕКТЫ ============ -->
+<section class="section" id="projects">
+  <div class="wrap">
+    <div class="sec-head sec-head--row">
+      <div>
+        <p class="sec-num reveal">05 — Проекты</p>
+        <h2 class="sec-title reveal">Дворы и пространства, которые мы построили</h2>
+      </div>
+      <div class="filters" role="group" aria-label="Фильтр проектов">
+        <button class="on" data-f="all">Все</button>
+        <button data-f="zhk">Жилые комплексы</button>
+        <button data-f="pub">Парки и набережные</button>
+        <button data-f="infra">Школы и улицы</button>
+      </div>
+    </div>
+    <div class="proj" id="projGrid"></div>
+  </div>
+</section>
+
+<!-- ============ КАК РАБОТАЕМ ============ -->
+<section class="section section--soft" id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="sec-num reveal">06 — Как работаем</p>
+      <h2 class="sec-title reveal">Понятный путь с ценой и сроками в договоре</h2>
+    </div>
+    <ol class="steps" id="steps"></ol>
+    <div class="principles">
+      <article class="principle reveal"><h3>Прозрачная смета</h3><p>Цена каждой позиции открыта, документы и фотоотчёты — в онлайн-доступе заказчика. Никаких «доплат по факту».</p></article>
+      <article class="principle reveal"><h3>Честная цена</h3><p>Свой питомник, свои бригады, прямые контракты с производителями. Из цепочки убрано всё, что не добавляет ценности.</p></article>
+      <article class="principle reveal"><h3>Сроки в договоре</h3><p>График с контрольными точками и ответственностью за срыв. Девять из десяти объектов сдаём в срок или раньше.</p></article>
+      <article class="principle reveal"><h3>Гарантия на живое</h3><p>Два года на растения и пять лет на конструкции. Если дерево не прижилось — заменим за свой счёт.</p></article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ КОМАНДА ============ -->
+<section class="section" id="team">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="sec-num reveal">07 — Команда</p>
+      <h2 class="sec-title reveal">Архитекторы, инженеры и дендрологи в одной студии</h2>
+    </div>
+    <div class="team" id="teamGrid"></div>
+  </div>
+</section>
+
+<!-- ============ КОНТАКТ ============ -->
+<section class="section section--deep contact" id="contact">
+  <div class="wrap contact__grid">
+    <div class="contact__text">
+      <p class="sec-num reveal">08 — Начать проект</p>
+      <h2 class="sec-title reveal">Пришлите участок — вернём концепцию и бюджет за пять дней</h2>
+      <p class="reveal">Бесплатно для объектов от 5 000 м². Выезд на площадку, осмотр существующих деревьев и анализ конкурентов в локации — в рамках первой встречи.</p>
+      <dl class="contacts reveal">
+        <div><dt>Телефон</dt><dd><a href="tel:+79000000000">+7 (900) 000-00-00</a></dd></div>
+        <div><dt>Почта</dt><dd><a href="mailto:hello@zhivoy-dvor.ru" id="cMail">hello@zhivoy-dvor.ru</a></dd></div>
+        <div><dt>География</dt><dd>Москва и область · проекты по всей России</dd></div>
+      </dl>
+    </div>
+    <form class="form reveal" id="leadForm" novalidate>
+      <div class="form__grid">
+        <label class="fld"><span>Имя</span><input name="name" required autocomplete="name"></label>
+        <label class="fld"><span>Компания</span><input name="company" autocomplete="organization"></label>
+        <label class="fld"><span>Телефон или e-mail</span><input name="contact" required autocomplete="email"></label>
+        <label class="fld"><span>Тип объекта</span>
+          <select name="type">
+            <option>Двор жилого комплекса</option>
+            <option>Парк, сквер, набережная</option>
+            <option>Улица, бульвар</option>
+            <option>Кровля или стилобат</option>
+            <option>Школа, детский сад</option>
+            <option>Коммерческий объект</option>
+          </select>
+        </label>
+        <label class="fld fld--wide"><span>Расскажите о задаче</span><textarea name="note" rows="3" placeholder="Площадь, сроки, стадия, ссылки на материалы"></textarea></label>
+      </div>
+      <button class="btn btn--accent btn--full" type="submit">Отправить заявку <span class="arr">→</span></button>
+      <p class="form__msg" id="formMsg" role="status"></p>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__in">
+    <span class="foot__logo">Живой двор</span>
+    <span>Ландшафтная студия · проектирование, благоустройство, озеленение, питомник</span>
+    <span>© 2014–2026</span>
+  </div>
+</footer>
+
+<script src="app.js?v=2"></script>
+</body>
+</html>
