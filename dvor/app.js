@@ -36,28 +36,6 @@
     return 'M' + pts.map((p) => p.map(f1).join(',')).join('L') + 'Z';
   }
 
-  // Условные обозначения деревьев в плане
-  function treeSym(x, y, r, kind, d) {
-    const st = `style="--d:${d}s"`;
-    if (kind === 'con') {                        // хвойное — «звезда»
-      const pts = [];
-      for (let i = 0; i < 24; i++) {
-        const a = (i / 24) * Math.PI * 2, rr = i % 2 ? r * 0.7 : r;
-        pts.push(f1(x + Math.cos(a) * rr) + ',' + f1(y + Math.sin(a) * rr));
-      }
-      return `<g class="pop" ${st}><polygon points="${pts.join(' ')}" fill="rgba(29,70,52,.22)" stroke="${C.green}" stroke-width=".8"/><circle cx="${f1(x)}" cy="${f1(y)}" r="1.4" fill="${C.green}"/></g>`;
-    }
-    if (kind === 'flw') {                        // цветущее — пунктир + лайм
-      return `<g class="pop" ${st}><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="rgba(232,136,78,.28)" stroke="${C.green2}" stroke-width=".8" stroke-dasharray="2 2"/><circle cx="${f1(x)}" cy="${f1(y)}" r="1.4" fill="${C.green}"/></g>`;
-    }
-    let spokes = '';
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2 + x;
-      spokes += `M${f1(x + Math.cos(a) * r * 0.2)},${f1(y + Math.sin(a) * r * 0.2)}L${f1(x + Math.cos(a) * r * 0.62)},${f1(y + Math.sin(a) * r * 0.62)}`;
-    }
-    return `<g class="pop" ${st}><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="rgba(46,106,78,.13)" stroke="${C.green2}" stroke-width=".9"/><path d="${spokes}" stroke="${C.green2}" stroke-width=".6" opacity=".7"/><circle cx="${f1(x)}" cy="${f1(y)}" r="1.5" fill="${C.green}"/></g>`;
-  }
-
   // Общие штриховки для планов
   const PATTERNS = (p) => `
     <pattern id="${p}hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#E9E8E1"/><path d="M0 0V6" stroke="${C.ink}" stroke-width=".7" opacity=".55"/></pattern>
@@ -67,124 +45,136 @@
     <pattern id="${p}rubber" width="5" height="5" patternUnits="userSpaceOnUse"><rect width="5" height="5" fill="#E7DEC4"/><circle cx="2.5" cy="2.5" r=".6" fill="${C.ink}" opacity=".35"/></pattern>
     <pattern id="${p}deck" width="40" height="5" patternUnits="userSpaceOnUse"><rect width="40" height="5" fill="#E6D9BF"/><path d="M0 5H40M17 0V5" stroke="${C.ink}" stroke-width=".4" opacity=".5"/></pattern>`;
 
+  // Рендер-стиль мастерплана: мягкие тени, объёмные кроны, свет сверху-слева
+  const RDEFS = (p) => `
+    <radialGradient id="${p}dec" cx=".38" cy=".34" r=".72"><stop offset="0" stop-color="#CBDFB9"/><stop offset=".55" stop-color="#9DBF93"/><stop offset="1" stop-color="#5F8E6B"/></radialGradient>
+    <radialGradient id="${p}con" cx=".38" cy=".34" r=".72"><stop offset="0" stop-color="#9FBF9A"/><stop offset=".6" stop-color="#5F8F6A"/><stop offset="1" stop-color="#2F5C42"/></radialGradient>
+    <radialGradient id="${p}flw" cx=".38" cy=".34" r=".72"><stop offset="0" stop-color="#FBE6D6"/><stop offset=".6" stop-color="#F2C1A4"/><stop offset="1" stop-color="#D98E6A"/></radialGradient>
+    <radialGradient id="${p}shr" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#D6E5C6"/><stop offset="1" stop-color="#8FB38B"/></radialGradient>
+    <linearGradient id="${p}lawn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E4ECD8"/><stop offset="1" stop-color="#CFDEC2"/></linearGradient>
+    <linearGradient id="${p}pond" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#C9DDEA"/><stop offset="1" stop-color="#8FB4CF"/></linearGradient>
+    <linearGradient id="${p}roof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F3F1EB"/><stop offset="1" stop-color="#DEDAD0"/></linearGradient>
+    <linearGradient id="${p}deck" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EBDDC6"/><stop offset="1" stop-color="#D9C5A6"/></linearGradient>
+    <pattern id="${p}pave" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#EAE6DC"/><path d="M10 0V10M0 10H10" stroke="#fff" stroke-width=".8" opacity=".7"/></pattern>
+    <pattern id="${p}rubber" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#F1D4BB"/><circle cx="3" cy="3" r=".7" fill="#D99A74" opacity=".5"/></pattern>
+    <filter id="${p}soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.2"/></filter>
+    <filter id="${p}cloud" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="28"/></filter>`;
+
+  // Дерево в плане: тень, крона с объёмом, лёгкий блик
+  function tree(x, y, r, kind, d, p = 'r-') {
+    const sx = f1(x + r * 0.22), sy = f1(y + r * 0.26);
+    const st = d === undefined ? '' : `class="pop" style="--d:${d}s"`;
+    const shadow = `<ellipse cx="${sx}" cy="${sy}" rx="${f1(r * 1.02)}" ry="${f1(r * 0.92)}" fill="rgba(28,33,29,.16)" filter="url(#${p}soft)"/>`;
+    if (kind === 'con') {
+      const pts = [];
+      for (let i = 0; i < 20; i++) {
+        const a = (i / 20) * Math.PI * 2, rr = i % 2 ? r * 0.8 : r;
+        pts.push(f1(x + Math.cos(a) * rr) + ',' + f1(y + Math.sin(a) * rr));
+      }
+      return `<g ${st}>${shadow}<polygon points="${pts.join(' ')}" fill="url(#${p}con)"/><circle cx="${f1(x - r * .3)}" cy="${f1(y - r * .3)}" r="${f1(r * .22)}" fill="#fff" opacity=".22"/></g>`;
+    }
+    const fill = kind === 'flw' ? `url(#${p}flw)` : `url(#${p}dec)`;
+    return `<g ${st}>${shadow}<path d="${blob(x, y, r, 7 + (kind === 'flw' ? 2 : 0), 0.07, Math.round(x * 3 + y))}" fill="${fill}"/><circle cx="${f1(x - r * .32)}" cy="${f1(y - r * .34)}" r="${f1(r * .24)}" fill="#fff" opacity=".28"/></g>`;
+  }
+  function shrub(x, y, r, d, p = 'r-') {
+    const st = d === undefined ? '' : `class="pop" style="--d:${d}s"`;
+    return `<g ${st}><ellipse cx="${f1(x + r * .2)}" cy="${f1(y + r * .25)}" rx="${f1(r)}" ry="${f1(r * .9)}" fill="rgba(28,33,29,.1)"/><path d="${blob(x, y, r, 6, 0.12, Math.round(x + y * 5))}" fill="url(#${p}shr)"/></g>`;
+  }
+  // Здание в плане: тень от объёма и светлая кровля
+  function building(x, y, w, h, p = 'r-', d) {
+    const st = d === undefined ? '' : `class="rise" style="--d:${d}s"`;
+    return `<g ${st}><rect x="${x + 8}" y="${y + 10}" width="${w}" height="${h}" rx="3" fill="rgba(28,33,29,.22)" filter="url(#${p}soft)"/>
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="url(#${p}roof)" stroke="rgba(28,33,29,.35)" stroke-width=".8"/>
+      <rect x="${x + 6}" y="${y + 6}" width="${w - 12}" height="${h - 12}" rx="2" fill="none" stroke="rgba(28,33,29,.14)" stroke-width=".8"/></g>`;
+  }
+  // Дорожка: кромка + покрытие, рисуется штрихом
+  function walk(d, w, p = 'r-', delay = 0, cls = 'draw') {
+    return `<path class="${cls}" pathLength="1" style="--d:${delay}s" d="${d}" fill="none" stroke="rgba(28,33,29,.28)" stroke-width="${w + 2}" stroke-linecap="round"/>
+      <path class="${cls} pv" data-hw="${w / 2}" pathLength="1" style="--d:${delay + .05}s" d="${d}" fill="none" stroke="url(#${p}pave)" stroke-width="${w}" stroke-linecap="round"/>`;
+  }
+  // Подпись на плане: белая плашка с мягкой тенью и выноской
+  function pill(x1, y1, x2, y2, t, d) {
+    const w = t.length * 8.8 + 30, h = 34;
+    const st = d === undefined ? '' : `class="fade" style="--d:${d}s"`;
+    return `<g ${st} font-family="Manrope, system-ui, sans-serif" font-size="15" font-weight="600" fill="${C.ink}">
+      <path d="M${x1},${y1}L${x2},${y2}" fill="none" stroke="${C.ink}" stroke-width="1" opacity=".55"/>
+      <circle cx="${x1}" cy="${y1}" r="4" fill="${C.lime}" stroke="#fff" stroke-width="1.5"/>
+      <rect x="${x2 - w / 2 + 2}" y="${y2 - h / 2 + 3}" width="${w}" height="${h}" rx="17" fill="rgba(28,33,29,.12)" filter="url(#r-soft)"/>
+      <rect x="${x2 - w / 2}" y="${y2 - h / 2}" width="${w}" height="${h}" rx="17" fill="#fff"/>
+      <text x="${x2}" y="${y2 + 5.2}" text-anchor="middle">${t}</text></g>`;
+  }
+
   /* =====================================================================
      1. ГЕНПЛАН В ПЕРВОМ ЭКРАНЕ
      ===================================================================== */
   function heroPlan() {
     const host = $('#heroPlan');
     if (!host) return;
-    const R = rng(11);
-
+    const R = rng(23);
     const B = [
-      { x: 70, y: 30, w: 480, h: 80, l: 'К1 · 9 эт.' },
-      { x: 600, y: 30, w: 140, h: 130, l: 'К2 · 24 эт.' },
-      { x: 880, y: 30, w: 90, h: 450, l: 'К3 · 12 эт.' },
-      { x: 30, y: 150, w: 90, h: 360, l: 'К4 · 9 эт.' },
-      { x: 30, y: 555, w: 360, h: 95, l: 'К5 · 14 эт.' },
-      { x: 560, y: 560, w: 330, h: 90, l: 'К6 · 14 эт.' },
+      { x: 40, y: 36, w: 420, h: 76 }, { x: 540, y: 36, w: 150, h: 118 }, { x: 862, y: 36, w: 98, h: 400 },
+      { x: 40, y: 170, w: 88, h: 320 }, { x: 40, y: 606, w: 350, h: 78 }, { x: 610, y: 606, w: 350, h: 78 },
     ];
     const PATHS = [
-      { d: 'M335,330a165,105 0 1,0 330,0a165,105 0 1,0 -330,0', hw: 9 },
-      { d: 'M475,700C476,600 488,480 500,435', hw: 13 },
-      { d: 'M500,225C510,170 575,140 575,10', hw: 11 },
-      { d: 'M335,330C300,335 280,300 240,292', hw: 8 },
-      { d: 'M195,228C170,180 130,135 0,130', hw: 8 },
-      { d: 'M665,330C710,330 740,360 760,400', hw: 8 },
-      { d: 'M830,470C860,500 900,522 1010,522', hw: 8 },
+      ['M320,340a180,112 0 1,0 360,0a180,112 0 1,0 -360,0', 18],
+      ['M500,720C500,640 500,520 500,452', 26],
+      ['M560,0C560,70 560,140 560,228', 20],
+      ['M320,340C290,342 265,330 245,322', 14],
+      ['M190,250C160,210 130,170 128,120', 14],
+      ['M680,340C715,342 740,370 760,400', 14],
+      ['M835,478C855,510 880,520 960,520', 14],
+      ['M402,606C440,570 470,540 470,500', 14],
     ];
-    const playground = { x: 225, y: 290, r: 72 };
-    const court = { x: 690, y: 398, w: 150, h: 84 };
-    const ring = { x: 500, y: 330, rx: 165, ry: 105 };
+    const play = { x: 232, y: 300, r: 72 }, ring = { x: 500, y: 340, rx: 180, ry: 112 };
 
-    let s = `<svg viewBox="-50 -50 1100 780" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Генеральный план благоустройства двора жилого комплекса">
-      <defs>${PATTERNS('h-')}
-        <radialGradient id="h-glow"><stop offset="0" stop-color="#F6E27A" stop-opacity=".9"/><stop offset=".35" stop-color="#F6E27A" stop-opacity=".35"/><stop offset="1" stop-color="#F6E27A" stop-opacity="0"/></radialGradient>
-        <marker id="h-ar" viewBox="0 0 6 6" refX="3" refY="3" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L6 3L0 6Z" fill="${C.ink}"/></marker>
-      </defs>`;
+    let s = `<svg viewBox="0 0 1000 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Генеральный план двора жилого комплекса">
+      <defs>${RDEFS('r-')}
+        <radialGradient id="r-glow"><stop offset="0" stop-color="#F7D88A" stop-opacity=".85"/><stop offset=".4" stop-color="#F7D88A" stop-opacity=".3"/><stop offset="1" stop-color="#F7D88A" stop-opacity="0"/></radialGradient>
+        <radialGradient id="r-bg" cx=".5" cy=".45" r=".75"><stop offset="0" stop-color="#F4F2EC"/><stop offset="1" stop-color="#E9E6DD"/></radialGradient>
+      </defs>
+      <rect width="1000" height="720" fill="url(#r-bg)"/>
+      <g id="r-parallax">`;
 
-    // Оси и размеры
-    const axX = [30, 218, 406, 594, 782, 970], axY = [30, 237, 443, 650];
-    s += `<g opacity=".9" font-family="JetBrains Mono, monospace" font-size="10" fill="${C.ink2}">`;
-    axX.forEach((x, i) => {
-      s += `<line x1="${x}" y1="-28" x2="${x}" y2="690" stroke="${C.ink}" stroke-width=".4" stroke-dasharray="14 3 2 3" opacity=".22"/>`;
-      s += `<circle cx="${x}" cy="-36" r="9" fill="${C.paper}" stroke="${C.ink}" stroke-width=".7"/><text x="${x}" y="-32.5" text-anchor="middle">${'АБВГДЕ'[i]}</text>`;
-    });
-    axY.forEach((y, i) => {
-      s += `<line x1="-28" y1="${y}" x2="1000" y2="${y}" stroke="${C.ink}" stroke-width=".4" stroke-dasharray="14 3 2 3" opacity=".22"/>`;
-      s += `<circle cx="-36" cy="${y}" r="9" fill="${C.paper}" stroke="${C.ink}" stroke-width=".7"/><text x="-36" y="${y + 3.5}" text-anchor="middle">${i + 1}</text>`;
-    });
-    // размерная цепочка сверху
-    s += `<g stroke="${C.ink}" stroke-width=".6"><line x1="30" y1="-12" x2="970" y2="-12"/>`;
-    axX.forEach((x) => { s += `<line x1="${x - 4}" y1="-8" x2="${x + 4}" y2="-16"/>`; });
-    s += `</g>`;
-    for (let i = 0; i < axX.length - 1; i++) s += `<text x="${(axX[i] + axX[i + 1]) / 2}" y="-16" text-anchor="middle" font-size="9">18 800</text>`;
-    s += `<g stroke="${C.ink}" stroke-width=".6"><line x1="-12" y1="30" x2="-12" y2="650"/>`;
-    axY.forEach((y) => { s += `<line x1="-16" y1="${y + 4}" x2="-8" y2="${y - 4}"/>`; });
-    s += `</g><text transform="translate(-16 340) rotate(-90)" text-anchor="middle" font-size="9">62 000</text></g>`;
+    // Зоны — мягкие подложки
+    s += `<g data-g="zones" class="fade" style="--d:.2s">
+      <circle cx="${play.x}" cy="${play.y}" r="122" fill="#D9E6CF" opacity=".7"/>
+      <ellipse cx="500" cy="340" rx="222" ry="150" fill="#D6E4CA" opacity=".55"/>
+      <rect x="664" y="372" width="200" height="140" rx="40" fill="#EADFC8" opacity=".6"/>
+      <circle cx="330" cy="520" r="78" fill="#D6E0E8" opacity=".55"/></g>`;
 
-    // Зонирование
-    s += `<g data-g="zones">
-      <circle cx="225" cy="290" r="118" fill="${C.sage}" opacity=".5"/>
-      <ellipse cx="500" cy="330" rx="205" ry="135" fill="${C.green3}" opacity=".22"/>
-      <rect x="668" y="372" width="196" height="138" rx="18" fill="${C.sand}" opacity=".38"/>
-      <circle cx="330" cy="488" r="72" fill="${C.water}" opacity=".16"/>
-      <g font-family="JetBrains Mono, monospace" font-size="10" font-weight="500" fill="${C.ink}">
-        ${zoneTag(150, 182, 'Детская площадка')}${zoneTag(560, 205, 'Тихий отдых')}${zoneTag(700, 362, 'Спорт')}${zoneTag(268, 565, 'Соседская гостиная')}
-      </g></g>`;
-
-    // Мощение (полосы дорожек — контур + покрытие)
-    s += `<g data-g="paving">
-      <rect x="395" y="545" width="160" height="150" fill="url(#h-tile)" stroke="${C.ink}" stroke-width=".7"/>`;
-    PATHS.forEach((p, i) => {
-      s += `<path class="draw" pathLength="1" style="--d:${0.2 + i * 0.12}s" d="${p.d}" fill="none" stroke="${C.ink}" stroke-width="${p.hw * 2 + 1.6}" stroke-linecap="butt"/>`;
-      s += `<path class="draw pv" data-hw="${p.hw}" pathLength="1" style="--d:${0.25 + i * 0.12}s" d="${p.d}" fill="none" stroke="url(#h-tile)" stroke-width="${p.hw * 2}" stroke-linecap="butt"/>`;
-    });
+    // Газон и дорожки
+    s += `<ellipse class="fade" style="--d:.35s" cx="500" cy="340" rx="${ring.rx - 14}" ry="${ring.ry - 14}" fill="url(#r-lawn)"/>`;
+    s += `<g data-g="paving"><rect class="fade" style="--d:.4s" x="400" y="560" width="200" height="160" fill="url(#r-pave)"/>`;
+    PATHS.forEach(([d, w], i) => { s += walk(d, w, 'r-', 0.45 + i * 0.1); });
     s += `</g>`;
 
-    // Объекты: луг, площадки, дождевой сад, амфитеатр, пергола
-    s += `<g>
-      <ellipse cx="500" cy="330" rx="${ring.rx - 10}" ry="${ring.ry - 10}" fill="url(#h-meadow)" stroke="${C.green2}" stroke-width=".7"/>
-      <g class="pop" style="--d:.9s"><circle cx="${playground.x}" cy="${playground.y}" r="${playground.r}" fill="url(#h-rubber)" stroke="${C.ink}" stroke-width="1"/>
-        <circle cx="${playground.x}" cy="${playground.y}" r="46" fill="none" stroke="${C.ink}" stroke-width=".6" stroke-dasharray="3 3"/>
-        <rect x="206" y="268" width="24" height="24" fill="${C.lime}" stroke="${C.ink}" stroke-width=".8"/><rect x="232" y="292" width="18" height="10" fill="${C.paper}" stroke="${C.ink}" stroke-width=".8"/>
-        <circle cx="204" cy="318" r="8" fill="${C.paper}" stroke="${C.ink}" stroke-width=".8"/><path d="M238,258l18,-10" stroke="${C.ink}" stroke-width="2"/></g>
-      <g class="pop" style="--d:1s" transform="rotate(-6 765 440)"><rect x="${court.x}" y="${court.y}" width="${court.w}" height="${court.h}" fill="#D9E4D0" stroke="${C.ink}" stroke-width="1"/>
-        <g fill="none" stroke="#fff" stroke-width="1.4"><rect x="${court.x + 8}" y="${court.y + 8}" width="${court.w - 16}" height="${court.h - 16}"/><line x1="765" y1="${court.y + 8}" x2="765" y2="${court.y + court.h - 8}"/><circle cx="765" cy="440" r="14"/></g></g>
-      <path class="pop" style="--d:1.1s" d="M515,455C560,450 620,480 640,520C645,535 620,541 600,533C570,521 530,496 512,470Z" fill="url(#h-water)" stroke="${C.water}" stroke-width="1"/>
-      <g fill="none" stroke="${C.ink}" stroke-width=".8">
-        <path d="M276,500A54,54 0 0 1 384,500M288,500A42,42 0 0 1 372,500M300,500A30,30 0 0 1 360,500"/>
-        <rect x="312" y="500" width="36" height="10" fill="url(#h-deck)"/></g>
-      <g><rect x="640" y="520" width="180" height="28" fill="url(#h-deck)" stroke="${C.ink}" stroke-width=".8"/>
-        <path d="${Array.from({ length: 17 }, (_, i) => `M${650 + i * 10},516V552`).join('')}" stroke="${C.ink}" stroke-width=".5" opacity=".7"/></g>
-    </g>`;
+    // Объекты
+    s += `<g class="pop" style="--d:1.1s"><circle cx="${play.x + 6}" cy="${play.y + 8}" r="${play.r}" fill="rgba(28,33,29,.1)" filter="url(#r-soft)"/>
+        <circle cx="${play.x}" cy="${play.y}" r="${play.r}" fill="url(#r-rubber)"/>
+        <circle cx="${play.x}" cy="${play.y}" r="48" fill="none" stroke="#fff" stroke-width="1.6" opacity=".8"/>
+        <rect x="212" y="276" width="26" height="26" rx="5" fill="${C.lime}"/><rect x="242" y="300" width="20" height="12" rx="3" fill="#fff"/>
+        <circle cx="212" cy="326" r="9" fill="#fff"/><path d="M246,262l20,-12" stroke="${C.ink}" stroke-width="3" stroke-linecap="round"/></g>`;
+    s += `<g class="pop" style="--d:1.2s" transform="rotate(-6 765 445)"><rect x="696" y="408" width="146" height="84" rx="8" fill="rgba(28,33,29,.12)" filter="url(#r-soft)"/>
+        <rect x="690" y="402" width="146" height="84" rx="8" fill="#BFD4B6"/>
+        <g fill="none" stroke="#fff" stroke-width="1.6"><rect x="698" y="410" width="130" height="68" rx="4"/><line x1="763" y1="410" x2="763" y2="478"/><circle cx="763" cy="444" r="14"/></g></g>`;
+    s += `<path class="pop" style="--d:1.3s" d="${blob(600, 500, 62, 5, 0.14, 7, 42)}" fill="url(#r-pond)"/>
+      <path d="${blob(600, 500, 62, 5, 0.14, 7, 42)}" class="pop" style="--d:1.3s" fill="none" stroke="#fff" stroke-width="1.2" opacity=".7"/>`;
+    s += `<g class="pop" style="--d:1.25s" fill="none" stroke="#fff" stroke-width="2.4"><path d="M274,520A56,56 0 0 1 386,520M286,520A44,44 0 0 1 374,520M298,520A32,32 0 0 1 362,520"/><rect x="312" y="520" width="36" height="12" rx="3" fill="url(#r-deck)" stroke="none"/></g>`;
+    s += `<g class="pop" style="--d:1.35s"><rect x="648" y="550" width="180" height="30" rx="4" fill="rgba(28,33,29,.1)" transform="translate(5 6)" filter="url(#r-soft)"/><rect x="648" y="550" width="180" height="30" rx="4" fill="url(#r-deck)"/>
+        <path d="${Array.from({ length: 17 }, (_, i) => `M${658 + i * 10},550V580`).join('')}" stroke="#fff" stroke-width="1.2" opacity=".7"/></g>`;
 
     // Здания
-    s += `<g>`;
-    B.forEach((b, i) => {
-      s += `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="url(#h-hatch)" stroke="${C.ink}" stroke-width="1.6"/>`;
-      const tw = b.l.length * 6.3 + 12, cx = b.x + b.w / 2, cy = b.y + b.h / 2;
-      const rot = b.h > b.w * 1.6 ? `transform="rotate(-90 ${cx} ${cy})"` : '';
-      s += `<g ${rot}><rect x="${cx - tw / 2}" y="${cy - 9}" width="${tw}" height="17" fill="${C.paper}" stroke="${C.ink}" stroke-width=".6"/><text x="${cx}" y="${cy + 3.5}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="${C.ink}">${b.l}</text></g>`;
-    });
-    s += `</g>`;
-
-    // Слои, заполняемые после вставки в DOM (нужна геометрия путей)
-    s += `<g data-g="dendro" id="h-dendro"></g>`;
-    s += `<g data-g="eng" class="off" id="h-eng"></g>`;
-    s += `<g data-g="light" class="off" id="h-light"></g>`;
-    s += `<g id="h-notes"></g>`;
-
-    // Север и масштаб
-    s += `<g transform="translate(1020 0)" font-family="JetBrains Mono, monospace" font-size="10" fill="${C.ink}">
-        <circle r="13" fill="none" stroke="${C.ink}" stroke-width=".7"/><path d="M0,-12L5,6L0,2L-5,6Z" fill="${C.ink}"/><text y="-17" text-anchor="middle">С</text></g>
-      <g transform="translate(30 702)" font-family="JetBrains Mono, monospace" font-size="9" fill="${C.ink2}">
-        <rect width="50" height="5" fill="${C.ink}"/><rect x="50" width="50" height="5" fill="none" stroke="${C.ink}" stroke-width=".7"/><rect x="100" width="100" height="5" fill="${C.ink}"/>
-        <text y="18">0</text><text x="50" y="18" text-anchor="middle">5</text><text x="100" y="18" text-anchor="middle">10</text><text x="200" y="18" text-anchor="middle">20 м</text></g>`;
-    s += `</svg>`;
+    s += `<g>` + B.map((b, i) => building(b.x, b.y, b.w, b.h, 'r-', i * 0.06)).join('') + `</g>`;
+    s += `<g data-g="dendro" id="r-dendro"></g><g data-g="eng" class="off" id="r-eng"></g><g data-g="light" class="off" id="r-light"></g><g id="r-notes"></g>`;
+    // Тень облака — медленно плывёт по плану
+    s += `<g class="cloud" opacity=".07" pointer-events="none"><path d="${blob(0, 0, 160, 5, 0.22, 3, 90)}" fill="${C.ink}" filter="url(#r-cloud)"/></g>`;
+    s += `</g>
+      <g transform="translate(962 40)" class="fade" style="--d:2.4s"><circle r="13" fill="#fff" opacity=".9"/><path d="M0,-9L4.5,6L0,3L-4.5,6Z" fill="${C.ink}"/><text y="-17" text-anchor="middle" font-family="Manrope" font-size="10" font-weight="700" fill="${C.ink}">С</text></g>
+      <g transform="translate(40 694)" class="fade" style="--d:2.4s" font-family="Manrope" font-size="10" font-weight="600" fill="${C.ink2}"><rect width="40" height="4" rx="2" fill="${C.ink}"/><rect x="40" width="40" height="4" rx="2" fill="#fff"/><rect x="80" width="40" height="4" rx="2" fill="${C.ink}"/><text y="16">0</text><text x="60" y="16" text-anchor="middle">10</text><text x="120" y="16" text-anchor="middle">20 м</text></g>
+    </svg>`;
     host.innerHTML = s;
 
     const svg = $('svg', host);
-    // Точки вдоль дорожек — чтобы деревья не попадали на мощение
     const pv = $$('.pv', svg).map((p) => {
       const L = p.getTotalLength(), pts = [];
       for (let l = 0; l <= L; l += 6) { const q = p.getPointAtLength(l); pts.push([q.x, q.y]); }
@@ -192,115 +182,82 @@
     });
     const inRect = (x, y, rx, ry, rw, rh, m = 0) => x > rx - m && x < rx + rw + m && y > ry - m && y < ry + rh + m;
     const free = (x, y, r) => {
-      if (B.some((b) => inRect(x, y, b.x, b.y, b.w, b.h, r + 6))) return false;
-      if (((x - ring.x) / (ring.rx + r + 10)) ** 2 + ((y - ring.y) / (ring.ry + r + 10)) ** 2 < 1) return false;
-      if (Math.hypot(x - playground.x, y - playground.y) < playground.r + r + 8) return false;
-      if (inRect(x, y, 678, 380, 175, 115, r)) return false;              // корт
-      if (inRect(x, y, 505, 445, 145, 100, r)) return false;              // дождевой сад
-      if (inRect(x, y, 270, 440, 120, 75, r)) return false;               // амфитеатр
-      if (inRect(x, y, 635, 512, 190, 42, r)) return false;               // пергола
-      if (inRect(x, y, 395, 545, 160, 160, r)) return false;              // входная площадь
-      for (const p of pv) for (const q of p.pts) if (Math.hypot(x - q[0], y - q[1]) < p.hw + r * 0.75 + 3) return false;
+      if (B.some((b) => inRect(x, y, b.x, b.y, b.w, b.h, r + 10))) return false;
+      if (((x - ring.x) / (ring.rx + r + 12)) ** 2 + ((y - ring.y) / (ring.ry + r + 12)) ** 2 < 1) return false;
+      if (Math.hypot(x - play.x, y - play.y) < play.r + r + 10) return false;
+      if (inRect(x, y, 680, 392, 170, 110, r + 4)) return false;      // корт
+      if (Math.hypot(x - 600, y - 500) < 72 + r) return false;         // дождевой сад
+      if (inRect(x, y, 268, 456, 124, 80, r + 4)) return false;        // амфитеатр
+      if (inRect(x, y, 640, 544, 196, 42, r + 4)) return false;        // пергола
+      if (inRect(x, y, 396, 556, 208, 170, r)) return false;           // входная площадь
+      for (const p of pv) for (const q of p.pts) if (Math.hypot(x - q[0], y - q[1]) < p.hw + r * 0.8 + 4) return false;
       return true;
     };
-
-    // Дендроплан
-    const trees = [
-      { x: 450, y: 312, r: 24, k: 'dec' }, { x: 566, y: 350, r: 19, k: 'dec' }, { x: 530, y: 282, r: 13, k: 'flw' },
-    ];
-    for (let a = 0; a < 6000 && trees.length < 95; a++) {
-      const x = 135 + R() * 760, y = 118 + R() * 430;
-      const roll = R();
-      const k = roll < 0.68 ? 'dec' : roll < 0.88 ? 'con' : 'flw';
-      const r = k === 'dec' ? 10 + R() * 8 : k === 'con' ? 8 + R() * 4 : 8 + R() * 3;
-      if (x > 868 && y < 480) continue;
+    // Деревья: немного крупных в центре, остальные по периметру
+    const trees = [{ x: 455, y: 320, r: 30, k: 'dec' }, { x: 560, y: 362, r: 24, k: 'dec' }, { x: 525, y: 290, r: 16, k: 'flw' }];
+    for (let a = 0; a < 7000 && trees.length < 58; a++) {
+      const x = 140 + R() * 720, y = 120 + R() * 470, roll = R();
+      const k = roll < 0.66 ? 'dec' : roll < 0.86 ? 'con' : 'flw';
+      const r = k === 'dec' ? 13 + R() * 11 : k === 'con' ? 11 + R() * 5 : 11 + R() * 4;
       if (!free(x, y, r)) continue;
-      if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < (t.r + r) * 0.92)) continue;
+      if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < t.r + r + 4)) continue;
       trees.push({ x, y, r, k });
     }
     const shrubs = [];
-    for (let a = 0; a < 5000 && shrubs.length < 46; a++) {
-      const x = 130 + R() * 750, y = 115 + R() * 435, r = 6 + R() * 6;
+    for (let a = 0; a < 5000 && shrubs.length < 34; a++) {
+      const x = 140 + R() * 720, y = 120 + R() * 470, r = 6 + R() * 6;
       if (!free(x, y, r)) continue;
-      if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < t.r + r * 0.6)) continue;
-      if (shrubs.some((t) => Math.hypot(t.x - x, t.y - y) < (t.r + r) * 0.9)) continue;
+      if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < t.r + r + 2)) continue;
+      if (shrubs.some((t) => Math.hypot(t.x - x, t.y - y) < t.r + r + 2)) continue;
       shrubs.push({ x, y, r });
     }
-    let dh = '';
-    shrubs.forEach((b, i) => {
-      dh += `<path class="pop" style="--d:${1.2 + (b.y / 700) * 1.2}s" d="${blob(b.x, b.y, b.r, 7, 0.14, i + 3)}" fill="rgba(141,181,154,.42)" stroke="${C.green2}" stroke-width=".6"/>`;
-    });
-    trees.forEach((t) => {
-      const d = 0.9 + (Math.hypot(t.x - 475, t.y - 680) / 900) * 1.6;
-      dh += treeSym(t.x, t.y, t.r, t.k, f1(d));
-    });
-    $('#h-dendro', svg).innerHTML = dh;
+    let dh = shrubs.map((b) => shrub(b.x, b.y, b.r, f1(1.3 + (b.y / 720) * 1.0))).join('');
+    trees.sort((a, b) => a.y - b.y).forEach((t) => { dh += tree(t.x, t.y, t.r, t.k, f1(1.2 + (Math.hypot(t.x - 500, t.y - 720) / 820) * 1.3)); });
+    $('#r-dendro', svg).innerHTML = dh;
     const tc = $('#treeCount'); if (tc) tc.textContent = trees.length + ' деревьев';
 
-    // Освещение — опоры вдоль дорожек
+    // Свет: фонари вдоль дорожек
     let lh = '';
     pv.forEach((p, pi) => {
-      for (let l = 20, side = 1; l < p.L - 10; l += 58, side *= -1) {
+      for (let l = 24, side = 1; l < p.L - 12; l += 64, side *= -1) {
         const a = p.el.getPointAtLength(l), b = p.el.getPointAtLength(Math.min(l + 1, p.L));
         const dx = b.x - a.x, dy = b.y - a.y, n = Math.hypot(dx, dy) || 1;
-        const x = a.x - (dy / n) * (p.hw + 6) * side, y = a.y + (dx / n) * (p.hw + 6) * side;
+        const x = a.x - (dy / n) * (p.hw + 7) * side, y = a.y + (dx / n) * (p.hw + 7) * side;
         if (B.some((bb) => inRect(x, y, bb.x, bb.y, bb.w, bb.h, 2))) continue;
-        lh += `<circle class="glow" style="--d:${f1((pi + l) % 3)}s" cx="${f1(x)}" cy="${f1(y)}" r="26" fill="url(#h-glow)"/>`;
-        lh += `<circle cx="${f1(x)}" cy="${f1(y)}" r="2.6" fill="${C.ink}"/><circle cx="${f1(x)}" cy="${f1(y)}" r="4.5" fill="none" stroke="${C.ink}" stroke-width=".6"/>`;
+        lh += `<circle class="glow" style="--d:${f1((pi + l) % 3)}s" cx="${f1(x)}" cy="${f1(y)}" r="30" fill="url(#r-glow)"/><circle cx="${f1(x)}" cy="${f1(y)}" r="3" fill="#fff" stroke="${C.ink}" stroke-width="1.2"/>`;
       }
     });
-    $('#h-light', svg).innerHTML = lh;
+    $('#r-light', svg).innerHTML = lh;
 
-    // Инженерия: ливнёвка и полив
-    const mh = [[140, 535], [475, 535], [600, 535], [865, 535], [475, 668], [140, 140], [865, 140]];
-    let eh = `<g fill="none" stroke="${C.water}" stroke-width="2.2"><path class="flow" d="M140,140V535H865V140M475,535V700M600,535V505"/></g>
-      <g fill="none" stroke="${C.green}" stroke-width="1.2" stroke-dasharray="8 3 2 3"><path d="M752,178H700V260H620M360,330H640M500,250V410"/></g>
-      <rect x="742" y="168" width="26" height="18" fill="${C.paper}" stroke="${C.green}" stroke-width="1"/><text x="755" y="181" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="${C.green}">УП</text>`;
-    mh.forEach(([x, y]) => { eh += `<g stroke="${C.water}" stroke-width="1"><circle cx="${x}" cy="${y}" r="6" fill="${C.paper}"/><path d="M${x - 4},${y}H${x + 4}M${x},${y - 4}V${y + 4}"/></g>`; });
-    [380, 440, 500, 560, 620].forEach((x) => { eh += `<circle cx="${x}" cy="330" r="22" fill="rgba(110,155,194,.12)" stroke="${C.water}" stroke-width=".6" stroke-dasharray="2 2"/><circle cx="${x}" cy="330" r="2.4" fill="${C.green}"/>`; });
-    eh += noteLabel(150, 548, 'Ливневая канализация', C.water) + noteLabel(372, 356, 'Автополив', C.green);
-    $('#h-eng', svg).innerHTML = eh;
+    // Вода и полив
+    let eh = `<path class="flow" d="M150,140V540H840V140M500,540V700M560,540V520" fill="none" stroke="${C.water}" stroke-width="2.4" opacity=".9"/>
+      <path d="M340,340H660M500,250V430" fill="none" stroke="${C.green}" stroke-width="1.2" stroke-dasharray="6 4" opacity=".8"/>`;
+    [[150, 140], [150, 540], [500, 540], [840, 540], [840, 140], [500, 700]].forEach(([x, y]) => { eh += `<circle cx="${x}" cy="${y}" r="6" fill="#fff" stroke="${C.water}" stroke-width="1.6"/>`; });
+    [380, 440, 500, 560, 620].forEach((x) => { eh += `<circle cx="${x}" cy="340" r="24" fill="rgba(127,168,201,.14)" stroke="${C.water}" stroke-width=".8" stroke-dasharray="2 3"/><circle cx="${x}" cy="340" r="2.6" fill="${C.green}"/>`; });
+    $('#r-eng', svg).innerHTML = eh;
 
-    // Выноски
-    $('#h-notes', svg).innerHTML =
-      callout(450, 312, 300, 180, 'Липа · крупномер 7 м') +
-      callout(600, 505, 640, 606, 'Дождевой сад') +
-      callout(225, 250, 140, 420, 'Детская площадка') +
-      callout(800, 420, 760, 300, 'Спортивный корт');
+    // Подписи — в свободных местах, с выносками
+    $('#r-notes', svg).innerHTML =
+      pill(455, 320, 330, 160, 'Липа · крупномер 7 м', 2.6) +
+      pill(232, 300, 200, 560, 'Детская площадка', 2.7) +
+      pill(600, 500, 500, 660, 'Дождевой сад', 2.8) +
+      pill(765, 445, 740, 330, 'Спортивный корт', 2.9);
 
-    // Анимация прорисовки + координаты под курсором
     requestAnimationFrame(() => svg.classList.add('drawn'));
-    const xy = $('#xy');
-    svg.addEventListener('pointermove', (e) => {
-      const m = svg.getScreenCTM(); if (!m) return;
-      const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse());
-      xy.textContent = `X ${nf(Math.max(0, (p.x - 30) / 10), 1).padStart(5, '0')} · Y ${nf(Math.max(0, (p.y - 30) / 10), 1).padStart(5, '0')} м`;
-    });
-    svg.addEventListener('pointerleave', () => { xy.textContent = 'X 000.0 · Y 000.0'; });
 
-    // Переключатели слоёв
+    // Лёгкий параллакс за курсором
+    const g = $('#r-parallax', svg); let tx = 0, ty = 0, cx = 0, cy = 0, raf = 0;
+    const tick = () => { cx += (tx - cx) * 0.08; cy += (ty - cy) * 0.08; g.setAttribute('transform', `translate(${f1(cx)} ${f1(cy)})`); if (Math.abs(tx - cx) > 0.05 || Math.abs(ty - cy) > 0.05) raf = requestAnimationFrame(tick); else raf = 0; };
+    const move = (e) => { const r = svg.getBoundingClientRect(); tx = ((e.clientX - r.left) / r.width - 0.5) * -10; ty = ((e.clientY - r.top) / r.height - 0.5) * -10; if (!raf) raf = requestAnimationFrame(tick); };
+    if (!reduced && matchMedia('(hover: hover)').matches) {
+      svg.addEventListener('pointermove', move);
+      svg.addEventListener('pointerleave', () => { tx = 0; ty = 0; if (!raf) raf = requestAnimationFrame(tick); });
+    }
     $$('.layer').forEach((b) => b.addEventListener('click', () => {
       b.classList.toggle('on');
-      const g = $(`[data-g="${b.dataset.layer}"]`, svg);
-      if (g) g.classList.toggle('off', !b.classList.contains('on'));
+      const gg = $(`[data-g="${b.dataset.layer}"]`, svg);
+      if (gg) gg.classList.toggle('off', !b.classList.contains('on'));
     }));
-  }
-
-  function zoneTag(x, y, t) {
-    const w = t.length * 6.3 + 12;
-    return `<rect x="${x}" y="${y}" width="${w}" height="16" fill="${C.paper}" stroke="${C.ink}" stroke-width=".6"/><text x="${x + 6}" y="${y + 11.5}">${t}</text>`;
-  }
-  function noteLabel(x, y, t, col) {
-    const w = t.length * 6 + 10;
-    return `<rect x="${x}" y="${y}" width="${w}" height="15" fill="${C.paper}" stroke="${col}" stroke-width=".6"/><text x="${x + 5}" y="${y + 10.5}" font-family="JetBrains Mono, monospace" font-size="9.5" fill="${col}">${t}</text>`;
-  }
-  function callout(x1, y1, x2, y2, t) {
-    const w = t.length * 6.2 + 14;
-    return `<g font-family="JetBrains Mono, monospace" font-size="10" fill="${C.ink}">
-      <path d="M${x1},${y1}L${x2},${y2}H${x2 + w}" fill="none" stroke="${C.ink}" stroke-width=".8"/>
-      <circle cx="${x1}" cy="${y1}" r="3" fill="${C.lime}" stroke="${C.ink}" stroke-width=".8"/>
-      <rect x="${x2}" y="${y2 - 17}" width="${w}" height="17" fill="${C.paper}" stroke="${C.ink}" stroke-width=".6"/>
-      <text x="${x2 + 7}" y="${y2 - 5}">${t}</text></g>`;
   }
 
   /* =====================================================================
@@ -331,6 +288,8 @@
     };
     let s = `<svg viewBox="0 0 1200 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Разрез типового решения двора">
       <defs>${PATTERNS('s-')}
+        <radialGradient id="s-canopy" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#D3E4C4"/><stop offset=".6" stop-color="#A4C49A"/><stop offset="1" stop-color="#6B9A74"/></radialGradient>
+        <linearGradient id="s-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7F8F4"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
         <pattern id="s-earth" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="2" cy="3" r=".7" fill="${C.ink}" opacity=".25"/><circle cx="7" cy="8" r=".5" fill="${C.ink}" opacity=".2"/></pattern>
         <pattern id="s-soil" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#E2DACB"/><circle cx="1" cy="1" r=".55" fill="${C.ink}" opacity=".45"/></pattern>
         <pattern id="s-gravel" width="9" height="7" patternUnits="userSpaceOnUse"><rect width="9" height="7" fill="#ECEAE2"/><circle cx="2.5" cy="2.5" r="1.7" fill="none" stroke="${C.ink}" stroke-width=".45"/><circle cx="7" cy="5" r="1.3" fill="none" stroke="${C.ink}" stroke-width=".45"/></pattern>
@@ -339,7 +298,9 @@
         <pattern id="s-dense" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#DAD8D0"/><path d="M0 0V4" stroke="${C.ink}" stroke-width=".8" opacity=".6"/></pattern>
         <clipPath id="s-rgclip"><path d="M640,${G}L660,${G}C690,${G} 700,330 755,330C810,330 820,${G} 850,${G}L860,${G}V440H640Z"/></clipPath>
       </defs>
-      <rect x="0" y="${G}" width="1200" height="170" fill="url(#s-earth)"/>`;
+      <rect width="1200" height="${G}" fill="url(#s-sky)"/>
+      <rect x="0" y="${G}" width="1200" height="170" fill="url(#s-earth)"/>
+      <ellipse cx="420" cy="${G + 2}" rx="150" ry="7" fill="rgba(28,33,29,.14)"/>`;
 
     // Дом
     s += `<rect x="0" y="0" width="90" height="${G}" fill="#ECEBE4" stroke="${C.ink}" stroke-width="1.4"/>`;
@@ -357,9 +318,9 @@
       <rect x="350" y="${G - 4}" width="100" height="5" fill="${C.ink}"/>`;
 
     // Дерево
-    s += `<path d="${blob(400, 92, 112, 11, 0.07, 4, 78)}" fill="rgba(46,106,78,.13)" stroke="${C.green2}" stroke-width="1.1"/>
-      <path d="${blob(372, 104, 58, 8, 0.1, 9, 44)}" fill="none" stroke="${C.green2}" stroke-width=".6" opacity=".7"/>
-      <path d="${blob(440, 78, 50, 8, 0.1, 12, 36)}" fill="none" stroke="${C.green2}" stroke-width=".6" opacity=".7"/>
+    s += `<path d="${blob(400, 92, 112, 11, 0.07, 4, 78)}" fill="url(#s-canopy)"/>
+      <path d="${blob(372, 104, 58, 8, 0.1, 9, 44)}" fill="#fff" opacity=".14"/>
+      <path d="${blob(440, 78, 50, 8, 0.1, 12, 36)}" fill="#fff" opacity=".14"/>
       <path d="M395,${G}L396,150M405,${G}L404,150" stroke="${C.ink}" stroke-width="1.2"/>
       <path d="M396,180C380,150 360,130 340,108M404,165C420,140 440,118 462,96M400,150C398,120 400,80 402,40M398,140C385,120 380,96 372,70" fill="none" stroke="${C.ink}" stroke-width="1"/>
       <path d="M398,200L338,${G}M402,200L462,${G}" stroke="${C.ink}" stroke-width=".6" stroke-dasharray="3 2"/>
@@ -522,63 +483,63 @@
   function projPlan(type, seed) {
     const R = rng(seed);
     const p = `p${seed}-`;
-    let s = `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs>${PATTERNS(p)}</defs><rect width="400" height="300" fill="#FBFAF7"/>`;
-    const grid = `<path d="${Array.from({ length: 9 }, (_, i) => `M${i * 50},0V300`).join('')}${Array.from({ length: 7 }, (_, i) => `M0,${i * 50}H400`).join('')}" stroke="${C.ink}" stroke-width=".3" opacity=".12"/>`;
-    s += grid;
+    let s = `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs>${RDEFS(p)}</defs><rect width="400" height="300" fill="#EFEDE6"/>`;
     const trees = [];
     const scatter = (n, test, rmin, rmax) => {
-      for (let a = 0; a < n * 60 && trees.length < 400; a++) {
+      for (let a = 0; a < n * 80 && n > 0; a++) {
         const x = R() * 400, y = R() * 300, r = rmin + R() * (rmax - rmin);
         if (!test(x, y, r)) continue;
-        if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < (t.r + r) * 0.95)) continue;
-        trees.push({ x, y, r, k: R() < 0.75 ? 'dec' : R() < 0.6 ? 'con' : 'flw' }); n--; if (n <= 0) break;
+        if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < t.r + r + 2)) continue;
+        trees.push({ x, y, r, k: R() < 0.72 ? 'dec' : R() < 0.6 ? 'con' : 'flw' }); n--;
       }
     };
-    const band = (d, w) => `<path d="${d}" fill="none" stroke="${C.ink}" stroke-width="${w + 1.4}"/><path d="${d}" fill="none" stroke="url(#${p}tile)" stroke-width="${w}"/>`;
-    const bld = (x, y, w, h) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#${p}hatch)" stroke="${C.ink}" stroke-width="1.2"/>`;
+    const road = (d, w) => walk(d, w, p, 0, 'static');
+    const bld = (x, y, w, h) => building(x, y, w, h, p);
 
     if (type === 'court') {
+      s += `<ellipse cx="200" cy="155" rx="96" ry="60" fill="url(#${p}lawn)"/>`;
+      s += road('M200,300C200,260 200,230 200,215M104,155a96,60 0 1,0 192,0a96,60 0 1,0 -192,0M200,95C210,70 255,60 255,0', 12);
+      s += `<circle cx="100" cy="100" r="30" fill="url(#${p}rubber)"/><circle cx="100" cy="100" r="20" fill="none" stroke="#fff" stroke-width="1.2" opacity=".8"/>`;
+      s += `<path d="${blob(310, 225, 30, 5, 0.14, seed, 22)}" fill="url(#${p}pond)"/>`;
+      scatter(34, (x, y, r) => x > 70 && x < 330 && y > 66 && y < 244 && ((x - 200) / 112) ** 2 + ((y - 155) / 76) ** 2 > 1 && Math.hypot(x - 100, y - 100) > 34 + r && Math.hypot(x - 310, y - 225) > 34 + r && Math.abs(x - 200) > 12 + r, 7, 12);
+      scatter(4, (x, y, r) => ((x - 200) / 70) ** 2 + ((y - 155) / 40) ** 2 < 0.4, 9, 14);
       s += bld(10, 10, 230, 46) + bld(270, 10, 120, 46) + bld(10, 80, 46, 210) + bld(344, 80, 46, 150) + bld(80, 254, 230, 40);
-      s += `<ellipse cx="200" cy="155" rx="88" ry="55" fill="url(#${p}meadow)" stroke="${C.green2}" stroke-width=".7"/>`;
-      s += band('M200,300C200,260 200,230 200,210M112,155a88,55 0 1,0 176,0a88,55 0 1,0 -176,0M200,100C210,80 255,70 255,0', 10);
-      s += `<circle cx="100" cy="100" r="28" fill="url(#${p}rubber)" stroke="${C.ink}"/><path d="M300,200C320,215 330,235 320,250C305,255 290,240 290,220Z" fill="url(#${p}water)" stroke="${C.water}"/>`;
-      scatter(48, (x, y, r) => x > 62 && x < 338 && y > 62 && y < 248 && ((x - 200) / 108) ** 2 + ((y - 155) / 74) ** 2 > 1 && Math.hypot(x - 100, y - 100) > 32 + r && Math.abs(x - 200) > 12 + r || (x > 62 && x < 338 && y > 62 && y < 248 && ((x - 200) / 70) ** 2 + ((y - 155) / 38) ** 2 < 0.35), 6, 11);
     } else if (type === 'roof') {
-      s += `<rect x="20" y="20" width="360" height="260" fill="url(#${p}deck)" stroke="${C.ink}" stroke-width="1.4"/>`;
-      for (let x = 50; x < 380; x += 60) for (let y = 50; y < 280; y += 60) s += `<rect x="${x - 3}" y="${y - 3}" width="6" height="6" fill="${C.ink}" opacity=".5"/>`;
+      s += `<rect x="20" y="20" width="360" height="260" rx="6" fill="url(#${p}deck)"/>`;
+      for (let y = 20; y < 280; y += 12) s += `<line x1="20" y1="${y}" x2="380" y2="${y}" stroke="#fff" stroke-width=".8" opacity=".45"/>`;
       const planters = [[40, 40, 120, 60], [190, 40, 80, 120], [300, 40, 60, 200], [40, 130, 60, 130], [130, 200, 140, 60]];
-      planters.forEach(([x, y, w, h]) => { s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="url(#${p}meadow)" stroke="${C.ink}" stroke-width="1"/>`; });
-      s += `<rect x="115" y="120" width="60" height="50" fill="url(#${p}water)" stroke="${C.water}"/>`;
-      planters.forEach(([x, y, w, h]) => scatter(Math.round(w * h / 1500), (tx, ty, r) => tx > x + r && tx < x + w - r && ty > y + r && ty < y + h - r, 7, 12));
+      planters.forEach(([x, y, w, h]) => { s += `<rect x="${x + 4}" y="${y + 5}" width="${w}" height="${h}" rx="10" fill="rgba(28,33,29,.14)" filter="url(#${p}soft)"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="url(#${p}lawn)"/>`; });
+      s += `<rect x="115" y="120" width="60" height="50" rx="8" fill="url(#${p}pond)"/>`;
+      planters.forEach(([x, y, w, h]) => scatter(Math.round(w * h / 1700), (tx, ty, r) => tx > x + r && tx < x + w - r && ty > y + r && ty < y + h - r, 7, 12));
     } else if (type === 'park') {
-      s += `<path d="${blob(250, 150, 70, 4, 0.18, seed, 48)}" fill="url(#${p}water)" stroke="${C.water}" stroke-width="1"/>`;
-      s += `<path d="${blob(110, 220, 60, 5, 0.15, seed + 2, 40)}" fill="url(#${p}meadow)" stroke="${C.green2}" stroke-width=".6"/>`;
-      s += band('M0,90C80,70 140,110 170,150S190,260 260,290', 7) + band('M400,60C330,80 300,60 260,70S170,40 120,0', 6) + band('M340,300C340,250 320,230 330,200', 5);
-      scatter(110, (x, y, r) => Math.hypot((x - 250) / 1.0, (y - 150) * 1.4) > 82 + r && Math.hypot(x - 110, (y - 220) * 1.4) > 66, 5, 12);
+      s += `<path d="${blob(250, 150, 72, 4, 0.18, seed, 50)}" fill="url(#${p}pond)"/><path d="${blob(250, 150, 72, 4, 0.18, seed, 50)}" fill="none" stroke="#fff" stroke-width="1.2" opacity=".7"/>`;
+      s += `<path d="${blob(110, 220, 62, 5, 0.15, seed + 2, 42)}" fill="url(#${p}lawn)"/>`;
+      s += road('M0,90C80,70 140,110 170,150S190,260 260,290', 9) + road('M400,60C330,80 300,60 260,70S170,40 120,0', 8) + road('M340,300C340,250 320,230 330,200', 7);
+      scatter(70, (x, y, r) => Math.hypot(x - 250, (y - 150) * 1.4) > 84 + r && Math.hypot(x - 110, (y - 220) * 1.4) > 70, 6, 13);
     } else if (type === 'embank') {
-      s += `<rect x="0" y="205" width="400" height="95" fill="url(#${p}water)"/><path d="M0,205C100,200 300,210 400,204" fill="none" stroke="${C.ink}" stroke-width="1.4"/>`;
-      s += `<rect x="60" y="205" width="60" height="40" fill="url(#${p}deck)" stroke="${C.ink}"/><rect x="250" y="205" width="80" height="30" fill="url(#${p}deck)" stroke="${C.ink}"/>`;
-      s += band('M0,180C120,176 280,184 400,178', 18) + band('M0,110C120,100 260,120 400,105', 8);
-      s += `<path d="M150,200A40,40 0 0 1 230,200M162,200A28,28 0 0 1 218,200" fill="none" stroke="${C.ink}"/>`;
-      for (let x = 14; x < 400; x += 26) trees.push({ x, y: 148 + Math.sin(x / 40) * 3, r: 9, k: 'dec' });
-      scatter(50, (x, y, r) => (y > 30 + r && y < 95 - r) || (y > 122 + r && y < 136 - r), 6, 11);
+      s += `<rect x="0" y="205" width="400" height="95" fill="url(#${p}pond)"/>`;
+      for (let i = 0; i < 6; i++) s += `<path d="M0,${222 + i * 14}q20,-4 40,0t40,0t40,0t40,0t40,0t40,0t40,0t40,0t40,0t40,0" fill="none" stroke="#fff" stroke-width=".8" opacity=".5"/>`;
+      s += `<rect x="60" y="205" width="60" height="40" rx="3" fill="url(#${p}deck)"/><rect x="250" y="205" width="80" height="30" rx="3" fill="url(#${p}deck)"/>`;
+      s += road('M0,180C120,176 280,184 400,178', 20) + road('M0,110C120,100 260,120 400,105', 9);
+      s += `<path d="M150,200A40,40 0 0 1 230,200M162,200A28,28 0 0 1 218,200" fill="none" stroke="#fff" stroke-width="2"/>`;
+      for (let x = 16; x < 400; x += 28) trees.push({ x, y: 148 + Math.sin(x / 40) * 3, r: 10, k: 'dec' });
+      scatter(30, (x, y, r) => (y > 32 + r && y < 94 - r) || (y > 124 + r && y < 136 - r), 6, 11);
       s += bld(0, 0, 400, 26);
     } else if (type === 'school') {
+      s += `<rect x="30" y="185" width="200" height="100" rx="50" fill="#E5D9BF"/><rect x="62" y="205" width="136" height="60" rx="4" fill="#BFD4B6" stroke="#fff" stroke-width="1.5"/><line x1="130" y1="205" x2="130" y2="265" stroke="#fff" stroke-width="1.5"/>`;
+      for (let i = 0; i < 6; i++) s += `<rect x="${250 + (i % 3) * 38}" y="${200 + Math.floor(i / 3) * 40}" width="30" height="30" rx="6" fill="url(#${p}lawn)"/>`;
+      s += road('M0,170H140M210,120H400M330,0V300', 9);
+      scatter(44, (x, y, r) => (x < 140 - r && y < 160 - r) || (x > 320 + r && y < 110 - r) || (x > 210 && x < 320 && y > 130 + r && y < 190 - r) || (x > 345 && y > 130), 6, 12);
       s += bld(150, 30, 160, 50) + bld(150, 80, 50, 90);
-      s += `<rect x="30" y="185" width="200" height="100" rx="50" fill="#E7DEC4" stroke="${C.ink}"/><rect x="62" y="205" width="136" height="60" fill="#D9E4D0" stroke="#fff" stroke-width="1.5"/><line x1="130" y1="205" x2="130" y2="265" stroke="#fff" stroke-width="1.5"/>`;
-      for (let i = 0; i < 6; i++) s += `<rect x="${250 + (i % 3) * 38}" y="${200 + Math.floor(i / 3) * 40}" width="30" height="30" fill="url(#${p}meadow)" stroke="${C.ink}" stroke-width=".8"/>`;
-      s += band('M0,170H140M210,120H400M330,0V300', 8);
-      scatter(70, (x, y, r) => (x < 140 && y < 160) || (x > 320 + r && y < 110) || (x > 210 && x < 320 && y > 130 + r && y < 190 - r) || (y > 290), 6, 11);
     } else {
-      s += `<rect x="0" y="0" width="400" height="70" fill="#E9E6DE"/><rect x="0" y="230" width="400" height="70" fill="#E9E6DE"/>`;
+      s += `<rect x="0" y="0" width="400" height="70" fill="#E3E0D8"/><rect x="0" y="230" width="400" height="70" fill="#E3E0D8"/>`;
       s += `<path d="M0,35H400M0,265H400" stroke="#fff" stroke-width="1.5" stroke-dasharray="12 10"/>`;
-      s += band('M0,118H400', 22) + `<path d="M0,170H400" stroke="${C.lime}" stroke-width="12"/><path d="M0,170H400" stroke="${C.ink}" stroke-width=".6" stroke-dasharray="6 6"/>`;
-      s += `<rect x="0" y="198" width="400" height="22" fill="url(#${p}water)" stroke="${C.water}" stroke-width=".6"/>`;
-      for (let x = 12; x < 400; x += 24) { trees.push({ x, y: 88, r: 10, k: 'dec' }); trees.push({ x: x + 12, y: 146, r: 10, k: 'dec' }); }
-      s += `<rect x="300" y="72" width="100" height="90" fill="url(#${p}tile)" stroke="${C.ink}"/><rect x="340" y="95" width="40" height="40" fill="${C.ink}"/><text x="360" y="119" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="${C.lime}">М</text>`;
-      for (let i = trees.length - 1; i >= 0; i--) if (trees[i].x > 296 && trees[i].y < 165) trees.splice(i, 1);
+      s += road('M0,118H400', 24) + `<path d="M0,170H400" stroke="#E8B48A" stroke-width="12"/><path d="M0,170H400" stroke="#fff" stroke-width=".8" stroke-dasharray="6 6"/>`;
+      s += `<rect x="0" y="198" width="400" height="22" fill="url(#${p}lawn)"/>`;
+      for (let x = 12; x < 300; x += 26) { trees.push({ x, y: 90, r: 11, k: 'dec' }); trees.push({ x: x + 13, y: 146, r: 11, k: 'dec' }); }
+      s += `<rect x="300" y="72" width="100" height="90" fill="url(#${p}pave)"/><rect x="340" y="95" width="40" height="40" rx="6" fill="${C.ink}"/><text x="360" y="120" text-anchor="middle" font-family="Manrope" font-size="14" font-weight="700" fill="#fff">М</text>`;
     }
-    trees.forEach((t) => { s += treeSym(t.x, t.y, t.r, t.k, 0).replace('class="pop"', ''); });
+    trees.sort((a, b) => a.y - b.y).forEach((t) => { s += tree(t.x, t.y, t.r, t.k, undefined, p); });
     s += `</svg>`;
     return s;
   }
