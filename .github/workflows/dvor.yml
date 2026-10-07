@@ -39,9 +39,9 @@ jobs:
             cd published
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            rm -rf dvor krona && mkdir dvor && cp -a "$SRC/." dvor/
+            rm -rf dvor && mkdir dvor && cp -a "$SRC/." dvor/
             rm -f dvor/README.md
-            git add -A dvor krona
+            git add -A dvor
             if git diff --cached --quiet; then
               echo "Сайт не изменился, публиковать нечего"; exit 0
             fi
