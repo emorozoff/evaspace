@@ -8,7 +8,7 @@
    (docs/strategy, docs/settings, docs/learning). */
 
 const Store = (() => {
-  const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy'];
+  const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy', 'messages'];
   const LS = 'eva-hq:';
   const data = Object.fromEntries(COLS.map(c => [c, new Map()]));
   const subs = new Set();
@@ -34,12 +34,16 @@ const Store = (() => {
   async function init() {
     loadLocal();
     let api = null;
-    try {
-      api = window.claude && typeof window.claude.use === 'function' ? await window.claude.use('db') : null;
-    } catch (e) { api = null; }
+    /* свой сервер штаба (server/server.js) подставляет адрес своего хранилища */
+    if (window.EVA_API) api = httpDb(window.EVA_API);
+    else {
+      try {
+        api = window.claude && typeof window.claude.use === 'function' ? await window.claude.use('db') : null;
+      } catch (e) { api = null; }
+    }
     if (!api) { state.mode = 'local'; state.ready = true; emitStatus(); return; }
     db = api;
-    state.mode = 'db';
+    state.mode = window.EVA_API ? 'server' : 'db';
     /* ждём первый окончательный снимок каждой коллекции, чтобы не решить
        «учёток нет» по неполному кэшу; через 9 с идём с тем, что есть */
     await new Promise(resolve => {

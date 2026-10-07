@@ -37,11 +37,46 @@ function makeCode() {
 const normCode = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^(.{4})(.+)$/, '$1-$2');
 
 const Auth = {
+  /* сессия: в хранилище браузера и в памяти — некоторые браузеры не дают
+     хранилища странице внутри Claude, а вход всё равно должен держаться */
+  _sid: null,
+  claudeId: null,      // кто смотрит: id аккаунта Claude (capability user), если площадка его даёт
+  canWrite: null,      // может ли этот человек писать в общую базу (null — площадка не сказала)
+  viaClaude: false,    // вошёл без пароля, по аккаунту Claude
+  _noAuto: false,      // нажал «Выйти» — сам больше не входим, пока не обновит страницу
   me() {
     /* window.__EVA_AS — только для проверок: две вкладки под разными людьми */
-    const id = window.__EVA_AS || Local.get(SESSION_KEY, null);
+    const id = window.__EVA_AS || Local.get(SESSION_KEY, null) || this._sid;
     const a = id ? Store.get('accounts', id) : null;
     return a && a.active !== false ? a : null;
+  },
+  /* узнать человека по аккаунту Claude: один раз привязал — дальше без пароля */
+  async initIdentity() {
+    try {
+      const u = window.claude && typeof window.claude.use === 'function' ? await window.claude.use('user') : null;
+      if (!u) return;
+      this.claudeId = (await u.id()) || null;
+      this.canWrite = await u.can('data.write');
+    } catch (e) { /* без личности — обычный вход по паролю */ }
+  },
+  byClaude() {
+    if (!this.claudeId) return null;
+    return Store.all('accounts').find(a => a.claudeId === this.claudeId && a.active !== false) || null;
+  },
+  autoLogin() {
+    if (this._noAuto || window.__EVA_AS || this.me()) return false;
+    const a = this.byClaude();
+    if (!a) return false;
+    this.viaClaude = true;
+    this.start(a, {silent: true});
+    return true;
+  },
+  /* привязать учётку к аккаунту Claude — следующий вход без пароля */
+  linkClaude(accId) {
+    if (!this.claudeId || !accId) return;
+    Store.all('accounts').filter(a => a.claudeId === this.claudeId && a.id !== accId).forEach(a => Store.patch('accounts', a.id, {claudeId: null}));
+    const a = Store.get('accounts', accId);
+    if (a && a.claudeId !== this.claudeId) Store.patch('accounts', accId, {claudeId: this.claudeId});
   },
   role() { const a = this.me(); return a ? roleOf(a.role) : null; },
   person() { const a = this.me(); return a ? personById(a.personId) : null; },
@@ -49,11 +84,13 @@ const Auth = {
   can(perm) { const r = this.role(); return !!r && (PERMS[perm] || []).includes(r); },
   isOwner() { return this.role() === 'owner'; },
 
-  start(acc) {
+  start(acc, opts = {}) {
+    this._sid = acc.id;
     Local.set(SESSION_KEY, acc.id);
-    if (!acc.lastSeen || Date.now() - acc.lastSeen > 3600e3) Store.patch('accounts', acc.id, {lastSeen: Date.now()});
+    if (!opts.silent) this.linkClaude(acc.id);
+    if (!acc.lastSeen || Date.now() - acc.lastSeen > 3600e3) Store.patch('accounts', acc.id, {lastSeen: Date.now()}, {mustExist: true});
   },
-  logout() { Local.del(SESSION_KEY); window.__EVA_AS = null; App.render(); },
+  logout() { Local.del(SESSION_KEY); this._sid = null; this._noAuto = true; this.viaClaude = false; window.__EVA_AS = null; App.render(); },
 
   findByEmail(email) { const e = normEmail(email); return Store.all('accounts').find(a => normEmail(a.email) === e) || null; },
 
@@ -105,7 +142,7 @@ const Auth = {
     const acc = await this.createAccount({name, email: f.email, pw: f.pw, role: roleOf(inv.role), personId: pid, welcomed: false});
     /* запись в общую базу могли не пустить: штаб открыт человеку только на просмотр */
     await acc.wrote;
-    if (Store.state.mode === 'db' && Store.state.readOnly) {
+    if (Store.state.mode !== 'local' && Store.state.readOnly) {
       throw new Error('Регистрация не сохранилась: штаб открыт вам только на просмотр. Попросите основателя дать доступ на редактирование (меню «Поделиться» у штаба) и откройте ссылку ещё раз.');
     }
     delete acc.wrote;
@@ -121,6 +158,16 @@ const Auth = {
     return acc;
   },
 
+  /* смена пароля по ссылке от основателя: #reset=<учётка>.<код> */
+  async resetByLink(accId, code, pw) {
+    const acc = Store.get('accounts', accId), r = acc && acc.reset;
+    if (!r || r.exp < Date.now()) throw new Error('Ссылка для смены пароля устарела или уже использована. Попросите у основателя новую.');
+    if ((await hashPassword(normCode(code), r.salt)) !== r.hash) throw new Error('Ссылка для смены пароля не подходит. Попросите у основателя новую.');
+    if (pw.length < 6) throw new Error('Пароль — не короче 6 символов.');
+    const salt = randSalt();
+    await Store.patch('accounts', acc.id, {salt, hash: await hashPassword(pw, salt), reset: null});
+    this.start(acc);
+  },
   async resetWithCode(f) {
     const acc = this.findByEmail(f.email);
     const r = acc && acc.reset;
@@ -144,6 +191,7 @@ const Auth = {
 function renderAuth(root) {
   const join = App.parse();
   if (join.id === 'join' && Store.count('accounts')) { renderJoin(root, join.param); return; }
+  if (join.id === 'reset' && Store.count('accounts')) { renderResetLink(root, join.param); return; }
   const empty = !Store.count('accounts');
   let mode = empty ? 'owner' : View.get('authMode', 'login');
   if (mode === 'owner' && !empty) mode = 'login';
@@ -162,10 +210,12 @@ function renderAuth(root) {
   };
   const F = {
     name:  '<label class="field"><span>Имя и фамилия</span><input class="input" id="a-name" autocomplete="name" placeholder="Анна Смирнова"></label>',
-    email: '<label class="field"><span>Почта</span><input class="input" id="a-email" type="email" autocomplete="email" placeholder="name@mail.ru"></label>',
+    email: '<label class="field"><span>Почта</span><input class="input" id="a-email" type="email" name="username" autocomplete="username" placeholder="name@mail.ru"></label>',
     pw:    `<label class="field"><span>${mode === 'login' ? 'Пароль' : 'Пароль (от 6 символов)'}</span><input class="input" id="a-pw" type="password" autocomplete="${mode === 'login' ? 'current-password' : 'new-password'}"></label>`,
     pw2:   '<label class="field"><span>Пароль ещё раз</span><input class="input" id="a-pw2" type="password" autocomplete="new-password"></label>',
-    code:  `<label class="field"><span>${mode === 'reset' ? 'Код сброса' : 'Код приглашения'}</span><input class="input auth-code" id="a-code" autocomplete="one-time-code" placeholder="ABCD-2345"></label>`,
+    code:  mode === 'invite'
+      ? '<label class="field"><span>Код из приглашения или почта, на которую вас пригласили</span><input class="input" id="a-code" autocomplete="one-time-code" placeholder="ABCD-2345 или name@mail.ru"></label>'
+      : '<label class="field"><span>Код сброса</span><input class="input auth-code" id="a-code" autocomplete="one-time-code" placeholder="ABCD-2345"></label>',
   };
   const [title, lead] = titles[mode];
   const tabs = empty ? '' : `<div class="seg auth-tabs">
@@ -186,8 +236,10 @@ function renderAuth(root) {
       <button class="btn primary auth-go" type="submit" id="authGo">${mode === 'owner' ? 'Создать штаб' : mode === 'invite' ? 'Дальше — к анкете' : mode === 'reset' ? 'Сохранить пароль и войти' : 'Войти'}</button>
       <div class="auth-links">
         ${mode === 'login' ? '<button type="button" class="link-btn" data-mode="reset">Забыли пароль?</button>' : ''}
+        ${mode === 'reset' ? '<span class="note">Проще всего — попросить у основателя ссылку для смены пароля: «Команда» → «Сброс пароля».</span>' : ''}
         ${mode === 'reset' ? '<button type="button" class="link-btn" data-mode="login">Вернуться ко входу</button>' : ''}
       </div>
+      ${Auth.claudeId && mode === 'login' ? '<p class="auth-claude">Вы вошли в Claude — после первого входа штаб будет узнавать вас сам, без пароля.</p>' : ''}
       <p class="auth-note">Не используйте пароль от почты или банка: вход разделяет кабинеты внутри команды, а данные штаба видят все, кому открыт доступ к нему.</p>
     </form>
     <aside class="auth-side">
@@ -206,7 +258,16 @@ function renderAuth(root) {
     msg.hidden = true;
     const f = {name: val('a-name'), email: val('a-email'), pw: val('a-pw'), code: val('a-code')};
     if (mode === 'invite') {
-      const code = normCode(f.code), inv = Store.get('invites', code);
+      const raw = f.code.trim();
+      /* можно ввести почту: найдём приглашение, выданное человеку с этой почтой */
+      if (raw.includes('@')) {
+        const e = normEmail(raw);
+        const found = Store.all('invites').filter(i => !i.usedBy).filter(i => { const p = personById(i.personId); return p && [p.email, p.calEmail].some(x => x && normEmail(x) === e); });
+        if (found.length !== 1) { msg.textContent = found.length ? 'На эту почту несколько приглашений — введите код из сообщения.' : 'Приглашения на эту почту не нашлось. Введите код из сообщения или попросите у основателя ссылку.'; msg.hidden = false; return; }
+        location.hash = 'join=' + found[0].id;
+        return;
+      }
+      const code = normCode(raw), inv = Store.get('invites', code);
       if (!inv || inv.usedBy) { msg.textContent = inv ? 'По этому коду уже зарегистрировались — войдите своей почтой и паролем.' : 'Код не найден. Проверьте его или попросите у основателя новую ссылку.'; msg.hidden = false; return; }
       location.hash = 'join=' + code;
       return;
@@ -228,7 +289,66 @@ function renderAuth(root) {
       go.textContent = 'Попробовать ещё раз';
     }
   });
+  wirePwToggles(root);
   const first = $('input', form);
   /* фокус в первое поле — только если человек ещё никуда не нажал */
   if (first) setTimeout(() => { if (!document.activeElement || document.activeElement === document.body) first.focus(); }, 30);
+}
+
+/* глазок у пароля: показать / скрыть — меньше ошибок при наборе на телефоне */
+function wirePwToggles(root) {
+  $$('input[type=password]', root).forEach(i => {
+    if (i.parentElement.classList.contains('pw-wrap')) return;
+    const w = document.createElement('span');
+    w.className = 'pw-wrap';
+    i.replaceWith(w);
+    w.appendChild(i);
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pw-eye';
+    b.setAttribute('aria-label', 'Показать пароль');
+    b.innerHTML = icon('eye');
+    b.onclick = () => {
+      const show = i.type === 'password';
+      i.type = show ? 'text' : 'password';
+      b.innerHTML = icon(show ? 'eyeOff' : 'eye');
+      b.setAttribute('aria-label', show ? 'Скрыть пароль' : 'Показать пароль');
+      i.focus();
+    };
+    w.appendChild(b);
+  });
+}
+
+/* смена пароля по ссылке: #reset=<учётка>.<код> */
+function renderResetLink(root, param) {
+  const [accId, code] = String(param || '').split('.');
+  const acc = accId ? Store.get('accounts', accId) : null;
+  const ok = acc && acc.reset && acc.reset.exp > Date.now();
+  root.innerHTML = `<div class="auth one"><form class="auth-card card" id="rlForm" novalidate>
+    <div class="auth-brand">${brandIcon('auth-mark')}<div><b>Eva Club</b><span>штаб команды Eva Space</span></div></div>
+    ${ok ? `<h1>Новый пароль</h1><p class="auth-lead">${esc(acc.name)}, придумайте новый пароль — и сразу войдёте в штаб.</p>
+      <input type="email" name="username" autocomplete="username" value="${esc(acc.email)}" hidden>
+      <div class="auth-fields"><label class="field"><span>Новый пароль — от 6 символов</span><input class="input" id="rl-pw" type="password" autocomplete="new-password"></label>
+        <label class="field"><span>Ещё раз</span><input class="input" id="rl-pw2" type="password" autocomplete="new-password"></label></div>
+      <div class="auth-msg" id="rlMsg" hidden></div>
+      <button class="btn primary auth-go" type="submit" id="rlGo">Сохранить пароль и войти</button>`
+    : `<h1>Ссылка устарела</h1><p class="auth-lead">Ссылка для смены пароля действует сутки и только один раз. Попросите у основателя новую.</p>
+      <div class="row"><button type="button" class="btn primary" data-rl-login>Ко входу</button></div>`}
+  </form></div>`;
+  on(root, 'click', '[data-rl-login]', () => { View.set('authMode', 'login'); location.hash = ''; App.render({force: true}); });
+  const form = $('#rlForm', root);
+  if (!ok) return;
+  wirePwToggles(root);
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const msg = $('#rlMsg', root), pw = $('#rl-pw', root).value;
+    if (pw !== $('#rl-pw2', root).value) { msg.textContent = 'Пароли не совпадают.'; msg.hidden = false; return; }
+    try {
+      await Auth.resetByLink(accId, code, pw);
+      try { history.replaceState(null, '', '#home'); } catch (err) { location.hash = 'home'; }
+      App.render({force: true});
+      toast('Пароль изменён — вы в штабе');
+    } catch (err) { msg.textContent = err.message || String(err); msg.hidden = false; }
+  });
+  setTimeout(() => { const i = $('#rl-pw', root); if (i) i.focus(); }, 30);
 }

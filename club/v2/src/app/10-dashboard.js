@@ -85,13 +85,13 @@ App.register('home', {
         ...acts.budget.slice(0, 4).map(x => ({html: `<span class="pill gold">бюджет ${rubK(Number(x.budget))}</span>${esc(x.title)}`, who: personById(x.createdBy), id: x.id})),
         ...overdueAll.filter(x => x.status !== 'review').sort((a, b) => (Tasks.due(a) < Tasks.due(b) ? -1 : 1)).slice(0, 5).map(x => ({html: `<span class="pill bad">срок ${dayShort(Tasks.due(x))}</span>${esc(x.title)}`, who: personById(x.assignee), id: x.id})),
       ];
-      focus = `<div class="card"><div class="card-head"><h2>Ждут решения</h2><a class="link-btn" href="#tasks">Все задачи</a></div>
+      focus = `<div class="card"><div class="card-head"><h2>Ждут решения</h2><span class="row"><button class="btn sm primary" data-new-task>${icon('plus')}Задача</button><a class="link-btn" href="#tasks">Все задачи</a></span></div>
         ${rows.length ? `<div class="focus-list">${rows.map(r => `<button class="focus-row" data-open-task="${r.id}"><span class="fr-t">${r.html}</span>${avatar(r.who)}</button>`).join('')}</div>` : '<p class="note">Ничего не ждёт согласования и нет просроченных задач.</p>'}
         ${unpaid.length ? `<div class="focus-pay"><span class="label">Платежи ${MONTHS_GEN[monthIdx(monthOf(t))]} по плану</span>${unpaid.slice(0, 4).map(it => `<a href="#money" class="fp-row"><span>${esc(it.group === 'payroll' && !Auth.can('payroll.view') ? 'Оплата труда' : it.title)}</span><b>${rub(Money.planAmount(it, monthOf(t)))}</b></a>`).join('')}${unpaid.length > 4 ? `<a href="#money" class="note">ещё ${unpaid.length - 4}</a>` : ''}</div>` : ''}
       </div>`;
     } else if (teamRoles) {
       const list = Tasks.sort(myOpen).slice(0, 7);
-      focus = `<div class="card"><div class="card-head"><h2>Мои задачи</h2><a class="link-btn" href="#tasks">Все мои задачи</a></div>
+      focus = `<div class="card"><div class="card-head"><h2>Мои задачи</h2><span class="row"><button class="btn sm primary" data-new-task>${icon('plus')}Задача</button><a class="link-btn" href="#tasks">Все мои задачи</a></span></div>
         ${list.length ? `<div class="t-list mini">${list.map(taskRow).join('')}</div>` : '<p class="note">Открытых задач нет. Возьмите задачу у ведущего своего направления или добавьте свою в «Задачах».</p>'}</div>`;
     } else {
       const goals = Strategy.goals();
@@ -134,7 +134,7 @@ App.register('home', {
 
     root.innerHTML = `
       ${pageHead(`${hello}, ${esc(name)}`, `${cap(dayWd(t))} · ${Q.name}: ${pace.started ? (pace.over ? 'квартал закрыт' : `день ${pace.daysGone} из ${pace.daysAll}`) : `до старта ${pace.toStart} ${plural(pace.toStart, 'день', 'дня', 'дней')}`} · ведём план «${SCENARIOS[sc].name}»`,
-        `${Auth.can('sales.edit') ? `<a class="btn" href="#reports">${icon('chart')}Цифры дня</a>` : ''}${teamRoles ? `<button class="btn primary" data-new-task>${icon('plus')}Задача</button>` : ''}`)}
+        '')}
       ${teamRoles ? spiritHtml() : ''}
       ${start}
       <div class="cards tiles">${tiles.join('')}</div>

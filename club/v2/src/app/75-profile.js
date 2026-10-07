@@ -114,10 +114,12 @@ function renderProfile(root, pid) {
     </div>
     ${own ? `<section class="section card pf-sec"><div class="card-head"><h2>Уведомления</h2></div>
       <div class="row pf-snd"><label class="check"><input type="checkbox" id="pfSound" ${Sound.on() ? 'checked' : ''}> Звук, когда мне ставят задачу, присылают на согласование или возвращают</label><button class="btn sm ghost" id="pfSoundTest">${icon('bell')}Проверить звук</button></div>
-      <p class="note">Уведомление всплывает, пока штаб открыт. Выбор помнится в этом браузере; то же переключает колокольчик внизу меню.</p>
+      <p class="note">Уведомление всплывает, пока штаб открыт. То же переключает колокольчик внизу меню.</p>
+      ${tgBot() ? `<div class="row pf-tg">${p.tgChatId ? `<span class="pill good">${icon('tick')}Напоминания о собраниях приходят в Telegram</span>` : `<a class="btn sm" href="https://t.me/${tgBot()}?start=p_${esc(p.id)}" target="_blank" rel="noopener">${icon('msg')}Получать напоминания о собраниях в Telegram</a><span class="note">Откроется бот штаба — нажмите «Старт».</span>`}</div>` : ''}
+      <div class="row"><button class="btn sm ghost" id="pfTours">${icon('help')}Показать подсказки и туры снова</button></div>
     </section>` : ''}
     ${own ? `<section class="section card pf-sec"><div class="card-head"><h2>Вход и пароль</h2></div>
-      <p class="note">Почта для входа: <b>${esc((Auth.me() || {}).email || '')}</b></p>
+      <p class="note">Почта для входа: <b>${esc((Auth.me() || {}).email || '')}</b>${Auth.claudeId ? ((Auth.me() || {}).claudeId === Auth.claudeId ? ' · вход через ваш аккаунт Claude включён — пароль не спрашиваем' : ' · <button class="link-btn" id="pfLinkClaude">входить через аккаунт Claude без пароля</button>') : ''}</p>
       <div class="row pf-pw"><input class="input" type="password" id="pwOld" placeholder="Текущий пароль" autocomplete="current-password"><input class="input" type="password" id="pwNew" placeholder="Новый, от 6 символов" autocomplete="new-password"><input class="input" type="password" id="pwNew2" placeholder="Новый ещё раз" autocomplete="new-password"><button class="btn" id="pwSave">Сменить пароль</button><button class="btn ghost" data-logout-me>${icon('logout')}Выйти</button></div>
     </section>` : ''}`;
 
@@ -138,6 +140,11 @@ function renderProfile(root, pid) {
   if (snd) snd.onchange = () => { Sound.set(snd.checked); App.paintSound(); if (snd.checked) Sound.play('task', true); };
   const sndT = $('#pfSoundTest', root);
   if (sndT) sndT.onclick = () => { Sound.play('control', true); toast('Так звучит задача на согласование', {ring: true}); };
+  const lc = $('#pfLinkClaude', root);
+  if (lc) lc.onclick = () => { Auth.linkClaude(Auth.me().id); toast('Готово: дальше штаб узнаёт вас по аккаунту Claude'); };
+  if (own) wirePwToggles(root);
+  const tr = $('#pfTours', root);
+  if (tr) tr.onclick = () => { Tour.reset(); ['tasks', 'strategy', 'money', 'reports', 'calendar', 'metrics'].forEach(k => Prefs.set('help_' + k, false)); toast('Готово: туры и подсказки покажутся снова на каждой странице'); };
   if (!edit) return;
   on(root, 'click', '[data-pf-birth]', () => editBirth(p));
 
@@ -199,7 +206,9 @@ function renderProfile(root, pid) {
   if (pw) pw.onclick = async () => {
     const acc0 = Auth.me();
     const o = $('#pwOld', root).value, n1 = $('#pwNew', root).value, n2 = $('#pwNew2', root).value;
-    if ((await hashPassword(o, acc0.salt)) !== acc0.hash) { toast('Текущий пароль не подошёл', {error: true}); return; }
+    /* вошёл по аккаунту Claude — личность подтверждена, старый пароль не нужен */
+    const trusted = Auth.claudeId && acc0.claudeId === Auth.claudeId;
+    if (!trusted && (await hashPassword(o, acc0.salt)) !== acc0.hash) { toast('Текущий пароль не подошёл', {error: true}); return; }
     if (n1.length < 6) { toast('Новый пароль — не короче 6 символов', {error: true}); return; }
     if (n1 !== n2) { toast('Новые пароли не совпадают', {error: true}); return; }
     const salt = randSalt();

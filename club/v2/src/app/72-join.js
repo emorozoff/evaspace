@@ -73,10 +73,13 @@ function cardValues(p, inv = {}) {
   return v;
 }
 const pendingInvite = pid => Store.all('invites').find(i => i.personId === pid && !i.usedBy) || null;
-function inviteLink(code) {
-  /* в артефакте Claude адрес страницы изнутри не виден — берём адрес штаба */
-  const base = Store.state.mode === 'db' ? HQ_URL : location.href.split('#')[0];
-  return `${base}#join=${code}`;
+/* в артефакте Claude адрес страницы изнутри не виден — берём адрес штаба */
+const hqBase = () => (Store.state.mode === 'db' ? HQ_URL : location.href.split('#')[0]);
+function inviteLink(code) { return `${hqBase()}#join=${code}`; }
+/* ключ анкеты: поменялся — анкету можно дорисовать (данные пришли позже) */
+function joinKey(code) {
+  const inv = Store.get('invites', normCode(code));
+  return JSON.stringify([code, !!inv, inv && inv.usedBy, inv && inv.role, inv ? cardValues(personById(inv.personId), inv) : 0]);
 }
 function inviteText(code) {
   const inv = Store.get('invites', code) || {};
@@ -168,7 +171,7 @@ function joinFormHtml(v, src, preview = false) {
         <label class="field"><span>Направление${tag('dir')}</span><select class="select" id="j-dir" ${dis}><option value="">Без направления</option>${Object.entries(DIRS).map(([k, d]) => `<option value="${k}" ${k === v.dir ? 'selected' : ''}>${d.name}</option>`).join('')}</select></label></div>
     </section>
     <section class="jf-sec"><h3>Как с тобой связаться</h3>
-      <div class="grid3">${inp('email', 'Почта — она же для входа', 'email', 'autocomplete="email" inputmode="email" placeholder="name@mail.ru"')}${inp('phone', 'Телефон', 'tel', 'autocomplete="tel" inputmode="tel" placeholder="+7 900 000-00-00"')}${inp('telegram', 'Телеграм', 'text', 'placeholder="@name"')}</div>
+      <div class="grid3">${inp('email', 'Почта — она же для входа', 'email', 'name="username" autocomplete="username" inputmode="email" placeholder="name@mail.ru"')}${inp('phone', 'Телефон', 'tel', 'autocomplete="tel" inputmode="tel" placeholder="+7 900 000-00-00"')}${inp('telegram', 'Телеграм', 'text', 'placeholder="@name"')}</div>
     </section>
     <section class="jf-sec"><h3>Рождение и Human Design <small>по желанию — чтобы команда знала тебя лучше</small></h3>
       <div class="grid3">${inp('birthDate', 'Дата рождения', 'date', `min="1940-01-01" max="${today()}"`)}${inp('birthTime', 'Время рождения', 'time')}${inp('birthCity', 'Город рождения', 'text', 'placeholder="Москва" maxlength="80"')}</div>
@@ -213,6 +216,7 @@ function renderJoin(root, code) {
   root.innerHTML = `<div class="join">
     ${joinHeroHtml(inv, p, v)}
     <form class="card join-form" id="joinForm" novalidate autocomplete="on">
+      ${Auth.canWrite === false ? '<div class="join-ro">Похоже, штаб открыт вам только на просмотр — регистрация не сохранится. Попросите основателя дать доступ на редактирование (меню «Поделиться» у штаба) и откройте ссылку снова.</div>' : ''}
       <p class="join-lead">Проверь данные — часть мы уже заполнили. Всё можно поправить сейчас или потом на своей странице в штабе.</p>
       ${joinFormHtml(v, src)}
       <div class="auth-msg" id="joinMsg" hidden></div>
@@ -221,6 +225,7 @@ function renderJoin(root, code) {
     </form>
   </div>`;
   wireJoinForm(root, c);
+  wirePwToggles(root);
   on(root, 'click', '[data-join-mode]', (e, b) => { View.set('authMode', b.dataset.joinMode); location.hash = ''; App.render({force: true}); });
   const first = $('#j-given', root);
   if (first && !first.value) setTimeout(() => { if (!document.activeElement || document.activeElement === document.body) first.focus(); }, 30);
@@ -229,13 +234,15 @@ function wireJoinForm(root, code) {
   let hd = (($('.hd-chip.on', root) || {}).dataset || {}).hd || '';
   on(root, 'click', '[data-hd]', (e, b) => {
     hd = b.dataset.hd;
+    $('#joinForm', root).dataset.dirty = '1';
     $$('.hd-chip', root).forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', String(x === b)); });
     $('#jHdHint', root).textContent = HD_TYPES[hd] ? `Стратегия — ${HD_TYPES[hd].strategy}.` : '';
   });
   const form = $('#joinForm', root), msg = $('#joinMsg', root), go = $('#joinGo', root);
   const val = k => (($('#j-' + k, root) || {}).value || '').trim();
   const fail = (text, k) => { msg.textContent = text; msg.hidden = false; const i = k && $('#j-' + k, root); if (i) { i.classList.add('bad'); i.focus(); } else msg.scrollIntoView({block: 'center', behavior: 'smooth'}); };
-  on(form, 'input', '.input', (e, i) => i.classList.remove('bad'));
+  on(form, 'input', '.input', (e, i) => { i.classList.remove('bad'); form.dataset.dirty = '1'; });
+  on(form, 'change', 'select', () => { form.dataset.dirty = '1'; });
   form.addEventListener('submit', async e => {
     e.preventDefault();
     msg.hidden = true;

@@ -73,13 +73,16 @@ App.register('team', {
 
     root.innerHTML = `
       ${pageHead('Команда', 'Люди, должности, условия и доступ в штаб. Нажмите на человека — откроется его страница.',
-        `${owner ? `<button class="btn" data-invite-new>${icon('link')}Пригласить по ссылке</button><button class="btn primary" data-person-add>${icon('plus')}Человек</button>` : ''}`)}
+        '')}
       <div class="team-bar">
-        <div class="seg"><button data-tv="list" class="${view === 'list' ? 'on' : ''}">Список</button><button data-tv="dirs" class="${view === 'dirs' ? 'on' : ''}">По направлениям</button></div>
+        <div class="seg"><button data-tv="list" class="${view === 'list' ? 'on' : ''}">Список</button><button data-tv="org" class="${view === 'org' ? 'on' : ''}">Структура</button><button data-tv="dirs" class="${view === 'dirs' ? 'on' : ''}">По направлениям</button></div>
+        ${owner ? `<span class="team-add"><button class="btn sm primary" data-person-add>${icon('plus')}Человек</button><button class="btn sm" data-invite-new>${icon('link')}Пригласить по ссылке</button></span>` : ''}
         <span class="team-sum">${ppl.length} ${plural(ppl.length, 'человек', 'человека', 'человек')} · в команде ${active.length}${seePay ? ` · ФОТ ${rubK(fot)} в месяц` : ''}</span>
       </div>
-      ${ppl.length ? (view === 'dirs' ? groups : table) : '<div class="empty"><b>В команде пока никого</b>Добавьте людей кнопкой «Человек».</div>'}
-      ${owner ? onboardHtml() + accessHtml(accs, invs) : ''}`;
+      ${ppl.length ? (view === 'dirs' ? groups : view === 'org' ? orgChartHtml(ppl, owner) : table) : '<div class="empty"><b>В команде пока никого</b>Добавьте людей кнопкой «Человек».</div>'}
+      ${owner ? onboardHtml() : ''}
+      ${Auth.can('money.edit') ? portableHtml() : ''}
+      ${owner ? accessHtml(accs, invs) : ''}`;
 
     on(root, 'click', '[data-tv]', (e, el) => { View.set('team.view', el.dataset.tv); App.render(); });
     on(root, 'click', '[data-person-tasks]', (e, el) => { View.set('t.whom', el.dataset.personTasks); View.set('t.late', false); View.set('t.dir', ''); View.set('t.goal', ''); App.go('tasks'); });
@@ -87,6 +90,7 @@ App.register('team', {
     on(root, 'click', '[data-person-add]', () => editPerson(null));
     on(root, 'click', '[data-invite-for]', (e, el) => { e.preventDefault(); issueInvite(el.dataset.inviteFor); });
     if (owner) { wireAccess(root); wireOnboard(root); }
+    if (Auth.can('money.edit')) wirePortable(root);
   },
 });
 
@@ -119,7 +123,8 @@ function editPerson(id, opts = {}) {
       <div class="grid2"><label class="field"><span>Имя</span><input class="input" id="peGiven" value="${esc(np.given)}" placeholder="Пусто — вакансия"></label>
       <label class="field"><span>Фамилия</span><input class="input" id="peSurname" value="${esc(np.surname)}"></label></div>
       <div class="grid2"><label class="field"><span>Должность</span><input class="input" id="peTitle" value="${esc(v.title || '')}" placeholder="Финансовый директор"></label>
-      <label class="field"><span>Направление</span><select class="select" id="peDir"><option value="">Без направления</option>${Object.entries(DIRS).map(([k, d]) => `<option value="${k}" ${k === v.dir ? 'selected' : ''}>${d.name}</option>`).join('')}</select></label></div></div>
+      <label class="field"><span>Направление</span><select class="select" id="peDir"><option value="">Без направления</option>${Object.entries(DIRS).map(([k, d]) => `<option value="${k}" ${k === v.dir ? 'selected' : ''}>${d.name}</option>`).join('')}</select></label></div>
+      ${v.founder ? '' : `<label class="field"><span>Подчиняется <small class="note">для структуры команды</small></span><select class="select" id="peMgr"><option value="">Автоматически${p ? ` — ${esc((personById(orgManagerOf(p, people(), people().find(x => x.founder))) || {}).name || '—')}` : ''}</option>${people().filter(x => !p || x.id !== p.id).map(x => `<option value="${x.id}" ${x.id === v.managerId ? 'selected' : ''}>${esc(personName(x))}${x.title && x.name ? ' · ' + esc(x.title) : ''}</option>`).join('')}</select></label>`}</div>
       <div class="form-sec"><span class="label">Условия</span>
       <div class="grid3"><label class="field"><span>Статус</span><select class="select" id="peStatus">${Object.entries(PERSON_STATUS).map(([k, s]) => `<option value="${k}" ${k === pStatus(v) ? 'selected' : ''}>${s.name}</option>`).join('')}</select><small>«Не активирован» — в плане платежей не считается</small></label>
       <label class="field"><span>Ставка</span><select class="select" id="peRate"><option value="">—</option>${opt(RATES, v.rate)}</select></label>
@@ -152,6 +157,7 @@ function editPerson(id, opts = {}) {
           format: $('#peFormat', el).value, salary: Math.max(0, Math.round(parseNum($('#peSalary', el).value))), startMonth: $('#peStart', el).value,
           email: $('#peEmail', el).value.trim(), phone: $('#pePhone', el).value.trim(), telegram: $('#peTg', el).value.trim(), calEmail: $('#peCal', el).value.trim(),
           duties: $('#peDuties', el).value.trim(), kpi: $('#peKpi', el).value.trim()};
+        if ($('#peMgr', el)) data.managerId = $('#peMgr', el).value || null;
         let pid = p ? p.id : null;
         if (p) Store.patch('people', p.id, data); else pid = Store.add('people', {...data, order: 50});
         syncPayroll(pid);
@@ -208,7 +214,7 @@ function accessHtml(accs, invs) {
         return `<tr class="${off ? 'off' : ''}"><td><b>${esc(a.name)}</b>${self ? ' <span class="note">это вы</span>' : ''}</td><td class="soft">${esc(a.email)}</td>
           <td><select class="select sm" data-acc-role="${a.id}" ${lockRole ? 'disabled' : ''}>${Object.entries(ROLES).map(([k, r]) => `<option value="${k}" ${k === roleOf(a.role) ? 'selected' : ''}>${r.name}</option>`).join('')}</select></td>
           <td class="soft nowrap">${a.lastSeen ? timeAgo(a.lastSeen) : '—'}</td>
-          <td class="r nowrap">${self ? '' : `<button class="btn xs" data-acc-reset="${a.id}">Код сброса</button> <button class="btn xs ${off ? '' : 'danger'}" data-acc-toggle="${a.id}">${off ? 'Включить' : 'Отключить'}</button>`}</td></tr>`;
+          <td class="r nowrap">${self ? '' : `<button class="btn xs" data-acc-reset="${a.id}">Сброс пароля</button> <button class="btn xs ${off ? '' : 'danger'}" data-acc-toggle="${a.id}">${off ? 'Включить' : 'Отключить'}</button>`}</td></tr>`;
       }).join('')}</tbody></table></div>
     ${pending.length ? `<div class="section-head inv-h"><h3>Приглашения, по которым ещё не зарегистрировались</h3></div>
       <div class="table-wrap"><table class="t inv"><thead><tr><th>Для кого</th><th>Роль</th><th>Код</th><th>Выдано</th><th></th></tr></thead>
@@ -232,10 +238,11 @@ function wireAccess(root) {
   on(root, 'click', '[data-acc-reset]', async (e, el) => {
     const a = Store.get('accounts', el.dataset.accReset);
     const code = await Auth.issueReset(a.id);
-    const text = `Код сброса пароля в штабе Eva Club: ${code}. Действует сутки: на входе нажмите «Забыли пароль?», введите почту ${a.email} и код.`;
-    openModal({title: `Код сброса для ${a.name}`, body: `<b class="inv-code big-code">${code}</b><p class="note">${esc(text)}</p>`,
+    const link = `${hqBase()}#reset=${a.id}.${code}`;
+    const text = `${a.name.split(' ')[0]}, ссылка, чтобы задать новый пароль в штабе Eva Space: ${link}\nДействует сутки и один раз. Если ссылка не откроется: на входе «Забыли пароль?» → почта ${a.email} и код ${code}.`;
+    openModal({title: `Сброс пароля: ${a.name}`, body: `<span class="label">Ссылка для смены пароля</span><div class="iv-link"><input class="input" readonly value="${esc(link)}"><button class="btn sm primary" id="rsLink">${icon('copy')}Скопировать ссылку</button></div><p class="note">Код на всякий случай: <span class="inv-code">${code}</span>. Действует сутки.</p><pre class="iv-msg"></pre>`,
       foot: `<button class="btn" data-close>Готово</button><button class="btn primary" id="rsCopy">${icon('copy')}Скопировать сообщение</button>`,
-      onMount(m) { $('#rsCopy', m).onclick = ev => copyText(text, ev.currentTarget); }});
+      onMount(m) { $('.iv-msg', m).textContent = text; $('#rsCopy', m).onclick = ev => copyText(text, ev.currentTarget); $('#rsLink', m).onclick = ev => copyText(link, ev.currentTarget); }});
   });
   on(root, 'click', '[data-inv-copy]', (e, el) => copyText(inviteText(el.dataset.invCopy), el));
   on(root, 'click', '[data-inv-link]', (e, el) => copyText(inviteLink(el.dataset.invLink), el));
@@ -244,4 +251,45 @@ function wireAccess(root) {
     if (!(await confirmPop(el, {text: 'Отозвать приглашение? По ссылке и коду больше нельзя будет зарегистрироваться.', yes: 'Да, отозвать', danger: true}))) return;
     Store.remove('invites', el.dataset.invDel);
   });
+}
+/* ── структура: генеральный директор сверху, под ним управление (финансовый,
+   исполнительный, коммерческий и другие директора), под каждым — его люди.
+   Кому подчиняется человек, можно указать в карточке; иначе — по должности
+   и направлению. ── */
+const ORG_ORDER = [[/фин|cfo/i, 1], [/исполн|операц|coo/i, 2], [/коммерч|продаж|cco/i, 3], [/техн|cto/i, 4], [/продукт|cpo/i, 5], [/маркет|cmo/i, 6]];
+const isDirector = p => !p.founder && /директор|\bc[fotpm]o\b|\bcco\b/i.test(p.title || '');
+const orgRank = p => { const r = ORG_ORDER.find(([re]) => re.test(p.title || '')); return r ? r[1] : 9; };
+const orgSort = (a, b) => (isDirector(b) - isDirector(a)) || orgRank(a) - orgRank(b) || (pStatus(a) === 'vacancy') - (pStatus(b) === 'vacancy') || personName(a).localeCompare(personName(b), 'ru');
+function orgManagerOf(p, ppl, founder) {
+  if (!p || p.founder) return null;
+  if (p.managerId && p.managerId !== p.id && ppl.some(x => x.id === p.managerId)) return p.managerId;
+  if (!founder) return null;
+  if (isDirector(p)) return founder.id;
+  const whale = (Strategy.whales()[p.dir] || {}).lead;
+  const lead = ppl.find(x => x.id !== p.id && isDirector(x) && x.dir && x.dir === p.dir) || (whale && whale !== p.id ? ppl.find(x => x.id === whale) : null);
+  return lead ? lead.id : founder.id;
+}
+function orgChartHtml(ppl, owner) {
+  const founder = ppl.find(p => p.founder) || null;
+  if (!founder) return '<div class="empty"><b>Нет основателя в команде</b>Отметьте генерального директора, чтобы построить структуру.</div>';
+  const mgr = {};
+  ppl.forEach(p => { mgr[p.id] = orgManagerOf(p, ppl, founder); });
+  /* замкнутый круг подчинения разрываем — такие люди подчиняются генеральному */
+  ppl.forEach(p => { const seen = new Set([p.id]); let m = mgr[p.id]; while (m) { if (seen.has(m)) { mgr[p.id] = founder.id; break; } seen.add(m); m = mgr[m]; } });
+  const kids = id => ppl.filter(p => mgr[p.id] === id).sort(orgSort);
+  const box = (p, cls = '') => `<a class="org-box ${cls} ${pStatus(p) !== 'active' ? 'dim' : ''}" href="#p-${p.id}">${avatar(p)}<span><b>${esc(p.name || 'Вакансия')}</b><small>${esc(p.title || '')}</small></span>${pStatus(p) === 'vacancy' ? '<em>вакансия</em>' : ''}</a>`;
+  const team = id => {
+    const list = kids(id);
+    return list.length ? `<div class="org-team">${list.map(x => `<div class="org-node">${box(x)}${kids(x.id).length ? `<div class="org-sub">${kids(x.id).map(y => box(y, 'sm')).join('')}</div>` : ''}</div>`).join('')}</div>` : '<p class="note org-empty">команда набирается</p>';
+  };
+  const top = kids(founder.id);
+  const dirs = top.filter(p => isDirector(p) || kids(p.id).length);
+  const direct = top.filter(p => !dirs.includes(p));
+  return `<div class="org">
+    <div class="org-l0"><span class="label">Генеральный директор</span>${box(founder, 'ceo')}</div>
+    ${dirs.length ? `<div class="org-band"><span class="label">Управление</span></div>
+    <div class="org-l1">${dirs.map(d => `<div class="org-col"><div class="org-head">${box(d, 'dir')}</div>${team(d.id)}</div>`).join('')}</div>` : ''}
+    ${direct.length ? `<div class="org-direct"><span class="label">Подчиняются напрямую генеральному директору</span><div class="org-row">${direct.map(x => box(x)).join('')}</div></div>` : ''}
+    <p class="note">${owner ? 'Кому подчиняется человек, меняется в его карточке («Изменить» → «Подчиняется»). ' : ''}Без явного указания директора стоят под генеральным, остальные — под директором своего направления.</p>
+  </div>`;
 }

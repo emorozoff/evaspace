@@ -44,6 +44,65 @@ const Tasks = {
   canEdit(t) { const k = this.meKey(); return this.manager() || this.mine(t) || t.createdBy === k || this.approver(t) === k; },
   canDelete(t) { return this.manager() || t.createdBy === this.meKey(); },
 
+  /* сроки. Постановщик (и основатель) меняет срок сразу — он меняется у всех.
+     Исполнитель своей задачи — тоже. Исполнитель чужой задачи переносит срок
+     сам в пределах того же календарного месяца, если постановщик не отметил
+     «Срок важен»; на другой месяц или при важном сроке — просит постановщика,
+     тот согласует одной кнопкой. */
+  dueBoss(t) { return t.createdBy || founderId(); },
+  dueRule(t, due, month) {
+    const k = this.meKey(), boss = this.dueBoss(t);
+    if (Auth.isOwner() || !boss || boss === k) return 'direct';
+    if (t.assignee === k) {
+      if (t.dueFixed) return 'request';
+      const curM = t.due ? monthOf(t.due) : t.month;
+      const newM = due ? monthOf(due) : month;
+      return !curM || (newM && newM === curM) ? 'direct' : 'request';
+    }
+    return this.manager() ? 'direct' : 'request';
+  },
+  canResolveDue(t) { const k = this.meKey(); return Auth.isOwner() || this.dueBoss(t) === k || (this.manager() && t.assignee !== k); },
+  dueLabel(due, month) { return due ? dayLong(due) : month ? monthName(month).toLowerCase() : 'без срока'; },
+  /* единая точка смены срока: доска, карточка, окно задачи */
+  changeDue(t, due, month, extra = {}) {
+    const cur = this.get(t.id) || t;
+    due = due || null;
+    if (due) month = monthOf(due);
+    else if (month === undefined) month = cur.month || null;
+    if ((cur.due || null) === due && (cur.month || null) === (month || null)) {
+      if (Object.keys(extra).length) Store.patch('tasks', cur.id, extra, {mustExist: true});
+      return 'same';
+    }
+    const k = this.meKey(), who = whoFirst(k), label = this.dueLabel(due, month);
+    if (this.dueRule(cur, due, month) === 'request') {
+      const boss = this.dueBoss(cur);
+      this.update(cur.id, {dueReq: {due, month: month || null, by: k, at: Date.now()}, ...extra}, `${who}: просит перенести срок на ${label}`, {type: 'dueReq', to: [boss]}, {d: label});
+      Sound.play('sent');
+      toast(cur.dueFixed ? `Срок важен для постановщика — ${whoName(boss)} получит запрос на перенос` : `Перенос на другой месяц согласует ${whoName(boss)} — запрос отправлен`);
+      return 'requested';
+    }
+    const was = this.due(cur) || '';
+    const patch = {due, month: month || null, dueReq: null, ...extra};
+    if (cur.due && (due || (month ? monthEnd(month) : '')) > was) patch.postponeCount = (cur.postponeCount || 0) + 1;
+    const notify = [cur.assignee, cur.createdBy].filter((x, i, a) => x && x !== k && a.indexOf(x) === i);
+    this.update(cur.id, patch, due ? `${who}: срок — ${label}` : month ? `${who}: перенесено на ${label}` : `${who}: срок снят`, notify.length ? {type: 'due', to: notify} : null, {d: label});
+    return 'applied';
+  },
+  resolveDue(t, ok) {
+    const cur = this.get(t.id) || t, r = cur.dueReq;
+    if (!r) return;
+    const who = whoFirst(this.meKey()), label = this.dueLabel(r.due, r.month);
+    if (ok) {
+      const patch = {due: r.due || null, month: r.month || (r.due ? monthOf(r.due) : cur.month || null), dueReq: null};
+      if (cur.due && (r.due || (r.month ? monthEnd(r.month) : '')) > (this.due(cur) || '')) patch.postponeCount = (cur.postponeCount || 0) + 1;
+      this.update(cur.id, patch, `${who}: перенос срока согласован — ${label}`, {type: 'dueOk', to: [r.by]}, {d: label});
+      toast(`Срок перенесён: ${label}`);
+    } else {
+      this.update(cur.id, {dueReq: null}, `${who}: срок оставлен прежним`, {type: 'dueNo', to: [r.by]});
+      toast('Срок оставлен прежним');
+    }
+  },
+
   /* зависимости */
   blockers(t) { return (t.blockedBy || []).map(id => this.get(id)).filter(Boolean); },
   blocked(t) { return this.blockers(t).some(b => b.status !== 'done'); },
@@ -91,9 +150,9 @@ const Tasks = {
     return [...g.values()].filter(x => x.length > 1).map(x => x.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)));
   },
 
-  entry(text, ev, to) {
+  entry(text, ev, to, meta) {
     const k = this.meKey();
-    const e = {by: k, at: Date.now(), text, kind: 'system'};
+    const e = {by: k, at: Date.now(), text, kind: 'system', ...(meta || {})};
     if (ev) { e.ev = ev; e.to = (to || []).filter((x, i, a) => x && x !== k && a.indexOf(x) === i); }
     return e;
   },
@@ -127,12 +186,12 @@ const Tasks = {
     return id;
   },
   /* правка с записью в историю; ev — кому сообщить */
-  update(id, patch, log, ev) {
+  update(id, patch, log, ev, meta) {
     const cur = this.get(id);
     if (!cur) return Promise.resolve(false);
     const k = this.meKey();
     const p = {...patch, updatedAt: Date.now(), updatedBy: k};
-    if (log) p.comments = {[uid()]: this.entry(log, ev && ev.type, ev && ev.to)};
+    if (log) p.comments = {[uid()]: this.entry(log, ev && ev.type, ev && ev.to, meta)};
     const r = Store.patch('tasks', id, p, {mustExist: true});
     this.syncBudget(id);
     return r;
@@ -249,6 +308,10 @@ const EV_TEXT = {
   budgetNo: (w, t) => `${w} не согласовал(а) бюджет — «${t}»`,
   comment: (w, t) => `${w} написал(а) в «${t}»`,
   unblock: (w, t) => `Можно начинать «${t}» — блокирующая задача готова`,
+  due: (w, t, c) => `${w} поменял(а) срок «${t}»${c && c.d ? ` — ${c.d}` : ''}`,
+  dueReq: (w, t, c) => `${w} просит перенести срок «${t}»${c && c.d ? ` на ${c.d}` : ''}`,
+  dueOk: (w, t, c) => `${w} согласовал(а) перенос срока «${t}»${c && c.d ? ` — ${c.d}` : ''}`,
+  dueNo: (w, t) => `${w} оставил(а) прежний срок «${t}»`,
 };
 const Inbox = {
   /* непрочитанные события для меня по одной задаче */
@@ -275,7 +338,7 @@ const Inbox = {
   },
   text(e) {
     const f = EV_TEXT[e.c.ev];
-    return f ? f(whoFirst(e.c.by), e.t.title) : e.c.text;
+    return f ? f(whoFirst(e.c.by), e.t.title, e.c) : e.c.text;
   },
   actions() {
     const me = Tasks.meKey(), list = Tasks.all();
@@ -284,12 +347,13 @@ const Inbox = {
       budget: list.filter(t => Tasks.budgetState(t) === 'pending' && Tasks.budgetApprover(t) === me),
       late: list.filter(t => Tasks.mine(t) && Tasks.overdue(t)),
       soon: list.filter(t => Tasks.mine(t) && Tasks.isOpen(t) && t.due && t.due >= today() && t.due <= addDays(today(), 1)),
+      dueReq: list.filter(t => t.dueReq && t.dueReq.by !== me && Tasks.canResolveDue(t)),
     };
   },
   count() {
     if (!Auth.can('tasks.view')) return 0;
     const a = this.actions();
-    const ids = new Set([...a.review, ...a.budget].map(t => t.id));
+    const ids = new Set([...a.review, ...a.budget, ...a.dueReq].map(t => t.id));
     Tasks.all().forEach(t => { if (this.unreadFor(t)) ids.add(t.id); });
     return ids.size;
   },
@@ -301,8 +365,8 @@ const Inbox = {
 function taskBadge() { return Inbox.count(); }
 
 /* всплывающие уведомления о свежих событиях, пока штаб открыт */
-const TN_CONTROL = ['review', 'return', 'budget'];
-const TN_TASK = ['assign', 'unblock'];
+const TN_CONTROL = ['review', 'return', 'budget', 'dueReq'];
+const TN_TASK = ['assign', 'unblock', 'due'];
 const TaskNotify = {
   since: 0,
   wired: false,
@@ -339,7 +403,7 @@ const TaskUI = {
   },
   filters() {
     return {
-      who: View.get('t.whom', 'all'),
+      who: View.get('t.whom', defaultScope()),
       late: View.get('t.late', false),
       done: View.get('t.done', false),
       dir: View.get('t.dir', ''),
@@ -351,8 +415,9 @@ const TaskUI = {
     const f = this.filters(), q = f.q.trim().toLowerCase(), me = Auth.personId();
     return Tasks.all().filter(t => {
       if (f.who === 'me' && t.assignee !== me) return false;
+      if (f.who === 'from' && !(t.createdBy === Tasks.meKey() && t.assignee !== me)) return false;
       if (f.who === 'none' && t.assignee) return false;
-      if (!['me', 'all', 'none'].includes(f.who) && t.assignee !== f.who) return false;
+      if (!SCOPES.includes(f.who) && t.assignee !== f.who) return false;
       if (f.dir && t.dir !== f.dir) return false;
       if (f.goal && t.goalId !== f.goal) return false;
       if (f.late && !opts.ignoreLate && !Tasks.overdue(t)) return false;
@@ -361,6 +426,9 @@ const TaskUI = {
     });
   },
 };
+/* чьи задачи: «Мне» — мне поставили, «От меня» — я поставил другим, «Все» — вся команда */
+const SCOPES = ['me', 'from', 'all', 'none'];
+const defaultScope = () => (Auth.personId() && Auth.role() === 'member' ? 'me' : 'all');
 /* порядок внутри колонки: ручной (перетаскиванием), иначе — по времени создания */
 const effOrder = t => (typeof t.order === 'number' ? t.order : (t.createdAt || 0));
 const byOrder = list => list.slice().sort((a, b) => effOrder(a) - effOrder(b));
@@ -384,23 +452,28 @@ App.register('tasks', {
     const lateN = TaskUI.filtered({ignoreLate: true}).filter(t => Tasks.overdue(t)).length;
     const dups = Tasks.dupGroups();
     const opt = (v, n, cur) => `<option value="${esc(v)}" ${cur === v ? 'selected' : ''}>${esc(n)}</option>`;
-    const allT = Tasks.all();
-    const cnt = v => (v === 'all' ? allT.length : v === 'me' ? allT.filter(t => t.assignee && t.assignee === Auth.personId()).length : v === 'none' ? allT.filter(t => !t.assignee).length : allT.filter(t => t.assignee === v).length);
-    const whoOpts = [['all', 'Вся команда'], ['me', 'Мои задачи'], ...ppl.map(p => [p.id, personName(p)]), ['none', 'Без исполнителя']]
-      .filter(([v]) => v !== 'me' || Auth.personId()).map(([v, n]) => opt(v, `${n} · ${cnt(v)}`, f.who)).join('');
-    const filtered = f.who !== 'all' || f.dir || f.goal || f.q.trim() || f.late;
+    const allT = Tasks.all(), meP = Auth.personId(), meK = Tasks.meKey();
+    const open = x => x.status !== 'done';
+    const cnt = v => allT.filter(open).filter(t => (v === 'all' ? true : v === 'me' ? t.assignee && t.assignee === meP : v === 'from' ? t.createdBy === meK && t.assignee !== meP : v === 'none' ? !t.assignee : t.assignee === v)).length;
+    const scopes = [['me', 'Мне', 'Задачи, которые поставили вам'], ['from', 'От меня', 'Задачи, которые вы поставили другим'], ['all', 'Все', 'Все задачи команды'], ['none', 'Без исполнителя', 'Задачи, которые ещё никому не поставлены']]
+      .filter(([v]) => (v !== 'me' && v !== 'from') || meP).filter(([v]) => v !== 'none' || cnt('none') || f.who === 'none');
+    const person = SCOPES.includes(f.who) ? '' : f.who;
+    const whoOpts = opt('', 'Человек: любой', person) + ppl.map(p => opt(p.id, `${personName(p)} · ${cnt(p.id)}`, person)).join('');
+    const filtered = f.who !== defaultScope() || f.dir || f.goal || f.q.trim() || f.late;
     const shownN = TaskUI.filtered().length;
     const views = [['board', 'Доска'], ['month', 'По месяцам'], ['week', 'По неделям'], ['list', 'Список']];
     TaskUI.dupIds = new Set(dups.flat().map(t => t.id));
 
     root.innerHTML = `
-      ${pageHead('Задачи', 'Кто что делает и к какому дню. Статус, важность и исполнителя меняйте прямо на карточке, остальное — внутри задачи.',
-        `${helpBtn('tasks')}<button class="btn primary" data-quick>${icon('plus')}Задача</button>`)}
-      ${helpBox('tasks', `<b>Как работаем с задачами.</b> На карточке сразу меняются статус, важность и исполнитель. Клик по карточке — окно задачи: описание, ЦКП (что получим на выходе), срок, бюджет — выберите сумму и при необходимости отметьте «Требует согласования», — кто принимает результат, от чего задача зависит, обсуждение. Если результат принимает другой человек, «Готово» отправит задачу ему на согласование: он согласует или вернёт с комментарием. Всё, что касается вас, собирается в блоке «Для вас» и всплывает уведомлением. Карточки перетаскиваются зажатием.`)}
+      ${pageHead('Задачи', 'Задачи от человека к человеку: кто поставил → кто делает и к какому дню. Статус, важность, исполнителя и срок меняйте прямо на карточке.',
+        helpBtn('tasks'))}
+      ${helpBox('tasks', `<b>Как работаем с задачами.</b> На карточке сразу меняются статус, важность и исполнитель. Клик по карточке — окно задачи: описание, ЦКП (что получим на выходе), срок, бюджет — выберите сумму и при необходимости отметьте «Требует согласования», — кто принимает результат, от чего задача зависит, обсуждение. Если результат принимает другой человек, «Готово» отправит задачу ему на согласование: он согласует или вернёт с комментарием. <b>Сроки:</b> постановщик меняет срок сразу у всех; исполнитель переносит сам в пределах месяца, а если постановщик отметил «Срок важен» или нужен другой месяц — отправляет запрос, постановщик согласует одной кнопкой. Всё, что касается вас, собирается в блоке «Для вас» и всплывает уведомлением со звуком. Карточки перетаскиваются зажатием.`)}
       ${inboxHtml()}
+      <div class="t-scope" role="tablist" aria-label="Чьи задачи">${scopes.map(([v, n, tip]) => `<button data-scope="${v}" class="${f.who === v ? 'on' : ''}" title="${tip}">${n}<b>${cnt(v)}</b></button>`).join('')}
+        <select class="select sm ${person ? 'on' : ''}" id="fWho" aria-label="Задачи человека">${whoOpts}</select></div>
+      ${quickBarHtml(person)}
       <div class="t-bar">
         <div class="seg" role="tablist">${views.map(([k, n]) => `<button data-view="${k}" class="${view === k ? 'on' : ''}">${n}</button>`).join('')}</div>
-        <select class="select sm" id="fWho" aria-label="Чьи задачи">${whoOpts}</select>
         <select class="select sm" id="fDir" aria-label="Направление">${opt('', 'Все направления', f.dir)}${Object.entries(DIRS).map(([k, d]) => opt(k, d.name, f.dir)).join('')}</select>
         ${goals.length ? `<select class="select sm" id="fGoal" aria-label="Цель квартала">${opt('', 'Все цели', f.goal)}${goals.map(g => opt(g.id, g.short || g.title, f.goal)).join('')}</select>` : ''}
         <input class="input sm t-search" id="fQ" type="search" placeholder="Поиск" value="${esc(f.q)}">
@@ -409,7 +482,7 @@ App.register('tasks', {
         ${dups.length ? `<button class="chip warn-chip" data-dups title="Задачи с одинаковым названием">Дубли <b>${dups.length}</b></button>` : ''}
         ${view !== 'board' ? `<label class="check t-done-t"><input type="checkbox" id="fDone" ${f.done ? 'checked' : ''}>Показывать готовые</label>` : ''}
       </div>
-      ${filtered ? `<div class="t-shown">Показано <b>${shownN}</b> из <b>${allT.length}</b> задач — по фильтру${f.who !== 'all' ? ` «${esc(f.who === 'me' ? 'Мои задачи' : f.who === 'none' ? 'Без исполнителя' : personName(personById(f.who)))}»` : ''}. <button class="link-btn" data-show-all>Показать все</button></div>` : ''}
+      ${filtered ? `<div class="t-shown">Показано <b>${shownN}</b> из <b>${allT.length}</b> задач${f.who !== 'all' ? ` — ${esc(f.who === 'me' ? 'поставленные вам' : f.who === 'from' ? 'поставленные вами' : f.who === 'none' ? 'без исполнителя' : 'у человека: ' + personName(personById(f.who)))}` : ' — по фильтру'}. <button class="link-btn" data-show-all>Показать все задачи команды</button></div>` : ''}
       <div id="taskView"></div>`;
 
     const box = $('#taskView', root);
@@ -424,7 +497,9 @@ App.register('tasks', {
     on(root, 'click', '[data-quick]', () => quickTask({}));
     on(root, 'click', '[data-dups]', () => dupModal());
     on(root, 'click', '[data-show-all]', () => { View.set('t.whom', 'all'); View.set('t.dir', ''); View.set('t.goal', ''); View.set('t.q', ''); View.set('t.late', false); App.render(); });
-    $('#fWho', root).onchange = e => { View.set('t.whom', e.target.value); App.render(); };
+    on(root, 'click', '[data-scope]', (e, el) => { View.set('t.whom', el.dataset.scope); App.render(); });
+    $('#fWho', root).onchange = e => { View.set('t.whom', e.target.value || 'all'); App.render(); };
+    wireQuickBar(root);
     $('#fDir', root).onchange = e => { View.set('t.dir', e.target.value); App.render(); };
     if ($('#fGoal', root)) $('#fGoal', root).onchange = e => { View.set('t.goal', e.target.value); App.render(); };
     if ($('#fDone', root)) $('#fDone', root).onchange = e => { View.set('t.done', e.target.checked); App.render(); };
@@ -443,6 +518,7 @@ function inboxHtml() {
   const rows = [
     ...a.review.map(t => ({t, kind: 'gold', tag: 'ждёт вашего согласования', who: t.assignee, btn: `<button class="btn xs good" data-ib-accept="${t.id}">${icon('tick')}Согласовать</button>`})),
     ...a.budget.map(t => ({t, kind: 'gold', tag: `бюджет ${rubK(t.budget)} ждёт согласования`, who: t.createdBy, btn: `<button class="btn xs good" data-ib-budget="${t.id}">${icon('tick')}Согласовать бюджет</button>`})),
+    ...a.dueReq.map(t => ({t, kind: 'gold', tag: `перенос срока на ${Tasks.dueLabel(t.dueReq.due, t.dueReq.month)}`, who: t.dueReq.by, btn: `<button class="btn xs good" data-ib-due="${t.id}:1">${icon('tick')}Согласовать</button><button class="btn xs ghost" data-ib-due="${t.id}:0">Оставить срок</button>`})),
     ...a.soon.map(t => ({t, kind: 'warn', tag: t.due === today() ? 'срок сегодня' : 'срок завтра', who: t.assignee})),
   ];
   const seenIds = new Set(rows.map(r => r.t.id));
@@ -469,6 +545,7 @@ function wireInbox(root) {
   on(root, 'click', '[data-ib-late]', () => { View.set('t.late', true); View.set('t.whom', 'me'); App.render(); });
   on(root, 'click', '[data-ib-accept]', (e, el) => { e.stopPropagation(); const t = Tasks.get(el.dataset.ibAccept); if (t) { Tasks.setStatus(t, 'done'); toast('Согласовано, задача закрыта'); } });
   on(root, 'click', '[data-ib-budget]', (e, el) => { e.stopPropagation(); const t = Tasks.get(el.dataset.ibBudget); if (t) approveBudget(t, true); });
+  on(root, 'click', '[data-ib-due]', (e, el) => { e.stopPropagation(); const [id, ok] = el.dataset.ibDue.split(':'); const t = Tasks.get(id); if (t) Tasks.resolveDue(t, ok === '1'); });
 }
 function approveBudget(t, ok) {
   const who = whoFirst(Tasks.meKey());
@@ -520,7 +597,7 @@ function taskCard(t) {
       ${escDots(t)}
       ${fresh ? '<span class="pill rose tc-new">новое</span>' : ''}
       ${TaskUI.dupIds && TaskUI.dupIds.has(t.id) ? '<span class="tc-dup" title="Есть задача с таким же названием — объедините их кнопкой «Дубли»">дубль</span>' : ''}
-      <span class="tc-av" title="${esc(p ? personName(p) : 'Не назначено')}">${avatar(p)}</span>
+      ${flowHtml(t)}
     </div>
     <div class="tc-title">${t.stratId ? '<span class="tc-strat" title="Этап дорожной карты">◆</span> ' : ''}${esc(t.title)}</div>
     <div class="tc-ctrl">
@@ -528,7 +605,7 @@ function taskCard(t) {
       ${can ? `<select class="tc-sel pr-${pr} tc-narrow" data-tsel="priority" data-id="${t.id}" aria-label="Важность">${Object.entries(PRIO).map(([k, x]) => `<option value="${k}" ${k === pr ? 'selected' : ''}>${x.short}</option>`).join('')}</select>` : `<span class="tc-sel ro pr-${pr} tc-narrow">${PRIO[pr].short}</span>`}
     </div>
     ${can ? `<select class="tc-sel tc-who" data-tsel="assignee" data-id="${t.id}" aria-label="Исполнитель"><option value="">— Не назначено —</option>${people().map(x => `<option value="${x.id}" ${t.assignee === x.id ? 'selected' : ''}>${esc(personName(x))}</option>`).join('')}</select>` : `<span class="tc-sel ro tc-who">${esc(p ? personName(p) : 'Не назначено')}</span>`}
-    <div class="tc-foot">${dueChip(t)}${n ? `<span class="t-cm">${icon('msg')}${n}</span>` : ''}${budgetChip(t)}${holds ? `<span class="t-holds" title="От этой задачи зависят другие">держит ${holds}</span>` : ''}${g ? `<span class="t-goal">${esc(g.short || g.title)}</span>` : ''}</div>
+    <div class="tc-foot">${dueBtn(t, can)}${n ? `<span class="t-cm">${icon('msg')}${n}</span>` : ''}${budgetChip(t)}${holds ? `<span class="t-holds" title="От этой задачи зависят другие">держит ${holds}</span>` : ''}${g ? `<span class="t-goal">${esc(g.short || g.title)}</span>` : ''}</div>
   </div>`;
 }
 /* строка — для списка, главной, стратегии и страницы человека */
@@ -542,6 +619,8 @@ function taskMeta(t) {
     n ? `<span class="t-cm">${icon('msg')}${n}</span>` : '',
     Tasks.blocked(t) ? '<span class="t-lock" title="Ждёт другую задачу">🔒</span>' : '',
     Inbox.unreadFor(t) ? '<span class="pill rose">новое</span>' : '',
+    t.createdBy && t.createdBy !== t.assignee && personById(t.createdBy) ? `<span class="t-from" title="Поставил(а)">от: ${esc(firstName(personById(t.createdBy)))}</span>` : '',
+    t.dueReq ? '<span class="t-dreq" title="Ждёт согласования переноса срока">перенос?</span>' : '',
   ].join('');
 }
 function taskRow(t) {
@@ -698,13 +777,11 @@ function renderTaskMonths(box, list) {
   Drag.board(box, {canDrag: id => { const t = Tasks.get(id); return t && Tasks.canEdit(t); }, onDrop: (id, key, pos) => {
     const t = Tasks.get(id);
     const m = key === 'm:none' ? null : key.slice(2);
-    const patch = {order: orderBetween(pos.afterId, pos.beforeId)};
+    const order = orderBetween(pos.afterId, pos.beforeId);
     if (t.month !== m) {
-      patch.month = m;
-      if (!m || (t.due && monthOf(t.due) !== m)) patch.due = null;
-      if (m && t.month && m > t.month) patch.postponeCount = (t.postponeCount || 0) + 1;
-      Tasks.update(id, patch, `Перенесено на ${m ? monthName(m).toLowerCase() : '«без срока»'}`);
-    } else Store.patch('tasks', id, patch, {mustExist: true});
+      const keepDue = t.due && m && monthOf(t.due) === m;
+      if (Tasks.changeDue(t, keepDue ? t.due : null, m, {order}) === 'requested') App.render();
+    } else Store.patch('tasks', id, {order}, {mustExist: true});
   }});
 }
 
@@ -728,12 +805,12 @@ function renderTaskWeeks(box, list) {
     const t = Tasks.get(id);
     const w = key.slice(2);
     const order = orderBetween(pos.afterId, pos.beforeId);
-    if (w === 'none') { if (t.due) Tasks.update(id, {due: null, month: m, order}, 'Срок снят'); else Store.patch('tasks', id, {order}, {mustExist: true}); return; }
+    if (w === 'none') { if (t.due) { if (Tasks.changeDue(t, null, m, {order}) === 'requested') App.render(); } else Store.patch('tasks', id, {order}, {mustExist: true}); return; }
     let d = addDays(w, t.due ? weekday(t.due) : 4);
     if (d < monthStart(m)) d = monthStart(m);
     if (d > monthEnd(m)) d = monthEnd(m);
     if (d === t.due) { Store.patch('tasks', id, {order}, {mustExist: true}); return; }
-    Tasks.update(id, {due: d, month: monthOf(d), order, ...(t.due && d > t.due ? {postponeCount: (t.postponeCount || 0) + 1} : {})}, `Срок: ${dayLong(d)}`);
+    if (Tasks.changeDue(t, d, undefined, {order}) === 'requested') App.render();
   }});
 }
 
@@ -759,6 +836,7 @@ function taskEmpty() {
 
 /* клики по карточкам и строкам: статус, важность, исполнитель прямо на карточке, открытие */
 function wireTaskCards(root) {
+  on(root, 'click', '[data-due-edit]', (e, el) => { e.stopPropagation(); const t = Tasks.get(el.dataset.dueEdit); if (t) duePop(el, t); });
   on(root, 'change', '[data-tsel]', (e, el) => {
     const t = Tasks.get(el.dataset.id);
     if (!t) return;
@@ -795,7 +873,8 @@ function quickTask(preset) {
         <label class="field"><span>Кто делает</span><select class="select" id="qtWho">${[['', 'Не назначено'], ...ppl.map(p => [p.id, personName(p)])].map(([v, n]) => `<option value="${v}" ${(Auth.personId() || '') === v ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
         <label class="field"><span>Срок</span><input class="input" id="qtDue" type="date" value="${esc(preset.due || '')}"></label>
         <label class="field"><span>Направление</span><select class="select" id="qtDir"><option value="">Как у исполнителя</option>${Object.entries(DIRS).map(([k, d]) => `<option value="${k}">${d.name}</option>`).join('')}</select></label>
-      </div>`,
+      </div>
+      <label class="check" id="qtFixWrap" hidden><input type="checkbox" id="qtFix"> Срок важен — исполнитель переносит его только с моего согласования</label>`,
     foot: `<button class="btn ghost left" id="qtMore">Подробнее…</button><button class="btn" data-close>Отмена</button><button class="btn primary" id="qtAdd">Добавить</button>`,
     onMount(el, close) {
       let force = false, done = false;
@@ -808,6 +887,9 @@ function quickTask(preset) {
         $('#qtAdd', el).textContent = 'Добавить';
       };
       $('#qtTitle', el).addEventListener('input', check);
+      const fixVis = () => { const v = $('#qtWho', el).value; $('#qtFixWrap', el).hidden = !v || v === Auth.personId(); };
+      $('#qtWho', el).addEventListener('change', fixVis);
+      fixVis();
       on(el, 'click', '[data-open-twin]', (e, b) => { close(); openTask(b.dataset.openTwin); });
       const make = () => {
         if (done) return null;
@@ -816,7 +898,8 @@ function quickTask(preset) {
         if (Tasks.twin(title) && !force) { force = true; $('#qtAdd', el).textContent = 'Всё равно добавить'; tw.hidden = false; return null; }
         done = true;
         const due = $('#qtDue', el).value || null;
-        return Tasks.create({title, force, assignee: $('#qtWho', el).value || null, due, dir: $('#qtDir', el).value || undefined});
+        const who = $('#qtWho', el).value || null;
+        return Tasks.create({title, force, assignee: who, due, dir: $('#qtDir', el).value || undefined, dueFixed: !!(who && who !== Auth.personId() && $('#qtFix', el).checked)});
       };
       $('#qtAdd', el).onclick = () => { if (make()) { close(); if (Date.now() - (Tasks._told || 0) > 800) toast('Задача добавлена'); } };
       $('#qtMore', el).onclick = () => { const id = make(); if (id) { close(); openTask(id); } };
@@ -883,6 +966,7 @@ function openTask(id, opts = {}) {
         ${items.length ? `<label class="tm-f tm-span2"><span>Этап дорожной карты</span>${sel('tmStrat', [['', 'Не связана'], ...items.map(i => [i.id, `${dirName(i.dir)} · ${i.title}`])], t0.stratId, !can)}</label>` : ''}
       </div>
     </div>
+    <div class="tm-due" id="tmDueBox"></div>
     <div class="tm-box" id="tmBudgetBox"></div>
     <div class="tm-box" id="tmApprBox"></div>
     ${isNew ? '' : '<div class="tm-box" id="tmDepsBox"></div><div class="tm-zone" id="tmZone"></div>'}
@@ -891,7 +975,8 @@ function openTask(id, opts = {}) {
   </div>`;
   const foot = isNew
     ? `<button class="btn" data-close>Отмена</button><button class="btn primary" id="tmCreate">Создать задачу</button>`
-    : `${Tasks.canDelete(t0) ? `<button class="btn danger left" id="tmDel">${icon('trash')}Удалить</button>` : '<span class="left"></span>'}<span class="note" id="tmSaved"></span><button class="btn primary" data-close>Готово</button>`;
+    : `${Tasks.canDelete(t0) ? `<button class="btn danger left" id="tmDel">${icon('trash')}Удалить</button>` : '<span class="left"></span>'}<span class="note" id="tmSaved"></span>
+      <button class="btn ghost tm-adam" id="tmAdam" title="Адам подготовит сообщение второму человеку в задаче">${adamFace('xs')}Адам: написать сообщение</button><button class="btn primary" data-close>Готово</button>`;
 
   openModal({
     title: isNew ? 'Новая задача' : 'Задача',
@@ -930,17 +1015,19 @@ function openTask(id, opts = {}) {
       bind('#tmGoal', v => set({goalId: v || null}));
       bind('#tmStrat', v => set({stratId: v || null}));
       bind('#tmDue', v => {
-        const t = cur(), patch = {due: v || null};
-        if (v) { patch.month = monthOf(v); const mm = $('#tmMonth', el); if (mm) mm.value = monthOf(v); }
-        if (!isNew && v && t.due && v > t.due) patch.postponeCount = (t.postponeCount || 0) + 1;
-        set(patch, v ? `Срок: ${dayLong(v)}` : 'Срок снят');
+        const t = cur();
+        if (isNew) { const patch = {due: v || null}; if (v) { patch.month = monthOf(v); const mm = $('#tmMonth', el); if (mm) mm.value = monthOf(v); } set(patch); return; }
+        if (Tasks.changeDue(t, v || null, v ? undefined : t.month) !== 'requested') saved();
+        paint();
       });
       bind('#tmMonth', v => {
-        const t = cur(), patch = {month: v || null};
-        if (t.due && monthOf(t.due) !== v) { patch.due = null; $('#tmDue', el).value = ''; }
-        if (!isNew && v && t.month && v > t.month) patch.postponeCount = (t.postponeCount || 0) + 1;
-        set(patch, v ? `Перенесено на ${monthName(v).toLowerCase()}` : 'Срок снят');
+        const t = cur();
+        if (isNew) { const patch = {month: v || null}; if (t.due && monthOf(t.due) !== v) { patch.due = null; $('#tmDue', el).value = ''; } set(patch); return; }
+        if (Tasks.changeDue(t, t.due && monthOf(t.due) === v ? t.due : null, v || null) !== 'requested') saved();
+        paint();
       });
+      on(el, 'change', '#tmDueFixed', (e, i) => set({dueFixed: i.checked}, i.checked ? 'Срок важен: перенос — по согласованию' : 'Срок гибкий: в пределах месяца исполнитель переносит сам'));
+      on(el, 'click', '[data-due-ok]', (e, b) => Tasks.resolveDue(cur(), b.dataset.dueOk === '1'));
 
       /* бюджет */
       const setBudget = (amount) => {
@@ -1019,6 +1106,7 @@ function openTask(id, opts = {}) {
           ['#tmDesc', '#tmResult'].forEach((s2, i2) => { d[['desc', 'result'][i2]] = $(s2, el).value; });
           Tasks.create({...d, title, force: !!btn.dataset.force, assignee: $('#tmWho', el).value || null, due: $('#tmDue', el).value || null, month: $('#tmMonth', el).value || null,
             dir: $('#tmDir', el).value, priority: $('#tmPrio', el).value, goalId: $('#tmGoal', el).value || null, stratId: $('#tmStrat', el) ? $('#tmStrat', el).value || null : null,
+            dueFixed: !!draft.dueFixed,
             createdBy: draft.createdBy || undefined});
           close();
           if (Date.now() - (Tasks._told || 0) > 800) toast('Задача создана');
@@ -1035,6 +1123,8 @@ function openTask(id, opts = {}) {
         $('#tmComment', el).addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) cf.requestSubmit(); });
         const del = $('#tmDel', el);
         if (del) del.onclick = () => Tasks.remove(cur(), del).then(ok => { if (ok) close(); });
+        /* Адам пишет черновик второму человеку в задаче — в панели справа */
+        $('#tmAdam', el).onclick = () => { const t = cur(); close(); Adam.draftFor(t); };
       }
 
       /* перерисовка живых частей: не трогаем поле, в котором человек печатает,
@@ -1050,6 +1140,9 @@ function openTask(id, opts = {}) {
         if (!t) { close(); toast('Задачу удалили'); return; }
         const inside = box => box && box.contains(document.activeElement) && document.activeElement.matches('input:not([type=checkbox]), textarea');
         $('#tmTop', el).innerHTML = topHtml(t, isNew);
+        const dbx = $('#tmDueBox', el); if (!inside(dbx)) dbx.innerHTML = dueBoxHtml(t, isNew);
+        const dI = $('#tmDue', el); if (dI && document.activeElement !== dI) dI.value = t.due || '';
+        const mI = $('#tmMonth', el); if (mI && document.activeElement !== mI) mI.value = t.month || '';
         const bb = $('#tmBudgetBox', el); if (!inside(bb)) bb.innerHTML = budgetHtml(t, can, isNew);
         const ab = $('#tmApprBox', el); if (!inside(ab)) ab.innerHTML = approvalHtml(t, can);
         if (!isNew) {
@@ -1167,4 +1260,112 @@ function paintThread(box, t, keepScroll) {
   const msgs = list.filter(c => c.kind !== 'system');
   $$('.th-msg p', box).forEach((pEl, i) => { pEl.textContent = msgs[i].text; });
   if (!keepScroll) box.scrollTop = box.scrollHeight;
+}
+
+/* ── от кого → кому: на карточке видно, кто поставил задачу и кто её делает ── */
+function flowHtml(t) {
+  const p = personById(t.assignee), boss = personById(t.createdBy);
+  if (!boss || t.createdBy === t.assignee) return `<span class="tc-av" title="${esc(p ? personName(p) + (boss ? ' — сам(а) себе' : '') : 'Не назначено')}">${avatar(p)}</span>`;
+  return `<span class="tc-flow" title="Поставил(а): ${esc(personName(boss))} → делает: ${esc(p ? personName(p) : 'не назначено')}">${avatar(boss, 'xs')}<i>→</i>${avatar(p)}</span>`;
+}
+/* срок на карточке: нажать — поменять; «важный» срок помечен, запрос переноса виден */
+function dueBtn(t, can) {
+  const req = t.dueReq ? `<span class="t-dreq" title="Ждёт согласования: ${esc(whoName(Tasks.dueBoss(t)))}">→ ${t.dueReq.due ? dayShort(t.dueReq.due) : t.dueReq.month ? monthShort(t.dueReq.month) : 'без срока'}?</span>` : '';
+  const fix = t.dueFixed ? '<span class="t-dfix" title="Срок важен: перенос — только по согласованию постановщика">важен</span>' : '';
+  if (!can || t.status === 'done') return dueChip(t) + fix + req;
+  return `<button type="button" class="due-btn" data-due-edit="${t.id}" title="Поменять срок">${dueChip(t)}</button>${fix}${req}`;
+}
+function dueHint(t) {
+  const k = Tasks.meKey(), boss = Tasks.dueBoss(t);
+  if (Auth.isOwner() || boss === k) return t.assignee && t.assignee !== k ? 'Вы постановщик: срок поменяется у всех, исполнитель получит уведомление.' : 'Срок поменяется сразу.';
+  if (t.assignee === k) {
+    if (t.dueFixed) return `Срок важен для постановщика: перенос уйдёт на согласование — ${whoName(boss)}.`;
+    const m = t.due ? monthOf(t.due) : t.month;
+    return m ? `В пределах ${MONTHS_GEN[monthIdx(m)]} — меняете сами, на другой месяц — по согласованию с постановщиком (${whoName(boss)}).` : 'Срок пока не задан — ставьте сами.';
+  }
+  return Tasks.manager() ? 'Срок поменяется сразу.' : `Перенос согласует постановщик — ${whoName(boss)}.`;
+}
+function duePop(anchor, t) {
+  closePops();
+  const pop = document.createElement('div');
+  pop.className = 'pop due-pop';
+  pop.innerHTML = `<p>Срок задачи</p><input class="input sm" type="date" value="${esc(t.due || '')}" min="2026-01-01" max="2028-12-31">
+    <small class="note">${esc(dueHint(t))}</small>
+    <div class="row"><button class="btn sm primary" data-ok>Сохранить</button>${t.due ? '<button class="btn sm ghost" data-clear>Снять дату</button>' : ''}<button class="btn sm ghost" data-no>Отмена</button></div>`;
+  document.body.appendChild(pop);
+  const r = anchor.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+  let top = r.bottom + 6, left = clamp(r.left, 8, window.innerWidth - w - 8);
+  if (top + h > window.innerHeight - 8) top = r.top - h - 6;
+  pop.style.top = (top + window.scrollY) + 'px';
+  pop.style.left = (left + window.scrollX) + 'px';
+  const inp = $('input', pop);
+  const done = () => { pop.remove(); document.removeEventListener('mousedown', outside, true); };
+  const outside = e => { if (!pop.contains(e.target)) done(); };
+  pop._done = done;
+  setTimeout(() => document.addEventListener('mousedown', outside, true), 0);
+  $('[data-ok]', pop).onclick = () => { const v = inp.value || null; done(); if (v !== (t.due || null)) Tasks.changeDue(t, v, v ? undefined : t.month); };
+  const cl = $('[data-clear]', pop); if (cl) cl.onclick = () => { done(); Tasks.changeDue(t, null, t.month); };
+  $('[data-no]', pop).onclick = done;
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') $('[data-ok]', pop).click(); if (e.key === 'Escape') done(); });
+  setTimeout(() => { inp.focus(); try { if (inp.showPicker) inp.showPicker(); } catch (e) { /* выбор даты откроется по нажатию */ } }, 30);
+}
+/* блок срока в окне задачи: «срок важен» и запрос переноса */
+function dueBoxHtml(t, isNew) {
+  const k = Tasks.meKey(), boss = isNew ? k : Tasks.dueBoss(t);
+  const canFix = isNew || Auth.isOwner() || boss === k;
+  const showFix = isNew ? (t.assignee && t.assignee !== k) : (t.assignee && t.assignee !== boss);
+  const r = !isNew && t.dueReq;
+  return `${showFix || t.dueFixed ? `<label class="check tm-fix"><input type="checkbox" id="tmDueFixed" ${t.dueFixed ? 'checked' : ''} ${canFix ? '' : 'disabled'}> Срок важен <small class="note">— исполнитель переносит срок только с вашего согласования; без галочки — сам в пределах месяца</small></label>` : ''}
+    ${!isNew && t.assignee ? `<p class="note tm-due-hint">${esc(dueHint(t))}</p>` : ''}
+    ${r ? `<div class="tm-dreq"><span>${icon('clock')}<b>${esc(whoFirst(r.by))}</b> просит перенести срок на <b>${esc(Tasks.dueLabel(r.due, r.month))}</b>${t.due || t.month ? ` (сейчас — ${esc(Tasks.dueLabel(t.due, t.month))})` : ''}</span>
+      ${Tasks.canResolveDue(t) && r.by !== k ? `<span class="row"><button type="button" class="btn sm good" data-due-ok="1">${icon('tick')}Согласовать</button><button type="button" class="btn sm ghost" data-due-ok="0">Оставить прежний</button></span>` : '<em class="note">ждём ответа постановщика</em>'}</div>` : ''}`;
+}
+
+/* ── строка быстрого добавления прямо над доской ── */
+function quickBarHtml(person) {
+  if (!Auth.can('tasks.edit')) return '';
+  const who = person || Auth.personId() || '';
+  return `<form class="t-quick" id="tQuick" autocomplete="off">
+    <span class="tq-plus">${icon('plus')}</span>
+    <input class="tq-title" id="tqTitle" maxlength="200" placeholder="Новая задача — что нужно сделать? Enter — добавить" aria-label="Новая задача">
+    <label class="tq-f"><span>Кому</span><select class="select sm" id="tqWho">${[['', 'Не назначено'], ...people().map(p => [p.id, personName(p) + (p.id === Auth.personId() ? ' (я)' : '')])].map(([v, n]) => `<option value="${v}" ${v === who ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+    <label class="tq-f"><span>Срок</span><input class="input sm" type="date" id="tqDue"></label>
+    <label class="check tq-fix" id="tqFixWrap" ${who && who !== Auth.personId() ? '' : 'hidden'} title="Исполнитель сможет перенести срок только с вашего согласования"><input type="checkbox" id="tqFix"> срок важен</label>
+    <button class="btn primary sm" type="submit">Добавить</button>
+    <button class="btn ghost sm" type="button" data-tq-more>Подробнее…</button>
+    <div class="kb-twin tq-twin" id="tqTwin" hidden></div>
+  </form>`;
+}
+function wireQuickBar(root) {
+  const form = $('#tQuick', root);
+  if (!form) return;
+  const title = $('#tqTitle', form), twin = $('#tqTwin', form);
+  let force = false;
+  $('#tqWho', form).onchange = e => { $('#tqFixWrap', form).hidden = !e.target.value || e.target.value === Auth.personId(); };
+  title.addEventListener('input', () => { force = false; twin.hidden = true; });
+  const make = () => {
+    const t = title.value.trim();
+    if (!t) { title.focus(); return null; }
+    const tw = Tasks.twin(t);
+    if (tw && !force) {
+      force = true;
+      twin.innerHTML = `Такая задача уже есть: «${esc(tw.title.slice(0, 60))}» — ${esc(tw.assignee ? personName(personById(tw.assignee)) : 'без исполнителя')}. Нажмите «Добавить» ещё раз, если нужна вторая.`;
+      twin.hidden = false;
+      return null;
+    }
+    const due = $('#tqDue', form).value || null, who = $('#tqWho', form).value || null;
+    const id = Tasks.create({title: t, force, assignee: who, due, dueFixed: !!(who && who !== Auth.personId() && $('#tqFix', form).checked)});
+    force = false;
+    return id;
+  };
+  form.onsubmit = e => {
+    e.preventDefault();
+    const id = make();
+    if (!id) return;
+    if (Date.now() - (Tasks._told || 0) > 800) toast('Задача добавлена');
+    App.render({focus: 'tqTitle'});
+  };
+  on(form, 'click', '[data-tq-more]', () => {
+    openTask(null, {defaults: {title: title.value.trim(), assignee: $('#tqWho', form).value || null, due: $('#tqDue', form).value || '', month: $('#tqDue', form).value ? monthOf($('#tqDue', form).value) : monthOf(today()), dueFixed: $('#tqFix', form).checked}});
+  });
 }

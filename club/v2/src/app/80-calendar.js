@@ -23,6 +23,19 @@ const CAL_H0 = 8, CAL_H1 = 21;          // сетка дня: 8:00–21:00
 const SYNC_DAYS = 28;                   // занятость в базе — на 4 недели
 const DURS = [15, 30, 45, 60, 90, 120];
 const REPEATS = {'': 'Не повторять', weekly: 'Каждую неделю', biweekly: 'Раз в две недели'};
+/* напоминание перед собранием: в штабе — со звуком, в Telegram — гостям и команде */
+const REMINDS = {0: 'Не напоминать', 15: 'За 15 минут', 30: 'За 30 минут', 60: 'За час', 120: 'За 2 часа', 1440: 'За день'};
+const remindOf = m => (m && m.remindMin !== undefined && m.remindMin !== null && m.remindMin !== '' ? Number(m.remindMin) || 0 : 60);
+/* Telegram гостя: @имя, ссылка t.me/имя или номер телефона → «имя» или «+79…» */
+function normTg(s) {
+  const v = String(s || '').trim().replace(/^https?:\/\//i, '').replace(/^(t\.me|telegram\.me)\//i, '').replace(/^@/, '').replace(/\/$/, '');
+  if (/^\+?\d[\d\s()-]{8,}$/.test(v)) return '+' + v.replace(/\D/g, '');
+  return /^[A-Za-z][A-Za-z0-9_]{3,31}$/.test(v) ? v : '';
+}
+const tgShow = tg => (!tg ? '' : tg[0] === '+' ? tg : '@' + tg);
+const tgUrl = tg => `https://t.me/${tg}`;
+/* бот напоминаний есть только на своём сервере штаба (TELEGRAM_BOT_NAME) */
+const tgBot = () => (/^[A-Za-z0-9_]{5,64}$/.test(window.EVA_TG_BOT || '') ? window.EVA_TG_BOT : '');
 const RSVP = {
   accepted:    {name: 'идёт',       tone: 'good', mark: '✓'},
   tentative:   {name: 'возможно',   tone: 'warn', mark: '?'},
@@ -202,9 +215,13 @@ const Cal = {
   },
 
   /* свои события недели — для сетки «Неделя» */
+  /* неделю перечитываем раз в 5 минут, пока календарь открыт; ошибку — только по кнопке */
+  stale(ws) { const w = this.week[ws]; return !w || (!w.loading && !w.err && Date.now() - (w.at || 0) > 5 * 60e3); },
   async loadWeek(ws) {
-    if (this.week[ws] && !this.week[ws].err) return;
-    this.week[ws] = {loading: true};
+    const w = this.week[ws];
+    if (w && (w.loading || w.err || Date.now() - (w.at || 0) < 5 * 60e3)) return;
+    /* пока обновляется — показываем прежние события */
+    this.week[ws] = {loading: true, events: w && w.events, at: w && w.at};
     try {
       this.week[ws] = {events: await this.events(ws, addDays(ws, 6)), at: Date.now()};
     } catch (e) {
@@ -299,10 +316,16 @@ function syncRsvp(events) {
   events.forEach(ev => {
     const m = meetingOfEvent(ev);
     if (!m || !Array.isArray(ev.attendees)) return;
-    const resp = {};
-    ev.attendees.forEach(a => { const p = personByEmail(a.email); if (p && a.responseStatus) resp[p.id] = a.responseStatus; });
+    const resp = {}, gr = [];
+    ev.attendees.forEach(a => {
+      const p = personByEmail(a.email);
+      if (p && a.responseStatus) resp[p.id] = a.responseStatus;
+      else if (!p && a.email && a.responseStatus) gr.push([normEmail(a.email), a.responseStatus]);
+    });
     const cur = m.responses || {};
     if (Object.keys(resp).some(k => cur[k] !== resp[k])) Store.patch('meetings', m.id, {responses: resp});
+    /* ответы гостей не из команды — по почте (списком: в почте есть точки) */
+    if (gr.length && JSON.stringify(gr) !== JSON.stringify(m.guestResp || [])) Store.patch('meetings', m.id, {guestResp: gr});
   });
 }
 const eventOf = res => (res && (res.event || res.createdEvent || res.updatedEvent)) || res || {};
@@ -413,7 +436,7 @@ function lanes(items) {
 }
 
 /* ── страница ── */
-const CalUI = {ws: null, day: null};
+const CalUI = {ws: null, day: null, evs: null, tick: null};
 
 App.register('calendar', {
   title: 'Календарь',
@@ -427,7 +450,7 @@ App.register('calendar', {
 
     root.innerHTML = `
       ${pageHead('Календарь', 'Занятость команды, общие свободные окна и собрания. Приглашения приходят участникам прямо в их Google Календарь.',
-        `${helpBtn('calendar')}${canMeet ? `<button class="btn primary" data-new-meet>${icon('plus')}Собрание</button>` : ''}`)}
+        helpBtn('calendar'))}
       ${helpBox('calendar', `<b>Как это работает.</b> Нажмите «Подключить мой Google Календарь» — один раз. Вы увидите свои события в сетке недели, а команда — только когда вы <b>заняты</b>: названия, места и участники ваших встреч в штаб не попадают. <b>Собрание</b>: кнопка сверху или клик по сетке → название, время, участники → «Создать и отправить приглашения» — событие появится в вашем Google Календаре, участникам придёт приглашение на почту и в их календарь, со ссылкой на Google Meet. Вкладка «Занятость команды» показывает, кто когда занят, и зелёным — окна, где свободны все выбранные: нажмите на окно, и собрание создастся на это время. Приглашение уходит на почту из вкладки <b>«Почты»</b>: по умолчанию это почта из карточки в «Команде», но каждый может вписать свою — например, другой аккаунт Google. Там же выбирается, какой календарь читает штаб.`)}
       ${connCard()}
       <div class="cal-bar">
@@ -437,6 +460,7 @@ App.register('calendar', {
           <button data-ctab="list" class="${tab === 'list' ? 'on' : ''}">Собрания <span class="n">${upcomingMeetings().length || ''}</span></button>
           <button data-ctab="mail" class="${tab === 'mail' ? 'on' : ''}">Почты${(n => n ? ` <span class="n warn-t" title="без почты — приглашения не придут">${n} без почты</span>` : '')(calPeople().filter(x => !inviteEmail(x)).length)}</button>
         </div>
+        ${canMeet ? `<button class="btn primary sm cal-add" data-new-meet>${icon('plus')}Собрание</button>` : ''}
         ${tab === 'week' || tab === 'team' ? `<div class="cal-nav">
           <button class="icon-btn" data-wk="-7" aria-label="Предыдущая неделя">${icon('back')}</button>
           <b class="cal-wk">${weekLabel(ws)}</b>
@@ -472,13 +496,17 @@ App.register('calendar', {
     on(root, 'click', '[data-verify]', (e, el) => verifyMeeting(el.dataset.verify));
     on(root, 'click', '[data-push]', (e, el) => { el.disabled = true; pushMeeting(el.dataset.push); });
     on(root, 'click', '[data-cancel-meet]', (e, el) => cancelMeeting(el.dataset.cancelMeet, el));
+    on(root, 'click', '[data-remind]', (e, el) => remindGuests(el.dataset.remind));
     on(root, 'click', '[data-mine]', (e, el) => { View.set('cal.mine', el.dataset.mine === '1'); App.render(); });
     if (tab === 'week') calWireWeek(root, ws);
     if (tab === 'team') calWireTeam(root, ws);
     if (tab === 'mail') calWireMail(root);
     if (tab === 'mail' && Cal.conn === 'ready' && Cal.calendars === null && !Cal.calLoading) Cal.loadCalendars();
-    if (tab === 'week' && Cal.conn === 'ready' && !Cal.week[ws]) Cal.loadWeek(ws);
+    if (tab === 'week' && Cal.conn === 'ready' && Cal.stale(ws)) Cal.loadWeek(ws);
     Cal.autoSync();
+    /* открытый календарь сам обновляется: линия «сейчас» и свои события */
+    clearTimeout(CalUI.tick);
+    CalUI.tick = setTimeout(() => { if (App.parse().id === 'calendar' && !document.hidden) App.renderSoon(); }, 5 * 60e3 + 500);
   },
 });
 
@@ -515,6 +543,7 @@ function calWeekView(ws, nDays) {
   const H = CAL_H1 - CAL_H0;
   const wk = Cal.week[ws];
   const own = wk && wk.events ? wk.events.filter(ev => !meetingOfEvent(ev)) : [];
+  CalUI.evs = new Map(own.map(ev => [String(ev.id), ev]));
   const occ = Meetings.occ(dates[0], dates[dates.length - 1]);
   const pct0 = ms => clamp((mskMin(ms) - CAL_H0 * 60) / (H * 60) * 100, 0, 100);
   const allDay = dates.map(d => own.filter(ev => { const r = evRange(ev); return r && r.allDay && r.d0 <= d && r.d1 > d && !evDeclined(ev); }));
@@ -541,7 +570,7 @@ function calWeekView(ws, nDays) {
       }
       const title = it.ev.summary || 'Без названия';
       if (evCrm(it.ev)) return `<a class="cw-ev own crm${short}" style="${style}" href="${esc(crmLinkOf(it.ev))}" target="_blank" rel="noopener" title="${esc(title)} · ${time} · открыть в CRM"><b>${esc(title.replace(/^CRM · /, ''))}</b><small>${time} · CRM</small></a>`;
-      return `<a class="cw-ev own${short} ${it.busy ? '' : 'free'}" style="${style}" ${it.ev.htmlLink ? `href="${esc(it.ev.htmlLink)}" target="_blank" rel="noopener"` : ''} title="${esc(title)} · ${time}${it.busy ? '' : ' · не занимает время'}"><b>${esc(title)}</b><small>${time}</small></a>`;
+      return `<button type="button" class="cw-ev own${short} ${it.busy ? '' : 'free'}" style="${style}" data-gev="${esc(it.ev.id)}" title="${esc(title)} · ${time}${it.busy ? '' : ' · не занимает время'}"><b>${esc(title)}</b><small>${time}</small></button>`;
     }).join('');
     const nowLine = d === t && mskDate(nowMs()) === d ? `<i class="cw-now" style="top:${pct0(nowMs()).toFixed(2)}%"></i>` : '';
     const offHours = `<i class="cw-off" style="top:0;height:${((10 - CAL_H0) / H * 100).toFixed(2)}%"></i><i class="cw-off" style="top:${((19 - CAL_H0) / H * 100).toFixed(2)}%;bottom:0"></i>`;
@@ -561,13 +590,14 @@ function calWeekView(ws, nDays) {
     <div class="cal-wrap"><div class="cal-week" style="--days:${nDays}">
       <div class="cw-corner"></div>
       ${dates.map(d => `<div class="cw-dh ${d === t ? 'is-today' : ''} ${weekday(d) > 4 ? 'we' : ''}"><span>${WD_SH[weekday(d)]}</span><b>${Number(d.slice(8))}</b><small>${MONTHS_SH[dateOf(d).getMonth()]}</small></div>`).join('')}
-      ${hasAllDay ? `<div class="cw-adl">весь день</div>${allDay.map(list => `<div class="cw-ad">${list.map(ev => `<span class="cw-adi" title="${esc(ev.summary || '')}">${esc(ev.summary || 'Событие')}</span>`).join('')}</div>`).join('')}` : ''}
+      ${hasAllDay ? `<div class="cw-adl">весь день</div>${allDay.map(list => `<div class="cw-ad">${list.map(ev => `<button type="button" class="cw-adi" data-gev="${esc(ev.id)}" title="${esc(ev.summary || '')}">${esc(ev.summary || 'Событие')}</button>`).join('')}</div>`).join('')}` : ''}
       <div class="cw-times">${Array.from({length: H}, (_, i) => `<span style="top:${(i / H * 100).toFixed(2)}%">${pad(CAL_H0 + i)}:00</span>`).join('')}</div>
       ${dates.map(col).join('')}
     </div></div>
     ${Auth.can('tasks.edit') ? '<p class="note">Нажмите на свободное место в сетке — откроется новое собрание на это время.</p>' : ''}`;
 }
 function calWireWeek(root) {
+  on(root, 'click', '[data-gev]', (e, el) => { e.stopPropagation(); const ev = CalUI.evs && CalUI.evs.get(el.dataset.gev); if (ev) openGEvent(ev); });
   if (!Auth.can('tasks.edit')) return;
   on(root, 'click', '.cw-col', (e, el) => {
     if (e.target.closest('.cw-ev')) return;
@@ -775,14 +805,15 @@ function meetRow(m, o) {
     const r = RSVP[st];
     return `<span class="mt-p ${r ? r.tone : ''}" title="${esc(personName(p))}${id === m.organizer ? ' · организатор' : r ? ' · ' + r.name : ''}">${avatar(p)}${r && id !== m.organizer ? `<i>${r.mark}</i>` : ''}</span>`;
   }).join('');
-  const guests = (m.guests || []).length;
+  const guests = Math.max((m.extGuests || []).length, (m.guests || []).length);
   const actions = [];
   if (m.meetUrl) actions.push(`<a class="btn xs" href="${esc(m.meetUrl)}" target="_blank" rel="noopener">${icon('video')}Meet</a>`);
   if (m.link) actions.push(`<a class="btn xs ghost" href="${esc(m.link)}" target="_blank" rel="noopener">${icon('ext')}Google</a>`);
   if (isOrg && m.invite === 'unknown' && Cal.usable()) actions.push(`<button class="btn xs" data-verify="${m.id}">Проверить в Google</button>`);
   if (isOrg && m.invite === 'failed' && Cal.usable()) actions.push(`<button class="btn xs primary" data-push="${m.id}">Отправить приглашения</button>`);
   if (isOrg && (!m.invite || m.invite === 'none') && Cal.usable()) actions.push(`<button class="btn xs" data-push="${m.id}">Отправить в Google</button>`);
-  if (isOrg || Auth.isOwner()) actions.push(`<button class="btn xs ghost" data-cancel-meet="${m.id}">${m.gcalId && isOrg ? 'Отменить' : 'Удалить'}</button>`);
+  if ((isOrg || Auth.isOwner()) && o && (m.extGuests || []).some(g => g.tg)) actions.push(`<button class="btn xs" data-remind="${m.id}" title="Напомнить гостям в Telegram">${icon('bell')}Напомнить</button>`);
+  if (isOrg || Auth.isOwner()) actions.push(`<button class="btn xs ghost" data-cancel-meet="${m.id}">${m.gcalId && isOrg && !m.gcalReadonly ? 'Отменить' : 'Удалить'}</button>`);
   return `<div class="mt-row ${Meetings.mine(m) ? 'mine' : ''}">
     <div class="mt-when"><b>${o ? hmMs(o.s) : m.start}</b><small>${o ? dayWd(o.date) : dayWd(m.date)}</small></div>
     <button class="mt-main" data-meet="${m.id}"><b>${esc(m.title)}</b>
@@ -813,7 +844,6 @@ function nextWorkday() {
   while (weekday(d) > 4) d = addDays(d, 1);
   return d;
 }
-const parseGuests = s => String(s || '').split(/[\s,;]+/).map(x => x.trim()).filter(x => /^\S+@\S+\.\S+$/.test(x));
 
 function openMeeting(id, preset = {}) {
   const m = id ? Store.get('meetings', id) : null;
@@ -822,7 +852,7 @@ function openMeeting(id, preset = {}) {
   const isOrg = !m || m.organizer === me;
   const canEdit = !m || isOrg || Auth.isOwner();
   const inGoogle = !!(m && m.gcalId);
-  const d = {title: '', date: nextWorkday(), start: '11:00', dur: 60, attendees: [], guests: [], agenda: '', meet: true, repeat: '', ...(m ? clone(m) : {}), ...preset};
+  const d = {title: '', date: nextWorkday(), start: '11:00', dur: 60, attendees: [], guests: [], extGuests: [], agenda: '', meet: true, repeat: '', remindMin: 60, ...(m ? clone(m) : {}), ...preset};
   const organizer = m ? m.organizer : me;
   d.attendees = (d.attendees || []).filter(x => x !== organizer);
   const all = calPeople();
@@ -830,8 +860,14 @@ function openMeeting(id, preset = {}) {
   for (let x = 7 * 60; x <= 22 * 60; x += 15) times.push(hmOf(x));
   if (!times.includes(d.start)) times.push(d.start);
   times.sort();
-  const google = Cal.usable();
+  /* событие чужого календаря, перенесённое в штаб, в Google меняет только его организатор */
+  const google = Cal.usable() && !(m && m.gcalReadonly);
   const orgP = personById(organizer);
+  /* гости не из команды: имя, почта для приглашения, Telegram для напоминания */
+  const gList = (d.extGuests || []).map(g => ({...g}));
+  (d.guests || []).forEach(mail => { if (!gList.some(g => normEmail(g.email) === normEmail(mail))) gList.push({id: uid(), name: '', email: mail, tg: ''}); });
+  const prevG = new Map(gList.map(g => [g.id, g]));
+  const gResp = new Map((d.guestResp || []).map(([mail, st]) => [mail, st]));
 
   if (m && !canEdit) {
     /* участник смотрит собрание */
@@ -843,6 +879,7 @@ function openMeeting(id, preset = {}) {
         <p class="note">Организатор — ${esc(personName(orgP))}. ${m.invite === 'sent' ? 'Приглашение пришло вам в Google Календарь — ответьте там, ответ появится в штабе.' : 'Собрание сохранено в штабе.'}</p>
         ${m.agenda ? `<div class="mt-agenda-full">${esc(m.agenda)}</div>` : ''}
         <div class="mt-ppl big">${Meetings.people(m).map(id => { const p = personById(id); const r = RSVP[(m.responses || {})[id] || '']; return `<span class="mt-pl">${avatar(p)}${esc(firstName(p))}${id === m.organizer ? ' <small>организатор</small>' : r ? ` <small class="${r.tone}">${r.name}</small>` : ''}</span>`; }).join('')}</div>
+        ${gList.length ? `<p class="note">Гости: ${gList.map(g => esc(g.name || g.email || tgShow(g.tg))).join(', ')}</p>` : ''}
         <div class="row">${m.meetUrl ? `<a class="btn primary" href="${esc(m.meetUrl)}" target="_blank" rel="noopener">${icon('video')}Войти в Google Meet</a>` : ''}${m.link ? `<a class="btn" href="${esc(m.link)}" target="_blank" rel="noopener">${icon('ext')}Открыть в Google</a>` : ''}</div>
       </div>`,
       foot: '<button class="btn" data-close>Закрыть</button>',
@@ -854,7 +891,8 @@ function openMeeting(id, preset = {}) {
     const mail = inviteEmail(p);
     return `<button type="button" class="chip mt-chip ${on ? 'on' : ''} ${mail ? '' : 'nomail'}" data-att="${p.id}" title="${mail ? esc(mail) : 'нет почты — приглашение не придёт; впишите её ниже или во вкладке «Почты»'}">${avatar(p)}${esc(firstName(p))}${mail ? '' : ' <span class="mt-nomail">нет почты</span>'}</button>`;
   };
-  const foot = `${m && canEdit ? `<button class="btn ghost danger left" id="mtDel">${inGoogle && isOrg ? 'Отменить собрание' : 'Удалить'}</button>` : ''}
+  const foot = `${m && canEdit ? `<button class="btn ghost danger left" id="mtDel">${inGoogle && isOrg && !m.gcalReadonly ? 'Отменить собрание' : 'Удалить'}</button>` : ''}
+    ${m && gList.some(g => g.tg) ? `<button class="btn ghost" id="mtRemindNow">${icon('bell')}Напомнить гостям</button>` : ''}
     <button class="btn" data-close>Отмена</button>
     <button class="btn primary" id="mtSave">${m ? 'Сохранить' : 'Создать собрание'}</button>`;
 
@@ -872,27 +910,40 @@ function openMeeting(id, preset = {}) {
       <div class="field"><span>Участники <small class="note">организатор — ${esc(orgP ? firstName(orgP) : 'вы')}</small></span>
         <div class="chips mt-chips">${all.filter(p => p.id !== organizer).map(p => chip(p)).join('')}<button type="button" class="chip ghost" id="mtAll">Все</button></div>
       </div>
-      <label class="field"><span>Гости не из команды <small class="note">почты через запятую</small></span><input class="input" id="mtGuests" value="${esc((d.guests || []).join(', '))}" placeholder="partner@mail.ru"></label>
+      <div class="field"><span>Гости не из команды <small class="note">почта — придёт приглашение Google · Telegram — напоминание перед встречей</small></span>
+        <div class="mt-guests" id="mtGuests">${gList.map(g => guestRow(g, gResp.get(normEmail(g.email)))).join('')}</div>
+        <button type="button" class="btn xs ghost mt-gadd" id="mtGAdd">${icon('plus')}Гость</button></div>
       <div class="mt-mail" id="mtMail"></div>
       <div class="mt-help" id="mtHelp"></div>
       <label class="field"><span>Повестка</span><textarea class="textarea" id="mtAgenda" rows="3" placeholder="1. Цифры недели · 2. Что мешает · 3. Решения">${esc(d.agenda || '')}</textarea></label>
       <div class="mt-opts">
+        <div class="mt-rem"><label class="field"><span>Напоминание</span><select class="select" id="mtRemind">${Object.entries(REMINDS).map(([k, n]) => `<option value="${k}" ${Number(k) === remindOf(d) ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+          <p class="note">${tgBot() ? 'Участникам придёт напоминание в штабе со звуком, а тем, кто подключил бота, — в Telegram само.' : 'Участникам из команды — в штабе со звуком. Гостям с Telegram — в один клик: «Напомнить» у собрания.'}</p></div>
         <label class="check"><input type="checkbox" id="mtMeet" ${d.meet ? 'checked' : ''} ${inGoogle && m.meetUrl ? 'disabled' : ''}> Ссылка Google Meet</label>
         <label class="check"><input type="checkbox" id="mtSend" ${google && (!m || isOrg) ? 'checked' : ''} ${google && isOrg ? '' : 'disabled'}> ${inGoogle ? 'Отправить изменения участникам через Google' : 'Создать в моём Google Календаре и отправить приглашения'}</label>
-        <p class="note">${!google ? 'Google Календарь недоступен в этом окне — собрание сохранится в штабе, приглашения не уйдут.' : !isOrg ? `Изменения в Google отправляет организатор — ${esc(personName(orgP))}. Здесь поправится только запись в штабе.` : 'Участникам придёт письмо-приглашение и событие в их календарь; ответ «иду / не иду» появится в штабе.'}</p>
+        <p class="note">${m && m.gcalReadonly ? 'Это событие из чужого Google Календаря: поменять его там может только организатор. Здесь — запись в штабе.' : !google ? 'Google Календарь недоступен в этом окне — собрание сохранится в штабе, приглашения не уйдут.' : !isOrg ? `Изменения в Google отправляет организатор — ${esc(personName(orgP))}. Здесь поправится только запись в штабе.` : 'Участникам придёт письмо-приглашение и событие в их календарь; ответ «иду / не иду» появится в штабе.'}</p>
       </div>`,
     foot,
     onMount(el, close) {
+      const guestsOf = () => $$('.mt-g', el).map(r => {
+        const f = k => ($(`[data-gf="${k}"]`, r).value || '').trim();
+        const prev = prevG.get(r.dataset.g) || {};
+        const g = {id: r.dataset.g, name: f('name').slice(0, 80), email: f('email'), tg: normTg(f('tg'))};
+        if (prev.tgChatId && prev.tg === g.tg) g.tgChatId = prev.tgChatId;
+        return g;
+      }).filter(g => g.name || g.email || g.tg);
       const val = () => ({
         title: $('#mtTitle', el).value.trim(),
         date: $('#mtDate', el).value,
         start: $('#mtStart', el).value,
         dur: Number(($('#mtDur .on', el) || {}).dataset?.dur || d.dur),
         attendees: $$('[data-att].on', el).map(b => b.dataset.att),
-        guests: parseGuests($('#mtGuests', el).value),
+        extGuests: guestsOf(),
+        guests: guestsOf().filter(g => EMAIL_RE.test(g.email)).map(g => g.email),
         agenda: $('#mtAgenda', el).value.trim(),
         meet: $('#mtMeet', el).checked,
         repeat: $('#mtRepeat', el).value,
+        remindMin: Number($('#mtRemind', el).value) || 0,
       });
       const paint = () => {
         const v = val();
@@ -975,13 +1026,29 @@ function openMeeting(id, preset = {}) {
         b.disabled = false;
       });
       ['#mtDate', '#mtStart'].forEach(s => { $(s, el).onchange = paint; });
-      $('#mtGuests', el).onchange = paint;
+      $('#mtGAdd', el).onclick = () => {
+        const g = {id: uid(), name: '', email: '', tg: ''};
+        $('#mtGuests', el).insertAdjacentHTML('beforeend', guestRow(g));
+        $(`[data-g="${g.id}"] [data-gf="name"]`, el).focus();
+      };
+      on(el, 'click', '[data-g-del]', (e, b) => b.closest('.mt-g').remove());
+      on(el, 'change', '.mt-g input', (e, i) => { i.classList.remove('bad'); });
+      const rn = $('#mtRemindNow', el);
+      if (rn) rn.onclick = () => { close(); remindGuests(m.id); };
       const del = $('#mtDel', el);
       if (del) del.onclick = async () => { if (await cancelMeeting(m.id, del)) close(); };
       $('#mtSave', el).onclick = async () => {
         const v = val();
         if (!v.title) { $('#mtTitle', el).focus(); toast('Напишите название собрания'); return; }
         if (!v.date || !v.start) { toast('Выберите дату и время'); return; }
+        /* гостям: почта — как почта, Telegram — @имя или номер */
+        let badG = 0;
+        $$('.mt-g', el).forEach(r => {
+          const em = $('[data-gf="email"]', r), tg = $('[data-gf="tg"]', r);
+          if (em.value.trim() && !EMAIL_RE.test(em.value.trim())) { em.classList.add('bad'); badG++; }
+          if (tg.value.trim() && !normTg(tg.value)) { tg.classList.add('bad'); badG++; }
+        });
+        if (badG) { toast('Проверьте гостей: почта вида name@mail.ru, Telegram — @имя или номер телефона'); return; }
         const send = $('#mtSend', el).checked && !$('#mtSend', el).disabled;
         const body = {...v, until: v.repeat ? Q.end : null};
         if (!m) {
@@ -992,7 +1059,7 @@ function openMeeting(id, preset = {}) {
           return;
         }
         const before = clone(m);
-        Store.patch('meetings', m.id, {...body, guests: v.guests, attendees: v.attendees, editedAt: Date.now()});
+        Store.patch('meetings', m.id, {...body, guests: v.guests, attendees: v.attendees, extGuests: v.extGuests, editedAt: Date.now()});
         close();
         if (send && before.gcalId && isOrg) await updateInGoogle(m.id, before);
         else if (send && !before.gcalId) await pushMeeting(m.id);
@@ -1017,7 +1084,7 @@ function inviteList(m) {
   };
   if (org && host) add(inviteEmail(org), personName(org));
   (m.attendees || []).forEach(pid => { const p = personById(pid); add(inviteEmail(p), personName(p)); });
-  (m.guests || []).forEach(mail => add(mail));
+  (m.guests || []).forEach(mail => { const g = (m.extGuests || []).find(x => normEmail(x.email) === normEmail(mail)); add(mail, g && g.name); });
   return out;
 }
 /* название календаря для подписи */
@@ -1102,7 +1169,7 @@ async function cancelMeeting(id, anchor) {
   const m = Store.get('meetings', id);
   if (!m) return false;
   const isOrg = m.organizer === Auth.personId();
-  if (m.gcalId && isOrg && Cal.conn !== 'off') {
+  if (m.gcalId && isOrg && !m.gcalReadonly && Cal.conn !== 'off') {
     if (!(await confirmPop(anchor, {text: 'Отменить собрание? Участникам придёт отмена в Google Календаре.', yes: 'Да, отменить', danger: true}))) return false;
     try {
       await Cal.call('delete_event', m.calId ? {eventId: m.gcalId, calendarId: m.calId, notificationLevel: 'ALL'} : {eventId: m.gcalId, notificationLevel: 'ALL'});
@@ -1118,7 +1185,7 @@ async function cancelMeeting(id, anchor) {
     }
   }
   const org = personById(m.organizer);
-  const text = m.gcalId && !isOrg ? `Удалить из штаба? В Google Календаре собрание отменит только организатор — ${personName(org)}.` : 'Удалить собрание?';
+  const text = m.gcalReadonly ? 'Удалить из штаба? В Google Календаре событие останется.' : m.gcalId && !isOrg ? `Удалить из штаба? В Google Календаре собрание отменит только организатор — ${personName(org)}.` : 'Удалить собрание?';
   if (!(await confirmPop(anchor, {text, yes: 'Удалить', danger: true}))) return false;
   const copy = clone(m);
   Store.remove('meetings', id);
@@ -1152,3 +1219,135 @@ function todayMeetingsHtml() {
   if (!list.length) return '';
   return `<div class="today-meet"><span class="label">Собрания сегодня</span>${list.map(o => `<div class="tm-row"><b>${hmMs(o.s)}</b><a href="#calendar">${esc(o.m.title)}</a>${o.m.meetUrl ? `<a class="btn xs" href="${esc(o.m.meetUrl)}" target="_blank" rel="noopener">${icon('video')}Meet</a>` : ''}</div>`).join('')}</div>`;
 }
+
+/* ── гости не из команды ── */
+function guestRow(g, resp) {
+  const r = resp && RSVP[resp];
+  return `<div class="mt-g" data-g="${esc(g.id)}">
+    <input class="input sm" data-gf="name" placeholder="Имя гостя" value="${esc(g.name || '')}" maxlength="80" aria-label="Имя гостя">
+    <input class="input sm" data-gf="email" type="email" placeholder="почта — для приглашения" value="${esc(g.email || '')}" aria-label="Почта гостя">
+    <input class="input sm" data-gf="tg" placeholder="@telegram — для напоминания" value="${esc(tgShow(g.tg))}" aria-label="Telegram гостя">
+    <span class="mt-g-st">${g.tgChatId ? '<span class="pill good" title="Гость подключил бота — напоминание придёт само">бот ✓</span>' : ''}${r ? `<span class="pill ${r.tone === 'good' ? 'good' : r.tone === 'bad' ? 'bad' : 'line'}">${r.name}</span>` : ''}</span>
+    <button type="button" class="icon-btn" data-g-del aria-label="Убрать гостя" title="Убрать гостя">${icon('x')}</button>
+  </div>`;
+}
+function reminderText(m) {
+  const o = Meetings.next(m);
+  const when = o ? `${dayWd(o.date)} в ${hmMs(o.s)}` : Meetings.when(m);
+  return `Напоминание: «${m.title}» — ${when} (по Москве).${m.meetUrl ? `\nСсылка на встречу: ${m.meetUrl}` : ''}`;
+}
+const botLink = (m, g) => (tgBot() ? `https://t.me/${tgBot()}?start=g_${m.id}_${g.id}` : '');
+/* напомнить гостям: с сервером и ботом — сами; здесь — текст и чат в один клик */
+function remindGuests(id) {
+  const m = Store.get('meetings', id);
+  if (!m) return;
+  const gs = (m.extGuests || []).filter(g => g.tg || g.tgChatId);
+  const bot = tgBot();
+  const shareUrl = text => `https://t.me/share/url?url=${encodeURIComponent(m.meetUrl || hqBase())}&text=${encodeURIComponent(text)}`;
+  openModal({
+    title: 'Напомнить гостям',
+    body: `<p class="note">${bot
+      ? `Гости, которые один раз нажали «Старт» у бота по своей ссылке, получат напоминание сами — ${esc((REMINDS[remindOf(m)] || 'за час').toLowerCase())}. Остальным отправьте ссылку на бота или напишите сами.`
+      : 'Нажмите «Написать»: текст скопируется, откроется чат с гостем в Telegram — вставьте и отправьте. Чтобы напоминания уходили сами, штабу нужен свой сервер с ботом (club/v2/DATA.md).'}</p>
+      <label class="field"><span>Текст напоминания</span><textarea class="textarea" id="rgText" rows="3">${esc(reminderText(m))}</textarea></label>
+      <div class="rg-list">${gs.map(g => `<div class="rg-row">
+          <div><b>${esc(g.name || tgShow(g.tg))}</b><small>${esc(tgShow(g.tg))}</small></div>
+          ${g.tgChatId ? '<span class="pill good">напомнит бот</span>' : ''}
+          ${g.tg ? `<a class="btn xs primary" href="${esc(tgUrl(g.tg))}" target="_blank" rel="noopener" data-rg-send>${icon('msg')}Написать</a>` : ''}
+          ${bot && !g.tgChatId ? `<button type="button" class="btn xs" data-rg-bot="${esc(g.id)}">${icon('link')}Ссылка на бота</button>` : ''}
+        </div>`).join('')}</div>
+      ${gs.length ? '' : '<p class="note">У гостей этого собрания не указан Telegram — впишите его в окне собрания.</p>'}
+      <a class="btn sm ghost" id="rgShare" href="${esc(shareUrl(reminderText(m)))}" target="_blank" rel="noopener">${icon('ext')}Поделиться в Telegram — выбрать чат</a>`,
+    foot: '<button class="btn primary" data-close>Готово</button>',
+    onMount(el) {
+      const txt = () => $('#rgText', el).value.trim();
+      $('#rgText', el).addEventListener('input', () => { $('#rgShare', el).href = shareUrl(txt()); });
+      on(el, 'click', '[data-rg-send]', () => { copyText(txt()); toast('Текст напоминания скопирован — вставьте его в чат'); });
+      on(el, 'click', '[data-rg-bot]', (e, b) => {
+        const g = gs.find(x => x.id === b.dataset.rgBot);
+        copyText(`${txt()}\n\nЧтобы получить напоминание в Telegram автоматически, откройте ссылку и нажмите «Старт»: ${botLink(m, g)}`, b);
+      });
+    },
+  });
+}
+
+/* ── своё событие из Google: открыть там или сделать собранием штаба ── */
+function openGEvent(ev) {
+  const r = evRange(ev);
+  if (!r) return;
+  const title = ev.summary || 'Без названия';
+  const can = Auth.can('tasks.edit') && !!Auth.personId() && !r.allDay && !meetingOfEvent(ev);
+  const others = (ev.attendees || []).filter(a => a.email && !a.self && !a.resource);
+  openModal({
+    title: 'Событие из Google',
+    body: `<div class="mt-view">
+      <p><b>${esc(title)}</b></p>
+      <p>${r.allDay ? `весь день · ${dayWd(r.d0)}` : `${dayWd(mskDate(r.start))}, ${hmMs(r.start)}–${hmMs(r.end)}`}${evBusy(ev) ? '' : ' · не занимает время'}${others.length ? ` · участников: ${others.length}` : ''}</p>
+      ${can ? '<p class="note">«Сделать собранием штаба» — событие появится в «Собраниях», у участников из команды — в сетке и с напоминанием, можно добавить гостей с Telegram. Название и время станут видны команде; в Google ничего не меняется.</p>' : ''}
+    </div>`,
+    foot: `${ev.htmlLink ? `<a class="btn" href="${esc(ev.htmlLink)}" target="_blank" rel="noopener">${icon('ext')}Открыть в Google</a>` : ''}
+      <button class="btn" data-close>Закрыть</button>
+      ${can ? '<button class="btn primary" id="geImport">Сделать собранием штаба</button>' : ''}`,
+    onMount(el, close) {
+      const b = $('#geImport', el);
+      if (b) b.onclick = () => { const id = importEvent(ev); close(); if (id) setTimeout(() => openMeeting(id), 60); };
+    },
+  });
+}
+function importEvent(ev) {
+  const r = evRange(ev), me = Auth.personId();
+  if (!r || !me) return null;
+  const att = [], ext = [];
+  (ev.attendees || []).forEach(a => {
+    if (!a.email || a.self || a.resource) return;
+    const p = personByEmail(a.email);
+    if (p) { if (p.id !== me && !att.includes(p.id)) att.push(p.id); }
+    else ext.push({id: uid(), name: String(a.displayName || '').slice(0, 80), email: String(a.email), tg: ''});
+  });
+  const id = uid();
+  const url = meetUrlOf(ev) || null;
+  Store.put('meetings', id, {
+    title: String(ev.summary || 'Встреча').slice(0, 120), date: mskDate(r.start), start: hmMs(r.start), dur: Math.max(15, Math.round((r.end - r.start) / 60e3)),
+    repeat: '', attendees: att, guests: ext.map(g => g.email), extGuests: ext, agenda: '', meet: !!url, remindMin: 60,
+    organizer: me, calId: myCalId() || null, by: Auth.me().id, at: Date.now(),
+    invite: 'sent', gcalId: String(ev.id), link: ev.htmlLink || null, meetUrl: url, imported: true,
+    gcalReadonly: !!(ev.organizer && !ev.organizer.self),
+  });
+  toast('Событие стало собранием штаба — его видят участники из команды');
+  return id;
+}
+
+/* ── напоминание о собрании в штабе: звук и уведомление участникам ── */
+const MeetRemind = {
+  timer: null,
+  done: new Set(),
+  start() {
+    if (this.timer) return;
+    this.timer = setInterval(() => this.check(), 60e3);
+    setTimeout(() => this.check(), 3000);
+  },
+  check() {
+    const pid = Auth.personId();
+    if (!pid) return [];
+    const now = nowMs(), fired = [];
+    Meetings.occ(today(), addDays(today(), 1)).forEach(o => {
+      const lead = remindOf(o.m) * 60e3;
+      if (!lead || o.s < now || o.s - now > lead) return;
+      if (!Meetings.people(o.m).includes(pid) || (o.m.responses || {})[pid] === 'declined') return;
+      const key = `eva-hq-rem:${o.m.id}:${o.date}`;
+      if (this.done.has(key) || Local.get(key, 0)) return;
+      this.done.add(key);
+      Local.set(key, Date.now());
+      fired.push(o.m.id);
+      const mins = Math.max(1, Math.round((o.s - now) / 60e3));
+      const left = mins < 60 ? `${mins} мин` : mins < 1440 ? `${Math.round(mins / 60)} ${plural(Math.round(mins / 60), 'час', 'часа', 'часов')}` : 'день';
+      const isOrg = o.m.organizer === pid;
+      const tgLeft = (o.m.extGuests || []).some(g => g.tg && !g.tgChatId);
+      Sound.play('control');
+      toast(`Через ${left}: «${o.m.title}» в ${hmMs(o.s)}`, {ring: true, action: isOrg && tgLeft
+        ? {label: 'Напомнить гостям', fn: () => remindGuests(o.m.id)}
+        : o.m.meetUrl ? {label: 'Открыть Meet', fn: () => window.open(o.m.meetUrl, '_blank', 'noopener')} : {label: 'Открыть', fn: () => openMeeting(o.m.id)}});
+    });
+    return fired;
+  },
+};

@@ -35,6 +35,11 @@ const ICONS = {
   link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
   gift: '<rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8h14v-8M12 8v12"/><path d="M12 8C10 4 6.5 5 7.5 7.2 8 8 12 8 12 8s4 0 4.5-.8C17.5 5 14 4 12 8z"/>',
   spark: '<path d="M12 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/><path d="M19 15.5c.2 1.6.9 2.3 2.5 2.5-1.6.2-2.3.9-2.5 2.5-.2-1.6-.9-2.3-2.5-2.5 1.6-.2 2.3-.9 2.5-2.5z"/>',
+  eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  eyeOff: '<path d="M3 3l18 18"/><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6C3.9 8.4 2 12 2 12s3.6 7 10 7a10 10 0 0 0 4.4-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+  download: '<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
+  upload: '<path d="M12 20V9"/><path d="m7 14 5-5 5 5"/><path d="M5 4h14"/>',
+  expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
   heart: '<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/>',
 };
 const icon = (name, cls = '') => `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true">${ICONS[name] || ''}</svg>`;
@@ -111,10 +116,13 @@ const SOUND_NOTES = {
   sent:    {notes: [880, 1174.66], gap: .07, vol: .07},              // своё отправлено
   info:    {notes: [740], gap: 0, vol: .07},                         // комментарий, закрыто
   hello:   {notes: [523.25, 659.25, 783.99, 1046.5], gap: .09, vol: .12}, // приветствие новичка
+  msg:     {notes: [987.77, 1318.51], gap: .08, vol: .09},           // личное сообщение
 };
+const SOUND_RANK = {info: 0, sent: 1, msg: 1, task: 2, hello: 2, control: 3};
 const Sound = {
   ctx: null,
   last: 0,
+  lastRank: -1,
   log: [],
   on() { return Local.get('eva-hq-sound', true) !== false; },
   set(v) { Local.set('eva-hq-sound', !!v); },
@@ -126,9 +134,11 @@ const Sound = {
   },
   play(kind = 'info', force = false) {
     if (!force && !this.on()) return false;
-    const now = Date.now();
-    if (!force && now - this.last < 1200) return false;
+    /* частые события — один звук, но более важный («контроль») прорывается */
+    const now = Date.now(), rank = SOUND_RANK[kind] || 0;
+    if (!force && now - this.last < 1200 && rank <= this.lastRank) return false;
     this.last = now;
+    this.lastRank = rank;
     this.log.push(kind);
     this.unlock();
     const ctx = this.ctx, cfg = SOUND_NOTES[kind] || SOUND_NOTES.info;
@@ -258,22 +268,46 @@ function pickPop(anchor, items, current) {
 }
 
 /* ── подсказка «как пользоваться» на странице: скрывается и возвращается ── */
+/* личные настройки человека: в этом браузере и в его учётке — чтобы
+   помнились и на другом устройстве, и там, где браузер не даёт хранилища */
+const Prefs = {
+  /* в браузере — отдельно для каждой учётки: на общем компьютере у каждого свои */
+  lk(k) { const a = Auth.me(); return 'eva-hq-pref:' + (a ? a.id + ':' : '') + k; },
+  get(k, def) {
+    const a = Auth.me(), v = a && a.prefs ? a.prefs[k] : undefined;
+    if (v !== undefined && v !== null) return v;
+    const l = Local.get(this.lk(k), undefined);
+    return l === undefined ? def : l;
+  },
+  set(k, v) {
+    Local.set(this.lk(k), v);
+    const a = Auth.me();
+    if (a && (a.prefs || {})[k] !== v) Store.patch('accounts', a.id, {prefs: {[k]: v}}, {mustExist: true});
+  },
+};
+
+/* подсказка на странице: цветной блок с «Просмотрено»; свёрнутая — строка, по которой она снова открывается */
 function helpBox(key, html) {
-  const hidden = Local.get('eva-hq-help', {})[key];
-  return `<div class="help" data-help="${key}" ${hidden ? 'hidden' : ''}>${icon('help', 'help-ico')}<div>${html}</div>
-    <button class="btn xs ghost x" data-help-hide="${key}">Понятно</button></div>`;
+  const hidden = !!Prefs.get('help_' + key, false);
+  const m = /<b>(.*?)<\/b>/.exec(html);
+  const title = m ? m[1].replace(/[.:]$/, '') : 'Как пользоваться';
+  return `<div class="help-wrap" data-help-wrap="${key}">
+    <div class="help" data-help="${key}" ${hidden ? 'hidden' : ''}>${icon('help', 'help-ico')}<div class="help-body">${html}</div>
+      <button class="btn xs help-ok" data-help-hide="${key}">${icon('tick')}Просмотрено</button></div>
+    <button class="help-mini" data-help-show="${key}" ${hidden ? '' : 'hidden'}>${icon('help')}<span>Подсказка: <b>${title}</b></span><em>открыть</em></button>
+  </div>`;
 }
-const helpBtn = key => `<button class="btn ghost sm" data-help-show="${key}" title="Как пользоваться">${icon('help')}Как пользоваться</button>`;
+const helpBtn = key => `<button class="btn ghost sm" data-tour="${key}" title="Пошаговая подсказка по этой странице">${icon('help')}Тур по странице</button>`;
 function wireHelp(root) {
-  on(root, 'click', '[data-help-hide]', (e, el) => {
-    const m = Local.get('eva-hq-help', {}); m[el.dataset.helpHide] = 1; Local.set('eva-hq-help', m);
-    const box = $(`[data-help="${el.dataset.helpHide}"]`, root); if (box) box.hidden = true;
-  });
-  on(root, 'click', '[data-help-show]', (e, el) => {
-    const m = Local.get('eva-hq-help', {}); delete m[el.dataset.helpShow]; Local.set('eva-hq-help', m);
-    const box = $(`[data-help="${el.dataset.helpShow}"]`, root);
-    if (box) { box.hidden = !box.hidden; if (!box.hidden) box.scrollIntoView({block: 'nearest', behavior: 'smooth'}); }
-  });
+  const flip = (k, hide) => {
+    const box = $(`[data-help="${k}"]`, root), mini = $(`[data-help-show="${k}"]`, root);
+    if (box) box.hidden = hide;
+    if (mini) mini.hidden = !hide;
+    Prefs.set('help_' + k, hide);
+  };
+  on(root, 'click', '[data-help-hide]', (e, el) => flip(el.dataset.helpHide, true));
+  on(root, 'click', '[data-help-show]', (e, el) => flip(el.dataset.helpShow, false));
+  on(root, 'click', '[data-tour]', (e, el) => Tour.start(el.dataset.tour, true));
 }
 
 /* полоса прогресса: доля и отметка «где должны быть» */
