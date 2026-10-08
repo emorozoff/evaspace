@@ -1,13 +1,13 @@
 {
-  "name": "АСЬКА — мессенджер",
-  "short_name": "АСЬКА",
+  "name": "АСЬКА v2 — классика",
+  "short_name": "АСЬКА v2",
   "description": "Олдскульный мессенджер в духе ICQ: номер, ник, цветочек и «о-оу!»",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#2c8de0",
-  "theme_color": "#2c8de0",
+  "background_color": "#3a6ea5",
+  "theme_color": "#0a246a",
   "lang": "ru",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

@@ -21,30 +21,13 @@
   // постер: цвет из названия, киноплёнка по краям, крупные буквы
   function hue(str) { let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0; return h % 360; }
   function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-  // постер: градиент по названию, мотив по жанру, крупное название внизу, как у стримингов
-  const MOTIF = {
-    'фантастика': (w, h, c) => `<g opacity=".9">${[[.15, .12, 1.2], [.8, .18, 1], [.6, .08, .8], [.3, .3, .7], [.88, .4, 1.1], [.12, .45, .8]].map(([x, y, r]) => `<circle cx="${x * w}" cy="${y * h}" r="${r * w / 60}" fill="#fff"/>`).join('')}<circle cx="${w * .62}" cy="${h * .36}" r="${w * .2}" fill="${c}" opacity=".9"/><ellipse cx="${w * .62}" cy="${h * .36}" rx="${w * .34}" ry="${w * .07}" fill="none" stroke="#fff" stroke-width="${w / 60}" opacity=".7" transform="rotate(-18 ${w * .62} ${h * .36})"/></g>`,
-    'мультфильм': (w, h) => `<g><ellipse cx="${w * .38}" cy="${h * .16}" rx="${w * .07}" ry="${w * .2}" fill="#fff" opacity=".9"/><ellipse cx="${w * .62}" cy="${h * .16}" rx="${w * .07}" ry="${w * .2}" fill="#fff" opacity=".9"/><circle cx="${w * .5}" cy="${h * .4}" r="${w * .24}" fill="#fff" opacity=".95"/><circle cx="${w * .42}" cy="${h * .37}" r="${w * .03}" fill="#222"/><circle cx="${w * .58}" cy="${h * .37}" r="${w * .03}" fill="#222"/><path d="M${w * .42} ${h * .46} Q${w * .5} ${h * .52} ${w * .58} ${h * .46}" stroke="#222" stroke-width="${w / 50}" fill="none" stroke-linecap="round"/></g>`,
-    'боевик': (w, h) => `<g><path d="M${w * .5} ${h * .12} L${w * .58} ${h * .3} L${w * .78} ${h * .24} L${w * .66} ${h * .4} L${w * .84} ${h * .52} L${w * .62} ${h * .5} L${w * .56} ${h * .66} L${w * .48} ${h * .5} L${w * .26} ${h * .58} L${w * .4} ${h * .42} L${w * .2} ${h * .3} L${w * .44} ${h * .3} Z" fill="#ffd34d" opacity=".95"/><path d="M0 ${h * .7} L${w} ${h * .2}" stroke="#fff" stroke-width="${w / 30}" opacity=".35"/></g>`,
-    'комедия': (w, h) => `<g><circle cx="${w * .5}" cy="${h * .36}" r="${w * .26}" fill="#ffd34d"/><circle cx="${w * .41}" cy="${h * .31}" r="${w * .03}" fill="#222"/><circle cx="${w * .59}" cy="${h * .31}" r="${w * .03}" fill="#222"/><path d="M${w * .36} ${h * .4} Q${w * .5} ${h * .54} ${w * .64} ${h * .4}" stroke="#222" stroke-width="${w / 40}" fill="#fff" stroke-linejoin="round"/></g>`,
-    'драма': (w, h) => `<g opacity=".8" stroke="#fff" stroke-width="${w / 90}">${[.15, .3, .45, .6, .75, .9].map((x, i) => `<line x1="${x * w}" y1="${(.05 + (i % 3) * .08) * h}" x2="${x * w - w * .05}" y2="${(.2 + (i % 3) * .08) * h}"/>`).join('')}</g><circle cx="${w * .5}" cy="${h * .42}" r="${w * .16}" fill="#fff" opacity=".2"/>`,
-    'мелодрама': (w, h) => `<path d="M${w * .5} ${h * .55} C${w * .1} ${h * .35} ${w * .22} ${h * .12} ${w * .5} ${h * .26} C${w * .78} ${h * .12} ${w * .9} ${h * .35} ${w * .5} ${h * .55} Z" fill="#ff5f8f" opacity=".9"/>`,
-    'документальное': (w, h) => `<g fill="none" stroke="#fff" stroke-width="${w / 40}" opacity=".85"><circle cx="${w * .5}" cy="${h * .36}" r="${w * .24}"/><circle cx="${w * .5}" cy="${h * .36}" r="${w * .1}"/>${[0, 60, 120, 180, 240, 300].map((a) => `<line x1="${w * .5}" y1="${h * .36}" x2="${w * .5 + w * .24 * Math.cos(a * Math.PI / 180)}" y2="${h * .36 + w * .24 * Math.sin(a * Math.PI / 180)}"/>`).join('')}</g>`,
-    'короткий метр': (w, h, c) => `<g transform="translate(${w * .5} ${h * .36})">${[0, 72, 144, 216, 288].map((a) => `<ellipse rx="${w * .09}" ry="${w * .2}" fill="#ff7aa8" opacity=".9" transform="rotate(${a}) translate(0 ${-w * .14})"/>`).join('')}<circle r="${w * .08}" fill="#ffd34d"/></g>`,
-    'ужасы': (w, h) => `<circle cx="${w * .62}" cy="${h * .26}" r="${w * .18}" fill="#f2f2d8" opacity=".9"/><circle cx="${w * .7}" cy="${h * .22}" r="${w * .16}" fill="#000" opacity=".55"/>`,
-    'сериал': (w, h) => `<g fill="none" stroke="#fff" stroke-width="${w / 40}" opacity=".8"><rect x="${w * .22}" y="${h * .2}" width="${w * .56}" height="${h * .3}" rx="${w * .05}"/><line x1="${w * .4}" y1="${h * .14}" x2="${w * .5}" y2="${h * .2}"/><line x1="${w * .6}" y1="${h * .14}" x2="${w * .5}" y2="${h * .2}"/></g>`,
-  };
   function posterSvg(mv, w) {
-    w = w || 60; const h = Math.round(w * 1.45);
-    const hu = hue(mv.title || '?'); const id = 'pg' + hu + '_' + (hue((mv.title || '') + 'x') % 997);
-    const words = String(mv.title || '?').split(/\s+/);
-    const lines = []; let cur = '';
-    words.forEach((wd) => { if ((cur + ' ' + wd).trim().length > 11 && cur) { lines.push(cur); cur = wd; } else cur = (cur + ' ' + wd).trim(); });
-    if (cur) lines.push(cur);
-    const L = lines.slice(0, 3); const fs = Math.max(7, Math.round(w / (L.some((l) => l.length > 9) ? 8.4 : 7)));
-    const motif = (MOTIF[mv.genre] || MOTIF[mv.kind === 'series' ? 'сериал' : 'драма'])(w, h, `hsl(${(hu + 180) % 360},70%,60%)`);
-    const text = L.map((l, i) => `<text x="${w * .08}" y="${h - w * .14 - (L.length - 1 - i) * (fs + 2)}" font-family="-apple-system,'Segoe UI',Roboto,Arial,sans-serif" font-weight="800" font-size="${fs}" fill="#fff" letter-spacing="-.2">${esc(l.slice(0, 16))}</text>`).join('');
-    return `<svg class="poster" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2=".4" y2="1"><stop offset="0" stop-color="hsl(${hu},70%,58%)"/><stop offset="1" stop-color="hsl(${(hu + 50) % 360},70%,16%)"/></linearGradient><linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".75"/></linearGradient></defs><rect width="${w}" height="${h}" fill="url(#${id})"/>${motif}<rect width="${w}" height="${h}" fill="url(#${id}s)"/>${text}<text x="${w * .08}" y="${h - w * .05}" font-family="-apple-system,'Segoe UI',Roboto,Arial,sans-serif" font-size="${Math.max(5, w / 15)}" fill="#fff" opacity=".75">${mv.year || ''}${mv.kind === 'series' ? ' · сериал' : ''}</text>${mv.kind === 'series' ? `<rect x="0" y="${w * .06}" width="${w * .46}" height="${w * .13}" fill="#e5352a"/><text x="${w * .05}" y="${w * .155}" font-family="-apple-system,'Segoe UI',Roboto,Arial,sans-serif" font-weight="800" font-size="${Math.max(5, w / 13)}" fill="#fff" letter-spacing=".5">СЕРИАЛ</text>` : ''}</svg>`;
+    w = w || 60; const h = Math.round(w * 1.4);
+    const hu = hue(mv.title || '?');
+    const words = String(mv.title || '?').split(/\s+/).slice(0, 2);
+    const holes = []; for (let y = 4; y < h - 2; y += 7) holes.push(`<rect x="1.5" y="${y}" width="3" height="4" rx="1" fill="#000" opacity=".6"/><rect x="${w - 4.5}" y="${y}" width="3" height="4" rx="1" fill="#000" opacity=".6"/>`);
+    const text = words.map((wd, i) => `<text x="${w / 2}" y="${h / 2 + (words.length === 1 ? 4 : i * 12 - 2)}" text-anchor="middle" font-family="Tahoma,Arial" font-weight="bold" font-size="${wd.length > 8 ? 7 : 9}" fill="#fff" stroke="#000" stroke-width=".6" paint-order="stroke">${esc(wd.slice(0, 11))}</text>`).join('');
+    return `<svg class="poster" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><defs><linearGradient id="pg${hu}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${hu},70%,55%)"/><stop offset="1" stop-color="hsl(${(hu + 60) % 360},70%,30%)"/></linearGradient></defs><rect width="${w}" height="${h}" fill="url(#pg${hu})"/><rect x="0" y="0" width="6" height="${h}" fill="#222"/><rect x="${w - 6}" y="0" width="6" height="${h}" fill="#222"/>${holes.join('')}<circle cx="${w / 2}" cy="${h * 0.3}" r="${w * 0.14}" fill="#fff" opacity=".25"/><path d="M${w / 2 - 3} ${h * 0.3 - 4} L${w / 2 + 5} ${h * 0.3} L${w / 2 - 3} ${h * 0.3 + 4} Z" fill="#fff" opacity=".8"/>${text}${mv.kind === 'series' ? `<rect x="8" y="${h - 12}" width="${w - 16}" height="8" fill="#000" opacity=".5"/><text x="${w / 2}" y="${h - 5.5}" text-anchor="middle" font-family="Tahoma,Arial" font-size="6" fill="#ffe14d">сериал · ${(mv.episodes || []).length} серий</text>` : ''}</svg>`;
   }
   // стартовая коллекция: свободные фильмы фонда Blender и демо-ролики, плюс «Цветение» из соседней Евы
   const G = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/';
@@ -69,5 +52,5 @@
     max: ['Кино — это способ прожить чужую жизнь за полтора часа. Благодарю, посмотрю.', 'Фильм как повод подумать. Принято.'],
     vinyl: ['Кино — это музыка плюс картинка. Оценю саундтрек.', 'Посмотрю. Если саундтрек хорош — расскажу.'],
   };
-  window.AskaCinema = { GENRES, parseLink, posterSvg, SEEDS, BOT_LINES, hue };
+  window.AskaCinema = { GENRES, parseLink, posterSvg, SEEDS, BOT_LINES };
 })();
