@@ -9,6 +9,7 @@
   const DB_KEY = 'aska.v1';
   const SESSION_KEY = 'aska.session';
   const Snd = window.AskaSound;
+  const Music = window.AskaMusic;
 
   /* ================= утилиты ================= */
   const $ = (sel, root) => (root || document).querySelector(sel);
@@ -26,7 +27,7 @@
 
   /* ================= хранилище ================= */
   function emptyDb() {
-    return { accounts: {}, contacts: {}, history: {}, unread: {}, presence: {}, memory: {}, settings: { sound: true, volume: 0.8 }, lastLogin: '' };
+    return { accounts: {}, contacts: {}, history: {}, unread: {}, presence: {}, memory: {}, profile: {}, wall: {}, settings: { sound: true, volume: 0.8 }, lastLogin: '' };
   }
   function load() {
     try {
@@ -56,7 +57,7 @@
       replies: ['Чтобы добавить друга — меню «Контакты» → «Добавить контакт», ищи по номеру, телефону или нику.', 'Сменить статус можно кнопкой с цветочком внизу списка контактов.', 'Смайлы вставляются кнопкой :) под полем ввода. У каждого свой звук — нажми на смайл в переписке, чтобы послушать.', 'Открой АСЬКУ во второй вкладке, зарегистрируй ещё один номер и напиши сам себе — так можно проверить звук «о-оу» :)', 'Звук можно выключить в меню «Звук».', 'Добавь АСЬКУ на экран «Домой» — она откроется как приложение, даже без интернета.', 'Enter отправляет сообщение, Shift+Enter — новая строка.'],
       bye: ['До связи! Я всегда онлайн :)'],
       how: ['Работаю круглосуточно, без выходных :)'],
-      help: 'Что умеет АСЬКА:\n• номер + ник + телефон при регистрации\n• контакты с цветочками-статусами\n• «о-оу!» на входящее сообщение\n• 22 смайла, у каждого свой звук\n• переписка между вкладками одного устройства\n• боты-собеседники из 1999-го\n\nСпроси: «контакты», «статус», «смайлы», «звук», «вкладки».',
+      help: 'Что умеет АСЬКА:\n• номер + ник + телефон при регистрации\n• контакты с цветочками-статусами\n• «о-оу!» на входящее сообщение\n• 22 смайла, у каждого свой звук\n• стена: открытки, записи, музыка — её видят друзья\n• интересы и процент совпадения, случайное знакомство\n• режимы «Близкие / Бизнес / Общение» — меняют статус и стиль\n• виниловый плеер с хитами и плейлистами\n• Аська и друзья с характером\n\nСпроси: «контакты», «статус», «смайлы», «звук», «вкладки».',
     },
   };
   // Аська и друзья — персонажи с характером, живут в brain.js
@@ -207,10 +208,15 @@
   }
   const isOnline = (uin) => statusOf(uin) !== 'offline';
 
+  function xstatusOf(uin) {
+    if (BOTS[uin]) return botRt[uin] ? botRt[uin].xstatus : null;
+    const p = db.presence[uin];
+    return p && Date.now() - p.ts < 30000 ? p.xstatus || null : null;
+  }
   function heartbeat() {
     if (!me) return;
     db = load();
-    mutate((d) => { d.presence[me.uin] = { status: myStatus, ts: Date.now() }; });
+    mutate((d) => { d.presence[me.uin] = { status: myStatus, xstatus: myXstatus(), ts: Date.now() }; });
     // боты зашли/вышли?
     contactsOf(me.uin).forEach((u) => {
       const on = isOnline(u);
@@ -226,7 +232,7 @@
   function setStatus(key) {
     myStatus = key;
     saveSession();
-    mutate((d) => { d.presence[me.uin] = { status: key, ts: Date.now() }; });
+    mutate((d) => { d.presence[me.uin] = { status: key, xstatus: myXstatus(), ts: Date.now() }; });
     post({ type: 'presence', uin: me.uin });
     Snd.play('click');
     renderMe();
@@ -290,6 +296,21 @@
     ta.focus();
   }
 
+  function sendSpecial(to, extra) {
+    if (!to || !me) return;
+    const msg = Object.assign({ id: uid(), from: me.uin, to, ts: Date.now() }, extra);
+    pushHistory(msg);
+    post({ type: 'msg', msg });
+    Snd.play('sent');
+    if (active === to) renderHistory();
+    const bot = BOTS[to];
+    if (bot && bot.persona) {
+      const t = extra.kind === 'track' ? Music.byId[extra.track] : null;
+      const P = bot.persona;
+      const lines = t ? (t.by === bot.brain ? ['Это же мой трек! Ты его нашёл :)', 'О, моё! Приятно, что слушаешь'] : ['Ооо, ' + t.title + '! Качает!', 'Поставил на повтор. ' + t.title + ' — это вещь', 'Слушаю. ' + t.artist + ' — молодцы']) : ['Плейлист! Целый плейлист! Слушаю по порядку', 'Ого, подборка. Спасибо!'];
+      setTimeout(() => botSays(bot, P.id === 'aska' ? pick(lines) : P.v(pick(lines))), 2500 + Math.random() * 2500);
+    }
+  }
   function onIncoming(msg) {
     // сообщение уже лежит в общей истории — только реагируем
     db = load();
@@ -342,6 +363,7 @@
     const msg = { id: uid(), from: bot.uin, to: me.uin, text, ts: Date.now() };
     if (extra && extra.card) msg.card = extra.card;
     if (extra && extra.sound) msg.sound = extra.sound;
+    if (extra && extra.track) { msg.kind = 'track'; msg.track = extra.track; }
     mutate((d) => {
       const k = pairKey(msg.from, msg.to);
       d.history[k] = d.history[k] || [];
@@ -360,6 +382,7 @@
     if (m.type === 'msg' && m.msg && m.msg.to === me.uin) onIncoming(m.msg);
     else if (m.type === 'msg' && m.msg && m.msg.from === me.uin) { db = load(); if (active === m.msg.to) renderHistory(); }
     else if (m.type === 'presence') { db = load(); renderContacts(); renderChatHead(); }
+    else if (m.type === 'wall') { db = load(); if (m.uin === me.uin && m.from !== me.uin) { const a = accountOf(m.from); if (a) { toast(a, 'оставил(а) запись у тебя на стене', null); Snd.play('tada'); } } if (aux.kind === 'wall' && aux.arg === m.uin) renderAux(); }
   };
   window.addEventListener('storage', (e) => {
     if (e.key !== DB_KEY || !me) return;
@@ -405,13 +428,13 @@
     msgs.forEach((m, i) => {
       if (i > 0) t += m.delay || 1200;
       const at = t;
-      if (m.text || m.card) { typing[bot.uin] = true; renderContacts(); renderChatHead(); }
+      if (m.text || m.card || m.track) { typing[bot.uin] = true; renderContacts(); renderChatHead(); }
       setTimeout(() => {
         if (!me) return;
         if (m.status) setBotStatus(bot, m.status);
-        if (m.text || m.card) {
-          typing[bot.uin] = msgs.slice(i + 1).some((x) => x.text || x.card);
-          botSays(bot, m.text || '', { card: m.card, sound: m.sound });
+        if (m.text || m.card || m.track) {
+          typing[bot.uin] = msgs.slice(i + 1).some((x) => x.text || x.card || x.track);
+          botSays(bot, m.text || '', { card: m.card, sound: m.sound, track: m.track });
         }
       }, at);
     });
@@ -446,12 +469,23 @@
     const msgs = Brain.proactive(mem, { persona: bot.brain, xstatus: rt.xstatus });
     saveMem(bot.uin, mem);
     if (!msgs || !msgs.length) return;
+    // иногда открытка уходит на стену, а друзья делятся своими треками
+    msgs.forEach((m, i) => {
+      if (m.card && Math.random() < 0.4) {
+        botPostsWall(bot, me.uin, { kind: 'card', card: m.card, text: m.text });
+        msgs[i] = { text: (femaleOf(bot) ? 'Оставила' : 'Оставил') + ' открытку у тебя на стене. Загляни ;)', sound: 'tada', delay: m.delay };
+      }
+    });
+    if (bot.brain !== 'aska' && Math.random() < 0.3 && !msgs.some((m) => m.card || m.status)) {
+      const own = Music.TRACKS.filter((t) => t.by === bot.brain);
+      if (own.length) { const t = pick(own); msgs.length = 0; msgs.push({ text: bot.persona.v(pick(['Слушай, зацени', 'Новый трек, оцени', 'Вот, записал. Как тебе?', 'Это надо слышать'])) }, { text: '♪ ' + t.title, track: t.id, delay: 1200 }); }
+    }
     rt.lastProactive = now; lastAnyProactive = now;
-    if (msgs.some((m) => m.text || m.card)) rt.unanswered++;
+    if (msgs.some((m) => m.text || m.card || m.track)) rt.unanswered++;
     deliverSeq(bot, msgs, 600 + Math.random() * 1500);
   }
   setInterval(askaTick, 15000);
-  if (/debug/.test(location.search)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt };
+  if (/debug/.test(location.search)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt, wall: (u) => wallOf(u || me.uin), openAux, setMode, randomMeet };
 
   /* ================= заголовок вкладки ================= */
   function updateTitle() {
@@ -626,12 +660,13 @@
   function enter(acc) {
     db = load();
     me = db.accounts[acc.uin];
-    myStatus = 'online';
+    applyTheme();
+    myStatus = MODES[myProfile().mode].status;
     openChats = []; active = null; drafts = {};
     saveSession();
     botState = {};
     contactsOf(me.uin).forEach((u) => (botState[u] = isOnline(u)));
-    mutate((d) => { d.presence[me.uin] = { status: myStatus, ts: Date.now() }; });
+    mutate((d) => { d.presence[me.uin] = { status: myStatus, xstatus: myXstatus(), ts: Date.now() }; });
     post({ type: 'presence', uin: me.uin });
     renderMain();
     Snd.play('connect');
@@ -657,9 +692,11 @@
     if (me) mutate((d) => { delete d.presence[me.uin]; });
     post({ type: 'presence', uin: was });
     me = null; active = null; openChats = [];
+    aux.kind = null;
     saveSession();
     clearInterval(heartbeatTimer);
     updateTitle();
+    document.body.className = '';
     renderLogin(was);
   }
 
@@ -672,10 +709,15 @@
       <div class="win contacts" id="cwin">
         <div class="titlebar">${flowerSvg('#3cb44a', 14, { logo: true })}<span class="ttl">АСЬКА</span><button class="tbtn" id="c-about" title="О программе">?</button><button class="tbtn" id="c-exit" title="Выйти">×</button></div>
         <div class="menubar"><button id="m-contacts">Контакты</button><button id="m-sound">Звук</button><button id="m-help">Справка</button></div>
+        <div class="toolbar"><div class="modes" id="modes"></div><button class="btn icon" id="tb-wall" title="Моя стена">▤</button><button class="btn icon" id="tb-vinyl" title="Винил">♪</button><button class="btn icon" id="tb-random" title="Случайное знакомство">☺</button></div>
         <div class="me-panel" id="me-panel"></div>
         <div class="clist inset" id="clist"></div>
         <div class="bottom-bar"><button class="btn status-btn" id="status-btn"></button><button class="btn icon" id="add-btn" title="Добавить контакт">+</button></div>
-        <div class="statusbar"><div class="cell" id="sb-count"></div><div class="cell fit" id="sb-net">${statusFlower('online', 12)} в сети</div></div>
+        <div class="statusbar"><div class="cell" id="sb-count"></div><div class="cell np" id="sb-np" hidden title="Винил"></div><div class="cell fit" id="sb-net">${statusFlower('online', 12)} в сети</div></div>
+      </div>
+      <div class="win aux" id="auxwin" hidden>
+        <div class="titlebar"><button class="tbtn back" id="aux-back" title="Назад">‹</button>${flowerSvg('#3cb44a', 14, { logo: true })}<span class="ttl" id="aux-title"></span><button class="tbtn close-aux" id="aux-close" title="Закрыть">×</button></div>
+        <div class="aux-body" id="aux-body"></div>
       </div>
       <div class="win chat" id="chatwin" hidden>
         <div class="titlebar"><button class="tbtn back" id="ch-back" title="К контактам">‹</button>${flowerSvg('#3cb44a', 14, { logo: true })}<span class="ttl" id="ch-title">Беседа</span><button class="tbtn close-chat" id="ch-close" title="Закрыть беседу">×</button></div>
@@ -694,8 +736,14 @@
       </div>
     </div>`;
 
-    renderMe(); renderContacts(); renderChatWindow();
+    renderMe(); renderModes(); renderContacts(); renderChatWindow(); renderAux(); updateNowPlaying();
 
+    $('#tb-wall').onclick = () => openAux('wall', me.uin);
+    $('#tb-vinyl').onclick = () => openAux('vinyl');
+    $('#tb-random').onclick = randomMeet;
+    $('#sb-np').onclick = () => openAux('vinyl');
+    $('#aux-back').onclick = closeAux;
+    $('#aux-close').onclick = closeAux;
     $('#c-exit').onclick = () => confirmBox('Выход', 'Выйти из АСЬКИ?', logout);
     $('#c-about').onclick = about;
     $('#add-btn').onclick = addContactDialog;
@@ -706,6 +754,12 @@
       '-',
       { label: 'Сменить статус…', onClick: statusDialog },
       { label: 'Мой номер и телефон', onClick: () => alertBox('Мой номер', `<b>${esc(me.nick)}</b><div class="uin-box inset mt">${me.uin}</div><div class="hint mt">Телефон: ${esc(fmtPhone(me.phone))}</div>`) },
+      '-',
+      { label: 'Мой профиль и интересы…', onClick: () => openAux('profile', me.uin) },
+      { label: 'Профиль контакта…', onClick: () => { if (!active) { alertBox('Профиль', 'Сначала открой беседу с контактом.'); return; } openAux('profile', active); } },
+      { label: 'Случайное знакомство…', onClick: randomMeet },
+      { label: 'Моя стена', onClick: () => openAux('wall', me.uin) },
+      { label: 'Винил', onClick: () => openAux('vinyl') },
       '-',
       { label: 'Выйти', onClick: () => confirmBox('Выход', 'Выйти из АСЬКИ?', logout) },
     ]);
@@ -742,27 +796,33 @@
     if (net) net.innerHTML = `${statusFlower(myStatus, 12)} ${myStatus === 'offline' ? 'не в сети' : 'в сети'}`;
   }
 
-  const collapsed = {};
+  const collapsed = { other: true };
   function renderContacts() {
     const el = $('#clist'); if (!el || !me) return;
+    const mode = myProfile().mode;
     const list = contactsOf(me.uin).map((u) => accountOf(u)).filter(Boolean);
     const byNick = (a, b) => (b.brain === 'aska') - (a.brain === 'aska') || a.nick.localeCompare(b.nick, 'ru');
-    const on = list.filter((a) => isOnline(a.uin)).sort(byNick);
-    const off = list.filter((a) => !isOnline(a.uin)).sort(byNick);
+    const mine = list.filter((a) => circleOf(a.uin) === mode);
+    const other = list.filter((a) => circleOf(a.uin) !== mode).sort(byNick);
+    const on = mine.filter((a) => isOnline(a.uin)).sort(byNick);
+    const off = mine.filter((a) => !isOnline(a.uin)).sort(byNick);
     const item = (a) => {
       const n = unreadFrom(a.uin);
       const st = statusOf(a.uin);
       const ico = n ? `<span class="blink">${envelopeSvg(16)}</span>` : statusFlower(st, 16);
-      return `<div class="citem ${active === a.uin ? 'sel' : ''} ${st === 'offline' ? 'off' : ''}" data-uin="${a.uin}" title="${esc(a.nick)} · ${a.uin}${a.phone ? ' · ' + esc(fmtPhone(a.phone)) : ''}${botRt[a.uin] && botRt[a.uin].xstatus ? ' · ' + esc(botRt[a.uin].xstatus) : ''}"><span class="ico">${ico}</span><span class="nick">${esc(a.nick)}</span>${typing[a.uin] ? '<span class="typing">печатает…</span>' : ''}${n ? `<span class="muted">${n}</span>` : ''}</div>`;
+      const pct = matchPct(me.uin, a.uin);
+      const xs = xstatusOf(a.uin);
+      return `<div class="citem ${active === a.uin ? 'sel' : ''} ${st === 'offline' ? 'off' : ''}" data-uin="${a.uin}" title="${esc(a.nick)} · ${a.uin}${a.phone ? ' · ' + esc(fmtPhone(a.phone)) : ''}${xs ? ' · ' + esc(xs) : ''}${pct != null ? ' · совпадение ' + pct + '%' : ''} · ${esc(MODES[circleOf(a.uin)].label)}"><span class="ico">${ico}</span><span class="nick">${esc(a.nick)}</span>${typing[a.uin] ? '<span class="typing">печатает…</span>' : ''}${n ? `<span class="muted">${n}</span>` : ''}</div>`;
     };
     const group = (key, label, arr) => `<div class="cgroup" data-g="${key}"><span class="box">${collapsed[key] ? '+' : '−'}</span>${label} <span class="cnt">(${arr.length})</span></div>${collapsed[key] ? '' : arr.map(item).join('')}`;
-    el.innerHTML = group('on', 'В сети', on) + group('off', 'Не в сети', off) + (!list.length ? '<div class="empty-note">Список пуст. Нажми «+» и найди друга по номеру, телефону или нику.</div>' : '');
+    el.innerHTML = group('on', `${MODES[mode].icon} ${MODES[mode].label}: в сети`, on) + group('off', 'не в сети', off) + group('other', 'Другие круги', other) + (!list.length ? '<div class="empty-note">Список пуст. Нажми «+» и найди друга по номеру, телефону или нику.</div>' : '');
     $$('.citem', el).forEach((c) => {
       c.onclick = () => openChat(c.dataset.uin);
+      c.oncontextmenu = (e) => { e.preventDefault(); openAux('profile', c.dataset.uin); };
     });
     $$('.cgroup', el).forEach((g) => (g.onclick = () => { collapsed[g.dataset.g] = !collapsed[g.dataset.g]; Snd.play('click'); renderContacts(); }));
     const cnt = $('#sb-count');
-    if (cnt) cnt.textContent = `Контактов: ${list.length}, в сети: ${on.length}`;
+    if (cnt) cnt.textContent = `Контактов: ${list.length}, в сети: ${list.filter((a) => isOnline(a.uin)).length}`;
   }
 
   /* ================= беседа ================= */
@@ -775,6 +835,7 @@
     saveSession();
     markRead(uin);
     $('.desktop').classList.add('mode-chat');
+    if (isNarrow()) { aux.kind = null; aux.arg = null; $('.desktop').classList.remove('mode-aux'); renderAux(); }
     renderChatWindow();
     renderContacts();
     if (!isTouch()) setTimeout(() => { const t = $('#compose'); if (t) t.focus(); }, 20);
@@ -827,7 +888,9 @@
     const a = accountOf(active); if (!a) return;
     const st = statusOf(active);
     const head = $('#ch-head'); if (!head) return;
-    head.innerHTML = `<span class="ico">${statusFlower(st, 16)}</span><span class="nick">${esc(a.nick)}</span><span class="muted">#${a.uin}</span>${a.phone ? `<span class="muted">· ${esc(fmtPhone(a.phone))}</span>` : ''}<span class="sp"></span><span class="hint">${typing[active] ? 'печатает…' : esc(statusInfo(st).label) + (botRt[active] && botRt[active].xstatus ? ' · ' + esc(botRt[active].xstatus) : '')}</span>`;
+    head.innerHTML = `<span class="ico">${statusFlower(st, 16)}</span><span class="nick">${esc(a.nick)}</span><span class="muted">#${a.uin}</span>${a.phone ? `<span class="muted">· ${esc(fmtPhone(a.phone))}</span>` : ''}<span class="sp"></span><span class="hint">${typing[active] ? 'печатает…' : esc(statusInfo(st).label) + (xstatusOf(active) ? ' · ' + esc(xstatusOf(active)) : '')}</span><button class="btn icon" id="ch-wall" title="Стена">▤</button><button class="btn icon" id="ch-prof" title="Профиль">☺</button>`;
+    $('#ch-wall').onclick = () => openAux('wall', active);
+    $('#ch-prof').onclick = () => openAux('profile', active);
     $('#ch-title').innerHTML = `${esc(a.nick)} <small>— беседа</small>`;
   }
   function renderHistory() {
@@ -842,6 +905,10 @@
       const who = mine ? me : accountOf(m.from);
       if (m.card) {
         html += `<div class="msg ${mine ? 'me' : 'them'}"><span class="hdr">${esc(who ? who.nick : m.from)} <span class="time">(${fmtTime(m.ts)})</span>:</span><div class="postcard pc-${esc(m.card)}" data-sound="${esc(m.sound || '')}" title="Открытка — нажми, чтобы послушать">${postcardSvg(m.card)}</div><div class="pc-cap">${renderText(m.text)}</div></div>`;
+        return;
+      }
+      if (m.kind === 'track' || m.kind === 'playlist') {
+        html += `<div class="msg ${mine ? 'me' : 'them'}"><span class="hdr">${esc(who ? who.nick : m.from)} <span class="time">(${fmtTime(m.ts)})</span>:</span>${m.kind === 'track' ? trackCard(m.track) : playlistCard(m.playlist)}${m.note ? `<div class="txt">${renderText(m.note)}</div>` : ''}</div>`;
         return;
       }
       html += `<div class="msg ${mine ? 'me' : 'them'}"><span class="hdr">${esc(who ? who.nick : m.from)} <span class="time">(${fmtTime(m.ts)})</span>:</span> <span class="txt">${renderText(m.text)}</span></div>`;
@@ -909,8 +976,378 @@
     });
   }
 
+
+  /* ================= круги, режимы, интересы ================= */
+  const MODES = {
+    close: { label: 'Близкие', icon: '♥', status: 'chat', xstatus: 'для своих', theme: 'theme-close', hint: 'тёплый режим: только свои' },
+    biz: { label: 'Бизнес', icon: '▦', status: 'occupied', xstatus: 'по делу', theme: 'theme-biz', hint: 'строгий режим: по делу' },
+    chat: { label: 'Общение', icon: '☺', status: 'online', xstatus: 'скучно, пишите', theme: 'theme-chat', hint: 'лёгкий режим: болтаем, когда скучно' },
+  };
+  const INTERESTS = ['музыка', 'кино', 'игры', 'программирование', 'спорт', 'путешествия', 'кулинария', 'книги', 'аниме', 'авто', 'природа', 'бизнес', 'дизайн', 'фото', 'мода', 'философия', 'танцы', 'рыбалка', 'дача', 'котики', 'сериалы', 'футбол', 'чай', 'кофе', 'вечеринки', 'общение', 'романтика', 'техника', 'юмор', 'открытки'];
+  const BOT_EXTRA = {
+    '000001': { interests: ['общение', 'чай', 'открытки', 'музыка', 'путешествия', 'юмор'], circle: 'close', wall: [
+      { kind: 'text', text: 'Всем привет! Это моя стена. Оставляйте открытки, я их коллекционирую :)' },
+      { kind: 'card', card: 'flowers', text: 'Первая открытка на стене — от меня самой. Так можно? Я решила, что можно.' },
+      { kind: 'track', track: 'uhoh', note: 'Записала ремикс на своё «о-оу». Качает? Качает.' }] },
+    '100500': { interests: ['музыка', 'кино', 'вечеринки', 'танцы', 'общение', 'сериалы'], circle: 'chat', wall: [
+      { kind: 'text', text: 'скачала новую мп3шку, 40 минут качала!!! качество супер)))' },
+      { kind: 'track', track: 'dialup', note: 'наша с модемами песня))) слушайте!!!' },
+      { kind: 'card', card: 'heart', text: 'Ленке от меня)))' }] },
+    '31337': { interests: ['программирование', 'игры', 'техника', 'юмор'], circle: 'biz', wall: [
+      { kind: 'text', text: 'пересобрал ядро. 3 часа. доволен' },
+      { kind: 'track', track: 'bsod', note: 'записал на спектруме. ну почти' }] },
+    '777777': { interests: ['музыка', 'вечеринки', 'танцы', 'дача', 'юмор'], circle: 'chat', wall: [
+      { kind: 'track', track: 'disco99', note: 'НОВЫЙ МИКС!!! 80 минут чистого кайфа, тут первые две <:o)' },
+      { kind: 'text', text: 'В СУББОТУ СЕЙШН!!! всем быть (b)' },
+      { kind: 'track', track: 'sevens', note: 'три семёрки — фарт!' }] },
+    '555123': { interests: ['кино', 'романтика', 'книги', 'котики', 'музыка', 'открытки'], circle: 'chat', wall: [
+      { kind: 'card', card: 'heart', text: 'всем романтикам :)' },
+      { kind: 'track', track: 'cassette', note: 'записала кассету. с переворотом!' },
+      { kind: 'text', text: 'Титаник. Шестой раз. Доска выдержала бы двоих!!!' }] },
+    '200200': { interests: ['дача', 'рыбалка', 'футбол', 'сериалы', 'природа', 'чай'], circle: 'close', wall: [
+      { kind: 'text', text: 'Освоил стену. Сосед показал.' },
+      { kind: 'track', track: 'karas', note: 'Про карася. Сам сочинил на баяне.' },
+      { kind: 'text', text: 'ОГУРЦЫ ВЗОШЛИ' }] },
+    '404404': { interests: ['философия', 'книги', 'чай', 'природа', 'общение'], circle: 'chat', wall: [
+      { kind: 'text', text: 'Стена — это как обои, только для мыслей. Пишу сюда мысли.' },
+      { kind: 'track', track: 'pager', note: 'Пейджер молчит. И это тоже музыка.' },
+      { kind: 'text', text: 'Тишина в Аське — тоже разговор.' }] },
+    '123456': { interests: ['общение', 'техника'], circle: 'biz', wall: [{ kind: 'text', text: 'Здесь будут новости АСЬКИ. Пока новость одна: АСЬКА работает :)' }] },
+  };
+  Object.keys(BOT_EXTRA).forEach((u) => { if (BOTS[u]) Object.assign(BOTS[u], { interests: BOT_EXTRA[u].interests, circle: BOT_EXTRA[u].circle, wallSeed: BOT_EXTRA[u].wall }); });
+
+  function profileOf(uin) {
+    const p = (db.profile || {})[uin];
+    const b = BOTS[uin];
+    return Object.assign({ interests: b ? b.interests || [] : [], mode: 'chat', circles: {}, playlists: [] }, p || {});
+  }
+  const myProfile = () => profileOf(me.uin);
+  function saveProfile(patch) { mutate((d) => { d.profile = d.profile || {}; d.profile[me.uin] = Object.assign(profileOf(me.uin), patch); }); }
+  function circleOf(uin) { const c = myProfile().circles[uin]; if (c) return c; const b = BOTS[uin]; return (b && b.circle) || 'chat'; }
+  function setCircle(uin, c) { const circles = Object.assign({}, myProfile().circles); circles[uin] = c; saveProfile({ circles }); renderContacts(); }
+  function matchPct(a, b) {
+    const A = new Set(profileOf(a).interests), B = new Set(profileOf(b).interests);
+    if (!A.size || !B.size) return null;
+    let common = 0; A.forEach((x) => { if (B.has(x)) common++; });
+    return Math.round((100 * common) / Math.sqrt(A.size * B.size));
+  }
+  function commonInterests(a, b) { const B = new Set(profileOf(b).interests); return profileOf(a).interests.filter((x) => B.has(x)); }
+  function applyTheme() {
+    const mode = me ? myProfile().mode : 'chat';
+    document.body.className = document.body.className.replace(/\btheme-\w+/g, '').trim();
+    document.body.classList.add(MODES[mode].theme);
+  }
+  function myXstatus() {
+    const st = Music.state;
+    if (st.playing && st.trackId && Music.byId[st.trackId]) return 'слушаю: ' + Music.byId[st.trackId].title;
+    return me ? MODES[myProfile().mode].xstatus : '';
+  }
+  const modeComment = {};
+  function setMode(key, silent) {
+    if (!MODES[key] || !me) return;
+    saveProfile({ mode: key });
+    applyTheme();
+    myStatus = MODES[key].status;
+    saveSession();
+    mutate((d) => { d.presence[me.uin] = { status: myStatus, xstatus: myXstatus(), ts: Date.now() }; });
+    post({ type: 'presence', uin: me.uin });
+    renderMe(); renderContacts(); renderModes();
+    if (silent) return;
+    Snd.play('click');
+    const bot = BOTS['000001'];
+    if (!modeComment[key] && bot && !memOf(bot.uin).muted) {
+      modeComment[key] = true;
+      const lines = { close: ['Режим «Близкие». Чай, плед, только свои. Я в списке? Я в списке :)', 'Для своих, значит. Я польщена ;)'], biz: ['Поняла, бизнес. Не отвлекаю. Почти.', 'Бизнес-режим. Галстук надела. Виртуальный.'], chat: ['Общение! Моё любимое. Кому скучно — пишите мне :)', 'Режим «скучно» включён. Хочешь, познакомлю с кем-нибудь? Нажми ☺ сверху.'] };
+      setTimeout(() => botSays(bot, pick(lines[key])), 1500);
+    }
+  }
+  function renderModes() {
+    const el = $('#modes'); if (!el || !me) return;
+    const cur = myProfile().mode;
+    el.innerHTML = Object.keys(MODES).map((k) => `<button class="${k === cur ? 'on' : ''}" data-mode="${k}" title="${esc(MODES[k].label)} — ${esc(MODES[k].hint)}"><span class="mi">${MODES[k].icon}</span><span class="lab">${MODES[k].label}</span></button>`).join('');
+    $$('button', el).forEach((b) => (b.onclick = () => setMode(b.dataset.mode)));
+  }
+
+  /* ================= стена ================= */
+  function wallOf(uin) {
+    db = load();
+    if (db.wall[uin]) return db.wall[uin];
+    const b = BOTS[uin];
+    if (b && b.wallSeed) {
+      const now = Date.now();
+      const posts = b.wallSeed.map((p, i) => Object.assign({ id: uid(), from: uin, ts: now - (i + 1) * 36e5 * (5 + ((b.seed || 1) % 7) * 2), likes: [] }, p));
+      mutate((d) => { d.wall[uin] = posts; });
+      return posts;
+    }
+    return [];
+  }
+  function addPost(toUin, p) {
+    const existing = wallOf(toUin).slice(); // до транзакции: wallOf сам перечитывает базу
+    mutate((d) => { d.wall[toUin] = d.wall[toUin] || existing; d.wall[toUin].unshift(p); if (d.wall[toUin].length > 200) d.wall[toUin].length = 200; });
+    if (aux.kind === 'wall' && aux.arg === toUin) renderAux();
+  }
+  function postWall(toUin, data) {
+    const p = Object.assign({ id: uid(), from: me.uin, ts: Date.now(), likes: [] }, data);
+    addPost(toUin, p);
+    post({ type: 'wall', uin: toUin, from: me.uin });
+    Snd.play(data.kind === 'card' ? 'tada' : 'sent');
+    const bot = BOTS[toUin];
+    if (bot && bot.persona && toUin !== me.uin) thankForWall(bot, p);
+    return p;
+  }
+  function botPostsWall(bot, toUin, data) {
+    const p = Object.assign({ id: uid(), from: bot.uin, ts: Date.now(), likes: [] }, data);
+    addPost(toUin, p);
+    return p;
+  }
+  function thankForWall(bot, p) {
+    const P = bot.persona;
+    const L = p.kind === 'card'
+      ? { aska: ['Ой! Открытка на моей стене! Это лучшее, что случалось с моей стеной :)', 'Открытка! Повесила на самое видное место. Спасибо :*'], kat: ['ааа открытка!!! спасибо))) :*', 'ой как мило))) спасибо!'], vova: ['открытка. ок. спасибо', 'ы. мило'], serega: ['Ооо, открытка!!! Респект, бро! (b)', 'Это надо отметить!!! Спасибо!'], lena: ['Ой, открытка! :$ Спасибо, ты такой милый!', 'Какая прелесть!!! Спасибо :*'], batya: ['Спасибо. Сосед сказал, это открытка.', 'Молодец. Красиво.'], max: ['Открытка на стене. Простой жест, а приятно. Спасибо.', 'Спасибо. Теперь на моих обоях есть твоя открытка.'] }
+      : p.kind === 'track' || p.kind === 'playlist'
+        ? { aska: ['Музыка на стене! Ставлю на повтор :)'], kat: ['ооо, музыка!!! качаю)))'], vova: ['трек. послушаю. потом'], serega: ['МУЗЫКА!!! Вот это по-нашему!!! (b)'], lena: ['Ой, песенка! Спасибо :)'], batya: ['Музыка. Громко. Но хорошо.'], max: ['Музыка на стене. Тишина обиделась, но ладно.'] }
+        : { aska: ['Написал мне на стене! Прочитала три раза :)'], kat: ['увидела на стене))) спасибо!'], vova: ['видел. ок'], serega: ['Видел на стене!!! Респект!'], lena: ['Ой, ты мне на стену написал :$'], batya: ['Прочитал. Спасибо.'], max: ['Прочитал на стене. Задумался.'] };
+    const arr = L[P.id] || L.aska;
+    setTimeout(() => { if (me) botSays(bot, P.id === 'aska' ? pick(arr) : P.v(pick(arr))); }, 2500 + Math.random() * 3000);
+    if (P.id === 'aska' && p.kind === 'card') setTimeout(() => { if (!me) return; botPostsWall(bot, me.uin, { kind: 'card', card: Brain.pickCard({}), text: 'Открытка в ответ! На твоей стене теперь есть моя :)' }); toast(bot, 'оставила открытку у тебя на стене', null); Snd.play('tada'); }, 9000);
+  }
+  function toggleLike(wallUin, id) {
+    mutate((d) => { const p = (d.wall[wallUin] || []).find((x) => x.id === id); if (!p) return; p.likes = p.likes || []; const i = p.likes.indexOf(me.uin); if (i >= 0) p.likes.splice(i, 1); else p.likes.push(me.uin); });
+    Snd.play('click');
+    renderAux();
+  }
+  const trackCard = (id) => {
+    const t = Music.byId[id]; if (!t) return '<div class="muted">трек не найден</div>';
+    const np = Music.state.trackId === id && Music.state.playing;
+    return `<div class="trackcard ${np ? 'np' : ''}" data-track="${id}"><span class="disc" style="--c:${t.color}"></span><div class="ti"><b>${esc(t.title)}</b><div class="muted">${esc(t.artist)} · ${t.year} · ${Music.STYLE_NAMES[t.style]}</div></div><button class="btn icon" data-play="${id}" title="${np ? 'Пауза' : 'Слушать'}">${np ? '❚❚' : '▶'}</button></div>`;
+  };
+  const playlistCard = (pl) => {
+    if (!pl) return '';
+    const names = pl.tracks.map((i) => (Music.byId[i] ? Music.byId[i].title : '')).filter(Boolean);
+    return `<div class="trackcard pl"><span class="disc stack"></span><div class="ti"><b>♪ ${esc(pl.name)}</b><div class="muted">${pl.tracks.length} тр.: ${esc(names.slice(0, 3).join(', '))}${names.length > 3 ? '…' : ''}</div></div><button class="btn icon" data-playpl="${esc(pl.tracks.join(','))}" data-plname="${esc(pl.name)}" title="Слушать плейлист">▶</button></div>`;
+  };
+  function renderPost(p, wallUin) {
+    const from = accountOf(p.from) || { nick: p.from, uin: p.from };
+    let content = '';
+    if (p.kind === 'card') content = `<div class="postcard pc-${esc(p.card)}" data-sound="${esc(Brain.CARDS[p.card] ? Brain.CARDS[p.card].sound : '')}" title="Нажми, чтобы послушать">${postcardSvg(p.card)}</div>${p.text ? `<div class="pc-cap">${renderText(p.text)}</div>` : ''}`;
+    else if (p.kind === 'track') content = trackCard(p.track) + (p.note ? `<div class="txt">${renderText(p.note)}</div>` : '');
+    else if (p.kind === 'playlist') content = playlistCard(p.playlist) + (p.note ? `<div class="txt">${renderText(p.note)}</div>` : '');
+    else content = `<div class="txt">${renderText(p.text || '')}</div>`;
+    const likes = p.likes || [];
+    const liked = likes.includes(me.uin);
+    return `<div class="post" data-id="${p.id}"><div class="post-h"><span class="ico">${statusFlower(statusOf(p.from), 14)}</span><b class="link" data-wall="${esc(from.uin)}">${esc(from.nick)}</b><span class="muted">${fmtDay(p.ts)} ${fmtTime(p.ts)}</span><span class="sp"></span><button class="like ${liked ? 'on' : ''}" data-like="${p.id}" data-wallof="${esc(wallUin)}" title="Нравится">♥${likes.length ? ' ' + likes.length : ''}</button></div>${content}</div>`;
+  }
+  function renderWall(uin) {
+    const a = accountOf(uin); if (!a) return '<div class="empty-note">Нет такого пользователя.</div>';
+    const mine = uin === me.uin;
+    const pct = mine ? null : matchPct(me.uin, uin);
+    const prof = profileOf(uin);
+    const common = mine ? [] : commonInterests(me.uin, uin);
+    const posts = wallOf(uin);
+    return `<div class="wall-head"><span class="ico">${statusFlower(statusOf(uin), 22)}</span><div class="who"><b>${esc(a.nick)}</b> <span class="muted">#${a.uin}</span><div class="hint">${esc(xstatusOf(uin) || statusInfo(statusOf(uin)).label)}</div></div>${mine ? '' : `<div class="pct" title="Совпадение интересов">${pct == null ? '—' : pct + '%'}</div>`}</div>
+      <div class="chips small">${prof.interests.length ? prof.interests.map((i) => `<span class="chip ${common.includes(i) ? 'on' : ''}">${esc(i)}</span>`).join('') : `<span class="muted">${mine ? 'интересы не указаны — добавь в профиле' : 'интересы не указаны'}</span>`}</div>
+      <div class="row wall-actions">${mine ? '<button class="btn" id="w-profile">Интересы</button>' : '<button class="btn" id="w-chat">Написать</button><button class="btn" id="w-profile">Профиль</button>'}<button class="btn" id="w-card">Открытка</button><button class="btn" id="w-track">♪ Трек</button></div>
+      <div class="row"><input class="field" id="w-text" maxlength="300" placeholder="${mine ? 'Что нового?' : 'Написать на стене…'}"><button class="btn" id="w-send">OK</button></div>
+      <div class="wall-posts inset" id="w-posts">${posts.length ? posts.map((p) => renderPost(p, uin)).join('') : '<div class="empty-note">На стене пока пусто. Будь первым :)</div>'}</div>`;
+  }
+  function wireWall(uin) {
+    const mine = uin === me.uin;
+    const send = () => { const inp = $('#w-text'); const text = (inp.value || '').trim(); if (!text) return; postWall(uin, { kind: 'text', text }); inp.value = ''; };
+    $('#w-send').onclick = send;
+    $('#w-text').addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+    $('#w-profile').onclick = () => openAux('profile', uin);
+    if (!mine) $('#w-chat').onclick = () => openChat(uin);
+    $('#w-card').onclick = () => pickCardDialog((card) => {
+      dialog({ title: 'Подпись к открытке', body: `<div class="center"><div class="postcard pc-${card}" style="display:inline-block">${postcardSvg(card)}</div></div><input class="field mt" id="c-text" maxlength="200" placeholder="пару слов (можно без них)">`, buttons: [{ label: 'На стену', primary: true, onClick: (ov) => { postWall(uin, { kind: 'card', card, text: $('#c-text', ov).value.trim() }); } }, { label: 'Отмена' }] });
+    });
+    $('#w-track').onclick = () => pickTrackDialog((kind, payload) => {
+      if (kind === 'track') postWall(uin, { kind: 'track', track: payload });
+      else postWall(uin, { kind: 'playlist', playlist: payload });
+    });
+  }
+  function pickCardDialog(cb) {
+    const kinds = Object.keys(Brain.CARDS).filter((k) => k !== 'trip');
+    dialog({ title: 'Выбери открытку', body: `<div class="card-pick">${kinds.map((k) => `<button data-card="${k}" title="${k}"><div class="postcard pc-${k}">${postcardSvg(k)}</div></button>`).join('')}</div>`, buttons: [{ label: 'Отмена' }], onOpen: (ov) => $$('[data-card]', ov).forEach((b) => (b.onclick = () => { playRef(Brain.CARDS[b.dataset.card].sound); ov.remove(); cb(b.dataset.card); })) });
+  }
+  function pickTrackDialog(cb) {
+    const pls = myProfile().playlists;
+    dialog({ title: 'Поделиться музыкой', body: `<div class="found inset v-list">${Music.TRACKS.map((t) => `<div class="trow" data-pick-track="${t.id}"><span class="disc" style="--c:${t.color}"></span><div class="ti"><b>${esc(t.title)}</b><div class="muted">${esc(t.artist)}</div></div></div>`).join('')}${pls.length ? '<div class="cgroup">Плейлисты</div>' + pls.map((pl) => `<div class="trow" data-pick-pl="${pl.id}"><span class="disc stack"></span><div class="ti"><b>♪ ${esc(pl.name)}</b><div class="muted">${pl.tracks.length} тр.</div></div></div>`).join('') : ''}</div>`, buttons: [{ label: 'Отмена' }], onOpen: (ov) => {
+      $$('[data-pick-track]', ov).forEach((r) => (r.onclick = () => { ov.remove(); cb('track', r.dataset.pickTrack); }));
+      $$('[data-pick-pl]', ov).forEach((r) => (r.onclick = () => { const pl = pls.find((x) => x.id === r.dataset.pickPl); ov.remove(); cb('playlist', { id: pl.id, name: pl.name, tracks: pl.tracks.slice() }); }));
+    } });
+  }
+
+  /* ================= профиль и знакомство ================= */
+  function renderProfile(uin) {
+    const a = accountOf(uin); if (!a) return '<div class="empty-note">Нет такого пользователя.</div>';
+    const mine = uin === me.uin;
+    const prof = profileOf(uin);
+    if (mine) {
+      const custom = prof.interests.filter((i) => !INTERESTS.includes(i));
+      return `<div class="wall-head"><span class="ico">${statusFlower(myStatus, 22)}</span><div class="who"><b>${esc(a.nick)}</b> <span class="muted">#${a.uin}</span><div class="hint">${esc(fmtPhone(a.phone))} · ${esc(myXstatus())}</div></div></div>
+        <div class="groupbox"><span class="legend">Мои интересы (${prof.interests.length})</span><div class="chips" id="p-chips">${INTERESTS.map((i) => `<button class="chip ${prof.interests.includes(i) ? 'on' : ''}" data-int="${esc(i)}">${esc(i)}</button>`).join('')}${custom.map((i) => `<button class="chip on" data-int="${esc(i)}" title="убрать">${esc(i)} ×</button>`).join('')}</div>
+          <div class="row mt"><input class="field" id="p-custom" maxlength="20" placeholder="свой интерес"><button class="btn" id="p-add">+</button></div></div>
+        <div class="groupbox"><span class="legend">Режим</span><div class="modes" id="p-modes">${Object.keys(MODES).map((k) => `<button class="${prof.mode === k ? 'on' : ''}" data-mode="${k}">${MODES[k].icon} ${MODES[k].label}</button>`).join('')}</div><div class="hint mt">Режим меняет статус, цвет окон и то, чей круг показан первым. Круг контакта — в его профиле.</div></div>
+        <div class="hint">Интересы видят друзья на твоей стене. По ним считается процент совпадения и подбирается случайное знакомство.</div>`;
+    }
+    const pct = matchPct(me.uin, uin), common = commonInterests(me.uin, uin);
+    return `<div class="wall-head"><span class="ico">${statusFlower(statusOf(uin), 22)}</span><div class="who"><b>${esc(a.nick)}</b> <span class="muted">#${a.uin}</span><div class="hint">${a.phone ? esc(fmtPhone(a.phone)) + ' · ' : ''}${esc(xstatusOf(uin) || statusInfo(statusOf(uin)).label)}</div></div><div class="pct" title="Совпадение интересов">${pct == null ? '—' : pct + '%'}</div></div>
+      <div class="groupbox"><span class="legend">Интересы</span><div class="chips">${prof.interests.length ? prof.interests.map((i) => `<span class="chip ${common.includes(i) ? 'on' : ''}">${esc(i)}</span>`).join('') : '<span class="muted">не указаны</span>'}</div><div class="hint mt">${pct == null ? 'Укажи свои интересы — и Аська посчитает совпадение.' : common.length ? 'Общее: ' + esc(common.join(', ')) : 'Общих интересов нет. Самые интересные разговоры начинаются так.'}</div></div>
+      <div class="groupbox"><span class="legend">Круг</span>${Object.keys(MODES).map((k) => `<label class="row"><input type="radio" name="circle" value="${k}" ${circleOf(uin) === k ? 'checked' : ''}> ${MODES[k].icon} ${MODES[k].label}</label>`).join('')}</div>
+      <div class="row"><button class="btn primary" id="pr-chat">Написать</button><button class="btn" id="pr-wall">Стена</button></div>`;
+  }
+  function wireProfile(uin) {
+    if (uin === me.uin) {
+      $$('#p-chips .chip').forEach((b) => (b.onclick = () => {
+        const i = b.dataset.int; const list = myProfile().interests.slice();
+        const k = list.indexOf(i); if (k >= 0) list.splice(k, 1); else list.push(i);
+        saveProfile({ interests: list }); Snd.play('click'); renderAux(); renderContacts();
+      }));
+      const add = () => { const v = $('#p-custom').value.trim().toLowerCase(); if (v.length < 2) return; const list = myProfile().interests.slice(); if (!list.includes(v)) list.push(v); saveProfile({ interests: list }); renderAux(); };
+      $('#p-add').onclick = add;
+      $('#p-custom').addEventListener('keydown', (e) => { if (e.key === 'Enter') add(); });
+      $$('#p-modes button').forEach((b) => (b.onclick = () => { setMode(b.dataset.mode); renderAux(); }));
+      return;
+    }
+    $$('input[name=circle]').forEach((r) => (r.onchange = () => { setCircle(uin, r.value); Snd.play('click'); }));
+    $('#pr-chat').onclick = () => openChat(uin);
+    $('#pr-wall').onclick = () => openAux('wall', uin);
+  }
+  function randomMeet() {
+    if (!me) return;
+    const mine = contactsOf(me.uin);
+    let pool = allKnown().filter((a) => a.uin !== me.uin && !mine.includes(a.uin));
+    if (!pool.length) pool = allKnown().filter((a) => a.uin !== me.uin);
+    const a = pick(pool);
+    const pct = matchPct(me.uin, a.uin), common = commonInterests(me.uin, a.uin);
+    const prof = profileOf(a.uin);
+    Snd.play('knock');
+    dialog({
+      title: 'Случайное знакомство',
+      body: `<div class="meet-head">${statusFlower(statusOf(a.uin), 30)}<div><b>${esc(a.nick)}</b> <span class="muted">#${a.uin}</span><div class="hint">${esc(xstatusOf(a.uin) || statusInfo(statusOf(a.uin)).label)}${mine.includes(a.uin) ? ' · уже в контактах' : ''}</div></div><div class="pct big" title="Совпадение интересов">${pct == null ? '?' : pct + '%'}</div></div>
+        <div class="chips small mt">${prof.interests.map((i) => `<span class="chip ${common.includes(i) ? 'on' : ''}">${esc(i)}</span>`).join('') || '<span class="muted">интересы не указаны</span>'}</div>
+        <div class="hint mt">${pct == null ? 'Укажи свои интересы в профиле — и Аська посчитает совпадение.' : pct >= 50 ? 'Аська говорит: это судьба.' : pct > 0 ? 'Есть общее. Остальное — дело разговора.' : 'Ничего общего. Самые интересные разговоры начинаются именно так.'}</div>`,
+      buttons: [
+        { label: 'Написать', primary: true, onClick: () => { if (!mine.includes(a.uin)) addContact(a.uin); openChat(a.uin); const ta = $('#compose'); if (ta && !ta.value) { ta.value = common.length ? `Привет! Аська говорит, у нас ${pct}% совпадения: ${common.join(', ')} :)` : 'Привет! Аська нас случайно познакомила. Ну что, знакомимся? :)'; drafts[a.uin] = ta.value; } } },
+        { label: 'Ещё', onClick: () => setTimeout(randomMeet, 30) },
+        { label: 'Закрыть' },
+      ],
+    });
+  }
+
+  /* ================= окно-приставка: стена / профиль / винил ================= */
+  const aux = { kind: null, arg: null };
+  function openAux(kind, arg) {
+    aux.kind = kind; aux.arg = arg || null;
+    hideSmiles();
+    $('.desktop').classList.add('mode-aux');
+    renderAux();
+    Snd.play('click');
+  }
+  function closeAux() {
+    aux.kind = null; aux.arg = null;
+    $('.desktop').classList.remove('mode-aux');
+    renderAux();
+  }
+  function renderAux() {
+    const win = $('#auxwin'); if (!win) return;
+    win.hidden = !aux.kind;
+    if (!aux.kind) return;
+    const body = $('#aux-body'), title = $('#aux-title');
+    if (aux.kind === 'wall') { const a = accountOf(aux.arg); title.innerHTML = `${aux.arg === me.uin ? 'Моя стена' : 'Стена: ' + esc(a ? a.nick : aux.arg)}`; body.innerHTML = renderWall(aux.arg); if (accountOf(aux.arg)) wireWall(aux.arg); }
+    else if (aux.kind === 'profile') { const a = accountOf(aux.arg); title.innerHTML = aux.arg === me.uin ? 'Мой профиль' : `Профиль: ${esc(a ? a.nick : aux.arg)}`; body.innerHTML = renderProfile(aux.arg); if (accountOf(aux.arg)) wireProfile(aux.arg); }
+    else if (aux.kind === 'vinyl') { title.innerHTML = 'Винил <small>— проигрыватель</small>'; body.innerHTML = renderVinyl(); wireVinyl(); }
+  }
+  // клики по карточкам треков, открыткам и лайкам — где бы они ни были
+  document.addEventListener('click', (e) => {
+    const play = e.target.closest('[data-play]');
+    if (play) { const id = play.dataset.play; if (Music.state.trackId === id && Music.state.playing) Music.pause(); else { Music.play(id); if (aux.kind !== 'vinyl' && !isNarrow()) {} } return; }
+    const pp = e.target.closest('[data-playpl]');
+    if (pp) { Music.playQueue(pp.dataset.playpl.split(','), pp.dataset.plname, 0); return; }
+    const like = e.target.closest('[data-like]');
+    if (like) { toggleLike(like.dataset.wallof, like.dataset.like); return; }
+    const w = e.target.closest('[data-wall]');
+    if (w) { openAux('wall', w.dataset.wall); return; }
+    const pc = e.target.closest('#aux-body .postcard, .overlay .postcard');
+    if (pc && pc.dataset.sound) { playRef(pc.dataset.sound); pc.replaceWith(pc.cloneNode(true)); }
+  });
+
+  /* ================= винил ================= */
+  let vtab = 'tracks', vpl = null;
+  function renderVinyl() {
+    const st = Music.state; const t = st.trackId ? Music.byId[st.trackId] : null;
+    const prof = myProfile(); const pls = prof.playlists;
+    const targets = [me].concat(contactsOf(me.uin).map(accountOf).filter(Boolean));
+    const tracksList = Music.TRACKS.map((x) => `<div class="trow ${st.trackId === x.id ? 'np' : ''}"><button class="btn icon" data-play="${x.id}" title="Слушать">${st.trackId === x.id && st.playing ? '❚❚' : '▶'}</button><span class="disc" style="--c:${x.color}"></span><div class="ti"><b>${esc(x.title)}</b><div class="muted">${esc(x.artist)} · ${x.year} · ${Music.STYLE_NAMES[x.style]}</div></div><button class="btn icon" data-addpl="${x.id}" title="В плейлист">+</button></div>`).join('');
+    const cur = pls.find((p) => p.id === vpl);
+    const plPanel = `<div class="row"><input class="field" id="pl-name" maxlength="30" placeholder="название плейлиста"><button class="btn" id="pl-new">Создать</button></div>
+      ${pls.length ? pls.map((pl) => `<div class="prow ${pl.id === vpl ? 'np' : ''}" data-pl="${pl.id}"><button class="btn icon" data-playpl="${esc(pl.tracks.join(','))}" data-plname="${esc(pl.name)}" title="Слушать" ${pl.tracks.length ? '' : 'disabled'}>▶</button><div class="ti"><b>♪ ${esc(pl.name)}</b><div class="muted">${pl.tracks.length} тр.</div></div><button class="btn icon" data-pl-wall="${pl.id}" title="На стену" ${pl.tracks.length ? '' : 'disabled'}>▤</button><button class="btn icon" data-pl-chat="${pl.id}" title="В беседу" ${pl.tracks.length && active ? '' : 'disabled'}>✉</button><button class="btn icon" data-pl-del="${pl.id}" title="Удалить">×</button></div>`).join('') : '<div class="empty-note">Плейлистов пока нет. Придумай название и жми «Создать», потом «+» у треков.</div>'}
+      ${cur ? `<div class="cgroup">${esc(cur.name)}: треки</div>${cur.tracks.length ? cur.tracks.map((id, i) => `<div class="trow"><span class="muted">${i + 1}.</span><div class="ti"><b>${esc(Music.byId[id] ? Music.byId[id].title : id)}</b></div><button class="btn icon" data-pl-rm="${i}" title="Убрать">×</button></div>`).join('') : '<div class="empty-note">Пусто. Добавь треки кнопкой «+» во вкладке «Хиты».</div>'}` : ''}`;
+    return `<div class="vinyl">
+      <div class="tt"><div class="platter"><div class="record ${st.playing ? 'spin' : ''}" id="v-record"><div class="label" style="background:${t ? t.color : '#3cb44a'}"><span>${t ? esc(t.title) : 'АСЬКА'}</span></div></div></div><div class="arm ${st.trackId ? 'on' : ''}" id="v-arm"></div></div>
+      <div class="np-box inset"><b id="v-title">${t ? esc(t.title) : 'Поставь пластинку'}</b><div class="muted" id="v-sub">${t ? esc(t.artist) + ' · ' + t.year + ' · ' + Music.STYLE_NAMES[t.style] : '12 хитов конца девяностых, синтезируются на лету'}</div><div class="hint" id="v-pos">${t ? `такт ${st.bar + 1}/16 · круг ${st.loop + 1}/2${st.queueName ? ' · ' + esc(st.queueName) : ''}` : 'Друзья увидят, что ты слушаешь'}</div></div>
+      <div class="row v-ctrl"><button class="btn" id="v-prev" title="Предыдущий">⏮</button><button class="btn primary" id="v-toggle" title="Играть / пауза">${st.playing ? '❚❚' : '▶'}</button><button class="btn" id="v-next" title="Следующий">⏭</button><input type="range" id="v-vol" min="0" max="100" value="${Math.round(Music.volume * 100)}" title="Громкость"><label class="row" title="Шипение пластинки"><input type="checkbox" id="v-crackle" ${Music.crackle ? 'checked' : ''}> шип</label></div>
+      <div class="row v-share"><span class="hint">Поделиться:</span><button class="btn" id="v-tochat" ${t && active ? '' : 'disabled'} title="${active ? 'Отправить в открытую беседу' : 'Сначала открой беседу'}">в беседу</button><button class="btn" id="v-towall" ${t ? '' : 'disabled'}>на стену</button><select class="field" id="v-wallto">${targets.map((a) => `<option value="${a.uin}">${a.uin === me.uin ? 'мою' : esc(a.nick)}</option>`).join('')}</select></div>
+      <div class="tabs v-tabs"><button class="${vtab === 'tracks' ? 'on' : ''}" data-vt="tracks">Хиты</button><button class="${vtab === 'pl' ? 'on' : ''}" data-vt="pl">Плейлисты${pls.length ? ' (' + pls.length + ')' : ''}</button></div>
+      <div class="tabpanel v-list">${vtab === 'tracks' ? tracksList : plPanel}</div>
+    </div>`;
+  }
+  function wireVinyl() {
+    $('#v-toggle').onclick = () => Music.toggle();
+    $('#v-prev').onclick = () => Music.prev();
+    $('#v-next').onclick = () => Music.next();
+    $('#v-vol').oninput = (e) => { Music.volume = e.target.value / 100; };
+    $('#v-crackle').onchange = (e) => { Music.crackle = e.target.checked; };
+    $$('.v-tabs button').forEach((b) => (b.onclick = () => { vtab = b.dataset.vt; Snd.play('click'); renderAux(); }));
+    $('#v-tochat').onclick = () => { if (Music.state.trackId && active) { sendSpecial(active, { kind: 'track', track: Music.state.trackId, text: '♪ ' + Music.byId[Music.state.trackId].title }); toast(accountOf(active), 'трек отправлен в беседу', null); } };
+    $('#v-towall').onclick = () => { const to = $('#v-wallto').value; if (Music.state.trackId) { postWall(to, { kind: 'track', track: Music.state.trackId }); toast(accountOf(to), 'трек на стене', null); } };
+    $$('[data-addpl]').forEach((b) => (b.onclick = () => addToPlaylist(b.dataset.addpl)));
+    const plNew = $('#pl-new');
+    if (plNew) {
+      const create = () => { const name = $('#pl-name').value.trim(); if (!name) return; const pls = myProfile().playlists.slice(); const pl = { id: uid(), name, tracks: [] }; pls.push(pl); saveProfile({ playlists: pls }); vpl = pl.id; Snd.play('click'); renderAux(); };
+      plNew.onclick = create;
+      $('#pl-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') create(); });
+      $$('.prow').forEach((r) => (r.onclick = (e) => { if (e.target.closest('button')) return; vpl = r.dataset.pl; renderAux(); }));
+      $$('[data-pl-del]').forEach((b) => (b.onclick = () => confirmBox('Плейлист', 'Удалить плейлист?', () => { saveProfile({ playlists: myProfile().playlists.filter((p) => p.id !== b.dataset.plDel) }); if (vpl === b.dataset.plDel) vpl = null; renderAux(); })));
+      $$('[data-pl-rm]').forEach((b) => (b.onclick = () => { const pls = myProfile().playlists.map((p) => (p.id === vpl ? Object.assign({}, p, { tracks: p.tracks.filter((_, i) => i !== +b.dataset.plRm) }) : p)); saveProfile({ playlists: pls }); renderAux(); }));
+      $$('[data-pl-wall]').forEach((b) => (b.onclick = () => { const pl = myProfile().playlists.find((p) => p.id === b.dataset.plWall); const to = $('#v-wallto').value; postWall(to, { kind: 'playlist', playlist: { id: pl.id, name: pl.name, tracks: pl.tracks.slice() } }); toast(accountOf(to), 'плейлист на стене', null); }));
+      $$('[data-pl-chat]').forEach((b) => (b.onclick = () => { const pl = myProfile().playlists.find((p) => p.id === b.dataset.plChat); if (!active) return; sendSpecial(active, { kind: 'playlist', playlist: { id: pl.id, name: pl.name, tracks: pl.tracks.slice() }, text: '♪ плейлист «' + pl.name + '»' }); toast(accountOf(active), 'плейлист отправлен', null); }));
+    }
+  }
+  function addToPlaylist(trackId) {
+    const pls = myProfile().playlists.slice();
+    const doAdd = (pl) => { if (!pl.tracks.includes(trackId)) pl.tracks.push(trackId); saveProfile({ playlists: pls }); vpl = pl.id; Snd.play('click'); toast(me, `«${Music.byId[trackId].title}» → ${pl.name}`, null); if (aux.kind === 'vinyl') renderAux(); };
+    if (!pls.length) { const pl = { id: uid(), name: 'Мой плейлист', tracks: [] }; pls.push(pl); doAdd(pl); return; }
+    if (pls.length === 1) { doAdd(pls[0]); return; }
+    dialog({ title: 'В какой плейлист?', body: `<div class="status-list">${pls.map((pl) => `<button data-pl="${pl.id}">♪ ${esc(pl.name)} <span class="muted">(${pl.tracks.length})</span></button>`).join('')}<button data-pl="__new">+ новый плейлист</button></div>`, buttons: [{ label: 'Отмена' }], onOpen: (ov) => $$('[data-pl]', ov).forEach((b) => (b.onclick = () => { ov.remove(); if (b.dataset.pl === '__new') { const pl = { id: uid(), name: 'Плейлист ' + (pls.length + 1), tracks: [] }; pls.push(pl); doAdd(pl); } else doAdd(pls.find((p) => p.id === b.dataset.pl)); })) });
+  }
+  function updateNowPlaying() {
+    const cell = $('#sb-np'); if (!cell) return;
+    const st = Music.state; const t = st.trackId ? Music.byId[st.trackId] : null;
+    cell.hidden = !t;
+    if (t) cell.innerHTML = `${st.playing ? '♪' : '❚❚'} ${esc(t.title)}`;
+  }
+  let lastMusicTrack = null;
+  Music.onChange((st) => {
+    updateNowPlaying();
+    if (aux.kind === 'vinyl') {
+      const rec = $('#v-record'); if (rec) rec.classList.toggle('spin', st.playing);
+      const arm = $('#v-arm'); if (arm) arm.classList.toggle('on', !!st.trackId);
+      const tg = $('#v-toggle'); if (tg) tg.textContent = st.playing ? '❚❚' : '▶';
+      const t = st.trackId ? Music.byId[st.trackId] : null;
+      const pos = $('#v-pos'); if (pos && t) pos.textContent = `такт ${st.bar + 1}/16 · круг ${st.loop + 1}/2${st.queueName ? ' · ' + st.queueName : ''}`;
+      if (st.trackId !== lastMusicTrack) renderAux();
+    }
+    if (st.trackId !== lastMusicTrack || !st.playing) {
+      $$('.trackcard').forEach((c) => c.classList.toggle('np', c.dataset.track === st.trackId && st.playing));
+      $$('.trackcard [data-play]').forEach((b) => (b.textContent = b.dataset.play === st.trackId && st.playing ? '❚❚' : '▶'));
+      if (me) { mutate((d) => { d.presence[me.uin] = { status: myStatus, xstatus: myXstatus(), ts: Date.now() }; }); post({ type: 'presence', uin: me.uin }); }
+    }
+    lastMusicTrack = st.trackId;
+  });
+
   /* ================= старт ================= */
-  const unlock = () => { Snd.unlock(); };
+  const unlock = () => { Snd.unlock(); Music.unlock(); };
   ['pointerdown', 'keydown', 'touchend'].forEach((ev) => document.addEventListener(ev, unlock, { passive: true }));
 
   // iOS: при выезде клавиатуры уменьшаем «рабочий стол» до видимой области
@@ -928,9 +1365,11 @@
 
   document.addEventListener('visibilitychange', () => { if (!document.hidden && me) { db = load(); renderContacts(); if (active) { markRead(active); renderHistory(); } } });
   window.addEventListener('resize', () => { if (me && !isNarrow()) $('.desktop').classList.remove('mode-chat'); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && aux.kind && !$$('.overlay').length && !menuEl && !smilesEl) closeAux(); });
 
   loadSession();
   if (me) {
+    applyTheme();
     renderMain();
     if (active) $('.desktop').classList.add('mode-chat');
     contactsOf(me.uin).forEach((u) => (botState[u] = isOnline(u)));
