@@ -35,6 +35,9 @@ const App = {
     if (h.startsWith('join=')) return {id: 'join', param: h.slice(5)};
     /* ссылка для смены пароля: #reset=<учётка>.<код> */
     if (h.startsWith('reset=')) return {id: 'reset', param: h.slice(6)};
+    /* раздел страницы: #money:refunds */
+    const sub = /^([a-z]+):([a-z]+)$/.exec(h);
+    if (sub) return {id: sub[1], param: sub[2]};
     return {id: h || 'home', param: null};
   },
   go(hash) { if (location.hash === '#' + hash) this.render(); else location.hash = hash; },
@@ -174,7 +177,7 @@ const App = {
         const k = crmWeek().length;
         return `<a href="${n.href}" target="_blank" rel="noopener" class="nav-ext" title="Eva CRM — кастдев и подключение. Число — созвоны CRM на этой неделе">${icon(n.icon)}<span>${n.name}</span>${k ? `<span class="nav-n">${k}</span>` : ''}</a>`;
       }
-      const b = n.id === 'tasks' ? taskBadge() : 0;
+      const b = n.id === 'tasks' ? taskBadge() : n.id === 'money' ? Fin.badge() : 0;
       return `<a href="#${n.id}" class="${n.id === active || (active === 'material' && n.id === 'home') ? 'on' : ''}">${icon(n.icon)}<span>${n.name}</span>${b ? `<span class="badge" title="Требуют внимания">${b}</span>` : ''}</a>`;
     }).join('');
     const me = Auth.me(), p = Auth.person();

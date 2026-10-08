@@ -1187,7 +1187,7 @@ function budgetHtml(t, can, isNew) {
     : st === 'pending' ? `Ждёт согласования: <b>${esc(whoName(Tasks.budgetApprover(t)))}</b>. В план платежей попадёт после согласования.`
     : st === 'rejected' ? 'Бюджет не согласован — поправьте сумму, и он снова уйдёт на согласование.'
     : `В плане платежей: разовый платёж <b>${rub(amount)}</b> за <b>${monthName(m, true).toLowerCase()}</b> — строка «Задача: ${esc(t.title)}». Правка суммы или срока обновит ту же строку, второй не появится.${inPlan ? '' : ' Месяц вне плана до Нового года — в Cash Flow не попадёт.'}`;
-  const approvers = [...new Set([founderId(), ...people().filter(p => (Store.all('accounts').find(a => a.personId === p.id && ['owner', 'lead'].includes(a.role)))).map(p => p.id)])].filter(Boolean);
+  const approvers = [...new Set([founderId(), ...people().filter(p => (Store.all('accounts').find(a => a.personId === p.id && ['owner', 'lead', 'finance'].includes(a.role)))).map(p => p.id)])].filter(Boolean);
   return `<p class="tm-box-l">Бюджет задачи</p>
     <div class="tm-bq">${BUDGET_QUICK.map(v => `<button type="button" class="tm-chip ${amount === v ? 'on' : ''}" data-bq="${v}" ${can ? '' : 'disabled'}>${v ? fmt(v / 1000) + ' тыс ₽' : '0'}</button>`).join('')}</div>
     <div class="tm-brow">

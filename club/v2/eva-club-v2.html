@@ -1040,6 +1040,89 @@ table.t tr.muted-row td{color:var(--ink-3);}
 .cf-table td.now{background:color-mix(in srgb, var(--rose-soft) 40%, transparent);}
 .cf-table td.plan{color:var(--ink-2);}
 
+/* ── 42-fin.css ── */
+/* Финансы: вкладки, обзор, таблицы разделов */
+.fin-tabs{margin-bottom:20px;}
+.fin-tabs button{white-space:nowrap;}
+.tabs.fin-tabs button .fin-n{min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--bad); color:#fff; font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; margin-left:5px;}
+.fin-kpi{grid-template-columns:repeat(4, minmax(0,1fr));}
+@media (max-width:1100px){ .fin-kpi{grid-template-columns:repeat(2, minmax(0,1fr));} }
+.fin-kpi .stat{min-height:118px;}
+.fin-kpi .cash-card .big{color:var(--gold-brand);}
+
+/* приход и расход месяца: полосы на одной шкале */
+.fin-flow{display:flex; flex-direction:column; gap:14px;}
+.fb-group{display:flex; flex-direction:column; gap:7px;}
+.fb-group > .label{display:flex; justify-content:space-between; gap:10px;}
+.fb-group > .label b{font-size:13px; letter-spacing:0; text-transform:none; font-variant-numeric:tabular-nums;}
+.fin-bar{display:grid; grid-template-columns:minmax(110px, 38%) minmax(0,1fr) 78px; gap:10px; align-items:center; font-size:13px;}
+.fb-l{color:var(--ink-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.fb-t{height:10px; border-radius:5px; background:var(--sunken); overflow:hidden;}
+.fb-t i{display:block; height:100%; border-radius:0 4px 4px 0;}
+.fb-t i.in{background:var(--good);}
+.fb-t i.out{background:color-mix(in srgb, var(--bad) 75%, var(--surface));}
+.fin-bar b{text-align:right; font-variant-numeric:tabular-nums; font-weight:600;}
+
+.fin-att .focus-row svg{width:16px; height:16px; stroke:var(--ink-3); fill:none; stroke-width:2; flex:0 0 16px;}
+.fin-att .fr-t{display:flex; flex-direction:column; align-items:flex-start; gap:3px;}
+.fin-att .fr-t small{color:var(--ink-3); font-size:12px;}
+.fin-planline{display:grid; grid-template-columns:auto minmax(120px,1fr) auto; gap:14px; align-items:center; margin-top:12px; padding:10px 14px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); font-size:13px;}
+@media (max-width:700px){ .fin-planline{grid-template-columns:1fr;} }
+.fin-recent{display:flex; flex-direction:column;}
+.fr-op{display:grid; grid-template-columns:64px minmax(0,1fr) auto; gap:12px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px;}
+.fr-op:last-child{border-bottom:0;}
+.fr-op small{display:block; color:var(--ink-3); font-size:11.5px;}
+.fr-op b{font-variant-numeric:tabular-nums;}
+.unit .card-head{flex-wrap:wrap; gap:10px;}
+.unit-t td:first-child{min-width:220px; font-weight:500;}
+.unit-t td.note{font-size:12px;}
+.unit-t tr.sub td{background:var(--surface-2);}
+
+/* общие куски разделов */
+.fin-subbar{margin:18px 0 4px;}
+.fin-sum{display:flex; gap:8px 22px; flex-wrap:wrap; font-size:13px; color:var(--ink-2); margin-bottom:10px;}
+.fin-sum b{color:var(--ink); font-variant-numeric:tabular-nums;}
+.fin-sum b.good{color:var(--good);}
+.payouts .section-head > .row{gap:8px; flex-wrap:wrap;}
+small.block{display:block; font-size:11.5px; color:var(--ink-3); font-weight:400;}
+small.block.bad{color:var(--bad);}
+table.t td .st-sel{height:28px; font-size:12.5px; padding:0 26px 0 8px; width:auto; min-width:118px;}
+.st-sel.good{color:var(--good); border-color:color-mix(in srgb, var(--good) 40%, var(--line));}
+.st-sel.bad{color:var(--bad); border-color:color-mix(in srgb, var(--bad) 40%, var(--line));}
+.st-sel.warn{color:var(--warn);}
+.st-sel.violet{color:var(--violet);}
+.st-sel.gold{color:var(--gold);}
+table.t tr.click{cursor:pointer;}
+table.t tr.click:hover td{background:var(--surface-2);}
+table.t tr.due-row td:first-child{box-shadow:inset 3px 0 0 var(--bad);}
+table.t tr.now-row td{background:color-mix(in srgb, var(--rose-soft) 35%, transparent);}
+table.subs-t th small{display:block; font-size:10.5px; font-weight:500; color:var(--ink-3); text-transform:none; letter-spacing:0;}
+table.subs-t td.auto{color:var(--ink-3); font-style:italic;}
+table.courses-t td:first-child{min-width:220px;}
+.cs-n{width:64px; text-align:right; height:30px;}
+.st-in{width:72px; text-align:right; height:30px;}
+.st-in.bad{border-color:var(--bad); color:var(--bad);}
+.ord-items{max-width:260px; font-size:12.5px; color:var(--ink-2);}
+.fin-reasons{display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:14px;}
+.fin-reasons .label{margin-right:4px;}
+.fin-span2{grid-column:span 2;}
+@media (max-width:700px){ .fin-span2{grid-column:auto;} }
+.fin-total{font-size:15px; margin-top:4px;}
+.fin-msg{padding:10px 12px; border-radius:8px; background:var(--surface-2); border:1px solid var(--line); display:flex; flex-direction:column; gap:6px;}
+.fin-msg p{margin:0; font-size:13px; line-height:1.5;}
+.fin-msg .row{gap:6px;}
+.fin-log{display:flex; flex-direction:column; gap:3px; font-size:12.5px; color:var(--ink-2);}
+.fin-log small{color:var(--ink-3);}
+.oi-list{display:flex; flex-direction:column; gap:6px; margin-bottom:6px;}
+.oi-row{display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 64px 100px 32px; gap:6px; align-items:center;}
+@media (max-width:700px){ .oi-row{grid-template-columns:1fr 1fr 32px;} .oi-p{grid-column:1 / -1;} }
+.cr-act{align-self:end; padding-bottom:9px;}
+.av.xs{width:20px; height:20px; flex-basis:20px; font-size:8.5px; vertical-align:middle;}
+table.subs-t{font-size:12.5px;}
+table.subs-t th, table.subs-t td{padding-left:8px; padding-right:8px;}
+.unit-t .how-m{display:none;}
+@media (max-width:640px){ .unit-t td.note{display:none;} .unit-t .how-m{display:block;} .unit-t td:first-child{min-width:0;} }
+
 /* ── 70-team.css ── */
 /* ── команда ── */
 .team-group{margin-bottom:22px;}
@@ -1317,6 +1400,8 @@ table.plan tr.dim td{color:var(--ink-3);}
 .help-ok{flex:0 0 auto; background:var(--gold); border-color:var(--gold); color:#fff; height:30px; padding:0 12px; font-weight:600;}
 .help-ok:hover{filter:brightness(1.1); border-color:var(--gold);}
 .help-ok svg{width:14px; height:14px;}
+/* телефон: «Просмотрено» — под текстом, текст на всю ширину */
+@media (max-width:640px){ .help{flex-wrap:wrap;} .help-body{flex:1 1 calc(100% - 36px);} .help-ok{margin-left:32px;} }
 .help-mini{display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:8px 12px; border-radius:var(--radius); border:1px dashed color-mix(in srgb, var(--gold) 55%, transparent); background:color-mix(in srgb, var(--gold-brand) 10%, var(--surface)); color:var(--ink-2); font-size:13px;}
 .help-mini svg{width:16px; height:16px; flex:0 0 16px; stroke:var(--gold); fill:none; stroke-width:1.9;}
 .help-mini span{flex:1; min-width:0;}
@@ -2045,25 +2130,27 @@ const CF_MONTHS = ['2026-09', '2026-10', '2026-11', '2026-12'];
 const ROLES = {
   owner:    {name: 'Основатель',   tone: 'gold',   about: 'видит и меняет всё: стратегию, деньги, доступы'},
   lead:     {name: 'Руководитель', tone: 'violet', about: 'ведёт задачи команды, принимает работу, вносит деньги'},
+  finance:  {name: 'Финансы',      tone: 'gold',   about: 'все деньги с зарплатами, подписки, возвраты, сбои оплат и выплаты'},
   member:   {name: 'Команда',      tone: 'rose',   about: 'свои задачи, цифры продаж, стратегия и материалы'},
   investor: {name: 'Инвестор',     tone: 'good',   about: 'только смотрит: главная, стратегия, отчёты, материалы'},
 };
 const roleOf = r => (ROLES[r] ? r : 'member'); // старые роли (эксперт и т. п.) считаем командой
 
 const PERMS = {
-  'tasks.view':     ['owner', 'lead', 'member'],
-  'tasks.edit':     ['owner', 'lead', 'member'],
-  'tasks.manage':   ['owner', 'lead'],            // принимать, возвращать, править любые
-  'money.view':     ['owner', 'lead', 'investor'],
-  'money.edit':     ['owner', 'lead'],
-  'payroll.view':   ['owner'],                    // зарплаты по людям
-  'sales.edit':     ['owner', 'lead', 'member'],
-  'cf.view':        ['owner', 'lead', 'investor'],
+  'tasks.view':     ['owner', 'lead', 'finance', 'member'],
+  'tasks.edit':     ['owner', 'lead', 'finance', 'member'],
+  'tasks.manage':   ['owner', 'lead', 'finance'], // принимать, возвращать, править любые
+  'money.view':     ['owner', 'lead', 'finance', 'investor'],
+  'money.edit':     ['owner', 'lead', 'finance'],
+  'payroll.view':   ['owner', 'finance'],         // зарплаты по людям
+  'fin.ops':        ['owner', 'lead', 'finance'], // возвраты, сбои оплат, заказы, выплаты — с данными клиентов
+  'sales.edit':     ['owner', 'lead', 'finance', 'member'],
+  'cf.view':        ['owner', 'lead', 'finance', 'investor'],
   'strategy.edit':  ['owner'],
-  'strategy.check': ['owner', 'lead'],            // отмечать пункты целей
+  'strategy.check': ['owner', 'lead', 'finance'], // отмечать пункты целей
   'settings.edit':  ['owner'],
   'team.manage':    ['owner'],
-  'materials.team': ['owner', 'lead', 'member'],
+  'materials.team': ['owner', 'lead', 'finance', 'member'],
 };
 
 /* ── разделы ── */
@@ -2072,7 +2159,7 @@ const NAV = [
   {id: 'strategy', name: 'Стратегия', icon: 'target'},
   {id: 'tasks',    name: 'Задачи',    icon: 'check', perm: 'tasks.view'},
   {id: 'calendar', name: 'Календарь', icon: 'cal', perm: 'tasks.view'},
-  {id: 'money',    name: 'Деньги',    icon: 'wallet', perm: 'money.view'},
+  {id: 'money',    name: 'Финансы',   icon: 'wallet', perm: 'money.view'},
   {id: 'reports',  name: 'Отчёты',    icon: 'chart'},
   {id: 'metrics',  name: 'Метрики',   icon: 'funnel'},
   {id: 'team',     name: 'Команда',   icon: 'users', perm: 'tasks.view'},
@@ -2115,13 +2202,18 @@ const OUT_CATS = {
   infra:     'Сервисы и платформа',
   marketing: 'Маркетинг и трафик',
   referral:  'Реферальные выплаты',
+  authors:   'Выплаты авторам курсов',
+  sellers:   'Выплаты продавцам маркетплейса',
+  goods:     'Закупка товаров',
+  refunds:   'Возвраты клиентам',
   legal:     'Юристы и документы',
   acquiring: 'Эквайринг',
   tax:       'Налоги',
   other:     'Прочие расходы',
 };
 const IN_CATS = {
-  courses:  'Курсы и маркет',
+  courses:  'Курсы',
+  market:   'Маркетплейс',
   partners: 'Партнёрства',
   other:    'Прочие приходы',
 };
@@ -2145,6 +2237,7 @@ const PLAN_GROUPS = {
 const DEFAULT_SETTINGS = {
   scenario: 'goal',
   price: 2900,          // месячная подписка, ₽
+  priceYear: 29000,     // годовая подписка, ₽
   convPay: 0.05,        // регистрация → оплата
   convReg: 0.02,        // охват → регистрация (= просмотр × переход × регистрация)
   retention: 0.5,       // продлевают в следующем месяце
@@ -2250,7 +2343,9 @@ function httpDb(base) {
    (docs/strategy, docs/settings, docs/learning). */
 
 const Store = (() => {
-  const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy', 'messages'];
+  const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy', 'messages',
+    /* финансы: подписки по месяцам, выплаты, курсы, заказы и товары маркетплейса, сбои оплат, возвраты */
+    'subs', 'payouts', 'courses', 'orders', 'products', 'failed', 'refunds'];
   const LS = 'eva-hq:';
   const data = Object.fromEntries(COLS.map(c => [c, new Map()]));
   const subs = new Set();
@@ -3254,6 +3349,9 @@ const App = {
     if (h.startsWith('join=')) return {id: 'join', param: h.slice(5)};
     /* ссылка для смены пароля: #reset=<учётка>.<код> */
     if (h.startsWith('reset=')) return {id: 'reset', param: h.slice(6)};
+    /* раздел страницы: #money:refunds */
+    const sub = /^([a-z]+):([a-z]+)$/.exec(h);
+    if (sub) return {id: sub[1], param: sub[2]};
     return {id: h || 'home', param: null};
   },
   go(hash) { if (location.hash === '#' + hash) this.render(); else location.hash = hash; },
@@ -3393,7 +3491,7 @@ const App = {
         const k = crmWeek().length;
         return `<a href="${n.href}" target="_blank" rel="noopener" class="nav-ext" title="Eva CRM — кастдев и подключение. Число — созвоны CRM на этой неделе">${icon(n.icon)}<span>${n.name}</span>${k ? `<span class="nav-n">${k}</span>` : ''}</a>`;
       }
-      const b = n.id === 'tasks' ? taskBadge() : 0;
+      const b = n.id === 'tasks' ? taskBadge() : n.id === 'money' ? Fin.badge() : 0;
       return `<a href="#${n.id}" class="${n.id === active || (active === 'material' && n.id === 'home') ? 'on' : ''}">${icon(n.icon)}<span>${n.name}</span>${b ? `<span class="badge" title="Требуют внимания">${b}</span>` : ''}</a>`;
     }).join('');
     const me = Auth.me(), p = Auth.person();
@@ -3851,6 +3949,10 @@ App.register('home', {
       tiles.push(`<div class="card stat"><span class="label">Деньги на счёте</span>
         <div class="big">${rubK(Money.cashNow())}</div>
         <div class="foot ${min < 0 ? 'bad' : ''}">${min < 0 ? `к декабрю не хватит ${rubK(-min)} — нужен раунд` : `к 31 декабря по прогнозу ${rubK(last.close)}`}</div></div>`);
+      const sub = Subs.now();
+      tiles.push(`<a class="card stat as-link" href="#money:subs"><span class="label">Платные подписки</span>
+        <div class="big">${fmt(sub.total)}</div>
+        <div class="foot">месячных ${fmt(sub.endM)} · годовых ${fmt(sub.endY)} · MRR ${rubK(sub.mrr)}</div></a>`);
     } else {
       tiles.push(`<div class="card stat"><span class="label">Регистрации квартала</span>
         <div class="big">${fmt(qStat.regs)} <small>из ${fmt(Plan.regs(pace.total))}</small></div>${progress(qStat.regs / Math.max(1, Plan.regs(pace.total)), 'good')}
@@ -3875,6 +3977,14 @@ App.register('home', {
     let focus = '';
     if (Tasks.manager()) {
       const unpaid = Auth.can('money.edit') ? Money.planItems().filter(it => Money.planAmount(it, monthOf(t)) && !Money.paid(it, monthOf(t))) : [];
+      /* финансы: возвраты, сбои оплат, выплаты, заказы к отправке */
+      const fa = Auth.can('fin.ops') ? Fin.attention() : null;
+      const finRows = fa ? [
+        fa.refunds.length ? ['refunds', `Запросы на возврат${fa.late.length ? ` · <b class="bad">просрочено ${fa.late.length}</b>` : ''}`, fmt(fa.refunds.length)] : null,
+        fa.failed.length ? ['failed', `Сбои оплат${fa.failedDue.length ? ` · действие сегодня: ${fa.failedDue.length}` : ''}`, rub(fa.failedSum)] : null,
+        fa.payouts.total ? [fa.payouts.ref ? 'subs' : fa.payouts.author ? 'courses' : 'market', 'К выплате рефералам, авторам, продавцам', rub(fa.payouts.total)] : null,
+        fa.ship.length ? ['market', 'Заказы к отправке', fmt(fa.ship.length)] : null,
+      ].filter(Boolean) : [];
       const rows = [
         ...review.slice(0, 5).map(x => ({html: `<span class="pill gold">на согласовании</span>${esc(x.title)}`, who: personById(x.assignee), id: x.id})),
         ...acts.budget.slice(0, 4).map(x => ({html: `<span class="pill gold">бюджет ${rubK(Number(x.budget))}</span>${esc(x.title)}`, who: personById(x.createdBy), id: x.id})),
@@ -3882,7 +3992,8 @@ App.register('home', {
       ];
       focus = `<div class="card"><div class="card-head"><h2>Ждут решения</h2><span class="row"><button class="btn sm primary" data-new-task>${icon('plus')}Задача</button><a class="link-btn" href="#tasks">Все задачи</a></span></div>
         ${rows.length ? `<div class="focus-list">${rows.map(r => `<button class="focus-row" data-open-task="${r.id}"><span class="fr-t">${r.html}</span>${avatar(r.who)}</button>`).join('')}</div>` : '<p class="note">Ничего не ждёт согласования и нет просроченных задач.</p>'}
-        ${unpaid.length ? `<div class="focus-pay"><span class="label">Платежи ${MONTHS_GEN[monthIdx(monthOf(t))]} по плану</span>${unpaid.slice(0, 4).map(it => `<a href="#money" class="fp-row"><span>${esc(it.group === 'payroll' && !Auth.can('payroll.view') ? 'Оплата труда' : it.title)}</span><b>${rub(Money.planAmount(it, monthOf(t)))}</b></a>`).join('')}${unpaid.length > 4 ? `<a href="#money" class="note">ещё ${unpaid.length - 4}</a>` : ''}</div>` : ''}
+        ${unpaid.length ? `<div class="focus-pay"><span class="label">Платежи ${MONTHS_GEN[monthIdx(monthOf(t))]} по плану</span>${unpaid.slice(0, 4).map(it => `<a href="#money:plan" class="fp-row"><span>${esc(it.group === 'payroll' && !Auth.can('payroll.view') ? 'Оплата труда' : it.title)}</span><b>${rub(Money.planAmount(it, monthOf(t)))}</b></a>`).join('')}${unpaid.length > 4 ? `<a href="#money:plan" class="note">ещё ${unpaid.length - 4}</a>` : ''}</div>` : ''}
+        ${finRows.length ? `<div class="focus-pay focus-fin"><span class="label">Финансы</span>${finRows.map(([tab, text, val]) => `<a href="#money:${tab}" class="fp-row"><span>${text}</span><b>${val}</b></a>`).join('')}</div>` : ''}
       </div>`;
     } else if (teamRoles) {
       const list = Tasks.sort(myOpen).slice(0, 7);
@@ -5615,7 +5726,7 @@ function budgetHtml(t, can, isNew) {
     : st === 'pending' ? `Ждёт согласования: <b>${esc(whoName(Tasks.budgetApprover(t)))}</b>. В план платежей попадёт после согласования.`
     : st === 'rejected' ? 'Бюджет не согласован — поправьте сумму, и он снова уйдёт на согласование.'
     : `В плане платежей: разовый платёж <b>${rub(amount)}</b> за <b>${monthName(m, true).toLowerCase()}</b> — строка «Задача: ${esc(t.title)}». Правка суммы или срока обновит ту же строку, второй не появится.${inPlan ? '' : ' Месяц вне плана до Нового года — в Cash Flow не попадёт.'}`;
-  const approvers = [...new Set([founderId(), ...people().filter(p => (Store.all('accounts').find(a => a.personId === p.id && ['owner', 'lead'].includes(a.role)))).map(p => p.id)])].filter(Boolean);
+  const approvers = [...new Set([founderId(), ...people().filter(p => (Store.all('accounts').find(a => a.personId === p.id && ['owner', 'lead', 'finance'].includes(a.role)))).map(p => p.id)])].filter(Boolean);
   return `<p class="tm-box-l">Бюджет задачи</p>
     <div class="tm-bq">${BUDGET_QUICK.map(v => `<button type="button" class="tm-chip ${amount === v ? 'on' : ''}" data-bq="${v}" ${can ? '' : 'disabled'}>${v ? fmt(v / 1000) + ' тыс ₽' : '0'}</button>`).join('')}</div>
     <div class="tm-brow">
@@ -5799,9 +5910,10 @@ function wireQuickBar(root) {
 }
 
 /* ── 40-money.js ── */
-/* Деньги: быстрая запись сверху → месяцы → P&L план/факт → план платежей
-   с кнопкой «Оплатить» → журнал. Выручка подписок приходит из «Отчётов»
-   (цифры продаж), поэтому здесь её вручную не вносим. */
+/* Финансы: вкладки «Обзор», «Операции» (быстрая запись и журнал), «План и
+   прогноз» (финплан с «Оплатить», план-факт, Cash Flow), «Подписки», «Курсы»,
+   «Маркетплейс», «Сбои оплат», «Возвраты» (44-fin-ui.js). Выручка подписок
+   приходит из «Отчётов» (цифры продаж), поэтому здесь её вручную не вносим. */
 
 const MoneyUI = {
   draft: {kind: 'out', amount: '', cat: 'other', date: '', note: ''},
@@ -5810,56 +5922,51 @@ const catName = (kind, cat) => ((KINDS[kind] || {}).cats || {})[cat] || 'Про�
 const monthStatus = m => (m < monthOf(today()) ? 'fact' : m === monthOf(today()) ? 'now' : 'plan');
 const STATUS_TAG = {fact: 'факт', now: 'идёт', plan: 'план'};
 
+/* разделы вкладки: обзор и деньги — всем, кто видит финансы; записи с данными клиентов — fin.ops */
+const FIN_TABS = [
+  ['overview', 'Обзор'], ['ops', 'Операции'], ['plan', 'План и прогноз'], ['subs', 'Подписки'], ['courses', 'Курсы'],
+  ['market', 'Маркетплейс'], ['failed', 'Сбои оплат', 'fin.ops'], ['refunds', 'Возвраты', 'fin.ops'],
+];
 App.register('money', {
-  title: 'Деньги',
-  render(root) {
-    if (!Auth.can('money.view')) { root.innerHTML = pageHead('Деньги', '') + noAccess(); return; }
+  title: 'Финансы',
+  render(root, param) {
+    if (!Auth.can('money.view')) { root.innerHTML = pageHead('Финансы', '') + noAccess(); return; }
     const s = settings(), sc = s.scenario;
     const edit = Auth.can('money.edit');
-    const rows = pnl(sc);
-    const cash = Money.cashNow();
+    const tabs = FIN_TABS.filter(t => !t[2] || Auth.can(t[2]));
+    /* ссылка вида #money:refunds открывает нужный раздел (один раз — дальше решают вкладки) */
+    if (param && App.cur !== 'money:' + param && tabs.some(t => t[0] === param)) View.set('fin.tab', param);
+    let tab = View.get('fin.tab', 'overview');
+    if (!tabs.some(t => t[0] === tab)) tab = 'overview';
+    const a = Fin.attention();
+    const badge = {failed: a.failedDue.length, refunds: a.refunds.length, market: finOps() ? a.ship.length : 0};
+    const body = {
+      overview: () => finOverviewHtml(sc),
+      ops: () => `${edit ? quickEntryHtml() : ''}
+        <section class="section"><div class="section-head"><h2>Журнал операций</h2>${ledgerFilters()}</div>${ledgerTable()}</section>`,
+      plan: () => `<section class="section"><div class="section-head"><h2>Финплан: платежи по месяцам</h2><span class="hint-inline">${edit ? 'Регулярные и разовые платежи. «Оплатить», когда деньги ушли, — операция попадёт в журнал и в план-факт.' : 'Что и когда платим до конца года.'}</span>
+            ${edit ? `<button class="btn sm" data-plan-add>${icon('plus')}Платёж</button>` : ''}</div>${planTable()}</section>
+        <section class="section"><div class="section-head"><h2>План-факт по месяцам</h2><span class="hint-inline">Крупно — факт, мелко — план. Будущие месяцы — только план. Сценарий продаж «${SCENARIOS[sc].name}».</span></div>${pnlTable(pnl(sc))}</section>
+        ${Auth.can('cf.view') ? cashFlowHtml(sc) : ''}
+        ${Auth.can('settings.edit') ? moneySettingsHtml() : ''}`,
+      subs: finSubsHtml, courses: finCoursesHtml, market: finMarketHtml, failed: finFailedHtml, refunds: finRefundsHtml,
+    }[tab]();
 
     root.innerHTML = `
-      ${pageHead('Деньги', 'Сверху — быстрая запись расхода, прихода или вложения. Ниже — P&L по месяцам, план платежей и журнал всех операций.', helpBtn('money'))}
-      ${helpBox('money', `<b>Как вести деньги.</b><ol>
-        <li>Потратили или получили деньги — запишите строкой сверху: сумма, статья, дата. Enter — сохранить. Ошиблись — «Отменить» в уведомлении или правка в журнале.</li>
-        <li>Плановые платежи (зарплаты, штаб, сервисы) отмечайте кнопкой «Оплатить» в плане — операция запишется в журнал сама.</li>
-        <li>Выручку подписок вносить не нужно: она считается из цифр продаж в «Отчётах».</li>
-        <li>«Вложение» — деньги основателя или инвестора: они пополняют счёт, но не считаются доходом.</li></ol>`)}
-      ${edit ? quickEntryHtml() : ''}
-      <div class="money-top">
-        <div class="card stat cash-card"><span class="label">На счёте сейчас</span><div class="big">${rubK(cash)}</div>
-          <div class="foot">старт ${rubK(s.cashStart)} на ${dayLong(s.cashDate)} + все операции и выручка</div></div>
-        ${rows.map(r => {
-          const st = monthStatus(r.m);
-          const f = st === 'plan' ? r.plan : r.fact;
-          return `<div class="card month-card ${st}"><div class="mc-h"><b>${monthName(r.m)}</b><span class="pill ${st === 'now' ? 'rose' : ''}">${STATUS_TAG[st]}</span></div>
-            <div class="mc-row"><span>Доходы</span><b class="good">${rubK(f.income)}</b></div>
-            <div class="mc-row"><span>Расходы</span><b class="bad">${rubK(f.outTotal)}</b></div>
-            <div class="mc-row total"><span>Итог</span><b class="${f.profit < 0 ? 'bad' : 'good'}">${signed(f.profit)}</b></div>
-            ${st !== 'plan' ? `<div class="note">план: ${signed(r.plan.profit)}</div>` : '<div class="note">по плану платежей и сценарию</div>'}</div>`;
-        }).join('')}
-      </div>
-      <section class="section">
-        <div class="section-head"><h2>P&amp;L по месяцам</h2><span class="hint-inline">Крупно — факт, мелко — план. Будущие месяцы — только план. Сценарий продаж «${SCENARIOS[sc].name}».</span></div>
-        ${pnlTable(rows)}
-      </section>
-      <section class="section">
-        <div class="section-head"><h2>План платежей</h2><span class="hint-inline">${edit ? 'Нажмите «Оплатить», когда деньги ушли — операция попадёт в журнал и в P&L.' : 'Что и когда платим до конца года.'}</span>
-          ${edit ? `<button class="btn sm" data-plan-add>${icon('plus')}Платёж</button>` : ''}</div>
-        ${planTable()}
-      </section>
-      <section class="section">
-        <div class="section-head"><h2>Журнал операций</h2>${ledgerFilters()}</div>
-        ${ledgerTable()}
-      </section>
-      ${Auth.can('settings.edit') ? moneySettingsHtml() : ''}`;
+      ${pageHead('Финансы', 'Все деньги клуба в одном месте: баланс и прогноз, журнал, финплан, подписки, курсы, маркетплейс, сбои оплат и возвраты.', helpBtn('money'))}
+      ${helpBox('money', `<b>Как устроены финансы.</b> Всё, что пришло и ушло, лежит в <b>журнале операций</b> — из него считаются баланс, план-факт и прогноз. Записывать вручную нужно только обычные расходы и приходы (строка в «Операциях»). Остальное попадает в журнал само, когда вы нажимаете: «Оплатить» в финплане, «Выплатить» рефералу, автору или продавцу, «Оплачен» у заказа, «Возвращено» у запроса на возврат, «Внести приход» у курсов. Выручка подписок считается из «Цифр дня» в «Отчётах»; в «Подписках» её можно разделить на месячные и годовые. Сбои оплат и возвраты — карточки со сроком, статусом, ответственным и готовым сообщением клиенту.`)}
+      <div class="tabs fin-tabs" role="tablist">${tabs.map(([k, n]) => `<button type="button" role="tab" data-ftab="${k}" class="${k === tab ? 'on' : ''}">${n}${badge[k] ? ` <span class="n fin-n">${badge[k]}</span>` : ''}</button>`).join('')}</div>
+      <div id="finView" data-tab="${tab}">${body}</div>`;
 
     wireHelp(root);
-    if (edit) wireQuickEntry(root);
-    wirePlan(root);
-    wireLedger(root);
-    if (Auth.can('settings.edit')) wireMoneySettings(root);
+    /* на телефоне вкладки прокручиваются вбок — выбранная должна быть видна */
+    const bar = $('.fin-tabs', root), cur = bar && $('.on', bar);
+    if (cur && (cur.offsetLeft + cur.offsetWidth > bar.scrollLeft + bar.clientWidth || cur.offsetLeft < bar.scrollLeft)) bar.scrollLeft = Math.max(0, cur.offsetLeft - 16);
+    on(root, 'click', '[data-ftab]', (e, el) => { View.set('fin.tab', el.dataset.ftab); App.render(); });
+    if (tab === 'ops' && edit) wireQuickEntry(root);
+    if (tab === 'plan') { wirePlan(root); if (Auth.can('settings.edit')) wireMoneySettings(root); }
+    if (tab === 'ops') wireLedger(root);
+    wireFin(root);
   },
 });
 
@@ -6139,6 +6246,7 @@ function moneySettingsHtml() {
     <div class="grid3 set-grid">
       <label class="field"><span>Деньги на счёте на старте, ₽</span><input class="input num" id="msCash" inputmode="decimal" value="${s.cashStart}"></label>
       <label class="field"><span>Дата старта</span><input class="input" id="msDate" type="date" value="${esc(s.cashDate)}"></label>
+      <label class="field"><span>Годовая подписка, ₽</span><input class="input num" id="msYear" inputmode="decimal" value="${s.priceYear || ''}" placeholder="${s.price * 10}"><small>месячная — ${rub(s.price)} в «Стратегии»</small></label>
       <label class="field"><span>Страховые взносы, %</span><input class="input num" id="msIns" inputmode="decimal" value="${fmt(s.insurance * 100, 1)}"></label>
       <label class="field"><span>Эквайринг, % выручки</span><input class="input num" id="msAcq" inputmode="decimal" value="${fmt(s.acquiring * 100, 1)}"></label>
       <label class="field"><span>Налог, % выручки</span><input class="input num" id="msTax" inputmode="decimal" value="${fmt(s.taxRate * 100, 1)}"><small>УСН 15%: минимальный налог 1%, пока расходы больше доходов</small></label>
@@ -6156,10 +6264,1134 @@ function wireMoneySettings(root) {
     $$('[data-inv]', root).forEach(i => { invest[i.dataset.inv] = Math.max(0, parseNum(i.value)); });
     saveSettings({cashStart: parseNum($('#msCash', root).value), cashDate: $('#msDate', root).value || '2026-09-01',
       insurance: parseNum($('#msIns', root).value) / 100, acquiring: parseNum($('#msAcq', root).value) / 100,
-      taxRate: parseNum($('#msTax', root).value) / 100, invest});
+      taxRate: parseNum($('#msTax', root).value) / 100, invest, priceYear: parseNum($('#msYear', root).value) || null});
     toast('Настройки сохранены');
   };
 }
+
+/* ── 42-fin.js ── */
+/* Финансы — модель. Подписки по месяцам, выплаты (рефералам, авторам курсов,
+   продавцам маркетплейса), курсы, заказы и товары, сбои оплат и возвраты.
+   Правило одно: деньги, которые на самом деле пришли или ушли, всегда лежат
+   в журнале операций (ledger) — тогда баланс, P&L и Cash Flow считают их сами.
+   Операция помнит, откуда она: payoutId (выплата), orderId (заказ),
+   refundId (возврат), courseMonth (выручка курсов за месяц). */
+
+const FAIL_REASONS = {
+  funds: 'Недостаточно средств',
+  bank:  'Отказ банка',
+  card:  'Карта просрочена или заблокирована',
+  tds:   'Не прошло подтверждение 3-D Secure',
+  limit: 'Превышен лимит по карте',
+  other: 'Другое',
+};
+const FAIL_ST = {
+  new:       {name: 'Новый',              tone: 'bad'},
+  contacted: {name: 'Написали клиенту',   tone: 'warn'},
+  retry:     {name: 'Повторное списание', tone: 'violet'},
+  paid:      {name: 'Оплачено',           tone: 'good'},
+  lost:      {name: 'Потерян',            tone: 'line'},
+};
+const FAIL_OPEN = ['new', 'contacted', 'retry'];
+const REFUND_ST = {
+  new:      {name: 'Новый запрос',     tone: 'bad'},
+  review:   {name: 'На рассмотрении',  tone: 'warn'},
+  approved: {name: 'Одобрен — вернуть', tone: 'violet'},
+  refunded: {name: 'Возвращено',       tone: 'good'},
+  rejected: {name: 'Отказано',         tone: 'line'},
+};
+const REFUND_OPEN = ['new', 'review', 'approved'];
+const REFUND_PRODUCTS = {sub: 'Подписка', course: 'Курс', market: 'Маркетплейс', other: 'Другое'};
+const REFUND_REASONS = ['Не подошёл контент', 'Забыл(а) отменить подписку', 'Двойное или ошибочное списание', 'Технические проблемы', 'Не устроило качество', 'Другое'];
+const REFUND_DAYS = 10;   // ответить и вернуть деньги — 10 дней (закон о защите прав потребителей)
+const ORDER_PAY = {
+  wait:   {name: 'Ждёт оплаты', tone: 'warn'},
+  paid:   {name: 'Оплачен',     tone: 'good'},
+  refund: {name: 'Возврат',     tone: 'bad'},
+};
+const ORDER_DELIVERY = {
+  new:       {name: 'Новый',      tone: 'line'},
+  packing:   {name: 'Собирается', tone: 'violet'},
+  shipped:   {name: 'Отправлен',  tone: 'gold'},
+  delivered: {name: 'Доставлен',  tone: 'good'},
+  cancelled: {name: 'Отменён',    tone: 'bad'},
+};
+const PAYOUT_KINDS = {
+  ref:    {name: 'Рефералам',      cat: 'referral'},
+  author: {name: 'Авторам курсов', cat: 'authors'},
+  seller: {name: 'Продавцам',      cat: 'sellers'},
+};
+const isSet = v => v !== undefined && v !== null && v !== '';
+const priceYear = () => Number(settings().priceYear) || settings().price * 10;
+/* месяцы учёта: с начала Cash Flow по текущий */
+function finMonths() {
+  const cur = monthOf(today()), first = CF_MONTHS[0];
+  return monthRange(first, cur < first ? first : cur);
+}
+
+/* ── подписки по месяцам: внесённое человеком поверх того, что видно из «Цифр дня» ── */
+const Subs = {
+  rec(m) { return Store.get('subs', m) || {}; },
+  rows() {
+    const s = settings(), out = [], cur = monthOf(today());
+    let prev = null;
+    finMonths().forEach(m => {
+      const r = this.rec(m), f = Sales.month(m), ref = Fin.refundsIn(m, 'sub');
+      const num = (k, def) => (isSet(r[k]) ? Number(r[k]) || 0 : def);
+      const now = m === cur;
+      const startM = num('startM', prev ? prev.endM : 0), startY = num('startY', prev ? prev.endY : 0);
+      const newY = num('newY', 0);
+      const newM = num('newM', Math.max(0, f.pays - newY));
+      const renewed = num('renewed', f.renewals);
+      /* продлеваются все месячные, кто был на начало; в идущем месяце срок
+         подошёл ещё не у всех — ждём пропорционально прошедшим дням */
+      const share = now ? Math.min(1, Number(today().slice(8)) / daysInMonth(m)) : 1;
+      const due = Math.round(startM * share);
+      const churn = num('churn', Math.max(0, due - renewed));
+      const refunds = num('refunds', ref.n);
+      const refundSum = num('refundSum', ref.sum);
+      const endM = Math.max(0, startM + newM - churn - refunds);
+      const endY = Math.max(0, startY + newY);
+      const pays = newM + newY + renewed;
+      const row = {m, now, r, startM, startY, newM, newY, renewed, due, churn, refunds, refundSum, endM, endY, total: endM + endY, pays,
+        renewRate: due ? Math.min(1, renewed / due) : null, churnRate: due ? churn / due : null, refundRate: pays ? refunds / pays : null,
+        revenue: f.revenue, check: pays ? f.revenue / pays : null, mrr: endM * s.price + endY * priceYear() / 12,
+        auto: {newM: !isSet(r.newM), renewed: !isSet(r.renewed), churn: !isSet(r.churn), refunds: !isSet(r.refunds), refundSum: !isSet(r.refundSum), startM: !isSet(r.startM), startY: !isSet(r.startY)}};
+      out.push(row);
+      prev = row;
+    });
+    return out;
+  },
+  now() { const rows = this.rows(); return rows[rows.length - 1]; },
+  /* процент продлений — по последнему месяцу, где было кому продлевать */
+  rate() {
+    const rows = this.rows().filter(r => r.due > 0);
+    const full = rows.filter(r => !r.now);
+    const r = full[full.length - 1] || rows[rows.length - 1];
+    return r ? {renew: r.renewRate, churn: r.churnRate, refund: r.refundRate, m: r.m} : null;
+  },
+};
+
+/* ── общее по финансам ── */
+const Fin = {
+  byDate: list => list.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (b.at || 0) - (a.at || 0)),
+  refunds() { return this.byDate(Store.all('refunds')); },
+  refundOpen: r => REFUND_OPEN.includes(r.status || 'new'),
+  refundLate(r) { return this.refundOpen(r) && !!r.deadline && r.deadline < today(); },
+  refundsIn(m, product) {
+    const list = Store.all('refunds').filter(r => r.status === 'refunded' && monthOf(r.refundedAt || r.date || '') === m && (!product || (r.product || 'sub') === product));
+    return {n: list.length, sum: sum(list, r => r.amount)};
+  },
+  failed() { return this.byDate(Store.all('failed')); },
+  failOpen: f => FAIL_OPEN.includes(f.status || 'new'),
+  failDue(f) { return this.failOpen(f) && ((f.status || 'new') === 'new' || !f.next || f.next <= today()); },
+  orders() { return Store.all('orders').sort((a, b) => (Number(b.no) || 0) - (Number(a.no) || 0)); },
+  orderTotal: o => sum(o.items || [], it => (Number(it.qty) || 0) * (Number(it.price) || 0)) + (Number(o.shipCost) || 0),
+  toShip: o => o.pay === 'paid' && ['new', 'packing'].includes(o.delivery || 'new'),
+  products() { return Store.all('products').filter(p => p.title).sort((a, b) => String(a.title).localeCompare(String(b.title), 'ru')); },
+  courses() { return Store.all('courses').filter(c => c.title).sort((a, b) => (a.at || 0) - (b.at || 0)); },
+  courseSale(c, m) {
+    const x = (c.sales || {})[m] || {};
+    const n = Number(x.n) || 0;
+    const revenue = isSet(x.revenue) ? Number(x.revenue) || 0 : n * (Number(c.price) || 0);
+    return {n, revenue, author: Math.round(revenue * (Number(c.authorPct) || 0) / 100), own: isSet(x.revenue)};
+  },
+  courseLedger: m => Store.all('ledger').find(e => e.courseMonth === m) || null,
+  authorId: (cid, m) => `author_${cid}_${m}`,
+  sellerId: (name, m) => `seller_s${hashStr(normTitle(name)).toString(36)}_${m}`,
+
+  /* начисления к выплате: рефералам — записями, авторам и продавцам — из продаж;
+     текущий месяц ещё «начисляется», к выплате — закрытые месяцы */
+  accruals() {
+    const cur = monthOf(today()), out = [];
+    Store.all('payouts').filter(p => p.kind === 'ref' && p.to).forEach(p => out.push({kind: 'ref', id: p.id, to: p.to, contact: p.contact || '', month: p.month, amount: Number(p.amount) || 0,
+      base: Number(p.base) || 0, n: Number(p.n) || 0, pct: Number(p.pct) || 0, note: p.note || '', paid: p.status === 'paid', paidAt: p.paidAt || '', doc: p, closed: true}));
+    this.courses().forEach(c => finMonths().forEach(m => {
+      const s = this.courseSale(c, m);
+      if (!s.author) return;
+      const id = this.authorId(c.id, m), p = Store.get('payouts', id);
+      out.push({kind: 'author', id, to: c.author || 'Автор курса', contact: c.authorContact || '', course: c, month: m, amount: s.author, n: s.n, revenue: s.revenue,
+        paid: !!(p && p.status === 'paid'), paidAt: (p && p.paidAt) || '', doc: p, closed: m < cur});
+    }));
+    finMonths().forEach(m => Market.split(m).sellers.forEach(x => {
+      if (!x.payout) return;
+      const id = this.sellerId(x.seller, m), p = Store.get('payouts', id);
+      out.push({kind: 'seller', id, to: x.seller, month: m, amount: Math.round(x.payout), revenue: x.turnover, fee: x.fee, paid: !!(p && p.status === 'paid'), paidAt: (p && p.paidAt) || '', doc: p, closed: m < cur});
+    }));
+    return out.sort((a, b) => (a.paid - b.paid) || String(b.month).localeCompare(String(a.month)));
+  },
+  payoutsDue() {
+    const list = this.accruals().filter(x => !x.paid && x.closed);
+    const by = k => sum(list.filter(x => x.kind === k), x => x.amount);
+    return {list, ref: by('ref'), author: by('author'), seller: by('seller'), total: sum(list, x => x.amount)};
+  },
+  /* выплатить: расход в журнал + отметка «выплачено» */
+  pay(acc) {
+    const date = today();
+    const lid = Store.add('ledger', {kind: 'out', amount: acc.amount, cat: PAYOUT_KINDS[acc.kind].cat, date,
+      note: `${PAYOUT_KINDS[acc.kind].name}: ${acc.to}${acc.course ? ' · ' + acc.course.title : ''} · ${monthName(acc.month).toLowerCase()}`, payoutId: acc.id, by: Tasks.meKey(), at: Date.now()});
+    const {id: _drop, ...base} = acc.doc || {kind: acc.kind, to: acc.to, month: acc.month, ...(acc.course ? {courseId: acc.course.id} : {}), at: Date.now()};
+    Store.put('payouts', acc.id, {...base, amount: acc.amount, status: 'paid', paidAt: date, ledgerId: lid, paidBy: Tasks.meKey()});
+  },
+  unpay(acc) {
+    Store.all('ledger').filter(e => e.payoutId === acc.id).forEach(e => Store.remove('ledger', e.id));
+    if (acc.kind === 'ref') Store.patch('payouts', acc.id, {status: 'accrued', paidAt: null, ledgerId: null});
+    else Store.remove('payouts', acc.id);
+  },
+
+  /* что требует действий финансов */
+  attention() {
+    const refunds = Store.all('refunds').filter(r => this.refundOpen(r));
+    const failed = Store.all('failed').filter(f => this.failOpen(f));
+    return {
+      refunds, late: refunds.filter(r => this.refundLate(r)),
+      failed, failedDue: failed.filter(f => this.failDue(f)), failedSum: sum(failed, f => f.amount),
+      ship: Store.all('orders').filter(o => this.toShip(o)),
+      low: this.products().filter(p => !p.seller && isSet(p.stock) && Number(p.stock) <= 3),
+      payouts: this.payoutsDue(),
+    };
+  },
+  badge() {
+    if (!Auth.can('fin.ops')) return 0;
+    const a = this.attention();
+    return a.refunds.length + a.failedDue.length + a.ship.length;
+  },
+};
+
+/* ── маркетплейс: оплата заказа ↔ журнал и склад ── */
+const Market = {
+  nextNo() { return 1 + Math.max(0, ...Store.all('orders').map(o => Number(o.no) || 0)); },
+  /* привести журнал и склад к статусу заказа: оплачен — приход; возврат —
+     ещё и расход «Возвраты клиентам»; свой товар списан со склада, пока заказ
+     оплачен и не отменён */
+  sync(id) {
+    const o = Store.get('orders', id);
+    if (!o) return;
+    const led = Store.all('ledger').filter(e => e.orderId === id);
+    const inE = led.find(e => e.kind === 'in'), outE = led.find(e => e.kind === 'out');
+    const total = Fin.orderTotal(o), by = Tasks.meKey(), at = Date.now();
+    const wantIn = o.pay === 'paid' || o.pay === 'refund', wantOut = o.pay === 'refund';
+    if (wantIn && !inE) Store.add('ledger', {kind: 'in', amount: total, cat: 'market', date: o.paidAt || today(), note: `Заказ №${o.no}${o.customer ? ' · ' + o.customer : ''}`, orderId: id, by, at});
+    else if (wantIn && inE && Number(inE.amount) !== total) Store.patch('ledger', inE.id, {amount: total});
+    else if (!wantIn && inE) Store.remove('ledger', inE.id);
+    if (wantOut && !outE) Store.add('ledger', {kind: 'out', amount: total, cat: 'refunds', date: today(), note: `Возврат по заказу №${o.no}`, orderId: id, by, at});
+    else if (!wantOut && outE) Store.remove('ledger', outE.id);
+    const need = {};
+    if (o.pay === 'paid' && o.delivery !== 'cancelled') (o.items || []).forEach(it => {
+      const p = it.productId ? Store.get('products', it.productId) : null;
+      if (p && !p.seller) need[p.id] = (need[p.id] || 0) + (Number(it.qty) || 0);
+    });
+    const have = o.stockOut || {};
+    let moved = false;
+    new Set([...Object.keys(need), ...Object.keys(have)]).forEach(pid => {
+      const delta = (need[pid] || 0) - (Number(have[pid]) || 0);
+      const p = Store.get('products', pid);
+      if (delta && p && isSet(p.stock)) { Store.patch('products', pid, {stock: (Number(p.stock) || 0) - delta}); moved = true; }
+    });
+    if (moved || JSON.stringify(need) !== JSON.stringify(have)) Store.put('orders', id, {...Store.get('orders', id), stockOut: need});
+  },
+  setPay(id, pay) {
+    const o = Store.get('orders', id);
+    if (!o || o.pay === pay) return;
+    Store.patch('orders', id, {pay, ...(pay === 'paid' && !o.paidAt ? {paidAt: today()} : {}), ...(pay === 'wait' ? {paidAt: null} : {})});
+    this.sync(id);
+  },
+  setDelivery(id, delivery) {
+    const o = Store.get('orders', id);
+    if (!o || o.delivery === delivery) return;
+    Store.patch('orders', id, {delivery, ...(delivery === 'shipped' && !o.shippedAt ? {shippedAt: today()} : {})});
+    this.sync(id);
+  },
+  /* распределение выручки месяца: свои товары — маржа клуба; товары продавцов —
+     комиссия клуба и выплата продавцу */
+  split(m) {
+    const orders = Store.all('orders').filter(o => o.pay === 'paid' && o.delivery !== 'cancelled' && monthOf(o.paidAt || o.date || '') === m);
+    const own = {rev: 0, cost: 0}, sellers = {};
+    let revenue = 0, shipping = 0;
+    orders.forEach(o => {
+      shipping += Number(o.shipCost) || 0;
+      (o.items || []).forEach(it => {
+        const amount = (Number(it.qty) || 0) * (Number(it.price) || 0);
+        revenue += amount;
+        if (it.seller) {
+          const x = sellers[it.seller] = sellers[it.seller] || {seller: it.seller, turnover: 0, fee: 0, payout: 0, orders: 0};
+          const fee = amount * (Number(it.fee) || 0) / 100;
+          x.turnover += amount; x.fee += fee; x.payout += amount - fee; x.orders++;
+        } else {
+          own.rev += amount;
+          own.cost += (Number(it.qty) || 0) * (Number(it.cost) || 0);
+        }
+      });
+    });
+    const list = Object.values(sellers);
+    return {orders, revenue: revenue + shipping, goods: revenue, shipping, own, sellers: list,
+      club: own.rev - own.cost + sum(list, x => x.fee) + shipping, toSellers: sum(list, x => x.payout)};
+  },
+};
+
+/* ── чек и юнит-экономика за период ── */
+function unitEcon(from, to) {
+  const s = settings(), f = Sales.range(from, to);
+  const pays = f.pays + f.renewals;
+  const check = pays ? f.revenue / pays : s.price;
+  let spend = 0;
+  Store.all('ledger').forEach(e => { if (e.kind === 'out' && e.date >= from && e.date <= to && ['marketing', 'referral'].includes(e.cat)) spend += Number(e.amount) || 0; });
+  const cac = f.pays ? spend / f.pays : null;
+  const varShare = (Number(s.acquiring) || 0) + (Number(s.taxRate) || 0);
+  const margin = check * (1 - varShare);
+  const rate = Subs.rate();
+  const renew = rate && rate.renew !== null ? rate.renew : s.retention;
+  const churn = Math.max(0.02, 1 - renew);
+  const life = Math.min(36, 1 / churn);
+  const ltv = margin * life;
+  return {from, to, f, pays, check, spend, cac, varShare, margin, renew, renewPlan: !(rate && rate.renew !== null), churn, life, ltv,
+    ltvCac: cac ? ltv / cac : null, payback: cac && margin ? cac / margin : null};
+}
+
+/* ── 44-fin-ui.js ── */
+/* Финансы — разделы вкладки: обзор, подписки и рефералы, курсы и авторы,
+   маркетплейс (заказы, товары, распределение), сбои оплат, возвраты.
+   Записи с данными клиентов (сбои, возвраты, заказы) видят роли с правом
+   fin.ops; инвестор видит только сводные цифры. */
+
+const finOps = () => Auth.can('fin.ops');
+const finTile = (label, big, foot = '', cls = '') => `<div class="card stat ${cls}"><span class="label">${label}</span><div class="big">${big}</div>${foot ? `<div class="foot">${foot}</div>` : ''}</div>`;
+const finPill = (st, map) => `<span class="pill ${(map[st] || {}).tone || ''}">${esc((map[st] || {}).name || st || '—')}</span>`;
+const finSeg = (key, items, cur) => `<div class="seg">${items.map(([k, n]) => `<button type="button" data-fseg="${key}:${k}" class="${k === cur ? 'on' : ''}">${n}</button>`).join('')}</div>`;
+const finCsvBtn = k => `<button type="button" class="btn xs ghost" data-fin-csv="${k}">${icon('download')}CSV</button>`;
+const pctOr = (x, d = 0) => (x === null || x === undefined ? '—' : pct(x, d));
+/* контакт клиента: почта, телефон или телеграм — ссылкой */
+function contactHtml(c) {
+  const v = String(c || '').trim();
+  if (!v) return '';
+  if (EMAIL_RE.test(v)) return `<a href="mailto:${esc(v)}">${esc(v)}</a>`;
+  if (/^\+?[\d\s()-]{7,}$/.test(v)) return `<a href="tel:${esc(v.replace(/[^\d+]/g, ''))}">${esc(v)}</a>`;
+  const tg = normTg(v);
+  return tg ? `<a href="${esc(tgUrl(tg))}" target="_blank" rel="noopener">${esc(tgShow(tg))}</a>` : esc(v);
+}
+const finPeople = () => people().filter(p => p.name && pStatus(p) === 'active');
+const whoSel = (id, cur) => `<select class="select" id="${id}"><option value="">—</option>${finPeople().map(p => `<option value="${p.id}" ${p.id === cur ? 'selected' : ''}>${esc(personName(p))}</option>`).join('')}</select>`;
+const finLog = text => ({[uid()]: {at: Date.now(), by: Tasks.meKey(), text}});
+const logHtml = d => {
+  const list = Object.values(d && d.log || {}).sort((a, b) => b.at - a.at).slice(0, 6);
+  return list.length ? `<div class="fin-log"><span class="label">История</span>${list.map(x => `<div><small>${timeAgo(x.at)} · ${esc(whoFirst(x.by))}</small> ${esc(x.text)}</div>`).join('')}</div>` : '';
+};
+const monthOpts = (cur, months = finMonths()) => months.map(m => `<option value="${m}" ${m === cur ? 'selected' : ''}>${monthName(m, true)}</option>`).join('');
+
+/* ── обзор ── */
+function finOverviewHtml(sc) {
+  const s = settings(), t = today(), m = monthOf(t);
+  const cash = Money.cashNow();
+  const cf = cashFlow(sc), last = cf[cf.length - 1], minClose = Math.min(...cf.map(r => r.close));
+  const f = Sales.month(m), led = Money.month(m);
+  const inCourses = led.cats.in.courses || 0, inMarket = led.cats.in.market || 0;
+  const income = f.revenue + led.in, net = income - led.out;
+  const sub = Subs.now(), rate = Subs.rate();
+  const tiles = [
+    finTile('Баланс на сегодня', rubK(cash), `старт ${rubK(s.cashStart)} на ${dayLong(s.cashDate)} + операции и выручка`, 'cash-card'),
+    finTile(`Итог ${MONTHS_GEN[monthIdx(m)]}`, `<span class="${net < 0 ? 'bad' : 'good'}">${signed(net)}</span>`, `приход ${rubK(income)} · расход ${rubK(led.out)}`),
+    finTile('Прогноз на 31 декабря', `<span class="${last.close < 0 ? 'bad' : ''}">${rubK(last.close)}</span>`, minClose < 0 ? `<span class="bad">в минус уйдём в ${monthName(cf.find(r => r.close < 0).m).toLowerCase()} — нужны вложения</span>` : `сценарий «${SCENARIOS[sc].name}» и план платежей`),
+    finTile('Платных подписчиков', fmt(sub.total), `месячных ${fmt(sub.endM)} · годовых ${fmt(sub.endY)}`),
+    finTile('MRR', rubK(sub.mrr), `месячная выручка подписок: ${rub(s.price)} и ${rub(priceYear())}/12`),
+    finTile('Продления', pctOr(rate && rate.renew), rate ? `${monthName(rate.m).toLowerCase()} · отток ${pctOr(rate.churn)}` : 'появятся после первого месяца'),
+    finTile('Возвраты', pctOr(rate && rate.refund, 1), `от оплат · за ${monthName(m).toLowerCase()} ${fmt(sub.refunds)} на ${rubK(sub.refundSum)}`),
+    finTile('Средний чек', sub.check ? rub(Math.round(sub.check)) : '—', `${fmt(sub.pays)} ${plural(sub.pays, 'оплата', 'оплаты', 'оплат')} подписки за ${monthName(m).toLowerCase()}`),
+  ];
+  /* приход и расход месяца: одна шкала на обе стороны */
+  const ins = [['Подписки', f.revenue], ['Курсы', inCourses], ['Маркетплейс', inMarket], ['Прочие приходы', led.in - inCourses - inMarket]].filter(x => x[1] > 0);
+  const outs = Object.entries(led.cats.out).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).map(([c, v]) => [OUT_CATS[c] || c, v]);
+  const outTop = outs.length > 6 ? [...outs.slice(0, 5), ['Остальное', sum(outs.slice(5), x => x[1])]] : outs;
+  const max = Math.max(1, ...ins.map(x => x[1]), ...outTop.map(x => x[1]));
+  const bar = (tone) => ([name, v]) => `<div class="fin-bar" title="${esc(name)}: ${rub(v)}"><span class="fb-l">${esc(name)}</span><span class="fb-t"><i class="${tone}" style="width:${Math.max(1.5, v / max * 100).toFixed(1)}%"></i></span><b>${rubK(v)}</b></div>`;
+  const flow = `<div class="card fin-flow"><div class="card-head"><h2>Приход и расход — ${monthName(m).toLowerCase()}</h2><button class="link-btn" data-fin-go="ops">Журнал</button></div>
+    <div class="fb-group"><span class="label">Приход <b class="good">+${rub(income)}</b></span>${ins.length ? ins.map(bar('in')).join('') : '<p class="note">Прихода пока нет</p>'}</div>
+    <div class="fb-group"><span class="label">Расход <b class="bad">${led.out ? '−' : ''}${rub(led.out)}</b></span>${outTop.length ? outTop.map(bar('out')).join('') : '<p class="note">Расходов пока нет</p>'}</div></div>`;
+  /* что требует действий */
+  let att = '';
+  if (finOps()) {
+    const a = Fin.attention();
+    const planUnpaid = Money.planItems().filter(it => Money.planAmount(it, m) && !Money.paid(it, m));
+    const rows = [
+      a.refunds.length ? ['refunds', 'bad', `Запросы на возврат: ${a.refunds.length}`, a.late.length ? `<b class="bad">${a.late.length} ${plural(a.late.length, 'просрочен', 'просрочено', 'просрочено')}</b> · ответить за ${REFUND_DAYS} дней` : `ответить за ${REFUND_DAYS} дней с запроса`] : null,
+      a.failed.length ? ['failed', 'warn', `Сбои оплат: ${a.failed.length} на ${rub(a.failedSum)}`, a.failedDue.length ? `сегодня нужно действие по ${a.failedDue.length}` : 'ждём ответа клиентов'] : null,
+      a.payouts.total ? ['payouts', 'violet', `К выплате: ${rub(a.payouts.total)}`, [a.payouts.ref ? `рефералам ${rubK(a.payouts.ref)}` : '', a.payouts.author ? `авторам ${rubK(a.payouts.author)}` : '', a.payouts.seller ? `продавцам ${rubK(a.payouts.seller)}` : ''].filter(Boolean).join(' · ')] : null,
+      a.ship.length ? ['market', 'gold', `Заказы к отправке: ${a.ship.length}`, 'оплачены, ещё не отправлены'] : null,
+      a.low.length ? ['market', 'line', `Мало на складе: ${a.low.length}`, a.low.slice(0, 3).map(p => `${esc(p.title)} — ${fmt(Number(p.stock) || 0)}`).join(', ')] : null,
+      planUnpaid.length ? ['plan', 'line', `Платежи ${MONTHS_GEN[monthIdx(m)]} по плану: ${planUnpaid.length}`, `осталось оплатить ${rub(sum(planUnpaid, it => Money.planAmount(it, m)))}`] : null,
+    ].filter(Boolean);
+    att = `<div class="card fin-att"><div class="card-head"><h2>Нужно внимание</h2></div>
+      ${rows.length ? `<div class="focus-list">${rows.map(([tab, tone, text, sub]) => `<button class="focus-row" data-fin-go="${tab === 'payouts' ? (a.payouts.ref ? 'subs' : a.payouts.author ? 'courses' : 'market') : tab}"><span class="fr-t"><span class="pill ${tone}">${text}</span><small>${sub}</small></span>${icon('arrow')}</button>`).join('')}</div>`
+        : '<p class="note">Всё под контролем: открытых возвратов и сбоев нет, выплаты сделаны.</p>'}</div>`;
+  }
+  /* план платежей месяца */
+  const planAll = sum(Money.planItems(), it => Money.planAmount(it, m)), planPaid = sum(Money.planItems(), it => (Money.paid(it, m) ? Money.planAmount(it, m) : 0));
+  const recent = Money.ledger().slice(0, 6);
+  return `<div class="cards tiles fin-kpi">${tiles.join('')}</div>
+    <div class="split section">${flow}${att || `<div class="card"><div class="card-head"><h2>Подписки</h2></div><p class="note">${fmt(sub.total)} платных: месячных ${fmt(sub.endM)}, годовых ${fmt(sub.endY)}. Продления — ${pctOr(rate && rate.renew)}.</p></div>`}</div>
+    <section class="section"><div class="section-head"><h2>Приход и расход по месяцам</h2><span class="hint-inline">Факт против плана; будущие месяцы — план по сценарию «${SCENARIOS[sc].name}» и плану платежей</span></div>
+      <div class="money-top">${pnl(sc).map(monthCardHtml).join('')}</div>
+      ${planAll ? `<div class="fin-planline"><span>План платежей ${MONTHS_GEN[monthIdx(m)]}: оплачено <b>${rub(planPaid)}</b> из ${rub(planAll)}</span>${progress(planPaid / planAll, 'good')}<button class="link-btn" data-fin-go="plan">План и прогноз</button></div>` : ''}
+    </section>
+    ${unitHtml()}
+    <section class="section card"><div class="card-head"><h2>Последние операции</h2><button class="link-btn" data-fin-go="ops">Весь журнал</button></div>
+      ${recent.length ? `<div class="fin-recent">${recent.map(e => `<div class="fr-op"><span class="soft">${dayShort(e.date)}</span><span>${esc(e.note || catName(e.kind, e.cat))}<small>${esc(catName(e.kind, e.cat))}</small></span><b class="${e.kind === 'out' ? 'bad' : 'good'}">${e.kind === 'out' ? '−' : '+'}${rub(e.amount)}</b></div>`).join('')}</div>` : '<p class="note">Операций пока нет.</p>'}</section>`;
+}
+function monthCardHtml(r) {
+  const st = monthStatus(r.m);
+  const f = st === 'plan' ? r.plan : r.fact;
+  return `<div class="card month-card ${st}"><div class="mc-h"><b>${monthName(r.m)}</b><span class="pill ${st === 'now' ? 'rose' : ''}">${STATUS_TAG[st]}</span></div>
+    <div class="mc-row"><span>Доходы</span><b class="good">${rubK(f.income)}</b></div>
+    <div class="mc-row"><span>Расходы</span><b class="bad">${rubK(f.outTotal)}</b></div>
+    <div class="mc-row total"><span>Итог</span><b class="${f.profit < 0 ? 'bad' : 'good'}">${signed(f.profit)}</b></div>
+    ${st !== 'plan' ? `<div class="note">план: ${signed(r.plan.profit)}</div>` : '<div class="note">по плану платежей и сценарию</div>'}</div>`;
+}
+/* чек и юнит-экономика */
+function unitHtml() {
+  const t = today(), per = View.get('fin.ue', 'quarter');
+  const from = per === 'month' ? monthStart(monthOf(t)) : (t < Q.start ? monthStart(CF_MONTHS[0]) : Q.start);
+  const u = unitEcon(from, t);
+  const s = settings();
+  const orders = Store.all('orders').filter(o => o.pay === 'paid' && (o.paidAt || o.date) >= from && (o.paidAt || o.date) <= t);
+  const courseN = sum(Fin.courses(), c => sum(finMonths().filter(m => m >= monthOf(from)), m => Fin.courseSale(c, m).n));
+  const courseRev = sum(Fin.courses(), c => sum(finMonths().filter(m => m >= monthOf(from)), m => Fin.courseSale(c, m).revenue));
+  const row = (name, val, how, cls = '') => `<tr class="${cls}"><td>${name}<small class="block how-m">${how}</small></td><td class="r nowrap"><b>${val}</b></td><td class="note">${how}</td></tr>`;
+  const ok = u.ltvCac === null ? '' : u.ltvCac >= 3 ? 'good' : u.ltvCac >= 1 ? 'warn' : 'bad';
+  return `<section class="section card unit">
+    <div class="card-head"><h2>Чек и юнит-экономика</h2>${finSeg('ue', [['month', 'Этот месяц'], ['quarter', 'С начала квартала']], per)}</div>
+    <div class="table-wrap"><table class="t unit-t">
+      <tbody>
+        ${row('Средний чек оплаты', rub(Math.round(u.check)), `выручка подписок ${rubK(u.f.revenue)} ÷ ${fmt(u.pays)} ${plural(u.pays, 'оплата', 'оплаты', 'оплат')} (первые и продления)`)}
+        ${row('Цена подписки', `${rub(s.price)} · ${rub(priceYear())}`, `месяц · год (≈ ${rub(Math.round(priceYear() / 12))} в месяц)`)}
+        ${row('Переменные расходы с оплаты', pct(u.varShare, 1), `эквайринг ${pct(s.acquiring, 1)} + налог ${pct(s.taxRate, 1)}`)}
+        ${row('Маржа с оплаты', rub(Math.round(u.margin)), 'чек минус переменные расходы')}
+        ${row('Продлевают каждый месяц', pct(u.renew), u.renewPlan ? 'по плану — фактических продлений ещё нет' : 'по последнему месяцу в «Подписках»')}
+        ${row('Средний срок подписки', `${fmt(u.life, 1)} мес.`, `1 ÷ отток ${pct(u.churn)}`)}
+        ${row('LTV — доход с подписчика', rub(Math.round(u.ltv)), 'маржа с оплаты × срок подписки', 'sub')}
+        ${row('Стоимость привлечения (CAC)', u.cac === null ? '—' : rub(Math.round(u.cac)), `маркетинг и реферальные ${rubK(u.spend)} ÷ ${fmt(u.f.pays)} новых платящих`, 'sub')}
+        ${row('LTV / CAC', u.ltvCac === null ? '—' : `<span class="${ok}">${fmt(u.ltvCac, 1)}</span>`, u.cac === 0 ? 'расходов на привлечение за период нет — подписчики пришли сами' : 'здорово — от 3; меньше 1 — привлечение не окупается')}
+        ${row('Окупаемость привлечения', u.payback === null ? '—' : `${fmt(u.payback, 1)} мес.`, 'CAC ÷ маржа с оплаты')}
+        ${orders.length ? row('Средний чек заказа маркетплейса', rub(Math.round(sum(orders, o => Fin.orderTotal(o)) / orders.length)), `${fmt(orders.length)} оплаченных заказов`) : ''}
+        ${courseN ? row('Средняя цена проданного курса', rub(Math.round(courseRev / courseN)), `${fmt(courseN)} продаж на ${rubK(courseRev)}`) : ''}
+      </tbody></table></div>
+  </section>`;
+}
+
+/* ── подписки и рефералы ── */
+function finSubsHtml() {
+  const rows = Subs.rows(), now = rows[rows.length - 1], rate = Subs.rate(), s = settings();
+  const edit = Auth.can('money.edit');
+  const cell = (r, k, val = r[k]) => `<td class="r ${r.auto[k] ? 'auto' : ''}" ${r.auto[k] ? 'title="Само: из «Цифр дня» и возвратов. «Поправить» — внести своё"' : ''}>${fmt(val)}</td>`;
+  return `<div class="cards tiles">
+      ${finTile('Платных сейчас', fmt(now.total), `месячных ${fmt(now.endM)} · годовых ${fmt(now.endY)}`)}
+      ${finTile('MRR', rubK(now.mrr), 'месячная выручка подписок')}
+      ${finTile('Продления', pctOr(rate && rate.renew), rate ? `${monthName(rate.m).toLowerCase()} · не продлили ${pctOr(rate.churn)}` : 'после первого месяца')}
+      ${finTile('Возвраты', pctOr(rate && rate.refund, 1), `от оплат · ${fmt(now.refunds)} в этом месяце`)}
+    </div>
+    <section class="section">
+      <div class="section-head"><h2>Подписки по месяцам</h2><span class="hint-inline">Серым — посчитано само: новые и продления из «Цифр дня», возвраты — из раздела «Возвраты». Цены: месяц ${rub(s.price)}, год ${rub(priceYear())}.</span>${finCsvBtn('subs')}</div>
+      <div class="table-wrap"><table class="t subs-t grid-lines">
+        <thead><tr><th>Месяц</th><th class="r">На начало<small>мес · год</small></th><th class="r">Новые<small>месячные</small></th><th class="r">Новые<small>годовые</small></th><th class="r">Продлили</th><th class="r">Не продлили</th><th class="r">Возвраты</th><th class="r">На конец<small>мес · год</small></th><th class="r">Всего</th><th class="r">Продления</th><th class="r">Возвраты</th><th class="r">Выручка</th><th class="r">MRR</th>${edit ? '<th></th>' : ''}</tr></thead>
+        <tbody>${rows.map(r => `<tr class="${r.now ? 'now-row' : ''}"><td class="nowrap"><b>${monthName(r.m)}</b>${r.now ? ' <span class="th-tag now">идёт</span>' : ''}</td>
+          <td class="r nowrap ${r.auto.startM && r.auto.startY ? 'auto' : ''}">${fmt(r.startM)} · ${fmt(r.startY)}</td>
+          ${cell(r, 'newM')}<td class="r">${fmt(r.newY)}</td>${cell(r, 'renewed')}${cell(r, 'churn')}${cell(r, 'refunds')}
+          <td class="r nowrap">${fmt(r.endM)} · ${fmt(r.endY)}</td><td class="r"><b>${fmt(r.total)}</b></td>
+          <td class="r">${pctOr(r.renewRate)}</td><td class="r">${pctOr(r.refundRate, 1)}</td><td class="r nowrap">${rubK(r.revenue)}</td><td class="r nowrap">${rubK(r.mrr)}</td>
+          ${edit ? `<td><button class="btn xs ghost" data-subs-edit="${r.m}">Поправить</button></td>` : ''}</tr>`).join('')}</tbody>
+      </table></div>
+      <p class="note">Продления — доля месячных подписчиков на начало месяца, которые оплатили снова${now.now ? '; в идущем месяце срок подошёл ещё не у всех, поэтому считаем только прошедшие дни' : ''}. Возвраты — от всех оплат месяца. Годовые подписки продлеваются через год.</p>
+    </section>
+    ${payoutsHtml('ref')}`;
+}
+function editSubs(m) {
+  const rows = Subs.rows(), r = rows.find(x => x.m === m), rec = Subs.rec(m), first = rows[0].m === m;
+  const f = (k, label, hint, auto) => `<label class="field"><span>${label}</span><input class="input num" data-sk="${k}" inputmode="numeric" value="${isSet(rec[k]) ? esc(rec[k]) : ''}" placeholder="${fmt(auto)}"><small>${hint}</small></label>`;
+  openModal({
+    title: `Подписки — ${monthName(m).toLowerCase()}`,
+    body: `<p class="note">Пустое поле — значит «посчитать само» (серая цифра). Впишите своё, если знаете точнее — например, из личного кабинета платёжной системы.</p>
+      <div class="grid3">
+        ${f('startM', 'Месячных на начало', first ? 'с этого месяца начинаем учёт' : 'само — конец прошлого месяца', r.startM)}
+        ${f('startY', 'Годовых на начало', first ? 'с этого месяца начинаем учёт' : 'само — конец прошлого месяца', r.startY)}
+        ${f('newY', 'Новые годовые', 'годовые подписки, оформленные в этом месяце', r.newY)}
+        ${f('newM', 'Новые месячные', 'само — оплаты из «Цифр дня» минус годовые', r.newM)}
+        ${f('renewed', 'Продлили', 'само — продления из «Цифр дня»', r.renewed)}
+        ${f('churn', 'Не продлили', 'само — у кого подошёл срок, но оплаты не было', r.churn)}
+        ${f('refunds', 'Возвраты, шт.', 'само — из раздела «Возвраты»', r.refunds)}
+        ${f('refundSum', 'Возвраты, ₽', 'само — из раздела «Возвраты»', r.refundSum)}
+      </div>`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" id="sbSave">Сохранить</button>',
+    onMount(el, close) {
+      $('#sbSave', el).onclick = () => {
+        const data = {by: Tasks.meKey(), at: Date.now()};
+        $$('[data-sk]', el).forEach(i => { const v = i.value.trim(); data[i.dataset.sk] = v === '' ? null : Math.max(0, Math.round(parseNum(v))); });
+        Store.put('subs', m, data);
+        close();
+        toast(`Подписки за ${monthName(m).toLowerCase()} сохранены`);
+      };
+    },
+  });
+}
+
+/* ── выплаты: рефералам, авторам, продавцам ── */
+function payoutsHtml(kind) {
+  const ops = finOps();
+  const all = Fin.accruals().filter(x => x.kind === kind);
+  const f = View.get('fin.pay.' + kind, 'due');
+  const list = all.filter(x => (f === 'due' ? !x.paid : f === 'paid' ? x.paid : true));
+  const due = sum(all.filter(x => !x.paid && x.closed), x => x.amount), paid = sum(all.filter(x => x.paid), x => x.amount);
+  const growing = sum(all.filter(x => !x.paid && !x.closed), x => x.amount);
+  const title = {ref: 'Реферальные выплаты', author: 'Выплаты авторам', seller: 'Выплаты продавцам'}[kind];
+  const how = {ref: 'Кому и сколько начислено за приведённых подписчиков. «Выплатить» — расход попадёт в журнал со статьёй «Реферальные выплаты».',
+    author: 'Начисляется само: продажи курса × доля автора. За идущий месяц — «начисляется», выплата — после закрытия месяца.',
+    seller: 'Начисляется само из оплаченных заказов: оборот продавца минус комиссия клуба.'}[kind];
+  const row = x => `<tr class="${x.paid ? 'muted-row' : ''}">
+      <td><b>${esc(x.to)}</b>${x.contact && ops ? `<small class="block">${contactHtml(x.contact)}</small>` : ''}${x.course ? `<small class="block">${esc(x.course.title)}</small>` : ''}${x.note ? `<small class="block">${esc(x.note)}</small>` : ''}</td>
+      <td class="nowrap">${monthName(x.month)}</td>
+      <td class="r nowrap">${kind === 'ref' ? `${x.n ? fmt(x.n) + ' опл. · ' : ''}${rub(x.base)} × ${fmt(x.pct)}%` : kind === 'author' ? `${fmt(x.n)} шт. · ${rubK(x.revenue)}` : `оборот ${rubK(x.revenue)} · комиссия ${rubK(x.fee)}`}</td>
+      <td class="r nowrap"><b>${rub(x.amount)}</b></td>
+      <td class="nowrap">${x.paid ? `<span class="pill good">выплачено ${dayShort(x.paidAt)}</span>` : x.closed ? '<span class="pill warn">к выплате</span>' : '<span class="pill line">начисляется</span>'}</td>
+      <td class="nowrap r">${ops ? (x.paid ? `<button class="btn xs ghost" data-unpay-x="${esc(x.id)}">Отменить</button>` : x.closed ? `<button class="btn xs primary" data-pay-x="${esc(x.id)}">Выплатить</button>` : '') : ''}${ops && kind === 'ref' ? ` <button class="icon-btn" data-ref-edit="${esc(x.id)}" aria-label="Изменить" title="Изменить">${icon('edit')}</button>` : ''}</td></tr>`;
+  return `<section class="section payouts" data-payouts="${kind}">
+    <div class="section-head"><h2>${title}</h2><span class="hint-inline">${how}</span>
+      <span class="row">${finSeg('pay.' + kind, [['due', 'К выплате'], ['paid', 'Выплачено'], ['all', 'Все']], f)}${ops && kind === 'ref' ? `<button class="btn sm primary" data-ref-add>${icon('plus')}Начисление</button>` : ''}${finCsvBtn('payouts')}</span></div>
+    <div class="fin-sum"><span>К выплате <b>${rub(due)}</b></span>${growing ? `<span>начисляется за ${monthName(monthOf(today())).toLowerCase()} <b>${rub(growing)}</b></span>` : ''}<span>Выплачено <b class="good">${rub(paid)}</b></span></div>
+    ${list.length ? `<div class="table-wrap"><table class="t pay-t"><thead><tr><th>Кому</th><th>Месяц</th><th class="r">За что</th><th class="r">Сумма</th><th>Статус</th><th></th></tr></thead><tbody>${list.map(row).join('')}</tbody></table></div>`
+      : `<div class="empty"><b>${f === 'due' ? 'Выплатить пока нечего' : 'Записей нет'}</b>${kind === 'ref' && ops ? 'Нажмите «Начисление», чтобы записать, сколько начислено партнёру или амбассадору.' : ''}</div>`}
+  </section>`;
+}
+function editRef(id) {
+  const p = id ? Store.get('payouts', id) : null, s = settings();
+  const v = p || {to: '', contact: '', month: monthOf(today()), n: '', base: '', pct: Math.round(s.referral * 100), amount: '', note: ''};
+  const names = [...new Set(Store.all('payouts').filter(x => x.kind === 'ref' && x.to).map(x => x.to))];
+  openModal({
+    title: p ? 'Реферальное начисление' : 'Новое реферальное начисление',
+    body: `<div class="grid2">
+        <label class="field"><span>Кому</span><input class="input" id="rfTo" list="rfNames" value="${esc(v.to)}" placeholder="Имя партнёра или амбассадора" maxlength="80"><datalist id="rfNames">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist></label>
+        <label class="field"><span>Контакт</span><input class="input" id="rfContact" value="${esc(v.contact || '')}" placeholder="@telegram, почта или телефон" maxlength="80"></label>
+      </div>
+      <div class="grid3">
+        <label class="field"><span>Месяц</span><select class="select" id="rfMonth">${monthOpts(v.month, monthRange(CF_MONTHS[0], addMonths(monthOf(today()), 1)))}</select></label>
+        <label class="field"><span>Оплат привёл</span><input class="input num" id="rfN" inputmode="numeric" value="${esc(v.n || '')}" placeholder="0"></label>
+        <label class="field"><span>Сумма этих оплат, ₽</span><input class="input num" id="rfBase" inputmode="decimal" value="${esc(v.base || '')}" placeholder="оплаты × ${fmt(s.price)}"></label>
+        <label class="field"><span>Процент</span><input class="input num" id="rfPct" inputmode="decimal" value="${esc(v.pct)}"></label>
+        <label class="field"><span>Начислено, ₽</span><input class="input num" id="rfAmount" inputmode="decimal" value="${esc(v.amount || '')}"><small id="rfAuto"></small></label>
+      </div>
+      <label class="field"><span>Комментарий</span><input class="input" id="rfNote" value="${esc(v.note || '')}" maxlength="160" placeholder="Например: промокод ANNA, блог"></label>
+      ${p && p.status === 'paid' ? `<p class="note">Выплачено ${dayLong(p.paidAt)} — сумма в журнале не изменится; чтобы поправить, отмените выплату.</p>` : ''}`,
+    foot: `${p ? `<button class="btn danger left" id="rfDel">${icon('trash')}Удалить</button>` : ''}<button class="btn" data-close>Отмена</button><button class="btn primary" id="rfSave">Сохранить</button>`,
+    onMount(el, close) {
+      const calc = () => {
+        const n = parseNum($('#rfN', el).value), base = parseNum($('#rfBase', el).value) || n * s.price;
+        const a = Math.round(base * parseNum($('#rfPct', el).value) / 100);
+        $('#rfAuto', el).textContent = a ? `само: ${rub(a)}` : '';
+        return {n, base, a};
+      };
+      ['#rfN', '#rfBase', '#rfPct'].forEach(q => $(q, el).addEventListener('input', calc));
+      calc();
+      $('#rfSave', el).onclick = () => {
+        const to = $('#rfTo', el).value.trim();
+        if (!to) { $('#rfTo', el).focus(); toast('Кому начисляем?'); return; }
+        const c = calc(), amount = Math.round(parseNum($('#rfAmount', el).value)) || c.a;
+        if (!(amount > 0)) { $('#rfAmount', el).focus(); toast('Укажите сумму начисления'); return; }
+        const data = {kind: 'ref', to, contact: $('#rfContact', el).value.trim(), month: $('#rfMonth', el).value, n: c.n || 0, base: c.base || 0, pct: parseNum($('#rfPct', el).value), amount, note: $('#rfNote', el).value.trim()};
+        if (p) Store.patch('payouts', p.id, data);
+        else Store.add('payouts', {...data, status: 'accrued', by: Tasks.meKey(), at: Date.now()});
+        close();
+        toast(`Начислено: ${to} — ${rub(amount)}`);
+      };
+      const del = $('#rfDel', el);
+      if (del) del.onclick = async () => {
+        if (!(await confirmPop(del, {text: p.status === 'paid' ? 'Удалить начисление? Выплата останется в журнале.' : 'Удалить начисление?', yes: 'Удалить', danger: true}))) return;
+        Store.remove('payouts', p.id);
+        close();
+      };
+    },
+  });
+}
+
+/* ── курсы и выплаты авторам ── */
+function finCoursesHtml() {
+  const list = Fin.courses(), months = finMonths(), cur = monthOf(today());
+  const edit = Auth.can('money.edit');
+  const mTot = m => list.reduce((a, c) => { const s = Fin.courseSale(c, m); a.n += s.n; a.rev += s.revenue; a.au += s.author; return a; }, {n: 0, rev: 0, au: 0});
+  const now = mTot(cur);
+  const due = sum(Fin.accruals().filter(x => x.kind === 'author' && !x.paid && x.closed), x => x.amount);
+  const ledCell = m => {
+    const t = mTot(m), e = Fin.courseLedger(m);
+    if (!t.rev && !e) return '<td></td>';
+    if (e) return `<td class="r"><span class="pill good" title="Выручка курсов за ${monthName(m).toLowerCase()} — в журнале">${icon('tick')}в журнале</span></td>`;
+    return `<td class="r">${edit ? `<button class="btn xs" data-course-led="${m}" title="Записать выручку курсов приходом в журнал — тогда она попадёт в баланс и P&L">Внести приход</button>` : '<span class="note">не в журнале</span>'}</td>`;
+  };
+  return `<div class="cards tiles">
+      ${finTile(`Продано за ${monthName(cur).toLowerCase()}`, fmt(now.n), `${list.length} ${plural(list.length, 'курс', 'курса', 'курсов')} в каталоге`)}
+      ${finTile('Выручка курсов за месяц', rubK(now.rev), 'продажи × цена или своя сумма')}
+      ${finTile('Авторам за месяц', rubK(now.au), 'начисляется, выплата после закрытия месяца')}
+      ${finTile('К выплате авторам', rubK(due), 'за прошлые месяцы')}
+    </div>
+    <section class="section">
+      <div class="section-head"><h2>Продажи по курсам</h2><span class="hint-inline">${edit ? 'Впишите, сколько продано за месяц, — выручка и доля автора посчитаются сами. «Внести приход» запишет выручку месяца в журнал.' : 'Сколько продано и начислено авторам.'}</span>
+        <span class="row">${edit ? `<button class="btn sm primary" data-course-add>${icon('plus')}Курс</button>` : ''}${finCsvBtn('courses')}</span></div>
+      ${list.length ? `<div class="table-wrap"><table class="t courses-t grid-lines">
+        <thead><tr><th>Курс</th>${months.map(m => `<th class="r">${monthName(m)}${m === cur ? ' <span class="th-tag now">идёт</span>' : ''}</th>`).join('')}<th class="r">Всего</th><th class="r">Выручка</th><th class="r">Авторам</th></tr></thead>
+        <tbody>${list.map(c => {
+          const tot = months.reduce((a, m) => { const s = Fin.courseSale(c, m); a.n += s.n; a.rev += s.revenue; a.au += s.author; return a; }, {n: 0, rev: 0, au: 0});
+          return `<tr class="${c.active === false ? 'dim' : ''}"><td><button class="plan-name" ${edit ? `data-course-edit="${c.id}"` : 'disabled'}>${esc(c.title)}</button><div class="note">${esc(c.author || 'автор не указан')} · ${rub(Number(c.price) || 0)} · автору ${fmt(Number(c.authorPct) || 0)}%</div></td>
+            ${months.map(m => { const s = Fin.courseSale(c, m); return `<td class="r">${edit ? `<input class="input num sm cs-n" data-cs="${c.id}:${m}" inputmode="numeric" value="${s.n || ''}" placeholder="0" aria-label="${esc(c.title)}: продано за ${monthName(m).toLowerCase()}">` : fmt(s.n)}${s.revenue ? `<small class="block">${rubK(s.revenue)}${s.own ? '*' : ''}</small>` : ''}</td>`; }).join('')}
+            <td class="r"><b>${fmt(tot.n)}</b></td><td class="r nowrap">${rubK(tot.rev)}</td><td class="r nowrap">${rubK(tot.au)}</td></tr>`;
+        }).join('')}</tbody>
+        <tfoot><tr class="total"><td>Итого</td>${months.map(m => { const t = mTot(m); return `<td class="r nowrap">${fmt(t.n)} шт.<small class="block">${rubK(t.rev)}</small></td>`; }).join('')}<td class="r">${fmt(sum(months, m => mTot(m).n))}</td><td class="r nowrap">${rubK(sum(months, m => mTot(m).rev))}</td><td class="r nowrap">${rubK(sum(months, m => mTot(m).au))}</td></tr>
+          <tr class="sub"><td>Приход в журнале</td>${months.map(ledCell).join('')}<td colspan="3"></td></tr></tfoot>
+      </table></div>${list.some(c => months.some(m => Fin.courseSale(c, m).own)) ? '<p class="note">* выручка вписана вручную (скидки, акции)</p>' : ''}`
+        : `<div class="empty"><b>Курсов пока нет</b>${edit ? 'Добавьте курс: название, автор, цена и доля автора.' : ''}</div>`}
+    </section>
+    ${payoutsHtml('author')}`;
+}
+function editCourse(id) {
+  const c = id ? Store.get('courses', id) : null;
+  const v = c || {title: '', author: '', authorContact: '', price: '', authorPct: 50, active: true, sales: {}};
+  openModal({
+    title: c ? 'Курс' : 'Новый курс',
+    wide: !!c,
+    body: `<label class="field"><span>Название</span><input class="input" id="crTitle" value="${esc(v.title)}" maxlength="120" placeholder="Например: Макияж для себя за 7 дней"></label>
+      <div class="grid2">
+        <label class="field"><span>Автор</span><input class="input" id="crAuthor" value="${esc(v.author || '')}" maxlength="80"></label>
+        <label class="field"><span>Контакт автора</span><input class="input" id="crContact" value="${esc(v.authorContact || '')}" maxlength="80" placeholder="@telegram, почта или телефон"></label>
+      </div>
+      <div class="grid3">
+        <label class="field"><span>Цена, ₽</span><input class="input num" id="crPrice" inputmode="decimal" value="${esc(v.price)}"></label>
+        <label class="field"><span>Доля автора, %</span><input class="input num" id="crPct" inputmode="decimal" value="${esc(v.authorPct)}"></label>
+        <label class="check cr-act"><input type="checkbox" id="crActive" ${v.active !== false ? 'checked' : ''}> В продаже</label>
+      </div>
+      ${c ? `<div class="field"><span>Выручка по месяцам — если отличалась от «продано × цена» (скидки, акции)</span><div class="grid3">${finMonths().map(m => { const x = (c.sales || {})[m] || {}; return `<label class="field"><span>${monthName(m)}</span><input class="input num" data-crrev="${m}" inputmode="decimal" value="${isSet(x.revenue) ? esc(x.revenue) : ''}" placeholder="${fmt((Number(x.n) || 0) * (Number(c.price) || 0))}"></label>`; }).join('')}</div></div>` : ''}`,
+    foot: `${c ? `<button class="btn danger left" id="crDel">${icon('trash')}Удалить</button>` : ''}<button class="btn" data-close>Отмена</button><button class="btn primary" id="crSave">Сохранить</button>`,
+    onMount(el, close) {
+      $('#crSave', el).onclick = () => {
+        const title = $('#crTitle', el).value.trim();
+        if (!title) { $('#crTitle', el).focus(); return; }
+        const data = {title, author: $('#crAuthor', el).value.trim(), authorContact: $('#crContact', el).value.trim(), price: parseNum($('#crPrice', el).value), authorPct: parseNum($('#crPct', el).value), active: $('#crActive', el).checked};
+        if (c) {
+          const sales = clone(c.sales || {});
+          $$('[data-crrev]', el).forEach(i => { const m = i.dataset.crrev; sales[m] = {...(sales[m] || {}), revenue: i.value.trim() === '' ? null : parseNum(i.value)}; });
+          Store.put('courses', c.id, {...c, ...data, sales});
+          finMonths().forEach(syncCourseLedger);
+        } else Store.add('courses', {...data, sales: {}, at: Date.now(), by: Tasks.meKey()});
+        close();
+      };
+      const del = $('#crDel', el);
+      if (del) del.onclick = async () => {
+        if (!(await confirmPop(del, {text: 'Удалить курс? Продажи и начисления по нему пропадут, выплаты останутся в журнале.', yes: 'Удалить', danger: true}))) return;
+        Store.remove('courses', c.id);
+        finMonths().forEach(syncCourseLedger);
+        close();
+      };
+    },
+  });
+}
+/* выручка курсов месяца уже в журнале — держим сумму в актуальном виде */
+function syncCourseLedger(m) {
+  const e = Fin.courseLedger(m);
+  if (!e) return;
+  const total = sum(Fin.courses(), c => Fin.courseSale(c, m).revenue);
+  if (!total) Store.remove('ledger', e.id);
+  else if (Number(e.amount) !== total) Store.patch('ledger', e.id, {amount: total});
+}
+
+/* ── маркетплейс ── */
+function finMarketHtml() {
+  const view = View.get('fin.mk', 'orders'), cur = monthOf(today());
+  const orders = Fin.orders(), products = Fin.products();
+  const month = orders.filter(o => monthOf(o.date || '') === cur);
+  const paidM = orders.filter(o => o.pay === 'paid' && monthOf(o.paidAt || o.date || '') === cur);
+  const tiles = `<div class="cards tiles">
+      ${finTile(`Заказов за ${monthName(cur).toLowerCase()}`, fmt(month.length), `оплачено ${fmt(paidM.length)}`)}
+      ${finTile('Выручка за месяц', rubK(sum(paidM, o => Fin.orderTotal(o))), 'оплаченные заказы')}
+      ${finTile('К отправке', fmt(orders.filter(o => Fin.toShip(o)).length), 'оплачены, не отправлены')}
+      ${finTile('Ждут оплаты', fmt(orders.filter(o => (o.pay || 'wait') === 'wait' && o.delivery !== 'cancelled').length), rubK(sum(orders.filter(o => (o.pay || 'wait') === 'wait' && o.delivery !== 'cancelled'), o => Fin.orderTotal(o))))}
+    </div>`;
+  const seg = finSeg('mk', [['orders', `Заказы · ${orders.length}`], ['products', `Товары и склад · ${products.length}`], ['split', 'Распределение выручки']], view);
+  return `${tiles}<div class="fin-subbar">${seg}</div>${view === 'products' ? productsHtml(products) : view === 'split' ? splitHtml() : ordersHtml(orders)}`;
+}
+function ordersHtml(orders) {
+  const ops = finOps();
+  const f = View.get('fin.ordf', 'open');
+  const groups = {open: o => o.delivery !== 'cancelled' && o.delivery !== 'delivered' && o.pay !== 'refund', wait: o => (o.pay || 'wait') === 'wait' && o.delivery !== 'cancelled', ship: o => Fin.toShip(o), road: o => o.delivery === 'shipped', done: o => o.delivery === 'delivered' || o.delivery === 'cancelled' || o.pay === 'refund', all: () => true};
+  const list = orders.filter(groups[f] || groups.all);
+  const items = o => (o.items || []).map(it => `${esc(it.title)}${Number(it.qty) > 1 ? ` × ${fmt(it.qty)}` : ''}`).join(', ');
+  const sel = (o, kind, map, cur) => ops ? `<select class="select sm st-sel ${(map[cur] || {}).tone || ''}" data-ord-${kind}="${o.id}" aria-label="${kind === 'pay' ? 'Оплата' : 'Доставка'} заказа №${o.no}">${Object.entries(map).map(([k, x]) => `<option value="${k}" ${k === cur ? 'selected' : ''}>${x.name}</option>`).join('')}</select>` : finPill(cur, map);
+  return `<section class="section">
+    <div class="section-head"><h2>Заказы</h2>${finSeg('ordf', [['open', 'В работе'], ['wait', 'Ждут оплаты'], ['ship', 'К отправке'], ['road', 'В пути'], ['done', 'Закрытые'], ['all', 'Все']], f)}
+      <span class="row">${ops ? `<button class="btn sm primary" data-order-add>${icon('plus')}Заказ</button>` : ''}${finCsvBtn('orders')}</span></div>
+    ${list.length ? `<div class="table-wrap"><table class="t ord-t">
+      <thead><tr><th>№</th><th>Дата</th>${ops ? '<th>Клиент</th>' : ''}<th>Состав</th><th class="r">Сумма</th><th>Оплата</th><th>Доставка</th><th>Трек</th></tr></thead>
+      <tbody>${list.map(o => `<tr class="${ops ? 'click' : ''}" ${ops ? `data-order="${o.id}"` : ''}>
+        <td><b>${fmt(o.no)}</b></td><td class="nowrap">${dayShort(o.date || today())}</td>
+        ${ops ? `<td>${esc(o.customer || '—')}${o.contact ? `<small class="block">${contactHtml(o.contact)}</small>` : ''}</td>` : ''}
+        <td class="ord-items">${items(o) || '—'}</td><td class="r nowrap"><b>${rub(Fin.orderTotal(o))}</b></td>
+        <td data-stop>${sel(o, 'pay', ORDER_PAY, o.pay || 'wait')}</td><td data-stop>${sel(o, 'del', ORDER_DELIVERY, o.delivery || 'new')}</td>
+        <td class="nowrap">${esc(o.track || '')}</td></tr>`).join('')}</tbody></table></div>`
+      : `<div class="empty"><b>Заказов нет</b>${ops ? 'Нажмите «Заказ», чтобы записать первый.' : ''}</div>`}
+    <p class="note">«Оплачен» — приход сам попадает в журнал, свой товар списывается со склада. «Возврат» — в журнал ляжет расход «Возвраты клиентам», товар вернётся на склад.</p>
+  </section>`;
+}
+function editOrder(id) {
+  const o = id ? Store.get('orders', id) : null;
+  const products = Fin.products();
+  const v = o || {no: Market.nextNo(), date: today(), customer: '', contact: '', address: '', items: [], shipCost: '', pay: 'wait', delivery: 'new', track: '', note: ''};
+  const itemRow = (it = {}) => `<div class="oi-row">
+      <select class="select oi-p"><option value="">— товар из каталога —</option>${products.map(p => `<option value="${p.id}" ${p.id === it.productId ? 'selected' : ''}>${esc(p.title)}${p.seller ? ' · ' + esc(p.seller) : ''}</option>`).join('')}</select>
+      <input class="input oi-t" placeholder="или название" value="${esc(it.productId ? '' : it.title || '')}">
+      <input class="input num oi-q" inputmode="numeric" value="${esc(it.qty || 1)}" aria-label="Количество">
+      <input class="input num oi-pr" inputmode="decimal" value="${esc(it.price || '')}" placeholder="цена" aria-label="Цена">
+      <button type="button" class="icon-btn" data-oi-del aria-label="Убрать">${icon('x')}</button></div>`;
+  openModal({
+    title: o ? `Заказ №${o.no}` : 'Новый заказ',
+    wide: true,
+    body: `<div class="grid3">
+        <label class="field"><span>Номер</span><input class="input num" id="orNo" value="${esc(v.no)}"></label>
+        <label class="field"><span>Дата</span><input class="input" type="date" id="orDate" value="${esc(v.date || today())}"></label>
+        <label class="field"><span>Клиент</span><input class="input" id="orCustomer" value="${esc(v.customer || '')}" maxlength="80"></label>
+        <label class="field"><span>Контакт</span><input class="input" id="orContact" value="${esc(v.contact || '')}" maxlength="80" placeholder="телефон, почта или @telegram"></label>
+        <label class="field fin-span2"><span>Адрес или пункт выдачи</span><input class="input" id="orAddr" value="${esc(v.address || '')}" maxlength="200"></label>
+      </div>
+      <div class="field"><span>Состав заказа</span><div class="oi-list" id="orItems">${(v.items.length ? v.items : [{}]).map(itemRow).join('')}</div>
+        <button type="button" class="btn xs ghost" id="orItemAdd">${icon('plus')}Позиция</button></div>
+      <div class="grid3">
+        <label class="field"><span>Доставка, ₽</span><input class="input num" id="orShip" inputmode="decimal" value="${esc(v.shipCost || '')}" placeholder="0"></label>
+        <label class="field"><span>Оплата</span><select class="select" id="orPay">${Object.entries(ORDER_PAY).map(([k, x]) => `<option value="${k}" ${k === (v.pay || 'wait') ? 'selected' : ''}>${x.name}</option>`).join('')}</select></label>
+        <label class="field"><span>Доставка</span><select class="select" id="orDel">${Object.entries(ORDER_DELIVERY).map(([k, x]) => `<option value="${k}" ${k === (v.delivery || 'new') ? 'selected' : ''}>${x.name}</option>`).join('')}</select></label>
+        <label class="field"><span>Трек-номер</span><input class="input" id="orTrack" value="${esc(v.track || '')}" maxlength="60"></label>
+        <label class="field fin-span2"><span>Комментарий</span><input class="input" id="orNote" value="${esc(v.note || '')}" maxlength="200"></label>
+      </div>
+      <p class="fin-total">Итого: <b id="orTotal"></b></p>`,
+    foot: `${o ? `<button class="btn danger left" id="orDel2">${icon('trash')}Удалить</button>` : ''}<button class="btn" data-close>Отмена</button><button class="btn primary" id="orSave">Сохранить</button>`,
+    onMount(el, close) {
+      const read = () => $$('.oi-row', el).map(r => {
+        const pid = $('.oi-p', r).value, p = pid ? Store.get('products', pid) : null;
+        const title = p ? p.title : $('.oi-t', r).value.trim();
+        if (!title) return null;
+        const it = {productId: pid || null, title, qty: Math.max(1, Math.round(parseNum($('.oi-q', r).value)) || 1), price: parseNum($('.oi-pr', r).value)};
+        if (p && p.seller) { it.seller = p.seller; it.fee = Number(p.fee) || 0; }
+        if (p && !p.seller) it.cost = Number(p.cost) || 0;
+        return it;
+      }).filter(Boolean);
+      const total = () => { const t = Fin.orderTotal({items: read(), shipCost: parseNum($('#orShip', el).value)}); $('#orTotal', el).textContent = rub(t); };
+      on(el, 'change', '.oi-p', (e, s) => { const p = Store.get('products', s.value), r = s.closest('.oi-row'); if (p) { $('.oi-pr', r).value = p.price || ''; $('.oi-t', r).value = ''; } total(); });
+      on(el, 'input', '.oi-q, .oi-pr, .oi-t, #orShip', total);
+      on(el, 'click', '[data-oi-del]', (e, b) => { b.closest('.oi-row').remove(); total(); });
+      $('#orItemAdd', el).onclick = () => { $('#orItems', el).insertAdjacentHTML('beforeend', itemRow()); total(); };
+      total();
+      $('#orSave', el).onclick = () => {
+        const items = read();
+        if (!items.length) { toast('Добавьте хотя бы одну позицию'); return; }
+        const pay = $('#orPay', el).value;
+        const data = {no: Math.round(parseNum($('#orNo', el).value)) || Market.nextNo(), date: $('#orDate', el).value || today(), customer: $('#orCustomer', el).value.trim(), contact: $('#orContact', el).value.trim(),
+          address: $('#orAddr', el).value.trim(), items, shipCost: parseNum($('#orShip', el).value), pay, delivery: $('#orDel', el).value, track: $('#orTrack', el).value.trim(), note: $('#orNote', el).value.trim()};
+        if (pay === 'paid' && !(o && o.paidAt)) data.paidAt = today();
+        if (pay === 'wait') data.paidAt = null;
+        let oid;
+        if (o) { oid = o.id; Store.put('orders', oid, {...o, ...data}); }
+        else oid = Store.add('orders', {...data, by: Tasks.meKey(), at: Date.now()});
+        Market.sync(oid);
+        close();
+        toast(o ? `Заказ №${data.no} сохранён` : `Заказ №${data.no} записан`);
+      };
+      const del = $('#orDel2', el);
+      if (del) del.onclick = async () => {
+        if (!(await confirmPop(del, {text: 'Удалить заказ? Его приход и возврат уйдут из журнала, товар вернётся на склад.', yes: 'Удалить', danger: true}))) return;
+        Store.put('orders', o.id, {...o, pay: 'wait', delivery: 'cancelled'});
+        Market.sync(o.id);
+        Store.remove('orders', o.id);
+        close();
+      };
+    },
+  });
+}
+function productsHtml(products) {
+  const ops = finOps();
+  const sold = {};
+  Store.all('orders').filter(o => o.pay === 'paid' && o.delivery !== 'cancelled').forEach(o => (o.items || []).forEach(it => { if (it.productId) sold[it.productId] = (sold[it.productId] || 0) + (Number(it.qty) || 0); }));
+  return `<section class="section">
+    <div class="section-head"><h2>Товары и склад</h2><span class="hint-inline">Свой склад — товар, который клуб закупает и отправляет сам: у него остаток и себестоимость. Товар продавца — клуб берёт комиссию, остальное выплачивается продавцу.</span>
+      <span class="row">${ops ? `<button class="btn sm primary" data-product-add>${icon('plus')}Товар</button>` : ''}${finCsvBtn('products')}</span></div>
+    ${products.length ? `<div class="table-wrap"><table class="t prod-t">
+      <thead><tr><th>Товар</th><th>Чей</th><th class="r">Цена</th><th class="r">Себестоимость</th><th class="r">Остаток</th><th class="r">Продано</th></tr></thead>
+      <tbody>${products.map(p => {
+        const low = !p.seller && isSet(p.stock) && Number(p.stock) <= 3;
+        return `<tr><td><button class="plan-name" ${ops ? `data-product="${p.id}"` : 'disabled'}>${esc(p.title)}</button>${p.sku ? `<div class="note">арт. ${esc(p.sku)}</div>` : ''}</td>
+          <td>${p.seller ? `${esc(p.seller)} <span class="note">· комиссия ${fmt(Number(p.fee) || 0)}%</span>` : 'Свой склад'}</td>
+          <td class="r nowrap">${rub(Number(p.price) || 0)}</td><td class="r nowrap">${p.seller ? '—' : rub(Number(p.cost) || 0)}</td>
+          <td class="r">${p.seller ? '—' : ops ? `<input class="input num sm st-in ${low ? 'bad' : ''}" data-stock="${p.id}" inputmode="numeric" value="${isSet(p.stock) ? esc(p.stock) : ''}" placeholder="—" aria-label="Остаток: ${esc(p.title)}">` : `<span class="${low ? 'bad' : ''}">${isSet(p.stock) ? fmt(p.stock) : '—'}</span>`}${low ? '<small class="block bad">заканчивается</small>' : ''}</td>
+          <td class="r">${fmt(sold[p.id] || 0)}</td></tr>`;
+      }).join('')}</tbody></table></div>`
+      : `<div class="empty"><b>Товаров пока нет</b>${ops ? 'Добавьте товары — свои или продавцов-партнёров.' : ''}</div>`}
+  </section>`;
+}
+function editProduct(id) {
+  const p = id ? Store.get('products', id) : null;
+  const v = p || {title: '', sku: '', price: '', cost: '', stock: '', seller: '', fee: 20};
+  const sellers = [...new Set(Store.all('products').map(x => x.seller).filter(Boolean))];
+  openModal({
+    title: p ? 'Товар' : 'Новый товар',
+    body: `<div class="grid2"><label class="field"><span>Название</span><input class="input" id="prTitle" value="${esc(v.title)}" maxlength="120"></label>
+      <label class="field"><span>Артикул</span><input class="input" id="prSku" value="${esc(v.sku || '')}" maxlength="40"></label></div>
+      <div class="seg" id="prOwn"><button type="button" data-own="1" class="${!v.seller ? 'on' : ''}">Свой склад</button><button type="button" data-own="0" class="${v.seller ? 'on' : ''}">Товар продавца</button></div>
+      <div class="grid3">
+        <label class="field"><span>Цена, ₽</span><input class="input num" id="prPrice" inputmode="decimal" value="${esc(v.price)}"></label>
+        <label class="field" data-own-f><span>Себестоимость, ₽</span><input class="input num" id="prCost" inputmode="decimal" value="${esc(v.cost || '')}"></label>
+        <label class="field" data-own-f><span>Остаток, шт.</span><input class="input num" id="prStock" inputmode="numeric" value="${isSet(v.stock) ? esc(v.stock) : ''}"></label>
+        <label class="field" data-sel-f><span>Продавец</span><input class="input" id="prSeller" list="prSellers" value="${esc(v.seller || '')}" maxlength="80"><datalist id="prSellers">${sellers.map(n => `<option value="${esc(n)}">`).join('')}</datalist></label>
+        <label class="field" data-sel-f><span>Комиссия клуба, %</span><input class="input num" id="prFee" inputmode="decimal" value="${esc(v.fee)}"></label>
+      </div>`,
+    foot: `${p ? `<button class="btn danger left" id="prDel">${icon('trash')}Удалить</button>` : ''}<button class="btn" data-close>Отмена</button><button class="btn primary" id="prSave">Сохранить</button>`,
+    onMount(el, close) {
+      let own = !v.seller;
+      const sync = () => { $$('[data-own-f]', el).forEach(x => { x.hidden = !own; }); $$('[data-sel-f]', el).forEach(x => { x.hidden = own; }); $$('[data-own]', el).forEach(b => b.classList.toggle('on', (b.dataset.own === '1') === own)); };
+      on(el, 'click', '[data-own]', (e, b) => { own = b.dataset.own === '1'; sync(); });
+      sync();
+      $('#prSave', el).onclick = () => {
+        const title = $('#prTitle', el).value.trim();
+        if (!title) { $('#prTitle', el).focus(); return; }
+        const seller = own ? '' : $('#prSeller', el).value.trim();
+        if (!own && !seller) { $('#prSeller', el).focus(); toast('Чей товар? Укажите продавца'); return; }
+        const st = $('#prStock', el).value.trim();
+        const data = {title, sku: $('#prSku', el).value.trim(), price: parseNum($('#prPrice', el).value), seller,
+          cost: own ? parseNum($('#prCost', el).value) : 0, stock: own && st !== '' ? Math.round(parseNum(st)) : null, fee: own ? 0 : parseNum($('#prFee', el).value)};
+        if (p) Store.put('products', p.id, {...p, ...data}); else Store.add('products', {...data, at: Date.now()});
+        close();
+      };
+      const del = $('#prDel', el);
+      if (del) del.onclick = async () => {
+        if (!(await confirmPop(del, {text: 'Удалить товар из каталога? В старых заказах он останется.', yes: 'Удалить', danger: true}))) return;
+        Store.remove('products', p.id);
+        close();
+      };
+    },
+  });
+}
+function splitHtml() {
+  const months = finMonths(), m = months.includes(View.get('fin.splitm', '')) ? View.get('fin.splitm', '') : months[months.length - 1];
+  const x = Market.split(m), cur = monthOf(today()), ops = finOps();
+  return `<section class="section">
+    <div class="section-head"><h2>Распределение выручки — ${monthName(m).toLowerCase()}</h2><span class="hint-inline">Кому сколько из оплаченных заказов месяца: клубу — маржа своих товаров, комиссия с продавцов и доставка; продавцам — их доля.</span>
+      <select class="select sm" id="splitM">${monthOpts(m, months)}</select></div>
+    <div class="cards tiles">
+      ${finTile('Оборот', rubK(x.revenue), `${fmt(x.orders.length)} оплаченных заказов`)}
+      ${finTile('Свои товары: маржа', rubK(x.own.rev - x.own.cost), `выручка ${rubK(x.own.rev)} − себестоимость ${rubK(x.own.cost)}`)}
+      ${finTile('Комиссия клуба', rubK(sum(x.sellers, s => s.fee)), `с оборота продавцов ${rubK(sum(x.sellers, s => s.turnover))}`)}
+      ${finTile('Итого клубу', rubK(x.club), `${x.shipping ? `с доставкой ${rubK(x.shipping)} · ` : ''}продавцам ${rubK(x.toSellers)}`)}
+    </div>
+    ${x.sellers.length ? `<div class="table-wrap section"><table class="t"><thead><tr><th>Продавец</th><th class="r">Позиций</th><th class="r">Оборот</th><th class="r">Комиссия клуба</th><th class="r">К выплате</th><th>Статус</th></tr></thead>
+      <tbody>${x.sellers.map(s => { const id = Fin.sellerId(s.seller, m), p = Store.get('payouts', id), paid = p && p.status === 'paid';
+        return `<tr><td><b>${esc(s.seller)}</b></td><td class="r">${fmt(s.orders)}</td><td class="r nowrap">${rub(Math.round(s.turnover))}</td><td class="r nowrap">${rub(Math.round(s.fee))}</td><td class="r nowrap"><b>${rub(Math.round(s.payout))}</b></td>
+          <td class="nowrap">${paid ? `<span class="pill good">выплачено ${dayShort(p.paidAt)}</span>${ops ? ` <button class="btn xs ghost" data-unpay-x="${esc(id)}">Отменить</button>` : ''}` : m < cur ? (ops ? `<button class="btn xs primary" data-pay-x="${esc(id)}">Выплатить</button>` : '<span class="pill warn">к выплате</span>') : '<span class="pill line">начисляется</span>'}</td></tr>`; }).join('')}</tbody></table></div>`
+      : '<p class="note section">Товаров продавцов в оплаченных заказах этого месяца нет.</p>'}
+  </section>`;
+}
+
+/* ── сбои оплат ── */
+function finFailedHtml() {
+  const all = Fin.failed(), cur = monthOf(today());
+  const f = View.get('fin.failf', 'open');
+  const list = all.filter(x => (f === 'open' ? Fin.failOpen(x) : f === 'all' ? true : (x.status || 'new') === f));
+  const month = all.filter(x => monthOf(x.date || '') === cur);
+  const rec = month.filter(x => x.status === 'paid'), lost = month.filter(x => x.status === 'lost');
+  const open = all.filter(x => Fin.failOpen(x));
+  const reasons = Object.entries(FAIL_REASONS).map(([k, n]) => [n, month.filter(x => (x.reason || 'other') === k).length]).filter(x => x[1]);
+  return `<div class="cards tiles">
+      ${finTile('Открыто', fmt(open.length), `на ${rub(sum(open, x => x.amount))}`)}
+      ${finTile('Действие сегодня', `<span class="${all.some(x => Fin.failDue(x)) ? 'bad' : ''}">${fmt(all.filter(x => Fin.failDue(x)).length)}</span>`, 'новые и с наступившим шагом')}
+      ${finTile('Вернули оплату', fmt(rec.length), `${rub(sum(rec, x => x.amount))} · ${month.length ? pct(rec.length / month.length) : '—'} сбоев месяца`)}
+      ${finTile('Потеряно за месяц', fmt(lost.length), rub(sum(lost, x => x.amount)))}
+    </div>
+    ${reasons.length ? `<div class="fin-reasons"><span class="label">Причины за ${monthName(cur).toLowerCase()}</span>${reasons.map(([n, k]) => `<span class="chip">${esc(n)} <b>${k}</b></span>`).join('')}</div>` : ''}
+    <section class="section">
+      <div class="section-head"><h2>Неудавшиеся платежи</h2>${finSeg('failf', [['open', 'Открытые'], ['paid', 'Оплачено'], ['lost', 'Потеряно'], ['all', 'Все']], f)}
+        <span class="row"><button class="btn sm primary" data-fail-add>${icon('plus')}Сбой оплаты</button>${finCsvBtn('failed')}</span></div>
+      ${list.length ? `<div class="table-wrap"><table class="t fail-t">
+        <thead><tr><th>Дата</th><th>Клиент</th><th class="r">Сумма</th><th>Причина</th><th class="r">Попыток</th><th>Статус</th><th>Следующий шаг</th><th>Ответственный</th></tr></thead>
+        <tbody>${list.map(x => { const due = Fin.failDue(x); const who = personById(x.who);
+          return `<tr class="click ${due ? 'due-row' : ''}" data-fail="${x.id}"><td class="nowrap">${dayShort(x.date || today())}</td>
+            <td><b>${esc(x.client || '—')}</b>${x.contact ? `<small class="block">${contactHtml(x.contact)}</small>` : ''}</td>
+            <td class="r nowrap"><b>${rub(Number(x.amount) || 0)}</b><small class="block">${x.plan === 'year' ? 'годовая' : 'месячная'}</small></td>
+            <td>${esc(FAIL_REASONS[x.reason] || FAIL_REASONS.other)}</td><td class="r">${fmt(Number(x.attempts) || 0)}</td>
+            <td>${finPill(x.status || 'new', FAIL_ST)}</td>
+            <td class="nowrap">${Fin.failOpen(x) && x.next ? `<span class="${x.next <= today() ? 'bad' : ''}">${x.next === today() ? 'сегодня' : dayShort(x.next)}</span>` : ''}</td>
+            <td class="nowrap">${who ? `${avatar(who, 'xs')} ${esc(firstName(who))}` : ''}</td></tr>`; }).join('')}</tbody></table></div>`
+        : `<div class="empty"><b>${f === 'open' ? 'Открытых сбоев нет' : 'Записей нет'}</b>Сбой оплаты — когда списание за подписку не прошло: не хватило денег, банк отклонил, карта просрочена. Запишите его, чтобы вернуть подписчика.</div>`}
+      <p class="note">Как работать: «Написали клиенту» — отправьте готовое сообщение из карточки; «Повторное списание» — ставьте дату следующей попытки; «Оплачено» — подписчик вернулся (можно сразу добавить продление в «Цифры дня»).</p>
+    </section>`;
+}
+function failMessage(x) {
+  const name = String(x.client || '').split(' ')[0];
+  const why = {funds: 'на карте не хватило средств', bank: 'банк отклонил платёж', card: 'карта просрочена или заблокирована', tds: 'платёж не подтвердился', limit: 'по карте превышен лимит'}[x.reason] || 'платёж не прошёл';
+  return `${name ? name + ', здравствуйте' : 'Здравствуйте'}! Это Eva Club. Не получилось продлить вашу подписку — ${why}. Чтобы доступ к мастер-классам не прервался, обновите способ оплаты в приложении или ответьте на это сообщение — поможем. Спасибо, что вы с нами!`;
+}
+function editFailed(id) {
+  const x = id ? Store.get('failed', id) : null, s = settings();
+  const v = x || {date: today(), client: '', contact: '', amount: s.price, plan: 'month', reason: 'funds', attempts: 1, status: 'new', next: addDays(today(), 1), who: Auth.personId() || '', note: ''};
+  openModal({
+    title: x ? 'Сбой оплаты' : 'Новый сбой оплаты',
+    wide: true,
+    body: `<div class="grid3">
+        <label class="field"><span>Дата сбоя</span><input class="input" type="date" id="flDate" value="${esc(v.date)}"></label>
+        <label class="field"><span>Клиент</span><input class="input" id="flClient" value="${esc(v.client || '')}" maxlength="80"></label>
+        <label class="field"><span>Контакт</span><input class="input" id="flContact" value="${esc(v.contact || '')}" maxlength="80" placeholder="почта, телефон или @telegram"></label>
+        <label class="field"><span>Сумма, ₽</span><input class="input num" id="flAmount" inputmode="decimal" value="${esc(v.amount)}"></label>
+        <label class="field"><span>Подписка</span><select class="select" id="flPlan"><option value="month" ${v.plan !== 'year' ? 'selected' : ''}>Месячная</option><option value="year" ${v.plan === 'year' ? 'selected' : ''}>Годовая</option></select></label>
+        <label class="field"><span>Причина</span><select class="select" id="flReason">${Object.entries(FAIL_REASONS).map(([k, n]) => `<option value="${k}" ${k === v.reason ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+        <label class="field"><span>Попыток списания</span><input class="input num" id="flAttempts" inputmode="numeric" value="${esc(v.attempts || 0)}"></label>
+        <label class="field"><span>Статус</span><select class="select" id="flStatus">${Object.entries(FAIL_ST).map(([k, st]) => `<option value="${k}" ${k === (v.status || 'new') ? 'selected' : ''}>${st.name}</option>`).join('')}</select></label>
+        <label class="field"><span>Следующий шаг</span><input class="input" type="date" id="flNext" value="${esc(v.next || '')}"></label>
+        <label class="field"><span>Ответственный</span>${whoSel('flWho', v.who)}</label>
+        <label class="field fin-span2"><span>Комментарий</span><input class="input" id="flNote" value="${esc(v.note || '')}" maxlength="200"></label>
+      </div>
+      <label class="check" id="flSalesBox" hidden><input type="checkbox" id="flSales" checked> Добавить продление в «Цифры дня» за сегодня (+1)</label>
+      <div class="fin-msg"><span class="label">Сообщение клиенту</span><p id="flMsg"></p><div class="row"><button type="button" class="btn xs" id="flCopy">${icon('copy')}Скопировать</button><span id="flTg"></span></div></div>
+      ${logHtml(x)}`,
+    foot: `${x ? `<button class="btn danger left" id="flDel">${icon('trash')}Удалить</button><button class="btn ghost" id="flTask" title="Поручить человеку задачей">${icon('check')}Задача</button>` : ''}<button class="btn" data-close>Отмена</button><button class="btn primary" id="flSave">Сохранить</button>`,
+    onMount(el, close) {
+      const cur = () => ({client: $('#flClient', el).value.trim(), reason: $('#flReason', el).value});
+      const paint = () => {
+        $('#flMsg', el).textContent = failMessage(cur());
+        const tg = normTg($('#flContact', el).value);
+        $('#flTg', el).innerHTML = tg ? `<a class="btn xs ghost" href="${esc(tgUrl(tg))}" target="_blank" rel="noopener" data-fl-tg>${icon('ext')}Открыть чат</a>` : '';
+        $('#flSalesBox', el).hidden = !($('#flStatus', el).value === 'paid' && (!x || x.status !== 'paid'));
+      };
+      ['#flClient', '#flContact'].forEach(q => $(q, el).addEventListener('input', paint));
+      ['#flReason', '#flStatus'].forEach(q => $(q, el).addEventListener('change', paint));
+      paint();
+      $('#flCopy', el).onclick = e => copyText($('#flMsg', el).textContent, e.currentTarget);
+      on(el, 'click', '[data-fl-tg]', () => copyText($('#flMsg', el).textContent));
+      $('#flSave', el).onclick = () => {
+        const amount = parseNum($('#flAmount', el).value);
+        if (!$('#flClient', el).value.trim() && !$('#flContact', el).value.trim()) { $('#flClient', el).focus(); toast('Укажите клиента или контакт'); return; }
+        const status = $('#flStatus', el).value;
+        const data = {date: $('#flDate', el).value || today(), client: $('#flClient', el).value.trim(), contact: $('#flContact', el).value.trim(), amount, plan: $('#flPlan', el).value,
+          reason: $('#flReason', el).value, attempts: Math.max(0, Math.round(parseNum($('#flAttempts', el).value))), status, next: $('#flNext', el).value || null, who: $('#flWho', el).value || null, note: $('#flNote', el).value.trim()};
+        if (x) {
+          const changed = x.status !== status;
+          Store.patch('failed', x.id, {...data, ...(status === 'paid' && changed ? {paidAt: today()} : {}), ...(changed ? {log: finLog(`статус: ${FAIL_ST[status].name.toLowerCase()}`)} : {})});
+        } else Store.add('failed', {...data, by: Tasks.meKey(), at: Date.now(), log: finLog('записан сбой оплаты'), ...(status === 'paid' ? {paidAt: today()} : {})});
+        if (status === 'paid' && (!x || x.status !== 'paid') && $('#flSales', el).checked && Auth.can('sales.edit')) {
+          const d = Sales.day(today()) || {};
+          Store.put('sales', today(), {...d, renewals: (Number(d.renewals) || 0) + 1, by: Tasks.meKey(), at: Date.now()});
+          toast('Оплата вернулась — +1 продление в «Цифрах дня»');
+        }
+        close();
+      };
+      const del = $('#flDel', el);
+      if (del) del.onclick = async () => { if (await confirmPop(del, {text: 'Удалить запись о сбое?', yes: 'Удалить', danger: true})) { Store.remove('failed', x.id); close(); } };
+      const task = $('#flTask', el);
+      if (task) task.onclick = () => { close(); openTask(null, {defaults: {title: `Сбой оплаты: ${x.client || x.contact}`, desc: `${FAIL_REASONS[x.reason] || ''}, ${rub(Number(x.amount) || 0)}. Контакт: ${x.contact || '—'}. Вернуть подписчика.`, assignee: x.who || Auth.personId(), dir: 'ops'}}); };
+    },
+  });
+}
+
+/* ── возвраты ── */
+function finRefundsHtml() {
+  const all = Fin.refunds(), cur = monthOf(today());
+  const f = View.get('fin.reff', 'open');
+  const list = all.filter(x => (f === 'open' ? Fin.refundOpen(x) : f === 'all' ? true : (x.status || 'new') === f));
+  const open = all.filter(x => Fin.refundOpen(x)), late = open.filter(x => Fin.refundLate(x));
+  const done = Fin.refundsIn(cur), rate = Subs.rate();
+  return `<div class="cards tiles">
+      ${finTile('Открытые запросы', fmt(open.length), `на ${rub(sum(open, x => x.amount))}`)}
+      ${finTile('Просрочено', `<span class="${late.length ? 'bad' : ''}">${fmt(late.length)}</span>`, `ответ и возврат — за ${REFUND_DAYS} дней`)}
+      ${finTile(`Возвращено за ${monthName(cur).toLowerCase()}`, fmt(done.n), rub(done.sum))}
+      ${finTile('Возвраты подписок', pctOr(rate && rate.refund, 1), 'от всех оплат подписки')}
+    </div>
+    <section class="section">
+      <div class="section-head"><h2>Запросы на возврат</h2>${finSeg('reff', [['open', 'Открытые'], ['refunded', 'Возвращено'], ['rejected', 'Отказано'], ['all', 'Все']], f)}
+        <span class="row"><button class="btn sm primary" data-refund-add>${icon('plus')}Запрос на возврат</button>${finCsvBtn('refunds')}</span></div>
+      ${list.length ? `<div class="table-wrap"><table class="t ref-t">
+        <thead><tr><th>Получен</th><th>Клиент</th><th>Что</th><th class="r">Сумма</th><th>Причина</th><th>Ответить до</th><th>Статус</th><th>Ответственный</th></tr></thead>
+        <tbody>${list.map(x => { const lateX = Fin.refundLate(x), who = personById(x.who), left = x.deadline ? daysBetween(today(), x.deadline) : null;
+          return `<tr class="click ${lateX ? 'due-row' : ''}" data-refund="${x.id}"><td class="nowrap">${dayShort(x.date || today())}</td>
+            <td><b>${esc(x.client || '—')}</b>${x.contact ? `<small class="block">${contactHtml(x.contact)}</small>` : ''}</td>
+            <td>${esc(REFUND_PRODUCTS[x.product || 'sub'])}${x.what ? `<small class="block">${esc(x.what)}</small>` : ''}</td>
+            <td class="r nowrap"><b>${rub(Number(x.amount) || 0)}</b></td><td>${esc(x.reason || '')}</td>
+            <td class="nowrap">${Fin.refundOpen(x) && x.deadline ? `<span class="${lateX ? 'bad' : left <= 2 ? 'warn-t' : ''}">${dayShort(x.deadline)}</span><small class="block ${lateX ? 'bad' : ''}">${lateX ? `просрочено на ${-left} ${plural(-left, 'день', 'дня', 'дней')}` : left === 0 ? 'сегодня' : `осталось ${left} ${plural(left, 'день', 'дня', 'дней')}`}</small>` : x.refundedAt ? `<small>возвращено ${dayShort(x.refundedAt)}</small>` : ''}</td>
+            <td>${finPill(x.status || 'new', REFUND_ST)}</td><td class="nowrap">${who ? `${avatar(who, 'xs')} ${esc(firstName(who))}` : ''}</td></tr>`; }).join('')}</tbody></table></div>`
+        : `<div class="empty"><b>${f === 'open' ? 'Открытых запросов нет' : 'Записей нет'}</b>Запрос на возврат — когда клиент просит вернуть деньги за подписку, курс или товар. У каждого — срок ответа ${REFUND_DAYS} дней, статус и ответственный.</div>`}
+      <p class="note">«Возвращено» — расход «Возвраты клиентам» сам ляжет в журнал, а по заказу маркетплейса заказ перейдёт в «Возврат» и товар вернётся на склад. Возвраты подписок учитываются в «Подписках».</p>
+    </section>`;
+}
+function refundMessage(x, status) {
+  const name = String(x.client || '').split(' ')[0];
+  const hi = name ? `${name}, здравствуйте` : 'Здравствуйте';
+  if (status === 'rejected') return `${hi}! Это Eva Club. Мы рассмотрели ваш запрос на возврат и, к сожалению, не можем его выполнить${x.decision ? ': ' + x.decision : ''}. Если остались вопросы — ответьте на это сообщение, разберёмся вместе.`;
+  if (status === 'refunded') return `${hi}! Это Eva Club. Вернули ${rub(Number(x.amount) || 0)} на вашу карту — деньги придут в течение нескольких дней, в зависимости от банка. Будем рады видеть вас снова!`;
+  return `${hi}! Это Eva Club. Получили ваш запрос на возврат ${rub(Number(x.amount) || 0)} — рассмотрим и ответим до ${x.deadline ? dayLong(x.deadline) : 'конца недели'}.`;
+}
+function editRefund(id) {
+  const x = id ? Store.get('refunds', id) : null, s = settings();
+  const v = x || {date: today(), client: '', contact: '', product: 'sub', what: '', courseId: '', orderId: '', amount: s.price, reason: REFUND_REASONS[0], comment: '', status: 'new', who: Auth.personId() || '', decision: ''};
+  const orders = Fin.orders().filter(o => o.pay === 'paid' || o.id === v.orderId).slice(0, 60);
+  openModal({
+    title: x ? 'Запрос на возврат' : 'Новый запрос на возврат',
+    wide: true,
+    body: `<div class="grid3">
+        <label class="field"><span>Получен</span><input class="input" type="date" id="rqDate" value="${esc(v.date)}"><small id="rqDl"></small></label>
+        <label class="field"><span>Клиент</span><input class="input" id="rqClient" value="${esc(v.client || '')}" maxlength="80"></label>
+        <label class="field"><span>Контакт</span><input class="input" id="rqContact" value="${esc(v.contact || '')}" maxlength="80" placeholder="почта, телефон или @telegram"></label>
+        <label class="field"><span>Что возвращаем</span><select class="select" id="rqProduct">${Object.entries(REFUND_PRODUCTS).map(([k, n]) => `<option value="${k}" ${k === (v.product || 'sub') ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+        <label class="field" data-rq="course"><span>Курс</span><select class="select" id="rqCourse"><option value="">—</option>${Fin.courses().map(c => `<option value="${c.id}" ${c.id === v.courseId ? 'selected' : ''}>${esc(c.title)}</option>`).join('')}</select></label>
+        <label class="field" data-rq="market"><span>Заказ</span><select class="select" id="rqOrder"><option value="">—</option>${orders.map(o => `<option value="${o.id}" ${o.id === v.orderId ? 'selected' : ''}>№${o.no} · ${esc(o.customer || '')} · ${rub(Fin.orderTotal(o))}</option>`).join('')}</select></label>
+        <label class="field" data-rq="other"><span>Уточнение</span><input class="input" id="rqWhat" value="${esc(v.what || '')}" maxlength="80"></label>
+        <label class="field"><span>Сумма, ₽</span><input class="input num" id="rqAmount" inputmode="decimal" value="${esc(v.amount)}"></label>
+        <label class="field"><span>Причина</span><select class="select" id="rqReason">${REFUND_REASONS.map(r => `<option ${r === v.reason ? 'selected' : ''}>${r}</option>`).join('')}</select></label>
+        <label class="field"><span>Статус</span><select class="select" id="rqStatus">${Object.entries(REFUND_ST).map(([k, st]) => `<option value="${k}" ${k === (v.status || 'new') ? 'selected' : ''}>${st.name}</option>`).join('')}</select></label>
+        <label class="field"><span>Ответственный</span>${whoSel('rqWho', v.who)}</label>
+        <label class="field fin-span2"><span>Что пишет клиент</span><input class="input" id="rqComment" value="${esc(v.comment || '')}" maxlength="300"></label>
+        <label class="field fin-span2"><span>Решение и пояснение</span><input class="input" id="rqDecision" value="${esc(v.decision || '')}" maxlength="300" placeholder="Обязательно при отказе"></label>
+      </div>
+      <div class="fin-msg"><span class="label">Ответ клиенту</span><p id="rqMsg"></p><div class="row"><button type="button" class="btn xs" id="rqCopy">${icon('copy')}Скопировать</button><span id="rqTg"></span></div></div>
+      ${logHtml(x)}`,
+    foot: `${x ? `<button class="btn danger left" id="rqDel">${icon('trash')}Удалить</button><button class="btn ghost" id="rqTask">${icon('check')}Задача</button>` : ''}<button class="btn" data-close>Отмена</button><button class="btn primary" id="rqSave">Сохранить</button>`,
+    onMount(el, close) {
+      const dl = () => addDays($('#rqDate', el).value || today(), REFUND_DAYS);
+      const paint = () => {
+        const prod = $('#rqProduct', el).value;
+        $$('[data-rq]', el).forEach(f => { f.hidden = f.dataset.rq !== prod && !(f.dataset.rq === 'other' && prod === 'sub'); });
+        $('#rqDl', el).textContent = `ответить до ${dayLong(dl())}`;
+        $('#rqMsg', el).textContent = refundMessage({client: $('#rqClient', el).value, amount: parseNum($('#rqAmount', el).value), deadline: dl(), decision: $('#rqDecision', el).value.trim()}, $('#rqStatus', el).value);
+        const tg = normTg($('#rqContact', el).value);
+        $('#rqTg', el).innerHTML = tg ? `<a class="btn xs ghost" href="${esc(tgUrl(tg))}" target="_blank" rel="noopener" data-rq-tg>${icon('ext')}Открыть чат</a>` : '';
+      };
+      on(el, 'input', 'input', paint);
+      on(el, 'change', 'select, input[type=date]', paint);
+      on(el, 'change', '#rqOrder', (e, s) => { const o = Store.get('orders', s.value); if (o) { $('#rqAmount', el).value = Fin.orderTotal(o); if (!$('#rqClient', el).value) $('#rqClient', el).value = o.customer || ''; if (!$('#rqContact', el).value) $('#rqContact', el).value = o.contact || ''; paint(); } });
+      on(el, 'change', '#rqCourse', (e, s) => { const c = Store.get('courses', s.value); if (c && c.price) { $('#rqAmount', el).value = c.price; paint(); } });
+      paint();
+      $('#rqCopy', el).onclick = e => copyText($('#rqMsg', el).textContent, e.currentTarget);
+      on(el, 'click', '[data-rq-tg]', () => copyText($('#rqMsg', el).textContent));
+      $('#rqSave', el).onclick = () => {
+        const status = $('#rqStatus', el).value, product = $('#rqProduct', el).value;
+        if (!$('#rqClient', el).value.trim() && !$('#rqContact', el).value.trim()) { $('#rqClient', el).focus(); toast('Укажите клиента или контакт'); return; }
+        if (status === 'rejected' && !$('#rqDecision', el).value.trim()) { $('#rqDecision', el).focus(); toast('При отказе напишите пояснение — клиенту и для истории'); return; }
+        const amount = parseNum($('#rqAmount', el).value);
+        const data = {date: $('#rqDate', el).value || today(), deadline: dl(), client: $('#rqClient', el).value.trim(), contact: $('#rqContact', el).value.trim(), product,
+          courseId: product === 'course' ? $('#rqCourse', el).value || null : null, orderId: product === 'market' ? $('#rqOrder', el).value || null : null,
+          what: $('#rqWhat', el).value.trim(), amount, reason: $('#rqReason', el).value, comment: $('#rqComment', el).value.trim(), status, who: $('#rqWho', el).value || null, decision: $('#rqDecision', el).value.trim()};
+        const was = x ? x.status || 'new' : null;
+        let rid;
+        if (x) { rid = x.id; Store.patch('refunds', rid, {...data, ...(was !== status ? {log: finLog(`статус: ${REFUND_ST[status].name.toLowerCase()}`)} : {})}); }
+        else rid = Store.add('refunds', {...data, by: Tasks.meKey(), at: Date.now(), log: finLog('получен запрос на возврат')});
+        refundMoney(rid, was, status);
+        close();
+        if (status === 'refunded' && was !== 'refunded') toast(`Возвращено ${rub(amount)} — расход в журнале`);
+      };
+      const del = $('#rqDel', el);
+      if (del) del.onclick = async () => {
+        if (!(await confirmPop(del, {text: x.status === 'refunded' ? 'Удалить запрос? Расход по возврату уйдёт из журнала.' : 'Удалить запрос на возврат?', yes: 'Удалить', danger: true}))) return;
+        refundMoney(x.id, x.status, 'deleted');
+        Store.remove('refunds', x.id);
+        close();
+      };
+      const task = $('#rqTask', el);
+      if (task) task.onclick = () => { close(); openTask(null, {defaults: {title: `Возврат: ${x.client || x.contact}`, desc: `${REFUND_PRODUCTS[x.product || 'sub']}, ${rub(Number(x.amount) || 0)}. Причина: ${x.reason || '—'}. Ответить до ${x.deadline ? dayLong(x.deadline) : '—'}.`, assignee: x.who || Auth.personId(), due: x.deadline || '', dir: 'ops'}}); };
+    },
+  });
+}
+/* деньги по возврату: «Возвращено» — расход в журнал (по заказу — через заказ), отмена — обратно */
+function refundMoney(rid, was, status) {
+  const x = Store.get('refunds', rid);
+  if (!x) return;
+  const now = status === 'refunded', before = was === 'refunded';
+  if (now === before) return;
+  if (x.product === 'market' && x.orderId && Store.get('orders', x.orderId)) {
+    Market.setPay(x.orderId, now ? 'refund' : 'paid');
+  } else if (now) {
+    const lid = Store.add('ledger', {kind: 'out', amount: Number(x.amount) || 0, cat: 'refunds', date: today(), note: `Возврат: ${x.client || x.contact || ''} · ${REFUND_PRODUCTS[x.product || 'sub']}`, refundId: rid, by: Tasks.meKey(), at: Date.now()});
+    Store.patch('refunds', rid, {ledgerId: lid});
+  } else Store.all('ledger').filter(e => e.refundId === rid).forEach(e => Store.remove('ledger', e.id));
+  if (status !== 'deleted') Store.patch('refunds', rid, {refundedAt: now ? today() : null});
+}
+
+/* ── события вкладки ── */
+function wireFin(root) {
+  on(root, 'click', '[data-fin-go]', (e, el) => {
+    View.set('fin.tab', el.dataset.finGo);
+    App.render();
+    const tabs = $('.fin-tabs');
+    if (tabs && tabs.getBoundingClientRect().top < 0) tabs.scrollIntoView({block: 'start'});
+  });
+  on(root, 'click', '[data-fseg]', (e, el) => { const [k, v] = el.dataset.fseg.split(':'); View.set('fin.' + k, v); App.render(); });
+  on(root, 'click', '[data-fin-csv]', async (e, el) => {
+    const k = el.dataset.finCsv, name = `eva-hq-${k}-${today()}.csv`;
+    if (await Portable.save(name, Portable[k + 'Csv']())) toast(`Файл ${name} — сохранён`);
+  });
+  /* подписки и выплаты */
+  on(root, 'click', '[data-subs-edit]', (e, el) => editSubs(el.dataset.subsEdit));
+  on(root, 'click', '[data-ref-add]', () => editRef(null));
+  on(root, 'click', '[data-ref-edit]', (e, el) => editRef(el.dataset.refEdit));
+  const accOf = id => Fin.accruals().find(x => x.id === id);
+  on(root, 'click', '[data-pay-x]', async (e, el) => {
+    const a = accOf(el.dataset.payX);
+    if (!a || !(await confirmPop(el, {text: `Выплатить ${rub(a.amount)} — ${a.to}? Расход попадёт в журнал.`, yes: 'Да, выплачено'}))) return;
+    Fin.pay(a);
+    toast(`Выплачено: ${a.to} — ${rub(a.amount)}`);
+  });
+  on(root, 'click', '[data-unpay-x]', async (e, el) => {
+    const a = accOf(el.dataset.unpayX);
+    if (!a || !(await confirmPop(el, {text: 'Отменить выплату? Расход уйдёт из журнала.', yes: 'Да, отменить', danger: true}))) return;
+    Fin.unpay(a);
+  });
+  /* курсы */
+  on(root, 'click', '[data-course-add]', () => editCourse(null));
+  on(root, 'click', '[data-course-edit]', (e, el) => editCourse(el.dataset.courseEdit));
+  on(root, 'change', '[data-cs]', (e, el) => {
+    const [cid, m] = el.dataset.cs.split(':');
+    Store.patch('courses', cid, {sales: {[m]: {n: Math.max(0, Math.round(parseNum(el.value)))}}}, {mustExist: true});
+    syncCourseLedger(m);
+  });
+  on(root, 'click', '[data-course-led]', (e, el) => {
+    const m = el.dataset.courseLed, total = sum(Fin.courses(), c => Fin.courseSale(c, m).revenue);
+    if (!total) return;
+    Store.add('ledger', {kind: 'in', amount: total, cat: 'courses', date: m === monthOf(today()) ? today() : monthEnd(m), note: `Курсы · ${monthName(m).toLowerCase()}`, courseMonth: m, by: Tasks.meKey(), at: Date.now()});
+    toast(`Выручка курсов за ${monthName(m).toLowerCase()} — в журнале: +${rub(total)}`);
+  });
+  /* маркетплейс */
+  on(root, 'click', '[data-order-add]', () => editOrder(null));
+  on(root, 'click', '[data-order]', (e, el) => { if (!e.target.closest('[data-stop], a, select')) editOrder(el.dataset.order); });
+  on(root, 'change', '[data-ord-pay]', (e, el) => { Market.setPay(el.dataset.ordPay, el.value); toast(`Заказ: ${ORDER_PAY[el.value].name.toLowerCase()}${el.value === 'paid' ? ' — приход в журнале' : el.value === 'refund' ? ' — расход «Возвраты клиентам» в журнале' : ''}`); });
+  on(root, 'change', '[data-ord-del]', (e, el) => Market.setDelivery(el.dataset.ordDel, el.value));
+  on(root, 'click', '[data-product-add]', () => editProduct(null));
+  on(root, 'click', '[data-product]', (e, el) => editProduct(el.dataset.product));
+  on(root, 'change', '[data-stock]', (e, el) => Store.patch('products', el.dataset.stock, {stock: el.value.trim() === '' ? null : Math.round(parseNum(el.value))}, {mustExist: true}));
+  const sm = $('#splitM', root);
+  if (sm) sm.onchange = () => { View.set('fin.splitm', sm.value); App.render(); };
+  /* сбои и возвраты */
+  on(root, 'click', '[data-fail-add]', () => editFailed(null));
+  on(root, 'click', '[data-fail]', (e, el) => { if (!e.target.closest('a')) editFailed(el.dataset.fail); });
+  on(root, 'click', '[data-refund-add]', () => editRefund(null));
+  on(root, 'click', '[data-refund]', (e, el) => { if (!e.target.closest('a')) editRefund(el.dataset.refund); });
+}
+
+/* новые возвраты, сбои и заказы от коллег — звук и уведомление тем, кто ведёт финансы */
+const FinNotify = {
+  since: 0,
+  wired: false,
+  init() {
+    if (this.wired) return;
+    this.wired = true;
+    this.since = Date.now() - 2000;
+    Store.subscribe(c => { if (['refunds', 'failed', 'orders'].includes(c)) setTimeout(() => this.check(), 40); });
+  },
+  check() {
+    if (!Auth.me() || !finOps()) return [];
+    const me = Tasks.meKey();
+    const fresh = [
+      ...Store.all('refunds').map(x => ({c: 'refunds', x, text: `Запрос на возврат: ${x.client || x.contact || 'клиент'} — ${rub(Number(x.amount) || 0)}`, tab: 'refunds'})),
+      ...Store.all('failed').map(x => ({c: 'failed', x, text: `Сбой оплаты: ${x.client || x.contact || 'клиент'} — ${FAIL_REASONS[x.reason] || 'платёж не прошёл'}`, tab: 'failed'})),
+      ...Store.all('orders').map(x => ({c: 'orders', x, text: `Новый заказ №${x.no}: ${rub(Fin.orderTotal(x))}`, tab: 'market'})),
+    ].filter(e => (e.x.at || 0) > this.since && e.x.by && e.x.by !== me);
+    if (!fresh.length) return [];
+    this.since = Math.max(this.since, ...fresh.map(e => e.x.at || 0));
+    Sound.play(fresh.some(e => e.c === 'refunds') ? 'control' : 'task');
+    fresh.slice(-3).forEach(e => toast(e.text, {ring: true, action: {label: 'Открыть', fn: () => { View.set('fin.tab', e.tab); App.go('money'); }}}));
+    return fresh;
+  },
+};
 
 /* ── 50-reports.js ── */
 /* Отчёты до Нового года: цифры дня → как идём сегодня, за неделю, месяц
@@ -6464,8 +7696,8 @@ function cashFlowHtml(sc) {
    GitHub Pages), остаётся ссылка на оригинал. Основатель может добавить
    свои ссылки — они лежат в базе, в коллекции links. */
 
-const TEAM_ROLES = ['owner', 'lead', 'member'];
-const ALL_ROLES = ['owner', 'lead', 'member', 'investor'];
+const TEAM_ROLES = ['owner', 'lead', 'finance', 'member'];
+const ALL_ROLES = ['owner', 'lead', 'finance', 'member', 'investor'];
 const MAT_GROUPS = {
   standards: {name: 'Стандарты',             about: 'Как мы работаем, говорим и считаем деньги'},
   team:      {name: 'Команде',               about: 'План квартала и выступление основателя'},
@@ -7225,6 +8457,7 @@ const WELCOME_STEPS = {
   owner: [['#team', 'Пригласите команду ссылками из «Команды» — у каждого своя роль'], ['#strategy', 'Проверьте цели квартала и этапы года в «Стратегии»'], ['#tasks', 'Раздайте задачи — исполнителю придёт уведомление со звуком']],
   lead: [['#m-standards', 'Прочитай Книгу стандартов — это час'], ['#tasks', 'Открой задачи своего направления: всё новое — в блоке «Для вас»'], ['#reports', 'К созвону в понедельник, 11:00, — цифры недели в «Отчётах»'], ['#me', 'Заполни свою страницу: фото, пара слов о себе, цели на квартал']],
   member: [['#m-standards', 'Прочитай Книгу стандартов и пройди тест в конце'], ['#tasks', 'Открой свои задачи: новое — в блоке «Для вас», сделано — жми «Готово»'], ['#me', 'Заполни свою страницу: фото, пара слов о себе, цели на квартал'], ['#calendar', 'Подключи Google Календарь — команда увидит, когда ты занят']],
+  finance: [['#money', 'Финансы: обзор, баланс, приход и расход — всё на первой вкладке'], ['#money:refunds', 'Возвраты и сбои оплат — каждый запрос со сроком и статусом'], ['#money:plan', 'План и прогноз: платежи по месяцам и Cash Flow до Нового года'], ['#me', 'Заполни свою страницу: фото, пара слов о себе, цели на квартал']],
   investor: [['#strategy', 'Стратегия: цели квартала и дорожная карта'], ['#reports', 'Отчёты: продажи и Cash Flow до Нового года'], ['#home', 'Материалы для инвесторов — на главной']],
 };
 function sparksHtml() {
@@ -7470,6 +8703,37 @@ const Portable = {
     const pay = Auth.can('payroll.view');
     return this.csv(people(), [['id', 'id'], ['name', 'Имя'], ['title', 'Должность'], [p => dirName(p.dir), 'Направление'], [p => (PERSON_STATUS[pStatus(p)] || {}).name, 'Статус'], ['email', 'Почта'], ['phone', 'Телефон'], ['telegram', 'Телеграм'], ['birthDate', 'Дата рождения'], [p => (HD_TYPES[p.hdType] || {}).name || '', 'Human Design'], ['hdProfile', 'Профиль'], [p => (pay ? p.salary || '' : ''), 'Оклад, ₽']]);
   },
+  /* финансы */
+  subsCsv() {
+    return this.csv(Subs.rows(), [['m', 'Месяц'], ['startM', 'Месячных на начало'], ['startY', 'Годовых на начало'], ['newM', 'Новые месячные'], ['newY', 'Новые годовые'], ['renewed', 'Продлили'], ['churn', 'Не продлили'],
+      ['refunds', 'Возвраты, шт'], ['refundSum', 'Возвраты, ₽'], ['endM', 'Месячных на конец'], ['endY', 'Годовых на конец'], ['total', 'Всего платных'], [r => (r.renewRate === null ? '' : Math.round(r.renewRate * 1000) / 10), 'Продления, %'],
+      [r => (r.refundRate === null ? '' : Math.round(r.refundRate * 1000) / 10), 'Возвраты, %'], [r => Math.round(r.revenue), 'Выручка, ₽'], [r => Math.round(r.mrr), 'MRR, ₽']]);
+  },
+  payoutsCsv() {
+    return this.csv(Fin.accruals(), [[x => PAYOUT_KINDS[x.kind].name, 'Кому'], ['to', 'Получатель'], ['contact', 'Контакт'], [x => (x.course ? x.course.title : ''), 'Курс'], ['month', 'Месяц'], ['amount', 'Начислено, ₽'],
+      [x => (x.paid ? 'выплачено' : x.closed ? 'к выплате' : 'начисляется'), 'Статус'], ['paidAt', 'Дата выплаты']]);
+  },
+  coursesCsv() {
+    const rows = [];
+    Fin.courses().forEach(c => finMonths().forEach(m => { const x = Fin.courseSale(c, m); if (x.n || x.revenue) rows.push({c, m, ...x}); }));
+    return this.csv(rows, [[r => r.c.title, 'Курс'], [r => r.c.author || '', 'Автор'], ['m', 'Месяц'], ['n', 'Продано, шт'], ['revenue', 'Выручка, ₽'], [r => Number(r.c.authorPct) || 0, 'Доля автора, %'], ['author', 'Автору, ₽'],
+      [r => { const p = Store.get('payouts', Fin.authorId(r.c.id, r.m)); return p && p.status === 'paid' ? 'выплачено ' + p.paidAt : ''; }, 'Выплата']]);
+  },
+  ordersCsv() {
+    return this.csv(Fin.orders(), [['no', '№'], ['date', 'Дата'], ['customer', 'Клиент'], ['contact', 'Контакт'], ['address', 'Адрес'], [o => (o.items || []).map(it => `${it.title} × ${it.qty} по ${it.price}`).join(', '), 'Состав'],
+      ['shipCost', 'Доставка, ₽'], [o => Fin.orderTotal(o), 'Сумма, ₽'], [o => (ORDER_PAY[o.pay || 'wait'] || {}).name, 'Оплата'], ['paidAt', 'Оплачен'], [o => (ORDER_DELIVERY[o.delivery || 'new'] || {}).name, 'Доставка'], ['track', 'Трек'], ['note', 'Комментарий']]);
+  },
+  productsCsv() {
+    return this.csv(Fin.products(), [['title', 'Товар'], ['sku', 'Артикул'], [p => p.seller || 'свой склад', 'Чей'], ['fee', 'Комиссия клуба, %'], ['price', 'Цена, ₽'], ['cost', 'Себестоимость, ₽'], ['stock', 'Остаток']]);
+  },
+  failedCsv() {
+    return this.csv(Fin.failed(), [['date', 'Дата'], ['client', 'Клиент'], ['contact', 'Контакт'], ['amount', 'Сумма, ₽'], [x => (x.plan === 'year' ? 'годовая' : 'месячная'), 'Подписка'], [x => FAIL_REASONS[x.reason] || '', 'Причина'],
+      ['attempts', 'Попыток'], [x => (FAIL_ST[x.status || 'new'] || {}).name, 'Статус'], ['next', 'Следующий шаг'], [x => (x.who ? whoName(x.who) : ''), 'Ответственный'], ['paidAt', 'Оплачено'], ['note', 'Комментарий']]);
+  },
+  refundsCsv() {
+    return this.csv(Fin.refunds(), [['date', 'Получен'], ['deadline', 'Ответить до'], ['client', 'Клиент'], ['contact', 'Контакт'], [x => REFUND_PRODUCTS[x.product || 'sub'], 'Что'], ['amount', 'Сумма, ₽'], ['reason', 'Причина'],
+      ['comment', 'Что пишет клиент'], [x => (REFUND_ST[x.status || 'new'] || {}).name, 'Статус'], ['decision', 'Решение'], [x => (x.who ? whoName(x.who) : ''), 'Ответственный'], ['refundedAt', 'Возвращено']]);
+  },
   /* сохранить файл: в Claude — через площадку (человек подтверждает), иначе — обычной загрузкой */
   async save(filename, text) {
     let dl = null;
@@ -7558,7 +8822,8 @@ function wirePortable(root) {
   };
 }
 function importModal({cols, meta}, fname) {
-  const names = {accounts: 'учётки', invites: 'приглашения', people: 'люди', tasks: 'задачи', ledger: 'операции', plan: 'план платежей', sales: 'цифры продаж', links: 'материалы', docs: 'стратегия и настройки', meetings: 'собрания', busy: 'занятость', messages: 'сообщения'};
+  const names = {accounts: 'учётки', invites: 'приглашения', people: 'люди', tasks: 'задачи', ledger: 'операции', plan: 'план платежей', sales: 'цифры продаж', links: 'материалы', docs: 'стратегия и настройки', meetings: 'собрания', busy: 'занятость', messages: 'сообщения',
+    subs: 'подписки по месяцам', payouts: 'выплаты', courses: 'курсы', orders: 'заказы', products: 'товары', failed: 'сбои оплат', refunds: 'возвраты'};
   const rows = Object.keys(cols).map(c => `<tr><td>${names[c] || c}</td><td class="r">${Object.keys(cols[c]).length}</td><td class="r soft">${Store.count(c)}</td></tr>`).join('');
   openModal({
     title: 'Загрузить данные из файла',
@@ -7936,9 +9201,11 @@ const TOURS = {
     {sel: '.portable', title: 'Данные штаба', text: 'Выгрузка всего в файл и загрузка обратно — для резервной копии и переезда на свой сервер.'},
   ],
   money: [
-    {sel: '#qeForm', title: 'Быстрая запись', text: 'Потратили или получили деньги — сумма, статья, дата и Enter.'},
-    {sel: 'table.plan', title: 'План платежей', text: 'Зарплаты, штаб и сервисы. «Оплатить» — и операция сама попадёт в журнал.'},
-    {sel: 'table.led', title: 'Журнал операций', text: 'Все приходы и расходы. Фильтры сверху переключаются без перезагрузки.'},
+    {sel: '.fin-tabs', title: 'Разделы финансов', text: 'Обзор, операции, план и прогноз, подписки, курсы, маркетплейс, сбои оплат и возвраты. Красная цифра — сколько ждёт действия.'},
+    {sel: '.fin-kpi', title: 'Ключевые показатели', text: 'Баланс на сегодня, итог месяца, прогноз на 31 декабря, платные подписчики, MRR, продления, возвраты и средний чек.'},
+    {sel: '.fin-flow', title: 'Приход и расход', text: 'Откуда пришли деньги и куда ушли в этом месяце — на одной шкале.'},
+    {sel: '.fin-att', title: 'Нужно внимание', text: 'Возвраты со сроком, сбои оплат, выплаты и заказы к отправке. Нажмите — откроется нужный раздел.'},
+    {sel: '.unit', title: 'Чек и юнит-экономика', text: 'Средний чек, маржа, срок подписки, LTV, стоимость привлечения и окупаемость — с формулой у каждой цифры.'},
   ],
   reports: [
     {sel: '#salesForm', title: 'Цифры дня', text: 'Охват, регистрации, оплаты — до созвона в понедельник. Выручка посчитается сама.'},
@@ -9835,7 +11102,8 @@ const ADAM_FAQ = [
   {k: /команд|структур|подчин|иерарх|директор/i, a: 'Вкладка «Команда» → «Структура»: сверху генеральный директор, под ним управление — финансовый, исполнительный и коммерческий директора, ниже их команды. Кому подчиняется человек, основатель меняет в карточке («Подчиняется»).'},
   {k: /пригла|регистрац|ссылк/i, a: 'Основатель во вкладке «Команда» добавляет человека и нажимает «Пригласить» — получается ссылка с ролью. Человек открывает её, видит свои данные (имя, должность, день рождения), дополняет и задаёт пароль.'},
   {k: /звук|уведомл|колокол/i, a: 'Колокольчик внизу меню включает и выключает звук. Новая задача, задача на согласование и личные сообщения приходят со звуком и всплывающим уведомлением.'},
-  {k: /деньг|расход|оплат|бюджет|платеж/i, a: 'Во вкладке «Деньги» — быстрая запись операции, план платежей («Оплатить» — и операция сама попадёт в журнал) и журнал. Бюджет задачи выше лимита уходит на согласование основателю.'},
+  {k: /возврат|сбой|не прош|отказ банка|недостат|рефер|подписчик|продлен|юнит|ltv|cac|маркетплейс|заказ|склад|автор/i, a: 'Всё это — во вкладке «Финансы». «Подписки» — платные по месяцам (месячные и годовые), продления, возвраты и реферальные выплаты. «Курсы» — продажи и выплаты авторам. «Маркетплейс» — заказы, оплата, доставка, склад и распределение выручки. «Сбои оплат» и «Возвраты» — карточки со сроком, ответственным и готовым сообщением клиенту. Деньги по выплатам, заказам и возвратам сами попадают в журнал.'},
+  {k: /деньг|расход|оплат|бюджет|платеж|финанс|баланс|прогноз/i, a: 'Во вкладке «Финансы»: «Обзор» — баланс, итог месяца, прогноз, юнит-экономика и что требует внимания; «Операции» — быстрая запись и журнал; «План и прогноз» — платежи по месяцам («Оплатить» — операция сама попадёт в журнал), план-факт и Cash Flow. Бюджет задачи выше лимита уходит на согласование.'},
   {k: /цифр|отчёт|отчет|продаж|выручк/i, a: 'Цифры дня вносятся во вкладке «Отчёты»: охват, регистрации, оплаты — до созвона в понедельник. Выручка и темп против плана считаются сами.'},
   {k: /напиш|сообщени|написать/i, a: 'Открой задачу и нажми «Адам: написать сообщение» — я подготовлю черновик коллеге, его можно отправить в личные одним нажатием. Или спроси: «Напиши напоминание Анне по задаче …».'},
   {k: /привет|здравств|добр(ое|ый)|хай|hello/i, hello: true},
@@ -9962,6 +11230,15 @@ const Adam = {
         cards.push({k: 'task', id: open[0].id, label: open[0].title});
       }
     }
+    if (Auth.can('fin.ops')) {
+      const a = Fin.attention(), n0 = lines.length;
+      if (a.late.length) lines.push(`Просрочены ответы на возврат: ${a.late.length} — по закону ${REFUND_DAYS} дней`);
+      else if (a.refunds.length) lines.push(`Запросы на возврат ждут решения: ${a.refunds.length}`);
+      if (a.failedDue.length) lines.push(`Сбои оплат ждут действия: ${a.failedDue.length} на ${rub(sum(a.failedDue, f => f.amount))} — напиши клиентам, текст готов в карточке`);
+      if (a.payouts.total) lines.push(`К выплате ${rub(a.payouts.total)}: рефералам, авторам и продавцам за прошлые месяцы`);
+      if (a.ship.length) lines.push(`Оплаченные заказы ждут отправки: ${a.ship.length}`);
+      if (lines.length > n0) cards.push({k: 'go', href: '#money:' + (a.refunds.length ? 'refunds' : a.failedDue.length ? 'failed' : 'overview'), label: 'Открыть финансы'});
+    }
     const pid = Auth.personId();
     if (pid) Meetings.occ(today(), today()).filter(o => Meetings.people(o.m).includes(pid) && o.e > nowMs()).slice(0, 2).forEach(o => lines.push(`Сегодня собрание «${o.m.title}» в ${hmMs(o.s)}`));
     birthdaysSoon(0).filter(x => x.b.days === 0 && x.p.id !== pid).forEach(x => lines.push(`Сегодня день рождения: ${personName(x.p)} — поздравь в «Команде»!`));
@@ -10010,7 +11287,13 @@ const Adam = {
     if (bd.length) L.push(`Дни рождения на неделе: ${bd.map(x => `${personName(x.p)} — ${dayShort(x.b.date)}`).join(', ')}.`);
     const goals = Strategy.goals().slice(0, 6);
     if (goals.length) L.push(`\nЦели квартала: ${goals.map(g => `«${g.short || g.title}»${g.short && g.title ? ` (${g.title})` : ''}`).join('; ')}.`);
-    if (Auth.can('cf.view')) { const q = quarterPace(settings().scenario || 'goal'); if (q.started) L.push(`Продажи квартала: ${q.fact} из плана ${Math.round(q.total)}, идём ${q.heading}.`); }
+    if (Auth.can('cf.view')) {
+      const q = quarterPace(settings().scenario || 'goal');
+      if (q.started) L.push(`Продажи квартала: ${q.fact} из плана ${Math.round(q.total)}, идём ${q.heading}.`);
+      const sb = Subs.now(), rt = Subs.rate();
+      L.push(`Финансы: на счёте ${rubK(Money.cashNow())}; платных подписчиков ${sb.total} (месячных ${sb.endM}, годовых ${sb.endY}), MRR ${rubK(sb.mrr)}; продления ${rt && rt.renew !== null ? pct(rt.renew) : 'ещё нет данных'}, возвраты ${rt && rt.refund !== null ? pct(rt.refund, 1) : 'нет'}.`);
+      if (Auth.can('fin.ops')) { const a = Fin.attention(); L.push(`Открытых запросов на возврат ${a.refunds.length} (просрочено ${a.late.length}), сбоев оплат ${a.failed.length} на ${rubK(a.failedSum)}, к выплате ${rubK(a.payouts.total)}, заказов к отправке ${a.ship.length}.`); }
+    }
     return L.join('\n');
   },
   rules() {
@@ -10027,7 +11310,7 @@ const Adam = {
 - «Задачи»: переключатель «Мне / От меня / Все», строка «Новая задача» сверху; галочка «Срок важен» — перенос только с согласия постановщика; без неё исполнитель переносит срок сам в пределах месяца. Статусы: к работе, в работе, на согласовании, готово.
 - «Календарь»: подключение Google Календаря, собрания с приглашениями и Google Meet, гости не из команды с почтой и Telegram, кнопка «Напомнить».
 - «Команда»: структура (генеральный директор → финансовый, исполнительный, коммерческий директора → их команды), приглашения ссылкой, «Данные штаба» — выгрузка в файл.
-- «Отчёты»: цифры дня до понедельника. «Деньги»: операции и план платежей (не всем ролям).
+- «Отчёты»: цифры дня до понедельника. «Финансы» (не всем ролям): обзор, операции, план и прогноз, подписки, курсы, маркетплейс, сбои оплат, возвраты.
 - Сообщения: вкладки «Команда» и «Личные» в этой же панели.
 
 Данные штаба:
@@ -10400,8 +11683,9 @@ const Chat = {
   TaskNotify.init();
   MsgNotify.init();
   MeetRemind.start();
+  FinNotify.init();
   /* для проверок и отладки из консоли */
-  window.__eva = {Store, Auth, App, Tasks, Inbox, settings, Sales, Plan, Money, cashFlow, pnl, quarterPace, Sound, Strategy, openWelcome, inviteLink, inviteText, Adam, Chat, Msgs, MsgNotify, MeetRemind, Cal, openGEvent, remindGuests, openTask};
+  window.__eva = {Store, Auth, App, Tasks, Inbox, settings, Sales, Plan, Money, cashFlow, pnl, quarterPace, Sound, Strategy, openWelcome, inviteLink, inviteText, Adam, Chat, Msgs, MsgNotify, MeetRemind, Cal, openGEvent, remindGuests, openTask, Fin, Subs, Market, unitEcon, FinNotify};
 })();
 })();
 </script>

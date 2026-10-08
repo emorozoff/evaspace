@@ -35,15 +35,27 @@
 | `ledger` | операции денег | `kind` (out · in · invest), `amount`, `cat`, `date`, `note`, `planId`/`planMonth` (оплачено по плану), `by`, `at` |
 | `plan` | план платежей | `title`, `group` (payroll · regular · once), `cat`, `amount`, `months` [YYYY-MM], `personId`, `insurance`, `taskId` |
 | `people` | команда | `name`, `givenName`, `surname`, `title`, `dir`, `status` (active · inactive · vacancy), `managerId` (кому подчиняется), `salary`, `startMonth`, `email`, `phone`, `telegram`, `calEmail`, `birthDate`, `birthTime`, `birthCity`, `hdType`, `hdProfile`, `founder` |
-| `accounts` | учётки | `name`, `email`, `role` (owner · lead · member · investor), `personId`, `salt` и `hash` (PBKDF2-SHA256, 150 000 итераций), `claudeId` (вход через аккаунт Claude), `prefs`, `welcomed` |
+| `accounts` | учётки | `name`, `email`, `role` (owner · lead · finance · member · investor), `personId`, `salt` и `hash` (PBKDF2-SHA256, 150 000 итераций), `claudeId` (вход через аккаунт Claude), `prefs`, `welcomed` |
 | `invites` | приглашения, id = код | `role`, `personId`, `by`, `at`, `usedBy` |
 | `docs` | одиночные документы | `strategy` (цели, этапы, точки, дорожная карта, `vision`), `settings` (цена, конверсии, сценарии, деньги), `learning` |
 | `meetings` | собрания | `title`, `date`, `start`, `dur`, `repeat`, `organizer`, `attendees` [id], `guests` [почты для приглашения], `extGuests` [{id, name, email, tg, tgChatId}] — гости не из команды, `remindMin` (за сколько минут напомнить, 0 — не напоминать, нет поля — за час), `gcalId`, `meetUrl`, `responses`, `guestResp` [[почта, ответ]], `imported`/`gcalReadonly` (событие перенесено из Google) |
 | `messages` | сообщения команды | `ch` (team · dm:<учётка>|<учётка>), `by` (учётка), `text`, `at` |
+| `subs` | подписки по месяцам, id = `YYYY-MM` (пустое поле — считается само) | `startM`, `startY` (на начало), `newM`, `newY`, `renewed`, `churn` (не продлили), `refunds`, `refundSum` |
+| `payouts` | выплаты: рефералам — записями; авторам и продавцам — отметка о выплате (`author_<курс>_<месяц>`, `seller_<код>_<месяц>`) | `kind` (ref · author · seller), `to`, `contact`, `month`, `n`, `base`, `pct`, `amount`, `status` (accrued · paid), `paidAt`, `ledgerId` |
+| `courses` | курсы | `title`, `author`, `authorContact`, `price`, `authorPct`, `active`, `sales` {YYYY-MM: {n, revenue}} |
+| `orders` | заказы маркетплейса | `no`, `date`, `customer`, `contact`, `address`, `items` [{productId, title, qty, price, cost, seller, fee}], `shipCost`, `pay` (wait · paid · refund), `paidAt`, `delivery` (new · packing · shipped · delivered · cancelled), `track`, `stockOut` |
+| `products` | товары | `title`, `sku`, `price`, `cost`, `stock`, `seller` (пусто — свой склад), `fee` (комиссия клуба, %) |
+| `failed` | сбои оплат | `date`, `client`, `contact`, `amount`, `plan` (month · year), `reason` (funds · bank · card · tds · limit · other), `attempts`, `status` (new · contacted · retry · paid · lost), `next`, `who`, `log` |
+| `refunds` | запросы на возврат | `date`, `deadline` (+10 дней), `client`, `contact`, `product` (sub · course · market · other), `courseId`, `orderId`, `amount`, `reason`, `comment`, `status` (new · review · approved · refunded · rejected), `decision`, `who`, `refundedAt`, `log` |
 | `busy` | занятость по Google Календарю (только интервалы, без названий) | `slots` [[начало, конец]], `crm`, `from`, `to`, `share` |
 | `links` | свои материалы основателя | `title`, `url`, `group`, `roles` |
 
 Деньги — в рублях, даты — `YYYY-MM-DD` по Москве, время — `HH:MM`, отметки времени — миллисекунды Unix.
+
+Операция в журнале помнит, откуда она: `planId`/`planMonth` (оплата по финплану),
+`payoutId` (выплата), `orderId` (заказ маркетплейса), `refundId` (возврат), `courseMonth`
+(выручка курсов за месяц). В сбоях, возвратах и заказах — данные клиентов: держите штаб
+закрытым от посторонних.
 
 Разговор с Адамом в общую выгрузку не входит: в артефакте он лежит в личном разделе
 базы человека (`data/users/<id>/adam-<учётка>`), вне артефакта — в его браузере.

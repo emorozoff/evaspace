@@ -3,8 +3,8 @@
    GitHub Pages), остаётся ссылка на оригинал. Основатель может добавить
    свои ссылки — они лежат в базе, в коллекции links. */
 
-const TEAM_ROLES = ['owner', 'lead', 'member'];
-const ALL_ROLES = ['owner', 'lead', 'member', 'investor'];
+const TEAM_ROLES = ['owner', 'lead', 'finance', 'member'];
+const ALL_ROLES = ['owner', 'lead', 'finance', 'member', 'investor'];
 const MAT_GROUPS = {
   standards: {name: 'Стандарты',             about: 'Как мы работаем, говорим и считаем деньги'},
   team:      {name: 'Команде',               about: 'План квартала и выступление основателя'},

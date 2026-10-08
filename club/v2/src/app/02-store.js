@@ -8,7 +8,9 @@
    (docs/strategy, docs/settings, docs/learning). */
 
 const Store = (() => {
-  const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy', 'messages'];
+  const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy', 'messages',
+    /* финансы: подписки по месяцам, выплаты, курсы, заказы и товары маркетплейса, сбои оплат, возвраты */
+    'subs', 'payouts', 'courses', 'orders', 'products', 'failed', 'refunds'];
   const LS = 'eva-hq:';
   const data = Object.fromEntries(COLS.map(c => [c, new Map()]));
   const subs = new Set();

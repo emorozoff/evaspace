@@ -39,6 +39,37 @@ const Portable = {
     const pay = Auth.can('payroll.view');
     return this.csv(people(), [['id', 'id'], ['name', 'Имя'], ['title', 'Должность'], [p => dirName(p.dir), 'Направление'], [p => (PERSON_STATUS[pStatus(p)] || {}).name, 'Статус'], ['email', 'Почта'], ['phone', 'Телефон'], ['telegram', 'Телеграм'], ['birthDate', 'Дата рождения'], [p => (HD_TYPES[p.hdType] || {}).name || '', 'Human Design'], ['hdProfile', 'Профиль'], [p => (pay ? p.salary || '' : ''), 'Оклад, ₽']]);
   },
+  /* финансы */
+  subsCsv() {
+    return this.csv(Subs.rows(), [['m', 'Месяц'], ['startM', 'Месячных на начало'], ['startY', 'Годовых на начало'], ['newM', 'Новые месячные'], ['newY', 'Новые годовые'], ['renewed', 'Продлили'], ['churn', 'Не продлили'],
+      ['refunds', 'Возвраты, шт'], ['refundSum', 'Возвраты, ₽'], ['endM', 'Месячных на конец'], ['endY', 'Годовых на конец'], ['total', 'Всего платных'], [r => (r.renewRate === null ? '' : Math.round(r.renewRate * 1000) / 10), 'Продления, %'],
+      [r => (r.refundRate === null ? '' : Math.round(r.refundRate * 1000) / 10), 'Возвраты, %'], [r => Math.round(r.revenue), 'Выручка, ₽'], [r => Math.round(r.mrr), 'MRR, ₽']]);
+  },
+  payoutsCsv() {
+    return this.csv(Fin.accruals(), [[x => PAYOUT_KINDS[x.kind].name, 'Кому'], ['to', 'Получатель'], ['contact', 'Контакт'], [x => (x.course ? x.course.title : ''), 'Курс'], ['month', 'Месяц'], ['amount', 'Начислено, ₽'],
+      [x => (x.paid ? 'выплачено' : x.closed ? 'к выплате' : 'начисляется'), 'Статус'], ['paidAt', 'Дата выплаты']]);
+  },
+  coursesCsv() {
+    const rows = [];
+    Fin.courses().forEach(c => finMonths().forEach(m => { const x = Fin.courseSale(c, m); if (x.n || x.revenue) rows.push({c, m, ...x}); }));
+    return this.csv(rows, [[r => r.c.title, 'Курс'], [r => r.c.author || '', 'Автор'], ['m', 'Месяц'], ['n', 'Продано, шт'], ['revenue', 'Выручка, ₽'], [r => Number(r.c.authorPct) || 0, 'Доля автора, %'], ['author', 'Автору, ₽'],
+      [r => { const p = Store.get('payouts', Fin.authorId(r.c.id, r.m)); return p && p.status === 'paid' ? 'выплачено ' + p.paidAt : ''; }, 'Выплата']]);
+  },
+  ordersCsv() {
+    return this.csv(Fin.orders(), [['no', '№'], ['date', 'Дата'], ['customer', 'Клиент'], ['contact', 'Контакт'], ['address', 'Адрес'], [o => (o.items || []).map(it => `${it.title} × ${it.qty} по ${it.price}`).join(', '), 'Состав'],
+      ['shipCost', 'Доставка, ₽'], [o => Fin.orderTotal(o), 'Сумма, ₽'], [o => (ORDER_PAY[o.pay || 'wait'] || {}).name, 'Оплата'], ['paidAt', 'Оплачен'], [o => (ORDER_DELIVERY[o.delivery || 'new'] || {}).name, 'Доставка'], ['track', 'Трек'], ['note', 'Комментарий']]);
+  },
+  productsCsv() {
+    return this.csv(Fin.products(), [['title', 'Товар'], ['sku', 'Артикул'], [p => p.seller || 'свой склад', 'Чей'], ['fee', 'Комиссия клуба, %'], ['price', 'Цена, ₽'], ['cost', 'Себестоимость, ₽'], ['stock', 'Остаток']]);
+  },
+  failedCsv() {
+    return this.csv(Fin.failed(), [['date', 'Дата'], ['client', 'Клиент'], ['contact', 'Контакт'], ['amount', 'Сумма, ₽'], [x => (x.plan === 'year' ? 'годовая' : 'месячная'), 'Подписка'], [x => FAIL_REASONS[x.reason] || '', 'Причина'],
+      ['attempts', 'Попыток'], [x => (FAIL_ST[x.status || 'new'] || {}).name, 'Статус'], ['next', 'Следующий шаг'], [x => (x.who ? whoName(x.who) : ''), 'Ответственный'], ['paidAt', 'Оплачено'], ['note', 'Комментарий']]);
+  },
+  refundsCsv() {
+    return this.csv(Fin.refunds(), [['date', 'Получен'], ['deadline', 'Ответить до'], ['client', 'Клиент'], ['contact', 'Контакт'], [x => REFUND_PRODUCTS[x.product || 'sub'], 'Что'], ['amount', 'Сумма, ₽'], ['reason', 'Причина'],
+      ['comment', 'Что пишет клиент'], [x => (REFUND_ST[x.status || 'new'] || {}).name, 'Статус'], ['decision', 'Решение'], [x => (x.who ? whoName(x.who) : ''), 'Ответственный'], ['refundedAt', 'Возвращено']]);
+  },
   /* сохранить файл: в Claude — через площадку (человек подтверждает), иначе — обычной загрузкой */
   async save(filename, text) {
     let dl = null;
@@ -127,7 +158,8 @@ function wirePortable(root) {
   };
 }
 function importModal({cols, meta}, fname) {
-  const names = {accounts: 'учётки', invites: 'приглашения', people: 'люди', tasks: 'задачи', ledger: 'операции', plan: 'план платежей', sales: 'цифры продаж', links: 'материалы', docs: 'стратегия и настройки', meetings: 'собрания', busy: 'занятость', messages: 'сообщения'};
+  const names = {accounts: 'учётки', invites: 'приглашения', people: 'люди', tasks: 'задачи', ledger: 'операции', plan: 'план платежей', sales: 'цифры продаж', links: 'материалы', docs: 'стратегия и настройки', meetings: 'собрания', busy: 'занятость', messages: 'сообщения',
+    subs: 'подписки по месяцам', payouts: 'выплаты', courses: 'курсы', orders: 'заказы', products: 'товары', failed: 'сбои оплат', refunds: 'возвраты'};
   const rows = Object.keys(cols).map(c => `<tr><td>${names[c] || c}</td><td class="r">${Object.keys(cols[c]).length}</td><td class="r soft">${Store.count(c)}</td></tr>`).join('');
   openModal({
     title: 'Загрузить данные из файла',

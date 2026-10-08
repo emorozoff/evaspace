@@ -27,7 +27,8 @@ const KEY = process.env.EVA_KEY || '';
 /* имя бота напоминаний — для ссылок «Старт» в штабе (только буквы, цифры и _) */
 const TG_BOT = /^[A-Za-z0-9_]{5,64}$/.test(process.env.TELEGRAM_BOT_NAME || '') ? process.env.TELEGRAM_BOT_NAME : '';
 const MAX_BODY = 8 * 1024 * 1024;
-const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy', 'messages'];
+const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy', 'messages',
+  'subs', 'payouts', 'courses', 'orders', 'products', 'failed', 'refunds'];
 const FORMAT = 'eva-hq';
 
 /* ── хранилище: всё в памяти, на диск — с задержкой и атомарно ── */
