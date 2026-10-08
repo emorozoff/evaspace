@@ -32,7 +32,7 @@
   let db = load();
   function mutate(fn) { return Store.mutate(fn); }
   // выбор дизайна: «Зумер» — новый интерфейс в корне, «Миллениал» — этот
-  function toZoomer() { mutate((d) => { d.settings.design = 'zoomer'; }); if (me) saveSession(); const q = new URLSearchParams(location.search); q.delete('design'); const qs = q.toString(); location.href = '../' + (qs ? '?' + qs : '') + location.hash; }
+  function toZoomer(k) { const design = k === 'boomer' ? 'boomer' : 'zoomer'; mutate((d) => { d.settings.design = design; }); if (me) saveSession(); const q = new URLSearchParams(location.search); q.delete('design'); const qs = q.toString(); location.href = '../' + (qs ? '?' + qs : '') + location.hash; }
 
   function applySettings() {
     Snd.enabled = db.settings.sound !== false;
@@ -647,7 +647,7 @@
         <div class="titlebar">${flowerSvg('#3cb44a', 14, { logo: true })}<span class="ttl">АСЬКА — вход в сеть</span></div>
         <div class="login-body">
           <div class="bigflower">${flowerSvg('#3cb44a', 44, { logo: true })}<div class="logo-word center">АСЬКА<small>I seek you · по-русски · с 1998 года</small></div></div>
-          <div class="design-pick" role="radiogroup" aria-label="Дизайн"><button type="button" role="radio" aria-checked="false" data-design="zoomer"><b>Зумер</b><small>стекло, плитки, свайпы</small></button><button type="button" role="radio" aria-checked="true" class="on" data-design="millennial"><b>Миллениал</b><small>классика 2000-х, окна и меню</small></button></div>
+          <div class="design-pick" role="radiogroup" aria-label="Дизайн"><button type="button" role="radio" aria-checked="false" data-design="zoomer"><b>Зумер</b><small>стекло, плитки, свайпы</small></button><button type="button" role="radio" aria-checked="true" class="on" data-design="millennial"><b>Миллениал</b><small>классика 2000-х, окна и меню</small></button><button type="button" role="radio" aria-checked="false" data-design="boomer"><b>Бумер</b><small>крупно, солидно, понятно</small></button></div>
           <div class="ver-links center"><a class="link" href="../v1/">простая v1</a></div>
           <div class="tabs"><button class="on" data-tab="reg">Новый номер</button><button data-tab="login">Уже есть номер</button></div>
           <div class="tabpanel" id="tab-reg">
@@ -684,7 +684,7 @@
     const ph = $('#r-phone');
     ph.addEventListener('input', () => maskPhoneInput(ph));
     $('#r-go').onclick = register;
-    $$('[data-design]', app).forEach((b) => (b.onclick = () => { Snd.play('click'); if (b.dataset.design === 'zoomer') toZoomer(); }));
+    $$('[data-design]', app).forEach((b) => (b.onclick = () => { Snd.play('click'); if (b.dataset.design !== 'millennial') toZoomer(b.dataset.design); }));
     $$('#tab-reg input', app).forEach((i) => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') register(); }));
     $('#l-go').onclick = login;
     $$('#tab-login input', app).forEach((i) => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); }));
@@ -884,8 +884,9 @@
       { label: 'Послушать все смайлы', onClick: playAllSmiles },
     ]);
     $('#m-help').onclick = (e) => showMenu(e.currentTarget, [
-      { label: 'Дизайн «Зумер» — новый интерфейс →', onClick: toZoomer },
+      { label: 'Дизайн «Зумер» — новый интерфейс →', onClick: () => toZoomer('zoomer') },
       { label: 'Дизайн «Миллениал» — классика', checked: true, onClick: () => {} },
+      { label: 'Дизайн «Бумер» — крупно, солидно, понятно →', onClick: () => toZoomer('boomer') },
       '-',
       { label: 'Подсказки: как пользоваться', onClick: () => showTips(true) },
       { label: 'Как пользоваться', onClick: () => { openChat('123456'); if (!historyOf('123456').some((m) => m.from === '123456' && /умеет/.test(m.text))) botSays(BOTS['123456'], BOTS['123456'].help); } },
