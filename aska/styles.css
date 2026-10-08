@@ -308,6 +308,88 @@ a, .link { color: var(--link); text-decoration: underline; cursor: pointer; }
 @keyframes pc-steam { 0% { transform: translateY(0); opacity: 0; } 30% { opacity: .8; } 100% { transform: translateY(-16px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .postcard * { animation: none !important; } }
 
+/* ---------- режимы, панель, темы ---------- */
+.toolbar { display: flex; gap: 3px; align-items: center; padding: 1px 0 3px; flex: none; }
+.modes { display: flex; flex: 1; min-width: 0; }
+.modes button {
+  flex: 1; min-width: 0; background: var(--face); border: 1px solid; border-color: var(--light) var(--black) var(--black) var(--light);
+  box-shadow: inset -1px -1px var(--shadow), inset 1px 1px var(--hl); padding: 2px 3px; font-size: 10px; min-height: 21px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.modes button.on { border-color: var(--black) var(--light) var(--light) var(--black); box-shadow: inset 1px 1px var(--shadow); background: var(--mode-on, #e8e8e8); font-weight: bold; flex: 2.4; }
+.modes button .lab { display: none; margin-left: 3px; }
+.modes button.on .lab { display: inline; }
+.modes button .mi { font-size: 12px; }
+#p-modes button { flex: 1; } #p-modes button .lab { display: inline; }
+.toolbar .btn.icon { min-width: 24px; }
+body.theme-close { --desktop: #6b3a63; --title1: #5a1f5c; --title2: #e6a0c4; --sel: #7a2a6a; --link: #7a1f5a; --mode-on: #f3d6e6; }
+body.theme-biz { --desktop: #2f4858; --title1: #1b2e40; --title2: #8aa9c9; --sel: #1b3a5c; --link: #1b3a5c; --mode-on: #d6e0ea; }
+body.theme-chat { --desktop: #3a6ea5; --mode-on: #d9ecd0; }
+.statusbar .cell.np { cursor: pointer; color: var(--link); flex: 1.2; }
+
+/* ---------- окно-приставка: стена, профиль, винил ---------- */
+.win.aux { width: 330px; height: min(560px, 100%); }
+.aux-body { flex: 1; min-height: 0; overflow: auto; padding: 4px 2px 2px; display: flex; flex-direction: column; gap: 4px; }
+.aux-body > .row { flex: none; }
+.wall-head { display: flex; gap: 6px; align-items: center; padding: 3px 4px; border: 1px solid; border-color: var(--shadow) var(--light) var(--light) var(--shadow); background: #d4d0c8; flex: none; }
+.wall-head .who { flex: 1; min-width: 0; }
+.wall-head .who b { white-space: nowrap; }
+.pct { font: bold 15px/1 Tahoma, Verdana, sans-serif; color: var(--link); padding: 3px 6px; background: #fff; border: 1px solid var(--shadow); flex: none; }
+.pct.big { font-size: 22px; }
+.chips { display: flex; flex-wrap: wrap; gap: 3px; flex: none; }
+.chip { font-size: 10px; padding: 1px 6px; background: #fff; border: 1px solid var(--shadow); border-radius: 8px; line-height: 1.3; }
+.chip.on { background: #ffe14d; border-color: #806a00; font-weight: bold; }
+button.chip { cursor: pointer; }
+button.chip:hover { border-color: #000; }
+.chips.small .chip { font-size: 9px; }
+.wall-actions { flex-wrap: wrap; }
+.wall-actions .btn { min-width: 0; padding: 2px 7px; }
+.wall-posts { flex: 1; min-height: 140px; overflow: auto; padding: 3px; user-select: text; -webkit-user-select: text; }
+.post { border-bottom: 1px dotted var(--shadow); padding: 3px 2px 6px; margin-bottom: 3px; }
+.post-h { display: flex; align-items: center; gap: 4px; margin-bottom: 3px; }
+.post-h .like { background: none; border: 1px solid transparent; color: #a03050; padding: 0 5px; font-weight: bold; }
+.post-h .like.on { background: #ffe3ea; border-color: #a03050; }
+.post .txt { white-space: pre-wrap; }
+.post .postcard { width: 180px; height: 108px; }
+.trackcard { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid; border-color: var(--shadow) var(--light) var(--light) var(--shadow); padding: 3px 4px; margin: 3px 0; }
+.trackcard .disc, .trow .disc { width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle, var(--c, #3cb44a) 0 28%, #111 30% 100%); flex: none; box-shadow: 0 0 0 1px #000; }
+.trackcard .disc.stack { background: repeating-linear-gradient(0deg, #111 0 3px, #666 3px 4px); border-radius: 3px; }
+.trackcard .ti, .trow .ti, .prow .ti { flex: 1; min-width: 0; }
+.trackcard .ti b, .trow .ti b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trackcard.np .disc { animation: spin 2s linear infinite; }
+.card-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.card-pick button { padding: 0; background: none; border: 0; }
+.card-pick .postcard { width: 100%; height: 76px; margin: 0; }
+.meet-head { display: flex; gap: 8px; align-items: center; }
+.meet-head > div:nth-child(2) { flex: 1; min-width: 0; }
+
+/* винил */
+.vinyl { display: flex; flex-direction: column; gap: 5px; }
+.tt { position: relative; height: 150px; flex: none; background: #5a4634; border: 2px solid #3a2c20; box-shadow: inset 0 0 0 2px #7a6248, 2px 2px 0 rgba(0,0,0,.3); display: flex; align-items: center; padding-left: 14px; }
+.platter { width: 130px; height: 130px; border-radius: 50%; background: #222; box-shadow: 0 0 0 3px #111, 0 4px 8px rgba(0,0,0,.5); display: grid; place-items: center; flex: none; }
+.record { width: 124px; height: 124px; border-radius: 50%; background: repeating-radial-gradient(circle, #1a1a1a 0 1.5px, #2b2b2b 1.5px 3px); display: grid; place-items: center; animation: spin 1.8s linear infinite; animation-play-state: paused; position: relative; }
+.record.spin { animation-play-state: running; }
+.record .label { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; text-align: center; font: bold 7px/1.1 Tahoma, Verdana, sans-serif; color: #fff; text-shadow: 0 0 2px #000; box-shadow: 0 0 0 2px #000; overflow: hidden; padding: 4px; position: relative; }
+.record .label::after { content: ''; position: absolute; width: 5px; height: 5px; background: #ddd; border-radius: 50%; border: 1px solid #000; }
+.arm { position: absolute; right: 30px; top: 12px; width: 9px; height: 98px; background: linear-gradient(90deg, #eee, #999); border: 1px solid #333; border-radius: 4px; transform-origin: 50% 9px; transform: rotate(-28deg); transition: transform .7s ease; }
+.arm::before { content: ''; position: absolute; top: -8px; left: -8px; width: 22px; height: 22px; border-radius: 50%; background: #777; border: 1px solid #333; }
+.arm::after { content: ''; position: absolute; bottom: -6px; left: -5px; width: 18px; height: 12px; background: #444; border: 1px solid #111; }
+.arm.on { transform: rotate(-3deg); }
+.np-box { padding: 4px 6px; flex: none; }
+.np-box b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v-ctrl input[type=range] { flex: 1; min-width: 40px; }
+.v-ctrl .btn { min-width: 32px; padding: 2px 6px; }
+.v-share { flex-wrap: wrap; }
+.v-share .btn { min-width: 0; padding: 2px 7px; }
+.v-share select { width: auto; flex: 1; min-width: 70px; }
+.v-tabs { margin-top: 2px; flex: none; }
+.v-list { max-height: 230px; overflow: auto; padding: 3px; background: #fff; }
+.trow, .prow { display: flex; align-items: center; gap: 5px; padding: 2px 2px; border-bottom: 1px dotted #ccc; }
+.trow.np, .prow.np { background: #ffffe0; }
+.trow .btn.icon, .prow .btn.icon { min-width: 22px; padding: 1px 4px; }
+.found .trow { cursor: pointer; }
+.found .trow:hover { background: #e8e8ff; }
+
 /* ---------- диалоги ---------- */
 .overlay { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(0,0,0,.15); }
 .dialog .body { padding: 10px 10px 8px; }
@@ -338,6 +420,15 @@ a, .link { color: var(--link); text-decoration: underline; cursor: pointer; }
   .win.chat { display: none; position: absolute; inset: var(--safe-t) 0 0 0; }
   .desktop.mode-chat .win.chat { display: flex; }
   .desktop.mode-chat .win.contacts { display: none; }
+  .win.aux { display: none; position: absolute; inset: var(--safe-t) 0 0 0; width: 100%; height: auto; margin: 0; box-shadow: none; border-width: 0; padding: 3px 3px calc(3px + var(--safe-b)); max-height: none; }
+  .desktop.mode-aux .win.aux { display: flex; }
+  .desktop.mode-aux .win.contacts, .desktop.mode-aux .win.chat { display: none; }
+  .tbtn.close-aux { display: none; }
+  .modes button { font-size: 11px; min-height: 26px; }
+  .chip { font-size: 11px; padding: 2px 8px; }
+  .chips.small .chip { font-size: 10px; }
+  .v-list { max-height: none; }
+  .wall-posts { min-height: 200px; }
   .tbtn.back { display: inline-block; width: 18px; }
   .tbtn.close-chat { display: none; }
   .titlebar { height: 24px; }
