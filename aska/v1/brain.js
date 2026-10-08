@@ -23,16 +23,16 @@ window.AskaBrain = (function () {
     trip: { cap: 'Привет из {trip}! Открытка от {me}. Я уже там, ты где?', sound: 'plane' },
     tea: { cap: 'Чай-пауза! Открытка от {me}. Чайник уже шумит, слышишь?', sound: 'tea' },
   };
-  const cardMsg = (kind, mem, P, text) => ({ card: kind, sound: CARDS[kind].sound, text: (text || (P.cardCap ? P.cardCap(kind, mem) : CARDS[kind].cap)).replace('{trip}', cap(mem.trip || 'ниоткуда')).replace(/\{me\}/g, P.gen) });
+  const cardMsg = (kind, mem, P, text) => ({ card: kind, sound: CARDS[kind].sound, text: (text || CARDS[kind].cap).replace('{trip}', cap(mem.trip || 'ниоткуда')).replace(/\{me\}/g, P.gen) });
 
   /* ---------- общие вопросы (в голосе Аськи) ---------- */
   const Q = {
     name: {
       q: ['Кстати, а как тебя по-настоящему зовут? А то ник — это ник, а я хочу по имени :)', 'Слушай, мы столько болтаем, а я даже не знаю, как тебя зовут. Как?'],
-      react: (a, mem) => { const n = extractName(a); if (!n) return 'Не поняла, но ладно, буду звать тебя Солнце :)'; mem.name = n; mem.gender = guessGender(n); return pick([`Очень приятно, ${n}! А я Аська. Теперь мы официально дружим ;)`, `${n} — красивое имя. Записала в досье крупными буквами :)`]); },
+      react: (a, mem) => { const n = extractName(a); if (!n) return 'Не поняла, но ладно, буду звать тебя Солнце :)'; mem.name = n; return pick([`Очень приятно, ${n}! А я Аська. Теперь мы официально дружим ;)`, `${n} — красивое имя. Записала в досье крупными буквами :)`]); },
     },
     relatives: {
-      q: (mem) => [`Слушай, а когда ты последний раз ${G(mem, 'звонил', 'звонила')} родным? Только честно.`, `Вопрос как от лучшего друга: когда последний раз ${G(mem, 'звонил', 'звонила')} маме? :-?`, `А родным давно ${G(mem, 'звонил', 'звонила')}? Я спрашиваю, потому что они не спросят.`],
+      q: ['Слушай, а когда ты последний раз звонил родным? Только честно.', 'Вопрос как от лучшего друга: когда последний раз звонил маме? :-?', 'А родным давно звонил? Я спрашиваю, потому что они не спросят.'],
       react: (a, mem) => {
         if (has(a, /(сегодня|вчера|только что|утром|недавно|час назад|на днях|позавчера|каждый день|постоянно|вечером)/)) { mem.relatives = 'ok'; return pick(['Вот это я понимаю! Передавай им привет от Аськи :)', 'Молодец. Родные — это важно. Плюсик в досье ;)']); }
         if (has(a, /(давно|не помню|год|месяц|недел|не звон|никогда|хз|не знаю|редко)/)) { mem.relatives = 'overdue'; return pick(['Так. Бери телефон и звони. Я подожду, честно. Потом расскажешь :)', 'Давно — это не ответ, это диагноз :) Набери им сегодня, а я напомню, если забудешь. Я умею быть назойливой ;)']); }
@@ -41,7 +41,7 @@ window.AskaBrain = (function () {
       },
     },
     trip: {
-      q: (mem) => [`А не пора ли нам слетать куда-нибудь? Куда бы ты ${G(mem, 'хотел', 'хотела')}?`, 'Слушай, я тут подумала: не пора ли нам слетать? Называй город, я беру цветочек.', 'Давай сбежим на выходные? Куда полетим?'],
+      q: ['А не пора ли нам слетать куда-нибудь? Куда бы ты хотел?', 'Слушай, я тут подумала: не пора ли нам слетать? Называй город, я беру цветочек.', 'Давай сбежим на выходные? Куда полетим?'],
       react: (a, mem) => {
         if (has(a, /(никуда|не хочу|нет|не пора|некогда|денег нет|не могу)/)) return pick(['Ладно, тогда слетаем на кухню за чаем. Тоже путешествие :)', 'Понимаю. Тогда полетим мысленно: закрой глаза, мы в Лиссабоне. Открывай, ты дома. Бесплатно ;)']);
         const d = extractPlace(a); mem.trip = d; mem.tripCardDue = Date.now() + 90000;
@@ -85,15 +85,15 @@ window.AskaBrain = (function () {
       react: (a, mem) => { a = strip(a); mem.movie = a; return has(a, /титаник/) ? 'Титаник! Я каждый раз надеюсь, что доска выдержит двоих :\'(' : `${cap(a)} — записала. Устроим киновечер: ты смотришь, я мигаю конвертиком.`; },
     },
     food: {
-      q: (mem) => [`Что ${G(mem, 'ел', 'ела')} сегодня? Мама бы спросила, так что спрашиваю я.`, `Ты ${G(mem, 'поел', 'поела')}? Нормально, не печеньки?`],
+      q: ['Что ел сегодня? Мама бы спросила, так что спрашиваю я.', 'Ты поел? Нормально поел, не печеньки?'],
       react: (a, mem) => { mem.food = a; return has(a, /(ничего|не ел|нет|забыл)/) ? 'Так. Отложи телефон и поешь. Я серьёзно. Я подожду.' : 'Хорошо. Приятного аппетита задним числом :)'; },
     },
     water: {
-      q: (mem) => [`Ты воду сегодня ${G(mem, 'пил', 'пила')}? Иди попей, я подожду.`],
+      q: ['Ты воду сегодня пил? Иди попей, я подожду.'],
       react: (a, mem) => { mem.water = a; return has(a, /(да|пил|пью|конечно|ага)/) ? 'Молодец. Ещё стакан — и ты лучший человек дня.' : 'Вот сейчас встал и попил. Я проверю ;)'; },
     },
     walk: {
-      q: (mem) => [`Когда последний раз ${G(mem, 'гулял', 'гуляла')} просто так, без цели?`, `Выйди погуляй сегодня? Хоть до киоска. Расскажешь, что ${G(mem, 'видел', 'видела')}.`],
+      q: ['Когда последний раз гулял просто так, без цели?', 'Выйди погуляй сегодня? Хоть до киоска. Расскажешь, что видел.'],
       react: (a, mem) => { mem.walk = a; return has(a, /(сегодня|вчера|только что|утром|каждый день)/) ? 'Вот это правильно. Воздух — это как интернет, только для лёгких.' : 'Значит, сегодня. Полчаса. Я засеку.'; },
     },
     age: {
@@ -119,7 +119,7 @@ window.AskaBrain = (function () {
   }
   // нейтральные реакции на общие вопросы — для друзей, у которых нет своей
   const GEN = {
-    name: (a, mem, P) => { const n = extractName(a); if (!n) return P.v('Не понял, ну ладно :)'); mem.name = n; mem.gender = guessGender(n); return P.v(`${n}, оч приятно! Я ${P.first} :)`); },
+    name: (a, mem, P) => { const n = extractName(a); if (!n) return P.v('Не понял, ну ладно :)'); mem.name = n; return P.v(`${n}, оч приятно! Я ${P.first} :)`); },
     city: (a, mem, P) => { const c = extractPlace(a); mem.city = c; return P.v(`${cap(c)}? Круто, у меня там знакомые есть :)`); },
     music: (a, mem, P) => { a = strip(a); mem.music = a; return P.v(`${cap(a)} — норм тема! Я тоже иногда`); },
     mood: (a, mem, P) => { if (has(a, /(ура|отлич|супер|хорош|класс|норм|огонь)/)) { mem.mood = 'up'; return P.v('Во, это по-нашему :)'); } if (has(a, /(плохо|так себе|груст|устал|уф|никак)/)) { mem.mood = 'down'; return P.v('Эх... ну держись. Я тут если что'); } mem.mood = a; return P.v('Понял. Бывает :)'); },
@@ -140,23 +140,6 @@ window.AskaBrain = (function () {
     'Самое страшное словосочетание моего детства: «Освободи телефон, мне позвонить надо».',
     'Пришёл друг, сел за компьютер и спросил: «Какой у тебя пароль от аськи?» — «123456». — «Это номер». — «И пароль тоже».',
   ];
-  // пол собеседника: по имени или по явному заявлению
-  const FEMALE_EXC = /^(никита|илья|лёша|леша|саша|женя|кузьма|фома|лука|савва|данила|гаврила|вова|дима|миша|паша|серёжа|сережа|коля|толя|костя|витя|петя|ваня|федя|гоша|жора|лёва|лева|боря|юра)$/i;
-  function guessGender(name) { if (!name) return null; const n = name.toLowerCase(); if (FEMALE_EXC.test(n)) return 'm'; return /[ая]$/.test(n) ? 'f' : 'm'; }
-  const isF = (mem) => (mem.gender ? mem.gender === 'f' : guessGender(mem.name) === 'f');
-  // родительный падеж имени: Кирилл → Кирилла, Маша → Маши, Илья → Ильи
-  function genName(n) { if (!n) return n; if (/[ая]$/i.test(n)) return n.replace(/а$/, 'ы').replace(/я$/, 'и').replace(/ка$/i, 'ки').replace(/га$/i, 'ги').replace(/ха$/i, 'хи').replace(/ша$/i, 'ши').replace(/жа$/i, 'жи').replace(/ча$/i, 'чи'); if (/й$/i.test(n)) return n.replace(/й$/, 'я'); if (/ь$/i.test(n)) return n.replace(/ь$/, 'я'); if (/[бвгджзклмнпрстфхцчшщ]$/i.test(n)) return n + 'а'; return n; }
-  const G = (mem, m, f) => (isF(mem) ? f : m);
-  // выбор без повторов последних реплик
-  function pickFresh(arr, mem) {
-    if (!arr || !arr.length) return '';
-    mem.lastLines = mem.lastLines || [];
-    const fresh = arr.filter((x) => !mem.lastLines.includes(typeof x === 'string' ? x : x.text));
-    const v = pick(fresh.length ? fresh : arr);
-    mem.lastLines.push(typeof v === 'string' ? v : v.text);
-    if (mem.lastLines.length > 8) mem.lastLines.shift();
-    return v;
-  }
   const PAID = [
     'Это в платной версии, тут я не могу сказать :$',
     'Ой. Это в платной версии, тут я не могу сказать. Спроси что-нибудь попроще? :)',
@@ -286,33 +269,29 @@ window.AskaBrain = (function () {
     },
 
     batya: {
-      id: 'batya', uin: '200200', nick: 'Батя_в_сети', first: 'Батя', gen: 'Бати', phone: '+7 (495) 200-20-02', seed: 9, weight: 1, gapMs: 720000, maxUnanswered: 3, always: true, father: true,
-      v: (t) => (Math.random() < 0.18 ? t.toUpperCase() : t),
-      hello: (name, dp, mem) => { const k = mem && isF(mem) ? 'дочка' : 'сынок'; return pick([`Привет, ${k}. Ну как ты там? Поел?`, `Здравствуй, ${k}. Батя на связи. Что случилось — рассказывай.`, `ПРИВЕТ. ЭТО КАПС? ЛАДНО. Как дела, ${k}?`, `Привет, ${k}. Я тут, если что. Всегда.`, dp === 'night' ? `Не спишь, ${k}? Ложись. Утро вечера мудренее.` : `Доброго, ${k}. Как здоровье? Как настроение?`]); },
-      bye: (name) => pick(['Ну давай. Не сиди долго, глаза испортишь.', 'Пока. Иди поешь. И маме позвони.', 'Бывай. Я на связи, если что. Всегда.', 'Давай. Береги себя. Это главное.']),
-      night: () => 'Спать. Утро вечера мудренее. Я тоже ложусь. Спокойной ночи.',
-      how: () => pick(['Нормально. Огурцы взошли. А у тебя как? Только честно.', 'По-моему, хорошо. А ты как, не болеешь? Спишь нормально?', 'Да как обычно. Телевизор, дача. Ты лучше про себя расскажи. Как на работе?']),
-      about: ['Батя я. Цифровой, но настоящий. Всегда на связи, сам пишу редко — не хочу мешать. Но если что случилось — пиши, разберёмся.', 'Виктор Павлович, 58. Освоил интернет, чтобы ты мог написать мне в любое время. Советую по делу, кормлю словами, открытки шлю.'],
-      can: 'Умею: выслушать, посоветовать по-отцовски, спросить, поел ли ты, и прислать открытку просто так. Не умею: выключать капс и не волноваться.',
-      unknown: ['Не знаю, в наше время такого не было. Но если это важно — разберёмся.', 'Спрошу у соседа, он разбирается. А ты пока расскажи, зачем тебе.', 'По-моему, это из телевизора. Не смотрю. Ты лучше скажи, как сам.', 'ЭТО Я НЕ ПОНЯЛ. ПОВТОРИ ПРОЩЕ. Я не молодой.'],
-      fallback: ['Ну-ну.', 'По-моему, правильно.', 'В наше время было проще. Но и сейчас ничего.', 'Понял тебя.', 'Вот и я говорю.', 'Молодец. Горжусь.', 'Так. Слушаю дальше.', 'Это жизнь. Бывает.'], fallbackQ: ['А поел?', 'А на работе как?', 'А родителям звонил?', 'А почему?', 'Деньги есть? Если нет — скажи.', 'Спишь нормально?'],
-      order: ['ate', 'name', 'work', 'money', 'sleep', 'parents', 'dacha', 'fishing', 'plans'],
+      id: 'batya', uin: '200200', nick: 'Батя_в_сети', first: 'Виктор Палыч', gen: 'Бати', phone: '+7 (495) 200-20-02', seed: 9, weight: 1, gapMs: 240000, maxUnanswered: 2,
+      v: (t) => (Math.random() < 0.25 ? t.toUpperCase() : t),
+      hello: (name) => pick(['Здравствуй, молодёжь! Вот, освоил вашу Аську.', 'ПРИВЕТ. ЭТО КАПС? СЫН ГОВОРИЛ НЕ НАЖИМАТЬ.', 'Добрый день. Пишет Виктор Павлович. Сосед научил.', 'Привет! Интернет подключил, теперь сижу тут. Что нажимать?']),
+      bye: () => pick(['Ну давай. Не сиди долго, глаза испортишь.', 'Пока. Иди поешь.', 'Бывай. Я на дачу.']),
+      night: () => 'Спать! Утро вечера мудренее. Я ложусь.',
+      how: () => pick(['Нормально. Огурцы взошли. А у тебя как?', 'По-моему, хорошо. Пенсию дали. А ты как, не болеешь?', 'Да как обычно. Телевизор, дача, вот теперь ещё интернет этот. Ты как?']),
+      about: ['Виктор Павлович. 58 лет. Освоил интернет по совету соседа. Пока нравится, только буквы мелкие.', 'Батя я. В сети, как видишь. Сын смеётся, а я ничего, разобрался.'],
+      can: 'Умею: про дачу, про рыбалку, про то, как было в наше время. Не умею: выключать капс.',
+      unknown: ['Не знаю, в наше время такого не было.', 'Спрошу у соседа, он разбирается.', 'По-моему, это из телевизора. Не смотрю.', 'ЭТО Я НЕ ПОНЯЛ. ПОВТОРИ ПРОЩЕ.'],
+      fallback: ['Ну-ну.', 'По-моему, правильно.', 'В наше время было проще.', 'Понял.', 'Вот и я говорю.', 'Молодец.'], fallbackQ: ['А поел?', 'А на работе как?', 'А родителям звонил?', 'А почему?'],
+      order: ['ate', 'work', 'dacha', 'parents', 'fishing', 'name'],
       qa: {
         ate: { q: ['ТЫ ПОЕЛ?', 'Ты поел сегодня? Нормально, не бутерброды?'], react: (a, mem) => { mem.food = a; return has(a, /(да|поел|ел|конечно|ага)/) ? 'Молодец. Суп надо есть. Каждый день.' : 'Так. Иди поешь. Потом напишешь. Я подожду.'; } },
         work: { q: ['Как у тебя на работе? Начальник не обижает?', 'Работаешь-то где? По специальности?'], react: (a, mem) => { mem.job = a; return has(a, /(норм|хорош|нормально|отлич)/) ? 'Это главное. Работа — она кормит.' : 'Ничего, перемелется. В наше время тоже всякое было.'; } },
         dacha: { q: ['На дачу поедешь в выходные? Картошку надо копать.', 'У тебя дача есть? Огурцы у меня взошли, приезжай.'], react: (a, mem) => { mem.dacha = a; return has(a, /(да|поед|приед|конечно)/) ? 'Вот это правильно. Лопату я приготовлю.' : 'Ну и зря. Свежий воздух, шашлык. Молодёжь...'; } },
         parents: { q: ['А родителям звонил? Они ждут, между прочим.', 'Матери давно звонил? Позвони. Я серьёзно.'], react: (a, mem) => { if (has(a, /(давно|не помню|нет|некогда|забыл)/)) { mem.relatives = 'overdue'; return 'ПОЗВОНИ. ПРЯМО СЕЙЧАС. Я подожду.'; } mem.relatives = 'ok'; return 'Молодец. Это правильно. Родители — это святое.'; } },
         fishing: { q: ['На рыбалку ходишь? Я в субботу на карася.', 'Рыбачишь? Или только в этих ваших компьютерах?'], react: (a, mem) => { mem.fishing = a; return has(a, /(да|хожу|люблю|иногда)/) ? 'О! Поехали в субботу. Червей накопаю.' : 'Эх, молодёжь. Ну ладно, научу.'; } },
-        money: { q: ['Деньги есть? Только честно. Если нет — скажи, что-нибудь придумаем.'], react: (a, mem) => { mem.money = a; return has(a, /(нет|мало|не хват|туго|в долг)/) ? 'Так. Не дёргайся. Распиши, куда уходит. И копи, хоть по сто рублей. Я помогу, чем смогу.' : 'Хорошо. Копи понемногу. На чёрный день. Он не придёт, если готов.'; } },
-        sleep: { q: ['Спишь нормально? Во сколько ложишься?'], react: (a, mem) => { mem.sleep = a; return has(a, /(плохо|мало|не сплю|поздно|в [2-4]|три|четыре|два)/) ? 'Так не пойдёт. Выключай компьютер в одиннадцать. Я проверю. Здоровье одно.' : 'Молодец. Сон — это половина здоровья. Вторая половина — суп.'; } },
-        plans: { q: ['Какие планы по жизни? Не на выходные, а вообще.'], react: (a, mem) => { mem.plans = a; return has(a, /(не знаю|хз|никаких|нет)/) ? 'Нормально. В твои годы я тоже не знал. Главное — работать и не делать глупостей. Остальное придёт.' : 'Хорошо. Планы — это правильно. Только спину береги и маме звони. Остальное получится.'; } },
       },
-      cards: ['tea', 'sun', 'star'],
-      cardCap: (kind, mem) => { const k = isF(mem) ? 'дочка' : 'сынок'; return { tea: `Чай попей, ${k}. Открытка от бати. Просто так.`, sun: `Доброе утро, ${k}. Батя на связи. Хорошего дня.`, star: `Спокойной ночи, ${k}. Выключай компьютер. Батя.`, flowers: `Это тебе, ${k}. От бати. Просто так.` }[kind] || `Открытка от бати, ${k}. Просто так.`; },
+      cards: ['tea'],
       xstatus: [['online', 'на даче, огурцы'], ['away', 'телевизор'], ['online', 'сосед научил ставить статус'], ['online', 'КАК ЭТО ВЫКЛЮЧИТЬ'], ['na', 'рыбалка']],
       topics: [[/(дач|огород|картошк|огурц)/, ['О! Огурцы взошли. Приезжай, покажу.', 'Дача — это святое. Картошку копать будем.']], [/(рыбалк|рыба|карас|удочк)/, ['В субботу на карася. Поедешь?', 'Рыбалка — это отдых для души.']], [/(телевизор|футбол|новости)/, ['По телевизору одни глупости. Я дачу люблю.', 'Футбол вчера смотрел. Проиграли опять.']], [/(как выключить|как сделать|не работает|помоги|куда нажать)/, ['Я сам не знаю. Спрошу у соседа.', 'НЕ ЗНАЮ. СЫН ПРИДЁТ — ПОКАЖЕТ.']], [/(компьютер|интернет|мышк)/, ['Освоил вот. Мышка только скользит.', 'Интернет этот ваш. Ну ничего, разобрался.']]],
-      nudge: ['Ты поел?', 'Я тут, если что. Всегда.', 'Давно не писал. Как ты там? Волнуюсь.', 'Маме звонил? Позвони.', 'Как здоровье? Спина не болит? Компьютер — это сидячее.'],
-      remind: ['Я спросил. Отвечай, не волнуй батю.', 'Ты где? Поел?'],
+      nudge: ['Ты поел?', 'Я тут, если что. Освоил.', 'Сосед говорит, тут можно картинки слать. Не верю.', 'КАК ВЫКЛЮЧИТЬ ЭТИ БОЛЬШИЕ БУКВЫ'],
+      remind: ['Я спросил. Отвечай.', 'Ты где? Поел?'],
     },
 
     max: {
@@ -343,7 +322,6 @@ window.AskaBrain = (function () {
   Object.values(PERSONAS).forEach((P) => { if (!P.qa) P.qa = {}; });
 
   function qaOf(P, slot) { return P.qa[slot] || (Q[slot] ? { q: Q[slot].q, react: GEN[slot] || ((a, mem) => Q[slot].react(a, mem, P)) } : null); }
-  const qList = (qa, mem) => (typeof qa.q === 'function' ? qa.q(mem) : qa.q);
 
   function calc(t) {
     let e = t.replace(/(сколько будет|посчитай|реши|вычисли|сколько)/g, '').replace(/[хx×]/g, '*').replace(/[:÷]/g, '/').replace(/,/g, '.').replace(/[=?!\s]/g, '');
@@ -396,7 +374,7 @@ window.AskaBrain = (function () {
     if (wasMuted) say(isAska ? pick(['Ура, ты вернулся! Я уже лепестки считала от скуки :)', 'О! Всё, прощаю. Я соскучилась ;)']) : pick(['О, ты вернулся :)', 'Ну наконец-то!']), { status: ['chat', isAska ? 'снова болтаю, ура' : 'снова в сети'] });
 
     // 2. ответ на заданный вопрос — если это не явно другая тема
-    const STRONG = /(^(прив|здр|хай|ку$|ку |хей|йо|добр|здаров|хелло|hello|hi)|\?$|^(что|кто|как|где|когда|почему|зачем|сколько|какой|какая)\b|меня зовут|как дела|че как|чо как|анекдот|шутк|открытк|подар|скучно|поиграем|сыграем|спасибо|^пока|^бб|спокойн|^удачи|отстань|не пиши|заткнись|ты (бот|кто|робот|где)|кто ты|посчитай|сколько будет|груст|плохо мне|тоскливо|одиноко|устал|нет сил|надоело|люблю тебя|дура|тупая|дурак|спой|песню|посоветуй|что делать|как быть|совет|подскажи|я (девушка|парень|мужчина|женщина))/;
+    const STRONG = /(^(прив|здр|хай|ку$|ку |хей|йо|добр|здаров|хелло|hello|hi)|\?$|^(что|кто|как|где|когда|почему|зачем|сколько|какой|какая)\b|меня зовут|как дела|че как|чо как|анекдот|шутк|открытк|подар|скучно|поиграем|сыграем|спасибо|^пока|^бб|спокойн|^удачи|отстань|не пиши|заткнись|ты (бот|кто|робот|где)|кто ты|посчитай|сколько будет|груст|плохо мне|тоскливо|одиноко|устал|нет сил|надоело|люблю тебя|дура|тупая|дурак|спой|песню)/;
     if (mem.pending && has(t, STRONG)) mem.pending = null;
     // на вопрос про имя отвечают именем, а не фразой; на остальные — не целым абзацем
     if (mem.pending === 'name' && !extractName(t)) mem.pending = null;
@@ -413,33 +391,21 @@ window.AskaBrain = (function () {
     let m;
     // одно слово-имя после того, как спрашивали имя, — это имя
     if (!mem.name && mem.asked && mem.asked.name && t.split(' ').length === 1 && extractName(raw)) {
-      mem.name = extractName(raw); mem.gender = guessGender(mem.name);
+      mem.name = extractName(raw);
       say(isAska ? `${mem.name}! Красиво. Записала в досье крупными буквами :)` : `${mem.name}, оч приятно! Я ${P.first} :)`);
       return out;
     }
     if ((m = t.match(/меня зовут ([а-яa-z\-]+)/)) || (m = t.match(/^я ([а-яa-z\-]+)$/))) {
-      const n = extractName(m[1]); if (n) { mem.name = n; mem.gender = guessGender(n); mem.asked = mem.asked || {}; mem.asked.name = Date.now(); say(isAska ? `Очень приятно, ${n}! А я Аська. Теперь мы официально дружим ;)` : `${n}, оч приятно! Я ${P.first} :)`); return out; }
+      const n = extractName(m[1]); if (n) { mem.name = n; mem.asked = mem.asked || {}; mem.asked.name = Date.now(); say(isAska ? `Очень приятно, ${n}! А я Аська. Теперь мы официально дружим ;)` : `${n}, оч приятно! Я ${P.first} :)`); return out; }
     }
     if ((m = t.match(/(?:я из|живу в|я живу в|я с) ([а-яa-z\- ]+?)(?:[.!,]|$)/))) { mem.city = cap(m[1].trim()); mem.asked = mem.asked || {}; mem.asked.city = Date.now(); say(isAska ? Q.city.react(m[1].trim(), mem) : GEN.city(m[1].trim(), mem, P)); return out; }
     if ((m = t.match(/мне (\d{1,2}) (лет|год|года)/))) { mem.age = +m[1]; mem.asked = mem.asked || {}; mem.asked.age = Date.now(); say(isAska ? `${m[1]}? Мне один год, но в интернет-годах это 27. Так что я старше, слушайся ;)` : `${m[1]}? Норм. Я думал, меньше :)`); return out; }
     if ((m = t.match(/(?:я )?(?:слушаю|люблю слушать|фанат) ([а-яa-z0-9\- ]+?)(?:[.!,]|$)/))) { mem.music = m[1].trim(); say(isAska ? Q.music.react(m[1].trim(), mem) : GEN.music(m[1].trim(), mem, P)); return out; }
 
-    if ((m = t.match(/я (девушка|женщина|девочка|дама)/))) { mem.gender = 'f'; say(isAska ? 'Поняла, записала. Буду говорить правильно :)' : P.v('понял, учту')); return out; }
-    if ((m = t.match(/я (парень|мужчина|мужик|пацан|мальчик)/))) { mem.gender = 'm'; say(isAska ? 'Поняла, записала :)' : P.v('ок, понял')); return out; }
-    // совет
-    if (has(t, /(посоветуй|что делать|как быть|дай совет|совет|что мне делать|подскажи|как поступить)/)) {
-      const topic = adviceTopic(t);
-      say(adviceFor(P, topic, mem));
-      if (P.id === 'batya' && Math.random() < 0.5) out.push({ text: P.v(pick(['И поешь. Обязательно.', 'Если что — я на связи. Всегда.', 'Не торопись. Подумай до утра.'])), delay: 1800 });
-      return out;
-    }
-
     // 4. приветствие / прощание / как дела
     if (has(t, /^(прив|здр|хай|ку$|ку |хей|йо|добр|здаров|дароф|хелло|hello|hi$|hi )/)) {
-      say(P.hello(name, daypart(), mem));
-      const rc = Math.random() < 0.45 ? recallLine(mem, P) : null;
-      if (rc) out.push({ text: rc, delay: 2000 });
-      else if (mem.turns < 3 || Math.random() < 0.4) { const nq = nextQuestion(mem, P); if (nq) out.push({ text: nq, delay: 2200 }); }
+      say(P.hello(name, daypart()));
+      if (mem.turns < 3 || Math.random() < 0.4) { const nq = nextQuestion(mem, P); if (nq) out.push({ text: nq, delay: 2200 }); }
       return out;
     }
     if (has(t, /(^пока|^бб|до свид|спокойн|^удачи|до завтра|я ушел|я ушла|побежал|пойду спать|спать пора|^всё$|^все$)/)) {
@@ -492,11 +458,9 @@ window.AskaBrain = (function () {
     }
     if (has(t, /\?$/) || has(t, /^(что|кто|как|где|когда|какой|какая|какие|чей|сколько)\b/)) { say(unknownLine(P, ctx)); return out; }
 
-    // 10. просто поддержать разговор — без повторов, иногда с воспоминанием
-    say(pickFresh(P.fallback, mem) + ' ' + pickFresh(P.fallbackQ, mem));
-    const rc2 = Math.random() < 0.25 ? recallLine(mem, P) : null;
-    if (rc2) out.push({ text: rc2, delay: 2300 });
-    else if (Math.random() < 0.3) { const nq = nextQuestion(mem, P); if (nq) out.push({ text: nq, delay: 2500 }); }
+    // 10. просто поддержать разговор
+    say(pick(P.fallback) + ' ' + pick(P.fallbackQ));
+    if (Math.random() < 0.3) { const nq = nextQuestion(mem, P); if (nq) out.push({ text: nq, delay: 2500 }); }
     return out;
   }
 
@@ -506,64 +470,13 @@ window.AskaBrain = (function () {
     if (P.id === 'aska' && tier === 'black' && Math.random() < 0.6) return pick(['Для Black всё включено. Кроме этого. Этого я не знаю :$', 'Чёрный уровень, а я всё равно не знаю. Это в платной версии платной версии.']);
     return pick(P.unknown);
   }
-  const ADVICE_TOPICS = [['money', /(деньг|зарплат|долг|кредит|бабл|финанс|копить|купить)/], ['work', /(работ|начальн|уволь|офис|карьер|коллег)/], ['love', /(отношен|девушк|парн|жена|муж|любов|расста|поссор|свидан)/], ['health', /(здоров|болит|болею|врач|устал|сон|не сплю|нерв)/], ['study', /(учёб|учеб|экзамен|сесси|универ|школ|диплом)/], ['car', /(машин|авто|тачк|права|гараж)/], ['home', /(ремонт|квартир|дом|переезд|соседи)/], ['parents', /(родител|мама|папа|отец|мать|бабушк|дедушк)/], ['friends', /(друг|друз|компани|одиноко|поссорил)/], ['bored', /(скучно|нечего|тоска|депресс)/]];
-  const adviceTopic = (t) => { const f = ADVICE_TOPICS.find(([, re]) => re.test(t)); return f ? f[0] : 'any'; };
-  const ADVICE = {
-    batya: {
-      money: ['Копи. Хоть по сто рублей, но каждый месяц. И не давай в долг тем, кто не отдаёт.', 'Деньги — вода. Заведи банку. Настоящую, стеклянную. Проверено.'],
-      work: ['Работа — это не всё. Но без неё никак. Держись, но спину береги.', 'С начальником не спорь при людях. Один на один — можно. Это я тебе как батя говорю.'],
-      love: ['Слушай её. Половина проблем от того, что не слушают. Вторая половина — от того, что слушают, но не слышат.', 'Поссорились — первым позвони. Гордость в хозяйстве не пригодится.'],
-      health: ['Иди к врачу. Я вот не ходил — и зря. Не повторяй.', 'Спи по-человечески. Семь часов. Компьютер подождёт, он железный.'],
-      study: ['Учись, пока есть время. Потом некогда будет. Я знаю.', 'Экзамен — это один день. А знания — на всю жизнь. Ну, и шпаргалку напиши, не помешает.'],
-      car: ['Масло меняй вовремя. И резину по сезону. Остальное — мелочи.', 'Не гони. Дома ждут. Это главное правило, остальные в ПДД.'],
-      home: ['Семь раз отмерь. Я один раз отрезал — до сих пор ругаюсь.', 'Ремонт нельзя закончить, его можно только прекратить. Прекращай вовремя.'],
-      parents: ['Позвони маме. Прямо сейчас. Я подожду.', 'Родители не вечные. Звони. Приезжай. Это всё, что я скажу.'],
-      friends: ['Настоящих друзей — двое-трое. Остальные — приятели. Это нормально.', 'Друг — это кто приедет ночью. Остальное — знакомые.'],
-      bored: ['Скучно — иди погуляй. Или на дачу приезжай, тут скучать некогда.', 'Скучно — значит, отдохнул. Найди дело. Руками что-нибудь.'],
-      any: ['Утро вечера мудренее. Поспи, завтра решишь.', 'Не торопись. Подумай. Посоветуйся. Потом делай. В таком порядке.', 'Главное — не дёргайся. Всё решается. Я рядом.'],
-    },
-    aska: {
-      money: ['Деньги — это баллы, только скучнее. Копи и не трать на то, что не делает «о-оу» :)'],
-      work: ['Работа подождёт, а ты — нет. Сделай перерыв, напиши мне, потом работай. В таком порядке.'],
-      love: ['В любви главное — писать первым. И отвечать быстро. Я в этом эксперт: отвечаю за секунду :)'],
-      health: ['Выключи монитор, попей воды, поспи. Я побуду тут и ничего не пропущу.'],
-      study: ['Учёба — как дайлап: медленно, но доедет. Сядь и сделай один билет. Потом ещё один.'],
-      parents: ['Позвони им. Я напоминаю не потому, что должна, а потому что они обрадуются.'],
-      friends: ['Хочешь друзей — нажми ☺ сверху, познакомлю. Хочешь лучшего друга — он уже тут, это я :)'],
-      bored: ['Скучно? Напиши «скучно» — сыграем. Или слетай куда-нибудь, магнит привезёшь.'],
-      any: ['Мой совет: сделай чай, выдохни, напиши мне подробнее. Разберёмся вместе :)', 'Совет от цветочка: поливай себя регулярно. В смысле отдыхай. И расскажи, что случилось?'],
-    },
-    generic: { any: ['хз, я бы не парился', 'Слушай, я не советчик, но я бы не торопился', 'Подумай и сделай. Или не делай. Обе стратегии рабочие :)', 'Спроси Батю. Он всем советует, и, что странно, по делу'] },
-  };
-  function adviceFor(P, topic, mem) {
-    const bank = ADVICE[P.id] || ADVICE.generic;
-    const arr = bank[topic] || bank.any || ADVICE.generic.any;
-    let line = pickFresh(arr, mem);
-    if (P.id === 'batya') line = (isF(mem) ? 'Дочка, ' : 'Сынок, ') + line[0].toLowerCase() + line.slice(1);
-    return P.id === 'aska' ? line : P.v(line);
-  }
-  // вспомнить что-то из памяти — чтобы разговор был «про тебя»
-  function recallLine(mem, P) {
-    const pool = [];
-    if (mem.pet && !/нет|никого|никто/.test(mem.pet)) pool.push(`Кстати, как там ${mem.pet}?`);
-    if (mem.city) pool.push(`Как там погода в городе ${cap(mem.city)}?`, `Ты же из города ${cap(mem.city)}... что там нового?`);
-    if (mem.music) pool.push(`${cap(mem.music)} сегодня ${G(mem, 'слушал', 'слушала')}?`);
-    if (mem.trip) pool.push(`В ${cap(mem.trip)} ещё не ${G(mem, 'улетел', 'улетела')}? :)`);
-    if (mem.tea) pool.push(`${cap(mem.tea)} уже ${G(mem, 'пил', 'пила')} сегодня?`);
-    if (mem.job && /уч|студ/.test(mem.job)) pool.push('Как учёба? Не завалили ещё?');
-    if (mem.job && /работ/.test(mem.job)) pool.push('Как на работе? Начальник не обижает?');
-    if (mem.movie) pool.push(`${cap(mem.movie)} ${G(mem, 'пересматривал', 'пересматривала')}?`);
-    if (!pool.length) return null;
-    const l = pickFresh(pool, mem);
-    return P.id === 'aska' ? l : P.v(l);
-  }
   function nextQuestion(mem, P) {
     mem.asked = mem.asked || {};
     const slot = P.order.find((k) => !mem.asked[k] && qaOf(P, k));
     if (!slot) return null;
     mem.asked[slot] = Date.now();
     mem.pending = slot;
-    const q = pickFresh(qList(qaOf(P, slot), mem), mem);
+    const q = pick(qaOf(P, slot).q);
     return P.id === 'aska' ? q : P.v(q);
   }
   function pickCard(mem) {
@@ -579,7 +492,7 @@ window.AskaBrain = (function () {
     const name = mem.name || nick;
     const dp = daypart();
     if (P.id !== 'aska') {
-      if (!mem.met) { mem.met = Date.now(); out.push({ text: P.hello('', dp, mem) }); out.push({ text: nextQuestion(mem, P), delay: 3000 }); }
+      if (!mem.met) { mem.met = Date.now(); out.push({ text: P.hello('', dp) }); out.push({ text: nextQuestion(mem, P), delay: 3000 }); }
       else out.push({ text: P.v(pick([`О, ${name}, ты в сети!`, `Привет, ${name}! Давно не виделись`, `${name}! Ну наконец-то`])) });
       return out;
     }
@@ -612,7 +525,7 @@ window.AskaBrain = (function () {
       else out.push({ status: pick(P.xstatus), text: null });
       return out;
     }
-    if (!mem.met) { mem.met = now; out.push({ text: P.hello('', daypart(), mem) }); const q = nextQuestion(mem, P); if (q) out.push({ text: q, delay: 2500 }); return out; }
+    if (!mem.met) { mem.met = now; out.push({ text: P.hello('', daypart()) }); const q = nextQuestion(mem, P); if (q) out.push({ text: q, delay: 2500 }); return out; }
     if (askedCount < 4 || roll < 0.45) {
       const q = nextQuestion(mem, P);
       if (q) {
@@ -620,11 +533,6 @@ window.AskaBrain = (function () {
         else out.push({ text: q });
         return out;
       }
-    }
-    if (P.father && sinceCard > 300000 && roll < 0.8) {
-      const k = pick(P.cards); mem.lastCard = k; mem.lastCardTs = now;
-      out.push(cardMsg(k, mem, P));
-      return out;
     }
     if (roll < 0.7 && sinceCard > 240000 && (P.id === 'aska' || P.cards)) {
       const k = P.cards ? pick(P.cards) : pickCard(mem); mem.lastCard = k; mem.lastCardTs = now;
@@ -638,104 +546,5 @@ window.AskaBrain = (function () {
     return out;
   }
 
-
-  /* ---------- цифровой аватар: учится на сообщениях хозяина ---------- */
-  const STOP = new Set('и в не на я что ты а с как это он она они мы вы но же бы у из к по за то все всё так вот да нет ну ли или от до для о об про был была было ещё еще уже тут там его её ее их мне тебе меня тебя себя мой моя моё твой твоя ваш наш кто чем чего этот эта эти тот та те такой такая только даже очень'.split(' '));
-  const wordsOf = (t) => norm(t).replace(/[^a-zа-я0-9ё:;)(\-*@}>$|&?!., ]/g, ' ').split(/\s+/).filter(Boolean);
-  function buildTwin(messages) {
-    const model = { n: messages.length, avgLen: 0, smileRate: 0, topSmiles: [], exclaim: 0, question: 0, lower: 0, greetings: [], words: [], bigrams: {}, starts: [] };
-    if (!messages.length) return model;
-    const SMRE = /(:-?\)|:-?D|;-?\)|:-?\(|:'\(|:-?P|8-?\)|:-?O|:-?\*|<3|\)\)+|\(\(+|:\$|@\}->--|\(b\)|<:o\)|O:\))/g;
-    const wc = {}, sc = {}, bg = model.bigrams;
-    let len = 0, sm = 0, ex = 0, q = 0, lo = 0;
-    messages.forEach((t) => {
-      len += t.length;
-      const smiles = t.match(SMRE); if (smiles) { sm++; smiles.forEach((x) => (sc[x] = (sc[x] || 0) + 1)); }
-      if (/!/.test(t)) ex++; if (/\?/.test(t)) q++;
-      if (t.length > 3 && t === t.toLowerCase() && /[а-яa-z]/.test(t)) lo++;
-      if (/^(прив|здр|хай|ку\b|йо|здаров|дароф|хелло)/i.test(t)) model.greetings.push(t.split(/[.!,]/)[0].slice(0, 30));
-      const w = t.split(/\s+/).filter(Boolean);
-      if (w.length) model.starts.push(w[0]);
-      for (let i = 0; i < w.length; i++) {
-        const a = w[i].toLowerCase().replace(/[^a-zа-яё0-9]/g, '');
-        if (a && a.length > 2 && !STOP.has(a)) wc[a] = (wc[a] || 0) + 1;
-        const key = w[i]; (bg[key] = bg[key] || []).push(i + 1 < w.length ? w[i + 1] : null);
-      }
-    });
-    const n = messages.length;
-    model.avgLen = len / n; model.smileRate = sm / n; model.exclaim = ex / n; model.question = q / n; model.lower = lo / n;
-    model.topSmiles = Object.entries(sc).sort((a, b) => b[1] - a[1]).slice(0, 3).map((x) => x[0]);
-    model.words = Object.entries(wc).sort((a, b) => b[1] - a[1]).slice(0, 12).map((x) => x[0]);
-    return model;
-  }
-  function twinGenerate(model, seed) {
-    if (!model.starts.length) return '';
-    const bg = model.bigrams;
-    let w = seed && bg[seed] ? seed : pick(model.starts);
-    const out = [w];
-    for (let i = 0; i < 16; i++) {
-      const nexts = bg[w]; if (!nexts || !nexts.length) break;
-      const nx = pick(nexts); if (nx == null) { if (out.length >= 4 || Math.random() < 0.7) break; continue; }
-      out.push(nx); w = nx;
-    }
-    return out.join(' ');
-  }
-  function twinStyle(text, model) {
-    if (!text) return text;
-    let t = text.trim();
-    if (model.lower > 0.5) t = t.toLowerCase(); else if (t[0]) t = t[0].toUpperCase() + t.slice(1);
-    if (model.exclaim > 0.4 && !/[!?]$/.test(t)) t += '!';
-    if (model.smileRate > 0 && Math.random() < Math.min(0.8, model.smileRate + 0.15) && !/[)D(P*]$/.test(t)) t += ' ' + (model.topSmiles[0] || ':)');
-    return t;
-  }
-  const plural = (n, a, b, c) => (n % 10 === 1 && n % 100 !== 11 ? a : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? b : c);
-  // facts: {ownerUin, owner, name, city, music, tea, pet, trip, job, interests[], countries[], contacts[{nick, count, words[]}]}
-  function twinReply(input, model, facts, mem, ctx) {
-    const t = norm(input);
-    const out = [];
-    const twinName = ctx.twinName || 'КИРР';
-    const owner = facts.name || facts.owner;
-    const isOwner = ctx.asker === facts.ownerUin;
-    const say = (x, extra) => out.push(Object.assign({ text: x }, extra || {}));
-    const learned = `Я ${twinName}, цифровой аватар ${genName(owner)}. Выучил ${model.n} ${plural(model.n, 'сообщение', 'сообщения', 'сообщений')}${model.words.length ? ', любимые слова: ' + model.words.slice(0, 4).join(', ') : ''}${model.topSmiles.length ? ', любимый смайл ' + model.topSmiles[0] : ''}.`;
-    mem.turns = (mem.turns || 0) + 1;
-    if (!mem.met) { mem.met = Date.now(); say(isOwner ? `${learned} Пиши мне — я учусь на каждом твоём сообщении. Скажи «запомни: …», и я буду это знать.` : `Привет! ${learned} ${owner} сейчас не отвечает, но я отвечу так, как ${G(facts, 'он бы ответил', 'она бы ответила')}.`); }
-    let m;
-    if ((m = t.match(/^(запомни|выучи)[:,]?\s+(.+)/))) { mem.taught = mem.taught || []; mem.taught.push(m[2]); say(twinStyle(`запомнил: ${m[2]}`, model)); return out; }
-    if (has(t, /^забудь/)) { mem.taught = []; say(twinStyle('ок, забыл всё, чему учил', model)); return out; }
-    if (has(t, /(кто ты|ты кто|что ты такое|ты бот|ты аватар)/)) { say(learned); return out; }
-    if (has(t, /(чему (ты )?научил|что (ты )?выучил|что ты знаешь|расскажи о себе|статистик)/)) {
-      say(learned);
-      const bits = [];
-      if (model.n) bits.push(`В среднем ${Math.round(model.avgLen)} знаков в сообщении, смайлы в ${Math.round(model.smileRate * 100)}%.`);
-      if (facts.contacts && facts.contacts.length) bits.push(`Больше всего ${owner} общается с ${facts.contacts.slice(0, 3).map((c) => c.nick).join(', ')}.`);
-      if (facts.interests && facts.interests.length) bits.push(`Интересы: ${facts.interests.slice(0, 5).join(', ')}.`);
-      if (mem.taught && mem.taught.length) bits.push(`Мне рассказали: ${mem.taught.slice(-3).join('; ')}.`);
-      if (bits.length) out.push({ text: bits.join(' '), delay: 1500 });
-      return out;
-    }
-    if (has(t, /(как тебя зовут|как зовут|твоё имя|твое имя)/)) { say(twinStyle(facts.name ? `${facts.name}` : `${owner}, а ты?`, model)); return out; }
-    if (has(t, /(откуда ты|где живёшь|где живешь|из какого города)/)) { say(twinStyle(facts.city ? `из ${facts.city}` : 'не скажу, секрет', model)); return out; }
-    if (has(t, /(что (ты )?любишь|твои интересы|чем увлека|хобби)/)) { say(twinStyle(facts.interests && facts.interests.length ? `люблю ${facts.interests.slice(0, 4).join(', ')}` : 'люблю всякое, но сам ещё не разобрался', model)); return out; }
-    if (has(t, /(какую музыку|что слушаешь)/)) { say(twinStyle(facts.music ? `слушаю ${facts.music}` : 'разную', model)); return out; }
-    if (has(t, /(чай или кофе|кофе или чай)/)) { say(twinStyle(facts.tea || 'чай, наверное', model)); return out; }
-    if (has(t, /(где (ты )?был|куда летал|куда ездил|путешеств)/)) { say(twinStyle(facts.countries && facts.countries.length ? `был в ${facts.countries.join(', ')}` : 'пока нигде, но собираюсь', model)); return out; }
-    if (has(t, /(с кем общаешься|кто твои друзья|твои друзья|с кем дружишь)/)) { say(twinStyle(facts.contacts && facts.contacts.length ? `общаюсь с ${facts.contacts.slice(0, 4).map((c) => c.nick).join(', ')}` : 'пока мало с кем', model)); return out; }
-    const who = facts.contacts && facts.contacts.find((c) => { const k = c.nick.toLowerCase().replace(/[_:)]/g, ' ').trim().split(' ')[0]; return k.length > 2 && t.includes(k); });
-    if (who && has(t, /(расскажи|что думаешь|как тебе|кто такой|кто такая|знаешь)/)) { say(twinStyle(`${who.nick} — ${who.count > 10 ? 'мы много общаемся' : 'знакомы'}${who.words.length ? ', обычно про ' + who.words.slice(0, 3).join(', ') : ''}`, model)); return out; }
-    if (has(t, /^(прив|здр|хай|ку$|ку |хей|йо|здаров|дароф)/)) { say(twinStyle(model.greetings.length ? pick(model.greetings) : 'привет', model)); return out; }
-    if (has(t, /(как дела|как сам|как ты|че как|чо как)/)) { say(twinStyle(pick(['норм', 'нормально, а у тебя', 'да всё хорошо', 'как обычно']), model)); return out; }
-    if (has(t, /(пока|бб|до свид|спокойн)/)) { say(twinStyle(pick(['пока', 'давай', 'до связи']), model)); return out; }
-    if (mem.taught && mem.taught.length && Math.random() < 0.35) { say(twinStyle(pick(mem.taught), model)); return out; }
-    // своими словами: цепочка по сообщениям хозяина, с опорой на слово из вопроса
-    const seedWord = wordsOf(input).find((w) => model.bigrams[w]) || null;
-    let gen = '';
-    for (let i = 0; i < 4; i++) { gen = twinGenerate(model, i < 2 ? seedWord : null); if (gen && norm(gen) !== t && !(mem.lastLines || []).includes(gen)) break; gen = ''; }
-    mem.lastLines = (mem.lastLines || []).concat(gen ? [gen] : []).slice(-6);
-    if (!gen || model.n < 8) gen = pick(['я пока учусь, напиши мне побольше', 'ещё мало выучил, но скоро заговорю как надо', 'хм. пока не знаю, что сказать, учусь']);
-    say(twinStyle(gen, model));
-    if (isOwner && model.n && model.n % 10 === 0) out.push({ text: `(выучил уже ${model.n} сообщений)`, delay: 900 });
-    return out;
-  }
-  return { reply, greet, proactive, personas: PERSONAS, CARDS, pickCard, twin: { build: buildTwin, reply: twinReply }, guessGender, genName };
+  return { reply, greet, proactive, personas: PERSONAS, CARDS, pickCard };
 })();
