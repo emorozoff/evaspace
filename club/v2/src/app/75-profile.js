@@ -144,7 +144,7 @@ function renderProfile(root, pid) {
   if (lc) lc.onclick = () => { Auth.linkClaude(Auth.me().id); toast('Готово: дальше штаб узнаёт вас по аккаунту Claude'); };
   if (own) wirePwToggles(root);
   const tr = $('#pfTours', root);
-  if (tr) tr.onclick = () => { Tour.reset(); ['tasks', 'strategy', 'money', 'reports', 'calendar', 'metrics'].forEach(k => Prefs.set('help_' + k, false)); toast('Готово: туры и подсказки покажутся снова на каждой странице'); };
+  if (tr) tr.onclick = () => { Tour.reset(); Prefs.setMany(Object.fromEntries(['calendar', 'metrics', 'money', 'reports', 'strategy', 'tasks'].map(k => ['help_' + k, false]))); toast('Готово: туры и подсказки покажутся снова — на каждой странице и в окнах'); };
   if (!edit) return;
   on(root, 'click', '[data-pf-birth]', () => editBirth(p));
 

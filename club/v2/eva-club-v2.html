@@ -1449,6 +1449,30 @@ body.viewer-open{overflow:hidden;}
 .pt-row .label{margin-right:4px;}
 .pt-row code{background:var(--sunken); padding:1px 5px; border-radius:4px; font-size:12px;}
 .pt-acc{font-size:12.5px; color:var(--ink-2);}
+.join-ro b{display:block; color:var(--bad); margin-bottom:4px;}
+.join-ro p{margin:0 0 8px; color:var(--ink-2); font-weight:400;}
+.join-form.is-ro .jf-sec{opacity:.75;}
+.iv-share{display:flex; gap:10px; align-items:flex-start; margin-top:12px; padding:10px 12px; border-radius:9px; background:var(--warn-soft); border:1px solid color-mix(in srgb, var(--warn) 30%, transparent); font-size:13px;}
+.iv-share svg{width:18px; height:18px; flex:0 0 18px; stroke:var(--warn); fill:none; stroke-width:1.9; margin-top:1px;}
+.iv-share ol{margin:6px 0 0; padding-left:18px; display:grid; gap:3px; color:var(--ink-2);}
+.tour-hole.none{opacity:0;}
+.tour-off{align-self:flex-start; font-size:12px; color:var(--ink-3); margin-top:2px;}
+.tour-ex{display:flex; flex-direction:column; gap:6px; margin-top:4px; padding:10px; border-radius:10px; background:var(--surface-2); border:1px dashed var(--line-strong);}
+.tour-demo{display:flex; flex-direction:column; gap:8px; font-size:12.5px; color:var(--ink-2);}
+.td-row{display:flex; align-items:center; gap:10px;}
+.td-lock{position:static !important; flex:0 0 22px;}
+.td-card{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 11px; border:1px solid var(--line-strong); border-radius:10px; background:var(--surface);}
+.td-card b{font-size:13px; color:var(--ink);}
+.td-legend{flex-direction:row; flex-wrap:wrap; align-items:center; gap:8px;}
+.td-sw{font-size:11.5px; padding:3px 8px; border-radius:7px; background:var(--surface); border:1px solid var(--line-strong);}
+.td-sw.fresh{box-shadow:0 0 0 2px var(--rose-brand);}
+.td-sw.awaiting{box-shadow:0 0 0 2px color-mix(in srgb, var(--gold) 70%, transparent);}
+.td-sw.returned{background:var(--warn-soft); border-color:color-mix(in srgb, var(--warn) 45%, transparent);}
+.tour.center{background:rgba(14,11,18,.45);}
+.td-col{flex-direction:column; align-items:flex-start; gap:5px;}
+.td-flow{font-size:11.5px; color:var(--ink-3);}
+.td-meta{display:flex; gap:6px; align-items:center;}
+.td-due{pointer-events:none;}
 
 /* ── 77-tasks-org.css ── */
 /* ── задачи: чьи задачи — крупные вкладки ── */
@@ -2485,8 +2509,11 @@ const Store = (() => {
     return Promise.resolve();
   }
 
+  /* убрать запись только из этого браузера — когда база её не приняла */
+  function drop(c, id) { data[c].delete(id); commitLocal(c); }
+
   return {
-    COLS, state, init, put, add, patch, remove,
+    COLS, state, init, put, add, patch, remove, drop,
     all: c => [...data[c].values()],
     get: (c, id) => data[c].get(id) || null,
     count: c => data[c].size,
@@ -2662,7 +2689,10 @@ const Auth = {
     /* запись в общую базу могли не пустить: штаб открыт человеку только на просмотр */
     await acc.wrote;
     if (Store.state.mode !== 'local' && Store.state.readOnly) {
-      throw new Error('Регистрация не сохранилась: штаб открыт вам только на просмотр. Попросите основателя дать доступ на редактирование (меню «Поделиться» у штаба) и откройте ссылку ещё раз.');
+      /* база не приняла — не оставляем в браузере «учётку-призрак», иначе повтор скажет «почта занята» */
+      Store.drop('accounts', acc.id);
+      if (!inv.personId || inv.personId !== pid) Store.drop('people', pid);
+      throw new Error(`Регистрация не сохранилась: штаб открыт тебе только на просмотр. Попроси основателя пригласить тебя в «Поделиться» по почте твоего аккаунта Claude с правом «Редактор», обнови страницу и открой ссылку ещё раз — заполненное в анкете сохранится в этом браузере.`);
     }
     delete acc.wrote;
     const p = personById(pid) || {};
@@ -3154,6 +3184,12 @@ const Prefs = {
     const l = Local.get(this.lk(k), undefined);
     return l === undefined ? def : l;
   },
+  /* несколько настроек разом — одной записью в учётку */
+  setMany(obj) {
+    Object.entries(obj).forEach(([k, v]) => Local.set(this.lk(k), v));
+    const a = Auth.me();
+    if (a) Store.patch('accounts', a.id, {prefs: obj}, {mustExist: true});
+  },
   set(k, v) {
     Local.set(this.lk(k), v);
     const a = Auth.me();
@@ -3381,7 +3417,7 @@ const App = {
       const j = this.parse();
       /* анкету по ссылке дорисовываем, когда данные приглашения пришли позже, —
          но только пока человек ничего в ней не набрал */
-      const mode = (Store.count('accounts') ? 'has' : 'empty') + (j.id === 'join' ? ':' + joinKey(j.param) : j.id === 'reset' ? ':r' + j.param : '') + ':' + (Auth.claudeId ? 'c' : '');
+      const mode = (Store.count('accounts') ? 'has' : 'empty') + (j.id === 'join' ? ':' + joinKey(j.param) : j.id === 'reset' ? ':r' + j.param : '') + ':' + (Auth.claudeId ? 'c' : '') + (Auth.canWrite === false ? 'ro' : '');
       const form = $('#joinForm');
       if (!opts.force && $('#authRoot') && (this._authMode === mode || (form && form.dataset.dirty === '1'))) return;
       this._authMode = mode;
@@ -3421,7 +3457,12 @@ const App = {
     document.title = (n ? `(${n}) ` : '') + (id === 'home' ? '' : (this.pages[id].title || '') + ' · ') + 'Штаб Eva Club V2';
     Chat.paint();
     if (Tour.active) requestAnimationFrame(() => Tour.place());
-    else if (id !== 'join') Tour.maybe(id === 'person' && param === Auth.personId() ? 'me' : id);
+    else if (id !== 'join') {
+      /* тур страницы (у «Финансов» — свой у каждого раздела) */
+      const tourKey = () => (id === 'person' && param === Auth.personId() ? 'me' : this.pages[id].tourKey ? this.pages[id].tourKey() : id);
+      const tk = tourKey();
+      Tour.maybe(tk, () => App.parse().id === id && tourKey() === tk);
+    }
     /* первый вход новичка — приветствие, один раз на учётку */
     if (me.welcomed === false && this._welcomed !== me.id && id !== 'join') {
       this._welcomed = me.id;
@@ -3527,7 +3568,7 @@ const App = {
     if (ro) {
       const off = s.mode !== 'local' && (s.readOnly || Auth.canWrite === false);
       ro.hidden = !off;
-      if (off) ro.innerHTML = `${icon('help')}<span><b>Ваши правки не сохраняются:</b> штаб открыт вам только на просмотр. Попросите основателя дать доступ на редактирование — меню «Поделиться» у штаба.</span>`;
+      if (off) ro.innerHTML = `${icon('help')}<span><b>Ваши правки не сохраняются:</b> штаб открыт вам только на просмотр. Попросите основателя пригласить вас в меню «Поделиться» по почте вашего аккаунта Claude с правом «Редактор» — и обновите страницу.</span>`;
     }
     el.title = s.mode === 'local'
       ? 'Штаб открыт не в артефакте Claude: данные живут только в этом браузере'
@@ -5006,7 +5047,7 @@ App.register('tasks', {
     root.innerHTML = `
       ${pageHead('Задачи', 'Задачи от человека к человеку: кто поставил → кто делает и к какому дню. Статус, важность, исполнителя и срок меняйте прямо на карточке.',
         helpBtn('tasks'))}
-      ${helpBox('tasks', `<b>Как работаем с задачами.</b> На карточке сразу меняются статус, важность и исполнитель. Клик по карточке — окно задачи: описание, ЦКП (что получим на выходе), срок, бюджет — выберите сумму и при необходимости отметьте «Требует согласования», — кто принимает результат, от чего задача зависит, обсуждение. Если результат принимает другой человек, «Готово» отправит задачу ему на согласование: он согласует или вернёт с комментарием. <b>Сроки:</b> постановщик меняет срок сразу у всех; исполнитель переносит сам в пределах месяца, а если постановщик отметил «Срок важен» или нужен другой месяц — отправляет запрос, постановщик согласует одной кнопкой. Всё, что касается вас, собирается в блоке «Для вас» и всплывает уведомлением со звуком. Карточки перетаскиваются зажатием.`)}
+      ${helpBox('tasks', `<b>Как работаем с задачами.</b> На карточке сразу меняются статус, важность и исполнитель. Клик по карточке — окно задачи: описание, ЦКП (что получим на выходе), срок, бюджет — выберите сумму и при необходимости отметьте «Требует согласования», — кто принимает результат, от чего задача зависит, обсуждение. Если результат принимает другой человек, «Готово» отправит задачу ему на согласование: он согласует или вернёт с комментарием. <b>Сроки:</b> постановщик меняет срок сразу у всех; исполнитель переносит сам в пределах месяца, а если постановщик отметил «Срок важен» или нужен другой месяц — отправляет запрос, постановщик согласует одной кнопкой. Всё, что касается вас, собирается в блоке «Для вас» и всплывает уведомлением со звуком. Карточки перетаскиваются зажатием. <b class="bad">Красное «держит N»</b> — блокирующая задача: от неё зависят другие, делайте её первой. <b>Замочек</b> в углу карточки: 🔒 — задача ждёт другую («Зависит от» в окне задачи), начинать рано; 🔓 — блокирующие готовы, можно делать.`)}
       ${inboxHtml()}
       <div class="t-scope" role="tablist" aria-label="Чьи задачи">${scopes.map(([v, n, tip]) => `<button data-scope="${v}" class="${f.who === v ? 'on' : ''}" title="${tip}">${n}<b>${cnt(v)}</b></button>`).join('')}
         <select class="select sm ${person ? 'on' : ''}" id="fWho" aria-label="Задачи человека">${whoOpts}</select></div>
@@ -5416,6 +5457,7 @@ function quickTask(preset) {
       <label class="check" id="qtFixWrap" hidden><input type="checkbox" id="qtFix"> Срок важен — исполнитель переносит его только с моего согласования</label>`,
     foot: `<button class="btn ghost left" id="qtMore">Подробнее…</button><button class="btn" data-close>Отмена</button><button class="btn primary" id="qtAdd">Добавить</button>`,
     onMount(el, close) {
+      Tour.inModal('task-quick', '#qtTitle');
       let force = false, done = false;
       const tw = $('#qtTwin', el);
       const check = () => {
@@ -5522,6 +5564,7 @@ function openTask(id, opts = {}) {
     body, foot, wide: true, focus: isNew,
     onMount(el, close) {
       el.classList.add('tm-modal');
+      Tour.inModal(isNew ? 'task-new' : 'task-open', '.tm-modal');
       const saved = () => { const s = $('#tmSaved', el); if (s) { s.textContent = 'Сохранено'; clearTimeout(s._t); s._t = setTimeout(() => { s.textContent = ''; }, 1600); } };
       /* одна точка записи: у новой задачи — в черновик, у существующей — в базу с историей */
       const set = (patch, log, ev) => {
@@ -5929,6 +5972,7 @@ const FIN_TABS = [
 ];
 App.register('money', {
   title: 'Финансы',
+  tourKey() { const t = View.get('fin.tab', 'overview'); return t === 'overview' || !TOURS['money-' + t] ? 'money' : 'money-' + t; },
   render(root, param) {
     if (!Auth.can('money.view')) { root.innerHTML = pageHead('Финансы', '') + noAccess(); return; }
     const s = settings(), sc = s.scenario;
@@ -8067,6 +8111,7 @@ function accessHtml(accs, invs) {
           <td class="soft nowrap">${a.lastSeen ? timeAgo(a.lastSeen) : '—'}</td>
           <td class="r nowrap">${self ? '' : `<button class="btn xs" data-acc-reset="${a.id}">Сброс пароля</button> <button class="btn xs ${off ? '' : 'danger'}" data-acc-toggle="${a.id}">${off ? 'Включить' : 'Отключить'}</button>`}</td></tr>`;
       }).join('')}</tbody></table></div>
+    ${pending.length ? shareHelpHtml() : ''}
     ${pending.length ? `<div class="section-head inv-h"><h3>Приглашения, по которым ещё не зарегистрировались</h3></div>
       <div class="table-wrap"><table class="t inv"><thead><tr><th>Для кого</th><th>Роль</th><th>Код</th><th>Выдано</th><th></th></tr></thead>
       <tbody>${pending.map(i => { const p = personById(i.personId); return `<tr><td>${esc(p ? personName(p) : i.title || '—')}</td><td>${rolePill(i.role)}</td><td><span class="inv-code">${esc(i.id)}</span></td><td class="soft">${timeAgo(i.at)}</td>
@@ -8237,7 +8282,15 @@ function inviteText(code) {
 Ссылка: ${inviteLink(code)}
 Доступ: ${ROLES[roleOf(inv.role)].name}.
 
-По ссылке откроется короткая анкета — часть данных уже заполнена, проверь и допиши остальное. Если вместо анкеты откроется вход, нажми «У меня приглашение» и введи код ${code}.`;
+По ссылке откроется короткая анкета — часть данных уже заполнена, проверь и допиши остальное. Если вместо анкеты откроется вход, нажми «У меня приглашение» и введи код ${code}.${Store.state.mode === 'db' ? '\n\nОткрывай ссылку в своём аккаунте Claude — в том, на чью почту пришёл доступ к штабу.' : ''}`;
+}
+/* основателю: без доступа на редактирование анкета не сохранится */
+function shareHelpHtml() {
+  if (Store.state.mode !== 'db') return '';
+  return `<div class="iv-share">${icon('help')}<div><b>Чтобы анкета сохранилась, человеку нужен доступ на редактирование.</b>
+    <ol><li>«Поделиться» у штаба → пригласите человека <b>по почте его аккаунта Claude</b> с правом <b>«Редактор»</b> (Editor).</li>
+      <li>Выключите доступ «всем по ссылке»: по общей ссылке люди не из вашей организации Claude могут только смотреть — и регистрация у них не сохранится.</li>
+      <li>Отправьте ссылку-приглашение отсюда.</li></ol></div></div>`;
 }
 function fillHtml(p) {
   const v = cardValues(p);
@@ -8257,7 +8310,8 @@ function issueInvite(pid) {
     <div class="iv-link"><input class="input" id="ivLink" readonly value="${esc(inviteLink(code))}" aria-label="Ссылка-приглашение"><button type="button" class="btn sm primary" data-iv-copy-link>${icon('copy')}Скопировать ссылку</button></div>
     <pre class="iv-msg" id="ivMsg"></pre>
     <div class="row"><button type="button" class="btn sm" data-iv-copy-msg>${icon('copy')}Скопировать приглашение целиком</button><button type="button" class="btn sm ghost" data-iv-preview>Как увидит человек</button></div>
-    <p class="note">Ссылка одноразовая: после регистрации она перестанет работать. Запасной код из сообщения — <span class="inv-code">${esc(code)}</span>.</p>`;
+    <p class="note">Ссылка одноразовая: после регистрации она перестанет работать. Запасной код из сообщения — <span class="inv-code">${esc(code)}</span>.</p>
+    ${shareHelpHtml()}`;
   openModal({
     title: p ? `Пригласить: ${personName(p)}` : 'Пригласить в команду',
     wide: true,
@@ -8359,21 +8413,29 @@ function renderJoin(root, code) {
     return;
   }
   const p = personById(inv.personId);
-  const v = cardValues(p, inv);
-  const src = Object.fromEntries(Object.entries(v).filter(([, x]) => x).map(([k]) => [k, true]));
+  const card = cardValues(p, inv);
+  const src = Object.fromEntries(Object.entries(card).filter(([, x]) => x).map(([k]) => [k, true]));
+  /* что человек уже набрал в этом браузере — не теряем при обновлении страницы */
+  const draft = Local.get('eva-hq-join:' + c, null) || {};
+  const v = {...card, ...Object.fromEntries(Object.entries(draft).filter(([, x]) => x))};
+  const ro = Auth.canWrite === false;
   root.innerHTML = `<div class="join">
     ${joinHeroHtml(inv, p, v)}
-    <form class="card join-form" id="joinForm" novalidate autocomplete="on">
-      ${Auth.canWrite === false ? '<div class="join-ro">Похоже, штаб открыт вам только на просмотр — регистрация не сохранится. Попросите основателя дать доступ на редактирование (меню «Поделиться» у штаба) и откройте ссылку снова.</div>' : ''}
+    <form class="card join-form ${ro ? 'is-ro' : ''}" id="joinForm" novalidate autocomplete="on">
+      ${ro ? `<div class="join-ro"><b>Сейчас штаб открыт тебе только на просмотр — регистрация не сохранится.</b>
+        <p>Попроси основателя пригласить тебя в меню «Поделиться» штаба по почте твоего аккаунта Claude с правом «Редактор». Когда доступ придёт — обнови страницу и открой эту ссылку снова.</p>
+        <div class="row"><button type="button" class="btn sm" data-join-ask>${icon('copy')}Скопировать сообщение основателю</button><button type="button" class="btn sm primary" data-join-reload>${icon('refresh')}Доступ дали — проверить</button></div></div>` : ''}
       <p class="join-lead">Проверь данные — часть мы уже заполнили. Всё можно поправить сейчас или потом на своей странице в штабе.</p>
       ${joinFormHtml(v, src)}
       <div class="auth-msg" id="joinMsg" hidden></div>
-      <button class="btn primary join-go" type="submit" id="joinGo">${icon('heart')}Присоединиться к команде</button>
+      <button class="btn primary join-go" type="submit" id="joinGo" ${ro ? 'disabled title="Сначала нужен доступ на редактирование"' : ''}>${icon('heart')}Присоединиться к команде</button>
       <p class="auth-note">Анкету видят все в команде штаба. Уже есть учётка? <button type="button" class="link-btn" data-join-mode="login">Войти</button></p>
     </form>
   </div>`;
   wireJoinForm(root, c);
   wirePwToggles(root);
+  on(root, 'click', '[data-join-reload]', () => location.reload());
+  on(root, 'click', '[data-join-ask]', (e, b) => copyText(`Привет! Открываю приглашение в штаб Eva Club, но штаб открыт мне только на просмотр — регистрация не сохраняется. Пригласи меня, пожалуйста, в «Поделиться» по почте моего аккаунта Claude с правом «Редактор».`, b));
   on(root, 'click', '[data-join-mode]', (e, b) => { View.set('authMode', b.dataset.joinMode); location.hash = ''; App.render({force: true}); });
   const first = $('#j-given', root);
   if (first && !first.value) setTimeout(() => { if (!document.activeElement || document.activeElement === document.body) first.focus(); }, 30);
@@ -8389,8 +8451,15 @@ function wireJoinForm(root, code) {
   const form = $('#joinForm', root), msg = $('#joinMsg', root), go = $('#joinGo', root);
   const val = k => (($('#j-' + k, root) || {}).value || '').trim();
   const fail = (text, k) => { msg.textContent = text; msg.hidden = false; const i = k && $('#j-' + k, root); if (i) { i.classList.add('bad'); i.focus(); } else msg.scrollIntoView({block: 'center', behavior: 'smooth'}); };
-  on(form, 'input', '.input', (e, i) => { i.classList.remove('bad'); form.dataset.dirty = '1'; });
-  on(form, 'change', 'select', () => { form.dataset.dirty = '1'; });
+  /* черновик анкеты — в этом браузере, без пароля */
+  const keep = () => {
+    const d = {hdType: hd};
+    ['given', 'surname', 'title', 'dir', 'email', 'phone', 'telegram', 'birthDate', 'birthTime', 'birthCity', 'hdProfile'].forEach(k => { d[k] = val(k); });
+    Local.set('eva-hq-join:' + code, d);
+  };
+  on(form, 'input', '.input', (e, i) => { i.classList.remove('bad'); form.dataset.dirty = '1'; if (i.type !== 'password') keep(); });
+  on(form, 'change', 'select', () => { form.dataset.dirty = '1'; keep(); });
+  on(root, 'click', '[data-hd]', () => keep());
   form.addEventListener('submit', async e => {
     e.preventDefault();
     msg.hidden = true;
@@ -8408,6 +8477,7 @@ function wireJoinForm(root, code) {
     go.textContent = 'Создаю учётку…';
     try {
       await Auth.acceptInvite(f);
+      Local.del('eva-hq-join:' + code);
       try { history.replaceState(null, '', '#home'); } catch (err) { location.hash = 'home'; }
       App.render({force: true});
     } catch (err) {
@@ -8993,7 +9063,7 @@ function renderProfile(root, pid) {
   if (lc) lc.onclick = () => { Auth.linkClaude(Auth.me().id); toast('Готово: дальше штаб узнаёт вас по аккаунту Claude'); };
   if (own) wirePwToggles(root);
   const tr = $('#pfTours', root);
-  if (tr) tr.onclick = () => { Tour.reset(); ['tasks', 'strategy', 'money', 'reports', 'calendar', 'metrics'].forEach(k => Prefs.set('help_' + k, false)); toast('Готово: туры и подсказки покажутся снова на каждой странице'); };
+  if (tr) tr.onclick = () => { Tour.reset(); Prefs.setMany(Object.fromEntries(['calendar', 'metrics', 'money', 'reports', 'strategy', 'tasks'].map(k => ['help_' + k, false]))); toast('Готово: туры и подсказки покажутся снова — на каждой странице и в окнах'); };
   if (!edit) return;
   on(root, 'click', '[data-pf-birth]', () => editBirth(p));
 
@@ -9184,10 +9254,86 @@ const TOURS = {
   tasks: [
     {sel: '.t-scope', title: 'Чьи задачи', text: '«Мне» — что поставили вам, «От меня» — что вы поставили другим, «Все» — задачи всей команды. Справа можно выбрать человека.'},
     {sel: '.t-quick', title: 'Новая задача — здесь', text: 'Напишите, что сделать, выберите кому и срок — Enter. Галочка «срок важен» — исполнитель перенесёт его только с вашего согласования.'},
-    {sel: '.kb .tc', title: 'Карточка задачи', text: 'Сверху — кто поставил → кто делает. Статус, важность и исполнитель меняются прямо на карточке, клик — окно задачи.'},
+    {sel: '.kb .tc', title: 'Карточка задачи', text: 'Сверху — кто поставил → кто делает. Статус, важность и исполнитель меняются прямо на карточке, клик — окно задачи.',
+      demo: '<div class="tour-demo"><div class="td-card td-col"><span class="td-flow">Кирилл → Мария</span><b>Снять три мастер-класса</b><span class="td-meta"><span class="due-btn td-due">20 окт</span><span class="pill violet">В работе</span></span></div></div>'},
+    {sel: '.kb .due-btn', title: 'Срок', text: 'Нажмите на срок, чтобы поменять. В пределах месяца исполнитель переносит сам, иначе — запрос постановщику.',
+      demo: '<div class="tour-demo"><div class="td-row"><span class="due-btn td-due">20 окт</span><span>срок можно сдвинуть сам</span></div><div class="td-row"><span class="due-btn td-due">20 окт ★</span><span>«срок важен» — перенос только с согласия постановщика</span></div></div>'},
+    {sel: '.kb .t-holds', title: 'Блокирующая задача — красным', text: 'Красная надпись «держит 2» — от этой задачи зависят другие, и пока она не готова, они стоят. Такие задачи делайте первыми.',
+      demo: '<div class="tour-demo"><div class="td-card"><b>Подключить оплату</b><span class="t-holds">держит 2</span></div></div>'},
+    {sel: '.kb .tc-lock', title: 'Замочек', text: 'Замочек в углу карточки — у задачи есть «Зависит от». Связь ставится в окне задачи; когда блокирующая готова, придёт уведомление «можно начинать».',
+      demo: '<div class="tour-demo"><div class="td-row"><span class="tc-lock on td-lock">🔒</span><span><b>Красный замочек</b> — ждёт другую задачу, начинать рано</span></div><div class="td-row"><span class="tc-lock td-lock">🔓</span><span><b>Зелёный</b> — блокирующие готовы, можно делать</span></div></div>'},
+    {sel: null, title: 'Что ещё бывает на карточке', text: 'Розовая рамка — новое для вас. Золотая — ждёт согласования. Жёлтый фон — вернули на доработку. Точки — сколько раз переносили срок или возвращали. «Перенос?» — просят сдвинуть срок.',
+      demo: '<div class="tour-demo td-legend"><span class="td-sw fresh">новое</span><span class="td-sw awaiting">на согласовании</span><span class="td-sw returned">вернули</span><span class="tc-dots"><i class="pp"></i><i class="rw"></i></span><span class="t-dreq">перенос?</span><span class="t-budget pending">30 тыс · ждёт</span></div>'},
     {sel: '.kb .due-btn', title: 'Срок', text: 'Нажмите на срок, чтобы поменять. В пределах месяца исполнитель переносит сам, иначе — запрос постановщику.'},
-    {sel: '.inbox', title: 'Для вас', text: 'Что ждёт вашего решения — согласовать работу, бюджет или перенос срока — и что произошло по вашим задачам.'},
+    {sel: '.inbox', title: 'Для вас', text: 'Что ждёт вашего решения — согласовать работу, бюджет или перенос срока — и что произошло по вашим задачам. Появляется, когда есть новости.',
+      demo: '<div class="tour-demo"><div class="td-card td-col"><b>Для вас</b><span>Кирилл поставил вам задачу «Снять ролик»</span><span>Мария сдала на согласование «Монтаж»</span></div></div>'},
     {sel: '.t-bar .seg', title: 'Виды', text: 'Доска по статусам, по месяцам, по неделям или списком. Карточки перетаскиваются зажатием.'},
+  ],
+  /* окно задачи: первая новая задача и первая открытая */
+  'task-new': [
+    {sel: '.tm-modal #tmTitle', title: 'Ваша первая задача', text: 'Коротко и с глаголом: «Снять ролик о…». Если вы уже умеете ставить задачи — «Пропустить».'},
+    {sel: '.tm-modal #tmResult', title: 'ЦКП — что получим на выходе', text: 'Конкретный результат, по которому видно, что задача сделана: «договор подписан и лежит в папке».'},
+    {sel: '.tm-modal .tm-grid', title: 'Кто и когда', text: 'Постановщик — вы, ответственный — кто делает: ему придёт уведомление со звуком. Срок, месяц и цель квартала.'},
+    {sel: '.tm-modal #tmDueBox', title: 'Срок важен?', text: 'Отметьте «Срок важен», если дату нельзя сдвигать: исполнитель перенесёт её только с вашего согласия. Без галочки он двигает срок сам в пределах месяца.'},
+    {sel: '.tm-modal #tmBudgetBox', title: 'Бюджет и его согласование', text: 'Нужны деньги — сумма и статья. С галочкой «Требует согласования» бюджет уходит основателю или финансам: тратить можно после «Согласовать». Согласованный бюджет сам встанет в план платежей.'},
+    {sel: '.tm-modal #tmApprBox', title: 'Кто принимает результат', text: '«Результат согласовывает» — кто проверит работу. Исполнитель нажмёт «Готово», и задача придёт этому человеку: принять или вернуть с комментарием.'},
+    {sel: '.tm-modal #tmCreate', title: 'Создать', text: '«Создать задачу» — и она появится у исполнителя. Зависимости («ждёт другую задачу») и обсуждение — в окне уже созданной задачи.'},
+  ],
+  'task-open': [
+    {sel: '.tm-modal #tmTop', title: 'Окно задачи', text: 'Сверху — кто поставил → кто делает и статус. Всё, что вы меняете, сохраняется сразу и видно команде.'},
+    {sel: '.tm-modal #tmDueBox', title: 'Срок', text: 'Свою задачу двигаете сами. Чужую — в пределах месяца, если срок не отмечен «важным»; иначе уйдёт запрос постановщику.'},
+    {sel: '.tm-modal #tmBudgetBox', title: 'Бюджет', text: 'Сумма, статья и согласование. Пока бюджет «ждёт», деньги не тратим — согласующему пришло уведомление.'},
+    {sel: '.tm-modal #tmApprBox', title: 'Приёмка', text: 'Если результат принимает другой человек, «Готово» отправит задачу ему на согласование.'},
+    {sel: '.tm-modal #tmDepsBox', title: 'Зависит от — замочек', text: 'Нельзя начать, пока не готова другая задача? Выберите её здесь: на карточке появится 🔒, а у той — красное «держит». Когда она будет готова, придёт «можно начинать».',
+      demo: '<div class="tour-demo"><div class="td-row"><span class="tc-lock on td-lock">🔒</span><span><b>Красный замочек</b> — ждёт другую задачу, начинать рано</span></div><div class="td-row"><span class="tc-lock td-lock">🔓</span><span><b>Зелёный</b> — блокирующие готовы, можно делать</span></div></div>'},
+    {sel: '.tm-modal #tmZone', title: 'Результат работы', text: 'Ссылка, документ или текст — и «Готово». Постановщик увидит результат и примет работу или вернёт с комментарием.'},
+    {sel: '.tm-modal .t-m-comments', title: 'Обсуждение', text: 'Вопросы и договорённости — комментарий придёт исполнителю и постановщику со звуком.'},
+    {sel: '.tm-modal #tmAdam', title: 'Адам напишет за вас', text: 'Нужно напомнить коллеге или отчитаться — Адам подготовит сообщение по этой задаче.'},
+  ],
+  'task-quick': [
+    {sel: '#qtTitle', title: 'Быстрая задача', text: 'Название, кто делает и срок — и «Добавить».'},
+    {sel: '#qtFixWrap', title: 'Срок важен', text: 'Для задачи коллеге: с галочкой исполнитель переносит срок только с вашего согласия.'},
+    {sel: '#qtMore', title: 'Подробнее…', text: 'Бюджет с согласованием, ЦКП, кто принимает результат, цель квартала — в полном окне задачи.'},
+  ],
+  meeting: [
+    {sel: '#mtTitle', title: 'Собрание', text: 'Название, дата, начало и длительность. Внизу окна — свободные у всех окна, можно нажать.'},
+    {sel: '.mt-chips', title: 'Участники из команды', text: 'Нажмите на людей — им придёт приглашение в Google Календарь. «Нет почты» — впишите её прямо здесь.'},
+    {sel: '#mtGAdd', title: 'Гости не из команды', text: 'Имя, почта для приглашения и Telegram для напоминания перед встречей.'},
+    {sel: '#mtRemind', title: 'Напоминание', text: 'За сколько напомнить: команде — в штабе со звуком, гостям — кнопкой «Напомнить» (или ботом на своём сервере).'},
+  ],
+  chat: [
+    {sel: '.chat-tabs', title: 'Адам, команда и личные', text: '«Адам» — ассистент: сводка дня и ответы на вопросы. «Команда» — общий чат. «Личные» — диалоги один на один.'},
+    {sel: '#chatChips', title: 'С чего начать', text: 'Нажмите готовый вопрос — например, «Что у меня горит?».'},
+    {sel: '#chatInput', title: 'Спросите своими словами', text: 'Enter — отправить. Попросите Адама написать сообщение коллеге или разбить задачу на шаги.'},
+  ],
+  'money-ops': [
+    {sel: '#qeForm', title: 'Быстрая запись', text: 'Потратили или получили деньги — сумма, статья, дата и Enter. Ошиблись — «Отменить» в уведомлении.'},
+    {sel: 'table.led', title: 'Журнал операций', text: 'Все приходы и расходы. Строки с пометками «по плану», выплаты, заказы и возвраты попали сюда сами. Нажмите на строку, чтобы поправить.'},
+  ],
+  'money-plan': [
+    {sel: 'table.plan', title: 'Финплан', text: 'Оплата труда, регулярные и разовые платежи по месяцам. «Оплатить» — операция сама попадёт в журнал.'},
+    {sel: 'table.pnl', title: 'План-факт', text: 'Крупно — факт, мелко — план. Будущие месяцы — план по сценарию.'},
+    {sel: '.cf', title: 'Прогноз', text: 'Cash Flow до Нового года: сколько денег будет на счёте в конце каждого месяца.'},
+  ],
+  'money-subs': [
+    {sel: '.subs-t', title: 'Подписки по месяцам', text: 'Серым — посчитано само из «Цифр дня» и возвратов. «Поправить» — вписать точные цифры, например годовые подписки.'},
+    {sel: '[data-payouts="ref"]', title: 'Реферальные выплаты', text: '«Начисление» — кому и сколько за приведённых подписчиков. «Выплатить» — расход сам попадёт в журнал.'},
+  ],
+  'money-courses': [
+    {sel: '.courses-t, [data-course-add]', title: 'Продажи курсов', text: 'Впишите, сколько продано за месяц, — выручка и доля автора посчитаются сами. «Внести приход» — выручка месяца в журнал.'},
+    {sel: '[data-payouts="author"]', title: 'Выплаты авторам', text: 'Начисляются сами; за закрытый месяц — «Выплатить».'},
+  ],
+  'money-market': [
+    {sel: '.fin-subbar', title: 'Заказы, товары, распределение', text: 'Заказы со статусом оплаты и доставки, склад и кто сколько получает с выручки.'},
+    {sel: '[data-order-add]', title: 'Новый заказ', text: 'Клиент, состав и доставка. «Оплачен» — приход в журнал и списание со склада.'},
+  ],
+  'money-failed': [
+    {sel: '[data-fail-add]', title: 'Сбой оплаты', text: 'Списание за подписку не прошло — запишите: причина, сумма, контакт. В карточке — готовое сообщение клиенту.'},
+    {sel: '.fin-tabs [data-ftab="failed"]', title: 'Путь сбоя', text: 'Новый → написали клиенту → повторное списание → оплачено или потерян. Красная цифра — сколько ждёт действия сегодня.'},
+  ],
+  'money-refunds': [
+    {sel: '[data-refund-add]', title: 'Запрос на возврат', text: 'Клиент просит вернуть деньги — запишите: что, сумма, причина. Срок ответа — 10 дней, просрочка подсвечивается красным.'},
+    {sel: '.fin-tabs [data-ftab="refunds"]', title: 'Решение', text: '«Одобрен» → «Возвращено» — расход сам ляжет в журнал. Отказ — только с пояснением; ответ клиенту готов в карточке.'},
   ],
   calendar: [
     {sel: '.cal-conn', title: 'Google Календарь', text: 'Подключите один раз — увидите свои события, а команда — только когда вы заняты.'},
@@ -9232,19 +9378,35 @@ const Tour = {
   active: null,
   _timer: null,
   seen(page) { return !!Prefs.get('tour_' + page, false); },
-  /* первый заход на страницу — тур через мгновение, если ничего не мешает */
-  maybe(page) {
-    if (!TOURS[page] || window.__EVA_NOTOUR || this.active || this.seen(page)) return;
+  off() { return !!Prefs.get('tours_off', false); },
+  can(page) {
     const me = Auth.me();
-    if (!me || me.welcomed === false) return;
+    return !!TOURS[page] && !window.__EVA_NOTOUR && !this.active && !this.off() && !this.seen(page) && !!me && me.welcomed !== false;
+  },
+  /* первый заход на страницу — тур через мгновение, если ничего не мешает;
+     still() — та же ли страница и раздел, когда пришло время */
+  maybe(page, still = () => true) {
+    if (!this.can(page)) return;
     clearTimeout(this._timer);
     this._timer = setTimeout(() => {
-      if (this.active || modalOpen() || $('.pop') || App.parse().id !== page || this.seen(page)) return;
+      if (!this.can(page) || modalOpen() || $('.pop') || !still()) return;
       this.start(page);
     }, 800);
   },
+  /* тур внутри окна: первая задача, первое собрание, панель Адама */
+  inModal(page, within = '.modal') {
+    if (!this.can(page)) return;
+    setTimeout(() => { if (this.can(page) && $(within) && !$('.pop')) { this.start(page); if (this.active) this.active.within = within; } }, 450);
+  },
+  /* шаг с примером (demo) показываем и тогда, когда на странице такого ещё нет */
   steps(page) {
-    return (TOURS[page] || []).filter(s => { const el = $(s.sel); return el && el.getClientRects().length; });
+    return (TOURS[page] || []).filter(s => { const el = s.sel ? $(s.sel) : null; return (el && el.getClientRects().length) || s.demo; });
+  },
+  /* «Я всё знаю» — больше никаких туров; вернуть — на своей странице */
+  disable() {
+    this.stop(true);
+    Prefs.setMany({tours_off: true, ...Object.fromEntries(Object.keys(TOURS).map(k => ['tour_' + k, true]))});
+    toast('Туры выключены. Включить снова — на вашей странице: «Показать подсказки и туры снова»');
   },
   start(page, manual = false) {
     const steps = this.steps(page);
@@ -9257,7 +9419,7 @@ const Tour = {
     this.active = {page, steps, i: 0, root};
     this._key = e => {
       if (!this.active) return;
-      if (e.key === 'Escape') { e.preventDefault(); this.stop(true); }
+      if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); this.stop(true); }
       if (e.key === 'ArrowRight') this.go(1);
       if (e.key === 'ArrowLeft') this.go(-1);
     };
@@ -9267,6 +9429,7 @@ const Tour = {
     window.addEventListener('scroll', this._place, true);
     on(root, 'click', '[data-tour-go]', (e, b) => this.go(Number(b.dataset.tourGo)));
     on(root, 'click', '[data-tour-end]', () => this.stop(true));
+    on(root, 'click', '[data-tour-off]', () => this.disable());
     this.show();
   },
   go(d) {
@@ -9278,16 +9441,18 @@ const Tour = {
     a.i = i;
     this.show();
   },
+  el(st) { const el = st.sel ? $(st.sel) : null; return el && el.getClientRects().length ? el : null; },
   show() {
-    const a = this.active, st = a.steps[a.i], el = $(st.sel);
-    if (!el) { this.go(1); return; }
-    el.scrollIntoView({block: 'center', inline: 'nearest'});
+    const a = this.active, st = a.steps[a.i], el = this.el(st);
+    if (!el && !st.demo) { this.go(1); return; }
+    if (el) el.scrollIntoView({block: 'center', inline: 'nearest'});
     const pop = $('.tour-pop', a.root);
     pop.innerHTML = `<div class="tour-n">${a.i + 1} из ${a.steps.length}</div>
-      <b class="tour-t"></b><p class="tour-x"></p>
+      <b class="tour-t"></b><p class="tour-x"></p>${!el && st.demo ? `<div class="tour-ex"><span class="label">Как это выглядит</span>${st.demo}</div>` : ''}
       <div class="tour-btns"><button class="btn ghost sm" data-tour-end>Пропустить</button><span></span>
         ${a.i ? '<button class="btn sm" data-tour-go="-1">Назад</button>' : ''}
-        <button class="btn primary sm" data-tour-go="1">${a.i === a.steps.length - 1 ? 'Понятно' : 'Дальше'}</button></div>`;
+        <button class="btn primary sm" data-tour-go="1">${a.i === a.steps.length - 1 ? 'Понятно' : 'Дальше'}</button></div>
+      ${a.i === 0 ? '<button class="link-btn tour-off" data-tour-off>Я всё знаю — больше не показывать подсказки</button>' : ''}`;
     $('.tour-t', pop).textContent = st.title;
     $('.tour-x', pop).textContent = st.text;
     this.place();
@@ -9296,10 +9461,18 @@ const Tour = {
   place() {
     const a = this.active;
     if (!a) return;
-    const el = $(a.steps[a.i].sel);
-    if (!el) return;
-    const r = el.getBoundingClientRect(), pad = 6;
+    /* окно, в котором шёл тур, закрыли — тур тоже заканчиваем */
+    if (a.within && !$(a.within)) { this.stop(true); return; }
+    const el = this.el(a.steps[a.i]);
     const hole = $('.tour-hole', a.root), pop = $('.tour-pop', a.root);
+    /* шаг-пример без места на странице — окно по центру, без подсветки */
+    hole.classList.toggle('none', !el);
+    a.root.classList.toggle('center', !el);
+    if (!el) {
+      Object.assign(pop.style, {top: Math.max(8, (window.innerHeight - pop.offsetHeight) / 2) + 'px', left: Math.max(8, (window.innerWidth - pop.offsetWidth) / 2) + 'px'});
+      return;
+    }
+    const r = el.getBoundingClientRect(), pad = 6;
     const top = Math.max(4, r.top - pad), left = Math.max(4, r.left - pad);
     const w = Math.min(window.innerWidth - left - 4, r.width + pad * 2), h = Math.min(window.innerHeight - top - 4, r.height + pad * 2);
     Object.assign(hole.style, {top: top + 'px', left: left + 'px', width: w + 'px', height: h + 'px'});
@@ -9320,7 +9493,7 @@ const Tour = {
     window.removeEventListener('scroll', this._place, true);
     this.active = null;
   },
-  reset() { Object.keys(TOURS).forEach(k => Prefs.set('tour_' + k, false)); },
+  reset() { Prefs.setMany({tours_off: false, ...Object.fromEntries(Object.keys(TOURS).map(k => ['tour_' + k, false]))}); },
 };
 
 /* ── 80-calendar.js ── */
@@ -10251,6 +10424,7 @@ function openMeeting(id, preset = {}) {
       </div>`,
     foot,
     onMount(el, close) {
+      Tour.inModal('meeting', '#mtTitle');
       const guestsOf = () => $$('.mt-g', el).map(r => {
         const f = k => ($(`[data-gf="${k}"]`, r).value || '').trim();
         const prev = prevG.get(r.dataset.g) || {};
@@ -11503,6 +11677,7 @@ const Chat = {
     Adam.load().then(() => { if (this.tab === 'adam') { Adam.greetIfNeeded(); this.renderList(true); } });
     this.render();
     if (window.matchMedia && !window.matchMedia('(max-width: 640px)').matches) setTimeout(() => { const i = $('#chatInput'); if (i && !i.disabled) i.focus(); }, 40);
+    Tour.inModal('chat', '#chat:not([hidden])');
   },
   hide() {
     this.open = false;

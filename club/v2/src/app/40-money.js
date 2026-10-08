@@ -17,6 +17,7 @@ const FIN_TABS = [
 ];
 App.register('money', {
   title: 'Финансы',
+  tourKey() { const t = View.get('fin.tab', 'overview'); return t === 'overview' || !TOURS['money-' + t] ? 'money' : 'money-' + t; },
   render(root, param) {
     if (!Auth.can('money.view')) { root.innerHTML = pageHead('Финансы', '') + noAccess(); return; }
     const s = settings(), sc = s.scenario;

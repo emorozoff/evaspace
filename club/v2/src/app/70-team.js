@@ -216,6 +216,7 @@ function accessHtml(accs, invs) {
           <td class="soft nowrap">${a.lastSeen ? timeAgo(a.lastSeen) : '—'}</td>
           <td class="r nowrap">${self ? '' : `<button class="btn xs" data-acc-reset="${a.id}">Сброс пароля</button> <button class="btn xs ${off ? '' : 'danger'}" data-acc-toggle="${a.id}">${off ? 'Включить' : 'Отключить'}</button>`}</td></tr>`;
       }).join('')}</tbody></table></div>
+    ${pending.length ? shareHelpHtml() : ''}
     ${pending.length ? `<div class="section-head inv-h"><h3>Приглашения, по которым ещё не зарегистрировались</h3></div>
       <div class="table-wrap"><table class="t inv"><thead><tr><th>Для кого</th><th>Роль</th><th>Код</th><th>Выдано</th><th></th></tr></thead>
       <tbody>${pending.map(i => { const p = personById(i.personId); return `<tr><td>${esc(p ? personName(p) : i.title || '—')}</td><td>${rolePill(i.role)}</td><td><span class="inv-code">${esc(i.id)}</span></td><td class="soft">${timeAgo(i.at)}</td>

@@ -518,6 +518,7 @@ const Chat = {
     Adam.load().then(() => { if (this.tab === 'adam') { Adam.greetIfNeeded(); this.renderList(true); } });
     this.render();
     if (window.matchMedia && !window.matchMedia('(max-width: 640px)').matches) setTimeout(() => { const i = $('#chatInput'); if (i && !i.disabled) i.focus(); }, 40);
+    Tour.inModal('chat', '#chat:not([hidden])');
   },
   hide() {
     this.open = false;

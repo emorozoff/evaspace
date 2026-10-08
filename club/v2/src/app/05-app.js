@@ -67,7 +67,7 @@ const App = {
       const j = this.parse();
       /* анкету по ссылке дорисовываем, когда данные приглашения пришли позже, —
          но только пока человек ничего в ней не набрал */
-      const mode = (Store.count('accounts') ? 'has' : 'empty') + (j.id === 'join' ? ':' + joinKey(j.param) : j.id === 'reset' ? ':r' + j.param : '') + ':' + (Auth.claudeId ? 'c' : '');
+      const mode = (Store.count('accounts') ? 'has' : 'empty') + (j.id === 'join' ? ':' + joinKey(j.param) : j.id === 'reset' ? ':r' + j.param : '') + ':' + (Auth.claudeId ? 'c' : '') + (Auth.canWrite === false ? 'ro' : '');
       const form = $('#joinForm');
       if (!opts.force && $('#authRoot') && (this._authMode === mode || (form && form.dataset.dirty === '1'))) return;
       this._authMode = mode;
@@ -107,7 +107,12 @@ const App = {
     document.title = (n ? `(${n}) ` : '') + (id === 'home' ? '' : (this.pages[id].title || '') + ' · ') + 'Штаб Eva Club V2';
     Chat.paint();
     if (Tour.active) requestAnimationFrame(() => Tour.place());
-    else if (id !== 'join') Tour.maybe(id === 'person' && param === Auth.personId() ? 'me' : id);
+    else if (id !== 'join') {
+      /* тур страницы (у «Финансов» — свой у каждого раздела) */
+      const tourKey = () => (id === 'person' && param === Auth.personId() ? 'me' : this.pages[id].tourKey ? this.pages[id].tourKey() : id);
+      const tk = tourKey();
+      Tour.maybe(tk, () => App.parse().id === id && tourKey() === tk);
+    }
     /* первый вход новичка — приветствие, один раз на учётку */
     if (me.welcomed === false && this._welcomed !== me.id && id !== 'join') {
       this._welcomed = me.id;
@@ -213,7 +218,7 @@ const App = {
     if (ro) {
       const off = s.mode !== 'local' && (s.readOnly || Auth.canWrite === false);
       ro.hidden = !off;
-      if (off) ro.innerHTML = `${icon('help')}<span><b>Ваши правки не сохраняются:</b> штаб открыт вам только на просмотр. Попросите основателя дать доступ на редактирование — меню «Поделиться» у штаба.</span>`;
+      if (off) ro.innerHTML = `${icon('help')}<span><b>Ваши правки не сохраняются:</b> штаб открыт вам только на просмотр. Попросите основателя пригласить вас в меню «Поделиться» по почте вашего аккаунта Claude с правом «Редактор» — и обновите страницу.</span>`;
     }
     el.title = s.mode === 'local'
       ? 'Штаб открыт не в артефакте Claude: данные живут только в этом браузере'

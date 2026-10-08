@@ -925,6 +925,7 @@ function openMeeting(id, preset = {}) {
       </div>`,
     foot,
     onMount(el, close) {
+      Tour.inModal('meeting', '#mtTitle');
       const guestsOf = () => $$('.mt-g', el).map(r => {
         const f = k => ($(`[data-gf="${k}"]`, r).value || '').trim();
         const prev = prevG.get(r.dataset.g) || {};

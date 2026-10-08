@@ -89,7 +89,15 @@ function inviteText(code) {
 Ссылка: ${inviteLink(code)}
 Доступ: ${ROLES[roleOf(inv.role)].name}.
 
-По ссылке откроется короткая анкета — часть данных уже заполнена, проверь и допиши остальное. Если вместо анкеты откроется вход, нажми «У меня приглашение» и введи код ${code}.`;
+По ссылке откроется короткая анкета — часть данных уже заполнена, проверь и допиши остальное. Если вместо анкеты откроется вход, нажми «У меня приглашение» и введи код ${code}.${Store.state.mode === 'db' ? '\n\nОткрывай ссылку в своём аккаунте Claude — в том, на чью почту пришёл доступ к штабу.' : ''}`;
+}
+/* основателю: без доступа на редактирование анкета не сохранится */
+function shareHelpHtml() {
+  if (Store.state.mode !== 'db') return '';
+  return `<div class="iv-share">${icon('help')}<div><b>Чтобы анкета сохранилась, человеку нужен доступ на редактирование.</b>
+    <ol><li>«Поделиться» у штаба → пригласите человека <b>по почте его аккаунта Claude</b> с правом <b>«Редактор»</b> (Editor).</li>
+      <li>Выключите доступ «всем по ссылке»: по общей ссылке люди не из вашей организации Claude могут только смотреть — и регистрация у них не сохранится.</li>
+      <li>Отправьте ссылку-приглашение отсюда.</li></ol></div></div>`;
 }
 function fillHtml(p) {
   const v = cardValues(p);
@@ -109,7 +117,8 @@ function issueInvite(pid) {
     <div class="iv-link"><input class="input" id="ivLink" readonly value="${esc(inviteLink(code))}" aria-label="Ссылка-приглашение"><button type="button" class="btn sm primary" data-iv-copy-link>${icon('copy')}Скопировать ссылку</button></div>
     <pre class="iv-msg" id="ivMsg"></pre>
     <div class="row"><button type="button" class="btn sm" data-iv-copy-msg>${icon('copy')}Скопировать приглашение целиком</button><button type="button" class="btn sm ghost" data-iv-preview>Как увидит человек</button></div>
-    <p class="note">Ссылка одноразовая: после регистрации она перестанет работать. Запасной код из сообщения — <span class="inv-code">${esc(code)}</span>.</p>`;
+    <p class="note">Ссылка одноразовая: после регистрации она перестанет работать. Запасной код из сообщения — <span class="inv-code">${esc(code)}</span>.</p>
+    ${shareHelpHtml()}`;
   openModal({
     title: p ? `Пригласить: ${personName(p)}` : 'Пригласить в команду',
     wide: true,
@@ -211,21 +220,29 @@ function renderJoin(root, code) {
     return;
   }
   const p = personById(inv.personId);
-  const v = cardValues(p, inv);
-  const src = Object.fromEntries(Object.entries(v).filter(([, x]) => x).map(([k]) => [k, true]));
+  const card = cardValues(p, inv);
+  const src = Object.fromEntries(Object.entries(card).filter(([, x]) => x).map(([k]) => [k, true]));
+  /* что человек уже набрал в этом браузере — не теряем при обновлении страницы */
+  const draft = Local.get('eva-hq-join:' + c, null) || {};
+  const v = {...card, ...Object.fromEntries(Object.entries(draft).filter(([, x]) => x))};
+  const ro = Auth.canWrite === false;
   root.innerHTML = `<div class="join">
     ${joinHeroHtml(inv, p, v)}
-    <form class="card join-form" id="joinForm" novalidate autocomplete="on">
-      ${Auth.canWrite === false ? '<div class="join-ro">Похоже, штаб открыт вам только на просмотр — регистрация не сохранится. Попросите основателя дать доступ на редактирование (меню «Поделиться» у штаба) и откройте ссылку снова.</div>' : ''}
+    <form class="card join-form ${ro ? 'is-ro' : ''}" id="joinForm" novalidate autocomplete="on">
+      ${ro ? `<div class="join-ro"><b>Сейчас штаб открыт тебе только на просмотр — регистрация не сохранится.</b>
+        <p>Попроси основателя пригласить тебя в меню «Поделиться» штаба по почте твоего аккаунта Claude с правом «Редактор». Когда доступ придёт — обнови страницу и открой эту ссылку снова.</p>
+        <div class="row"><button type="button" class="btn sm" data-join-ask>${icon('copy')}Скопировать сообщение основателю</button><button type="button" class="btn sm primary" data-join-reload>${icon('refresh')}Доступ дали — проверить</button></div></div>` : ''}
       <p class="join-lead">Проверь данные — часть мы уже заполнили. Всё можно поправить сейчас или потом на своей странице в штабе.</p>
       ${joinFormHtml(v, src)}
       <div class="auth-msg" id="joinMsg" hidden></div>
-      <button class="btn primary join-go" type="submit" id="joinGo">${icon('heart')}Присоединиться к команде</button>
+      <button class="btn primary join-go" type="submit" id="joinGo" ${ro ? 'disabled title="Сначала нужен доступ на редактирование"' : ''}>${icon('heart')}Присоединиться к команде</button>
       <p class="auth-note">Анкету видят все в команде штаба. Уже есть учётка? <button type="button" class="link-btn" data-join-mode="login">Войти</button></p>
     </form>
   </div>`;
   wireJoinForm(root, c);
   wirePwToggles(root);
+  on(root, 'click', '[data-join-reload]', () => location.reload());
+  on(root, 'click', '[data-join-ask]', (e, b) => copyText(`Привет! Открываю приглашение в штаб Eva Club, но штаб открыт мне только на просмотр — регистрация не сохраняется. Пригласи меня, пожалуйста, в «Поделиться» по почте моего аккаунта Claude с правом «Редактор».`, b));
   on(root, 'click', '[data-join-mode]', (e, b) => { View.set('authMode', b.dataset.joinMode); location.hash = ''; App.render({force: true}); });
   const first = $('#j-given', root);
   if (first && !first.value) setTimeout(() => { if (!document.activeElement || document.activeElement === document.body) first.focus(); }, 30);
@@ -241,8 +258,15 @@ function wireJoinForm(root, code) {
   const form = $('#joinForm', root), msg = $('#joinMsg', root), go = $('#joinGo', root);
   const val = k => (($('#j-' + k, root) || {}).value || '').trim();
   const fail = (text, k) => { msg.textContent = text; msg.hidden = false; const i = k && $('#j-' + k, root); if (i) { i.classList.add('bad'); i.focus(); } else msg.scrollIntoView({block: 'center', behavior: 'smooth'}); };
-  on(form, 'input', '.input', (e, i) => { i.classList.remove('bad'); form.dataset.dirty = '1'; });
-  on(form, 'change', 'select', () => { form.dataset.dirty = '1'; });
+  /* черновик анкеты — в этом браузере, без пароля */
+  const keep = () => {
+    const d = {hdType: hd};
+    ['given', 'surname', 'title', 'dir', 'email', 'phone', 'telegram', 'birthDate', 'birthTime', 'birthCity', 'hdProfile'].forEach(k => { d[k] = val(k); });
+    Local.set('eva-hq-join:' + code, d);
+  };
+  on(form, 'input', '.input', (e, i) => { i.classList.remove('bad'); form.dataset.dirty = '1'; if (i.type !== 'password') keep(); });
+  on(form, 'change', 'select', () => { form.dataset.dirty = '1'; keep(); });
+  on(root, 'click', '[data-hd]', () => keep());
   form.addEventListener('submit', async e => {
     e.preventDefault();
     msg.hidden = true;
@@ -260,6 +284,7 @@ function wireJoinForm(root, code) {
     go.textContent = 'Создаю учётку…';
     try {
       await Auth.acceptInvite(f);
+      Local.del('eva-hq-join:' + code);
       try { history.replaceState(null, '', '#home'); } catch (err) { location.hash = 'home'; }
       App.render({force: true});
     } catch (err) {

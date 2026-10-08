@@ -16,10 +16,86 @@ const TOURS = {
   tasks: [
     {sel: '.t-scope', title: 'Чьи задачи', text: '«Мне» — что поставили вам, «От меня» — что вы поставили другим, «Все» — задачи всей команды. Справа можно выбрать человека.'},
     {sel: '.t-quick', title: 'Новая задача — здесь', text: 'Напишите, что сделать, выберите кому и срок — Enter. Галочка «срок важен» — исполнитель перенесёт его только с вашего согласования.'},
-    {sel: '.kb .tc', title: 'Карточка задачи', text: 'Сверху — кто поставил → кто делает. Статус, важность и исполнитель меняются прямо на карточке, клик — окно задачи.'},
+    {sel: '.kb .tc', title: 'Карточка задачи', text: 'Сверху — кто поставил → кто делает. Статус, важность и исполнитель меняются прямо на карточке, клик — окно задачи.',
+      demo: '<div class="tour-demo"><div class="td-card td-col"><span class="td-flow">Кирилл → Мария</span><b>Снять три мастер-класса</b><span class="td-meta"><span class="due-btn td-due">20 окт</span><span class="pill violet">В работе</span></span></div></div>'},
+    {sel: '.kb .due-btn', title: 'Срок', text: 'Нажмите на срок, чтобы поменять. В пределах месяца исполнитель переносит сам, иначе — запрос постановщику.',
+      demo: '<div class="tour-demo"><div class="td-row"><span class="due-btn td-due">20 окт</span><span>срок можно сдвинуть сам</span></div><div class="td-row"><span class="due-btn td-due">20 окт ★</span><span>«срок важен» — перенос только с согласия постановщика</span></div></div>'},
+    {sel: '.kb .t-holds', title: 'Блокирующая задача — красным', text: 'Красная надпись «держит 2» — от этой задачи зависят другие, и пока она не готова, они стоят. Такие задачи делайте первыми.',
+      demo: '<div class="tour-demo"><div class="td-card"><b>Подключить оплату</b><span class="t-holds">держит 2</span></div></div>'},
+    {sel: '.kb .tc-lock', title: 'Замочек', text: 'Замочек в углу карточки — у задачи есть «Зависит от». Связь ставится в окне задачи; когда блокирующая готова, придёт уведомление «можно начинать».',
+      demo: '<div class="tour-demo"><div class="td-row"><span class="tc-lock on td-lock">🔒</span><span><b>Красный замочек</b> — ждёт другую задачу, начинать рано</span></div><div class="td-row"><span class="tc-lock td-lock">🔓</span><span><b>Зелёный</b> — блокирующие готовы, можно делать</span></div></div>'},
+    {sel: null, title: 'Что ещё бывает на карточке', text: 'Розовая рамка — новое для вас. Золотая — ждёт согласования. Жёлтый фон — вернули на доработку. Точки — сколько раз переносили срок или возвращали. «Перенос?» — просят сдвинуть срок.',
+      demo: '<div class="tour-demo td-legend"><span class="td-sw fresh">новое</span><span class="td-sw awaiting">на согласовании</span><span class="td-sw returned">вернули</span><span class="tc-dots"><i class="pp"></i><i class="rw"></i></span><span class="t-dreq">перенос?</span><span class="t-budget pending">30 тыс · ждёт</span></div>'},
     {sel: '.kb .due-btn', title: 'Срок', text: 'Нажмите на срок, чтобы поменять. В пределах месяца исполнитель переносит сам, иначе — запрос постановщику.'},
-    {sel: '.inbox', title: 'Для вас', text: 'Что ждёт вашего решения — согласовать работу, бюджет или перенос срока — и что произошло по вашим задачам.'},
+    {sel: '.inbox', title: 'Для вас', text: 'Что ждёт вашего решения — согласовать работу, бюджет или перенос срока — и что произошло по вашим задачам. Появляется, когда есть новости.',
+      demo: '<div class="tour-demo"><div class="td-card td-col"><b>Для вас</b><span>Кирилл поставил вам задачу «Снять ролик»</span><span>Мария сдала на согласование «Монтаж»</span></div></div>'},
     {sel: '.t-bar .seg', title: 'Виды', text: 'Доска по статусам, по месяцам, по неделям или списком. Карточки перетаскиваются зажатием.'},
+  ],
+  /* окно задачи: первая новая задача и первая открытая */
+  'task-new': [
+    {sel: '.tm-modal #tmTitle', title: 'Ваша первая задача', text: 'Коротко и с глаголом: «Снять ролик о…». Если вы уже умеете ставить задачи — «Пропустить».'},
+    {sel: '.tm-modal #tmResult', title: 'ЦКП — что получим на выходе', text: 'Конкретный результат, по которому видно, что задача сделана: «договор подписан и лежит в папке».'},
+    {sel: '.tm-modal .tm-grid', title: 'Кто и когда', text: 'Постановщик — вы, ответственный — кто делает: ему придёт уведомление со звуком. Срок, месяц и цель квартала.'},
+    {sel: '.tm-modal #tmDueBox', title: 'Срок важен?', text: 'Отметьте «Срок важен», если дату нельзя сдвигать: исполнитель перенесёт её только с вашего согласия. Без галочки он двигает срок сам в пределах месяца.'},
+    {sel: '.tm-modal #tmBudgetBox', title: 'Бюджет и его согласование', text: 'Нужны деньги — сумма и статья. С галочкой «Требует согласования» бюджет уходит основателю или финансам: тратить можно после «Согласовать». Согласованный бюджет сам встанет в план платежей.'},
+    {sel: '.tm-modal #tmApprBox', title: 'Кто принимает результат', text: '«Результат согласовывает» — кто проверит работу. Исполнитель нажмёт «Готово», и задача придёт этому человеку: принять или вернуть с комментарием.'},
+    {sel: '.tm-modal #tmCreate', title: 'Создать', text: '«Создать задачу» — и она появится у исполнителя. Зависимости («ждёт другую задачу») и обсуждение — в окне уже созданной задачи.'},
+  ],
+  'task-open': [
+    {sel: '.tm-modal #tmTop', title: 'Окно задачи', text: 'Сверху — кто поставил → кто делает и статус. Всё, что вы меняете, сохраняется сразу и видно команде.'},
+    {sel: '.tm-modal #tmDueBox', title: 'Срок', text: 'Свою задачу двигаете сами. Чужую — в пределах месяца, если срок не отмечен «важным»; иначе уйдёт запрос постановщику.'},
+    {sel: '.tm-modal #tmBudgetBox', title: 'Бюджет', text: 'Сумма, статья и согласование. Пока бюджет «ждёт», деньги не тратим — согласующему пришло уведомление.'},
+    {sel: '.tm-modal #tmApprBox', title: 'Приёмка', text: 'Если результат принимает другой человек, «Готово» отправит задачу ему на согласование.'},
+    {sel: '.tm-modal #tmDepsBox', title: 'Зависит от — замочек', text: 'Нельзя начать, пока не готова другая задача? Выберите её здесь: на карточке появится 🔒, а у той — красное «держит». Когда она будет готова, придёт «можно начинать».',
+      demo: '<div class="tour-demo"><div class="td-row"><span class="tc-lock on td-lock">🔒</span><span><b>Красный замочек</b> — ждёт другую задачу, начинать рано</span></div><div class="td-row"><span class="tc-lock td-lock">🔓</span><span><b>Зелёный</b> — блокирующие готовы, можно делать</span></div></div>'},
+    {sel: '.tm-modal #tmZone', title: 'Результат работы', text: 'Ссылка, документ или текст — и «Готово». Постановщик увидит результат и примет работу или вернёт с комментарием.'},
+    {sel: '.tm-modal .t-m-comments', title: 'Обсуждение', text: 'Вопросы и договорённости — комментарий придёт исполнителю и постановщику со звуком.'},
+    {sel: '.tm-modal #tmAdam', title: 'Адам напишет за вас', text: 'Нужно напомнить коллеге или отчитаться — Адам подготовит сообщение по этой задаче.'},
+  ],
+  'task-quick': [
+    {sel: '#qtTitle', title: 'Быстрая задача', text: 'Название, кто делает и срок — и «Добавить».'},
+    {sel: '#qtFixWrap', title: 'Срок важен', text: 'Для задачи коллеге: с галочкой исполнитель переносит срок только с вашего согласия.'},
+    {sel: '#qtMore', title: 'Подробнее…', text: 'Бюджет с согласованием, ЦКП, кто принимает результат, цель квартала — в полном окне задачи.'},
+  ],
+  meeting: [
+    {sel: '#mtTitle', title: 'Собрание', text: 'Название, дата, начало и длительность. Внизу окна — свободные у всех окна, можно нажать.'},
+    {sel: '.mt-chips', title: 'Участники из команды', text: 'Нажмите на людей — им придёт приглашение в Google Календарь. «Нет почты» — впишите её прямо здесь.'},
+    {sel: '#mtGAdd', title: 'Гости не из команды', text: 'Имя, почта для приглашения и Telegram для напоминания перед встречей.'},
+    {sel: '#mtRemind', title: 'Напоминание', text: 'За сколько напомнить: команде — в штабе со звуком, гостям — кнопкой «Напомнить» (или ботом на своём сервере).'},
+  ],
+  chat: [
+    {sel: '.chat-tabs', title: 'Адам, команда и личные', text: '«Адам» — ассистент: сводка дня и ответы на вопросы. «Команда» — общий чат. «Личные» — диалоги один на один.'},
+    {sel: '#chatChips', title: 'С чего начать', text: 'Нажмите готовый вопрос — например, «Что у меня горит?».'},
+    {sel: '#chatInput', title: 'Спросите своими словами', text: 'Enter — отправить. Попросите Адама написать сообщение коллеге или разбить задачу на шаги.'},
+  ],
+  'money-ops': [
+    {sel: '#qeForm', title: 'Быстрая запись', text: 'Потратили или получили деньги — сумма, статья, дата и Enter. Ошиблись — «Отменить» в уведомлении.'},
+    {sel: 'table.led', title: 'Журнал операций', text: 'Все приходы и расходы. Строки с пометками «по плану», выплаты, заказы и возвраты попали сюда сами. Нажмите на строку, чтобы поправить.'},
+  ],
+  'money-plan': [
+    {sel: 'table.plan', title: 'Финплан', text: 'Оплата труда, регулярные и разовые платежи по месяцам. «Оплатить» — операция сама попадёт в журнал.'},
+    {sel: 'table.pnl', title: 'План-факт', text: 'Крупно — факт, мелко — план. Будущие месяцы — план по сценарию.'},
+    {sel: '.cf', title: 'Прогноз', text: 'Cash Flow до Нового года: сколько денег будет на счёте в конце каждого месяца.'},
+  ],
+  'money-subs': [
+    {sel: '.subs-t', title: 'Подписки по месяцам', text: 'Серым — посчитано само из «Цифр дня» и возвратов. «Поправить» — вписать точные цифры, например годовые подписки.'},
+    {sel: '[data-payouts="ref"]', title: 'Реферальные выплаты', text: '«Начисление» — кому и сколько за приведённых подписчиков. «Выплатить» — расход сам попадёт в журнал.'},
+  ],
+  'money-courses': [
+    {sel: '.courses-t, [data-course-add]', title: 'Продажи курсов', text: 'Впишите, сколько продано за месяц, — выручка и доля автора посчитаются сами. «Внести приход» — выручка месяца в журнал.'},
+    {sel: '[data-payouts="author"]', title: 'Выплаты авторам', text: 'Начисляются сами; за закрытый месяц — «Выплатить».'},
+  ],
+  'money-market': [
+    {sel: '.fin-subbar', title: 'Заказы, товары, распределение', text: 'Заказы со статусом оплаты и доставки, склад и кто сколько получает с выручки.'},
+    {sel: '[data-order-add]', title: 'Новый заказ', text: 'Клиент, состав и доставка. «Оплачен» — приход в журнал и списание со склада.'},
+  ],
+  'money-failed': [
+    {sel: '[data-fail-add]', title: 'Сбой оплаты', text: 'Списание за подписку не прошло — запишите: причина, сумма, контакт. В карточке — готовое сообщение клиенту.'},
+    {sel: '.fin-tabs [data-ftab="failed"]', title: 'Путь сбоя', text: 'Новый → написали клиенту → повторное списание → оплачено или потерян. Красная цифра — сколько ждёт действия сегодня.'},
+  ],
+  'money-refunds': [
+    {sel: '[data-refund-add]', title: 'Запрос на возврат', text: 'Клиент просит вернуть деньги — запишите: что, сумма, причина. Срок ответа — 10 дней, просрочка подсвечивается красным.'},
+    {sel: '.fin-tabs [data-ftab="refunds"]', title: 'Решение', text: '«Одобрен» → «Возвращено» — расход сам ляжет в журнал. Отказ — только с пояснением; ответ клиенту готов в карточке.'},
   ],
   calendar: [
     {sel: '.cal-conn', title: 'Google Календарь', text: 'Подключите один раз — увидите свои события, а команда — только когда вы заняты.'},
@@ -64,19 +140,35 @@ const Tour = {
   active: null,
   _timer: null,
   seen(page) { return !!Prefs.get('tour_' + page, false); },
-  /* первый заход на страницу — тур через мгновение, если ничего не мешает */
-  maybe(page) {
-    if (!TOURS[page] || window.__EVA_NOTOUR || this.active || this.seen(page)) return;
+  off() { return !!Prefs.get('tours_off', false); },
+  can(page) {
     const me = Auth.me();
-    if (!me || me.welcomed === false) return;
+    return !!TOURS[page] && !window.__EVA_NOTOUR && !this.active && !this.off() && !this.seen(page) && !!me && me.welcomed !== false;
+  },
+  /* первый заход на страницу — тур через мгновение, если ничего не мешает;
+     still() — та же ли страница и раздел, когда пришло время */
+  maybe(page, still = () => true) {
+    if (!this.can(page)) return;
     clearTimeout(this._timer);
     this._timer = setTimeout(() => {
-      if (this.active || modalOpen() || $('.pop') || App.parse().id !== page || this.seen(page)) return;
+      if (!this.can(page) || modalOpen() || $('.pop') || !still()) return;
       this.start(page);
     }, 800);
   },
+  /* тур внутри окна: первая задача, первое собрание, панель Адама */
+  inModal(page, within = '.modal') {
+    if (!this.can(page)) return;
+    setTimeout(() => { if (this.can(page) && $(within) && !$('.pop')) { this.start(page); if (this.active) this.active.within = within; } }, 450);
+  },
+  /* шаг с примером (demo) показываем и тогда, когда на странице такого ещё нет */
   steps(page) {
-    return (TOURS[page] || []).filter(s => { const el = $(s.sel); return el && el.getClientRects().length; });
+    return (TOURS[page] || []).filter(s => { const el = s.sel ? $(s.sel) : null; return (el && el.getClientRects().length) || s.demo; });
+  },
+  /* «Я всё знаю» — больше никаких туров; вернуть — на своей странице */
+  disable() {
+    this.stop(true);
+    Prefs.setMany({tours_off: true, ...Object.fromEntries(Object.keys(TOURS).map(k => ['tour_' + k, true]))});
+    toast('Туры выключены. Включить снова — на вашей странице: «Показать подсказки и туры снова»');
   },
   start(page, manual = false) {
     const steps = this.steps(page);
@@ -89,7 +181,7 @@ const Tour = {
     this.active = {page, steps, i: 0, root};
     this._key = e => {
       if (!this.active) return;
-      if (e.key === 'Escape') { e.preventDefault(); this.stop(true); }
+      if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); this.stop(true); }
       if (e.key === 'ArrowRight') this.go(1);
       if (e.key === 'ArrowLeft') this.go(-1);
     };
@@ -99,6 +191,7 @@ const Tour = {
     window.addEventListener('scroll', this._place, true);
     on(root, 'click', '[data-tour-go]', (e, b) => this.go(Number(b.dataset.tourGo)));
     on(root, 'click', '[data-tour-end]', () => this.stop(true));
+    on(root, 'click', '[data-tour-off]', () => this.disable());
     this.show();
   },
   go(d) {
@@ -110,16 +203,18 @@ const Tour = {
     a.i = i;
     this.show();
   },
+  el(st) { const el = st.sel ? $(st.sel) : null; return el && el.getClientRects().length ? el : null; },
   show() {
-    const a = this.active, st = a.steps[a.i], el = $(st.sel);
-    if (!el) { this.go(1); return; }
-    el.scrollIntoView({block: 'center', inline: 'nearest'});
+    const a = this.active, st = a.steps[a.i], el = this.el(st);
+    if (!el && !st.demo) { this.go(1); return; }
+    if (el) el.scrollIntoView({block: 'center', inline: 'nearest'});
     const pop = $('.tour-pop', a.root);
     pop.innerHTML = `<div class="tour-n">${a.i + 1} из ${a.steps.length}</div>
-      <b class="tour-t"></b><p class="tour-x"></p>
+      <b class="tour-t"></b><p class="tour-x"></p>${!el && st.demo ? `<div class="tour-ex"><span class="label">Как это выглядит</span>${st.demo}</div>` : ''}
       <div class="tour-btns"><button class="btn ghost sm" data-tour-end>Пропустить</button><span></span>
         ${a.i ? '<button class="btn sm" data-tour-go="-1">Назад</button>' : ''}
-        <button class="btn primary sm" data-tour-go="1">${a.i === a.steps.length - 1 ? 'Понятно' : 'Дальше'}</button></div>`;
+        <button class="btn primary sm" data-tour-go="1">${a.i === a.steps.length - 1 ? 'Понятно' : 'Дальше'}</button></div>
+      ${a.i === 0 ? '<button class="link-btn tour-off" data-tour-off>Я всё знаю — больше не показывать подсказки</button>' : ''}`;
     $('.tour-t', pop).textContent = st.title;
     $('.tour-x', pop).textContent = st.text;
     this.place();
@@ -128,10 +223,18 @@ const Tour = {
   place() {
     const a = this.active;
     if (!a) return;
-    const el = $(a.steps[a.i].sel);
-    if (!el) return;
-    const r = el.getBoundingClientRect(), pad = 6;
+    /* окно, в котором шёл тур, закрыли — тур тоже заканчиваем */
+    if (a.within && !$(a.within)) { this.stop(true); return; }
+    const el = this.el(a.steps[a.i]);
     const hole = $('.tour-hole', a.root), pop = $('.tour-pop', a.root);
+    /* шаг-пример без места на странице — окно по центру, без подсветки */
+    hole.classList.toggle('none', !el);
+    a.root.classList.toggle('center', !el);
+    if (!el) {
+      Object.assign(pop.style, {top: Math.max(8, (window.innerHeight - pop.offsetHeight) / 2) + 'px', left: Math.max(8, (window.innerWidth - pop.offsetWidth) / 2) + 'px'});
+      return;
+    }
+    const r = el.getBoundingClientRect(), pad = 6;
     const top = Math.max(4, r.top - pad), left = Math.max(4, r.left - pad);
     const w = Math.min(window.innerWidth - left - 4, r.width + pad * 2), h = Math.min(window.innerHeight - top - 4, r.height + pad * 2);
     Object.assign(hole.style, {top: top + 'px', left: left + 'px', width: w + 'px', height: h + 'px'});
@@ -152,5 +255,5 @@ const Tour = {
     window.removeEventListener('scroll', this._place, true);
     this.active = null;
   },
-  reset() { Object.keys(TOURS).forEach(k => Prefs.set('tour_' + k, false)); },
+  reset() { Prefs.setMany({tours_off: false, ...Object.fromEntries(Object.keys(TOURS).map(k => ['tour_' + k, false]))}); },
 };

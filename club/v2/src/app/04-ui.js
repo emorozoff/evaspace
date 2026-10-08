@@ -279,6 +279,12 @@ const Prefs = {
     const l = Local.get(this.lk(k), undefined);
     return l === undefined ? def : l;
   },
+  /* несколько настроек разом — одной записью в учётку */
+  setMany(obj) {
+    Object.entries(obj).forEach(([k, v]) => Local.set(this.lk(k), v));
+    const a = Auth.me();
+    if (a) Store.patch('accounts', a.id, {prefs: obj}, {mustExist: true});
+  },
   set(k, v) {
     Local.set(this.lk(k), v);
     const a = Auth.me();

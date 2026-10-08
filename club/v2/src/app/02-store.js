@@ -150,8 +150,11 @@ const Store = (() => {
     return Promise.resolve();
   }
 
+  /* убрать запись только из этого браузера — когда база её не приняла */
+  function drop(c, id) { data[c].delete(id); commitLocal(c); }
+
   return {
-    COLS, state, init, put, add, patch, remove,
+    COLS, state, init, put, add, patch, remove, drop,
     all: c => [...data[c].values()],
     get: (c, id) => data[c].get(id) || null,
     count: c => data[c].size,
