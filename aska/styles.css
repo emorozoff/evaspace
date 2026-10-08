@@ -50,6 +50,9 @@ svg { display: inline-block; vertical-align: middle; }
   position: fixed; inset: 0;
   background: var(--desktop);
   overflow: hidden;
+  /* clip, а не hidden: рабочий стол не становится прокручиваемым, и фокус в поле
+     не может сдвинуть окна за край экрана */
+  overflow: clip;
 }
 .desktop::before {
   /* едва заметная фактура, как обои Win98 */

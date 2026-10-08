@@ -5,8 +5,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '2.0';
-  const DB_KEY = 'aska.v1';
+  const VERSION = '2.1';
   const SESSION_KEY = 'aska.session';
   const Snd = window.AskaSound;
   const Music = window.AskaMusic;
@@ -26,22 +25,14 @@
   const isNarrow = () => window.matchMedia('(max-width: 719px)').matches || (isTouch() && window.matchMedia('(max-width: 900px)').matches);
 
   /* ================= хранилище ================= */
-  function emptyDb() {
-    return { accounts: {}, contacts: {}, history: {}, unread: {}, presence: {}, memory: {}, profile: {}, wall: {}, interests: {}, communities: {}, events: {}, refLog: [], tracks: {}, trackOwners: {}, trackLog: {}, movies: {}, radio: {}, settings: { sound: true, volume: 0.8 }, lastLogin: '' };
-  }
-  function load() {
-    try {
-      const raw = localStorage.getItem(DB_KEY);
-      const d = raw ? JSON.parse(raw) : emptyDb();
-      const e = emptyDb();
-      for (const k in e) if (d[k] == null) d[k] = e[k];
-      return d;
-    } catch (err) { return emptyDb(); }
-  }
+  // общее с дизайном «Зумер» хранилище (../store.js): те же номера, переписка и сессия
+  const Store = window.AskaStore;
+  const Sec = window.AskaSecure;
+  function load() { return Store.sync(); }
   let db = load();
-  function save() { try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch (err) {} }
-  // перечитать → изменить → записать: так вкладки не затирают друг друга
-  function mutate(fn) { db = load(); fn(db); save(); }
+  function mutate(fn) { return Store.mutate(fn); }
+  // выбор дизайна: «Зумер» — новый интерфейс в корне, «Миллениал» — этот
+  function toZoomer() { mutate((d) => { d.settings.design = 'zoomer'; }); if (me) saveSession(); const q = new URLSearchParams(location.search); q.delete('design'); const qs = q.toString(); location.href = '../' + (qs ? '?' + qs : '') + location.hash; }
 
   function applySettings() {
     Snd.enabled = db.settings.sound !== false;
@@ -106,7 +97,7 @@
     parts.push(['t', text.slice(last)]);
     return parts.map((p) => {
       if (p[0] === 's') return `<span class="sm" data-sm="${p[1]}" title="${esc(p[2])} — ${esc(SMILE_BY_ID[p[1]].name)}">${smileSvg(p[1])}</span>`;
-      return esc(p[1]).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      return esc(p[1]).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
     }).join('');
   }
 
@@ -185,7 +176,8 @@
   function loadSession() {
     try {
       const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');
-      if (s && db.accounts[s.uin]) {
+      if (s && s.seen && Date.now() - s.seen > 12 * 3600 * 1000) { sessionStorage.removeItem(SESSION_KEY); return; }
+      if (s && Sec.isUin(s.uin) && !isTwin(s.uin) && db.accounts[s.uin]) {
         me = db.accounts[s.uin];
         myStatus = s.status || 'online';
         openChats = (s.open || []).filter((u) => accountOf(u));
@@ -197,7 +189,7 @@
   function saveSession() {
     try {
       if (!me) sessionStorage.removeItem(SESSION_KEY);
-      else sessionStorage.setItem(SESSION_KEY, JSON.stringify({ uin: me.uin, status: myStatus, open: openChats, active, drafts }));
+      else sessionStorage.setItem(SESSION_KEY, JSON.stringify({ uin: me.uin, status: myStatus, open: openChats, active, drafts, seen: Date.now() }));
     } catch (err) {}
   }
 
@@ -304,7 +296,7 @@
   function send() {
     const ta = $('#compose');
     if (!ta || !active) return;
-    const text = ta.value.replace(/\s+$/, '');
+    const text = Sec.cleanText(ta.value, 2000);
     if (!text) return;
     const msg = { id: uid(), from: me.uin, to: active, text, ts: Date.now() };
     lastUserActivity = Date.now();
@@ -422,10 +414,10 @@
     else if (m.type === 'interests' || m.type === 'events' || m.type === 'refs') { db = load(); if (['interests', 'interest', 'community', 'events', 'refs'].includes(aux.kind)) renderAux(); if (m.type === 'events' && active) renderHistory(); }
     else if (m.type === 'wall') { db = load(); if (m.uin === me.uin && m.from !== me.uin) { const a = accountOf(m.from); if (a) { toast(a, 'оставил(а) запись у тебя на стене', null); Snd.play('tada'); } } if (aux.kind === 'wall' && aux.arg === m.uin) renderAux(); if (aux.kind === 'track' && 'trk_' + aux.arg === m.uin) renderAux(); }
   };
-  window.addEventListener('storage', (e) => {
-    if (e.key !== DB_KEY || !me) return;
-    db = load();
-    renderContacts();
+  Store.onChange((cols) => {
+    if (!me) return;
+    if (cols.has('*') || cols.has('accounts')) { if (!db.accounts[me.uin]) { logout(); return; } me = db.accounts[me.uin]; }
+    if (['*', 'contacts', 'presence', 'unread', 'accounts', 'profile'].some((c) => cols.has(c))) renderContacts();
   });
 
   /* ================= Аська и друзья ================= */
@@ -493,7 +485,16 @@
     const prof = myProfile();
     return { catalog: catalogAll().map((t) => ({ id: t.id, title: t.title, artist: t.artist, style: t.style || 'pop', by: t.by, source: t.url ? t.kind : 'synth' })), plays: prof.plays || {}, favs: prof.favTracks || [], nowId: Music.state.trackId };
   }
+  // бот «дочитывает»: если человек дописывает вторым-третьим сообщением, ответ один — на всё сразу
+  const READ_MS = 1400;
+  const inbox = {};
   function brainTalk(bot, text) {
+    const box = inbox[bot.uin] || (inbox[bot.uin] = { texts: [], timer: null });
+    box.texts.push(String(text).trim());
+    clearTimeout(box.timer);
+    box.timer = setTimeout(() => { const all = box.texts.splice(0).join(' '); if (me) brainTalkNow(bot, all); }, READ_MS);
+  }
+  function brainTalkNow(bot, text) {
     const rt = rtOf(bot.uin);
     Object.values(botRt).forEach((r) => (r.unanswered = 0));
     const mem = memOf(bot.uin);
@@ -501,7 +502,7 @@
     msgs.forEach((m) => { if (m.play) { const id = m.play; setTimeout(() => { Music.play(id); if (aux.kind === 'vinyl') renderAux(); }, 1500); } });
     saveMem(bot.uin, mem);
     const first = msgs[0] && msgs[0].text ? msgs[0].text : '';
-    const delay = 900 + Math.min(first.length, 160) * 16 + Math.random() * 1200;
+    const delay = Math.max(400, 900 + Math.min(first.length, 160) * 16 + Math.random() * 1200 - READ_MS);
     deliverSeq(bot, msgs, delay);
   }
   // персонажи пишут сами: вопросы, открытки, статусы
@@ -547,7 +548,7 @@
     deliverSeq(bot, msgs, 600 + Math.random() * 1500);
   }
   setInterval(askaTick, 15000);
-  if (/debug/.test(location.search)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt, wall: (u) => wallOf(u || me.uin), openAux, setMode, randomMeet, fly, addPoints, profile: () => myProfile(), dossier: buildDossier, createEvent, rsvp, addTrackByLink, toggleFav, music: () => Music.state, twinFacts: () => twinFacts(me.uin), twinStore: () => twinStore(me.uin), welcomeFrom, quiet: () => ({ lastAnyProactive, lastUserActivity, hiddenSent, sessionStart }), addMovie, toggleMovieFav, recommendMovie, botRecommendsMovie, watching: () => watching, saveProfile, events: () => load().events, refs: () => refTree(me.uin), botInvitesMe, interests: () => load().interests, twinModel: () => twinModelOf(me.uin) };
+  if (/[?&]debug\b/.test(location.search) && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt, wall: (u) => wallOf(u || me.uin), openAux, setMode, randomMeet, fly, addPoints, profile: () => myProfile(), dossier: buildDossier, createEvent, rsvp, addTrackByLink, toggleFav, music: () => Music.state, twinFacts: () => twinFacts(me.uin), twinStore: () => twinStore(me.uin), welcomeFrom, quiet: () => ({ lastAnyProactive, lastUserActivity, hiddenSent, sessionStart }), addMovie, toggleMovieFav, recommendMovie, botRecommendsMovie, watching: () => watching, saveProfile, events: () => load().events, refs: () => refTree(me.uin), botInvitesMe, interests: () => load().interests, twinModel: () => twinModelOf(me.uin) };
 
   /* ================= заголовок вкладки ================= */
   function updateTitle() {
@@ -638,14 +639,16 @@
   function renderLogin(prefill) {
     const app = $('#app');
     app.className = 'desktop';
-    const known = Object.values(db.accounts);
+    const known = Object.values(db.accounts).filter((a) => !isTwin(a.uin));
     const last = prefill || db.lastLogin || '';
     app.innerHTML = `
     <div class="wins">
       <div class="win dialog" id="loginwin">
         <div class="titlebar">${flowerSvg('#3cb44a', 14, { logo: true })}<span class="ttl">АСЬКА — вход в сеть</span></div>
         <div class="login-body">
-          <div class="bigflower">${flowerSvg('#3cb44a', 44, { logo: true })}<div class="logo-word center">АСЬКА<small>I seek you · по-русски · с 1998 года</small></div><a class="link" href="../" style="margin-top:6px">АСЬКА 3 — новый дизайн →</a><a class="link" href="../v1/" style="margin-top:3px">← простая АСЬКА v1</a></div>
+          <div class="bigflower">${flowerSvg('#3cb44a', 44, { logo: true })}<div class="logo-word center">АСЬКА<small>I seek you · по-русски · с 1998 года</small></div></div>
+          <div class="design-pick" role="radiogroup" aria-label="Дизайн"><button type="button" role="radio" aria-checked="false" data-design="zoomer"><b>Зумер</b><small>стекло, плитки, свайпы</small></button><button type="button" role="radio" aria-checked="true" class="on" data-design="millennial"><b>Миллениал</b><small>классика 2000-х, окна и меню</small></button></div>
+          <div class="ver-links center"><a class="link" href="../v1/">простая v1</a></div>
           <div class="tabs"><button class="on" data-tab="reg">Новый номер</button><button data-tab="login">Уже есть номер</button></div>
           <div class="tabpanel" id="tab-reg">
             <div class="col">
@@ -663,7 +666,7 @@
               <label class="row"><span class="lbl">Номер / тел.</span><input class="field" id="l-id" inputmode="tel" placeholder="123456 или +7…" value="${esc(last)}"></label>
               <label class="row"><span class="lbl">Пароль</span><input class="field" id="l-pass" type="password" autocomplete="current-password"></label>
               <div class="err" id="l-err"></div>
-              ${known.length ? `<div class="hint">Номера на этом устройстве:</div><div class="found inset">${known.map((a) => `<div class="citem" data-pick="${a.uin}"><span class="ico">${statusFlower('offline')}</span><span class="nick">${esc(a.nick)}</span><span class="muted">${a.uin}</span></div>`).join('')}</div>` : '<div class="hint">На этом устройстве ещё нет номеров. Заведи новый на соседней вкладке.</div>'}
+              ${known.length ? `<div class="hint">Номера на этом устройстве:</div><div class="found inset">${known.map((a) => `<div class="citem" data-pick="${esc(a.uin)}"><span class="ico">${statusFlower('offline')}</span><span class="nick">${esc(a.nick)}</span><span class="muted">${esc(a.uin)}</span></div>`).join('')}</div>` : '<div class="hint">На этом устройстве ещё нет номеров. Заведи новый на соседней вкладке.</div>'}
               <div class="right mt"><button class="btn primary" id="l-go">Войти</button></div>
             </div>
           </div>
@@ -681,6 +684,7 @@
     const ph = $('#r-phone');
     ph.addEventListener('input', () => maskPhoneInput(ph));
     $('#r-go').onclick = register;
+    $$('[data-design]', app).forEach((b) => (b.onclick = () => { Snd.play('click'); if (b.dataset.design === 'zoomer') toZoomer(); }));
     $$('#tab-reg input', app).forEach((i) => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') register(); }));
     $('#l-go').onclick = login;
     $$('#tab-login input', app).forEach((i) => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); }));
@@ -690,16 +694,22 @@
 
   function register() {
     const phone = normPhone($('#r-phone').value);
-    const nick = $('#r-nick').value.trim();
+    const nick = Sec.cleanNick($('#r-nick').value);
     const pass = $('#r-pass').value;
     const err = $('#r-err');
+    if (registering) return;
     if (phone.length < 10 || phone.length > 15) { err.textContent = 'Введи настоящий номер телефона.'; Snd.play('error'); return; }
     if (nick.length < 2) { err.textContent = 'Ник — хотя бы две буквы.'; Snd.play('error'); return; }
+    if (pass && pass.length < 4) { err.textContent = 'Пароль — от 4 символов (или оставь пустым).'; Snd.play('error'); return; }
     if (Object.values(db.accounts).some((a) => a.phone === phone)) { err.textContent = 'На этот телефон уже заведён номер — войди через «Уже есть номер».'; Snd.play('error'); return; }
     err.textContent = '';
     const ref = ($('#r-ref').value || '').trim();
-    const inviter = ref && accountOf(ref) && !isTwin(ref) ? ref : '000001';
-    const acc = { uin: newUin(), phone, nick, pass, created: Date.now(), invitedBy: inviter };
+    const inviter = Sec.isUin(ref) && accountOf(ref) && !isTwin(ref) ? ref : '000001';
+    registering = true; $('#r-go').disabled = true; err.textContent = 'Шифруем пароль…';
+    Sec.hashPassword(pass).then((pw) => { registering = false; $('#r-go').disabled = false; err.textContent = ''; finishRegister({ uin: newUin(), phone, nick, pw, created: Date.now(), invitedBy: inviter }); });
+  }
+  let registering = false, loggingIn = false;
+  function finishRegister(acc) {
     mutate((d) => {
       d.accounts[acc.uin] = acc;
       d.contacts[acc.uin] = Object.keys(BOTS).filter((u) => !(BOTS[u].persona && BOTS[u].persona.lite));
@@ -710,7 +720,7 @@
     Snd.play('connect');
     dialog({
       title: 'Регистрация завершена',
-      body: `<div class="center">Твой номер АСЬКИ:</div><div class="uin-box inset mt">${acc.uin}</div><div class="hint mt center">Запиши его на бумажке — по нему тебя будут искать друзья.<br>Телефон: ${esc(fmtPhone(phone))}</div>`,
+      body: `<div class="center">Твой номер АСЬКИ:</div><div class="uin-box inset mt">${acc.uin}</div><div class="hint mt center">Запиши его на бумажке — по нему тебя будут искать друзья.<br>Телефон: ${esc(fmtPhone(acc.phone))}</div>`,
       buttons: [{ label: 'Войти в сеть', primary: true, onClick: () => enter(acc) }],
     });
   }
@@ -718,12 +728,22 @@
     const id = $('#l-id').value.trim();
     const pass = $('#l-pass').value;
     const err = $('#l-err');
+    if (loggingIn) return;
+    db = load();
     const phone = normPhone(id);
-    const acc = db.accounts[id] || Object.values(db.accounts).find((a) => a.phone === phone && phone.length >= 10);
-    if (!acc) { err.textContent = 'Такого номера на этом устройстве нет.'; Snd.play('error'); return; }
-    if ((acc.pass || '') !== pass) { err.textContent = 'Неверный пароль.'; Snd.play('error'); return; }
-    mutate((d) => { d.lastLogin = acc.uin; });
-    enter(acc);
+    const acc = (Sec.isUin(id) && db.accounts[id]) || Object.values(db.accounts).find((a) => a.phone === phone && phone.length >= 10);
+    if (!acc || isTwin(acc.uin)) { err.textContent = 'Такого номера на этом устройстве нет.'; Snd.play('error'); return; }
+    const wait = Sec.lockLeft(acc.uin);
+    if (wait) { err.textContent = `Много неверных попыток. Подожди ${Math.ceil(wait / 1000)} с.`; Snd.play('error'); return; }
+    loggingIn = true; $('#l-go').disabled = true;
+    Sec.verifyPassword(acc, pass).then((ok) => {
+      loggingIn = false; $('#l-go').disabled = false;
+      if (!ok) { Sec.noteFail(acc.uin); err.textContent = 'Неверный пароль.'; Snd.play('error'); return; }
+      Sec.noteOk(acc.uin);
+      mutate((d) => { d.lastLogin = acc.uin; });
+      if (Sec.needsUpgrade(acc)) Sec.hashPassword(pass).then((pw) => mutate((d) => { const a = d.accounts[acc.uin]; if (a) { a.pw = pw; delete a.pass; } }));
+      enter(acc);
+    });
   }
   function enter(acc) {
     db = load();
@@ -742,7 +762,8 @@
     if (pendingWelcome && pendingWelcome.length) { const list = pendingWelcome; pendingWelcome = null; list.forEach((u, i) => setTimeout(() => welcomeFrom(u, me), 3500 + i * 9000)); }
     if (pendingPlay) { const id = pendingPlay; pendingPlay = null; openAux('vinyl'); Music.play(id); }
     else if (pendingWatch) { const id = pendingWatch; pendingWatch = null; openAux('watch', id); }
-    else setTimeout(() => showTips(false), 1200);
+    // подсказки не лезут поверх окна, которое человек уже открыл сам: ждут, пока закроет
+    else { const autoTips = (n) => { if (!me) return; if ($$('.overlay').length && n < 20) { setTimeout(() => autoTips(n + 1), 3000); return; } showTips(false); }; setTimeout(() => autoTips(0), 1200); }
     clearInterval(heartbeatTimer);
     heartbeatTimer = setInterval(heartbeat, 10000);
     updateTitle();
@@ -801,7 +822,7 @@
         <div class="chat-head" id="ch-head"></div>
         <div class="history inset" id="history"></div>
         <div class="compose">
-          <textarea class="field" id="compose" placeholder="Напиши что-нибудь… Enter — отправить" rows="3"></textarea>
+          <textarea class="field" id="compose" maxlength="2000" placeholder="Напиши что-нибудь… Enter — отправить" rows="3"></textarea>
           <div class="send-row">
             <button class="btn icon" id="smbtn" title="Смайлы">${smileSvg('smile', 16)}</button>
             <button class="btn icon" id="clearbtn" title="Очистить историю">🗑</button>
@@ -863,6 +884,9 @@
       { label: 'Послушать все смайлы', onClick: playAllSmiles },
     ]);
     $('#m-help').onclick = (e) => showMenu(e.currentTarget, [
+      { label: 'Дизайн «Зумер» — новый интерфейс →', onClick: toZoomer },
+      { label: 'Дизайн «Миллениал» — классика', checked: true, onClick: () => {} },
+      '-',
       { label: 'Подсказки: как пользоваться', onClick: () => showTips(true) },
       { label: 'Как пользоваться', onClick: () => { openChat('123456'); if (!historyOf('123456').some((m) => m.from === '123456' && /умеет/.test(m.text))) botSays(BOTS['123456'], BOTS['123456'].help); } },
       { label: 'О программе', onClick: about },
@@ -1248,6 +1272,7 @@
     if ((aux.kind === 'wall' || aux.kind === 'community') && aux.arg === toUin) renderAux();
   }
   function postWall(toUin, data) {
+    if (data.text != null) data.text = Sec.cleanText(data.text, 300);
     const p = Object.assign({ id: uid(), from: me.uin, ts: Date.now(), likes: [] }, data);
     addPost(toUin, p);
     post({ type: 'wall', uin: toUin, from: me.uin });
@@ -1289,6 +1314,7 @@
     return `<div class="trackcard pl"><span class="disc stack"></span><div class="ti"><b>♪ ${esc(pl.name)}</b><div class="muted">${pl.tracks.length} тр.: ${esc(names.slice(0, 3).join(', '))}${names.length > 3 ? '…' : ''}</div></div><button class="btn icon" data-playpl="${esc(pl.tracks.join(','))}" data-plname="${esc(pl.name)}" title="Слушать плейлист">▶</button></div>`;
   };
   function addReply(wallUin, postId, reply) {
+    if (reply.text != null) reply.text = Sec.cleanText(reply.text, 200);
     mutate((d) => { const p = (d.wall[wallUin] || []).find((x) => x.id === postId); if (p) { p.replies = p.replies || []; p.replies.push(reply); } });
     if ((aux.kind === 'wall' || aux.kind === 'community') && aux.arg === wallUin) renderAux();
   }
@@ -1680,8 +1706,8 @@
     let player = '';
     if (!info) player = '<div class="empty-note">Нет ссылки на видео.</div>';
     else if (info.kind === 'video') player = `<video id="wv" controls autoplay playsinline preload="metadata" src="${esc(info.src)}"></video>`;
-    else if (info.embed) player = `<iframe id="wf" src="${esc(info.embed)}" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
-    else player = `<div class="empty-note">Эта ссылка не встраивается. <a href="${esc(url)}" target="_blank" rel="noopener">Открыть в новой вкладке</a></div>`;
+    else if (info.embed) player = `<iframe id="wf" sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin" src="${esc(info.embed)}" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+    else player = `<div class="empty-note">Эта ссылка не встраивается. <a href="${esc(Sec.safeUrl(url))}" target="_blank" rel="noopener noreferrer">Открыть в новой вкладке</a></div>`;
     const eps = mv.kind === 'series' ? `<div class="cgroup">Серии</div><div class="ep-list">${(mv.episodes || []).map((e, i) => `<button class="btn ${i === ep ? 'down' : ''}" data-ep="${i}">${esc(e.title)}</button>`).join('')}</div>` : '';
     return `<div class="watch">
       <div class="row wall-head"><button class="btn" id="wt-back">← Кино</button><span class="sp"></span><span class="hint">${esc(info ? info.label : '')}${mv.kind === 'series' ? ' · серия ' + (ep + 1) + '/' + (mv.episodes || []).length : ''}</span></div>
@@ -1706,7 +1732,7 @@
       v.addEventListener('pause', () => { if (!v.ended) saveWatchPos(v.currentTime); });
       v.addEventListener('play', () => { mutate((d) => { d.presence[me.uin] = { status: myStatus, xstatus: myXstatus(), ts: Date.now() }; }); post({ type: 'presence', uin: me.uin }); });
       v.addEventListener('ended', () => { saveWatchPos(0, true); if (mv.kind === 'series' && watching && watching.ep + 1 < (mv.episodes || []).length) { watching = { id, ep: watching.ep + 1 }; renderAux(); } });
-      v.addEventListener('error', () => { const scr = $('.watch .screen'); if (scr && !$('.err', scr)) scr.insertAdjacentHTML('beforeend', `<div class="err">Видео не загрузилось. Проверь ссылку или открой: <a href="${esc(movieSource(mv, ep).url)}" target="_blank" rel="noopener">в новой вкладке</a></div>`); });
+      v.addEventListener('error', () => { const scr = $('.watch .screen'); if (scr && !$('.err', scr)) scr.insertAdjacentHTML('beforeend', `<div class="err">Видео не загрузилось. Проверь ссылку или открой: <a href="${esc(Sec.safeUrl(movieSource(mv, ep).url))}" target="_blank" rel="noopener noreferrer">в новой вкладке</a></div>`); });
       const cont = $('#wt-cont'); if (cont) cont.onclick = () => { v.currentTime = w.pos; v.play(); cont.remove(); };
     }
     $('#wt-wall').onclick = () => { postWall(me.uin, { kind: 'movie', movie: id, note: `Смотрю «${mv.title}»` }); toast(me, 'кино на стене', null); };
@@ -1846,7 +1872,7 @@
     const st = Music.stationById(id); if (!st) return;
     const cur = (db.radio || {})[id] ? db.radio[id].stream || '' : '';
     dialog({ title: `${st.icon} ${st.name}: прямой эфир`, body: `<div class="hint">Станция играет из общей коллекции по стилю (${st.styles.map((x) => Music.STYLE_NAMES[x]).join(', ')}). Можно подключить настоящий поток: ссылку на mp3/aac-стрим любой радиостанции. Поток услышат все.</div><label class="row mt"><span class="lbl">Поток</span><input class="field" id="rs-url" placeholder="https://…/stream.mp3" value="${esc(cur)}"></label>`,
-      buttons: [{ label: 'Сохранить', primary: true, onClick: (ov) => { const url = $('#rs-url', ov).value.trim(); mutate((d) => { d.radio = d.radio || {}; d.radio[id] = { stream: url || null, by: me.uin, ts: Date.now() }; }); loadRadio(); post({ type: 'radio' }); Snd.play('click'); if (aux.kind === 'vinyl') renderAux(); } }, { label: 'Отмена' }] });
+      buttons: [{ label: 'Сохранить', primary: true, onClick: (ov) => { const url = Sec.safeUrl($('#rs-url', ov).value); mutate((d) => { d.radio = d.radio || {}; d.radio[id] = { stream: url || null, by: me.uin, ts: Date.now() }; }); loadRadio(); post({ type: 'radio' }); Snd.play('click'); if (aux.kind === 'vinyl') renderAux(); } }, { label: 'Отмена' }] });
   }
   function renderVinyl() {
     const st = Music.state; const t = st.trackId ? Music.anyById(st.trackId) : null;
@@ -1870,8 +1896,8 @@
     return `<div class="vinyl ${skin}">
       <div class="row v-top"><span class="hint">${skin === 'cyber' ? 'КИБЕР-ВИНИЛ: пластинка крутит НФТ' : 'Ретро-винил'}</span><span class="sp"></span><button class="btn" id="v-skin" title="Сменить дизайн">${skin === 'cyber' ? '📼 ретро' : '⚡ киберпанк'}</button></div>
       <div class="tt ${st.playing ? '' : 'lifted'}">${turntableSvg(st.jingle && station ? { title: station.name, color: station.color, id: 'radio' } : t, skin)}${skin === 'cyber' ? '<div class="neon-grid"></div>' : ''}</div>
-      ${t && st.kind === 'embed' && st.embed ? `<div class="embed-box"><iframe src="${esc(st.embed)}" style="height:${st.embedH || 180}px" allow="autoplay; clipboard-write; encrypted-media" allowfullscreen loading="lazy"></iframe></div>` : ''}
-      ${t && st.kind === 'link' ? `<div class="hint">Эта ссылка не встраивается: <a href="${esc(t.url)}" target="_blank" rel="noopener">открыть в новой вкладке</a></div>` : ''}
+      ${t && st.kind === 'embed' && st.embed ? `<div class="embed-box"><iframe sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin" src="${esc(st.embed)}" style="height:${st.embedH || 180}px" allow="autoplay; clipboard-write; encrypted-media" allowfullscreen loading="lazy"></iframe></div>` : ''}
+      ${t && st.kind === 'link' ? `<div class="hint">Эта ссылка не встраивается: <a href="${esc(Sec.safeUrl(t.url))}" target="_blank" rel="noopener noreferrer">открыть в новой вкладке</a></div>` : ''}
       ${st.error ? `<div class="err">${esc(st.error)}</div>` : ''}
       <div class="np-box inset ${station ? 'radio' : ''}" ${station ? `style="--c1:${station.color};--c2:${station.color2}"` : ''}>${station ? `<div class="onair-line">📻 ${esc(station.name)} · <span id="v-onair">${esc(st.onAir || station.slogan)}</span></div>` : ''}<div class="row">${t ? `<span class="cv" data-trackpage="${esc(t.id)}">${coverSvg(t, 36)}</span>` : ''}<div class="sp"><b id="v-title">${t ? `<span class="link" data-trackpage="${esc(t.id)}">${esc(t.title)}</span>` : st.jingle ? 'Джингл станции' : 'Поставь пластинку'}</b><div class="muted" id="v-sub">${t ? esc(t.artist) + ' · ' + (t.url ? esc(t.label || t.kind) : t.year + ' · ' + Music.STYLE_NAMES[t.style]) : '12 хитов, коллекция по ссылкам и три радиостанции'}</div>${t ? `<div class="muted">НФТ ${esc(nft.serial)} · владелец ${esc(nickOf(nft.owner))} · ценность ${trackValue(t.id)}⚡</div>` : ''}</div>${t ? `<button class="btn icon ${favs.includes(t.id) ? 'on' : ''}" data-fav="${t.id}" title="В избранное">♥</button>` : ''}</div><div class="prog" id="v-prog" title="${st.kind === 'audio' ? 'Перемотать' : ''}"><i style="width:${Math.round(prog * 100)}%"></i></div><div class="hint" id="v-pos">${timeTxt || 'Друзья увидят, что ты слушаешь'}${st.queueName && !station ? ' · ' + esc(st.queueName) : ''}</div></div>
       <div class="row v-ctrl"><button class="btn" id="v-prev" title="Предыдущий">⏮</button><button class="btn primary" id="v-toggle" title="Играть / пауза">${st.playing ? '❚❚' : '▶'}</button><button class="btn" id="v-next" title="Следующий">⏭</button><button class="btn icon ${st.shuffle ? 'down' : ''}" id="v-shuffle" title="Случайный порядок">⤮</button><button class="btn icon ${st.repeat ? 'down' : ''}" id="v-repeat" title="Повтор">⟲</button><input type="range" id="v-vol" min="0" max="100" value="${Math.round(Music.volume * 100)}" title="Громкость"><label class="row" title="Шипение пластинки"><input type="checkbox" id="v-crackle" ${Music.crackle ? 'checked' : ''}> шип</label></div>
@@ -2684,7 +2710,7 @@
   }
 
   /* ================= приглашения и рефералы (цепочка) ================= */
-  function refFromUrl() { try { return new URLSearchParams(location.search).get('ref') || ''; } catch (e) { return ''; } }
+  function refFromUrl() { try { const r = new URLSearchParams(location.search).get('ref') || ''; return Sec.isUin(r) && !isTwin(r) ? r : ''; } catch (e) { return ''; } }
   const inviterOf = (uin) => { const a = accountOf(uin); return a ? (a.invitedBy === undefined ? (BOTS[uin] ? null : '000001') : a.invitedBy) : null; };
   const inviteesOf = (uin) => allKnown().filter((a) => !a.twinOf && inviterOf(a.uin) === uin);
   function refTree(uin) {

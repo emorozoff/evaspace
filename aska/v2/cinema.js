@@ -6,6 +6,8 @@
   function parseLink(url) {
     url = String(url || '').trim(); let m;
     if (!url) return null;
+    // ссылка со схемой — только http(s) или blob:: никаких javascript:/data: в src и href
+    if (/^[a-z][a-z0-9+.-]*:/i.test(url) && !/^(https?|blob):/i.test(url)) return null;
     if ((m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([\w-]{6,})/))) return { kind: 'youtube', embed: `https://www.youtube.com/embed/${m[1]}?rel=0&autoplay=1`, label: 'YouTube' };
     if ((m = url.match(/(?:vk(?:video)?\.(?:com|ru))\/video(-?\d+)_(\d+)/))) return { kind: 'vk', embed: `https://vk.com/video_ext.php?oid=${m[1]}&id=${m[2]}&hd=2&autoplay=1`, label: 'VK Видео' };
     if ((m = url.match(/vk(?:video)?\.(?:com|ru)\/video_ext\.php\?[^#]*oid=(-?\d+)[^#]*id=(\d+)/))) return { kind: 'vk', embed: `https://vk.com/video_ext.php?oid=${m[1]}&id=${m[2]}&hd=2&autoplay=1`, label: 'VK Видео' };

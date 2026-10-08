@@ -6,7 +6,6 @@
   'use strict';
 
   const VERSION = '1.0 · простая';
-  const DB_KEY = 'aska.v1';
   const SESSION_KEY = 'aska.session';
   const Snd = window.AskaSound;
 
@@ -25,22 +24,12 @@
   const isNarrow = () => window.matchMedia('(max-width: 719px)').matches || (isTouch() && window.matchMedia('(max-width: 900px)').matches);
 
   /* ================= хранилище ================= */
-  function emptyDb() {
-    return { accounts: {}, contacts: {}, history: {}, unread: {}, presence: {}, memory: {}, settings: { sound: true, volume: 0.8 }, lastLogin: '' };
-  }
-  function load() {
-    try {
-      const raw = localStorage.getItem(DB_KEY);
-      const d = raw ? JSON.parse(raw) : emptyDb();
-      const e = emptyDb();
-      for (const k in e) if (d[k] == null) d[k] = e[k];
-      return d;
-    } catch (err) { return emptyDb(); }
-  }
+  // общее с новыми дизайнами хранилище (../store.js)
+  const Store = window.AskaStore;
+  const Sec = window.AskaSecure;
+  function load() { return Store.sync(); }
   let db = load();
-  function save() { try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch (err) {} }
-  // перечитать → изменить → записать: так вкладки не затирают друг друга
-  function mutate(fn) { db = load(); fn(db); save(); }
+  function mutate(fn) { return Store.mutate(fn); }
 
   function applySettings() {
     Snd.enabled = db.settings.sound !== false;
@@ -104,7 +93,7 @@
     parts.push(['t', text.slice(last)]);
     return parts.map((p) => {
       if (p[0] === 's') return `<span class="sm" data-sm="${p[1]}" title="${esc(p[2])} — ${esc(SMILE_BY_ID[p[1]].name)}">${smileSvg(p[1])}</span>`;
-      return esc(p[1]).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      return esc(p[1]).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
     }).join('');
   }
 
@@ -166,7 +155,8 @@
   function loadSession() {
     try {
       const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');
-      if (s && db.accounts[s.uin]) {
+      if (s && s.seen && Date.now() - s.seen > 12 * 3600 * 1000) { sessionStorage.removeItem(SESSION_KEY); return; }
+      if (s && Sec.isUin(s.uin) && !/^tw/.test(s.uin) && db.accounts[s.uin]) {
         me = db.accounts[s.uin];
         myStatus = s.status || 'online';
         openChats = (s.open || []).filter((u) => accountOf(u));
@@ -178,7 +168,7 @@
   function saveSession() {
     try {
       if (!me) sessionStorage.removeItem(SESSION_KEY);
-      else sessionStorage.setItem(SESSION_KEY, JSON.stringify({ uin: me.uin, status: myStatus, open: openChats, active, drafts }));
+      else sessionStorage.setItem(SESSION_KEY, JSON.stringify({ uin: me.uin, status: myStatus, open: openChats, active, drafts, seen: Date.now() }));
     } catch (err) {}
   }
 
@@ -275,7 +265,7 @@
   function send() {
     const ta = $('#compose');
     if (!ta || !active) return;
-    const text = ta.value.replace(/\s+$/, '');
+    const text = Sec.cleanText(ta.value, 2000);
     if (!text) return;
     const msg = { id: uid(), from: me.uin, to: active, text, ts: Date.now() };
     pushHistory(msg);
@@ -361,10 +351,10 @@
     else if (m.type === 'msg' && m.msg && m.msg.from === me.uin) { db = load(); if (active === m.msg.to) renderHistory(); }
     else if (m.type === 'presence') { db = load(); renderContacts(); renderChatHead(); }
   };
-  window.addEventListener('storage', (e) => {
-    if (e.key !== DB_KEY || !me) return;
-    db = load();
-    renderContacts();
+  Store.onChange((cols) => {
+    if (!me) return;
+    if (cols.has('*') || cols.has('accounts')) { if (!db.accounts[me.uin]) { logout(); return; } me = db.accounts[me.uin]; }
+    if (['*', 'contacts', 'presence', 'unread', 'accounts'].some((c) => cols.has(c))) renderContacts();
   });
 
   /* ================= Аська и друзья ================= */
@@ -451,7 +441,7 @@
     deliverSeq(bot, msgs, 600 + Math.random() * 1500);
   }
   setInterval(askaTick, 15000);
-  if (/debug/.test(location.search)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt };
+  if (/[?&]debug\b/.test(location.search) && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt };
 
   /* ================= заголовок вкладки ================= */
   function updateTitle() {
@@ -541,14 +531,14 @@
   function renderLogin(prefill) {
     const app = $('#app');
     app.className = 'desktop';
-    const known = Object.values(db.accounts);
+    const known = Object.values(db.accounts).filter((a) => !/^tw/.test(a.uin));
     const last = prefill || db.lastLogin || '';
     app.innerHTML = `
     <div class="wins">
       <div class="win dialog" id="loginwin">
         <div class="titlebar">${flowerSvg('#3cb44a', 14, { logo: true })}<span class="ttl">АСЬКА — вход в сеть</span></div>
         <div class="login-body">
-          <div class="bigflower">${flowerSvg('#3cb44a', 44, { logo: true })}<div class="logo-word center">АСЬКА<small>I seek you · по-русски · с 1998 года</small></div><a class="link" href="../" style="margin-top:6px">АСЬКА 3 — новый дизайн →</a><a class="link" href="../v2/" style="margin-top:3px">АСЬКА v2 — классика со всеми фишками →</a><span class="hint" style="margin-top:3px">Это простая v1: контакты, беседы, «о-оу», смайлы, Аська и друзья.</span></div>
+          <div class="bigflower">${flowerSvg('#3cb44a', 44, { logo: true })}<div class="logo-word center">АСЬКА<small>I seek you · по-русски · с 1998 года</small></div><a class="link" href="../?design=zoomer" style="margin-top:6px">АСЬКА · дизайн «Зумер» →</a><a class="link" href="../?design=millennial" style="margin-top:3px">АСЬКА · дизайн «Миллениал» →</a><span class="hint" style="margin-top:3px">Это простая v1: контакты, беседы, «о-оу», смайлы, Аська и друзья.</span></div>
           <div class="tabs"><button class="on" data-tab="reg">Новый номер</button><button data-tab="login">Уже есть номер</button></div>
           <div class="tabpanel" id="tab-reg">
             <div class="col">
@@ -565,7 +555,7 @@
               <label class="row"><span class="lbl">Номер / тел.</span><input class="field" id="l-id" inputmode="tel" placeholder="123456 или +7…" value="${esc(last)}"></label>
               <label class="row"><span class="lbl">Пароль</span><input class="field" id="l-pass" type="password" autocomplete="current-password"></label>
               <div class="err" id="l-err"></div>
-              ${known.length ? `<div class="hint">Номера на этом устройстве:</div><div class="found inset">${known.map((a) => `<div class="citem" data-pick="${a.uin}"><span class="ico">${statusFlower('offline')}</span><span class="nick">${esc(a.nick)}</span><span class="muted">${a.uin}</span></div>`).join('')}</div>` : '<div class="hint">На этом устройстве ещё нет номеров. Заведи новый на соседней вкладке.</div>'}
+              ${known.length ? `<div class="hint">Номера на этом устройстве:</div><div class="found inset">${known.map((a) => `<div class="citem" data-pick="${esc(a.uin)}"><span class="ico">${statusFlower('offline')}</span><span class="nick">${esc(a.nick)}</span><span class="muted">${a.uin}</span></div>`).join('')}</div>` : '<div class="hint">На этом устройстве ещё нет номеров. Заведи новый на соседней вкладке.</div>'}
               <div class="right mt"><button class="btn primary" id="l-go">Войти</button></div>
             </div>
           </div>
@@ -592,14 +582,20 @@
 
   function register() {
     const phone = normPhone($('#r-phone').value);
-    const nick = $('#r-nick').value.trim();
+    const nick = Sec.cleanNick($('#r-nick').value);
     const pass = $('#r-pass').value;
     const err = $('#r-err');
+    if (busy) return;
     if (phone.length < 10 || phone.length > 15) { err.textContent = 'Введи настоящий номер телефона.'; Snd.play('error'); return; }
     if (nick.length < 2) { err.textContent = 'Ник — хотя бы две буквы.'; Snd.play('error'); return; }
+    if (pass && pass.length < 4) { err.textContent = 'Пароль — от 4 символов (или оставь пустым).'; Snd.play('error'); return; }
     if (Object.values(db.accounts).some((a) => a.phone === phone)) { err.textContent = 'На этот телефон уже заведён номер — войди через «Уже есть номер».'; Snd.play('error'); return; }
     err.textContent = '';
-    const acc = { uin: newUin(), phone, nick, pass, created: Date.now() };
+    busy = true; err.textContent = 'Шифруем пароль…';
+    Sec.hashPassword(pass).then((pw) => { busy = false; err.textContent = ''; finishRegister({ uin: newUin(), phone, nick, pw, created: Date.now() }); });
+  }
+  let busy = false;
+  function finishRegister(acc) {
     mutate((d) => {
       d.accounts[acc.uin] = acc;
       d.contacts[acc.uin] = Object.keys(BOTS);
@@ -608,7 +604,7 @@
     Snd.play('connect');
     dialog({
       title: 'Регистрация завершена',
-      body: `<div class="center">Твой номер АСЬКИ:</div><div class="uin-box inset mt">${acc.uin}</div><div class="hint mt center">Запиши его на бумажке — по нему тебя будут искать друзья.<br>Телефон: ${esc(fmtPhone(phone))}</div>`,
+      body: `<div class="center">Твой номер АСЬКИ:</div><div class="uin-box inset mt">${acc.uin}</div><div class="hint mt center">Запиши его на бумажке — по нему тебя будут искать друзья.<br>Телефон: ${esc(fmtPhone(acc.phone))}</div>`,
       buttons: [{ label: 'Войти в сеть', primary: true, onClick: () => enter(acc) }],
     });
   }
@@ -616,12 +612,22 @@
     const id = $('#l-id').value.trim();
     const pass = $('#l-pass').value;
     const err = $('#l-err');
+    if (busy) return;
+    db = load();
     const phone = normPhone(id);
-    const acc = db.accounts[id] || Object.values(db.accounts).find((a) => a.phone === phone && phone.length >= 10);
-    if (!acc) { err.textContent = 'Такого номера на этом устройстве нет.'; Snd.play('error'); return; }
-    if ((acc.pass || '') !== pass) { err.textContent = 'Неверный пароль.'; Snd.play('error'); return; }
-    mutate((d) => { d.lastLogin = acc.uin; });
-    enter(acc);
+    const acc = (Sec.isUin(id) && db.accounts[id]) || Object.values(db.accounts).find((a) => a.phone === phone && phone.length >= 10);
+    if (!acc || /^tw/.test(acc.uin)) { err.textContent = 'Такого номера на этом устройстве нет.'; Snd.play('error'); return; }
+    const wait = Sec.lockLeft(acc.uin);
+    if (wait) { err.textContent = `Много неверных попыток. Подожди ${Math.ceil(wait / 1000)} с.`; Snd.play('error'); return; }
+    busy = true;
+    Sec.verifyPassword(acc, pass).then((ok) => {
+      busy = false;
+      if (!ok) { Sec.noteFail(acc.uin); err.textContent = 'Неверный пароль.'; Snd.play('error'); return; }
+      Sec.noteOk(acc.uin);
+      mutate((d) => { d.lastLogin = acc.uin; });
+      if (Sec.needsUpgrade(acc)) Sec.hashPassword(pass).then((pw) => mutate((d) => { const a = d.accounts[acc.uin]; if (a) { a.pw = pw; delete a.pass; } }));
+      enter(acc);
+    });
   }
   function enter(acc) {
     db = load();

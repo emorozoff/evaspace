@@ -88,6 +88,8 @@ window.AskaMusic = (function () {
   function parseLink(url) {
     url = String(url || '').trim();
     let m;
+    // ссылка со схемой — только http(s): никаких javascript:/data: в src и href
+    if (/^[a-z][a-z0-9+.-]*:/i.test(url) && !/^(https?):/i.test(url)) return null;
     if ((m = url.match(/music\.yandex\.(?:ru|com|by|kz|uz)\/album\/(\d+)\/track\/(\d+)/))) return { kind: 'yandex', embed: `https://music.yandex.ru/iframe/track/${m[2]}/${m[1]}`, label: 'Яндекс Музыка', h: 180 };
     if ((m = url.match(/music\.yandex\.(?:ru|com|by|kz|uz)\/users\/([^/]+)\/playlists\/(\d+)/))) return { kind: 'yandex', embed: `https://music.yandex.ru/iframe/playlist/${m[1]}/${m[2]}`, label: 'Яндекс Музыка · плейлист', h: 450 };
     if ((m = url.match(/music\.yandex\.(?:ru|com|by|kz|uz)\/album\/(\d+)/))) return { kind: 'yandex', embed: `https://music.yandex.ru/iframe/album/${m[1]}`, label: 'Яндекс Музыка · альбом', h: 450 };

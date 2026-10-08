@@ -64,10 +64,13 @@ body.skin-aero.theme-biz { --a-sky1: #9fc3dc; --a-sky2: #3f6a8c; --a-sky3: #1d35
   background-size: 140px 140px, 140px 140px, 80px 80px, 80px 80px, 200px 200px, 200px 200px, 54px 54px, 54px 54px, 110px 110px, 110px 110px;
   background-position: 6% 72%, 6% 72%, 88% 30%, 88% 30%, 82% 88%, 82% 88%, 18% 20%, 18% 20%, 60% 8%, 60% 8%;
   background-repeat: no-repeat;
-  animation: bubbles 18s ease-in-out infinite alternate;
 }
-@keyframes bubbles { to { background-position: 8% 66%, 8% 66%, 85% 24%, 85% 24%, 80% 82%, 80% 82%, 20% 14%, 20% 14%, 63% 4%, 63% 4%; } }
-@media (prefers-reduced-motion: reduce) { .skin-aero .desktop::before { animation: none; } }
+/* пузыри плывут сдвигом слоя (transform): это делает видеокарта, без перерисовки
+   всего экрана на каждом кадре. На телефоне небо неподвижно — бережём батарею */
+@media (min-width: 720px) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .skin-aero .desktop::before { inset: -3%; will-change: transform; animation: bubbles 24s ease-in-out infinite alternate; }
+}
+@keyframes bubbles { to { transform: translate3d(1.2%, -2.4%, 0); } }
 
 /* ---------- окна ---------- */
 .skin-aero .win {
@@ -200,7 +203,9 @@ body.skin-aero.theme-biz { --a-sky1: #9fc3dc; --a-sky2: #3f6a8c; --a-sky3: #1d35
 .skin-aero .history { display: flex; flex-direction: column; align-items: stretch; padding: 10px 10px 12px; border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(232,244,255,.65)); line-height: 1.38; }
 .skin-aero .history .day { align-self: center; margin: 10px 0 4px; padding: 2px 10px; border-radius: 999px; background: rgba(255,255,255,.75); font-size: 11px; color: var(--a-muted); box-shadow: 0 1px 2px rgba(0,30,70,.08); }
 .skin-aero .history .day::before, .skin-aero .history .day::after { content: none; }
-.skin-aero .msg { align-self: flex-start; max-width: 84%; margin: 6px 0 0; padding: 6px 11px 7px; border-radius: 18px; background: #fff; box-shadow: 0 1px 2px rgba(0,30,70,.12); animation: bubble .22s ease-out both; }
+.skin-aero .msg { align-self: flex-start; max-width: 84%; margin: 6px 0 0; padding: 6px 11px 7px; border-radius: 18px; background: #fff; box-shadow: 0 1px 2px rgba(0,30,70,.12); }
+/* появляется только новое сообщение, а не вся беседа при каждой перерисовке */
+.skin-aero .msg.new { animation: bubble .22s ease-out both; }
 @keyframes bubble { from { transform: translateY(6px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
 .skin-aero .msg.them { border-bottom-left-radius: 6px; }
 .skin-aero .msg.me { align-self: flex-end; color: #fff; border-bottom-right-radius: 6px; background: linear-gradient(180deg, var(--a-me1), var(--a-me2)); box-shadow: 0 2px 6px color-mix(in srgb, var(--a-me2) 35%, transparent); }
@@ -256,6 +261,44 @@ body.skin-aero.theme-biz { --a-sky1: #9fc3dc; --a-sky2: #3f6a8c; --a-sky3: #1d35
 .skin-aero .uin-box { border-radius: 14px; font-size: 26px; background: linear-gradient(180deg, #fff, #eef6ff); }
 .skin-aero .lbl { width: 84px; color: var(--a-muted); }
 
+/* выбор дизайна на входе: Зумер (этот) или Миллениал (классика v2) */
+.design-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 2px 0 10px; }
+.design-pick button { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 8px 10px; text-align: left; cursor: pointer; font: inherit; color: inherit; border: 1px solid #9aa9bb; background: #f4f6f9; border-radius: 3px; }
+.design-pick button b { font-size: 13px; }
+.design-pick button small { font-size: 10.5px; opacity: .72; line-height: 1.2; }
+.design-pick button.on { outline: 2px solid var(--sel, #0a246a); outline-offset: -2px; background: #fff; }
+.skin-aero .design-pick button { border-radius: 14px; border-color: var(--a-line); background: rgba(255,255,255,.7); }
+.skin-aero .design-pick button.on { outline: none; background: linear-gradient(180deg, #fff, #e6f3ff); box-shadow: 0 0 0 2px var(--a-accent), 0 4px 14px rgba(30,143,255,.2); }
+.skin-aero .design-pick button[data-design="millennial"] b { font-family: Tahoma, Verdana, sans-serif; }
+
+/* «Мои данные» */
+.data-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.data-grid > div { display: flex; flex-direction: column; align-items: center; padding: 8px 4px; border: 1px solid #9aa9bb; background: #fff; }
+.data-grid b { font-size: 16px; }
+.data-grid span { font-size: 11px; opacity: .7; text-align: center; }
+.skin-aero .data-grid > div { border-radius: 14px; border-color: var(--a-line); background: rgba(255,255,255,.8); }
+
+/* средние экраны: окна сжимаются, а если три не помещаются — видно последнее открытое */
+@media (min-width: 720px) {
+  .win.contacts { flex: 0 1 auto; min-width: 220px; }
+  .win.chat { flex: 0 1 auto; min-width: 320px; }
+  .win.aux { flex: 0 1 auto; min-width: 300px; }
+  .wins { overflow: clip; }
+}
+@media (min-width: 720px) and (max-width: 1179px) {
+  .skin-aero .desktop.mode-aux.focus-aux .win.chat { display: none; }
+  .skin-aero .desktop.mode-aux.mode-chat:not(.focus-aux) .win.aux { display: none; }
+}
+@media (min-width: 720px) and (max-width: 1009px) {
+  .skin-classic .desktop.mode-aux.focus-aux .win.chat { display: none; }
+  .skin-classic .desktop.mode-aux.mode-chat:not(.focus-aux) .win.aux { display: none; }
+}
+.toast .t { min-width: 0; overflow: hidden; }
+
+/* «показать ранее» в длинной беседе */
+.hist-more { display: block; margin: 6px auto 10px; padding: 5px 14px; font: inherit; font-size: 12px; cursor: pointer; border: 1px solid #9aa9bb; background: #f4f6f9; color: var(--link, #0000cc); border-radius: 3px; }
+.skin-aero .hist-more { border-radius: 999px; border-color: var(--a-line); background: rgba(255,255,255,.8); box-shadow: 0 1px 3px rgba(0,30,70,.1); }
+
 /* ---------- лист «Ещё» и прочее ---------- */
 .skin-aero .more-grid button { border: 1px solid var(--a-line); border-radius: 16px; background: linear-gradient(180deg, #fff, #eef5fc); box-shadow: 0 2px 6px rgba(0,30,70,.08); color: var(--a-text); }
 .skin-aero .more-grid button:active { transform: scale(.96); }
@@ -292,7 +335,10 @@ body.skin-aero.theme-biz { --a-sky1: #9fc3dc; --a-sky2: #3f6a8c; --a-sky3: #1d35
   @keyframes sheetup { from { transform: translateY(100%); } to { transform: none; } }
   .skin-aero .overlay .win.dialog .titlebar { border-radius: 22px 22px 0 0; }
   .skin-aero .overlay .win.dialog::before { content: ''; position: absolute; top: 6px; left: 50%; width: 38px; height: 5px; margin-left: -19px; border-radius: 3px; background: rgba(20,70,130,.25); z-index: 2; }
-  .skin-aero .win { border-radius: 0; border-width: 0; box-shadow: none; -webkit-backdrop-filter: blur(16px) saturate(1.5); backdrop-filter: blur(16px) saturate(1.5); background: rgba(255,255,255,.74); }
+  /* на телефоне окно во весь экран: размывать под ним нечего, а видеокарта и батарея платят.
+     Вместо живого стекла — светлый полупрозрачный слой поверх неба */
+  .skin-aero .win { border-radius: 0; border-width: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(242,248,255,.93)); }
+  .skin-aero .overlay .win.dialog { background: rgba(255,255,255,.97); }
   .skin-aero .titlebar { border-radius: 0; height: 46px; font-size: 16px; margin-bottom: 8px; }
   .skin-aero .tbtn { width: 30px; height: 30px; font-size: 15px; line-height: 28px; }
   .skin-aero .win.contacts, .skin-aero .win.chat, .skin-aero .win.aux { width: 100%; height: auto; max-height: none; }
@@ -668,3 +714,11 @@ body.skin-aero.theme-biz { --a-sky1: #9fc3dc; --a-sky2: #3f6a8c; --a-sky3: #1d35
 .skin-aero .avatars button.on { border: 2px solid var(--a-accent); background: #eef6ff; box-shadow: 0 0 0 3px color-mix(in srgb, var(--a-accent) 20%, transparent); }
 .skin-aero .dossier-sec, .skin-aero .event, .skin-aero .evcard { border-radius: 14px; }
 .ver-links { margin-top: 3px; font-size: 11px; color: var(--a-muted, #555); }
+
+/* телефон: пальцу нужны цели побольше — чипы интересов, статусов и фильтров не меньше 32 px */
+@media (max-width: 719px), (pointer: coarse) and (max-width: 900px) {
+  .chip { min-height: 32px; padding-top: 5px; padding-bottom: 5px; }
+  .chips { gap: 6px; }
+  .chat-tabs button { min-height: 30px; }
+  button.link { min-height: 28px; }
+}
