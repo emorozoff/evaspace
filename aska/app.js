@@ -27,7 +27,7 @@
 
   /* ================= хранилище ================= */
   function emptyDb() {
-    return { accounts: {}, contacts: {}, history: {}, unread: {}, presence: {}, memory: {}, profile: {}, wall: {}, interests: {}, communities: {}, events: {}, refLog: [], tracks: {}, trackOwners: {}, settings: { sound: true, volume: 0.8 }, lastLogin: '' };
+    return { accounts: {}, contacts: {}, history: {}, unread: {}, presence: {}, memory: {}, profile: {}, wall: {}, interests: {}, communities: {}, events: {}, refLog: [], tracks: {}, trackOwners: {}, movies: {}, settings: { sound: true, volume: 0.8 }, lastLogin: '' };
   }
   function load() {
     try {
@@ -57,7 +57,7 @@
       replies: ['Чтобы добавить друга — меню «Контакты» → «Добавить контакт», ищи по номеру, телефону или нику.', 'Сменить статус можно кнопкой с цветочком внизу списка контактов.', 'Смайлы вставляются кнопкой :) под полем ввода. У каждого свой звук — нажми на смайл в переписке, чтобы послушать.', 'Открой АСЬКУ во второй вкладке, зарегистрируй ещё один номер и напиши сам себе — так можно проверить звук «о-оу» :)', 'Звук можно выключить в меню «Звук».', 'Добавь АСЬКУ на экран «Домой» — она откроется как приложение, даже без интернета.', 'Enter отправляет сообщение, Shift+Enter — новая строка.'],
       bye: ['До связи! Я всегда онлайн :)'],
       how: ['Работаю круглосуточно, без выходных :)'],
-      help: 'Что умеет АСЬКА:\n• номер + ник + телефон при регистрации\n• контакты с цветочками-статусами\n• «о-оу!» на входящее сообщение\n• 22 смайла, у каждого свой звук\n• стена: открытки, записи, музыка — её видят друзья\n• интересы и процент совпадения, случайное знакомство\n• режимы «Близкие / Бизнес / Общение» — меняют статус и стиль\n• виниловый плеер с хитами и плейлистами\n• Аська и друзья с характером\n\nСпроси: «контакты», «статус», «смайлы», «звук», «вкладки».',
+      help: 'Что умеет АСЬКА:\n• номер + ник + телефон при регистрации\n• контакты с цветочками-статусами\n• «о-оу!» на входящее сообщение\n• 22 смайла, у каждого свой звук\n• стена: открытки, записи, музыка — её видят друзья\n• интересы и процент совпадения, случайное знакомство\n• режимы «Близкие / Бизнес / Общение» — меняют статус и стиль\n• виниловый плеер: хиты, коллекция по ссылкам (Яндекс Музыка, YouTube, mp3), НФТ у трека, консультант Винилл\n• кино: фильмы и сериалы по ссылке, смотреть с любого устройства, любимое, советовать друзьям\n• холодильник: магниты из поездок, любимая еда и напитки (НФТ)\n• Аська и друзья с характером\n\nСпроси: «контакты», «статус», «смайлы», «звук», «вкладки».',
     },
   };
   // Аська и друзья — персонажи с характером, живут в brain.js
@@ -69,6 +69,7 @@
 
   /* ================= графика (art.js) ================= */
   const { STATUSES, statusInfo, flowerSvg, statusFlower, envelopeSvg, SMILES, SMILE_BY_ID, smileSvg, postcardSvg, COUNTRIES, COUNTRY, magnetSvg } = window.AskaArt;
+  const Cinema = window.AskaCinema;
 
   // регулярка по всем кодам: длинные раньше коротких
   const CODE_LIST = [];
@@ -318,7 +319,9 @@
     Snd.play('sent');
     if (active === to) renderHistory();
     if (extra.kind === 'track' || extra.kind === 'playlist') addPoints(2, 'музыка другу');
+    if (extra.kind === 'movie') addPoints(2, 'кино другу');
     const bot = BOTS[to];
+    if (bot && bot.persona && extra.kind === 'movie') { const P = bot.persona; const arr = Cinema.BOT_LINES[P.id] || Cinema.BOT_LINES.aska; setTimeout(() => botSays(bot, P.id === 'aska' ? pick(arr) : P.v(pick(arr))), 2500 + Math.random() * 2500); return; }
     if (bot && bot.persona && extra.kind !== 'magnet') {
       const t = extra.kind === 'track' ? Music.byId[extra.track] : null;
       const P = bot.persona;
@@ -382,6 +385,7 @@
     if (extra && extra.track) { msg.kind = 'track'; msg.track = extra.track; }
     if (extra && extra.magnet) { msg.kind = 'magnet'; msg.country = extra.magnet.country; msg.serial = extra.magnet.id; }
     if (extra && extra.invite) { msg.kind = 'invite'; msg.event = extra.invite; }
+    if (extra && extra.movie) { msg.kind = 'movie'; msg.movie = extra.movie; if (extra.note) msg.note = extra.note; }
     mutate((d) => {
       const k = pairKey(msg.from, msg.to);
       d.history[k] = d.history[k] || [];
@@ -401,6 +405,7 @@
     else if (m.type === 'msg' && m.msg && m.msg.from === me.uin) { db = load(); if (active === m.msg.to) renderHistory(); }
     else if (m.type === 'presence') { db = load(); renderContacts(); renderChatHead(); }
     else if (m.type === 'tracks') { db = load(); loadExternalTracks(); if (aux.kind === 'vinyl') renderAux(); }
+    else if (m.type === 'movies') { db = load(); if (aux.kind === 'cinema' || aux.kind === 'watch') renderAux(); }
     else if (m.type === 'interests' || m.type === 'events' || m.type === 'refs') { db = load(); if (['interests', 'interest', 'community', 'events', 'refs'].includes(aux.kind)) renderAux(); if (m.type === 'events' && active) renderHistory(); }
     else if (m.type === 'wall') { db = load(); if (m.uin === me.uin && m.from !== me.uin) { const a = accountOf(m.from); if (a) { toast(a, 'оставил(а) запись у тебя на стене', null); Snd.play('tada'); } } if (aux.kind === 'wall' && aux.arg === m.uin) renderAux(); }
   };
@@ -432,6 +437,7 @@
     syncMyInterests();
     seedBotEvents();
     if (!myProfile().invitedOnce) setTimeout(botInvitesMe, 25000 + Math.random() * 30000);
+    if (!myProfile().movieRecd) setTimeout(botRecommendsMovie, 70000 + Math.random() * 40000);
     Object.values(BOTS).forEach((b) => {
       if (!b.persona) return;
       const rt = rtOf(b.uin);
@@ -516,7 +522,7 @@
     deliverSeq(bot, msgs, 600 + Math.random() * 1500);
   }
   setInterval(askaTick, 15000);
-  if (/debug/.test(location.search)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt, wall: (u) => wallOf(u || me.uin), openAux, setMode, randomMeet, fly, addPoints, profile: () => myProfile(), dossier: buildDossier, createEvent, rsvp, addTrackByLink, toggleFav, music: () => Music.state, events: () => load().events, refs: () => refTree(me.uin), botInvitesMe, interests: () => load().interests, twinModel: () => twinModelOf(me.uin) };
+  if (/debug/.test(location.search)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt, wall: (u) => wallOf(u || me.uin), openAux, setMode, randomMeet, fly, addPoints, profile: () => myProfile(), dossier: buildDossier, createEvent, rsvp, addTrackByLink, toggleFav, music: () => Music.state, addMovie, toggleMovieFav, recommendMovie, botRecommendsMovie, watching: () => watching, saveProfile, events: () => load().events, refs: () => refTree(me.uin), botInvitesMe, interests: () => load().interests, twinModel: () => twinModelOf(me.uin) };
 
   /* ================= заголовок вкладки ================= */
   function updateTitle() {
@@ -706,6 +712,7 @@
     renderMain();
     Snd.play('connect');
     if (pendingPlay) { const id = pendingPlay; pendingPlay = null; openAux('vinyl'); Music.play(id); }
+    else if (pendingWatch) { const id = pendingWatch; pendingWatch = null; openAux('watch', id); }
     else setTimeout(() => showTips(false), 1200);
     clearInterval(heartbeatTimer);
     heartbeatTimer = setInterval(heartbeat, 10000);
@@ -716,6 +723,7 @@
     if (!historyOf('123456').length) setTimeout(() => botSays(BOTS['123456'], BOTS['123456'].hello[0]), 1200);
     initBots();
     loadExternalTracks();
+    ensureMovies();
     setTimeout(() => {
       if (!me) return;
       const bot = BOTS['000001'];
@@ -748,7 +756,7 @@
         <div class="titlebar">${flowerSvg('#3cb44a', 14, { logo: true })}<span class="ttl">АСЬКА</span><button class="tbtn" id="c-about" title="О программе">?</button><button class="tbtn" id="c-exit" title="Выйти">×</button></div>
         <div class="menubar"><button id="m-contacts">Контакты</button><button id="m-sound">Звук</button><button id="m-help">Справка</button></div>
         <div class="toolbar"><div class="modes" id="modes"></div></div>
-        <div class="toolbar tb2"><button class="btn tb-btn" id="tb-wall" title="Моя стена: записи, открытки, комментарии"><i>▤</i><span>Стена</span></button><button class="btn tb-btn" id="tb-vinyl" title="Винил: музыка, коллекция, плейлисты"><i>♪</i><span>Винил</span></button><button class="btn tb-btn" id="tb-random" title="Случайное знакомство по интересам"><i>☺</i><span>Люди</span></button><button class="btn tb-btn" id="tb-fridge" title="Холодильник: еда, напитки, магниты"><i>🧲</i><span>Холод.</span></button><button class="btn tb-btn" id="tb-events" title="Мероприятия: позвать в гости"><i>📅</i><span>Гости</span></button></div>
+        <div class="toolbar tb2"><button class="btn tb-btn" id="tb-wall" title="Моя стена: записи, открытки, комментарии"><i>▤</i><span>Стена</span></button><button class="btn tb-btn" id="tb-vinyl" title="Винил: музыка, коллекция, плейлисты"><i>♪</i><span>Винил</span></button><button class="btn tb-btn" id="tb-random" title="Случайное знакомство по интересам"><i>☺</i><span>Люди</span></button><button class="btn tb-btn" id="tb-fridge" title="Холодильник: еда, напитки, магниты"><i>🧲</i><span>Холод.</span></button><button class="btn tb-btn" id="tb-cinema" title="Кино: фильмы и сериалы по ссылке, любимое, рекомендации"><i>🎬</i><span>Кино</span></button><button class="btn tb-btn" id="tb-events" title="Мероприятия: позвать в гости"><i>📅</i><span>Гости</span></button></div>
         <div class="me-panel" id="me-panel"></div>
         <div class="clist inset" id="clist"></div>
         <div class="bottom-bar"><button class="btn status-btn" id="status-btn"></button><button class="btn icon" id="add-btn" title="Добавить контакт">+</button></div>
@@ -782,6 +790,7 @@
     $('#tb-random').onclick = randomMeet;
     $('#tb-fridge').onclick = () => openAux('fridge', me.uin);
     $('#tb-events').onclick = () => openAux('events');
+    $('#tb-cinema').onclick = () => openAux('cinema');
     $('#sb-np').onclick = () => openAux('vinyl');
     $('#aux-back').onclick = closeAux;
     $('#aux-close').onclick = closeAux;
@@ -978,6 +987,10 @@
         html += `<div class="msg ${mine ? 'me' : 'them'}"><span class="hdr">${esc(who ? who.nick : m.from)} <span class="time">(${fmtTime(m.ts)})</span>:</span>${foodCard(m.item, m.serial, m.text)}</div>`;
         return;
       }
+      if (m.kind === 'movie') {
+        html += `<div class="msg ${mine ? 'me' : 'them'}"><span class="hdr">${esc(who ? who.nick : m.from)} <span class="time">(${fmtTime(m.ts)})</span>:</span>${movieCard(m.movie)}${m.note ? `<div class="txt">${renderText(m.note)}</div>` : ''}</div>`;
+        return;
+      }
       if (m.kind === 'track' || m.kind === 'playlist') {
         html += `<div class="msg ${mine ? 'me' : 'them'}"><span class="hdr">${esc(who ? who.nick : m.from)} <span class="time">(${fmtTime(m.ts)})</span>:</span>${m.kind === 'track' ? trackCard(m.track) : playlistCard(m.playlist)}${m.note ? `<div class="txt">${renderText(m.note)}</div>` : ''}</div>`;
         return;
@@ -1124,6 +1137,7 @@
   }
   function myXstatus() {
     const st = Music.state;
+    if (watching && movieOf(watching.id)) return 'смотрю: ' + movieOf(watching.id).title;
     if (st.playing && st.trackId && Music.anyById(st.trackId)) return 'слушаю: ' + Music.anyById(st.trackId).title;
     if (!me) return '';
     const p = myProfile();
@@ -1163,7 +1177,8 @@
       <div class="tip"><b>1. Беседа.</b> Нажми на контакт — откроется окно беседы. Enter отправляет. Жёлтый смайл внизу вставляет смайлик со звуком.</div>
       <div class="tip"><b>2. Режим.</b> Список сверху: ♥ Близкие, ▦ Бизнес, ☺ Общение. Меняет твой статус, цвет окон и чей круг показан первым.</div>
       <div class="tip"><b>3. Стена ▤.</b> Публичная переписка на виду у друзей: записи, открытки, треки, комментарии. Своя — кнопка «Стена» на панели; чужая — ▤ в шапке беседы. В профиле стену можно закрыть.</div>
-      <div class="tip"><b>4. Винил ♪.</b> Проигрыватель с хитами, коллекцией и плейлистами. Кнопки «в беседу» и «на стену» — поделиться. Друзья видят, что ты слушаешь.</div>
+      <div class="tip"><b>4. Винил ♪.</b> Пластинка раскручивается по-настоящему. Вкладка «Коллекция» → «Добавить по ссылке»: Яндекс Музыка, YouTube, SoundCloud, mp3. У каждого трека НФТ с владельцем. Кнопка «⚡ киберпанк» меняет дизайн. Консультант Винилл в контактах: напиши «посоветуй».</div>
+      <div class="tip"><b>4а. Кино 🎬.</b> Фильмы и сериалы по ссылке (YouTube, VK, Rutube, mp4) — смотрятся прямо в АСЬКЕ с любого устройства. ♥ любимое, «посоветовать» другу или на стену, серии подряд, запоминает, где остановился.</div>
       <div class="tip"><b>5. Холодильник 🧲.</b> Дверца открывается — внутри любимая еда и напитки (НФТ с номером), снаружи магниты из поездок. «Я лечу» — магнит себе и друзьям.</div>
       <div class="tip"><b>6. Люди ☺ и гости 📅.</b> Случайное знакомство по интересам, мероприятия с приглашениями. Интересы — в профиле, у каждого своя страница и сообщества.</div>
       <div class="tip"><b>7. Аська и друзья.</b> Пишут сами, помнят ответы, советуют, отвечают на стене. Аватар КИРР учится на твоих сообщениях. Вернуться сюда: «Справка» → «Подсказки».</div></div>`, buttons: [{ label: 'Понятно, поехали', primary: true }] });
@@ -1203,7 +1218,7 @@
   }
   function thankForWall(bot, p) {
     const P = bot.persona;
-    const L = p.kind === 'card'
+    const L = p.kind === 'movie' ? Cinema.BOT_LINES : p.kind === 'card'
       ? { aska: ['Ой! Открытка на моей стене! Это лучшее, что случалось с моей стеной :)', 'Открытка! Повесила на самое видное место. Спасибо :*'], kat: ['ааа открытка!!! спасибо))) :*', 'ой как мило))) спасибо!'], vova: ['открытка. ок. спасибо', 'ы. мило'], serega: ['Ооо, открытка!!! Респект, бро! (b)', 'Это надо отметить!!! Спасибо!'], lena: ['Ой, открытка! :$ Спасибо, ты такой милый!', 'Какая прелесть!!! Спасибо :*'], batya: ['Спасибо. Сосед сказал, это открытка.', 'Молодец. Красиво.'], max: ['Открытка на стене. Простой жест, а приятно. Спасибо.', 'Спасибо. Теперь на моих обоях есть твоя открытка.'] }
       : p.kind === 'track' || p.kind === 'playlist'
         ? { aska: ['Музыка на стене! Ставлю на повтор :)'], kat: ['ооо, музыка!!! качаю)))'], vova: ['трек. послушаю. потом'], serega: ['МУЗЫКА!!! Вот это по-нашему!!! (b)'], lena: ['Ой, песенка! Спасибо :)'], batya: ['Музыка. Громко. Но хорошо.'], max: ['Музыка на стене. Тишина обиделась, но ладно.'] }
@@ -1288,6 +1303,7 @@
     else if (p.kind === 'magnet') content = magnetCard(p.country, p.serial, p.text);
     else if (p.kind === 'invite') content = inviteCard(p.event);
     else if (p.kind === 'food') content = foodCard(p.item, p.serial, p.text);
+    else if (p.kind === 'movie') content = movieCard(p.movie) + (p.note ? `<div class="txt">${renderText(p.note)}</div>` : '');
     else content = `<div class="txt">${renderText(p.text || '')}</div>`;
     const likes = p.likes || [];
     const liked = likes.includes(me.uin);
@@ -1310,7 +1326,7 @@
     const shown = wallFull ? posts : posts.slice(0, 6);
     return head + `<div class="composer"><div class="legend-line">${mine ? 'Написать на своей стене' : `Написать на стене ${esc(a.nick)}`} <span class="muted">— видят все друзья</span></div>
       <textarea class="field" id="w-text" rows="2" maxlength="300" placeholder="${mine ? 'Что нового? Enter — отправить' : 'Привет! Enter — отправить'}"></textarea>
-      <div class="row"><button class="btn primary" id="w-send">Отправить</button><button class="btn" id="w-card">🖼 Открытка</button><button class="btn" id="w-track">♪ Трек</button>${mine ? `<label class="row" style="margin-left:auto" title="Приватная стена — видишь только ты"><input type="checkbox" id="w-priv" ${prof.wallPrivate ? 'checked' : ''}> приватная</label>` : ''}</div></div>
+      <div class="row"><button class="btn primary" id="w-send">Отправить</button><button class="btn" id="w-card">🖼 Открытка</button><button class="btn" id="w-track">♪ Трек</button><button class="btn" id="w-movie">🎬 Кино</button>${mine ? `<label class="row" style="margin-left:auto" title="Приватная стена — видишь только ты"><input type="checkbox" id="w-priv" ${prof.wallPrivate ? 'checked' : ''}> приватная</label>` : ''}</div></div>
       <div class="legend-line">${mine ? 'Моя стена' : 'Стена'} <span class="muted">— последние записи${posts.length > shown.length ? `, всего ${posts.length}` : ''}</span></div>
       <div class="wall-posts inset" id="w-posts">${shown.length ? shown.map((p) => renderPost(p, uin)).join('') : '<div class="empty-note">На стене пока пусто. Будь первым :)</div>'}${posts.length > shown.length ? `<button class="btn" id="w-more" style="width:100%;margin-top:4px">Показать всю историю (${posts.length} записей)</button>` : wallFull && posts.length > 6 ? '<button class="btn" id="w-less" style="width:100%;margin-top:4px">Свернуть до последних</button>' : ''}</div>`;
   }
@@ -1328,6 +1344,7 @@
       dialog({ title: 'Подпись к открытке', body: `<div class="center"><div class="postcard pc-${card}" style="display:inline-block">${postcardSvg(card)}</div></div><input class="field mt" id="c-text" maxlength="200" placeholder="пару слов (можно без них)">`, buttons: [{ label: 'На стену', primary: true, onClick: (ov) => { postWall(uin, { kind: 'card', card, text: $('#c-text', ov).value.trim() }); } }, { label: 'Отмена' }] });
     });
     $('#w-track').onclick = () => pickTrackDialog((kind, payload) => { if (kind === 'track') postWall(uin, { kind: 'track', track: payload }); else postWall(uin, { kind: 'playlist', playlist: payload }); });
+    $('#w-movie').onclick = () => pickMovieDialog((id) => { postWall(uin, { kind: 'movie', movie: id }); toast(accountOf(uin), 'кино на стене', null); });
     const pv = $('#w-priv'); if (pv) pv.onchange = (e) => { saveProfile({ wallPrivate: e.target.checked }); toast(me, e.target.checked ? 'стена теперь приватная' : 'стена снова публичная', null); };
     const more = $('#w-more'); if (more) more.onclick = () => { wallFull = true; renderAux(); };
     const less = $('#w-less'); if (less) less.onclick = () => { wallFull = false; renderAux(); };
@@ -1428,6 +1445,7 @@
   const aux = { kind: null, arg: null };
   function openAux(kind, arg) {
     if (aux.kind !== kind || aux.arg !== (arg || null)) wallFull = false;
+    if (aux.kind === 'watch' && (kind !== 'watch' || arg !== aux.arg)) stopWatching();
     aux.kind = kind; aux.arg = arg || null;
     hideSmiles();
     $('.desktop').classList.add('mode-aux');
@@ -1435,6 +1453,7 @@
     Snd.play('click');
   }
   function closeAux() {
+    if (aux.kind === 'watch') stopWatching();
     aux.kind = null; aux.arg = null;
     $('.desktop').classList.remove('mode-aux');
     renderAux();
@@ -1450,6 +1469,8 @@
     else if (aux.kind === 'fridge') { const a = accountOf(aux.arg); title.innerHTML = aux.arg === me.uin ? 'Мой холодильник' : `Холодильник: ${esc(a ? a.nick : aux.arg)}`; body.innerHTML = renderFridge(aux.arg); if (accountOf(aux.arg)) wireFridge(aux.arg); }
     else if (aux.kind === 'dossier') { const a = accountOf(aux.arg); title.innerHTML = `Досье: ${esc(a ? a.nick : aux.arg)}`; body.innerHTML = renderDossier(aux.arg); if (accountOf(aux.arg)) wireDossier(aux.arg); }
     else if (aux.kind === 'events') { title.innerHTML = 'Мероприятия <small>— в гости</small>'; body.innerHTML = renderEvents(); wireEvents(); }
+    else if (aux.kind === 'cinema') { title.innerHTML = 'Кино <small>— фильмы и сериалы</small>'; body.innerHTML = renderCinema(); wireCinema(); }
+    else if (aux.kind === 'watch') { const mv = movieOf(aux.arg); title.innerHTML = mv ? `🎬 ${esc(mv.title)}` : 'Кино'; body.innerHTML = renderWatch(aux.arg); wireWatch(aux.arg); }
     else if (aux.kind === 'refs') { title.innerHTML = 'Приглашения <small>— цепочка</small>'; body.innerHTML = renderRefs(); wireRefs(); }
     else if (aux.kind === 'interests') { title.innerHTML = 'Каталог интересов'; body.innerHTML = renderInterestCatalog(); wireInterestCatalog(); }
     else if (aux.kind === 'interest') { title.innerHTML = `Интерес: ${esc(aux.arg)}`; body.innerHTML = renderInterest(aux.arg); wireInterest(aux.arg); }
@@ -1474,6 +1495,12 @@
     if (it) { openAux('interest', it.dataset.interest); return; }
     const ch = e.target.closest('[data-chat]');
     if (ch) { openChat(ch.dataset.chat); return; }
+    const mf = e.target.closest('[data-mfav]');
+    if (mf) { toggleMovieFav(mf.dataset.mfav); return; }
+    const mr = e.target.closest('[data-mrec]');
+    if (mr) { recommendMovieDialog(mr.dataset.mrec); return; }
+    const mw = e.target.closest('[data-watch]');
+    if (mw) { openAux('watch', mw.dataset.watch); return; }
     const rs = e.target.closest('[data-rsvp]');
     if (rs) { rsvp(rs.dataset.ev, rs.dataset.rsvp); return; }
     const ed = e.target.closest('[data-evinfo]');
@@ -1481,6 +1508,182 @@
     const pc = e.target.closest('#aux-body .postcard, .overlay .postcard');
     if (pc && pc.dataset.sound) { playRef(pc.dataset.sound); pc.replaceWith(pc.cloneNode(true)); }
   });
+
+  /* ================= кино ================= */
+  let watching = null, watchSaveT = 0;
+  function ensureMovies() {
+    const missing = Cinema.SEEDS.filter((m) => !(db.movies || {})[m.id]);
+    if (!missing.length) return;
+    mutate((d) => { d.movies = d.movies || {}; missing.forEach((m) => { d.movies[m.id] = Object.assign({ ts: Date.now() - Math.floor(Math.random() * 5 + 1) * 86400000, likes: [] }, m); }); });
+  }
+  const movieOf = (id) => (db.movies || {})[id] || null;
+  const allMovies = () => Object.values(db.movies || {});
+  const myMovieFavs = () => (me ? myProfile().favMovies || [] : []);
+  function movieSource(mv, ep) {
+    const url = mv.kind === 'series' ? ((mv.episodes || [])[ep || 0] || {}).url : mv.url;
+    return { url, info: Cinema.parseLink(url) };
+  }
+  function movieCard(id, small) {
+    const mv = movieOf(id); if (!mv) return '<div class="muted">фильм не найден</div>';
+    const fav = myMovieFavs().includes(id);
+    return `<div class="moviecard" data-watch="${esc(id)}" title="Смотреть">${Cinema.posterSvg(mv, 34)}<div class="ti"><b>${esc(mv.title)}</b><div class="muted">${mv.kind === 'series' ? 'сериал · ' + (mv.episodes || []).length + ' серий' : 'фильм'} · ${mv.year} · ${esc(mv.genre)}</div><div class="muted">добавил(а) ${esc(nickOf(mv.addedBy))}${(mv.likes || []).length ? ' · ♥' + mv.likes.length : ''}</div></div><span class="btn icon" title="Смотреть">▶</span>${small ? '' : `<button class="btn icon ${fav ? 'on' : ''}" data-mfav="${esc(id)}" title="В любимое">♥</button>`}</div>`;
+  }
+  function addMovie(data) {
+    const info = Cinema.parseLink(data.url || (data.episodes && data.episodes[0] && data.episodes[0].url));
+    if (!info) return null;
+    const mv = Object.assign({ id: 'm_' + uid(), kind: 'film', year: new Date().getFullYear(), genre: 'драма', desc: '', addedBy: me.uin, ts: Date.now(), likes: [] }, data);
+    mutate((d) => { d.movies = d.movies || {}; d.movies[mv.id] = mv; });
+    addPoints(3, 'кино в сеть'); post({ type: 'movies' }); Snd.play('tada');
+    // друзья реагируют: кто-то сразу лайкает
+    setTimeout(() => { const fans = Object.values(BOTS).filter((b) => b.persona && Math.random() < 0.35).slice(0, 2); if (!fans.length) return; mutate((d) => { const m = d.movies[mv.id]; if (m) fans.forEach((b) => { if (!m.likes.includes(b.uin)) m.likes.push(b.uin); }); }); if (aux.kind === 'cinema' || aux.kind === 'watch') renderAux(); }, 4000);
+    return mv;
+  }
+  function addMovieDialog() {
+    const gsel = Cinema.GENRES.filter((g) => g !== 'сериал').map((g) => `<option>${g}</option>`).join('');
+    dialog({ title: '＋ Добавить в сеть', body: `<div class="col">
+      <div class="tabs"><button class="on" data-mk="film">Фильм</button><button data-mk="series">Сериал</button></div>
+      <label class="row"><span class="lbl">Название</span><input class="field" id="m-title" maxlength="60" placeholder="как называется"></label>
+      <div class="row"><label class="row sp"><span class="lbl">Год</span><input class="field" id="m-year" type="number" min="1900" max="2100" value="${new Date().getFullYear()}" style="width:64px"></label><label class="row sp"><span class="lbl">Жанр</span><select class="field" id="m-genre">${gsel}</select></label></div>
+      <label class="row"><span class="lbl">О чём</span><input class="field" id="m-desc" maxlength="140" placeholder="пара слов, чтобы друзья захотели"></label>
+      <div id="m-film"><label class="row"><span class="lbl">Ссылка</span><input class="field" id="m-url" placeholder="https://youtu.be/… или https://…/film.mp4"></label></div>
+      <div id="m-series" hidden><div class="hint">Серии: по одной ссылке в строке. Название через « | »: <i>1. Пилот | https://…</i></div><textarea class="field" id="m-eps" rows="4" placeholder="1. Пилот | https://youtu.be/…\n2. Вторая | https://…"></textarea></div>
+      <div class="hint" id="m-kind">YouTube, VK Видео, Rutube, Vimeo, Дзен, Одноклассники или прямая ссылка на mp4/webm — смотрится прямо в АСЬКЕ с любого устройства.</div>
+      <div class="hint">Свой файл: выложи его на любой хостинг (Яндекс Диск → «прямая ссылка», свой сайт, облако) и вставь ссылку. АСЬКА хранит ссылку, а не файл, поэтому кино откроется везде, где ты вошёл.</div></div>`,
+      buttons: [{ label: 'Добавить и смотреть', primary: true, onClick: (ov) => {
+        const kind = $('.tabs .on', ov).dataset.mk; const title = $('#m-title', ov).value.trim(); if (!title) { $('#m-title', ov).focus(); return false; }
+        const base = { title, kind, year: +$('#m-year', ov).value || new Date().getFullYear(), genre: $('#m-genre', ov).value, desc: $('#m-desc', ov).value.trim() };
+        if (kind === 'film') { base.url = $('#m-url', ov).value.trim(); if (!Cinema.parseLink(base.url)) { $('#m-kind', ov).textContent = 'Не похоже на ссылку на видео.'; return false; } }
+        else { base.episodes = $('#m-eps', ov).value.split('\n').map((l) => l.trim()).filter(Boolean).map((l, i) => { const parts = l.split('|').map((x) => x.trim()); const url = parts.length > 1 ? parts[parts.length - 1] : parts[0]; return { title: parts.length > 1 ? parts.slice(0, -1).join(' ') : (i + 1) + '. Серия', url }; }).filter((e) => Cinema.parseLink(e.url)); if (!base.episodes.length) { $('#m-kind', ov).textContent = 'Нужна хотя бы одна ссылка на серию.'; return false; } }
+        const mv = addMovie(base); if (!mv) return false; openAux('watch', mv.id);
+      } }, { label: 'Отмена' }],
+      onOpen: (ov) => { $$('.tabs button', ov).forEach((b) => (b.onclick = () => { $$('.tabs button', ov).forEach((x) => x.classList.toggle('on', x === b)); $('#m-film', ov).hidden = b.dataset.mk !== 'film'; $('#m-series', ov).hidden = b.dataset.mk !== 'series'; })); const u = $('#m-url', ov); u.addEventListener('input', () => { const i = Cinema.parseLink(u.value); $('#m-kind', ov).textContent = i ? `Источник: ${i.label}${i.kind === 'link' ? ' — откроется в новой вкладке, в окне не показать' : ' — покажем прямо в АСЬКЕ'}` : 'Вставь ссылку на видео.'; }); },
+    });
+  }
+  function toggleMovieFav(id) {
+    const mv = movieOf(id); if (!mv) return;
+    const favs = myMovieFavs().slice(); const i = favs.indexOf(id);
+    if (i >= 0) favs.splice(i, 1); else favs.push(id);
+    saveProfile({ favMovies: favs });
+    mutate((d) => { const m = d.movies[id]; if (!m) return; m.likes = m.likes || []; const j = m.likes.indexOf(me.uin); if (i >= 0 && j >= 0) m.likes.splice(j, 1); if (i < 0 && j < 0) m.likes.push(me.uin); });
+    if (i < 0) addPoints(1, 'любимое кино');
+    post({ type: 'movies' }); Snd.play('click');
+    if (aux.kind === 'cinema' || aux.kind === 'watch') renderAux(); else if (active) renderHistory();
+  }
+  function recommendMovie(id, toUin, note, alsoWall) {
+    const mv = movieOf(id); if (!mv || !toUin) return;
+    sendSpecial(toUin, { kind: 'movie', movie: id, note: note || '', text: '🎬 ' + mv.title });
+    if (alsoWall) postWall(me.uin, { kind: 'movie', movie: id, note: note ? note : `Советую: «${mv.title}»` });
+    toast(accountOf(toUin), 'кино отправлено', null);
+  }
+  function recommendMovieDialog(id) {
+    const mv = movieOf(id); if (!mv) return;
+    const friends = contactsOf(me.uin).map(accountOf).filter((a) => a && !a.twinOf);
+    dialog({ title: `Посоветовать «${esc(mv.title)}»`, body: `<div class="col"><label class="row"><span class="lbl">Кому</span><select class="field" id="mr-to">${friends.map((a) => `<option value="${a.uin}" ${a.uin === active ? 'selected' : ''}>${esc(a.nick)}</option>`).join('')}</select></label><label class="row"><span class="lbl">Слова</span><input class="field" id="mr-note" maxlength="120" placeholder="почему стоит посмотреть"></label><label class="row"><input type="checkbox" id="mr-wall" checked> и на мою стену</label></div>`,
+      buttons: [{ label: 'Отправить', primary: true, onClick: (ov) => recommendMovie(id, $('#mr-to', ov).value, $('#mr-note', ov).value.trim(), $('#mr-wall', ov).checked) }, { label: 'Отмена' }] });
+  }
+  function pickMovieDialog(cb) {
+    const list = allMovies().sort((a, b) => b.ts - a.ts);
+    dialog({ title: 'Какое кино?', body: `<div class="found inset v-list">${list.map((m) => `<div class="trow" data-pick-movie="${esc(m.id)}">${Cinema.posterSvg(m, 24)}<div class="ti"><b>${esc(m.title)}</b><div class="muted">${m.kind === 'series' ? 'сериал' : 'фильм'} · ${esc(m.genre)}</div></div></div>`).join('')}</div>`, buttons: [{ label: 'Отмена' }], onOpen: (ov) => $$('[data-pick-movie]', ov).forEach((r) => (r.onclick = () => { ov.remove(); cb(r.dataset.pickMovie); })) });
+  }
+  function movieRecs(n) {
+    const favs = myMovieFavs(); const likedGenres = {}; favs.forEach((id) => { const m = movieOf(id); if (m) likedGenres[m.genre] = (likedGenres[m.genre] || 0) + 1; });
+    const friends = contactsOf(me.uin);
+    return allMovies().filter((m) => !favs.includes(m.id)).map((m) => {
+      const fl = (m.likes || []).filter((u) => friends.includes(u) && u !== me.uin);
+      const sc = fl.length * 2 + (likedGenres[m.genre] || 0) * 3 + (m.addedBy !== me.uin ? 0.5 : 0) + Math.random() * 0.4;
+      const why = likedGenres[m.genre] ? `ты любишь жанр «${m.genre}»` : fl.length ? `нравится: ${fl.slice(0, 2).map(nickOf).join(', ')}` : `добавил(а) ${nickOf(m.addedBy)}`;
+      return { m, sc, why };
+    }).sort((a, b) => b.sc - a.sc).slice(0, n || 3);
+  }
+  let ctab = 'all', cq = '';
+  function renderCinema() {
+    const favs = myMovieFavs();
+    let list = allMovies().sort((a, b) => b.ts - a.ts);
+    if (ctab === 'film') list = list.filter((m) => m.kind === 'film'); else if (ctab === 'series') list = list.filter((m) => m.kind === 'series'); else if (ctab === 'fav') list = list.filter((m) => favs.includes(m.id)); else if (ctab === 'mine') list = list.filter((m) => m.addedBy === me.uin);
+    if (cq) { const q = cq.toLowerCase(); list = list.filter((m) => (m.title + ' ' + (m.orig || '') + ' ' + m.genre + ' ' + (m.kind === 'series' ? 'сериал' : 'фильм') + ' ' + m.year + ' ' + nickOf(m.addedBy)).toLowerCase().includes(q)); }
+    const watch = myProfile().watch || {};
+    const card = (m) => { const fav = favs.includes(m.id); const w = watch[m.id]; return `<div class="mcard" data-id="${esc(m.id)}"><div class="mposter" data-watch="${esc(m.id)}" title="Смотреть">${Cinema.posterSvg(m, 64)}<span class="playo">▶</span></div><div class="mi"><b class="link" data-watch="${esc(m.id)}">${esc(m.title)}</b><div class="muted">${m.kind === 'series' ? 'сериал · ' + (m.episodes || []).length + ' сер.' : 'фильм'} · ${m.year} · ${esc(m.genre)}</div><div class="muted">добавил(а) <span class="link" data-wall="${esc(m.addedBy)}">${esc(nickOf(m.addedBy))}</span>${(m.likes || []).length ? ' · ♥ ' + m.likes.length : ''}${w && w.pos > 10 ? ' · <span class="cont">смотрел(а) до ' + fmtSec(w.pos) + (m.kind === 'series' ? ', серия ' + (w.ep + 1) : '') + '</span>' : ''}</div>${m.desc ? `<div class="mdesc">${esc(m.desc)}</div>` : ''}<div class="row mact"><button class="btn primary" data-watch="${esc(m.id)}">▶ Смотреть</button><button class="btn icon ${fav ? 'on' : ''}" data-mfav="${esc(m.id)}" title="В любимое">♥</button><button class="btn" data-mrec="${esc(m.id)}" title="Посоветовать другу или на стену">➤ Посоветовать</button></div></div></div>`; };
+    const recs = ctab === 'all' && !cq ? movieRecs(3) : [];
+    return `<div class="cinema">
+      <div class="row wall-head"><span class="hint">Фильмы и сериалы по ссылке. Смотри прямо здесь, с любого устройства.</span><span class="sp"></span><button class="btn primary" id="c-add">＋ Добавить в сеть</button></div>
+      <div class="row"><input class="field sp" id="c-q" placeholder="поиск: название, жанр, кто добавил" value="${esc(cq)}"></div>
+      <div class="tabs c-tabs"><button class="${ctab === 'all' ? 'on' : ''}" data-ct="all">Все</button><button class="${ctab === 'film' ? 'on' : ''}" data-ct="film">Фильмы</button><button class="${ctab === 'series' ? 'on' : ''}" data-ct="series">Сериалы</button><button class="${ctab === 'fav' ? 'on' : ''}" data-ct="fav">♥${favs.length ? ' ' + favs.length : ''}</button><button class="${ctab === 'mine' ? 'on' : ''}" data-ct="mine">Мои</button></div>
+      <div class="tabpanel v-list">
+        ${recs.length ? `<div class="cgroup">Рекомендуем тебе</div><div class="recs">${recs.map((r) => `<div class="rec" data-watch="${esc(r.m.id)}" title="${esc(r.why)}">${Cinema.posterSvg(r.m, 44)}<div class="ti"><b>${esc(r.m.title)}</b><div class="muted">${esc(r.why)}</div></div></div>`).join('')}</div><div class="cgroup">${cq ? 'Найдено' : 'Вся сеть'}</div>` : ''}
+        ${list.length ? list.map(card).join('') : `<div class="empty-note">${ctab === 'fav' ? 'Нажми ♥ у фильма — он появится тут.' : ctab === 'mine' ? 'Ты ещё ничего не добавил. Жми «Добавить в сеть».' : 'Ничего не нашлось.'}</div>`}
+      </div></div>`;
+  }
+  function wireCinema() {
+    $('#c-add').onclick = addMovieDialog;
+    $$('.c-tabs button').forEach((b) => (b.onclick = () => { ctab = b.dataset.ct; Snd.play('click'); renderAux(); }));
+    const q = $('#c-q'); q.oninput = () => { cq = q.value.trim(); const panel = $('.cinema .tabpanel'); const pos = q.selectionStart; renderAux(); const nq = $('#c-q'); if (nq) { nq.focus(); nq.setSelectionRange(pos, pos); } };
+  }
+  function renderWatch(id) {
+    const mv = movieOf(id); if (!mv) return '<div class="empty-note">Фильм не найден.</div>';
+    const prof = myProfile(); const favs = myMovieFavs(); const w = (prof.watch || {})[id];
+    const ep = watching && watching.id === id ? watching.ep : (w ? w.ep || 0 : 0);
+    const { url, info } = movieSource(mv, ep);
+    let player = '';
+    if (!info) player = '<div class="empty-note">Нет ссылки на видео.</div>';
+    else if (info.kind === 'video') player = `<video id="wv" controls autoplay playsinline preload="metadata" src="${esc(info.src)}"></video>`;
+    else if (info.embed) player = `<iframe id="wf" src="${esc(info.embed)}" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+    else player = `<div class="empty-note">Эта ссылка не встраивается. <a href="${esc(url)}" target="_blank" rel="noopener">Открыть в новой вкладке</a></div>`;
+    const eps = mv.kind === 'series' ? `<div class="cgroup">Серии</div><div class="ep-list">${(mv.episodes || []).map((e, i) => `<button class="btn ${i === ep ? 'down' : ''}" data-ep="${i}">${esc(e.title)}</button>`).join('')}</div>` : '';
+    return `<div class="watch">
+      <div class="row wall-head"><button class="btn" id="wt-back">← Кино</button><span class="sp"></span><span class="hint">${esc(info ? info.label : '')}${mv.kind === 'series' ? ' · серия ' + (ep + 1) + '/' + (mv.episodes || []).length : ''}</span></div>
+      <div class="screen">${player}</div>
+      ${w && w.pos > 10 && info && info.kind === 'video' && !(watching && watching.id === id) ? `<div class="row"><button class="btn" id="wt-cont">▶ Продолжить с ${fmtSec(w.pos)}${mv.kind === 'series' ? ' (серия ' + ((w.ep || 0) + 1) + ')' : ''}</button></div>` : ''}
+      <div class="np-box inset"><div class="row"><b class="sp">${esc(mv.title)}${mv.orig && mv.orig !== mv.title ? ` <span class="muted">(${esc(mv.orig)})</span>` : ''}</b><button class="btn icon ${favs.includes(id) ? 'on' : ''}" data-mfav="${esc(id)}" title="В любимое">♥</button></div><div class="muted">${mv.kind === 'series' ? 'сериал' : 'фильм'} · ${mv.year} · ${esc(mv.genre)} · ♥ ${(mv.likes || []).length}</div><div class="muted">добавил(а) <span class="link" data-wall="${esc(mv.addedBy)}">${esc(nickOf(mv.addedBy))}</span> · ${fmtDay(mv.ts)}</div>${mv.desc ? `<div class="mdesc">${esc(mv.desc)}</div>` : ''}${(mv.likes || []).length ? `<div class="muted">Нравится: ${mv.likes.map(nickOf).map(esc).join(', ')}</div>` : ''}</div>
+      ${eps}
+      <div class="row v-share"><button class="btn" data-mrec="${esc(id)}">➤ Посоветовать другу</button><button class="btn" id="wt-wall">▤ На стену</button><button class="btn" id="wt-link" title="Скопировать ссылку">🔗</button><button class="btn" id="wt-full" ${info && (info.kind === 'video' || info.embed) ? '' : 'disabled'}>⛶ Во весь экран</button></div>
+      <div class="row"><label class="btn" title="Открыть своё видео с этого устройства (в сеть не попадёт)">📁 Файл с устройства<input type="file" id="wt-file" accept="video/*" hidden></label><span class="hint">только здесь, в сеть не попадёт</span></div>
+    </div>`;
+  }
+  function wireWatch(id) {
+    const mv = movieOf(id); if (!mv) return;
+    const w = (myProfile().watch || {})[id];
+    const ep = watching && watching.id === id ? watching.ep : (w ? w.ep || 0 : 0);
+    watching = { id, ep };
+    $('#wt-back').onclick = () => openAux('cinema');
+    $$('[data-ep]').forEach((b) => (b.onclick = () => { watching = { id, ep: +b.dataset.ep }; saveWatchPos(0, true); renderAux(); }));
+    const v = $('#wv');
+    if (v) {
+      v.addEventListener('timeupdate', () => { if (Date.now() - watchSaveT > 5000) saveWatchPos(v.currentTime); });
+      v.addEventListener('pause', () => { if (!v.ended) saveWatchPos(v.currentTime); });
+      v.addEventListener('play', () => { mutate((d) => { d.presence[me.uin] = { status: myStatus, xstatus: myXstatus(), ts: Date.now() }; }); post({ type: 'presence', uin: me.uin }); });
+      v.addEventListener('ended', () => { saveWatchPos(0, true); if (mv.kind === 'series' && watching && watching.ep + 1 < (mv.episodes || []).length) { watching = { id, ep: watching.ep + 1 }; renderAux(); } });
+      v.addEventListener('error', () => { const scr = $('.watch .screen'); if (scr && !$('.err', scr)) scr.insertAdjacentHTML('beforeend', `<div class="err">Видео не загрузилось. Проверь ссылку или открой: <a href="${esc(movieSource(mv, ep).url)}" target="_blank" rel="noopener">в новой вкладке</a></div>`); });
+      const cont = $('#wt-cont'); if (cont) cont.onclick = () => { v.currentTime = w.pos; v.play(); cont.remove(); };
+    }
+    $('#wt-wall').onclick = () => { postWall(me.uin, { kind: 'movie', movie: id, note: `Смотрю «${mv.title}»` }); toast(me, 'кино на стене', null); };
+    $('#wt-link').onclick = () => { const link = location.origin + location.pathname.replace(/[^/]*$/, '') + '?watch=' + encodeURIComponent(id); const done = () => { Snd.play('click'); toast(me, 'ссылка на кино скопирована', null); }; if (navigator.clipboard) navigator.clipboard.writeText(link).then(done, () => window.prompt('Ссылка:', link)); else window.prompt('Ссылка:', link); };
+    $('#wt-full').onclick = () => { const el = $('#wv') || $('#wf'); if (el && el.requestFullscreen) el.requestFullscreen(); };
+    $('#wt-file').onchange = (e) => { const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f); const scr = $('.watch .screen'); scr.innerHTML = `<video id="wv" controls autoplay playsinline src="${url}"></video>`; $('.watch .wall-head .hint').textContent = 'свой файл: ' + f.name; };
+  }
+  function saveWatchPos(pos, reset) {
+    watchSaveT = Date.now();
+    const all = Object.assign({}, myProfile().watch || {});
+    if (!watching) return;
+    all[watching.id] = reset ? { ep: watching.ep, pos: 0, ts: Date.now() } : { ep: watching.ep, pos: Math.floor(pos), ts: Date.now() };
+    saveProfile({ watch: all });
+  }
+  function stopWatching() {
+    const v = $('#wv'); if (v && watching && !v.ended) saveWatchPos(v.currentTime);
+    watching = null;
+    if (me) { mutate((d) => { d.presence[me.uin] = { status: myStatus, xstatus: myXstatus(), ts: Date.now() }; }); post({ type: 'presence', uin: me.uin }); }
+  }
+  function botRecommendsMovie() {
+    if (!me || myProfile().movieRecd) return;
+    const bots = Object.values(BOTS).filter((b) => b.persona && b.brain !== 'vinyl' && isOnline(b.uin));
+    const list = allMovies().filter((m) => m.addedBy !== me.uin); if (!bots.length || !list.length) return;
+    const bot = pick(bots);
+    const liked = list.filter((m) => (m.likes || []).includes(bot.uin));
+    const mv = pick(liked.length ? liked : list);
+    const P = bot.persona;
+    const lines = { aska: [`Посмотри «${mv.title}»! Я смотрела два раза и оба раза плакала (от счастья) :)`], kat: [`«${mv.title}» смотрел???? срочно смотри)))`], vova: [`«${mv.title}». норм. смотри`], serega: [`«${mv.title}» — ОГОНЬ!!! Смотрим вместе в субботу!!!`], lena: [`Советую «${mv.title}». Со вкусом снято, без лишнего.`], batya: [`Сын, посмотри «${mv.title}». Там про главное. Потом обсудим.`], max: [`«${mv.title}» — редкий случай, когда кино умнее зрителя. Посмотри.`] };
+    botSays(bot, P.id === 'aska' ? pick(lines.aska) : P.v(pick(lines[P.id] || lines.aska)), { movie: mv.id });
+    saveProfile({ movieRecd: true });
+  }
 
   /* ================= винил ================= */
   const SOURCE_LABEL = { yandex: 'Яндекс Музыка', youtube: 'YouTube', soundcloud: 'SoundCloud', audio: 'mp3', link: 'ссылка', synth: 'синтез' };
@@ -1532,7 +1735,7 @@
     if (navigator.clipboard) navigator.clipboard.writeText(link).then(done, () => { window.prompt('Ссылка на трек:', link); });
     else window.prompt('Ссылка на трек:', link);
   }
-  let vtab = 'hits', vpl = null, pendingPlay = null;
+  let vtab = 'hits', vpl = null, pendingPlay = null, pendingWatch = null;
   function renderVinyl() {
     const st = Music.state; const t = st.trackId ? Music.anyById(st.trackId) : null;
     const prof = myProfile(); const pls = prof.playlists; const favs = prof.favTracks || [];
@@ -2324,8 +2527,10 @@
 
   loadSession();
   loadExternalTracks();
-  try { const pp = new URLSearchParams(location.search).get('play'); if (pp && Music.anyById(pp)) pendingPlay = pp; } catch (e) {}
+  ensureMovies();
+  try { const pp = new URLSearchParams(location.search).get('play'); if (pp && Music.anyById(pp)) pendingPlay = pp; const pw = new URLSearchParams(location.search).get('watch'); if (pw && movieOf(pw)) pendingWatch = pw; } catch (e) {}
   if (me) {
+    if (pendingWatch) { const id = pendingWatch; pendingWatch = null; setTimeout(() => openAux('watch', id), 300); }
     if (pendingPlay) { setTimeout(() => openAux('vinyl'), 300); document.addEventListener('pointerdown', function once() { document.removeEventListener('pointerdown', once); if (pendingPlay) { Music.play(pendingPlay); pendingPlay = null; } }, { once: true }); }
     applyTheme();
     renderMain();
