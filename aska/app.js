@@ -68,7 +68,7 @@
   const SMILE_TAUNTS = ['Ой, какой смайлик! :)', 'Отвечаю тем же! :D', 'хихи :$', ';)', 'Ух ты! :O', 'Люблю смайлы @}->--', '8) круто'];
 
   /* ================= графика (art.js) ================= */
-  const { STATUSES, statusInfo, flowerSvg, statusFlower, envelopeSvg, SMILES, SMILE_BY_ID, smileSvg, postcardSvg } = window.AskaArt;
+  const { STATUSES, statusInfo, flowerSvg, statusFlower, envelopeSvg, SMILES, SMILE_BY_ID, smileSvg, postcardSvg, COUNTRIES, COUNTRY, magnetSvg } = window.AskaArt;
 
   // регулярка по всем кодам: длинные раньше коротких
   const CODE_LIST = [];
@@ -242,10 +242,12 @@
   /* ================= контакты ================= */
   function contactsOf(uin) { return db.contacts[uin] || []; }
   function addContact(uin) {
+    const fresh = !contactsOf(me.uin).includes(uin);
     mutate((d) => {
       d.contacts[me.uin] = d.contacts[me.uin] || [];
       if (!d.contacts[me.uin].includes(uin)) d.contacts[me.uin].push(uin);
     });
+    if (fresh) addPoints(10, 'новый друг');
     botState[uin] = isOnline(uin);
     renderContacts();
   }
@@ -285,6 +287,7 @@
     if (!text) return;
     const msg = { id: uid(), from: me.uin, to: active, text, ts: Date.now() };
     pushHistory(msg);
+    addPoints(1);
     ta.value = '';
     delete drafts[active];
     saveSession();
@@ -303,8 +306,9 @@
     post({ type: 'msg', msg });
     Snd.play('sent');
     if (active === to) renderHistory();
+    if (extra.kind === 'track' || extra.kind === 'playlist') addPoints(2, 'музыка другу');
     const bot = BOTS[to];
-    if (bot && bot.persona) {
+    if (bot && bot.persona && extra.kind !== 'magnet') {
       const t = extra.kind === 'track' ? Music.byId[extra.track] : null;
       const P = bot.persona;
       const lines = t ? (t.by === bot.brain ? ['Это же мой трек! Ты его нашёл :)', 'О, моё! Приятно, что слушаешь'] : ['Ооо, ' + t.title + '! Качает!', 'Поставил на повтор. ' + t.title + ' — это вещь', 'Слушаю. ' + t.artist + ' — молодцы']) : ['Плейлист! Целый плейлист! Слушаю по порядку', 'Ого, подборка. Спасибо!'];
@@ -364,6 +368,7 @@
     if (extra && extra.card) msg.card = extra.card;
     if (extra && extra.sound) msg.sound = extra.sound;
     if (extra && extra.track) { msg.kind = 'track'; msg.track = extra.track; }
+    if (extra && extra.magnet) { msg.kind = 'magnet'; msg.country = extra.magnet.country; msg.serial = extra.magnet.id; }
     mutate((d) => {
       const k = pairKey(msg.from, msg.to);
       d.history[k] = d.history[k] || [];
@@ -443,7 +448,7 @@
     const rt = rtOf(bot.uin);
     Object.values(botRt).forEach((r) => (r.unanswered = 0));
     const mem = memOf(bot.uin);
-    const msgs = Brain.reply(text, mem, { persona: bot.brain, xstatus: rt.xstatus, nick: me.nick });
+    const msgs = Brain.reply(text, mem, { persona: bot.brain, xstatus: rt.xstatus, nick: me.nick, tier: tierOf(me.uin) });
     saveMem(bot.uin, mem);
     const first = msgs[0] && msgs[0].text ? msgs[0].text : '';
     const delay = 900 + Math.min(first.length, 160) * 16 + Math.random() * 1200;
@@ -485,7 +490,7 @@
     deliverSeq(bot, msgs, 600 + Math.random() * 1500);
   }
   setInterval(askaTick, 15000);
-  if (/debug/.test(location.search)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt, wall: (u) => wallOf(u || me.uin), openAux, setMode, randomMeet };
+  if (/debug/.test(location.search)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt, wall: (u) => wallOf(u || me.uin), openAux, setMode, randomMeet, fly, addPoints, profile: () => myProfile(), dossier: buildDossier };
 
   /* ================= заголовок вкладки ================= */
   function updateTitle() {
@@ -709,7 +714,7 @@
       <div class="win contacts" id="cwin">
         <div class="titlebar">${flowerSvg('#3cb44a', 14, { logo: true })}<span class="ttl">АСЬКА</span><button class="tbtn" id="c-about" title="О программе">?</button><button class="tbtn" id="c-exit" title="Выйти">×</button></div>
         <div class="menubar"><button id="m-contacts">Контакты</button><button id="m-sound">Звук</button><button id="m-help">Справка</button></div>
-        <div class="toolbar"><div class="modes" id="modes"></div><button class="btn icon" id="tb-wall" title="Моя стена">▤</button><button class="btn icon" id="tb-vinyl" title="Винил">♪</button><button class="btn icon" id="tb-random" title="Случайное знакомство">☺</button></div>
+        <div class="toolbar"><div class="modes" id="modes"></div><button class="btn icon" id="tb-wall" title="Моя стена">▤</button><button class="btn icon" id="tb-vinyl" title="Винил">♪</button><button class="btn icon" id="tb-random" title="Случайное знакомство">☺</button><button class="btn icon" id="tb-fridge" title="Холодильник с магнитами">🧲</button></div>
         <div class="me-panel" id="me-panel"></div>
         <div class="clist inset" id="clist"></div>
         <div class="bottom-bar"><button class="btn status-btn" id="status-btn"></button><button class="btn icon" id="add-btn" title="Добавить контакт">+</button></div>
@@ -741,6 +746,7 @@
     $('#tb-wall').onclick = () => openAux('wall', me.uin);
     $('#tb-vinyl').onclick = () => openAux('vinyl');
     $('#tb-random').onclick = randomMeet;
+    $('#tb-fridge').onclick = () => openAux('fridge', me.uin);
     $('#sb-np').onclick = () => openAux('vinyl');
     $('#aux-back').onclick = closeAux;
     $('#aux-close').onclick = closeAux;
@@ -759,6 +765,10 @@
       { label: 'Профиль контакта…', onClick: () => { if (!active) { alertBox('Профиль', 'Сначала открой беседу с контактом.'); return; } openAux('profile', active); } },
       { label: 'Случайное знакомство…', onClick: randomMeet },
       { label: 'Моя стена', onClick: () => openAux('wall', me.uin) },
+      { label: 'Моё досье', onClick: () => openAux('dossier', me.uin) },
+      { label: 'Досье контакта…', onClick: () => { if (!active) { alertBox('Досье', 'Сначала открой беседу с контактом.'); return; } openAux('dossier', active); } },
+      { label: 'Холодильник и магниты', onClick: () => openAux('fridge', me.uin) },
+      { label: '✈ Я лечу…', onClick: flyDialog },
       { label: 'Винил', onClick: () => openAux('vinyl') },
       '-',
       { label: 'Выйти', onClick: () => confirmBox('Выход', 'Выйти из АСЬКИ?', logout) },
@@ -789,7 +799,8 @@
 
   function renderMe() {
     const el = $('#me-panel'); if (!el || !me) return;
-    el.innerHTML = `<span class="ico">${statusFlower(myStatus, 16)}</span><span class="nick">${esc(me.nick)}</span><span class="sp"></span><span class="uin">#${me.uin}</span>`;
+    const tier = tierOf(me.uin);
+    el.innerHTML = `<span class="ico">${statusFlower(myStatus, 16, TIER[tier].ring)}</span><span class="nick">${esc(me.nick)}</span>${tier !== 'basic' ? `<span class="tier ${tier}" title="Уровень АСЬКИ">${TIER[tier].badge}</span>` : ''}<span class="sp"></span><span class="uin">#${me.uin}</span>`;
     const sb = $('#status-btn');
     if (sb) sb.innerHTML = `${statusFlower(myStatus, 16)}<span class="lab">${esc(statusInfo(myStatus).label)}</span><span class="sp"></span><span>▾</span>`;
     const net = $('#sb-net');
@@ -802,14 +813,15 @@
     const mode = myProfile().mode;
     const list = contactsOf(me.uin).map((u) => accountOf(u)).filter(Boolean);
     const byNick = (a, b) => (b.brain === 'aska') - (a.brain === 'aska') || a.nick.localeCompare(b.nick, 'ru');
-    const mine = list.filter((a) => circleOf(a.uin) === mode);
-    const other = list.filter((a) => circleOf(a.uin) !== mode).sort(byNick);
+    const inMode = (a) => a.brain === 'aska' || circleOf(a.uin) === mode; // Аська — в любом круге
+    const mine = list.filter(inMode);
+    const other = list.filter((a) => !inMode(a)).sort(byNick);
     const on = mine.filter((a) => isOnline(a.uin)).sort(byNick);
     const off = mine.filter((a) => !isOnline(a.uin)).sort(byNick);
     const item = (a) => {
       const n = unreadFrom(a.uin);
       const st = statusOf(a.uin);
-      const ico = n ? `<span class="blink">${envelopeSvg(16)}</span>` : statusFlower(st, 16);
+      const ico = n ? `<span class="blink">${envelopeSvg(16)}</span>` : statusFlower(st, 16, TIER[tierOf(a.uin)].ring);
       const pct = matchPct(me.uin, a.uin);
       const xs = xstatusOf(a.uin);
       return `<div class="citem ${active === a.uin ? 'sel' : ''} ${st === 'offline' ? 'off' : ''}" data-uin="${a.uin}" title="${esc(a.nick)} · ${a.uin}${a.phone ? ' · ' + esc(fmtPhone(a.phone)) : ''}${xs ? ' · ' + esc(xs) : ''}${pct != null ? ' · совпадение ' + pct + '%' : ''} · ${esc(MODES[circleOf(a.uin)].label)}"><span class="ico">${ico}</span><span class="nick">${esc(a.nick)}</span>${typing[a.uin] ? '<span class="typing">печатает…</span>' : ''}${n ? `<span class="muted">${n}</span>` : ''}</div>`;
@@ -888,9 +900,10 @@
     const a = accountOf(active); if (!a) return;
     const st = statusOf(active);
     const head = $('#ch-head'); if (!head) return;
-    head.innerHTML = `<span class="ico">${statusFlower(st, 16)}</span><span class="nick">${esc(a.nick)}</span><span class="muted">#${a.uin}</span>${a.phone ? `<span class="muted">· ${esc(fmtPhone(a.phone))}</span>` : ''}<span class="sp"></span><span class="hint">${typing[active] ? 'печатает…' : esc(statusInfo(st).label) + (xstatusOf(active) ? ' · ' + esc(xstatusOf(active)) : '')}</span><button class="btn icon" id="ch-wall" title="Стена">▤</button><button class="btn icon" id="ch-prof" title="Профиль">☺</button>`;
+    head.innerHTML = `<span class="ico">${statusFlower(st, 16)}</span><span class="nick">${esc(a.nick)}</span><span class="muted">#${a.uin}</span>${a.phone ? `<span class="muted">· ${esc(fmtPhone(a.phone))}</span>` : ''}<span class="sp"></span><span class="hint">${typing[active] ? 'печатает…' : esc(statusInfo(st).label) + (xstatusOf(active) ? ' · ' + esc(xstatusOf(active)) : '')}</span><button class="btn icon" id="ch-wall" title="Стена">▤</button><button class="btn icon" id="ch-prof" title="Профиль">☺</button><button class="btn icon" id="ch-dos" title="Досье">📁</button>`;
     $('#ch-wall').onclick = () => openAux('wall', active);
     $('#ch-prof').onclick = () => openAux('profile', active);
+    $('#ch-dos').onclick = () => openAux('dossier', active);
     $('#ch-title').innerHTML = `${esc(a.nick)} <small>— беседа</small>`;
   }
   function renderHistory() {
@@ -905,6 +918,10 @@
       const who = mine ? me : accountOf(m.from);
       if (m.card) {
         html += `<div class="msg ${mine ? 'me' : 'them'}"><span class="hdr">${esc(who ? who.nick : m.from)} <span class="time">(${fmtTime(m.ts)})</span>:</span><div class="postcard pc-${esc(m.card)}" data-sound="${esc(m.sound || '')}" title="Открытка — нажми, чтобы послушать">${postcardSvg(m.card)}</div><div class="pc-cap">${renderText(m.text)}</div></div>`;
+        return;
+      }
+      if (m.kind === 'magnet') {
+        html += `<div class="msg ${mine ? 'me' : 'them'}"><span class="hdr">${esc(who ? who.nick : m.from)} <span class="time">(${fmtTime(m.ts)})</span>:</span>${magnetCard(m.country, m.serial, m.text)}</div>`;
         return;
       }
       if (m.kind === 'track' || m.kind === 'playlist') {
@@ -970,9 +987,10 @@
   function statusDialog() {
     dialog({
       title: 'Мой статус',
-      body: `<div class="status-list">${STATUSES.filter((s) => s.key !== 'offline').map((s) => `<button data-st="${s.key}">${statusFlower(s.key, 16)}<span>${esc(s.label)}</span>${s.key === myStatus ? '<span class="sp"></span><span>✓</span>' : ''}</button>`).join('')}</div>`,
-      buttons: [{ label: 'Отмена' }],
-      onOpen: (ov) => $$('[data-st]', ov).forEach((b) => (b.onclick = () => { setStatus(b.dataset.st); ov.remove(); })),
+      body: `<div class="status-list">${STATUSES.filter((s) => s.key !== 'offline').map((s) => `<button data-st="${s.key}">${statusFlower(s.key, 16)}<span>${esc(s.label)}</span>${s.key === myStatus ? '<span class="sp"></span><span>✓</span>' : ''}</button>`).join('')}</div>
+        <div class="legend-line">Чем занят</div><div class="chips">${FUN_STATUS.filter((f) => !f.tier || tierRank(tierOf(me.uin)) >= tierRank(f.tier)).map((f) => `<button class="chip ${myProfile().xstatus === f.icon + ' ' + f.text ? 'on' : ''}" data-xs="${esc(f.icon + ' ' + f.text)}">${f.icon} ${esc(f.text)}</button>`).join('')}<button class="chip" data-xs="">✕ сбросить</button></div>`,
+      buttons: [{ label: 'Закрыть' }],
+      onOpen: (ov) => { $$('[data-st]', ov).forEach((b) => (b.onclick = () => { setStatus(b.dataset.st); ov.remove(); })); $$('[data-xs]', ov).forEach((b) => (b.onclick = () => { setXstatus(b.dataset.xs || null); ov.remove(); })); },
     });
   }
 
@@ -1014,12 +1032,22 @@
       { kind: 'text', text: 'Тишина в Аське — тоже разговор.' }] },
     '123456': { interests: ['общение', 'техника'], circle: 'biz', wall: [{ kind: 'text', text: 'Здесь будут новости АСЬКИ. Пока новость одна: АСЬКА работает :)' }] },
   };
-  Object.keys(BOT_EXTRA).forEach((u) => { if (BOTS[u]) Object.assign(BOTS[u], { interests: BOT_EXTRA[u].interests, circle: BOT_EXTRA[u].circle, wallSeed: BOT_EXTRA[u].wall }); });
+  const BOT_MORE = {
+    '000001': { avatar: null, tier: 'black', fridge: ['TR', 'IT', 'JP', 'AQ', 'MOON'], dossierOpen: true, dossier: ['Цветочек. Восемь лепестков, один красный — для настроения.', 'Любит чай, открытки, вопросы и когда ей пишут. Не любит, когда не звонят родным.', 'Пишет много, со смайлами, иногда барабанной дробью. Помнит всё, что ей рассказали.'] },
+    '100500': { avatar: 'blush', tier: 'basic', fridge: ['TR', 'EG'], dossierOpen: true, dossier: ['Аватар — смущённая улыбка. Подходит: краснеет через сообщение.', 'Студентка иняза, модем 33.6, «Руки Вверх» на повторе. Качает мп3 ночами.', 'Пишет быстро, со скобочками и «прикинь». Отвечает всегда, даже с лекции.'] },
+    '31337': { avatar: 'cool', tier: 'gold', fridge: ['CZ'], dossierOpen: false, dossier: ['Аватар в тёмных очках. Естественно.', 'Линукс, квака, кофе. Винду считает ошибкой природы.', 'Пишет строчными, коротко, без точек. Если ответил два слова — это уже тёплый разговор.'] },
+    '777777': { avatar: 'party', tier: 'gold', fridge: ['TH', 'TR', 'ES'], dossierOpen: true, dossier: ['Аватар в праздничном колпаке. Снимает его только в душе.', 'Музыка, сейшны, колонки на максимум. Соседи знают его по имени.', 'Пишет с тремя восклицательными!!! Минимум. Смайл (b) — его подпись.'] },
+    '555123': { avatar: 'kiss', tier: 'basic', fridge: ['FR', 'IT'], dossierOpen: true, dossier: ['Аватар с поцелуйчиком. Романтик, предупреждали.', 'Титаник (шесть раз), книги, котики, дождь за окном. Тамагочи, увы, погиб.', 'Начинает сообщения с «ой». Плачет на красивых местах. Пишет длинно и душевно.'] },
+    '200200': { avatar: 'neutral', tier: 'basic', fridge: ['BY', 'RU'], dossierOpen: true, dossier: ['Аватар строгий, без улыбки. Это не грусть, это опыт.', 'Дача, рыбалка, футбол по телевизору. Освоил интернет по совету соседа.', 'Иногда пишет капсом — не нажимать Caps Lock не научился. Спрашивает, поел ли ты.'] },
+    '404404': { avatar: 'think', tier: 'basic', fridge: ['IN', 'GE'], dossierOpen: true, dossier: ['Аватар задумчивый, с вопросительным знаком. Иначе никак.', 'Философия, книги, чай. Ищет смысл, иногда находит, потом теряет.', 'Пишет длинно, с многоточиями… Отвечает вопросом на вопрос. Это не баг, это метод.'] },
+    '123456': { avatar: 'angel', tier: 'gold', fridge: [], dossierOpen: true, dossier: ['Аватар с нимбом: служебное лицо.', 'Интересы: чтобы АСЬКА работала. Всё.', 'Пишет по делу, с пунктами и без смайлов. Отвечает на «помощь».'] },
+  };
+  Object.keys(BOT_EXTRA).forEach((u) => { if (BOTS[u]) Object.assign(BOTS[u], { interests: BOT_EXTRA[u].interests, circle: BOT_EXTRA[u].circle, wallSeed: BOT_EXTRA[u].wall }, BOT_MORE[u] || {}); });
 
   function profileOf(uin) {
     const p = (db.profile || {})[uin];
     const b = BOTS[uin];
-    return Object.assign({ interests: b ? b.interests || [] : [], mode: 'chat', circles: {}, playlists: [] }, p || {});
+    return Object.assign({ interests: b ? b.interests || [] : [], mode: 'chat', circles: {}, playlists: [], avatar: b ? (b.avatar === undefined ? null : b.avatar) : SMILES[parseInt(uin, 10) % SMILES.length].id, xstatus: null, points: 0, fridge: null, dossierOpen: b ? b.dossierOpen !== false : true }, p || {});
   }
   const myProfile = () => profileOf(me.uin);
   function saveProfile(patch) { mutate((d) => { d.profile = d.profile || {}; d.profile[me.uin] = Object.assign(profileOf(me.uin), patch); }); }
@@ -1040,7 +1068,9 @@
   function myXstatus() {
     const st = Music.state;
     if (st.playing && st.trackId && Music.byId[st.trackId]) return 'слушаю: ' + Music.byId[st.trackId].title;
-    return me ? MODES[myProfile().mode].xstatus : '';
+    if (!me) return '';
+    const p = myProfile();
+    return p.xstatus || MODES[p.mode].xstatus;
   }
   const modeComment = {};
   function setMode(key, silent) {
@@ -1091,6 +1121,7 @@
     addPost(toUin, p);
     post({ type: 'wall', uin: toUin, from: me.uin });
     Snd.play(data.kind === 'card' ? 'tada' : 'sent');
+    addPoints(data.kind === 'card' ? 5 : 3, data.kind === 'card' ? 'открытка' : 'запись на стене');
     const bot = BOTS[toUin];
     if (bot && bot.persona && toUin !== me.uin) thankForWall(bot, p);
     return p;
@@ -1132,6 +1163,7 @@
     if (p.kind === 'card') content = `<div class="postcard pc-${esc(p.card)}" data-sound="${esc(Brain.CARDS[p.card] ? Brain.CARDS[p.card].sound : '')}" title="Нажми, чтобы послушать">${postcardSvg(p.card)}</div>${p.text ? `<div class="pc-cap">${renderText(p.text)}</div>` : ''}`;
     else if (p.kind === 'track') content = trackCard(p.track) + (p.note ? `<div class="txt">${renderText(p.note)}</div>` : '');
     else if (p.kind === 'playlist') content = playlistCard(p.playlist) + (p.note ? `<div class="txt">${renderText(p.note)}</div>` : '');
+    else if (p.kind === 'magnet') content = magnetCard(p.country, p.serial, p.text);
     else content = `<div class="txt">${renderText(p.text || '')}</div>`;
     const likes = p.likes || [];
     const liked = likes.includes(me.uin);
@@ -1144,9 +1176,10 @@
     const prof = profileOf(uin);
     const common = mine ? [] : commonInterests(me.uin, uin);
     const posts = wallOf(uin);
-    return `<div class="wall-head"><span class="ico">${statusFlower(statusOf(uin), 22)}</span><div class="who"><b>${esc(a.nick)}</b> <span class="muted">#${a.uin}</span><div class="hint">${esc(xstatusOf(uin) || statusInfo(statusOf(uin)).label)}</div></div>${mine ? '' : `<div class="pct" title="Совпадение интересов">${pct == null ? '—' : pct + '%'}</div>`}</div>
+    const tierW = tierOf(uin);
+    return `<div class="wall-head"><span class="ico">${avatarSvg(uin, 30)}</span><div class="who"><b>${esc(a.nick)}</b> <span class="muted">#${a.uin}</span> ${tierW !== 'basic' ? `<span class="tier ${tierW}">${TIER[tierW].badge}</span>` : ''}<div class="hint">${esc(xstatusOf(uin) || statusInfo(statusOf(uin)).label)}</div></div>${mine ? '' : `<div class="pct" title="Совпадение интересов">${pct == null ? '—' : pct + '%'}</div>`}</div>
       <div class="chips small">${prof.interests.length ? prof.interests.map((i) => `<span class="chip ${common.includes(i) ? 'on' : ''}">${esc(i)}</span>`).join('') : `<span class="muted">${mine ? 'интересы не указаны — добавь в профиле' : 'интересы не указаны'}</span>`}</div>
-      <div class="row wall-actions">${mine ? '<button class="btn" id="w-profile">Интересы</button>' : '<button class="btn" id="w-chat">Написать</button><button class="btn" id="w-profile">Профиль</button>'}<button class="btn" id="w-card">Открытка</button><button class="btn" id="w-track">♪ Трек</button></div>
+      <div class="row wall-actions">${mine ? '<button class="btn" id="w-profile">Профиль</button>' : '<button class="btn" id="w-chat">Написать</button><button class="btn" id="w-profile">Профиль</button>'}<button class="btn" id="w-card">Открытка</button><button class="btn" id="w-track">♪ Трек</button><button class="btn" id="w-dos">📁</button><button class="btn" id="w-fr">🧲</button></div>
       <div class="row"><input class="field" id="w-text" maxlength="300" placeholder="${mine ? 'Что нового?' : 'Написать на стене…'}"><button class="btn" id="w-send">OK</button></div>
       <div class="wall-posts inset" id="w-posts">${posts.length ? posts.map((p) => renderPost(p, uin)).join('') : '<div class="empty-note">На стене пока пусто. Будь первым :)</div>'}</div>`;
   }
@@ -1156,6 +1189,8 @@
     $('#w-send').onclick = send;
     $('#w-text').addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
     $('#w-profile').onclick = () => openAux('profile', uin);
+    $('#w-dos').onclick = () => openAux('dossier', uin);
+    $('#w-fr').onclick = () => openAux('fridge', uin);
     if (!mine) $('#w-chat').onclick = () => openChat(uin);
     $('#w-card').onclick = () => pickCardDialog((card) => {
       dialog({ title: 'Подпись к открытке', body: `<div class="center"><div class="postcard pc-${card}" style="display:inline-block">${postcardSvg(card)}</div></div><input class="field mt" id="c-text" maxlength="200" placeholder="пару слов (можно без них)">`, buttons: [{ label: 'На стену', primary: true, onClick: (ov) => { postWall(uin, { kind: 'card', card, text: $('#c-text', ov).value.trim() }); } }, { label: 'Отмена' }] });
@@ -1184,17 +1219,23 @@
     const prof = profileOf(uin);
     if (mine) {
       const custom = prof.interests.filter((i) => !INTERESTS.includes(i));
-      return `<div class="wall-head"><span class="ico">${statusFlower(myStatus, 22)}</span><div class="who"><b>${esc(a.nick)}</b> <span class="muted">#${a.uin}</span><div class="hint">${esc(fmtPhone(a.phone))} · ${esc(myXstatus())}</div></div></div>
+      const tier = tierOf(uin), nextT = nextTier(uin);
+      return `<div class="wall-head"><span class="ico">${avatarSvg(uin, 30)}</span><div class="who"><b>${esc(a.nick)}</b> <span class="muted">#${a.uin}</span> ${tier !== 'basic' ? `<span class="tier ${tier}">${TIER[tier].badge}</span>` : ''}<div class="hint">${esc(fmtPhone(a.phone))} · ${esc(myXstatus())}</div></div></div>
+        <div class="groupbox"><span class="legend">Уровень АСЬКИ: ${TIER[tier].label}</span><div class="row"><span class="tier-bar"><i style="width:${nextT ? Math.min(100, Math.round((100 * prof.points) / nextT.min)) : 100}%"></i></span><span class="muted">${prof.points} б.</span></div><div class="hint">${nextT ? `До уровня ${nextT.label}: ещё ${nextT.min - prof.points} баллов. ` : 'Выше некуда. Ты на вершине пищевой цепочки АСЬКИ. '}Баллы — за сообщения, открытки, записи, магниты и новых друзей.</div><div class="hint">${esc(TIER[tier].perks)}</div></div>
+        <div class="groupbox"><span class="legend">Аватар</span><div class="avatars" id="p-avatars"><button class="${prof.avatar == null ? 'on' : ''}" data-av="" title="цветочек">${flowerSvg('#3cb44a', 22, { logo: true })}</button>${SMILES.map((sm) => `<button class="${prof.avatar === sm.id ? 'on' : ''}" data-av="${sm.id}" title="${esc(sm.name)}">${smileSvg(sm.id, 22)}</button>`).join('')}</div></div>
+        <div class="groupbox"><span class="legend">Чем занят</span><div class="chips" id="p-xs">${FUN_STATUS.filter((f) => !f.tier || tierRank(tier) >= tierRank(f.tier)).map((f) => `<button class="chip ${prof.xstatus === f.icon + ' ' + f.text ? 'on' : ''}" data-xs="${esc(f.icon + ' ' + f.text)}">${f.icon} ${esc(f.text)}</button>`).join('')}${prof.xstatus && !FUN_STATUS.some((f) => f.icon + ' ' + f.text === prof.xstatus) ? `<button class="chip on" data-xs="${esc(prof.xstatus)}">${esc(prof.xstatus)}</button>` : ''}<button class="chip" data-xs="" title="обычный статус режима">✕ сбросить</button></div><div class="row mt"><input class="field" id="p-xcustom" maxlength="40" placeholder="свой статус"><button class="btn" id="p-xset">OK</button></div><div class="hint">${FUN_STATUS.some((f) => f.tier) ? 'Статусы с ★ и ◆ открываются на уровнях Gold и Black.' : ''}</div></div>
+        <div class="groupbox"><span class="legend">Досье</span><label class="row"><input type="checkbox" id="p-dossier" ${prof.dossierOpen ? 'checked' : ''}> досье открыто для друзей</label><div class="row mt"><button class="btn" id="p-dossier-open">Открыть досье</button><button class="btn" id="p-fridge">🧲 Холодильник</button></div></div>
         <div class="groupbox"><span class="legend">Мои интересы (${prof.interests.length})</span><div class="chips" id="p-chips">${INTERESTS.map((i) => `<button class="chip ${prof.interests.includes(i) ? 'on' : ''}" data-int="${esc(i)}">${esc(i)}</button>`).join('')}${custom.map((i) => `<button class="chip on" data-int="${esc(i)}" title="убрать">${esc(i)} ×</button>`).join('')}</div>
           <div class="row mt"><input class="field" id="p-custom" maxlength="20" placeholder="свой интерес"><button class="btn" id="p-add">+</button></div></div>
         <div class="groupbox"><span class="legend">Режим</span><div class="modes" id="p-modes">${Object.keys(MODES).map((k) => `<button class="${prof.mode === k ? 'on' : ''}" data-mode="${k}">${MODES[k].icon} ${MODES[k].label}</button>`).join('')}</div><div class="hint mt">Режим меняет статус, цвет окон и то, чей круг показан первым. Круг контакта — в его профиле.</div></div>
         <div class="hint">Интересы видят друзья на твоей стене. По ним считается процент совпадения и подбирается случайное знакомство.</div>`;
     }
     const pct = matchPct(me.uin, uin), common = commonInterests(me.uin, uin);
-    return `<div class="wall-head"><span class="ico">${statusFlower(statusOf(uin), 22)}</span><div class="who"><b>${esc(a.nick)}</b> <span class="muted">#${a.uin}</span><div class="hint">${a.phone ? esc(fmtPhone(a.phone)) + ' · ' : ''}${esc(xstatusOf(uin) || statusInfo(statusOf(uin)).label)}</div></div><div class="pct" title="Совпадение интересов">${pct == null ? '—' : pct + '%'}</div></div>
+    const tierC = tierOf(uin);
+    return `<div class="wall-head"><span class="ico">${avatarSvg(uin, 30)}</span><div class="who"><b>${esc(a.nick)}</b> <span class="muted">#${a.uin}</span> ${tierC !== 'basic' ? `<span class="tier ${tierC}">${TIER[tierC].badge}</span>` : ''}<div class="hint">${a.phone ? esc(fmtPhone(a.phone)) + ' · ' : ''}${esc(xstatusOf(uin) || statusInfo(statusOf(uin)).label)}</div></div><div class="pct" title="Совпадение интересов">${pct == null ? '—' : pct + '%'}</div></div>
       <div class="groupbox"><span class="legend">Интересы</span><div class="chips">${prof.interests.length ? prof.interests.map((i) => `<span class="chip ${common.includes(i) ? 'on' : ''}">${esc(i)}</span>`).join('') : '<span class="muted">не указаны</span>'}</div><div class="hint mt">${pct == null ? 'Укажи свои интересы — и Аська посчитает совпадение.' : common.length ? 'Общее: ' + esc(common.join(', ')) : 'Общих интересов нет. Самые интересные разговоры начинаются так.'}</div></div>
       <div class="groupbox"><span class="legend">Круг</span>${Object.keys(MODES).map((k) => `<label class="row"><input type="radio" name="circle" value="${k}" ${circleOf(uin) === k ? 'checked' : ''}> ${MODES[k].icon} ${MODES[k].label}</label>`).join('')}</div>
-      <div class="row"><button class="btn primary" id="pr-chat">Написать</button><button class="btn" id="pr-wall">Стена</button></div>`;
+      <div class="row"><button class="btn primary" id="pr-chat">Написать</button><button class="btn" id="pr-wall">Стена</button><button class="btn" id="pr-dos">Досье</button><button class="btn" id="pr-fridge">🧲</button></div>`;
   }
   function wireProfile(uin) {
     if (uin === me.uin) {
@@ -1207,11 +1248,21 @@
       $('#p-add').onclick = add;
       $('#p-custom').addEventListener('keydown', (e) => { if (e.key === 'Enter') add(); });
       $$('#p-modes button').forEach((b) => (b.onclick = () => { setMode(b.dataset.mode); renderAux(); }));
+      $$('#p-avatars button').forEach((b) => (b.onclick = () => { saveProfile({ avatar: b.dataset.av || null }); Snd.play('click'); renderAux(); renderMe(); }));
+      $$('#p-xs .chip').forEach((b) => (b.onclick = () => setXstatus(b.dataset.xs || null)));
+      const setCustom = () => { const v = $('#p-xcustom').value.trim(); if (v) setXstatus(v); };
+      $('#p-xset').onclick = setCustom;
+      $('#p-xcustom').addEventListener('keydown', (e) => { if (e.key === 'Enter') setCustom(); });
+      $('#p-dossier').onchange = (e) => { saveProfile({ dossierOpen: e.target.checked }); Snd.play('click'); toast(me, e.target.checked ? 'досье открыто для друзей' : 'досье закрыто. Аська молчит как партизан', null); };
+      $('#p-dossier-open').onclick = () => openAux('dossier', me.uin);
+      $('#p-fridge').onclick = () => openAux('fridge', me.uin);
       return;
     }
     $$('input[name=circle]').forEach((r) => (r.onchange = () => { setCircle(uin, r.value); Snd.play('click'); }));
     $('#pr-chat').onclick = () => openChat(uin);
     $('#pr-wall').onclick = () => openAux('wall', uin);
+    $('#pr-dos').onclick = () => openAux('dossier', uin);
+    $('#pr-fridge').onclick = () => openAux('fridge', uin);
   }
   function randomMeet() {
     if (!me) return;
@@ -1224,7 +1275,7 @@
     Snd.play('knock');
     dialog({
       title: 'Случайное знакомство',
-      body: `<div class="meet-head">${statusFlower(statusOf(a.uin), 30)}<div><b>${esc(a.nick)}</b> <span class="muted">#${a.uin}</span><div class="hint">${esc(xstatusOf(a.uin) || statusInfo(statusOf(a.uin)).label)}${mine.includes(a.uin) ? ' · уже в контактах' : ''}</div></div><div class="pct big" title="Совпадение интересов">${pct == null ? '?' : pct + '%'}</div></div>
+      body: `<div class="meet-head">${avatarSvg(a.uin, 34)}<div><b>${esc(a.nick)}</b> <span class="muted">#${a.uin}</span><div class="hint">${esc(xstatusOf(a.uin) || statusInfo(statusOf(a.uin)).label)}${mine.includes(a.uin) ? ' · уже в контактах' : ''}</div></div><div class="pct big" title="Совпадение интересов">${pct == null ? '?' : pct + '%'}</div></div>
         <div class="chips small mt">${prof.interests.map((i) => `<span class="chip ${common.includes(i) ? 'on' : ''}">${esc(i)}</span>`).join('') || '<span class="muted">интересы не указаны</span>'}</div>
         <div class="hint mt">${pct == null ? 'Укажи свои интересы в профиле — и Аська посчитает совпадение.' : pct >= 50 ? 'Аська говорит: это судьба.' : pct > 0 ? 'Есть общее. Остальное — дело разговора.' : 'Ничего общего. Самые интересные разговоры начинаются именно так.'}</div>`,
       buttons: [
@@ -1257,6 +1308,8 @@
     if (aux.kind === 'wall') { const a = accountOf(aux.arg); title.innerHTML = `${aux.arg === me.uin ? 'Моя стена' : 'Стена: ' + esc(a ? a.nick : aux.arg)}`; body.innerHTML = renderWall(aux.arg); if (accountOf(aux.arg)) wireWall(aux.arg); }
     else if (aux.kind === 'profile') { const a = accountOf(aux.arg); title.innerHTML = aux.arg === me.uin ? 'Мой профиль' : `Профиль: ${esc(a ? a.nick : aux.arg)}`; body.innerHTML = renderProfile(aux.arg); if (accountOf(aux.arg)) wireProfile(aux.arg); }
     else if (aux.kind === 'vinyl') { title.innerHTML = 'Винил <small>— проигрыватель</small>'; body.innerHTML = renderVinyl(); wireVinyl(); }
+    else if (aux.kind === 'fridge') { const a = accountOf(aux.arg); title.innerHTML = aux.arg === me.uin ? 'Мой холодильник' : `Холодильник: ${esc(a ? a.nick : aux.arg)}`; body.innerHTML = renderFridge(aux.arg); if (accountOf(aux.arg)) wireFridge(aux.arg); }
+    else if (aux.kind === 'dossier') { const a = accountOf(aux.arg); title.innerHTML = `Досье: ${esc(a ? a.nick : aux.arg)}`; body.innerHTML = renderDossier(aux.arg); if (accountOf(aux.arg)) wireDossier(aux.arg); }
   }
   // клики по карточкам треков, открыткам и лайкам — где бы они ни были
   document.addEventListener('click', (e) => {
@@ -1345,6 +1398,296 @@
     }
     lastMusicTrack = st.trackId;
   });
+
+
+  /* ================= уровни, аватары, статусы ================= */
+  const TIER = {
+    basic: { label: 'Обычная', badge: '', ring: null, rank: 0, perks: 'Обычная АСЬКА: всё, что нужно, и ничего лишнего.' },
+    gold: { label: 'Gold', badge: '★ Gold', ring: '#e8b300', rank: 1, min: 60, perks: 'Gold: золотой цветочек, статусы «на яхте», «считаю деньги», «в VIP-ложе», Аська отвечает честнее.' },
+    black: { label: 'Black', badge: '◆ Black', ring: '#111111', rank: 2, min: 200, perks: 'Black: чёрный цветочек, статусы «в тени» и «на орбите», магнит с Луны, Аська говорит «вы». Иногда.' },
+  };
+  const tierRank = (k) => (TIER[k] || TIER.basic).rank;
+  function tierOf(uin) {
+    const b = BOTS[uin];
+    if (b) return b.tier || 'basic';
+    const pts = profileOf(uin).points || 0;
+    return pts >= TIER.black.min ? 'black' : pts >= TIER.gold.min ? 'gold' : 'basic';
+  }
+  function nextTier(uin) { const t = tierOf(uin); return t === 'basic' ? TIER.gold : t === 'gold' ? TIER.black : null; }
+  function addPoints(n, why) {
+    if (!me || !n) return;
+    const before = tierOf(me.uin);
+    saveProfile({ points: (myProfile().points || 0) + n });
+    const after = tierOf(me.uin);
+    if (why && n >= 3) toast(me, `+${n} б. — ${why}`, null);
+    if (after !== before) {
+      Snd.play('tada');
+      toast(me, `Новый уровень: АСЬКА ${TIER[after].label}!`, null);
+      renderMe(); renderContacts();
+      addPost(me.uin, { id: uid(), from: '000001', ts: Date.now(), likes: [], kind: 'text', text: `Поздравляю! ${me.nick} теперь АСЬКА ${TIER[after].label} ${TIER[after].badge}. Это официально, я записала.` });
+      const bot = BOTS['000001'];
+      if (bot) setTimeout(() => botSays(bot, after === 'gold' ? 'Ты Gold! Золотой цветочек, VIP-статусы и моё уважение. Ладно, уважение у тебя и так было :)' : 'Black. Чёрный уровень. Теперь я буду говорить вам «вы». Шучу. Но магнит с Луны ваш.', { sound: 'tada' }), 1500);
+    }
+  }
+  function avatarSvg(uin, size) {
+    const p = profileOf(uin);
+    const ring = TIER[tierOf(uin)].ring;
+    if (!p.avatar || !SMILE_BY_ID[p.avatar]) return statusFlower(statusOf(uin), size, ring);
+    return `<span class="av" style="width:${size}px;height:${size}px;${ring ? 'box-shadow:0 0 0 2px ' + ring : ''}">${smileSvg(p.avatar, size)}</span>`;
+  }
+  const FUN_STATUS = [
+    { icon: '✈', text: 'в полёте' }, { icon: '☯', text: 'медитирую' }, { icon: '⌨', text: 'работаю' }, { icon: '🎨', text: 'создаю шедевр' },
+    { icon: '☕', text: 'пью чай' }, { icon: '🌻', text: 'на даче' }, { icon: '💭', text: 'в раздумьях' }, { icon: '💤', text: 'сплю' },
+    { icon: '📖', text: 'читаю' }, { icon: '💃', text: 'танцую' }, { icon: '🚗', text: 'в пути' }, { icon: '🎣', text: 'рыбачу' },
+    { icon: '📥', text: 'качаю мп3' }, { icon: '🎮', text: 'не трогать, кваку гоняю' }, { icon: '💼', text: 'строю бизнес' }, { icon: '🧲', text: 'у холодильника' },
+    { icon: '🍕', text: 'ем пиццу' }, { icon: '🛁', text: 'в ванной с резиновой уткой' },
+    { icon: '🛥', text: 'на яхте', tier: 'gold' }, { icon: '💰', text: 'считаю деньги', tier: 'gold' }, { icon: '👑', text: 'в VIP-ложе', tier: 'gold' },
+    { icon: '🕶', text: 'в тени', tier: 'black' }, { icon: '🚀', text: 'на орбите', tier: 'black' },
+  ];
+  const XS_REACT = [
+    [/полёт|полет|лечу/, ['Куда летим? Магнит привезёшь? ✈', 'В полёте! Пристегнись и напиши, когда сядешь. И магнит, да.']],
+    [/медитир/, ['Ом-м-м. Я тоже. Ом-м-м. Напиши, когда вернёшься из нирваны.']],
+    [/работа/, ['Работа — не волк. Но я подожду. Я умею.']],
+    [/шедевр/, ['Шедевр? Покажи потом! Я повешу на стену. На твою.']],
+    [/сплю|сон/, ['Споки. Я покараулю конвертики.']],
+    [/холодильник/, ['Не ешь ночью. Магниты посмотри лучше :)']],
+    [/чай/, ['Чай! Наливай и мне. Виртуально, но от души.']],
+    [/яхт|деньги|vip/i, ['Ого, Gold-жизнь! Не забывай нас, простых цветочков ;)']],
+    [/тени|орбит/, ['Black-статус. Я бы сказала «круто», но на этом уровне так не говорят.']],
+  ];
+  function setXstatus(text) {
+    saveProfile({ xstatus: text || null });
+    mutate((d) => { d.presence[me.uin] = { status: myStatus, xstatus: myXstatus(), ts: Date.now() }; });
+    post({ type: 'presence', uin: me.uin });
+    Snd.play('click');
+    renderMe(); if (aux.kind === 'profile') renderAux();
+    toast(me, text ? 'статус: ' + text : 'статус сброшен', null);
+    const bot = BOTS['000001'];
+    if (text && bot && !memOf(bot.uin).muted) { const r = XS_REACT.find(([re]) => re.test(text.toLowerCase())); if (r) setTimeout(() => botSays(bot, pick(r[1])), 1800); }
+  }
+
+  /* ================= полёты, магниты, холодильник ================= */
+  function fridgeOf(uin) {
+    const p = profileOf(uin);
+    if (p.fridge) return p.fridge;
+    const b = BOTS[uin];
+    if (b && b.fridge) {
+      const seeded = b.fridge.map((code, i) => ({ id: 'A' + String(1000 + (parseInt(uin, 10) % 900) + i), country: code, ts: Date.now() - (i + 1) * 864e5 * 9, from: uin, origin: 'flight' }));
+      mutate((d) => { d.profile[uin] = Object.assign(profileOf(uin), { fridge: seeded }); });
+      return seeded;
+    }
+    return [];
+  }
+  function newSerial() { let n = 0; mutate((d) => { d.magnetSeq = (d.magnetSeq || 1000) + 1; n = d.magnetSeq; }); return '#' + String(n).padStart(6, '0'); }
+  function giveMagnetTo(uin, magnet) {
+    const existing = fridgeOf(uin).slice();
+    mutate((d) => { d.profile[uin] = Object.assign(profileOf(uin), { fridge: [magnet].concat(existing) }); });
+  }
+  function takeMagnetFrom(uin, id) {
+    const existing = fridgeOf(uin).filter((m) => m.id !== id);
+    mutate((d) => { d.profile[uin] = Object.assign(profileOf(uin), { fridge: existing }); });
+  }
+  const magnetCard = (code, serial, text) => { const c = COUNTRY[code] || COUNTRY.UR; return `<div class="magnetcard"><span class="mg">${magnetSvg(code, 44)}</span><div class="ti"><b>${c.flag} ${esc(c.name)}</b><div class="muted">магнит ${esc(serial || '')} · НФТ</div>${text ? `<div class="txt">${renderText(text)}</div>` : ''}</div></div>`; };
+  const pastFly = () => (me && /[ая]$/i.test(me.nick) ? 'Полетела' : 'Полетел');
+  function fly(code, scope) {
+    const c = COUNTRY[code]; if (!c || !me) return;
+    if (c.tier && tierRank(tierOf(me.uin)) < tierRank(c.tier)) { alertBox('Магнит', `${c.name} — только для уровня ${TIER[c.tier].label}. Копи баллы :)`); return; }
+    const mine = { id: newSerial(), country: code, ts: Date.now(), from: me.uin, origin: 'flight' };
+    giveMagnetTo(me.uin, mine);
+    setXstatus(`✈ в полёте: ${c.flag} ${c.name}`);
+    addPost(me.uin, { id: uid(), from: me.uin, ts: Date.now(), likes: [], kind: 'magnet', country: code, serial: mine.id, text: `${pastFly()} ${c.to}! Магнит — на холодильнике.` });
+    const recipients = scope === 'none' ? [] : contactsOf(me.uin).filter((u) => scope === 'all' || circleOf(u) === 'close');
+    recipients.forEach((u, i) => {
+      const m = { id: newSerial(), country: code, ts: Date.now(), from: me.uin, origin: 'gift' };
+      giveMagnetTo(u, m);
+      const msg = { id: uid(), from: me.uin, to: u, ts: Date.now(), kind: 'magnet', country: code, serial: m.id, text: `Я ${pastFly().toLowerCase()} ${c.to}! Тебе магнит на холодильник 🧲` };
+      pushHistory(msg); post({ type: 'msg', msg });
+      const bot = BOTS[u];
+      if (bot && bot.persona) setTimeout(() => thankForMagnet(bot, c, false), 3000 + i * 1200 + Math.random() * 3000);
+    });
+    addPoints(10, 'полёт ' + c.to);
+    Snd.play('plane');
+    toast(me, `${pastFly()} ${c.to}. Магнитов отправлено: ${recipients.length}`, null);
+    if (active) renderHistory();
+    if (aux.kind === 'fridge' || aux.kind === 'wall') renderAux();
+  }
+  function thankForMagnet(bot, c, gift) {
+    if (!me) return;
+    const P = bot.persona;
+    const L = { aska: [`${c.name}! Магнит уже на моём холодильнике. Рядом с магнитом с Луны ;)`, 'Магнит! Коллекция растёт. Привези ещё рассказов.'], kat: [`ааа ${c.name}!!! завидую))) магнит повесила на холодильник`, 'магнит!!! спасибо))) а фотки будут?'], vova: ['магнит. ок. повесил', `${c.name.toLowerCase()}. неплохо. интернет там как?`], serega: [`${c.name.toUpperCase()}!!! Привези музыки оттуда!!! (b)`, 'Магнит на холодильник!!! Рядом с пивом!!!'], lena: [`Ой, ${c.name}! Как романтично :$ Спасибо за магнит!`, 'Магнитик! Повесила рядом с Титаником :)'], batya: [`${c.name}. Далеко. Ты там поел?`, 'Магнит повесил. На холодильник. Куда ещё.'], max: [`${c.name}... Путь важнее точки на карте. Но магнит красивый. Спасибо.`, 'Магнит на холодильнике — якорь памяти. Спасибо.'] };
+    const arr = L[P.id] || L.aska;
+    botSays(bot, P.id === 'aska' ? pick(arr) : P.v(pick(arr)));
+    // иногда дарят в ответ свой магнит
+    if (!gift && Math.random() < 0.45) {
+      const own = fridgeOf(bot.uin).filter((m) => m.origin !== 'gift');
+      if (own.length) {
+        const src = pick(own); const cc = COUNTRY[src.country];
+        setTimeout(() => {
+          if (!me) return;
+          const m = { id: newSerial(), country: src.country, ts: Date.now(), from: bot.uin, origin: 'gift' };
+          giveMagnetTo(me.uin, m);
+          botSays(bot, P.id === 'aska' ? `А это тебе в ответ: магнит ${cc.from}. Обмен!` : P.v(`держи в ответ, у меня лишний: ${cc.name}`), { magnet: m });
+          Snd.play('tada');
+          if (aux.kind === 'fridge') renderAux();
+        }, 4000);
+      }
+    }
+  }
+  function flyDialog() {
+    if (!me) return;
+    const myTier = tierOf(me.uin);
+    dialog({
+      title: '✈ Я лечу',
+      body: `<div class="hint">Выбери страну — магнит ляжет на твой холодильник, а друзья получат по магниту в беседу.</div>
+        <div class="magnet-grid inset" id="fly-grid">${COUNTRIES.map((c) => `<button data-code="${c.code}" class="${c.tier && tierRank(myTier) < tierRank(c.tier) ? 'locked' : ''}" title="${esc(c.name)}${c.tier ? ' — только ' + TIER[c.tier].label : ''}">${magnetSvg(c.code, 44)}</button>`).join('')}</div>
+        <div class="row mt"><span class="lbl">Кому сказать</span><select class="field" id="fly-scope"><option value="all">всем друзьям</option><option value="close">только кругу «Близкие»</option><option value="none">никому, просто магнит</option></select></div>
+        <div class="hint mt" id="fly-pick">Страна не выбрана.</div>`,
+      buttons: [{ label: 'Полетел!', primary: true, onClick: (ov) => { const code = ov.dataset.code; if (!code) { $('#fly-pick', ov).textContent = 'Сначала выбери страну.'; return false; } fly(code, $('#fly-scope', ov).value); } }, { label: 'Отмена' }],
+      onOpen: (ov) => $$('#fly-grid button', ov).forEach((b) => (b.onclick = () => { $$('#fly-grid button', ov).forEach((x) => x.classList.remove('on')); b.classList.add('on'); ov.dataset.code = b.dataset.code; const c = COUNTRY[b.dataset.code]; $('#fly-pick', ov).textContent = `${c.flag} ${c.name}: ${pastFly().toLowerCase()} ${c.to}` + (b.classList.contains('locked') ? ` — нужен уровень ${TIER[c.tier].label}` : ''); Snd.play('click'); })),
+    });
+  }
+  function giftMagnetDialog(preselect) {
+    const mine = fridgeOf(me.uin);
+    if (!mine.length) { alertBox('Магниты', 'На холодильнике пусто. Сначала слетай куда-нибудь: меню «Контакты» → «✈ Я лечу».'); return; }
+    const friends = contactsOf(me.uin).map(accountOf).filter(Boolean);
+    dialog({
+      title: '🎁 Подарить магнит',
+      body: `<div class="hint">Магнит уйдёт с твоего холодильника на чужой. НФТ: Настоящий Фанерный Талисман, с номером.</div>
+        <div class="magnet-grid inset" id="gift-grid">${mine.map((m) => `<button data-id="${m.id}" class="${preselect === m.id ? 'on' : ''}" title="${esc(COUNTRY[m.country].name)} ${m.id}">${magnetSvg(m.country, 44)}</button>`).join('')}</div>
+        <div class="row mt"><span class="lbl">Кому</span><select class="field" id="gift-to">${friends.map((a) => `<option value="${a.uin}">${esc(a.nick)}</option>`).join('')}</select></div>`,
+      buttons: [{ label: 'Подарить', primary: true, onClick: (ov) => { const id = ov.dataset.id || preselect; if (!id) return false; giftMagnet(id, $('#gift-to', ov).value); } }, { label: 'Отмена' }],
+      onOpen: (ov) => { if (preselect) ov.dataset.id = preselect; $$('#gift-grid button', ov).forEach((b) => (b.onclick = () => { $$('#gift-grid button', ov).forEach((x) => x.classList.remove('on')); b.classList.add('on'); ov.dataset.id = b.dataset.id; Snd.play('click'); })); },
+    });
+  }
+  function giftMagnet(id, toUin) {
+    const m = fridgeOf(me.uin).find((x) => x.id === id); if (!m || !toUin) return;
+    const c = COUNTRY[m.country];
+    takeMagnetFrom(me.uin, id);
+    const given = Object.assign({}, m, { from: me.uin, origin: 'gift', ts: Date.now() });
+    giveMagnetTo(toUin, given);
+    const msg = { id: uid(), from: me.uin, to: toUin, ts: Date.now(), kind: 'magnet', country: m.country, serial: m.id, text: `Дарю магнит ${c.from} 🧲 Теперь он твой.` };
+    pushHistory(msg); post({ type: 'msg', msg });
+    addPoints(5, 'подарок');
+    Snd.play('tada');
+    toast(accountOf(toUin), 'магнит подарен', null);
+    const bot = BOTS[toUin];
+    if (bot && bot.persona) setTimeout(() => thankForMagnet(bot, c, true), 2500 + Math.random() * 2500);
+    if (active === toUin) renderHistory();
+    if (aux.kind === 'fridge') renderAux();
+  }
+  function renderFridge(uin) {
+    const a = accountOf(uin); if (!a) return '<div class="empty-note">Нет такого пользователя.</div>';
+    const mine = uin === me.uin;
+    const items = fridgeOf(uin);
+    const countries = new Set(items.map((m) => m.country));
+    const magnet = (m) => { const c = COUNTRY[m.country] || COUNTRY.UR; const from = m.from === uin ? '' : (accountOf(m.from) || { nick: m.from }).nick; return `<button class="magnet ${m.origin === 'gift' ? 'gift' : ''}" data-mid="${m.id}" title="${esc(c.name)} ${m.id}${from ? ' · от ' + esc(from) : ''} · ${fmtDay(m.ts)}">${magnetSvg(m.country, 56)}${from ? `<span class="from">от ${esc(from)}</span>` : ''}</button>`; };
+    return `<div class="wall-head"><span class="ico">${avatarSvg(uin, 30)}</span><div class="who"><b>${mine ? 'Мой холодильник' : esc(a.nick)}</b><div class="hint">стран: ${countries.size} · магнитов: ${items.length}${mine ? ' · все магниты — НФТ с номером' : ''}</div></div></div>
+      <div class="row wall-actions">${mine ? '<button class="btn primary" id="fr-fly">✈ Я лечу</button><button class="btn" id="fr-gift">🎁 Подарить</button>' : `<button class="btn" id="fr-giftto">🎁 Подарить ${esc(a.nick)}</button>`}</div>
+      <div class="fridge"><div class="fridge-top"></div><div class="fridge-door">${items.length ? items.map(magnet).join('') : `<div class="empty-note">${mine ? 'Пусто. Нажми «Я лечу» — и первый магнит твой.' : 'Пока ни одного магнита. Подари первый!'}</div>`}</div><div class="fridge-handle"></div></div>
+      <div class="hint">Нажми на магнит — узнаешь, откуда он и кто подарил.</div>`;
+  }
+  function wireFridge(uin) {
+    const mine = uin === me.uin;
+    if (mine) { $('#fr-fly').onclick = flyDialog; $('#fr-gift').onclick = () => giftMagnetDialog(); }
+    else $('#fr-giftto').onclick = () => { const f = fridgeOf(me.uin); if (!f.length) { alertBox('Магниты', 'У тебя пока нет магнитов. Слетай куда-нибудь сначала ✈'); return; } dialog({ title: 'Подарить магнит', body: `<div class="magnet-grid inset" id="g2">${f.map((m) => `<button data-id="${m.id}" title="${esc(COUNTRY[m.country].name)}">${magnetSvg(m.country, 44)}</button>`).join('')}</div>`, buttons: [{ label: 'Отмена' }], onOpen: (ov) => $$('#g2 button', ov).forEach((b) => (b.onclick = () => { ov.remove(); giftMagnet(b.dataset.id, uin); })) }); };
+    $$('.fridge .magnet').forEach((b) => (b.onclick = () => {
+      const m = fridgeOf(uin).find((x) => x.id === b.dataset.mid); if (!m) return;
+      const c = COUNTRY[m.country]; const from = accountOf(m.from);
+      Snd.play('click');
+      dialog({ title: `Магнит ${m.id}`, body: `<div class="center">${magnetSvg(m.country, 96)}</div><div class="center mt"><b>${c.flag} ${esc(c.name)}</b></div><div class="hint center">${m.origin === 'flight' ? `Привезён из поездки ${fmtDay(m.ts)}` : `Подарок от ${esc(from ? from.nick : m.from)}, ${fmtDay(m.ts)}`}<br>НФТ ${m.id} — Настоящий Фанерный Талисман, единственный в своём роде.</div>`, buttons: mine ? [{ label: 'Подарить', onClick: () => setTimeout(() => giftMagnetDialog(m.id), 30) }, { label: 'Закрыть', primary: true }] : [{ label: 'Закрыть', primary: true }] });
+    }));
+  }
+
+  /* ================= досье ================= */
+  function msgStats(uin) {
+    const msgs = [];
+    Object.values(db.history).forEach((arr) => arr.forEach((m) => { if (m.from === uin && m.text && !m.card && !m.kind) msgs.push(m); }));
+    const n = msgs.length;
+    if (!n) return { n: 0 };
+    const len = msgs.reduce((a, m) => a + m.text.length, 0) / n;
+    const sm = msgs.filter((m) => findSmiles(m.text).length).length / n;
+    const ex = msgs.filter((m) => /!/.test(m.text)).length / n;
+    const q = msgs.filter((m) => /\?/.test(m.text)).length / n;
+    const caps = msgs.filter((m) => m.text.length > 5 && m.text === m.text.toUpperCase() && /[А-ЯA-Z]/.test(m.text)).length / n;
+    const night = msgs.filter((m) => { const h = new Date(m.ts).getHours(); return h < 6 || h >= 23; }).length / n;
+    const hello = msgs.filter((m) => /^(прив|здр|хай|ку\b|йо)/i.test(m.text)).length;
+    const last = Math.max.apply(null, msgs.map((m) => m.ts));
+    return { n, len, sm, ex, q, caps, night, hello, last };
+  }
+  function buildDossier(uin) {
+    const a = accountOf(uin); const p = profileOf(uin); const b = BOTS[uin];
+    const st = msgStats(uin);
+    const mine = uin === me.uin;
+    const f = /[ая]$/i.test(a.nick) && !/_/.test(a.nick) ? true : (b ? /^(aska|kat|lena)$/.test(b.brain) : false);
+    const g = (m, w) => (f ? w : m);
+    const out = { avatar: [], likes: [], style: [], verdict: '', secret: [] };
+    // аватар и ник
+    if (b && b.dossier) out.avatar.push(b.dossier[0]);
+    else out.avatar.push(p.avatar && SMILE_BY_ID[p.avatar] ? `Аватар — смайл «${SMILE_BY_ID[p.avatar].name}». ${{ smile: 'Классика: ничего лишнего.', laugh: 'Значит, смешливый. Или хочет казаться.', wink: 'Подмигивает. Что-то знает.', cool: 'В очках. Солнца нет, а очки есть.', kiss: 'С поцелуйчиком. Романтик, предупреждали.', party: 'В колпаке. Праздник — состояние души.', angel: 'С нимбом. Подозрительно.', devil: 'С рожками. Честно хотя бы.', think: 'Задумчивый. Отвечает не сразу.', zzz: 'Спит. Даже на аватаре.', heart: 'Сердце вместо лица. Открытый человек.', cat: 'Кот. Всё ясно.' }[p.avatar] || 'Выбран со вкусом.'}` : 'Аватар — цветочек. Верен традициям 1998 года.');
+    const digits = (a.nick.match(/\d+/) || [])[0];
+    if (digits) out.avatar.push(digits.length === 2 && +digits > 80 ? `В нике цифры ${digits}: похоже, год рождения или год первого модема.` : digits === '2000' ? 'В нике 2000: пережил миллениум и проблему Y2K.' : `В нике цифры ${digits} — число со значением, Аська не спрашивала.`);
+    if (/_/.test(a.nick)) out.avatar.push('Подчёркивание в нике — классика, так делали все в 1999-м.');
+    if (/[a-z]/i.test(a.nick) && /[а-я]/i.test(a.nick)) out.avatar.push('Ник на двух алфавитах сразу. Смелость.');
+    const tier = tierOf(uin);
+    if (tier !== 'basic') out.avatar.push(`Уровень АСЬКИ: ${TIER[tier].label}. ${tier === 'gold' ? 'Золотой цветочек, статусы с яхтой.' : 'Чёрный уровень. Магнит с Луны, скорее всего, есть.'}`);
+    // увлечения
+    if (b && b.dossier) out.likes.push(b.dossier[1]);
+    else if (p.interests.length) out.likes.push(`Любит: ${p.interests.slice(0, 6).join(', ')}${p.interests.length > 6 ? ' и ещё ' + (p.interests.length - 6) : ''}.`);
+    else out.likes.push('Интересы не указаны. Либо скромность, либо интересы слишком интересные.');
+    if (!mine) { const pct = matchPct(me.uin, uin); const common = commonInterests(me.uin, uin); if (pct != null) out.likes.push(pct >= 50 ? `С тобой совпадение ${pct}% — общее: ${common.join(', ')}. Аська одобряет.` : pct > 0 ? `С тобой совпадение ${pct}%: ${common.join(', ')}. Есть о чём поговорить.` : 'С тобой ни одного общего интереса. Зато не будете спорить о музыке.'); }
+    if (!b) out.likes.push(`Режим сейчас — «${MODES[p.mode].label}»: ${p.mode === 'biz' ? 'не отвлекать, по делу' : p.mode === 'close' ? 'только для своих' : 'открыт к общению'}.`);
+    if (!mine) out.likes.push(`Для тебя — круг «${MODES[circleOf(uin)].label}».`);
+    const fr = fridgeOf(uin); if (fr.length) out.likes.push(`На холодильнике ${fr.length} магн. (${Array.from(new Set(fr.map((m) => COUNTRY[m.country] ? COUNTRY[m.country].name : m.country))).slice(0, 4).join(', ')}). ${fr.length > 3 ? 'Путешественник.' : 'Начинающий путешественник.'}`);
+    // как общается
+    if (b && b.dossier) out.style.push(b.dossier[2]);
+    if (st.n) {
+      out.style.push(`Сообщений в базе: ${st.n}, в среднем ${Math.round(st.len)} знаков — ${st.len < 25 ? g('любит коротко', 'любит коротко') + '. Телеграфный стиль.' : st.len < 70 ? 'нормальные человеческие фразы.' : 'пишет письма. Романтик или зануда — Аська ещё не решила.'}`);
+      out.style.push(st.sm >= 0.4 ? `Смайлы в ${Math.round(st.sm * 100)}% сообщений — улыбчивый, в 1999-м таких любили.` : st.sm >= 0.1 ? `Смайлы иногда (${Math.round(st.sm * 100)}%) — держит баланс.` : 'Смайлов почти нет. Серьёзный человек. Или клавиша «)» сломалась.');
+      if (st.ex > 0.4) out.style.push('Много восклицательных!!! DJ_Serёga одобряет.');
+      if (st.q > 0.4) out.style.push('Много спрашивает — любопытный. Или допрашивает.');
+      if (st.caps > 0.2) out.style.push('ЧАСТО ПИШЕТ КАПСОМ. Батя_в_сети, это ты?');
+      if (st.night > 0.4) out.style.push('Пишет по ночам — сова. Дайлап ночью дешевле, Аська понимает.');
+      if (st.hello >= 3) out.style.push(`${g('Здоровается', 'Здоровается')} почти каждый раз — воспитанный человек.`);
+      out.style.push(`Последний раз ${g('писал', 'писала')} ${fmtDay(st.last)} в ${fmtTime(st.last)}.`);
+    } else if (!b) out.style.push('Сообщений пока нет: молчун или только зарегистрировался. Аська наблюдает.');
+    // вердикт
+    const traits = [];
+    if (st.sm >= 0.3) traits.push('улыбчивый'); if (st.len > 70) traits.push('обстоятельный'); if (st.len && st.len < 25) traits.push('лаконичный'); if (st.night > 0.4) traits.push('ночной'); if (fr.length > 2) traits.push('лёгкий на подъём'); if (p.interests.length > 5) traits.push('разносторонний');
+    out.verdict = b && b.persona ? ({ aska: 'Вердикт: это я. Я себе доверяю.', kat: 'Вердикт: лучший друг для режима «Общение». Не забудь мп3.', vova: 'Вердикт: надёжен, если не трогать его линукс.', serega: 'Вердикт: с ним не бывает тихо. Это плюс.', lena: 'Вердикт: подруга для режима «Близкие». Носи платочек.', batya: 'Вердикт: круг «Близкие», без вариантов. Поешь.', max: 'Вердикт: собеседник для вечера с чаем. Отвечает долго, но глубоко.' })[b.brain] || 'Вердикт: служебное досье.' : `Вердикт Аськи: ${traits.length ? traits.join(', ') + ' человек' : 'человек-загадка'}. ${mine ? 'Я бы с тобой дружила. Собственно, дружу.' : 'Можно дружить. Для круга «' + MODES[circleOf(uin)].label + '» — в самый раз.'}`;
+    // секретная часть: что Аська помнит (только своё досье)
+    if (mine) {
+      const mem = memOf('000001');
+      if (mem.name) out.secret.push(`Имя: ${mem.name}.`);
+      if (mem.city) out.secret.push(`Город: ${mem.city}.`);
+      if (mem.age) out.secret.push(`Возраст: ${mem.age}.`);
+      if (mem.tea) out.secret.push(`Чай или кофе: ${mem.tea}.`);
+      if (mem.music) out.secret.push(`Слушает: ${mem.music}.`);
+      if (mem.pet) out.secret.push(`Дома живёт: ${mem.pet}.`);
+      if (mem.trip) out.secret.push(`Мечтает слетать в ${mem.trip}.`);
+      if (mem.relatives) out.secret.push(`Родным звонил: ${mem.relatives === 'ok' ? 'недавно, молодец' : mem.relatives === 'overdue' ? 'давно. Аська напомнит' : 'уклончиво'}.`);
+      if (mem.mood) out.secret.push(`Настроение в прошлый раз: ${mem.mood === 'up' ? 'ура' : mem.mood === 'down' ? 'уф' : mem.mood}.`);
+      if (!out.secret.length) out.secret.push('Пока ничего. Поболтай с Аськой — она запишет.');
+    }
+    return out;
+  }
+  function renderDossier(uin) {
+    const a = accountOf(uin); if (!a) return '<div class="empty-note">Нет такого пользователя.</div>';
+    const mine = uin === me.uin;
+    const p = profileOf(uin);
+    const open = p.dossierOpen !== false;
+    const head = `<div class="dossier-head"><span class="ico">${avatarSvg(uin, 34)}</span><div class="who"><div class="eyebrow">ДОСЬЕ № ${esc(a.uin)}</div><b>${esc(a.nick)}</b><div class="hint">составила Аська · ${fmtDay(Date.now())}</div></div><span class="stamp ${open ? 'ok' : 'no'}">${open ? 'ОТКРЫТО' : 'ЗАКРЫТО'}</span></div>`;
+    if (!open && !mine) return head + `<div class="dossier"><div class="dossier-sec"><div class="dossier-t">Приватность</div><p>Досье закрыто владельцем. Аська молчит как партизан.</p><p class="muted">Попроси ${esc(a.nick)} открыть досье в профиле — или подружись так, без бумажек.</p></div></div><div class="row"><button class="btn" id="d-chat">Написать</button><button class="btn" id="d-prof">Профиль</button></div>`;
+    const d = buildDossier(uin);
+    const sec = (t, lines) => (lines && lines.length ? `<div class="dossier-sec"><div class="dossier-t">${t}</div>${lines.map((l) => `<p>${esc(l)}</p>`).join('')}</div>` : '');
+    return head + `<div class="dossier">${sec('Аватар и ник', d.avatar)}${sec('Увлечения', d.likes)}${sec('Как общается', d.style)}<div class="dossier-sec verdict"><p>${esc(d.verdict)}</p></div>${mine ? sec('Что Аська о тебе запомнила (видишь только ты)', d.secret) : ''}</div>
+      ${mine ? `<div class="row"><label class="row"><input type="checkbox" id="d-open" ${open ? 'checked' : ''}> досье открыто для друзей</label><span class="sp"></span><button class="btn" id="d-refresh">Пересобрать</button></div>` : `<div class="row"><button class="btn" id="d-chat">Написать</button><button class="btn" id="d-prof">Профиль</button></div>`}`;
+  }
+  function wireDossier(uin) {
+    if (uin === me.uin) {
+      $('#d-open').onchange = (e) => { saveProfile({ dossierOpen: e.target.checked }); Snd.play('click'); renderAux(); };
+      $('#d-refresh').onclick = () => { Snd.play('drum'); setTimeout(renderAux, 600); };
+    } else { const c = $('#d-chat'), pr = $('#d-prof'); if (c) c.onclick = () => openChat(uin); if (pr) pr.onclick = () => openAux('profile', uin); }
+  }
 
   /* ================= старт ================= */
   const unlock = () => { Snd.unlock(); Music.unlock(); };
