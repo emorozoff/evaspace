@@ -36,9 +36,10 @@ window.AskaArt = (function () {
     opts = opts || {};
     size = size || 16;
     const op = opts.glyph === 'ghost' ? ' opacity=".55"' : '';
-    return `<svg viewBox="0 0 16 16" width="${size}" height="${size}" aria-hidden="true"${op}>${flowerInner(color, opts)}</svg>`;
+    const ring = opts.ring ? `<circle cx="8" cy="8" r="7.3" fill="none" stroke="${opts.ring}" stroke-width="1.2"/>` : '';
+    return `<svg viewBox="0 0 16 16" width="${size}" height="${size}" aria-hidden="true"${op}>${ring}${flowerInner(color, opts)}</svg>`;
   }
-  const statusFlower = (key, size) => { const s = statusInfo(key); return flowerSvg(s.color, size, { glyph: s.glyph }); };
+  const statusFlower = (key, size, ring) => { const s = statusInfo(key); return flowerSvg(s.color, size, { glyph: s.glyph, ring }); };
   const envelopeSvg = (size) => `<svg viewBox="0 0 16 16" width="${size || 16}" height="${size || 16}" aria-hidden="true"><rect x="1" y="3.5" width="14" height="9" fill="#ffe14d" stroke="#000" stroke-width=".7"/><path d="M1 3.5l7 5 7-5M1 12.5l5.5-5M15 12.5l-5.5-5" stroke="#000" stroke-width=".7" fill="none"/></svg>`;
 
   /* ================= смайлы ================= */
@@ -174,5 +175,50 @@ window.AskaArt = (function () {
     }
     return `<svg viewBox="0 0 200 120" aria-hidden="true">${body}</svg>`;
   }
-  return { STATUSES, statusInfo, flowerSvg, statusFlower, envelopeSvg, SMILES, SMILE_BY_ID, smileSvg, postcardSvg };
+
+  /* ---------- магниты на холодильник ---------- */
+  const COUNTRIES = [
+    { code: 'TR', from: 'из Турции', name: 'Турция', to: 'в Турцию', flag: '🇹🇷', icon: '🕌', colors: ['#e30a17', '#ffffff'] },
+    { code: 'EG', from: 'из Египта', name: 'Египет', to: 'в Египет', flag: '🇪🇬', icon: '🐫', colors: ['#ce1126', '#ffffff', '#111111'] },
+    { code: 'IT', from: 'из Италии', name: 'Италия', to: 'в Италию', flag: '🇮🇹', icon: '🍕', colors: ['#009246', '#ffffff', '#ce2b37'] },
+    { code: 'FR', from: 'из Франции', name: 'Франция', to: 'во Францию', flag: '🇫🇷', icon: '🗼', colors: ['#0055a4', '#ffffff', '#ef4135'] },
+    { code: 'ES', from: 'из Испании', name: 'Испания', to: 'в Испанию', flag: '🇪🇸', icon: '💃', colors: ['#aa151b', '#f1bf00', '#aa151b'] },
+    { code: 'GR', from: 'из Греции', name: 'Греция', to: 'в Грецию', flag: '🇬🇷', icon: '🏛️', colors: ['#0d5eaf', '#ffffff', '#0d5eaf'] },
+    { code: 'TH', from: 'из Таиланда', name: 'Таиланд', to: 'в Таиланд', flag: '🇹🇭', icon: '🌴', colors: ['#a51931', '#ffffff', '#2d2a4a'] },
+    { code: 'AE', from: 'из ОАЭ', name: 'ОАЭ', to: 'в ОАЭ', flag: '🇦🇪', icon: '🏙️', colors: ['#00732f', '#ffffff', '#111111'] },
+    { code: 'JP', from: 'из Японии', name: 'Япония', to: 'в Японию', flag: '🇯🇵', icon: '🗻', colors: ['#ffffff', '#bc002d', '#ffffff'] },
+    { code: 'US', from: 'из США', name: 'США', to: 'в США', flag: '🇺🇸', icon: '🗽', colors: ['#3c3b6e', '#ffffff', '#b22234'] },
+    { code: 'DE', from: 'из Германии', name: 'Германия', to: 'в Германию', flag: '🇩🇪', icon: '🍺', colors: ['#111111', '#dd0000', '#ffce00'] },
+    { code: 'CZ', from: 'из Чехии', name: 'Чехия', to: 'в Чехию', flag: '🇨🇿', icon: '🏰', colors: ['#11457e', '#ffffff', '#d7141a'] },
+    { code: 'CY', from: 'с Кипра', name: 'Кипр', to: 'на Кипр', flag: '🇨🇾', icon: '🐱', colors: ['#ffffff', '#d57800', '#ffffff'] },
+    { code: 'GE', from: 'из Грузии', name: 'Грузия', to: 'в Грузию', flag: '🇬🇪', icon: '🍷', colors: ['#ffffff', '#ff0000', '#ffffff'] },
+    { code: 'AM', from: 'из Армении', name: 'Армения', to: 'в Армению', flag: '🇦🇲', icon: '⛰️', colors: ['#d90012', '#0033a0', '#f2a800'] },
+    { code: 'KZ', from: 'из Казахстана', name: 'Казахстан', to: 'в Казахстан', flag: '🇰🇿', icon: '🦅', colors: ['#00afca', '#fec50c'] },
+    { code: 'BY', from: 'из Беларуси', name: 'Беларусь', to: 'в Беларусь', flag: '🇧🇾', icon: '🥔', colors: ['#c8313e', '#4aa657'] },
+    { code: 'CN', from: 'из Китая', name: 'Китай', to: 'в Китай', flag: '🇨🇳', icon: '🐼', colors: ['#de2910', '#ffde00'] },
+    { code: 'IN', from: 'из Индии', name: 'Индия', to: 'в Индию', flag: '🇮🇳', icon: '🐘', colors: ['#ff9933', '#ffffff', '#138808'] },
+    { code: 'BR', from: 'из Бразилии', name: 'Бразилия', to: 'в Бразилию', flag: '🇧🇷', icon: '⚽', colors: ['#009c3b', '#ffdf00'] },
+    { code: 'MV', from: 'с Мальдив', name: 'Мальдивы', to: 'на Мальдивы', flag: '🇲🇻', icon: '🏝️', colors: ['#d21034', '#007e3a'] },
+    { code: 'VN', from: 'из Вьетнама', name: 'Вьетнам', to: 'во Вьетнам', flag: '🇻🇳', icon: '🍜', colors: ['#da251d', '#ffff00'] },
+    { code: 'GB', from: 'из Британии', name: 'Британия', to: 'в Британию', flag: '🇬🇧', icon: '☕', colors: ['#012169', '#ffffff', '#c8102e'] },
+    { code: 'RU', from: 'из Сочи', name: 'Сочи', to: 'в Сочи', flag: '🇷🇺', icon: '🏖️', colors: ['#ffffff', '#0039a6', '#d52b1e'] },
+    { code: 'UR', from: 'из Урюпинска', name: 'Урюпинск', to: 'в Урюпинск', flag: '🏘️', icon: '🐐', colors: ['#8fbc8f', '#f5deb3'] },
+    { code: 'AQ', from: 'из Антарктиды', name: 'Антарктида', to: 'в Антарктиду', flag: '🐧', icon: '🐧', colors: ['#e8f4ff', '#9ec9ff'] },
+    { code: 'MOON', from: 'с Луны', name: 'Луна', to: 'на Луну', flag: '🌙', icon: '🚀', colors: ['#1a1a2e', '#c0c0c0'], tier: 'black' },
+  ];
+  const COUNTRY = {};
+  COUNTRIES.forEach((c) => (COUNTRY[c.code] = c));
+  function magnetSvg(code, size) {
+    const c = COUNTRY[code] || COUNTRY.UR;
+    const n = c.colors.length, h = 64 / n;
+    const stripes = c.colors.map((col, i) => `<rect x="0" y="${(i * h).toFixed(1)}" width="64" height="${h.toFixed(1)}" fill="${col}"/>`).join('');
+    const sz = size || 64;
+    return `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}" aria-hidden="true"><defs><clipPath id="mg"><rect x="2" y="2" width="60" height="60" rx="9"/></clipPath></defs>
+      <g clip-path="url(#mg)">${stripes}</g><rect x="2" y="2" width="60" height="60" rx="9" fill="none" stroke="#222" stroke-width="2"/>
+      <rect x="10" y="16" width="44" height="34" rx="5" fill="#fff" stroke="#222" stroke-width="1.2"/>
+      <text x="32" y="38" font-size="20" text-anchor="middle" font-family="'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif">${c.icon}</text>
+      <rect x="6" y="50" width="52" height="10" rx="3" fill="rgba(255,255,255,.9)"/><text x="32" y="58" font-size="7.5" text-anchor="middle" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" fill="#222">${c.name}</text>
+      <rect x="24" y="2" width="16" height="7" rx="2" fill="#444" stroke="#222" stroke-width=".8"/></svg>`;
+  }
+  return { STATUSES, statusInfo, flowerSvg, statusFlower, envelopeSvg, SMILES, SMILE_BY_ID, smileSvg, postcardSvg, COUNTRIES, COUNTRY, magnetSvg };
 })();
