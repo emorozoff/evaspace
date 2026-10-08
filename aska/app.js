@@ -5,8 +5,8 @@
 (function () {
   'use strict';
 
-  const VERSION = '3.0';
-  const DB_KEY = 'aska.v1';
+  const VERSION = '3.1';
+  const MAX_MSG = 2000;   // длинные простыни режем: история и синхронизация остаются лёгкими
   const SESSION_KEY = 'aska.session';
   const Snd = window.AskaSound;
   const Music = window.AskaMusic;
@@ -26,22 +26,33 @@
   const isNarrow = () => window.matchMedia('(max-width: 719px)').matches || (isTouch() && window.matchMedia('(max-width: 900px)').matches);
 
   /* ================= хранилище ================= */
-  function emptyDb() {
-    return { accounts: {}, contacts: {}, history: {}, unread: {}, presence: {}, memory: {}, profile: {}, wall: {}, interests: {}, communities: {}, events: {}, refLog: [], tracks: {}, trackOwners: {}, trackLog: {}, movies: {}, radio: {}, settings: { sound: true, volume: 0.8 }, lastLogin: '' };
-  }
-  function load() {
-    try {
-      const raw = localStorage.getItem(DB_KEY);
-      const d = raw ? JSON.parse(raw) : emptyDb();
-      const e = emptyDb();
-      for (const k in e) if (d[k] == null) d[k] = e[k];
-      return d;
-    } catch (err) { return emptyDb(); }
-  }
+  // данные лежат по отдельным ключам (см. store.js): запись сообщения больше не
+  // переписывает весь мир, а соседние вкладки получают только изменённое
+  const Store = window.AskaStore;
+  const Sec = window.AskaSecure;
+  // db — живой кэш; load() подтягивает правки других вкладок по журналу
+  function load() { return Store.sync(); }
   let db = load();
-  function save() { try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch (err) {} }
-  // перечитать → изменить → записать: так вкладки не затирают друг друга
-  function mutate(fn) { db = load(); fn(db); save(); }
+  // изменить и записать только тронутые записи
+  function mutate(fn) { return Store.mutate(fn); }
+
+  /* ================= дизайн: Зумер / Миллениал ================= */
+  // «Миллениал» — предыдущая версия интерфейса (папка v2/). Номер, переписка,
+  // музыка и сессия общие: переключение не разлогинивает и ничего не теряет.
+  const DESIGNS = { zoomer: { name: 'Зумер', sub: 'стекло, плитки, свайпы' }, millennial: { name: 'Миллениал', sub: 'классика 2000-х, окна и меню' } };
+  const designOf = () => (db.settings && DESIGNS[db.settings.design] ? db.settings.design : 'zoomer');
+  function carryQuery() { const q = new URLSearchParams(location.search); q.delete('design'); const s = q.toString(); return (s ? '?' + s : '') + location.hash; }
+  function setDesign(k, go) {
+    if (!DESIGNS[k]) return;
+    mutate((d) => { d.settings.design = k; });
+    if (k === 'millennial' && go !== false) { if (typeof saveSession === 'function') saveSession(); location.href = 'v2/' + carryQuery(); }
+  }
+  {
+    const want = new URLSearchParams(location.search).get('design');
+    if (DESIGNS[want] && want !== designOf()) mutate((d) => { d.settings.design = want; });
+    if (designOf() === 'millennial') { location.replace('v2/' + carryQuery()); return; }
+  }
+  Store.onError(() => toastText('Память браузера заполнена: сделай резервную копию в меню «Данные» и почисти старые чаты.'));
 
   function applySettings() {
     Snd.enabled = db.settings.sound !== false;
@@ -54,7 +65,7 @@
     document.body.classList.toggle('skin-aero', skinOf() === 'aero');
     document.body.classList.toggle('skin-classic', skinOf() !== 'aero');
   }
-  function setSkin(k) { mutate((d) => { d.settings.skin = k; }); applySkin(); Snd.play('tada'); if (me) { renderContacts(); if (aux.kind) renderAux(); if (active) renderHistory(); } }
+  function setSkin(k) { mutate((d) => { d.settings.skin = k; }); applySkin(); Snd.play('tada'); if (me) { renderContacts(); if (aux.kind) renderAux(); if (active) renderHistory(true); } }
   applySettings();
 
   /* ================= боты ================= */
@@ -114,7 +125,7 @@
     parts.push(['t', text.slice(last)]);
     return parts.map((p) => {
       if (p[0] === 's') return `<span class="sm" data-sm="${p[1]}" title="${esc(p[2])} — ${esc(SMILE_BY_ID[p[1]].name)}">${smileSvg(p[1])}</span>`;
-      return esc(p[1]).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      return esc(p[1]).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
     }).join('');
   }
 
@@ -189,11 +200,15 @@
     if (soonest < Infinity) blinkTimer = setTimeout(() => { if (me) { renderContacts(); renderChatHead(); } }, soonest + 150);
   }
   let toastTimer = null;
+  const IDLE_MS = 12 * 3600 * 1000;
+  let lastSeen = Date.now();
 
   function loadSession() {
     try {
       const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');
-      if (s && db.accounts[s.uin]) {
+      // вкладку бросили открытой на чужом компьютере — через 12 часов тишины сессия гаснет
+      if (s && s.seen && Date.now() - s.seen > IDLE_MS) { sessionStorage.removeItem(SESSION_KEY); return; }
+      if (s && Sec.isUin(s.uin) && !isTwin(s.uin) && db.accounts[s.uin]) {
         me = db.accounts[s.uin];
         myStatus = s.status || 'online';
         openChats = (s.open || []).filter((u) => accountOf(u));
@@ -205,7 +220,7 @@
   function saveSession() {
     try {
       if (!me) sessionStorage.removeItem(SESSION_KEY);
-      else sessionStorage.setItem(SESSION_KEY, JSON.stringify({ uin: me.uin, status: myStatus, open: openChats, active, drafts }));
+      else sessionStorage.setItem(SESSION_KEY, JSON.stringify({ uin: me.uin, status: myStatus, open: openChats, active, drafts, seen: lastSeen }));
     } catch (err) {}
   }
 
@@ -243,6 +258,7 @@
   }
   function heartbeat() {
     if (!me) return;
+    if (Date.now() - lastSeen > IDLE_MS) { logout(); return; }
     db = load();
     mutate((d) => { d.presence[me.uin] = { status: myStatus, xstatus: myXstatus(), ts: Date.now() }; });
     // боты зашли/вышли?
@@ -312,7 +328,7 @@
   function send() {
     const ta = $('#compose');
     if (!ta || !active) return;
-    const text = ta.value.replace(/\s+$/, '');
+    const text = Sec.cleanText(ta.value, MAX_MSG);
     if (!text) return;
     const msg = { id: uid(), from: me.uin, to: active, text, ts: Date.now() };
     lastUserActivity = Date.now();
@@ -428,13 +444,14 @@
     else if (m.type === 'tracks') { db = load(); loadExternalTracks(); if (aux.kind === 'vinyl') renderAux(); }
     else if (m.type === 'movies') { db = load(); if (aux.kind === 'cinema' || (aux.kind === 'watch' && wplay !== aux.arg)) renderAux(); }
     else if (m.type === 'radio') { db = load(); loadRadio(); if (aux.kind === 'vinyl') renderAux(); }
-    else if (m.type === 'interests' || m.type === 'events' || m.type === 'refs') { db = load(); if (['interests', 'interest', 'community', 'events', 'refs'].includes(aux.kind)) renderAux(); if (m.type === 'events' && active) renderHistory(); }
+    else if (m.type === 'interests' || m.type === 'events' || m.type === 'refs') { db = load(); if (['interests', 'interest', 'community', 'events', 'refs'].includes(aux.kind)) renderAux(); if (m.type === 'events' && active) renderHistory(true); }
     else if (m.type === 'wall') { db = load(); if (m.uin === me.uin && m.from !== me.uin) { const a = accountOf(m.from); if (a) { toast(a, 'оставил(а) запись у тебя на стене', null); Snd.play('tada'); } } if (aux.kind === 'wall' && aux.arg === m.uin) renderAux(); if (aux.kind === 'track' && 'trk_' + aux.arg === m.uin) renderAux(); }
   };
-  window.addEventListener('storage', (e) => {
-    if (e.key !== DB_KEY || !me) return;
-    db = load();
-    renderContacts();
+  // соседняя вкладка что-то записала: перерисовываем только то, что от этого зависит
+  Store.onChange((cols) => {
+    if (!me) return;
+    if (cols.has('*') || cols.has('accounts')) { if (!db.accounts[me.uin]) { logout(); return; } me = db.accounts[me.uin]; }
+    if (['*', 'contacts', 'presence', 'unread', 'accounts', 'profile'].some((c) => cols.has(c))) renderContacts();
   });
 
   /* ================= Аська и друзья ================= */
@@ -503,7 +520,16 @@
     const prof = myProfile();
     return { catalog: catalogAll().map((t) => ({ id: t.id, title: t.title, artist: t.artist, style: t.style || 'pop', by: t.by, source: t.url ? t.kind : 'synth' })), plays: prof.plays || {}, favs: prof.favTracks || [], nowId: Music.state.trackId };
   }
+  // бот «дочитывает»: если человек дописывает вторым-третьим сообщением, ответ один — на всё сразу
+  const READ_MS = 1400;
+  const inbox = {};
   function brainTalk(bot, text) {
+    const box = inbox[bot.uin] || (inbox[bot.uin] = { texts: [], timer: null });
+    box.texts.push(String(text).trim());
+    clearTimeout(box.timer);
+    box.timer = setTimeout(() => { const all = box.texts.splice(0).join(' '); if (me) brainTalkNow(bot, all); }, READ_MS);
+  }
+  function brainTalkNow(bot, text) {
     const rt = rtOf(bot.uin);
     Object.values(botRt).forEach((r) => (r.unanswered = 0));
     const mem = memOf(bot.uin);
@@ -511,7 +537,7 @@
     msgs.forEach((m) => { if (m.play) { const id = m.play; setTimeout(() => { Music.play(id); if (aux.kind === 'vinyl') renderAux(); }, 1500); } });
     saveMem(bot.uin, mem);
     const first = msgs[0] && msgs[0].text ? msgs[0].text : '';
-    const delay = 900 + Math.min(first.length, 160) * 16 + Math.random() * 1200;
+    const delay = Math.max(400, 900 + Math.min(first.length, 160) * 16 + Math.random() * 1200 - READ_MS);
     deliverSeq(bot, msgs, delay);
   }
   // персонажи пишут сами: вопросы, открытки, статусы
@@ -557,7 +583,8 @@
     deliverSeq(bot, msgs, 600 + Math.random() * 1500);
   }
   setInterval(askaTick, 15000);
-  if (/debug/.test(location.search)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt, wall: (u) => wallOf(u || me.uin), openAux, setMode, randomMeet, fly, addPoints, profile: () => myProfile(), dossier: buildDossier, createEvent, rsvp, askaTwinCta, botsNotice, addTrackByLink, toggleFav, music: () => Music.state, twinFacts: () => twinFacts(me.uin), twinStore: () => twinStore(me.uin), welcomeFrom, quiet: () => ({ lastAnyProactive, lastUserActivity, hiddenSent, sessionStart }), addMovie, toggleMovieFav, recommendMovie, botRecommendsMovie, watching: () => watching, saveProfile, events: () => load().events, refs: () => refTree(me.uin), botInvitesMe, interests: () => load().interests, twinModel: () => twinModelOf(me.uin) };
+  // отладочный пульт — только на своём компьютере (localhost), не в боевой версии
+  if (/[?&]debug\b/.test(location.search) && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt, wall: (u) => wallOf(u || me.uin), openAux, setMode, randomMeet, fly, addPoints, profile: () => myProfile(), dossier: buildDossier, createEvent, rsvp, askaTwinCta, botsNotice, addTrackByLink, toggleFav, music: () => Music.state, twinFacts: () => twinFacts(me.uin), twinStore: () => twinStore(me.uin), welcomeFrom, quiet: () => ({ lastAnyProactive, lastUserActivity, hiddenSent, sessionStart }), addMovie, toggleMovieFav, recommendMovie, botRecommendsMovie, watching: () => watching, saveProfile, events: () => load().events, refs: () => refTree(me.uin), botInvitesMe, interests: () => load().interests, twinModel: () => twinModelOf(me.uin) };
 
   /* ================= заголовок вкладки ================= */
   function updateTitle() {
@@ -583,6 +610,8 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.remove(), isNarrow() ? 3500 : 5000);
   }
+
+  function toastText(text) { if ($('.desktop')) toast({ uin: '', nick: 'АСЬКА' }, text, null); }
 
   /* ================= меню и диалоги ================= */
   function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; } $$('.menubar button.open').forEach((b) => b.classList.remove('open')); }
@@ -653,14 +682,16 @@
   function renderLogin(prefill) {
     const app = $('#app');
     app.className = 'desktop';
-    const known = Object.values(db.accounts);
+    const known = Object.values(db.accounts).filter((a) => !isTwin(a.uin));
     const last = prefill || db.lastLogin || '';
     app.innerHTML = `
     <div class="wins">
       <div class="win dialog" id="loginwin">
         <div class="titlebar">${flowerSvg('#3cb44a', 14, { logo: true })}<span class="ttl">АСЬКА — вход в сеть</span></div>
         <div class="login-body">
-          <div class="bigflower">${flowerSvg('#3cb44a', 44, { logo: true })}<div class="logo-word center">АСЬКА<small>I seek you · по-русски · с 1998 года</small></div><a class="link" href="promo/" style="margin-top:6px">Чем она крута? 10 преимуществ →</a><span class="ver-links"><a class="link" href="v2/">АСЬКА v2 — классика</a> · <a class="link" href="v1/">простая v1</a></span></div>
+          <div class="bigflower">${flowerSvg('#3cb44a', 44, { logo: true })}<div class="logo-word center">АСЬКА<small>I seek you · по-русски · с 1998 года</small></div><a class="link" href="promo/" style="margin-top:6px">Чем она крута? 10 преимуществ →</a></div>
+          <div class="design-pick" role="radiogroup" aria-label="Дизайн">${Object.keys(DESIGNS).map((k) => `<button type="button" role="radio" aria-checked="${k === designOf()}" class="${k === designOf() ? 'on' : ''}" data-design="${k}"><b>${DESIGNS[k].name}</b><small>${DESIGNS[k].sub}</small></button>`).join('')}</div>
+          <div class="ver-links"><a class="link" href="v1/">простая v1</a></div>
           <div class="tabs"><button class="on" data-tab="reg">Новый номер</button><button data-tab="login">Уже есть номер</button></div>
           <div class="tabpanel" id="tab-reg">
             <div class="col">
@@ -678,7 +709,7 @@
               <label class="row"><span class="lbl">Номер / тел.</span><input class="field" id="l-id" inputmode="tel" placeholder="123456 или +7…" value="${esc(last)}"></label>
               <label class="row"><span class="lbl">Пароль</span><input class="field" id="l-pass" type="password" autocomplete="current-password"></label>
               <div class="err" id="l-err"></div>
-              ${known.length ? `<div class="hint">Номера на этом устройстве:</div><div class="found inset">${known.map((a) => `<div class="citem" data-pick="${a.uin}"><span class="ico">${statusFlower('offline')}</span><span class="nick">${esc(a.nick)}</span><span class="muted">${a.uin}</span></div>`).join('')}</div>` : '<div class="hint">На этом устройстве ещё нет номеров. Заведи новый на соседней вкладке.</div>'}
+              ${known.length ? `<div class="hint">Номера на этом устройстве:</div><div class="found inset">${known.map((a) => `<div class="citem" data-pick="${esc(a.uin)}"><span class="ico">${statusFlower('offline')}</span><span class="nick">${esc(a.nick)}</span><span class="muted">${esc(a.uin)}</span></div>`).join('')}</div>` : '<div class="hint">На этом устройстве ещё нет номеров. Заведи новый на соседней вкладке.</div>'}
               <div class="right mt"><button class="btn primary" id="l-go">Войти</button></div>
             </div>
           </div>
@@ -696,6 +727,7 @@
     const ph = $('#r-phone');
     ph.addEventListener('input', () => maskPhoneInput(ph));
     $('#r-go').onclick = register;
+    $$('[data-design]', app).forEach((b) => (b.onclick = () => { Snd.play('click'); if (b.dataset.design === 'millennial') setDesign('millennial'); }));
     $$('#tab-reg input', app).forEach((i) => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') register(); }));
     $('#l-go').onclick = login;
     $$('#tab-login input', app).forEach((i) => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); }));
@@ -705,16 +737,22 @@
 
   function register() {
     const phone = normPhone($('#r-phone').value);
-    const nick = $('#r-nick').value.trim();
+    const nick = Sec.cleanNick($('#r-nick').value);
     const pass = $('#r-pass').value;
     const err = $('#r-err');
+    if (registering) return;
     if (phone.length < 10 || phone.length > 15) { err.textContent = 'Введи настоящий номер телефона.'; Snd.play('error'); return; }
     if (nick.length < 2) { err.textContent = 'Ник — хотя бы две буквы.'; Snd.play('error'); return; }
+    if (pass && pass.length < 4) { err.textContent = 'Пароль — от 4 символов (или оставь пустым).'; Snd.play('error'); return; }
     if (Object.values(db.accounts).some((a) => a.phone === phone)) { err.textContent = 'На этот телефон уже заведён номер — войди через «Уже есть номер».'; Snd.play('error'); return; }
     err.textContent = '';
     const ref = ($('#r-ref').value || '').trim();
-    const inviter = ref && accountOf(ref) && !isTwin(ref) ? ref : '000001';
-    const acc = { uin: newUin(), phone, nick, pass, created: Date.now(), invitedBy: inviter };
+    const inviter = Sec.isUin(ref) && accountOf(ref) && !isTwin(ref) ? ref : '000001';
+    registering = true; $('#r-go').disabled = true; err.textContent = 'Шифруем пароль…';
+    Sec.hashPassword(pass).then((pw) => { registering = false; $('#r-go').disabled = false; err.textContent = ''; finishRegister({ uin: newUin(), phone, nick, pw, created: Date.now(), invitedBy: inviter }); });
+  }
+  let registering = false, loggingIn = false;
+  function finishRegister(acc) {
     mutate((d) => {
       d.accounts[acc.uin] = acc;
       d.contacts[acc.uin] = Object.keys(BOTS).filter((u) => !(BOTS[u].persona && BOTS[u].persona.lite));
@@ -725,7 +763,7 @@
     Snd.play('connect');
     dialog({
       title: 'Регистрация завершена',
-      body: `<div class="center">Твой номер АСЬКИ:</div><div class="uin-box inset mt">${acc.uin}</div><div class="hint mt center">Запиши его на бумажке — по нему тебя будут искать друзья.<br>Телефон: ${esc(fmtPhone(phone))}</div>`,
+      body: `<div class="center">Твой номер АСЬКИ:</div><div class="uin-box inset mt">${acc.uin}</div><div class="hint mt center">Запиши его на бумажке — по нему тебя будут искать друзья.<br>Телефон: ${esc(fmtPhone(acc.phone))}</div>`,
       buttons: [{ label: 'Войти в сеть', primary: true, onClick: () => enter(acc) }],
     });
   }
@@ -733,12 +771,24 @@
     const id = $('#l-id').value.trim();
     const pass = $('#l-pass').value;
     const err = $('#l-err');
+    if (loggingIn) return;
+    db = load();
     const phone = normPhone(id);
-    const acc = db.accounts[id] || Object.values(db.accounts).find((a) => a.phone === phone && phone.length >= 10);
-    if (!acc) { err.textContent = 'Такого номера на этом устройстве нет.'; Snd.play('error'); return; }
-    if ((acc.pass || '') !== pass) { err.textContent = 'Неверный пароль.'; Snd.play('error'); return; }
-    mutate((d) => { d.lastLogin = acc.uin; });
-    enter(acc);
+    const acc = (Sec.isUin(id) && db.accounts[id]) || Object.values(db.accounts).find((a) => a.phone === phone && phone.length >= 10);
+    if (!acc || isTwin(acc.uin)) { err.textContent = 'Такого номера на этом устройстве нет.'; Snd.play('error'); return; }
+    // после трёх ошибок — растущая пауза, чтобы пароль нельзя было перебрать
+    const wait = Sec.lockLeft(acc.uin);
+    if (wait) { err.textContent = `Много неверных попыток. Подожди ${Math.ceil(wait / 1000)} с.`; Snd.play('error'); return; }
+    loggingIn = true; $('#l-go').disabled = true;
+    Sec.verifyPassword(acc, pass).then((ok) => {
+      loggingIn = false; $('#l-go').disabled = false;
+      if (!ok) { Sec.noteFail(acc.uin); err.textContent = 'Неверный пароль.'; Snd.play('error'); return; }
+      Sec.noteOk(acc.uin);
+      mutate((d) => { d.lastLogin = acc.uin; });
+      // старый аккаунт с паролем открытым текстом — тихо переводим на хеш
+      if (Sec.needsUpgrade(acc)) Sec.hashPassword(pass).then((pw) => mutate((d) => { const a = d.accounts[acc.uin]; if (a) { a.pw = pw; delete a.pass; } }));
+      enter(acc);
+    });
   }
   function enter(acc) {
     db = load();
@@ -757,7 +807,8 @@
     if (pendingWelcome && pendingWelcome.length) { const list = pendingWelcome; pendingWelcome = null; list.forEach((u, i) => setTimeout(() => welcomeFrom(u, me), 3500 + i * 9000)); }
     if (pendingPlay) { const id = pendingPlay; pendingPlay = null; Music.play(id); openAux('player'); }
     else if (pendingWatch) { const id = pendingWatch; pendingWatch = null; openAux('watch', id); }
-    else setTimeout(() => showTips(false), 1200);
+    // подсказки не лезут поверх окна, которое человек уже открыл сам: ждут, пока закроет
+    else { const autoTips = (n) => { if (!me) return; if ($$('.overlay').length && n < 20) { setTimeout(() => autoTips(n + 1), 3000); return; } showTips(false); }; setTimeout(() => autoTips(0), 1200); }
     clearInterval(heartbeatTimer);
     heartbeatTimer = setInterval(heartbeat, 10000);
     updateTitle();
@@ -816,7 +867,7 @@
         <div class="chat-head" id="ch-head"></div>
         <div class="history inset" id="history"></div>
         <div class="compose">
-          <textarea class="field" id="compose" placeholder="Напиши что-нибудь… Enter — отправить" rows="3"></textarea>
+          <textarea class="field" id="compose" maxlength="2000" placeholder="Напиши что-нибудь… Enter — отправить" rows="3"></textarea>
           <div class="send-row">
             <button class="btn icon" id="smbtn" title="Смайлы">${smileSvg('smile', 16)}</button>
             <button class="btn icon" id="clearbtn" title="Очистить историю">🗑</button>
@@ -838,9 +889,13 @@
     renderMe(); renderModes(); renderContacts(); renderChatWindow(); renderAux(); updateNowPlaying();
     $$('#tabbar button').forEach((b) => (b.onclick = () => goTab(b.dataset.tab)));
     $('#m-view').onclick = (e) => showMenu(e.currentTarget, [
-      { label: 'Aero 2007 — стекло и глянец', checked: skinOf() === 'aero', onClick: () => setSkin('aero') },
-      { label: 'Классика 98 — серые фаски', checked: skinOf() !== 'aero', onClick: () => setSkin('classic') },
+      { label: 'Дизайн «Зумер» — стекло, плитки, свайпы', checked: true, onClick: () => {} },
+      { label: 'Дизайн «Миллениал» — классика 2000-х', onClick: () => setDesign('millennial') },
       '-',
+      { label: 'Оформление: Aero 2007 — стекло и глянец', checked: skinOf() === 'aero', onClick: () => setSkin('aero') },
+      { label: 'Оформление: Классика 98 — серые фаски', checked: skinOf() !== 'aero', onClick: () => setSkin('classic') },
+      '-',
+      { label: 'Мои данные и резервная копия…', onClick: dataDialog },
       { label: 'Подсказки: как пользоваться', onClick: () => showTips(true) },
     ]);
 
@@ -961,6 +1016,7 @@
     saveSession();
     markRead(uin);
     $('.desktop').classList.add('mode-chat');
+    $('.desktop').classList.remove('focus-aux');
     if (isNarrow()) { aux.kind = null; aux.arg = null; $('.desktop').classList.remove('mode-aux'); renderAux(); }
     renderChatWindow();
     renderContacts();
@@ -1022,55 +1078,56 @@
     $('#ch-title').innerHTML = `${esc(a.nick)} <small>— беседа</small>`;
   }
   const hdrOf = (m, who) => `<span class="hdr"><span class="nk">${esc(who ? who.nick : m.from)}</span> <span class="time"><i>(</i>${fmtTime(m.ts)}<i>)</i></span><span class="cl">:</span></span>`;
-  function renderHistory() {
+  // окно истории: на экране последние HIST_STEP сообщений, остальное — по кнопке.
+  // Новые сообщения дописываются в конец, а не перерисовывают всю беседу.
+  const HIST_STEP = 120;
+  let hist = { uin: null, limit: HIST_STEP, n: 0, lastId: null, last: null };
+  function msgHtml(m, p, fresh) {
+    let html = '';
+    if (!p || !sameDay(p.ts, m.ts)) html += `<div class="day">${fmtDay(m.ts)}</div>`;
+    const mine = m.from === me.uin;
+    const who = mine ? me : accountOf(m.from);
+    const cont = !!p && sameDay(p.ts, m.ts) && p.from === m.from && m.ts - p.ts < 300000;
+    const out = (cls, inner) => html + `<div class="msg ${mine ? 'me' : 'them'}${cls}${cont ? ' grp' : ''}${fresh ? ' new' : ''}">${hdrOf(m, who)}${inner}</div>`;
+    const note = m.note ? `<div class="txt">${renderText(m.note)}</div>` : '';
+    if (m.card) return out(' rich', `<div class="postcard pc-${esc(m.card)}" data-sound="${esc(m.sound || '')}" title="Открытка — нажми, чтобы послушать">${postcardSvg(m.card)}</div><div class="pc-cap">${renderText(m.text)}</div>`);
+    if (m.kind === 'invite') return out(' rich', inviteCard(m.event));
+    if (m.kind === 'rsvp') return out('', ` <span class="txt">${renderText(m.text)}</span>`);
+    if (m.kind === 'magnet') return out(' rich', magnetCard(m.country, m.serial, m.text));
+    if (m.kind === 'food') return out(' rich', foodCard(m.item, m.serial, m.text));
+    if (m.kind === 'cta') return out('', `<span class="txt">${renderText(m.text)}</span><button class="btn primary cta-btn" data-cta="${esc(m.cta)}">${esc(m.ctaLabel || 'Открыть')}</button>`);
+    if (m.kind === 'movie') return out(' rich', movieCard(m.movie) + note);
+    if (m.kind === 'track' || m.kind === 'playlist') return out(' rich', (m.kind === 'track' ? trackCard(m.track) : playlistCard(m.playlist)) + note);
+    return out('', ` <span class="txt">${renderText(m.text)}</span>`);
+  }
+  function renderHistory(force) {
     const el = $('#history'); if (!el || !active) return;
     db = load();
     const msgs = historyOf(active);
-    let html = '', prev = 0, prevFrom = null, prevMsgTs = 0;
-    msgs.forEach((m) => {
-      if (!sameDay(prev, m.ts)) { html += `<div class="day">${fmtDay(m.ts)}</div>`; prevFrom = null; }
-      prev = m.ts;
-      const mine = m.from === me.uin;
-      const who = mine ? me : accountOf(m.from);
-      const cont = prevFrom === m.from && m.ts - prevMsgTs < 300000; prevFrom = m.from; prevMsgTs = m.ts;
-      if (m.card) {
-        html += `<div class="msg ${mine ? 'me' : 'them'} rich${cont ? ' grp' : ''}">${hdrOf(m, who)}<div class="postcard pc-${esc(m.card)}" data-sound="${esc(m.sound || '')}" title="Открытка — нажми, чтобы послушать">${postcardSvg(m.card)}</div><div class="pc-cap">${renderText(m.text)}</div></div>`;
-        return;
-      }
-      if (m.kind === 'invite') {
-        html += `<div class="msg ${mine ? 'me' : 'them'} rich${cont ? ' grp' : ''}">${hdrOf(m, who)}${inviteCard(m.event)}</div>`;
-        return;
-      }
-      if (m.kind === 'rsvp') {
-        html += `<div class="msg ${mine ? 'me' : 'them'}${cont ? ' grp' : ''}">${hdrOf(m, who)} <span class="txt">${renderText(m.text)}</span></div>`;
-        return;
-      }
-      if (m.kind === 'magnet') {
-        html += `<div class="msg ${mine ? 'me' : 'them'} rich${cont ? ' grp' : ''}">${hdrOf(m, who)}${magnetCard(m.country, m.serial, m.text)}</div>`;
-        return;
-      }
-      if (m.kind === 'food') {
-        html += `<div class="msg ${mine ? 'me' : 'them'} rich${cont ? ' grp' : ''}">${hdrOf(m, who)}${foodCard(m.item, m.serial, m.text)}</div>`;
-        return;
-      }
-      if (m.kind === 'cta') {
-        html += `<div class="msg ${mine ? 'me' : 'them'}${cont ? ' grp' : ''}">${hdrOf(m, who)}<span class="txt">${renderText(m.text)}</span><button class="btn primary cta-btn" data-cta="${esc(m.cta)}">${esc(m.ctaLabel || 'Открыть')}</button></div>`;
-        return;
-      }
-      if (m.kind === 'movie') {
-        html += `<div class="msg ${mine ? 'me' : 'them'} rich${cont ? ' grp' : ''}">${hdrOf(m, who)}${movieCard(m.movie)}${m.note ? `<div class="txt">${renderText(m.note)}</div>` : ''}</div>`;
-        return;
-      }
-      if (m.kind === 'track' || m.kind === 'playlist') {
-        html += `<div class="msg ${mine ? 'me' : 'them'} rich${cont ? ' grp' : ''}">${hdrOf(m, who)}${m.kind === 'track' ? trackCard(m.track) : playlistCard(m.playlist)}${m.note ? `<div class="txt">${renderText(m.note)}</div>` : ''}</div>`;
-        return;
-      }
-      html += `<div class="msg ${mine ? 'me' : 'them'}${cont ? ' grp' : ''}">${hdrOf(m, who)} <span class="txt">${renderText(m.text)}</span></div>`;
-    });
+    // быстрый путь: та же беседа, старые сообщения не менялись — дописываем хвост
+    if (!force && hist.uin === active && el.dataset.uin === active && msgs.length > hist.n && hist.n > 0 && msgs[hist.n - 1] && msgs[hist.n - 1].id === hist.lastId) {
+      const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+      let html = '', prev = msgs[hist.n - 1];
+      msgs.slice(hist.n).forEach((m) => { html += msgHtml(m, prev, true); prev = m; });
+      el.insertAdjacentHTML('beforeend', html);
+      const lastMine = msgs[msgs.length - 1].from === me.uin;
+      hist.n = msgs.length; hist.lastId = msgs[msgs.length - 1].id;
+      if (nearBottom || lastMine) el.scrollTop = el.scrollHeight;
+      return;
+    }
+    if (hist.uin !== active) hist = { uin: active, limit: HIST_STEP, n: 0, lastId: null };
+    const from = Math.max(0, msgs.length - hist.limit);
+    let html = from > 0 ? `<button class="hist-more" data-histmore="1">Показать ранее · ещё ${from}</button>` : '';
+    let prev = null;
+    msgs.slice(from).forEach((m) => { html += msgHtml(m, prev, false); prev = m; });
     if (!msgs.length) html = `<div class="msg"><span class="sys">Беседа с ${esc(accountOf(active).nick)} началась. ${isOnline(active) ? 'Контакт в сети.' : 'Контакт не в сети — сообщение дойдёт, когда появится.'}</span></div>`;
+    const keep = force === 'older' ? el.scrollHeight - el.scrollTop : null;
+    el.dataset.uin = active;
     el.innerHTML = html;
-    el.scrollTop = el.scrollHeight;
+    hist.n = msgs.length; hist.lastId = msgs.length ? msgs[msgs.length - 1].id : null;
+    el.scrollTop = keep != null ? el.scrollHeight - keep : el.scrollHeight;
   }
+  function showOlder() { hist.limit += HIST_STEP * 2; renderHistory('older'); }
 
   /* ================= панель смайлов ================= */
   function toggleSmiles() { if (smilesEl) hideSmiles(); else showSmiles(); }
@@ -1295,6 +1352,7 @@
     if ((aux.kind === 'wall' || aux.kind === 'community') && aux.arg === toUin) renderAux();
   }
   function postWall(toUin, data) {
+    if (data.text != null) data.text = Sec.cleanText(data.text, 300);
     const p = Object.assign({ id: uid(), from: me.uin, ts: Date.now(), likes: [] }, data);
     addPost(toUin, p);
     post({ type: 'wall', uin: toUin, from: me.uin });
@@ -1335,6 +1393,7 @@
     return `<div class="trackcard pl">${mosaic(pl.tracks, 42)}<div class="ti"><b>♪ ${esc(pl.name)}</b><div class="muted">${pl.tracks.length} тр.: ${esc(names.slice(0, 3).join(', '))}${names.length > 3 ? '…' : ''}</div></div><button class="btn icon" data-playpl="${esc(pl.tracks.join(','))}" data-plname="${esc(pl.name)}" title="Слушать плейлист">▶</button></div>`;
   };
   function addReply(wallUin, postId, reply) {
+    if (reply.text != null) reply.text = Sec.cleanText(reply.text, 200);
     mutate((d) => { const p = (d.wall[wallUin] || []).find((x) => x.id === postId); if (p) { p.replies = p.replies || []; p.replies.push(reply); } });
     if ((aux.kind === 'wall' || aux.kind === 'community') && aux.arg === wallUin) renderAux();
   }
@@ -1558,7 +1617,7 @@
     const tiles = [
       ['wall', '▤', 'Моя стена'], ['fridge', '🧲', 'Холодильник'], ['events', '📅', 'В гости'], ['twin', '🤖', 'Мой аватар'],
       ['profile', '🙂', 'Профиль'], ['dossier', '🗂', 'Моё досье'], ['refs', '🔗', 'Пригласить'], ['interests', '✨', 'Интересы'],
-      ['fly', '✈', 'Я лечу'], ['skin', skinOf() === 'aero' ? '🖥' : '🫧', skinOf() === 'aero' ? 'Классика 98' : 'Aero 2007'], ['sound', Snd.enabled ? '🔔' : '🔕', Snd.enabled ? 'Звук вкл' : 'Звук выкл'], ['tips', '💡', 'Подсказки'],
+      ['fly', '✈', 'Я лечу'], ['design', '📟', 'Миллениал'], ['skin', skinOf() === 'aero' ? '🖥' : '🫧', skinOf() === 'aero' ? 'Классика 98' : 'Aero 2007'], ['sound', Snd.enabled ? '🔔' : '🔕', Snd.enabled ? 'Звук вкл' : 'Звук выкл'], ['data', '💾', 'Мои данные'], ['tips', '💡', 'Подсказки'],
     ];
     dialog({ title: 'Ещё', sheet: true, buttons: [], body: `<div class="more-grid">${tiles.map(([k, i, l]) => `<button data-more="${k}"><i>${i}</i><span>${esc(l)}</span></button>`).join('')}</div><div class="row mt"><span class="hint sp">${esc(me.nick)} · #${me.uin}</span><button class="btn" data-more="exit">Выйти</button></div>`,
       onOpen: (ov) => $$('[data-more]', ov).forEach((b) => (b.onclick = () => {
@@ -1567,11 +1626,54 @@
         else if (k === 'events' || k === 'twin' || k === 'refs' || k === 'interests') openAux(k);
         else if (k === 'fly') flyDialog();
         else if (k === 'skin') setSkin(skinOf() === 'aero' ? 'classic' : 'aero');
+        else if (k === 'design') setDesign('millennial');
+        else if (k === 'data') dataDialog();
         else if (k === 'sound') { mutate((d) => { d.settings.sound = !Snd.enabled; }); applySettings(); if (Snd.enabled) Snd.play('click'); }
         else if (k === 'tips') showTips(true);
         else if (k === 'exit') confirmBox('Выход', 'Выйти из АСЬКИ?', logout);
       })) });
   }
+  /* ---------- мои данные: сколько места, резервная копия ---------- */
+  // в копию попадает только твоё: твой аккаунт, твои беседы, стена, профиль и общая коллекция
+  function myBackup() {
+    db = load();
+    const u = me.uin, tw = twinUin(u);
+    const mineKey = (k) => k.split('-').includes(u) || k.split('-').includes(tw);
+    const pickMap = (src, f) => Object.keys(src || {}).filter(f).reduce((o, k) => ((o[k] = src[k]), o), {});
+    const data = {
+      accounts: pickMap(db.accounts, (k) => k === u), contacts: pickMap(db.contacts, (k) => k === u || k === tw),
+      history: pickMap(db.history, mineKey), unread: pickMap(db.unread, (k) => k === u), memory: pickMap(db.memory, (k) => k === u || k === tw),
+      profile: pickMap(db.profile, (k) => k === u), wall: pickMap(db.wall, (k) => k === u),
+      tracks: db.tracks, trackOwners: db.trackOwners, trackLog: db.trackLog, movies: db.movies, interests: db.interests, communities: db.communities, events: db.events, radio: db.radio,
+    };
+    return JSON.stringify({ app: 'aska', schema: Store.SCHEMA, exported: Date.now(), uin: u, data });
+  }
+  function dataDialog() {
+    const st = Store.stats();
+    const kb = (n) => (n / 1024 < 1024 ? Math.round(n / 1024) + ' КБ' : (n / 1048576).toFixed(1) + ' МБ');
+    const chats = Object.keys(db.history).filter((k) => k.split('-').includes(me.uin)).length;
+    dialog({
+      title: 'Мои данные', sheet: true,
+      body: `<div class="hint">Всё хранится только в этом браузере — на сервер ничего не уходит. Пароль зашифрован (PBKDF2), переписка разложена по отдельным записям.</div>
+        <div class="data-grid mt"><div><b>${kb(st.total)}</b><span>занято из ~5 МБ</span></div><div><b>${chats}</b><span>бесед</span></div><div><b>${kb(st.cols.history || 0)}</b><span>переписка</span></div></div>
+        <div class="hint mt">Сохрани копию в файл — пригодится при смене телефона или после чистки браузера.</div>`,
+      buttons: [
+        { label: '💾 Сохранить копию', primary: true, onClick: () => {
+          const blob = new Blob([myBackup()], { type: 'application/json' });
+          const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `aska-${me.uin}-${fmtDay(Date.now())}.json`;
+          document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+          Snd.play('tada'); return false;
+        } },
+        { label: '📂 Восстановить из файла', onClick: () => {
+          const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'application/json,.json';
+          inp.onchange = () => { const f = inp.files[0]; if (!f) return; if (f.size > 8 * 1048576) { alertBox('Копия', 'Файл слишком большой.'); return; } f.text().then((txt) => { const r = Store.importAll(txt); db = load(); if (r.ok) { Snd.play('tada'); toastText('Копия восстановлена: недостающие беседы и записи вернулись на место.'); renderContacts(); if (active) renderHistory(true); } else alertBox('Копия', r.error); }); };
+          inp.click(); return false;
+        } },
+        { label: 'Закрыть' },
+      ],
+    });
+  }
+
   let miniTrack = null;
   function renderMini() {
     const el = $('#mini'); if (!el || !me) return;
@@ -1600,14 +1702,15 @@
     aux.kind = kind; aux.arg = arg || null;
     hideSmiles();
     if (isNarrow()) $('.desktop').classList.remove('mode-chat');
-    $('.desktop').classList.add('mode-aux');
+    // на средних экранах (планшет, маленький ноутбук) три окна не помещаются — на виду последнее открытое
+    $('.desktop').classList.add('mode-aux', 'focus-aux');
     renderAux();
     Snd.play('click');
   }
   function closeAux() {
     if (aux.kind === 'watch') stopWatching();
     aux.kind = null; aux.arg = null;
-    $('.desktop').classList.remove('mode-aux');
+    $('.desktop').classList.remove('mode-aux', 'focus-aux');
     renderAux();
   }
   function renderAux() {
@@ -1641,6 +1744,7 @@
   });
   // клики по карточкам треков, открыткам и лайкам — где бы они ни были
   document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-histmore]')) { showOlder(); return; }
     const cta = e.target.closest('[data-cta]');
     if (cta) { if (cta.dataset.cta === 'twinquiz') { twTab = 'learn'; if (!twinStore(me.uin).quizDone) twQ = 0; openAux('twin'); } return; }
     const ro = e.target.closest('[data-reply-open]');
@@ -1741,7 +1845,7 @@
     post({ type: 'movies' }); Snd.play('click');
     if (aux.kind === 'cinema' || (aux.kind === 'watch' && wplay !== aux.arg)) renderAux();
     else if (aux.kind === 'watch') $$('[data-mfav]').forEach((b) => b.classList.toggle('on', i < 0));
-    else if (active) renderHistory();
+    else if (active) renderHistory(true);
   }
   function recommendMovie(id, toUin, note, alsoWall) {
     const mv = movieOf(id); if (!mv || !toUin) return;
@@ -1821,8 +1925,8 @@
     if (!started) screen = `<div class="w-cover" id="w-play" style="--h:${Cinema.hue(mv.title)}"><span class="w-cover-poster">${Cinema.posterSvg(mv, 120)}</span><span class="w-play-btn">▶</span><span class="w-cover-cap">${canResume ? 'Продолжить с ' + fmtSec(w.pos) : mv.kind === 'series' ? 'Смотреть серию ' + (ep + 1) : 'Смотреть'}</span></div>`;
     else if (!info) screen = '<div class="empty-note">Нет ссылки на видео.</div>';
     else if (info.kind === 'video') screen = `<video id="wv" controls autoplay playsinline preload="metadata" src="${esc(info.src)}"></video>`;
-    else if (info.embed) screen = `<iframe id="wf" src="${esc(info.embed)}" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
-    else screen = `<div class="empty-note">Эта ссылка не встраивается. <a href="${esc(url)}" target="_blank" rel="noopener">Открыть в новой вкладке</a></div>`;
+    else if (info.embed) screen = `<iframe id="wf" sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin" src="${esc(info.embed)}" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+    else screen = `<div class="empty-note">Эта ссылка не встраивается. <a href="${esc(Sec.safeUrl(url))}" target="_blank" rel="noopener noreferrer">Открыть в новой вкладке</a></div>`;
     const likers = (mv.likes || []).filter((u) => accountOf(u));
     const similar = allMovies().filter((m) => m.id !== id && (m.genre === mv.genre || m.kind === mv.kind)).slice(0, 6);
     return `<div class="watch">
@@ -1861,7 +1965,7 @@
       v.addEventListener('pause', () => { if (!v.ended) saveWatchPos(v.currentTime, false, v.duration); });
       v.addEventListener('play', () => { botsNotice('movie', id); mutate((dd) => { dd.presence[me.uin] = { status: myStatus, xstatus: myXstatus(), ts: Date.now() }; }); post({ type: 'presence', uin: me.uin }); });
       v.addEventListener('ended', () => { saveWatchPos(0, true); if (mv.kind === 'series' && ep + 1 < (mv.episodes || []).length) { wep = { id, ep: ep + 1 }; renderAux(); } });
-      v.addEventListener('error', () => { const scr = $('.watch .screen'); if (scr && !$('.err', scr)) scr.insertAdjacentHTML('beforeend', `<div class="err">Видео не загрузилось. Проверь ссылку или открой: <a href="${esc(movieSource(mv, ep).url)}" target="_blank" rel="noopener">в новой вкладке</a></div>`); });
+      v.addEventListener('error', () => { const scr = $('.watch .screen'); if (scr && !$('.err', scr)) scr.insertAdjacentHTML('beforeend', `<div class="err">Видео не загрузилось. Проверь ссылку или открой: <a href="${esc(Sec.safeUrl(movieSource(mv, ep).url))}" target="_blank" rel="noopener noreferrer">в новой вкладке</a></div>`); });
     }
   }
   function saveWatchPos(pos, reset, dur) {
@@ -2022,7 +2126,7 @@
     const st = Music.stationById(id); if (!st) return;
     const cur = (db.radio || {})[id] ? db.radio[id].stream || '' : '';
     dialog({ title: `${st.icon} ${st.name}: прямой эфир`, body: `<div class="hint">Станция играет из общей коллекции по стилю (${st.styles.map((x) => Music.STYLE_NAMES[x]).join(', ')}). Можно подключить настоящий поток: ссылку на mp3/aac-стрим любой радиостанции. Поток услышат все.</div><label class="row mt"><span class="lbl">Поток</span><input class="field" id="rs-url" placeholder="https://…/stream.mp3" value="${esc(cur)}"></label>`,
-      buttons: [{ label: 'Сохранить', primary: true, onClick: (ov) => { const url = $('#rs-url', ov).value.trim(); mutate((d) => { d.radio = d.radio || {}; d.radio[id] = { stream: url || null, by: me.uin, ts: Date.now() }; }); loadRadio(); post({ type: 'radio' }); Snd.play('click'); if (aux.kind === 'vinyl') renderAux(); } }, { label: 'Отмена' }] });
+      buttons: [{ label: 'Сохранить', primary: true, onClick: (ov) => { const url = Sec.safeUrl($('#rs-url', ov).value); mutate((d) => { d.radio = d.radio || {}; d.radio[id] = { stream: url || null, by: me.uin, ts: Date.now() }; }); loadRadio(); post({ type: 'radio' }); Snd.play('click'); if (aux.kind === 'vinyl') renderAux(); } }, { label: 'Отмена' }] });
   }
   const MOODS = [
     { id: 'up', icon: '☀', label: 'Бодро', styles: ['eurodance', 'pop', 'techno'], c1: '#ffb21e', c2: '#ff5f6d' },
@@ -2194,8 +2298,8 @@
     return `<div class="player vinyl ${skin}">
       <div class="pl-top"><button class="btn icon" id="pl-down" title="К музыке">⌄</button><span class="pl-src">${station ? '📻 ' + esc(station.name) : esc(st.queueName || (t && t.url ? 'По ссылке · ' + (SOURCE_LABEL[t.kind] || '') : 'Из коллекции'))}</span><button class="btn" id="v-skin" title="Сменить вид проигрывателя">${PSKIN_L[PSKINS[(PSKINS.indexOf(skin) + 1) % PSKINS.length]]}</button></div>
       <div class="tt ${st.playing ? '' : 'lifted'}">${turntableSvg(st.jingle && station ? { title: station.name, color: station.color, id: 'radio' } : t, skin)}${skin === 'cyber' ? '<div class="neon-grid"></div>' : ''}</div>
-      ${t && st.kind === 'embed' && st.embed ? `<div class="embed-box"><iframe src="${esc(st.embed)}" style="height:${st.embedH || 180}px" allow="autoplay; clipboard-write; encrypted-media" allowfullscreen loading="lazy"></iframe></div>` : ''}
-      ${t && st.kind === 'link' ? `<div class="hint center">Эта ссылка не встраивается: <a href="${esc(t.url)}" target="_blank" rel="noopener">открыть в новой вкладке</a></div>` : ''}
+      ${t && st.kind === 'embed' && st.embed ? `<div class="embed-box"><iframe sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin" src="${esc(st.embed)}" style="height:${st.embedH || 180}px" allow="autoplay; clipboard-write; encrypted-media" allowfullscreen loading="lazy"></iframe></div>` : ''}
+      ${t && st.kind === 'link' ? `<div class="hint center">Эта ссылка не встраивается: <a href="${esc(Sec.safeUrl(t.url))}" target="_blank" rel="noopener noreferrer">открыть в новой вкладке</a></div>` : ''}
       ${st.error ? `<div class="err">${esc(st.error)}</div>` : ''}
       ${station ? `<div class="onair-line" style="--c1:${station.color};--c2:${station.color2}">● В ЭФИРЕ · <span id="v-onair">${esc(st.onAir || station.slogan)}</span></div>` : ''}
       <div class="pl-meta"><div class="pl-ti"><b class="pl-title">${t ? esc(t.title) : 'Джингл станции'}</b><span class="pl-artist">${t ? esc(t.artist) : station ? esc(station.slogan) : ''}</span></div>${t ? `<button class="btn icon ${favs.includes(t.id) ? 'on' : ''}" data-fav="${t.id}" title="В любимое">♥</button>` : ''}</div>
@@ -2993,7 +3097,7 @@
     pushHistory(msg); post({ type: 'msg', msg }); post({ type: 'events' });
     const bot = BOTS[ev.host];
     if (bot && bot.persona) { const P = bot.persona; const L = answer === 'yes' ? { aska: 'Ура! Жду тебя! Печеньки уже на столе :)', kat: 'УРА!!! жду)))', serega: 'ЕСТЬ!!! Колонки греются!!!', batya: 'Молодец. Жду. Лопату приготовлю.', max: 'Хорошо. Придёшь — поговорим о важном.', lena: 'Ой, как здорово!!! Жду :$', vova: 'ок. адрес скину' } : answer === 'maybe' ? { aska: 'Подумай. Я подожду, у меня это хорошо получается :)', kat: 'ну давай, решай))) я жду', serega: 'Давай без «может быть»!!! Приходи!', batya: 'Подумай. Но приезжай.', max: '«Может быть» — честный ответ. Уважаю.', lena: 'Ну пожалуйста, приди :$', vova: 'ясн' } : { aska: 'Жаль :( Ну ничего, открытку пришлю оттуда.', kat: 'ну вот :( ладно, в следующий раз', serega: 'Бро, ну как так?! Ладно, в следующий раз!!!', batya: 'Жаль. Ну, дела есть дела. Береги себя.', max: 'Отсутствие — тоже присутствие. Но жаль.', lena: 'Жа-а-аль :( Ладно...', vova: 'ок' }; setTimeout(() => botSays(bot, P.id === 'aska' ? L.aska : P.v(L[P.id] || L.aska)), 2000 + Math.random() * 2000); }
-    if (active === ev.host) renderHistory();
+    if (active === ev.host) renderHistory(true);
     if (aux.kind === 'events') renderAux();
   }
   function addPointsTo(uin, n) { if (!db.accounts[uin]) return; mutate((d) => { d.profile[uin] = Object.assign(profileOf(uin), { points: (profileOf(uin).points || 0) + n }); }); }
@@ -3028,7 +3132,7 @@
     Snd.play('tada');
     toast(me, `приглашений отправлено: ${invited.length}`, null);
     post({ type: 'events' });
-    if (active) renderHistory();
+    if (active) renderHistory(true);
     openAux('events');
     return id;
   }
@@ -3068,7 +3172,7 @@
   }
 
   /* ================= приглашения и рефералы (цепочка) ================= */
-  function refFromUrl() { try { return new URLSearchParams(location.search).get('ref') || ''; } catch (e) { return ''; } }
+  function refFromUrl() { try { const r = new URLSearchParams(location.search).get('ref') || ''; return Sec.isUin(r) && !isTwin(r) ? r : ''; } catch (e) { return ''; } }
   const inviterOf = (uin) => { const a = accountOf(uin); return a ? (a.invitedBy === undefined ? (BOTS[uin] ? null : '000001') : a.invitedBy) : null; };
   const inviteesOf = (uin) => allKnown().filter((a) => !a.twinOf && inviterOf(a.uin) === uin);
   function refTree(uin) {
@@ -3115,7 +3219,16 @@
   const pluralRu = (n, a, b, c) => (n % 10 === 1 && n % 100 !== 11 ? a : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? b : c);
   const agoRu = (ts) => { const d = Math.floor((Date.now() - ts) / 864e5); if (d <= 0) return 'сегодня'; if (d === 1) return 'вчера'; if (d < 7) return d + ' ' + pluralRu(d, 'день', 'дня', 'дней') + ' назад'; const w = Math.floor(d / 7); if (w < 5) return w === 1 ? 'неделю назад' : w + ' недели назад'; return 'давно'; };
   // модель: фразы хозяина + пары «что ему написали → что он ответил»
+  // отпечаток переписки владельца: если он не менялся, модель аватара не пересобираем
+  function histSig(owner) {
+    let n = 0, last = '';
+    const tail = '-' + owner, head = owner + '-';
+    for (const k in db.history) { if (k.endsWith(tail) || k.startsWith(head)) { const a = db.history[k]; n += a.length; if (a.length) last += a[a.length - 1].id || a[a.length - 1].ts; } }
+    return n + ':' + last.length + ':' + last.slice(-40);
+  }
   function twinModelOf(owner) {
+    const sig = histSig(owner);
+    if (twinCache[owner] && twinCache[owner].sig === sig) return twinCache[owner];
     const msgs = [], pairs = []; let total = 0;
     Object.values(db.history).forEach((arr) => {
       let lastOther = null;
@@ -3127,15 +3240,24 @@
       });
     });
     const c = twinCache[owner];
-    if (c && c.total === total && c.n === msgs.length) return c;
+    if (c && c.total === total && c.n === msgs.length) { c.sig = sig; return c; }
     const model = Brain.twin.build(msgs, pairs);
-    twinCache[owner] = { n: msgs.length, total, model };
+    twinCache[owner] = { n: msgs.length, total, model, sig };
     return twinCache[owner];
   }
   // память самого аватара: чему научил хозяин, его ответы друзьям, на чём не нашёлся
   function twinStore(owner) { return Object.assign(Brain.twin.emptyStore(), profileOf(owner).twin || {}); }
   function saveTwinStore(owner, store) { mutate((d) => { d.profile = d.profile || {}; d.profile[owner] = Object.assign(profileOf(owner), { twin: store }); }); }
+  const factsMemo = {};
   function twinFacts(owner) {
+    const sig = histSig(owner) + '|' + ((Store.db.profile[owner] || {}).points || 0) + '|' + Object.keys(db.events).length;
+    const f = factsMemo[owner];
+    if (f && f.sig === sig && Date.now() - f.ts < 5000) return f.v;
+    const v = twinFactsCore(owner);
+    factsMemo[owner] = { sig, ts: Date.now(), v };
+    return v;
+  }
+  function twinFactsCore(owner) {
     const acc = accountOf(owner); const prof = profileOf(owner);
     const mem = Object.assign({}, (db.memory[owner] || {})['000001'] || {});
     const per = {}, lastTs = {};
@@ -3347,7 +3469,7 @@
   }
 
   /* ================= старт ================= */
-  const unlock = () => { Snd.unlock(); Music.unlock(); };
+  const unlock = () => { Snd.unlock(); Music.unlock(); const was = lastSeen; lastSeen = Date.now(); if (me && lastSeen - was > 60000) saveSession(); };
   ['pointerdown', 'keydown', 'touchend'].forEach((ev) => document.addEventListener(ev, unlock, { passive: true }));
 
   // iOS: при выезде клавиатуры уменьшаем «рабочий стол» до видимой области

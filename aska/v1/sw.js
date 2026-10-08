@@ -1,8 +1,11 @@
 /* АСЬКА — service worker: приложение открывается и без интернета.
    Обслуживает только свою папку (/evaspace/aska/), соседей не трогает. */
-const VERSION = 'aska1-v1';
+const VERSION = 'aska1-v2';
 const BASE = new URL('./', self.location).pathname;
-const SHELL = ['', 'index.html', 'styles.css?v=1', 'app.js?v=1', 'art.js?v=1', 'brain.js?v=1', 'sounds.js?v=1', 'manifest.webmanifest', 'icons/flower.svg', 'icons/apple-touch-icon.png'].map((p) => BASE + p);
+const PARENT = new URL('../', self.location).pathname;
+const SHARED = ['store.js', 'secure.js'].map((p) => PARENT + p);
+const SHELL = ['', 'index.html', 'styles.css?v=1', 'app.js?v=2', 'art.js?v=1', 'brain.js?v=1', 'sounds.js?v=1', 'manifest.webmanifest', 'icons/flower.svg', 'icons/apple-touch-icon.png'].map((p) => BASE + p)
+  .concat(['store.js?v=1', 'secure.js?v=1'].map((p) => PARENT + p));
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting()));
@@ -18,7 +21,7 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  if (url.origin !== self.location.origin || !url.pathname.startsWith(BASE)) return;
+  if (url.origin !== self.location.origin || !(url.pathname.startsWith(BASE) || SHARED.includes(url.pathname))) return;
 
   if (req.mode === 'navigate') {
     e.respondWith(
