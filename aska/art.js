@@ -230,17 +230,69 @@ window.AskaArt = (function () {
   ];
   const COUNTRY = {};
   COUNTRIES.forEach((c) => (COUNTRY[c.code] = c));
-  function magnetSvg(code, size) {
+  const hashOf = (str) => { let h = 2166136261; for (let i = 0; i < String(str).length; i++) { h ^= String(str).charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; };
+  const escT = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // магнит на холодильник: форма зависит от страны, флаг, достопримечательность, табличка с именем, блик и номер НФТ
+  function magnetSvg(code, size, opts) {
+    opts = opts || {};
     const c = COUNTRY[code] || COUNTRY.UR;
-    const n = c.colors.length, h = 64 / n;
-    const stripes = c.colors.map((col, i) => `<rect x="0" y="${(i * h).toFixed(1)}" width="64" height="${h.toFixed(1)}" fill="${col}"/>`).join('');
-    const sz = size || 64;
-    return `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}" aria-hidden="true"><defs><clipPath id="mg"><rect x="2" y="2" width="60" height="60" rx="9"/></clipPath></defs>
-      <g clip-path="url(#mg)">${stripes}</g><rect x="2" y="2" width="60" height="60" rx="9" fill="none" stroke="#222" stroke-width="2"/>
-      <rect x="10" y="16" width="44" height="34" rx="5" fill="#fff" stroke="#222" stroke-width="1.2"/>
-      <text x="32" y="38" font-size="20" text-anchor="middle" font-family="'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif">${c.icon}</text>
-      <rect x="6" y="50" width="52" height="10" rx="3" fill="rgba(255,255,255,.9)"/><text x="32" y="58" font-size="7.5" text-anchor="middle" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" fill="#222">${c.name}</text>
-      <rect x="24" y="2" width="16" height="7" rx="2" fill="#444" stroke="#222" stroke-width=".8"/></svg>`;
+    const sz = size || 64; const h = hashOf(code);
+    const shape = c.tier === 'black' ? 'star' : ['plate', 'badge', 'shield', 'oval'][h % 4];
+    const n = c.colors.length, sh = 64 / n;
+    const stripes = c.colors.map((col, i) => `<rect x="0" y="${(i * sh).toFixed(1)}" width="64" height="${(sh + 0.5).toFixed(1)}" fill="${col}"/>`).join('');
+    const cid = 'mg' + code + shape;
+    const path = shape === 'plate' ? '<rect x="2" y="2" width="60" height="60" rx="9"/>' : shape === 'badge' ? '<circle cx="32" cy="32" r="30"/>' : shape === 'shield' ? '<path d="M32 2 L60 10 V34 C60 50 46 60 32 62 C18 60 4 50 4 34 V10 Z"/>' : shape === 'oval' ? '<ellipse cx="32" cy="32" rx="30" ry="27"/>' : '<path d="M32 2 L40 22 L62 24 L45 38 L50 60 L32 48 L14 60 L19 38 L2 24 L24 22 Z"/>';
+    const inner = shape === 'badge' || shape === 'oval' ? `<circle cx="32" cy="30" r="18" fill="#fff" stroke="#222" stroke-width="1.2"/>` : shape === 'star' ? `<circle cx="32" cy="33" r="13" fill="#fff" stroke="#222" stroke-width="1.2"/>` : `<rect x="10" y="14" width="44" height="32" rx="5" fill="#fff" stroke="#222" stroke-width="1.2"/>`;
+    const iconY = shape === 'star' ? 39 : 36, iconSize = shape === 'star' ? 15 : 20;
+    const plate = shape === 'star' ? `<rect x="14" y="48" width="36" height="9" rx="3" fill="#ffe14d" stroke="#806a00" stroke-width=".8"/><text x="32" y="55" font-size="6.5" text-anchor="middle" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" fill="#222">${escT(c.name)}</text>` : `<rect x="8" y="49" width="48" height="10" rx="3" fill="rgba(255,255,255,.92)" stroke="#222" stroke-width=".6"/><text x="32" y="57" font-size="7.5" text-anchor="middle" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" fill="#222">${escT(c.name)}</text>`;
+    const gloss = `<path d="M8 10 Q32 0 56 10 Q40 14 8 10 Z" fill="#fff" opacity=".35"/>`;
+    const screws = shape === 'plate' ? '<circle cx="8" cy="8" r="1.6" fill="#999" stroke="#333" stroke-width=".5"/><circle cx="56" cy="8" r="1.6" fill="#999" stroke="#333" stroke-width=".5"/>' : '';
+    const serial = opts.serial ? `<rect x="36" y="2" width="26" height="7" rx="2" fill="#222"/><text x="49" y="7.5" font-size="5" text-anchor="middle" font-family="Tahoma,Verdana,sans-serif" fill="#ffe14d">${escT(opts.serial)}</text>` : '';
+    return `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}" aria-hidden="true"><defs><clipPath id="${cid}">${path}</clipPath></defs>
+      <g clip-path="url(#${cid})">${stripes}${c.tier === 'black' ? '<rect width="64" height="64" fill="#111" opacity=".55"/>' : ''}</g>
+      <g fill="none" stroke="#222" stroke-width="2">${path}</g>
+      ${inner}<text x="32" y="${iconY}" font-size="${iconSize}" text-anchor="middle" font-family="'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif">${c.icon}</text>
+      ${plate}${screws}${gloss}${serial}</svg>`;
   }
-  return { STATUSES, statusInfo, flowerSvg, statusFlower, envelopeSvg, SMILES, SMILE_BY_ID, smileSvg, postcardSvg, COUNTRIES, COUNTRY, magnetSvg };
+  // обложка трека: узор по стилю, цвет трека, пластинка выглядывает из конверта
+  const COVER_PAT = {
+    eurodance: (c) => `<g opacity=".35" fill="#fff">${[0, 30, 60, 90, 120, 150].map((a) => `<rect x="48" y="-10" width="6" height="120" transform="rotate(${a} 50 50)"/>`).join('')}</g>`,
+    techno: () => `<g opacity=".3" stroke="#fff" stroke-width="1">${[15, 30, 45, 60, 75].map((v) => `<line x1="${v}" y1="0" x2="${v}" y2="100"/><line x1="0" y1="${v}" x2="100" y2="${v}"/>`).join('')}</g>`,
+    ballad: () => `<g opacity=".3" fill="#fff"><circle cx="30" cy="35" r="18"/><circle cx="62" cy="48" r="26"/><circle cx="40" cy="70" r="12"/></g>`,
+    lounge: () => `<g opacity=".35" fill="none" stroke="#fff" stroke-width="2">${[20, 35, 50, 65, 80].map((y) => `<path d="M0 ${y} Q25 ${y - 10} 50 ${y} T100 ${y}"/>`).join('')}</g>`,
+    rock: () => `<path d="M55 5 L30 50 H48 L40 95 L72 42 H54 Z" fill="#fff" opacity=".4"/>`,
+    pop: () => `<g opacity=".35" fill="#fff">${[[20, 20, 8], [60, 25, 12], [35, 55, 6], [75, 65, 9], [20, 80, 10], [55, 85, 5]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g>`,
+    chiptune: () => `<g opacity=".4" fill="#fff">${[[10, 10], [30, 10], [20, 20], [40, 30], [60, 20], [80, 10], [70, 40], [10, 50], [50, 60], [30, 70], [80, 70], [60, 85], [20, 90]].map(([x, y]) => `<rect x="${x}" y="${y}" width="8" height="8"/>`).join('')}</g>`,
+    link: () => `<g opacity=".4" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"><path d="M38 62 L62 38"/><path d="M45 32 l10 -10 a10 10 0 0 1 14 14 l-10 10"/><path d="M55 68 l-10 10 a10 10 0 0 1 -14 -14 l10 -10"/></g>`,
+  };
+  function coverSvg(t, size) {
+    t = t || {}; const sz = size || 96;
+    const col = t.color || '#7a3cff'; const h = hashOf(t.id || t.title || 'x');
+    const pat = (COVER_PAT[t.url ? 'link' : t.style] || COVER_PAT.pop)(col);
+    const words = String(t.title || '?').split(/\s+/); const l1 = words.slice(0, 2).join(' '), l2 = words.slice(2, 4).join(' ');
+    const fs = l1.length > 12 ? 8 : l1.length > 8 ? 10 : 12;
+    const cid = 'cv' + (h % 100000);
+    return `<svg class="cover" viewBox="0 0 100 100" width="${sz}" height="${sz}" aria-hidden="true"><defs><clipPath id="${cid}"><rect x="0" y="0" width="100" height="100"/></clipPath><linearGradient id="${cid}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${col}"/><stop offset="1" stop-color="#1a1030"/></linearGradient></defs>
+      <g clip-path="url(#${cid})"><rect width="100" height="100" fill="url(#${cid}g)"/>${pat}
+      <circle cx="88" cy="50" r="40" fill="#151515"/><circle cx="88" cy="50" r="38" fill="none" stroke="#333" stroke-width="1" stroke-dasharray="2 1"/><circle cx="88" cy="50" r="30" fill="none" stroke="#2a2a2a" stroke-width="1"/><circle cx="88" cy="50" r="14" fill="${col}"/><circle cx="88" cy="50" r="2" fill="#eee"/>
+      <rect x="0" y="0" width="76" height="100" fill="url(#${cid}g)" opacity=".97"/>${pat.replace(/opacity="[.0-9]+"/g, 'opacity=".25"')}</g>
+      <text x="6" y="${l2 ? 58 : 62}" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" font-size="${fs}" fill="#fff" stroke="#000" stroke-width=".5" paint-order="stroke">${escT(l1.slice(0, 16))}</text>${l2 ? `<text x="6" y="${58 + fs + 1}" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" font-size="${fs}" fill="#fff" stroke="#000" stroke-width=".5" paint-order="stroke">${escT(l2.slice(0, 16))}</text>` : ''}
+      <text x="6" y="90" font-family="Tahoma,Verdana,sans-serif" font-size="6.5" fill="#fff" opacity=".9">${escT(String(t.artist || '').slice(0, 22))}</text>
+      ${t.year ? `<text x="6" y="12" font-family="Tahoma,Verdana,sans-serif" font-size="6" fill="#fff" opacity=".8">${t.year}</text>` : ''}
+      <rect x="0" y="0" width="100" height="100" fill="none" stroke="#000" stroke-width="2"/></svg>`;
+  }
+  // еда и напитки в холодильнике: баночка, бутылка или тарелка с наклейкой НФТ
+  function foodSvg(item, size) {
+    item = item || {}; const sz = size || 48; const h = hashOf(item.code || 'x');
+    const hue = h % 360; const col = `hsl(${hue},60%,55%)`, col2 = `hsl(${(hue + 40) % 360},60%,35%)`;
+    const kind = item.kind === 'drink' ? (h % 2 ? 'bottle' : 'can') : (h % 3 === 0 ? 'jar' : 'plate');
+    let body = '';
+    if (kind === 'bottle') body = `<path d="M26 6 h12 v8 l6 8 v38 a4 4 0 0 1 -4 4 h-16 a4 4 0 0 1 -4 -4 v-38 l6 -8 z" fill="${col}" stroke="#222" stroke-width="1.5"/><rect x="26" y="3" width="12" height="5" rx="1" fill="#ddd" stroke="#222" stroke-width="1"/><rect x="22" y="30" width="20" height="18" rx="2" fill="#fff" stroke="#222" stroke-width="1"/>`;
+    else if (kind === 'can') body = `<rect x="18" y="10" width="28" height="50" rx="5" fill="${col}" stroke="#222" stroke-width="1.5"/><ellipse cx="32" cy="11" rx="14" ry="4" fill="#ddd" stroke="#222" stroke-width="1"/><rect x="20" y="28" width="24" height="18" rx="2" fill="#fff" stroke="#222" stroke-width="1"/>`;
+    else if (kind === 'jar') body = `<rect x="16" y="16" width="32" height="44" rx="6" fill="${col}" opacity=".9" stroke="#222" stroke-width="1.5"/><rect x="18" y="8" width="28" height="10" rx="2" fill="${col2}" stroke="#222" stroke-width="1.2"/><rect x="20" y="30" width="24" height="18" rx="2" fill="#fff" stroke="#222" stroke-width="1"/>`;
+    else body = `<ellipse cx="32" cy="44" rx="28" ry="12" fill="#fff" stroke="#222" stroke-width="1.5"/><ellipse cx="32" cy="42" rx="20" ry="8" fill="${col}" opacity=".35"/>`;
+    const iconY = kind === 'plate' ? 46 : 44;
+    return `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}" aria-hidden="true">${body}<text x="32" y="${iconY}" font-size="${kind === 'plate' ? 24 : 16}" text-anchor="middle" font-family="'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif">${item.icon || '🍽'}</text><path d="M20 12 Q32 6 44 12" fill="none" stroke="#fff" stroke-width="2" opacity=".5"/><rect x="38" y="52" width="24" height="9" rx="2" fill="#ffe14d" stroke="#806a00" stroke-width=".8"/><text x="50" y="59" font-size="6" text-anchor="middle" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" fill="#222">НФТ</text></svg>`;
+  }
+  return { STATUSES, statusInfo, flowerSvg, statusFlower, envelopeSvg, SMILES, SMILE_BY_ID, smileSvg, postcardSvg, COUNTRIES, COUNTRY, magnetSvg, coverSvg, foodSvg };
 })();

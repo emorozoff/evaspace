@@ -366,16 +366,6 @@ button.chip:hover { border-color: #000; }
 
 /* винил */
 .vinyl { display: flex; flex-direction: column; gap: 5px; }
-.tt { position: relative; height: 150px; flex: none; background: #5a4634; border: 2px solid #3a2c20; box-shadow: inset 0 0 0 2px #7a6248, 2px 2px 0 rgba(0,0,0,.3); display: flex; align-items: center; padding-left: 14px; }
-.platter { width: 130px; height: 130px; border-radius: 50%; background: #222; box-shadow: 0 0 0 3px #111, 0 4px 8px rgba(0,0,0,.5); display: grid; place-items: center; flex: none; }
-.record { width: 124px; height: 124px; border-radius: 50%; background: repeating-radial-gradient(circle, #1a1a1a 0 1.5px, #2b2b2b 1.5px 3px); display: grid; place-items: center; animation: spin 1.8s linear infinite; animation-play-state: paused; position: relative; }
-.record.spin { animation-play-state: running; }
-.record .label { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; text-align: center; font: bold 7px/1.1 Tahoma, Verdana, sans-serif; color: #fff; text-shadow: 0 0 2px #000; box-shadow: 0 0 0 2px #000; overflow: hidden; padding: 4px; position: relative; }
-.record .label::after { content: ''; position: absolute; width: 5px; height: 5px; background: #ddd; border-radius: 50%; border: 1px solid #000; }
-.arm { position: absolute; right: 30px; top: 12px; width: 9px; height: 98px; background: linear-gradient(90deg, #eee, #999); border: 1px solid #333; border-radius: 4px; transform-origin: 50% 9px; transform: rotate(-28deg); transition: transform .7s ease; }
-.arm::before { content: ''; position: absolute; top: -8px; left: -8px; width: 22px; height: 22px; border-radius: 50%; background: #777; border: 1px solid #333; }
-.arm::after { content: ''; position: absolute; bottom: -6px; left: -5px; width: 18px; height: 12px; background: #444; border: 1px solid #111; }
-.arm.on { transform: rotate(-3deg); }
 .np-box { padding: 4px 6px; flex: none; }
 .np-box b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .v-ctrl input[type=range] { flex: 1; min-width: 40px; }
@@ -493,30 +483,6 @@ button.chip:hover { border-color: #000; }
 @keyframes spark { 0%, 35%, 70%, 100% { opacity: 0; transform: scale(.3); } 50% { opacity: 1; transform: scale(1.4); } }
 @keyframes heartpop { 0% { transform: scale(.2); opacity: 0; } 30% { transform: scale(1.15); opacity: 1; } 45% { transform: scale(1); } 60% { transform: scale(1.1); } 75%, 100% { transform: scale(1); opacity: 1; } }
 /* холодильник с дверцей */
-.fridge3 { position: relative; height: 260px; perspective: 700px; flex: none; margin: 4px 0; }
-.fr-top { position: absolute; left: 0; right: 0; top: 0; height: 10px; background: linear-gradient(#f4f4f4, #c8c8c8); border: 2px solid #777; border-bottom: 0; border-radius: 6px 6px 0 0; }
-.fr-body { position: absolute; left: 0; right: 0; top: 10px; bottom: 0; background: #e9eef2; border: 2px solid #777; box-shadow: inset 0 0 24px rgba(0,0,0,.15); overflow: hidden; }
-.fr-light { position: absolute; left: 50%; top: 4px; width: 60px; height: 6px; margin-left: -30px; background: #fff9c4; border-radius: 3px; box-shadow: 0 0 10px #fff9c4; opacity: 0; transition: opacity .4s; }
-.fridge3.open .fr-light { opacity: 1; }
-.fr-inside { position: absolute; inset: 12px 8px 8px; display: flex; flex-direction: column; gap: 6px; }
-.shelf { background: linear-gradient(#fff, #dde3e8); border-bottom: 3px solid #b0b8c0; padding: 3px 4px 4px; min-height: 58px; }
-.shelf.low { min-height: 0; background: none; border: 0; }
-.shelf-l { font-size: 9px; color: #607080; display: block; margin-bottom: 2px; }
-.shelf-items { display: flex; gap: 4px; flex-wrap: wrap; }
-.food { width: 46px; padding: 2px 1px; background: #fff; border: 1px solid #c0c8d0; border-radius: 4px; display: flex; flex-direction: column; align-items: center; gap: 0; line-height: 1.05; }
-.food i { font-style: normal; font-size: 18px; }
-.food span { font-size: 7px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 44px; }
-.food small { font-size: 7px; color: #a06000; }
-.food:hover { border-color: #000; }
-.fr-door { position: absolute; left: 0; top: 10px; bottom: 0; width: 100%; background: linear-gradient(135deg, #fdfdfd, #d6d6d6); border: 2px solid #777; transform-origin: left center; transition: transform .7s cubic-bezier(.4,.1,.3,1); cursor: pointer; display: flex; flex-direction: column; box-shadow: 2px 0 8px rgba(0,0,0,.25); }
-.fridge3.open .fr-door { transform: rotateY(-108deg); }
-.fr-magnets { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 26px 10px 10px; align-content: flex-start; }
-.fr-magnets .magnet { position: relative; padding: 0; background: none; border: 0; transform: rotate(var(--r, -3deg)); filter: drop-shadow(1px 2px 1px rgba(0,0,0,.35)); }
-.fr-magnets .magnet:nth-child(2n) { --r: 4deg; } .fr-magnets .magnet:nth-child(3n) { --r: -6deg; }
-.fr-magnets .magnet .from { position: absolute; left: 0; right: 0; bottom: -6px; font-size: 7px; background: #ffe14d; border: 1px solid #806a00; border-radius: 3px; padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fr-handle { position: absolute; right: 8px; top: 30px; width: 7px; height: 80px; background: linear-gradient(90deg, #aaa, #eee, #999); border: 1px solid #666; border-radius: 3px; }
-.fr-label { font-size: 9px; color: #607080; text-align: center; padding: 3px; background: rgba(255,255,255,.6); }
-.fr-hint { padding: 6px; }
 .food-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; padding: 4px; max-height: 240px; overflow: auto; }
 .food-grid button, .food-pick { padding: 2px; background: #fff; border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; line-height: 1.05; }
 .food-grid button i, .food-pick i { font-style: normal; font-size: 20px; }
@@ -526,20 +492,13 @@ button.chip:hover { border-color: #000; }
 
 /* ---------- винил: прогресс, вкладки, киберпанк ---------- */
 .v-top { flex: none; }
-.record { animation: none !important; will-change: transform; }
 .prog { height: 7px; background: #fff; border: 1px solid; border-color: var(--shadow) var(--light) var(--light) var(--shadow); margin: 4px 0 2px; cursor: pointer; }
 .prog i { display: block; height: 100%; background: var(--sel); width: 0; transition: width .3s linear; }
 .embed-box { background: #000; padding: 2px; flex: none; }
 .embed-box iframe { width: 100%; border: 0; display: block; }
 .btn.icon.on { background: #ffe3ea; color: #a03050; }
 .vinyl.cyber { background: #07040f; color: #c8f7ff; padding: 6px; border: 1px solid #ff2bd6; box-shadow: 0 0 12px #ff2bd6, inset 0 0 20px rgba(0,240,255,.15); }
-.vinyl.cyber .tt { background: radial-gradient(circle at 30% 50%, #1a0a3a, #07040f 70%); border-color: #00f0ff; box-shadow: inset 0 0 0 2px #ff2bd6, 0 0 18px rgba(0,240,255,.5); overflow: hidden; }
 .vinyl.cyber .neon-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(0,240,255,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,.12) 1px, transparent 1px); background-size: 18px 18px; pointer-events: none; transform: perspective(200px) rotateX(55deg) translateY(40px); }
-.vinyl.cyber .platter { background: #000; box-shadow: 0 0 0 3px #00f0ff, 0 0 22px #00f0ff; position: relative; z-index: 1; }
-.vinyl.cyber .record { background: repeating-radial-gradient(circle, #0a0a1a 0 1.5px, #2a1a4a 1.5px 3px); box-shadow: inset 0 0 20px #ff2bd6; }
-.vinyl.cyber .record .label { background: conic-gradient(#ff2bd6, #00f0ff, #ffe14d, #ff2bd6) !important; color: #000; text-shadow: none; font-size: 8px; letter-spacing: .5px; box-shadow: 0 0 0 2px #fff, 0 0 10px #fff; }
-.vinyl.cyber .arm { background: linear-gradient(90deg, #00f0ff, #0a4a5a); border-color: #00f0ff; box-shadow: 0 0 8px #00f0ff; z-index: 2; }
-.vinyl.cyber .arm::before, .vinyl.cyber .arm::after { background: #1a1a2e; border-color: #00f0ff; }
 .vinyl.cyber .np-box, .vinyl.cyber .v-list, .vinyl.cyber .prog { background: #0e0820; color: #c8f7ff; border-color: #ff2bd6 #00f0ff #00f0ff #ff2bd6; box-shadow: none; }
 .vinyl.cyber .prog i { background: linear-gradient(90deg, #ff2bd6, #00f0ff); }
 .vinyl.cyber .muted, .vinyl.cyber .hint { color: #8fd3e8; }
@@ -593,6 +552,101 @@ label.btn { cursor: pointer; }
 .tl { padding: 3px 2px; border-bottom: 1px dotted var(--shadow); }
 .tl .row { margin-top: 2px; }
 
+
+/* ---------- проигрыватель: SVG-вертушка ---------- */
+.tt { --tt-bg: #5a4634; --tt-edge: #2e2217; --tt-platter: #202020; --tt-strobe: #777; --tt-record: #161616; --tt-groove: #3a3a3a; --tt-labelring: #111; --tt-labeltext: #fff; --tt-arm: #d8d8d8; --tt-weight: #555; --tt-head: #333; --tt-needle: #eee; --tt-pivot: #777; --tt-btn: #c9b89a; --tt-text: #e8dcc4;
+  position: relative; flex: none; border: 2px solid #3a2c20; box-shadow: inset 0 0 0 2px #7a6248, 2px 2px 0 rgba(0,0,0,.3); background: var(--tt-bg); overflow: hidden; }
+.ttsvg { display: block; width: 100%; height: auto; max-height: 190px; }
+.tt-record { transform-origin: 84px 80px; transform-box: view-box; will-change: transform; }
+.tt-arm { transform-origin: 188px 26px; transform-box: view-box; transition: transform 1.1s cubic-bezier(.45,.05,.2,1); }
+.tt-armshadow { transform-origin: 188px 26px; transform-box: view-box; transition: transform 1.1s cubic-bezier(.45,.05,.2,1), opacity .4s; transform: translate(3px, 4px) rotate(-9deg); opacity: .5; }
+.tt.lifted .tt-armshadow { opacity: .35; }
+.vinyl.cyber .tt { --tt-bg: #07040f; --tt-edge: #ff2bd6; --tt-platter: #000; --tt-strobe: #00f0ff; --tt-record: #0a0a1a; --tt-groove: #2a1a4a; --tt-labelring: #fff; --tt-labeltext: #000; --tt-arm: #00f0ff; --tt-weight: #1a1a2e; --tt-head: #1a1a2e; --tt-needle: #ffe14d; --tt-pivot: #1a1a2e; --tt-btn: #1a0a2e; --tt-text: #00f0ff; border-color: #00f0ff; box-shadow: inset 0 0 0 2px #ff2bd6, 0 0 18px rgba(0,240,255,.5); }
+.vinyl.cyber .tt-record > circle:first-child { filter: drop-shadow(0 0 6px #ff2bd6); }
+.vinyl.cyber .tt-arm { filter: drop-shadow(0 0 4px #00f0ff); }
+.cv { display: inline-flex; flex: none; } .cv .cover { display: block; box-shadow: 1px 1px 0 rgba(0,0,0,.4); cursor: pointer; }
+.cv.big .cover { box-shadow: 3px 3px 0 rgba(0,0,0,.35); }
+.trow .cv { margin: 0 2px; }
+
+/* ---------- радио ---------- */
+.station { display: flex; align-items: center; gap: 6px; padding: 5px 6px; margin: 3px 0; border: 1px solid #333; background: linear-gradient(135deg, var(--c1), var(--c2)); color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.4); }
+.station .ti { flex: 1; min-width: 0; } .station .muted { color: rgba(255,255,255,.85); }
+.station.on { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--c1); }
+.st-dial { width: 40px; height: 40px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff, #bbb 60%, #666); border: 2px solid #333; display: grid; place-items: center; flex: none; box-shadow: inset 0 0 6px rgba(0,0,0,.4); }
+.st-ico { font-size: 18px; }
+.st-slogan { font-style: italic; }
+.onair { color: #ffe14d; font-weight: bold; animation: onair 1.4s steps(2) infinite; }
+@keyframes onair { 50% { opacity: .55; } }
+.np-box.radio { background: linear-gradient(90deg, var(--c1), #fff 55%); }
+.onair-line { font-weight: bold; margin-bottom: 2px; }
+.vinyl.cyber .station { border-color: #00f0ff; }
+
+/* ---------- страница трека ---------- */
+.trackpage { display: flex; flex-direction: column; gap: 5px; overflow: auto; flex: 1; min-height: 0; }
+.tp-head { display: flex; gap: 8px; align-items: flex-start; }
+.tp-info { flex: 1; min-width: 0; } .tp-title { font-size: 14px; }
+.tp-actions { margin-top: 4px; flex-wrap: wrap; }
+.nftpass { background: linear-gradient(135deg, #fff8dc, #f4e6b8); border: 1px solid #a08a40; padding: 4px 6px; box-shadow: 2px 2px 0 rgba(0,0,0,.2); }
+.np-row { display: flex; gap: 6px; align-items: baseline; padding: 1px 0; flex-wrap: wrap; }
+.np-k { color: #7a6a30; width: 84px; flex: none; font-size: 10px; text-transform: uppercase; letter-spacing: .3px; }
+.mono { font-family: 'Courier New', monospace; }
+.tp-story { background: #fff; border: 1px solid; border-color: var(--shadow) var(--light) var(--light) var(--shadow); padding: 4px 6px; line-height: 1.3; }
+.tp-log { font-size: 10px; } .tp-logline { padding: 1px 0 1px 8px; border-left: 2px solid var(--sel); margin: 1px 0; }
+
+/* ---------- люди ---------- */
+.people { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.people .tabpanel { flex: 1; min-height: 0; overflow: auto; }
+.pp-tabs button { padding: 2px 6px 3px; }
+.pcard { border: 1px solid; border-color: var(--light) var(--shadow) var(--shadow) var(--light); background: #fff; padding: 5px 6px; margin: 4px 2px; }
+.pcard.big { background: linear-gradient(#fffdf5, #fff); box-shadow: 2px 2px 0 rgba(0,0,0,.2); }
+.pc-head { display: flex; gap: 6px; align-items: flex-start; }
+.pc-head .who { flex: 1; min-width: 0; }
+.pct { font-weight: bold; font-size: 14px; padding: 2px 6px; border: 1px solid var(--shadow); background: #eee; flex: none; }
+.pct.hi { background: #d9f7d0; border-color: #2a8a2a; color: #1a5a1a; } .pct.mid { background: #fff3b0; border-color: #a08000; }
+.pc-dossier { margin-top: 4px; padding: 3px 6px; background: #fffbe6; border-left: 3px solid #e8b300; font-size: 10px; line-height: 1.3; }
+.pc-verdict { font-style: italic; margin-top: 2px; }
+.pc-actions { margin-top: 4px; flex-wrap: wrap; }
+
+/* ---------- холодильник «Холодок-99» ---------- */
+.fridge-stage { height: 330px; perspective: 900px; flex: none; margin: 6px 0 2px; display: flex; justify-content: center; }
+.fridge3 { position: relative; width: min(100%, 300px); height: 100%; transform-style: preserve-3d; }
+.fr-cabinet { position: absolute; inset: 0 0 10px; background: linear-gradient(180deg, #f3ead6, #e3d8bd); border: 3px solid #8a7f66; border-radius: 16px 16px 6px 6px; box-shadow: inset 0 0 0 3px #fbf6ea, 4px 6px 0 rgba(0,0,0,.25); overflow: hidden; }
+.fr-gasket { position: absolute; inset: 8px; border: 4px solid #2b2b2b; border-radius: 10px; pointer-events: none; opacity: 0; transition: opacity .3s; }
+.fridge3.open .fr-gasket { opacity: .8; }
+.fr-light { position: absolute; left: 50%; top: 12px; width: 70px; height: 7px; margin-left: -35px; background: #fff9c4; border-radius: 3px; box-shadow: 0 0 14px 4px #fff9c4; opacity: 0; transition: opacity .3s .3s; z-index: 2; }
+.fridge3.open .fr-light { opacity: 1; }
+.fr-inside { position: absolute; inset: 14px 12px 12px; display: flex; flex-direction: column; gap: 4px; background: linear-gradient(#eef4f8, #dde6ec); border-radius: 8px; padding: 4px; }
+.shelf { background: linear-gradient(rgba(255,255,255,.85), rgba(220,228,235,.9)); border-bottom: 4px solid #9fb0bf; box-shadow: 0 4px 3px -2px rgba(0,0,0,.25); padding: 2px 4px 3px; min-height: 62px; flex: 1; overflow: hidden; }
+.shelf.freezer, .shelf.drawer { min-height: 40px; flex: .6; }
+.shelf.freezer { background: linear-gradient(#f4fbff, #d8ecf7); border-bottom-color: #b9d4e6; border-top: 1px dashed #b9d4e6; }
+.shelf.drawer { background: rgba(190, 220, 200, .55); border: 2px solid #8fb09a; border-radius: 4px; box-shadow: inset 0 6px 8px rgba(0,0,0,.08); }
+.shelf-l { font-size: 8px; color: #607080; display: block; margin-bottom: 1px; text-transform: uppercase; letter-spacing: .3px; }
+.shelf-items { display: flex; gap: 3px; flex-wrap: wrap; align-items: flex-end; }
+.food { width: 50px; padding: 0; background: none; border: 0; display: flex; flex-direction: column; align-items: center; line-height: 1.05; position: relative; filter: drop-shadow(1px 2px 1px rgba(0,0,0,.3)); }
+.food svg { display: block; }
+.food span { font-size: 7px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50px; }
+.food small { font-size: 6.5px; color: #a06000; }
+.food em { position: absolute; top: 0; right: -2px; font-size: 6.5px; background: #ffe14d; border: 1px solid #806a00; border-radius: 3px; padding: 0 2px; font-style: normal; }
+.food:hover { transform: translateY(-2px); }
+.fr-door { position: absolute; inset: 0 0 10px; background: linear-gradient(100deg, #f7f0dd 0%, #efe5cc 60%, #d9cdaf 100%); border: 3px solid #8a7f66; border-radius: 16px 16px 6px 6px; box-shadow: inset 0 0 0 3px #fbf6ea, inset 0 -30px 40px rgba(0,0,0,.05); transform-origin: left center; transition: transform .9s cubic-bezier(.4,0,.2,1); cursor: pointer; backface-visibility: hidden; display: flex; flex-direction: column; }
+.fridge3.open .fr-door { transform: rotateY(-112deg); }
+.fr-badge { position: absolute; left: 14px; top: 10px; background: linear-gradient(#d41b1b, #8f0f0f); color: #fff; border: 2px solid #ffd27a; border-radius: 50% / 60%; padding: 3px 10px 4px; text-align: center; line-height: 1; box-shadow: 1px 1px 0 rgba(0,0,0,.4); }
+.fr-badge span { font: italic bold 11px Georgia, serif; letter-spacing: .5px; display: block; }
+.fr-badge small { font-size: 6px; display: block; opacity: .85; }
+.fr-magnets { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; padding: 42px 30px 10px 14px; align-content: flex-start; }
+.fr-magnets .magnet { position: relative; padding: 0; background: none; border: 0; transform: rotate(var(--r, -4deg)); filter: drop-shadow(2px 3px 2px rgba(0,0,0,.4)); transition: transform .15s; }
+.fr-magnets .magnet:nth-child(2n) { --r: 5deg; } .fr-magnets .magnet:nth-child(3n) { --r: -7deg; } .fr-magnets .magnet:nth-child(5n) { --r: 3deg; }
+.fr-magnets .magnet:hover { transform: rotate(0) scale(1.1); z-index: 2; }
+.fr-magnets .magnet .from { position: absolute; left: 0; right: 0; bottom: -7px; font-size: 7px; background: #ffe14d; border: 1px solid #806a00; border-radius: 3px; padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fr-handle { position: absolute; right: 10px; top: 34px; width: 12px; height: 110px; background: linear-gradient(90deg, #8f8f8f, #f4f4f4 45%, #9a9a9a); border: 1px solid #555; border-radius: 6px; box-shadow: 2px 2px 3px rgba(0,0,0,.35); }
+.fr-handle::before, .fr-handle::after { content: ''; position: absolute; left: 1px; width: 8px; height: 6px; background: #777; border: 1px solid #444; border-radius: 2px; }
+.fr-handle::before { top: -7px; } .fr-handle::after { bottom: -7px; }
+.fr-handle i { position: absolute; left: 3px; top: 10px; bottom: 10px; width: 2px; background: rgba(255,255,255,.7); border-radius: 1px; }
+.fr-plate { position: absolute; left: 14px; right: 40px; bottom: 10px; font-size: 8px; color: #6b6049; text-align: center; border: 1px solid #b7ab8e; background: rgba(255,255,255,.5); padding: 2px; border-radius: 3px; letter-spacing: .3px; }
+.fr-feet { position: absolute; left: 0; right: 0; bottom: 0; height: 10px; display: flex; justify-content: space-between; padding: 0 22px; }
+.fr-feet i { width: 22px; height: 10px; background: linear-gradient(#444, #111); border-radius: 0 0 4px 4px; }
+.fr-hint { padding: 6px; }
+
 /* ---------- диалоги ---------- */
 .overlay { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(0,0,0,.15); }
 .dialog .body { padding: 10px 10px 8px; }
@@ -631,7 +685,7 @@ label.btn { cursor: pointer; }
   .magnet-grid { grid-template-columns: repeat(4, 1fr); max-height: 260px; }
   .food-grid { grid-template-columns: repeat(4, 1fr); }
   .tb-btn span { font-size: 9px; }
-  .fridge3 { height: 300px; }
+  .fridge-stage { height: 360px; }
   .food { width: 54px; } .food span { font-size: 8px; max-width: 52px; }
   .mode-sel { height: 28px; font-size: 13px; }
   .dossier { font-size: 12px; }

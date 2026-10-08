@@ -80,7 +80,8 @@ window.AskaMusic = (function () {
   /* ---------- движок ---------- */
   let C = null, master = null, musicGain = null, crackleGain = null, crackleSrc = null, popTimer = null;
   let enabled = true, volume = 0.7, crackle = true;
-  let state = { playing: false, trackId: null, bar: 0, loop: 0, queue: [], index: -1, queueName: '', kind: 'synth', pos: 0, dur: 0, embed: null, shuffle: false, repeat: false, motor: 0 };
+  let state = { playing: false, trackId: null, bar: 0, loop: 0, queue: [], index: -1, queueName: '', kind: 'synth', pos: 0, dur: 0, embed: null, shuffle: false, repeat: false, motor: 0, radio: null, onAir: '', jingle: false };
+  let radioCount = 0, jingleTimer = null;
   const external = {};          // треки по ссылке: id → {id,title,artist,url,kind,src,embed,style,by}
   let audioEl = null;
   // разбор ссылки: Яндекс Музыка, YouTube, SoundCloud, прямой mp3
@@ -274,7 +275,8 @@ window.AskaMusic = (function () {
   function playTrack(id, keepQueue) {
     const track = anyById(id); if (!track) return;
     if (!ensure()) return;
-    stopTimers(); stopExternal();
+    stopTimers(); stopExternal(); clearTimeout(jingleTimer); state.jingle = false;
+    if (!keepQueue) { state.radio = null; state.onAir = ''; }
     if (!keepQueue) { state.queue = [id]; state.index = 0; state.queueName = ''; }
     state.playing = true; state.trackId = id; state.bar = 0; state.loop = 0; state.motor = 1;
     needleDrop(C.currentTime + 0.05);
@@ -303,11 +305,14 @@ window.AskaMusic = (function () {
   function stopTimers() { clearInterval(timer); timer = null; }
   function pause() {
     if (!state.playing) return;
+    if (state.jingle) { clearTimeout(jingleTimer); state.jingle = false; state.playing = false; state.motor = 0; emit(); return; }
     state.playing = false; state.motor = 0; stopTimers(); stopCrackle(); needleLift();
     if (audioEl) audioEl.pause();
     emit();
   }
   function resume() {
+    if (state.playing && !state.trackId && state.radio) return;
+    if (!state.playing && !state.trackId && state.radio) { radioNext(); return; }
     if (state.playing || !state.trackId) return;
     ensure();
     state.playing = true; state.motor = 1;
@@ -315,7 +320,7 @@ window.AskaMusic = (function () {
     if (audioEl) audioEl.play().catch(() => {});
     startCrackle(); emit();
   }
-  function stop() { state.playing = false; state.motor = 0; stopTimers(); stopExternal(); if (C) { stopCrackle(); } state.trackId = null; state.bar = 0; emit(); }
+  function stop() { state.playing = false; state.motor = 0; stopTimers(); stopExternal(); clearTimeout(jingleTimer); state.jingle = false; state.radio = null; state.onAir = ''; if (C) { stopCrackle(); } state.trackId = null; state.bar = 0; emit(); }
   function playQueue(ids, name, startIndex) {
     const list = ids.filter((i) => anyById(i)); if (!list.length) return;
     state.queue = list; state.queueName = name || ''; state.index = startIndex || 0;
@@ -323,6 +328,7 @@ window.AskaMusic = (function () {
   }
   function next() {
     if (!state.queue.length) return;
+    if (state.radio) { radioNext(); return; }
     if (state.repeat) { playTrack(state.queue[state.index], true); return; }
     if (state.shuffle && state.queue.length > 1) { let i; do { i = Math.floor(Math.random() * state.queue.length); } while (i === state.index); state.index = i; }
     else state.index = (state.index + 1) % state.queue.length;
@@ -333,12 +339,69 @@ window.AskaMusic = (function () {
     state.index = (state.index - 1 + state.queue.length) % state.queue.length;
     playTrack(state.queue[state.index], true);
   }
+  /* ---------- радио: станции из коллекции, джинглы и ведущие ---------- */
+  const STATIONS = [
+    { id: 'bali', name: 'Бали FM', slogan: 'закат, волны и лаунж', styles: ['lounge', 'ballad'], color: '#ff8c42', color2: '#ffd166', icon: '🌴', bpm: 92, notes: 'C5 . E5 . G5 . . . A5 . G5 . E5 . C5 .', host: ['Бали FM. Солнце село, а мы — нет.', 'На волне Бали FM: прибой, кокос и ни одной спешки.', 'Бали FM. Если слышно волны — это мы.', 'Бали FM: ваш закат уже в эфире.'] },
+    { id: 'eva', name: 'Ева Спейс', slogan: 'космос, техно и 8 бит', styles: ['techno', 'chiptune', 'eurodance'], color: '#7a3cff', color2: '#00f0ff', icon: '🛸', bpm: 132, notes: 'E4 . E5 . B4 . E5 . G5 . E5 . B5 . . .', host: ['Ева Спейс. Орбита, связь устойчивая.', 'Вы на Еве Спейс: 140 ударов в минуту, невесомость бесплатно.', 'Ева Спейс. Поехали.', 'Ева Спейс: до Луны — три трека.'] },
+    { id: 'yuhom', name: 'Юхом Плюс', slogan: 'хиты, только хиты', styles: ['pop', 'rock', 'eurodance'], color: '#1fa3e0', color2: '#ffe14d', icon: '📻', bpm: 120, notes: 'G4 . B4 . D5 . G5 . D5 . B4 . G4 . . .', host: ['Юхом Плюс. Плюс — потому что хиты.', 'На Юхом Плюс всё, что вы пели в 1999-м.', 'Юхом Плюс: не переключайтесь, мы и сами не можем.', 'Юхом Плюс. Телефон студии занят, пишите в АСЬКУ.'] },
+  ];
+  const stationById = (id) => STATIONS.find((s) => s.id === id);
+  const streams = {};
+  function setStream(id, url) { if (url) streams[id] = url; else delete streams[id]; }
+  function stationQueue(st) {
+    const pool = TRACKS.filter((t) => st.styles.includes(t.style)).concat(Object.values(external).filter((t) => st.styles.includes(t.style || 'pop') && (t.kind === 'audio' || t.kind === 'embed' || t.embed)));
+    const ids = pool.map((t) => t.id);
+    for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; }
+    return ids.length ? ids : TRACKS.map((t) => t.id);
+  }
+  function playJingle(st) {
+    if (!ensure()) return 0;
+    const t0 = C.currentTime + 0.05, s8 = 60 / st.bpm / 2;
+    // настройка на волну: шорох эфира
+    const n = noiseSrc(); const f = C.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 6; f.frequency.setValueAtTime(400, t0); f.frequency.exponentialRampToValueAtTime(3200, t0 + 0.5); f.frequency.exponentialRampToValueAtTime(900, t0 + 0.9);
+    const g = C.createGain(); env(g, t0, 0.02, 0.2, 0.18, 0.08, 0.2, 0.9); n.connect(f); f.connect(g); g.connect(master); n.start(t0); n.stop(t0 + 1.2);
+    const toks = st.notes.split(/\s+/); let t = t0 + 0.9;
+    toks.forEach((tok, i) => { if (tok !== '.') { let len = 1; for (let j = i + 1; j < toks.length && toks[j] === '.'; j++) len++; const m = noteMidi(tok); if (m != null) lead(t, m, s8 * len * 0.9, 'square', true); } if (i % 4 === 0) kick(t, 0.4); t += s8; });
+    return 0.9 + toks.length * s8 + 0.3;
+  }
+  function playRadio(id) {
+    const st = stationById(id); if (!st) return;
+    if (!ensure()) return;
+    stopTimers(); stopExternal(); clearTimeout(jingleTimer);
+    state.radio = id; state.queueName = st.name; state.shuffle = false; state.repeat = false; radioCount = 0;
+    state.onAir = st.host[Math.floor(Math.random() * st.host.length)];
+    if (streams[id]) {
+      external['radio_' + id] = { id: 'radio_' + id, title: st.name, artist: 'прямой эфир · ' + st.slogan, kind: 'audio', src: streams[id], style: st.styles[0], color: st.color, url: streams[id], label: 'поток' };
+      state.queue = ['radio_' + id]; state.index = 0;
+      state.jingle = true; state.playing = true; state.motor = 1; state.trackId = null; emit();
+      const d = playJingle(st);
+      jingleTimer = setTimeout(() => { state.jingle = false; playTrack('radio_' + id, true); }, d * 1000);
+      return;
+    }
+    state.queue = stationQueue(st); state.index = 0;
+    state.jingle = true; state.playing = true; state.motor = 1; state.trackId = null; emit();
+    const d = playJingle(st);
+    jingleTimer = setTimeout(() => { state.jingle = false; playTrack(state.queue[0], true); }, d * 1000);
+  }
+  function radioNext() {
+    const st = stationById(state.radio); if (!st) { state.radio = null; return; }
+    if (streams[state.radio]) { playTrack('radio_' + state.radio, true); return; }
+    radioCount++;
+    if (state.queue.length > 1) { let i; do { i = Math.floor(Math.random() * state.queue.length); } while (i === state.index); state.index = i; } else state.index = 0;
+    const id = state.queue[state.index];
+    if (radioCount % 3 === 0) {
+      stopTimers(); stopExternal();
+      state.onAir = st.host[Math.floor(Math.random() * st.host.length)]; state.jingle = true; state.trackId = null; state.playing = true; state.motor = 1; emit();
+      const d = playJingle(st);
+      jingleTimer = setTimeout(() => { state.jingle = false; playTrack(id, true); }, d * 1000);
+    } else playTrack(id, true);
+  }
   function duration(id) { const t = byId[id]; return t ? Math.round(16 * 4 * 60 / t.bpm * loops) : 0; }
   function seek(sec) { if (audioEl && isFinite(sec)) audioEl.currentTime = sec; }
 
   return {
     TRACKS, byId, STYLE_NAMES: { eurodance: 'евродэнс', techno: 'техно', ballad: 'баллада', lounge: 'лаунж', rock: 'рок', pop: 'поп', chiptune: '8 бит' },
-    play: playTrack, playQueue, pause, resume, stop, next, prev, duration, seek, parseLink, registerExternal, anyById, external,
+    play: playTrack, playQueue, pause, resume, stop, next, prev, duration, seek, parseLink, registerExternal, anyById, external, STATIONS, stationById, playRadio, setStream, streams,
     set shuffle(v) { state.shuffle = !!v; emit(); }, set repeat(v) { state.repeat = !!v; emit(); },
     toggle() { if (state.playing) pause(); else if (state.trackId) resume(); else playQueue(TRACKS.map((t) => t.id), 'Все хиты', 0); },
     get state() { return state; },

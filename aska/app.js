@@ -27,7 +27,7 @@
 
   /* ================= хранилище ================= */
   function emptyDb() {
-    return { accounts: {}, contacts: {}, history: {}, unread: {}, presence: {}, memory: {}, profile: {}, wall: {}, interests: {}, communities: {}, events: {}, refLog: [], tracks: {}, trackOwners: {}, movies: {}, settings: { sound: true, volume: 0.8 }, lastLogin: '' };
+    return { accounts: {}, contacts: {}, history: {}, unread: {}, presence: {}, memory: {}, profile: {}, wall: {}, interests: {}, communities: {}, events: {}, refLog: [], tracks: {}, trackOwners: {}, trackLog: {}, movies: {}, radio: {}, settings: { sound: true, volume: 0.8 }, lastLogin: '' };
   }
   function load() {
     try {
@@ -68,7 +68,7 @@
   const SMILE_TAUNTS = ['Ой, какой смайлик! :)', 'Отвечаю тем же! :D', 'хихи :$', ';)', 'Ух ты! :O', 'Люблю смайлы @}->--', '8) круто'];
 
   /* ================= графика (art.js) ================= */
-  const { STATUSES, statusInfo, flowerSvg, statusFlower, envelopeSvg, SMILES, SMILE_BY_ID, smileSvg, postcardSvg, COUNTRIES, COUNTRY, magnetSvg } = window.AskaArt;
+  const { STATUSES, statusInfo, flowerSvg, statusFlower, envelopeSvg, SMILES, SMILE_BY_ID, smileSvg, postcardSvg, COUNTRIES, COUNTRY, magnetSvg, coverSvg, foodSvg } = window.AskaArt;
   const Cinema = window.AskaCinema;
 
   // регулярка по всем кодам: длинные раньше коротких
@@ -418,8 +418,9 @@
     else if (m.type === 'presence') { db = load(); renderContacts(); renderChatHead(); }
     else if (m.type === 'tracks') { db = load(); loadExternalTracks(); if (aux.kind === 'vinyl') renderAux(); }
     else if (m.type === 'movies') { db = load(); if (aux.kind === 'cinema' || aux.kind === 'watch') renderAux(); }
+    else if (m.type === 'radio') { db = load(); loadRadio(); if (aux.kind === 'vinyl') renderAux(); }
     else if (m.type === 'interests' || m.type === 'events' || m.type === 'refs') { db = load(); if (['interests', 'interest', 'community', 'events', 'refs'].includes(aux.kind)) renderAux(); if (m.type === 'events' && active) renderHistory(); }
-    else if (m.type === 'wall') { db = load(); if (m.uin === me.uin && m.from !== me.uin) { const a = accountOf(m.from); if (a) { toast(a, 'оставил(а) запись у тебя на стене', null); Snd.play('tada'); } } if (aux.kind === 'wall' && aux.arg === m.uin) renderAux(); }
+    else if (m.type === 'wall') { db = load(); if (m.uin === me.uin && m.from !== me.uin) { const a = accountOf(m.from); if (a) { toast(a, 'оставил(а) запись у тебя на стене', null); Snd.play('tada'); } } if (aux.kind === 'wall' && aux.arg === m.uin) renderAux(); if (aux.kind === 'track' && 'trk_' + aux.arg === m.uin) renderAux(); }
   };
   window.addEventListener('storage', (e) => {
     if (e.key !== DB_KEY || !me) return;
@@ -446,7 +447,7 @@
   function initBots() {
     mutate((d) => {
       d.contacts[me.uin] = d.contacts[me.uin] || [];
-      Object.keys(BOTS).forEach((u) => { if (!d.contacts[me.uin].includes(u)) d.contacts[me.uin].push(u); });
+      Object.keys(BOTS).filter((u) => !(BOTS[u].persona && BOTS[u].persona.lite)).forEach((u) => { if (!d.contacts[me.uin].includes(u)) d.contacts[me.uin].push(u); });
       if (!d.contacts[me.uin].includes(twinUin(me.uin))) d.contacts[me.uin].push(twinUin(me.uin));
       d.contacts[me.uin].slice().forEach((u) => { if (d.accounts[u] && !d.contacts[me.uin].includes(twinUin(u))) d.contacts[me.uin].push(twinUin(u)); });
     });
@@ -701,7 +702,7 @@
     const acc = { uin: newUin(), phone, nick, pass, created: Date.now(), invitedBy: inviter };
     mutate((d) => {
       d.accounts[acc.uin] = acc;
-      d.contacts[acc.uin] = Object.keys(BOTS);
+      d.contacts[acc.uin] = Object.keys(BOTS).filter((u) => !(BOTS[u].persona && BOTS[u].persona.lite));
       d.lastLogin = acc.uin;
     });
     recordReferral(acc);
@@ -815,7 +816,7 @@
 
     $('#tb-wall').onclick = () => openAux('wall', me.uin);
     $('#tb-vinyl').onclick = () => openAux('vinyl');
-    $('#tb-random').onclick = randomMeet;
+    $('#tb-random').onclick = () => openAux('people');
     $('#tb-fridge').onclick = () => openAux('fridge', me.uin);
     $('#tb-events').onclick = () => openAux('events');
     $('#tb-cinema').onclick = () => openAux('cinema');
@@ -1144,6 +1145,15 @@
     '000777': { avatar: 'cool', tier: 'gold', fridge: ['GB', 'US'], dossierOpen: true, dossier: ['Аватар в очках: как у всех, кто стоит за вертушками.', 'Музыка, винил, диджеинг. Знает коллекцию наизусть и запоминает, что нравится тебе.', 'Сначала на «вы», потом на «ты», потом «дружище». Советует, учится на реакции, что просили удалить — не предлагает.'] },
   };
   const BOT_REF = { '100500': '000001', '777777': '000001', '200200': '000001', '555123': '100500', '31337': '777777', '404404': '200200', '123456': null, '000001': null, '000777': '777777' };
+  const LITE_AV = { sunny: 'laugh', calm: 'neutral', nerd: 'cool', biz: 'think', warm: 'blush', sport: 'party' };
+  const LITE_STYLE_RU = { sunny: 'Пишет с восклицаниями и солнышками: заряжает даже через экран.', calm: 'Спокойный тон, без восклицаний. Отвечает по существу и не торопит.', nerd: 'Всё с маленькой буквы, коротко, по-гиковски. Шуток не объясняет.', biz: 'Говорит по делу и на «вы», пока не подружится. Фиксирует договорённости.', warm: 'Тёплые слова и сердечки. Слушает лучше, чем говорит, но говорит тоже хорошо.', sport: 'Бодро, с восклицаниями. Любое дело измеряет подходами.' };
+  const LITE_FOOD = { sunny: ['lemonade', 'watermelon'], calm: ['tea', 'cookies'], nerd: ['cola', 'pizza'], biz: ['coffee', 'salmon'], warm: ['redwine', 'cake'], sport: ['milk', 'pelmeni'] };
+  const LITE_FRIDGE = { oksana: ['TR', 'TH', 'MV'], dimon: ['KZ'], alisa: ['CZ'], stas: ['JP'], marina: ['IT', 'FR'], egor: ['AE', 'DE'], nadya: ['IN'], pasha: ['RU'], liza: ['ES'], timur: ['GE'] };
+  Brain.LITE_PEOPLE.forEach((o) => {
+    const P = BOTS[o.uin] && BOTS[o.uin].persona; if (!P) return;
+    BOT_EXTRA[o.uin] = { interests: o.interests, circle: 'chat', wall: [{ kind: 'text', text: o.hi }, { kind: 'text', text: o.about }] };
+    BOT_MORE[o.uin] = { avatar: LITE_AV[o.style] || 'smile', tier: 'basic', fridge: LITE_FRIDGE[o.id] || [], dossierOpen: true, city: o.city, dossier: [`Аватар — смайл «${(SMILE_BY_ID[LITE_AV[o.style]] || { name: 'улыбка' }).name}». ${o.first} из ${o.cityGen}: ${o.about.split('. ').slice(1, 2).join('')}`, `Любит: ${o.interests.join(', ')}. ${o.hi}`, LITE_STYLE_RU[o.style]] };
+  });
   Object.keys(BOT_EXTRA).forEach((u) => { if (BOTS[u]) Object.assign(BOTS[u], { interests: BOT_EXTRA[u].interests, circle: BOT_EXTRA[u].circle, wallSeed: BOT_EXTRA[u].wall, invitedBy: BOT_REF[u] || null }, BOT_MORE[u] || {}); });
 
   function profileOf(uin) {
@@ -1209,9 +1219,10 @@
       <div class="tip"><b>1. Беседа.</b> Нажми на контакт — откроется окно беседы. Enter отправляет. Жёлтый смайл внизу вставляет смайлик со звуком.</div>
       <div class="tip"><b>2. Режим.</b> Список сверху: ♥ Близкие, ▦ Бизнес, ☺ Общение. Меняет твой статус, цвет окон и чей круг показан первым.</div>
       <div class="tip"><b>3. Стена ▤.</b> Публичная переписка на виду у друзей: записи, открытки, треки, комментарии. Своя — кнопка «Стена» на панели; чужая — ▤ в шапке беседы. В профиле стену можно закрыть.</div>
-      <div class="tip"><b>4. Винил ♪.</b> Пластинка раскручивается по-настоящему. Вкладка «Коллекция» → «Добавить по ссылке»: Яндекс Музыка, YouTube, SoundCloud, mp3. У каждого трека НФТ с владельцем. Кнопка «⚡ киберпанк» меняет дизайн. Консультант Винилл в контактах: напиши «посоветуй».</div>
+      <div class="tip"><b>4. Винил ♪.</b> Пластинка раскручивается, тонарм сам опускается на дорожку и ползёт к центру. Вкладка «Радио»: Бали FM, Ева Спейс, Юхом Плюс. «Коллекция» → «Добавить по ссылке». Нажми на обложку трека — его страница: история, НФТ-паспорт, цепочка владения, стена. Винилл в контактах: «посоветуй».</div>
+      <div class="tip"><b>4б. Люди ☺.</b> Случайное знакомство с досье от Аськи и процентом совпадения по интересам, вкладка «По интересам» и все люди сети. «Познакомиться» добавляет в контакты и открывает беседу.</div>
       <div class="tip"><b>4а. Кино 🎬.</b> Фильмы и сериалы по ссылке (YouTube, VK, Rutube, mp4) — смотрятся прямо в АСЬКЕ с любого устройства. ♥ любимое, «посоветовать» другу или на стену, серии подряд, запоминает, где остановился.</div>
-      <div class="tip"><b>5. Холодильник 🧲.</b> Дверца открывается — внутри любимая еда и напитки (НФТ с номером), снаружи магниты из поездок. «Я лечу» — магнит себе и друзьям.</div>
+      <div class="tip"><b>5. Холодильник 🧲.</b> Старый добрый «Холодок-99»: дверца открывается — внутри морозилка, напитки, еда и овощной ящик (НФТ с номером), снаружи магниты из поездок с номером и формой по стране. «Я лечу» — магнит себе и друзьям, магниты и еду можно дарить.</div>
       <div class="tip"><b>6. Люди ☺ и гости 📅.</b> Случайное знакомство по интересам, мероприятия с приглашениями. Интересы — в профиле, у каждого своя страница и сообщества.</div>
       <div class="tip"><b>7. Аська и друзья.</b> Пишут сами, но редко и не мешают: помнят ответы, советуют, отвечают на стене. Конверт мигает две минуты после сообщения, потом просто ждёт.</div>
       <div class="tip"><b>8. Аватар КИРР.</b> Твой двойник: учится на переписке и отвечает друзьям твоими словами, знает друзей, где ты и что слушаешь. «Контакты → Мой аватар: обучение» или напиши ему «учись». Вернуться сюда: «Справка» → «Подсказки».</div>
@@ -1270,7 +1281,7 @@
     const t = Music.anyById(id); if (!t) return '<div class="muted">трек не найден</div>';
     const np = Music.state.trackId === id && Music.state.playing;
     const nft = trackNft(id);
-    return `<div class="trackcard ${np ? 'np' : ''}" data-track="${id}"><span class="disc" style="--c:${t.color || '#7a3cff'}"></span><div class="ti"><b>${esc(t.title)}</b><div class="muted">${esc(t.artist)} · ${t.url ? esc(t.label || t.kind) : t.year + ' · ' + Music.STYLE_NAMES[t.style]} · НФТ ${nft.serial}</div></div><button class="btn icon" data-play="${id}" title="${np ? 'Пауза' : 'Слушать'}">${np ? '❚❚' : '▶'}</button></div>`;
+    return `<div class="trackcard ${np ? 'np' : ''}" data-track="${id}"><span class="cv" data-trackpage="${esc(id)}" title="Страница трека">${coverSvg(t, 34)}</span><div class="ti"><b class="link" data-trackpage="${esc(id)}">${esc(t.title)}</b><div class="muted">${esc(t.artist)} · ${t.url ? esc(t.label || t.kind) : t.year + ' · ' + Music.STYLE_NAMES[t.style]} · НФТ ${nft.serial}</div></div><button class="btn icon" data-play="${id}" title="${np ? 'Пауза' : 'Слушать'}">${np ? '❚❚' : '▶'}</button></div>`;
   };
   const playlistCard = (pl) => {
     if (!pl) return '';
@@ -1504,6 +1515,8 @@
     else if (aux.kind === 'fridge') { const a = accountOf(aux.arg); title.innerHTML = aux.arg === me.uin ? 'Мой холодильник' : `Холодильник: ${esc(a ? a.nick : aux.arg)}`; body.innerHTML = renderFridge(aux.arg); if (accountOf(aux.arg)) wireFridge(aux.arg); }
     else if (aux.kind === 'dossier') { const a = accountOf(aux.arg); title.innerHTML = `Досье: ${esc(a ? a.nick : aux.arg)}`; body.innerHTML = renderDossier(aux.arg); if (accountOf(aux.arg)) wireDossier(aux.arg); }
     else if (aux.kind === 'events') { title.innerHTML = 'Мероприятия <small>— в гости</small>'; body.innerHTML = renderEvents(); wireEvents(); }
+    else if (aux.kind === 'people') { title.innerHTML = 'Люди <small>— знакомства и досье</small>'; body.innerHTML = renderPeople(); wirePeople(); }
+    else if (aux.kind === 'track') { const t = Music.anyById(aux.arg); title.innerHTML = t ? `♪ ${esc(t.title)} <small>— страница трека</small>` : 'Трек'; body.innerHTML = renderTrackPage(aux.arg); wireTrackPage(aux.arg); }
     else if (aux.kind === 'twin') { title.innerHTML = `${esc(twinNick(me.uin))} <small>— обучение аватара</small>`; body.innerHTML = renderTwin(); wireTwin(); }
     else if (aux.kind === 'cinema') { title.innerHTML = 'Кино <small>— фильмы и сериалы</small>'; body.innerHTML = renderCinema(); wireCinema(); }
     else if (aux.kind === 'watch') { const mv = movieOf(aux.arg); title.innerHTML = mv ? `🎬 ${esc(mv.title)}` : 'Кино'; body.innerHTML = renderWatch(aux.arg); wireWatch(aux.arg); }
@@ -1531,6 +1544,10 @@
     if (it) { openAux('interest', it.dataset.interest); return; }
     const ch = e.target.closest('[data-chat]');
     if (ch) { openChat(ch.dataset.chat); return; }
+    const tp = e.target.closest('[data-trackpage]');
+    if (tp) { openAux('track', tp.dataset.trackpage); return; }
+    const rd = e.target.closest('[data-radio]');
+    if (rd) { if (Music.state.radio === rd.dataset.radio && Music.state.playing) Music.pause(); else { Music.playRadio(rd.dataset.radio); if (aux.kind === 'vinyl') renderAux(); } return; }
     const mf = e.target.closest('[data-mfav]');
     if (mf) { toggleMovieFav(mf.dataset.mfav); return; }
     const mr = e.target.closest('[data-mrec]');
@@ -1737,6 +1754,7 @@
     const t = { id: 'x_' + uid(), title: title || 'Без названия', artist: artist || (info.kind === 'yandex' ? 'Яндекс Музыка' : info.kind === 'youtube' ? 'YouTube' : 'Неизвестный исполнитель'), url, kind: info.kind, embed: info.embed || null, src: info.src || null, h: info.h || 0, label: info.label, style: 'pop', by: null, addedBy: me.uin, ts: Date.now(), serial: '#T' + String(n).padStart(6, '0'), color: '#7a3cff', likes: [] };
     mutate((d) => { d.tracks = d.tracks || {}; d.tracks[t.id] = t; });
     Music.registerExternal(t);
+    trackLogPush(t.id, { kind: 'mint', who: me.uin, note: info.label });
     addPoints(2, 'трек в коллекцию');
     post({ type: 'tracks' });
     Snd.play('tada');
@@ -1752,13 +1770,17 @@
     const favs = (myProfile().favTracks || []).slice(); const i = favs.indexOf(id);
     if (i >= 0) favs.splice(i, 1); else favs.push(id);
     saveProfile({ favTracks: favs });
+    if (i < 0) trackLogPush(id, { kind: 'like', who: me.uin });
     const mem = memOf('000777'); Brain.vinyl.bump(mem, 'tracks', id, i >= 0 ? -1 : 1); const t = Music.anyById(id); if (t && t.style) Brain.vinyl.bump(mem, 'styles', t.style, i >= 0 ? -0.5 : 0.5); saveMem('000777', mem);
     Snd.play('click');
     if (aux.kind === 'vinyl') renderAux();
   }
+  function trackLogPush(id, entry) { mutate((d) => { d.trackLog = d.trackLog || {}; d.trackLog[id] = (d.trackLog[id] || []).concat([Object.assign({ ts: Date.now() }, entry)]).slice(-60); }); }
   function giftTrack(id, toUin) {
     const t = Music.anyById(id); if (!t || !toUin) return;
+    const prevOwner = trackNft(id).owner;
     mutate((d) => { d.trackOwners = d.trackOwners || {}; d.trackOwners[id] = toUin; });
+    trackLogPush(id, { kind: 'gift', who: me.uin, to: toUin, from: prevOwner });
     const msg = { id: uid(), from: me.uin, to: toUin, ts: Date.now(), kind: 'track', track: id, note: `Дарю НФТ трека «${t.title}» ${trackNft(id).serial}. Теперь он твой.`, text: '♪ ' + t.title };
     pushHistory(msg); post({ type: 'msg', msg }); post({ type: 'tracks' });
     addPoints(5, 'подарок НФТ'); Snd.play('tada'); toast(accountOf(toUin), 'НФТ трека подарен', null);
@@ -1772,13 +1794,67 @@
     else window.prompt('Ссылка на трек:', link);
   }
   let vtab = 'hits', vpl = null, pendingPlay = null, pendingWatch = null;
+  // проигрыватель: пластинка с бороздками и этикеткой, тонарм с противовесом и головкой, стробоскоп на диске
+  function turntableSvg(t, skin) {
+    const col = t ? t.color || '#7a3cff' : '#3cb44a';
+    const label = skin === 'cyber' ? (t ? 'NFT ' + trackNft(t.id).serial : 'NFT') : (t ? t.title : 'АСЬКА');
+    const words = String(label).split(/\s+/); const l1 = words.slice(0, 2).join(' '), l2 = words.slice(2, 4).join(' ');
+    const grooves = []; for (let r = 28; r <= 60; r += 3.2) grooves.push(`<circle cx="84" cy="80" r="${r.toFixed(1)}" fill="none" stroke="var(--tt-groove)" stroke-width="${r % 2 ? 0.6 : 1.1}" opacity="${(0.35 + ((r * 7) % 5) / 10).toFixed(2)}"/>`);
+    const strobe = []; for (let a = 0; a < 360; a += 8) { const rad = a * Math.PI / 180; strobe.push(`<circle cx="${(84 + 65 * Math.cos(rad)).toFixed(1)}" cy="${(80 + 65 * Math.sin(rad)).toFixed(1)}" r="0.9" fill="var(--tt-strobe)"/>`); }
+    return `<svg class="ttsvg" viewBox="0 0 230 160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <defs><radialGradient id="ttsheen" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".85" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/></radialGradient><filter id="ttshadow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
+      <rect x="0" y="0" width="230" height="160" rx="6" fill="var(--tt-bg)"/>
+      <rect x="4" y="4" width="222" height="152" rx="4" fill="none" stroke="var(--tt-edge)" stroke-width="1.5"/>
+      <circle cx="84" cy="80" r="69" fill="var(--tt-platter)" stroke="var(--tt-edge)" stroke-width="2"/>
+      <g class="tt-strobe">${strobe.join('')}</g>
+      <g id="v-record" class="tt-record"><circle cx="84" cy="80" r="62" fill="var(--tt-record)"/>${grooves.join('')}
+        <circle cx="84" cy="80" r="23" fill="${col}" stroke="var(--tt-labelring)" stroke-width="1.2"/>
+        <text x="84" y="${l2 ? 78 : 82}" text-anchor="middle" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" font-size="${l1.length > 9 ? 5.2 : 6.5}" fill="var(--tt-labeltext)">${esc(l1.slice(0, 14))}</text>${l2 ? `<text x="84" y="86" text-anchor="middle" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" font-size="5.2" fill="var(--tt-labeltext)">${esc(l2.slice(0, 14))}</text>` : ''}
+        <circle cx="84" cy="80" r="2.6" fill="#e8e8e8" stroke="#333" stroke-width=".6"/></g>
+      <path d="M84 18 A62 62 0 0 1 146 80 L84 80 Z" fill="#fff" opacity=".05" pointer-events="none"/><path d="M84 142 A62 62 0 0 1 22 80 L84 80 Z" fill="#fff" opacity=".04" pointer-events="none"/>
+      <circle cx="84" cy="80" r="62" fill="url(#ttsheen)" pointer-events="none"/>
+      <g class="tt-armshadow" filter="url(#ttshadow)"><g class="tt-armsh-inner"><rect x="185" y="24" width="6" height="100" rx="3" fill="#000" opacity=".45"/><rect x="181" y="116" width="14" height="18" rx="2" fill="#000" opacity=".45"/></g></g>
+      <g id="v-arm" class="tt-arm">
+        <rect x="181" y="4" width="14" height="18" rx="2" fill="var(--tt-weight)" stroke="var(--tt-edge)" stroke-width="1"/>
+        <rect x="185.5" y="22" width="5" height="100" rx="2.5" fill="var(--tt-arm)" stroke="var(--tt-edge)" stroke-width=".8"/>
+        <rect x="181" y="116" width="14" height="18" rx="2" fill="var(--tt-head)" stroke="var(--tt-edge)" stroke-width="1"/>
+        <line x1="186" y1="134" x2="183.5" y2="139" stroke="var(--tt-needle)" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="188" cy="26" r="10" fill="var(--tt-pivot)" stroke="var(--tt-edge)" stroke-width="1.2"/><circle cx="188" cy="26" r="4" fill="var(--tt-arm)"/>
+      </g>
+      <g class="tt-btns"><circle cx="24" cy="146" r="5" fill="var(--tt-btn)" stroke="var(--tt-edge)" stroke-width="1"/><circle cx="40" cy="146" r="5" fill="var(--tt-btn)" stroke="var(--tt-edge)" stroke-width="1"/><rect x="190" y="142" width="30" height="8" rx="2" fill="var(--tt-btn)" stroke="var(--tt-edge)" stroke-width="1"/></g>
+      <text x="160" y="152" font-family="Tahoma,Verdana,sans-serif" font-size="6" fill="var(--tt-text)" opacity=".8">${skin === 'cyber' ? 'ASKA-2099' : 'АСЬКА · Hi-Fi 1999'}</text>
+    </svg>`;
+  }
+  const ARM = { rest: -9, lead: 33, end: 50 };
+  function armAngle() {
+    const st = Music.state;
+    if (!st.trackId && !st.jingle) return ARM.rest;
+    if (st.jingle) return ARM.lead - 6;
+    const prog = st.kind === 'audio' && st.dur ? st.pos / st.dur : st.kind === 'synth' ? ((st.loop * 16 + st.bar) / 32) : 0.35;
+    return ARM.lead + Math.max(0, Math.min(1, prog)) * (ARM.end - ARM.lead);
+  }
+  function updateArm() {
+    const arm = $('#v-arm'); if (!arm) return;
+    const ang = armAngle().toFixed(2); const lifted = !Music.state.playing;
+    arm.style.transform = `rotate(${ang}deg)`;
+    const sh = $('.tt-armshadow'); if (sh) sh.style.transform = `translate(${lifted ? 7 : 3}px, ${lifted ? 9 : 4}px) rotate(${ang}deg)`;
+    const tt = $('.tt'); if (tt) tt.classList.toggle('lifted', lifted);
+  }
+  function loadRadio() { Object.entries(db.radio || {}).forEach(([id, v]) => Music.setStream(id, v && v.stream)); }
+  function streamDialog(id) {
+    const st = Music.stationById(id); if (!st) return;
+    const cur = (db.radio || {})[id] ? db.radio[id].stream || '' : '';
+    dialog({ title: `${st.icon} ${st.name}: прямой эфир`, body: `<div class="hint">Станция играет из общей коллекции по стилю (${st.styles.map((x) => Music.STYLE_NAMES[x]).join(', ')}). Можно подключить настоящий поток: ссылку на mp3/aac-стрим любой радиостанции. Поток услышат все.</div><label class="row mt"><span class="lbl">Поток</span><input class="field" id="rs-url" placeholder="https://…/stream.mp3" value="${esc(cur)}"></label>`,
+      buttons: [{ label: 'Сохранить', primary: true, onClick: (ov) => { const url = $('#rs-url', ov).value.trim(); mutate((d) => { d.radio = d.radio || {}; d.radio[id] = { stream: url || null, by: me.uin, ts: Date.now() }; }); loadRadio(); post({ type: 'radio' }); Snd.play('click'); if (aux.kind === 'vinyl') renderAux(); } }, { label: 'Отмена' }] });
+  }
   function renderVinyl() {
     const st = Music.state; const t = st.trackId ? Music.anyById(st.trackId) : null;
     const prof = myProfile(); const pls = prof.playlists; const favs = prof.favTracks || [];
     const skin = prof.vinylSkin || 'retro';
     const targets = [me].concat(contactsOf(me.uin).map(accountOf).filter((a) => a && !a.twinOf));
     const nft = t ? trackNft(t.id) : null;
-    const row = (x) => { const np = st.trackId === x.id; const n = trackNft(x.id); const mineNft = n.owner === me.uin; return `<div class="trow ${np ? 'np' : ''}"><button class="btn icon" data-play="${x.id}" title="Слушать">${np && st.playing ? '❚❚' : '▶'}</button><span class="disc" style="--c:${x.color || '#7a3cff'}"></span><div class="ti"><b>${esc(x.title)}</b><div class="muted">${esc(x.artist)} · ${x.url ? esc(x.label || x.kind) + ' · добавил(а) ' + esc(nickOf(x.addedBy)) : x.year + ' · ' + Music.STYLE_NAMES[x.style]}</div><div class="muted">НФТ ${n.serial} · владелец ${esc(nickOf(n.owner))}${(x.likes || []).length ? ' · ♥' + x.likes.length : ''}</div></div><button class="btn icon ${favs.includes(x.id) ? 'on' : ''}" data-fav="${x.id}" title="В избранное">♥</button><button class="btn icon" data-addpl="${x.id}" title="В плейлист">+</button>${mineNft ? `<button class="btn icon" data-gifttrack="${x.id}" title="Подарить НФТ">🎁</button>` : ''}</div>`; };
+    const station = st.radio ? Music.stationById(st.radio) : null;
+    const row = (x) => { const np = st.trackId === x.id; const n = trackNft(x.id); const mineNft = n.owner === me.uin; return `<div class="trow ${np ? 'np' : ''}"><button class="btn icon" data-play="${x.id}" title="Слушать">${np && st.playing ? '❚❚' : '▶'}</button><span class="cv" data-trackpage="${esc(x.id)}" title="Страница трека">${coverSvg(x, 30)}</span><div class="ti"><b class="link" data-trackpage="${esc(x.id)}">${esc(x.title)}</b><div class="muted">${esc(x.artist)} · ${x.url ? esc(x.label || x.kind) + ' · добавил(а) ' + esc(nickOf(x.addedBy)) : x.year + ' · ' + Music.STYLE_NAMES[x.style]}</div><div class="muted">НФТ ${n.serial} · владелец ${esc(nickOf(n.owner))} · ценность ${trackValue(x.id)}⚡</div></div><button class="btn icon ${favs.includes(x.id) ? 'on' : ''}" data-fav="${x.id}" title="В избранное">♥</button><button class="btn icon" data-addpl="${x.id}" title="В плейлист">+</button>${mineNft ? `<button class="btn icon" data-gifttrack="${x.id}" title="Подарить НФТ">🎁</button>` : ''}</div>`; };
     const hits = Music.TRACKS.map(row).join('');
     const coll = Object.values(db.tracks || {}).sort((a, b) => b.ts - a.ts);
     const collList = `<div class="row" style="margin:3px 0"><button class="btn primary" id="v-addlink">＋ Добавить по ссылке</button><span class="hint">Яндекс Музыка · YouTube · SoundCloud · mp3</span></div>` + (coll.length ? coll.map(row).join('') : '<div class="empty-note">Коллекция пуста. Добавь первый трек по ссылке — все увидят, кто его принёс.</div>');
@@ -1786,22 +1862,140 @@
     const cur = pls.find((p) => p.id === vpl);
     const plPanel = `<div class="row"><input class="field" id="pl-name" maxlength="30" placeholder="название плейлиста"><button class="btn" id="pl-new">Создать</button></div>
       ${pls.length ? pls.map((pl) => `<div class="prow ${pl.id === vpl ? 'np' : ''}" data-pl="${pl.id}"><button class="btn icon" data-playpl="${esc(pl.tracks.join(','))}" data-plname="${esc(pl.name)}" title="Слушать" ${pl.tracks.length ? '' : 'disabled'}>▶</button><div class="ti"><b>♪ ${esc(pl.name)}</b><div class="muted">${pl.tracks.length} тр.</div></div><button class="btn icon" data-pl-wall="${pl.id}" title="На стену" ${pl.tracks.length ? '' : 'disabled'}>▤</button><button class="btn icon" data-pl-chat="${pl.id}" title="В беседу" ${pl.tracks.length && active ? '' : 'disabled'}>✉</button><button class="btn icon" data-pl-del="${pl.id}" title="Удалить">×</button></div>`).join('') : '<div class="empty-note">Плейлистов пока нет. Придумай название и жми «Создать», потом «+» у треков.</div>'}
-      ${cur ? `<div class="cgroup">${esc(cur.name)}: треки</div>${cur.tracks.length ? cur.tracks.map((id, i) => `<div class="trow"><span class="muted">${i + 1}.</span><div class="ti"><b>${esc(Music.anyById(id) ? Music.anyById(id).title : id)}</b></div><button class="btn icon" data-pl-rm="${i}" title="Убрать">×</button></div>`).join('') : '<div class="empty-note">Пусто. Добавь треки кнопкой «+».</div>'}` : ''}`;
+      ${cur ? `<div class="cgroup">${esc(cur.name)}: треки</div>${cur.tracks.length ? cur.tracks.map((id, i) => `<div class="trow"><span class="muted">${i + 1}.</span><div class="ti"><b class="link" data-trackpage="${esc(id)}">${esc(Music.anyById(id) ? Music.anyById(id).title : id)}</b></div><button class="btn icon" data-pl-rm="${i}" title="Убрать">×</button></div>`).join('') : '<div class="empty-note">Пусто. Добавь треки кнопкой «+».</div>'}` : ''}`;
+    const radioPanel = `<div class="hint">Три станции из общей коллекции: у каждой свой стиль, джингл и ведущий. Можно подключить настоящий поток.</div>` + Music.STATIONS.map((r) => { const on = st.radio === r.id; const stream = (db.radio || {})[r.id] && db.radio[r.id].stream; return `<div class="station ${on ? 'on' : ''}" style="--c1:${r.color};--c2:${r.color2}"><div class="st-dial"><span class="st-ico">${r.icon}</span></div><div class="ti"><b>${esc(r.name)}</b><div class="st-slogan">${esc(r.slogan)}</div><div class="muted">${r.styles.map((x) => Music.STYLE_NAMES[x]).join(' · ')}${stream ? ' · прямой эфир' : ''}</div>${on ? `<div class="onair">● В ЭФИРЕ${st.jingle ? ': джингл' : t ? ': ' + esc(t.title) : ''}</div>` : ''}</div><button class="btn ${on ? '' : 'primary'}" data-radio="${r.id}">${on && st.playing ? '❚❚' : '▶ Слушать'}</button><button class="btn icon" data-stream="${r.id}" title="Подключить поток">⚙</button></div>`; }).join('');
     const prog = t ? (st.kind === 'audio' && st.dur ? st.pos / st.dur : st.kind === 'synth' ? ((st.loop * 16 + st.bar) / 32) : 0) : 0;
-    const timeTxt = t ? (st.kind === 'audio' ? `${fmtSec(st.pos)} / ${fmtSec(st.dur)}` : st.kind === 'synth' ? `такт ${st.bar + 1}/16 · круг ${st.loop + 1}/2` : st.kind === 'embed' ? 'играет во встроенном плеере' : 'ссылка') : '';
+    const timeTxt = t ? (st.kind === 'audio' ? `${fmtSec(st.pos)} / ${fmtSec(st.dur)}` : st.kind === 'synth' ? `такт ${st.bar + 1}/16 · круг ${st.loop + 1}/2` : st.kind === 'embed' ? 'играет во встроенном плеере' : 'ссылка') : (st.jingle ? '📻 настройка на волну…' : '');
     return `<div class="vinyl ${skin}">
       <div class="row v-top"><span class="hint">${skin === 'cyber' ? 'КИБЕР-ВИНИЛ: пластинка крутит НФТ' : 'Ретро-винил'}</span><span class="sp"></span><button class="btn" id="v-skin" title="Сменить дизайн">${skin === 'cyber' ? '📼 ретро' : '⚡ киберпанк'}</button></div>
-      <div class="tt"><div class="platter"><div class="record" id="v-record"><div class="label" style="background:${t ? t.color || '#7a3cff' : '#3cb44a'}"><span>${skin === 'cyber' ? (t ? 'NFT ' + esc(nft.serial) : 'NFT') : (t ? esc(t.title) : 'АСЬКА')}</span></div></div></div><div class="arm ${st.trackId ? 'on' : ''}" id="v-arm"></div>${skin === 'cyber' ? '<div class="neon-grid"></div>' : ''}</div>
+      <div class="tt ${st.playing ? '' : 'lifted'}">${turntableSvg(st.jingle && station ? { title: station.name, color: station.color, id: 'radio' } : t, skin)}${skin === 'cyber' ? '<div class="neon-grid"></div>' : ''}</div>
       ${t && st.kind === 'embed' && st.embed ? `<div class="embed-box"><iframe src="${esc(st.embed)}" style="height:${st.embedH || 180}px" allow="autoplay; clipboard-write; encrypted-media" allowfullscreen loading="lazy"></iframe></div>` : ''}
       ${t && st.kind === 'link' ? `<div class="hint">Эта ссылка не встраивается: <a href="${esc(t.url)}" target="_blank" rel="noopener">открыть в новой вкладке</a></div>` : ''}
       ${st.error ? `<div class="err">${esc(st.error)}</div>` : ''}
-      <div class="np-box inset"><div class="row"><b id="v-title" class="sp">${t ? esc(t.title) : 'Поставь пластинку'}</b>${t ? `<button class="btn icon ${favs.includes(t.id) ? 'on' : ''}" data-fav="${t.id}" title="В избранное">♥</button>` : ''}</div><div class="muted" id="v-sub">${t ? esc(t.artist) + ' · ' + (t.url ? esc(t.label || t.kind) : t.year + ' · ' + Music.STYLE_NAMES[t.style]) : '12 хитов + ваша коллекция по ссылкам'}</div>${t ? `<div class="muted">НФТ ${esc(nft.serial)} · владелец ${esc(nickOf(nft.owner))}${t.url ? ' · добавил(а) ' + esc(nickOf(t.addedBy)) : ''}</div>` : ''}<div class="prog" id="v-prog" title="${st.kind === 'audio' ? 'Перемотать' : ''}"><i style="width:${Math.round(prog * 100)}%"></i></div><div class="hint" id="v-pos">${timeTxt || 'Друзья увидят, что ты слушаешь'}${st.queueName ? ' · ' + esc(st.queueName) : ''}</div></div>
+      <div class="np-box inset ${station ? 'radio' : ''}" ${station ? `style="--c1:${station.color};--c2:${station.color2}"` : ''}>${station ? `<div class="onair-line">📻 ${esc(station.name)} · <span id="v-onair">${esc(st.onAir || station.slogan)}</span></div>` : ''}<div class="row">${t ? `<span class="cv" data-trackpage="${esc(t.id)}">${coverSvg(t, 36)}</span>` : ''}<div class="sp"><b id="v-title">${t ? `<span class="link" data-trackpage="${esc(t.id)}">${esc(t.title)}</span>` : st.jingle ? 'Джингл станции' : 'Поставь пластинку'}</b><div class="muted" id="v-sub">${t ? esc(t.artist) + ' · ' + (t.url ? esc(t.label || t.kind) : t.year + ' · ' + Music.STYLE_NAMES[t.style]) : '12 хитов, коллекция по ссылкам и три радиостанции'}</div>${t ? `<div class="muted">НФТ ${esc(nft.serial)} · владелец ${esc(nickOf(nft.owner))} · ценность ${trackValue(t.id)}⚡</div>` : ''}</div>${t ? `<button class="btn icon ${favs.includes(t.id) ? 'on' : ''}" data-fav="${t.id}" title="В избранное">♥</button>` : ''}</div><div class="prog" id="v-prog" title="${st.kind === 'audio' ? 'Перемотать' : ''}"><i style="width:${Math.round(prog * 100)}%"></i></div><div class="hint" id="v-pos">${timeTxt || 'Друзья увидят, что ты слушаешь'}${st.queueName && !station ? ' · ' + esc(st.queueName) : ''}</div></div>
       <div class="row v-ctrl"><button class="btn" id="v-prev" title="Предыдущий">⏮</button><button class="btn primary" id="v-toggle" title="Играть / пауза">${st.playing ? '❚❚' : '▶'}</button><button class="btn" id="v-next" title="Следующий">⏭</button><button class="btn icon ${st.shuffle ? 'down' : ''}" id="v-shuffle" title="Случайный порядок">⤮</button><button class="btn icon ${st.repeat ? 'down' : ''}" id="v-repeat" title="Повтор">⟲</button><input type="range" id="v-vol" min="0" max="100" value="${Math.round(Music.volume * 100)}" title="Громкость"><label class="row" title="Шипение пластинки"><input type="checkbox" id="v-crackle" ${Music.crackle ? 'checked' : ''}> шип</label></div>
       <div class="row v-share"><span class="hint">Поделиться:</span><button class="btn" id="v-tochat" ${t && active ? '' : 'disabled'} title="${active ? 'Отправить в открытую беседу' : 'Сначала открой беседу'}">✉ в беседу</button><button class="btn" id="v-towall" ${t ? '' : 'disabled'}>▤ на стену</button><select class="field" id="v-wallto">${targets.map((a) => `<option value="${a.uin}">${a.uin === me.uin ? 'мою' : esc(a.nick)}</option>`).join('')}</select><button class="btn" id="v-link" ${t ? '' : 'disabled'} title="Скопировать ссылку на трек">🔗</button></div>
-      <div class="tabs v-tabs"><button class="${vtab === 'hits' ? 'on' : ''}" data-vt="hits">Хиты</button><button class="${vtab === 'coll' ? 'on' : ''}" data-vt="coll">Коллекция${coll.length ? ' (' + coll.length + ')' : ''}</button><button class="${vtab === 'fav' ? 'on' : ''}" data-vt="fav">♥${favs.length ? ' ' + favs.length : ''}</button><button class="${vtab === 'pl' ? 'on' : ''}" data-vt="pl">Плейлисты${pls.length ? ' (' + pls.length + ')' : ''}</button></div>
-      <div class="tabpanel v-list">${vtab === 'hits' ? hits : vtab === 'coll' ? collList : vtab === 'fav' ? favList : plPanel}</div>
-      <div class="hint">Консультант <b class="link" data-chat="000777">Винилл</b> подберёт трек: напиши ему «посоветуй».</div>
+      <div class="tabs v-tabs"><button class="${vtab === 'hits' ? 'on' : ''}" data-vt="hits">Хиты</button><button class="${vtab === 'coll' ? 'on' : ''}" data-vt="coll">Коллекция${coll.length ? ' (' + coll.length + ')' : ''}</button><button class="${vtab === 'fav' ? 'on' : ''}" data-vt="fav">♥${favs.length ? ' ' + favs.length : ''}</button><button class="${vtab === 'pl' ? 'on' : ''}" data-vt="pl">Плейлисты${pls.length ? ' (' + pls.length + ')' : ''}</button><button class="${vtab === 'radio' ? 'on' : ''}" data-vt="radio">📻 Радио</button></div>
+      <div class="tabpanel v-list">${vtab === 'hits' ? hits : vtab === 'coll' ? collList : vtab === 'fav' ? favList : vtab === 'radio' ? radioPanel : plPanel}</div>
+      <div class="hint">Нажми на обложку или название — откроется страница трека: история, НФТ-паспорт, стена. Консультант <b class="link" data-chat="000777">Винилл</b> подберёт трек: напиши ему «посоветуй».</div>
     </div>`;
+  }
+  /* ================= страница трека: история, НФТ-паспорт, стена ================= */
+  const TRACK_STORY = {
+    dialup: 'Записана в 1999-м на кухне под звук модема: Катя ждала, пока догрузится страница, и напела первый куплет. «Модемы» — это Вова и его старый US Robotics на бэк-вокале.',
+    summer99: 'Серёга свёл этот трек за одну ночь перед дискотекой в универе. Диск пошёл по рукам, кассета — по общагам. Говорят, с него началось лето 1999-го.',
+    cassette: 'Ленка записала её на диктофон в Питере, в дождь, с одного дубля. Потом переписывала на кассеты и раздавала друзьям вместо открыток.',
+    pager: 'Макс написал её за вечер, когда пейджер молчал третий день. Лаунж с одной мыслью: тишина — тоже сообщение.',
+    disco99: 'Гимн дискотеки в актовом зале. Серёга клянётся, что бас там настоящий, а не из «Юпитера». Проверить уже нельзя.',
+    sevens: 'Счастливый номер 777777 и три семёрки в припеве. Серёга считает трек талисманом и ставит его перед каждым сейшном.',
+    bsod: 'Вова собрал мелодию на спектруме между двумя синими экранами. Чиптюн, который, как он говорит, «не падает».',
+    karas: 'Батя привёз эту мелодию с рыбалки: насвистывал у костра, Серёга подобрал аккорды. Про карася, который был вот такой.',
+    uhoh: 'Ремикс на фирменное «о-оу!» АСЬКИ. Аська записала его сама, из своих же звуков, и очень гордится.',
+    cookies: 'Чайная баллада Аськи про печеньки, которые закончились. Записана между вопросом «когда звонил родным?» и ответом.',
+    lisboa: 'Аська и Макс мечтали о Лиссабоне, не выезжая из Урюпинска. Получился лаунж для тех, кто ещё не улетел.',
+    flower: 'Про цветочек-статус, который меняет цвет. Ленкины слова, Аськина мелодия. Самая короткая песня в коллекции.',
+  };
+  function trackStats(id) {
+    let plays = 0, likes = 0, inPl = 0;
+    Object.values(db.profile || {}).forEach((p) => { plays += (p.plays || {})[id] || 0; if ((p.favTracks || []).includes(id)) likes++; (p.playlists || []).forEach((pl) => { if (pl.tracks.includes(id)) inPl++; }); });
+    const t = Music.anyById(id); if (t && t.likes) likes += t.likes.length;
+    const comments = (db.wall['trk_' + id] || []).length;
+    return { plays, likes, inPl, comments };
+  }
+  function trackValue(id) {
+    const s = trackStats(id); const t = Music.anyById(id); if (!t) return 0;
+    const log = (db.trackLog || {})[id] || [];
+    return s.plays + s.likes * 5 + s.inPl * 3 + s.comments * 2 + log.filter((e) => e.kind === 'gift').length * 8 + (t.url ? 10 : 4);
+  }
+  function ensureTrackLog(id) {
+    const t = Music.anyById(id); if (!t) return;
+    const log = (db.trackLog || {})[id] || [];
+    if (!log.some((e) => e.kind === 'mint')) trackLogPush(id, { kind: 'mint', who: trackNft(id).owner, ts: t.url ? t.ts || Date.now() : new Date(t.year || 1999, 5, 1).getTime(), note: t.url ? t.label : 'оригинальная запись' });
+    if (!db.wall['trk_' + id]) {
+      const artist = t.by ? Object.values(BOTS).find((b) => b.brain === t.by) : null;
+      const seeds = [];
+      if (artist) seeds.push({ id: uid(), from: artist.uin, ts: Date.now() - 36e5 * 30, likes: [], kind: 'text', text: artist.persona.v(pick(['Это моя запись. Если где-то фальшивит — так и задумано.', 'Писал(а) от души. Слушайте громче.', 'Первый комментарий — мой, по праву автора :)'])) });
+      seeds.push({ id: uid(), from: '000777', ts: Date.now() - 36e5 * 20, likes: [], kind: 'text', text: t.url ? `Добавлен по ссылке (${t.label || t.kind}). Оценим вместе: пишите, под какое настроение заходит.` : `${Music.STYLE_NAMES[t.style]} ${t.year} года. ${t.style === 'lounge' || t.style === 'ballad' ? 'Для вечера и тишины.' : 'Для громкости и окон нараспашку.'} Винилл одобряет.` });
+      mutate((d) => { d.wall['trk_' + id] = seeds; });
+    }
+  }
+  function renderTrackPage(id) {
+    const t = Music.anyById(id); if (!t) return '<div class="empty-note">Трек не найден.</div>';
+    ensureTrackLog(id);
+    const st = Music.state; const np = st.trackId === id; const nft = trackNft(id); const stats = trackStats(id); const favs = myProfile().favTracks || [];
+    const log = ((db.trackLog || {})[id] || []).slice().sort((a, b) => a.ts - b.ts);
+    const posts = wallOf('trk_' + id);
+    const who = (u) => esc(nickOf(u));
+    const logLine = (e) => e.kind === 'mint' ? `${fmtDay(e.ts)} — выпущен НФТ, владелец ${who(e.who)}${e.note ? ' · ' + esc(e.note) : ''}` : e.kind === 'gift' ? `${fmtDay(e.ts)} — ${who(e.who)} подарил(а) НФТ → ${who(e.to)}` : e.kind === 'like' ? `${fmtDay(e.ts)} — ♥ от ${who(e.who)}` : `${fmtDay(e.ts)} — ${esc(e.kind)}`;
+    const story = t.url ? `Добавлен в сеть ${fmtDay(t.ts || Date.now())}: ${who(t.addedBy)} принёс(ла) ссылку (${esc(t.label || t.kind)}). ${t.story ? esc(t.story) : 'Историю трека может дописать тот, кто его добавил.'}` : TRACK_STORY[id] || 'История пока не записана.';
+    return `<div class="trackpage">
+      <div class="tp-head"><span class="cv big">${coverSvg(t, 96)}</span><div class="tp-info"><b class="tp-title">${esc(t.title)}</b><div>${t.by && Object.values(BOTS).find((b) => b.brain === t.by) ? `<span class="link" data-wall="${Object.values(BOTS).find((b) => b.brain === t.by).uin}">${esc(t.artist)}</span>` : esc(t.artist)}</div><div class="muted">${t.url ? esc(t.label || t.kind) : t.year + ' · ' + Music.STYLE_NAMES[t.style]}${t.bpm ? ' · ' + t.bpm + ' bpm' : ''}</div>
+        <div class="row tp-actions"><button class="btn primary" data-play="${esc(id)}">${np && st.playing ? '❚❚ Пауза' : '▶ Слушать'}</button><button class="btn icon ${favs.includes(id) ? 'on' : ''}" data-fav="${esc(id)}" title="В избранное">♥</button><button class="btn icon" data-addpl="${esc(id)}" title="В плейлист">+</button><button class="btn" id="tp-chat" ${active ? '' : 'disabled'} title="В открытую беседу">✉</button><button class="btn" id="tp-wall" title="На мою стену">▤</button><button class="btn" id="tp-link" title="Ссылка">🔗</button>${nft.owner === me.uin ? `<button class="btn" data-gifttrack="${esc(id)}">🎁 Подарить НФТ</button>` : ''}</div></div></div>
+      <div class="nftpass"><div class="np-row"><span class="np-k">НФТ-паспорт</span><b class="mono">${esc(nft.serial)}</b></div><div class="np-row"><span class="np-k">Владелец</span><b class="link" data-wall="${esc(nft.owner)}">${who(nft.owner)}</b></div><div class="np-row"><span class="np-k">Добавил(а)</span><span>${who(nft.addedBy)}</span></div><div class="np-row"><span class="np-k">Ценность</span><b>${trackValue(id)} ⚡</b> <span class="muted">= прослушивания + 5×♥ + 3×плейлисты + 2×записи + 8×подарки</span></div><div class="np-row"><span class="np-k">Статистика</span><span>▶ ${stats.plays} · ♥ ${stats.likes} · в плейлистах ${stats.inPl} · записей ${stats.comments}</span></div></div>
+      <div class="legend-line">История</div><div class="tp-story">${story}</div>
+      ${t.url && t.addedBy === me.uin ? `<div class="row"><input class="field sp" id="tp-story" maxlength="240" placeholder="дописать историю трека" value="${esc(t.story || '')}"><button class="btn" id="tp-storysave">Сохранить</button></div>` : ''}
+      <div class="legend-line">Цепочка владения</div><div class="tp-log">${log.length ? log.map((e) => `<div class="tp-logline">${logLine(e)}</div>`).join('') : '<div class="muted">пусто</div>'}</div>
+      <div class="legend-line">Стена трека (${posts.length})</div>
+      <div class="composer inset"><div class="row"><input class="field sp" id="tp-text" maxlength="240" placeholder="что думаешь об этом треке? Enter — отправить"><button class="btn primary" id="tp-send">Написать</button></div></div>
+      <div id="w-posts">${posts.length ? posts.map((p) => renderPost(p, 'trk_' + id)).join('') : '<div class="empty-note">Пока никто не написал. Будь первым.</div>'}</div>
+    </div>`;
+  }
+  function wireTrackPage(id) {
+    const t = Music.anyById(id); if (!t) return;
+    const send = () => { const inp = $('#tp-text'); const v = inp.value.trim(); if (!v) return; const p = { id: uid(), from: me.uin, ts: Date.now(), likes: [], kind: 'text', text: v }; addPost('trk_' + id, p); post({ type: 'wall', uin: 'trk_' + id, from: me.uin }); addPoints(2, 'запись о треке'); Snd.play('sent'); setTimeout(() => trackWallReply(id, p), 2500 + Math.random() * 3000); renderAux(); };
+    $('#tp-send').onclick = send; $('#tp-text').addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+    $('#tp-wall').onclick = () => { postWall(me.uin, { kind: 'track', track: id }); toast(me, 'трек на стене', null); };
+    $('#tp-link').onclick = () => shareTrackLink(id);
+    const tc = $('#tp-chat'); if (tc) tc.onclick = () => { if (!active) return; sendSpecial(active, { kind: 'track', track: id, text: '♪ ' + t.title }); toast(accountOf(active), 'трек отправлен', null); };
+    const ss = $('#tp-storysave'); if (ss) ss.onclick = () => { const v = $('#tp-story').value.trim(); mutate((d) => { if (d.tracks[id]) d.tracks[id].story = v; }); Music.registerExternal(db.tracks[id]); post({ type: 'tracks' }); Snd.play('click'); renderAux(); };
+    $$('[data-gifttrack]').forEach((b) => (b.onclick = () => { const friends = contactsOf(me.uin).map(accountOf).filter((a) => a && !a.twinOf); dialog({ title: '🎁 Подарить НФТ трека', body: `<div class="hint">Владелец НФТ сменится, трек останется в коллекции, подарок попадёт в цепочку владения.</div><div class="row mt"><span class="lbl">Кому</span><select class="field" id="gt-to">${friends.map((a) => `<option value="${a.uin}">${esc(a.nick)}</option>`).join('')}</select></div>`, buttons: [{ label: 'Подарить', primary: true, onClick: (ov) => { giftTrack(id, $('#gt-to', ov).value); renderAux(); } }, { label: 'Отмена' }] }); }));
+    $$('[data-addpl]').forEach((b) => (b.onclick = () => addToPlaylist(b.dataset.addpl)));
+    $$('[data-fav]').forEach((b) => (b.onclick = () => { toggleFav(b.dataset.fav); renderAux(); }));
+  }
+  function trackWallReply(id, p) {
+    if (!me) return;
+    const t = Music.anyById(id); if (!t) return;
+    const artist = t.by ? Object.values(BOTS).find((b) => b.brain === t.by) : null;
+    const bot = artist && Math.random() < 0.6 ? artist : BOTS['000777'];
+    const P = bot.persona;
+    const lines = bot.uin === '000777' ? ['Записал мнение в заметки о тебе. Вкус формируется :)', 'Согласен. Ставлю этот трек в твою ротацию чуть чаще.', 'Хорошее слово о треке — это плюс к его ценности. Так и считаем.'] : ['Спасибо! Автору приятно, когда пишут.', 'Вот это отзыв! Запишу следующий ещё лучше.', 'Читаю и улыбаюсь. Слушай громче :)'];
+    addReply('trk_' + id, p.id, { id: uid(), from: bot.uin, ts: Date.now(), text: bot.uin === '000777' ? pick(lines) : P.v(pick(lines)) });
+    toast(bot, 'ответил(а) на стене трека', null); Snd.play('click');
+    if (aux.kind === 'track' && aux.arg === id) renderAux();
+  }
+
+  /* ================= люди: знакомства по интересам, досье ================= */
+  let peopleTab = 'meet', meetIdx = 0, meetOrder = null;
+  function peoplePool() { return allKnown().filter((a) => a.uin !== me.uin && !a.twinOf && !(BOTS[a.uin] && !BOTS[a.uin].persona)); }
+  function personCity(uin) { const b = BOTS[uin]; if (b && b.persona && b.persona.city) return b.persona.city; const mem = (db.memory[uin] || {})['000001']; return mem && mem.city ? mem.city : (b && b.persona ? { aska: 'Урюпинск', kat: 'Москва', vova: 'Томск', serega: 'Урюпинск', lena: 'Петербург', batya: 'дача', max: 'Петербург', vinyl: 'в проигрывателе' }[b.brain] || '' : ''); }
+  function renderPeople() {
+    const mine = contactsOf(me.uin);
+    const pool = peoplePool();
+    const scored = pool.map((a) => ({ a, pct: matchPct(me.uin, a.uin), common: commonInterests(me.uin, a.uin), known: mine.includes(a.uin) })).sort((x, y) => (x.known - y.known) || ((y.pct || 0) - (x.pct || 0)));
+    const card = (x, big) => { const d = buildDossier(x.a.uin); const p = profileOf(x.a.uin); return `<div class="pcard ${big ? 'big' : ''}" data-uin="${esc(x.a.uin)}">
+        <div class="pc-head"><span class="ico">${avatarSvg(x.a.uin, big ? 44 : 28)}</span><div class="who"><b class="link" data-wall="${esc(x.a.uin)}">${esc(x.a.nick)}</b> <span class="muted">#${esc(x.a.uin)}</span><div class="hint">${esc(personCity(x.a.uin))}${personCity(x.a.uin) ? ' · ' : ''}${esc(xstatusOf(x.a.uin) || statusInfo(statusOf(x.a.uin)).label)}${x.known ? ' · уже в контактах' : ''}</div></div><div class="pct ${x.pct == null ? '' : x.pct >= 50 ? 'hi' : x.pct > 0 ? 'mid' : ''}" title="совпадение интересов">${x.pct == null ? '—' : x.pct + '%'}</div></div>
+        <div class="chips small">${p.interests.map((i) => `<span class="chip ${x.common.includes(i) ? 'on' : ''}" data-interest="${esc(i)}">${esc(i)}</span>`).join('') || '<span class="muted">интересы не указаны</span>'}</div>
+        <div class="pc-dossier"><div class="muted">Досье от Аськи:</div><div>${esc(d.avatar[0] || '')}</div>${big ? `<div>${esc(d.likes[0] || '')}</div><div class="pc-verdict">${esc(d.verdict)}</div>` : `<div class="pc-verdict">${esc(d.verdict)}</div>`}</div>
+        <div class="row pc-actions"><button class="btn primary" data-meet="${esc(x.a.uin)}">${x.known ? '✉ Написать' : '☺ Познакомиться'}</button><button class="btn" data-dossier="${esc(x.a.uin)}">Досье</button><button class="btn" data-wall="${esc(x.a.uin)}">Стена</button></div></div>`; };
+    let panel = '';
+    if (peopleTab === 'meet') {
+      const cands = scored.filter((x) => !x.known); const list = cands.length ? cands : scored;
+      if (!meetOrder || meetOrder.length !== list.length) { meetOrder = list.map((_, i) => i).sort(() => Math.random() - 0.5); meetIdx = 0; }
+      const x = list[meetOrder[meetIdx % meetOrder.length]];
+      panel = x ? `<div class="hint">Аська подбирает случайного человека, с которым ты ещё не знаком. Совпадение считается по интересам из профиля${myProfile().interests.length ? '' : ' — укажи свои в профиле, чтобы проценты заработали'}.</div>${card(x, true)}<div class="row mt"><button class="btn" id="pp-next">🎲 Следующий</button><span class="hint">${cands.length} ${pluralRu(cands.length, 'незнакомый человек', 'незнакомых человека', 'незнакомых людей')} в сети АСЬКИ</span></div>` : '<div class="empty-note">Людей пока нет.</div>';
+    } else if (peopleTab === 'match') {
+      const list = scored.filter((x) => x.pct != null).sort((x, y) => (y.pct || 0) - (x.pct || 0));
+      panel = `<div class="hint">По совпадению интересов: кто ближе всего к тебе.</div>` + (list.length ? list.map((x) => card(x, false)).join('') : '<div class="empty-note">Укажи интересы в профиле — и список заполнится.</div>');
+    } else panel = `<div class="hint">Все люди в сети АСЬКИ с досье от Аськи. Нажми на имя — стена, «Досье» — полный разбор.</div>` + scored.map((x) => card(x, false)).join('');
+    return `<div class="people">
+      <div class="tabs pp-tabs"><button class="${peopleTab === 'meet' ? 'on' : ''}" data-pt="meet">🎲 Знакомство</button><button class="${peopleTab === 'match' ? 'on' : ''}" data-pt="match">По интересам</button><button class="${peopleTab === 'all' ? 'on' : ''}" data-pt="all">Все (${scored.length})</button></div>
+      <div class="tabpanel v-list">${panel}</div></div>`;
+  }
+  function wirePeople() {
+    $$('.pp-tabs button').forEach((b) => (b.onclick = () => { peopleTab = b.dataset.pt; Snd.play('click'); renderAux(); }));
+    const nx = $('#pp-next'); if (nx) nx.onclick = () => { meetIdx++; Snd.play('knock'); renderAux(); };
+    $$('[data-meet]').forEach((b) => (b.onclick = () => { const u = b.dataset.meet; const known = contactsOf(me.uin).includes(u); const common = commonInterests(me.uin, u); const pct = matchPct(me.uin, u); if (!known) { addContact(u); Snd.play('tada'); toast(accountOf(u), 'теперь в контактах', null); } openChat(u); const ta = $('#compose'); if (ta && !ta.value && !known) ta.value = common.length ? `Привет! Аська говорит, у нас ${pct}% совпадения: ${common.join(', ')}. Это правда?` : 'Привет! Аська нас познакомила. Расскажи о себе?'; }));
+    $$('[data-dossier]').forEach((b) => (b.onclick = () => openAux('dossier', b.dataset.dossier)));
   }
   const fmtSec = (s) => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + pad(s % 60); };
   function wireVinyl() {
@@ -1820,7 +2014,9 @@
     $('#v-link').onclick = () => { if (Music.state.trackId) shareTrackLink(Music.state.trackId); };
     const al = $('#v-addlink'); if (al) al.onclick = addLinkDialog;
     $$('[data-addpl]').forEach((b) => (b.onclick = () => addToPlaylist(b.dataset.addpl)));
+    $$('[data-stream]').forEach((b) => (b.onclick = () => streamDialog(b.dataset.stream)));
     $$('[data-fav]').forEach((b) => (b.onclick = () => toggleFav(b.dataset.fav)));
+    setTimeout(updateArm, 30);
     $$('[data-gifttrack]').forEach((b) => (b.onclick = () => { const id = b.dataset.gifttrack; const friends = contactsOf(me.uin).map(accountOf).filter((a) => a && !a.twinOf); dialog({ title: '🎁 Подарить НФТ трека', body: `<div class="hint">Владелец НФТ сменится, трек останется в коллекции.</div><div class="row mt"><span class="lbl">Кому</span><select class="field" id="gt-to">${friends.map((a) => `<option value="${a.uin}">${esc(a.nick)}</option>`).join('')}</select></div>`, buttons: [{ label: 'Подарить', primary: true, onClick: (ov) => giftTrack(id, $('#gt-to', ov).value) }, { label: 'Отмена' }] }); }));
     const plNew = $('#pl-new');
     if (plNew) {
@@ -1849,6 +2045,7 @@
       motorAngle = (motorAngle + motorSpeed * dt) % 360;
       const rec = $('#v-record');
       if (rec) rec.style.transform = `rotate(${motorAngle}deg)`;
+      if (rec && Math.floor(now / 250) !== Math.floor((now - dt * 1000) / 250)) updateArm();
       if (rec && (motorSpeed > 0 || Music.state.motor)) motorRaf = requestAnimationFrame(step); else motorRaf = null;
     };
     motorRaf = requestAnimationFrame(step);
@@ -1866,7 +2063,7 @@
     cell.hidden = !t;
     if (t) cell.innerHTML = `${st.playing ? '♪' : '❚❚'} ${esc(t.title)}`;
   }
-  let lastMusicTrack = null;
+  let lastMusicTrack = null, lastJingle = false;
   Music.onChange((st) => {
     updateNowPlaying();
     if (st.trackId && st.trackId !== lastMusicTrack && st.playing && me) {
@@ -1874,8 +2071,9 @@
       const t = Music.anyById(st.trackId); if (t && t.style) { const mem = memOf('000777'); Brain.vinyl.bump(mem, 'styles', t.style, 0.3); saveMem('000777', mem); }
     }
     if (aux.kind === 'vinyl') {
-      startMotor();
-      const arm = $('#v-arm'); if (arm) arm.classList.toggle('on', !!st.trackId);
+      startMotor(); updateArm();
+      const oa = $('#v-onair'); if (oa && st.onAir) oa.textContent = st.onAir;
+      if (st.jingle !== lastJingle) { lastJingle = st.jingle; renderAux(); return; }
       const tg = $('#v-toggle'); if (tg) tg.textContent = st.playing ? '❚❚' : '▶';
       const pos = $('#v-pos'); const pr = $('#v-prog i');
       if (pos && st.trackId) { pos.textContent = st.kind === 'audio' ? `${fmtSec(st.pos)} / ${fmtSec(st.dur)}` : st.kind === 'synth' ? `такт ${st.bar + 1}/16 · круг ${st.loop + 1}/2${st.queueName ? ' · ' + st.queueName : ''}` : pos.textContent; }
@@ -2075,6 +2273,7 @@
   ];
   const FOOD_BY = {}; FOOD.forEach((f) => (FOOD_BY[f.code] = f));
   const BOT_FOOD = { '000777': ['coffee', 'cola'], '000001': ['tea', 'cookies', 'cake'], '100500': ['cola', 'pizza', 'icecream'], '31337': ['coffee', 'pelmeni'], '777777': ['baltika0', 'shashlik', 'champagne'], '555123': ['strawberry', 'whitewine', 'cake'], '200200': ['salmon', 'olivier', 'tea'], '404404': ['tea', 'cheese'], '123456': ['coffee'] };
+  Brain.LITE_PEOPLE.forEach((o) => { BOT_FOOD[o.uin] = LITE_FOOD[o.style] || ['tea']; });
   function foodOf(uin) {
     const p = profileOf(uin);
     if (p.food) return p.food;
@@ -2086,31 +2285,45 @@
   function setFood(uin, list) { mutate((d) => { d.profile[uin] = Object.assign(profileOf(uin), { food: list }); }); }
   const foodCard = (code, serial, text) => { const f = FOOD_BY[code] || { icon: '🍽', name: code }; return `<div class="magnetcard"><span class="mg food-ico">${f.icon}</span><div class="ti"><b>${esc(f.name)}</b><div class="muted">НФТ ${esc(serial || '')} · из холодильника</div>${text ? `<div class="txt">${renderText(text)}</div>` : ''}</div></div>`; };
   let fridgeOpen = false;
+  const FOOD_ZONE = { icecream: 'freezer', pelmeni: 'freezer', watermelon: 'drawer', strawberry: 'drawer', olivier: 'food' };
   function renderFridge(uin) {
     const a = accountOf(uin); if (!a) return '<div class="empty-note">Нет такого пользователя.</div>';
     const mine = uin === me.uin;
     const items = fridgeOf(uin);
     const food = foodOf(uin);
     const countries = new Set(items.map((m) => m.country));
-    const magnet = (m) => { const c = COUNTRY[m.country] || COUNTRY.UR; const from = m.from === uin ? '' : (accountOf(m.from) || { nick: m.from }).nick; return `<button class="magnet" data-mid="${m.id}" title="${esc(c.name)} ${m.id}${from ? ' · от ' + esc(from) : ''} · ${fmtDay(m.ts)}">${magnetSvg(m.country, 44)}${from ? `<span class="from">от ${esc(from)}</span>` : ''}</button>`; };
-    const tile = (f) => { const d = FOOD_BY[f.item] || { icon: '🍽', name: f.item }; const from = f.from === uin ? '' : (accountOf(f.from) || { nick: f.from }).nick; return `<button class="food" data-fid="${f.id}" title="${esc(d.name)} · НФТ ${f.id}${from ? ' · от ' + esc(from) : ''}"><i>${d.icon}</i><span>${esc(d.name)}</span>${from ? `<small>от ${esc(from)}</small>` : ''}</button>`; };
-    const drinks = food.filter((f) => (FOOD_BY[f.item] || {}).kind === 'drink'), eats = food.filter((f) => (FOOD_BY[f.item] || {}).kind !== 'drink');
-    return `<div class="wall-head"><span class="ico">${avatarSvg(uin, 30)}</span><div class="who"><b>${mine ? 'Мой холодильник' : 'Холодильник: ' + esc(a.nick)}</b><div class="hint">снаружи магниты: ${items.length} (стран: ${countries.size}) · внутри: ${food.length} ${mine ? '· всё — НФТ с номером' : ''}</div></div></div>
-      <div class="row wall-actions">${mine ? '<button class="btn primary" id="fr-fly">✈ Я лечу</button><button class="btn" id="fr-gift">🎁 Подарить</button><button class="btn" id="fr-add">🍽 Добавить еду</button>' : `<button class="btn" id="fr-giftto">🎁 Подарить ${esc(a.nick)}</button>`}</div>
-      <div class="fridge3 ${fridgeOpen ? 'open' : ''}" id="fridge3">
-        <div class="fr-top"></div>
-        <div class="fr-body"><div class="fr-light"></div><div class="fr-inside">
-          <div class="shelf"><span class="shelf-l">Напитки</span><div class="shelf-items">${drinks.length ? drinks.map(tile).join('') : '<span class="hint">пусто</span>'}</div></div>
-          <div class="shelf"><span class="shelf-l">Еда</span><div class="shelf-items">${eats.length ? eats.map(tile).join('') : '<span class="hint">пусто</span>'}</div></div>
-          <div class="shelf low"><span class="shelf-l">${mine ? 'Что я люблю — это и лежит здесь. Нажми на еду: подарить или съесть.' : 'Любимое ' + esc(a.nick) + '. Можно угостить.'}</span></div>
-        </div></div>
-        <div class="fr-door" id="fr-door" title="${fridgeOpen ? 'Закрыть дверцу' : 'Открыть дверцу'}"><div class="fr-magnets">${items.length ? items.map(magnet).join('') : '<div class="hint fr-hint">магнитов нет — нажми «Я лечу»</div>'}</div><div class="fr-handle"></div><div class="fr-label">${fridgeOpen ? '◀ закрыть' : 'открыть ▶'}</div></div>
-      </div>
-      <div class="hint">Дверца открывается по клику. Магниты — снаружи, еда и напитки — внутри. Нажми на любой предмет: откуда он, чей и что с ним делать.</div>`;
+    const magnet = (m) => { const c = COUNTRY[m.country] || COUNTRY.UR; const from = m.from === uin ? '' : (accountOf(m.from) || { nick: m.from }).nick; return `<button class="magnet" data-mid="${m.id}" title="${esc(c.name)} ${m.id}${from ? ' · от ' + esc(from) : ''} · ${fmtDay(m.ts)}">${magnetSvg(m.country, 46, { serial: m.id })}${from ? `<span class="from">${esc(from)}</span>` : ''}</button>`; };
+    const tile = (f) => { const d = FOOD_BY[f.item] || { icon: '🍽', name: f.item, kind: 'food' }; const from = f.from === uin ? '' : (accountOf(f.from) || { nick: f.from }).nick; return `<button class="food" data-fid="${f.id}" title="${esc(d.name)} · НФТ ${f.id}${from ? ' · от ' + esc(from) : ''}">${foodSvg(Object.assign({ code: f.item }, d), 34)}<span>${esc(d.name)}</span><small>${esc(f.id)}</small>${from ? `<em>от ${esc(from)}</em>` : ''}</button>`; };
+    const zone = (f) => FOOD_ZONE[f.item] || ((FOOD_BY[f.item] || {}).kind === 'drink' ? 'drink' : 'food');
+    const freezer = food.filter((f) => zone(f) === 'freezer'), drinks = food.filter((f) => zone(f) === 'drink'), eats = food.filter((f) => zone(f) === 'food'), drawer = food.filter((f) => zone(f) === 'drawer');
+    return `<div class="wall-head"><span class="ico">${avatarSvg(uin, 30)}</span><div class="who"><b>${mine ? 'Мой холодильник' : 'Холодильник: ' + esc(a.nick)}</b><div class="hint">снаружи магниты: ${items.length} (стран: ${countries.size}) · внутри: ${food.length} · всё — НФТ с номером</div></div></div>
+      <div class="row wall-actions">${mine ? '<button class="btn primary" id="fr-fly">✈ Я лечу</button><button class="btn" id="fr-gift">🎁 Подарить</button><button class="btn" id="fr-add">🍽 Добавить еду</button>' : `<button class="btn" id="fr-giftto">🎁 Подарить ${esc(a.nick)}</button>`}<button class="btn" id="fr-open">${fridgeOpen ? 'Закрыть дверцу' : 'Открыть дверцу'}</button></div>
+      <div class="fridge-stage"><div class="fridge3 ${fridgeOpen ? 'open' : ''}" id="fridge3">
+        <div class="fr-cabinet">
+          <div class="fr-light"></div>
+          <div class="fr-inside">
+            <div class="shelf freezer"><span class="shelf-l">❄ морозилка</span><div class="shelf-items">${freezer.length ? freezer.map(tile).join('') : '<span class="hint">иней</span>'}</div></div>
+            <div class="shelf"><span class="shelf-l">напитки</span><div class="shelf-items">${drinks.length ? drinks.map(tile).join('') : '<span class="hint">пусто</span>'}</div></div>
+            <div class="shelf"><span class="shelf-l">еда</span><div class="shelf-items">${eats.length ? eats.map(tile).join('') : '<span class="hint">пусто</span>'}</div></div>
+            <div class="shelf drawer"><span class="shelf-l">🥬 овощной ящик</span><div class="shelf-items">${drawer.length ? drawer.map(tile).join('') : '<span class="hint">пусто</span>'}</div></div>
+          </div>
+          <div class="fr-gasket"></div>
+        </div>
+        <div class="fr-door" id="fr-door" title="${fridgeOpen ? 'Закрыть дверцу' : 'Открыть дверцу'}">
+          <div class="fr-badge"><span>ХОЛОДОК</span><small>модель 99 · АСЬКА</small></div>
+          <div class="fr-magnets">${items.length ? items.map(magnet).join('') : '<div class="hint fr-hint">магнитов нет — нажми «Я лечу»</div>'}</div>
+          <div class="fr-handle"><i></i></div>
+          <div class="fr-plate">${mine ? 'Что я люблю — внутри' : 'Любимое ' + esc(a.nick)}</div>
+        </div>
+        <div class="fr-feet"><i></i><i></i></div>
+      </div></div>
+      <div class="hint">Дверца открывается по клику (или кнопкой). Магниты — снаружи, с номером НФТ: из поездок и в подарок. Внутри — морозилка, напитки, еда и овощной ящик. Нажми на любой предмет: откуда он, чей и что с ним делать.</div>`;
   }
   function wireFridge(uin) {
     const mine = uin === me.uin;
-    $('#fr-door').onclick = (e) => { if (e.target.closest('.magnet')) return; fridgeOpen = !fridgeOpen; Snd.play(fridgeOpen ? 'click' : 'knock'); $('#fridge3').classList.toggle('open', fridgeOpen); $('#fr-door').title = fridgeOpen ? 'Закрыть дверцу' : 'Открыть дверцу'; $('.fr-label').textContent = fridgeOpen ? '◀ закрыть' : 'открыть ▶'; };
+    const toggleDoor = () => { fridgeOpen = !fridgeOpen; Snd.play(fridgeOpen ? 'click' : 'knock'); $('#fridge3').classList.toggle('open', fridgeOpen); $('#fr-door').title = fridgeOpen ? 'Закрыть дверцу' : 'Открыть дверцу'; $('#fr-open').textContent = fridgeOpen ? 'Закрыть дверцу' : 'Открыть дверцу'; };
+    $('#fr-open').onclick = toggleDoor;
+    $('#fr-door').onclick = (e) => { if (e.target.closest('.magnet')) return; toggleDoor(); };
     if (mine) { $('#fr-fly').onclick = flyDialog; $('#fr-gift').onclick = () => giftAnyDialog(); $('#fr-add').onclick = addFoodDialog; }
     else $('#fr-giftto').onclick = () => giftAnyDialog(uin);
     $$('.fridge3 .magnet').forEach((b) => (b.onclick = (e) => {
@@ -2208,7 +2421,7 @@
     // вердикт
     const traits = [];
     if (st.sm >= 0.3) traits.push('улыбчивый'); if (st.len > 70) traits.push('обстоятельный'); if (st.len && st.len < 25) traits.push('лаконичный'); if (st.night > 0.4) traits.push('ночной'); if (fr.length > 2) traits.push('лёгкий на подъём'); if (p.interests.length > 5) traits.push('разносторонний');
-    out.verdict = b && b.persona ? ({ aska: 'Вердикт: это я. Я себе доверяю.', kat: 'Вердикт: лучший друг для режима «Общение». Не забудь мп3.', vova: 'Вердикт: надёжен, если не трогать его линукс.', serega: 'Вердикт: с ним не бывает тихо. Это плюс.', lena: 'Вердикт: подруга для режима «Близкие». Носи платочек.', batya: 'Вердикт: круг «Близкие», без вариантов. Поешь.', max: 'Вердикт: собеседник для вечера с чаем. Отвечает долго, но глубоко.' })[b.brain] || 'Вердикт: служебное досье.' : `Вердикт Аськи: ${traits.length ? traits.join(', ') + ' человек' : 'человек-загадка'}. ${mine ? 'Я бы с тобой дружила. Собственно, дружу.' : 'Можно дружить. Для круга «' + MODES[circleOf(uin)].label + '» — в самый раз.'}`;
+    out.verdict = b && b.persona ? ({ aska: 'Вердикт: это я. Я себе доверяю.', kat: 'Вердикт: лучший друг для режима «Общение». Не забудь мп3.', vova: 'Вердикт: надёжен, если не трогать его линукс.', serega: 'Вердикт: с ним не бывает тихо. Это плюс.', lena: 'Вердикт: подруга для режима «Близкие». Носи платочек.', batya: 'Вердикт: круг «Близкие», без вариантов. Поешь.', max: 'Вердикт: собеседник для вечера с чаем. Отвечает долго, но глубоко.', vinyl: 'Вердикт: консультант, который станет другом, если лайкать честно.' })[b.brain] || (b.persona.lite ? ({ sunny: 'Вердикт: с таким человеком не бывает скучно. Зови в поездку.', calm: 'Вердикт: спокойный собеседник для режима «Близкие». Не торопи.', nerd: 'Вердикт: свой человек для режима «Бизнес», если по технике. Шутки понимает, но не признаётся.', biz: 'Вердикт: круг «Бизнес». Договорённости держит, время ценит.', warm: 'Вердикт: тёплый человек, режим «Близкие». Выслушает и накормит.', sport: 'Вердикт: заряжает. Поднимет с дивана и тебя, и твой статус.' })[b.persona.styleKey] || 'Вердикт: хороший человек, познакомься.' : 'Вердикт: служебное досье.') : `Вердикт Аськи: ${traits.length ? traits.join(', ') + ' человек' : 'человек-загадка'}. ${mine ? 'Я бы с тобой дружила. Собственно, дружу.' : 'Можно дружить. Для круга «' + MODES[circleOf(uin)].label + '» — в самый раз.'}`;
     // секретная часть: что Аська помнит (только своё досье)
     if (mine) {
       const mem = memOf('000001');
