@@ -1,8 +1,8 @@
 /* АСЬКА — service worker: приложение открывается и без интернета.
    Обслуживает только свою папку (/evaspace/aska/), соседей не трогает. */
-const VERSION = 'aska-v6';
+const VERSION = 'aska-v7';
 const BASE = new URL('./', self.location).pathname;
-const SHELL = ['', 'index.html', 'styles.css?v=6', 'app.js?v=6', 'art.js?v=3', 'brain.js?v=4', 'music.js?v=1', 'sounds.js?v=3', 'manifest.webmanifest', 'icons/flower.svg', 'icons/apple-touch-icon.png', 'promo/', 'promo/index.html', 'promo/promo.css?v=2', 'promo/promo.js?v=2'].map((p) => BASE + p);
+const SHELL = ['', 'index.html', 'styles.css?v=7', 'app.js?v=7', 'art.js?v=4', 'brain.js?v=5', 'music.js?v=1', 'sounds.js?v=4', 'manifest.webmanifest', 'icons/flower.svg', 'icons/apple-touch-icon.png', 'promo/', 'promo/index.html', 'promo/promo.css?v=2', 'promo/promo.js?v=2'].map((p) => BASE + p);
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting()));

@@ -324,6 +324,19 @@ window.AskaSound = (function () {
     [330, 415, 494, 659].forEach((f) => vowel(t, 0.8, { v: 'a', vEnd: 'o', f, fEnd: f * 1.01, gain: 0.13, a: 0.12, r: 0.4, vib: 2, vibRate: 5 }));
     return 0.85;
   };
+  SM.wine = (t) => { // чокнулись: дзынь-дзынь
+    tone(t, 0.4, { f: 2650, gain: 0.14, r: 0.38, a: 0.001 });
+    tone(t, 0.4, { f: 3900, gain: 0.08, r: 0.38, a: 0.001, detune: 8 });
+    tone(t + 0.12, 0.5, { f: 2950, gain: 0.12, r: 0.48, a: 0.001 });
+    tone(t + 0.12, 0.5, { f: 4400, gain: 0.07, r: 0.48, a: 0.001, detune: -6 });
+    return 0.7;
+  };
+  SM.heart2 = (t) => { // сердечко: нежный перебор и тук-тук
+    [784, 988, 1175, 1568].forEach((f, i) => tone(t + i * 0.08, 0.7, { f, gain: 0.1, r: 0.6, a: 0.01 }));
+    tone(t + 0.45, 0.13, { f: 60, fEnd: 35, gain: 0.4, a: 0.004, lp: 180 });
+    tone(t + 0.62, 0.13, { f: 48, fEnd: 35, gain: 0.4, a: 0.004, lp: 180 });
+    return 0.9;
+  };
   SM.shock = (t) => { // «а-а-а!» вверх с дрожью
     vowel(t, 0.5, { v: 'a', f: 300, fEnd: 520, gain: 0.5, a: 0.02, r: 0.1, vib: 12, vibRate: 14 });
     return 0.55;

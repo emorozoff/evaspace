@@ -22,6 +22,10 @@ window.AskaBrain = (function () {
     cat: { cap: 'Мяу. Это кот. Он тоже передаёт привет. Открытка от {me}!', sound: 'meow' },
     trip: { cap: 'Привет из {trip}! Открытка от {me}. Я уже там, ты где?', sound: 'plane' },
     tea: { cap: 'Чай-пауза! Открытка от {me}. Чайник уже шумит, слышишь?', sound: 'tea' },
+    roses: { cap: 'Букет роз от {me}. Просто потому что :)', sound: 'smile:rose' },
+    candle: { cap: 'Ужин при свечах — от {me}. Виртуальный, но от души.', sound: 'smile:wine' },
+    kiss: { cap: 'Чмок! Открытка от {me}, не красней :$', sound: 'smile:kiss' },
+    couple: { cap: 'Только ты и я под луной. Открытка от {me} <3', sound: 'smile:heart2' },
   };
   const cardMsg = (kind, mem, P, text) => ({ card: kind, sound: CARDS[kind].sound, text: (text || (P.cardCap ? P.cardCap(kind, mem) : CARDS[kind].cap)).replace('{trip}', cap(mem.trip || 'ниоткуда')).replace(/\{me\}/g, P.gen) });
 
@@ -688,6 +692,7 @@ window.AskaBrain = (function () {
     if (model.smileRate > 0 && Math.random() < Math.min(0.8, model.smileRate + 0.15) && !/[)D(P*]$/.test(t)) t += ' ' + (model.topSmiles[0] || ':)');
     return t;
   }
+  function twinComment(model) { const g = twinGenerate(model, null); return twinStyle(g || pick(['норм', 'класс', 'ага', 'плюсую']), model); }
   const plural = (n, a, b, c) => (n % 10 === 1 && n % 100 !== 11 ? a : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? b : c);
   // facts: {ownerUin, owner, name, city, music, tea, pet, trip, job, interests[], countries[], contacts[{nick, count, words[]}]}
   function twinReply(input, model, facts, mem, ctx) {
@@ -737,5 +742,5 @@ window.AskaBrain = (function () {
     if (isOwner && model.n && model.n % 10 === 0) out.push({ text: `(выучил уже ${model.n} сообщений)`, delay: 900 });
     return out;
   }
-  return { reply, greet, proactive, personas: PERSONAS, CARDS, pickCard, twin: { build: buildTwin, reply: twinReply }, guessGender, genName };
+  return { reply, greet, proactive, personas: PERSONAS, CARDS, pickCard, twin: { build: buildTwin, reply: twinReply, comment: twinComment }, guessGender, genName };
 })();
