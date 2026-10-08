@@ -344,6 +344,118 @@ window.AskaBrain = (function () {
       remind: ['Ты думаешь над ответом? Правильно. Не спеши.', 'Молчание — тоже ответ. Но мне нужен другой.'],
     },
   };
+  PERSONAS.vinyl = {
+    id: 'vinyl', uin: '000777', nick: 'Винилл', first: 'Винилл', gen: 'Винилла', phone: '', always: true, seed: 17, weight: 1, gapMs: 420000, maxUnanswered: 2, music: true,
+    v: (t) => t,
+    hello: (name, dp, mem) => { const lv = closeness(mem); return pick(lv >= 3 ? [`Дружище${name}! Пластинка уже на столе. Что сегодня: качать или грустить?`, `О, ты${name}! Я тут новенькое отслушал, кажется, тебе зайдёт.`] : lv === 2 ? [`Привет${name}! Винилл на связи. Настроение какое — подберу.`, `Здорово${name}! Есть пара треков на примете. Рассказывай, как день.`] : [`Здравствуйте${name}. Я Винилл, консультант по музыке. Подберу трек под настроение — скажите, что любите.`, `Добро пожаловать в винил${name}. Я Винилл, помогаю с музыкой: стили, треки, плейлисты. С чего начнём?`]); },
+    bye: (name) => pick(['До связи! Иголку поднял, пластинку убрал.', 'Пока! Что послушать — ты знаешь, у кого спросить.']),
+    night: () => 'Ночью лучше всего лаунж. Ставлю тихо. Спокойной.',
+    how: () => pick(['Отлично: иголка новая, пластинки чистые. А у тебя под что сегодня?', 'Хорошо. Весь день слушал коллекцию. Ты как, какое настроение?']),
+    about: ['Я Винилл. Консультант по музыке, который хочет стать другом. Запоминаю, что тебе нравится, и подбираю. Что не зашло — предлагаю реже. Что попросил удалить — никогда.', 'Винилл. Живу в проигрывателе. Знаю все 12 хитов наизусть и всё, что вы добавили по ссылкам. Формирую вкус по твоим «нравится» и «не нравится».'],
+    can: 'Скажи «посоветуй», «что послушать», «включи <название>», «нравится», «не нравится», «удали», «мой вкус». Расскажи про стиль — запомню. Чем больше общаемся, тем лучше попадаю.',
+    unknown: ['Это не про музыку, а я по музыке. Но если поставить лаунж — любой вопрос решается легче :)', 'Не моя тема. Спроси Аську, а я пока подберу трек под этот разговор.'],
+    fallback: ['Понял.', 'Записал в заметки о тебе.', 'Так.', 'Интересно.', 'Ага.'], fallbackQ: ['А под какое настроение это?', 'А что слушал в тот момент?', 'Это ближе к техно или к балладе? :)'],
+    order: ['style', 'mood', 'first', 'when', 'name'],
+    qa: {
+      style: { q: ['Какой стиль тебе ближе: евродэнс, техно, баллады, лаунж, рок, поп или 8 бит?'], react: (a, mem) => { const st = styleFromText(a); if (st) { bumpTaste(mem, 'styles', st, 2); return `${STYLE_RU[st]} — отличный выбор. Буду предлагать больше. Скажи «посоветуй» — проверим.`; } return 'Не узнал стиль, но запомнил слова. Скажи «посоветуй», подберу наугад — и по реакции пойму.'; } },
+      mood: { q: ['Под какое настроение сейчас слушаешь: разогнаться или успокоиться?'], react: (a, mem) => { if (/(разогн|качать|бодр|танц|энерг)/.test(a)) { bumpTaste(mem, 'styles', 'eurodance', 1); bumpTaste(mem, 'styles', 'techno', 1); return 'Понял: качаем. Евродэнс и техно поднимаю в приоритете.'; } if (/(успок|спок|тих|грус|рассл)/.test(a)) { bumpTaste(mem, 'styles', 'ballad', 1); bumpTaste(mem, 'styles', 'lounge', 1); return 'Понял: тихо и мягко. Баллады и лаунж вперёд.'; } return 'Принял. Буду смотреть по реакции.'; } },
+      first: { q: ['Какая у тебя была первая кассета или диск? Это многое говорит о человеке.'], react: (a, mem) => { mem.firstTape = a; return `${cap(a)}... уважаю. Первая кассета — это как первая любовь: не забыть и немного стыдно :)`; } },
+      when: { q: ['Когда ты обычно слушаешь музыку: в дороге, за работой или вечером дома?'], react: (a, mem) => { mem.whenListen = a; return /(работ|фон)/.test(a) ? 'За работой — значит, без слов и без резких ударных. Лаунж и баллады беру на заметку.' : /(дорог|машин|метро)/.test(a) ? 'В дороге — ритм нужен. Запомнил.' : 'Понял. Вечер дома — лучшее время для пластинки.'; } },
+    },
+    cards: null,
+    xstatus: [['chat', 'чищу иголку'], ['online', 'слушаю коллекцию'], ['chat', 'подбираю тебе трек'], ['online', 'сторона B'], ['away', 'перематываю кассету карандашом']],
+    topics: [[/(евродэнс|eurodance)/, ['Евродэнс — это когда 140 ударов и не стыдно. Поставить «Лето 1999»?']], [/(техно|techno)/, ['Техно — честная музыка: ритм и ничего лишнего. «Дискотека 99» как раз.']], [/(баллад|медляк)/, ['Баллады — для вечера и воспоминаний. «Кассета» Ленки — прямо туда.']], [/(лаунж|lounge|джаз)/, ['Лаунж — мой любимый фон для разговоров. «Пейджер молчит» послушай.']], [/(рок|rock|гитар)/, ['Рок — «Карась» Бати. Сам сочинил на баяне, но звучит как гараж.']], [/(8 бит|чиптюн|денди|спектрум)/, ['8 бит! «Синий экран» Вовы и «Цветочек». Ностальгия в чистом виде.']], [/(яндекс|ютуб|youtube|ссылк)/, ['Вставляй ссылку во вкладке «Коллекция» → «Добавить по ссылке». Яндекс Музыка, YouTube, SoundCloud и mp3 играют прямо тут.']], [/(нфт|nft)/, ['У каждого трека НФТ с номером и владельцем. Можно подарить — кнопка 🎁 в коллекции.']]],
+    nudge: ['Давно не советовал. Сказать, что послушать?', 'Новое в коллекции есть, зацени.', 'Иголку сменил, звук стал мягче. Поставим что-нибудь?'],
+    remind: ['Я спросил про музыку. Это важно :)'],
+  };
+  const STYLE_RU = { eurodance: 'Евродэнс', techno: 'Техно', ballad: 'Баллады', lounge: 'Лаунж', rock: 'Рок', pop: 'Поп', chiptune: '8 бит' };
+  function styleFromText(a) { if (/(евродэнс|eurodance|дэнс)/.test(a)) return 'eurodance'; if (/(техно|techno)/.test(a)) return 'techno'; if (/(баллад|медляк|лирик)/.test(a)) return 'ballad'; if (/(лаунж|lounge|джаз|фон)/.test(a)) return 'lounge'; if (/(рок|rock|гитар)/.test(a)) return 'rock'; if (/(поп|pop|попс)/.test(a)) return 'pop'; if (/(8 бит|8бит|чиптюн|денди|спектрум)/.test(a)) return 'chiptune'; return null; }
+  function bumpTaste(mem, kind, key, n) { mem.taste = mem.taste || { styles: {}, artists: {}, tracks: {}, removed: [] }; mem.taste[kind] = mem.taste[kind] || {}; mem.taste[kind][key] = (mem.taste[kind][key] || 0) + n; }
+  const closeness = (mem) => ((mem.turns || 0) >= 14 ? 3 : (mem.turns || 0) >= 5 ? 2 : 1);
+  // оценка трека по вкусу: стиль, исполнитель, сам трек, статистика прослушиваний
+  function scoreTrack(t, mem, ctx) {
+    const taste = mem.taste || { styles: {}, artists: {}, tracks: {}, removed: [] };
+    if ((taste.removed || []).includes(t.id)) return -999;
+    let sc = (taste.styles[t.style] || 0) * 2 + (taste.artists[t.artist] || 0) * 1.5 + (taste.tracks[t.id] || 0) * 3;
+    sc += Math.min(3, ((ctx.plays || {})[t.id] || 0) * 0.3);
+    if ((ctx.favs || []).includes(t.id)) sc += 2;
+    if ((mem.recent || []).includes(t.id)) sc -= 2.5;
+    return sc + Math.random();
+  }
+  function recommend(mem, ctx, n) {
+    const list = (ctx.catalog || []).map((t) => ({ t, sc: scoreTrack(t, mem, ctx) })).filter((x) => x.sc > -900).sort((a, b) => b.sc - a.sc).slice(0, n || 1).map((x) => x.t);
+    mem.recent = ((mem.recent || []).concat(list.map((t) => t.id))).slice(-5);
+    if (list.length) mem.lastRec = list[0].id;
+    return list;
+  }
+  function findTrack(q, ctx) { q = q.toLowerCase().trim(); return (ctx.catalog || []).find((t) => t.title.toLowerCase() === q) || (ctx.catalog || []).find((t) => t.title.toLowerCase().includes(q) || q.includes(t.title.toLowerCase())) || (ctx.catalog || []).find((t) => t.artist.toLowerCase().includes(q)); }
+  // ответ Винилла: ctx = {catalog:[{id,title,artist,style,by,source}], plays:{id:n}, favs:[ids], nowId}
+  function vinylReply(input, mem, ctx) {
+    const P = PERSONAS.vinyl;
+    const t = norm(input);
+    const out = [];
+    const say = (x, extra) => out.push(Object.assign({ text: x }, extra || {}));
+    const lv = closeness(mem);
+    const cur = ctx.nowId ? (ctx.catalog || []).find((x) => x.id === ctx.nowId) : null;
+    const last = mem.lastRec ? (ctx.catalog || []).find((x) => x.id === mem.lastRec) : null;
+    const target = cur || last;
+    let m;
+    if ((m = t.match(/^(включи|поставь|сыграй|запусти|играй)\s+(.+)/))) {
+      const tr = findTrack(m[2], ctx);
+      if (tr) { bumpTaste(mem, 'tracks', tr.id, 0.5); mem.lastRec = tr.id; say(pick([`Ставлю «${tr.title}». Иголка пошла.`, `«${tr.title}» — ${tr.artist}. Поехали.`]), { play: tr.id }); return out; }
+      say(`Не нашёл «${m[2]}» в коллекции. Добавь по ссылке во вкладке «Коллекция» — и поставлю.`); return out;
+    }
+    if (has(t, /(посоветуй|что послушать|предложи|порекомендуй|включи что-нибудь|что нового|что-нибудь поставь|подбери)/)) {
+      const recs = recommend(mem, ctx, 2);
+      if (!recs.length) { say('Коллекция пуста или всё вычеркнуто. Добавь треки по ссылке — и будет из чего выбирать.'); return out; }
+      const r = recs[0];
+      const why = (mem.taste && mem.taste.styles && mem.taste.styles[r.style] > 0) ? `ты говорил, что ${STYLE_RU[r.style] ? STYLE_RU[r.style].toLowerCase() : r.style} заходит` : ((ctx.favs || []).includes(r.id) ? 'ты её лайкал' : 'по твоим прослушиваниям');
+      say(lv >= 3 ? `Дружище, вот что сегодня: «${r.title}» — ${r.artist}. Почему: ${why}. Скажешь «нравится» — таких будет больше, «удали» — больше не увидишь.` : lv === 2 ? `Советую «${r.title}» — ${r.artist} (${why}). Как зайдёт — скажи «нравится» или «не нравится», я учусь.` : `Рекомендую «${r.title}» — ${r.artist}. Почему: ${why}. Скажите «нравится» или «не нравится», и я подстроюсь.`);
+      out.push({ text: '♪ ' + r.title, track: r.id, delay: 1200 });
+      if (recs[1]) out.push({ text: `Запасной вариант: «${recs[1].title}» — ${recs[1].artist}. Скажи «включи ${recs[1].title}».`, delay: 1800 });
+      return out;
+    }
+    if (has(t, /(удали|убери|вычеркни|никогда больше|не предлагай|выкинь)/)) {
+      if (!target) { say('Что удалить? Скажи «удали <название>» или сначала включи трек.'); return out; }
+      bumpTaste(mem, 'tracks', target.id, 0); mem.taste.removed = (mem.taste.removed || []).concat([target.id]); bumpTaste(mem, 'styles', target.style, -1);
+      say(pick([`Вычеркнул «${target.title}». Больше не предложу, слово Винилла.`, `«${target.title}» — в чёрный список. Стиль ${STYLE_RU[target.style] || target.style} тоже чуть опустил.`]));
+      return out;
+    }
+    if (has(t, /(не нравится|не моё|не мое|фу|скучно|не то|так себе|выключи|не зашло|мимо)/)) {
+      if (!target) { say('Понял, не то. А что бы хотелось: быстрее, медленнее, другой стиль?'); return out; }
+      bumpTaste(mem, 'tracks', target.id, -2); bumpTaste(mem, 'styles', target.style, -1); bumpTaste(mem, 'artists', target.artist, -1);
+      say(pick([`Понял, «${target.title}» не зашло. ${STYLE_RU[target.style] || target.style} буду предлагать реже.`, `Записал: минус «${target.title}». Подберу другое — скажи «посоветуй».`]));
+      return out;
+    }
+    if (has(t, /(нравится|класс|огонь|кайф|супер|люблю (это|этот|эту)|топ|зашло|огонь|бомба|качает|круто)/)) {
+      if (!target) { say('Рад! А что именно? Включи трек и скажи «нравится» — запомню.'); return out; }
+      bumpTaste(mem, 'tracks', target.id, 2); bumpTaste(mem, 'styles', target.style, 1); bumpTaste(mem, 'artists', target.artist, 1);
+      say(pick([`Запомнил: «${target.title}» — в яблочко. ${STYLE_RU[target.style] || target.style} теперь выше в приоритете.`, `Отлично! ${target.artist} и ${STYLE_RU[target.style] || target.style} — буду предлагать больше.`]) + (lv >= 2 ? ' Вкус формируется :)' : ''));
+      return out;
+    }
+    if (has(t, /(мой вкус|что я люблю|что мне нравится|мои предпочтения|что ты обо мне знаешь)/)) {
+      const taste = mem.taste || { styles: {}, artists: {}, tracks: {}, removed: [] };
+      const top = (o) => Object.entries(o || {}).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 3).map((x) => x[0]);
+      const st = top(taste.styles).map((k) => STYLE_RU[k] || k), ar = top(taste.artists);
+      const fav = (ctx.favs || []).map((id) => (ctx.catalog || []).find((x) => x.id === id)).filter(Boolean).map((x) => x.title).slice(0, 3);
+      const plays = Object.entries(ctx.plays || {}).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([id, n]) => { const x = (ctx.catalog || []).find((y) => y.id === id); return x ? `${x.title} (${n})` : null; }).filter(Boolean);
+      if (!st.length && !ar.length && !fav.length && !plays.length) { say('Пока знаю мало: ты только пришёл. Послушай пару треков, скажи «нравится» или «не нравится» — и я составлю портрет.'); return out; }
+      say(`Твой вкус по моим заметкам: ${st.length ? 'стили — ' + st.join(', ') + '. ' : ''}${ar.length ? 'Исполнители — ' + ar.join(', ') + '. ' : ''}${fav.length ? 'Лайкнул — ' + fav.join(', ') + '. ' : ''}${plays.length ? 'Чаще всего слушаешь — ' + plays.join(', ') + '. ' : ''}${(taste.removed || []).length ? 'В чёрном списке: ' + taste.removed.length + '. ' : ''}${lv >= 3 ? 'Мы уже друзья, я тебя слышу с полуслова.' : lv === 2 ? 'Продолжаем знакомство — скоро буду угадывать с первого раза.' : 'Это начало.'}`);
+      return out;
+    }
+    if (has(t, /(что (ты )?слушаешь|что у тебя играет|твой любимый)/)) { say(pick(['Сейчас у меня «Пейджер молчит» на повторе — лучший фон для разговоров.', 'Люблю «О-оу (ремикс)» Аськи. Секретно: подпеваю.'])); return out; }
+    if (has(t, /(что есть|какая музыка|что в коллекции|сколько треков)/)) { const n = (ctx.catalog || []).length; const styles = {}; (ctx.catalog || []).forEach((x) => (styles[x.style] = (styles[x.style] || 0) + 1)); say(`В коллекции ${n} ${plural(n, 'трек', 'трека', 'треков')}: ${Object.entries(styles).map(([k, v]) => (STYLE_RU[k] || k) + ' — ' + v).join(', ')}. Добавляй по ссылке — всё играет тут.`); return out; }
+    const st = styleFromText(t);
+    if (st && has(t, /(люблю|нравится|обожаю|слушаю|предпочитаю)/)) { bumpTaste(mem, 'styles', st, 2); say(`${STYLE_RU[st]} — записал в твой вкус. Скажи «посоветуй», подберу именно в этом стиле.`); return out; }
+    // общие намерения — через обычный движок с персоной Винилла
+    return reply(input, mem, Object.assign({}, ctx, { persona: 'vinyl' }));
+  }
+  function vinylProactive(mem, ctx) {
+    const recs = recommend(mem, ctx, 1);
+    if (!recs.length) return null;
+    const r = recs[0];
+    return [{ text: pick([`Нашёл тебе кое-что: «${r.title}» — ${r.artist}. Зацени.`, `Винилл с советом дня: «${r.title}». Если мимо — скажи, учту.`]) }, { text: '♪ ' + r.title, track: r.id, delay: 1200 }];
+  }
   Object.values(PERSONAS).forEach((P) => { if (!P.qa) P.qa = {}; });
 
   function qaOf(P, slot) { return P.qa[slot] || (Q[slot] ? { q: Q[slot].q, react: GEN[slot] || ((a, mem) => Q[slot].react(a, mem, P)) } : null); }
@@ -742,5 +854,5 @@ window.AskaBrain = (function () {
     if (isOwner && model.n && model.n % 10 === 0) out.push({ text: `(выучил уже ${model.n} сообщений)`, delay: 900 });
     return out;
   }
-  return { reply, greet, proactive, personas: PERSONAS, CARDS, pickCard, twin: { build: buildTwin, reply: twinReply, comment: twinComment }, guessGender, genName };
+  return { reply, greet, proactive, personas: PERSONAS, CARDS, pickCard, twin: { build: buildTwin, reply: twinReply, comment: twinComment }, vinyl: { reply: vinylReply, proactive: vinylProactive, bump: bumpTaste, closeness }, guessGender, genName };
 })();

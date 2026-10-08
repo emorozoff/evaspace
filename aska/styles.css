@@ -523,6 +523,36 @@ button.chip:hover { border-color: #000; }
 .food-grid button.on, .food-pick.on { border-color: var(--sel); background: #ffffe0; }
 .food-ico { font-size: 28px; width: 44px; text-align: center; }
 
+/* ---------- винил: прогресс, вкладки, киберпанк ---------- */
+.v-top { flex: none; }
+.record { animation: none !important; will-change: transform; }
+.prog { height: 7px; background: #fff; border: 1px solid; border-color: var(--shadow) var(--light) var(--light) var(--shadow); margin: 4px 0 2px; cursor: pointer; }
+.prog i { display: block; height: 100%; background: var(--sel); width: 0; transition: width .3s linear; }
+.embed-box { background: #000; padding: 2px; flex: none; }
+.embed-box iframe { width: 100%; border: 0; display: block; }
+.btn.icon.on { background: #ffe3ea; color: #a03050; }
+.vinyl.cyber { background: #07040f; color: #c8f7ff; padding: 6px; border: 1px solid #ff2bd6; box-shadow: 0 0 12px #ff2bd6, inset 0 0 20px rgba(0,240,255,.15); }
+.vinyl.cyber .tt { background: radial-gradient(circle at 30% 50%, #1a0a3a, #07040f 70%); border-color: #00f0ff; box-shadow: inset 0 0 0 2px #ff2bd6, 0 0 18px rgba(0,240,255,.5); overflow: hidden; }
+.vinyl.cyber .neon-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(0,240,255,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,.12) 1px, transparent 1px); background-size: 18px 18px; pointer-events: none; transform: perspective(200px) rotateX(55deg) translateY(40px); }
+.vinyl.cyber .platter { background: #000; box-shadow: 0 0 0 3px #00f0ff, 0 0 22px #00f0ff; position: relative; z-index: 1; }
+.vinyl.cyber .record { background: repeating-radial-gradient(circle, #0a0a1a 0 1.5px, #2a1a4a 1.5px 3px); box-shadow: inset 0 0 20px #ff2bd6; }
+.vinyl.cyber .record .label { background: conic-gradient(#ff2bd6, #00f0ff, #ffe14d, #ff2bd6) !important; color: #000; text-shadow: none; font-size: 8px; letter-spacing: .5px; box-shadow: 0 0 0 2px #fff, 0 0 10px #fff; }
+.vinyl.cyber .arm { background: linear-gradient(90deg, #00f0ff, #0a4a5a); border-color: #00f0ff; box-shadow: 0 0 8px #00f0ff; z-index: 2; }
+.vinyl.cyber .arm::before, .vinyl.cyber .arm::after { background: #1a1a2e; border-color: #00f0ff; }
+.vinyl.cyber .np-box, .vinyl.cyber .v-list, .vinyl.cyber .prog { background: #0e0820; color: #c8f7ff; border-color: #ff2bd6 #00f0ff #00f0ff #ff2bd6; box-shadow: none; }
+.vinyl.cyber .prog i { background: linear-gradient(90deg, #ff2bd6, #00f0ff); }
+.vinyl.cyber .muted, .vinyl.cyber .hint { color: #8fd3e8; }
+.vinyl.cyber .trow { border-bottom-color: #2a1a4a; } .vinyl.cyber .trow.np, .vinyl.cyber .prow.np { background: #2a0a3a; }
+.vinyl.cyber .btn { background: #1a0a2e; color: #c8f7ff; border-color: #ff2bd6 #00f0ff #00f0ff #ff2bd6; box-shadow: none; }
+.vinyl.cyber .btn.primary { outline-color: #ffe14d; }
+.vinyl.cyber .tabs button { background: #1a0a2e; color: #c8f7ff; border-color: #ff2bd6 #00f0ff transparent #ff2bd6; }
+.vinyl.cyber .tabpanel { border-color: #ff2bd6 #00f0ff #00f0ff #ff2bd6; box-shadow: none; }
+.vinyl.cyber .field { background: #0e0820; color: #c8f7ff; border-color: #ff2bd6 #00f0ff #00f0ff #ff2bd6; box-shadow: none; }
+.vinyl.cyber .cgroup { color: #ffe14d; }
+.vinyl.cyber .link { color: #00f0ff; }
+.vinyl.cyber .v-top .hint { color: #ff2bd6; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; text-shadow: 0 0 6px #ff2bd6; }
+.v-tabs button { padding: 2px 6px 3px; }
+
 /* ---------- диалоги ---------- */
 .overlay { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(0,0,0,.15); }
 .dialog .body { padding: 10px 10px 8px; }

@@ -80,7 +80,24 @@ window.AskaMusic = (function () {
   /* ---------- движок ---------- */
   let C = null, master = null, musicGain = null, crackleGain = null, crackleSrc = null, popTimer = null;
   let enabled = true, volume = 0.7, crackle = true;
-  let state = { playing: false, trackId: null, bar: 0, loop: 0, queue: [], index: -1, queueName: '' };
+  let state = { playing: false, trackId: null, bar: 0, loop: 0, queue: [], index: -1, queueName: '', kind: 'synth', pos: 0, dur: 0, embed: null, shuffle: false, repeat: false, motor: 0 };
+  const external = {};          // треки по ссылке: id → {id,title,artist,url,kind,src,embed,style,by}
+  let audioEl = null;
+  // разбор ссылки: Яндекс Музыка, YouTube, SoundCloud, прямой mp3
+  function parseLink(url) {
+    url = String(url || '').trim();
+    let m;
+    if ((m = url.match(/music\.yandex\.(?:ru|com|by|kz|uz)\/album\/(\d+)\/track\/(\d+)/))) return { kind: 'yandex', embed: `https://music.yandex.ru/iframe/track/${m[2]}/${m[1]}`, label: 'Яндекс Музыка', h: 180 };
+    if ((m = url.match(/music\.yandex\.(?:ru|com|by|kz|uz)\/users\/([^/]+)\/playlists\/(\d+)/))) return { kind: 'yandex', embed: `https://music.yandex.ru/iframe/playlist/${m[1]}/${m[2]}`, label: 'Яндекс Музыка · плейлист', h: 450 };
+    if ((m = url.match(/music\.yandex\.(?:ru|com|by|kz|uz)\/album\/(\d+)/))) return { kind: 'yandex', embed: `https://music.yandex.ru/iframe/album/${m[1]}`, label: 'Яндекс Музыка · альбом', h: 450 };
+    if ((m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/))([\w-]{6,})/))) return { kind: 'youtube', embed: `https://www.youtube.com/embed/${m[1]}?autoplay=1&rel=0`, label: 'YouTube', h: 200 };
+    if (/soundcloud\.com\//.test(url)) return { kind: 'soundcloud', embed: `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=true&color=%23ff5500`, label: 'SoundCloud', h: 166 };
+    if (/\.(mp3|ogg|oga|m4a|wav|aac|flac|opus)(\?.*)?$/i.test(url)) return { kind: 'audio', src: url, label: 'аудиофайл', h: 0 };
+    if (/^https?:\/\//.test(url)) return { kind: 'link', embed: null, label: 'ссылка', h: 0 };
+    return null;
+  }
+  function registerExternal(t) { external[t.id] = t; }
+  const anyById = (id) => byId[id] || external[id] || null;
   let timer = null, nextStep = 0, step = 0, loops = 2;
   const listeners = [];
   const emit = () => listeners.forEach((f) => { try { f(state); } catch (e) {} });
@@ -250,38 +267,65 @@ window.AskaMusic = (function () {
       }
     }
   }
+  function stopExternal() {
+    if (audioEl) { try { audioEl.pause(); } catch (e) {} audioEl.src = ''; audioEl = null; }
+    state.embed = null; state.pos = 0; state.dur = 0;
+  }
   function playTrack(id, keepQueue) {
-    const track = byId[id]; if (!track) return;
+    const track = anyById(id); if (!track) return;
     if (!ensure()) return;
-    stopTimers();
-    prepare(track);
+    stopTimers(); stopExternal();
     if (!keepQueue) { state.queue = [id]; state.index = 0; state.queueName = ''; }
-    state.playing = true; state.trackId = id; state.bar = 0; state.loop = 0;
-    step = 0; nextStep = C.currentTime + 0.35;
+    state.playing = true; state.trackId = id; state.bar = 0; state.loop = 0; state.motor = 1;
     needleDrop(C.currentTime + 0.05);
-    startCrackle();
-    timer = setInterval(tick, 90);
+    if (byId[id]) {
+      state.kind = 'synth';
+      prepare(track);
+      step = 0; nextStep = C.currentTime + 0.35;
+      startCrackle();
+      timer = setInterval(tick, 90);
+    } else if (track.kind === 'audio' && track.src) {
+      state.kind = 'audio';
+      audioEl = new Audio(track.src); audioEl.crossOrigin = 'anonymous'; audioEl.volume = volume;
+      audioEl.addEventListener('timeupdate', () => { state.pos = audioEl.currentTime; state.dur = audioEl.duration || 0; emit(); });
+      audioEl.addEventListener('ended', () => next());
+      audioEl.addEventListener('error', () => { state.playing = false; state.error = 'не удалось загрузить аудио'; emit(); });
+      audioEl.play().catch(() => {});
+      startCrackle();
+    } else if (track.embed) {
+      state.kind = 'embed'; state.embed = track.embed; state.embedH = track.h || 180;
+      startCrackle();
+    } else {
+      state.kind = 'link'; state.playing = false;
+    }
     emit();
   }
   function stopTimers() { clearInterval(timer); timer = null; }
   function pause() {
     if (!state.playing) return;
-    state.playing = false; stopTimers(); stopCrackle(); needleLift(); emit();
+    state.playing = false; state.motor = 0; stopTimers(); stopCrackle(); needleLift();
+    if (audioEl) audioEl.pause();
+    emit();
   }
   function resume() {
     if (state.playing || !state.trackId) return;
     ensure();
-    state.playing = true; nextStep = C.currentTime + 0.2; startCrackle(); timer = setInterval(tick, 90); emit();
+    state.playing = true; state.motor = 1;
+    if (state.kind === 'synth') { nextStep = C.currentTime + 0.2; timer = setInterval(tick, 90); }
+    if (audioEl) audioEl.play().catch(() => {});
+    startCrackle(); emit();
   }
-  function stop() { state.playing = false; stopTimers(); if (C) { stopCrackle(); } state.trackId = null; state.bar = 0; emit(); }
+  function stop() { state.playing = false; state.motor = 0; stopTimers(); stopExternal(); if (C) { stopCrackle(); } state.trackId = null; state.bar = 0; emit(); }
   function playQueue(ids, name, startIndex) {
-    const list = ids.filter((i) => byId[i]); if (!list.length) return;
+    const list = ids.filter((i) => anyById(i)); if (!list.length) return;
     state.queue = list; state.queueName = name || ''; state.index = startIndex || 0;
     playTrack(list[state.index], true);
   }
   function next() {
     if (!state.queue.length) return;
-    state.index = (state.index + 1) % state.queue.length;
+    if (state.repeat) { playTrack(state.queue[state.index], true); return; }
+    if (state.shuffle && state.queue.length > 1) { let i; do { i = Math.floor(Math.random() * state.queue.length); } while (i === state.index); state.index = i; }
+    else state.index = (state.index + 1) % state.queue.length;
     playTrack(state.queue[state.index], true);
   }
   function prev() {
@@ -290,13 +334,15 @@ window.AskaMusic = (function () {
     playTrack(state.queue[state.index], true);
   }
   function duration(id) { const t = byId[id]; return t ? Math.round(16 * 4 * 60 / t.bpm * loops) : 0; }
+  function seek(sec) { if (audioEl && isFinite(sec)) audioEl.currentTime = sec; }
 
   return {
     TRACKS, byId, STYLE_NAMES: { eurodance: 'евродэнс', techno: 'техно', ballad: 'баллада', lounge: 'лаунж', rock: 'рок', pop: 'поп', chiptune: '8 бит' },
-    play: playTrack, playQueue, pause, resume, stop, next, prev, duration,
+    play: playTrack, playQueue, pause, resume, stop, next, prev, duration, seek, parseLink, registerExternal, anyById, external,
+    set shuffle(v) { state.shuffle = !!v; emit(); }, set repeat(v) { state.repeat = !!v; emit(); },
     toggle() { if (state.playing) pause(); else if (state.trackId) resume(); else playQueue(TRACKS.map((t) => t.id), 'Все хиты', 0); },
     get state() { return state; },
-    get volume() { return volume; }, set volume(v) { volume = Math.max(0, Math.min(1, v)); if (master) master.gain.value = volume; },
+    get volume() { return volume; }, set volume(v) { volume = Math.max(0, Math.min(1, v)); if (master) master.gain.value = volume; if (audioEl) audioEl.volume = volume; },
     get crackle() { return crackle; }, set crackle(v) { crackle = !!v; if (C) { if (crackle && state.playing) startCrackle(); else stopCrackle(); } },
     onChange(f) { listeners.push(f); },
     unlock() { try { ensure(); } catch (e) {} },
