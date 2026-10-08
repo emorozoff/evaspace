@@ -548,7 +548,7 @@
       <div class="win dialog" id="loginwin">
         <div class="titlebar">${flowerSvg('#3cb44a', 14, { logo: true })}<span class="ttl">АСЬКА — вход в сеть</span></div>
         <div class="login-body">
-          <div class="bigflower">${flowerSvg('#3cb44a', 44, { logo: true })}<div class="logo-word center">АСЬКА<small>I seek you · по-русски · с 1998 года</small></div><a class="link" href="../" style="margin-top:6px">АСЬКА v2 — со всеми новшествами →</a><span class="hint" style="margin-top:3px">Это простая v1: контакты, беседы, «о-оу», смайлы, Аська и друзья.</span></div>
+          <div class="bigflower">${flowerSvg('#3cb44a', 44, { logo: true })}<div class="logo-word center">АСЬКА<small>I seek you · по-русски · с 1998 года</small></div><a class="link" href="../" style="margin-top:6px">АСЬКА 3 — новый дизайн →</a><a class="link" href="../v2/" style="margin-top:3px">АСЬКА v2 — классика со всеми фишками →</a><span class="hint" style="margin-top:3px">Это простая v1: контакты, беседы, «о-оу», смайлы, Аська и друзья.</span></div>
           <div class="tabs"><button class="on" data-tab="reg">Новый номер</button><button data-tab="login">Уже есть номер</button></div>
           <div class="tabpanel" id="tab-reg">
             <div class="col">
