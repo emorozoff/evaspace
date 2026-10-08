@@ -57,7 +57,7 @@
       replies: ['Чтобы добавить друга — меню «Контакты» → «Добавить контакт», ищи по номеру, телефону или нику.', 'Сменить статус можно кнопкой с цветочком внизу списка контактов.', 'Смайлы вставляются кнопкой :) под полем ввода. У каждого свой звук — нажми на смайл в переписке, чтобы послушать.', 'Открой АСЬКУ во второй вкладке, зарегистрируй ещё один номер и напиши сам себе — так можно проверить звук «о-оу» :)', 'Звук можно выключить в меню «Звук».', 'Добавь АСЬКУ на экран «Домой» — она откроется как приложение, даже без интернета.', 'Enter отправляет сообщение, Shift+Enter — новая строка.'],
       bye: ['До связи! Я всегда онлайн :)'],
       how: ['Работаю круглосуточно, без выходных :)'],
-      help: 'Что умеет АСЬКА:\n• номер + ник + телефон при регистрации\n• контакты с цветочками-статусами\n• «о-оу!» на входящее сообщение\n• 22 смайла, у каждого свой звук\n• стена: открытки, записи, музыка — её видят друзья\n• интересы и процент совпадения, случайное знакомство\n• режимы «Близкие / Бизнес / Общение» — меняют статус и стиль\n• виниловый плеер: хиты, коллекция по ссылкам (Яндекс Музыка, YouTube, mp3), НФТ у трека, консультант Винилл\n• кино: фильмы и сериалы по ссылке, смотреть с любого устройства, любимое, советовать друзьям\n• холодильник: магниты из поездок, любимая еда и напитки (НФТ)\n• Аська и друзья с характером\n\nСпроси: «контакты», «статус», «смайлы», «звук», «вкладки».',
+      help: 'Что умеет АСЬКА:\n• номер + ник + телефон при регистрации\n• контакты с цветочками-статусами\n• «о-оу!» на входящее сообщение\n• 22 смайла, у каждого свой звук\n• стена: открытки, записи, музыка — её видят друзья\n• интересы и процент совпадения, случайное знакомство\n• режимы «Близкие / Бизнес / Общение» — меняют статус и стиль\n• виниловый плеер: хиты, коллекция по ссылкам (Яндекс Музыка, YouTube, mp3), НФТ у трека, консультант Винилл\n• кино: фильмы и сериалы по ссылке, смотреть с любого устройства, любимое, советовать друзьям\n• холодильник: магниты из поездок, любимая еда и напитки (НФТ)\n• Аська и друзья с характером\n• аватар КИРР: учится на переписке, отвечает друзьям твоими словами («учись» — тренировка)\n• пригласить друга: «Добавить контакт → Пригласить» — аватар встретит новичка открыткой\n\nСпроси: «контакты», «статус», «смайлы», «звук», «вкладки».',
     },
   };
   // Аська и друзья — персонажи с характером, живут в brain.js
@@ -171,6 +171,15 @@
   let smilesEl = null;
   let heartbeatTimer = null;
   let titleTimer = null;
+  const BLINK_MS = 120000;        // конверт мигает две минуты после прихода, потом просто висит
+  let lastIncomingTs = 0, blinkTimer = null;
+  function lastFromTs(uin) { const h = db.history[pairKey(me.uin, uin)] || []; for (let i = h.length - 1; i >= 0; i--) if (h[i].from === uin) return h[i].ts; return 0; }
+  function freshUnread(uin) { return unreadFrom(uin) > 0 && Date.now() - lastFromTs(uin) < BLINK_MS; }
+  function scheduleBlinkStop() {
+    clearTimeout(blinkTimer); let soonest = Infinity;
+    contactsOf(me.uin).forEach((u) => { if (!unreadFrom(u)) return; const left = BLINK_MS - (Date.now() - lastFromTs(u)); if (left > 0) soonest = Math.min(soonest, left); });
+    if (soonest < Infinity) blinkTimer = setTimeout(() => { if (me) { renderContacts(); renderChatHead(); } }, soonest + 150);
+  }
   let toastTimer = null;
 
   function loadSession() {
@@ -298,6 +307,7 @@
     const text = ta.value.replace(/\s+$/, '');
     if (!text) return;
     const msg = { id: uid(), from: me.uin, to: active, text, ts: Date.now() };
+    lastUserActivity = Date.now();
     pushHistory(msg);
     addPoints(1);
     ta.value = '';
@@ -335,6 +345,7 @@
     const from = accountOf(msg.from);
     const inChat = active === msg.from && document.hasFocus() && !(isNarrow() && !$('.desktop').classList.contains('mode-chat'));
     if (inChat) markRead(msg.from);
+    lastIncomingTs = Date.now();
     if (!contactsOf(me.uin).includes(msg.from) && from) addContact(msg.from);
     Snd.play('incoming');
     const sm = findSmiles(msg.text);
@@ -379,6 +390,7 @@
   }
   function botSays(bot, text, extra) {
     if (!me) return;
+    lastIncomingTs = Date.now();
     const msg = { id: uid(), from: bot.uin, to: me.uin, text, ts: Date.now() };
     if (extra && extra.card) msg.card = extra.card;
     if (extra && extra.sound) msg.sound = extra.sound;
@@ -419,6 +431,11 @@
   const Brain = window.AskaBrain;
   const botRt = {};              // состояние персонажей в этой вкладке: статус, подпись, таймеры
   let lastAnyProactive = 0;
+  // тишина: боты пишут редко, не мешают, когда ты занят, и не копят гору непрочитанного
+  const QUIET = { gap: 240000, maxUnTotal: 2, maxUnreadChats: 3, busyMs: 90000, hiddenMax: 1, warmup: 45000 };
+  let lastUserActivity = 0, hiddenSent = 0, sessionStart = 0;
+  const unreadChats = () => Object.values((db.unread[me.uin] || {})).filter((n) => n > 0).length;
+  function scheduleSoft(fn, ms) { setTimeout(() => { if (!me) return; if (!lastUserActivity || Date.now() - lastUserActivity < QUIET.busyMs || unreadChats() >= 2 || document.hidden) { scheduleSoft(fn, 180000); return; } fn(); }, ms); }
   const playRef = (ref) => (ref && ref.startsWith('smile:') ? Snd.smile(ref.slice(6)) : Snd.play(ref));
   function rtOf(uin) { return botRt[uin] || (botRt[uin] = { status: null, xstatus: null, lastProactive: 0, unanswered: 0 }); }
   function memOf(uin) { db = load(); return Object.assign({}, (db.memory[me.uin] || {})[uin] || {}); }
@@ -436,8 +453,8 @@
     ensureInterestRegistry();
     syncMyInterests();
     seedBotEvents();
-    if (!myProfile().invitedOnce) setTimeout(botInvitesMe, 25000 + Math.random() * 30000);
-    if (!myProfile().movieRecd) setTimeout(botRecommendsMovie, 70000 + Math.random() * 40000);
+    if (!myProfile().invitedOnce) scheduleSoft(botInvitesMe, 240000 + Math.random() * 120000);
+    if (!myProfile().movieRecd) scheduleSoft(botRecommendsMovie, 540000 + Math.random() * 180000);
     Object.values(BOTS).forEach((b) => {
       if (!b.persona) return;
       const rt = rtOf(b.uin);
@@ -490,10 +507,16 @@
   function askaTick(force) {
     if (!me) return;
     const now = Date.now();
-    if (!force && now - lastAnyProactive < 40000) return;
     const bots = contactsOf(me.uin).map(accountOf).filter((b) => b && b.persona && isOnline(b.uin));
     const totalUn = bots.reduce((a, b) => a + rtOf(b.uin).unanswered, 0);
-    if (!force && totalUn >= 4) return;
+    if (!force) {
+      if (now - sessionStart < QUIET.warmup) return;
+      if (now - lastAnyProactive < QUIET.gap * (1 + Math.min(3, totalUn))) return;
+      if (totalUn >= QUIET.maxUnTotal) return;
+      if (unreadChats() >= QUIET.maxUnreadChats) return;
+      if (now - lastUserActivity < QUIET.busyMs) return;
+      if (document.hidden && hiddenSent >= QUIET.hiddenMax) return;
+    }
     let pool = bots.filter((b) => { const rt = rtOf(b.uin); return force || (now - rt.lastProactive >= b.persona.gapMs && rt.unanswered < b.persona.maxUnanswered && !memOf(b.uin).muted); });
     if (typeof force === 'string') pool = pool.filter((b) => b.uin === force);
     if (!pool.length) return;
@@ -518,20 +541,22 @@
       if (own.length) { const t = pick(own); msgs.length = 0; msgs.push({ text: bot.persona.v(pick(['Слушай, зацени', 'Новый трек, оцени', 'Вот, записал. Как тебе?', 'Это надо слышать'])) }, { text: '♪ ' + t.title, track: t.id, delay: 1200 }); }
     }
     rt.lastProactive = now; lastAnyProactive = now;
+    if (document.hidden) hiddenSent++;
     if (msgs.some((m) => m.text || m.card || m.track)) rt.unanswered++;
     deliverSeq(bot, msgs, 600 + Math.random() * 1500);
   }
   setInterval(askaTick, 15000);
-  if (/debug/.test(location.search)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt, wall: (u) => wallOf(u || me.uin), openAux, setMode, randomMeet, fly, addPoints, profile: () => myProfile(), dossier: buildDossier, createEvent, rsvp, addTrackByLink, toggleFav, music: () => Music.state, addMovie, toggleMovieFav, recommendMovie, botRecommendsMovie, watching: () => watching, saveProfile, events: () => load().events, refs: () => refTree(me.uin), botInvitesMe, interests: () => load().interests, twinModel: () => twinModelOf(me.uin) };
+  if (/debug/.test(location.search)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt, wall: (u) => wallOf(u || me.uin), openAux, setMode, randomMeet, fly, addPoints, profile: () => myProfile(), dossier: buildDossier, createEvent, rsvp, addTrackByLink, toggleFav, music: () => Music.state, twinFacts: () => twinFacts(me.uin), twinStore: () => twinStore(me.uin), welcomeFrom, quiet: () => ({ lastAnyProactive, lastUserActivity, hiddenSent, sessionStart }), addMovie, toggleMovieFav, recommendMovie, botRecommendsMovie, watching: () => watching, saveProfile, events: () => load().events, refs: () => refTree(me.uin), botInvitesMe, interests: () => load().interests, twinModel: () => twinModelOf(me.uin) };
 
   /* ================= заголовок вкладки ================= */
   function updateTitle() {
     const n = me ? unreadTotal() : 0;
     clearInterval(titleTimer); titleTimer = null;
     if (!n) { document.title = 'АСЬКА'; return; }
-    let flip = false;
     document.title = `(${n}) АСЬКА`;
-    titleTimer = setInterval(() => { flip = !flip; document.title = flip ? '✉ Новое сообщение!' : `(${n}) АСЬКА`; }, 900);
+    if (Date.now() - lastIncomingTs > BLINK_MS) return;
+    let flip = false;
+    titleTimer = setInterval(() => { if (Date.now() - lastIncomingTs > BLINK_MS) { clearInterval(titleTimer); titleTimer = null; document.title = `(${n}) АСЬКА`; return; } flip = !flip; document.title = flip ? '✉ Новое сообщение!' : `(${n}) АСЬКА`; }, 900);
   }
   window.addEventListener('focus', () => { if (me && active) { markRead(active); updateTitle(); } });
 
@@ -680,6 +705,7 @@
       d.lastLogin = acc.uin;
     });
     recordReferral(acc);
+    pendingWelcome = whoInvited(acc);
     Snd.play('connect');
     dialog({
       title: 'Регистрация завершена',
@@ -711,6 +737,8 @@
     post({ type: 'presence', uin: me.uin });
     renderMain();
     Snd.play('connect');
+    sessionStart = Date.now(); lastUserActivity = 0; hiddenSent = 0;
+    if (pendingWelcome && pendingWelcome.length) { const list = pendingWelcome; pendingWelcome = null; list.forEach((u, i) => setTimeout(() => welcomeFrom(u, me), 3500 + i * 9000)); }
     if (pendingPlay) { const id = pendingPlay; pendingPlay = null; openAux('vinyl'); Music.play(id); }
     else if (pendingWatch) { const id = pendingWatch; pendingWatch = null; openAux('watch', id); }
     else setTimeout(() => showTips(false), 1200);
@@ -800,6 +828,8 @@
     $('#status-btn').onclick = statusDialog;
     $('#m-contacts').onclick = (e) => showMenu(e.currentTarget, [
       { label: 'Добавить контакт…', onClick: addContactDialog },
+      { label: 'Пригласить друга…', onClick: () => inviteFriendDialog('') },
+      { label: 'Мой аватар: обучение', onClick: () => openAux('twin') },
       { label: 'Удалить выбранный', onClick: () => { if (!active) { alertBox('Контакты', 'Сначала открой беседу с контактом.'); return; } const a = accountOf(active); confirmBox('Удалить', `Удалить ${esc(a.nick)} из списка?`, () => removeContact(active)); } },
       '-',
       { label: 'Сменить статус…', onClick: statusDialog },
@@ -871,7 +901,7 @@
     const item = (a) => {
       const n = unreadFrom(a.uin);
       const st = statusOf(a.uin);
-      const ico = n ? `<span class="blink">${envelopeSvg(16)}</span>` : a.twinOf ? `<span class="twin-ico">${avatarSvg(a.twinOf, 14)}</span>` : statusFlower(st, 16, TIER[tierOf(a.uin)].ring);
+      const ico = n ? `<span class="${freshUnread(a.uin) ? 'blink' : 'unread-ico'}" title="${n} новых">${envelopeSvg(16)}</span>` : a.twinOf ? `<span class="twin-ico">${avatarSvg(a.twinOf, 14)}</span>` : statusFlower(st, 16, TIER[tierOf(a.uin)].ring);
       const pct = matchPct(me.uin, a.uin);
       const xs = xstatusOf(a.uin);
       return `<div class="citem ${active === a.uin ? 'sel' : ''} ${st === 'offline' ? 'off' : ''}" data-uin="${a.uin}" title="${esc(a.nick)} · ${a.uin}${a.phone ? ' · ' + esc(fmtPhone(a.phone)) : ''}${xs ? ' · ' + esc(xs) : ''}${pct != null ? ' · совпадение ' + pct + '%' : ''} · ${esc(MODES[circleOf(a.uin)].label)}"><span class="ico">${ico}</span><span class="nick">${esc(a.nick)}</span>${typing[a.uin] ? '<span class="typing">печатает…</span>' : ''}${n ? `<span class="muted">${n}</span>` : ''}</div>`;
@@ -885,6 +915,7 @@
     $$('.cgroup', el).forEach((g) => (g.onclick = () => { collapsed[g.dataset.g] = !collapsed[g.dataset.g]; Snd.play('click'); renderContacts(); }));
     const cnt = $('#sb-count');
     if (cnt) cnt.textContent = `Контактов: ${list.length}, в сети: ${list.filter((a) => isOnline(a.uin)).length}`;
+    scheduleBlinkStop();
   }
 
   /* ================= беседа ================= */
@@ -917,7 +948,7 @@
     win.hidden = !active;
     if (!active) { hideSmiles(); return; }
     const tabs = $('#ch-tabs');
-    tabs.innerHTML = openChats.map((u) => { const a = accountOf(u); const n = unreadFrom(u); return `<button class="${u === active ? 'on' : ''}" data-uin="${u}">${n ? `<span class="blink">${envelopeSvg(12)}</span>` : statusFlower(statusOf(u), 12)}<span>${esc(a.nick)}</span><i data-close="${u}" title="Закрыть">×</i></button>`; }).join('');
+    tabs.innerHTML = openChats.map((u) => { const a = accountOf(u); const n = unreadFrom(u); return `<button class="${u === active ? 'on' : ''}" data-uin="${u}">${n ? `<span class="${freshUnread(u) ? 'blink' : 'unread-ico'}">${envelopeSvg(12)}</span>` : statusFlower(statusOf(u), 12)}<span>${esc(a.nick)}</span><i data-close="${u}" title="Закрыть">×</i></button>`; }).join('');
     $$('button', tabs).forEach((b) => (b.onclick = (e) => {
       if (e.target.dataset.close) { closeChat(e.target.dataset.close); return; }
       openChat(b.dataset.uin);
@@ -931,7 +962,7 @@
       ta.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
       });
-      ta.addEventListener('input', () => { drafts[active] = ta.value; });
+      ta.addEventListener('input', () => { drafts[active] = ta.value; lastUserActivity = Date.now(); });
       $('#sendbtn').onclick = send;
       $('#smbtn').onclick = toggleSmiles;
       $('#clearbtn').onclick = () => confirmBox('История', 'Стереть всю переписку с этим контактом?', () => { mutate((d) => { delete d.history[pairKey(me.uin, active)]; }); renderHistory(); });
@@ -1030,17 +1061,18 @@
   function addContactDialog() {
     dialog({
       title: 'Добавить контакт',
-      body: `<label class="row"><span class="lbl">Кого ищем</span><input class="field" id="f-q" placeholder="номер, телефон или ник"></label><div class="found inset" id="f-res"><div class="empty-note">Набери хотя бы две буквы или цифры.</div></div>`,
+      body: `<label class="row"><span class="lbl">Кого ищем</span><input class="field" id="f-q" placeholder="номер, телефон или ник"></label><div class="found inset" id="f-res"><div class="empty-note">Набери хотя бы две буквы или цифры.</div></div><div class="row mt"><button class="btn" id="f-invite">✉ Пригласить друга в АСЬКУ</button><span class="hint">${esc(twinNick(me.uin))} встретит новичка открыткой</span></div>`,
       buttons: [{ label: 'Закрыть' }],
       onOpen: (ov) => {
         const q = $('#f-q', ov), res = $('#f-res', ov);
+        $('#f-invite', ov).onclick = () => { ov.remove(); inviteFriendDialog(q.value.trim()); };
         const run = () => {
           const v = q.value.trim().toLowerCase();
           const ph = normPhone(v);
           if (v.length < 2) { res.innerHTML = '<div class="empty-note">Набери хотя бы две буквы или цифры.</div>'; return; }
           const mine = contactsOf(me.uin);
           const found = allKnown().filter((a) => a.uin !== me.uin && (a.uin.includes(v) || a.nick.toLowerCase().includes(v) || (ph.length >= 4 && a.phone && normPhone(a.phone).includes(ph))));
-          if (!found.length) { res.innerHTML = '<div class="empty-note">Никого не нашли. Друг должен завести номер на этом же устройстве — или открой АСЬКУ во второй вкладке.</div>'; return; }
+          if (!found.length) { res.innerHTML = `<div class="empty-note">Никого не нашли. Друга ещё нет в АСЬКЕ? <span class="link" id="f-inv2">Пригласи ${/^[\d+ ()-]+$/.test(v) ? 'по этому номеру' : 'его'}</span> — ${esc(twinNick(me.uin))} встретит ${/^[\d+ ()-]+$/.test(v) ? 'его' : 'новичка'} открыткой и песней.</div>`; $('#f-inv2', res).onclick = () => { ov.remove(); inviteFriendDialog(q.value.trim()); }; return; }
           res.innerHTML = found.map((a) => `<div class="citem" data-uin="${a.uin}"><span class="ico">${statusFlower(statusOf(a.uin), 16)}</span><span class="nick">${esc(a.nick)} <span class="muted">#${a.uin}</span></span>${mine.includes(a.uin) ? '<span class="muted">уже в списке</span>' : '<span class="link">добавить</span>'}</div>`).join('');
           $$('.citem', res).forEach((c) => (c.onclick = () => {
             if (!mine.includes(c.dataset.uin)) { addContact(c.dataset.uin); Snd.play('knock'); run(); }
@@ -1181,7 +1213,9 @@
       <div class="tip"><b>4а. Кино 🎬.</b> Фильмы и сериалы по ссылке (YouTube, VK, Rutube, mp4) — смотрятся прямо в АСЬКЕ с любого устройства. ♥ любимое, «посоветовать» другу или на стену, серии подряд, запоминает, где остановился.</div>
       <div class="tip"><b>5. Холодильник 🧲.</b> Дверца открывается — внутри любимая еда и напитки (НФТ с номером), снаружи магниты из поездок. «Я лечу» — магнит себе и друзьям.</div>
       <div class="tip"><b>6. Люди ☺ и гости 📅.</b> Случайное знакомство по интересам, мероприятия с приглашениями. Интересы — в профиле, у каждого своя страница и сообщества.</div>
-      <div class="tip"><b>7. Аська и друзья.</b> Пишут сами, помнят ответы, советуют, отвечают на стене. Аватар КИРР учится на твоих сообщениях. Вернуться сюда: «Справка» → «Подсказки».</div></div>`, buttons: [{ label: 'Понятно, поехали', primary: true }] });
+      <div class="tip"><b>7. Аська и друзья.</b> Пишут сами, но редко и не мешают: помнят ответы, советуют, отвечают на стене. Конверт мигает две минуты после сообщения, потом просто ждёт.</div>
+      <div class="tip"><b>8. Аватар КИРР.</b> Твой двойник: учится на переписке и отвечает друзьям твоими словами, знает друзей, где ты и что слушаешь. «Контакты → Мой аватар: обучение» или напиши ему «учись». Вернуться сюда: «Справка» → «Подсказки».</div>
+      <div class="tip"><b>9. Пригласить друга.</b> «Контакты → Добавить контакт → Пригласить друга»: ссылка с твоим кодом. Как только друг появится, аватар сам встретит его открыткой и песней и сообщит тебе.</div></div>`, buttons: [{ label: 'Понятно, поехали', primary: true }] });
   }
 
   /* ================= стена ================= */
@@ -1260,7 +1294,7 @@
   function botWallReply(bot, wallUin, postId, why, kind) {
     if (!me) return;
     let text;
-    if (bot.twinOf) text = Brain.twin.comment(twinModelOf(bot.twinOf).model);
+    if (bot.twinOf) text = Brain.twin.comment(twinModelOf(bot.twinOf).model, twinStore(bot.twinOf));
     else {
       const P = bot.persona;
       const OWN = { card: { aska: ['Ой, открытка на моей стене! Повесила на самое видное место :)', 'Спасибо за открытку! Коллекция растёт.'], kat: ['ааа открытка!!! спасибо)))', 'ой как мило)))'], vova: ['открытка. ок. спасибо', 'ы. мило'], serega: ['Ооо, открытка!!! Респект! (b)'], lena: ['Ой, открытка! :$ Спасибо!'], batya: ['Спасибо. Красиво. Повесил.'], max: ['Открытка на стене. Простой жест, а приятно.'] },
@@ -1374,7 +1408,7 @@
         <div class="groupbox"><span class="legend">Аватар</span><div class="avatars" id="p-avatars"><button class="${prof.avatar == null ? 'on' : ''}" data-av="" title="цветочек">${flowerSvg('#3cb44a', 22, { logo: true })}</button>${SMILES.map((sm) => `<button class="${prof.avatar === sm.id ? 'on' : ''}" data-av="${sm.id}" title="${esc(sm.name)}">${smileSvg(sm.id, 22)}</button>`).join('')}</div></div>
         <div class="groupbox"><span class="legend">Чем занят</span><div class="chips" id="p-xs">${FUN_STATUS.filter((f) => !f.tier || tierRank(tier) >= tierRank(f.tier)).map((f) => `<button class="chip ${prof.xstatus === f.icon + ' ' + f.text ? 'on' : ''}" data-xs="${esc(f.icon + ' ' + f.text)}">${f.icon} ${esc(f.text)}</button>`).join('')}${prof.xstatus && !FUN_STATUS.some((f) => f.icon + ' ' + f.text === prof.xstatus) ? `<button class="chip on" data-xs="${esc(prof.xstatus)}">${esc(prof.xstatus)}</button>` : ''}<button class="chip" data-xs="" title="обычный статус режима">✕ сбросить</button></div><div class="row mt"><input class="field" id="p-xcustom" maxlength="40" placeholder="свой статус"><button class="btn" id="p-xset">OK</button></div><div class="hint">${FUN_STATUS.some((f) => f.tier) ? 'Статусы с ★ и ◆ открываются на уровнях Gold и Black.' : ''}</div></div>
         <div class="groupbox"><span class="legend">Досье</span><label class="row"><input type="checkbox" id="p-dossier" ${prof.dossierOpen ? 'checked' : ''}> досье открыто для друзей</label><div class="row mt"><button class="btn" id="p-dossier-open">Открыть досье</button><button class="btn" id="p-fridge">🧲 Холодильник</button></div></div>
-        <div class="groupbox"><span class="legend">Мой аватар</span><div class="row"><span class="ico">${avatarSvg(uin, 22)}</span><input class="field" id="p-twinname" maxlength="16" value="${esc(prof.twinName || 'КИРР')}" title="имя аватара"><button class="btn" id="p-twinsave">OK</button><button class="btn" id="p-twinchat">Написать</button></div><div class="hint">Цифровой двойник: учится на твоих сообщениях (выучил ${twinModelOf(uin).model.n}), знает твои интересы, друзей и то, что помнит Аська. Друзья могут писать ему, как тебе.</div></div>
+        <div class="groupbox"><span class="legend">Мой аватар</span><div class="row"><span class="ico">${avatarSvg(uin, 22)}</span><input class="field" id="p-twinname" maxlength="16" value="${esc(prof.twinName || 'КИРР')}" title="имя аватара"><button class="btn" id="p-twinsave">OK</button><button class="btn primary" id="p-twinlearn">🎓 Обучение</button><button class="btn" id="p-twinchat">Написать</button></div><div class="hint">Цифровой двойник: учится на твоих сообщениях и на том, как ты отвечаешь друзьям (выучил ${twinModelOf(uin).model.n} фраз, ${twinModelOf(uin).model.pairsN} ответов). Знает друзей, где ты, что слушаешь. Друзья пишут ему, как тебе.</div></div>
         <div class="groupbox"><span class="legend">Мои интересы (${prof.interests.length})</span><div class="hint mb">Нажми — добавить/убрать; правой кнопкой — страница интереса. <button class="link" id="p-catalog" style="background:none;border:0;padding:0">Каталог →</button></div><div class="chips" id="p-chips">${INTERESTS.map((i) => `<button class="chip ${prof.interests.includes(i) ? 'on' : ''}" data-int="${esc(i)}">${esc(i)}</button>`).join('')}${custom.map((i) => `<button class="chip on" data-int="${esc(i)}" title="убрать">${esc(i)} ×</button>`).join('')}</div>
           <div class="row mt"><input class="field" id="p-custom" maxlength="20" placeholder="свой интерес"><button class="btn" id="p-add">+</button></div></div>
         <div class="groupbox"><span class="legend">Режим</span><select class="field" id="p-mode">${Object.keys(MODES).map((k) => `<option value="${k}" ${prof.mode === k ? 'selected' : ''}>${MODES[k].icon} ${MODES[k].label} — ${MODES[k].hint}</option>`).join('')}</select><div class="hint mt">Режим меняет статус, цвет окон и то, чей круг показан первым. Круг контакта — в его профиле.</div></div>
@@ -1398,6 +1432,7 @@
       $$('#p-chips .chip').forEach((b) => (b.oncontextmenu = (e) => { e.preventDefault(); openAux('interest', b.dataset.int); }));
       const add = () => { const v = $('#p-custom').value.trim().toLowerCase(); if (v.length < 2) return; const list = myProfile().interests.slice(); if (!list.includes(v)) list.push(v); saveProfile({ interests: list }); registerInterest(v, true); toast(me, `интерес «${v}» теперь виден всем`, null); renderAux(); };
       $('#p-catalog').onclick = () => openAux('interests');
+      const tl = $('#p-twinlearn'); if (tl) tl.onclick = () => openAux('twin');
       const tn = $('#p-twinname'); if (tn) { const saveTwin = () => { const v = tn.value.trim().slice(0, 16) || 'КИРР'; saveProfile({ twinName: v }); toast(me, `аватар теперь зовут ${v}`, null); renderContacts(); }; $('#p-twinsave').onclick = saveTwin; tn.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveTwin(); }); $('#p-twinchat').onclick = () => openChat(twinUin(me.uin)); }
       $('#p-add').onclick = add;
       $('#p-custom').addEventListener('keydown', (e) => { if (e.key === 'Enter') add(); });
@@ -1469,6 +1504,7 @@
     else if (aux.kind === 'fridge') { const a = accountOf(aux.arg); title.innerHTML = aux.arg === me.uin ? 'Мой холодильник' : `Холодильник: ${esc(a ? a.nick : aux.arg)}`; body.innerHTML = renderFridge(aux.arg); if (accountOf(aux.arg)) wireFridge(aux.arg); }
     else if (aux.kind === 'dossier') { const a = accountOf(aux.arg); title.innerHTML = `Досье: ${esc(a ? a.nick : aux.arg)}`; body.innerHTML = renderDossier(aux.arg); if (accountOf(aux.arg)) wireDossier(aux.arg); }
     else if (aux.kind === 'events') { title.innerHTML = 'Мероприятия <small>— в гости</small>'; body.innerHTML = renderEvents(); wireEvents(); }
+    else if (aux.kind === 'twin') { title.innerHTML = `${esc(twinNick(me.uin))} <small>— обучение аватара</small>`; body.innerHTML = renderTwin(); wireTwin(); }
     else if (aux.kind === 'cinema') { title.innerHTML = 'Кино <small>— фильмы и сериалы</small>'; body.innerHTML = renderCinema(); wireCinema(); }
     else if (aux.kind === 'watch') { const mv = movieOf(aux.arg); title.innerHTML = mv ? `🎬 ${esc(mv.title)}` : 'Кино'; body.innerHTML = renderWatch(aux.arg); wireWatch(aux.arg); }
     else if (aux.kind === 'refs') { title.innerHTML = 'Приглашения <small>— цепочка</small>'; body.innerHTML = renderRefs(); wireRefs(); }
@@ -2477,31 +2513,186 @@
 
   /* ================= цифровой аватар КИРР ================= */
   const twinCache = {};
+  const STOPW = new Set('этот этого была были было будет может очень тоже если когда нет да ну вот как что это там тут сейчас просто давай пока привет спасибо'.split(' '));
+  const pluralRu = (n, a, b, c) => (n % 10 === 1 && n % 100 !== 11 ? a : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? b : c);
+  const agoRu = (ts) => { const d = Math.floor((Date.now() - ts) / 864e5); if (d <= 0) return 'сегодня'; if (d === 1) return 'вчера'; if (d < 7) return d + ' ' + pluralRu(d, 'день', 'дня', 'дней') + ' назад'; const w = Math.floor(d / 7); if (w < 5) return w === 1 ? 'неделю назад' : w + ' недели назад'; return 'давно'; };
+  // модель: фразы хозяина + пары «что ему написали → что он ответил»
   function twinModelOf(owner) {
-    const msgs = [];
-    Object.values(db.history).forEach((arr) => arr.forEach((m) => { if (m.from === owner && m.text && !m.card && !m.kind) msgs.push(m.text); }));
+    const msgs = [], pairs = []; let total = 0;
+    Object.values(db.history).forEach((arr) => {
+      let lastOther = null;
+      arr.forEach((m) => {
+        total++;
+        if (m.from === owner && m.to === twinUin(owner)) { lastOther = null; return; } // команды своему аватару — не манера
+        if (m.from === owner) { if (m.text && !m.card && !m.kind) { msgs.push(m.text); if (lastOther && m.ts - lastOther.ts < 1800000) pairs.push({ in: lastOther.text, out: m.text }); } lastOther = null; }
+        else if (m.to === owner && m.text && !m.kind && !m.card && !isTwin(m.from)) lastOther = m;
+      });
+    });
     const c = twinCache[owner];
-    if (c && c.n === msgs.length) return c;
-    const model = Brain.twin.build(msgs);
-    twinCache[owner] = { n: msgs.length, model };
+    if (c && c.total === total && c.n === msgs.length) return c;
+    const model = Brain.twin.build(msgs, pairs);
+    twinCache[owner] = { n: msgs.length, total, model };
     return twinCache[owner];
   }
+  // память самого аватара: чему научил хозяин, его ответы друзьям, на чём не нашёлся
+  function twinStore(owner) { return Object.assign(Brain.twin.emptyStore(), profileOf(owner).twin || {}); }
+  function saveTwinStore(owner, store) { mutate((d) => { d.profile = d.profile || {}; d.profile[owner] = Object.assign(profileOf(owner), { twin: store }); }); }
   function twinFacts(owner) {
     const acc = accountOf(owner); const prof = profileOf(owner);
     const mem = Object.assign({}, (db.memory[owner] || {})['000001'] || {});
-    const per = {};
-    Object.values(db.history).forEach((arr) => arr.forEach((m) => { if (m.from === owner && m.text && !m.kind) { const to = m.to; if (!per[to]) per[to] = { count: 0, words: {} }; per[to].count++; m.text.toLowerCase().split(/[^a-zа-яё0-9]+/).forEach((w) => { if (w.length > 3) per[to].words[w] = (per[to].words[w] || 0) + 1; }); } }));
-    const contacts = Object.entries(per).filter(([u]) => !isTwin(u) && accountOf(u)).sort((a, b) => b[1].count - a[1].count).slice(0, 6).map(([u, v]) => ({ nick: nickOf(u), count: v.count, words: Object.entries(v.words).sort((a, b) => b[1] - a[1]).slice(0, 4).map((x) => x[0]) }));
-    return { ownerUin: owner, owner: acc ? acc.nick : owner, name: mem.name, city: mem.city, music: mem.music, tea: mem.tea, pet: mem.pet, trip: mem.trip, job: mem.job, gender: mem.gender || Brain.guessGender(mem.name), interests: prof.interests, countries: Array.from(new Set(fridgeOf(owner).map((m) => COUNTRY[m.country] ? COUNTRY[m.country].name : m.country))), contacts };
+    const per = {}, lastTs = {};
+    Object.values(db.history).forEach((arr) => arr.forEach((m) => {
+      if (m.from === owner && m.text && !m.kind) { const to = m.to; if (!per[to]) per[to] = { count: 0, words: {} }; per[to].count++; lastTs[to] = Math.max(lastTs[to] || 0, m.ts); m.text.toLowerCase().split(/[^a-zа-яё0-9]+/).forEach((w) => { if (w.length > 3 && !STOPW.has(w)) per[to].words[w] = (per[to].words[w] || 0) + 1; }); }
+      else if (m.to === owner && m.text) lastTs[m.from] = Math.max(lastTs[m.from] || 0, m.ts);
+    }));
+    const circle = (u) => (prof.circles || {})[u] || (BOTS[u] && BOTS[u].circle) || 'chat';
+    const ORDER = { close: 0, biz: 1, chat: 2 };
+    const friends = (db.contacts[owner] || []).filter((u) => !isTwin(u) && accountOf(u)).map((u) => { const v = per[u] || { count: 0, words: {} }; return { uin: u, nick: nickOf(u), circle: circle(u), count: v.count, topics: Object.entries(v.words).sort((a, b) => b[1] - a[1]).slice(0, 4).map((x) => x[0]), interests: profileOf(u).interests || [], last: lastTs[u] ? agoRu(lastTs[u]) : null, bot: !!BOTS[u] }; }).sort((a, b) => ORDER[a.circle] - ORDER[b.circle] || b.count - a.count);
+    // где сейчас: последний «я лечу» за три недели, иначе город из памяти Аськи
+    const fl = fridgeOf(owner).filter((m) => m.origin === 'flight' && m.from === owner).sort((a, b) => b.ts - a.ts)[0];
+    const C = fl && COUNTRY[fl.country];
+    const location = fl && C && Date.now() - fl.ts < 21 * 864e5 ? { name: C.name, in: C.in || ('в ' + C.name), since: fl.ts, ago: (mem.gender === 'f' ? 'прилетела ' : 'прилетел ') + agoRu(fl.ts) } : null;
+    const pr = db.presence[owner] || {}; const mine = me && owner === me.uin;
+    const online = mine ? true : !!(pr.ts && Date.now() - pr.ts < 30000);
+    const xs = mine ? myXstatus() : pr.xstatus || '';
+    let activity = '', activity3 = '';
+    if (/^слушаю: /.test(xs)) { activity = 'слушаю «' + xs.slice(8) + '»'; activity3 = 'слушает «' + xs.slice(8) + '»'; }
+    else if (/^смотрю: /.test(xs)) { activity = 'смотрю «' + xs.slice(8) + '»'; activity3 = 'смотрит «' + xs.slice(8) + '»'; }
+    else if (xs) { activity = 'в статусе «' + xs + '»'; activity3 = activity; }
+    const modeL = MODES[prof.mode] ? MODES[prof.mode].label.toLowerCase() : '';
+    if (modeL && !activity) { activity = `в режиме «${modeL}»`; activity3 = activity; }
+    const favTrackIds = (prof.favTracks || []).filter((id) => Music.anyById(id));
+    const favMovies = (prof.favMovies || []).map((id) => movieOf(id)).filter(Boolean).map((m) => m.title);
+    const food = foodOf(owner).map((f) => (FOOD_BY[f.item] || { name: f.item }).name);
+    const events = Object.values(db.events || {}).filter((e) => e.host === owner && (!e.when || e.when > Date.now() - 864e5)).map((e) => `«${e.title}»${e.place ? ' — ' + e.place : ''}${e.when ? ', ' + fmtDay(e.when) : ''}`);
+    return { ownerUin: owner, owner: acc ? acc.nick : owner, name: mem.name, gender: mem.gender || Brain.guessGender(mem.name || (acc && acc.nick)), city: mem.city, music: mem.music, tea: mem.tea, pet: mem.pet, trip: mem.trip, job: mem.job, location, online, lastSeen: pr.ts ? (Date.now() - pr.ts < 864e5 ? 'сегодня в ' + fmtTime(pr.ts) : agoRu(pr.ts)) : null, status: pr.status, xstatus: xs, mode: modeL, activity, activity3, friends, interests: prof.interests || [], countries: Array.from(new Set(fridgeOf(owner).map((m) => COUNTRY[m.country] ? COUNTRY[m.country].name : m.country))), favTracks: favTrackIds.map((id) => Music.anyById(id).title), favTrackIds, favMovies, food, events, tier: TIER[tierOf(owner)] ? TIER[tierOf(owner)].label : tierOf(owner), points: prof.points || 0, playlists: (prof.playlists || []).map((p) => p.name), twinName: twinNick(owner) };
   }
   function twinTalk(bot, text) {
     const owner = bot.twinOf;
     const { model } = twinModelOf(owner);
     const facts = twinFacts(owner);
+    const store = twinStore(owner);
     const mem = memOf(bot.uin);
-    const msgs = Brain.twin.reply(text, model, facts, mem, { asker: me.uin, twinName: twinNick(owner) });
-    saveMem(bot.uin, mem);
+    const msgs = Brain.twin.reply(text, model, facts, store, mem, { asker: me.uin, askerNick: me.nick, twinName: twinNick(owner) });
+    saveMem(bot.uin, mem); saveTwinStore(owner, store);
     deliverSeq(bot, msgs, 700 + Math.random() * 900);
+  }
+  // окно «Обучение аватара»
+  let twTab = 'learn';
+  function renderTwin() {
+    const uin = me.uin; const { model } = twinModelOf(uin); const facts = twinFacts(uin); const store = twinStore(uin); const name = twinNick(uin);
+    const trainedN = Object.values(store.trained || {}).reduce((a, b) => a + b.length, 0);
+    const score = Math.min(100, Math.round(model.n * 1.5 + (model.pairsN + store.pairs.length) * 3 + trainedN * 4 + store.taught.length * 2));
+    const manner = [];
+    if (model.n) {
+      manner.push(model.caps > 0.5 ? 'пишет капсом' : model.lower > 0.5 ? 'всё с маленькой буквы' : 'обычный регистр');
+      manner.push(`смайлы в ${Math.round(model.smileRate * 100)}% сообщений${model.laugh ? ', смеётся «' + model.laugh + '»' : model.topSmiles.length ? ', любимый ' + model.topSmiles[0] : ''}`);
+      if (model.openers.length) manner.push('начинает с «' + model.openers.join('», «') + '»');
+      if (model.address.length) manner.push('обращается «' + model.address.join('», «') + '»');
+      if (model.multiEx > 0.3) manner.push('много восклицаний!!!'); else if (model.exclaim > 0.4) manner.push('часто с восклицанием');
+      if (model.dots > 0.3) manner.push('любит многоточия...');
+      manner.push(`в среднем ${Math.round(model.avgLen)} знаков`);
+    }
+    const tabs = `<div class="tabs tw-tabs"><button class="${twTab === 'learn' ? 'on' : ''}" data-tw="learn">Обучение${store.toLearn.length ? ' (' + store.toLearn.length + ')' : ''}</button><button class="${twTab === 'know' ? 'on' : ''}" data-tw="know">Что знает</button><button class="${twTab === 'phr' ? 'on' : ''}" data-tw="phr">Фразы</button></div>`;
+    let panel = '';
+    if (twTab === 'learn') panel = `
+      <div class="legend-line">Обученность</div><div class="prog" title="${score}%"><i style="width:${score}%"></i></div>
+      <div class="muted">${model.n} ${pluralRu(model.n, 'твоя фраза', 'твои фразы', 'твоих фраз')} · ${model.pairsN + store.pairs.length} ${pluralRu(model.pairsN + store.pairs.length, 'ответ', 'ответа', 'ответов')} друзьям · ${trainedN} из тренировок · ${store.taught.length} ${pluralRu(store.taught.length, 'факт', 'факта', 'фактов')}</div>
+      <div class="legend-line">Манера</div><div>${manner.length ? manner.map(esc).join(' · ') : 'пока нечего сказать — напиши друзьям'}</div>
+      ${model.words.length ? `<div class="muted">любимые слова: ${model.words.slice(0, 8).map(esc).join(', ')}</div>` : ''}
+      <div class="legend-line">Как учить</div>
+      <ol class="tw-how"><li><b>Само.</b> Пиши друзьям — ${esc(name)} запоминает фразы и то, как ты отвечаешь на их реплики.</li><li><b>Тренировка.</b> Кнопка «Потренировать» или слово «учись» в беседе: ${esc(name)} задаёт вопросы, ты отвечаешь, как ответил бы сам.</li><li><b>Факты.</b> «запомни: я в Москве до пятницы» — будет это знать и рассказывать друзьям.</li><li><b>Разбор.</b> На что ${esc(name)} не нашёлся — ниже. Ответь здесь, и друзьям он ответит твоими словами.</li></ol>
+      <div class="legend-line">Не нашёлся, что ответить${store.toLearn.length ? ' (' + store.toLearn.length + ')' : ''}</div>
+      ${store.toLearn.length ? store.toLearn.map((x, i) => `<div class="tl"><div><b class="link" data-chat="${esc(x.from)}">${esc(x.nick || nickOf(x.from))}</b>: «${esc(x.in)}»</div><div class="row"><input class="field sp" data-tl="${i}" placeholder="как бы ты ответил? Enter — сохранить"><button class="btn icon" data-tl-skip="${i}" title="Пропустить">×</button></div></div>`).join('') : '<div class="empty-note">Пока на всё находил ответ.</div>'}
+      <div class="legend-line">Факты, которым ты научил</div>
+      ${store.taught.length ? store.taught.map((x, i) => `<div class="row tl"><span class="sp">${esc(x)}</span><button class="btn icon" data-tw-del="${i}" title="Забыть">×</button></div>`).join('') : '<div class="empty-note">Напиши аватару «запомни: …».</div>'}
+      <div class="row mt"><input class="field sp" id="tw-fact" maxlength="120" placeholder="запомни: …"><button class="btn" id="tw-factadd">Запомнить</button></div>`;
+    else if (twTab === 'know') panel = `
+      <div class="legend-line">Где ты и чем занят</div>
+      <div>${facts.location ? `${facts.location.in} (${esc(facts.location.ago)})` : facts.city ? 'город: ' + esc(facts.city) : 'не знаю, где ты: нажми «Я лечу» или скажи «запомни: я в Москве»'}</div>
+      <div class="muted">${esc(facts.activity3 || 'ничего не делаешь, судя по статусу')}</div>
+      <div class="legend-line">Друзья (${facts.friends.length})</div>
+      ${facts.friends.map((f) => `<div class="row tl"><span class="ico">${avatarSvg(f.uin, 14)}</span><b class="link sp" data-chat="${esc(f.uin)}">${esc(f.nick)}</b><span class="muted">${f.circle === 'close' ? '♥ близкие' : f.circle === 'biz' ? '▦ бизнес' : '☺ общение'} · ${f.count} сообщ.${f.topics.length ? ' · про ' + esc(f.topics.slice(0, 2).join(', ')) : ''}${f.last ? ' · ' + esc(f.last) : ''}</span></div>`).join('')}
+      <div class="legend-line">Вкусы</div>
+      <div class="muted">интересы: ${facts.interests.length ? esc(facts.interests.join(', ')) : '—'}</div>
+      <div class="muted">музыка: ${facts.favTracks.length ? esc(facts.favTracks.slice(0, 4).join(', ')) : 'лайкни трек в виниле'}</div>
+      <div class="muted">кино: ${facts.favMovies.length ? esc(facts.favMovies.slice(0, 4).join(', ')) : 'лайкни фильм в «Кино»'}</div>
+      <div class="muted">холодильник: ${facts.food.length ? esc(facts.food.slice(0, 6).join(', ')) : '—'}</div>
+      <div class="muted">поездки: ${facts.countries.length ? esc(facts.countries.join(', ')) : '—'}</div>
+      ${facts.events.length ? `<div class="muted">зовёшь: ${esc(facts.events.join('; '))}</div>` : ''}
+      <div class="muted">уровень ${esc(facts.tier)}, ${facts.points} баллов${facts.name ? ' · имя: ' + esc(facts.name) : ''}</div>
+      <div class="hint mt">Друзья могут спросить аватара: «где он?», «что делает?», «кто его друзья?», «расскажи про Катю», «что любит есть?», «когда ответит?». Телефон не выдаёт.</div>`;
+    else panel = `
+      <div class="legend-line">Из тренировок</div>
+      ${Object.keys(store.trained || {}).filter((k) => store.trained[k].length).map((k) => `<div class="tl"><b>${esc(Brain.twin.INTENT_RU[k] || k)}</b>${store.trained[k].map((x, i) => `<div class="row"><span class="sp">— ${esc(x)}</span><button class="btn icon" data-tw-trdel="${k}:${i}" title="Убрать">×</button></div>`).join('')}</div>`).join('') || '<div class="empty-note">Пока нет. Нажми «Потренировать».</div>'}
+      <div class="legend-line">Твои ответы друзьям (из разбора)</div>
+      ${store.pairs.length ? store.pairs.slice(-10).reverse().map((p) => `<div class="tl"><div class="muted">«${esc(p.in)}»</div><div>— ${esc(p.out)}</div></div>`).join('') : '<div class="empty-note">Пока нет.</div>'}
+      <div class="legend-line">Фразы из переписки (${model.phrases.length})</div>
+      <div class="muted">${model.phrases.slice(0, 25).map(esc).join(' · ') || 'напиши друзьям — появятся'}</div>`;
+    return `<div class="twinwin">
+      <div class="wall-head"><span class="ico">${avatarSvg(uin, 28)}</span><div class="who"><b>${esc(name)} — твой цифровой аватар</b><div class="hint">Отвечает друзьям твоими словами и манерой, знает твоих друзей, где ты и чем занят. Чем больше ты пишешь, тем точнее.</div></div></div>
+      <div class="row"><button class="btn primary" id="tw-train">🎓 Тренировка</button><button class="btn" id="tw-chat">✉ Написать</button><input class="field" id="tw-name" maxlength="16" value="${esc(name)}" style="width:80px" title="имя аватара"><button class="btn" id="tw-save">Имя</button><button class="btn" id="tw-forget" title="Забыть тренировки и факты">Забыть</button></div>
+      ${tabs}<div class="tabpanel v-list">${panel}</div></div>`;
+  }
+  function wireTwin() {
+    const uin = me.uin; const tw = twinUin(uin);
+    $$('.tw-tabs button').forEach((b) => (b.onclick = () => { twTab = b.dataset.tw; Snd.play('click'); renderAux(); }));
+    $('#tw-train').onclick = () => { openChat(tw); const ta = $('#compose'); if (ta) { ta.value = 'учись'; send(); } };
+    $('#tw-chat').onclick = () => openChat(tw);
+    $('#tw-save').onclick = () => { const v = $('#tw-name').value.trim().slice(0, 16) || 'КИРР'; saveProfile({ twinName: v }); toast(me, `аватар теперь зовут ${v}`, null); renderContacts(); renderAux(); };
+    $('#tw-forget').onclick = () => confirmBox('Аватар', 'Забыть всё, чему ты учил (тренировки, факты, разборы)? Переписку он помнит всё равно.', () => { saveTwinStore(uin, Brain.twin.emptyStore()); renderAux(); });
+    const store = twinStore(uin);
+    $$('[data-tl]').forEach((inp) => inp.addEventListener('keydown', (e) => { if (e.key !== 'Enter') return; const v = inp.value.trim(); if (!v) return; const item = store.toLearn[+inp.dataset.tl]; if (!item) return; store.pairs.push({ in: item.in, out: v, from: item.from, ts: Date.now() }); store.toLearn.splice(+inp.dataset.tl, 1); saveTwinStore(uin, store); Snd.play('click'); toast(me, `${twinNick(uin)} запомнил ответ`, null); renderAux(); }));
+    $$('[data-tl-skip]').forEach((b) => (b.onclick = () => { store.toLearn.splice(+b.dataset.tlSkip, 1); saveTwinStore(uin, store); renderAux(); }));
+    $$('[data-tw-del]').forEach((b) => (b.onclick = () => { store.taught.splice(+b.dataset.twDel, 1); saveTwinStore(uin, store); renderAux(); }));
+    $$('[data-tw-trdel]').forEach((b) => (b.onclick = () => { const [k, i] = b.dataset.twTrdel.split(':'); store.trained[k].splice(+i, 1); saveTwinStore(uin, store); renderAux(); }));
+    const fa = $('#tw-factadd'); if (fa) { const add = () => { const v = $('#tw-fact').value.replace(/^запомни[:,]?\s*/i, '').trim(); if (!v) return; store.taught.push(v); saveTwinStore(uin, store); Snd.play('click'); renderAux(); }; fa.onclick = add; $('#tw-fact').addEventListener('keydown', (e) => { if (e.key === 'Enter') add(); }); }
+  }
+
+  /* ================= пригласить друга: аватар встречает новичка ================= */
+  let pendingWelcome = null;
+  function copyText(v, msg) { const done = () => { Snd.play('click'); toast(me, msg, null); }; if (navigator.clipboard) navigator.clipboard.writeText(v).then(done, () => window.prompt('Скопируй:', v)); else window.prompt('Скопируй:', v); }
+  function inviteFriendDialog(prefill) {
+    const link = location.origin + location.pathname.replace(/[^/]*$/, '') + '?ref=' + me.uin;
+    const isPhone = /^[\d+ ()-]{6,}$/.test(prefill || '');
+    const tn = twinNick(me.uin);
+    const text = (name) => `Привет${name ? ', ' + name : ''}! Заходи в АСЬКУ: ${link}\nМой код: ${me.uin}. Там тебя встретит мой аватар ${tn} :)`;
+    const saveInvite = (ov) => { const name = $('#iv-name', ov).value.trim(); const phone = normPhone($('#iv-phone', ov).value); const inv = (myProfile().invites || []).slice(); if ((name || phone) && !inv.some((i) => !i.joined && ((phone && i.phone === phone) || (!phone && i.name === name)))) { inv.push({ id: uid(), name, phone, ts: Date.now() }); saveProfile({ invites: inv }); } };
+    dialog({ title: '✉ Пригласить друга', body: `<div class="col">
+      <label class="row"><span class="lbl">Имя</span><input class="field" id="iv-name" maxlength="24" placeholder="как зовут друга" value="${isPhone ? '' : esc(prefill || '')}"></label>
+      <label class="row"><span class="lbl">Телефон</span><input class="field" id="iv-phone" type="tel" inputmode="tel" placeholder="чтобы узнать его, когда придёт" value="${isPhone ? esc(prefill) : ''}"></label>
+      <div class="hint">Друг открывает ссылку (код подставится сам) или вводит при регистрации код <b>${me.uin}</b>. Как только появится — ${esc(tn)} встретит его открыткой и песней, добавит в контакты и сообщит тебе.</div>
+      <textarea class="field" id="iv-text" rows="4" readonly>${esc(text(isPhone ? '' : (prefill || '')))}</textarea></div>`,
+      buttons: [{ label: 'Скопировать приглашение', primary: true, onClick: (ov) => { saveInvite(ov); copyText($('#iv-text', ov).value, 'приглашение скопировано — отправь другу'); } }].concat(navigator.share ? [{ label: 'Поделиться', onClick: (ov) => { saveInvite(ov); navigator.share({ title: 'АСЬКА', text: $('#iv-text', ov).value }).catch(() => {}); } }] : []).concat([{ label: 'Отмена' }]),
+      onOpen: (ov) => { const n = $('#iv-name', ov); n.addEventListener('input', () => { $('#iv-text', ov).value = text(n.value.trim()); }); const ph = $('#iv-phone', ov); ph.addEventListener('input', () => maskPhoneInput(ph)); } });
+  }
+  // кто ждал этого новичка: по коду приглашения или по телефону из «пригласить»
+  function whoInvited(acc) {
+    const out = [];
+    if (acc.invitedBy && db.accounts[acc.invitedBy] && !BOTS[acc.invitedBy]) out.push(acc.invitedBy);
+    Object.keys(db.accounts).forEach((u) => { if (u === acc.uin || BOTS[u] || out.includes(u)) return; const inv = profileOf(u).invites || []; if (inv.some((i) => !i.joined && i.phone && i.phone === acc.phone)) out.push(u); });
+    return out;
+  }
+  function welcomeFrom(owner, acc) {
+    if (!me || !acc || me.uin !== acc.uin || !db.accounts[owner] || owner === acc.uin) return;
+    const tw = twinUin(owner);
+    mutate((d) => {
+      d.contacts[owner] = d.contacts[owner] || []; [acc.uin, twinUin(acc.uin)].forEach((u) => { if (!d.contacts[owner].includes(u)) d.contacts[owner].push(u); });
+      d.contacts[acc.uin] = d.contacts[acc.uin] || []; [owner, tw].forEach((u) => { if (!d.contacts[acc.uin].includes(u)) d.contacts[acc.uin].push(u); });
+      const p = profileOf(owner);
+      const inv = (p.invites || []).map((i) => (!i.joined && ((i.phone && i.phone === acc.phone) || (!i.phone && i.name && acc.nick.toLowerCase().startsWith(i.name.toLowerCase().slice(0, 3)))) ? Object.assign({}, i, { joined: acc.uin, joinedTs: Date.now() }) : i));
+      d.profile[owner] = Object.assign(p, { invites: inv });
+    });
+    const bot = accountOf(tw); if (!bot) return;
+    const { model } = twinModelOf(owner); const facts = twinFacts(owner); const store = twinStore(owner);
+    const msgs = Brain.twin.welcome(model, facts, store, acc.nick, { twinName: twinNick(owner), defaultTrack: pick(['summer99', 'pager', 'disco99', 'lisboa']) });
+    const mem = memOf(tw); mem.met = Date.now(); saveMem(tw, mem);
+    deliverSeq(bot, msgs, 800);
+    const g = Brain.guessGender(acc.nick) === 'f'; const og = facts.gender === 'f';
+    const note = { id: uid(), from: tw, to: owner, ts: Date.now(), text: `Твой друг ${acc.nick} ${g ? 'появилась' : 'появился'} в АСЬКЕ (#${acc.uin}). Я ${g ? 'встретил её' : 'встретил его'} открыткой и песней, добавил в контакты. Напиши ${g ? 'ей' : 'ему'}!` };
+    pushHistory(note); post({ type: 'msg', msg: note });
+    setTimeout(() => { if (!db.accounts[owner]) return; addPost(owner, { id: uid(), from: tw, ts: Date.now(), kind: 'text', text: `Встретил ${acc.nick} в АСЬКЕ: ${accountOf(owner).nick} ${og ? 'звала' : 'звал'} — и вот ${g ? 'она' : 'он'} здесь. Открытка вручена, песня поставлена.`, likes: [] }); post({ type: 'wall', uin: owner, from: tw }); }, 12000);
+    renderContacts();
   }
 
   /* ================= старт ================= */
@@ -2521,7 +2712,7 @@
     fit();
   }
 
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && me) { db = load(); renderContacts(); if (active) { markRead(active); renderHistory(); } } });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && me) { hiddenSent = 0; db = load(); renderContacts(); if (active) { markRead(active); renderHistory(); } } });
   window.addEventListener('resize', () => { if (me && !isNarrow()) $('.desktop').classList.remove('mode-chat'); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && aux.kind && !$$('.overlay').length && !menuEl && !smilesEl) closeAux(); });
 
