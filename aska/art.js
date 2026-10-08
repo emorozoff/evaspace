@@ -66,6 +66,8 @@ window.AskaArt = (function () {
     { id: 'sick', codes: [':-&', '(sick)'], name: 'фу' },
     { id: 'angel', codes: ['O:)', 'O:-)'], name: 'ангел' },
     { id: 'shock', codes: ['8-O', '8O', ':-0'], name: 'шок' },
+    { id: 'wine', codes: ['(wine)', '(вино)', '(чин)'], name: 'чокнемся', anim: true },
+    { id: 'heart2', codes: ['(love)', '(сердце)', '(л)'], name: 'сердечко', anim: true },
   ];
   const SMILE_BY_ID = {};
   SMILES.forEach((s) => (SMILE_BY_ID[s.id] = s));
@@ -95,6 +97,8 @@ window.AskaArt = (function () {
     think: () => FACE(...Y) + '<path d="M11 5.8l3.5-.8" stroke="#000" stroke-width="1" stroke-linecap="round"/><circle cx="7" cy="8" r="1.1"/><circle cx="13" cy="8" r="1.1"/><path d="M7 13.2h6" stroke="#000" stroke-width="1.1" stroke-linecap="round"/><text x="14" y="5" font-size="6" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" fill="#1a3ea8">?</text>',
     sick: () => FACE(...G) + '<path d="M5 7.5q2-1.5 4 0M11 7.5q2-1.5 4 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/><path d="M6 13.5q1-1.2 2 0t2 0t2 0t2 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/>',
     angel: () => '<ellipse cx="10" cy="3" rx="6" ry="1.6" fill="none" stroke="#f0c020" stroke-width="1.2"/>' + FACE(...Y) + '<path d="M5 8.5q2-1.4 4 0M11 8.5q2-1.4 4 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/><path d="M6.5 12q3.5 3 7 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/>',
+    wine: () => '<g class="an-glass-l" style="transform-origin:6px 18px"><path d="M2 2h8l-1 7q-1 3-3 3t-3-3z" fill="#f7f2c0" stroke="#555" stroke-width=".6"/><path d="M2.6 4h6.8l-.6 4.5q-.8 2.3-2.8 2.3t-2.8-2.3z" fill="#fff7a8"/><path d="M6 12v5M3.5 18h5" stroke="#555" stroke-width=".9" stroke-linecap="round"/></g><g class="an-glass-r" style="transform-origin:14px 18px"><path d="M10 2h8l-1 7q-1 3-3 3t-3-3z" fill="#c62a3a" stroke="#555" stroke-width=".6"/><path d="M10.6 4h6.8l-.6 4.5q-.8 2.3-2.8 2.3t-2.8-2.3z" fill="#8a0f1f"/><path d="M14 12v5M11.5 18h5" stroke="#555" stroke-width=".9" stroke-linecap="round"/></g><g class="an-spark"><path d="M10 1l.6 1.6L12.2 3l-1.6.6L10 5.2l-.6-1.6L7.8 3l1.6-.4z" fill="#ffd21e"/></g>',
+    heart2: () => '<g class="an-heart" style="transform-origin:10px 10px"><path d="M10 17.5L3.2 10.6A3.9 3.9 0 0 1 10 5.9a3.9 3.9 0 0 1 6.8 4.7z" fill="#ff2d55" stroke="#9a0025" stroke-width=".7"/><path d="M6 7.5q1.5-1.8 3.2-.3" fill="none" stroke="#fff" stroke-width="1" stroke-linecap="round" opacity=".85"/></g><g class="an-spark"><circle cx="3" cy="4" r="1" fill="#ffb6c1"/><circle cx="17" cy="5" r="1.2" fill="#ffb6c1"/><circle cx="16" cy="15" r=".9" fill="#ffd21e"/><circle cx="4" cy="14" r=".8" fill="#ffd21e"/></g>',
     shock: () => FACE(...Y) + '<path d="M4.5 5.5l4-1M15.5 5.5l-4-1" stroke="#000" stroke-width="1" stroke-linecap="round"/><circle cx="7" cy="8" r="1.9" fill="#fff" stroke="#000" stroke-width=".7"/><circle cx="13" cy="8" r="1.9" fill="#fff" stroke="#000" stroke-width=".7"/><circle cx="7" cy="8" r=".9"/><circle cx="13" cy="8" r=".9"/><ellipse cx="10" cy="13.8" rx="3" ry="2.6" fill="#6b1010" stroke="#000" stroke-width=".7"/>',
   };
   function smileSvg(id, size) {
@@ -161,6 +165,24 @@ window.AskaArt = (function () {
           <g class="planefly"><g transform="translate(0,50)"><path d="M0 0h40l10-4-3 6 3 6-10-4H0z" fill="#fff" stroke="#333" stroke-width="1"/><path d="M12 0l-8-12h8l10 12zM12 4l-8 12h8l10-12z" fill="#d8232a" stroke="#333" stroke-width=".7"/><circle cx="36" cy="2" r="1.6" fill="#1fa3e0"/><circle cx="30" cy="2" r="1.6" fill="#1fa3e0"/><circle cx="24" cy="2" r="1.6" fill="#1fa3e0"/></g></g>
           <path d="M0 120Q60 100 100 108T200 100V120z" fill="#9bd14a"/><rect x="150" y="90" width="22" height="30" fill="#f7b31c" stroke="#7a4a00" stroke-width=".8"/><rect x="156" y="84" width="10" height="6" fill="none" stroke="#7a4a00" stroke-width="1.2"/>
           ${label('летим!', '#0a246a', 12, 112)}`;
+        break;
+      case 'roses':
+        body = paper('#fff0f3') + `<g class="sway" style="transform-origin:100px 118px"><path d="M100 118C98 92 84 76 70 58M100 118C100 90 100 72 100 50M100 118C102 92 116 76 130 58" stroke="#2f7d1e" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M88 96q-16-2-20-18q14 2 20 18zM112 90q16-2 20-18q-14 2-20 18z" fill="#4ca12c" stroke="#2f7d1e" stroke-width=".6"/>${[[70, 56], [100, 46], [130, 56], [85, 68], [115, 68]].map(([x, y]) => `<g transform="translate(${x},${y})"><circle r="11" fill="#d8182e" stroke="#7a0010" stroke-width=".8"/><path d="M-6 -2q6-7 12 0q-3 7-9 4z" fill="#ff5c6c" opacity=".8"/><path d="M-3 3q3-4 6 0" fill="none" stroke="#7a0010" stroke-width=".7"/></g>`).join('')}</g><path d="M82 112q18-12 36 0q-18 12-36 0z" fill="#ffd21e" stroke="#806a00" stroke-width=".6"/>${label('с любовью', '#b01818', 100, 112, 'middle')}`;
+        break;
+      case 'candle':
+        body = paper('#2a1030') + `<rect x="0" y="80" width="200" height="40" fill="#5a2a3a"/><ellipse cx="100" cy="84" rx="70" ry="12" fill="#f3e9d2" stroke="#999" stroke-width=".6"/>
+          <rect x="97" y="40" width="6" height="36" fill="#fff5d0" stroke="#999" stroke-width=".5"/><g class="flicker" style="transform-origin:100px 40px"><ellipse cx="100" cy="33" rx="4" ry="7" fill="#ffb21e"/><ellipse cx="100" cy="35" rx="2" ry="4" fill="#fff3a0"/></g><circle cx="100" cy="36" r="22" fill="#ffb21e" opacity=".12"/>
+          <g transform="translate(60,52)"><path d="M0 0h18l-2 16q-2 7-7 7t-7-7z" fill="#f7f2c0" stroke="#999" stroke-width=".6"/><path d="M9 23v9M3 33h12" stroke="#999" stroke-width="1"/></g><g transform="translate(122,52)"><path d="M0 0h18l-2 16q-2 7-7 7t-7-7z" fill="#c62a3a" stroke="#999" stroke-width=".6"/><path d="M9 23v9M3 33h12" stroke="#999" stroke-width="1"/></g>
+          ${[[30, 20], [170, 24], [20, 60], [180, 62]].map(([x, y], i) => `<g class="rise" style="animation-delay:${i * .6}s">${heart(x, y + 50, 1.2, '#ff6b8a')}</g>`).join('')}${label('ужин при свечах', '#ffd9a0', 100, 20, 'middle')}`;
+        break;
+      case 'kiss':
+        body = paper('#ffe3ea') + `<g class="beat" style="transform-origin:100px 62px"><path d="M60 62q20-22 40-6q20-16 40 6q-20 24-40 14q-20 10-40-14z" fill="#e02050" stroke="#7a0020" stroke-width="1"/><path d="M60 62q40 6 80 0" fill="none" stroke="#7a0020" stroke-width="1.2"/><path d="M78 52q10-6 20 2q10-8 20-2" fill="none" stroke="#ff7a9a" stroke-width="2" opacity=".7"/></g>
+          ${[[25, 108], [50, 112], [150, 110], [176, 106]].map(([x, y], i) => `<g class="rise" style="animation-delay:${i * .7}s">${heart(x, y, 1.5, '#ff6b8a')}</g>`).join('')}${label('чмок!', '#b01818', 100, 110, 'middle')}`;
+        break;
+      case 'couple':
+        body = paper('#1b1b4a') + [[20, 18, 1.4, 0], [60, 10, 1, .4], [140, 14, 1.2, .8], [180, 30, 1, .2], [100, 22, 1, .6], [40, 40, 1, 1]].map(([x, y, r, d]) => `<circle class="tw" cx="${x}" cy="${y}" r="${r}" fill="#fff" style="animation-delay:${d}s"/>`).join('') + `<circle cx="160" cy="36" r="16" fill="#ffe14d"/><circle cx="167" cy="31" r="14" fill="#1b1b4a"/>
+          <path d="M0 120Q50 96 100 104T200 96V120z" fill="#0d0d30"/><path d="M78 118V84q0-10 8-10t8 10v34zM106 118V86q0-10 8-10t8 10v32z" fill="#000"/><circle cx="86" cy="68" r="7" fill="#000"/><circle cx="114" cy="70" r="7" fill="#000"/><path d="M94 90q6-6 12 0" stroke="#000" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <g class="beat" style="transform-origin:100px 52px">${heart(100, 52, 1.8, '#ff2d55')}</g>${label('только ты и я', '#ffd9e6', 100, 112, 'middle')}`;
         break;
       case 'tea':
         body = paper('#f3e9d2') + `<ellipse cx="100" cy="104" rx="56" ry="8" fill="#ddd" stroke="#999" stroke-width=".6"/>
