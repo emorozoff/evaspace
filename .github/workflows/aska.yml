@@ -1,0 +1,56 @@
+name: Публикация «АСЬКИ»
+
+# Мессенджер лежит в папке aska/ и публикуется в ту же папку ветки gh-pages:
+# https://emorozoff.github.io/evaspace/aska/
+# Остальное содержимое gh-pages (Ева и соседние приложения) не трогается.
+
+on:
+  push:
+    branches:
+      - claude/pensive-davinci-tyahht
+    paths:
+      - 'aska/**'
+      - '.github/workflows/aska.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aska-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Публикация в gh-pages/aska
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          REMOTE="https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          SRC="$PWD/aska"
+          for attempt in 1 2 3 4 5; do
+            rm -rf published
+            git clone --quiet --depth 1 --branch gh-pages "$REMOTE" published
+            cd published
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            rm -rf aska && mkdir aska && cp -a "$SRC/." aska/
+            rm -f aska/README.md
+            git add -A aska
+            if git diff --cached --quiet; then
+              echo "Сайт не изменился, публиковать нечего"; exit 0
+            fi
+            git commit -q -m "АСЬКА из ${GITHUB_SHA}"
+            if git push "$REMOTE" gh-pages; then
+              echo "Опубликовано: https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/aska/"
+              exit 0
+            fi
+            echo "gh-pages обновилась параллельно — повтор через $((attempt * 5)) с"
+            cd .. && sleep $((attempt * 5))
+          done
+          exit 1
