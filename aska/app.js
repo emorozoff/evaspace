@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '3.1';
+  const VERSION = '3.2';
   const MAX_MSG = 2000;   // длинные простыни режем: история и синхронизация остаются лёгкими
   const SESSION_KEY = 'aska.session';
   const Snd = window.AskaSound;
