@@ -389,6 +389,12 @@ window.AskaBrain = (function () {
 
     // 3. факты о себе
     let m;
+    // одно слово-имя после того, как спрашивали имя, — это имя
+    if (!mem.name && mem.asked && mem.asked.name && t.split(' ').length === 1 && extractName(raw)) {
+      mem.name = extractName(raw);
+      say(isAska ? `${mem.name}! Красиво. Записала в досье крупными буквами :)` : `${mem.name}, оч приятно! Я ${P.first} :)`);
+      return out;
+    }
     if ((m = t.match(/меня зовут ([а-яa-z\-]+)/)) || (m = t.match(/^я ([а-яa-z\-]+)$/))) {
       const n = extractName(m[1]); if (n) { mem.name = n; mem.asked = mem.asked || {}; mem.asked.name = Date.now(); say(isAska ? `Очень приятно, ${n}! А я Аська. Теперь мы официально дружим ;)` : `${n}, оч приятно! Я ${P.first} :)`); return out; }
     }
