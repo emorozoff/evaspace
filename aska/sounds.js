@@ -177,6 +177,41 @@ window.AskaSound = (function () {
     return 0.45;
   };
 
+  // барабанная дробь — перед важным сообщением
+  S.drum = (t) => {
+    for (let i = 0; i < 16; i++) {
+      const d = t + i * 0.075;
+      noise(d, 0.05, { f: 1800, q: 0.8, gain: 0.08 + i * 0.012, a: 0.001 });
+      tone(d, 0.06, { f: 180, fEnd: 90, gain: 0.12 + i * 0.01, a: 0.001 });
+    }
+    return 1.25;
+  };
+  // та-да-а!
+  S.tada = (t) => {
+    tone(t, 0.18, { f: 392, type: 'sawtooth', gain: 0.12, lp: 2200, r: 0.05 });
+    tone(t, 0.18, { f: 494, type: 'sawtooth', gain: 0.1, lp: 2200, r: 0.05 });
+    [523, 659, 784].forEach((f) => tone(t + 0.2, 0.7, { f, type: 'sawtooth', gain: 0.09, lp: 2600, a: 0.02, r: 0.5 }));
+    tone(t + 0.2, 0.7, { f: 262, type: 'triangle', gain: 0.15, r: 0.5 });
+    return 0.95;
+  };
+  S.meow = (t) => {
+    vowel(t, 0.45, { v: 'm', vEnd: 'u', f: 520, fEnd: 380, gain: 0.6, a: 0.05, r: 0.15, vib: 6, vibRate: 7 });
+    vowel(t + 0.05, 0.25, { v: 'a', vEnd: 'u', f: 700, fEnd: 450, gain: 0.35, a: 0.03, r: 0.1 });
+    return 0.5;
+  };
+  S.plane = (t) => {
+    noise(t, 1.4, { type: 'lowpass', f: 250, fEnd: 1400, q: 1.5, gain: 0.4, a: 0.4, r: 0.6 });
+    tone(t, 1.4, { f: 90, fEnd: 160, type: 'sawtooth', gain: 0.1, lp: 400, a: 0.4, r: 0.6 });
+    return 1.5;
+  };
+  S.tea = (t) => { // наливаем и дзынь
+    noise(t, 0.8, { f: 700, fEnd: 1100, q: 1.2, gain: 0.3, trem: 9, a: 0.05, r: 0.2 });
+    [0.1, 0.3, 0.5].forEach((d, i) => tone(t + d, 0.12, { f: 300 + i * 60, fEnd: 500 + i * 80, gain: 0.14, lp: 1200 }));
+    tone(t + 0.85, 0.3, { f: 2600, gain: 0.12, r: 0.28, a: 0.001 });
+    tone(t + 0.85, 0.3, { f: 3900, gain: 0.07, r: 0.28, a: 0.001, detune: 9 });
+    return 1.2;
+  };
+
   /* ---------- голоса смайлов ---------- */
   const SM = {};
 

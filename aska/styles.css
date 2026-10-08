@@ -182,6 +182,7 @@ a, .link { color: var(--link); text-decoration: underline; cursor: pointer; }
   padding: 10px 8px 8px;
 }
 .bigflower { display: grid; place-items: center; padding: 4px 0 8px; }
+.bigflower .link { font-size: 11px; }
 .uin-box {
   font: bold 22px/1 'Courier New', Courier, monospace; letter-spacing: 2px;
   padding: 6px 10px; text-align: center; background: #fff;
@@ -277,6 +278,35 @@ a, .link { color: var(--link); text-decoration: underline; cursor: pointer; }
 .smiles button:active { border-color: var(--shadow) var(--light) var(--light) var(--shadow); }
 .smiles button svg { width: 20px; height: 20px; }
 .smiles .cap { grid-column: 1 / -1; text-align: center; color: #404040; padding-top: 2px; border-top: 1px solid var(--shadow); margin-top: 2px; }
+
+/* открытки в переписке */
+.postcard { width: 200px; max-width: 100%; height: 120px; border: 2px solid #fff; outline: 1px solid #000; box-shadow: 2px 2px 0 rgba(0,0,0,.3); margin: 4px 0 3px; cursor: pointer; background: #fff; display: block; overflow: hidden; }
+.postcard svg { width: 100%; height: 100%; display: block; }
+.postcard:active { transform: scale(.98); }
+.pc-cap { font-size: 10px; color: #404040; margin-bottom: 4px; }
+.postcard .sway { animation: pc-sway 2.2s ease-in-out infinite alternate; transform-box: view-box; }
+.postcard .rays { animation: pc-spin 14s linear infinite; transform-box: view-box; }
+.postcard .drift { animation: pc-drift 5s ease-in-out infinite alternate; }
+.postcard .beat { animation: pc-beat 1s ease-in-out infinite; transform-box: view-box; }
+.postcard .rise { animation: pc-rise 3s linear infinite; opacity: 0; }
+.postcard .tw { animation: pc-tw 1.6s ease-in-out infinite alternate; }
+.postcard .flicker { animation: pc-flicker .25s ease-in-out infinite alternate; transform-box: view-box; }
+.postcard .wag { animation: pc-wag 1.1s ease-in-out infinite alternate; transform-box: view-box; }
+.postcard .blink-eye { animation: pc-blink 4s infinite; transform-box: view-box; }
+.postcard .planefly { animation: pc-plane 4.5s linear infinite; }
+.postcard .steam { animation: pc-steam 2.4s ease-in-out infinite; opacity: 0; }
+@keyframes pc-sway { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+@keyframes pc-spin { to { transform: rotate(360deg); } }
+@keyframes pc-drift { from { transform: translateX(-8px); } to { transform: translateX(8px); } }
+@keyframes pc-beat { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.12); } 45% { transform: scale(1.04); } 60% { transform: scale(1.12); } }
+@keyframes pc-rise { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-80px); opacity: 0; } }
+@keyframes pc-tw { from { opacity: .2; } to { opacity: 1; } }
+@keyframes pc-flicker { from { transform: scaleY(1) rotate(-3deg); } to { transform: scaleY(1.18) rotate(3deg); } }
+@keyframes pc-wag { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
+@keyframes pc-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+@keyframes pc-plane { from { transform: translate(-60px, 18px); } to { transform: translate(230px, -16px); } }
+@keyframes pc-steam { 0% { transform: translateY(0); opacity: 0; } 30% { opacity: .8; } 100% { transform: translateY(-16px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .postcard * { animation: none !important; } }
 
 /* ---------- диалоги ---------- */
 .overlay { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(0,0,0,.15); }

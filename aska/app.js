@@ -26,7 +26,7 @@
 
   /* ================= хранилище ================= */
   function emptyDb() {
-    return { accounts: {}, contacts: {}, history: {}, unread: {}, presence: {}, settings: { sound: true, volume: 0.8 }, lastLogin: '' };
+    return { accounts: {}, contacts: {}, history: {}, unread: {}, presence: {}, memory: {}, settings: { sound: true, volume: 0.8 }, lastLogin: '' };
   }
   function load() {
     try {
@@ -50,27 +50,6 @@
 
   /* ================= боты ================= */
   const BOTS = {
-    '100500': {
-      uin: '100500', nick: 'Катюха_98', phone: '+7 (916) 100-05-00', bot: true, seed: 3,
-      hello: ['Приветик! :) Ты новенький? Я тут с 98-го сижу', 'Ку! Как сам? :)', 'О, кто-то в сети! Привет :)'],
-      replies: ['ааа, понятно :)', 'Ну ты даёшь :D', 'слушай, а у тебя какой модем? у меня 33.6, еле тянет', 'Скинь мп3 какую-нить, а? Только не больше 3 мегов, а то до утра качать', 'я тут на инфе сижу в универе, препод не видит ;)', 'Пошли в чат на кроватке? там весело', 'Ща, мне мама звонить хочет, инет вырубит... ((', 'А ты из какого города?', ':* ', 'хихи :$', 'ооо круто!!! 8)', 'не, ну ты что :(', 'ща чайник поставлю и вернусь, не теряй'],
-      bye: ['Пока-пока! Пиши! :*', 'Давай, удачи! Я на связи :)', 'Ну всё, побежала. Чмоки :*'],
-      how: ['Да норм, модем только отваливается постоянно :( А у тебя?', 'Отлично! Сессию закрыла :D', 'Скучно... развесели меня :)'],
-    },
-    '31337': {
-      uin: '31337', nick: 'ha©keR', phone: '+7 (495) 313-37-13', bot: true, seed: 11,
-      hello: ['йо', 'привед. ты кто?', 'в сети. чё надо'],
-      replies: ['lol', 'не, фигня', 'это всё ламерство', 'у меня линукс стоит, венда для домохозяек 8)', 'качаю дистрибутив уже 3 дня по дайлапу', 'напиши мне на мыло, тут небезопасно', 'я тебе уин подарю красивый, если фрилансер найдёшь', 'ы', 'мда', 'ясн', 'а ты в кваку играешь? го на сервак', 'ща ядро пересоберу и напишу', '>:) хехе', 'не палюсь', 'ок'],
-      bye: ['bb', 'cya', 'давай. не пались'],
-      how: ['норм. компилю', 'хз. винда опять синий экран показала, снёс', 'гуд. 3 ночи, самое время кодить 8)'],
-    },
-    '777777': {
-      uin: '777777', nick: 'DJ_Serёga', phone: '+7 (903) 777-77-77', bot: true, seed: 7,
-      hello: ['Хэй! Здарова! :D', 'Привет-привет! У меня тут вечеринка намечается <:o)', 'Серёга на связи! Чё как?'],
-      replies: ['Ооо, это круто!!! <:o)', 'Слушай, в субботу у меня сейшн, приходи! (b)', 'А какую музыку любишь? Я щас Продиджи гоняю', 'Хахаха :D', 'Ну давай, рассказывай', 'Ты не поверишь, что вчера было :O', 'блин, кассета зажевалась :(', 'записал новый микс на диск, 80 минут чистого кайфа', 'ща колонки подключу, погоди', 'ваще бомба!!! 8)', 'не, ну это надо отметить (b)', 'а поехали на дачу в выходные?'],
-      bye: ['Давай, бро! На связи! (b)', 'Пока! Не скучай :D', 'Всё, умотал. Пиши!'],
-      how: ['Да всё супер!!! <:o) Тусим!', 'Нормально, микс свёл наконец :D', 'Ваще зашибись! А у тебя?'],
-    },
     '123456': {
       uin: '123456', nick: 'Админ АСЬКИ', phone: '', bot: true, seed: 1, always: true,
       hello: ['Добро пожаловать в АСЬКУ! Я помогу разобраться. Напиши «помощь» :)'],
@@ -79,113 +58,16 @@
       how: ['Работаю круглосуточно, без выходных :)'],
       help: 'Что умеет АСЬКА:\n• номер + ник + телефон при регистрации\n• контакты с цветочками-статусами\n• «о-оу!» на входящее сообщение\n• 22 смайла, у каждого свой звук\n• переписка между вкладками одного устройства\n• боты-собеседники из 1999-го\n\nСпроси: «контакты», «статус», «смайлы», «звук», «вкладки».',
     },
-    '555123': {
-      uin: '555123', nick: 'Ленка :)', phone: '+7 (921) 555-12-30', bot: true, seed: 5,
-      hello: ['Приветики!!! :) А я тебя знаю? :-?', 'Ой, привет! А я думала никого нет', 'Хай :) Я Лена, из Питера'],
-      replies: ['Ой, правда? :O', 'Ха-ха-ха, умора :D', 'А я вчера Титаник в пятый раз смотрела :\'(', 'Расскажи что-нить интересное', 'Ты такой милый :$', 'Сейчас мама придёт, модем отберёт', 'у меня тамагочи помер :(', 'слушаю Руки Вверх на всю громкость!!! @}->--', 'А тебе кто больше нравится, Децл или Дельфин?', 'О:) я само совершенство', 'Пиши ещё, мне скучно', ';) ну-ну'],
-      bye: ['Пока! Целую :*', 'Ну пока-пока :( Пиши обязательно!', 'Побежала, мама зовёт. Чмок :*'],
-      how: ['Супер!!! Завтра выходной :D А у тебя?', 'Так себе... контрольная завтра :(', 'Хорошо :) Чай с печеньками пью'],
-    },
   };
+  // Аська и друзья — персонажи с характером, живут в brain.js
+  Object.values(window.AskaBrain.personas).forEach((P) => {
+    BOTS[P.uin] = { uin: P.uin, nick: P.nick, phone: P.phone, bot: true, brain: P.id, persona: P, always: !!P.always, seed: P.seed };
+  });
 
   const SMILE_TAUNTS = ['Ой, какой смайлик! :)', 'Отвечаю тем же! :D', 'хихи :$', ';)', 'Ух ты! :O', 'Люблю смайлы @}->--', '8) круто'];
 
-  /* ================= статусы ================= */
-  const STATUSES = [
-    { key: 'online', label: 'В сети', color: '#3cb44a' },
-    { key: 'chat', label: 'Готов болтать', color: '#1fa3e0', glyph: 'chat' },
-    { key: 'away', label: 'Отошёл', color: '#e8c22d', glyph: 'clock' },
-    { key: 'na', label: 'Недоступен', color: '#e88b2d', glyph: 'clock' },
-    { key: 'occupied', label: 'Занят', color: '#d85050', glyph: 'minus' },
-    { key: 'dnd', label: 'Не беспокоить', color: '#b01818', glyph: 'minus' },
-    { key: 'invisible', label: 'Невидимый', color: '#a8a8a8', glyph: 'ghost' },
-    { key: 'offline', label: 'Не в сети', color: '#d8232a' },
-  ];
-  const statusInfo = (key) => STATUSES.find((s) => s.key === key) || STATUSES[STATUSES.length - 1];
-
-  /* ================= цветочек ================= */
-  function flowerSvg(color, size, opts) {
-    opts = opts || {};
-    size = size || 16;
-    let petals = '';
-    for (let i = 0; i < 8; i++) {
-      const a = (i * Math.PI) / 4 - Math.PI / 2;
-      const cx = (8 + 5 * Math.cos(a)).toFixed(2), cy = (8 + 5 * Math.sin(a)).toFixed(2);
-      const fill = opts.logo && i === 3 ? '#d8232a' : color;
-      petals += `<circle cx="${cx}" cy="${cy}" r="2.7" fill="${fill}" stroke="#1a1a1a" stroke-width=".55"/>`;
-    }
-    let glyph = '';
-    if (opts.glyph === 'minus') glyph = '<rect x="4" y="7" width="8" height="2" fill="#fff"/><rect x="4.5" y="7.5" width="7" height="1" fill="#b01818"/>';
-    if (opts.glyph === 'clock') glyph = '<path d="M8 5.5V8h2" stroke="#000" stroke-width="1" fill="none"/>';
-    if (opts.glyph === 'chat') glyph = '<rect x="5" y="6" width="6" height="4" rx="1" fill="#fff" stroke="#000" stroke-width=".6"/><path d="M6.5 10l-1 1.6 2-1.6" fill="#fff" stroke="#000" stroke-width=".6"/>';
-    if (opts.glyph === 'ghost') glyph = '';
-    const op = opts.glyph === 'ghost' ? ' opacity=".55"' : '';
-    const center = opts.glyph === 'minus' || opts.glyph === 'chat' ? '' : `<circle cx="8" cy="8" r="2.5" fill="#fff" stroke="#1a1a1a" stroke-width=".55"/>`;
-    return `<svg viewBox="0 0 16 16" width="${size}" height="${size}" aria-hidden="true"${op}>${petals}${center}${glyph}</svg>`;
-  }
-  const statusFlower = (key, size) => { const s = statusInfo(key); return flowerSvg(s.color, size, { glyph: s.glyph }); };
-  const envelopeSvg = (size) => `<svg viewBox="0 0 16 16" width="${size || 16}" height="${size || 16}" aria-hidden="true"><rect x="1" y="3.5" width="14" height="9" fill="#ffe14d" stroke="#000" stroke-width=".7"/><path d="M1 3.5l7 5 7-5M1 12.5l5.5-5M15 12.5l-5.5-5" stroke="#000" stroke-width=".7" fill="none"/></svg>`;
-
-  /* ================= смайлы ================= */
-  const SMILES = [
-    { id: 'smile', codes: [':)', ':-)'], name: 'улыбка' },
-    { id: 'laugh', codes: [':D', ':-D'], name: 'смех' },
-    { id: 'wink', codes: [';)', ';-)'], name: 'подмигиваю' },
-    { id: 'sad', codes: [':(', ':-('], name: 'грусть' },
-    { id: 'cry', codes: [":'(", ':_('], name: 'плачу' },
-    { id: 'tongue', codes: [':P', ':-P', ':p'], name: 'язык' },
-    { id: 'cool', codes: ['8)', '8-)', 'B)'], name: 'крутой' },
-    { id: 'surprise', codes: [':O', ':-O', ':o'], name: 'ого' },
-    { id: 'kiss', codes: [':*', ':-*'], name: 'чмок' },
-    { id: 'angry', codes: ['>:(', ':@'], name: 'злюсь' },
-    { id: 'neutral', codes: [':|', ':-|'], name: 'хм' },
-    { id: 'blush', codes: [':$', ':-$'], name: 'смущаюсь' },
-    { id: 'heart', codes: ['<3'], name: 'сердце' },
-    { id: 'rose', codes: ['@}->--', '@)->--', '(f)'], name: 'роза' },
-    { id: 'beer', codes: ['(b)', '(B)'], name: 'пиво' },
-    { id: 'zzz', codes: ['|-)', '(zzz)'], name: 'сплю' },
-    { id: 'devil', codes: ['>:)', '}:)'], name: 'чёртик' },
-    { id: 'party', codes: ['<:o)', '(party)'], name: 'праздник' },
-    { id: 'think', codes: [':-?', '(think)'], name: 'думаю' },
-    { id: 'sick', codes: [':-&', '(sick)'], name: 'фу' },
-    { id: 'angel', codes: ['O:)', 'O:-)'], name: 'ангел' },
-    { id: 'shock', codes: ['8-O', '8O', ':-0'], name: 'шок' },
-  ];
-  const SMILE_BY_ID = {};
-  SMILES.forEach((s) => (SMILE_BY_ID[s.id] = s));
-
-  const FACE = (fill, stroke) => `<defs><radialGradient id="g_${fill.slice(1)}" cx=".38" cy=".32" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset=".35" stop-color="${fill}"/><stop offset="1" stop-color="${stroke}"/></radialGradient></defs><circle cx="10" cy="10" r="8.6" fill="url(#g_${fill.slice(1)})" stroke="#000" stroke-width=".8"/>`;
-  const Y = ['#ffd21e', '#c98a00'], R = ['#ff5a3c', '#a01a00'], G = ['#9bd14a', '#4b7d12'], P = ['#ff9ec7', '#b5376f'];
-  const EYES = (dx, dy) => `<circle cx="${7 - (dx || 0)}" cy="${8 + (dy || 0)}" r="1.1"/><circle cx="${13 + (dx || 0)}" cy="${8 + (dy || 0)}" r="1.1"/>`;
-  const SMILE_ART = {
-    smile: () => FACE(...Y) + EYES() + '<path d="M5.5 11.5q4.5 4.5 9 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/>',
-    laugh: () => FACE(...Y) + '<path d="M5 8q2-2 4 0M11 8q2-2 4 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/><path d="M5 11h10q-1 5-5 5t-5-5z" fill="#6b1010" stroke="#000" stroke-width=".7"/><path d="M6 11.3h8l-.4 1.4H6.4z" fill="#fff"/>',
-    wink: () => FACE(...Y) + '<circle cx="7" cy="8" r="1.1"/><path d="M11.5 8.2h3.5" stroke="#000" stroke-width="1.2" stroke-linecap="round"/><path d="M5.5 11.5q4.5 4.5 9 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/>',
-    sad: () => FACE(...Y) + EYES() + '<path d="M6 14.5q4-4 8 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/>',
-    cry: () => FACE(...Y) + EYES() + '<path d="M6 14.5q4-4 8 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/><path d="M6.5 9.5q-1.3 3 0 3.6q1.3-.6 0-3.6z" fill="#3fa0ff" stroke="#1659a8" stroke-width=".4"/><path d="M13.5 9.5q-1.3 3 0 3.6q1.3-.6 0-3.6z" fill="#3fa0ff" stroke="#1659a8" stroke-width=".4"/>',
-    tongue: () => FACE(...Y) + EYES() + '<path d="M5.5 11.5q4.5 4 9 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/><path d="M9 13.2h4.2v2.2q0 2-2.1 2t-2.1-2z" fill="#ff5f8f" stroke="#a01a40" stroke-width=".6"/>',
-    cool: () => FACE(...Y) + '<path d="M3.5 7.5h13" stroke="#000" stroke-width="1"/><rect x="4" y="7" width="5" height="3.5" rx="1" fill="#111"/><rect x="11" y="7" width="5" height="3.5" rx="1" fill="#111"/><path d="M6.5 13q4 2.5 7.5-.5" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/>',
-    surprise: () => FACE(...Y) + '<circle cx="7" cy="7.8" r="1.5"/><circle cx="13" cy="7.8" r="1.5"/><ellipse cx="10" cy="13.3" rx="2" ry="2.5" fill="#6b1010" stroke="#000" stroke-width=".7"/>',
-    kiss: () => FACE(...Y) + '<circle cx="7" cy="8" r="1.1"/><path d="M11.5 8.2h3.5" stroke="#000" stroke-width="1.2" stroke-linecap="round"/><path d="M8.5 12.8q1.5-1.2 3 0q-1.5 1.6-3 0z" fill="#e02050" stroke="#7a0020" stroke-width=".5"/><path d="M14.2 12.6l1-1q1-.6 1.3.4q.2.9-2.3 2.3q-2.5-1.4-2.3-2.3q.3-1 1.3-.4z" fill="#e02050"/>',
-    angry: () => FACE(...R) + '<path d="M4.5 5.5l4 1.8M15.5 5.5l-4 1.8" stroke="#000" stroke-width="1.2" stroke-linecap="round"/>' + EYES(0, .6) + '<path d="M6 14.5q4-3 8 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/>',
-    neutral: () => FACE(...Y) + EYES() + '<path d="M6 13.2h8" stroke="#000" stroke-width="1.1" stroke-linecap="round"/>',
-    blush: () => FACE(...Y) + '<circle cx="5.5" cy="11" r="1.7" fill="#ff8aa0" opacity=".8"/><circle cx="14.5" cy="11" r="1.7" fill="#ff8aa0" opacity=".8"/>' + EYES(0, .8) + '<path d="M7.5 13.5q2.5 1.8 5 0" fill="none" stroke="#000" stroke-width="1" stroke-linecap="round"/>',
-    heart: () => '<path d="M10 17.5L3.2 10.6A3.9 3.9 0 0 1 10 5.9a3.9 3.9 0 0 1 6.8 4.7z" fill="#e8203a" stroke="#7a0010" stroke-width=".8"/><path d="M6 7.5q1.5-1.8 3.2-.3" fill="none" stroke="#fff" stroke-width="1" stroke-linecap="round" opacity=".8"/>',
-    rose: () => '<path d="M10 18V9" stroke="#2f7d1e" stroke-width="1.3"/><path d="M10 13q-3-.5-4 2.5q3 .5 4-2.5zM10 11q3-.5 4 2.5q-3 .5-4-2.5z" fill="#4ca12c" stroke="#2f7d1e" stroke-width=".5"/><circle cx="10" cy="6.5" r="4.2" fill="#d8182e" stroke="#7a0010" stroke-width=".7"/><path d="M8 6q2-2.5 4 0q-1 2.5-4 1.5z" fill="#ff5c6c" opacity=".8"/>',
-    beer: () => '<rect x="4" y="6" width="9" height="11" rx="1" fill="#f7b31c" stroke="#7a4a00" stroke-width=".8"/><path d="M13 8h2.5a1.5 1.5 0 0 1 0 3V13a1.5 1.5 0 0 1 0 3H13" fill="none" stroke="#7a4a00" stroke-width=".9"/><path d="M4 7q1-3 3-2q1-2.5 3.5-1.5q2-1 3 2.5v1H4z" fill="#fff" stroke="#999" stroke-width=".6"/><path d="M6.5 9v6M9 9v6M11.5 9v6" stroke="#fff" stroke-width=".7" opacity=".6"/>',
-    zzz: () => FACE(...Y) + '<path d="M5 8.5q2 1.2 4 0M11 8.5q2 1.2 4 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/><ellipse cx="10" cy="13.5" rx="1.3" ry="1" fill="#6b1010"/><text x="12.5" y="5" font-size="5.5" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" fill="#1a3ea8">z</text><text x="15.3" y="3.5" font-size="3.8" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" fill="#1a3ea8">z</text>',
-    devil: () => '<path d="M3 3l3 4h-1zM17 3l-3 4h1z" fill="#8a1010"/>' + FACE(...R) + '<path d="M4.5 6.5l4 1.3M15.5 6.5l-4 1.3" stroke="#000" stroke-width="1.1" stroke-linecap="round"/>' + EYES(0, .8) + '<path d="M5.5 12q4.5 4 9 0" fill="#fff" stroke="#000" stroke-width=".9"/><path d="M6.5 12.3h7" stroke="#000" stroke-width=".4"/>',
-    party: () => '<path d="M10 1.5l-3.5 7.5h7z" fill="#5a3df0" stroke="#2a1a90" stroke-width=".6"/><circle cx="10" cy="1.8" r="1" fill="#ffd21e"/>' + FACE(...Y) + EYES() + '<path d="M5.5 11.5q4.5 5 9 0z" fill="#6b1010" stroke="#000" stroke-width=".8"/><circle cx="3" cy="4" r=".9" fill="#ff5a3c"/><circle cx="17.5" cy="5" r=".9" fill="#1fa3e0"/><circle cx="2.5" cy="15" r=".8" fill="#3cb44a"/>',
-    think: () => FACE(...Y) + '<path d="M11 5.8l3.5-.8" stroke="#000" stroke-width="1" stroke-linecap="round"/><circle cx="7" cy="8" r="1.1"/><circle cx="13" cy="8" r="1.1"/><path d="M7 13.2h6" stroke="#000" stroke-width="1.1" stroke-linecap="round"/><text x="14" y="5" font-size="6" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" fill="#1a3ea8">?</text>',
-    sick: () => FACE(...G) + '<path d="M5 7.5q2-1.5 4 0M11 7.5q2-1.5 4 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/><path d="M6 13.5q1-1.2 2 0t2 0t2 0t2 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/>',
-    angel: () => '<ellipse cx="10" cy="3" rx="6" ry="1.6" fill="none" stroke="#f0c020" stroke-width="1.2"/>' + FACE(...Y) + '<path d="M5 8.5q2-1.4 4 0M11 8.5q2-1.4 4 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/><path d="M6.5 12q3.5 3 7 0" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/>',
-    shock: () => FACE(...Y) + '<path d="M4.5 5.5l4-1M15.5 5.5l-4-1" stroke="#000" stroke-width="1" stroke-linecap="round"/><circle cx="7" cy="8" r="1.9" fill="#fff" stroke="#000" stroke-width=".7"/><circle cx="13" cy="8" r="1.9" fill="#fff" stroke="#000" stroke-width=".7"/><circle cx="7" cy="8" r=".9"/><circle cx="13" cy="8" r=".9"/><ellipse cx="10" cy="13.8" rx="3" ry="2.6" fill="#6b1010" stroke="#000" stroke-width=".7"/>',
-  };
-  function smileSvg(id, size) {
-    const art = SMILE_ART[id];
-    if (!art) return '';
-    return `<svg viewBox="0 0 20 20" width="${size || 18}" height="${size || 18}" aria-hidden="true">${art()}</svg>`;
-  }
+  /* ================= графика (art.js) ================= */
+  const { STATUSES, statusInfo, flowerSvg, statusFlower, envelopeSvg, SMILES, SMILE_BY_ID, smileSvg, postcardSvg } = window.AskaArt;
 
   // регулярка по всем кодам: длинные раньше коротких
   const CODE_LIST = [];
@@ -314,6 +196,7 @@
     if (me && uin === me.uin) return myStatus;
     const b = BOTS[uin];
     if (b) {
+      if (b.persona && botRt[uin] && botRt[uin].status) return botRt[uin].status;
       if (!botOnline(b)) return 'offline';
       const slot = Math.floor(Date.now() / 300000) + b.seed;
       return ['online', 'online', 'chat', 'away', 'online', 'na', 'online', 'occupied'][slot % 8];
@@ -416,7 +299,8 @@
     if (!contactsOf(me.uin).includes(msg.from) && from) addContact(msg.from);
     Snd.play('incoming');
     const sm = findSmiles(msg.text);
-    if (sm.length) setTimeout(() => Snd.smile(sm[0]), 700);
+    const extraSound = msg.sound || (sm.length ? 'smile:' + sm[0] : null);
+    if (extraSound) setTimeout(() => playRef(extraSound), 700);
     if (navigator.vibrate) try { navigator.vibrate(60); } catch (err) {}
     if (!inChat) toast(from, msg.text, msg.from);
     renderContacts();
@@ -425,6 +309,7 @@
   }
 
   function scheduleBotReply(bot, text) {
+    if (bot.persona) { brainTalk(bot, text); return; }
     const t = text.toLowerCase();
     const smiles = findSmiles(text);
     let pool = bot.replies;
@@ -452,9 +337,11 @@
       botSays(bot, reply);
     }, delay);
   }
-  function botSays(bot, text) {
+  function botSays(bot, text, extra) {
     if (!me) return;
     const msg = { id: uid(), from: bot.uin, to: me.uin, text, ts: Date.now() };
+    if (extra && extra.card) msg.card = extra.card;
+    if (extra && extra.sound) msg.sound = extra.sound;
     mutate((d) => {
       const k = pairKey(msg.from, msg.to);
       d.history[k] = d.history[k] || [];
@@ -479,6 +366,92 @@
     db = load();
     renderContacts();
   });
+
+  /* ================= Аська и друзья ================= */
+  const Brain = window.AskaBrain;
+  const botRt = {};              // состояние персонажей в этой вкладке: статус, подпись, таймеры
+  let lastAnyProactive = 0;
+  const playRef = (ref) => (ref && ref.startsWith('smile:') ? Snd.smile(ref.slice(6)) : Snd.play(ref));
+  function rtOf(uin) { return botRt[uin] || (botRt[uin] = { status: null, xstatus: null, lastProactive: 0, unanswered: 0 }); }
+  function memOf(uin) { db = load(); return Object.assign({}, (db.memory[me.uin] || {})[uin] || {}); }
+  function saveMem(uin, mem) { mutate((d) => { d.memory[me.uin] = d.memory[me.uin] || {}; d.memory[me.uin][uin] = mem; }); }
+  const femaleOf = (bot) => /^(aska|kat|lena)$/.test(bot.brain);
+
+  // все персонажи — в список контактов; у каждого своя подпись к статусу и свой таймер
+  function initBots() {
+    mutate((d) => {
+      d.contacts[me.uin] = d.contacts[me.uin] || [];
+      Object.keys(BOTS).forEach((u) => { if (!d.contacts[me.uin].includes(u)) d.contacts[me.uin].push(u); });
+    });
+    Object.values(BOTS).forEach((b) => {
+      if (!b.persona) return;
+      const rt = rtOf(b.uin);
+      rt.xstatus = pick(b.persona.xstatus)[1];
+      rt.lastProactive = Date.now() - b.persona.gapMs + (b.brain === 'aska' ? 50000 : 30000 + Math.random() * 90000);
+      botState[b.uin] = isOnline(b.uin);
+    });
+    renderContacts();
+  }
+  function setBotStatus(bot, st) {
+    const rt = rtOf(bot.uin);
+    rt.status = st[0]; rt.xstatus = st[1];
+    Snd.play('online');
+    toast(bot, `${femaleOf(bot) ? 'сменила' : 'сменил'} статус: «${st[1]}»`, null);
+    renderContacts(); renderChatHead();
+  }
+  // доставить цепочку сообщений с паузами и «печатает…»
+  function deliverSeq(bot, msgs, firstDelay) {
+    let t = firstDelay;
+    msgs.forEach((m, i) => {
+      if (i > 0) t += m.delay || 1200;
+      const at = t;
+      if (m.text || m.card) { typing[bot.uin] = true; renderContacts(); renderChatHead(); }
+      setTimeout(() => {
+        if (!me) return;
+        if (m.status) setBotStatus(bot, m.status);
+        if (m.text || m.card) {
+          typing[bot.uin] = msgs.slice(i + 1).some((x) => x.text || x.card);
+          botSays(bot, m.text || '', { card: m.card, sound: m.sound });
+        }
+      }, at);
+    });
+  }
+  function brainTalk(bot, text) {
+    const rt = rtOf(bot.uin);
+    Object.values(botRt).forEach((r) => (r.unanswered = 0));
+    const mem = memOf(bot.uin);
+    const msgs = Brain.reply(text, mem, { persona: bot.brain, xstatus: rt.xstatus, nick: me.nick });
+    saveMem(bot.uin, mem);
+    const first = msgs[0] && msgs[0].text ? msgs[0].text : '';
+    const delay = 900 + Math.min(first.length, 160) * 16 + Math.random() * 1200;
+    deliverSeq(bot, msgs, delay);
+  }
+  // персонажи пишут сами: вопросы, открытки, статусы
+  function askaTick(force) {
+    if (!me) return;
+    const now = Date.now();
+    if (!force && now - lastAnyProactive < 40000) return;
+    const bots = contactsOf(me.uin).map(accountOf).filter((b) => b && b.persona && isOnline(b.uin));
+    const totalUn = bots.reduce((a, b) => a + rtOf(b.uin).unanswered, 0);
+    if (!force && totalUn >= 4) return;
+    let pool = bots.filter((b) => { const rt = rtOf(b.uin); return force || (now - rt.lastProactive >= b.persona.gapMs && rt.unanswered < b.persona.maxUnanswered && !memOf(b.uin).muted); });
+    if (typeof force === 'string') pool = pool.filter((b) => b.uin === force);
+    if (!pool.length) return;
+    if (!force && Math.random() > 0.55) return;
+    const total = pool.reduce((a, b) => a + b.persona.weight, 0);
+    let r = Math.random() * total, bot = pool[0];
+    for (const b of pool) { r -= b.persona.weight; if (r <= 0) { bot = b; break; } }
+    const rt = rtOf(bot.uin);
+    const mem = memOf(bot.uin);
+    const msgs = Brain.proactive(mem, { persona: bot.brain, xstatus: rt.xstatus });
+    saveMem(bot.uin, mem);
+    if (!msgs || !msgs.length) return;
+    rt.lastProactive = now; lastAnyProactive = now;
+    if (msgs.some((m) => m.text || m.card)) rt.unanswered++;
+    deliverSeq(bot, msgs, 600 + Math.random() * 1500);
+  }
+  setInterval(askaTick, 15000);
+  if (/debug/.test(location.search)) window.AskaDebug = { tick: (uin) => askaTick(uin || true), mem: () => load().memory, bots: () => botRt };
 
   /* ================= заголовок вкладки ================= */
   function updateTitle() {
@@ -575,7 +548,7 @@
       <div class="win dialog" id="loginwin">
         <div class="titlebar">${flowerSvg('#3cb44a', 14, { logo: true })}<span class="ttl">АСЬКА — вход в сеть</span></div>
         <div class="login-body">
-          <div class="bigflower">${flowerSvg('#3cb44a', 44, { logo: true })}<div class="logo-word center">АСЬКА<small>I seek you · по-русски · с 1998 года</small></div></div>
+          <div class="bigflower">${flowerSvg('#3cb44a', 44, { logo: true })}<div class="logo-word center">АСЬКА<small>I seek you · по-русски · с 1998 года</small></div><a class="link" href="promo/" style="margin-top:6px">Чем она крута? 10 преимуществ →</a></div>
           <div class="tabs"><button class="on" data-tab="reg">Новый номер</button><button data-tab="login">Уже есть номер</button></div>
           <div class="tabpanel" id="tab-reg">
             <div class="col">
@@ -667,8 +640,17 @@
     updateTitle();
     const pending = unreadTotal();
     if (pending) setTimeout(() => Snd.play('incoming'), 900);
-    // первое знакомство: админ здоровается
-    if (!historyOf('123456').length) setTimeout(() => botSays(BOTS['123456'], BOTS['123456'].hello[0]), 1600);
+    // первое знакомство: админ здоровается, потом Аська
+    if (!historyOf('123456').length) setTimeout(() => botSays(BOTS['123456'], BOTS['123456'].hello[0]), 1200);
+    initBots();
+    setTimeout(() => {
+      if (!me) return;
+      const bot = BOTS['000001'];
+      const mem = memOf(bot.uin);
+      const msgs = Brain.greet(mem, me.nick, 'aska');
+      saveMem(bot.uin, mem);
+      deliverSeq(bot, msgs, 2200);
+    }, 1800);
   }
   function logout() {
     const was = me && me.uin;
@@ -764,13 +746,14 @@
   function renderContacts() {
     const el = $('#clist'); if (!el || !me) return;
     const list = contactsOf(me.uin).map((u) => accountOf(u)).filter(Boolean);
-    const on = list.filter((a) => isOnline(a.uin)).sort((a, b) => a.nick.localeCompare(b.nick, 'ru'));
-    const off = list.filter((a) => !isOnline(a.uin)).sort((a, b) => a.nick.localeCompare(b.nick, 'ru'));
+    const byNick = (a, b) => (b.brain === 'aska') - (a.brain === 'aska') || a.nick.localeCompare(b.nick, 'ru');
+    const on = list.filter((a) => isOnline(a.uin)).sort(byNick);
+    const off = list.filter((a) => !isOnline(a.uin)).sort(byNick);
     const item = (a) => {
       const n = unreadFrom(a.uin);
       const st = statusOf(a.uin);
       const ico = n ? `<span class="blink">${envelopeSvg(16)}</span>` : statusFlower(st, 16);
-      return `<div class="citem ${active === a.uin ? 'sel' : ''} ${st === 'offline' ? 'off' : ''}" data-uin="${a.uin}" title="${esc(a.nick)} · ${a.uin}${a.phone ? ' · ' + esc(fmtPhone(a.phone)) : ''}"><span class="ico">${ico}</span><span class="nick">${esc(a.nick)}</span>${typing[a.uin] ? '<span class="typing">печатает…</span>' : ''}${n ? `<span class="muted">${n}</span>` : ''}</div>`;
+      return `<div class="citem ${active === a.uin ? 'sel' : ''} ${st === 'offline' ? 'off' : ''}" data-uin="${a.uin}" title="${esc(a.nick)} · ${a.uin}${a.phone ? ' · ' + esc(fmtPhone(a.phone)) : ''}${botRt[a.uin] && botRt[a.uin].xstatus ? ' · ' + esc(botRt[a.uin].xstatus) : ''}"><span class="ico">${ico}</span><span class="nick">${esc(a.nick)}</span>${typing[a.uin] ? '<span class="typing">печатает…</span>' : ''}${n ? `<span class="muted">${n}</span>` : ''}</div>`;
     };
     const group = (key, label, arr) => `<div class="cgroup" data-g="${key}"><span class="box">${collapsed[key] ? '+' : '−'}</span>${label} <span class="cnt">(${arr.length})</span></div>${collapsed[key] ? '' : arr.map(item).join('')}`;
     el.innerHTML = group('on', 'В сети', on) + group('off', 'Не в сети', off) + (!list.length ? '<div class="empty-note">Список пуст. Нажми «+» и найди друга по номеру, телефону или нику.</div>' : '');
@@ -833,6 +816,8 @@
       $('#history').addEventListener('click', (e) => {
         const sm = e.target.closest('.sm');
         if (sm) { Snd.smile(sm.dataset.sm); sm.classList.remove('bounce'); void sm.offsetWidth; sm.classList.add('bounce'); }
+        const pc = e.target.closest('.postcard');
+        if (pc) { if (pc.dataset.sound) playRef(pc.dataset.sound); pc.replaceWith(pc.cloneNode(true)); }
       });
     }
     $('#ch-hint').textContent = isTouch() ? '' : 'Enter — отправить, Shift+Enter — новая строка';
@@ -842,7 +827,7 @@
     const a = accountOf(active); if (!a) return;
     const st = statusOf(active);
     const head = $('#ch-head'); if (!head) return;
-    head.innerHTML = `<span class="ico">${statusFlower(st, 16)}</span><span class="nick">${esc(a.nick)}</span><span class="muted">#${a.uin}</span>${a.phone ? `<span class="muted">· ${esc(fmtPhone(a.phone))}</span>` : ''}<span class="sp"></span><span class="hint">${typing[active] ? 'печатает…' : esc(statusInfo(st).label)}</span>`;
+    head.innerHTML = `<span class="ico">${statusFlower(st, 16)}</span><span class="nick">${esc(a.nick)}</span><span class="muted">#${a.uin}</span>${a.phone ? `<span class="muted">· ${esc(fmtPhone(a.phone))}</span>` : ''}<span class="sp"></span><span class="hint">${typing[active] ? 'печатает…' : esc(statusInfo(st).label) + (botRt[active] && botRt[active].xstatus ? ' · ' + esc(botRt[active].xstatus) : '')}</span>`;
     $('#ch-title').innerHTML = `${esc(a.nick)} <small>— беседа</small>`;
   }
   function renderHistory() {
@@ -855,6 +840,10 @@
       prev = m.ts;
       const mine = m.from === me.uin;
       const who = mine ? me : accountOf(m.from);
+      if (m.card) {
+        html += `<div class="msg ${mine ? 'me' : 'them'}"><span class="hdr">${esc(who ? who.nick : m.from)} <span class="time">(${fmtTime(m.ts)})</span>:</span><div class="postcard pc-${esc(m.card)}" data-sound="${esc(m.sound || '')}" title="Открытка — нажми, чтобы послушать">${postcardSvg(m.card)}</div><div class="pc-cap">${renderText(m.text)}</div></div>`;
+        return;
+      }
       html += `<div class="msg ${mine ? 'me' : 'them'}"><span class="hdr">${esc(who ? who.nick : m.from)} <span class="time">(${fmtTime(m.ts)})</span>:</span> <span class="txt">${renderText(m.text)}</span></div>`;
     });
     if (!msgs.length) html = `<div class="msg"><span class="sys">Беседа с ${esc(accountOf(active).nick)} началась. ${isOnline(active) ? 'Контакт в сети.' : 'Контакт не в сети — сообщение дойдёт, когда появится.'}</span></div>`;
@@ -945,6 +934,7 @@
     renderMain();
     if (active) $('.desktop').classList.add('mode-chat');
     contactsOf(me.uin).forEach((u) => (botState[u] = isOnline(u)));
+    initBots();
     heartbeatTimer = setInterval(heartbeat, 10000);
     heartbeat();
     updateTitle();
