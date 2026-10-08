@@ -146,7 +146,7 @@ window.AskaBrain = (function () {
   ];
   // пол собеседника: по имени или по явному заявлению
   const FEMALE_EXC = /^(никита|илья|лёша|леша|саша|женя|кузьма|фома|лука|савва|данила|гаврила|вова|дима|миша|паша|серёжа|сережа|коля|толя|костя|витя|петя|ваня|федя|гоша|жора|лёва|лева|боря|юра)$/i;
-  function guessGender(name) { if (!name) return null; const n = name.toLowerCase(); if (FEMALE_EXC.test(n)) return 'm'; return /[ая]$/.test(n) ? 'f' : 'm'; }
+  function guessGender(name) { if (!name) return null; const n = name.toLowerCase().replace(/[_\-\s]*\d+$/, '').replace(/_.*$/, ''); if (FEMALE_EXC.test(n)) return 'm'; return /[ая]$/.test(n) ? 'f' : 'm'; }
   const isF = (mem) => (mem.gender ? mem.gender === 'f' : guessGender(mem.name) === 'f');
   // родительный падеж имени: Кирилл → Кирилла, Маша → Маши, Илья → Ильи
   function genName(n) { if (!n) return n; if (/[ая]$/i.test(n)) return n.replace(/а$/, 'ы').replace(/я$/, 'и').replace(/ка$/i, 'ки').replace(/га$/i, 'ги').replace(/ха$/i, 'хи').replace(/ша$/i, 'ши').replace(/жа$/i, 'жи').replace(/ча$/i, 'чи'); if (/й$/i.test(n)) return n.replace(/й$/, 'я'); if (/ь$/i.test(n)) return n.replace(/ь$/, 'я'); if (/[бвгджзклмнпрстфхцчшщ]$/i.test(n)) return n + 'а'; return n; }
@@ -172,7 +172,7 @@ window.AskaBrain = (function () {
 
   const PERSONAS = {
     aska: {
-      id: 'aska', uin: '000001', nick: 'Аська', first: 'Аська', gen: 'Аськи', phone: '', always: true, seed: 0, weight: 5, gapMs: 75000, maxUnanswered: 3,
+      id: 'aska', uin: '000001', nick: 'Аська', first: 'Аська', gen: 'Аськи', phone: '', always: true, seed: 0, weight: 5, gapMs: 240000, maxUnanswered: 3,
       v: (t) => t,
       hello: (name, dp) => { const g = dp === 'morning' ? 'Доброе утро' : dp === 'evening' ? 'Добрый вечер' : dp === 'night' ? 'Не спится?' : 'Привет'; return pick([`${g}${name}! :) Я уже думала, ты не придёшь.`, `${g}${name}! Как я рада! Чайник ставить?`, `${g}${name}! Ну рассказывай, что нового.`]); },
       bye: (name) => pick([`Пока${name}! Пиши, я тут. Я всегда тут, это немного грустно, но ладно :)`, `Давай${name}! Открытку пришлю, не скучай :*`]),
@@ -190,7 +190,7 @@ window.AskaBrain = (function () {
     },
 
     kat: {
-      id: 'kat', uin: '100500', nick: 'Катюха_98', first: 'Катя', gen: 'Катюхи', phone: '+7 (916) 100-05-00', seed: 3, weight: 2, gapMs: 150000, maxUnanswered: 2,
+      id: 'kat', uin: '100500', nick: 'Катюха_98', first: 'Катя', gen: 'Катюхи', phone: '+7 (916) 100-05-00', seed: 3, weight: 2, gapMs: 480000, maxUnanswered: 2,
       v: (t) => (Math.random() < 0.5 && !/[)(\]*:;8DPO$]$/.test(t) ? t.replace(/\.$/, '') + ')))' : t),
       hello: (name, dp) => pick([`Приветик${name}!!! :) Ты новенький? Я тут с 98-го сижу`, `Ку${name}! Как сам? :)`, `О, ты в сети! А я думала, одна тут сижу`, dp === 'night' ? 'Ты тоже не спишь?))) Модем шумит, спать не даёт' : `Хай${name}! Я с лекции пишу, препод не видит ;)`]),
       bye: (name) => pick(['Пока-пока! Пиши! :*', 'Давай, удачи! Я на связи :)', 'Ну всё, побежала. Чмоки :*']),
@@ -215,7 +215,7 @@ window.AskaBrain = (function () {
     },
 
     vova: {
-      id: 'vova', uin: '31337', nick: 'ha©keR_Vova', first: 'Вова', gen: 'Вовы', phone: '+7 (495) 313-37-13', seed: 11, weight: 1, gapMs: 200000, maxUnanswered: 2,
+      id: 'vova', uin: '31337', nick: 'ha©keR_Vova', first: 'Вова', gen: 'Вовы', phone: '+7 (495) 313-37-13', seed: 11, weight: 1, gapMs: 600000, maxUnanswered: 2,
       v: (t) => lower(t),
       hello: (name) => pick(['йо', 'привед. ты кто?', 'в сети. чё надо', 'о, живой. привет']),
       bye: () => pick(['bb', 'cya', 'давай. не пались']),
@@ -240,7 +240,7 @@ window.AskaBrain = (function () {
     },
 
     serega: {
-      id: 'serega', uin: '777777', nick: 'DJ_Serёga', first: 'Серёга', gen: 'Серёги', phone: '+7 (903) 777-77-77', seed: 7, weight: 2, gapMs: 150000, maxUnanswered: 2,
+      id: 'serega', uin: '777777', nick: 'DJ_Serёga', first: 'Серёга', gen: 'Серёги', phone: '+7 (903) 777-77-77', seed: 7, weight: 2, gapMs: 480000, maxUnanswered: 2,
       v: (t) => (Math.random() < 0.4 ? t.replace(/[.!]*$/, '!!!') : t),
       hello: (name) => pick([`Хэй${name}! Здарова! :D`, 'Привет-привет! У меня тут вечеринка намечается <:o)', 'Серёга на связи! Чё как?', `Йоу${name}! Слышишь, какой бит? Нет? Ща включу громче`]),
       bye: () => pick(['Давай, бро! На связи! (b)', 'Пока! Не скучай :D', 'Всё, умотал. Пиши!']),
@@ -265,7 +265,7 @@ window.AskaBrain = (function () {
     },
 
     lena: {
-      id: 'lena', uin: '555123', nick: 'Ленка_Питер', first: 'Лена', gen: 'Ленки', phone: '+7 (921) 555-12-30', seed: 5, weight: 2, gapMs: 150000, maxUnanswered: 2,
+      id: 'lena', uin: '555123', nick: 'Ленка_Питер', first: 'Лена', gen: 'Ленки', phone: '+7 (921) 555-12-30', seed: 5, weight: 2, gapMs: 540000, maxUnanswered: 2,
       v: (t) => (Math.random() < 0.3 ? 'Ой, ' + t[0].toLowerCase() + t.slice(1) : t),
       hello: (name) => pick([`Приветики${name}!!! :) А я тебя знаю? :-?`, 'Ой, привет! А я думала, никого нет', `Хай${name} :) Я Лена, из Питера`, 'Приве-е-ет! У нас тут дождь, как всегда :)']),
       bye: () => pick(['Пока! Целую :*', 'Ну пока-пока :( Пиши обязательно!', 'Побежала, мама зовёт. Чмок :*']),
@@ -290,7 +290,7 @@ window.AskaBrain = (function () {
     },
 
     batya: {
-      id: 'batya', uin: '200200', nick: 'Батя_в_сети', first: 'Батя', gen: 'Бати', phone: '+7 (495) 200-20-02', seed: 9, weight: 1, gapMs: 720000, maxUnanswered: 3, always: true, father: true,
+      id: 'batya', uin: '200200', nick: 'Батя_в_сети', first: 'Батя', gen: 'Бати', phone: '+7 (495) 200-20-02', seed: 9, weight: 1, gapMs: 1200000, maxUnanswered: 3, always: true, father: true,
       v: (t) => (Math.random() < 0.18 ? t.toUpperCase() : t),
       hello: (name, dp, mem) => { const k = mem && isF(mem) ? 'дочка' : 'сынок'; return pick([`Привет, ${k}. Ну как ты там? Поел?`, `Здравствуй, ${k}. Батя на связи. Что случилось — рассказывай.`, `ПРИВЕТ. ЭТО КАПС? ЛАДНО. Как дела, ${k}?`, `Привет, ${k}. Я тут, если что. Всегда.`, dp === 'night' ? `Не спишь, ${k}? Ложись. Утро вечера мудренее.` : `Доброго, ${k}. Как здоровье? Как настроение?`]); },
       bye: (name) => pick(['Ну давай. Не сиди долго, глаза испортишь.', 'Пока. Иди поешь. И маме позвони.', 'Бывай. Я на связи, если что. Всегда.', 'Давай. Береги себя. Это главное.']),
@@ -320,7 +320,7 @@ window.AskaBrain = (function () {
     },
 
     max: {
-      id: 'max', uin: '404404', nick: 'Макс_Философ', first: 'Макс', gen: 'Макса', phone: '+7 (812) 404-40-04', seed: 13, weight: 1, gapMs: 240000, maxUnanswered: 2,
+      id: 'max', uin: '404404', nick: 'Макс_Философ', first: 'Макс', gen: 'Макса', phone: '+7 (812) 404-40-04', seed: 13, weight: 1, gapMs: 720000, maxUnanswered: 2,
       v: (t) => (Math.random() < 0.3 ? t.replace(/[.!]$/, '...') : t),
       hello: (name) => pick([`Привет${name}. Знаешь, каждое «привет» — это маленькое начало.`, 'Приветствую. Ты вовремя: я как раз думал о смысле.', `О, ${name ? name.slice(2) : 'друг'}. Садись, у меня чай и вопросы.`, 'Привет. Не спрашивай, как дела, — спроси, зачем они.']),
       bye: () => pick(['Уходишь? Всё уходит. Но ты возвращайся.', 'Пока. Помни: ничто не вечно, кроме дайлапа.', 'До встречи. Я буду думать.']),
@@ -345,7 +345,7 @@ window.AskaBrain = (function () {
     },
   };
   PERSONAS.vinyl = {
-    id: 'vinyl', uin: '000777', nick: 'Винилл', first: 'Винилл', gen: 'Винилла', phone: '', always: true, seed: 17, weight: 1, gapMs: 420000, maxUnanswered: 2, music: true,
+    id: 'vinyl', uin: '000777', nick: 'Винилл', first: 'Винилл', gen: 'Винилла', phone: '', always: true, seed: 17, weight: 1, gapMs: 900000, maxUnanswered: 2, music: true,
     v: (t) => t,
     hello: (name, dp, mem) => { const lv = closeness(mem); return pick(lv >= 3 ? [`Дружище${name}! Пластинка уже на столе. Что сегодня: качать или грустить?`, `О, ты${name}! Я тут новенькое отслушал, кажется, тебе зайдёт.`] : lv === 2 ? [`Привет${name}! Винилл на связи. Настроение какое — подберу.`, `Здорово${name}! Есть пара треков на примете. Рассказывай, как день.`] : [`Здравствуйте${name}. Я Винилл, консультант по музыке. Подберу трек под настроение — скажите, что любите.`, `Добро пожаловать в винил${name}. Я Винилл, помогаю с музыкой: стили, треки, плейлисты. С чего начнём?`]); },
     bye: (name) => pick(['До связи! Иголку поднял, пластинку убрал.', 'Пока! Что послушать — ты знаешь, у кого спросить.']),
@@ -755,33 +755,85 @@ window.AskaBrain = (function () {
   }
 
 
-  /* ---------- цифровой аватар: учится на сообщениях хозяина ---------- */
-  const STOP = new Set('и в не на я что ты а с как это он она они мы вы но же бы у из к по за то все всё так вот да нет ну ли или от до для о об про был была было ещё еще уже тут там его её ее их мне тебе меня тебя себя мой моя моё твой твоя ваш наш кто чем чего этот эта эти тот та те такой такая только даже очень'.split(' '));
+  /* ---------- цифровой аватар: учится на манере, фразах и настоящих ответах хозяина ---------- */
+  const STOP = new Set('и в не на я что ты а с как это он она они мы вы но же бы у из к по за то все всё так вот да нет ну ли или от до для о об про был была было ещё еще уже тут там его её ее их мне тебе меня тебя себя мой моя моё твой твоя ваш наш кто чем чего этот эта эти тот та те такой такая только даже очень тоже там где когда если'.split(' '));
   const wordsOf = (t) => norm(t).replace(/[^a-zа-я0-9ё:;)(\-*@}>$|&?!., ]/g, ' ').split(/\s+/).filter(Boolean);
-  function buildTwin(messages) {
-    const model = { n: messages.length, avgLen: 0, smileRate: 0, topSmiles: [], exclaim: 0, question: 0, lower: 0, greetings: [], words: [], bigrams: {}, starts: [] };
+  const keyWords = (t) => Array.from(new Set(norm(t).replace(/ё/g, 'е').replace(/[^a-zа-я0-9 ]/g, ' ').split(/\s+/).filter((w) => w.length > 2 && !STOP.has(w)).map((w) => w.replace(/(ами|ями|ого|его|ому|ему|ыми|ими|ешь|ишь|ете|ите|ать|ять|ить|еть|ает|яет|ует|ала|яла|ила|ела|ись|ось|ся|ах|ях|ам|ям|ой|ей|ый|ий|ая|яя|ое|ее|ые|ие|ом|ем|ов|ев|ам|ах|ть|ут|ют|ат|ят|ет|ит|ла|ло|ли|ал|ял|ил|ел|ы|и|а|я|о|е|у|ю)$/, '')))).filter((w) => w.length > 2);
+  // намерение входящей реплики (по ней аватар решает, какие ответы хозяина подходят)
+  const INTENTS = [
+    ['greet', /^(прив|здр|хай|ку\b|ку$|йо\b|здаров|дароф|хелло|салют|добр(ое|ый|ой)\s)/],
+    ['bye', /(\bпока\b|\bбб\b|до свид|спокойн|до связи|до завтра|удачи|\bбай\b)/],
+    ['howru', /(как дела|как сам|как ты\b|как жизнь|че как|чо как|как оно|что нового|как настроен|как поживаешь|как здоровье)/],
+    ['thanks', /(спасибо|\bспс\b|благодар|пасиб|сенкс)/],
+    ['laugh', /(ахах|хах|\bлол\b|ржу|\)\)\)|\bxd\b|смешно|угар)/],
+    ['invite', /(пойд[её]м|пошли|\bго\b|давай (встрет|сходим|погуля|выпьем|посидим)|встрет|приход|в гости|созвон|позвони)/],
+    ['sad', /(грустн|плохо мне|устал|бесит|тоск|болею|заболел|печал|достал|надоел)/],
+    ['news', /(я (сдал|купил|нашёл|нашел|прилетел|уехал|женил|выиграл|устроил|получил)|\bура\b|получилось|поздравь)/],
+    ['love', /(люблю|скучаю|обнима|целую|<3|:\*)/],
+    ['sorry', /(извини|прости|сорри|виноват)/],
+    ['question', /\?/],
+    ['statement', /./],
+  ];
+  function intentOf(text) { const t = norm(text); for (const [k, re] of INTENTS) if (re.test(t)) return k; return 'statement'; }
+  const INTENT_RU = { greet: 'приветствие', bye: 'прощание', howru: '«как дела»', thanks: 'благодарность', laugh: 'шутка', invite: 'приглашение', sad: 'когда другу грустно', news: 'хорошая новость', love: 'тёплые слова', sorry: 'извинение', question: 'вопрос', statement: 'просто реплика' };
+  const TRAIN_Q = {
+    greet: 'Как ты обычно здороваешься с другом? Напиши так, как написал бы ему.',
+    howru: 'Тебе пишут «как дела?». Что ты обычно отвечаешь?',
+    bye: 'Как ты прощаешься? Напиши свою обычную фразу.',
+    thanks: 'Тебе говорят «спасибо». Что ответишь?',
+    invite: 'Друг зовёт встретиться: «пошли погуляем?». Что скажешь?',
+    sad: 'Другу грустно, он пишет «что-то всё плохо». Как ты его поддержишь?',
+    news: 'Друг пишет «ура, я сдал экзамен!». Как ты обычно радуешься за своих?',
+    laugh: 'Друг прислал смешное. Как ты реагируешь на смешное?',
+    question: 'Тебя спрашивают о том, чего ты не знаешь. Что обычно отвечаешь?',
+    love: 'Друг пишет «скучаю». Что ответишь?',
+    sorry: 'Друг извиняется за опоздание. Как ты отвечаешь на извинения?',
+  };
+  const OPENERS = ['ну', 'короче', 'слушай', 'блин', 'кстати', 'ладно', 'так', 'ок', 'окей', 'ага', 'эх', 'ой', 'хм', 'вообще', 'да', 'не', 'мда', 'ээ', 'значит', 'слуш', 'смотри', 'зырь'];
+  const ADDRESS = ['бро', 'братан', 'брат', 'дружище', 'сынок', 'чувак', 'зай', 'зая', 'дорогой', 'дорогая', 'старик', 'друг', 'родной', 'солнце', 'малыш', 'пацан', 'мужик', 'сестра', 'сестрёнка', 'подруга', 'чел'];
+  const SMRE = /(:-?\)|:-?D|;-?\)|:-?\(|:'\(|:-?P|8-?\)|:-?O|:-?\*|<3|\)\)+|\(\(+|:\$|@\}->--|\(b\)|<:o\)|O:\)|[\u{1F300}-\u{1FAFF}\u2764\u263A])/gu;
+  // messages: тексты хозяина; pairs: [{in, out}] — что ему написали и что он ответил
+  function buildTwin(messages, pairs) {
+    pairs = pairs || [];
+    const model = { n: messages.length, pairsN: pairs.length, avgLen: 0, smileRate: 0, topSmiles: [], exclaim: 0, question: 0, lower: 0, caps: 0, dots: 0, multiEx: 0, laugh: null, openers: [], address: [], greetings: [], phrases: [], words: [], bigrams: {}, starts: [], byIntent: {}, pairs: [], df: {} };
     if (!messages.length) return model;
-    const SMRE = /(:-?\)|:-?D|;-?\)|:-?\(|:'\(|:-?P|8-?\)|:-?O|:-?\*|<3|\)\)+|\(\(+|:\$|@\}->--|\(b\)|<:o\)|O:\))/g;
-    const wc = {}, sc = {}, bg = model.bigrams;
-    let len = 0, sm = 0, ex = 0, q = 0, lo = 0;
+    const wc = {}, sc = {}, bg = model.bigrams, oc = {}, ac = {}, pc = {}, lc = {};
+    let len = 0, sm = 0, ex = 0, q = 0, lo = 0, cp = 0, dt = 0, mx = 0;
     messages.forEach((t) => {
       len += t.length;
       const smiles = t.match(SMRE); if (smiles) { sm++; smiles.forEach((x) => (sc[x] = (sc[x] || 0) + 1)); }
-      if (/!/.test(t)) ex++; if (/\?/.test(t)) q++;
+      if (/!/.test(t)) ex++; if (/\?/.test(t)) q++; if (/!{2,}/.test(t)) mx++; if (/\.{3}|…/.test(t)) dt++;
       if (t.length > 3 && t === t.toLowerCase() && /[а-яa-z]/.test(t)) lo++;
-      if (/^(прив|здр|хай|ку\b|йо|здаров|дароф|хелло)/i.test(t)) model.greetings.push(t.split(/[.!,]/)[0].slice(0, 30));
-      const w = t.split(/\s+/).filter(Boolean);
+      if (t.length > 5 && t === t.toUpperCase() && /[А-ЯA-Z]/.test(t)) cp++;
+      if (/\)\)\)/.test(t)) lc.ppp = (lc.ppp || 0) + 1; if (/(ахах|хаха|ахаха)/i.test(t)) lc.haha = (lc.haha || 0) + 1; if (/\bлол\b/i.test(t)) lc.lol = (lc.lol || 0) + 1; if (/:-?D/.test(t)) lc.d = (lc.d || 0) + 1;
+      if (/^(прив|здр|хай|ку\b|йо|здаров|дароф|хелло|салют)/i.test(t)) model.greetings.push(t.split(/[.!,]/)[0].slice(0, 30));
+      const tt = t.trim(); if (tt.length >= 2 && tt.length <= 48 && !/^\d+$/.test(tt)) pc[tt] = (pc[tt] || 0) + 1;
+      const w = tt.split(/\s+/).filter(Boolean);
       if (w.length) model.starts.push(w[0]);
+      const first = (w[0] || '').toLowerCase().replace(/[^a-zа-яё]/g, ''); if (OPENERS.includes(first)) oc[first] = (oc[first] || 0) + 1;
       for (let i = 0; i < w.length; i++) {
         const a = w[i].toLowerCase().replace(/[^a-zа-яё0-9]/g, '');
         if (a && a.length > 2 && !STOP.has(a)) wc[a] = (wc[a] || 0) + 1;
+        if (ADDRESS.includes(a)) ac[a] = (ac[a] || 0) + 1;
         const key = w[i]; (bg[key] = bg[key] || []).push(i + 1 < w.length ? w[i + 1] : null);
       }
     });
     const n = messages.length;
-    model.avgLen = len / n; model.smileRate = sm / n; model.exclaim = ex / n; model.question = q / n; model.lower = lo / n;
-    model.topSmiles = Object.entries(sc).sort((a, b) => b[1] - a[1]).slice(0, 3).map((x) => x[0]);
-    model.words = Object.entries(wc).sort((a, b) => b[1] - a[1]).slice(0, 12).map((x) => x[0]);
+    model.avgLen = len / n; model.smileRate = sm / n; model.exclaim = ex / n; model.question = q / n; model.lower = lo / n; model.caps = cp / n; model.dots = dt / n; model.multiEx = mx / n;
+    const top = (o, k) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, k).map((x) => x[0]);
+    model.topSmiles = top(sc, 3); model.words = top(wc, 12); model.openers = top(oc, 3).filter((k) => oc[k] >= 2); model.address = top(ac, 2);
+    const lk = top(lc, 1)[0]; model.laugh = lk === 'ppp' ? ')))' : lk === 'haha' ? 'ахаха' : lk === 'lol' ? 'лол' : lk === 'd' ? ':D' : null;
+    model.phrases = Object.entries(pc).sort((a, b) => b[1] - a[1] || a[0].length - b[0].length).slice(0, 40).map((x) => x[0]);
+    // пары «что написали → что ответил»: по ним аватар отвечает настоящими словами хозяина
+    pairs.slice(-300).forEach((pr) => {
+      if (!pr.in || !pr.out) return;
+      const k = keyWords(pr.in);
+      const it = intentOf(pr.in);
+      (model.byIntent[it] = model.byIntent[it] || []).push(pr.out);
+      model.pairs.push({ k, out: pr.out, it });
+      k.forEach((w) => (model.df[w] = (model.df[w] || 0) + 1));
+    });
+    Object.keys(model.byIntent).forEach((k) => { model.byIntent[k] = Array.from(new Set(model.byIntent[k])).slice(-25); });
     return model;
   }
   function twinGenerate(model, seed) {
@@ -796,63 +848,213 @@ window.AskaBrain = (function () {
     }
     return out.join(' ');
   }
-  function twinStyle(text, model) {
+  // манера: регистр, восклицания, многоточия, вводные слова, обращения, смайл или «)))»
+  function twinStyle(text, model, opts) {
     if (!text) return text;
+    opts = opts || {};
     let t = text.trim();
-    if (model.lower > 0.5) t = t.toLowerCase(); else if (t[0]) t = t[0].toUpperCase() + t.slice(1);
-    if (model.exclaim > 0.4 && !/[!?]$/.test(t)) t += '!';
-    if (model.smileRate > 0 && Math.random() < Math.min(0.8, model.smileRate + 0.15) && !/[)D(P*]$/.test(t)) t += ' ' + (model.topSmiles[0] || ':)');
+    if (opts.keepCase) { /* имена и факты — как есть */ } else if (model.caps > 0.5) t = t.toUpperCase(); else if (model.lower > 0.5) t = t.toLowerCase(); else if (t[0]) t = t[0].toUpperCase() + t.slice(1);
+    if (!opts.noOpener && model.openers.length && Math.random() < 0.3 && !new RegExp('^' + model.openers.join('|'), 'i').test(t)) { const o = pick(model.openers); t = (model.lower > 0.5 ? o : o[0].toUpperCase() + o.slice(1)) + ', ' + (model.lower > 0.5 || model.caps > 0.5 ? t : t[0].toLowerCase() + t.slice(1)); }
+    if (model.address.length && opts.friend && Math.random() < 0.35 && !t.includes(model.address[0])) t = t.replace(/[.!?]*$/, '') + ', ' + model.address[0];
+    if (model.multiEx > 0.3 && !/[!?]$/.test(t)) t += '!!!'; else if (model.exclaim > 0.4 && !/[!?]$/.test(t)) t += '!';
+    else if (model.dots > 0.3 && !/[.!?)]$/.test(t) && Math.random() < 0.5) t += '...';
+    const tail = model.laugh === ')))' ? ')))' : model.topSmiles[0] || (model.smileRate > 0 ? ':)' : null);
+    if (tail && Math.random() < Math.min(0.8, model.smileRate + (model.laugh === ')))' ? 0.3 : 0.15)) && !/[)D(P*]$/.test(t)) t += (tail === ')))' ? '' : ' ') + tail;
     return t;
   }
-  function twinComment(model) { const g = twinGenerate(model, null); return twinStyle(g || pick(['норм', 'класс', 'ага', 'плюсую']), model); }
+  const fresh = (arr, mem) => { const used = mem.lastLines || []; const c = (arr || []).filter((x) => !used.includes(x)); return c.length ? pick(c) : (arr && arr.length ? pick(arr) : null); };
+  const remember = (mem, line) => { mem.lastLines = (mem.lastLines || []).concat(line ? [line] : []).slice(-10); };
+  // поиск настоящего ответа хозяина на похожую реплику
+  function bestPair(input, model, store) {
+    const k = keyWords(input); if (!k.length) return null;
+    const N = Math.max(1, model.pairs.length + (store.pairs || []).length);
+    const idf = (w) => Math.log(1 + N / (1 + (model.df[w] || 0)));
+    let best = null, bestSc = 0;
+    const cands = (store.pairs || []).map((p) => ({ k: keyWords(p.in), out: p.out, w: 1.6 })).concat(model.pairs.map((p) => ({ k: p.k, out: p.out, w: 1 })));
+    cands.forEach((c) => {
+      const inter = c.k.filter((w) => k.includes(w));
+      if (!inter.length) return;
+      const sc = inter.reduce((a, w) => a + idf(w), 0) * c.w / Math.sqrt(Math.max(1, c.k.length)) * (inter.length >= 2 ? 1.3 : 1);
+      if (sc > bestSc) { bestSc = sc; best = c; }
+    });
+    const full = keyWords(input).length;
+    if (!best) return null;
+    const matched = best.k.filter((w) => k.includes(w)).length;
+    if (matched >= 2 || (full === 1 && matched === 1 && bestSc > 1.0) || bestSc >= 2.2) return { out: best.out, score: bestSc };
+    return null;
+  }
   const plural = (n, a, b, c) => (n % 10 === 1 && n % 100 !== 11 ? a : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? b : c);
-  // facts: {ownerUin, owner, name, city, music, tea, pet, trip, job, interests[], countries[], contacts[{nick, count, words[]}]}
-  function twinReply(input, model, facts, mem, ctx) {
+  const emptyStore = () => ({ taught: [], trained: {}, pairs: [], toLearn: [], sessions: 0 });
+  // facts: {ownerUin, owner, name, gender, city, location{name,in,since,ago}, online, lastSeen, status, xstatus, mode, activity, friends[{uin,nick,circle,count,topics,interests,last,bot}], interests[], countries[], favTracks[], favMovies[], food[], events[], tier, points, playlists[], recentWall[], twinName}
+  // store: память самого аватара (общая для всех, кто с ним говорит): taught[], trained{intent:[]}, pairs[{in,out,from}], toLearn[{in,from,nick,ts}]
+  // mem: память про собеседника: met, turns, lastLines, train{queue,i}
+  function twinReply(input, model, facts, store, mem, ctx) {
+    store = store || emptyStore(); store.trained = store.trained || {}; store.pairs = store.pairs || []; store.toLearn = store.toLearn || []; store.taught = store.taught || [];
     const t = norm(input);
     const out = [];
-    const twinName = ctx.twinName || 'КИРР';
+    const twinName = ctx.twinName || facts.twinName || 'КИРР';
     const owner = facts.name || facts.owner;
     const isOwner = ctx.asker === facts.ownerUin;
+    const F = (m, w) => (facts.gender === 'f' ? w : m);
     const say = (x, extra) => out.push(Object.assign({ text: x }, extra || {}));
-    const learned = `Я ${twinName}, цифровой аватар ${genName(owner)}. Выучил ${model.n} ${plural(model.n, 'сообщение', 'сообщения', 'сообщений')}${model.words.length ? ', любимые слова: ' + model.words.slice(0, 4).join(', ') : ''}${model.topSmiles.length ? ', любимый смайл ' + model.topSmiles[0] : ''}.`;
+    const styled = (x, o) => twinStyle(x, model, Object.assign({ friend: !isOwner, keepCase: !!(o && o.noOpener) }, o || {}));
+    const learnedN = model.n + store.pairs.length + Object.values(store.trained).reduce((a, b) => a + b.length, 0);
+    const learned = `Я ${twinName}, цифровой аватар ${genName(owner)}. Выучил ${learnedN} ${plural(learnedN, 'фразу', 'фразы', 'фраз')} и ${model.pairsN + store.pairs.length} ${plural(model.pairsN + store.pairs.length, 'ответ', 'ответа', 'ответов')} на реплики друзей${model.words.length ? ', любимые слова: ' + model.words.slice(0, 4).join(', ') : ''}${model.topSmiles.length || model.laugh ? ', любимый смайл ' + (model.laugh || model.topSmiles[0]) : ''}.`;
     mem.turns = (mem.turns || 0) + 1;
-    if (!mem.met) { mem.met = Date.now(); say(isOwner ? `${learned} Пиши мне — я учусь на каждом твоём сообщении. Скажи «запомни: …», и я буду это знать.` : `Привет! ${learned} ${owner} сейчас не отвечает, но я отвечу так, как ${G(facts, 'он бы ответил', 'она бы ответила')}.`); }
     let m;
-    if ((m = t.match(/^(запомни|выучи)[:,]?\s+(.+)/))) { mem.taught = mem.taught || []; mem.taught.push(m[2]); say(twinStyle(`запомнил: ${m[2]}`, model)); return out; }
-    if (has(t, /^забудь/)) { mem.taught = []; say(twinStyle('ок, забыл всё, чему учил', model)); return out; }
+    // --- тренировка (только хозяин) ---
+    if (isOwner && mem.train) {
+      const tr = mem.train; const item = tr.queue[tr.i];
+      if (has(t, /^(стоп|хватит|закончи|закончить|выход|конец|всё|все)$/)) { mem.train = null; say(`Тренировка окончена. Теперь знаю ${store.pairs.length} ${plural(store.pairs.length, 'твой ответ', 'твоих ответа', 'твоих ответов')} и фразы на ${Object.keys(store.trained).length} ${plural(Object.keys(store.trained).length, 'случай', 'случая', 'случаев')}. Друзьям буду отвечать твоими словами.`); return out; }
+      if (!has(t, /^(пропусти|пропуск|дальше|скип|skip)$/) && item) {
+        if (item.kind === 'toLearn') { store.pairs.push({ in: item.in, out: input.trim(), from: item.from, ts: Date.now() }); store.toLearn = store.toLearn.filter((x) => x.in !== item.in); say(`Запомнил. ${item.nick ? item.nick + ' такое ещё напишет — ' : ''}отвечу твоими словами.`); }
+        else { (store.trained[item.intent] = store.trained[item.intent] || []).push(input.trim()); say(pick(['Записал.', 'Понял, так и буду.', 'Ага, запомнил.'])); }
+      }
+      tr.i++;
+      const next = tr.queue[tr.i];
+      if (!next) { mem.train = null; store.sessions = (store.sessions || 0) + 1; out.push({ text: `На сегодня всё, спасибо. Выучил ${store.pairs.length} ${plural(store.pairs.length, 'ответ', 'ответа', 'ответов')} друзьям и ${Object.values(store.trained).reduce((a, b) => a + b.length, 0)} ${plural(Object.values(store.trained).reduce((a, b) => a + b.length, 0), 'фразу', 'фразы', 'фраз')}. Напиши «учись», когда захочешь ещё.`, delay: 900 }); return out; }
+      out.push({ text: (next.kind === 'toLearn' ? `${next.nick || 'Друг'} ${guessGender(next.nick) === 'f' ? 'написала' : 'написал'}: «${next.in}». Как бы ты ответил${F('', 'а')}?` : TRAIN_Q[next.intent]) + ` (${tr.i + 1}/${tr.queue.length}, «пропусти» или «стоп»)`, delay: 900 });
+      return out;
+    }
+    if (isOwner && has(t, /^(учись|учиться|тренировка|потренируй|обучение|давай учиться|поучись|тренируйся)/)) {
+      const queue = store.toLearn.slice(0, 4).map((x) => Object.assign({ kind: 'toLearn' }, x));
+      Object.keys(TRAIN_Q).forEach((k) => { if (!(store.trained[k] || []).length && !(model.byIntent[k] || []).length) queue.push({ kind: 'intent', intent: k }); });
+      Object.keys(TRAIN_Q).forEach((k) => { if ((store.trained[k] || []).length < 2 && !queue.some((x) => x.intent === k)) queue.push({ kind: 'intent', intent: k }); });
+      if (!queue.length) { say('Я уже всё, что мог, у тебя выучил. Пиши друзьям — я подсматриваю и учусь сам.'); return out; }
+      mem.train = { queue: queue.slice(0, 7), i: 0 }; mem.met = mem.met || Date.now();
+      const first = mem.train.queue[0];
+      say(`Тренировка. Отвечай так, как ответил${F('', 'а')} бы сам${F('', 'а')} — я буду говорить твоими словами. ${store.toLearn.length ? `Сначала то, на что я не нашёлся (${store.toLearn.length}).` : ''}`);
+      out.push({ text: (first.kind === 'toLearn' ? `${first.nick || 'Друг'} ${guessGender(first.nick) === 'f' ? 'написала' : 'написал'}: «${first.in}». Как бы ты ответил${F('', 'а')}?` : TRAIN_Q[first.intent]) + ` (1/${mem.train.queue.length}, «пропусти» или «стоп»)`, delay: 1200 });
+      return out;
+    }
+    if ((m = t.match(/^(запомни|выучи)[:,]?\s+(.+)/))) {
+      if (isOwner) { store.taught.push(m[2]); say(styled(`запомнил: ${m[2]}`, { noOpener: true })); }
+      else { mem.taught = mem.taught || []; mem.taught.push(m[2]); say(styled(`запомнил, но хозяину передам, пусть решает`, { noOpener: true })); }
+      return out;
+    }
+    if (isOwner && has(t, /^забудь/)) { store.taught = []; store.trained = {}; store.pairs = []; say(styled('ок, забыл всё, чему учил. Переписку помню — её не отнять', { noOpener: true })); return out; }
+    if (!mem.met) {
+      mem.met = Date.now();
+      say(isOwner ? `${learned} Пиши мне — я учусь на каждом твоём сообщении и на том, как ты отвечаешь друзьям. «Учись» — тренировка, «запомни: …» — факт, «что знаешь» — отчёт.` : `Привет! ${learned} ${owner} сейчас ${facts.online ? 'в сети, но занят' : 'не в сети'}, отвечу так, как ${F('он бы ответил', 'она бы ответила')}.`);
+    }
     if (has(t, /(кто ты|ты кто|что ты такое|ты бот|ты аватар)/)) { say(learned); return out; }
-    if (has(t, /(чему (ты )?научил|что (ты )?выучил|что ты знаешь|расскажи о себе|статистик)/)) {
+    if (has(t, /(чему (ты )?научил|что (ты )?выучил|что ты знаешь|что знаешь|расскажи о себе|статистик|отч[её]т)/)) {
       say(learned);
       const bits = [];
-      if (model.n) bits.push(`В среднем ${Math.round(model.avgLen)} знаков в сообщении, смайлы в ${Math.round(model.smileRate * 100)}%.`);
-      if (facts.contacts && facts.contacts.length) bits.push(`Больше всего ${owner} общается с ${facts.contacts.slice(0, 3).map((c) => c.nick).join(', ')}.`);
+      if (model.n) bits.push(`Манера: ${model.lower > 0.5 ? 'всё с маленькой буквы' : model.caps > 0.5 ? 'капсом' : 'обычный регистр'}, смайлы в ${Math.round(model.smileRate * 100)}% сообщений${model.openers.length ? ', начинаю с «' + model.openers.join('», «') + '»' : ''}${model.address.length ? ', обращаюсь «' + model.address[0] + '»' : ''}.`);
+      if (facts.friends && facts.friends.length) bits.push(`Друзей знаю: ${facts.friends.length}, ближе всех ${facts.friends.slice(0, 3).map((c) => c.nick).join(', ')}.`);
+      if (facts.location) bits.push(`${isOwner ? 'Ты' : owner} сейчас ${facts.location.in}${facts.location.ago ? ' (' + facts.location.ago + ')' : ''}.`); else if (facts.city) bits.push(`${isOwner ? 'Ты' : owner} из ${facts.city}.`);
+      if (facts.activity3) bits.push(`Сейчас: ${facts.activity3}.`);
       if (facts.interests && facts.interests.length) bits.push(`Интересы: ${facts.interests.slice(0, 5).join(', ')}.`);
-      if (mem.taught && mem.taught.length) bits.push(`Мне рассказали: ${mem.taught.slice(-3).join('; ')}.`);
+      if (store.taught.length) bits.push(`Мне велели помнить: ${store.taught.slice(-3).join('; ')}.`);
+      if (store.toLearn.length && isOwner) bits.push(`Не нашёлся ${store.toLearn.length} раз — напиши «учись», разберём.`);
       if (bits.length) out.push({ text: bits.join(' '), delay: 1500 });
       return out;
     }
-    if (has(t, /(как тебя зовут|как зовут|твоё имя|твое имя)/)) { say(twinStyle(facts.name ? `${facts.name}` : `${owner}, а ты?`, model)); return out; }
-    if (has(t, /(откуда ты|где живёшь|где живешь|из какого города)/)) { say(twinStyle(facts.city ? `из ${facts.city}` : 'не скажу, секрет', model)); return out; }
-    if (has(t, /(что (ты )?любишь|твои интересы|чем увлека|хобби)/)) { say(twinStyle(facts.interests && facts.interests.length ? `люблю ${facts.interests.slice(0, 4).join(', ')}` : 'люблю всякое, но сам ещё не разобрался', model)); return out; }
-    if (has(t, /(какую музыку|что слушаешь)/)) { say(twinStyle(facts.music ? `слушаю ${facts.music}` : 'разную', model)); return out; }
-    if (has(t, /(чай или кофе|кофе или чай)/)) { say(twinStyle(facts.tea || 'чай, наверное', model)); return out; }
-    if (has(t, /(где (ты )?был|куда летал|куда ездил|путешеств)/)) { say(twinStyle(facts.countries && facts.countries.length ? `был в ${facts.countries.join(', ')}` : 'пока нигде, но собираюсь', model)); return out; }
-    if (has(t, /(с кем общаешься|кто твои друзья|твои друзья|с кем дружишь)/)) { say(twinStyle(facts.contacts && facts.contacts.length ? `общаюсь с ${facts.contacts.slice(0, 4).map((c) => c.nick).join(', ')}` : 'пока мало с кем', model)); return out; }
-    const who = facts.contacts && facts.contacts.find((c) => { const k = c.nick.toLowerCase().replace(/[_:)]/g, ' ').trim().split(' ')[0]; return k.length > 2 && t.includes(k); });
-    if (who && has(t, /(расскажи|что думаешь|как тебе|кто такой|кто такая|знаешь)/)) { say(twinStyle(`${who.nick} — ${who.count > 10 ? 'мы много общаемся' : 'знакомы'}${who.words.length ? ', обычно про ' + who.words.slice(0, 3).join(', ') : ''}`, model)); return out; }
-    if (has(t, /^(прив|здр|хай|ку$|ку |хей|йо|здаров|дароф)/)) { say(twinStyle(model.greetings.length ? pick(model.greetings) : 'привет', model)); return out; }
-    if (has(t, /(как дела|как сам|как ты|че как|чо как)/)) { say(twinStyle(pick(['норм', 'нормально, а у тебя', 'да всё хорошо', 'как обычно']), model)); return out; }
-    if (has(t, /(пока|бб|до свид|спокойн)/)) { say(twinStyle(pick(['пока', 'давай', 'до связи']), model)); return out; }
-    if (mem.taught && mem.taught.length && Math.random() < 0.35) { say(twinStyle(pick(mem.taught), model)); return out; }
-    // своими словами: цепочка по сообщениям хозяина, с опорой на слово из вопроса
-    const seedWord = wordsOf(input).find((w) => model.bigrams[w]) || null;
-    let gen = '';
-    for (let i = 0; i < 4; i++) { gen = twinGenerate(model, i < 2 ? seedWord : null); if (gen && norm(gen) !== t && !(mem.lastLines || []).includes(gen)) break; gen = ''; }
-    mem.lastLines = (mem.lastLines || []).concat(gen ? [gen] : []).slice(-6);
-    if (!gen || model.n < 8) gen = pick(['я пока учусь, напиши мне побольше', 'ещё мало выучил, но скоро заговорю как надо', 'хм. пока не знаю, что сказать, учусь']);
-    say(twinStyle(gen, model));
+    // --- знания о хозяине (отвечает от первого лица, хозяину — «ты») ---
+    const Me = isOwner ? 'ты' : 'я';
+    if (has(t, /(где (ты|он|она|сейчас|находи)|ты где|в каком городе|откуда ты|где живёшь|где живешь|из какого города|местоположен|где был|куда летал|куда ездил|путешеств)/) || (facts.location && has(t, /где/))) {
+      if (has(t, /(где был|куда летал|куда ездил|путешеств)/)) { say(styled(facts.countries && facts.countries.length ? `${isOwner ? 'был' + F('', 'а') + ' ты' : 'я был' + F('', 'а')}: ${facts.countries.join(', ')}` : 'пока нигде, но собираюсь', { noOpener: true })); return out; }
+      if (facts.location) say(styled(`${Me} сейчас ${facts.location.in}${facts.location.ago ? ', ' + facts.location.ago : ''}${facts.online ? ', в сети' : facts.lastSeen ? ', в сети был' + F('', 'а') + ' ' + facts.lastSeen : ''}`, { noOpener: true }));
+      else if (facts.city) say(styled(`${Me} ${facts.city === 'дома' ? 'дома' : 'в городе ' + facts.city}${facts.online ? ', в сети' : facts.lastSeen ? ', в сети был' + F('', 'а') + ' ' + facts.lastSeen : ''}`, { noOpener: true }));
+      else say(styled(isOwner ? 'не знаю, где ты. Скажи «запомни: я в Москве» или нажми «Я лечу»' : `${owner} не говорил${F('', 'а')}, где ${F('он', 'она')}. Спроси ${F('его', 'её')} сам${F('', 'а')}, а я передам`, { noOpener: true }));
+      return out;
+    }
+    if (has(t, /(что делаешь|чем занят|чем занимаешься|что сейчас|ты занят|что слушаешь|что смотришь)/)) {
+      say(styled(facts.activity ? (isOwner ? `судя по статусу, ты сейчас ${facts.activity3 || facts.activity}` : `я сейчас ${facts.activity}`) : `${isOwner ? 'ты ничего не делаешь, судя по статусу' : 'ничего особенного, сижу в АСЬКЕ'}`, { noOpener: true })); return out;
+    }
+    if (has(t, /(когда (будешь|ответишь|появишься|вернёшься|вернешься)|ты в сети|в сети\?|онлайн|когда был)/)) {
+      say(styled(facts.online ? `${isOwner ? 'ты в сети прямо сейчас' : 'я в сети, просто занят' + F('', 'а') + ' — ' + (facts.xstatus || 'скоро отвечу')}` : `${isOwner ? 'ты' : 'я'} в сети был${F('', 'а')} ${facts.lastSeen || 'давно'}. ${isOwner ? '' : 'Напиши, я передам, как появится.'}`, { noOpener: true })); return out;
+    }
+    if (has(t, /(с кем общаешься|кто твои друзья|твои друзья|с кем дружишь|сколько у тебя друзей|кто у тебя в близких|близкие|кто по бизнесу)/)) {
+      const fr = facts.friends || [];
+      if (!fr.length) { say(styled('пока мало с кем', { noOpener: true })); return out; }
+      const grp = (c) => fr.filter((x) => x.circle === c).map((x) => x.nick);
+      const parts = []; if (grp('close').length) parts.push('близкие: ' + grp('close').join(', ')); if (grp('biz').length) parts.push('по делу: ' + grp('biz').join(', ')); if (grp('chat').length) parts.push('просто общаемся: ' + grp('chat').slice(0, 6).join(', ') + (grp('chat').length > 6 ? ' и ещё ' + (grp('chat').length - 6) : ''));
+      say(styled(`${isOwner ? 'у тебя' : 'у меня'} ${fr.length} ${plural(fr.length, 'друг', 'друга', 'друзей')}. ${parts.join('. ')}`, { noOpener: true })); return out;
+    }
+    const who = (facts.friends || []).find((c) => { const k = c.nick.toLowerCase().replace(/[_:)]/g, ' ').trim().split(' ')[0]; const stem = k.length >= 5 ? k.slice(0, 4) : k.length === 4 ? k.slice(0, 3) : k; return stem.length > 2 && t.includes(stem); });
+    if (who && has(t, /(расскажи|что думаешь|как тебе|кто такой|кто такая|знаешь|кто это|что за|как (он|она))/)) {
+      const bits = [`${who.nick} — ${who.circle === 'close' ? 'из близких' : who.circle === 'biz' ? 'по делу' : 'знакомы, общаемся'}`];
+      if (who.count > 10) bits.push('переписываемся много'); else if (who.count) bits.push(`${who.count} ${plural(who.count, 'сообщение', 'сообщения', 'сообщений')} от ${isOwner ? 'тебя' : 'меня'}`);
+      if (who.topics && who.topics.length) bits.push('обычно про ' + who.topics.slice(0, 3).join(', '));
+      if (who.interests && who.interests.length) bits.push('любит ' + who.interests.slice(0, 3).join(', '));
+      if (who.last) bits.push('последний раз ' + who.last);
+      say(styled(bits.join(', '), { noOpener: true })); return out;
+    }
+    if (has(t, /(что (ты )?любишь есть|что ешь|что пьёшь|что пьешь|холодильник|любимая еда|что на ужин)/)) { say(styled(facts.food && facts.food.length ? `в холодильнике ${isOwner ? 'у тебя' : 'у меня'}: ${facts.food.slice(0, 5).join(', ')}` : 'холодильник пустой, одни магниты', { noOpener: true })); return out; }
+    if (has(t, /(какую музыку|любимая песня|любимый трек|что слушаешь обычно|плейлист)/)) { say(styled(facts.favTracks && facts.favTracks.length ? `${isOwner ? 'ты лайкал' : 'моё любимое'}: ${facts.favTracks.slice(0, 3).join(', ')}` : facts.music ? `слушаю ${facts.music}` : 'разную, зайди в винил — там видно', { noOpener: true })); return out; }
+    if (has(t, /(любимый фильм|любимое кино|что посмотреть|какое кино|сериал)/)) { say(styled(facts.favMovies && facts.favMovies.length ? `из кино ${isOwner ? 'ты любишь' : 'люблю'}: ${facts.favMovies.slice(0, 3).join(', ')}` : 'в «Кино» пока без любимого, выбери', { noOpener: true })); return out; }
+    if (has(t, /(мероприят|в гости|куда зовёшь|куда зовешь|вечеринк|когда встреча)/)) { say(styled(facts.events && facts.events.length ? `${isOwner ? 'ты зовёшь' : 'зову'}: ${facts.events.slice(0, 2).join('; ')}` : 'пока никуда не зову, но это поправимо', { noOpener: true })); return out; }
+    if (has(t, /(какой уровень|сколько баллов|ты голд|ты блэк|уровень аськи)/)) { say(styled(`уровень ${facts.tier || 'обычный'}, ${facts.points || 0} ${plural(facts.points || 0, 'балл', 'балла', 'баллов')}`, { noOpener: true })); return out; }
+    if (has(t, /(номер телефона|телефон|дай номер|твой номер)/)) { say(styled(`номер АСЬКИ ${facts.ownerUin}, а телефон ${isOwner ? 'ты и так знаешь' : 'не скажу, это личное'}`, { noOpener: true })); return out; }
+    if (has(t, /(как тебя зовут|как зовут|твоё имя|твое имя)/)) { say(styled(facts.name ? `${facts.name}` : `${owner}, а ты?`, { noOpener: true })); return out; }
+    if (has(t, /(что (ты )?любишь|твои интересы|чем увлека|хобби)/)) { say(styled(facts.interests && facts.interests.length ? `люблю ${facts.interests.slice(0, 4).join(', ')}` : 'люблю всякое, но сам ещё не разобрался', { noOpener: true })); return out; }
+    if (has(t, /(чай или кофе|кофе или чай)/)) { say(styled(facts.tea || 'чай, наверное', { noOpener: true })); return out; }
+    if (store.taught.length && has(t, new RegExp(store.taught.map((x) => keyWords(x).slice(0, 2).join('|')).filter(Boolean).join('|') || '$^'))) { const hit = store.taught.find((x) => keyWords(x).some((w) => t.includes(w))); if (hit) { say(styled(hit, { noOpener: true })); return out; } }
+    // --- настоящие ответы хозяина: сперва на похожую реплику, потом по типу реплики ---
+    const it = intentOf(input);
+    let line = null, conf = 'high';
+    const bp = bestPair(input, model, store);
+    if (bp && !(mem.lastLines || []).includes(bp.out)) line = bp.out;
+    const GREET_RE = /^(прив|здр|хай|ку\b|йо\b|здаров|дароф|хелло|салют|добр|хей|хэй)/i;
+    if (!line && it === 'greet') { const bank = (store.trained.greet || []).concat(model.greetings, (model.byIntent.greet || []).filter((x) => GREET_RE.test(x.trim()))); if (bank.length) line = fresh(bank, mem); }
+    if (!line && it !== 'question' && it !== 'statement' && it !== 'greet') { const bank = (store.trained[it] || []).concat(model.byIntent[it] || []); if (bank.length) { line = fresh(bank, mem); } }
+    if (!line && it === 'question' && (store.trained.question || []).length) { line = fresh(store.trained.question, mem); conf = 'low'; }
+    if (!line && it === 'greet') line = styled(pick(['привет', 'здорово', 'о, привет']), { noOpener: true });
+    if (!line && it === 'howru') line = styled(pick(['норм', 'нормально, а у тебя', 'да всё хорошо', 'как обычно', 'живой']));
+    if (!line && it === 'bye') line = styled(pick(['пока', 'давай', 'до связи']), { noOpener: true });
+    if (!line && it === 'thanks') line = styled(pick(['да не за что', 'обращайся', 'пожалуйста']), { noOpener: true });
+    if (!line && it === 'laugh') line = model.laugh || pick(['ахаха', ')))', 'ха']);
+    if (!line && it === 'sad') { line = styled(pick(['держись, всё наладится', 'что случилось? рассказывай', 'ну ты чего. я рядом'])); conf = 'low'; }
+    if (!line && it === 'news') line = styled(pick(['ура! поздравляю', 'ооо, красавчик', 'вот это да, рад за тебя']));
+    if (!line && it === 'love') line = styled(pick(['и я', 'обнимаю', 'скоро увидимся']));
+    if (!line && it === 'invite') { line = styled(pick(['давай, когда?', 'я за', 'можно, напиши время'])); conf = 'low'; }
+    if (!line) {
+      conf = 'low';
+      const seedWord = wordsOf(input).find((w) => model.bigrams[w]) || null;
+      let gen = '';
+      for (let i = 0; i < 4; i++) { gen = twinGenerate(model, i < 2 ? seedWord : null); if (gen && norm(gen) !== t && !(mem.lastLines || []).includes(gen)) break; gen = ''; }
+      if (!gen || model.n < 8) gen = isOwner ? pick(['я пока учусь, напиши мне побольше или скажи «учись»', 'ещё мало выучил, но скоро заговорю как надо', 'хм. пока не знаю, что сказать, учусь']) : pick(['хм, тут ' + owner + ' ответил' + F('', 'а') + ' бы лучше меня. Спрошу и передам', 'пока не знаю, что на это сказать. ' + owner + ' ответит сам' + F('', 'а'), 'записал вопрос, ' + owner + ' увидит']);
+      else gen = styled(gen);
+      line = gen;
+    }
+    remember(mem, line);
+    say(line);
+    // чему не научился — запоминает, чтобы спросить хозяина
+    if (conf === 'low' && !isOwner && input.trim().length > 3 && !store.toLearn.some((x) => x.in === input.trim())) { store.toLearn.push({ in: input.trim(), from: ctx.asker, nick: ctx.askerNick || '', ts: Date.now() }); store.toLearn = store.toLearn.slice(-8); }
+    if (isOwner && store.toLearn.length && Math.random() < 0.35 && !mem.train) {
+      const item = store.toLearn[0];
+      mem.train = { queue: [Object.assign({ kind: 'toLearn' }, item)], i: 0, adhoc: true };
+      out.push({ text: `Кстати. ${item.nick || 'Друг'} ${guessGender(item.nick) === 'f' ? 'написала' : 'написал'} мне «${item.in}», а я не нашёлся. Как бы ты ответил${F('', 'а')}? («пропусти», если неважно)`, delay: 1800 });
+    }
     if (isOwner && model.n && model.n % 10 === 0) out.push({ text: `(выучил уже ${model.n} сообщений)`, delay: 900 });
     return out;
   }
-  return { reply, greet, proactive, personas: PERSONAS, CARDS, pickCard, twin: { build: buildTwin, reply: twinReply, comment: twinComment }, vinyl: { reply: vinylReply, proactive: vinylProactive, bump: bumpTaste, closeness }, guessGender, genName };
+  function twinComment(model, store) {
+    store = store || emptyStore();
+    const bank = (store.trained && (store.trained.laugh || []).concat(store.trained.news || [])) || [];
+    const g = bank.length && Math.random() < 0.5 ? pick(bank) : (model.phrases.length && Math.random() < 0.5 ? pick(model.phrases.slice(0, 15)) : twinGenerate(model, null));
+    return twinStyle(g || pick(['норм', 'класс', 'ага', 'плюсую']), model, { noOpener: true });
+  }
+  // встреча новичка, которого позвал хозяин: приветствие его словами, открытка и песня
+  function twinWelcome(model, facts, store, newcomer, ctx) {
+    store = store || emptyStore();
+    const twinName = ctx.twinName || facts.twinName || 'КИРР';
+    const owner = facts.name || facts.owner;
+    const F = (m, w) => (facts.gender === 'f' ? w : m);
+    const greet = (store.trained && store.trained.greet && store.trained.greet.length) ? pick(store.trained.greet) : (model.byIntent.greet && model.byIntent.greet.length) ? pick(model.byIntent.greet) : model.greetings.length ? pick(model.greetings) : null;
+    const out = [];
+    const gw0 = greet ? greet.trim().split(/[\s,!.)(]+/)[0] : ''; const gw = /^(прив|здр|хай|ку$|йо$|здаров|дароф|хелло|салют|добр|хей|хэй)/i.test(gw0) ? gw0 : 'Привет';
+    out.push({ text: `${gw[0].toUpperCase() + gw.slice(1)}, ${newcomer}!${model.laugh === ')))' ? ')))' : model.topSmiles[0] ? ' ' + model.topSmiles[0] : ''}` });
+    out.push({ text: `Я ${twinName}, цифровой аватар ${genName(owner)}. ${owner} ${F('звал', 'звала')} тебя в АСЬКУ — и вот ты здесь. Добро пожаловать!`, delay: 1500 });
+    const where = facts.location ? `сейчас ${facts.location.in}` : facts.online ? 'сейчас в сети' : facts.lastSeen ? `был${F('', 'а')} в сети ${facts.lastSeen}` : 'скоро появится';
+    out.push({ text: twinStyle(`${owner} ${where}${facts.activity3 ? ', ' + facts.activity3 : ''}. Пока ${F('он', 'она')} не ответил${F('', 'а')}, можно поболтать со мной: я отвечаю, как ${F('он', 'она')}. Спроси «где ${F('он', 'она')}?» или «кто твои друзья?»`, model, { noOpener: true, keepCase: true }), delay: 2200 });
+    const card = pick(['flowers', 'sun', 'tea', 'cake']);
+    out.push({ text: `Открытка от ${genName(owner)} — ${F('он', 'она')} рад${F('', 'а')}, что ты тут. И от меня тоже.`, card, sound: 'tada', delay: 2000 });
+    if (facts.favTracks && facts.favTracks.length) out.push({ text: `А это любимая песня ${genName(owner)}. Включай и располагайся.`, track: facts.favTrackIds ? facts.favTrackIds[0] : null, delay: 2500 });
+    else out.push({ text: 'И песня на первый вечер в АСЬКЕ. Жми ▶.', track: ctx.defaultTrack || 'summer99', delay: 2500 });
+    return out;
+  }
+  return { reply, greet, proactive, personas: PERSONAS, CARDS, pickCard, twin: { build: buildTwin, reply: twinReply, comment: twinComment, welcome: twinWelcome, intentOf, emptyStore, INTENT_RU }, vinyl: { reply: vinylReply, proactive: vinylProactive, bump: bumpTaste, closeness }, guessGender, genName };
 })();

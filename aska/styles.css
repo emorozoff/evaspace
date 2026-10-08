@@ -217,7 +217,8 @@ a, .link { color: var(--link); text-decoration: underline; cursor: pointer; }
 .citem .nick { flex: 1; overflow: hidden; text-overflow: ellipsis; }
 .citem .ico { width: 16px; height: 16px; flex: none; display: grid; place-items: center; }
 .citem .typing { font-size: 9px; color: var(--shadow); }
-.blink { animation: blink .5s steps(1) infinite; }
+.blink { animation: blink 1s steps(1) infinite; }
+.unread-ico { display: inline-flex; }
 @keyframes blink { 50% { opacity: 0; } }
 .empty-note { padding: 10px 8px; color: #404040; }
 
@@ -583,6 +584,14 @@ button.chip:hover { border-color: #000; }
 .btn.down { border-color: var(--shadow) var(--light) var(--light) var(--shadow); background: #d4d0c8; box-shadow: inset 1px 1px 0 var(--dark); }
 label.btn { cursor: pointer; }
 .err { background: #ffe0e0; color: #900; border: 1px solid #c66; padding: 3px 6px; margin: 2px 0; }
+
+/* ---------- обучение аватара ---------- */
+.twinwin { display: flex; flex-direction: column; gap: 4px; flex: 1; min-height: 0; }
+.twinwin .tabpanel { flex: 1; min-height: 0; overflow: auto; }
+.tw-tabs button { padding: 2px 6px 3px; }
+.tw-how { margin: 2px 0 4px 16px; padding: 0; } .tw-how li { margin: 2px 0; }
+.tl { padding: 3px 2px; border-bottom: 1px dotted var(--shadow); }
+.tl .row { margin-top: 2px; }
 
 /* ---------- диалоги ---------- */
 .overlay { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(0,0,0,.15); }
