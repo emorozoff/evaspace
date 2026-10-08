@@ -110,6 +110,7 @@ window.AskaArt = (function () {
 
   /* ---------- открытки (анимация — в styles.css) ---------- */
   function postcardSvg(kind) {
+    if (artStyle === 'boomer') return postcardBoomer(kind);
     const paper = (bg) => `<rect width="200" height="120" fill="${bg}"/>`;
     const fl = (color, cx, cy, s) => `<g transform="translate(${cx - 8 * s},${cy - 8 * s}) scale(${s})">${flowerInner(color)}</g>`;
     const label = (text, color, x, y, anchor) => `<text x="${x}" y="${y}" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" font-size="11" fill="${color || '#0a246a'}" text-anchor="${anchor || 'start'}">${text}</text>`;
@@ -234,6 +235,7 @@ window.AskaArt = (function () {
   const escT = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   // магнит на холодильник: форма зависит от страны, флаг, достопримечательность, табличка с именем, блик и номер НФТ
   function magnetSvg(code, size, opts) {
+    if (artStyle === 'boomer') return magnetBoomer(code, size, opts);
     opts = opts || {};
     const c = COUNTRY[code] || COUNTRY.UR;
     const sz = size || 64; const h = hashOf(code);
@@ -254,6 +256,115 @@ window.AskaArt = (function () {
       ${inner}<text x="32" y="${iconY}" font-size="${iconSize}" text-anchor="middle" font-family="'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif">${c.icon}</text>
       ${plate}${screws}${gloss}${serial}</svg>`;
   }
+  /* ================= «Бумер»: торжественные открытки и коллекционные магниты =================
+     Классическая поздравительная открытка: глубокий цвет, золотая рамка с вензелями
+     по углам, золотая надпись с засечками и «блёстки». Магнит — фарфоровый сувенир
+     в золотом овале с лавровой ветвью и лентой с названием. */
+  let artStyle = 'default';
+  const setStyle = (s) => { artStyle = s === 'boomer' ? 'boomer' : 'default'; };
+  const SERIF = "Georgia,'Times New Roman',Times,serif";
+  const GOLD_DEF = '<linearGradient id="bmGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4c2"/><stop offset=".42" stop-color="#e7bf55"/><stop offset=".58" stop-color="#b07d12"/><stop offset="1" stop-color="#f3d36f"/></linearGradient>'
+    + '<linearGradient id="bmGoldH" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9c6b0c"/><stop offset=".5" stop-color="#ffe9a3"/><stop offset="1" stop-color="#9c6b0c"/></linearGradient>'
+    + '<radialGradient id="bmVig" cx=".5" cy=".45" r=".75"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></radialGradient>';
+  // вензель в углу рамки
+  const curl = (x, y, sx, sy) => `<g transform="translate(${x},${y}) scale(${sx},${sy})" fill="none" stroke="url(#bmGold)" stroke-width="1.1" stroke-linecap="round"><path d="M0 14 C0 4 4 0 14 0"/><path d="M4 12 C5 6 7 5 12 4"/><circle cx="3.2" cy="3.2" r="1.6" fill="url(#bmGold)" stroke="none"/><path d="M14 0 q4 0 6 3 M0 14 q0 4 3 6"/></g>`;
+  const frame = () => `<rect x="5" y="5" width="190" height="110" rx="3" fill="none" stroke="url(#bmGold)" stroke-width="2"/><rect x="9.5" y="9.5" width="181" height="101" rx="2" fill="none" stroke="url(#bmGold)" stroke-width=".7" opacity=".9"/>${curl(12, 12, 1, 1)}${curl(188, 12, -1, 1)}${curl(12, 108, 1, -1)}${curl(188, 108, -1, -1)}`;
+  const sparkle = (x, y, s) => `<path transform="translate(${x},${y}) scale(${s || 1})" d="M0-4 L.9-.9 L4 0 L.9 .9 L0 4 L-.9 .9 L-4 0 L-.9-.9 Z" fill="#fff6cf"/>`;
+  const sparkles = (pts) => `<g class="bm-spark">${pts.map(([x, y, s]) => sparkle(x, y, s)).join('')}</g>`;
+  // надпись золотом с тенью; длинная — в две строки
+  const title = (text, y, size, color) => {
+    const lines = Array.isArray(text) ? text : [text];
+    return lines.map((t, i) => `<text x="100" y="${y + i * (size + 2)}" text-anchor="middle" font-family="${SERIF}" font-style="italic" font-weight="bold" font-size="${size}" fill="#000" opacity=".35" transform="translate(.8,.9)">${t}</text><text x="100" y="${y + i * (size + 2)}" text-anchor="middle" font-family="${SERIF}" font-style="italic" font-weight="bold" font-size="${size}" fill="${color || 'url(#bmGold)'}">${t}</text>`).join('');
+  };
+  const sub = (text, y, color) => `<text x="100" y="${y}" text-anchor="middle" font-family="${SERIF}" font-size="6.5" letter-spacing="1.6" fill="${color || '#f3e6c4'}">${text}</text>`;
+  const bg = (c1, c2) => `<defs><linearGradient id="bmBg${c1.slice(1)}${c2.slice(1)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect width="200" height="120" fill="url(#bmBg${c1.slice(1)}${c2.slice(1)})"/><rect width="200" height="120" fill="url(#bmVig)"/>`;
+  // роза: чаша из лепестков
+  const rose = (cx, cy, r, c, d) => `<g transform="translate(${cx},${cy})"><circle r="${r}" fill="${c}"/><path d="M${-r * .95} ${r * .15} Q0 ${r * 1.2} ${r * .95} ${r * .15}" fill="${d}" opacity=".45"/><path d="M${-r * .12} ${-r * .05} a${r * .16} ${r * .16} 0 1 1 ${r * .28} ${r * .1} a${r * .36} ${r * .36} 0 1 1 ${-r * .66} ${-r * .14} a${r * .6} ${r * .6} 0 1 1 ${r * 1.06} ${r * .3}" fill="none" stroke="${d}" stroke-width="${(r * .13).toFixed(2)}" stroke-linecap="round"/><path d="M${-r * .55} ${-r * .55} q${r * .35} ${-r * .25} ${r * .7} 0" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="${(r * .1).toFixed(2)}" stroke-linecap="round"/></g>`;
+  const leaf = (x, y, a, s) => `<path transform="translate(${x},${y}) rotate(${a}) scale(${s || 1})" d="M0 0 Q6 -5 14 0 Q6 5 0 0Z" fill="#2f6b2a" stroke="#1d4a1a" stroke-width=".5"/>`;
+  function postcardBoomer(kind) {
+    let body = '';
+    switch (kind) {
+      case 'flowers':
+        body = bg('#5c1420', '#2b070c') + `<path d="M100 104 C98 88 92 76 80 66 M100 104 C100 86 100 74 100 62 M100 104 C102 88 108 76 120 66" stroke="#2f6b2a" stroke-width="2.2" fill="none"/>${leaf(88, 86, -150, 1.1)}${leaf(112, 84, -30, 1.1)}${rose(80, 62, 10, '#c8102e', '#7d0a1c')}${rose(120, 62, 10, '#c8102e', '#7d0a1c')}${rose(100, 54, 12, '#e0283f', '#8a0b20')}<path d="M90 98 l10 8 l10 -8 l-4 12 h-12 z" fill="url(#bmGold)"/>`
+          + title(['С наилучшими', 'пожеланиями'], 26, 13) + sparkles([[40, 50, 1], [160, 46, .8], [52, 86, .7], [150, 88, 1]]);
+        break;
+      case 'sun':
+        body = bg('#1d3557', '#f0a35e') + `<circle cx="100" cy="92" r="26" fill="#ffd36b"/><g stroke="#ffe7a3" stroke-width="1.4" opacity=".85">${Array.from({ length: 11 }, (_, i) => { const a = Math.PI + (i * Math.PI) / 10; return `<line x1="${(100 + 31 * Math.cos(a)).toFixed(1)}" y1="${(92 + 31 * Math.sin(a)).toFixed(1)}" x2="${(100 + 42 * Math.cos(a)).toFixed(1)}" y2="${(92 + 42 * Math.sin(a)).toFixed(1)}"/>`; }).join('')}</g><path d="M0 96 Q60 84 100 94 T200 92 V120 H0Z" fill="#24402a"/><path d="M0 104 Q70 96 120 104 T200 102 V120 H0Z" fill="#1a2f1f"/><path d="M40 66 q4 -3 8 0 q4 -3 8 0" stroke="#1d1d1d" stroke-width="1" fill="none"/><path d="M150 60 q3 -2 6 0 q3 -2 6 0" stroke="#1d1d1d" stroke-width="1" fill="none"/>`
+          + title('Доброе утро!', 30, 18) + sub('ХОРОШЕГО ВАМ ДНЯ', 44);
+        break;
+      case 'heart':
+        body = bg('#10392b', '#06170f') + `<g transform="translate(100,68)"><path d="M0 22 L-24 -1 A13 13 0 0 1 0 -15 A13 13 0 0 1 24 -1 Z" fill="url(#bmGold)" stroke="#7a5a10" stroke-width="1"/><path d="M-12 -4 q6 -8 12 -2" stroke="#fff6cf" stroke-width="1.6" fill="none" opacity=".7"/></g>${[-1, 1].map((d) => `<g transform="translate(${100 + d * 40},70) scale(${d},1)">${[0, 1, 2, 3, 4].map((i) => `<ellipse cx="${-i * 3}" cy="${-16 + i * 8}" rx="2.4" ry="5" transform="rotate(${-30 + i * 14} ${-i * 3} ${-16 + i * 8})" fill="#c9a227"/>`).join('')}</g>`).join('')}`
+          + title('С теплом и уважением', 30, 14) + sparkles([[60, 48, .9], [140, 50, 1], [70, 96, .7], [132, 98, .8]]);
+        break;
+      case 'star':
+        body = bg('#0b1633', '#1d2b55') + `<path d="M108 44 a21 21 0 1 0 0 40 a16 16 0 1 1 0 -40z" fill="url(#bmGold)"/>${[[40, 52], [62, 44], [80, 68], [150, 48], [168, 64], [52, 84], [160, 88], [140, 74]].map(([x, y], i) => sparkle(x, y, i % 3 ? .7 : 1.1)).join('')}`
+          + title('Спокойной ночи', 30, 17) + sub('ДОБРЫХ И СВЕТЛЫХ СНОВ', 102, '#d9cfa8');
+        break;
+      case 'cake':
+        body = bg('#4a0f22', '#1f0610') + `<rect x="72" y="80" width="56" height="20" rx="3" fill="#f6e7c8" stroke="#c9a227" stroke-width="1"/><rect x="80" y="64" width="40" height="18" rx="3" fill="#fbefd6" stroke="#c9a227" stroke-width="1"/><path d="M72 86 q7 5 14 0 q7 5 14 0 q7 5 14 0 q7 5 14 0" fill="none" stroke="#c8102e" stroke-width="1.6"/><path d="M80 70 q5 4 10 0 q5 4 10 0 q5 4 10 0 q5 4 10 0" fill="none" stroke="#c8102e" stroke-width="1.4"/>${[88, 100, 112].map((x) => `<rect x="${x - 1.3}" y="52" width="2.6" height="12" fill="#fff"/><path d="M${x} 44 q3 4 0 8 q-3 -4 0 -8z" fill="#ffcf4d"/>`).join('')}<rect x="66" y="100" width="68" height="3" rx="1.5" fill="url(#bmGold)"/>`
+          + title('С праздником!', 30, 18) + sparkles([[40, 60, 1.2], [160, 58, 1], [50, 94, .8], [152, 96, .9], [60, 40, .7], [142, 40, .7]]);
+        break;
+      case 'cat':
+        body = bg('#f3ead3', '#dccaa0') + `<rect x="58" y="44" width="84" height="54" rx="2" fill="#8fb4d8" stroke="#6b4a1f" stroke-width="3"/><line x1="100" y1="44" x2="100" y2="98" stroke="#6b4a1f" stroke-width="2"/><line x1="58" y1="70" x2="142" y2="70" stroke="#6b4a1f" stroke-width="2"/><rect x="50" y="96" width="100" height="5" fill="#6b4a1f"/><g fill="#2b2b2b"><ellipse cx="82" cy="88" rx="10" ry="9"/><circle cx="82" cy="76" r="6"/><path d="M77 72 l1-6 l3 4zM87 72 l-1-6 l-3 4z"/><path d="M90 92 q10 2 8 -10" stroke="#2b2b2b" stroke-width="2.4" fill="none"/></g><rect x="114" y="84" width="14" height="12" fill="#b5563a"/>${rose(121, 80, 5, '#d8232a', '#8a0b20')}${leaf(116, 84, -140, .6)}`
+          + title('Хорошего дня!', 30, 17, '#7a0f22') + sub('С ДОБРЫМИ ПОЖЕЛАНИЯМИ', 106, '#6b4a1f').replace('letter-spacing="1.6"', 'letter-spacing="1"');
+        break;
+      case 'trip':
+        body = bg('#0f3b5c', '#08243a') + `<g transform="translate(64,40)"><rect width="72" height="52" fill="#f6efdc" stroke="url(#bmGold)" stroke-width="1.5" stroke-dasharray="3 2"/><rect x="6" y="6" width="60" height="40" fill="#7fb3d5"/><path d="M6 34 L24 18 L36 28 L46 20 L66 36 V46 H6Z" fill="#2f5d3a"/><path d="M6 40 Q36 34 66 40 V46 H6Z" fill="#1f6fa3"/><circle cx="54" cy="14" r="5" fill="#ffd36b"/></g>`
+          + title('Привет из путешествия', 28, 13) + sub('НА ДОБРУЮ ПАМЯТЬ', 104);
+        break;
+      case 'tea':
+        body = bg('#10392b', '#062016') + `<ellipse cx="100" cy="96" rx="40" ry="7" fill="#f6efdc" stroke="url(#bmGold)" stroke-width="1.5"/><path d="M74 66 h52 v6 c0 16 -12 24 -26 24 c-14 0 -26 -8 -26 -24z" fill="#f9f4e6" stroke="url(#bmGold)" stroke-width="1.6"/><path d="M126 72 q14 0 12 10 q-2 8 -14 6" fill="none" stroke="url(#bmGold)" stroke-width="2.2"/><path d="M80 76 q20 6 40 0" stroke="#c8102e" stroke-width="1.4" fill="none"/>${rose(100, 82, 4, '#c8102e', '#7d0a1c')}<g class="bm-steam" fill="none" stroke="#f3e6c4" stroke-width="1.4" opacity=".7"><path d="M90 60 q-4 -6 0 -12 q4 -6 0 -12"/><path d="M100 58 q-4 -6 0 -12 q4 -6 0 -12"/><path d="M110 60 q-4 -6 0 -12 q4 -6 0 -12"/></g>`
+          + title('Приглашаю на чай', 26, 15);
+        break;
+      case 'roses':
+        body = bg('#f6efdc', '#e4d3a8') + `<path d="M76 104 L100 62 L124 104Z" fill="#efe2bf" stroke="#b08a3a" stroke-width="1"/>${rose(86, 60, 10, '#c8102e', '#7d0a1c')}${rose(114, 60, 10, '#c8102e', '#7d0a1c')}${rose(100, 50, 11, '#d6203a', '#8a0b20')}${rose(93, 70, 8, '#b80d27', '#6d0817')}${rose(107, 70, 8, '#b80d27', '#6d0817')}${leaf(74, 66, -160, 1)}${leaf(126, 66, -20, 1)}<path d="M90 92 q10 6 20 0 l-4 8 q-6 -3 -12 0z" fill="#c8102e"/>`
+          + title('Примите этот букет', 28, 15, '#7a0f22') + sparkles([[46, 56, .8], [154, 56, .8]]).replace(/#fff6cf/g, '#c9a227');
+        break;
+      case 'candle':
+        body = bg('#2a1406', '#120802') + `<circle cx="100" cy="56" r="28" fill="#ffcf6b" opacity=".18"/><circle cx="100" cy="56" r="16" fill="#ffcf6b" opacity=".22"/><rect x="92" y="62" width="16" height="32" rx="2" fill="#f6efdc" stroke="#c9a227" stroke-width=".8"/><path d="M100 44 q6 8 0 16 q-6 -8 0 -16z" fill="#ffb02e"/><path d="M100 50 q2.5 4 0 8 q-2.5 -4 0 -8z" fill="#fff3c4"/><ellipse cx="100" cy="96" rx="20" ry="4" fill="url(#bmGold)"/>`
+          + title('Уютного вечера', 28, 16) + sub('ТЕПЛА ВАШЕМУ ДОМУ', 106);
+        break;
+      case 'kiss':
+        body = bg('#5c1420', '#2b070c') + `<g transform="translate(100,70)"><path d="M-10 16 L-30 -4 A11 11 0 0 1 -10 -16 A11 11 0 0 1 10 -4 Z" fill="#e0283f" stroke="url(#bmGold)" stroke-width="1.2"/><path d="M14 18 L-4 0 A10 10 0 0 1 14 -11 A10 10 0 0 1 32 0 Z" fill="url(#bmGold)" stroke="#7a5a10" stroke-width="1"/></g>`
+          + title('С любовью', 30, 18) + sparkles([[50, 60, 1], [150, 62, 1], [60, 98, .7], [140, 98, .8]]);
+        break;
+      case 'couple':
+        body = bg('#14213d', '#0a1120') + `<circle cx="90" cy="70" r="16" fill="none" stroke="url(#bmGold)" stroke-width="5"/><circle cx="110" cy="70" r="16" fill="none" stroke="url(#bmGoldH)" stroke-width="5"/><path d="M106 52 l4 -6 l4 6 l-4 4z" fill="#e8f4ff" stroke="#c9a227" stroke-width=".6"/>`
+          + title('Вместе — навсегда', 30, 16) + sparkles([[52, 60, 1], [148, 60, 1], [64, 96, .8], [136, 96, .8]]);
+        break;
+      default:
+        body = bg('#10392b', '#06170f') + title('С уважением', 64, 18);
+    }
+    return `<svg viewBox="0 0 200 120" aria-hidden="true" class="bm-card"><defs>${GOLD_DEF}</defs>${body}${frame()}</svg>`;
+  }
+  // коллекционный магнит: фарфор в золотом овале, лавровая ветвь, лента с названием
+  function magnetBoomer(code, size, opts) {
+    opts = opts || {};
+    const c = COUNTRY[code] || COUNTRY.UR;
+    const sz = size || 64;
+    const dark = c.tier === 'black';
+    const rim = dark ? '<linearGradient id="bmSilver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6fa"/><stop offset=".5" stop-color="#9aa3b2"/><stop offset="1" stop-color="#e3e7ee"/></linearGradient>' : '';
+    const rimFill = dark ? 'url(#bmSilver)' : 'url(#bmGold)';
+    const cols = c.colors.length ? c.colors : ['#c8102e'];
+    const mid = 'bmMed' + code;
+    const stripes = cols.map((col, i) => `<rect x="19" y="${(14 + i * (26 / cols.length)).toFixed(1)}" width="26" height="${(26 / cols.length + .4).toFixed(1)}" fill="${col}"/>`).join('');
+    const laurel = (d) => `<g transform="translate(32,27) scale(${d},1)">${[0, 1, 2, 3, 4, 5].map((i) => { const a = (-70 + i * 26) * Math.PI / 180; const x = -17.5 * Math.cos(a), y = 17.5 * Math.sin(a); return `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="1.6" ry="3.4" transform="rotate(${(-20 + i * 26).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${dark ? '#c9d1dd' : '#5f7a2a'}" stroke="${dark ? '#7d8796' : '#3d5418'}" stroke-width=".3"/>`; }).join('')}</g>`;
+    const serial = opts.serial ? `<text x="32" y="6.6" text-anchor="middle" font-family="${SERIF}" font-size="4.2" fill="${dark ? '#dfe5ee' : '#5a3d06'}">№ ${escT(String(opts.serial).replace(/^#/, ''))}</text>` : '';
+    return `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}" aria-hidden="true" class="bm-magnet"><defs>${GOLD_DEF}${rim}<radialGradient id="bmPorc" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="${dark ? '#1b2440' : '#efe4c8'}"/></radialGradient><clipPath id="${mid}"><circle cx="32" cy="27" r="12.5"/></clipPath></defs>
+      <ellipse cx="32" cy="29" rx="29" ry="27" fill="#000" opacity=".25" transform="translate(1,1.4)"/>
+      <ellipse cx="32" cy="29" rx="29" ry="27" fill="${rimFill}" stroke="${dark ? '#5d6675' : '#7a5a10'}" stroke-width=".8"/>
+      <ellipse cx="32" cy="29" rx="24.5" ry="22.5" fill="url(#bmPorc)" stroke="${dark ? '#5d6675' : '#a07b22'}" stroke-width=".6"/>
+      ${laurel(1)}${laurel(-1)}
+      <g clip-path="url(#${mid})">${stripes}<rect x="19" y="14" width="26" height="26" fill="#fff" opacity=".18"/></g>
+      <circle cx="32" cy="27" r="12.5" fill="none" stroke="${rimFill}" stroke-width="1.6"/>
+      <circle cx="32" cy="27" r="9.4" fill="#fff" opacity=".9"/>
+      <text x="32" y="31.6" text-anchor="middle" font-size="12" font-family="'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif">${c.icon}</text>
+      <path d="M8 46 L14 43 H50 L56 46 L50 49 L52 54 L44 51 H20 L12 54 L14 49 Z" fill="${dark ? '#2a3354' : '#8b1a1a'}" stroke="${dark ? '#9aa3b2' : '#c9a227'}" stroke-width=".6"/>
+      <text x="32" y="49.4" text-anchor="middle" font-family="${SERIF}" font-weight="bold" font-size="${c.name.length > 9 ? 4.6 : 5.6}" letter-spacing=".5" fill="#fff6dd">${escT(c.name.toUpperCase())}</text>
+      ${serial}
+      <path d="M12 16 Q32 4 52 16" fill="none" stroke="#fff" stroke-width="1.6" opacity=".35"/></svg>`;
+  }
+
   // обложка трека: узор по стилю, цвет трека, пластинка выглядывает из конверта
   const COVER_PAT = {
     eurodance: (c) => `<g opacity=".35" fill="#fff">${[0, 30, 60, 90, 120, 150].map((a) => `<rect x="48" y="-10" width="6" height="120" transform="rotate(${a} 50 50)"/>`).join('')}</g>`,
@@ -294,5 +405,5 @@ window.AskaArt = (function () {
     const iconY = kind === 'plate' ? 46 : 44;
     return `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}" aria-hidden="true">${body}<text x="32" y="${iconY}" font-size="${kind === 'plate' ? 24 : 16}" text-anchor="middle" font-family="'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif">${item.icon || '🍽'}</text><path d="M20 12 Q32 6 44 12" fill="none" stroke="#fff" stroke-width="2" opacity=".5"/><rect x="38" y="52" width="24" height="9" rx="2" fill="#ffe14d" stroke="#806a00" stroke-width=".8"/><text x="50" y="59" font-size="6" text-anchor="middle" font-family="Tahoma,Verdana,sans-serif" font-weight="bold" fill="#222">НФТ</text></svg>`;
   }
-  return { STATUSES, statusInfo, flowerSvg, statusFlower, envelopeSvg, SMILES, SMILE_BY_ID, smileSvg, postcardSvg, COUNTRIES, COUNTRY, magnetSvg, coverSvg, foodSvg };
+  return { STATUSES, statusInfo, flowerSvg, statusFlower, envelopeSvg, SMILES, SMILE_BY_ID, smileSvg, postcardSvg, COUNTRIES, COUNTRY, magnetSvg, coverSvg, foodSvg, setStyle, style: () => artStyle };
 })();

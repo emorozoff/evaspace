@@ -1,0 +1,279 @@
+/* АСЬКА — дизайн «Бумер»: солидно, крупно, понятно.
+   Тёмно-зелёный «кабинетный» фон с золотом, окна цвета слоновой кости в двойной
+   золотой рамке, шрифт с засечками, всё подписано словами, ничего не мигает и не прыгает.
+   Работает поверх базовых стилей: всё под body.skin-boomer. */
+
+:root { --bz: 1; }   /* масштаб текста; приложение меняет его на <html> */
+body.skin-boomer {
+  --b-green: #0f3b2e; --b-green2: #0a2a20; --b-green3: #17503d;
+  --b-gold: #c9a227; --b-gold-l: #ecd38a; --b-gold-d: #8a6a14;
+  --b-ivory: #faf6ec; --b-paper: #fffdf8; --b-line: #d9c9a0; --b-ink: #1f1a12; --b-muted: #5c5444; --b-red: #8b1a1a;
+  /* базовые переменные классики → в тон «Бумера» */
+  --face: var(--b-ivory); --light: #fffef9; --hl: #efe6cf; --shadow: #a8956a; --dark: #5c5444; --black: #6d5a2c;
+  --title1: var(--b-green); --title2: var(--b-green3); --desktop: var(--b-green2); --paper: var(--b-paper);
+  --sel: var(--b-green); --link: #0f5a42; --me: #7a5410; --them: #0f5a42;
+  --fs: calc(16px * var(--bz)); --row: calc(44px * var(--bz));
+  font-family: Georgia, 'Times New Roman', 'PT Serif', Times, serif;
+  font-size: var(--fs); line-height: 1.4; color: var(--b-ink);
+  background: var(--b-green2);
+}
+/* окна и письма появляются сразу, без «прыжков»; пластинка при этом крутится как положено */
+.skin-boomer .win, .skin-boomer .msg, .skin-boomer .overlay .win.dialog, .skin-boomer .mini, .skin-boomer .toast { animation: none !important; }
+
+/* ---------- рабочий стол: зелёное сукно с тиснёным узором ---------- */
+.skin-boomer .desktop {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(201,162,39,.16), transparent 60%),
+    radial-gradient(circle at 25% 25%, rgba(255,255,255,.035) 0 2px, transparent 3px) 0 0 / 34px 34px,
+    radial-gradient(circle at 75% 75%, rgba(255,255,255,.035) 0 2px, transparent 3px) 0 0 / 34px 34px,
+    linear-gradient(180deg, var(--b-green), var(--b-green2));
+}
+.skin-boomer .desktop::before { background: none; }
+.skin-boomer .wins { gap: 14px; padding: 22px 14px; }
+
+/* ---------- окна ---------- */
+.skin-boomer .win {
+  background: var(--b-paper); border: 1px solid var(--b-gold-d); border-radius: 6px; padding: 0 0 8px;
+  box-shadow: 0 0 0 3px var(--b-green), 0 0 0 4px var(--b-gold), 0 18px 44px rgba(0,0,0,.5);
+  animation: none;
+}
+.skin-boomer .win.contacts { width: calc(320px * var(--bz)); height: min(680px, 100%); }
+.skin-boomer .win.chat { width: calc(470px * var(--bz)); height: min(680px, 100%); }
+.skin-boomer .win.aux { width: calc(430px * var(--bz)); height: min(680px, 100%); }
+.skin-boomer .titlebar {
+  height: 48px; padding: 0 10px 0 14px; gap: 10px; border-radius: 5px 5px 0 0; margin-bottom: 8px;
+  background: linear-gradient(180deg, var(--b-green3), var(--b-green)); color: var(--b-gold-l);
+  border-bottom: 2px solid var(--b-gold);
+  font-weight: normal; font-size: calc(19px * var(--bz)); letter-spacing: .06em; font-variant: small-caps;
+}
+.skin-boomer .titlebar .ttl { letter-spacing: .06em; }
+.skin-boomer .titlebar .ttl small { color: #d9cfa8; font-variant: normal; letter-spacing: 0; font-size: .7em; }
+.skin-boomer .tbtn {
+  width: 34px; height: 34px; border-radius: 4px; font: bold 17px/30px Georgia, serif;
+  background: transparent; color: var(--b-gold-l); border: 1px solid var(--b-gold); box-shadow: none;
+}
+.skin-boomer .tbtn:hover { background: rgba(201,162,39,.18); }
+.skin-boomer .titlebar svg { width: 22px; height: 22px; }
+
+/* ---------- меню и панели ---------- */
+.skin-boomer .menubar { padding: 0 8px 6px; gap: 2px; border-bottom: 1px solid var(--b-line); margin-bottom: 8px; }
+.skin-boomer .menubar button { font-size: calc(15px * var(--bz)); padding: 6px 10px; border: 1px solid transparent; border-radius: 4px; }
+.skin-boomer .menubar button:hover, .skin-boomer .menubar button.open { background: var(--b-ivory); border-color: var(--b-line); }
+.skin-boomer .menu { background: var(--b-paper); border: 1px solid var(--b-gold-d); border-radius: 4px; box-shadow: 0 0 0 2px var(--b-ivory), 0 10px 26px rgba(0,0,0,.35); padding: 6px 0; font-size: calc(16px * var(--bz)); min-width: 280px; }
+.skin-boomer .menu button { padding: 10px 18px 10px 12px; }
+.skin-boomer .menu button:hover { background: var(--b-green); color: var(--b-gold-l); }
+.skin-boomer .menu hr { border-top: 1px solid var(--b-line); border-bottom: 0; margin: 6px 10px; }
+/* лишнее: режимы, уровни, баллы */
+.skin-boomer .toolbar:not(.tb2), .skin-boomer .me-panel .tier, .skin-boomer .points, .skin-boomer #sb-np { display: none !important; }
+.skin-boomer .toolbar.tb2 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 0 8px 8px; }
+.skin-boomer .tb-btn { min-height: 64px; flex-direction: column; gap: 4px; padding: 6px 2px; }
+.skin-boomer .tb-btn i { font-style: normal; font-size: 22px; line-height: 1; color: var(--b-green); }
+.skin-boomer .tb-btn span { font-size: calc(13px * var(--bz)); }
+.skin-boomer .me-panel { margin: 0 8px 8px; padding: 10px 12px; min-height: 48px; background: var(--b-ivory); border: 1px solid var(--b-line); border-radius: 4px; font-size: calc(17px * var(--bz)); }
+.skin-boomer .me-panel .uin { color: var(--b-muted); font-size: .85em; }
+
+/* ---------- кнопки и поля ---------- */
+.skin-boomer .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px; min-width: 44px; padding: 6px 16px; border-radius: 5px;
+  background: linear-gradient(180deg, #fffdf6, #f1e7cf); border: 1px solid var(--b-gold-d);
+  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,.12); color: var(--b-ink); font-size: calc(16px * var(--bz));
+}
+.skin-boomer .btn:hover { background: linear-gradient(180deg, #fffaf0, #eadcb8); }
+.skin-boomer .btn:active { box-shadow: inset 0 2px 4px rgba(0,0,0,.15); }
+.skin-boomer .btn.primary { outline: none; background: linear-gradient(180deg, var(--b-green3), var(--b-green)); color: #f7e7b4; border-color: var(--b-gold); font-weight: bold; letter-spacing: .02em; }
+.skin-boomer .btn.primary:hover { background: linear-gradient(180deg, #1d5f49, #124535); }
+.skin-boomer .btn.icon { min-width: 44px; padding: 6px; }
+.skin-boomer .btn:disabled { opacity: .55; text-shadow: none; }
+.skin-boomer .inset, .skin-boomer .field, .skin-boomer textarea.field { background: #fff; border: 1px solid var(--b-line); border-radius: 4px; box-shadow: inset 0 1px 2px rgba(0,0,0,.06); }
+.skin-boomer .field { height: auto; min-height: 46px; padding: 8px 12px; font-size: calc(17px * var(--bz)); }
+.skin-boomer .field:focus { outline: 2px solid var(--b-gold); outline-offset: 0; border-color: var(--b-gold-d); }
+.skin-boomer select.field { padding-right: 30px; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238a6a14' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 10px center; }
+.skin-boomer .lbl { width: 110px; color: var(--b-muted); }
+.skin-boomer .hint { color: var(--b-muted); font-size: calc(14px * var(--bz)); }
+.skin-boomer .row { gap: 10px; }
+.skin-boomer .groupbox { border: 1px solid var(--b-line); border-radius: 4px; padding: 14px 12px 10px; }
+.skin-boomer .groupbox > .legend, .skin-boomer .groupbox > legend { background: var(--b-paper); color: var(--b-green); font-variant: small-caps; letter-spacing: .05em; }
+.skin-boomer .chip { font-size: calc(14px * var(--bz)); padding: 5px 12px; min-height: 34px; border: 1px solid var(--b-line); background: #fff; border-radius: 17px; }
+.skin-boomer .chip.on { background: var(--b-green); color: var(--b-gold-l); border-color: var(--b-gold); font-weight: normal; }
+.skin-boomer a, .skin-boomer .link { color: var(--link); }
+
+/* ---------- список собеседников ---------- */
+.skin-boomer .clist { margin: 0 8px; padding: 4px; border-radius: 4px; }
+.skin-boomer .cgroup { height: 40px; padding: 0 8px; color: var(--b-green); font-variant: small-caps; letter-spacing: .05em; font-size: calc(15px * var(--bz)); border-bottom: 1px solid var(--b-line); }
+.skin-boomer .cgroup .cnt { color: var(--b-muted); }
+.skin-boomer .citem { min-height: 58px; height: auto; padding: 8px 10px; gap: 12px; border-radius: 4px; border-bottom: 1px solid #f0e8d4; }
+.skin-boomer .citem:hover { background: #f6efdc; }
+.skin-boomer .citem.sel { background: var(--b-green); color: #fff; }
+.skin-boomer .citem .ico, .skin-boomer .citem .ico svg { width: 30px; height: 30px; }
+.skin-boomer .citem .nick { font-size: calc(18px * var(--bz)); font-weight: bold; }
+.skin-boomer .cmeta { flex-direction: column; align-items: flex-start; gap: 0; }
+.skin-boomer .cmeta .sub { display: block; font-size: calc(13.5px * var(--bz)); color: var(--b-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.skin-boomer .citem.sel .cmeta .sub { color: #e6dcc0; }
+.skin-boomer .badge { color: #fff; background: var(--b-red); border-radius: 12px; min-width: 24px; padding: 0 7px; font-size: calc(13px * var(--bz)); line-height: 24px; text-align: center; font-family: Georgia, serif; }
+.skin-boomer .citem .typing { font-size: calc(13px * var(--bz)); color: var(--b-gold-d); }
+.skin-boomer .bottom-bar { margin: 8px 8px 0; gap: 8px; }
+.skin-boomer .status-btn { min-height: 46px; justify-content: flex-start; }
+.skin-boomer .statusbar { margin: 6px 8px 0; color: var(--b-muted); font-size: calc(13px * var(--bz)); }
+.skin-boomer .statusbar .cell { border: 0; padding: 0 4px; }
+
+/* ---------- письмо: вместо пузырей — аккуратные листы ---------- */
+.skin-boomer .chat-tabs { padding: 0 8px; gap: 6px; }
+.skin-boomer .chat-tabs button { min-height: 38px; padding: 6px 12px; border: 1px solid var(--b-line); border-bottom: 0; border-radius: 5px 5px 0 0; background: var(--b-ivory); font-size: calc(15px * var(--bz)); }
+.skin-boomer .chat-tabs button.on { background: #fff; border-color: var(--b-gold-d); color: var(--b-green); font-weight: bold; }
+.skin-boomer .chat-head { margin: 0 8px 8px; padding: 8px 10px; background: var(--b-ivory); border: 1px solid var(--b-line); border-radius: 4px; font-size: calc(16px * var(--bz)); gap: 10px; }
+.skin-boomer .chat-head .nick { font-size: calc(19px * var(--bz)); }
+.skin-boomer .history { margin: 0 8px; padding: 12px 14px; font-size: calc(17px * var(--bz)); line-height: 1.5; background: #fffdf6 linear-gradient(transparent 0) ; border-radius: 4px; }
+.skin-boomer .history .day { color: var(--b-gold-d); font-variant: small-caps; letter-spacing: .08em; margin: 12px 0 8px; font-size: calc(14px * var(--bz)); }
+.skin-boomer .history .day::before, .skin-boomer .history .day::after { content: ' ——— '; color: var(--b-line); }
+.skin-boomer .msg { max-width: 92%; margin: 10px 0 0; padding: 10px 14px; background: #fff; border: 1px solid #ece2c8; border-left: 4px solid var(--b-green3); border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+.skin-boomer .msg.me { margin-left: auto; border-left-color: var(--b-gold); background: #fffaf0; }
+.skin-boomer .msg.grp { margin-top: 4px; }
+.skin-boomer .msg .hdr { font-weight: bold; font-variant: small-caps; letter-spacing: .03em; font-size: calc(15px * var(--bz)); }
+.skin-boomer .msg .time { color: var(--b-muted); font-variant: normal; }
+.skin-boomer .msg .txt { display: block; margin-top: 2px; }
+.skin-boomer .msg .sys { color: var(--b-green); }
+.skin-boomer .sm, .skin-boomer .sm svg { width: calc(24px * var(--bz)); height: calc(24px * var(--bz)); vertical-align: -6px; }
+.skin-boomer .compose { margin: 8px 8px 0; display: flex; flex-direction: column; gap: 8px; }
+.skin-boomer #compose { min-height: 84px; font-size: calc(17px * var(--bz)); }
+.skin-boomer .send-row { display: flex; align-items: center; gap: 8px; }
+.skin-boomer .send-row .hint { flex: 1; font-size: calc(13px * var(--bz)); }
+.skin-boomer #sendbtn { min-width: 150px; min-height: 48px; font-size: calc(17px * var(--bz)); }
+.skin-boomer .hist-more { border-color: var(--b-line); background: var(--b-ivory); color: var(--b-green); border-radius: 4px; padding: 8px 18px; font-size: calc(15px * var(--bz)); }
+.skin-boomer .smiles { background: var(--b-paper); border: 1px solid var(--b-gold-d); border-radius: 6px; box-shadow: 0 10px 26px rgba(0,0,0,.3); }
+.skin-boomer .smiles button svg { width: 30px; height: 30px; }
+
+/* открытки и магниты крупно, в рамке */
+.skin-boomer .postcard { width: 100%; max-width: 360px; border-radius: 4px; overflow: hidden; box-shadow: 0 3px 10px rgba(0,0,0,.25); border: 0; background: none; }
+.skin-boomer .postcard svg { display: block; width: 100%; height: auto; }
+.skin-boomer .card-big { max-width: 420px; }
+.skin-boomer .msg.rich { max-width: 96%; }
+.skin-boomer .pc-cap { margin-top: 8px; font-style: italic; color: var(--b-muted); }
+.skin-boomer .card-pick { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.skin-boomer .card-pick button { padding: 0; border: 2px solid transparent; background: none; border-radius: 6px; }
+.skin-boomer .card-pick button:hover, .skin-boomer .card-pick button:focus { border-color: var(--b-gold); }
+.skin-boomer .magnetcard { background: var(--b-ivory); border: 1px solid var(--b-line); border-radius: 4px; padding: 10px; }
+.skin-boomer .magnetcard .mg svg { width: 72px; height: 72px; }
+.skin-boomer .magnet svg { filter: drop-shadow(0 2px 2px rgba(0,0,0,.3)); }
+
+/* ---------- окно-приставка: музыка, кино, страница ---------- */
+.skin-boomer .aux-body { padding: 0 12px; font-size: calc(16px * var(--bz)); }
+.skin-boomer .aux-body h2, .skin-boomer .aux-body h3, .skin-boomer .aux-body .sec-h, .skin-boomer .aux-body .legend-line { font-family: Georgia, serif; color: var(--b-green); font-variant: small-caps; letter-spacing: .04em; }
+/* убираем лишнее: «друзья слушают», совпадения, свайпы */
+.skin-boomer .friends-row, .skin-boomer .friends-h, .skin-boomer [data-vt="nft"], .skin-boomer [data-tp="nft"] { display: none !important; }
+.skin-boomer .tabs { gap: 4px; margin-bottom: 10px; }
+.skin-boomer .tabs button { min-height: 42px; padding: 6px 14px; border: 1px solid var(--b-line); border-radius: 4px; background: var(--b-ivory); font-size: calc(15px * var(--bz)); top: 0; }
+.skin-boomer .tabs button.on { background: var(--b-green); color: var(--b-gold-l); border-color: var(--b-gold); padding-bottom: 6px; }
+.skin-boomer .mus-tabs { background: var(--b-paper); }
+.skin-boomer .tile b, .skin-boomer .ptile b { font-size: calc(15px * var(--bz)); }
+.skin-boomer .mrow { min-height: 56px; }
+.skin-boomer .post { background: #fff; border: 1px solid #ece2c8; border-radius: 4px; padding: 10px 12px; }
+.skin-boomer .like { min-height: 36px; }
+.skin-boomer .empty-note { color: var(--b-muted); font-style: italic; }
+
+/* ---------- вход ---------- */
+.skin-boomer #loginwin { width: calc(440px * var(--bz)); max-width: calc(100vw - 28px); }
+.skin-boomer .login-body { padding: 6px 22px 22px; }
+.skin-boomer .bigflower { padding: 6px 0 14px; gap: 2px; }
+.skin-boomer .bigflower > svg { width: 64px; height: 64px; padding: 6px; border-radius: 50%; background: radial-gradient(circle, #fffdf6 55%, transparent 56%), conic-gradient(from 0deg, var(--b-gold), var(--b-gold-l), var(--b-gold), var(--b-gold-d), var(--b-gold)); box-shadow: 0 0 0 2px var(--b-green), 0 0 0 3px var(--b-gold); }
+.skin-boomer .logo-word { font: bold calc(30px * var(--bz))/1.1 Georgia, 'Times New Roman', serif; letter-spacing: .22em; color: var(--b-green); margin-top: 8px; }
+.skin-boomer .logo-word small { font: italic calc(14px * var(--bz)) Georgia, serif; letter-spacing: .04em; color: var(--b-gold-d); margin-top: 6px; }
+.skin-boomer .bigflower .link { font-size: calc(14px * var(--bz)); }
+.skin-boomer .uin-box { font: bold 30px Georgia, serif; letter-spacing: .14em; color: var(--b-green); background: var(--b-ivory); border: 1px solid var(--b-gold); border-radius: 4px; }
+.skin-boomer .err { color: var(--b-red); font-size: calc(15px * var(--bz)); }
+.skin-boomer .design-pick { grid-template-columns: repeat(3, 1fr); }
+.skin-boomer .design-pick button { border: 1px solid var(--b-line); background: #fff; border-radius: 5px; padding: 10px; min-height: 64px; }
+.skin-boomer .design-pick button.on { outline: none; background: var(--b-green); color: #fff; border-color: var(--b-gold); box-shadow: 0 0 0 2px var(--b-gold); }
+.skin-boomer .design-pick button b { font-size: calc(16px * var(--bz)); }
+.skin-boomer .design-pick button small { font-size: calc(12px * var(--bz)); }
+.skin-boomer .design-pick button[data-design="boomer"] b { font-family: Georgia, serif; }
+.design-pick.big { grid-template-columns: 1fr; }
+.design-pick.big button { min-height: 60px; }
+
+/* ---------- листы, диалоги, уведомления ---------- */
+.skin-boomer .overlay { background: rgba(5,20,14,.62); }
+.skin-boomer .win.dialog { width: calc(440px * var(--bz)); max-width: calc(100vw - 24px); padding-bottom: 14px; }
+.skin-boomer .win.dialog > *:not(.titlebar) { margin-left: 16px; margin-right: 16px; }
+.skin-boomer .btns { gap: 10px; padding-top: 6px; }
+.skin-boomer .toast { background: var(--b-paper); border: 1px solid var(--b-gold-d); border-radius: 6px; box-shadow: 0 0 0 2px var(--b-green), 0 0 0 3px var(--b-gold), 0 12px 28px rgba(0,0,0,.4); font-size: calc(16px * var(--bz)); padding: 12px 14px; max-width: min(420px, calc(100vw - 24px)); }
+.skin-boomer .more-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.skin-boomer .more-grid button { min-height: 86px; background: #fff; border: 1px solid var(--b-line); border-radius: 6px; }
+.skin-boomer .more-grid i { font-size: 26px; color: var(--b-green); }
+.skin-boomer .more-grid span { font-size: calc(14px * var(--bz)); }
+.guide { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; counter-reset: g; }
+.guide li { display: flex; gap: 14px; align-items: flex-start; padding: 12px; border: 1px solid var(--b-line, #ccc); border-radius: 6px; background: #fff; }
+.guide .g-i { flex: none; width: 46px; height: 46px; display: grid; place-items: center; font-size: 22px; border-radius: 50%; background: var(--b-green, #0f3b2e); color: var(--b-gold-l, #ecd38a); }
+.guide b { font-size: calc(18px * var(--bz, 1)); color: var(--b-green, #0f3b2e); }
+.guide p { margin: 4px 0 0; font-size: calc(16px * var(--bz, 1)); }
+.skin-boomer .data-grid > div { border-color: var(--b-line); border-radius: 6px; }
+
+/* ---------- мини-плеер и нижняя навигация ---------- */
+.skin-boomer .mini { background: var(--b-green); color: var(--b-gold-l); border: 1px solid var(--b-gold); border-radius: 6px; box-shadow: 0 8px 22px rgba(0,0,0,.45); height: 62px; }
+.skin-boomer .mini-ti b { font-size: calc(16px * var(--bz)); }
+.skin-boomer .mini-ti span { font-size: calc(13px * var(--bz)); }
+.skin-boomer .mini-btn { width: 44px; height: 44px; background: rgba(201,162,39,.2); color: var(--b-gold-l); border: 1px solid var(--b-gold); }
+.skin-boomer .mini-prog { background: rgba(255,255,255,.15); } .skin-boomer .mini-prog b { background: var(--b-gold); }
+
+/* ---------- средние экраны ---------- */
+@media (min-width: 720px) and (max-width: 1259px) {
+  .skin-boomer .desktop.mode-aux.focus-aux .win.chat { display: none; }
+  .skin-boomer .desktop.mode-aux.mode-chat:not(.focus-aux) .win.aux { display: none; }
+}
+
+/* ---------- телефон ---------- */
+@media (max-width: 719px), (pointer: coarse) and (max-width: 900px) {
+  .skin-boomer .win { border-radius: 0; box-shadow: none; border: 0; padding-bottom: 0; }
+  .skin-boomer .win.contacts, .skin-boomer .win.chat, .skin-boomer .win.aux { width: 100%; height: auto; max-height: none; }
+  .skin-boomer .titlebar { border-radius: 0; height: 54px; padding-top: var(--safe-t); }
+  .skin-boomer .titlebar .ttl small { display: none; }
+  .skin-boomer .wins { padding: 0; gap: 0; }
+  .skin-boomer .tabbar { background: var(--b-green); border-top: 2px solid var(--b-gold); height: calc(66px + var(--safe-b)); }
+  .skin-boomer .tabbar button { color: #d9cfa8; }
+  .skin-boomer .tabbar button.on { color: var(--b-gold-l); }
+  .skin-boomer .tabbar button.on span { text-decoration: underline; text-underline-offset: 3px; }
+  .skin-boomer .tabbar i { font-size: 22px; }
+  .skin-boomer .tabbar span { font-size: calc(13px * var(--bz)); }
+  .skin-boomer .wins { padding-bottom: calc(66px + var(--safe-b)) !important; }
+  .skin-boomer .desktop.mode-chat .wins { padding-bottom: 0 !important; }
+  .skin-boomer .win.aux { bottom: calc(66px + var(--safe-b)) !important; }
+  .skin-boomer .mini { bottom: calc(74px + var(--safe-b)); }
+  .skin-boomer .history { margin: 0; border-radius: 0; padding: 10px; }
+  .skin-boomer .compose { margin: 8px 8px calc(8px + var(--safe-b)); }
+  .skin-boomer #compose { min-height: 64px; }
+  .skin-boomer .send-row .hint { display: none; }
+  .skin-boomer #sendbtn { flex: 1; }
+  .skin-boomer .chat-tabs { display: none; }
+  .skin-boomer .clist { margin: 0; border-radius: 0; border-left: 0; border-right: 0; }
+  .skin-boomer .me-panel { margin: 0 8px 8px; }
+  .skin-boomer .overlay { place-items: end center; }
+  .skin-boomer .overlay .win.dialog { width: 100% !important; max-width: 100%; border-radius: 10px 10px 0 0; max-height: 90%; overflow: auto; padding-bottom: calc(16px + var(--safe-b)); border-top: 3px solid var(--b-gold); }
+  .skin-boomer .overlay .win.dialog .titlebar { border-radius: 8px 8px 0 0; padding-top: 0; }
+  .skin-boomer .more-grid { grid-template-columns: repeat(3, 1fr); }
+  .skin-boomer .card-pick { grid-template-columns: 1fr 1fr; }
+  /* подписи над полями: крупно и ничего не обрезается */
+  .skin-boomer label.row { flex-direction: column; align-items: stretch; gap: 4px; }
+  .skin-boomer label.row .lbl { width: auto; font-size: calc(15px * var(--bz)); }
+  .skin-boomer #loginwin { width: 100%; max-width: none; align-self: stretch; overflow: auto; }
+  .skin-boomer .login-body { padding: 6px 16px 18px; }
+  /* уведомление сверху, чтобы не закрывало кнопку «Отправить» и нижнюю навигацию */
+  .skin-boomer .toast { left: 8px; right: 8px; max-width: none; top: calc(60px + var(--safe-t)); bottom: auto !important; }
+  .skin-boomer .citem .typing { display: none; }
+}
+
+/* ---------- доводка после обхода ---------- */
+.skin-boomer .postcard { height: auto; aspect-ratio: 200 / 120; margin: 6px 0 4px; outline: 0; }
+.skin-boomer .post .postcard { width: 100%; max-width: 320px; height: auto; }
+.skin-boomer .card-pick .postcard { height: auto; max-width: none; }
+.skin-boomer .chat-head .hint { flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
+.skin-boomer .chat-head .muted { display: none; }
+.skin-boomer .tabpanel { background: #fff; border: 1px solid var(--b-line); border-radius: 0 4px 4px 4px; box-shadow: none; padding: 12px; }
+.skin-boomer .wall-head { background: var(--b-ivory); border: 1px solid var(--b-line); border-radius: 4px; padding: 10px 12px; gap: 10px; }
+.skin-boomer .wall-head .who b { font-size: calc(18px * var(--bz)); color: var(--b-green); }
+.skin-boomer .wall-actions { flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.skin-boomer .fr-magnets .magnet svg { width: 64px; height: 64px; }
+.skin-boomer .fr-magnets .magnet .from { font-size: 10px; background: var(--b-ivory); border-color: var(--b-gold-d); color: var(--b-ink); }
+.skin-boomer .magnet-grid button svg { width: 56px; height: 56px; }
+/* «Друзья слушают» и прочие подсказки-пустышки — лишнее */
+.skin-boomer section.sec:has(.friends-row) { display: none; }
+.skin-boomer .mood { font-family: Georgia, serif; }
+.skin-boomer .msearch .field { padding-left: 36px; }

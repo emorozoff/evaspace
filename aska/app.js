@@ -39,13 +39,24 @@
   /* ================= дизайн: Зумер / Миллениал ================= */
   // «Миллениал» — предыдущая версия интерфейса (папка v2/). Номер, переписка,
   // музыка и сессия общие: переключение не разлогинивает и ничего не теряет.
-  const DESIGNS = { zoomer: { name: 'Зумер', sub: 'стекло, плитки, свайпы' }, millennial: { name: 'Миллениал', sub: 'классика 2000-х, окна и меню' } };
+  // «Бумер» — тот же интерфейс, но торжественный и крупный: тёмно-зелёный с золотом, шрифт с засечками,
+  // всё подписано словами, лишнее (знакомства, аватар, баллы, режимы) убрано
+  const DESIGNS = { zoomer: { name: 'Зумер', sub: 'стекло, плитки, свайпы' }, millennial: { name: 'Миллениал', sub: 'классика 2000-х, окна и меню' }, boomer: { name: 'Бумер', sub: 'крупно, солидно, понятно' } };
+  const isBoomer = () => designOf() === 'boomer';
   const designOf = () => (db.settings && DESIGNS[db.settings.design] ? db.settings.design : 'zoomer');
   function carryQuery() { const q = new URLSearchParams(location.search); q.delete('design'); const s = q.toString(); return (s ? '?' + s : '') + location.hash; }
   function setDesign(k, go) {
     if (!DESIGNS[k]) return;
+    const was = designOf();
     mutate((d) => { d.settings.design = k; });
-    if (k === 'millennial' && go !== false) { if (typeof saveSession === 'function') saveSession(); location.href = 'v2/' + carryQuery(); }
+    if (k === 'millennial' && go !== false) { if (typeof saveSession === 'function') saveSession(); location.href = 'v2/' + carryQuery(); return; }
+    if (go === false || was === k) return;
+    // Зумер ⇄ Бумер — тот же интерфейс, перекрашиваем на месте
+    applySkin(); Snd.play('tada');
+    if (!me) { renderLogin(); return; }
+    renderMain();
+    if (active) $('.desktop').classList.add('mode-chat');
+    if (aux.kind) $('.desktop').classList.add('mode-aux');
   }
   {
     const want = new URLSearchParams(location.search).get('design');
@@ -62,9 +73,18 @@
   // вид: «Aero» (стекло, глянец, 2007-й) или «Классика 98» (серые фаски)
   const skinOf = () => (db.settings && db.settings.skin) || 'aero';
   function applySkin() {
-    document.body.classList.toggle('skin-aero', skinOf() === 'aero');
-    document.body.classList.toggle('skin-classic', skinOf() !== 'aero');
+    const b = isBoomer();
+    document.body.classList.toggle('skin-boomer', b);
+    document.body.classList.toggle('skin-aero', !b && skinOf() === 'aero');
+    document.body.classList.toggle('skin-classic', !b && skinOf() !== 'aero');
+    window.AskaArt.setStyle(b ? 'boomer' : 'default');
+    // размер текста в «Бумере»: обычный, крупный, очень крупный
+    document.documentElement.style.setProperty('--bz', b ? String(TEXT_SIZES[textSizeOf()].z) : '1');
+    const tc = document.querySelector('meta[name="theme-color"]'); if (tc) tc.content = b ? '#0f3b2e' : '#2c8de0';
   }
+  const TEXT_SIZES = { m: { z: 1, label: 'Обычный' }, l: { z: 1.14, label: 'Крупный' }, xl: { z: 1.28, label: 'Очень крупный' } };
+  const textSizeOf = () => (TEXT_SIZES[(db.settings || {}).textSize] ? db.settings.textSize : 'm');
+  function setTextSize(k) { mutate((d) => { d.settings.textSize = k; }); applySkin(); Snd.play('click'); if (me) { renderContacts(); if (active) renderHistory(true); if (aux.kind) renderAux(); } }
   function setSkin(k) { mutate((d) => { d.settings.skin = k; }); applySkin(); Snd.play('tada'); if (me) { renderContacts(); if (aux.kind) renderAux(); if (active) renderHistory(true); } }
   applySettings();
 
@@ -356,6 +376,13 @@
     if (extra.kind === 'movie') addPoints(2, 'кино другу');
     const bot = BOTS[to];
     if (bot && bot.persona && extra.kind === 'movie') { const P = bot.persona; const arr = Cinema.BOT_LINES[P.id] || Cinema.BOT_LINES.aska; setTimeout(() => botSays(bot, P.id === 'aska' ? pick(arr) : P.v(pick(arr))), 2500 + Math.random() * 2500); return; }
+    // открытка: друг благодарит своими словами
+    if (bot && bot.persona && extra.card) {
+      const f = femaleOf(bot);
+      const lines = bot.brain === 'batya' ? ['Спасибо. Тронут. Поставил на сервант.', 'Красивая. Спасибо, что не забываешь батю.'] : bot.brain === 'vova' ? ['спасибо. красиво', 'о. открытка. приятно'] : bot.brain === 'max' ? ['Открытка — это маленькое письмо из прошлого века. Спасибо.', 'Красиво. И со смыслом. Благодарю.'] : [`Какая красота! Спасибо, ${f ? 'тронута' : 'тронут'} :)`, 'Ой, спасибо! Поставлю на самое видное место.', 'Спасибо за открытку! Сразу настроение лучше.'];
+      setTimeout(() => { if (me) botSays(bot, bot.persona.id === 'aska' ? pick(lines) : bot.persona.v(pick(lines))); }, 2600 + Math.random() * 1500);
+      return;
+    }
     if (bot && bot.persona && extra.kind !== 'magnet') {
       const t = extra.kind === 'track' ? Music.byId[extra.track] : null;
       const P = bot.persona;
@@ -482,7 +509,7 @@
     seedBotEvents();
     if (!myProfile().invitedOnce) scheduleSoft(botInvitesMe, 240000 + Math.random() * 120000);
     if (!myProfile().movieRecd) scheduleSoft(botRecommendsMovie, 540000 + Math.random() * 180000);
-    if (!myProfile().twinCta && !twinStore(me.uin).quizDone) scheduleSoft(askaTwinCta, 150000 + Math.random() * 90000);
+    if (!isBoomer() && !myProfile().twinCta && !twinStore(me.uin).quizDone) scheduleSoft(askaTwinCta, 150000 + Math.random() * 90000);
     Object.values(BOTS).forEach((b) => {
       if (!b.persona) return;
       const rt = rtOf(b.uin);
@@ -689,7 +716,7 @@
       <div class="win dialog" id="loginwin">
         <div class="titlebar">${flowerSvg('#3cb44a', 14, { logo: true })}<span class="ttl">АСЬКА — вход в сеть</span></div>
         <div class="login-body">
-          <div class="bigflower">${flowerSvg('#3cb44a', 44, { logo: true })}<div class="logo-word center">АСЬКА<small>I seek you · по-русски · с 1998 года</small></div><a class="link" href="promo/" style="margin-top:6px">Чем она крута? 10 преимуществ →</a></div>
+          <div class="bigflower">${flowerSvg('#3cb44a', 44, { logo: true })}<div class="logo-word center">АСЬКА<small>${isBoomer() ? 'Личная переписка · с 1998 года' : 'I seek you · по-русски · с 1998 года'}</small></div><a class="link" href="promo/" style="margin-top:6px">Чем она крута? 10 преимуществ →</a></div>
           <div class="design-pick" role="radiogroup" aria-label="Дизайн">${Object.keys(DESIGNS).map((k) => `<button type="button" role="radio" aria-checked="${k === designOf()}" class="${k === designOf() ? 'on' : ''}" data-design="${k}"><b>${DESIGNS[k].name}</b><small>${DESIGNS[k].sub}</small></button>`).join('')}</div>
           <div class="ver-links"><a class="link" href="v1/">простая v1</a></div>
           <div class="tabs"><button class="on" data-tab="reg">Новый номер</button><button data-tab="login">Уже есть номер</button></div>
@@ -727,7 +754,7 @@
     const ph = $('#r-phone');
     ph.addEventListener('input', () => maskPhoneInput(ph));
     $('#r-go').onclick = register;
-    $$('[data-design]', app).forEach((b) => (b.onclick = () => { Snd.play('click'); if (b.dataset.design === 'millennial') setDesign('millennial'); }));
+    $$('[data-design]', app).forEach((b) => (b.onclick = () => { Snd.play('click'); setDesign(b.dataset.design); }));
     $$('#tab-reg input', app).forEach((i) => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') register(); }));
     $('#l-go').onclick = login;
     $$('#tab-login input', app).forEach((i) => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); }));
@@ -838,6 +865,7 @@
     clearInterval(heartbeatTimer);
     updateTitle();
     document.body.className = '';
+    applySkin();
     renderLogin(was);
   }
 
@@ -845,13 +873,14 @@
   function renderMain() {
     const app = $('#app');
     app.className = 'desktop';
+    const B = isBoomer();
     app.innerHTML = `
     <div class="wins">
       <div class="win contacts" id="cwin">
         <div class="titlebar">${flowerSvg('#3cb44a', 14, { logo: true })}<span class="ttl">АСЬКА</span><button class="tbtn" id="c-about" title="О программе">?</button><button class="tbtn" id="c-exit" title="Выйти">×</button></div>
         <div class="menubar"><button id="m-contacts">Контакты</button><button id="m-view">Вид</button><button id="m-sound">Звук</button><button id="m-help">Справка</button></div>
         <div class="toolbar"><div class="modes" id="modes"></div></div>
-        <div class="toolbar tb2"><button class="btn tb-btn" id="tb-wall" title="Моя стена: записи, открытки, комментарии"><i>▤</i><span>Стена</span></button><button class="btn tb-btn" id="tb-vinyl" title="Винил: музыка, коллекция, плейлисты"><i>♪</i><span>Винил</span></button><button class="btn tb-btn" id="tb-random" title="Случайное знакомство по интересам"><i>☺</i><span>Люди</span></button><button class="btn tb-btn" id="tb-fridge" title="Холодильник: еда, напитки, магниты"><i>🧲</i><span>Холод.</span></button><button class="btn tb-btn" id="tb-cinema" title="Кино: фильмы и сериалы по ссылке, любимое, рекомендации"><i>🎬</i><span>Кино</span></button><button class="btn tb-btn" id="tb-events" title="Мероприятия: позвать в гости"><i>📅</i><span>Гости</span></button></div>
+        <div class="toolbar tb2">${B ? `<button class="btn tb-btn" id="tb-card" title="Отправить открытку"><i>✉</i><span>Открытка</span></button><button class="btn tb-btn" id="tb-vinyl" title="Музыка и радио"><i>♪</i><span>Музыка</span></button><button class="btn tb-btn" id="tb-cinema" title="Фильмы и сериалы"><i>🎬</i><span>Кино</span></button><button class="btn tb-btn" id="tb-fridge" title="Магниты из поездок"><i>🧲</i><span>Магниты</span></button><button class="btn tb-btn" id="tb-wall" title="Моя стена: записи и открытки"><i>▤</i><span>Стена</span></button>` : `<button class="btn tb-btn" id="tb-wall" title="Моя стена: записи, открытки, комментарии"><i>▤</i><span>Стена</span></button><button class="btn tb-btn" id="tb-vinyl" title="Винил: музыка, коллекция, плейлисты"><i>♪</i><span>Винил</span></button><button class="btn tb-btn" id="tb-random" title="Случайное знакомство по интересам"><i>☺</i><span>Люди</span></button><button class="btn tb-btn" id="tb-fridge" title="Холодильник: еда, напитки, магниты"><i>🧲</i><span>Холод.</span></button><button class="btn tb-btn" id="tb-cinema" title="Кино: фильмы и сериалы по ссылке, любимое, рекомендации"><i>🎬</i><span>Кино</span></button><button class="btn tb-btn" id="tb-events" title="Мероприятия: позвать в гости"><i>📅</i><span>Гости</span></button>`}</div>
         <div class="me-panel" id="me-panel"></div>
         <div class="clist inset" id="clist"></div>
         <div class="bottom-bar"><button class="btn status-btn" id="status-btn"></button><button class="btn icon" id="add-btn" title="Добавить контакт">+</button></div>
@@ -879,21 +908,22 @@
     </div>
     <div class="mini" id="mini" hidden></div>
     <nav class="tabbar" id="tabbar">
-      <button data-tab="chats"><i>💬</i><span>Чаты</span><b class="tb-badge" id="tb-unread" hidden></b></button>
+      <button data-tab="chats"><i>💬</i><span>${B ? 'Письма' : 'Чаты'}</span><b class="tb-badge" id="tb-unread" hidden></b></button>
       <button data-tab="music"><i>🎵</i><span>Музыка</span></button>
       <button data-tab="cinema"><i>🎬</i><span>Кино</span></button>
-      <button data-tab="people"><i>👥</i><span>Люди</span></button>
+      ${B ? '<button data-tab="cards"><i>✉</i><span>Открытки</span></button>' : '<button data-tab="people"><i>👥</i><span>Люди</span></button>'}
       <button data-tab="more"><i>☰</i><span>Ещё</span></button>
     </nav>`;
 
     renderMe(); renderModes(); renderContacts(); renderChatWindow(); renderAux(); updateNowPlaying();
     $$('#tabbar button').forEach((b) => (b.onclick = () => goTab(b.dataset.tab)));
     $('#m-view').onclick = (e) => showMenu(e.currentTarget, [
-      { label: 'Дизайн «Зумер» — стекло, плитки, свайпы', checked: true, onClick: () => {} },
+      { label: 'Дизайн «Зумер» — стекло, плитки, свайпы', checked: !B, onClick: () => setDesign('zoomer') },
       { label: 'Дизайн «Миллениал» — классика 2000-х', onClick: () => setDesign('millennial') },
+      { label: 'Дизайн «Бумер» — крупно, солидно, понятно', checked: B, onClick: () => setDesign('boomer') },
       '-',
-      { label: 'Оформление: Aero 2007 — стекло и глянец', checked: skinOf() === 'aero', onClick: () => setSkin('aero') },
-      { label: 'Оформление: Классика 98 — серые фаски', checked: skinOf() !== 'aero', onClick: () => setSkin('classic') },
+      ...(B ? Object.keys(TEXT_SIZES).map((k) => ({ label: 'Размер текста: ' + TEXT_SIZES[k].label.toLowerCase(), checked: textSizeOf() === k, onClick: () => setTextSize(k) }))
+        : [{ label: 'Оформление: Aero 2007 — стекло и глянец', checked: skinOf() === 'aero', onClick: () => setSkin('aero') }, { label: 'Оформление: Классика 98 — серые фаски', checked: skinOf() !== 'aero', onClick: () => setSkin('classic') }]),
       '-',
       { label: 'Мои данные и резервная копия…', onClick: dataDialog },
       { label: 'Подсказки: как пользоваться', onClick: () => showTips(true) },
@@ -901,9 +931,10 @@
 
     $('#tb-wall').onclick = () => openAux('wall', me.uin);
     $('#tb-vinyl').onclick = () => openAux('vinyl');
-    $('#tb-random').onclick = () => openAux('people');
+    if ($('#tb-random')) $('#tb-random').onclick = () => openAux('people');
+    if ($('#tb-card')) $('#tb-card').onclick = () => sendCardDialog(active);
     $('#tb-fridge').onclick = () => openAux('fridge', me.uin);
-    $('#tb-events').onclick = () => openAux('events');
+    if ($('#tb-events')) $('#tb-events').onclick = () => openAux('events');
     $('#tb-cinema').onclick = () => openAux('cinema');
     $('#sb-np').onclick = () => openAux('vinyl');
     $('#aux-back').onclick = closeAux;
@@ -978,7 +1009,7 @@
   function renderContacts() {
     const el = $('#clist'); if (!el || !me) return;
     const mode = myProfile().mode;
-    const list = contactsOf(me.uin).map((u) => accountOf(u)).filter(Boolean);
+    const list = contactsOf(me.uin).map((u) => accountOf(u)).filter((a) => a && !(isBoomer() && isTwin(a.uin)));
     const byNick = (a, b) => (b.brain === 'aska') - (a.brain === 'aska') || a.nick.localeCompare(b.nick, 'ru');
     const inMode = (a) => a.brain === 'aska' || (a.twinOf === me.uin) || circleOf(a.uin) === mode; // Аська и свой аватар — в любом круге
     const mine = list.filter(inMode);
@@ -1319,6 +1350,12 @@
     if (!me) return;
     if (!force && myProfile().tipsSeen) return;
     saveProfile({ tipsSeen: true });
+    if (isBoomer()) {
+      // «Бумер»: одна понятная страница вместо листалки
+      const steps = [['💬', 'Написать письмо', 'Нажмите на имя собеседника в списке и напишите текст внизу. Кнопка «Отправить» — справа.'], ['✉', 'Отправить открытку', 'Кнопка «Открытка»: выберите картинку, получателя и подпись.'], ['♪', 'Послушать музыку', 'Кнопка «Музыка»: радиостанции и коллекция песен. Нажмите на песню — она заиграет.'], ['🎬', 'Посмотреть кино', 'Кнопка «Кино»: фильмы и сериалы смотрятся прямо здесь.'], ['Аа', 'Крупнее текст', 'Меню «Вид» → «Размер текста» (на телефоне: «Ещё» → «Размер текста»).']];
+      dialog({ title: 'Как пользоваться', sheet: true, body: `<ol class="guide">${steps.map(([i, t, d]) => `<li><span class="g-i">${i}</span><div><b>${esc(t)}</b><p>${esc(d)}</p></div></li>`).join('')}</ol>`, buttons: [{ label: 'Понятно', primary: true }] });
+      return;
+    }
     let k = 0;
     const ov = dialog({ title: 'Как пользоваться АСЬКОЙ', sheet: true, buttons: [], body: `<div class="tips2" id="tips2"></div>` });
     const draw = () => {
@@ -1611,10 +1648,15 @@
     if (tab === 'music') { openAux(Music.state.trackId && aux.kind === 'vinyl' ? 'player' : 'vinyl'); return; }
     if (tab === 'cinema') { openAux('cinema'); return; }
     if (tab === 'people') { openAux('people'); return; }
+    if (tab === 'cards') { sendCardDialog(active); return; }
     if (tab === 'more') moreSheet();
   }
   function moreSheet() {
-    const tiles = [
+    const tiles = isBoomer() ? [
+      ['card', '✉', 'Открытка'], ['wall', '▤', 'Моя стена'], ['fridge', '🧲', 'Магниты'], ['fly', '✈', 'Поездка'],
+      ['events', '📅', 'Пригласить в гости'], ['refs', '🔗', 'Позвать друга'], ['profile', '🙂', 'Профиль'], ['size', 'Аа', 'Размер текста'],
+      ['design', '🎨', 'Дизайн'], ['sound', Snd.enabled ? '🔔' : '🔕', Snd.enabled ? 'Звук включён' : 'Звук выключен'], ['data', '💾', 'Резервная копия'], ['tips', '❓', 'Как пользоваться'],
+    ] : [
       ['wall', '▤', 'Моя стена'], ['fridge', '🧲', 'Холодильник'], ['events', '📅', 'В гости'], ['twin', '🤖', 'Мой аватар'],
       ['profile', '🙂', 'Профиль'], ['dossier', '🗂', 'Моё досье'], ['refs', '🔗', 'Пригласить'], ['interests', '✨', 'Интересы'],
       ['fly', '✈', 'Я лечу'], ['design', '📟', 'Миллениал'], ['skin', skinOf() === 'aero' ? '🖥' : '🫧', skinOf() === 'aero' ? 'Классика 98' : 'Aero 2007'], ['sound', Snd.enabled ? '🔔' : '🔕', Snd.enabled ? 'Звук вкл' : 'Звук выкл'], ['data', '💾', 'Мои данные'], ['tips', '💡', 'Подсказки'],
@@ -1626,13 +1668,55 @@
         else if (k === 'events' || k === 'twin' || k === 'refs' || k === 'interests') openAux(k);
         else if (k === 'fly') flyDialog();
         else if (k === 'skin') setSkin(skinOf() === 'aero' ? 'classic' : 'aero');
-        else if (k === 'design') setDesign('millennial');
+        else if (k === 'design') designDialog();
+        else if (k === 'card') sendCardDialog(active);
+        else if (k === 'size') { const ks = Object.keys(TEXT_SIZES); setTextSize(ks[(ks.indexOf(textSizeOf()) + 1) % ks.length]); toastText('Размер текста: ' + TEXT_SIZES[textSizeOf()].label.toLowerCase()); }
         else if (k === 'data') dataDialog();
         else if (k === 'sound') { mutate((d) => { d.settings.sound = !Snd.enabled; }); applySettings(); if (Snd.enabled) Snd.play('click'); }
         else if (k === 'tips') showTips(true);
         else if (k === 'exit') confirmBox('Выход', 'Выйти из АСЬКИ?', logout);
       })) });
   }
+  /* ---------- «Бумер»: простые слова вместо жаргона ---------- */
+  const PLAIN = [[/НФТ-паспорт/g, 'Паспорт сувенира'], [/НФТ-магнит/g, 'сувенирный магнит'], [/с номером НФТ/g, 'номерные'], [/НФТ-баночк/g, 'баночк'], [/НФТ/g, 'сувенир'], [/Это мэтч!/g, 'Знакомство состоялось']];
+  function tidyWords(root) {
+    if (!root || !isBoomer()) return;
+    if (root.nodeType === 3) { if (/НФТ|мэтч/.test(root.nodeValue)) PLAIN.forEach(([re, to]) => (root.nodeValue = root.nodeValue.replace(re, to))); return; }
+    if (root.nodeType !== 1) return;
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n;
+    while ((n = w.nextNode())) { if (!/НФТ|мэтч/.test(n.nodeValue)) continue; let v = n.nodeValue; PLAIN.forEach(([re, to]) => (v = v.replace(re, to))); n.nodeValue = v; }
+  }
+  // следим за всем, что появляется на экране: окна, листы, всплывашки
+  new MutationObserver((list) => { if (!isBoomer()) return; list.forEach((m) => m.addedNodes.forEach(tidyWords)); }).observe(document.getElementById('app'), { childList: true, subtree: true });
+
+  /* ---------- дизайн на выбор (лист «Ещё») ---------- */
+  function designDialog() {
+    dialog({ title: 'Дизайн', sheet: true, body: `<div class="design-pick big">${Object.keys(DESIGNS).map((k) => `<button type="button" class="${k === designOf() ? 'on' : ''}" data-design="${k}"><b>${DESIGNS[k].name}</b><small>${DESIGNS[k].sub}</small></button>`).join('')}</div>`, buttons: [{ label: 'Закрыть' }],
+      onOpen: (ov) => $$('[data-design]', ov).forEach((b) => (b.onclick = () => { ov.remove(); setDesign(b.dataset.design); })) });
+  }
+  /* ---------- открытка в беседу: выбрать, кому, подписать ---------- */
+  const CARD_TITLE = { flowers: 'С наилучшими пожеланиями', sun: 'Доброе утро!', heart: 'С теплом и уважением', star: 'Спокойной ночи', cake: 'С праздником!', cat: 'Хорошего дня!', tea: 'Приглашаю на чай', roses: 'Примите этот букет', candle: 'Уютного вечера', kiss: 'С любовью', couple: 'Вместе — навсегда', trip: 'Привет из путешествия' };
+  function sendCardDialog(preTo) {
+    if (!me) return;
+    const people = contactsOf(me.uin).map(accountOf).filter((a) => a && !isTwin(a.uin));
+    pickCardDialog((card) => {
+      dialog({
+        title: 'Отправить открытку',
+        body: `<div class="center"><div class="postcard pc-${esc(card)} card-big">${postcardSvg(card)}</div></div>
+          <label class="row mt"><span class="lbl">Кому</span><select class="field" id="sc-to">${people.map((a) => `<option value="${esc(a.uin)}" ${a.uin === preTo ? 'selected' : ''}>${esc(a.nick)}</option>`).join('')}</select></label>
+          <label class="row mt"><span class="lbl">Подпись</span><input class="field" id="sc-text" maxlength="200" value="${esc(CARD_TITLE[card] || '')}"></label>`,
+        buttons: [{ label: 'Отправить', primary: true, onClick: (ov) => {
+          const to = $('#sc-to', ov).value; if (!accountOf(to)) return false;
+          const text = Sec.cleanText($('#sc-text', ov).value, 200) || CARD_TITLE[card] || 'Открытка';
+          sendSpecial(to, { card, sound: (Brain.CARDS[card] || {}).sound, text });
+          addPoints(3, 'открытка');
+          toastText(`Открытка «${CARD_TITLE[card] || card}» отправлена: ${accountOf(to).nick}`);
+          openChat(to);
+        } }, { label: 'Отмена' }],
+      });
+    });
+  }
+
   /* ---------- мои данные: сколько места, резервная копия ---------- */
   // в копию попадает только твоё: твой аккаунт, твои беседы, стена, профиль и общая коллекция
   function myBackup() {

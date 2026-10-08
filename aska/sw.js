@@ -1,8 +1,8 @@
 /* АСЬКА — service worker: приложение открывается и без интернета.
    Обслуживает только свою папку (/evaspace/aska/), соседей не трогает. */
-const VERSION = 'aska-v14';
+const VERSION = 'aska-v15';
 const BASE = new URL('./', self.location).pathname;
-const SHELL = ['', 'index.html', 'styles.css?v=13', 'aero.css?v=3', 'app.js?v=14', 'store.js?v=1', 'secure.js?v=1', 'art.js?v=6', 'brain.js?v=10', 'music.js?v=4', 'cinema.js?v=3', 'sounds.js?v=4', 'manifest.webmanifest', 'icons/flower.svg', 'icons/apple-touch-icon.png', 'promo/', 'promo/index.html', 'promo/promo.css?v=2', 'promo/promo.js?v=2'].map((p) => BASE + p);
+const SHELL = ['', 'index.html', 'styles.css?v=13', 'aero.css?v=4', 'boomer.css?v=1', 'app.js?v=15', 'store.js?v=1', 'secure.js?v=1', 'art.js?v=7', 'brain.js?v=11', 'music.js?v=4', 'cinema.js?v=3', 'sounds.js?v=4', 'manifest.webmanifest', 'icons/flower.svg', 'icons/apple-touch-icon.png', 'promo/', 'promo/index.html', 'promo/promo.css?v=2', 'promo/promo.js?v=2'].map((p) => BASE + p);
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting()));

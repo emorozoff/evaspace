@@ -1117,7 +1117,10 @@ window.AskaBrain = (function () {
       mem._inner = true;
       let rest;
       try { rest = replyCore(gm[2], mem, ctx); } finally { delete mem._inner; }
-      const hi = P.id === 'batya' ? `Привет, ${isF(mem) ? 'дочка' : 'сынок'}.` : P.id === 'vova' ? 'йо.' : pick(['Привет', 'Приветик', 'Хай']) + (mem.name ? ', ' + mem.name : '') + '!';
+      // на «Добрый день» отвечают «Добрый день», на «Здравствуйте» — «Здравствуйте», а не «Хай»
+      const g1 = gm[1].toLowerCase().replace(/[^а-яёa-z ]/g, '').trim();
+      const polite = /^(добр|здравств)/.test(g1) ? cap(g1) : null;
+      const hi = P.id === 'batya' ? `${polite || 'Привет'}, ${isF(mem) ? 'дочка' : 'сынок'}.` : P.id === 'vova' ? (polite ? polite.toLowerCase() + '.' : 'йо.') : (polite || pick(['Привет', 'Приветик', 'Хай'])) + (mem.name ? ', ' + mem.name : '') + '!';
       mem.turns = Math.max(0, mem.turns - 1);
       return [{ text: isAska ? hi + ' :)' : P.v(hi) }].concat(rest.map((m, i) => (i === 0 ? Object.assign({ delay: 1300 }, m) : m)));
     }
@@ -1182,7 +1185,7 @@ window.AskaBrain = (function () {
       else say(P.bye(name));
       return out;
     }
-    if (has(t, /(как (дела|сам|сама|ты|жизнь|настроение|оно|поживаешь)|че как|чо как|что нового у тебя)/)) {
+    if (has(t, /(как (ваши |у вас |твои |у тебя )?(дела|здоровье|самочувствие)|как (сам|сама|ты|жизнь|настроение|оно|поживаешь|поживаете|вы)(?=$|[^а-яё])|че как|чо как|что нового у (тебя|вас))/)) {
       say(P.how(ctx || {}));
       mem.pending = 'mood'; mem.asked = mem.asked || {}; mem.asked.mood = Date.now();
       return out;

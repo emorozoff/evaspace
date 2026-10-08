@@ -1,12 +1,12 @@
 /* АСЬКА — service worker: приложение открывается и без интернета.
    Обслуживает только свою папку (/evaspace/aska/), соседей не трогает. */
-const VERSION = 'aska2-v12';
+const VERSION = 'aska2-v13';
 const BASE = new URL('./', self.location).pathname;
 // общие с «Зумером» модули лежат на уровень выше: хранилище, безопасность, мозг ботов
 const PARENT = new URL('../', self.location).pathname;
 const SHARED = ['store.js', 'secure.js', 'brain.js'].map((p) => PARENT + p);
-const SHELL = ['', 'index.html', 'styles.css?v=12', 'app.js?v=12', 'art.js?v=6', 'music.js?v=4', 'cinema.js?v=2', 'sounds.js?v=4', 'manifest.webmanifest', 'icons/flower.svg', 'icons/apple-touch-icon.png'].map((p) => BASE + p)
-  .concat(['store.js?v=1', 'secure.js?v=1', 'brain.js?v=10'].map((p) => PARENT + p));
+const SHELL = ['', 'index.html', 'styles.css?v=13', 'app.js?v=13', 'art.js?v=6', 'music.js?v=4', 'cinema.js?v=2', 'sounds.js?v=4', 'manifest.webmanifest', 'icons/flower.svg', 'icons/apple-touch-icon.png'].map((p) => BASE + p)
+  .concat(['store.js?v=1', 'secure.js?v=1', 'brain.js?v=11'].map((p) => PARENT + p));
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting()));
