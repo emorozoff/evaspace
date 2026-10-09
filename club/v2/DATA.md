@@ -121,8 +121,18 @@
 Настройки — переменные окружения, список в шапке `server/server.js`. За HTTPS и доменом —
 обратный прокси (Caddy, nginx) перед `PORT` или сокетом `LISTEN`.
 
-Выкладка на сервер проекта: `bash club/v2/server/deploy/deploy.sh` (код),
-`bash club/v2/server/deploy/caddy.sh` (адрес) и `bash club/v2/server/deploy/google.sh`
-(ключи Google); куда выкладывать — в `deploy/local.env`, он в репозиторий не попадает.
-Первое приглашение, когда войти основателем некому: `node server.js --invite owner`. Проверки: `node server/test/gcal-test.js` и
-`node server/test/api-test.js` (вторая — против сервера, запущенного на пустой папке данных).
+**Как правка попадает на сервер проекта.** Достаточно `git push` в ветку
+`claude/financial-model-reporting-0tg9bl`: сервер раз в 2 минуты смотрит её, проверяет новую
+правку в одноразовом контейнере (сборка обеих страниц, `server/test/gcal-test.js`,
+`server/test/api-test.js` на пустых данных) и, только если всё прошло, ставит и перезапускается;
+перед установкой делает снимок данных. Не прошла проверку или не запустилась — остаётся прежняя
+версия. Что стоит сейчас и почему не встала следующая — `https://адрес-штаба/version.json`.
+Устройство — `server/deploy/autodeploy/` (эти скрипты живут на сервере и из ветки сами не
+обновляются; поставить или обновить их — `bash club/v2/server/deploy/autodeploy-install.sh`).
+
+Вручную, с компьютера владельца: `bash club/v2/server/deploy/deploy.sh` (код в обход ветки —
+следующая правка в ветке его заменит), `caddy.sh` (адрес), `google.sh` (ключи Google); куда
+выкладывать — в `deploy/local.env`, он в репозиторий не попадает.
+Первое приглашение, когда войти основателем некому: `node server.js --invite owner`.
+Проверки: `node server/test/gcal-test.js` и `node server/test/api-test.js` (вторая — против
+сервера, запущенного на пустой папке данных).
