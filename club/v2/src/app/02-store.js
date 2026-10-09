@@ -23,13 +23,17 @@ const Store = (() => {
   const emit = c => subs.forEach(fn => { try { fn(c); } catch (e) { console.error(e); } });
   const emitStatus = () => statusSubs.forEach(fn => { try { fn(state); } catch (e) { console.error(e); } });
 
+  /* на своём сервере копию в браузере не держим: данные приходят по роли и не должны
+     оставаться на чужом компьютере после выхода */
   function loadLocal() {
+    if (onServer()) { COLS.forEach(c => Local.del(LS + c)); return; }
     for (const c of COLS) {
       const o = Local.get(LS + c, null);
       if (o && typeof o === 'object') for (const [id, v] of Object.entries(o)) data[c].set(id, {...v, id});
     }
   }
   function saveLocal(c) {
+    if (onServer()) return;
     Local.set(LS + c, Object.fromEntries([...data[c]].map(([id, v]) => [id, strip(v)])));
   }
 
@@ -37,7 +41,7 @@ const Store = (() => {
     loadLocal();
     let api = null;
     /* свой сервер штаба (server/server.js) подставляет адрес своего хранилища */
-    if (window.EVA_API) api = httpDb(window.EVA_API);
+    if (onServer()) api = httpDb();
     else {
       try {
         api = window.claude && typeof window.claude.use === 'function' ? await window.claude.use('db') : null;
@@ -45,7 +49,7 @@ const Store = (() => {
     }
     if (!api) { state.mode = 'local'; state.ready = true; emitStatus(); return; }
     db = api;
-    state.mode = window.EVA_API ? 'server' : 'db';
+    state.mode = onServer() ? 'server' : 'db';
     /* ждём первый окончательный снимок каждой коллекции, чтобы не решить
        «учёток нет» по неполному кэшу; через 9 с идём с тем, что есть */
     await new Promise(resolve => {
@@ -109,6 +113,8 @@ const Store = (() => {
     if (code === 'quota_exceeded') return 'База заполнена: удалите старые записи, чтобы добавить новые';
     if (code === 'invalid_argument') return 'Не сохранилось: у вас доступ только на просмотр этого штаба';
     if (code === 'resource_exhausted') return 'Слишком много правок подряд — повторите через минуту';
+    /* сервер не принял правку по правам роли — говорит, почему */
+    if (code === 'permission_denied') return 'Не сохранилось: ' + ((e && e.message) || 'для вашей роли это закрыто');
     return 'Не сохранилось. Проверьте связь и повторите';
   }
 

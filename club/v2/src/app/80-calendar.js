@@ -14,10 +14,15 @@ const GCAL = 'Google Calendar';
    с названием «CRM · …» и меткой #eva-crm в описании. Штаб узнаёт их по
    метке и рисует полупрозрачными — это чужие для штаба встречи, но время
    занято. Ссылка из описания ведёт прямо в карточку человека в CRM. */
-const CRM_URL = 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA';
+const CRM_URL = window.EvaServer ? location.origin + window.EvaServer.urls.crm : 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA';
 const CRM_TAG = '#eva-crm';
 const evCrm = ev => String(ev.description || '').includes(CRM_TAG) || /^CRM ·/.test(String(ev.summary || ''));
-const crmLinkOf = ev => { const m = String(ev.description || '').match(/https:\/\/claude\.ai\/artifact\/[A-Za-z0-9]+#p-[A-Za-z0-9_-]+/); return m ? m[0] : CRM_URL; };
+/* карточка в CRM: ссылка на артефакт или на CRM своего сервера (…/crm/#p-<id>); старые ссылки на артефакт на сервере ведут в ту же карточку здесь */
+const crmLinkOf = ev => {
+  const m = String(ev.description || '').match(/https:\/\/[A-Za-z0-9.-]+\/(?:artifact\/[A-Za-z0-9]+|crm\/)#p-[A-Za-z0-9_-]+/);
+  if (!m) return CRM_URL;
+  return window.EvaServer ? CRM_URL + m[0].slice(m[0].indexOf('#')) : m[0];
+};
 const TZ = 'Europe/Moscow', TZ_OFF = '+03:00', TZ_MS = 3 * 3600e3;
 const CAL_H0 = 8, CAL_H1 = 21;          // сетка дня: 8:00–21:00
 const SYNC_DAYS = 28;                   // занятость в базе — на 4 недели
@@ -94,6 +99,8 @@ const CAL_ERR = {
   approval_required: 'Нужно разрешение администратора организации на Google Календарь.',
   server_not_found: 'Коннектор Google Календаря не найден. Подключите его заново: claude.ai → Настройки → Коннекторы.',
   consent_required: 'Штабу нужен доступ к Google Календарю — нажмите «Подключить» ещё раз и подтвердите.',
+  /* свой сервер: человек ещё не подключил свой аккаунт Google */
+  connect_first: 'Сначала подключите свой Google Календарь: «Календарь» → «Подключить мой Google Календарь».',
   server_unavailable: 'Google Календарь сейчас не отвечает. Попробуйте через минуту.',
   rate_limited: 'Слишком много запросов к календарю — подождите немного.',
   cancelled: 'Действие отменено.',
@@ -103,7 +110,7 @@ const CAL_CONN = ['needs_reauth', 'server_not_connected', 'selection_required', 
 function calErr(e) {
   const code = (e && e.code) || 'upstream_error';
   let text = CAL_ERR[code];
-  if (!text && CAL_OFF.includes(code)) text = 'Google Календарь недоступен в этом окне — откройте штаб в Claude.';
+  if (!text && CAL_OFF.includes(code)) text = onServer() ? 'Google Календарь на этом сервере ещё не настроен.' : 'Google Календарь недоступен в этом окне — откройте штаб в Claude.';
   if (!text && code === 'tool_error') text = 'Google ответил ошибкой: ' + ((e && e.message) || 'без подробностей');
   if (!text) text = 'Не получилось связаться с Google Календарём' + (e && e.message ? ': ' + e.message : '') + '.';
   /* для записи «не ответил» не значит «не сделал» — повторять только после проверки */
@@ -485,10 +492,13 @@ App.register('calendar', {
     on(root, 'click', '[data-cal-connect]', async (e, el) => {
       el.disabled = true;
       el.textContent = 'Подключаю…';
+      /* свой сервер: сначала человек даёт доступ в окне Google, потом вернётся сюда же */
+      if (onServer() && !(await window.EvaServer.gcal.status(true)).connected) { window.EvaServer.gcal.connect(); return; }
       await Cal.sync();
       App.render();
     });
     on(root, 'click', '[data-cal-sync]', () => Cal.sync());
+    on(root, 'click', '[data-gcal-switch]', () => window.EvaServer.gcal.connect());
     on(root, 'click', '[data-cal-stop]', async (e, el) => {
       if (await confirmPop(el, {text: 'Перестать показывать команде вашу занятость?', yes: 'Да, перестать'})) Cal.stopSharing();
     });
@@ -504,6 +514,12 @@ App.register('calendar', {
     if (tab === 'mail' && Cal.conn === 'ready' && Cal.calendars === null && !Cal.calLoading) Cal.loadCalendars();
     if (tab === 'week' && Cal.conn === 'ready' && Cal.stale(ws)) Cal.loadWeek(ws);
     Cal.autoSync();
+    /* свой сервер: только что вернулись из окна Google — сразу подтягиваем занятость */
+    if (onServer()) {
+      const back = window.EvaServer.gcal.just();
+      if (back === 'ok') Cal.init().then(() => { if (Cal.conn === 'ready') Cal.sync(); });
+      else if (back) toast('Google Календарь не подключился: доступ не подтверждён. Нажмите «Подключить» ещё раз.', {error: true});
+    }
     /* открытый календарь сам обновляется: линия «сейчас» и свои события */
     clearTimeout(CalUI.tick);
     CalUI.tick = setTimeout(() => { if (App.parse().id === 'calendar' && !document.hidden) App.renderSoon(); }, 5 * 60e3 + 500);
@@ -517,14 +533,14 @@ function connCard() {
   const shared = doc && doc.share !== false && doc.from;
   const p = personById(pid);
   if (Cal.conn === 'checking') return '<div class="cal-conn slim"><i class="dot"></i><span>Проверяю Google Календарь…</span></div>';
-  if (Cal.conn === 'off') return `<div class="cal-conn slim off"><i class="dot"></i><span><b>Google Календарь подключается, когда штаб открыт в Claude.</b> Здесь собрания сохраняются в штабе и видны команде, но приглашения не уходят, а своя занятость не подтягивается.</span></div>`;
+  if (Cal.conn === 'off') return `<div class="cal-conn slim off"><i class="dot"></i><span><b>${onServer() ? 'Google Календарь на этом сервере ещё не настроен.' : 'Google Календарь подключается, когда штаб открыт в Claude.'}</b> Здесь собрания сохраняются в штабе и видны команде, но приглашения не уходят, а своя занятость не подтягивается.</span></div>`;
   if (Cal.conn === 'error' && Cal.err) return `<div class="cal-conn warn"><div>${icon('cal')}</div><div><b>Google Календарь не отвечает штабу</b><p>${esc(Cal.err.text)}</p></div><button class="btn sm" data-cal-retry>Проверить снова</button></div>`;
   if (Cal.conn === 'denied') return `<div class="cal-conn warn"><div>${icon('cal')}</div><div><b>Доступ к календарю не разрешён</b><p>Вы отказали в доступе в этот раз. Обновите страницу и нажмите «Разрешить», когда Claude спросит.</p></div></div>`;
   if (!pid) return '<div class="cal-conn slim off"><i class="dot"></i><span>Ваша учётка не связана с карточкой в «Команде» — занятость не с чем связать. Напишите основателю.</span></div>';
   if (!shared) return `<div class="cal-conn">
       <div>${icon('cal')}</div>
       <div><b>Подключите свой Google Календарь</b>
-        <p>Вы увидите свои события в сетке недели, а команда — только интервалы «занят» на 4 недели вперёд. Названия, места и участники ваших встреч в штаб не попадают. Claude спросит разрешение на доступ — нажмите «Разрешить».</p>
+        <p>Вы увидите свои события в сетке недели, а команда — только интервалы «занят» на 4 недели вперёд. Названия, места и участники ваших встреч в штаб не попадают. ${onServer() ? 'Откроется окно Google — выберите аккаунт и разрешите доступ к календарю.' : 'Claude спросит разрешение на доступ — нажмите «Разрешить».'}</p>
         ${Cal.hint ? `<p class="warn-t">${esc(Cal.hint)}</p>` : ''}</div>
       <button class="btn primary" data-cal-connect ${Cal.syncing ? 'disabled' : ''}>${Cal.syncing ? 'Подключаю…' : 'Подключить мой Google Календарь'}</button>
     </div>`;
@@ -724,9 +740,10 @@ function calMailView() {
               ${cals.map(c => `<option value="${esc(c.id)}" ${c.id === cid ? 'selected' : ''}>${esc(c.name)}${c.name !== c.id && EMAIL_RE.test(c.id) ? ' — ' + esc(c.id) : ''}</option>`).join('')}
               ${cid && !cals.some(c => c.id === cid) ? `<option value="${esc(cid)}" selected>${esc(cid)}</option>` : ''}
             </select></label>
-          <p class="note">Из этого календаря штаб берёт вашу занятость и в него ставит собрания, которые создаёте вы. ${!usable ? 'Выбор появится, когда штаб открыт в Claude с подключённым Google Календарём.' : Cal.calLoading ? 'Загружаю список календарей…' : Cal.calendars ? `В списке — календари, которые видит подключённый аккаунт. <button type="button" class="link-btn" data-ml-cals>Обновить список</button>` : '<button type="button" class="link-btn" data-ml-cals>Загрузить список календарей</button>'}</p>
+          <p class="note">Из этого календаря штаб берёт вашу занятость и в него ставит собрания, которые создаёте вы. ${!usable ? (onServer() ? 'Выбор появится, когда вы подключите Google Календарь.' : 'Выбор появится, когда штаб открыт в Claude с подключённым Google Календарём.') : Cal.calLoading ? 'Загружаю список календарей…' : Cal.calendars ? `В списке — календари, которые видит подключённый аккаунт. <button type="button" class="link-btn" data-ml-cals>Обновить список</button>` : '<button type="button" class="link-btn" data-ml-cals>Загрузить список календарей</button>'}</p>
           <details class="ml-other"><summary>Нужного аккаунта нет в списке?</summary>
-            <p class="note">Коннектор Google Calendar в Claude работает с одним аккаунтом Google. Два пути: <b>1)</b> в нужном аккаунте откройте Google Календарь → Настройки → «Доступ для отдельных пользователей» и добавьте ${host ? esc(host) : 'подключённый аккаунт'} с правом вносить изменения — календарь появится в списке выше; <b>2)</b> переподключите Google Calendar в claude.ai → Настройки → Коннекторы уже к нужному аккаунту и обновите страницу.</p>
+            ${onServer() ? '<p class="note">Штаб работает с одним вашим аккаунтом Google. Чтобы сменить его — <button type="button" class="link-btn" data-gcal-switch>подключите другой аккаунт Google</button>: откроется окно Google с выбором аккаунта.</p>' : ''}
+            <p class="note" ${onServer() ? 'hidden' : ''}>Коннектор Google Calendar в Claude работает с одним аккаунтом Google. Два пути: <b>1)</b> в нужном аккаунте откройте Google Календарь → Настройки → «Доступ для отдельных пользователей» и добавьте ${host ? esc(host) : 'подключённый аккаунт'} с правом вносить изменения — календарь появится в списке выше; <b>2)</b> переподключите Google Calendar в claude.ai → Настройки → Коннекторы уже к нужному аккаунту и обновите страницу.</p>
           </details>
         </div>
       </div>

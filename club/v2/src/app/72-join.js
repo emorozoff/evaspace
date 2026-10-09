@@ -74,7 +74,7 @@ function cardValues(p, inv = {}) {
 }
 const pendingInvite = pid => Store.all('invites').find(i => i.personId === pid && !i.usedBy) || null;
 /* в артефакте Claude адрес страницы изнутри не виден — берём адрес штаба */
-const hqBase = () => (Store.state.mode === 'db' ? HQ_URL : location.href.split('#')[0]);
+const hqBase = () => (Store.state.mode === 'db' ? HQ_URL : onServer() ? location.origin + '/' : location.href.split('#')[0]);
 function inviteLink(code) { return `${hqBase()}#join=${code}`; }
 /* ключ анкеты: поменялся — анкету можно дорисовать (данные пришли позже) */
 function joinKey(code) {

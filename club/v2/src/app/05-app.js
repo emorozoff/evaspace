@@ -67,7 +67,7 @@ const App = {
       const j = this.parse();
       /* анкету по ссылке дорисовываем, когда данные приглашения пришли позже, —
          но только пока человек ничего в ней не набрал */
-      const mode = (Store.count('accounts') ? 'has' : 'empty') + (j.id === 'join' ? ':' + joinKey(j.param) : j.id === 'reset' ? ':r' + j.param : '') + ':' + (Auth.claudeId ? 'c' : '') + (Auth.canWrite === false ? 'ro' : '');
+      const mode = (hqEmpty() ? 'empty' : 'has') + (j.id === 'join' ? ':' + joinKey(j.param) : j.id === 'reset' ? ':r' + j.param : '') + ':' + (Auth.claudeId ? 'c' : '') + (Auth.canWrite === false ? 'ro' : '');
       const form = $('#joinForm');
       if (!opts.force && $('#authRoot') && (this._authMode === mode || (form && form.dataset.dirty === '1'))) return;
       this._authMode = mode;
@@ -223,6 +223,7 @@ const App = {
     el.title = s.mode === 'local'
       ? 'Штаб открыт не в артефакте Claude: данные живут только в этом браузере'
       : 'Все правки сразу видны команде';
+    if (s.mode === 'server') el.title = 'Штаб на своём сервере: все правки сразу видны команде';
   },
 };
 

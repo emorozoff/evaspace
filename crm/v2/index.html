@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Eva CRM 2.0</title>
+<meta name="description" content="Кастдев и подключение экспертов, партнёров и амбассадоров Eva Space.">
+<meta name="theme-color" content="#111014">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='.72' y2='1'%3E%3Cstop offset='0' stop-color='%231A171F'/%3E%3Cstop offset='.55' stop-color='%232B2233'/%3E%3Cstop offset='1' stop-color='%234A2C42'/%3E%3C/linearGradient%3E%3CradialGradient id='r' cx='.5' cy='.5' r='.5'%3E%3Cstop offset='0' stop-color='%23C2506F' stop-opacity='.55'/%3E%3Cstop offset='1' stop-color='%23C2506F' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='22' fill='url(%23g)'/%3E%3Ccircle cx='50' cy='50' r='34' fill='url(%23r)'/%3E%3Cpath d='M50 2c1.6 16.4 4.4 27.4 8.8 33.6C63.2 41.8 73.6 45.6 90 48c-16.4 2.4-26.8 6.2-31.2 12.4C54.4 66.6 51.6 79 50 98c-1.6-19-4.4-31.4-8.8-37.6C36.8 54.2 26.4 50.4 10 48c16.4-2.4 26.8-6.2 31.2-12.4C45.6 29.4 48.4 18.4 50 2z' fill='%23fff' transform='translate(50 50) scale(.62) translate(-50 -50)'/%3E%3C/svg%3E">
+<style>
+  :root{color-scheme:light;}
+  html,body{margin:0;padding:0;background:#F7F6F4;color:#111014;}
+  @media (prefers-color-scheme: dark){ html,body{background:#121017;color:#F0ECF5;} :root{color-scheme:dark;} }
+  body{font:14px/1.5 'Inter',-apple-system,BlinkMacSystemFont,sans-serif;}
+  img{max-width:100%;}
+  [hidden]{display:none !important;}
+  #wrapBoot{max-width:520px;margin:18vh auto;padding:0 24px;text-align:center;color:#7A7386;}
+  #wrapBoot b{display:block;font-size:18px;color:inherit;margin-bottom:8px;}
+  #wrapBoot code{background:rgba(125,118,137,.18);padding:2px 6px;border-radius:5px;font-size:13px;}
+</style>
+</head>
+<body>
+<div id="wrapBoot"><b>Eva CRM</b>Загружаем CRM…</div>
+<script>
+/* CRM собирается в один файл eva-crm-v2.html — это тело страницы без
+   обёртки, потому что тот же файл публикуется артефактом Claude. Здесь
+   обёртку подставляем сами: забираем файл, вставляем разметку и заново
+   создаём <script> — innerHTML их не выполняет. Вне артефакта данные
+   живут в этом браузере (внизу меню горит «Только этот браузер»). */
+(async function(){
+  const boot = document.getElementById('wrapBoot');
+  let html;
+  try{
+    const res = await fetch('eva-crm-v2.html', {cache:'no-cache'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    html = await res.text();
+  }catch(e){
+    boot.innerHTML = '<b>Не удалось загрузить CRM</b>Файл <code>eva-crm-v2.html</code> не отдался: ' + String(e.message||e) +
+      '.<br><br>Если страница открыта двойным кликом с диска, поднимите локальный сервер: <code>python3 -m http.server</code> в папке проекта.';
+    return;
+  }
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const scripts = [];
+  tpl.content.querySelectorAll('script').forEach(s => { scripts.push(s); s.remove(); });
+  tpl.content.querySelectorAll('title, meta[name="description"]').forEach(n => n.remove());
+  tpl.content.querySelectorAll('link').forEach(l => document.head.appendChild(l));
+  boot.remove();
+  document.body.appendChild(tpl.content);
+  for(const old of scripts){
+    const s = document.createElement('script');
+    for(const a of old.attributes) s.setAttribute(a.name, a.value);
+    s.textContent = old.textContent;
+    document.body.appendChild(s);
+  }
+})();
+</script>
+</body>
+</html>

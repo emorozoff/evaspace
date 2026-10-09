@@ -206,6 +206,7 @@ function renderProfile(root, pid) {
   if (pw) pw.onclick = async () => {
     const acc0 = Auth.me();
     const o = $('#pwOld', root).value, n1 = $('#pwNew', root).value, n2 = $('#pwNew2', root).value;
+    if (onServer()) { if (await serverPassword(o, n1, n2)) ['pwOld', 'pwNew', 'pwNew2'].forEach(id => { $('#' + id, root).value = ''; }); return; }
     /* вошёл по аккаунту Claude — личность подтверждена, старый пароль не нужен */
     const trusted = Auth.claudeId && acc0.claudeId === Auth.claudeId;
     if (!trusted && (await hashPassword(o, acc0.salt)) !== acc0.hash) { toast('Текущий пароль не подошёл', {error: true}); return; }
@@ -218,6 +219,16 @@ function renderProfile(root, pid) {
   };
 }
 
+/* свой пароль на своём сервере: текущий проверяет сервер, остальные устройства после смены выходят */
+async function serverPassword(old, n1, n2) {
+  if (n1.length < 6) { toast('Новый пароль — не короче 6 символов', {error: true}); return false; }
+  if (n1 !== n2) { toast('Новые пароли не совпадают', {error: true}); return false; }
+  try { await window.EvaServer.auth.password(old, n1); }
+  catch (e) { toast(e.message || 'Пароль не сменился', {error: true}); return false; }
+  toast('Пароль изменён');
+  return true;
+}
+
 /* учётка без карточки в команде (например, инвестор) */
 function renderAccountOnly(root) {
   const a = Auth.me();
@@ -227,6 +238,7 @@ function renderAccountOnly(root) {
   on(root, 'click', '[data-logout-me]', () => Auth.logout());
   $('#pwSave', root).onclick = async () => {
     const o = $('#pwOld', root).value, n1 = $('#pwNew', root).value, n2 = $('#pwNew2', root).value;
+    if (onServer()) { await serverPassword(o, n1, n2); return; }
     if ((await hashPassword(o, a.salt)) !== a.hash) { toast('Текущий пароль не подошёл', {error: true}); return; }
     if (n1.length < 6 || n1 !== n2) { toast('Проверьте новый пароль: от 6 символов и одинаковый дважды', {error: true}); return; }
     const salt = randSalt();

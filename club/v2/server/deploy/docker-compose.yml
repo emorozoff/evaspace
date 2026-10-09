@@ -1,0 +1,37 @@
+# Штаб Eva Club и Eva CRM на сервере: один контейнер с Node, без открытых портов.
+# Наружу его отдаёт Caddy сайта «тут про ии» (он один держит 80/443) — через
+# сокет в своём томе данных: там это /data/eva/web.sock (см. caddy.sh).
+# Лежит на сервере как /opt/eva/docker-compose.yml; рядом .env (EVA_UID, EVA_GID —
+# от чьего имени работает контейнер) и eva.env (адрес сайта и ключи Google).
+name: eva
+
+services:
+  hq:
+    image: node:22-alpine
+    restart: unless-stopped
+    user: "${EVA_UID}:${EVA_GID}"
+    working_dir: /app/club/v2/server
+    command: ["node", "server.js"]
+    env_file: eva.env
+    environment:
+      NODE_ENV: production
+      LISTEN: /sock/web.sock
+      DATA_DIR: /data
+      CRM_DIR: /app/crm/v2
+      MATERIALS_DIR: /materials
+    volumes:
+      - ./app:/app:ro
+      - ./materials:/materials:ro
+      - ./data:/data
+      - /var/lib/docker/volumes/tytproai_caddy-data/_data/eva:/sock
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 300m
+    pids_limit: 100
+    stop_grace_period: 10s
+    # журналы не копим: не больше 3 файлов по 10 МБ
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}

@@ -2188,7 +2188,7 @@ const NAV = [
   {id: 'metrics',  name: 'Метрики',   icon: 'funnel'},
   {id: 'team',     name: 'Команда',   icon: 'users', perm: 'tasks.view'},
   /* Eva CRM — отдельный артефакт; в меню — ссылка и число созвонов недели */
-  {id: 'crm',      name: 'CRM',       icon: 'ext', perm: 'tasks.view', href: 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA'},
+  {id: 'crm',      name: 'CRM',       icon: 'ext', perm: 'tasks.view', href: window.EvaServer ? window.EvaServer.urls.crm : 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA'},
 ];
 
 /* ── три кита и управление ── */
@@ -2282,79 +2282,17 @@ const DEFAULT_SETTINGS = {
 };
 
 /* ── 02-httpdb.js ── */
-/* Хранилище на своём сервере (club/v2/server/server.js) — тот же интерфейс,
-   что у общей базы Claude: collection(c).onSnapshot / doc(id).set|update|delete.
-   Включается, когда страницу отдаёт сервер штаба: он подставляет
-   window.EVA_API. Живые обновления — поток событий сервера (EventSource).
-   Если на сервере задан ключ доступа, его передают один раз в адресе
-   (?key=…) — дальше он помнится в этом браузере. */
+/* Свой сервер штаба (club/v2/server/server.js). Страницу отдаёт он же и
+   подключает перед кодом штаба server/public/eva-server.js: общая база с тем
+   же интерфейсом, что у Claude (collection(c).onSnapshot / doc(id).set|update|
+   delete), вход по почте и паролю и Google Календарь. Признак — window.EVA_API.
+   На сервере вход проверяет сервер: до входа в браузер не приходит ни одной
+   записи, а после — только то, что положено роли. */
 
-function httpDb(base) {
-  const key = (() => {
-    const m = /[?&]key=([^&#]+)/.exec(location.search);
-    if (m) { Local.set('eva-hq-key', decodeURIComponent(m[1])); return decodeURIComponent(m[1]); }
-    return Local.get('eva-hq-key', '');
-  })();
-  const url = p => `${base.replace(/\/$/, '')}/${p}`;
-  const headers = {'content-type': 'application/json', ...(key ? {'x-eva-key': key} : {})};
-  const data = {};
-  const subs = {};
-  const fail = (code, message) => { const e = new Error(message || code); e.code = code; return e; };
-  const snap = c => ({docs: Object.entries(data[c] || {}).map(([id, v]) => ({id, data: () => clone(v)})), metadata: {fromCache: false}});
-  const emit = c => (subs[c] || []).forEach(fn => { try { fn(snap(c)); } catch (e) { console.error(e); } });
-  let ready = null;
-  function load() {
-    if (ready) return ready;
-    ready = fetch(url('state'), {headers}).then(r => {
-      if (r.status === 401) throw fail('invalid_argument', 'нужен ключ доступа');
-      if (!r.ok) throw fail('unavailable', 'HTTP ' + r.status);
-      return r.json();
-    }).then(j => {
-      Object.entries(j.collections || {}).forEach(([c, docs]) => { data[c] = docs || {}; });
-      /* живые правки коллег */
-      try {
-        const es = new EventSource(url('events') + (key ? '?key=' + encodeURIComponent(key) : ''));
-        es.onmessage = ev => {
-          let m;
-          try { m = JSON.parse(ev.data); } catch (e) { return; }
-          if (!m || !m.col) return;
-          if (m.reset) { data[m.col] = m.docs || {}; emit(m.col); return; }
-          data[m.col] = data[m.col] || {};
-          if (m.doc === null) delete data[m.col][m.id]; else data[m.col][m.id] = m.doc;
-          emit(m.col);
-        };
-      } catch (e) { /* без потока — обновится при следующей загрузке */ }
-    });
-    return ready;
-  }
-  const send = (method, c, id, body) => fetch(url(`doc/${encodeURIComponent(c)}/${encodeURIComponent(id)}`), {method, headers, body: body === undefined ? undefined : JSON.stringify(body)})
-    .catch(() => { throw fail('unavailable', 'сервер не отвечает'); })
-    .then(r => {
-      if (r.status === 404) throw fail('invalid_argument', 'документа нет');
-      if (r.status === 401 || r.status === 403) throw fail('invalid_argument', 'нет доступа на запись');
-      if (r.status === 413) throw fail('quota_exceeded');
-      if (!r.ok) throw fail('unavailable', 'HTTP ' + r.status);
-      return r.json().catch(() => ({}));
-    });
-  return {
-    collection(c) {
-      return {
-        onSnapshot(cb, err) {
-          (subs[c] = subs[c] || []).push(cb);
-          load().then(() => cb(snap(c)), e => err && err(e));
-          return () => { subs[c] = (subs[c] || []).filter(f => f !== cb); };
-        },
-        doc(id) {
-          return {
-            set: body => send('PUT', c, id, body).then(() => { (data[c] = data[c] || {})[id] = clone(body); }),
-            update: part => send('PATCH', c, id, part).then(r => { if (r && r.doc) (data[c] = data[c] || {})[id] = r.doc; }),
-            delete: () => send('DELETE', c, id).then(() => { if (data[c]) delete data[c][id]; }),
-          };
-        },
-      };
-    },
-  };
-}
+const onServer = () => !!(window.EVA_API && window.EvaServer);
+function httpDb() { return window.EvaServer.db; }
+/* штаб ещё пуст (нет ни одной учётки)? До входа на сервере учёток в браузере нет — спрашиваем сервер */
+const hqEmpty = () => (onServer() ? window.EvaServer.session.empty : !Store.count('accounts'));
 
 /* ── 02-store.js ── */
 /* Хранилище. Один слой — два источника:
@@ -2382,13 +2320,17 @@ const Store = (() => {
   const emit = c => subs.forEach(fn => { try { fn(c); } catch (e) { console.error(e); } });
   const emitStatus = () => statusSubs.forEach(fn => { try { fn(state); } catch (e) { console.error(e); } });
 
+  /* на своём сервере копию в браузере не держим: данные приходят по роли и не должны
+     оставаться на чужом компьютере после выхода */
   function loadLocal() {
+    if (onServer()) { COLS.forEach(c => Local.del(LS + c)); return; }
     for (const c of COLS) {
       const o = Local.get(LS + c, null);
       if (o && typeof o === 'object') for (const [id, v] of Object.entries(o)) data[c].set(id, {...v, id});
     }
   }
   function saveLocal(c) {
+    if (onServer()) return;
     Local.set(LS + c, Object.fromEntries([...data[c]].map(([id, v]) => [id, strip(v)])));
   }
 
@@ -2396,7 +2338,7 @@ const Store = (() => {
     loadLocal();
     let api = null;
     /* свой сервер штаба (server/server.js) подставляет адрес своего хранилища */
-    if (window.EVA_API) api = httpDb(window.EVA_API);
+    if (onServer()) api = httpDb();
     else {
       try {
         api = window.claude && typeof window.claude.use === 'function' ? await window.claude.use('db') : null;
@@ -2404,7 +2346,7 @@ const Store = (() => {
     }
     if (!api) { state.mode = 'local'; state.ready = true; emitStatus(); return; }
     db = api;
-    state.mode = window.EVA_API ? 'server' : 'db';
+    state.mode = onServer() ? 'server' : 'db';
     /* ждём первый окончательный снимок каждой коллекции, чтобы не решить
        «учёток нет» по неполному кэшу; через 9 с идём с тем, что есть */
     await new Promise(resolve => {
@@ -2468,6 +2410,8 @@ const Store = (() => {
     if (code === 'quota_exceeded') return 'База заполнена: удалите старые записи, чтобы добавить новые';
     if (code === 'invalid_argument') return 'Не сохранилось: у вас доступ только на просмотр этого штаба';
     if (code === 'resource_exhausted') return 'Слишком много правок подряд — повторите через минуту';
+    /* сервер не принял правку по правам роли — говорит, почему */
+    if (code === 'permission_denied') return 'Не сохранилось: ' + ((e && e.message) || 'для вашей роли это закрыто');
     return 'Не сохранилось. Проверьте связь и повторите';
   }
 
@@ -2547,8 +2491,14 @@ function firstName(p) { const n = personName(p); return p && p.name ? n.split(' 
 /* Вход по ролям. У каждого человека своя учётка; роль решает меню и права.
    Пароль хранится только как PBKDF2-SHA256 (150 000 итераций) с солью —
    тем же способом, что в первой версии, поэтому старые пароли подходят.
-   Честно: это разделение кабинетов внутри команды, а не сейф — общая база
-   читается всеми, у кого есть доступ к штабу. */
+   Честно: в артефакте Claude это разделение кабинетов внутри команды, а не
+   сейф — общая база читается всеми, у кого есть доступ к штабу.
+   На своём сервере (onServer) вход проверяет сервер: пароль уходит только
+   ему, отпечатки паролей в браузер не приходят, сессия — в cookie. После
+   входа страница перезагружается и получает данные уже по роли. */
+
+/* сервер принял вход — перезагружаемся в штаб; обещание не завершается, чтобы форма не дёргалась */
+const serverEnter = hash => { window.EvaServer.enter(hash); return new Promise(() => {}); };
 
 const SESSION_KEY = 'eva-hq-session';
 const b64 = buf => btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
@@ -2592,7 +2542,8 @@ const Auth = {
   _noAuto: false,      // нажал «Выйти» — сам больше не входим, пока не обновит страницу
   me() {
     /* window.__EVA_AS — только для проверок: две вкладки под разными людьми */
-    const id = window.__EVA_AS || Local.get(SESSION_KEY, null) || this._sid;
+    /* на своём сервере, кто вошёл, говорит сервер — браузеру на слово не верим */
+    const id = onServer() ? window.EvaServer.session.me : window.__EVA_AS || Local.get(SESSION_KEY, null) || this._sid;
     const a = id ? Store.get('accounts', id) : null;
     return a && a.active !== false ? a : null;
   },
@@ -2636,11 +2587,15 @@ const Auth = {
     if (!opts.silent) this.linkClaude(acc.id);
     if (!acc.lastSeen || Date.now() - acc.lastSeen > 3600e3) Store.patch('accounts', acc.id, {lastSeen: Date.now()}, {mustExist: true});
   },
-  logout() { Local.del(SESSION_KEY); this._sid = null; this._noAuto = true; this.viaClaude = false; window.__EVA_AS = null; App.render(); },
+  logout() {
+    if (onServer()) { window.EvaServer.auth.logout(); return; }
+    Local.del(SESSION_KEY); this._sid = null; this._noAuto = true; this.viaClaude = false; window.__EVA_AS = null; App.render();
+  },
 
   findByEmail(email) { const e = normEmail(email); return Store.all('accounts').find(a => normEmail(a.email) === e) || null; },
 
   async login(email, pw) {
+    if (onServer()) { await window.EvaServer.auth.login(email, pw); return serverEnter('home'); }
     const acc = this.findByEmail(email);
     if (!acc) throw new Error('Нет учётки с такой почтой. Если вас пригласили — откройте ссылку из приглашения или введите код во вкладке «У меня приглашение».');
     if (acc.active === false) throw new Error('Учётка отключена. Напишите основателю.');
@@ -2664,6 +2619,7 @@ const Auth = {
 
   /* первый вход в пустой штаб — учётка основателя и его карточка в команде */
   async createOwner(f) {
+    if (onServer()) { await window.EvaServer.auth.owner({name: f.name, email: f.email, pw: f.pw}); return serverEnter('home'); }
     if (Store.count('accounts')) throw new Error('Штаб уже создан — войдите своей почтой.');
     let pid = (people().find(p => p.founder) || {}).id;
     if (!pid) pid = Store.add('people', {name: f.name.trim(), title: 'Основатель', dir: 'ops', founder: true, order: 0});
@@ -2675,6 +2631,11 @@ const Auth = {
   /* регистрация по приглашению: анкета из ссылки ложится в карточку человека
      в «Команде» — то, что заполнил основатель, человек мог поправить */
   async acceptInvite(f) {
+    if (onServer()) {
+      await window.EvaServer.auth.join({...f, code: normCode(f.code)});
+      Local.del('eva-hq-join:' + f.code);
+      return serverEnter('home');
+    }
     const code = normCode(f.code);
     const inv = Store.get('invites', code);
     if (!inv || inv.usedBy) throw new Error('Приглашение не найдено или уже использовано. Попросите у основателя новую ссылку.');
@@ -2709,6 +2670,7 @@ const Auth = {
 
   /* смена пароля по ссылке от основателя: #reset=<учётка>.<код> */
   async resetByLink(accId, code, pw) {
+    if (onServer()) { await window.EvaServer.auth.reset({accId, code, pw}); return serverEnter('home'); }
     const acc = Store.get('accounts', accId), r = acc && acc.reset;
     if (!r || r.exp < Date.now()) throw new Error('Ссылка для смены пароля устарела или уже использована. Попросите у основателя новую.');
     if ((await hashPassword(normCode(code), r.salt)) !== r.hash) throw new Error('Ссылка для смены пароля не подходит. Попросите у основателя новую.');
@@ -2718,6 +2680,7 @@ const Auth = {
     this.start(acc);
   },
   async resetWithCode(f) {
+    if (onServer()) { await window.EvaServer.auth.reset({email: f.email, code: f.code, pw: f.pw}); return serverEnter('home'); }
     const acc = this.findByEmail(f.email);
     const r = acc && acc.reset;
     if (!r || r.exp < Date.now()) throw new Error('Код сброса не найден или истёк. Попросите у основателя новый.');
@@ -2730,6 +2693,7 @@ const Auth = {
 
   /* основатель выдаёт код сброса пароля: действует сутки */
   async issueReset(accId) {
+    if (onServer()) return window.EvaServer.auth.issueReset(accId);
     const code = makeCode(), salt = randSalt();
     await Store.patch('accounts', accId, {reset: {salt, hash: await hashPassword(normCode(code), salt), exp: Date.now() + 864e5}});
     return code;
@@ -2739,9 +2703,9 @@ const Auth = {
 /* ── экран входа ── */
 function renderAuth(root) {
   const join = App.parse();
-  if (join.id === 'join' && Store.count('accounts')) { renderJoin(root, join.param); return; }
-  if (join.id === 'reset' && Store.count('accounts')) { renderResetLink(root, join.param); return; }
-  const empty = !Store.count('accounts');
+  if (join.id === 'join' && !hqEmpty()) { renderJoin(root, join.param); return; }
+  if (join.id === 'reset' && !hqEmpty()) { renderResetLink(root, join.param); return; }
+  const empty = hqEmpty();
   let mode = empty ? 'owner' : View.get('authMode', 'login');
   if (mode === 'owner' && !empty) mode = 'login';
 
@@ -2763,7 +2727,8 @@ function renderAuth(root) {
     pw:    `<label class="field"><span>${mode === 'login' ? 'Пароль' : 'Пароль (от 6 символов)'}</span><input class="input" id="a-pw" type="password" autocomplete="${mode === 'login' ? 'current-password' : 'new-password'}"></label>`,
     pw2:   '<label class="field"><span>Пароль ещё раз</span><input class="input" id="a-pw2" type="password" autocomplete="new-password"></label>',
     code:  mode === 'invite'
-      ? '<label class="field"><span>Код из приглашения или почта, на которую вас пригласили</span><input class="input" id="a-code" autocomplete="one-time-code" placeholder="ABCD-2345 или name@mail.ru"></label>'
+      ? (onServer() ? '<label class="field"><span>Код из приглашения</span><input class="input auth-code" id="a-code" autocomplete="one-time-code" placeholder="ABCD-2345"></label>'
+        : '<label class="field"><span>Код из приглашения или почта, на которую вас пригласили</span><input class="input" id="a-code" autocomplete="one-time-code" placeholder="ABCD-2345 или name@mail.ru"></label>')
       : '<label class="field"><span>Код сброса</span><input class="input auth-code" id="a-code" autocomplete="one-time-code" placeholder="ABCD-2345"></label>',
   };
   const [title, lead] = titles[mode];
@@ -2789,7 +2754,7 @@ function renderAuth(root) {
         ${mode === 'reset' ? '<button type="button" class="link-btn" data-mode="login">Вернуться ко входу</button>' : ''}
       </div>
       ${Auth.claudeId && mode === 'login' ? '<p class="auth-claude">Вы вошли в Claude — после первого входа штаб будет узнавать вас сам, без пароля.</p>' : ''}
-      <p class="auth-note">Не используйте пароль от почты или банка: вход разделяет кабинеты внутри команды, а данные штаба видят все, кому открыт доступ к нему.</p>
+      <p class="auth-note">${onServer() ? 'Не используйте здесь пароль от почты или банка. Забыли пароль — основатель пришлёт ссылку для смены.' : 'Не используйте пароль от почты или банка: вход разделяет кабинеты внутри команды, а данные штаба видят все, кому открыт доступ к нему.'}</p>
     </form>
     <aside class="auth-side">
       <p class="label">Кто что видит</p>
@@ -2806,6 +2771,17 @@ function renderAuth(root) {
     e.preventDefault();
     msg.hidden = true;
     const f = {name: val('a-name'), email: val('a-email'), pw: val('a-pw'), code: val('a-code')};
+    if (mode === 'invite' && onServer()) {
+      const raw = f.code.trim();
+      if (raw.includes('@')) { msg.textContent = 'Введите код из сообщения с приглашением (вида ABCD-2345) или откройте ссылку из него.'; msg.hidden = false; return; }
+      const code = normCode(raw);
+      let inv = null;
+      try { inv = ((await window.EvaServer.auth.peek({join: code})).invites || {})[code] || null; }
+      catch (err) { msg.textContent = err.message || 'Сервер не ответил — попробуйте ещё раз.'; msg.hidden = false; return; }
+      if (!inv || inv.usedBy) { msg.textContent = inv ? 'По этому коду уже зарегистрировались — войдите своей почтой и паролем.' : 'Код не найден. Проверьте его или попросите у основателя новую ссылку.'; msg.hidden = false; return; }
+      location.hash = 'join=' + code;
+      return;
+    }
     if (mode === 'invite') {
       const raw = f.code.trim();
       /* можно ввести почту: найдём приглашение, выданное человеку с этой почтой */
@@ -3417,7 +3393,7 @@ const App = {
       const j = this.parse();
       /* анкету по ссылке дорисовываем, когда данные приглашения пришли позже, —
          но только пока человек ничего в ней не набрал */
-      const mode = (Store.count('accounts') ? 'has' : 'empty') + (j.id === 'join' ? ':' + joinKey(j.param) : j.id === 'reset' ? ':r' + j.param : '') + ':' + (Auth.claudeId ? 'c' : '') + (Auth.canWrite === false ? 'ro' : '');
+      const mode = (hqEmpty() ? 'empty' : 'has') + (j.id === 'join' ? ':' + joinKey(j.param) : j.id === 'reset' ? ':r' + j.param : '') + ':' + (Auth.claudeId ? 'c' : '') + (Auth.canWrite === false ? 'ro' : '');
       const form = $('#joinForm');
       if (!opts.force && $('#authRoot') && (this._authMode === mode || (form && form.dataset.dirty === '1'))) return;
       this._authMode = mode;
@@ -3573,6 +3549,7 @@ const App = {
     el.title = s.mode === 'local'
       ? 'Штаб открыт не в артефакте Claude: данные живут только в этом браузере'
       : 'Все правки сразу видны команде';
+    if (s.mode === 'server') el.title = 'Штаб на своём сервере: все правки сразу видны команде';
   },
 };
 
@@ -8267,7 +8244,7 @@ function cardValues(p, inv = {}) {
 }
 const pendingInvite = pid => Store.all('invites').find(i => i.personId === pid && !i.usedBy) || null;
 /* в артефакте Claude адрес страницы изнутри не виден — берём адрес штаба */
-const hqBase = () => (Store.state.mode === 'db' ? HQ_URL : location.href.split('#')[0]);
+const hqBase = () => (Store.state.mode === 'db' ? HQ_URL : onServer() ? location.origin + '/' : location.href.split('#')[0]);
 function inviteLink(code) { return `${hqBase()}#join=${code}`; }
 /* ключ анкеты: поменялся — анкету можно дорисовать (данные пришли позже) */
 function joinKey(code) {
@@ -8833,6 +8810,8 @@ const Portable = {
   },
   /* загрузить: «добавить и обновить» или «заменить» — только те коллекции, что есть в файле */
   async apply(cols, mode) {
+    /* на своём сервере файл целиком принимает сервер: он же следит, чтобы учётка загружающего осталась */
+    if (onServer()) { const r = await window.EvaServer.auth.importAll({collections: cols}, mode); return r.n || 0; }
     const me = (Auth.me() || {}).id;
     let n = 0;
     for (const c of Object.keys(cols)) {
@@ -8872,7 +8851,11 @@ function wirePortable(root) {
     if (k === 'json') {
       const acc = !!($('#ptAcc', root) || {}).checked && Auth.isOwner();
       name = `eva-hq-${acc ? 'full' : 'data'}-${dayStamp()}.json`;
-      text = JSON.stringify(Portable.snapshot({accounts: acc}), null, 1);
+      /* пароли лежат только на сервере: выгрузку «с учётками» основателю собирает он */
+      if (acc && onServer()) {
+        try { text = JSON.stringify(await window.EvaServer.auth.exportAll(true), null, 1); }
+        catch (err) { toast('Сервер не отдал выгрузку: ' + (err.message || err), {error: true}); return; }
+      } else text = JSON.stringify(Portable.snapshot({accounts: acc}), null, 1);
     } else {
       name = `eva-hq-${k}-${dayStamp()}.csv`;
       text = Portable[k + 'Csv']();
@@ -8908,7 +8891,9 @@ function importModal({cols, meta}, fname) {
         const go = $('#ptGo', el);
         go.disabled = true;
         go.textContent = 'Загружаю…';
-        const n = await Portable.apply(cols, mode);
+        let n = 0;
+        try { n = await Portable.apply(cols, mode); }
+        catch (err) { close(); toast('Не загрузилось: ' + (err.message || err), {error: true}); return; }
         close();
         toast(Store.state.readOnly ? 'Не сохранилось: доступ только на просмотр' : `Загружено записей: ${n}`, Store.state.readOnly ? {error: true} : {});
       };
@@ -9125,6 +9110,7 @@ function renderProfile(root, pid) {
   if (pw) pw.onclick = async () => {
     const acc0 = Auth.me();
     const o = $('#pwOld', root).value, n1 = $('#pwNew', root).value, n2 = $('#pwNew2', root).value;
+    if (onServer()) { if (await serverPassword(o, n1, n2)) ['pwOld', 'pwNew', 'pwNew2'].forEach(id => { $('#' + id, root).value = ''; }); return; }
     /* вошёл по аккаунту Claude — личность подтверждена, старый пароль не нужен */
     const trusted = Auth.claudeId && acc0.claudeId === Auth.claudeId;
     if (!trusted && (await hashPassword(o, acc0.salt)) !== acc0.hash) { toast('Текущий пароль не подошёл', {error: true}); return; }
@@ -9137,6 +9123,16 @@ function renderProfile(root, pid) {
   };
 }
 
+/* свой пароль на своём сервере: текущий проверяет сервер, остальные устройства после смены выходят */
+async function serverPassword(old, n1, n2) {
+  if (n1.length < 6) { toast('Новый пароль — не короче 6 символов', {error: true}); return false; }
+  if (n1 !== n2) { toast('Новые пароли не совпадают', {error: true}); return false; }
+  try { await window.EvaServer.auth.password(old, n1); }
+  catch (e) { toast(e.message || 'Пароль не сменился', {error: true}); return false; }
+  toast('Пароль изменён');
+  return true;
+}
+
 /* учётка без карточки в команде (например, инвестор) */
 function renderAccountOnly(root) {
   const a = Auth.me();
@@ -9146,6 +9142,7 @@ function renderAccountOnly(root) {
   on(root, 'click', '[data-logout-me]', () => Auth.logout());
   $('#pwSave', root).onclick = async () => {
     const o = $('#pwOld', root).value, n1 = $('#pwNew', root).value, n2 = $('#pwNew2', root).value;
+    if (onServer()) { await serverPassword(o, n1, n2); return; }
     if ((await hashPassword(o, a.salt)) !== a.hash) { toast('Текущий пароль не подошёл', {error: true}); return; }
     if (n1.length < 6 || n1 !== n2) { toast('Проверьте новый пароль: от 6 символов и одинаковый дважды', {error: true}); return; }
     const salt = randSalt();
@@ -9513,10 +9510,15 @@ const GCAL = 'Google Calendar';
    с названием «CRM · …» и меткой #eva-crm в описании. Штаб узнаёт их по
    метке и рисует полупрозрачными — это чужие для штаба встречи, но время
    занято. Ссылка из описания ведёт прямо в карточку человека в CRM. */
-const CRM_URL = 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA';
+const CRM_URL = window.EvaServer ? location.origin + window.EvaServer.urls.crm : 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA';
 const CRM_TAG = '#eva-crm';
 const evCrm = ev => String(ev.description || '').includes(CRM_TAG) || /^CRM ·/.test(String(ev.summary || ''));
-const crmLinkOf = ev => { const m = String(ev.description || '').match(/https:\/\/claude\.ai\/artifact\/[A-Za-z0-9]+#p-[A-Za-z0-9_-]+/); return m ? m[0] : CRM_URL; };
+/* карточка в CRM: ссылка на артефакт или на CRM своего сервера (…/crm/#p-<id>); старые ссылки на артефакт на сервере ведут в ту же карточку здесь */
+const crmLinkOf = ev => {
+  const m = String(ev.description || '').match(/https:\/\/[A-Za-z0-9.-]+\/(?:artifact\/[A-Za-z0-9]+|crm\/)#p-[A-Za-z0-9_-]+/);
+  if (!m) return CRM_URL;
+  return window.EvaServer ? CRM_URL + m[0].slice(m[0].indexOf('#')) : m[0];
+};
 const TZ = 'Europe/Moscow', TZ_OFF = '+03:00', TZ_MS = 3 * 3600e3;
 const CAL_H0 = 8, CAL_H1 = 21;          // сетка дня: 8:00–21:00
 const SYNC_DAYS = 28;                   // занятость в базе — на 4 недели
@@ -9593,6 +9595,8 @@ const CAL_ERR = {
   approval_required: 'Нужно разрешение администратора организации на Google Календарь.',
   server_not_found: 'Коннектор Google Календаря не найден. Подключите его заново: claude.ai → Настройки → Коннекторы.',
   consent_required: 'Штабу нужен доступ к Google Календарю — нажмите «Подключить» ещё раз и подтвердите.',
+  /* свой сервер: человек ещё не подключил свой аккаунт Google */
+  connect_first: 'Сначала подключите свой Google Календарь: «Календарь» → «Подключить мой Google Календарь».',
   server_unavailable: 'Google Календарь сейчас не отвечает. Попробуйте через минуту.',
   rate_limited: 'Слишком много запросов к календарю — подождите немного.',
   cancelled: 'Действие отменено.',
@@ -9602,7 +9606,7 @@ const CAL_CONN = ['needs_reauth', 'server_not_connected', 'selection_required', 
 function calErr(e) {
   const code = (e && e.code) || 'upstream_error';
   let text = CAL_ERR[code];
-  if (!text && CAL_OFF.includes(code)) text = 'Google Календарь недоступен в этом окне — откройте штаб в Claude.';
+  if (!text && CAL_OFF.includes(code)) text = onServer() ? 'Google Календарь на этом сервере ещё не настроен.' : 'Google Календарь недоступен в этом окне — откройте штаб в Claude.';
   if (!text && code === 'tool_error') text = 'Google ответил ошибкой: ' + ((e && e.message) || 'без подробностей');
   if (!text) text = 'Не получилось связаться с Google Календарём' + (e && e.message ? ': ' + e.message : '') + '.';
   /* для записи «не ответил» не значит «не сделал» — повторять только после проверки */
@@ -9984,10 +9988,13 @@ App.register('calendar', {
     on(root, 'click', '[data-cal-connect]', async (e, el) => {
       el.disabled = true;
       el.textContent = 'Подключаю…';
+      /* свой сервер: сначала человек даёт доступ в окне Google, потом вернётся сюда же */
+      if (onServer() && !(await window.EvaServer.gcal.status(true)).connected) { window.EvaServer.gcal.connect(); return; }
       await Cal.sync();
       App.render();
     });
     on(root, 'click', '[data-cal-sync]', () => Cal.sync());
+    on(root, 'click', '[data-gcal-switch]', () => window.EvaServer.gcal.connect());
     on(root, 'click', '[data-cal-stop]', async (e, el) => {
       if (await confirmPop(el, {text: 'Перестать показывать команде вашу занятость?', yes: 'Да, перестать'})) Cal.stopSharing();
     });
@@ -10003,6 +10010,12 @@ App.register('calendar', {
     if (tab === 'mail' && Cal.conn === 'ready' && Cal.calendars === null && !Cal.calLoading) Cal.loadCalendars();
     if (tab === 'week' && Cal.conn === 'ready' && Cal.stale(ws)) Cal.loadWeek(ws);
     Cal.autoSync();
+    /* свой сервер: только что вернулись из окна Google — сразу подтягиваем занятость */
+    if (onServer()) {
+      const back = window.EvaServer.gcal.just();
+      if (back === 'ok') Cal.init().then(() => { if (Cal.conn === 'ready') Cal.sync(); });
+      else if (back) toast('Google Календарь не подключился: доступ не подтверждён. Нажмите «Подключить» ещё раз.', {error: true});
+    }
     /* открытый календарь сам обновляется: линия «сейчас» и свои события */
     clearTimeout(CalUI.tick);
     CalUI.tick = setTimeout(() => { if (App.parse().id === 'calendar' && !document.hidden) App.renderSoon(); }, 5 * 60e3 + 500);
@@ -10016,14 +10029,14 @@ function connCard() {
   const shared = doc && doc.share !== false && doc.from;
   const p = personById(pid);
   if (Cal.conn === 'checking') return '<div class="cal-conn slim"><i class="dot"></i><span>Проверяю Google Календарь…</span></div>';
-  if (Cal.conn === 'off') return `<div class="cal-conn slim off"><i class="dot"></i><span><b>Google Календарь подключается, когда штаб открыт в Claude.</b> Здесь собрания сохраняются в штабе и видны команде, но приглашения не уходят, а своя занятость не подтягивается.</span></div>`;
+  if (Cal.conn === 'off') return `<div class="cal-conn slim off"><i class="dot"></i><span><b>${onServer() ? 'Google Календарь на этом сервере ещё не настроен.' : 'Google Календарь подключается, когда штаб открыт в Claude.'}</b> Здесь собрания сохраняются в штабе и видны команде, но приглашения не уходят, а своя занятость не подтягивается.</span></div>`;
   if (Cal.conn === 'error' && Cal.err) return `<div class="cal-conn warn"><div>${icon('cal')}</div><div><b>Google Календарь не отвечает штабу</b><p>${esc(Cal.err.text)}</p></div><button class="btn sm" data-cal-retry>Проверить снова</button></div>`;
   if (Cal.conn === 'denied') return `<div class="cal-conn warn"><div>${icon('cal')}</div><div><b>Доступ к календарю не разрешён</b><p>Вы отказали в доступе в этот раз. Обновите страницу и нажмите «Разрешить», когда Claude спросит.</p></div></div>`;
   if (!pid) return '<div class="cal-conn slim off"><i class="dot"></i><span>Ваша учётка не связана с карточкой в «Команде» — занятость не с чем связать. Напишите основателю.</span></div>';
   if (!shared) return `<div class="cal-conn">
       <div>${icon('cal')}</div>
       <div><b>Подключите свой Google Календарь</b>
-        <p>Вы увидите свои события в сетке недели, а команда — только интервалы «занят» на 4 недели вперёд. Названия, места и участники ваших встреч в штаб не попадают. Claude спросит разрешение на доступ — нажмите «Разрешить».</p>
+        <p>Вы увидите свои события в сетке недели, а команда — только интервалы «занят» на 4 недели вперёд. Названия, места и участники ваших встреч в штаб не попадают. ${onServer() ? 'Откроется окно Google — выберите аккаунт и разрешите доступ к календарю.' : 'Claude спросит разрешение на доступ — нажмите «Разрешить».'}</p>
         ${Cal.hint ? `<p class="warn-t">${esc(Cal.hint)}</p>` : ''}</div>
       <button class="btn primary" data-cal-connect ${Cal.syncing ? 'disabled' : ''}>${Cal.syncing ? 'Подключаю…' : 'Подключить мой Google Календарь'}</button>
     </div>`;
@@ -10223,9 +10236,10 @@ function calMailView() {
               ${cals.map(c => `<option value="${esc(c.id)}" ${c.id === cid ? 'selected' : ''}>${esc(c.name)}${c.name !== c.id && EMAIL_RE.test(c.id) ? ' — ' + esc(c.id) : ''}</option>`).join('')}
               ${cid && !cals.some(c => c.id === cid) ? `<option value="${esc(cid)}" selected>${esc(cid)}</option>` : ''}
             </select></label>
-          <p class="note">Из этого календаря штаб берёт вашу занятость и в него ставит собрания, которые создаёте вы. ${!usable ? 'Выбор появится, когда штаб открыт в Claude с подключённым Google Календарём.' : Cal.calLoading ? 'Загружаю список календарей…' : Cal.calendars ? `В списке — календари, которые видит подключённый аккаунт. <button type="button" class="link-btn" data-ml-cals>Обновить список</button>` : '<button type="button" class="link-btn" data-ml-cals>Загрузить список календарей</button>'}</p>
+          <p class="note">Из этого календаря штаб берёт вашу занятость и в него ставит собрания, которые создаёте вы. ${!usable ? (onServer() ? 'Выбор появится, когда вы подключите Google Календарь.' : 'Выбор появится, когда штаб открыт в Claude с подключённым Google Календарём.') : Cal.calLoading ? 'Загружаю список календарей…' : Cal.calendars ? `В списке — календари, которые видит подключённый аккаунт. <button type="button" class="link-btn" data-ml-cals>Обновить список</button>` : '<button type="button" class="link-btn" data-ml-cals>Загрузить список календарей</button>'}</p>
           <details class="ml-other"><summary>Нужного аккаунта нет в списке?</summary>
-            <p class="note">Коннектор Google Calendar в Claude работает с одним аккаунтом Google. Два пути: <b>1)</b> в нужном аккаунте откройте Google Календарь → Настройки → «Доступ для отдельных пользователей» и добавьте ${host ? esc(host) : 'подключённый аккаунт'} с правом вносить изменения — календарь появится в списке выше; <b>2)</b> переподключите Google Calendar в claude.ai → Настройки → Коннекторы уже к нужному аккаунту и обновите страницу.</p>
+            ${onServer() ? '<p class="note">Штаб работает с одним вашим аккаунтом Google. Чтобы сменить его — <button type="button" class="link-btn" data-gcal-switch>подключите другой аккаунт Google</button>: откроется окно Google с выбором аккаунта.</p>' : ''}
+            <p class="note" ${onServer() ? 'hidden' : ''}>Коннектор Google Calendar в Claude работает с одним аккаунтом Google. Два пути: <b>1)</b> в нужном аккаунте откройте Google Календарь → Настройки → «Доступ для отдельных пользователей» и добавьте ${host ? esc(host) : 'подключённый аккаунт'} с правом вносить изменения — календарь появится в списке выше; <b>2)</b> переподключите Google Calendar в claude.ai → Настройки → Коннекторы уже к нужному аккаунту и обновите страницу.</p>
           </details>
         </div>
       </div>

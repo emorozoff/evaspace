@@ -99,6 +99,8 @@ const Portable = {
   },
   /* загрузить: «добавить и обновить» или «заменить» — только те коллекции, что есть в файле */
   async apply(cols, mode) {
+    /* на своём сервере файл целиком принимает сервер: он же следит, чтобы учётка загружающего осталась */
+    if (onServer()) { const r = await window.EvaServer.auth.importAll({collections: cols}, mode); return r.n || 0; }
     const me = (Auth.me() || {}).id;
     let n = 0;
     for (const c of Object.keys(cols)) {
@@ -138,7 +140,11 @@ function wirePortable(root) {
     if (k === 'json') {
       const acc = !!($('#ptAcc', root) || {}).checked && Auth.isOwner();
       name = `eva-hq-${acc ? 'full' : 'data'}-${dayStamp()}.json`;
-      text = JSON.stringify(Portable.snapshot({accounts: acc}), null, 1);
+      /* пароли лежат только на сервере: выгрузку «с учётками» основателю собирает он */
+      if (acc && onServer()) {
+        try { text = JSON.stringify(await window.EvaServer.auth.exportAll(true), null, 1); }
+        catch (err) { toast('Сервер не отдал выгрузку: ' + (err.message || err), {error: true}); return; }
+      } else text = JSON.stringify(Portable.snapshot({accounts: acc}), null, 1);
     } else {
       name = `eva-hq-${k}-${dayStamp()}.csv`;
       text = Portable[k + 'Csv']();
@@ -174,7 +180,9 @@ function importModal({cols, meta}, fname) {
         const go = $('#ptGo', el);
         go.disabled = true;
         go.textContent = 'Загружаю…';
-        const n = await Portable.apply(cols, mode);
+        let n = 0;
+        try { n = await Portable.apply(cols, mode); }
+        catch (err) { close(); toast('Не загрузилось: ' + (err.message || err), {error: true}); return; }
         close();
         toast(Store.state.readOnly ? 'Не сохранилось: доступ только на просмотр' : `Загружено записей: ${n}`, Store.state.readOnly ? {error: true} : {});
       };

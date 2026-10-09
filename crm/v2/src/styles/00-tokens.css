@@ -1,0 +1,105 @@
+/* Деловая палитра на основе Книги стандартов Eva Space:
+   Ночь #14111A — основа и тёмная панель, Роза и Золото — только акценты
+   бренда (знак, отметки, деньги), Фиалка — ссылки и выбранное.
+   Шрифт — Inter; Unbounded остаётся только в названии штаба. */
+:root{
+  /* Eva Space, дизайн-система v2: графит + приглушённая фуксия (как приложение
+     и «Книга стандартов»). Фуксия — выбранное и ссылки, графит — главные
+     кнопки, золото и зелень — только смысловые отметки. */
+  --bg:#F7F6F4;
+  --surface:#FFFFFF;
+  --surface-2:#FAF9F7;
+  --sunken:#F1EFEC;
+  --line:#E6E2DE;
+  --line-strong:#D2CDC8;
+  --ink:#111014;
+  --ink-2:#4A4650;
+  --ink-3:#7E7A85;
+
+  --night:#1A171F;
+  --night-2:#2B2233;
+  --night-line:#3A2F42;
+  --night-ink:#F3EFF4;
+  --night-ink-2:#B3AAB9;
+  --night-grad:linear-gradient(170deg,#1A171F 0%,#2B2233 62%,#4A2C42 100%);
+
+  --accent:#111014;          /* главные кнопки */
+  --on-accent:#FFFFFF;
+  --link:#A8375C;            /* ссылки, выбранные вкладки, фокус */
+  --link-soft:#F7E9EE;
+
+  --rose:#A8375C;
+  --rose-brand:#C2506F;
+  --rose-soft:#F7E9EE;
+  --gold:#8C6528;
+  --gold-brand:#E7C58B;
+  --gold-soft:#F6EEDF;
+  --violet:#5B4BD0;
+  --violet-soft:#EFECFC;
+
+  --good:#3F7D62;
+  --good-soft:#E4F1EA;
+  --bad:#B03A48;
+  --bad-soft:#F8E6E8;
+  --warn:#B4642A;
+  --warn-soft:#FAEEDF;
+
+  --in-row:#F1F8F4;
+  --out-row:#FCF3F4;
+
+  --g-alt:rgba(17,16,20,.028);
+  --g-half:rgba(17,16,20,.06);
+  --g-month:rgba(17,16,20,.13);
+  --g-quarter:rgba(17,16,20,.28);
+
+  --shadow:0 1px 2px rgba(17,16,20,.05);
+  --shadow-pop:0 16px 44px rgba(17,16,20,.16), 0 2px 6px rgba(17,16,20,.07);
+  --radius:12px;
+  --radius-sm:8px;
+
+  --f-display:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --f-text:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --f-brand:'Unbounded', 'Inter', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121014; --surface:#1B181F; --surface-2:#211D26; --sunken:#16131A;
+    --line:#2E2934; --line-strong:#453E4D;
+    --ink:#F3EFF4; --ink-2:#C4BCC9; --ink-3:#938B9A;
+    --night:#0E0C11; --night-2:#221C29; --night-line:#2F2836;
+    --night-grad:linear-gradient(170deg,#0E0C11 0%,#1B1622 62%,#2E1F2B 100%);
+    --accent:#F3EFF4; --on-accent:#111014;
+    --link:#E693B0; --link-soft:#3A2230;
+    --rose:#E693B0; --rose-soft:#3A2230;
+    --gold:#E7C58B; --gold-soft:#33291B;
+    --violet:#ABA2F2; --violet-soft:#29254A;
+    --good:#7DCBA3; --good-soft:#1B3027;
+    --bad:#EF929F; --bad-soft:#3B2027;
+    --warn:#E8B463; --warn-soft:#352819;
+    --in-row:#17231D; --out-row:#261B20;
+    --g-alt:rgba(255,255,255,.025); --g-half:rgba(255,255,255,.05); --g-month:rgba(255,255,255,.11); --g-quarter:rgba(255,255,255,.24);
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+    --shadow-pop:0 16px 44px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121014; --surface:#1B181F; --surface-2:#211D26; --sunken:#16131A;
+  --line:#2E2934; --line-strong:#453E4D;
+  --ink:#F3EFF4; --ink-2:#C4BCC9; --ink-3:#938B9A;
+  --night:#0E0C11; --night-2:#221C29; --night-line:#2F2836;
+  --night-grad:linear-gradient(170deg,#0E0C11 0%,#1B1622 62%,#2E1F2B 100%);
+  --accent:#F3EFF4; --on-accent:#111014;
+  --link:#E693B0; --link-soft:#3A2230;
+  --rose:#E693B0; --rose-soft:#3A2230;
+  --gold:#E7C58B; --gold-soft:#33291B;
+  --violet:#ABA2F2; --violet-soft:#29254A;
+  --good:#7DCBA3; --good-soft:#1B3027;
+  --bad:#EF929F; --bad-soft:#3B2027;
+  --warn:#E8B463; --warn-soft:#352819;
+  --in-row:#17231D; --out-row:#261B20;
+  --g-alt:rgba(255,255,255,.025); --g-half:rgba(255,255,255,.05); --g-month:rgba(255,255,255,.11); --g-quarter:rgba(255,255,255,.24);
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+  --shadow-pop:0 16px 44px rgba(0,0,0,.6);
+}

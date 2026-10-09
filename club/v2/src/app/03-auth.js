@@ -1,8 +1,14 @@
 /* Вход по ролям. У каждого человека своя учётка; роль решает меню и права.
    Пароль хранится только как PBKDF2-SHA256 (150 000 итераций) с солью —
    тем же способом, что в первой версии, поэтому старые пароли подходят.
-   Честно: это разделение кабинетов внутри команды, а не сейф — общая база
-   читается всеми, у кого есть доступ к штабу. */
+   Честно: в артефакте Claude это разделение кабинетов внутри команды, а не
+   сейф — общая база читается всеми, у кого есть доступ к штабу.
+   На своём сервере (onServer) вход проверяет сервер: пароль уходит только
+   ему, отпечатки паролей в браузер не приходят, сессия — в cookie. После
+   входа страница перезагружается и получает данные уже по роли. */
+
+/* сервер принял вход — перезагружаемся в штаб; обещание не завершается, чтобы форма не дёргалась */
+const serverEnter = hash => { window.EvaServer.enter(hash); return new Promise(() => {}); };
 
 const SESSION_KEY = 'eva-hq-session';
 const b64 = buf => btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
@@ -46,7 +52,8 @@ const Auth = {
   _noAuto: false,      // нажал «Выйти» — сам больше не входим, пока не обновит страницу
   me() {
     /* window.__EVA_AS — только для проверок: две вкладки под разными людьми */
-    const id = window.__EVA_AS || Local.get(SESSION_KEY, null) || this._sid;
+    /* на своём сервере, кто вошёл, говорит сервер — браузеру на слово не верим */
+    const id = onServer() ? window.EvaServer.session.me : window.__EVA_AS || Local.get(SESSION_KEY, null) || this._sid;
     const a = id ? Store.get('accounts', id) : null;
     return a && a.active !== false ? a : null;
   },
@@ -90,11 +97,15 @@ const Auth = {
     if (!opts.silent) this.linkClaude(acc.id);
     if (!acc.lastSeen || Date.now() - acc.lastSeen > 3600e3) Store.patch('accounts', acc.id, {lastSeen: Date.now()}, {mustExist: true});
   },
-  logout() { Local.del(SESSION_KEY); this._sid = null; this._noAuto = true; this.viaClaude = false; window.__EVA_AS = null; App.render(); },
+  logout() {
+    if (onServer()) { window.EvaServer.auth.logout(); return; }
+    Local.del(SESSION_KEY); this._sid = null; this._noAuto = true; this.viaClaude = false; window.__EVA_AS = null; App.render();
+  },
 
   findByEmail(email) { const e = normEmail(email); return Store.all('accounts').find(a => normEmail(a.email) === e) || null; },
 
   async login(email, pw) {
+    if (onServer()) { await window.EvaServer.auth.login(email, pw); return serverEnter('home'); }
     const acc = this.findByEmail(email);
     if (!acc) throw new Error('Нет учётки с такой почтой. Если вас пригласили — откройте ссылку из приглашения или введите код во вкладке «У меня приглашение».');
     if (acc.active === false) throw new Error('Учётка отключена. Напишите основателю.');
@@ -118,6 +129,7 @@ const Auth = {
 
   /* первый вход в пустой штаб — учётка основателя и его карточка в команде */
   async createOwner(f) {
+    if (onServer()) { await window.EvaServer.auth.owner({name: f.name, email: f.email, pw: f.pw}); return serverEnter('home'); }
     if (Store.count('accounts')) throw new Error('Штаб уже создан — войдите своей почтой.');
     let pid = (people().find(p => p.founder) || {}).id;
     if (!pid) pid = Store.add('people', {name: f.name.trim(), title: 'Основатель', dir: 'ops', founder: true, order: 0});
@@ -129,6 +141,11 @@ const Auth = {
   /* регистрация по приглашению: анкета из ссылки ложится в карточку человека
      в «Команде» — то, что заполнил основатель, человек мог поправить */
   async acceptInvite(f) {
+    if (onServer()) {
+      await window.EvaServer.auth.join({...f, code: normCode(f.code)});
+      Local.del('eva-hq-join:' + f.code);
+      return serverEnter('home');
+    }
     const code = normCode(f.code);
     const inv = Store.get('invites', code);
     if (!inv || inv.usedBy) throw new Error('Приглашение не найдено или уже использовано. Попросите у основателя новую ссылку.');
@@ -163,6 +180,7 @@ const Auth = {
 
   /* смена пароля по ссылке от основателя: #reset=<учётка>.<код> */
   async resetByLink(accId, code, pw) {
+    if (onServer()) { await window.EvaServer.auth.reset({accId, code, pw}); return serverEnter('home'); }
     const acc = Store.get('accounts', accId), r = acc && acc.reset;
     if (!r || r.exp < Date.now()) throw new Error('Ссылка для смены пароля устарела или уже использована. Попросите у основателя новую.');
     if ((await hashPassword(normCode(code), r.salt)) !== r.hash) throw new Error('Ссылка для смены пароля не подходит. Попросите у основателя новую.');
@@ -172,6 +190,7 @@ const Auth = {
     this.start(acc);
   },
   async resetWithCode(f) {
+    if (onServer()) { await window.EvaServer.auth.reset({email: f.email, code: f.code, pw: f.pw}); return serverEnter('home'); }
     const acc = this.findByEmail(f.email);
     const r = acc && acc.reset;
     if (!r || r.exp < Date.now()) throw new Error('Код сброса не найден или истёк. Попросите у основателя новый.');
@@ -184,6 +203,7 @@ const Auth = {
 
   /* основатель выдаёт код сброса пароля: действует сутки */
   async issueReset(accId) {
+    if (onServer()) return window.EvaServer.auth.issueReset(accId);
     const code = makeCode(), salt = randSalt();
     await Store.patch('accounts', accId, {reset: {salt, hash: await hashPassword(normCode(code), salt), exp: Date.now() + 864e5}});
     return code;
@@ -193,9 +213,9 @@ const Auth = {
 /* ── экран входа ── */
 function renderAuth(root) {
   const join = App.parse();
-  if (join.id === 'join' && Store.count('accounts')) { renderJoin(root, join.param); return; }
-  if (join.id === 'reset' && Store.count('accounts')) { renderResetLink(root, join.param); return; }
-  const empty = !Store.count('accounts');
+  if (join.id === 'join' && !hqEmpty()) { renderJoin(root, join.param); return; }
+  if (join.id === 'reset' && !hqEmpty()) { renderResetLink(root, join.param); return; }
+  const empty = hqEmpty();
   let mode = empty ? 'owner' : View.get('authMode', 'login');
   if (mode === 'owner' && !empty) mode = 'login';
 
@@ -217,7 +237,8 @@ function renderAuth(root) {
     pw:    `<label class="field"><span>${mode === 'login' ? 'Пароль' : 'Пароль (от 6 символов)'}</span><input class="input" id="a-pw" type="password" autocomplete="${mode === 'login' ? 'current-password' : 'new-password'}"></label>`,
     pw2:   '<label class="field"><span>Пароль ещё раз</span><input class="input" id="a-pw2" type="password" autocomplete="new-password"></label>',
     code:  mode === 'invite'
-      ? '<label class="field"><span>Код из приглашения или почта, на которую вас пригласили</span><input class="input" id="a-code" autocomplete="one-time-code" placeholder="ABCD-2345 или name@mail.ru"></label>'
+      ? (onServer() ? '<label class="field"><span>Код из приглашения</span><input class="input auth-code" id="a-code" autocomplete="one-time-code" placeholder="ABCD-2345"></label>'
+        : '<label class="field"><span>Код из приглашения или почта, на которую вас пригласили</span><input class="input" id="a-code" autocomplete="one-time-code" placeholder="ABCD-2345 или name@mail.ru"></label>')
       : '<label class="field"><span>Код сброса</span><input class="input auth-code" id="a-code" autocomplete="one-time-code" placeholder="ABCD-2345"></label>',
   };
   const [title, lead] = titles[mode];
@@ -243,7 +264,7 @@ function renderAuth(root) {
         ${mode === 'reset' ? '<button type="button" class="link-btn" data-mode="login">Вернуться ко входу</button>' : ''}
       </div>
       ${Auth.claudeId && mode === 'login' ? '<p class="auth-claude">Вы вошли в Claude — после первого входа штаб будет узнавать вас сам, без пароля.</p>' : ''}
-      <p class="auth-note">Не используйте пароль от почты или банка: вход разделяет кабинеты внутри команды, а данные штаба видят все, кому открыт доступ к нему.</p>
+      <p class="auth-note">${onServer() ? 'Не используйте здесь пароль от почты или банка. Забыли пароль — основатель пришлёт ссылку для смены.' : 'Не используйте пароль от почты или банка: вход разделяет кабинеты внутри команды, а данные штаба видят все, кому открыт доступ к нему.'}</p>
     </form>
     <aside class="auth-side">
       <p class="label">Кто что видит</p>
@@ -260,6 +281,17 @@ function renderAuth(root) {
     e.preventDefault();
     msg.hidden = true;
     const f = {name: val('a-name'), email: val('a-email'), pw: val('a-pw'), code: val('a-code')};
+    if (mode === 'invite' && onServer()) {
+      const raw = f.code.trim();
+      if (raw.includes('@')) { msg.textContent = 'Введите код из сообщения с приглашением (вида ABCD-2345) или откройте ссылку из него.'; msg.hidden = false; return; }
+      const code = normCode(raw);
+      let inv = null;
+      try { inv = ((await window.EvaServer.auth.peek({join: code})).invites || {})[code] || null; }
+      catch (err) { msg.textContent = err.message || 'Сервер не ответил — попробуйте ещё раз.'; msg.hidden = false; return; }
+      if (!inv || inv.usedBy) { msg.textContent = inv ? 'По этому коду уже зарегистрировались — войдите своей почтой и паролем.' : 'Код не найден. Проверьте его или попросите у основателя новую ссылку.'; msg.hidden = false; return; }
+      location.hash = 'join=' + code;
+      return;
+    }
     if (mode === 'invite') {
       const raw = f.code.trim();
       /* можно ввести почту: найдём приглашение, выданное человеку с этой почтой */
