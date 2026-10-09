@@ -1175,6 +1175,8 @@ function refCodeFor(name) {
 /* CRM на своём сервере (club/v2/server): вход — по учётке штаба, база и Google
    Календарь — через сервер; он подключает к странице eva-server.js */
 const onServer = () => !!window.EvaServer;
+/* где CRM живёт теперь — для таблички «переехали» в замороженном артефакте Claude */
+const CRM_HOME = 'https://eva.tytproai.ru/crm/';
 
 const ROLES = {
   owner:  {name: 'Руководитель', tone: 'gold',   about: 'всё, включая команду и удаление'},
@@ -4577,6 +4579,15 @@ function exportCsv(type) {
   const slow = setTimeout(() => { if (msg) msg.textContent = 'База отвечает медленно — ещё пара секунд…'; }, 4000);
   try { await Promise.all([Store.init(), Who.init()]); } catch (e) { console.error('Хранилище не поднялось', e); }
   clearTimeout(slow);
+  /* CRM переехала на свой сервер (CRM_HOME). Копия в артефакте Claude заморожена: если её
+     опубликуют снова, там должна открыться эта табличка, а не CRM со старыми данными. */
+  if (Store.state.mode !== 'local' && !onServer()) {
+    App.render = App.renderSoon = () => {};
+    const t = $('#boot b');
+    if (t) t.textContent = 'Eva CRM переехала';
+    if (msg) msg.innerHTML = `Теперь она работает по адресу <a href="${CRM_HOME}" target="_blank" rel="noopener">${CRM_HOME.replace(/^https:\/\/|\/$/g, '')}</a> — вход по учётке штаба. Копия в Claude больше не обновляется.`;
+    return;
+  }
   if (Store.state.mode === 'local' && !Store.total() && !Local.get('eva-crm2-seeded', false)) {
     Local.set('eva-crm2-seeded', true);
     await Demo.load();

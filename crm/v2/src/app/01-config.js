@@ -4,6 +4,8 @@
 /* CRM на своём сервере (club/v2/server): вход — по учётке штаба, база и Google
    Календарь — через сервер; он подключает к странице eva-server.js */
 const onServer = () => !!window.EvaServer;
+/* где CRM живёт теперь — для таблички «переехали» в замороженном артефакте Claude */
+const CRM_HOME = 'https://eva.tytproai.ru/crm/';
 
 const ROLES = {
   owner:  {name: 'Руководитель', tone: 'gold',   about: 'всё, включая команду и удаление'},

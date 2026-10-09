@@ -9,6 +9,16 @@
   Auth.initIdentity().then(() => { App.renderSoon(); App.paintSync(Store.state); });
   try { await Store.init(); } catch (e) { console.error('Хранилище не поднялось', e); }
   clearTimeout(slow);
+  /* Штаб переехал на свой сервер (HQ_HOME). Копия в артефакте Claude заморожена: если её
+     опубликуют снова, там должна открыться эта табличка, а не штаб со старыми данными —
+     иначе записи разойдутся между двумя местами. Просто в браузере (без базы) штаб работает как раньше. */
+  if (Store.state.mode === 'db') {
+    App.render = App.renderSoon = () => {};
+    const t = $('#boot b');
+    if (t) t.textContent = 'Штаб Eva Club переехал';
+    if (msg) msg.innerHTML = `Теперь он работает по адресу <a href="${HQ_HOME}" target="_blank" rel="noopener">${HQ_HOME.replace(/^https:\/\/|\/$/g, '')}</a> — входите прежней почтой и паролем. Копия в Claude больше не обновляется.`;
+    return;
+  }
   App.start();
   TaskNotify.init();
   MsgNotify.init();

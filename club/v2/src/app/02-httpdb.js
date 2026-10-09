@@ -6,6 +6,8 @@
    записи, а после — только то, что положено роли. */
 
 const onServer = () => !!(window.EVA_API && window.EvaServer);
+/* где штаб живёт теперь — для таблички «переехали» в замороженном артефакте Claude */
+const HQ_HOME = 'https://eva.tytproai.ru/';
 function httpDb() { return window.EvaServer.db; }
 /* штаб ещё пуст (нет ни одной учётки)? До входа на сервере учёток в браузере нет — спрашиваем сервер */
 const hqEmpty = () => (onServer() ? window.EvaServer.session.empty : !Store.count('accounts'));
