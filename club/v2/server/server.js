@@ -45,6 +45,7 @@ const {Gcal} = require('./lib/gcal');
 const HQ_DIR = path.resolve(__dirname, '..');                       // club/v2 — сам штаб
 const CRM_DIR = path.resolve(process.env.CRM_DIR || path.join(__dirname, '..', '..', '..', 'crm', 'v2'));
 const MATERIALS_DIR = path.resolve(process.env.MATERIALS_DIR || path.join(HQ_DIR, 'm'));
+const VERSION_FILE = path.resolve(process.env.VERSION_FILE || path.join(HQ_DIR, '..', '..', 'version.json'));
 const DATA_DIR = path.resolve(process.env.DATA_DIR || path.join(__dirname, 'data'));
 const PORT = Number(process.env.PORT || 8080);
 const LISTEN = process.env.LISTEN || '';
@@ -468,6 +469,8 @@ function page(req, res, u) {
   if (p === '/eva-club-v2.html') return file(res, path.join(HQ_DIR, 'eva-club-v2.html'));
   if (p === '/eva-server.js') return file(res, path.join(__dirname, 'public', 'eva-server.js'));
   if (p === '/healthz') { res.writeHead(200, {'content-type': 'text/plain'}); return res.end('ok'); }
+  /* какая правка сейчас стоит и не отказался ли сервер ставить следующую (пишет deploy/autodeploy) */
+  if (p === '/version.json') return file(res, VERSION_FILE);
   const mm = /^\/m\/([a-z-]+)\.html$/.exec(p);
   if (mm) {
     const ctx = ctxOf(req);

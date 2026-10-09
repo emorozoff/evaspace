@@ -1,0 +1,10 @@
+[Unit]
+Description=Eva: забрать правки с GitHub, проверить и обновить штаб
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/eva/autodeploy/autodeploy.sh
+Nice=10
+TimeoutStartSec=1200

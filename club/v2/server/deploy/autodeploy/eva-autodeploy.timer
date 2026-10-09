@@ -1,0 +1,10 @@
+[Unit]
+Description=Eva: раз в 2 минуты смотреть, нет ли новых правок на GitHub
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=2min
+AccuracySec=15s
+
+[Install]
+WantedBy=timers.target
