@@ -242,6 +242,14 @@ async function browserHash(pw, salt) {
   ok((await owner.state()).me === ownerId, 'основатель после загрузки остался в штабе');
 
   console.log('15. CRM');
+  /* строка команды CRM, заведённая заранее на карточку штаба, привязывается к учётке при регистрации */
+  await owner.put('people', 'p9', {name: 'Нина Новая', title: 'Менеджер', order: 50});
+  await owner.put('invites', 'NINA-4444', {role: 'member', personId: 'p9', by: ownerId, at: Date.now()});
+  await owner.put('team', 'tm_nina', {name: 'Нина', role: 'owner', person: 'p9', joinedAt: 1}, '/crm/api');
+  const nina = new Client('nina');
+  r = await nina.req('POST', '/api/auth/join', {code: 'NINA-4444', given: 'Нина', surname: 'Новая', email: 'nina@test.ru', pw: 'ninapw1'});
+  s = (await nina.get('/crm/api/state')).j;
+  ok(r.status === 200 && s.collections.team.tm_nina.uid === r.j.me && s.crmRole === 'owner', 'заранее заведённая строка CRM привязалась к новой учётке', s.collections.team.tm_nina);
   s = (await owner.get('/crm/api/state')).j;
   ok(s.me === ownerId && s.owner === true && s.crmRole === 'owner', 'основатель штаба — руководитель CRM', s);
   ok((await owner.put('team', 'tm_owner', {uid: ownerId, name: '', role: 'owner', joinedAt: Date.now(), order: 0}, '/crm/api')).status === 200, 'строка руководителя');

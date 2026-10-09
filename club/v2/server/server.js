@@ -277,6 +277,8 @@ const auth = {
     if (p.status === 'vacancy') card.status = 'active';
     hq.store.patch('people', pid, card);
     hq.store.patch('invites', code, {usedBy: id, usedAt: Date.now()});
+    /* строка команды CRM, заведённая на эту карточку заранее (team.person), становится строкой этой учётки */
+    crm.store.list('team').filter(t => t.person === pid && !t.uid && !t.archived).forEach(t => crm.store.patch('team', t.id, {uid: id}));
     startSession(res, id);
     return {ok: true, me: id};
   },
@@ -515,7 +517,7 @@ setInterval(() => sessions.sweep(), 6 * 3600e3).unref();
 
 if (LISTEN) {
   try { fs.unlinkSync(LISTEN); } catch (e) { /* сокета ещё нет */ }
-  server.listen(LISTEN, () => { fs.chmodSync(LISTEN, 0o666); console.log(`Штаб и CRM слушают сокет ${LISTEN} · данные: ${DATA_DIR}`); });
+  server.listen(LISTEN, () => { fs.chmodSync(LISTEN, 0o666); console.log(`Штаб и CRM слушают сокет ${LISTEN} · данные: ${DATA_DIR} · Google Календарь ${gcal.configured ? 'настроен' : 'не настроен'}`); });
 } else {
   server.listen(PORT, () => console.log(`Штаб: http://localhost:${PORT}/ · CRM: http://localhost:${PORT}/crm/ · данные: ${DATA_DIR}${gcal.configured ? '' : ' · Google Календарь не настроен'}`));
 }
