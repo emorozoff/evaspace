@@ -27,7 +27,9 @@ const Timer = {
 
 /* что показать из анкеты перед созвоном — самое полезное для разговора */
 const KNOWN = {
-  client: [['stage', 'Этап жизни'], ['age', 'Возраст'], ['city', 'Город'], ['pain', 'Болит'], ['goal', 'Важно'], ['time', 'Время в день'], ['when', 'Когда удобно'], ['tried', 'Уже пробовала'], ['spend', 'Тратит на себя'], ['formats', 'Интересно в Еве'], ['price', 'Готова платить'], ['fit', 'Идея Евы'], ['source', 'Откуда узнала']],
+  client: [['birth', 'Возраст'], ['age', 'Возраст'], ['city', 'Город'], ['status', 'Статус'], ['job', 'Занятость'], ['stage', 'Этап жизни'], ['energy', 'Энергия'], ['happy', 'Довольна жизнью'], ['health', 'Здоровье'],
+    ['pain', 'Беспокоит'], ['goal', 'Важнее всего'], ['time', 'Время в день'], ['when', 'Когда удобно'], ['tried', 'Уже пробовала'], ['transform', 'Как меняется'], ['wake', 'Встаёт'], ['sleep', 'Ложится'],
+    ['screen', 'В телефоне'], ['where', 'Где смотрит контент'], ['length', 'Длина видео'], ['form', 'Подача'], ['formats', 'Интересно в Еве'], ['price', 'Готова платить'], ['source', 'Откуда узнала']],
   expert: [['dirs', 'Направления'], ['topic', 'Тема'], ['exp', 'Стаж'], ['edu', 'Образование'], ['have', 'Уже есть'], ['course', 'Курс с Евой'], ['record', 'Можно записать'], ['where', 'Где снимать'], ['days', 'Время на съёмки'], ['aud', 'Аудитория'], ['deal', 'Формат'], ['check', 'Консультация']],
   partner: [['cat', 'Категория'], ['city', 'Город'], ['clients', 'Клиенток в месяц'], ['ages', 'Возраст клиенток'], ['want', 'Интересно'], ['give', 'Могут дать'], ['tell', 'Где расскажут'], ['aud', 'Соцсети'], ['when', 'Когда удобно']],
   amb: [['use', 'Пользуется Евой'], ['where', 'Где аудитория'], ['size', 'Читают'], ['topic', 'О чём блог'], ['women', 'Кто читает'], ['how', 'Как расскажет'], ['hours', 'Время в неделю'], ['motive', 'Главное'], ['tax', 'Статус'], ['pay', 'Выплаты']],
@@ -59,11 +61,33 @@ const PROBES = {
 function knownRows(p) {
   const a = p.answers || {};
   const qs = Questions.set(p.type).test;
+  const legacy = LEGACY_Q[p.type] || {};
   const seen = new Set();
-  const val = (q, v) => (q && q.k === 'scale' ? `${v} из 5` : (q ? answerLabels(q, v) : [].concat(v)).map(noEmo).join(', '));
-  const rows = (KNOWN[p.type] || []).filter(([id]) => a[id] !== undefined && a[id] !== '' && !(Array.isArray(a[id]) && !a[id].length)).map(([id, label]) => { seen.add(id); return [label, val(qs.find(q => q.id === id), a[id])]; });
-  qs.forEach(q => { if (!seen.has(q.id) && !['name', 'tg', 'call', 'social', 'addr', 'contact'].includes(q.id) && a[q.id] !== undefined && a[q.id] !== '') rows.push([noEmo(q.t).replace(/\?.*$/, ''), val(q, a[q.id])]); });
+  const val = (q, v) => {
+    if (!q) return [].concat(v).map(noEmo).join(', ');
+    if (q.k === 'scale') return `${v} из ${scaleN(q)}`;
+    if (q.k === 'date') { const age = ageFromBirth(v); return age !== null ? `${age} ${plural(age, 'год', 'года', 'лет')}` : dateLabel(v); }
+    return answerLabels(q, v).map(l => otherText(q, l) || canonLabel(q, l)).join(', ');
+  };
+  const rows = (KNOWN[p.type] || []).filter(([id]) => !emptyAns(a[id]) && !(id === 'age' && seen.has('birth'))).map(([id, label]) => { seen.add(id); return [label, val(qs.find(q => q.id === id) || legacy[id], a[id])]; });
+  qs.forEach(q => { if (!seen.has(q.id) && !['name', 'tg', 'call', 'social', 'addr', 'contact', 'evaId'].includes(q.id) && !emptyAns(a[q.id])) rows.push([noEmo(q.t).replace(/\?.*$/, ''), val(q, a[q.id])]); });
   return rows;
+}
+/* вопросы прошлого набора: ответы на них показываем, чтобы ничего не потерялось */
+const LEGACY_TALK = {
+  client: {
+    t1: 'Расскажи немного о себе: чем занимаешься и как выглядит твой обычный день?', t2: 'Когда ты последний раз специально делала что-то для себя — практику, спорт, курс?',
+    t3: 'Что сейчас больше всего забирает твои силы или настроение?', t4: 'Что ты уже пробовала, чтобы с этим справиться? Что сработало, а что бросила?',
+    t5: 'Какими приложениями, каналами или курсами «про себя» ты пользуешься? За что платила?', t6: 'Вспомни момент, когда ты бросила практику или курс. Что тогда произошло?',
+    t7: 'Кому ты доверяешь в этих темах — эксперту, блогеру, подруге?', t8: 'Представь помощницу, которая каждый день заботится о тебе. Что она делает?',
+    t9: 'Если уже пробовала Еву: что было самым полезным? Что раздражало?', t10: 'Какой формат тебе ближе: практика, мастер-класс, эфир, сообщество, офлайн?',
+    t11: 'Когда тебе удобно получать напоминания? Какие уведомления бесят?', t12: 'Сколько должна стоить такая подписка?',
+    t13: 'Что должно произойти, чтобы ты сказала подруге «попробуй Еву»?', t14: 'Если бы Ева была твоей: что бы ты добавила, а что убрала?', t15: 'Можно написать тебе через месяц? Кого из подруг расспросить?',
+  },
+};
+function legacyTalk(p) {
+  const ids = new Set(Questions.set(p.type).talk.map(q => q.id));
+  return Object.entries(p.talk || {}).filter(([id, x]) => id !== '_extra' && !ids.has(id) && x && x.a).map(([id, x]) => ({id, t: ((LEGACY_TALK[p.type] || {})[id]) || 'Вопрос из прошлого набора', a: x.a, star: x.star}));
 }
 
 function interviewPane(p, canEdit) {
@@ -80,6 +104,8 @@ function interviewPane(p, canEdit) {
   const S = SCRIPT[p.type] || SCRIPT.client;
   const word = p.type === 'client' ? 'интервью' : p.type === 'partner' ? 'встречу' : 'созвон';
   const done = p.s2 === 'done';
+  const blocks = groupByBlock(p.type, 'talk', qs);
+  const legacy = legacyTalk(p);
   return `<div class="iv">
     <div class="iv-main">
       <div class="iv-bar">
@@ -93,11 +119,14 @@ function interviewPane(p, canEdit) {
         ${done ? `<span class="st good">${p.callDur ? `прошёл · ${Math.round(p.callDur / 60)} мин` : 'прошёл'}</span>` : ''}
       </div>
       <details class="iv-script" ${n ? '' : 'open'}><summary>Начало разговора</summary><ol>${S.intro.map(x => `<li>${esc(x)}</li>`).join('')}</ol></details>
-      <div class="talk">${qs.map((q, i) => { const x = talk[q.id] || {}; const isAsked = asked(q); return `<div class="tq ${x.a ? 'filled' : ''} ${cur && cur.id === q.id ? 'cur' : ''} ${isAsked ? 'asked' : ''}">
+      ${blocks.length > 1 ? `<nav class="iv-nav" aria-label="Блоки интервью">${blocks.map((g, bi) => { const k = g.qs.filter(asked).length; return `<a href="#" data-iv-go="${bi}" class="${k === g.qs.length ? 'done' : g.qs.includes(cur) ? 'cur' : ''}"><b>${esc(g.name)}</b><small>${k}/${g.qs.length}</small></a>`; }).join('')}</nav>` : ''}
+      <div class="talk">${blocks.map((g, bi) => `${blocks.length > 1 ? `<h3 class="iv-bh" id="ivb-${bi}">${esc(g.name)}<small>${g.qs.filter(asked).length} из ${g.qs.length}</small></h3>` : ''}${g.qs.map(q => { const i = qs.indexOf(q); const x = talk[q.id] || {}; const isAsked = asked(q); return `<div class="tq ${x.a ? 'filled' : ''} ${cur && cur.id === q.id ? 'cur' : ''} ${isAsked ? 'asked' : ''}">
         <div class="tq-h">${canEdit ? `<button class="tq-n" data-asked="${q.id}" title="${isAsked ? 'Задан' : 'Отметить, что вопрос задан'}">${isAsked ? '✓' : i + 1}</button>` : `<i>${i + 1}</i>`}<b>${esc(q.t)}</b>${canEdit ? `<button class="star ${x.star ? 'on' : ''}" data-star="${q.id}" title="${x.star ? 'Убрать из цитат' : 'Яркая цитата — попадёт в статистику'}">${icon('star')}</button>` : x.star ? `<span class="star on">${icon('star')}</span>` : ''}</div>
         ${q.why ? `<div class="tq-why">Зачем: ${esc(q.why)}</div>` : ''}
-        <textarea class="textarea" data-talk="${q.id}" placeholder="${T.you === 'ты' ? 'Что ответила' : 'Что ответили'}…" ${canEdit ? '' : 'readonly'}>${esc(x.a || '')}</textarea></div>`; }).join('')}
+        ${(q.pick || []).length ? `<div class="tq-pick" role="group" aria-label="Быстрая метка">${q.pick.map(o => `<button type="button" class="${x.pick === o ? 'on' : ''}" data-pick="${q.id}" data-v="${esc(o)}" ${canEdit ? '' : 'disabled'}>${esc(o)}</button>`).join('')}</div>` : ''}
+        <textarea class="textarea" data-talk="${q.id}" placeholder="${T.you === 'ты' ? 'Что ответила' : 'Что ответили'}…" ${canEdit ? '' : 'readonly'}>${esc(x.a || '')}</textarea></div>`; }).join('')}`).join('')}
         <div class="tq"><div class="tq-h"><i>＋</i><b>Что ещё важного прозвучало</b></div><textarea class="textarea" data-talk="_extra" placeholder="Всё, что не попало в вопросы" ${canEdit ? '' : 'readonly'}>${esc((talk._extra || {}).a || '')}</textarea></div>
+        ${legacy.length ? `<details class="iv-legacy"><summary>Ответы на вопросы прошлого набора · ${legacy.length}</summary>${legacy.map(x => `<div class="tq filled"><div class="tq-h"><i>·</i><b>${esc(x.t)}</b>${x.star ? `<span class="star on">${icon('star')}</span>` : ''}</div><p class="tq-old">${esc(x.a)}</p></div>`).join('')}</details>` : ''}
       </div>
       <details class="iv-script" open><summary>Завершение</summary><ol>${S.outro.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
         ${['client', 'amb'].includes(p.type) && canEdit ? `<button class="btn sm" data-act="link" data-pid="${p.id}">${icon('link')}Скопировать ссылку для подруги</button>` : ''}</details>
@@ -128,6 +157,17 @@ function wireInterview(root, p) {
     People.patch(p.id, {talk: {[qid]: {...cur, asked: !cur.asked, t: Date.now()}}});
   });
   on(root, 'click', '[data-iv-finish]', () => finishInterview(p.id));
+  /* быстрая метка у открытого вопроса (погода) — одна на вопрос */
+  on(root, 'click', '[data-pick]', (e, el) => {
+    const qid = el.dataset.pick;
+    const cur = (People.get(p.id).talk || {})[qid] || {};
+    People.patch(p.id, {talk: {[qid]: {...cur, pick: cur.pick === el.dataset.v ? '' : el.dataset.v, asked: true, t: Date.now()}}, talkAt: p.talkAt || Date.now()});
+  });
+  on(root, 'click', '[data-iv-go]', (e, el) => {
+    e.preventDefault();
+    const h = $('#ivb-' + el.dataset.ivGo, root);
+    if (h) window.scrollTo({top: h.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth'});
+  });
 }
 
 /* завершить: длительность по таймеру, шаг 2 — «прошёл», дальше — итог */
@@ -153,13 +193,13 @@ async function claudeDraft(p) {
   try { sample = window.claude && typeof window.claude.use === 'function' ? await window.claude.use('sample') : null; } catch (e) { sample = null; }
   if (!sample) throw {code: 'unavailable'};
   const qs = Questions.set(p.type).test, tq = Questions.talk(p.type);
-  const ans = Object.entries(p.answers || {}).map(([id, v]) => { const q = qs.find(x => x.id === id); return q ? `- ${noEmo(q.t)}: ${answerLabels(q, v).map(noEmo).join(', ')}` : ''; }).filter(Boolean).join('\n');
-  const notes = tq.map(q => ((p.talk || {})[q.id] || {}).a ? `- [${q.id}] ${q.t}\n  ${(p.talk[q.id].a || '').trim()}` : '').filter(Boolean).join('\n');
+  const ans = Object.entries(p.answers || {}).map(([id, v]) => { const q = qs.find(x => x.id === id); return q && !['name', 'tg', 'evaId'].includes(id) ? `- ${noEmo(q.t)}: ${answerLabels(q, v).map(noEmo).join(', ')}` : ''; }).filter(Boolean).join('\n');
+  const notes = tq.map(q => { const x = (p.talk || {})[q.id] || {}; return x.a || x.pick ? `- [${q.id}] ${q.t}\n  ${x.pick ? `(${x.pick}) ` : ''}${(x.a || '').trim()}` : ''; }).filter(Boolean).join('\n');
   const extra = ((p.talk || {})._extra || {}).a || '';
   const tags = p.type === 'client' ? INSIGHT_TAGS : RESULT_TAGS[p.type];
   const who = p.type === 'client' ? 'кастдев-интервью с потенциальной клиенткой' : `созвон с ${TYPES[p.type].one.toLowerCase() === 'партнёр' ? 'партнёром' : TYPES[p.type].one.toLowerCase() === 'эксперт' ? 'экспертом' : 'амбассадором'}`;
   const shape = p.type === 'client'
-    ? `{"main": "главный инсайт одной фразой, до 160 знаков", "idea": "что улучшить в продукте: 1–3 пункта через «; »", "tags": ["до 4 меток строго из списка"], "quotes": ["id вопросов (t1, t2…) с самыми яркими ответами, не больше 2"], "why": "одно предложение: на каких ответах основан вывод"}`
+    ? `{"main": "главный инсайт одной фразой, до 160 знаков", "idea": "что улучшить в продукте: 1–3 пункта через «; »", "tags": ["до 4 меток строго из списка"], "quotes": ["id вопросов из квадратных скобок с самыми яркими ответами, не больше 2"], "why": "одно предложение: на каких ответах основан вывод"}`
     : `{"decision": "yes | think | no — подключаем, думает или не сейчас", "tags": ["до 4 меток строго из списка"], "next": "следующий шаг одной фразой", "note": "договорённости и условия, 1–3 предложения", "why": "одно предложение: на каких ответах основан вывод"}`;
   const input = `Ты помогаешь команде Eva Space разобрать ${who}. Eva Space — приложение для женщин 25–45: программа коротких практик под этап жизни, проверенные эксперты, сообщество; подписка 2 900 ₽ в месяц.
 Опирайся только на то, что сказал человек, ничего не выдумывай. Пиши по-русски, коротко и без канцелярита.

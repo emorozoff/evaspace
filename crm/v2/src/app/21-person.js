@@ -2,31 +2,42 @@
    созвона (вопросы + заметки + звёздочка у яркой цитаты), итог и история.
    Всё сохраняется само — кнопки «Сохранить» почти нигде не нужны. */
 
-/* ── анкета кнопками: общая для ручного заполнения ── */
+/* ── анкета кнопками: общая для ручного заполнения, по разделам ── */
 function fillFormHtml(type, answers, prefix = 'fa') {
-  return `<div class="fill">${Questions.test(type).map((q, i) => {
+  let i = 0;
+  const one = q => {
     const v = answers[q.id];
     let ctl = '';
     if (q.k === 'one' || q.k === 'many') {
       const sel = answerLabels(q, v);
-      ctl = `<div class="ans" data-q="${q.id}" data-k="${q.k}" data-max="${q.max || 0}">${(q.o || []).map(o => `<button type="button" class="${sel.includes(o) ? 'on' : ''}" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
+      const oth = sel.find(x => canonLabel(q, x) === q.other && q.other);
+      ctl = `<div class="ans" data-q="${q.id}" data-k="${q.k}" data-max="${q.max || 0}">${(q.o || []).map(o => `<button type="button" class="${sel.some(x => canonLabel(q, x) === plainLabel(o)) ? 'on' : ''}" data-v="${esc(o)}">${esc(noEmo(o))}</button>`).join('')}
+        ${q.other ? `<button type="button" class="${oth ? 'on' : ''}" data-v="${esc(q.other)}" data-other>${esc(q.other)}</button><input class="input sm ans-oth" value="${esc(oth ? otherText(q, oth) : '')}" placeholder="Свой вариант" ${oth ? '' : 'hidden'}>` : ''}</div>`;
     } else if (q.k === 'scale') {
-      ctl = `<div class="scale num-scale" data-q="${q.id}" data-k="scale">${[1, 2, 3, 4, 5].map(j => `<button type="button" class="${Number(v) === j ? 'on' : ''}" data-v="${j}">${j}</button>`).join('')}<span class="scale-ends">1 — ${esc(q.lo || 'совсем нет')}, 5 — ${esc(q.hi || 'очень')}</span></div>`;
+      const n = scaleN(q);
+      ctl = `<div class="scale num-scale ${n > 5 ? 's10' : ''}" data-q="${q.id}" data-k="scale">${Array.from({length: n}, (_, j) => `<button type="button" class="${Number(v) === j + 1 ? 'on' : ''}" data-v="${j + 1}">${j + 1}</button>`).join('')}<span class="scale-ends">1 — ${esc(q.lo || 'совсем нет')}, ${n} — ${esc(q.hi || 'очень')}</span></div>`;
+    } else if (q.k === 'date') {
+      ctl = `<input class="input" type="date" data-q="${q.id}" data-k="date" value="${esc(v || '')}" style="max-width:200px">`;
     } else if (q.k === 'text') {
       ctl = `<textarea class="textarea" data-q="${q.id}" data-k="text" placeholder="${esc(q.ph || '')}">${esc(v || '')}</textarea>`;
     } else {
       ctl = `<input class="input" data-q="${q.id}" data-k="short" value="${esc(v || '')}" placeholder="${esc(q.ph || '')}">`;
     }
-    return `<div class="fq"><div class="fq-t"><i>${i + 1}</i><span>${esc(q.t)}${q.k === 'many' && q.max ? ` <span class="fq-hint">· до ${q.max}</span>` : ''}</span></div><div class="fq-v">${ctl}</div></div>`;
-  }).join('')}</div>`;
+    return `<div class="fq"><div class="fq-t"><i>${++i}</i><span>${esc(noEmo(q.t))}${q.k === 'many' && q.max ? ` <span class="fq-hint">· до ${q.max}</span>` : ''}</span></div><div class="fq-v">${ctl}</div></div>`;
+  };
+  return `<div class="fill">${groupByBlock(type, 'test', Questions.test(type)).map(g => `${g.name ? `<h3 class="fill-h">${g.emo ? `<span aria-hidden="true">${g.emo}</span>` : ''}${esc(g.name)}</h3>` : ''}${g.qs.map(one).join('')}`).join('')}</div>`;
 }
 function wireFill(el) {
   on(el, 'click', '.ans button', (e, b) => {
     const box = b.closest('.ans');
-    if (box.dataset.k === 'one') { $$('button', box).forEach(x => x !== b && x.classList.remove('on')); b.classList.toggle('on'); return; }
-    const max = Number(box.dataset.max) || 99;
-    if (!b.classList.contains('on') && $$('button.on', box).length >= max) { toast(`Можно выбрать до ${max}`); return; }
-    b.classList.toggle('on');
+    const oth = $('.ans-oth', box);
+    if (box.dataset.k === 'one') { $$('button', box).forEach(x => x !== b && x.classList.remove('on')); b.classList.toggle('on'); }
+    else {
+      const max = Number(box.dataset.max) || 99;
+      if (!b.classList.contains('on') && $$('button.on', box).length >= max) { toast(`Можно выбрать до ${max}`); return; }
+      b.classList.toggle('on');
+    }
+    if (oth) { oth.hidden = !$('[data-other].on', box); if (!oth.hidden && b.hasAttribute('data-other')) oth.focus(); }
   });
   on(el, 'click', '.scale button', (e, b) => { const box = b.closest('.scale'); $$('button', box).forEach(x => x !== b && x.classList.remove('on')); b.classList.toggle('on'); });
 }
@@ -34,23 +45,57 @@ function readFill(el) {
   const out = {};
   $$('[data-q]', el).forEach(n => {
     const id = n.dataset.q, k = n.dataset.k;
-    if (k === 'one') { const b = $('button.on', n); if (b) out[id] = b.dataset.v; }
-    else if (k === 'many') { const L = $$('button.on', n).map(b => b.dataset.v); if (L.length) out[id] = L; }
+    const label = b => { if (!b.hasAttribute('data-other')) return b.dataset.v; const t = ($('.ans-oth', n) || {}).value || ''; return t.trim() ? `${b.dataset.v}${OTHER_SEP}${t.trim()}` : b.dataset.v; };
+    if (k === 'one') { const b = $('button.on', n); if (b) out[id] = label(b); }
+    else if (k === 'many') { const L = $$('button.on', n).map(label); if (L.length) out[id] = L; }
     else if (k === 'scale') { const b = $('button.on', n); if (b) out[id] = Number(b.dataset.v); }
     else { const v = n.value.trim(); if (v) out[id] = v; }
   });
   return out;
 }
+
+/* ответы старой анкеты, которых нет в новом наборе вопросов */
+const LEGACY_Q = {
+  client: {age: {id: 'age', k: 'one', t: 'Сколько тебе лет (прошлая анкета)'}, fit: {id: 'fit', k: 'scale', n: 5, t: 'Насколько откликается идея Евы (прошлая анкета)'}},
+};
+const emptyAns = v => v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length);
+/* шкала 1–10 полоской: красная — низко, жёлтая — середина, зелёная — хорошо */
+function gaugeHtml(v, n = 10) {
+  const x = Number(v) || 0, share = x / n;
+  return `<span class="gauge ${share <= .4 ? 'lo' : share < .7 ? 'mid' : 'hi'}"><b>${x}</b><small>/${n}</small><i><u style="width:${(share * 100).toFixed(0)}%"></u></i></span>`;
+}
+function answerValHtml(q, v) {
+  if (q.k === 'scale') return gaugeHtml(v, scaleN(q));
+  if (q.k === 'date') { const a = ageFromBirth(v); return `<em>${esc(dateLabel(v))}${a !== null ? ` · ${a} ${plural(a, 'год', 'года', 'лет')}` : ''}</em>`; }
+  if (['short', 'text'].includes(q.k)) return `<em>${esc(answerLabels(q, v).join(''))}</em>`;
+  return answerLabels(q, v).map(l => { const t = otherText(q, l); return `<span class="${t ? 'own' : ''}">${esc(t ? `${q.other}: ${t}` : canonLabel(q, l))}</span>`; }).join('');
+}
+/* коротко о клиентке — то, что важно увидеть за три секунды */
+function portraitHtml(answers) {
+  const a = answers || {};
+  const Q = id => Questions.find('client', id);
+  const lab = id => (emptyAns(a[id]) || !Q(id) ? '' : answerLabels(Q(id), a[id]).map(l => { const t = otherText(Q(id), l); return t || canonLabel(Q(id), l); }).join(', '));
+  const age = ageFromBirth(a.birth);
+  const country = lab('country');
+  const facts = [age !== null ? `${age} ${plural(age, 'год', 'года', 'лет')}` : ageGroupOf(a), [a.city, country && country !== 'Россия' ? country : ''].filter(Boolean).join(', '), lab('status'), lab('job'), lab('stage')].filter(Boolean);
+  const gauges = [['energy', 'Энергия'], ['happy', 'Довольна жизнью'], ['health', 'Здоровье']].filter(([id]) => !emptyAns(a[id]));
+  const chips = [['Беспокоит', lab('pain')], ['Важнее всего', lab('goal')], ['Время на себя', [lab('time'), lab('when')].filter(Boolean).join(', ').toLowerCase()], ['Готова платить', lab('price')]].filter(x => x[1]);
+  if (!facts.length && !gauges.length && !chips.length) return '';
+  return `<div class="portrait">
+    ${facts.length ? `<div class="pt-facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div>` : ''}
+    ${gauges.length ? `<div class="pt-gauges">${gauges.map(([id, l]) => `<div><span>${l}</span>${gaugeHtml(a[id], scaleN(Q(id)))}</div>`).join('')}</div>` : ''}
+    ${chips.length ? `<div class="pt-chips">${chips.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>` : ''}
+  </div>`;
+}
 function answersView(type, answers) {
   const qs = Questions.set(type).test;
-  const ids = Object.keys(answers || {});
+  const ids = Object.keys(answers || {}).filter(id => !emptyAns(answers[id]));
   if (!ids.length) return '';
-  const ordered = [...qs.filter(q => ids.includes(q.id)), ...ids.filter(id => !qs.some(q => q.id === id)).map(id => ({id, t: id, k: 'short'}))];
-  return ordered.map((q, i) => {
-    const labels = q.k === 'scale' ? [`${answers[q.id]} из 5`] : answerLabels(q, answers[q.id]).map(noEmo);
-    return `<div class="fq"><div class="fq-t"><i>${i + 1}</i><span>${esc(noEmo(q.t))}${q.hidden ? ' <span class="fq-hint">· скрытый вопрос</span>' : ''}</span></div>
-      <div class="fq-v answer-val">${['short', 'text'].includes(q.k) ? `<em>${esc(labels.join(''))}</em>` : labels.map(l => `<span>${esc(l)}</span>`).join('')}</div></div>`;
-  }).join('');
+  const legacy = LEGACY_Q[type] || {};
+  const list = [...qs.filter(q => ids.includes(q.id)), ...ids.filter(id => !qs.some(q => q.id === id)).map(id => legacy[id] || {id, t: id, k: 'short'})];
+  const row = q => `<div class="ar"><span class="ar-q">${esc(noEmo(q.t).replace(/\s*Выбери до \S+$/, ''))}${q.hidden ? ' · скрытый вопрос' : ''}</span><div class="ar-v answer-val">${answerValHtml(q, answers[q.id])}</div></div>`;
+  return `${type === 'client' ? portraitHtml(answers) : ''}
+    <div class="ablocks">${groupByBlock(type, 'test', list).map(g => `<section class="ab"><h3>${g.emo ? `<span aria-hidden="true">${g.emo}</span>` : ''}${esc(g.name || 'Ответы')}<small>${g.qs.length}</small></h3>${g.qs.map(row).join('')}</section>`).join('')}</div>`;
 }
 
 /* черновики итога от Claude — только в этом окне, пока не применили */
@@ -142,6 +187,7 @@ App.register('person', {
             <span>${esc(T.one)}</span>
             ${People.sub(p) ? `<span>${esc(People.sub(p))}</span>` : ''}
             ${tgLink}
+            ${p.evaId ? `<span title="ID в приложении Ева">EVA ID ${esc(p.evaId)}</span>` : ''}
             ${p.contact ? `<span>контакт: ${esc(p.contact)}</span>` : ''}
             ${ref ? `<span>по приглашению <a href="#p-${ref.id}">${esc(People.name(ref))}</a></span>` : p.ref ? `<span>по приглашению ${esc(p.ref)}</span>` : ''}
             ${invited.length ? `<span>по ссылке пришли: ${invited.length}</span>` : ''}</div></div>

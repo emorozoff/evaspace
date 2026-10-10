@@ -65,7 +65,8 @@ const People = {
     if (p.type === 'expert') return [p.topic || a.topic || (p.dirs || []).map(noEmo).join(', '), p.city].filter(Boolean).join(' · ');
     if (p.type === 'partner') return [noEmo(p.cat), p.city].filter(Boolean).join(' · ');
     if (p.type === 'amb') return [a.size ? `аудитория ${noEmo(a.size)}` : '', p.city].filter(Boolean).join(' · ');
-    return [a.age ? noEmo(a.age) : '', p.city, a.stage ? noEmo(a.stage) : ''].filter(Boolean).join(' · ');
+    const age = ageFromBirth(a.birth);
+    return [age !== null ? `${age} ${plural(age, 'год', 'года', 'лет')}` : ageGroupOf(a) || '', p.city, a.stage ? canonLabel(Questions.find('client', 'stage'), a.stage) : ''].filter(Boolean).join(' · ');
   },
   uniqueCode(name) {
     let code = refCodeFor(name || 'eva');
@@ -114,7 +115,7 @@ const People = {
 };
 
 /* ── ответы анкеты: из ссылки или вручную ── */
-const KEY_FIELDS = ['name', 'city', 'tg', 'cat', 'dirs', 'contact'];
+const KEY_FIELDS = ['name', 'city', 'tg', 'cat', 'dirs', 'contact', 'evaId'];
 function keyPatch(p, type, answers) {
   const out = {};
   Questions.set(type).test.forEach(q => {
@@ -142,26 +143,56 @@ const Import = {
 };
 
 /* ── статистика ответов ── */
-/* шкала 1–5 цифрами: крайние значения с подписью, без смайлов */
-const scaleName = (q, i) => (i === 0 ? `1 — ${q.lo || 'совсем нет'}` : i === 4 ? `5 — ${q.hi || 'очень'}` : String(i + 1));
+/* шкала цифрами: крайние значения с подписью, без смайлов */
+const scaleName = (q, i) => { const n = scaleN(q); return i === 0 ? `1 — ${q.lo || 'совсем нет'}` : i === n - 1 ? `${n} — ${q.hi || 'очень'}` : String(i + 1); };
+/* дата рождения в статистике — это возраст группами */
+const AGE_Q = {id: 'age', k: 'one', t: 'Возраст', o: AGE_GROUPS};
 const Stats = {
+  /* по каждому вопросу с вариантами: сколько ответили, сколько выбрали
+     каждый вариант (старые подписи и смайлы считаются вместе с новыми),
+     среднее у шкалы и свои ответы из «Другое» */
   agg(type, list = People.all(type)) {
     const answered = list.filter(p => p.answers && Object.keys(p.answers).length);
-    return Questions.test(type).filter(q => ['one', 'many', 'scale'].includes(q.k)).map(q => {
-      const counts = {};
+    return Questions.test(type).filter(q => ['one', 'many', 'scale', 'date'].includes(q.k)).map(q => {
+      if (q.k === 'date') return q.id === 'birth' ? this.ageAgg(answered) : null;
+      const counts = {}, others = [];
       let n = 0, total = 0;
       answered.forEach(p => {
         const v = p.answers[q.id];
         if (v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length)) return;
         n++;
-        if (q.k === 'scale') { total += Number(v) || 0; counts[v] = (counts[v] || 0) + 1; return; }
-        answerLabels(q, v).forEach(l => { counts[l] = (counts[l] || 0) + 1; });
+        if (q.k === 'scale') { const x = Number(v) || 0; total += x; counts[x] = (counts[x] || 0) + 1; return; }
+        const seen = new Set();
+        answerLabels(q, v).forEach(l => {
+          const c = canonLabel(q, l);
+          if (!c || seen.has(c)) return;
+          seen.add(c);
+          counts[c] = (counts[c] || 0) + 1;
+          const t = otherText(q, l);
+          if (t) others.push({p, text: t});
+        });
       });
-      const opts = q.k === 'scale' ? [1, 2, 3, 4, 5].map(String) : (q.o || []);
-      const rows = opts.map((o, i) => ({i, name: q.k === 'scale' ? scaleName(q, i) : o, v: counts[o] || 0})).filter(r => r.v || q.k !== 'many');
-      Object.keys(counts).forEach(k => { if (q.k !== 'scale' && !opts.includes(k)) rows.push({i: -1, name: k, v: counts[k]}); });
-      return {q, n, rows, avg: q.k === 'scale' && n ? total / n : null};
-    });
+      const N = scaleN(q);
+      const opts = q.k === 'scale' ? Array.from({length: N}, (_, i) => String(i + 1)) : (q.o || []).map(plainLabel);
+      /* нули оставляем только у шкал и диапазонов (время, цена) — так видна форма распределения */
+      const ordered = q.k === 'scale' || opts.some(o => /\d/.test(o));
+      const rows = opts.map((o, i) => ({i, name: q.k === 'scale' ? scaleName(q, i) : o, v: counts[o] || 0})).filter(r => r.v || (q.k !== 'many' && ordered));
+      if (q.other && counts[q.other]) rows.push({i: -2, name: q.other, v: counts[q.other]});
+      Object.keys(counts).forEach(k => { if (q.k !== 'scale' && !opts.includes(k) && k !== q.other) rows.push({i: -1, name: k, v: counts[k]}); });
+      return {q, n, rows, avg: q.k === 'scale' && n ? total / n : null, others};
+    }).filter(Boolean);
+  },
+  /* возраст группами: из даты рождения, у старых анкет — из ответа «Сколько тебе лет» */
+  ageAgg(list) {
+    const counts = {};
+    let n = 0;
+    list.forEach(p => { const g = ageGroupOf(p.answers); if (g) { n++; counts[g] = (counts[g] || 0) + 1; } });
+    return {q: AGE_Q, n, rows: AGE_GROUPS.map((o, i) => ({i, name: o, v: counts[o] || 0})), avg: null, others: []};
+  },
+  /* средние по шкалам 1–10 — «Состояние» */
+  avgOf(list, id) {
+    const v = list.map(p => Number((p.answers || {})[id])).filter(x => x > 0);
+    return v.length ? {avg: v.reduce((a, b) => a + b, 0) / v.length, n: v.length} : null;
   },
   top(a) { const r = a.rows.slice().sort((x, y) => y.v - x.v)[0]; return r && r.v ? r : null; },
   funnel(type) { const L = People.all(type); return {all: L.length, c1: L.filter(p => People.col(p) === 1).length, c2: L.filter(p => People.col(p) === 2).length, c3: L.filter(p => People.col(p) === 3).length, yes: L.filter(People.connected).length, answered: L.filter(p => p.s1 === 'done').length}; },

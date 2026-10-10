@@ -31,6 +31,7 @@ App.register('home', {
       ${pageHead(`${hello}${first && first !== 'Вы' ? ', ' + esc(first) : ''} 👋`, `${cap(dayWd(today()))} · в базе ${all.length} ${plural(all.length, 'человек', 'человека', 'человек')}`,
         People.canEdit() ? `<button class="btn" data-paste>${icon('inbox')}Вставить ответы</button>` : '')}
       ${!all.length ? `<div class="welcome"><span class="e">🌱</span><div><b>Начнём?</b><p>Добавьте первого человека в любом разделе или загрузите пример в настройках, чтобы посмотреть, как всё работает.</p></div></div>` : ''}
+      ${Who.can('team') && Team.pending().length ? `<a class="warnline team-banner" href="#team"><b>${Team.pending().length} ${plural(Team.pending().length, 'человек ждёт', 'человека ждут', 'человек ждут')} подтверждения в команду:</b> ${esc(Team.pending().slice(0, 3).map(t => Team.name(t)).join(', '))} — открыть «Команду»</a>` : ''}
       <h2 class="h-sm">Что сделать</h2>
       <div class="todo">
         ${tile(1, 'Анкета', toSend, 'отправить ссылку на анкету', waiting.length ? `ещё ${waiting.length} ${plural(waiting.length, 'ждёт', 'ждут', 'ждут')} ответа` : 'человек ответит сам за 3 минуты')}

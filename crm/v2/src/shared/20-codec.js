@@ -73,11 +73,17 @@ function applyDiff(type, diff) {
   if (Array.isArray(diff.s)) { const pos = id => { const i = diff.s.indexOf(id); return i < 0 ? 999 : i; }; out.sort((a, b) => pos(a.id) - pos(b.id)); }
   return out;
 }
-/* ответ вопроса «как текст»: индексы вариантов → подписи */
+/* ответ вопроса «как текст»: индексы вариантов → подписи, шкала → «7 из 10»,
+   дата → «12 марта 1992» */
+const BIRTH_MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+function dateLabel(v) {
+  const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${Number(m[3])} ${BIRTH_MON[Number(m[2]) - 1] || ''} ${m[1]}` : String(v);
+}
 function answerLabels(q, v) {
-  if (v === undefined || v === null || v === '') return [];
-  if (q.k === 'one') return [typeof v === 'number' ? (q.o || [])[v] : v].filter(x => x !== undefined);
-  if (q.k === 'many') return (Array.isArray(v) ? v : [v]).map(x => (typeof x === 'number' ? (q.o || [])[x] : x)).filter(x => x !== undefined);
-  if (q.k === 'scale') return [`${SCALE_EMO[(v | 0) - 1] || ''} ${v} из 5`];
+  if (v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length)) return [];
+  if (q.k === 'one' || q.k === 'many') return (Array.isArray(v) ? v : [v]).map(x => (typeof x === 'number' ? (q.o || [])[x] : x)).filter(x => x !== undefined && x !== '');
+  if (q.k === 'scale') return [`${v} из ${scaleN(q)}`];
+  if (q.k === 'date') return [dateLabel(v)];
   return [String(v)];
 }

@@ -7,7 +7,7 @@ App.register('settings', {
     const own = Who.can('team') && !Who.readOnly();
     const canEdit = People.canEdit();
     const s = settings();
-    const team = Team.all(true);
+    const team = Team.all();
     root.innerHTML = `
       ${pageHead('Настройки', 'Команда, единая ссылка, пример данных и выгрузка ответов.')}
       <div class="two">
@@ -18,12 +18,9 @@ App.register('settings', {
             <li><b>Рефералка.</b> Если по ссылке придёт подруга, она выберет «Меня пригласили», и в её карточке будет видно, кто её привёл.</li></ol>
           <label class="field" style="margin-top:10px"><span>Адрес публичной анкеты</span><input class="input" id="stAnk" value="${esc(s.anketaUrl || '')}" ${own ? '' : 'disabled'}><small>Анкета — отдельная страница: откройте к ней доступ по ссылке, чтобы её видели люди вне команды.</small></label>
         </div>
-        <div class="card"><div class="card-head"><h2>Команда</h2></div>
-          <div class="stack">${team.map(m => `<div class="row" style="align-items:center;flex-wrap:nowrap">${Team.av(m)}<span style="flex:1">${esc(Team.name(m))}${m.uid === Who.uid ? ' <span class="muted">· это вы</span>' : ''}</span>
-            ${own && m.uid !== Who.uid ? `<select class="select sm" data-role="${m.id}" style="width:auto">${Object.entries(ROLES).map(([k, r]) => `<option value="${k}" ${roleOf(m.role) === k ? 'selected' : ''}>${r.name}</option>`).join('')}</select>` : `<span class="pill ${ROLES[roleOf(m.role)].tone}">${ROLES[roleOf(m.role)].name}</span>`}</div>`).join('')}</div>
-          <p class="note" style="margin-top:10px">Чтобы добавить коллегу, откройте ей доступ к этой странице через «Поделиться». При первом входе она появится здесь.</p>
-          ${own ? `<form class="row" id="stAdd" style="margin-top:8px"><input class="input sm" id="stName" placeholder="Имя без входа, например стажёр" style="flex:1"><button class="btn sm" type="submit">${icon('plus')}Добавить</button></form>` : ''}
-        </div>
+        <div class="card"><div class="card-head"><h2>Команда и доступ</h2><a class="note" href="#team">Открыть →</a></div>
+          <p class="note" style="margin-bottom:8px">В команде ${team.length} ${plural(team.length, 'человек', 'человека', 'человек')}${Team.pending().length ? `, ждут подтверждения — ${Team.pending().length}` : ''}${Team.invited().length ? `, приглашены — ${Team.invited().length}` : ''}. Главная — ${esc(Team.headName())}.</p>
+          <p class="note">Новые люди регистрируются сами: с кодом приглашения — сразу, без кода — после подтверждения главной.</p></div>
         <div class="card"><div class="card-head"><h2>Выгрузить ответы</h2></div>
           <p class="note" style="margin-bottom:10px">Таблица CSV для Excel или Google Таблиц: одна строка — один человек, столбцы — вопросы анкеты и заметки созвона.</p>
           <div class="row">${Object.keys(TYPES).map(k => `<button class="btn sm" data-csv="${k}">${icon('download')}${groupName(k)}</button>`).join('')}</div></div>
@@ -35,9 +32,6 @@ App.register('settings', {
 
     const ank = $('#stAnk', root);
     if (ank) ank.onchange = () => Store.patch('cfg', 'settings', {anketaUrl: ank.value.trim()});
-    on(root, 'change', '[data-role]', (e, el) => { Store.patch('team', el.dataset.role, {role: el.value}); toast('Роль изменена'); });
-    const add = $('#stAdd', root);
-    if (add) add.onsubmit = e => { e.preventDefault(); const n = $('#stName', root).value.trim(); if (n) Store.add('team', {name: n, role: 'member', joinedAt: Date.now(), order: 30}); };
     on(root, 'click', '[data-demo-load]', async (e, el) => { el.disabled = true; el.textContent = 'Загружаю…'; const n = await Demo.load(); toast(`🧪 Загружено: ${n}`); });
     on(root, 'click', '[data-demo-clear]', async (e, el) => { if (!await confirmPop(el, {text: 'Удалить пример? Ваши записи останутся.', yes: 'Удалить', danger: true})) return; const n = await Demo.clear(); toast(`Удалено: ${n}`); });
     on(root, 'click', '[data-csv]', (e, el) => exportCsv(el.dataset.csv));

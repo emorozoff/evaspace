@@ -47,6 +47,20 @@ const App = {
   },
 
   render(opts = {}) {
+    /* не в команде — сначала регистрация (её можно отложить и просто смотреть) */
+    if ((Who.needsReg() && View.get('reg.later', null) !== Who.uid) || Reg.done) {
+      if ($('#regRoot') && !opts.force) {
+        /* имя из профиля пришло позже — подставляем, не трогая уже введённое */
+        const n = $('#rgName'); if (n && !n.value && Who.names[Who.uid]) n.value = Who.names[Who.uid];
+        return;
+      }
+      this.shell = false;
+      this.cur = null;
+      $('#app').innerHTML = '<div id="regRoot"></div>';
+      renderRegistration($('#regRoot'));
+      document.title = 'Регистрация · Eva CRM 2.0';
+      return;
+    }
     let {id, param} = this.parse();
     if (id === 'import') { this.buildShellOnce(); openImport(param); history.replaceState(null, '', '#home'); id = 'home'; param = null; }
     if (!this.pages[id]) { id = 'home'; param = null; }
@@ -59,6 +73,17 @@ const App = {
     const y = window.scrollY;
     try { this.pages[id].render(page, param); }
     catch (e) { console.error(e); page.innerHTML = `<div class="empty"><b>Страница не открылась 😕</b>${esc(e.message || e)}</div>`; }
+    /* заявка ждёт подтверждения или смотрят без регистрации — напоминаем */
+    const st = Who.status();
+    if (st === 'pending' || (Who.needsReg() && st === null)) {
+      const n = document.createElement('div');
+      n.className = 'warnline reg-banner';
+      n.innerHTML = st === 'pending'
+        ? `Заявка в команду ждёт подтверждения — ${esc(Team.headName())}. Пока CRM открыта только на просмотр.`
+        : 'Вы смотрите CRM без регистрации — только просмотр. <button class="link-btn" data-reg-now>Зарегистрироваться</button>';
+      page.prepend(n);
+      on(n, 'click', '[data-reg-now]', () => { View.set('reg.later', null); this.render({force: true}); });
+    }
     if (this.cur === key) window.scrollTo(0, y); else window.scrollTo(0, 0);
     this.cur = key;
     if (opts.focus) { const el = document.getElementById(opts.focus); if (el) { el.focus(); if (el.setSelectionRange && typeof el.value === 'string') el.setSelectionRange(el.value.length, el.value.length); } }
@@ -86,11 +111,13 @@ const App = {
   paintNav(active) {
     /* у группы одна цифра — сколько в ней людей; что делать, видно на главной */
     $('#nav').innerHTML = NAV.map(n => {
-      const cnt = TYPES[n.id] ? People.all(n.id).length : n.id === 'calendar' ? callsBetween(Date.now() - 3600e3, dateOf(addDays(weekStart(today()), 7)).getTime()).filter(p => p.s2 === 'set').length || null : null;
-      return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${cnt ? `<span class="nav-n">${cnt}</span>` : ''}</a>`;
+      const pend = n.id === 'team' && Who.can('team') ? Team.pending().length : 0;
+      const cnt = TYPES[n.id] ? People.all(n.id).length : n.id === 'calendar' ? callsBetween(Date.now() - 3600e3, dateOf(addDays(weekStart(today()), 7)).getTime()).filter(p => p.s2 === 'set').length || null : pend || null;
+      return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${cnt ? `<span class="nav-n ${pend ? 'hot' : ''}" ${pend ? 'title="Ждут подтверждения"' : ''}>${cnt}</span>` : ''}</a>`;
     }).join('');
     const m = Who.member();
-    $('#meChip').innerHTML = `${m ? Team.av(m) : avatar('Гость')}<div class="who"><b>${esc(m ? Team.name(m) : 'Гость')}</b><span>${esc(ROLES[Who.role()] ? ROLES[Who.role()].name : 'Наблюдатель')}</span></div>`;
+    const st = Who.status();
+    $('#meChip').innerHTML = `<a class="me-link" href="#team" title="Команда и мой профиль">${m ? Team.av(m) : avatar('Гость')}<div class="who"><b>${esc(m ? Team.name(m) : 'Гость')}</b><span>${esc(st === 'pending' ? 'Ждёт подтверждения' : !m ? 'Без регистрации' : (m.head ? 'Главная · ' : '') + (ROLES[Who.role()] ? ROLES[Who.role()].name : 'Наблюдатель'))}</span></div></a>`;
   },
 
   paintSync(s) {
