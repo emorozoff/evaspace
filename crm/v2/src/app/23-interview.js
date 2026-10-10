@@ -222,7 +222,7 @@ ${extra ? `\nЕщё прозвучало:\n${extra}` : ''}
   return clean;
 }
 const CLAUDE_ERR = {
-  unavailable: 'Claude недоступен в этом окне — откройте CRM в Claude.',
+  unavailable: onServer() ? 'Разбор с Claude на своём сервере пока не подключён.' : 'Claude недоступен в этом окне — откройте CRM в Claude.',
   not_granted: 'Доступ к Claude для этой страницы не разрешён.',
   rate_limited: 'Слишком много запросов к Claude — попробуйте через минуту.',
 };

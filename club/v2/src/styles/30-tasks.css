@@ -240,3 +240,6 @@ body.dragging-now, body.dragging-now *{cursor:grabbing !important; user-select:n
 .tm-outcome p{font-size:13.5px; white-space:pre-wrap; overflow-wrap:anywhere; margin-top:3px;}
 .tm-ret{display:flex; flex-direction:column; gap:8px;}
 .tm-ret .btn{align-self:flex-start;}
+
+.t-shown{font-size:13px; color:var(--ink-2); background:var(--gold-soft); border-radius:8px; padding:8px 12px; margin:-6px 0 14px;}
+.t-shown b{color:var(--ink);}

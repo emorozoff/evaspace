@@ -13,25 +13,27 @@ const CF_MONTHS = ['2026-09', '2026-10', '2026-11', '2026-12'];
 const ROLES = {
   owner:    {name: 'Основатель',   tone: 'gold',   about: 'видит и меняет всё: стратегию, деньги, доступы'},
   lead:     {name: 'Руководитель', tone: 'violet', about: 'ведёт задачи команды, принимает работу, вносит деньги'},
+  finance:  {name: 'Финансы',      tone: 'gold',   about: 'все деньги с зарплатами, подписки, возвраты, сбои оплат и выплаты'},
   member:   {name: 'Команда',      tone: 'rose',   about: 'свои задачи, цифры продаж, стратегия и материалы'},
   investor: {name: 'Инвестор',     tone: 'good',   about: 'только смотрит: главная, стратегия, отчёты, материалы'},
 };
 const roleOf = r => (ROLES[r] ? r : 'member'); // старые роли (эксперт и т. п.) считаем командой
 
 const PERMS = {
-  'tasks.view':     ['owner', 'lead', 'member'],
-  'tasks.edit':     ['owner', 'lead', 'member'],
-  'tasks.manage':   ['owner', 'lead'],            // принимать, возвращать, править любые
-  'money.view':     ['owner', 'lead', 'investor'],
-  'money.edit':     ['owner', 'lead'],
-  'payroll.view':   ['owner'],                    // зарплаты по людям
-  'sales.edit':     ['owner', 'lead', 'member'],
-  'cf.view':        ['owner', 'lead', 'investor'],
+  'tasks.view':     ['owner', 'lead', 'finance', 'member'],
+  'tasks.edit':     ['owner', 'lead', 'finance', 'member'],
+  'tasks.manage':   ['owner', 'lead', 'finance'], // принимать, возвращать, править любые
+  'money.view':     ['owner', 'lead', 'finance', 'investor'],
+  'money.edit':     ['owner', 'lead', 'finance'],
+  'payroll.view':   ['owner', 'finance'],         // зарплаты по людям
+  'fin.ops':        ['owner', 'lead', 'finance'], // возвраты, сбои оплат, заказы, выплаты — с данными клиентов
+  'sales.edit':     ['owner', 'lead', 'finance', 'member'],
+  'cf.view':        ['owner', 'lead', 'finance', 'investor'],
   'strategy.edit':  ['owner'],
-  'strategy.check': ['owner', 'lead'],            // отмечать пункты целей
+  'strategy.check': ['owner', 'lead', 'finance'], // отмечать пункты целей
   'settings.edit':  ['owner'],
   'team.manage':    ['owner'],
-  'materials.team': ['owner', 'lead', 'member'],
+  'materials.team': ['owner', 'lead', 'finance', 'member'],
 };
 
 /* ── разделы ── */
@@ -40,12 +42,12 @@ const NAV = [
   {id: 'strategy', name: 'Стратегия', icon: 'target'},
   {id: 'tasks',    name: 'Задачи',    icon: 'check', perm: 'tasks.view'},
   {id: 'calendar', name: 'Календарь', icon: 'cal', perm: 'tasks.view'},
-  {id: 'money',    name: 'Деньги',    icon: 'wallet', perm: 'money.view'},
+  {id: 'money',    name: 'Финансы',   icon: 'wallet', perm: 'money.view'},
   {id: 'reports',  name: 'Отчёты',    icon: 'chart'},
   {id: 'metrics',  name: 'Метрики',   icon: 'funnel'},
   {id: 'team',     name: 'Команда',   icon: 'users', perm: 'tasks.view'},
   /* Eva CRM — отдельный артефакт; в меню — ссылка и число созвонов недели */
-  {id: 'crm',      name: 'CRM',       icon: 'ext', perm: 'tasks.view', href: 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA'},
+  {id: 'crm',      name: 'CRM',       icon: 'ext', perm: 'tasks.view', href: window.EvaServer ? window.EvaServer.urls.crm : 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA'},
 ];
 
 /* ── три кита и управление ── */
@@ -83,13 +85,18 @@ const OUT_CATS = {
   infra:     'Сервисы и платформа',
   marketing: 'Маркетинг и трафик',
   referral:  'Реферальные выплаты',
+  authors:   'Выплаты авторам курсов',
+  sellers:   'Выплаты продавцам маркетплейса',
+  goods:     'Закупка товаров',
+  refunds:   'Возвраты клиентам',
   legal:     'Юристы и документы',
   acquiring: 'Эквайринг',
   tax:       'Налоги',
   other:     'Прочие расходы',
 };
 const IN_CATS = {
-  courses:  'Курсы и маркет',
+  courses:  'Курсы',
+  market:   'Маркетплейс',
   partners: 'Партнёрства',
   other:    'Прочие приходы',
 };
@@ -113,6 +120,7 @@ const PLAN_GROUPS = {
 const DEFAULT_SETTINGS = {
   scenario: 'goal',
   price: 2900,          // месячная подписка, ₽
+  priceYear: 29000,     // годовая подписка, ₽
   convPay: 0.05,        // регистрация → оплата
   convReg: 0.02,        // охват → регистрация (= просмотр × переход × регистрация)
   retention: 0.5,       // продлевают в следующем месяце

@@ -195,16 +195,22 @@ App.register('calendar', {
     on(root, 'click', '[data-gcal-retry]', () => { Gcal._init = null; Gcal.err = null; Gcal.conn = 'checking'; Gcal.week = {}; App.render(); });
     if (tab === 'week') wireWeek(root, canEdit);
     if (tab === 'week' && Gcal.conn === 'ready' && !Gcal.week[ws]) Gcal.loadWeek(ws);
+    /* свой сервер: только что вернулись из окна Google */
+    if (onServer()) {
+      const back = window.EvaServer.gcal.just();
+      if (back === 'ok') toast('Google Календарь подключён: новые созвоны будут появляться в нём сами');
+      else if (back) toast('Google Календарь не подключился: доступ не подтверждён. Нажмите «Подключить» ещё раз.', {error: true});
+    }
   },
 });
 
 function gcalCard(ws) {
   const c = Gcal.conn;
   if (c === 'checking') return '<div class="gc-card slim"><i class="dot"></i><span>Проверяю Google Календарь…</span></div>';
-  if (c === 'off') return '<div class="gc-card slim off"><i class="dot"></i><span><b>Google Календарь подключается, когда CRM открыта в Claude.</b> Здесь созвоны живут только в CRM.</span></div>';
+  if (c === 'off') return '<div class="gc-card slim off"><i class="dot"></i><span><b>' + (onServer() ? 'Google Календарь на этом сервере ещё не настроен.' : 'Google Календарь подключается, когда CRM открыта в Claude.') + '</b> Здесь созвоны живут только в CRM.</span></div>';
   if (c === 'error' && Gcal.err) return `<div class="gc-card warn"><span><b>Google Календарь не отвечает</b><br>${esc(Gcal.err.text)}</span><span class="sp"></span><button class="btn sm" data-gcal-retry>Проверить снова</button></div>`;
   if (c === 'denied') return '<div class="gc-card warn"><span><b>Доступ к календарю не разрешён.</b> Обновите страницу и нажмите «Разрешить», когда Claude спросит.</span></div>';
-  if (c === 'prompt') return `<div class="gc-card"><span><b>Подключите свой Google Календарь</b><br>Созвоны сами встанут в ваш календарь с пометкой «CRM», а в сетке будет видно, когда вы заняты. Штаб увидит созвоны CRM в общем календаре. Claude спросит разрешение — нажмите «Разрешить».</span><span class="sp"></span><button class="btn primary" data-gcal-connect>Подключить Google Календарь</button></div>`;
+  if (c === 'prompt') return `<div class="gc-card"><span><b>Подключите свой Google Календарь</b><br>Созвоны сами встанут в ваш календарь с пометкой «CRM», а в сетке будет видно, когда вы заняты. Штаб увидит созвоны CRM в общем календаре. ${onServer() ? 'Откроется окно Google — выберите аккаунт и разрешите доступ.' : 'Claude спросит разрешение — нажмите «Разрешить».'}</span><span class="sp"></span><button class="btn primary" data-gcal-connect>Подключить Google Календарь</button></div>`;
   const w = Gcal.week[ws];
   const mine = Store.all('people').filter(p => Gcal.mine(p)).length;
   return `<div class="gc-card slim ok"><i class="dot"></i><span><b>Google Календарь подключён</b> · ваших созвонов CRM в нём: ${mine} · ${w && w.loading ? 'загружаю неделю…' : w && w.err ? esc(w.err.text) : w ? 'неделя обновлена ' + timeAgo(w.at) : ''}</span><span class="sp"></span>

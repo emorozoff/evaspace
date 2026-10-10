@@ -419,6 +419,15 @@ const Q_BLOCKS = {
   },
 };
 /* вопросы по разделам в порядке появления; без раздела — «Дополнительно» */
+/* версия стартового набора. Когда набор меняется целиком (кастдев 2.0 по таблице V2),
+   сохранённые правки команды для прежнего набора не должны его заслонять: из них
+   остаются только вопросы, которые команда добавила сама (их id нет в Q_PREV). */
+const Q_VER = {client: 2};
+const Q_PREV = {client: {
+  test: ['name', 'age', 'city', 'stage', 'goal', 'pain', 'time', 'when', 'tried', 'spend', 'formats', 'price', 'fit', 'source', 'call', 'tg'],
+  talk: ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12', 't13', 't14', 't15'],
+}};
+
 function groupByBlock(type, part, qs) {
   const names = ((Q_BLOCKS[type] || {})[part]) || {};
   const out = [];
@@ -534,7 +543,8 @@ const Codec = {
    подменяем, новые добавляем в конец */
 function applyDiff(type, diff) {
   const base = (Q_DEFAULT[type] || {test: []}).test.map(q => ({...q}));
-  if (!diff) return base;
+  /* ссылка выдана до смены набора вопросов — её правки относятся к прежнему набору */
+  if (!diff || (diff.v || 1) < (Q_VER[type] || 1)) return base;
   const hide = new Set(diff.h || []);
   const changed = Object.fromEntries((diff.c || []).map(q => [q.id, q]));
   const out = base.filter(q => !hide.has(q.id)).map(q => (changed[q.id] ? {...q, ...changed[q.id]} : q));
@@ -567,7 +577,8 @@ function answerLabels(q, v) {
    разделы: на вводном экране — оглавление, над вопросом — раздел и точки
    его вопросов. */
 
-const CRM_URL = 'http://localhost:8766/crm/v2/index.html';
+/* на своём сервере анкета живёт по адресу /anketa/, CRM — рядом, в /crm/ */
+const CRM_URL = location.pathname.startsWith('/anketa') ? location.origin + '/crm/' : 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA';
 const $ = (s, r = document) => r.querySelector(s);
 const ESC = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'};
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ESC[c]);

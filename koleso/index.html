@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Колесо баланса Ева</title>
+<meta name="description" content="Колесо баланса Ева: раз в квартал оцените 16 сфер жизни и смотрите, как меняется ваше колесо.">
+<meta name="theme-color" content="#1A171F">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Колесо Ева">
+<meta property="og:title" content="Колесо баланса Ева">
+<meta property="og:description" content="Раз в квартал оцените 16 сфер жизни и смотрите, как меняется ваше колесо.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Unbounded:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* Колесо баланса Ева — дизайн-система Eva Space v2: графит + приглушённая фуксия */
+:root{
+  --ink:#111014; --ink-2:#1C1A21; --ink-3:#2A272F;
+  --paper:#F7F6F4; --surface:#FFFFFF; --surface-2:#F1EFEC;
+  --muted:#7E7A85; --line:rgba(17,16,20,.09); --line-2:rgba(17,16,20,.16);
+  --accent:#A8375C; --accent-2:#C2506F; --accent-soft:#F7E9EE;
+  --gold:#B8894A; --gold-light:#E8BE72; --ok:#3F7D62; --warn:#B4642A;
+  --violet:#4A2D7A; --violet-soft:#EDE7F6; --up:#5B45C9; --down:#B4642A;
+  --grad-dark:linear-gradient(155deg,#1A171F 0%,#2B2233 55%,#4A2C42 100%);
+  --sh-1:0 1px 2px rgba(17,16,20,.05); --sh-2:0 4px 18px rgba(17,16,20,.07); --sh-3:0 16px 44px rgba(17,16,20,.14);
+  --r-xs:8px; --r-sm:12px; --r:16px; --r-lg:22px; --r-xl:28px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--paper);color:var(--ink);
+  min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.45;letter-spacing:-.006em}
+button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer;padding:0;letter-spacing:inherit;font-size:inherit}
+input,textarea,select{font-family:inherit;font-size:15px;letter-spacing:-.006em;color:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+h1,h2,h3,p{margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+@media(max-width:560px){.wrap{padding:0 14px}}
+.muted{color:var(--muted)}
+.small{font-size:13px;line-height:1.5}
+.eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.logo{font-family:Unbounded,Inter,sans-serif;font-weight:300;letter-spacing:.18em}
+.serif{font-weight:700;letter-spacing:-.038em;line-height:1.1}
+
+/* ── шапка ── */
+.hero{background:var(--grad-dark);color:#fff;border-radius:0 0 var(--r-xl) var(--r-xl);position:relative;overflow:hidden;
+  padding:calc(16px + env(safe-area-inset-top)) 0 26px}
+.hero .muted{color:rgba(255,255,255,.6)}
+.hero .eyebrow{color:rgba(255,255,255,.55)}
+.stars{position:absolute;inset:0;pointer-events:none;opacity:.7;
+  background-image:
+   radial-gradient(1.2px 1.2px at 8% 18%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 22% 72%,#fff 50%,transparent 51%),
+   radial-gradient(1.4px 1.4px at 35% 12%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 48% 88%,#fff 50%,transparent 51%),
+   radial-gradient(1.1px 1.1px at 63% 8%,#fff 50%,transparent 51%),radial-gradient(1.3px 1.3px at 76% 64%,#fff 50%,transparent 51%),
+   radial-gradient(1px 1px at 88% 22%,#fff 50%,transparent 51%),radial-gradient(1.2px 1.2px at 94% 82%,#fff 50%,transparent 51%),
+   radial-gradient(1px 1px at 14% 46%,rgba(255,255,255,.7) 50%,transparent 51%),radial-gradient(1px 1px at 57% 40%,rgba(255,255,255,.6) 50%,transparent 51%)}
+.glow{position:absolute;width:720px;height:720px;left:-120px;top:40px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(194,80,111,.32) 0%,rgba(194,80,111,0) 62%)}
+.brandbar{display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative;z-index:2;margin-bottom:8px}
+.brandbar .b{display:flex;align-items:center;gap:9px;font-size:12px;opacity:.9}
+.brandbar .b svg{width:18px;height:18px}
+.saved{font-size:11.5px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:6px;transition:opacity .3s}
+.saved.warn{color:#F3C08A}
+.hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
+  grid-template-areas:"wheel side" "wheel stats";column-gap:34px;align-items:start}
+.hero-side{grid-area:side;padding-top:26px}
+.hero-wheel{grid-area:wheel}
+.hero-stats{grid-area:stats;margin-top:16px}
+@media(max-width:880px){
+  .hero-grid{grid-template-columns:1fr;grid-template-areas:"side" "wheel" "stats"}
+  .hero-side{padding-top:12px}
+}
+.h1{font-size:clamp(30px,4.6vw,46px);margin:8px 0 6px}
+.eva-word{background:linear-gradient(95deg,#F6C9D8 0%,#E592B0 45%,#E8BE72 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:rgba(255,255,255,.7);font-size:14.5px;max-width:460px}
+.namebox{display:flex;align-items:center;gap:10px;margin-top:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);
+  border-radius:var(--r);padding:4px 6px 4px 14px;max-width:420px}
+.namebox span{font-size:12px;color:rgba(255,255,255,.55);white-space:nowrap}
+.namebox input{flex:1;min-width:0;background:transparent;border:0;color:#fff;padding:9px 4px;font-weight:600;outline:none}
+.namebox input::placeholder{color:rgba(255,255,255,.35);font-weight:500}
+.qbar{display:flex;align-items:center;gap:8px;margin-top:16px;flex-wrap:wrap}
+.qchip{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#fff;border-radius:999px;padding:7px 13px;
+  font-size:12.5px;font-weight:600;white-space:nowrap;transition:.15s;display:inline-flex;align-items:center;gap:7px}
+.qchip:hover{background:rgba(255,255,255,.12)}
+.qchip.on{background:#fff;color:var(--ink);border-color:#fff}
+.qchip i{font-style:normal;font-weight:700;font-size:11px;opacity:.6}
+.qchip.add{border-style:dashed;color:rgba(255,255,255,.8)}
+.qmeta{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:12.5px;color:rgba(255,255,255,.6);flex-wrap:wrap}
+.qmeta button{color:#fff;font-weight:600;text-decoration:underline;text-decoration-color:rgba(255,255,255,.3);text-underline-offset:3px}
+.wheel{position:relative;margin:0 auto;max-width:600px}
+.wheel svg{width:100%;height:auto;display:block;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.wheel .hit{cursor:pointer}
+.wheel-hint{text-align:center;font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+.legend{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:rgba(255,255,255,.7)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend svg{width:22px;height:8px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:12px 8px;text-align:center}
+.stats b{display:block;font-size:24px;font-weight:700;line-height:1.1;letter-spacing:-.035em}
+.stats span{display:block;font-size:9px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;font-weight:700;margin-top:4px}
+.stats em{display:block;font-style:normal;font-size:11px;font-weight:700;margin-top:3px}
+.stats em.up{color:#B9AEF5}.stats em.down{color:#F0B48A}.stats em.flat{color:rgba(255,255,255,.45)}
+.progress{margin-top:12px;font-size:12px;color:rgba(255,255,255,.6)}
+.progress .bar{height:4px;border-radius:4px;background:rgba(255,255,255,.1);margin-top:6px;overflow:hidden}
+.progress .bar i{display:block;height:100%;background:linear-gradient(90deg,#C9587F,#F6C9D8);border-radius:4px;transition:width .3s}
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.zones div{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-sm);padding:9px 11px;font-size:12px}
+.zones b{display:block;font-size:13.5px;color:#fff;margin-top:2px}
+.zones small{color:rgba(255,255,255,.5);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+
+/* ── вкладки ── */
+.tabs{position:sticky;top:0;z-index:30;background:rgba(247,246,244,.88);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);
+  padding:10px 0;border-bottom:1px solid var(--line)}
+.seg{display:flex;background:var(--surface-2);border-radius:var(--r);padding:3px;gap:2px;overflow-x:auto;scrollbar-width:none;max-width:640px}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:1;padding:9px 12px;border-radius:var(--r-sm);font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;transition:.15s}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh-1)}
+main{padding:22px 0 10px}
+.sec-h{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin:0 0 14px;flex-wrap:wrap}
+.sec-h h2{font-size:24px}
+.sec-h p{margin-top:4px}
+.card{background:var(--surface);border-radius:var(--r-lg);padding:16px;box-shadow:var(--sh-1);border:1px solid var(--line)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:780px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:var(--ink);color:#fff;padding:11px 16px;border-radius:var(--r);
+  font-weight:600;font-size:14px;transition:.16s;white-space:nowrap}
+.btn:hover{background:var(--ink-3)}
+.btn.acc{background:var(--accent)}.btn.acc:hover{background:var(--accent-2)}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line-2)}.btn.ghost:hover{background:var(--surface-2)}
+.btn.sm{padding:8px 12px;font-size:12.5px;border-radius:var(--r-sm)}
+.btn.danger{background:#fff;color:#B33A3A;border:1px solid rgba(179,58,58,.3)}
+.link{font-size:12.5px;font-weight:600;color:var(--accent)}
+
+/* ── карточка сферы ── */
+.sp{padding:14px 14px 12px;transition:box-shadow .2s}
+.sp.open{box-shadow:var(--sh-2)}
+.sp-top{display:flex;align-items:center;gap:11px}
+.sp-n{width:26px;height:26px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--muted);flex:none}
+.sp-name{flex:1;min-width:0}
+.sp-name b{display:block;font-size:15.5px;letter-spacing:-.02em}
+.sp-name small{display:block;font-size:12px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-name small .up{color:var(--up);font-weight:700}.sp-name small .down{color:var(--down);font-weight:700}.sp-name small .met{color:var(--ok);font-weight:700}
+.sp-score{font-size:26px;font-weight:700;letter-spacing:-.04em;min-width:34px;text-align:right;color:var(--accent);line-height:1}
+.sp-score.empty{color:#C9C5CC;font-size:20px}
+.pills{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:4px;margin-top:12px}
+.pill{height:34px;border-radius:10px;background:var(--surface-2);font-weight:600;font-size:13px;color:var(--muted);transition:background .12s,color .12s,transform .12s}
+.pill:hover{background:#E9E5E2;color:var(--ink)}
+.pill.fill{background:var(--accent-soft);color:var(--accent)}
+.pill.on{background:var(--accent);color:#fff;box-shadow:0 6px 16px rgba(168,55,92,.28);transform:translateY(-1px)}
+.pills.plan .pill{height:28px;font-size:12px;border-radius:8px}
+.pills.plan .pill.fill{background:#F6EEDF;color:#8A6430}
+.pills.plan .pill.on{background:var(--gold);color:#fff;box-shadow:0 5px 14px rgba(184,137,74,.3)}
+@media(max-width:380px){.pill{height:30px;font-size:12px;border-radius:8px}.pills{gap:3px}}
+.sp-more{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.sp-more:hover{color:var(--ink)}
+.sp-more .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.sp-more svg{width:12px;height:12px;transition:transform .2s}
+.sp.open .sp-more svg{transform:rotate(180deg)}
+.sp-body{margin-top:10px;display:grid;gap:12px}
+.sp-body[hidden]{display:none}
+.hint{font-size:12.5px;color:var(--muted);background:var(--paper);border-radius:var(--r-sm);padding:9px 11px}
+.fld label{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+textarea,.input,select{width:100%;border:1px solid var(--line-2);border-radius:14px;padding:10px 12px;background:var(--paper);outline:none;transition:border-color .15s,background .15s}
+textarea{min-height:64px;resize:none;line-height:1.45;overflow:hidden}
+textarea:focus,.input:focus,select:focus{border-color:var(--accent);background:#fff}
+.prev-note{font-size:12px;color:var(--muted);border-left:2px solid var(--line-2);padding:2px 0 2px 10px}
+.prev-note b{color:var(--ink-3);font-weight:600}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ── сравнение ── */
+.cmp-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media(max-width:880px){.cmp-top{grid-template-columns:minmax(0,1fr)}}
+.cmp-top>*,.grid2>*,.how>*{min-width:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:12px;font-weight:600;color:var(--muted);
+  display:inline-flex;align-items:center;gap:6px;transition:.14s}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip .sw{width:9px;height:9px;border-radius:50%}
+.radar svg{width:100%;height:auto;display:block}
+.scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}
+table.t{border-collapse:separate;border-spacing:0;width:100%;font-size:13px;min-width:520px}
+.t th,.t td{padding:8px 8px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+.t th{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--surface)}
+.t th:first-child,.t td:first-child{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1}
+.t td.h{font-weight:700;border-radius:8px;border:2px solid #fff}
+.t tr.tot td{font-weight:700;border-bottom:0;background:var(--paper)}
+.t tr.tot td:first-child{background:var(--paper)}
+.t .up{color:var(--up);font-weight:700}.t .down{color:var(--down);font-weight:700}.t .flat{color:var(--muted)}
+.t .cur{background:var(--accent-soft)!important}
+.kpi td{font-size:14px}
+.kpi td b{font-size:17px;letter-spacing:-.02em}
+.kpi td .z1{color:var(--ok);font-weight:600;font-size:12px;white-space:normal}
+.kpi td .z2{color:var(--down);font-weight:600;font-size:12px;white-space:normal}
+.bars svg{width:100%;height:auto;display:block}
+.drows{display:grid;gap:6px}
+.drow{display:grid;grid-template-columns:132px 1fr 1fr;align-items:center;gap:0;font-size:12.5px}
+.drow .lab{font-weight:600;padding-right:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drow .neg{display:flex;justify-content:flex-end;align-items:center;gap:6px;border-right:1.5px solid var(--line-2);height:20px}
+.drow .pos{display:flex;justify-content:flex-start;align-items:center;gap:6px;height:20px}
+.drow .neg i,.drow .pos i{display:block;height:14px}
+.drow .neg i{background:var(--down);border-radius:4px 0 0 4px}
+.drow .pos i{background:var(--up);border-radius:0 4px 4px 0}
+.drow b{font-size:12px}
+.drow .neg b{color:var(--down)}.drow .pos b{color:var(--up)}
+.drow .zero{color:var(--muted);font-size:11.5px;padding-left:6px}
+@media(max-width:480px){.drow{grid-template-columns:104px 1fr 1fr}}
+.empty{text-align:center;padding:30px 18px}
+.empty .ic{width:58px;height:58px;margin:0 auto 12px;border-radius:50%;background:var(--accent-soft);display:grid;place-items:center}
+.empty h3{font-size:18px;letter-spacing:-.02em;margin-bottom:6px}
+
+/* ── шаги ── */
+.add-step{display:grid;grid-template-columns:2fr 2fr 1.3fr auto;gap:8px;align-items:end}
+@media(max-width:780px){.add-step{grid-template-columns:1fr}}
+.step{display:grid;gap:10px;padding:14px}
+.step-h{display:flex;gap:10px;align-items:flex-start}
+.step-h .tx{flex:1;min-width:0}
+.step-h b{display:block;font-size:15px;letter-spacing:-.015em}
+.step-h small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.tag{display:inline-block;background:var(--violet-soft);color:var(--violet);border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700;margin-top:6px}
+.x{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:var(--muted);flex:none}
+.x:hover{background:var(--surface-2);color:var(--ink)}
+.st-row{display:flex;gap:6px;flex-wrap:wrap}
+.st{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 11px;font-size:12px;font-weight:600;color:var(--muted)}
+.st.on.done{background:#E6F1EB;border-color:#BFDCCB;color:var(--ok)}
+.st.on.almost{background:var(--violet-soft);border-color:#D4C8EE;color:var(--up)}
+.st.on.start{background:#F6EEDF;border-color:#E9D6B3;color:#8A6430}
+.st.on.no{background:var(--surface-2);border-color:var(--line-2);color:var(--ink-3)}
+.hist{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+.hist span{display:inline-flex;align-items:center;gap:5px}
+.hist i{width:8px;height:8px;border-radius:50%;background:var(--line-2)}
+.steps-sum{font-size:13px;color:var(--muted)}
+.steps-sum b{color:var(--ok)}
+
+/* ── как заполнять ── */
+.how{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px}
+@media(max-width:880px){.how{grid-template-columns:minmax(0,1fr)}}
+.nsteps{display:grid;gap:12px;counter-reset:n}
+.nsteps li{list-style:none;display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;font-size:14px}
+.nsteps li::before{counter-increment:n;content:counter(n);width:28px;height:28px;border-radius:50%;background:var(--grad-dark);color:#fff;
+  display:grid;place-items:center;font-weight:700;font-size:13px}
+.nsteps{padding:0;margin:0}
+.scale{display:grid;gap:6px}
+.scale div{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:center;font-size:13.5px}
+.scale b{height:30px;border-radius:9px;display:grid;place-items:center;font-size:14px}
+.ex{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px}
+.ex dt{color:var(--muted);font-size:12px;font-weight:600;padding-top:1px}
+.ex dd{margin:0}
+.tips{margin:0;padding-left:18px;display:grid;gap:8px;font-size:13.5px}
+
+/* ── подвал ── */
+.foot{padding:26px 20px calc(36px + env(safe-area-inset-bottom))}
+.foot .card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;background:var(--grad-dark);color:#fff;border:0}
+@media(max-width:780px){.foot .card{grid-template-columns:1fr}}
+.foot .card p{color:rgba(255,255,255,.7);font-size:13px;margin-top:4px}
+.foot .acts{display:flex;gap:8px;flex-wrap:wrap}
+.foot .btn.ghost{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.18)}
+.foot .btn.ghost:hover{background:rgba(255,255,255,.14)}
+.foot .btn.acc{box-shadow:0 10px 26px rgba(168,55,92,.35)}
+.foot .sub{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted)}
+.foot .sub button{color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+
+/* ── окна ── */
+.modal-back{position:fixed;inset:0;background:rgba(17,16,20,.5);backdrop-filter:blur(4px);z-index:100;display:grid;place-items:center;padding:16px;animation:fade .18s}
+.modal{background:#fff;border-radius:var(--r-xl);padding:22px;width:100%;max-width:420px;box-shadow:var(--sh-3);animation:up .22s cubic-bezier(.2,.75,.3,1)}
+.modal h3{font-size:20px;letter-spacing:-.03em;margin-bottom:6px}
+.modal .fld{margin-top:14px}
+.modal .acts{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
+.modal .acts .btn{flex:1}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
+  padding:11px 16px;border-radius:14px;font-size:13.5px;font-weight:500;box-shadow:var(--sh-3);opacity:0;pointer-events:none;transition:.25s;z-index:120;max-width:calc(100vw - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.tip{position:fixed;z-index:110;background:#fff;color:var(--ink);border-radius:12px;padding:9px 11px;font-size:12.5px;box-shadow:var(--sh-3);pointer-events:none;
+  opacity:0;transition:opacity .12s;max-width:240px;border:1px solid var(--line)}
+.tip.show{opacity:1}
+.tip b{display:block;font-size:13.5px;margin-bottom:2px}
+.view-in{animation:up .3s cubic-bezier(.2,.75,.3,1)}
+.ro-banner{background:#FFF4E5;color:#7A4A12;border:1px solid #F0D2A8;border-radius:var(--r);padding:10px 14px;font-size:13px;margin-bottom:14px}
+#print{display:none}
+
+@media print{
+  @page{margin:12mm}
+  body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .tabs,.foot,.qbar,.qmeta,.namebox,.wheel-hint,.toast,.tip,#modal,main{display:none!important}
+  .hero{border-radius:16px;padding:16px 0}
+  .hero-grid{grid-template-columns:1.2fr 1fr;grid-template-areas:"wheel side" "wheel stats"}
+  #print{display:block;padding-top:14px}
+  #print h2{font-size:18px;margin:16px 0 8px}
+  #print table{width:100%;border-collapse:collapse;font-size:11px}
+  #print td,#print th{border:1px solid #ddd;padding:6px;vertical-align:top;text-align:left}
+  #print th{background:#f4f2f0}
+  #print .pr-n{width:30px;text-align:center;font-weight:700}
+  #print tr{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero" id="top">
+  <div class="stars"></div><div class="glow"></div>
+  <div class="wrap">
+    <div class="brandbar">
+      <div class="b"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#fff" d="M50 2c1.6 16.4 4.4 27.4 8.8 33.6C63.2 41.8 73.6 45.6 90 48c-16.4 2.4-26.8 6.2-31.2 12.4C54.4 66.6 51.6 79 50 98c-1.6-19-4.4-31.4-8.8-37.6C36.8 54.2 26.4 50.4 10 48c16.4-2.4 26.8-6.2 31.2-12.4C45.6 29.4 48.4 18.4 50 2z"/></svg><span class="logo">EVA SPACE</span></div>
+      <div class="saved" id="saved" aria-live="polite"></div>
+    </div>
+    <div class="hero-grid">
+      <div class="hero-side">
+        <div class="eyebrow">Раз в квартал — честный взгляд на свою жизнь</div>
+        <h1 class="h1 serif">Колесо баланса <span class="eva-word">Ева</span></h1>
+        <p class="lead">Оцените 16 сфер жизни от 0 до 10, запишите, как сейчас и какой хотите видеть каждую сферу. Каждый квартал колесо будет меняться — и это видно.</p>
+        <label class="namebox"><span>Колесо для</span><input id="name" maxlength="80" placeholder="Ваше имя" autocomplete="given-name"></label>
+        <div class="qbar" id="qchips"></div>
+        <div class="qmeta" id="qmeta"></div>
+      </div>
+      <div class="hero-wheel">
+        <div class="wheel" id="wheel"></div>
+        <div class="wheel-hint">Нажмите на колесо: чем ближе к краю, тем выше балл</div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="hero-stats">
+        <div class="stats" id="stats"></div>
+        <div class="zones" id="zones"></div>
+        <div class="progress" id="progress"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Разделы">
+  <div class="wrap">
+    <div class="seg" role="tablist">
+      <button role="tab" data-tab="rate">Оценка</button>
+      <button role="tab" data-tab="cmp">Сравнение</button>
+      <button role="tab" data-tab="steps">Шаги</button>
+      <button role="tab" data-tab="how">Как заполнять</button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <div id="banner"></div>
+  <section class="panel" id="p-rate"></section>
+  <section class="panel" id="p-cmp" hidden></section>
+  <section class="panel" id="p-steps" hidden></section>
+  <section class="panel" id="p-how" hidden></section>
+</main>
+<div class="wrap" id="print"></div>
+
+<footer class="foot wrap">
+  <div class="card">
+    <div>
+      <div class="eyebrow" style="color:rgba(255,255,255,.55)">Ваши ответы — только у вас</div>
+      <h2 class="serif" style="font-size:21px;margin-top:6px">Всё хранится в этом браузере</h2>
+      <p>На сервер ничего не отправляется. Раз в квартал сохраняйте файл: так ответы не потеряются, а колесо можно открыть на другом телефоне или компьютере.</p>
+    </div>
+    <div class="acts">
+      <button class="btn acc" data-act="save">Сохранить файл</button>
+      <button class="btn ghost" data-act="open">Открыть файл</button>
+      <button class="btn ghost" data-act="png">Картинка колеса</button>
+      <button class="btn ghost" data-act="print">Распечатать</button>
+    </div>
+  </div>
+  <div class="sub"><span id="fileNote"></span><button data-act="reset">Начать заново</button></div>
+</footer>
+
+<div id="modal"></div>
+<div class="toast" id="toast" role="status"></div>
+<div class="tip" id="tip"></div>
+<input type="file" id="fileIn" accept=".json,application/json" hidden>
+
+<script>
+(function () {
+'use strict';
+
+/* ───────────── сферы ───────────── */
+const SPHERES = [
+  {k:'fin',     name:'Финансы',                 short:'Финансы',      hint:'Хватает ли денег на жизнь? Есть ли долги? Какой доход и сколько остаётся в конце месяца?'},
+  {k:'friends', name:'Друзья',                  short:'Друзья',       hint:'Есть ли с кем встретиться? Как часто видитесь? На кого можно опереться?'},
+  {k:'harmony', name:'Внутренняя гармония',     short:'Гармония',     hint:'Есть ли спокойствие внутри? Понятно ли, зачем и куда вы идёте?'},
+  {k:'health',  name:'Здоровье',                short:'Здоровье',     hint:'Сон, питание, энергия, спорт. Что беспокоит в теле?'},
+  {k:'family',  name:'Семья',                   short:'Семья',        hint:'Какие отношения с близкими? Тепло ли вам вместе? Чего не хватает?'},
+  {k:'love',    name:'Любовь',                  short:'Любовь',       hint:'Есть ли отношения? Хорошо ли в них? Чего хочется?'},
+  {k:'creat',   name:'Творчество',              short:'Творчество',   hint:'Есть ли место для творчества: музыка, тексты, съёмки, рукоделие?'},
+  {k:'free',    name:'Свободное время',         short:'Своб. время',  hint:'Есть ли свободное время? Чем оно наполнено — радует или пустое?'},
+  {k:'capital', name:'Капитал и сбережения',    short:'Капитал',      hint:'Есть ли подушка? Сколько месяцев проживёте без дохода? Есть ли активы?'},
+  {k:'growth',  name:'Личностный рост',         short:'Рост',         hint:'Учитесь ли новому? Есть ли цели и движение к ним?'},
+  {k:'travel',  name:'Путешествия',             short:'Путешествия',  hint:'Когда последний раз ездили? Куда хочется?'},
+  {k:'home',    name:'Дом',                     short:'Дом',          hint:'Комфортно ли там, где вы живёте? Есть ли уют и чувство безопасности?'},
+  {k:'hobby',   name:'Хобби и спорт',           short:'Хобби, спорт', hint:'Есть ли занятие для души и тела, к которому вы возвращаетесь регулярно?'},
+  {k:'rest',    name:'Развлечения и отдых',     short:'Отдых',        hint:'Умеете ли отдыхать? Когда в последний раз отдыхали по-настоящему?'},
+  {k:'career',  name:'Карьера',                 short:'Карьера',      hint:'Есть ли понятное дело, которое даёт доход и развитие?'},
+  {k:'emo',     name:'Эмоциональное состояние', short:'Эмоции',       hint:'Какие эмоции преобладают? Часто ли вам спокойно и радостно?'},
+];
+const N = SPHERES.length, MAX = N * 10;
+const KEYS = new Set(SPHERES.map(s => s.k));
+const KEY = 'eva-koleso-v1';
+const STATUSES = [
+  {k:'done', t:'Сделано', c:'#3F7D62'}, {k:'almost', t:'Почти', c:'#5B45C9'},
+  {k:'start', t:'Начинаю', c:'#B8894A'}, {k:'no', t:'Пока нет', c:'#B5B1BA'},
+];
+const STK = new Set(STATUSES.map(s => s.k));
+const CMP = ['#E09AB3', '#C9587F', '#A8375C', '#6B1E3B'];       // кварталы: от раннего к последнему
+const WHEEL = ['#9C3A60', '#C9587F', '#E592B0', '#F6C9D8'];     // балл на тёмном: тусклее → ярче
+const FONT = "Inter, -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif";
+const STAR = 'M50 2c1.6 16.4 4.4 27.4 8.8 33.6C63.2 41.8 73.6 45.6 90 48c-16.4 2.4-26.8 6.2-31.2 12.4C54.4 66.6 51.6 79 50 98c-1.6-19-4.4-31.4-8.8-37.6C36.8 54.2 26.4 50.4 10 48c16.4-2.4 26.8-6.2 31.2-12.4C45.6 29.4 48.4 18.4 50 2z';
+
+/* ───────────── мелочи ───────────── */
+const $ = (s, el) => (el || document).querySelector(s);
+const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const isNum = v => typeof v === 'number' && isFinite(v);
+const uid = () => Math.random().toString(36).slice(2, 10);
+const pct = v => isNum(v) ? Math.round(v * 100) + '%' : '—';
+const one = v => isNum(v) ? v.toFixed(1).replace('.', ',') : '—';
+const sgn = d => d > 0 ? '+' + d : d < 0 ? '−' + Math.abs(d) : '0';
+const arrow = d => d > 0 ? '▲ +' + d : d < 0 ? '▼ −' + Math.abs(d) : '0';
+const cls = d => d > 0 ? 'up' : d < 0 ? 'down' : 'flat';
+function todayISO() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function fmtDate(iso) { if (!iso) return ''; const p = iso.split('-'); return p[2] + '.' + p[1] + '.' + p[0]; }
+function qLabel(d) { return (Math.floor(d.getMonth() / 3) + 1) + ' квартал ' + d.getFullYear(); }
+function nextLabel(label) {
+  const m = /(\d)\s*квартал\s*(\d{4})/i.exec(label || '');
+  if (!m) return qLabel(new Date());
+  let q = +m[1] + 1, y = +m[2];
+  if (q > 4) { q = 1; y++; }
+  return q + ' квартал ' + y;
+}
+const shortQ = l => String(l || '').replace(/\s*квартал\s*/i, ' кв ').trim();
+function hexRgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function mix(a, b, t) { const A = hexRgb(a), B = hexRgb(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); }
+function ramp(stops, t) { t = Math.max(0, Math.min(1, t)); const x = (stops.length - 1) * t; const i = Math.min(stops.length - 2, Math.floor(x)); return mix(stops[i], stops[i + 1], x - i); }
+const wheelColor = v => ramp(WHEEL, (v - 1) / 9);
+const heat = v => v <= 5 ? mix('#EFC3A4', '#F1EFEC', v / 5) : mix('#F1EFEC', '#CBBFF3', (v - 5) / 5);
+
+/* ───────────── данные ───────────── */
+let storageOk = true;
+function lsGet() { try { return localStorage.getItem(KEY); } catch (e) { storageOk = false; return null; } }
+function lsSet(v) { try { localStorage.setItem(KEY, v); storageOk = true; return true; } catch (e) { storageOk = false; return false; } }
+function newQuarter(label, date) { return {id: uid(), label, date, score: {}, plan: {}, now: {}, grow: {}}; }
+function fresh() { const q = newQuarter(qLabel(new Date()), todayISO()); return {v: 1, name: '', quarters: [q], cur: q.id, steps: [], cmp: null, savedFile: ''}; }
+
+/* всё, что пришло из браузера или из файла, приводим к ожидаемому виду */
+function clean(raw) {
+  if (!raw || typeof raw !== 'object' || !Array.isArray(raw.quarters) || !raw.quarters.length) return null;
+  const str = (v, n) => typeof v === 'string' ? v.slice(0, n || 4000) : '';
+  const sc = v => { if (v === '' || v == null) return undefined; const n = Number(v); return isFinite(n) ? Math.max(0, Math.min(10, Math.round(n))) : undefined; };
+  const txt = v => str(v) || undefined;
+  const map = (o, f) => { const r = {}; if (o && typeof o === 'object') Object.keys(o).forEach(k => { if (KEYS.has(k)) { const v = f(o[k]); if (v !== undefined) r[k] = v; } }); return r; };
+  const seen = new Set();
+  const quarters = raw.quarters.slice(0, 60).filter(q => q && typeof q === 'object').map(q => {
+    let id = str(q.id, 24) || uid();
+    while (seen.has(id)) id = uid();
+    seen.add(id);
+    return {id, label: str(q.label, 40) || 'Квартал', date: /^\d{4}-\d{2}-\d{2}$/.test(q.date || '') ? q.date : '',
+      score: map(q.score, sc), plan: map(q.plan, sc), now: map(q.now, txt), grow: map(q.grow, txt)};
+  });
+  if (!quarters.length) return null;
+  const steps = (Array.isArray(raw.steps) ? raw.steps : []).slice(0, 300).filter(s => s && typeof s === 'object').map(s => {
+    const status = {};
+    if (s.status && typeof s.status === 'object') Object.keys(s.status).forEach(k => { if (seen.has(k) && STK.has(s.status[k])) status[k] = s.status[k]; });
+    return {id: str(s.id, 24) || uid(), text: str(s.text, 300), why: str(s.why, 300), sphere: KEYS.has(s.sphere) ? s.sphere : '', status};
+  }).filter(s => s.text);
+  const cmp = Array.isArray(raw.cmp) ? raw.cmp.filter(id => seen.has(id)).slice(0, 4) : [];
+  return {v: 1, name: str(raw.name, 80), quarters, cur: seen.has(raw.cur) ? raw.cur : quarters[quarters.length - 1].id,
+    steps, cmp: cmp.length ? cmp : null, savedFile: str(raw.savedFile, 20)};
+}
+function load() { const s = lsGet(); if (!s) return null; try { return clean(JSON.parse(s)); } catch (e) { return null; } }
+
+let S = load() || fresh();
+let saveT = 0;
+function save() { clearTimeout(saveT); saveT = setTimeout(flush, 250); }
+function flush() { clearTimeout(saveT); const ok = lsSet(JSON.stringify(S)); showSaved(ok); }
+function showSaved(ok) {
+  const el = $('#saved');
+  el.className = 'saved' + (ok ? '' : ' warn');
+  el.textContent = ok ? '✓ Сохранено в этом браузере' : 'Браузер не сохраняет — сохраните файл';
+  renderBanner();
+}
+
+const curQ = () => S.quarters.find(q => q.id === S.cur) || S.quarters[S.quarters.length - 1];
+const qIdx = q => S.quarters.indexOf(q);
+const prevOf = q => { const i = qIdx(q); return i > 0 ? S.quarters[i - 1] : null; };
+function stats(q) {
+  let n = 0, total = 0, best = null, worst = null, planSum = 0, planN = 0, met = 0, metOf = 0;
+  const p = prevOf(q);
+  SPHERES.forEach(s => {
+    const v = q.score[s.k];
+    if (isNum(v)) {
+      n++; total += v;
+      if (!best || v > q.score[best.k]) best = s;
+      if (!worst || v < q.score[worst.k]) worst = s;
+    }
+    if (isNum(q.plan[s.k])) { planSum += q.plan[s.k]; planN++; }
+    if (p && isNum(p.plan[s.k]) && isNum(v)) { metOf++; if (v >= p.plan[s.k]) met++; }
+  });
+  return {n, total, pct: n ? total / MAX : null, avg: n ? total / n : null, best, worst,
+    planPct: planN ? planSum / MAX : null, met, metOf};
+}
+
+/* ───────────── колесо (SVG) ───────────── */
+const R = 150, R0 = 36, A = 2 * Math.PI / N, GAP = 0.014;
+const ang = i => -Math.PI / 2 + i * A;
+const rad = v => R0 + (R - R0) * v / 10;
+const P = (r, a) => [(r * Math.cos(a)).toFixed(2), (r * Math.sin(a)).toFixed(2)];
+function wedge(r0, r1, a0, a1) {
+  const p0 = P(r1, a0), p1 = P(r1, a1), p2 = P(r0, a1), p3 = P(r0, a0);
+  return 'M' + p3 + 'L' + p0 + 'A' + r1 + ' ' + r1 + ' 0 0 1 ' + p1 + 'L' + p2 + 'A' + r0 + ' ' + r0 + ' 0 0 0 ' + p3 + 'Z';
+}
+function arc(r, a0, a1) { const p0 = P(r, a0), p1 = P(r, a1); return 'M' + p0 + 'A' + r + ' ' + r + ' 0 0 1 ' + p1; }
+
+/* подписи не мельче ~10px на телефоне: шрифт и ширина рисунка под ширину контейнера */
+function fit(w) { const fs = Math.max(13, Math.min(15, 3260 / Math.max(1, w - 134))); return {fs, hw: Math.ceil(163 + 12 * fs * 0.6 + 4)}; }
+function wheelInner(q, opt) {
+  opt = opt || {};
+  const FS = opt.fs || 13;
+  const p = prevOf(q), st = stats(q);
+  let g = '';
+  for (let k = 2; k <= 10; k += 2) g += '<circle r="' + rad(k) + '" fill="none" stroke="rgba(255,255,255,' + (k === 10 ? .2 : .09) + ')" stroke-width="' + (k === 10 ? 1.2 : .8) + '"/>';
+  for (let i = 0; i < N; i++) { const a = ang(i) - A / 2, p0 = P(R0, a), p1 = P(R, a); g += '<line x1="' + p0[0] + '" y1="' + p0[1] + '" x2="' + p1[0] + '" y2="' + p1[1] + '" stroke="rgba(255,255,255,.07)" stroke-width=".8"/>'; }
+  SPHERES.forEach((s, i) => { g += '<path d="' + wedge(R0, R, ang(i) - A / 2 + GAP, ang(i) + A / 2 - GAP) + '" fill="rgba(255,255,255,.035)"/>'; });
+  let w = '', glow = '';
+  SPHERES.forEach((s, i) => {
+    const v = q.score[s.k];
+    if (!isNum(v) || v <= 0) return;
+    const d = wedge(R0 + 1.5, rad(v), ang(i) - A / 2 + GAP, ang(i) + A / 2 - GAP), c = wheelColor(v);
+    w += '<path d="' + d + '" fill="' + c + '"/>';
+    glow += '<path d="' + d + '" fill="' + c + '"/>';
+  });
+  g += '<g filter="url(#' + opt.id + 'Glow)" opacity=".6">' + glow + '</g>' + w;
+  if (p) SPHERES.forEach((s, i) => {
+    const v = p.score[s.k];
+    if (isNum(v)) g += '<path d="' + arc(rad(v), ang(i) - A / 2 + GAP * 2.5, ang(i) + A / 2 - GAP * 2.5) + '" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1.5" stroke-dasharray="3.2 3" stroke-linecap="round"/>';
+  });
+  SPHERES.forEach((s, i) => {
+    const v = q.plan[s.k];
+    if (isNum(v)) g += '<path d="' + arc(rad(v), ang(i) - A / 2 + GAP * 2.5, ang(i) + A / 2 - GAP * 2.5) + '" fill="none" stroke="#E8BE72" stroke-width="2.2" stroke-dasharray="0.1 4.4" stroke-linecap="round"/>';
+  });
+  SPHERES.forEach((s, i) => {
+    const v = q.score[s.k];
+    if (!isNum(v)) return;
+    const inside = v >= 3, r = inside ? rad(v) - 11 : rad(v) + 10, pt = P(r, ang(i));
+    g += '<text x="' + pt[0] + '" y="' + pt[1] + '" text-anchor="middle" dominant-baseline="central" font-size="11.5" font-weight="700" fill="' + (inside && v >= 6 ? '#3A1226' : '#fff') + '">' + v + '</text>';
+  });
+  SPHERES.forEach((s, i) => {
+    const a = ang(i), c = Math.cos(a), sn = Math.sin(a), pt = P(R + 13, a);
+    const anchor = Math.abs(c) < 0.3 ? 'middle' : c > 0 ? 'start' : 'end';
+    const y = (+pt[1] + (sn < -0.9 ? -5 : sn > 0.9 ? 7 : 0)).toFixed(2);
+    g += '<text x="' + pt[0] + '" y="' + y + '" text-anchor="' + anchor + '" dominant-baseline="central" font-size="' + FS.toFixed(1) + '" font-weight="600" fill="rgba(255,255,255,' + (isNum(q.score[s.k]) ? .9 : .45) + ')">' + esc(s.short) + '</text>';
+  });
+  g += '<circle r="' + (R0 - 5) + '" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.14)"/>';
+  g += '<text y="-2" text-anchor="middle" font-size="' + (st.n ? 21 : 17) + '" font-weight="700" fill="#fff" letter-spacing="-.6">' + (st.n ? Math.round(st.pct * 100) + '%' : '—') + '</text>';
+  g += '<text y="13" text-anchor="middle" font-size="6.4" font-weight="700" letter-spacing="1.3" fill="rgba(255,255,255,.6)">ЖИЗНИ</text>';
+  if (opt.hit) SPHERES.forEach((s, i) => { g += '<path class="hit" data-i="' + i + '" d="' + wedge(4, R + 10, ang(i) - A / 2, ang(i) + A / 2) + '" fill="transparent"/>'; });
+  return g;
+}
+function wheelDefs(id) {
+  return '<filter id="' + id + 'Glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7"/></filter>';
+}
+function renderWheel() {
+  const q = curQ(), f = fit($('#wheel').clientWidth || 560);
+  $('#wheel').innerHTML = '<svg viewBox="' + (-f.hw) + ' -194 ' + (2 * f.hw) + ' 388" font-family="' + FONT + '" role="img" aria-label="Колесо баланса: ' + esc(q.label) + '"><defs>' + wheelDefs('w') + '</defs>' + wheelInner(q, {id: 'w', hit: true, fs: f.fs}) + '</svg>';
+  const p = prevOf(q), hasPlan = SPHERES.some(s => isNum(q.plan[s.k]));
+  let lg = '<span><svg viewBox="0 0 22 8"><rect x="0" y="1" width="22" height="6" rx="3" fill="#E592B0"/></svg>' + esc(shortQ(q.label)) + '</span>';
+  if (p) lg += '<span><svg viewBox="0 0 22 8"><line x1="1" y1="4" x2="21" y2="4" stroke="#fff" stroke-width="1.6" stroke-dasharray="3 3"/></svg>' + esc(shortQ(p.label)) + '</span>';
+  if (hasPlan) lg += '<span><svg viewBox="0 0 22 8"><line x1="2" y1="4" x2="21" y2="4" stroke="#E8BE72" stroke-width="2.4" stroke-dasharray="0.1 4.4" stroke-linecap="round"/></svg>план на следующий квартал</span>';
+  $('#legend').innerHTML = lg;
+}
+
+/* ───────────── шапка ───────────── */
+function renderHero() {
+  $('#name').value = S.name || '';
+  const q = curQ();
+  $('#qchips').innerHTML = S.quarters.map(x => {
+    const st = stats(x);
+    return '<button class="qchip' + (x.id === q.id ? ' on' : '') + '" data-q="' + x.id + '">' + esc(shortQ(x.label)) + (st.n ? '<i>' + pct(st.pct) + '</i>' : '') + '</button>';
+  }).join('') + '<button class="qchip add" data-act="addq" title="Следующий квартал">+ квартал</button>';
+  $('#qmeta').innerHTML = '<span>' + esc(q.label) + (q.date ? ' · оценка ' + fmtDate(q.date) : '') + '</span><button data-act="editq">Изменить</button>';
+  renderWheel();
+  renderStats();
+}
+function renderStats() {
+  const q = curQ(), st = stats(q), p = prevOf(q), ps = p ? stats(p) : null;
+  const d = (ps && st.n && ps.n) ? st.total - ps.total : null;
+  const dEm = d == null ? '' : '<em class="' + cls(d) + '">' + (d === 0 ? 'как в прошлом' : arrow(d)) + '</em>';
+  $('#stats').innerHTML =
+    '<div><b>' + pct(st.pct) + '</b><span>Проживание жизни</span>' + dEm + '</div>' +
+    '<div><b>' + (st.n ? st.total : '—') + '<small style="font-size:13px;opacity:.55;font-weight:600"> / ' + MAX + '</small></b><span>Баллы</span></div>' +
+    '<div><b>' + one(st.avg) + '</b><span>В среднем</span>' + (p && st.metOf ? '<em class="flat">план: ' + st.met + ' из ' + st.metOf + '</em>' : '') + '</div>';
+  $('#zones').innerHTML = st.n ? '<div><small>Сильная сфера</small><b>' + esc(st.best.name) + '</b></div><div><small>Зона роста</small><b>' + esc(st.worst.name) + '</b></div>' : '';
+  $('#progress').innerHTML = st.n === N ? '' : 'Оценено ' + st.n + ' из ' + N + ' сфер<div class="bar"><i style="width:' + (st.n / N * 100) + '%"></i></div>';
+}
+
+/* ───────────── оценка ───────────── */
+const openSet = new Set();
+function pillsHtml(k, v, kind) {
+  let h = '';
+  for (let i = 0; i <= 10; i++) {
+    const on = isNum(v) && v === i, fill = isNum(v) && i < v;
+    h += '<button class="pill' + (on ? ' on' : fill ? ' fill' : '') + '" data-' + kind + '="' + i + '" data-k="' + k + '" aria-pressed="' + on + '" aria-label="' + i + '">' + i + '</button>';
+  }
+  return h;
+}
+function subLine(q, s) {
+  const p = prevOf(q), v = q.score[s.k], bits = [];
+  if (p && isNum(p.score[s.k])) {
+    const d = isNum(v) ? v - p.score[s.k] : null;
+    bits.push('было ' + p.score[s.k] + (d != null && d !== 0 ? ' <span class="' + cls(d) + '">' + arrow(d) + '</span>' : ''));
+  }
+  if (p && isNum(p.plan[s.k])) bits.push('план ' + p.plan[s.k] + (isNum(v) ? (v >= p.plan[s.k] ? ' <span class="met">✓ выполнен</span>' : ' · ещё ' + (p.plan[s.k] - v)) : ''));
+  if (!bits.length) return isNum(v) ? (v <= 3 ? 'Зона роста' : v >= 8 ? 'Сильная сфера' : 'Опишите, как сейчас') : 'Поставьте балл от 0 до 10';
+  return bits.join(' · ');
+}
+function cardHtml(q, s, i) {
+  const v = q.score[s.k], open = openSet.has(s.k), hasText = q.now[s.k] || q.grow[s.k], p = prevOf(q);
+  const prevTxt = p && (p.grow[s.k] || p.now[s.k]);
+  return '<div class="card sp' + (open ? ' open' : '') + '" data-card="' + s.k + '">' +
+    '<div class="sp-top"><div class="sp-n">' + (i + 1) + '</div><div class="sp-name"><b>' + esc(s.name) + '</b><small>' + subLine(q, s) + '</small></div>' +
+    '<div class="sp-score' + (isNum(v) ? '' : ' empty') + '">' + (isNum(v) ? v : '—') + '</div></div>' +
+    '<div class="pills" role="group" aria-label="Балл: ' + esc(s.name) + '">' + pillsHtml(s.k, v, 'score') + '</div>' +
+    '<button class="sp-more" data-open="' + s.k + '" aria-expanded="' + open + '">' + (hasText ? '<span class="dot"></span>' : '') +
+    (open ? 'Свернуть' : hasText ? 'Как сейчас и точка роста' : 'Описать, как сейчас, и точку роста') +
+    '<svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>' +
+    '<div class="sp-body"' + (open ? '' : ' hidden') + '>' +
+      '<div class="hint">' + esc(s.hint) + '</div>' +
+      (prevTxt ? '<div class="prev-note">' + (p.grow[s.k] ? '<b>Точка роста в ' + esc(shortQ(p.label)) + ':</b> ' + esc(p.grow[s.k]) : '<b>Как было в ' + esc(shortQ(p.label)) + ':</b> ' + esc(p.now[s.k])) + '</div>' : '') +
+      '<div class="fld"><label for="now-' + s.k + '">Как сейчас — честно, своими словами</label><textarea id="now-' + s.k + '" data-f="now" data-k="' + s.k + '" maxlength="4000" placeholder="Что происходит в этой сфере прямо сейчас">' + esc(q.now[s.k] || '') + '</textarea></div>' +
+      '<div class="fld"><label for="grow-' + s.k + '">Точка роста — какой хочу видеть сферу через квартал</label><textarea id="grow-' + s.k + '" data-f="grow" data-k="' + s.k + '" maxlength="4000" placeholder="Картинка результата: «живу в своей квартире», а не «найти квартиру»">' + esc(q.grow[s.k] || '') + '</textarea></div>' +
+      '<div class="fld"><label>План на следующий квартал — какой балл хочу</label><div class="pills plan" role="group" aria-label="План: ' + esc(s.name) + '">' + pillsHtml(s.k, q.plan[s.k], 'plan') + '</div></div>' +
+    '</div></div>';
+}
+function renderRate() {
+  const q = curQ(), st = stats(q);
+  $('#p-rate').innerHTML =
+    '<div class="sec-h"><div><div class="eyebrow">' + esc(q.label) + '</div><h2 class="serif">Оценка сфер</h2>' +
+    '<p class="muted small">Поставьте каждой сфере балл. Откройте сферу, чтобы описать, как сейчас, и точку роста.</p></div>' +
+    '<div class="tools"><button class="btn ghost sm" data-act="openall">' + (openSet.size === N ? 'Свернуть все' : 'Раскрыть все') + '</button></div></div>' +
+    '<div class="grid2">' + SPHERES.map((s, i) => cardHtml(q, s, i)).join('') + '</div>' +
+    (st.n === N ? '<div class="card" style="margin-top:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:space-between"><div><b>Все 16 сфер оценены.</b> <span class="muted small">Запишите шаги к своему колесу и сохраните файл.</span></div><div class="tools"><button class="btn sm" data-tab="steps">К шагам</button><button class="btn acc sm" data-act="save">Сохранить файл</button></div></div>' : '');
+  $$('#p-rate textarea').forEach(autosize);
+}
+function rerenderCard(k) {
+  const q = curQ(), i = SPHERES.findIndex(s => s.k === k), el = $('[data-card="' + k + '"]');
+  if (!el) return;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = cardHtml(q, SPHERES[i], i);
+  const nu = tmp.firstChild;
+  el.replaceWith(nu);
+  $$('textarea', nu).forEach(autosize);
+}
+function autosize(t) { t.style.height = 'auto'; t.style.height = Math.max(64, t.scrollHeight + 2) + 'px'; }
+
+function setScore(k, v, from) {
+  const q = curQ();
+  if (from !== 'wheel' && q.score[k] === v) delete q.score[k]; else q.score[k] = v;
+  save();
+  renderWheel(); renderStats(); renderChipsOnly(); rerenderCard(k);
+}
+function setPlan(k, v) {
+  const q = curQ();
+  if (q.plan[k] === v) delete q.plan[k]; else q.plan[k] = v;
+  save(); renderWheel(); rerenderCard(k);
+}
+function renderChipsOnly() {
+  const q = curQ();
+  $$('#qchips [data-q]').forEach(b => { const x = S.quarters.find(z => z.id === b.dataset.q); const st = stats(x); b.innerHTML = esc(shortQ(x.label)) + (st.n ? '<i>' + pct(st.pct) + '</i>' : ''); });
+}
+
+/* ───────────── сравнение ───────────── */
+function cmpList() {
+  let ids = (S.cmp || []).filter(id => S.quarters.some(q => q.id === id));
+  if (!ids.length) ids = S.quarters.slice(-4).map(q => q.id);
+  return S.quarters.filter(q => ids.includes(q.id));
+}
+function radarSVG(qs, cw) {
+  const RR = 150, rr = v => RR * v / 10, f = fit(cw);
+  let g = '';
+  for (let k = 2; k <= 10; k += 2) {
+    let d = '';
+    for (let i = 0; i < N; i++) { const p = P(rr(k), ang(i)); d += (i ? 'L' : 'M') + p; }
+    g += '<path d="' + d + 'Z" fill="' + (k === 10 ? '#FBFAF8' : 'none') + '" stroke="' + (k === 10 ? '#DCD7DF' : '#ECE8EE') + '" stroke-width="1"/>';
+    const lp = P(rr(k), ang(0));
+    g += '<text x="4" y="' + (+lp[1] + 4) + '" font-size="8.5" fill="#A29DA8">' + k + '</text>';
+  }
+  for (let i = 0; i < N; i++) { const p = P(RR, ang(i)); g += '<line x1="0" y1="0" x2="' + p[0] + '" y2="' + p[1] + '" stroke="#ECE8EE"/>'; }
+  const off = 4 - qs.length;
+  qs.forEach((q, j) => {
+    const col = CMP[off + j], last = j === qs.length - 1;
+    const pts = SPHERES.map((s, i) => isNum(q.score[s.k]) ? P(rr(q.score[s.k]), ang(i)) : null);
+    let d = '', run = false;
+    pts.forEach(p => { if (p) { d += (run ? 'L' : 'M') + p; run = true; } else run = false; });
+    if (pts.every(Boolean)) d += 'Z';
+    if (last && pts.every(Boolean)) g += '<path d="' + d + '" fill="' + col + '" fill-opacity=".1"/>';
+    g += '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="' + (last ? 2.6 : 1.8) + '" stroke-linejoin="round"/>';
+    pts.forEach(p => { if (p) g += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="' + (last ? 3.8 : 3) + '" fill="' + col + '" stroke="#fff" stroke-width="1.2"/>'; });
+  });
+  SPHERES.forEach((s, i) => {
+    const a = ang(i), c = Math.cos(a), sn = Math.sin(a), pt = P(RR + 12, a);
+    const anchor = Math.abs(c) < 0.3 ? 'middle' : c > 0 ? 'start' : 'end';
+    g += '<text x="' + pt[0] + '" y="' + (+pt[1] + (sn < -0.9 ? -5 : sn > 0.9 ? 7 : 0)).toFixed(2) + '" text-anchor="' + anchor + '" dominant-baseline="central" font-size="' + (f.fs - 1).toFixed(1) + '" font-weight="600" fill="#4A4652">' + esc(s.short) + '</text>';
+  });
+  return '<svg viewBox="' + (-f.hw) + ' -186 ' + (2 * f.hw) + ' 372" font-family="' + FONT + '" role="img" aria-label="Сравнение кварталов">' + g + '</svg>';
+}
+function barsSVG(cw) {
+  const qs = S.quarters, n = qs.length, W = Math.max(280, Math.round(cw), n * 74), H = 230, top = 30, bot = 36, h = H - top - bot, bw = Math.min(64, (W - 40) / n * .55);
+  let g = '';
+  [0, .25, .5, .75, 1].forEach(t => { const y = top + h - h * t; g += '<line x1="34" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="#ECE8EE"/><text x="28" y="' + (y + 3) + '" text-anchor="end" font-size="10" fill="#A29DA8">' + Math.round(t * 100) + '%</text>'; });
+  const step = (W - 40) / n;
+  qs.forEach((q, i) => {
+    const st = stats(q), x = 40 + step * i + step / 2 - bw / 2, isCur = q.id === S.cur;
+    if (st.n) {
+      const bh = Math.max(2, h * st.pct), y = top + h - bh;
+      g += '<rect x="' + x + '" y="' + y + '" width="' + bw + '" height="' + bh + '" rx="6" fill="' + (isCur ? '#A8375C' : '#E5B2C3') + '"/>';
+      g += '<rect x="' + x + '" y="' + (top + h - Math.min(6, bh)) + '" width="' + bw + '" height="' + Math.min(6, bh) + '" fill="' + (isCur ? '#A8375C' : '#E5B2C3') + '"/>';
+      g += '<text x="' + (x + bw / 2) + '" y="' + (y - 7) + '" text-anchor="middle" font-size="13" font-weight="700" fill="#111014">' + pct(st.pct) + '</text>';
+    }
+    g += '<text x="' + (x + bw / 2) + '" y="' + (H - 12) + '" text-anchor="middle" font-size="11" font-weight="' + (isCur ? 700 : 600) + '" fill="' + (isCur ? '#111014' : '#7E7A85') + '">' + esc(shortQ(q.label)) + '</text>';
+  });
+  g += '<line x1="34" x2="' + W + '" y1="' + (top + h) + '" y2="' + (top + h) + '" stroke="#C9C4CC"/>';
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" font-family="' + FONT + '" role="img" aria-label="Проживание жизни по кварталам">' + g + '</svg>';
+}
+function renderCmp() {
+  const qs = S.quarters, el = $('#p-cmp');
+  if (qs.length < 2) {
+    const st = stats(qs[0]);
+    el.innerHTML = '<div class="sec-h"><div><div class="eyebrow">Квартал к кварталу</div><h2 class="serif">Сравнение</h2></div></div>' +
+      '<div class="card empty"><div class="ic"><svg width="26" height="26" viewBox="0 0 100 100"><path fill="#A8375C" d="' + STAR + '"/></svg></div>' +
+      '<h3>Сравнение появится со второго квартала</h3><p class="muted small" style="max-width:420px;margin:0 auto 16px">' +
+      (st.n ? 'Сейчас у вас ' + pct(st.pct) + ' проживания жизни. Через квартал нажмите «+ квартал» вверху, поставьте новые баллы — и здесь появится, что выросло, что просело и выполнен ли план.' : 'Сначала оцените сферы в этом квартале. Через квартал нажмите «+ квартал» вверху — и здесь появится сравнение.') +
+      '</p><button class="btn sm" data-tab="rate">К оценке</button></div>';
+    return;
+  }
+  const sel = cmpList(), selIds = sel.map(q => q.id), off = 4 - sel.length;
+  const full = el.clientWidth || 900, cw = (window.innerWidth > 880 ? (full - 12) / 2 : full) - 34;
+  const chips = qs.map(q => {
+    const j = selIds.indexOf(q.id);
+    return '<button class="chip' + (j >= 0 ? ' on' : '') + '" data-cmp="' + q.id + '">' + (j >= 0 ? '<span class="sw" style="background:' + CMP[off + j] + '"></span>' : '') + esc(shortQ(q.label)) + '</button>';
+  }).join('');
+  // таблица цифр
+  const sts = qs.map(stats);
+  const kRow = (lab, f) => '<tr><td>' + lab + '</td>' + qs.map((q, i) => '<td' + (q.id === S.cur ? ' class="cur"' : '') + '>' + f(sts[i], i, q) + '</td>').join('') + '</tr>';
+  const kpi = '<table class="t kpi"><thead><tr><th></th>' + qs.map(q => '<th' + (q.id === S.cur ? ' class="cur"' : '') + '>' + esc(shortQ(q.label)) + '</th>').join('') + '</tr></thead><tbody>' +
+    kRow('Проживание жизни', s => '<b>' + pct(s.pct) + '</b>') +
+    kRow('Баллы из ' + MAX, s => s.n ? s.total : '—') +
+    kRow('В среднем на сферу', s => one(s.avg)) +
+    kRow('К прошлому кварталу', (s, i) => i && s.n && sts[i - 1].n ? '<span class="' + cls(s.total - sts[i - 1].total) + '">' + arrow(s.total - sts[i - 1].total) + '</span>' : '<span class="flat">—</span>') +
+    kRow('Сильная сфера', s => s.best ? '<span class="z1">' + esc(s.best.name) + '</span>' : '—') +
+    kRow('Зона роста', s => s.worst ? '<span class="z2">' + esc(s.worst.name) + '</span>' : '—') +
+    kRow('План выполнен', (s, i) => i && s.metOf ? s.met + ' из ' + s.metOf : '<span class="flat">—</span>') +
+    '</tbody></table>';
+  // сферы × кварталы
+  const cur = curQ(), ci = qIdx(cur), pq = prevOf(cur), first = qs[0];
+  let heatT = '<table class="t"><thead><tr><th>Сфера</th>' + qs.map(q => '<th' + (q.id === S.cur ? ' class="cur"' : '') + '>' + esc(shortQ(q.label)) + '</th>').join('') + '<th>К прошлому</th><th>С первого</th></tr></thead><tbody>';
+  SPHERES.forEach(s => {
+    heatT += '<tr><td><b style="font-weight:600">' + esc(s.name) + '</b></td>' + qs.map(q => { const v = q.score[s.k]; return isNum(v) ? '<td class="h" style="background:' + heat(v) + '">' + v + '</td>' : '<td class="flat">·</td>'; }).join('');
+    const v = cur.score[s.k];
+    const d1 = pq && isNum(v) && isNum(pq.score[s.k]) ? v - pq.score[s.k] : null;
+    const d2 = ci > 0 && isNum(v) && isNum(first.score[s.k]) ? v - first.score[s.k] : null;
+    heatT += '<td class="' + (d1 == null ? 'flat' : cls(d1)) + '">' + (d1 == null ? '—' : arrow(d1)) + '</td><td class="' + (d2 == null ? 'flat' : cls(d2)) + '">' + (d2 == null ? '—' : arrow(d2)) + '</td></tr>';
+  });
+  const tc = stats(cur), tp = pq ? stats(pq) : null, tf = stats(first);
+  const T1 = tp && tc.n && tp.n ? tc.total - tp.total : null, T2 = ci > 0 && tc.n && tf.n ? tc.total - tf.total : null;
+  heatT += '<tr class="tot"><td>Итого</td>' + sts.map(s => '<td>' + (s.n ? s.total : '—') + '</td>').join('') +
+    '<td class="' + (T1 == null ? 'flat' : cls(T1)) + '">' + (T1 == null ? '—' : arrow(T1)) + '</td><td class="' + (T2 == null ? 'flat' : cls(T2)) + '">' + (T2 == null ? '—' : arrow(T2)) + '</td></tr></tbody></table>';
+  // что изменилось
+  let drows = '';
+  if (pq) {
+    const ds = SPHERES.map(s => isNum(cur.score[s.k]) && isNum(pq.score[s.k]) ? cur.score[s.k] - pq.score[s.k] : null);
+    const mx = Math.max(3, ...ds.filter(isNum).map(Math.abs));
+    drows = SPHERES.map((s, i) => {
+      const d = ds[i];
+      if (d == null) return '<div class="drow"><div class="lab muted">' + esc(s.name) + '</div><div class="neg"></div><div class="pos"><span class="zero">нет оценки</span></div></div>';
+      const w = Math.abs(d) / mx * 100;
+      return '<div class="drow"><div class="lab" title="' + esc(s.name) + '">' + esc(s.name) + '</div>' +
+        '<div class="neg">' + (d < 0 ? '<b>' + sgn(d) + '</b><i style="width:' + w + '%"></i>' : '') + '</div>' +
+        '<div class="pos">' + (d > 0 ? '<i style="width:' + w + '%"></i><b>' + sgn(d) + '</b>' : d === 0 ? '<span class="zero">без изменений</span>' : '') + '</div></div>';
+    }).join('');
+  }
+  el.innerHTML =
+    '<div class="sec-h"><div><div class="eyebrow">Квартал к кварталу</div><h2 class="serif">Сравнение</h2>' +
+    '<p class="muted small">Выберите кварталы, которые хотите наложить друг на друга (до четырёх).</p></div></div>' +
+    '<div class="cmp-top">' +
+      '<div class="card"><div class="chips">' + chips + '</div><div class="radar">' + radarSVG(sel, cw) + '</div></div>' +
+      '<div class="card"><h3 style="font-size:16px;letter-spacing:-.02em;margin-bottom:8px">Проживание жизни по кварталам</h3><div class="bars">' + barsSVG(cw) + '</div>' +
+      '<div class="scroll-x" style="margin-top:10px">' + kpi + '</div></div>' +
+    '</div>' +
+    '<div class="card" style="margin-top:12px"><h3 style="font-size:16px;letter-spacing:-.02em">Сферы по кварталам</h3><p class="muted small" style="margin:2px 0 10px">Изменения считаются для ' + esc(cur.label) + '. Красноватое — проседает, сиреневое — сильное.</p><div class="scroll-x">' + heatT + '</div></div>' +
+    (pq ? '<div class="card" style="margin-top:12px"><h3 style="font-size:16px;letter-spacing:-.02em">Что изменилось: ' + esc(shortQ(pq.label)) + ' → ' + esc(shortQ(cur.label)) + '</h3><p class="muted small" style="margin:2px 0 12px">Сиреневое — выросло, терракотовое — просело.</p><div class="drows">' + drows + '</div></div>' : '');
+}
+
+/* ───────────── шаги ───────────── */
+function renderSteps() {
+  const q = curQ(), st = stats(q), el = $('#p-steps');
+  const opts = '<option value="">Сфера</option>' + SPHERES.map(s => '<option value="' + s.k + '">' + esc(s.name) + '</option>').join('');
+  const done = S.steps.filter(s => s.status[q.id] === 'done').length;
+  const list = S.steps.map(s => {
+    const sp = SPHERES.find(x => x.k === s.sphere);
+    const hist = S.quarters.length > 1 ? '<div class="hist">' + S.quarters.map(x => { const v = s.status[x.id], c = STATUSES.find(z => z.k === v); return '<span title="' + esc(c ? c.t : 'нет отметки') + '"><i style="background:' + (c ? c.c : 'rgba(17,16,20,.12)') + '"></i>' + esc(shortQ(x.label)) + '</span>'; }).join('') + '</div>' : '';
+    return '<div class="card step"><div class="step-h"><div class="tx"><b>' + esc(s.text) + '</b>' + (s.why ? '<small>' + esc(s.why) + '</small>' : '') + (sp ? '<span class="tag">' + esc(sp.name) + '</span>' : '') + '</div>' +
+      '<button class="x" data-del-step="' + s.id + '" aria-label="Удалить шаг"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>' +
+      '<div><div class="eyebrow" style="margin-bottom:6px">' + esc(q.label) + '</div><div class="st-row">' +
+      STATUSES.map(x => '<button class="st ' + x.k + (s.status[q.id] === x.k ? ' on' : '') + '" data-st="' + x.k + '" data-step="' + s.id + '">' + (x.k === 'done' ? '✓ ' : '') + x.t + '</button>').join('') +
+      '</div></div>' + hist + '</div>';
+  }).join('');
+  el.innerHTML =
+    '<div class="sec-h"><div><div class="eyebrow">Чтобы колесо выросло</div><h2 class="serif">Шаги к своему колесу</h2>' +
+    '<p class="muted small">Конкретные действия, которые подтянут слабые сферы' + (st.worst ? ' — например, «' + esc(st.worst.name) + '»' : '') + '. В конце квартала отметьте, что получилось.</p></div>' +
+    (S.steps.length ? '<div class="steps-sum">' + esc(q.label) + ': сделано <b>' + done + ' из ' + S.steps.length + '</b></div>' : '') + '</div>' +
+    '<form class="card add-step" id="stepForm" style="margin-bottom:12px">' +
+      '<div class="fld"><label for="stText">Шаг — что сделаю</label><input class="input" id="stText" maxlength="300" placeholder="Например: откладывать 10% дохода" required></div>' +
+      '<div class="fld"><label for="stWhy">Зачем мне это</label><input class="input" id="stWhy" maxlength="300" placeholder="Подушка и спокойствие"></div>' +
+      '<div class="fld"><label for="stSphere">Сфера</label><select id="stSphere">' + opts + '</select></div>' +
+      '<button class="btn acc" type="submit">Добавить</button></form>' +
+    (list ? '<div class="grid2">' + list + '</div>' : '<div class="card empty"><h3>Пока ни одного шага</h3><p class="muted small">Начните с одной-двух самых низких сфер: что можно сделать в этом квартале?</p></div>');
+}
+
+/* ───────────── как заполнять ───────────── */
+function renderHow() {
+  const scale = [[0, 'Этого в жизни нет совсем'], [2, 'Очень плохо, сильно не хватает'], [4, 'Есть, но мало, хочется больше'], [5, 'Терпимо, середина'],
+    [6, 'Нормально, но есть куда расти'], [8, 'Хорошо, почти как хочется'], [10, 'Так, как мечтаю']];
+  $('#p-how').innerHTML =
+    '<div class="sec-h"><div><div class="eyebrow">Пять минут на квартал</div><h2 class="serif">Как заполнять</h2></div></div>' +
+    '<div class="how"><div class="card"><ol class="nsteps">' +
+      '<li><div>Впишите имя наверху. Колесо уже открыто на текущем квартале.</div></li>' +
+      '<li><div>Поставьте каждой сфере балл от 0 до 10 — кнопками или прямо на колесе: чем ближе к краю, тем выше балл.</div></li>' +
+      '<li><div>Откройте сферу и честно опишите, как сейчас. Своими словами — это только для вас.</div></li>' +
+      '<li><div>Запишите точку роста — какой хотите видеть сферу через квартал — и поставьте план: какой балл хотите получить.</div></li>' +
+      '<li><div>Во вкладке «Шаги» запишите конкретные действия. В конце квартала отметьте, что получилось.</div></li>' +
+      '<li><div>Через квартал нажмите «+ квартал» и оцените сферы заново. Пунктир на колесе покажет, где вы были, а «Сравнение» — что выросло и выполнен ли план.</div></li>' +
+      '<li><div>Сохраняйте файл после каждой оценки. Ответы хранятся только в этом браузере: файл — ваша копия и способ открыть колесо на другом устройстве.</div></li>' +
+    '</ol></div>' +
+    '<div style="display:grid;gap:12px">' +
+      '<div class="card"><h3 style="font-size:16px;margin-bottom:10px">Шкала баллов</h3><div class="scale">' + scale.map(x => '<div><b style="background:' + heat(x[0]) + '">' + x[0] + '</b><span>' + x[1] + '</span></div>').join('') + '</div></div>' +
+      '<div class="card"><h3 style="font-size:16px;margin-bottom:10px">Пример: одна сфера</h3><dl class="ex">' +
+        '<dt>Сфера</dt><dd><b>Здоровье</b> — балл 4, план 6</dd>' +
+        '<dt>Как сейчас</dt><dd>Сплю по 5–6 часов, спорта нет, к вечеру нет сил. Чек-ап давно не делали.</dd>' +
+        '<dt>Точка роста</dt><dd>Сплю 7–8 часов, тренировки 2 раза в неделю, чек-ап пройден. Энергии хватает до вечера.</dd></dl></div>' +
+      '<div class="card"><h3 style="font-size:16px;margin-bottom:10px">Подсказки</h3><ul class="tips">' +
+        '<li>Балл ставьте по ощущению и не сравнивайте себя с другими. Важно, как меняется именно ваше колесо.</li>' +
+        '<li>Точку роста пишите картинкой результата, а не задачей.</li>' +
+        '<li>Ровное колесо важнее высокого: самые низкие сферы тянут вниз всё остальное.</li>' +
+        '<li>Проживание жизни — сумма баллов от максимума: 16 сфер × 10 = 160.</li>' +
+      '</ul></div>' +
+    '</div></div>';
+}
+
+/* ───────────── вкладки и баннер ───────────── */
+let TAB = 'rate';
+function setTab(t, scroll) {
+  if (!['rate', 'cmp', 'steps', 'how'].includes(t)) t = 'rate';
+  TAB = t;
+  $$('.seg [data-tab]').forEach(b => { const on = b.dataset.tab === t; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+  $$('.panel').forEach(p => { p.hidden = p.id !== 'p-' + t; });
+  renderPanel();
+  const el = $('#p-' + t); el.classList.remove('view-in'); void el.offsetWidth; el.classList.add('view-in');
+  if (history.replaceState) history.replaceState(null, '', t === 'rate' ? location.pathname + location.search : '#' + t);
+  if (scroll) { const y = $('.tabs').getBoundingClientRect().top + window.scrollY; if (window.scrollY > y) window.scrollTo({top: y, behavior: 'smooth'}); }
+}
+function renderPanel() { ({rate: renderRate, cmp: renderCmp, steps: renderSteps, how: renderHow})[TAB](); }
+function renderBanner() {
+  $('#banner').innerHTML = storageOk ? '' : '<div class="ro-banner">Этот браузер не даёт сохранять данные (например, приватный режим). Ответы пропадут, когда закроете страницу, — сохраните файл.</div>';
+}
+function renderAll() { renderHero(); renderPanel(); renderFileNote(); }
+function renderFileNote() { $('#fileNote').textContent = S.savedFile ? 'Последний файл сохранён ' + fmtDate(S.savedFile) : 'Файл ещё не сохраняли'; }
+
+/* ───────────── окна ───────────── */
+function modal(html) {
+  const m = $('#modal');
+  m.innerHTML = '<div class="modal-back"><div class="modal" role="dialog" aria-modal="true">' + html + '</div></div>';
+  const back = $('.modal-back', m);
+  back.addEventListener('click', e => { if (e.target === back) closeModal(); });
+  const f = $('input,button', m); if (f) setTimeout(() => f.focus(), 30);
+  return m;
+}
+function closeModal() { $('#modal').innerHTML = ''; }
+function ask(title, text, ok, danger) {
+  return new Promise(res => {
+    const m = modal('<h3>' + esc(title) + '</h3><p class="muted small">' + esc(text) + '</p><div class="acts"><button class="btn ghost" data-no>Отмена</button><button class="btn ' + (danger ? 'danger' : 'acc') + '" data-yes>' + esc(ok) + '</button></div>');
+    $('[data-no]', m).onclick = () => { closeModal(); res(false); };
+    $('[data-yes]', m).onclick = () => { closeModal(); res(true); };
+  });
+}
+let toastT = 0;
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2600); }
+
+function editQuarter() {
+  const q = curQ();
+  const m = modal('<h3>Квартал</h3><p class="muted small">Название и дата видны на колесе и в сравнении.</p>' +
+    '<div class="fld"><label for="mqL">Название</label><input class="input" id="mqL" maxlength="40" value="' + esc(q.label) + '" placeholder="например: 4 квартал 2026"></div>' +
+    '<div class="fld"><label for="mqD">Дата оценки</label><input class="input" id="mqD" type="date" value="' + esc(q.date) + '"></div>' +
+    '<div class="acts">' + (S.quarters.length > 1 ? '<button class="btn danger" data-delq>Удалить квартал</button>' : '') + '<button class="btn acc" data-okq>Готово</button></div>');
+  $('[data-okq]', m).onclick = () => {
+    q.label = ($('#mqL').value.trim() || q.label).slice(0, 40);
+    const d = $('#mqD').value; q.date = /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : '';
+    save(); closeModal(); renderAll();
+  };
+  const del = $('[data-delq]', m);
+  if (del) del.onclick = async () => {
+    closeModal();
+    if (!(await ask('Удалить «' + q.label + '»?', 'Баллы и записи этого квартала пропадут. Если сохраняли файл — их можно вернуть из него.', 'Удалить', true))) return;
+    S.quarters = S.quarters.filter(x => x.id !== q.id);
+    S.steps.forEach(s => { delete s.status[q.id]; });
+    if (S.cmp) S.cmp = S.cmp.filter(id => id !== q.id);
+    S.cur = S.quarters[S.quarters.length - 1].id;
+    save(); renderAll(); toast('Квартал удалён');
+  };
+}
+function addQuarter() {
+  const last = S.quarters[S.quarters.length - 1];
+  const q = newQuarter(nextLabel(last.label), todayISO());
+  S.quarters.push(q); S.cur = q.id; S.cmp = null; openSet.clear();
+  save(); renderAll(); setTab('rate');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  toast('Добавлен ' + q.label + '. Пунктир на колесе — где вы были');
+}
+
+/* ───────────── файл, картинка, печать ───────────── */
+function fileName(ext) {
+  const TR = {а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'ts',ч:'ch',ш:'sh',щ:'sch',ъ:'',ы:'y',ь:'',э:'e',ю:'yu',я:'ya'};
+  const base = (S.name || '').trim().toLowerCase().split('').map(c => TR[c] !== undefined ? TR[c] : c).join('')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  return 'koleso-balansa' + (base ? '-' + base : '') + '-' + todayISO() + '.' + ext;
+}
+async function shareOrDownload(blob, name, title) {
+  try {
+    const file = new File([blob], name, {type: blob.type});
+    if (navigator.canShare && navigator.canShare({files: [file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)) {
+      await navigator.share({files: [file], title});
+      return true;
+    }
+  } catch (e) { if (e && e.name === 'AbortError') return false; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  return true;
+}
+async function saveFile() {
+  S.savedFile = todayISO(); flush();
+  const data = Object.assign({format: 'eva-koleso', version: 1}, S);
+  const ok = await shareOrDownload(new Blob([JSON.stringify(data, null, 1)], {type: 'application/json'}), fileName('json'), 'Колесо баланса Ева');
+  renderFileNote();
+  if (ok) toast('Файл сохранён — храните его у себя');
+}
+function openFile() { $('#fileIn').value = ''; $('#fileIn').click(); }
+$('#fileIn').addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  let data = null;
+  try { data = clean(JSON.parse(await f.text())); } catch (err) { data = null; }
+  if (!data) { toast('Это не файл колеса баланса'); return; }
+  const has = S.quarters.some(q => Object.keys(q.score).length) || S.steps.length;
+  if (has && !(await ask('Открыть файл?', 'Колесо из файла заменит то, что сейчас на этой странице.', 'Открыть'))) return;
+  S = data; openSet.clear(); flush(); renderAll(); setTab('rate');
+  toast('Колесо открыто: ' + S.quarters.length + ' ' + plural(S.quarters.length, 'квартал', 'квартала', 'кварталов'));
+});
+function plural(n, a, b, c) { const m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 12 || h > 14) ? b : c; }
+
+function cardSVG() {
+  const q = curQ(), st = stats(q), p = prevOf(q), ps = p ? stats(p) : null;
+  const d = ps && st.n && ps.n ? st.total - ps.total : null;
+  const who = [S.name, q.label].filter(Boolean).map(esc).join(' · ');
+  const box = (x, big, lab) => '<rect x="' + x + '" y="1150" width="300" height="120" rx="26" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.12)"/>' +
+    '<text x="' + (x + 150) + '" y="1214" text-anchor="middle" font-size="50" font-weight="700" fill="#fff" letter-spacing="-1.5">' + big + '</text>' +
+    '<text x="' + (x + 150) + '" y="1250" text-anchor="middle" font-size="17" font-weight="700" letter-spacing="2.6" fill="rgba(255,255,255,.6)">' + lab + '</text>';
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350" font-family="' + FONT + '">' +
+    '<defs><linearGradient id="bg" x1="0" y1="0" x2=".55" y2="1"><stop offset="0" stop-color="#1A171F"/><stop offset=".55" stop-color="#2B2233"/><stop offset="1" stop-color="#4A2C42"/></linearGradient>' +
+    '<radialGradient id="gl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#C2506F" stop-opacity=".38"/><stop offset="1" stop-color="#C2506F" stop-opacity="0"/></radialGradient>' +
+    '<linearGradient id="ev" x1="0" x2="1"><stop offset="0" stop-color="#F6C9D8"/><stop offset=".45" stop-color="#E592B0"/><stop offset="1" stop-color="#E8BE72"/></linearGradient>' +
+    wheelDefs('c') + '</defs>' +
+    '<rect width="1080" height="1350" fill="url(#bg)"/><circle cx="540" cy="700" r="520" fill="url(#gl)"/>' +
+    '<g transform="translate(80 92) scale(.3)"><path fill="#fff" d="' + STAR + '"/></g>' +
+    '<text x="124" y="118" font-size="22" font-weight="300" letter-spacing="7" fill="rgba(255,255,255,.88)">EVA SPACE</text>' +
+    '<text x="80" y="230" font-size="78" font-weight="700" letter-spacing="-3" fill="#fff">Колесо баланса <tspan fill="url(#ev)">Ева</tspan></text>' +
+    '<text x="82" y="284" font-size="30" font-weight="500" fill="rgba(255,255,255,.7)">' + who + '</text>' +
+    '<g transform="translate(540 700) scale(1.95)">' + wheelInner(q, {id: 'c'}) + '</g>' +
+    box(75, pct(st.pct), 'ПРОЖИВАНИЕ ЖИЗНИ') + box(390, st.n ? st.total + '/' + MAX : '—', 'БАЛЛЫ') +
+    box(705, d == null ? one(st.avg) : (d > 0 ? '+' : d < 0 ? '−' : '') + Math.abs(d), d == null ? 'В СРЕДНЕМ' : 'К ПРОШЛОМУ') +
+    '</svg>';
+}
+function exportPNG() {
+  const svg = cardSVG();
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas'); c.width = 1080; c.height = 1350;
+    const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
+    c.toBlob(async b => { if (!b) { toast('Не получилось сделать картинку'); return; } if (await shareOrDownload(b, fileName('png'), 'Колесо баланса Ева')) toast('Картинка готова'); }, 'image/png');
+  };
+  img.onerror = () => toast('Не получилось сделать картинку');
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+function buildPrint() {
+  const q = curQ();
+  let h = '<h2>' + esc(q.label) + (q.date ? ' · ' + fmtDate(q.date) : '') + (S.name ? ' · ' + esc(S.name) : '') + '</h2>' +
+    '<table><thead><tr><th>Сфера</th><th>Балл</th><th>Как сейчас</th><th>Точка роста</th><th>План</th></tr></thead><tbody>' +
+    SPHERES.map(s => '<tr><td><b>' + esc(s.name) + '</b></td><td class="pr-n">' + (isNum(q.score[s.k]) ? q.score[s.k] : '') + '</td><td>' + esc(q.now[s.k] || '') + '</td><td>' + esc(q.grow[s.k] || '') + '</td><td class="pr-n">' + (isNum(q.plan[s.k]) ? q.plan[s.k] : '') + '</td></tr>').join('') +
+    '</tbody></table>';
+  if (S.steps.length) h += '<h2>Шаги</h2><table><thead><tr><th>Шаг</th><th>Зачем</th><th>Сфера</th><th>Статус</th></tr></thead><tbody>' +
+    S.steps.map(s => { const sp = SPHERES.find(x => x.k === s.sphere), c = STATUSES.find(x => x.k === s.status[q.id]); return '<tr><td>' + esc(s.text) + '</td><td>' + esc(s.why) + '</td><td>' + (sp ? esc(sp.name) : '') + '</td><td>' + (c ? c.t : '') + '</td></tr>'; }).join('') + '</tbody></table>';
+  $('#print').innerHTML = h;
+}
+window.addEventListener('beforeprint', buildPrint);
+
+/* ───────────── события ───────────── */
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button, [data-tab]');
+  if (!t) return;
+  const d = t.dataset;
+  if (d.tab) { setTab(d.tab, true); return; }
+  if (d.q) { S.cur = d.q; openSet.clear(); save(); renderHero(); renderPanel(); return; }
+  if (d.score !== undefined) { setScore(d.k, +d.score); return; }
+  if (d.plan !== undefined) { setPlan(d.k, +d.plan); return; }
+  if (d.open) { openSet.has(d.open) ? openSet.delete(d.open) : openSet.add(d.open); rerenderCard(d.open); if (openSet.has(d.open)) { const ta = $('[data-card="' + d.open + '"] textarea'); if (ta) ta.focus({preventScroll: true}); } return; }
+  if (d.cmp) {
+    let ids = cmpList().map(q => q.id);
+    if (ids.includes(d.cmp)) { if (ids.length > 1) ids = ids.filter(x => x !== d.cmp); }
+    else { ids.push(d.cmp); if (ids.length > 4) ids.shift(); }
+    S.cmp = S.quarters.filter(q => ids.includes(q.id)).map(q => q.id); save(); renderCmp(); return;
+  }
+  if (d.st) { const s = S.steps.find(x => x.id === d.step), q = curQ(); if (s) { if (s.status[q.id] === d.st) delete s.status[q.id]; else s.status[q.id] = d.st; save(); renderSteps(); } return; }
+  if (d.delStep) { const s = S.steps.find(x => x.id === d.delStep); if (s && await ask('Удалить шаг?', s.text, 'Удалить', true)) { S.steps = S.steps.filter(x => x !== s); save(); renderSteps(); } return; }
+  switch (d.act) {
+    case 'addq': addQuarter(); break;
+    case 'editq': editQuarter(); break;
+    case 'openall': if (openSet.size === N) openSet.clear(); else SPHERES.forEach(s => openSet.add(s.k)); renderRate(); break;
+    case 'save': saveFile(); break;
+    case 'open': openFile(); break;
+    case 'png': exportPNG(); break;
+    case 'print': buildPrint(); window.print(); break;
+    case 'reset':
+      if (await ask('Начать заново?', 'Все кварталы, баллы и шаги на этой странице удалятся. Если нужен архив — сначала сохраните файл.', 'Удалить всё', true)) {
+        S = fresh(); openSet.clear(); flush(); renderAll(); setTab('rate'); toast('Чистое колесо');
+      }
+      break;
+  }
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'name') { S.name = t.value.slice(0, 80); save(); return; }
+  if (t.dataset && t.dataset.f) {
+    const q = curQ(), k = t.dataset.k, f = t.dataset.f;
+    if (t.value.trim()) q[f][k] = t.value.slice(0, 4000); else delete q[f][k];
+    autosize(t); save();
+  }
+});
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'stepForm') return;
+  e.preventDefault();
+  const text = $('#stText').value.trim();
+  if (!text) return;
+  S.steps.push({id: uid(), text: text.slice(0, 300), why: $('#stWhy').value.trim().slice(0, 300), sphere: $('#stSphere').value, status: {}});
+  save(); renderSteps(); toast('Шаг добавлен');
+  const f = $('#stText'); if (f) f.focus();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#modal').innerHTML) closeModal(); });
+
+/* нажатие на колесо: сектор — сфера, расстояние от центра — балл */
+const tip = $('#tip');
+let tipT = 0;
+function showTip(i, x, y, extra) {
+  const q = curQ(), s = SPHERES[i], p = prevOf(q), v = q.score[s.k];
+  let h = '<b>' + esc(s.name) + '</b>' + (isNum(v) ? 'Балл ' + v + ' из 10' : 'Без оценки');
+  const more = [];
+  if (p && isNum(p.score[s.k])) more.push('был ' + p.score[s.k]);
+  if (isNum(q.plan[s.k])) more.push('план ' + q.plan[s.k]);
+  if (more.length) h += '<br><span class="muted">' + more.join(' · ') + '</span>';
+  if (extra) h += '<br><span class="muted">' + extra + '</span>';
+  tip.innerHTML = h;
+  const w = 220;
+  tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, x + 14)) + 'px';
+  tip.style.top = Math.max(8, y - 64) + 'px';
+  tip.classList.add('show');
+}
+function hideTip() { tip.classList.remove('show'); }
+$('#wheel').addEventListener('click', e => {
+  const h = e.target.closest('.hit');
+  if (!h) return;
+  const svg = h.ownerSVGElement, pt = svg.createSVGPoint();
+  pt.x = e.clientX; pt.y = e.clientY;
+  const m = svg.getScreenCTM(); if (!m) return;
+  const loc = pt.matrixTransform(m.inverse()), dist = Math.hypot(loc.x, loc.y), i = +h.dataset.i;
+  const v = Math.max(0, Math.min(10, Math.round((dist - R0) / (R - R0) * 10)));
+  setScore(SPHERES[i].k, v, 'wheel');
+  showTip(i, e.clientX, e.clientY);
+  clearTimeout(tipT); tipT = setTimeout(hideTip, 1800);
+});
+$('#wheel').addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse') return;
+  const h = e.target.closest('.hit');
+  if (!h) { hideTip(); return; }
+  showTip(+h.dataset.i, e.clientX, e.clientY, 'нажмите, чтобы поставить балл');
+});
+$('#wheel').addEventListener('pointerleave', hideTip);
+let rsT = 0, lastW = window.innerWidth;
+window.addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { if (Math.abs(window.innerWidth - lastW) < 40) return; lastW = window.innerWidth; renderWheel(); if (TAB === 'cmp') renderCmp(); }, 200); });
+window.addEventListener('pagehide', flush);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+window.addEventListener('storage', e => { if (e.key !== KEY || !e.newValue) return; let n = null; try { n = clean(JSON.parse(e.newValue)); } catch (err) { n = null; } if (n) { S = n; renderAll(); } });
+
+/* ───────────── старт ───────────── */
+lsGet(); renderBanner();
+renderAll();
+setTab((location.hash || '').slice(1));
+window.__koleso = {get state() { return S; }, stats, cardSVG};
+})();
+</script>
+</body>
+</html>

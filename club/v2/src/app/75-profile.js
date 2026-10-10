@@ -75,7 +75,7 @@ function renderProfile(root, pid) {
       <div class="pf-main">
         <div class="pf-name"><h1>${esc(p.name || 'Имя не указано')}</h1>${own ? '<span class="pill line">это вы</span>' : ''}</div>
         <p class="pf-title">${esc(p.title || 'Должность не указана')}${p.dir && DIRS[p.dir] ? ` · ${DIRS[p.dir].name}` : ''}</p>
-        <div class="pf-tags"><span class="pill ${st.tone}">${st.name}</span>${acc ? rolePill(acc.role) : '<span class="pill line">без входа в штаб</span>'}${p.rate ? `<span class="pill line">${esc(p.rate)}</span>` : ''}${p.format ? `<span class="pill line">${esc(p.format)}</span>` : ''}</div>
+        <div class="pf-tags"><span class="pill ${st.tone}">${st.name}</span>${acc ? rolePill(acc.role) : '<span class="pill line">без входа в штаб</span>'}${p.rate ? `<span class="pill line">${esc(p.rate)}</span>` : ''}${p.format ? `<span class="pill line">${esc(p.format)}</span>` : ''}${HD_TYPES[p.hdType] ? `<span class="pill violet">${HD_TYPES[p.hdType].name}${p.hdProfile ? ' · ' + esc(p.hdProfile) : ''}</span>` : ''}${isBirthday(p) ? `<span class="pill rose">${icon('gift')}сегодня день рождения</span>` : ''}</div>
         ${contacts.length ? `<div class="pf-contacts">${contacts.map(([k, v]) => `<button class="pf-ct" data-copy="${esc(v)}" title="Скопировать"><span>${k}</span><b>${esc(v)}</b></button>`).join('')}</div>` : ''}
       </div>
       <div class="pf-stats">
@@ -91,6 +91,7 @@ function renderProfile(root, pid) {
       <div class="pf-col">
         ${sec('about', 'О себе', p.about ? '<p class="pf-text" data-f="about"></p>' : '', 'Пара предложений: откуда вы, чем занимались, что умеете лучше всего.')}
         ${sec('mission', 'Миссия', p.mission ? '<p class="pf-text pf-mission" data-f="mission"></p>' : '', 'Зачем вы в Еве — одной фразой.')}
+        ${birthHdHtml(p, edit)}
         <section class="card pf-sec"><div class="card-head"><h2>Увлечения</h2></div>
           <div class="tags" id="pfTags">${(p.interests || []).map((t, i) => `<span class="tag">${esc(t)}${edit ? `<button data-tag-del="${i}" aria-label="Убрать">×</button>` : ''}</span>`).join('') || (edit ? '' : '<p class="note">Пока не заполнено.</p>')}
           ${edit ? '<input class="tag-in" id="pfTagIn" placeholder="+ добавить: йога, горы, книги… Enter" maxlength="40">' : ''}</div></section>
@@ -111,8 +112,14 @@ function renderProfile(root, pid) {
         </section>
       </div>
     </div>
+    ${own ? `<section class="section card pf-sec"><div class="card-head"><h2>Уведомления</h2></div>
+      <div class="row pf-snd"><label class="check"><input type="checkbox" id="pfSound" ${Sound.on() ? 'checked' : ''}> Звук, когда мне ставят задачу, присылают на согласование или возвращают</label><button class="btn sm ghost" id="pfSoundTest">${icon('bell')}Проверить звук</button></div>
+      <p class="note">Уведомление всплывает, пока штаб открыт. То же переключает колокольчик внизу меню.</p>
+      ${tgBot() ? `<div class="row pf-tg">${p.tgChatId ? `<span class="pill good">${icon('tick')}Напоминания о собраниях приходят в Telegram</span>` : `<a class="btn sm" href="https://t.me/${tgBot()}?start=p_${esc(p.id)}" target="_blank" rel="noopener">${icon('msg')}Получать напоминания о собраниях в Telegram</a><span class="note">Откроется бот штаба — нажмите «Старт».</span>`}</div>` : ''}
+      <div class="row"><button class="btn sm ghost" id="pfTours">${icon('help')}Показать подсказки и туры снова</button></div>
+    </section>` : ''}
     ${own ? `<section class="section card pf-sec"><div class="card-head"><h2>Вход и пароль</h2></div>
-      <p class="note">Почта для входа: <b>${esc((Auth.me() || {}).email || '')}</b></p>
+      <p class="note">Почта для входа: <b>${esc((Auth.me() || {}).email || '')}</b>${Auth.claudeId ? ((Auth.me() || {}).claudeId === Auth.claudeId ? ' · вход через ваш аккаунт Claude включён — пароль не спрашиваем' : ' · <button class="link-btn" id="pfLinkClaude">входить через аккаунт Claude без пароля</button>') : ''}</p>
       <div class="row pf-pw"><input class="input" type="password" id="pwOld" placeholder="Текущий пароль" autocomplete="current-password"><input class="input" type="password" id="pwNew" placeholder="Новый, от 6 символов" autocomplete="new-password"><input class="input" type="password" id="pwNew2" placeholder="Новый ещё раз" autocomplete="new-password"><button class="btn" id="pwSave">Сменить пароль</button><button class="btn ghost" data-logout-me>${icon('logout')}Выйти</button></div>
     </section>` : ''}`;
 
@@ -125,11 +132,21 @@ function renderProfile(root, pid) {
   $$('.pf-goals li', root).forEach((li, i) => { $('span', li).textContent = goals[i].t; });
 
   wireTaskCards(root);
-  on(root, 'click', '[data-my-tasks]', () => { View.set('t.who', pid); View.set('t.late', false); });
+  on(root, 'click', '[data-my-tasks]', () => { View.set('t.whom', pid); View.set('t.late', false); });
   on(root, 'click', '[data-person-edit]', (e, el) => editPerson(el.dataset.personEdit));
   on(root, 'click', '[data-copy]', (e, el) => copyText(el.dataset.copy, $('b', el)));
   on(root, 'click', '[data-logout-me]', () => Auth.logout());
+  const snd = $('#pfSound', root);
+  if (snd) snd.onchange = () => { Sound.set(snd.checked); App.paintSound(); if (snd.checked) Sound.play('task', true); };
+  const sndT = $('#pfSoundTest', root);
+  if (sndT) sndT.onclick = () => { Sound.play('control', true); toast('Так звучит задача на согласование', {ring: true}); };
+  const lc = $('#pfLinkClaude', root);
+  if (lc) lc.onclick = () => { Auth.linkClaude(Auth.me().id); toast('Готово: дальше штаб узнаёт вас по аккаунту Claude'); };
+  if (own) wirePwToggles(root);
+  const tr = $('#pfTours', root);
+  if (tr) tr.onclick = () => { Tour.reset(); Prefs.setMany(Object.fromEntries(['calendar', 'metrics', 'money', 'reports', 'strategy', 'tasks'].map(k => ['help_' + k, false]))); toast('Готово: туры и подсказки покажутся снова — на каждой странице и в окнах'); };
   if (!edit) return;
+  on(root, 'click', '[data-pf-birth]', () => editBirth(p));
 
   const save = patch => Store.patch('people', pid, patch);
   on(root, 'click', '[data-pf-edit]', (e, el) => {
@@ -189,7 +206,10 @@ function renderProfile(root, pid) {
   if (pw) pw.onclick = async () => {
     const acc0 = Auth.me();
     const o = $('#pwOld', root).value, n1 = $('#pwNew', root).value, n2 = $('#pwNew2', root).value;
-    if ((await hashPassword(o, acc0.salt)) !== acc0.hash) { toast('Текущий пароль не подошёл', {error: true}); return; }
+    if (onServer()) { if (await serverPassword(o, n1, n2)) ['pwOld', 'pwNew', 'pwNew2'].forEach(id => { $('#' + id, root).value = ''; }); return; }
+    /* вошёл по аккаунту Claude — личность подтверждена, старый пароль не нужен */
+    const trusted = Auth.claudeId && acc0.claudeId === Auth.claudeId;
+    if (!trusted && (await hashPassword(o, acc0.salt)) !== acc0.hash) { toast('Текущий пароль не подошёл', {error: true}); return; }
     if (n1.length < 6) { toast('Новый пароль — не короче 6 символов', {error: true}); return; }
     if (n1 !== n2) { toast('Новые пароли не совпадают', {error: true}); return; }
     const salt = randSalt();
@@ -197,6 +217,16 @@ function renderProfile(root, pid) {
     ['pwOld', 'pwNew', 'pwNew2'].forEach(id => { $('#' + id, root).value = ''; });
     toast('Пароль изменён');
   };
+}
+
+/* свой пароль на своём сервере: текущий проверяет сервер, остальные устройства после смены выходят */
+async function serverPassword(old, n1, n2) {
+  if (n1.length < 6) { toast('Новый пароль — не короче 6 символов', {error: true}); return false; }
+  if (n1 !== n2) { toast('Новые пароли не совпадают', {error: true}); return false; }
+  try { await window.EvaServer.auth.password(old, n1); }
+  catch (e) { toast(e.message || 'Пароль не сменился', {error: true}); return false; }
+  toast('Пароль изменён');
+  return true;
 }
 
 /* учётка без карточки в команде (например, инвестор) */
@@ -208,6 +238,7 @@ function renderAccountOnly(root) {
   on(root, 'click', '[data-logout-me]', () => Auth.logout());
   $('#pwSave', root).onclick = async () => {
     const o = $('#pwOld', root).value, n1 = $('#pwNew', root).value, n2 = $('#pwNew2', root).value;
+    if (onServer()) { await serverPassword(o, n1, n2); return; }
     if ((await hashPassword(o, a.salt)) !== a.hash) { toast('Текущий пароль не подошёл', {error: true}); return; }
     if (n1.length < 6 || n1 !== n2) { toast('Проверьте новый пароль: от 6 символов и одинаковый дважды', {error: true}); return; }
     const salt = randSalt();

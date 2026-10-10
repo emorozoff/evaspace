@@ -65,7 +65,8 @@ const Codec = {
    подменяем, новые добавляем в конец */
 function applyDiff(type, diff) {
   const base = (Q_DEFAULT[type] || {test: []}).test.map(q => ({...q}));
-  if (!diff) return base;
+  /* ссылка выдана до смены набора вопросов — её правки относятся к прежнему набору */
+  if (!diff || (diff.v || 1) < (Q_VER[type] || 1)) return base;
   const hide = new Set(diff.h || []);
   const changed = Object.fromEntries((diff.c || []).map(q => [q.id, q]));
   const out = base.filter(q => !hide.has(q.id)).map(q => (changed[q.id] ? {...q, ...changed[q.id]} : q));

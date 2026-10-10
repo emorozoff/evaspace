@@ -23,6 +23,8 @@ const GCAL_ERR = {
   approval_required: 'Нужно разрешение администратора организации на Google Календарь.',
   server_not_found: 'Коннектор Google Календаря не найден. Подключите его заново: claude.ai → Настройки → Коннекторы.',
   consent_required: 'CRM нужен доступ к Google Календарю — нажмите «Подключить» ещё раз и подтвердите.',
+  /* свой сервер: человек ещё не подключил свой аккаунт Google */
+  connect_first: 'Сначала подключите свой Google Календарь: «Календарь» → «Подключить Google Календарь».',
   server_unavailable: 'Google Календарь сейчас не отвечает. Попробуйте через минуту.',
   rate_limited: 'Слишком много запросов к календарю — подождите немного.',
   cancelled: 'Действие отменено.',
@@ -32,7 +34,7 @@ const GCAL_CONN = ['needs_reauth', 'server_not_connected', 'selection_required',
 function gcalErr(e) {
   const code = (e && e.code) || 'upstream_error';
   let text = GCAL_ERR[code];
-  if (!text && GCAL_OFF.includes(code)) text = 'Google Календарь недоступен в этом окне — откройте CRM в Claude.';
+  if (!text && GCAL_OFF.includes(code)) text = onServer() ? 'Google Календарь на этом сервере ещё не настроен.' : 'Google Календарь недоступен в этом окне — откройте CRM в Claude.';
   if (!text && code === 'tool_error') text = 'Google ответил ошибкой: ' + ((e && e.message) || 'без подробностей');
   if (!text) text = 'Не получилось связаться с Google Календарём' + (e && e.message ? ': ' + e.message : '') + '.';
   /* для записи «не ответил» не значит «не сделал» — повторять только после проверки */
@@ -135,6 +137,8 @@ const Gcal = {
   },
   /* подключить: первое чтение само спросит разрешение */
   async connect(ws) {
+    /* свой сервер: сначала человек даёт доступ в окне Google, потом вернётся сюда же */
+    if (onServer() && !(await window.EvaServer.gcal.status(true)).connected) { window.EvaServer.gcal.connect(); return; }
     this.week = {};
     await this.loadWeek(ws, true);
     const w = this.week[ws];

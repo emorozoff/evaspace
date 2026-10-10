@@ -271,6 +271,15 @@ const Q_BLOCKS = {
   },
 };
 /* вопросы по разделам в порядке появления; без раздела — «Дополнительно» */
+/* версия стартового набора. Когда набор меняется целиком (кастдев 2.0 по таблице V2),
+   сохранённые правки команды для прежнего набора не должны его заслонять: из них
+   остаются только вопросы, которые команда добавила сама (их id нет в Q_PREV). */
+const Q_VER = {client: 2};
+const Q_PREV = {client: {
+  test: ['name', 'age', 'city', 'stage', 'goal', 'pain', 'time', 'when', 'tried', 'spend', 'formats', 'price', 'fit', 'source', 'call', 'tg'],
+  talk: ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12', 't13', 't14', 't15'],
+}};
+
 function groupByBlock(type, part, qs) {
   const names = ((Q_BLOCKS[type] || {})[part]) || {};
   const out = [];

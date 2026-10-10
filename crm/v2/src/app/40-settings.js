@@ -16,11 +16,11 @@ App.register('settings', {
           <ol class="legal"><li><b>Анкета.</b> Человек открывает ссылку и отвечает на вопросы кнопками.</li>
             <li><b>Ответы возвращаются.</b> В конце он нажимает «Отправить» и присылает менеджеру ссылку, которая одним нажатием кладёт ответы в карточку.</li>
             <li><b>Рефералка.</b> Если по ссылке придёт подруга, она выберет «Меня пригласили», и в её карточке будет видно, кто её привёл.</li></ol>
-          <label class="field" style="margin-top:10px"><span>Адрес публичной анкеты</span><input class="input" id="stAnk" value="${esc(s.anketaUrl || '')}" ${own ? '' : 'disabled'}><small>Анкета — отдельная страница: откройте к ней доступ по ссылке, чтобы её видели люди вне команды.</small></label>
+          <label class="field" style="margin-top:10px"><span>Адрес публичной анкеты</span><input class="input" id="stAnk" value="${esc(s.anketaUrl || '')}" ${own ? '' : 'disabled'}><small>${onServer() ? 'Анкета — отдельная страница на этом же сервере, открыта всем по ссылке. Пустое поле — адрес по умолчанию.' : 'Анкета — отдельная страница: откройте к ней доступ по ссылке, чтобы её видели люди вне команды.'}</small></label>
         </div>
         <div class="card"><div class="card-head"><h2>Команда и доступ</h2><a class="note" href="#team">Открыть →</a></div>
           <p class="note" style="margin-bottom:8px">В команде ${team.length} ${plural(team.length, 'человек', 'человека', 'человек')}${Team.pending().length ? `, ждут подтверждения — ${Team.pending().length}` : ''}${Team.invited().length ? `, приглашены — ${Team.invited().length}` : ''}. Главная — ${esc(Team.headName())}.</p>
-          <p class="note">Новые люди регистрируются сами: с кодом приглашения — сразу, без кода — после подтверждения главной.</p></div>
+          <p class="note">${onServer() ? 'В CRM входят по учётке штаба. Новый человек при первом входе заполняет профиль: с кодом приглашения он сразу в команде, без кода — после подтверждения главной.' : 'Новые люди регистрируются сами: с кодом приглашения — сразу, без кода — после подтверждения главной.'}</p></div>
         <div class="card"><div class="card-head"><h2>Выгрузить ответы</h2></div>
           <p class="note" style="margin-bottom:10px">Таблица CSV для Excel или Google Таблиц: одна строка — один человек, столбцы — вопросы анкеты и заметки созвона.</p>
           <div class="row">${Object.keys(TYPES).map(k => `<button class="btn sm" data-csv="${k}">${icon('download')}${groupName(k)}</button>`).join('')}</div></div>

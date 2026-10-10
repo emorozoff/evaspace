@@ -29,8 +29,11 @@ const Who = {
   },
 
   /* свои строки в команде: в платформе — по id, локально — 'local'.
-     Если строк несколько (двойной первый вход), берём самую раннюю */
-  mine() { return this.uid ? Store.all('team').filter(t => t.uid === this.uid && !t.archived).sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0)) : []; },
+     Если строк несколько (двойной первый вход), берём действующую, из них — самую раннюю */
+  mine() {
+    const wait = t => (t.status === 'pending' || t.status === 'rejected' ? 1 : 0);
+    return this.uid ? Store.all('team').filter(t => t.uid === this.uid && !t.archived).sort((a, b) => wait(a) - wait(b) || (a.joinedAt || 0) - (b.joinedAt || 0)) : [];
+  },
   self() { return this.mine()[0] || null; },
   status() { const m = this.self(); return m ? m.status || 'active' : null; },
   realRole() {
@@ -82,14 +85,40 @@ const Who = {
       this._seeded = true;
       const cfg = Store.get('cfg', 'team') || {};
       if (!cfg.headSeeded && !Store.all('team').some(t => t.head)) {
-        Store.add('team', {name: TEAM_HEAD.name, title: TEAM_HEAD.title, role: 'owner', head: true, status: 'invited', code: Team.newCode(), groups: Object.keys(TYPES), invitedBy: this.id(), invitedAt: Date.now(), order: 0});
         Store.patch('cfg', 'team', {headSeeded: true, at: Date.now()});
+        this.seedHead();
       }
     }
   },
 
+  /* главная в CRM: на своём сервере Зульфия, скорее всего, уже есть в штабе —
+     тогда сразу делаем главной её учётку; иначе — место с кодом приглашения */
+  async seedHead() {
+    const base = {title: TEAM_HEAD.title, role: 'owner', head: true, groups: Object.keys(TYPES), order: 0};
+    let acc = null;
+    if (onServer()) {
+      const all = await this.accounts();
+      const hits = Object.entries(all).filter(([, a]) => /^\s*(зульф|зуля)/i.test((a && a.name) || ''));
+      if (hits.length === 1) acc = {id: hits[0][0], name: hits[0][1].name};
+    }
+    if (Store.all('team').some(t => t.head && !t.archived)) return;
+    if (acc) {
+      const row = Store.all('team').find(t => t.uid === acc.id && !t.archived);
+      if (row) Store.patch('team', row.id, {...base, title: row.title || base.title, groups: (row.groups || []).length ? row.groups : base.groups, status: 'active', order: 0});
+      else Store.add('team', {...base, uid: acc.id, name: acc.name, status: 'active', joinedAt: Date.now(), invitedBy: this.id()});
+      return;
+    }
+    Store.add('team', {...base, name: TEAM_HEAD.name, status: 'invited', code: Team.newCode(), invitedBy: this.id(), invitedAt: Date.now()});
+  },
+  /* учётки штаба (только на своём сервере): id → имя */
+  async accounts() {
+    if (!onServer()) return {};
+    try { const r = await fetch(window.EVA.api + '/profiles', {credentials: 'same-origin', headers: {'x-eva': '1'}}); return r.ok ? await r.json() : {}; } catch (e) { return {}; }
+  },
+
   /* регистрация: по коду — сразу в команду с ролью из приглашения,
-     без кода — заявка, которую подтверждает главная */
+     без кода — заявка, которую подтверждает главная.
+     На своём сервере код проверяет сервер: в браузер коды попадают только руководителю */
   register({name, title, groups, tg, code}) {
     if (!this.uid) return {err: 'CRM не узнала вас — откройте её в Claude.'};
     if (this.readOnly()) return {err: 'У вас доступ к странице только на просмотр — регистрация не сохранится. Попросите владельца CRM открыть доступ «Может редактировать» через «Поделиться».'};
@@ -97,14 +126,26 @@ const Who = {
     const now = Date.now();
     const base = {uid: this.uid, name: name.trim(), title: title.trim(), groups, tg: tg.trim(), joinedAt: now};
     const c = Team.normCode(code);
+    if (c && onServer()) return this.joinServer({code: c, name: base.name, title: base.title, groups, tg: base.tg});
     if (c) {
       const row = Store.all('team').find(t => t.status === 'invited' && !t.uid && Team.normCode(t.code) === c);
       if (!row) return {err: 'Код не найден или уже использован. Проверьте его или отправьте заявку без кода.'};
       Store.patch('team', row.id, {...base, title: base.title || row.title || '', groups: groups.length ? groups : row.groups || [], status: 'active', code: null, usedCode: c});
+      /* своя заявка без кода больше не нужна */
+      this.mine().filter(t => t.id !== row.id && (t.status === 'pending' || t.status === 'rejected')).forEach(t => Store.remove('team', t.id));
       return {ok: true, status: 'active', role: roleOf(row.role), head: !!row.head};
     }
     Store.add('team', {...base, role: 'member', status: 'pending', order: 40});
     return {ok: true, status: 'pending'};
+  },
+
+  async joinServer(payload) {
+    try {
+      const r = await fetch(window.EVA.api + '/join', {method: 'POST', credentials: 'same-origin', headers: {'content-type': 'application/json', 'x-eva': '1'}, body: JSON.stringify(payload)});
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) return {err: j.error || 'Не получилось. Проверьте связь и повторите.'};
+      return {ok: true, status: 'active', role: roleOf(j.role), head: !!j.head};
+    } catch (e) { return {err: 'Сервер не отвечает. Проверьте связь и повторите.'}; }
   },
 
   /* имена из профилей площадки: не храним, спрашиваем при отрисовке */
@@ -160,8 +201,8 @@ const Team = {
     return `Привет! Приглашаю тебя в CRM команды Eva Space — там мы ведём кастдев клиенток, экспертов, партнёров и амбассадоров.
 
 1. Открой CRM: ${LINKS.crm}
-   Если пишет, что нет доступа, — напиши мне, я открою.
-2. Нажми «Зарегистрироваться», впиши имя и код: ${t.code}
+   ${onServer() ? 'Войди по своей учётке штаба. Если учётки ещё нет — напиши мне, пришлю приглашение в штаб.' : 'Если пишет, что нет доступа, — напиши мне, я открою.'}
+2. ${onServer() ? 'CRM попросит заполнить профиль — впиши должность и код' : 'Нажми «Зарегистрироваться», впиши имя и код'}: ${t.code}
 
 С кодом ты сразу попадёшь в команду с ролью «${ROLES[roleOf(t.role)].name}»${t.head ? ' и станешь главной в CRM' : ''}.`;
   },

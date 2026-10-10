@@ -1,6 +1,7 @@
-/* Деньги: быстрая запись сверху → месяцы → P&L план/факт → план платежей
-   с кнопкой «Оплатить» → журнал. Выручка подписок приходит из «Отчётов»
-   (цифры продаж), поэтому здесь её вручную не вносим. */
+/* Финансы: вкладки «Обзор», «Операции» (быстрая запись и журнал), «План и
+   прогноз» (финплан с «Оплатить», план-факт, Cash Flow), «Подписки», «Курсы»,
+   «Маркетплейс», «Сбои оплат», «Возвраты» (44-fin-ui.js). Выручка подписок
+   приходит из «Отчётов» (цифры продаж), поэтому здесь её вручную не вносим. */
 
 const MoneyUI = {
   draft: {kind: 'out', amount: '', cat: 'other', date: '', note: ''},
@@ -9,56 +10,52 @@ const catName = (kind, cat) => ((KINDS[kind] || {}).cats || {})[cat] || 'Про�
 const monthStatus = m => (m < monthOf(today()) ? 'fact' : m === monthOf(today()) ? 'now' : 'plan');
 const STATUS_TAG = {fact: 'факт', now: 'идёт', plan: 'план'};
 
+/* разделы вкладки: обзор и деньги — всем, кто видит финансы; записи с данными клиентов — fin.ops */
+const FIN_TABS = [
+  ['overview', 'Обзор'], ['ops', 'Операции'], ['plan', 'План и прогноз'], ['subs', 'Подписки'], ['courses', 'Курсы'],
+  ['market', 'Маркетплейс'], ['failed', 'Сбои оплат', 'fin.ops'], ['refunds', 'Возвраты', 'fin.ops'],
+];
 App.register('money', {
-  title: 'Деньги',
-  render(root) {
-    if (!Auth.can('money.view')) { root.innerHTML = pageHead('Деньги', '') + noAccess(); return; }
+  title: 'Финансы',
+  tourKey() { const t = View.get('fin.tab', 'overview'); return t === 'overview' || !TOURS['money-' + t] ? 'money' : 'money-' + t; },
+  render(root, param) {
+    if (!Auth.can('money.view')) { root.innerHTML = pageHead('Финансы', '') + noAccess(); return; }
     const s = settings(), sc = s.scenario;
     const edit = Auth.can('money.edit');
-    const rows = pnl(sc);
-    const cash = Money.cashNow();
+    const tabs = FIN_TABS.filter(t => !t[2] || Auth.can(t[2]));
+    /* ссылка вида #money:refunds открывает нужный раздел (один раз — дальше решают вкладки) */
+    if (param && App.cur !== 'money:' + param && tabs.some(t => t[0] === param)) View.set('fin.tab', param);
+    let tab = View.get('fin.tab', 'overview');
+    if (!tabs.some(t => t[0] === tab)) tab = 'overview';
+    const a = Fin.attention();
+    const badge = {failed: a.failedDue.length, refunds: a.refunds.length, market: finOps() ? a.ship.length : 0};
+    const body = {
+      overview: () => finOverviewHtml(sc),
+      ops: () => `${edit ? quickEntryHtml() : ''}
+        <section class="section"><div class="section-head"><h2>Журнал операций</h2>${ledgerFilters()}</div>${ledgerTable()}</section>`,
+      plan: () => `<section class="section"><div class="section-head"><h2>Финплан: платежи по месяцам</h2><span class="hint-inline">${edit ? 'Регулярные и разовые платежи. «Оплатить», когда деньги ушли, — операция попадёт в журнал и в план-факт.' : 'Что и когда платим до конца года.'}</span>
+            ${edit ? `<button class="btn sm" data-plan-add>${icon('plus')}Платёж</button>` : ''}</div>${planTable()}</section>
+        <section class="section"><div class="section-head"><h2>План-факт по месяцам</h2><span class="hint-inline">Крупно — факт, мелко — план. Будущие месяцы — только план. Сценарий продаж «${SCENARIOS[sc].name}».</span></div>${pnlTable(pnl(sc))}</section>
+        ${Auth.can('cf.view') ? cashFlowHtml(sc) : ''}
+        ${Auth.can('settings.edit') ? moneySettingsHtml() : ''}`,
+      subs: finSubsHtml, courses: finCoursesHtml, market: finMarketHtml, failed: finFailedHtml, refunds: finRefundsHtml,
+    }[tab]();
 
     root.innerHTML = `
-      ${pageHead('Деньги', 'Сверху — быстрая запись расхода, прихода или вложения. Ниже — P&L по месяцам, план платежей и журнал всех операций.', helpBtn('money'))}
-      ${helpBox('money', `<b>Как вести деньги.</b><ol>
-        <li>Потратили или получили деньги — запишите строкой сверху: сумма, статья, дата. Enter — сохранить. Ошиблись — «Отменить» в уведомлении или правка в журнале.</li>
-        <li>Плановые платежи (зарплаты, штаб, сервисы) отмечайте кнопкой «Оплатить» в плане — операция запишется в журнал сама.</li>
-        <li>Выручку подписок вносить не нужно: она считается из цифр продаж в «Отчётах».</li>
-        <li>«Вложение» — деньги основателя или инвестора: они пополняют счёт, но не считаются доходом.</li></ol>`)}
-      ${edit ? quickEntryHtml() : ''}
-      <div class="money-top">
-        <div class="card stat cash-card"><span class="label">На счёте сейчас</span><div class="big">${rubK(cash)}</div>
-          <div class="foot">старт ${rubK(s.cashStart)} на ${dayLong(s.cashDate)} + все операции и выручка</div></div>
-        ${rows.map(r => {
-          const st = monthStatus(r.m);
-          const f = st === 'plan' ? r.plan : r.fact;
-          return `<div class="card month-card ${st}"><div class="mc-h"><b>${monthName(r.m)}</b><span class="pill ${st === 'now' ? 'rose' : ''}">${STATUS_TAG[st]}</span></div>
-            <div class="mc-row"><span>Доходы</span><b class="good">${rubK(f.income)}</b></div>
-            <div class="mc-row"><span>Расходы</span><b class="bad">${rubK(f.outTotal)}</b></div>
-            <div class="mc-row total"><span>Итог</span><b class="${f.profit < 0 ? 'bad' : 'good'}">${signed(f.profit)}</b></div>
-            ${st !== 'plan' ? `<div class="note">план: ${signed(r.plan.profit)}</div>` : '<div class="note">по плану платежей и сценарию</div>'}</div>`;
-        }).join('')}
-      </div>
-      <section class="section">
-        <div class="section-head"><h2>P&amp;L по месяцам</h2><span class="hint-inline">Крупно — факт, мелко — план. Будущие месяцы — только план. Сценарий продаж «${SCENARIOS[sc].name}».</span></div>
-        ${pnlTable(rows)}
-      </section>
-      <section class="section">
-        <div class="section-head"><h2>План платежей</h2><span class="hint-inline">${edit ? 'Нажмите «Оплатить», когда деньги ушли — операция попадёт в журнал и в P&L.' : 'Что и когда платим до конца года.'}</span>
-          ${edit ? `<button class="btn sm" data-plan-add>${icon('plus')}Платёж</button>` : ''}</div>
-        ${planTable()}
-      </section>
-      <section class="section">
-        <div class="section-head"><h2>Журнал операций</h2>${ledgerFilters()}</div>
-        ${ledgerTable()}
-      </section>
-      ${Auth.can('settings.edit') ? moneySettingsHtml() : ''}`;
+      ${pageHead('Финансы', 'Все деньги клуба в одном месте: баланс и прогноз, журнал, финплан, подписки, курсы, маркетплейс, сбои оплат и возвраты.', helpBtn('money'))}
+      ${helpBox('money', `<b>Как устроены финансы.</b> Всё, что пришло и ушло, лежит в <b>журнале операций</b> — из него считаются баланс, план-факт и прогноз. Записывать вручную нужно только обычные расходы и приходы (строка в «Операциях»). Остальное попадает в журнал само, когда вы нажимаете: «Оплатить» в финплане, «Выплатить» рефералу, автору или продавцу, «Оплачен» у заказа, «Возвращено» у запроса на возврат, «Внести приход» у курсов. Выручка подписок считается из «Цифр дня» в «Отчётах»; в «Подписках» её можно разделить на месячные и годовые. Сбои оплат и возвраты — карточки со сроком, статусом, ответственным и готовым сообщением клиенту.`)}
+      <div class="tabs fin-tabs" role="tablist">${tabs.map(([k, n]) => `<button type="button" role="tab" data-ftab="${k}" class="${k === tab ? 'on' : ''}">${n}${badge[k] ? ` <span class="n fin-n">${badge[k]}</span>` : ''}</button>`).join('')}</div>
+      <div id="finView" data-tab="${tab}">${body}</div>`;
 
     wireHelp(root);
-    if (edit) wireQuickEntry(root);
-    wirePlan(root);
-    wireLedger(root);
-    if (Auth.can('settings.edit')) wireMoneySettings(root);
+    /* на телефоне вкладки прокручиваются вбок — выбранная должна быть видна */
+    const bar = $('.fin-tabs', root), cur = bar && $('.on', bar);
+    if (cur && (cur.offsetLeft + cur.offsetWidth > bar.scrollLeft + bar.clientWidth || cur.offsetLeft < bar.scrollLeft)) bar.scrollLeft = Math.max(0, cur.offsetLeft - 16);
+    on(root, 'click', '[data-ftab]', (e, el) => { View.set('fin.tab', el.dataset.ftab); App.render(); });
+    if (tab === 'ops' && edit) wireQuickEntry(root);
+    if (tab === 'plan') { wirePlan(root); if (Auth.can('settings.edit')) wireMoneySettings(root); }
+    if (tab === 'ops') wireLedger(root);
+    wireFin(root);
   },
 });
 
@@ -338,6 +335,7 @@ function moneySettingsHtml() {
     <div class="grid3 set-grid">
       <label class="field"><span>Деньги на счёте на старте, ₽</span><input class="input num" id="msCash" inputmode="decimal" value="${s.cashStart}"></label>
       <label class="field"><span>Дата старта</span><input class="input" id="msDate" type="date" value="${esc(s.cashDate)}"></label>
+      <label class="field"><span>Годовая подписка, ₽</span><input class="input num" id="msYear" inputmode="decimal" value="${s.priceYear || ''}" placeholder="${s.price * 10}"><small>месячная — ${rub(s.price)} в «Стратегии»</small></label>
       <label class="field"><span>Страховые взносы, %</span><input class="input num" id="msIns" inputmode="decimal" value="${fmt(s.insurance * 100, 1)}"></label>
       <label class="field"><span>Эквайринг, % выручки</span><input class="input num" id="msAcq" inputmode="decimal" value="${fmt(s.acquiring * 100, 1)}"></label>
       <label class="field"><span>Налог, % выручки</span><input class="input num" id="msTax" inputmode="decimal" value="${fmt(s.taxRate * 100, 1)}"><small>УСН 15%: минимальный налог 1%, пока расходы больше доходов</small></label>
@@ -355,7 +353,7 @@ function wireMoneySettings(root) {
     $$('[data-inv]', root).forEach(i => { invest[i.dataset.inv] = Math.max(0, parseNum(i.value)); });
     saveSettings({cashStart: parseNum($('#msCash', root).value), cashDate: $('#msDate', root).value || '2026-09-01',
       insurance: parseNum($('#msIns', root).value) / 100, acquiring: parseNum($('#msAcq', root).value) / 100,
-      taxRate: parseNum($('#msTax', root).value) / 100, invest});
+      taxRate: parseNum($('#msTax', root).value) / 100, invest, priceYear: parseNum($('#msYear', root).value) || null});
     toast('Настройки сохранены');
   };
 }

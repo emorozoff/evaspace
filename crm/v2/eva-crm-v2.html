@@ -1059,6 +1059,8 @@ table.team-t .select{width:auto;}
 .nav .nav-n.hot{background:var(--rose-brand); color:#fff; min-width:18px; height:18px; padding:0 5px; border-radius:9px; display:inline-grid; place-items:center; font-weight:600; font-size:11px;}
 .me-chip .me-link{display:flex; align-items:center; gap:10px; flex:1; min-width:0; text-decoration:none; color:inherit;}
 .me-chip .me-link:hover b{text-decoration:underline; text-underline-offset:3px;}
+table.team-t .code{white-space:nowrap;}
+@media (max-width:640px){ table.team-t .select{max-width:132px;} .tm-who{min-width:0;} }
 </style>
 <div id="app" class="app">
   <div class="boot" id="boot">
@@ -1311,6 +1313,12 @@ function refCodeFor(name) {
 /* Константы CRM 2.0: роли, разделы, статусы трёх шагов, быстрые метки
    итогов. Вопросы, направления и категории — в shared/10-questions.js. */
 
+/* CRM на своём сервере (club/v2/server): вход — по учётке штаба, база и Google
+   Календарь — через сервер; он подключает к странице eva-server.js */
+const onServer = () => !!window.EvaServer;
+/* где CRM живёт теперь — для таблички «переехали» в замороженном артефакте Claude */
+const CRM_HOME = 'https://eva.tytproai.ru/crm/';
+
 const ROLES = {
   owner:  {name: 'Руководитель', tone: 'gold',   about: 'всё: подтверждает новых, назначает роли, удаляет'},
   member: {name: 'Команда',      tone: 'violet', about: 'добавляет людей, ведёт созвоны и интервью, правит вопросы'},
@@ -1325,10 +1333,10 @@ const PERMS = {
 /* главная в CRM: подтверждает новых и назначает роли. Её место в команде
    создаётся само — с кодом приглашения, по которому она войдёт */
 const TEAM_HEAD = {name: 'Зульфия', short: 'Зуля', title: 'Исполнительный директор'};
-/* строка команды: invited — приглашена кодом, pending — ждёт подтверждения,
+/* строка команды: invited — приглашение кодом, pending — ждёт подтверждения,
    active (или пусто) — в команде, rejected — заявку отклонили */
 const MEMBER_ST = {
-  invited:  {name: 'Приглашена, ещё не вошла', tone: 'warn'},
+  invited:  {name: 'Приглашение отправлено, ждём входа', tone: 'warn'},
   pending:  {name: 'Ждёт подтверждения',       tone: 'warn'},
   active:   {name: 'В команде',                tone: 'good'},
   rejected: {name: 'Заявка отклонена',         tone: 'bad'},
@@ -1688,6 +1696,15 @@ const Q_BLOCKS = {
   },
 };
 /* вопросы по разделам в порядке появления; без раздела — «Дополнительно» */
+/* версия стартового набора. Когда набор меняется целиком (кастдев 2.0 по таблице V2),
+   сохранённые правки команды для прежнего набора не должны его заслонять: из них
+   остаются только вопросы, которые команда добавила сама (их id нет в Q_PREV). */
+const Q_VER = {client: 2};
+const Q_PREV = {client: {
+  test: ['name', 'age', 'city', 'stage', 'goal', 'pain', 'time', 'when', 'tried', 'spend', 'formats', 'price', 'fit', 'source', 'call', 'tg'],
+  talk: ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12', 't13', 't14', 't15'],
+}};
+
 function groupByBlock(type, part, qs) {
   const names = ((Q_BLOCKS[type] || {})[part]) || {};
   const out = [];
@@ -1803,7 +1820,8 @@ const Codec = {
    подменяем, новые добавляем в конец */
 function applyDiff(type, diff) {
   const base = (Q_DEFAULT[type] || {test: []}).test.map(q => ({...q}));
-  if (!diff) return base;
+  /* ссылка выдана до смены набора вопросов — её правки относятся к прежнему набору */
+  if (!diff || (diff.v || 1) < (Q_VER[type] || 1)) return base;
   const hide = new Set(diff.h || []);
   const changed = Object.fromEntries((diff.c || []).map(q => [q.id, q]));
   const out = base.filter(q => !hide.has(q.id)).map(q => (changed[q.id] ? {...q, ...changed[q.id]} : q));
@@ -1941,6 +1959,8 @@ const Store = (() => {
     if (code === 'quota_exceeded') return 'База заполнена (до 5 000 записей): удалите демо-записи в «Настройках»';
     if (code === 'invalid_argument') return 'Не сохранилось: у вас доступ только на просмотр этой CRM';
     if (code === 'resource_exhausted') return 'Слишком много правок подряд — повторите через минуту';
+    /* свой сервер не принял правку по правам роли — говорит, почему */
+    if (code === 'permission_denied') return 'Не сохранилось: ' + ((e && e.message) || 'для вашей роли это закрыто');
     return 'Не сохранилось. Проверьте связь и повторите';
   }
 
@@ -2034,8 +2054,11 @@ const Who = {
   },
 
   /* свои строки в команде: в платформе — по id, локально — 'local'.
-     Если строк несколько (двойной первый вход), берём самую раннюю */
-  mine() { return this.uid ? Store.all('team').filter(t => t.uid === this.uid && !t.archived).sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0)) : []; },
+     Если строк несколько (двойной первый вход), берём действующую, из них — самую раннюю */
+  mine() {
+    const wait = t => (t.status === 'pending' || t.status === 'rejected' ? 1 : 0);
+    return this.uid ? Store.all('team').filter(t => t.uid === this.uid && !t.archived).sort((a, b) => wait(a) - wait(b) || (a.joinedAt || 0) - (b.joinedAt || 0)) : [];
+  },
   self() { return this.mine()[0] || null; },
   status() { const m = this.self(); return m ? m.status || 'active' : null; },
   realRole() {
@@ -2087,14 +2110,40 @@ const Who = {
       this._seeded = true;
       const cfg = Store.get('cfg', 'team') || {};
       if (!cfg.headSeeded && !Store.all('team').some(t => t.head)) {
-        Store.add('team', {name: TEAM_HEAD.name, title: TEAM_HEAD.title, role: 'owner', head: true, status: 'invited', code: Team.newCode(), groups: Object.keys(TYPES), invitedBy: this.id(), invitedAt: Date.now(), order: 0});
         Store.patch('cfg', 'team', {headSeeded: true, at: Date.now()});
+        this.seedHead();
       }
     }
   },
 
+  /* главная в CRM: на своём сервере Зульфия, скорее всего, уже есть в штабе —
+     тогда сразу делаем главной её учётку; иначе — место с кодом приглашения */
+  async seedHead() {
+    const base = {title: TEAM_HEAD.title, role: 'owner', head: true, groups: Object.keys(TYPES), order: 0};
+    let acc = null;
+    if (onServer()) {
+      const all = await this.accounts();
+      const hits = Object.entries(all).filter(([, a]) => /^\s*(зульф|зуля)/i.test((a && a.name) || ''));
+      if (hits.length === 1) acc = {id: hits[0][0], name: hits[0][1].name};
+    }
+    if (Store.all('team').some(t => t.head && !t.archived)) return;
+    if (acc) {
+      const row = Store.all('team').find(t => t.uid === acc.id && !t.archived);
+      if (row) Store.patch('team', row.id, {...base, title: row.title || base.title, groups: (row.groups || []).length ? row.groups : base.groups, status: 'active', order: 0});
+      else Store.add('team', {...base, uid: acc.id, name: acc.name, status: 'active', joinedAt: Date.now(), invitedBy: this.id()});
+      return;
+    }
+    Store.add('team', {...base, name: TEAM_HEAD.name, status: 'invited', code: Team.newCode(), invitedBy: this.id(), invitedAt: Date.now()});
+  },
+  /* учётки штаба (только на своём сервере): id → имя */
+  async accounts() {
+    if (!onServer()) return {};
+    try { const r = await fetch(window.EVA.api + '/profiles', {credentials: 'same-origin', headers: {'x-eva': '1'}}); return r.ok ? await r.json() : {}; } catch (e) { return {}; }
+  },
+
   /* регистрация: по коду — сразу в команду с ролью из приглашения,
-     без кода — заявка, которую подтверждает главная */
+     без кода — заявка, которую подтверждает главная.
+     На своём сервере код проверяет сервер: в браузер коды попадают только руководителю */
   register({name, title, groups, tg, code}) {
     if (!this.uid) return {err: 'CRM не узнала вас — откройте её в Claude.'};
     if (this.readOnly()) return {err: 'У вас доступ к странице только на просмотр — регистрация не сохранится. Попросите владельца CRM открыть доступ «Может редактировать» через «Поделиться».'};
@@ -2102,14 +2151,26 @@ const Who = {
     const now = Date.now();
     const base = {uid: this.uid, name: name.trim(), title: title.trim(), groups, tg: tg.trim(), joinedAt: now};
     const c = Team.normCode(code);
+    if (c && onServer()) return this.joinServer({code: c, name: base.name, title: base.title, groups, tg: base.tg});
     if (c) {
       const row = Store.all('team').find(t => t.status === 'invited' && !t.uid && Team.normCode(t.code) === c);
       if (!row) return {err: 'Код не найден или уже использован. Проверьте его или отправьте заявку без кода.'};
       Store.patch('team', row.id, {...base, title: base.title || row.title || '', groups: groups.length ? groups : row.groups || [], status: 'active', code: null, usedCode: c});
+      /* своя заявка без кода больше не нужна */
+      this.mine().filter(t => t.id !== row.id && (t.status === 'pending' || t.status === 'rejected')).forEach(t => Store.remove('team', t.id));
       return {ok: true, status: 'active', role: roleOf(row.role), head: !!row.head};
     }
     Store.add('team', {...base, role: 'member', status: 'pending', order: 40});
     return {ok: true, status: 'pending'};
+  },
+
+  async joinServer(payload) {
+    try {
+      const r = await fetch(window.EVA.api + '/join', {method: 'POST', credentials: 'same-origin', headers: {'content-type': 'application/json', 'x-eva': '1'}, body: JSON.stringify(payload)});
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) return {err: j.error || 'Не получилось. Проверьте связь и повторите.'};
+      return {ok: true, status: 'active', role: roleOf(j.role), head: !!j.head};
+    } catch (e) { return {err: 'Сервер не отвечает. Проверьте связь и повторите.'}; }
   },
 
   /* имена из профилей площадки: не храним, спрашиваем при отрисовке */
@@ -2165,8 +2226,8 @@ const Team = {
     return `Привет! Приглашаю тебя в CRM команды Eva Space — там мы ведём кастдев клиенток, экспертов, партнёров и амбассадоров.
 
 1. Открой CRM: ${LINKS.crm}
-   Если пишет, что нет доступа, — напиши мне, я открою.
-2. Нажми «Зарегистрироваться», впиши имя и код: ${t.code}
+   ${onServer() ? 'Войди по своей учётке штаба. Если учётки ещё нет — напиши мне, пришлю приглашение в штаб.' : 'Если пишет, что нет доступа, — напиши мне, я открою.'}
+2. ${onServer() ? 'CRM попросит заполнить профиль — впиши должность и код' : 'Нажми «Зарегистрироваться», впиши имя и код'}: ${t.code}
 
 С кодом ты сразу попадёшь в команду с ролью «${ROLES[roleOf(t.role)].name}»${t.head ? ' и станешь главной в CRM' : ''}.`;
   },
@@ -2597,10 +2658,14 @@ let MV = 0;
 Store.subscribe(() => { MV++; });
 function memo(fn) { let v = -1, val; return () => (v === MV ? val : (v = MV, val = fn())); }
 
-/* адреса опубликованных страниц; руководитель может поменять в настройках */
-const LINKS = {
-  crm: 'http://localhost:8766/crm/v2/index.html',
-  anketa: 'http://localhost:8766/crm/v2/a/index.html',
+/* адреса опубликованных страниц; руководитель может поменять в настройках.
+   На своём сервере (onServer) CRM и анкета живут рядом — адреса берём от страницы. */
+const LINKS = onServer() ? {
+  crm: location.origin + window.EvaServer.urls.crm,
+  anketa: location.origin + '/anketa/',
+} : {
+  crm: 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA',
+  anketa: 'https://claude.ai/artifact/XtnwZ7txmRKpUAeGEnqwBT',
 };
 const settings = memo(() => ({anketaUrl: LINKS.anketa, ...(Store.get('cfg', 'settings') || {})}));
 
@@ -2610,12 +2675,18 @@ const strip = q => { const {hidden, custom, rec, ...rest} = q; return rest; };
 const Questions = {
   set(type) {
     const d = Store.get('cfg', 'q_' + type);
+    /* правки сохранены для прежнего набора: берём новый, свои вопросы команды — в конец */
+    if (d && (d.ver || 1) < (Q_VER[type] || 1)) {
+      const prev = Q_PREV[type] || {test: [], talk: []};
+      const own = part => { const known = new Set([...Q_DEFAULT[type][part].map(q => q.id), ...prev[part]]); return (Array.isArray(d[part]) ? d[part] : []).filter(q => q && q.id && !known.has(q.id)); };
+      return {test: [...clone(Q_DEFAULT[type].test), ...own('test')], talk: [...clone(Q_DEFAULT[type].talk), ...own('talk')]};
+    }
     return {test: d && Array.isArray(d.test) ? d.test : clone(Q_DEFAULT[type].test), talk: d && Array.isArray(d.talk) ? d.talk : clone(Q_DEFAULT[type].talk)};
   },
   test(type) { return this.set(type).test.filter(q => !q.hidden); },
   talk(type) { return this.set(type).talk.filter(q => !q.hidden); },
   find(type, id) { return this.set(type).test.find(q => q.id === id) || null; },
-  save(type, set) { return Store.put('cfg', 'q_' + type, {test: set.test, talk: set.talk, at: Date.now()}); },
+  save(type, set) { return Store.put('cfg', 'q_' + type, {test: set.test, talk: set.talk, ver: Q_VER[type] || 1, at: Date.now()}); },
   reset(type) { return Store.remove('cfg', 'q_' + type); },
   /* что изменили в анкете относительно стартового набора — едет в ссылке */
   diff(type) {
@@ -2628,6 +2699,7 @@ const Questions = {
     const s = JSON.stringify(order) !== JSON.stringify(defOrder) ? order : undefined;
     if (!h.length && !c.length && !s) return null;
     const d = {};
+    if ((Q_VER[type] || 1) > 1) d.v = Q_VER[type];
     if (h.length) d.h = h;
     if (c.length) d.c = c;
     if (s) d.s = s;
@@ -4436,7 +4508,7 @@ ${extra ? `\nЕщё прозвучало:\n${extra}` : ''}
   return clean;
 }
 const CLAUDE_ERR = {
-  unavailable: 'Claude недоступен в этом окне — откройте CRM в Claude.',
+  unavailable: onServer() ? 'Разбор с Claude на своём сервере пока не подключён.' : 'Claude недоступен в этом окне — откройте CRM в Claude.',
   not_granted: 'Доступ к Claude для этой страницы не разрешён.',
   rate_limited: 'Слишком много запросов к Claude — попробуйте через минуту.',
 };
@@ -4467,6 +4539,8 @@ const GCAL_ERR = {
   approval_required: 'Нужно разрешение администратора организации на Google Календарь.',
   server_not_found: 'Коннектор Google Календаря не найден. Подключите его заново: claude.ai → Настройки → Коннекторы.',
   consent_required: 'CRM нужен доступ к Google Календарю — нажмите «Подключить» ещё раз и подтвердите.',
+  /* свой сервер: человек ещё не подключил свой аккаунт Google */
+  connect_first: 'Сначала подключите свой Google Календарь: «Календарь» → «Подключить Google Календарь».',
   server_unavailable: 'Google Календарь сейчас не отвечает. Попробуйте через минуту.',
   rate_limited: 'Слишком много запросов к календарю — подождите немного.',
   cancelled: 'Действие отменено.',
@@ -4476,7 +4550,7 @@ const GCAL_CONN = ['needs_reauth', 'server_not_connected', 'selection_required',
 function gcalErr(e) {
   const code = (e && e.code) || 'upstream_error';
   let text = GCAL_ERR[code];
-  if (!text && GCAL_OFF.includes(code)) text = 'Google Календарь недоступен в этом окне — откройте CRM в Claude.';
+  if (!text && GCAL_OFF.includes(code)) text = onServer() ? 'Google Календарь на этом сервере ещё не настроен.' : 'Google Календарь недоступен в этом окне — откройте CRM в Claude.';
   if (!text && code === 'tool_error') text = 'Google ответил ошибкой: ' + ((e && e.message) || 'без подробностей');
   if (!text) text = 'Не получилось связаться с Google Календарём' + (e && e.message ? ': ' + e.message : '') + '.';
   /* для записи «не ответил» не значит «не сделал» — повторять только после проверки */
@@ -4579,6 +4653,8 @@ const Gcal = {
   },
   /* подключить: первое чтение само спросит разрешение */
   async connect(ws) {
+    /* свой сервер: сначала человек даёт доступ в окне Google, потом вернётся сюда же */
+    if (onServer() && !(await window.EvaServer.gcal.status(true)).connected) { window.EvaServer.gcal.connect(); return; }
     this.week = {};
     await this.loadWeek(ws, true);
     const w = this.week[ws];
@@ -4846,16 +4922,22 @@ App.register('calendar', {
     on(root, 'click', '[data-gcal-retry]', () => { Gcal._init = null; Gcal.err = null; Gcal.conn = 'checking'; Gcal.week = {}; App.render(); });
     if (tab === 'week') wireWeek(root, canEdit);
     if (tab === 'week' && Gcal.conn === 'ready' && !Gcal.week[ws]) Gcal.loadWeek(ws);
+    /* свой сервер: только что вернулись из окна Google */
+    if (onServer()) {
+      const back = window.EvaServer.gcal.just();
+      if (back === 'ok') toast('Google Календарь подключён: новые созвоны будут появляться в нём сами');
+      else if (back) toast('Google Календарь не подключился: доступ не подтверждён. Нажмите «Подключить» ещё раз.', {error: true});
+    }
   },
 });
 
 function gcalCard(ws) {
   const c = Gcal.conn;
   if (c === 'checking') return '<div class="gc-card slim"><i class="dot"></i><span>Проверяю Google Календарь…</span></div>';
-  if (c === 'off') return '<div class="gc-card slim off"><i class="dot"></i><span><b>Google Календарь подключается, когда CRM открыта в Claude.</b> Здесь созвоны живут только в CRM.</span></div>';
+  if (c === 'off') return '<div class="gc-card slim off"><i class="dot"></i><span><b>' + (onServer() ? 'Google Календарь на этом сервере ещё не настроен.' : 'Google Календарь подключается, когда CRM открыта в Claude.') + '</b> Здесь созвоны живут только в CRM.</span></div>';
   if (c === 'error' && Gcal.err) return `<div class="gc-card warn"><span><b>Google Календарь не отвечает</b><br>${esc(Gcal.err.text)}</span><span class="sp"></span><button class="btn sm" data-gcal-retry>Проверить снова</button></div>`;
   if (c === 'denied') return '<div class="gc-card warn"><span><b>Доступ к календарю не разрешён.</b> Обновите страницу и нажмите «Разрешить», когда Claude спросит.</span></div>';
-  if (c === 'prompt') return `<div class="gc-card"><span><b>Подключите свой Google Календарь</b><br>Созвоны сами встанут в ваш календарь с пометкой «CRM», а в сетке будет видно, когда вы заняты. Штаб увидит созвоны CRM в общем календаре. Claude спросит разрешение — нажмите «Разрешить».</span><span class="sp"></span><button class="btn primary" data-gcal-connect>Подключить Google Календарь</button></div>`;
+  if (c === 'prompt') return `<div class="gc-card"><span><b>Подключите свой Google Календарь</b><br>Созвоны сами встанут в ваш календарь с пометкой «CRM», а в сетке будет видно, когда вы заняты. Штаб увидит созвоны CRM в общем календаре. ${onServer() ? 'Откроется окно Google — выберите аккаунт и разрешите доступ.' : 'Claude спросит разрешение — нажмите «Разрешить».'}</span><span class="sp"></span><button class="btn primary" data-gcal-connect>Подключить Google Календарь</button></div>`;
   const w = Gcal.week[ws];
   const mine = Store.all('people').filter(p => Gcal.mine(p)).length;
   return `<div class="gc-card slim ok"><i class="dot"></i><span><b>Google Календарь подключён</b> · ваших созвонов CRM в нём: ${mine} · ${w && w.loading ? 'загружаю неделю…' : w && w.err ? esc(w.err.text) : w ? 'неделя обновлена ' + timeAgo(w.at) : ''}</span><span class="sp"></span>
@@ -5191,11 +5273,11 @@ App.register('settings', {
           <ol class="legal"><li><b>Анкета.</b> Человек открывает ссылку и отвечает на вопросы кнопками.</li>
             <li><b>Ответы возвращаются.</b> В конце он нажимает «Отправить» и присылает менеджеру ссылку, которая одним нажатием кладёт ответы в карточку.</li>
             <li><b>Рефералка.</b> Если по ссылке придёт подруга, она выберет «Меня пригласили», и в её карточке будет видно, кто её привёл.</li></ol>
-          <label class="field" style="margin-top:10px"><span>Адрес публичной анкеты</span><input class="input" id="stAnk" value="${esc(s.anketaUrl || '')}" ${own ? '' : 'disabled'}><small>Анкета — отдельная страница: откройте к ней доступ по ссылке, чтобы её видели люди вне команды.</small></label>
+          <label class="field" style="margin-top:10px"><span>Адрес публичной анкеты</span><input class="input" id="stAnk" value="${esc(s.anketaUrl || '')}" ${own ? '' : 'disabled'}><small>${onServer() ? 'Анкета — отдельная страница на этом же сервере, открыта всем по ссылке. Пустое поле — адрес по умолчанию.' : 'Анкета — отдельная страница: откройте к ней доступ по ссылке, чтобы её видели люди вне команды.'}</small></label>
         </div>
         <div class="card"><div class="card-head"><h2>Команда и доступ</h2><a class="note" href="#team">Открыть →</a></div>
           <p class="note" style="margin-bottom:8px">В команде ${team.length} ${plural(team.length, 'человек', 'человека', 'человек')}${Team.pending().length ? `, ждут подтверждения — ${Team.pending().length}` : ''}${Team.invited().length ? `, приглашены — ${Team.invited().length}` : ''}. Главная — ${esc(Team.headName())}.</p>
-          <p class="note">Новые люди регистрируются сами: с кодом приглашения — сразу, без кода — после подтверждения главной.</p></div>
+          <p class="note">${onServer() ? 'В CRM входят по учётке штаба. Новый человек при первом входе заполняет профиль: с кодом приглашения он сразу в команде, без кода — после подтверждения главной.' : 'Новые люди регистрируются сами: с кодом приглашения — сразу, без кода — после подтверждения главной.'}</p></div>
         <div class="card"><div class="card-head"><h2>Выгрузить ответы</h2></div>
           <p class="note" style="margin-bottom:10px">Таблица CSV для Excel или Google Таблиц: одна строка — один человек, столбцы — вопросы анкеты и заметки созвона.</p>
           <div class="row">${Object.keys(TYPES).map(k => `<button class="btn sm" data-csv="${k}">${icon('download')}${groupName(k)}</button>`).join('')}</div></div>
@@ -5261,7 +5343,7 @@ function renderRegistration(root) {
           : `${esc(head ? Team.name(head) : 'Руководитель')} увидит заявку на главной и в разделе «Команда». Пока заявку не подтвердили, CRM открыта только на просмотр.`}</p>
         <button class="btn primary reg-go" data-reg-open>Открыть CRM</button>`
       : `<h1>Регистрация в команде</h1>
-        <p class="reg-lead">Это CRM команды Eva Space: кастдев клиенток, эксперты, партнёры и амбассадоры. Зарегистрируйтесь, чтобы вести людей и созвоны.${head ? ` Новых участников подтверждает главная в CRM — ${esc(Team.headName())}.` : ''}</p>
+        <p class="reg-lead">Это CRM команды Eva Space: кастдев клиенток, эксперты, партнёры и амбассадоры. ${onServer() ? 'Вы вошли по учётке штаба — осталось заполнить профиль в CRM, чтобы вести людей и созвоны.' : 'Зарегистрируйтесь, чтобы вести людей и созвоны.'}${head ? ` Новых участников подтверждает главная в CRM — ${esc(Team.headName())}.` : ''}</p>
         ${ro ? '<div class="reg-msg">У вас доступ к этой странице только на просмотр — регистрация не сохранится. Попросите владельца CRM открыть доступ «Может редактировать» через «Поделиться», затем обновите страницу.</div>' : ''}
         <div class="reg-msg" id="regMsg" hidden></div>
         <form id="regForm" class="reg-fields" autocomplete="on">
@@ -5270,7 +5352,7 @@ function renderRegistration(root) {
           <div class="field"><span>С кем работаете</span>${groupsHtml([])}<small>Можно выбрать несколько — это видно команде.</small></div>
           <label class="field"><span>Telegram</span><input class="input" id="rgTg" placeholder="@username"></label>
           <label class="field"><span>Код приглашения</span><input class="input reg-code" id="rgCode" placeholder="EVA-7KQ2" autocomplete="one-time-code"><small>Если вам прислали код — с ним вы сразу попадёте в команду. Без кода заявку подтвердит главная.</small></label>
-          <button class="btn primary reg-go" type="submit" ${ro ? 'disabled' : ''}>Зарегистрироваться</button>
+          <button class="btn primary reg-go" type="submit" ${ro ? 'disabled' : ''}>${onServer() ? 'Готово' : 'Зарегистрироваться'}</button>
         </form>
         <button class="link-btn reg-later" data-reg-later>Пока только посмотреть</button>`}
     </div>
@@ -5282,9 +5364,13 @@ function renderRegistration(root) {
   on(root, 'click', '[data-reg-open]', () => { Reg.done = null; App.render({force: true}); });
   const form = $('#regForm', root);
   if (!form) return;
-  form.onsubmit = e => {
+  form.onsubmit = async e => {
     e.preventDefault();
-    const r = Who.register({name: $('#rgName', root).value, title: $('#rgTitle', root).value, tg: $('#rgTg', root).value, code: $('#rgCode', root).value, groups: $$('[data-g].on', root).map(b => b.dataset.g)});
+    const go = $('.reg-go', form);
+    if (go.disabled) return;
+    go.disabled = true;
+    const r = await Who.register({name: $('#rgName', root).value, title: $('#rgTitle', root).value, tg: $('#rgTg', root).value, code: $('#rgCode', root).value, groups: $$('[data-g].on', root).map(b => b.dataset.g)});
+    go.disabled = false;
     const msg = $('#regMsg', root);
     if (r.err) { msg.textContent = r.err; msg.hidden = false; return; }
     Reg.done = r;
@@ -5306,7 +5392,7 @@ App.register('team', {
     const leads = id => Store.all('people').filter(p => p.owner === id).length;
     const stCell = t => {
       const st = t.status || 'active';
-      if (st === 'invited') return `<span class="pill warn">ещё не вошла</span>${own && t.code ? ` <span class="code">${esc(t.code)}</span>` : ''}`;
+      if (st === 'invited') return `<span class="pill warn">ждём входа</span>${own && t.code ? ` <span class="code">${esc(t.code)}</span>` : ''}`;
       return `<span class="muted">${t.joinedAt ? 'в CRM с ' + dayLong(isoTs(t.joinedAt)) : 'в команде'}</span>`;
     };
     root.innerHTML = `
@@ -5331,11 +5417,13 @@ App.register('team', {
       <section class="section two">
         <div class="card"><div class="card-head"><h2>Как пригласить в команду</h2></div>
           <ol class="legal team-steps">
-            <li><b>Откройте доступ к странице.</b> Владелец CRM: «Поделиться» → почта человека → «Может редактировать». Без этого он не войдёт, а заявка не сохранится.</li>
+            ${onServer() ? `<li><b>Учётка в штабе.</b> В CRM входят по учётке штаба. Если её ещё нет — пригласите человека в штаб: «Команда» → «Пригласить».</li>
+            <li><b>Место в CRM.</b> «Пригласить» → выберите человека из штаба, роль и группы — и он сразу в команде. Ещё нет в штабе — CRM даст код для сообщения в Telegram.</li>
+            <li><b>Первый вход.</b> Человек открывает CRM и заполняет профиль: с кодом — сразу в команде, без кода — заявка, её подтверждает главная здесь, вверху страницы.</li>` : `<li><b>Откройте доступ к странице.</b> Владелец CRM: «Поделиться» → почта человека → «Может редактировать». Без этого он не войдёт, а заявка не сохранится.</li>
             <li><b>Пригласите кодом.</b> «Пригласить» → роль и группы → отправьте сообщение с кодом в Telegram.</li>
-            <li><b>Человек регистрируется.</b> Открывает CRM, вводит имя и код — и сразу в команде. Без кода он оставляет заявку, её подтверждает главная здесь, вверху страницы.</li>
+            <li><b>Человек регистрируется.</b> Открывает CRM, вводит имя и код — и сразу в команде. Без кода он оставляет заявку, её подтверждает главная здесь, вверху страницы.</li>`}
           </ol>
-          <p class="note">Работает и в штабе? Пригласите его отдельно в штабе: «Команда» → «Пригласить». Штаб и CRM — разные страницы, вход в каждую свой.</p></div>
+          <p class="note">${onServer() ? 'Штаб и CRM — один вход: учётка штаба открывает и CRM (кроме инвесторов). Роль в CRM своя — её назначают здесь.' : 'Работает и в штабе? Пригласите его отдельно в штабе: «Команда» → «Пригласить». Штаб и CRM — разные страницы, вход в каждую свой.'}</p></div>
         <div class="card"><div class="card-head"><h2>Роли</h2></div>
           <ul class="reg-roles">${Object.entries(ROLES).map(([k, r]) => `<li><span class="pill ${r.tone}">${r.name}</span><span>${esc(r.about)}</span></li>`).join('')}
             <li><span class="pill gold">Главная</span><span>руководитель, к которому приходят заявки новых участников${head ? ` — сейчас ${esc(Team.name(head))}` : ''}</span></li></ul></div>
@@ -5372,22 +5460,39 @@ App.register('team', {
   },
 });
 
-/* приглашение кодом: место в команде ждёт человека, код его «открывает» */
-function openInvite() {
+/* приглашение кодом: место в команде ждёт человека, код его «открывает».
+   На своём сервере можно сразу выбрать человека из штаба — тогда код не нужен */
+async function openInvite() {
+  const taken = new Set(Store.all('team').filter(t => t.uid && !t.archived).map(t => t.uid));
+  const accs = Object.entries(await Who.accounts()).filter(([id, a]) => !taken.has(id) && a && a.name).sort((a, b) => a[1].name.localeCompare(b[1].name, 'ru'));
   openModal({title: 'Пригласить в команду', body: `
+      ${accs.length ? `<label class="field"><span>Человек из штаба</span><select class="select" id="ivAcc"><option value="">— ещё нет в штабе: дать код приглашения —</option>${accs.map(([id, a]) => `<option value="${esc(id)}">${esc(a.name)}</option>`).join('')}</select><small>Выберите — и человек сразу в команде CRM с этой ролью, код не нужен.</small></label>` : ''}
       <div class="grid2"><label class="field"><span>Имя</span><input class="input" id="ivName" placeholder="Анна Смирнова"></label>
       <label class="field"><span>Должность</span><input class="input" id="ivTitle" placeholder="Менеджер по кастдеву"></label></div>
       <label class="field"><span>Роль</span><select class="select" id="ivRole">${Object.entries(ROLES).map(([k, r]) => `<option value="${k}" ${k === 'member' ? 'selected' : ''}>${r.name} — ${esc(r.about)}</option>`).join('')}</select></label>
       <div class="field"><span>С кем будет работать</span>${groupsHtml([], 'data-ig')}</div>
       <div class="invite-out" id="ivOut" hidden><span class="label">Код</span><b class="code inv-code" id="ivCode"></b>
         <textarea class="textarea" id="ivText" readonly style="min-height:150px"></textarea>
-        <p class="note">Не забудьте открыть человеку доступ к странице: «Поделиться» → его почта → «Может редактировать».</p></div>`,
+        <p class="note">${onServer() ? 'Если у человека ещё нет учётки в штабе — пригласите его и в штаб: «Команда» → «Пригласить».' : 'Не забудьте открыть человеку доступ к странице: «Поделиться» → его почта → «Может редактировать».'}</p></div>`,
     foot: '<button class="btn" data-close>Готово</button><button class="btn primary" id="ivGo">Создать код</button>',
-    onMount(el) {
+    onMount(el, close) {
       on(el, 'click', '[data-ig]', (e, b) => b.classList.toggle('on'));
       let made = null;
+      const acc = $('#ivAcc', el);
+      if (acc) acc.onchange = () => {
+        const a = accs.find(([id]) => id === acc.value);
+        if (a && !$('#ivName', el).value.trim()) $('#ivName', el).value = a[1].name;
+        $('#ivGo', el).textContent = acc.value ? 'Добавить в команду' : 'Создать код';
+      };
       $('#ivGo', el).onclick = () => {
         if (made) { copyOrShow(Team.inviteText(made), 'Приглашение скопировано — отправьте его в Telegram'); return; }
+        if (acc && acc.value) {
+          const a = accs.find(([id]) => id === acc.value);
+          Store.add('team', {uid: acc.value, name: $('#ivName', el).value.trim() || (a ? a[1].name : ''), title: $('#ivTitle', el).value.trim(), role: $('#ivRole', el).value, groups: $$('[data-ig].on', el).map(b => b.dataset.ig), status: 'active', joinedAt: Date.now(), invitedBy: Who.id(), order: 30});
+          close();
+          toast('Добавили в команду CRM');
+          return;
+        }
         const t = {name: $('#ivName', el).value.trim(), title: $('#ivTitle', el).value.trim(), role: $('#ivRole', el).value, groups: $$('[data-ig].on', el).map(b => b.dataset.ig), status: 'invited', code: Team.newCode(), invitedBy: Who.id(), invitedAt: Date.now(), order: 30};
         const id = Store.add('team', t);
         made = {...t, id};
@@ -5430,6 +5535,15 @@ function openMyProfile() {
   const slow = setTimeout(() => { if (msg) msg.textContent = 'База отвечает медленно — ещё пара секунд…'; }, 4000);
   try { await Promise.all([Store.init(), Who.init()]); } catch (e) { console.error('Хранилище не поднялось', e); }
   clearTimeout(slow);
+  /* CRM переехала на свой сервер (CRM_HOME). Копия в артефакте Claude заморожена: если её
+     опубликуют снова, там должна открыться эта табличка, а не CRM со старыми данными. */
+  if (Store.state.mode !== 'local' && !onServer()) {
+    App.render = App.renderSoon = () => {};
+    const t = $('#boot b');
+    if (t) t.textContent = 'Eva CRM переехала';
+    if (msg) msg.innerHTML = `Теперь она работает по адресу <a href="${CRM_HOME}" target="_blank" rel="noopener">${CRM_HOME.replace(/^https:\/\/|\/$/g, '')}</a> — вход по учётке штаба. Копия в Claude больше не обновляется.`;
+    return;
+  }
   if (Store.state.mode === 'local' && !Store.total() && !Local.get('eva-crm2-seeded', false)) {
     Local.set('eva-crm2-seeded', true);
     await Demo.load();

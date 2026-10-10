@@ -29,7 +29,7 @@ function renderRegistration(root) {
           : `${esc(head ? Team.name(head) : 'Руководитель')} увидит заявку на главной и в разделе «Команда». Пока заявку не подтвердили, CRM открыта только на просмотр.`}</p>
         <button class="btn primary reg-go" data-reg-open>Открыть CRM</button>`
       : `<h1>Регистрация в команде</h1>
-        <p class="reg-lead">Это CRM команды Eva Space: кастдев клиенток, эксперты, партнёры и амбассадоры. Зарегистрируйтесь, чтобы вести людей и созвоны.${head ? ` Новых участников подтверждает главная в CRM — ${esc(Team.headName())}.` : ''}</p>
+        <p class="reg-lead">Это CRM команды Eva Space: кастдев клиенток, эксперты, партнёры и амбассадоры. ${onServer() ? 'Вы вошли по учётке штаба — осталось заполнить профиль в CRM, чтобы вести людей и созвоны.' : 'Зарегистрируйтесь, чтобы вести людей и созвоны.'}${head ? ` Новых участников подтверждает главная в CRM — ${esc(Team.headName())}.` : ''}</p>
         ${ro ? '<div class="reg-msg">У вас доступ к этой странице только на просмотр — регистрация не сохранится. Попросите владельца CRM открыть доступ «Может редактировать» через «Поделиться», затем обновите страницу.</div>' : ''}
         <div class="reg-msg" id="regMsg" hidden></div>
         <form id="regForm" class="reg-fields" autocomplete="on">
@@ -38,7 +38,7 @@ function renderRegistration(root) {
           <div class="field"><span>С кем работаете</span>${groupsHtml([])}<small>Можно выбрать несколько — это видно команде.</small></div>
           <label class="field"><span>Telegram</span><input class="input" id="rgTg" placeholder="@username"></label>
           <label class="field"><span>Код приглашения</span><input class="input reg-code" id="rgCode" placeholder="EVA-7KQ2" autocomplete="one-time-code"><small>Если вам прислали код — с ним вы сразу попадёте в команду. Без кода заявку подтвердит главная.</small></label>
-          <button class="btn primary reg-go" type="submit" ${ro ? 'disabled' : ''}>Зарегистрироваться</button>
+          <button class="btn primary reg-go" type="submit" ${ro ? 'disabled' : ''}>${onServer() ? 'Готово' : 'Зарегистрироваться'}</button>
         </form>
         <button class="link-btn reg-later" data-reg-later>Пока только посмотреть</button>`}
     </div>
@@ -50,9 +50,13 @@ function renderRegistration(root) {
   on(root, 'click', '[data-reg-open]', () => { Reg.done = null; App.render({force: true}); });
   const form = $('#regForm', root);
   if (!form) return;
-  form.onsubmit = e => {
+  form.onsubmit = async e => {
     e.preventDefault();
-    const r = Who.register({name: $('#rgName', root).value, title: $('#rgTitle', root).value, tg: $('#rgTg', root).value, code: $('#rgCode', root).value, groups: $$('[data-g].on', root).map(b => b.dataset.g)});
+    const go = $('.reg-go', form);
+    if (go.disabled) return;
+    go.disabled = true;
+    const r = await Who.register({name: $('#rgName', root).value, title: $('#rgTitle', root).value, tg: $('#rgTg', root).value, code: $('#rgCode', root).value, groups: $$('[data-g].on', root).map(b => b.dataset.g)});
+    go.disabled = false;
     const msg = $('#regMsg', root);
     if (r.err) { msg.textContent = r.err; msg.hidden = false; return; }
     Reg.done = r;
@@ -99,11 +103,13 @@ App.register('team', {
       <section class="section two">
         <div class="card"><div class="card-head"><h2>Как пригласить в команду</h2></div>
           <ol class="legal team-steps">
-            <li><b>Откройте доступ к странице.</b> Владелец CRM: «Поделиться» → почта человека → «Может редактировать». Без этого он не войдёт, а заявка не сохранится.</li>
+            ${onServer() ? `<li><b>Учётка в штабе.</b> В CRM входят по учётке штаба. Если её ещё нет — пригласите человека в штаб: «Команда» → «Пригласить».</li>
+            <li><b>Место в CRM.</b> «Пригласить» → выберите человека из штаба, роль и группы — и он сразу в команде. Ещё нет в штабе — CRM даст код для сообщения в Telegram.</li>
+            <li><b>Первый вход.</b> Человек открывает CRM и заполняет профиль: с кодом — сразу в команде, без кода — заявка, её подтверждает главная здесь, вверху страницы.</li>` : `<li><b>Откройте доступ к странице.</b> Владелец CRM: «Поделиться» → почта человека → «Может редактировать». Без этого он не войдёт, а заявка не сохранится.</li>
             <li><b>Пригласите кодом.</b> «Пригласить» → роль и группы → отправьте сообщение с кодом в Telegram.</li>
-            <li><b>Человек регистрируется.</b> Открывает CRM, вводит имя и код — и сразу в команде. Без кода он оставляет заявку, её подтверждает главная здесь, вверху страницы.</li>
+            <li><b>Человек регистрируется.</b> Открывает CRM, вводит имя и код — и сразу в команде. Без кода он оставляет заявку, её подтверждает главная здесь, вверху страницы.</li>`}
           </ol>
-          <p class="note">Работает и в штабе? Пригласите его отдельно в штабе: «Команда» → «Пригласить». Штаб и CRM — разные страницы, вход в каждую свой.</p></div>
+          <p class="note">${onServer() ? 'Штаб и CRM — один вход: учётка штаба открывает и CRM (кроме инвесторов). Роль в CRM своя — её назначают здесь.' : 'Работает и в штабе? Пригласите его отдельно в штабе: «Команда» → «Пригласить». Штаб и CRM — разные страницы, вход в каждую свой.'}</p></div>
         <div class="card"><div class="card-head"><h2>Роли</h2></div>
           <ul class="reg-roles">${Object.entries(ROLES).map(([k, r]) => `<li><span class="pill ${r.tone}">${r.name}</span><span>${esc(r.about)}</span></li>`).join('')}
             <li><span class="pill gold">Главная</span><span>руководитель, к которому приходят заявки новых участников${head ? ` — сейчас ${esc(Team.name(head))}` : ''}</span></li></ul></div>
@@ -140,22 +146,39 @@ App.register('team', {
   },
 });
 
-/* приглашение кодом: место в команде ждёт человека, код его «открывает» */
-function openInvite() {
+/* приглашение кодом: место в команде ждёт человека, код его «открывает».
+   На своём сервере можно сразу выбрать человека из штаба — тогда код не нужен */
+async function openInvite() {
+  const taken = new Set(Store.all('team').filter(t => t.uid && !t.archived).map(t => t.uid));
+  const accs = Object.entries(await Who.accounts()).filter(([id, a]) => !taken.has(id) && a && a.name).sort((a, b) => a[1].name.localeCompare(b[1].name, 'ru'));
   openModal({title: 'Пригласить в команду', body: `
+      ${accs.length ? `<label class="field"><span>Человек из штаба</span><select class="select" id="ivAcc"><option value="">— ещё нет в штабе: дать код приглашения —</option>${accs.map(([id, a]) => `<option value="${esc(id)}">${esc(a.name)}</option>`).join('')}</select><small>Выберите — и человек сразу в команде CRM с этой ролью, код не нужен.</small></label>` : ''}
       <div class="grid2"><label class="field"><span>Имя</span><input class="input" id="ivName" placeholder="Анна Смирнова"></label>
       <label class="field"><span>Должность</span><input class="input" id="ivTitle" placeholder="Менеджер по кастдеву"></label></div>
       <label class="field"><span>Роль</span><select class="select" id="ivRole">${Object.entries(ROLES).map(([k, r]) => `<option value="${k}" ${k === 'member' ? 'selected' : ''}>${r.name} — ${esc(r.about)}</option>`).join('')}</select></label>
       <div class="field"><span>С кем будет работать</span>${groupsHtml([], 'data-ig')}</div>
       <div class="invite-out" id="ivOut" hidden><span class="label">Код</span><b class="code inv-code" id="ivCode"></b>
         <textarea class="textarea" id="ivText" readonly style="min-height:150px"></textarea>
-        <p class="note">Не забудьте открыть человеку доступ к странице: «Поделиться» → его почта → «Может редактировать».</p></div>`,
+        <p class="note">${onServer() ? 'Если у человека ещё нет учётки в штабе — пригласите его и в штаб: «Команда» → «Пригласить».' : 'Не забудьте открыть человеку доступ к странице: «Поделиться» → его почта → «Может редактировать».'}</p></div>`,
     foot: '<button class="btn" data-close>Готово</button><button class="btn primary" id="ivGo">Создать код</button>',
-    onMount(el) {
+    onMount(el, close) {
       on(el, 'click', '[data-ig]', (e, b) => b.classList.toggle('on'));
       let made = null;
+      const acc = $('#ivAcc', el);
+      if (acc) acc.onchange = () => {
+        const a = accs.find(([id]) => id === acc.value);
+        if (a && !$('#ivName', el).value.trim()) $('#ivName', el).value = a[1].name;
+        $('#ivGo', el).textContent = acc.value ? 'Добавить в команду' : 'Создать код';
+      };
       $('#ivGo', el).onclick = () => {
         if (made) { copyOrShow(Team.inviteText(made), 'Приглашение скопировано — отправьте его в Telegram'); return; }
+        if (acc && acc.value) {
+          const a = accs.find(([id]) => id === acc.value);
+          Store.add('team', {uid: acc.value, name: $('#ivName', el).value.trim() || (a ? a[1].name : ''), title: $('#ivTitle', el).value.trim(), role: $('#ivRole', el).value, groups: $$('[data-ig].on', el).map(b => b.dataset.ig), status: 'active', joinedAt: Date.now(), invitedBy: Who.id(), order: 30});
+          close();
+          toast('Добавили в команду CRM');
+          return;
+        }
         const t = {name: $('#ivName', el).value.trim(), title: $('#ivTitle', el).value.trim(), role: $('#ivRole', el).value, groups: $$('[data-ig].on', el).map(b => b.dataset.ig), status: 'invited', code: Team.newCode(), invitedBy: Who.id(), invitedAt: Date.now(), order: 30};
         const id = Store.add('team', t);
         made = {...t, id};

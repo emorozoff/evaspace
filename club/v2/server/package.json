@@ -1,0 +1,14 @@
+{
+  "name": "eva-club-hq-server",
+  "private": true,
+  "description": "Сервер штаба Eva Club V2: раздаёт штаб, хранит общую базу в файле, живые обновления, напоминания в Telegram",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "export": "node server.js --export backup.json"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

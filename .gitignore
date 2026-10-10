@@ -5,3 +5,6 @@ dist/
 .shot.mjs
 .vite/
 .shot*.mjs
+# свой сервер штаба: данные и адрес выкладки — только на месте
+club/v2/server/data/
+club/v2/server/deploy/local.env

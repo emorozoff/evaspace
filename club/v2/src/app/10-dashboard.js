@@ -56,6 +56,10 @@ App.register('home', {
       tiles.push(`<div class="card stat"><span class="label">Деньги на счёте</span>
         <div class="big">${rubK(Money.cashNow())}</div>
         <div class="foot ${min < 0 ? 'bad' : ''}">${min < 0 ? `к декабрю не хватит ${rubK(-min)} — нужен раунд` : `к 31 декабря по прогнозу ${rubK(last.close)}`}</div></div>`);
+      const sub = Subs.now();
+      tiles.push(`<a class="card stat as-link" href="#money:subs"><span class="label">Платные подписки</span>
+        <div class="big">${fmt(sub.total)}</div>
+        <div class="foot">месячных ${fmt(sub.endM)} · годовых ${fmt(sub.endY)} · MRR ${rubK(sub.mrr)}</div></a>`);
     } else {
       tiles.push(`<div class="card stat"><span class="label">Регистрации квартала</span>
         <div class="big">${fmt(qStat.regs)} <small>из ${fmt(Plan.regs(pace.total))}</small></div>${progress(qStat.regs / Math.max(1, Plan.regs(pace.total)), 'good')}
@@ -80,18 +84,27 @@ App.register('home', {
     let focus = '';
     if (Tasks.manager()) {
       const unpaid = Auth.can('money.edit') ? Money.planItems().filter(it => Money.planAmount(it, monthOf(t)) && !Money.paid(it, monthOf(t))) : [];
+      /* финансы: возвраты, сбои оплат, выплаты, заказы к отправке */
+      const fa = Auth.can('fin.ops') ? Fin.attention() : null;
+      const finRows = fa ? [
+        fa.refunds.length ? ['refunds', `Запросы на возврат${fa.late.length ? ` · <b class="bad">просрочено ${fa.late.length}</b>` : ''}`, fmt(fa.refunds.length)] : null,
+        fa.failed.length ? ['failed', `Сбои оплат${fa.failedDue.length ? ` · действие сегодня: ${fa.failedDue.length}` : ''}`, rub(fa.failedSum)] : null,
+        fa.payouts.total ? [fa.payouts.ref ? 'subs' : fa.payouts.author ? 'courses' : 'market', 'К выплате рефералам, авторам, продавцам', rub(fa.payouts.total)] : null,
+        fa.ship.length ? ['market', 'Заказы к отправке', fmt(fa.ship.length)] : null,
+      ].filter(Boolean) : [];
       const rows = [
         ...review.slice(0, 5).map(x => ({html: `<span class="pill gold">на согласовании</span>${esc(x.title)}`, who: personById(x.assignee), id: x.id})),
         ...acts.budget.slice(0, 4).map(x => ({html: `<span class="pill gold">бюджет ${rubK(Number(x.budget))}</span>${esc(x.title)}`, who: personById(x.createdBy), id: x.id})),
         ...overdueAll.filter(x => x.status !== 'review').sort((a, b) => (Tasks.due(a) < Tasks.due(b) ? -1 : 1)).slice(0, 5).map(x => ({html: `<span class="pill bad">срок ${dayShort(Tasks.due(x))}</span>${esc(x.title)}`, who: personById(x.assignee), id: x.id})),
       ];
-      focus = `<div class="card"><div class="card-head"><h2>Ждут решения</h2><a class="link-btn" href="#tasks">Все задачи</a></div>
+      focus = `<div class="card"><div class="card-head"><h2>Ждут решения</h2><span class="row"><button class="btn sm primary" data-new-task>${icon('plus')}Задача</button><a class="link-btn" href="#tasks">Все задачи</a></span></div>
         ${rows.length ? `<div class="focus-list">${rows.map(r => `<button class="focus-row" data-open-task="${r.id}"><span class="fr-t">${r.html}</span>${avatar(r.who)}</button>`).join('')}</div>` : '<p class="note">Ничего не ждёт согласования и нет просроченных задач.</p>'}
-        ${unpaid.length ? `<div class="focus-pay"><span class="label">Платежи ${MONTHS_GEN[monthIdx(monthOf(t))]} по плану</span>${unpaid.slice(0, 4).map(it => `<a href="#money" class="fp-row"><span>${esc(it.group === 'payroll' && !Auth.can('payroll.view') ? 'Оплата труда' : it.title)}</span><b>${rub(Money.planAmount(it, monthOf(t)))}</b></a>`).join('')}${unpaid.length > 4 ? `<a href="#money" class="note">ещё ${unpaid.length - 4}</a>` : ''}</div>` : ''}
+        ${unpaid.length ? `<div class="focus-pay"><span class="label">Платежи ${MONTHS_GEN[monthIdx(monthOf(t))]} по плану</span>${unpaid.slice(0, 4).map(it => `<a href="#money:plan" class="fp-row"><span>${esc(it.group === 'payroll' && !Auth.can('payroll.view') ? 'Оплата труда' : it.title)}</span><b>${rub(Money.planAmount(it, monthOf(t)))}</b></a>`).join('')}${unpaid.length > 4 ? `<a href="#money:plan" class="note">ещё ${unpaid.length - 4}</a>` : ''}</div>` : ''}
+        ${finRows.length ? `<div class="focus-pay focus-fin"><span class="label">Финансы</span>${finRows.map(([tab, text, val]) => `<a href="#money:${tab}" class="fp-row"><span>${text}</span><b>${val}</b></a>`).join('')}</div>` : ''}
       </div>`;
     } else if (teamRoles) {
       const list = Tasks.sort(myOpen).slice(0, 7);
-      focus = `<div class="card"><div class="card-head"><h2>Мои задачи</h2><a class="link-btn" href="#tasks">Все мои задачи</a></div>
+      focus = `<div class="card"><div class="card-head"><h2>Мои задачи</h2><span class="row"><button class="btn sm primary" data-new-task>${icon('plus')}Задача</button><a class="link-btn" href="#tasks">Все мои задачи</a></span></div>
         ${list.length ? `<div class="t-list mini">${list.map(taskRow).join('')}</div>` : '<p class="note">Открытых задач нет. Возьмите задачу у ведущего своего направления или добавьте свою в «Задачах».</p>'}</div>`;
     } else {
       const goals = Strategy.goals();
@@ -134,7 +147,8 @@ App.register('home', {
 
     root.innerHTML = `
       ${pageHead(`${hello}, ${esc(name)}`, `${cap(dayWd(t))} · ${Q.name}: ${pace.started ? (pace.over ? 'квартал закрыт' : `день ${pace.daysGone} из ${pace.daysAll}`) : `до старта ${pace.toStart} ${plural(pace.toStart, 'день', 'дня', 'дней')}`} · ведём план «${SCENARIOS[sc].name}»`,
-        `${Auth.can('sales.edit') ? `<a class="btn" href="#reports">${icon('chart')}Цифры дня</a>` : ''}${teamRoles ? `<button class="btn primary" data-new-task>${icon('plus')}Задача</button>` : ''}`)}
+        '')}
+      ${teamRoles ? spiritHtml() : ''}
       ${start}
       <div class="cards tiles">${tiles.join('')}</div>
       <div class="split section">${focus}${side}</div>
@@ -152,5 +166,6 @@ App.register('home', {
     on(root, 'click', '[data-start-hide]', () => { Local.set(startKey, 1); App.render(); });
     wireTaskCards(root);
     wireMaterials(root);
+    wireSpirit(root);
   },
 });

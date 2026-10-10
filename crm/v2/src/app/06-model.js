@@ -7,8 +7,12 @@ let MV = 0;
 Store.subscribe(() => { MV++; });
 function memo(fn) { let v = -1, val; return () => (v === MV ? val : (v = MV, val = fn())); }
 
-/* адреса опубликованных страниц; руководитель может поменять в настройках */
-const LINKS = {
+/* адреса опубликованных страниц; руководитель может поменять в настройках.
+   На своём сервере (onServer) CRM и анкета живут рядом — адреса берём от страницы. */
+const LINKS = onServer() ? {
+  crm: location.origin + window.EvaServer.urls.crm,
+  anketa: location.origin + '/anketa/',
+} : {
   crm: 'https://claude.ai/artifact/CRM_URL_PLACEHOLDER',
   anketa: 'https://claude.ai/artifact/ANKETA_URL_PLACEHOLDER',
 };
@@ -20,12 +24,18 @@ const strip = q => { const {hidden, custom, rec, ...rest} = q; return rest; };
 const Questions = {
   set(type) {
     const d = Store.get('cfg', 'q_' + type);
+    /* правки сохранены для прежнего набора: берём новый, свои вопросы команды — в конец */
+    if (d && (d.ver || 1) < (Q_VER[type] || 1)) {
+      const prev = Q_PREV[type] || {test: [], talk: []};
+      const own = part => { const known = new Set([...Q_DEFAULT[type][part].map(q => q.id), ...prev[part]]); return (Array.isArray(d[part]) ? d[part] : []).filter(q => q && q.id && !known.has(q.id)); };
+      return {test: [...clone(Q_DEFAULT[type].test), ...own('test')], talk: [...clone(Q_DEFAULT[type].talk), ...own('talk')]};
+    }
     return {test: d && Array.isArray(d.test) ? d.test : clone(Q_DEFAULT[type].test), talk: d && Array.isArray(d.talk) ? d.talk : clone(Q_DEFAULT[type].talk)};
   },
   test(type) { return this.set(type).test.filter(q => !q.hidden); },
   talk(type) { return this.set(type).talk.filter(q => !q.hidden); },
   find(type, id) { return this.set(type).test.find(q => q.id === id) || null; },
-  save(type, set) { return Store.put('cfg', 'q_' + type, {test: set.test, talk: set.talk, at: Date.now()}); },
+  save(type, set) { return Store.put('cfg', 'q_' + type, {test: set.test, talk: set.talk, ver: Q_VER[type] || 1, at: Date.now()}); },
   reset(type) { return Store.remove('cfg', 'q_' + type); },
   /* что изменили в анкете относительно стартового набора — едет в ссылке */
   diff(type) {
@@ -38,6 +48,7 @@ const Questions = {
     const s = JSON.stringify(order) !== JSON.stringify(defOrder) ? order : undefined;
     if (!h.length && !c.length && !s) return null;
     const d = {};
+    if ((Q_VER[type] || 1) > 1) d.v = Q_VER[type];
     if (h.length) d.h = h;
     if (c.length) d.c = c;
     if (s) d.s = s;

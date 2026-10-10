@@ -3,8 +3,8 @@
    GitHub Pages), остаётся ссылка на оригинал. Основатель может добавить
    свои ссылки — они лежат в базе, в коллекции links. */
 
-const TEAM_ROLES = ['owner', 'lead', 'member'];
-const ALL_ROLES = ['owner', 'lead', 'member', 'investor'];
+const TEAM_ROLES = ['owner', 'lead', 'finance', 'member'];
+const ALL_ROLES = ['owner', 'lead', 'finance', 'member', 'investor'];
 const MAT_GROUPS = {
   standards: {name: 'Стандарты',             about: 'Как мы работаем, говорим и считаем деньги'},
   team:      {name: 'Команде',               about: 'План квартала и выступление основателя'},
@@ -103,13 +103,36 @@ App.register('material', {
         <div class="viewer-t"><span class="label">${MAT_GROUPS[m.group].name}</span><b>${esc(m.title)}</b></div>
         <div class="viewer-act">
           ${siblings.map(x => `<a class="btn sm" href="#m-${x.id}">${esc(x.title)}</a>`).join('')}
+          <button class="btn sm primary" data-full>${icon('expand')}На весь экран</button>
           <a class="btn sm" href="${esc(m.url)}" target="_blank" rel="noopener">${icon('ext')}Открыть оригинал</a>
         </div>
       </div>
       <div class="viewer-frame" id="vFrame"><div class="viewer-load">Открываю «${esc(m.title)}»…</div></div>
+      <button class="viewer-exit" data-full-exit hidden>${icon('x')}Свернуть</button>
       <p class="note">${m.group === 'standards' ? 'Книга читается прокруткой, оглавление слева, тест — в конце. Прогресс чтения запоминается в этом браузере.' : 'Листайте стрелками ← → или пробелом, F — на весь экран.'} Если материал не открылся здесь, нажмите «Открыть оригинал».</p>
     </div>`;
-    const box = $('#vFrame', root);
+    const box = $('#vFrame', root), wrap = $('.viewer', root);
+    /* на весь экран: настоящий полноэкранный режим, а где он запрещён — окно поверх штаба */
+    const setFull = onOff => {
+      wrap.classList.toggle('full', onOff);
+      document.body.classList.toggle('viewer-open', onOff);
+      $('[data-full-exit]', root).hidden = !onOff;
+      if (onOff) {
+        const req = wrap.requestFullscreen || wrap.webkitRequestFullscreen;
+        if (req) { try { const r = req.call(wrap); if (r && r.catch) r.catch(() => {}); } catch (e) { /* окно поверх — уже открыто */ } }
+      } else if (document.fullscreenElement || document.webkitFullscreenElement) {
+        try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) { /* ничего */ }
+      }
+    };
+    on(root, 'click', '[data-full]', () => setFull(true));
+    on(root, 'click', '[data-full-exit]', () => setFull(false));
+    const onKey = e => { if (e.key === 'Escape' && wrap.classList.contains('full')) setFull(false); };
+    const onFs = () => { if (!document.fullscreenElement && !document.webkitFullscreenElement && wrap.classList.contains('full') && wrap.dataset.fs === '1') setFull(false); wrap.dataset.fs = document.fullscreenElement ? '1' : ''; };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('fullscreenchange', onFs);
+    /* ушли со страницы — снимаем слушатели и режим */
+    const off = () => { if (!root.isConnected) { document.removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFs); document.body.classList.remove('viewer-open'); window.removeEventListener('hashchange', off); } };
+    window.addEventListener('hashchange', () => setTimeout(off, 0));
     const show = html => {
       const f = document.createElement('iframe');
       f.title = m.title;

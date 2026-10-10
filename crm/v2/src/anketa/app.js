@@ -7,7 +7,8 @@
    разделы: на вводном экране — оглавление, над вопросом — раздел и точки
    его вопросов. */
 
-const CRM_URL = 'https://claude.ai/artifact/CRM_URL_PLACEHOLDER';
+/* на своём сервере анкета живёт по адресу /anketa/, CRM — рядом, в /crm/ */
+const CRM_URL = location.pathname.startsWith('/anketa') ? location.origin + '/crm/' : 'https://claude.ai/artifact/CRM_URL_PLACEHOLDER';
 const $ = (s, r = document) => r.querySelector(s);
 const ESC = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'};
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ESC[c]);
