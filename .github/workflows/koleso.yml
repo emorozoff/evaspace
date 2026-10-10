@@ -1,0 +1,56 @@
+name: Публикация «Колеса баланса Ева»
+
+# Колесо лежит в папке koleso/ и публикуется в ту же папку ветки gh-pages:
+# https://emorozoff.github.io/evaspace/koleso/
+# Остальное содержимое gh-pages (Ева и соседние приложения) не трогается.
+
+on:
+  push:
+    branches:
+      - claude/financial-model-reporting-0tg9bl
+    paths:
+      - 'koleso/**'
+      - '.github/workflows/koleso.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: koleso-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Публикация в gh-pages/koleso
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          REMOTE="https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          SRC="$PWD/koleso"
+          for attempt in 1 2 3 4 5; do
+            rm -rf published
+            git clone --quiet --depth 1 --branch gh-pages "$REMOTE" published
+            cd published
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            rm -rf koleso && mkdir koleso && cp -a "$SRC/." koleso/
+            rm -f koleso/README.md
+            git add -A koleso
+            if git diff --cached --quiet; then
+              echo "Сайт не изменился, публиковать нечего"; exit 0
+            fi
+            git commit -q -m "Колесо баланса Ева из ${GITHUB_SHA}"
+            if git push "$REMOTE" gh-pages; then
+              echo "Опубликовано: https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/koleso/"
+              exit 0
+            fi
+            echo "gh-pages обновилась параллельно — повтор через $((attempt * 5)) с"
+            cd .. && sleep $((attempt * 5))
+          done
+          exit 1
