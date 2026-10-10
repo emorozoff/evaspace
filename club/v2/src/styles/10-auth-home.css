@@ -70,6 +70,14 @@ a.card.as-link:hover{border-color:var(--line-strong); background:var(--surface-2
 .mat-hero p{font-size:13px; color:var(--night-ink-2);}
 .mat-hero .btn.primary{background:var(--gold-brand); border-color:var(--gold-brand); color:var(--night);}
 .mat-groups{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;}
+/* «Продукт и контент» — сразу под Книгой стандартов, двумя карточками */
+.mat-duo{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px;}
+.mat-pro{display:flex; align-items:center; gap:14px; padding:15px 16px; border-radius:var(--radius); text-decoration:none; color:var(--ink);
+  background:var(--surface); border:1px solid var(--line); box-shadow:var(--shadow); position:relative; overflow:hidden;}
+.mat-pro:before{content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--rose-brand);}
+.mat-pro:hover{border-color:var(--line-strong); background:var(--surface-2);}
+.mat-pro .mat-ico{width:40px; height:40px; flex:0 0 40px; border-radius:10px; background:var(--rose-soft); color:var(--rose);}
+.mat-pro .mat-t b{font-size:15px; margin:1px 0 2px;}
 .mat-group{display:flex; flex-direction:column; gap:8px;}
 .mat-gh{display:flex; flex-direction:column; padding:0 2px 2px;}
 .mat-gh b{font-size:13.5px;}

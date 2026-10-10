@@ -1,12 +1,16 @@
 /* Стандарты и презентации — смотрим прямо в штабе. Файлы презентаций
    опубликованы рядом со штабом (папка m/); если их нет (например, на
    GitHub Pages), остаётся ссылка на оригинал. Основатель может добавить
-   свои ссылки — они лежат в базе, в коллекции links. */
+   свои ссылки — они лежат в базе, в коллекции links.
+   «Продуктовое наполнение» и «План съёмок» живут в репозитории
+   (server/public/m/) и приезжают на сервер вместе с правкой — у них нет
+   оригинала в Claude, поэтому и кнопки «Открыть оригинал» нет. */
 
 const TEAM_ROLES = ['owner', 'lead', 'finance', 'member'];
 const ALL_ROLES = ['owner', 'lead', 'finance', 'member', 'investor'];
 const MAT_GROUPS = {
   standards: {name: 'Стандарты',             about: 'Как мы работаем, говорим и считаем деньги'},
+  product:   {name: 'Продукт и контент',     about: 'Как устроена платформа и что снимаем'},
   team:      {name: 'Команде',               about: 'План квартала и выступление основателя'},
   investors: {name: 'Инвесторам',            about: 'Для встреч по раунду pre-seed'},
   experts:   {name: 'Экспертам и партнёрам', about: 'Чтобы пригласить эксперта или партнёра'},
@@ -14,6 +18,8 @@ const MAT_GROUPS = {
 };
 const MATERIALS = [
   {id: 'standards', group: 'standards', title: 'Книга стандартов', sub: 'Версия 1.0 · 13 глав и тест из 20 вопросов. Выдаётся каждому в команде', file: 'm/standards.html', url: 'https://claude.ai/artifact/6YLAiVtzRwmqwMJ2DqrsvH', roles: TEAM_ROLES},
+  {id: 'product', group: 'product', icon: 'chart', title: 'Продуктовое наполнение', sub: 'Как устроена платформа: дашборд, 21 раздел, решения за основателями и задачи продукта', file: 'm/product.html', roles: TEAM_ROLES},
+  {id: 'shoot', group: 'product', icon: 'video', title: 'План съёмок', sub: 'Календарь съёмок до конца года, что снимать первым, сто тем, траектории и цель на год', file: 'm/shoot.html', roles: TEAM_ROLES},
   {id: 'team', group: 'team', title: 'Квартал команды', sub: 'IV квартал 2026 · 13 слайдов: цели, план продаж, премия и ритм', file: 'm/team.html', url: 'https://claude.ai/artifact/L3xYahrutEbWqbf51fq9Jx', roles: TEAM_ROLES},
   {id: 'speech', group: 'team', title: 'Выступление основателя', sub: 'Та же презентация по шагам — 40 шагов с текстом к каждому', file: 'm/speech.html', url: 'https://claude.ai/artifact/C88pX22Rcg6YpyUDogoPUy', roles: TEAM_ROLES},
   {id: 'investor', group: 'investors', title: 'Инвестору', sub: 'Сентябрь 2026 · 15 слайдов: рынок, продукт, деньги, раунд', file: 'm/investor.html', url: 'https://claude.ai/artifact/HdzeCgjPiYhYiUQAagA8B8', roles: ALL_ROLES},
@@ -23,11 +29,9 @@ const MATERIALS = [
 ];
 const MORE_LINKS = [
   {title: 'Амбассадорская программа', url: 'https://claude.ai/artifact/UKVD5gRKe6vVMouhsmCryR'},
-  {title: 'План съёмок', url: 'https://claude.ai/artifact/JRsdV1BPqJ1B5aLPQ9C62B'},
   {title: 'Права и роли в приложении', url: 'https://claude.ai/artifact/XLvX3eRMxRSJrxQHgc7n5x'},
   {title: 'Главная Eva Space', url: 'https://claude.ai/artifact/EWQbgtvGnVbQtcRiZDHbGR'},
   {title: 'Голоса Eva Space', url: 'https://claude.ai/artifact/VDoTpBTQJBHTG9B3cYosAC'},
-  {title: 'Штаб продукта Eva Space', url: 'https://claude.ai/artifact/P723mALW3WEZzUaWtgRZYD'},
 ];
 const matVisible = m => (m.roles || ALL_ROLES).includes(Auth.role());
 const safeUrl = u => (/^https:\/\//i.test(String(u || '')) ? String(u) : '');
@@ -36,7 +40,8 @@ function materialsHtml() {
   const mats = MATERIALS.filter(matVisible);
   const custom = Store.all('links').filter(l => (l.roles || ALL_ROLES).includes(Auth.role())).sort((a, b) => (a.at || 0) - (b.at || 0));
   const std = mats.find(m => m.group === 'standards');
-  const card = m => `<a class="mat" href="#m-${m.id}"><span class="mat-ico">${icon(m.group === 'standards' ? 'book' : 'play')}</span><span class="mat-t"><b>${esc(m.title)}</b><small>${esc(m.sub)}</small></span>${icon('arrow', 'mat-go')}</a>`;
+  const prod = mats.filter(m => m.group === 'product');
+  const card = m => `<a class="mat" href="#m-${m.id}"><span class="mat-ico">${icon(m.icon || (m.group === 'standards' ? 'book' : 'play'))}</span><span class="mat-t"><b>${esc(m.title)}</b><small>${esc(m.sub)}</small></span>${icon('arrow', 'mat-go')}</a>`;
   const groups = ['team', 'investors', 'experts'].map(g => {
     const list = mats.filter(m => m.group === g);
     const own = custom.filter(l => l.group === g);
@@ -48,6 +53,7 @@ function materialsHtml() {
   const ownMore = custom.filter(l => !l.group || l.group === 'more' || l.group === 'standards');
   return `<div class="mats">
     ${std ? `<a class="mat-hero" href="#m-${std.id}">${brandIcon('mat-star')}<div><span class="label">Стандарты</span><b>${esc(std.title)}</b><p>${esc(std.sub)}</p></div><span class="btn primary sm">Открыть${icon('arrow')}</span></a>` : ''}
+    ${prod.length ? `<div class="mat-duo">${prod.map(m => `<a class="mat-pro" href="#m-${m.id}"><span class="mat-ico">${icon(m.icon)}</span><span class="mat-t"><span class="label">${esc(MAT_GROUPS.product.name)}</span><b>${esc(m.title)}</b><small>${esc(m.sub)}</small></span>${icon('arrow', 'mat-go')}</a>`).join('')}</div>` : ''}
     <div class="mat-groups">${groups}</div>
     ${more.length || ownMore.length ? `<div class="mat-more"><span class="label">${MAT_GROUPS.more.name}</span>${more.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.title)}${icon('ext')}</a>`).join('')}${ownMore.map(l => `<a href="${esc(safeUrl(l.url))}" target="_blank" rel="noopener">${esc(l.title)}${icon('ext')}</a>`).join('')}</div>` : ''}
     ${Auth.isOwner() ? `<button class="btn sm ghost mat-add" data-link-add>${icon('plus')}Добавить материал по ссылке</button>` : ''}
@@ -104,12 +110,12 @@ App.register('material', {
         <div class="viewer-act">
           ${siblings.map(x => `<a class="btn sm" href="#m-${x.id}">${esc(x.title)}</a>`).join('')}
           <button class="btn sm primary" data-full>${icon('expand')}На весь экран</button>
-          <a class="btn sm" href="${esc(m.url)}" target="_blank" rel="noopener">${icon('ext')}Открыть оригинал</a>
+          ${m.url ? `<a class="btn sm" href="${esc(m.url)}" target="_blank" rel="noopener">${icon('ext')}Открыть оригинал</a>` : ''}
         </div>
       </div>
       <div class="viewer-frame" id="vFrame"><div class="viewer-load">Открываю «${esc(m.title)}»…</div></div>
       <button class="viewer-exit" data-full-exit hidden>${icon('x')}Свернуть</button>
-      <p class="note">${m.group === 'standards' ? 'Книга читается прокруткой, оглавление слева, тест — в конце. Прогресс чтения запоминается в этом браузере.' : 'Листайте стрелками ← → или пробелом, F — на весь экран.'} Если материал не открылся здесь, нажмите «Открыть оригинал».</p>
+      <p class="note">${m.group === 'standards' ? 'Книга читается прокруткой, оглавление слева, тест — в конце. Прогресс чтения запоминается в этом браузере.' : m.group === 'product' ? 'Документ читается прокруткой, разделы — вкладками сверху. У графиков есть подсказки при наведении и таблица под каждым.' : 'Листайте стрелками ← → или пробелом, F — на весь экран.'}${m.url ? ' Если материал не открылся здесь, нажмите «Открыть оригинал».' : ''}</p>
     </div>`;
     const box = $('#vFrame', root), wrap = $('.viewer', root);
     /* на весь экран: настоящий полноэкранный режим, а где он запрещён — окно поверх штаба */
@@ -149,8 +155,9 @@ App.register('material', {
       if (box.isConnected) show(html);
     }).catch(() => {
       if (!box.isConnected) return;
-      box.innerHTML = `<div class="viewer-load"><b>Здесь презентация не открылась</b><p>Файл лежит только в артефакте штаба. Откройте оригинал — он всегда под рукой.</p>
-        <a class="btn primary" href="${esc(m.url)}" target="_blank" rel="noopener">${icon('ext')}Открыть «${esc(m.title)}»</a></div>`;
+      box.innerHTML = m.url ? `<div class="viewer-load"><b>Здесь презентация не открылась</b><p>Файл лежит только в артефакте штаба. Откройте оригинал — он всегда под рукой.</p>
+        <a class="btn primary" href="${esc(m.url)}" target="_blank" rel="noopener">${icon('ext')}Открыть «${esc(m.title)}»</a></div>`
+        : `<div class="viewer-load"><b>«${esc(m.title)}» не открылся</b><p>Этот материал лежит на сервере штаба. Проверьте связь и обновите страницу.</p></div>`;
     });
   },
 });

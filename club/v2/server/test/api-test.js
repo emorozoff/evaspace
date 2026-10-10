@@ -308,6 +308,11 @@ async function browserHash(pw, salt) {
   for (const p of ['/server/server.js', '/server/data/eva-hq.json', '/src/app/03-auth.js', '/../server.js', '/data/eva-hq.json', '/.git/config', '/build.py'])
     ok((await anon.req('GET', p, undefined, {raw: true})).status === 404, 'закрыто: ' + p);
   ok((await anon.req('GET', '/m/team.html', undefined, {raw: true})).status === 401, 'презентации без входа закрыты');
+  r = await owner.req('GET', '/m/product.html', undefined, {raw: true});
+  ok(r.status === 200 && r.text.includes('Продуктовое наполнение'), '«Продуктовое наполнение» из репозитория открывается команде', r.status);
+  r = await owner.req('GET', '/m/shoot.html', undefined, {raw: true});
+  ok(r.status === 200 && r.text.includes('План съёмок') && (r.headers.get('content-security-policy') || '').includes('sandbox'), '«План съёмок» открывается и заперт в песочнице', r.status);
+  ok((await anon.req('GET', '/m/shoot.html', undefined, {raw: true})).status === 401, '«План съёмок» без входа закрыт');
 
   console.log('17. перебор паролей и выход');
   const br = new Client('brute');

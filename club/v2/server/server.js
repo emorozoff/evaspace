@@ -471,7 +471,9 @@ function file(res, f, {inject, cache = 'no-cache', headers = {}} = {}) {
 const boot = app => `<script>window.EVA = ${JSON.stringify({app, api: app === 'crm' ? '/crm/api' : '/api', hq: '/', crm: '/crm/'})}; window.EVA_API = window.EVA.api;</script>\n<script src="/eva-server.js"></script>`;
 /* кому какие презентации: как в src/app/60-materials.js */
 const TEAM = ['owner', 'lead', 'finance', 'member'];
-const MATERIALS = {standards: TEAM, team: TEAM, speech: TEAM, experts: TEAM, 'experts-partners': TEAM, investor: HQ.ROLES, pitch: HQ.ROLES};
+const MATERIALS = {standards: TEAM, product: TEAM, shoot: TEAM, team: TEAM, speech: TEAM, experts: TEAM, 'experts-partners': TEAM, investor: HQ.ROLES, pitch: HQ.ROLES};
+/* материалы, которые живут в репозитории и приезжают на сервер с правкой (папка public/m) */
+const REPO_MATERIALS = path.join(__dirname, 'public', 'm');
 
 function page(req, res, u) {
   const p = decodeURIComponent(u.pathname);
@@ -485,7 +487,8 @@ function page(req, res, u) {
   if (mm) {
     const ctx = ctxOf(req);
     if (!ctx || !(MATERIALS[mm[1]] || []).includes(ctx.role)) { res.writeHead(ctx ? 403 : 401, {'content-type': 'text/plain; charset=utf-8'}); return res.end('Материал закрыт'); }
-    return file(res, path.join(MATERIALS_DIR, mm[1] + '.html'), {cache: 'private, max-age=3600', headers: {'content-security-policy': 'sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox'}});
+    const own = path.join(MATERIALS_DIR, mm[1] + '.html'), repo = path.join(REPO_MATERIALS, mm[1] + '.html');
+    return file(res, fs.existsSync(own) ? own : repo, {cache: 'private, max-age=600', headers: {'content-security-policy': 'sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox'}});
   }
   /* анкета CRM — открыта всем: её заполняют клиентки, данных с сервера она не получает */
   if (p === '/anketa') { res.writeHead(301, {location: '/anketa/'}); return res.end(); }
