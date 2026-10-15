@@ -285,7 +285,7 @@ function cashFlowHtml(sc) {
         <tr class="in"><td>Прочие приходы</td>${cells(r => r.otherIn)}<td class="r">${rub(sum(rows, r => r.otherIn))}</td></tr>
         <tr class="in fin"><td>Вложения <span class="note">основателя и инвесторов</span></td>${cells(r => r.invest)}<td class="r">${rub(sum(rows, r => r.invest))}</td></tr>
         <tr class="group out"><td colspan="${rows.length + 2}">Выплаты</td></tr>
-        ${outCats.map(c => `<tr class="out"><td>${OUT_CATS[c]}${c === 'referral' ? ` <span class="note">${pct(s.referral)} первых оплат</span>` : c === 'acquiring' ? ` <span class="note">${pct(s.acquiring, 1)}</span>` : c === 'tax' ? ` <span class="note">${pct(s.taxRate)} выручки</span>` : ''}</td>${cells(r => r.out[c])}<td class="r">${rub(sum(rows, r => r.out[c]))}</td></tr>`).join('')}
+        ${outCats.map(c => `<tr class="out"><td>${OUT_CATS[c]}${c === 'referral' ? ` <span class="note">${pct(s.referral)} первых оплат</span>` : ['acquiring', 'tax', 'vat'].includes(c) ? ` <span class="note">${esc(rateText(c))}${rateTable(c).length > 1 ? ', дальше по срокам' : ''}</span>` : ''}</td>${cells(r => r.out[c])}<td class="r">${rub(sum(rows, r => r.out[c]))}</td></tr>`).join('')}
         <tr class="sub out"><td>Итого выплаты</td>${cells(r => r.outTotal)}<td class="r">${rub(outTotal)}</td></tr>
         <tr class="sub"><td>Чистый поток</td>${rows.map(r => `<td class="r ${r.net < 0 ? 'bad' : 'good'}">${signed(r.net, rub)}</td>`).join('')}<td class="r">${signed(sum(rows, r => r.net), rub)}</td></tr>
         <tr class="total bal"><td>Остаток на конец</td>${rows.map(r => `<td class="r"><b class="${r.close < 0 ? 'bad' : ''}">${rub(r.close)}</b></td>`).join('')}<td></td></tr>

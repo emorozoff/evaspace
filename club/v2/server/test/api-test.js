@@ -76,7 +76,8 @@ async function browserHash(pw, salt) {
   await owner.put('plan', 'pay_p1', {title: 'SMM', group: 'payroll', cat: 'payroll', amount: 120000, months: ['2026-10'], personId: 'p1', insurance: true});
   await owner.put('plan', 'reg1', {title: 'Офис', group: 'regular', cat: 'office', amount: 30000, months: ['2026-10']});
   await owner.put('tasks', 't1', {title: 'Задача', status: 'todo', budget: 1000});
-  await owner.put('docs', 'settings', {price: 2900, cashStart: 777, cashDate: '2026-09-01', invest: {'2026-11': 1}});
+  await owner.put('docs', 'settings', {price: 2900, cashStart: 777, cashDate: '2026-09-01', invest: {'2026-11': 1},
+    rates: {insurance: [{from: '', label: 'до регистрации', steps: [{upTo: null, rate: 0}]}, {from: '2026-11', label: 'ООО', steps: [{upTo: 2400000, rate: 0.3}, {upTo: null, rate: 0.15}]}]}});
   await owner.put('orders', 'o1', {no: 1, customer: 'Клиентка', contact: '+7911', address: 'Москва', items: [{title: 'Свеча', qty: 1, price: 900}], pay: 'paid'});
   await owner.put('refunds', 'rf1', {client: 'Анна', contact: 'a@a.ru', amount: 2900, status: 'new', comment: 'не подошло'});
   await owner.put('links', 'lk1', {title: 'Только команде', url: 'https://x.ru', roles: ['owner', 'lead', 'finance', 'member']});
@@ -115,6 +116,7 @@ async function browserHash(pw, salt) {
   ok(mc.people.p1.status === 'active', 'вакансия закрылась');
   ok(Object.values(mc.accounts).every(a => !('hash' in a) && !('salt' in a) && !('reset' in a)), 'ни одного отпечатка пароля');
   ok(mc.docs.settings && mc.docs.settings.price === 2900 && !('cashStart' in mc.docs.settings), 'настройки без денег на счёте', mc.docs.settings);
+  ok(!('rates' in mc.docs.settings), 'ставки взносов и налогов команде не уходят', mc.docs.settings);
   ok(mc.tasks.t1 && mc.sales['2026-10-01'] && mc.links.lk1, 'задачи, цифры и материалы видит');
 
   console.log('7. что может участница');
@@ -163,6 +165,7 @@ async function browserHash(pw, salt) {
   const ic = s.collections;
   ok(Object.keys(ic.tasks).length === 0 && Object.keys(ic.messages).length === 0, 'задач и сообщений не видит');
   ok(ic.ledger.l1 && ic.plan.reg1, 'деньги видит');
+  ok(ic.docs.settings && Array.isArray(ic.docs.settings.rates.insurance) && ic.docs.settings.rates.insurance[1].steps[0].upTo === 2400000, 'ставки по срокам и порогам видит', ic.docs.settings);
   ok(ic.orders.o1 && !('customer' in ic.orders.o1) && !('address' in ic.orders.o1) && !('contact' in ic.orders.o1), 'заказы — без данных клиентов', ic.orders.o1);
   ok(ic.refunds.rf1 && ic.refunds.rf1.amount === 2900 && !('client' in ic.refunds.rf1) && !('comment' in ic.refunds.rf1), 'возвраты — только суммы', ic.refunds.rf1);
   ok(!ic.links.lk1, 'материал «только команде» не видит');
@@ -176,6 +179,7 @@ async function browserHash(pw, salt) {
   s = await lead.state();
   ok(s.collections.ledger.l1 && s.collections.orders.o1.customer === 'Клиентка', 'деньги и клиентов видит');
   ok(!('salary' in s.collections.people.p1), 'оклад в карточке не видит');
+  ok((await lead.patch('docs', 'settings', {rates: {vat: []}})).status === 403, 'ставки меняет только основатель');
   ok((await lead.put('ledger', 'l3', {kind: 'in', amount: 10, cat: 'other', date: '2026-10-02'})).status === 200, 'операцию внести — да');
   ok((await lead.patch('plan', 'pay_p1', {amount: 1})).status === 403, 'зарплатную строку править — нет');
   ok((await lead.patch('docs', 'strategy', {x: 1})).status === 404, 'стратегии ещё нет — 404, а не запись');

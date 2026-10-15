@@ -38,7 +38,7 @@ const PERSON_PUBLIC = ['name', 'givenName', 'surname', 'title', 'dir', 'status',
 const ACC_PUBLIC = ['name', 'role', 'personId', 'active'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 /* настройки денег — тем, кто денег не видит, не нужны */
-const SETTINGS_MONEY = ['cashStart', 'cashDate', 'invest'];
+const SETTINGS_MONEY = ['cashStart', 'cashDate', 'invest', 'rates'];
 
 const dmHas = (ch, accId) => String(ch).startsWith('dm:') && String(ch).slice(3).split('|').includes(accId);
 

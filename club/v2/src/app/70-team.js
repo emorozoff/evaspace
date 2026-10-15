@@ -52,7 +52,7 @@ App.register('team', {
           ${owner ? `<td class="r"><button class="icon-btn" data-person-edit="${p.id}" title="Изменить">${icon('edit')}</button></td>` : ''}
         </tr>`;
       }).join('')}</tbody>
-      ${seePay ? `<tfoot><tr class="total"><td colspan="3">Фонд оплаты труда в месяц — активные</td><td class="r nowrap">${rub(fot)}</td><td colspan="${owner ? 5 : 4}" class="soft">с взносами ${rub(Math.round(fot * (1 + settings().insurance)))}</td></tr></tfoot>` : ''}
+      ${seePay ? `<tfoot><tr class="total"><td colspan="3">Фонд оплаты труда в месяц — активные</td><td class="r nowrap">${rub(fot)}</td><td colspan="${owner ? 5 : 4}" class="soft">с взносами ${rub(Math.round(fot * (1 + rateAt('insurance', monthOf(today()), 0))))}</td></tr></tfoot>` : ''}
     </table></div>`;
 
     const card = p => {

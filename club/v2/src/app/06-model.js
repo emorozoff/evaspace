@@ -108,15 +108,38 @@ const Money = {
     const order = {payroll: 0, regular: 1, once: 2};
     return Store.all('plan').sort((a, b) => (order[a.group] ?? 3) - (order[b.group] ?? 3) || (a.months || [])[0]?.localeCompare((b.months || [])[0] || '') || (b.amount || 0) - (a.amount || 0));
   },
-  planAmount(item, m) {
+  /* сумма платежа в месяце без взносов */
+  planBase(item, m) {
     if (!(item.months || []).includes(m)) return 0;
     const who = item.personId ? personById(item.personId) : null;
     if (who && (who.status === 'inactive' || who.archived)) return 0;   // не активирован — не платим
-    const base = Number(item.amount) || 0;
-    return item.group === 'payroll' && item.insurance !== false ? Math.round(base * (1 + settings().insurance)) : base;
+    return Number(item.amount) || 0;
   },
-  paid(item, m) { return Store.all('ledger').find(e => e.planId === item.id && e.planMonth === m) || null; },
-  /* план расходов месяца по статьям: всего и ещё не оплачено */
+  /* взносы с зарплаты: ставка месяца, порог — по зарплате этого человека с начала года */
+  insurance(item, m, base = this.planBase(item, m)) {
+    const who = it => it.personId || 'plan:' + it.id, me = who(item), y = m.slice(0, 4);
+    let before = 0;
+    Store.all('plan').forEach(it => {
+      if (it.group !== 'payroll' || who(it) !== me) return;
+      (it.months || []).forEach(x => { if (x.slice(0, 4) === y && x < m) before += this.planBase(it, x); });
+    });
+    return rateCharge('insurance', m, base, before);
+  },
+  planAmount(item, m) {
+    const base = this.planBase(item, m);
+    if (!base) return 0;
+    return item.group === 'payroll' && item.insurance !== false ? Math.round(base + this.insurance(item, m, base)) : base;
+  },
+  /* оплаты строки плана за месяц: целиком или частями (аванс и зарплата) */
+  payments(item, m) { return Store.all('ledger').filter(e => e.planId === item.id && e.planMonth === m).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.at || 0) - (b.at || 0))); },
+  paidAmount(item, m) { return Math.round(sum(this.payments(item, m), e => Number(e.amount) || 0) * 100) / 100; },
+  left(item, m) { return Math.max(0, Math.round((this.planAmount(item, m) - this.paidAmount(item, m)) * 100) / 100); },
+  /* оплачен полностью — последняя оплата, иначе null */
+  paid(item, m) {
+    const list = this.payments(item, m);
+    return list.length && this.left(item, m) <= 0 ? list[list.length - 1] : null;
+  },
+  /* план расходов месяца по статьям: всего и ещё не оплачено (остаток после частичных оплат) */
   planByCat(m) {
     const all = {}, unpaid = {};
     this.planItems().forEach(it => {
@@ -124,7 +147,8 @@ const Money = {
       if (!a) return;
       const cat = it.group === 'payroll' ? 'payroll' : (it.cat || 'other');
       all[cat] = (all[cat] || 0) + a;
-      if (!this.paid(it, m)) unpaid[cat] = (unpaid[cat] || 0) + a;
+      const rest = this.left(it, m);
+      if (rest) unpaid[cat] = (unpaid[cat] || 0) + rest;
     });
     return {all, unpaid};
   },
@@ -142,7 +166,7 @@ const Money = {
   },
 };
 
-const VAR_CATS = ['referral', 'acquiring', 'tax'];
+const VAR_CATS = ['referral', 'acquiring', 'tax', 'vat'];
 const FIXED_CATS = Object.keys(OUT_CATS).filter(c => !VAR_CATS.includes(c));
 
 /* ── Cash Flow до Нового года: прошлые месяцы — факт, текущий — факт плюс
@@ -150,8 +174,10 @@ const FIXED_CATS = Object.keys(OUT_CATS).filter(c => !VAR_CATS.includes(c));
 function cashFlow(sc) {
   const s = settings(), t = today(), cur = monthOf(t);
   let open = Number(s.cashStart) || 0;
-  let prevPayers = 0;
-  return CF_MONTHS.map(m => {
+  let prevPayers = 0, ytd = 0;
+  return CF_MONTHS.map((m, i) => {
+    /* пороги ставок — по выручке с начала года */
+    if (!i || m.endsWith('-01')) ytd = revenueBefore(m);
     const status = m < cur ? 'fact' : m === cur ? 'now' : 'plan';
     const f = Sales.month(m), led = Money.month(m), plan = Money.planByCat(m);
     const planFresh = Plan.sales(sc, m);
@@ -174,7 +200,9 @@ function cashFlow(sc) {
     FIXED_CATS.forEach(c => {
       out[c] = (led.cats.out[c] || 0) + (status === 'fact' ? 0 : (plan.unpaid[c] || 0));
     });
-    const varBase = {referral: revNew * s.referral, acquiring: revenue * s.acquiring, tax: revenue * s.taxRate};
+    const varBase = {referral: revNew * s.referral, acquiring: rateCharge('acquiring', m, revenue, ytd, s),
+      tax: rateCharge('tax', m, revenue, ytd, s), vat: rateCharge('vat', m, revenue, ytd, s)};
+    ytd += revenue;
     VAR_CATS.forEach(c => {
       out[c] = status === 'fact' ? (led.cats.out[c] || 0) : Math.max(led.cats.out[c] || 0, varBase[c]);
     });
@@ -191,12 +219,16 @@ function cashFlow(sc) {
 function pnl(sc) {
   const s = settings();
   const chain = Plan.chain(sc);
+  let ytd = 0;
   return CF_MONTHS.map((m, i) => {
     const f = Sales.month(m), led = Money.month(m), plan = Money.planByCat(m);
     const c = chain[i];
     const factOut = {...led.cats.out};
     const planRev = c.revNew + c.revRenew;
-    const planOut = {...plan.all, referral: c.revNew * s.referral, acquiring: planRev * s.acquiring, tax: planRev * s.taxRate};
+    if (!i || m.endsWith('-01')) ytd = revenueBefore(m);
+    const planOut = {...plan.all, referral: c.revNew * s.referral, acquiring: rateCharge('acquiring', m, planRev, ytd, s),
+      tax: rateCharge('tax', m, planRev, ytd, s), vat: rateCharge('vat', m, planRev, ytd, s)};
+    ytd += planRev;
     const fact = {subs: f.revenue, other: led.in, out: factOut, outTotal: led.out, invest: led.invest};
     fact.income = fact.subs + fact.other;
     fact.profit = fact.income - fact.outTotal;

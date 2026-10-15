@@ -83,7 +83,7 @@ App.register('home', {
     /* что ждёт меня */
     let focus = '';
     if (Tasks.manager()) {
-      const unpaid = Auth.can('money.edit') ? Money.planItems().filter(it => Money.planAmount(it, monthOf(t)) && !Money.paid(it, monthOf(t))) : [];
+      const unpaid = Auth.can('money.edit') ? Money.planItems().filter(it => Money.left(it, monthOf(t)) > 0) : [];
       /* финансы: возвраты, сбои оплат, выплаты, заказы к отправке */
       const fa = Auth.can('fin.ops') ? Fin.attention() : null;
       const finRows = fa ? [
@@ -99,7 +99,7 @@ App.register('home', {
       ];
       focus = `<div class="card"><div class="card-head"><h2>Ждут решения</h2><span class="row"><button class="btn sm primary" data-new-task>${icon('plus')}Задача</button><a class="link-btn" href="#tasks">Все задачи</a></span></div>
         ${rows.length ? `<div class="focus-list">${rows.map(r => `<button class="focus-row" data-open-task="${r.id}"><span class="fr-t">${r.html}</span>${avatar(r.who)}</button>`).join('')}</div>` : '<p class="note">Ничего не ждёт согласования и нет просроченных задач.</p>'}
-        ${unpaid.length ? `<div class="focus-pay"><span class="label">Платежи ${MONTHS_GEN[monthIdx(monthOf(t))]} по плану</span>${unpaid.slice(0, 4).map(it => `<a href="#money:plan" class="fp-row"><span>${esc(it.group === 'payroll' && !Auth.can('payroll.view') ? 'Оплата труда' : it.title)}</span><b>${rub(Money.planAmount(it, monthOf(t)))}</b></a>`).join('')}${unpaid.length > 4 ? `<a href="#money:plan" class="note">ещё ${unpaid.length - 4}</a>` : ''}</div>` : ''}
+        ${unpaid.length ? `<div class="focus-pay"><span class="label">Платежи ${MONTHS_GEN[monthIdx(monthOf(t))]} по плану</span>${unpaid.slice(0, 4).map(it => `<a href="#money:plan" class="fp-row"><span>${esc(it.group === 'payroll' && !Auth.can('payroll.view') ? 'Оплата труда' : it.title)}</span><b>${rub(Money.left(it, monthOf(t)))}</b></a>`).join('')}${unpaid.length > 4 ? `<a href="#money:plan" class="note">ещё ${unpaid.length - 4}</a>` : ''}</div>` : ''}
         ${finRows.length ? `<div class="focus-pay focus-fin"><span class="label">Финансы</span>${finRows.map(([tab, text, val]) => `<a href="#money:${tab}" class="fp-row"><span>${text}</span><b>${val}</b></a>`).join('')}</div>` : ''}
       </div>`;
     } else if (teamRoles) {

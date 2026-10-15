@@ -265,13 +265,15 @@ function unitEcon(from, to) {
   let spend = 0;
   Store.all('ledger').forEach(e => { if (e.kind === 'out' && e.date >= from && e.date <= to && ['marketing', 'referral'].includes(e.cat)) spend += Number(e.amount) || 0; });
   const cac = f.pays ? spend / f.pays : null;
-  const varShare = (Number(s.acquiring) || 0) + (Number(s.taxRate) || 0);
+  /* доля с оплаты по ставкам месяца и ступени, в которой стоит выручка с начала года */
+  const m = monthOf(to), ytd = Sales.range(to.slice(0, 4) + '-01-01', to).revenue;
+  const varShare = rateAt('acquiring', m, ytd, s) + rateAt('tax', m, ytd, s) + rateAt('vat', m, ytd, s);
   const margin = check * (1 - varShare);
   const rate = Subs.rate();
   const renew = rate && rate.renew !== null ? rate.renew : s.retention;
   const churn = Math.max(0.02, 1 - renew);
   const life = Math.min(36, 1 / churn);
   const ltv = margin * life;
-  return {from, to, f, pays, check, spend, cac, varShare, margin, renew, renewPlan: !(rate && rate.renew !== null), churn, life, ltv,
+  return {from, to, f, pays, check, spend, cac, varShare, varParts: {acquiring: rateAt('acquiring', m, ytd, s), tax: rateAt('tax', m, ytd, s), vat: rateAt('vat', m, ytd, s)}, margin, renew, renewPlan: !(rate && rate.renew !== null), churn, life, ltv,
     ltvCac: cac ? ltv / cac : null, payback: cac && margin ? cac / margin : null};
 }

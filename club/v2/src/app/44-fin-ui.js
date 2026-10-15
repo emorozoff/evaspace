@@ -59,21 +59,21 @@ function finOverviewHtml(sc) {
   let att = '';
   if (finOps()) {
     const a = Fin.attention();
-    const planUnpaid = Money.planItems().filter(it => Money.planAmount(it, m) && !Money.paid(it, m));
+    const planUnpaid = Money.planItems().filter(it => Money.left(it, m) > 0);
     const rows = [
       a.refunds.length ? ['refunds', 'bad', `Запросы на возврат: ${a.refunds.length}`, a.late.length ? `<b class="bad">${a.late.length} ${plural(a.late.length, 'просрочен', 'просрочено', 'просрочено')}</b> · ответить за ${REFUND_DAYS} дней` : `ответить за ${REFUND_DAYS} дней с запроса`] : null,
       a.failed.length ? ['failed', 'warn', `Сбои оплат: ${a.failed.length} на ${rub(a.failedSum)}`, a.failedDue.length ? `сегодня нужно действие по ${a.failedDue.length}` : 'ждём ответа клиентов'] : null,
       a.payouts.total ? ['payouts', 'violet', `К выплате: ${rub(a.payouts.total)}`, [a.payouts.ref ? `рефералам ${rubK(a.payouts.ref)}` : '', a.payouts.author ? `авторам ${rubK(a.payouts.author)}` : '', a.payouts.seller ? `продавцам ${rubK(a.payouts.seller)}` : ''].filter(Boolean).join(' · ')] : null,
       a.ship.length ? ['market', 'gold', `Заказы к отправке: ${a.ship.length}`, 'оплачены, ещё не отправлены'] : null,
       a.low.length ? ['market', 'line', `Мало на складе: ${a.low.length}`, a.low.slice(0, 3).map(p => `${esc(p.title)} — ${fmt(Number(p.stock) || 0)}`).join(', ')] : null,
-      planUnpaid.length ? ['plan', 'line', `Платежи ${MONTHS_GEN[monthIdx(m)]} по плану: ${planUnpaid.length}`, `осталось оплатить ${rub(sum(planUnpaid, it => Money.planAmount(it, m)))}`] : null,
+      planUnpaid.length ? ['plan', 'line', `Платежи ${MONTHS_GEN[monthIdx(m)]} по плану: ${planUnpaid.length}`, `осталось оплатить ${rub(sum(planUnpaid, it => Money.left(it, m)))}`] : null,
     ].filter(Boolean);
     att = `<div class="card fin-att"><div class="card-head"><h2>Нужно внимание</h2></div>
       ${rows.length ? `<div class="focus-list">${rows.map(([tab, tone, text, sub]) => `<button class="focus-row" data-fin-go="${tab === 'payouts' ? (a.payouts.ref ? 'subs' : a.payouts.author ? 'courses' : 'market') : tab}"><span class="fr-t"><span class="pill ${tone}">${text}</span><small>${sub}</small></span>${icon('arrow')}</button>`).join('')}</div>`
         : '<p class="note">Всё под контролем: открытых возвратов и сбоев нет, выплаты сделаны.</p>'}</div>`;
   }
   /* план платежей месяца */
-  const planAll = sum(Money.planItems(), it => Money.planAmount(it, m)), planPaid = sum(Money.planItems(), it => (Money.paid(it, m) ? Money.planAmount(it, m) : 0));
+  const planAll = sum(Money.planItems(), it => Money.planAmount(it, m)), planPaid = sum(Money.planItems(), it => Math.min(Money.planAmount(it, m), Money.paidAmount(it, m)));
   const recent = Money.ledger().slice(0, 6);
   return `<div class="cards tiles fin-kpi">${tiles.join('')}</div>
     <div class="split section">${flow}${att || `<div class="card"><div class="card-head"><h2>Подписки</h2></div><p class="note">${fmt(sub.total)} платных: месячных ${fmt(sub.endM)}, годовых ${fmt(sub.endY)}. Продления — ${pctOr(rate && rate.renew)}.</p></div>`}</div>
@@ -111,7 +111,7 @@ function unitHtml() {
       <tbody>
         ${row('Средний чек оплаты', rub(Math.round(u.check)), `выручка подписок ${rubK(u.f.revenue)} ÷ ${fmt(u.pays)} ${plural(u.pays, 'оплата', 'оплаты', 'оплат')} (первые и продления)`)}
         ${row('Цена подписки', `${rub(s.price)} · ${rub(priceYear())}`, `месяц · год (≈ ${rub(Math.round(priceYear() / 12))} в месяц)`)}
-        ${row('Переменные расходы с оплаты', pct(u.varShare, 1), `эквайринг ${pct(s.acquiring, 1)} + налог ${pct(s.taxRate, 1)}`)}
+        ${row('Переменные расходы с оплаты', pct(u.varShare, 1), `эквайринг ${pctA(u.varParts.acquiring)} + налог ${pctA(u.varParts.tax)}${u.varParts.vat ? ` + НДС ${pctA(u.varParts.vat)}` : ''} — ставки этого месяца`)}
         ${row('Маржа с оплаты', rub(Math.round(u.margin)), 'чек минус переменные расходы')}
         ${row('Продлевают каждый месяц', pct(u.renew), u.renewPlan ? 'по плану — фактических продлений ещё нет' : 'по последнему месяцу в «Подписках»')}
         ${row('Средний срок подписки', `${fmt(u.life, 1)} мес.`, `1 ÷ отток ${pct(u.churn)}`)}
