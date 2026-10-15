@@ -1,7 +1,9 @@
 /* Финансы: вкладки «Обзор», «Операции» (быстрая запись и журнал), «План и
    прогноз» (финплан с «Оплатить», план-факт, Cash Flow), «Подписки», «Курсы»,
    «Маркетплейс», «Сбои оплат», «Возвраты» (44-fin-ui.js). Выручка подписок
-   приходит из «Отчётов» (цифры продаж), поэтому здесь её вручную не вносим. */
+   приходит из «Отчётов» (цифры продаж), поэтому здесь её вручную не вносим.
+   Платёж плана можно оплатить целиком или частями (аванс и зарплата); ставки
+   взносов, налога, НДС и эквайринга — по срокам и порогам (06-rates.js). */
 
 const MoneyUI = {
   draft: {kind: 'out', amount: '', cat: 'other', date: '', note: ''},
@@ -33,7 +35,7 @@ App.register('money', {
       overview: () => finOverviewHtml(sc),
       ops: () => `${edit ? quickEntryHtml() : ''}
         <section class="section"><div class="section-head"><h2>Журнал операций</h2>${ledgerFilters()}</div>${ledgerTable()}</section>`,
-      plan: () => `<section class="section"><div class="section-head"><h2>Финплан: платежи по месяцам</h2><span class="hint-inline">${edit ? 'Регулярные и разовые платежи. «Оплатить», когда деньги ушли, — операция попадёт в журнал и в план-факт.' : 'Что и когда платим до конца года.'}</span>
+      plan: () => `<section class="section"><div class="section-head"><h2>Финплан: платежи по месяцам</h2><span class="hint-inline">${edit ? 'Регулярные и разовые платежи. «Оплатить», когда деньги ушли, — целиком или частью (например, аванс), операция попадёт в журнал и в план-факт.' : 'Что и когда платим до конца года.'}</span>
             ${edit ? `<button class="btn sm" data-plan-add>${icon('plus')}Платёж</button>` : ''}</div>${planTable()}</section>
         <section class="section"><div class="section-head"><h2>План-факт по месяцам</h2><span class="hint-inline">Крупно — факт, мелко — план. Будущие месяцы — только план. Сценарий продаж «${SCENARIOS[sc].name}».</span></div>${pnlTable(pnl(sc))}</section>
         ${Auth.can('cf.view') ? cashFlowHtml(sc) : ''}
@@ -127,7 +129,7 @@ function pnlTable(rows) {
       <tr class="total"><td>Прибыль</td>${rows.map(profitCell).join('')}<td class="r pl-cell tot"><b class="${profitTot < 0 ? 'bad' : 'good'}">${signed(profitTot)}</b></td></tr>
       <tr class="fin"><td>Вложения <span class="note">вне P&amp;L</span></td>${rows.map(r => `<td class="r pl-cell"><b>${r.fact.invest ? rubK(r.fact.invest) : '—'}</b></td>`).join('')}<td class="r pl-cell tot"><b>${rubK(total(r => r.fact.invest))}</b></td></tr>
     </tbody></table></div>
-    <p class="note">План расходов = план платежей ниже + от выручки по плану: реферальные ${pct(settings().referral)} первых оплат, эквайринг ${pct(settings().acquiring, 1)}, налог ${pct(settings().taxRate)}.</p>`;
+    <p class="note">План расходов = план платежей ниже + от выручки по плану: реферальные ${pct(settings().referral)} первых оплат, ${varRatesText()} — по ставкам каждого месяца и порогам с начала года («Настройки расчёта»).</p>`;
 }
 
 /* ── план платежей ── */
@@ -140,9 +142,12 @@ function planTable() {
   const cell = (it, m) => {
     const a = Money.planAmount(it, m);
     if (!a) return '<td class="r plan-c empty-c"></td>';
-    const paid = Money.paid(it, m);
+    const paidA = Money.paidAmount(it, m), rest = Money.left(it, m);
     const canPay = edit && (it.group !== 'payroll' || seePay);
-    if (paid) return `<td class="r plan-c paid"><button class="pay-btn paid" ${canPay ? `data-unpay="${it.id}:${m}"` : 'disabled'} title="Оплачено ${dayLong(paid.date)}${canPay ? ' — нажмите, чтобы отменить' : ''}"><span>${rub(a)}</span>${icon('tick')}</button></td>`;
+    const list = Money.payments(it, m).map(e => `${dayLong(e.date)} — ${rub(e.amount)}${e.planPart ? ' (' + e.planPart.toLowerCase() + ')' : ''}`).join(', ');
+    if (paidA && !rest) return `<td class="r plan-c paid"><button class="pay-btn paid" ${canPay ? `data-pay="${it.id}:${m}"` : 'disabled'} title="Оплачено: ${esc(list)}${canPay ? '. Нажмите, чтобы посмотреть или отменить' : ''}"><span>${rub(a)}</span>${icon('tick')}</button></td>`;
+    if (paidA) return `<td class="r plan-c part"><div class="pc-amt">${rub(a)}</div><div class="pc-bar" title="Оплачено: ${esc(list)}"><i style="width:${Math.min(100, Math.round(paidA / a * 100))}%"></i></div>
+      <div class="pc-part">оплачено ${rubK(paidA)}</div>${canPay ? `<button class="pay-btn" data-pay="${it.id}:${m}">Доплатить ${rubK(rest)}</button>` : `<span class="note">осталось ${rubK(rest)}</span>`}</td>`;
     return `<td class="r plan-c"><div class="pc-amt">${rub(a)}</div>${canPay ? `<button class="pay-btn" data-pay="${it.id}:${m}">Оплатить</button>` : `<span class="note">${m < monthOf(today()) ? 'не оплачено' : ''}</span>`}</td>`;
   };
   const groupRows = Object.entries(PLAN_GROUPS).map(([g, gname]) => {
@@ -157,12 +162,12 @@ function planTable() {
       const p = personById(it.personId);
       const off = p && (p.status === 'inactive' || p.archived);
       return `<tr class="${off ? 'dim' : ''}"><td><button class="plan-name" ${edit && (g !== 'payroll' || seePay) ? `data-plan-edit="${it.id}"` : 'disabled'}>${esc(it.title)}</button>${off ? ' <span class="pill warn">не активирован — не считаем</span>' : ''}
-        <div class="note">${g === 'payroll' ? `${p ? esc(personName(p)) + ' · ' : ''}${rub(it.amount)}${it.insurance !== false ? ' + взносы ' + pct(settings().insurance, 1) : ''}` : `${catName('out', it.cat)} · ${rub(it.amount)}${g === 'regular' ? ' в месяц' : ''}`}</div></td>
+        <div class="note">${g === 'payroll' ? `${p ? esc(personName(p)) + ' · ' : ''}${rub(it.amount)}${it.insurance !== false ? ' + взносы ' + insNote() : ''}` : `${catName('out', it.cat)} · ${rub(it.amount)}${g === 'regular' ? ' в месяц' : ''}`}${planParts(it).length ? ' · частями: ' + planParts(it).map(x => `${esc(x.name.toLowerCase())} ${pctA(x.share)}`).join(', ') : ''}</div></td>
         ${months.map(m => cell(it, m)).join('')}<td class="r"><b>${rub(sum(months, m => Money.planAmount(it, m)))}</b></td></tr>`;
     }).join('');
   }).join('');
   const tot = m => sum(items, it => Money.planAmount(it, m));
-  const paidTot = m => sum(items, it => (Money.paid(it, m) ? Money.planAmount(it, m) : 0));
+  const paidTot = m => sum(items, it => Math.min(Money.planAmount(it, m), Money.paidAmount(it, m)));
   return `<div class="table-wrap"><table class="t plan grid-lines">
     <thead><tr><th>Платёж</th>${months.map(m => `<th class="r">${monthName(m)}</th>`).join('')}<th class="r">Всего</th></tr></thead>
     <tbody>${groupRows}
@@ -172,35 +177,99 @@ function planTable() {
     </tbody></table></div>`;
 }
 function wirePlan(root) {
-  on(root, 'click', '[data-pay]', async (e, el) => {
-    const [id, m] = el.dataset.pay.split(':');
-    const it = Store.get('plan', id);
-    if (!it) return;
-    const a = Money.planAmount(it, m);
-    if (!(await confirmPop(el, {text: `Отметить оплаченным: ${it.title}, ${monthName(m).toLowerCase()} — ${rub(a)}?`, yes: 'Да, оплачено'}))) return;
-    const cur = monthOf(today());
-    const date = m === cur ? today() : m < cur ? monthEnd(m) : today();
-    Store.add('ledger', {kind: 'out', amount: a, cat: it.group === 'payroll' ? 'payroll' : (it.cat || 'other'), date, note: it.title,
-      planId: it.id, planMonth: m, by: Tasks.meKey(), at: Date.now()});
-    toast(`Оплачено: ${it.title}`);
-  });
-  on(root, 'click', '[data-unpay]', async (e, el) => {
-    const [id, m] = el.dataset.unpay.split(':');
-    const it = Store.get('plan', id);
-    const paid = it && Money.paid(it, m);
-    if (!paid) return;
-    if (!(await confirmPop(el, {text: `Отменить оплату: ${it.title}, ${monthName(m).toLowerCase()}? Операция уйдёт из журнала.`, yes: 'Да, отменить', danger: true}))) return;
-    const copy = clone(paid);
-    Store.remove('ledger', paid.id);
-    toast('Оплата отменена', {undo: () => Store.put('ledger', copy.id, copy)});
-  });
+  on(root, 'click', '[data-pay]', (e, el) => { const [id, m] = el.dataset.pay.split(':'); openPay(id, m); });
   on(root, 'click', '[data-plan-edit]', (e, el) => editPlanItem(el.dataset.planEdit));
   on(root, 'click', '[data-plan-add]', () => editPlanItem(null));
+}
+/* части платежа: [{name: 'Аванс', share: 0.4}, {name: 'Зарплата', share: 0.6}] */
+const planParts = it => (Array.isArray(it.parts) ? it.parts : []).filter(x => x && x.name && Number(x.share) > 0).map(x => ({name: String(x.name).slice(0, 40), share: Number(x.share)}));
+const PARTS_DEFAULT = {payroll: [{name: 'Аванс', share: 0.4}, {name: 'Зарплата', share: 0.6}], other: [{name: 'Первая часть', share: 0.5}, {name: 'Вторая часть', share: 0.5}]};
+const insNote = () => rateText('insurance') + (rateTable('insurance').length > 1 ? ', дальше по срокам' : '');
+function varRatesText() {
+  const m = monthOf(today()), parts = [`эквайринг ${rateText('acquiring', m)}`, `налог ${rateText('tax', m)}`];
+  if (rateTable('vat').some(p => p.steps.some(st => st.rate > 0))) parts.push(`НДС ${rateText('vat', m)}`);
+  return parts.join(', ');
+}
+
+/* ── оплата платежа плана: целиком или частями ── */
+function openPay(id, m) {
+  const it = Store.get('plan', id);
+  if (!it) return;
+  const cur = monthOf(today());
+  const defDate = m === cur ? today() : m < cur ? monthEnd(m) : today();
+  const cat = it.group === 'payroll' ? 'payroll' : (it.cat || 'other');
+  let pick = null;   // выбранная часть
+  openModal({
+    title: `Оплата: ${it.title}`,
+    body: '<div id="payBox"></div>',
+    foot: '<button class="btn" data-close>Закрыть</button><button class="btn primary" id="payGo">Оплатить</button>',
+    onMount(el, close) {
+      const parts = () => {
+        const a = Money.planAmount(it, m), list = Money.payments(it, m), rest = Money.left(it, m);
+        const ps = planParts(it).map(x => ({...x, amount: Math.round(a * x.share), done: list.some(e => e.planPart === x.name)}));
+        const open = ps.filter(x => !x.done);
+        ps.forEach(x => { x.amount = open.length === 1 && x === open[0] ? rest : Math.min(x.amount, rest); });
+        return ps;
+      };
+      const draw = () => {
+        const a = Money.planAmount(it, m), base = Money.planBase(it, m), list = Money.payments(it, m), paidA = Money.paidAmount(it, m), rest = Money.left(it, m);
+        const ps = parts();
+        if (pick && !ps.some(x => x.name === pick && !x.done)) pick = null;
+        /* следующая неоплаченная часть выбрана сразу: аванс, потом зарплата */
+        if (!pick && ps.some(x => !x.done)) pick = ps.find(x => !x.done).name;
+        const chosen = ps.find(x => x.name === pick);
+        $('#payBox', el).innerHTML = `
+          <div class="pay-sum"><div><span class="label">${monthName(m)} по плану</span><b>${rub(a)}</b></div>
+            <div><span class="label">Оплачено</span><b class="${paidA ? 'good' : ''}">${rub(paidA)}</b></div>
+            <div><span class="label">Осталось</span><b>${rub(rest)}</b></div></div>
+          ${it.group === 'payroll' && it.insurance !== false && a > base ? `<p class="note">В сумме зарплата ${rub(base)} и страховые взносы ${rub(a - base)} — ${esc(rateText('insurance', m))}.</p>` : ''}
+          ${list.length ? `<div class="pay-list"><span class="label">Оплаты</span>${list.map(e => `<div class="pay-row"><span class="nowrap">${dayShort(e.date)}</span><span class="pay-what">${esc(e.planPart || 'Оплата')}</span><b class="nowrap">${rub(e.amount)}</b>
+            <button type="button" class="icon-btn" data-unpay-one="${e.id}" title="Отменить эту оплату" aria-label="Отменить оплату">${icon('x')}</button></div>`).join('')}</div>` : ''}
+          ${rest > 0 ? `
+            ${ps.length ? `<div class="field"><span>Какую часть платим</span><div class="chips pay-parts">${ps.map(x => `<button type="button" class="chip ${x.done ? 'done' : x.name === pick ? 'on' : ''}" data-part="${esc(x.name)}" ${x.done ? 'disabled' : ''}>${esc(x.name)} · ${x.done ? 'оплачено' : rub(x.amount)}</button>`).join('')}</div></div>` : ''}
+            <div class="grid3">
+              <label class="field"><span>Сумма, ₽</span><input class="input num" id="payAmt" inputmode="decimal" value="${chosen ? chosen.amount : rest}"></label>
+              <label class="field"><span>Дата оплаты</span><input class="input" id="payDate" type="date" value="${esc(defDate)}"></label>
+              <label class="field"><span>Что оплачиваем</span><input class="input" id="payPart" maxlength="40" placeholder="Например: аванс" value="${esc(chosen ? chosen.name : '')}"></label>
+            </div>
+            <div class="chips pay-quick"><button type="button" class="chip" data-amt="${rest}">Весь остаток ${rub(rest)}</button>${rest >= 2 ? `<button type="button" class="chip" data-amt="${Math.round(rest / 2)}">Половина ${rub(Math.round(rest / 2))}</button>` : ''}</div>
+            ${!ps.length ? `<p class="note">Платите частями каждый месяц — например, аванс и зарплата? Задайте части в карточке платежа (нажмите на его название): тогда здесь будут готовые кнопки.</p>` : ''}`
+          : '<p class="good pay-done">Оплачено полностью.</p>'}`;
+        $('#payGo', el).hidden = !(rest > 0);
+      };
+      draw();
+      on(el, 'click', '[data-part]', (e, b) => { pick = b.dataset.part; draw(); });
+      on(el, 'click', '[data-amt]', (e, b) => { $('#payAmt', el).value = b.dataset.amt; });
+      on(el, 'click', '[data-unpay-one]', async (e, b) => {
+        const led = Store.get('ledger', b.dataset.unpayOne);
+        if (!led) return;
+        if (!(await confirmPop(b, {text: `Отменить оплату ${rub(led.amount)}${led.planPart ? ' (' + led.planPart.toLowerCase() + ')' : ''}? Операция уйдёт из журнала.`, yes: 'Да, отменить', danger: true}))) return;
+        const copy = clone(led);
+        Store.remove('ledger', led.id);
+        toast('Оплата отменена', {undo: () => Store.put('ledger', copy.id, copy)});
+        draw();
+      });
+      $('#payGo', el).onclick = () => {
+        const rest = Money.left(it, m);
+        const amount = Math.round(parseNum($('#payAmt', el).value) * 100) / 100;
+        if (!(amount > 0)) { $('#payAmt', el).focus(); toast('Укажите сумму'); return; }
+        if (amount > rest + 0.009) { $('#payAmt', el).focus(); toast(`Не больше остатка — ${rub(rest)}`); return; }
+        const part = $('#payPart', el).value.trim().slice(0, 40);
+        Store.add('ledger', {kind: 'out', amount, cat, date: $('#payDate', el).value || defDate, note: it.title + (part ? ' — ' + part.toLowerCase() : ''),
+          planId: it.id, planMonth: m, ...(part ? {planPart: part} : {}), by: Tasks.meKey(), at: Date.now()});
+        pick = null;
+        if (Money.left(it, m) <= 0) { close(); toast(`Оплачено полностью: ${it.title}, ${monthName(m).toLowerCase()}`); return; }
+        toast(`Оплачено ${rub(amount)}${part ? ' — ' + part.toLowerCase() : ''}. Осталось ${rub(Money.left(it, m))}`);
+        draw();
+      };
+    },
+  });
 }
 function editPlanItem(id) {
   const it = id ? Store.get('plan', id) : null;
   const seePay = Auth.can('payroll.view');
   const v = it || {title: '', group: 'regular', cat: 'office', amount: '', months: [monthOf(today())], insurance: true, personId: ''};
+  let parts = planParts(v).map(x => ({name: x.name, pct: Math.round(x.share * 1000) / 10}));
   const groups = Object.entries(PLAN_GROUPS).filter(([g]) => g !== 'payroll' || seePay);
   openModal({
     title: it ? 'Платёж в плане' : 'Новый платёж',
@@ -212,8 +281,10 @@ function editPlanItem(id) {
       </div>
       <div class="grid2" id="piPayF">
         <label class="field"><span>Человек</span><select class="select" id="piPerson"><option value="">Вакансия / не выбран</option>${people().map(p => `<option value="${p.id}" ${p.id === v.personId ? 'selected' : ''}>${esc(personName(p))}</option>`).join('')}</select></label>
-        <label class="check pi-ins"><input type="checkbox" id="piIns" ${v.insurance !== false ? 'checked' : ''}>Плюс страховые взносы ${pct(settings().insurance, 1)}</label>
+        <label class="check pi-ins"><input type="checkbox" id="piIns" ${v.insurance !== false ? 'checked' : ''}>Плюс страховые взносы — сейчас ${esc(insNote())}</label>
       </div>
+      <div class="field pi-parts"><label class="check"><input type="checkbox" id="piPartsOn" ${parts.length ? 'checked' : ''}>Платим частями каждый месяц</label>
+        <div id="piParts"></div></div>
       <div class="field"><span>В какие месяцы платим</span><div class="chips">${CF_MONTHS.map(m => `<label class="chip pick"><input type="checkbox" value="${m}" ${(v.months || []).includes(m) ? 'checked' : ''}>${monthName(m)}</label>`).join('')}</div></div>`,
     foot: `${it ? `<button class="btn danger left" id="piDel">${icon('trash')}Удалить</button>` : ''}<button class="btn" data-close>Отмена</button><button class="btn primary" id="piSave">Сохранить</button>`,
     onMount(el, close) {
@@ -224,6 +295,25 @@ function editPlanItem(id) {
       };
       $('#piGroup', el).onchange = sync;
       sync();
+      /* части: название и доля в процентах, вместе — 100% */
+      const readParts = () => { parts = $$('[data-pt]', el).map(r => ({name: $('[data-pn]', r).value.trim(), pct: parseNum($('[data-pp]', r).value)})); };
+      const drawParts = () => {
+        const box = $('#piParts', el);
+        if (!$('#piPartsOn', el).checked) { box.innerHTML = ''; return; }
+        const total = Math.round(sum(parts, x => x.pct) * 10) / 10;
+        box.innerHTML = `<div class="pi-plist">${parts.map((x, i) => `<div class="pi-prow" data-pt="${i}"><input class="input" data-pn maxlength="40" value="${esc(x.name)}" placeholder="Например: аванс">
+            <label class="pi-pct"><input class="input num" data-pp inputmode="decimal" value="${x.pct}"><span>%</span></label>
+            ${parts.length > 2 ? `<button type="button" class="icon-btn" data-pdel="${i}" aria-label="Убрать часть">${icon('x')}</button>` : '<span></span>'}</div>`).join('')}</div>
+          <div class="row pi-pfoot"><button type="button" class="btn sm ghost" data-padd>${icon('plus')}Часть</button><span class="note ${Math.abs(total - 100) > 0.05 ? 'bad' : ''}" id="piPTot">вместе ${fmt(total, total % 1 ? 1 : 0)}% — нужно 100%</span></div>`;
+      };
+      $('#piPartsOn', el).onchange = e => {
+        if (e.target.checked && !parts.length) parts = PARTS_DEFAULT[$('#piGroup', el).value === 'payroll' ? 'payroll' : 'other'].map(x => ({name: x.name, pct: x.share * 100}));
+        drawParts();
+      };
+      on(el, 'click', '[data-padd]', () => { readParts(); parts.push({name: '', pct: Math.max(0, Math.round((100 - sum(parts, x => x.pct)) * 10) / 10)}); drawParts(); });
+      on(el, 'click', '[data-pdel]', (e, b) => { readParts(); parts.splice(Number(b.dataset.pdel), 1); drawParts(); });
+      on(el, 'input', '[data-pp]', () => { readParts(); const t = Math.round(sum(parts, x => x.pct) * 10) / 10, n = $('#piPTot', el); if (n) { n.textContent = `вместе ${fmt(t, t % 1 ? 1 : 0)}% — нужно 100%`; n.classList.toggle('bad', Math.abs(t - 100) > 0.05); } });
+      drawParts();
       $('#piSave', el).onclick = () => {
         const title = $('#piTitle', el).value.trim();
         const amount = parseNum($('#piAmount', el).value);
@@ -232,8 +322,18 @@ function editPlanItem(id) {
         if (!(amount > 0)) { $('#piAmount', el).focus(); toast('Укажите сумму'); return; }
         if (!months.length) { toast('Отметьте хотя бы один месяц'); return; }
         const group = $('#piGroup', el).value;
+        let partsOut = [];
+        if ($('#piPartsOn', el).checked) {
+          readParts();
+          const list = parts.filter(x => x.name || x.pct);
+          if (list.length < 2 || list.some(x => !x.name || !(x.pct > 0))) { toast('У каждой части — название и доля больше нуля, частей хотя бы две'); return; }
+          if (new Set(list.map(x => x.name.toLowerCase())).size !== list.length) { toast('Названия частей не должны повторяться'); return; }
+          if (Math.abs(sum(list, x => x.pct) - 100) > 0.05) { toast('Части вместе должны давать 100%'); return; }
+          partsOut = list.map(x => ({name: x.name, share: Math.round(x.pct * 10) / 1000}));
+        }
         const data = {title, group, amount, months, cat: group === 'payroll' ? 'payroll' : $('#piCat', el).value,
-          personId: group === 'payroll' ? $('#piPerson', el).value || null : null, insurance: group === 'payroll' ? $('#piIns', el).checked : false};
+          personId: group === 'payroll' ? $('#piPerson', el).value || null : null, insurance: group === 'payroll' ? $('#piIns', el).checked : false,
+          parts: partsOut};
         if (it) Store.put('plan', it.id, {...it, ...data}); else Store.add('plan', data);
         close();
       };
@@ -300,7 +400,7 @@ function editLedger(id) {
         <label class="field"><span>Дата</span><input class="input" id="leDate" type="date" value="${esc(e0.date)}"></label>
       </div>
       <label class="field"><span>Комментарий</span><input class="input" id="leNote" value="${esc(e0.note || '')}"></label>
-      ${e0.planId ? '<p class="note">Операция создана кнопкой «Оплатить» в плане платежей. Если удалить её, платёж снова станет неоплаченным.</p>' : ''}`,
+      ${e0.planId ? `<p class="note">Операция создана кнопкой «Оплатить» в плане платежей${e0.planPart ? ` (${esc(e0.planPart.toLowerCase())})` : ''}. Если удалить её, эта сумма снова станет к оплате.</p>` : ''}`,
     foot: `<button class="btn danger left" id="leDel">${icon('trash')}Удалить</button><button class="btn" data-close>Отмена</button><button class="btn primary" id="leSave">Сохранить</button>`,
     onMount(el, close) {
       let kind = e0.kind;
@@ -329,31 +429,124 @@ function editLedger(id) {
 
 /* ── настройки расчёта (основатель) ── */
 function moneySettingsHtml() {
-  const s = settings();
+  const s = settings(), m = monthOf(today());
+  const timeline = key => rateTable(key).map((p, i, t) => {
+    const on = i === t.reduce((ci, x, j) => (x.from <= m ? j : ci), 0);
+    return `<span class="rt-per ${on ? 'on' : ''}"><small>${i ? monthFrom(p.from) : 'с начала'}${p.label ? ' · ' + esc(p.label) : ''}</small><b>${esc(stepsText(p.steps))}</b></span>`;
+  }).join('<span class="rt-arr">→</span>');
   return `<details class="section card settings-box" ${View.get('m.set', false) ? 'open' : ''} id="mSet">
-    <summary><h2>Настройки расчёта</h2><span class="note">деньги на старте, ставки, план вложений</span></summary>
+    <summary><h2>Настройки расчёта</h2><span class="note">деньги на старте, ставки по срокам и порогам, план вложений</span></summary>
     <div class="grid3 set-grid">
       <label class="field"><span>Деньги на счёте на старте, ₽</span><input class="input num" id="msCash" inputmode="decimal" value="${s.cashStart}"></label>
       <label class="field"><span>Дата старта</span><input class="input" id="msDate" type="date" value="${esc(s.cashDate)}"></label>
       <label class="field"><span>Годовая подписка, ₽</span><input class="input num" id="msYear" inputmode="decimal" value="${s.priceYear || ''}" placeholder="${s.price * 10}"><small>месячная — ${rub(s.price)} в «Стратегии»</small></label>
-      <label class="field"><span>Страховые взносы, %</span><input class="input num" id="msIns" inputmode="decimal" value="${fmt(s.insurance * 100, 1)}"></label>
-      <label class="field"><span>Эквайринг, % выручки</span><input class="input num" id="msAcq" inputmode="decimal" value="${fmt(s.acquiring * 100, 1)}"></label>
-      <label class="field"><span>Налог, % выручки</span><input class="input num" id="msTax" inputmode="decimal" value="${fmt(s.taxRate * 100, 1)}"><small>УСН 15%: минимальный налог 1%, пока расходы больше доходов</small></label>
+    </div>
+    <div class="rates-box">
+      <div class="rates-head"><h3>Ставки по срокам и порогам</h3>
+        <p class="note">Ставка может меняться с даты — например, взносы: до регистрации ООО 0%, после — 30%, с IT-льготами — 15%. И по порогу за год: до 2,4 млн ₽ одна ставка, со всего, что сверх, — другая. Порог взносов считается по зарплате каждого человека с начала года, налога, НДС и эквайринга — по выручке клуба с начала года.</p></div>
+      ${RATE_KEYS.map(k => `<div class="rate-row"><div class="rate-what"><b>${RATE_DEFS[k].name}</b><span class="note">${RATE_DEFS[k].of}</span></div>
+        <div class="rate-tl">${timeline(k)}</div><button type="button" class="btn sm" data-rate-edit="${k}">Изменить</button></div>`).join('')}
     </div>
     <div class="field"><span>План вложений по месяцам, ₽ — попадает в Cash Flow, пока деньги не пришли</span>
-      <div class="grid3">${Q.months.map(m => `<label class="field"><span>${monthName(m)}</span><input class="input num" data-inv="${m}" inputmode="decimal" value="${(s.invest || {})[m] || ''}" placeholder="0"></label>`).join('')}</div></div>
+      <div class="grid3">${Q.months.map(mm => `<label class="field"><span>${monthName(mm)}</span><input class="input num" data-inv="${mm}" inputmode="decimal" value="${(s.invest || {})[mm] || ''}" placeholder="0"></label>`).join('')}</div></div>
     <div class="row"><button class="btn primary" id="msSave">Сохранить настройки</button></div>
   </details>`;
 }
 function wireMoneySettings(root) {
   const box = $('#mSet', root);
   box.addEventListener('toggle', () => View.set('m.set', box.open));
+  on(box, 'click', '[data-rate-edit]', (e, el) => editRates(el.dataset.rateEdit));
   $('#msSave', root).onclick = () => {
     const invest = {};
     $$('[data-inv]', root).forEach(i => { invest[i.dataset.inv] = Math.max(0, parseNum(i.value)); });
     saveSettings({cashStart: parseNum($('#msCash', root).value), cashDate: $('#msDate', root).value || '2026-09-01',
-      insurance: parseNum($('#msIns', root).value) / 100, acquiring: parseNum($('#msAcq', root).value) / 100,
-      taxRate: parseNum($('#msTax', root).value) / 100, invest, priceYear: parseNum($('#msYear', root).value) || null});
+      invest, priceYear: parseNum($('#msYear', root).value) || null});
     toast('Настройки сохранены');
   };
+}
+
+/* ── ставка по срокам и порогам: периоды «с месяца», в каждом — ступени до порога и сверх ── */
+const RATE_EXAMPLE = {
+  insurance: 'Например: с начала — 0% (до регистрации ООО); с ноября — 30% (после регистрации); с февраля — 15% до 2 400 000 ₽ в год, сверх — 7,6% (IT-льготы).',
+  tax: 'Например: 1% выручки — минимальный налог УСН 15%, пока расходы больше доходов.',
+  vat: 'Например: 0% до 20 000 000 ₽ выручки в год, сверх — 5%.',
+  acquiring: 'Например: 2,9% с каждой оплаты.',
+};
+function editRates(key) {
+  const def = RATE_DEFS[key];
+  let periods = rateTable(key).map(p => ({from: p.from, label: p.label, steps: p.steps.map(st => ({upTo: st.upTo, rate: Math.round(st.rate * 10000) / 100}))}));
+  const months = rateMonths();
+  const nextFree = () => { const used = new Set(periods.map(p => p.from)); return months.find(mm => mm > (periods[periods.length - 1].from || monthOf(today())) && !used.has(mm)) || months[months.length - 1]; };
+  openModal({
+    title: def.name,
+    wide: true,
+    body: `<p class="note">${def.of[0].toUpperCase() + def.of.slice(1)}. Порог — ${def.year}; каждый январь счёт начинается заново. ${RATE_EXAMPLE[key]}</p><div id="rtBox"></div>`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" id="rtSave">Сохранить</button>',
+    onMount(el, close) {
+      const read = () => {
+        $$('[data-per]', el).forEach(box => {
+          const p = periods[Number(box.dataset.per)];
+          const f = $('[data-from]', box); if (f) p.from = f.value;
+          p.label = $('[data-label]', box).value.trim().slice(0, 60);
+          p.steps = $$('[data-step]', box).map(r => ({upTo: $('[data-up]', r) ? (parseNum($('[data-up]', r).value) || null) : null, rate: parseNum($('[data-rate]', r).value)}));
+        });
+      };
+      const preview = p => stepsText(cleanSteps(p.steps.map(st => ({upTo: st.upTo, rate: st.rate / 100}))));
+      const draw = () => {
+        $('#rtBox', el).innerHTML = periods.map((p, i) => `<div class="rp card flat" data-per="${i}">
+            <div class="rp-head">
+              ${i ? `<label class="field"><span>С месяца</span><select class="select" data-from>${months.map(mm => `<option value="${mm}" ${mm === p.from ? 'selected' : ''}>${monthName(mm, true)}</option>`).join('')}</select></label>` : '<div class="rp-start"><span class="label">Период</span><b>С начала</b></div>'}
+              <label class="field rp-label"><span>Название периода</span><input class="input" data-label maxlength="60" value="${esc(p.label)}" placeholder="${i ? 'Например: после регистрации ООО' : 'Например: до регистрации ООО'}"></label>
+              ${i ? `<button type="button" class="icon-btn" data-pdel="${i}" title="Убрать период" aria-label="Убрать период">${icon('trash')}</button>` : ''}
+            </div>
+            <div class="rp-steps">${p.steps.map((st, j) => {
+              const last = j === p.steps.length - 1;
+              return `<div class="rs" data-step="${j}">
+                ${last ? `<span class="rs-l">${p.steps.length > 1 ? 'Сверх порога' : 'Ставка'}</span>` : `<span class="rs-l">До</span><input class="input num" data-up inputmode="decimal" value="${st.upTo || ''}" placeholder="2 400 000"><span class="rs-l">₽ в год —</span>`}
+                <input class="input num rs-rate" data-rate inputmode="decimal" value="${st.rate}"><span class="rs-l">%</span>
+                ${!last ? `<button type="button" class="icon-btn" data-sdel="${i}:${j}" title="Убрать порог" aria-label="Убрать порог">${icon('x')}</button>` : ''}</div>`;
+            }).join('')}
+              <button type="button" class="btn sm ghost" data-sadd="${i}">${icon('plus')}Порог за год</button></div>
+            <div class="note rp-prev">${i ? monthFrom(p.from) : 'С начала'}: ${esc(preview(p))}</div>
+          </div>`).join('') + `<button type="button" class="btn sm" data-padd>${icon('plus')}Новый период с даты</button>`;
+      };
+      draw();
+      on(el, 'input', 'input', () => { read(); $$('[data-per]', el).forEach(box => { const p = periods[Number(box.dataset.per)], i = Number(box.dataset.per); $('.rp-prev', box).textContent = `${i ? monthFrom(p.from) : 'С начала'}: ${preview(p)}`; }); });
+      on(el, 'change', '[data-from]', () => { read(); draw(); });
+      on(el, 'click', '[data-padd]', () => {
+        read();
+        const lastP = periods[periods.length - 1];
+        periods.push({from: nextFree(), label: '', steps: [{upTo: null, rate: lastP.steps[lastP.steps.length - 1].rate}]});
+        draw();
+      });
+      on(el, 'click', '[data-pdel]', (e, b) => { read(); periods.splice(Number(b.dataset.pdel), 1); draw(); });
+      on(el, 'click', '[data-sadd]', (e, b) => {
+        read();
+        const p = periods[Number(b.dataset.sadd)], caps = p.steps.filter(st => st.upTo), open = p.steps[p.steps.length - 1];
+        p.steps.splice(p.steps.length - 1, 0, {upTo: caps.length ? caps[caps.length - 1].upTo * 2 : null, rate: open.rate});
+        draw();
+        const ups = $$(`[data-per="${b.dataset.sadd}"] [data-up]`, el); const f = ups[ups.length - 1]; if (f && !f.value) f.focus();
+      });
+      on(el, 'click', '[data-sdel]', (e, b) => { read(); const [i, j] = b.dataset.sdel.split(':').map(Number); periods[i].steps.splice(j, 1); draw(); });
+      $('#rtSave', el).onclick = () => {
+        read();
+        const froms = periods.slice(1).map(p => p.from);
+        if (new Set(froms).size !== froms.length) { toast('У двух периодов один и тот же месяц начала'); return; }
+        for (const p of periods) {
+          if (p.steps.some(st => st.rate < 0 || st.rate > 100)) { toast('Ставка — от 0 до 100%'); return; }
+          const caps = p.steps.slice(0, -1);
+          if (caps.some(st => !(st.upTo > 0))) { toast('Укажите порог в рублях за год или уберите строку'); return; }
+          if (caps.some((st, j) => j && st.upTo <= caps[j - 1].upTo)) { toast('Пороги — по возрастанию: каждый следующий больше предыдущего'); return; }
+        }
+        const out = periods.map((p, i) => ({from: i ? p.from : '', label: p.label, steps: p.steps.map(st => ({upTo: st.upTo || null, rate: Math.round(st.rate * 100) / 10000}))}))
+          .sort((a, b) => a.from.localeCompare(b.from));
+        const patch = {rates: {[key]: out}};
+        /* старое поле — ставка этого месяца без порога: на нём держатся прежние подсказки */
+        if (def.legacy) patch[def.legacy] = rateAt(key, monthOf(today()), 0, {...settings(), rates: {...(settings().rates || {}), [key]: out}});
+        saveSettings(patch);
+        close();
+        toast(`${def.name}: ${rateTimeline(key)}`);
+      };
+    },
+  });
 }

@@ -32,12 +32,12 @@
 | --- | --- | --- |
 | `tasks` | задачи | `title`, `status` (todo · doing · review · done), `assignee` и `createdBy` (id человека), `due` (YYYY-MM-DD), `month` (YYYY-MM), `dueFixed` (срок важен), `dueReq` (запрос переноса), `priority`, `dir`, `goalId`, `stratId`, `budget`, `budgetNeedsApproval`, `approval`/`approver`, `blockedBy` [id], `comments` {id: {by, at, text, kind, ev, to}}, `seen` {кто: когда} |
 | `sales` | цифры дня, id = дата `YYYY-MM-DD` | `reach`, `views`, `clicks`, `regs`, `pays`, `renewals`, `revenue` (если правили руками), `experts`, `mk`, `note`, `by`, `at` |
-| `ledger` | операции денег | `kind` (out · in · invest), `amount`, `cat`, `date`, `note`, `planId`/`planMonth` (оплачено по плану), `by`, `at` |
-| `plan` | план платежей | `title`, `group` (payroll · regular · once), `cat`, `amount`, `months` [YYYY-MM], `personId`, `insurance`, `taskId` |
+| `ledger` | операции денег | `kind` (out · in · invest), `amount`, `cat`, `date`, `note`, `planId`/`planMonth` (оплачено по плану; оплат одного месяца может быть несколько — частями), `planPart` (какая часть: «Аванс»), `by`, `at` |
+| `plan` | план платежей | `title`, `group` (payroll · regular · once), `cat`, `amount`, `months` [YYYY-MM], `personId`, `insurance`, `parts` [{name, share}] (платим частями: доли вместе — 1), `taskId` |
 | `people` | команда | `name`, `givenName`, `surname`, `title`, `dir`, `status` (active · inactive · vacancy), `managerId` (кому подчиняется), `salary`, `startMonth`, `email`, `phone`, `telegram`, `calEmail`, `birthDate`, `birthTime`, `birthCity`, `hdType`, `hdProfile`, `founder` |
 | `accounts` | учётки | `name`, `email`, `role` (owner · lead · finance · member · investor), `personId`, `salt` и `hash` (PBKDF2-SHA256, 150 000 итераций), `claudeId` (вход через аккаунт Claude), `prefs`, `welcomed` |
 | `invites` | приглашения, id = код | `role`, `personId`, `by`, `at`, `usedBy` |
-| `docs` | одиночные документы | `strategy` (цели, этапы, точки, дорожная карта, `vision`), `settings` (цена, конверсии, сценарии, деньги), `learning` |
+| `docs` | одиночные документы | `strategy` (цели, этапы, точки, дорожная карта, `vision`), `settings` (цена, конверсии, сценарии, деньги, `rates` — ставки по срокам и порогам), `learning` |
 | `meetings` | собрания | `title`, `date`, `start`, `dur`, `repeat`, `organizer`, `attendees` [id], `guests` [почты для приглашения], `extGuests` [{id, name, email, tg, tgChatId}] — гости не из команды, `remindMin` (за сколько минут напомнить, 0 — не напоминать, нет поля — за час), `gcalId`, `meetUrl`, `responses`, `guestResp` [[почта, ответ]], `imported`/`gcalReadonly` (событие перенесено из Google) |
 | `messages` | сообщения команды | `ch` (team · dm:<учётка>|<учётка>), `by` (учётка), `text`, `at` |
 | `subs` | подписки по месяцам, id = `YYYY-MM` (пустое поле — считается само) | `startM`, `startY` (на начало), `newM`, `newY`, `renewed`, `churn` (не продлили), `refunds`, `refundSum` |
@@ -51,6 +51,14 @@
 | `links` | свои материалы основателя | `title`, `url`, `group`, `roles` |
 
 Деньги — в рублях, даты — `YYYY-MM-DD` по Москве, время — `HH:MM`, отметки времени — миллисекунды Unix.
+
+Ставки по срокам и порогам — `settings.rates`: для `insurance`, `tax`, `vat`, `acquiring` —
+список периодов `[{from: 'YYYY-MM' (у первого пусто — с начала), label, steps: [{upTo, rate}]}]`,
+ступени по возрастанию порога за календарный год, у последней `upTo: null` («сверх»),
+`rate` — доля (0.3 = 30%). Порог взносов — зарплата человека с начала года, остальных —
+выручка подписок с начала года. Без `rates` берутся старые поля `insurance`, `taxRate`,
+`acquiring`; при сохранении они обновляются ставкой текущего месяца. Ролям без доступа к
+деньгам сервер `rates` не отдаёт.
 
 Операция в журнале помнит, откуда она: `planId`/`planMonth` (оплата по финплану),
 `payoutId` (выплата), `orderId` (заказ маркетплейса), `refundId` (возврат), `courseMonth`

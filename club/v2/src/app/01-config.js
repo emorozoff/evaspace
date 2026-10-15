@@ -92,6 +92,7 @@ const OUT_CATS = {
   legal:     'Юристы и документы',
   acquiring: 'Эквайринг',
   tax:       'Налоги',
+  vat:       'НДС',
   other:     'Прочие расходы',
 };
 const IN_CATS = {
