@@ -109,21 +109,29 @@ const Demo = {
         const born = new Date(T); born.setFullYear(born.getFullYear() - age); born.setMonth(R.int(0, 11), R.int(1, 28));
         a.birth = `${born.getFullYear()}-${String(born.getMonth() + 1).padStart(2, '0')}-${String(born.getDate()).padStart(2, '0')}`;
         a.city = R.weighted([['Москва', 5], ['Санкт-Петербург', 3], ['Казань', 2], ['Екатеринбург', 1], ['Краснодар', 1], ['Алматы', 1]]);
-        a.country = a.city === 'Алматы' ? 'Казахстан' : i === 7 ? 'Другая страна: Сербия' : 'Россия';
-        a.status = one(qc.status, [5, 3, 1, 1, 1, 0]);
-        a.job = one(qc.job, [3, 1, 4, 2, 2, 3, 1, 0]);
+        if (i === 7) a.city = 'Будва';
+        /* страну в анкете не спрашиваем — она из города */
+        a.country = (cityCountry(a.city) || ['', 'Россия'])[1];
+        const rel = one({o: qc.status.o.slice(0, 7)}, [3, 5, 2, 1, 1, 2, 0]);
+        a.status = /^(Не замужем|Разведена|Вдова|Всё сложно)/.test(rel) && R.int(0, 1) ? [rel, one({o: qc.status.o.slice(7)}, [2, 3, 1, 2])] : [rel];
+        a.employ = one(qc.employ, [5, 2, 1, 2, 2, 2, 3, 0, 1, 2, 1, 1, 0]);
+        if (qVisible(qc.schedule, a)) a.schedule = one(qc.schedule, [4, 3, 3, 1]);
+        a.income = one(qc.income, [0, 1, 2, 4, 3, 1, 1]);
+        a.housing = one(qc.housing, [3, 4, 4, 1, 0, 0, 0]);
         a.rhythm = one(qc.rhythm, [2, 3, 3, 1, 2]);
-        a.stage = one(qc.stage, [1, 4, 2, 4, 2, 2, 1]);
+        a.sphere = one(qc.sphere, [2, 4, 4, 3]);
+        /* этап жизни — из вариантов выбранной сферы, один или два */
+        a.stage = many({o: depOptions(qc.stage, a).map(j => qc.stage.o[j])}, null, R.int(1, 2));
         a.energy = R.weighted([[3, 2], [4, 3], [5, 3], [6, 2], [7, 2], [8, 1]]);
         a.happy = R.weighted([[4, 1], [5, 2], [6, 3], [7, 3], [8, 2], [9, 1]]);
         a.health = R.weighted([[5, 2], [6, 3], [7, 3], [8, 2], [9, 1]]);
-        a.pain = many(qc.pain, [3, 5, 2, 3, 6, 1], 2);
+        a.pain = many(qc.pain, [5, 3, 3, 5, 2, 2, 2], 2);
         if (i === 4) a.pain = [a.pain[0], 'Другое: мигрени и гормоны'];
-        a.goal = i === 9 ? 'Другое: найти своё дело' : one(qc.goal, [5, 4, 2, 2, 3]);
+        a.goal = one(qc.goal, [5, 4, 2, 2, 3, 1, 3, 2, 1]);
         a.time = one(qc.time, [6, 3, 1]);
         a.when = one(qc.when, [3, 1, 5]);
         a.tried = many(qc.tried, [4, 4, 2, 3, 3, 1], R.int(1, 3));
-        a.spend = one(qc.spend, [2, 4, 3, 2, 1]);
+        a.spend = one(qc.spend, [4, 4, 2, 1, 0, 0]);
         a.transform = one(qc.transform, [3, 2, 3, 2]);
         a.wake = one(qc.wake, [1, 4, 4, 2, 1, 2]);
         a.sleep = one(qc.sleep, [1, 2, 4, 3, 2, 1]);
@@ -134,10 +142,11 @@ const Demo = {
         a.where = many(qc.where, [6, 4, 4, 2, 3, 1, 1, 1], R.int(2, 3));
         a.length = one(qc.length, [3, 5, 3, 1, 0]);
         a.speed = one(qc.speed, [3, 3, 1, 2]);
-        a.form = many(qc.form, [3, 3, 4, 5, 1], 2);
+        a.form = many(qc.form, [3, 3, 4, 5, 1, 2, 2], R.int(1, 2));
         a.ask = one(qc.ask, [3, 3, 2]);
         a.formats = many(qc.formats, [6, 4, 2, 3, 3, 1, 3, 2], 3);
-        a.price = one(qc.price, [2, 5, 3, 1]);
+        a.extras = many(qc.extras, [3, 4, 2, 3, 1, 1, 3, 2], R.int(1, 3));
+        a.price = one(qc.price, [3, 5, 2, 1, 0, 0]);
         a.source = i === 6 ? 'Другое: увидела стойку в фитнес-клубе' : one(qc.source, [3, 2, 3, 3, 1, 1, 1]);
         a.call = one(qc.call, [2, 4, 2, 1, 0]);
         a.tg = '@' + refCodeFor(name).toLowerCase().replace(/\d+$/, '');
@@ -154,7 +163,9 @@ const Demo = {
       }
       const {talk: _t, tags, main, idea, ...rest} = f;
       clientIds.push(person('client', name, {...rest, answers: a, answeredAt: f.answeredAt || (answered ? ago(6 - (i % 5)) : undefined), answeredBy: f.answeredBy || (answered ? 'self' : undefined), talk, talkAt: f.talk ? ago(2) : undefined,
-        callAt: f.callAt || (f.s2 === 'done' ? pastCall() : undefined), res: {tags: tags || [], main: main || '', idea: idea || ''}, city: a.city || '', tg: a.tg || '', evaId: a.evaId || '', owner: team[i % 2], created: 12 - (i % 8)}));
+        callAt: f.callAt || (f.s2 === 'done' ? pastCall() : undefined), res: {tags: tags || [], main: main || '', idea: idea || ''},
+        /* подарок за анкету — неделя Евы: части уже выдали, части ещё нет */
+        ...(answered && !f.answeredBy && i % 3 === 1 ? {gift: {at: f.answeredAt || ago(6 - (i % 5)), done: i < 5, ...(i < 5 ? {doneAt: ago(1)} : {})}} : {}), city: a.city || '', tg: a.tg || '', evaId: a.evaId || '', owner: team[i % 2], created: 12 - (i % 8)}));
     });
 
     /* ── эксперты ── */

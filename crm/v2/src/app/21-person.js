@@ -3,6 +3,12 @@
    Всё сохраняется само — кнопки «Сохранить» почти нигде не нужны. */
 
 /* ── анкета кнопками: общая для ручного заполнения, по разделам ── */
+/* пояснения к выбранным вариантам и к делению шкалы — строкой под вопросом */
+function fillDescHtml(q, v) {
+  if (q.k === 'scale') { const h = (q.sh || [])[Number(v) - 1]; return h ? `<b>${Number(v)} — ${esc(h[0])}.</b> ${esc(h[1])}` : ''; }
+  if (!q.od) return '';
+  return answerLabels(q, v).map(l => { const d = optDesc(q, canonLabel(q, l)); return d ? `<b>${esc(canonLabel(q, l))}</b> — ${esc(d)}` : ''; }).filter(Boolean).join('<br>');
+}
 function fillFormHtml(type, answers, prefix = 'fa') {
   let i = 0;
   const one = q => {
@@ -11,11 +17,14 @@ function fillFormHtml(type, answers, prefix = 'fa') {
     if (q.k === 'one' || q.k === 'many') {
       const sel = answerLabels(q, v);
       const oth = sel.find(x => canonLabel(q, x) === q.other && q.other);
-      ctl = `<div class="ans" data-q="${q.id}" data-k="${q.k}" data-max="${q.max || 0}">${(q.o || []).map(o => `<button type="button" class="${sel.some(x => canonLabel(q, x) === plainLabel(o)) ? 'on' : ''}" data-v="${esc(o)}">${esc(noEmo(o))}</button>`).join('')}
+      const btn = o => { const d = optDesc(q, o); return `<button type="button" class="${sel.some(x => canonLabel(q, x) === plainLabel(o)) ? 'on' : ''}" data-v="${esc(o)}"${d ? ` title="${esc(d)}"` : ''}>${esc(noEmo(o))}</button>`; };
+      /* этап жизни — варианты по группам сфер */
+      const opts = q.groups ? q.groups.map((g, gi) => `<span class="ans-gt">${esc(g)}</span>${(q.o || []).filter((o, j) => q.g[j] === gi).map(btn).join('')}`).join('') : (q.o || []).map(btn).join('');
+      ctl = `<div class="ans ${q.groups ? 'grouped' : ''}" data-q="${q.id}" data-k="${q.k}" data-max="${q.max || 0}"${q.auto ? ` data-auto="${q.auto}"` : ''}>${opts}
         ${q.other ? `<button type="button" class="${oth ? 'on' : ''}" data-v="${esc(q.other)}" data-other>${esc(q.other)}</button><input class="input sm ans-oth" value="${esc(oth ? otherText(q, oth) : '')}" placeholder="Свой вариант" ${oth ? '' : 'hidden'}>` : ''}</div>`;
     } else if (q.k === 'scale') {
       const n = scaleN(q);
-      ctl = `<div class="scale num-scale ${n > 5 ? 's10' : ''}" data-q="${q.id}" data-k="scale">${Array.from({length: n}, (_, j) => `<button type="button" class="${Number(v) === j + 1 ? 'on' : ''}" data-v="${j + 1}">${j + 1}</button>`).join('')}<span class="scale-ends">1 — ${esc(q.lo || 'совсем нет')}, ${n} — ${esc(q.hi || 'очень')}</span></div>`;
+      ctl = `<div class="scale num-scale ${n > 5 ? 's10' : ''}" data-q="${q.id}" data-k="scale">${Array.from({length: n}, (_, j) => `<button type="button" class="${Number(v) === j + 1 ? 'on' : ''}" data-v="${j + 1}"${(q.sh || [])[j] ? ` title="${esc(q.sh[j][0])}"` : ''}>${j + 1}</button>`).join('')}<span class="scale-ends">1 — ${esc(q.lo || 'совсем нет')}, ${n} — ${esc(q.hi || 'очень')}</span></div>`;
     } else if (q.k === 'date') {
       ctl = `<input class="input" type="date" data-q="${q.id}" data-k="date" value="${esc(v || '')}" style="max-width:200px">`;
     } else if (q.k === 'text') {
@@ -23,11 +32,24 @@ function fillFormHtml(type, answers, prefix = 'fa') {
     } else {
       ctl = `<input class="input" data-q="${q.id}" data-k="short" value="${esc(v || '')}" placeholder="${esc(q.ph || '')}">`;
     }
-    return `<div class="fq"><div class="fq-t"><i>${++i}</i><span>${esc(noEmo(q.t))}${q.k === 'many' && q.max ? ` <span class="fq-hint">· до ${q.max}</span>` : ''}</span></div><div class="fq-v">${ctl}</div></div>`;
+    const note = q.auto === 'city' ? 'если не отметить — подставим по городу' : q.showIf ? 'только если работает' : q.k === 'many' && q.max ? `до ${q.max}` : '';
+    const desc = q.od || q.sh;
+    const showIf = q.showIf ? ` data-show-if="${esc(JSON.stringify(q.showIf))}" ${qVisible(q, answers) ? '' : 'hidden'}` : '';
+    return `<div class="fq" data-fq="${q.id}"${showIf}><div class="fq-t"><i>${++i}</i><span>${esc(noEmo(q.t).replace(/\s*Выбери до \S+ вариант\S*$/, ''))}${note ? ` <span class="fq-hint">· ${note}</span>` : ''}</span></div><div class="fq-v">${ctl}${desc ? `<div class="fq-desc" data-desc="${q.id}">${fillDescHtml(q, v)}</div>` : ''}</div></div>`;
   };
-  return `<div class="fill">${groupByBlock(type, 'test', Questions.test(type)).map(g => `${g.name ? `<h3 class="fill-h">${g.emo ? `<span aria-hidden="true">${g.emo}</span>` : ''}${esc(g.name)}</h3>` : ''}${g.qs.map(one).join('')}`).join('')}</div>`;
+  return `<div class="fill" data-fill-type="${esc(type)}">${groupByBlock(type, 'test', Questions.test(type)).map(g => `${g.name ? `<h3 class="fill-h">${g.emo ? `<span aria-hidden="true">${g.emo}</span>` : ''}${esc(g.name)}</h3>` : ''}${g.qs.map(one).join('')}`).join('')}</div>`;
 }
 function wireFill(el) {
+  /* после выбора: пояснение к варианту и вопросы, которые зависят от ответа (график — от занятости) */
+  const refresh = box => {
+    const fill = box.closest('.fill'), type = fill && fill.dataset.fillType;
+    if (!type) return;
+    const now = readFill(fill, true);
+    const q = Questions.find(type, box.dataset.q);
+    const d = q && $(`[data-desc="${q.id}"]`, fill);
+    if (d) d.innerHTML = fillDescHtml(q, now[q.id]);
+    $$('[data-show-if]', fill).forEach(n => { const c = JSON.parse(n.dataset.showIf); n.hidden = !qVisible({showIf: c}, now); });
+  };
   on(el, 'click', '.ans button', (e, b) => {
     const box = b.closest('.ans');
     const oth = $('.ans-oth', box);
@@ -38,12 +60,15 @@ function wireFill(el) {
       b.classList.toggle('on');
     }
     if (oth) { oth.hidden = !$('[data-other].on', box); if (!oth.hidden && b.hasAttribute('data-other')) oth.focus(); }
+    refresh(box);
   });
-  on(el, 'click', '.scale button', (e, b) => { const box = b.closest('.scale'); $$('button', box).forEach(x => x !== b && x.classList.remove('on')); b.classList.toggle('on'); });
+  on(el, 'click', '.scale button', (e, b) => { const box = b.closest('.scale'); $$('button', box).forEach(x => x !== b && x.classList.remove('on')); b.classList.toggle('on'); refresh(box); });
 }
-function readFill(el) {
+/* all — с ответами на скрытые сейчас вопросы (для проверки условий) */
+function readFill(el, all = false) {
   const out = {};
   $$('[data-q]', el).forEach(n => {
+    if (!all && n.closest('.fq[hidden]')) return;
     const id = n.dataset.q, k = n.dataset.k;
     const label = b => { if (!b.hasAttribute('data-other')) return b.dataset.v; const t = ($('.ans-oth', n) || {}).value || ''; return t.trim() ? `${b.dataset.v}${OTHER_SEP}${t.trim()}` : b.dataset.v; };
     if (k === 'one') { const b = $('button.on', n); if (b) out[id] = label(b); }
@@ -51,12 +76,15 @@ function readFill(el) {
     else if (k === 'scale') { const b = $('button.on', n); if (b) out[id] = Number(b.dataset.v); }
     else { const v = n.value.trim(); if (v) out[id] = v; }
   });
+  /* страну не отметили — берём по городу */
+  $$('[data-auto="city"]', el).forEach(n => { const c = !out[n.dataset.q] && out.city && cityCountry(out.city); if (c) out[n.dataset.q] = c[1]; });
   return out;
 }
 
 /* ответы старой анкеты, которых нет в новом наборе вопросов */
 const LEGACY_Q = {
-  client: {age: {id: 'age', k: 'one', t: 'Сколько тебе лет (прошлая анкета)'}, fit: {id: 'fit', k: 'scale', n: 5, t: 'Насколько откликается идея Евы (прошлая анкета)'}},
+  client: {age: {id: 'age', k: 'one', t: 'Сколько тебе лет (прошлая анкета)'}, fit: {id: 'fit', k: 'scale', n: 5, t: 'Насколько откликается идея Евы (прошлая анкета)'},
+    job: {id: 'job', b: 'life', k: 'one', t: 'Как устроена твоя занятость (прошлая анкета)'}},
 };
 const emptyAns = v => v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length);
 /* шкала 1–10 полоской: красная — низко, жёлтая — середина, зелёная — хорошо */
@@ -77,13 +105,18 @@ function portraitHtml(answers) {
   const lab = id => (emptyAns(a[id]) || !Q(id) ? '' : answerLabels(Q(id), a[id]).map(l => { const t = otherText(Q(id), l); return t || canonLabel(Q(id), l); }).join(', '));
   const age = ageFromBirth(a.birth);
   const country = lab('country');
-  const facts = [age !== null ? `${age} ${plural(age, 'год', 'года', 'лет')}` : ageGroupOf(a), [a.city, country && country !== 'Россия' ? country : ''].filter(Boolean).join(', '), lab('status'), lab('job'), lab('stage')].filter(Boolean);
+  /* занятость с графиком; старая анкета — «как устроена занятость» */
+  const work = [lab('employ'), lab('schedule').replace(/^Работаю\s*/, '').toLowerCase()].filter(Boolean).join(', ') || (emptyAns(a.job) ? '' : answerLabels({k: 'one'}, a.job).join(', '));
+  const facts = [age !== null ? `${age} ${plural(age, 'год', 'года', 'лет')}` : ageGroupOf(a), [a.city, country && country !== 'Россия' ? country : ''].filter(Boolean).join(', '), lab('status'), work, lab('stage')].filter(Boolean);
   const gauges = [['energy', 'Энергия'], ['happy', 'Довольна жизнью'], ['health', 'Здоровье']].filter(([id]) => !emptyAns(a[id]));
-  const chips = [['Беспокоит', lab('pain')], ['Важнее всего', lab('goal')], ['Время на себя', [lab('time'), lab('when')].filter(Boolean).join(', ').toLowerCase()], ['Готова платить', lab('price')]].filter(x => x[1]);
+  const chips = [['Внимание забирает', lab('sphere')], ['Беспокоит', lab('pain')], ['Важнее всего', lab('goal')], ['Доход', lab('income')], ['Жильё', lab('housing')],
+    ['Время на себя', [lab('time'), lab('when')].filter(Boolean).join(', ').toLowerCase()], ['Готова платить', lab('price')]].filter(x => x[1]);
+  const rule = energyRule(a.energy);
   if (!facts.length && !gauges.length && !chips.length) return '';
   return `<div class="portrait">
     ${facts.length ? `<div class="pt-facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div>` : ''}
-    ${gauges.length ? `<div class="pt-gauges">${gauges.map(([id, l]) => `<div><span>${l}</span>${gaugeHtml(a[id], scaleN(Q(id)))}</div>`).join('')}</div>` : ''}
+    ${gauges.length ? `<div class="pt-gauges">${gauges.map(([id, l]) => `<div title="${esc(((Q(id) || {}).sh || [])[Number(a[id]) - 1] ? Q(id).sh[Number(a[id]) - 1][0] : '')}"><span>${l}</span>${gaugeHtml(a[id], scaleN(Q(id)))}</div>`).join('')}</div>` : ''}
+    ${rule ? `<div class="pt-rule ${rule.max === 3 ? 'soft' : rule.max === 10 ? 'hard' : ''}"><b>Что предлагать в Еве: ${esc(rule.name.toLowerCase())}</b><span>энергия ${Number(a.energy)} из 10 — ${esc(rule.text)}</span></div>` : ''}
     ${chips.length ? `<div class="pt-chips">${chips.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>` : ''}
   </div>`;
 }
@@ -93,7 +126,7 @@ function answersView(type, answers) {
   if (!ids.length) return '';
   const legacy = LEGACY_Q[type] || {};
   const list = [...qs.filter(q => ids.includes(q.id)), ...ids.filter(id => !qs.some(q => q.id === id)).map(id => legacy[id] || {id, t: id, k: 'short'})];
-  const row = q => `<div class="ar"><span class="ar-q">${esc(noEmo(q.t).replace(/\s*Выбери до \S+$/, ''))}${q.hidden ? ' · скрытый вопрос' : ''}</span><div class="ar-v answer-val">${answerValHtml(q, answers[q.id])}</div></div>`;
+  const row = q => `<div class="ar"><span class="ar-q">${esc(noEmo(q.t).replace(/\s*Выбери до \S+( вариант\S*)?$/, ''))}${q.hidden ? ' · скрытый вопрос' : ''}</span><div class="ar-v answer-val">${answerValHtml(q, answers[q.id])}</div></div>`;
   return `${type === 'client' ? portraitHtml(answers) : ''}
     <div class="ablocks">${groupByBlock(type, 'test', list).map(g => `<section class="ab"><h3>${g.emo ? `<span aria-hidden="true">${g.emo}</span>` : ''}${esc(g.name || 'Ответы')}<small>${g.qs.length}</small></h3>${g.qs.map(row).join('')}</section>`).join('')}</div>`;
 }
@@ -138,8 +171,10 @@ App.register('person', {
     const box = (n, title, statusHtml, acts, done, cur) => `<div class="b3 ${done ? 'done' : ''} ${cur ? 'cur' : ''}"><div class="b3-t"><span class="step-n">${done ? '✓' : n}</span>Шаг ${n} · ${esc(title)}</div><div class="b3-s">${statusHtml}</div>${acts ? `<div class="row">${acts}</div>` : ''}</div>`;
     const s1 = S1[p.s1 || 'new'], s2 = S2[p.s2 || 'none'], s3 = s3Map(p.type)[p.s3 || 'none'];
     const small = t => ` <span class="b3-when">${t}</span>`;
+    /* подарок за анкету (неделя Евы): видно, выдан ли он, и кнопка «Выдала» */
+    const giftHtml = p.gift ? `<div class="gift-line ${p.gift.done ? 'done' : ''}">${icon('gift')}<span>Подарок за анкету: неделя Евы${p.gift.done ? ` — выдан ${when(p.gift.doneAt)}` : ' — ещё не выдан'}</span>${!p.gift.done && canEdit ? `<button class="btn sm" data-gift>Выдала</button>` : ''}</div>` : '';
     const steps = `<div class="big3">
-      ${box(1, T.steps[0], `${esc(s1.name)}${p.s1 === 'done' && p.answeredAt ? small(`${when(p.answeredAt)} · ${p.answeredBy === 'self' ? 'по ссылке' : 'заполнила команда'}`) : p.s1 === 'sent' && p.sentAt ? small(`ссылка отправлена ${sinceDays(p.sentAt)}`) : ''}`, col === 1 ? nextActs(p, true) : '', ['done', 'skip'].includes(p.s1), col === 1)}
+      ${box(1, T.steps[0], `${esc(s1.name)}${p.s1 === 'done' && p.answeredAt ? small(`${when(p.answeredAt)} · ${p.answeredBy === 'self' ? 'по ссылке' : 'заполнила команда'}`) : p.s1 === 'sent' && p.sentAt ? small(`ссылка отправлена ${sinceDays(p.sentAt)}`) : ''}${giftHtml}`, col === 1 ? nextActs(p, true) : '', ['done', 'skip'].includes(p.s1), col === 1)}
       ${box(2, T.steps[1], `${esc(s2.name)}${p.callAt && p.s2 === 'set' ? small(when(p.callAt)) : ''}${p.zoom && p.s2 === 'set' ? ` <a class="b3-when" href="${esc(p.zoom)}" target="_blank" rel="noopener">Zoom ↗</a>` : ''}`, col === 2 ? nextActs(p, true) : '', ['done', 'skip'].includes(p.s2), col === 2)}
       ${box(3, T.steps[2], esc(s3.name), col === 3 && tab !== 'result' ? nextActs(p, true) : '', People.connected(p), col === 3)}
     </div>`;
@@ -209,6 +244,8 @@ App.register('person', {
       const answers = readFill(fb);
       if (!Object.keys(answers).length) { toast('Отметьте хотя бы один ответ'); return; }
       People.patch(p.id, {answers, s1: 'done', answeredAt: Date.now(), answeredBy: 'team', ...keyPatch(p, p.type, answers)}, 'Анкету заполнила команда', '✍️');
+      /* снятые отметки и ответы на скрытые теперь вопросы убираем; ответы прошлых анкет не трогаем */
+      Questions.set(p.type).test.forEach(q => { if (!(q.id in answers) && (p.answers || {})[q.id] !== undefined) Store.unset('people', p.id, ['answers', q.id]); });
       View.set('pp.edit', false);
       toast('Ответы сохранены ✅');
     });
@@ -264,6 +301,10 @@ App.register('person', {
       $$('[data-res]', root).forEach(n => { if (n.value !== ((p.res || {})[n.dataset.res] || '')) People.patch(p.id, {res: {[n.dataset.res]: n.value}}); });
       People.patch(p.id, {s3: k, s2: ['done', 'skip'].includes(p.s2) ? p.s2 : 'done'}, `Итог: ${s.name}`, s.emo);
       toast(`${s.name} ${s.emo}`);
+    });
+    on(root, 'click', '[data-gift]', () => {
+      People.patch(p.id, {gift: {...(People.get(p.id).gift || {}), done: true, doneAt: Date.now(), by: Who.id()}}, 'Выдала подарок за анкету — неделю Евы', '🎁');
+      toast('Отмечено: подарок выдан');
     });
     on(root, 'click', '[data-edit-person]', () => openEditPerson(p));
     on(root, 'click', '[data-del]', async (e, el) => {

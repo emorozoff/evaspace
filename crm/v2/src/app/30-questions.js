@@ -16,7 +16,7 @@ App.register('questions', {
         <span class="n">${i + 1}</span>
         <div><b>${esc(q.t)}${!defIds.has(q.id) ? ' <span class="pill custom">новый</span>' : ''}${q.hidden ? ' <span class="pill">скрыт</span>' : ''}</b>
           ${part === 'test' ? `<small><span class="qk">${esc(KIND_NAME[q.k] || '')}${q.k === 'scale' ? ` 1–${scaleN(q)}` : ''}${q.k === 'many' && q.max ? `, до ${q.max}` : ''}${q.other ? ', есть «Другое»' : ''}</span>${q.o ? esc(q.o.map(noEmo).join(' · ')) : q.k === 'scale' ? `1 — ${esc(q.lo || 'совсем нет')}, ${scaleN(q)} — ${esc(q.hi || 'очень')}` : ''}</small>` : ''}
-          ${q.why ? `<small>Зачем: ${esc(q.why)}</small>` : ''}${(q.pick || []).length ? `<small>Быстрые метки: ${esc(q.pick.join(' · '))}</small>` : ''}${q.key ? '<small>Ответ сам попадает в карточку</small>' : ''}</div>
+          ${q.why ? `<small>Зачем: ${esc(q.why)}</small>` : ''}${(q.pick || []).length ? `<small>Быстрые метки: ${esc(q.pick.join(' · '))}</small>` : ''}${q.key ? '<small>Ответ сам попадает в карточку</small>' : ''}${qRuleNote(type, q)}</div>
         ${canEdit ? `<div class="acts">
           <button class="icon-btn up" data-mv="${part}|${i}|-1" title="Выше" ${i ? '' : 'disabled'}>${icon('down')}</button>
           <button class="icon-btn" data-mv="${part}|${i}|1" title="Ниже" ${i < set[part].length - 1 ? '' : 'disabled'}>${icon('down')}</button>
@@ -57,6 +57,44 @@ App.register('questions', {
   },
 });
 
+/* особые правила вопроса — простыми словами */
+function qRuleNote(type, q) {
+  const name = id => { const x = Questions.find(type, id); return x ? `«${noEmo(x.t).replace(/\?.*$/, '')}»` : 'другой вопрос'; };
+  const notes = [q.auto === 'city' ? 'В анкете не спрашиваем — подставляем по городу; незнакомый город — выбор страны на том же экране' : '',
+    q.showIf ? `Показываем, только если в вопросе ${name(q.showIf.id)} выбрано: ${q.showIf.o.length > 3 ? `${q.showIf.o.slice(0, 3).join(', ')} и ещё ${q.showIf.o.length - 3}` : q.showIf.o.join(', ')}` : '',
+    q.dep ? `Второй шаг после вопроса ${name(q.dep.id)}: показываем только варианты выбранной сферы` : '',
+    q.sh ? 'У каждого деления шкалы — подсказка, цвет от красного к зелёному' : '',
+    q.od ? 'У части вариантов — пояснение мелким шрифтом' : ''].filter(Boolean);
+  return notes.map(n => `<small>${esc(n)}</small>`).join('');
+}
+/* варианты в поле редактора; у этапа жизни — по группам, строки «## Группа» */
+function optLines(q) {
+  if (!q.groups) return (q.o || []).join('\n');
+  return q.groups.map((g, gi) => [`## ${g}`, ...(q.o || []).filter((o, j) => q.g[j] === gi)].join('\n')).join('\n');
+}
+function parseOptLines(q, text) {
+  const lines = text.split('\n').map(x => x.trim()).filter(Boolean);
+  if (!q.groups) return {o: lines};
+  const o = [], g = [];
+  let cur = 0;
+  for (const l of lines) {
+    if (l.startsWith('##')) {
+      cur = q.groups.indexOf(l.replace(/^#+\s*/, ''));
+      if (cur < 0) return {err: `Нет такой группы: «${l.replace(/^#+\s*/, '')}». Названия групп менять нельзя.`};
+    } else { o.push(l); g.push(cur); }
+  }
+  return {o, g};
+}
+/* варианты поменялись: подсказки к вариантам (od), советы (rec), группы (g) и старые подписи (alias) — по названию, а не по номеру */
+function remapOpts(q, out, o, g) {
+  const old = (q.o || []).map(plainLabel);
+  const idx = o.map(x => old.indexOf(plainLabel(x)));
+  out.o = o;
+  if (g) out.g = g;
+  if (q.rec) { const r = {}; idx.forEach((j, k) => { if (j >= 0 && q.rec[j]) r[k] = q.rec[j]; }); if (Object.keys(r).length) out.rec = r; else delete out.rec; }
+  if (q.od) { const d = {}; o.forEach(x => { if (q.od[plainLabel(x)]) d[plainLabel(x)] = q.od[plainLabel(x)]; }); if (Object.keys(d).length) out.od = d; else delete out.od; }
+  if (q.alias) { const keep = new Set(o.map(plainLabel)); const al = {}; Object.entries(q.alias).forEach(([k, v]) => { if (keep.has(v)) al[k] = v; }); out.alias = al; }
+}
 function openQuestion(type, part, i) {
   const set = Questions.set(type);
   const blocks = Object.entries(((Q_BLOCKS[type] || {})[part]) || {});
@@ -68,7 +106,7 @@ function openQuestion(type, part, i) {
       <label class="field"><span>Вопрос</span><textarea class="textarea" id="qT" style="min-height:64px" placeholder="${isTest ? 'Сколько раз в неделю ты занимаешься собой?' : 'Расскажи, как прошла твоя последняя неделя?'}">${esc(q.t)}</textarea><small>${isTest ? 'Этот текст увидит человек в анкете.' : 'Задавайте про прошлый опыт: «когда последний раз…», «как это было».'}</small></label>
       ${blockSel}
       ${isTest ? `<div class="field"><span>Как отвечать</span><div class="kinds">${Object.entries(KIND_NAME).map(([k, n]) => `<button type="button" data-k="${k}" class="${q.k === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
-        <label class="field" id="qOptsF"><span>Варианты — каждый с новой строки</span><textarea class="textarea opt-lines" id="qO" style="min-height:120px" placeholder="Утром&#10;Вечером">${esc((q.o || []).join('\n'))}</textarea></label>
+        <label class="field" id="qOptsF"><span>Варианты — каждый с новой строки</span><textarea class="textarea opt-lines" id="qO" style="min-height:${q.groups ? 260 : 120}px" placeholder="Утром&#10;Вечером">${esc(optLines(q))}</textarea>${q.groups ? '<small>Строки с «##» — группы этапов: вариант попадает в группу, под заголовком которой стоит. Названия групп не меняйте.</small>' : ''}</label>
         <label class="check" id="qOthF"><input type="checkbox" id="qOth" ${q.other ? 'checked' : ''}>Добавить «Другое» со своим ответом — свои ответы видны под графиком</label>
         <div class="grid2" id="qScF"><label class="field"><span>Шкала</span><select class="select" id="qN"><option value="5" ${scaleN(q) === 5 ? 'selected' : ''}>1–5, смайлы</option><option value="10" ${scaleN(q) === 10 ? 'selected' : ''}>1–10, цифры</option></select></label>
           <div class="grid2"><label class="field"><span>Подпись к 1</span><input class="input" id="qLo" value="${esc(q.lo || '')}" placeholder="совсем нет"></label><label class="field"><span>Подпись к максимуму</span><input class="input" id="qHi" value="${esc(q.hi || '')}" placeholder="очень"></label></div></div>
@@ -97,10 +135,12 @@ function openQuestion(type, part, i) {
         if (bs) { if (bs.value) out.b = bs.value; else delete out.b; }
         if (isTest) {
           out.k = $('.kinds button.on', el).dataset.k;
-          const o = $('#qO', el).value.split('\n').map(x => x.trim()).filter(Boolean);
+          const parsed = parseOptLines(q, $('#qO', el).value);
+          if (parsed.err) { $('#qO', el).classList.add('need'); toast(parsed.err); return; }
+          const o = parsed.o;
           if (['one', 'many'].includes(out.k)) {
             if (o.length < 2) { $('#qO', el).classList.add('need'); toast('Нужно хотя бы два варианта'); return; }
-            out.o = o;
+            remapOpts(q, out, o, parsed.g);
             if ($('#qOth', el).checked) out.other = q.other || 'Другое'; else delete out.other;
           } else { delete out.o; delete out.other; }
           const mx = parseNum($('#qMax', el).value);
@@ -112,6 +152,8 @@ function openQuestion(type, part, i) {
             out.hi = $('#qHi', el).value.trim() || 'очень';
             if ($('#qN', el).value === '10') out.n = 10; else delete out.n;
           } else { delete out.lo; delete out.hi; delete out.n; }
+          /* подсказки к делениям шкалы — только если число делений не поменялось */
+          if (out.sh && (out.k !== 'scale' || out.sh.length !== scaleN(out))) delete out.sh;
         } else {
           out.why = $('#qW', el).value.trim();
           const pk = $('#qP', el).value.split('\n').map(x => x.trim()).filter(Boolean);

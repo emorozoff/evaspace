@@ -137,3 +137,26 @@ table.team-t .select{width:auto;}
 .me-chip .me-link:hover b{text-decoration:underline; text-underline-offset:3px;}
 table.team-t .code{white-space:nowrap;}
 @media (max-width:640px){ table.team-t .select{max-width:132px;} .tm-who{min-width:0;} }
+
+/* ── 13.10: подарок за анкету в карточке ── */
+.gift-line{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; padding:7px 10px; border-radius:10px;
+  background:var(--gold-soft); color:var(--ink); font-size:13px; font-weight:500;}
+.gift-line svg{width:16px; height:16px; flex:none; color:var(--gold);}
+.gift-line span{flex:1; min-width:140px;}
+.gift-line.done{background:var(--good-soft); color:var(--ink-2);}
+.gift-line.done svg{color:var(--good);}
+
+/* ── 13.10: форма заполнения — группы этапа жизни и пояснения ── */
+.ans.grouped .ans-gt{flex-basis:100%; font-size:12px; font-weight:600; color:var(--ink-3); text-transform:uppercase; letter-spacing:.03em; margin-top:6px;}
+.ans.grouped .ans-gt:first-child{margin-top:0;}
+.fq-desc{font-size:12.5px; color:var(--ink-2); line-height:1.45; margin-top:6px;}
+.fq-desc:empty{display:none;}
+.fq-desc b{color:var(--ink); font-weight:600;}
+.fq[hidden]{display:none;}
+
+/* ── 13.10: подсказка по энергии — какой контент предлагать ── */
+.pt-rule{display:flex; flex-direction:column; gap:2px; padding:8px 12px; border-radius:10px; background:var(--link-soft); border-left:3px solid var(--link); font-size:13px; line-height:1.4;}
+.pt-rule b{font-weight:600;}
+.pt-rule span{color:var(--ink-2);}
+.pt-rule.soft{background:var(--bad-soft); border-left-color:var(--bad);}
+.pt-rule.hard{background:var(--good-soft); border-left-color:var(--good);}

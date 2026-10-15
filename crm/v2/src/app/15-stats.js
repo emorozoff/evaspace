@@ -57,9 +57,12 @@ const kpiRow = (items, cls = 'kpis-4') => `<div class="kpis ${cls} card">${items
 const card = (title, note, inner, cls = '') => `<div class="card ${cls}"><div class="card-head"><h2>${title}</h2>${note ? `<span class="note">${note}</span>` : ''}</div>${inner}</div>`;
 const answered = type => People.all(type).filter(p => Object.keys(p.answers || {}).length);
 function aggOf(type, id, list) { return Stats.agg(type, list).find(a => a.q.id === id && a.n) || null; }
-/* этап жизни клиентки — с учётом старых подписей */
-const stageOf = p => canonLabel(Questions.find('client', 'stage'), (p.answers || {}).stage || '');
-const stageOpts = base => { const q = Questions.find('client', 'stage'); return q ? q.o.map(plainLabel).filter(o => base.some(p => stageOf(p) === o)) : []; };
+/* сегмент по этапу жизни — группа этапов (Становление, Отношения, Материнство, Карьера и дело, Поиск себя);
+   у клиентки их может быть две — она попадает в обе */
+const inStage = (p, s) => stageGroupsOf(p.answers).includes(s);
+/* выбранный сегмент; старое значение (полное название этапа из прошлой версии) — сбрасываем на «Все» */
+const curSeg = () => { const s = View.get('st.seg', ''); return (Q_DEFAULT.client.test.find(x => x.id === 'stage') || {gshort: []}).gshort.includes(s) ? s : ''; };
+const stageOpts = base => { const q = Q_DEFAULT.client.test.find(x => x.id === 'stage'); return q ? q.gshort.filter(o => base.some(p => inStage(p, o))) : []; };
 /* свои ответы из «Другое» под графиком */
 const othersHtml = a => (a && a.others && a.others.length ? `<p class="own-list"><span>Свои ответы:</span> ${a.others.slice(0, 8).map(x => `<a href="#p-${x.p.id}">${esc(x.text)}</a>`).join(' · ')}${a.others.length > 8 ? ` и ещё ${a.others.length - 8}` : ''}</p>` : '');
 /* ответы на открытый вопрос интервью — цитатами */
@@ -151,17 +154,19 @@ function processView() {
 
 /* ── Продукт ── */
 function productView() {
-  const seg = View.get('st.seg', '');
+  const seg = curSeg();
   const qs = Questions.set('client').test;
   const stageQ = qs.find(q => q.id === 'stage');
   const base = answered('client');
-  const list = seg ? base.filter(p => stageOf(p) === seg) : base;
+  const list = seg ? base.filter(p => inStage(p, seg)) : base;
   const n = list.length;
   const pain = aggOf('client', 'pain', list), goal = aggOf('client', 'goal', list), formats = aggOf('client', 'formats', list);
   const time = aggOf('client', 'time', list), price = aggOf('client', 'price', list), energy = Stats.avgOf(list, 'energy');
   const length = aggOf('client', 'length', list), form = aggOf('client', 'form', list), ask = aggOf('client', 'ask', list), speed = aggOf('client', 'speed', list), transform = aggOf('client', 'transform', list);
   const weather = pickAgg('t_weather', list);
-  const priceHi = price ? price.rows.filter(r => /1 500–3 000|Больше 3 000/.test(r.name)).reduce((a, r) => a + r.v, 0) / price.n : null;
+  /* нижняя граница диапазона цены: «До 1 000 ₽» — 0, «3 000–5 000 ₽» — 3000 */
+  const lowOf = name => (/^До/.test(name) ? 0 : Number((String(name).replace(/[\s\u00a0]/g, '').match(/\d+/) || [0])[0]));
+  const priceHi = price ? price.rows.filter(r => lowOf(r.name) >= 3000).reduce((a, r) => a + r.v, 0) / price.n : null;
   const tp = topShare(pain);
   /* спрос клиенток на форматы против того, что эксперты готовы снять */
   const ex = answered('expert');
@@ -174,7 +179,7 @@ function productView() {
   const stages = stageOpts(base);
   const painQ = qs.find(q => q.id === 'pain');
   const hasPain = (p, o) => answerLabels(painQ, p.answers.pain).some(l => canonLabel(painQ, l) === o);
-  const cross = painQ ? painQ.o.map(plainLabel).map(o => ({o, cells: stages.map(s => { const L = base.filter(p => stageOf(p) === s); return {s, v: L.filter(p => hasPain(p, o)).length, n: L.length}; })})) : [];
+  const cross = painQ ? painQ.o.map(plainLabel).map(o => ({o, cells: stages.map(s => { const L = base.filter(p => inStage(p, s)); return {s, v: L.filter(p => hasPain(p, o)).length, n: L.length}; })})) : [];
   /* метки из интервью с цитатами */
   const tags = Stats.insightTags();
   const clients = People.all('client');
@@ -186,7 +191,7 @@ function productView() {
   return `
     ${segChips(stages, seg, base.length)}
     ${kpiRow([[n, n === base.length ? 'анкет клиенток' : 'анкет в сегменте'], [tp ? pct(tp.share) : '—', tp ? `главная боль: ${esc(tp.name.toLowerCase())}` : 'главная боль'],
-      [priceHi === null ? '—' : pct(priceHi), `готовы платить от 1 500 ₽ (сейчас ${fmt(PRICE_NOW)} ₽)`], [energy ? `${fmt(energy.avg, 1)} из 10` : '—', 'энергия в среднем']])}
+      [priceHi === null ? '—' : pct(priceHi), `готовы платить от 3 000 ₽ (сейчас ${fmt(PRICE_NOW)} ₽)`], [energy ? `${fmt(energy.avg, 1)} из 10` : '—', 'энергия в среднем']])}
     ${synBox('product', 'Что улучшить в продукте', 'Claude соберёт 5 главных улучшений с доказательствами из ответов и интервью — готово, чтобы поставить задачами в штабе.')}
     <div class="two section">
       ${card('Что беспокоит', `${pain ? pain.n : 0} ответов`, bars(pain, 'var(--link)') + othersHtml(pain))}
@@ -203,7 +208,7 @@ function productView() {
       ${card('Как удобнее меняться', 'с наставником, сама или в группе', bars(transform, 'var(--rose)'))}
     </div>
     ${cross.length && stages.length > 1 ? `<section class="section card"><div class="card-head"><h2>Боли по этапам жизни</h2><span class="note">сколько человек в сегменте отметили боль · темнее — чаще</span></div>
-      <div class="xt-wrap"><table class="xt"><thead><tr><th></th>${stages.map(s => `<th>${esc(noEmo(s))}<small>${base.filter(p => stageOf(p) === s).length}</small></th>`).join('')}</tr></thead>
+      <div class="xt-wrap"><table class="xt"><thead><tr><th></th>${stages.map(s => `<th>${esc(noEmo(s))}<small>${base.filter(p => inStage(p, s)).length}</small></th>`).join('')}</tr></thead>
       <tbody>${cross.map(r => `<tr><td>${esc(noEmo(r.o))}</td>${r.cells.map(c => { const sh = c.n ? c.v / c.n : 0; return `<td style="background:color-mix(in srgb, var(--link) ${(sh * 70).toFixed(0)}%, var(--surface));color:${sh > .5 ? '#fff' : 'inherit'}">${c.v ? `${c.v}<small>${pct(sh)}</small>` : '·'}</td>`; }).join('')}</tr>`).join('')}</tbody></table></div></section>` : ''}
     <div class="two section">
       ${card('Что слышим на интервью', 'метки из разбора и пример цитаты', tags.length ? `<div class="tq-list">${tags.map(t => { const q = tagQuote(t.name); return `<div class="tqr"><div class="tqr-h"><b>${esc(noEmo(t.name))}</b><span>${t.v}</span></div>${q ? `<p>«${esc(q.text.length > 150 ? q.text.slice(0, 150) + '…' : q.text)}» <a href="#p-${q.p.id}">${esc(People.name(q.p))}</a></p>` : ''}</div>`; }).join('')}</div>` : '<p class="note">Метки появятся, когда разберёте первые интервью.</p>')}
@@ -221,7 +226,7 @@ function marketingView() {
   const n = base.length;
   const mode = id => topShare(id === 'age' ? Stats.ageAgg(base) : aggOf('client', id, base));
   const city = cityRows(base)[0];
-  const persona = [['Возраст', mode('age')], ['Город', city ? {name: city.name, share: city.v / Math.max(1, base.filter(p => (p.answers || {}).city || p.city).length)} : null], ['Статус', mode('status')], ['Занятость', mode('job')], ['Этап жизни', mode('stage')], ['Беспокоит', mode('pain')], ['Важнее всего', mode('goal')],
+  const persona = [['Возраст', mode('age')], ['Город', city ? {name: city.name, share: city.v / Math.max(1, base.filter(p => (p.answers || {}).city || p.city).length)} : null], ['Статус', mode('status')], ['Занятость', mode('employ')], ['Доход', mode('income')], ['Внимание забирает', mode('sphere')], ['Этап жизни', mode('stage')], ['Беспокоит', mode('pain')], ['Важнее всего', mode('goal')],
     ['Время в день', mode('time')], ['Когда удобно', mode('when')], ['Смотрит контент', mode('where')], ['Готова платить', mode('price')], ['Откуда узнаёт', mode('source')]].filter(x => x[1]);
   const quotes = Stats.quotes().filter(x => x.p.type === 'client').slice(0, 4);
   const source = aggOf('client', 'source', base), when = aggOf('client', 'when', base), tried = aggOf('client', 'tried', base), where = aggOf('client', 'where', base);
@@ -234,7 +239,7 @@ function marketingView() {
   const invited = Store.all('people').filter(p => p.ref);
   const giveQ = aggOf('partner', 'give', answered('partner')), tellQ = aggOf('partner', 'tell', answered('partner'));
   const stageQ = Questions.set('client').test.find(q => q.id === 'stage');
-  const segs = stageQ ? stageOpts(base).map(o => { const L = base.filter(p => stageOf(p) === o); const g = topShare(aggOf('client', 'goal', L)), pn = topShare(aggOf('client', 'pain', L)), w = topShare(aggOf('client', 'where', L)); return {o, n: L.length, g, pn, w}; }) : [];
+  const segs = stageQ ? stageOpts(base).map(o => { const L = base.filter(p => inStage(p, o)); const g = topShare(aggOf('client', 'goal', L)), pn = topShare(aggOf('client', 'pain', L)), w = topShare(aggOf('client', 'where', L)); return {o, n: L.length, g, pn, w}; }) : [];
   return `
     ${kpiRow([[n, 'анкет клиенток'], [`≈ ${fmt(reach)}`, 'охват амбассадоров'], [invited.length, 'пришли по ссылкам'], [People.all('partner').filter(People.connected).length, 'партнёров подключаем']])}
     ${synBox('marketing', 'Заходы для рекламы', 'Claude предложит 5 заходов для постов и рекламы на языке клиенток: кому, где и почему сработает.')}
@@ -257,10 +262,10 @@ function marketingView() {
 /* ── Ответы анкеты по группам (как было) с фильтром по сегменту ── */
 function answersStatsView() {
   const type = TYPES[View.get('st.type', 'client')] ? View.get('st.type', 'client') : 'client';
-  const seg = type === 'client' ? View.get('st.seg', '') : '';
+  const seg = type === 'client' ? curSeg() : '';
   const stageQ = Questions.set('client').test.find(q => q.id === 'stage');
   const base = People.all(type);
-  const list = seg ? base.filter(p => stageOf(p) === seg) : base;
+  const list = seg ? base.filter(p => inStage(p, seg)) : base;
   const f = Stats.funnel(type);
   const agg = Stats.agg(type, list).filter(a => a.n);
   const nAns = list.filter(p => Object.keys(p.answers || {}).length).length;
@@ -286,7 +291,7 @@ function answersStatsView() {
 /* фильтр по этапу жизни: «Все · Мама малыша · Карьера …» */
 function segChips(opts, cur, total) {
   if (!opts.length) return '';
-  return `<div class="chip-row st-seg"><span class="note">Сегмент:</span><button class="chip ${!cur ? 'on' : ''}" data-seg="">Все<span class="chip-n">${total}</span></button>${opts.map(o => `<button class="chip ${cur === o ? 'on' : ''}" data-seg="${esc(o)}">${esc(noEmo(o))}<span class="chip-n">${answered('client').filter(p => stageOf(p) === o).length}</span></button>`).join('')}</div>`;
+  return `<div class="chip-row st-seg"><span class="note">Сегмент:</span><button class="chip ${!cur ? 'on' : ''}" data-seg="">Все<span class="chip-n">${total}</span></button>${opts.map(o => `<button class="chip ${cur === o ? 'on' : ''}" data-seg="${esc(o)}">${esc(noEmo(o))}<span class="chip-n">${answered('client').filter(p => inStage(p, o)).length}</span></button>`).join('')}</div>`;
 }
 
 /* один вопрос анкеты: вариант — полоса — сколько человек — доля.
@@ -308,9 +313,9 @@ function qStatCard(a) {
 
 /* ── Образ жизни: кто наши клиентки ── */
 function lifeView() {
-  const seg = View.get('st.seg', '');
+  const seg = curSeg();
   const base = answered('client');
-  const list = seg ? base.filter(p => stageOf(p) === seg) : base;
+  const list = seg ? base.filter(p => inStage(p, seg)) : base;
   const A = id => (id === 'age' ? Stats.ageAgg(list) : aggOf('client', id, list));
   const cities = cityRows(list);
   const late = A('sleep'), screen = A('screen');
@@ -318,7 +323,12 @@ function lifeView() {
   const heavy = screen ? screen.rows.filter(r => /4–6|Больше 6/.test(r.name)).reduce((x, r) => x + r.v, 0) / screen.n : null;
   const ages = list.map(p => ageFromBirth((p.answers || {}).birth)).filter(x => x !== null).sort((a, b) => a - b);
   const median = ages.length ? ages[Math.floor(ages.length / 2)] : null;
-  const c = (title, id, color, note = '') => { const a = A(id); return card(title, note || (a ? `${a.n} ${plural(a.n, 'ответ', 'ответа', 'ответов')}` : ''), bars(a, color) + othersHtml(a)); };
+  const c = (title, id, color, note = '') => { const a = A(id); return card(title, note || (a ? `${a.n} ${plural(a.n, 'ответ', 'ответа', 'ответов')}` : ''), bars(a, color, 20) + othersHtml(a)); };
+  const stageGroups = (Q_DEFAULT.client.test.find(q => q.id === 'stage') || {gshort: []}).gshort.map(g => ({name: g, v: list.filter(p => inStage(p, g)).length})).filter(r => r.v);
+  /* сколько клиенток в каком режиме контента по уровню энергии */
+  const withE = list.filter(p => energyRule((p.answers || {}).energy));
+  const energyMix = {n: withE.length, rows: ENERGY_RULE.map((r, i) => ({name: `${r.name} (${i ? ENERGY_RULE[i - 1].max + 1 : 1}–${r.max})`, v: withE.filter(p => energyRule(p.answers.energy) === r).length}))};
+  const schedNote = a => (a ? `${a.n} из работающих` : 'спрашиваем только тех, кто работает');
   return `
     ${segChips(stageOpts(base), seg, base.length)}
     ${kpiRow([[list.length, seg ? 'анкет в сегменте' : 'анкет клиенток'], [median === null ? '—' : `${median} ${plural(median, 'год', 'года', 'лет')}`, 'средний возраст (медиана)'],
@@ -329,8 +339,14 @@ function lifeView() {
       ${card('Города', `${cities.length} ${plural(cities.length, 'город', 'города', 'городов')}`, cities.length ? hbarList(cities.slice(0, 8), {color: 'var(--violet)', sub: r => pct(r.v / Math.max(1, sum(cities, x => x.v)))}) : '<p class="note">Пока нет данных.</p>')}
       ${c('Страна', 'country', 'var(--good)')}
       ${c('Социальный статус', 'status', 'var(--rose)')}
-      ${c('Занятость', 'job', 'var(--gold)')}
-      ${c('Этап жизни', 'stage', 'var(--link)')}
+      ${c('Занятость', 'employ', 'var(--gold)')}
+      ${c('График работы', 'schedule', 'var(--gold)', schedNote(A('schedule')))}
+      ${c('Доход', 'income', 'var(--good)', 'самооценка')}
+      ${c('Где и как живёт', 'housing', 'var(--violet)')}
+      ${c('Что забирает 80% внимания', 'sphere', 'var(--rose)')}
+      ${card('Этап жизни по группам', 'можно выбрать два этапа — клиентка попадает в обе группы', stageGroups.length ? hbarList(stageGroups, {color: 'var(--link)', sub: r => pct(r.v / Math.max(1, list.filter(p => stageGroupsOf(p.answers).length).length))}) : '<p class="note">Пока нет данных.</p>')}
+      ${c('Этап жизни подробно', 'stage', 'var(--link)')}
+      ${card('Какой контент предлагать — по энергии', 'правило: 1–3 — только мягкий, 8–10 — интенсивный', energyMix.n ? hbarList(energyMix.rows, {color: 'var(--good)', sub: r => pct(r.v / energyMix.n)}) : '<p class="note">Пока нет ответов.</p>')}
     </div>
     <h3 class="qs-bh section"><span aria-hidden="true">🌤</span>Состояние</h3>
     <div class="two">${card('Энергия, довольство жизнью, здоровье', 'шкала 1–10', stateHtml(list))}${c('Как удобнее меняться', 'transform', 'var(--rose)')}</div>
@@ -378,10 +394,10 @@ function statsDigest() {
   const age = Stats.ageAgg(base);
   const weather = pickAgg('t_weather').map(r => `${r.name} — ${r.v}`).join('; ');
   const annoy = talkAnswers('t_annoy').slice(0, 6).map(x => '- ' + x.a).join('\n');
-  return [`Анкет клиенток: ${base.length}.`, age.n ? `Возраст: ${age.rows.filter(r => r.v).map(r => `${r.name} — ${r.v} из ${age.n}`).join('; ')}` : '', line('Этап жизни', 'stage'), line('Статус', 'status'), line('Занятость', 'job'),
+  return [`Анкет клиенток: ${base.length}.`, age.n ? `Возраст: ${age.rows.filter(r => r.v).map(r => `${r.name} — ${r.v} из ${age.n}`).join('; ')}` : '', line('Этап жизни', 'stage'), line('Статус', 'status'), line('Занятость', 'employ'), line('График работы', 'schedule'), line('Доход (самооценка)', 'income'), line('Жильё', 'housing'), line('Что забирает 80% внимания', 'sphere'),
     st ? `Состояние по шкале 1–10 в среднем: ${st}` : '', line('Беспокоит', 'pain'), line('Важнее всего', 'goal'), line('Время в день', 'time'), line('Когда удобно', 'when'), line('Как удобнее меняться', 'transform'),
-    line('Пробовали', 'tried'), line('Ложатся спать', 'sleep'), line('Время в телефоне', 'screen'), line('Где смотрят контент', 'where'), line('Комфортная длина видео', 'length'), line('Подача', 'form'),
-    line('Интересно в Еве', 'formats'), line('Готовы платить в месяц', 'price'), line('Откуда узнали', 'source'), weather ? `Погода жизни (из интервью): ${weather}` : '',
+    line('Пробовали', 'tried'), line('Ложатся спать', 'sleep'), line('Время в телефоне', 'screen'), line('Где смотрят контент', 'where'), line('Комфортная длина практики в будний день', 'length'), line('Подача', 'form'), line('Траты на саморазвитие в месяц', 'spend'),
+    line('Интересно в Еве', 'formats'), line('Что ещё интересно получить', 'extras'), line('Готовы платить в месяц', 'price'), line('Откуда узнали', 'source'), weather ? `Погода жизни (из интервью): ${weather}` : '',
     tags ? `Метки из интервью: ${tags}` : '', ideas ? `Инсайты и идеи из интервью:\n${ideas}` : '', quotes ? `Яркие цитаты:\n${quotes}` : '', about ? `Что говорят про приложение:\n${about}` : '', annoy ? `Что раздражает в приложениях:\n${annoy}` : '',
     rec, cov ? `Направления без экспертов: ${cov}` : '', amb.length ? `Амбассадоров: ${amb.length}, охват около ${fmt(sum(amb, p => REACH[(p.answers || {}).size] || 0))}` : ''].filter(Boolean).join('\n');
 }

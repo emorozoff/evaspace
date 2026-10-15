@@ -77,7 +77,7 @@ const People = {
     if (p.type === 'partner') return [noEmo(p.cat), p.city].filter(Boolean).join(' · ');
     if (p.type === 'amb') return [a.size ? `аудитория ${noEmo(a.size)}` : '', p.city].filter(Boolean).join(' · ');
     const age = ageFromBirth(a.birth);
-    return [age !== null ? `${age} ${plural(age, 'год', 'года', 'лет')}` : ageGroupOf(a) || '', p.city, a.stage ? canonLabel(Questions.find('client', 'stage'), a.stage) : ''].filter(Boolean).join(' · ');
+    return [age !== null ? `${age} ${plural(age, 'год', 'года', 'лет')}` : ageGroupOf(a) || '', p.city, emptyStage(a) ? '' : stageGroupsOf(a).join(', ') || canonLabel(Questions.find('client', 'stage'), [].concat(a.stage)[0])].filter(Boolean).join(' · ');
   },
   uniqueCode(name) {
     let code = refCodeFor(name || 'eva');
@@ -137,6 +137,7 @@ function keyPatch(p, type, answers) {
   });
   return out;
 }
+const emptyStage = a => !a.stage || (Array.isArray(a.stage) && !a.stage.length);
 const Import = {
   /* сохранить ответы, присланные по ссылке: к карточке по коду или новой карточкой */
   apply(pl) {
@@ -144,12 +145,14 @@ const Import = {
     if (!TYPES[type]) throw new Error('Неизвестный тип анкеты');
     const answers = pl.a || {};
     const owner = pl.c ? People.byCode(pl.c) : null;
+    /* анкета клиентки с 13.10 обещает подарок — неделю Евы; отмечаем, чтобы команда не забыла выдать */
+    const gift = p => pl.g && type === 'client' && !(p && p.gift) ? {gift: {at: pl.at || Date.now(), done: false}} : {};
     if (owner && !pl.r) {
-      People.patch(owner.id, {answers: {...(owner.answers || {}), ...answers}, s1: 'done', answeredAt: pl.at || Date.now(), answeredBy: 'self', ...keyPatch(owner, type, answers)}, 'Заполнила анкету по ссылке', '📝');
+      People.patch(owner.id, {answers: {...(owner.answers || {}), ...answers}, s1: 'done', answeredAt: pl.at || Date.now(), answeredBy: 'self', ...keyPatch(owner, type, answers), ...gift(owner)}, 'Заполнила анкету по ссылке', '📝');
       return owner.id;
     }
     const fromKeys = keyPatch(null, type, answers);
-    return People.create({type, name: fromKeys.name || 'Без имени', ...fromKeys, answers, s1: 'done', answeredAt: pl.at || Date.now(), answeredBy: 'self', ref: pl.r && owner ? owner.code : pl.r ? pl.c : null, source: pl.r ? 'ref' : 'link'});
+    return People.create({type, name: fromKeys.name || 'Без имени', ...fromKeys, answers, s1: 'done', answeredAt: pl.at || Date.now(), answeredBy: 'self', ref: pl.r && owner ? owner.code : pl.r ? pl.c : null, source: pl.r ? 'ref' : 'link', ...gift(null)});
   },
 };
 
@@ -243,6 +246,8 @@ function recommendations() {
   if (stuck3.length) add('now', 'all', `Запишите решение после созвона: ${stuck3.length} ${plural(stuck3.length, 'человек', 'человека', 'человек')} без итога.`, names3(stuck3), 1.1, topType(stuck3, 'expert'));
   const clientsNoInsight = People.all('client').filter(p => ['done', 'skip'].includes(p.s2) && (p.s3 || 'none') === 'none');
   if (clientsNoInsight.length) add('now', 'client', `Разберите ${clientsNoInsight.length} ${plural(clientsNoInsight.length, 'интервью', 'интервью', 'интервью')}, пока разговор свежий: отметьте, что услышали.`, names3(clientsNoInsight), 1.05);
+  const gifts = People.all('client').filter(p => p.gift && !p.gift.done);
+  if (gifts.length) add('now', 'client', `Выдайте подарок за анкету — неделю Евы: ${gifts.length} ${plural(gifts.length, 'клиентка ждёт', 'клиентки ждут', 'клиенток ждут')}. В карточке нажмите «Выдала».`, names3(gifts), 1.15);
   const noTax = People.all('amb').filter(p => /Пока нет/.test(String((p.answers || {}).tax || '')) && /карту/.test(String((p.answers || {}).pay || '')));
   if (noTax.length) add('now', 'amb', `Отправьте памятку про «Мой налог»: ${noTax.length} ${plural(noTax.length, 'амбассадор хочет', 'амбассадора хотят', 'амбассадоров хотят')} выплаты на карту, но без статуса. Или предложите баланс Евы +10%.`, names3(noTax), 0.7);
   /* что улучшить: самый частый вариант ответа, если он набрал заметную долю */
