@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useStore } from './useStore.ts';
-import { onIncoming, activeChatId, unreadIn, store } from './lib/store.ts';
+import { onIncoming, onFriendOnline, activeChatId, unreadIn, store, openDm } from './lib/store.ts';
 import type { Msg } from './lib/store.ts';
 import { previewText } from './lib/protocol.ts';
-import { play, envelope } from './lib/aska.ts';
+import { play, envelope, flower } from './lib/aska.ts';
 import { Welcome } from './components/Welcome.tsx';
 import { Contacts } from './components/Contacts.tsx';
 import { ChatView } from './components/ChatView.tsx';
@@ -16,7 +16,7 @@ function chatFromHash(): string | null {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-interface Toast { chatId: string; name: string; text: string }
+interface Toast { chatId?: string; userId?: number; name: string; text: string; online?: boolean }
 
 export default function App() {
   const s = useStore();
@@ -53,13 +53,27 @@ export default function App() {
       clearTimeout(hideTimer);
       hideTimer = setTimeout(() => setToast(null), 5000);
     });
-    return () => { off(); clearTimeout(hideTimer); };
+    // Друг вошёл в сеть — как в ICQ: «User is online» и всплывашка.
+    const offOnline = onFriendOnline((userId) => {
+      if (document.visibilityState !== 'visible') return;
+      play('online');
+      const name = store.get().users[userId]?.displayName || 'Друг';
+      setToast({ userId, name, text: 'в сети', online: true });
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => setToast(null), 3500);
+    });
+    return () => { off(); offOnline(); clearTimeout(hideTimer); };
   }, []);
 
   if (s.phase === 'loading') return <div className="desktop" />;
   if (s.phase === 'welcome') return <Welcome />;
 
   const openChat = (id: string) => { setAux(null); setChat(id); setToast(null); };
+  const onToast = async (t: Toast) => {
+    setToast(null);
+    if (t.chatId) openChat(t.chatId);
+    else if (t.userId) { try { openChat(await openDm(t.userId)); } catch { /* нет связи */ } }
+  };
   const unread = Object.keys(s.chats).reduce((n, id) => n + unreadIn(id, s), 0);
   const chatOpen = chat && s.chats[chat] ? chat : null;
   const cls = ['desktop', chatOpen && 'mode-chat', aux && 'mode-aux', aux && 'focus-aux'].filter(Boolean).join(' ');
@@ -72,8 +86,8 @@ export default function App() {
         {chatOpen && <ChatView key={chatOpen} chatId={chatOpen} onBack={() => setChat(null)} />}
       </div>
       {toast && (
-        <div className="toast" onClick={() => openChat(toast.chatId)}>
-          <Svg html={envelope(22)} />
+        <div className="toast" onClick={() => onToast(toast)}>
+          <Svg html={toast.online ? flower('online', 22) : envelope(22)} />
           <div className="t"><b>{toast.name}</b><div>{toast.text}</div></div>
         </div>
       )}

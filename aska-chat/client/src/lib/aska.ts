@@ -93,6 +93,42 @@ export function splitSmiles(text: string): TextPart[] {
 }
 
 // ---------- звуки ----------
+// Настоящие звуки ICQ 99a лежат только на сервере (/sounds/…, в репозиторий не попадают — права у ICQ).
+// Есть файл — играет он, нет — синтезированный звук «Аськи».
+const REAL: Record<string, string> = { incoming: '/sounds/uh-oh.wav', online: '/sounds/online.wav', sent: '/sounds/sent.wav' };
+let ctx: AudioContext | null = null;
+const buffers = new Map<string, AudioBuffer>();
+let realLoading: Promise<void> | null = null;
+
+function audio(): AudioContext | null {
+  if (!ctx) {
+    const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AC) return null;
+    ctx = new AC();
+  }
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  return ctx;
+}
+
+function loadRealSounds() {
+  if (realLoading) return realLoading;
+  realLoading = (async () => {
+    const c = audio();
+    if (!c) return;
+    await Promise.all(Object.entries(REAL).map(async ([name, url]) => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return;
+        buffers.set(name, await c.decodeAudioData(await res.arrayBuffer()));
+      } catch { /* нет файла — останется синтезированный звук */ }
+    }));
+  })();
+  return realLoading;
+}
+
+export function realSoundsLoaded() {
+  return [...buffers.keys()];
+}
 
 export function soundEnabled() {
   return readLS(SOUND_KEY) !== 'off';
@@ -105,6 +141,16 @@ export function setSoundEnabled(on: boolean) {
 
 export function play(name: 'incoming' | 'sent' | 'online' | 'offline' | 'connect' | 'error' | 'click') {
   if (!soundEnabled()) return;
+  const buf = buffers.get(name);
+  if (buf && ctx) {
+    try {
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start();
+      return;
+    } catch { /* играем запасной */ }
+  }
   try { window.AskaSound?.play(name); } catch { /* звук не обязателен */ }
 }
 
@@ -116,8 +162,19 @@ export function playSmile(id: string) {
 // iPhone разрешает звук только после первого касания.
 export function unlockSoundOnFirstTouch() {
   if (window.AskaSound) window.AskaSound.enabled = soundEnabled();
+  loadRealSounds();
   const unlock = () => {
     try { window.AskaSound?.unlock(); } catch { /* нет звука */ }
+    const c = audio();
+    if (c) {
+      // тихий звук «разблокирует» воспроизведение на iPhone
+      try {
+        const src = c.createBufferSource();
+        src.buffer = c.createBuffer(1, 1, 22050);
+        src.connect(c.destination);
+        src.start();
+      } catch { /* пусто */ }
+    }
     window.removeEventListener('pointerdown', unlock);
     window.removeEventListener('keydown', unlock);
   };

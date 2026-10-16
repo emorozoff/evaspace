@@ -10,6 +10,7 @@
 # поэтому ключ не может выложить чужой или старый код. Код скачивается с GitHub, собирается в Docker
 # (сборка изолирована от сервера), контейнер получает только свою папку данных и сокет для Caddy.
 # Если новая версия не ответила — возвращается прежняя. База и фото (/opt/aska/data) не трогаются.
+# Настоящие звуки ICQ (/opt/aska/sounds) в репозиторий не кладём (права у ICQ) — подключаем в контейнер только для чтения.
 set -euo pipefail
 REPO=emorozoff/evaspace
 BRANCH=claude/pensive-davinci-tyahht
@@ -42,14 +43,14 @@ curl -fsSL "https://codeload.github.com/$REPO/tar.gz/$sha" \
 echo "Собираю…"
 docker build -q -t "$IMAGE:$sha" -f "$work/aska-chat/Dockerfile" "$work" >/dev/null
 
-mkdir -p "$BASE/data" "$SOCK"
+mkdir -p "$BASE/data" "$SOCK" "$BASE/sounds"
 chown 1000:1000 "$BASE/data" "$SOCK"
 prev="$(docker inspect -f '{{.Config.Image}}' "$NAME" 2>/dev/null || true)"
 
 run() {
   docker run -d --name "$NAME" --restart unless-stopped --user 1000:1000 --memory 256m \
     -e PUBLIC_URL="$PUBLIC_URL" -e SOCKET=/sock/web.sock -e APP_VERSION="$2" \
-    -v "$BASE/data":/data -v "$SOCK":/sock "$1" >/dev/null
+    -v "$BASE/data":/data -v "$SOCK":/sock -v "$BASE/sounds":/app/client/dist/sounds:ro "$1" >/dev/null
 }
 healthy() {
   for _ in $(seq 1 60); do

@@ -38,7 +38,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   // Дизайн «Аськи» (/aska/…) меняется без смены имени файла: показываем сохранённый и тут же обновляем.
-  if (url.pathname.startsWith('/aska/')) {
+  if (url.pathname.startsWith('/aska/') || url.pathname.startsWith('/sounds/')) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE);
       const hit = await cache.match(event.request);

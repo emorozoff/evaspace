@@ -43,6 +43,13 @@ export function onIncoming(l: (m: Msg) => void) {
   return () => { incomingListeners.delete(l); };
 }
 
+// Друг только что появился в сети — для звука «User is online» и всплывашки.
+const onlineListeners = new Set<(userId: number) => void>();
+export function onFriendOnline(l: (userId: number) => void) {
+  onlineListeners.add(l);
+  return () => { onlineListeners.delete(l); };
+}
+
 export function activeChatId() {
   return activeChat;
 }
@@ -279,9 +286,12 @@ function onEvent(ev: ServerEvent) {
       });
       break;
     }
-    case 'presence':
+    case 'presence': {
+      const wasOnline = !!state.presence[ev.userId];
       set({ presence: { ...state.presence, [ev.userId]: ev.online } });
+      if (ev.online && !wasOnline && ev.userId !== state.me?.userId) for (const l of onlineListeners) l(ev.userId);
       break;
+    }
     case 'read': {
       const chat = state.chats[ev.chatId];
       if (!chat) break;
