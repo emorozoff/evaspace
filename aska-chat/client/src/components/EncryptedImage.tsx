@@ -25,7 +25,7 @@ function load(image: ImageRef): Promise<string> {
   return p;
 }
 
-export function photoSize(w: number, h: number, maxW = 250, maxH = 330) {
+export function photoSize(w: number, h: number, maxW = 230, maxH = 300) {
   const scale = Math.min(maxW / w, maxH / h, 1);
   return { width: Math.max(120, Math.round(w * scale)), height: Math.max(80, Math.round(h * scale)) };
 }
@@ -43,19 +43,19 @@ export function EncryptedImage({ image, local, onOpen }: { image: ImageRef; loca
 
   const size = photoSize(image.w, image.h);
   return (
-    <div className="photo" style={size} onClick={(e) => { if (url) { e.stopPropagation(); onOpen(url); } }}>
-      {url ? <img src={url} alt="" draggable={false} /> : image.thumb && <img className="photo-thumb" src={image.thumb} alt="" />}
-      {!url && !failed && <div className="spinner" />}
-      {failed && <div className="photo-failed">Не удалось загрузить фото</div>}
-    </div>
+    <span className="aska-photo" style={size} onClick={(e) => { if (url) { e.stopPropagation(); onOpen(url); } }}>
+      {url ? <img src={url} alt="" draggable={false} /> : image.thumb && <img className="thumb" src={image.thumb} alt="" />}
+      {!url && !failed && <span className="spin" />}
+      {failed && <span className="fail">Не удалось загрузить фото</span>}
+    </span>
   );
 }
 
 export function ImageViewer({ url, onClose }: { url: string; onClose: () => void }) {
   return (
-    <div className="viewer" onClick={onClose}>
+    <div className="aska-viewer" onClick={onClose}>
       <img src={url} alt="" />
-      <div className="viewer-hint">Нажми, чтобы закрыть · удерживай, чтобы сохранить</div>
+      <div className="h">Нажми, чтобы закрыть · удерживай, чтобы сохранить</div>
     </div>
   );
 }

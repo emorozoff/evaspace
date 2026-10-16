@@ -50,6 +50,14 @@
 - Новое приглашение: `docker exec aska node server/src/cli.js invite`. Журнал: `docker logs --tail 50 aska`.
 - Адрес `aska.tytproai.ru`: запись A в reg.ru (16.10.2026), блок в Caddy — `deploy/caddy.sh` (на сервере и в исходниках сайта `~/Desktop/Курс "тут про ии"/app/deploy/Caddyfile`).
 
+## Дизайн «Аськи» (как устроено)
+- Берётся **как есть** из соседней папки `aska/`: `styles.css` + `aero.css` (оба вида), `art.js` (цветочки, смайлы, конвертик), `sounds.js` («о-оу», голоса смайлов), `icons/`. Перед сборкой `npm run design` (`scripts/copy-aska.mjs`) копирует их в `client/public/aska/` (в git не хранится).
+- **Зумер** = `body.skin-aero`, **Миллениал** = `body.skin-classic` (те же файлы, классический вид — это `styles.css`; `aska/v2/styles.css` от него почти не отличается). Выбор — на экране входа и в «Настройках», запоминается в браузере.
+- Экраны собраны из тех же классов, что в «Аське»: `.desktop`, `.wins`, `.win.contacts#cwin`, `.win.chat#chatwin`, `.win.aux#auxwin`, `.win.dialog#loginwin`, `.titlebar/.tbtn`, `.me-panel`, `.clist/.cgroup/.citem/.cmeta/.badge`, `.chat-head`, `.history/.msg.me|them/.hdr/.nk/.time/.txt/.grp/.new`, `.compose/.send-row`, `.smiles`, `.tabbar`, `.overlay.sheet`, `.toast`, `.groupbox/.legend`, `.design-pick`, `.uin-box`, `.tabs/.tabpanel`. Переключение экранов на телефоне — классы `mode-chat` / `mode-aux` на `.desktop`, как в «Аське».
+- **Правки дизайна делаются в `aska/`** (облачная сессия «Аськи») и сами попадают сюда при следующей выкладке (workflow следит за `aska/*.css`, `aska/icons/**`, `aska/sounds.js`). Если в «Аське» переименовать перечисленные классы или функции `AskaArt.statusFlower/flowerSvg/envelopeSvg/smileSvg/SMILES` и `AskaSound.play/smile/unlock` — поправить и мессенджер.
+- Своё, чего в «Аське» нет (фото, ответы, галочки, просмотр фото), — в `client/src/styles.css` с префиксом `aska-`.
+- Статус «в сети / не в сети» (зелёный и красный цветок) — сервер шлёт событие `presence`, «не в сети» — через 8 секунд после закрытия приложения.
+
 ## Что дальше
-1. Перенести дизайн «Аськи» (оба варианта) — сейчас интерфейс ещё от «Своих», чёрно-белый.
+1. Егор проверяет на iPhone: установка, оба дизайна, уведомления, «о-оу».
 2. Голосовые сообщения, потом звонки «приглашением» (кнопка «Присоединиться» в чате, сразу с видео) — как решено для «Своих».

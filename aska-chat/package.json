@@ -4,11 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "vite build client && esbuild client/src/sw.ts --bundle --minify --format=iife --target=safari16 --outfile=client/dist/sw.js",
+    "build": "npm run design && vite build client && esbuild client/src/sw.ts --bundle --minify --format=iife --target=safari16 --outfile=client/dist/sw.js",
     "start": "node server/src/index.js",
     "invite": "node server/src/cli.js invite",
     "test": "node --test test/*.test.js",
-    "typecheck": "tsc -p client --noEmit"
+    "typecheck": "tsc -p client --noEmit",
+    "design": "node scripts/copy-aska.mjs"
   },
   "dependencies": {
     "express": "^5.3.0",

@@ -1,41 +1,59 @@
+// Окно беседы в стиле «Аськи»: шапка, история (пузыри в «Зумере», строчки в «Миллениале»), поле ввода, смайлы.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, KeyboardEvent, ReactNode } from 'react';
 import { useStore } from '../useStore.ts';
-import { sendText, sendImage, setActiveChat, retrySend, discardFailed, unreadIn } from '../lib/store.ts';
+import { sendText, sendImage, setActiveChat, retrySend, discardFailed } from '../lib/store.ts';
 import type { Msg } from '../lib/store.ts';
-import { chatTitle, dmPeer, dayKey, dayLabel, plural, timeShort } from '../lib/format.ts';
+import { chatTitle, dmPeer, dayKey, plural, timeShort } from '../lib/format.ts';
 import { previewText } from '../lib/protocol.ts';
 import { isTouch } from '../lib/platform.ts';
-import { Avatar } from './Avatar.tsx';
+import { flower, smiles, smileSvg, splitSmiles, play, playSmile } from '../lib/aska.ts';
 import { EncryptedImage, ImageViewer } from './EncryptedImage.tsx';
-import { Sheet } from './Sheet.tsx';
-import type { SheetAction } from './Sheet.tsx';
-import {
-  BackIcon, PhotoIcon, SendIcon, CloseIcon, ReplyIcon, CheckIcon, DoubleCheckIcon, ClockIcon, DownIcon, LockIcon,
-} from './Icons.tsx';
+import { Win, Svg, Ico, Dialog } from './Win.tsx';
 
 const drafts = new Map<string, string>();
 const GROUP_GAP = 5 * 60 * 1000;
 const URL_RE = /(https?:\/\/[^\s<]+[^\s<.,:;"')\]!?])/g;
 
-function linkify(t: string): ReactNode[] {
-  return t.split(URL_RE).map((part, i) => (i % 2
-    ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>{part}</a>
-    : part));
+function renderText(t: string): ReactNode[] {
+  const out: ReactNode[] = [];
+  t.split(URL_RE).forEach((part, i) => {
+    if (i % 2) {
+      out.push(<a key={`u${i}`} href={part} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>{part}</a>);
+      return;
+    }
+    splitSmiles(part).forEach((p, j) => {
+      if ('text' in p) out.push(p.text);
+      else {
+        out.push(
+          <span key={`s${i}-${j}`} className="sm" data-sm={p.smile} title={p.code}
+            onClick={(e) => { e.stopPropagation(); playSmile(p.smile); }}
+            dangerouslySetInnerHTML={{ __html: smileSvg(p.smile, 18) }} />,
+        );
+      }
+    });
+  });
+  return out;
+}
+
+function dayLabel(ts: number) {
+  const d = new Date(ts);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 
 function msgPreview(m?: Msg) {
-  if (!m) return 'Сообщение недоступно';
-  return m.body ? previewText(m.body) : '🔒 Не удалось расшифровать';
+  if (!m) return 'сообщение недоступно';
+  return m.body ? previewText(m.body) : '🔒 не удалось расшифровать';
 }
 
-interface BubbleProps {
+interface LineProps {
   m: Msg;
   out: boolean;
-  first: boolean;
-  last: boolean;
-  name?: string;
-  quote?: { name: string; text: string } | null;
+  grp: boolean;
+  isNew: boolean;
+  name: string;
+  quote: { name: string; text: string } | null;
   read: boolean;
   flash: boolean;
   onMenu: (m: Msg) => void;
@@ -43,53 +61,53 @@ interface BubbleProps {
   onQuote: () => void;
 }
 
-function Bubble({ m, out, first, last, name, quote, read, flash, onMenu, onImage, onQuote }: BubbleProps) {
+function Line({ m, out, grp, isNew, name, quote, read, flash, onMenu, onImage, onQuote }: LineProps) {
   const timer = useRef<number | undefined>(undefined);
   const start = useRef<{ x: number; y: number } | null>(null);
   const body = m.body;
-  const isPhoto = body?.kind === 'image' && !!body.image;
-  const photoOnly = isPhoto && !body?.text && !quote && !name;
-
   const cancel = () => { clearTimeout(timer.current); start.current = null; };
-  const handlers = {
-    onContextMenu: (e: React.MouseEvent) => { e.preventDefault(); onMenu(m); },
-    onTouchStart: (e: React.TouchEvent) => {
-      const t = e.touches[0];
-      start.current = { x: t.clientX, y: t.clientY };
-      timer.current = window.setTimeout(() => { navigator.vibrate?.(10); onMenu(m); }, 450);
-    },
-    onTouchMove: (e: React.TouchEvent) => {
-      const t = e.touches[0];
-      if (start.current && Math.hypot(t.clientX - start.current.x, t.clientY - start.current.y) > 10) cancel();
-    },
-    onTouchEnd: cancel,
-    onTouchCancel: cancel,
-    onClick: () => { if (m.status === 'failed') onMenu(m); },
-  };
 
-  let status: ReactNode = null;
+  let tick: ReactNode = null;
   if (out) {
-    if (m.status === 'sending') status = <ClockIcon />;
-    else if (m.status === 'failed') status = <span className="failed-mark">!</span>;
-    else status = read ? <DoubleCheckIcon /> : <CheckIcon />;
+    if (m.status === 'sending') tick = <span className="aska-tick" title="отправляется">…</span>;
+    else if (m.status === 'failed') tick = <span className="aska-tick fail" title="не отправлено">!</span>;
+    else tick = <span className="aska-tick" title={read ? 'прочитано' : 'доставлено'}>{read ? '✓✓' : '✓'}</span>;
   }
 
   return (
-    <div id={`m-${m.id}`} className={`msg ${out ? 'out' : 'in'}${first ? ' first' : ''}${last ? ' last' : ''}${flash ? ' flash' : ''}`}>
-      <div className={`bubble${photoOnly ? ' photo-only' : ''}${isPhoto ? ' has-photo' : ''}${m.status === 'failed' ? ' is-failed' : ''}`} {...handlers}>
-        {name && <div className="sender">{name}</div>}
+    <div
+      id={`m-${m.id}`}
+      className={`msg ${out ? 'me' : 'them'}${grp ? ' grp' : ''}${isNew ? ' new' : ''}${flash ? ' aska-flash' : ''}${m.status === 'failed' ? ' aska-failed' : ''}`}
+      onContextMenu={(e) => { e.preventDefault(); onMenu(m); }}
+      onTouchStart={(e) => {
+        const t = e.touches[0];
+        start.current = { x: t.clientX, y: t.clientY };
+        timer.current = window.setTimeout(() => { navigator.vibrate?.(10); onMenu(m); }, 450);
+      }}
+      onTouchMove={(e) => {
+        const t = e.touches[0];
+        if (start.current && Math.hypot(t.clientX - start.current.x, t.clientY - start.current.y) > 10) cancel();
+      }}
+      onTouchEnd={cancel}
+      onTouchCancel={cancel}
+      onClick={() => { if (m.status === 'failed') onMenu(m); }}
+    >
+      <span className="hdr">
+        <span className="nk">{name}</span>{' '}
+        <span className="time"><i>(</i>{timeShort(m.createdAt)}<i>)</i></span>
+        {tick}
+        <span className="cl">:</span>
+      </span>{' '}
+      <span className="txt">
         {quote && (
-          <div className="quote" onClick={(e) => { e.stopPropagation(); onQuote(); }}>
-            <b>{quote.name}</b>
-            <span>{quote.text}</span>
-          </div>
+          <span className="aska-quote" onClick={(e) => { e.stopPropagation(); onQuote(); }}>
+            <b>{quote.name}</b>{quote.text}
+          </span>
         )}
-        {!body && <span className="text muted">🔒 Не удалось расшифровать</span>}
-        {isPhoto && <EncryptedImage image={body!.image!} local={m.localImage} onOpen={onImage} />}
-        {body?.text && <span className="text">{linkify(body.text)}</span>}
-        {!photoOnly && <span className={`meta-spacer${out ? ' out' : ''}`} />}
-        <span className="meta">{timeShort(m.createdAt)}{status}</span>
-      </div>
+        {!body && <i className="muted">🔒 не удалось расшифровать</i>}
+        {body?.kind === 'image' && body.image && <EncryptedImage image={body.image} local={m.localImage} onOpen={onImage} />}
+        {body?.text && renderText(body.text)}
+      </span>
     </div>
   );
 }
@@ -104,13 +122,15 @@ export function ChatView({ chatId, onBack }: { chatId: string; onBack: () => voi
   const [reply, setReply] = useState<Msg | null>(null);
   const [menu, setMenu] = useState<Msg | null>(null);
   const [viewer, setViewer] = useState<string | null>(null);
-  const [showDown, setShowDown] = useState(false);
+  const [smilesOpen, setSmilesOpen] = useState(false);
   const [flash, setFlash] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const near = useRef(true);
   const lastCount = useRef(0);
+  const seenAtOpen = useRef<Set<string> | null>(null);
+  if (!seenAtOpen.current) seenAtOpen.current = new Set(list.map((m) => `${m.senderId}:${m.uuid}`));
 
   useEffect(() => {
     setActiveChat(chatId);
@@ -135,50 +155,36 @@ export function ChatView({ chatId, onBack }: { chatId: string; onBack: () => voi
     return () => ro.disconnect();
   }, []);
 
-  useLayoutEffect(() => {
-    const t = inputRef.current;
-    if (!t) return;
-    t.style.height = 'auto';
-    t.style.height = `${Math.min(t.scrollHeight, 140)}px`;
-  }, [text]);
-
   const byId = useMemo(() => new Map(list.map((m) => [m.id, m])), [list]);
-
-  if (!chat) {
-    return (
-      <div className="screen">
-        <header className="header"><div className="header-row">
-          <button className="icon-btn" onClick={onBack} aria-label="Назад"><BackIcon /></button>
-          <div className="header-title">Чат</div><div className="icon-btn" />
-        </div></header>
-        <div className="scroll"><p className="empty-hint">Чат не найден.</p></div>
-      </div>
-    );
-  }
+  if (!chat) return null;
 
   const others = chat.members.filter((m) => m.userId !== me);
   const peer = chat.kind === 'dm' ? dmPeer(chat, s) : undefined;
+  const title = chatTitle(chat, s);
+  const peerOnline = peer ? !!s.presence[peer.id] : false;
+  const onlineCount = others.filter((m) => s.presence[m.userId]).length;
+  const icon = chat.kind === 'dm' ? flower(peerOnline ? 'online' : 'offline', 14) : flower('chat', 14);
   const changed = chat.members.map((m) => s.users[m.userId]).filter((u) => u?.keyChanged);
-  const subtitle = chat.kind === 'dm'
-    ? (peer ? `@${peer.username}` : '')
-    : `${chat.members.length} ${plural(chat.members.length, 'участник', 'участника', 'участников')}`;
-  const otherUnread = Object.keys(s.chats).filter((id) => id !== chatId).reduce((n, id) => n + unreadIn(id, s), 0);
+  const statusHint = !s.connected ? 'нет связи, переподключаюсь…'
+    : chat.kind === 'dm' ? (peerOnline ? 'в сети' : 'не в сети')
+      : `${chat.members.length} ${plural(chat.members.length, 'участник', 'участника', 'участников')}, в сети ${onlineCount}`;
+  const nameOf = (id: number) => (id === me ? (s.users[me]?.displayName || 'Я') : s.users[id]?.displayName || '?');
 
   function onScroll() {
     const el = scrollRef.current!;
-    const isNear = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
-    near.current = isNear;
-    setShowDown(!isNear);
+    near.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
   }
 
   function submit() {
     const t = text.trim();
     if (!t) return;
     setText('');
+    setSmilesOpen(false);
     const r = reply?.id;
     setReply(null);
     near.current = true;
     inputRef.current?.focus();
+    play('sent');
     sendText(chatId, t, r);
   }
 
@@ -196,8 +202,14 @@ export function ChatView({ chatId, onBack }: { chatId: string; onBack: () => voi
     setReply(null);
     near.current = true;
     for (const f of files) {
-      try { await sendImage(chatId, f, r); } catch (err) { console.error(err); }
+      try { await sendImage(chatId, f, r); play('sent'); } catch (err) { console.error(err); }
     }
+  }
+
+  function addSmile(code: string, id: string) {
+    playSmile(id);
+    setText((t) => (t && !/\s$/.test(t) ? `${t} ${code} ` : `${t}${code} `));
+    inputRef.current?.focus();
   }
 
   function jumpTo(id: number) {
@@ -208,31 +220,28 @@ export function ChatView({ chatId, onBack }: { chatId: string; onBack: () => voi
     setTimeout(() => setFlash(null), 1200);
   }
 
-  const nameOf = (id: number) => (id === me ? 'Вы' : s.users[id]?.displayName || '?');
-
   const items: ReactNode[] = [];
   let prevDay = 0;
   list.forEach((m, i) => {
     const day = dayKey(m.createdAt);
     if (day !== prevDay) {
-      items.push(<div className="day" key={`d${day}`}><span>{dayLabel(m.createdAt)}</span></div>);
+      items.push(<div className="day" key={`d${day}`}>{dayLabel(m.createdAt)}</div>);
       prevDay = day;
     }
     const prev = list[i - 1];
-    const next = list[i + 1];
-    const first = !prev || prev.senderId !== m.senderId || m.createdAt - prev.createdAt > GROUP_GAP || dayKey(prev.createdAt) !== day;
-    const last = !next || next.senderId !== m.senderId || next.createdAt - m.createdAt > GROUP_GAP || dayKey(next.createdAt) !== day;
+    const grp = !!prev && prev.senderId === m.senderId && m.createdAt - prev.createdAt <= GROUP_GAP && dayKey(prev.createdAt) === day;
     const out = m.senderId === me;
     const replyId = m.body?.reply;
     const quoted = replyId ? byId.get(replyId) : undefined;
+    const key = `${m.senderId}:${m.uuid}`;
     items.push(
-      <Bubble
-        key={`${m.senderId}:${m.uuid}`}
+      <Line
+        key={key}
         m={m}
         out={out}
-        first={first}
-        last={last}
-        name={chat.kind !== 'dm' && !out && first ? s.users[m.senderId]?.displayName || '?' : undefined}
+        grp={grp}
+        isNew={!seenAtOpen.current!.has(key)}
+        name={nameOf(m.senderId)}
         quote={replyId ? { name: quoted ? nameOf(quoted.senderId) : '', text: msgPreview(quoted) } : null}
         read={out && !m.status && others.some((o) => o.readUpTo >= m.id)}
         flash={flash === m.id}
@@ -243,90 +252,84 @@ export function ChatView({ chatId, onBack }: { chatId: string; onBack: () => voi
     );
   });
 
-  const actions: SheetAction[] = [];
+  const menuButtons: ReactNode[] = [];
   if (menu) {
+    const close = () => setMenu(null);
     if (menu.status === 'failed') {
-      actions.push({ label: 'Отправить ещё раз', run: () => retrySend(menu.uuid) });
-      actions.push({ label: 'Удалить', danger: true, run: () => discardFailed(menu.uuid, chatId) });
+      menuButtons.push(<button key="r" className="btn primary" onClick={() => { close(); retrySend(menu.uuid); }}>Отправить ещё раз</button>);
+      menuButtons.push(<button key="d" className="btn" onClick={() => { close(); discardFailed(menu.uuid, chatId); }}>Удалить</button>);
     } else if (!menu.status) {
-      actions.push({ label: 'Ответить', run: () => { setReply(menu); inputRef.current?.focus(); } });
+      menuButtons.push(<button key="a" className="btn primary" onClick={() => { close(); setReply(menu); inputRef.current?.focus(); }}>Ответить</button>);
     }
     const t = menu.body?.text;
-    if (t) actions.push({ label: 'Скопировать текст', run: () => { navigator.clipboard?.writeText(t).catch(() => {}); } });
+    if (t) menuButtons.push(<button key="c" className="btn" onClick={() => { close(); navigator.clipboard?.writeText(t).catch(() => {}); }}>Скопировать</button>);
+    menuButtons.push(<button key="x" className="btn" onClick={close}>Отмена</button>);
   }
 
   return (
-    <div className="screen chat-screen">
-      <header className="header">
-        <div className="header-row">
-          <button className="icon-btn back-btn" onClick={onBack} aria-label="Назад">
-            <BackIcon />
-            {otherUnread > 0 && <span className="back-badge">{otherUnread}</span>}
-          </button>
-          <div className="header-center">
-            <div className="header-title">{chatTitle(chat, s)}</div>
-            <div className="header-sub">{s.online ? subtitle : 'Подключение…'}</div>
-          </div>
-          <div className="header-avatar">
-            {chat.kind === 'dm' ? <Avatar name={peer?.displayName} id={peer?.id} size={36} /> : <Avatar group size={36} />}
-          </div>
-        </div>
-      </header>
-
+    <Win id="chatwin" className="chat" title={<>{title} <small>— беседа</small></>} icon={icon}
+      onBack={onBack} onClose={onBack} closeClass="close-chat">
+      <div className="chat-head">
+        <Ico html={icon.replace('width="14" height="14"', 'width="16" height="16"')} />
+        <span className="nick">{title}</span>
+        <span className="muted">{peer ? `@${peer.username}` : ''}</span>
+        <span className="sp" />
+        <span className="hint">{statusHint}</span>
+      </div>
       {changed.length > 0 && (
-        <div className="warn">
-          Ключ шифрования у {changed.map((u) => u!.displayName).join(', ')} изменился. Возможно, кто-то пытается подменить переписку.
+        <div className="err aska-warn">
+          ⚠ Ключ шифрования у {changed.map((u) => u!.displayName).join(', ')} изменился — возможно, кто-то пытается подменить переписку.
           Сверь коды безопасности в настройках. Пока сообщения шифруются старым ключом.
         </div>
       )}
-
-      <div className="scroll messages" ref={scrollRef} onScroll={onScroll}>
+      <div className="history inset" ref={scrollRef} onScroll={onScroll}>
         {!list.length && (
-          <div className="chat-empty">
-            <LockIcon size={22} />
-            <p>Сообщения защищены сквозным шифрованием. Их видят только участники чата.</p>
-          </div>
+          <div className="msg aska-sys"><span className="sys">Сообщения защищены сквозным шифрованием: их видят только участники беседы.</span></div>
         )}
         {items}
       </div>
-
-      {showDown && (
-        <button className="down-btn" onClick={() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })} aria-label="Вниз">
-          <DownIcon />
-        </button>
-      )}
-
-      {reply && (
-        <div className="reply-bar">
-          <ReplyIcon />
-          <div className="reply-bar-main">
-            <b>{nameOf(reply.senderId)}</b>
-            <span>{msgPreview(reply)}</span>
+      <div className="compose">
+        {reply && (
+          <div className="aska-reply">
+            <span className="t"><b>Ответ: {nameOf(reply.senderId)}</b><span>{msgPreview(reply)}</span></span>
+            <button className="tbtn" onClick={() => setReply(null)} aria-label="Отменить ответ">×</button>
           </div>
-          <button className="icon-btn small" onClick={() => setReply(null)} aria-label="Отменить ответ"><CloseIcon size={18} /></button>
-        </div>
-      )}
-      <div className="composer">
-        <button className="icon-btn attach" onClick={() => fileRef.current?.click()} aria-label="Фото"><PhotoIcon /></button>
-        <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={onFiles} />
+        )}
         <textarea
           ref={inputRef}
-          rows={1}
+          className="field"
+          rows={2}
+          maxLength={20000}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="Сообщение"
-          enterKeyHint={isTouch ? 'enter' : 'send'}
+          placeholder={isTouch ? 'Напиши что-нибудь…' : 'Напиши что-нибудь… Enter — отправить'}
         />
-        <button className="send-btn" disabled={!text.trim()} onMouseDown={(e) => e.preventDefault()} onClick={submit} aria-label="Отправить">
-          <SendIcon />
-        </button>
+        <div className="send-row">
+          <button className="btn icon" onClick={() => setSmilesOpen((v) => !v)} title="Смайлы" aria-label="Смайлы">
+            <Svg html={smileSvg('smile', 18) || '☺'} />
+          </button>
+          <button className="btn icon" onClick={() => fileRef.current?.click()} title="Фото" aria-label="Фото">📷</button>
+          <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={onFiles} />
+          <span className="hint">{!s.connected ? 'нет связи' : ''}</span>
+          <button className="btn primary" disabled={!text.trim()} onMouseDown={(e) => e.preventDefault()} onClick={submit}>Отправить</button>
+        </div>
       </div>
-
+      {smilesOpen && (
+        <div className="smiles">
+          {smiles().slice(0, 24).map((sm) => (
+            <button key={sm.id} title={`${sm.codes[0]} — ${sm.name}`} onMouseDown={(e) => e.preventDefault()}
+              onClick={() => addSmile(sm.codes[0], sm.id)} dangerouslySetInnerHTML={{ __html: smileSvg(sm.id, 20) }} />
+          ))}
+          <div className="cap">нажми — смайл вставится и скажет своё</div>
+        </div>
+      )}
       {menu && (
-        <Sheet title={<span className="sheet-quote">{msgPreview(menu)}</span>} actions={actions} onClose={() => setMenu(null)} />
+        <Dialog title="Сообщение" onClose={() => setMenu(null)} buttons={<div className="aska-menu">{menuButtons}</div>}>
+          <div className="aska-menu-preview">{msgPreview(menu)}</div>
+        </Dialog>
       )}
       {viewer && <ImageViewer url={viewer} onClose={() => setViewer(null)} />}
-    </div>
+    </Win>
   );
 }

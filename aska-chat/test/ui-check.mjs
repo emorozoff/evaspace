@@ -1,13 +1,14 @@
-// Прогон интерфейса в невидимом Chrome с экраном iPhone: два друга регистрируются и переписываются.
-// Запуск: BASE=http://localhost:8090 INVITE=XXXX-XXXX OUT=/папка/для/скриншотов node test/ui-check.mjs
+// Прогон интерфейса в невидимом Chrome с экраном iPhone: два друга (один в «Зумере», другой в «Миллениале»)
+// регистрируются по приглашениям, переписываются, шлют фото, отвечают, пишут лично, входят с нового телефона.
+// Запуск: BASE=http://localhost:8091 INVITE=XXXX-XXXX OUT=/папка/для/скриншотов node test/ui-check.mjs
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const BASE = process.env.BASE || 'http://localhost:8090';
+const BASE = process.env.BASE || 'http://localhost:8091';
 const OUT = process.env.OUT || 'ui-shots';
 const INVITE = process.env.INVITE;
-const PHOTO = process.env.PHOTO || 'client/public/icons/icon-512.png';
+const PHOTO = process.env.PHOTO || 'client/public/aska/icons/icon-512.png';
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -15,209 +16,180 @@ const IPHONE = {
   userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
   viewport: { width: 393, height: 852, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
 };
-
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (...a) => console.log('•', ...a);
 let shot = 0;
 async function snap(page, name) {
   const file = path.join(OUT, `${String(++shot).padStart(2, '0')}-${name}.png`);
-  await sleep(250);
+  await sleep(350);
   await page.screenshot({ path: file });
-  log('скрин', file);
+  log('скрин', path.basename(file));
 }
-
 async function clickText(page, text, selector = 'button') {
   const ok = await page.evaluate((text, selector) => {
-    const el = [...document.querySelectorAll(selector)].find((b) => b.textContent.trim().includes(text));
+    const el = [...document.querySelectorAll(selector)].find((b) => b.textContent.trim().includes(text) && b.offsetParent);
     if (el) { el.click(); return true; }
     return false;
   }, text, selector);
-  if (!ok) throw new Error(`не нашёл кнопку «${text}»`);
+  if (!ok) throw new Error(`не нашёл «${text}» (${selector})`);
 }
+const waitText = (page, text, timeout = 15000) => page.waitForFunction((t) => document.body.innerText.includes(t), { timeout }, text);
+async function typeInto(page, selector, value) { await page.click(selector, { clickCount: 3 }); await page.type(selector, value); }
 
-async function waitText(page, text, timeout = 15000) {
-  await page.waitForFunction((t) => document.body.innerText.includes(t), { timeout }, text);
-}
-
-async function typeInto(page, selector, value) {
-  await page.click(selector, { clickCount: 3 });
-  await page.type(selector, value);
-}
-
-async function newPhone(browser, dark = false) {
+async function newPhone(browser, label) {
   const ctx = await browser.createBrowserContext();
   const page = await ctx.newPage();
   await page.emulate(IPHONE);
-  await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: dark ? 'dark' : 'light' }]);
-  page.on('pageerror', (e) => console.log('  [ошибка страницы]', e.message));
-  page.on('console', (m) => { if (m.type() === 'error') console.log('  [console]', m.text()); });
+  page.on('pageerror', (e) => console.log(`  [${label}: ошибка страницы]`, e.message));
+  page.on('console', (m) => { if (m.type() === 'error' && !/401|Failed to load resource/.test(m.text())) console.log(`  [${label}: console]`, m.text()); });
   return page;
 }
 
-async function registerFlow(page, invite, name, username, password, shots) {
+async function registerFlow(page, invite, nick, username, password, { design = 'zoomer', shots = false } = {}) {
   await page.goto(`${BASE}/#invite=${invite}`, { waitUntil: 'networkidle0' });
-  await waitText(page, 'Установи');
-  if (shots) await snap(page, 'установка');
+  await page.waitForSelector('#loginwin');
+  if (design === 'millennial') await page.click('.design-pick button[data-design="millennial"]');
+  if (shots) await snap(page, `${design}-установка`);
   await clickText(page, 'Продолжить в браузере');
-  await page.waitForSelector('input');
-  if (shots) await snap(page, 'код-приглашения');
+  await page.waitForSelector('#loginwin input.field');
   await clickText(page, 'Дальше');
-  await waitText(page, 'Знакомство');
-  await typeInto(page, 'input[autocomplete="name"]', name);
+  await page.waitForSelector('input[autocomplete="nickname"]');
+  await typeInto(page, 'input[autocomplete="nickname"]', nick);
   await typeInto(page, 'input[autocomplete="username"]', username);
   const pw = await page.$$('input[type="password"]');
   await pw[0].type(password);
   await pw[1].type(password);
-  if (shots) await snap(page, 'регистрация');
-  await clickText(page, 'Создать аккаунт');
-  await waitText(page, 'Общий чат', 20000);
+  if (shots) await snap(page, `${design}-регистрация`);
+  await clickText(page, 'Получить АСЬКУ');
+  await page.waitForSelector('#cwin', { timeout: 20000 });
 }
 
 async function openChat(page, title) {
+  await page.waitForFunction((t) => [...document.querySelectorAll('#cwin .citem .nick')].some((n) => n.textContent.replace(' ⚠', '') === t), { timeout: 10000 }, title);
   await page.evaluate((t) => {
-    const row = [...document.querySelectorAll('.chat-row')].find((r) => r.querySelector('.chat-name')?.textContent === t);
-    row.click();
+    const it = [...document.querySelectorAll('#cwin .citem')].find((r) => r.querySelector('.nick')?.textContent.replace(' ⚠', '') === t);
+    it.click();
   }, title);
-  await page.waitForSelector('.composer textarea');
+  await page.waitForSelector('#chatwin .compose textarea');
 }
-
 async function send(page, text) {
-  await page.type('.composer textarea', text);
-  await page.click('.send-btn');
-  await page.waitForFunction((t) => [...document.querySelectorAll('.msg.out .text')].some((e) => e.textContent === t), {}, text);
+  await page.type('#chatwin .compose textarea', text);
+  await clickText(page, 'Отправить', '#chatwin .send-row button');
+  const probe = text.split(' :')[0]; // смайлы вроде :) превращаются в картинки
+  await page.waitForFunction((t) => [...document.querySelectorAll('#chatwin .msg.me .txt')].some((e) => e.textContent.includes(t)), {}, probe);
+}
+async function backToList(page) {
+  // нажимаем напрямую: сверху может висеть всплывашка о новом сообщении (по ней открывается та беседа)
+  await page.evaluate(() => document.querySelector('#chatwin .tbtn.back').click());
+  await page.waitForFunction(() => !document.querySelector('#chatwin'));
 }
 
-async function back(page) {
-  await page.click('.header .icon-btn');
-  await page.waitForSelector('.chat-row, .profile, .person-row');
-}
-
-const browser = await puppeteer.launch({
-  executablePath: CHROME,
-  headless: true,
-  args: ['--no-first-run', '--no-default-browser-check', '--lang=ru-RU'],
-});
-
+const browser = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ['--no-first-run', '--no-default-browser-check', '--lang=ru-RU'] });
 try {
-  // 1. Алиса по первому приглашению
-  const alice = await newPhone(browser);
-  await registerFlow(alice, INVITE, 'Алиса', 'alice', 'пароль алисы 1', true);
-  await snap(alice, 'список-чатов-алиса');
+  // 1. Алиса (Зумер)
+  const alice = await newPhone(browser, 'Алиса');
+  await registerFlow(alice, INVITE, 'Алиса', 'alice', 'пароль алисы 1', { shots: true });
+  await snap(alice, 'zoomer-контакты-пусто');
 
-  // 2. Алиса приглашает Борю
-  await alice.click('.header .icon-btn[aria-label="Настройки"]');
-  await waitText(alice, 'Мой код');
-  await clickText(alice, 'Пригласить друга');
-  await alice.waitForSelector('.invite-code');
-  const code = await alice.$eval('.invite-code', (e) => e.textContent.trim());
+  // 2. Алиса зовёт Борю
+  await clickText(alice, 'Позвать', 'nav.tabbar button');
+  await alice.waitForSelector('#auxwin .uin-box');
+  const code = await alice.$eval('#auxwin .uin-box', (e) => e.textContent.trim());
   log('приглашение для Бори', code);
-  await snap(alice, 'приглашение');
-  await clickText(alice, 'Отмена');
-  await back(alice);
+  await snap(alice, 'zoomer-позвать');
+  await clickText(alice, 'Чаты', 'nav.tabbar button');
 
-  // 3. Боря (тёмная тема) регистрируется
-  const bob = await newPhone(browser, true);
-  await registerFlow(bob, code, 'Боря Петров', 'bob', 'пароль бори 2', false);
+  // 3. Боря выбирает «Миллениал»
+  const bob = await newPhone(browser, 'Боря');
+  await registerFlow(bob, code, 'Боря_98', 'bob', 'пароль бори 2', { design: 'millennial', shots: true });
 
-  // 4. Алиса пишет в общий чат
+  // 4. Алиса видит Борю «в сети» и пишет в общий чат
+  await alice.waitForFunction(() => [...document.querySelectorAll('#cwin .citem:not(.off) .nick')].some((n) => n.textContent === 'Боря_98'), { timeout: 15000 });
+  await snap(alice, 'zoomer-контакты-боря-в-сети');
   await openChat(alice, 'Общий чат');
-  await snap(alice, 'пустой-чат');
-  await send(alice, 'Привет! Это наш мессенджер 👋');
-  await send(alice, 'Проверяем шифрование и пуши. Ссылка: https://tytproai.ru');
+  await send(alice, 'Привет! Это наша АСЬКА :)');
+  await send(alice, 'Шифрование работает. Ссылка: https://tytproai.ru');
 
-  // 5. Боря видит непрочитанные, открывает, отвечает
-  await bob.waitForFunction(() => document.querySelector('.badge')?.textContent === '2', { timeout: 10000 });
-  await snap(bob, 'боря-непрочитанные-тёмная');
+  // 5. Боря видит конвертик, открывает, отвечает и шлёт фото
+  await bob.waitForFunction(() => document.querySelector('#cwin .citem .badge')?.textContent === '2', { timeout: 10000 });
+  await snap(bob, 'millennial-контакты-конвертик');
   await openChat(bob, 'Общий чат');
-  await waitText(bob, 'Это наш мессенджер');
-  await send(bob, 'О, работает! Сейчас скину фотку');
-
-  // 6. Боря отправляет фото
-  const input = await bob.$('input[type="file"]');
+  await waitText(bob, 'Это наша АСЬКА');
+  await send(bob, 'О-оу! Работает :D');
+  const input = await bob.$('#chatwin input[type="file"]');
   await input.uploadFile(PHOTO);
-  await bob.waitForFunction(() => document.querySelector('.msg.out .photo img:not(.photo-thumb)'), { timeout: 15000 });
-  await bob.waitForFunction(() => !document.querySelector('.msg.out .meta svg circle'), { timeout: 15000 }); // часики исчезли
-  await snap(bob, 'боря-чат-тёмная');
+  await bob.waitForFunction(() => document.querySelector('#chatwin .msg.me .aska-photo img:not(.thumb)'), { timeout: 15000 });
+  await bob.waitForFunction(() => ![...document.querySelectorAll('#chatwin .msg.me .aska-tick')].some((t) => t.textContent === '…'), { timeout: 15000 });
+  await snap(bob, 'millennial-беседа');
 
-  // 7. Алиса получила фото и видит, что прочитано
-  await alice.waitForFunction(() => document.querySelector('.msg.in .photo img:not(.photo-thumb)'), { timeout: 15000 });
-  await alice.waitForFunction(() => document.querySelectorAll('.msg.out .meta svg path').length >= 4, { timeout: 10000 }); // двойные галочки
-  await snap(alice, 'алиса-чат');
+  // 6. Алиса видит фото и «прочитано»
+  await alice.waitForFunction(() => document.querySelector('#chatwin .msg.them .aska-photo img:not(.thumb)'), { timeout: 15000 });
+  await alice.waitForFunction(() => [...document.querySelectorAll('#chatwin .msg.me .aska-tick')].every((t) => t.textContent === '✓✓'), { timeout: 10000 });
+  await snap(alice, 'zoomer-беседа');
 
-  // 8. Ответ на сообщение через меню
+  // 7. Ответ через меню
   await alice.evaluate(() => {
-    const t = [...document.querySelectorAll('.msg.in .bubble')].find((b) => b.textContent.includes('работает'));
+    const t = [...document.querySelectorAll('#chatwin .msg.them')].find((b) => b.textContent.includes('Работает'));
     t.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
   });
-  await alice.waitForSelector('.sheet');
-  await snap(alice, 'меню-сообщения');
-  await clickText(alice, 'Ответить', '.sheet-btn');
-  await alice.waitForSelector('.reply-bar');
-  await send(alice, 'Классная фотка!');
-  await alice.waitForSelector('.msg.out .quote');
-  await snap(alice, 'ответ-с-цитатой');
+  await alice.waitForSelector('.overlay .win.dialog');
+  await snap(alice, 'zoomer-меню-сообщения');
+  await clickText(alice, 'Ответить', '.overlay button');
+  await alice.waitForSelector('#chatwin .aska-reply');
+  await send(alice, 'Классное фото!');
+  await alice.waitForSelector('#chatwin .msg.me .aska-quote');
+  await snap(alice, 'zoomer-ответ');
 
-  // 9. Открыть фото на весь экран
-  await alice.click('.msg.in .photo');
-  await alice.waitForSelector('.viewer');
-  await snap(alice, 'фото-на-весь-экран');
-  await alice.click('.viewer');
+  // 8. Боря пишет Алисе лично
+  await backToList(bob);
+  await openChat(bob, 'Алиса');
+  await send(bob, 'Это личное, видишь только ты');
+  await backToList(alice);
+  await alice.waitForFunction(() => [...document.querySelectorAll('#cwin .citem')].some((r) => r.textContent.includes('Боря_98') && r.querySelector('.badge')), { timeout: 10000 });
+  await snap(alice, 'zoomer-контакты-личное');
+  await snap(bob, 'millennial-личная-беседа');
 
-  // 10. Боря пишет Алисе лично
-  await back(bob);
-  await bob.click('.header .icon-btn[aria-label="Новый чат"]');
-  await waitText(bob, 'Пригласить друга');
-  await snap(bob, 'новый-чат-тёмная');
-  await clickText(bob, 'Алиса', '.person-row');
-  await bob.waitForSelector('.composer textarea');
-  await send(bob, 'Это личное сообщение, его видишь только ты');
-  await back(alice);
-  await alice.waitForFunction(() => [...document.querySelectorAll('.chat-name')].some((e) => e.textContent === 'Боря Петров'), { timeout: 10000 });
-  await snap(alice, 'список-с-личным-чатом');
+  // 9. Коды безопасности
+  await clickText(alice, 'Ещё', 'nav.tabbar button');
+  await alice.waitForFunction(() => document.querySelector('.aska-codes .row .code')?.textContent.trim().length > 0);
+  await snap(alice, 'zoomer-настройки');
+  const aliceSeesBob = await alice.evaluate(() => [...document.querySelectorAll('.aska-codes .row')].find((r) => r.textContent.includes('Боря_98'))?.querySelector('.code')?.textContent);
+  await backToList(bob);
+  await clickText(bob, 'Ещё', 'nav.tabbar button');
+  await bob.waitForFunction(() => document.querySelector('.aska-codes .row .code')?.textContent.trim().length > 0);
+  const bobOwn = await bob.evaluate(() => document.querySelector('.aska-codes .row .code')?.textContent);
+  await snap(bob, 'millennial-настройки');
+  log('код Бори у Алисы:', aliceSeesBob, '| у самого Бори:', bobOwn, aliceSeesBob === bobOwn ? '— совпадают ✓' : '— НЕ СОВПАДАЮТ ✗');
 
-  // 11. Настройки с кодами безопасности
-  await alice.click('.header .icon-btn[aria-label="Настройки"]');
-  await alice.waitForFunction(() => document.querySelector('.row.column .code')?.textContent.trim().length > 0);
-  await snap(alice, 'настройки');
-  const aliceSeesBob = await alice.evaluate(() => [...document.querySelectorAll('.row.column')].find((r) => r.textContent.includes('Боря'))?.querySelector('.code')?.textContent);
-  await bob.click('.header .icon-btn');
-  await bob.click('.header .icon-btn[aria-label="Настройки"]');
-  await bob.waitForFunction(() => document.querySelector('.row.column .code')?.textContent.trim().length > 0);
-  const bobOwn = await bob.evaluate(() => document.querySelector('.row.column .code')?.textContent);
-  log('код Бори у Алисы:', aliceSeesBob, '| свой код у Бори:', bobOwn, aliceSeesBob === bobOwn ? '— совпадают ✓' : '— НЕ СОВПАДАЮТ ✗');
-
-  // 12. Боря «потерял телефон»: вход на новом устройстве по паролю, история на месте
-  const bob2 = await newPhone(browser);
+  // 10. Боря на новом телефоне: история на месте
+  const bob2 = await newPhone(browser, 'Боря-2');
   await bob2.goto(BASE, { waitUntil: 'networkidle0' });
   await clickText(bob2, 'Продолжить в браузере');
-  await clickText(bob2, 'У меня уже есть аккаунт');
-  await waitText(bob2, 'Вход');
+  await clickText(bob2, 'Уже есть АСЬКА');
   await typeInto(bob2, 'input[autocomplete="username"]', 'bob');
   await bob2.type('input[type="password"]', 'пароль бори 2');
-  await snap(bob2, 'вход-новый-телефон');
   await clickText(bob2, 'Войти');
-  await waitText(bob2, 'Общий чат', 20000);
+  await bob2.waitForSelector('#cwin', { timeout: 20000 });
   await openChat(bob2, 'Общий чат');
-  await waitText(bob2, 'Классная фотка!');
-  await bob2.waitForFunction(() => document.querySelector('.photo img:not(.photo-thumb)'), { timeout: 15000 });
-  await snap(bob2, 'история-восстановлена');
+  await waitText(bob2, 'Классное фото!');
+  await bob2.waitForFunction(() => document.querySelector('#chatwin .aska-photo img:not(.thumb)'), { timeout: 15000 });
+  await snap(bob2, 'zoomer-история-на-новом-телефоне');
 
-  // 13. Неверный пароль
-  const eve = await newPhone(browser);
+  // 11. Неверный пароль
+  const eve = await newPhone(browser, 'Ева');
   await eve.goto(BASE, { waitUntil: 'networkidle0' });
   await clickText(eve, 'Продолжить в браузере');
-  await clickText(eve, 'У меня уже есть аккаунт');
+  await clickText(eve, 'Уже есть АСЬКА');
   await typeInto(eve, 'input[autocomplete="username"]', 'bob');
   await eve.type('input[type="password"]', 'не тот пароль');
   await clickText(eve, 'Войти');
   await waitText(eve, 'Неверный логин или пароль', 20000);
   log('неверный пароль отклонён ✓');
-
   log('ГОТОВО');
 } catch (e) {
   console.error('ОШИБКА:', e.message);
   for (const p of await browser.pages()) {
-    try { await p.screenshot({ path: path.join(OUT, `fail-${Date.now()}.png`) }); } catch { /* пусто */ }
+    try { await p.screenshot({ path: path.join(OUT, `fail-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.png`) }); } catch { /* пусто */ }
   }
   process.exitCode = 1;
 } finally {

@@ -1,18 +1,19 @@
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import { start } from './lib/store.ts';
+import { applyDesign, getDesign, unlockSoundOnFirstTouch } from './lib/aska.ts';
 import './styles.css';
 
-// На iPhone клавиатура уменьшает видимую область — подгоняем приложение под неё.
+applyDesign(getDesign());
+unlockSoundOnFirstTouch();
+
+// На iPhone клавиатура уменьшает видимую область — стили «Аськи» берут высоту из --vvh.
 function fitViewport() {
   const vv = window.visualViewport;
-  const root = document.documentElement;
-  root.style.setProperty('--vvh', `${vv ? vv.height : window.innerHeight}px`);
-  root.style.setProperty('--vvtop', `${vv ? vv.offsetTop : 0}px`);
-  root.classList.toggle('kb-open', !!vv && window.innerHeight - vv.height > 120);
+  document.documentElement.style.setProperty('--vvh', `${Math.round(vv ? vv.height : window.innerHeight)}px`);
 }
 window.visualViewport?.addEventListener('resize', fitViewport);
-window.visualViewport?.addEventListener('scroll', fitViewport);
+window.visualViewport?.addEventListener('scroll', () => window.scrollTo(0, 0));
 window.addEventListener('resize', fitViewport);
 fitViewport();
 

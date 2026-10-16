@@ -6,8 +6,8 @@ import { kvGet } from './lib/db.ts';
 
 declare const self: ServiceWorkerGlobalScope;
 
-const CACHE = 'svoi-v1';
-const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/apple-touch-icon.png'];
+const CACHE = 'aska-v1';
+const SHELL = ['/', '/manifest.webmanifest', '/aska/icons/icon-192.png', '/aska/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -37,6 +37,17 @@ self.addEventListener('fetch', (event) => {
     })());
     return;
   }
+  // Дизайн «Аськи» (/aska/…) меняется без смены имени файла: показываем сохранённый и тут же обновляем.
+  if (url.pathname.startsWith('/aska/')) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      const hit = await cache.match(event.request);
+      const fresh = fetch(event.request).then((res) => { if (res.ok) cache.put(event.request, res.clone()); return res; });
+      if (hit) { event.waitUntil(fresh.catch(() => {})); return hit; }
+      return fresh;
+    })());
+    return;
+  }
   if (url.pathname.startsWith('/assets/') || SHELL.includes(url.pathname)) {
     event.respondWith((async () => {
       const hit = await caches.match(event.request);
@@ -59,7 +70,7 @@ self.addEventListener('push', (event) => {
     } catch { /* показываем общее уведомление: iPhone требует показать что-то на каждый пуш */ }
     await self.registration.showNotification(n.title, {
       body: n.body,
-      icon: '/icons/icon-192.png',
+      icon: '/aska/icons/icon-192.png',
       data: { chatId: data.c },
     });
     const nav = self.navigator as WorkerNavigator & { setAppBadge?: (n: number) => Promise<void>; clearAppBadge?: () => Promise<void> };

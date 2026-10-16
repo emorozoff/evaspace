@@ -1,27 +1,34 @@
 import { useEffect, useState } from 'react';
 import { useStore } from './useStore.ts';
+import { onIncoming, activeChatId, unreadIn, store } from './lib/store.ts';
+import type { Msg } from './lib/store.ts';
+import { previewText } from './lib/protocol.ts';
+import { play, envelope } from './lib/aska.ts';
 import { Welcome } from './components/Welcome.tsx';
-import { ChatList } from './components/ChatList.tsx';
+import { Contacts } from './components/Contacts.tsx';
 import { ChatView } from './components/ChatView.tsx';
-import { NewChat } from './components/NewChat.tsx';
-import { Settings } from './components/Settings.tsx';
+import { Aux } from './components/Aux.tsx';
+import type { AuxKind } from './components/Aux.tsx';
+import { Svg } from './components/Win.tsx';
 
-type Route = { name: 'list' } | { name: 'chat'; chatId: string } | { name: 'settings' } | { name: 'new' };
-
-function routeFromHash(): Route {
+function chatFromHash(): string | null {
   const m = location.hash.match(/chat=([^&]+)/);
-  return m ? { name: 'chat', chatId: decodeURIComponent(m[1]) } : { name: 'list' };
+  return m ? decodeURIComponent(m[1]) : null;
 }
+
+interface Toast { chatId: string; name: string; text: string }
 
 export default function App() {
   const s = useStore();
-  const [route, setRoute] = useState<Route>(routeFromHash);
+  const [chat, setChat] = useState<string | null>(chatFromHash);
+  const [aux, setAux] = useState<AuxKind | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
 
   useEffect(() => {
     if (location.hash.includes('chat=')) history.replaceState(null, '', location.pathname);
     // Нажали на уведомление, а приложение уже открыто.
     const onMessage = (e: MessageEvent) => {
-      if (e.data?.type === 'open-chat' && typeof e.data.chatId === 'string') setRoute({ name: 'chat', chatId: e.data.chatId });
+      if (e.data?.type === 'open-chat' && typeof e.data.chatId === 'string') { setAux(null); setChat(e.data.chatId); }
     };
     navigator.serviceWorker?.addEventListener('message', onMessage);
     return () => navigator.serviceWorker?.removeEventListener('message', onMessage);
@@ -31,20 +38,56 @@ export default function App() {
     if (s.phase === 'ready' && location.hash.includes('invite=')) history.replaceState(null, '', location.pathname);
   }, [s.phase]);
 
-  if (s.phase === 'loading') return <div className="screen splash" />;
+  // «О-оу!» и всплывашка, когда пишут в другую беседу.
+  useEffect(() => {
+    let hideTimer: ReturnType<typeof setTimeout> | undefined;
+    const off = onIncoming((m: Msg) => {
+      if (document.visibilityState !== 'visible') return;
+      play('incoming');
+      if (activeChatId() === m.chatId) return;
+      const st = store.get();
+      const c = st.chats[m.chatId];
+      const sender = st.users[m.senderId]?.displayName || 'Кто-то';
+      const text = m.body ? previewText(m.body) : 'новое сообщение';
+      setToast({ chatId: m.chatId, name: c?.kind === 'dm' || !c ? sender : `${sender} · ${c.title || 'Общий чат'}`, text });
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => setToast(null), 5000);
+    });
+    return () => { off(); clearTimeout(hideTimer); };
+  }, []);
+
+  if (s.phase === 'loading') return <div className="desktop" />;
   if (s.phase === 'welcome') return <Welcome />;
 
-  const toList = () => setRoute({ name: 'list' });
-  const openChat = (chatId: string) => setRoute({ name: 'chat', chatId });
+  const openChat = (id: string) => { setAux(null); setChat(id); setToast(null); };
+  const unread = Object.keys(s.chats).reduce((n, id) => n + unreadIn(id, s), 0);
+  const chatOpen = chat && s.chats[chat] ? chat : null;
+  const cls = ['desktop', chatOpen && 'mode-chat', aux && 'mode-aux', aux && 'focus-aux'].filter(Boolean).join(' ');
 
-  switch (route.name) {
-    case 'chat':
-      return <ChatView key={route.chatId} chatId={route.chatId} onBack={toList} />;
-    case 'settings':
-      return <Settings onBack={toList} />;
-    case 'new':
-      return <NewChat onBack={toList} onOpen={openChat} />;
-    default:
-      return <ChatList onOpen={openChat} onSettings={() => setRoute({ name: 'settings' })} onNew={() => setRoute({ name: 'new' })} />;
-  }
+  return (
+    <div className={cls}>
+      <div className="wins">
+        <Contacts activeChat={chatOpen} onOpen={openChat} onSettings={() => setAux('settings')} onInvite={() => setAux('invite')} />
+        {aux && <Aux kind={aux} onBack={() => setAux(null)} />}
+        {chatOpen && <ChatView key={chatOpen} chatId={chatOpen} onBack={() => setChat(null)} />}
+      </div>
+      {toast && (
+        <div className="toast" onClick={() => openChat(toast.chatId)}>
+          <Svg html={envelope(22)} />
+          <div className="t"><b>{toast.name}</b><div>{toast.text}</div></div>
+        </div>
+      )}
+      <nav className="tabbar">
+        <button className={!aux ? 'on' : ''} onClick={() => { setAux(null); setChat(null); }}>
+          <i>💬</i><span>Чаты</span>{unread > 0 && <b className="tb-badge">{unread}</b>}
+        </button>
+        <button className={aux === 'invite' ? 'on' : ''} onClick={() => setAux('invite')}>
+          <i>➕</i><span>Позвать</span>
+        </button>
+        <button className={aux === 'settings' ? 'on' : ''} onClick={() => setAux('settings')}>
+          <i>☰</i><span>Ещё</span>
+        </button>
+      </nav>
+    </div>
+  );
 }

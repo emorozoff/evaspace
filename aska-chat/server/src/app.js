@@ -141,6 +141,22 @@ export function createApp({ dataDir, staticDir, publicUrl, pushSender, trustProx
     for (const ws of set) if (ws.readyState === 1) ws.send(data);
   }
   const sendToAll = (obj) => { for (const id of conns.keys()) sendTo(id, obj); };
+
+  // «В сети» — у человека открыто приложение. После закрытия ждём немного: телефон мог просто переподключиться.
+  const offlineTimers = new Map(); // userId -> timer
+  const OFFLINE_DELAY = 8000;
+  const onlineIds = () => [...new Set([...conns.keys(), ...offlineTimers.keys()])];
+  function wentOnline(userId) {
+    const t = offlineTimers.get(userId);
+    if (t) { clearTimeout(t); offlineTimers.delete(userId); return; }
+    sendToAll({ type: 'presence', userId, online: true });
+  }
+  function wentOffline(userId) {
+    offlineTimers.set(userId, setTimeout(() => {
+      offlineTimers.delete(userId);
+      if (!conns.has(userId)) sendToAll({ type: 'presence', userId, online: false });
+    }, OFFLINE_DELAY));
+  }
   function isVisible(userId) {
     const set = conns.get(userId);
     if (!set) return false;
@@ -266,7 +282,7 @@ export function createApp({ dataDir, staticDir, publicUrl, pushSender, trustProx
     const users = db.prepare('SELECT * FROM users ORDER BY id').all().map(publicUser);
     const chats = db.prepare('SELECT chat_id FROM chat_members WHERE user_id = ?').all(req.userId)
       .map((r) => chatView(r.chat_id));
-    res.json({ me: req.userId, users, chats, vapidPublicKey: push.publicKey, badge: unreadCount(req.userId) });
+    res.json({ me: req.userId, users, chats, vapidPublicKey: push.publicKey, badge: unreadCount(req.userId), online: onlineIds() });
   });
 
   api.get('/sync', auth, (req, res) => {
@@ -446,8 +462,10 @@ export function createApp({ dataDir, staticDir, publicUrl, pushSender, trustProx
       const userId = session.user_id;
       ws.visible = url.searchParams.get('visible') !== '0';
       ws.isAlive = true;
-      if (!conns.has(userId)) conns.set(userId, new Set());
+      const first = !conns.has(userId);
+      if (first) conns.set(userId, new Set());
       conns.get(userId).add(ws);
+      if (first) wentOnline(userId);
       ws.on('pong', () => { ws.isAlive = true; });
       ws.on('message', (raw) => {
         let msg;
@@ -457,7 +475,7 @@ export function createApp({ dataDir, staticDir, publicUrl, pushSender, trustProx
       });
       ws.on('close', () => {
         const set = conns.get(userId);
-        if (set) { set.delete(ws); if (!set.size) conns.delete(userId); }
+        if (set) { set.delete(ws); if (!set.size) { conns.delete(userId); wentOffline(userId); } }
       });
       ws.send(JSON.stringify({ type: 'hello' }));
     });
@@ -474,6 +492,7 @@ export function createApp({ dataDir, staticDir, publicUrl, pushSender, trustProx
 
   function close() {
     clearInterval(heartbeat);
+    for (const t of offlineTimers.values()) clearTimeout(t);
     for (const ws of wss.clients) ws.terminate();
     return new Promise((resolve) => server.close(() => { db.close(); resolve(); }));
   }

@@ -169,6 +169,21 @@ test('сообщение в общий чат: доставка, расшифр�
   carolWs.close();
 });
 
+test('кто в сети: видно в состоянии и приходит событием', async () => {
+  const aliceWs = await connect(U.alice.token, true);
+  const before = await call('GET', '/api/state', { token: U.alice.token });
+  assert.ok(before.data.online.includes(U.alice.userId));
+  // Новый человек заходит — Алисе приходит событие «в сети»
+  const inv = await call('POST', '/api/invites', { token: U.alice.token });
+  const dan = await register(inv.data.code, 'dan', 'Даня', 'пароль дани 4');
+  const danWs = await connect(dan.data.token, true);
+  await waitFor(() => aliceWs.inbox.find((e) => e.type === 'presence' && e.userId === dan.data.userId && e.online));
+  const st = await call('GET', '/api/state', { token: U.alice.token });
+  assert.ok(st.data.online.includes(dan.data.userId));
+  aliceWs.close();
+  danWs.close();
+});
+
 test('сервер не может перенести сообщение в другой чат', async () => {
   const sync = await call('GET', '/api/sync?after=0', { token: U.bob.token });
   const row = sync.data.messages[0];

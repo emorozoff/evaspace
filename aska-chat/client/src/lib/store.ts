@@ -19,13 +19,14 @@ export interface State {
   users: Record<number, User>;
   chats: Record<string, Chat>;
   messages: Record<string, Msg[]>;
-  online: boolean;
+  connected: boolean;
+  presence: Record<number, boolean>;
   vapidKey: string | null;
   pushState: PushState;
 }
 
 const initial: State = {
-  phase: 'loading', me: null, users: {}, chats: {}, messages: {}, online: false, vapidKey: null, pushState: 'default',
+  phase: 'loading', me: null, users: {}, chats: {}, messages: {}, connected: false, presence: {}, vapidKey: null, pushState: 'default',
 };
 
 let state: State = initial;
@@ -33,6 +34,17 @@ const listeners = new Set<() => void>();
 function set(patch: Partial<State>) {
   state = { ...state, ...patch };
   for (const l of listeners) l();
+}
+
+// Новое входящее сообщение, пришедшее прямо сейчас (не из истории): для звука и всплывашки.
+const incomingListeners = new Set<(m: Msg) => void>();
+export function onIncoming(l: (m: Msg) => void) {
+  incomingListeners.add(l);
+  return () => { incomingListeners.delete(l); };
+}
+
+export function activeChatId() {
+  return activeChat;
 }
 
 export const store = {
@@ -153,6 +165,7 @@ interface StateResp {
   chats: Chat[];
   vapidPublicKey: string;
   badge: number;
+  online: number[];
 }
 
 let pushChecked = false;
@@ -170,7 +183,9 @@ async function loadState() {
   }
   const chats: Record<string, Chat> = {};
   for (const c of st.chats) chats[c.id] = c;
-  set({ users, chats, vapidKey: st.vapidPublicKey });
+  const presence: Record<number, boolean> = {};
+  for (const id of st.online || []) presence[id] = true;
+  set({ users, chats, vapidKey: st.vapidPublicKey, presence });
   await Promise.all([kvSet('users', users), kvSet('chats', chats)]);
   updateBadge();
   if (!pushChecked) {
@@ -197,7 +212,7 @@ async function connect() {
   connecting = false;
   sock.onopen = () => {
     retry = 0;
-    set({ online: true });
+    set({ connected: true });
     sync();
     flushPending();
   };
@@ -207,7 +222,7 @@ async function connect() {
   sock.onclose = () => {
     if (ws !== sock) return;
     ws = null;
-    set({ online: false });
+    set({ connected: false });
     scheduleReconnect();
   };
   sock.onerror = () => sock.close();
@@ -246,6 +261,7 @@ type ServerEvent =
   | { type: 'msg'; m: ServerRow }
   | { type: 'read'; chatId: string; userId: number; upTo: number }
   | { type: 'chat'; chat: Chat }
+  | { type: 'presence'; userId: number; online: boolean }
   | { type: 'user'; user: { id: number; username: string; displayName: string; boxPk: string } };
 
 function onEvent(ev: ServerEvent) {
@@ -253,8 +269,18 @@ function onEvent(ev: ServerEvent) {
     case 'pong':
       clearTimeout(pingTimer);
       break;
-    case 'msg':
-      ingest([ev.m]).then(scheduleSync);
+    case 'msg': {
+      const live = !known.has(ev.m.id) && ev.m.senderId !== state.me?.userId;
+      ingest([ev.m]).then(() => {
+        scheduleSync();
+        if (!live) return;
+        const m = (state.messages[ev.m.chatId] || []).find((x) => x.id === ev.m.id);
+        if (m) for (const l of incomingListeners) l(m);
+      });
+      break;
+    }
+    case 'presence':
+      set({ presence: { ...state.presence, [ev.userId]: ev.online } });
       break;
     case 'read': {
       const chat = state.chats[ev.chatId];
