@@ -1,0 +1,32 @@
+{
+  "name": "aska-chat",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build client && esbuild client/src/sw.ts --bundle --minify --format=iife --target=safari16 --outfile=client/dist/sw.js",
+    "start": "node server/src/index.js",
+    "invite": "node server/src/cli.js invite",
+    "test": "node --test test/*.test.js",
+    "typecheck": "tsc -p client --noEmit"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "web-push": "^3.6.7",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@noble/hashes": "^2.4.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "esbuild": "^0.28.2",
+    "idb": "^8.0.4",
+    "puppeteer-core": "^25.14.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tweetnacl": "^1.0.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}

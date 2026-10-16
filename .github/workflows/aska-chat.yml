@@ -1,0 +1,68 @@
+name: Выкладка мессенджера «АСЬКА» на сервер
+
+# Мессенджер с настоящим сервером лежит в папке aska-chat/ и работает на https://aska.tytproai.ru
+# (сервер 159.194.237.231). Дизайн берётся из папки aska/ — поэтому её изменения тоже выкладываются.
+# Порядок: проверки → сервер сам скачивает эту версию с GitHub, собирает и перезапускает.
+# Ключ выкладки (секрет ASKA_CHAT_DEPLOY_KEY) умеет только одно — попросить сервер выложить вершину ветки.
+
+on:
+  push:
+    branches:
+      - claude/pensive-davinci-tyahht
+    paths:
+      - 'aska-chat/**'
+      - 'aska/*.css'
+      - 'aska/icons/**'
+      - 'aska/sounds.js'
+      - '.github/workflows/aska-chat.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aska-chat-deploy
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Проверки
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: aska-chat
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: aska-chat/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm run build
+
+  deploy:
+    name: Выкладка на сервер
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Команда серверу
+        env:
+          KEY: ${{ secrets.ASKA_CHAT_DEPLOY_KEY }}
+        run: |
+          set -eu
+          umask 077
+          printf '%s\n' "$KEY" > key
+          echo '159.194.237.231 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOFZLjgFbciSIkSwOisTvdwarvXwa5tnvG/e0KvZeajd' > known_hosts
+          ssh -i key -o UserKnownHostsFile=known_hosts -o StrictHostKeyChecking=yes -o BatchMode=yes \
+            -o ConnectTimeout=20 root@159.194.237.231 "deploy $GITHUB_SHA"
+          rm -f key
+
+      - name: Сайт отвечает
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if v="$(curl -fsS --max-time 10 https://aska.tytproai.ru/api/health)"; then echo "$v"; exit 0; fi
+            sleep 5
+          done
+          echo "::warning::https://aska.tytproai.ru пока не отвечает снаружи (проверь адрес в Caddy)"
