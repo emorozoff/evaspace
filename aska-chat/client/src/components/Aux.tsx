@@ -1,7 +1,7 @@
 // Окно-приставка «Аськи»: настройки и приглашение друга.
 import { useEffect, useState } from 'react';
 import { useStore } from '../useStore.ts';
-import { enablePush, logout, myPublicKey, createInvite } from '../lib/store.ts';
+import { enablePush, logout, myPublicKey, createInvite, listInvites } from '../lib/store.ts';
 import { safetyCode, fromB64 } from '../lib/crypto.ts';
 import { isIOS, isStandalone } from '../lib/platform.ts';
 import { getDesign, setDesign, soundEnabled, setSoundEnabled, play, flower } from '../lib/aska.ts';
@@ -96,16 +96,43 @@ function Settings() {
 }
 
 function Invite() {
-  const [code, setCode] = useState<string | null>(null);
+  // Приглашения одноразовые: на каждого друга — своё. Показываем все свободные и даём сделать ещё.
+  const [codes, setCodes] = useState<string[] | null>(null);
+  const [current, setCurrent] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    createInvite().then((r) => setCode(r.code)).catch(() => setError('Не получилось создать приглашение. Проверь интернет.'));
+    (async () => {
+      try {
+        let list = (await listInvites()).invites.map((i) => i.code);
+        if (!list.length) list = [(await createInvite()).code];
+        setCodes(list);
+        setCurrent(list[0]);
+      } catch {
+        setError('Не получилось создать приглашение. Проверь интернет.');
+      }
+    })();
   }, []);
 
-  const link = code ? `${location.origin}/#invite=${code}` : '';
-  const text = `Привет! Зову тебя в АСЬКУ — наш мессенджер с шифрованием.\nОткрой ссылку в Safari на iPhone: ${link}\nКод приглашения: ${code}`;
+  async function more() {
+    setBusy(true);
+    setError('');
+    try {
+      const { code } = await createInvite();
+      setCodes((c) => [code, ...(c || [])]);
+      setCurrent(code);
+      setCopied(false);
+    } catch {
+      setError('Не получилось. Попробуй ещё раз чуть позже.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const link = current ? `${location.origin}/#invite=${current}` : '';
+  const text = `Привет! Зову тебя в АСЬКУ — наш мессенджер с шифрованием.\nОткрой ссылку в Safari на iPhone: ${link}\nКод приглашения: ${current}`;
 
   async function share() {
     if (navigator.share) {
@@ -119,22 +146,35 @@ function Invite() {
   }
 
   return (
-    <div className="groupbox">
-      <div className="legend">Приглашение (одноразовое)</div>
-      {error && <div className="err">{error}</div>}
-      {!code && !error && <div className="hint">Создаю приглашение…</div>}
-      {code && (
-        <div className="col">
-          <div className="uin-box">{code}</div>
-          <div className="hint">По нему зайдёт один человек. Отправь другу ссылку — в ней есть инструкция.</div>
-          <div className="aska-invite-link muted">{link}</div>
-          <div className="row mt">
-            <button className="btn" onClick={copy}>{copied ? 'Скопировано' : 'Скопировать'}</button>
-            <span className="sp" />
-            <button className="btn primary" onClick={share}>Отправить</button>
+    <>
+      <div className="groupbox">
+        <div className="legend">Приглашение для друга</div>
+        {error && <div className="err">{error}</div>}
+        {!codes && !error && <div className="hint">Создаю приглашение…</div>}
+        {current && (
+          <div className="col">
+            <div className="uin-box">{current}</div>
+            <div className="hint">Одно приглашение — для одного друга. Каждому другу отправь своё: кнопка «Ещё приглашение» ниже.</div>
+            <div className="aska-invite-link muted">{link}</div>
+            <div className="row mt">
+              <button className="btn" onClick={copy}>{copied ? 'Скопировано' : 'Скопировать'}</button>
+              <span className="sp" />
+              <button className="btn primary" onClick={share}>Отправить</button>
+            </div>
           </div>
+        )}
+      </div>
+      {codes && (
+        <div className="groupbox">
+          <div className="legend">Свободные приглашения ({codes.length})</div>
+          <div className="chips">
+            {codes.map((c) => (
+              <button key={c} className={`chip${c === current ? ' on' : ''}`} onClick={() => { setCurrent(c); setCopied(false); }}>{c}</button>
+            ))}
+          </div>
+          <div className="right mt"><button className="btn" onClick={more} disabled={busy}>{busy ? 'Создаю…' : '+ Ещё приглашение'}</button></div>
         </div>
       )}
-    </div>
+    </>
   );
 }

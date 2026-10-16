@@ -397,6 +397,12 @@ export function createApp({ dataDir, staticDir, publicUrl, pushSender, trustProx
     res.sendFile(path.join(blobDir, id));
   });
 
+  // Мои ещё не использованные приглашения — чтобы позвать нескольких друзей.
+  api.get('/invites', auth, (req, res) => {
+    const rows = db.prepare('SELECT code, created_at FROM invites WHERE created_by = ? AND used_by IS NULL ORDER BY created_at DESC LIMIT 20').all(req.userId);
+    res.json({ invites: rows.map((r) => ({ code: formatInvite(r.code), createdAt: r.created_at })) });
+  });
+
   api.post('/invites', auth, (req, res) => {
     if (!allow(`mkinv:${req.userId}`, 20, 3_600_000)) return res.status(429).json({ error: 'too_many' });
     res.json({ code: formatInvite(createInvite(db, req.userId)) });

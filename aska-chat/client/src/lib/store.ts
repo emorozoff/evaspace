@@ -541,6 +541,7 @@ export async function openDm(userId: number): Promise<string> {
 }
 
 export const createInvite = () => api.post<{ code: string }>('/invites');
+export const listInvites = () => api.get<{ invites: { code: string; createdAt: number }[] }>('/invites');
 
 export async function myPublicKey() {
   return (await kvGet('keys'))?.pk || '';

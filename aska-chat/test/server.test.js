@@ -97,6 +97,14 @@ test('регистрация по приглашениям', async () => {
   assert.equal(b.status, 200);
   U.bob = { ...b.data, kp: b.kp, password: 'пароль бори 2' };
 
+  const mine = await call('GET', '/api/invites', { token: U.alice.token });
+  assert.deepEqual(mine.data.invites, [], 'использованное приглашение не показывается');
+  const spare1 = await call('POST', '/api/invites', { token: U.alice.token });
+  const spare2 = await call('POST', '/api/invites', { token: U.alice.token });
+  const mine2 = await call('GET', '/api/invites', { token: U.alice.token });
+  assert.deepEqual(mine2.data.invites.map((i) => i.code).sort(), [spare1.data.code, spare2.data.code].sort(), 'видно все свободные');
+  assert.deepEqual((await call('GET', '/api/invites', { token: U.bob.token })).data.invites, [], 'чужие не видно');
+
   const inv2 = await call('POST', '/api/invites', { token: U.bob.token });
   const c = await register(inv2.data.code, 'carol', 'Катя', 'пароль кати 3');
   assert.equal(c.status, 200);
