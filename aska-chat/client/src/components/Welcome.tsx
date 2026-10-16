@@ -137,7 +137,7 @@ function AuthFlow({ initialInvite }: { initialInvite: string }) {
         {step === 'start' && (
           <form onSubmit={onInvite} className="form">
             <h1>АСЬКА</h1>
-            <p className="lead">Мессенджер для своих. Переписку видят только участники — даже сервер не может её прочитать.</p>
+            <p className="lead">АСЬКА для друзей. Переписку видят только участники — даже сервер не может её прочитать.</p>
             <label className="field">
               <span>Код приглашения</span>
               <input value={invite} onChange={(e) => setInvite(e.target.value.toUpperCase())} placeholder="ABCD-EFGH"
