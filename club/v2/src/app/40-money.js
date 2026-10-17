@@ -76,7 +76,7 @@ function quickEntryHtml() {
       <label class="field qe-note"><span>Комментарий</span><input class="input" id="qeNote" placeholder="${d.kind === 'out' ? 'За что: например, хостинг на месяц' : d.kind === 'in' ? 'От кого и за что' : 'Кто вложил'}" value="${esc(d.note)}" maxlength="160"></label>
       <button class="btn ${d.kind === 'out' ? 'danger solid' : d.kind === 'in' ? 'good' : 'dark'} qe-go" type="submit">Записать ${KINDS[d.kind].name.toLowerCase()}</button>
     </div>
-    ${recent.length ? `<div class="qe-recent"><span class="label">Последние</span>${recent.map(e => `<button type="button" class="qe-r" data-led="${e.id}"><span>${dayShort(e.date)}</span><span>${esc(e.note || catName(e.kind, e.cat))}</span><b class="${e.kind === 'out' ? 'bad' : 'good'}">${e.kind === 'out' ? '−' : '+'}${rub(e.amount)}</b></button>`).join('')}</div>` : ''}
+    ${recent.length ? `<div class="qe-recent"><span class="label">Последние</span>${recent.map(e => `<button type="button" class="qe-r" data-led="${e.id}"><span>${dayShort(e.date)}</span><span>${esc(e.note || catName(e.kind, e.cat))}</span><b class="${e.kind === 'out' ? 'bad' : 'good'}">${e.kind === 'out' ? '−' : '+'}${money(e.amount)}</b></button>`).join('')}</div>` : ''}
   </form>`;
 }
 function wireQuickEntry(root) {
@@ -95,7 +95,7 @@ function wireQuickEntry(root) {
       note: $('#qeNote', form).value.trim(), by: Tasks.meKey(), at: Date.now()};
     const id = Store.add('ledger', entry);
     d.amount = ''; d.note = '';
-    toast(`Записано: ${d.kind === 'out' ? '−' : '+'}${rub(amount)} · ${catName(entry.kind, entry.cat)}`, {undo: () => Store.remove('ledger', id)});
+    toast(`Записано: ${d.kind === 'out' ? '−' : '+'}${money(amount)} · ${catName(entry.kind, entry.cat)}`, {undo: () => Store.remove('ledger', id)});
     App.render({focus: 'qeAmount'});
   };
 }
@@ -104,16 +104,16 @@ function wireQuickEntry(root) {
 function pnlTable(rows) {
   const cell = (r, f, p) => {
     const st = monthStatus(r.m);
-    if (st === 'plan') return `<td class="r pl-cell future"><b>${p ? rubK(p) : '—'}</b><small>план</small></td>`;
-    return `<td class="r pl-cell"><b>${f ? rubK(f) : '—'}</b>${p ? `<small>план ${rubK(p)}</small>` : ''}</td>`;
+    if (st === 'plan') return `<td class="r pl-cell future"><b>${p ? money(p) : '—'}</b><small>план</small></td>`;
+    return `<td class="r pl-cell"><b>${f ? money(f) : '—'}</b>${p ? `<small>план ${money(p)}</small>` : ''}</td>`;
   };
   const total = (get) => sum(rows, r => get(r));
   const line = (name, getF, getP, cls = '') => `<tr class="${cls}"><td>${name}</td>${rows.map(r => cell(r, getF(r), getP(r))).join('')}
-    <td class="r pl-cell tot"><b>${rubK(total(r => (monthStatus(r.m) === 'plan' ? getP(r) : getF(r))))}</b><small>план ${rubK(total(getP))}</small></td></tr>`;
+    <td class="r pl-cell tot"><b>${money(total(r => (monthStatus(r.m) === 'plan' ? getP(r) : getF(r))))}</b><small>план ${money(total(getP))}</small></td></tr>`;
   const outCats = Object.keys(OUT_CATS).filter(c => rows.some(r => (r.fact.out[c] || 0) || (r.plan.out[c] || 0)));
   const profitCell = r => {
     const st = monthStatus(r.m), v = st === 'plan' ? r.plan.profit : r.fact.profit;
-    return `<td class="r pl-cell ${st === 'plan' ? 'future' : ''}"><b class="${v < 0 ? 'bad' : 'good'}">${signed(v)}</b>${st !== 'plan' ? `<small>план ${signed(r.plan.profit)}</small>` : '<small>план</small>'}</td>`;
+    return `<td class="r pl-cell ${st === 'plan' ? 'future' : ''}"><b class="${v < 0 ? 'bad' : 'good'}">${signedMoney(v)}</b>${st !== 'plan' ? `<small>план ${signedMoney(r.plan.profit)}</small>` : '<small>план</small>'}</td>`;
   };
   const profitTot = total(r => (monthStatus(r.m) === 'plan' ? r.plan.profit : r.fact.profit));
   return `<div class="table-wrap"><table class="t pnl grid-lines">
@@ -126,8 +126,8 @@ function pnlTable(rows) {
       <tr class="group out"><td colspan="${rows.length + 2}">Расходы</td></tr>
       ${outCats.map(c => line(OUT_CATS[c], r => r.fact.out[c] || 0, r => r.plan.out[c] || 0, 'out')).join('') || `<tr><td colspan="${rows.length + 2}" class="note">Расходов пока нет</td></tr>`}
       ${line('Итого расходы', r => r.fact.outTotal, r => r.plan.outTotal, 'sub out')}
-      <tr class="total"><td>Прибыль</td>${rows.map(profitCell).join('')}<td class="r pl-cell tot"><b class="${profitTot < 0 ? 'bad' : 'good'}">${signed(profitTot)}</b></td></tr>
-      <tr class="fin"><td>Вложения <span class="note">вне P&amp;L</span></td>${rows.map(r => `<td class="r pl-cell"><b>${r.fact.invest ? rubK(r.fact.invest) : '—'}</b></td>`).join('')}<td class="r pl-cell tot"><b>${rubK(total(r => r.fact.invest))}</b></td></tr>
+      <tr class="total"><td>Прибыль</td>${rows.map(profitCell).join('')}<td class="r pl-cell tot"><b class="${profitTot < 0 ? 'bad' : 'good'}">${signedMoney(profitTot)}</b></td></tr>
+      <tr class="fin"><td>Вложения <span class="note">вне P&amp;L</span></td>${rows.map(r => `<td class="r pl-cell"><b>${r.fact.invest ? money(r.fact.invest) : '—'}</b></td>`).join('')}<td class="r pl-cell tot"><b>${money(total(r => r.fact.invest))}</b></td></tr>
     </tbody></table></div>
     <p class="note">План расходов = план платежей ниже + от выручки по плану: реферальные ${pct(settings().referral)} первых оплат, ${varRatesText()} — по ставкам каждого месяца и порогам с начала года («Настройки расчёта»).</p>`;
 }
@@ -144,26 +144,26 @@ function planTable() {
     if (!a) return '<td class="r plan-c empty-c"></td>';
     const paidA = Money.paidAmount(it, m), rest = Money.left(it, m);
     const canPay = edit && (it.group !== 'payroll' || seePay);
-    const list = Money.payments(it, m).map(e => `${dayLong(e.date)} — ${rub(e.amount)}${e.planPart ? ' (' + e.planPart.toLowerCase() + ')' : ''}`).join(', ');
-    if (paidA && !rest) return `<td class="r plan-c paid"><button class="pay-btn paid" ${canPay ? `data-pay="${it.id}:${m}"` : 'disabled'} title="Оплачено: ${esc(list)}${canPay ? '. Нажмите, чтобы посмотреть или отменить' : ''}"><span>${rub(a)}</span>${icon('tick')}</button></td>`;
-    if (paidA) return `<td class="r plan-c part"><div class="pc-amt">${rub(a)}</div><div class="pc-bar" title="Оплачено: ${esc(list)}"><i style="width:${Math.min(100, Math.round(paidA / a * 100))}%"></i></div>
-      <div class="pc-part">оплачено ${rubK(paidA)}</div>${canPay ? `<button class="pay-btn" data-pay="${it.id}:${m}">Доплатить ${rubK(rest)}</button>` : `<span class="note">осталось ${rubK(rest)}</span>`}</td>`;
-    return `<td class="r plan-c"><div class="pc-amt">${rub(a)}</div>${canPay ? `<button class="pay-btn" data-pay="${it.id}:${m}">Оплатить</button>` : `<span class="note">${m < monthOf(today()) ? 'не оплачено' : ''}</span>`}</td>`;
+    const list = Money.payments(it, m).map(e => `${dayLong(e.date)} — ${money(e.amount)}${e.planPart ? ' (' + e.planPart.toLowerCase() + ')' : ''}`).join(', ');
+    if (paidA && !rest) return `<td class="r plan-c paid"><button class="pay-btn paid" ${canPay ? `data-pay="${it.id}:${m}"` : 'disabled'} title="Оплачено: ${esc(list)}${canPay ? '. Нажмите, чтобы посмотреть или отменить' : ''}"><span>${money(a)}</span>${icon('tick')}</button></td>`;
+    if (paidA) return `<td class="r plan-c part"><div class="pc-amt">${money(a)}</div><div class="pc-bar" title="Оплачено: ${esc(list)}"><i style="width:${Math.min(100, Math.round(paidA / a * 100))}%"></i></div>
+      <div class="pc-part">оплачено ${money(paidA)}</div>${canPay ? `<button class="pay-btn" data-pay="${it.id}:${m}">Доплатить ${money(rest)}</button>` : `<span class="note">осталось ${money(rest)}</span>`}</td>`;
+    return `<td class="r plan-c"><div class="pc-amt">${money(a)}</div>${canPay ? `<button class="pay-btn" data-pay="${it.id}:${m}">Оплатить</button>` : `<span class="note">${m < monthOf(today()) ? 'не оплачено' : ''}</span>`}</td>`;
   };
   const groupRows = Object.entries(PLAN_GROUPS).map(([g, gname]) => {
     const list = items.filter(it => it.group === g);
     if (!list.length) return '';
     const gTot = m => sum(list, it => Money.planAmount(it, m));
-    const head = `<tr class="group"><td>${gname}</td>${months.map(m => `<td class="r">${gTot(m) ? rubK(gTot(m)) : ''}</td>`).join('')}<td class="r">${rubK(sum(months, gTot))}</td></tr>`;
+    const head = `<tr class="group"><td>${gname}</td>${months.map(m => `<td class="r">${gTot(m) ? money(gTot(m)) : ''}</td>`).join('')}<td class="r">${money(sum(months, gTot))}</td></tr>`;
     if (g === 'payroll' && !seePay) {
-      return head + `<tr><td><span class="soft">${list.length} ${plural(list.length, 'человек', 'человека', 'человек')} в команде</span><div class="note">суммы по людям видит основатель</div></td>${months.map(m => `<td class="r plan-c">${gTot(m) ? rub(gTot(m)) : ''}</td>`).join('')}<td class="r"><b>${rub(sum(months, gTot))}</b></td></tr>`;
+      return head + `<tr><td><span class="soft">${list.length} ${plural(list.length, 'человек', 'человека', 'человек')} в команде</span><div class="note">суммы по людям видит основатель</div></td>${months.map(m => `<td class="r plan-c">${gTot(m) ? money(gTot(m)) : ''}</td>`).join('')}<td class="r"><b>${money(sum(months, gTot))}</b></td></tr>`;
     }
     return head + list.map(it => {
       const p = personById(it.personId);
       const off = p && (p.status === 'inactive' || p.archived);
       return `<tr class="${off ? 'dim' : ''}"><td><button class="plan-name" ${edit && (g !== 'payroll' || seePay) ? `data-plan-edit="${it.id}"` : 'disabled'}>${esc(it.title)}</button>${off ? ' <span class="pill warn">не активирован — не считаем</span>' : ''}
-        <div class="note">${g === 'payroll' ? `${p ? esc(personName(p)) + ' · ' : ''}${rub(it.amount)}${it.insurance !== false ? ' + взносы ' + insNote() : ''}` : `${catName('out', it.cat)} · ${rub(it.amount)}${g === 'regular' ? ' в месяц' : ''}`}${planParts(it).length ? ' · частями: ' + planParts(it).map(x => `${esc(x.name.toLowerCase())} ${pctA(x.share)}`).join(', ') : ''}</div></td>
-        ${months.map(m => cell(it, m)).join('')}<td class="r"><b>${rub(sum(months, m => Money.planAmount(it, m)))}</b></td></tr>`;
+        <div class="note">${g === 'payroll' ? `${p ? esc(personName(p)) + ' · ' : ''}${money(it.amount)}${it.insurance !== false ? ' + взносы ' + insNote() : ''}` : `${catName('out', it.cat)} · ${money(it.amount)}${g === 'regular' ? ' в месяц' : ''}`}${planParts(it).length ? ' · частями: ' + planParts(it).map(x => `${esc(x.name.toLowerCase())} ${pctA(x.share)}`).join(', ') : ''}</div></td>
+        ${months.map(m => cell(it, m)).join('')}<td class="r"><b>${money(sum(months, m => Money.planAmount(it, m)))}</b></td></tr>`;
     }).join('');
   }).join('');
   const tot = m => sum(items, it => Money.planAmount(it, m));
@@ -171,9 +171,9 @@ function planTable() {
   return `<div class="table-wrap"><table class="t plan grid-lines">
     <thead><tr><th>Платёж</th>${months.map(m => `<th class="r">${monthName(m)}</th>`).join('')}<th class="r">Всего</th></tr></thead>
     <tbody>${groupRows}
-      <tr class="total"><td>Итого по плану</td>${months.map(m => `<td class="r">${rub(tot(m))}</td>`).join('')}<td class="r">${rub(sum(months, tot))}</td></tr>
-      <tr class="sub"><td>Оплачено</td>${months.map(m => `<td class="r good">${paidTot(m) ? rub(paidTot(m)) : '—'}</td>`).join('')}<td class="r good">${rub(sum(months, paidTot))}</td></tr>
-      <tr class="sub"><td>Осталось оплатить</td>${months.map(m => `<td class="r">${tot(m) - paidTot(m) ? rub(tot(m) - paidTot(m)) : '—'}</td>`).join('')}<td class="r">${rub(sum(months, m => tot(m) - paidTot(m)))}</td></tr>
+      <tr class="total"><td>Итого по плану</td>${months.map(m => `<td class="r">${money(tot(m))}</td>`).join('')}<td class="r">${money(sum(months, tot))}</td></tr>
+      <tr class="sub"><td>Оплачено</td>${months.map(m => `<td class="r good">${paidTot(m) ? money(paidTot(m)) : '—'}</td>`).join('')}<td class="r good">${money(sum(months, paidTot))}</td></tr>
+      <tr class="sub"><td>Осталось оплатить</td>${months.map(m => `<td class="r">${tot(m) - paidTot(m) ? money(tot(m) - paidTot(m)) : '—'}</td>`).join('')}<td class="r">${money(sum(months, m => tot(m) - paidTot(m)))}</td></tr>
     </tbody></table></div>`;
 }
 function wirePlan(root) {
@@ -206,7 +206,7 @@ function openPay(id, m) {
     onMount(el, close) {
       const parts = () => {
         const a = Money.planAmount(it, m), list = Money.payments(it, m), rest = Money.left(it, m);
-        const ps = planParts(it).map(x => ({...x, amount: Math.round(a * x.share), done: list.some(e => e.planPart === x.name)}));
+        const ps = planParts(it).map(x => ({...x, amount: kop(a * x.share), done: list.some(e => e.planPart === x.name)}));
         const open = ps.filter(x => !x.done);
         ps.forEach(x => { x.amount = open.length === 1 && x === open[0] ? rest : Math.min(x.amount, rest); });
         return ps;
@@ -219,20 +219,20 @@ function openPay(id, m) {
         if (!pick && ps.some(x => !x.done)) pick = ps.find(x => !x.done).name;
         const chosen = ps.find(x => x.name === pick);
         $('#payBox', el).innerHTML = `
-          <div class="pay-sum"><div><span class="label">${monthName(m)} по плану</span><b>${rub(a)}</b></div>
-            <div><span class="label">Оплачено</span><b class="${paidA ? 'good' : ''}">${rub(paidA)}</b></div>
-            <div><span class="label">Осталось</span><b>${rub(rest)}</b></div></div>
-          ${it.group === 'payroll' && it.insurance !== false && a > base ? `<p class="note">В сумме зарплата ${rub(base)} и страховые взносы ${rub(a - base)} — ${esc(rateText('insurance', m))}.</p>` : ''}
-          ${list.length ? `<div class="pay-list"><span class="label">Оплаты</span>${list.map(e => `<div class="pay-row"><span class="nowrap">${dayShort(e.date)}</span><span class="pay-what">${esc(e.planPart || 'Оплата')}</span><b class="nowrap">${rub(e.amount)}</b>
+          <div class="pay-sum"><div><span class="label">${monthName(m)} по плану</span><b>${money(a)}</b></div>
+            <div><span class="label">Оплачено</span><b class="${paidA ? 'good' : ''}">${money(paidA)}</b></div>
+            <div><span class="label">Осталось</span><b>${money(rest)}</b></div></div>
+          ${it.group === 'payroll' && it.insurance !== false && a > base ? `<p class="note">В сумме зарплата ${money(base)} и страховые взносы ${money(a - base)} — ${esc(rateText('insurance', m))}.</p>` : ''}
+          ${list.length ? `<div class="pay-list"><span class="label">Оплаты</span>${list.map(e => `<div class="pay-row"><span class="nowrap">${dayShort(e.date)}</span><span class="pay-what">${esc(e.planPart || 'Оплата')}</span><b class="nowrap">${money(e.amount)}</b>
             <button type="button" class="icon-btn" data-unpay-one="${e.id}" title="Отменить эту оплату" aria-label="Отменить оплату">${icon('x')}</button></div>`).join('')}</div>` : ''}
           ${rest > 0 ? `
-            ${ps.length ? `<div class="field"><span>Какую часть платим</span><div class="chips pay-parts">${ps.map(x => `<button type="button" class="chip ${x.done ? 'done' : x.name === pick ? 'on' : ''}" data-part="${esc(x.name)}" ${x.done ? 'disabled' : ''}>${esc(x.name)} · ${x.done ? 'оплачено' : rub(x.amount)}</button>`).join('')}</div></div>` : ''}
+            ${ps.length ? `<div class="field"><span>Какую часть платим</span><div class="chips pay-parts">${ps.map(x => `<button type="button" class="chip ${x.done ? 'done' : x.name === pick ? 'on' : ''}" data-part="${esc(x.name)}" ${x.done ? 'disabled' : ''}>${esc(x.name)} · ${x.done ? 'оплачено' : money(x.amount)}</button>`).join('')}</div></div>` : ''}
             <div class="grid3">
               <label class="field"><span>Сумма, ₽</span><input class="input num" id="payAmt" inputmode="decimal" value="${chosen ? chosen.amount : rest}"></label>
               <label class="field"><span>Дата оплаты</span><input class="input" id="payDate" type="date" value="${esc(defDate)}"></label>
               <label class="field"><span>Что оплачиваем</span><input class="input" id="payPart" maxlength="40" placeholder="Например: аванс" value="${esc(chosen ? chosen.name : '')}"></label>
             </div>
-            <div class="chips pay-quick"><button type="button" class="chip" data-amt="${rest}">Весь остаток ${rub(rest)}</button>${rest >= 2 ? `<button type="button" class="chip" data-amt="${Math.round(rest / 2)}">Половина ${rub(Math.round(rest / 2))}</button>` : ''}</div>
+            <div class="chips pay-quick"><button type="button" class="chip" data-amt="${rest}">Весь остаток ${money(rest)}</button>${rest >= 0.02 ? `<button type="button" class="chip" data-amt="${kop(rest / 2)}">Половина ${money(rest / 2)}</button>` : ''}</div>
             ${!ps.length ? `<p class="note">Платите частями каждый месяц — например, аванс и зарплата? Задайте части в карточке платежа (нажмите на его название): тогда здесь будут готовые кнопки.</p>` : ''}`
           : '<p class="good pay-done">Оплачено полностью.</p>'}`;
         $('#payGo', el).hidden = !(rest > 0);
@@ -243,7 +243,7 @@ function openPay(id, m) {
       on(el, 'click', '[data-unpay-one]', async (e, b) => {
         const led = Store.get('ledger', b.dataset.unpayOne);
         if (!led) return;
-        if (!(await confirmPop(b, {text: `Отменить оплату ${rub(led.amount)}${led.planPart ? ' (' + led.planPart.toLowerCase() + ')' : ''}? Операция уйдёт из журнала.`, yes: 'Да, отменить', danger: true}))) return;
+        if (!(await confirmPop(b, {text: `Отменить оплату ${money(led.amount)}${led.planPart ? ' (' + led.planPart.toLowerCase() + ')' : ''}? Операция уйдёт из журнала.`, yes: 'Да, отменить', danger: true}))) return;
         const copy = clone(led);
         Store.remove('ledger', led.id);
         toast('Оплата отменена', {undo: () => Store.put('ledger', copy.id, copy)});
@@ -253,13 +253,13 @@ function openPay(id, m) {
         const rest = Money.left(it, m);
         const amount = Math.round(parseNum($('#payAmt', el).value) * 100) / 100;
         if (!(amount > 0)) { $('#payAmt', el).focus(); toast('Укажите сумму'); return; }
-        if (amount > rest + 0.009) { $('#payAmt', el).focus(); toast(`Не больше остатка — ${rub(rest)}`); return; }
+        if (amount > rest + 0.009) { $('#payAmt', el).focus(); toast(`Не больше остатка — ${money(rest)}`); return; }
         const part = $('#payPart', el).value.trim().slice(0, 40);
         Store.add('ledger', {kind: 'out', amount, cat, date: $('#payDate', el).value || defDate, note: it.title + (part ? ' — ' + part.toLowerCase() : ''),
           planId: it.id, planMonth: m, ...(part ? {planPart: part} : {}), by: Tasks.meKey(), at: Date.now()});
         pick = null;
         if (Money.left(it, m) <= 0) { close(); toast(`Оплачено полностью: ${it.title}, ${monthName(m).toLowerCase()}`); return; }
-        toast(`Оплачено ${rub(amount)}${part ? ' — ' + part.toLowerCase() : ''}. Осталось ${rub(Money.left(it, m))}`);
+        toast(`Оплачено ${money(amount)}${part ? ' — ' + part.toLowerCase() : ''}. Осталось ${money(Money.left(it, m))}`);
         draw();
       };
     },
@@ -375,9 +375,9 @@ function ledgerTable() {
         <td>${esc(catName(e.kind, e.cat))}</td>
         <td>${esc(e.note || '')}${e.planId ? ' <span class="pill line">по плану</span>' : ''}</td>
         <td class="nowrap soft">${p ? esc(firstName(p)) : ''}</td>
-        <td class="r nowrap"><b class="${e.kind === 'out' ? 'bad' : 'good'}">${e.kind === 'out' ? '−' : '+'}${rub(e.amount)}</b></td></tr>`;
+        <td class="r nowrap"><b class="${e.kind === 'out' ? 'bad' : 'good'}">${e.kind === 'out' ? '−' : '+'}${money(e.amount)}</b></td></tr>`;
     }).join('')}</tbody>
-    <tfoot><tr class="total"><td colspan="6"><span class="led-tot">Приходы <b class="good">+${rub(tot('in'))}</b> · Вложения <b>+${rub(tot('invest'))}</b> · Расходы <b class="bad">−${rub(tot('out'))}</b></span></td></tr></tfoot>
+    <tfoot><tr class="total"><td colspan="6"><span class="led-tot">Приходы <b class="good">+${money(tot('in'))}</b> · Вложения <b>+${money(tot('invest'))}</b> · Расходы <b class="bad">−${money(tot('out'))}</b></span></td></tr></tfoot>
   </table></div>
   ${list.length > shown.length ? `<button class="btn sm ghost" data-led-more>Показать все ${list.length}</button>` : ''}`;
 }
@@ -439,11 +439,11 @@ function moneySettingsHtml() {
     <div class="grid3 set-grid">
       <label class="field"><span>Деньги на счёте на старте, ₽</span><input class="input num" id="msCash" inputmode="decimal" value="${s.cashStart}"></label>
       <label class="field"><span>Дата старта</span><input class="input" id="msDate" type="date" value="${esc(s.cashDate)}"></label>
-      <label class="field"><span>Годовая подписка, ₽</span><input class="input num" id="msYear" inputmode="decimal" value="${s.priceYear || ''}" placeholder="${s.price * 10}"><small>месячная — ${rub(s.price)} в «Стратегии»</small></label>
+      <label class="field"><span>Годовая подписка, ₽</span><input class="input num" id="msYear" inputmode="decimal" value="${s.priceYear || ''}" placeholder="${s.price * 10}"><small>месячная — ${money(s.price)} в «Стратегии»</small></label>
     </div>
     <div class="rates-box">
       <div class="rates-head"><h3>Ставки по срокам и порогам</h3>
-        <p class="note">Ставка может меняться с даты — например, взносы: до регистрации ООО 0%, после — 30%, с IT-льготами — 15%. И по порогу за год: до 2,4 млн ₽ одна ставка, со всего, что сверх, — другая. Порог взносов считается по зарплате каждого человека с начала года, налога, НДС и эквайринга — по выручке клуба с начала года.</p></div>
+        <p class="note">Ставка может меняться с даты — например, взносы: до регистрации ООО 0%, после — 30%, с IT-льготами — 15%. И по порогу за год: до 2 400 000,00 ₽ одна ставка, со всего, что сверх, — другая. Порог взносов считается по зарплате каждого человека с начала года, налога, НДС и эквайринга — по выручке клуба с начала года.</p></div>
       ${RATE_KEYS.map(k => `<div class="rate-row"><div class="rate-what"><b>${RATE_DEFS[k].name}</b><span class="note">${RATE_DEFS[k].of}</span></div>
         <div class="rate-tl">${timeline(k)}</div><button type="button" class="btn sm" data-rate-edit="${k}">Изменить</button></div>`).join('')}
     </div>
@@ -467,9 +467,9 @@ function wireMoneySettings(root) {
 
 /* ── ставка по срокам и порогам: периоды «с месяца», в каждом — ступени до порога и сверх ── */
 const RATE_EXAMPLE = {
-  insurance: 'Например: с начала — 0% (до регистрации ООО); с ноября — 30% (после регистрации); с февраля — 15% до 2 400 000 ₽ в год, сверх — 7,6% (IT-льготы).',
+  insurance: 'Например: с начала — 0% (до регистрации ООО); с ноября — 30% (после регистрации); с февраля — 15% до 2 400 000,00 ₽ в год, сверх — 7,6% (IT-льготы).',
   tax: 'Например: 1% выручки — минимальный налог УСН 15%, пока расходы больше доходов.',
-  vat: 'Например: 0% до 20 000 000 ₽ выручки в год, сверх — 5%.',
+  vat: 'Например: 0% до 20 000 000,00 ₽ выручки в год, сверх — 5%.',
   acquiring: 'Например: 2,9% с каждой оплаты.',
 };
 function editRates(key) {

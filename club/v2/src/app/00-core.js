@@ -46,6 +46,14 @@ function rubK(n) {
   return s + fmt(Math.round(a)) + NB + '₽';
 }
 const signed = (n, f = rubK) => (n > 0 ? '+' : n < 0 ? '' : '') + f(n);
+/* деньги в «Финансах» — до копеек, полностью: 12 048 000,18 ₽ · −900,00 ₽ */
+const kop = n => Math.round((Number(n) || 0) * 100) / 100;
+function money(n) {
+  if (n === null || n === undefined || Number.isNaN(Number(n))) return '—';
+  const v = kop(n);
+  return (v < 0 ? '−' : '') + fmt(Math.abs(v), 2) + NB + '₽';
+}
+const signedMoney = n => signed(n, money);
 /* доля без лишних знаков: 5% · 5,3% · 1,9% */
 const pctA = x => (Number.isFinite(x) && Math.abs(x * 100 - Math.round(x * 100)) >= 0.05 ? pct(x, 1) : pct(x));
 const pct = (x, d = 0) => (x === null || x === undefined || !Number.isFinite(x) ? '—' : fmt(x * 100, d) + '%');

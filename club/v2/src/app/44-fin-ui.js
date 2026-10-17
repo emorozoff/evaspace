@@ -37,24 +37,24 @@ function finOverviewHtml(sc) {
   const income = f.revenue + led.in, net = income - led.out;
   const sub = Subs.now(), rate = Subs.rate();
   const tiles = [
-    finTile('Баланс на сегодня', rubK(cash), `старт ${rubK(s.cashStart)} на ${dayLong(s.cashDate)} + операции и выручка`, 'cash-card'),
-    finTile(`Итог ${MONTHS_GEN[monthIdx(m)]}`, `<span class="${net < 0 ? 'bad' : 'good'}">${signed(net)}</span>`, `приход ${rubK(income)} · расход ${rubK(led.out)}`),
-    finTile('Прогноз на 31 декабря', `<span class="${last.close < 0 ? 'bad' : ''}">${rubK(last.close)}</span>`, minClose < 0 ? `<span class="bad">в минус уйдём в ${monthName(cf.find(r => r.close < 0).m).toLowerCase()} — нужны вложения</span>` : `сценарий «${SCENARIOS[sc].name}» и план платежей`),
+    finTile('Баланс на сегодня', money(cash), `старт ${money(s.cashStart)} на ${dayLong(s.cashDate)} + операции и выручка`, 'cash-card'),
+    finTile(`Итог ${MONTHS_GEN[monthIdx(m)]}`, `<span class="${net < 0 ? 'bad' : 'good'}">${signedMoney(net)}</span>`, `приход ${money(income)} · расход ${money(led.out)}`),
+    finTile('Прогноз на 31 декабря', `<span class="${last.close < 0 ? 'bad' : ''}">${money(last.close)}</span>`, minClose < 0 ? `<span class="bad">в минус уйдём в ${monthName(cf.find(r => r.close < 0).m).toLowerCase()} — нужны вложения</span>` : `сценарий «${SCENARIOS[sc].name}» и план платежей`),
     finTile('Платных подписчиков', fmt(sub.total), `месячных ${fmt(sub.endM)} · годовых ${fmt(sub.endY)}`),
-    finTile('MRR', rubK(sub.mrr), `месячная выручка подписок: ${rub(s.price)} и ${rub(priceYear())}/12`),
+    finTile('MRR', money(sub.mrr), `месячная выручка подписок: ${money(s.price)} и ${money(priceYear())}/12`),
     finTile('Продления', pctOr(rate && rate.renew), rate ? `${monthName(rate.m).toLowerCase()} · отток ${pctOr(rate.churn)}` : 'появятся после первого месяца'),
-    finTile('Возвраты', pctOr(rate && rate.refund, 1), `от оплат · за ${monthName(m).toLowerCase()} ${fmt(sub.refunds)} на ${rubK(sub.refundSum)}`),
-    finTile('Средний чек', sub.check ? rub(Math.round(sub.check)) : '—', `${fmt(sub.pays)} ${plural(sub.pays, 'оплата', 'оплаты', 'оплат')} подписки за ${monthName(m).toLowerCase()}`),
+    finTile('Возвраты', pctOr(rate && rate.refund, 1), `от оплат · за ${monthName(m).toLowerCase()} ${fmt(sub.refunds)} на ${money(sub.refundSum)}`),
+    finTile('Средний чек', sub.check ? money(sub.check) : '—', `${fmt(sub.pays)} ${plural(sub.pays, 'оплата', 'оплаты', 'оплат')} подписки за ${monthName(m).toLowerCase()}`),
   ];
   /* приход и расход месяца: одна шкала на обе стороны */
   const ins = [['Подписки', f.revenue], ['Курсы', inCourses], ['Маркетплейс', inMarket], ['Прочие приходы', led.in - inCourses - inMarket]].filter(x => x[1] > 0);
   const outs = Object.entries(led.cats.out).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).map(([c, v]) => [OUT_CATS[c] || c, v]);
   const outTop = outs.length > 6 ? [...outs.slice(0, 5), ['Остальное', sum(outs.slice(5), x => x[1])]] : outs;
   const max = Math.max(1, ...ins.map(x => x[1]), ...outTop.map(x => x[1]));
-  const bar = (tone) => ([name, v]) => `<div class="fin-bar" title="${esc(name)}: ${rub(v)}"><span class="fb-l">${esc(name)}</span><span class="fb-t"><i class="${tone}" style="width:${Math.max(1.5, v / max * 100).toFixed(1)}%"></i></span><b>${rubK(v)}</b></div>`;
+  const bar = (tone) => ([name, v]) => `<div class="fin-bar" title="${esc(name)}: ${money(v)}"><span class="fb-l">${esc(name)}</span><span class="fb-t"><i class="${tone}" style="width:${Math.max(1.5, v / max * 100).toFixed(1)}%"></i></span><b>${money(v)}</b></div>`;
   const flow = `<div class="card fin-flow"><div class="card-head"><h2>Приход и расход — ${monthName(m).toLowerCase()}</h2><button class="link-btn" data-fin-go="ops">Журнал</button></div>
-    <div class="fb-group"><span class="label">Приход <b class="good">+${rub(income)}</b></span>${ins.length ? ins.map(bar('in')).join('') : '<p class="note">Прихода пока нет</p>'}</div>
-    <div class="fb-group"><span class="label">Расход <b class="bad">${led.out ? '−' : ''}${rub(led.out)}</b></span>${outTop.length ? outTop.map(bar('out')).join('') : '<p class="note">Расходов пока нет</p>'}</div></div>`;
+    <div class="fb-group"><span class="label">Приход <b class="good">+${money(income)}</b></span>${ins.length ? ins.map(bar('in')).join('') : '<p class="note">Прихода пока нет</p>'}</div>
+    <div class="fb-group"><span class="label">Расход <b class="bad">${led.out ? '−' : ''}${money(led.out)}</b></span>${outTop.length ? outTop.map(bar('out')).join('') : '<p class="note">Расходов пока нет</p>'}</div></div>`;
   /* что требует действий */
   let att = '';
   if (finOps()) {
@@ -62,11 +62,11 @@ function finOverviewHtml(sc) {
     const planUnpaid = Money.planItems().filter(it => Money.left(it, m) > 0);
     const rows = [
       a.refunds.length ? ['refunds', 'bad', `Запросы на возврат: ${a.refunds.length}`, a.late.length ? `<b class="bad">${a.late.length} ${plural(a.late.length, 'просрочен', 'просрочено', 'просрочено')}</b> · ответить за ${REFUND_DAYS} дней` : `ответить за ${REFUND_DAYS} дней с запроса`] : null,
-      a.failed.length ? ['failed', 'warn', `Сбои оплат: ${a.failed.length} на ${rub(a.failedSum)}`, a.failedDue.length ? `сегодня нужно действие по ${a.failedDue.length}` : 'ждём ответа клиентов'] : null,
-      a.payouts.total ? ['payouts', 'violet', `К выплате: ${rub(a.payouts.total)}`, [a.payouts.ref ? `рефералам ${rubK(a.payouts.ref)}` : '', a.payouts.author ? `авторам ${rubK(a.payouts.author)}` : '', a.payouts.seller ? `продавцам ${rubK(a.payouts.seller)}` : ''].filter(Boolean).join(' · ')] : null,
+      a.failed.length ? ['failed', 'warn', `Сбои оплат: ${a.failed.length} на ${money(a.failedSum)}`, a.failedDue.length ? `сегодня нужно действие по ${a.failedDue.length}` : 'ждём ответа клиентов'] : null,
+      a.payouts.total ? ['payouts', 'violet', `К выплате: ${money(a.payouts.total)}`, [a.payouts.ref ? `рефералам ${money(a.payouts.ref)}` : '', a.payouts.author ? `авторам ${money(a.payouts.author)}` : '', a.payouts.seller ? `продавцам ${money(a.payouts.seller)}` : ''].filter(Boolean).join(' · ')] : null,
       a.ship.length ? ['market', 'gold', `Заказы к отправке: ${a.ship.length}`, 'оплачены, ещё не отправлены'] : null,
       a.low.length ? ['market', 'line', `Мало на складе: ${a.low.length}`, a.low.slice(0, 3).map(p => `${esc(p.title)} — ${fmt(Number(p.stock) || 0)}`).join(', ')] : null,
-      planUnpaid.length ? ['plan', 'line', `Платежи ${MONTHS_GEN[monthIdx(m)]} по плану: ${planUnpaid.length}`, `осталось оплатить ${rub(sum(planUnpaid, it => Money.left(it, m)))}`] : null,
+      planUnpaid.length ? ['plan', 'line', `Платежи ${MONTHS_GEN[monthIdx(m)]} по плану: ${planUnpaid.length}`, `осталось оплатить ${money(sum(planUnpaid, it => Money.left(it, m)))}`] : null,
     ].filter(Boolean);
     att = `<div class="card fin-att"><div class="card-head"><h2>Нужно внимание</h2></div>
       ${rows.length ? `<div class="focus-list">${rows.map(([tab, tone, text, sub]) => `<button class="focus-row" data-fin-go="${tab === 'payouts' ? (a.payouts.ref ? 'subs' : a.payouts.author ? 'courses' : 'market') : tab}"><span class="fr-t"><span class="pill ${tone}">${text}</span><small>${sub}</small></span>${icon('arrow')}</button>`).join('')}</div>`
@@ -79,20 +79,20 @@ function finOverviewHtml(sc) {
     <div class="split section">${flow}${att || `<div class="card"><div class="card-head"><h2>Подписки</h2></div><p class="note">${fmt(sub.total)} платных: месячных ${fmt(sub.endM)}, годовых ${fmt(sub.endY)}. Продления — ${pctOr(rate && rate.renew)}.</p></div>`}</div>
     <section class="section"><div class="section-head"><h2>Приход и расход по месяцам</h2><span class="hint-inline">Факт против плана; будущие месяцы — план по сценарию «${SCENARIOS[sc].name}» и плану платежей</span></div>
       <div class="money-top">${pnl(sc).map(monthCardHtml).join('')}</div>
-      ${planAll ? `<div class="fin-planline"><span>План платежей ${MONTHS_GEN[monthIdx(m)]}: оплачено <b>${rub(planPaid)}</b> из ${rub(planAll)}</span>${progress(planPaid / planAll, 'good')}<button class="link-btn" data-fin-go="plan">План и прогноз</button></div>` : ''}
+      ${planAll ? `<div class="fin-planline"><span>План платежей ${MONTHS_GEN[monthIdx(m)]}: оплачено <b>${money(planPaid)}</b> из ${money(planAll)}</span>${progress(planPaid / planAll, 'good')}<button class="link-btn" data-fin-go="plan">План и прогноз</button></div>` : ''}
     </section>
     ${unitHtml()}
     <section class="section card"><div class="card-head"><h2>Последние операции</h2><button class="link-btn" data-fin-go="ops">Весь журнал</button></div>
-      ${recent.length ? `<div class="fin-recent">${recent.map(e => `<div class="fr-op"><span class="soft">${dayShort(e.date)}</span><span>${esc(e.note || catName(e.kind, e.cat))}<small>${esc(catName(e.kind, e.cat))}</small></span><b class="${e.kind === 'out' ? 'bad' : 'good'}">${e.kind === 'out' ? '−' : '+'}${rub(e.amount)}</b></div>`).join('')}</div>` : '<p class="note">Операций пока нет.</p>'}</section>`;
+      ${recent.length ? `<div class="fin-recent">${recent.map(e => `<div class="fr-op"><span class="soft">${dayShort(e.date)}</span><span>${esc(e.note || catName(e.kind, e.cat))}<small>${esc(catName(e.kind, e.cat))}</small></span><b class="${e.kind === 'out' ? 'bad' : 'good'}">${e.kind === 'out' ? '−' : '+'}${money(e.amount)}</b></div>`).join('')}</div>` : '<p class="note">Операций пока нет.</p>'}</section>`;
 }
 function monthCardHtml(r) {
   const st = monthStatus(r.m);
   const f = st === 'plan' ? r.plan : r.fact;
   return `<div class="card month-card ${st}"><div class="mc-h"><b>${monthName(r.m)}</b><span class="pill ${st === 'now' ? 'rose' : ''}">${STATUS_TAG[st]}</span></div>
-    <div class="mc-row"><span>Доходы</span><b class="good">${rubK(f.income)}</b></div>
-    <div class="mc-row"><span>Расходы</span><b class="bad">${rubK(f.outTotal)}</b></div>
-    <div class="mc-row total"><span>Итог</span><b class="${f.profit < 0 ? 'bad' : 'good'}">${signed(f.profit)}</b></div>
-    ${st !== 'plan' ? `<div class="note">план: ${signed(r.plan.profit)}</div>` : '<div class="note">по плану платежей и сценарию</div>'}</div>`;
+    <div class="mc-row"><span>Доходы</span><b class="good">${money(f.income)}</b></div>
+    <div class="mc-row"><span>Расходы</span><b class="bad">${money(f.outTotal)}</b></div>
+    <div class="mc-row total"><span>Итог</span><b class="${f.profit < 0 ? 'bad' : 'good'}">${signedMoney(f.profit)}</b></div>
+    ${st !== 'plan' ? `<div class="note">план: ${signedMoney(r.plan.profit)}</div>` : '<div class="note">по плану платежей и сценарию</div>'}</div>`;
 }
 /* чек и юнит-экономика */
 function unitHtml() {
@@ -109,18 +109,18 @@ function unitHtml() {
     <div class="card-head"><h2>Чек и юнит-экономика</h2>${finSeg('ue', [['month', 'Этот месяц'], ['quarter', 'С начала квартала']], per)}</div>
     <div class="table-wrap"><table class="t unit-t">
       <tbody>
-        ${row('Средний чек оплаты', rub(Math.round(u.check)), `выручка подписок ${rubK(u.f.revenue)} ÷ ${fmt(u.pays)} ${plural(u.pays, 'оплата', 'оплаты', 'оплат')} (первые и продления)`)}
-        ${row('Цена подписки', `${rub(s.price)} · ${rub(priceYear())}`, `месяц · год (≈ ${rub(Math.round(priceYear() / 12))} в месяц)`)}
+        ${row('Средний чек оплаты', money(u.check), `выручка подписок ${money(u.f.revenue)} ÷ ${fmt(u.pays)} ${plural(u.pays, 'оплата', 'оплаты', 'оплат')} (первые и продления)`)}
+        ${row('Цена подписки', `${money(s.price)} · ${money(priceYear())}`, `месяц · год (≈ ${money(priceYear() / 12)} в месяц)`)}
         ${row('Переменные расходы с оплаты', pct(u.varShare, 1), `эквайринг ${pctA(u.varParts.acquiring)} + налог ${pctA(u.varParts.tax)}${u.varParts.vat ? ` + НДС ${pctA(u.varParts.vat)}` : ''} — ставки этого месяца`)}
-        ${row('Маржа с оплаты', rub(Math.round(u.margin)), 'чек минус переменные расходы')}
+        ${row('Маржа с оплаты', money(u.margin), 'чек минус переменные расходы')}
         ${row('Продлевают каждый месяц', pct(u.renew), u.renewPlan ? 'по плану — фактических продлений ещё нет' : 'по последнему месяцу в «Подписках»')}
         ${row('Средний срок подписки', `${fmt(u.life, 1)} мес.`, `1 ÷ отток ${pct(u.churn)}`)}
-        ${row('LTV — доход с подписчика', rub(Math.round(u.ltv)), 'маржа с оплаты × срок подписки', 'sub')}
-        ${row('Стоимость привлечения (CAC)', u.cac === null ? '—' : rub(Math.round(u.cac)), `маркетинг и реферальные ${rubK(u.spend)} ÷ ${fmt(u.f.pays)} новых платящих`, 'sub')}
+        ${row('LTV — доход с подписчика', money(u.ltv), 'маржа с оплаты × срок подписки', 'sub')}
+        ${row('Стоимость привлечения (CAC)', u.cac === null ? '—' : money(u.cac), `маркетинг и реферальные ${money(u.spend)} ÷ ${fmt(u.f.pays)} новых платящих`, 'sub')}
         ${row('LTV / CAC', u.ltvCac === null ? '—' : `<span class="${ok}">${fmt(u.ltvCac, 1)}</span>`, u.cac === 0 ? 'расходов на привлечение за период нет — подписчики пришли сами' : 'здорово — от 3; меньше 1 — привлечение не окупается')}
         ${row('Окупаемость привлечения', u.payback === null ? '—' : `${fmt(u.payback, 1)} мес.`, 'CAC ÷ маржа с оплаты')}
-        ${orders.length ? row('Средний чек заказа маркетплейса', rub(Math.round(sum(orders, o => Fin.orderTotal(o)) / orders.length)), `${fmt(orders.length)} оплаченных заказов`) : ''}
-        ${courseN ? row('Средняя цена проданного курса', rub(Math.round(courseRev / courseN)), `${fmt(courseN)} продаж на ${rubK(courseRev)}`) : ''}
+        ${orders.length ? row('Средний чек заказа маркетплейса', money(sum(orders, o => Fin.orderTotal(o)) / orders.length), `${fmt(orders.length)} оплаченных заказов`) : ''}
+        ${courseN ? row('Средняя цена проданного курса', money(courseRev / courseN), `${fmt(courseN)} продаж на ${money(courseRev)}`) : ''}
       </tbody></table></div>
   </section>`;
 }
@@ -132,19 +132,19 @@ function finSubsHtml() {
   const cell = (r, k, val = r[k]) => `<td class="r ${r.auto[k] ? 'auto' : ''}" ${r.auto[k] ? 'title="Само: из «Цифр дня» и возвратов. «Поправить» — внести своё"' : ''}>${fmt(val)}</td>`;
   return `<div class="cards tiles">
       ${finTile('Платных сейчас', fmt(now.total), `месячных ${fmt(now.endM)} · годовых ${fmt(now.endY)}`)}
-      ${finTile('MRR', rubK(now.mrr), 'месячная выручка подписок')}
+      ${finTile('MRR', money(now.mrr), 'месячная выручка подписок')}
       ${finTile('Продления', pctOr(rate && rate.renew), rate ? `${monthName(rate.m).toLowerCase()} · не продлили ${pctOr(rate.churn)}` : 'после первого месяца')}
       ${finTile('Возвраты', pctOr(rate && rate.refund, 1), `от оплат · ${fmt(now.refunds)} в этом месяце`)}
     </div>
     <section class="section">
-      <div class="section-head"><h2>Подписки по месяцам</h2><span class="hint-inline">Серым — посчитано само: новые и продления из «Цифр дня», возвраты — из раздела «Возвраты». Цены: месяц ${rub(s.price)}, год ${rub(priceYear())}.</span>${finCsvBtn('subs')}</div>
+      <div class="section-head"><h2>Подписки по месяцам</h2><span class="hint-inline">Серым — посчитано само: новые и продления из «Цифр дня», возвраты — из раздела «Возвраты». Цены: месяц ${money(s.price)}, год ${money(priceYear())}.</span>${finCsvBtn('subs')}</div>
       <div class="table-wrap"><table class="t subs-t grid-lines">
         <thead><tr><th>Месяц</th><th class="r">На начало<small>мес · год</small></th><th class="r">Новые<small>месячные</small></th><th class="r">Новые<small>годовые</small></th><th class="r">Продлили</th><th class="r">Не продлили</th><th class="r">Возвраты</th><th class="r">На конец<small>мес · год</small></th><th class="r">Всего</th><th class="r">Продления</th><th class="r">Возвраты</th><th class="r">Выручка</th><th class="r">MRR</th>${edit ? '<th></th>' : ''}</tr></thead>
         <tbody>${rows.map(r => `<tr class="${r.now ? 'now-row' : ''}"><td class="nowrap"><b>${monthName(r.m)}</b>${r.now ? ' <span class="th-tag now">идёт</span>' : ''}</td>
           <td class="r nowrap ${r.auto.startM && r.auto.startY ? 'auto' : ''}">${fmt(r.startM)} · ${fmt(r.startY)}</td>
           ${cell(r, 'newM')}<td class="r">${fmt(r.newY)}</td>${cell(r, 'renewed')}${cell(r, 'churn')}${cell(r, 'refunds')}
           <td class="r nowrap">${fmt(r.endM)} · ${fmt(r.endY)}</td><td class="r"><b>${fmt(r.total)}</b></td>
-          <td class="r">${pctOr(r.renewRate)}</td><td class="r">${pctOr(r.refundRate, 1)}</td><td class="r nowrap">${rubK(r.revenue)}</td><td class="r nowrap">${rubK(r.mrr)}</td>
+          <td class="r">${pctOr(r.renewRate)}</td><td class="r">${pctOr(r.refundRate, 1)}</td><td class="r nowrap">${money(r.revenue)}</td><td class="r nowrap">${money(r.mrr)}</td>
           ${edit ? `<td><button class="btn xs ghost" data-subs-edit="${r.m}">Поправить</button></td>` : ''}</tr>`).join('')}</tbody>
       </table></div>
       <p class="note">Продления — доля месячных подписчиков на начало месяца, которые оплатили снова${now.now ? '; в идущем месяце срок подошёл ещё не у всех, поэтому считаем только прошедшие дни' : ''}. Возвраты — от всех оплат месяца. Годовые подписки продлеваются через год.</p>
@@ -195,14 +195,14 @@ function payoutsHtml(kind) {
   const row = x => `<tr class="${x.paid ? 'muted-row' : ''}">
       <td><b>${esc(x.to)}</b>${x.contact && ops ? `<small class="block">${contactHtml(x.contact)}</small>` : ''}${x.course ? `<small class="block">${esc(x.course.title)}</small>` : ''}${x.note ? `<small class="block">${esc(x.note)}</small>` : ''}</td>
       <td class="nowrap">${monthName(x.month)}</td>
-      <td class="r nowrap">${kind === 'ref' ? `${x.n ? fmt(x.n) + ' опл. · ' : ''}${rub(x.base)} × ${fmt(x.pct)}%` : kind === 'author' ? `${fmt(x.n)} шт. · ${rubK(x.revenue)}` : `оборот ${rubK(x.revenue)} · комиссия ${rubK(x.fee)}`}</td>
-      <td class="r nowrap"><b>${rub(x.amount)}</b></td>
+      <td class="r nowrap">${kind === 'ref' ? `${x.n ? fmt(x.n) + ' опл. · ' : ''}${money(x.base)} × ${fmt(x.pct)}%` : kind === 'author' ? `${fmt(x.n)} шт. · ${money(x.revenue)}` : `оборот ${money(x.revenue)} · комиссия ${money(x.fee)}`}</td>
+      <td class="r nowrap"><b>${money(x.amount)}</b></td>
       <td class="nowrap">${x.paid ? `<span class="pill good">выплачено ${dayShort(x.paidAt)}</span>` : x.closed ? '<span class="pill warn">к выплате</span>' : '<span class="pill line">начисляется</span>'}</td>
       <td class="nowrap r">${ops ? (x.paid ? `<button class="btn xs ghost" data-unpay-x="${esc(x.id)}">Отменить</button>` : x.closed ? `<button class="btn xs primary" data-pay-x="${esc(x.id)}">Выплатить</button>` : '') : ''}${ops && kind === 'ref' ? ` <button class="icon-btn" data-ref-edit="${esc(x.id)}" aria-label="Изменить" title="Изменить">${icon('edit')}</button>` : ''}</td></tr>`;
   return `<section class="section payouts" data-payouts="${kind}">
     <div class="section-head"><h2>${title}</h2><span class="hint-inline">${how}</span>
       <span class="row">${finSeg('pay.' + kind, [['due', 'К выплате'], ['paid', 'Выплачено'], ['all', 'Все']], f)}${ops && kind === 'ref' ? `<button class="btn sm primary" data-ref-add>${icon('plus')}Начисление</button>` : ''}${finCsvBtn('payouts')}</span></div>
-    <div class="fin-sum"><span>К выплате <b>${rub(due)}</b></span>${growing ? `<span>начисляется за ${monthName(monthOf(today())).toLowerCase()} <b>${rub(growing)}</b></span>` : ''}<span>Выплачено <b class="good">${rub(paid)}</b></span></div>
+    <div class="fin-sum"><span>К выплате <b>${money(due)}</b></span>${growing ? `<span>начисляется за ${monthName(monthOf(today())).toLowerCase()} <b>${money(growing)}</b></span>` : ''}<span>Выплачено <b class="good">${money(paid)}</b></span></div>
     ${list.length ? `<div class="table-wrap"><table class="t pay-t"><thead><tr><th>Кому</th><th>Месяц</th><th class="r">За что</th><th class="r">Сумма</th><th>Статус</th><th></th></tr></thead><tbody>${list.map(row).join('')}</tbody></table></div>`
       : `<div class="empty"><b>${f === 'due' ? 'Выплатить пока нечего' : 'Записей нет'}</b>${kind === 'ref' && ops ? 'Нажмите «Начисление», чтобы записать, сколько начислено партнёру или амбассадору.' : ''}</div>`}
   </section>`;
@@ -230,8 +230,8 @@ function editRef(id) {
     onMount(el, close) {
       const calc = () => {
         const n = parseNum($('#rfN', el).value), base = parseNum($('#rfBase', el).value) || n * s.price;
-        const a = Math.round(base * parseNum($('#rfPct', el).value) / 100);
-        $('#rfAuto', el).textContent = a ? `само: ${rub(a)}` : '';
+        const a = kop(base * parseNum($('#rfPct', el).value) / 100);
+        $('#rfAuto', el).textContent = a ? `само: ${money(a)}` : '';
         return {n, base, a};
       };
       ['#rfN', '#rfBase', '#rfPct'].forEach(q => $(q, el).addEventListener('input', calc));
@@ -239,13 +239,13 @@ function editRef(id) {
       $('#rfSave', el).onclick = () => {
         const to = $('#rfTo', el).value.trim();
         if (!to) { $('#rfTo', el).focus(); toast('Кому начисляем?'); return; }
-        const c = calc(), amount = Math.round(parseNum($('#rfAmount', el).value)) || c.a;
+        const c = calc(), amount = kop(parseNum($('#rfAmount', el).value)) || c.a;
         if (!(amount > 0)) { $('#rfAmount', el).focus(); toast('Укажите сумму начисления'); return; }
         const data = {kind: 'ref', to, contact: $('#rfContact', el).value.trim(), month: $('#rfMonth', el).value, n: c.n || 0, base: c.base || 0, pct: parseNum($('#rfPct', el).value), amount, note: $('#rfNote', el).value.trim()};
         if (p) Store.patch('payouts', p.id, data);
         else Store.add('payouts', {...data, status: 'accrued', by: Tasks.meKey(), at: Date.now()});
         close();
-        toast(`Начислено: ${to} — ${rub(amount)}`);
+        toast(`Начислено: ${to} — ${money(amount)}`);
       };
       const del = $('#rfDel', el);
       if (del) del.onclick = async () => {
@@ -272,9 +272,9 @@ function finCoursesHtml() {
   };
   return `<div class="cards tiles">
       ${finTile(`Продано за ${monthName(cur).toLowerCase()}`, fmt(now.n), `${list.length} ${plural(list.length, 'курс', 'курса', 'курсов')} в каталоге`)}
-      ${finTile('Выручка курсов за месяц', rubK(now.rev), 'продажи × цена или своя сумма')}
-      ${finTile('Авторам за месяц', rubK(now.au), 'начисляется, выплата после закрытия месяца')}
-      ${finTile('К выплате авторам', rubK(due), 'за прошлые месяцы')}
+      ${finTile('Выручка курсов за месяц', money(now.rev), 'продажи × цена или своя сумма')}
+      ${finTile('Авторам за месяц', money(now.au), 'начисляется, выплата после закрытия месяца')}
+      ${finTile('К выплате авторам', money(due), 'за прошлые месяцы')}
     </div>
     <section class="section">
       <div class="section-head"><h2>Продажи по курсам</h2><span class="hint-inline">${edit ? 'Впишите, сколько продано за месяц, — выручка и доля автора посчитаются сами. «Внести приход» запишет выручку месяца в журнал.' : 'Сколько продано и начислено авторам.'}</span>
@@ -283,11 +283,11 @@ function finCoursesHtml() {
         <thead><tr><th>Курс</th>${months.map(m => `<th class="r">${monthName(m)}${m === cur ? ' <span class="th-tag now">идёт</span>' : ''}</th>`).join('')}<th class="r">Всего</th><th class="r">Выручка</th><th class="r">Авторам</th></tr></thead>
         <tbody>${list.map(c => {
           const tot = months.reduce((a, m) => { const s = Fin.courseSale(c, m); a.n += s.n; a.rev += s.revenue; a.au += s.author; return a; }, {n: 0, rev: 0, au: 0});
-          return `<tr class="${c.active === false ? 'dim' : ''}"><td><button class="plan-name" ${edit ? `data-course-edit="${c.id}"` : 'disabled'}>${esc(c.title)}</button><div class="note">${esc(c.author || 'автор не указан')} · ${rub(Number(c.price) || 0)} · автору ${fmt(Number(c.authorPct) || 0)}%</div></td>
-            ${months.map(m => { const s = Fin.courseSale(c, m); return `<td class="r">${edit ? `<input class="input num sm cs-n" data-cs="${c.id}:${m}" inputmode="numeric" value="${s.n || ''}" placeholder="0" aria-label="${esc(c.title)}: продано за ${monthName(m).toLowerCase()}">` : fmt(s.n)}${s.revenue ? `<small class="block">${rubK(s.revenue)}${s.own ? '*' : ''}</small>` : ''}</td>`; }).join('')}
-            <td class="r"><b>${fmt(tot.n)}</b></td><td class="r nowrap">${rubK(tot.rev)}</td><td class="r nowrap">${rubK(tot.au)}</td></tr>`;
+          return `<tr class="${c.active === false ? 'dim' : ''}"><td><button class="plan-name" ${edit ? `data-course-edit="${c.id}"` : 'disabled'}>${esc(c.title)}</button><div class="note">${esc(c.author || 'автор не указан')} · ${money(Number(c.price) || 0)} · автору ${fmt(Number(c.authorPct) || 0)}%</div></td>
+            ${months.map(m => { const s = Fin.courseSale(c, m); return `<td class="r">${edit ? `<input class="input num sm cs-n" data-cs="${c.id}:${m}" inputmode="numeric" value="${s.n || ''}" placeholder="0" aria-label="${esc(c.title)}: продано за ${monthName(m).toLowerCase()}">` : fmt(s.n)}${s.revenue ? `<small class="block">${money(s.revenue)}${s.own ? '*' : ''}</small>` : ''}</td>`; }).join('')}
+            <td class="r"><b>${fmt(tot.n)}</b></td><td class="r nowrap">${money(tot.rev)}</td><td class="r nowrap">${money(tot.au)}</td></tr>`;
         }).join('')}</tbody>
-        <tfoot><tr class="total"><td>Итого</td>${months.map(m => { const t = mTot(m); return `<td class="r nowrap">${fmt(t.n)} шт.<small class="block">${rubK(t.rev)}</small></td>`; }).join('')}<td class="r">${fmt(sum(months, m => mTot(m).n))}</td><td class="r nowrap">${rubK(sum(months, m => mTot(m).rev))}</td><td class="r nowrap">${rubK(sum(months, m => mTot(m).au))}</td></tr>
+        <tfoot><tr class="total"><td>Итого</td>${months.map(m => { const t = mTot(m); return `<td class="r nowrap">${fmt(t.n)} шт.<small class="block">${money(t.rev)}</small></td>`; }).join('')}<td class="r">${fmt(sum(months, m => mTot(m).n))}</td><td class="r nowrap">${money(sum(months, m => mTot(m).rev))}</td><td class="r nowrap">${money(sum(months, m => mTot(m).au))}</td></tr>
           <tr class="sub"><td>Приход в журнале</td>${months.map(ledCell).join('')}<td colspan="3"></td></tr></tfoot>
       </table></div>${list.some(c => months.some(m => Fin.courseSale(c, m).own)) ? '<p class="note">* выручка вписана вручную (скидки, акции)</p>' : ''}`
         : `<div class="empty"><b>Курсов пока нет</b>${edit ? 'Добавьте курс: название, автор, цена и доля автора.' : ''}</div>`}
@@ -352,9 +352,9 @@ function finMarketHtml() {
   const paidM = orders.filter(o => o.pay === 'paid' && monthOf(o.paidAt || o.date || '') === cur);
   const tiles = `<div class="cards tiles">
       ${finTile(`Заказов за ${monthName(cur).toLowerCase()}`, fmt(month.length), `оплачено ${fmt(paidM.length)}`)}
-      ${finTile('Выручка за месяц', rubK(sum(paidM, o => Fin.orderTotal(o))), 'оплаченные заказы')}
+      ${finTile('Выручка за месяц', money(sum(paidM, o => Fin.orderTotal(o))), 'оплаченные заказы')}
       ${finTile('К отправке', fmt(orders.filter(o => Fin.toShip(o)).length), 'оплачены, не отправлены')}
-      ${finTile('Ждут оплаты', fmt(orders.filter(o => (o.pay || 'wait') === 'wait' && o.delivery !== 'cancelled').length), rubK(sum(orders.filter(o => (o.pay || 'wait') === 'wait' && o.delivery !== 'cancelled'), o => Fin.orderTotal(o))))}
+      ${finTile('Ждут оплаты', fmt(orders.filter(o => (o.pay || 'wait') === 'wait' && o.delivery !== 'cancelled').length), money(sum(orders.filter(o => (o.pay || 'wait') === 'wait' && o.delivery !== 'cancelled'), o => Fin.orderTotal(o))))}
     </div>`;
   const seg = finSeg('mk', [['orders', `Заказы · ${orders.length}`], ['products', `Товары и склад · ${products.length}`], ['split', 'Распределение выручки']], view);
   return `${tiles}<div class="fin-subbar">${seg}</div>${view === 'products' ? productsHtml(products) : view === 'split' ? splitHtml() : ordersHtml(orders)}`;
@@ -374,7 +374,7 @@ function ordersHtml(orders) {
       <tbody>${list.map(o => `<tr class="${ops ? 'click' : ''}" ${ops ? `data-order="${o.id}"` : ''}>
         <td><b>${fmt(o.no)}</b></td><td class="nowrap">${dayShort(o.date || today())}</td>
         ${ops ? `<td>${esc(o.customer || '—')}${o.contact ? `<small class="block">${contactHtml(o.contact)}</small>` : ''}</td>` : ''}
-        <td class="ord-items">${items(o) || '—'}</td><td class="r nowrap"><b>${rub(Fin.orderTotal(o))}</b></td>
+        <td class="ord-items">${items(o) || '—'}</td><td class="r nowrap"><b>${money(Fin.orderTotal(o))}</b></td>
         <td data-stop>${sel(o, 'pay', ORDER_PAY, o.pay || 'wait')}</td><td data-stop>${sel(o, 'del', ORDER_DELIVERY, o.delivery || 'new')}</td>
         <td class="nowrap">${esc(o.track || '')}</td></tr>`).join('')}</tbody></table></div>`
       : `<div class="empty"><b>Заказов нет</b>${ops ? 'Нажмите «Заказ», чтобы записать первый.' : ''}</div>`}
@@ -422,7 +422,7 @@ function editOrder(id) {
         if (p && !p.seller) it.cost = Number(p.cost) || 0;
         return it;
       }).filter(Boolean);
-      const total = () => { const t = Fin.orderTotal({items: read(), shipCost: parseNum($('#orShip', el).value)}); $('#orTotal', el).textContent = rub(t); };
+      const total = () => { const t = Fin.orderTotal({items: read(), shipCost: parseNum($('#orShip', el).value)}); $('#orTotal', el).textContent = money(t); };
       on(el, 'change', '.oi-p', (e, s) => { const p = Store.get('products', s.value), r = s.closest('.oi-row'); if (p) { $('.oi-pr', r).value = p.price || ''; $('.oi-t', r).value = ''; } total(); });
       on(el, 'input', '.oi-q, .oi-pr, .oi-t, #orShip', total);
       on(el, 'click', '[data-oi-del]', (e, b) => { b.closest('.oi-row').remove(); total(); });
@@ -467,7 +467,7 @@ function productsHtml(products) {
         const low = !p.seller && isSet(p.stock) && Number(p.stock) <= 3;
         return `<tr><td><button class="plan-name" ${ops ? `data-product="${p.id}"` : 'disabled'}>${esc(p.title)}</button>${p.sku ? `<div class="note">арт. ${esc(p.sku)}</div>` : ''}</td>
           <td>${p.seller ? `${esc(p.seller)} <span class="note">· комиссия ${fmt(Number(p.fee) || 0)}%</span>` : 'Свой склад'}</td>
-          <td class="r nowrap">${rub(Number(p.price) || 0)}</td><td class="r nowrap">${p.seller ? '—' : rub(Number(p.cost) || 0)}</td>
+          <td class="r nowrap">${money(Number(p.price) || 0)}</td><td class="r nowrap">${p.seller ? '—' : money(Number(p.cost) || 0)}</td>
           <td class="r">${p.seller ? '—' : ops ? `<input class="input num sm st-in ${low ? 'bad' : ''}" data-stock="${p.id}" inputmode="numeric" value="${isSet(p.stock) ? esc(p.stock) : ''}" placeholder="—" aria-label="Остаток: ${esc(p.title)}">` : `<span class="${low ? 'bad' : ''}">${isSet(p.stock) ? fmt(p.stock) : '—'}</span>`}${low ? '<small class="block bad">заканчивается</small>' : ''}</td>
           <td class="r">${fmt(sold[p.id] || 0)}</td></tr>`;
       }).join('')}</tbody></table></div>`
@@ -523,14 +523,14 @@ function splitHtml() {
     <div class="section-head"><h2>Распределение выручки — ${monthName(m).toLowerCase()}</h2><span class="hint-inline">Кому сколько из оплаченных заказов месяца: клубу — маржа своих товаров, комиссия с продавцов и доставка; продавцам — их доля.</span>
       <select class="select sm" id="splitM">${monthOpts(m, months)}</select></div>
     <div class="cards tiles">
-      ${finTile('Оборот', rubK(x.revenue), `${fmt(x.orders.length)} оплаченных заказов`)}
-      ${finTile('Свои товары: маржа', rubK(x.own.rev - x.own.cost), `выручка ${rubK(x.own.rev)} − себестоимость ${rubK(x.own.cost)}`)}
-      ${finTile('Комиссия клуба', rubK(sum(x.sellers, s => s.fee)), `с оборота продавцов ${rubK(sum(x.sellers, s => s.turnover))}`)}
-      ${finTile('Итого клубу', rubK(x.club), `${x.shipping ? `с доставкой ${rubK(x.shipping)} · ` : ''}продавцам ${rubK(x.toSellers)}`)}
+      ${finTile('Оборот', money(x.revenue), `${fmt(x.orders.length)} оплаченных заказов`)}
+      ${finTile('Свои товары: маржа', money(x.own.rev - x.own.cost), `выручка ${money(x.own.rev)} − себестоимость ${money(x.own.cost)}`)}
+      ${finTile('Комиссия клуба', money(sum(x.sellers, s => s.fee)), `с оборота продавцов ${money(sum(x.sellers, s => s.turnover))}`)}
+      ${finTile('Итого клубу', money(x.club), `${x.shipping ? `с доставкой ${money(x.shipping)} · ` : ''}продавцам ${money(x.toSellers)}`)}
     </div>
     ${x.sellers.length ? `<div class="table-wrap section"><table class="t"><thead><tr><th>Продавец</th><th class="r">Позиций</th><th class="r">Оборот</th><th class="r">Комиссия клуба</th><th class="r">К выплате</th><th>Статус</th></tr></thead>
       <tbody>${x.sellers.map(s => { const id = Fin.sellerId(s.seller, m), p = Store.get('payouts', id), paid = p && p.status === 'paid';
-        return `<tr><td><b>${esc(s.seller)}</b></td><td class="r">${fmt(s.orders)}</td><td class="r nowrap">${rub(Math.round(s.turnover))}</td><td class="r nowrap">${rub(Math.round(s.fee))}</td><td class="r nowrap"><b>${rub(Math.round(s.payout))}</b></td>
+        return `<tr><td><b>${esc(s.seller)}</b></td><td class="r">${fmt(s.orders)}</td><td class="r nowrap">${money(s.turnover)}</td><td class="r nowrap">${money(s.fee)}</td><td class="r nowrap"><b>${money(s.payout)}</b></td>
           <td class="nowrap">${paid ? `<span class="pill good">выплачено ${dayShort(p.paidAt)}</span>${ops ? ` <button class="btn xs ghost" data-unpay-x="${esc(id)}">Отменить</button>` : ''}` : m < cur ? (ops ? `<button class="btn xs primary" data-pay-x="${esc(id)}">Выплатить</button>` : '<span class="pill warn">к выплате</span>') : '<span class="pill line">начисляется</span>'}</td></tr>`; }).join('')}</tbody></table></div>`
       : '<p class="note section">Товаров продавцов в оплаченных заказах этого месяца нет.</p>'}
   </section>`;
@@ -546,10 +546,10 @@ function finFailedHtml() {
   const open = all.filter(x => Fin.failOpen(x));
   const reasons = Object.entries(FAIL_REASONS).map(([k, n]) => [n, month.filter(x => (x.reason || 'other') === k).length]).filter(x => x[1]);
   return `<div class="cards tiles">
-      ${finTile('Открыто', fmt(open.length), `на ${rub(sum(open, x => x.amount))}`)}
+      ${finTile('Открыто', fmt(open.length), `на ${money(sum(open, x => x.amount))}`)}
       ${finTile('Действие сегодня', `<span class="${all.some(x => Fin.failDue(x)) ? 'bad' : ''}">${fmt(all.filter(x => Fin.failDue(x)).length)}</span>`, 'новые и с наступившим шагом')}
-      ${finTile('Вернули оплату', fmt(rec.length), `${rub(sum(rec, x => x.amount))} · ${month.length ? pct(rec.length / month.length) : '—'} сбоев месяца`)}
-      ${finTile('Потеряно за месяц', fmt(lost.length), rub(sum(lost, x => x.amount)))}
+      ${finTile('Вернули оплату', fmt(rec.length), `${money(sum(rec, x => x.amount))} · ${month.length ? pct(rec.length / month.length) : '—'} сбоев месяца`)}
+      ${finTile('Потеряно за месяц', fmt(lost.length), money(sum(lost, x => x.amount)))}
     </div>
     ${reasons.length ? `<div class="fin-reasons"><span class="label">Причины за ${monthName(cur).toLowerCase()}</span>${reasons.map(([n, k]) => `<span class="chip">${esc(n)} <b>${k}</b></span>`).join('')}</div>` : ''}
     <section class="section">
@@ -560,7 +560,7 @@ function finFailedHtml() {
         <tbody>${list.map(x => { const due = Fin.failDue(x); const who = personById(x.who);
           return `<tr class="click ${due ? 'due-row' : ''}" data-fail="${x.id}"><td class="nowrap">${dayShort(x.date || today())}</td>
             <td><b>${esc(x.client || '—')}</b>${x.contact ? `<small class="block">${contactHtml(x.contact)}</small>` : ''}</td>
-            <td class="r nowrap"><b>${rub(Number(x.amount) || 0)}</b><small class="block">${x.plan === 'year' ? 'годовая' : 'месячная'}</small></td>
+            <td class="r nowrap"><b>${money(Number(x.amount) || 0)}</b><small class="block">${x.plan === 'year' ? 'годовая' : 'месячная'}</small></td>
             <td>${esc(FAIL_REASONS[x.reason] || FAIL_REASONS.other)}</td><td class="r">${fmt(Number(x.attempts) || 0)}</td>
             <td>${finPill(x.status || 'new', FAIL_ST)}</td>
             <td class="nowrap">${Fin.failOpen(x) && x.next ? `<span class="${x.next <= today() ? 'bad' : ''}">${x.next === today() ? 'сегодня' : dayShort(x.next)}</span>` : ''}</td>
@@ -630,7 +630,7 @@ function editFailed(id) {
       const del = $('#flDel', el);
       if (del) del.onclick = async () => { if (await confirmPop(del, {text: 'Удалить запись о сбое?', yes: 'Удалить', danger: true})) { Store.remove('failed', x.id); close(); } };
       const task = $('#flTask', el);
-      if (task) task.onclick = () => { close(); openTask(null, {defaults: {title: `Сбой оплаты: ${x.client || x.contact}`, desc: `${FAIL_REASONS[x.reason] || ''}, ${rub(Number(x.amount) || 0)}. Контакт: ${x.contact || '—'}. Вернуть подписчика.`, assignee: x.who || Auth.personId(), dir: 'ops'}}); };
+      if (task) task.onclick = () => { close(); openTask(null, {defaults: {title: `Сбой оплаты: ${x.client || x.contact}`, desc: `${FAIL_REASONS[x.reason] || ''}, ${money(Number(x.amount) || 0)}. Контакт: ${x.contact || '—'}. Вернуть подписчика.`, assignee: x.who || Auth.personId(), dir: 'ops'}}); };
     },
   });
 }
@@ -643,9 +643,9 @@ function finRefundsHtml() {
   const open = all.filter(x => Fin.refundOpen(x)), late = open.filter(x => Fin.refundLate(x));
   const done = Fin.refundsIn(cur), rate = Subs.rate();
   return `<div class="cards tiles">
-      ${finTile('Открытые запросы', fmt(open.length), `на ${rub(sum(open, x => x.amount))}`)}
+      ${finTile('Открытые запросы', fmt(open.length), `на ${money(sum(open, x => x.amount))}`)}
       ${finTile('Просрочено', `<span class="${late.length ? 'bad' : ''}">${fmt(late.length)}</span>`, `ответ и возврат — за ${REFUND_DAYS} дней`)}
-      ${finTile(`Возвращено за ${monthName(cur).toLowerCase()}`, fmt(done.n), rub(done.sum))}
+      ${finTile(`Возвращено за ${monthName(cur).toLowerCase()}`, fmt(done.n), money(done.sum))}
       ${finTile('Возвраты подписок', pctOr(rate && rate.refund, 1), 'от всех оплат подписки')}
     </div>
     <section class="section">
@@ -657,7 +657,7 @@ function finRefundsHtml() {
           return `<tr class="click ${lateX ? 'due-row' : ''}" data-refund="${x.id}"><td class="nowrap">${dayShort(x.date || today())}</td>
             <td><b>${esc(x.client || '—')}</b>${x.contact ? `<small class="block">${contactHtml(x.contact)}</small>` : ''}</td>
             <td>${esc(REFUND_PRODUCTS[x.product || 'sub'])}${x.what ? `<small class="block">${esc(x.what)}</small>` : ''}</td>
-            <td class="r nowrap"><b>${rub(Number(x.amount) || 0)}</b></td><td>${esc(x.reason || '')}</td>
+            <td class="r nowrap"><b>${money(Number(x.amount) || 0)}</b></td><td>${esc(x.reason || '')}</td>
             <td class="nowrap">${Fin.refundOpen(x) && x.deadline ? `<span class="${lateX ? 'bad' : left <= 2 ? 'warn-t' : ''}">${dayShort(x.deadline)}</span><small class="block ${lateX ? 'bad' : ''}">${lateX ? `просрочено на ${-left} ${plural(-left, 'день', 'дня', 'дней')}` : left === 0 ? 'сегодня' : `осталось ${left} ${plural(left, 'день', 'дня', 'дней')}`}</small>` : x.refundedAt ? `<small>возвращено ${dayShort(x.refundedAt)}</small>` : ''}</td>
             <td>${finPill(x.status || 'new', REFUND_ST)}</td><td class="nowrap">${who ? `${avatar(who, 'xs')} ${esc(firstName(who))}` : ''}</td></tr>`; }).join('')}</tbody></table></div>`
         : `<div class="empty"><b>${f === 'open' ? 'Открытых запросов нет' : 'Записей нет'}</b>Запрос на возврат — когда клиент просит вернуть деньги за подписку, курс или товар. У каждого — срок ответа ${REFUND_DAYS} дней, статус и ответственный.</div>`}
@@ -668,8 +668,8 @@ function refundMessage(x, status) {
   const name = String(x.client || '').split(' ')[0];
   const hi = name ? `${name}, здравствуйте` : 'Здравствуйте';
   if (status === 'rejected') return `${hi}! Это Eva Club. Мы рассмотрели ваш запрос на возврат и, к сожалению, не можем его выполнить${x.decision ? ': ' + x.decision : ''}. Если остались вопросы — ответьте на это сообщение, разберёмся вместе.`;
-  if (status === 'refunded') return `${hi}! Это Eva Club. Вернули ${rub(Number(x.amount) || 0)} на вашу карту — деньги придут в течение нескольких дней, в зависимости от банка. Будем рады видеть вас снова!`;
-  return `${hi}! Это Eva Club. Получили ваш запрос на возврат ${rub(Number(x.amount) || 0)} — рассмотрим и ответим до ${x.deadline ? dayLong(x.deadline) : 'конца недели'}.`;
+  if (status === 'refunded') return `${hi}! Это Eva Club. Вернули ${money(Number(x.amount) || 0)} на вашу карту — деньги придут в течение нескольких дней, в зависимости от банка. Будем рады видеть вас снова!`;
+  return `${hi}! Это Eva Club. Получили ваш запрос на возврат ${money(Number(x.amount) || 0)} — рассмотрим и ответим до ${x.deadline ? dayLong(x.deadline) : 'конца недели'}.`;
 }
 function editRefund(id) {
   const x = id ? Store.get('refunds', id) : null, s = settings();
@@ -684,7 +684,7 @@ function editRefund(id) {
         <label class="field"><span>Контакт</span><input class="input" id="rqContact" value="${esc(v.contact || '')}" maxlength="80" placeholder="почта, телефон или @telegram"></label>
         <label class="field"><span>Что возвращаем</span><select class="select" id="rqProduct">${Object.entries(REFUND_PRODUCTS).map(([k, n]) => `<option value="${k}" ${k === (v.product || 'sub') ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
         <label class="field" data-rq="course"><span>Курс</span><select class="select" id="rqCourse"><option value="">—</option>${Fin.courses().map(c => `<option value="${c.id}" ${c.id === v.courseId ? 'selected' : ''}>${esc(c.title)}</option>`).join('')}</select></label>
-        <label class="field" data-rq="market"><span>Заказ</span><select class="select" id="rqOrder"><option value="">—</option>${orders.map(o => `<option value="${o.id}" ${o.id === v.orderId ? 'selected' : ''}>№${o.no} · ${esc(o.customer || '')} · ${rub(Fin.orderTotal(o))}</option>`).join('')}</select></label>
+        <label class="field" data-rq="market"><span>Заказ</span><select class="select" id="rqOrder"><option value="">—</option>${orders.map(o => `<option value="${o.id}" ${o.id === v.orderId ? 'selected' : ''}>№${o.no} · ${esc(o.customer || '')} · ${money(Fin.orderTotal(o))}</option>`).join('')}</select></label>
         <label class="field" data-rq="other"><span>Уточнение</span><input class="input" id="rqWhat" value="${esc(v.what || '')}" maxlength="80"></label>
         <label class="field"><span>Сумма, ₽</span><input class="input num" id="rqAmount" inputmode="decimal" value="${esc(v.amount)}"></label>
         <label class="field"><span>Причина</span><select class="select" id="rqReason">${REFUND_REASONS.map(r => `<option ${r === v.reason ? 'selected' : ''}>${r}</option>`).join('')}</select></label>
@@ -727,7 +727,7 @@ function editRefund(id) {
         else rid = Store.add('refunds', {...data, by: Tasks.meKey(), at: Date.now(), log: finLog('получен запрос на возврат')});
         refundMoney(rid, was, status);
         close();
-        if (status === 'refunded' && was !== 'refunded') toast(`Возвращено ${rub(amount)} — расход в журнале`);
+        if (status === 'refunded' && was !== 'refunded') toast(`Возвращено ${money(amount)} — расход в журнале`);
       };
       const del = $('#rqDel', el);
       if (del) del.onclick = async () => {
@@ -737,7 +737,7 @@ function editRefund(id) {
         close();
       };
       const task = $('#rqTask', el);
-      if (task) task.onclick = () => { close(); openTask(null, {defaults: {title: `Возврат: ${x.client || x.contact}`, desc: `${REFUND_PRODUCTS[x.product || 'sub']}, ${rub(Number(x.amount) || 0)}. Причина: ${x.reason || '—'}. Ответить до ${x.deadline ? dayLong(x.deadline) : '—'}.`, assignee: x.who || Auth.personId(), due: x.deadline || '', dir: 'ops'}}); };
+      if (task) task.onclick = () => { close(); openTask(null, {defaults: {title: `Возврат: ${x.client || x.contact}`, desc: `${REFUND_PRODUCTS[x.product || 'sub']}, ${money(Number(x.amount) || 0)}. Причина: ${x.reason || '—'}. Ответить до ${x.deadline ? dayLong(x.deadline) : '—'}.`, assignee: x.who || Auth.personId(), due: x.deadline || '', dir: 'ops'}}); };
     },
   });
 }
@@ -776,9 +776,9 @@ function wireFin(root) {
   const accOf = id => Fin.accruals().find(x => x.id === id);
   on(root, 'click', '[data-pay-x]', async (e, el) => {
     const a = accOf(el.dataset.payX);
-    if (!a || !(await confirmPop(el, {text: `Выплатить ${rub(a.amount)} — ${a.to}? Расход попадёт в журнал.`, yes: 'Да, выплачено'}))) return;
+    if (!a || !(await confirmPop(el, {text: `Выплатить ${money(a.amount)} — ${a.to}? Расход попадёт в журнал.`, yes: 'Да, выплачено'}))) return;
     Fin.pay(a);
-    toast(`Выплачено: ${a.to} — ${rub(a.amount)}`);
+    toast(`Выплачено: ${a.to} — ${money(a.amount)}`);
   });
   on(root, 'click', '[data-unpay-x]', async (e, el) => {
     const a = accOf(el.dataset.unpayX);
@@ -797,7 +797,7 @@ function wireFin(root) {
     const m = el.dataset.courseLed, total = sum(Fin.courses(), c => Fin.courseSale(c, m).revenue);
     if (!total) return;
     Store.add('ledger', {kind: 'in', amount: total, cat: 'courses', date: m === monthOf(today()) ? today() : monthEnd(m), note: `Курсы · ${monthName(m).toLowerCase()}`, courseMonth: m, by: Tasks.meKey(), at: Date.now()});
-    toast(`Выручка курсов за ${monthName(m).toLowerCase()} — в журнале: +${rub(total)}`);
+    toast(`Выручка курсов за ${monthName(m).toLowerCase()} — в журнале: +${money(total)}`);
   });
   /* маркетплейс */
   on(root, 'click', '[data-order-add]', () => editOrder(null));
@@ -830,9 +830,9 @@ const FinNotify = {
     if (!Auth.me() || !finOps()) return [];
     const me = Tasks.meKey();
     const fresh = [
-      ...Store.all('refunds').map(x => ({c: 'refunds', x, text: `Запрос на возврат: ${x.client || x.contact || 'клиент'} — ${rub(Number(x.amount) || 0)}`, tab: 'refunds'})),
+      ...Store.all('refunds').map(x => ({c: 'refunds', x, text: `Запрос на возврат: ${x.client || x.contact || 'клиент'} — ${money(Number(x.amount) || 0)}`, tab: 'refunds'})),
       ...Store.all('failed').map(x => ({c: 'failed', x, text: `Сбой оплаты: ${x.client || x.contact || 'клиент'} — ${FAIL_REASONS[x.reason] || 'платёж не прошёл'}`, tab: 'failed'})),
-      ...Store.all('orders').map(x => ({c: 'orders', x, text: `Новый заказ №${x.no}: ${rub(Fin.orderTotal(x))}`, tab: 'market'})),
+      ...Store.all('orders').map(x => ({c: 'orders', x, text: `Новый заказ №${x.no}: ${money(Fin.orderTotal(x))}`, tab: 'market'})),
     ].filter(e => (e.x.at || 0) > this.since && e.x.by && e.x.by !== me);
     if (!fresh.length) return [];
     this.since = Math.max(this.since, ...fresh.map(e => e.x.at || 0));

@@ -63,7 +63,7 @@ const revenueBefore = m => Sales.range(m.slice(0, 4) + '-01-01', addDays(monthSt
 /* подписи: «15% до 2,4 млн ₽ в год, сверх — 7,6%» · «30%» */
 function stepsText(steps) {
   if (steps.length === 1) return pctA(steps[0].rate);
-  return steps.map((st, i) => (st.upTo === null ? `сверх — ${pctA(st.rate)}` : `${pctA(st.rate)} до ${rubK(st.upTo)}${i ? '' : ' в год'}`)).join(', ');
+  return steps.map((st, i) => (st.upTo === null ? `сверх — ${pctA(st.rate)}` : `${pctA(st.rate)} до ${money(st.upTo)}${i ? '' : ' в год'}`)).join(', ');
 }
 const monthFrom = m => `с ${MONTHS_GEN[monthIdx(m)]} ${m.slice(0, 4)}`;
 /* ставка на месяц одной строкой — для подсказок у сумм */

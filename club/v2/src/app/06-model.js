@@ -128,7 +128,7 @@ const Money = {
   planAmount(item, m) {
     const base = this.planBase(item, m);
     if (!base) return 0;
-    return item.group === 'payroll' && item.insurance !== false ? Math.round(base + this.insurance(item, m, base)) : base;
+    return item.group === 'payroll' && item.insurance !== false ? kop(base + this.insurance(item, m, base)) : base;
   },
   /* оплаты строки плана за месяц: целиком или частями (аванс и зарплата) */
   payments(item, m) { return Store.all('ledger').filter(e => e.planId === item.id && e.planMonth === m).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.at || 0) - (b.at || 0))); },

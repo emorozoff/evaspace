@@ -122,7 +122,7 @@ const Fin = {
     const x = (c.sales || {})[m] || {};
     const n = Number(x.n) || 0;
     const revenue = isSet(x.revenue) ? Number(x.revenue) || 0 : n * (Number(c.price) || 0);
-    return {n, revenue, author: Math.round(revenue * (Number(c.authorPct) || 0) / 100), own: isSet(x.revenue)};
+    return {n, revenue, author: kop(revenue * (Number(c.authorPct) || 0) / 100), own: isSet(x.revenue)};
   },
   courseLedger: m => Store.all('ledger').find(e => e.courseMonth === m) || null,
   authorId: (cid, m) => `author_${cid}_${m}`,
@@ -144,7 +144,7 @@ const Fin = {
     finMonths().forEach(m => Market.split(m).sellers.forEach(x => {
       if (!x.payout) return;
       const id = this.sellerId(x.seller, m), p = Store.get('payouts', id);
-      out.push({kind: 'seller', id, to: x.seller, month: m, amount: Math.round(x.payout), revenue: x.turnover, fee: x.fee, paid: !!(p && p.status === 'paid'), paidAt: (p && p.paidAt) || '', doc: p, closed: m < cur});
+      out.push({kind: 'seller', id, to: x.seller, month: m, amount: kop(x.payout), revenue: x.turnover, fee: x.fee, paid: !!(p && p.status === 'paid'), paidAt: (p && p.paidAt) || '', doc: p, closed: m < cur});
     }));
     return out.sort((a, b) => (a.paid - b.paid) || String(b.month).localeCompare(String(a.month)));
   },
