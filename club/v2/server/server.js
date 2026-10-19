@@ -480,6 +480,8 @@ function page(req, res, u) {
   if (p === '/' || p === '/index.html') return file(res, path.join(HQ_DIR, 'index.html'), {inject: boot('hq')});
   if (p === '/eva-club-v2.html') return file(res, path.join(HQ_DIR, 'eva-club-v2.html'));
   if (p === '/eva-server.js') return file(res, path.join(__dirname, 'public', 'eva-server.js'));
+  /* библиотека Excel (ExcelJS, MIT) — грузится штабом только по кнопке «Скачать Excel» */
+  if (p === '/vendor/exceljs.min.js') return file(res, path.join(__dirname, 'public', 'vendor', 'exceljs.min.js'), {cache: 'public, max-age=86400'});
   if (p === '/healthz') { res.writeHead(200, {'content-type': 'text/plain'}); return res.end('ok'); }
   /* какая правка сейчас стоит и не отказался ли сервер ставить следующую (пишет deploy/autodeploy) */
   if (p === '/version.json') return file(res, VERSION_FILE);
