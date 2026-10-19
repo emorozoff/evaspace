@@ -7,7 +7,7 @@
 const {isObj} = require('./store');
 
 const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy', 'messages',
-  'subs', 'payouts', 'courses', 'orders', 'products', 'failed', 'refunds', 'scenarios'];
+  'subs', 'payouts', 'courses', 'orders', 'products', 'failed', 'refunds', 'scenarios', 'protocols'];
 const ROLES = ['owner', 'lead', 'finance', 'member', 'investor'];
 const roleOf = r => (ROLES.includes(r) ? r : 'member');
 const PERMS = {
@@ -19,7 +19,14 @@ const PERMS = {
   'fin.ops':        ['owner', 'lead', 'finance'],
   'sales.edit':     ['owner', 'lead', 'finance', 'member'],
   'strategy.check': ['owner', 'lead', 'finance'],
+  'proto.edit':     ['owner', 'lead', 'finance'],
 };
+/* протоколы и собрания по уровням: 1 — основатели, 2 — и инвесторы, 3 — все участники */
+const LEVEL_ROLES = {1: ['owner', 'lead', 'finance'], 2: ['owner', 'lead', 'finance', 'investor'], 3: ROLES};
+const levelOf = d => (LEVEL_ROLES[Number(d && d.level)] ? Number(d.level) : 1);
+const seesLevel = (role, d) => LEVEL_ROLES[levelOf(d)].includes(role);
+/* собрание без уровня — как раньше, для всей команды */
+const meetHidden = (role, d) => !!d && Number(d.level) === 1 && !can(role, 'proto.edit');
 const can = (role, perm) => (PERMS[perm] || []).includes(role);
 
 const omit = (o, keys) => { const out = {...o}; keys.forEach(k => { delete out[k]; }); return out; };
@@ -52,7 +59,9 @@ function view(ctx, c, id, doc) {
     case 'people':
       if (!can(r, 'tasks.view') && id !== ctx.personId) return pick(doc, PERSON_PUBLIC);
       return omit(doc, can(r, 'payroll.view') ? ['tgChatId'] : ['tgChatId', 'salary']);
-    case 'tasks': case 'meetings': case 'busy': return can(r, 'tasks.view') ? doc : null;
+    case 'tasks': case 'busy': return can(r, 'tasks.view') ? doc : null;
+    case 'meetings': return can(r, 'tasks.view') && !meetHidden(r, doc) ? doc : null;
+    case 'protocols': return seesLevel(r, doc) ? doc : null;
     case 'messages':
       if (!can(r, 'tasks.view')) return null;
       return doc.ch === 'team' || dmHas(doc.ch, ctx.accId) ? doc : null;
@@ -102,7 +111,18 @@ function write(ctx, op, c, id, cur, body, next) {
       if (Object.keys(body || {}).some(k => PERSON_LOCKED.includes(k))) return no('это поле карточки меняет основатель');
       return yes(next);
     }
-    case 'tasks': case 'meetings': return can(r, 'tasks.view') ? yes(next) : no('нет доступа к задачам и собраниям');
+    case 'tasks': return can(r, 'tasks.view') ? yes(next) : no('нет доступа к задачам и собраниям');
+    case 'meetings':
+      if (!can(r, 'tasks.view')) return no('нет доступа к задачам и собраниям');
+      return meetHidden(r, cur) || meetHidden(r, next) ? no('собрания уровня 1 ведут основатели') : yes(next);
+    case 'protocols': {
+      if (next && JSON.stringify(next).length > 5e6) return no('протокол слишком большой: файл — до 3 МБ');
+      if (can(r, 'proto.edit')) return yes(next);
+      /* остальные — только своё «Ок» в протоколе, который видят */
+      const me = ctx.personId || ctx.accId, ok = isObj(body) ? body.ok : null;
+      if (op === 'patch' && cur && seesLevel(r, cur) && onlyKeys(body, ['ok']) && isObj(ok) && Object.keys(ok).length === 1 && Object.keys(ok)[0] === me && typeof ok[me] === 'number') return yes(next);
+      return no('протоколы ведут основатели; участник может только подтвердить «Ок»');
+    }
     case 'busy':
       /* занятость — только своя */
       return can(r, 'tasks.view') && (owner || id === ctx.personId) ? yes(next) : no('занятость каждый ведёт свою');

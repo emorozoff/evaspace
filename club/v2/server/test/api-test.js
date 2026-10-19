@@ -76,6 +76,11 @@ async function browserHash(pw, salt) {
   await owner.put('plan', 'pay_p1', {title: 'SMM', group: 'payroll', cat: 'payroll', amount: 120000, months: ['2026-10'], personId: 'p1', insurance: true});
   await owner.put('plan', 'reg1', {title: 'Офис', group: 'regular', cat: 'office', amount: 30000, months: ['2026-10']});
   await owner.put('tasks', 't1', {title: 'Задача', status: 'todo', budget: 1000});
+  ok((await owner.put('protocols', 'pr1', {title: 'Только основатели', level: 1, date: '2026-10-19', text: 'опционы', people: [], ok: {}})).status === 200, 'протокол ур. 1');
+  ok((await owner.put('protocols', 'pr2', {title: 'С инвесторами', level: 2, date: '2026-10-19', text: 'раунд', people: [], ok: {}})).status === 200, 'протокол ур. 2');
+  ok((await owner.put('protocols', 'pr3', {title: 'Для всех', level: 3, date: '2026-10-19', text: 'план', people: [], ok: {}})).status === 200, 'протокол ур. 3');
+  ok((await owner.put('meetings', 'mt1', {title: 'Совет основателей', level: 1, date: '2026-10-20', start: '17:00', dur: 60})).status === 200, 'собрание ур. 1');
+  ok((await owner.put('meetings', 'mt3', {title: 'Созвон команды', date: '2026-10-20', start: '11:00', dur: 60})).status === 200, 'собрание без уровня');
   ok((await owner.put('scenarios', 'sc1', {name: 'УСН 6%', p: {taxMode: 'income', tax: 6}})).status === 200, 'сценарий');
   await owner.put('docs', 'settings', {price: 2900, cashStart: 777, cashDate: '2026-09-01', invest: {'2026-11': 1},
     rates: {insurance: [{from: '', label: 'до регистрации', steps: [{upTo: null, rate: 0}]}, {from: '2026-11', label: 'ООО', steps: [{upTo: 2400000, rate: 0.3}, {upTo: null, rate: 0.15}]}]}});
@@ -95,7 +100,7 @@ async function browserHash(pw, salt) {
   console.log('5. регистрация по приглашениям');
   r = await member.req('POST', '/api/auth/join', {code: 'ABCD-2345', given: 'Маша', surname: 'Команда', email: 'member@test.ru', pw: 'member1', phone: '+7922', title: 'SMM'});
   ok(r.status === 200 && r.j.me, 'участница зарегистрировалась', r);
-  const memberId = r.j.me;
+  const memberId = r.j.me, memberPid = 'p1';   // приглашение ABCD-2345 — на карточку p1
   ok((await anon.req('POST', '/api/auth/join', {code: 'ABCD-2345', given: 'Вор', surname: 'Вор', email: 'x@test.ru', pw: 'xxxxxx'})).status === 400, 'приглашение одноразовое');
   r = await investor.req('POST', '/api/auth/join', {code: 'INVE-2222', given: 'Иван', surname: 'Инвестор', email: 'inv@test.ru', pw: 'invest1'});
   const investorId = r.j.me;
@@ -114,6 +119,8 @@ async function browserHash(pw, salt) {
   ok(Object.keys(mc.plan).length === 0, 'плана платежей и зарплат не видит', mc.plan);
   ok(Object.keys(mc.orders).length === 0 && Object.keys(mc.refunds).length === 0, 'заказов и возвратов не видит');
   ok(Object.keys(mc.scenarios).length === 0, 'сценариев не видит', mc.scenarios);
+  ok(!mc.protocols.pr1 && !mc.protocols.pr2 && mc.protocols.pr3, 'протоколы — только уровня 3', Object.keys(mc.protocols));
+  ok(!mc.meetings.mt1 && mc.meetings.mt3, 'собрание уровня 1 не видит, обычное — да', Object.keys(mc.meetings));
   ok(mc.people.p1 && mc.people.p1.name === 'Маша Команда' && !('salary' in mc.people.p1), 'карточку видит, оклад — нет', mc.people.p1);
   ok(mc.people.p1.status === 'active', 'вакансия закрылась');
   ok(Object.values(mc.accounts).every(a => !('hash' in a) && !('salt' in a) && !('reset' in a)), 'ни одного отпечатка пароля');
@@ -125,6 +132,12 @@ async function browserHash(pw, salt) {
   ok((await member.put('tasks', 't2', {title: 'Моя', status: 'todo'})).status === 200, 'задачу создать — да');
   ok((await member.put('ledger', 'l2', {kind: 'in', amount: 1})).status === 403, 'операцию внести — нет');
   ok((await member.put('scenarios', 'sc3', {name: 'x', p: {}})).status === 403, 'сценарий сохранить — нет');
+  ok((await member.patch('protocols', 'pr3', {ok: {[memberPid]: Date.now()}})).status === 200, 'своё «Ок» в протоколе — да');
+  ok((await member.patch('protocols', 'pr3', {ok: {someoneElse: Date.now()}})).status === 403, '«Ок» за другого — нет');
+  ok((await member.patch('protocols', 'pr3', {text: 'переписала'})).status === 403, 'текст протокола менять — нет');
+  ok((await member.patch('protocols', 'pr1', {ok: {[memberPid]: Date.now()}})).status === 403, '«Ок» в закрытом протоколе — нет');
+  ok((await member.put('protocols', 'pr9', {title: 'x', level: 3})).status === 403, 'протокол завести — нет');
+  ok((await member.put('meetings', 'mt9', {title: 'x', level: 1, date: '2026-10-21', start: '10:00', dur: 30})).status === 403, 'собрание уровня 1 завести — нет');
   ok((await member.patch('accounts', memberId, {role: 'owner'})).status === 403, 'сделать себя основателем — нет');
   ok((await member.patch('accounts', memberId, {hash: 'x', salt: 'y'})).status === 403, 'подменить пароль записью — нет');
   ok((await member.patch('accounts', ownerId, {prefs: {a: 1}})).status === 403, 'чужую учётку — нет');
@@ -176,6 +189,7 @@ async function browserHash(pw, salt) {
   ok(ic.accounts[memberId] && !('email' in ic.accounts[memberId]) && ic.accounts[investorId].email === 'inv@test.ru', 'чужих почт для входа не видит, свою — да', ic.accounts[memberId]);
   ok((await investor.put('ledger', 'l9', {kind: 'in', amount: 1})).status === 403 && (await investor.put('tasks', 't9', {title: 'x'})).status === 403, 'писать не может');
   ok(ic.scenarios.sc1 && ic.scenarios.sc1.p.tax === 6, 'сценарии видит');
+  ok(!ic.protocols.pr1 && ic.protocols.pr2 && ic.protocols.pr3, 'протоколы уровней 2 и 3 видит, 1 — нет', Object.keys(ic.protocols));
   ok((await investor.put('scenarios', 'sc9', {name: 'x', p: {}})).status === 403, 'сценарий сохранить — нет');
   ok((await investor.get('/crm/api/state')).status === 403, 'в CRM не пускают');
   ok((await investor.req('GET', '/crm/', undefined, {raw: true})).status === 403, 'страница CRM закрыта');

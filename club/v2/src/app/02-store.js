@@ -12,7 +12,9 @@ const Store = (() => {
     /* финансы: подписки по месяцам, выплаты, курсы, заказы и товары маркетплейса, сбои оплат, возвраты */
     'subs', 'payouts', 'courses', 'orders', 'products', 'failed', 'refunds',
     /* сценарии: свои настройки поверх живых данных, на штаб не влияют */
-    'scenarios'];
+    'scenarios',
+    /* протоколы собраний: уровень 1–3, текст, запись, подтверждения «Ок» */
+    'protocols'];
   const LS = 'eva-hq:';
   const data = Object.fromEntries(COLS.map(c => [c, new Map()]));
   const subs = new Set();

@@ -24,6 +24,7 @@
   MsgNotify.init();
   MeetRemind.start();
   FinNotify.init();
+  ProtoNotify.init();
   /* для проверок и отладки из консоли */
   window.__eva = {Store, Auth, App, Tasks, Inbox, settings, Sales, Plan, Money, cashFlow, pnl, rateTable, rateCharge, rateAt, quarterPace, Sound, Strategy, openWelcome, inviteLink, inviteText, Adam, Chat, Msgs, MsgNotify, MeetRemind, Cal, openGEvent, remindGuests, openTask, Fin, Subs, Market, unitEcon, FinNotify};
 })();

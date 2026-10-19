@@ -824,7 +824,9 @@ function meetRow(m, o) {
   }).join('');
   const guests = Math.max((m.extGuests || []).length, (m.guests || []).length);
   const actions = [];
+  if (m.zoomUrl) actions.push(`<a class="btn xs" href="${esc(m.zoomUrl)}" target="_blank" rel="noopener">${icon('video')}Зум</a>`);
   if (m.meetUrl) actions.push(`<a class="btn xs" href="${esc(m.meetUrl)}" target="_blank" rel="noopener">${icon('video')}Meet</a>`);
+  { const pr = Proto.byMeeting(m.id); if (pr || protoCanEdit()) actions.push(`<button class="btn xs ${pr && Proto.needsMe(pr) ? 'primary' : 'ghost'}" data-proto-meet="${m.id}">${icon('book')}${pr ? 'Протокол' : '+ Протокол'}</button>`); }
   if (m.link) actions.push(`<a class="btn xs ghost" href="${esc(m.link)}" target="_blank" rel="noopener">${icon('ext')}Google</a>`);
   if (isOrg && m.invite === 'unknown' && Cal.usable()) actions.push(`<button class="btn xs" data-verify="${m.id}">Проверить в Google</button>`);
   if (isOrg && m.invite === 'failed' && Cal.usable()) actions.push(`<button class="btn xs primary" data-push="${m.id}">Отправить приглашения</button>`);
@@ -834,7 +836,7 @@ function meetRow(m, o) {
   return `<div class="mt-row ${Meetings.mine(m) ? 'mine' : ''}">
     <div class="mt-when"><b>${o ? hmMs(o.s) : m.start}</b><small>${o ? dayWd(o.date) : dayWd(m.date)}</small></div>
     <button class="mt-main" data-meet="${m.id}"><b>${esc(m.title)}</b>
-      <small>${Meetings.step(m) ? esc(REPEATS[m.repeat]) + ' · ' : ''}${m.dur} мин · организатор ${esc(org ? firstName(org) : '—')}${guests ? ` · гостей: ${guests}` : ''}</small>
+      <small>${m.level ? `ур. ${protoLevel(m)} · ` : ''}${Meetings.step(m) ? esc(REPEATS[m.repeat]) + ' · ' : ''}${m.dur} мин · организатор ${esc(org ? firstName(org) : '—')}${guests ? ` · гостей: ${guests}` : ''}</small>
       ${m.agenda ? `<span class="mt-agenda">${esc(m.agenda.split('\n')[0]).slice(0, 140)}</span>` : ''}</button>
     <div class="mt-ppl">${ppl}</div>
     <div class="mt-st">${inviteState(m)}</div>
@@ -897,7 +899,7 @@ function openMeeting(id, preset = {}) {
         ${m.agenda ? `<div class="mt-agenda-full">${esc(m.agenda)}</div>` : ''}
         <div class="mt-ppl big">${Meetings.people(m).map(id => { const p = personById(id); const r = RSVP[(m.responses || {})[id] || '']; return `<span class="mt-pl">${avatar(p)}${esc(firstName(p))}${id === m.organizer ? ' <small>организатор</small>' : r ? ` <small class="${r.tone}">${r.name}</small>` : ''}</span>`; }).join('')}</div>
         ${gList.length ? `<p class="note">Гости: ${gList.map(g => esc(g.name || g.email || tgShow(g.tg))).join(', ')}</p>` : ''}
-        <div class="row">${m.meetUrl ? `<a class="btn primary" href="${esc(m.meetUrl)}" target="_blank" rel="noopener">${icon('video')}Войти в Google Meet</a>` : ''}${m.link ? `<a class="btn" href="${esc(m.link)}" target="_blank" rel="noopener">${icon('ext')}Открыть в Google</a>` : ''}</div>
+        <div class="row">${m.zoomUrl ? `<a class="btn primary" href="${esc(m.zoomUrl)}" target="_blank" rel="noopener">${icon('video')}Войти в Зум</a>` : ''}${Proto.byMeeting(m.id) ? `<button type="button" class="btn" data-proto-meet="${m.id}">${icon('book')}Протокол</button>` : ''}${m.meetUrl ? `<a class="btn primary" href="${esc(m.meetUrl)}" target="_blank" rel="noopener">${icon('video')}Войти в Google Meet</a>` : ''}${m.link ? `<a class="btn" href="${esc(m.link)}" target="_blank" rel="noopener">${icon('ext')}Открыть в Google</a>` : ''}</div>
       </div>`,
       foot: '<button class="btn" data-close>Закрыть</button>',
     });
@@ -932,6 +934,10 @@ function openMeeting(id, preset = {}) {
         <button type="button" class="btn xs ghost mt-gadd" id="mtGAdd">${icon('plus')}Гость</button></div>
       <div class="mt-mail" id="mtMail"></div>
       <div class="mt-help" id="mtHelp"></div>
+      <div class="grid2">
+        <div class="field"><span>Кто видит собрание и протокол</span><div class="seg" id="mtLv">${Object.entries(PROTO_LEVELS).filter(([k]) => k !== '1' || protoCanEdit()).map(([k, x]) => `<button type="button" data-lv="${k}" class="${Number(k) === protoLevel(d.level ? d : {level: 3}) ? 'on' : ''}" title="${esc(x.name)}">${k} · ${['', 'Основатели', '+ инвесторы', 'Все'][k]}</button>`).join('')}</div></div>
+        <label class="field"><span>Ссылка на Зум</span><input class="input" id="mtZoom" value="${esc(d.zoomUrl || '')}" placeholder="https://zoom.us/j/…"></label>
+      </div>
       <label class="field"><span>Повестка</span><textarea class="textarea" id="mtAgenda" rows="3" placeholder="1. Цифры недели · 2. Что мешает · 3. Решения">${esc(d.agenda || '')}</textarea></label>
       <div class="mt-opts">
         <div class="mt-rem"><label class="field"><span>Напоминание</span><select class="select" id="mtRemind">${Object.entries(REMINDS).map(([k, n]) => `<option value="${k}" ${Number(k) === remindOf(d) ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
@@ -962,6 +968,8 @@ function openMeeting(id, preset = {}) {
         meet: $('#mtMeet', el).checked,
         repeat: $('#mtRepeat', el).value,
         remindMin: Number($('#mtRemind', el).value) || 0,
+        level: Number(($('#mtLv .on', el) || {}).dataset?.lv || 3),
+        zoomUrl: safeUrl($('#mtZoom', el).value.trim()),
       });
       const paint = () => {
         const v = val();
@@ -1044,6 +1052,7 @@ function openMeeting(id, preset = {}) {
         b.disabled = false;
       });
       ['#mtDate', '#mtStart'].forEach(s => { $(s, el).onchange = paint; });
+      on(el, 'click', '[data-lv]', (e, b) => $$('[data-lv]', el).forEach(x => x.classList.toggle('on', x === b)));
       $('#mtGAdd', el).onclick = () => {
         const g = {id: uid(), name: '', email: '', tg: ''};
         $('#mtGuests', el).insertAdjacentHTML('beforeend', guestRow(g));
