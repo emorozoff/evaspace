@@ -92,7 +92,7 @@ App.register('strategy', {
       const on = k === sc;
       return `<tr class="${on ? 'sc-on' : ''}">
         <td><label class="sc-pick">${canEdit ? `<input type="radio" name="scPick" value="${k}" ${on ? 'checked' : ''}>` : ''}<b>${x.name}</b></label><div class="note">${esc(x.about)}</div></td>
-        ${Q.months.map(m => `<td class="r"><b>${fmt(sales[m])}</b><div class="note">${fmt(Plan.regs(sales[m]))} рег. · ${rubK(sales[m] * s.price).replace(NB + '₽', '')}</div></td>`).join('')}
+        ${Q.months.map(m => `<td class="r"><b>${fmt(sales[m])}</b><div class="note">${fmt(Plan.regs(sales[m]))} рег. · ${money(sales[m] * s.price)}</div></td>`).join('')}
         <td class="r"><b>${fmt(tot)}</b><div class="note">${rubK(tot * s.price)}</div></td>
       </tr>`;
     }).join('');
@@ -112,7 +112,7 @@ App.register('strategy', {
         <div class="north-side">
           <div><span class="label">Выручка по плану</span><b>${rubK(pace.total * s.price)}</b><small>первые платежи</small></div>
           <div><span class="label">Регистраций нужно</span><b>${fmt(Plan.regs(pace.total))}</b><small>при конверсии ${pctA(s.convPay)}</small></div>
-          <div><span class="label">Охват нужен</span><b>${rubK(Plan.reach(pace.total)).replace(NB + '₽', '')}</b><small>при ${pctA(s.convReg)} в регистрацию</small></div>
+          <div><span class="label">Охват нужен</span><b>${fmt(Math.round(Plan.reach(pace.total)))}</b><small>при ${pctA(s.convReg)} в регистрацию</small></div>
         </div>
       </section>
 

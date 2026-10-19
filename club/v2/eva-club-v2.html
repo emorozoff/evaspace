@@ -325,7 +325,7 @@ img{max-width:100%;}
 
 /* показатели */
 .stat .label{display:block; margin-bottom:8px;}
-.stat .big{font:600 26px/1.1 var(--f-display); letter-spacing:-.02em;}
+.stat .big{font:600 26px/1.1 var(--f-display); font-size:clamp(17px, 1.8vw, 26px); letter-spacing:-.02em; font-variant-numeric:tabular-nums;}
 .stat .big small{font:500 14px var(--f-text); color:var(--ink-3); letter-spacing:0;}
 .stat .foot{margin-top:8px; font-size:12.5px; color:var(--ink-3);}
 .bar{height:6px; border-radius:3px; background:var(--sunken); overflow:hidden; margin-top:10px; position:relative;}
@@ -427,7 +427,7 @@ table.grid-lines td:last-child, table.grid-lines th:last-child{border-right:0;}
 @media (max-width:640px){
   .tiles, .periods, .cf-sum{grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px;}
   .tiles .stat, .periods .period, .cf-sum .stat{min-height:0; padding:14px;}
-  .stat .big{font-size:20px;}
+  .stat .big{font-size:16px;}
   .stat .foot{font-size:12px;}
 }
 
@@ -2100,17 +2100,8 @@ function fmt(n, d = 0) {
   const v = Number(n);
   return v.toLocaleString('ru-RU', {minimumFractionDigits: d, maximumFractionDigits: d}).replace(/\s/g, NB);
 }
-const rub = n => (n === null || n === undefined ? '—' : fmt(Math.round(n)) + NB + '₽');
-/* компактно: 1,45 млн ₽ · 290 тыс ₽ · 900 ₽ */
-function rubK(n) {
-  if (n === null || n === undefined || Number.isNaN(n)) return '—';
-  const a = Math.abs(n), s = n < 0 ? '−' : '';
-  if (a >= 1e6) return s + fmt(a / 1e6, a >= 1e7 ? 1 : 2).replace(/,?0+$/, '') + NB + 'млн' + NB + '₽';
-  if (a >= 1e4) return s + fmt(Math.round(a / 1e3)) + NB + 'тыс' + NB + '₽';
-  return s + fmt(Math.round(a)) + NB + '₽';
-}
-const signed = (n, f = rubK) => (n > 0 ? '+' : n < 0 ? '' : '') + f(n);
-/* деньги в «Финансах» — до копеек, полностью: 12 048 000,18 ₽ · −900,00 ₽ */
+const signed = (n, f = money) => (n > 0 ? '+' : n < 0 ? '' : '') + f(n);
+/* деньги — до копеек, полностью: 12 048 000,18 ₽ · −900,00 ₽ */
 const kop = n => Math.round((Number(n) || 0) * 100) / 100;
 function money(n) {
   if (n === null || n === undefined || Number.isNaN(Number(n))) return '—';
@@ -2118,6 +2109,8 @@ function money(n) {
   return (v < 0 ? '−' : '') + fmt(Math.abs(v), 2) + NB + '₽';
 }
 const signedMoney = n => signed(n, money);
+/* везде в штабе деньги — до копеек (решили 19.10.2026) */
+const rub = money, rubK = money;
 /* доля без лишних знаков: 5% · 5,3% · 1,9% */
 const pctA = x => (Number.isFinite(x) && Math.abs(x * 100 - Math.round(x * 100)) >= 0.05 ? pct(x, 1) : pct(x));
 const pct = (x, d = 0) => (x === null || x === undefined || !Number.isFinite(x) ? '—' : fmt(x * 100, d) + '%');
@@ -4361,7 +4354,7 @@ App.register('strategy', {
       const on = k === sc;
       return `<tr class="${on ? 'sc-on' : ''}">
         <td><label class="sc-pick">${canEdit ? `<input type="radio" name="scPick" value="${k}" ${on ? 'checked' : ''}>` : ''}<b>${x.name}</b></label><div class="note">${esc(x.about)}</div></td>
-        ${Q.months.map(m => `<td class="r"><b>${fmt(sales[m])}</b><div class="note">${fmt(Plan.regs(sales[m]))} рег. · ${rubK(sales[m] * s.price).replace(NB + '₽', '')}</div></td>`).join('')}
+        ${Q.months.map(m => `<td class="r"><b>${fmt(sales[m])}</b><div class="note">${fmt(Plan.regs(sales[m]))} рег. · ${money(sales[m] * s.price)}</div></td>`).join('')}
         <td class="r"><b>${fmt(tot)}</b><div class="note">${rubK(tot * s.price)}</div></td>
       </tr>`;
     }).join('');
@@ -4381,7 +4374,7 @@ App.register('strategy', {
         <div class="north-side">
           <div><span class="label">Выручка по плану</span><b>${rubK(pace.total * s.price)}</b><small>первые платежи</small></div>
           <div><span class="label">Регистраций нужно</span><b>${fmt(Plan.regs(pace.total))}</b><small>при конверсии ${pctA(s.convPay)}</small></div>
-          <div><span class="label">Охват нужен</span><b>${rubK(Plan.reach(pace.total)).replace(NB + '₽', '')}</b><small>при ${pctA(s.convReg)} в регистрацию</small></div>
+          <div><span class="label">Охват нужен</span><b>${fmt(Math.round(Plan.reach(pace.total)))}</b><small>при ${pctA(s.convReg)} в регистрацию</small></div>
         </div>
       </section>
 
@@ -5933,7 +5926,7 @@ function budgetHtml(t, can, isNew) {
     : `В плане платежей: разовый платёж <b>${rub(amount)}</b> за <b>${monthName(m, true).toLowerCase()}</b> — строка «Задача: ${esc(t.title)}». Правка суммы или срока обновит ту же строку, второй не появится.${inPlan ? '' : ' Месяц вне плана до Нового года — в Cash Flow не попадёт.'}`;
   const approvers = [...new Set([founderId(), ...people().filter(p => (Store.all('accounts').find(a => a.personId === p.id && ['owner', 'lead', 'finance'].includes(a.role)))).map(p => p.id)])].filter(Boolean);
   return `<p class="tm-box-l">Бюджет задачи</p>
-    <div class="tm-bq">${BUDGET_QUICK.map(v => `<button type="button" class="tm-chip ${amount === v ? 'on' : ''}" data-bq="${v}" ${can ? '' : 'disabled'}>${v ? fmt(v / 1000) + ' тыс ₽' : '0'}</button>`).join('')}</div>
+    <div class="tm-bq">${BUDGET_QUICK.map(v => `<button type="button" class="tm-chip ${amount === v ? 'on' : ''}" data-bq="${v}" ${can ? '' : 'disabled'}>${v ? money(v) : '0'}</button>`).join('')}</div>
     <div class="tm-brow">
       <label class="tm-f"><span>Или своя сумма, ₽</span><input class="input num" id="tmBudget" inputmode="numeric" value="${amount ? fmt(amount) : ''}" placeholder="0" ${can ? '' : 'disabled'}></label>
       <label class="tm-f"><span>Статья расходов</span><select class="select" id="tmBudgetCat" ${can ? '' : 'disabled'}>${Object.entries(OUT_CATS).filter(([k]) => k !== 'payroll').map(([k, n]) => `<option value="${k}" ${k === cat ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
@@ -7919,7 +7912,7 @@ function wireEntry(root) {
     if (k === 'pays' || k === 'renewals') {
       const auto = ((Number(dr.pays) || 0) + (Number(dr.renewals) || 0)) * settings().price;
       const r = $('#se-revenue', form); r.placeholder = fmt(auto);
-      $('#se-revenue', form).nextElementSibling.textContent = `само: ${fmt(auto)} ₽ — поправьте при годовых`;
+      $('#se-revenue', form).nextElementSibling.textContent = `само: ${money(auto)} — поправьте при годовых`;
     }
   });
   on(form, 'click', '[data-shift]', (e, el) => {

@@ -1191,7 +1191,7 @@ function budgetHtml(t, can, isNew) {
     : `В плане платежей: разовый платёж <b>${rub(amount)}</b> за <b>${monthName(m, true).toLowerCase()}</b> — строка «Задача: ${esc(t.title)}». Правка суммы или срока обновит ту же строку, второй не появится.${inPlan ? '' : ' Месяц вне плана до Нового года — в Cash Flow не попадёт.'}`;
   const approvers = [...new Set([founderId(), ...people().filter(p => (Store.all('accounts').find(a => a.personId === p.id && ['owner', 'lead', 'finance'].includes(a.role)))).map(p => p.id)])].filter(Boolean);
   return `<p class="tm-box-l">Бюджет задачи</p>
-    <div class="tm-bq">${BUDGET_QUICK.map(v => `<button type="button" class="tm-chip ${amount === v ? 'on' : ''}" data-bq="${v}" ${can ? '' : 'disabled'}>${v ? fmt(v / 1000) + ' тыс ₽' : '0'}</button>`).join('')}</div>
+    <div class="tm-bq">${BUDGET_QUICK.map(v => `<button type="button" class="tm-chip ${amount === v ? 'on' : ''}" data-bq="${v}" ${can ? '' : 'disabled'}>${v ? money(v) : '0'}</button>`).join('')}</div>
     <div class="tm-brow">
       <label class="tm-f"><span>Или своя сумма, ₽</span><input class="input num" id="tmBudget" inputmode="numeric" value="${amount ? fmt(amount) : ''}" placeholder="0" ${can ? '' : 'disabled'}></label>
       <label class="tm-f"><span>Статья расходов</span><select class="select" id="tmBudgetCat" ${can ? '' : 'disabled'}>${Object.entries(OUT_CATS).filter(([k]) => k !== 'payroll').map(([k, n]) => `<option value="${k}" ${k === cat ? 'selected' : ''}>${n}</option>`).join('')}</select></label>

@@ -36,17 +36,8 @@ function fmt(n, d = 0) {
   const v = Number(n);
   return v.toLocaleString('ru-RU', {minimumFractionDigits: d, maximumFractionDigits: d}).replace(/\s/g, NB);
 }
-const rub = n => (n === null || n === undefined ? '—' : fmt(Math.round(n)) + NB + '₽');
-/* компактно: 1,45 млн ₽ · 290 тыс ₽ · 900 ₽ */
-function rubK(n) {
-  if (n === null || n === undefined || Number.isNaN(n)) return '—';
-  const a = Math.abs(n), s = n < 0 ? '−' : '';
-  if (a >= 1e6) return s + fmt(a / 1e6, a >= 1e7 ? 1 : 2).replace(/,?0+$/, '') + NB + 'млн' + NB + '₽';
-  if (a >= 1e4) return s + fmt(Math.round(a / 1e3)) + NB + 'тыс' + NB + '₽';
-  return s + fmt(Math.round(a)) + NB + '₽';
-}
-const signed = (n, f = rubK) => (n > 0 ? '+' : n < 0 ? '' : '') + f(n);
-/* деньги в «Финансах» — до копеек, полностью: 12 048 000,18 ₽ · −900,00 ₽ */
+const signed = (n, f = money) => (n > 0 ? '+' : n < 0 ? '' : '') + f(n);
+/* деньги — до копеек, полностью: 12 048 000,18 ₽ · −900,00 ₽ */
 const kop = n => Math.round((Number(n) || 0) * 100) / 100;
 function money(n) {
   if (n === null || n === undefined || Number.isNaN(Number(n))) return '—';
@@ -54,6 +45,8 @@ function money(n) {
   return (v < 0 ? '−' : '') + fmt(Math.abs(v), 2) + NB + '₽';
 }
 const signedMoney = n => signed(n, money);
+/* везде в штабе деньги — до копеек (решили 19.10.2026) */
+const rub = money, rubK = money;
 /* доля без лишних знаков: 5% · 5,3% · 1,9% */
 const pctA = x => (Number.isFinite(x) && Math.abs(x * 100 - Math.round(x * 100)) >= 0.05 ? pct(x, 1) : pct(x));
 const pct = (x, d = 0) => (x === null || x === undefined || !Number.isFinite(x) ? '—' : fmt(x * 100, d) + '%');

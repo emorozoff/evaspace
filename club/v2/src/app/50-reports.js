@@ -122,7 +122,7 @@ function wireEntry(root) {
     if (k === 'pays' || k === 'renewals') {
       const auto = ((Number(dr.pays) || 0) + (Number(dr.renewals) || 0)) * settings().price;
       const r = $('#se-revenue', form); r.placeholder = fmt(auto);
-      $('#se-revenue', form).nextElementSibling.textContent = `само: ${fmt(auto)} ₽ — поправьте при годовых`;
+      $('#se-revenue', form).nextElementSibling.textContent = `само: ${money(auto)} — поправьте при годовых`;
     }
   });
   on(form, 'click', '[data-shift]', (e, el) => {
