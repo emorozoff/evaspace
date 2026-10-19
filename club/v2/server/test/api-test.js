@@ -76,6 +76,7 @@ async function browserHash(pw, salt) {
   await owner.put('plan', 'pay_p1', {title: 'SMM', group: 'payroll', cat: 'payroll', amount: 120000, months: ['2026-10'], personId: 'p1', insurance: true});
   await owner.put('plan', 'reg1', {title: 'Офис', group: 'regular', cat: 'office', amount: 30000, months: ['2026-10']});
   await owner.put('tasks', 't1', {title: 'Задача', status: 'todo', budget: 1000});
+  ok((await owner.put('scenarios', 'sc1', {name: 'УСН 6%', p: {taxMode: 'income', tax: 6}})).status === 200, 'сценарий');
   await owner.put('docs', 'settings', {price: 2900, cashStart: 777, cashDate: '2026-09-01', invest: {'2026-11': 1},
     rates: {insurance: [{from: '', label: 'до регистрации', steps: [{upTo: null, rate: 0}]}, {from: '2026-11', label: 'ООО', steps: [{upTo: 2400000, rate: 0.3}, {upTo: null, rate: 0.15}]}]}});
   await owner.put('orders', 'o1', {no: 1, customer: 'Клиентка', contact: '+7911', address: 'Москва', items: [{title: 'Свеча', qty: 1, price: 900}], pay: 'paid'});
@@ -112,6 +113,7 @@ async function browserHash(pw, salt) {
   ok(Object.keys(mc.ledger).length === 0, 'операций не видит', mc.ledger);
   ok(Object.keys(mc.plan).length === 0, 'плана платежей и зарплат не видит', mc.plan);
   ok(Object.keys(mc.orders).length === 0 && Object.keys(mc.refunds).length === 0, 'заказов и возвратов не видит');
+  ok(Object.keys(mc.scenarios).length === 0, 'сценариев не видит', mc.scenarios);
   ok(mc.people.p1 && mc.people.p1.name === 'Маша Команда' && !('salary' in mc.people.p1), 'карточку видит, оклад — нет', mc.people.p1);
   ok(mc.people.p1.status === 'active', 'вакансия закрылась');
   ok(Object.values(mc.accounts).every(a => !('hash' in a) && !('salt' in a) && !('reset' in a)), 'ни одного отпечатка пароля');
@@ -122,6 +124,7 @@ async function browserHash(pw, salt) {
   console.log('7. что может участница');
   ok((await member.put('tasks', 't2', {title: 'Моя', status: 'todo'})).status === 200, 'задачу создать — да');
   ok((await member.put('ledger', 'l2', {kind: 'in', amount: 1})).status === 403, 'операцию внести — нет');
+  ok((await member.put('scenarios', 'sc3', {name: 'x', p: {}})).status === 403, 'сценарий сохранить — нет');
   ok((await member.patch('accounts', memberId, {role: 'owner'})).status === 403, 'сделать себя основателем — нет');
   ok((await member.patch('accounts', memberId, {hash: 'x', salt: 'y'})).status === 403, 'подменить пароль записью — нет');
   ok((await member.patch('accounts', ownerId, {prefs: {a: 1}})).status === 403, 'чужую учётку — нет');
@@ -172,6 +175,8 @@ async function browserHash(pw, salt) {
   ok(ic.people.p1 && ic.people.p1.name === 'Маша Команда' && !('phone' in ic.people.p1) && !('email' in ic.people.p1) && !('salary' in ic.people.p1), 'команду видит по именам, без контактов', ic.people.p1);
   ok(ic.accounts[memberId] && !('email' in ic.accounts[memberId]) && ic.accounts[investorId].email === 'inv@test.ru', 'чужих почт для входа не видит, свою — да', ic.accounts[memberId]);
   ok((await investor.put('ledger', 'l9', {kind: 'in', amount: 1})).status === 403 && (await investor.put('tasks', 't9', {title: 'x'})).status === 403, 'писать не может');
+  ok(ic.scenarios.sc1 && ic.scenarios.sc1.p.tax === 6, 'сценарии видит');
+  ok((await investor.put('scenarios', 'sc9', {name: 'x', p: {}})).status === 403, 'сценарий сохранить — нет');
   ok((await investor.get('/crm/api/state')).status === 403, 'в CRM не пускают');
   ok((await investor.req('GET', '/crm/', undefined, {raw: true})).status === 403, 'страница CRM закрыта');
 
@@ -181,6 +186,7 @@ async function browserHash(pw, salt) {
   ok(!('salary' in s.collections.people.p1), 'оклад в карточке не видит');
   ok((await lead.patch('docs', 'settings', {rates: {vat: []}})).status === 403, 'ставки меняет только основатель');
   ok((await lead.put('ledger', 'l3', {kind: 'in', amount: 10, cat: 'other', date: '2026-10-02'})).status === 200, 'операцию внести — да');
+  ok((await lead.put('scenarios', 'sc2', {name: 'Рефералка 20%', p: {refFirst: 20}})).status === 200, 'сценарий сохранить — да');
   ok((await lead.patch('plan', 'pay_p1', {amount: 1})).status === 403, 'зарплатную строку править — нет');
   ok((await lead.patch('docs', 'strategy', {x: 1})).status === 404, 'стратегии ещё нет — 404, а не запись');
   await owner.put('docs', 'strategy', {goals: {g1: {title: 'Цель'}}});

@@ -7,7 +7,7 @@
 const {isObj} = require('./store');
 
 const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy', 'messages',
-  'subs', 'payouts', 'courses', 'orders', 'products', 'failed', 'refunds'];
+  'subs', 'payouts', 'courses', 'orders', 'products', 'failed', 'refunds', 'scenarios'];
 const ROLES = ['owner', 'lead', 'finance', 'member', 'investor'];
 const roleOf = r => (ROLES.includes(r) ? r : 'member');
 const PERMS = {
@@ -56,7 +56,7 @@ function view(ctx, c, id, doc) {
     case 'messages':
       if (!can(r, 'tasks.view')) return null;
       return doc.ch === 'team' || dmHas(doc.ch, ctx.accId) ? doc : null;
-    case 'ledger': case 'subs': case 'courses': case 'products': return can(r, 'money.view') ? doc : null;
+    case 'ledger': case 'subs': case 'courses': case 'products': case 'scenarios': return can(r, 'money.view') ? doc : null;
     case 'plan':
       if (can(r, 'money.view')) return doc;
       /* команде — только строки бюджета задач: их заводит сама задача */
@@ -125,6 +125,8 @@ function write(ctx, op, c, id, cur, body, next) {
     }
     case 'ledger': case 'subs': case 'courses': case 'products':
       return can(r, 'money.edit') ? yes(next) : no('деньги вносят основатель, руководитель и финансы');
+    /* сценарии ни на что в штабе не влияют; сохраняют те, кто ведёт деньги */
+    case 'scenarios': return can(r, 'money.edit') ? yes(next) : no('сценарии сохраняют основатель, руководитель и финансы');
     case 'orders': case 'payouts': case 'failed': case 'refunds':
       return can(r, 'fin.ops') ? yes(next) : no('заказы, выплаты и возвраты ведут основатель, руководитель и финансы');
     case 'sales':

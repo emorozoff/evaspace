@@ -142,14 +142,18 @@ const Money = {
   /* план расходов месяца по статьям: всего и ещё не оплачено (остаток после частичных оплат) */
   planByCat(m) {
     const all = {}, unpaid = {};
+    /* в сценарии будущие платежи можно уменьшить или увеличить и добавить свой расход */
+    const k = cat => (SANDBOX && m >= monthOf(today()) ? SANDBOX.costK(cat) : 1);
     this.planItems().forEach(it => {
-      const a = this.planAmount(it, m);
-      if (!a) return;
       const cat = it.group === 'payroll' ? 'payroll' : (it.cat || 'other');
+      const a = this.planAmount(it, m) * k(cat);
+      if (!a) return;
       all[cat] = (all[cat] || 0) + a;
-      const rest = this.left(it, m);
+      const rest = this.left(it, m) * k(cat);
       if (rest) unpaid[cat] = (unpaid[cat] || 0) + rest;
     });
+    const extra = SANDBOX && m >= monthOf(today()) ? SANDBOX.extra : 0;
+    if (extra > 0) { all.other = (all.other || 0) + extra; unpaid.other = (unpaid.other || 0) + extra; }
     return {all, unpaid};
   },
   /* деньги на счёте: старт + приходы + вложения + выручка − расходы после даты старта */
@@ -175,6 +179,7 @@ function cashFlow(sc) {
   const s = settings(), t = today(), cur = monthOf(t);
   let open = Number(s.cashStart) || 0;
   let prevPayers = 0, ytd = 0;
+  const hist = [];   // выручка первых оплат по месяцам — для рефералки с продлений в сценарии
   return CF_MONTHS.map((m, i) => {
     /* пороги ставок — по выручке с начала года */
     if (!i || m.endsWith('-01')) ytd = revenueBefore(m);
@@ -200,13 +205,19 @@ function cashFlow(sc) {
     FIXED_CATS.forEach(c => {
       out[c] = (led.cats.out[c] || 0) + (status === 'fact' ? 0 : (plan.unpaid[c] || 0));
     });
-    const varBase = {referral: revNew * s.referral, acquiring: rateCharge('acquiring', m, revenue, ytd, s),
+    hist.push(revNew);
+    const varBase = {referral: SANDBOX && SANDBOX.referral ? SANDBOX.referral(hist, s) : revNew * s.referral, acquiring: rateCharge('acquiring', m, revenue, ytd, s),
       tax: rateCharge('tax', m, revenue, ytd, s), vat: rateCharge('vat', m, revenue, ytd, s)};
     ytd += revenue;
     VAR_CATS.forEach(c => {
       out[c] = status === 'fact' ? (led.cats.out[c] || 0) : Math.max(led.cats.out[c] || 0, varBase[c]);
     });
     const inTotal = revenue + otherIn;
+    /* сценарий «доходы минус расходы»: налог с разницы, но не меньше минимального с выручки */
+    if (SANDBOX && SANDBOX.taxProfit && status !== 'fact') {
+      const t = SANDBOX.taxProfit, base = inTotal - sum(Object.entries(out).filter(([c]) => c !== 'tax'), ([, v]) => v);
+      out.tax = Math.max(led.cats.out.tax || 0, base * t.rate, revenue * t.min);
+    }
     const outTotal = sum(Object.values(out));
     const close = open + inTotal + invest - outTotal;
     const row = {m, status, open, fresh, renewCount, revNew, revRenew, otherIn, invest, out, inTotal, outTotal, net: inTotal + invest - outTotal, close};

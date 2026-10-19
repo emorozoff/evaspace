@@ -83,3 +83,23 @@ table.subs-t{font-size:12.5px;}
 table.subs-t th, table.subs-t td{padding-left:8px; padding-right:8px;}
 .unit-t .how-m{display:none;}
 @media (max-width:640px){ .unit-t td.note{display:none;} .unit-t .how-m{display:block;} .unit-t td:first-child{min-width:0;} }
+
+/* Сценарии: форма слева, результат справа */
+.sc-grid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:24px; align-items:start;}
+@media (max-width:1100px){ .sc-grid{grid-template-columns:minmax(0,1fr);} }
+.sc-h{font-size:14px; margin:18px 0 8px;}
+.sc-form .sc-h:first-of-type{margin-top:12px;}
+.sc-presets{margin-bottom:10px; flex-wrap:wrap;}
+.sc-act{margin-top:18px; flex-wrap:wrap; gap:8px;}
+.sc-out{position:sticky; top:12px;}
+@media (max-width:1100px){ .sc-out{position:static;} }
+.sc-sum td.r small, .sc-cmp td.r small{display:block; font-size:11px;}
+.sc-cmp th .link-btn{font-weight:600;}
+.sc-pick{display:flex; flex-wrap:wrap; gap:8px 18px; margin-bottom:10px;}
+.sc-tips{margin-top:8px;}
+.sc-tip{margin:0 0 8px; padding:8px 12px; border-radius:var(--radius); background:var(--surface-2); border-left:3px solid var(--line); font-size:13px;}
+.sc-tip.good{border-left-color:var(--good);}
+.sc-tip.warn{border-left-color:var(--warn, #c98a1b);}
+.sc-tip.bad{border-left-color:var(--bad);}
+.sc-tip.violet{border-left-color:var(--violet, #5A50C0);}
+.sc-months th small{display:block; font-weight:500; text-transform:none; letter-spacing:0;}

@@ -10,7 +10,9 @@
 const Store = (() => {
   const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy', 'messages',
     /* финансы: подписки по месяцам, выплаты, курсы, заказы и товары маркетплейса, сбои оплат, возвраты */
-    'subs', 'payouts', 'courses', 'orders', 'products', 'failed', 'refunds'];
+    'subs', 'payouts', 'courses', 'orders', 'products', 'failed', 'refunds',
+    /* сценарии: свои настройки поверх живых данных, на штаб не влияют */
+    'scenarios'];
   const LS = 'eva-hq:';
   const data = Object.fromEntries(COLS.map(c => [c, new Map()]));
   const subs = new Set();
@@ -171,8 +173,11 @@ const Store = (() => {
 })();
 
 /* ── производные доступа к данным ── */
+/* сценарий: на время расчёта его настройки ложатся поверх настоящих (Sandbox.run) */
+let SANDBOX = null;
 function settings() {
-  return deepMerge(DEFAULT_SETTINGS, Store.get('docs', 'settings') || {});
+  const s = deepMerge(DEFAULT_SETTINGS, Store.get('docs', 'settings') || {});
+  return SANDBOX ? deepMerge(s, SANDBOX.settings) : s;
 }
 const saveSettings = partial => Store.patch('docs', 'settings', partial);
 /* план продаж по сценарию: свои цифры основателя поверх стандартных */

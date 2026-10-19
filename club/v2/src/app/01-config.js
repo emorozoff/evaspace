@@ -43,6 +43,7 @@ const NAV = [
   {id: 'tasks',    name: 'Задачи',    icon: 'check', perm: 'tasks.view'},
   {id: 'calendar', name: 'Календарь', icon: 'cal', perm: 'tasks.view'},
   {id: 'money',    name: 'Финансы',   icon: 'wallet', perm: 'money.view'},
+  {id: 'scenarios', name: 'Сценарии', icon: 'layers', perm: 'money.view'},
   {id: 'reports',  name: 'Отчёты',    icon: 'chart'},
   {id: 'metrics',  name: 'Метрики',   icon: 'funnel'},
   {id: 'team',     name: 'Команда',   icon: 'users', perm: 'tasks.view'},

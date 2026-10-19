@@ -47,6 +47,7 @@
 | `products` | товары | `title`, `sku`, `price`, `cost`, `stock`, `seller` (пусто — свой склад), `fee` (комиссия клуба, %) |
 | `failed` | сбои оплат | `date`, `client`, `contact`, `amount`, `plan` (month · year), `reason` (funds · bank · card · tds · limit · other), `attempts`, `status` (new · contacted · retry · paid · lost), `next`, `who`, `log` |
 | `refunds` | запросы на возврат | `date`, `deadline` (+10 дней), `client`, `contact`, `product` (sub · course · market · other), `courseId`, `orderId`, `amount`, `reason`, `comment`, `status` (new · review · approved · refunded · rejected), `decision`, `who`, `refundedAt`, `log` |
+| `scenarios` | сценарии финансов (раздел «Сценарии»): только отличия от штаба, считаются поверх живых данных и ни на что не влияют. Видят все с `money.view`, сохраняют `money.edit` | `name`, `note`, `p` (`base`, `salesK`, `sales{месяц}`, `price`, `retention`, `taxMode` (income · profit), `tax`, `taxMin`, `insurance`, `vat`, `acquiring`, `refShare`, `refFirst`, `refRenew`, `refMonths`, `payrollK`, `otherK`, `extra`, `invest{месяц}`; пусто — как в штабе), `by`, `at`, `upd` |
 | `busy` | занятость по Google Календарю (только интервалы, без названий) | `slots` [[начало, конец]], `crm`, `from`, `to`, `share` |
 | `links` | свои материалы основателя | `title`, `url`, `group`, `roles` |
 
