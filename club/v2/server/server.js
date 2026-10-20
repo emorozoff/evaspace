@@ -28,6 +28,9 @@
                     sessions.json, gcal.json и копии на каждый день в backups/
      PUBLIC_URL     адрес сайта, например https://eva.example.ru — для ссылок и Google
      GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET — ключи Google для календаря
+     BOT_KEY        ключ бота команды в Telegram: с ним бот ставит и меняет задачи штаба
+                    (заголовок «Authorization: Bearer …», права — lib/hq-rules.js, роль bot);
+                    каждая его правка с прежней версией пишется в DATA_DIR/bot-log.jsonl
      CRM_DIR        папка собранной CRM (по умолчанию ../../../crm/v2)
      MATERIALS_DIR  папка с презентациями m/*.html (по умолчанию ../m)
      INSECURE_COOKIE=1 — для проверки на своём компьютере без HTTPS */
@@ -107,6 +110,29 @@ function ctxOf(req) {
   const token = A.readCookie(req, COOKIE);
   const s = sessions.get(token);
   return s ? ctxFor(s.acc, token) : null;
+}
+
+/* ── бот команды в Telegram: входит по ключу, права — роль bot в lib/hq-rules.js ── */
+const BOT_KEY = String(process.env.BOT_KEY || '').trim();
+const BOT_LOG = path.join(DATA_DIR, 'bot-log.jsonl');
+const BOT_CTX = {accId: 'bot', token: null, role: HQ.BOT, personId: null, name: 'Клод (бот)', crmAccess: false, crmRole: null};
+/* → null (ключа в запросе нет), false (ключ не тот) или права бота */
+function botOf(req) {
+  const m = /^Bearer\s+(\S+)$/.exec(String(req.headers.authorization || ''));
+  if (!m) return null;
+  return BOT_KEY.length >= 32 && A.same(m[1], BOT_KEY) ? BOT_CTX : false;
+}
+/* каждая правка бота — строкой с прежней версией: по ней любую правку можно вернуть */
+function botLog(entry) {
+  try {
+    try { if (fs.statSync(BOT_LOG).size > 5e6) fs.renameSync(BOT_LOG, BOT_LOG + '.old'); } catch (e) { /* журнала ещё нет */ }
+    fs.appendFileSync(BOT_LOG, JSON.stringify({at: Date.now(), ...entry}) + '\n', {mode: 0o600});
+  } catch (e) { console.error(new Date().toISOString(), 'bot log', e.message); }
+}
+function botLogTail(n) {
+  let lines = [];
+  try { lines = fs.readFileSync(BOT_LOG, 'utf8').trim().split('\n').filter(Boolean); } catch (e) { /* пусто */ }
+  return lines.slice(-n).map(l => { try { return JSON.parse(l); } catch (e) { return null; } }).filter(Boolean);
 }
 const cookie = (token, maxAge) => `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${SECURE ? '; Secure' : ''}`;
 function startSession(res, accId) {
@@ -352,6 +378,7 @@ async function docApi(app, req, res, ctx, c, id) {
   const verdict = app.rules.write(ctx, op, c, id, cur, b, next, app.store);
   if (!verdict.ok) return json(res, 403, {error: verdict.why});
   app.store.set(c, id, op === 'delete' ? null : verdict.next);
+  if (ctx.role === HQ.BOT) botLog({op, col: c, id, prev: cur || null, next: op === 'delete' ? null : verdict.next});
   return json(res, 200, {ok: true, rev: app.store.rev, doc: op === 'delete' ? null : app.rules.view(ctx, c, id, verdict.next)});
 }
 
@@ -417,8 +444,21 @@ async function zoomWebhook(req, res) {
 async function hqApi(req, res, p, u) {
   /* уведомления Зума приходят не со страницы штаба — проверяем подпись Зума */
   if (p === 'zoom/webhook' && req.method === 'POST') return zoomWebhook(req, res);
-  const ctx = ctxOf(req);
   const write = req.method !== 'GET';
+  const bot = botOf(req);
+  if (bot !== null) {
+    const k = 'bot|' + ipOf(req);
+    if (limiter.blocked(k)) return json(res, 429, {error: 'Слишком много попыток. Попробуйте позже.'});
+    if (!bot) { limiter.fail(k); return json(res, 401, {error: 'ключ бота не подошёл'}); }
+    if (write && !sameSite(req)) return json(res, 403, {error: 'нужен заголовок x-eva'});
+    /* боту — только задачи: снимок штаба, записи и журнал своих правок */
+    if (p === 'state' && !write) return json(res, 200, {me: bot.accId, collections: stateOf(hq, bot)});
+    if (p === 'bot/log' && !write) return json(res, 200, {log: botLogTail(Math.min(200, Math.max(1, Number(u.searchParams.get('n')) || 30)))});
+    const bm = /^doc\/([a-z]{2,20})\/([^/]+)$/.exec(p);
+    if (bm) return docApi(hq, req, res, bot, decodeURIComponent(bm[1]), decodeURIComponent(bm[2]));
+    return json(res, 403, {error: 'боту доступны только задачи'});
+  }
+  const ctx = ctxOf(req);
   if (write && !sameSite(req)) return json(res, 403, {error: 'запрос не со страницы штаба'});
 
   if (p === 'state' && !write) {

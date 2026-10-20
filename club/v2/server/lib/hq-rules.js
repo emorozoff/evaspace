@@ -49,10 +49,31 @@ const SETTINGS_MONEY = ['cashStart', 'cashDate', 'invest', 'rates'];
 
 const dmHas = (ch, accId) => String(ch).startsWith('dm:') && String(ch).slice(3).split('|').includes(accId);
 
+/* Бот команды в Telegram входит по ключу (BOT_KEY на сервере), а не по паролю. Роль 'bot' — не из
+   ROLES: учётки с ней нет. Видит задачи, а из «Команды» и учёток — только кто это (без контактов,
+   зарплат и личного). Ставит и меняет задачи; удалить может только задачу, которую поставил сам
+   (via: 'bot'). Денег, сообщений, собраний и настроек не видит и не меняет. */
+const BOT = 'bot';
+function botView(c, doc) {
+  if (c === 'tasks') return doc;
+  if (c === 'people') return pick(doc, PERSON_PUBLIC);
+  if (c === 'accounts') return pick(doc, ACC_PUBLIC);
+  return null;
+}
+function botWrite(op, c, cur, body, next) {
+  if (c !== 'tasks') return no('бот может только ставить и менять задачи');
+  if (op === 'delete') return cur && cur.via === BOT ? yes(null) : no('бот удаляет только задачи, которые поставил сам');
+  if (op === 'put' && cur) return no('бот меняет задачу правкой, а не заменой целиком');
+  if (op === 'put' && (!isObj(next) || next.via !== BOT)) return no('задача от бота должна быть помечена via: bot');
+  if (op === 'patch' && isObj(body) && 'via' in body) return no('пометку бота менять нельзя');
+  return yes(next);
+}
+
 /* что из записи увидит этот человек: документ (возможно, без части полей) или null */
 function view(ctx, c, id, doc) {
   if (!doc) return null;
   const r = ctx.role;
+  if (r === BOT) return botView(c, doc);
   switch (c) {
     case 'accounts': return can(r, 'tasks.view') || id === ctx.accId ? omit(doc, ACC_SECRET) : pick(doc, ACC_PUBLIC);
     case 'invites': return r === 'owner' ? doc : null;
@@ -89,6 +110,7 @@ const onlyKeys = (body, allowed) => isObj(body) && Object.keys(body).every(k => 
    Возвращает {ok, next} — next может быть поправлен (скрытые поля возвращаем на место). */
 function write(ctx, op, c, id, cur, body, next) {
   const r = ctx.role, owner = r === 'owner';
+  if (r === BOT) return botWrite(op, c, cur, body, next);
   switch (c) {
     case 'accounts': {
       /* учётки создаёт и удаляет только сервер: вход, приглашение, сброс пароля */
@@ -172,4 +194,4 @@ function keepHidden(ctx, c, id, cur, next) {
   return out;
 }
 
-module.exports = {COLS, ROLES, roleOf, can, view, write, keepHidden, ACC_SECRET, LEVEL_ROLES, levelOf};
+module.exports = {COLS, ROLES, roleOf, can, view, write, keepHidden, ACC_SECRET, LEVEL_ROLES, levelOf, BOT};

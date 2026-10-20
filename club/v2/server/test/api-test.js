@@ -6,12 +6,14 @@ let pass = 0, failN = 0;
 const ok = (cond, name, extra) => { if (cond) pass++; else { failN++; console.log('  ✗', name, extra !== undefined ? JSON.stringify(extra).slice(0, 300) : ''); } };
 
 class Client {
-  constructor(name) { this.name = name; this.cookie = ''; }
+  /* base — другой сервер (бот проверяется на своём), bearer — ключ бота вместо входа */
+  constructor(name, base = BASE, bearer = '') { this.name = name; this.cookie = ''; this.base = base; this.bearer = bearer; }
   async req(method, path, body, {raw = false, noHeader = false} = {}) {
     const headers = {'content-type': 'application/json'};
     if (!noHeader) headers['x-eva'] = '1';
     if (this.cookie) headers.cookie = this.cookie;
-    const r = await fetch(BASE + path, {method, headers, body: body === undefined ? undefined : JSON.stringify(body), redirect: 'manual'});
+    if (this.bearer) headers.authorization = 'Bearer ' + this.bearer;
+    const r = await fetch(this.base + path, {method, headers, body: body === undefined ? undefined : JSON.stringify(body), redirect: 'manual'});
     const sc = r.headers.get('set-cookie');
     if (sc) { const m = /eva_sid=([^;]*)/.exec(sc); if (m) this.cookie = m[1] ? 'eva_sid=' + m[1] : ''; }
     if (raw) return {status: r.status, text: await r.text(), headers: r.headers};
@@ -345,6 +347,57 @@ async function browserHash(pw, salt) {
   for (let i = 0; i < 10; i++) st = (await br.req('POST', '/api/auth/login', {email: 'owner@test.ru', pw: 'guess' + i})).status;
   ok(st === 429, 'после серии неудач вход с этого адреса закрыт на время', st);
   ok((await owner.req('POST', '/api/auth/logout', {})).status === 200 && (await owner.state()).me === null, 'выход закрывает сессию');
+
+  console.log('18. бот команды: вход по ключу, только задачи');
+  ok((await new Client('nokey', BASE, 'k'.repeat(40)).get('/api/state')).status === 401, 'без BOT_KEY на сервере ключ бота не пускает');
+  {
+    /* у бота свой сервер: с ключом и на своих пустых данных */
+    const {spawn} = require('child_process'), fs = require('fs'), os = require('os'), path = require('path');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eva-bot-'));
+    const KEY = require('crypto').randomBytes(24).toString('hex');
+    const B2 = `http://localhost:${Number(new URL(BASE).port || 8787) + 1}`;
+    const srv = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')],
+      {env: {...process.env, DATA_DIR: dir, PORT: new URL(B2).port, INSECURE_COOKIE: '1', BOT_KEY: KEY}, stdio: 'ignore'});
+    try {
+      for (let i = 0; i < 50; i++) { try { if ((await fetch(B2 + '/healthz')).ok) break; } catch (e) { /* ещё не встал */ } await wait(100); }
+      const own = new Client('owner2', B2), bot = new Client('bot', B2, KEY), bad = new Client('bad', B2, KEY.replace(/.$/, c => (c === 'a' ? 'b' : 'a')));
+      await own.req('POST', '/api/auth/owner', {name: 'Основатель Бота', email: 'o@bot.ru', pw: 'secret1'});
+      const ownAcc = (await own.state()).me;
+      await own.put('people', 'pz', {name: 'Зуля Тест', title: 'PR', dir: 'content', salary: 100000, phone: '+7999', birthDate: '1990-01-01'});
+      await own.put('tasks', 'th', {title: 'Задача человека', assignee: 'pz', status: 'todo', due: '2026-10-20'});
+      await own.put('ledger', 'l1', {amount: 5000, title: 'деньги'});
+      await own.put('messages', 'mm1', {ch: 'team', by: ownAcc, text: 'секрет', at: Date.now()});
+
+      ok((await bad.get('/api/state')).status === 401, 'чужой ключ — 401');
+      r = await bot.get('/api/state');
+      const bs = r.j.collections || {};
+      ok(r.status === 200 && bs.tasks && bs.tasks.th, 'бот видит задачи', r.status);
+      ok(bs.people && bs.people.pz && bs.people.pz.name === 'Зуля Тест' && !('phone' in bs.people.pz) && !('salary' in bs.people.pz) && !('birthDate' in bs.people.pz), 'из «Команды» — только кто это', bs.people);
+      ok(!Object.keys(bs.ledger || {}).length && !Object.keys(bs.messages || {}).length && !Object.keys(bs.invites || {}).length, 'денег, сообщений и приглашений не видит');
+      ok(Object.values(bs.accounts || {}).every(a => !('email' in a) && !('hash' in a)), 'учётки — без почты и пароля', bs.accounts);
+
+      ok((await bot.put('tasks', 'tb1', {title: 'От бота', assignee: 'pz', status: 'todo', via: 'bot', createdBy: 'pz'})).status === 200, 'бот ставит задачу');
+      ok((await bot.put('tasks', 'tb2', {title: 'Без пометки', status: 'todo'})).status === 403, 'задачу без пометки via: bot — нет');
+      ok((await bot.put('tasks', 'th', {title: 'Подмена', via: 'bot'})).status === 403, 'чужую задачу целиком не заменяет');
+      ok((await bot.patch('tasks', 'th', {due: '2026-10-21'})).status === 200, 'срок чужой задачи меняет');
+      ok((await bot.patch('tasks', 'th', {via: 'bot'})).status === 403, 'пометку бота на чужую задачу не ставит');
+      ok((await bot.del('tasks', 'th')).status === 403, 'чужую задачу не удаляет');
+      ok((await bot.req('PATCH', '/api/doc/tasks/th', {due: '2026-10-22'}, {noHeader: true})).status === 403, 'запись без заголовка x-eva — нет');
+      ok((await bot.put('ledger', 'l2', {amount: 1})).status === 403 && (await bot.patch('people', 'pz', {phone: '+7000'})).status === 403, 'деньги и «Команду» не меняет');
+      ok((await bot.put('messages', 'mm2', {ch: 'team', by: 'bot', text: 'x', at: 1})).status === 403, 'в чат команды не пишет');
+      ok((await bot.get('/api/events')).status === 403 && (await bot.get('/api/export')).status === 403, 'поток событий и выгрузка — нет');
+      ok((await bot.get('/crm/api/state')).status === 401, 'в CRM не пускает');
+      ok((await bot.del('tasks', 'tb1')).status === 200, 'свою задачу удаляет');
+
+      const log = (await bot.get('/api/bot/log?n=10')).j.log || [];
+      ok(log.length === 3 && log.map(x => x.op).join() === 'put,patch,delete', 'журнал бота: каждая правка', log.map(x => x.op));
+      const pl = log.find(x => x.op === 'patch');
+      ok(pl && pl.prev && pl.prev.due === '2026-10-20' && pl.next.due === '2026-10-21', 'в журнале прежняя версия — правку можно вернуть', pl);
+      ok((await own.state()).collections.tasks.th.due === '2026-10-21', 'основатель видит правку бота');
+      for (let i = 0; i < 9; i++) await bad.get('/api/state');
+      ok((await bad.get('/api/state')).status === 429, 'перебор ключа закрывает вход с этого адреса');
+    } finally { srv.kill(); }
+  }
 
   console.log(`\nИтог: прошло ${pass}, не прошло ${failN}`);
   process.exit(failN ? 1 : 0);
