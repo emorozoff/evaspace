@@ -125,6 +125,7 @@ function botOf(req) {
 /* каждая правка бота — строкой с прежней версией: по ней любую правку можно вернуть */
 function botLog(entry) {
   try {
+    fs.mkdirSync(DATA_DIR, {recursive: true});   /* на пустом сервере папки данных может ещё не быть */
     try { if (fs.statSync(BOT_LOG).size > 5e6) fs.renameSync(BOT_LOG, BOT_LOG + '.old'); } catch (e) { /* журнала ещё нет */ }
     fs.appendFileSync(BOT_LOG, JSON.stringify({at: Date.now(), ...entry}) + '\n', {mode: 0o600});
   } catch (e) { console.error(new Date().toISOString(), 'bot log', e.message); }
