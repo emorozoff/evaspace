@@ -41,6 +41,7 @@ const A = require('./lib/auth');
 const HQ = require('./lib/hq-rules');
 const CRM = require('./lib/crm-rules');
 const {Gcal} = require('./lib/gcal');
+const {Zoom} = require('./lib/zoom');
 
 const HQ_DIR = path.resolve(__dirname, '..');                       // club/v2 — сам штаб
 const CRM_DIR = path.resolve(process.env.CRM_DIR || path.join(__dirname, '..', '..', '..', 'crm', 'v2'));
@@ -90,6 +91,7 @@ crm.store.load();
 const sessions = new A.Sessions(path.join(DATA_DIR, 'sessions.json'));
 const limiter = new A.Limiter();
 const gcal = new Gcal({file: path.join(DATA_DIR, 'gcal.json'), clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, publicUrl: PUBLIC_URL});
+const zoom = new Zoom({accountId: process.env.ZOOM_ACCOUNT_ID, clientId: process.env.ZOOM_CLIENT_ID, clientSecret: process.env.ZOOM_CLIENT_SECRET, webhookSecret: process.env.ZOOM_WEBHOOK_SECRET});
 
 /* ── кто пришёл ── */
 function ctxFor(accId, token) {
@@ -125,6 +127,15 @@ function body(req) {
     req.on('data', ch => { size += ch.length; if (size > MAX_BODY) { reject(err(413, 'слишком большой запрос')); req.destroy(); } else parts.push(ch); });
     /* поле «__proto__» в записях не нужно никому, а вреда наделать может — выбрасываем при чтении */
     req.on('end', () => { try { resolve(parts.length ? JSON.parse(Buffer.concat(parts).toString('utf8'), (k, v) => (k === '__proto__' ? undefined : v)) : null); } catch (e) { reject(err(400, 'не JSON')); } });
+    req.on('error', reject);
+  });
+}
+function rawBody(req) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const parts = [];
+    req.on('data', ch => { size += ch.length; if (size > MAX_BODY) { reject(err(413, 'слишком большой запрос')); req.destroy(); } else parts.push(ch); });
+    req.on('end', () => resolve(Buffer.concat(parts).toString('utf8')));
     req.on('error', reject);
   });
 }
@@ -353,7 +364,59 @@ function events(app, req, res, ctx) {
   req.on('close', () => { clearInterval(ping); clients.delete(cl); });
 }
 
+/* ── Зум: запись и ИИ-протокол встречи — сами в «Протоколы» ── */
+const MSK = 3 * 3600e3;
+const mskDate = iso => new Date(new Date(iso || Date.now()).getTime() + MSK).toISOString().slice(0, 10);
+/* протокол встречи: найти по собранию штаба (или по встрече Зума) или завести. Ждём «Ок» от
+   участников собрания на его уровне; встреча, созданная прямо в Зуме, — уровень 1, все основатели */
+function zoomProtocol(obj) {
+  const zid = String(obj.id || obj.meeting_id || '');
+  const meet = zid ? hq.store.list('meetings').find(m => String(m.zoomId || '') === zid) : null;
+  const list = hq.store.list('protocols');
+  let p = meet ? list.find(x => x.meetingId === meet.id) : null;
+  if (!p && zid) p = list.find(x => String(x.zoomId || '') === zid && x.date === mskDate(obj.start_time));
+  if (p) return p;
+  const level = meet ? HQ.levelOf(meet.level ? meet : {level: 3}) : 1;
+  const roles = HQ.LEVEL_ROLES[level];
+  const accs = hq.store.list('accounts').filter(a => a.active !== false && roles.includes(HQ.roleOf(a.role)));
+  const inMeet = meet ? new Set([meet.organizer, ...(meet.attendees || [])].filter(Boolean)) : null;
+  let people = accs.filter(a => !inMeet || inMeet.has(a.personId)).map(a => a.personId || a.id);
+  if (!people.length) people = accs.map(a => a.personId || a.id);
+  const id = 'zm_' + A.uid();
+  const doc = {title: (meet && meet.title) || String(obj.topic || 'Встреча в Зуме').slice(0, 160), date: meet ? meet.date : mskDate(obj.start_time), level,
+    meetingId: meet ? meet.id : null, zoomId: zid || null, people, ok: {}, recUrl: '', text: '', by: 'zoom', at: Date.now(), log: {}};
+  hq.store.set('protocols', id, doc);
+  return {...doc, id};
+}
+const zoomLog = text => ({['zm' + Date.now().toString(36)]: {at: Date.now(), by: 'zoom', text}});
+async function zoomWebhook(req, res) {
+  const raw = await rawBody(req);
+  let j = null;
+  try { j = JSON.parse(raw); } catch (e) { return json(res, 400, {error: 'не JSON'}); }
+  if (!zoom.verify(req.headers, raw)) return json(res, 401, {error: 'подпись не сошлась'});
+  const ev = String(j.event || ''), obj = (j.payload && j.payload.object) || {};
+  if (ev === 'endpoint.url_validation') return json(res, 200, zoom.validation((j.payload || {}).plainToken));
+  try {
+    if (ev === 'recording.completed') {
+      const p = zoomProtocol(obj);
+      const pass = obj.recording_play_passcode || obj.password || '';
+      const url = obj.share_url ? obj.share_url + (pass && !String(obj.share_url).includes('pwd=') ? (obj.share_url.includes('?') ? '&' : '?') + 'pwd=' + encodeURIComponent(pass) : '') : '';
+      if (url && url !== p.recUrl) hq.store.patch('protocols', p.id, {recUrl: url, upd: Date.now(), log: zoomLog('Зум прислал запись встречи')});
+    }
+    if (ev === 'meeting.summary_completed' && zoom.configured) {
+      const p = zoomProtocol(obj);
+      const text = await zoom.summaryText(obj.meeting_uuid || obj.uuid);
+      /* текст, который уже правили люди, не трогаем: протокол Зума — в журнал */
+      if (text && !String(p.text || '').trim()) hq.store.patch('protocols', p.id, {text, ok: {}, upd: Date.now(), log: zoomLog('Зум прислал протокол встречи')});
+      else if (text) hq.store.patch('protocols', p.id, {zoomText: text, log: zoomLog('Зум прислал протокол — текст уже правили, его версия сохранена отдельно')});
+    }
+  } catch (e) { console.error(new Date().toISOString(), 'zoom webhook', ev, e.message); }
+  return json(res, 200, {ok: true});
+}
+
 async function hqApi(req, res, p, u) {
+  /* уведомления Зума приходят не со страницы штаба — проверяем подпись Зума */
+  if (p === 'zoom/webhook' && req.method === 'POST') return zoomWebhook(req, res);
   const ctx = ctxOf(req);
   const write = req.method !== 'GET';
   if (write && !sameSite(req)) return json(res, 403, {error: 'запрос не со страницы штаба'});
@@ -399,6 +462,23 @@ async function hqApi(req, res, p, u) {
     const b = (await body(req)) || {};
     try { return json(res, 200, {payload: await gcal.call(ctx.accId, String(b.tool || ''), b.input)}); }
     catch (e) { return json(res, 200, {error: e.message || 'ошибка', code: e.code || 'upstream_error', retryable: !!e.retryable, retryAfterMs: e.retryAfterMs}); }
+  }
+
+  /* Зум: включён ли, и создать или обновить встречу Зума для собрания штаба */
+  if (p === 'zoom/status' && !write) return json(res, 200, {configured: zoom.configured, hooks: zoom.hooks});
+  if (p === 'zoom/meeting' && req.method === 'POST') {
+    if (!zoom.configured) return json(res, 503, {error: 'Зум на сервере не подключён'});
+    const b = (await body(req)) || {};
+    const m = hq.store.get('meetings', String(b.id || ''));
+    if (!m || !HQ.view(ctx, 'meetings', String(b.id), m)) return json(res, 404, {error: 'собрание не найдено'});
+    if (!HQ.write(ctx, 'patch', 'meetings', String(b.id), m, {zoomUrl: ''}, m).ok) return json(res, 403, {error: 'это собрание менять нельзя'});
+    try {
+      let z;
+      if (m.zoomId) { await zoom.update(m.zoomId, m); z = {id: m.zoomId, join_url: m.zoomUrl}; }
+      else z = await zoom.create(m);
+      const next = hq.store.patch('meetings', String(b.id), {zoomId: String(z.id), zoomUrl: z.join_url || m.zoomUrl || ''});
+      return json(res, 200, {zoomId: next.zoomId, zoomUrl: next.zoomUrl});
+    } catch (e) { return json(res, e.status || 502, {error: e.message}); }
   }
 
   if (p === 'export' && !write) {

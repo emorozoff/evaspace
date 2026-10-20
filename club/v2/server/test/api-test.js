@@ -320,6 +320,7 @@ async function browserHash(pw, salt) {
   for (let i = 0; i < 10; i++) jn = (await nina.req('POST', '/crm/api/join', {code: 'EVA-ZZZ' + i})).status;
   ok(jn === 429, 'перебор кодов приглашения закрыт на время', jn);
 
+  ok((await anon.req('POST', '/api/zoom/webhook', {event: 'recording.completed', payload: {object: {id: 1}}}, {noHeader: true})).status === 401, 'уведомление «от Зума» без подписи — 401');
   console.log('16. страницы');
   r = await anon.req('GET', '/', undefined, {raw: true});
   ok(r.status === 200 && r.text.includes('window.EVA = ') && r.text.includes('/eva-server.js'), 'главная подключает серверную часть');

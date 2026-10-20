@@ -140,6 +140,7 @@ function openProto(id) {
           <button type="button" class="btn sm ghost" id="prPdf">${icon('download')}Скачать PDF</button></div>
         <div class="pr-text">${p.text ? protoTextHtml(p.text) : '<p class="note">Текста протокола пока нет.</p>'}</div>
         ${(p.people || []).length ? `<div class="pr-oks"><span class="label">Подтверждения</span>${p.people.map(k => `<span class="pr-ok ${ok[k] ? 'good' : ''}">${avatar(personById(k) || {name: whoName(k)})}${esc(whoFirst(k))} <small>${ok[k] ? 'Ок · ' + timeAgo(ok[k]) : 'ждём'}</small></span>`).join('')}</div>` : ''}
+        ${p.zoomText ? `<details class="pr-zoom"><summary>Версия протокола от Зума</summary><div class="pr-text">${protoTextHtml(p.zoomText)}</div></details>` : ''}
         ${logHtml(p)}
       </div>`,
     foot: `${protoCanEdit() ? `<button class="btn left" id="prEdit">${icon('edit')}Изменить</button>` : ''}<button class="btn" data-close>Закрыть</button>${Proto.needsMe(p) ? `<button class="btn primary" id="prOk">${icon('tick')}Ок, согласен(на)</button>` : ''}`,
@@ -251,6 +252,19 @@ document.addEventListener('click', e => {
   if (x) $('[data-close]', x).click();
   protoForMeeting(b.dataset.protoMeet);
 }, true);
+
+/* Зум на сервере: если подключён — собрание можно сразу создать в Зуме,
+   запись и ИИ-протокол придут в «Протоколы» сами (server/lib/zoom.js) */
+const ZoomSt = {
+  on: false,
+  load() { if (window.EvaServer && window.EvaServer.zoom) window.EvaServer.zoom.status().then(s => { this.on = !!(s && s.configured); }); },
+  async meeting(id) {
+    try {
+      await window.EvaServer.zoom.meeting(id);
+      toast('Встреча в Зуме готова: ссылка — в собрании, запись и протокол придут в «Протоколы» сами');
+    } catch (e) { toast('Зум не создал встречу: ' + ((e && e.message) || 'нет связи'), {error: true}); }
+  },
+};
 
 /* новый протокол на моё «Ок» — звук и уведомление */
 const ProtoNotify = {

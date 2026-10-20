@@ -129,6 +129,12 @@
   `GOOGLE_CLIENT_ID` и `GOOGLE_CLIENT_SECRET` (Google Cloud → Credentials → OAuth client,
   тип «Web application», адрес возврата `PUBLIC_URL/api/gcal/callback`) и `PUBLIC_URL`.
   Инструменты и поля — те же, что у коннектора Claude (`server/lib/gcal.js`).
+- **Зум команды** (`server/lib/zoom.js`) — приложение Зума Server-to-Server OAuth:
+  `ZOOM_ACCOUNT_ID`, `ZOOM_CLIENT_ID`, `ZOOM_CLIENT_SECRET` — штаб создаёт встречу Зума для
+  собрания (`POST /api/zoom/meeting`, запись в облако включена) и забирает ИИ-протокол;
+  `ZOOM_WEBHOOK_SECRET` — Зум присылает на `/api/zoom/webhook` «запись готова» и «протокол готов»,
+  сервер проверяет подпись и сам кладёт ссылку на запись и текст в `protocols` (by: `zoom`).
+  Текст, который уже правили люди, не перезаписывается — версия Зума ложится в `zoomText`.
 - Чего на своём сервере нет: ответов Адама и сводок CRM с помощью Claude (остаются
   встроенные ответы), входа через аккаунт Claude, напоминаний в Telegram.
 
@@ -145,7 +151,7 @@
 обновляются; поставить или обновить их — `bash club/v2/server/deploy/autodeploy-install.sh`).
 
 Вручную, с компьютера владельца: `bash club/v2/server/deploy/deploy.sh` (код в обход ветки —
-следующая правка в ветке его заменит), `caddy.sh` (адрес), `google.sh` (ключи Google); куда
+следующая правка в ветке его заменит), `caddy.sh` (адрес), `google.sh` (ключи Google), `zoom.sh` (ключи Зума); куда
 выкладывать — в `deploy/local.env`, он в репозиторий не попадает.
 Первое приглашение, когда войти основателем некому: `node server.js --invite owner`.
 Проверки: `node server/test/gcal-test.js` и `node server/test/api-test.js` (вторая — против

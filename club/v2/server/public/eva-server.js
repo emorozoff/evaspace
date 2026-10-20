@@ -252,7 +252,12 @@
     profiles: async ids => { const all = await call('GET', API + '/profiles'); return Object.fromEntries((ids || []).map(id => [id, all[id] || {}])); },
   };
 
-  window.EvaServer = {app: cfg.app, urls: {hq: cfg.hq || '/', crm: cfg.crm || '/crm/'}, db, session, load, auth, gcal, enter};
+  /* Зум команды: подключён ли на сервере и встреча Зума для собрания */
+  const zoom = {
+    status: () => call('GET', HQ_API + '/zoom/status').catch(() => ({configured: false})),
+    meeting: id => call('POST', HQ_API + '/zoom/meeting', {id}),
+  };
+  window.EvaServer = {app: cfg.app, urls: {hq: cfg.hq || '/', crm: cfg.crm || '/crm/'}, db, session, load, auth, gcal, zoom, enter};
   window.claude = {
     async use(cap) {
       if (cap === 'mcp') return (await gstatus()).configured ? mcp : null;

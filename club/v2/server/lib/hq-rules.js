@@ -172,4 +172,4 @@ function keepHidden(ctx, c, id, cur, next) {
   return out;
 }
 
-module.exports = {COLS, ROLES, roleOf, can, view, write, keepHidden, ACC_SECRET};
+module.exports = {COLS, ROLES, roleOf, can, view, write, keepHidden, ACC_SECRET, LEVEL_ROLES, levelOf};

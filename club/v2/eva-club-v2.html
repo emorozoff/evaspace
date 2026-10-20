@@ -4815,6 +4815,7 @@ const DIR_CAT = {content: 'content', audience: 'marketing', product: 'infra', op
 const normTitle = s => String(s || '').toLowerCase().replace(/ё/g, 'е').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 const founderId = () => (people().find(p => p.founder) || {}).id || null;
 function whoName(k) {
+  if (k === 'zoom') return 'Зум';
   const p = personById(k);
   if (p) return personName(p);
   const a = k ? Store.get('accounts', k) : null;
@@ -11523,6 +11524,7 @@ function openMeeting(id, preset = {}) {
       <div class="mt-opts">
         <div class="mt-rem"><label class="field"><span>Напоминание</span><select class="select" id="mtRemind">${Object.entries(REMINDS).map(([k, n]) => `<option value="${k}" ${Number(k) === remindOf(d) ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
           <p class="note">${tgBot() ? 'Участникам придёт напоминание в штабе со звуком, а тем, кто подключил бота, — в Telegram само.' : 'Участникам из команды — в штабе со звуком. Гостям с Telegram — в один клик: «Напомнить» у собрания.'}</p></div>
+        ${ZoomSt.on ? `<label class="check"><input type="checkbox" id="mtZoomMk" ${m && m.zoomId ? 'checked disabled' : !m ? 'checked' : ''}> ${m && m.zoomId ? 'Встреча в Зуме создана — время и название обновятся там сами' : 'Создать встречу в Зуме: запись и протокол придут в «Протоколы» сами'}</label>` : ''}
         <label class="check"><input type="checkbox" id="mtMeet" ${d.meet ? 'checked' : ''} ${inGoogle && m.meetUrl ? 'disabled' : ''}> Ссылка Google Meet</label>
         <label class="check"><input type="checkbox" id="mtSend" ${google && (!m || isOrg) ? 'checked' : ''} ${google && isOrg ? '' : 'disabled'}> ${inGoogle ? 'Отправить изменения участникам через Google' : 'Создать в моём Google Календаре и отправить приглашения'}</label>
         <p class="note">${m && m.gcalReadonly ? 'Это событие из чужого Google Календаря: поменять его там может только организатор. Здесь — запись в штабе.' : !google ? 'Google Календарь недоступен в этом окне — собрание сохранится в штабе, приглашения не уйдут.' : !isOrg ? `Изменения в Google отправляет организатор — ${esc(personName(orgP))}. Здесь поправится только запись в штабе.` : 'Участникам придёт письмо-приглашение и событие в их календарь; ответ «иду / не иду» появится в штабе.'}</p>
@@ -11659,16 +11661,23 @@ function openMeeting(id, preset = {}) {
         if (badG) { toast('Проверьте гостей: почта вида name@mail.ru, Telegram — @имя или номер телефона'); return; }
         const send = $('#mtSend', el).checked && !$('#mtSend', el).disabled;
         const body = {...v, until: v.repeat ? Q.end : null};
+        const zBox = $('#mtZoomMk', el), zoomWant = !!(zBox && zBox.checked);
+        /* встречу Зума заводит сервер — ссылку на Зум он впишет сам */
+        if (zoomWant && !(m && m.zoomId)) delete body.zoomUrl;
+        if (m && m.zoomId && !body.zoomUrl) body.zoomUrl = m.zoomUrl || '';
         if (!m) {
           const nid = uid();
-          Store.put('meetings', nid, {...body, organizer, calId: myCalId() || null, by: Auth.me().id, at: Date.now(), invite: send ? 'sending' : 'none'});
+          const saved = Store.put('meetings', nid, {...body, organizer, calId: myCalId() || null, by: Auth.me().id, at: Date.now(), invite: send ? 'sending' : 'none'});
           close();
+          if (zoomWant) { await saved; await ZoomSt.meeting(nid); }
           if (send) await pushMeeting(nid); else toast('Собрание сохранено в штабе');
           return;
         }
         const before = clone(m);
-        Store.patch('meetings', m.id, {...body, guests: v.guests, attendees: v.attendees, extGuests: v.extGuests, editedAt: Date.now()});
+        const saved = Store.patch('meetings', m.id, {...body, guests: v.guests, attendees: v.attendees, extGuests: v.extGuests, editedAt: Date.now()});
         close();
+        /* встреча Зума: создать или перенести вслед за собранием */
+        if (ZoomSt.on && (zoomWant || m.zoomId) && (!m.zoomId || ['title', 'date', 'start', 'dur', 'agenda'].some(k => String(before[k] || '') !== String(body[k] || '')))) { await saved; await ZoomSt.meeting(m.id); }
         if (send && before.gcalId && isOrg) await updateInGoogle(m.id, before);
         else if (send && !before.gcalId) await pushMeeting(m.id);
         else toast('Собрание обновлено');
@@ -12103,6 +12112,7 @@ function openProto(id) {
           <button type="button" class="btn sm ghost" id="prPdf">${icon('download')}Скачать PDF</button></div>
         <div class="pr-text">${p.text ? protoTextHtml(p.text) : '<p class="note">Текста протокола пока нет.</p>'}</div>
         ${(p.people || []).length ? `<div class="pr-oks"><span class="label">Подтверждения</span>${p.people.map(k => `<span class="pr-ok ${ok[k] ? 'good' : ''}">${avatar(personById(k) || {name: whoName(k)})}${esc(whoFirst(k))} <small>${ok[k] ? 'Ок · ' + timeAgo(ok[k]) : 'ждём'}</small></span>`).join('')}</div>` : ''}
+        ${p.zoomText ? `<details class="pr-zoom"><summary>Версия протокола от Зума</summary><div class="pr-text">${protoTextHtml(p.zoomText)}</div></details>` : ''}
         ${logHtml(p)}
       </div>`,
     foot: `${protoCanEdit() ? `<button class="btn left" id="prEdit">${icon('edit')}Изменить</button>` : ''}<button class="btn" data-close>Закрыть</button>${Proto.needsMe(p) ? `<button class="btn primary" id="prOk">${icon('tick')}Ок, согласен(на)</button>` : ''}`,
@@ -12214,6 +12224,19 @@ document.addEventListener('click', e => {
   if (x) $('[data-close]', x).click();
   protoForMeeting(b.dataset.protoMeet);
 }, true);
+
+/* Зум на сервере: если подключён — собрание можно сразу создать в Зуме,
+   запись и ИИ-протокол придут в «Протоколы» сами (server/lib/zoom.js) */
+const ZoomSt = {
+  on: false,
+  load() { if (window.EvaServer && window.EvaServer.zoom) window.EvaServer.zoom.status().then(s => { this.on = !!(s && s.configured); }); },
+  async meeting(id) {
+    try {
+      await window.EvaServer.zoom.meeting(id);
+      toast('Встреча в Зуме готова: ссылка — в собрании, запись и протокол придут в «Протоколы» сами');
+    } catch (e) { toast('Зум не создал встречу: ' + ((e && e.message) || 'нет связи'), {error: true}); }
+  },
+};
 
 /* новый протокол на моё «Ок» — звук и уведомление */
 const ProtoNotify = {
@@ -13254,6 +13277,7 @@ const Chat = {
   MeetRemind.start();
   FinNotify.init();
   ProtoNotify.init();
+  ZoomSt.load();
   /* для проверок и отладки из консоли */
   window.__eva = {Store, Auth, App, Tasks, Inbox, settings, Sales, Plan, Money, cashFlow, pnl, rateTable, rateCharge, rateAt, quarterPace, Sound, Strategy, openWelcome, inviteLink, inviteText, Adam, Chat, Msgs, MsgNotify, MeetRemind, Cal, openGEvent, remindGuests, openTask, Fin, Subs, Market, unitEcon, FinNotify};
 })();

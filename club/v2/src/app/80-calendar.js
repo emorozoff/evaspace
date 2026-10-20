@@ -942,6 +942,7 @@ function openMeeting(id, preset = {}) {
       <div class="mt-opts">
         <div class="mt-rem"><label class="field"><span>Напоминание</span><select class="select" id="mtRemind">${Object.entries(REMINDS).map(([k, n]) => `<option value="${k}" ${Number(k) === remindOf(d) ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
           <p class="note">${tgBot() ? 'Участникам придёт напоминание в штабе со звуком, а тем, кто подключил бота, — в Telegram само.' : 'Участникам из команды — в штабе со звуком. Гостям с Telegram — в один клик: «Напомнить» у собрания.'}</p></div>
+        ${ZoomSt.on ? `<label class="check"><input type="checkbox" id="mtZoomMk" ${m && m.zoomId ? 'checked disabled' : !m ? 'checked' : ''}> ${m && m.zoomId ? 'Встреча в Зуме создана — время и название обновятся там сами' : 'Создать встречу в Зуме: запись и протокол придут в «Протоколы» сами'}</label>` : ''}
         <label class="check"><input type="checkbox" id="mtMeet" ${d.meet ? 'checked' : ''} ${inGoogle && m.meetUrl ? 'disabled' : ''}> Ссылка Google Meet</label>
         <label class="check"><input type="checkbox" id="mtSend" ${google && (!m || isOrg) ? 'checked' : ''} ${google && isOrg ? '' : 'disabled'}> ${inGoogle ? 'Отправить изменения участникам через Google' : 'Создать в моём Google Календаре и отправить приглашения'}</label>
         <p class="note">${m && m.gcalReadonly ? 'Это событие из чужого Google Календаря: поменять его там может только организатор. Здесь — запись в штабе.' : !google ? 'Google Календарь недоступен в этом окне — собрание сохранится в штабе, приглашения не уйдут.' : !isOrg ? `Изменения в Google отправляет организатор — ${esc(personName(orgP))}. Здесь поправится только запись в штабе.` : 'Участникам придёт письмо-приглашение и событие в их календарь; ответ «иду / не иду» появится в штабе.'}</p>
@@ -1078,16 +1079,23 @@ function openMeeting(id, preset = {}) {
         if (badG) { toast('Проверьте гостей: почта вида name@mail.ru, Telegram — @имя или номер телефона'); return; }
         const send = $('#mtSend', el).checked && !$('#mtSend', el).disabled;
         const body = {...v, until: v.repeat ? Q.end : null};
+        const zBox = $('#mtZoomMk', el), zoomWant = !!(zBox && zBox.checked);
+        /* встречу Зума заводит сервер — ссылку на Зум он впишет сам */
+        if (zoomWant && !(m && m.zoomId)) delete body.zoomUrl;
+        if (m && m.zoomId && !body.zoomUrl) body.zoomUrl = m.zoomUrl || '';
         if (!m) {
           const nid = uid();
-          Store.put('meetings', nid, {...body, organizer, calId: myCalId() || null, by: Auth.me().id, at: Date.now(), invite: send ? 'sending' : 'none'});
+          const saved = Store.put('meetings', nid, {...body, organizer, calId: myCalId() || null, by: Auth.me().id, at: Date.now(), invite: send ? 'sending' : 'none'});
           close();
+          if (zoomWant) { await saved; await ZoomSt.meeting(nid); }
           if (send) await pushMeeting(nid); else toast('Собрание сохранено в штабе');
           return;
         }
         const before = clone(m);
-        Store.patch('meetings', m.id, {...body, guests: v.guests, attendees: v.attendees, extGuests: v.extGuests, editedAt: Date.now()});
+        const saved = Store.patch('meetings', m.id, {...body, guests: v.guests, attendees: v.attendees, extGuests: v.extGuests, editedAt: Date.now()});
         close();
+        /* встреча Зума: создать или перенести вслед за собранием */
+        if (ZoomSt.on && (zoomWant || m.zoomId) && (!m.zoomId || ['title', 'date', 'start', 'dur', 'agenda'].some(k => String(before[k] || '') !== String(body[k] || '')))) { await saved; await ZoomSt.meeting(m.id); }
         if (send && before.gcalId && isOrg) await updateInGoogle(m.id, before);
         else if (send && !before.gcalId) await pushMeeting(m.id);
         else toast('Собрание обновлено');

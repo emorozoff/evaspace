@@ -15,6 +15,7 @@ const DIR_CAT = {content: 'content', audience: 'marketing', product: 'infra', op
 const normTitle = s => String(s || '').toLowerCase().replace(/ё/g, 'е').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 const founderId = () => (people().find(p => p.founder) || {}).id || null;
 function whoName(k) {
+  if (k === 'zoom') return 'Зум';
   const p = personById(k);
   if (p) return personName(p);
   const a = k ? Store.get('accounts', k) : null;
