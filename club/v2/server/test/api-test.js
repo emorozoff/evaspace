@@ -394,6 +394,23 @@ async function browserHash(pw, salt) {
       const pl = log.find(x => x.op === 'patch');
       ok(pl && pl.prev && pl.prev.due === '2026-10-20' && pl.next.due === '2026-10-21', 'в журнале прежняя версия — правку можно вернуть', pl);
       ok((await own.state()).collections.tasks.th.due === '2026-10-21', 'основатель видит правку бота');
+
+      /* собрания: бот назначает созвоны, встречу Зума заводит сервер */
+      await own.put('meetings', 'mh', {title: 'Собрание основателей', date: '2026-10-21', start: '15:00', dur: 60, level: 1, organizer: 'pz', attendees: [],
+        extGuests: [{id: 'g1', name: 'Гость', email: 'g@x.ru'}], guests: ['g@x.ru']});
+      const bmh = ((await bot.get('/api/state')).j.collections.meetings || {}).mh;
+      ok(bmh && bmh.title === 'Собрание основателей' && !('extGuests' in bmh) && !('guests' in bmh), 'собрания видит, внешних гостей — нет', bmh);
+      ok((await bot.put('meetings', 'mb1', {title: 'Созвон', date: '2026-10-21', start: '15:00', dur: 60, level: 1, organizer: 'pz', attendees: [], via: 'bot'})).status === 200, 'бот создаёт собрание');
+      ok((await bot.put('meetings', 'mb2', {title: 'Без пометки', date: '2026-10-21', start: '16:00'})).status === 403, 'собрание без пометки via: bot — нет');
+      ok((await bot.patch('meetings', 'mh', {start: '16:00'})).status === 200, 'время чужого собрания меняет');
+      const omh = (await own.state()).collections.meetings.mh;
+      ok(omh.start === '16:00' && (omh.extGuests || []).length === 1 && (omh.guests || []).length === 1, 'гости собрания после правки бота на месте', omh);
+      ok((await bot.patch('meetings', 'mh', {extGuests: []})).status === 403, 'внешних гостей не трогает');
+      ok((await bot.del('meetings', 'mh')).status === 403, 'чужое собрание не удаляет');
+      r = await bot.req('POST', '/api/zoom/meeting', {id: 'mb1'});
+      ok(r.status === 503, 'встречу Зума просит у сервера (здесь Зум не подключён — 503, а не отказ в правах)', r);
+      ok((await bot.del('meetings', 'mb1')).status === 200, 'своё собрание удаляет');
+      ok((await bot.put('protocols', 'pb', {title: 'x', level: 3, via: 'bot'})).status === 403, 'протоколы не трогает');
       for (let i = 0; i < 9; i++) await bad.get('/api/state');
       ok((await bad.get('/api/state')).status === 429, 'перебор ключа закрывает вход с этого адреса');
     } finally { srv.kill(); }

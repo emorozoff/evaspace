@@ -442,6 +442,23 @@ async function zoomWebhook(req, res) {
   return json(res, 200, {ok: true});
 }
 
+/* создать или обновить встречу Зума для собрания штаба (со страницы штаба и от бота) */
+async function zoomMeeting(req, res, ctx) {
+  if (!zoom.configured) return json(res, 503, {error: 'Зум на сервере не подключён'});
+  const b = (await body(req)) || {};
+  const m = hq.store.get('meetings', String(b.id || ''));
+  if (!m || !HQ.view(ctx, 'meetings', String(b.id), m)) return json(res, 404, {error: 'собрание не найдено'});
+  if (!HQ.write(ctx, 'patch', 'meetings', String(b.id), m, {zoomUrl: ''}, m).ok) return json(res, 403, {error: 'это собрание менять нельзя'});
+  try {
+    let z;
+    if (m.zoomId) { await zoom.update(m.zoomId, m); z = {id: m.zoomId, join_url: m.zoomUrl}; }
+    else z = await zoom.create(m);
+    const next = hq.store.patch('meetings', String(b.id), {zoomId: String(z.id), zoomUrl: z.join_url || m.zoomUrl || ''});
+    if (ctx.role === HQ.BOT) botLog({op: 'patch', col: 'meetings', id: String(b.id), prev: m, next});
+    return json(res, 200, {zoomId: next.zoomId, zoomUrl: next.zoomUrl});
+  } catch (e) { return json(res, e.status || 502, {error: e.message}); }
+}
+
 async function hqApi(req, res, p, u) {
   /* уведомления Зума приходят не со страницы штаба — проверяем подпись Зума */
   if (p === 'zoom/webhook' && req.method === 'POST') return zoomWebhook(req, res);
@@ -452,12 +469,13 @@ async function hqApi(req, res, p, u) {
     if (limiter.blocked(k)) return json(res, 429, {error: 'Слишком много попыток. Попробуйте позже.'});
     if (!bot) { limiter.fail(k); return json(res, 401, {error: 'ключ бота не подошёл'}); }
     if (write && !sameSite(req)) return json(res, 403, {error: 'нужен заголовок x-eva'});
-    /* боту — только задачи: снимок штаба, записи и журнал своих правок */
+    /* боту — задачи и собрания: снимок штаба, записи, встреча Зума к собранию и журнал своих правок */
     if (p === 'state' && !write) return json(res, 200, {me: bot.accId, collections: stateOf(hq, bot)});
     if (p === 'bot/log' && !write) return json(res, 200, {log: botLogTail(Math.min(200, Math.max(1, Number(u.searchParams.get('n')) || 30)))});
+    if (p === 'zoom/meeting' && req.method === 'POST') return zoomMeeting(req, res, bot);
     const bm = /^doc\/([a-z]{2,20})\/([^/]+)$/.exec(p);
     if (bm) return docApi(hq, req, res, bot, decodeURIComponent(bm[1]), decodeURIComponent(bm[2]));
-    return json(res, 403, {error: 'боту доступны только задачи'});
+    return json(res, 403, {error: 'боту доступны только задачи и собрания'});
   }
   const ctx = ctxOf(req);
   if (write && !sameSite(req)) return json(res, 403, {error: 'запрос не со страницы штаба'});
@@ -507,20 +525,7 @@ async function hqApi(req, res, p, u) {
 
   /* Зум: включён ли, и создать или обновить встречу Зума для собрания штаба */
   if (p === 'zoom/status' && !write) return json(res, 200, {configured: zoom.configured, hooks: zoom.hooks});
-  if (p === 'zoom/meeting' && req.method === 'POST') {
-    if (!zoom.configured) return json(res, 503, {error: 'Зум на сервере не подключён'});
-    const b = (await body(req)) || {};
-    const m = hq.store.get('meetings', String(b.id || ''));
-    if (!m || !HQ.view(ctx, 'meetings', String(b.id), m)) return json(res, 404, {error: 'собрание не найдено'});
-    if (!HQ.write(ctx, 'patch', 'meetings', String(b.id), m, {zoomUrl: ''}, m).ok) return json(res, 403, {error: 'это собрание менять нельзя'});
-    try {
-      let z;
-      if (m.zoomId) { await zoom.update(m.zoomId, m); z = {id: m.zoomId, join_url: m.zoomUrl}; }
-      else z = await zoom.create(m);
-      const next = hq.store.patch('meetings', String(b.id), {zoomId: String(z.id), zoomUrl: z.join_url || m.zoomUrl || ''});
-      return json(res, 200, {zoomId: next.zoomId, zoomUrl: next.zoomUrl});
-    } catch (e) { return json(res, e.status || 502, {error: e.message}); }
-  }
+  if (p === 'zoom/meeting' && req.method === 'POST') return zoomMeeting(req, res, ctx);
 
   if (p === 'export' && !write) {
     if (ctx.role !== 'owner') return json(res, 403, {error: 'полную выгрузку делает основатель'});

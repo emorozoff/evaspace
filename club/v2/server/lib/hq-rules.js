@@ -50,21 +50,26 @@ const SETTINGS_MONEY = ['cashStart', 'cashDate', 'invest', 'rates'];
 const dmHas = (ch, accId) => String(ch).startsWith('dm:') && String(ch).slice(3).split('|').includes(accId);
 
 /* Бот команды в Telegram входит по ключу (BOT_KEY на сервере), а не по паролю. Роль 'bot' — не из
-   ROLES: учётки с ней нет. Видит задачи, а из «Команды» и учёток — только кто это (без контактов,
-   зарплат и личного). Ставит и меняет задачи; удалить может только задачу, которую поставил сам
-   (via: 'bot'). Денег, сообщений, собраний и настроек не видит и не меняет. */
+   ROLES: учётки с ней нет. Видит задачи и собрания (без внешних гостей), а из «Команды» и учёток —
+   только кто это (без контактов, зарплат и личного). Ставит и меняет задачи и собрания (встречу Зума
+   к собранию заводит сервер); удалить может только то, что поставил сам (via: 'bot'). Денег,
+   сообщений, протоколов и настроек не видит и не меняет. */
 const BOT = 'bot';
+const BOT_COLS = ['tasks', 'meetings'];
+const MEET_GUESTS = ['extGuests', 'guests'];
 function botView(c, doc) {
   if (c === 'tasks') return doc;
+  if (c === 'meetings') return omit(doc, MEET_GUESTS);
   if (c === 'people') return pick(doc, PERSON_PUBLIC);
   if (c === 'accounts') return pick(doc, ACC_PUBLIC);
   return null;
 }
 function botWrite(op, c, cur, body, next) {
-  if (c !== 'tasks') return no('бот может только ставить и менять задачи');
-  if (op === 'delete') return cur && cur.via === BOT ? yes(null) : no('бот удаляет только задачи, которые поставил сам');
-  if (op === 'put' && cur) return no('бот меняет задачу правкой, а не заменой целиком');
-  if (op === 'put' && (!isObj(next) || next.via !== BOT)) return no('задача от бота должна быть помечена via: bot');
+  if (!BOT_COLS.includes(c)) return no('бот может только ставить и менять задачи и собрания');
+  if (op === 'delete') return cur && cur.via === BOT ? yes(null) : no('бот удаляет только то, что поставил сам');
+  if (op === 'put' && cur) return no('бот меняет запись правкой, а не заменой целиком');
+  if (op === 'put' && (!isObj(next) || next.via !== BOT)) return no('запись от бота должна быть помечена via: bot');
+  if (isObj(body) && MEET_GUESTS.some(k => k in body)) return no('внешних гостей собрания бот не трогает');
   if (op === 'patch' && isObj(body) && 'via' in body) return no('пометку бота менять нельзя');
   return yes(next);
 }
