@@ -430,6 +430,7 @@ function zoomProtocol(obj) {
   hq.store.set('protocols', id, doc);
   return {...doc, id};
 }
+const ZOOM_NEXT = '\n\n── Следующая часть встречи ──\n\n';
 const zoomLog = text => ({['zm' + Date.now().toString(36)]: {at: Date.now(), by: 'zoom', text}});
 async function zoomWebhook(req, res) {
   const raw = await rawBody(req);
@@ -445,20 +446,30 @@ async function zoomWebhook(req, res) {
       const pass = obj.recording_play_passcode || obj.password || '';
       const url = obj.share_url ? obj.share_url + (pass && !String(obj.share_url).includes('pwd=') ? (obj.share_url.includes('?') ? '&' : '?') + 'pwd=' + encodeURIComponent(pass) : '') : '';
       if (url && url !== p.recUrl) hq.store.patch('protocols', p.id, {recUrl: url, upd: Date.now(), log: zoomLog('Зум прислал запись встречи')});
-      /* транскрипт — дословно, кто что сказал: по нему бот ищет «внимание, задача» */
-      if (!p.transcript) {
+      /* транскрипт — дословно, кто что сказал. У одного собрания бывает несколько заходов в Зум (вышли
+         и зашли снова) — у каждого свой uuid: транскрипт каждого дописываем следом */
+      const part = String(obj.uuid || ''), got = p.transcriptOf || [];
+      if (!got.includes(part)) {
         const t = await zoom.transcriptText(obj.recording_files, j.download_token || (j.payload || {}).download_token).catch(e => {
           console.error(new Date().toISOString(), 'zoom transcript', e.message); return '';
         });
-        if (t) hq.store.patch('protocols', p.id, {transcript: t.slice(0, 400000), upd: Date.now(), log: zoomLog('Зум прислал транскрипт встречи')});
+        const was = String(p.transcript || '').trim();
+        if (t) hq.store.patch('protocols', p.id, {transcript: (was ? was + ZOOM_NEXT + t : t).slice(0, 400000), transcriptOf: [...got, part],
+          upd: Date.now(), log: zoomLog(was ? 'Зум прислал транскрипт ещё одной части встречи' : 'Зум прислал транскрипт встречи')});
       }
     }
     if (ev === 'meeting.summary_completed' && zoom.configured) {
       const p = zoomProtocol(obj);
-      const text = await zoom.summaryText(obj.meeting_uuid || obj.uuid);
-      /* текст, который уже правили люди, не трогаем: протокол Зума — в журнал */
-      if (text && !String(p.text || '').trim()) hq.store.patch('protocols', p.id, {text, ok: {}, upd: Date.now(), log: zoomLog('Зум прислал протокол встречи')});
-      else if (text) hq.store.patch('protocols', p.id, {zoomText: text, log: zoomLog('Зум прислал протокол — текст уже правили, его версия сохранена отдельно')});
+      const part = String(obj.meeting_uuid || obj.uuid || ''), got = p.summaryOf || [];
+      const text = got.includes(part) ? '' : await zoom.summaryText(part);
+      /* текст, который уже правили люди, не трогаем: протокол Зума — в журнал. Не правили (совпадает с тем,
+         что положил сервер) — протокол следующей части встречи дописываем следом */
+      const was = String(p.text || '').trim(), auto = !was || p.text === p.zoomAuto;
+      if (text && auto) {
+        const next = was ? was + ZOOM_NEXT + text : text;
+        hq.store.patch('protocols', p.id, {text: next, zoomAuto: next, summaryOf: [...got, part], ok: {}, upd: Date.now(),
+          log: zoomLog(was ? 'Зум прислал протокол ещё одной части встречи' : 'Зум прислал протокол встречи')});
+      } else if (text) hq.store.patch('protocols', p.id, {zoomText: text, summaryOf: [...got, part], log: zoomLog('Зум прислал протокол — текст уже правили, его версия сохранена отдельно')});
     }
   } catch (e) { console.error(new Date().toISOString(), 'zoom webhook', ev, e.message); }
   return json(res, 200, {ok: true});

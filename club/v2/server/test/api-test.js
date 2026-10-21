@@ -444,6 +444,18 @@ async function browserHash(pw, salt) {
       vtt.close();
       const zp = Object.values((await bot.get('/api/state')).j.collections.protocols || {}).find(x => x.zoomId === '777');
       ok(r.status === 200 && zp && /^\[00:00:01\] Кирилл: Внимание, задача: Зоя готовит отчёт до пятницы\n\[00:00:04\] Зоя: Хорошо$/.test(zp.transcript || ''), 'транскрипт Зума — в протокол, бот его видит', zp);
+      /* второй заход в ту же встречу (свой uuid) — транскрипт дописывается следом; повтор того же — не дублируется */
+      const zsend = async body => {
+        const ts = String(Math.floor(Date.now() / 1000)), sig = 'v0=' + require('crypto').createHmac('sha256', 'zsecret').update(`v0:${ts}:${body}`).digest('hex');
+        return fetch(B2 + '/api/zoom/webhook', {method: 'POST', headers: {'content-type': 'application/json', 'x-zm-request-timestamp': ts, 'x-zm-signature': sig}, body});
+      };
+      await new Promise(rr => vtt.listen(0, rr));
+      const zobj = uuid => JSON.stringify({event: 'recording.completed', download_token: 'dtok', payload: {object: {id: 777, uuid, start_time: '2026-10-21T12:00:00Z',
+        recording_files: [{file_type: 'TRANSCRIPT', download_url: `http://127.0.0.1:${vtt.address().port}/t.vtt`}]}}});
+      await zsend(zobj('u2')); await zsend(zobj('u2'));
+      vtt.close();
+      const zps = Object.values((await bot.get('/api/state')).j.collections.protocols || {}).filter(x => x.zoomId === '777'), zp2 = zps[0] || {};
+      ok(zps.length === 1 && (String(zp2.transcript).match(/Следующая часть встречи/g) || []).length === 1 && (String(zp2.transcript).match(/Внимание, задача/g) || []).length === 2, 'вторая часть встречи — транскрипт дописан один раз', zp2.transcriptOf);
       ok((await bot.patch('yasen', 'pz', {at: 2})).status === 403 && (await bot.put('yasen', 'yb', {answers: {}, at: 1, via: 'bot'})).status === 403 && (await bot.del('yasen', 'pz')).status === 403, 'анкету не меняет, не заполняет и не удаляет');
 
       /* своя карточка в «Команде» — одна и только «кто это» */
