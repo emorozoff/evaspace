@@ -36,8 +36,8 @@ const ACC_SECRET = ['salt', 'hash', 'reset'];
 const ACC_SELF = ['prefs', 'welcomed', 'welcomedAt', 'lastSeen'];
 /* что в учётке меняет только основатель */
 const ACC_OWNER = [...ACC_SELF, 'role', 'active', 'name', 'email', 'personId'];
-/* поля карточки, которые человек не меняет себе сам */
-const PERSON_LOCKED = ['salary', 'startMonth', 'rate', 'status', 'archived', 'founder', 'managerId', 'order', 'tgChatId'];
+/* поля карточки, которые человек не меняет себе сам; tgChatId и tgLinked пишет бот штаба (lib/tg.js) */
+const PERSON_LOCKED = ['salary', 'startMonth', 'rate', 'status', 'archived', 'founder', 'managerId', 'order', 'tgChatId', 'tgLinked'];
 /* данные клиентов в финансовых записях — инвестору идут только суммы */
 const CLIENT_FIELDS = ['client', 'customer', 'contact', 'address', 'comment', 'note', 'log', 'track', 'to', 'who', 'decision'];
 /* инвестор команду не ведёт: ему от карточки и учётки — только кто это, без контактов и личного */

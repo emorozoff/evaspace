@@ -257,7 +257,12 @@
     status: () => call('GET', HQ_API + '/zoom/status').catch(() => ({configured: false})),
     meeting: id => call('POST', HQ_API + '/zoom/meeting', {id}),
   };
-  window.EvaServer = {app: cfg.app, urls: {hq: cfg.hq || '/', crm: cfg.crm || '/crm/'}, db, session, load, auth, gcal, zoom, enter};
+  /* бот штаба в Telegram: одноразовая ссылка, чтобы подключить напоминания, и отключить их */
+  const tg = {
+    link: () => call('POST', HQ_API + '/tg/link', {}),
+    unlink: () => call('POST', HQ_API + '/tg/unlink', {}),
+  };
+  window.EvaServer = {app: cfg.app, urls: {hq: cfg.hq || '/', crm: cfg.crm || '/crm/'}, db, session, load, auth, gcal, zoom, tg, enter};
   window.claude = {
     async use(cap) {
       if (cap === 'mcp') return (await gstatus()).configured ? mcp : null;

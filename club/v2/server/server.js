@@ -9,7 +9,8 @@
    • каждой роли отдаёт только её данные и не принимает чужие правки
      (lib/hq-rules.js, lib/crm-rules.js);
    • живые правки коллег — поток событий (Server-Sent Events);
-   • Google Календарь — от имени вошедшего человека (lib/gcal.js).
+   • Google Календарь — от имени вошедшего человека (lib/gcal.js);
+   • бот штаба в Telegram — напоминания в личку с кнопками (lib/tg.js).
 
    Запуск:   node server.js                         — http://localhost:8080
              PORT=3000 node server.js               — другой порт
@@ -31,6 +32,9 @@
      BOT_KEY        ключ бота команды в Telegram: с ним бот ставит и меняет задачи штаба
                     (заголовок «Authorization: Bearer …», права — lib/hq-rules.js, роль bot);
                     каждая его правка с прежней версией пишется в DATA_DIR/bot-log.jsonl
+     HQ_TG_TOKEN    ключ бота штаба в Telegram (@BotFather): напоминания в личку с кнопками
+                    «Буду» / «Не смогу» / «Ок», нажатия — сами в штаб (lib/tg.js). Адрес для
+                    нажатий (PUBLIC_URL/api/tg/webhook) сервер сообщает Telegram сам при запуске
      CRM_DIR        папка собранной CRM (по умолчанию ../../../crm/v2)
      MATERIALS_DIR  папка с презентациями m/*.html (по умолчанию ../m)
      INSECURE_COOKIE=1 — для проверки на своём компьютере без HTTPS */
@@ -45,6 +49,7 @@ const HQ = require('./lib/hq-rules');
 const CRM = require('./lib/crm-rules');
 const {Gcal} = require('./lib/gcal');
 const {Zoom} = require('./lib/zoom');
+const {TgBot} = require('./lib/tg');
 
 const HQ_DIR = path.resolve(__dirname, '..');                       // club/v2 — сам штаб
 const CRM_DIR = path.resolve(process.env.CRM_DIR || path.join(__dirname, '..', '..', '..', 'crm', 'v2'));
@@ -95,6 +100,9 @@ const sessions = new A.Sessions(path.join(DATA_DIR, 'sessions.json'));
 const limiter = new A.Limiter();
 const gcal = new Gcal({file: path.join(DATA_DIR, 'gcal.json'), clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, publicUrl: PUBLIC_URL});
 const zoom = new Zoom({accountId: process.env.ZOOM_ACCOUNT_ID, clientId: process.env.ZOOM_CLIENT_ID, clientSecret: process.env.ZOOM_CLIENT_SECRET, webhookSecret: process.env.ZOOM_WEBHOOK_SECRET});
+/* TG_API, HQ_TG_SECRET, TG_TICK_MS, TG_ANY_HOUR — только для проверок (test/api-test.js): свой «Telegram», частые круги, в любой час */
+const tg = new TgBot({token: process.env.HQ_TG_TOKEN, secret: process.env.HQ_TG_SECRET, publicUrl: PUBLIC_URL, file: path.join(DATA_DIR, 'tg.json'),
+  store: hq.store, rules: HQ, api: process.env.TG_API, anyHour: process.env.TG_ANY_HOUR === '1'});
 
 /* ── кто пришёл ── */
 function ctxFor(accId, token) {
@@ -459,9 +467,18 @@ async function zoomMeeting(req, res, ctx) {
   } catch (e) { return json(res, e.status || 502, {error: e.message}); }
 }
 
+/* нажатия и «Старт» в боте штаба: Telegram подписывает запрос секретом из setWebhook */
+async function tgWebhook(req, res) {
+  if (!tg.verify(req.headers)) return json(res, 401, {error: 'секрет не сошёлся'});
+  const u = await body(req);
+  try { await tg.update(u); } catch (e) { console.error(new Date().toISOString(), 'tg webhook', e.message); }
+  return json(res, 200, {ok: true});
+}
+
 async function hqApi(req, res, p, u) {
   /* уведомления Зума приходят не со страницы штаба — проверяем подпись Зума */
   if (p === 'zoom/webhook' && req.method === 'POST') return zoomWebhook(req, res);
+  if (p === 'tg/webhook' && req.method === 'POST') return tgWebhook(req, res);
   const write = req.method !== 'GET';
   const bot = botOf(req);
   if (bot !== null) {
@@ -526,6 +543,18 @@ async function hqApi(req, res, p, u) {
   /* Зум: включён ли, и создать или обновить встречу Зума для собрания штаба */
   if (p === 'zoom/status' && !write) return json(res, 200, {configured: zoom.configured, hooks: zoom.hooks});
   if (p === 'zoom/meeting' && req.method === 'POST') return zoomMeeting(req, res, ctx);
+
+  /* Telegram: одноразовая ссылка на бота — только для своей карточки; и отключить */
+  if (p === 'tg/link' && req.method === 'POST') {
+    if (!tg.configured) return json(res, 503, {error: 'бот штаба в Telegram не подключён'});
+    if (!ctx.personId || !hq.store.get('people', ctx.personId)) return json(res, 400, {error: 'у вашей учётки нет карточки в «Команде» — напишите основателю'});
+    const l = tg.linkFor(ctx.personId);
+    return l ? json(res, 200, l) : json(res, 503, {error: 'бот штаба ещё не на связи с Telegram — попробуйте через минуту'});
+  }
+  if (p === 'tg/unlink' && req.method === 'POST') {
+    if (ctx.personId) tg.unlink(ctx.personId);
+    return json(res, 200, {ok: true});
+  }
 
   if (p === 'export' && !write) {
     if (ctx.role !== 'owner') return json(res, 403, {error: 'полную выгрузку делает основатель'});
@@ -594,7 +623,8 @@ function file(res, f, {inject, cache = 'no-cache', headers = {}} = {}) {
   res.writeHead(200, {'content-type': TYPES[path.extname(f)] || 'application/octet-stream', 'cache-control': cache, ...HEADERS, ...headers});
   res.end(data);
 }
-const boot = app => `<script>window.EVA = ${JSON.stringify({app, api: app === 'crm' ? '/crm/api' : '/api', hq: '/', crm: '/crm/'})}; window.EVA_API = window.EVA.api;</script>\n<script src="/eva-server.js"></script>`;
+/* EVA_TG_BOT — имя бота штаба в Telegram: по нему штаб показывает «Подключить Telegram» */
+const boot = app => `<script>window.EVA = ${JSON.stringify({app, api: app === 'crm' ? '/crm/api' : '/api', hq: '/', crm: '/crm/'})}; window.EVA_API = window.EVA.api;${tg.username ? ` window.EVA_TG_BOT = ${JSON.stringify(tg.username)};` : ''}</script>\n<script src="/eva-server.js"></script>`;
 /* кому какие презентации: как в src/app/60-materials.js */
 const TEAM = ['owner', 'lead', 'finance', 'member'];
 const MATERIALS = {standards: TEAM, product: TEAM, shoot: TEAM, team: TEAM, speech: TEAM, experts: TEAM, 'experts-partners': TEAM, investor: HQ.ROLES, pitch: HQ.ROLES};
@@ -658,6 +688,7 @@ function stop() {
 process.on('SIGTERM', stop);
 process.on('SIGINT', stop);
 setInterval(() => sessions.sweep(), 6 * 3600e3).unref();
+tg.start(Number(process.env.TG_TICK_MS) || 30e3);
 
 if (LISTEN) {
   try { fs.unlinkSync(LISTEN); } catch (e) { /* сокета ещё нет */ }

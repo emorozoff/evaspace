@@ -437,6 +437,153 @@ async function browserHash(pw, salt) {
     } finally { srv.kill(); }
   }
 
+  console.log('19. бот штаба в Telegram: привязка, напоминания, кнопки');
+  ok((await fetch(BASE + '/api/tg/webhook', {method: 'POST', headers: {'content-type': 'application/json', 'x-telegram-bot-api-secret-token': 'x'}, body: '{}'})).status === 401, 'без HQ_TG_TOKEN вебхук ничего не принимает');
+  ok((await member.req('POST', '/api/tg/link', {})).status === 503, 'без HQ_TG_TOKEN ссылку на бота не выдаёт');
+  {
+    /* свой сервер с ключом бота и свой «Telegram»: запоминает, что сервер отправил */
+    const {spawn} = require('child_process'), fs = require('fs'), os = require('os'), path = require('path'), crypto = require('crypto');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eva-tg-'));
+    const port = Number(new URL(BASE).port || 8787), B3 = `http://localhost:${port + 2}`, TGP = port + 3;
+    const TOKEN = '123456:' + crypto.randomBytes(24).toString('hex'), SECRET = 'tg' + crypto.randomBytes(16).toString('hex');
+    const calls = [];
+    const fake = http.createServer((req, res) => {
+      let b = '';
+      req.on('data', ch => { b += ch; });
+      req.on('end', () => {
+        const m = /^\/bot([^/]+)\/(\w+)$/.exec(req.url) || [];
+        let p = {};
+        try { p = JSON.parse(b || '{}'); } catch (e) { /* пусто */ }
+        calls.push({token: m[1], method: m[2], p});
+        res.writeHead(200, {'content-type': 'application/json'});
+        /* чат 333 «заблокировал бота» */
+        if (m[2] === 'sendMessage' && String(p.chat_id) === '333') return res.end(JSON.stringify({ok: false, error_code: 403, description: 'Forbidden: bot was blocked by the user'}));
+        const result = m[2] === 'getMe' ? {id: 1, is_bot: true, username: 'eva_test_hq_bot'} : m[2] === 'sendMessage' ? {message_id: calls.length, chat: {id: p.chat_id}, text: p.text} : true;
+        res.end(JSON.stringify({ok: true, result}));
+      });
+    });
+    await new Promise(r => fake.listen(TGP, r));
+    const run = () => spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], {env: {...process.env, DATA_DIR: dir, PORT: String(port + 2), INSECURE_COOKIE: '1',
+      HQ_TG_TOKEN: TOKEN, HQ_TG_SECRET: SECRET, TG_API: `http://localhost:${TGP}`, TG_TICK_MS: '200', TG_ANY_HOUR: '1'}, stdio: 'ignore'});
+    const up = async () => { for (let i = 0; i < 50; i++) { try { if ((await fetch(B3 + '/healthz')).ok) return; } catch (e) { /* ещё не встал */ } await wait(100); } };
+    let srv = run();
+    try {
+      await up();
+      const hook = (u, secret = SECRET) => fetch(B3 + '/api/tg/webhook', {method: 'POST', headers: {'content-type': 'application/json', ...(secret ? {'x-telegram-bot-api-secret-token': secret} : {})}, body: JSON.stringify(u)}).then(x => x.status);
+      const sent = (chat, pred = () => true) => calls.filter(c => c.method === 'sendMessage' && String(c.p.chat_id) === String(chat) && pred(c.p));
+      const until = async (fn, ms = 5000) => { for (let i = 0; i < ms / 100; i++) { if (fn()) return true; await wait(100); } return !!fn(); };
+      const btns = p => ((p.reply_markup || {}).inline_keyboard || []).flat().map(b => b.callback_data).filter(Boolean);
+      let uid = 100;
+      const msg = (chat, text) => hook({update_id: ++uid, message: {message_id: uid, chat: {id: chat, type: 'private'}, from: {id: chat}, text}});
+      const press = (chat, data) => hook({update_id: ++uid, callback_query: {id: 'q' + uid, from: {id: chat}, data, message: {message_id: 5, chat: {id: chat, type: 'private'}, text: 'напоминание'}}});
+
+      const own = new Client('owner3', B3), ca = new Client('anna', B3), cb = new Client('boris', B3), cc = new Client('vera', B3), anon3 = new Client('anon3', B3);
+      await own.req('POST', '/api/auth/owner', {name: 'Основатель Штаба', email: 'o@tg.ru', pw: 'secret1'});
+      const ownPid = Object.values((await own.state()).collections.accounts)[0].personId;
+      for (const [pid, code, name] of [['pA', 'ANNA-2345', 'Анна'], ['pB', 'BORI-2345', 'Борис'], ['pC', 'VERA-2345', 'Вера']]) {
+        await own.put('people', pid, {name, title: 'Команда', order: 50});
+        await own.put('invites', code, {role: 'member', personId: pid, by: null, at: Date.now()});
+      }
+      await ca.req('POST', '/api/auth/join', {code: 'ANNA-2345', given: 'Анна', surname: 'Тест', email: 'a@tg.ru', pw: 'secret1'});
+      await cb.req('POST', '/api/auth/join', {code: 'BORI-2345', given: 'Борис', surname: 'Тест', email: 'b@tg.ru', pw: 'secret1'});
+      await cc.req('POST', '/api/auth/join', {code: 'VERA-2345', given: 'Вера', surname: 'Тест', email: 'c@tg.ru', pw: 'secret1'});
+      await until(() => calls.some(c => c.method === 'getMe'));
+      await wait(200);
+      ok(calls.every(c => c.token === TOKEN), 'сервер ходит в Telegram со своим ключом');
+      r = await own.req('GET', '/', undefined, {raw: true});
+      ok(r.text.includes('window.EVA_TG_BOT = "eva_test_hq_bot"'), 'штаб знает имя бота — покажет «Подключить Telegram»');
+
+      /* вебхук: только с секретом */
+      ok(await hook({update_id: 1, message: {chat: {id: 999, type: 'private'}, text: '/start'}}, 'wrong-secret-0000') === 401, 'вебхук с неверным секретом — 401');
+      ok(await hook({update_id: 2, message: {chat: {id: 999, type: 'private'}, text: '/start'}}, '') === 401, 'вебхук без секрета — 401');
+      ok(await msg(999, '/start') === 200, 'вебхук с секретом принимает');
+
+      /* привязка: одноразовая ссылка — только на свою карточку */
+      ok((await anon3.req('POST', '/api/tg/link', {})).status === 401, 'ссылку на бота без входа не выдаёт');
+      r = await ca.req('POST', '/api/tg/link', {personId: 'pB'});
+      const codeA = ((r.j.url || '').match(/^https:\/\/t\.me\/eva_test_hq_bot\?start=([\w-]+)$/) || [])[1];
+      ok(r.status === 200 && codeA && codeA.length >= 20, 'ссылка вида t.me/<бот>?start=<одноразовый код>', r.j);
+      const codeB = ((await cb.req('POST', '/api/tg/link', {})).j.url || '').split('start=')[1];
+      const codeC = ((await cc.req('POST', '/api/tg/link', {})).j.url || '').split('start=')[1];
+      const tgOf = async pid => ((await own.get('/api/export')).j.collections.people[pid] || {}).tgChatId;
+      await msg(777, '/start ' + 'x'.repeat(24));
+      await msg(777, '/start p_pA');
+      ok(sent(777).some(c => /не подошла/.test(c.p.text)) && !(await tgOf('pA')), 'чужой или выдуманный код ничего не привязывает');
+      await msg(111, '/start ' + codeA);
+      ok(await tgOf('pA') === 111, 'код Анны привязал её чат к её карточке');
+      ok(sent(111).some(c => /Готово, Анна/.test(c.p.text)), 'бот подтвердил привязку');
+      await msg(999, '/start ' + codeA);
+      ok(await tgOf('pA') === 111 && sent(999).some(c => /не подошла/.test(c.p.text)), 'код одноразовый: второй раз и из другого чата не работает');
+      await msg(222, '/start ' + codeB);
+      await msg(333, '/start ' + codeC);
+      const sa = (await ca.state()).collections.people;
+      ok(sa.pA.tgLinked === true && !('tgChatId' in sa.pA) && !('tgChatId' in ((await own.state()).collections.people.pB || {})), 'в браузер — только «подключён», номер чата не уходит', sa.pA);
+      ok((await ca.patch('people', 'pA', {tgLinked: false})).status === 403 && (await ca.patch('people', 'pA', {tgChatId: 5})).status === 403, 'привязку в карточке сам не подделать');
+
+      /* собрание через полчаса: напоминание с кнопками участникам, кто не участник — ничего */
+      const MSK = 3 * 3600e3, s0 = Math.ceil((Date.now() + 30 * 60e3) / 60e3) * 60e3;
+      const D = new Date(s0 + MSK).toISOString().slice(0, 10), HM = new Date(s0 + MSK).toISOString().slice(11, 16);
+      await own.put('meetings', 'mt1', {title: 'Собрание штаба', date: D, start: HM, dur: 30, organizer: ownPid, attendees: ['pA', 'pB'], responses: {pB: 'tentative'}, remindMin: 60, zoomUrl: 'https://zoom.us/j/1', agenda: 'План'});
+      ok(await until(() => sent(111, p => btns(p).includes(`m:mt1:${D}:a`)).length && sent(222, p => btns(p).includes(`m:mt1:${D}:d`)).length), 'участникам пришло напоминание с кнопками «Буду» / «Не смогу»', calls.slice(-3));
+      await wait(700);
+      ok(sent(111, p => /Собрание штаба/.test(p.text)).length === 1, 'напоминание не повторяется на следующих кругах');
+      ok(!sent(333, p => /Собрание штаба/.test(p.text)).length, 'тому, кого нет на собрании, — ничего');
+      const before = (await own.state()).collections.meetings.mt1;
+      ok(await press(111, `m:mt1:${D}:a`) === 200, 'нажатие «Буду» принято');
+      let after = (await own.state()).collections.meetings.mt1;
+      ok(after.responses.pA === 'accepted' && after.responses.pB === 'tentative', '«Буду» Анны записано, ответ Бориса не тронут', after.responses);
+      ok(JSON.stringify({...after, responses: null}) === JSON.stringify({...before, responses: null}), 'остальное в собрании не изменилось');
+      ok(calls.some(c => c.method === 'answerCallbackQuery') && calls.some(c => c.method === 'editMessageText' && /Ваш ответ: ✅ Буду/.test(c.p.text)), 'бот ответил на нажатие и отметил ответ в сообщении');
+      await press(333, `m:mt1:${D}:d`);
+      await press(444, `m:mt1:${D}:d`);
+      await press(111, `m:mt1:2020-01-01:d`);
+      ok(JSON.stringify((await own.state()).collections.meetings.mt1.responses) === JSON.stringify(after.responses), 'кнопка чужого собрания, чужого чата или прошедшего дня ничего не меняет');
+      await press(222, `m:mt1:${D}:d`);
+      after = (await own.state()).collections.meetings.mt1;
+      ok(after.responses.pB === 'declined' && after.responses.pA === 'accepted', '«Не смогу» Бориса — только в его поле');
+      /* повторяющееся: ответ кнопкой — на один день */
+      const wk = new Date(Date.parse(D) - 7 * 864e5).toISOString().slice(0, 10);
+      await own.put('meetings', 'mt2', {title: 'Еженедельное', date: wk, start: HM, dur: 30, repeat: 'weekly', organizer: ownPid, attendees: ['pA']});
+      ok(await until(() => sent(111, p => btns(p).includes(`m:mt2:${D}:d`)).length), 'повторяющееся собрание: напоминание о сегодняшнем дне');
+      await press(111, `m:mt2:${D}:d`);
+      const m2 = (await own.state()).collections.meetings.mt2;
+      ok(m2.responses.pA === 'declined' && m2.respDate.pA === D, 'у повторяющегося ответ помечен днём', m2);
+
+      /* протокол на «Ок» */
+      await own.put('protocols', 'pr1', {title: 'Протокол собрания', level: 3, date: D, text: 'Итоги', people: ['pA', 'pB'], ok: {}, at: Date.now() - 5 * 60e3});
+      ok(await until(() => sent(111, p => btns(p).some(x => x.startsWith('p:pr1:'))).length), 'протокол пришёл с кнопкой «Ок»');
+      const okBtn = btns(sent(111, p => btns(p).some(x => x.startsWith('p:pr1:')))[0].p).find(x => x.startsWith('p:pr1:'));
+      await press(111, okBtn);
+      let pr = (await own.state()).collections.protocols.pr1;
+      ok(typeof pr.ok.pA === 'number' && !pr.ok.pB && pr.text === 'Итоги', '«Ок» Анны записано — только её', pr.ok);
+      await own.put('protocols', 'pr1', {...pr, text: 'Итоги, исправлено', ok: {}, upd: Date.now() - 5 * 60e3});
+      await press(111, okBtn);
+      pr = (await own.state()).collections.protocols.pr1;
+      ok(!pr.ok.pA, '«Ок» на прежний текст после правки не засчитывается');
+      ok(await until(() => sent(111, p => btns(p).some(x => x.startsWith('p:pr1:') && x !== okBtn)).length), 'новая версия текста — новое напоминание');
+
+      /* задачи со сроком сегодня; заблокировали бота — отвязываем */
+      await own.put('tasks', 'tt1', {title: 'Сдать отчёт', status: 'todo', assignee: 'pA', due: D});
+      await own.put('tasks', 'tt2', {title: 'Позвонить', status: 'todo', assignee: 'pC', due: D});
+      ok(await until(() => sent(111, p => /Сдать отчёт/.test(p.text)).length), 'сводка задач со сроком сегодня');
+      await until(() => sent(333, p => /Позвонить/.test(p.text)).length);
+      await wait(200);
+      ok(!(await tgOf('pC')), 'бота заблокировали — привязка снята сама');
+      ok((await cc.state()).collections.people.pC.tgLinked === false, 'и в штабе видно, что Telegram не подключён');
+
+      /* /stop и защита от повторов после перезапуска */
+      await msg(222, '/stop');
+      ok(!(await tgOf('pB')) && (await cb.state()).collections.people.pB.tgLinked === false, '/stop отключает напоминания');
+      const n = calls.filter(c => c.method === 'sendMessage').length;
+      srv.kill();
+      await wait(300);
+      srv = run();
+      await up();
+      await wait(1200);
+      ok(calls.filter(c => c.method === 'sendMessage').length === n, 'после перезапуска сервера ничего не отправлено повторно', calls.slice(n).map(c => c.p.text));
+    } finally { srv.kill(); fake.close(); }
+  }
+
   console.log(`\nИтог: прошло ${pass}, не прошло ${failN}`);
   process.exit(failN ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(2); });

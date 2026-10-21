@@ -329,8 +329,12 @@ function syncRsvp(events) {
       if (p && a.responseStatus) resp[p.id] = a.responseStatus;
       else if (!p && a.email && a.responseStatus) gr.push([normEmail(a.email), a.responseStatus]);
     });
-    const cur = m.responses || {};
-    if (Object.keys(resp).some(k => cur[k] !== resp[k])) Store.patch('meetings', m.id, {responses: resp});
+    const cur = m.responses || {}, curDay = m.respDate || {};
+    /* «нет ответа» из Google не стирает ответ, данный кнопкой в Telegram; ответ из Google — на всю серию */
+    Object.keys(resp).forEach(k => { if (resp[k] === 'needsAction' && cur[k]) delete resp[k]; });
+    const changed = Object.keys(resp).filter(k => cur[k] !== resp[k]);
+    const dayOff = changed.filter(k => curDay[k]);
+    if (changed.length) Store.patch('meetings', m.id, {responses: resp, ...(dayOff.length ? {respDate: Object.fromEntries(dayOff.map(k => [k, null]))} : {})});
     /* ответы гостей не из команды — по почте (списком: в почте есть точки) */
     if (gr.length && JSON.stringify(gr) !== JSON.stringify(m.guestResp || [])) Store.patch('meetings', m.id, {guestResp: gr});
   });
@@ -361,6 +365,9 @@ const Meetings = {
   },
   next(m) { const t = today(); return this.occ(t, addDays(t, 120)).find(o => o.m.id === m.id && o.e > nowMs()) || null; },
   people(m) { return [m.organizer, ...(m.attendees || [])].filter((x, i, a) => x && a.indexOf(x) === i); },
+  /* ответ участника на этот день: ответ кнопкой в Telegram у повторяющегося собрания
+     относится к одному дню (respDate), ответ из Google — ко всей серии */
+  resp(m, pid, date) { const r = (m.responses || {})[pid], d = (m.respDate || {})[pid]; return r && (!d || !date || d === date) ? r : ''; },
   mine(m) { const pid = Auth.personId(); return !!pid && this.people(m).includes(pid); },
   when(m) {
     const step = this.step(m);
@@ -380,7 +387,7 @@ function busyOf(pid, from, to) {
   if (shared) (doc.slots || []).forEach(([s, e]) => { if (e > a && s < b) list.push({s, e, kind: 'busy'}); });
   if (shared) (doc.crm || []).forEach(([s, e]) => { if (e > a && s < b) list.push({s, e, kind: 'crm'}); });
   Meetings.occ(from, to).forEach(o => {
-    if (Meetings.people(o.m).includes(pid) && (o.m.responses || {})[pid] !== 'declined') list.push({s: o.s, e: o.e, kind: 'meet', m: o.m});
+    if (Meetings.people(o.m).includes(pid) && Meetings.resp(o.m, pid, o.date) !== 'declined') list.push({s: o.s, e: o.e, kind: 'meet', m: o.m});
   });
   return {has: shared && doc.from <= from && doc.to >= to, shared, at: doc ? doc.at : 0, list: list.sort((x, y) => x.s - y.s)};
 }
@@ -815,10 +822,9 @@ function meetRow(m, o) {
   const pid = Auth.personId();
   const org = personById(m.organizer);
   const isOrg = m.organizer === pid;
-  const resp = m.responses || {};
   const ppl = Meetings.people(m).map(id => {
     const p = personById(id);
-    const st = id === m.organizer ? 'accepted' : resp[id] || (m.invite === 'sent' ? 'needsAction' : '');
+    const st = id === m.organizer ? 'accepted' : Meetings.resp(m, id, o ? o.date : m.date) || (m.invite === 'sent' ? 'needsAction' : '');
     const r = RSVP[st];
     return `<span class="mt-p ${r ? r.tone : ''}" title="${esc(personName(p))}${id === m.organizer ? ' · организатор' : r ? ' · ' + r.name : ''}">${avatar(p)}${r && id !== m.organizer ? `<i>${r.mark}</i>` : ''}</span>`;
   }).join('');
@@ -895,9 +901,9 @@ function openMeeting(id, preset = {}) {
       title: m.title,
       body: `<div class="mt-view">
         <p><b>${o ? `${dayWd(o.date)}, ${hmMs(o.s)}–${hmMs(o.e)}` : Meetings.when(m)}</b>${Meetings.step(m) ? ` · ${esc(REPEATS[m.repeat].toLowerCase())}` : ''}</p>
-        <p class="note">Организатор — ${esc(personName(orgP))}. ${m.invite === 'sent' ? 'Приглашение пришло вам в Google Календарь — ответьте там, ответ появится в штабе.' : 'Собрание сохранено в штабе.'}</p>
+        <p class="note">Организатор — ${esc(personName(orgP))}. ${m.invite === 'sent' ? 'Приглашение пришло вам в Google Календарь — ответьте там, ответ появится в штабе.' : 'Собрание сохранено в штабе.'}${tgBot() ? ' Ответить можно и кнопкой в напоминании от бота штаба в Telegram.' : ''}</p>
         ${m.agenda ? `<div class="mt-agenda-full">${esc(m.agenda)}</div>` : ''}
-        <div class="mt-ppl big">${Meetings.people(m).map(id => { const p = personById(id); const r = RSVP[(m.responses || {})[id] || '']; return `<span class="mt-pl">${avatar(p)}${esc(firstName(p))}${id === m.organizer ? ' <small>организатор</small>' : r ? ` <small class="${r.tone}">${r.name}</small>` : ''}</span>`; }).join('')}</div>
+        <div class="mt-ppl big">${Meetings.people(m).map(id => { const p = personById(id); const r = RSVP[Meetings.resp(m, id, o ? o.date : m.date)]; return `<span class="mt-pl">${avatar(p)}${esc(firstName(p))}${id === m.organizer ? ' <small>организатор</small>' : r ? ` <small class="${r.tone}">${r.name}</small>` : ''}</span>`; }).join('')}</div>
         ${gList.length ? `<p class="note">Гости: ${gList.map(g => esc(g.name || g.email || tgShow(g.tg))).join(', ')}</p>` : ''}
         <div class="row">${m.zoomUrl ? `<a class="btn primary" href="${esc(m.zoomUrl)}" target="_blank" rel="noopener">${icon('video')}Войти в Зум</a>` : ''}${Proto.byMeeting(m.id) ? `<button type="button" class="btn" data-proto-meet="${m.id}">${icon('book')}Протокол</button>` : ''}${m.meetUrl ? `<a class="btn primary" href="${esc(m.meetUrl)}" target="_blank" rel="noopener">${icon('video')}Войти в Google Meet</a>` : ''}${m.link ? `<a class="btn" href="${esc(m.link)}" target="_blank" rel="noopener">${icon('ext')}Открыть в Google</a>` : ''}</div>
       </div>`,
@@ -1368,7 +1374,7 @@ const MeetRemind = {
     Meetings.occ(today(), addDays(today(), 1)).forEach(o => {
       const lead = remindOf(o.m) * 60e3;
       if (!lead || o.s < now || o.s - now > lead) return;
-      if (!Meetings.people(o.m).includes(pid) || (o.m.responses || {})[pid] === 'declined') return;
+      if (!Meetings.people(o.m).includes(pid) || Meetings.resp(o.m, pid, o.date) === 'declined') return;
       const key = `eva-hq-rem:${o.m.id}:${o.date}`;
       if (this.done.has(key) || Local.get(key, 0)) return;
       this.done.add(key);

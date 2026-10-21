@@ -34,11 +34,11 @@
 | `sales` | цифры дня, id = дата `YYYY-MM-DD` | `reach`, `views`, `clicks`, `regs`, `pays`, `renewals`, `revenue` (если правили руками), `experts`, `mk`, `note`, `by`, `at` |
 | `ledger` | операции денег | `kind` (out · in · invest), `amount`, `cat`, `date`, `note`, `planId`/`planMonth` (оплачено по плану; оплат одного месяца может быть несколько — частями), `planPart` (какая часть: «Аванс»), `by`, `at` |
 | `plan` | план платежей | `title`, `group` (payroll · regular · once), `cat`, `amount`, `months` [YYYY-MM], `personId`, `insurance`, `parts` [{name, share}] (платим частями: доли вместе — 1), `taskId` |
-| `people` | команда | `name`, `givenName`, `surname`, `title`, `dir`, `status` (active · inactive · vacancy), `managerId` (кому подчиняется), `salary`, `startMonth`, `email`, `phone`, `telegram`, `calEmail`, `birthDate`, `birthTime`, `birthCity`, `hdType`, `hdProfile`, `founder` |
+| `people` | команда | `name`, `givenName`, `surname`, `title`, `dir`, `status` (active · inactive · vacancy), `managerId` (кому подчиняется), `salary`, `startMonth`, `email`, `phone`, `telegram`, `calEmail`, `birthDate`, `birthTime`, `birthCity`, `hdType`, `hdProfile`, `founder`, `tgLinked` (подключил бота штаба в Telegram), `tgChatId` (номер его чата — пишет и видит только сервер) |
 | `accounts` | учётки | `name`, `email`, `role` (owner · lead · finance · member · investor), `personId`, `salt` и `hash` (PBKDF2-SHA256, 150 000 итераций), `claudeId` (вход через аккаунт Claude), `prefs`, `welcomed` |
 | `invites` | приглашения, id = код | `role`, `personId`, `by`, `at`, `usedBy` |
 | `docs` | одиночные документы | `strategy` (цели, этапы, точки, дорожная карта, `vision`), `settings` (цена, конверсии, сценарии, деньги, `rates` — ставки по срокам и порогам), `learning` |
-| `meetings` | собрания | `title`, `date`, `start`, `dur`, `repeat`, `organizer`, `attendees` [id], `guests` [почты для приглашения], `extGuests` [{id, name, email, tg, tgChatId}] — гости не из команды, `remindMin` (за сколько минут напомнить, 0 — не напоминать, нет поля — за час), `gcalId`, `meetUrl`, `responses`, `guestResp` [[почта, ответ]], `imported`/`gcalReadonly` (событие перенесено из Google), `level` (1 — только основатели, сервер не отдаёт его остальным; 2, 3 или нет поля — вся команда), `zoomUrl` |
+| `meetings` | собрания | `title`, `date`, `start`, `dur`, `repeat`, `organizer`, `attendees` [id], `guests` [почты для приглашения], `extGuests` [{id, name, email, tg, tgChatId}] — гости не из команды, `remindMin` (за сколько минут напомнить, 0 — не напоминать, нет поля — за час), `gcalId`, `meetUrl`, `responses` {человек: accepted · declined · tentative · needsAction}, `respDate` {человек: день} — ответ кнопкой в Telegram у повторяющегося собрания относится к одному дню (ответ из Google — ко всей серии), `guestResp` [[почта, ответ]], `imported`/`gcalReadonly` (событие перенесено из Google), `level` (1 — только основатели, сервер не отдаёт его остальным; 2, 3 или нет поля — вся команда), `zoomUrl` |
 | `messages` | сообщения команды | `ch` (team · dm:<учётка>|<учётка>), `by` (учётка), `text`, `at` |
 | `subs` | подписки по месяцам, id = `YYYY-MM` (пустое поле — считается само) | `startM`, `startY` (на начало), `newM`, `newY`, `renewed`, `churn` (не продлили), `refunds`, `refundSum` |
 | `payouts` | выплаты: рефералам — записями; авторам и продавцам — отметка о выплате (`author_<курс>_<месяц>`, `seller_<код>_<месяц>`) | `kind` (ref · author · seller), `to`, `contact`, `month`, `n`, `base`, `pct`, `amount`, `status` (accrued · paid), `paidAt`, `ledgerId` |
@@ -147,8 +147,26 @@
   ложится строкой в `data/bot-log.jsonl` (боту — `GET /api/bot/log?n=30`): так любую можно вернуть.
   Без `BOT_KEY` (или если он короче 32 знаков) вход бота выключен. Ключ лежит в `eva.env` на сервере
   и у бота на ноутбуке Егора; в репозиторий не попадает.
+- **Бот штаба в Telegram** (@eva_club_hq_bot, `server/lib/tg.js`, ключ `HQ_TG_TOKEN`) — другой бот,
+  не «Ясень Ева» из группы: пишет каждому в личку напоминания с кнопками и сам записывает нажатия.
+  Человек один раз подключает его в штабе: «Мой профиль» → «Уведомления» → «Подключить Telegram»
+  (`POST /api/tg/link` выдаёт одноразовую ссылку `t.me/<бот>?start=<код>` только на свою карточку,
+  код действует час) → «Старт» в боте → сервер пишет `tgChatId` и `tgLinked: true` в карточку.
+  Отключить — там же или командой `/stop` в боте; заблокировал бота — привязка снимается сама.
+  Гости не из команды подключаются по ссылке `?start=g_<собрание>_<гость>` из «Напомнить гостям».
+  Что присылает (расписание считает сервер раз в полминуты, отправленное помнит в `data/tg.json`,
+  после перезапуска не повторяет):
+  собрание — за `remindMin` (нет поля — за час) и за 15 минут, кнопки «Буду» / «Не смогу» →
+  `meetings.responses[человек]` (у повторяющихся ещё `respDate`); кто ответил «Не смогу», больше
+  не получает; гостям — один раз, без кнопок. Протокол, который ждёт «Ок», — по разу на каждую
+  версию текста, с 9 до 21 по Москве, кнопка «Ок» → `protocols.ok[человек]` (кнопка от прежнего
+  текста не засчитывается). Задачи со сроком сегодня — одной сводкой в 10:00. Кому что слать,
+  решают права его учётки (`hq-rules.js`): чего человек не видит в штабе, того и в Telegram не получит.
+  Нажатия Telegram присылает на `/api/tg/webhook` с секретом в заголовке
+  `X-Telegram-Bot-Api-Secret-Token` (без него — 401); адрес сервер сам сообщает Telegram при запуске.
+  Ключ лежит в `eva.env` на сервере (и копия у Егора в `~/.claude/channels/eva-hq-bot/.env`); в репозиторий не попадает.
 - Чего на своём сервере нет: ответов Адама и сводок CRM с помощью Claude (остаются
-  встроенные ответы), входа через аккаунт Claude, напоминаний в Telegram.
+  встроенные ответы), входа через аккаунт Claude.
 
 Настройки — переменные окружения, список в шапке `server/server.js`. За HTTPS и доменом —
 обратный прокси (Caddy, nginx) перед `PORT` или сокетом `LISTEN`.

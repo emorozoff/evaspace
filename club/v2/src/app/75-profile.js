@@ -115,7 +115,9 @@ function renderProfile(root, pid) {
     ${own ? `<section class="section card pf-sec"><div class="card-head"><h2>Уведомления</h2></div>
       <div class="row pf-snd"><label class="check"><input type="checkbox" id="pfSound" ${Sound.on() ? 'checked' : ''}> Звук, когда мне ставят задачу, присылают на согласование или возвращают</label><button class="btn sm ghost" id="pfSoundTest">${icon('bell')}Проверить звук</button></div>
       <p class="note">Уведомление всплывает, пока штаб открыт. То же переключает колокольчик внизу меню.</p>
-      ${tgBot() ? `<div class="row pf-tg">${p.tgChatId ? `<span class="pill good">${icon('tick')}Напоминания о собраниях приходят в Telegram</span>` : `<a class="btn sm" href="https://t.me/${tgBot()}?start=p_${esc(p.id)}" target="_blank" rel="noopener">${icon('msg')}Получать напоминания о собраниях в Telegram</a><span class="note">Откроется бот штаба — нажмите «Старт».</span>`}</div>` : ''}
+      ${tgBot() && window.EvaServer ? `<div class="row pf-tg">${p.tgLinked
+        ? `<span class="pill good">${icon('tick')}Telegram подключён: напоминания о собраниях, протоколах и задачах приходят в личку</span><button class="btn sm ghost" id="pfTgOff">Отключить</button>`
+        : `<button class="btn sm" id="pfTgOn">${icon('msg')}Подключить Telegram</button><span class="note">Бот штаба @${esc(tgBot())} напомнит о собраниях и протоколах — отвечать можно кнопками, ответ сам попадёт в штаб.</span>`}</div>` : ''}
       <div class="row"><button class="btn sm ghost" id="pfTours">${icon('help')}Показать подсказки и туры снова</button></div>
     </section>` : ''}
     ${own ? `<section class="section card pf-sec"><div class="card-head"><h2>Вход и пароль</h2></div>
@@ -143,6 +145,9 @@ function renderProfile(root, pid) {
   const lc = $('#pfLinkClaude', root);
   if (lc) lc.onclick = () => { Auth.linkClaude(Auth.me().id); toast('Готово: дальше штаб узнаёт вас по аккаунту Claude'); };
   if (own) wirePwToggles(root);
+  const tgOn = $('#pfTgOn', root), tgOff = $('#pfTgOff', root);
+  if (tgOn) tgOn.onclick = () => tgConnect(tgOn);
+  if (tgOff) tgOff.onclick = () => window.EvaServer.tg.unlink().then(() => toast('Telegram отключён: напоминаний в личку больше не будет'), e => toast(e.message || 'Не получилось — попробуйте ещё раз'));
   const tr = $('#pfTours', root);
   if (tr) tr.onclick = () => { Tour.reset(); Prefs.setMany(Object.fromEntries(['calendar', 'metrics', 'money', 'reports', 'strategy', 'tasks'].map(k => ['help_' + k, false]))); toast('Готово: туры и подсказки покажутся снова — на каждой странице и в окнах'); };
   if (!edit) return;
@@ -245,6 +250,25 @@ function renderAccountOnly(root) {
     await Store.patch('accounts', a.id, {salt, hash: await hashPassword(n1, salt)});
     toast('Пароль изменён');
   };
+}
+
+/* подключить Telegram: сервер выдаёт одноразовую ссылку на бота штаба (действует час) */
+async function tgConnect(btn) {
+  btn.disabled = true;
+  let l;
+  try { l = await window.EvaServer.tg.link(); }
+  catch (e) { toast(e.message || 'Не получилось — попробуйте ещё раз'); return; }
+  finally { btn.disabled = false; }
+  openModal({
+    title: 'Подключить Telegram',
+    body: `<p>Откройте бота штаба и нажмите в нём «Старт». Дальше напоминания о собраниях, протоколах на «Ок» и задачах со сроком на сегодня будут приходить в личку, а ответы кнопками «Буду», «Не смогу» и «Ок» сами попадут в штаб.</p>
+      <p class="note">Ссылка одноразовая и действует час. Если Telegram у вас на телефоне — скопируйте ссылку и откройте её там.</p>`,
+    foot: `<button class="btn" id="tgCopy">${icon('link')}Скопировать ссылку</button><a class="btn primary" id="tgOpen" href="${esc(l.url)}" target="_blank" rel="noopener">${icon('msg')}Открыть бота</a>`,
+    onMount(el, close) {
+      $('#tgCopy', el).onclick = e => copyText(l.url, e.currentTarget);
+      $('#tgOpen', el).onclick = () => setTimeout(close, 300);
+    },
+  });
 }
 
 function textModal(title, value, placeholder, rows, onSave) {
