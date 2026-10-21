@@ -48,3 +48,17 @@ test('новый личный чат, которого ещё нет на тел
   const n = buildNotification(pushFor('dm:1:2', { kind: 'text', text: 'Йо' }), { ...bobView, chats: {} });
   assert.deepEqual(n, { title: 'Алиса', body: 'Йо' });
 });
+
+test('Аська пишет, а телефон её ещё не знает: имя и ключ из пуша', () => {
+  const aska = generateKeyPair();
+  const boxes = encodeOutgoing('dm:2:9', 'u-9', { kind: 'text', text: 'Привет! Это Аська 🌼' }, [{ id: 9, pk: aska.pk }, { id: 2, pk: bob.pk }], 9, aska.sk);
+  const b = boxes.find((x) => x.to === 2);
+  const n = buildNotification({ t: 'm', c: 'dm:2:9', s: 9, i: 7, pn: b.pn, pc: b.pc, b: 1, sn: 'Аська', spk: toB64(aska.pk) }, bobView);
+  assert.deepEqual(n, { title: 'Аська', body: 'Привет! Это Аська 🌼' });
+});
+
+test('круг: эмодзи и название', () => {
+  const view = { ...bobView, chats: { ...chats, 'circle:kino': { id: 'circle:kino', kind: 'circle', emoji: '🎬', title: 'Кино и сериалы', members: [], lastId: 0 } } };
+  const n = buildNotification(pushFor('circle:kino', { kind: 'text', text: 'Что смотрим?' }), view);
+  assert.deepEqual(n, { title: '🎬 Кино и сериалы', body: 'Алиса: Что смотрим?' });
+});

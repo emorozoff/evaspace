@@ -12,6 +12,8 @@ export type Chat = LocalChat;
 export type User = LocalUser;
 export interface Msg extends StoredMsg { status?: 'sending' | 'failed'; localImage?: string }
 export type PushState = 'unsupported' | 'default' | 'denied' | 'subscribed';
+export interface Profile { isAdmin: boolean; phone: string | null; phoneVerified: boolean; allowAnon: boolean; plate: string | null }
+export type Truth = 'ai' | 'human';
 
 export interface State {
   phase: 'loading' | 'welcome' | 'ready';
@@ -23,10 +25,17 @@ export interface State {
   presence: Record<number, boolean>;
   vapidKey: string | null;
   pushState: PushState;
+  profile: Profile | null;
+  pins: number[];
+  guesses: Record<number, Truth>;      // кого я уже угадал(а) в игре «Кто здесь ИИ?» и что оказалось
+  features: { ai: boolean; sms: boolean };
+  typing: Record<string, Record<number, number>>; // чат → кто печатает → когда
+  welcomePlate: string | null;         // только что выданный номер — показать поздравление
 }
 
 const initial: State = {
   phase: 'loading', me: null, users: {}, chats: {}, messages: {}, connected: false, presence: {}, vapidKey: null, pushState: 'default',
+  profile: null, pins: [], guesses: {}, features: { ai: false, sms: false }, typing: {}, welcomePlate: null,
 };
 
 let state: State = initial;
@@ -96,40 +105,77 @@ async function saveCredentials(session: Session, keys: Keys) {
 }
 
 export async function checkInvite(code: string) {
-  return api.get<{ ok: boolean; invitedBy: string | null }>(`/invites/${encodeURIComponent(code)}`);
+  return api.get<{ ok: boolean; invitedBy: string | null; sms: boolean }>(`/invites/${encodeURIComponent(code)}`);
+}
+
+export const smsAvailable = () => api.get<{ sms: boolean }>('/features').then((r) => r.sms);
+
+// Код по СМС. mode: 'sms' — код отправлен, 'none' — СМС не подключены (тогда кода не будет)
+export function sendCode(phone: string, purpose: 'register' | 'link' | 'recover', invite?: string) {
+  return api.post<{ mode: 'sms' | 'none' }>('/phone/send', { phone, purpose, invite });
+}
+export function verifyCode(phone: string, purpose: 'register' | 'link' | 'recover', code: string) {
+  return api.post<{ ticket: string }>('/phone/verify', { phone, purpose, code }).then((r) => r.ticket);
+}
+
+// Новый пароль → новые ключи шифрования (секретный ключ уходит на сервер только зашифрованным паролем)
+async function newKeys(password: string, onProgress?: (p: number) => void) {
+  const kp = C.generateKeyPair();
+  const salt = C.randomBytes(16);
+  const { encKey, authKey } = await C.deriveFromPassword(password, salt, onProgress);
+  return {
+    kp,
+    body: { boxPk: C.toB64(kp.pk), kdfSalt: C.toB64(salt), authKey: C.toB64(authKey), backup: C.sealSecret(kp.sk, encKey) },
+    keys: { pk: C.toB64(kp.pk), sk: C.toB64(kp.sk) },
+  };
 }
 
 export async function register(
-  f: { invite: string; username: string; displayName: string; password: string },
+  f: { invite: string; displayName: string; phone: string; phoneTicket?: string; password: string },
   onProgress?: (p: number) => void,
 ) {
-  const kp = C.generateKeyPair();
-  const salt = C.randomBytes(16);
-  const { encKey, authKey } = await C.deriveFromPassword(f.password, salt, onProgress);
-  const backup = C.sealSecret(kp.sk, encKey);
-  const r = await api.post<{ token: string; userId: number }>('/register', {
-    invite: f.invite, username: f.username, displayName: f.displayName,
-    boxPk: C.toB64(kp.pk), kdfSalt: C.toB64(salt), authKey: C.toB64(authKey), backup,
+  const k = await newKeys(f.password, onProgress);
+  const r = await api.post<{ token: string; userId: number; plate: string; username: string }>('/register', {
+    invite: f.invite, displayName: f.displayName, phone: f.phone, phoneTicket: f.phoneTicket, ...k.body,
   });
-  const session = { token: r.token, userId: r.userId, username: f.username.trim().toLowerCase() };
-  const keys = { pk: C.toB64(kp.pk), sk: C.toB64(kp.sk) };
+  const session = { token: r.token, userId: r.userId, username: r.username };
+  await saveCredentials(session, k.keys);
+  state = { ...state, welcomePlate: r.plate };
+  await enter(session, k.keys);
+}
+
+// Вход по телефону, номеру АСЬКИ (А 001 МР 777) или старому логину
+export async function login(loginName: string, password: string, onProgress?: (p: number) => void) {
+  const l = loginName.trim();
+  const { salt } = await api.get<{ salt: string }>(`/salt?login=${encodeURIComponent(l)}`);
+  const { encKey, authKey } = await C.deriveFromPassword(password, C.fromB64(salt), onProgress);
+  const r = await api.post<{ token: string; userId: number; username: string; boxPk: string; backup: C.Sealed }>('/login', {
+    login: l, authKey: C.toB64(authKey),
+  });
+  const secret = C.openSecret(r.backup, encKey);
+  if (!secret || C.toB64(C.publicFromSecret(secret)) !== r.boxPk) throw new Error('backup_broken');
+  const session = { token: r.token, userId: r.userId, username: r.username };
+  const keys = { pk: r.boxPk, sk: C.toB64(secret) };
   await saveCredentials(session, keys);
   await enter(session, keys);
 }
 
-export async function login(username: string, password: string, onProgress?: (p: number) => void) {
-  const uname = username.trim().toLowerCase();
-  const { salt } = await api.get<{ salt: string }>(`/salt?username=${encodeURIComponent(uname)}`);
-  const { encKey, authKey } = await C.deriveFromPassword(password, C.fromB64(salt), onProgress);
-  const r = await api.post<{ token: string; userId: number; boxPk: string; backup: C.Sealed }>('/login', {
-    username: uname, authKey: C.toB64(authKey),
+// Не помню пароль: билет после кода из СМС или код от администратора → новый пароль и новые ключи
+export async function recover(
+  f: { ticket?: string; login?: string; helpCode?: string; password: string },
+  onProgress?: (p: number) => void,
+) {
+  const k = await newKeys(f.password, onProgress);
+  const r = await api.post<{ token: string; userId: number; username: string }>('/recover', {
+    ticket: f.ticket, login: f.login, helpCode: f.helpCode, ...k.body,
   });
-  const secret = C.openSecret(r.backup, encKey);
-  if (!secret || C.toB64(C.publicFromSecret(secret)) !== r.boxPk) throw new Error('backup_broken');
-  const session = { token: r.token, userId: r.userId, username: uname };
-  const keys = { pk: r.boxPk, sk: C.toB64(secret) };
-  await saveCredentials(session, keys);
-  await enter(session, keys);
+  const session = { token: r.token, userId: r.userId, username: r.username };
+  await saveCredentials(session, k.keys);
+  await enter(session, k.keys);
+}
+
+export function dismissWelcomePlate() {
+  set({ welcomePlate: null });
 }
 
 export async function logout() {
@@ -166,13 +212,35 @@ let retry = 0;
 let retryTimer: ReturnType<typeof setTimeout> | undefined;
 let pingTimer: ReturnType<typeof setTimeout> | undefined;
 
+interface ServerUser {
+  id: number; username: string; displayName: string; boxPk: string;
+  plate?: string | null; about?: string; city?: string; kind?: 'human' | 'aska' | 'twin'; ownerId?: number; prevPks?: string[];
+}
+
 interface StateResp {
   me: number;
-  users: { id: number; username: string; displayName: string; boxPk: string }[];
+  users: ServerUser[];
   chats: Chat[];
   vapidPublicKey: string;
   badge: number;
   online: number[];
+  profile: Profile;
+  pins: number[];
+  guesses: Record<number, Truth>;
+  features: { ai: boolean; sms: boolean };
+}
+
+// Ключ друга запоминаем при первой встрече. Новый ключ принимаем, только если старый сервер числит прежним
+// (друг восстановил вход) — тогда мягкое «ключ обновился». Иначе — предупреждение о возможной подмене.
+function mergeUser(u: ServerUser, prev: User | undefined, myPk?: string): User {
+  const pinned = u.id === state.me?.userId ? myPk : prev?.pk;
+  const base: User = {
+    id: u.id, username: u.username, displayName: u.displayName, pk: u.boxPk, plate: u.plate ?? null,
+    about: u.about || '', city: u.city || '', kind: u.kind || 'human', ownerId: u.ownerId, prevPks: u.prevPks,
+  };
+  if (!pinned || pinned === u.boxPk) return prev?.keyRotated ? { ...base, keyRotated: true } : base;
+  if ((u.prevPks || []).includes(pinned)) return { ...base, keyRotated: true };
+  return { ...base, pk: pinned, keyChanged: true };
 }
 
 let pushChecked = false;
@@ -181,18 +249,15 @@ async function loadState() {
   const st = await api.get<StateResp>('/state');
   const myKeys = await kvGet('keys');
   const users: Record<number, User> = {};
-  for (const u of st.users) {
-    const prev = state.users[u.id];
-    // Ключ запоминаем при первой встрече. Если сервер вдруг выдал другой — предупреждаем и не верим ему.
-    const pinned = u.id === state.me?.userId ? myKeys?.pk : prev?.pk;
-    if (pinned && pinned !== u.boxPk) users[u.id] = { id: u.id, username: u.username, displayName: u.displayName, pk: pinned, keyChanged: true };
-    else users[u.id] = { id: u.id, username: u.username, displayName: u.displayName, pk: u.boxPk };
-  }
+  for (const u of st.users) users[u.id] = mergeUser(u, state.users[u.id], myKeys?.pk);
   const chats: Record<string, Chat> = {};
   for (const c of st.chats) chats[c.id] = c;
   const presence: Record<number, boolean> = {};
   for (const id of st.online || []) presence[id] = true;
-  set({ users, chats, vapidKey: st.vapidPublicKey, presence });
+  set({
+    users, chats, vapidKey: st.vapidPublicKey, presence, profile: st.profile, pins: st.pins || [], guesses: st.guesses || {},
+    features: st.features || { ai: false, sms: false },
+  });
   await Promise.all([kvSet('users', users), kvSet('chats', chats)]);
   updateBadge();
   if (!pushChecked) {
@@ -268,8 +333,10 @@ type ServerEvent =
   | { type: 'msg'; m: ServerRow }
   | { type: 'read'; chatId: string; userId: number; upTo: number }
   | { type: 'chat'; chat: Chat }
+  | { type: 'chat_left'; chatId: string }
+  | { type: 'typing'; chatId: string; userId: number }
   | { type: 'presence'; userId: number; online: boolean }
-  | { type: 'user'; user: { id: number; username: string; displayName: string; boxPk: string } };
+  | { type: 'user'; user: ServerUser };
 
 function onEvent(ev: ServerEvent) {
   switch (ev.type) {
@@ -278,6 +345,7 @@ function onEvent(ev: ServerEvent) {
       break;
     case 'msg': {
       const live = !known.has(ev.m.id) && ev.m.senderId !== state.me?.userId;
+      clearTyping(ev.m.chatId, ev.m.senderId);
       ingest([ev.m]).then(() => {
         scheduleSync();
         if (!live) return;
@@ -300,17 +368,52 @@ function onEvent(ev: ServerEvent) {
       break;
     }
     case 'chat':
-      setChats({ ...state.chats, [ev.chat.id]: ev.chat });
+      if (!ev.chat.members.some((m) => m.userId === state.me?.userId)) {
+        const { [ev.chat.id]: _gone, ...rest } = state.chats;
+        setChats(rest);
+      } else setChats({ ...state.chats, [ev.chat.id]: ev.chat });
       break;
+    case 'chat_left': {
+      const { [ev.chatId]: _gone, ...rest } = state.chats;
+      setChats(rest);
+      break;
+    }
+    case 'typing': {
+      const chat = { ...(state.typing[ev.chatId] || {}), [ev.userId]: Date.now() };
+      set({ typing: { ...state.typing, [ev.chatId]: chat } });
+      setTimeout(() => {
+        const t = state.typing[ev.chatId]?.[ev.userId];
+        if (t && Date.now() - t >= 5000) clearTyping(ev.chatId, ev.userId);
+      }, 5200);
+      break;
+    }
     case 'user': {
-      if (state.users[ev.user.id]) break;
-      const u = ev.user;
-      const users = { ...state.users, [u.id]: { id: u.id, username: u.username, displayName: u.displayName, pk: u.boxPk } };
+      const users = { ...state.users, [ev.user.id]: mergeUser(ev.user, state.users[ev.user.id]) };
       set({ users });
       kvSet('users', users);
       break;
     }
   }
+}
+
+function clearTyping(chatId: string, userId: number) {
+  if (!state.typing[chatId]?.[userId]) return;
+  const { [userId]: _gone, ...rest } = state.typing[chatId];
+  set({ typing: { ...state.typing, [chatId]: rest } });
+}
+
+// «печатает…» — сообщаем собеседникам не чаще раза в 2,5 секунды
+const typingSent = new Map<string, number>();
+export function sendTyping(chatId: string) {
+  const t = Date.now();
+  if (t - (typingSent.get(chatId) || 0) < 2500 || ws?.readyState !== 1) return;
+  typingSent.set(chatId, t);
+  ws.send(JSON.stringify({ type: 'typing', chatId }));
+}
+
+export function typingIn(chatId: string, s: State = state): number[] {
+  const now = Date.now();
+  return Object.entries(s.typing[chatId] || {}).filter(([, t]) => now - t < 5000).map(([id]) => Number(id));
 }
 
 function setChats(chats: Record<string, Chat>) {
@@ -363,7 +466,12 @@ async function ingest(rows: ServerRow[]) {
   for (const row of fresh) {
     if (known.has(row.id)) continue;
     const sender = state.users[row.senderId];
-    const body = sender ? decodeIncoming(row, C.fromB64(sender.pk), sk) : null;
+    let body = null;
+    // после восстановления входа у друга новый ключ — старые сообщения открываем прежним
+    for (const pk of sender ? [sender.pk, ...(sender.prevPks || [])] : []) {
+      body = decodeIncoming(row, C.fromB64(pk), sk);
+      if (body) break;
+    }
     stored.push({ id: row.id, chatId: row.chatId, senderId: row.senderId, uuid: row.uuid, createdAt: row.createdAt, body });
     known.add(row.id);
   }
@@ -401,8 +509,8 @@ function putPending(msg: Msg) {
   set({ messages });
 }
 
-export async function sendText(chatId: string, text: string, reply?: number) {
-  const body: Body = { kind: 'text', text };
+export async function sendText(chatId: string, text: string, reply?: number, extra?: Pick<Body, 'act' | 'gift'>) {
+  const body: Body = { kind: 'text', text, ...extra };
   if (reply) body.reply = reply;
   const msg: Msg = newPending(chatId, body);
   pending.set(msg.uuid, { msg });
@@ -552,6 +660,77 @@ export async function openDm(userId: number): Promise<string> {
 
 export const createInvite = () => api.post<{ code: string }>('/invites');
 export const listInvites = () => api.get<{ invites: { code: string; createdAt: number }[] }>('/invites');
+
+// ---------- профиль, круги, личный ИИ, игра, управление ----------
+
+export async function updateProfile(p: { displayName?: string; about?: string; city?: string; allowAnon?: boolean }) {
+  await api.post('/me', p);
+  if (p.allowAnon !== undefined && state.profile) set({ profile: { ...state.profile, allowAnon: p.allowAnon } });
+}
+
+export async function linkPhone(phone: string, ticket?: string) {
+  const r = await api.post<{ phone: string; phoneVerified: boolean }>('/me/phone', { phone, ticket });
+  if (state.profile) set({ profile: { ...state.profile, phone: r.phone, phoneVerified: r.phoneVerified } });
+}
+
+export async function setPin(userId: number, on: boolean) {
+  const r = await api.post<{ pins: number[] }>('/pins', { userId, on });
+  set({ pins: r.pins });
+}
+
+export async function guess(userId: number, g: Truth) {
+  const r = await api.post<{ correct: boolean; truth: Truth }>('/guess', { userId, guess: g });
+  set({ guesses: { ...state.guesses, [userId]: r.truth } });
+  return r;
+}
+export const game = () => api.get<{ right: number; total: number; top: { userId: number; right: number; total: number }[] }>('/game');
+
+export interface CircleInfo {
+  id: string; kind: 'general' | 'circle'; title: string; emoji: string; about: string; isPublic: boolean;
+  member: boolean; count: number; online: number; lastAt: number;
+}
+export const listCircles = () => api.get<{ circles: CircleInfo[] }>('/circles').then((r) => r.circles);
+
+async function gotChat(chat: Chat) {
+  setChats({ ...state.chats, [chat.id]: chat });
+  sync();
+  return chat.id;
+}
+export const joinCircle = async (id: string) => gotChat((await api.post<{ chat: Chat }>(`/circles/${encodeURIComponent(id)}/join`)).chat);
+export async function leaveCircle(id: string) {
+  await api.post(`/circles/${encodeURIComponent(id)}/leave`);
+  const { [id]: _gone, ...rest } = state.chats;
+  setChats(rest);
+}
+export async function createCircle(c: { title: string; emoji: string; about: string; memberIds: number[]; isPublic: boolean }) {
+  if (c.memberIds.some((id) => !state.users[id])) await loadState();
+  return gotChat((await api.post<{ chat: Chat }>('/circles', c)).chat);
+}
+
+export const openTwinChat = async (twinId: number, anon: boolean) => gotChat((await api.post<{ chat: Chat }>(`/twins/${twinId}/chat`, { anon })).chat);
+export interface TwinInfo { twinId: number; allowAnon: boolean; facts: { id: number; text: string; source: string; createdAt: number }[]; stats: { chats: number; questions: number; answered: number } }
+export const myTwin = () => api.get<TwinInfo>('/twin');
+export const addTwinFact = (text: string) => api.post('/twin/facts', { text });
+export const deleteTwinFact = (id: number) => api.del(`/twin/facts/${id}`);
+
+export function twinOf(ownerId: number, s: State = state): User | undefined {
+  return Object.values(s.users).find((u) => u.kind === 'twin' && u.ownerId === ownerId);
+}
+export const askaOf = (s: State = state) => Object.values(s.users).find((u) => u.kind === 'aska');
+
+export interface AdminInfo {
+  ai: { configured: boolean; hasKey: boolean; keyHint: string; model: string; models: { id: string; name: string; note: string }[]; dailyLimit: number; usedToday: number; paused: boolean; lastError: string };
+  people: boolean;
+  sms: { configured: boolean; hasKey: boolean; lastError: string };
+  users: { id: number; displayName: string; plate: string; phone: string | null; phoneVerified: boolean; createdAt: number; lastActive: number | null; isAdmin: boolean }[];
+}
+export const adminInfo = () => api.get<AdminInfo>('/admin');
+export const adminSetAi = (p: { apiKey?: string; model?: string; dailyLimit?: number; paused?: boolean }) => api.post('/admin/ai', p);
+export const adminCheckAi = () => api.post<{ ok: boolean; reply?: string; error?: string }>('/admin/ai/check');
+export const adminSetPeople = async (on: boolean) => { await api.post('/admin/people', { on }); await loadState(); };
+export const adminSetSms = (apiId: string) => api.post('/admin/sms', { apiId });
+export const adminCheckSms = () => api.post<{ ok: boolean; balance?: number; error?: string }>('/admin/sms/check');
+export const adminHelpCode = (userId: number) => api.post<{ code: string; login: string }>('/admin/help-code', { userId });
 
 export async function myPublicKey() {
   return (await kvGet('keys'))?.pk || '';

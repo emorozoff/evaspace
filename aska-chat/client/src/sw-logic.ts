@@ -3,7 +3,7 @@ import { decodePreview } from './lib/protocol.ts';
 import { fromB64 } from './lib/crypto.ts';
 import type { Keys, LocalUser, LocalChat } from './lib/db.ts';
 
-export interface PushData { t?: string; c?: string; s?: number; i?: number; pn?: string; pc?: string; b?: number }
+export interface PushData { t?: string; c?: string; s?: number; i?: number; pn?: string; pc?: string; b?: number; sn?: string; spk?: string }
 export interface LocalView {
   keys?: Keys;
   users?: Record<number, LocalUser>;
@@ -13,14 +13,17 @@ export interface LocalView {
 export function buildNotification(data: PushData, view: LocalView): { title: string; body: string } {
   const sender = data.s !== undefined ? view.users?.[data.s] : undefined;
   const chat = data.c ? view.chats?.[data.c] : undefined;
-  const isDm = chat ? chat.kind === 'dm' : Boolean(data.c?.startsWith('dm:'));
-  const senderName = sender?.displayName || 'Кто-то';
+  const isDm = chat ? chat.kind === 'dm' || chat.kind === 'twin' : Boolean(data.c?.startsWith('dm:') || data.c?.startsWith('twin:'));
+  // Аська и другие боты могут быть ещё не известны телефону — сервер присылает их имя и открытый ключ
+  const senderName = sender?.displayName || data.sn || 'Кто-то';
+  const senderPk = sender?.pk || data.spk;
 
   let text: string | null = null;
-  if (data.pn && data.pc && sender && view.keys) {
-    try { text = decodePreview(data.pn, data.pc, fromB64(sender.pk), fromB64(view.keys.sk)); } catch { text = null; }
+  if (data.pn && data.pc && senderPk && view.keys) {
+    try { text = decodePreview(data.pn, data.pc, fromB64(senderPk), fromB64(view.keys.sk)); } catch { text = null; }
   }
 
   if (isDm) return { title: senderName, body: text || 'Новое сообщение' };
-  return { title: chat?.title || 'Общий чат', body: `${senderName}: ${text || 'новое сообщение'}` };
+  const title = chat?.kind === 'circle' ? `${chat.emoji || '⭕'} ${chat.title || 'Круг'}` : chat?.title || (data.c?.startsWith('circle:') ? 'Круг' : 'Общий чат');
+  return { title, body: `${senderName}: ${text || 'новое сообщение'}` };
 }

@@ -6,7 +6,7 @@ import { kvGet } from './lib/db.ts';
 
 declare const self: ServiceWorkerGlobalScope;
 
-const CACHE = 'aska-v1';
+const CACHE = 'aska-v2';
 const SHELL = ['/', '/manifest.webmanifest', '/aska/icons/icon-192.png', '/aska/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {

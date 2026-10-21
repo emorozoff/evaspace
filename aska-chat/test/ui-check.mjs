@@ -9,7 +9,7 @@ const BASE = process.env.BASE || 'http://localhost:8091';
 const OUT = process.env.OUT || 'ui-shots';
 const INVITE = process.env.INVITE;
 const PHOTO = process.env.PHOTO || 'client/public/aska/icons/icon-512.png';
-const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 fs.mkdirSync(OUT, { recursive: true });
 
 const IPHONE = {
@@ -45,29 +45,34 @@ async function newPhone(browser, label) {
   return page;
 }
 
-async function registerFlow(page, invite, nick, username, password, { design = 'zoomer', shots = false } = {}) {
+// Регистрация второй версии: имя → телефон → пароль → поздравление с номером
+async function registerFlow(page, invite, nick, phone, password, { design = 'zoomer', shots = false } = {}) {
   await page.goto(`${BASE}/#invite=${invite}`, { waitUntil: 'networkidle0' });
   await page.waitForSelector('#loginwin');
-  if (design === 'millennial') await page.click('.design-pick button[data-design="millennial"]');
+  if (design === 'millennial') await page.click('.aska-design-mini button[data-design="millennial"]');
   if (shots) await snap(page, `${design}-установка`);
   await clickText(page, 'Продолжить в браузере');
-  await page.waitForSelector('#loginwin input.field');
-  await clickText(page, 'Дальше');
   await page.waitForSelector('input[autocomplete="nickname"]');
   await typeInto(page, 'input[autocomplete="nickname"]', nick);
-  await typeInto(page, 'input[autocomplete="username"]', username);
-  const pw = await page.$$('input[type="password"]');
-  await pw[0].type(password);
-  await pw[1].type(password);
+  await clickText(page, 'Дальше');
+  await page.waitForSelector('input[type="tel"]');
+  await typeInto(page, 'input[type="tel"]', phone);
+  await clickText(page, 'Дальше');
+  await page.waitForSelector('input[autocomplete="new-password"]');
+  await page.type('input[autocomplete="new-password"]', password);
   if (shots) await snap(page, `${design}-регистрация`);
   await clickText(page, 'Получить АСЬКУ');
+  await page.waitForSelector('.aska-plate-reveal', { timeout: 20000 });
+  if (shots) await snap(page, `${design}-номер`);
+  await clickText(page, 'Поехали');
   await page.waitForSelector('#cwin', { timeout: 20000 });
 }
 
 async function openChat(page, title) {
-  await page.waitForFunction((t) => [...document.querySelectorAll('#cwin .citem .nick')].some((n) => n.textContent.replace(' ⚠', '') === t), { timeout: 10000 }, title);
+  // у кругов перед названием эмодзи («🌼 Общий чат»), у людей после имени бывает «⚠»
+  await page.waitForFunction((t) => [...document.querySelectorAll('#cwin .citem .nick')].some((n) => n.textContent.replace(' ⚠', '').trim().endsWith(t)), { timeout: 10000 }, title);
   await page.evaluate((t) => {
-    const it = [...document.querySelectorAll('#cwin .citem')].find((r) => r.querySelector('.nick')?.textContent.replace(' ⚠', '') === t);
+    const it = [...document.querySelectorAll('#cwin .citem')].find((r) => r.querySelector('.nick')?.textContent.replace(' ⚠', '').trim().endsWith(t));
     it.click();
   }, title);
   await page.waitForSelector('#chatwin .compose textarea');
@@ -84,15 +89,16 @@ async function backToList(page) {
   await page.waitForFunction(() => !document.querySelector('#chatwin'));
 }
 
-const browser = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ['--no-first-run', '--no-default-browser-check', '--lang=ru-RU'] });
+const browser = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ['--no-first-run', '--no-default-browser-check', '--lang=ru-RU', ...(process.getuid?.() === 0 ? ['--no-sandbox'] : [])] });
 try {
   // 1. Алиса (Зумер)
   const alice = await newPhone(browser, 'Алиса');
-  await registerFlow(alice, INVITE, 'Алиса', 'alice', 'пароль алисы 1', { shots: true });
+  await registerFlow(alice, INVITE, 'Алиса', '+7 900 000-00-01', 'пароль алисы 1', { shots: true });
   await snap(alice, 'zoomer-контакты-пусто');
 
   // 2. Алиса зовёт Борю
-  await clickText(alice, 'Позвать', 'nav.tabbar button');
+  await clickText(alice, 'Ещё', 'nav.tabbar button');
+  await clickText(alice, 'Позвать друга', '#auxwin button');
   await alice.waitForSelector('#auxwin .uin-box');
   const code = await alice.$eval('#auxwin .uin-box', (e) => e.textContent.trim());
   log('приглашение для Бори', code);
@@ -101,7 +107,7 @@ try {
 
   // 3. Боря выбирает «Миллениал»
   const bob = await newPhone(browser, 'Боря');
-  await registerFlow(bob, code, 'Боря_98', 'bob', 'пароль бори 2', { design: 'millennial', shots: true });
+  await registerFlow(bob, code, 'Боря_98', '+7 900 000-00-02', 'пароль бори 2', { design: 'millennial', shots: true });
 
   // 4. Алиса видит Борю «в сети» и пишет в общий чат
   await alice.waitForFunction(() => [...document.querySelectorAll('#cwin .citem:not(.off) .nick')].some((n) => n.textContent === 'Боря_98'), { timeout: 15000 });
@@ -111,7 +117,7 @@ try {
   await send(alice, 'Шифрование работает. Ссылка: https://tytproai.ru');
 
   // 5. Боря видит конвертик, открывает, отвечает и шлёт фото
-  await bob.waitForFunction(() => document.querySelector('#cwin .citem .badge')?.textContent === '2', { timeout: 10000 });
+  await bob.waitForFunction(() => [...document.querySelectorAll('#cwin .citem')].find((r) => r.textContent.includes('Общий чат'))?.querySelector('.badge')?.textContent === '2', { timeout: 10000 });
   await snap(bob, 'millennial-контакты-конвертик');
   await openChat(bob, 'Общий чат');
   await waitText(bob, 'Это наша АСЬКА');
@@ -165,8 +171,7 @@ try {
   const bob2 = await newPhone(browser, 'Боря-2');
   await bob2.goto(BASE, { waitUntil: 'networkidle0' });
   await clickText(bob2, 'Продолжить в браузере');
-  await clickText(bob2, 'Уже есть АСЬКА');
-  await typeInto(bob2, 'input[autocomplete="username"]', 'bob');
+  await typeInto(bob2, 'input[autocomplete="username"]', '89000000002');
   await bob2.type('input[type="password"]', 'пароль бори 2');
   await clickText(bob2, 'Войти');
   await bob2.waitForSelector('#cwin', { timeout: 20000 });
@@ -179,11 +184,10 @@ try {
   const eve = await newPhone(browser, 'Ева');
   await eve.goto(BASE, { waitUntil: 'networkidle0' });
   await clickText(eve, 'Продолжить в браузере');
-  await clickText(eve, 'Уже есть АСЬКА');
-  await typeInto(eve, 'input[autocomplete="username"]', 'bob');
+  await typeInto(eve, 'input[autocomplete="username"]', '89000000002');
   await eve.type('input[type="password"]', 'не тот пароль');
   await clickText(eve, 'Войти');
-  await waitText(eve, 'Неверный логин или пароль', 20000);
+  await waitText(eve, 'Неверный телефон, номер или пароль', 20000);
   log('неверный пароль отклонён ✓');
   log('ГОТОВО');
 } catch (e) {

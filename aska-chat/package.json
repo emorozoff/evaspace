@@ -12,7 +12,9 @@
     "design": "node scripts/copy-aska.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.137.0",
     "express": "^5.3.0",
+    "tweetnacl": "^1.0.3",
     "web-push": "^3.6.7",
     "ws": "^8.22.0"
   },
@@ -26,7 +28,6 @@
     "puppeteer-core": "^25.14.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "tweetnacl": "^1.0.3",
     "typescript": "^7.0.2",
     "vite": "^8.3.4"
   }

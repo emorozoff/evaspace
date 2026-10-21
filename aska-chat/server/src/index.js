@@ -9,11 +9,13 @@ const dataDir = path.resolve(process.env.DATA_DIR || 'data');
 const staticDir = path.resolve(process.env.STATIC_DIR || 'client/dist');
 const publicUrl = (process.env.PUBLIC_URL || `http://localhost:${port}`).replace(/\/$/, '');
 
-const { server, db, createInvite } = createApp({ dataDir, staticDir, publicUrl, trustProxy: Boolean(socket) });
+// ASKA_FAKE_AI=1 — заготовки вместо Claude, только для проверки на своём компьютере
+const aiImpl = process.env.ASKA_FAKE_AI === '1' ? (await import('./fake-ai.js')).fakeAi : undefined;
+const { server, db, createInvite } = createApp({ dataDir, staticDir, publicUrl, trustProxy: Boolean(socket), aiImpl });
 
 function ready(where) {
   console.log(`АСЬКА: ${publicUrl} (${where}, данные в ${dataDir})`);
-  const users = db.prepare('SELECT COUNT(*) AS n FROM users').get().n;
+  const users = db.prepare("SELECT COUNT(*) AS n FROM users WHERE kind = 'human'").get().n;
   const invites = db.prepare('SELECT COUNT(*) AS n FROM invites WHERE used_by IS NULL').get().n;
   if (!users && !invites) {
     const code = createInvite(null);

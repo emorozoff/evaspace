@@ -22,6 +22,7 @@ before(async () => {
     publicUrl: 'http://localhost',
     pushSender: async (sub, payload) => { pushes.push({ endpoint: sub.endpoint, data: JSON.parse(payload) }); },
     log: () => {},
+    startBots: false, // боты проверяются отдельно в v2.test.js
   });
   await new Promise((r) => srv.server.listen(0, '127.0.0.1', r));
   base = `http://127.0.0.1:${srv.server.address().port}`;
@@ -111,8 +112,11 @@ test('регистрация по приглашениям', async () => {
   U.carol = { ...c.data, kp: c.kp };
 
   const st = await call('GET', '/api/state', { token: U.alice.token });
-  assert.equal(st.data.users.length, 3);
-  assert.equal(st.data.users[0].username, 'alice');
+  const people = st.data.users.filter((u) => u.kind === 'human');
+  assert.equal(people.length, 3);
+  assert.equal(people[0].username, 'alice');
+  assert.ok(st.data.users.some((u) => u.kind === 'aska'), 'Аська есть у всех');
+  assert.equal(st.data.users.filter((u) => u.kind === 'twin').length, 3, 'у каждого свой ИИ');
   const general = st.data.chats.find((x) => x.id === 'general');
   assert.equal(general.members.length, 3);
   assert.ok(st.data.vapidPublicKey);
@@ -212,7 +216,7 @@ test('личный чат виден только двоим', async () => {
   const carolSync = await call('GET', '/api/sync?after=0', { token: U.carol.token });
   assert.equal(carolSync.data.messages.length, 1, 'Катя видит только общий чат');
   const carolState = await call('GET', '/api/state', { token: U.carol.token });
-  assert.equal(carolState.data.chats.length, 1);
+  assert.ok(!carolState.data.chats.some((c) => c.id === dm.data.chat.id), 'чужой личный чат не виден');
 });
 
 test('вход на новом телефоне: пароль восстанавливает ключ', async () => {

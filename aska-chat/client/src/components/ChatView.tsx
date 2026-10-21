@@ -2,7 +2,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, KeyboardEvent, ReactNode } from 'react';
 import { useStore } from '../useStore.ts';
-import { sendText, sendImage, setActiveChat, retrySend, discardFailed } from '../lib/store.ts';
+import { sendText, sendImage, setActiveChat, retrySend, discardFailed, sendTyping, typingIn, openTwinChat } from '../lib/store.ts';
 import type { Msg } from '../lib/store.ts';
 import { chatTitle, dmPeer, dayKey, plural, timeShort } from '../lib/format.ts';
 import { previewText } from '../lib/protocol.ts';
@@ -112,7 +112,21 @@ function Line({ m, out, grp, isNew, name, quote, read, flash, onMenu, onImage, o
   );
 }
 
-export function ChatView({ chatId, onBack }: { chatId: string; onBack: () => void }) {
+const GIFTS: { id: string; emoji: string; name: string }[] = [
+  { id: 'flowers', emoji: '💐', name: 'Цветы' }, { id: 'coffee', emoji: '☕', name: 'Кофе' }, { id: 'cake', emoji: '🍰', name: 'Тортик' },
+  { id: 'hug', emoji: '🤗', name: 'Обнимашки' }, { id: 'star', emoji: '⭐', name: 'Звёздочка' }, { id: 'heart', emoji: '💛', name: 'Сердечко' },
+];
+type Act = 'compliment' | 'question' | null;
+
+interface ChatProps {
+  chatId: string;
+  onBack: () => void;
+  onProfile: (userId: number) => void;
+  onCircleInfo: (chatId: string) => void;
+  onOpen: (chatId: string) => void;
+}
+
+export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: ChatProps) {
   const s = useStore();
   const chat = s.chats[chatId];
   const list = s.messages[chatId] || [];
@@ -124,6 +138,8 @@ export function ChatView({ chatId, onBack }: { chatId: string; onBack: () => voi
   const [viewer, setViewer] = useState<string | null>(null);
   const [smilesOpen, setSmilesOpen] = useState(false);
   const [flash, setFlash] = useState<number | null>(null);
+  const [act, setAct] = useState<Act>(null);
+  const [gifts, setGifts] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -159,16 +175,29 @@ export function ChatView({ chatId, onBack }: { chatId: string; onBack: () => voi
   if (!chat) return null;
 
   const others = chat.members.filter((m) => m.userId !== me);
-  const peer = chat.kind === 'dm' ? dmPeer(chat, s) : undefined;
+  const peer = chat.kind === 'dm' ? dmPeer(chat, s) : chat.kind === 'twin' && chat.twin ? s.users[chat.twin.twinId] : undefined;
   const title = chatTitle(chat, s);
   const peerOnline = peer ? !!s.presence[peer.id] : false;
   const onlineCount = others.filter((m) => s.presence[m.userId]).length;
-  const icon = chat.kind === 'dm' ? flower(peerOnline ? 'online' : 'offline', 14) : flower('chat', 14);
+  const isAi = peer?.kind === 'aska' || peer?.kind === 'twin';
+  const icon = chat.kind === 'dm' && !isAi ? flower(peerOnline ? 'online' : 'offline', 14) : flower('chat', 14);
   const changed = chat.members.map((m) => s.users[m.userId]).filter((u) => u?.keyChanged);
+  const typers = typingIn(chatId, s).filter((id) => id !== me);
+  const twinOwner = peer?.kind === 'twin' && peer.ownerId ? s.users[peer.ownerId] : undefined;
+  const friendTwin = chat.kind === 'twin' && twinOwner; // пишу личному ИИ друга
+  const ownTwin = chat.kind === 'dm' && peer?.kind === 'twin' && peer.ownerId === me;
   const statusHint = !s.connected ? 'нет связи, переподключаюсь…'
-    : chat.kind === 'dm' ? (peerOnline ? 'в сети' : 'не в сети')
-      : `${chat.members.length} ${plural(chat.members.length, 'участник', 'участника', 'участников')}, в сети ${onlineCount}`;
+    : typers.length ? (chat.kind === 'dm' || chat.kind === 'twin' ? 'печатает…' : `${typers.map((id) => s.users[id]?.displayName || '?').join(', ')} печата${typers.length > 1 ? 'ют' : 'ет'}…`)
+      : peer?.kind === 'aska' ? 'ИИ · всегда на связи'
+        : peer?.kind === 'twin' ? (chat.twin?.anon ? 'личный ИИ · анонимно' : 'личный ИИ')
+          : chat.kind === 'dm' ? (peerOnline ? 'в сети' : 'не в сети')
+            : `${chat.members.length} ${plural(chat.members.length, 'участник', 'участника', 'участников')}, в сети ${onlineCount}`;
   const nameOf = (id: number) => (id === me ? (s.users[me]?.displayName || 'Я') : s.users[id]?.displayName || '?');
+  const openHead = () => {
+    if (chat.kind === 'circle' || chat.kind === 'general') onCircleInfo(chatId);
+    else if (chat.kind === 'twin' && twinOwner) onProfile(twinOwner.id);
+    else if (peer) onProfile(peer.id);
+  };
 
   function onScroll() {
     const el = scrollRef.current!;
@@ -185,7 +214,19 @@ export function ChatView({ chatId, onBack }: { chatId: string; onBack: () => voi
     near.current = true;
     inputRef.current?.focus();
     play('sent');
-    sendText(chatId, t, r);
+    if (friendTwin && act) {
+      sendText(chatId, `${act === 'compliment' ? '💐' : '❓'} ${t}`, r, { act });
+      setAct(null);
+    } else sendText(chatId, t, r);
+  }
+
+  function sendGift(g: { id: string; emoji: string; name: string }) {
+    const t = text.trim();
+    setGifts(false);
+    setText('');
+    near.current = true;
+    play('sent');
+    sendText(chatId, `${g.emoji} ${g.name}${t ? ` — ${t}` : ''}`, undefined, { act: 'gift', gift: g.id });
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -269,13 +310,21 @@ export function ChatView({ chatId, onBack }: { chatId: string; onBack: () => voi
   return (
     <Win id="chatwin" className="chat" title={<>{title} <small>— беседа</small></>} icon={icon}
       onBack={onBack} onClose={onBack} closeClass="close-chat">
-      <div className="chat-head">
+      <div className="chat-head aska-head" onClick={openHead} role="button" title="Подробнее">
         <Ico html={icon.replace('width="14" height="14"', 'width="16" height="16"')} />
         <span className="nick">{title}</span>
-        <span className="muted">{peer ? `@${peer.username}` : ''}</span>
+        {peer?.kind === 'aska' && <span className="aska-tag">ИИ</span>}
         <span className="sp" />
-        <span className="hint">{statusHint}</span>
+        <span className={`hint${typers.length ? ' aska-typing' : ''}`}>{statusHint}</span>
       </div>
+      {friendTwin && (
+        <div className="aska-twin-bar">
+          <span>{chat.twin?.anon ? `🕶 Анонимно: ${twinOwner.displayName} не узнает, кто пишет.` : `🙂 Открыто: ${twinOwner.displayName} увидит, что это ты.`}</span>
+          <button className="link aska-linkbtn" onClick={async () => { try { onOpen(await openTwinChat(chat.twin!.twinId, !chat.twin!.anon)); } catch { /* аноним выключен */ } }}>
+            {chat.twin?.anon ? 'писать открыто' : 'писать анонимно'}
+          </button>
+        </div>
+      )}
       {changed.length > 0 && (
         <div className="err aska-warn">
           ⚠ Ключ шифрования у {changed.map((u) => u!.displayName).join(', ')} изменился — возможно, кто-то пытается подменить переписку.
@@ -284,11 +333,30 @@ export function ChatView({ chatId, onBack }: { chatId: string; onBack: () => voi
       )}
       <div className="history inset" ref={scrollRef} onScroll={onScroll}>
         {!list.length && (
-          <div className="msg aska-sys"><span className="sys">Сообщения защищены сквозным шифрованием: их видят только участники беседы.</span></div>
+          <div className="msg aska-sys"><span className="sys">{
+            friendTwin ? `Это личный ИИ человека «${twinOwner.displayName}». Задай вопрос, передай комплимент или подарок — кнопки внизу. Его ответы пишет нейросеть.`
+              : ownTwin ? 'Это твой личный ИИ. Расскажи ему о себе — он будет отвечать друзьям. Сюда же приходит то, что тебе передают.'
+                : peer?.kind === 'aska' ? 'Аська — ИИ и душа АСЬКИ. Спроси её о чём угодно 🌼'
+                  : chat.kind === 'circle' ? 'Это круг — общая беседа. В кругах бывают и ИИ, так что секреты лучше писать лично.'
+                    : 'Сообщения шифруются на телефоне: их видят только участники беседы.'
+          }</span></div>
         )}
         {items}
       </div>
       <div className="compose">
+        {friendTwin && (
+          <div className="aska-acts">
+            <button className={`chip${act === 'compliment' ? ' on' : ''}`} onClick={() => { setGifts(false); setAct(act === 'compliment' ? null : 'compliment'); inputRef.current?.focus(); }}>💐 Комплимент</button>
+            <button className={`chip${gifts ? ' on' : ''}`} onClick={() => { setAct(null); setGifts((v) => !v); }}>🎁 Подарок</button>
+            <button className={`chip${act === 'question' ? ' on' : ''}`} onClick={() => { setGifts(false); setAct(act === 'question' ? null : 'question'); inputRef.current?.focus(); }}>❓ Вопрос</button>
+          </div>
+        )}
+        {gifts && (
+          <div className="aska-gifts">
+            {GIFTS.map((g) => <button key={g.id} className="btn" onClick={() => sendGift(g)}><span>{g.emoji}</span><small>{g.name}</small></button>)}
+            <div className="hint">Можно сначала написать пару слов в поле — они уйдут вместе с подарком.</div>
+          </div>
+        )}
         {reply && (
           <div className="aska-reply">
             <span className="t"><b>Ответ: {nameOf(reply.senderId)}</b><span>{msgPreview(reply)}</span></span>
@@ -301,9 +369,11 @@ export function ChatView({ chatId, onBack }: { chatId: string; onBack: () => voi
           rows={2}
           maxLength={20000}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => { setText(e.target.value); if (e.target.value.trim()) sendTyping(chatId); }}
           onKeyDown={onKeyDown}
-          placeholder={isTouch ? 'Напиши что-нибудь…' : 'Напиши что-нибудь… Enter — отправить'}
+          placeholder={act === 'compliment' ? `Комплимент — ${twinOwner?.displayName} увидит${chat.twin?.anon ? ', но не узнает от кого' : ''}`
+            : act === 'question' ? `Вопрос — ${twinOwner?.displayName} ответит`
+              : isTouch ? 'Напиши что-нибудь…' : 'Напиши что-нибудь… Enter — отправить'}
         />
         <div className="send-row">
           <button className="btn icon" onClick={() => setSmilesOpen((v) => !v)} title="Смайлы" aria-label="Смайлы">

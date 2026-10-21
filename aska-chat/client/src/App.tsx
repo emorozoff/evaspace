@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useStore } from './useStore.ts';
-import { onIncoming, onFriendOnline, activeChatId, unreadIn, store, openDm } from './lib/store.ts';
+import { onIncoming, onFriendOnline, activeChatId, unreadIn, store, openDm, dismissWelcomePlate, twinOf } from './lib/store.ts';
 import type { Msg } from './lib/store.ts';
 import { previewText } from './lib/protocol.ts';
 import { play, envelope, flower } from './lib/aska.ts';
@@ -9,7 +9,9 @@ import { Contacts } from './components/Contacts.tsx';
 import { ChatView } from './components/ChatView.tsx';
 import { Aux } from './components/Aux.tsx';
 import type { AuxKind } from './components/Aux.tsx';
-import { Svg } from './components/Win.tsx';
+import { Svg, Dialog } from './components/Win.tsx';
+import { Profile, CircleInfo } from './components/Profile.tsx';
+import { Plate } from './components/Plate.tsx';
 
 function chatFromHash(): string | null {
   const m = location.hash.match(/chat=([^&]+)/);
@@ -23,6 +25,8 @@ export default function App() {
   const [chat, setChat] = useState<string | null>(chatFromHash);
   const [aux, setAux] = useState<AuxKind | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [profile, setProfile] = useState<number | null>(null);
+  const [circleInfo, setCircleInfo] = useState<string | null>(null);
 
   useEffect(() => {
     if (location.hash.includes('chat=')) history.replaceState(null, '', location.pathname);
@@ -49,7 +53,7 @@ export default function App() {
       const c = st.chats[m.chatId];
       const sender = st.users[m.senderId]?.displayName || 'Кто-то';
       const text = m.body ? previewText(m.body) : 'новое сообщение';
-      setToast({ chatId: m.chatId, name: c?.kind === 'dm' || !c ? sender : `${sender} · ${c.title || 'Общий чат'}`, text });
+      setToast({ chatId: m.chatId, name: c?.kind === 'dm' || c?.kind === 'twin' || !c ? sender : `${sender} · ${c.title || 'Общий чат'}`, text });
       clearTimeout(hideTimer);
       hideTimer = setTimeout(() => setToast(null), 5000);
     });
@@ -74,17 +78,35 @@ export default function App() {
     if (t.chatId) openChat(t.chatId);
     else if (t.userId) { try { openChat(await openDm(t.userId)); } catch { /* нет связи */ } }
   };
-  const unread = Object.keys(s.chats).reduce((n, id) => n + unreadIn(id, s), 0);
+  const chatIds = Object.keys(s.chats);
+  const unreadOf = (pred: (id: string) => boolean) => chatIds.filter(pred).reduce((n, id) => n + unreadIn(id, s), 0);
+  const myTwin = twinOf(s.me!.userId, s);
+  const isTwinChat = (id: string) => !!myTwin && s.chats[id]?.kind === 'dm' && s.chats[id].members.some((m) => m.userId === myTwin.id);
+  const unread = unreadOf((id) => !isTwinChat(id));
+  const twinUnread = unreadOf(isTwinChat);
   const chatOpen = chat && s.chats[chat] ? chat : null;
   const cls = ['desktop', chatOpen && 'mode-chat', aux && 'mode-aux', aux && 'focus-aux'].filter(Boolean).join(' ');
+  const tab = (k: AuxKind | null) => { setAux(k); if (k) setChat(null); };
 
   return (
     <div className={cls}>
       <div className="wins">
-        <Contacts activeChat={chatOpen} onOpen={openChat} onSettings={() => setAux('settings')} onInvite={() => setAux('invite')} />
-        {aux && <Aux kind={aux} onBack={() => setAux(null)} />}
-        {chatOpen && <ChatView key={chatOpen} chatId={chatOpen} onBack={() => setChat(null)} />}
+        <Contacts activeChat={chatOpen} onOpen={openChat} onProfile={setProfile} onSettings={() => setAux('settings')} onInvite={() => setAux('invite')} onAux={setAux} />
+        {aux && <Aux kind={aux} onBack={() => setAux(aux === 'admin' || aux === 'invite' ? 'settings' : null)} onOpen={openChat} onAux={setAux} />}
+        {chatOpen && <ChatView key={chatOpen} chatId={chatOpen} onBack={() => setChat(null)} onProfile={setProfile} onCircleInfo={setCircleInfo} onOpen={openChat} />}
       </div>
+      {profile !== null && <Profile userId={profile} onClose={() => setProfile(null)} onOpenChat={openChat} />}
+      {circleInfo && <CircleInfo chatId={circleInfo} onClose={() => setCircleInfo(null)} onProfile={(id) => { setCircleInfo(null); setProfile(id); }} />}
+      {s.welcomePlate && (
+        <Dialog title="Добро пожаловать в АСЬКУ!" onClose={dismissWelcomePlate}
+          buttons={<button className="btn primary" onClick={dismissWelcomePlate}>Поехали! 🚗</button>}>
+          <div className="aska-plate-reveal">
+            <div className="hint">Твой номер в АСЬКЕ:</div>
+            <Plate plate={s.welcomePlate} size="l" />
+            <div className="hint">Им можно входить вместо телефона и делиться с друзьями. Аська уже пишет тебе 🌼</div>
+          </div>
+        </Dialog>
+      )}
       {toast && (
         <div className="toast" onClick={() => onToast(toast)}>
           <Svg html={toast.online ? flower('online', 22) : envelope(22)} />
@@ -95,10 +117,13 @@ export default function App() {
         <button className={!aux ? 'on' : ''} onClick={() => { setAux(null); setChat(null); }}>
           <i>💬</i><span>Чаты</span>{unread > 0 && <b className="tb-badge">{unread}</b>}
         </button>
-        <button className={aux === 'invite' ? 'on' : ''} onClick={() => setAux('invite')}>
-          <i>➕</i><span>Позвать</span>
+        <button className={aux === 'circles' ? 'on' : ''} onClick={() => tab('circles')}>
+          <i>⭕</i><span>Круги</span>
         </button>
-        <button className={aux === 'settings' ? 'on' : ''} onClick={() => setAux('settings')}>
+        <button className={aux === 'myai' ? 'on' : ''} onClick={() => tab('myai')}>
+          <i>🤖</i><span>Мой ИИ</span>{twinUnread > 0 && <b className="tb-badge">{twinUnread}</b>}
+        </button>
+        <button className={aux === 'settings' || aux === 'invite' || aux === 'admin' ? 'on' : ''} onClick={() => tab('settings')}>
           <i>☰</i><span>Ещё</span>
         </button>
       </nav>

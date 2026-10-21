@@ -59,3 +59,122 @@
 @media (pointer: coarse) {
   .history .msg { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 }
+
+/* ===================== АСЬКА 2: номера, вход, профиль, круги, личный ИИ ===================== */
+
+/* номер как у машины: [А 001 МР | 777 RUS] */
+.aska-plate { --h: 22px; display: inline-flex; align-items: stretch; height: var(--h); flex: none; background: #fff; color: #111;
+  border: max(1px, calc(var(--h) * .07)) solid #111; border-radius: calc(var(--h) * .14); font-family: 'Arial Narrow', 'Roboto Condensed', 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 700; line-height: 1; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); white-space: nowrap; vertical-align: middle; cursor: default; user-select: none; }
+.aska-plate .main { display: flex; align-items: flex-end; gap: calc(var(--h) * .06); padding: 0 calc(var(--h) * .22) calc(var(--h) * .1); }
+.aska-plate .main b { font-size: calc(var(--h) * .82); letter-spacing: calc(var(--h) * .02); }
+.aska-plate .main i { font-style: normal; font-size: calc(var(--h) * .62); padding-bottom: calc(var(--h) * .02); }
+.aska-plate .reg { display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: max(1px, calc(var(--h) * .06)) solid #111; padding: 0 calc(var(--h) * .14); }
+.aska-plate .reg b { font-size: calc(var(--h) * .5); }
+.aska-plate .reg small { display: flex; align-items: center; gap: calc(var(--h) * .06); font-size: calc(var(--h) * .2); letter-spacing: .5px; margin-top: calc(var(--h) * .03); }
+.aska-plate .flag { display: inline-block; width: calc(var(--h) * .3); height: calc(var(--h) * .2); background: linear-gradient(#fff 0 33%, #1c47b8 33% 66%, #d8232a 66%); outline: 1px solid rgba(0, 0, 0, .25); }
+.aska-plate.s { --h: 18px; }
+.aska-plate.m { --h: 24px; }
+.aska-plate.l { --h: 46px; }
+.aska-profile-plate { display: flex; justify-content: center; padding: 6px 0; }
+
+/* вход и регистрация */
+.aska-auth { display: flex; flex-direction: column; gap: 6px; }
+.aska-auth .col { gap: 8px; }
+.aska-step-title { font-weight: bold; font-size: 1.15em; }
+.aska-field { display: flex; flex-direction: column; gap: 3px; }
+.aska-field .lbl, .skin-aero .aska-field .lbl { width: auto; font-size: .92em; opacity: .85; }
+.aska-field .field { width: 100%; box-sizing: border-box; }
+.aska-pass { display: flex; gap: 4px; align-items: center; }
+.aska-pass .field { flex: 1; min-width: 0; }
+.aska-code { letter-spacing: 6px; font-size: 1.3em; text-align: center; }
+.aska-wide { width: 100%; justify-content: center; }
+.aska-links { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.aska-dots { display: flex; gap: 6px; justify-content: center; }
+.aska-dots i { width: 22px; height: 4px; border-radius: 2px; background: rgba(0, 0, 0, .15); }
+.aska-dots i.on { background: var(--a-accent, var(--sel)); }
+.aska-design-mini { display: flex; align-items: center; gap: 6px; justify-content: center; margin-top: 10px; }
+.skin-classic .aska-dots i { border-radius: 0; }
+
+/* карточка человека и круга */
+.aska-profile { display: flex; flex-direction: column; gap: 8px; }
+.aska-profile-head { display: flex; align-items: center; gap: 10px; }
+.aska-profile-head .who { flex: 1; min-width: 0; }
+.aska-profile-head .who b { font-size: 1.15em; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ico.big { width: 40px; height: 40px; display: inline-grid; place-items: center; flex: none; }
+.aska-about { white-space: pre-wrap; padding: 6px 8px; background: rgba(0, 0, 0, .04); font-style: italic; }
+.skin-aero .aska-about { border-radius: 10px; }
+.aska-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.aska-actions .btn { flex: 1 1 auto; justify-content: center; }
+.aska-choice { display: flex; gap: 6px; }
+.aska-choice .btn { flex: 1; flex-direction: column; display: flex; align-items: center; gap: 2px; padding: 6px; height: auto; white-space: normal; }
+.aska-choice .btn small { font-weight: normal; opacity: .8; font-size: .85em; }
+.aska-verdict { font-weight: bold; padding: 6px; text-align: center; }
+.aska-verdict.ok { color: var(--green-dark); }
+.aska-verdict.miss { color: var(--red); }
+.aska-safety summary { cursor: pointer; opacity: .75; }
+.aska-safety .code { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
+.aska-members { max-height: 40vh; overflow: auto; }
+.aska-tag { font-size: 10px; font-weight: bold; padding: 0 5px; margin-left: 5px; border-radius: 6px; background: var(--a-accent, var(--sel)); color: #fff; vertical-align: middle; }
+.aska-me { cursor: pointer; }
+.aska-head { cursor: pointer; }
+.aska-typing { color: var(--green-dark); font-style: italic; }
+.aska-typing-sub { color: var(--green-dark); }
+.aska-emoji { font-style: normal; }
+.aska-plate-reveal { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 6px 0; }
+.aska-plate-reveal .aska-plate { animation: aska-drive 1s cubic-bezier(.2, .9, .3, 1.2); }
+@keyframes aska-drive { from { transform: translateX(-120%) rotate(-4deg); opacity: 0; } }
+.aska-lead { padding: 2px 2px 6px; }
+
+/* беседа с личным ИИ друга: подсказка сверху и кнопки «комплимент / подарок / вопрос» */
+.aska-twin-bar { display: flex; align-items: center; gap: 6px; padding: 3px 6px; font-size: .92em; flex: none; flex-wrap: wrap; background: rgba(255, 225, 77, .25); }
+.aska-twin-bar span { flex: 1; min-width: 0; }
+.skin-aero .aska-twin-bar { border-radius: 10px; margin: 0 6px 4px; }
+.aska-acts { display: flex; gap: 4px; flex-wrap: wrap; padding: 2px 0 4px; }
+.aska-acts .chip { font-size: 12px; padding: 3px 9px; }
+.aska-gifts { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; padding: 2px 0 4px; }
+.aska-gifts .btn { flex-direction: column; display: flex; align-items: center; padding: 3px 0; height: auto; gap: 0; min-width: 0; }
+.aska-gifts .btn span { font-size: 20px; line-height: 1.2; }
+.aska-gifts .btn small { font-size: 9px; font-weight: normal; }
+.aska-gifts .hint { grid-column: 1 / -1; }
+
+/* круги */
+.aska-circles .citem { cursor: pointer; }
+.aska-circle-emoji { font-size: 20px; width: 28px; text-align: center; flex: none; }
+.aska-circle-meta { display: flex !important; align-items: center; gap: 3px; font-size: 11px; opacity: .75; }
+.aska-circle-meta .ico { width: 12px; height: 12px; display: inline-grid; place-items: center; }
+.aska-circle .btn { flex: none; }
+.aska-emoji-pick .chip { font-size: 18px; padding: 2px 6px; }
+.aska-check { gap: 8px; align-items: flex-start; cursor: pointer; }
+.aska-check input { margin-top: 2px; flex: none; }
+.aska-pick-list { max-height: 34vh; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
+
+/* мой ИИ */
+.aska-twin-head { margin-bottom: 6px; }
+.aska-fact-add { gap: 4px; }
+.aska-fact-add .field { flex: 1; min-width: 0; }
+.aska-facts { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.aska-facts li { display: flex; align-items: center; gap: 6px; padding: 3px 6px; background: rgba(0, 0, 0, .04); }
+.skin-aero .aska-facts li { border-radius: 8px; }
+.aska-facts li span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+/* «Ещё» и управление */
+.aska-kv { gap: 8px; align-items: center; padding: 2px 0; }
+.aska-kv > span:first-child { opacity: .8; }
+.aska-top { margin: 4px 0 0; padding-left: 20px; }
+.aska-codes summary { cursor: pointer; }
+.aska-me-card .aska-profile-head { margin-bottom: 4px; }
+.aska-admin-users { display: flex; flex-direction: column; gap: 8px; }
+.aska-admin-user { padding: 6px; background: rgba(0, 0, 0, .04); display: flex; flex-direction: column; gap: 4px; }
+.skin-aero .aska-admin-user { border-radius: 10px; }
+.aska-admin-user .row { gap: 6px; align-items: center; flex-wrap: wrap; }
+.aska-help-code { padding: 4px 6px; background: rgba(255, 225, 77, .35); }
+.aska-help-code b { font-family: 'Courier New', Courier, monospace; font-size: 1.2em; letter-spacing: 1px; user-select: all; -webkit-user-select: all; }
+select.field { max-width: 100%; }
+
+/* разделы на компьютере (на телефоне — нижние вкладки) */
+.aska-desk-nav { display: flex; gap: 4px; padding: 0 0 4px; flex: none; }
+.aska-desk-nav .btn { flex: 1; justify-content: center; white-space: nowrap; padding-left: 4px; padding-right: 4px; min-width: 0; }
+@media (max-width: 719px), (pointer: coarse) and (max-width: 900px) {
+  .aska-desk-nav { display: none; }
+}

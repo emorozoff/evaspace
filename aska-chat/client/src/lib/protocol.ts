@@ -18,6 +18,8 @@ export interface Body {
   text?: string;
   reply?: number;    // id сообщения, на которое отвечаем
   image?: ImageRef;
+  act?: 'compliment' | 'question' | 'gift'; // просьба к личному ИИ друга: передать комплимент, вопрос или подарок
+  gift?: string;
 }
 
 interface Inner extends Body {

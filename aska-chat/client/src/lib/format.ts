@@ -12,6 +12,8 @@ export function dmPeer(chat: Chat, s: State): User | undefined {
 
 export function chatTitle(chat: Chat, s: State) {
   if (chat.kind === 'dm') return dmPeer(chat, s)?.displayName || 'Личный чат';
+  if (chat.kind === 'twin') return `${(chat.twin && s.users[chat.twin.twinId]?.displayName) || 'ИИ друга'}${chat.twin?.anon ? ' 🕶' : ''}`;
+  if (chat.kind === 'circle') return `${chat.emoji || '⭕'} ${chat.title || 'Круг'}`;
   return chat.title || 'Общий чат';
 }
 
