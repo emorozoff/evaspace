@@ -411,6 +411,15 @@ async function browserHash(pw, salt) {
       ok(r.status === 503, 'встречу Зума просит у сервера (здесь Зум не подключён — 503, а не отказ в правах)', r);
       ok((await bot.del('meetings', 'mb1')).status === 200, 'своё собрание удаляет');
       ok((await bot.put('protocols', 'pb', {title: 'x', level: 3, via: 'bot'})).status === 403, 'протоколы не трогает');
+
+      /* протоколы и стратегия — только читать */
+      await own.put('protocols', 'pr1', {title: 'Созвон основателей', level: 1, date: '2026-10-21', text: 'итоги', people: [], ok: {}, file: {name: 'p.pdf', data: 'data:application/pdf;base64,AAAA'}});
+      await own.put('docs', 'strategy', {goals: {g1: {title: 'Цель квартала'}}});
+      await own.put('docs', 'settings', {cashStart: 100000});
+      const bs2 = (await bot.get('/api/state')).j.collections;
+      ok(bs2.protocols.pr1 && bs2.protocols.pr1.text === 'итоги' && !('file' in bs2.protocols.pr1) && bs2.protocols.pr1.hasFile === true, 'протоколы видит, без файла', bs2.protocols.pr1);
+      ok(bs2.docs.strategy && bs2.docs.strategy.goals.g1.title === 'Цель квартала' && !bs2.docs.settings, 'стратегию видит, настройки — нет', bs2.docs);
+      ok((await bot.patch('protocols', 'pr1', {text: 'другое'})).status === 403 && (await bot.patch('docs', 'strategy', {goals: {}})).status === 403, 'протоколы и стратегию не меняет');
       for (let i = 0; i < 9; i++) await bad.get('/api/state');
       ok((await bad.get('/api/state')).status === 429, 'перебор ключа закрывает вход с этого адреса');
     } finally { srv.kill(); }

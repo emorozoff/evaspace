@@ -50,16 +50,21 @@ const SETTINGS_MONEY = ['cashStart', 'cashDate', 'invest', 'rates'];
 const dmHas = (ch, accId) => String(ch).startsWith('dm:') && String(ch).slice(3).split('|').includes(accId);
 
 /* Бот команды в Telegram входит по ключу (BOT_KEY на сервере), а не по паролю. Роль 'bot' — не из
-   ROLES: учётки с ней нет. Видит задачи и собрания (без внешних гостей), а из «Команды» и учёток —
-   только кто это (без контактов, зарплат и личного). Ставит и меняет задачи и собрания (встречу Зума
-   к собранию заводит сервер); удалить может только то, что поставил сам (via: 'bot'). Денег,
-   сообщений, протоколов и настроек не видит и не меняет. */
+   ROLES: учётки с ней нет. Видит задачи, собрания (без внешних гостей), протоколы (без файла) и
+   стратегию; из «Команды» и учёток — только кто это (без контактов, зарплат и личного). Ставит и
+   меняет задачи и собрания (встречу Зума к собранию заводит сервер); удалить может только то, что
+   поставил сам (via: 'bot'). Протоколы и стратегию только читает. Денег, сообщений и настроек не
+   видит и не меняет. */
 const BOT = 'bot';
 const BOT_COLS = ['tasks', 'meetings'];
 const MEET_GUESTS = ['extGuests', 'guests'];
-function botView(c, doc) {
+function botView(c, id, doc) {
   if (c === 'tasks') return doc;
   if (c === 'meetings') return omit(doc, MEET_GUESTS);
+  /* протоколы — чтобы присылать их в группу (файл не отдаём: тяжёлый, есть ссылка на запись и текст) */
+  if (c === 'protocols') return {...omit(doc, ['file']), hasFile: !!doc.file};
+  /* из документов — только стратегия: цели недели для утренней сводки */
+  if (c === 'docs') return id === 'strategy' ? doc : null;
   if (c === 'people') return pick(doc, PERSON_PUBLIC);
   if (c === 'accounts') return pick(doc, ACC_PUBLIC);
   return null;
@@ -78,7 +83,7 @@ function botWrite(op, c, cur, body, next) {
 function view(ctx, c, id, doc) {
   if (!doc) return null;
   const r = ctx.role;
-  if (r === BOT) return botView(c, doc);
+  if (r === BOT) return botView(c, id, doc);
   switch (c) {
     case 'accounts': return can(r, 'tasks.view') || id === ctx.accId ? omit(doc, ACC_SECRET) : pick(doc, ACC_PUBLIC);
     case 'invites': return r === 'owner' ? doc : null;
