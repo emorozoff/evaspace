@@ -423,6 +423,15 @@ async function browserHash(pw, salt) {
       ok(bs2.protocols.pr1 && bs2.protocols.pr1.text === 'итоги' && !('file' in bs2.protocols.pr1) && bs2.protocols.pr1.hasFile === true, 'протоколы видит, без файла', bs2.protocols.pr1);
       ok(bs2.docs.strategy && bs2.docs.strategy.goals.g1.title === 'Цель квартала' && !bs2.docs.settings, 'стратегию видит, настройки — нет', bs2.docs);
       ok((await bot.patch('protocols', 'pr1', {text: 'другое'})).status === 403 && (await bot.patch('docs', 'strategy', {goals: {}})).status === 403, 'протоколы и стратегию не меняет');
+
+      /* своя карточка в «Команде» — одна и только «кто это» */
+      ok((await bot.put('people', 'yasen', {name: 'Ясень Ева', title: 'ИИ-ассистент команды', dir: 'ops', status: 'active', order: 90, bot: true})).status === 200, 'бот заводит свою карточку в «Команде»');
+      ok((await own.state()).collections.people.yasen.name === 'Ясень Ева', 'основатель видит Ясеня в «Команде»');
+      ok((await bot.patch('people', 'yasen', {title: 'Ассистент'})).status === 200, 'свою должность меняет');
+      ok((await bot.patch('people', 'yasen', {salary: 1})).status === 403 && (await bot.patch('people', 'yasen', {founder: true})).status === 403, 'оклад и «основатель» себе не ставит');
+      ok((await bot.put('people', 'p9', {name: 'Чужой', via: 'bot'})).status === 403 && (await bot.patch('people', 'pz', {title: 'x'})).status === 403, 'чужие карточки не заводит и не меняет');
+      ok((await bot.del('people', 'yasen')).status === 403, 'свою карточку не удаляет');
+      ok((await bot.put('tasks', 'ty', {title: 'От Ясеня', assignee: 'pz', createdBy: 'yasen', via: 'bot'})).status === 200, 'ставит задачу от себя');
       for (let i = 0; i < 9; i++) await bad.get('/api/state');
       ok((await bad.get('/api/state')).status === 429, 'перебор ключа закрывает вход с этого адреса');
     } finally { srv.kill(); }

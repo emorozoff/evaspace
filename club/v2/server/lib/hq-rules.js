@@ -53,10 +53,14 @@ const dmHas = (ch, accId) => String(ch).startsWith('dm:') && String(ch).slice(3)
    ROLES: учётки с ней нет. Видит задачи, собрания (без внешних гостей), протоколы (без файла) и
    стратегию; из «Команды» и учёток — только кто это (без контактов, зарплат и личного). Ставит и
    меняет задачи и собрания (встречу Зума к собранию заводит сервер); удалить может только то, что
-   поставил сам (via: 'bot'). Протоколы и стратегию только читает. Денег, сообщений и настроек не
+   поставил сам (via: 'bot'). В «Команде» ведёт одну свою карточку (id yasen). Протоколы и стратегию
+   только читает. Денег, сообщений и настроек не
    видит и не меняет. */
 const BOT = 'bot';
 const BOT_COLS = ['tasks', 'meetings'];
+/* своя карточка в «Команде»: Ясень — участник команды, чтобы ставить задачи от себя и получать их */
+const BOT_PERSON = 'yasen';
+const BOT_PERSON_FIELDS = ['name', 'givenName', 'surname', 'title', 'dir', 'status', 'order', 'bot', 'about'];
 const MEET_GUESTS = ['extGuests', 'guests'];
 function botView(c, id, doc) {
   if (c === 'tasks') return doc;
@@ -69,7 +73,12 @@ function botView(c, id, doc) {
   if (c === 'accounts') return pick(doc, ACC_PUBLIC);
   return null;
 }
-function botWrite(op, c, cur, body, next) {
+function botWrite(op, c, id, cur, body, next) {
+  if (c === 'people') {
+    if (id !== BOT_PERSON || op === 'delete' || (op === 'put' && cur)) return no('в «Команде» бот ведёт только свою карточку');
+    if (!Object.keys((op === 'put' ? next : body) || {}).every(k => BOT_PERSON_FIELDS.includes(k))) return no('в своей карточке бот меняет только имя, должность и направление');
+    return yes(next);
+  }
   if (!BOT_COLS.includes(c)) return no('бот может только ставить и менять задачи и собрания');
   if (op === 'delete') return cur && cur.via === BOT ? yes(null) : no('бот удаляет только то, что поставил сам');
   if (op === 'put' && cur) return no('бот меняет запись правкой, а не заменой целиком');
@@ -122,7 +131,7 @@ const onlyKeys = (body, allowed) => isObj(body) && Object.keys(body).every(k => 
    Возвращает {ok, next} — next может быть поправлен (скрытые поля возвращаем на место). */
 function write(ctx, op, c, id, cur, body, next) {
   const r = ctx.role, owner = r === 'owner';
-  if (r === BOT) return botWrite(op, c, cur, body, next);
+  if (r === BOT) return botWrite(op, c, id, cur, body, next);
   switch (c) {
     case 'accounts': {
       /* учётки создаёт и удаляет только сервер: вход, приглашение, сброс пароля */
