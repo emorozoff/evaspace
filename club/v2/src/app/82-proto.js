@@ -110,19 +110,14 @@ function protoFileOpen(p) {
 }
 /* PDF — через печать браузера: «Сохранить как PDF» */
 function protoPdf(p) {
-  const ok = Proto.ok(p);
   const w = window.open('', '_blank');
   if (!w) { toast('Браузер не дал открыть окно печати — разрешите всплывающие окна'); return; }
+  /* PDF — в том виде, который выбран у человека */
   w.document.write(`<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>${esc(p.title)} — ${esc(dayLong(p.date))}</title>
-    <style>body{font:14px/1.55 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1d1b2e;max-width:760px;margin:32px auto;padding:0 24px}
-    h1{font-size:22px;margin:0 0 4px}.m{color:#6b6880;margin:0 0 18px}h2{font-size:15px;margin:22px 0 8px}
-    table{border-collapse:collapse;width:100%}td{border-bottom:1px solid #ddd;padding:6px 4px}a{color:#4F46B8}
-    @media print{body{margin:0}}</style></head><body>
-    <h1>${esc(p.title)}</h1>
-    <p class="m">${esc(dayLong(p.date))} ${p.date ? p.date.slice(0, 4) : ''} · ${esc(PROTO_LEVELS[protoLevel(p)].name)}${p.recUrl ? ` · запись: <a href="${esc(safeUrl(p.recUrl))}">${esc(p.recUrl)}</a>` : ''}</p>
-    ${protoTextHtml(p.text)}
-    ${(p.people || []).length ? `<h2>Подтверждения</h2><table>${p.people.map(k => `<tr><td>${esc(whoName(k))}</td><td>${ok[k] ? 'Ок · ' + esc(new Date(ok[k]).toLocaleString('ru-RU', {timeZone: 'Europe/Moscow'})) : 'ждём'}</td></tr>`).join('')}</table>` : ''}
-    <script>setTimeout(function(){window.print()},300)<\/script></body></html>`);
+    <link rel="stylesheet" href="${PT_FONTS}"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Inter:wght@400;600&display=swap">
+    <style>${PT_CSS} body{margin:0; padding:24px; background:#fff; -webkit-print-color-adjust:exact; print-color-adjust:exact;} .pt{max-width:820px; margin:0 auto;}</style></head><body>
+    ${ptDoc(p, ptPick(p))}
+    <script>(document.fonts ? document.fonts.ready : Promise.resolve()).then(function(){setTimeout(function(){window.print()},400)})<\/script></body></html>`);
   w.document.close();
 }
 function openProto(id) {
@@ -138,14 +133,21 @@ function openProto(id) {
         <div class="row pr-links">${p.recUrl && safeUrl(p.recUrl) ? `<a class="btn sm" href="${esc(safeUrl(p.recUrl))}" target="_blank" rel="noopener">${icon('video')}Запись встречи</a>` : ''}
           ${p.file && p.file.data ? `<button type="button" class="btn sm" id="prFile">${icon('download')}${esc(p.file.name || 'Файл протокола')}</button>` : ''}
           <button type="button" class="btn sm ghost" id="prPdf">${icon('download')}Скачать PDF</button></div>
-        <div class="pr-text">${p.text ? protoTextHtml(p.text) : '<p class="note">Текста протокола пока нет.</p>'}</div>
-        ${(p.people || []).length ? `<div class="pr-oks"><span class="label">Подтверждения</span>${p.people.map(k => `<span class="pr-ok ${ok[k] ? 'good' : ''}">${avatar(personById(k) || {name: whoName(k)})}${esc(whoFirst(k))} <small>${ok[k] ? 'Ок · ' + timeAgo(ok[k]) : 'ждём'}</small></span>`).join('')}</div>` : ''}
+        <div class="pt-bar"><span class="label">Вид протокола</span>${ptSwitch(p)}</div>
+        <div id="prDoc" class="pt-wrap">${ptDoc(p, ptPick(p))}</div>
         ${p.zoomText ? `<details class="pr-zoom"><summary>Версия протокола от Зума</summary><div class="pr-text">${protoTextHtml(p.zoomText)}</div></details>` : ''}
         ${logHtml(p)}
       </div>`,
     foot: `${protoCanEdit() ? `<button class="btn left" id="prEdit">${icon('edit')}Изменить</button>` : ''}<button class="btn" data-close>Закрыть</button>${Proto.needsMe(p) ? `<button class="btn primary" id="prOk">${icon('tick')}Ок, согласен(на)</button>` : ''}`,
     onMount(el, close) {
       $('#prPdf', el).onclick = () => protoPdf(p);
+      ptFonts(); ptStyle();
+      /* вид протокола: свой у каждого, помнится в учётке */
+      on(el, 'click', '[data-pt]', (e, b) => {
+        Prefs.set('proto.theme', b.dataset.pt);
+        $$('[data-pt]', el).forEach(x => x.classList.toggle('on', x === b));
+        $('#prDoc', el).innerHTML = ptDoc(p, ptPick(p));
+      });
       const f = $('#prFile', el);
       if (f) f.onclick = () => protoFileOpen(p);
       const okB = $('#prOk', el);
