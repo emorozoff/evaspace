@@ -7,7 +7,10 @@
 const {isObj} = require('./store');
 
 const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy', 'messages',
-  'subs', 'payouts', 'courses', 'orders', 'products', 'failed', 'refunds', 'scenarios', 'protocols', 'yasen'];
+  'subs', 'payouts', 'courses', 'orders', 'products', 'failed', 'refunds', 'scenarios', 'protocols', 'yasen', 'files'];
+/* файл к задаче (скриншот, документ) — до 5 МБ; в браузер уходит без содержимого, сам файл — по /api/file/<id> */
+const FILE_MAX = 5 * 1024 * 1024;
+const FILE_DATA = /^data:[\w.+-]+\/[\w.+-]+(;[\w.+=-]+)*;base64,[A-Za-z0-9+/=]*$/;
 const ROLES = ['owner', 'lead', 'finance', 'member', 'investor'];
 const roleOf = r => (ROLES.includes(r) ? r : 'member');
 const PERMS = {
@@ -71,6 +74,8 @@ function botView(c, id, doc) {
   if (c === 'docs') return id === 'strategy' ? doc : null;
   /* анкета «Каким быть Ясеню» — бот и есть Ясень: читает ответы, чтобы общаться, как просит команда */
   if (c === 'yasen') return doc;
+  /* файлы к задачам — что приложили (без содержимого) */
+  if (c === 'files') return omit(doc, ['data']);
   if (c === 'people') return pick(doc, PERSON_PUBLIC);
   if (c === 'accounts') return pick(doc, ACC_PUBLIC);
   return null;
@@ -102,6 +107,8 @@ function view(ctx, c, id, doc) {
       if (!can(r, 'tasks.view') && id !== ctx.personId) return pick(doc, PERSON_PUBLIC);
       return omit(doc, can(r, 'payroll.view') ? ['tgChatId'] : ['tgChatId', 'salary']);
     case 'tasks': case 'busy': return can(r, 'tasks.view') ? doc : null;
+    /* файлы к задачам видят все, кто видит задачи; содержимое отдаёт /api/file/<id> */
+    case 'files': return can(r, 'tasks.view') ? omit(doc, ['data']) : null;
     case 'meetings': return can(r, 'tasks.view') && !meetHidden(r, doc) ? doc : null;
     case 'protocols': return seesLevel(r, doc) ? doc : null;
     /* анкета Ясеня: свой ответ — каждому, все ответы — основателю (и боту — только читать, см. botView) */
@@ -131,7 +138,7 @@ const onlyKeys = (body, allowed) => isObj(body) && Object.keys(body).every(k => 
 /* можно ли записать. op: put | patch | delete; cur — что лежит сейчас,
    body — что прислали, next — что получится (для delete — null).
    Возвращает {ok, next} — next может быть поправлен (скрытые поля возвращаем на место). */
-function write(ctx, op, c, id, cur, body, next) {
+function write(ctx, op, c, id, cur, body, next, store) {
   const r = ctx.role, owner = r === 'owner';
   if (r === BOT) return botWrite(op, c, id, cur, body, next);
   switch (c) {
@@ -170,6 +177,17 @@ function write(ctx, op, c, id, cur, body, next) {
       const me = ctx.personId || ctx.accId, ok = isObj(body) ? body.ok : null;
       if (op === 'patch' && cur && seesLevel(r, cur) && onlyKeys(body, ['ok']) && isObj(ok) && Object.keys(ok).length === 1 && Object.keys(ok)[0] === me && typeof ok[me] === 'number') return yes(next);
       return no('протоколы ведут основатели; участник может только подтвердить «Ок»');
+    }
+    case 'files': {
+      if (!can(r, 'tasks.view')) return no('нет доступа к задачам');
+      if (op === 'delete') return cur && (cur.acc === ctx.accId || owner) ? yes(null) : no('удалить файл может тот, кто его приложил, или основатель');
+      if (op !== 'put' || cur) return no('файл не меняется: удалите и приложите заново');
+      if (!isObj(body) || typeof body.data !== 'string' || !FILE_DATA.test(body.data)) return no('файл оформлен неверно');
+      if (body.data.length > Math.ceil(FILE_MAX / 3) * 4 + 200) return no('файл больше 5 МБ');
+      if (!['outcome', 'thread'].includes(body.where) || typeof body.name !== 'string' || body.name.length > 200) return no('файл оформлен неверно');
+      if (store && !store.get('tasks', String(body.task || ''))) return no('нет такой задачи');
+      /* кто приложил — по учётке, а не по тому, что прислал браузер */
+      return yes({...next, acc: ctx.accId, at: Date.now()});
     }
     case 'busy':
       /* занятость — только своя */
@@ -220,4 +238,4 @@ function keepHidden(ctx, c, id, cur, next) {
   return out;
 }
 
-module.exports = {COLS, ROLES, roleOf, can, view, write, keepHidden, ACC_SECRET, LEVEL_ROLES, levelOf, BOT};
+module.exports = {COLS, ROLES, roleOf, can, view, write, keepHidden, ACC_SECRET, LEVEL_ROLES, levelOf, BOT, FILE_MAX};

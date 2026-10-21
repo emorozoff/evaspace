@@ -133,6 +133,22 @@ async function browserHash(pw, salt) {
   console.log('7. что может участница');
   ok((await member.put('tasks', 't2', {title: 'Моя', status: 'todo'})).status === 200, 'задачу создать — да');
   ok((await member.put('ledger', 'l2', {kind: 'in', amount: 1})).status === 403, 'операцию внести — нет');
+  /* файлы к задаче: приложить, открыть, кто видит */
+  const png = 'data:image/png;base64,' + Buffer.from('PNGDATA').toString('base64');
+  ok((await member.put('files', 'f1', {task: 't1', where: 'outcome', name: 'скрин.png', type: 'image/png', size: 7, data: png, by: memberPid, at: 1})).status === 200, 'файл к задаче приложить — да');
+  ok((await member.put('files', 'f2', {task: 'нет-такой', where: 'thread', name: 'x.png', type: 'image/png', size: 7, data: png})).status === 403, 'файл к чужой несуществующей задаче — нет');
+  ok((await member.put('files', 'f3', {task: 't1', where: 'thread', name: 'x', data: 'javascript:alert(1)'})).status === 403, 'не файл — нет');
+  ok((await member.put('files', 'f4', {task: 't1', where: 'thread', name: 'big', data: 'data:image/png;base64,' + 'A'.repeat(7200000)})).status !== 200, 'больше 5 МБ — нет');
+  ok((await member.put('files', 'f1', {task: 't1', where: 'outcome', name: 'подмена', data: png})).status === 403, 'файл заменить — нет');
+  r = await member.state();
+  ok(r.collections.files.f1 && !('data' in r.collections.files.f1) && r.collections.files.f1.acc === memberId, 'в списке — без содержимого, с автором', r.collections.files.f1);
+  r = await member.req('GET', '/api/file/f1', undefined, {raw: true});
+  ok(r.status === 200 && r.text === 'PNGDATA' && r.headers.get('content-type') === 'image/png' && /inline/.test(r.headers.get('content-disposition')) && /sandbox/.test(r.headers.get('content-security-policy') || ''), 'файл открывается', r.status);
+  await member.put('files', 'f5', {task: 't1', where: 'thread', name: 'page.html', type: 'text/html', size: 5, data: 'data:text/html;base64,' + Buffer.from('<b>x</b>').toString('base64')});
+  r = await member.req('GET', '/api/file/f5', undefined, {raw: true});
+  ok(r.status === 200 && r.headers.get('content-type') === 'application/octet-stream' && /attachment/.test(r.headers.get('content-disposition')), 'HTML не открывается страницей — только скачать', r.headers.get('content-type'));
+  ok((await anon.req('GET', '/api/file/f1', undefined, {raw: true})).status === 401, 'без входа файл не отдаётся');
+  ok((await member.del('files', 'f5')).status === 200, 'свой файл удалить — да');
   ok((await member.put('scenarios', 'sc3', {name: 'x', p: {}})).status === 403, 'сценарий сохранить — нет');
   ok((await member.patch('protocols', 'pr3', {ok: {[memberPid]: Date.now()}})).status === 200, 'своё «Ок» в протоколе — да');
   ok((await member.patch('protocols', 'pr3', {ok: {someoneElse: Date.now()}})).status === 403, '«Ок» за другого — нет');
@@ -196,6 +212,8 @@ async function browserHash(pw, salt) {
   ok(!ic.yasen[memberPid], 'чужую анкету Ясеня не видит');
   ok(!ic.protocols.pr1 && ic.protocols.pr2 && ic.protocols.pr3, 'протоколы уровней 2 и 3 видит, 1 — нет', Object.keys(ic.protocols));
   ok((await investor.put('scenarios', 'sc9', {name: 'x', p: {}})).status === 403, 'сценарий сохранить — нет');
+  ok(Object.keys(ic.files || {}).length === 0 && (await investor.req('GET', '/api/file/f1', undefined, {raw: true})).status === 404, 'файлов к задачам не видит');
+  ok((await lead.del('files', 'f1')).status === 403, 'чужой файл удалить — нет');
   ok((await investor.get('/crm/api/state')).status === 403, 'в CRM не пускают');
   ok((await investor.req('GET', '/crm/', undefined, {raw: true})).status === 403, 'страница CRM закрыта');
 

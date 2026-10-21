@@ -397,6 +397,25 @@ async function docApi(app, req, res, ctx, c, id) {
   return json(res, 200, {ok: true, rev: app.store.rev, doc: op === 'delete' ? null : app.rules.view(ctx, c, id, verdict.next)});
 }
 
+/* файл к задаче: тем, кто видит задачи. Картинки и PDF открываются во вкладке, остальное скачивается;
+   чужой HTML или SVG как страница штаба не откроется (sandbox, nosniff) */
+const FILE_INLINE = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf'];
+function fileGet(res, ctx, id) {
+  const f = hq.store.get('files', id);
+  if (!f || !HQ.view(ctx, 'files', id, f)) return json(res, 404, {error: 'нет такого файла'});
+  const m = /^data:([^;,]+)[^,]*;base64,(.*)$/s.exec(String(f.data || ''));
+  if (!m) return json(res, 404, {error: 'нет такого файла'});
+  const buf = Buffer.from(m[2], 'base64'), type = m[1].toLowerCase(), inline = FILE_INLINE.includes(type);
+  const name = String(f.name || 'файл').replace(/[\r\n"\\]/g, '_');
+  res.writeHead(200, {
+    'content-type': inline ? type : 'application/octet-stream', 'content-length': buf.length,
+    'content-disposition': `${inline ? 'inline' : 'attachment'}; filename="${name.replace(/[^\x20-\x7e]/g, '_')}"; filename*=UTF-8''${encodeURIComponent(name)}`,
+    'x-content-type-options': 'nosniff', 'cache-control': 'private, max-age=86400',
+    ...(type === 'application/pdf' ? {} : {'content-security-policy': "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'"}),
+  });
+  return res.end(buf);
+}
+
 function events(app, req, res, ctx) {
   res.writeHead(200, {'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive', 'x-accel-buffering': 'no'});
   res.write(': ok\n\n');
@@ -599,6 +618,8 @@ async function hqApi(req, res, p, u) {
     hq.store.replace(inc, mode);
     return json(res, 200, {ok: true, n: Object.values(inc.collections).reduce((a, d) => a + Object.keys(d).length, 0)});
   }
+  const fm = /^file\/([^/]+)$/.exec(p);
+  if (fm && !write) return fileGet(res, ctx, decodeURIComponent(fm[1]));
   const m = /^doc\/([a-z]{2,20})\/([^/]+)$/.exec(p);
   if (m) return docApi(hq, req, res, ctx, decodeURIComponent(m[1]), decodeURIComponent(m[2]));
   return json(res, 404, {error: 'нет такого адреса'});

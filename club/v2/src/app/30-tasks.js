@@ -248,9 +248,12 @@ const Tasks = {
     Store.patch('tasks', t.id, {comments: {[uid()]: {by: k, at: Date.now(), text: text.trim(), kind: 'return', ev: 'return', to: [t.assignee].filter(x => x && x !== k)}}}, {mustExist: true});
     return this.update(t.id, {status: 'doing', reworkCount: (t.reworkCount || 0) + 1}, `${who}: вернул(а) на доработку`);
   },
-  comment(t, text) {
-    const k = this.meKey(), now = Date.now();
-    return Store.patch('tasks', t.id, {updatedAt: now, updatedBy: k, comments: {[uid()]: {by: k, at: now, text: text.trim(), kind: 'comment', ev: 'comment', to: this.circle(t).filter(x => x !== k)}}}, {mustExist: true});
+  /* files — приложенные файлы [{id, name}]: без текста в уведомлении будут их названия */
+  comment(t, text, files = []) {
+    const k = this.meKey(), now = Date.now(), own = String(text || '').trim();
+    const c = {by: k, at: now, text: own || files.map(f => '📎 ' + f.name).join(', '), kind: 'comment', ev: 'comment', to: this.circle(t).filter(x => x !== k)};
+    if (files.length) Object.assign(c, {files: files.map(f => f.id), fileOnly: !own});
+    return Store.patch('tasks', t.id, {updatedAt: now, updatedBy: k, comments: {[uid()]: c}}, {mustExist: true});
   },
   /* блокирующая задача закрыта — исполнителю зависимой можно начинать */
   notifyUnblocked(t) {
@@ -973,7 +976,8 @@ function openTask(id, opts = {}) {
     <div class="tm-box" id="tmApprBox"></div>
     ${isNew ? '' : '<div class="tm-box" id="tmDepsBox"></div><div class="tm-zone" id="tmZone"></div>'}
     ${isNew ? '' : `<div class="t-m-comments"><div class="label">Обсуждение и история</div><div id="tmThread" class="thread"></div>
-      <form id="tmCForm" class="t-m-cform"><textarea class="textarea" id="tmComment" rows="2" placeholder="Написать комментарий: вопрос, ссылка, что сделано — придёт исполнителю и постановщику"></textarea><button class="btn sm dark" type="submit">Отправить</button></form></div>`}
+      <div id="tmCPend" class="tf-row" hidden></div>
+      <form id="tmCForm" class="t-m-cform"><textarea class="textarea" id="tmComment" rows="2" placeholder="Написать комментарий: вопрос, ссылка, что сделано — придёт исполнителю и постановщику"></textarea><label class="btn sm ghost tf-add" title="Прикрепить скриншот или документ (до 5 МБ)">${icon('clip')}<input type="file" id="tmCFile" multiple hidden></label><button class="btn sm dark" type="submit">Отправить</button></form></div>`}
   </div>`;
   const foot = isNew
     ? `<button class="btn" data-close>Отмена</button><button class="btn primary" id="tmCreate">Создать задачу</button>`
@@ -1097,6 +1101,16 @@ function openTask(id, opts = {}) {
         Tasks.apply(t, st);
       });
       on(el, 'change', '#tmOutcome', (e, i) => set({outcome: i.value}));
+      on(el, 'change', '#tmOutFile', async (e, i) => {
+        const list = TaskFiles.pick(i.files);
+        i.value = '';
+        const files = await TaskFiles.add(cur(), 'outcome', list);
+        if (files.length) Tasks.update(id, {}, `${whoFirst(Tasks.meKey())}: приложил(а) к результату ${files.map(f => '«' + f.name + '»').join(', ')}`);
+      });
+      on(el, 'click', '[data-tf-del]', async (e, b) => {
+        const f = Store.get('files', b.dataset.tfDel);
+        if (f && await confirmPop(b, {text: `Удалить файл «${f.name}»?`, yes: 'Удалить', danger: true})) Store.remove('files', f.id);
+      });
 
       if (isNew) {
         $('#tmCreate', el).onclick = () => {
@@ -1116,12 +1130,26 @@ function openTask(id, opts = {}) {
         };
       } else {
         const cf = $('#tmCForm', el);
-        cf.onsubmit = e => {
+        /* файлы к комментарию: выбрали — видны над полем, уходят вместе с «Отправить» */
+        let pend = [];
+        const paintPend = () => {
+          const pb = $('#tmCPend', el);
+          pb.hidden = !pend.length;
+          pb.innerHTML = pend.map((f, i) => `<span class="tf"><span class="tf-ic">${icon('file')}</span><span class="tf-n">${esc(f.name)}</span><small>${TaskFiles.size(f.size)}</small><button type="button" class="icon-btn" data-pend-rm="${i}" title="Не прикладывать">${icon('x')}</button></span>`).join('');
+        };
+        $('#tmCFile', el).onchange = e => { pend = pend.concat(TaskFiles.pick(e.target.files)); e.target.value = ''; paintPend(); };
+        on(el, 'click', '[data-pend-rm]', (e, b) => { pend.splice(Number(b.dataset.pendRm), 1); paintPend(); });
+        cf.onsubmit = async e => {
           e.preventDefault();
-          const box = $('#tmComment', el);
-          if (!box.value.trim()) return;
-          Tasks.comment(cur(), box.value);
-          box.value = '';
+          const box = $('#tmComment', el), btn = $('button[type=submit]', cf);
+          if (!box.value.trim() && !pend.length) return;
+          const text = box.value, list = pend;
+          box.value = ''; pend = []; paintPend();
+          btn.disabled = true;
+          try {
+            const files = await TaskFiles.add(cur(), 'thread', list);
+            if (text.trim() || files.length) Tasks.comment(cur(), text, files);
+          } finally { btn.disabled = false; }
         };
         $('#tmComment', el).addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) cf.requestSubmit(); });
         const del = $('#tmDel', el);
@@ -1152,9 +1180,10 @@ function openTask(id, opts = {}) {
           const db = $('#tmDepsBox', el); if (!inside(db)) db.innerHTML = depsHtml(t, can);
           /* блок статуса пересобираем только при смене состояния; текст результата — на месте */
           const z = $('#tmZone', el), ret = lastReturn(t);
-          const zk = [t.status, Tasks.approver(t), Tasks.canJudge(t), can, ret ? ret.at : 0, t.submittedAt || 0, t.acceptedBy || '', t.status === 'done' || t.status === 'review' ? t.outcome : ''].join('|');
+          const zk = [t.status, Tasks.approver(t), Tasks.canJudge(t), can, ret ? ret.at : 0, t.submittedAt || 0, t.acceptedBy || '', t.status === 'done' || t.status === 'review' ? t.outcome : '', TaskFiles.of(t.id, 'outcome').length ? 1 : 0].join('|');
           if (z.dataset.k !== zk && !inside(z)) { z.innerHTML = zoneHtml(t, can); z.dataset.k = zk; }
           else { const o = $('#tmOutcome', z); if (o && document.activeElement !== o && o.value !== (t.outcome || '')) o.value = t.outcome || ''; }
+          const ofb = $('#tmOutFiles', z); if (ofb) ofb.innerHTML = TaskFiles.html(TaskFiles.of(t.id, 'outcome'), can);
           paintThread($('#tmThread', el), t, document.activeElement && document.activeElement.id === 'tmComment');
           if (opts.focus === 'return' && t.status === 'review' && Tasks.canJudge(t)) {
             opts.focus = null;
@@ -1164,7 +1193,7 @@ function openTask(id, opts = {}) {
         }
       }
       paint();
-      if (!isNew) unsub = Store.subscribe(c => { if (c === 'tasks' || c === 'people') paint(); });
+      if (!isNew) unsub = Store.subscribe(c => { if (c === 'tasks' || c === 'people' || c === 'files') paint(); });
     },
     onClose() { if (unsub) unsub(); },
   });
@@ -1228,15 +1257,60 @@ function depsHtml(t, can) {
     ${can ? `<select class="select sm" id="tmDepAdd"><option value="">+ Добавить задачу, которую надо сделать раньше…</option>${addable.map(x => `<option value="${x.id}">${esc(x.title.slice(0, 90))}</option>`).join('')}</select>` : ''}
     ${dep.length ? `<p class="note">От этой задачи зависят: ${dep.map(d => `<button type="button" class="link-btn" data-dep-open="${d.id}">${esc(d.title.slice(0, 50))}</button>`).join(', ')} — когда она будет готова, их исполнители получат «можно начинать».</p>` : ''}`;
 }
+/* ── файлы к задаче: скриншоты и документы в «Результате работы» и «Обсуждении».
+   На сервере содержимое в браузер не приходит — открывается по /api/file/<id> ── */
+const TaskFiles = {
+  MAX: 5 * 1024 * 1024,
+  of: (taskId, where) => Store.all('files').filter(f => f.task === taskId && f.where === where).sort((a, b) => (a.at || 0) - (b.at || 0)),
+  url: f => (onServer() ? `/api/file/${encodeURIComponent(f.id)}` : f.data || ''),
+  isImg: f => /^image\/(png|jpe?g|gif|webp)$/.test(f.type || ''),
+  size: n => (n >= 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' МБ' : Math.max(1, Math.round(n / 1024)) + ' КБ'),
+  /* выбранные файлы: больше 5 МБ — мимо, с подсказкой */
+  pick(fileList) {
+    const all = [...(fileList || [])], ok = all.filter(f => f.size <= this.MAX);
+    if (ok.length < all.length) toast('Файл больше 5 МБ не приложить — положите его в облако и вставьте ссылку');
+    return ok;
+  },
+  read: f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(f); }),
+  /* приложить к задаче; возвращает [{id, name}] того, что сервер принял */
+  async add(t, where, list) {
+    const out = [];
+    for (const f of list) {
+      let data = await this.read(f).catch(() => '');
+      if (!data) { toast(`Не прочитался файл «${f.name}»`, {error: true}); continue; }
+      const type = f.type || 'application/octet-stream';
+      data = data.replace(/^data:[^,]*?(;base64)?,/, `data:${type};base64,`);
+      const id = uid(), name = f.name.slice(0, 160);
+      await Store.put('files', id, {task: t.id, where, name, type, size: f.size, data, by: Tasks.meKey(), at: Date.now()});
+      /* сервер не принял (права, размер) — тост уже показан, из этого браузера убираем */
+      if (Store.state.error) Store.drop('files', id); else out.push({id, name});
+    }
+    return out;
+  },
+  canDel: f => Auth.isOwner() || f.by === Tasks.meKey(),
+  html(list, canEdit) {
+    return list.map(f => {
+      if (f.gone) return '<span class="tf gone">файл удалён</span>';
+      const u = esc(this.url(f)), dl = onServer() ? '' : ` download="${esc(f.name)}"`;
+      const del = canEdit && this.canDel(f) ? `<button type="button" class="icon-btn" data-tf-del="${esc(f.id)}" title="Удалить файл">${icon('x')}</button>` : '';
+      if (this.isImg(f)) return `<span class="tf img"><a href="${u}" target="_blank" rel="noopener"${dl} title="${esc(f.name)}"><img src="${u}" alt="${esc(f.name)}" loading="lazy"></a>${del}</span>`;
+      return `<span class="tf"><a href="${u}" target="_blank" rel="noopener"${dl}><span class="tf-ic">${icon('file')}</span><span class="tf-n">${esc(f.name)}</span><small>${this.size(f.size || 0)}</small></a>${del}</span>`;
+    }).join('');
+  },
+};
 function zoneHtml(t, can) {
   const ap = Tasks.approver(t), judge = Tasks.canJudge(t);
-  const out = t.outcome ? `<div class="tm-outcome"><span>Результат работы</span><p>${esc(t.outcome)}</p></div>` : '';
+  const files = TaskFiles.of(t.id, 'outcome');
+  const filesBox = `<div class="tf-row" id="tmOutFiles">${TaskFiles.html(files, can)}</div>`;
+  const out = t.outcome || files.length ? `<div class="tm-outcome"><span>Результат работы</span>${t.outcome ? `<p>${esc(t.outcome)}</p>` : ''}${filesBox}</div>` : '';
   if (t.status === 'todo' || t.status === 'doing') {
     const ret = lastReturn(t);
     const returned = ret && t.reworkCount && (!t.submittedAt || ret.at > t.submittedAt);
     return `${returned ? `<div class="tm-returned"><b>Возвращено на доработку</b> — ${esc(whoFirst(ret.by))}, ${timeAgo(ret.at)}:<p>${esc(ret.text)}</p></div>` : ''}
       <p class="tm-zone-note">${ap ? `Отвечает ${esc(t.assignee ? whoName(t.assignee) : 'исполнитель')}, результат принимает <b>${esc(whoName(ap))}</b>.` : 'Задачу закрывает сам исполнитель.'}</p>
       <label class="tm-f"><span>Результат работы — ссылка, документ, скрин или текст</span><textarea class="textarea" id="tmOutcome" rows="2" ${can ? '' : 'disabled'} placeholder="Вставьте ссылку или опишите, что сделано и что проверить">${esc(t.outcome || '')}</textarea></label>
+      ${filesBox}
+      ${can ? `<label class="btn sm ghost tf-add">${icon('clip')}Прикрепить файл<input type="file" id="tmOutFile" multiple hidden></label>` : ''}
       ${can ? `<div class="tm-zone-btns">${t.status === 'todo' ? '<button type="button" class="btn" data-st="doing">◐ В работу</button>' : ''}<button type="button" class="btn primary" data-st="finish">${ap && !judge ? (returned ? 'Отправить повторно на согласование →' : 'Отправить на согласование →') : '✓ Готово'}</button></div>` : ''}`;
   }
   if (t.status === 'review') {
@@ -1257,11 +1331,12 @@ function paintThread(box, t, keepScroll) {
   box.innerHTML = list.map(c => {
     const p = personById(c.by);
     if (c.kind === 'system') return `<div class="th-sys"><span>${esc(c.text)}</span><time>${timeAgo(c.at)}</time></div>`;
-    return `<div class="th-msg ${c.kind === 'return' ? 'ret' : ''}">${avatar(p)}<div><div class="th-h"><b>${esc(p ? personName(p) : whoName(c.by))}</b><time>${timeAgo(c.at)}</time>${c.kind === 'return' ? '<span class="pill bad">вернул(а) на доработку</span>' : ''}</div><p></p></div></div>`;
+    const files = (c.files || []).map(fid => Store.get('files', fid) || {id: fid, gone: true});
+    return `<div class="th-msg ${c.kind === 'return' ? 'ret' : ''}">${avatar(p)}<div><div class="th-h"><b>${esc(p ? personName(p) : whoName(c.by))}</b><time>${timeAgo(c.at)}</time>${c.kind === 'return' ? '<span class="pill bad">вернул(а) на доработку</span>' : ''}</div><p></p>${files.length ? `<div class="tf-row">${TaskFiles.html(files, true)}</div>` : ''}</div></div>`;
   }).join('');
   /* текст комментариев — только через textContent */
   const msgs = list.filter(c => c.kind !== 'system');
-  $$('.th-msg p', box).forEach((pEl, i) => { pEl.textContent = msgs[i].text; });
+  $$('.th-msg p', box).forEach((pEl, i) => { if (msgs[i].fileOnly) pEl.remove(); else pEl.textContent = msgs[i].text; });
   if (!keepScroll) box.scrollTop = box.scrollHeight;
 }
 
