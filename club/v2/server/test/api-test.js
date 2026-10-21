@@ -138,6 +138,8 @@ async function browserHash(pw, salt) {
   ok((await member.patch('protocols', 'pr3', {ok: {someoneElse: Date.now()}})).status === 403, '«Ок» за другого — нет');
   ok((await member.patch('protocols', 'pr3', {text: 'переписала'})).status === 403, 'текст протокола менять — нет');
   ok((await member.patch('protocols', 'pr1', {ok: {[memberPid]: Date.now()}})).status === 403, '«Ок» в закрытом протоколе — нет');
+  ok((await member.put('yasen', memberPid, {answers: {humor: {pick: 'Часто, но по делу', own: ''}}, at: 1})).status === 200, 'анкета Ясеня — свой ответ да');
+  ok((await member.put('yasen', 'чужой', {answers: {}, at: 1})).status === 403, 'анкета Ясеня — за другого нет');
   ok((await member.put('protocols', 'pr9', {title: 'x', level: 3})).status === 403, 'протокол завести — нет');
   ok((await member.put('meetings', 'mt9', {title: 'x', level: 1, date: '2026-10-21', start: '10:00', dur: 30})).status === 403, 'собрание уровня 1 завести — нет');
   ok((await member.patch('accounts', memberId, {role: 'owner'})).status === 403, 'сделать себя основателем — нет');
@@ -191,6 +193,7 @@ async function browserHash(pw, salt) {
   ok(ic.accounts[memberId] && !('email' in ic.accounts[memberId]) && ic.accounts[investorId].email === 'inv@test.ru', 'чужих почт для входа не видит, свою — да', ic.accounts[memberId]);
   ok((await investor.put('ledger', 'l9', {kind: 'in', amount: 1})).status === 403 && (await investor.put('tasks', 't9', {title: 'x'})).status === 403, 'писать не может');
   ok(ic.scenarios.sc1 && ic.scenarios.sc1.p.tax === 6, 'сценарии видит');
+  ok(!ic.yasen[memberPid], 'чужую анкету Ясеня не видит');
   ok(!ic.protocols.pr1 && ic.protocols.pr2 && ic.protocols.pr3, 'протоколы уровней 2 и 3 видит, 1 — нет', Object.keys(ic.protocols));
   ok((await investor.put('scenarios', 'sc9', {name: 'x', p: {}})).status === 403, 'сценарий сохранить — нет');
   ok((await investor.get('/crm/api/state')).status === 403, 'в CRM не пускают');

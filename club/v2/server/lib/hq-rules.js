@@ -7,7 +7,7 @@
 const {isObj} = require('./store');
 
 const COLS = ['accounts', 'invites', 'people', 'tasks', 'ledger', 'plan', 'sales', 'links', 'docs', 'meetings', 'busy', 'messages',
-  'subs', 'payouts', 'courses', 'orders', 'products', 'failed', 'refunds', 'scenarios', 'protocols'];
+  'subs', 'payouts', 'courses', 'orders', 'products', 'failed', 'refunds', 'scenarios', 'protocols', 'yasen'];
 const ROLES = ['owner', 'lead', 'finance', 'member', 'investor'];
 const roleOf = r => (ROLES.includes(r) ? r : 'member');
 const PERMS = {
@@ -93,6 +93,8 @@ function view(ctx, c, id, doc) {
     case 'tasks': case 'busy': return can(r, 'tasks.view') ? doc : null;
     case 'meetings': return can(r, 'tasks.view') && !meetHidden(r, doc) ? doc : null;
     case 'protocols': return seesLevel(r, doc) ? doc : null;
+    /* анкета Ясеня: свой ответ — каждому, все ответы — основателю */
+    case 'yasen': return r === 'owner' || id === (ctx.personId || ctx.accId) ? doc : null;
     case 'messages':
       if (!can(r, 'tasks.view')) return null;
       return doc.ch === 'team' || dmHas(doc.ch, ctx.accId) ? doc : null;
@@ -147,6 +149,9 @@ function write(ctx, op, c, id, cur, body, next) {
     case 'meetings':
       if (!can(r, 'tasks.view')) return no('нет доступа к задачам и собраниям');
       return meetHidden(r, cur) || meetHidden(r, next) ? no('собрания уровня 1 ведут основатели') : yes(next);
+    case 'yasen':
+      if (next && JSON.stringify(next).length > 50000) return no('слишком длинные ответы');
+      return owner || id === (ctx.personId || ctx.accId) ? yes(next) : no('отвечать можно только за себя');
     case 'protocols': {
       if (next && JSON.stringify(next).length > 5e6) return no('протокол слишком большой: файл — до 3 МБ');
       if (can(r, 'proto.edit')) return yes(next);

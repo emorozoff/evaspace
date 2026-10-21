@@ -14,7 +14,9 @@ const Store = (() => {
     /* сценарии: свои настройки поверх живых данных, на штаб не влияют */
     'scenarios',
     /* протоколы собраний: уровень 1–3, текст, запись, подтверждения «Ок» */
-    'protocols'];
+    'protocols',
+    /* анкета «Каким быть Ясеню»: ответ человека — документ с id его карточки или учётки */
+    'yasen'];
   const LS = 'eva-hq:';
   const data = Object.fromEntries(COLS.map(c => [c, new Map()]));
   const subs = new Set();
