@@ -10,6 +10,24 @@ const crypto = require('crypto');
 
 const hmac = (key, text) => crypto.createHmac('sha256', key).update(text).digest('hex');
 const same = (a, b) => { const x = Buffer.from(String(a)), y = Buffer.from(String(b)); return x.length === y.length && crypto.timingSafeEqual(x, y); };
+/* звуковой транскрипт записи (WebVTT) → текст: «[чч:мм:сс] Имя: фраза», реплики одного человека подряд — одной строкой */
+function vttText(vtt) {
+  const out = [];
+  for (const block of String(vtt || '').replace(/\r/g, '').split(/\n\s*\n/)) {
+    const lines = block.split('\n').map(x => x.trim()).filter(Boolean);
+    const ti = lines.findIndex(x => x.includes('-->'));
+    if (ti < 0) continue;
+    const at = lines[ti].split('-->')[0].trim().replace(/\.\d+$/, '');
+    const text = lines.slice(ti + 1).join(' ').trim();
+    if (!text) continue;
+    const m = /^([^:]{1,60}):\s+(.*)$/.exec(text);
+    const who = m ? m[1].trim() : '', say = m ? m[2] : text;
+    const last = out[out.length - 1];
+    if (last && last.who === who) last.say += ' ' + say;
+    else out.push({at, who, say});
+  }
+  return out.map(x => `[${x.at}] ${x.who ? x.who + ': ' : ''}${x.say}`).join('\n');
+}
 /* uuid встречи с «/» в начале или «//» внутри Зум просит кодировать дважды */
 const uuidPath = u => (/^\/|\/\//.test(u) ? encodeURIComponent(encodeURIComponent(u)) : encodeURIComponent(u));
 
@@ -60,6 +78,15 @@ class Zoom {
     if (s.summary_content && !parts.length) parts.push(String(s.summary_content));
     return parts.join('\n\n').trim();
   }
+  /* транскрипт записи текстом. Файл TRANSCRIPT приходит в уведомлении о записи; скачать его можно ключом
+     из уведомления (download_token, живёт сутки) или ключом приложения (нужны права на облачные записи) */
+  async transcriptText(files, downloadToken) {
+    const f = (files || []).find(x => x && (x.file_type === 'TRANSCRIPT' || x.recording_type === 'audio_transcript') && x.download_url);
+    if (!f) return '';
+    const r = await fetch(f.download_url, {headers: {authorization: 'Bearer ' + (downloadToken || await this.token())}});
+    if (!r.ok) throw Object.assign(new Error('Зум не отдал транскрипт: ' + r.status), {status: 502});
+    return vttText(await r.text());
+  }
   /* уведомление пришло от Зума: подпись v0=HMAC(секрет, «v0:время:тело»), не старше 5 минут */
   verify(headers, raw) {
     if (!this.hooks) return false;
@@ -71,4 +98,4 @@ class Zoom {
   validation(plainToken) { return {plainToken, encryptedToken: hmac(this.webhookSecret, String(plainToken))}; }
 }
 
-module.exports = {Zoom, hmac};
+module.exports = {Zoom, hmac, vttText};

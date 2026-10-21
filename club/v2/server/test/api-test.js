@@ -362,7 +362,7 @@ async function browserHash(pw, salt) {
     const KEY = require('crypto').randomBytes(24).toString('hex');
     const B2 = `http://localhost:${Number(new URL(BASE).port || 8787) + 1}`;
     const srv = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')],
-      {env: {...process.env, DATA_DIR: dir, PORT: new URL(B2).port, INSECURE_COOKIE: '1', BOT_KEY: KEY}, stdio: 'ignore'});
+      {env: {...process.env, DATA_DIR: dir, PORT: new URL(B2).port, INSECURE_COOKIE: '1', BOT_KEY: KEY, ZOOM_WEBHOOK_SECRET: 'zsecret'}, stdio: 'ignore'});
     try {
       for (let i = 0; i < 50; i++) { try { if ((await fetch(B2 + '/healthz')).ok) break; } catch (e) { /* ещё не встал */ } await wait(100); }
       const own = new Client('owner2', B2), bot = new Client('bot', B2, KEY), bad = new Client('bad', B2, KEY.replace(/.$/, c => (c === 'a' ? 'b' : 'a')));
@@ -430,6 +430,20 @@ async function browserHash(pw, salt) {
       await own.put('yasen', 'pz', {answers: {you: {pick: 'На «ты»', own: ''}}, name: 'Зоя', at: 1});
       const bya = ((await bot.get('/api/state')).j.collections.yasen || {}).pz;
       ok(bya && bya.answers.you.pick === 'На «ты»', 'ответы анкеты Ясеня видит', bya);
+      /* транскрипт встречи из Зума: сервер скачивает его по ссылке из уведомления, бот читает */
+      const vtt = http.createServer((q, s2) => {
+        if (q.headers.authorization !== 'Bearer dtok') { s2.writeHead(401); return s2.end(); }
+        s2.end('WEBVTT\n\n1\n00:00:01.000 --> 00:00:03.000\nКирилл: Внимание, задача: Зоя готовит отчёт до пятницы\n\n2\n00:00:04.000 --> 00:00:05.000\nЗоя: Хорошо\n');
+      });
+      await new Promise(r => vtt.listen(0, r));
+      const zbody = JSON.stringify({event: 'recording.transcript_completed', download_token: 'dtok', payload: {object: {id: 777, topic: 'Созвон', start_time: '2026-10-21T12:00:00Z',
+        recording_files: [{file_type: 'TRANSCRIPT', download_url: `http://127.0.0.1:${vtt.address().port}/t.vtt`}]}}});
+      const zts = String(Math.floor(Date.now() / 1000));
+      const zsig = 'v0=' + require('crypto').createHmac('sha256', 'zsecret').update(`v0:${zts}:${zbody}`).digest('hex');
+      r = await fetch(B2 + '/api/zoom/webhook', {method: 'POST', headers: {'content-type': 'application/json', 'x-zm-request-timestamp': zts, 'x-zm-signature': zsig}, body: zbody});
+      vtt.close();
+      const zp = Object.values((await bot.get('/api/state')).j.collections.protocols || {}).find(x => x.zoomId === '777');
+      ok(r.status === 200 && zp && /^\[00:00:01\] Кирилл: Внимание, задача: Зоя готовит отчёт до пятницы\n\[00:00:04\] Зоя: Хорошо$/.test(zp.transcript || ''), 'транскрипт Зума — в протокол, бот его видит', zp);
       ok((await bot.patch('yasen', 'pz', {at: 2})).status === 403 && (await bot.put('yasen', 'yb', {answers: {}, at: 1, via: 'bot'})).status === 403 && (await bot.del('yasen', 'pz')).status === 403, 'анкету не меняет, не заполняет и не удаляет');
 
       /* своя карточка в «Команде» — одна и только «кто это» */

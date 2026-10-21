@@ -439,11 +439,19 @@ async function zoomWebhook(req, res) {
   const ev = String(j.event || ''), obj = (j.payload && j.payload.object) || {};
   if (ev === 'endpoint.url_validation') return json(res, 200, zoom.validation((j.payload || {}).plainToken));
   try {
-    if (ev === 'recording.completed') {
+    /* запись готова; транскрипт речи Зум доделывает позже и присылает отдельным уведомлением */
+    if (ev === 'recording.completed' || ev === 'recording.transcript_completed') {
       const p = zoomProtocol(obj);
       const pass = obj.recording_play_passcode || obj.password || '';
       const url = obj.share_url ? obj.share_url + (pass && !String(obj.share_url).includes('pwd=') ? (obj.share_url.includes('?') ? '&' : '?') + 'pwd=' + encodeURIComponent(pass) : '') : '';
       if (url && url !== p.recUrl) hq.store.patch('protocols', p.id, {recUrl: url, upd: Date.now(), log: zoomLog('Зум прислал запись встречи')});
+      /* транскрипт — дословно, кто что сказал: по нему бот ищет «внимание, задача» */
+      if (!p.transcript) {
+        const t = await zoom.transcriptText(obj.recording_files, j.download_token || (j.payload || {}).download_token).catch(e => {
+          console.error(new Date().toISOString(), 'zoom transcript', e.message); return '';
+        });
+        if (t) hq.store.patch('protocols', p.id, {transcript: t.slice(0, 400000), upd: Date.now(), log: zoomLog('Зум прислал транскрипт встречи')});
+      }
     }
     if (ev === 'meeting.summary_completed' && zoom.configured) {
       const p = zoomProtocol(obj);
