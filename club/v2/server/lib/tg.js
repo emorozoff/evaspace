@@ -115,7 +115,7 @@ class TgBot {
       console.log(`Бот штаба в Telegram: @${this.username}`);
     } catch (e) {
       console.error(new Date().toISOString(), 'tg setup:', e.message);
-      setTimeout(() => this.setup(), 5 * 60e3).unref();
+      setTimeout(() => this.setup(), 60e3).unref();
     }
   }
   start(every = 30e3) {

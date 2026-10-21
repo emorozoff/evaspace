@@ -43,6 +43,12 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const net = require('net');
+const dns = require('dns');
+/* У контейнера на сервере нет IPv6, а путь до Telegram с потерями: соединение бывает и 5 секунд.
+   По умолчанию Node даёт ему 250 мс на адрес и рвёт — поэтому идём по IPv4 и ждём, сколько нужно */
+if (net.setDefaultAutoSelectFamily) net.setDefaultAutoSelectFamily(false);
+dns.setDefaultResultOrder('ipv4first');
 const {JsonStore, merge, isObj} = require('./lib/store');
 const A = require('./lib/auth');
 const HQ = require('./lib/hq-rules');
