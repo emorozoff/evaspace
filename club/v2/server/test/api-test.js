@@ -426,6 +426,12 @@ async function browserHash(pw, salt) {
       ok(bs2.docs.strategy && bs2.docs.strategy.goals.g1.title === 'Цель квартала' && !bs2.docs.settings, 'стратегию видит, настройки — нет', bs2.docs);
       ok((await bot.patch('protocols', 'pr1', {text: 'другое'})).status === 403 && (await bot.patch('docs', 'strategy', {goals: {}})).status === 403, 'протоколы и стратегию не меняет');
 
+      /* анкета «Каким быть Ясеню» — только читать */
+      await own.put('yasen', 'pz', {answers: {you: {pick: 'На «ты»', own: ''}}, name: 'Зоя', at: 1});
+      const bya = ((await bot.get('/api/state')).j.collections.yasen || {}).pz;
+      ok(bya && bya.answers.you.pick === 'На «ты»', 'ответы анкеты Ясеня видит', bya);
+      ok((await bot.patch('yasen', 'pz', {at: 2})).status === 403 && (await bot.put('yasen', 'yb', {answers: {}, at: 1, via: 'bot'})).status === 403 && (await bot.del('yasen', 'pz')).status === 403, 'анкету не меняет, не заполняет и не удаляет');
+
       /* своя карточка в «Команде» — одна и только «кто это» */
       ok((await bot.put('people', 'yasen', {name: 'Ясень Ева', title: 'ИИ-ассистент команды', dir: 'ops', status: 'active', order: 90, bot: true})).status === 200, 'бот заводит свою карточку в «Команде»');
       ok((await own.state()).collections.people.yasen.name === 'Ясень Ева', 'основатель видит Ясеня в «Команде»');

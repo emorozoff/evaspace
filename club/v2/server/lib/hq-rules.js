@@ -53,8 +53,8 @@ const dmHas = (ch, accId) => String(ch).startsWith('dm:') && String(ch).slice(3)
    ROLES: учётки с ней нет. Видит задачи, собрания (без внешних гостей), протоколы (без файла) и
    стратегию; из «Команды» и учёток — только кто это (без контактов, зарплат и личного). Ставит и
    меняет задачи и собрания (встречу Зума к собранию заводит сервер); удалить может только то, что
-   поставил сам (via: 'bot'). В «Команде» ведёт одну свою карточку (id yasen). Протоколы и стратегию
-   только читает. Денег, сообщений и настроек не
+   поставил сам (via: 'bot'). В «Команде» ведёт одну свою карточку (id yasen). Протоколы, стратегию
+   и ответы анкеты «Каким быть Ясеню» только читает. Денег, сообщений и настроек не
    видит и не меняет. */
 const BOT = 'bot';
 const BOT_COLS = ['tasks', 'meetings'];
@@ -69,6 +69,8 @@ function botView(c, id, doc) {
   if (c === 'protocols') return {...omit(doc, ['file']), hasFile: !!doc.file};
   /* из документов — только стратегия: цели недели для утренней сводки */
   if (c === 'docs') return id === 'strategy' ? doc : null;
+  /* анкета «Каким быть Ясеню» — бот и есть Ясень: читает ответы, чтобы общаться, как просит команда */
+  if (c === 'yasen') return doc;
   if (c === 'people') return pick(doc, PERSON_PUBLIC);
   if (c === 'accounts') return pick(doc, ACC_PUBLIC);
   return null;
@@ -102,7 +104,7 @@ function view(ctx, c, id, doc) {
     case 'tasks': case 'busy': return can(r, 'tasks.view') ? doc : null;
     case 'meetings': return can(r, 'tasks.view') && !meetHidden(r, doc) ? doc : null;
     case 'protocols': return seesLevel(r, doc) ? doc : null;
-    /* анкета Ясеня: свой ответ — каждому, все ответы — основателю */
+    /* анкета Ясеня: свой ответ — каждому, все ответы — основателю (и боту — только читать, см. botView) */
     case 'yasen': return r === 'owner' || id === (ctx.personId || ctx.accId) ? doc : null;
     case 'messages':
       if (!can(r, 'tasks.view')) return null;
