@@ -12455,7 +12455,7 @@ const PT_THEMES = {
   std:     {name: 'Обычный', icon: '📄'},
   tsar:    {name: 'Царский', icon: '👑'},
   premium: {name: 'Для акционеров', icon: '💼'},
-  zoom:    {name: 'Раскраска', icon: '🖍'},
+  zoom:    {name: 'Раскраска', icon: '🖍'},   // ключ остался прежним: выбор уже сохранён у людей
 };
 const PT_FONTS = 'https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Ruslan+Display&family=Cormorant+Garamond:wght@500;600;700&family=Neucha&family=Rubik+Doodle+Shadow&display=swap';
 const ptAuto = p => (protoLevel(p) <= 2 ? 'premium' : 'std');
@@ -12483,6 +12483,42 @@ function ptBody(text) {
   flush();
   return out.join('') || '<p>Текста протокола пока нет.</p>';
 }
+/* язык под стиль: смысл тот же, подача — языком эпохи или детской книжки.
+   Обычный и «для акционеров» — оригинальный текст. */
+const PT_HEADS = {
+  tsar: {'кратко': 'Вкратцѣ', 'решения': 'Повелѣваемъ', 'следующие шаги': 'Надлежитъ исполнить', 'повестка': 'Порядокъ собранія', 'итоги': 'Итоги'},
+  zoom: {'кратко': 'О чём мы болтали', 'решения': 'Что мы вместе решили ♥', 'следующие шаги': 'Наши маленькие шаги', 'повестка': 'О чём хотели поговорить', 'итоги': 'Что получилось'},
+};
+const ptHead = (theme, line) => {
+  const m = /^(.*?):\s*$/.exec(line.trim());
+  if (!m) return null;
+  const k = m[1].toLowerCase().replace(/ё/g, 'е');
+  return (PT_HEADS[theme] || {})[k] || null;
+};
+const PT_WORDS = {
+  tsar: [[/(?<![а-яёА-ЯЁ])задач(а|у|и|ей|ам|ами|ах)?(?![а-яёА-ЯЁ])/giu, w => ({'': 'порученій', а: 'порученіе', у: 'порученіе', и: 'порученія', ей: 'порученіемъ', ам: 'порученіямъ', ами: 'порученіями', ах: 'порученіяхъ'})[(/задач(.*)/i.exec(w) || [])[1] || ''] || w],
+    [/(?<![а-яёА-ЯЁ])к (встрече|созвону)(?![а-яёА-ЯЁ])/giu, 'къ собранію'],
+    [/(?<![а-яёА-ЯЁ])(созвон|встреча)(?![а-яёА-ЯЁ])/giu, 'собраніе'], [/(?<![а-яёА-ЯЁ])(созвоне|встрече)(?![а-яёА-ЯЁ])/giu, 'собраніи'], [/(?<![а-яёА-ЯЁ])(нужно|надо)(?![а-яёА-ЯЁ])/giu, 'надлежитъ'], [/(?<![а-яёА-ЯЁ])компани(я|и)(?![а-яёА-ЯЁ])/giu, (w, e) => 'компані' + e]],
+  zoom: [[/(?<![а-яёА-ЯЁ])задач(а|у|и|ей)(?![а-яёА-ЯЁ])/giu, (w, e) => ({а: 'задачка', у: 'задачку', и: 'задачки', ей: 'задачкой'})[e.toLowerCase()]], [/(?<![а-яёА-ЯЁ])задач(?![а-яёА-ЯЁ])/giu, 'задачек'], [/(?<![а-яёА-ЯЁ])нужно(?![а-яёА-ЯЁ])/giu, 'надо бы']],
+};
+/* дореформенная орфография: «ъ» после согласной на конце слова, «і» перед гласной в окончаниях */
+const ptYat = t => t.replace(/[А-Яа-яЁёІіѢѣ]+/g, w => {
+  if (w.length > 1 && w === w.toUpperCase()) return w;
+  let x = w.replace(/и(е|я|ю|й)$/i, (m, v) => 'і' + v).replace(/ие(м|х)$/i, 'іе$1');
+  if (/[бвгджзклмнпрстфхцчшщ]$/i.test(x)) x += 'ъ';
+  return x;
+});
+function ptLang(text, theme) {
+  if (theme !== 'tsar' && theme !== 'zoom') return String(text || '');
+  return String(text || '').split('\n').map(line => {
+    const h = ptHead(theme, line);
+    if (h) return h + ':';
+    let x = line;
+    /* заглавная буква в начале фразы остаётся заглавной */
+    (PT_WORDS[theme] || []).forEach(([re, to]) => { x = x.replace(re, (...m) => { const r = typeof to === 'function' ? to(...m) : to; return /^[А-ЯЁ]/.test(m[0]) ? r[0].toUpperCase() + r.slice(1) : r; }); });
+    return theme === 'tsar' ? ptYat(x) : x;
+  }).join('\n');
+}
 const ptWhen = ts => new Date(ts).toLocaleString('ru-RU', {timeZone: 'Europe/Moscow', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'});
 const ptDateLong = d => `${dayLong(d)} ${String(d || '').slice(0, 4)} года`;
 /* печать Королевства Ева: сургуч, корона и надпись по кругу */
@@ -12499,7 +12535,8 @@ function ptDoc(p, theme) {
   const ok = Proto.ok(p), ppl = p.people || [], lv = protoLevel(p);
   const rec = p.recUrl && safeUrl(p.recUrl) ? safeUrl(p.recUrl) : '';
   const no = `EVA-${String(p.date || '').replace(/-/g, '')}-${String(p.id || '').slice(-4).toUpperCase()}`;
-  const body = ptBody(p.text);
+  const body = ptBody(ptLang(p.text, theme));
+  if (theme === 'zoom') return ptColoring(p);
   if (theme === 'tsar') {
     return `<article class="pt pt-tsar"><div class="pt-frame">
       <div class="pt-crown">♔</div>
@@ -12527,18 +12564,6 @@ function ptDoc(p, theme) {
       <div class="pt-foot"><span class="pt-mono">ES</span><span>Eva Space · штаб Eva Club · документ сформирован автоматически</span></div>
     </article>`;
   }
-  if (theme === 'zoom') {
-    const doodle = `<svg class="pt-doodle" viewBox="0 0 120 60"><path d="M10 40 l6 -14 l6 14 l-14 -9 h16 z" /><circle cx="52" cy="28" r="12"/><path d="M46 26 q2 -3 4 0 M54 26 q2 -3 4 0 M46 32 q6 6 12 0"/><path d="M80 44 c4 -18 22 -18 26 0 c-6 -8 -20 -8 -26 0z"/><path d="M92 18 v-8 M86 20 l-4 -6 M98 20 l4 -6"/></svg>`;
-    return `<article class="pt pt-zoom">
-      ${doodle}
-      <div class="pt-kick">протокол, но вайбово ✌️</div>
-      <h1>${esc(p.title)}</h1>
-      <div class="pt-sub">📅 ${esc(dayLong(p.date))} · кто в теме: ${esc(PROTO_LEVELS[lv].short.toLowerCase())}${rec ? ` · <a href="${esc(rec)}">запись тут 🎥</a>` : ''}</div>
-      <div class="pt-text">${body}</div>
-      ${ppl.length ? `<h3>кто апрувнул 👇</h3><div class="pt-stickers">${ppl.map(k => `<span class="${ok[k] ? 'ok' : ''}">${ok[k] ? '✅' : '⏳'} ${esc(whoFirst(k))}${ok[k] ? ' апрувнул(а)' : ' ещё думает'}</span>`).join('')}</div>` : ''}
-      <div class="pt-foot">раскрась меня 🖍 · no cap, всё по фактам 💅</div>
-    </article>`;
-  }
   return `<article class="pt pt-std">
     <div class="pt-kick">Протокол · ${esc(dayLong(p.date))} ${String(p.date || '').slice(0, 4)}</div>
     <h1>${esc(p.title)}</h1>
@@ -12547,6 +12572,75 @@ function ptDoc(p, theme) {
     ${ppl.length ? `<h3>Подтверждения</h3><ul class="pt-oks">${ppl.map(k => `<li><span>${esc(whoName(k))}</span><i>${ok[k] ? 'Ок · ' + esc(ptWhen(ok[k])) : 'ждём'}</i></li>`).join('')}</ul>` : ''}
   </article>`;
 }
+/* раскраска — как книжка для Исполнительного директора: шаги, похвала, картинки.
+   Нажал на картинку — она раскрашивается; раскрасил всё — праздник. */
+const PC_COLORS = ['#F6B3C8', '#FFD98A', '#B9E3C6', '#C9C2F2', '#A9D8F5', '#FFC2A8'];
+const PC_PICS = [
+  '<path class="pc-f" d="M20 52 L50 28 L80 52 Z"/><rect class="pc-f" x="26" y="52" width="48" height="36"/><rect class="pc-f" x="43" y="66" width="14" height="22"/><path d="M50 40 c-3 -4 -8 0 0 6 c8 -6 3 -10 0 -6z"/>',
+  '<path class="pc-f" d="M50 14 L59 38 L84 38 L64 54 L72 80 L50 64 L28 80 L36 54 L16 38 L41 38 Z"/><circle cx="44" cy="46" r="1.8"/><circle cx="56" cy="46" r="1.8"/><path d="M44 53 q6 5 12 0"/>',
+  '<circle class="pc-f" cx="50" cy="50" r="18"/><path d="M50 18 v-8 M50 90 v-8 M18 50 h-8 M90 50 h-8 M27 27 l-6 -6 M73 73 l6 6 M73 27 l6 -6 M27 73 l-6 6"/><circle cx="44" cy="46" r="1.8"/><circle cx="56" cy="46" r="1.8"/><path d="M43 55 q7 6 14 0"/>',
+  '<path class="pc-f" d="M50 82 C20 60 14 44 22 32 C30 20 46 24 50 36 C54 24 70 20 78 32 C86 44 80 60 50 82Z"/>',
+  '<circle class="pc-f" cx="50" cy="40" r="10"/><circle class="pc-f" cx="34" cy="34" r="10"/><circle class="pc-f" cx="66" cy="34" r="10"/><circle class="pc-f" cx="40" cy="52" r="10"/><circle class="pc-f" cx="60" cy="52" r="10"/><path d="M50 62 v26 M50 76 q-10 -8 -16 -4 M50 80 q10 -8 16 -4"/>',
+  '<path class="pc-f" d="M50 12 C66 24 68 50 60 70 L40 70 C32 50 34 24 50 12Z"/><circle class="pc-f" cx="50" cy="38" r="7"/><path class="pc-f" d="M40 60 L28 76 L40 72 Z M60 60 L72 76 L60 72 Z"/><path d="M44 74 l-2 12 M50 74 v14 M56 74 l2 12"/>',
+];
+const PC_PRAISE = ['У тебя всё получится, мы в тебя верим!', 'Ты умеешь наводить порядок как никто другой!', 'С тобой всегда приятно работать!', 'Маленький шаг — большая радость для всей команды!', 'Ты настоящая звезда Евы!', 'Мы рядом и всегда поможем!'];
+const pcPic = (i, label) => `<button type="button" class="pc-pic" data-pc="${i}" style="--pc:${PC_COLORS[i % PC_COLORS.length]}" aria-label="Раскрасить картинку: ${esc(label)}"><svg viewBox="0 0 100 100">${PC_PICS[i % PC_PICS.length]}</svg></button>`;
+function ptColoring(p) {
+  const ok = Proto.ok(p), ppl = p.people || [];
+  const lines = ptLang(p.text, 'zoom').split('\n');
+  const blocks = [];
+  let cur = {head: '', paras: [], items: []};
+  const push = () => { if (cur.head || cur.paras.length || cur.items.length) blocks.push(cur); };
+  lines.forEach(raw => {
+    const t = raw.trim();
+    if (!t) return;
+    const li = /^(?:[•\-–*]|\d+[.)])\s+(.*)$/.exec(t);
+    if (li) { cur.items.push(li[1]); return; }
+    if (t.length < 90 && /:$/.test(t)) { push(); cur = {head: t.slice(0, -1), paras: [], items: []}; return; }
+    cur.paras.push(t);
+  });
+  push();
+  let n = 0;
+  const total = blocks.reduce((a, b) => a + (/шаг|задач|сделать/i.test(b.head) ? b.items.length : 0), 0);
+  const step = it => {
+    const m = /^([А-ЯЁA-Z][\wа-яё]+(?:\s[А-ЯЁ][\wа-яё]+)?)\s*:\s*(.+)$/u.exec(it);
+    const who = m ? m[1] : '', what = m ? m[2] : it;
+    const when = (/\b(до\s+[^,.;]{2,22}|к\s+пятниц[еу]|сегодня|завтра)/i.exec(what) || [])[1];
+    const i = n++;
+    return `<div class="pc-step"><div class="pc-num">Шаг ${i + 1} из ${total}</div>
+      <div class="pc-row"><div class="pc-txt"><p><b>Что делаем:</b> ${esc(what)}</p>${who ? `<p><b>Кто:</b> ${esc(who)}</p>` : ''}${when ? `<p>☀ <b>Когда:</b> ${esc(when)}</p>` : ''}
+        <p class="pc-love">♥ ${esc(PC_PRAISE[i % PC_PRAISE.length])}</p><p class="pc-check">☐ Готово? Раскрась картинку!</p></div>${pcPic(i, what)}</div></div>`;
+  };
+  const html = blocks.map(b => {
+    const steps = /шаг|задач|сделать/i.test(b.head);
+    return `${b.head ? `<h3>${esc(b.head)}</h3>` : ''}${b.paras.map(x => `<p>${esc(x)}</p>`).join('')}
+      ${b.items.length ? (steps ? b.items.map(step).join('') : `<ul class="pc-hearts">${b.items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`) : ''}`;
+  }).join('');
+  const rec = p.recUrl && safeUrl(p.recUrl) ? safeUrl(p.recUrl) : '';
+  return `<article class="pt pt-zoom" data-pc-total="${n}">
+    <div class="pc-cover"><div class="pc-for">для самой лучшей команды</div>
+      <h1>${esc(p.title)}</h1>
+      <div class="pc-sub">Наш протокол — по маленьким шагам и с картинками</div>
+      <div class="pc-from">С любовью от Ясеня ♥ · ${esc(dayLong(p.date))}</div>
+      ${pcPic(n + 1, 'обложка')}</div>
+    <p class="pc-intro">Эта книжка — про наш созвон. Здесь всё, о чём мы договорились, разложено по маленьким шагам. Сделал шаг — раскрась картинку! К концу у нас будет целая цветная книжка ♥</p>
+    ${html}
+    ${ppl.length ? `<h3>Кто уже сказал «Ок» ♥</h3><div class="pt-stickers">${ppl.map(k => `<span class="${ok[k] ? 'ok' : ''}">${ok[k] ? '♥' : '☐'} ${esc(whoFirst(k))}${ok[k] ? ' — Ок!' : ' — ждём'}</span>`).join('')}</div>` : ''}
+    ${rec ? `<p class="pc-rec">🎥 <a href="${esc(rec)}">Запись нашего созвона</a></p>` : ''}
+    <div class="pc-hooray">Ура! Вся книжка раскрашена ♥ Вы лучшие!</div>
+    <div class="pt-foot">Мы рядом и всегда поможем ♥</div>
+  </article>`;
+}
+/* картинку раскрашивают нажатием: где бы протокол ни был открыт */
+document.addEventListener('click', e => {
+  const pic = e.target.closest && e.target.closest('.pc-pic');
+  if (!pic) return;
+  pic.classList.toggle('done');
+  const step = pic.closest('.pc-step'), chk = step && step.querySelector('.pc-check');
+  if (chk) chk.textContent = pic.classList.contains('done') ? '☑ Готово! Картинка раскрашена ♥' : '☐ Готово? Раскрась картинку!';
+  const art = pic.closest('.pt-zoom');
+  if (art) art.classList.toggle('all', art.querySelectorAll('.pc-pic').length === art.querySelectorAll('.pc-pic.done').length);
+});
 /* оформление видов: в окне штаба и в окне печати одно и то же */
 const PT_CSS = `
 .pt{border-radius:14px; padding:34px 40px; line-height:1.6; font-size:15px; overflow-wrap:anywhere;}
@@ -12582,17 +12676,39 @@ const PT_CSS = `
 .pt-premium .pt-foot{display:flex; align-items:center; gap:12px; margin-top:24px; font-size:11px; color:#8a7350; letter-spacing:.05em;}
 .pt-premium .pt-mono{width:38px; height:38px; border-radius:50%; border:1.5px solid #b08d57; display:grid; place-items:center; font:700 15px 'Cormorant Garamond',serif; color:#b08d57;}
 
-.pt-zoom{background:#fff; color:#111; font-family:Neucha,'Comic Sans MS',cursive; font-size:19px; border:3px solid #111; border-radius:22px; position:relative; box-shadow:6px 6px 0 #111;}
-.pt-zoom .pt-doodle{position:absolute; right:22px; top:16px; width:130px; fill:none; stroke:#111; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round;}
-.pt-zoom .pt-kick{display:inline-block; border:2px dashed #111; border-radius:99px; padding:2px 12px; font-size:16px;}
-.pt-zoom h1{font:400 38px/1.15 'Rubik Doodle Shadow',Neucha,cursive; margin:12px 0 6px; max-width:80%;}
-.pt-zoom .pt-sub{margin-bottom:16px;}
-.pt-zoom h3{font:400 24px 'Rubik Doodle Shadow',Neucha,cursive; display:inline-block; border:2.5px solid #111; border-radius:12px; padding:2px 12px; transform:rotate(-1.5deg);}
-.pt-zoom ul{list-style:none; padding-left:4px;} .pt-zoom ul li::before{content:'☆ ';}
-.pt-zoom .pt-stickers{display:flex; flex-wrap:wrap; gap:10px;} .pt-zoom .pt-stickers span{border:2.5px solid #111; border-radius:14px; padding:4px 12px; transform:rotate(-2deg);} .pt-zoom .pt-stickers span:nth-child(even){transform:rotate(2deg);}
-.pt-zoom .pt-foot{margin-top:22px; text-align:center; border-top:2.5px dashed #111; padding-top:10px;}
-@media (max-width:700px){ .pt{padding:22px 18px;} .pt-tsar .pt-frame{padding:22px 16px;} .pt-tsar h1{font-size:32px;} .pt-zoom .pt-doodle{display:none;} .pt-zoom h1{max-width:none; font-size:30px;} }
-@media print{ .pt{border-radius:0; box-shadow:none;} }
+.pt-zoom{background:#fff; color:#222; font-family:Neucha,'Comic Sans MS',cursive; font-size:19px; border:3px solid #111; border-radius:22px; box-shadow:6px 6px 0 #111;}
+.pt-zoom h3{font:400 24px Neucha,cursive; display:inline-block; border:2.5px solid #111; border-radius:12px; padding:2px 14px; transform:rotate(-1.5deg); margin-top:22px;}
+.pt-zoom .pc-cover{text-align:center; border:2.5px dashed #111; border-radius:20px; padding:18px 18px 8px; margin-bottom:16px;}
+.pt-zoom .pc-for{font-size:16px; letter-spacing:.06em;} .pt-zoom h1{font:400 34px/1.15 'Rubik Doodle Shadow',Neucha,cursive; margin:6px 0;}
+.pt-zoom .pc-sub{font-size:20px;} .pt-zoom .pc-from{font-size:16px; margin:4px 0 6px;}
+.pt-zoom .pc-cover .pc-pic{width:150px; height:150px;}
+.pt-zoom .pc-step{border:2.5px solid #111; border-radius:18px; padding:12px 16px; margin:12px 0;}
+.pt-zoom .pc-num{display:inline-block; border:2px solid #111; border-radius:99px; padding:0 12px; font-size:16px; margin-bottom:6px;}
+.pt-zoom .pc-row{display:flex; gap:14px; align-items:center;} .pt-zoom .pc-txt{flex:1;} .pt-zoom .pc-txt p{margin:2px 0;}
+.pt-zoom .pc-love{color:#B23A6F;} .pt-zoom .pc-check{font-size:17px; opacity:.85;}
+.pt-zoom .pc-pic{flex:0 0 120px; width:120px; height:120px; border:0; background:none; padding:0; cursor:pointer; transition:transform .2s;}
+.pt-zoom .pc-pic:hover{animation:pcWiggle .5s ease-in-out;}
+.pt-zoom .pc-pic svg{width:100%; height:100%; fill:none; stroke:#111; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round;}
+.pt-zoom .pc-pic .pc-f{fill:#fff; transition:fill .7s ease;} .pt-zoom .pc-pic.done .pc-f{fill:var(--pc);}
+.pt-zoom .pc-pic.done{animation:pcPop .5s ease;}
+.pt-zoom .pc-hearts{list-style:none; padding-left:4px;} .pt-zoom .pc-hearts li::before{content:'♡ ';}
+.pt-zoom .pt-stickers{display:flex; flex-wrap:wrap; gap:10px;} .pt-zoom .pt-stickers span{border:2.5px solid #111; border-radius:14px; padding:4px 12px; transform:rotate(-2deg);} .pt-zoom .pt-stickers span:nth-child(even){transform:rotate(2deg);} .pt-zoom .pt-stickers span.ok{background:#FDE3EC;}
+.pt-zoom .pc-hooray{display:none; text-align:center; font-size:26px; margin:18px 0 0; color:#B23A6F; animation:pcPop .6s ease;} .pt-zoom.all .pc-hooray{display:block;}
+.pt-zoom .pt-foot{margin-top:18px; text-align:center; border-top:2.5px dashed #111; padding-top:10px;}
+@keyframes pcWiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+@keyframes pcPop{0%{transform:scale(.85)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+/* анимация видов: царский разворачивается и ставит печать, премиум — проявляется строками */
+.pt-tsar .pt-frame{animation:ptUnroll 1s ease both;}
+.pt-tsar .pt-seal{animation:ptStamp .8s .9s cubic-bezier(.3,1.6,.5,1) both;}
+.pt-premium > *{animation:ptFade .6s ease both;} .pt-premium > *:nth-child(2){animation-delay:.08s} .pt-premium > *:nth-child(3){animation-delay:.16s} .pt-premium > *:nth-child(4){animation-delay:.24s} .pt-premium > *:nth-child(5){animation-delay:.32s} .pt-premium > *:nth-child(n+6){animation-delay:.4s}
+.pt-zoom .pc-cover .pc-pic svg{animation:pcFloat 3s ease-in-out infinite;}
+@keyframes ptUnroll{from{clip-path:inset(0 0 100% 0); opacity:.4}to{clip-path:inset(0 0 0 0); opacity:1}}
+@keyframes ptStamp{0%{transform:scale(2.6) rotate(-50deg); opacity:0}70%{transform:scale(.9) rotate(-8deg); opacity:1}100%{transform:scale(1) rotate(-12deg); opacity:1}}
+@keyframes ptFade{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
+@keyframes pcFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@media (prefers-reduced-motion:reduce){ .pt *, .pt{animation:none !important;} }
+@media (max-width:700px){ .pt{padding:22px 18px;} .pt-tsar .pt-frame{padding:22px 16px;} .pt-tsar h1{font-size:32px;} .pt-zoom h1{font-size:28px;} .pt-zoom .pc-row{flex-direction:column; align-items:flex-start;} .pt-zoom .pc-pic{width:100px; height:100px; flex-basis:100px;} }
+@media print{ .pt{border-radius:0; box-shadow:none;} .pt *, .pt{animation:none !important;} .pt-zoom .pc-pic .pc-f{fill:#fff !important;} .pt-zoom .pc-hooray{display:none !important;} }
 `;
 function ptStyle(doc = document) {
   if (doc.getElementById('ptCss')) return;
