@@ -645,6 +645,8 @@ function page(req, res, u) {
   /* библиотека Excel (ExcelJS, MIT) — грузится штабом только по кнопке «Скачать Excel» */
   if (p === '/vendor/exceljs.min.js') return file(res, path.join(__dirname, 'public', 'vendor', 'exceljs.min.js'), {cache: 'public, max-age=86400'});
   if (p === '/healthz') { res.writeHead(200, {'content-type': 'text/plain'}); return res.end('ok'); }
+  /* страница о конфиденциальности — её требует Google для подключения календаря (открыта всем) */
+  if (p === '/privacy') return file(res, path.join(__dirname, 'public', 'privacy.html'));
   /* какая правка сейчас стоит и не отказался ли сервер ставить следующую (пишет deploy/autodeploy) */
   if (p === '/version.json') return file(res, VERSION_FILE);
   const mm = /^\/m\/([a-z-]+)\.html$/.exec(p);
