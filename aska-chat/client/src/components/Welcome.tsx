@@ -101,7 +101,7 @@ const ERRORS: Record<string, string> = {
   phone_unverified: 'Сначала подтверди телефон кодом из СМС.',
   bad_code: 'Код не подошёл. Проверь цифры или запроси новый.',
   sms_failed: 'СМС не отправилась. Попробуй через минуту.',
-  bad_login: 'Неверный телефон, номер или пароль.',
+  bad_login: 'Неверный телефон, номер, логин или пароль.',
   bad_recover: 'Код не подошёл или устарел. Запроси новый.',
   too_many: 'Слишком много попыток. Подожди 10–15 минут.',
   network: 'Нет связи с сервером. Проверь интернет.',
@@ -174,14 +174,15 @@ function Login({ onInvite, onForgot }: { onInvite: () => void; onForgot: (phone:
   return (
     <form className="col" onSubmit={submit}>
       <div className="aska-step-title">Вход</div>
-      <Field label="Телефон или номер АСЬКИ">
-        <input className="field" value={loginName} onChange={(e) => setLogin(e.target.value)} placeholder="+7 999 123-45-67 или А 001 МР"
+      <Field label="Телефон, номер АСЬКИ или логин">
+        <input className="field" value={loginName} onChange={(e) => setLogin(e.target.value)} placeholder="+7 999…, А 001 МР или логин"
           autoCapitalize="characters" autoCorrect="off" spellCheck={false} autoComplete="username" />
       </Field>
       <Field label="Пароль">
         <PasswordInput value={password} onChange={setPassword} autoComplete="current-password" />
       </Field>
       <div className="err">{error}</div>
+      <div className="hint">Регистрировался(ась) раньше с логином (например, kirill)? Он тоже подходит, пароль — прежний.</div>
       <button className="btn primary aska-wide" disabled={busy}>{busy ? <Busy label="Проверяю пароль…" progress={progress} /> : 'Войти'}</button>
       <div className="aska-links">
         <button type="button" className="link aska-linkbtn" onClick={() => onForgot(/\d{6,}/.test(loginName.replace(/\D/g, '')) ? loginName : '')}>Не помню пароль</button>
@@ -435,8 +436,8 @@ function Recover({ initialPhone, onBack }: { initialPhone: string; onBack: () =>
         }}>
           <div className="aska-step-title">Код от администратора</div>
           <div className="hint">Попроси администратора АСЬКИ: «Ещё» → «Управление АСЬКОЙ» → «Люди» → «Код для входа». Он даст код из 8 знаков — он действует сутки.</div>
-          <Field label="Твой телефон или номер АСЬКИ">
-            <input className="field" value={loginName} onChange={(e) => setLogin(e.target.value)} placeholder="+7 999… или А 001 МР" autoCapitalize="characters" autoCorrect="off" spellCheck={false} />
+          <Field label="Твой телефон, номер АСЬКИ или логин">
+            <input className="field" value={loginName} onChange={(e) => setLogin(e.target.value)} placeholder="+7 999…, А 001 МР или логин" autoCapitalize="characters" autoCorrect="off" spellCheck={false} />
           </Field>
           <Field label="Код для входа">
             <input className="field aska-code" value={helpCode} onChange={(e) => setHelpCode(e.target.value.toUpperCase())} placeholder="ABCD-EFGH"
