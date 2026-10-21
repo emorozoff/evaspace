@@ -76,6 +76,7 @@ function finOverviewHtml(sc) {
   const planAll = sum(Money.planItems(), it => Money.planAmount(it, m)), planPaid = sum(Money.planItems(), it => Math.min(Money.planAmount(it, m), Money.paidAmount(it, m)));
   const recent = Money.ledger().slice(0, 6);
   return `<div class="cards tiles fin-kpi">${tiles.join('')}</div>
+    ${finChartHtml(sc)}
     <div class="split section">${flow}${att || `<div class="card"><div class="card-head"><h2>Подписки</h2></div><p class="note">${fmt(sub.total)} платных: месячных ${fmt(sub.endM)}, годовых ${fmt(sub.endY)}. Продления — ${pctOr(rate && rate.renew)}.</p></div>`}</div>
     <section class="section"><div class="section-head"><h2>Приход и расход по месяцам</h2><span class="hint-inline">Факт против плана; будущие месяцы — план по сценарию «${SCENARIOS[sc].name}» и плану платежей</span></div>
       <div class="money-top">${pnl(sc).map(monthCardHtml).join('')}</div>
@@ -765,6 +766,12 @@ function wireFin(root) {
     if (tabs && tabs.getBoundingClientRect().top < 0) tabs.scrollIntoView({block: 'start'});
   });
   on(root, 'click', '[data-fseg]', (e, el) => { const [k, v] = el.dataset.fseg.split(':'); View.set('fin.' + k, v); App.render(); });
+  /* график обзора: какие линии показать */
+  on(root, 'click', '[data-fcs]', (e, el) => {
+    const cur = View.get('fin.fcs', ['cash', 'rev', 'out', 'invest']), k = el.dataset.fcs;
+    View.set('fin.fcs', cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k]);
+    App.render();
+  });
   on(root, 'click', '[data-fin-csv]', async (e, el) => {
     const k = el.dataset.finCsv, name = `eva-hq-${k}-${today()}.csv`;
     if (await Portable.save(name, Portable[k + 'Csv']())) toast(`Файл ${name} — сохранён`);

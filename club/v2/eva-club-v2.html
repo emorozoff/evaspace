@@ -1203,6 +1203,20 @@ table.subs-t th, table.subs-t td{padding-left:8px; padding-right:8px;}
 .sc-tip.violet{border-left-color:var(--violet, #5A50C0);}
 .sc-months th small{display:block; font-weight:500; text-transform:none; letter-spacing:0;}
 
+/* график обзора — как котировка */
+.fin-chart{margin-top:16px;}
+.fc-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
+.fc-quote{display:flex; flex-direction:column; gap:2px;}
+.fc-big{font:600 clamp(20px, 2.4vw, 30px)/1.15 var(--f-display); font-variant-numeric:tabular-nums; letter-spacing:-.02em;}
+.fc-delta{font-size:13px; font-weight:600; font-variant-numeric:tabular-nums;}
+.fc-delta.soft{color:var(--ink-3); font-weight:500;}
+.fc-chips{margin:12px 0 4px; flex-wrap:wrap;}
+.fc-chip i{display:inline-block; width:12px; height:3px; border-radius:2px; background:var(--c); margin-right:6px; vertical-align:middle;}
+.fc-chip.on{background:var(--surface-2); color:var(--ink); border-color:var(--c);}
+.fin-chart .chart .grid.zero{stroke:var(--line-strong);}
+.fin-chart .fc-today{stroke:var(--rose); stroke-width:1; stroke-dasharray:3 3;}
+.fin-chart .fc-today-t{fill:var(--rose); font-weight:600;}
+
 /* ── 70-team.css ── */
 /* ── команда ── */
 .team-group{margin-bottom:22px;}
@@ -3444,8 +3458,10 @@ function wireCharts() {
       const cx = L + (n <= 1 ? 0 : (i / (n - 1)) * (W - L - R));
       const cross = $('.cross', box);
       cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.removeAttribute('hidden');
-      const rows = cfg.series.filter(s => s.values[i] !== null && s.values[i] !== undefined)
-        .map(s => `<div class="tip-row"><i class="${s.dash ? 'dash' : ''}" style="background:${s.color};color:${s.color}"></i><b>${fmt(s.values[i])}</b><span>${esc(s.name)}</span></div>`).join('');
+      /* у линии с прогнозом факт и пунктир — одна группа: в подсказке одна строка */
+      const f = cfg.fmt === 'money' ? money : fmt, seen = new Set();
+      const rows = cfg.series.filter(s => s.values[i] !== null && s.values[i] !== undefined && !(s.group && seen.has(s.group)) && (seen.add(s.group), true))
+        .map(s => `<div class="tip-row"><i class="${s.dash ? 'dash' : ''}" style="background:${s.color};color:${s.color}"></i><b>${f(s.values[i])}</b><span>${esc(s.name)}</span></div>`).join('');
       tipAt(box, `<div class="tip-h">${esc(cfg.labels[i])}</div>${rows}`, (cx / W) * rect.width, e.clientY - rect.top);
     } else {
       const hit = e.target.closest('.bar-hit');
@@ -7103,6 +7119,7 @@ function finOverviewHtml(sc) {
   const planAll = sum(Money.planItems(), it => Money.planAmount(it, m)), planPaid = sum(Money.planItems(), it => Math.min(Money.planAmount(it, m), Money.paidAmount(it, m)));
   const recent = Money.ledger().slice(0, 6);
   return `<div class="cards tiles fin-kpi">${tiles.join('')}</div>
+    ${finChartHtml(sc)}
     <div class="split section">${flow}${att || `<div class="card"><div class="card-head"><h2>Подписки</h2></div><p class="note">${fmt(sub.total)} платных: месячных ${fmt(sub.endM)}, годовых ${fmt(sub.endY)}. Продления — ${pctOr(rate && rate.renew)}.</p></div>`}</div>
     <section class="section"><div class="section-head"><h2>Приход и расход по месяцам</h2><span class="hint-inline">Факт против плана; будущие месяцы — план по сценарию «${SCENARIOS[sc].name}» и плану платежей</span></div>
       <div class="money-top">${pnl(sc).map(monthCardHtml).join('')}</div>
@@ -7792,6 +7809,12 @@ function wireFin(root) {
     if (tabs && tabs.getBoundingClientRect().top < 0) tabs.scrollIntoView({block: 'start'});
   });
   on(root, 'click', '[data-fseg]', (e, el) => { const [k, v] = el.dataset.fseg.split(':'); View.set('fin.' + k, v); App.render(); });
+  /* график обзора: какие линии показать */
+  on(root, 'click', '[data-fcs]', (e, el) => {
+    const cur = View.get('fin.fcs', ['cash', 'rev', 'out', 'invest']), k = el.dataset.fcs;
+    View.set('fin.fcs', cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k]);
+    App.render();
+  });
   on(root, 'click', '[data-fin-csv]', async (e, el) => {
     const k = el.dataset.finCsv, name = `eva-hq-${k}-${today()}.csv`;
     if (await Portable.save(name, Portable[k + 'Csv']())) toast(`Файл ${name} — сохранён`);
@@ -7868,6 +7891,116 @@ const FinNotify = {
     return fresh;
   },
 };
+
+/* ── 45-fin-chart.js ── */
+/* «Финансы» → «Обзор»: график в стиле биржевого. По дням с начала учёта до
+   31 декабря: деньги на счёте, выручка, расходы и вложения (накопительно за
+   выбранный период). До сегодня — факт из журнала и «Цифр дня», дальше —
+   прогноз пунктиром: то, что осталось по Cash Flow месяца, ровно по дням.
+   Что показать и за какой период — переключатели над графиком. */
+
+const FC_SERIES = {
+  cash:   {name: 'Деньги на счёте', color: 'var(--gold-brand)'},
+  rev:    {name: 'Выручка',         color: 'var(--good)'},
+  out:    {name: 'Расходы',         color: 'var(--bad)'},
+  invest: {name: 'Вложения',        color: 'var(--violet)'},
+};
+const FC_PERIODS = [['month', 'Месяц'], ['quarter', 'Квартал'], ['all', 'Весь срок']];
+
+/* приход, расход и вложения по дням: факт до сегодня, дальше остаток Cash Flow месяца поровну */
+function finDaily(sc) {
+  const s = settings(), t = today(), cf = cashFlow(sc);
+  const from = s.cashDate && s.cashDate < monthStart(CF_MONTHS[0]) ? s.cashDate : monthStart(CF_MONTHS[0]);
+  const to = monthEnd(CF_MONTHS[CF_MONTHS.length - 1]);
+  const fact = {};
+  const add = (d, k, v) => { (fact[d] = fact[d] || {rev: 0, out: 0, invest: 0})[k] += v; };
+  Store.all('ledger').forEach(e => { if (!KINDS[e.kind] || !e.date) return; const a = Number(e.amount) || 0; add(e.date, e.kind === 'out' ? 'out' : e.kind === 'invest' ? 'invest' : 'rev', a); });
+  Sales.list().forEach(x => add(x.id, 'rev', revenueOf(x)));
+  /* прогноз месяца: сколько ещё придёт и уйдёт после сегодня */
+  const plan = {};
+  cf.forEach(r => {
+    if (r.status === 'fact') return;
+    const days = [];
+    for (let d = r.status === 'now' ? addDays(t, 1) : monthStart(r.m); d <= monthEnd(r.m); d = addDays(d, 1)) days.push(d);
+    if (!days.length) return;
+    const done = {rev: 0, out: 0, invest: 0};
+    if (r.status === 'now') for (let d = monthStart(r.m); d <= t; d = addDays(d, 1)) { const f = fact[d]; if (f) { done.rev += f.rev; done.out += f.out; done.invest += f.invest; } }
+    const left = {rev: Math.max(0, r.inTotal - done.rev), out: Math.max(0, r.outTotal - done.out), invest: Math.max(0, r.invest - done.invest)};
+    days.forEach(d => { plan[d] = {rev: left.rev / days.length, out: left.out / days.length, invest: left.invest / days.length}; });
+  });
+  const out = [];
+  let cash = Number(s.cashStart) || 0;
+  for (let d = from; d <= to; d = addDays(d, 1)) {
+    const isFact = d <= t, v = (isFact ? fact[d] : plan[d]) || {rev: 0, out: 0, invest: 0};
+    if (d >= (s.cashDate || from)) cash += v.rev + v.invest - v.out;
+    out.push({d, fact: isFact, cash, rev: v.rev, out: v.out, invest: v.invest});
+  }
+  return out;
+}
+
+function finChartHtml(sc) {
+  const per = View.get('fin.fcp', 'quarter'), on = View.get('fin.fcs', ['cash', 'rev', 'out', 'invest']);
+  const t = today(), days = finDaily(sc);
+  const lo = per === 'month' ? monthStart(monthOf(t)) : per === 'quarter' ? Q.start : days[0].d;
+  const hi = per === 'month' ? monthEnd(monthOf(t)) : Q.end;
+  const win = days.filter(x => x.d >= lo && x.d <= hi);
+  if (!win.length) return '';
+  /* потоки — накопительно с начала периода, деньги на счёте — как есть */
+  const acc = {rev: 0, out: 0, invest: 0};
+  const pts = win.map(x => { acc.rev += x.rev; acc.out += x.out; acc.invest += x.invest; return {...x, cum: {cash: x.cash, rev: acc.rev, out: acc.out, invest: acc.invest}}; });
+  const ti = pts.findIndex(x => x.d === t);
+  const series = [];
+  on.filter(k => FC_SERIES[k]).forEach(k => {
+    const f = FC_SERIES[k];
+    series.push({group: k, name: f.name, color: f.color, width: k === 'cash' ? 2.5 : 2, area: k === 'cash', values: pts.map(x => (x.fact ? kop(x.cum[k]) : null))});
+    series.push({group: k, name: f.name + ' · прогноз', color: f.color, width: k === 'cash' ? 2.5 : 2, dash: true, values: pts.map((x, i) => (!x.fact || i === ti ? kop(x.cum[k]) : null))});
+  });
+  const labels = pts.map(x => ({text: dayLong(x.d), tick: x.d.endsWith('-01') || (per === 'month' && /-(08|15|22)$/.test(x.d)) ? dayShort(x.d) : ''}));
+  /* шапка как у котировки: сколько на счёте сейчас и куда идём к концу периода */
+  const now = ti >= 0 ? pts[ti] : pts[pts.length - 1], end = pts[pts.length - 1], start = pts[0];
+  const delta = now.cash - start.cash, toEnd = end.cash - now.cash;
+  const chip = k => `<button type="button" class="chip fc-chip ${on.includes(k) ? 'on' : ''}" data-fcs="${k}" style="--c:${FC_SERIES[k].color}"><i></i>${FC_SERIES[k].name}</button>`;
+  return `<section class="section card fin-chart">
+    <div class="fc-head">
+      <div class="fc-quote"><span class="label">Деньги на счёте · ${ti >= 0 ? 'сегодня' : dayLong(now.d)}</span>
+        <b class="fc-big">${money(now.cash)}</b>
+        <span class="fc-delta ${delta < 0 ? 'bad' : 'good'}">${delta < 0 ? '▼' : '▲'} ${signedMoney(delta)} с ${dayLong(start.d)}</span>
+        ${end.d > t ? `<span class="fc-delta soft">к ${dayLong(end.d)} по прогнозу ${money(end.cash)} (${signedMoney(toEnd)})</span>` : ''}</div>
+      ${finSeg('fcp', FC_PERIODS, per)}
+    </div>
+    <div class="chips fc-chips">${Object.keys(FC_SERIES).map(chip).join('')}</div>
+    ${series.length ? stockChart({labels, series, today: ti}) : '<p class="note">Выберите, что показать.</p>'}
+    <p class="note">Сплошная линия — факт, пунктир — прогноз по плану платежей и сценарию продаж «${esc(SCENARIOS[sc].name)}». Выручка, расходы и вложения — накопительно с начала периода.</p>
+  </section>`;
+}
+/* линейный график с минусом по оси Y, вертикалью «сегодня» и подсказкой в деньгах */
+function stockChart({labels, series, today: ti = -1, height = 300}) {
+  const W = chartWidth(), H = height, L = W < 520 ? 92 : 112, R = 16, T = 18, B = 26;
+  const n = labels.length;
+  const vals = series.flatMap(s => s.values.filter(v => v !== null));
+  let mn = Math.min(0, ...vals), mx = Math.max(0, ...vals);
+  const step = niceScale(Math.max(1, mx - mn), false, 5).step;
+  mn = Math.floor(mn / step) * step; mx = Math.max(mn + step, Math.ceil(mx / step) * step);
+  const x = i => L + (n <= 1 ? 0 : (i / (n - 1)) * (W - L - R));
+  const y = v => T + (1 - (v - mn) / (mx - mn)) * (H - T - B);
+  let g = '';
+  for (let v = mn; v <= mx + step / 2; v += step) g += `<line class="grid ${Math.abs(v) < step / 1e6 ? 'zero' : ''}" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${esc(money(v))}</text>`;
+  labels.forEach((lb, i) => { if (lb.tick) g += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${esc(lb.tick)}</text>`; });
+  if (ti >= 0) g += `<line class="fc-today" x1="${x(ti)}" x2="${x(ti)}" y1="${T}" y2="${H - B}"/><text class="fc-today-t" x="${x(ti) + 5}" y="${T + 10}">сегодня</text>`;
+  let marks = '';
+  series.forEach(s => {
+    const pts = s.values.map((v, i) => (v === null ? null : [x(i), y(v)])).filter(Boolean);
+    if (!pts.length) return;
+    const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
+    if (s.area) marks += `<path d="${d}L${pts[pts.length - 1][0].toFixed(1)} ${y(Math.max(mn, 0))}L${pts[0][0].toFixed(1)} ${y(Math.max(mn, 0))}Z" fill="${s.color}" opacity=".12"/>`;
+    marks += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.width || 2}" stroke-linecap="round" stroke-linejoin="round" ${s.dash ? 'stroke-dasharray="5 5" opacity=".85"' : ''}/>`;
+    if (!s.dash && ti >= 0 && s.values[ti] !== null) marks += `<circle cx="${x(ti)}" cy="${y(s.values[ti])}" r="4.5" fill="${s.color}" stroke="var(--surface)" stroke-width="2"/>`;
+  });
+  const data = esc(JSON.stringify({fmt: 'money', labels: labels.map(l => l.text), series: series.map(s => ({name: s.name, group: s.group, color: s.color, dash: !!s.dash, values: s.values}))}));
+  return `<div class="chart-box" data-chart="line" data-cfg="${data}" data-geo="${[W, H, L, R, T, B].join(',')}">
+    <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="График денег по дням">${g}${marks}<line class="cross" x1="0" x2="0" y1="${T}" y2="${H - B}" hidden/></svg>
+    <div class="chart-tip" hidden></div></div>`;
+}
 
 /* ── 46-scen.js ── */
 /* Сценарии — «тренажёр» финансов. Входящие данные живые: журнал, план

@@ -431,8 +431,10 @@ function wireCharts() {
       const cx = L + (n <= 1 ? 0 : (i / (n - 1)) * (W - L - R));
       const cross = $('.cross', box);
       cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.removeAttribute('hidden');
-      const rows = cfg.series.filter(s => s.values[i] !== null && s.values[i] !== undefined)
-        .map(s => `<div class="tip-row"><i class="${s.dash ? 'dash' : ''}" style="background:${s.color};color:${s.color}"></i><b>${fmt(s.values[i])}</b><span>${esc(s.name)}</span></div>`).join('');
+      /* у линии с прогнозом факт и пунктир — одна группа: в подсказке одна строка */
+      const f = cfg.fmt === 'money' ? money : fmt, seen = new Set();
+      const rows = cfg.series.filter(s => s.values[i] !== null && s.values[i] !== undefined && !(s.group && seen.has(s.group)) && (seen.add(s.group), true))
+        .map(s => `<div class="tip-row"><i class="${s.dash ? 'dash' : ''}" style="background:${s.color};color:${s.color}"></i><b>${f(s.values[i])}</b><span>${esc(s.name)}</span></div>`).join('');
       tipAt(box, `<div class="tip-h">${esc(cfg.labels[i])}</div>${rows}`, (cx / W) * rect.width, e.clientY - rect.top);
     } else {
       const hit = e.target.closest('.bar-hit');

@@ -103,3 +103,17 @@ table.subs-t th, table.subs-t td{padding-left:8px; padding-right:8px;}
 .sc-tip.bad{border-left-color:var(--bad);}
 .sc-tip.violet{border-left-color:var(--violet, #5A50C0);}
 .sc-months th small{display:block; font-weight:500; text-transform:none; letter-spacing:0;}
+
+/* график обзора — как котировка */
+.fin-chart{margin-top:16px;}
+.fc-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
+.fc-quote{display:flex; flex-direction:column; gap:2px;}
+.fc-big{font:600 clamp(20px, 2.4vw, 30px)/1.15 var(--f-display); font-variant-numeric:tabular-nums; letter-spacing:-.02em;}
+.fc-delta{font-size:13px; font-weight:600; font-variant-numeric:tabular-nums;}
+.fc-delta.soft{color:var(--ink-3); font-weight:500;}
+.fc-chips{margin:12px 0 4px; flex-wrap:wrap;}
+.fc-chip i{display:inline-block; width:12px; height:3px; border-radius:2px; background:var(--c); margin-right:6px; vertical-align:middle;}
+.fc-chip.on{background:var(--surface-2); color:var(--ink); border-color:var(--c);}
+.fin-chart .chart .grid.zero{stroke:var(--line-strong);}
+.fin-chart .fc-today{stroke:var(--rose); stroke-width:1; stroke-dasharray:3 3;}
+.fin-chart .fc-today-t{fill:var(--rose); font-weight:600;}
