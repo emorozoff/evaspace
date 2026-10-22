@@ -62,20 +62,109 @@
 
 /* ===================== АСЬКА 2: номера, вход, профиль, круги, личный ИИ ===================== */
 
-/* номер как у машины: [А 001 МР | 777 RUS] */
-.aska-plate { --h: 22px; display: inline-flex; align-items: stretch; height: var(--h); flex: none; background: #fff; color: #111;
-  border: max(1px, calc(var(--h) * .07)) solid #111; border-radius: calc(var(--h) * .14); font-family: 'Arial Narrow', 'Roboto Condensed', 'Helvetica Neue', Arial, sans-serif;
-  font-weight: 700; line-height: 1; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); white-space: nowrap; vertical-align: middle; cursor: default; user-select: none; }
+/* номер как у машины своей страны: [А 001 МР | 777 RUS], Беларусь, Казахстан, Германия (полоса ЕС), США, Дубай… */
+.aska-plate { --h: 22px; --ink: #111; --bg: #fff; display: inline-flex; align-items: stretch; height: var(--h); flex: none; background: var(--bg); color: var(--ink);
+  border: max(1px, calc(var(--h) * .07)) solid var(--ink); border-radius: calc(var(--h) * .14); font-family: 'Arial Narrow', 'Roboto Condensed', 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 700; line-height: 1; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); white-space: nowrap; vertical-align: middle; cursor: default; user-select: none;
+  position: relative; overflow: hidden; isolation: isolate; }
+.aska-plate.click { cursor: pointer; }
 .aska-plate .main { display: flex; align-items: flex-end; gap: calc(var(--h) * .06); padding: 0 calc(var(--h) * .22) calc(var(--h) * .1); }
 .aska-plate .main b { font-size: calc(var(--h) * .82); letter-spacing: calc(var(--h) * .02); }
 .aska-plate .main i { font-style: normal; font-size: calc(var(--h) * .62); padding-bottom: calc(var(--h) * .02); }
-.aska-plate .reg { display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: max(1px, calc(var(--h) * .06)) solid #111; padding: 0 calc(var(--h) * .14); }
+.aska-plate .reg { display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: max(1px, calc(var(--h) * .06)) solid var(--ink); padding: 0 calc(var(--h) * .14); }
 .aska-plate .reg b { font-size: calc(var(--h) * .5); }
 .aska-plate .reg small { display: flex; align-items: center; gap: calc(var(--h) * .06); font-size: calc(var(--h) * .2); letter-spacing: .5px; margin-top: calc(var(--h) * .03); }
-.aska-plate .flag { display: inline-block; width: calc(var(--h) * .3); height: calc(var(--h) * .2); background: linear-gradient(#fff 0 33%, #1c47b8 33% 66%, #d8232a 66%); outline: 1px solid rgba(0, 0, 0, .25); }
+.aska-plate .flag { display: inline-block; width: calc(var(--h) * .3); height: calc(var(--h) * .2); outline: 1px solid rgba(0, 0, 0, .25); }
+.aska-plate .band { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--h) * .05); padding: 0 calc(var(--h) * .1); font-size: calc(var(--h) * .22); }
+.aska-plate .band small { font-size: calc(var(--h) * .24); font-weight: 700; }
 .aska-plate.s { --h: 18px; }
 .aska-plate.m { --h: 24px; }
 .aska-plate.l { --h: 46px; }
+/* флаги */
+.flag.f-RU { background: linear-gradient(#fff 0 33%, #1c47b8 33% 66%, #d8232a 66%); }
+.flag.f-BY { background: linear-gradient(90deg, #fff 0 18%, #c8313e 18%) 0 0 / 100% 66% no-repeat, #4aa657; }
+.flag.f-KZ { background: radial-gradient(circle at 50% 45%, #fec50c 0 22%, transparent 23%), #00afca; }
+.flag.f-AM { background: linear-gradient(#d90012 0 33%, #0033a0 33% 66%, #f2a800 66%); }
+.flag.f-GE { background: linear-gradient(90deg, transparent 42%, #e8112d 42% 58%, transparent 58%), linear-gradient(transparent 40%, #e8112d 40% 60%, transparent 60%), #fff; }
+.flag.f-DE { background: radial-gradient(circle, #ffcc00 0 1px, transparent 1.5px) 50% 50% / 33% 33%, #003399; border-radius: 50%; outline: none; }
+/* страны */
+.c-BY .main b, .c-AM .main b, .c-GE .main b, .c-DE .main b, .c-AE .main b, .c-GB .main b, .c-US .main b, .c-KZ .main b { font-size: calc(var(--h) * .74); }
+.c-BY .main, .c-KZ .main, .c-AM .main, .c-GE .main, .c-DE .main, .c-AE .main, .c-GB .main { align-items: center; padding-bottom: 0; }
+.c-DE .band { background: #003399; color: #fff; }
+.c-DE .band .flag { width: calc(var(--h) * .34); height: calc(var(--h) * .34); }
+.c-GB { --bg: #ffd500; }
+.c-GB .band { background: #00247d; color: #fff; }
+.c-GB .band .flag { display: none; }
+.c-US { --ink: #1c2f80; flex-direction: column; align-items: center; justify-content: center; border-radius: calc(var(--h) * .22); padding: 0 calc(var(--h) * .25); }
+.c-US .top { font: italic 700 calc(var(--h) * .26)/1 'Brush Script MT', 'Segoe Script', cursive; color: #c8102e; margin-top: calc(var(--h) * .02); }
+.c-US .main { padding: 0; }
+.c-US .main b { font-size: calc(var(--h) * .58); }
+.c-US.l .main b { letter-spacing: 1px; }
+.c-AE .band.ae { flex-direction: column; gap: 0; padding: 0 calc(var(--h) * .14); border-right: max(1px, calc(var(--h) * .05)) solid var(--ink); }
+.c-AE .band.ae small { font-size: calc(var(--h) * .2); }
+.c-KZ .band, .c-BY .band, .c-AM .band, .c-GE .band { border-right: max(1px, calc(var(--h) * .05)) solid rgba(0, 0, 0, .18); }
+
+/* уровни улучшения */
+.aska-plate.lvl-1 { box-shadow: 0 0 0 calc(var(--h) * .06) #c9ced6, 0 0 0 calc(var(--h) * .1) #7d8590, 0 1px 3px rgba(0, 0, 0, .3); }
+.aska-plate.lvl-2 { box-shadow: 0 0 0 calc(var(--h) * .06) #22e3ff, 0 0 calc(var(--h) * .35) #22e3ff, 0 0 calc(var(--h) * .7) rgba(34, 227, 255, .6); animation: aska-neon 2.4s ease-in-out infinite; }
+@keyframes aska-neon { 50% { box-shadow: 0 0 0 calc(var(--h) * .06) #ff3bd4, 0 0 calc(var(--h) * .35) #ff3bd4, 0 0 calc(var(--h) * .7) rgba(255, 59, 212, .55); } }
+.aska-plate.lvl-3::after, .aska-plate.lvl-4::after, .aska-plate.lvl-5::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.aska-plate.lvl-3::after { background: linear-gradient(115deg, rgba(255, 0, 128, .22), rgba(0, 255, 200, .22), rgba(120, 80, 255, .22), rgba(255, 220, 0, .22)) 0 0 / 300% 100%; mix-blend-mode: multiply; animation: aska-holo 4s linear infinite; }
+.aska-plate.lvl-3 { box-shadow: 0 0 0 calc(var(--h) * .06) #b8a6ff, 0 1px 4px rgba(0, 0, 0, .3); }
+@keyframes aska-holo { to { background-position: 300% 0; } }
+.aska-plate.lvl-4 { --bg: linear-gradient(180deg, #f6f7f9, #cfd3da 55%, #eef0f3); background: var(--bg); box-shadow: 0 0 0 calc(var(--h) * .07) #e5e4e2, 0 0 0 calc(var(--h) * .11) #8a8f99, 0 2px 6px rgba(0, 0, 0, .35); }
+.aska-plate.lvl-4::after, .aska-plate.lvl-5::after { background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .85) 50%, transparent 65%) -150% 0 / 60% 100% no-repeat; animation: aska-shine 3s ease-in-out infinite; }
+@keyframes aska-shine { 0%, 40% { background-position: -150% 0; } 100% { background-position: 250% 0; } }
+.aska-plate.lvl-5 { box-shadow: 0 0 0 calc(var(--h) * .07) #fff, 0 0 calc(var(--h) * .3) #9be7ff, 0 0 calc(var(--h) * .6) #d8a6ff, 0 2px 6px rgba(0, 0, 0, .3); animation: aska-diamond 3s ease-in-out infinite; }
+@keyframes aska-diamond { 50% { box-shadow: 0 0 0 calc(var(--h) * .07) #fff, 0 0 calc(var(--h) * .45) #ffd6f5, 0 0 calc(var(--h) * .8) #9be7ff, 0 2px 6px rgba(0, 0, 0, .3); } }
+/* золотая серия АМР */
+.aska-plate.gold { border-color: #a57a10; box-shadow: 0 0 0 calc(var(--h) * .06) #f4cf52, 0 0 calc(var(--h) * .25) rgba(244, 196, 48, .65), 0 1px 3px rgba(0, 0, 0, .3); }
+.aska-plate.gold .reg { border-left-color: #a57a10; }
+@media (prefers-reduced-motion: reduce) { .aska-plate, .aska-plate::after { animation: none !important; } }
+
+/* золотой значок голд */
+.aska-gold { display: inline-grid; place-items: center; width: 15px; height: 15px; margin-left: 4px; border-radius: 50%; font-size: 10px; line-height: 1; font-style: normal; font-weight: 700;
+  color: #6b4a00; background: radial-gradient(circle at 35% 30%, #fff6c8, #f6cf45 45%, #c9921a); box-shadow: 0 0 0 1px #a8790f, 0 1px 2px rgba(0, 0, 0, .3); vertical-align: middle; }
+.aska-gold.big { width: 20px; height: 20px; font-size: 13px; margin-left: 6px; }
+.aska-gold.sm { width: 12px; height: 12px; font-size: 8px; margin-left: 3px; }
+
+/* номера: кошелёк, плитки, редкость */
+.aska-wallet { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; background: linear-gradient(90deg, rgba(246, 207, 69, .3), rgba(246, 207, 69, .08)); margin-bottom: 4px; }
+.skin-aero .aska-wallet { border-radius: 12px; }
+.aska-wallet .coins { font-size: 1.15em; }
+.aska-subtabs { margin: 4px 0 6px; }
+.aska-subtabs .chip { font-size: 12px; padding: 3px 10px; }
+.aska-ptiles { display: flex; flex-direction: column; gap: 6px; }
+.aska-ptile { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: rgba(255, 255, 255, .55); border: 1px solid rgba(0, 0, 0, .08); cursor: pointer; }
+.skin-aero .aska-ptile { border-radius: 14px; }
+.skin-classic .aska-ptile { background: #fff; border: 1px solid; border-color: var(--shadow) var(--light) var(--light) var(--shadow); }
+.aska-ptile .pt-plate { display: flex; justify-content: center; padding: 6px 0; }
+.aska-ptile .pt-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; }
+.aska-ptile .pt-token { font-family: 'Courier New', monospace; opacity: .7; }
+.aska-ptile .pt-city { opacity: .75; }
+.aska-ptile .pt-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.aska-ptile .pt-actions .btn { flex: 1 1 auto; justify-content: center; }
+.aska-rarity { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 8px; color: #fff; }
+.aska-rarity.common { background: #8a94a3; }
+.aska-rarity.rare { background: #2f7ae5; }
+.aska-rarity.epic { background: #8b3fe0; }
+.aska-rarity.legendary { background: linear-gradient(90deg, #f59e0b, #ea580c); }
+.aska-rarity.mythic { background: linear-gradient(90deg, #ec4899, #8b5cf6, #06b6d4); }
+.aska-lvl { font-size: 11px; padding: 1px 7px; border-radius: 8px; background: rgba(0, 0, 0, .08); }
+.aska-active { color: var(--green-dark); font-weight: 700; font-size: 12px; }
+.aska-note { padding: 6px 8px; background: rgba(60, 180, 74, .14); color: var(--green-dark); }
+.skin-aero .aska-note { border-radius: 10px; }
+.aska-quote-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 4px; }
+.aska-quote-card .row { width: 100%; }
+.aska-coinlog .row { gap: 8px; padding: 1px 0; font-size: 12px; }
+.aska-coinlog .plus { color: var(--green-dark); font-weight: 700; min-width: 44px; }
+.aska-coinlog .minus { color: var(--red); font-weight: 700; min-width: 44px; }
+.aska-pcard { display: flex; flex-direction: column; gap: 6px; }
+.aska-pcard .center { padding: 10px 0; }
+.aska-history { margin: 0; padding-left: 18px; font-size: 12px; display: flex; flex-direction: column; gap: 2px; }
+.aska-admin-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.aska-admin-actions .btn { font-size: 12px; }
+.aska-admin-user.blocked { opacity: .65; }
 .aska-profile-plate { display: flex; justify-content: center; padding: 6px 0; }
 
 /* вход и регистрация */

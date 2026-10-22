@@ -10,6 +10,7 @@ import { isTouch } from '../lib/platform.ts';
 import { flower, smiles, smileSvg, splitSmiles, play, playSmile } from '../lib/aska.ts';
 import { EncryptedImage, ImageViewer } from './EncryptedImage.tsx';
 import { Win, Svg, Ico, Dialog } from './Win.tsx';
+import { Gold } from './Plate.tsx';
 
 const drafts = new Map<string, string>();
 const GROUP_GAP = 5 * 60 * 1000;
@@ -53,6 +54,7 @@ interface LineProps {
   grp: boolean;
   isNew: boolean;
   name: string;
+  gold: boolean;
   quote: { name: string; text: string } | null;
   read: boolean;
   flash: boolean;
@@ -61,7 +63,7 @@ interface LineProps {
   onQuote: () => void;
 }
 
-function Line({ m, out, grp, isNew, name, quote, read, flash, onMenu, onImage, onQuote }: LineProps) {
+function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onImage, onQuote }: LineProps) {
   const timer = useRef<number | undefined>(undefined);
   const start = useRef<{ x: number; y: number } | null>(null);
   const body = m.body;
@@ -93,7 +95,7 @@ function Line({ m, out, grp, isNew, name, quote, read, flash, onMenu, onImage, o
       onClick={() => { if (m.status === 'failed') onMenu(m); }}
     >
       <span className="hdr">
-        <span className="nk">{name}</span>{' '}
+        <span className="nk">{name}{gold && <span className="aska-gold sm" title="Голд">★</span>}</span>{' '}
         <span className="time"><i>(</i>{timeShort(m.createdAt)}<i>)</i></span>
         {tick}
         <span className="cl">:</span>
@@ -283,6 +285,7 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
         grp={grp}
         isNew={!seenAtOpen.current!.has(key)}
         name={nameOf(m.senderId)}
+        gold={!!s.users[m.senderId]?.gold}
         quote={replyId ? { name: quoted ? nameOf(quoted.senderId) : '', text: msgPreview(quoted) } : null}
         read={out && !m.status && others.some((o) => o.readUpTo >= m.id)}
         flash={flash === m.id}
@@ -312,7 +315,7 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
       onBack={onBack} onClose={onBack} closeClass="close-chat">
       <div className="chat-head aska-head" onClick={openHead} role="button" title="Подробнее">
         <Ico html={icon.replace('width="14" height="14"', 'width="16" height="16"')} />
-        <span className="nick">{title}</span>
+        <span className="nick">{title}{chat.kind === 'dm' && <Gold user={peer} />}</span>
         {peer?.kind === 'aska' && <span className="aska-tag">ИИ</span>}
         <span className="sp" />
         <span className={`hint${typers.length ? ' aska-typing' : ''}`}>{statusHint}</span>

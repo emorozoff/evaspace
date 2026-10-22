@@ -9,7 +9,7 @@ import { previewText } from '../lib/protocol.ts';
 import { isIOS, isStandalone } from '../lib/platform.ts';
 import { flower, envelope, logoFlower } from '../lib/aska.ts';
 import { Win, Svg, Ico } from './Win.tsx';
-import { Plate } from './Plate.tsx';
+import { UserPlate, Gold } from './Plate.tsx';
 
 function lastOf(s: State, chatId?: string): Msg | undefined {
   if (!chatId) return undefined;
@@ -55,7 +55,7 @@ interface Props {
   onProfile: (userId: number) => void;
   onSettings: () => void;
   onInvite: () => void;
-  onAux: (k: 'circles' | 'myai' | 'settings') => void;
+  onAux: (k: 'circles' | 'myai' | 'settings' | 'plates') => void;
 }
 
 // Долгое нажатие на телефоне / правая кнопка на компьютере
@@ -102,7 +102,7 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
   const myself = s.users[me];
   const aska = askaOf(s);
   const lastTime = (u: User) => lastOf(s, dmWith(s, u.id)?.id)?.createdAt ?? 0;
-  const people = Object.values(s.users).filter((u) => u.id !== me && (u.kind || 'human') === 'human')
+  const people = Object.values(s.users).filter((u) => u.id !== me && (u.kind || 'human') === 'human' && !u.blocked)
     .sort((a, b) => lastTime(b) - lastTime(a) || a.displayName.localeCompare(b.displayName, 'ru'));
   const pinned = people.filter((u) => s.pins.includes(u.id));
   const rest = people.filter((u) => !s.pins.includes(u.id));
@@ -135,7 +135,7 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
     return (
       <Item key={u.id} active={!!chat && chat.id === activeChat} off={!isOn} blink={!!unread}
         icon={unread ? envelope(16) : flower(isOn ? 'online' : 'offline', 16)}
-        nick={<>{u.displayName}{u.keyChanged ? ' ⚠' : ''}{s.guesses[u.id] === 'ai' ? ' 🤖' : ''}</>}
+        nick={<>{u.displayName}<Gold user={u} />{u.keyChanged ? ' ⚠' : ''}{s.guesses[u.id] === 'ai' ? ' 🤖' : ''}</>}
         sub={sub} badge={unread} onClick={() => openFriend(u)} onLong={() => onProfile(u.id)} title={u.displayName} />
     );
   };
@@ -148,14 +148,15 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
       extra={<button className="tbtn" onClick={onSettings} title="Настройки" aria-label="Настройки">☰</button>}>
       <div className="me-panel aska-me" onClick={() => onProfile(me)}>
         <Ico html={flower(status, 16)} />
-        <span className="nick">{myself?.displayName || s.me?.username}</span>
+        <span className="nick">{myself?.displayName || s.me?.username}<Gold user={myself} /></span>
         <span className="sp" />
-        <Plate plate={myself?.plate} size="s" />
+        <UserPlate user={myself} size="s" />
       </div>
       <PushPanel />
       {/* на компьютере нижних вкладок нет — те же разделы кнопками */}
       <div className="aska-desk-nav">
         <button className="btn" onClick={() => onAux('circles')}>⭕ Круги</button>
+        <button className="btn" onClick={() => onAux('plates')}>🚗 Номера</button>
         <button className="btn" onClick={() => onAux('myai')}>🤖 Мой ИИ</button>
         <button className="btn" onClick={() => onAux('settings')}>☰ Ещё</button>
       </div>

@@ -18,7 +18,7 @@ function chatFromHash(): string | null {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-interface Toast { chatId?: string; userId?: number; name: string; text: string; online?: boolean }
+interface Toast { chatId?: string; userId?: number; name: string; text: string; online?: boolean; aux?: AuxKind }
 
 export default function App() {
   const s = useStore();
@@ -69,13 +69,22 @@ export default function App() {
     return () => { off(); offOnline(); clearTimeout(hideTimer); };
   }, []);
 
+  // Бонус за первый вход дня — всплывашкой
+  const bonus = s.profile?.bonus || 0;
+  useEffect(() => {
+    if (!bonus) return;
+    setToast({ name: 'Аськоины 🪙', text: `+${bonus} за вход сегодня. Номера — во вкладке «Номера»`, aux: 'plates' });
+    const t = setTimeout(() => setToast(null), 4500);
+    return () => clearTimeout(t);
+  }, [bonus]);
+
   if (s.phase === 'loading') return <div className="desktop" />;
   if (s.phase === 'welcome') return <Welcome />;
 
   const openChat = (id: string) => { setAux(null); setChat(id); setToast(null); };
   const onToast = async (t: Toast) => {
     setToast(null);
-    if (t.chatId) openChat(t.chatId);
+    if (t.aux) { setChat(null); setAux(t.aux); } else if (t.chatId) openChat(t.chatId);
     else if (t.userId) { try { openChat(await openDm(t.userId)); } catch { /* нет связи */ } }
   };
   const chatIds = Object.keys(s.chats);
@@ -102,7 +111,7 @@ export default function App() {
           buttons={<button className="btn primary" onClick={dismissWelcomePlate}>Поехали! 🚗</button>}>
           <div className="aska-plate-reveal">
             <div className="hint">Твой номер в АСЬКЕ:</div>
-            <Plate plate={s.welcomePlate} size="l" />
+            <Plate plate={s.welcomePlate} country={s.users[s.me!.userId]?.plateCountry || 'RU'} size="l" />
             <div className="hint">Им можно входить вместо телефона и делиться с друзьями. Аська уже пишет тебе 🌼</div>
           </div>
         </Dialog>
@@ -119,6 +128,9 @@ export default function App() {
         </button>
         <button className={aux === 'circles' ? 'on' : ''} onClick={() => tab('circles')}>
           <i>⭕</i><span>Круги</span>
+        </button>
+        <button className={aux === 'plates' ? 'on' : ''} onClick={() => tab('plates')}>
+          <i>🚗</i><span>Номера</span>
         </button>
         <button className={aux === 'myai' ? 'on' : ''} onClick={() => tab('myai')}>
           <i>🤖</i><span>Мой ИИ</span>{twinUnread > 0 && <b className="tb-badge">{twinUnread}</b>}

@@ -12,7 +12,10 @@ export type Chat = LocalChat;
 export type User = LocalUser;
 export interface Msg extends StoredMsg { status?: 'sending' | 'failed'; localImage?: string }
 export type PushState = 'unsupported' | 'default' | 'denied' | 'subscribed';
-export interface Profile { isAdmin: boolean; phone: string | null; phoneVerified: boolean; allowAnon: boolean; plate: string | null }
+export interface Profile {
+  isAdmin: boolean; role?: 'user' | 'admin' | 'super'; coins?: number; bonus?: number;
+  phone: string | null; phoneVerified: boolean; allowAnon: boolean; plate: string | null;
+}
 export type Truth = 'ai' | 'human';
 
 export interface State {
@@ -215,6 +218,7 @@ let pingTimer: ReturnType<typeof setTimeout> | undefined;
 interface ServerUser {
   id: number; username: string; displayName: string; boxPk: string;
   plate?: string | null; about?: string; city?: string; kind?: 'human' | 'aska' | 'twin'; ownerId?: number; prevPks?: string[];
+  gold?: boolean; blocked?: boolean; plateId?: number; plateCountry?: string; plateLevel?: number; plateRarity?: number;
 }
 
 interface StateResp {
@@ -237,6 +241,7 @@ function mergeUser(u: ServerUser, prev: User | undefined, myPk?: string): User {
   const base: User = {
     id: u.id, username: u.username, displayName: u.displayName, pk: u.boxPk, plate: u.plate ?? null,
     about: u.about || '', city: u.city || '', kind: u.kind || 'human', ownerId: u.ownerId, prevPks: u.prevPks,
+    gold: Boolean(u.gold), blocked: Boolean(u.blocked), plateId: u.plateId, plateCountry: u.plateCountry || 'RU', plateLevel: u.plateLevel || 0, plateRarity: u.plateRarity || 0,
   };
   if (!pinned || pinned === u.boxPk) return prev?.keyRotated ? { ...base, keyRotated: true } : base;
   if ((u.prevPks || []).includes(pinned)) return { ...base, keyRotated: true };
@@ -722,7 +727,12 @@ export interface AdminInfo {
   ai: { configured: boolean; hasKey: boolean; keyHint: string; model: string; models: { id: string; name: string; note: string }[]; dailyLimit: number; usedToday: number; paused: boolean; lastError: string };
   people: boolean;
   sms: { configured: boolean; hasKey: boolean; lastError: string };
-  users: { id: number; displayName: string; plate: string; phone: string | null; phoneVerified: boolean; createdAt: number; lastActive: number | null; isAdmin: boolean }[];
+  users: {
+    id: number; displayName: string; username: string; plate: string; plateView: PlateInfo | null; phone: string | null; phoneVerified: boolean;
+    createdAt: number; lastActive: number | null; isAdmin: boolean; role: 'user' | 'admin' | 'super'; blocked: boolean; coins: number;
+  }[];
+  me: { role: 'user' | 'admin' | 'super'; id: number };
+  hasSuper: boolean;
 }
 export const adminInfo = () => api.get<AdminInfo>('/admin');
 export const adminSetAi = (p: { apiKey?: string; model?: string; dailyLimit?: number; paused?: boolean }) => api.post('/admin/ai', p);
@@ -731,6 +741,55 @@ export const adminSetPeople = async (on: boolean) => { await api.post('/admin/pe
 export const adminSetSms = (apiId: string) => api.post('/admin/sms', { apiId });
 export const adminCheckSms = () => api.post<{ ok: boolean; balance?: number; error?: string }>('/admin/sms/check');
 export const adminHelpCode = (userId: number) => api.post<{ code: string; login: string }>('/admin/help-code', { userId });
+export const adminSetRole = async (userId: number, role: 'admin' | 'user') => { await api.post(`/admin/users/${userId}/role`, { role }); await loadState(); };
+export const adminBlock = async (userId: number, blocked: boolean) => { await api.post(`/admin/users/${userId}/block`, { blocked }); await loadState(); };
+export const adminSetPlate = async (userId: number, p: { country: string; region?: string; code: string }) => {
+  const r = await api.post<{ plate: PlateInfo }>(`/admin/users/${userId}/plate`, p);
+  await loadState();
+  return r.plate;
+};
+export const adminCoins = (userId: number, delta: number) => api.post<{ coins: number }>(`/admin/users/${userId}/coins`, { delta });
+export async function adminCreateSuper(login: string, password: string, onProgress?: (p: number) => void) {
+  const k = await newKeys(password, onProgress);
+  return api.post<{ ok: boolean; plate: string }>('/admin/super', { login, ...k.body });
+}
+
+// ---------- номера-токены и аськоины ----------
+
+export interface PlateInfo {
+  id: number; token: string; code: string; text: string; country: string; countryName: string; region: string; city: string;
+  rarity: number; rarityName: string; level: number; levelName: string; gold: boolean; ownerId: number | null; ownerName?: string;
+  price: number | null; mintedAt: number; nextLevelCost: number | null;
+  history?: { kind: string; from: string; to: string; price: number | null; note: string | null; at: number }[];
+}
+export interface Country { id: string; name: string; regions: { code: string; city: string }[] }
+export interface MyPlates {
+  coins: number; activeId: number; gold: boolean; plates: PlateInfo[]; log: { delta: number; reason: string; at: number }[];
+  levels: { name: string; cost: number }[]; countries: Country[]; bonuses: { daily: number; invite: number; guess: number };
+}
+export interface Quote { code: string; text: string; country: string; region: string; city: string; price: number; rarity: number; rarityName: string; free: boolean; gold: boolean; allowed: boolean }
+
+function setCoins(coins: number) {
+  if (state.profile) set({ profile: { ...state.profile, coins } });
+}
+export const myPlates = () => api.get<MyPlates>('/plates/me').then((r) => { setCoins(r.coins); return r; });
+export const plateMarket = () => api.get<{ showcase: PlateInfo[]; listings: PlateInfo[] }>('/plates/market');
+export const plateCard = (id: number) => api.get<{ plate: PlateInfo }>(`/plates/${id}`).then((r) => r.plate);
+export const quotePlate = (q: { country: string; region: string; code?: string }) => api.post<Quote>('/plates/quote', q);
+export async function buyPlate(b: { plateId?: number; country?: string; region?: string; code?: string; activate?: boolean }) {
+  const r = await api.post<{ plate: PlateInfo; coins: number }>('/plates/buy', b);
+  setCoins(r.coins);
+  if (b.activate) await loadState();
+  return r.plate;
+}
+export async function activatePlate(id: number) { await api.post(`/plates/${id}/activate`); await loadState(); }
+export async function upgradePlate(id: number) {
+  const r = await api.post<{ plate: PlateInfo; coins: number }>(`/plates/${id}/upgrade`);
+  setCoins(r.coins);
+  await loadState();
+  return r.plate;
+}
+export const listPlate = (id: number, price: number | null) => api.post<{ plate: PlateInfo }>(`/plates/${id}/list`, { price }).then((r) => r.plate);
 
 export async function myPublicKey() {
   return (await kvGet('keys'))?.pk || '';

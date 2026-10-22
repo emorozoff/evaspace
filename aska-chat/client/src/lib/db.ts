@@ -9,6 +9,7 @@ export interface Keys { pk: string; sk: string }
 export interface LocalUser {
   id: number; username: string; displayName: string; pk: string; keyChanged?: boolean; keyRotated?: boolean;
   plate?: string | null; about?: string; city?: string; kind?: 'human' | 'aska' | 'twin'; ownerId?: number; prevPks?: string[];
+  gold?: boolean; blocked?: boolean; plateId?: number; plateCountry?: string; plateLevel?: number; plateRarity?: number;
 }
 export interface Member { userId: number; readUpTo: number }
 export interface LocalChat {

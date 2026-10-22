@@ -9,7 +9,8 @@ import { safetyCode, fromB64 } from '../lib/crypto.ts';
 import { flower } from '../lib/aska.ts';
 import { plural } from '../lib/format.ts';
 import { Dialog, Ico } from './Win.tsx';
-import { Plate } from './Plate.tsx';
+import { UserPlate, Gold } from './Plate.tsx';
+import { PlateCard } from './Plates.tsx';
 
 export function Profile({ userId, onClose, onOpenChat }: { userId: number; onClose: () => void; onOpenChat: (chatId: string) => void }) {
   const s = useStore();
@@ -17,6 +18,7 @@ export function Profile({ userId, onClose, onOpenChat }: { userId: number; onClo
   const [twinAsk, setTwinAsk] = useState(false);
   const [result, setResult] = useState<{ correct: boolean; truth: Truth } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [card, setCard] = useState(false);
   const u = s.users[userId];
   if (!u) return null;
   const me = s.me!.userId;
@@ -47,17 +49,18 @@ export function Profile({ userId, onClose, onOpenChat }: { userId: number; onClo
         <div className="aska-profile-head">
           <Ico className="ico big" html={flower(isAska ? 'chat' : online ? 'online' : 'offline', 40)} />
           <div className="who">
-            <b>{u.displayName}</b>
-            <div className="muted">{online ? 'в сети' : 'не в сети'}{u.city ? ` · ${u.city}` : ''}</div>
+            <b>{u.displayName}<Gold user={u} big /></b>
+            <div className="muted">{u.blocked ? 'заблокирован(а)' : online ? 'в сети' : 'не в сети'}{u.city ? ` · ${u.city}` : ''}{u.gold ? ' · голд' : ''}</div>
           </div>
         </div>
-        {u.plate && <div className="aska-profile-plate"><Plate plate={u.plate} size="l" /></div>}
+        {u.plate && <div className="aska-profile-plate"><UserPlate user={u} size="l" onClick={u.plateId ? () => setCard(true) : undefined} /></div>}
+        {card && u.plateId && <PlateCard id={u.plateId} onClose={() => setCard(false)} />}
         {u.about && <div className="aska-about">{u.about}</div>}
         {isAska && <div className="hint">Аська — ИИ и душа АСЬКИ. Подскажет, поболтает и не даст заскучать 🌼</div>}
         {isTwin && owner && <div className="hint">Личный ИИ человека «{owner.displayName}». Ему можно задать вопрос, передать комплимент или подарок.</div>}
         {u.keyRotated && !itsMe && <div className="hint">🔑 {u.displayName} недавно восстанавливал(а) вход — ключ шифрования обновился.</div>}
 
-        {!itsMe && (
+        {!itsMe && !u.blocked && (
           <div className="aska-actions">
             <button className="btn primary" onClick={write} disabled={busy}>💬 Написать</button>
             {twin && <button className="btn" onClick={() => setTwinAsk((v) => !v)} disabled={busy}>🤖 Личный ИИ</button>}

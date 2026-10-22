@@ -8,7 +8,9 @@ import path from 'node:path';
 import WebSocket from 'ws';
 import { createApp } from '../server/src/app.js';
 import { setSetting } from '../server/src/db.js';
-import { normalizePlate, formatPlate } from '../server/src/plates.js';
+import { parsePlate, formatCode } from '../server/src/plates.js';
+const normalizePlate = (x) => parsePlate(x, 'RU');
+const formatPlate = (c) => formatCode('RU', c);
 import { normalizePhone } from '../server/src/phone.js';
 import { generateKeyPair, deriveFromPassword, sealSecret, openSecret, toB64, fromB64, randomBytes, publicFromSecret } from '../client/src/lib/crypto.ts';
 import { encodeOutgoing, decodeIncoming, decodePreview } from '../client/src/lib/protocol.ts';
@@ -138,8 +140,8 @@ test('регистрация с телефоном, номер, вход по т
   assert.equal(taken.status, 409, 'телефон уже занят');
   const m = await register(A, inv2.data.code, 'Маша', 'пароль маши', { phone: '+7 916 000-00-01' });
   assert.equal(m.status, 200);
-  assert.match(m.data.plate, /^А\d{3}МР777$/);
-  assert.notEqual(m.data.plate, 'А001МР777');
+  assert.match(m.data.plate, /^[А-Я]\d{3}[А-Я]{2}777$/);
+  assert.ok(!/^А\d{3}МР/.test(m.data.plate), 'серия АМР — только у голд');
   U.masha = { ...m.data, kp: m.kp, password: m.password };
 
   for (const name of ['89991112233', '+7 999 111 22 33', 'а001мр', 'А 001 МР 777', '001']) {
@@ -400,7 +402,7 @@ test('с ИИ: Аська, личный ИИ и ИИ-люди в кругах и
     const st = await C.call('GET', '/api/state', { token: me.token });
     const people = st.data.users.filter((u) => u.kind === 'human' && u.id !== me.userId);
     assert.equal(people.length, 7, 'пришли семь новых людей');
-    assert.ok(people.every((p) => /^[А-Я]\d{3}МР777$/.test(p.plate) && p.city), 'у всех номера и города, как у людей');
+    assert.ok(people.every((p) => p.plate && !/^А\d{3}МР/.test(p.plate) && p.city && !p.gold), 'у всех номера своих городов и города, как у людей');
     const plates = new Set([me.plate, ...people.map((p) => p.plate)]);
     assert.equal(plates.size, 8, 'номера не повторяются');
     await C.app.bots.idle();

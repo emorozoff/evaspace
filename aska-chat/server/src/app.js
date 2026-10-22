@@ -10,7 +10,8 @@ import { createAi } from './ai.js';
 import { createBots } from './bots.js';
 import { encodeOutgoing as sealOutgoing, newUuid } from './seal.js';
 import { createSms, createCodes, normalizePhone, looksLikePhone } from './phone.js';
-import { freePlate, normalizePlate, looksLikePlate, ADMIN_PLATE } from './plates.js';
+import { parsePlate, plateKey, countryForPhone, defaultRegion, COUNTRIES, keyTaken, priceOf, isGoldCode, plateView, LEVELS, formatCode, randomFreeCode, rarityOf, RARITY, cityOf } from './plates.js';
+import * as M from './market.js';
 
 const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
@@ -59,9 +60,13 @@ function cleanName(s) {
   return t && t.length >= 1 ? t : null;
 }
 
-// А042МР777 → a042mr777: внутреннее имя для входа, его никто не придумывает
-const TRANSLIT = { А: 'a', В: 'v', Е: 'e', К: 'k', М: 'm', Н: 'n', О: 'o', Р: 'r', С: 's', Т: 't', У: 'u', Х: 'h' };
-const plateUsername = (plate) => plate.replace(/[А-Я]/g, (c) => TRANSLIT[c] || 'x').toLowerCase();
+// А042МР777 → a042mp777: внутреннее имя для входа, его никто не придумывает
+const plateUsername = (code) => plateKey(code).toLowerCase().slice(0, 16) || 'user';
+const mskDay = () => new Date(Date.now() + 3 * 3_600_000).toISOString().slice(0, 10);
+const DAILY_BONUS = 20;
+const INVITE_BONUS = 50;
+const GUESS_BONUS = 15;
+const WELCOME_COINS = 100;
 
 export function createApp({
   dataDir, staticDir, publicUrl, pushSender, smsSender, aiImpl, botTiming, startBots = true, trustProxy = false, log = console.log,
@@ -80,11 +85,11 @@ export function createApp({
   const sms = createSms({ db, sender: smsSender, log });
   const codes = createCodes({ db, secret: serverSecret });
 
-  // Номера АСЬКИ тем, у кого их ещё нет: первый номер серии — администратору
-  for (const u of db.prepare("SELECT id, is_admin FROM users WHERE kind = 'human' AND plate IS NULL ORDER BY id").all()) {
-    const adminFree = u.is_admin && !db.prepare('SELECT 1 FROM users WHERE plate = ?').get(ADMIN_PLATE);
-    db.prepare('UPDATE users SET plate = ? WHERE id = ?').run(adminFree ? ADMIN_PLATE : freePlate(db), u.id);
+  // Номера тем, у кого их ещё нет: голд — золотая серия (первому — А 001 МР 777), остальным — своей страны
+  for (const u of db.prepare("SELECT * FROM users WHERE kind = 'human' AND plate_id IS NULL ORDER BY id").all()) {
+    tx(db, () => M.firstPlate(db, u.id, { country: countryForPhone(u.phone), gold: M.isGold(u), preferred: M.isGold(u) ? M.ADMIN_PLATE : null }));
   }
+  M.seedShowcase(db);
 
   // ---------- вспомогательное ----------
 
@@ -135,17 +140,23 @@ export function createApp({
     next();
   }
 
+  // Админ = голд. Супер-админ — тоже голд, и его нельзя заблокировать или снять
   function admin(req, res, next) {
-    if (!userRow(req.userId)?.is_admin) return res.status(403).json({ error: 'not_admin' });
+    const me = userRow(req.userId);
+    if (!M.isGold(me) || me.blocked_at) return res.status(403).json({ error: 'not_admin' });
+    req.me = me;
     next();
   }
 
   // ИИ-люди для остальных выглядят как обычные люди: «person» наружу не отдаём
   function publicUser(u) {
+    const p = M.plateRow(db, u.plate_id);
     const o = {
       id: u.id, username: u.username, displayName: u.display_name, boxPk: u.box_pk,
       plate: u.plate || null, about: u.about || '', city: u.city || '', kind: u.kind === 'person' ? 'human' : u.kind,
+      gold: M.isGold(u), blocked: Boolean(u.blocked_at),
     };
+    if (p) { o.plateId = p.id; o.plateCountry = p.country; o.plateLevel = p.level; o.plateRarity = p.rarity; }
     if (u.kind === 'twin') o.ownerId = u.owner_id;
     const prev = JSON.parse(u.prev_pks || '[]');
     if (prev.length) o.prevPks = prev;
@@ -192,7 +203,17 @@ export function createApp({
     if (!s || s.length > 40) return null;
     const human = (sql, v) => db.prepare(`SELECT * FROM users WHERE kind = 'human' AND ${sql} = ?`).get(v);
     if (looksLikePhone(s)) { const u = human('phone', normalizePhone(s)); if (u) return u; }
-    if (looksLikePlate(s) || /^\d{1,3}$/.test(s)) { const p = normalizePlate(s); const u = p && human('plate', p); if (u) return u; }
+    // номер: по ключу (кириллица = латиница), «001» и «а001мр» — как российские А…МР 777;
+    // подходит любой номер человека, не только основной (сменил основной — старый для входа годится)
+    const keys = new Set([plateKey(s)]);
+    const ru = parsePlate(s, 'RU');
+    if (ru) keys.add(plateKey(ru));
+    for (const k of keys) {
+      if (!k) continue;
+      const u = db.prepare("SELECT u.* FROM users u JOIN plates p ON p.owner_id = u.id WHERE u.kind = 'human' AND p.key = ?").get(k);
+      if (u) return u;
+    }
+    for (const k of keys) { const u = k && human('old_plate_key', k); if (u) return u; } // номер АМР, сменённый при переходе на третью версию
     const uname = s.toLowerCase();
     return USERNAME_RE.test(uname) ? human('username', uname) || null : null;
   }
@@ -429,21 +450,28 @@ export function createApp({
         if (!inv || inv.used_by) return { error: 'invite_invalid', status: 404 };
         if (wanted && db.prepare('SELECT 1 FROM users WHERE username = ?').get(wanted)) return { error: 'username_taken', status: 409 };
         if (phone && phoneOwner(phone)) return { error: 'phone_taken', status: 409 };
-        // Самый первый человек становится администратором и получает первый номер серии
+        // Самый первый человек становится администратором (голд) и получает А 001 МР 777
         const firstAdmin = !db.prepare("SELECT 1 FROM users WHERE is_admin = 1 AND kind = 'human'").get();
-        const plate = firstAdmin && !db.prepare('SELECT 1 FROM users WHERE plate = ?').get(ADMIN_PLATE) ? ADMIN_PLATE : freePlate(db);
-        let uname = wanted || plateUsername(plate);
-        for (let i = 2; db.prepare('SELECT 1 FROM users WHERE username = ?').get(uname); i++) uname = `${plateUsername(plate)}_${i}`;
         const now = Date.now();
+        const tmp = `new_${crypto.randomBytes(6).toString('hex')}`;
         const { lastInsertRowid } = db.prepare(`
-          INSERT INTO users (username, display_name, box_pk, kdf_salt, auth_hash, backup_n, backup_c, created_at, plate, phone, phone_verified, last_active)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(uname, name, body.boxPk, body.kdfSalt, sha256hex(Buffer.from(body.authKey, 'base64')), body.backup.n, body.backup.c, now, plate, phone, verified, now);
+          INSERT INTO users (username, display_name, box_pk, kdf_salt, auth_hash, backup_n, backup_c, created_at, phone, phone_verified, last_active, role, is_admin)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(wanted || tmp, name, body.boxPk, body.kdfSalt, sha256hex(Buffer.from(body.authKey, 'base64')), body.backup.n, body.backup.c, now, phone, verified, now,
+          firstAdmin ? 'admin' : 'user', firstAdmin ? 1 : 0);
         const userId = Number(lastInsertRowid);
+        const country = countryForPhone(phone);
+        M.firstPlate(db, userId, { country, gold: firstAdmin, preferred: firstAdmin ? M.ADMIN_PLATE : null });
+        const plate = userRow(userId).plate;
+        let uname = wanted || plateUsername(plate);
+        for (let i = 2; !wanted && db.prepare('SELECT 1 FROM users WHERE username = ? AND id != ?').get(uname, userId); i++) uname = `${plateUsername(plate)}_${i}`;
+        db.prepare('UPDATE users SET username = ? WHERE id = ?').run(uname, userId);
+        M.addCoins(db, userId, WELCOME_COINS, 'подарок новичку');
+        const inviter = db.prepare('SELECT created_by FROM invites WHERE code = ?').get(code)?.created_by;
+        if (inviter) M.addCoins(db, inviter, INVITE_BONUS, `пригласил(а) ${name}`);
         db.prepare('UPDATE invites SET used_by = ?, used_at = ? WHERE code = ?').run(userId, now, code);
         const maxId = db.prepare('SELECT MAX(id) AS id FROM messages').get().id || 0;
         db.prepare('INSERT INTO chat_members (chat_id, user_id, read_up_to) VALUES (?, ?, ?)').run(GENERAL_CHAT, userId, maxId);
-        if (firstAdmin) db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(userId);
         return { userId, plate, username: uname, token: createSession(userId) };
       });
     } catch (e) {
@@ -463,7 +491,7 @@ export function createApp({
     if (!allow(`salt:${req.ip}`, 60, 600_000)) return res.status(429).json({ error: 'too_many' });
     const login = String(req.query.login || req.query.username || '').trim();
     const u = findByLogin(login);
-    const key = normalizePhone(login) || normalizePlate(login) || login.toLowerCase();
+    const key = normalizePhone(login) || plateKey(parsePlate(login, 'RU') || login) || login.toLowerCase();
     const salt = u ? u.kdf_salt
       : crypto.createHmac('sha256', serverSecret).update(`salt:${key}`).digest().subarray(0, 16).toString('base64');
     res.json({ salt });
@@ -479,6 +507,7 @@ export function createApp({
     const given = Buffer.from(sha256hex(Buffer.from(authKey, 'base64')), 'hex');
     const stored = Buffer.from(user.auth_hash, 'hex');
     if (!crypto.timingSafeEqual(given, stored)) return res.status(401).json({ error: 'bad_login' });
+    if (user.blocked_at) return res.status(403).json({ error: 'blocked' });
     touch(user.id);
     res.json({
       token: createSession(user.id), userId: user.id, username: user.username, boxPk: user.box_pk,
@@ -502,6 +531,7 @@ export function createApp({
       if (u && allow(`rec:u${u.id}`, 5, 600_000) && codes.checkHelp(u.id, body.helpCode)) user = u;
     }
     if (!user) return res.status(401).json({ error: 'bad_recover' });
+    if (user.blocked_at) return res.status(403).json({ error: 'blocked' });
     if (!validKeys(body)) return res.status(400).json({ error: 'bad_keys' });
     const token = tx(db, () => {
       const prev = [user.box_pk, ...JSON.parse(user.prev_pks || '[]')].filter((k) => k !== body.boxPk).slice(0, 5);
@@ -539,9 +569,20 @@ export function createApp({
       guesses[g.target_id] = g.kind === 'person' ? 'ai' : 'human';
     }
     touch(req.userId);
+    // Бонус за первый вход дня
+    let bonus = 0;
+    if (me.kind === 'human' && me.daily_day !== mskDay()) {
+      db.prepare('UPDATE users SET daily_day = ? WHERE id = ?').run(mskDay(), me.id);
+      M.addCoins(db, me.id, DAILY_BONUS, 'вход сегодня');
+      bonus = DAILY_BONUS;
+    }
+    const fresh = userRow(req.userId);
     res.json({
       me: req.userId, users, chats, vapidPublicKey: push.publicKey, badge: unreadCount(req.userId), online: onlineIds(),
-      profile: { isAdmin: Boolean(me.is_admin), phone: me.phone || null, phoneVerified: Boolean(me.phone_verified), allowAnon: Boolean(me.allow_anon), plate: me.plate },
+      profile: {
+        isAdmin: M.isGold(fresh), role: fresh.role, coins: fresh.coins, bonus, phone: fresh.phone || null, phoneVerified: Boolean(fresh.phone_verified),
+        allowAnon: Boolean(fresh.allow_anon), plate: fresh.plate,
+      },
       pins, guesses, features: { ai: ai.available(), sms: sms.configured() },
     });
   });
@@ -603,6 +644,7 @@ export function createApp({
     if (!u) return res.status(400).json({ error: 'bad_user' });
     // Чужому личному ИИ пишут через /twins/:id/chat — там выбирают «открыто» или «анонимно»
     if (u.kind === 'twin' && u.owner_id !== req.userId) return res.status(403).json({ error: 'use_twin_chat' });
+    if (u.blocked_at) return res.status(403).json({ error: 'blocked' });
     res.json({ chat: chatView(ensureDm(req.userId, other)) });
   });
 
@@ -662,6 +704,7 @@ export function createApp({
     if (old) return res.json({ correct: Boolean(old.correct), truth, already: true });
     db.prepare('INSERT INTO guesses (guesser_id, target_id, guess, correct, created_at) VALUES (?, ?, ?, ?, ?)')
       .run(req.userId, userId, guess, guess === truth ? 1 : 0, Date.now());
+    if (guess === truth) M.addCoins(db, req.userId, GUESS_BONUS, 'угадал(а) в «Кто здесь ИИ?»');
     res.json({ correct: guess === truth, truth });
   });
 
@@ -785,10 +828,135 @@ export function createApp({
 
   api.get('/admin', auth, admin, (req, res) => {
     const users = db.prepare("SELECT * FROM users WHERE kind = 'human' ORDER BY id").all().map((u) => ({
-      id: u.id, displayName: u.display_name, plate: u.plate, phone: u.phone, phoneVerified: Boolean(u.phone_verified),
-      createdAt: u.created_at, lastActive: u.last_active, isAdmin: Boolean(u.is_admin),
+      id: u.id, displayName: u.display_name, username: u.username, plate: u.plate, plateView: plateView(M.plateRow(db, u.plate_id)),
+      phone: u.phone, phoneVerified: Boolean(u.phone_verified), createdAt: u.created_at, lastActive: u.last_active,
+      isAdmin: M.isGold(u), role: u.role, blocked: Boolean(u.blocked_at), coins: u.coins,
     }));
-    res.json({ ai: ai.status(), people: bots.peopleEnabled(), sms: sms.status(), users });
+    const hasSuper = Boolean(db.prepare("SELECT 1 FROM users WHERE role = 'super'").get());
+    res.json({ ai: ai.status(), people: bots.peopleEnabled(), sms: sms.status(), users, me: { role: req.me.role, id: req.me.id }, hasSuper });
+  });
+
+  // Кто кого может менять: супер-админа — никто; админа — только супер-админ; обычных — любой админ
+  function canManage(me, target) {
+    if (!target || target.kind !== 'human' || target.id === me.id) return false;
+    if (target.role === 'super') return false;
+    if (target.role === 'admin') return me.role === 'super';
+    return true;
+  }
+  const humanTarget = (req) => { const u = userRow(Number(req.params.id)); return u && u.kind === 'human' ? u : null; };
+
+  // Сделать голд (админом) или снять
+  api.post('/admin/users/:id/role', auth, admin, json, (req, res) => {
+    const target = humanTarget(req);
+    const role = req.body?.role;
+    if (!target || !['admin', 'user'].includes(role)) return res.status(400).json({ error: 'bad_request' });
+    if (role === 'admin' && target.role === 'user' && !target.blocked_at) {
+      tx(db, () => {
+        db.prepare("UPDATE users SET role = 'admin', is_admin = 1 WHERE id = ?").run(target.id);
+        M.grantGoldPlate(db, userRow(target.id));
+      });
+    } else if (role === 'user' && target.role === 'admin') {
+      if (!canManage(req.me, target)) return res.status(403).json({ error: 'forbidden' });
+      tx(db, () => {
+        db.prepare("UPDATE users SET role = 'user', is_admin = 0 WHERE id = ?").run(target.id);
+        M.revokeGoldPlates(db, userRow(target.id));
+      });
+    } else if (target.role !== role) return res.status(403).json({ error: 'forbidden' });
+    broadcastUser(target.id);
+    log(`role ${target.username} → ${role} by ${req.me.username}`);
+    res.json({ ok: true });
+  });
+
+  // Заблокировать: вход закрыт, сессии сброшены, из общих бесед и кругов убран. Разблокировать — вернётся в общий чат.
+  api.post('/admin/users/:id/block', auth, admin, json, (req, res) => {
+    const target = humanTarget(req);
+    if (!canManage(req.me, target)) return res.status(403).json({ error: 'forbidden' });
+    const blocked = Boolean(req.body?.blocked);
+    let left = [];
+    tx(db, () => {
+      if (blocked) {
+        db.prepare('UPDATE users SET blocked_at = ? WHERE id = ?').run(Date.now(), target.id);
+        db.prepare('DELETE FROM sessions WHERE user_id = ?').run(target.id);
+        db.prepare('DELETE FROM push_subs WHERE user_id = ?').run(target.id);
+        left = db.prepare("SELECT m.chat_id FROM chat_members m JOIN chats c ON c.id = m.chat_id WHERE m.user_id = ? AND c.kind IN ('general', 'circle')").all(target.id).map((r) => r.chat_id);
+        for (const c of left) db.prepare('DELETE FROM chat_members WHERE chat_id = ? AND user_id = ?').run(c, target.id);
+      } else {
+        db.prepare('UPDATE users SET blocked_at = NULL WHERE id = ?').run(target.id);
+        const maxId = db.prepare('SELECT MAX(id) AS id FROM messages').get().id || 0;
+        db.prepare('INSERT OR IGNORE INTO chat_members (chat_id, user_id, read_up_to) VALUES (?, ?, ?)').run(GENERAL_CHAT, target.id, maxId);
+        left = [GENERAL_CHAT];
+      }
+    });
+    if (blocked) for (const ws of conns.get(target.id) || []) ws.close(4003, 'blocked');
+    for (const c of left) broadcastChat(c);
+    broadcastUser(target.id);
+    log(`${blocked ? 'blocked' : 'unblocked'} ${target.username} by ${req.me.username}`);
+    res.json({ ok: true });
+  });
+
+  // Сменить номер человеку: любой формат любой страны. Занятый другим — нельзя, золотой — только голд.
+  api.post('/admin/users/:id/plate', auth, admin, json, (req, res) => {
+    const target = humanTarget(req);
+    if (!target || (target.id !== req.me.id && !canManage(req.me, target) && target.role !== 'user')) return res.status(403).json({ error: 'forbidden' });
+    const country = COUNTRIES[req.body?.country] ? req.body.country : 'RU';
+    const code = parsePlate(req.body?.code, country, req.body?.region);
+    if (!code) return res.status(400).json({ error: 'bad_plate' });
+    if (isGoldCode(country, code) && !M.isGold(target)) return res.status(400).json({ error: 'gold_only' });
+    const existing = db.prepare('SELECT * FROM plates WHERE key = ?').get(plateKey(code));
+    if (existing && existing.owner_id && existing.owner_id !== target.id) {
+      return res.status(409).json({ error: 'plate_taken', owner: userRow(existing.owner_id)?.display_name || '' });
+    }
+    tx(db, () => {
+      if (existing) {
+        if (existing.owner_id !== target.id) {
+          db.prepare('UPDATE plates SET owner_id = ?, price = NULL WHERE id = ?').run(target.id, existing.id);
+          db.prepare("INSERT INTO plate_history (plate_id, from_id, to_id, price, kind, note, at) VALUES (?, NULL, ?, NULL, 'admin', ?, ?)").run(existing.id, target.id, `выдал ${req.me.display_name}`, Date.now());
+        }
+        M.activate(db, target.id, existing.id);
+      } else {
+        M.give(db, target.id, { country, code, kind: 'admin', note: `выдал ${req.me.display_name}` });
+      }
+    });
+    broadcastUser(target.id);
+    res.json({ ok: true, plate: plateView(M.plateRow(db, userRow(target.id).plate_id)) });
+  });
+
+  // Начислить или списать аськоины
+  api.post('/admin/users/:id/coins', auth, admin, json, (req, res) => {
+    const target = humanTarget(req);
+    const delta = req.body?.delta;
+    if (!target || !Number.isInteger(delta) || !delta || Math.abs(delta) > 1_000_000) return res.status(400).json({ error: 'bad_request' });
+    M.addCoins(db, target.id, delta, delta > 0 ? `подарок от ${req.me.display_name}` : `списал(а) ${req.me.display_name}`);
+    res.json({ coins: userRow(target.id).coins });
+  });
+
+  // Супер-админ: создаётся один раз админом (пароль шифруется на телефоне, как при регистрации)
+  api.post('/admin/super', auth, admin, json, (req, res) => {
+    if (db.prepare("SELECT 1 FROM users WHERE role = 'super'").get()) return res.status(409).json({ error: 'super_exists' });
+    const b = req.body || {};
+    const login = typeof b.login === 'string' ? b.login.trim() : '';
+    const uname = login.toLowerCase();
+    if (!USERNAME_RE.test(uname)) return res.status(400).json({ error: 'bad_username' });
+    if (db.prepare('SELECT 1 FROM users WHERE username = ?').get(uname)) return res.status(409).json({ error: 'username_taken' });
+    if (!validKeys(b)) return res.status(400).json({ error: 'bad_keys' });
+    const userId = tx(db, () => {
+      const now = Date.now();
+      const { lastInsertRowid } = db.prepare(`
+        INSERT INTO users (username, display_name, box_pk, kdf_salt, auth_hash, backup_n, backup_c, created_at, last_active, role, is_admin)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'super', 1)
+      `).run(uname, cleanName(b.displayName) || login, b.boxPk, b.kdfSalt, sha256hex(Buffer.from(b.authKey, 'base64')), b.backup.n, b.backup.c, now, now);
+      const id = Number(lastInsertRowid);
+      M.grantGoldPlate(db, userRow(id));
+      M.addCoins(db, id, WELCOME_COINS, 'подарок новичку');
+      const maxId = db.prepare('SELECT MAX(id) AS id FROM messages').get().id || 0;
+      db.prepare('INSERT INTO chat_members (chat_id, user_id, read_up_to) VALUES (?, ?, ?)').run(GENERAL_CHAT, id, maxId);
+      return id;
+    });
+    broadcastUser(userId);
+    broadcastChat(GENERAL_CHAT);
+    bots.onUserRegistered(userId);
+    log(`super admin ${uname} created by ${req.me.username}`);
+    res.json({ ok: true, plate: userRow(userId).plate });
   });
 
   api.post('/admin/ai', auth, admin, json, (req, res) => {
@@ -827,6 +995,143 @@ export function createApp({
     const u = userRow(req.body?.userId);
     if (!u || u.kind !== 'human') return res.status(400).json({ error: 'bad_user' });
     res.json({ code: codes.issueHelp(u.id), login: u.plate });
+  });
+
+  // ---------- номера-токены и аськоины ----------
+
+  const ownPlate = (req) => {
+    const p = M.plateRow(db, Number(req.params.id));
+    return p && p.owner_id === req.userId ? p : null;
+  };
+
+  api.get('/plates/me', auth, (req, res) => {
+    const me = userRow(req.userId);
+    const plates = db.prepare('SELECT * FROM plates WHERE owner_id = ? ORDER BY id').all(req.userId).map((p) => plateView(p));
+    const log = db.prepare('SELECT delta, reason, at FROM coin_log WHERE user_id = ? ORDER BY id DESC LIMIT 20').all(req.userId).map((r) => ({ ...r }));
+    res.json({
+      coins: me.coins, activeId: me.plate_id, gold: M.isGold(me), plates, log, levels: LEVELS,
+      countries: Object.entries(COUNTRIES).map(([id, c]) => ({ id, name: c.name, regions: c.regions })),
+      bonuses: { daily: DAILY_BONUS, invite: INVITE_BONUS, guess: GUESS_BONUS },
+    });
+  });
+
+  api.get('/plates/market', auth, (req, res) => {
+    const rows = db.prepare('SELECT * FROM plates WHERE price IS NOT NULL ORDER BY rarity DESC, price DESC LIMIT 200').all();
+    res.json({
+      showcase: rows.filter((r) => !r.owner_id).map((r) => M.viewWithOwner(db, r)),
+      listings: rows.filter((r) => r.owner_id && r.owner_id !== req.userId).map((r) => M.viewWithOwner(db, r)),
+    });
+  });
+
+  api.get('/plates/:id', auth, (req, res) => {
+    const p = M.plateRow(db, Number(req.params.id));
+    if (!p) return res.status(404).json({ error: 'not_found' });
+    const name = (id) => (id ? userRow(id)?.display_name || '?' : 'АСЬКА');
+    const history = db.prepare('SELECT * FROM plate_history WHERE plate_id = ? ORDER BY id').all(p.id)
+      .map((h) => ({ kind: h.kind, from: name(h.from_id), to: name(h.to_id), price: h.price, note: h.note, at: h.at }));
+    res.json({ plate: { ...M.viewWithOwner(db, p), history } });
+  });
+
+  // Узнать цену: свой вариант (country, region, code) или случайный обычный номер региона
+  api.post('/plates/quote', auth, json, (req, res) => {
+    const me = userRow(req.userId);
+    const country = COUNTRIES[req.body?.country] ? req.body.country : 'RU';
+    const region = COUNTRIES[country].regions.some((r) => r.code === req.body?.region) ? req.body.region : defaultRegion(country);
+    let code;
+    if (req.body?.code) {
+      code = parsePlate(req.body.code, country, region);
+      if (!code) return res.status(400).json({ error: 'bad_plate' });
+    } else {
+      try { code = randomFreeCode(db, country, region); } catch { return res.status(409).json({ error: 'no_plates' }); }
+    }
+    const gold = isGoldCode(country, code);
+    const r = rarityOf(country, code);
+    res.json({
+      code, text: formatCode(country, code), country, region, city: cityOf(country, region), price: priceOf(country, code),
+      rarity: r, rarityName: RARITY[r].name, free: !keyTaken(db, plateKey(code)), gold, allowed: !gold || M.isGold(me),
+    });
+  });
+
+  // Купить: номер с витрины или у другого человека (plateId) — или свой вариант (country, region, code)
+  api.post('/plates/buy', auth, json, (req, res) => {
+    if (!allow(`buy:${req.userId}`, 30, 600_000)) return res.status(429).json({ error: 'too_many' });
+    const me = userRow(req.userId);
+    const b = req.body || {};
+    let result;
+    try {
+      result = tx(db, () => {
+        if (Number.isInteger(b.plateId)) {
+          const p = M.plateRow(db, b.plateId);
+          if (!p || p.price === null || p.owner_id === me.id) return { error: 'not_for_sale', status: 400 };
+          if (!M.canHold(me, p)) return { error: 'gold_only', status: 403 };
+          if (me.coins < p.price) return { error: 'no_coins', status: 402 };
+          M.addCoins(db, me.id, -p.price, `купил(а) номер ${formatCode(p.country, p.code)}`);
+          if (p.owner_id) M.addCoins(db, p.owner_id, p.price, `продал(а) номер ${formatCode(p.country, p.code)}`);
+          db.prepare('UPDATE plates SET owner_id = ?, price = NULL WHERE id = ?').run(me.id, p.id);
+          db.prepare("INSERT INTO plate_history (plate_id, from_id, to_id, price, kind, at) VALUES (?, ?, ?, ?, 'sale', ?)").run(p.id, p.owner_id, me.id, p.price, Date.now());
+          if (b.activate) M.activate(db, me.id, p.id);
+          return { id: p.id, seller: p.owner_id };
+        }
+        const country = COUNTRIES[b.country] ? b.country : 'RU';
+        const region = COUNTRIES[country].regions.some((r) => r.code === b.region) ? b.region : defaultRegion(country);
+        const code = parsePlate(b.code, country, region);
+        if (!code) return { error: 'bad_plate', status: 400 };
+        if (keyTaken(db, plateKey(code))) return { error: 'plate_taken', status: 409 };
+        if (isGoldCode(country, code) && !M.isGold(me)) return { error: 'gold_only', status: 403 };
+        const price = priceOf(country, code);
+        if (me.coins < price) return { error: 'no_coins', status: 402 };
+        M.addCoins(db, me.id, -price, `купил(а) номер ${formatCode(country, code)}`);
+        const id = M.give(db, me.id, { country, code, kind: 'buy', note: `за ${price}`, active: Boolean(b.activate) });
+        db.prepare('UPDATE plate_history SET price = ? WHERE plate_id = ?').run(price, id);
+        return { id };
+      });
+    } catch (e) {
+      log('buy error', e);
+      return res.status(500).json({ error: 'server' });
+    }
+    if (result.error) return res.status(result.status).json({ error: result.error });
+    if (b.activate) broadcastUser(me.id);
+    if (result.seller) broadcastUser(result.seller);
+    res.json({ ok: true, plate: plateView(M.plateRow(db, result.id)), coins: userRow(me.id).coins });
+  });
+
+  api.post('/plates/:id/activate', auth, (req, res) => {
+    const p = ownPlate(req);
+    if (!p) return res.status(404).json({ error: 'not_found' });
+    if (!M.canHold(userRow(req.userId), p)) return res.status(403).json({ error: 'gold_only' });
+    db.prepare('UPDATE plates SET price = NULL WHERE id = ?').run(p.id);
+    M.activate(db, req.userId, p.id);
+    broadcastUser(req.userId);
+    res.json({ ok: true });
+  });
+
+  // Улучшить номер: рамка, неон, голограмма, платина, бриллиант
+  api.post('/plates/:id/upgrade', auth, (req, res) => {
+    const p = ownPlate(req);
+    if (!p) return res.status(404).json({ error: 'not_found' });
+    const cost = M.upgradeCost(p);
+    if (cost === null) return res.status(400).json({ error: 'max_level' });
+    const me = userRow(req.userId);
+    if (me.coins < cost) return res.status(402).json({ error: 'no_coins' });
+    tx(db, () => {
+      M.addCoins(db, me.id, -cost, `улучшил(а) номер ${formatCode(p.country, p.code)} до «${LEVELS[p.level + 1].name}»`);
+      db.prepare('UPDATE plates SET level = level + 1 WHERE id = ?').run(p.id);
+      db.prepare("INSERT INTO plate_history (plate_id, from_id, to_id, price, kind, note, at) VALUES (?, ?, ?, ?, 'upgrade', ?, ?)").run(p.id, me.id, me.id, cost, LEVELS[p.level + 1].name, Date.now());
+    });
+    if (me.plate_id === p.id) broadcastUser(me.id);
+    res.json({ ok: true, plate: plateView(M.plateRow(db, p.id)), coins: userRow(me.id).coins });
+  });
+
+  // Выставить на продажу (цена) или снять (price: null). Основной номер продать нельзя — сначала сделай основным другой.
+  api.post('/plates/:id/list', auth, json, (req, res) => {
+    const p = ownPlate(req);
+    if (!p) return res.status(404).json({ error: 'not_found' });
+    const price = req.body?.price;
+    if (price !== null && (!Number.isInteger(price) || price < 1 || price > 1_000_000)) return res.status(400).json({ error: 'bad_price' });
+    if (price !== null && userRow(req.userId).plate_id === p.id) return res.status(400).json({ error: 'active_plate' });
+    db.prepare('UPDATE plates SET price = ? WHERE id = ?').run(price, p.id);
+    if (price !== null) db.prepare("INSERT INTO plate_history (plate_id, from_id, to_id, price, kind, at) VALUES (?, ?, NULL, ?, 'list', ?)").run(p.id, req.userId, price, Date.now());
+    res.json({ ok: true, plate: plateView(M.plateRow(db, p.id)) });
   });
 
   // ---------- файлы, приглашения, пуши ----------

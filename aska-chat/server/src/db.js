@@ -3,6 +3,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
+import { mintPlate, isGoldCode, partsOf, randomFreeCode, regionForCity, keyTaken, plateKey } from './plates.js';
 
 export const GENERAL_CHAT = 'general';
 
@@ -229,6 +230,86 @@ function migrate(db) {
   // Администратор — самый первый человек (тот, кто открыл АСЬКУ первым приглашением).
   if (!db.prepare("SELECT 1 FROM users WHERE is_admin = 1 AND kind = 'human'").get()) {
     db.prepare("UPDATE users SET is_admin = 1 WHERE id = (SELECT MIN(id) FROM users WHERE kind = 'human')").run();
+  }
+  migrateV3(db);
+}
+
+// Третья версия (22.10.2026): номера-токены (покупка, улучшение, рынок), аськоины, роли (голд-админы, супер-админ), блокировка.
+function migrateV3(db) {
+  addColumn(db, 'users', 'role', "TEXT NOT NULL DEFAULT 'user'"); // user | admin (голд) | super
+  addColumn(db, 'users', 'blocked_at', 'INTEGER');
+  addColumn(db, 'users', 'coins', 'INTEGER NOT NULL DEFAULT 0');
+  addColumn(db, 'users', 'plate_id', 'INTEGER');
+  addColumn(db, 'users', 'daily_day', 'TEXT');
+  addColumn(db, 'users', 'old_plate_key', 'TEXT'); // номер второй версии, если его пришлось сменить, — по нему можно войти
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS plates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT NOT NULL,
+      key TEXT NOT NULL UNIQUE,
+      country TEXT NOT NULL,
+      region TEXT NOT NULL DEFAULT '',
+      rarity INTEGER NOT NULL DEFAULT 0,
+      level INTEGER NOT NULL DEFAULT 0,
+      owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      price INTEGER,
+      gold INTEGER NOT NULL DEFAULT 0,
+      minted_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS plates_owner ON plates(owner_id);
+    CREATE TABLE IF NOT EXISTS plate_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      plate_id INTEGER NOT NULL REFERENCES plates(id) ON DELETE CASCADE,
+      from_id INTEGER,
+      to_id INTEGER,
+      price INTEGER,
+      kind TEXT NOT NULL,
+      note TEXT,
+      at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS plate_history_plate ON plate_history(plate_id);
+    CREATE TABLE IF NOT EXISTS coin_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      delta INTEGER NOT NULL,
+      reason TEXT NOT NULL,
+      at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS coin_log_user ON coin_log(user_id, id);
+  `);
+  // Администраторы второй версии становятся голд
+  db.prepare("UPDATE users SET role = 'admin' WHERE is_admin = 1 AND role = 'user' AND kind = 'human'").run();
+
+  // Каждый номер — токен в таблице plates. Серия АМР — только у голд (и у Аськи), остальным
+  // выдаём номер с теми же цифрами в другой серии; ИИ-людям — в регионе их города.
+  const done = getSetting(db, 'plates_v3');
+  const users = db.prepare('SELECT * FROM users WHERE plate IS NOT NULL AND plate_id IS NULL ORDER BY id').all();
+  for (const u of users) {
+    tx(db, () => {
+      const gold = u.role === 'admin' || u.role === 'super' || u.kind === 'aska';
+      let code = u.plate;
+      let country = 'RU';
+      if (!partsOf('RU', code)) return;
+      if (u.kind === 'person' || (!gold && isGoldCode('RU', code))) {
+        const per = u.persona ? JSON.parse(u.persona) : null;
+        const place = (per && regionForCity(per.city)) || { country: 'RU', region: partsOf('RU', code).region };
+        country = place.country;
+        code = randomFreeCode(db, country, place.region, { keepDigits: country === 'RU' ? partsOf('RU', u.plate).digits : undefined });
+      } else if (keyTaken(db, plateKey(code))) {
+        code = randomFreeCode(db, 'RU', partsOf('RU', code).region, { gold, keepDigits: partsOf('RU', code).digits });
+      }
+      const id = mintPlate(db, { country, code, ownerId: u.id, kind: 'mint', note: code === u.plate ? 'перенос' : `было ${u.plate}` });
+      db.prepare('UPDATE users SET plate = ?, plate_id = ?, old_plate_key = ? WHERE id = ?').run(code, id, code === u.plate ? null : plateKey(u.plate), u.id);
+    });
+  }
+  if (!done) {
+    // стартовые аськоины всем людям
+    const now = Date.now();
+    for (const u of db.prepare("SELECT id FROM users WHERE kind = 'human'").all()) {
+      db.prepare('UPDATE users SET coins = coins + 100 WHERE id = ?').run(u.id);
+      db.prepare("INSERT INTO coin_log (user_id, delta, reason, at) VALUES (?, 100, 'подарок к запуску номеров', ?)").run(u.id, now);
+    }
+    setSetting(db, 'plates_v3', '1');
   }
 }
 

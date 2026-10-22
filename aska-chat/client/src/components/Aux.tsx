@@ -12,15 +12,16 @@ import { getDesign, setDesign, soundEnabled, setSoundEnabled, play, flower } fro
 import type { Design } from '../lib/aska.ts';
 import { DesignPick, APP_VERSION } from './Welcome.tsx';
 import { Win, Ico, Dialog } from './Win.tsx';
-import { Plate } from './Plate.tsx';
+import { UserPlate, Gold } from './Plate.tsx';
+import { Plates } from './Plates.tsx';
 import { Circles } from './Circles.tsx';
 import { MyAI } from './MyAI.tsx';
 import { Admin } from './Admin.tsx';
 
-export type AuxKind = 'settings' | 'invite' | 'circles' | 'myai' | 'admin';
+export type AuxKind = 'settings' | 'invite' | 'circles' | 'myai' | 'admin' | 'plates';
 
 const TITLES: Record<AuxKind, string> = {
-  settings: 'Ещё', invite: 'Позвать друга', circles: 'Круги', myai: 'Мой ИИ', admin: 'Управление АСЬКОЙ',
+  settings: 'Ещё', invite: 'Позвать друга', circles: 'Круги', myai: 'Мой ИИ', admin: 'Управление АСЬКОЙ', plates: 'Номера',
 };
 
 export function Aux({ kind, onBack, onOpen, onAux }: { kind: AuxKind; onBack: () => void; onOpen: (chatId: string) => void; onAux: (k: AuxKind) => void }) {
@@ -32,6 +33,7 @@ export function Aux({ kind, onBack, onOpen, onAux }: { kind: AuxKind; onBack: ()
         {kind === 'circles' && <Circles onOpen={onOpen} />}
         {kind === 'myai' && <MyAI onOpen={onOpen} />}
         {kind === 'admin' && <Admin />}
+        {kind === 'plates' && <Plates />}
       </div>
     </Win>
   );
@@ -71,13 +73,14 @@ function Settings({ onAux }: { onAux: (k: AuxKind) => void }) {
         <div className="aska-profile-head">
           <Ico className="ico big" html={flower(s.connected ? 'online' : 'offline', 36)} />
           <div className="who">
-            <b>{me?.displayName}</b>
+            <b>{me?.displayName}<Gold user={me} big /></b>
             <div className="muted">{[me?.city, me?.about].filter(Boolean).join(' · ') || 'расскажи о себе'}</div>
           </div>
           <button className="btn" onClick={() => setEditing(true)}>Изменить</button>
         </div>
-        <div className="aska-profile-plate"><Plate plate={me?.plate} size="l" /></div>
-        <div className="hint center">Твой номер в АСЬКЕ — им можно входить и делиться с друзьями.</div>
+        <div className="aska-profile-plate"><UserPlate user={me} size="l" onClick={() => onAux('plates')} /></div>
+        <div className="hint center">Твой номер в АСЬКЕ — им можно входить и делиться с друзьями. Сменить, купить красивый или улучшить — во вкладке «Номера».</div>
+        <div className="row aska-kv"><span>Аськоины</span><b>🪙 {s.profile?.coins ?? 0}</b><span className="sp" /><button className="btn" onClick={() => onAux('plates')}>🚗 Номера</button></div>
         <div className="row aska-kv">
           <span>Телефон</span>
           <b>{phone ? `${phoneText}${s.profile?.phoneVerified ? ' ✓' : ''}` : 'не привязан'}</b>

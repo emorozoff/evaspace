@@ -4,7 +4,8 @@
 import crypto from 'node:crypto';
 import { newKeys, decodeIncoming } from './seal.js';
 import { getSetting, setSetting } from './db.js';
-import { freePlate, ASKA_PLATE, formatPlate } from './plates.js';
+import { ASKA_PLATE, formatCode, randomFreeCode, regionForCity, keyTaken, plateKey } from './plates.js';
+import * as M from './market.js';
 import * as P from './personas.js';
 
 const ANNOUNCE = '2026-10-21-v2';
@@ -47,25 +48,33 @@ export function createBots(ctx) {
   const peopleEnabled = () => getSetting(db, 'people') === '1';
   const peopleOn = () => peopleEnabled() && ai.available();
 
-  function createBot({ kind, username, displayName, plate, about, city, ownerId, persona }) {
+  function createBot({ kind, username, displayName, about, city, ownerId, persona }) {
     const keys = newKeys();
     const junk = () => crypto.randomBytes(24).toString('base64');
     let uname = username;
     for (let i = 2; db.prepare('SELECT 1 FROM users WHERE username = ?').get(uname); i++) uname = `${username.slice(0, 16)}_${i}`;
     const { lastInsertRowid } = db.prepare(`
       INSERT INTO users (username, display_name, box_pk, kdf_salt, auth_hash, backup_n, backup_c, created_at,
-        kind, owner_id, plate, about, city, bot_sk, persona)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        kind, owner_id, about, city, bot_sk, persona)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(uname, displayName, keys.pk, junk(), crypto.randomBytes(32).toString('hex'), junk(), junk(), now(),
-      kind, ownerId ?? null, plate ?? null, about ?? null, city ?? null, keys.sk, persona ? JSON.stringify(persona) : null);
+      kind, ownerId ?? null, about ?? null, city ?? null, keys.sk, persona ? JSON.stringify(persona) : null);
     return Number(lastInsertRowid);
+  }
+
+  // Номер для показа: «А 001 МР 777», «1234 AB-7», «B AB 1234»…
+  function plateText(u) {
+    const p = u?.plate_id ? db.prepare('SELECT country, code FROM plates WHERE id = ?').get(u.plate_id) : null;
+    return p ? formatCode(p.country, p.code) : '';
   }
 
   function ensureAska() {
     const id = askaId();
     if (id) return id;
-    const plate = db.prepare('SELECT 1 FROM users WHERE plate = ?').get(ASKA_PLATE) ? null : ASKA_PLATE;
-    return createBot({ kind: 'aska', username: 'aska', displayName: 'Аська', plate, about: 'душа АСЬКИ 🌼 спроси меня о чём угодно' });
+    const aska = createBot({ kind: 'aska', username: 'aska', displayName: 'Аська', about: 'душа АСЬКИ 🌼 спроси меня о чём угодно' });
+    const code = keyTaken(db, plateKey(ASKA_PLATE)) ? randomFreeCode(db, 'RU', '777', { gold: true }) : ASKA_PLATE;
+    M.give(db, aska, { country: 'RU', code, note: 'Аська' });
+    return aska;
   }
 
   const twinName = (name) => `ИИ · ${name}`;
@@ -274,6 +283,7 @@ export function createBots(ctx) {
     switch (j.kind) {
       case 'reply': return replyJob(j.bot_id, j.chat_id);
       case 'announce': return announceJob(j.bot_id, j.chat_id, payload);
+      case 'announce3': return announce3Job(j.bot_id, j.chat_id, payload);
       case 'welcome': return welcomeJob(j.bot_id, j.chat_id, payload);
       case 'recovered': return say(j.bot_id, j.chat_id, [`С возвращением! 🌼 Вход восстановлен.`, 'Старые сообщения на этом телефоне не откроются — так работает шифрование. Зато новые придут как обычно.']);
       case 'people': return peopleJob(j.bot_id, j.chat_id);
@@ -427,7 +437,7 @@ export function createBots(ctx) {
       isDm ? 'Ответь на последние сообщения.' : 'Ответь, только если тебе правда есть что сказать — не обязательно отвечать на всё. Можно обратиться к кому-то по имени.',
       'В поле note — что нового стоит запомнить о собеседнике (коротко), или пустая строка.',
     ].filter(Boolean).join('\n');
-    const system = `${P.PERSON_RULES}\n\nКто ты:\n${per.card}\nИмя в АСЬКЕ: «${bot.display_name}», номер ${formatPlate(bot.plate)}.\nКак ты пишешь: ${per.style}`;
+    const system = `${P.PERSON_RULES}\n\nКто ты:\n${per.card}\nИмя в АСЬКЕ: «${bot.display_name}», номер ${plateText(bot)}.\nКак ты пишешь: ${per.style}`;
     const out = await ai.complete({ system, prompt, schema: P.REPLY_SCHEMA });
     if (!out) return;
     if (out.note && other?.kind === 'human') addNote(bot.id, otherId, out.note);
@@ -517,7 +527,7 @@ export function createBots(ctx) {
     const g = db.prepare('SELECT COUNT(*) AS n, SUM(correct) AS ok FROM guesses WHERE guesser_id = ?').get(userId);
     const friends = db.prepare("SELECT COUNT(*) AS n FROM users WHERE kind = 'human' AND id != ?").get(userId).n;
     return [
-      `Собеседник: ${describe(u)}, номер АСЬКИ ${formatPlate(u.plate)}.`,
+      `Собеседник: ${describe(u)}, номер АСЬКИ ${plateText(u)}.`,
       u.phone ? 'Телефон привязан.' : 'Телефон НЕ привязан (можно предложить привязать в «Ещё» → «Мой профиль»).',
       `Круги: ${circles.join(', ') || 'пока ни в одном'}.`,
       `Его личный ИИ знает фактов: ${facts}.`,
@@ -549,7 +559,7 @@ export function createBots(ctx) {
     }
     if (!isDm) return; // по шпаргалке в кругах не болтаем
     const text = fresh.map((m) => m.body?.text || '').join(' ');
-    return say(bot.id, chat.id, P.askaScripted(text, { name: u?.display_name, plate: formatPlate(u?.plate) }));
+    return say(bot.id, chat.id, P.askaScripted(text, { name: u?.display_name, plate: plateText(u) }));
   }
 
   function reach(botId, userId) {
@@ -587,7 +597,7 @@ export function createBots(ctx) {
     if (!u) return;
     // Одно-два сообщения, чтобы обновление не принесло пачку уведомлений
     const msgs = [
-      `Привет, ${u.display_name}! Это Аська 🌼 Теперь я живая: со мной можно болтать, а если что-то непонятно — спрашивай.\n\nЧто нового в АСЬКЕ:\n🚗 Номера как у машин — твой ${formatPlate(u.plate)}\n⭕ Круги — беседы по интересам (вкладка «Круги»)\n🤖 Твой личный ИИ: друзья пишут ему открыто или анонимно, передают тебе приятное и задают вопросы\n📱 Вход по телефону и лёгкое восстановление`,
+      `Привет, ${u.display_name}! Это Аська 🌼 Теперь я живая: со мной можно болтать, а если что-то непонятно — спрашивай.\n\nЧто нового в АСЬКЕ:\n🚗 Номера как у машин — твой ${plateText(u)}\n⭕ Круги — беседы по интересам (вкладка «Круги»)\n🤖 Твой личный ИИ: друзья пишут ему открыто или анонимно, передают тебе приятное и задают вопросы\n📱 Вход по телефону и лёгкое восстановление`,
     ];
     const tips = [];
     if (!u.phone) tips.push('Привяжи телефон: «Ещё» → «Мой профиль». Тогда, если забудешь пароль, вход вернётся за минуту.');
@@ -596,13 +606,30 @@ export function createBots(ctx) {
     for (const m of msgs) await say(botId, chatId, [m], { typing: true });
   }
 
+  // Третья версия: номера-токены, аськоины, голд
+  async function announce3Job(botId, chatId, { userId }) {
+    const u = row(userId);
+    if (!u) return;
+    const gold = M.isGold(u);
+    const msgs = [
+      `Обновление 🚗 Номера в АСЬКЕ теперь коллекционные — как NFT: у каждого свой токен, редкость и история владельцев. Красивые номера, номера своего города и других стран можно покупать, улучшать (серебро, неон, голограмма, платина, бриллиант) и продавать другим. Всё во вкладке «Номера».`,
+      gold
+        ? `Ты — голд 👑 У тебя золотая серия: ${plateText(u)}. В «Управлении АСЬКОЙ» теперь можно менять номера людям, начислять аськоины, блокировать и назначать голд.`
+        : u.old_plate_key
+          ? `Серия АМР теперь золотая — она только у админов (у них золотой значок). Твой новый номер — ${plateText(u)}, цифры те же. Входить можно и по нему, и по старому, и по телефону.`
+          : `Серия АМР теперь золотая — она только у админов (у них золотой значок). Твой номер — ${plateText(u)}.`,
+      `Держи 100 аськоинов на старт 🪙 Ещё их дают за вход каждый день, за приглашённого друга и за угаданного ИИ в игре «Кто здесь ИИ?».`,
+    ];
+    await say(botId, chatId, [msgs.join('\n\n')]);
+  }
+
   async function welcomeJob(botId, chatId, { userId }) {
     const u = row(userId);
     if (!u) return;
     await say(botId, chatId, [
       `Привет, ${u.display_name}! Я Аська 🌼 Добро пожаловать в АСЬКУ!`,
-      `Твой номер — ${formatPlate(u.plate)}. Им можно входить вместо телефона и делиться с друзьями.`,
-      'Загляни в «Круги», а во вкладке «Мой ИИ» расскажи о себе своему ИИ — друзьям будет интересно с ним болтать.',
+      `Твой номер — ${plateText(u)}. Им можно входить вместо телефона и делиться с друзьями.`,
+      'Загляни в «Круги», а во вкладке «Мой ИИ» расскажи о себе своему ИИ — друзьям будет интересно с ним болтать. Во вкладке «Номера» — красивые номера за аськоины, 100 уже у тебя 🪙',
       'И заполни профиль: «Ещё» → «Изменить» — город и пару слов о себе. Так тебя быстрее узнают 😉',
     ]);
   }
@@ -863,7 +890,9 @@ export function createBots(ctx) {
       for (const per of P.PEOPLE) {
         let u = db.prepare("SELECT * FROM users WHERE kind = 'person' AND json_extract(persona, '$.key') = ?").get(per.key);
         if (!u) {
-          const id = createBot({ kind: 'person', username: per.username, displayName: per.name, plate: freePlate(db), about: per.about, city: per.city, persona: per });
+          const id = createBot({ kind: 'person', username: per.username, displayName: per.name, about: per.about, city: per.city, persona: per });
+          const place = regionForCity(per.city) || { country: 'RU', region: '777' };
+          M.give(db, id, { country: place.country, code: randomFreeCode(db, place.country, place.region), note: 'первый номер' });
           ctx.broadcastUser(id);
           const twin = ensureTwin(id);
           if (twin) ctx.broadcastUser(twin);
@@ -898,7 +927,12 @@ export function createBots(ctx) {
     }
     if (getSetting(db, 'announced') !== ANNOUNCE) {
       setSetting(db, 'announced', ANNOUNCE);
+      setSetting(db, 'announced_v3', '1');
       humans().forEach((h, i) => schedule('announce', aska, `dm:${Math.min(aska, h.id)}:${Math.max(aska, h.id)}`, now() + T(3000 + i * 2000), { userId: h.id }));
+    }
+    else if (getSetting(db, 'announced_v3') !== '1') {
+      setSetting(db, 'announced_v3', '1');
+      humans().forEach((h, i) => schedule('announce3', aska, `dm:${Math.min(aska, h.id)}:${Math.max(aska, h.id)}`, now() + T(3000 + i * 2000), { userId: h.id }));
     }
   }
 
