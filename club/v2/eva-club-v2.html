@@ -11614,7 +11614,7 @@ function calMailView() {
     const m = inviteMail(p), b = Store.get('busy', p.id);
     return `<tr>
       <td><a class="ml-person" href="#p-${p.id}">${avatar(p)}<span><b>${esc(personName(p))}</b><small>${esc(p.title || '')}</small></span></a></td>
-      <td>${canEditMail(p.id) ? `<input class="input sm" type="email" data-ml-pid="${p.id}" value="${esc(p.calEmail || '')}" placeholder="${esc(m.src && m.src !== 'cal' ? m.mail : 'почта для приглашений')}">` : (p.calEmail ? esc(p.calEmail) : '<span class="muted">—</span>')}</td>
+      <td>${canEditMail(p.id) ? `<input class="input sm" type="text" inputmode="email" autocomplete="off" spellcheck="false" data-ml-pid="${p.id}" value="${esc(p.calEmail || '')}" placeholder="${esc(m.src && m.src !== 'cal' ? m.mail : 'почта для приглашений')}">` : (p.calEmail ? esc(p.calEmail) : '<span class="muted">—</span>')}</td>
       <td>${m.mail ? `<b>${esc(m.mail)}</b><small class="ml-src">${MAIL_SRC[m.src]}</small>` : '<span class="pill warn">приглашения не придут</span>'}</td>
       <td class="soft nowrap">${b && b.share !== false && b.from ? `подключён · ${timeAgo(b.at)}` : 'не подключён'}</td>
     </tr>`;
@@ -11858,7 +11858,7 @@ function openMeeting(id, preset = {}) {
         if (!noMail.length) { box.innerHTML = ''; return; }
         const editable = noMail.filter(canEditMail);
         box.innerHTML = `<p class="note warn-t">Без почты приглашение не придёт: ${noMail.map(pid => esc(firstName(personById(pid)))).join(', ')}.${editable.length < noMail.length ? ' Почту остальных впишет основатель во вкладке «Почты».' : ''}</p>
-          ${editable.length ? `<div class="mt-mail-row">${editable.map(pid => `<label class="field"><span>${esc(firstName(personById(pid)))}</span><input class="input sm" type="email" data-mt-mail="${pid}" placeholder="name@gmail.com" value="${esc(typed[pid] || '')}"></label>`).join('')}
+          ${editable.length ? `<div class="mt-mail-row">${editable.map(pid => `<label class="field"><span>${esc(firstName(personById(pid)))}</span><input class="input sm" type="text" inputmode="email" autocomplete="off" spellcheck="false" data-mt-mail="${pid}" placeholder="name@gmail.com" value="${esc(typed[pid] || '')}"></label>`).join('')}
             <button type="button" class="btn sm" id="mtMailSave">Сохранить почты</button></div>` : ''}`;
       };
       paint();
