@@ -474,7 +474,7 @@ export function createApp({
         db.prepare('UPDATE invites SET used_by = ?, used_at = ? WHERE code = ?').run(userId, now, code);
         const maxId = db.prepare('SELECT MAX(id) AS id FROM messages').get().id || 0;
         db.prepare('INSERT INTO chat_members (chat_id, user_id, read_up_to) VALUES (?, ?, ?)').run(GENERAL_CHAT, userId, maxId);
-        return { userId, plate, username: uname, token: createSession(userId) };
+        return { userId, plate, username: uname, token: createSession(userId), inviter: inviter || null };
       });
     } catch (e) {
       log('register error', e);
@@ -483,7 +483,7 @@ export function createApp({
     if (result.error) return res.status(result.status).json({ error: result.error });
     broadcastUser(result.userId);
     broadcastChat(GENERAL_CHAT);
-    bots.onUserRegistered(result.userId);
+    bots.onUserRegistered(result.userId, { inviterId: result.inviter, bonus: result.inviter ? INVITE_BONUS : 0 });
     log(`registered ${result.username}`);
     res.json({ token: result.token, userId: result.userId, plate: result.plate, username: result.username });
   });
@@ -841,7 +841,7 @@ export function createApp({
       isAdmin: M.isGold(u), role: u.role, blocked: Boolean(u.blocked_at), coins: u.coins,
     }));
     const hasSuper = anySuper();
-    res.json({ ai: ai.status(), people: bots.peopleEnabled(), sms: sms.status(), users, me: { role: req.me.role, id: req.me.id }, hasSuper, canInviteSuper: req.me.role === 'super' || !hasSuper });
+    res.json({ ai: ai.status(), people: bots.peopleEnabled(), sms: sms.status(), users, me: { role: req.me.role, id: req.me.id }, hasSuper, canInviteSuper: req.me.role === 'super' || !hasSuper, party: bots.partyResults() });
   });
 
   // Кто кого может менять: админа и супер-админа — только супер-админ; обычных — любой админ. Себя — никто.

@@ -207,8 +207,11 @@ export function createBots(ctx) {
     if (changes) for (const id of memberIds(chatId)) ctx.sendTo(id, { type: 'read', chatId, userId: botId, upTo: maxId });
   }
 
+  // У ИИ-людей свой темп: pace — как долго собираются ответить, typing — как медленно печатают
+  const paceOf = (u) => (u.kind === 'person' ? personaOf(u)?.pace || 1 : 1);
+  const slowOf = (u) => (u.kind === 'person' ? personaOf(u)?.typing || 1 : 1);
   const typingMs = (u, text) => (u.kind === 'person'
-    ? Math.min(9000, Math.max(1500, text.length * 55))
+    ? slowOf(u) * Math.min(9000, Math.max(1500, text.length * 55))
     : Math.min(2500, Math.max(600, text.length * 15)));
 
   function cleanOut(t, u) {
@@ -241,7 +244,7 @@ export function createBots(ctx) {
       const r = ctx.post(botId, chatId, body);
       if (r) ids.push(r.id);
       if (u.kind === 'person') keepOnline(botId);
-      if (i < list.length - 1) await sleep(rand(500, 1600));
+      if (i < list.length - 1) await sleep(rand(500, 1600) * slowOf(u));
     }
     return ids;
   }
@@ -289,8 +292,11 @@ export function createBots(ctx) {
       case 'people': return peopleJob(j.bot_id, j.chat_id);
       case 'qday': return say(j.bot_id, j.chat_id, [`❓ Вопрос дня: ${payload.q}`], { typing: false });
       case 'nudge': return nudgeJob(j.bot_id, j.chat_id, payload);
-      case 'opener': return openerJob(j.bot_id, j.chat_id);
+      case 'opener': return openerJob(j.bot_id, j.chat_id, payload);
       case 'hello': return helloJob(j.bot_id, payload);
+      case 'newbie': return newbieJob(j.bot_id, payload);
+      case 'party': return partyJob(j.bot_id, j.chat_id, payload);
+      case 'party_digest': return partyDigestJob(j.bot_id, payload);
       case 'thank': return thankJob(j.bot_id, payload);
       case 'person_answer': return personAnswerJob(j.bot_id, payload);
       default: return null;
@@ -315,10 +321,11 @@ export function createBots(ctx) {
 
   function replyDue(u, inCircle) {
     if (u.kind !== 'person') return now() + T(rand(1200, 3500));
-    if (isOnline(u)) return now() + T(inCircle ? rand(8000, 70000) : rand(4000, 35000));
+    const pace = paceOf(u);
+    if (isOnline(u)) return now() + T(pace * (inCircle ? rand(8000, 70000) : rand(4000, 35000)));
     const at = nextOnline(u);
     if (inCircle && at - now() > 2 * HOUR) return null;
-    return at + T(rand(20000, 120000));
+    return at + T(pace * rand(20000, 120000));
   }
 
   function onMessage({ chatId, msgId, senderId }) {
@@ -359,7 +366,7 @@ export function createBots(ctx) {
       // ИИ-люди иногда отвечают друг другу, но не больше двух реплик подряд без живых
       if (botStreak(chatId) >= 2 || Math.random() > (timing.chainChance ?? 0.3)) return;
       const others = people.filter((p) => p.id !== senderId && isOnline(p));
-      if (others.length) schedule('reply', pick(others).id, chatId, now() + T(rand(20000, 120000)));
+      if (others.length) { const p = pick(others); schedule('reply', p.id, chatId, now() + T(paceOf(p) * rand(20000, 120000))); }
     }
   }
 
@@ -444,7 +451,7 @@ export function createBots(ctx) {
     await say(bot.id, chat.id, outMessages(out));
   }
 
-  async function openerJob(botId, chatId) {
+  async function openerJob(botId, chatId, { intro } = {}) {
     const bot = row(botId);
     const chat = getChat(chatId);
     if (!bot || !chat || !peopleOn() || !memberIds(chatId).includes(botId)) return;
@@ -452,9 +459,11 @@ export function createBots(ctx) {
     const hist = history(botId, chatId, 12);
     const prompt = [
       timeLine(per.tz),
-      `Общий круг «${chat.emoji || ''} ${chat.title}» (${chat.about || ''}). В нём давно тихо.`,
+      `Общий круг «${chat.emoji || ''} ${chat.title}» (${chat.about || ''}).${intro ? '' : ' В нём давно тихо.'}`,
       hist.length ? `Что писали раньше:\n${transcript(hist, botId, nameOf)}` : 'Раньше тут ничего не писали.',
-      'Начни разговор сам(а): поделись чем-то из своей жизни по теме круга или спроси у всех что-нибудь. Одно-два коротких сообщения.',
+      intro
+        ? 'Ты только что появился(ась) в АСЬКЕ и зашёл(шла) в этот круг. Поздоровайся со всеми коротко и по-своему, как живой человек. Одно-два коротких сообщения.'
+        : 'Начни разговор сам(а): поделись чем-то из своей жизни по теме круга или спроси у всех что-нибудь. Одно-два коротких сообщения.',
       'note оставь пустым.',
     ].join('\n');
     const system = `${P.PERSON_RULES}\n\nКто ты:\n${per.card}\nИмя в АСЬКЕ: «${bot.display_name}».\nКак ты пишешь: ${per.style}`;
@@ -462,18 +471,22 @@ export function createBots(ctx) {
     if (out) await say(botId, chatId, outMessages(out));
   }
 
-  async function helloJob(botId, { userId, circleId }) {
+  async function helloJob(botId, { userId, circleId, party }) {
     const bot = row(botId);
     const human = row(userId);
-    const circle = getChat(circleId);
+    const circle = circleId ? getChat(circleId) : null;
     if (!bot || !human || !peopleOn()) return;
     const chatId = ctx.ensureDm(botId, userId);
     if (db.prepare('SELECT 1 FROM messages WHERE chat_id = ?').get(chatId)) return;
     const per = personaOf(bot);
     const prompt = [
       timeLine(per.tz),
-      `Ты сам(а) пишешь первым(ой) человеку: ${describe(human)}. Вы оба в круге «${circle?.emoji || ''} ${circle?.title || ''}».`,
-      'Напиши короткое первое сообщение, как живой человек: зацепись за что-то из круга или просто познакомься. Без «как дела» в лоб.',
+      party
+        ? `Ты сам(а) пишешь первым(ой) человеку: ${describe(human)}. Ты слышал(а), что он(а) тоже был(а) на вечеринке зумеров. Вы там толком не общались, но напиши так, будто вы знакомы, — по своей роли, легко и без подробностей о нём(ней).`
+        : `Ты сам(а) пишешь первым(ой) человеку: ${describe(human)}. Вы оба в круге «${circle?.emoji || ''} ${circle?.title || ''}».`,
+      party
+        ? 'Одно-два коротких сообщения, как живой человек.'
+        : 'Напиши короткое первое сообщение, как живой человек: зацепись за что-то из круга или просто познакомься. Без «как дела» в лоб.',
       'note оставь пустым.',
     ].join('\n');
     const system = `${P.PERSON_RULES}\n\nКто ты:\n${per.card}\nИмя в АСЬКЕ: «${bot.display_name}».\nКак ты пишешь: ${per.style}`;
@@ -534,6 +547,7 @@ export function createBots(ctx) {
       `Игра «Кто здесь ИИ?»: угадал(а) ${g.ok || 0} из ${g.n}.`,
       `Живых друзей в АСЬКЕ, кроме него: ${friends}.`,
       u.is_admin ? `Он администратор АСЬКИ. ${ai.configured() ? '' : 'Ключ Claude ещё не вставлен («Ещё» → «Управление АСЬКОЙ»).'}` : '',
+      partyLine(),
       notesOf(askaId(), userId) && `Твои заметки о нём: ${notesOf(askaId(), userId)}`,
     ].filter(Boolean).join('\n');
   }
@@ -543,23 +557,146 @@ export function createBots(ctx) {
     const isDm = chat.kind === 'dm';
     const userId = isDm ? memberIds(chat.id).find((id) => id !== bot.id) : last.senderId;
     const u = row(userId);
+    const vote = isDm && u?.kind === 'human' ? partyVote(userId) : null; // недавно спрашивала про вечеринку
     const prompt = [
       timeLine(),
       isDm ? 'Личная переписка.' : `Круг «${chat.emoji || ''} ${chat.title}». Тут ты ведущая: реагируй коротко и по-доброму, не на каждое сообщение.`,
       askaContext(userId),
+      vote && partyPrompt(vote),
       'Переписка (старые сверху):',
       transcript(hist.slice(-20), bot.id, nameOf),
       isDm ? 'Ответь на последние сообщения.' : 'Ответь, если к месту, иначе — пустой список.',
       'В поле note — что нового стоит запомнить о собеседнике (коротко), или пустая строка.',
-    ].join('\n');
-    const out = await ai.complete({ system: P.ASKA_RULES, prompt, schema: P.REPLY_SCHEMA });
+    ].filter(Boolean).join('\n');
+    const out = await ai.complete({ system: P.ASKA_RULES, prompt, schema: vote ? P.PARTY_SCHEMA : P.REPLY_SCHEMA });
     if (out) {
       if (out.note && u?.kind === 'human') addNote(bot.id, userId, out.note);
+      if (vote) applyParty(userId, out);
       return say(bot.id, chat.id, outMessages(out));
     }
     if (!isDm) return; // по шпаргалке в кругах не болтаем
     const text = fresh.map((m) => m.body?.text || '').join(' ');
+    if (vote && (vote.attended === null || (vote.attended === 1 && vote.rating === null))) {
+      const v = applyParty(userId, P.parseParty(text));
+      if (v) {
+        if (v.attended === 0) return say(bot.id, chat.id, P.PARTY.no);
+        if (!v.rating) return say(bot.id, chat.id, P.PARTY.askRating);
+        return say(bot.id, chat.id, [...P.PARTY.thanks(v.rating), ...(v.comment ? [] : P.PARTY.askComment)]);
+      }
+    }
     return say(bot.id, chat.id, P.askaScripted(text, { name: u?.display_name, plate: plateText(u) }));
+  }
+
+  // ---------- опрос о вечеринке зумеров ----------
+
+  const PARTY_DAYS = 14; // сколько дней после запуска опроса спрашиваем новичков
+  const partyStarted = () => Number(getSetting(db, 'party_started') || 0);
+  const partyOpen = () => partyStarted() > 0 && now() - partyStarted() < PARTY_DAYS * DAY;
+  const partyVote = (userId) => db.prepare('SELECT * FROM party_votes WHERE user_id = ? AND asked_at > ?').get(userId, now() - 7 * DAY) || null;
+  const admins = () => db.prepare("SELECT * FROM users WHERE kind = 'human' AND role IN ('admin', 'super') AND blocked_at IS NULL ORDER BY id").all();
+  const avgText = (x) => String(Math.round(x * 10) / 10).replace('.', ',');
+
+  function partyStats() {
+    const r = db.prepare(`SELECT COUNT(*) AS asked, COUNT(attended) AS answered, COALESCE(SUM(attended = 1), 0) AS went,
+      COUNT(rating) AS rated, AVG(rating) AS avg FROM party_votes`).get();
+    return { asked: r.asked, answered: r.answered, went: r.went, rated: r.rated, avg: r.rated ? Math.round(r.avg * 10) / 10 : null };
+  }
+
+  function partyLine() {
+    if (!partyStarted()) return '';
+    const s = partyStats();
+    return s.rated ? `Опрос о вечеринке зумеров: оценок ${s.rated}, средняя ${avgText(s.avg)} из 10.` : 'Опрос о вечеринке зумеров: оценок пока нет.';
+  }
+
+  function partyPrompt(v) {
+    const state = v.attended === null ? 'Он ещё не ответил.'
+      : v.attended === 0 ? 'Записано: на вечеринке не был.'
+        : `Записано: был, оценка ${v.rating ?? 'ещё не поставлена'}${v.comment ? `, отзыв «${short(v.comment, 120)}»` : ''}.`;
+    return [
+      'Недавно ты спросила его в этой переписке про вечеринку зумеров: был ли он там, оценка от 1 до 10 и пара слов о ней.',
+      state,
+      'Заполни поля по НОВЫМ сообщениям: attended — yes или no, если понятно, был ли он на вечеринке, иначе unknown; rating — оценка от 1 до 10, если он её назвал, иначе 0; comment — его отзыв о вечеринке коротко, его словами, иначе пустая строка.',
+      'Если он был, но оценки ещё нет, — попроси её один раз и мягко. Ответил — поблагодари. Говорит о другом — просто поболтай.',
+    ].join('\n');
+  }
+
+  async function partyJob(botId, chatId, { userId }) {
+    const u = row(userId);
+    if (!u || u.kind !== 'human' || u.blocked_at) return;
+    if (db.prepare('SELECT 1 FROM party_votes WHERE user_id = ?').get(userId)) return;
+    db.prepare('INSERT INTO party_votes (user_id, asked_at) VALUES (?, ?)').run(userId, now());
+    await say(botId, chatId, P.PARTY.ask);
+  }
+
+  // Записать ответ. Возвращает обновлённую строку или null, если ничего не поменялось.
+  function applyParty(userId, res) {
+    const v = db.prepare('SELECT * FROM party_votes WHERE user_id = ?').get(userId);
+    if (!v) return null;
+    let { attended, rating, comment } = v;
+    const r = Number.isInteger(res?.rating) && res.rating >= 1 && res.rating <= 10 ? res.rating : 0;
+    if (res?.attended === 'no' && !r) { attended = 0; rating = null; comment = null; }
+    if (res?.attended === 'yes' || r) attended = 1;
+    if (r) rating = r;
+    const c = short(res?.comment, 300);
+    if (c && attended === 1) comment = c;
+    if (attended === v.attended && rating === v.rating && comment === v.comment) return null;
+    db.prepare('UPDATE party_votes SET attended = ?, rating = ?, comment = ?, updated_at = ? WHERE user_id = ?').run(attended, rating, comment, now(), userId);
+    // администраторам — сводка; ответы за 10 минут сливаются в одно сообщение
+    const aska = askaId();
+    for (const a of admins()) if (a.id !== userId) schedule('party_digest', aska, `pd:${a.id}`, now() + T(10 * 60_000), { toId: a.id });
+    if (attended === 1 && v.attended !== 1) partyGuestHello(userId);
+    return db.prepare('SELECT * FROM party_votes WHERE user_id = ?').get(userId);
+  }
+
+  // Кто был на вечеринке, тому со временем напишет тот, кто пришёл туда без приглашения
+  function partyGuestHello(userId) {
+    if (!peopleOn()) return;
+    const guest = persons().find((p) => personaOf(p)?.party);
+    if (!guest || getChat(`dm:${Math.min(guest.id, userId)}:${Math.max(guest.id, userId)}`)) return;
+    schedule('hello', guest.id, `u:${userId}`, nextOnline(guest, now() + T(rand(30 * 60_000, 3 * HOUR))) + T(rand(0, 600_000)), { userId, party: true });
+  }
+
+  async function partyDigestJob(botId, { toId }) {
+    const to = row(toId);
+    if (!to || !M.isGold(to)) return;
+    const since = Number(getSetting(db, `party_digest:${toId}`) || 0);
+    const rows = db.prepare('SELECT * FROM party_votes WHERE updated_at > ? AND user_id != ? ORDER BY updated_at').all(since, toId);
+    setSetting(db, `party_digest:${toId}`, String(now()));
+    if (!rows.length) return;
+    const lines = rows.map((v) => `• ${nameOf(v.user_id)} — ${v.attended === 0 ? 'не был(а)'
+      : `${v.rating ? `${v.rating}/10` : 'был(а), без оценки'}${v.comment ? ` «${short(v.comment, 100)}»` : ''}`}`);
+    const s = partyStats();
+    const total = s.rated ? `Оценок: ${s.rated}, средняя ${avgText(s.avg)}/10.` : 'Оценок пока нет.';
+    await say(botId, ctx.ensureDm(botId, toId), [`🎉 Вечеринка зумеров — новые ответы:\n${lines.join('\n')}\n\n${total} Все ответы — в «Управлении АСЬКОЙ».`], { typing: false });
+  }
+
+  // Для «Управления АСЬКОЙ»
+  function partyResults() {
+    const votes = db.prepare('SELECT v.*, u.display_name AS name FROM party_votes v JOIN users u ON u.id = v.user_id ORDER BY v.rating IS NULL, v.rating DESC, v.updated_at DESC').all()
+      .map((v) => ({ userId: v.user_id, name: v.name, attended: v.attended === null ? null : Boolean(v.attended), rating: v.rating, comment: v.comment || '', askedAt: v.asked_at, at: v.updated_at }));
+    return { started: partyStarted() || null, ...partyStats(), votes };
+  }
+
+  // Когда днём по Москве: опрос и новости не присылаем ночью
+  function daytime(t = now()) {
+    if (timing.alwaysOnline) return t;
+    const h = mskHour(t);
+    if (h >= 11 && h < 21) return t;
+    const d = msk(t);
+    return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + (h >= 21 ? 1 : 0), 12) - MSK;
+  }
+
+  // ---------- новичок в АСЬКЕ ----------
+
+  async function newbieJob(botId, { userId, toId, inviterId, bonus }) {
+    const u = row(userId);
+    const to = row(toId);
+    if (!u || !to || to.blocked_at) return;
+    const who = `${u.display_name} (${plateText(u)})`;
+    const text = toId === inviterId
+      ? `🎉 ${who} теперь в АСЬКЕ — по твоему приглашению!${bonus ? ` Тебе +${bonus} аськоинов 🪙` : ''} Напиши первым(ой) — новичкам приятно 🌼`
+      : `🆕 В АСЬКЕ новый человек: ${who}${inviterId && row(inviterId) ? `, позвал(а) ${nameOf(inviterId)}` : ''}.`;
+    await say(botId, ctx.ensureDm(botId, toId), [text], { typing: false });
   }
 
   function reach(botId, userId) {
@@ -884,27 +1021,44 @@ export function createBots(ctx) {
 
   // ---------- включение ИИ-людей ----------
 
+  // Заводит ИИ-людей, которых ещё нет (и тех, кого добавили в код позже), и сажает их в круги. Возвращает новеньких.
+  function ensurePeople() {
+    const born = [];
+    for (const per of P.PEOPLE) {
+      let u = db.prepare("SELECT * FROM users WHERE kind = 'person' AND json_extract(persona, '$.key') = ?").get(per.key);
+      if (!u) {
+        const id = createBot({ kind: 'person', username: per.username, displayName: per.name, about: per.about, city: per.city, persona: per });
+        const place = regionForCity(per.city) || { country: 'RU', region: '777' };
+        M.give(db, id, { country: place.country, code: randomFreeCode(db, place.country, place.region), note: 'первый номер' });
+        ctx.broadcastUser(id);
+        const twin = ensureTwin(id);
+        if (twin) ctx.broadcastUser(twin);
+        u = row(id);
+        born.push(u);
+      }
+      for (const c of per.circles) if (getChat(c) && addMember(c, u.id)) ctx.broadcastChat(c);
+    }
+    return born;
+  }
+
+  // Новенький сам здоровается в своём первом круге, когда будет в сети
+  function introduce(born) {
+    born.forEach((u, i) => {
+      const circle = personaOf(u)?.circles?.find(getChat);
+      if (circle) schedule('opener', u.id, circle, nextOnline(u, daytime(now() + T(rand(5 * 60_000, 40 * 60_000) + i * 20 * 60_000))), { intro: true });
+    });
+  }
+
   function setPeople(on) {
     setSetting(db, 'people', on ? '1' : '0');
     if (on) {
-      for (const per of P.PEOPLE) {
-        let u = db.prepare("SELECT * FROM users WHERE kind = 'person' AND json_extract(persona, '$.key') = ?").get(per.key);
-        if (!u) {
-          const id = createBot({ kind: 'person', username: per.username, displayName: per.name, about: per.about, city: per.city, persona: per });
-          const place = regionForCity(per.city) || { country: 'RU', region: '777' };
-          M.give(db, id, { country: place.country, code: randomFreeCode(db, place.country, place.region), note: 'первый номер' });
-          ctx.broadcastUser(id);
-          const twin = ensureTwin(id);
-          if (twin) ctx.broadcastUser(twin);
-          u = row(id);
-        }
-        for (const c of per.circles) if (getChat(c) && addMember(c, u.id)) ctx.broadcastChat(c);
-      }
-      if (getSetting(db, 'people_announced') !== '1') {
+      const first = getSetting(db, 'people_announced') !== '1';
+      const born = ensurePeople();
+      if (first) {
         setSetting(db, 'people_announced', '1');
         const aska = askaId();
         humans().forEach((h, i) => schedule('people', aska, `dm:${Math.min(aska, h.id)}:${Math.max(aska, h.id)}`, now() + T(4000 + i * 1500)));
-      }
+      } else introduce(born);
     }
     presenceTick();
   }
@@ -925,6 +1079,14 @@ export function createBots(ctx) {
       if (per) db.prepare('UPDATE users SET persona = ? WHERE id = ?').run(JSON.stringify(per), u.id);
       ensureTwin(u.id);
     }
+    // новые ИИ-люди из кода появляются сами, если ИИ-люди уже включены
+    if (peopleEnabled() && getSetting(db, 'people_announced') === '1') introduce(ensurePeople());
+    // опрос о вечеринке зумеров — один раз всем, днём, по очереди
+    if (!partyStarted()) {
+      setSetting(db, 'party_started', String(now()));
+      const at = daytime(now() + T(60_000));
+      humans().forEach((h, i) => schedule('party', aska, ctx.ensureDm(aska, h.id), at + T(i * 20_000), { userId: h.id }));
+    }
     if (getSetting(db, 'announced') !== ANNOUNCE) {
       setSetting(db, 'announced', ANNOUNCE);
       setSetting(db, 'announced_v3', '1');
@@ -936,12 +1098,17 @@ export function createBots(ctx) {
     }
   }
 
-  function onUserRegistered(userId) {
+  function onUserRegistered(userId, { inviterId, bonus } = {}) {
     const aska = ensureAska();
     const twin = ensureTwin(userId);
     if (twin) ctx.broadcastUser(twin);
     const dm = ctx.ensureDm(aska, userId);
     schedule('welcome', aska, dm, now() + T(2500), { userId });
+    // администраторам и тому, кто позвал, — весточка о новичке (придёт пушем)
+    const tell = new Set(admins().map((a) => a.id).filter((id) => id !== userId));
+    if (inviterId && inviterId !== userId && row(inviterId)?.kind === 'human') tell.add(inviterId);
+    [...tell].forEach((id, i) => schedule('newbie', aska, `n:${userId}:${id}`, now() + T(4000 + i * 1500), { userId, toId: id, inviterId: inviterId || null, bonus: bonus || 0 }));
+    if (partyOpen()) schedule('party', aska, dm, daytime(now() + T(rand(3 * 60_000, 6 * 60_000))), { userId });
   }
 
   function onRecovered(userId) {
@@ -966,7 +1133,8 @@ export function createBots(ctx) {
     const t0 = Date.now();
     for (;;) {
       tick();
-      const pending = db.prepare('SELECT COUNT(*) AS n FROM bot_jobs WHERE due_at <= ?').get(now()).n;
+      // отложенные на миг (чат занят другим делом) тоже ждём
+      const pending = db.prepare('SELECT COUNT(*) AS n FROM bot_jobs WHERE due_at <= ?').get(now() + 100).n;
       if (!pending && !inflight.size) return;
       if (Date.now() - t0 > ms) return;
       await new Promise((r) => setTimeout(r, 10));
@@ -975,6 +1143,6 @@ export function createBots(ctx) {
 
   return {
     init, start, stop, idle, tick, proactive, onMessage, onUserRegistered, onRecovered, onlineIds, isOnline,
-    setPeople, peopleEnabled, ensureTwin, twinName, addFacts, factsOf, askaId,
+    setPeople, peopleEnabled, ensureTwin, twinName, addFacts, factsOf, askaId, partyResults,
   };
 }

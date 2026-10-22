@@ -770,6 +770,10 @@ export interface AdminInfo {
   me: { role: 'user' | 'admin' | 'super'; id: number };
   hasSuper: boolean;
   canInviteSuper: boolean;
+  party: {
+    started: number | null; asked: number; answered: number; went: number; rated: number; avg: number | null;
+    votes: { userId: number; name: string; attended: boolean | null; rating: number | null; comment: string; askedAt: number; at: number | null }[];
+  };
 }
 export const adminInfo = () => api.get<AdminInfo>('/admin');
 export const adminSetAi = (p: { apiKey?: string; model?: string; dailyLimit?: number; paused?: boolean }) => api.post('/admin/ai', p);

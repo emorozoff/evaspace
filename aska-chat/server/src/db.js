@@ -232,6 +232,7 @@ function migrate(db) {
     db.prepare("UPDATE users SET is_admin = 1 WHERE id = (SELECT MIN(id) FROM users WHERE kind = 'human')").run();
   }
   migrateV3(db);
+  migrateV4(db);
 }
 
 // Третья версия (22.10.2026): номера-токены (покупка, улучшение, рынок), аськоины, роли (голд-админы, супер-админ), блокировка.
@@ -321,6 +322,20 @@ function migrateV3(db) {
     }
     setSetting(db, 'plates_v3', '1');
   }
+}
+
+// Опрос Аськи о вечеринке зумеров (22.10.2026): был ли человек и оценка 1–10 с отзывом.
+function migrateV4(db) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS party_votes (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      asked_at INTEGER NOT NULL,
+      attended INTEGER,
+      rating INTEGER,
+      comment TEXT,
+      updated_at INTEGER
+    );
+  `);
 }
 
 // Транзакция: всё или ничего.

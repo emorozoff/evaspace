@@ -85,8 +85,9 @@ export function Admin() {
       <div className="groupbox">
         <div className="legend">👀 ИИ-люди</div>
         <div className="hint">
-          Семь «новых людей» — ИИ, которые живут в кругах, пишут как люди и иногда сами начинают разговор. Все знают правила игры
-          «Кто здесь ИИ?», но не знают, кто именно. Во всём серьёзном (здоровье, деньги, просьба сказать правду) они честно признаются.
+          «Новые люди» — ИИ, которые живут в кругах, пишут как люди и иногда сами начинают разговор. У каждого свой темп: кто-то
+          отвечает сразу, кто-то — через несколько минут. Все знают правила игры «Кто здесь ИИ?», но не знают, кто именно.
+          Во всём серьёзном (здоровье, деньги, просьба сказать правду) они честно признаются.
         </div>
         <label className="row aska-check">
           <input type="checkbox" checked={info.people} disabled={busy || (!info.people && !ai.configured)}
@@ -94,6 +95,8 @@ export function Admin() {
           <span>{info.people ? 'Включены' : ai.configured ? 'Выключены' : 'Сначала вставь ключ Claude'}</span>
         </label>
       </div>
+
+      {info.party.started && <Party party={info.party} />}
 
       <div className="groupbox">
         <div className="legend">📱 СМС — SMS.ru</div>
@@ -314,5 +317,36 @@ function SuperForm({ onDone }: { onDone: () => void }) {
         </>
       )}
     </form>
+  );
+}
+
+// Опрос Аськи: кто был на вечеринке зумеров и как её оценили
+function Party({ party }: { party: AdminInfo['party'] }) {
+  const done = party.votes.filter((v) => v.attended !== null);
+  const silent = party.votes.filter((v) => v.attended === null);
+  return (
+    <div className="groupbox">
+      <div className="legend">🎉 Вечеринка зумеров</div>
+      <div className="hint">Аська спрашивает каждого, был ли он на вечеринке, и собирает оценки от 1 до 10. Новые ответы она присылает тебе в личку.</div>
+      <div className="row aska-kv"><span>Спросила</span><b>{party.asked}</b></div>
+      <div className="row aska-kv"><span>Ответили</span><b>{party.answered}</b></div>
+      <div className="row aska-kv"><span>Были на вечеринке</span><b>{party.went}</b></div>
+      <div className="row aska-kv"><span>Средняя оценка</span><b>{party.avg === null ? '—' : `${String(party.avg).replace('.', ',')} из 10 (оценок: ${party.rated})`}</b></div>
+      {done.length > 0 && (
+        <div className="aska-admin-users mt">
+          {done.map((v) => (
+            <div key={v.userId} className="aska-admin-user">
+              <div className="row">
+                <b>{v.name}</b>
+                <span className="sp" />
+                <b>{v.attended ? (v.rating ? `${v.rating}/10` : 'был(а), без оценки') : 'не был(а)'}</b>
+              </div>
+              {v.comment && <div className="muted">«{v.comment}»</div>}
+            </div>
+          ))}
+        </div>
+      )}
+      {silent.length > 0 && <div className="hint mt">Ещё не ответили: {silent.map((v) => v.name).join(', ')}</div>}
+    </div>
   );
 }

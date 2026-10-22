@@ -8,6 +8,7 @@ import path from 'node:path';
 import WebSocket from 'ws';
 import { createApp } from '../server/src/app.js';
 import { setSetting } from '../server/src/db.js';
+import { PEOPLE } from '../server/src/personas.js';
 import { parsePlate, formatCode } from '../server/src/plates.js';
 const normalizePlate = (x) => parsePlate(x, 'RU');
 const formatPlate = (c) => formatCode('RU', c);
@@ -401,10 +402,10 @@ test('с ИИ: Аська, личный ИИ и ИИ-люди в кругах и
     assert.equal((await C.call('POST', '/api/admin/people', { token: me.token, body: { on: true } })).data.people, true);
     const st = await C.call('GET', '/api/state', { token: me.token });
     const people = st.data.users.filter((u) => u.kind === 'human' && u.id !== me.userId);
-    assert.equal(people.length, 7, 'пришли семь новых людей');
+    assert.equal(people.length, PEOPLE.length, 'пришли все ИИ-люди');
     assert.ok(people.every((p) => p.plate && !/^А\d{3}МР/.test(p.plate) && p.city && !p.gold), 'у всех номера своих городов и города, как у людей');
     const plates = new Set([me.plate, ...people.map((p) => p.plate)]);
-    assert.equal(plates.size, 8, 'номера не повторяются');
+    assert.equal(plates.size, PEOPLE.length + 1, 'номера не повторяются');
     await C.app.bots.idle();
     assert.ok((await read(C, me, dmId(aska, me.userId))).some((m) => /новые люди/.test(m.text || '')), 'Аська объявила о новых людях');
 
