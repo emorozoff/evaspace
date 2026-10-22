@@ -12,6 +12,7 @@ import { encodeOutgoing as sealOutgoing, newUuid } from './seal.js';
 import { createSms, createCodes, normalizePhone, looksLikePhone } from './phone.js';
 import { parsePlate, plateKey, countryForPhone, defaultRegion, COUNTRIES, keyTaken, priceOf, isGoldCode, plateView, LEVELS, formatCode, randomFreeCode, rarityOf, RARITY, cityOf } from './plates.js';
 import * as M from './market.js';
+import { createSuperLinks } from './superlink.js';
 
 const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
@@ -84,6 +85,7 @@ export function createApp({
   const ai = createAi({ db, impl: aiImpl, log });
   const sms = createSms({ db, sender: smsSender, log });
   const codes = createCodes({ db, secret: serverSecret });
+  const superLinks = createSuperLinks({ db, secret: serverSecret });
 
   // Номера тем, у кого их ещё нет: голд — золотая серия (первому — А 001 МР 777), остальным — своей страны
   for (const u of db.prepare("SELECT * FROM users WHERE kind = 'human' AND plate_id IS NULL ORDER BY id").all()) {
@@ -533,23 +535,29 @@ export function createApp({
     if (!user) return res.status(401).json({ error: 'bad_recover' });
     if (user.blocked_at) return res.status(403).json({ error: 'blocked' });
     if (!validKeys(body)) return res.status(400).json({ error: 'bad_keys' });
-    const token = tx(db, () => {
-      const prev = [user.box_pk, ...JSON.parse(user.prev_pks || '[]')].filter((k) => k !== body.boxPk).slice(0, 5);
-      db.prepare(`UPDATE users SET box_pk = ?, kdf_salt = ?, auth_hash = ?, backup_n = ?, backup_c = ?, prev_pks = ?, key_reset_at = ?,
-        phone_verified = CASE WHEN ? THEN 1 ELSE phone_verified END WHERE id = ?`)
-        .run(body.boxPk, body.kdfSalt, sha256hex(Buffer.from(body.authKey, 'base64')), body.backup.n, body.backup.c,
-          JSON.stringify(prev), Date.now(), viaPhone ? 1 : 0, user.id);
-      db.prepare('DELETE FROM sessions WHERE user_id = ?').run(user.id);
-      db.prepare('DELETE FROM push_subs WHERE user_id = ?').run(user.id);
-      db.prepare('DELETE FROM message_boxes WHERE recipient_id = ?').run(user.id);
-      return createSession(user.id);
-    });
+    const token = tx(db, () => resetKeys(user, body, viaPhone));
+    afterReset(user);
+    res.json({ token, userId: user.id, username: user.username });
+  });
+
+  // Новый пароль и новые ключи (внутри транзакции): старые входы закрыты, старые копии сообщений этому человеку удалены
+  function resetKeys(user, body, viaPhone = false) {
+    const prev = [user.box_pk, ...JSON.parse(user.prev_pks || '[]')].filter((k) => k !== body.boxPk).slice(0, 5);
+    db.prepare(`UPDATE users SET box_pk = ?, kdf_salt = ?, auth_hash = ?, backup_n = ?, backup_c = ?, prev_pks = ?, key_reset_at = ?,
+      phone_verified = CASE WHEN ? THEN 1 ELSE phone_verified END WHERE id = ?`)
+      .run(body.boxPk, body.kdfSalt, sha256hex(Buffer.from(body.authKey, 'base64')), body.backup.n, body.backup.c,
+        JSON.stringify(prev), Date.now(), viaPhone ? 1 : 0, user.id);
+    db.prepare('DELETE FROM sessions WHERE user_id = ?').run(user.id);
+    db.prepare('DELETE FROM push_subs WHERE user_id = ?').run(user.id);
+    db.prepare('DELETE FROM message_boxes WHERE recipient_id = ?').run(user.id);
+    return createSession(user.id);
+  }
+  function afterReset(user) {
     for (const ws of conns.get(user.id) || []) ws.close(4001, 'recovered');
     broadcastUser(user.id);
     bots.onRecovered(user.id);
     log(`recovered ${user.username}`);
-    res.json({ token, userId: user.id, username: user.username });
-  });
+  }
 
   api.delete('/session', auth, (req, res) => {
     db.prepare('DELETE FROM push_subs WHERE session_hash = ?').run(req.sessionHash);
@@ -832,15 +840,14 @@ export function createApp({
       phone: u.phone, phoneVerified: Boolean(u.phone_verified), createdAt: u.created_at, lastActive: u.last_active,
       isAdmin: M.isGold(u), role: u.role, blocked: Boolean(u.blocked_at), coins: u.coins,
     }));
-    const hasSuper = Boolean(db.prepare("SELECT 1 FROM users WHERE role = 'super'").get());
-    res.json({ ai: ai.status(), people: bots.peopleEnabled(), sms: sms.status(), users, me: { role: req.me.role, id: req.me.id }, hasSuper });
+    const hasSuper = anySuper();
+    res.json({ ai: ai.status(), people: bots.peopleEnabled(), sms: sms.status(), users, me: { role: req.me.role, id: req.me.id }, hasSuper, canInviteSuper: req.me.role === 'super' || !hasSuper });
   });
 
-  // Кто кого может менять: супер-админа — никто; админа — только супер-админ; обычных — любой админ
+  // Кто кого может менять: админа и супер-админа — только супер-админ; обычных — любой админ. Себя — никто.
   function canManage(me, target) {
     if (!target || target.kind !== 'human' || target.id === me.id) return false;
-    if (target.role === 'super') return false;
-    if (target.role === 'admin') return me.role === 'super';
+    if (target.role === 'admin' || target.role === 'super') return me.role === 'super';
     return true;
   }
   const humanTarget = (req) => { const u = userRow(Number(req.params.id)); return u && u.kind === 'human' ? u : null; };
@@ -855,7 +862,7 @@ export function createApp({
         db.prepare("UPDATE users SET role = 'admin', is_admin = 1 WHERE id = ?").run(target.id);
         M.grantGoldPlate(db, userRow(target.id));
       });
-    } else if (role === 'user' && target.role === 'admin') {
+    } else if (role === 'user' && (target.role === 'admin' || target.role === 'super')) {
       if (!canManage(req.me, target)) return res.status(403).json({ error: 'forbidden' });
       tx(db, () => {
         db.prepare("UPDATE users SET role = 'user', is_admin = 0 WHERE id = ?").run(target.id);
@@ -932,32 +939,136 @@ export function createApp({
 
   // Супер-админ: создаётся один раз админом (пароль шифруется на телефоне, как при регистрации)
   api.post('/admin/super', auth, admin, json, (req, res) => {
-    if (db.prepare("SELECT 1 FROM users WHERE role = 'super'").get()) return res.status(409).json({ error: 'super_exists' });
+    if (req.me.role !== 'super' && anySuper()) return res.status(409).json({ error: 'super_exists' });
     const b = req.body || {};
     const login = typeof b.login === 'string' ? b.login.trim() : '';
     const uname = login.toLowerCase();
     if (!USERNAME_RE.test(uname)) return res.status(400).json({ error: 'bad_username' });
     if (db.prepare('SELECT 1 FROM users WHERE username = ?').get(uname)) return res.status(409).json({ error: 'username_taken' });
     if (!validKeys(b)) return res.status(400).json({ error: 'bad_keys' });
-    const userId = tx(db, () => {
-      const now = Date.now();
-      const { lastInsertRowid } = db.prepare(`
-        INSERT INTO users (username, display_name, box_pk, kdf_salt, auth_hash, backup_n, backup_c, created_at, last_active, role, is_admin)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'super', 1)
-      `).run(uname, cleanName(b.displayName) || login, b.boxPk, b.kdfSalt, sha256hex(Buffer.from(b.authKey, 'base64')), b.backup.n, b.backup.c, now, now);
-      const id = Number(lastInsertRowid);
-      M.grantGoldPlate(db, userRow(id));
-      M.addCoins(db, id, WELCOME_COINS, 'подарок новичку');
-      const maxId = db.prepare('SELECT MAX(id) AS id FROM messages').get().id || 0;
-      db.prepare('INSERT INTO chat_members (chat_id, user_id, read_up_to) VALUES (?, ?, ?)').run(GENERAL_CHAT, id, maxId);
-      return id;
-    });
-    broadcastUser(userId);
-    broadcastChat(GENERAL_CHAT);
-    bots.onUserRegistered(userId);
+    const userId = tx(db, () => createSuperAccount(uname, cleanName(b.displayName) || login, b));
+    afterSuperCreated(userId);
     log(`super admin ${uname} created by ${req.me.username}`);
     res.json({ ok: true, plate: userRow(userId).plate });
   });
+
+  // Новый вход супер-админа (внутри транзакции)
+  function createSuperAccount(uname, displayName, keys) {
+    const now = Date.now();
+    const { lastInsertRowid } = db.prepare(`
+      INSERT INTO users (username, display_name, box_pk, kdf_salt, auth_hash, backup_n, backup_c, created_at, last_active, role, is_admin)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'super', 1)
+    `).run(uname, displayName, keys.boxPk, keys.kdfSalt, sha256hex(Buffer.from(keys.authKey, 'base64')), keys.backup.n, keys.backup.c, now, now);
+    const id = Number(lastInsertRowid);
+    M.grantGoldPlate(db, userRow(id));
+    M.addCoins(db, id, WELCOME_COINS, 'подарок новичку');
+    const maxId = db.prepare('SELECT MAX(id) AS id FROM messages').get().id || 0;
+    db.prepare('INSERT INTO chat_members (chat_id, user_id, read_up_to) VALUES (?, ?, ?)').run(GENERAL_CHAT, id, maxId);
+    return id;
+  }
+  function afterSuperCreated(userId) {
+    broadcastUser(userId);
+    broadcastChat(GENERAL_CHAT);
+    bots.onUserRegistered(userId);
+  }
+
+  // ---------- ссылка супер-админа ----------
+  // Создать: админ — пока супер-админа нет, супер-админ — всегда. login — уже существующий вход (логин, телефон, номер)
+  // или новый логин. Ссылка одноразовая, на 7 дней; новая ссылка на тот же вход отменяет прежнюю.
+  const anySuper = (exceptId = 0) => Boolean(db.prepare("SELECT 1 FROM users WHERE role = 'super' AND id != ? AND blocked_at IS NULL").get(exceptId));
+
+  api.post('/admin/super-link', auth, admin, json, (req, res) => {
+    if (req.me.role !== 'super' && anySuper()) return res.status(409).json({ error: 'super_exists' });
+    const login = typeof req.body?.login === 'string' ? req.body.login.trim() : '';
+    if (!login) return res.status(400).json({ error: 'bad_username' });
+    const target = findByLogin(login);
+    let code;
+    if (target) {
+      if (target.role === 'super') return res.status(409).json({ error: 'already_super' });
+      if (target.blocked_at) return res.status(400).json({ error: 'blocked' });
+      code = superLinks.create({ createdBy: req.me.id, userId: target.id });
+    } else {
+      const uname = login.toLowerCase();
+      if (!USERNAME_RE.test(uname)) return res.status(400).json({ error: 'bad_username' });
+      if (db.prepare('SELECT 1 FROM users WHERE username = ?').get(uname)) return res.status(409).json({ error: 'username_taken' });
+      code = superLinks.create({ createdBy: req.me.id, username: uname });
+    }
+    log(`super link for ${target ? target.username : login.toLowerCase()} by ${req.me.username}`);
+    res.json({
+      code,
+      target: target ? { displayName: target.display_name, username: target.username, plate: target.plate } : null,
+      username: target ? target.username : login.toLowerCase(),
+    });
+  });
+
+  // Ссылка ещё действует? Кто позвал и для какого входа
+  function superLinkInfo(row) {
+    const by = row.created_by ? userRow(row.created_by) : null;
+    const t = row.target_id ? userRow(row.target_id) : null;
+    // админ, создавший ссылку, должен оставаться админом; если с тех пор появился другой супер-админ — ссылка от админа не действует
+    if (!row.from_console && (!by || !M.isGold(by) || by.blocked_at || (by.role !== 'super' && anySuper(row.target_id || 0)))) return null;
+    if (row.target_id && (!t || t.blocked_at || t.kind !== 'human')) return null;
+    return { by, target: t };
+  }
+
+  api.get('/super-link/:code', (req, res) => {
+    if (!allow(`slink:${req.ip}`, 30, 600_000)) return res.status(429).json({ error: 'too_many' });
+    const row = superLinks.read(req.params.code);
+    const info = row && superLinkInfo(row);
+    if (!info) return res.status(404).json({ error: 'link_invalid' });
+    res.json({
+      username: info.target ? info.target.username : row.username,
+      exists: Boolean(info.target),
+      displayName: info.target ? info.target.display_name : null,
+      plate: info.target ? info.target.plate : null,
+      invitedBy: info.by ? info.by.display_name : null,
+    });
+  });
+
+  // Принять ссылку. Уже есть в АСЬКЕ: либо вошёл своим паролем (токен в заголовке), либо задаёт новый пароль (новые ключи).
+  // Нового входа нет: имя + пароль (ключи делаются на телефоне).
+  api.post('/super-link/claim', json, (req, res) => {
+    if (!allow(`sclaim:${req.ip}`, 10, 600_000)) return res.status(429).json({ error: 'too_many' });
+    const body = req.body || {};
+    const row = superLinks.read(body.code);
+    const info = row && superLinkInfo(row);
+    if (!info) return res.status(404).json({ error: 'link_invalid' });
+    const by = info.by ? info.by.username : 'console';
+    if (info.target) {
+      const t = info.target;
+      const s = sessionByToken(bearer(req));
+      if (s && s.user_id === t.id) {
+        tx(db, () => { makeSuper(t.id); superLinks.markUsed(row); });
+        broadcastUser(t.id);
+        log(`super admin ${t.username} (link from ${by})`);
+        return res.json({ ok: true, userId: t.id, username: t.username, plate: userRow(t.id).plate });
+      }
+      if (!validKeys(body)) return res.status(401).json({ error: 'unauthorized' });
+      const token = tx(db, () => { const tk = resetKeys(t, body); makeSuper(t.id); superLinks.markUsed(row); return tk; });
+      afterReset(t);
+      log(`super admin ${t.username} with new password (link from ${by})`);
+      return res.json({ ok: true, token, userId: t.id, username: t.username, plate: userRow(t.id).plate });
+    }
+    const name = cleanName(body.displayName);
+    if (!name) return res.status(400).json({ error: 'bad_name' });
+    if (!validKeys(body)) return res.status(400).json({ error: 'bad_keys' });
+    const result = tx(db, () => {
+      if (db.prepare('SELECT 1 FROM users WHERE username = ?').get(row.username)) return null;
+      const id = createSuperAccount(row.username, name, body);
+      superLinks.markUsed(row);
+      return { id, token: createSession(id) };
+    });
+    if (!result) return res.status(409).json({ error: 'username_taken' });
+    afterSuperCreated(result.id);
+    log(`super admin ${row.username} created (link from ${by})`);
+    res.json({ ok: true, token: result.token, userId: result.id, username: row.username, plate: userRow(result.id).plate });
+  });
+
+  // Стать супер-админом (внутри транзакции): голд, золотой номер
+  function makeSuper(userId) {
+    db.prepare("UPDATE users SET role = 'super', is_admin = 1 WHERE id = ?").run(userId);
+    M.grantGoldPlate(db, userRow(userId));
+  }
 
   api.post('/admin/ai', auth, admin, json, (req, res) => {
     const b = req.body || {};

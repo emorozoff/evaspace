@@ -5,6 +5,8 @@
 //   superadmin <логин>             — создать супер-админа (или сбросить ему пароль). Пароль читается из
 //                                    переменной ASKA_PASSWORD или первой строкой из stdin. Чтобы пароль не попал в историю команд:
 //                                    read -rs P; printf '%s\n' "$P" | docker exec -i aska node server/src/cli.js superadmin <логин>; unset P
+//   super-link <вход>              — ссылка супер-админа на 7 дней (от имени первого админа). <вход> — логин, телефон или номер
+//                                    того, кто уже есть в АСЬКЕ, или новый логин. Пароль человек задаёт сам, по ссылке.
 import path from 'node:path';
 import crypto from 'node:crypto';
 import nacl from 'tweetnacl';
@@ -13,6 +15,7 @@ import { createInvite, formatInvite } from './app.js';
 import { createCodes, normalizePhone, looksLikePhone } from './phone.js';
 import { parsePlate, plateKey, formatCode } from './plates.js';
 import * as M from './market.js';
+import { createSuperLinks } from './superlink.js';
 
 const dataDir = path.resolve(process.env.DATA_DIR || 'data');
 const publicUrl = (process.env.PUBLIC_URL || 'http://localhost:8080').replace(/\/$/, '');
@@ -77,7 +80,7 @@ if (cmd === 'invite') {
   if (!password || password.length < 6) { console.log('Пароль — минимум 6 символов (ASKA_PASSWORD или первой строкой в stdin).'); process.exit(1); }
   const db = openDb(dataDir);
   const other = db.prepare("SELECT * FROM users WHERE role = 'super' AND username != ?").get(uname);
-  if (other) { console.log(`Супер-админ уже есть: ${other.username}. Второго не делаю.`); db.close(); process.exit(1); }
+  if (other) console.log(`Внимание: супер-админ уже есть — ${other.username}. Будет ещё один.`);
   const k = keysFromPassword(password);
   const now = Date.now();
   const existing = db.prepare('SELECT * FROM users WHERE username = ?').get(uname);
@@ -106,7 +109,28 @@ if (cmd === 'invite') {
   console.log(`${existing ? 'Обновлён' : 'Создан'} супер-админ ${login}: вход — логин «${login}» или номер ${plateText(db, u)}, пароль — тот, что передан.`);
   console.log('Друзья увидят его после перезапуска приложения; Аська и личный ИИ появятся после следующей выкладки.');
   db.close();
+} else if (cmd === 'super-link' && args.length) {
+  const db = openDb(dataDir);
+  const login = args.join(' ').trim();
+  const target = findHuman(db, login);
+  const from = db.prepare("SELECT * FROM users WHERE kind = 'human' AND role IN ('admin', 'super') AND blocked_at IS NULL ORDER BY id LIMIT 1").get();
+  const links = createSuperLinks({ db, secret: getSetting(db, 'secret') });
+  let code;
+  if (target) {
+    if (target.role === 'super') { console.log(`${target.display_name} (${target.username}) уже супер-админ.`); db.close(); process.exit(1); }
+    code = links.create({ createdBy: from?.id ?? null, fromConsole: true, userId: target.id });
+    console.log(`Для ${target.display_name}: логин ${target.username}, номер ${plateText(db, target)}. Войдёт своим паролем (или задаст новый) и станет супер-админом.`);
+  } else {
+    const uname = login.toLowerCase();
+    if (!/^[a-z0-9_]{3,20}$/.test(uname)) { console.log('Такого человека нет, а новый логин — от 3 до 20 символов: латиница, цифры и _.'); db.close(); process.exit(1); }
+    if (db.prepare('SELECT 1 FROM users WHERE username = ?').get(uname)) { console.log('Этот логин занят.'); db.close(); process.exit(1); }
+    code = links.create({ createdBy: from?.id ?? null, fromConsole: true, username: uname });
+    console.log(`Новый вход «${uname}»: по ссылке человек сам придумает пароль и станет супер-админом.`);
+  }
+  console.log(`${publicUrl}/#super=${code}`);
+  console.log(`Действует 7 дней, один раз${from ? `, приглашает ${from.display_name}` : ''}.`);
+  db.close();
 } else {
-  console.log('Команды: invite | help-code <логин, телефон или номер> | superadmin <логин> (пароль — ASKA_PASSWORD или stdin)');
+  console.log('Команды: invite | help-code <логин, телефон или номер> | superadmin <логин> (пароль — ASKA_PASSWORD или stdin) | super-link <вход или новый логин>');
   process.exit(1);
 }

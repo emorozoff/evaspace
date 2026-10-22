@@ -1,7 +1,7 @@
 // Управление АСЬКОЙ (только для администратора): «мозг» ИИ (ключ Claude, модель, лимит), ИИ-люди,
 // СМС (SMS.ru) и люди — с кодом для входа, если кто-то забыл пароль, а СМС не подключены.
 import { useEffect, useState } from 'react';
-import { adminInfo, adminSetAi, adminCheckAi, adminSetPeople, adminSetSms, adminCheckSms, adminHelpCode, adminSetRole, adminBlock, adminSetPlate, adminCoins, adminCreateSuper } from '../lib/store.ts';
+import { adminInfo, adminSetAi, adminCheckAi, adminSetPeople, adminSetSms, adminCheckSms, adminHelpCode, adminSetRole, adminBlock, adminSetPlate, adminCoins, adminCreateSuper, adminSuperLink } from '../lib/store.ts';
 import type { AdminInfo } from '../lib/store.ts';
 
 type AdminUser = AdminInfo['users'][number];
@@ -118,7 +118,7 @@ export function Admin() {
         <div className="aska-admin-users">
           {info.users.map((u) => {
             const isMe = u.id === info.me.id;
-            const canTouch = !isMe && u.role !== 'super' && (u.role !== 'admin' || info.me.role === 'super');
+            const canTouch = !isMe && (u.role === 'user' || info.me.role === 'super');
             return (
               <div key={u.id} className={`aska-admin-user${u.blocked ? ' blocked' : ''}`}>
                 <div className="row">
@@ -133,7 +133,7 @@ export function Admin() {
                   <button className="btn" disabled={busy} onClick={() => setPlateFor(u)}>🚗 Номер</button>
                   <button className="btn" disabled={busy} onClick={() => setCoinsFor(u)}>🪙 Аськоины</button>
                   {u.role === 'user' && !u.blocked && <button className="btn" disabled={busy} onClick={() => act(() => adminSetRole(u.id, 'admin'))}>★ Сделать голд</button>}
-                  {u.role === 'admin' && canTouch && <button className="btn" disabled={busy} onClick={() => act(() => adminSetRole(u.id, 'user'))}>Снять голд</button>}
+                  {u.role !== 'user' && canTouch && <button className="btn" disabled={busy} onClick={() => act(() => adminSetRole(u.id, 'user'))}>Снять голд</button>}
                   {canTouch && <button className="btn" disabled={busy} onClick={() => act(() => adminBlock(u.id, !u.blocked))}>{u.blocked ? 'Разблокировать' : '⛔ Заблокировать'}</button>}
                   {!isMe && !u.blocked && <button className="btn" disabled={busy} onClick={() => act(async () => { const r = await adminHelpCode(u.id); setCodes((c) => ({ ...c, [u.id]: r.code })); })}>Код для входа</button>}
                 </div>
@@ -144,7 +144,7 @@ export function Admin() {
         </div>
       </div>
 
-      {!info.hasSuper && <SuperForm onDone={load} />}
+      {info.canInviteSuper && <SuperBox hasSuper={info.hasSuper} onDone={load} />}
 
       {plateFor && <PlateDialog user={plateFor} onClose={() => setPlateFor(null)} onDone={() => { setPlateFor(null); load(); }} />}
       {coinsFor && <CoinsDialog user={coinsFor} onClose={() => setCoinsFor(null)} onDone={() => { setCoinsFor(null); load(); }} />}
@@ -211,7 +211,76 @@ function CoinsDialog({ user, onClose, onDone }: { user: AdminUser; onClose: () =
   );
 }
 
-// Супер-админ — отдельный вход с полной властью; создаётся один раз. Пароль шифруется здесь же, на телефоне.
+const SUPER_ERRORS: Record<string, string> = {
+  super_exists: 'Супер-админ уже есть — позвать нового может только он.',
+  already_super: 'Он уже супер-админ.',
+  username_taken: 'Этот логин занят.',
+  bad_username: 'Такого человека нет. Новый логин — от 3 до 20 символов: латиница, цифры и _.',
+  blocked: 'Человек заблокирован — сначала разблокируй.',
+};
+
+// Супер-админ: только он может снять голд с админа и заблокировать админа. Зовут ссылкой — пароль человек задаёт сам.
+function SuperBox({ hasSuper, onDone }: { hasSuper: boolean; onDone: () => void }) {
+  const [login, setLogin] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [made, setMade] = useState<{ url: string; who: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!login.trim()) return setError('Кого позвать? Логин, телефон или номер.');
+    setBusy(true);
+    setError('');
+    try {
+      const r = await adminSuperLink(login.trim());
+      setMade({ url: `${location.origin}/#super=${r.code}`, who: r.target ? `${r.target.displayName} (логин ${r.target.username})` : `новый вход «${r.username}»` });
+      setCopied(false);
+    } catch (err) {
+      setError((err instanceof ApiError && SUPER_ERRORS[err.code]) || 'Не получилось.');
+    } finally { setBusy(false); }
+  }
+  async function copy() {
+    try { await navigator.clipboard.writeText(made!.url); setCopied(true); } catch { /* нет доступа — ссылку можно выделить */ }
+  }
+  const share = () => navigator.share?.({ title: 'АСЬКА', text: 'Ссылка: вход супер-админа АСЬКИ', url: made!.url }).catch(() => {});
+  return (
+    <div className="groupbox col">
+      <div className="legend">👑 Супер-админ</div>
+      <div className="hint">
+        Только супер-админ может снять голд с админа и заблокировать админа. Позови по ссылке: впиши логин, телефон или номер
+        человека из АСЬКИ — он войдёт своим паролем (или задаст новый). Или впиши новый логин — человек сам придумает пароль.
+        {hasSuper ? ' Супер-админов может быть несколько.' : ''}
+      </div>
+      {made ? (
+        <>
+          <div className="aska-note">Ссылка для: {made.who}. Действует 7 дней, один раз. Перешли её человеку.</div>
+          <input className="field" readOnly value={made.url} onFocus={(e) => e.target.select()} />
+          <div className="btns">
+            {'share' in navigator && <button className="btn primary" onClick={share}>📤 Поделиться</button>}
+            <button className="btn" onClick={copy}>{copied ? '✓ Скопировано' : '📋 Скопировать'}</button>
+            <button className="btn" onClick={() => { setMade(null); setLogin(''); onDone(); }}>Готово</button>
+          </div>
+        </>
+      ) : (
+        <form className="col" onSubmit={submit}>
+          <label className="aska-field"><span className="lbl">Кого: логин, телефон или номер</span>
+            <input className="field" value={login} onChange={(e) => setLogin(e.target.value)} placeholder="например, ivan_petrov" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="off" />
+          </label>
+          {error && <div className="err">{error}</div>}
+          <div className="right"><button className="btn primary" disabled={busy}>🔗 Создать ссылку</button></div>
+        </form>
+      )}
+      {!made && (
+        <details className="aska-safety">
+          <summary>Или создать вход с паролем сразу</summary>
+          <SuperForm onDone={onDone} />
+        </details>
+      )}
+    </div>
+  );
+}
+
+// Новый вход супер-админа с паролем, который вводит админ. Пароль шифруется здесь же, на телефоне.
 function SuperForm({ onDone }: { onDone: () => void }) {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
@@ -231,13 +300,11 @@ function SuperForm({ onDone }: { onDone: () => void }) {
       setPassword('');
       onDone();
     } catch (err) {
-      setError(err instanceof ApiError && err.code === 'username_taken' ? 'Такой логин уже есть.' : 'Не получилось.');
+      setError((err instanceof ApiError && SUPER_ERRORS[err.code]) || 'Не получилось.');
     } finally { setBusy(false); }
   }
   return (
-    <form className="groupbox col" onSubmit={submit}>
-      <div className="legend">👑 Супер-админ</div>
-      <div className="hint">Отдельный вход с полной властью: только он может снять голд с админа и заблокировать админа, его самого не может тронуть никто. Создаётся один раз.</div>
+    <form className="col" onSubmit={submit}>
       {done ? <div className="aska-note">{done}</div> : (
         <>
           <label className="aska-field"><span className="lbl">Логин</span><input className="field" value={login} onChange={(e) => setLogin(e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="off" /></label>

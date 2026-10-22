@@ -177,6 +177,42 @@ export async function recover(
   await enter(session, k.keys);
 }
 
+// Ссылка супер-админа (#super=…): кто зовёт и для какого входа
+export interface SuperLinkInfo { username: string; exists: boolean; displayName: string | null; plate: string | null; invitedBy: string | null }
+export const superLinkInfo = (code: string) => api.get<SuperLinkInfo>(`/super-link/${encodeURIComponent(code)}`);
+
+// Уже есть в АСЬКЕ и помнит пароль: обычный вход, затем ссылка принимается этим входом
+export async function claimSuperWithLogin(code: string, loginName: string, password: string, onProgress?: (p: number) => void) {
+  const { salt } = await api.get<{ salt: string }>(`/salt?login=${encodeURIComponent(loginName)}`);
+  const { encKey, authKey } = await C.deriveFromPassword(password, C.fromB64(salt), onProgress);
+  const r = await api.post<{ token: string; userId: number; username: string; boxPk: string; backup: C.Sealed }>('/login', {
+    login: loginName, authKey: C.toB64(authKey),
+  });
+  const secret = C.openSecret(r.backup, encKey);
+  if (!secret || C.toB64(C.publicFromSecret(secret)) !== r.boxPk) throw new Error('backup_broken');
+  setToken(r.token);
+  try { await api.post('/super-link/claim', { code }); } catch (e) { setToken(null); throw e; }
+  const session = { token: r.token, userId: r.userId, username: r.username };
+  const keys = { pk: r.boxPk, sk: C.toB64(secret) };
+  await saveCredentials(session, keys);
+  await enter(session, keys);
+}
+
+// Ссылку открыл тот, кто уже вошёл нужным входом
+export async function claimSuperHere(code: string) {
+  await api.post('/super-link/claim', { code });
+  await loadState();
+}
+
+// Новый пароль (пароль забыт или входа ещё нет): новые ключи делаются здесь, на телефоне
+export async function claimSuperWithPassword(code: string, password: string, displayName?: string, onProgress?: (p: number) => void) {
+  const k = await newKeys(password, onProgress);
+  const r = await api.post<{ token: string; userId: number; username: string }>('/super-link/claim', { code, displayName, ...k.body });
+  const session = { token: r.token, userId: r.userId, username: r.username };
+  await saveCredentials(session, k.keys);
+  await enter(session, k.keys);
+}
+
 export function dismissWelcomePlate() {
   set({ welcomePlate: null });
 }
@@ -733,6 +769,7 @@ export interface AdminInfo {
   }[];
   me: { role: 'user' | 'admin' | 'super'; id: number };
   hasSuper: boolean;
+  canInviteSuper: boolean;
 }
 export const adminInfo = () => api.get<AdminInfo>('/admin');
 export const adminSetAi = (p: { apiKey?: string; model?: string; dailyLimit?: number; paused?: boolean }) => api.post('/admin/ai', p);
@@ -749,6 +786,8 @@ export const adminSetPlate = async (userId: number, p: { country: string; region
   return r.plate;
 };
 export const adminCoins = (userId: number, delta: number) => api.post<{ coins: number }>(`/admin/users/${userId}/coins`, { delta });
+export const adminSuperLink = (login: string) =>
+  api.post<{ code: string; username: string; target: { displayName: string; username: string; plate: string } | null }>('/admin/super-link', { login });
 export async function adminCreateSuper(login: string, password: string, onProgress?: (p: number) => void) {
   const k = await newKeys(password, onProgress);
   return api.post<{ ok: boolean; plate: string }>('/admin/super', { login, ...k.body });

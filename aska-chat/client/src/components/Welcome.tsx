@@ -1,13 +1,15 @@
 // Окно «АСЬКА — вход в сеть». Три пути: вход (телефон или номер + пароль), регистрация по приглашению
 // (имя → телефон → код из СМС → пароль) и «не помню пароль» (код из СМС или от администратора → новый пароль).
+// Плюс ссылка супер-админа (#super=…): войти своим паролем, задать новый или создать новый вход.
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import { checkInvite, register, login, recover, sendCode, verifyCode, smsAvailable } from '../lib/store.ts';
+import { checkInvite, register, login, recover, sendCode, verifyCode, smsAvailable, superLinkInfo, claimSuperWithLogin, claimSuperWithPassword, claimSuperHere, logout } from '../lib/store.ts';
+import type { SuperLinkInfo } from '../lib/store.ts';
 import { ApiError } from '../lib/api.ts';
 import { isIOS, isStandalone } from '../lib/platform.ts';
 import { getDesign, setDesign, logoFlower, flower } from '../lib/aska.ts';
 import type { Design } from '../lib/aska.ts';
-import { Win, Svg } from './Win.tsx';
+import { Win, Svg, Dialog } from './Win.tsx';
 
 export const APP_VERSION = 'v2.0';
 
@@ -15,6 +17,11 @@ function inviteFromUrl() {
   const m = location.hash.match(/invite=([A-Za-z0-9-]+)/);
   return m ? m[1].toUpperCase() : '';
 }
+export function superFromUrl() {
+  const m = location.hash.match(/super=([A-Za-z0-9-]+)/);
+  return m ? m[1].toUpperCase() : '';
+}
+const clearHash = () => history.replaceState(null, '', location.pathname + location.search);
 
 export function DesignPick({ value, onChange }: { value: Design; onChange: (d: Design) => void }) {
   return (
@@ -35,6 +42,7 @@ export function Welcome() {
   const [design, setD] = useState<Design>(getDesign());
   const [skipInstall, setSkipInstall] = useState(false);
   const invite = inviteFromUrl();
+  const [superCode, setSuperCode] = useState(superFromUrl());
   const pick = (d: Design) => { setDesign(d); setD(d); };
 
   return (
@@ -46,9 +54,11 @@ export function Welcome() {
               <Svg html={logoFlower(44)} />
               <div className="logo-word center">АСЬКА<small>мессенджер для своих</small></div>
             </div>
-            {isIOS && !isStandalone && !skipInstall
-              ? <InstallGuide invite={invite} onSkip={() => setSkipInstall(true)} />
-              : <Auth initialInvite={invite} />}
+            {superCode
+              ? <SuperClaim code={superCode} onCancel={() => { clearHash(); setSuperCode(''); }} />
+              : isIOS && !isStandalone && !skipInstall
+                ? <InstallGuide invite={invite} onSkip={() => setSkipInstall(true)} />
+                : <Auth initialInvite={invite} />}
             <div className="aska-design-mini">
               <span className="hint">Вид:</span>
               {(['zoomer', 'millennial'] as Design[]).map((d) => (
@@ -107,6 +117,9 @@ const ERRORS: Record<string, string> = {
   too_many: 'Слишком много попыток. Подожди 10–15 минут.',
   network: 'Нет связи с сервером. Проверь интернет.',
   backup_broken: 'Не получилось восстановить ключ шифрования.',
+  link_invalid: 'Ссылка не подходит: устарела или уже использована. Попроси новую.',
+  username_taken: 'Этот логин уже занят. Попроси новую ссылку.',
+  unauthorized: 'Это не тот вход, для которого ссылка.',
 };
 const errorText = (e: unknown) => {
   const code = e instanceof ApiError ? e.code : e instanceof Error ? e.message : '';
@@ -476,5 +489,103 @@ function Recover({ initialPhone, onBack }: { initialPhone: string; onBack: () =>
         </form>
       )}
     </div>
+  );
+}
+
+// Ссылка супер-админа. Уже есть в АСЬКЕ — войти своим паролем (или задать новый); нового входа нет — имя и пароль.
+function SuperClaim({ code, onCancel }: { code: string; onCancel: () => void }) {
+  const [info, setInfo] = useState<SuperLinkInfo | null>(null);
+  const [error, setError] = useState('');
+  const [forgot, setForgot] = useState(false);
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
+  useEffect(() => { superLinkInfo(code).then(setInfo).catch((e) => setError(errorText(e))); }, [code]);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!info) return;
+    if (!info.exists && !name.trim()) return setError('Напиши имя — так тебя увидят друзья.');
+    if (password.length < 6) return setError('Пароль — минимум 6 символов.');
+    setError('');
+    setBusy(true);
+    setProgress(0);
+    clearHash(); // до входа: иначе открывшееся приложение снова увидит ссылку
+    try {
+      if (info.exists && !forgot) await claimSuperWithLogin(code, info.username, password, setProgress);
+      else await claimSuperWithPassword(code, password, info.exists ? undefined : name.trim(), setProgress);
+    } catch (err) {
+      history.replaceState(null, '', `#super=${code}`);
+      setError(errorText(err));
+      setBusy(false);
+    }
+  }
+
+  if (!info) {
+    return (
+      <div className="col aska-auth">
+        <div className="aska-step-title">👑 Вход супер-админа</div>
+        <div className={error ? 'err' : 'hint'}>{error || 'Проверяю ссылку…'}</div>
+        {error && <button type="button" className="btn aska-wide" onClick={onCancel}>Обычный вход</button>}
+      </div>
+    );
+  }
+  return (
+    <form className="col aska-auth" onSubmit={submit}>
+      <div className="aska-step-title">👑 {info.invitedBy ? `${info.invitedBy} зовёт тебя супер-админом` : 'Ты — супер-админ АСЬКИ'}</div>
+      <div className="hint">Супер-админ может всё, что админы (номера, аськоины, блокировка, голд), и ещё снимать голд с админов и блокировать админов.</div>
+      {info.exists ? (
+        <div className="aska-note">Вход: <b>{info.displayName}</b> · логин <b>{info.username}</b></div>
+      ) : (
+        <>
+          <div className="aska-note">Новый вход · логин <b>{info.username}</b></div>
+          <Field label="Имя (его увидят друзья)">
+            <input className="field" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} autoFocus />
+          </Field>
+        </>
+      )}
+      <Field label={info.exists && !forgot ? 'Твой пароль' : 'Придумай пароль (от 6 символов)'}>
+        <PasswordInput value={password} onChange={setPassword} autoComplete={info.exists && !forgot ? 'current-password' : 'new-password'} autoFocus={info.exists} />
+      </Field>
+      {info.exists && forgot && <div className="hint">Вход вернётся с новым паролем. Старые сообщения на новом пароле не откроются — так работает шифрование.</div>}
+      <div className="err">{error}</div>
+      <button className="btn primary aska-wide" disabled={busy}>
+        {busy ? <Busy label={info.exists && !forgot ? 'Проверяю пароль…' : 'Создаю ключи…'} progress={progress} /> : info.exists ? 'Войти и стать супер-админом' : 'Создать вход'}
+      </button>
+      <div className="aska-links">
+        {info.exists && <button type="button" className="link aska-linkbtn" onClick={() => { setForgot((v) => !v); setPassword(''); setError(''); }}>{forgot ? 'Я помню пароль' : 'Не помню пароль'}</button>}
+        <button type="button" className="link aska-linkbtn" onClick={onCancel}>Обычный вход</button>
+      </div>
+    </form>
+  );
+}
+
+// Ссылку супер-админа открыли, уже войдя в АСЬКУ: тем же входом — принять сразу, другим — выйти и открыть заново
+export function SuperLinkInApp({ code, me, onClose }: { code: string; me: string; onClose: () => void }) {
+  const [info, setInfo] = useState<SuperLinkInfo | null>(null);
+  const [error, setError] = useState('');
+  const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { superLinkInfo(code).then(setInfo).catch((e) => setError(errorText(e))); }, [code]);
+  const close = () => { clearHash(); onClose(); };
+  const mine = info && info.exists && info.username === me;
+  async function accept() {
+    setBusy(true);
+    try { await claimSuperHere(code); setDone(true); } catch (e) { setError(errorText(e)); } finally { setBusy(false); }
+  }
+  return (
+    <Dialog title="👑 Супер-админ" onClose={close}
+      buttons={done || error || !info ? <button className="btn primary" onClick={close}>Хорошо</button>
+        : mine ? <><button className="btn primary" disabled={busy} onClick={accept}>Стать супер-админом</button><button className="btn" onClick={close}>Не сейчас</button></>
+          : <><button className="btn primary" onClick={() => logout()}>Выйти и открыть ссылку</button><button className="btn" onClick={close}>Отмена</button></>}>
+      <div className="col">
+        {done ? <div className="aska-note">Готово — ты супер-админ АСЬКИ 👑 Всё управление — «Ещё» → «Управление АСЬКОЙ».</div>
+          : error ? <div className="err">{error}</div>
+            : !info ? <div className="hint">Проверяю ссылку…</div>
+              : mine ? <div className="hint">{info.invitedBy ? `${info.invitedBy} зовёт тебя` : 'Тебя зовут'} супер-админом АСЬКИ: можно всё, что админам, и ещё снимать голд с админов и блокировать админов.</div>
+                : <div className="hint">Эта ссылка — для {info.exists ? `входа ${info.displayName} (логин ${info.username})` : `нового входа «${info.username}»`}, а ты сейчас в АСЬКЕ под другим входом. Выйди и открой ссылку заново.</div>}
+      </div>
+    </Dialog>
   );
 }

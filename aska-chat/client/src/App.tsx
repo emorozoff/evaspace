@@ -4,7 +4,7 @@ import { onIncoming, onFriendOnline, activeChatId, unreadIn, store, openDm, dism
 import type { Msg } from './lib/store.ts';
 import { previewText } from './lib/protocol.ts';
 import { play, envelope, flower } from './lib/aska.ts';
-import { Welcome } from './components/Welcome.tsx';
+import { Welcome, SuperLinkInApp, superFromUrl } from './components/Welcome.tsx';
 import { Contacts } from './components/Contacts.tsx';
 import { ChatView } from './components/ChatView.tsx';
 import { Aux } from './components/Aux.tsx';
@@ -27,6 +27,7 @@ export default function App() {
   const [toast, setToast] = useState<Toast | null>(null);
   const [profile, setProfile] = useState<number | null>(null);
   const [circleInfo, setCircleInfo] = useState<string | null>(null);
+  const [superCode, setSuperCode] = useState('');
 
   useEffect(() => {
     if (location.hash.includes('chat=')) history.replaceState(null, '', location.pathname);
@@ -40,6 +41,15 @@ export default function App() {
 
   useEffect(() => {
     if (s.phase === 'ready' && location.hash.includes('invite=')) history.replaceState(null, '', location.pathname);
+  }, [s.phase]);
+
+  // Ссылка супер-админа, открытая уже внутри АСЬКИ (до входа её разбирает экран входа)
+  useEffect(() => {
+    if (s.phase !== 'ready') return;
+    const check = () => { const c = superFromUrl(); if (c) setSuperCode(c); };
+    check();
+    window.addEventListener('hashchange', check);
+    return () => window.removeEventListener('hashchange', check);
   }, [s.phase]);
 
   // «О-оу!» и всплывашка, когда пишут в другую беседу.
@@ -106,6 +116,7 @@ export default function App() {
       </div>
       {profile !== null && <Profile userId={profile} onClose={() => setProfile(null)} onOpenChat={openChat} />}
       {circleInfo && <CircleInfo chatId={circleInfo} onClose={() => setCircleInfo(null)} onProfile={(id) => { setCircleInfo(null); setProfile(id); }} />}
+      {superCode && s.me && <SuperLinkInApp code={superCode} me={s.me.username} onClose={() => setSuperCode('')} />}
       {s.welcomePlate && (
         <Dialog title="Добро пожаловать в АСЬКУ!" onClose={dismissWelcomePlate}
           buttons={<button className="btn primary" onClick={dismissWelcomePlate}>Поехали! 🚗</button>}>
