@@ -67,6 +67,7 @@ p{margin:0;}
 .scale-ends{display:flex; justify-content:space-between; font-size:12px; color:var(--ink-3);}
 .inp{width:100%; min-height:52px; padding:12px 16px; border-radius:16px; border:1.5px solid var(--line); background:var(--card); font-size:16px;}
 textarea.inp{min-height:110px; resize:vertical;}
+textarea.inp.tall{min-height:200px;}
 .inp:focus{outline:none; border-color:var(--violet); box-shadow:0 0 0 4px var(--violet-soft);}
 .go{min-height:54px; border:0; border-radius:16px; background:#111014; color:#fff; font-weight:600; font-size:16px; padding:0 22px; width:100%;}
 .go:disabled{opacity:.45; cursor:default;}
@@ -768,6 +769,7 @@ function ageGroupOf(answers) {
 /* Одна ссылка на человека — и для анкеты, и для рефералки.
    Ссылка анкеты:  <анкета>#k.ANNA482          k — клиентка, e — эксперт, p — партнёр, a — амбассадор
                    <анкета>#k.ANNA482.q…       хвост .q… — вопросы, которые команда добавила или скрыла
+   Ссылка интервью: <анкета>#k.ANNA482.i(.q…)  те же правки, но вопросов интервью; ответы сервер кладёт в карточку
    Ответы назад:   <CRM>#in.z…                 z — сжатые ответы, j — без сжатия
    В адресе после # разрешены только буквы, цифры и . _ ~ - — поэтому
    данные упакованы в base64url. */
@@ -818,7 +820,7 @@ const Codec = {
     let diff = null;
     const q = parts.find((p, i) => i >= 2 && p[0] === 'q');
     if (q) { try { diff = this.decJson(q.slice(1)); } catch (e) { diff = null; } }
-    return {type, code, diff};
+    return {type, code, diff, talk: parts.slice(2).includes('i')};
   },
   /* найти ответы в любом тексте: ссылке, сообщении из Telegram, чистом коде */
   findPayload(text) {
@@ -830,8 +832,8 @@ const Codec = {
 
 /* вопросы анкеты с учётом правок команды: скрытые убираем, изменённые
    подменяем, новые добавляем в конец */
-function applyDiff(type, diff) {
-  const base = (Q_DEFAULT[type] || {test: []}).test.map(q => ({...q}));
+function applyDiff(type, diff, part = 'test') {
+  const base = ((Q_DEFAULT[type] || {})[part] || []).map(q => ({...q}));
   /* ссылка выдана до смены набора вопросов — её правки относятся к прежнему набору */
   if (!diff || (diff.v || 1) < (Q_VER[type] || 1)) return base;
   const hide = new Set(diff.h || []);
@@ -866,7 +868,9 @@ function answerLabels(q, v) {
    разделы: на вводном экране — оглавление, над вопросом — раздел и точки
    его вопросов. Страну подставляет город, этап жизни уточняется после
    сферы, график работы спрашиваем только у работающих. На трети и двух
-   третях — тёплые слова, в конце у клиентки — подарок: неделя Евы. */
+   третях — тёплые слова, в конце у клиентки — подарок: неделя Евы.
+   Ссылка с .i — интервью: открытые вопросы интервью, ответ своими словами;
+   на своём сервере ответы сразу ложатся в карточку человека. */
 
 /* на своём сервере анкета живёт по адресу /anketa/, CRM — рядом, в /crm/ */
 const CRM_URL = location.pathname.startsWith('/anketa') ? location.origin + '/crm/' : 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA';
@@ -884,6 +888,16 @@ const INTRO = {
   partner: {emo: '🤝', title: 'Давайте дружить 🤝', lead: 'Расскажите о себе — подберём формат, выгодный обеим сторонам.', min: 3},
   amb:     {emo: '📣', title: 'Стань голосом Евы 💜', lead: 'Расскажи о себе и своей аудитории — придумаем, как тебе удобнее делиться Евой.', min: 3},
 };
+/* интервью по ссылке: те же люди, вопросы — открытые */
+const INTRO_TALK = {
+  client:  {emo: '💬', title: 'Интервью Eva 💜', lead: 'Ответь своими словами — как рассказала бы подруге. Коротко или подробно, как удобно. Любой вопрос можно пропустить.', min: 25},
+  expert:  {emo: '💬', title: 'Вопросы о вашем опыте ✨', lead: 'Ответьте своими словами. Любой вопрос можно пропустить.', min: 15},
+  partner: {emo: '💬', title: 'Вопросы о вашем бизнесе 🤝', lead: 'Ответьте своими словами. Любой вопрос можно пропустить.', min: 15},
+  amb:     {emo: '💬', title: 'Расскажи о себе 💜', lead: 'Ответь своими словами. Любой вопрос можно пропустить.', min: 15},
+};
+const TALK_MAX = 4000;
+/* вопрос интервью — развёрнутый ответ, можно пропустить */
+const asText = q => ({...q, k: 'text', opt: true});
 /* тёплые слова на трети пути — одно из списка */
 const CHEERS = [
   'Ты делаешь то, до чего у многих не доходят руки, — честно смотришь на свою жизнь. Это уже забота о себе.',
@@ -892,14 +906,17 @@ const CHEERS = [
   'Каждый ответ — маленький шаг к себе. Ты уже прошла треть, и это прекрасно.',
 ];
 
-const S = {type: null, code: '', invited: false, all: [], i: -1, a: {}, key: '', m: {}};
+const S = {type: null, code: '', talk: false, invited: false, all: [], i: -1, a: {}, key: '', m: {}};
+const part = () => (S.talk ? 'talk' : 'test');
 
 function init() {
   const h = Codec.parseAnketaHash(location.hash);
   S.type = h.type;
   S.code = h.code;
-  setQuestions(h.type ? applyDiff(h.type, h.diff) : []);
-  S.key = `eva-anketa:${h.type || ''}:${h.code || 'new'}`;
+  /* интервью — только для своей карточки: без кода ответы некуда положить */
+  S.talk = !!(h.talk && h.code);
+  setQuestions(h.type ? applyDiff(h.type, h.diff, part()) : []);
+  S.key = `eva-anketa:${S.talk ? 'talk:' : ''}${h.type || ''}:${h.code || 'new'}`;
   const saved = store.get(S.key);
   if (saved && saved.a) { S.a = saved.a; S.invited = !!saved.invited; S.m = saved.m || {}; }
   if (!S.type) return renderChooser();
@@ -907,10 +924,10 @@ function init() {
   render();
 }
 /* вопросы по разделам: добавленный в раздел позже идёт внутри своего раздела */
-function setQuestions(qs) { S.all = S.type ? groupByBlock(S.type, 'test', qs).flatMap(x => x.qs) : []; }
+function setQuestions(qs) { S.all = S.type ? groupByBlock(S.type, part(), S.talk ? qs.map(asText) : qs).flatMap(x => x.qs) : []; }
 /* какие вопросы видны сейчас: без автоматических (страна) и без тех, чьё условие не выполнено */
 function qs() { return S.all.filter(q => qVisible(q, S.a)); }
-function blocks() { return groupByBlock(S.type, 'test', qs()); }
+function blocks() { return groupByBlock(S.type, part(), qs()); }
 function save() { store.set(S.key, {a: S.a, invited: S.invited, m: S.m}); }
 function total() { return qs().length; }
 /* в каком разделе вопрос: номер раздела, его вопросы и место внутри */
@@ -1006,7 +1023,7 @@ function render() {
     const y = new Date().getFullYear();
     ctl = `<input class="inp" id="inp" type="date" value="${esc(v || '')}" min="${y - 90}-01-01" max="${y - 12}-12-31">`;
   } else if (q.k === 'text') {
-    ctl = `<textarea class="inp" id="inp" placeholder="${esc(q.ph || 'Напишите, как есть')}">${esc(v || '')}</textarea>`;
+    ctl = `<textarea class="inp ${S.talk ? 'tall' : ''}" id="inp" placeholder="${esc(q.ph || (S.talk ? 'Напиши своими словами' : 'Напишите, как есть'))}">${esc(v || '')}</textarea>`;
   } else if (q.city) {
     ctl = `<input class="inp" id="inp" value="${esc(v || '')}" placeholder="${esc(q.ph || '')}" autocomplete="address-level2" autocapitalize="words">
       <div class="sugg" id="sugg"></div><div class="country" id="ctry"></div>`;
@@ -1067,7 +1084,7 @@ function render() {
         save();
         return go();
       }
-      if (val) S.a[q.id] = val.slice(0, q.k === 'text' ? 600 : 160); else delete S.a[q.id];
+      if (val) S.a[q.id] = val.slice(0, S.talk ? TALK_MAX : q.k === 'text' ? 600 : 160); else delete S.a[q.id];
       save();
     }
     if (q.k === 'many' && !(S.a[q.id] || []).length) delete S.a[q.id];
@@ -1134,7 +1151,7 @@ function flash(text) {
 }
 
 function renderIntro() {
-  const I = INTRO[S.type];
+  const I = (S.talk ? INTRO_TALK : INTRO)[S.type];
   const started = Object.keys(S.a).length;
   const bl = blocks();
   const named = bl.length > 1 && bl[0].name;
@@ -1144,7 +1161,7 @@ function renderIntro() {
     ${named ? `<ol class="toc">${bl.map(b => `<li class="${doneIn(b) === b.qs.length ? 'done' : ''}"><span class="toc-e" aria-hidden="true">${b.emo || '•'}</span><span><b>${esc(b.name)}</b>${b.about ? `<small>${esc(b.about)}</small>` : ''}</span><em>${doneIn(b) ? `${doneIn(b)}/${b.qs.length}` : b.qs.length}</em></li>`).join('')}</ol>` : ''}
     ${S.invited ? '<div class="note">👭 Ты пришла по приглашению — мы сохраним, кто тебя позвал.</div>' : ''}
     <button class="go" id="start">${started ? 'Продолжить 🚀' : 'Начать 🚀'}</button>
-    ${S.code && !S.invited ? '<button class="link" id="inv">Меня пригласили по этой ссылке 👭</button>' : ''}
+    ${S.code && !S.invited && !S.talk ? '<button class="link" id="inv">Меня пригласили по этой ссылке 👭</button>' : ''}
     <p class="small">Нажимая «Начать», вы соглашаетесь, что команда Eva Space увидит ваши ответы и сможет связаться с вами. Ответы нужны, чтобы сделать продукт лучше, и никуда не публикуются.</p></div>`);
   $('#app').onclick = e => {
     if (e.target.closest('#start')) { const k = qs().findIndex(q => S.a[q.id] === undefined); S.i = started && k >= 0 ? k : 0; render(); }
@@ -1159,7 +1176,46 @@ function plural(n, one, few, many) {
   return many;
 }
 
+/* интервью: на своём сервере ответы уходят сразу в карточку; иначе — ссылкой менеджеру, как анкета */
+async function renderTalkDone() {
+  const onSrv = location.pathname.startsWith('/anketa');
+  if (onSrv) {
+    shell('<div class="card intro fade"><div class="big">⏳</div><h1>Отправляем ответы…</h1></div>');
+    let ok = false, why = '';
+    try {
+      const r = await fetch('/crm/api/talk', {method: 'POST', headers: {'content-type': 'application/json', 'x-eva': '1'}, body: JSON.stringify({c: S.code, a: S.a})});
+      const j = await r.json().catch(() => ({}));
+      ok = r.ok; why = j.error || '';
+    } catch (e) { why = 'Нет связи с интернетом'; }
+    if (ok) {
+      shell(`<div class="card intro fade"><div class="big">🎉</div><h1>Спасибо!</h1><p class="lead">Ответы уже у команды Евы 💜 Каждый из них поможет сделать Еву лучше.</p>
+        <button class="link" id="edit">← Поменять ответы</button></div>`);
+    } else {
+      shell(`<div class="card intro fade"><div class="big">😕</div><h1>Не получилось отправить</h1><p class="lead">${esc(why || 'Попробуй ещё раз через минуту.')} Ответы сохранились в этом браузере.</p>
+        <button class="go" id="retry">Отправить ещё раз</button><button class="link" id="edit">← Вернуться к ответам</button></div>`);
+    }
+    $('#app').onclick = e => {
+      if (e.target.closest('#retry')) renderTalkDone();
+      if (e.target.closest('#edit')) { S.i = total() - 1; render(); }
+    };
+    return;
+  }
+  const packed = await Codec.pack({v: 1, t: TYPES[S.type].letter, c: S.code, m: 'talk', a: S.a, at: Date.now()});
+  const link = `${CRM_URL}#in.${packed}`;
+  shell(`<div class="card intro fade"><div class="big">🎉</div><h1>Спасибо!</h1><p class="lead">Скопируй ссылку с ответами и отправь менеджеру Евы, который прислал тебе вопросы.</p>
+    <button class="go alt" id="copy">📋 Скопировать ссылку с ответами</button><textarea class="linkbox" id="lb" readonly hidden>${esc(link)}</textarea>
+    <button class="link" id="edit">← Поменять ответы</button></div>`);
+  $('#app').onclick = async e => {
+    if (e.target.closest('#copy')) {
+      try { await navigator.clipboard.writeText(link); e.target.closest('#copy').textContent = '✅ Скопировано'; }
+      catch (err) { const lb = $('#lb'); lb.hidden = false; lb.focus(); lb.select(); }
+    }
+    if (e.target.closest('#edit')) { S.i = total() - 1; render(); }
+  };
+}
+
 async function renderDone() {
+  if (S.talk) return renderTalkDone();
   /* ответы на вопросы, которые теперь не показываются (сменили занятость), не отправляем */
   S.all.forEach(q => { if (!q.auto && !qVisible(q, S.a)) delete S.a[q.id]; });
   save();

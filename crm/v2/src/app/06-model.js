@@ -38,8 +38,8 @@ const Questions = {
   save(type, set) { return Store.put('cfg', 'q_' + type, {test: set.test, talk: set.talk, ver: Q_VER[type] || 1, at: Date.now()}); },
   reset(type) { return Store.remove('cfg', 'q_' + type); },
   /* что изменили в анкете относительно стартового набора — едет в ссылке */
-  diff(type) {
-    const cur = this.set(type).test, def = Q_DEFAULT[type].test;
+  diff(type, part = 'test') {
+    const cur = this.set(type)[part], def = Q_DEFAULT[type][part];
     const defIds = def.map(q => q.id);
     const h = cur.filter(q => q.hidden && defIds.includes(q.id)).map(q => q.id);
     const c = cur.filter(q => !q.hidden && (!defIds.includes(q.id) || JSON.stringify(strip(q)) !== JSON.stringify(strip(def.find(d => d.id === q.id))))).map(strip);
@@ -104,6 +104,12 @@ const People = {
     const d = Questions.diff(p.type);
     return `${base}#${TYPES[p.type].letter}.${p.code}${d ? '.q' + Codec.encJson(d) : ''}`;
   },
+  /* ссылка на интервью: человек отвечает на вопросы интервью сам, ответы ложатся в карточку */
+  talkLink(p) {
+    const base = settings().anketaUrl || LINKS.anketa;
+    const d = Questions.diff(p.type, 'talk');
+    return `${base}#${TYPES[p.type].letter}.${p.code}.i${d ? '.q' + Codec.encJson(d) : ''}`;
+  },
   canEdit() { return Who.can('edit') && !Who.readOnly(); },
   /* перенос между шагами на доске: статусы подстраиваются под колонку,
      zone — точный итог («Подключаем», «Думает»…). Возвращает прежние
@@ -137,6 +143,17 @@ function keyPatch(p, type, answers) {
   });
   return out;
 }
+/* ответы интервью от самого человека: не затирают то, что записал интервьюер; карточка — в «Итог» */
+function talkPatch(p, answers) {
+  const now = Date.now(), talk = {};
+  Object.entries(answers || {}).forEach(([id, v]) => {
+    const cur = (p.talk || {})[id] || {};
+    if (typeof v !== 'string' || !v.trim() || (cur.a && !cur.self)) return;
+    talk[id] = {...cur, a: v.trim(), asked: true, self: true, t: now};
+  });
+  const s1 = ['done', 'skip'].includes(p.s1) ? p.s1 : Object.keys(p.answers || {}).length ? 'done' : 'skip';
+  return {talk, s1, s2: 'done', talkAt: p.talkAt || now, talkSelf: now};
+}
 const emptyStage = a => !a.stage || (Array.isArray(a.stage) && !a.stage.length);
 const Import = {
   /* сохранить ответы, присланные по ссылке: к карточке по коду или новой карточкой */
@@ -145,6 +162,12 @@ const Import = {
     if (!TYPES[type]) throw new Error('Неизвестный тип анкеты');
     const answers = pl.a || {};
     const owner = pl.c ? People.byCode(pl.c) : null;
+    /* ответы на вопросы интервью (если сервер их не принял сам — пришли ссылкой) */
+    if (pl.m === 'talk') {
+      if (!owner) throw new Error('Нет карточки для ответов интервью');
+      People.patch(owner.id, talkPatch(owner, answers), 'Ответила на вопросы интервью по ссылке', '📝');
+      return owner.id;
+    }
     /* анкета клиентки с 13.10 обещает подарок — неделю Евы; отмечаем, чтобы команда не забыла выдать */
     const gift = p => pl.g && type === 'client' && !(p && p.gift) ? {gift: {at: pl.at || Date.now(), done: false}} : {};
     if (owner && !pl.r) {

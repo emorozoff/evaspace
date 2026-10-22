@@ -226,7 +226,8 @@ App.register('person', {
             ${p.contact ? `<span>контакт: ${esc(p.contact)}</span>` : ''}
             ${ref ? `<span>по приглашению <a href="#p-${ref.id}">${esc(People.name(ref))}</a></span>` : p.ref ? `<span>по приглашению ${esc(p.ref)}</span>` : ''}
             ${invited.length ? `<span>по ссылке пришли: ${invited.length}</span>` : ''}</div></div>
-        <div class="ph-acts">${canEdit ? `<button class="btn sm" data-act="link" data-pid="${p.id}">${icon('link')}Скопировать ссылку</button><button class="icon-btn" data-edit-person title="Изменить данные">${icon('edit')}</button>` : ''}${Who.can('delete') ? `<button class="icon-btn" data-del title="Удалить">${icon('trash')}</button>` : ''}</div>
+        <div class="ph-acts">${canEdit ? `<label class="pp-move"><span>Этап</span><select class="select sm" data-move>${[1, 2].map(c => `<option value="${c}" ${col === c ? 'selected' : ''}>${c} · ${esc(T.steps[c - 1])}</option>`).join('')}${Object.entries(s3Map(p.type)).map(([k, z]) => `<option value="3:${k}" ${col === 3 && (p.s3 || 'none') === k ? 'selected' : ''}>3 · ${esc(T.steps[2])}: ${esc(z.name.toLowerCase())}</option>`).join('')}</select></label>
+          <button class="btn sm" data-act="link" data-pid="${p.id}">${icon('link')}Скопировать ссылку</button><button class="btn sm" data-act="tlink" data-pid="${p.id}" title="Вопросы ${p.type === 'client' ? 'интервью' : 'созвона'} — человек ответит сам, ответы лягут в карточку">${icon('link')}Ссылка на ${p.type === 'client' ? 'интервью' : 'вопросы'}</button><button class="icon-btn" data-edit-person title="Изменить данные">${icon('edit')}</button>` : ''}${Who.can('delete') ? `<button class="icon-btn" data-del title="Удалить">${icon('trash')}</button>` : ''}</div>
       </div>
       ${steps}
       <div class="card" style="padding:0;overflow:clip">
@@ -307,6 +308,14 @@ App.register('person', {
       toast('Отмечено: подарок выдан');
     });
     on(root, 'click', '[data-edit-person]', () => openEditPerson(p));
+    /* перенести на этап — то же, что перетащить карточку на доске, но работает и на телефоне */
+    on(root, 'change', '[data-move]', (e, el) => {
+      const [c, zone] = el.value.split(':');
+      const before = People.moveTo(People.get(p.id), Number(c), zone || null);
+      if (!before) return;
+      syncCall(p.id);
+      toast(`${People.name(p)} → ${T.steps[Number(c) - 1]}${zone ? ' · ' + s3Map(p.type)[zone].name.toLowerCase() : ''}`, {undo: () => People.patch(p.id, before, 'Отменили перенос', '↩')});
+    });
     on(root, 'click', '[data-del]', async (e, el) => {
       if (!await confirmPop(el, {text: `Удалить ${People.name(p)} со всеми ответами?`, yes: 'Удалить', danger: true})) return;
       Store.remove('people', p.id);

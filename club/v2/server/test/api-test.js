@@ -315,6 +315,14 @@ async function browserHash(pw, salt) {
   ok((await owner.patch('team', 'tm_lead', {status: 'active', approvedAt: Date.now()}, '/crm/api')).status === 200 && (await lead.get('/crm/api/state')).j.crmRole === 'member', 'руководитель подтвердил заявку — роль «Команда»');
   ok((await lead.put('people', 'c1', {type: 'client', name: 'Клиентка', code: 'ANNA482'}, '/crm/api')).status === 200, 'карточку клиентки — да');
   ok((await lead.del('people', 'c1', '/crm/api')).status === 403, 'удалить карточку — только руководитель');
+  /* интервью по ссылке: без входа, только в карточку по коду, не затирая записанное интервьюером */
+  await lead.patch('people', 'c1', {s1: 'new', s2: 'none', talk: {t_job: {a: 'Записала команда'}}}, '/crm/api');
+  ok((await anon.req('POST', '/crm/api/talk', {c: 'NOPE999', a: {t_pain: 'x'}})).status === 404, 'интервью: чужой код — нет');
+  ok((await anon.req('POST', '/crm/api/talk', {c: 'ANNA482', a: {t_pain: 'x'}}, {noHeader: true})).status === 403, 'интервью: не со страницы — нет');
+  ok((await anon.req('POST', '/crm/api/talk', {c: 'anna482', a: {t_pain: 'Нет времени', t_job: 'Подмена', 'bad id!': 'x', t_mood: 5}})).status === 200, 'интервью по ссылке — принято');
+  r = (await lead.get('/crm/api/state')).j.collections.people.c1;
+  ok(r.talk.t_pain.a === 'Нет времени' && r.talk.t_pain.self && r.talk.t_job.a === 'Записала команда' && !r.talk['bad id!'] && !r.talk.t_mood, 'ответы в карточке, записанное командой не затёрто', r.talk);
+  ok(r.s2 === 'done' && r.s1 === 'skip' && r.talkSelf, 'карточка перешла к итогу', {s1: r.s1, s2: r.s2});
   ok((await lead.put('cfg', 'q_client', {test: [], talk: [], at: 1}, '/crm/api')).status === 200, 'вопросы анкеты — да');
   ok((await lead.patch('cfg', 'settings', {anketaUrl: 'https://evil'}, '/crm/api')).status === 404 && (await lead.put('cfg', 'settings', {anketaUrl: 'https://evil'}, '/crm/api')).status === 403, 'настройки CRM — нет');
   ok((await owner.patch('team', 'tm_lead', {role: 'viewer'}, '/crm/api')).status === 200, 'руководитель делает наблюдателем');

@@ -625,7 +625,38 @@ async function hqApi(req, res, p, u) {
   return json(res, 404, {error: 'нет такого адреса'});
 }
 
+/* интервью по ссылке (/anketa/#k.КОД.i): человек сам отвечает на вопросы интервью, ответы ложатся в его
+   карточку. Без входа — поэтому только в карточку с кодом из ссылки, только текст ответов, не затирая
+   записанное интервьюером, и с ограничением попыток */
+const TALK_ID = /^[A-Za-z0-9_]{1,40}$/;
+async function crmTalk(req, res) {
+  const k = 'talk|' + ipOf(req);
+  const wait = limiter.blocked(k);
+  if (wait) return json(res, 429, {error: `Слишком много попыток. Попробуйте через ${wait} мин.`});
+  if (!sameSite(req)) return json(res, 403, {error: 'запрос не со страницы анкеты'});
+  const b = (await body(req)) || {};
+  const code = String(b.c || '').toUpperCase();
+  const p = /^[A-Z0-9_-]{2,40}$/.test(code) ? crm.store.list('people').find(x => x.code === code) : null;
+  if (!p) { limiter.fail(k); return json(res, 404, {error: 'Ссылка устарела — попросите новую у менеджера Евы.'}); }
+  const a = isObj(b.a) ? b.a : {}, now = Date.now(), talk = {};
+  const ids = Object.keys(a);
+  if (ids.length > 120 || JSON.stringify(a).length > 200000) return json(res, 413, {error: 'Слишком длинные ответы'});
+  for (const id of ids) {
+    const v = a[id], cur = (p.talk || {})[id] || {};
+    if (!TALK_ID.test(id) || typeof v !== 'string' || !v.trim()) continue;
+    if (cur.a && !cur.self) continue;
+    talk[id] = {...cur, a: v.trim().slice(0, 5000), asked: true, self: true, t: now};
+  }
+  if (!Object.keys(talk).length) return json(res, 400, {error: 'Нет ни одного ответа'});
+  const {id, ...doc} = p;
+  const s1 = ['done', 'skip'].includes(doc.s1) ? doc.s1 : Object.keys(doc.answers || {}).length ? 'done' : 'skip';
+  crm.store.set('people', id, {...doc, talk: {...(doc.talk || {}), ...talk}, s1, s2: 'done', talkAt: doc.talkAt || now, talkSelf: now, touchedAt: now,
+    log: {...(doc.log || {}), [A.uid()]: {t: now, by: 'self', emo: '📝', text: 'Ответила на вопросы интервью по ссылке'}}});
+  return json(res, 200, {ok: true});
+}
+
 async function crmApi(req, res, p, u) {
+  if (p === 'talk' && req.method === 'POST') return crmTalk(req, res);
   const ctx = ctxOf(req);
   const write = req.method !== 'GET';
   if (write && !sameSite(req)) return json(res, 403, {error: 'запрос не со страницы CRM'});

@@ -30,7 +30,7 @@ function nextActs(p, big = false) {
   if (c === 1) return (p.s1 === 'sent' ? b('link', 'Ссылка ещё раз') : b('link', 'Отправить анкету', true)) + b('fill', 'Заполнить') + (big ? b('skip1', 'Без анкеты') : '');
   if (c === 2) {
     if (p.s2 === 'set') return b('talk', `Начать ${talk}`, true) + b('done2', p.type === 'client' ? 'Прошло' : 'Прошёл') + (big ? b('time', 'Перенести') + b('noshow', 'Не состоялся') : '');
-    return b('time', 'Назначить созвон', true) + (big ? b('talk', `Начать ${talk} сейчас`) + b('skip2', 'Без созвона') : '');
+    return b('time', 'Назначить созвон', true) + (big ? b('talk', `Начать ${talk} сейчас`) + b('tlink', 'Отправить вопросы ссылкой') + b('skip2', 'Без созвона') : '');
   }
   const s3 = p.s3 || 'none';
   if (p.type === 'client') return s3 === 'none' ? b('result', 'Разобрать интервью', true) : '';
@@ -49,6 +49,9 @@ function wireActs(root) {
     if (act === 'link') {
       await copyOrShow(People.link(p), 'Ссылка скопирована 💌 Отправьте её в Telegram или WhatsApp');
       if ((p.s1 || 'new') === 'new') People.patch(p.id, {s1: 'sent', sentAt: Date.now()}, 'Отправили ссылку на анкету', '🔗');
+    } else if (act === 'tlink') {
+      await copyOrShow(People.talkLink(p), `Ссылка на вопросы ${p.type === 'client' ? 'интервью' : 'созвона'} скопирована 💬 Отправьте её человеку — ответы сами лягут в карточку`);
+      if (!p.talkSentAt) People.patch(p.id, {talkSentAt: Date.now()}, 'Отправили ссылку на вопросы интервью', '💬');
     } else if (act === 'fill') { View.set('pp.last', p.id); View.set('pp.tab', 'anketa'); View.set('pp.edit', true); App.go('p-' + p.id); }
     else if (act === 'skip1') People.patch(p.id, {s1: 'skip'}, 'Решили без анкеты', '⏭');
     else if (act === 'time') openTimePicker(p);
@@ -116,7 +119,7 @@ function audiencePage(type) {
         : type === 'partner' ? PARTNER_CATS.map(c => [c, everyone.filter(p => p.cat === c).length]).filter(x => x[1])
         : [];
       const canEdit = People.canEdit();
-      if (canEdit) hints[0] += ' Карточку можно зажать и перенести в другой шаг.';
+      if (canEdit) hints[0] += ' Карточку можно зажать и перенести в другой шаг или выбрать этап в самой карточке.';
 
       root.innerHTML = `
         ${pageHead(`${T.emo} ${groupName(type)}`, esc(T.about),

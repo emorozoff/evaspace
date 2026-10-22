@@ -1,6 +1,7 @@
 /* Одна ссылка на человека — и для анкеты, и для рефералки.
    Ссылка анкеты:  <анкета>#k.ANNA482          k — клиентка, e — эксперт, p — партнёр, a — амбассадор
                    <анкета>#k.ANNA482.q…       хвост .q… — вопросы, которые команда добавила или скрыла
+   Ссылка интервью: <анкета>#k.ANNA482.i(.q…)  те же правки, но вопросов интервью; ответы сервер кладёт в карточку
    Ответы назад:   <CRM>#in.z…                 z — сжатые ответы, j — без сжатия
    В адресе после # разрешены только буквы, цифры и . _ ~ - — поэтому
    данные упакованы в base64url. */
@@ -51,7 +52,7 @@ const Codec = {
     let diff = null;
     const q = parts.find((p, i) => i >= 2 && p[0] === 'q');
     if (q) { try { diff = this.decJson(q.slice(1)); } catch (e) { diff = null; } }
-    return {type, code, diff};
+    return {type, code, diff, talk: parts.slice(2).includes('i')};
   },
   /* найти ответы в любом тексте: ссылке, сообщении из Telegram, чистом коде */
   findPayload(text) {
@@ -63,8 +64,8 @@ const Codec = {
 
 /* вопросы анкеты с учётом правок команды: скрытые убираем, изменённые
    подменяем, новые добавляем в конец */
-function applyDiff(type, diff) {
-  const base = (Q_DEFAULT[type] || {test: []}).test.map(q => ({...q}));
+function applyDiff(type, diff, part = 'test') {
+  const base = ((Q_DEFAULT[type] || {})[part] || []).map(q => ({...q}));
   /* ссылка выдана до смены набора вопросов — её правки относятся к прежнему набору */
   if (!diff || (diff.v || 1) < (Q_VER[type] || 1)) return base;
   const hide = new Set(diff.h || []);
