@@ -202,6 +202,7 @@ function Login({ onInvite, onForgot }: { onInvite: () => void; onForgot: (phone:
         <button type="button" className="link aska-linkbtn" onClick={() => onForgot(/\d{6,}/.test(loginName.replace(/\D/g, '')) ? loginName : '')}>Не помню пароль</button>
         <button type="button" className="link aska-linkbtn" onClick={onInvite}>У меня приглашение</button>
       </div>
+      <a className="link aska-linkbtn aska-about-link" href="/site/" target="_blank" rel="noopener">Что такое АСЬКА? Правила и уровни →</a>
     </form>
   );
 }

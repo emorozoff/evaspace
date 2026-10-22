@@ -195,6 +195,8 @@
 .skin-aero .aska-about { border-radius: 10px; }
 .aska-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .aska-actions .btn { flex: 1 1 auto; justify-content: center; }
+.aska-actions a.btn { display: inline-flex; align-items: center; text-decoration: none; color: inherit; }
+.aska-about-link { display: block; text-align: center; font-size: 13px; text-decoration: none; margin-top: 2px; }
 .aska-choice { display: flex; gap: 6px; }
 .aska-choice .btn { flex: 1; flex-direction: column; display: flex; align-items: center; gap: 2px; padding: 6px; height: auto; white-space: normal; }
 .aska-choice .btn small { font-weight: normal; opacity: .8; font-size: .85em; }

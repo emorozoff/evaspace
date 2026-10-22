@@ -93,6 +93,7 @@ function Settings({ onAux }: { onAux: (k: AuxKind) => void }) {
       <div className="aska-actions">
         <button className="btn primary" onClick={() => onAux('invite')}>➕ Позвать друга</button>
         {s.profile?.isAdmin && <button className="btn" onClick={() => onAux('admin')}>👑 Управление АСЬКОЙ</button>}
+        <a className="btn" href="/site/" target="_blank" rel="noopener">📜 Правила и уровни</a>
       </div>
 
       <div className="groupbox">

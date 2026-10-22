@@ -23,6 +23,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET' || url.origin !== location.origin || url.pathname.startsWith('/api/')) return;
+  if (url.pathname === '/site' || url.pathname.startsWith('/site/')) return; // сайт — не приложение: не кэшируем и не подменяем
   if (event.request.mode === 'navigate') {
     // Сначала сеть (чтобы получать обновления), без сети — сохранённая версия.
     event.respondWith((async () => {

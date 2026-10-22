@@ -1305,6 +1305,12 @@ export function createApp({
         else res.set('Cache-Control', 'no-cache');
       },
     }));
+    // Сайт АСЬКИ (правила, уровни, номера) — отдельная страница рядом с приложением
+    app.get('/site', (req, res) => {
+      if (!req.path.endsWith('/')) return res.redirect(301, '/site/');
+      res.set('Cache-Control', 'no-cache');
+      res.sendFile(path.join(staticDir, 'site', 'index.html'));
+    });
     app.get(/^\/(?!api\/|ws$).*/, (req, res) => {
       res.set('Cache-Control', 'no-cache');
       res.sendFile(path.join(staticDir, 'index.html'));

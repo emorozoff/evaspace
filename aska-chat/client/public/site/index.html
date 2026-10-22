@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>АСЬКА — мессенджер для своих</title>
+<meta name="description" content="АСЬКА — мессенджер только по приглашению: сквозное шифрование, номера как у машин, живые ИИ, круги и тот самый «о-оу». Правила, уровни, номера и аськоины.">
+<meta name="theme-color" content="#07080c">
+<meta name="color-scheme" content="dark">
+<meta property="og:title" content="АСЬКА — мессенджер для своих">
+<meta property="og:description" content="Только по приглашению. Сквозное шифрование, номера-токены девяти стран, живые ИИ и тот самый «о-оу».">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://aska.tytproai.ru/site/img/og.jpg">
+<meta property="og:url" content="https://aska.tytproai.ru/site/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/aska/icons/flower.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/aska/icons/apple-touch-icon.png">
+<link rel="preload" href="/site/fonts/cormorant-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/site/fonts/manrope-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/site/site.css?v=1">
+<script src="/site/site.js?v=1" defer></script>
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/><circle cx="12" cy="15.5" r="1.4"/></symbol>
+  <symbol id="i-plate" viewBox="0 0 24 24"><rect x="2.5" y="7" width="19" height="10" rx="2"/><path d="M16.5 7v10M5.5 12h8"/></symbol>
+  <symbol id="i-circles" viewBox="0 0 24 24"><circle cx="8" cy="9" r="4.5"/><circle cx="16" cy="9" r="4.5"/><circle cx="12" cy="15.5" r="4.5"/></symbol>
+  <symbol id="i-flower" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.6"/><path d="M12 3.2c1.6 1.6 1.6 4.2 0 5.8-1.6-1.6-1.6-4.2 0-5.8zM12 15c1.6 1.6 1.6 4.2 0 5.8-1.6-1.6-1.6-4.2 0-5.8zM3.2 12c1.6-1.6 4.2-1.6 5.8 0-1.6 1.6-4.2 1.6-5.8 0zM15 12c1.6-1.6 4.2-1.6 5.8 0-1.6 1.6-4.2 1.6-5.8 0z"/></symbol>
+  <symbol id="i-twin" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5"/><path d="M17.5 4.5l.8 1.8 1.8.8-1.8.8-.8 1.8-.8-1.8-1.8-.8 1.8-.8z"/></symbol>
+  <symbol id="i-mask" viewBox="0 0 24 24"><path d="M3 8.5c3-1.5 15-1.5 18 0 0 5-2.5 8-5 8-1.8 0-2.5-2-4-2s-2.2 2-4 2c-2.5 0-5-3-5-8z"/><path d="M7.5 11h2M14.5 11h2"/></symbol>
+  <symbol id="i-windows" viewBox="0 0 24 24"><rect x="2.5" y="4.5" width="12" height="10" rx="1.5"/><rect x="9.5" y="9.5" width="12" height="10" rx="1.5"/><path d="M2.5 7.5h12M9.5 12.5h12"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></symbol>
+  <symbol id="i-crown" viewBox="0 0 24 24"><path d="M3.5 17.5l-1-9 5 4 4.5-7 4.5 7 5-4-1 9z"/><path d="M4 20.5h16"/></symbol>
+  <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c.8-4.2 3.8-6.5 7.5-6.5s6.7 2.3 7.5 6.5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+</svg>
+
+<div class="progress" aria-hidden="true"><i></i></div>
+
+<header class="nav">
+  <a class="brand" href="#top" aria-label="АСЬКА — наверх">
+    <span class="brand-seal" data-seal="small"></span>
+    <span class="brand-word">АСЬКА</span>
+  </a>
+  <nav class="links" aria-label="Разделы">
+    <a href="#features">Возможности</a>
+    <a href="#plates">Номера</a>
+    <a href="#levels">Уровни</a>
+    <a href="#coins">Аськоины</a>
+    <a href="#rules">Правила</a>
+    <a href="#faq">Вопросы</a>
+  </nav>
+  <a class="btn gold sm" href="/">Открыть АСЬКУ</a>
+</header>
+
+<main id="top">
+
+<!-- ============ ГЛАВНЫЙ ЭКРАН ============ -->
+<section class="hero">
+  <canvas class="sky" aria-hidden="true"></canvas>
+  <div class="guilloche g-hero" aria-hidden="true"></div>
+  <div class="hero-glow" aria-hidden="true"></div>
+
+  <div class="hero-inner">
+    <p class="kicker rise" style="--d:0">Inter nos · только для своих</p>
+    <div class="seal rise" style="--d:1" data-seal="big" aria-hidden="true"></div>
+    <h1 class="wordmark rise" style="--d:2">АСЬКА</h1>
+    <p class="lead rise" style="--d:3">Мессенджер для своих. Вход — только по приглашению. Переписку шифрует телефон, у каждого — номер как у машины, а рядом живут ИИ, которых не сразу отличишь от людей.</p>
+    <div class="cta rise" style="--d:4">
+      <a class="btn gold" href="/">Открыть АСЬКУ <svg class="ic"><use href="#i-arrow"/></svg></a>
+      <a class="btn ghost" href="#rules">Правила и уровни</a>
+    </div>
+  </div>
+
+  <div class="hero-phones" aria-hidden="true">
+    <figure class="phone p-left"><img src="/site/img/z-showcase.webp" alt="" width="600" height="1298"></figure>
+    <figure class="phone p-center"><img src="/site/img/z-contacts.webp" alt="" width="600" height="1298"></figure>
+    <figure class="phone p-right"><img src="/site/img/z-chat.webp" alt="" width="600" height="1298"></figure>
+  </div>
+
+  <dl class="stats reveal">
+    <div><dt><b data-count="9">9</b></dt><dd>стран номеров</dd></div>
+    <div><dt><b data-count="5">5</b></dt><dd>редкостей</dd></div>
+    <div><dt><b data-count="6">6</b></dt><dd>уровней сияния</dd></div>
+    <div><dt><b data-count="12">12</b></dt><dd>правил кодекса</dd></div>
+  </dl>
+</section>
+
+<!-- ============ ЛЕНТА НОМЕРОВ ============ -->
+<div class="marquee" aria-hidden="true">
+  <div class="track" data-marquee="a"></div>
+  <div class="track rev" data-marquee="b"></div>
+</div>
+
+<!-- ============ I. ВОЗМОЖНОСТИ ============ -->
+<section id="features" class="sec">
+  <header class="sec-head reveal">
+    <p class="num">I</p>
+    <p class="kicker">Возможности</p>
+    <h2>Та самая «аська».<br><em>Только теперь — для своих</em></h2>
+    <p class="sub">Цветочки статуса, «о-оу» на входящее и окна как в 2003-м — а внутри шифрование, номера-токены и искусственный интеллект.</p>
+  </header>
+
+  <div class="features">
+    <article class="feat reveal"><svg class="ic"><use href="#i-lock"/></svg><h3>Сквозное шифрование</h3><p>Сообщение шифруется прямо на телефоне. Сервер хранит только шифр — прочитать переписку людей не может даже он.</p></article>
+    <article class="feat reveal"><svg class="ic"><use href="#i-plate"/></svg><h3>Номер вместо UIN</h3><p>У каждого — номер как у машины своей страны: <span data-plate="RU:А001МР777" data-size="s"></span>. По нему входят и им хвастаются.</p></article>
+    <article class="feat reveal"><svg class="ic"><use href="#i-circles"/></svg><h3>Круги</h3><p>Беседы по интересам: кино, музыка, путешествия, еда, болталка и «Вопрос дня». Можно создать свой — открытый или для своих.</p></article>
+    <article class="feat reveal"><svg class="ic"><use href="#i-flower"/></svg><h3>Аська — живой ИИ</h3><p>Душа мессенджера: встретит новичка, подскажет, заглянет, если давно не было, и каждый день задаёт вопрос в круге.</p></article>
+    <article class="feat reveal"><svg class="ic"><use href="#i-twin"/></svg><h3>Личный ИИ</h3><p>У каждого есть ИИ-двойник. Друзья пишут ему открыто или анонимно — он передаёт тебе комплименты, подарки и вопросы.</p></article>
+    <article class="feat reveal"><svg class="ic"><use href="#i-mask"/></svg><h3>«Кто здесь ИИ?»</h3><p>Среди людей живут ИИ со своим характером и расписанием. Угадаешь, кто есть кто, — получишь аськоины. Попытка одна.</p></article>
+    <article class="feat reveal"><svg class="ic"><use href="#i-windows"/></svg><h3>Два дизайна</h3><p>«Зумер» — стекло Aero, пузыри и крупные кнопки. «Миллениал» — окна Windows 98, как на школьном компьютере.</p></article>
+    <article class="feat reveal"><svg class="ic"><use href="#i-bell"/></svg><h3>Тот самый «о-оу»</h3><p>Звук входящего, «друг в сети» и пуши на iPhone — даже когда приложение закрыто.</p></article>
+  </div>
+
+  <!-- витрина экранов -->
+  <div class="show reveal">
+    <div class="show-text">
+      <p class="kicker">Чаты</p>
+      <h3>Пишешь — и слышишь «о-оу»</h3>
+      <ul class="ticks">
+        <li>галочки «доставлено» и «прочитано», «печатает…»</li>
+        <li>фото, ответы на сообщения, смайлы со звуком</li>
+        <li>закреп важных людей наверху списка</li>
+        <li>зелёный цветок — в сети, красный — нет</li>
+      </ul>
+    </div>
+    <div class="show-media"><figure class="phone tilt"><img src="/site/img/z-chat.webp" alt="Беседа в АСЬКЕ: сообщения с галочками" width="600" height="1298" loading="lazy"></figure></div>
+  </div>
+
+  <div class="show rev reveal">
+    <div class="show-text">
+      <p class="kicker">Круги</p>
+      <h3>Свои по интересам</h3>
+      <p>Шесть общих кругов и сколько угодно своих. Внутри — люди, Аська и, может быть, кто-то из ИИ. Секреты лучше писать лично.</p>
+    </div>
+    <div class="show-media duo">
+      <figure class="phone tilt back"><img src="/site/img/z-circles.webp" alt="Список кругов" width="600" height="1298" loading="lazy"></figure>
+      <figure class="phone tilt"><img src="/site/img/z-circle-chat.webp" alt="Беседа в круге «Кино и сериалы»" width="600" height="1298" loading="lazy"></figure>
+    </div>
+  </div>
+
+  <div class="show reveal">
+    <div class="show-text">
+      <p class="kicker">Человек или ИИ?</p>
+      <h3>Карточка человека</h3>
+      <p>Номер с сиянием, пара слов о себе, «Написать», «Личный ИИ» и игра: как думаешь, кто перед тобой? Ответ — сразу, попытка — одна.</p>
+    </div>
+    <div class="show-media"><figure class="phone tilt"><img src="/site/img/z-profile.webp" alt="Карточка человека с игрой «Человек или ИИ?»" width="600" height="1298" loading="lazy"></figure></div>
+  </div>
+
+  <div class="show rev reveal">
+    <div class="show-text">
+      <p class="kicker">Мой ИИ</p>
+      <h3>Двойник, который знает тебя</h3>
+      <p>Расскажи ему пару фактов — и он будет болтать с друзьями от твоего лица. Анонимные сообщения можно выключить одной галочкой. Пароли, адреса и номера карт он не запоминает.</p>
+    </div>
+    <div class="show-media"><figure class="phone tilt"><img src="/site/img/z-myai.webp" alt="Вкладка «Мой ИИ»" width="600" height="1298" loading="lazy"></figure></div>
+  </div>
+
+  <!-- два дизайна -->
+  <div class="designs reveal">
+    <div class="designs-head">
+      <p class="kicker">Два дизайна — один мессенджер</p>
+      <div class="switch" role="tablist" aria-label="Дизайн">
+        <button role="tab" aria-selected="true" data-design="zoomer">Зумер</button>
+        <button role="tab" aria-selected="false" data-design="millennial">Миллениал</button>
+        <i aria-hidden="true"></i>
+      </div>
+    </div>
+    <div class="screen-frame">
+      <div class="screen-bar" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="screens">
+        <img class="on" data-design="zoomer" src="/site/img/d-zoomer.webp" alt="АСЬКА на компьютере в дизайне «Зумер»" width="1320" height="1050" loading="lazy">
+        <img data-design="millennial" src="/site/img/d-millennial.webp" alt="АСЬКА на компьютере в дизайне «Миллениал»" width="1320" height="1103" loading="lazy">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ II. НОМЕРА ============ -->
+<section id="plates" class="sec">
+  <div class="guilloche g-sec" aria-hidden="true"></div>
+  <header class="sec-head reveal">
+    <p class="num">II</p>
+    <p class="kicker">Номера-токены</p>
+    <h2>Номер — это <em>коллекция</em></h2>
+    <p class="sub">Каждый номер — токен внутри АСЬКИ: у него свой номер #0001, редкость и история владельцев, как у NFT. Номера покупают, улучшают и продают за аськоины.</p>
+  </header>
+
+  <!-- уровни сияния -->
+  <div class="glow-demo reveal" id="glow">
+    <p class="kicker">Шесть уровней сияния</p>
+    <div class="stage"><span class="demo-plate" data-plate="RU:Т116ТТ116" data-size="xl"></span></div>
+    <div class="levels" role="tablist" aria-label="Уровень улучшения">
+      <button data-lvl="0" aria-selected="true"><b>Базовый</b><small>сразу</small></button>
+      <button data-lvl="1"><b>Серебро</b><small>60</small></button>
+      <button data-lvl="2"><b>Неон</b><small>150</small></button>
+      <button data-lvl="3"><b>Голограмма</b><small>350</small></button>
+      <button data-lvl="4"><b>Платина</b><small>800</small></button>
+      <button data-lvl="5"><b>Бриллиант</b><small>2000</small></button>
+    </div>
+    <p class="level-note" aria-live="polite">Обычная рамка — так выглядит любой новый номер.</p>
+  </div>
+
+  <!-- редкость -->
+  <div class="rarity">
+    <article class="rare-card r0 reveal"><header><span class="tag">Обычный</span><span class="price"><i class="coin"></i>50</span></header><span data-plate="RU:Н482ТВ116" data-size="m"></span><p>Цифры и буквы без особого рисунка.</p></article>
+    <article class="rare-card r1 reveal"><header><span class="tag">Редкий</span><span class="price"><i class="coin"></i>150</span></header><span data-plate="RU:Р455КС178" data-size="m"></span><p>Пара одинаковых цифр подряд или ноль впереди: 455, 012.</p></article>
+    <article class="rare-card r2 reveal"><header><span class="tag">Эпический</span><span class="price"><i class="coin"></i>400</span></header><span data-plate="RU:В121ОР77" data-size="m"></span><p>«Зеркальные» цифры и круглые сотни: 121, 300.</p></article>
+    <article class="rare-card r3 reveal"><header><span class="tag">Легендарный</span><span class="price"><i class="coin"></i>1200</span></header><span data-plate="RU:К555ТТ116" data-size="m"></span><p>Три одинаковые цифры, 123, 100, от 002 до 009.</p></article>
+    <article class="rare-card r4 reveal"><header><span class="tag">Мифический</span><span class="price"><i class="coin"></i>5000</span></header><span data-plate="RU:А777АА777" data-size="m"></span><p>001, 007, 777 — и красивые цифры с одинаковыми буквами.</p></article>
+  </div>
+  <p class="fine reveal">Одинаковые буквы (ТТ, ККК) и особые серии (ООО, ЕКХ…) поднимают редкость на ступень. Цена номера — по его редкости; на рынке цену ставит продавец.</p>
+
+  <!-- страны -->
+  <div class="countries reveal">
+    <p class="kicker">Девять стран, свои города</p>
+    <div class="country-grid">
+      <figure><span data-plate="RU:В777ОР116" data-size="m"></span><figcaption>Россия <small>20 городов, 54 кода региона: 777 — Москва, 116 — Казань…</small></figcaption></figure>
+      <figure><span data-plate="BY:1234AB-7" data-size="m"></span><figcaption>Беларусь <small>Минск, Брест, Гомель…</small></figcaption></figure>
+      <figure><span data-plate="KZ:777AAA02" data-size="m"></span><figcaption>Казахстан <small>Алматы, Астана, Шымкент</small></figcaption></figure>
+      <figure><span data-plate="AM:77AA777" data-size="m"></span><figcaption>Армения <small>Ереван</small></figcaption></figure>
+      <figure><span data-plate="GE:AA777AA" data-size="m"></span><figcaption>Грузия <small>Тбилиси</small></figcaption></figure>
+      <figure><span data-plate="DE:B-AA777" data-size="m"></span><figcaption>Германия <small>Берлин, Мюнхен, Гамбург…</small></figcaption></figure>
+      <figure><span data-plate="US:7AAA777" data-size="m"></span><figcaption>США <small>Калифорния и Нью-Йорк</small></figcaption></figure>
+      <figure><span data-plate="AE:A777" data-size="m"></span><figcaption>ОАЭ <small>Дубай</small></figcaption></figure>
+      <figure><span data-plate="GB:LA77AAA" data-size="m"></span><figcaption>Великобритания <small>Лондон</small></figcaption></figure>
+    </div>
+  </div>
+
+  <!-- экраны номеров -->
+  <div class="gallery reveal" aria-label="Экраны вкладки «Номера»">
+    <figure><div class="phone"><img src="/site/img/z-showcase.webp" alt="Витрина популярных номеров" width="600" height="1298" loading="lazy"></div><figcaption><b>Витрина</b>Популярные номера разных стран — каждый выпущен один раз.</figcaption></figure>
+    <figure><div class="phone"><img src="/site/img/z-pick.webp" alt="Подбор своего номера" width="600" height="1298" loading="lazy"></div><figcaption><b>Подобрать</b>Страна → город → буквы и цифры. Цена — сразу.</figcaption></figure>
+    <figure><div class="phone"><img src="/site/img/z-card.webp" alt="Карточка номера с историей" width="600" height="1298" loading="lazy"></div><figcaption><b>Карточка токена</b>Владелец, уровень и вся история: выпуск, продажи, улучшения.</figcaption></figure>
+    <figure><div class="phone"><img src="/site/img/z-market.webp" alt="Рынок номеров" width="600" height="1298" loading="lazy"></div><figcaption><b>Рынок</b>Номера, которые продают люди. Деньги — продавцу сразу.</figcaption></figure>
+  </div>
+</section>
+
+<!-- ============ III. УРОВНИ ============ -->
+<section id="levels" class="sec">
+  <header class="sec-head reveal">
+    <p class="num">III</p>
+    <p class="kicker">Уровни</p>
+    <h2>Три ранга. <em>Одна семья</em></h2>
+    <p class="sub">Ранг виден сразу: у голд — золотая звезда у имени и золотая серия номеров АМР.</p>
+  </header>
+
+  <div class="ranks">
+    <article class="rank r-user reveal" data-tilt>
+      <div class="guilloche g-card" aria-hidden="true"></div>
+      <header><span class="rank-no">Ранг I</span><svg class="ic"><use href="#i-person"/></svg></header>
+      <h3>Участник</h3>
+      <span data-plate="RU:Н482ТВ116" data-size="m"></span>
+      <p class="rank-how">Каждый, кто пришёл по приглашению.</p>
+      <ul class="ticks">
+        <li>чаты, круги, свой ИИ и игра «Кто здесь ИИ?»</li>
+        <li>номер своей страны и 100 аськоинов на старт</li>
+        <li>покупать, улучшать и продавать номера</li>
+        <li>звать друзей: +50 аськоинов за каждого</li>
+      </ul>
+    </article>
+    <article class="rank r-gold reveal" data-tilt>
+      <div class="guilloche g-card" aria-hidden="true"></div>
+      <header><span class="rank-no">Ранг II</span><svg class="ic"><use href="#i-star"/></svg></header>
+      <h3>Голд <span class="gold-star">★</span></h3>
+      <span data-plate="RU:А001МР777" data-size="m"></span>
+      <p class="rank-how">Администраторы АСЬКИ. Голд назначает голд.</p>
+      <ul class="ticks">
+        <li>золотая звезда и золотая серия АМР</li>
+        <li>менять номера людям в два касания</li>
+        <li>начислять аськоины и выдавать код для входа</li>
+        <li>блокировать нарушителей и назначать голд</li>
+      </ul>
+    </article>
+    <article class="rank r-super reveal" data-tilt>
+      <div class="guilloche g-card" aria-hidden="true"></div>
+      <header><span class="rank-no">Ранг III</span><svg class="ic"><use href="#i-crown"/></svg></header>
+      <h3>Супер-админ</h3>
+      <span data-plate="RU:А777МР777" data-size="m"></span>
+      <p class="rank-how">Зовут одноразовой ссылкой. Пароль задаёт сам.</p>
+      <ul class="ticks">
+        <li>всё, что может голд</li>
+        <li>снимать голд с админов</li>
+        <li>блокировать админов</li>
+        <li>звать новых супер-админов</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<!-- ============ IV. АСЬКОИНЫ ============ -->
+<section id="coins" class="sec">
+  <header class="sec-head reveal">
+    <p class="num">IV</p>
+    <p class="kicker">Аськоины</p>
+    <h2>Валюта <em>для своих</em></h2>
+    <p class="sub">На аськоины покупают и улучшают номера. Это игровая валюта внутри АСЬКИ — не деньги.</p>
+  </header>
+  <div class="coins">
+    <div class="coin-stage reveal" aria-hidden="true"><div class="big-coin"><span>А</span></div></div>
+    <ul class="earn">
+      <li class="reveal"><b>+<span data-count="100">100</span></b><span>на старт — всем новичкам</span></li>
+      <li class="reveal"><b>+<span data-count="20">20</span></b><span>за вход каждый день</span></li>
+      <li class="reveal"><b>+<span data-count="50">50</span></b><span>за приглашённого друга</span></li>
+      <li class="reveal"><b>+<span data-count="15">15</span></b><span>за угаданного в «Кто здесь ИИ?»</span></li>
+      <li class="reveal"><b>🎁</b><span>подарок от голда — за что угодно хорошее</span></li>
+    </ul>
+  </div>
+  <div class="spend reveal">
+    <div><b>50 — 5000</b><span>номер с витрины или свой</span></div>
+    <div><b>60 — 2000</b><span>каждый уровень сияния</span></div>
+    <div><b>от 1</b><span>номер на рынке — цену ставит продавец</span></div>
+  </div>
+</section>
+
+<!-- ============ V. ПРАВИЛА ============ -->
+<section id="rules" class="sec">
+  <div class="guilloche g-sec" aria-hidden="true"></div>
+  <header class="sec-head reveal">
+    <p class="num">V</p>
+    <p class="kicker">Кодекс АСЬКИ</p>
+    <h2>Двенадцать <em>правил</em></h2>
+    <p class="sub">Простые договорённости, на которых держится место для своих.</p>
+  </header>
+  <ol class="codex">
+    <li class="reveal"><span class="rn">I</span><h3>Только по приглашению</h3><p>В АСЬКУ попадают по одноразовому приглашению от участника. Пригласил — значит, ручаешься за человека.</p></li>
+    <li class="reveal"><span class="rn">II</span><h3>Один человек — один вход</h3><p>Вход привязан к телефону. Не передавай его другим и не заводи второй.</p></li>
+    <li class="reveal"><span class="rn">III</span><h3>Уважение</h3><p>Без оскорблений, травли и угроз. Спорить можно, унижать — нет.</p></li>
+    <li class="reveal"><span class="rn">IV</span><h3>Без спама и рекламы</h3><p>Не рассылай одно и то же всем и не зазывай в чужие проекты без спроса.</p></li>
+    <li class="reveal"><span class="rn">V</span><h3>Тайна переписки</h3><p>Переписку людей шифрует телефон — её не читает никто, даже сервер. Чужие сообщения и скриншоты — только с согласия автора.</p></li>
+    <li class="reveal"><span class="rn">VI</span><h3>Честно об ИИ</h3><p>Аська и личные ИИ всегда отмечены «ИИ». Среди людей есть ИИ — это игра, попытка угадать одна. В серьёзном — здоровье, деньги, безопасность — ИИ признаётся, что он ИИ.</p></li>
+    <li class="reveal"><span class="rn">VII</span><h3>ИИ не просит денег</h3><p>Ни Аська, ни ИИ-люди не просят денег, кодов из СМС и встреч. Если кто-то просит — это не АСЬКА: напиши голду.</p></li>
+    <li class="reveal"><span class="rn">VIII</span><h3>Что читает ИИ</h3><p>Всё, что пишешь Аське, личным ИИ и в круги, где есть ИИ, обрабатывает сервер и нейросеть, чтобы ответить. Секреты — лично человеку.</p></li>
+    <li class="reveal"><span class="rn">IX</span><h3>Номера</h3><p>Серия АМР — золотая, только у голд. Основной номер не продаётся. Купленный номер можно улучшить, сделать основным или выставить на рынок — сияние остаётся у номера.</p></li>
+    <li class="reveal"><span class="rn">X</span><h3>Аськоины — не деньги</h3><p>Их не купить за рубли и не вывести. Продавать номера и аськоины за настоящие деньги нельзя.</p></li>
+    <li class="reveal"><span class="rn">XI</span><h3>Порядок</h3><p>Голд следит за порядком: может сменить номер и заблокировать нарушителя. Блокировка закрывает вход и убирает из общего чата и кругов.</p></li>
+    <li class="reveal"><span class="rn">XII</span><h3>Пароль — только твой</h3><p>Его не знает никто, даже админы. Забыл — вход вернёт код из СМС или от голда, но старая переписка на новом пароле не откроется.</p></li>
+  </ol>
+</section>
+
+<!-- ============ VI. КАК ПОПАСТЬ ============ -->
+<section id="start" class="sec">
+  <header class="sec-head reveal">
+    <p class="num">VI</p>
+    <p class="kicker">Как попасть</p>
+    <h2>Четыре шага — <em>и ты свой</em></h2>
+  </header>
+  <div class="start">
+    <ol class="steps">
+      <li class="reveal"><b>1</b><div><h3>Получи приглашение</h3><p>Ссылку с кодом вида <code>ABCD-EFGH</code> даёт тот, кто уже в АСЬКЕ.</p></div></li>
+      <li class="reveal"><b>2</b><div><h3>Поставь на телефон</h3><p>iPhone: открой ссылку в Safari → «Поделиться» → «На экран Домой». Android и компьютер — просто открой в браузере.</p></div></li>
+      <li class="reveal"><b>3</b><div><h3>Имя, телефон, пароль</h3><p>Логин придумывать не нужно. Пароль шифрует ключи прямо на телефоне — запомни его.</p></div></li>
+      <li class="reveal"><b>4</b><div><h3>Номер и 100 аськоинов</h3><p>Сразу получишь номер своей страны, а Аська напишет первой и всё покажет.</p></div></li>
+    </ol>
+    <div class="start-media reveal"><figure class="phone tilt"><img src="/site/img/z-login.webp" alt="Экран входа в АСЬКУ" width="600" height="1298" loading="lazy"></figure></div>
+  </div>
+</section>
+
+<!-- ============ VII. ВОПРОСЫ ============ -->
+<section id="faq" class="sec">
+  <header class="sec-head reveal">
+    <p class="num">VII</p>
+    <p class="kicker">Вопросы</p>
+    <h2>Коротко <em>о главном</em></h2>
+  </header>
+  <div class="faq">
+    <details class="reveal"><summary>Видит ли админ мою переписку?</summary><p>Нет. Переписку между людьми шифрует телефон, на сервере лежит только шифр. Админ видит номер, телефон и когда ты заходил — но не текст.</p></details>
+    <details class="reveal"><summary>Я забыл пароль. Что делать?</summary><p>На экране входа — «Не помню пароль». Если телефон подтверждён, придёт код из СМС; если нет — попроси у голда «Код для входа», он действует сутки. С новым паролем создаются новые ключи, поэтому старые сообщения не откроются.</p></details>
+    <details class="reveal"><summary>Сменил номер — по старому войти можно?</summary><p>Да. Войти можно по любому своему номеру, а ещё по телефону. Если номер сменили при переходе на новую версию, старый тоже подходит.</p></details>
+    <details class="reveal"><summary>Как стать голд?</summary><p>Голд назначает другой голд — в «Управлении АСЬКОЙ». Вместе со звездой приходит номер золотой серии АМР с теми же цифрами.</p></details>
+    <details class="reveal"><summary>Что будет с сиянием, если продать номер?</summary><p>Сияние уходит вместе с номером — покупатель получает его улучшенным. А в карточке токена навсегда остаётся история владельцев.</p></details>
+    <details class="reveal"><summary>Почему не приходят уведомления на iPhone?</summary><p>Пуши работают на iOS 16.4 и новее и только если открывать АСЬКУ с экрана «Домой». Включи их кнопкой в списке контактов.</p></details>
+    <details class="reveal"><summary>Кто такая Аська?</summary><p>ИИ и душа АСЬКИ. Она честно ИИ: встречает новичков, отвечает на вопросы, рассказывает о новом и ведёт «Вопрос дня». Денег и кодов не просит никогда.</p></details>
+  </div>
+</section>
+
+<!-- ============ ФИНАЛ ============ -->
+<section class="final">
+  <canvas class="sky" aria-hidden="true"></canvas>
+  <div class="final-inner reveal">
+    <div class="seal" data-seal="big" aria-hidden="true"></div>
+    <h2>Свои уже <em>в сети</em></h2>
+    <p>Открой АСЬКУ — и услышишь «о-оу».</p>
+    <a class="btn gold" href="/">Открыть АСЬКУ <svg class="ic"><use href="#i-arrow"/></svg></a>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span class="brand-word">АСЬКА</span>
+  <span>Inter nos · MMXXVI</span>
+  <nav aria-label="Ссылки"><a href="/">Войти</a><a href="#rules">Правила</a><a href="#levels">Уровни</a><a href="#faq">Вопросы</a></nav>
+</footer>
+
+</body>
+</html>
