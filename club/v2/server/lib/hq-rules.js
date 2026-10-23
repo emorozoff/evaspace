@@ -60,7 +60,9 @@ const dmHas = (ch, accId) => String(ch).startsWith('dm:') && String(ch).slice(3)
    меняет задачи и собрания (встречу Зума к собранию заводит сервер); удалить может только то, что
    поставил сам (via: 'bot'). В «Команде» ведёт одну свою карточку (id yasen). Протоколы, стратегию
    и ответы анкеты «Каким быть Ясеню» только читает. Денег, сообщений и настроек не
-   видит и не меняет. */
+   видит и не меняет. Приглашения выдаёт только с ролью «Команда» и только через
+   POST /api/bot/invite (код и роль ставит сервер); видит и отзывает лишь свои неиспользованные.
+   В CRM бот — как человек из команды (server.js, BOT_CTX). */
 const BOT = 'bot';
 const BOT_COLS = ['tasks', 'meetings'];
 /* своя карточка в «Команде»: Ясень — участник команды, чтобы ставить задачи от себя и получать их */
@@ -78,6 +80,8 @@ function botView(c, id, doc) {
   if (c === 'yasen') return doc;
   /* файлы к задачам — что приложили (без содержимого) */
   if (c === 'files') return omit(doc, ['data']);
+  /* приглашения — только свои: использовано ли, на кого */
+  if (c === 'invites') return doc.by === BOT_PERSON ? doc : null;
   if (c === 'people') return pick(doc, PERSON_PUBLIC);
   if (c === 'accounts') return pick(doc, ACC_PUBLIC);
   return null;
@@ -87,6 +91,10 @@ function botWrite(op, c, id, cur, body, next) {
     if (id !== BOT_PERSON || op === 'delete' || (op === 'put' && cur)) return no('в «Команде» бот ведёт только свою карточку');
     if (!Object.keys((op === 'put' ? next : body) || {}).every(k => BOT_PERSON_FIELDS.includes(k))) return no('в своей карточке бот меняет только имя, должность и направление');
     return yes(next);
+  }
+  if (c === 'invites') {
+    /* выдаёт приглашение сервер (POST /api/bot/invite); сам бот может только отозвать свою неиспользованную ссылку */
+    return op === 'delete' && cur && cur.by === BOT_PERSON && !cur.usedBy ? yes(null) : no('приглашение бот выдаёт через /api/bot/invite и отзывает только своё неиспользованное');
   }
   if (!BOT_COLS.includes(c)) return no('бот может только ставить и менять задачи и собрания');
   if (op === 'delete') return cur && cur.via === BOT ? yes(null) : no('бот удаляет только то, что поставил сам');
@@ -241,4 +249,4 @@ function keepHidden(ctx, c, id, cur, next) {
   return out;
 }
 
-module.exports = {COLS, ROLES, roleOf, can, view, write, keepHidden, ACC_SECRET, LEVEL_ROLES, levelOf, BOT, FILE_MAX};
+module.exports = {COLS, ROLES, roleOf, can, view, write, keepHidden, ACC_SECRET, LEVEL_ROLES, levelOf, BOT, BOT_PERSON, FILE_MAX};

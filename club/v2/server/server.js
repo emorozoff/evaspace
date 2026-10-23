@@ -30,7 +30,8 @@
                     sessions.json, gcal.json и копии на каждый день в backups/
      PUBLIC_URL     адрес сайта, например https://eva.example.ru — для ссылок и Google
      GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET — ключи Google для календаря
-     BOT_KEY        ключ бота команды в Telegram: с ним бот ставит и меняет задачи штаба
+     BOT_KEY        ключ бота команды в Telegram: с ним бот ставит и меняет задачи штаба, работает
+                    в CRM как человек из команды и выдаёт приглашения с ролью «Команда»
                     (заголовок «Authorization: Bearer …», права — lib/hq-rules.js, роль bot);
                     каждая его правка с прежней версией пишется в DATA_DIR/bot-log.jsonl
      HQ_TG_TOKEN    ключ бота штаба в Telegram (@BotFather): напоминания в личку с кнопками
@@ -136,12 +137,23 @@ function ctxOf(req) {
 /* ── бот команды в Telegram: входит по ключу, права — роль bot в lib/hq-rules.js ── */
 const BOT_KEY = String(process.env.BOT_KEY || '').trim();
 const BOT_LOG = path.join(DATA_DIR, 'bot-log.jsonl');
-const BOT_CTX = {accId: 'bot', token: null, role: HQ.BOT, personId: null, name: 'Клод (бот)', crmAccess: false, crmRole: null};
+/* в CRM бот — как человек из команды (роль member): видит всё, правит карточки и вопросы, не удаляет */
+const BOT_CTX = {accId: 'bot', token: null, role: HQ.BOT, personId: null, name: 'Клод (бот)', crmAccess: true, crmRole: 'member'};
 /* → null (ключа в запросе нет), false (ключ не тот) или права бота */
 function botOf(req) {
   const m = /^Bearer\s+(\S+)$/.exec(String(req.headers.authorization || ''));
   if (!m) return null;
   return BOT_KEY.length >= 32 && A.same(m[1], BOT_KEY) ? BOT_CTX : false;
+}
+/* запрос с ключом бота → права бота; null — ключа нет; false — ключ не подошёл, ответ уже отправлен */
+function botGate(req, res, write) {
+  const bot = botOf(req);
+  if (bot === null) return null;
+  const k = 'bot|' + ipOf(req);
+  if (limiter.blocked(k)) { json(res, 429, {error: 'Слишком много попыток. Попробуйте позже.'}); return false; }
+  if (!bot) { limiter.fail(k); json(res, 401, {error: 'ключ бота не подошёл'}); return false; }
+  if (write && !sameSite(req)) { json(res, 403, {error: 'нужен заголовок x-eva'}); return false; }
+  return bot;
 }
 /* каждая правка бота — строкой с прежней версией: по ней любую правку можно вернуть */
 function botLog(entry) {
@@ -217,8 +229,10 @@ async function peek(q) {
       const card = ['name', 'givenName', 'surname', 'title', 'dir', 'email', 'phone', 'telegram', 'birthDate', 'birthTime', 'birthCity', 'hdType', 'hdProfile', 'status'];
       cols.people = {};
       if (p) cols.people[inv.personId] = Object.fromEntries(card.filter(k => p[k] !== undefined).map(k => [k, p[k]]));
-      /* кто пригласил — только имя */
+      /* кто пригласил — только имя (by — учётка или карточка в «Команде», у бота — его карточка) */
       const by = inv.by ? hq.store.get('accounts', inv.by) : null;
+      const byCard = !by && inv.by ? hq.store.get('people', inv.by) : null;
+      if (byCard && !cols.people[inv.by]) cols.people[inv.by] = {name: byCard.name, givenName: byCard.givenName, surname: byCard.surname, title: byCard.title};
       if (by) {
         cols.accounts = {[inv.by]: {name: by.name, personId: by.personId || null, role: by.role}};
         const bp = by.personId ? hq.store.get('people', by.personId) : null;
@@ -400,7 +414,7 @@ async function docApi(app, req, res, ctx, c, id) {
   const verdict = app.rules.write(ctx, op, c, id, cur, b, next, app.store);
   if (!verdict.ok) return json(res, 403, {error: verdict.why});
   app.store.set(c, id, op === 'delete' ? null : verdict.next);
-  if (ctx.role === HQ.BOT) botLog({op, col: c, id, prev: cur || null, next: op === 'delete' ? null : verdict.next});
+  if (ctx.role === HQ.BOT) botLog({...(app === crm && {app: 'crm'}), op, col: c, id, prev: cur || null, next: op === 'delete' ? null : verdict.next});
   return json(res, 200, {ok: true, rev: app.store.rev, doc: op === 'delete' ? null : app.rules.view(ctx, c, id, verdict.next)});
 }
 
@@ -559,6 +573,40 @@ async function zoomVideosFind(req, res, ctx) {
 }
 
 /* создать или обновить встречу Зума для собрания штаба (со страницы штаба и от бота) */
+/* приглашение в штаб от бота. Роль — всегда «Команда» (member): её ставит сервер, бот роль не выбирает.
+   Человек — карточка из «Команды» (personId) или новая (given, surname, title, dir). Кто попросил — askedBy:
+   по правилам бота это основатель; сервер записывает, чтобы было видно в журнале. */
+async function botInvite(req, res, bot) {
+  const b = await body(req);
+  if (!isObj(b)) return json(res, 400, {error: 'нужен объект'});
+  const str = (v, n) => String(v || '').trim().slice(0, n);
+  const asked = str(b.askedBy, 80);
+  if (!asked) return json(res, 400, {error: 'askedBy: кто из основателей попросил приглашение'});
+  let pid = str(b.personId, 60);
+  if (pid) {
+    if (!hq.store.get('people', pid)) return json(res, 404, {error: 'в «Команде» нет такой карточки'});
+    if (hq.store.list('accounts').some(a => a.personId === pid && a.active !== false)) return json(res, 409, {error: 'у человека уже есть вход в штаб'});
+    const open = hq.store.list('invites').filter(i => i.personId === pid && !i.usedBy);
+    const mine = open.find(i => i.by === HQ.BOT_PERSON && HQ.roleOf(i.role) === 'member');
+    /* та же ссылка ещё раз — не плодим приглашения; чужую ссылку (у неё может быть другая роль) не отдаём */
+    if (mine) return json(res, 200, {ok: true, code: mine.id, link: `${PUBLIC_URL}/#join=${mine.id}`, role: 'member', personId: pid, again: true});
+    if (open.length) return json(res, 409, {error: 'у человека уже есть неиспользованная ссылка от основателя: пусть её перешлют или удалят в штабе («Команда» → «ссылка»)'});
+  } else {
+    const given = str(b.given, 60), surname = str(b.surname, 60);
+    if (!given) return json(res, 400, {error: 'нужен personId или имя (given)'});
+    pid = A.uid();
+    const card = {name: joinName(given, surname), givenName: given, surname, title: str(b.title, 120), dir: str(b.dir, 30), order: 50};
+    hq.store.set('people', pid, card);
+    botLog({op: 'put', col: 'people', id: pid, prev: null, next: card});
+  }
+  const pp = hq.store.get('people', pid) || {};
+  const code = A.makeCode();
+  const inv = {role: 'member', personId: pid, title: pp.title || '', dir: pp.dir || '', by: HQ.BOT_PERSON, askedBy: asked, at: Date.now()};
+  hq.store.set('invites', code, inv);
+  botLog({op: 'put', col: 'invites', id: code, prev: null, next: inv});
+  return json(res, 200, {ok: true, code, link: `${PUBLIC_URL}/#join=${code}`, role: 'member', personId: pid});
+}
+
 async function zoomMeeting(req, res, ctx) {
   if (!zoom.configured) return json(res, 503, {error: 'Зум на сервере не подключён'});
   const b = (await body(req)) || {};
@@ -588,16 +636,14 @@ async function hqApi(req, res, p, u) {
   if (p === 'zoom/webhook' && req.method === 'POST') return zoomWebhook(req, res);
   if (p === 'tg/webhook' && req.method === 'POST') return tgWebhook(req, res);
   const write = req.method !== 'GET';
-  const bot = botOf(req);
-  if (bot !== null) {
-    const k = 'bot|' + ipOf(req);
-    if (limiter.blocked(k)) return json(res, 429, {error: 'Слишком много попыток. Попробуйте позже.'});
-    if (!bot) { limiter.fail(k); return json(res, 401, {error: 'ключ бота не подошёл'}); }
-    if (write && !sameSite(req)) return json(res, 403, {error: 'нужен заголовок x-eva'});
-    /* боту — задачи и собрания: снимок штаба, записи, встреча Зума к собранию и журнал своих правок */
+  const bot = botGate(req, res, write);
+  if (bot === false) return;
+  if (bot) {
+    /* боту — задачи и собрания: снимок штаба, записи, встреча Зума к собранию, приглашение «Команда» и журнал своих правок */
     if (p === 'state' && !write) return json(res, 200, {me: bot.accId, collections: stateOf(hq, bot)});
     if (p === 'bot/log' && !write) return json(res, 200, {log: botLogTail(Math.min(200, Math.max(1, Number(u.searchParams.get('n')) || 30)))});
     if (p === 'zoom/meeting' && req.method === 'POST') return zoomMeeting(req, res, bot);
+    if (p === 'bot/invite' && req.method === 'POST') return botInvite(req, res, bot);
     const bm = /^doc\/([a-z]{2,20})\/([^/]+)$/.exec(p);
     if (bm) return docApi(hq, req, res, bot, decodeURIComponent(bm[1]), decodeURIComponent(bm[2]));
     return json(res, 403, {error: 'боту доступны только задачи и собрания'});
@@ -808,8 +854,17 @@ async function crmAnketa(req, res) {
 async function crmApi(req, res, p, u) {
   if (p === 'talk' && req.method === 'POST') return crmTalk(req, res);
   if (p === 'anketa' && req.method === 'POST') return crmAnketa(req, res);
-  const ctx = ctxOf(req);
   const write = req.method !== 'GET';
+  /* бот — как человек из команды CRM: снимок и записи (поток событий и выгрузка ему не нужны) */
+  const bot = botGate(req, res, write);
+  if (bot === false) return;
+  if (bot) {
+    if (p === 'state' && !write) return json(res, 200, {me: bot.accId, owner: false, crmRole: bot.crmRole, collections: stateOf(crm, bot)});
+    const bm = /^doc\/([a-z]{2,20})\/([^/]+)$/.exec(p);
+    if (bm) return docApi(crm, req, res, bot, decodeURIComponent(bm[1]), decodeURIComponent(bm[2]));
+    return json(res, 403, {error: 'боту в CRM доступны снимок и записи'});
+  }
+  const ctx = ctxOf(req);
   if (write && !sameSite(req)) return json(res, 403, {error: 'запрос не со страницы CRM'});
   if (!ctx) return json(res, 401, {error: 'нужно войти'});
   if (!ctx.crmAccess) return json(res, 403, {error: 'CRM — для команды'});

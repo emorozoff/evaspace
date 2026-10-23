@@ -45,6 +45,8 @@ function write(ctx, op, c, id, cur, body, next, store) {
   switch (c) {
     case 'team': {
       if (owner) return yes(next);
+      /* бот (роль bot штаба) в команде CRM строки не заводит: его права — member, заданы на сервере */
+      if (ctx.role === 'bot') return no('команду CRM ведёт руководитель');
       /* первый вход: заявка в команду — одна, своя, с ролью «Команда»; права появятся,
          когда её подтвердит главная или руководитель */
       const mine = Object.values(store.col('team')).some(t => t && t.uid === ctx.accId && !t.archived);

@@ -409,7 +409,7 @@ async function browserHash(pw, salt) {
   ok(st === 429, 'после серии неудач вход с этого адреса закрыт на время', st);
   ok((await owner.req('POST', '/api/auth/logout', {})).status === 200 && (await owner.state()).me === null, 'выход закрывает сессию');
 
-  console.log('18. бот команды: вход по ключу, только задачи');
+  console.log('18. бот команды: вход по ключу — задачи, CRM как у команды, приглашения «Команда»');
   ok((await new Client('nokey', BASE, 'k'.repeat(40)).get('/api/state')).status === 401, 'без BOT_KEY на сервере ключ бота не пускает');
   {
     /* у бота свой сервер: с ключом и на своих пустых данных */
@@ -447,7 +447,6 @@ async function browserHash(pw, salt) {
       ok((await bot.put('ledger', 'l2', {amount: 1})).status === 403 && (await bot.patch('people', 'pz', {phone: '+7000'})).status === 403, 'деньги и «Команду» не меняет');
       ok((await bot.put('messages', 'mm2', {ch: 'team', by: 'bot', text: 'x', at: 1})).status === 403, 'в чат команды не пишет');
       ok((await bot.get('/api/events')).status === 403 && (await bot.get('/api/export')).status === 403, 'поток событий и выгрузка — нет');
-      ok((await bot.get('/crm/api/state')).status === 401, 'в CRM не пускает');
       ok((await bot.del('tasks', 'tb1')).status === 200, 'свою задачу удаляет');
 
       const log = (await bot.get('/api/bot/log?n=10')).j.log || [];
@@ -455,6 +454,21 @@ async function browserHash(pw, salt) {
       const pl = log.find(x => x.op === 'patch');
       ok(pl && pl.prev && pl.prev.due === '2026-10-20' && pl.next.due === '2026-10-21', 'в журнале прежняя версия — правку можно вернуть', pl);
       ok((await own.state()).collections.tasks.th.due === '2026-10-21', 'основатель видит правку бота');
+
+      /* CRM: бот — как человек из команды (member): видит всё, правит карточки, не удаляет и в команду не пишется */
+      await own.put('people', 'cc1', {type: 'client', name: 'Клиентка Бота', phone: '+79990001122', answers: {q1: 'старый ответ'}}, '/crm/api');
+      r = await bot.get('/crm/api/state');
+      ok(r.status === 200 && r.j.crmRole === 'member' && (r.j.collections.people.cc1 || {}).phone === '+79990001122', 'бот видит CRM целиком, как команда', r.j.crmRole);
+      ok((await bot.patch('people', 'cc1', {answers: {q1: 'старый ответ', q2: 'новый'}}, '/crm/api')).status === 200, 'бот дописывает ответы в карточку CRM');
+      ok((await bot.put('people', 'cc2', {type: 'client', name: 'Новая от бота'}, '/crm/api')).status === 200, 'бот заводит карточку CRM');
+      ok((await bot.del('people', 'cc1', '/crm/api')).status === 403, 'карточки CRM не удаляет (это руководитель)');
+      ok((await bot.put('team', 'tmb', {uid: 'bot', role: 'member', status: 'pending'}, '/crm/api')).status === 403, 'в команду CRM строку не заводит');
+      ok((await bot.put('cfg', 'settings', {x: 1}, '/crm/api')).status === 403, 'настройки CRM не меняет');
+      ok((await bot.get('/crm/api/export')).status === 403 && (await bot.get('/crm/api/events')).status === 403, 'выгрузка и поток событий CRM — нет');
+      ok((await bot.req('PATCH', '/crm/api/doc/people/cc1', {name: 'x'}, {noHeader: true})).status === 403, 'запись в CRM без заголовка x-eva — нет');
+      ok((await own.state('/crm/api')).collections.people.cc1.answers.q2 === 'новый', 'руководитель видит правку бота в CRM');
+      const clog = ((await bot.get('/api/bot/log?n=10')).j.log || []).filter(x => x.app === 'crm');
+      ok(clog.length === 2 && clog[0].prev.answers.q1 === 'старый ответ', 'правки бота в CRM — в журнал с прежней версией', clog);
 
       /* собрания: бот назначает созвоны, встречу Зума заводит сервер */
       await own.put('meetings', 'mh', {title: 'Собрание основателей', date: '2026-10-21', start: '15:00', dur: 60, level: 1, organizer: 'pz', attendees: [],
@@ -524,6 +538,31 @@ async function browserHash(pw, salt) {
       ok((await bot.put('people', 'p9', {name: 'Чужой', via: 'bot'})).status === 403 && (await bot.patch('people', 'pz', {title: 'x'})).status === 403, 'чужие карточки не заводит и не меняет');
       ok((await bot.del('people', 'yasen')).status === 403, 'свою карточку не удаляет');
       ok((await bot.put('tasks', 'ty', {title: 'От Ясеня', assignee: 'pz', createdBy: 'yasen', via: 'bot'})).status === 200, 'ставит задачу от себя');
+
+      /* приглашения: только «Команда», код и роль ставит сервер, ссылка — тому, кто попросил */
+      ok((await bot.req('POST', '/api/bot/invite', {personId: 'pz'})).status === 400, 'приглашение без «кто попросил» — нет');
+      r = await bot.req('POST', '/api/bot/invite', {personId: 'pz', askedBy: 'Кирилл', role: 'owner'});
+      const bcode = r.j.code;
+      ok(r.status === 200 && /^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(bcode || '') && r.j.role === 'member' && (r.j.link || '').endsWith('/#join=' + bcode), 'бот выдаёт приглашение — роль «Команда», даже если просит другую', r.j);
+      let oi = (await own.state()).collections.invites[bcode];
+      ok(oi && oi.role === 'member' && oi.personId === 'pz' && oi.by === 'yasen' && oi.askedBy === 'Кирилл', 'основатель видит приглашение от Ясеня', oi);
+      r = await bot.req('POST', '/api/bot/invite', {personId: 'pz', askedBy: 'Кирилл'});
+      ok(r.status === 200 && r.j.code === bcode && r.j.again, 'повторная просьба — та же ссылка', r.j);
+      ok((await bot.patch('invites', bcode, {role: 'owner'})).status === 403 && (await bot.put('invites', 'ZZZZ-2345', {role: 'member', by: 'yasen'})).status === 403, 'роль в ссылке не меняет, приглашение мимо сервера не заводит');
+      await own.put('people', 'pl', {name: 'Лид Тест'});
+      await own.put('invites', 'LEAD-2345', {role: 'lead', personId: 'pl', by: ownAcc, at: 1});
+      ok((await bot.req('POST', '/api/bot/invite', {personId: 'pl', askedBy: 'Егор'})).status === 409, 'чужую ссылку (с другой ролью) не отдаёт и вторую не выдаёт');
+      ok(!('LEAD-2345' in ((await bot.state()).collections.invites || {})) && (await bot.del('invites', 'LEAD-2345')).status === 403, 'чужие приглашения не видит и не отзывает');
+      r = await bot.req('POST', '/api/bot/invite', {given: 'Джаргал', surname: 'Тест', title: 'Дизайнер', askedBy: 'Егор'});
+      ok(r.status === 200 && ((await own.state()).collections.people[r.j.personId] || {}).name === 'Джаргал Тест', 'нового человека заводит в «Команде» вместе с приглашением', r.j);
+      ok((await bot.del('invites', r.j.code)).status === 200, 'свою неиспользованную ссылку отзывает');
+      const pk = (await new Client('peek', B2).get('/api/state?join=' + bcode)).j.collections || {};
+      ok(pk.invites[bcode].role === 'member' && (pk.people.yasen || {}).name === 'Ясень Ева', 'в анкете приглашения видно, кто пригласил', pk);
+      const jz = new Client('jz', B2);
+      ok((await jz.req('POST', '/api/auth/join', {code: bcode, given: 'Зуля', surname: 'Тест', email: 'z@bot.ru', pw: 'zulya1'})).status === 200, 'по ссылке от бота входят');
+      ok((await own.state()).collections.accounts[(await jz.state()).me].role === 'member', 'вошедший по ссылке бота — «Команда»');
+      ok((await bot.req('POST', '/api/bot/invite', {personId: 'pz', askedBy: 'Кирилл'})).status === 409, 'тому, у кого уже есть вход, приглашение не выдаёт');
+
       for (let i = 0; i < 9; i++) await bad.get('/api/state');
       ok((await bad.get('/api/state')).status === 429, 'перебор ключа закрывает вход с этого адреса');
     } finally { srv.kill(); }
