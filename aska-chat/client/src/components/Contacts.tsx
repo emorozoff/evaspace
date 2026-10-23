@@ -12,7 +12,6 @@ import { statusLine } from '../lib/statuses.ts';
 import { timeShort } from '../lib/format.ts';
 import { Win, Svg, Ico } from './Win.tsx';
 import { UserPlate, Gold } from './Plate.tsx';
-import { Avatar, ChatAvatar } from './Avatar.tsx';
 import { StatusPicker } from './Status.tsx';
 
 function lastOf(s: State, chatId?: string): Msg | undefined {
@@ -89,17 +88,16 @@ function useLongPress(onLong: () => void) {
   };
 }
 
-// Строка списка: в Миллениале — цветочек (.ico), в Зумере — аватарка (.aska-av); лишнее прячет стиль
-function Item({ active, off, icon, av, blink, nick, sub, badge, at, onClick, onLong, title }: {
-  active?: boolean; off?: boolean; icon: string; av: ReactNode; blink?: boolean; nick: ReactNode; sub: ReactNode; badge?: number; at?: string;
+// Строка списка: цветочек-статус (у голд — золотой), имя, последнее сообщение или статус, время и счётчик
+function Item({ active, off, icon, gold, blink, nick, sub, badge, at, onClick, onLong, title }: {
+  active?: boolean; off?: boolean; icon: string; gold?: boolean; blink?: boolean; nick: ReactNode; sub: ReactNode; badge?: number; at?: string;
   onClick: () => void; onLong?: () => void; title?: string;
 }) {
   const lp = useLongPress(onLong || (() => {}));
   return (
     <div className={`citem${active ? ' sel' : ''}${off ? ' off' : ''}${badge ? ' unread' : ''}`} title={title}
       onClick={() => { if (!lp.fired.current) onClick(); lp.fired.current = false; }} {...(onLong ? lp.handlers : {})}>
-      <Ico className={`ico${blink ? ' blink' : ''}`} html={icon} />
-      {av}
+      <Ico className={`ico${blink ? ' blink' : ''}${gold ? ' gold' : ''}`} html={icon} />
       <span className="cmeta">
         <span className="nick">{nick}</span>
         <span className="sub">{sub}</span>
@@ -165,7 +163,7 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
     const isOn = !!s.presence[u.id];
     return (
       <Item key={u.id} active={!!chat && chat.id === activeChat} off={!isOn} blink={!!unread}
-        icon={unread ? envelope(16) : userFlower(u, isOn, 16)} av={<Avatar user={u} online={isOn} />}
+        icon={unread ? envelope(16) : userFlower(u, isOn, 16)} gold={u.gold}
         nick={<>{u.displayName}<Gold user={u} />{s.pins.includes(u.id) ? <span className="aska-pin">📌</span> : null}{u.keyChanged ? ' ⚠' : ''}{s.guesses[u.id] === 'ai' ? ' 🤖' : ''}{u.status && <span className="aska-st-emo">{u.status.emoji}</span>}</>}
         sub={subOf(chat, u, isOn ? 'в сети' : 'не в сети')} badge={unread} at={when(lastOf(s, chat?.id)?.createdAt)}
         onClick={() => openFriend(u)} onLong={() => onProfile(u.id)} title={u.displayName} />
@@ -179,7 +177,7 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
     const isOn = u.kind === 'aska' || !!s.presence[u.id];
     return (
       <Item key={u.id} active={!!chat && chat.id === activeChat} blink={!!unread}
-        icon={unread ? envelope(16) : u.kind === 'aska' ? logoFlower(16) : flower(isOn ? 'chat' : 'away', 16)} av={<Avatar user={u} online={isOn} />}
+        icon={unread ? envelope(16) : u.kind === 'aska' ? logoFlower(16) : '<span class="aska-ico-emo">👨</span>'}
         nick={<>{u.displayName} <span className="aska-tag">ИИ</span>{u.status && u.kind !== 'aska' && <span className="aska-st-emo">{u.status.emoji}</span>}</>}
         sub={subOf(chat, u, fallback)} badge={unread} at={when(lastOf(s, chat?.id)?.createdAt)}
         onClick={() => openFriend(u)} onLong={() => onProfile(u.id)} />
@@ -191,27 +189,19 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
 
   return (
     <Win id="cwin" className="contacts" title="АСЬКА" icon={logoFlower(16)}
-      extra={<>
-        <button className="tbtn aska-plus" onClick={onInvite} title="Позвать друга" aria-label="Позвать друга">+</button>
-        <button className="tbtn" onClick={onSettings} title="Настройки" aria-label="Настройки">☰</button>
-      </>}>
-      <div className={`me-panel aska-me aska-hero${myself?.gold ? ' gold' : ''}`}>
-        <div className="hero-row" onClick={() => onProfile(me)}>
-          <Ico html={userFlower(myself, s.connected, 16)} />
-          <Avatar user={myself} online={s.connected} size={46} />
-          <span className="hero-id">
-            <span className="nick">{myself?.displayName || s.me?.username}<Gold user={myself} /></span>
-            <button className="hero-status" onClick={(e) => { e.stopPropagation(); setStatusOpen(true); }}>
-              {myself?.status ? statusLine(myself.status) : '＋ поставить статус'}
-            </button>
-          </span>
-          {typeof s.profile?.coins === 'number' && (
-            <button className="hero-coins" onClick={(e) => { e.stopPropagation(); onAux('plates'); }} title="Аськоины">🪙 {s.profile.coins}</button>
-          )}
-        </div>
-        <div className="hero-plate" onClick={() => onAux('plates')} title="Мои номера">
-          <UserPlate user={myself} size="l" />
-        </div>
+      extra={<button className="tbtn" onClick={onSettings} title="Настройки" aria-label="Настройки">☰</button>}>
+      <div className={`me-panel aska-me${myself?.gold ? ' gold' : ''}`} onClick={() => onProfile(me)}>
+        <Ico className={`ico${myself?.gold ? ' gold' : ''}`} html={userFlower(myself, s.connected, 16)} />
+        <span className="aska-me-id">
+          <span className="nick">{myself?.displayName || s.me?.username}<Gold user={myself} /></span>
+          <button className="aska-me-status" onClick={(e) => { e.stopPropagation(); setStatusOpen(true); }}>
+            {myself?.status ? statusLine(myself.status) : '＋ статус'}
+          </button>
+        </span>
+        <span className="sp" />
+        <span className="aska-me-plate" onClick={(e) => { e.stopPropagation(); onAux('plates'); }} title="Мои номера">
+          <UserPlate user={myself} size="m" />
+        </span>
       </div>
       {brainOff && (
         <button className="me-panel aska-brain-note" onClick={() => onAux('admin')}>
@@ -243,7 +233,7 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
                   const unread = unreadIn(c.id, s);
                   return (
                     <Item key={c.id} active={c.id === activeChat} blink={!!unread}
-                      icon={unread ? envelope(16) : flower('chat', 16)} av={<Avatar user={twin} badge={false} />}
+                      icon={unread ? envelope(16) : flower('chat', 16)}
                       nick={<>{twin?.displayName || 'ИИ друга'}{c.twin?.anon ? ' 🕶' : ''}</>}
                       sub={preview(s, lastOf(s, c.id), false) ?? (c.twin?.anon ? 'анонимно' : 'открыто')} badge={unread} at={when(lastOf(s, c.id)?.createdAt)}
                       onClick={() => onOpen(c.id)} />
@@ -272,7 +262,7 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
               const emoji = c.emoji || (c.kind === 'general' ? '🌼' : '⭕');
               return (
                 <Item key={c.id} active={c.id === activeChat} blink={!!unread}
-                  icon={unread ? envelope(16) : flower('chat', 16)} av={<ChatAvatar emoji={emoji} />}
+                  icon={unread ? envelope(16) : flower('chat', 16)}
                   nick={<><span className="aska-emoji">{emoji}</span> {c.title || 'Общий чат'}</>}
                   sub={preview(s, lastOf(s, c.id), true) ?? (c.about || 'здесь пока тихо')} badge={unread} at={when(lastOf(s, c.id)?.createdAt)}
                   onClick={() => onOpen(c.id)} />

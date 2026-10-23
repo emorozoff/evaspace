@@ -12,7 +12,6 @@ import { plural } from '../lib/format.ts';
 import { Dialog, Ico } from './Win.tsx';
 import { UserPlate, Gold } from './Plate.tsx';
 import { PlateCard } from './Plates.tsx';
-import { Avatar } from './Avatar.tsx';
 import { StatusPicker } from './Status.tsx';
 
 const GROUP_NAMES: { key: Group; label: string }[] = [{ key: 'close', label: '💛 Ближний круг' }, { key: 'meet', label: '👋 Знакомства' }, { key: 'work', label: '💼 Работа' }];
@@ -54,8 +53,7 @@ export function Profile({ userId, onClose, onOpenChat }: { userId: number; onClo
     <Dialog title={itsMe ? 'Это ты' : u.displayName} onClose={onClose}>
       <div className="aska-profile">
         <div className="aska-profile-head">
-          <Ico className="ico big" html={isAska ? flower('chat', 40) : userFlower(u, online || itsMe, 40)} />
-          <Avatar user={u} online={online || itsMe || isAska} size={64} />
+          <Ico className={`ico big${u.gold ? ' gold' : ''}`} html={isAska ? flower('chat', 40) : isFriendAi ? '<span class="aska-ico-emo">👨</span>' : userFlower(u, online || itsMe, 40)} />
           <div className="who">
             <b>{u.displayName}<Gold user={u} big />{(isAska || isFriendAi) && <span className="aska-tag">ИИ</span>}</b>
             <div className="muted">{u.blocked ? 'заблокирован(а)' : isAska ? 'всегда на связи' : online || itsMe ? 'в сети' : 'не в сети'}{u.city ? ` · ${u.city}` : ''}{u.gold ? ' · голд' : ''}</div>
@@ -159,7 +157,7 @@ export function CircleInfo({ chatId, onClose, onProfile }: { chatId: string; onC
           <div className="clist inset aska-members">
             {people.map((u) => (
               <div key={u!.id} className={`citem${s.presence[u!.id] ? '' : ' off'}`} onClick={() => onProfile(u!.id)}>
-                <Ico html={flower(u!.kind === 'aska' ? 'chat' : s.presence[u!.id] ? 'online' : 'offline', 16)} />
+                <Ico className={`ico${u!.gold ? ' gold' : ''}`} html={u!.kind === 'aska' ? flower('chat', 16) : userFlower(u, !!s.presence[u!.id], 16)} />
                 <span className="cmeta"><span className="nick">{u!.id === s.me?.userId ? `${u!.displayName} (ты)` : u!.displayName}</span>{u!.city && <span className="sub">{u!.city}</span>}</span>
               </div>
             ))}

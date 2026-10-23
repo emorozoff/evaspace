@@ -14,22 +14,6 @@ import { Svg, Dialog } from './components/Win.tsx';
 import { Profile, CircleInfo } from './components/Profile.tsx';
 import { Plate } from './components/Plate.tsx';
 
-// Значки нижних вкладок: в Зумере — тонкие линии, в Миллениале — эмодзи (лишнее прячет стиль)
-const TAB_ICONS: Record<string, string> = {
-  chats: '<path d="M4 6.5A3.5 3.5 0 0 1 7.5 3h9A3.5 3.5 0 0 1 20 6.5v6a3.5 3.5 0 0 1-3.5 3.5H11l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A3.5 3.5 0 0 1 4 12.5z"/>',
-  circles: '<circle cx="9" cy="10" r="5.2"/><circle cx="15" cy="10" r="5.2"/><circle cx="12" cy="15" r="5.2"/>',
-  plates: '<rect x="2.5" y="7" width="19" height="10" rx="2.2"/><path d="M6 10.2v3.6M9 10.2h2.4v3.6H9M15.5 10.2v3.6M18 10.2v3.6"/>',
-  myai: '<path d="M12 3l1.8 4.6L18.5 9.5l-4.7 1.9L12 16l-1.8-4.6L5.5 9.5l4.7-1.9z"/><path d="M18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>',
-  more: '<circle cx="5.5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18.5" cy="12" r="1.6"/>',
-};
-const TabIcon = ({ name, emoji }: { name: string; emoji: string }) => (
-  <>
-    <i className="tb-emo">{emoji}</i>
-    <svg className="tb-svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
-      aria-hidden="true" dangerouslySetInnerHTML={{ __html: TAB_ICONS[name] }} />
-  </>
-);
-
 function chatFromHash(): string | null {
   const m = location.hash.match(/chat=([^&]+)/);
   return m ? decodeURIComponent(m[1]) : null;
@@ -154,19 +138,19 @@ export default function App() {
       )}
       <nav className="tabbar">
         <button className={!aux ? 'on' : ''} onClick={() => { setAux(null); setChat(null); }}>
-          <TabIcon name="chats" emoji="💬" /><span>Чаты</span>{unread > 0 && <b className="tb-badge">{unread}</b>}
+          <i>💬</i><span>Чаты</span>{unread > 0 && <b className="tb-badge">{unread}</b>}
         </button>
         <button className={aux === 'circles' ? 'on' : ''} onClick={() => tab('circles')}>
-          <TabIcon name="circles" emoji="⭕" /><span>Круги</span>
+          <i>⭕</i><span>Круги</span>
         </button>
         <button className={aux === 'plates' ? 'on' : ''} onClick={() => tab('plates')}>
-          <TabIcon name="plates" emoji="🚗" /><span>Номера</span>
+          <i>🚗</i><span>Номера</span>
         </button>
         <button className={aux === 'myai' ? 'on' : ''} onClick={() => tab('myai')}>
-          <TabIcon name="myai" emoji="🤖" /><span>Мой ИИ</span>{twinUnread > 0 && <b className="tb-badge">{twinUnread}</b>}
+          <i>🤖</i><span>Мой ИИ</span>{twinUnread > 0 && <b className="tb-badge">{twinUnread}</b>}
         </button>
         <button className={aux === 'settings' || aux === 'invite' || aux === 'admin' ? 'on' : ''} onClick={() => tab('settings')}>
-          <TabIcon name="more" emoji="☰" /><span>Ещё</span>
+          <i>☰</i><span>Ещё</span>
         </button>
       </nav>
     </div>

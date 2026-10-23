@@ -13,7 +13,6 @@ import { statusLine } from '../lib/statuses.ts';
 import { EncryptedImage, ImageViewer } from './EncryptedImage.tsx';
 import { Win, Svg, Ico, Dialog } from './Win.tsx';
 import { Gold } from './Plate.tsx';
-import { Avatar, ChatAvatar } from './Avatar.tsx';
 
 const drafts = new Map<string, string>();
 const GROUP_GAP = 5 * 60 * 1000;
@@ -164,13 +163,6 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
   }, [chatId]);
   useEffect(() => { drafts.set(chatId, text); }, [chatId, text]);
 
-  // Поле ввода растёт вместе с текстом (в Зумере)
-  useLayoutEffect(() => {
-    const el = inputRef.current;
-    if (!el || !document.body.classList.contains('skin-aero')) return;
-    el.style.height = 'auto';
-    el.style.height = `${Math.min(140, el.scrollHeight + 2)}px`;
-  }, [text]);
 
   useLayoutEffect(() => {
     const el = scrollRef.current;
@@ -339,15 +331,11 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
     <Win id="chatwin" className="chat" title={<>{title} <small>— беседа</small></>} icon={icon}
       onBack={onBack} onClose={onBack} closeClass="close-chat">
       <div className="chat-head aska-head" onClick={openHead} role="button" title="Подробнее">
-        <button className="aska-back" onClick={(e) => { e.stopPropagation(); onBack(); }} aria-label="Назад">‹</button>
-        <Ico html={icon.replace('width="14" height="14"', 'width="16" height="16"')} />
-        {peer ? <Avatar user={peer} online={peerOnline || peer.kind === 'aska'} size={38} badge={peer.kind !== 'aska'} />
-          : <ChatAvatar emoji={chat.emoji || (chat.kind === 'general' ? '🌼' : '⭕')} size={38} />}
-        <span className="aska-head-t">
-          <span className="nick">{title}{chat.kind === 'dm' && <Gold user={peer} />}{(peer?.kind === 'aska' || peer?.kind === 'friend') && <span className="aska-tag">ИИ</span>}</span>
-          <span className={`hint${typers.length ? ' aska-typing' : ''}`}>{statusHint}</span>
-        </span>
+        <Ico className={`ico${peer?.gold && chat.kind === 'dm' ? ' gold' : ''}`} html={icon.replace('width="14" height="14"', 'width="16" height="16"')} />
+        <span className="nick">{title}{chat.kind === 'dm' && <Gold user={peer} />}</span>
+        {(peer?.kind === 'aska' || peer?.kind === 'friend') && <span className="aska-tag">ИИ</span>}
         <span className="sp" />
+        <span className={`hint${typers.length ? ' aska-typing' : ''}`}>{statusHint}</span>
       </div>
       {friendTwin && (
         <div className="aska-twin-bar">
@@ -363,7 +351,7 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
           Сверь коды безопасности в настройках. Пока сообщения шифруются старым ключом.
         </div>
       )}
-      <div className={`history inset${chat.kind === 'dm' || chat.kind === 'twin' ? ' aska-dm' : ''}`} ref={scrollRef} onScroll={onScroll}>
+      <div className="history inset" ref={scrollRef} onScroll={onScroll}>
         {!list.length && (
           <div className="msg aska-sys"><span className="sys">{
             friendTwin ? `Это личный ИИ человека «${twinOwner.displayName}». Задай вопрос, передай комплимент или подарок — кнопки внизу. Его ответы пишет нейросеть.`
@@ -399,14 +387,14 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
         <textarea
           ref={inputRef}
           className="field"
-          rows={1}
+          rows={2}
           maxLength={20000}
           value={text}
           onChange={(e) => { setText(e.target.value); if (e.target.value.trim()) sendTyping(chatId); }}
           onKeyDown={onKeyDown}
           placeholder={act === 'compliment' ? `Комплимент — ${twinOwner?.displayName} увидит${chat.twin?.anon ? ', но не узнает от кого' : ''}`
             : act === 'question' ? `Вопрос — ${twinOwner?.displayName} ответит`
-              : isTouch || document.body.classList.contains('skin-aero') ? 'Напиши что-нибудь…' : 'Напиши что-нибудь… Enter — отправить'}
+              : isTouch ? 'Напиши что-нибудь…' : 'Напиши что-нибудь… Enter — отправить'}
         />
         <div className="send-row">
           <button className="btn icon" onClick={() => setSmilesOpen((v) => !v)} title="Смайлы" aria-label="Смайлы">
@@ -415,10 +403,7 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
           <button className="btn icon" onClick={() => fileRef.current?.click()} title="Фото" aria-label="Фото">📷</button>
           <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={onFiles} />
           <span className="hint">{!s.connected ? 'нет связи' : ''}</span>
-          <button className="btn primary aska-send" disabled={!text.trim()} onMouseDown={(e) => e.preventDefault()} onClick={submit} aria-label="Отправить">
-            <span className="lab">Отправить</span>
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 12l15-7-5 15-2.5-6.2z" fill="currentColor" /><path d="M11.5 13.8L19 5" stroke="rgba(0,0,0,.25)" strokeWidth="1.2" /></svg>
-          </button>
+          <button className="btn primary" disabled={!text.trim()} onMouseDown={(e) => e.preventDefault()} onClick={submit}>Отправить</button>
         </div>
       </div>
       {smilesOpen && (
