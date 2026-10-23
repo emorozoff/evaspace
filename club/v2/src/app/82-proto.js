@@ -5,6 +5,9 @@
    из Зума или документа), ссылка на запись, файл. Участники, от которых ждём
    подтверждения, получают уведомление со звуком и нажимают «Ок».
    Поменяли текст — подтверждения сбрасываются: «Ок» относится к тексту.
+   «Ок» можно нажать и прямо в списке, не открывая протокол.
+   Запись встречи смотрят прямо в протоколе: из Зума — через сервер штаба (videos),
+   ссылки YouTube, Google Диска, Vimeo, Loom, Rutube, Kinescope и на файл — во встроенном плеере.
    Пока Зум не подключён к серверу, ссылки и текст вносятся вручную. */
 
 const PROTO_LEVELS = {
@@ -58,7 +61,7 @@ App.register('protocols', {
     };
     root.innerHTML = `
       ${pageHead('Протоколы', 'Протоколы собраний: поиск по тексту, ссылки на запись и подтверждение «Ок» от участников.', protoCanEdit() ? `<button class="btn primary sm" id="prNew">${icon('plus')}Протокол</button>` : '')}
-      ${helpBox('protocols', `<b>Как работают протоколы.</b> Протокол заводят основатели: вставляют текст (из Зума или документа), ссылку на запись и, если нужно, файл. Уровень решает, кто его видит: 1 — основатели, 2 — основатели и инвесторы, 3 — все участники. Те, от кого ждём подтверждения, получают уведомление со звуком и нажимают «Ок». Если текст потом поменяли, подтверждения сбрасываются. Протокол можно скачать в PDF. Протокол к собранию удобно открывать прямо из календаря — кнопка «Протокол» у собрания.`)}
+      ${helpBox('protocols', `<b>Как работают протоколы.</b> Протокол заводят основатели: вставляют текст (из Зума или документа), ссылку на запись и, если нужно, файл. Уровень решает, кто его видит: 1 — основатели, 2 — основатели и инвесторы, 3 — все участники. Те, от кого ждём подтверждения, получают уведомление со звуком и нажимают «Ок» — в самом протоколе или прямо в списке. Запись встречи смотрится внутри протокола, переходить в Зум не нужно. Если текст потом поменяли, подтверждения сбрасываются. Протокол можно скачать в PDF. Протокол к собранию удобно открывать прямо из календаря — кнопка «Протокол» у собрания.`)}
       <div class="pr-tools">
         <input class="input" id="prQ" type="search" placeholder="Поиск: слово из текста, название, дата или участник" value="${esc(q)}" aria-label="Поиск по протоколам">
         <div class="seg">${[['all', 'Все'], ['1', 'Ур. 1'], ['2', 'Ур. 2'], ['3', 'Ур. 3']].map(([k, n]) => `<button type="button" data-prlv="${k}" class="${lvF === k ? 'on' : ''}">${n}</button>`).join('')}</div>
@@ -66,14 +69,14 @@ App.register('protocols', {
       </div>
       ${list.length ? `<div class="pr-list">${list.map(p => {
         const ok = Proto.ok(p), ppl = p.people || [], done = ppl.filter(k => ok[k]).length;
-        return `<button class="card pr-row ${Proto.needsMe(p) ? 'need' : ''}" data-proto="${p.id}">
+        return `<div class="card pr-row ${Proto.needsMe(p) ? 'need' : ''}" data-proto="${p.id}" role="button" tabindex="0">
           <span class="pr-date"><b>${dayShort(p.date)}</b><small>${p.date ? p.date.slice(0, 4) : ''}</small></span>
           <span class="pr-main"><b>${esc(p.title)}</b><small>${snippet(p)}</small></span>
           <span class="pr-meta">${protoLevelPill(protoLevel(p))}
             ${ppl.length ? `<span class="pill ${done === ppl.length ? 'good' : 'warn'}">Ок: ${done} из ${ppl.length}</span>` : ''}
-            ${Proto.needsMe(p) ? '<span class="pill bad">ждём вашего «Ок»</span>' : ''}
-            ${p.recUrl ? `<span class="pill line">${icon('video')}запись</span>` : ''}</span>
-        </button>`;
+            ${p.recUrl || (p.videos || []).length ? `<span class="pill line">${icon('video')}запись</span>` : ''}
+            ${Proto.needsMe(p) ? `<button type="button" class="btn primary xs" data-prok="${p.id}" title="Подтвердить протокол, не открывая его">${icon('tick')}Ок</button>` : ''}</span>
+        </div>`;
       }).join('')}</div>`
         : `<div class="empty"><b>${all.length ? 'Ничего не нашлось' : 'Протоколов пока нет'}</b>${all.length ? 'Попробуйте другое слово или снимите фильтр.' : protoCanEdit() ? 'Нажмите «Протокол», чтобы добавить первый, или откройте собрание в календаре.' : 'Здесь появятся протоколы собраний.'}</div>`}`;
     wireHelp(root);
@@ -82,7 +85,15 @@ App.register('protocols', {
     qi.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { View.set('pr.q', qi.value); App.render({focus: 'prQ'}); }, 300); });
     on(root, 'click', '[data-prlv]', (e, el) => { View.set('pr.lv', el.dataset.prlv); App.render(); });
     $('#prMine', root).onchange = e => { View.set('pr.mine', e.target.checked); App.render(); };
-    on(root, 'click', '[data-proto]', (e, el) => openProto(el.dataset.proto));
+    on(root, 'click', '[data-proto]', (e, el) => { if (!e.target.closest('[data-prok]')) openProto(el.dataset.proto); });
+    on(root, 'keydown', '[data-proto]', (e, el) => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target === el) { e.preventDefault(); openProto(el.dataset.proto); }
+    });
+    /* «Ок» прямо из списка */
+    on(root, 'click', '[data-prok]', (e, el) => {
+      const p = Store.get('protocols', el.dataset.prok);
+      if (p && Proto.needsMe(p)) Proto.approve(p);
+    });
     const nb = $('#prNew', root);
     if (nb) nb.onclick = () => editProto(null);
   },
@@ -120,6 +131,67 @@ function protoPdf(p) {
     <script>(document.fonts ? document.fonts.ready : Promise.resolve()).then(function(){setTimeout(function(){window.print()},400)})<\/script></body></html>`);
   w.document.close();
 }
+/* запись встречи — смотреть прямо в протоколе. Ссылку YouTube, Google Диска, Vimeo, Loom, Rutube, Kinescope
+   превращаем в их встроенный плеер; ссылку на файл — в плеер браузера; запись Зума отдаёт сервер штаба */
+function protoEmbed(url) {
+  let u, m;
+  try { u = new URL(url); } catch (e) { return ''; }
+  const h = u.hostname.replace(/^(www|m)\./, ''), path = u.pathname;
+  if (h === 'youtu.be' && (m = /^\/([\w-]{6,})/.exec(path))) return `https://www.youtube-nocookie.com/embed/${m[1]}`;
+  if (h === 'youtube.com' || h === 'youtube-nocookie.com') {
+    const yt = u.searchParams.get('v') || ((m = /^\/(?:embed|shorts|live)\/([\w-]{6,})/.exec(path)) && m[1]);
+    if (yt && /^[\w-]+$/.test(yt)) return `https://www.youtube-nocookie.com/embed/${yt}`;
+  }
+  if (h === 'drive.google.com' && (m = /\/file\/d\/([\w-]+)/.exec(path))) return `https://drive.google.com/file/d/${m[1]}/preview`;
+  if (h === 'vimeo.com' && (m = /^\/(\d+)(?:\/([\da-f]+))?/.exec(path))) return `https://player.vimeo.com/video/${m[1]}${m[2] ? '?h=' + m[2] : ''}`;
+  if (h === 'player.vimeo.com' && /^\/video\/\d+/.test(path)) return url;
+  if (h === 'loom.com' && (m = /^\/(?:share|embed)\/([\da-f]+)/.exec(path))) return `https://www.loom.com/embed/${m[1]}`;
+  if (h === 'rutube.ru' && (m = /^\/(?:video|play\/embed)\/([\da-f]{20,})/.exec(path))) return `https://rutube.ru/play/embed/${m[1]}`;
+  if (h === 'kinescope.io' && (m = /^\/(?:embed\/)?([\w-]+)\/?$/.exec(path))) return `https://kinescope.io/embed/${m[1]}`;
+  return '';
+}
+const protoMedia = url => (/\.(mp4|webm|mov|m4v)(\?|$)/i.test(url) ? 'video' : /\.(m4a|mp3|ogg|wav)(\?|$)/i.test(url) ? 'audio' : '');
+const protoZoomUrl = url => { try { return /(^|\.)zoom\.us$/.test(new URL(url).hostname); } catch (e) { return false; } };
+const protoVideoAt = v => (v.start ? new Date(v.start).toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow'}) : '');
+function protoPlayerHtml(p, videos) {
+  const vids = onServer() ? videos || p.videos || [] : [], rec = safeUrl(p.recUrl || '');
+  const link = label => (rec ? `<a href="${esc(rec)}" target="_blank" rel="noopener">${label}</a>` : '');
+  /* плеер не справился (запись удалили, Зум не отдал) — подсказка со ссылкой появится сама */
+  const media = (tag, src, away) => `<${tag} class="pr-video" id="prVideo" controls playsinline preload="metadata" src="${esc(src)}"></${tag}>
+    <p class="note pr-vfail" hidden>Запись не загрузилась здесь. ${link(away)}</p>`;
+  if (vids.length) {
+    return `${vids.length > 1 ? `<div class="seg pr-parts">${vids.map((x, i) => `<button type="button" data-prpart="${i}" class="${i ? '' : 'on'}">Часть ${i + 1}${protoVideoAt(x) ? ' · ' + protoVideoAt(x) : ''}</button>`).join('')}</div>` : ''}
+      ${media(vids[0].kind === 'audio' ? 'audio' : 'video', window.EvaServer.zoom.videoUrl(p.id, 0), 'Открыть в Зуме')}`;
+  }
+  if (!rec) return '';
+  const emb = protoEmbed(rec), file = protoMedia(rec);
+  if (emb) return `<div class="pr-frame"><iframe src="${esc(emb)}" title="Запись встречи" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+    <p class="note pr-away">${link('Открыть в новой вкладке')}</p>`;
+  if (file) return media(file, rec, 'Открыть запись отдельно');
+  if (protoZoomUrl(rec) && onServer() && p.zoomId) return '<p class="note pr-find">Ищем запись у Зума, чтобы показать её здесь…</p>';
+  return `<a class="btn sm" href="${esc(rec)}" target="_blank" rel="noopener">${icon('video')}Запись встречи</a>`;
+}
+function wireProtoPlayer(box, p) {
+  const failOn = () => { const v = $('#prVideo', box); if (v) v.addEventListener('error', () => { $('.pr-vfail', box).hidden = false; }); };
+  failOn();
+  /* встреча из нескольких заходов в Зум — у каждого своя запись */
+  on(box, 'click', '[data-prpart]', (e, b) => {
+    $$('[data-prpart]', box).forEach(x => x.classList.toggle('on', x === b));
+    $('.pr-vfail', box).hidden = true;
+    const v = $('#prVideo', box);
+    v.src = window.EvaServer.zoom.videoUrl(p.id, Number(b.dataset.prpart));
+    v.play().catch(() => {});
+  });
+  /* встреча прошла до того, как штаб научился показывать записи, — просим сервер найти её у Зума */
+  if (!$('.pr-find', box)) return;
+  window.EvaServer.zoom.videos(p.id).catch(() => ({})).then(r => {
+    if (!box.isConnected) return;
+    const list = (r && r.videos) || [];
+    box.innerHTML = list.length ? protoPlayerHtml(p, list)
+      : `<p class="note">Показать запись здесь пока не получилось. <a href="${esc(safeUrl(p.recUrl))}" target="_blank" rel="noopener">Открыть в Зуме</a></p>`;
+    failOn();
+  });
+}
 function openProto(id) {
   const p = Store.get('protocols', id);
   if (!p) return;
@@ -130,8 +202,8 @@ function openProto(id) {
     wide: true,
     body: `<div class="pr-view">
         <p class="pr-sub">${esc(dayLong(p.date))} ${p.date ? p.date.slice(0, 4) : ''} · ${protoLevelPill(lv)}${meet ? ` · собрание «${esc(meet.title)}»` : ''}</p>
-        <div class="row pr-links">${p.recUrl && safeUrl(p.recUrl) ? `<a class="btn sm" href="${esc(safeUrl(p.recUrl))}" target="_blank" rel="noopener">${icon('video')}Запись встречи</a>` : ''}
-          ${p.file && p.file.data ? `<button type="button" class="btn sm" id="prFile">${icon('download')}${esc(p.file.name || 'Файл протокола')}</button>` : ''}
+        <div class="pr-player" id="prPlayer">${protoPlayerHtml(p)}</div>
+        <div class="row pr-links">${p.file && p.file.data ? `<button type="button" class="btn sm" id="prFile">${icon('download')}${esc(p.file.name || 'Файл протокола')}</button>` : ''}
           <button type="button" class="btn sm ghost" id="prPdf">${icon('download')}Скачать PDF</button></div>
         <div class="pt-bar"><span class="label">Вид протокола</span>${ptSwitch(p)}</div>
         <div id="prDoc" class="pt-wrap">${ptDoc(p, ptPick(p))}</div>
@@ -141,6 +213,7 @@ function openProto(id) {
     foot: `${protoCanEdit() ? `<button class="btn left" id="prEdit">${icon('edit')}Изменить</button>` : ''}<button class="btn" data-close>Закрыть</button>${Proto.needsMe(p) ? `<button class="btn primary" id="prOk">${icon('tick')}Ок, согласен(на)</button>` : ''}`,
     onMount(el, close) {
       $('#prPdf', el).onclick = () => protoPdf(p);
+      wireProtoPlayer($('#prPlayer', el), p);
       ptFonts(); ptStyle();
       /* вид протокола: свой у каждого, помнится в учётке */
       on(el, 'click', '[data-pt]', (e, b) => {
@@ -177,7 +250,8 @@ function editProto(id, preset = {}) {
       </div>
       <div class="field"><span>Кто видит</span><div class="seg" id="prLv">${Object.entries(PROTO_LEVELS).map(([k, x]) => `<button type="button" data-lv="${k}" class="${Number(k) === lv0 ? 'on' : ''}">${esc(x.name)}</button>`).join('')}</div></div>
       <div class="field"><span>От кого ждём «Ок»</span><div class="chips" id="prPpl">${chips(lv0)}</div></div>
-      <label class="field"><span>Ссылка на запись встречи</span><input class="input" id="prRec" value="${esc(v.recUrl || '')}" placeholder="https://… (облако Зума или диск)"></label>
+      <label class="field"><span>Ссылка на запись встречи</span><input class="input" id="prRec" value="${esc(v.recUrl || '')}" placeholder="https://… — Зум, YouTube, Google Диск, Vimeo, Loom, Rutube или файл .mp4">
+        <small>Запись откроется прямо в протоколе. Запись Зума, если встречу создали из штаба, придёт сама.</small></label>
       <label class="field"><span>Текст протокола</span><textarea class="textarea" id="prText" rows="16" placeholder="Вставьте текст протокола: повестка, решения, следующие шаги и ответственные">${esc(v.text || '')}</textarea>
         ${p && Object.keys(Proto.ok(p)).length ? '<small>Если поменять текст, подтверждения «Ок» сбросятся и участники получат протокол заново.</small>' : ''}</label>
       <div class="field"><span>Файл протокола <small class="note">PDF или документ, до 3 МБ</small></span>

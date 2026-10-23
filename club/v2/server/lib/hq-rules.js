@@ -33,6 +33,8 @@ const meetHidden = (role, d) => !!d && Number(d.level) === 1 && !can(role, 'prot
 const can = (role, perm) => (PERMS[perm] || []).includes(role);
 
 const omit = (o, keys) => { const out = {...o}; keys.forEach(k => { delete out[k]; }); return out; };
+/* в протоколе: ссылки на файлы записи у Зума — их знает и ведёт только сервер, смотрят запись через /api/zoom/video */
+const PROTO_SERVER = ['recSrc'];
 /* пароль и всё, по чему его можно подобрать или сбросить, — никогда не уходит в браузер */
 const ACC_SECRET = ['salt', 'hash', 'reset'];
 /* что человек может поправить в своей учётке сам */
@@ -69,7 +71,7 @@ function botView(c, id, doc) {
   if (c === 'tasks') return doc;
   if (c === 'meetings') return omit(doc, MEET_GUESTS);
   /* протоколы — чтобы присылать их в группу (файл не отдаём: тяжёлый, есть ссылка на запись и текст) */
-  if (c === 'protocols') return {...omit(doc, ['file']), hasFile: !!doc.file};
+  if (c === 'protocols') return {...omit(doc, ['file', ...PROTO_SERVER]), hasFile: !!doc.file};
   /* из документов — только стратегия: цели недели для утренней сводки */
   if (c === 'docs') return id === 'strategy' ? doc : null;
   /* анкета «Каким быть Ясеню» — бот и есть Ясень: читает ответы, чтобы общаться, как просит команда */
@@ -110,7 +112,7 @@ function view(ctx, c, id, doc) {
     /* файлы к задачам видят все, кто видит задачи; содержимое отдаёт /api/file/<id> */
     case 'files': return can(r, 'tasks.view') ? omit(doc, ['data']) : null;
     case 'meetings': return can(r, 'tasks.view') && !meetHidden(r, doc) ? doc : null;
-    case 'protocols': return seesLevel(r, doc) ? doc : null;
+    case 'protocols': return seesLevel(r, doc) ? omit(doc, PROTO_SERVER) : null;
     /* анкета Ясеня: свой ответ — каждому, все ответы — основателю (и боту — только читать, см. botView) */
     case 'yasen': return r === 'owner' || id === (ctx.personId || ctx.accId) ? doc : null;
     case 'messages':
@@ -172,6 +174,7 @@ function write(ctx, op, c, id, cur, body, next, store) {
       return owner || id === (ctx.personId || ctx.accId) ? yes(next) : no('отвечать можно только за себя');
     case 'protocols': {
       if (next && JSON.stringify(next).length > 5e6) return no('протокол слишком большой: файл — до 3 МБ');
+      if (next && PROTO_SERVER.some(k => JSON.stringify(next[k]) !== JSON.stringify(cur ? cur[k] : undefined))) return no('ссылки на запись у Зума ведёт сервер');
       if (can(r, 'proto.edit')) return yes(next);
       /* остальные — только своё «Ок» в протоколе, который видят */
       const me = ctx.personId || ctx.accId, ok = isObj(body) ? body.ok : null;

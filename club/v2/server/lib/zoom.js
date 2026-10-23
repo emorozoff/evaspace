@@ -3,7 +3,8 @@
    компании, от имени владельца аккаунта): ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID,
    ZOOM_CLIENT_SECRET — создавать встречи и читать протоколы; ZOOM_WEBHOOK_SECRET —
    проверять уведомления Зума («запись готова», «протокол готов»), которые он
-   присылает на https://АДРЕС-ШТАБА/api/zoom/webhook. Ключи кладёт deploy/zoom.sh. */
+   присылает на https://АДРЕС-ШТАБА/api/zoom/webhook. Ключи кладёт deploy/zoom.sh.
+   Видео записи штаб показывает у себя: файл берёт у Зума сервер (file) и отдаёт плееру кусками. */
 
 'use strict';
 const crypto = require('crypto');
@@ -30,18 +31,35 @@ function vttText(vtt) {
 }
 /* uuid встречи с «/» в начале или «//» внутри Зум просит кодировать дважды */
 const uuidPath = u => (/^\/|\/\//.test(u) ? encodeURIComponent(encodeURIComponent(u)) : encodeURIComponent(u));
+/* из файлов одного захода в Зум — одно видео для просмотра: экран с говорящим, потом говорящий, галерея…
+   Видео нет — звук. Ссылку на файл (url) знает только сервер */
+const VIDEO_PICK = ['shared_screen_with_speaker_view', 'shared_screen_with_speaker_view(CC)', 'active_speaker', 'speaker_view',
+  'shared_screen_with_gallery_view', 'gallery_view', 'shared_screen'];
+function videoFile(files) {
+  const ready = (files || []).filter(f => f && f.id && f.download_url && f.status !== 'processing');
+  const typed = t => ready.filter(f => String(f.file_type || '').toUpperCase() === t);
+  const rank = f => { const i = VIDEO_PICK.indexOf(f.recording_type); return i < 0 ? 99 : i; };
+  const mp4 = typed('MP4').sort((a, b) => rank(a) - rank(b))[0], f = mp4 || typed('M4A')[0];
+  if (!f) return null;
+  return {id: String(f.id), kind: mp4 ? 'video' : 'audio', size: Number(f.file_size) || 0,
+    start: String(f.recording_start || ''), end: String(f.recording_end || ''), url: String(f.download_url)};
+}
 
 class Zoom {
-  constructor({accountId, clientId, clientSecret, webhookSecret}) {
+  /* oauth и api — адреса Зума; другие — только для проверок (test/api-test.js): свой «Зум» */
+  constructor({accountId, clientId, clientSecret, webhookSecret, oauth, api}) {
     Object.assign(this, {accountId, clientId, clientSecret, webhookSecret});
+    this.oauth = oauth || 'https://zoom.us/oauth/token';
+    this.base = api || 'https://api.zoom.us/v2';
     this.configured = !!(accountId && clientId && clientSecret);
     this.hooks = !!webhookSecret;
     this.tok = null;
     this.exp = 0;
+    this.cdn = new Map();
   }
   async token() {
     if (this.tok && Date.now() < this.exp - 60e3) return this.tok;
-    const r = await fetch(`https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${encodeURIComponent(this.accountId)}`, {
+    const r = await fetch(`${this.oauth}?grant_type=account_credentials&account_id=${encodeURIComponent(this.accountId)}`, {
       method: 'POST', headers: {authorization: 'Basic ' + Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')},
     });
     const j = await r.json().catch(() => ({}));
@@ -51,7 +69,7 @@ class Zoom {
     return this.tok;
   }
   async api(method, path, body) {
-    const r = await fetch('https://api.zoom.us/v2' + path, {
+    const r = await fetch(this.base + path, {
       method, headers: {authorization: 'Bearer ' + await this.token(), 'content-type': 'application/json'},
       body: body === undefined ? undefined : JSON.stringify(body),
     });
@@ -87,6 +105,36 @@ class Zoom {
     if (!r.ok) throw Object.assign(new Error('Зум не отдал транскрипт: ' + r.status), {status: 502});
     return vttText(await r.text());
   }
+  /* файлы записи одного захода — для записей, пришедших до того, как штаб научился их показывать */
+  recordings(uuid) { return this.api('GET', `/meetings/${uuidPath(uuid)}/recordings`); }
+  /* файл записи для плеера штаба. Ссылка Зума перенаправляет в хранилище: туда идём уже без ключа, с тем же
+     Range (плеер просит запись кусками). Адрес хранилища помним пять минут, чтобы не спрашивать Зум на каждый кусок.
+     Ключ отдаём только самому Зуму */
+  async file(url, range, signal) {
+    const own = u => { try { const h = new URL(u).hostname; return /(^|\.)zoom\.us$/.test(h) || h === new URL(this.base).hostname; } catch (e) { return false; } };
+    if (!own(url)) throw Object.assign(new Error('ссылка на запись — не Зума'), {status: 400});
+    const get = async (u, auth) => fetch(u, {redirect: 'manual', signal,
+      headers: {'accept-encoding': 'identity', ...(range ? {range} : {}), ...(auth ? {authorization: 'Bearer ' + await this.token()} : {})}});
+    const hit = this.cdn.get(url);
+    if (hit && hit.exp > Date.now()) {
+      const r = await get(hit.loc, false);
+      if (r.ok || r.status === 416) return r;
+      r.body?.cancel().catch(() => {});
+      this.cdn.delete(url);
+    }
+    let at = url, r = await get(url, true);
+    for (let i = 0; i < 4 && r.status >= 300 && r.status < 400 && r.headers.get('location'); i++) {
+      r.body?.cancel().catch(() => {});
+      at = new URL(r.headers.get('location'), at).href;
+      r = await get(at, new URL(at).hostname === new URL(url).hostname);   // как curl: ключ — только тому же адресу
+    }
+    if (r.ok && at !== url) {
+      const now = Date.now();
+      for (const [k, x] of this.cdn) if (x.exp < now) this.cdn.delete(k);
+      this.cdn.set(url, {loc: at, exp: now + 5 * 60e3});
+    }
+    return r;
+  }
   /* уведомление пришло от Зума: подпись v0=HMAC(секрет, «v0:время:тело»), не старше 5 минут */
   verify(headers, raw) {
     if (!this.hooks) return false;
@@ -98,4 +146,4 @@ class Zoom {
   validation(plainToken) { return {plainToken, encryptedToken: hmac(this.webhookSecret, String(plainToken))}; }
 }
 
-module.exports = {Zoom, hmac, vttText};
+module.exports = {Zoom, hmac, vttText, videoFile};

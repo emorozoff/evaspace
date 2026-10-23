@@ -46,6 +46,7 @@ const fs = require('fs');
 const path = require('path');
 const net = require('net');
 const dns = require('dns');
+const {Readable} = require('stream');
 /* У контейнера на сервере нет IPv6, а путь до Telegram с потерями: соединение бывает и 5 секунд.
    По умолчанию Node даёт ему 250 мс на адрес и рвёт — поэтому идём по IPv4 и ждём, сколько нужно */
 if (net.setDefaultAutoSelectFamily) net.setDefaultAutoSelectFamily(false);
@@ -55,7 +56,7 @@ const A = require('./lib/auth');
 const HQ = require('./lib/hq-rules');
 const CRM = require('./lib/crm-rules');
 const {Gcal} = require('./lib/gcal');
-const {Zoom} = require('./lib/zoom');
+const {Zoom, videoFile} = require('./lib/zoom');
 const {TgBot} = require('./lib/tg');
 
 const HQ_DIR = path.resolve(__dirname, '..');                       // club/v2 — сам штаб
@@ -106,7 +107,9 @@ crm.store.load();
 const sessions = new A.Sessions(path.join(DATA_DIR, 'sessions.json'));
 const limiter = new A.Limiter();
 const gcal = new Gcal({file: path.join(DATA_DIR, 'gcal.json'), clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, publicUrl: PUBLIC_URL});
-const zoom = new Zoom({accountId: process.env.ZOOM_ACCOUNT_ID, clientId: process.env.ZOOM_CLIENT_ID, clientSecret: process.env.ZOOM_CLIENT_SECRET, webhookSecret: process.env.ZOOM_WEBHOOK_SECRET});
+/* ZOOM_OAUTH_URL, ZOOM_API_URL — только для проверок (test/api-test.js): свой «Зум» */
+const zoom = new Zoom({accountId: process.env.ZOOM_ACCOUNT_ID, clientId: process.env.ZOOM_CLIENT_ID, clientSecret: process.env.ZOOM_CLIENT_SECRET, webhookSecret: process.env.ZOOM_WEBHOOK_SECRET,
+  oauth: process.env.ZOOM_OAUTH_URL, api: process.env.ZOOM_API_URL});
 /* TG_API, HQ_TG_SECRET, TG_TICK_MS, TG_ANY_HOUR — только для проверок (test/api-test.js): свой «Telegram», частые круги, в любой час */
 const tg = new TgBot({token: process.env.HQ_TG_TOKEN, secret: process.env.HQ_TG_SECRET, publicUrl: PUBLIC_URL, file: path.join(DATA_DIR, 'tg.json'),
   store: hq.store, rules: HQ, api: process.env.TG_API, anyHour: process.env.TG_ANY_HOUR === '1'});
@@ -466,6 +469,7 @@ async function zoomWebhook(req, res) {
       const pass = obj.recording_play_passcode || obj.password || '';
       const url = obj.share_url ? obj.share_url + (pass && !String(obj.share_url).includes('pwd=') ? (obj.share_url.includes('?') ? '&' : '?') + 'pwd=' + encodeURIComponent(pass) : '') : '';
       if (url && url !== p.recUrl) hq.store.patch('protocols', p.id, {recUrl: url, upd: Date.now(), log: zoomLog('Зум прислал запись встречи')});
+      zoomVideo(p.id, String(obj.uuid || ''), obj.recording_files);
       /* транскрипт — дословно, кто что сказал. У одного собрания бывает несколько заходов в Зум (вышли
          и зашли снова) — у каждого свой uuid: транскрипт каждого дописываем следом */
       const part = String(obj.uuid || ''), got = p.transcriptOf || [];
@@ -493,6 +497,62 @@ async function zoomWebhook(req, res) {
     }
   } catch (e) { console.error(new Date().toISOString(), 'zoom webhook', ev, e.message); }
   return json(res, 200, {ok: true});
+}
+
+/* видео захода — в протокол, смотреть прямо в штабе. Что показывать (videos) видят все, кому открыт протокол;
+   ссылку на файл Зума (recSrc) — только сервер (hq-rules.js) */
+function zoomVideo(pid, part, files) {
+  const v = videoFile(files), cur = hq.store.get('protocols', pid);
+  if (!v || !cur) return;
+  const list = cur.videos || [];
+  if (list.some(x => x.id === v.id || (part && x.part === part))) return;
+  const {url, ...meta} = v;
+  hq.store.patch('protocols', pid, {videos: [...list, {...meta, part}].sort((a, b) => a.start.localeCompare(b.start)), recSrc: {...(cur.recSrc || {}), [v.id]: url}});
+}
+/* запись встречи — в плеер штаба, без перехода в Зум: сервер берёт файл у Зума своим ключом и отдаёт
+   кусками (Range) только тем, кто видит протокол */
+const VIDEO_TYPES = {video: 'video/mp4', audio: 'audio/mp4'};
+async function zoomVideoGet(req, res, ctx, pid, n) {
+  const p = hq.store.get('protocols', pid);
+  const v = p && HQ.view(ctx, 'protocols', pid, p) ? (p.videos || [])[n] : null;
+  const url = v && (p.recSrc || {})[v.id];
+  if (!url) return json(res, 404, {error: 'записи нет'});
+  if (!zoom.configured) return json(res, 503, {error: 'Зум на сервере не подключён'});
+  const ac = new AbortController();
+  res.on('close', () => ac.abort());   // плеер перемотал или закрыли окно — у Зума больше не берём
+  let r;
+  try { r = await zoom.file(url, req.headers.range, ac.signal); } catch (e) {
+    if (ac.signal.aborted) return;
+    console.error(new Date().toISOString(), 'zoom video', e.message);
+    return json(res, e.status || 502, {error: e.message || 'Зум не отдал запись'});
+  }
+  if (!r.ok) {
+    r.body?.cancel().catch(() => {});
+    console.error(new Date().toISOString(), 'zoom video', r.status);
+    return json(res, r.status === 416 ? 416 : 502, {error: 'Зум не отдал запись: ' + r.status});
+  }
+  const h = {'content-type': VIDEO_TYPES[v.kind] || 'video/mp4', 'accept-ranges': 'bytes', 'content-disposition': 'inline',
+    'cache-control': 'private, max-age=3600', 'x-content-type-options': 'nosniff'};
+  for (const k of ['content-length', 'content-range']) { const x = r.headers.get(k); if (x) h[k] = x; }
+  res.writeHead(r.status === 206 ? 206 : 200, h);
+  Readable.fromWeb(r.body).on('error', () => res.destroy()).pipe(res);
+}
+/* записи встреч, которые прошли до того, как штаб научился их показывать: спросить Зум по заходам протокола.
+   Одного протокола — не чаще раза в 10 минут */
+const zoomAsked = new Map();
+async function zoomVideosFind(req, res, ctx) {
+  const pid = String(((await body(req)) || {}).id || ''), p = hq.store.get('protocols', pid);
+  if (!p || !HQ.view(ctx, 'protocols', pid, p)) return json(res, 404, {error: 'протокол не найден'});
+  const have = () => ({videos: (hq.store.get('protocols', pid) || {}).videos || []});
+  const parts = [...new Set([...(p.transcriptOf || []), ...(p.summaryOf || [])].filter(Boolean))];
+  if (!parts.length && p.zoomId) parts.push(String(p.zoomId));
+  if (!zoom.configured || !parts.length || Date.now() - (zoomAsked.get(pid) || 0) < 10 * 60e3) return json(res, 200, have());
+  zoomAsked.set(pid, Date.now());
+  for (const u of parts) {
+    try { const z = await zoom.recordings(u); zoomVideo(pid, String(z.uuid || u), z.recording_files); }
+    catch (e) { console.error(new Date().toISOString(), 'zoom videos', e.message); }
+  }
+  return json(res, 200, have());
 }
 
 /* создать или обновить встречу Зума для собрания штаба (со страницы штаба и от бота) */
@@ -588,6 +648,10 @@ async function hqApi(req, res, p, u) {
   /* Зум: включён ли, и создать или обновить встречу Зума для собрания штаба */
   if (p === 'zoom/status' && !write) return json(res, 200, {configured: zoom.configured, hooks: zoom.hooks});
   if (p === 'zoom/meeting' && req.method === 'POST') return zoomMeeting(req, res, ctx);
+  /* запись встречи из протокола — смотреть в штабе */
+  const zv = /^zoom\/video\/([^/]+)\/(\d{1,2})$/.exec(p);
+  if (zv && !write) return zoomVideoGet(req, res, ctx, decodeURIComponent(zv[1]), Number(zv[2]));
+  if (p === 'zoom/videos' && req.method === 'POST') return zoomVideosFind(req, res, ctx);
 
   /* Telegram: одноразовая ссылка на бота — только для своей карточки; и отключить */
   if (p === 'tg/link' && req.method === 'POST') {

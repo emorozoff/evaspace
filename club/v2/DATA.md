@@ -48,7 +48,7 @@
 | `failed` | сбои оплат | `date`, `client`, `contact`, `amount`, `plan` (month · year), `reason` (funds · bank · card · tds · limit · other), `attempts`, `status` (new · contacted · retry · paid · lost), `next`, `who`, `log` |
 | `refunds` | запросы на возврат | `date`, `deadline` (+10 дней), `client`, `contact`, `product` (sub · course · market · other), `courseId`, `orderId`, `amount`, `reason`, `comment`, `status` (new · review · approved · refunded · rejected), `decision`, `who`, `refundedAt`, `log` |
 | `scenarios` | сценарии финансов (раздел «Сценарии»): только отличия от штаба, считаются поверх живых данных и ни на что не влияют. Видят все с `money.view`, сохраняют `money.edit` | `name`, `note`, `p` (`base`, `salesK`, `sales{месяц}`, `price`, `retention`, `taxMode` (income · profit), `tax`, `taxMin`, `insurance`, `vat`, `acquiring`, `refShare`, `refFirst`, `refRenew`, `refMonths`, `payrollK`, `otherK`, `extra`, `invest{месяц}`; пусто — как в штабе), `by`, `at`, `upd` |
-| `protocols` | протоколы собраний (раздел «Протоколы»). Уровень решает, кто видит: 1 — основатели (owner, lead, finance), 2 — и инвесторы, 3 — все. Заводят и правят `proto.edit`; остальные могут только поставить своё «Ок» | `title`, `date`, `level`, `meetingId`, `people` [ключи: карточка человека или учётка — от кого ждём «Ок»], `ok` {ключ: время}, `recUrl`, `text`, `transcript` (дословный транскрипт речи из Зума «[чч:мм:сс] Имя: фраза»; по нему бот ищет «внимание, задача»), `file` {name, type, size, data — data URL до 3 МБ}, `log`, `by`, `at`, `upd` |
+| `protocols` | протоколы собраний (раздел «Протоколы»). Уровень решает, кто видит: 1 — основатели (owner, lead, finance), 2 — и инвесторы, 3 — все. Заводят и правят `proto.edit`; остальные могут только поставить своё «Ок» | `title`, `date`, `level`, `meetingId`, `people` [ключи: карточка человека или учётка — от кого ждём «Ок»], `ok` {ключ: время}, `recUrl`, `videos` [{id, kind: video|audio, part, start, end, size} — записи Зума, смотреть в штабе через `/api/zoom/video/<id протокола>/<n>`], `recSrc` {id файла: ссылка Зума — только сервер, в браузер и боту не уходит, из браузера не меняется}, `text`, `transcript` (дословный транскрипт речи из Зума «[чч:мм:сс] Имя: фраза»; по нему бот ищет «внимание, задача»), `file` {name, type, size, data — data URL до 3 МБ}, `log`, `by`, `at`, `upd` |
 | `yasen` | анкета «Каким быть Ясеню» (страница `#yasen`): id — карточка человека или учётка. Свой ответ видит и правит каждый, все — основатель и бот команды (только читает) | `answers` {вопрос: {pick (строка или список), own}}, `name`, `at` |
 | `busy` | занятость по Google Календарю (только интервалы, без названий) | `slots` [[начало, конец]], `crm`, `from`, `to`, `share` |
 | `links` | свои материалы основателя | `title`, `url`, `group`, `roles` |
@@ -136,6 +136,10 @@
   `ZOOM_WEBHOOK_SECRET` — Зум присылает на `/api/zoom/webhook` «запись готова» и «протокол готов»,
   сервер проверяет подпись и сам кладёт ссылку на запись и текст в `protocols` (by: `zoom`).
   Текст, который уже правили люди, не перезаписывается — версия Зума ложится в `zoomText`.
+  Видео записи смотрят прямо в протоколе: сервер берёт файл у Зума ключом приложения (нужны права
+  на облачные записи) и отдаёт плееру кусками — `GET /api/zoom/video/<протокол>/<n>`, только тем, кто
+  видит протокол. Записи встреч, прошедших раньше, сервер ищет у Зума по кнопке-запросу страницы
+  (`POST /api/zoom/videos`, не чаще раза в 10 минут на протокол).
 - **Бот команды в Telegram** («Клод EVA») входит не по паролю, а по ключу `BOT_KEY`
   (заголовок `Authorization: Bearer …` и `x-eva: 1`). Учётки у него нет, роль `bot` — в
   `server/lib/hq-rules.js`: видит задачи и собрания (без внешних гостей), а из «Команды» и учёток —

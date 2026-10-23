@@ -491,11 +491,13 @@ async function browserHash(pw, salt) {
       };
       await new Promise(rr => vtt.listen(0, rr));
       const zobj = uuid => JSON.stringify({event: 'recording.completed', download_token: 'dtok', payload: {object: {id: 777, uuid, start_time: '2026-10-21T12:00:00Z',
-        recording_files: [{file_type: 'TRANSCRIPT', download_url: `http://127.0.0.1:${vtt.address().port}/t.vtt`}]}}});
+        recording_files: [{file_type: 'TRANSCRIPT', download_url: `http://127.0.0.1:${vtt.address().port}/t.vtt`},
+          {id: 'mv', file_type: 'MP4', recording_type: 'active_speaker', download_url: 'https://zoom.us/rec/download/mv'}]}}});
       await zsend(zobj('u2')); await zsend(zobj('u2'));
       vtt.close();
       const zps = Object.values((await bot.get('/api/state')).j.collections.protocols || {}).filter(x => x.zoomId === '777'), zp2 = zps[0] || {};
       ok(zps.length === 1 && (String(zp2.transcript).match(/Следующая часть встречи/g) || []).length === 1 && (String(zp2.transcript).match(/Внимание, задача/g) || []).length === 2, 'вторая часть встречи — транскрипт дописан один раз', zp2.transcriptOf);
+      ok((zp2.videos || []).length === 1 && !('recSrc' in zp2), 'видео записи бот видит, ссылку на файл Зума — нет', zp2);
       ok((await bot.patch('yasen', 'pz', {at: 2})).status === 403 && (await bot.put('yasen', 'yb', {answers: {}, at: 1, via: 'bot'})).status === 403 && (await bot.del('yasen', 'pz')).status === 403, 'анкету не меняет, не заполняет и не удаляет');
 
       /* своя карточка в «Команде» — одна и только «кто это» */
@@ -655,6 +657,110 @@ async function browserHash(pw, salt) {
       await up();
       await wait(1200);
       ok(calls.filter(c => c.method === 'sendMessage').length === n, 'после перезапуска сервера ничего не отправлено повторно', calls.slice(n).map(c => c.p.text));
+    } finally { srv.kill(); fake.close(); }
+  }
+
+  console.log('20. запись встречи из Зума — смотреть в штабе');
+  {
+    /* свой сервер с ключами Зума и свой «Зум»: выдаёт ключ, список записей, файл — перенаправлением в «хранилище»
+       (другой адрес, туда ключ уходить не должен), кусками по Range */
+    const {spawn} = require('child_process'), fs = require('fs'), os = require('os'), path = require('path'), crypto = require('crypto');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eva-zoom-'));
+    const port = Number(new URL(BASE).port || 8787), B4 = `http://localhost:${port + 4}`, ZP = port + 5;
+    const FILE = Buffer.from('0123456789'.repeat(100)), hits = {token: 0, list: 0, dl: 0, cdn: 0, evil: 0};
+    const fake = http.createServer((q, s2) => {
+      const u = new URL(q.url, 'http://x');
+      const authed = q.headers.authorization === 'Bearer ztok';
+      if (u.pathname === '/oauth/token') { hits.token++; s2.writeHead(200, {'content-type': 'application/json'}); return s2.end(JSON.stringify({access_token: 'ztok', expires_in: 3600})); }
+      if (/^\/v2\/meetings\/[^/]+\/recordings$/.test(u.pathname)) {
+        hits.list++;
+        if (!authed) { s2.writeHead(401); return s2.end(); }
+        s2.writeHead(200, {'content-type': 'application/json'});
+        return s2.end(JSON.stringify({uuid: 'old-1', recording_files: [{id: 'fold', file_type: 'MP4', recording_type: 'gallery_view', status: 'completed', download_url: `http://localhost:${ZP}/rec/download/old`}]}));
+      }
+      if (u.pathname.startsWith('/rec/download/')) {
+        hits.dl++;
+        if (!authed) { s2.writeHead(401); return s2.end(); }
+        s2.writeHead(302, {location: `http://127.0.0.1:${ZP}/cdn/${u.pathname.split('/').pop()}?sig=1`});
+        return s2.end();
+      }
+      if (u.pathname.startsWith('/cdn/')) {
+        hits.cdn++;
+        if (q.headers.authorization) { s2.writeHead(400); return s2.end('ключ ушёл в хранилище'); }
+        const m = /^bytes=(\d+)-(\d*)$/.exec(q.headers.range || '');
+        if (!m) { s2.writeHead(200, {'content-type': 'binary/octet-stream', 'content-length': FILE.length}); return s2.end(FILE); }
+        const a = Number(m[1]), b = Math.min(m[2] ? Number(m[2]) : FILE.length - 1, FILE.length - 1);
+        s2.writeHead(206, {'content-type': 'binary/octet-stream', 'content-length': b - a + 1, 'content-range': `bytes ${a}-${b}/${FILE.length}`});
+        return s2.end(FILE.subarray(a, b + 1));
+      }
+      hits.evil++;
+      s2.writeHead(404); s2.end();
+    });
+    await new Promise(r => fake.listen(ZP, r));
+    const srv = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], {env: {...process.env, DATA_DIR: dir, PORT: String(port + 4), INSECURE_COOKIE: '1',
+      ZOOM_ACCOUNT_ID: 'acc', ZOOM_CLIENT_ID: 'cid', ZOOM_CLIENT_SECRET: 'csec', ZOOM_WEBHOOK_SECRET: 'zsecret',
+      ZOOM_OAUTH_URL: `http://localhost:${ZP}/oauth/token`, ZOOM_API_URL: `http://localhost:${ZP}/v2`}, stdio: 'ignore'});
+    try {
+      for (let i = 0; i < 50; i++) { try { if ((await fetch(B4 + '/healthz')).ok) break; } catch (e) { /* ещё не встал */ } await wait(100); }
+      const own = new Client('owner4', B4), mem = new Client('member4', B4), anon4 = new Client('anon4', B4);
+      await own.req('POST', '/api/auth/owner', {name: 'Основатель Зума', email: 'o@zoom.ru', pw: 'secret1'});
+      await own.put('people', 'pm', {name: 'Мила', title: 'Команда', order: 50});
+      await own.put('invites', 'MILA-2345', {role: 'member', personId: 'pm', by: null, at: Date.now()});
+      await mem.req('POST', '/api/auth/join', {code: 'MILA-2345', given: 'Мила', surname: 'Команда', email: 'm@zoom.ru', pw: 'member1'});
+      const zsend = body => {
+        const ts = String(Math.floor(Date.now() / 1000)), sig = 'v0=' + crypto.createHmac('sha256', 'zsecret').update(`v0:${ts}:${body}`).digest('hex');
+        return fetch(B4 + '/api/zoom/webhook', {method: 'POST', headers: {'content-type': 'application/json', 'x-zm-request-timestamp': ts, 'x-zm-signature': sig}, body});
+      };
+      const dl = n => `http://localhost:${ZP}/rec/download/${n}`;
+      const rec = (uuid, start) => JSON.stringify({event: 'recording.completed', payload: {object: {id: 888, uuid, topic: 'Созвон основателей', start_time: start, share_url: 'https://zoom.us/rec/share/abc',
+        recording_files: [
+          {id: uuid + 'g', file_type: 'MP4', recording_type: 'gallery_view', status: 'completed', download_url: dl(uuid + 'g'), recording_start: start},
+          {id: uuid + 's', file_type: 'MP4', recording_type: 'shared_screen_with_speaker_view', status: 'completed', download_url: dl(uuid + 's'), recording_start: start, file_size: 1000},
+          {id: uuid + 'a', file_type: 'M4A', recording_type: 'audio_only', status: 'completed', download_url: dl(uuid + 'a'), recording_start: start}]}}});
+      await zsend(rec('p1', '2026-10-22T12:00:00Z')); await zsend(rec('p1', '2026-10-22T12:00:00Z'));
+      let ps = Object.entries((await own.state()).collections.protocols || {}).filter(([, x]) => x.zoomId === '888');
+      const [pid, zp] = ps[0] || [null, {}];
+      ok(ps.length === 1 && (zp.videos || []).length === 1 && zp.videos[0].id === 'p1s' && zp.videos[0].kind === 'video', 'из файлов записи — одно видео, экран с говорящим; повтор не дублирует', zp.videos);
+      ok(!('recSrc' in zp), 'ссылку на файл Зума основатель не видит — её знает только сервер', Object.keys(zp));
+
+      const vraw = async (c, n, range) => {
+        const r = await fetch(B4 + `/api/zoom/video/${encodeURIComponent(pid)}/${n}`, {headers: {...(c.cookie ? {cookie: c.cookie} : {}), ...(range ? {range} : {})}});
+        return {status: r.status, type: r.headers.get('content-type'), cr: r.headers.get('content-range'), text: await r.text()};
+      };
+      r = await vraw(own, 0, 'bytes=0-99');
+      ok(r.status === 206 && r.cr === 'bytes 0-99/1000' && r.text === FILE.subarray(0, 100).toString() && r.type === 'video/mp4', 'запись отдаётся кусками, как видео', r.status + ' ' + r.cr + ' ' + r.type);
+      r = await vraw(own, 0, 'bytes=900-');
+      ok(r.status === 206 && r.text === FILE.subarray(900).toString() && hits.dl === 1 && hits.cdn === 2, 'следующий кусок — сразу из хранилища, Зум второй раз не спрашиваем', hits);
+      r = await vraw(own, 0);
+      ok(r.status === 200 && r.text.length === 1000, 'без Range — вся запись');
+      ok(hits.token === 1, 'ключ Зума берём один раз и помним', hits.token);
+      ok((await vraw(mem, 0, 'bytes=0-9')).status === 404, 'участник не видит протокол уровня 1 — и записи не получит');
+      ok((await vraw(anon4, 0)).status === 401, 'без входа — нет');
+      ok((await vraw(own, 5)).status === 404, 'нет такой записи — 404');
+
+      /* ссылку на файл не подменить: сервер не понесёт ключ Зума на чужой адрес */
+      ok((await own.put('protocols', 'evil', {title: 'x', level: 1, date: '2026-10-22', videos: [{id: 'e'}], recSrc: {e: `http://localhost:${ZP}/steal`}})).status === 403, 'новый протокол со своей ссылкой на файл — нет');
+      r = await own.patch('protocols', pid, {recSrc: {p1s: `http://localhost:${ZP}/steal`}});
+      const r2 = await vraw(own, 0, 'bytes=0-9');
+      ok(r2.status === 206 && hits.evil === 0, 'правка протокола ссылку на файл не меняет', [r.status, r2.status, hits]);
+      const zp1 = (await own.state()).collections.protocols[pid];
+      ok(await own.put('protocols', pid, {...zp1, text: 'Итоги'}).then(x => x.status === 200) && (await vraw(own, 0, 'bytes=0-9')).status === 206, 'основатель сохранил протокол — запись по-прежнему смотрится');
+
+      /* второй заход в ту же встречу — вторая запись */
+      await zsend(rec('p2', '2026-10-22T12:40:00Z'));
+      const zp2 = (await own.state()).collections.protocols[pid];
+      ok((zp2.videos || []).map(v => v.id).join() === 'p1s,p2s', 'второй заход — вторая часть записи', zp2.videos);
+      ok((await vraw(own, 1, 'bytes=0-9')).status === 206, 'вторая часть тоже смотрится');
+
+      /* записи встреч, прошедших раньше: сервер находит их у Зума по заходам протокола */
+      await own.put('protocols', 'old', {title: 'Прошлый созвон', level: 1, date: '2026-10-20', zoomId: '999', recUrl: 'https://zoom.us/rec/share/old', transcriptOf: ['old-1'], people: [], ok: {}});
+      ok((await mem.req('POST', '/api/zoom/videos', {id: 'old'})).status === 404, 'участник не ищет записи закрытого протокола');
+      r = await own.req('POST', '/api/zoom/videos', {id: 'old'});
+      ok(r.status === 200 && (r.j.videos || []).length === 1 && r.j.videos[0].id === 'fold' && hits.list === 1, 'запись прошлой встречи найдена у Зума', [r.j, hits.list]);
+      r = await own.req('POST', '/api/zoom/videos', {id: 'old'});
+      ok((r.j.videos || []).length === 1 && hits.list === 1, 'повторно Зум не спрашиваем', hits.list);
+      const oldv = await fetch(B4 + '/api/zoom/video/old/0', {headers: {cookie: own.cookie, range: 'bytes=0-4'}});
+      ok(oldv.status === 206 && (await oldv.text()) === '01234', 'и смотрится в штабе');
     } finally { srv.kill(); fake.close(); }
   }
 

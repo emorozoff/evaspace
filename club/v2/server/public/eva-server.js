@@ -252,10 +252,12 @@
     profiles: async ids => { const all = await call('GET', API + '/profiles'); return Object.fromEntries((ids || []).map(id => [id, all[id] || {}])); },
   };
 
-  /* Зум команды: подключён ли на сервере и встреча Зума для собрания */
+  /* Зум команды: подключён ли на сервере, встреча Зума для собрания и записи встреч — смотреть в штабе */
   const zoom = {
     status: () => call('GET', HQ_API + '/zoom/status').catch(() => ({configured: false})),
     meeting: id => call('POST', HQ_API + '/zoom/meeting', {id}),
+    videos: id => call('POST', HQ_API + '/zoom/videos', {id}),
+    videoUrl: (id, n) => `${HQ_API}/zoom/video/${encodeURIComponent(id)}/${n}`,
   };
   /* бот штаба в Telegram: одноразовая ссылка, чтобы подключить напоминания, и отключить их */
   const tg = {
