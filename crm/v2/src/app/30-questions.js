@@ -36,7 +36,7 @@ App.register('questions', {
         <section><div class="section-head"><h2>Анкета <span class="h-n">${Questions.test(type).length} ${plural(Questions.test(type).length, 'вопрос', 'вопроса', 'вопросов')}</span></h2>${canEdit ? `<button class="btn sm primary" data-add="test">${icon('plus')}Вопрос</button>` : ''}</div>
           <p class="note" style="margin-bottom:10px">${T.you === 'ты' ? 'Обращаемся на «ты», как в приложении.' : 'Обращаемся на «вы».'} ${type === 'client' ? 'Анкета разбита на разделы — человек видит, в каком он разделе и сколько осталось. Каждый ответ с вариантами попадает в статистику.' : 'Держите анкету короткой: 10–15 вопросов, 3 минуты.'}</p>
           <div class="ql">${byBlocks('test')}</div></section>
-        <section><div class="section-head"><h2>Для созвона <span class="h-n">${Questions.talk(type).length} ${plural(Questions.talk(type).length, 'вопрос', 'вопроса', 'вопросов')}</span></h2>${canEdit ? `<button class="btn sm primary" data-add="talk">${icon('plus')}Вопрос</button>` : ''}</div>
+        <section><div class="section-head"><h2>Для созвона <span class="h-n">${Questions.talk(type).length} ${plural(Questions.talk(type).length, 'вопрос', 'вопроса', 'вопросов')}</span></h2><span class="sh-acts"><a class="btn sm" href="${esc(People.talkLink({type, code: 'DEMO'}))}" target="_blank" rel="noopener" title="Эти же вопросы отдельной формой — так их видит человек по ссылке">${icon('eye')}Форма</a>${canEdit ? `<button class="btn sm primary" data-add="talk">${icon('plus')}Вопрос</button>` : ''}</span></div>
           <p class="note" style="margin-bottom:10px">Спрашивайте про прошлый опыт, а не «купили бы вы». Слушайте больше, чем говорите.</p>
           <div class="ql">${byBlocks('talk')}</div></section>
       </div>

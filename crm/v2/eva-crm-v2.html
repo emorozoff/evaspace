@@ -557,6 +557,9 @@ a.known .card-head .note{color:var(--link);}
 .pc-top{display:flex; align-items:center; gap:8px;}
 .pc-top .av{width:28px; height:28px; flex-basis:28px; font-size:11px;}
 .pc-top b{font-size:13.5px; font-weight:600; line-height:1.3; flex:1; min-width:0; overflow-wrap:anywhere;}
+.pc-move{flex:none; width:28px; height:28px; margin:-4px -5px -4px 0; border-radius:8px; border:0; background:none; color:var(--ink-3); display:inline-flex; align-items:center; justify-content:center; cursor:pointer;}
+.pc-move svg{width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+.pc-move:hover, .pc-move:focus-visible{background:var(--sunken); color:var(--ink);}
 .pc-sub{font-size:12px; color:var(--ink-3); line-height:1.4;}
 .pc-ref{color:var(--violet); font-weight:600;}
 .pc-acts{display:flex; gap:6px; flex-wrap:wrap;}
@@ -698,6 +701,25 @@ body.dragging-now .b3-zones{display:grid;}
 .b3-zone{border:1.5px dashed var(--line-strong); border-radius:9px; padding:9px 8px; text-align:center; font-size:12px; font-weight:600; color:var(--ink-2); background:var(--surface);}
 .b3-zone.good{color:var(--good);} .b3-zone.warn{color:var(--warn);} .b3-zone.bad{color:var(--bad);} .b3-zone.violet{color:var(--violet);}
 .b3-zone.drop-on{border-style:solid; border-color:currentColor; background:color-mix(in srgb, currentColor 10%, var(--surface));}
+/* форма интервью: разделы и общая ссылка */
+.tf-blocks{display:flex; flex-wrap:wrap; gap:6px; margin:12px 0 4px;}
+.tf-blocks span{font-size:12px; color:var(--ink-3); background:var(--sunken); border-radius:8px; padding:4px 8px;}
+.tf-blocks b{color:var(--ink-2); font-weight:600;}
+.tf-h{font-size:14px; font-weight:650; margin:18px 0 8px;}
+.tf-link{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px;}
+.tf-link .input{flex:1 1 240px; min-width:0; font-size:13px;}
+.sh-acts{display:inline-flex; gap:6px; align-items:center;}
+/* удалить несколько карточек */
+.bd-tools{display:flex; gap:14px;}
+.bd-list{display:flex; flex-direction:column; border:1px solid var(--line); border-radius:10px; max-height:52vh; overflow-y:auto;}
+.bd-row{display:flex; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid var(--line); cursor:pointer;}
+.bd-row:last-child{border-bottom:0;}
+.bd-row input{width:17px; height:17px; flex:none; accent-color:var(--bad);}
+.bd-row .av{width:28px; height:28px; flex-basis:28px; font-size:11px;}
+.bd-row span{display:flex; flex-direction:column; min-width:0;}
+.bd-row b{font-size:13.5px; font-weight:600;}
+.bd-row small{font-size:12px; color:var(--ink-3);}
+.bd-row:has(input:checked){background:var(--bad-soft);}
 
 /* ── 20-calendar.css ── */
 /* ── календарь созвонов: сетка недели как в штабе, цвет — по группе ── */
@@ -2495,6 +2517,7 @@ const ICONS = {
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
   merge: '<path d="M6 3v6a6 6 0 0 0 6 6h6"/><path d="m15 12 3 3-3 3"/><path d="M6 21v-6"/>',
+  swap: '<path d="M7 4 3 8l4 4"/><path d="M3 8h14"/><path d="m17 20 4-4-4-4"/><path d="M21 16H7"/>',
   more: '<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
   chevron: '<path d="m9 6 6 6-6 6"/>',
   down: '<path d="m6 9 6 6 6-6"/>',
@@ -2869,6 +2892,7 @@ function memo(fn) { let v = -1, val; return () => (v === MV ? val : (v = MV, val
 const LINKS = onServer() ? {
   crm: location.origin + window.EvaServer.urls.crm,
   anketa: location.origin + '/anketa/',
+  interview: location.origin + '/interview/',
 } : {
   crm: 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA',
   anketa: 'https://claude.ai/artifact/XtnwZ7txmRKpUAeGEnqwBT',
@@ -2926,6 +2950,13 @@ const People = {
     if (['done', 'skip'].includes(p.s2)) return 3;
     return 2;
   },
+  /* этапы воронки для выбора «куда перенести»: шаги 1 и 2, у шага 3 — каждый итог отдельно ('3:fan') */
+  stages(p) {
+    const T = TYPES[p.type];
+    return [['1', `1 · ${T.steps[0]}`], ['2', `2 · ${T.steps[1]}`],
+      ...Object.entries(s3Map(p.type)).map(([k, z]) => [`3:${k}`, `3 · ${T.steps[2]}: ${z.name.toLowerCase()}`])];
+  },
+  stageOf(p) { const c = this.col(p); return c === 3 ? `3:${p.s3 || 'none'}` : String(c); },
   connected(p) { return p.type === 'client' ? ['done', 'fan'].includes(p.s3) : p.s3 === 'yes'; },
   /* строка под именем: без смайлов, чтобы читалась с одного взгляда */
   sub(p) {
@@ -2961,11 +2992,18 @@ const People = {
     const d = Questions.diff(p.type);
     return `${base}#${TYPES[p.type].letter}.${p.code}${d ? '.q' + Codec.encJson(d) : ''}`;
   },
-  /* ссылка на интервью: человек отвечает на вопросы интервью сам, ответы ложатся в карточку */
+  /* ссылка на интервью: человек отвечает на вопросы интервью сам, ответы ложатся в карточку.
+     На своём сервере — отдельная страница /interview/, иначе — анкета с меткой .i */
   talkLink(p) {
-    const base = settings().anketaUrl || LINKS.anketa;
-    const d = Questions.diff(p.type, 'talk');
-    return `${base}#${TYPES[p.type].letter}.${p.code}.i${d ? '.q' + Codec.encJson(d) : ''}`;
+    const d = Questions.diff(p.type, 'talk'), q = d ? '.q' + Codec.encJson(d) : '';
+    if (LINKS.interview) return `${LINKS.interview}#${TYPES[p.type].letter}.${p.code}${q}`;
+    return `${settings().anketaUrl || LINKS.anketa}#${TYPES[p.type].letter}.${p.code}.i${q}`;
+  },
+  /* общая ссылка на форму интервью: кто заполнит — появится новой карточкой (только на своём сервере) */
+  talkForm(type) {
+    if (!LINKS.interview) return '';
+    const d = Questions.diff(type, 'talk');
+    return LINKS.interview + (type === 'client' && !d ? '' : `#${TYPES[type].letter}${d ? '..q' + Codec.encJson(d) : ''}`);
   },
   canEdit() { return Who.can('edit') && !Who.readOnly(); },
   /* перенос между шагами на доске: статусы подстраиваются под колонку,
@@ -3000,12 +3038,14 @@ function keyPatch(p, type, answers) {
   });
   return out;
 }
-/* ответы интервью от самого человека: не затирают то, что записал интервьюер; карточка — в «Итог» */
+/* ответы интервью от самого человека: не затирают то, что записал интервьюер; карточка — в «Итог».
+   Имя и контакт с общей ссылки — не ответы интервью */
+const TALK_WHO = ['name', 'tg'];
 function talkPatch(p, answers) {
   const now = Date.now(), talk = {};
   Object.entries(answers || {}).forEach(([id, v]) => {
     const cur = (p.talk || {})[id] || {};
-    if (typeof v !== 'string' || !v.trim() || (cur.a && !cur.self)) return;
+    if (TALK_WHO.includes(id) || typeof v !== 'string' || !v.trim() || (cur.a && !cur.self)) return;
     talk[id] = {...cur, a: v.trim(), asked: true, self: true, t: now};
   });
   const s1 = ['done', 'skip'].includes(p.s1) ? p.s1 : Object.keys(p.answers || {}).length ? 'done' : 'skip';
@@ -3021,9 +3061,14 @@ const Import = {
     const owner = pl.c ? People.byCode(pl.c) : null;
     /* ответы на вопросы интервью (если сервер их не принял сам — пришли ссылкой) */
     if (pl.m === 'talk') {
-      if (!owner) throw new Error('Нет карточки для ответов интервью');
-      People.patch(owner.id, talkPatch(owner, answers), 'Ответила на вопросы интервью по ссылке', '📝');
-      return owner.id;
+      if (owner) {
+        People.patch(owner.id, talkPatch(owner, answers), 'Ответила на вопросы интервью по ссылке', '📝');
+        return owner.id;
+      }
+      /* общая ссылка на интервью — новая карточка */
+      const str = v => (typeof v === 'string' ? v.trim().slice(0, 80) : '');
+      const name = str(answers.name) || str(pl.n) || 'Без имени';
+      return People.create({type, name, ...(str(answers.tg) ? {tg: str(answers.tg)} : {}), ...talkPatch({}, answers), s3: 'none', source: 'talk'});
     }
     /* анкета клиентки с 13.10 обещает подарок — неделю Евы; отмечаем, чтобы команда не забыла выдать */
     const gift = p => pl.g && type === 'client' && !(p && p.gift) ? {gift: {at: pl.at || Date.now(), done: false}} : {};
@@ -4051,6 +4096,17 @@ function statusLine(p) {
   const s = s3Map(p.type)[p.s3 || 'none'];
   return (p.s3 || 'none') !== 'none' ? stChip(s.tone, s.name) : '';
 }
+/* перенести на этап из списка ('2', '3:fan') — кнопкой на доске и выбором «Этап» в карточке;
+   то же, что перетащить карточку, но работает и на телефоне */
+function moveToStage(p, value) {
+  const [c, zone] = String(value).split(':');
+  const before = People.moveTo(People.get(p.id), Number(c), zone || null);
+  if (!before) return false;
+  syncCall(p.id);
+  const T = TYPES[p.type];
+  toast(`${People.name(p)} → ${T.steps[Number(c) - 1]}${zone ? ' · ' + s3Map(p.type)[zone].name.toLowerCase() : ''}`, {undo: () => People.patch(p.id, before, 'Отменили перенос', '↩')});
+  return true;
+}
 /* кнопки следующего шага: одни и те же на доске и в карточке (big — в карточке, больше вариантов) */
 function nextActs(p, big = false) {
   if (!People.canEdit()) return '';
@@ -4093,6 +4149,63 @@ function wireActs(root) {
     else if (['yes', 'think', 'no'].includes(act)) { const s = S3.other[act]; People.patch(p.id, {s3: act}, `Итог: ${s.name}`, s.emo); toast(`${s.emo} ${People.name(p)}: ${s.name.toLowerCase()}`); }
     void T;
   });
+}
+
+/* форма интервью отдельной страницей (/interview/): общая ссылка — кто заполнит, тот появится
+   новой карточкой; личная — в карточке человека, ответы лягут к нему */
+function openTalkForm(type) {
+  const T = TYPES[type], url = People.talkForm(type);
+  const qs = Questions.talk(type), blocks = groupByBlock(type, 'talk', qs);
+  const what = type === 'client' ? 'интервью' : 'созвона';
+  openModal({title: type === 'client' ? 'Форма интервью' : 'Вопросы созвона — формой', wide: true, body: `
+      <p class="note">${qs.length} ${plural(qs.length, 'вопрос', 'вопроса', 'вопросов')} ${what} отдельной страницей: человек отвечает своими словами, ответы сами ложатся в CRM — во вкладку «Интервью» карточки, карточка переходит на шаг «${esc(T.steps[2])}». Ту же форму можно открыть самим во время онлайн-${type === 'client' ? 'интервью' : 'созвона'} и записывать ответы.</p>
+      ${blocks.length > 1 ? `<div class="tf-blocks">${blocks.map((g, i) => `<span><b>${i + 1}. ${esc(g.name)}</b> ${g.qs.length}</span>`).join('')}</div>` : ''}
+      <h3 class="tf-h">Общая ссылка — для любого респондента</h3>
+      ${url ? `<div class="tf-link"><input class="input" readonly value="${esc(url)}" id="tfUrl" aria-label="Общая ссылка на форму"><button class="btn primary" data-copy>${icon('copy')}Скопировать</button><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">${icon('ext')}Открыть</a></div>
+        <p class="note">Сначала форма спросит имя и Telegram. Каждый, кто заполнит, — новая карточка в «${esc(groupName(type))}».</p>`
+        : '<p class="note">Общая ссылка работает на сервере Евы — eva.tytproai.ru.</p>'}
+      <h3 class="tf-h">Личная ссылка — для конкретного человека</h3>
+      <p class="note">В карточке человека — кнопка «Ссылка на ${type === 'client' ? 'интервью' : 'вопросы'}» (и «Отправить вопросы ссылкой» на шаге «${esc(T.steps[1])}»). Ответы лягут именно в его карточку, записанное командой не затрётся.</p>
+      <p class="note"><button class="link-btn" data-qs>Изменить вопросы</button> — правки сами попадут в форму и в новые ссылки.</p>`,
+    foot: '<button class="btn" data-close>Закрыть</button>',
+    onMount(el, close) {
+      const cp = $('[data-copy]', el);
+      if (cp) cp.onclick = () => copyOrShow(url, `Ссылка на форму ${what} скопирована 💬`);
+      $('[data-qs]', el).onclick = () => { View.set('qs.type', type); close(); App.go('questions'); };
+    }});
+}
+
+/* удалить несколько карточек разом (руководитель) — например, тестовые. Заранее отмечены похожие
+   на тестовые: пример (demo), «тест» в имени, а в кастдеве — все клиентки, заведённые до утра 23.10.2026,
+   кроме Алены Красильниковой: на это время её интервью — единственное настоящее (просьба основателей) */
+const TEST_UNTIL = Date.UTC(2026, 9, 23, 8, 0);
+const looksTest = p => !!p.demo || /тест|test/i.test(People.name(p))
+  || (p.type === 'client' && (p.createdAt || 0) < TEST_UNTIL && !/красильников|krasilnikov/i.test(People.name(p).replace(/ё/gi, 'е')));
+function openBulkDelete(type) {
+  const T = TYPES[type], list = People.all(type);
+  const info = p => [`шаг ${People.col(p)} · ${T.steps[People.col(p) - 1]}`, p.city,
+    Object.keys(p.answers || {}).length ? 'есть анкета' : '', Object.values(p.talk || {}).some(x => x && x.a) ? 'есть интервью' : '',
+    p.createdAt ? 'добавлена ' + when(p.createdAt).replace(/, \d\d:\d\d$/, '') : ''].filter(Boolean).join(' · ');
+  openModal({title: `Удалить карточки — ${groupName(type)}`, wide: true, body: `
+      <p class="note">Отметьте, что удалить, — например, тестовые карточки. Похожие на тестовые уже отмечены: проверьте список. Удалённую карточку не вернуть.</p>
+      <div class="bd-tools"><button class="link-btn" data-all>Отметить все</button><button class="link-btn" data-none>Снять все</button></div>
+      <div class="bd-list">${list.map(p => `<label class="bd-row"><input type="checkbox" value="${p.id}" ${looksTest(p) ? 'checked' : ''}>${avatar(People.name(p))}<span><b>${esc(People.name(p))}</b><small>${esc(info(p))}</small></span></label>`).join('') || '<p class="note">Карточек нет</p>'}</div>`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn danger solid" data-ok>Удалить</button>',
+    onMount(el, close) {
+      const ok = $('[data-ok]', el), boxes = () => $$('.bd-row input', el);
+      const upd = () => { const n = boxes().filter(i => i.checked).length; ok.textContent = n ? `Удалить ${n}` : 'Удалить'; ok.disabled = !n; };
+      on(el, 'change', '.bd-row input', upd);
+      $('[data-all]', el).onclick = () => { boxes().forEach(i => { i.checked = true; }); upd(); };
+      $('[data-none]', el).onclick = () => { boxes().forEach(i => { i.checked = false; }); upd(); };
+      ok.onclick = async () => {
+        const ids = boxes().filter(i => i.checked).map(i => i.value);
+        if (!ids.length || !await confirmPop(ok, {text: `Удалить ${ids.length} ${plural(ids.length, 'карточку', 'карточки', 'карточек')} со всеми ответами? Вернуть их будет нельзя.`, yes: 'Удалить', danger: true})) return;
+        ids.forEach(id => Store.remove('people', id));
+        close();
+        toast(`Удалено: ${ids.length} ${plural(ids.length, 'карточка', 'карточки', 'карточек')}`);
+      };
+      upd();
+    }});
 }
 
 /* быстро добавить человека: имя, контакт — и сразу ссылка */
@@ -4149,11 +4262,11 @@ function audiencePage(type) {
         : type === 'partner' ? PARTNER_CATS.map(c => [c, everyone.filter(p => p.cat === c).length]).filter(x => x[1])
         : [];
       const canEdit = People.canEdit();
-      if (canEdit) hints[0] += ' Карточку можно зажать и перенести в другой шаг или выбрать этап в самой карточке.';
+      if (canEdit) hints[0] += ' Перенести на другой этап — кнопкой ⇄ на карточке или перетащить её.';
 
       root.innerHTML = `
         ${pageHead(`${T.emo} ${groupName(type)}`, esc(T.about),
-          `<button class="btn" data-stats>${icon('chart')}Статистика</button>${canEdit ? `<button class="btn" data-paste>${icon('inbox')}Вставить ответы</button><button class="btn primary" data-add>${icon('plus')}${type === 'client' ? 'Клиентка' : T.one}</button>` : ''}`)}
+          `<button class="btn" data-stats>${icon('chart')}Статистика</button>${canEdit ? `<button class="btn" data-tform>${icon('msg')}${type === 'client' ? 'Форма интервью' : 'Вопросы формой'}</button><button class="btn" data-paste>${icon('inbox')}Вставить ответы</button><button class="btn primary" data-add>${icon('plus')}${type === 'client' ? 'Клиентка' : T.one}</button>` : ''}${Who.can('delete') && everyone.length ? `<button class="icon-btn" data-bulk-del title="Удалить несколько карточек — например, тестовые">${icon('trash')}</button>` : ''}`)}
         ${!everyone.length ? `<div class="welcome"><span class="e">${T.emo}</span><div><b>Здесь пока никого</b><p>Добавьте первого человека — ссылка на анкету скопируется сама. ${type === 'client' ? 'Для кастдева хватит 10–15 интервью, чтобы увидеть закономерности.' : ''}</p></div></div>` : ''}
         <div class="t-bar"><input class="input sm t-search" id="bq" placeholder="Поиск: имя, город, код" value="${esc(View.get(type + '.q', ''))}"><span class="t-bar-sp"></span>
           <span class="note">${list.length === everyone.length ? `${everyone.length} ${plural(everyone.length, 'человек', 'человека', 'человек')}` : `найдено ${list.length} из ${everyone.length}`}</span></div>
@@ -4163,7 +4276,7 @@ function audiencePage(type) {
             <div class="b3-hint">${esc(hints[i])}</div>
             ${i === 2 && canEdit ? `<div class="b3-zones">${Object.entries(s3Map(type)).filter(([k]) => k !== 'none').map(([k, z]) => `<div class="b3-zone ${z.tone}" data-zone="${k}">${esc(z.name)}</div>`).join('')}</div>` : ''}
             <div class="b3-list">${cols[i].map(p => { const st = statusLine(p), acts = nextActs(p); return `<div class="pc" data-open="${p.id}" data-drag="${p.id}">
-              <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b></div>
+              <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b>${canEdit ? `<button class="pc-move" data-move-pop="${p.id}" title="Перенести на другой этап" aria-label="Перенести на другой этап">${icon('swap')}</button>` : ''}</div>
               ${People.sub(p) || p.ref ? `<div class="pc-sub">${esc(People.sub(p))}${p.ref ? `${People.sub(p) ? ' · ' : ''}<span class="pc-ref">по приглашению</span>` : ''}</div>` : ''}
               ${st ? `<div>${st}</div>` : ''}
               ${acts ? `<div class="pc-acts">${acts}</div>` : ''}
@@ -4175,8 +4288,16 @@ function audiencePage(type) {
       on(root, 'click', '[data-f]', (e, el) => { View.set(type + '.f', el.dataset.f); App.render(); });
       on(root, 'click', '[data-add]', () => openAdd(type));
       on(root, 'click', '[data-paste]', () => openPaste());
+      on(root, 'click', '[data-tform]', () => openTalkForm(type));
+      on(root, 'click', '[data-bulk-del]', () => openBulkDelete(type));
       on(root, 'click', '[data-stats]', () => { View.set('st.type', type); App.go('stats'); });
       on(root, 'click', '[data-open]', (e, el) => { if (e.target.closest('button')) return; App.go('p-' + el.dataset.open); });
+      on(root, 'click', '[data-move-pop]', async (e, el) => {
+        const p = People.get(el.dataset.movePop);
+        if (!p) return;
+        const v = await pickPop(el, People.stages(p), People.stageOf(p));
+        if (v) moveToStage(p, v);
+      });
       wireActs(root);
       /* зажать карточку и перенести в другой шаг — статус меняется сам */
       if (canEdit) Drag.board($('.board3', root), {onDrop: (id, col, zone) => {
@@ -4422,7 +4543,7 @@ App.register('person', {
             ${p.contact ? `<span>контакт: ${esc(p.contact)}</span>` : ''}
             ${ref ? `<span>по приглашению <a href="#p-${ref.id}">${esc(People.name(ref))}</a></span>` : p.ref ? `<span>по приглашению ${esc(p.ref)}</span>` : ''}
             ${invited.length ? `<span>по ссылке пришли: ${invited.length}</span>` : ''}</div></div>
-        <div class="ph-acts">${canEdit ? `<label class="pp-move"><span>Этап</span><select class="select sm" data-move>${[1, 2].map(c => `<option value="${c}" ${col === c ? 'selected' : ''}>${c} · ${esc(T.steps[c - 1])}</option>`).join('')}${Object.entries(s3Map(p.type)).map(([k, z]) => `<option value="3:${k}" ${col === 3 && (p.s3 || 'none') === k ? 'selected' : ''}>3 · ${esc(T.steps[2])}: ${esc(z.name.toLowerCase())}</option>`).join('')}</select></label>
+        <div class="ph-acts">${canEdit ? `<label class="pp-move"><span>Этап</span><select class="select sm" data-move>${opts(People.stages(p), People.stageOf(p))}</select></label>
           <button class="btn sm" data-act="link" data-pid="${p.id}">${icon('link')}Скопировать ссылку</button><button class="btn sm" data-act="tlink" data-pid="${p.id}" title="Вопросы ${p.type === 'client' ? 'интервью' : 'созвона'} — человек ответит сам, ответы лягут в карточку">${icon('link')}Ссылка на ${p.type === 'client' ? 'интервью' : 'вопросы'}</button><button class="icon-btn" data-edit-person title="Изменить данные">${icon('edit')}</button>` : ''}${Who.can('delete') ? `<button class="icon-btn" data-del title="Удалить">${icon('trash')}</button>` : ''}</div>
       </div>
       ${steps}
@@ -4505,13 +4626,7 @@ App.register('person', {
     });
     on(root, 'click', '[data-edit-person]', () => openEditPerson(p));
     /* перенести на этап — то же, что перетащить карточку на доске, но работает и на телефоне */
-    on(root, 'change', '[data-move]', (e, el) => {
-      const [c, zone] = el.value.split(':');
-      const before = People.moveTo(People.get(p.id), Number(c), zone || null);
-      if (!before) return;
-      syncCall(p.id);
-      toast(`${People.name(p)} → ${T.steps[Number(c) - 1]}${zone ? ' · ' + s3Map(p.type)[zone].name.toLowerCase() : ''}`, {undo: () => People.patch(p.id, before, 'Отменили перенос', '↩')});
-    });
+    on(root, 'change', '[data-move]', (e, el) => moveToStage(p, el.value));
     on(root, 'click', '[data-del]', async (e, el) => {
       if (!await confirmPop(el, {text: `Удалить ${People.name(p)} со всеми ответами?`, yes: 'Удалить', danger: true})) return;
       Store.remove('people', p.id);
@@ -4583,27 +4698,30 @@ function showImport(pl) {
       };
     }});
 }
-/* ответы интервью: в карточку по коду, а если кода нет (перенесли из файла) — в выбранную карточку */
+/* ответы интервью: в карточку по коду, а если кода нет (общая ссылка, перенесли из файла) —
+   в выбранную карточку или новой карточкой */
 function showTalkImport(pl, type) {
   const owner = pl.c ? People.byCode(pl.c) : null;
   const a = pl.a || {};
   const qs = Questions.set(type).talk.filter(q => typeof a[q.id] === 'string' && a[q.id].trim());
-  const hint = String(pl.n || '').toLowerCase().split(/\s+/)[0];
+  const who = String(a.name || pl.n || '').trim();
+  const hint = who.toLowerCase().split(/\s+/)[0];
   const list = People.all(type);
   const guess = owner || list.find(p => hint && People.name(p).toLowerCase().includes(hint)) || null;
   const canEdit = People.canEdit();
   openModal({title: `Ответы интервью${pl.n ? ': ' + pl.n : ''}`, wide: true, body: `
       ${owner ? `<div class="okline"><span>Интервью для карточки <b>${esc(People.name(owner))}</b> · ${qs.length} ${plural(qs.length, 'ответ', 'ответа', 'ответов')}</span></div>`
-        : `<label class="field"><span>В какую карточку положить ответы</span><select class="select" id="imWho">${list.map(p => `<option value="${p.id}" ${guess && guess.id === p.id ? 'selected' : ''}>${esc(People.name(p))}${p.city ? ' · ' + esc(p.city) : ''}</option>`).join('')}</select></label>`}
+        : `<label class="field"><span>В какую карточку положить ответы</span><select class="select" id="imWho"><option value="">＋ Новая карточка${who ? ': ' + esc(who) : ''}</option>${list.map(p => `<option value="${p.id}" ${guess && guess.id === p.id ? 'selected' : ''}>${esc(People.name(p))}${p.city ? ' · ' + esc(p.city) : ''}</option>`).join('')}</select></label>
+          ${who || a.tg ? `<p class="note">${who ? `Имя: <b>${esc(who)}</b>` : ''}${who && a.tg ? ' · ' : ''}${a.tg ? `контакт: ${esc(a.tg)}` : ''}</p>` : ''}`}
       <div class="im-talk">${qs.map(q => `<div class="tq filled"><div class="tq-h"><b>${esc(q.t)}</b></div><p class="tq-old">${esc(a[q.id])}</p></div>`).join('')}</div>
       <p class="note">Ответы лягут во вкладку «Интервью», карточка перейдёт на шаг «Итог». То, что уже записала команда, не затрётся.</p>`,
-    foot: canEdit && (owner || list.length) ? `<button class="btn" data-close>Не сейчас</button><button class="btn primary" data-ok>Сохранить в карточку</button>` : '<button class="btn" data-close>Закрыть</button>',
+    foot: canEdit ? `<button class="btn" data-close>Не сейчас</button><button class="btn primary" data-ok>Сохранить в карточку</button>` : '<button class="btn" data-close>Закрыть</button>',
     onMount(el, close) {
       const ok = $('[data-ok]', el);
       if (ok) ok.onclick = () => {
-        const p = owner || People.get($('#imWho', el).value);
-        if (!p) return;
-        const id = Import.apply({...pl, c: p.code});
+        const pick = owner ? '' : $('#imWho', el).value;
+        const p = owner || (pick ? People.get(pick) : null);
+        const id = Import.apply({...pl, c: p ? p.code : ''});
         close();
         toast('Ответы интервью в карточке 💬');
         View.set('pp.tab', 'talk');
@@ -5510,7 +5628,7 @@ App.register('questions', {
         <section><div class="section-head"><h2>Анкета <span class="h-n">${Questions.test(type).length} ${plural(Questions.test(type).length, 'вопрос', 'вопроса', 'вопросов')}</span></h2>${canEdit ? `<button class="btn sm primary" data-add="test">${icon('plus')}Вопрос</button>` : ''}</div>
           <p class="note" style="margin-bottom:10px">${T.you === 'ты' ? 'Обращаемся на «ты», как в приложении.' : 'Обращаемся на «вы».'} ${type === 'client' ? 'Анкета разбита на разделы — человек видит, в каком он разделе и сколько осталось. Каждый ответ с вариантами попадает в статистику.' : 'Держите анкету короткой: 10–15 вопросов, 3 минуты.'}</p>
           <div class="ql">${byBlocks('test')}</div></section>
-        <section><div class="section-head"><h2>Для созвона <span class="h-n">${Questions.talk(type).length} ${plural(Questions.talk(type).length, 'вопрос', 'вопроса', 'вопросов')}</span></h2>${canEdit ? `<button class="btn sm primary" data-add="talk">${icon('plus')}Вопрос</button>` : ''}</div>
+        <section><div class="section-head"><h2>Для созвона <span class="h-n">${Questions.talk(type).length} ${plural(Questions.talk(type).length, 'вопрос', 'вопроса', 'вопросов')}</span></h2><span class="sh-acts"><a class="btn sm" href="${esc(People.talkLink({type, code: 'DEMO'}))}" target="_blank" rel="noopener" title="Эти же вопросы отдельной формой — так их видит человек по ссылке">${icon('eye')}Форма</a>${canEdit ? `<button class="btn sm primary" data-add="talk">${icon('plus')}Вопрос</button>` : ''}</span></div>
           <p class="note" style="margin-bottom:10px">Спрашивайте про прошлый опыт, а не «купили бы вы». Слушайте больше, чем говорите.</p>
           <div class="ql">${byBlocks('talk')}</div></section>
       </div>

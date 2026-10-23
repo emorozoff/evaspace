@@ -3,7 +3,8 @@
    Без зависимостей: нужен только Node.js 18+.
 
    Что делает:
-   • раздаёт штаб (/) и CRM (/crm/), анкету CRM (/anketa/) — её видят без входа;
+   • раздаёт штаб (/) и CRM (/crm/), анкету CRM (/anketa/) и форму интервью (/interview/) —
+     их видят без входа;
    • вход по почте и паролю проверяет сам: пароли и их отпечатки в браузер
      не уходят, без входа сервер не отдаёт ни одной записи;
    • каждой роли отдаёт только её данные и не принимает чужие правки
@@ -625,34 +626,65 @@ async function hqApi(req, res, p, u) {
   return json(res, 404, {error: 'нет такого адреса'});
 }
 
-/* интервью по ссылке (/anketa/#k.КОД.i): человек сам отвечает на вопросы интервью, ответы ложатся в его
-   карточку. Без входа — поэтому только в карточку с кодом из ссылки, только текст ответов, не затирая
-   записанное интервьюером, и с ограничением попыток */
+/* интервью по ссылке: человек сам отвечает на вопросы интервью, ответы ложатся в карточку.
+   Личная ссылка (/interview/#k.КОД, прежняя /anketa/#k.КОД.i) — в карточку с этим кодом;
+   общая (/interview/, без кода) — новая карточка с именем и контактом из ответов.
+   Без входа — поэтому только текст ответов, не затирая записанное интервьюером, и с ограничением
+   попыток; новых карточек с одного адреса — не больше нескольких в час */
 const TALK_ID = /^[A-Za-z0-9_]{1,40}$/;
+const TALK_WHO = ['name', 'tg'];
+const TALK_TYPES = {k: 'client', e: 'expert', p: 'partner', a: 'amb'};
+const talkNew = new A.Limiter({max: 10, windowMs: 60 * 60e3});
+const RU_LAT = {а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'i', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'c', ч: 'ch', ш: 'sh', щ: 'sch', ы: 'y', э: 'e', ю: 'yu', я: 'ya'};
+/* код карточки как в CRM: имя латиницей и три цифры (ANNA482) */
+function talkCode(name) {
+  const lat = [...String(name).trim().split(/\s+/)[0].toLowerCase()].map(ch => RU_LAT[ch] ?? (/[a-z0-9]/.test(ch) ? ch : '')).join('').slice(0, 10);
+  const used = new Set(crm.store.list('people').map(x => x.code));
+  for (let i = 0; i < 200; i++) {
+    const code = (lat || 'eva').toUpperCase() + (100 + Math.floor(Math.random() * 900));
+    if (!used.has(code)) return code;
+  }
+  return 'EVA' + Date.now().toString(36).toUpperCase();
+}
 async function crmTalk(req, res) {
   const k = 'talk|' + ipOf(req);
   const wait = limiter.blocked(k);
   if (wait) return json(res, 429, {error: `Слишком много попыток. Попробуйте через ${wait} мин.`});
   if (!sameSite(req)) return json(res, 403, {error: 'запрос не со страницы анкеты'});
   const b = (await body(req)) || {};
-  const code = String(b.c || '').toUpperCase();
-  const p = /^[A-Z0-9_-]{2,40}$/.test(code) ? crm.store.list('people').find(x => x.code === code) : null;
-  if (!p) { limiter.fail(k); return json(res, 404, {error: 'Ссылка устарела — попросите новую у менеджера Евы.'}); }
   const a = isObj(b.a) ? b.a : {}, now = Date.now(), talk = {};
   const ids = Object.keys(a);
   if (ids.length > 120 || JSON.stringify(a).length > 200000) return json(res, 413, {error: 'Слишком длинные ответы'});
+  const code = String(b.c || '').toUpperCase();
+  const p = code ? (/^[A-Z0-9_-]{2,40}$/.test(code) ? crm.store.list('people').find(x => x.code === code) : null) : {};
+  if (!p) { limiter.fail(k); return json(res, 404, {error: 'Ссылка устарела — попросите новую у менеджера Евы.'}); }
   for (const id of ids) {
     const v = a[id], cur = (p.talk || {})[id] || {};
-    if (!TALK_ID.test(id) || typeof v !== 'string' || !v.trim()) continue;
+    if (!TALK_ID.test(id) || TALK_WHO.includes(id) || typeof v !== 'string' || !v.trim()) continue;
     if (cur.a && !cur.self) continue;
     talk[id] = {...cur, a: v.trim().slice(0, 5000), asked: true, self: true, t: now};
   }
   if (!Object.keys(talk).length) return json(res, 400, {error: 'Нет ни одного ответа'});
+  if (!code) {
+    /* общая ссылка: новая карточка на шаге «Итог» — анкеты не было, интервью есть */
+    const type = TALK_TYPES[b.t] || 'client';
+    const str = (v, n) => (typeof v === 'string' ? v.trim().slice(0, n) : '');
+    const name = str(a.name, 80);
+    if (!name) return json(res, 400, {error: 'Напишите, как вас зовут'});
+    const nk = 'talknew|' + ipOf(req), w = talkNew.blocked(nk);
+    if (w) return json(res, 429, {error: `С этого адреса уже пришло несколько интервью. Попробуйте через ${w} мин.`});
+    talkNew.fail(nk);
+    const id = A.uid(), tg = str(a.tg, 80), newCode = talkCode(name);
+    crm.store.set('people', id, {type, name, ...(tg ? {tg} : {}), code: newCode, s1: 'skip', s2: 'done', s3: 'none', answers: {}, talk, res: {tags: []},
+      talkAt: now, talkSelf: now, source: 'talk', createdAt: now, touchedAt: now,
+      log: {[A.uid()]: {t: now, by: 'self', emo: '📝', text: 'Ответила на вопросы интервью по общей ссылке'}}});
+    return json(res, 200, {ok: true, c: newCode});
+  }
   const {id, ...doc} = p;
   const s1 = ['done', 'skip'].includes(doc.s1) ? doc.s1 : Object.keys(doc.answers || {}).length ? 'done' : 'skip';
   crm.store.set('people', id, {...doc, talk: {...(doc.talk || {}), ...talk}, s1, s2: 'done', talkAt: doc.talkAt || now, talkSelf: now, touchedAt: now,
     log: {...(doc.log || {}), [A.uid()]: {t: now, by: 'self', emo: '📝', text: 'Ответила на вопросы интервью по ссылке'}}});
-  return json(res, 200, {ok: true});
+  return json(res, 200, {ok: true, c: code});
 }
 
 async function crmApi(req, res, p, u) {
@@ -731,6 +763,9 @@ function page(req, res, u) {
   if (p === '/anketa') { res.writeHead(301, {location: '/anketa/'}); return res.end(); }
   if (p === '/anketa/') return file(res, path.join(CRM_DIR, 'a', 'index.html'));
   if (p === '/anketa.html') return file(res, path.join(CRM_DIR, 'anketa.html'));
+  /* форма интервью — та же страница анкеты, на своём адресе: /interview/ — общая ссылка, /interview/#k.КОД — личная */
+  if (p === '/interview') { res.writeHead(301, {location: '/interview/'}); return res.end(); }
+  if (p === '/interview/') return file(res, path.join(CRM_DIR, 'a', 'index.html'));
   if (p === '/crm') { res.writeHead(301, {location: '/crm/'}); return res.end(); }
   if (p === '/crm/' || p === '/crm/index.html') {
     const ctx = ctxOf(req);

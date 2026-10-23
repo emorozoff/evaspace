@@ -21,6 +21,17 @@ function statusLine(p) {
   const s = s3Map(p.type)[p.s3 || 'none'];
   return (p.s3 || 'none') !== 'none' ? stChip(s.tone, s.name) : '';
 }
+/* перенести на этап из списка ('2', '3:fan') — кнопкой на доске и выбором «Этап» в карточке;
+   то же, что перетащить карточку, но работает и на телефоне */
+function moveToStage(p, value) {
+  const [c, zone] = String(value).split(':');
+  const before = People.moveTo(People.get(p.id), Number(c), zone || null);
+  if (!before) return false;
+  syncCall(p.id);
+  const T = TYPES[p.type];
+  toast(`${People.name(p)} → ${T.steps[Number(c) - 1]}${zone ? ' · ' + s3Map(p.type)[zone].name.toLowerCase() : ''}`, {undo: () => People.patch(p.id, before, 'Отменили перенос', '↩')});
+  return true;
+}
 /* кнопки следующего шага: одни и те же на доске и в карточке (big — в карточке, больше вариантов) */
 function nextActs(p, big = false) {
   if (!People.canEdit()) return '';
@@ -63,6 +74,63 @@ function wireActs(root) {
     else if (['yes', 'think', 'no'].includes(act)) { const s = S3.other[act]; People.patch(p.id, {s3: act}, `Итог: ${s.name}`, s.emo); toast(`${s.emo} ${People.name(p)}: ${s.name.toLowerCase()}`); }
     void T;
   });
+}
+
+/* форма интервью отдельной страницей (/interview/): общая ссылка — кто заполнит, тот появится
+   новой карточкой; личная — в карточке человека, ответы лягут к нему */
+function openTalkForm(type) {
+  const T = TYPES[type], url = People.talkForm(type);
+  const qs = Questions.talk(type), blocks = groupByBlock(type, 'talk', qs);
+  const what = type === 'client' ? 'интервью' : 'созвона';
+  openModal({title: type === 'client' ? 'Форма интервью' : 'Вопросы созвона — формой', wide: true, body: `
+      <p class="note">${qs.length} ${plural(qs.length, 'вопрос', 'вопроса', 'вопросов')} ${what} отдельной страницей: человек отвечает своими словами, ответы сами ложатся в CRM — во вкладку «Интервью» карточки, карточка переходит на шаг «${esc(T.steps[2])}». Ту же форму можно открыть самим во время онлайн-${type === 'client' ? 'интервью' : 'созвона'} и записывать ответы.</p>
+      ${blocks.length > 1 ? `<div class="tf-blocks">${blocks.map((g, i) => `<span><b>${i + 1}. ${esc(g.name)}</b> ${g.qs.length}</span>`).join('')}</div>` : ''}
+      <h3 class="tf-h">Общая ссылка — для любого респондента</h3>
+      ${url ? `<div class="tf-link"><input class="input" readonly value="${esc(url)}" id="tfUrl" aria-label="Общая ссылка на форму"><button class="btn primary" data-copy>${icon('copy')}Скопировать</button><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">${icon('ext')}Открыть</a></div>
+        <p class="note">Сначала форма спросит имя и Telegram. Каждый, кто заполнит, — новая карточка в «${esc(groupName(type))}».</p>`
+        : '<p class="note">Общая ссылка работает на сервере Евы — eva.tytproai.ru.</p>'}
+      <h3 class="tf-h">Личная ссылка — для конкретного человека</h3>
+      <p class="note">В карточке человека — кнопка «Ссылка на ${type === 'client' ? 'интервью' : 'вопросы'}» (и «Отправить вопросы ссылкой» на шаге «${esc(T.steps[1])}»). Ответы лягут именно в его карточку, записанное командой не затрётся.</p>
+      <p class="note"><button class="link-btn" data-qs>Изменить вопросы</button> — правки сами попадут в форму и в новые ссылки.</p>`,
+    foot: '<button class="btn" data-close>Закрыть</button>',
+    onMount(el, close) {
+      const cp = $('[data-copy]', el);
+      if (cp) cp.onclick = () => copyOrShow(url, `Ссылка на форму ${what} скопирована 💬`);
+      $('[data-qs]', el).onclick = () => { View.set('qs.type', type); close(); App.go('questions'); };
+    }});
+}
+
+/* удалить несколько карточек разом (руководитель) — например, тестовые. Заранее отмечены похожие
+   на тестовые: пример (demo), «тест» в имени, а в кастдеве — все клиентки, заведённые до утра 23.10.2026,
+   кроме Алены Красильниковой: на это время её интервью — единственное настоящее (просьба основателей) */
+const TEST_UNTIL = Date.UTC(2026, 9, 23, 8, 0);
+const looksTest = p => !!p.demo || /тест|test/i.test(People.name(p))
+  || (p.type === 'client' && (p.createdAt || 0) < TEST_UNTIL && !/красильников|krasilnikov/i.test(People.name(p).replace(/ё/gi, 'е')));
+function openBulkDelete(type) {
+  const T = TYPES[type], list = People.all(type);
+  const info = p => [`шаг ${People.col(p)} · ${T.steps[People.col(p) - 1]}`, p.city,
+    Object.keys(p.answers || {}).length ? 'есть анкета' : '', Object.values(p.talk || {}).some(x => x && x.a) ? 'есть интервью' : '',
+    p.createdAt ? 'добавлена ' + when(p.createdAt).replace(/, \d\d:\d\d$/, '') : ''].filter(Boolean).join(' · ');
+  openModal({title: `Удалить карточки — ${groupName(type)}`, wide: true, body: `
+      <p class="note">Отметьте, что удалить, — например, тестовые карточки. Похожие на тестовые уже отмечены: проверьте список. Удалённую карточку не вернуть.</p>
+      <div class="bd-tools"><button class="link-btn" data-all>Отметить все</button><button class="link-btn" data-none>Снять все</button></div>
+      <div class="bd-list">${list.map(p => `<label class="bd-row"><input type="checkbox" value="${p.id}" ${looksTest(p) ? 'checked' : ''}>${avatar(People.name(p))}<span><b>${esc(People.name(p))}</b><small>${esc(info(p))}</small></span></label>`).join('') || '<p class="note">Карточек нет</p>'}</div>`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn danger solid" data-ok>Удалить</button>',
+    onMount(el, close) {
+      const ok = $('[data-ok]', el), boxes = () => $$('.bd-row input', el);
+      const upd = () => { const n = boxes().filter(i => i.checked).length; ok.textContent = n ? `Удалить ${n}` : 'Удалить'; ok.disabled = !n; };
+      on(el, 'change', '.bd-row input', upd);
+      $('[data-all]', el).onclick = () => { boxes().forEach(i => { i.checked = true; }); upd(); };
+      $('[data-none]', el).onclick = () => { boxes().forEach(i => { i.checked = false; }); upd(); };
+      ok.onclick = async () => {
+        const ids = boxes().filter(i => i.checked).map(i => i.value);
+        if (!ids.length || !await confirmPop(ok, {text: `Удалить ${ids.length} ${plural(ids.length, 'карточку', 'карточки', 'карточек')} со всеми ответами? Вернуть их будет нельзя.`, yes: 'Удалить', danger: true})) return;
+        ids.forEach(id => Store.remove('people', id));
+        close();
+        toast(`Удалено: ${ids.length} ${plural(ids.length, 'карточка', 'карточки', 'карточек')}`);
+      };
+      upd();
+    }});
 }
 
 /* быстро добавить человека: имя, контакт — и сразу ссылка */
@@ -119,11 +187,11 @@ function audiencePage(type) {
         : type === 'partner' ? PARTNER_CATS.map(c => [c, everyone.filter(p => p.cat === c).length]).filter(x => x[1])
         : [];
       const canEdit = People.canEdit();
-      if (canEdit) hints[0] += ' Карточку можно зажать и перенести в другой шаг или выбрать этап в самой карточке.';
+      if (canEdit) hints[0] += ' Перенести на другой этап — кнопкой ⇄ на карточке или перетащить её.';
 
       root.innerHTML = `
         ${pageHead(`${T.emo} ${groupName(type)}`, esc(T.about),
-          `<button class="btn" data-stats>${icon('chart')}Статистика</button>${canEdit ? `<button class="btn" data-paste>${icon('inbox')}Вставить ответы</button><button class="btn primary" data-add>${icon('plus')}${type === 'client' ? 'Клиентка' : T.one}</button>` : ''}`)}
+          `<button class="btn" data-stats>${icon('chart')}Статистика</button>${canEdit ? `<button class="btn" data-tform>${icon('msg')}${type === 'client' ? 'Форма интервью' : 'Вопросы формой'}</button><button class="btn" data-paste>${icon('inbox')}Вставить ответы</button><button class="btn primary" data-add>${icon('plus')}${type === 'client' ? 'Клиентка' : T.one}</button>` : ''}${Who.can('delete') && everyone.length ? `<button class="icon-btn" data-bulk-del title="Удалить несколько карточек — например, тестовые">${icon('trash')}</button>` : ''}`)}
         ${!everyone.length ? `<div class="welcome"><span class="e">${T.emo}</span><div><b>Здесь пока никого</b><p>Добавьте первого человека — ссылка на анкету скопируется сама. ${type === 'client' ? 'Для кастдева хватит 10–15 интервью, чтобы увидеть закономерности.' : ''}</p></div></div>` : ''}
         <div class="t-bar"><input class="input sm t-search" id="bq" placeholder="Поиск: имя, город, код" value="${esc(View.get(type + '.q', ''))}"><span class="t-bar-sp"></span>
           <span class="note">${list.length === everyone.length ? `${everyone.length} ${plural(everyone.length, 'человек', 'человека', 'человек')}` : `найдено ${list.length} из ${everyone.length}`}</span></div>
@@ -133,7 +201,7 @@ function audiencePage(type) {
             <div class="b3-hint">${esc(hints[i])}</div>
             ${i === 2 && canEdit ? `<div class="b3-zones">${Object.entries(s3Map(type)).filter(([k]) => k !== 'none').map(([k, z]) => `<div class="b3-zone ${z.tone}" data-zone="${k}">${esc(z.name)}</div>`).join('')}</div>` : ''}
             <div class="b3-list">${cols[i].map(p => { const st = statusLine(p), acts = nextActs(p); return `<div class="pc" data-open="${p.id}" data-drag="${p.id}">
-              <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b></div>
+              <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b>${canEdit ? `<button class="pc-move" data-move-pop="${p.id}" title="Перенести на другой этап" aria-label="Перенести на другой этап">${icon('swap')}</button>` : ''}</div>
               ${People.sub(p) || p.ref ? `<div class="pc-sub">${esc(People.sub(p))}${p.ref ? `${People.sub(p) ? ' · ' : ''}<span class="pc-ref">по приглашению</span>` : ''}</div>` : ''}
               ${st ? `<div>${st}</div>` : ''}
               ${acts ? `<div class="pc-acts">${acts}</div>` : ''}
@@ -145,8 +213,16 @@ function audiencePage(type) {
       on(root, 'click', '[data-f]', (e, el) => { View.set(type + '.f', el.dataset.f); App.render(); });
       on(root, 'click', '[data-add]', () => openAdd(type));
       on(root, 'click', '[data-paste]', () => openPaste());
+      on(root, 'click', '[data-tform]', () => openTalkForm(type));
+      on(root, 'click', '[data-bulk-del]', () => openBulkDelete(type));
       on(root, 'click', '[data-stats]', () => { View.set('st.type', type); App.go('stats'); });
       on(root, 'click', '[data-open]', (e, el) => { if (e.target.closest('button')) return; App.go('p-' + el.dataset.open); });
+      on(root, 'click', '[data-move-pop]', async (e, el) => {
+        const p = People.get(el.dataset.movePop);
+        if (!p) return;
+        const v = await pickPop(el, People.stages(p), People.stageOf(p));
+        if (v) moveToStage(p, v);
+      });
       wireActs(root);
       /* зажать карточку и перенести в другой шаг — статус меняется сам */
       if (canEdit) Drag.board($('.board3', root), {onDrop: (id, col, zone) => {

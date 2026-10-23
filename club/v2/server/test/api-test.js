@@ -323,6 +323,19 @@ async function browserHash(pw, salt) {
   r = (await lead.get('/crm/api/state')).j.collections.people.c1;
   ok(r.talk.t_pain.a === 'Нет времени' && r.talk.t_pain.self && r.talk.t_job.a === 'Записала команда' && !r.talk['bad id!'] && !r.talk.t_mood, 'ответы в карточке, записанное командой не затёрто', r.talk);
   ok(r.s2 === 'done' && r.s1 === 'skip' && r.talkSelf, 'карточка перешла к итогу', {s1: r.s1, s2: r.s2});
+  ok((await anon.req('POST', '/crm/api/talk', {c: 'ANNA482', a: {name: 'Взлом', tg: '@x', t_goal: 'Высыпаться'}})).status === 200
+    && (r = (await lead.get('/crm/api/state')).j.collections.people.c1) && r.name === 'Клиентка' && !r.talk.name && !r.talk.tg && r.talk.t_goal.a === 'Высыпаться', 'личная ссылка: имя и контакт из формы не трогают карточку', r.talk);
+  /* общая ссылка на форму интервью (/interview/): без кода — новая карточка с именем и контактом */
+  ok((await anon.req('POST', '/crm/api/talk', {t: 'k', a: {t_pain: 'Без имени'}})).status === 400, 'общая ссылка: без имени — нет');
+  r = await anon.req('POST', '/crm/api/talk', {t: 'k', a: {name: 'Ольга Новая', tg: '@olga', t_pain: 'Мало сна', t_job: 'Дизайнер', 'bad id!': 'x'}});
+  const olga = Object.values((await lead.get('/crm/api/state')).j.collections.people).find(x => x.name === 'Ольга Новая');
+  ok(r.status === 200 && /^OLGA\d{3}$/.test(r.j.c) && olga && olga.code === r.j.c && olga.type === 'client' && olga.tg === '@olga', 'общая ссылка: новая карточка клиентки с кодом и контактом', {r: r.j, olga});
+  ok(olga && olga.s2 === 'done' && olga.s1 === 'skip' && olga.talk.t_pain.a === 'Мало сна' && olga.talk.t_pain.self && !olga.talk.name && !olga.talk['bad id!'], 'общая ссылка: ответы во вкладке «Интервью», шаг «Итог»', olga);
+  ok((await anon.req('POST', '/crm/api/talk', {c: r.j.c, a: {t_goal: 'Дополнила'}})).status === 200
+    && Object.values((await lead.get('/crm/api/state')).j.collections.people).filter(x => x.name === 'Ольга Новая').length === 1, 'правка ответов после отправки — в ту же карточку');
+  let lim = 0;
+  for (let i = 0; i < 11 && !lim; i++) if ((await anon.req('POST', '/crm/api/talk', {t: 'k', a: {name: 'Спам ' + i, t_pain: 'x'}})).status === 429) lim = i + 1;
+  ok(lim && lim <= 10, 'общая ссылка: много новых карточек с одного адреса — стоп', lim);
   ok((await lead.put('cfg', 'q_client', {test: [], talk: [], at: 1}, '/crm/api')).status === 200, 'вопросы анкеты — да');
   ok((await lead.patch('cfg', 'settings', {anketaUrl: 'https://evil'}, '/crm/api')).status === 404 && (await lead.put('cfg', 'settings', {anketaUrl: 'https://evil'}, '/crm/api')).status === 403, 'настройки CRM — нет');
   ok((await owner.patch('team', 'tm_lead', {role: 'viewer'}, '/crm/api')).status === 200, 'руководитель делает наблюдателем');
@@ -361,6 +374,7 @@ async function browserHash(pw, salt) {
   ok(r.status === 302 && r.headers.get('location') === '/?next=crm', 'CRM без входа — на экран входа', r.status);
   ok((await owner.req('GET', '/crm/', undefined, {raw: true})).text.includes('"app":"crm"'), 'CRM со входом открывается');
   ok((await anon.req('GET', '/anketa/', undefined, {raw: true})).status === 200 && (await anon.req('GET', '/anketa.html', undefined, {raw: true})).status === 200, 'анкета открыта всем');
+  ok((await anon.req('GET', '/interview/', undefined, {raw: true})).status === 200 && (await anon.req('GET', '/interview', undefined, {raw: true})).status === 301, 'форма интервью открыта всем');
   for (const p of ['/server/server.js', '/server/data/eva-hq.json', '/src/app/03-auth.js', '/../server.js', '/data/eva-hq.json', '/.git/config', '/build.py'])
     ok((await anon.req('GET', p, undefined, {raw: true})).status === 404, 'закрыто: ' + p);
   r = await anon.req('GET', '/privacy', undefined, {raw: true});

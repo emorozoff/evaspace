@@ -33,27 +33,30 @@ function showImport(pl) {
       };
     }});
 }
-/* ответы интервью: в карточку по коду, а если кода нет (перенесли из файла) — в выбранную карточку */
+/* ответы интервью: в карточку по коду, а если кода нет (общая ссылка, перенесли из файла) —
+   в выбранную карточку или новой карточкой */
 function showTalkImport(pl, type) {
   const owner = pl.c ? People.byCode(pl.c) : null;
   const a = pl.a || {};
   const qs = Questions.set(type).talk.filter(q => typeof a[q.id] === 'string' && a[q.id].trim());
-  const hint = String(pl.n || '').toLowerCase().split(/\s+/)[0];
+  const who = String(a.name || pl.n || '').trim();
+  const hint = who.toLowerCase().split(/\s+/)[0];
   const list = People.all(type);
   const guess = owner || list.find(p => hint && People.name(p).toLowerCase().includes(hint)) || null;
   const canEdit = People.canEdit();
   openModal({title: `Ответы интервью${pl.n ? ': ' + pl.n : ''}`, wide: true, body: `
       ${owner ? `<div class="okline"><span>Интервью для карточки <b>${esc(People.name(owner))}</b> · ${qs.length} ${plural(qs.length, 'ответ', 'ответа', 'ответов')}</span></div>`
-        : `<label class="field"><span>В какую карточку положить ответы</span><select class="select" id="imWho">${list.map(p => `<option value="${p.id}" ${guess && guess.id === p.id ? 'selected' : ''}>${esc(People.name(p))}${p.city ? ' · ' + esc(p.city) : ''}</option>`).join('')}</select></label>`}
+        : `<label class="field"><span>В какую карточку положить ответы</span><select class="select" id="imWho"><option value="">＋ Новая карточка${who ? ': ' + esc(who) : ''}</option>${list.map(p => `<option value="${p.id}" ${guess && guess.id === p.id ? 'selected' : ''}>${esc(People.name(p))}${p.city ? ' · ' + esc(p.city) : ''}</option>`).join('')}</select></label>
+          ${who || a.tg ? `<p class="note">${who ? `Имя: <b>${esc(who)}</b>` : ''}${who && a.tg ? ' · ' : ''}${a.tg ? `контакт: ${esc(a.tg)}` : ''}</p>` : ''}`}
       <div class="im-talk">${qs.map(q => `<div class="tq filled"><div class="tq-h"><b>${esc(q.t)}</b></div><p class="tq-old">${esc(a[q.id])}</p></div>`).join('')}</div>
       <p class="note">Ответы лягут во вкладку «Интервью», карточка перейдёт на шаг «Итог». То, что уже записала команда, не затрётся.</p>`,
-    foot: canEdit && (owner || list.length) ? `<button class="btn" data-close>Не сейчас</button><button class="btn primary" data-ok>Сохранить в карточку</button>` : '<button class="btn" data-close>Закрыть</button>',
+    foot: canEdit ? `<button class="btn" data-close>Не сейчас</button><button class="btn primary" data-ok>Сохранить в карточку</button>` : '<button class="btn" data-close>Закрыть</button>',
     onMount(el, close) {
       const ok = $('[data-ok]', el);
       if (ok) ok.onclick = () => {
-        const p = owner || People.get($('#imWho', el).value);
-        if (!p) return;
-        const id = Import.apply({...pl, c: p.code});
+        const pick = owner ? '' : $('#imWho', el).value;
+        const p = owner || (pick ? People.get(pick) : null);
+        const id = Import.apply({...pl, c: p ? p.code : ''});
         close();
         toast('Ответы интервью в карточке 💬');
         View.set('pp.tab', 'talk');

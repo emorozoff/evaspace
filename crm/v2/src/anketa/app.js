@@ -8,11 +8,15 @@
    его вопросов. Страну подставляет город, этап жизни уточняется после
    сферы, график работы спрашиваем только у работающих. На трети и двух
    третях — тёплые слова, в конце у клиентки — подарок: неделя Евы.
-   Ссылка с .i — интервью: открытые вопросы интервью, ответ своими словами;
-   на своём сервере ответы сразу ложатся в карточку человека. */
+   Форма интервью — /interview/ (или ссылка с .i): открытые вопросы интервью,
+   ответ своими словами; на своём сервере ответы сразу ложатся в карточку.
+   /interview/#k.ANNA482 — личная ссылка, в карточку человека; /interview/ без
+   кода — общая: сначала имя и контакт, сервер заводит новую карточку. */
 
-/* на своём сервере анкета живёт по адресу /anketa/, CRM — рядом, в /crm/ */
-const CRM_URL = location.pathname.startsWith('/anketa') ? location.origin + '/crm/' : 'https://claude.ai/artifact/CRM_URL_PLACEHOLDER';
+/* на своём сервере анкета живёт по адресу /anketa/, форма интервью — /interview/, CRM — рядом, в /crm/ */
+const TALK_PAGE = location.pathname.startsWith('/interview');
+const ON_SRV = TALK_PAGE || location.pathname.startsWith('/anketa');
+const CRM_URL = ON_SRV ? location.origin + '/crm/' : 'https://claude.ai/artifact/CRM_URL_PLACEHOLDER';
 const $ = (s, r = document) => r.querySelector(s);
 const ESC = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'};
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ESC[c]);
@@ -27,6 +31,12 @@ const INTRO = {
   partner: {emo: '🤝', title: 'Давайте дружить 🤝', lead: 'Расскажите о себе — подберём формат, выгодный обеим сторонам.', min: 3},
   amb:     {emo: '📣', title: 'Стань голосом Евы 💜', lead: 'Расскажи о себе и своей аудитории — придумаем, как тебе удобнее делиться Евой.', min: 3},
 };
+/* общая ссылка на интервью — карточки ещё нет: сначала кто отвечает (в первом разделе) */
+function whoQs(type) {
+  const ty = TYPES[type].you === 'ты', b = Object.keys((Q_BLOCKS[type] || {}).talk || {})[0];
+  return [{id: 'name', k: 'short', key: 'name', b, t: type === 'partner' ? 'Как называется ваша компания?' : ty ? 'Как тебя зовут?' : 'Как вас зовут?', ph: type === 'partner' ? 'Студия «Баланс»' : 'Имя и фамилия'},
+    {id: 'tg', k: 'short', key: 'tg', b, t: `${ty ? 'Твой' : 'Ваш'} Telegram или телефон — если захотим уточнить ответ`, ph: '@username или +7…'}];
+}
 /* интервью по ссылке: те же люди, вопросы — открытые */
 const INTRO_TALK = {
   client:  {emo: '💬', title: 'Интервью Eva 💜', lead: 'Ответь своими словами — как рассказала бы подруге. Коротко или подробно, как удобно. Любой вопрос можно пропустить.', min: 25},
@@ -45,29 +55,35 @@ const CHEERS = [
   'Каждый ответ — маленький шаг к себе. Ты уже прошла треть, и это прекрасно.',
 ];
 
-const S = {type: null, code: '', talk: false, invited: false, all: [], i: -1, a: {}, key: '', m: {}};
+const S = {type: null, code: '', talk: false, general: false, invited: false, all: [], i: -1, a: {}, key: '', m: {}, sent: 0};
 const part = () => (S.talk ? 'talk' : 'test');
 
 function init() {
   const h = Codec.parseAnketaHash(location.hash);
-  S.type = h.type;
+  /* форма интервью без типа в ссылке — интервью клиентки (кастдев) */
+  S.type = h.type || (TALK_PAGE ? 'client' : null);
   S.code = h.code;
-  /* интервью — только для своей карточки: без кода ответы некуда положить */
-  S.talk = !!(h.talk && h.code);
-  setQuestions(h.type ? applyDiff(h.type, h.diff, part()) : []);
-  S.key = `eva-anketa:${S.talk ? 'talk:' : ''}${h.type || ''}:${h.code || 'new'}`;
+  /* интервью по ссылке с .i — только для своей карточки; на /interview/ можно и без кода */
+  S.talk = TALK_PAGE || !!(h.talk && h.code);
+  S.general = S.talk && !h.code;
+  S.key = `eva-anketa:${S.talk ? 'talk:' : ''}${S.type || ''}:${h.code || 'new'}`;
   const saved = store.get(S.key);
-  if (saved && saved.a) { S.a = saved.a; S.invited = !!saved.invited; S.m = saved.m || {}; }
+  S.a = {}; S.invited = false; S.m = {}; S.sent = 0;
+  if (saved && saved.a) { S.a = saved.a; S.invited = !!saved.invited; S.m = saved.m || {}; S.sent = saved.sent || 0; }
+  /* общая ссылка: после отправки сервер дал карточке код — правки ответов идут в неё же */
+  if (S.talk && !S.code && saved && saved.c) S.code = saved.c;
+  setQuestions(S.type ? applyDiff(S.type, h.diff, part()) : []);
+  if (S.talk) document.title = 'Интервью Eva';
   if (!S.type) return renderChooser();
   S.i = -1;
   render();
 }
 /* вопросы по разделам: добавленный в раздел позже идёт внутри своего раздела */
-function setQuestions(qs) { S.all = S.type ? groupByBlock(S.type, part(), S.talk ? qs.map(asText) : qs).flatMap(x => x.qs) : []; }
+function setQuestions(qs) { S.all = S.type ? groupByBlock(S.type, part(), S.talk ? [...(S.code ? [] : whoQs(S.type)), ...qs.map(asText)] : qs).flatMap(x => x.qs) : []; }
 /* какие вопросы видны сейчас: без автоматических (страна) и без тех, чьё условие не выполнено */
 function qs() { return S.all.filter(q => qVisible(q, S.a)); }
 function blocks() { return groupByBlock(S.type, part(), qs()); }
-function save() { store.set(S.key, {a: S.a, invited: S.invited, m: S.m}); }
+function save() { store.set(S.key, {a: S.a, invited: S.invited, m: S.m, ...(S.sent ? {sent: S.sent, c: S.code} : {})}); }
 function total() { return qs().length; }
 /* в каком разделе вопрос: номер раздела, его вопросы и место внутри */
 function where(i) {
@@ -295,6 +311,17 @@ function renderIntro() {
   const bl = blocks();
   const named = bl.length > 1 && bl[0].name;
   const doneIn = b => b.qs.filter(q => S.a[q.id] !== undefined).length;
+  /* интервью уже отправлено: поменять ответы или (общая ссылка) начать новое — например, за следующую клиентку */
+  if (S.talk && S.sent) {
+    shell(`<div class="card intro fade"><div class="big">💜</div><h1>Ответы уже у команды Евы</h1>
+      <p class="lead">${S.a.name ? esc(String(S.a.name).split(' ')[0]) + ', с' : 'С'}пасибо! Если хочется что-то дополнить — поменяй ответы и отправь ещё раз, они обновятся.</p>
+      <button class="go" id="start">Поменять ответы ✏️</button>${S.general ? '<button class="go alt" id="fresh">Новое интервью ✨</button>' : ''}</div>`);
+    $('#app').onclick = e => {
+      if (e.target.closest('#start')) { S.i = 0; render(); }
+      if (e.target.closest('#fresh')) freshTalk();
+    };
+    return;
+  }
   shell(`<div class="card intro fade"><div class="big">${I.emo}</div><h1>${esc(I.title)}</h1><p class="lead">${esc(I.lead)}</p>
     <p class="meta">${total()} ${plural(total(), 'вопрос', 'вопроса', 'вопросов')} · около ${I.min} минут${named ? ` · ${bl.length} ${plural(bl.length, 'раздел', 'раздела', 'разделов')}` : ''}</p>
     ${named ? `<ol class="toc">${bl.map(b => `<li class="${doneIn(b) === b.qs.length ? 'done' : ''}"><span class="toc-e" aria-hidden="true">${b.emo || '•'}</span><span><b>${esc(b.name)}</b>${b.about ? `<small>${esc(b.about)}</small>` : ''}</span><em>${doneIn(b) ? `${doneIn(b)}/${b.qs.length}` : b.qs.length}</em></li>`).join('')}</ol>` : ''}
@@ -315,31 +342,44 @@ function plural(n, one, few, many) {
   return many;
 }
 
+/* новое интервью по общей ссылке: прежние ответы уже у команды, начинаем с чистого листа */
+function freshTalk() { store.del(S.key); init(); }
 /* интервью: на своём сервере ответы уходят сразу в карточку; иначе — ссылкой менеджеру, как анкета */
 async function renderTalkDone() {
-  const onSrv = location.pathname.startsWith('/anketa');
-  if (onSrv) {
+  /* предпросмотр из «Базы вопросов» — ответы никуда не уходят */
+  if (S.code === 'DEMO') {
+    shell(`<div class="card intro fade"><div class="big">👀</div><h1>Это предпросмотр</h1><p class="lead">Так форму видит человек. Здесь ответы никуда не отправляются — по настоящей ссылке они сразу лягут в карточку.</p>
+      <button class="link" id="edit">← К вопросам</button></div>`);
+    $('#app').onclick = e => { if (e.target.closest('#edit')) { S.i = total() - 1; render(); } };
+    return;
+  }
+  if (ON_SRV) {
     shell('<div class="card intro fade"><div class="big">⏳</div><h1>Отправляем ответы…</h1></div>');
     let ok = false, why = '';
     try {
-      const r = await fetch('/crm/api/talk', {method: 'POST', headers: {'content-type': 'application/json', 'x-eva': '1'}, body: JSON.stringify({c: S.code, a: S.a})});
+      const r = await fetch('/crm/api/talk', {method: 'POST', headers: {'content-type': 'application/json', 'x-eva': '1'}, body: JSON.stringify({c: S.code, t: TYPES[S.type].letter, a: S.a})});
       const j = await r.json().catch(() => ({}));
       ok = r.ok; why = j.error || '';
+      /* общая ссылка: сервер завёл карточку — следующие правки ответов пойдут в неё */
+      if (ok && j.c && !S.code) S.code = j.c;
     } catch (e) { why = 'Нет связи с интернетом'; }
     if (ok) {
-      shell(`<div class="card intro fade"><div class="big">🎉</div><h1>Спасибо!</h1><p class="lead">Ответы уже у команды Евы 💜 Каждый из них поможет сделать Еву лучше.</p>
-        <button class="link" id="edit">← Поменять ответы</button></div>`);
+      S.sent = Date.now();
+      save();
+      shell(`<div class="card intro fade"><div class="big">🎉</div><h1>Спасибо${S.a.name ? ', ' + esc(String(S.a.name).split(' ')[0]) : ''}!</h1><p class="lead">Ответы уже у команды Евы 💜 Каждый из них поможет сделать Еву лучше.</p>
+        ${S.general ? '<button class="go alt" id="fresh">Новое интервью ✨</button>' : ''}<button class="link" id="edit">← Поменять ответы</button></div>`);
     } else {
       shell(`<div class="card intro fade"><div class="big">😕</div><h1>Не получилось отправить</h1><p class="lead">${esc(why || 'Попробуй ещё раз через минуту.')} Ответы сохранились в этом браузере.</p>
         <button class="go" id="retry">Отправить ещё раз</button><button class="link" id="edit">← Вернуться к ответам</button></div>`);
     }
     $('#app').onclick = e => {
       if (e.target.closest('#retry')) renderTalkDone();
+      if (e.target.closest('#fresh')) freshTalk();
       if (e.target.closest('#edit')) { S.i = total() - 1; render(); }
     };
     return;
   }
-  const packed = await Codec.pack({v: 1, t: TYPES[S.type].letter, c: S.code, m: 'talk', a: S.a, at: Date.now()});
+  const packed = await Codec.pack({v: 1, t: TYPES[S.type].letter, c: S.code, m: 'talk', ...(S.a.name ? {n: String(S.a.name).slice(0, 80)} : {}), a: S.a, at: Date.now()});
   const link = `${CRM_URL}#in.${packed}`;
   shell(`<div class="card intro fade"><div class="big">🎉</div><h1>Спасибо!</h1><p class="lead">Скопируй ссылку с ответами и отправь менеджеру Евы, который прислал тебе вопросы.</p>
     <button class="go alt" id="copy">📋 Скопировать ссылку с ответами</button><textarea class="linkbox" id="lb" readonly hidden>${esc(link)}</textarea>

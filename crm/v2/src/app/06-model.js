@@ -12,6 +12,7 @@ function memo(fn) { let v = -1, val; return () => (v === MV ? val : (v = MV, val
 const LINKS = onServer() ? {
   crm: location.origin + window.EvaServer.urls.crm,
   anketa: location.origin + '/anketa/',
+  interview: location.origin + '/interview/',
 } : {
   crm: 'https://claude.ai/artifact/CRM_URL_PLACEHOLDER',
   anketa: 'https://claude.ai/artifact/ANKETA_URL_PLACEHOLDER',
@@ -69,6 +70,13 @@ const People = {
     if (['done', 'skip'].includes(p.s2)) return 3;
     return 2;
   },
+  /* этапы воронки для выбора «куда перенести»: шаги 1 и 2, у шага 3 — каждый итог отдельно ('3:fan') */
+  stages(p) {
+    const T = TYPES[p.type];
+    return [['1', `1 · ${T.steps[0]}`], ['2', `2 · ${T.steps[1]}`],
+      ...Object.entries(s3Map(p.type)).map(([k, z]) => [`3:${k}`, `3 · ${T.steps[2]}: ${z.name.toLowerCase()}`])];
+  },
+  stageOf(p) { const c = this.col(p); return c === 3 ? `3:${p.s3 || 'none'}` : String(c); },
   connected(p) { return p.type === 'client' ? ['done', 'fan'].includes(p.s3) : p.s3 === 'yes'; },
   /* строка под именем: без смайлов, чтобы читалась с одного взгляда */
   sub(p) {
@@ -104,11 +112,18 @@ const People = {
     const d = Questions.diff(p.type);
     return `${base}#${TYPES[p.type].letter}.${p.code}${d ? '.q' + Codec.encJson(d) : ''}`;
   },
-  /* ссылка на интервью: человек отвечает на вопросы интервью сам, ответы ложатся в карточку */
+  /* ссылка на интервью: человек отвечает на вопросы интервью сам, ответы ложатся в карточку.
+     На своём сервере — отдельная страница /interview/, иначе — анкета с меткой .i */
   talkLink(p) {
-    const base = settings().anketaUrl || LINKS.anketa;
-    const d = Questions.diff(p.type, 'talk');
-    return `${base}#${TYPES[p.type].letter}.${p.code}.i${d ? '.q' + Codec.encJson(d) : ''}`;
+    const d = Questions.diff(p.type, 'talk'), q = d ? '.q' + Codec.encJson(d) : '';
+    if (LINKS.interview) return `${LINKS.interview}#${TYPES[p.type].letter}.${p.code}${q}`;
+    return `${settings().anketaUrl || LINKS.anketa}#${TYPES[p.type].letter}.${p.code}.i${q}`;
+  },
+  /* общая ссылка на форму интервью: кто заполнит — появится новой карточкой (только на своём сервере) */
+  talkForm(type) {
+    if (!LINKS.interview) return '';
+    const d = Questions.diff(type, 'talk');
+    return LINKS.interview + (type === 'client' && !d ? '' : `#${TYPES[type].letter}${d ? '..q' + Codec.encJson(d) : ''}`);
   },
   canEdit() { return Who.can('edit') && !Who.readOnly(); },
   /* перенос между шагами на доске: статусы подстраиваются под колонку,
@@ -143,12 +158,14 @@ function keyPatch(p, type, answers) {
   });
   return out;
 }
-/* ответы интервью от самого человека: не затирают то, что записал интервьюер; карточка — в «Итог» */
+/* ответы интервью от самого человека: не затирают то, что записал интервьюер; карточка — в «Итог».
+   Имя и контакт с общей ссылки — не ответы интервью */
+const TALK_WHO = ['name', 'tg'];
 function talkPatch(p, answers) {
   const now = Date.now(), talk = {};
   Object.entries(answers || {}).forEach(([id, v]) => {
     const cur = (p.talk || {})[id] || {};
-    if (typeof v !== 'string' || !v.trim() || (cur.a && !cur.self)) return;
+    if (TALK_WHO.includes(id) || typeof v !== 'string' || !v.trim() || (cur.a && !cur.self)) return;
     talk[id] = {...cur, a: v.trim(), asked: true, self: true, t: now};
   });
   const s1 = ['done', 'skip'].includes(p.s1) ? p.s1 : Object.keys(p.answers || {}).length ? 'done' : 'skip';
@@ -164,9 +181,14 @@ const Import = {
     const owner = pl.c ? People.byCode(pl.c) : null;
     /* ответы на вопросы интервью (если сервер их не принял сам — пришли ссылкой) */
     if (pl.m === 'talk') {
-      if (!owner) throw new Error('Нет карточки для ответов интервью');
-      People.patch(owner.id, talkPatch(owner, answers), 'Ответила на вопросы интервью по ссылке', '📝');
-      return owner.id;
+      if (owner) {
+        People.patch(owner.id, talkPatch(owner, answers), 'Ответила на вопросы интервью по ссылке', '📝');
+        return owner.id;
+      }
+      /* общая ссылка на интервью — новая карточка */
+      const str = v => (typeof v === 'string' ? v.trim().slice(0, 80) : '');
+      const name = str(answers.name) || str(pl.n) || 'Без имени';
+      return People.create({type, name, ...(str(answers.tg) ? {tg: str(answers.tg)} : {}), ...talkPatch({}, answers), s3: 'none', source: 'talk'});
     }
     /* анкета клиентки с 13.10 обещает подарок — неделю Евы; отмечаем, чтобы команда не забыла выдать */
     const gift = p => pl.g && type === 'client' && !(p && p.gift) ? {gift: {at: pl.at || Date.now(), done: false}} : {};
