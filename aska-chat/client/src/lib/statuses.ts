@@ -1,0 +1,33 @@
+// Готовые статусы — те же, что на сервере (server/src/personas.js → STATUSES): сервер принимает только эти ключи
+export const STATUSES: { key: string; emoji: string; text: string }[] = [
+  { key: 'chat', emoji: '💬', text: 'го болтать' },
+  { key: 'meditate', emoji: '🧘', text: 'медитирую' },
+  { key: 'sleep', emoji: '😴', text: 'сплю' },
+  { key: 'movie', emoji: '🎬', text: 'смотрю кинч' },
+  { key: 'work', emoji: '💼', text: 'вджобываю' },
+  { key: 'study', emoji: '📚', text: 'учусь' },
+  { key: 'gym', emoji: '🏋️', text: 'в зале' },
+  { key: 'food', emoji: '🍜', text: 'ем' },
+  { key: 'cook', emoji: '🍳', text: 'готовлю' },
+  { key: 'game', emoji: '🎮', text: 'катаю каточку' },
+  { key: 'music', emoji: '🎧', text: 'в наушниках' },
+  { key: 'road', emoji: '🚗', text: 'в дороге' },
+  { key: 'flight', emoji: '✈️', text: 'в полёте' },
+  { key: 'party', emoji: '🎉', text: 'тусуюсь' },
+  { key: 'date', emoji: '💘', text: 'на свидании' },
+  { key: 'chill', emoji: '🛋', text: 'на чилле' },
+  { key: 'bath', emoji: '🛁', text: 'отмокаю' },
+  { key: 'coffee', emoji: '☕', text: 'кофе-брейк' },
+  { key: 'walk', emoji: '🌿', text: 'трогаю траву' },
+  { key: 'detox', emoji: '📵', text: 'диджитал-детокс' },
+  { key: 'shop', emoji: '🛍', text: 'на шопинге' },
+  { key: 'create', emoji: '🎨', text: 'творю' },
+  { key: 'clean', emoji: '🧹', text: 'убираюсь' },
+  { key: 'sick', emoji: '🤒', text: 'болею' },
+  { key: 'zero', emoji: '🔋', text: 'на нуле' },
+  { key: 'vacation', emoji: '🏖', text: 'в отпуске' },
+  { key: 'dnd', emoji: '🤫', text: 'не беспокоить' },
+  { key: 'think', emoji: '🧠', text: 'думаю' },
+];
+
+export const statusLine = (st?: { emoji: string; text: string } | null) => (st ? `${st.emoji} ${st.text}`.trim() : '');

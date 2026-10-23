@@ -13,6 +13,7 @@ import { createSms, createCodes, normalizePhone, looksLikePhone } from './phone.
 import { parsePlate, plateKey, countryForPhone, defaultRegion, COUNTRIES, keyTaken, priceOf, isGoldCode, plateView, LEVELS, formatCode, randomFreeCode, rarityOf, RARITY, cityOf } from './plates.js';
 import * as M from './market.js';
 import { createSuperLinks } from './superlink.js';
+import { STATUSES } from './personas.js';
 
 const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
@@ -150,6 +151,31 @@ export function createApp({
     next();
   }
 
+  // Статус: у людей — выбранный ими, у ботов — по их расписанию
+  function statusOf(u) {
+    if (u.kind !== 'human') return bots ? bots.statusOf(u) : null;
+    if (!u.status) return null;
+    try {
+      const s = JSON.parse(u.status);
+      const preset = s.key && STATUSES.find((x) => x.key === s.key);
+      if (preset) return { emoji: preset.emoji, text: preset.text, at: u.status_at || 0 };
+      return s.emoji || s.text ? { emoji: s.emoji || '', text: s.text || '', at: u.status_at || 0 } : null;
+    } catch { return null; }
+  }
+
+  // Группы контактов: Ближний круг, Знакомства, Работа. Кого человек позвал или кто позвал его — сразу в ближний круг
+  const GROUPS = ['close', 'meet', 'work'];
+  function groupsOf(userId) {
+    const out = {};
+    for (const r of db.prepare("SELECT id FROM users WHERE kind IN ('human', 'person') AND id != ?").all(userId)) out[r.id] = 'meet';
+    for (const r of db.prepare('SELECT created_by, used_by FROM invites WHERE used_by IS NOT NULL AND (created_by = ? OR used_by = ?)').all(userId, userId)) {
+      const other = r.created_by === userId ? r.used_by : r.created_by;
+      if (other && out[other]) out[other] = 'close';
+    }
+    for (const r of db.prepare('SELECT target_id, grp FROM contact_groups WHERE user_id = ?').all(userId)) if (out[r.target_id]) out[r.target_id] = r.grp;
+    return out;
+  }
+
   // ИИ-люди для остальных выглядят как обычные люди: «person» наружу не отдаём
   function publicUser(u) {
     const p = M.plateRow(db, u.plate_id);
@@ -160,6 +186,8 @@ export function createApp({
     };
     if (p) { o.plateId = p.id; o.plateCountry = p.country; o.plateLevel = p.level; o.plateRarity = p.rarity; }
     if (u.kind === 'twin') o.ownerId = u.owner_id;
+    const st = statusOf(u);
+    if (st) o.status = st;
     const prev = JSON.parse(u.prev_pks || '[]');
     if (prev.length) o.prevPks = prev;
     return o;
@@ -596,7 +624,8 @@ export function createApp({
         isAdmin: M.isGold(fresh), role: fresh.role, coins: fresh.coins, bonus, phone: fresh.phone || null, phoneVerified: Boolean(fresh.phone_verified),
         allowAnon: Boolean(fresh.allow_anon), plate: fresh.plate,
       },
-      pins, guesses, features: { ai: ai.available(), sms: sms.configured() },
+      pins, guesses, groups: groupsOf(req.userId), features: { ai: ai.available(), sms: sms.configured() },
+      ...(M.isGold(fresh) ? { brain: { key: ai.configured(), people: bots.peopleEnabled(), error: ai.status().lastError || '' } } : {}),
     });
   });
 
@@ -696,6 +725,33 @@ export function createApp({
     }
     db.prepare('UPDATE users SET phone = ?, phone_verified = ? WHERE id = ?').run(phone, verified, req.userId);
     res.json({ phone, phoneVerified: Boolean(verified) });
+  });
+
+  // Статус: готовый (key) или свой (emoji + text); пустой — снять
+  api.post('/me/status', auth, json, (req, res) => {
+    const b = req.body || {};
+    let value = null;
+    if (typeof b.key === 'string' && b.key) {
+      if (!STATUSES.some((x) => x.key === b.key)) return res.status(400).json({ error: 'bad_status' });
+      value = { key: b.key };
+    } else if (typeof b.text === 'string' || typeof b.emoji === 'string') {
+      const text = cleanText(b.text || '', 40);
+      const emoji = String(b.emoji || '').trim();
+      if (text === null || emoji.length > 16 || (emoji && !/\p{Extended_Pictographic}/u.test(emoji)) || /[<>]/.test(emoji)) return res.status(400).json({ error: 'bad_status' });
+      if (text || emoji) value = { emoji, text };
+    }
+    db.prepare('UPDATE users SET status = ?, status_at = ? WHERE id = ?').run(value ? JSON.stringify(value) : null, value ? Date.now() : null, req.userId);
+    broadcastUser(req.userId);
+    res.json({ status: statusOf(userRow(req.userId)) });
+  });
+
+  api.post('/groups', auth, json, (req, res) => {
+    const { userId, group } = req.body || {};
+    const t = Number.isInteger(userId) && userId !== req.userId ? userRow(userId) : null;
+    if (!t || !['human', 'person'].includes(t.kind) || !GROUPS.includes(group)) return res.status(400).json({ error: 'bad_request' });
+    db.prepare(`INSERT INTO contact_groups (user_id, target_id, grp) VALUES (?, ?, ?)
+      ON CONFLICT(user_id, target_id) DO UPDATE SET grp = excluded.grp`).run(req.userId, userId, group);
+    res.json({ groups: groupsOf(req.userId) });
   });
 
   api.post('/pins', auth, json, (req, res) => {
@@ -1082,6 +1138,10 @@ export function createApp({
     if (typeof b.model === 'string') patch.model = b.model;
     if (Number.isInteger(b.dailyLimit) && b.dailyLimit >= 10 && b.dailyLimit <= 20000) patch.dailyLimit = b.dailyLimit;
     if (typeof b.paused === 'boolean') patch.paused = b.paused;
+    // шлюз — адрес API, совместимый с Claude; прокси — http(s)://логин:пароль@адрес:порт
+    const url = (v, protos) => { try { const x = new URL(v); return protos.includes(x.protocol) && v.length <= 300 ? v.replace(/\/+$/, '') : null; } catch { return null; } };
+    if (typeof b.baseUrl === 'string') { const v = b.baseUrl.trim(); if (v && !url(v, ['https:', 'http:'])) return res.status(400).json({ error: 'bad_url' }); patch.baseUrl = v ? url(v, ['https:', 'http:']) : ''; }
+    if (typeof b.proxy === 'string') { const v = b.proxy.trim(); if (v && !url(v, ['http:', 'https:'])) return res.status(400).json({ error: 'bad_proxy' }); patch.proxy = v ? url(v, ['http:', 'https:']) : ''; }
     ai.setConfig(patch);
     res.json({ ai: ai.status() });
   });

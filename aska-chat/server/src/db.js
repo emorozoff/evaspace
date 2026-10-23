@@ -233,6 +233,7 @@ function migrate(db) {
   }
   migrateV3(db);
   migrateV4(db);
+  migrateV5(db);
 }
 
 // Третья версия (22.10.2026): номера-токены (покупка, улучшение, рынок), аськоины, роли (голд-админы, супер-админ), блокировка.
@@ -334,6 +335,20 @@ function migrateV4(db) {
       rating INTEGER,
       comment TEXT,
       updated_at INTEGER
+    );
+  `);
+}
+
+// Пятое обновление: статус человека («медитирую», «вджобываю»…) и группы контактов
+function migrateV5(db) {
+  addColumn(db, 'users', 'status', 'TEXT');
+  addColumn(db, 'users', 'status_at', 'INTEGER');
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS contact_groups (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      target_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      grp TEXT NOT NULL,
+      PRIMARY KEY (user_id, target_id)
     );
   `);
 }

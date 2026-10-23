@@ -1,5 +1,5 @@
-// Боты АСЬКИ: Аська (живой аватар мессенджера), ИИ-люди (играют обычных людей в игре «Кто здесь ИИ?»)
-// и личные ИИ каждого человека. Боты — обычные участники чатов: читают свою зашифрованную копию
+// Боты АСЬКИ: Аська (живой аватар мессенджера), Батя (открытый ИИ-друг, общается как отец), ИИ-люди
+// (играют обычных людей в игре «Кто здесь ИИ?») и личные ИИ каждого человека. Боты — обычные участники чатов: читают свою зашифрованную копию
 // сообщения и отвечают так же, как люди. Все отложенные дела лежат в таблице bot_jobs и переживают перезапуск.
 import crypto from 'node:crypto';
 import { newKeys, decodeIncoming } from './seal.js';
@@ -41,6 +41,7 @@ export function createBots(ctx) {
   const humans = () => db.prepare("SELECT * FROM users WHERE kind = 'human' ORDER BY id").all();
   const persons = () => db.prepare("SELECT * FROM users WHERE kind = 'person' ORDER BY id").all();
   const askaId = () => db.prepare("SELECT id FROM users WHERE kind = 'aska'").get()?.id;
+  const batyaId = () => db.prepare("SELECT id FROM users WHERE kind = 'friend' AND json_extract(persona, '$.key') = 'batya'").get()?.id;
   const twinOf = (ownerId) => db.prepare("SELECT * FROM users WHERE kind = 'twin' AND owner_id = ?").get(ownerId);
   const personaOf = (u) => (u?.persona ? JSON.parse(u.persona) : null);
   const getChat = (id) => db.prepare('SELECT * FROM chats WHERE id = ?').get(id);
@@ -75,6 +76,16 @@ export function createBots(ctx) {
     const code = keyTaken(db, plateKey(ASKA_PLATE)) ? randomFreeCode(db, 'RU', '777', { gold: true }) : ASKA_PLATE;
     M.give(db, aska, { country: 'RU', code, note: 'Аська' });
     return aska;
+  }
+
+  // Батя — открытый ИИ-друг: у всех в «ИИ-друзьях», спрашивает, как дела, поел ли и звонил ли родным
+  function ensureBatya() {
+    const id = batyaId();
+    if (id) return id;
+    const b = createBot({ kind: 'friend', username: P.BATYA.username, displayName: P.BATYA.name, about: P.BATYA.about, city: P.BATYA.city, persona: { key: P.BATYA.key } });
+    M.give(db, b, { country: 'RU', code: randomFreeCode(db, 'RU', '777'), note: 'Батя' });
+    ctx.broadcastUser(b);
+    return b;
   }
 
   const twinName = (name) => `ИИ · ${name}`;
@@ -151,12 +162,16 @@ export function createBots(ctx) {
   const forced = new Map(); // botId → «в сети» до
   const keepOnline = (id) => forced.set(id, now() + 12 * 60_000);
 
+  const localHour = (per, t) => { const l = new Date(t + MSK + (per.tz || 0) * HOUR); return l.getUTCHours() + l.getUTCMinutes() / 60; };
+  function awake(per, t) {
+    const h = localHour(per, t);
+    return per.sleep > 24 ? (h >= per.wake || h < per.sleep - 24) : (h >= per.wake && h < per.sleep);
+  }
+
   function slotOnline(per, t) {
     if (timing.alwaysOnline) return true;
-    const local = new Date(t + MSK + (per.tz || 0) * HOUR);
-    const h = local.getUTCHours() + local.getUTCMinutes() / 60;
-    const awake = per.sleep > 24 ? (h >= per.wake || h < per.sleep - 24) : (h >= per.wake && h < per.sleep);
-    if (!awake) return false;
+    const h = localHour(per, t);
+    if (!awake(per, t)) return false;
     const x = crypto.createHash('sha256').update(`${per.key}:${Math.floor(t / SLOT)}`).digest()[0] / 255;
     return x < (per.activity || 0.4) + (h >= 19 && h < 23 ? 0.15 : 0);
   }
@@ -165,6 +180,7 @@ export function createBots(ctx) {
     if (!u) return false;
     if (u.kind === 'aska') return true;
     if (u.kind === 'twin') return true;
+    if (u.kind === 'friend') return timing.alwaysOnline || (mskHour(now()) >= 6 && mskHour(now()) < 23); // Батя спит ночью
     if (u.kind !== 'person' || !peopleOn()) return false;
     if ((forced.get(u.id) || 0) > now()) return true;
     return slotOnline(personaOf(u), now());
@@ -179,14 +195,41 @@ export function createBots(ctx) {
   }
 
   const shown = new Map(); // botId → что сейчас показано людям
+  const shownStatus = new Map(); // botId → статус, который видят люди
   function presenceTick() {
-    for (const u of persons()) {
+    for (const u of db.prepare("SELECT * FROM users WHERE kind IN ('person', 'friend')").all()) {
       const on = isOnline(u);
       if (shown.get(u.id) !== on) {
         shown.set(u.id, on);
         ctx.presence(u.id, on);
       }
+      const st = JSON.stringify(statusOf(u));
+      if (shownStatus.has(u.id) && shownStatus.get(u.id) !== st) ctx.broadcastUser(u.id);
+      shownStatus.set(u.id, st);
     }
+  }
+
+  // ---------- статусы ботов ----------
+  // Аська всегда на связи, Батя живёт по часам, ИИ-люди — по своему расписанию и интересам
+  const STATUS_BY_CIRCLE = {
+    'circle:music': ['music'], 'circle:kino': ['movie'], 'circle:food': ['cook', 'food'], 'circle:travel': ['road', 'flight'],
+    'circle:fun': ['chill', 'party', 'game'], 'circle:q': ['think'],
+  };
+  const statusByKey = (k) => { const x = P.STATUSES.find((s) => s.key === k); return x ? { emoji: x.emoji, text: x.text } : null; };
+  const hashPick = (arr, seed) => arr[crypto.createHash('sha256').update(seed).digest()[0] % arr.length];
+
+  function statusOf(u) {
+    if (u.kind === 'aska') return { emoji: '🌼', text: 'на связи 24/7' };
+    if (u.kind === 'friend') { const d = msk(now()); return P.batyaStatus(d.getUTCHours(), d.getUTCDay()); }
+    if (u.kind !== 'person' || !peopleOn()) return null;
+    const per = personaOf(u);
+    if (!per) return null;
+    const t = now();
+    if (!timing.alwaysOnline && !awake(per, t)) return statusByKey('sleep');
+    const slot = `${per.key}:${Math.floor(t / (3 * HOUR))}`;
+    if (!isOnline(u)) return statusByKey(hashPick(['work', 'road', 'study', 'gym', 'detox', null, null], slot));
+    const pool = [...new Set([...(per.circles || []).flatMap((c) => STATUS_BY_CIRCLE[c] || []), 'coffee', 'chat', null])];
+    return statusByKey(hashPick(pool, slot));
   }
 
   function onlineIds() {
@@ -209,8 +252,8 @@ export function createBots(ctx) {
 
   // У ИИ-людей свой темп: pace — как долго собираются ответить, typing — как медленно печатают
   const paceOf = (u) => (u.kind === 'person' ? personaOf(u)?.pace || 1 : 1);
-  const slowOf = (u) => (u.kind === 'person' ? personaOf(u)?.typing || 1 : 1);
-  const typingMs = (u, text) => (u.kind === 'person'
+  const slowOf = (u) => (u.kind === 'person' ? personaOf(u)?.typing || 1 : u.kind === 'friend' ? 1.3 : 1);
+  const typingMs = (u, text) => (u.kind === 'person' || u.kind === 'friend'
     ? slowOf(u) * Math.min(9000, Math.max(1500, text.length * 55))
     : Math.min(2500, Math.max(600, text.length * 15)));
 
@@ -297,6 +340,9 @@ export function createBots(ctx) {
       case 'newbie': return newbieJob(j.bot_id, payload);
       case 'party': return partyJob(j.bot_id, j.chat_id, payload);
       case 'party_digest': return partyDigestJob(j.bot_id, payload);
+      case 'batya_hello': return batyaHelloJob(j.bot_id, j.chat_id, payload);
+      case 'batya_q': return batyaAskJob(j.bot_id, j.chat_id, payload);
+      case 'announce5': return announce5Job(j.bot_id, j.chat_id, payload);
       case 'thank': return thankJob(j.bot_id, payload);
       case 'person_answer': return personAnswerJob(j.bot_id, payload);
       default: return null;
@@ -320,6 +366,7 @@ export function createBots(ctx) {
   }
 
   function replyDue(u, inCircle) {
+    if (u.kind === 'friend') return now() + T(isOnline(u) ? rand(4000, 25000) : rand(60_000, 180_000)); // ночью Батя просыпается не сразу
     if (u.kind !== 'person') return now() + T(rand(1200, 3500));
     const pace = paceOf(u);
     if (isOnline(u)) return now() + T(pace * (inCircle ? rand(8000, 70000) : rand(4000, 35000)));
@@ -383,6 +430,7 @@ export function createBots(ctx) {
     for (let i = hist.length - 1; i >= 0; i--) if (hist[i].senderId === botId) { lastMine = i; break; }
     const fresh = hist.slice(lastMine + 1).filter((m) => m.senderId !== botId);
     if (bot.kind === 'aska') return askaReply(bot, chat, hist, fresh);
+    if (bot.kind === 'friend') return batyaReply(bot, chat, hist, fresh);
     if (bot.kind === 'twin') return chat.kind === 'twin' ? twinFriendReply(bot, chat, hist, fresh) : twinOwnerReply(bot, chat, hist, fresh);
     if (bot.kind === 'person') return personReply(bot, chat, hist);
   }
@@ -587,6 +635,103 @@ export function createBots(ctx) {
     return say(bot.id, chat.id, P.askaScripted(text, { name: u?.display_name, plate: plateText(u) }));
   }
 
+  // ---------- Батя ----------
+
+  // У каждого свой порядок 100 вопросов; позиция — в настройках
+  function batyaOrder(userId) {
+    const idx = P.BATYA_QUESTIONS.map((_, i) => i);
+    let seed = (userId * 2654435761) >>> 0;
+    for (let i = idx.length - 1; i > 0; i--) {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      const j = seed % (i + 1);
+      [idx[i], idx[j]] = [idx[j], idx[i]];
+    }
+    return idx;
+  }
+  const batyaPos = (userId) => Number(getSetting(db, `batya_q:${userId}`) || 0);
+  const batyaQuestion = (userId) => P.BATYA_QUESTIONS[batyaOrder(userId)[batyaPos(userId) % P.BATYA_QUESTIONS.length]];
+  const batyaAdvance = (userId) => setSetting(db, `batya_q:${userId}`, String(batyaPos(userId) + 1));
+  const greet = (t) => { const h = mskHour(t); return h < 6 ? 'Не спится?' : h < 12 ? 'Доброе утро! ☀️' : h < 18 ? 'Привет!' : 'Добрый вечер.'; };
+
+  async function batyaReply(bot, chat, hist, fresh) {
+    if (chat.kind !== 'dm') return;
+    const userId = memberIds(chat.id).find((id) => id !== bot.id);
+    const u = row(userId);
+    if (!u || u.kind !== 'human') return;
+    const prompt = [
+      timeLine(),
+      `Тебе пишет: ${describe(u)}.`,
+      notesOf(bot.id, userId) && `Что ты о нём(ней) помнишь: ${notesOf(bot.id, userId)}`,
+      'Переписка (старые сверху):',
+      transcript(hist.slice(-24), bot.id, nameOf),
+      'Ответь на последние сообщения. В поле note — что нового стоит запомнить о собеседнике (коротко), или пустая строка.',
+    ].filter(Boolean).join('\n');
+    const out = await ai.complete({ system: P.BATYA_RULES, prompt, schema: P.REPLY_SCHEMA });
+    if (out) {
+      if (out.note) addNote(bot.id, userId, out.note);
+      return say(bot.id, chat.id, outMessages(out));
+    }
+    const q = batyaQuestion(userId);
+    const texts = P.batyaScripted(fresh.map((m) => m.body?.text || '').join(' '), q);
+    if (texts.includes(q)) batyaAdvance(userId);
+    return say(bot.id, chat.id, texts);
+  }
+
+  async function batyaHelloJob(botId, chatId, { userId }) {
+    const u = row(userId);
+    if (!u || u.kind !== 'human' || u.blocked_at) return;
+    if (db.prepare('SELECT 1 FROM messages WHERE chat_id = ? AND sender_id = ?').get(chatId, botId)) return;
+    setSetting(db, `batya_day:${userId}`, mskDay(now())); // сегодня уже спросил
+    await say(botId, chatId, [P.BATYA_HELLO(u.display_name).join('\n')]); // одним сообщением — один пуш
+  }
+
+  // Раз в день Батя сам проведывает: один вопрос из ста
+  async function batyaAskJob(botId, chatId, { userId }) {
+    const u = row(userId);
+    if (!u || u.kind !== 'human' || u.blocked_at) return;
+    const day = mskDay(now());
+    if (getSetting(db, `batya_day:${userId}`) === day) return;
+    setSetting(db, `batya_day:${userId}`, day);
+    const q = batyaQuestion(userId);
+    batyaAdvance(userId);
+    const hist = history(botId, chatId, 16);
+    const out = await ai.complete({
+      system: P.BATYA_RULES,
+      prompt: [
+        timeLine(),
+        `Собеседник: ${describe(u)}.`,
+        notesOf(botId, userId) && `Что ты о нём(ней) помнишь: ${notesOf(botId, userId)}`,
+        hist.length ? `Ваша переписка (старые сверху):\n${transcript(hist, botId, nameOf)}` : 'Вы ещё не переписывались.',
+        `Ты сам пишешь первым — проведать. Спроси по-своему вот это: «${q}». Можно коротко поздороваться по времени суток. Одно-два коротких сообщения.`,
+        'note оставь пустым.',
+      ].filter(Boolean).join('\n'),
+      schema: P.REPLY_SCHEMA,
+    });
+    const texts = outMessages(out);
+    await say(botId, chatId, texts.length ? texts : [`${greet(now())} ${q}`]);
+    reach(botId, userId);
+  }
+
+  // Днём (10–20 по Москве) раскладываем вопросы Бати на сегодня: каждому в своё время
+  function planBatya(force) {
+    const t = now();
+    const day = mskDay(t);
+    const batya = batyaId();
+    if (!batya) return;
+    const d = msk(t);
+    const until = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 20) - MSK;
+    for (const u of humans()) {
+      if (u.blocked_at || (u.last_active && t - u.last_active > 14 * DAY)) continue;
+      if (getSetting(db, `batya_day:${u.id}`) === day) continue;
+      const r = db.prepare('SELECT * FROM bot_reach WHERE bot_id = ? AND user_id = ?').get(batya, u.id);
+      if (r && r.unanswered >= 2 && t - r.last_at < 72 * HOUR) continue; // не отвечает — не надоедаем
+      const dm = ctx.ensureDm(batya, u.id);
+      const lastUser = db.prepare('SELECT MAX(created_at) AS t FROM messages WHERE chat_id = ? AND sender_id = ?').get(dm, u.id).t || 0;
+      if (t - lastUser < 12 * HOUR) continue; // и так болтают
+      schedule('batya_q', batya, dm, force ? now() : now() + T(rand(0, Math.max(0, until - t))), { userId: u.id });
+    }
+  }
+
   // ---------- опрос о вечеринке зумеров ----------
 
   const PARTY_DAYS = 14; // сколько дней после запуска опроса спрашиваем новичков
@@ -758,6 +903,23 @@ export function createBots(ctx) {
       `Держи 100 аськоинов на старт 🪙 Ещё их дают за вход каждый день, за приглашённого друга и за угаданного ИИ в игре «Кто здесь ИИ?».`,
     ];
     await say(botId, chatId, [msgs.join('\n\n')]);
+  }
+
+  // Пятое обновление: Батя, статусы, группы, звуковые смайлы, новый дизайн
+  async function announce5Job(botId, chatId, { userId }) {
+    const u = row(userId);
+    if (!u || u.blocked_at) return;
+    const lines = [
+      'Обновление АСЬКИ 🌼',
+      '👨 Батя — новый ИИ-друг: будет спрашивать, как ты, поел ли и звонил ли маме)',
+      '😴 Статусы: нажми на себя вверху и выбери — медитирую, сплю, смотрю кинч, вджобываю…',
+      '🗂 Группы: ИИ-друзья, Ближний круг, Знакомства, Работа. Перенести человека — в его карточке.',
+      '🔊 Звуковые смайлы — кнопка ☺ в беседе. Их слышит и тот, кому отправил.',
+      '✨ И Зумер стал легче и удобнее.',
+    ];
+    if (M.isGold(u)) lines.push('👑 У голд теперь золотой цветок.');
+    if (M.isGold(u) && !ai.configured()) lines.push('\nЧтобы ИИ заговорили своими словами, а ИИ-люди появились, нужен ключ Claude: «Ещё» → «Управление АСЬКОЙ» → «Мозг ИИ».');
+    await say(botId, chatId, [lines.join('\n')]);
   }
 
   async function welcomeJob(botId, chatId, { userId }) {
@@ -967,6 +1129,11 @@ export function createBots(ctx) {
       const idx = Math.floor(t / DAY) % P.QUESTIONS_OF_DAY.length;
       schedule('qday', aska, 'circle:q', now(), { q: P.QUESTIONS_OF_DAY[idx] });
     }
+    // Батя раз в день проведывает каждого
+    if ((force || (h >= 10 && h < 20)) && getSetting(db, 'batya_plan') !== day) {
+      setSetting(db, 'batya_plan', day);
+      planBatya(force);
+    }
     // Аська заглядывает к тем, кто давно не писал (не чаще раза в сутки, без навязчивости)
     if ((h >= 12 && h < 21) || force) {
       for (const u of humans()) {
@@ -1067,10 +1234,23 @@ export function createBots(ctx) {
 
   function init() {
     const aska = ensureAska();
+    const batya = ensureBatya();
     seedCircles();
     for (const h of humans()) {
       ensureTwin(h.id);
       ctx.ensureDm(aska, h.id);
+    }
+    // Батя знакомится со всеми, кого ещё не знает (днём, по очереди)
+    const hello = daytime(now() + T(5 * 60_000));
+    humans().filter((h) => !h.blocked_at).forEach((h, i) => {
+      const dm = ctx.ensureDm(batya, h.id);
+      if (!db.prepare('SELECT 1 FROM messages WHERE chat_id = ? AND sender_id = ?').get(dm, batya)) schedule('batya_hello', batya, dm, hello + T(i * 45_000), { userId: h.id });
+    });
+    // Аська один раз рассказывает о пятом обновлении
+    if (getSetting(db, 'announced_v5') !== '1') {
+      setSetting(db, 'announced_v5', '1');
+      const at = daytime(now() + T(60_000));
+      humans().filter((h) => !h.blocked_at).forEach((h, i) => schedule('announce5', aska, ctx.ensureDm(aska, h.id), at + T(i * 30_000), { userId: h.id }));
     }
     // характеры ИИ-людей обновляются вместе с кодом
     for (const u of persons()) {
@@ -1109,6 +1289,8 @@ export function createBots(ctx) {
     if (inviterId && inviterId !== userId && row(inviterId)?.kind === 'human') tell.add(inviterId);
     [...tell].forEach((id, i) => schedule('newbie', aska, `n:${userId}:${id}`, now() + T(4000 + i * 1500), { userId, toId: id, inviterId: inviterId || null, bonus: bonus || 0 }));
     if (partyOpen()) schedule('party', aska, dm, daytime(now() + T(rand(3 * 60_000, 6 * 60_000))), { userId });
+    const batya = ensureBatya();
+    schedule('batya_hello', batya, ctx.ensureDm(batya, userId), daytime(now() + T(rand(15 * 60_000, 40 * 60_000))), { userId });
   }
 
   function onRecovered(userId) {
@@ -1143,6 +1325,6 @@ export function createBots(ctx) {
 
   return {
     init, start, stop, idle, tick, proactive, onMessage, onUserRegistered, onRecovered, onlineIds, isOnline,
-    setPeople, peopleEnabled, ensureTwin, twinName, addFacts, factsOf, askaId, partyResults,
+    setPeople, peopleEnabled, ensureTwin, twinName, addFacts, factsOf, askaId, batyaId, partyResults, statusOf,
   };
 }

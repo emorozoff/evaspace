@@ -1,6 +1,7 @@
 // «Мозг» ботов — Claude. Ключ, модель и дневной лимит администратор задаёт в настройках АСЬКИ
 // (хранятся на сервере, наружу не отдаются). Нет ключа или кончился лимит — боты отвечают по шпаргалке.
 import Anthropic from '@anthropic-ai/sdk';
+import { fetch as proxyFetch, ProxyAgent } from 'undici';
 import { getSetting, setSetting } from './db.js';
 
 export const MODELS = [
@@ -22,6 +23,11 @@ function parseJson(text) {
     try { return JSON.parse(text.slice(a, b + 1)); } catch { /* не JSON */ }
   }
   return null;
+}
+
+// Логин и пароль прокси наружу не показываем
+function hideAuth(u) {
+  try { const x = new URL(u); if (x.username || x.password) { x.username = '***'; x.password = ''; } return x.toString().replace(/\/$/, ''); } catch { return '***'; }
 }
 
 export function createAi({ db, impl, fetchImpl, log = console.log }) {
@@ -51,13 +57,21 @@ export function createAi({ db, impl, fetchImpl, log = console.log }) {
   const configured = () => Boolean(impl) || Boolean(conf().apiKey);
   const available = () => configured() && !conf().paused && usage().calls < limit();
 
+  // Claude не принимает запросы из некоторых стран (в том числе из России). Тогда выручает
+  // шлюз (свой адрес API, совместимый с Claude) или прокси за границей — их задаёт администратор.
   let client = null;
   let clientKey = '';
   function getClient() {
-    const key = conf().apiKey;
-    if (!client || clientKey !== key) {
-      client = new Anthropic({ apiKey: key, maxRetries: 1, timeout: 60_000, ...(fetchImpl ? { fetch: fetchImpl } : {}) });
-      clientKey = key;
+    const c = conf();
+    const sig = `${c.apiKey}|${c.baseUrl || ''}|${c.proxy || ''}`;
+    if (!client || clientKey !== sig) {
+      let f = fetchImpl;
+      if (!f && c.proxy) {
+        const dispatcher = new ProxyAgent(c.proxy);
+        f = (url, init) => proxyFetch(url, { ...init, dispatcher });
+      }
+      client = new Anthropic({ apiKey: c.apiKey, maxRetries: 1, timeout: 60_000, ...(c.baseUrl ? { baseURL: c.baseUrl } : {}), ...(f ? { fetch: f } : {}) });
+      clientKey = sig;
     }
     return client;
   }
@@ -68,7 +82,7 @@ export function createAi({ db, impl, fetchImpl, log = console.log }) {
     if (e instanceof Anthropic.NotFoundError) return 'Модель не найдена (404)';
     if (e instanceof Anthropic.RateLimitError) return 'Слишком много запросов или кончились деньги на счёте (429)';
     if (e instanceof Anthropic.BadRequestError) return `Claude не принял запрос (400): ${e.message}`.slice(0, 300);
-    if (e instanceof Anthropic.APIConnectionError) return 'Нет связи с Claude (сервер не достучался до api.anthropic.com)';
+    if (e instanceof Anthropic.APIConnectionError) return conf().proxy || conf().baseUrl ? 'Нет связи: прокси или шлюз не отвечает' : 'Нет связи с Claude (сервер не достучался до api.anthropic.com)';
     if (e instanceof Anthropic.APIError) return `Ошибка Claude ${e.status || ''}: ${e.message}`.slice(0, 300);
     return String(e?.message || e).slice(0, 300);
   }
@@ -150,6 +164,8 @@ export function createAi({ db, impl, fetchImpl, log = console.log }) {
   function setConfig(patch) {
     const c = { ...conf(), ...patch };
     if (patch.apiKey === '') delete c.apiKey;
+    if (patch.baseUrl === '') delete c.baseUrl;
+    if (patch.proxy === '') delete c.proxy;
     if (!MODELS.some((m) => m.id === c.model)) delete c.model;
     setSetting(db, 'ai', JSON.stringify(c));
     client = null;
@@ -161,6 +177,7 @@ export function createAi({ db, impl, fetchImpl, log = console.log }) {
       configured: configured(), hasKey: Boolean(c.apiKey), keyHint: c.apiKey ? `…${c.apiKey.slice(-4)}` : '',
       model: model(), models: MODELS, dailyLimit: limit(), usedToday: usage().calls, paused: Boolean(c.paused), lastError,
       lastAt: last().at || 0, worked: Boolean(last().ok),
+      baseUrl: c.baseUrl || '', proxy: c.proxy ? hideAuth(c.proxy) : '', region: /403|стран/.test(lastError),
     };
   }
 

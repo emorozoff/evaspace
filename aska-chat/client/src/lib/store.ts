@@ -4,7 +4,7 @@ import * as C from './crypto.ts';
 import { encodeOutgoing, decodeIncoming } from './protocol.ts';
 import type { Body, ServerRow } from './protocol.ts';
 import { kvGet, kvSet, allMessages, putMessages, wipeLocal } from './db.ts';
-import type { LocalUser, LocalChat, StoredMsg, Session, Keys } from './db.ts';
+import type { LocalUser, LocalChat, StoredMsg, Session, Keys, UserStatus } from './db.ts';
 import { prepareImage } from './images.ts';
 import { setBadge, pushSupported } from './platform.ts';
 
@@ -17,6 +17,10 @@ export interface Profile {
   phone: string | null; phoneVerified: boolean; allowAnon: boolean; plate: string | null;
 }
 export type Truth = 'ai' | 'human';
+export type Group = 'close' | 'meet' | 'work';
+export type { UserStatus } from './db.ts';
+// Состояние «мозга» — только для голд (администраторов)
+export interface Brain { key: boolean; people: boolean; error: string }
 
 export interface State {
   phase: 'loading' | 'welcome' | 'ready';
@@ -31,6 +35,8 @@ export interface State {
   profile: Profile | null;
   pins: number[];
   guesses: Record<number, Truth>;      // кого я уже угадал(а) в игре «Кто здесь ИИ?» и что оказалось
+  groups: Record<number, Group>;       // группы контактов: ближний круг, знакомства, работа
+  brain: Brain | null;
   features: { ai: boolean; sms: boolean };
   typing: Record<string, Record<number, number>>; // чат → кто печатает → когда
   welcomePlate: string | null;         // только что выданный номер — показать поздравление
@@ -38,7 +44,7 @@ export interface State {
 
 const initial: State = {
   phase: 'loading', me: null, users: {}, chats: {}, messages: {}, connected: false, presence: {}, vapidKey: null, pushState: 'default',
-  profile: null, pins: [], guesses: {}, features: { ai: false, sms: false }, typing: {}, welcomePlate: null,
+  profile: null, pins: [], guesses: {}, groups: {}, brain: null, features: { ai: false, sms: false }, typing: {}, welcomePlate: null,
 };
 
 let state: State = initial;
@@ -253,8 +259,9 @@ let pingTimer: ReturnType<typeof setTimeout> | undefined;
 
 interface ServerUser {
   id: number; username: string; displayName: string; boxPk: string;
-  plate?: string | null; about?: string; city?: string; kind?: 'human' | 'aska' | 'twin'; ownerId?: number; prevPks?: string[];
+  plate?: string | null; about?: string; city?: string; kind?: 'human' | 'aska' | 'friend' | 'twin'; ownerId?: number; prevPks?: string[];
   gold?: boolean; blocked?: boolean; plateId?: number; plateCountry?: string; plateLevel?: number; plateRarity?: number;
+  status?: UserStatus | null;
 }
 
 interface StateResp {
@@ -267,6 +274,8 @@ interface StateResp {
   profile: Profile;
   pins: number[];
   guesses: Record<number, Truth>;
+  groups?: Record<number, Group>;
+  brain?: Brain;
   features: { ai: boolean; sms: boolean };
 }
 
@@ -278,6 +287,7 @@ function mergeUser(u: ServerUser, prev: User | undefined, myPk?: string): User {
     id: u.id, username: u.username, displayName: u.displayName, pk: u.boxPk, plate: u.plate ?? null,
     about: u.about || '', city: u.city || '', kind: u.kind || 'human', ownerId: u.ownerId, prevPks: u.prevPks,
     gold: Boolean(u.gold), blocked: Boolean(u.blocked), plateId: u.plateId, plateCountry: u.plateCountry || 'RU', plateLevel: u.plateLevel || 0, plateRarity: u.plateRarity || 0,
+    status: u.status || null,
   };
   if (!pinned || pinned === u.boxPk) return prev?.keyRotated ? { ...base, keyRotated: true } : base;
   if ((u.prevPks || []).includes(pinned)) return { ...base, keyRotated: true };
@@ -297,7 +307,7 @@ async function loadState() {
   for (const id of st.online || []) presence[id] = true;
   set({
     users, chats, vapidKey: st.vapidPublicKey, presence, profile: st.profile, pins: st.pins || [], guesses: st.guesses || {},
-    features: st.features || { ai: false, sms: false },
+    groups: st.groups || {}, brain: st.brain || null, features: st.features || { ai: false, sms: false },
   });
   await Promise.all([kvSet('users', users), kvSet('chats', chats)]);
   updateBadge();
@@ -719,6 +729,19 @@ export async function setPin(userId: number, on: boolean) {
   set({ pins: r.pins });
 }
 
+export async function setGroup(userId: number, group: Group) {
+  set({ groups: { ...state.groups, [userId]: group } });
+  const r = await api.post<{ groups: Record<number, Group> }>('/groups', { userId, group });
+  set({ groups: r.groups });
+}
+
+// Статус: готовый по ключу, свой (эмодзи + текст) или null — снять
+export async function setStatus(st: { key: string } | { emoji: string; text: string } | null) {
+  const r = await api.post<{ status: UserStatus | null }>('/me/status', st || {});
+  const me = state.me && state.users[state.me.userId];
+  if (me) set({ users: { ...state.users, [me.id]: { ...me, status: r.status } } });
+}
+
 export async function guess(userId: number, g: Truth) {
   const r = await api.post<{ correct: boolean; truth: Truth }>('/guess', { userId, guess: g });
   set({ guesses: { ...state.guesses, [userId]: r.truth } });
@@ -758,9 +781,14 @@ export function twinOf(ownerId: number, s: State = state): User | undefined {
   return Object.values(s.users).find((u) => u.kind === 'twin' && u.ownerId === ownerId);
 }
 export const askaOf = (s: State = state) => Object.values(s.users).find((u) => u.kind === 'aska');
+export const aiFriendsOf = (s: State = state) => Object.values(s.users).filter((u) => u.kind === 'friend');
+export const isOpenAi = (u?: User) => u?.kind === 'aska' || u?.kind === 'friend' || u?.kind === 'twin';
 
 export interface AdminInfo {
-  ai: { configured: boolean; hasKey: boolean; keyHint: string; model: string; models: { id: string; name: string; note: string }[]; dailyLimit: number; usedToday: number; paused: boolean; lastError: string };
+  ai: {
+    configured: boolean; hasKey: boolean; keyHint: string; model: string; models: { id: string; name: string; note: string }[]; dailyLimit: number; usedToday: number; paused: boolean; lastError: string;
+    lastAt: number; worked: boolean; baseUrl: string; proxy: string; region: boolean;
+  };
   people: boolean;
   sms: { configured: boolean; hasKey: boolean; lastError: string };
   users: {
@@ -776,7 +804,7 @@ export interface AdminInfo {
   };
 }
 export const adminInfo = () => api.get<AdminInfo>('/admin');
-export const adminSetAi = (p: { apiKey?: string; model?: string; dailyLimit?: number; paused?: boolean }) => api.post('/admin/ai', p);
+export const adminSetAi = async (p: { apiKey?: string; model?: string; dailyLimit?: number; paused?: boolean; baseUrl?: string; proxy?: string }) => { await api.post('/admin/ai', p); await loadState(); };
 export const adminCheckAi = () => api.post<{ ok: boolean; reply?: string; error?: string }>('/admin/ai/check');
 export const adminSetPeople = async (on: boolean) => { await api.post('/admin/people', { on }); await loadState(); };
 export const adminSetSms = (apiId: string) => api.post('/admin/sms', { apiId });

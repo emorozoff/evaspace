@@ -7,7 +7,7 @@ import { kvGet } from './lib/db.ts';
 declare const self: ServiceWorkerGlobalScope;
 
 const CACHE = 'aska-v2';
-const SHELL = ['/', '/manifest.webmanifest', '/aska/icons/icon-192.png', '/aska/icons/apple-touch-icon.png'];
+const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -71,7 +71,7 @@ self.addEventListener('push', (event) => {
     } catch { /* показываем общее уведомление: iPhone требует показать что-то на каждый пуш */ }
     await self.registration.showNotification(n.title, {
       body: n.body,
-      icon: '/aska/icons/icon-192.png',
+      icon: '/icons/icon-192.png',
       data: { chatId: data.c },
     });
     const nav = self.navigator as WorkerNavigator & { setAppBadge?: (n: number) => Promise<void>; clearAppBadge?: () => Promise<void> };

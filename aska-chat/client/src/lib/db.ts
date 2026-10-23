@@ -5,11 +5,14 @@ import type { Body } from './protocol.ts';
 
 export interface Session { token: string; userId: number; username: string }
 export interface Keys { pk: string; sk: string }
-// kind: human — человек (для всех, в том числе ИИ-люди: кто есть кто — секрет игры), aska — Аська, twin — личный ИИ
+// kind: human — человек (для всех, в том числе ИИ-люди: кто есть кто — секрет игры), aska — Аська,
+// friend — открытый ИИ-друг (Батя), twin — личный ИИ
+export interface UserStatus { emoji: string; text: string; at?: number }
 export interface LocalUser {
   id: number; username: string; displayName: string; pk: string; keyChanged?: boolean; keyRotated?: boolean;
-  plate?: string | null; about?: string; city?: string; kind?: 'human' | 'aska' | 'twin'; ownerId?: number; prevPks?: string[];
+  plate?: string | null; about?: string; city?: string; kind?: 'human' | 'aska' | 'friend' | 'twin'; ownerId?: number; prevPks?: string[];
   gold?: boolean; blocked?: boolean; plateId?: number; plateCountry?: string; plateLevel?: number; plateRarity?: number;
+  status?: UserStatus | null;
 }
 export interface Member { userId: number; readUpTo: number }
 export interface LocalChat {

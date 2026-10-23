@@ -1,6 +1,8 @@
 // Обёртки над графикой и звуками «Аськи» + выбор дизайна (Зумер / Миллениал).
 // Если файлы «Аськи» почему-то не загрузились, приложение работает без цветочков и звуков.
 
+import { markSvg, goldFlowerSvg } from './logo.ts';
+
 export type Design = 'zoomer' | 'millennial';
 const DESIGN_KEY = 'aska-design';
 const SOUND_KEY = 'aska-sound';
@@ -34,8 +36,14 @@ export function flower(status: string, size = 16): string {
   return window.AskaArt?.statusFlower(status, size) ?? '';
 }
 
+// Значок АСЬКИ — новая ромашка (lib/logo.ts)
 export function logoFlower(size = 44): string {
-  return window.AskaArt?.flowerSvg('#3cb44a', size, { logo: true }) ?? '';
+  return markSvg(size);
+}
+
+// Цветочек человека: у голд — золотой, у остальных — зелёный «в сети» и красный «не в сети»
+export function userFlower(user: { gold?: boolean } | undefined, online: boolean, size = 16): string {
+  return user?.gold ? goldFlowerSvg(size, online) : flower(online ? 'online' : 'offline', size);
 }
 
 export function envelope(size = 16): string {
@@ -99,6 +107,10 @@ const REAL: Record<string, string> = { incoming: '/sounds/uh-oh.wav', online: '/
 let ctx: AudioContext | null = null;
 const buffers = new Map<string, AudioBuffer>();
 let realLoading: Promise<void> | null = null;
+
+export function audioCtx(): AudioContext | null {
+  return audio();
+}
 
 function audio(): AudioContext | null {
   if (!ctx) {

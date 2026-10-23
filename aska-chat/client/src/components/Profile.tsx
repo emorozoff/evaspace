@@ -2,15 +2,20 @@
 // закрепить наверху, сыграть «Человек или ИИ?». И карточка круга: кто в нём и выйти.
 import { useState } from 'react';
 import { useStore } from '../useStore.ts';
-import { openDm, openTwinChat, setPin, guess, twinOf, leaveCircle } from '../lib/store.ts';
-import type { Truth } from '../lib/store.ts';
+import { openDm, openTwinChat, setPin, setGroup, guess, twinOf, leaveCircle } from '../lib/store.ts';
+import type { Group, Truth } from '../lib/store.ts';
 import { ApiError } from '../lib/api.ts';
 import { safetyCode, fromB64 } from '../lib/crypto.ts';
-import { flower } from '../lib/aska.ts';
+import { flower, userFlower } from '../lib/aska.ts';
+import { statusLine } from '../lib/statuses.ts';
 import { plural } from '../lib/format.ts';
 import { Dialog, Ico } from './Win.tsx';
 import { UserPlate, Gold } from './Plate.tsx';
 import { PlateCard } from './Plates.tsx';
+import { Avatar } from './Avatar.tsx';
+import { StatusPicker } from './Status.tsx';
+
+const GROUP_NAMES: { key: Group; label: string }[] = [{ key: 'close', label: '💛 Ближний круг' }, { key: 'meet', label: '👋 Знакомства' }, { key: 'work', label: '💼 Работа' }];
 
 export function Profile({ userId, onClose, onOpenChat }: { userId: number; onClose: () => void; onOpenChat: (chatId: string) => void }) {
   const s = useStore();
@@ -19,13 +24,15 @@ export function Profile({ userId, onClose, onOpenChat }: { userId: number; onClo
   const [result, setResult] = useState<{ correct: boolean; truth: Truth } | null>(null);
   const [busy, setBusy] = useState(false);
   const [card, setCard] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
   const u = s.users[userId];
   if (!u) return null;
   const me = s.me!.userId;
   const itsMe = u.id === me;
   const isAska = u.kind === 'aska';
   const isTwin = u.kind === 'twin';
-  const person = !isAska && !isTwin;
+  const isFriendAi = u.kind === 'friend';
+  const person = !isAska && !isTwin && !isFriendAi;
   const online = !!s.presence[u.id];
   const twin = person ? twinOf(u.id, s) : undefined;
   const owner = isTwin && u.ownerId ? s.users[u.ownerId] : undefined;
@@ -47,16 +54,21 @@ export function Profile({ userId, onClose, onOpenChat }: { userId: number; onClo
     <Dialog title={itsMe ? 'Это ты' : u.displayName} onClose={onClose}>
       <div className="aska-profile">
         <div className="aska-profile-head">
-          <Ico className="ico big" html={flower(isAska ? 'chat' : online ? 'online' : 'offline', 40)} />
+          <Ico className="ico big" html={isAska ? flower('chat', 40) : userFlower(u, online || itsMe, 40)} />
+          <Avatar user={u} online={online || itsMe || isAska} size={64} />
           <div className="who">
-            <b>{u.displayName}<Gold user={u} big /></b>
-            <div className="muted">{u.blocked ? 'заблокирован(а)' : online ? 'в сети' : 'не в сети'}{u.city ? ` · ${u.city}` : ''}{u.gold ? ' · голд' : ''}</div>
+            <b>{u.displayName}<Gold user={u} big />{(isAska || isFriendAi) && <span className="aska-tag">ИИ</span>}</b>
+            <div className="muted">{u.blocked ? 'заблокирован(а)' : isAska ? 'всегда на связи' : online || itsMe ? 'в сети' : 'не в сети'}{u.city ? ` · ${u.city}` : ''}{u.gold ? ' · голд' : ''}</div>
+            {u.status && <div className="aska-st-line">{statusLine(u.status)}</div>}
           </div>
         </div>
+        {itsMe && <button className="btn aska-st-btn" onClick={() => setStatusOpen(true)}>{u.status ? '✏️ Сменить статус' : '＋ Поставить статус'}</button>}
+        {statusOpen && <StatusPicker onClose={() => setStatusOpen(false)} />}
         {u.plate && <div className="aska-profile-plate"><UserPlate user={u} size="l" onClick={u.plateId ? () => setCard(true) : undefined} /></div>}
         {card && u.plateId && <PlateCard id={u.plateId} onClose={() => setCard(false)} />}
         {u.about && <div className="aska-about">{u.about}</div>}
         {isAska && <div className="hint">Аська — ИИ и душа АСЬКИ. Подскажет, поболтает и не даст заскучать 🌼</div>}
+        {isFriendAi && <div className="hint">Батя — ИИ-друг. Раз в день спросит, как ты: поел ли, выспался ли, звонил ли родным и как на личном фронте. Можно и самому написать — выслушает и подскажет по-отцовски.</div>}
         {isTwin && owner && <div className="hint">Личный ИИ человека «{owner.displayName}». Ему можно задать вопрос, передать комплимент или подарок.</div>}
         {u.keyRotated && !itsMe && <div className="hint">🔑 {u.displayName} недавно восстанавливал(а) вход — ключ шифрования обновился.</div>}
 
@@ -65,6 +77,18 @@ export function Profile({ userId, onClose, onOpenChat }: { userId: number; onClo
             <button className="btn primary" onClick={write} disabled={busy}>💬 Написать</button>
             {twin && <button className="btn" onClick={() => setTwinAsk((v) => !v)} disabled={busy}>🤖 Личный ИИ</button>}
             {person && <button className="btn" onClick={() => act(() => setPin(u.id, !pinned))} disabled={busy}>{pinned ? '📌 Открепить' : '📌 Закрепить'}</button>}
+          </div>
+        )}
+
+        {person && !itsMe && !u.blocked && (
+          <div className="aska-grp-pick">
+            <span className="hint">Группа:</span>
+            <div className="tabs">
+              {GROUP_NAMES.map((g) => (
+                <button key={g.key} className={(s.groups[u.id] || 'meet') === g.key ? 'on' : ''} disabled={busy}
+                  onClick={() => act(() => setGroup(u.id, g.key))}>{g.label}</button>
+              ))}
+            </div>
           </div>
         )}
 

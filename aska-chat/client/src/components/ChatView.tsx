@@ -7,10 +7,13 @@ import type { Msg } from '../lib/store.ts';
 import { chatTitle, dmPeer, dayKey, plural, timeShort } from '../lib/format.ts';
 import { previewText } from '../lib/protocol.ts';
 import { isTouch } from '../lib/platform.ts';
-import { flower, smiles, smileSvg, splitSmiles, play, playSmile } from '../lib/aska.ts';
+import { flower, smiles, smileSvg, splitSmiles, play, playSmile, userFlower } from '../lib/aska.ts';
+import { SFX, sfxOf, playSfx, isEmojiOnly } from '../lib/sfx.ts';
+import { statusLine } from '../lib/statuses.ts';
 import { EncryptedImage, ImageViewer } from './EncryptedImage.tsx';
 import { Win, Svg, Ico, Dialog } from './Win.tsx';
 import { Gold } from './Plate.tsx';
+import { Avatar, ChatAvatar } from './Avatar.tsx';
 
 const drafts = new Map<string, string>();
 const GROUP_GAP = 5 * 60 * 1000;
@@ -68,6 +71,9 @@ function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onIm
   const start = useRef<{ x: number; y: number } | null>(null);
   const body = m.body;
   const cancel = () => { clearTimeout(timer.current); start.current = null; };
+  // одни эмодзи — крупно и без пузыря; звуковой смайл звучит по нажатию
+  const big = body?.kind === 'text' && !body.reply && isEmojiOnly(body.text);
+  const sfx = big ? sfxOf(body?.text) : undefined;
 
   let tick: ReactNode = null;
   if (out) {
@@ -79,7 +85,7 @@ function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onIm
   return (
     <div
       id={`m-${m.id}`}
-      className={`msg ${out ? 'me' : 'them'}${grp ? ' grp' : ''}${isNew ? ' new' : ''}${flash ? ' aska-flash' : ''}${m.status === 'failed' ? ' aska-failed' : ''}`}
+      className={`msg ${out ? 'me' : 'them'}${grp ? ' grp' : ''}${isNew ? ' new' : ''}${flash ? ' aska-flash' : ''}${m.status === 'failed' ? ' aska-failed' : ''}${big ? ' aska-big' : ''}${sfx ? ' aska-sfx' : ''}`}
       onContextMenu={(e) => { e.preventDefault(); onMenu(m); }}
       onTouchStart={(e) => {
         const t = e.touches[0];
@@ -92,7 +98,7 @@ function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onIm
       }}
       onTouchEnd={cancel}
       onTouchCancel={cancel}
-      onClick={() => { if (m.status === 'failed') onMenu(m); }}
+      onClick={() => { if (m.status === 'failed') onMenu(m); else if (sfx) playSfx(sfx.e); }}
     >
       <span className="hdr">
         <span className="nk">{name}{gold && <span className="aska-gold sm" title="Голд">★</span>}</span>{' '}
@@ -108,7 +114,8 @@ function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onIm
         )}
         {!body && <i className="muted">🔒 не удалось расшифровать</i>}
         {body?.kind === 'image' && body.image && <EncryptedImage image={body.image} local={m.localImage} onOpen={onImage} />}
-        {body?.text && renderText(body.text)}
+        {body?.text && (big ? body.text : renderText(body.text))}
+        {sfx && <span className="aska-sfx-ico" aria-label="звуковой смайл">🔊</span>}
       </span>
     </div>
   );
@@ -139,6 +146,7 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
   const [menu, setMenu] = useState<Msg | null>(null);
   const [viewer, setViewer] = useState<string | null>(null);
   const [smilesOpen, setSmilesOpen] = useState(false);
+  const [smileTab, setSmileTab] = useState<'sfx' | 'icq'>('sfx');
   const [flash, setFlash] = useState<number | null>(null);
   const [act, setAct] = useState<Act>(null);
   const [gifts, setGifts] = useState(false);
@@ -155,6 +163,14 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
     return () => setActiveChat(null);
   }, [chatId]);
   useEffect(() => { drafts.set(chatId, text); }, [chatId, text]);
+
+  // Поле ввода растёт вместе с текстом (в Зумере)
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el || !document.body.classList.contains('skin-aero')) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(140, el.scrollHeight + 2)}px`;
+  }, [text]);
 
   useLayoutEffect(() => {
     const el = scrollRef.current;
@@ -181,8 +197,8 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
   const title = chatTitle(chat, s);
   const peerOnline = peer ? !!s.presence[peer.id] : false;
   const onlineCount = others.filter((m) => s.presence[m.userId]).length;
-  const isAi = peer?.kind === 'aska' || peer?.kind === 'twin';
-  const icon = chat.kind === 'dm' && !isAi ? flower(peerOnline ? 'online' : 'offline', 14) : flower('chat', 14);
+  const isAi = peer?.kind === 'aska' || peer?.kind === 'twin' || peer?.kind === 'friend';
+  const icon = chat.kind === 'dm' && !isAi ? userFlower(peer, peerOnline, 14) : flower('chat', 14);
   const changed = chat.members.map((m) => s.users[m.userId]).filter((u) => u?.keyChanged);
   const typers = typingIn(chatId, s).filter((id) => id !== me);
   const twinOwner = peer?.kind === 'twin' && peer.ownerId ? s.users[peer.ownerId] : undefined;
@@ -191,8 +207,9 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
   const statusHint = !s.connected ? 'нет связи, переподключаюсь…'
     : typers.length ? (chat.kind === 'dm' || chat.kind === 'twin' ? 'печатает…' : `${typers.map((id) => s.users[id]?.displayName || '?').join(', ')} печата${typers.length > 1 ? 'ют' : 'ет'}…`)
       : peer?.kind === 'aska' ? 'ИИ · всегда на связи'
-        : peer?.kind === 'twin' ? (chat.twin?.anon ? 'личный ИИ · анонимно' : 'личный ИИ')
-          : chat.kind === 'dm' ? (peerOnline ? 'в сети' : 'не в сети')
+        : peer?.kind === 'friend' ? ['ИИ-друг', statusLine(peer.status)].filter(Boolean).join(' · ')
+          : peer?.kind === 'twin' ? (chat.twin?.anon ? 'личный ИИ · анонимно' : 'личный ИИ')
+            : chat.kind === 'dm' ? [peerOnline ? 'в сети' : 'не в сети', statusLine(peer?.status)].filter(Boolean).join(' · ')
             : `${chat.members.length} ${plural(chat.members.length, 'участник', 'участника', 'участников')}, в сети ${onlineCount}`;
   const nameOf = (id: number) => (id === me ? (s.users[me]?.displayName || 'Я') : s.users[id]?.displayName || '?');
   const openHead = () => {
@@ -247,6 +264,14 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
     for (const f of files) {
       try { await sendImage(chatId, f, r); play('sent'); } catch (err) { console.error(err); }
     }
+  }
+
+  // Звуковой смайл уходит сразу, как стикер
+  function sendSfx(e: string) {
+    playSfx(e);
+    setSmilesOpen(false);
+    near.current = true;
+    sendText(chatId, e);
   }
 
   function addSmile(code: string, id: string) {
@@ -314,11 +339,15 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
     <Win id="chatwin" className="chat" title={<>{title} <small>— беседа</small></>} icon={icon}
       onBack={onBack} onClose={onBack} closeClass="close-chat">
       <div className="chat-head aska-head" onClick={openHead} role="button" title="Подробнее">
+        <button className="aska-back" onClick={(e) => { e.stopPropagation(); onBack(); }} aria-label="Назад">‹</button>
         <Ico html={icon.replace('width="14" height="14"', 'width="16" height="16"')} />
-        <span className="nick">{title}{chat.kind === 'dm' && <Gold user={peer} />}</span>
-        {peer?.kind === 'aska' && <span className="aska-tag">ИИ</span>}
+        {peer ? <Avatar user={peer} online={peerOnline || peer.kind === 'aska'} size={38} badge={peer.kind !== 'aska'} />
+          : <ChatAvatar emoji={chat.emoji || (chat.kind === 'general' ? '🌼' : '⭕')} size={38} />}
+        <span className="aska-head-t">
+          <span className="nick">{title}{chat.kind === 'dm' && <Gold user={peer} />}{(peer?.kind === 'aska' || peer?.kind === 'friend') && <span className="aska-tag">ИИ</span>}</span>
+          <span className={`hint${typers.length ? ' aska-typing' : ''}`}>{statusHint}</span>
+        </span>
         <span className="sp" />
-        <span className={`hint${typers.length ? ' aska-typing' : ''}`}>{statusHint}</span>
       </div>
       {friendTwin && (
         <div className="aska-twin-bar">
@@ -334,12 +363,13 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
           Сверь коды безопасности в настройках. Пока сообщения шифруются старым ключом.
         </div>
       )}
-      <div className="history inset" ref={scrollRef} onScroll={onScroll}>
+      <div className={`history inset${chat.kind === 'dm' || chat.kind === 'twin' ? ' aska-dm' : ''}`} ref={scrollRef} onScroll={onScroll}>
         {!list.length && (
           <div className="msg aska-sys"><span className="sys">{
             friendTwin ? `Это личный ИИ человека «${twinOwner.displayName}». Задай вопрос, передай комплимент или подарок — кнопки внизу. Его ответы пишет нейросеть.`
               : ownTwin ? 'Это твой личный ИИ. Расскажи ему о себе — он будет отвечать друзьям. Сюда же приходит то, что тебе передают.'
                 : peer?.kind === 'aska' ? 'Аська — ИИ и душа АСЬКИ. Спроси её о чём угодно 🌼'
+                  : peer?.kind === 'friend' ? 'Батя — ИИ-друг. Расскажи, как ты, — выслушает и подскажет по-отцовски 👨'
                   : chat.kind === 'circle' ? 'Это круг — общая беседа. В кругах бывают и ИИ, так что секреты лучше писать лично.'
                     : 'Сообщения шифруются на телефоне: их видят только участники беседы.'
           }</span></div>
@@ -369,14 +399,14 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
         <textarea
           ref={inputRef}
           className="field"
-          rows={2}
+          rows={1}
           maxLength={20000}
           value={text}
           onChange={(e) => { setText(e.target.value); if (e.target.value.trim()) sendTyping(chatId); }}
           onKeyDown={onKeyDown}
           placeholder={act === 'compliment' ? `Комплимент — ${twinOwner?.displayName} увидит${chat.twin?.anon ? ', но не узнает от кого' : ''}`
             : act === 'question' ? `Вопрос — ${twinOwner?.displayName} ответит`
-              : isTouch ? 'Напиши что-нибудь…' : 'Напиши что-нибудь… Enter — отправить'}
+              : isTouch || document.body.classList.contains('skin-aero') ? 'Напиши что-нибудь…' : 'Напиши что-нибудь… Enter — отправить'}
         />
         <div className="send-row">
           <button className="btn icon" onClick={() => setSmilesOpen((v) => !v)} title="Смайлы" aria-label="Смайлы">
@@ -385,16 +415,36 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
           <button className="btn icon" onClick={() => fileRef.current?.click()} title="Фото" aria-label="Фото">📷</button>
           <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={onFiles} />
           <span className="hint">{!s.connected ? 'нет связи' : ''}</span>
-          <button className="btn primary" disabled={!text.trim()} onMouseDown={(e) => e.preventDefault()} onClick={submit}>Отправить</button>
+          <button className="btn primary aska-send" disabled={!text.trim()} onMouseDown={(e) => e.preventDefault()} onClick={submit} aria-label="Отправить">
+            <span className="lab">Отправить</span>
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 12l15-7-5 15-2.5-6.2z" fill="currentColor" /><path d="M11.5 13.8L19 5" stroke="rgba(0,0,0,.25)" strokeWidth="1.2" /></svg>
+          </button>
         </div>
       </div>
       {smilesOpen && (
-        <div className="smiles">
-          {smiles().slice(0, 24).map((sm) => (
-            <button key={sm.id} title={`${sm.codes[0]} — ${sm.name}`} onMouseDown={(e) => e.preventDefault()}
-              onClick={() => addSmile(sm.codes[0], sm.id)} dangerouslySetInnerHTML={{ __html: smileSvg(sm.id, 20) }} />
-          ))}
-          <div className="cap">нажми — смайл вставится и скажет своё</div>
+        <div className="smiles aska-smiles">
+          <div className="aska-smile-tabs">
+            <button className={smileTab === 'sfx' ? 'on' : ''} onClick={() => setSmileTab('sfx')}>🔊 Звуковые</button>
+            <button className={smileTab === 'icq' ? 'on' : ''} onClick={() => setSmileTab('icq')}>☺ Смайлы Аськи</button>
+          </div>
+          {smileTab === 'sfx' ? (
+            <>
+              {SFX.map((x) => (
+                <button key={x.e} className="aska-sfx-btn" title={x.name} onMouseDown={(e) => e.preventDefault()} onClick={() => sendSfx(x.e)}>
+                  <i>{x.e}</i><small>{x.name}</small>
+                </button>
+              ))}
+              <div className="cap">нажми — смайл улетит и прозвучит у друга 🔊</div>
+            </>
+          ) : (
+            <>
+              {smiles().slice(0, 24).map((sm) => (
+                <button key={sm.id} title={`${sm.codes[0]} — ${sm.name}`} onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => addSmile(sm.codes[0], sm.id)} dangerouslySetInnerHTML={{ __html: smileSvg(sm.id, 20) }} />
+              ))}
+              <div className="cap">нажми — смайл вставится и скажет своё</div>
+            </>
+          )}
         </div>
       )}
       {menu && (

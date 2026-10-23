@@ -20,48 +20,79 @@ const ago = (t: number | null) => {
   return `${Math.round(m / 1440)} дн назад`;
 };
 
-export function Admin() {
-  const [info, setInfo] = useState<AdminInfo | null>(null);
+// «Мозг» ИИ: состояние крупно, шаги подключения, ключ, проверка, ИИ-люди и обход запрета из России (шлюз или прокси)
+function Brain({ info, busy, act }: { info: AdminInfo; busy: boolean; act: (fn: () => Promise<unknown>) => Promise<void> }) {
+  const ai = info.ai;
   const [key, setKey] = useState('');
-  const [limit, setLimit] = useState('');
-  const [smsKey, setSmsKey] = useState('');
-  const [aiCheck, setAiCheck] = useState('');
-  const [smsCheck, setSmsCheck] = useState('');
-  const [codes, setCodes] = useState<Record<number, string>>({});
-  const [plateFor, setPlateFor] = useState<AdminUser | null>(null);
-  const [coinsFor, setCoinsFor] = useState<AdminUser | null>(null);
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [limit, setLimit] = useState(String(ai.dailyLimit));
+  const [base, setBase] = useState(ai.baseUrl);
+  const [proxy, setProxy] = useState('');
+  const [check, setCheck] = useState('');
+  const ok = ai.configured && !ai.paused && ai.worked && !ai.lastError;
+  const state = !ai.configured ? { cls: 'off', icon: '😴', title: 'Мозг не подключён', text: 'Нет ключа Claude: Аська и Батя отвечают по шпаргалке, ИИ-люди спят.' }
+    : ai.paused ? { cls: 'warn', icon: '⏸', title: 'Мозг на паузе', text: 'Ключ есть, но ИИ отдыхают. Нажми «Включить».' }
+      : ai.lastError ? { cls: 'warn', icon: '⚠️', title: 'Claude не отвечает', text: ai.lastError }
+        : ai.worked ? { cls: 'ok', icon: '🧠', title: 'Мозг работает', text: `Сегодня ответов: ${ai.usedToday} из ${ai.dailyLimit}.` }
+          : { cls: 'warn', icon: '🔌', title: 'Ключ вставлен', text: 'Нажми «Проверить связь», чтобы убедиться, что Claude отвечает.' };
 
-  const load = () => adminInfo().then((i) => { setInfo(i); setLimit(String(i.ai.dailyLimit)); }).catch(() => setError('Не получилось загрузить.'));
-  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const act = async (fn: () => Promise<unknown>) => {
-    setBusy(true);
-    setError('');
-    try { await fn(); await load(); } catch (e) {
-      setError(e instanceof ApiError && e.code === 'ai_off' ? 'Сначала вставь ключ Claude.' : 'Не получилось. Попробуй ещё раз.');
-    } finally { setBusy(false); }
+  // Проверить связь; заработало — сразу включить ИИ-людей
+  const verify = async () => {
+    const r = await adminCheckAi();
+    setCheck(r.ok ? `✅ Работает: «${r.reply}»` : `❌ ${r.error}`);
+    if (r.ok && !info.people) await adminSetPeople(true);
   };
 
-  if (!info) return <div className="hint">{error || 'Загружаю…'}</div>;
-  const ai = info.ai;
-
   return (
-    <>
-      {error && <div className="err">{error}</div>}
-      <div className="groupbox">
-        <div className="legend">🧠 Мозг ИИ — Claude</div>
-        <div className="hint">Им думают Аська, ИИ-люди и личные ИИ. Без ключа они отвечают по шпаргалке.</div>
-        <div className="row aska-kv"><span>Ключ</span><b>{ai.hasKey ? `вставлен ${ai.keyHint}` : 'нет'}</b></div>
-        <div className="row aska-kv"><span>Сегодня ответов</span><b>{ai.usedToday} из {ai.dailyLimit}</b></div>
-        {ai.lastError && <div className="err">Последняя ошибка: {ai.lastError}</div>}
-        <label className="aska-field"><span className="lbl">Ключ Claude API (console.anthropic.com → API keys)</span>
+    <div className={`groupbox aska-brain ${state.cls}`}>
+      <div className="legend">🧠 Мозг ИИ — Claude</div>
+      <div className="aska-brain-state"><i>{state.icon}</i><span><b>{state.title}</b><small>{state.text}</small></span></div>
+      <div className="row aska-kv"><span>Ключ</span><b>{ai.hasKey ? `вставлен ${ai.keyHint}` : 'нет'}</b></div>
+      <div className="row aska-kv"><span>ИИ-люди</span><b>{info.people ? 'включены' : 'выключены'}</b></div>
+      {!ok && (
+        <ol className="aska-steps">
+          <li>Открой <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer">console.anthropic.com</a>, пополни баланс ($5 хватит надолго) и нажми «Create Key».</li>
+          <li>Скопируй ключ (начинается с <code>sk-ant-</code>), вставь ниже и нажми «Сохранить и проверить».</li>
+          <li>Заработало — ИИ-люди включатся сами, и новые персонажи появятся в «Знакомствах».</li>
+          <li>Пишет про 403 или страну — Claude не принимает запросы с сервера в России. Тогда заполни «Шлюз» или «Прокси» ниже.</li>
+        </ol>
+      )}
+      <label className="aska-field"><span className="lbl">Ключ Claude API</span>
+        <span className="row">
+          <input className="field" type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-ant-…" autoComplete="off" />
+          <button className="btn primary" disabled={busy || !key.trim()} onClick={() => act(async () => { await adminSetAi({ apiKey: key.trim() }); setKey(''); await verify(); })}>Сохранить и проверить</button>
+        </span>
+      </label>
+      <div className="row mt">
+        <button className="btn" disabled={busy || !ai.configured} onClick={() => act(verify)}>Проверить связь</button>
+        <span className="sp" />
+        {ai.hasKey && <button className="btn" disabled={busy} onClick={() => act(() => adminSetAi({ paused: !ai.paused }))}>{ai.paused ? '▶ Включить' : '⏸ Пауза'}</button>}
+        {ai.hasKey && <button className="btn" disabled={busy} onClick={() => act(() => adminSetAi({ apiKey: '' }))}>Удалить ключ</button>}
+      </div>
+      {check && <div className="hint">{check}</div>}
+      <label className="row aska-check">
+        <input type="checkbox" checked={info.people} disabled={busy || (!info.people && !ai.configured)} onChange={(e) => act(() => adminSetPeople(e.target.checked))} />
+        <span>ИИ-люди {info.people ? 'включены' : ai.configured ? 'выключены' : '— сначала ключ Claude'}</span>
+      </label>
+      <div className="hint">ИИ-люди живут в кругах, пишут как люди, у каждого свой темп. Все знают правила игры «Кто здесь ИИ?», но не знают, кто именно. Во всём серьёзном они честно признаются.</div>
+      <details className="aska-more" open={ai.region || Boolean(ai.baseUrl || ai.proxy)}>
+        <summary>Если Claude не пускает из России: шлюз или прокси</summary>
+        <div className="hint">Сервер АСЬКИ стоит в России, а Claude оттуда может не принимать запросы (ошибка 403). Выход — <b>шлюз</b> (адрес API, совместимый с Claude, с его же ключом) или <b>прокси</b> за границей. Через них идут сообщения, которые пишут ИИ, — выбирай тех, кому доверяешь.</div>
+        <label className="aska-field"><span className="lbl">Шлюз — адрес API{ai.baseUrl ? ` (сейчас ${ai.baseUrl})` : ''}</span>
           <span className="row">
-            <input className="field" type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-ant-…" autoComplete="off" />
-            <button className="btn" disabled={busy || !key.trim()} onClick={() => act(async () => { await adminSetAi({ apiKey: key.trim() }); setKey(''); })}>Сохранить</button>
+            <input className="field" value={base} onChange={(e) => setBase(e.target.value)} placeholder="https://…" autoComplete="off" inputMode="url" />
+            <button className="btn" disabled={busy || base.trim() === ai.baseUrl} onClick={() => act(async () => { await adminSetAi({ baseUrl: base.trim() }); if (ai.configured) await verify(); })}>{base.trim() ? 'Сохранить' : 'Убрать'}</button>
           </span>
         </label>
+        <label className="aska-field"><span className="lbl">Прокси{ai.proxy ? ` (сейчас ${ai.proxy})` : ''}</span>
+          <span className="row">
+            <input className="field" type="password" value={proxy} onChange={(e) => setProxy(e.target.value)} placeholder="http://логин:пароль@адрес:порт" autoComplete="off" />
+            <button className="btn" disabled={busy || !proxy.trim()} onClick={() => act(async () => { await adminSetAi({ proxy: proxy.trim() }); setProxy(''); if (ai.configured) await verify(); })}>Сохранить</button>
+            {ai.proxy && <button className="btn" disabled={busy} onClick={() => act(() => adminSetAi({ proxy: '' }))}>Убрать</button>}
+          </span>
+        </label>
+      </details>
+      <details className="aska-more">
+        <summary>Модель и лимит</summary>
         <label className="aska-field"><span className="lbl">Модель</span>
           <select className="field" value={ai.model} disabled={busy} onChange={(e) => act(() => adminSetAi({ model: e.target.value }))}>
             {ai.models.map((m) => <option key={m.id} value={m.id}>{m.name} — {m.note}</option>)}
@@ -73,28 +104,40 @@ export function Admin() {
             <button className="btn" disabled={busy || !limit || Number(limit) === ai.dailyLimit} onClick={() => act(() => adminSetAi({ dailyLimit: Number(limit) }))}>Сохранить</button>
           </span>
         </label>
-        <div className="row mt">
-          <button className="btn" disabled={busy || !ai.configured} onClick={() => act(async () => { const r = await adminCheckAi(); setAiCheck(r.ok ? `✅ Работает: «${r.reply}»` : `❌ ${r.error}`); })}>Проверить связь</button>
-          <span className="sp" />
-          {ai.hasKey && <button className="btn" disabled={busy} onClick={() => act(() => adminSetAi({ paused: !ai.paused }))}>{ai.paused ? '▶ Включить' : '⏸ Пауза'}</button>}
-          {ai.hasKey && <button className="btn" disabled={busy} onClick={() => act(() => adminSetAi({ apiKey: '' }))}>Удалить ключ</button>}
-        </div>
-        {aiCheck && <div className="hint">{aiCheck}</div>}
-      </div>
+      </details>
+    </div>
+  );
+}
 
-      <div className="groupbox">
-        <div className="legend">👀 ИИ-люди</div>
-        <div className="hint">
-          «Новые люди» — ИИ, которые живут в кругах, пишут как люди и иногда сами начинают разговор. У каждого свой темп: кто-то
-          отвечает сразу, кто-то — через несколько минут. Все знают правила игры «Кто здесь ИИ?», но не знают, кто именно.
-          Во всём серьёзном (здоровье, деньги, просьба сказать правду) они честно признаются.
-        </div>
-        <label className="row aska-check">
-          <input type="checkbox" checked={info.people} disabled={busy || (!info.people && !ai.configured)}
-            onChange={(e) => act(() => adminSetPeople(e.target.checked))} />
-          <span>{info.people ? 'Включены' : ai.configured ? 'Выключены' : 'Сначала вставь ключ Claude'}</span>
-        </label>
-      </div>
+export function Admin() {
+  const [info, setInfo] = useState<AdminInfo | null>(null);
+  const [smsKey, setSmsKey] = useState('');
+  const [smsCheck, setSmsCheck] = useState('');
+  const [codes, setCodes] = useState<Record<number, string>>({});
+  const [plateFor, setPlateFor] = useState<AdminUser | null>(null);
+  const [coinsFor, setCoinsFor] = useState<AdminUser | null>(null);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const load = () => adminInfo().then(setInfo).catch(() => setError('Не получилось загрузить.'));
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const act = async (fn: () => Promise<unknown>) => {
+    setBusy(true);
+    setError('');
+    try { await fn(); await load(); } catch (e) {
+      setError(e instanceof ApiError && e.code === 'ai_off' ? 'Сначала вставь ключ Claude.'
+        : e instanceof ApiError && (e.code === 'bad_url' || e.code === 'bad_proxy') ? 'Адрес не похож на ссылку: нужно http:// или https://…'
+          : 'Не получилось. Попробуй ещё раз.');
+    } finally { setBusy(false); }
+  };
+
+  if (!info) return <div className="hint">{error || 'Загружаю…'}</div>;
+
+  return (
+    <>
+      {error && <div className="err">{error}</div>}
+      <Brain info={info} busy={busy} act={act} />
 
       {info.party.started && <Party party={info.party} />}
 
