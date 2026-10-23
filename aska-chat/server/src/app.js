@@ -356,7 +356,12 @@ export function createApp({
   const api = express.Router();
   app.use('/api', api);
 
-  api.get('/health', (req, res) => res.json({ ok: true, version: process.env.APP_VERSION || 'dev' }));
+  // Состояние «мозга» видно снаружи (без ключей): есть ли ключ, включены ли ИИ-люди, чем кончился последний запрос
+  api.get('/health', (req, res) => {
+    const st = ai.status();
+    const brain = { key: st.configured, people: bots.peopleEnabled(), today: st.usedToday, ok: st.lastAt ? st.worked : null, error: st.lastError || undefined };
+    res.json({ ok: true, version: process.env.APP_VERSION || 'dev', brain });
+  });
 
   api.get('/invites/:code', (req, res) => {
     if (!allow(`inv:${req.ip}`, 30, 600_000)) return res.status(429).json({ error: 'too_many' });

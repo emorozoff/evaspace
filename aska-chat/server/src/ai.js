@@ -26,7 +26,14 @@ function parseJson(text) {
 
 export function createAi({ db, impl, fetchImpl, log = console.log }) {
   const conf = () => JSON.parse(getSetting(db, 'ai') || '{}');
-  let lastError = '';
+  // Последний исход запроса к Claude помним и после перезапуска — чтобы было видно, работает ли «мозг»
+  const last = () => JSON.parse(getSetting(db, 'ai_last') || '{}');
+  let lastError = last().error || '';
+  const remember = (error) => {
+    if (error === lastError && last().at) return;
+    lastError = error;
+    setSetting(db, 'ai_last', JSON.stringify({ ok: !error, error, at: Date.now() }));
+  };
   let active = 0;
   const queue = [];
 
@@ -113,10 +120,10 @@ export function createAi({ db, impl, fetchImpl, log = console.log }) {
     try {
       const out = impl ? await impl(req) : await callClaude(req);
       if (impl) bump(0, 0);
-      lastError = '';
+      remember('');
       return out && typeof out === 'object' ? out : null;
     } catch (e) {
-      lastError = explain(e);
+      remember(explain(e));
       log('ai error:', lastError);
       return null;
     } finally {
@@ -132,10 +139,10 @@ export function createAi({ db, impl, fetchImpl, log = console.log }) {
         ? await impl({ system: 'check', prompt: 'check', schema })
         : await callClaude({ system: 'Ты проверяешь связь. Ответь одним коротким приветствием по-русски.', prompt: 'Привет! Проверка связи.', schema, maxTokens: 2000 });
       if (!out) return { ok: false, error: 'Пустой ответ' };
-      lastError = '';
+      remember('');
       return { ok: true, reply: String(out.reply || 'ок') };
     } catch (e) {
-      lastError = explain(e);
+      remember(explain(e));
       return { ok: false, error: lastError };
     }
   }
@@ -153,6 +160,7 @@ export function createAi({ db, impl, fetchImpl, log = console.log }) {
     return {
       configured: configured(), hasKey: Boolean(c.apiKey), keyHint: c.apiKey ? `…${c.apiKey.slice(-4)}` : '',
       model: model(), models: MODELS, dailyLimit: limit(), usedToday: usage().calls, paused: Boolean(c.paused), lastError,
+      lastAt: last().at || 0, worked: Boolean(last().ok),
     };
   }
 
