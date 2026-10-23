@@ -25,18 +25,20 @@ const strip = q => { const {hidden, custom, rec, ...rest} = q; return rest; };
 const Questions = {
   set(type) {
     const d = Store.get('cfg', 'q_' + type);
-    /* правки сохранены для прежнего набора: берём новый, свои вопросы команды — в конец */
-    if (d && (d.ver || 1) < (Q_VER[type] || 1)) {
-      const prev = Q_PREV[type] || {test: [], talk: []};
-      const own = part => { const known = new Set([...Q_DEFAULT[type][part].map(q => q.id), ...prev[part]]); return (Array.isArray(d[part]) ? d[part] : []).filter(q => q && q.id && !known.has(q.id)); };
-      return {test: [...clone(Q_DEFAULT[type].test), ...own('test')], talk: [...clone(Q_DEFAULT[type].talk), ...own('talk')]};
-    }
-    return {test: d && Array.isArray(d.test) ? d.test : clone(Q_DEFAULT[type].test), talk: d && Array.isArray(d.talk) ? d.talk : clone(Q_DEFAULT[type].talk)};
+    if (!d) return {test: clone(Q_DEFAULT[type].test), talk: clone(Q_DEFAULT[type].talk)};
+    /* правки сохранены для прежнего набора (у анкеты и интервью версии свои): берём новый,
+       свои вопросы команды — в конец */
+    const prev = Q_PREV[type] || {test: [], talk: []};
+    const oldTest = (d.ver || 1) < (Q_VER[type] || 1);
+    const stale = {test: oldTest, talk: oldTest || (d.tver || 1) < (Q_TALK_VER[type] || 1)};
+    const own = part => { const known = new Set([...Q_DEFAULT[type][part].map(q => q.id), ...(prev[part] || [])]); return (Array.isArray(d[part]) ? d[part] : []).filter(q => q && q.id && !known.has(q.id)); };
+    const part = k => (stale[k] ? [...clone(Q_DEFAULT[type][k]), ...own(k)] : Array.isArray(d[k]) ? d[k] : clone(Q_DEFAULT[type][k]));
+    return {test: part('test'), talk: part('talk')};
   },
   test(type) { return this.set(type).test.filter(q => !q.hidden); },
   talk(type) { return this.set(type).talk.filter(q => !q.hidden); },
   find(type, id) { return this.set(type).test.find(q => q.id === id) || null; },
-  save(type, set) { return Store.put('cfg', 'q_' + type, {test: set.test, talk: set.talk, ver: Q_VER[type] || 1, at: Date.now()}); },
+  save(type, set) { return Store.put('cfg', 'q_' + type, {test: set.test, talk: set.talk, ver: Q_VER[type] || 1, tver: Q_TALK_VER[type] || 1, at: Date.now()}); },
   reset(type) { return Store.remove('cfg', 'q_' + type); },
   /* что изменили в анкете относительно стартового набора — едет в ссылке */
   diff(type, part = 'test') {
@@ -50,6 +52,7 @@ const Questions = {
     if (!h.length && !c.length && !s) return null;
     const d = {};
     if ((Q_VER[type] || 1) > 1) d.v = Q_VER[type];
+    if (part === 'talk' && (Q_TALK_VER[type] || 1) > 1) d.tv = Q_TALK_VER[type];
     if (h.length) d.h = h;
     if (c.length) d.c = c;
     if (s) d.s = s;
@@ -77,11 +80,19 @@ const People = {
       ...Object.entries(s3Map(p.type)).map(([k, z]) => [`3:${k}`, `3 · ${T.steps[2]}: ${z.name.toLowerCase()}`])];
   },
   stageOf(p) { const c = this.col(p); return c === 3 ? `3:${p.s3 || 'none'}` : String(c); },
+  /* теги группы: сначала те, что уже стоят на карточках (чаще — выше), потом готовые подсказки */
+  tagsOf(type) {
+    const n = {};
+    this.all(type).forEach(p => (p.tags || []).forEach(t => { n[t] = (n[t] || 0) + 1; }));
+    const used = Object.keys(n).sort((a, b) => n[b] - n[a] || a.localeCompare(b, 'ru'));
+    return {list: [...new Set([...used, ...(PERSON_TAGS[type] || [])])], n};
+  },
   connected(p) { return p.type === 'client' ? ['done', 'fan'].includes(p.s3) : p.s3 === 'yes'; },
   /* строка под именем: без смайлов, чтобы читалась с одного взгляда */
-  sub(p) {
+  /* chips — рядом и так показаны направления чипами (доска, шапка карточки) */
+  sub(p, chips = false) {
     const a = p.answers || {};
-    if (p.type === 'expert') return [p.topic || a.topic || (p.dirs || []).map(noEmo).join(', '), p.city].filter(Boolean).join(' · ');
+    if (p.type === 'expert') return [p.topic || a.topic || (chips ? '' : (p.dirs || []).map(noEmo).join(', ')), p.city].filter(Boolean).join(' · ');
     if (p.type === 'partner') return [noEmo(p.cat), p.city].filter(Boolean).join(' · ');
     if (p.type === 'amb') return [a.size ? `аудитория ${noEmo(a.size)}` : '', p.city].filter(Boolean).join(' · ');
     const age = ageFromBirth(a.birth);

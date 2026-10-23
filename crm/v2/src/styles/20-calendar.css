@@ -110,6 +110,9 @@
 .timer.on{background:var(--rose-soft); color:var(--rose);}
 .iv-prog{display:inline-flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-2);}
 .iv-prog b{font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums;}
+/* план интервью по времени: «в графике» / «отстаём на 3 мин» */
+.iv-plan{display:inline-flex; align-items:center; height:24px; padding:0 9px; border-radius:12px; font-size:12px; font-weight:600; background:var(--sunken); color:var(--ink-2); white-space:nowrap; font-variant-numeric:tabular-nums;}
+.iv-plan.good{background:var(--good-soft); color:var(--good);} .iv-plan.warn{background:var(--warn-soft); color:var(--warn);} .iv-plan.bad{background:var(--bad-soft); color:var(--bad);}
 .iv-pbar{width:90px; height:6px; border-radius:3px; background:var(--sunken); overflow:hidden; display:inline-block;}
 .iv-pbar i{display:block; height:100%; background:var(--good); border-radius:3px;}
 .iv-script{border:1px dashed var(--line-strong); border-radius:12px; padding:10px 14px; margin-bottom:10px; background:var(--surface-2); font-size:13.5px;}

@@ -220,12 +220,13 @@ App.register('person', {
         <div><h1>${esc(People.name(p))}</h1>
           <div class="ph-sub"><span class="code" title="Личный код: в ссылке на анкету и в реферальной ссылке">${esc(p.code)}</span>
             <span>${esc(T.one)}</span>
-            ${People.sub(p) ? `<span>${esc(People.sub(p))}</span>` : ''}
+            ${People.sub(p, true) ? `<span>${esc(People.sub(p, true))}</span>` : ''}
             ${tgLink}
             ${p.evaId ? `<span title="ID в приложении Ева">EVA ID ${esc(p.evaId)}</span>` : ''}
             ${p.contact ? `<span>контакт: ${esc(p.contact)}</span>` : ''}
             ${ref ? `<span>по приглашению <a href="#p-${ref.id}">${esc(People.name(ref))}</a></span>` : p.ref ? `<span>по приглашению ${esc(p.ref)}</span>` : ''}
-            ${invited.length ? `<span>по ссылке пришли: ${invited.length}</span>` : ''}</div></div>
+            ${invited.length ? `<span>по ссылке пришли: ${invited.length}</span>` : ''}</div>
+          ${(p.tags || []).length || (p.dirs || []).length || canEdit ? `<div class="ph-tags">${p.type === 'expert' ? (p.dirs || []).map(d => `<span class="tagchip dir">${esc(noEmo(d))}</span>`).join('') : ''}${(p.tags || []).map(t => `<span class="tagchip">${esc(t)}</span>`).join('')}${canEdit ? `<button class="tag-add" data-tags-edit title="Теги — по ним удобно искать и фильтровать на доске">${icon((p.tags || []).length ? 'edit' : 'tag')}${(p.tags || []).length ? 'Теги' : 'Добавить тег'}</button>` : ''}</div>` : ''}</div>
         <div class="ph-acts">${canEdit ? `<label class="pp-move"><span>Этап</span><select class="select sm" data-move>${opts(People.stages(p), People.stageOf(p))}</select></label>
           <button class="btn sm" data-act="link" data-pid="${p.id}">${icon('link')}Скопировать ссылку</button><button class="btn sm" data-act="tlink" data-pid="${p.id}" title="Вопросы ${p.type === 'client' ? 'интервью' : 'созвона'} — человек ответит сам, ответы лягут в карточку">${icon('link')}Ссылка на ${p.type === 'client' ? 'интервью' : 'вопросы'}</button><button class="icon-btn" data-edit-person title="Изменить данные">${icon('edit')}</button>` : ''}${Who.can('delete') ? `<button class="icon-btn" data-del title="Удалить">${icon('trash')}</button>` : ''}</div>
       </div>
@@ -308,6 +309,13 @@ App.register('person', {
       toast('Отмечено: подарок выдан');
     });
     on(root, 'click', '[data-edit-person]', () => openEditPerson(p));
+    /* теги: из списка группы (что уже стоит на карточках и готовые подсказки) или свой */
+    on(root, 'click', '[data-tags-edit]', async (e, el) => {
+      const cur = (People.get(p.id) || p).tags || [];
+      const v = await multiPop(el, {items: People.tagsOf(p.type).list, selected: cur, allowNew: true, placeholder: 'Найти или добавить тег…'});
+      if (!v || JSON.stringify(v) === JSON.stringify(cur)) return;
+      People.patch(p.id, {tags: v}, v.length ? `Теги: ${v.join(', ')}` : 'Убрали теги', '🏷');
+    });
     /* перенести на этап — то же, что перетащить карточку на доске, но работает и на телефоне */
     on(root, 'change', '[data-move]', (e, el) => moveToStage(p, el.value));
     on(root, 'click', '[data-del]', async (e, el) => {
@@ -325,18 +333,21 @@ function openEditPerson(p) {
       <label class="field"><span>${p.type === 'partner' ? 'Название' : 'Имя'}</span><input class="input" id="epName" value="${esc(p.name || '')}"></label>
       <div class="grid2"><label class="field"><span>Telegram или телефон</span><input class="input" id="epTg" value="${esc(p.tg || '')}"></label>
       <label class="field"><span>Город</span><input class="input" id="epCity" value="${esc(p.city || '')}"></label></div>
-      ${p.type === 'expert' ? `<div class="field"><span>Направления</span><div class="ans" id="epDirs">${DIRECTIONS.map(d => `<button type="button" class="${(p.dirs || []).includes(d) ? 'on' : ''}" data-v="${esc(d)}">${esc(noEmo(d))}</button>`).join('')}</div></div>
+      ${p.type === 'expert' ? `<div class="field"><span>Направления</span>${pickedHtml('epDirs', p.dirs || [], 'Выбрать из списка')}</div>
         <label class="field"><span>Тема экспертизы</span><input class="input" id="epTopic" value="${esc(p.topic || (p.answers || {}).topic || '')}"></label>` : ''}
       ${p.type === 'partner' ? `<label class="field"><span>Категория</span><select class="select" id="epCat">${PARTNER_CATS.map(c => `<option value="${esc(c)}" ${p.cat === c ? 'selected' : ''}>${esc(noEmo(c))}</option>`).join('')}</select></label>
         <label class="field"><span>Контактное лицо</span><input class="input" id="epContact" value="${esc(p.contact || '')}"></label>` : ''}
+      <div class="field"><span>Теги</span>${pickedHtml('epTags', p.tags || [], 'Добавить теги')}</div>
       <label class="field"><span>Кто ведёт</span><select class="select" id="epOwner"><option value="">—</option>${Team.all().map(m => `<option value="${m.id}" ${p.owner === m.id ? 'selected' : ''}>${esc(Team.name(m))}</option>`).join('')}</select></label>
       <label class="field"><span>Группа</span><select class="select" id="epType">${Object.keys(TYPES).map(k => `<option value="${k}" ${p.type === k ? 'selected' : ''}>${groupName(k)}</option>`).join('')}</select></label>`,
     foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Сохранить</button>',
     onMount(el, close) {
-      on(el, 'click', '#epDirs button', (e, b) => b.classList.toggle('on'));
+      const picked = {epDirs: [...(p.dirs || [])], epTags: [...(p.tags || [])]};
+      wirePicked(el, picked, {epDirs: {items: DIRECTIONS, label: noEmo, placeholder: 'Найти направление…'}, epTags: {items: People.tagsOf(p.type).list, allowNew: true, placeholder: 'Найти или добавить тег…'}});
       $('[data-ok]', el).onclick = () => {
         const d = {name: $('#epName', el).value.trim() || p.name, tg: $('#epTg', el).value.trim(), city: $('#epCity', el).value.trim(), owner: $('#epOwner', el).value || null, type: $('#epType', el).value};
-        if ($('#epDirs', el)) { d.dirs = $$('#epDirs button.on', el).map(b => b.dataset.v); d.topic = $('#epTopic', el).value.trim(); }
+        if ($('#epDirs', el)) { d.dirs = picked.epDirs; d.topic = $('#epTopic', el).value.trim(); }
+        d.tags = picked.epTags;
         if ($('#epCat', el)) { d.cat = $('#epCat', el).value; d.contact = $('#epContact', el).value.trim(); }
         People.patch(p.id, d);
         close();

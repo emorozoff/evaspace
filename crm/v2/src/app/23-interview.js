@@ -18,12 +18,31 @@ const Timer = {
     View.set('tm.' + pid, t);
   },
   reset(pid) { View.set('tm.' + pid, null); },
-  /* одна секундная стрелка на всё окно: обновляет все таймеры на экране */
+  /* одна секундная стрелка на всё окно: обновляет все таймеры и «в графике ли мы» на экране */
   wire() {
     if (this.id) return;
-    this.id = setInterval(() => $$('[data-timer-for]').forEach(el => { el.textContent = dur(Timer.secs(el.dataset.timerFor)); }), 1000);
+    this.id = setInterval(() => {
+      $$('[data-timer-for]').forEach(el => { el.textContent = dur(Timer.secs(el.dataset.timerFor)); });
+      $$('[data-pace]').forEach(el => { const [tone, text] = pace(Timer.secs(el.dataset.pace), Number(el.dataset.due), Number(el.dataset.total)); el.className = 'iv-plan ' + tone; el.textContent = text; });
+    }, 1000);
   },
 };
+/* план по времени (у разделов интервью есть минуты): к концу какой минуты должен закончиться каждый раздел */
+function talkPlan(type, blocks) {
+  if (!blocks.length || !blocks.every(g => g.min)) return null;
+  const lead = Math.ceil((TALK_SCRIPT_MIN[type] || 0) / 2);
+  let t = lead;
+  const ends = blocks.map(g => (t += g.min));
+  return {ends, total: t + (TALK_SCRIPT_MIN[type] || 0) - lead};
+}
+/* идём ли по плану: до старта — сколько всего, дальше — «в графике» или на сколько отстаём */
+function pace(secs, due, total) {
+  const m = secs / 60;
+  if (!secs) return ['', `план ${total} мин`];
+  if (m > total + 1) return ['bad', `дольше плана на ${Math.round(m - total)} мин`];
+  if (m > due + 1) return ['warn', `отстаём на ${Math.round(m - due)} мин`];
+  return ['good', `в графике · план ${total} мин`];
+}
 
 /* что показать из анкеты перед созвоном — самое полезное для разговора */
 const KNOWN = {
@@ -37,7 +56,7 @@ const KNOWN = {
 /* сценарий: что сказать в начале и в конце */
 const SCRIPT = {
   client: {
-    intro: ['Спасибо, что нашла время! Займёт минут 25.', 'Мы делаем Еву и хотим понять твой настоящий опыт. Правильных ответов нет, критика очень помогает.', 'Можно я буду коротко записывать? Ответы увидит только команда.', 'Буду спрашивать про то, что уже было, а не про «купила бы ты».'],
+    intro: ['Спасибо, что нашла время! Займёт около 40 минут.', 'Мы делаем Еву и хотим понять твой настоящий опыт. Правильных ответов нет, критика очень помогает.', 'Можно я буду коротко записывать? Ответы увидит только команда.', 'Буду спрашивать про то, что уже было, а не про «купила бы ты».'],
     outro: ['Что я не спросила, а стоило бы?', 'Можно написать тебе через месяц и показать, что получилось?', 'Кого из подруг нам стоит расспросить? Могу прислать ссылку.', 'Спасибо! Ты очень помогла.'],
   },
   expert: {
@@ -86,6 +105,18 @@ const LEGACY_TALK = {
     t9: 'Если уже пробовала Еву: что было самым полезным? Что раздражало?', t10: 'Какой формат тебе ближе: практика, мастер-класс, эфир, сообщество, офлайн?',
     t11: 'Когда тебе удобно получать напоминания? Какие уведомления бесят?', t12: 'Сколько должна стоить такая подписка?',
     t13: 'Что должно произойти, чтобы ты сказала подруге «попробуй Еву»?', t14: 'Если бы Ева была твоей: что бы ты добавила, а что убрала?', t15: 'Можно написать тебе через месяц? Кого из подруг расспросить?',
+    /* интервью до 23.10 (37 вопросов): эти вошли в соседние, ответы на них остаются в карточке */
+    t_mood: 'Что повышает тебе настроение?', t_selftime: 'Успеваешь уделять время себе утром — или день сразу начинается с суеты?', t_day: 'Опиши свой обычный день от обеда до вечера.',
+    t_audio: 'В какие моменты ты слушаешь подкасты или музыку?', t_fallasleep: 'Легко ли тебе уснуть? Что мешает?', t_switch: 'Что помогает тебе переключиться с работы и семьи на отдых?',
+    t_drain: 'Что сейчас больше всего забирает твои силы или настроение? Когда это было в последний раз?', t_best: 'Какая сфера твоей жизни сейчас закрыта лучше всего?',
+    t_grateful: 'За что ты благодарна своему нынешнему образу жизни?', t_hour: 'Если бы в твоём дне появился лишний час только для себя — на что бы ты его потратила?',
+    t_how: 'Как ты смотришь полезный контент: выделяешь время и сидишь с блокнотом, включаешь фоном за готовкой или в зале, слушаешь в дороге?',
+    t_annoy: 'Что тебя больше всего раздражает в приложениях — из-за чего сразу закрываешь или удаляешь?', t_push: 'Как ты относишься к push-уведомлениям? Какие бесят, а какие реально помогают?',
+    t_overload: 'Бывает ли у тебя ощущение перегруза? Что его вызывает?', t_saved: 'Сохраняешь ли ты полезное «на потом»? Как часто к нему возвращаешься?',
+    t_worth: 'За какой контент — курсы, гайды, подписки, вебинары — за последний год тебе было совсем не жалко денег? Почему?',
+    t_follow: 'На кого из известных женщин, спикеров или блогеров ты подписана и кого регулярно слушаешь? За что ты их ценишь?',
+    t_visual: 'Что быстрее привлекает твоё внимание: красивый «кинематографичный» кадр или динамичный разбор на доске или с презентацией?',
+    t_result: 'Как ты понимаешь, что прошла через трансформацию: изменилось состояние, появились результаты в деньгах или отношениях, стало легко на душе?',
   },
 };
 function legacyTalk(p) {
@@ -109,12 +140,16 @@ function interviewPane(p, canEdit) {
   const done = p.s2 === 'done';
   const blocks = groupByBlock(p.type, 'talk', qs);
   const legacy = legacyTalk(p);
+  const plan = talkPlan(p.type, blocks);
+  const curB = Math.max(0, cur ? blocks.findIndex(g => g.qs.includes(cur)) : blocks.length - 1);
+  const pc = plan ? pace(secs, plan.ends[curB], plan.total) : null;
   return `<div class="iv">
     <div class="iv-main">
       <div class="iv-bar">
         <span class="timer ${run ? 'on' : ''}" data-timer-for="${p.id}" title="Длительность">${dur(secs)}</span>
         ${canEdit ? `<button class="btn sm" data-iv-timer>${run ? `${icon('pause')}Пауза` : `${icon('play')}${secs ? 'Продолжить' : 'Старт'}`}</button>` : ''}
         <span class="iv-prog"><b>${n}</b> из ${qs.length} вопросов<span class="iv-pbar"><i style="width:${qs.length ? (n / qs.length * 100).toFixed(0) : 0}%"></i></span></span>
+        ${plan && !done ? `<span class="iv-plan ${pc[0]}" data-pace="${p.id}" data-due="${plan.ends[curB]}" data-total="${plan.total}" title="Раздел «${esc(blocks[curB].name)}» по плану заканчивается к ${plan.ends[curB]}-й минуте">${pc[1]}</span>` : ''}
         <span class="sp"></span>
         ${p.zoom ? `<a class="btn sm" href="${esc(p.zoom)}" target="_blank" rel="noopener">${icon('cam')}Zoom</a>` : ''}
         <button class="btn sm ghost" data-copy-q title="Скопировать вопросы в заметки Zoom">${icon('copy')}</button>
@@ -122,8 +157,8 @@ function interviewPane(p, canEdit) {
         ${done ? `<span class="st good">${p.callDur ? `прошёл · ${Math.round(p.callDur / 60)} мин` : 'прошёл'}</span>` : ''}
       </div>
       <details class="iv-script" ${n ? '' : 'open'}><summary>Начало разговора</summary><ol>${S.intro.map(x => `<li>${esc(x)}</li>`).join('')}</ol></details>
-      ${blocks.length > 1 ? `<nav class="iv-nav" aria-label="Блоки интервью">${blocks.map((g, bi) => { const k = g.qs.filter(asked).length; return `<a href="#" data-iv-go="${bi}" class="${k === g.qs.length ? 'done' : g.qs.includes(cur) ? 'cur' : ''}"><b>${esc(g.name)}</b><small>${k}/${g.qs.length}</small></a>`; }).join('')}</nav>` : ''}
-      <div class="talk">${blocks.map((g, bi) => `${blocks.length > 1 ? `<h3 class="iv-bh" id="ivb-${bi}">${esc(g.name)}<small>${g.qs.filter(asked).length} из ${g.qs.length}</small></h3>` : ''}${g.qs.map(q => { const i = qs.indexOf(q); const x = talk[q.id] || {}; const isAsked = asked(q); return `<div class="tq ${x.a ? 'filled' : ''} ${cur && cur.id === q.id ? 'cur' : ''} ${isAsked ? 'asked' : ''}">
+      ${blocks.length > 1 ? `<nav class="iv-nav" aria-label="Блоки интервью">${blocks.map((g, bi) => { const k = g.qs.filter(asked).length; return `<a href="#" data-iv-go="${bi}" class="${k === g.qs.length ? 'done' : g.qs.includes(cur) ? 'cur' : ''}"><b>${esc(g.name)}</b><small>${k}/${g.qs.length}${g.min ? ` · ${g.min} мин` : ''}</small></a>`; }).join('')}</nav>` : ''}
+      <div class="talk">${blocks.map((g, bi) => `${blocks.length > 1 ? `<h3 class="iv-bh" id="ivb-${bi}">${esc(g.name)}<small>${g.qs.filter(asked).length} из ${g.qs.length}${g.min ? ` · ≈${g.min} мин${plan ? `, к ${plan.ends[bi]}-й минуте` : ''}` : ''}</small></h3>` : ''}${g.qs.map(q => { const i = qs.indexOf(q); const x = talk[q.id] || {}; const isAsked = asked(q); return `<div class="tq ${x.a ? 'filled' : ''} ${cur && cur.id === q.id ? 'cur' : ''} ${isAsked ? 'asked' : ''}">
         <div class="tq-h">${canEdit ? `<button class="tq-n" data-asked="${q.id}" title="${isAsked ? 'Задан' : 'Отметить, что вопрос задан'}">${isAsked ? '✓' : i + 1}</button>` : `<i>${i + 1}</i>`}<b>${esc(q.t)}</b>${x.self ? '<span class="st violet" title="Ответ пришёл по ссылке на интервью">ответила сама</span>' : ''}${canEdit ? `<button class="star ${x.star ? 'on' : ''}" data-star="${q.id}" title="${x.star ? 'Убрать из цитат' : 'Яркая цитата — попадёт в статистику'}">${icon('star')}</button>` : x.star ? `<span class="star on">${icon('star')}</span>` : ''}</div>
         ${q.why ? `<div class="tq-why">Зачем: ${esc(q.why)}</div>` : ''}
         ${(q.pick || []).length ? `<div class="tq-pick" role="group" aria-label="Быстрая метка">${q.pick.map(o => `<button type="button" class="${x.pick === o ? 'on' : ''}" data-pick="${q.id}" data-v="${esc(o)}" ${canEdit ? '' : 'disabled'}>${esc(o)}</button>`).join('')}</div>` : ''}

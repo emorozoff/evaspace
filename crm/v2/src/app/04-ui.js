@@ -197,6 +197,69 @@ function pickPop(anchor, items, current) {
   });
 }
 
+/* ── выбор нескольких из длинного списка: поиск, галочки, «добавить свой» (направления эксперта, теги).
+   Возвращает выбранные значения или null, если закрыли без «Готово» ── */
+function multiPop(anchor, {items, selected = [], allowNew = false, placeholder = 'Найти…', label = (x => x)}) {
+  return new Promise(resolve => {
+    closePops();
+    const pop = document.createElement('div');
+    pop.className = 'pop multi';
+    pop.setAttribute('role', 'dialog');
+    const all = [...new Set([...items, ...selected])];
+    const sel = new Set(selected);
+    pop.innerHTML = `<input class="input sm multi-q" type="search" autocomplete="off"><div class="multi-list" role="listbox" aria-multiselectable="true"></div>
+      <div class="multi-foot"><span class="multi-n"></span><button class="btn sm" data-no>Отмена</button><button class="btn sm primary" data-ok>Готово</button></div>`;
+    const q = $('.multi-q', pop), list = $('.multi-list', pop);
+    q.placeholder = placeholder;
+    const draw = () => {
+      const v = q.value.trim(), lv = v.toLowerCase();
+      const hits = all.filter(x => !lv || String(label(x)).toLowerCase().includes(lv));
+      list.innerHTML = hits.map(x => `<label class="multi-i"><input type="checkbox" value="${esc(x)}" ${sel.has(x) ? 'checked' : ''}><span>${esc(label(x))}</span></label>`).join('')
+        + (allowNew && v && !all.some(x => String(label(x)).toLowerCase() === lv) ? `<button type="button" class="multi-new" data-new>＋ Добавить «${esc(v)}»</button>` : '')
+        + (!hits.length && !(allowNew && v) ? '<p class="note">Ничего не нашлось</p>' : '');
+      $('.multi-n', pop).textContent = sel.size ? `выбрано: ${sel.size}` : '';
+    };
+    const add = () => { const v = q.value.trim().slice(0, 40); if (!v) return; if (!all.includes(v)) all.push(v); sel.add(v); q.value = ''; draw(); q.focus(); };
+    list.addEventListener('change', e => { const c = e.target.closest('input'); if (!c) return; if (c.checked) sel.add(c.value); else sel.delete(c.value); $('.multi-n', pop).textContent = sel.size ? `выбрано: ${sel.size}` : ''; });
+    list.addEventListener('click', e => { if (e.target.closest('[data-new]')) add(); });
+    q.addEventListener('input', draw);
+    q.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const hit = $$('.multi-i input', list);
+      if (hit.length === 1) { hit[0].checked = !hit[0].checked; hit[0].dispatchEvent(new Event('change', {bubbles: true})); q.select(); }
+      else if (allowNew && !hit.length) add();
+    });
+    draw();
+    document.body.appendChild(pop);
+    const r = anchor.getBoundingClientRect();
+    const w = pop.offsetWidth, h = pop.offsetHeight;
+    let top = r.bottom + 4, left = r.left;
+    if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 4);
+    left = clamp(left, 8, window.innerWidth - w - 8);
+    pop.style.top = (top + window.scrollY) + 'px';
+    pop.style.left = (left + window.scrollX) + 'px';
+    function done(v) {
+      pop.remove();
+      document.removeEventListener('mousedown', outside, true);
+      document.removeEventListener('keydown', key, true);
+      resolve(v);
+    }
+    pop._done = () => done(null);
+    const outside = e => { if (!pop.contains(e.target)) done(null); };
+    const key = e => { if (e.key === 'Escape') { e.stopPropagation(); done(null); } };
+    setTimeout(() => document.addEventListener('mousedown', outside, true), 0);
+    document.addEventListener('keydown', key, true);
+    $('[data-ok]', pop).onclick = () => done(all.filter(x => sel.has(x)));
+    $('[data-no]', pop).onclick = () => done(null);
+    if (!matchMedia('(pointer:coarse)').matches) q.focus();
+  });
+}
+/* выбранное — чипами и кнопка «Выбрать…»: для форм (направления эксперта) */
+function pickedHtml(id, values, empty = 'Выбрать') {
+  return `<div class="picked" id="${id}">${values.map(v => `<span class="tagchip">${esc(noEmo(v))}</span>`).join('')}<button type="button" class="btn sm" data-pick-open="${id}">${icon(values.length ? 'edit' : 'plus')}${values.length ? 'Изменить' : esc(empty)}</button></div>`;
+}
+
 /* ── подсказка «как пользоваться» на странице: скрывается и возвращается ── */
 function helpBox(key, html) {
   const hidden = Local.get('eva-crm2-help', {})[key];
@@ -248,8 +311,8 @@ function funnelBars(rows, {money = false} = {}) {
   }).join('')}</div>`;
 }
 /* строки «название — полоса — значение», например источники */
-function hbarList(rows, {valFmt = fmt, color = 'var(--link)', sub = null} = {}) {
-  const max = Math.max(1, ...rows.map(r => r.v));
+function hbarList(rows, {valFmt = fmt, color = 'var(--link)', sub = null, max: top = 0} = {}) {
+  const max = top || Math.max(1, ...rows.map(r => r.v));
   if (!rows.length) return '<p class="note">Пока нет данных.</p>';
   return `<div class="hbl">${rows.map(r => `<div class="hbl-r">
       <span class="hbl-n">${r.dot ? `<i class="dot" style="background:${r.dot}"></i>` : ''}${esc(r.name)}</span>

@@ -336,6 +336,22 @@ async function browserHash(pw, salt) {
   let lim = 0;
   for (let i = 0; i < 11 && !lim; i++) if ((await anon.req('POST', '/crm/api/talk', {t: 'k', a: {name: 'Спам ' + i, t_pain: 'x'}})).status === 429) lim = i + 1;
   ok(lim && lim <= 10, 'общая ссылка: много новых карточек с одного адреса — стоп', lim);
+  /* анкета на своём сервере: ответы сразу в карточку (без пересылки ссылки менеджеру) */
+  ok((await anon.req('POST', '/crm/api/anketa', {t: 'k', c: 'ANNA482', a: {energy: 5}}, {noHeader: true})).status === 403, 'анкета: не со страницы — нет');
+  ok((await anon.req('POST', '/crm/api/anketa', {t: 'k', c: 'NOPE999', a: {energy: 5}})).status === 404, 'анкета: чужой код — нет');
+  ok((await anon.req('POST', '/crm/api/anketa', {t: 'e', c: 'ANNA482', a: {energy: 5}})).status === 400, 'анкета: ссылка другой группы — нет');
+  r = await anon.req('POST', '/crm/api/anketa', {t: 'k', c: 'anna482', g: 1, a: {energy: 5, pain: ['Нет времени', 42], city: 'Казань', 'bad id!': 'x', obj: {x: 1}}, k: {name: 'Взлом', city: 'Казань', role: 'owner'}});
+  let c1 = (await lead.get('/crm/api/state')).j.collections.people.c1;
+  ok(r.status === 200 && r.j.c === 'ANNA482' && c1.answers.energy === 5 && c1.answers.pain.join() === 'Нет времени' && !c1.answers['bad id!'] && !c1.answers.obj, 'анкета: ответы в карточке, лишнее отброшено', c1.answers);
+  ok(c1.s1 === 'done' && c1.answeredBy === 'self' && c1.name === 'Клиентка' && c1.city === 'Казань' && !c1.role && c1.gift && c1.gift.done === false, 'анкета: шаг, город, подарок; имя не затёрто', {s1: c1.s1, name: c1.name, city: c1.city, gift: c1.gift});
+  r = await anon.req('POST', '/crm/api/anketa', {t: 'k', c: 'ANNA482', r: 1, a: {name: 'Подруга Аня', energy: 7}, k: {name: 'Подруга Аня'}});
+  let fr = Object.values((await lead.get('/crm/api/state')).j.collections.people).find(x => x.name === 'Подруга Аня');
+  ok(r.status === 200 && fr && fr.code === r.j.c && fr.ref === 'ANNA482' && fr.source === 'ref' && fr.s1 === 'done' && fr.answers.energy === 7, 'анкета «Меня пригласили»: новая карточка, кто позвал', fr);
+  ok((await anon.req('POST', '/crm/api/anketa', {t: 'k', c: r.j.c, a: {energy: 8}})).status === 200
+    && Object.values((await lead.get('/crm/api/state')).j.collections.people).filter(x => x.name === 'Подруга Аня').length === 1, 'анкета: правка после отправки — в ту же карточку');
+  r = await anon.req('POST', '/crm/api/anketa', {t: 'e', a: {name: 'Мария Эксперт', dirs: ['Йога']}, k: {name: 'Мария Эксперт', dirs: ['Йога']}});
+  fr = Object.values((await lead.get('/crm/api/state')).j.collections.people).find(x => x.name === 'Мария Эксперт');
+  ok(r.status === 200 && fr && fr.type === 'expert' && fr.dirs.join() === 'Йога' && !fr.gift, 'анкета без кода: новая карточка эксперта', fr);
   ok((await lead.put('cfg', 'q_client', {test: [], talk: [], at: 1}, '/crm/api')).status === 200, 'вопросы анкеты — да');
   ok((await lead.patch('cfg', 'settings', {anketaUrl: 'https://evil'}, '/crm/api')).status === 404 && (await lead.put('cfg', 'settings', {anketaUrl: 'https://evil'}, '/crm/api')).status === 403, 'настройки CRM — нет');
   ok((await owner.patch('team', 'tm_lead', {role: 'viewer'}, '/crm/api')).status === 200, 'руководитель делает наблюдателем');
@@ -762,6 +778,33 @@ async function browserHash(pw, salt) {
       const oldv = await fetch(B4 + '/api/zoom/video/old/0', {headers: {cookie: own.cookie, range: 'bytes=0-4'}});
       ok(oldv.status === 206 && (await oldv.text()) === '01234', 'и смотрится в штабе');
     } finally { srv.kill(); fake.close(); }
+  }
+
+  console.log('21. разовая правка данных CRM: тестовые карточки (без сервера, на копии)');
+  {
+    const fs = require('fs'), os = require('os'), path = require('path');
+    const {JsonStore} = require('../lib/store'), {runFixes} = require('../lib/crm-fixes');
+    const mk = docs => { const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'evafix-')); const st = new JsonStore({file: path.join(dir, 'eva-crm.json'), cols: ['team', 'people', 'cfg'], format: 'eva-crm'}).load(); Object.entries(docs).forEach(([c, d]) => Object.entries(d).forEach(([id, x]) => st.set(c, id, x))); st.flush(); return {dir, st}; };
+    const old = Date.UTC(2026, 9, 15), fresh = Date.UTC(2026, 9, 23, 12);
+    const {dir, st} = mk({people: {
+      al: {type: 'client', name: 'Алёна Красильникова', createdAt: old, talk: {t_job: {a: 'x'}}}, c1: {type: 'client', name: 'Маша', createdAt: old}, c2: {type: 'client', name: 'Новая настоящая', createdAt: fresh},
+      d1: {type: 'expert', name: 'Пример эксперт', demo: true, createdAt: old}, e1: {type: 'expert', name: 'Ирина Йога', createdAt: old}, e2: {type: 'partner', name: 'Студия тест', createdAt: fresh}},
+      team: {dm_anna: {demo: true, name: 'Анна'}, tm1: {name: 'Зуля', uid: 'u1'}}, cfg: {meta2: {demo: true}, settings: {x: 1}}});
+    const logs = [];
+    const done = runFixes(st, dir, {log: x => logs.push(x)});
+    const ids = c => Object.keys(st.col(c)).sort().join(',');
+    ok(ids('people') === 'al,c2,e1' && ids('team') === 'tm1' && ids('cfg') === 'settings', 'правка: осталась Алена, новые клиентки и настоящие эксперты', {people: ids('people'), team: ids('team'), cfg: ids('cfg')});
+    const bk = JSON.parse(fs.readFileSync(path.join(dir, 'removed', '2026-10-23-test-data.json'), 'utf8'));
+    ok(Object.keys(bk.collections.people).sort().join() === 'c1,d1,e2' && bk.collections.people.c1.name === 'Маша' && bk.collections.team.dm_anna, 'правка: удалённое сохранено копией', bk.collections);
+    ok(done['2026-10-23-test-data'] && JSON.parse(fs.readFileSync(path.join(dir, 'crm-fixes.json'), 'utf8'))['2026-10-23-test-data'], 'правка отмечена сделанной', logs);
+    st.set('people', 'c3', {type: 'client', name: 'Ещё тест', createdAt: old});
+    runFixes(st, dir, {log: () => {}});
+    ok(st.get('people', 'c3'), 'правка не повторяется при следующем запуске');
+    const st2 = new JsonStore({file: path.join(dir, 'eva-crm.json'), cols: ['team', 'people', 'cfg'], format: 'eva-crm'}).load();
+    ok(!st2.get('people', 'c1') && st2.get('people', 'al'), 'правка записана в файл данных');
+    const b2 = mk({people: {c1: {type: 'client', name: 'Маша', createdAt: old}, d1: {type: 'client', name: 'Пример', demo: true, createdAt: old}}});
+    runFixes(b2.st, b2.dir, {log: () => {}});
+    ok(b2.st.get('people', 'c1') && !b2.st.get('people', 'd1'), 'нет карточки Алены — клиенток без пометок не трогаем, пример убираем');
   }
 
   console.log(`\nИтог: прошло ${pass}, не прошло ${failN}`);

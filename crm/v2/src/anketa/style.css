@@ -168,6 +168,12 @@ input[type=date].inp{appearance:none; -webkit-appearance:none;}
 @keyframes wiggle{0%,86%,100%{transform:rotate(0);} 90%{transform:rotate(-10deg);} 94%{transform:rotate(9deg);} 97%{transform:rotate(-5deg);}}
 .gift b{display:block; font:600 16px/1.3 var(--f-display);}
 .gift span{font-size:13.5px; color:var(--ink-2);}
+/* после анкеты — следующий шаг: вопросы интервью */
+.next-step{display:flex; flex-direction:column; gap:8px; width:100%; text-align:left; padding:14px 16px; border-radius:18px; background:var(--violet-soft); border:1px solid var(--line);}
+.next-step b{font:600 16px/1.3 var(--f-display);}
+.next-step span{font-size:13.5px; color:var(--ink-2); line-height:1.5;}
+a.go{display:flex; align-items:center; justify-content:center; text-decoration:none; text-align:center;}
+.next-step .go{margin-top:4px; min-height:48px;}
 /* телефон: компактнее, чтобы вопрос и все варианты помещались в один экран */
 @media (max-width:560px){
   .wrap{padding:10px 12px 12px; gap:8px;}

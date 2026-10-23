@@ -1,9 +1,10 @@
 /* Публичная анкета Eva. Ссылка: <анкета>#k.ANNA482 — тип и код человека.
    Один вопрос на экран, варианты — крупные кнопки, ответ подтверждают
-   кнопкой «Дальше». Ответы помнятся в этом браузере до отправки. В конце —
-   «Отправить»: человек пересылает менеджеру ссылку, которая кладёт ответы
-   в карточку CRM. Эта же ссылка — реферальная: подруга выберет «Меня
-   пригласили», и CRM запишет, кто её привёл. Длинная анкета разбита на
+   кнопкой «Дальше». Ответы помнятся в этом браузере до отправки. На своём
+   сервере ответы сразу ложатся в карточку CRM, а следующий шаг — вопросы
+   интервью по личной ссылке. Без сервера (или если он не ответил) — как
+   раньше: человек пересылает менеджеру ссылку с ответами. Ссылка анкеты —
+   реферальная: подруга выберет «Меня пригласили», и CRM запишет, кто её привёл. Длинная анкета разбита на
    разделы: на вводном экране — оглавление, над вопросом — раздел и точки
    его вопросов. Страну подставляет город, этап жизни уточняется после
    сферы, график работы спрашиваем только у работающих. На трети и двух
@@ -39,7 +40,7 @@ function whoQs(type) {
 }
 /* интервью по ссылке: те же люди, вопросы — открытые */
 const INTRO_TALK = {
-  client:  {emo: '💬', title: 'Интервью Eva 💜', lead: 'Ответь своими словами — как рассказала бы подруге. Коротко или подробно, как удобно. Любой вопрос можно пропустить.', min: 25},
+  client:  {emo: '💬', title: 'Интервью Eva 💜', lead: 'Ответь своими словами — как рассказала бы подруге. Коротко или подробно, как удобно. Любой вопрос можно пропустить.', min: 20},
   expert:  {emo: '💬', title: 'Вопросы о вашем опыте ✨', lead: 'Ответьте своими словами. Любой вопрос можно пропустить.', min: 15},
   partner: {emo: '💬', title: 'Вопросы о вашем бизнесе 🤝', lead: 'Ответьте своими словами. Любой вопрос можно пропустить.', min: 15},
   amb:     {emo: '💬', title: 'Расскажи о себе 💜', lead: 'Ответь своими словами. Любой вопрос можно пропустить.', min: 15},
@@ -67,11 +68,14 @@ function init() {
   S.talk = TALK_PAGE || !!(h.talk && h.code);
   S.general = S.talk && !h.code;
   S.key = `eva-anketa:${S.talk ? 'talk:' : ''}${S.type || ''}:${h.code || 'new'}`;
+  /* подруга уже нажала «Меня пригласили» на своём телефоне — её ответы лежат отдельно от ответов
+     владелицы ссылки; если в этом браузере отвечала и сама владелица — открываем её ответы */
+  if (!S.talk && h.code && !store.get(S.key) && store.get(S.key + ':inv')) S.key += ':inv';
   const saved = store.get(S.key);
   S.a = {}; S.invited = false; S.m = {}; S.sent = 0;
   if (saved && saved.a) { S.a = saved.a; S.invited = !!saved.invited; S.m = saved.m || {}; S.sent = saved.sent || 0; }
-  /* общая ссылка: после отправки сервер дал карточке код — правки ответов идут в неё же */
-  if (S.talk && !S.code && saved && saved.c) S.code = saved.c;
+  /* после отправки сервер дал своей карточке код (новая, приглашённая, общая ссылка) — правки идут в неё */
+  if (saved && saved.c && saved.c !== S.code) { S.code = saved.c; S.invited = false; }
   setQuestions(S.type ? applyDiff(S.type, h.diff, part()) : []);
   if (S.talk) document.title = 'Интервью Eva';
   if (!S.type) return renderChooser();
@@ -117,6 +121,8 @@ function renderChooser() {
     const saved = store.get(S.key);
     S.a = saved && saved.a ? saved.a : {};
     S.m = saved && saved.m ? saved.m : {};
+    S.sent = saved && saved.sent ? saved.sent : 0;
+    S.code = saved && saved.c ? saved.c : '';
     S.i = -1;
     render();
   };
@@ -311,6 +317,7 @@ function renderIntro() {
   const bl = blocks();
   const named = bl.length > 1 && bl[0].name;
   const doneIn = b => b.qs.filter(q => S.a[q.id] !== undefined).length;
+  if (!S.talk && S.sent) return renderSentIntro();
   /* интервью уже отправлено: поменять ответы или (общая ссылка) начать новое — например, за следующую клиентку */
   if (S.talk && S.sent) {
     shell(`<div class="card intro fade"><div class="big">💜</div><h1>Ответы уже у команды Евы</h1>
@@ -393,12 +400,55 @@ async function renderTalkDone() {
   };
 }
 
+/* ссылка на вопросы интервью для своей карточки — следующий шаг после анкеты */
+const talkUrl = () => `${location.origin}/interview/#${TYPES[S.type].letter}.${S.code}`;
+/* поля карточки из ответов: имя, город, Telegram… */
+function keyFields() {
+  const k = {};
+  S.all.forEach(q => { if (q.key && answered(q, S.a[q.id])) k[q.key] = S.a[q.id]; });
+  return k;
+}
+/* что дальше после анкеты: вопросы интервью — созвоном или письменно */
+function nextStepHtml() {
+  const ty = TYPES[S.type].you === 'ты', talk = S.type === 'client' ? 'интервью' : 'созвона';
+  const call = String(S.a.call || '');
+  const noCall = /^нет|перепиш/i.test(call);
+  return `<div class="next-step"><b>Следующий шаг — ${S.type === 'client' ? 'интервью, около 40 минут' : 'короткий созвон'}</b>
+    <span>${noCall ? `${ty ? 'Если созваниваться неудобно, ответь' : 'Если созваниваться неудобно, ответьте'} на вопросы ${talk} письменно — в своём темпе, любой можно пропустить.`
+      : `Мы напишем, чтобы договориться о созвоне в Zoom. ${ty ? 'Удобнее письменно? Ответь' : 'Удобнее письменно? Ответьте'} на вопросы ${talk} здесь — в своём темпе.`}</span>
+    <a class="go alt" href="${esc(talkUrl())}">Ответить на вопросы ${talk} ✍️</a></div>`;
+}
+/* анкета отправлена раньше: поменять ответы или перейти к интервью */
+function renderSentIntro() {
+  const ty = TYPES[S.type].you === 'ты';
+  shell(`<div class="card intro fade"><div class="big">💜</div><h1>${S.a.name ? esc(String(S.a.name).split(' ')[0]) + ', о' : 'О'}тветы уже у команды Евы</h1>
+    <p class="lead">${ty ? 'Спасибо! Если хочется что-то поменять — исправь и отправь ещё раз, карточка обновится.' : 'Спасибо! Если хотите что-то поменять — исправьте и отправьте ещё раз.'}</p>
+    ${S.code ? nextStepHtml() : ''}
+    <button class="link" id="start">← Поменять ответы</button></div>`);
+  $('#app').onclick = e => { if (e.target.closest('#start')) { S.i = 0; render(); } };
+}
 async function renderDone() {
   if (S.talk) return renderTalkDone();
   /* ответы на вопросы, которые теперь не показываются (сменили занятость), не отправляем */
   S.all.forEach(q => { if (!q.auto && !qVisible(q, S.a)) delete S.a[q.id]; });
   save();
   const gift = S.type === 'client';
+  /* на своём сервере — сразу в карточку; не вышло — запасной путь ссылкой менеджеру */
+  let why = '';
+  if (ON_SRV) {
+    shell('<div class="card intro fade"><div class="big">⏳</div><h1>Отправляем ответы…</h1></div>');
+    try {
+      const r = await fetch('/crm/api/anketa', {method: 'POST', headers: {'content-type': 'application/json', 'x-eva': '1'},
+        body: JSON.stringify({t: TYPES[S.type].letter, c: S.code || '', r: S.invited ? 1 : 0, a: S.a, k: keyFields(), ...(gift ? {g: 1} : {})})});
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.c) {
+        S.code = j.c; S.invited = false; S.sent = Date.now();
+        save();
+        return renderSaved(gift);
+      }
+      why = j.error || '';
+    } catch (e) { why = 'Нет связи с сервером'; }
+  }
   const payload = {v: 1, t: TYPES[S.type].letter, c: S.code || '', r: S.invited ? 1 : 0, a: S.a, at: Date.now(), ...(gift ? {g: 1} : {})};
   const packed = await Codec.pack(payload);
   const link = `${CRM_URL}#in.${packed}`;
@@ -407,6 +457,7 @@ async function renderDone() {
   const wa = `https://wa.me/?text=${encodeURIComponent(text + ' ' + link)}`;
   const own = S.code && !S.invited && ['client', 'amb'].includes(S.type);
   shell(`<div class="card intro fade"><div class="big">🎉</div><h1>Спасибо${S.a.name ? ', ' + esc(String(S.a.name).split(' ')[0]) : ''}!</h1>
+    ${why ? `<p class="note">Сразу отправить не получилось (${esc(why)}) — ответы сохранились в этом браузере. Отправь их менеджеру одним нажатием ниже.</p>` : ''}
     ${gift ? `<div class="gift"><div class="gift-box" aria-hidden="true">🎁</div><div><b>Неделя Евы — в подарок</b><span>Отправь ответы менеджеру — и в ответ получишь доступ к Еве на 7 дней.</span></div></div>` : ''}
     <p class="lead">${gift ? 'Одно нажатие — и выбери чат с менеджером Евы, который прислал тебе ссылку.' : 'Остался один шаг: отправьте ответы менеджеру Евы, который прислал вам ссылку. Одно нажатие — и выберите чат с ним.'}</p>
     <div class="send" style="width:100%"><a class="tg" href="${esc(tg)}" target="_blank" rel="noopener">✈️ Отправить в Telegram</a><a class="wa" href="${esc(wa)}" target="_blank" rel="noopener">💬 Отправить в WhatsApp</a>
@@ -419,6 +470,26 @@ async function renderDone() {
       const lb = $('#lb');
       try { await navigator.clipboard.writeText(link); e.target.closest('#copy').textContent = '✅ Скопировано — вставь в чат с менеджером'; }
       catch (err) { lb.hidden = false; lb.focus(); lb.select(); }
+    }
+    if (e.target.closest('#edit')) { S.i = total() - 1; render(); }
+  };
+}
+
+/* ответы уже в CRM: подарок, следующий шаг (вопросы интервью), ссылка для подруги */
+function renderSaved(gift) {
+  const ty = TYPES[S.type].you === 'ты';
+  const own = ['client', 'amb'].includes(S.type);
+  const share = `${location.origin}${location.pathname}#${TYPES[S.type].letter}.${S.code}`;
+  shell(`<div class="card intro fade"><div class="big">🎉</div><h1>Спасибо${S.a.name ? ', ' + esc(String(S.a.name).split(' ')[0]) : ''}!</h1>
+    <p class="lead">${ty ? 'Ответы уже у команды Евы 💜 Каждый из них поможет сделать Еву лучше.' : 'Ответы уже у команды Евы ✨ Спасибо за время.'}</p>
+    ${gift ? `<div class="gift"><div class="gift-box" aria-hidden="true">🎁</div><div><b>Неделя Евы — в подарок</b><span>Менеджер Евы напишет тебе и откроет доступ на 7 дней.</span></div></div>` : ''}
+    ${nextStepHtml()}
+    ${own ? `<div class="note">👭 Подруге — эту же анкету по твоей ссылке: она выберет «Меня пригласили», а мы узнаем, что она от тебя. <button class="link" id="share">Скопировать ссылку</button></div>` : ''}
+    <button class="link" id="edit">← Поменять ответы</button></div>`);
+  $('#app').onclick = async e => {
+    if (e.target.closest('#share')) {
+      try { await navigator.clipboard.writeText(share); e.target.closest('#share').textContent = '✅ Скопировано'; }
+      catch (err) { e.target.closest('#share').textContent = share; }
     }
     if (e.target.closest('#edit')) { S.i = total() - 1; render(); }
   };

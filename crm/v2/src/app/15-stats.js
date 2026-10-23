@@ -9,11 +9,13 @@
      заходы для рекламы от Claude;
    • Образ жизни — кто наши клиентки: возраст, город, статус, занятость,
      режим дня, сон, питание, телефон и трекеры;
+   • Интервью — сколько проведено, длительность против плана 40 минут, какие
+     разделы проходят, ответы всех людей на выбранный вопрос, погода, метки, цитаты;
    • Ответы — графики по каждому вопросу анкеты по разделам, с фильтром по
      сегменту и своими ответами из «Другое».
    Подписи без смайлов — так цифры читаются с первого взгляда. */
 
-const ST_TABS = [['process', 'Процесс'], ['product', 'Продукт'], ['marketing', 'Маркетинг'], ['life', 'Образ жизни'], ['answers', 'Ответы анкеты']];
+const ST_TABS = [['process', 'Процесс'], ['product', 'Продукт'], ['marketing', 'Маркетинг'], ['life', 'Образ жизни'], ['interviews', 'Интервью'], ['answers', 'Ответы анкеты']];
 const PRICE_NOW = 2900;
 /* клиентский формат ↔ что может снять эксперт */
 const FORMAT_MAP = [
@@ -26,12 +28,13 @@ App.register('stats', {
   title: 'Статистика',
   render(root) {
     const tab = ST_TABS.some(([k]) => k === View.get('st.tab', 'process')) ? View.get('st.tab', 'process') : 'process';
-    const body = tab === 'product' ? productView() : tab === 'marketing' ? marketingView() : tab === 'life' ? lifeView() : tab === 'answers' ? answersStatsView() : processView();
+    const body = tab === 'product' ? productView() : tab === 'marketing' ? marketingView() : tab === 'life' ? lifeView() : tab === 'interviews' ? interviewsView() : tab === 'answers' ? answersStatsView() : processView();
     const sub = {
       process: 'Как идут три шага: где люди застревают, сколько дней уходит на шаг, кто сколько сделал.',
       product: 'Что улучшить в Еве: боли, желания, форматы, цена и идеи прямо из интервью.',
       marketing: 'Кому и как рассказывать о Еве: портрет, каналы, время, слова клиенток, рефералы.',
       life: 'Кто наши клиентки: возраст, город, статус, занятость, режим дня, сон, питание и телефон.',
+      interviews: 'Что говорят на интервью: сколько проведено, укладываемся ли в 40 минут, ответы всех людей на каждый вопрос.',
       answers: 'Графики по каждому вопросу анкеты. Всё считается само, когда приходят ответы.',
     }[tab];
     root.innerHTML = `
@@ -40,6 +43,7 @@ App.register('stats', {
       ${body}`;
     wireTabs(root);
     on(root, 'click', '[data-seg]', (e, el) => { View.set('st.seg', el.dataset.seg); App.render(); });
+    on(root, 'change', '#ivQ', (e, el) => { View.set('st.iq', el.value); App.render(); });
     on(root, 'click', '[data-syn]', async (e, el) => {
       const key = el.dataset.syn;
       Syn[key] = {loading: true};
@@ -185,7 +189,8 @@ function productView() {
   const clients = People.all('client');
   const tagQuote = t => { for (const p of clients.filter(x => ((x.res || {}).tags || []).includes(t))) { const s = Object.values(p.talk || {}).find(x => x && x.star && x.a); if (s) return {p, text: s.a}; } return null; };
   const ideas = clients.filter(p => (p.res || {}).idea || (p.res || {}).main).map(p => ({p, main: p.res.main, idea: p.res.idea}));
-  const annoy = [...talkAnswers('t_annoy', list), ...talkAnswers('t9', list)];
+  /* с 23.10 «что раздражает» спрашиваем вместе с любимым приложением (t_favapp); старые ответы — тоже здесь */
+  const annoy = [...talkAnswers('t_favapp', list), ...talkAnswers('t_annoy', list), ...talkAnswers('t9', list)];
   const apply = talkAnswers('t_apply', list), ideal = talkAnswers('t_idealvideo', list);
   const recs = recommendations().filter(r => r.kind === 'idea').slice(0, 6);
   return `
@@ -213,7 +218,7 @@ function productView() {
     <div class="two section">
       ${card('Что слышим на интервью', 'метки из разбора и пример цитаты', tags.length ? `<div class="tq-list">${tags.map(t => { const q = tagQuote(t.name); return `<div class="tqr"><div class="tqr-h"><b>${esc(noEmo(t.name))}</b><span>${t.v}</span></div>${q ? `<p>«${esc(q.text.length > 150 ? q.text.slice(0, 150) + '…' : q.text)}» <a href="#p-${q.p.id}">${esc(People.name(q.p))}</a></p>` : ''}</div>`; }).join('')}</div>` : '<p class="note">Метки появятся, когда разберёте первые интервью.</p>')}
       ${card('Идеи из интервью', `${ideas.length} ${plural(ideas.length, 'интервью', 'интервью', 'интервью')}`, ideas.length ? `<div class="idea-list">${ideas.map(x => `<a class="idea" href="#p-${x.p.id}">${x.main ? `<b>${esc(x.main)}</b>` : ''}${x.idea ? `<span>${esc(x.idea)}</span>` : ''}<small>${esc(People.name(x.p))}</small></a>`).join('')}</div>` : '<p class="note">В итоге интервью заполняйте «Главный инсайт» и «Что улучшить в Еве» — они соберутся здесь.</p>')}
-      ${card('Что раздражает в приложениях', 'из интервью — чего не делать в Еве', quotesHtml(annoy))}
+      ${card('Любимые приложения и что раздражает', 'из интервью — на что равняться и чего не делать в Еве', quotesHtml(annoy))}
       ${card('Что помогает внедрить', 'трекеры, шпаргалки, задания — из интервью', quotesHtml(apply))}
       ${card('Идеальное обучающее видео', 'бриф для съёмок — словами клиенток', quotesHtml(ideal, 3))}
       ${card('Рекомендации по ответам', '', recs.length ? `<div class="recs">${recs.map(r => `<a class="rec" href="#${r.href}"><b>${esc(r.text)}</b><small><span class="rec-g">${r.type === 'all' ? 'Все группы' : groupName(r.type)}</span>${esc(r.why)}</small></a>`).join('')}</div>` : '<p class="note">Появятся, когда придут первые анкеты.</p>')}
@@ -230,7 +235,7 @@ function marketingView() {
     ['Время в день', mode('time')], ['Когда удобно', mode('when')], ['Смотрит контент', mode('where')], ['Готова платить', mode('price')], ['Откуда узнаёт', mode('source')]].filter(x => x[1]);
   const quotes = Stats.quotes().filter(x => x.p.type === 'client').slice(0, 4);
   const source = aggOf('client', 'source', base), when = aggOf('client', 'when', base), tried = aggOf('client', 'tried', base), where = aggOf('client', 'where', base);
-  const follow = talkAnswers('t_follow'), friend = [...talkAnswers('t_friend'), ...talkAnswers('t13')];
+  const follow = [...talkAnswers('t_trust'), ...talkAnswers('t_follow')], friend = [...talkAnswers('t_friend'), ...talkAnswers('t13')];
   const ambs = People.all('amb');
   const reach = sum(ambs, p => REACH[(p.answers || {}).size] || 0);
   const platforms = {};
@@ -286,6 +291,45 @@ function answersStatsView() {
     ${extra}
     <section class="section"><div class="section-head"><h2>Ответы анкеты</h2><span class="hint-inline">по ${nAns} ${plural(nAns, 'анкете', 'анкетам', 'анкетам')} · где можно выбрать несколько, сумма больше 100%</span></div>
       ${agg.length ? groupByBlock(type, 'test', agg.map(a => (a.q.id === 'age' ? {...a.q, b: (Questions.find(type, 'birth') || {}).b} : a.q))).map(g => `${g.name ? `<h3 class="qs-bh">${g.emo ? `<span aria-hidden="true">${g.emo}</span>` : ''}${esc(g.name)}</h3>` : ''}<div class="qstats">${g.qs.map(q => qStatCard(agg.find(a => a.q.id === q.id))).join('')}</div>`).join('') : '<p class="note">Графики появятся, когда придут первые анкеты.</p>'}</section>`;
+}
+
+/* ── Интервью: по ответам во вкладке «Интервью» карточек (записала команда или ответила сама по ссылке) ── */
+function interviewsView() {
+  const qs = Questions.talk('client');
+  const blocks = groupByBlock('client', 'talk', qs);
+  const plan = talkPlan('client', blocks);
+  const has = p => qs.some(q => ((p.talk || {})[q.id] || {}).a);
+  const list = People.all('client').filter(p => has(p) || p.s2 === 'done');
+  const withAns = list.filter(has);
+  const durs = list.map(p => p.callDur).filter(x => x >= 60);
+  const avgMin = durs.length ? durs.reduce((a, b) => a + b, 0) / durs.length / 60 : null;
+  const self = withAns.filter(p => qs.some(q => ((p.talk || {})[q.id] || {}).self)).length;
+  const fill = withAns.length ? withAns.reduce((a, p) => a + qs.filter(q => ((p.talk || {})[q.id] || {}).a).length, 0) / withAns.length : 0;
+  /* какие разделы доходят до конца: доля ответов в разделе по всем интервью */
+  const cover = blocks.map(g => ({name: g.name, min: g.min, v: withAns.length ? withAns.reduce((a, p) => a + g.qs.filter(q => ((p.talk || {})[q.id] || {}).a).length, 0) / (withAns.length * g.qs.length) : 0}));
+  const counted = qs.map(q => ({q, n: withAns.filter(p => ((p.talk || {})[q.id] || {}).a).length}));
+  const pick = qs.find(q => q.id === View.get('st.iq', '')) || (counted.find(x => x.n) || counted[0] || {}).q;
+  const answers = pick ? talkAnswers(pick.id, list) : [];
+  const weather = pickAgg('t_weather', list);
+  const tags = Stats.insightTags();
+  const stars = Stats.quotes().filter(x => x.p.type === 'client').slice(0, 8);
+  const tagN = People.tagsOf('client').n, tagRows = Object.entries(tagN).map(([name, v]) => ({name, v})).sort((a, b) => b.v - a.v);
+  return `
+    ${kpiRow([[withAns.length, plural(withAns.length, 'интервью с ответами', 'интервью с ответами', 'интервью с ответами')], [avgMin === null ? '—' : `${fmt(avgMin, 0)} мин`, `в среднем · план ${plan ? plan.total : 40} мин`],
+      [withAns.length ? `${fmt(fill, 0)} из ${qs.length}` : '—', 'вопросов с ответом в среднем'], [self, 'ответили сами по ссылке']])}
+    ${avgMin !== null && plan && avgMin > plan.total + 5 ? `<div class="warnline" style="margin-top:12px">Интервью в среднем идут ${fmt(avgMin, 0)} минут — дольше плана на ${fmt(avgMin - plan.total, 0)}. Держите темп по разделам: подсказка «в графике / отстаём» — рядом с таймером в карточке.</div>` : ''}
+    <section class="section card"><div class="card-head"><h2>Ответы по вопросам</h2><span class="note">все, кто ответил на выбранный вопрос · звёздочка — яркая цитата</span></div>
+      ${qs.length ? `<select class="select" id="ivQ" aria-label="Вопрос интервью">${blocks.map(g => `<optgroup label="${esc(g.name || 'Вопросы')}">${g.qs.map(q => { const c = counted.find(x => x.q === q); return `<option value="${q.id}" ${pick === q ? 'selected' : ''}>${esc(q.t)} · ${c.n}</option>`; }).join('')}</optgroup>`).join('')}</select>
+        ${pick && pick.why ? `<p class="note" style="margin-top:8px">Зачем спрашиваем: ${esc(pick.why)}</p>` : ''}
+        <div class="iv-answers">${answers.length ? answers.map(x => { const t = (x.p.talk || {})[pick.id] || {}; return `<div class="quote">${t.star ? `<span class="star on">${icon('star')}</span>` : ''}${t.pick ? `<span class="tagchip">${esc(t.pick)}</span> ` : ''}«${esc(x.a)}»<small><a href="#p-${x.p.id}">${esc(People.name(x.p))}</a>${t.self ? ' · ответила сама' : ''}</small></div>`; }).join('') : '<p class="note">На этот вопрос пока никто не ответил.</p>'}</div>` : '<p class="note">Вопросов интервью нет — добавьте их в «Базе вопросов».</p>'}</section>
+    <div class="two section">
+      ${card('Какие разделы проходим', plan ? `доля вопросов с ответом · план по минутам` : 'доля вопросов с ответом', withAns.length ? hbarList(cover.map(c => ({name: `${c.name}${c.min ? ` · ${c.min} мин` : ''}`, v: Math.round(c.v * 100)})), {color: 'var(--link)', valFmt: v => v + '%', max: 100}) : '<p class="note">Появится после первого интервью.</p>')}
+      ${card('Погода жизни', 'метка интервьюера', weather.length ? hbarList(weather, {color: 'var(--gold)', sub: r => pct(r.v / sum(weather, x => x.v))}) : '<p class="note">Отмечайте погоду кнопкой в интервью.</p>')}
+      ${card('Метки из разбора', 'что слышим чаще всего', tags.length ? hbarList(tags.map(t => ({name: noEmo(t.name), v: t.v})), {color: 'var(--violet)'}) : '<p class="note">Метки появятся, когда разберёте первые интервью во вкладке «Итог».</p>')}
+      ${card('Теги клиенток', 'теги на карточках', tagRows.length ? hbarList(tagRows, {color: 'var(--good)'}) : '<p class="note">Ставьте теги в карточке — «Добавить тег» под именем.</p>')}
+    </div>
+    <section class="section card"><div class="card-head"><h2>Яркие цитаты</h2><span class="note">звёздочка у ответа в интервью</span></div>
+      ${stars.length ? `<div class="stack">${stars.map(x => `<div class="quote">«${esc(x.text.length > 260 ? x.text.slice(0, 260) + '…' : x.text)}»<small><a href="#p-${x.p.id}">${esc(People.name(x.p))}</a></small></div>`).join('')}</div>` : '<p class="note">Отмечайте звёздочкой самые точные ответы во время интервью — они соберутся здесь.</p>'}</section>`;
 }
 
 /* фильтр по этапу жизни: «Все · Мама малыша · Карьера …» */
@@ -393,7 +437,7 @@ function statsDigest() {
   const st = ['energy', 'happy', 'health'].map(id => { const a = Stats.avgOf(base, id); return a ? `${{energy: 'энергия', happy: 'довольство жизнью', health: 'здоровье'}[id]} ${fmt(a.avg, 1)}` : ''; }).filter(Boolean).join(', ');
   const age = Stats.ageAgg(base);
   const weather = pickAgg('t_weather').map(r => `${r.name} — ${r.v}`).join('; ');
-  const annoy = talkAnswers('t_annoy').slice(0, 6).map(x => '- ' + x.a).join('\n');
+  const annoy = [...talkAnswers('t_favapp'), ...talkAnswers('t_annoy')].slice(0, 6).map(x => '- ' + x.a).join('\n');
   return [`Анкет клиенток: ${base.length}.`, age.n ? `Возраст: ${age.rows.filter(r => r.v).map(r => `${r.name} — ${r.v} из ${age.n}`).join('; ')}` : '', line('Этап жизни', 'stage'), line('Статус', 'status'), line('Занятость', 'employ'), line('График работы', 'schedule'), line('Доход (самооценка)', 'income'), line('Жильё', 'housing'), line('Что забирает 80% внимания', 'sphere'),
     st ? `Состояние по шкале 1–10 в среднем: ${st}` : '', line('Беспокоит', 'pain'), line('Важнее всего', 'goal'), line('Время в день', 'time'), line('Когда удобно', 'when'), line('Как удобнее меняться', 'transform'),
     line('Пробовали', 'tried'), line('Ложатся спать', 'sleep'), line('Время в телефоне', 'screen'), line('Где смотрят контент', 'where'), line('Комфортная длина практики в будний день', 'length'), line('Подача', 'form'), line('Траты на саморазвитие в месяц', 'spend'),

@@ -720,6 +720,37 @@ body.dragging-now .b3-zones{display:grid;}
 .bd-row b{font-size:13.5px; font-weight:600;}
 .bd-row small{font-size:12px; color:var(--ink-3);}
 .bd-row:has(input:checked){background:var(--bad-soft);}
+/* теги карточек и выбор из списка */
+.tagchip{display:inline-flex; align-items:center; height:22px; padding:0 8px; border-radius:6px; background:var(--sunken); color:var(--ink-2); font-size:11.5px; font-weight:500; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis;}
+.tagchip.more{color:var(--ink-3);}
+.pc-tags{display:flex; flex-wrap:wrap; gap:4px;}
+.ph-tags{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:8px;}
+.tag-add{display:inline-flex; align-items:center; gap:5px; height:24px; padding:0 9px; border-radius:12px; border:1px dashed var(--line-strong); background:none; color:var(--ink-3); font-size:12px; cursor:pointer;}
+.tag-add svg{width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:1.8;}
+.tag-add:hover{color:var(--ink); border-color:var(--ink-3);}
+.t-filter{width:auto; max-width:230px;}
+.picked{display:flex; flex-wrap:wrap; gap:6px; align-items:center;}
+.picked .btn svg{width:14px; height:14px;}
+.pop.multi{width:min(320px, calc(100vw - 16px)); max-width:none; padding:10px; display:flex; flex-direction:column; gap:8px;}
+.multi-list{max-height:min(320px, 50vh); overflow-y:auto; display:flex; flex-direction:column; margin:0 -4px;}
+.multi-i{display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:8px; font-size:13.5px; cursor:pointer;}
+.multi-i:hover{background:var(--sunken);}
+.multi-i input{width:16px; height:16px; flex:none; accent-color:var(--link);}
+.multi-new{text-align:left; padding:8px; border:0; border-radius:8px; background:var(--sunken); color:var(--link); font-weight:600; font-size:13px; cursor:pointer;}
+.multi-foot{display:flex; gap:6px; align-items:center;}
+.multi-n{flex:1; font-size:12px; color:var(--ink-3);}
+/* статистика интервью: ответы на выбранный вопрос */
+.iv-answers{display:flex; flex-direction:column; gap:8px; margin-top:12px; max-height:560px; overflow-y:auto;}
+.iv-answers .quote .star{display:inline-flex; vertical-align:-2px; margin-right:4px;}
+.iv-answers .quote .star svg{width:14px; height:14px;}
+#ivQ{max-width:100%;}
+/* доска: у каждого шага свой цвет — номер и полоса сверху; карточка чуть приподнимается под курсором */
+.b3-col[data-col="1"]{--acc:var(--link);} .b3-col[data-col="2"]{--acc:var(--violet);} .b3-col[data-col="3"]{--acc:var(--good);}
+.b3-col{border-top:3px solid var(--acc, var(--line));}
+.b3-h .num{background:var(--acc, var(--surface)); border-color:transparent; color:#fff;}
+.pc{box-shadow:var(--shadow); transition:border-color .12s, box-shadow .12s, transform .12s;}
+.pc:hover{box-shadow:0 6px 18px rgba(17,16,20,.08); transform:translateY(-1px);}
+.tagchip.dir{background:var(--violet-soft); color:var(--violet);}
 
 /* ── 20-calendar.css ── */
 /* ── календарь созвонов: сетка недели как в штабе, цвет — по группе ── */
@@ -834,6 +865,9 @@ body.dragging-now .b3-zones{display:grid;}
 .timer.on{background:var(--rose-soft); color:var(--rose);}
 .iv-prog{display:inline-flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-2);}
 .iv-prog b{font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums;}
+/* план интервью по времени: «в графике» / «отстаём на 3 мин» */
+.iv-plan{display:inline-flex; align-items:center; height:24px; padding:0 9px; border-radius:12px; font-size:12px; font-weight:600; background:var(--sunken); color:var(--ink-2); white-space:nowrap; font-variant-numeric:tabular-nums;}
+.iv-plan.good{background:var(--good-soft); color:var(--good);} .iv-plan.warn{background:var(--warn-soft); color:var(--warn);} .iv-plan.bad{background:var(--bad-soft); color:var(--bad);}
 .iv-pbar{width:90px; height:6px; border-radius:3px; background:var(--sunken); overflow:hidden; display:inline-block;}
 .iv-pbar i{display:block; height:100%; background:var(--good); border-radius:3px;}
 .iv-script{border:1px dashed var(--line-strong); border-radius:12px; padding:10px 14px; margin-bottom:10px; background:var(--surface-2); font-size:13.5px;}
@@ -1440,6 +1474,13 @@ const s3Map = type => (type === 'client' ? S3.client : S3.other);
 /* быстрые метки инсайтов на интервью — из них собирается облако на главной */
 const INSIGHT_TAGS = ['⏳ Нет времени', '💸 Дорого', '📱 Неудобно в приложении', '🔔 Бесят пуши', '🎓 Хочет экспертов', '👭 Хочет сообщество',
   '🏠 Хочет офлайн', '🧘‍♀️ Любит короткие практики', '🌙 Проблемы со сном', '🤖 Нравится Ева-помощница', '💡 Идея фичи', '❤️ Готова рекомендовать'];
+/* теги карточек: готовые подсказки по группе, свои команда добавляет сама — они тоже попадут в список */
+const PERSON_TAGS = {
+  client:  ['Горячая', 'Готова к интервью', 'Хочет попробовать Еву', 'Можно позвать в амбассадоры', 'Мама', 'Предпринимательница', 'Релокантка', 'Повторный контакт'],
+  expert:  ['Топ-эксперт', 'Есть готовый курс', 'Готов снимать', 'Свой продакшн', 'Медийный', 'Нужен договор', 'По рекомендации', 'Оплата: доля', 'Оплата: фикс'],
+  partner: ['Готов к промо', 'Спецпредложение для участниц', 'Сеть', 'Онлайн', 'Нужен договор', 'По рекомендации'],
+  amb:     ['Блогер', 'Микроинфлюенсер', 'Клиентка Евы', 'Готова к UGC', 'Нужен договор'],
+};
 /* что обсудили с экспертом, партнёром, амбассадором */
 const RESULT_TAGS = {
   expert:  ['💌 Послания', '🧘‍♀️ Практики', '🎓 Мастер-класс', '📚 Курс', '📡 Эфир', '🏠 Офлайн-встреча', '📦 Готовый курс', '📣 Расскажет аудитории'],
@@ -1637,48 +1678,32 @@ const Q_DEFAULT = {
         rec: {0: 'Чаще всего готовы платить до 1 000 ₽ — при цене 2 900 ₽ нужен лёгкий тариф или сильный аргумент за годовую подписку.', 1: 'Чаще всего готовы платить 1 000–3 000 ₽ — цена 2 900 ₽ на верхней границе: показывайте годовой тариф первым.'}},
       {id: 'source', b: 'contact', k: 'one', t: 'Откуда ты узнала о Еве?', o: ['Telegram', 'ВКонтакте', 'Блогер', 'Подруга', 'Эксперт', 'Студия или салон', 'Мероприятие'], other: 'Другое',
         rec: {2: 'Чаще всего приходят от блогеров — посчитайте, какие интеграции окупаются, и зовите этих блогеров в амбассадоры.', 3: 'Чаще всего приходят от подруг — запускайте «Приведи подругу» с уникальными ссылками.', 5: 'Много приходят из студий и салонов — партнёрства работают, ищите ещё.'}},
-      {id: 'call', b: 'contact', k: 'one', t: 'Готова созвониться на 30 минут в Zoom? Нам очень важно твоё мнение', o: ['Да, в будни днём', 'Да, в будни вечером', 'Да, в выходные', 'Лучше перепишемся', 'Нет, спасибо']},
+      {id: 'call', b: 'contact', k: 'one', t: 'Готова созвониться в Zoom на 40 минут? Нам очень важно твоё мнение', o: ['Да, в будни днём', 'Да, в будни вечером', 'Да, в выходные', 'Лучше перепишемся', 'Нет, спасибо']},
       {id: 'tg', b: 'contact', k: 'short', key: 'tg', t: 'Твой Telegram или телефон — чтобы договориться о звонке', ph: '@username или +7…'},
     ],
+    /* интервью кастдева — 40 минут (правка 23.10): 18 вопросов вместо 37. Похожие вопросы слиты в один,
+       то, что уже спросила анкета (работа, сон, где смотрит контент), не переспрашиваем. План по времени —
+       у разделов (min), всего 38 минут вопросов + 2 минуты начала и завершения */
     talk: [
-      {id: 't_job', b: 'intro', t: 'Кем ты работаешь? Расскажи коротко, чем занимаешься.', why: 'Какая нагрузка и сколько свободы в дне'},
-      {id: 't_weather', b: 'pointA', t: 'Если бы твоя жизнь сейчас была погодой — какая это погода за окном?', why: 'Состояние одной картинкой. Отметьте погоду кнопкой — она уйдёт в статистику',
+      {id: 't_job', b: 'intro', t: 'Расскажи коротко о себе: чем занимаешься и как обычно выглядит твой день?', why: 'Нагрузка, свобода в дне и где в нём паузы'},
+      {id: 't_weather', b: 'intro', t: 'Если бы твоя жизнь сейчас была погодой — какая это погода за окном?', why: 'Состояние одной картинкой. Отметьте погоду кнопкой — она уйдёт в статистику',
         pick: ['Солнечно', 'Переменная облачность', 'Пасмурно', 'Дождь', 'Гроза', 'Туман', 'Снег и тишина', 'Ветер, всё меняется']},
-      {id: 't_pain', b: 'pointA', t: 'Что тебя сейчас беспокоит больше всего?', why: 'Настоящая боль своими словами'},
-      {id: 't_goal', b: 'pointA', t: 'Какой твой самый актуальный запрос на сегодня? Чего хочется добиться?', why: 'С чем Ева должна помочь в первую очередь'},
-      {id: 't_morning', b: 'day', t: 'Что ты делаешь в первые 15–30 минут после пробуждения? Есть любимые утренние ритуалы, свои «кайфушки»?', why: 'Окно для утренней практики и что уже радует'},
-      {id: 't_mood', b: 'day', t: 'Что повышает тебе настроение?', why: 'Источники радости — для контента и пушей'},
-      {id: 't_selftime', b: 'day', t: 'Успеваешь уделять время себе утром — или день сразу начинается с суеты?', why: 'Есть ли место для утренней программы'},
-      {id: 't_day', b: 'day', t: 'Опиши свой обычный день от обеда до вечера.', why: 'Где в дне паузы и свободные минуты'},
-      {id: 't_pauses', b: 'day', t: 'Бывают ли у тебя паузы в течение дня? Чем ты их заполняешь — Reels, чай, прогулка?', why: 'С чем Ева конкурирует за 5 минут внимания'},
-      {id: 't_audio', b: 'day', t: 'В какие моменты ты слушаешь подкасты или музыку?', why: 'Где к месту аудиопрактики'},
-      {id: 't_fallasleep', b: 'evening', t: 'Легко ли тебе уснуть? Что мешает?', why: 'Сон — частая боль: нужен ли вечерний ритуал'},
-      {id: 't_evening', b: 'evening', t: 'Как выглядит твой идеальный вечер — и как реальный?', why: 'Разрыв между желаемым и тем, как есть'},
-      {id: 't_switch', b: 'evening', t: 'Что помогает тебе переключиться с работы и семьи на отдых?', why: 'Готовые ритуалы перехода'},
-      {id: 't_happy', b: 'res', t: 'В какие моменты дня или недели ты чувствуешь себя максимально счастливой и наполненной?', why: 'Откуда берётся ресурс'},
-      {id: 't_drain', b: 'res', t: 'Что сейчас больше всего забирает твои силы или настроение? Когда это было в последний раз?', why: 'Конкретный случай, а не общие слова'},
-      {id: 't_last', b: 'res', t: 'Когда ты последний раз специально делала что-то для себя — практику, спорт, курс? Как это было?', why: 'Реальное поведение, а не намерения'},
-      {id: 't_apps', b: 'res', t: 'Какими приложениями, каналами или курсами «про себя» ты пользуешься? За что платила последний раз и сколько?', why: 'Конкуренты и реальный чек'},
-      {id: 't_best', b: 'res', t: 'Какая сфера твоей жизни сейчас закрыта лучше всего?', why: 'Опора, на которую можно строить'},
-      {id: 't_grateful', b: 'res', t: 'За что ты благодарна своему нынешнему образу жизни?', why: 'Что человек ценит и боится потерять'},
-      {id: 't_lack', b: 'res', t: 'Чего тебе больше всего не хватает в повседневной жизни — времени на себя, общения, эстетики, дисциплины, тишины?', why: 'Дефицит, который Ева может закрыть'},
-      {id: 't_hour', b: 'res', t: 'Если бы в твоём дне появился лишний час только для себя — на что бы ты его потратила?', why: 'Желаемое поведение — подсказка для программы'},
-      {id: 't_how', b: 'content', t: 'Как ты смотришь полезный контент: выделяешь время и сидишь с блокнотом, включаешь фоном за готовкой или в зале, слушаешь в дороге?', why: 'Как подавать: смотреть или слушать'},
-      {id: 't_favapp', b: 'content', t: 'Вспомни своё самое любимое приложение на телефоне. Почему именно оно? За что ты его ценишь?', why: 'Ориентир по удобству'},
-      {id: 't_annoy', b: 'content', t: 'Что тебя больше всего раздражает в приложениях — из-за чего сразу закрываешь или удаляешь?', why: 'Чего не делать в Еве'},
-      {id: 't_push', b: 'content', t: 'Как ты относишься к push-уведомлениям? Какие бесят, а какие реально помогают?', why: 'Пуши, которые не раздражают'},
-      {id: 't_overload', b: 'content', t: 'Бывает ли у тебя ощущение перегруза? Что его вызывает?', why: 'Сколько контента — это уже много'},
-      {id: 't_saved', b: 'content', t: 'Сохраняешь ли ты полезное «на потом»? Как часто к нему возвращаешься?', why: 'Нужна ли «Моя полка» и напоминания'},
-      {id: 't_apply', b: 'content', t: 'Что помогает тебе не просто посмотреть урок, а реально внедрить совет в жизнь — трекеры, шпаргалки, задания?', why: 'Механика внедрения в программе'},
-      {id: 't_idealvideo', b: 'experts', t: 'Опиши идеальное обучающее видео для себя: где оно снято, сколько длится, как говорит спикер?', why: 'Бриф для съёмок'},
-      {id: 't_worth', b: 'experts', t: 'За какой контент — курсы, гайды, подписки, вебинары — за последний год тебе было совсем не жалко денег? Почему?', why: 'За что реально платят'},
-      {id: 't_trust', b: 'experts', t: 'Как ты выбираешь «своего» эксперта? Как понимаешь, что ему можно доверять?', why: 'Как подбирать и показывать экспертов'},
+      {id: 't_pain', b: 'intro', t: 'Что тебя сейчас беспокоит или забирает силы больше всего? Когда это было в последний раз?', why: 'Настоящая боль и конкретный случай, а не общие слова'},
+      {id: 't_goal', b: 'intro', t: 'Какой твой самый актуальный запрос на сегодня? Чего хочется добиться?', why: 'С чем Ева должна помочь в первую очередь'},
+      {id: 't_morning', b: 'day', t: 'Как проходят первые полчаса после пробуждения? Успеваешь уделить время себе — или день сразу начинается с суеты?', why: 'Есть ли окно для утренней практики и что уже радует'},
+      {id: 't_pauses', b: 'day', t: 'Бывают ли паузы в течение дня? Чем ты их заполняешь — Reels, подкасты, музыка, прогулка?', why: 'С чем Ева конкурирует за 5 минут внимания и где к месту аудио'},
+      {id: 't_evening', b: 'day', t: 'Какой у тебя реальный вечер и каким был бы идеальный? Что помогает переключиться и легко уснуть?', why: 'Ритуалы перехода и сон: нужен ли вечерний ритуал'},
+      {id: 't_happy', b: 'res', t: 'В какие моменты ты чувствуешь себя максимально счастливой и наполненной? Что поднимает настроение?', why: 'Откуда берётся ресурс — для контента и пушей'},
+      {id: 't_lack', b: 'res', t: 'Чего тебе больше всего не хватает в повседневной жизни? Если бы появился лишний час только для себя — на что бы ты его потратила?', why: 'Дефицит, который Ева может закрыть, и желаемое поведение'},
+      {id: 't_last', b: 'res', t: 'Когда ты последний раз специально делала что-то для себя — практику, спорт, курс? Как это было, почему продолжила или бросила?', why: 'Реальное поведение, а не намерения'},
+      {id: 't_apps', b: 'res', t: 'Какими приложениями, каналами или курсами «про себя» пользуешься? За что за последний год платила — и за что было не жалко денег?', why: 'Конкуренты, реальный чек и за что платят'},
+      {id: 't_favapp', b: 'content', t: 'Какое приложение на телефоне твоё любимое и почему? А из-за чего приложения раздражают — что заставляет удалить, какие пуши бесят?', why: 'Ориентир по удобству и чего не делать в Еве'},
+      {id: 't_apply', b: 'content', t: 'Что помогает не просто посмотреть урок, а внедрить совет в жизнь — трекеры, задания, напоминания? Возвращаешься к сохранённому «на потом»?', why: 'Механика внедрения в программе и нужна ли «Моя полка»'},
+      {id: 't_trust', b: 'experts', t: 'Как ты выбираешь «своего» эксперта и понимаешь, что ему можно доверять? Кого слушаешь регулярно — за что ценишь?', why: 'Как подбирать и показывать экспертов, кого звать'},
+      {id: 't_idealvideo', b: 'experts', t: 'Опиши идеальный урок для себя: где снят, сколько длится, как говорит спикер? Что цепляет быстрее — красивый кадр или живой разбор?', why: 'Бриф для съёмок и визуальный стиль'},
       {id: 't_three', b: 'experts', t: 'Представь, что в приложении всего 3 раздела. Без каких тем ты бы его точно не скачала?', why: 'Ядро продукта'},
-      {id: 't_follow', b: 'experts', t: 'На кого из известных женщин, спикеров или блогеров ты подписана и кого регулярно слушаешь? За что ты их ценишь?', why: 'Кого звать в эксперты и амбассадоры'},
-      {id: 't_visual', b: 'experts', t: 'Что быстрее привлекает твоё внимание: красивый «кинематографичный» кадр или динамичный разбор на доске или с презентацией?', why: 'Визуальный стиль роликов'},
-      {id: 't_change', b: 'change', t: 'Вспомни момент, когда ты по-настоящему изменила привычку или взгляд на вещи. Что именно тебе помогло?', why: 'Что реально запускает перемены'},
-      {id: 't_result', b: 'change', t: 'Как ты понимаешь, что прошла через трансформацию: изменилось состояние, появились результаты в деньгах или отношениях, стало легко на душе?', why: 'Как измерять результат в Еве'},
-      {id: 't_friend', b: 'friend', t: 'Что должно произойти, чтобы ты сказала подруге «попробуй Еву»? Кому бы ты её посоветовала?', why: 'Рекомендации и реферальная программа'},
+      {id: 't_change', b: 'change', t: 'Вспомни момент, когда ты по-настоящему изменила привычку или взгляд на вещи. Что помогло — и как ты поняла, что изменения случились?', why: 'Что запускает перемены и как измерять результат в Еве'},
+      {id: 't_friend', b: 'change', t: 'Что должно произойти, чтобы ты сказала подруге «попробуй Еву»? Кому бы ты её посоветовала?', why: 'Рекомендации и реферальная программа'},
     ],
   },
 
@@ -1817,15 +1842,12 @@ const Q_BLOCKS = {
       contact: {name: 'На связи',       emo: '📲', about: 'как договориться о звонке'},
     },
     talk: {
-      intro:   {name: 'Знакомство'},
-      pointA:  {name: 'Точка А'},
-      day:     {name: 'Утро и день'},
-      evening: {name: 'Вечер и сон'},
-      res:     {name: 'Ресурсы: чего хватает и не хватает'},
-      content: {name: 'Где и как смотрит контент'},
-      experts: {name: 'Формат и эксперты'},
-      change:  {name: 'Механика трансформации'},
-      friend:  {name: 'Рекомендации'},
+      intro:   {name: 'Знакомство и точка А', min: 7},
+      day:     {name: 'День и ритуалы', min: 8},
+      res:     {name: 'Ресурсы: чего хватает и не хватает', min: 8},
+      content: {name: 'Контент и приложения', min: 6},
+      experts: {name: 'Эксперты и формат', min: 6},
+      change:  {name: 'Перемены и рекомендации', min: 3},
     },
   },
 };
@@ -1834,11 +1856,18 @@ const Q_BLOCKS = {
    сохранённые правки команды для прежнего набора не должны его заслонять: из них
    остаются только вопросы, которые команда добавила сама (их id нет в Q_PREV). */
 const Q_VER = {client: 3};
+/* версия набора интервью — отдельно от анкеты: сокращение интервью до 40 минут (23.10) не сбрасывает
+   правки анкеты, а правки команды в прежнем интервью уступают новому (свои вопросы остаются) */
+const Q_TALK_VER = {client: 2};
+/* сколько минут на начало и завершение разговора — к плану по разделам */
+const TALK_SCRIPT_MIN = {client: 2};
 /* все id прежних стартовых наборов клиенток (первая анкета, кастдев 2.0) */
 const Q_PREV = {client: {
   test: ['name', 'age', 'city', 'stage', 'goal', 'pain', 'time', 'when', 'tried', 'spend', 'formats', 'price', 'fit', 'source', 'call', 'tg',
     'evaId', 'birth', 'country', 'status', 'job', 'rhythm', 'energy', 'happy', 'health', 'transform', 'wake', 'sleep', 'food', 'diet', 'screen', 'devices', 'where', 'length', 'speed', 'form', 'ask'],
-  talk: ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12', 't13', 't14', 't15'],
+  talk: ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12', 't13', 't14', 't15',
+    't_mood', 't_selftime', 't_day', 't_audio', 't_fallasleep', 't_switch', 't_drain', 't_best', 't_grateful', 't_hour', 't_how', 't_annoy', 't_push',
+    't_overload', 't_saved', 't_worth', 't_follow', 't_visual', 't_result'],
 }};
 
 function groupByBlock(type, part, qs) {
@@ -2049,7 +2078,7 @@ const Codec = {
 function applyDiff(type, diff, part = 'test') {
   const base = ((Q_DEFAULT[type] || {})[part] || []).map(q => ({...q}));
   /* ссылка выдана до смены набора вопросов — её правки относятся к прежнему набору */
-  if (!diff || (diff.v || 1) < (Q_VER[type] || 1)) return base;
+  if (!diff || (diff.v || 1) < (Q_VER[type] || 1) || (part === 'talk' && (diff.tv || 1) < (Q_TALK_VER[type] || 1))) return base;
   const hide = new Set(diff.h || []);
   const changed = Object.fromEntries((diff.c || []).map(q => [q.id, q]));
   const out = base.filter(q => !hide.has(q.id)).map(q => (changed[q.id] ? {...q, ...changed[q.id]} : q));
@@ -2662,6 +2691,69 @@ function pickPop(anchor, items, current) {
   });
 }
 
+/* ── выбор нескольких из длинного списка: поиск, галочки, «добавить свой» (направления эксперта, теги).
+   Возвращает выбранные значения или null, если закрыли без «Готово» ── */
+function multiPop(anchor, {items, selected = [], allowNew = false, placeholder = 'Найти…', label = (x => x)}) {
+  return new Promise(resolve => {
+    closePops();
+    const pop = document.createElement('div');
+    pop.className = 'pop multi';
+    pop.setAttribute('role', 'dialog');
+    const all = [...new Set([...items, ...selected])];
+    const sel = new Set(selected);
+    pop.innerHTML = `<input class="input sm multi-q" type="search" autocomplete="off"><div class="multi-list" role="listbox" aria-multiselectable="true"></div>
+      <div class="multi-foot"><span class="multi-n"></span><button class="btn sm" data-no>Отмена</button><button class="btn sm primary" data-ok>Готово</button></div>`;
+    const q = $('.multi-q', pop), list = $('.multi-list', pop);
+    q.placeholder = placeholder;
+    const draw = () => {
+      const v = q.value.trim(), lv = v.toLowerCase();
+      const hits = all.filter(x => !lv || String(label(x)).toLowerCase().includes(lv));
+      list.innerHTML = hits.map(x => `<label class="multi-i"><input type="checkbox" value="${esc(x)}" ${sel.has(x) ? 'checked' : ''}><span>${esc(label(x))}</span></label>`).join('')
+        + (allowNew && v && !all.some(x => String(label(x)).toLowerCase() === lv) ? `<button type="button" class="multi-new" data-new>＋ Добавить «${esc(v)}»</button>` : '')
+        + (!hits.length && !(allowNew && v) ? '<p class="note">Ничего не нашлось</p>' : '');
+      $('.multi-n', pop).textContent = sel.size ? `выбрано: ${sel.size}` : '';
+    };
+    const add = () => { const v = q.value.trim().slice(0, 40); if (!v) return; if (!all.includes(v)) all.push(v); sel.add(v); q.value = ''; draw(); q.focus(); };
+    list.addEventListener('change', e => { const c = e.target.closest('input'); if (!c) return; if (c.checked) sel.add(c.value); else sel.delete(c.value); $('.multi-n', pop).textContent = sel.size ? `выбрано: ${sel.size}` : ''; });
+    list.addEventListener('click', e => { if (e.target.closest('[data-new]')) add(); });
+    q.addEventListener('input', draw);
+    q.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const hit = $$('.multi-i input', list);
+      if (hit.length === 1) { hit[0].checked = !hit[0].checked; hit[0].dispatchEvent(new Event('change', {bubbles: true})); q.select(); }
+      else if (allowNew && !hit.length) add();
+    });
+    draw();
+    document.body.appendChild(pop);
+    const r = anchor.getBoundingClientRect();
+    const w = pop.offsetWidth, h = pop.offsetHeight;
+    let top = r.bottom + 4, left = r.left;
+    if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 4);
+    left = clamp(left, 8, window.innerWidth - w - 8);
+    pop.style.top = (top + window.scrollY) + 'px';
+    pop.style.left = (left + window.scrollX) + 'px';
+    function done(v) {
+      pop.remove();
+      document.removeEventListener('mousedown', outside, true);
+      document.removeEventListener('keydown', key, true);
+      resolve(v);
+    }
+    pop._done = () => done(null);
+    const outside = e => { if (!pop.contains(e.target)) done(null); };
+    const key = e => { if (e.key === 'Escape') { e.stopPropagation(); done(null); } };
+    setTimeout(() => document.addEventListener('mousedown', outside, true), 0);
+    document.addEventListener('keydown', key, true);
+    $('[data-ok]', pop).onclick = () => done(all.filter(x => sel.has(x)));
+    $('[data-no]', pop).onclick = () => done(null);
+    if (!matchMedia('(pointer:coarse)').matches) q.focus();
+  });
+}
+/* выбранное — чипами и кнопка «Выбрать…»: для форм (направления эксперта) */
+function pickedHtml(id, values, empty = 'Выбрать') {
+  return `<div class="picked" id="${id}">${values.map(v => `<span class="tagchip">${esc(noEmo(v))}</span>`).join('')}<button type="button" class="btn sm" data-pick-open="${id}">${icon(values.length ? 'edit' : 'plus')}${values.length ? 'Изменить' : esc(empty)}</button></div>`;
+}
+
 /* ── подсказка «как пользоваться» на странице: скрывается и возвращается ── */
 function helpBox(key, html) {
   const hidden = Local.get('eva-crm2-help', {})[key];
@@ -2713,8 +2805,8 @@ function funnelBars(rows, {money = false} = {}) {
   }).join('')}</div>`;
 }
 /* строки «название — полоса — значение», например источники */
-function hbarList(rows, {valFmt = fmt, color = 'var(--link)', sub = null} = {}) {
-  const max = Math.max(1, ...rows.map(r => r.v));
+function hbarList(rows, {valFmt = fmt, color = 'var(--link)', sub = null, max: top = 0} = {}) {
+  const max = top || Math.max(1, ...rows.map(r => r.v));
   if (!rows.length) return '<p class="note">Пока нет данных.</p>';
   return `<div class="hbl">${rows.map(r => `<div class="hbl-r">
       <span class="hbl-n">${r.dot ? `<i class="dot" style="background:${r.dot}"></i>` : ''}${esc(r.name)}</span>
@@ -2905,18 +2997,20 @@ const strip = q => { const {hidden, custom, rec, ...rest} = q; return rest; };
 const Questions = {
   set(type) {
     const d = Store.get('cfg', 'q_' + type);
-    /* правки сохранены для прежнего набора: берём новый, свои вопросы команды — в конец */
-    if (d && (d.ver || 1) < (Q_VER[type] || 1)) {
-      const prev = Q_PREV[type] || {test: [], talk: []};
-      const own = part => { const known = new Set([...Q_DEFAULT[type][part].map(q => q.id), ...prev[part]]); return (Array.isArray(d[part]) ? d[part] : []).filter(q => q && q.id && !known.has(q.id)); };
-      return {test: [...clone(Q_DEFAULT[type].test), ...own('test')], talk: [...clone(Q_DEFAULT[type].talk), ...own('talk')]};
-    }
-    return {test: d && Array.isArray(d.test) ? d.test : clone(Q_DEFAULT[type].test), talk: d && Array.isArray(d.talk) ? d.talk : clone(Q_DEFAULT[type].talk)};
+    if (!d) return {test: clone(Q_DEFAULT[type].test), talk: clone(Q_DEFAULT[type].talk)};
+    /* правки сохранены для прежнего набора (у анкеты и интервью версии свои): берём новый,
+       свои вопросы команды — в конец */
+    const prev = Q_PREV[type] || {test: [], talk: []};
+    const oldTest = (d.ver || 1) < (Q_VER[type] || 1);
+    const stale = {test: oldTest, talk: oldTest || (d.tver || 1) < (Q_TALK_VER[type] || 1)};
+    const own = part => { const known = new Set([...Q_DEFAULT[type][part].map(q => q.id), ...(prev[part] || [])]); return (Array.isArray(d[part]) ? d[part] : []).filter(q => q && q.id && !known.has(q.id)); };
+    const part = k => (stale[k] ? [...clone(Q_DEFAULT[type][k]), ...own(k)] : Array.isArray(d[k]) ? d[k] : clone(Q_DEFAULT[type][k]));
+    return {test: part('test'), talk: part('talk')};
   },
   test(type) { return this.set(type).test.filter(q => !q.hidden); },
   talk(type) { return this.set(type).talk.filter(q => !q.hidden); },
   find(type, id) { return this.set(type).test.find(q => q.id === id) || null; },
-  save(type, set) { return Store.put('cfg', 'q_' + type, {test: set.test, talk: set.talk, ver: Q_VER[type] || 1, at: Date.now()}); },
+  save(type, set) { return Store.put('cfg', 'q_' + type, {test: set.test, talk: set.talk, ver: Q_VER[type] || 1, tver: Q_TALK_VER[type] || 1, at: Date.now()}); },
   reset(type) { return Store.remove('cfg', 'q_' + type); },
   /* что изменили в анкете относительно стартового набора — едет в ссылке */
   diff(type, part = 'test') {
@@ -2930,6 +3024,7 @@ const Questions = {
     if (!h.length && !c.length && !s) return null;
     const d = {};
     if ((Q_VER[type] || 1) > 1) d.v = Q_VER[type];
+    if (part === 'talk' && (Q_TALK_VER[type] || 1) > 1) d.tv = Q_TALK_VER[type];
     if (h.length) d.h = h;
     if (c.length) d.c = c;
     if (s) d.s = s;
@@ -2957,11 +3052,19 @@ const People = {
       ...Object.entries(s3Map(p.type)).map(([k, z]) => [`3:${k}`, `3 · ${T.steps[2]}: ${z.name.toLowerCase()}`])];
   },
   stageOf(p) { const c = this.col(p); return c === 3 ? `3:${p.s3 || 'none'}` : String(c); },
+  /* теги группы: сначала те, что уже стоят на карточках (чаще — выше), потом готовые подсказки */
+  tagsOf(type) {
+    const n = {};
+    this.all(type).forEach(p => (p.tags || []).forEach(t => { n[t] = (n[t] || 0) + 1; }));
+    const used = Object.keys(n).sort((a, b) => n[b] - n[a] || a.localeCompare(b, 'ru'));
+    return {list: [...new Set([...used, ...(PERSON_TAGS[type] || [])])], n};
+  },
   connected(p) { return p.type === 'client' ? ['done', 'fan'].includes(p.s3) : p.s3 === 'yes'; },
   /* строка под именем: без смайлов, чтобы читалась с одного взгляда */
-  sub(p) {
+  /* chips — рядом и так показаны направления чипами (доска, шапка карточки) */
+  sub(p, chips = false) {
     const a = p.answers || {};
-    if (p.type === 'expert') return [p.topic || a.topic || (p.dirs || []).map(noEmo).join(', '), p.city].filter(Boolean).join(' · ');
+    if (p.type === 'expert') return [p.topic || a.topic || (chips ? '' : (p.dirs || []).map(noEmo).join(', ')), p.city].filter(Boolean).join(' · ');
     if (p.type === 'partner') return [noEmo(p.cat), p.city].filter(Boolean).join(' · ');
     if (p.type === 'amb') return [a.size ? `аудитория ${noEmo(a.size)}` : '', p.city].filter(Boolean).join(' · ');
     const age = ageFromBirth(a.birth);
@@ -3664,11 +3767,13 @@ App.register('home', {
      заходы для рекламы от Claude;
    • Образ жизни — кто наши клиентки: возраст, город, статус, занятость,
      режим дня, сон, питание, телефон и трекеры;
+   • Интервью — сколько проведено, длительность против плана 40 минут, какие
+     разделы проходят, ответы всех людей на выбранный вопрос, погода, метки, цитаты;
    • Ответы — графики по каждому вопросу анкеты по разделам, с фильтром по
      сегменту и своими ответами из «Другое».
    Подписи без смайлов — так цифры читаются с первого взгляда. */
 
-const ST_TABS = [['process', 'Процесс'], ['product', 'Продукт'], ['marketing', 'Маркетинг'], ['life', 'Образ жизни'], ['answers', 'Ответы анкеты']];
+const ST_TABS = [['process', 'Процесс'], ['product', 'Продукт'], ['marketing', 'Маркетинг'], ['life', 'Образ жизни'], ['interviews', 'Интервью'], ['answers', 'Ответы анкеты']];
 const PRICE_NOW = 2900;
 /* клиентский формат ↔ что может снять эксперт */
 const FORMAT_MAP = [
@@ -3681,12 +3786,13 @@ App.register('stats', {
   title: 'Статистика',
   render(root) {
     const tab = ST_TABS.some(([k]) => k === View.get('st.tab', 'process')) ? View.get('st.tab', 'process') : 'process';
-    const body = tab === 'product' ? productView() : tab === 'marketing' ? marketingView() : tab === 'life' ? lifeView() : tab === 'answers' ? answersStatsView() : processView();
+    const body = tab === 'product' ? productView() : tab === 'marketing' ? marketingView() : tab === 'life' ? lifeView() : tab === 'interviews' ? interviewsView() : tab === 'answers' ? answersStatsView() : processView();
     const sub = {
       process: 'Как идут три шага: где люди застревают, сколько дней уходит на шаг, кто сколько сделал.',
       product: 'Что улучшить в Еве: боли, желания, форматы, цена и идеи прямо из интервью.',
       marketing: 'Кому и как рассказывать о Еве: портрет, каналы, время, слова клиенток, рефералы.',
       life: 'Кто наши клиентки: возраст, город, статус, занятость, режим дня, сон, питание и телефон.',
+      interviews: 'Что говорят на интервью: сколько проведено, укладываемся ли в 40 минут, ответы всех людей на каждый вопрос.',
       answers: 'Графики по каждому вопросу анкеты. Всё считается само, когда приходят ответы.',
     }[tab];
     root.innerHTML = `
@@ -3695,6 +3801,7 @@ App.register('stats', {
       ${body}`;
     wireTabs(root);
     on(root, 'click', '[data-seg]', (e, el) => { View.set('st.seg', el.dataset.seg); App.render(); });
+    on(root, 'change', '#ivQ', (e, el) => { View.set('st.iq', el.value); App.render(); });
     on(root, 'click', '[data-syn]', async (e, el) => {
       const key = el.dataset.syn;
       Syn[key] = {loading: true};
@@ -3840,7 +3947,8 @@ function productView() {
   const clients = People.all('client');
   const tagQuote = t => { for (const p of clients.filter(x => ((x.res || {}).tags || []).includes(t))) { const s = Object.values(p.talk || {}).find(x => x && x.star && x.a); if (s) return {p, text: s.a}; } return null; };
   const ideas = clients.filter(p => (p.res || {}).idea || (p.res || {}).main).map(p => ({p, main: p.res.main, idea: p.res.idea}));
-  const annoy = [...talkAnswers('t_annoy', list), ...talkAnswers('t9', list)];
+  /* с 23.10 «что раздражает» спрашиваем вместе с любимым приложением (t_favapp); старые ответы — тоже здесь */
+  const annoy = [...talkAnswers('t_favapp', list), ...talkAnswers('t_annoy', list), ...talkAnswers('t9', list)];
   const apply = talkAnswers('t_apply', list), ideal = talkAnswers('t_idealvideo', list);
   const recs = recommendations().filter(r => r.kind === 'idea').slice(0, 6);
   return `
@@ -3868,7 +3976,7 @@ function productView() {
     <div class="two section">
       ${card('Что слышим на интервью', 'метки из разбора и пример цитаты', tags.length ? `<div class="tq-list">${tags.map(t => { const q = tagQuote(t.name); return `<div class="tqr"><div class="tqr-h"><b>${esc(noEmo(t.name))}</b><span>${t.v}</span></div>${q ? `<p>«${esc(q.text.length > 150 ? q.text.slice(0, 150) + '…' : q.text)}» <a href="#p-${q.p.id}">${esc(People.name(q.p))}</a></p>` : ''}</div>`; }).join('')}</div>` : '<p class="note">Метки появятся, когда разберёте первые интервью.</p>')}
       ${card('Идеи из интервью', `${ideas.length} ${plural(ideas.length, 'интервью', 'интервью', 'интервью')}`, ideas.length ? `<div class="idea-list">${ideas.map(x => `<a class="idea" href="#p-${x.p.id}">${x.main ? `<b>${esc(x.main)}</b>` : ''}${x.idea ? `<span>${esc(x.idea)}</span>` : ''}<small>${esc(People.name(x.p))}</small></a>`).join('')}</div>` : '<p class="note">В итоге интервью заполняйте «Главный инсайт» и «Что улучшить в Еве» — они соберутся здесь.</p>')}
-      ${card('Что раздражает в приложениях', 'из интервью — чего не делать в Еве', quotesHtml(annoy))}
+      ${card('Любимые приложения и что раздражает', 'из интервью — на что равняться и чего не делать в Еве', quotesHtml(annoy))}
       ${card('Что помогает внедрить', 'трекеры, шпаргалки, задания — из интервью', quotesHtml(apply))}
       ${card('Идеальное обучающее видео', 'бриф для съёмок — словами клиенток', quotesHtml(ideal, 3))}
       ${card('Рекомендации по ответам', '', recs.length ? `<div class="recs">${recs.map(r => `<a class="rec" href="#${r.href}"><b>${esc(r.text)}</b><small><span class="rec-g">${r.type === 'all' ? 'Все группы' : groupName(r.type)}</span>${esc(r.why)}</small></a>`).join('')}</div>` : '<p class="note">Появятся, когда придут первые анкеты.</p>')}
@@ -3885,7 +3993,7 @@ function marketingView() {
     ['Время в день', mode('time')], ['Когда удобно', mode('when')], ['Смотрит контент', mode('where')], ['Готова платить', mode('price')], ['Откуда узнаёт', mode('source')]].filter(x => x[1]);
   const quotes = Stats.quotes().filter(x => x.p.type === 'client').slice(0, 4);
   const source = aggOf('client', 'source', base), when = aggOf('client', 'when', base), tried = aggOf('client', 'tried', base), where = aggOf('client', 'where', base);
-  const follow = talkAnswers('t_follow'), friend = [...talkAnswers('t_friend'), ...talkAnswers('t13')];
+  const follow = [...talkAnswers('t_trust'), ...talkAnswers('t_follow')], friend = [...talkAnswers('t_friend'), ...talkAnswers('t13')];
   const ambs = People.all('amb');
   const reach = sum(ambs, p => REACH[(p.answers || {}).size] || 0);
   const platforms = {};
@@ -3941,6 +4049,45 @@ function answersStatsView() {
     ${extra}
     <section class="section"><div class="section-head"><h2>Ответы анкеты</h2><span class="hint-inline">по ${nAns} ${plural(nAns, 'анкете', 'анкетам', 'анкетам')} · где можно выбрать несколько, сумма больше 100%</span></div>
       ${agg.length ? groupByBlock(type, 'test', agg.map(a => (a.q.id === 'age' ? {...a.q, b: (Questions.find(type, 'birth') || {}).b} : a.q))).map(g => `${g.name ? `<h3 class="qs-bh">${g.emo ? `<span aria-hidden="true">${g.emo}</span>` : ''}${esc(g.name)}</h3>` : ''}<div class="qstats">${g.qs.map(q => qStatCard(agg.find(a => a.q.id === q.id))).join('')}</div>`).join('') : '<p class="note">Графики появятся, когда придут первые анкеты.</p>'}</section>`;
+}
+
+/* ── Интервью: по ответам во вкладке «Интервью» карточек (записала команда или ответила сама по ссылке) ── */
+function interviewsView() {
+  const qs = Questions.talk('client');
+  const blocks = groupByBlock('client', 'talk', qs);
+  const plan = talkPlan('client', blocks);
+  const has = p => qs.some(q => ((p.talk || {})[q.id] || {}).a);
+  const list = People.all('client').filter(p => has(p) || p.s2 === 'done');
+  const withAns = list.filter(has);
+  const durs = list.map(p => p.callDur).filter(x => x >= 60);
+  const avgMin = durs.length ? durs.reduce((a, b) => a + b, 0) / durs.length / 60 : null;
+  const self = withAns.filter(p => qs.some(q => ((p.talk || {})[q.id] || {}).self)).length;
+  const fill = withAns.length ? withAns.reduce((a, p) => a + qs.filter(q => ((p.talk || {})[q.id] || {}).a).length, 0) / withAns.length : 0;
+  /* какие разделы доходят до конца: доля ответов в разделе по всем интервью */
+  const cover = blocks.map(g => ({name: g.name, min: g.min, v: withAns.length ? withAns.reduce((a, p) => a + g.qs.filter(q => ((p.talk || {})[q.id] || {}).a).length, 0) / (withAns.length * g.qs.length) : 0}));
+  const counted = qs.map(q => ({q, n: withAns.filter(p => ((p.talk || {})[q.id] || {}).a).length}));
+  const pick = qs.find(q => q.id === View.get('st.iq', '')) || (counted.find(x => x.n) || counted[0] || {}).q;
+  const answers = pick ? talkAnswers(pick.id, list) : [];
+  const weather = pickAgg('t_weather', list);
+  const tags = Stats.insightTags();
+  const stars = Stats.quotes().filter(x => x.p.type === 'client').slice(0, 8);
+  const tagN = People.tagsOf('client').n, tagRows = Object.entries(tagN).map(([name, v]) => ({name, v})).sort((a, b) => b.v - a.v);
+  return `
+    ${kpiRow([[withAns.length, plural(withAns.length, 'интервью с ответами', 'интервью с ответами', 'интервью с ответами')], [avgMin === null ? '—' : `${fmt(avgMin, 0)} мин`, `в среднем · план ${plan ? plan.total : 40} мин`],
+      [withAns.length ? `${fmt(fill, 0)} из ${qs.length}` : '—', 'вопросов с ответом в среднем'], [self, 'ответили сами по ссылке']])}
+    ${avgMin !== null && plan && avgMin > plan.total + 5 ? `<div class="warnline" style="margin-top:12px">Интервью в среднем идут ${fmt(avgMin, 0)} минут — дольше плана на ${fmt(avgMin - plan.total, 0)}. Держите темп по разделам: подсказка «в графике / отстаём» — рядом с таймером в карточке.</div>` : ''}
+    <section class="section card"><div class="card-head"><h2>Ответы по вопросам</h2><span class="note">все, кто ответил на выбранный вопрос · звёздочка — яркая цитата</span></div>
+      ${qs.length ? `<select class="select" id="ivQ" aria-label="Вопрос интервью">${blocks.map(g => `<optgroup label="${esc(g.name || 'Вопросы')}">${g.qs.map(q => { const c = counted.find(x => x.q === q); return `<option value="${q.id}" ${pick === q ? 'selected' : ''}>${esc(q.t)} · ${c.n}</option>`; }).join('')}</optgroup>`).join('')}</select>
+        ${pick && pick.why ? `<p class="note" style="margin-top:8px">Зачем спрашиваем: ${esc(pick.why)}</p>` : ''}
+        <div class="iv-answers">${answers.length ? answers.map(x => { const t = (x.p.talk || {})[pick.id] || {}; return `<div class="quote">${t.star ? `<span class="star on">${icon('star')}</span>` : ''}${t.pick ? `<span class="tagchip">${esc(t.pick)}</span> ` : ''}«${esc(x.a)}»<small><a href="#p-${x.p.id}">${esc(People.name(x.p))}</a>${t.self ? ' · ответила сама' : ''}</small></div>`; }).join('') : '<p class="note">На этот вопрос пока никто не ответил.</p>'}</div>` : '<p class="note">Вопросов интервью нет — добавьте их в «Базе вопросов».</p>'}</section>
+    <div class="two section">
+      ${card('Какие разделы проходим', plan ? `доля вопросов с ответом · план по минутам` : 'доля вопросов с ответом', withAns.length ? hbarList(cover.map(c => ({name: `${c.name}${c.min ? ` · ${c.min} мин` : ''}`, v: Math.round(c.v * 100)})), {color: 'var(--link)', valFmt: v => v + '%', max: 100}) : '<p class="note">Появится после первого интервью.</p>')}
+      ${card('Погода жизни', 'метка интервьюера', weather.length ? hbarList(weather, {color: 'var(--gold)', sub: r => pct(r.v / sum(weather, x => x.v))}) : '<p class="note">Отмечайте погоду кнопкой в интервью.</p>')}
+      ${card('Метки из разбора', 'что слышим чаще всего', tags.length ? hbarList(tags.map(t => ({name: noEmo(t.name), v: t.v})), {color: 'var(--violet)'}) : '<p class="note">Метки появятся, когда разберёте первые интервью во вкладке «Итог».</p>')}
+      ${card('Теги клиенток', 'теги на карточках', tagRows.length ? hbarList(tagRows, {color: 'var(--good)'}) : '<p class="note">Ставьте теги в карточке — «Добавить тег» под именем.</p>')}
+    </div>
+    <section class="section card"><div class="card-head"><h2>Яркие цитаты</h2><span class="note">звёздочка у ответа в интервью</span></div>
+      ${stars.length ? `<div class="stack">${stars.map(x => `<div class="quote">«${esc(x.text.length > 260 ? x.text.slice(0, 260) + '…' : x.text)}»<small><a href="#p-${x.p.id}">${esc(People.name(x.p))}</a></small></div>`).join('')}</div>` : '<p class="note">Отмечайте звёздочкой самые точные ответы во время интервью — они соберутся здесь.</p>'}</section>`;
 }
 
 /* фильтр по этапу жизни: «Все · Мама малыша · Карьера …» */
@@ -4048,7 +4195,7 @@ function statsDigest() {
   const st = ['energy', 'happy', 'health'].map(id => { const a = Stats.avgOf(base, id); return a ? `${{energy: 'энергия', happy: 'довольство жизнью', health: 'здоровье'}[id]} ${fmt(a.avg, 1)}` : ''; }).filter(Boolean).join(', ');
   const age = Stats.ageAgg(base);
   const weather = pickAgg('t_weather').map(r => `${r.name} — ${r.v}`).join('; ');
-  const annoy = talkAnswers('t_annoy').slice(0, 6).map(x => '- ' + x.a).join('\n');
+  const annoy = [...talkAnswers('t_favapp'), ...talkAnswers('t_annoy')].slice(0, 6).map(x => '- ' + x.a).join('\n');
   return [`Анкет клиенток: ${base.length}.`, age.n ? `Возраст: ${age.rows.filter(r => r.v).map(r => `${r.name} — ${r.v} из ${age.n}`).join('; ')}` : '', line('Этап жизни', 'stage'), line('Статус', 'status'), line('Занятость', 'employ'), line('График работы', 'schedule'), line('Доход (самооценка)', 'income'), line('Жильё', 'housing'), line('Что забирает 80% внимания', 'sphere'),
     st ? `Состояние по шкале 1–10 в среднем: ${st}` : '', line('Беспокоит', 'pain'), line('Важнее всего', 'goal'), line('Время в день', 'time'), line('Когда удобно', 'when'), line('Как удобнее меняться', 'transform'),
     line('Пробовали', 'tried'), line('Ложатся спать', 'sleep'), line('Время в телефоне', 'screen'), line('Где смотрят контент', 'where'), line('Комфортная длина практики в будний день', 'length'), line('Подача', 'form'), line('Траты на саморазвитие в месяц', 'spend'),
@@ -4083,6 +4230,12 @@ const stChip = (tone, text) => `<span class="st ${tone}">${esc(text)}</span>`;
 function sinceDays(ts) {
   const d = Math.floor((Date.now() - ts) / 864e5);
   return d <= 0 ? 'сегодня' : d === 1 ? 'вчера' : `${d} ${plural(d, 'день', 'дня', 'дней')}`;
+}
+/* направления эксперта и теги — чипами: на доске первые n, в карточке все */
+function chipsOf(p, n = 99) {
+  const dirs = p.type === 'expert' ? (p.dirs || []).map(d => `<span class="tagchip dir">${esc(noEmo(d))}</span>`) : [];
+  const all = [...dirs, ...(p.tags || []).map(t => `<span class="tagchip">${esc(t)}</span>`)];
+  return all.length ? `<div class="pc-tags">${all.slice(0, n).join('')}${all.length > n ? `<span class="tagchip more">+${all.length - n}</span>` : ''}</div>` : '';
 }
 /* статус на карточке: пусто, если кнопка рядом и так говорит, что делать */
 function statusLine(p) {
@@ -4208,25 +4361,39 @@ function openBulkDelete(type) {
     }});
 }
 
+/* поля «выбрать из списка» в форме: кнопка открывает поиск с галочками, выбранное — чипами */
+function wirePicked(el, picked, cfg) {
+  on(el, 'click', '[data-pick-open]', async (e, b) => {
+    const id = b.dataset.pickOpen, c = cfg[id];
+    const v = await multiPop(b, {items: c.items, selected: picked[id], allowNew: !!c.allowNew, placeholder: c.placeholder, label: c.label || (x => x)});
+    if (!v) return;
+    picked[id] = v;
+    $('#' + id, el).outerHTML = pickedHtml(id, v, c.empty || (c.allowNew ? 'Добавить теги' : 'Выбрать из списка'));
+  });
+}
+
 /* быстро добавить человека: имя, контакт — и сразу ссылка */
 function openAdd(type) {
   const T = TYPES[type];
-  const extra = type === 'expert' ? `<div class="field"><span>Направление</span><div class="ans" id="adDirs">${DIRECTIONS.map(d => `<button type="button" data-v="${esc(d)}">${esc(noEmo(d))}</button>`).join('')}</div></div>`
+  const extra = type === 'expert' ? `<div class="field"><span>Направления</span>${pickedHtml('adDirs', [], 'Выбрать из списка')}</div>`
     : type === 'partner' ? `<label class="field"><span>Категория</span><select class="select" id="adCat">${PARTNER_CATS.map(c => `<option value="${esc(c)}">${esc(noEmo(c))}</option>`).join('')}</select></label><label class="field"><span>Контактное лицо</span><input class="input" id="adContact" placeholder="Ирина, управляющая"></label>` : '';
   openModal({title: `${T.one}: добавить`, body: `
       <label class="field"><span>${type === 'partner' ? 'Название' : 'Имя'}</span><input class="input" id="adName" placeholder="${type === 'partner' ? 'Студия «Баланс»' : 'Анна Иванова'}"></label>
       <div class="grid2"><label class="field"><span>Telegram или телефон</span><input class="input" id="adTg" placeholder="@username"></label>
       <label class="field"><span>Город</span><input class="input" id="adCity" placeholder="Москва"></label></div>
       ${extra}
+      <div class="field"><span>Теги</span>${pickedHtml('adTags', [], 'Добавить теги')}</div>
       <p class="note">Ссылка на анкету скопируется сама — отправьте её человеку. Ответы попадут в карточку.</p>`,
     foot: '<button class="btn" data-close>Отмена</button><button class="btn" data-only>Просто добавить</button><button class="btn primary" data-ok>Добавить и скопировать ссылку</button>',
     onMount(el, close) {
-      on(el, 'click', '#adDirs button', (ev, b) => b.classList.toggle('on'));
+      const picked = {adDirs: [], adTags: []};
+      wirePicked(el, picked, {adDirs: {items: DIRECTIONS, label: noEmo, placeholder: 'Найти направление…'}, adTags: {items: People.tagsOf(type).list, allowNew: true, placeholder: 'Найти или добавить тег…'}});
       const save = async withLink => {
         const name = $('#adName', el).value.trim();
         if (!name) { $('#adName', el).classList.add('need'); $('#adName', el).focus(); return; }
         const f = {type, name, tg: $('#adTg', el).value.trim(), city: $('#adCity', el).value.trim()};
-        if (type === 'expert') f.dirs = $$('#adDirs button.on', el).map(b => b.dataset.v);
+        if (type === 'expert') f.dirs = picked.adDirs;
+        if (picked.adTags.length) f.tags = picked.adTags;
         if (type === 'partner') { f.cat = $('#adCat', el).value; f.contact = $('#adContact', el).value.trim(); }
         const id = People.create(f);
         close();
@@ -4247,20 +4414,26 @@ function audiencePage(type) {
     render(root) {
       const T = TYPES[type];
       const q = View.get(type + '.q', '').trim().toLowerCase();
-      const f = View.get(type + '.f', '');
+      const f = View.get(type + '.f', ''), tg = View.get(type + '.tag', '');
       const everyone = People.all(type);
       let list = everyone;
-      if (q) list = list.filter(p => (People.name(p) + ' ' + (p.city || '') + ' ' + (p.code || '') + ' ' + (p.topic || '')).toLowerCase().includes(q));
+      if (q) list = list.filter(p => (People.name(p) + ' ' + (p.city || '') + ' ' + (p.code || '') + ' ' + (p.topic || '') + ' ' + (p.tags || []).join(' ')).toLowerCase().includes(q));
       if (f) list = list.filter(p => (type === 'expert' ? (p.dirs || []).includes(f) : type === 'partner' ? p.cat === f : true));
+      if (tg) list = list.filter(p => (p.tags || []).includes(tg));
+      const tags = People.tagsOf(type);
       const cols = [1, 2, 3].map(c => list.filter(p => People.col(p) === c));
       const hints = [
         'Отправьте ссылку — человек ответит сам за 3 минуты. Или заполните за него.',
-        type === 'client' ? 'Интервью в Zoom, 20–30 минут. Вопросы и заметки — в карточке.' : 'Созвон 30 минут: знакомимся и договариваемся.',
+        type === 'client' ? 'Интервью в Zoom — 40 минут по плану. Вопросы, таймер и заметки — в карточке; или вопросы ссылкой, письменно.' : 'Созвон 30 минут: знакомимся и договариваемся.',
         type === 'client' ? 'Отметьте, что услышали, — это попадёт в статистику.' : 'Запишите решение: подключаем, думает или не сейчас.',
       ];
+      /* направления и категории — выпадающим списком (с числом людей), а не стеной кнопок */
       const filters = type === 'expert' ? DIRECTIONS.map(d => [d, everyone.filter(p => (p.dirs || []).includes(d)).length])
-        : type === 'partner' ? PARTNER_CATS.map(c => [c, everyone.filter(p => p.cat === c).length]).filter(x => x[1])
+        : type === 'partner' ? PARTNER_CATS.map(c => [c, everyone.filter(p => p.cat === c).length])
         : [];
+      const fSel = filters.length ? `<select class="select sm t-filter" id="bf" aria-label="${type === 'expert' ? 'Направление' : 'Категория'}"><option value="">${type === 'expert' ? 'Все направления' : 'Все категории'}</option>${filters.map(([v, c]) => `<option value="${esc(v)}" ${f === v ? 'selected' : ''}>${esc(noEmo(v))}${c ? ` · ${c}` : ''}</option>`).join('')}</select>` : '';
+      const usedTags = Object.keys(tags.n);
+      const tSel = usedTags.length || tg ? `<select class="select sm t-filter" id="bt" aria-label="Тег"><option value="">Все теги</option>${[...new Set([...usedTags, ...(tg ? [tg] : [])])].map(t => `<option value="${esc(t)}" ${tg === t ? 'selected' : ''}>${esc(t)} · ${tags.n[t] || 0}</option>`).join('')}</select>` : '';
       const canEdit = People.canEdit();
       if (canEdit) hints[0] += ' Перенести на другой этап — кнопкой ⇄ на карточке или перетащить её.';
 
@@ -4268,16 +4441,17 @@ function audiencePage(type) {
         ${pageHead(`${T.emo} ${groupName(type)}`, esc(T.about),
           `<button class="btn" data-stats>${icon('chart')}Статистика</button>${canEdit ? `<button class="btn" data-tform>${icon('msg')}${type === 'client' ? 'Форма интервью' : 'Вопросы формой'}</button><button class="btn" data-paste>${icon('inbox')}Вставить ответы</button><button class="btn primary" data-add>${icon('plus')}${type === 'client' ? 'Клиентка' : T.one}</button>` : ''}${Who.can('delete') && everyone.length ? `<button class="icon-btn" data-bulk-del title="Удалить несколько карточек — например, тестовые">${icon('trash')}</button>` : ''}`)}
         ${!everyone.length ? `<div class="welcome"><span class="e">${T.emo}</span><div><b>Здесь пока никого</b><p>Добавьте первого человека — ссылка на анкету скопируется сама. ${type === 'client' ? 'Для кастдева хватит 10–15 интервью, чтобы увидеть закономерности.' : ''}</p></div></div>` : ''}
-        <div class="t-bar"><input class="input sm t-search" id="bq" placeholder="Поиск: имя, город, код" value="${esc(View.get(type + '.q', ''))}"><span class="t-bar-sp"></span>
+        <div class="t-bar"><input class="input sm t-search" id="bq" placeholder="Поиск: имя, город, код, тег" value="${esc(View.get(type + '.q', ''))}">${fSel}${tSel}
+          ${f || tg ? '<button class="link-btn" data-f-clear>Сбросить</button>' : ''}<span class="t-bar-sp"></span>
           <span class="note">${list.length === everyone.length ? `${everyone.length} ${plural(everyone.length, 'человек', 'человека', 'человек')}` : `найдено ${list.length} из ${everyone.length}`}</span></div>
-        ${filters.length ? `<div class="chip-row"><button class="chip ${!f ? 'on' : ''}" data-f="">Все</button>${filters.map(([v, c]) => `<button class="chip ${f === v ? 'on' : ''}" data-f="${esc(v)}">${esc(noEmo(v))}<span class="chip-n">${c}</span></button>`).join('')}</div>` : ''}
         <div class="board3 ${canEdit ? 'can-drag' : ''}">${[0, 1, 2].map(i => `
           <div class="b3-col" data-col="${i + 1}"><div class="b3-h"><span class="num">${i + 1}</span><b>${T.steps[i]}</b><span class="kb-n">${cols[i].length}</span></div>
             <div class="b3-hint">${esc(hints[i])}</div>
             ${i === 2 && canEdit ? `<div class="b3-zones">${Object.entries(s3Map(type)).filter(([k]) => k !== 'none').map(([k, z]) => `<div class="b3-zone ${z.tone}" data-zone="${k}">${esc(z.name)}</div>`).join('')}</div>` : ''}
             <div class="b3-list">${cols[i].map(p => { const st = statusLine(p), acts = nextActs(p); return `<div class="pc" data-open="${p.id}" data-drag="${p.id}">
               <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b>${canEdit ? `<button class="pc-move" data-move-pop="${p.id}" title="Перенести на другой этап" aria-label="Перенести на другой этап">${icon('swap')}</button>` : ''}</div>
-              ${People.sub(p) || p.ref ? `<div class="pc-sub">${esc(People.sub(p))}${p.ref ? `${People.sub(p) ? ' · ' : ''}<span class="pc-ref">по приглашению</span>` : ''}</div>` : ''}
+              ${People.sub(p, true) || p.ref ? `<div class="pc-sub">${esc(People.sub(p, true))}${p.ref ? `${People.sub(p, true) ? ' · ' : ''}<span class="pc-ref">по приглашению</span>` : ''}</div>` : ''}
+              ${chipsOf(p, 3)}
               ${st ? `<div>${st}</div>` : ''}
               ${acts ? `<div class="pc-acts">${acts}</div>` : ''}
             </div>`; }).join('') || '<p class="note" style="padding:6px 4px">Пусто</p>'}</div>
@@ -4285,7 +4459,10 @@ function audiencePage(type) {
 
       let qt;
       $('#bq', root).oninput = e => { clearTimeout(qt); const v = e.target.value; qt = setTimeout(() => { View.set(type + '.q', v); App.render({focus: 'bq'}); }, 250); };
-      on(root, 'click', '[data-f]', (e, el) => { View.set(type + '.f', el.dataset.f); App.render(); });
+      const bf = $('#bf', root), bt = $('#bt', root);
+      if (bf) bf.onchange = () => { View.set(type + '.f', bf.value); App.render(); };
+      if (bt) bt.onchange = () => { View.set(type + '.tag', bt.value); App.render(); };
+      on(root, 'click', '[data-f-clear]', () => { View.set(type + '.f', ''); View.set(type + '.tag', ''); App.render(); });
       on(root, 'click', '[data-add]', () => openAdd(type));
       on(root, 'click', '[data-paste]', () => openPaste());
       on(root, 'click', '[data-tform]', () => openTalkForm(type));
@@ -4537,12 +4714,13 @@ App.register('person', {
         <div><h1>${esc(People.name(p))}</h1>
           <div class="ph-sub"><span class="code" title="Личный код: в ссылке на анкету и в реферальной ссылке">${esc(p.code)}</span>
             <span>${esc(T.one)}</span>
-            ${People.sub(p) ? `<span>${esc(People.sub(p))}</span>` : ''}
+            ${People.sub(p, true) ? `<span>${esc(People.sub(p, true))}</span>` : ''}
             ${tgLink}
             ${p.evaId ? `<span title="ID в приложении Ева">EVA ID ${esc(p.evaId)}</span>` : ''}
             ${p.contact ? `<span>контакт: ${esc(p.contact)}</span>` : ''}
             ${ref ? `<span>по приглашению <a href="#p-${ref.id}">${esc(People.name(ref))}</a></span>` : p.ref ? `<span>по приглашению ${esc(p.ref)}</span>` : ''}
-            ${invited.length ? `<span>по ссылке пришли: ${invited.length}</span>` : ''}</div></div>
+            ${invited.length ? `<span>по ссылке пришли: ${invited.length}</span>` : ''}</div>
+          ${(p.tags || []).length || (p.dirs || []).length || canEdit ? `<div class="ph-tags">${p.type === 'expert' ? (p.dirs || []).map(d => `<span class="tagchip dir">${esc(noEmo(d))}</span>`).join('') : ''}${(p.tags || []).map(t => `<span class="tagchip">${esc(t)}</span>`).join('')}${canEdit ? `<button class="tag-add" data-tags-edit title="Теги — по ним удобно искать и фильтровать на доске">${icon((p.tags || []).length ? 'edit' : 'tag')}${(p.tags || []).length ? 'Теги' : 'Добавить тег'}</button>` : ''}</div>` : ''}</div>
         <div class="ph-acts">${canEdit ? `<label class="pp-move"><span>Этап</span><select class="select sm" data-move>${opts(People.stages(p), People.stageOf(p))}</select></label>
           <button class="btn sm" data-act="link" data-pid="${p.id}">${icon('link')}Скопировать ссылку</button><button class="btn sm" data-act="tlink" data-pid="${p.id}" title="Вопросы ${p.type === 'client' ? 'интервью' : 'созвона'} — человек ответит сам, ответы лягут в карточку">${icon('link')}Ссылка на ${p.type === 'client' ? 'интервью' : 'вопросы'}</button><button class="icon-btn" data-edit-person title="Изменить данные">${icon('edit')}</button>` : ''}${Who.can('delete') ? `<button class="icon-btn" data-del title="Удалить">${icon('trash')}</button>` : ''}</div>
       </div>
@@ -4625,6 +4803,13 @@ App.register('person', {
       toast('Отмечено: подарок выдан');
     });
     on(root, 'click', '[data-edit-person]', () => openEditPerson(p));
+    /* теги: из списка группы (что уже стоит на карточках и готовые подсказки) или свой */
+    on(root, 'click', '[data-tags-edit]', async (e, el) => {
+      const cur = (People.get(p.id) || p).tags || [];
+      const v = await multiPop(el, {items: People.tagsOf(p.type).list, selected: cur, allowNew: true, placeholder: 'Найти или добавить тег…'});
+      if (!v || JSON.stringify(v) === JSON.stringify(cur)) return;
+      People.patch(p.id, {tags: v}, v.length ? `Теги: ${v.join(', ')}` : 'Убрали теги', '🏷');
+    });
     /* перенести на этап — то же, что перетащить карточку на доске, но работает и на телефоне */
     on(root, 'change', '[data-move]', (e, el) => moveToStage(p, el.value));
     on(root, 'click', '[data-del]', async (e, el) => {
@@ -4642,18 +4827,21 @@ function openEditPerson(p) {
       <label class="field"><span>${p.type === 'partner' ? 'Название' : 'Имя'}</span><input class="input" id="epName" value="${esc(p.name || '')}"></label>
       <div class="grid2"><label class="field"><span>Telegram или телефон</span><input class="input" id="epTg" value="${esc(p.tg || '')}"></label>
       <label class="field"><span>Город</span><input class="input" id="epCity" value="${esc(p.city || '')}"></label></div>
-      ${p.type === 'expert' ? `<div class="field"><span>Направления</span><div class="ans" id="epDirs">${DIRECTIONS.map(d => `<button type="button" class="${(p.dirs || []).includes(d) ? 'on' : ''}" data-v="${esc(d)}">${esc(noEmo(d))}</button>`).join('')}</div></div>
+      ${p.type === 'expert' ? `<div class="field"><span>Направления</span>${pickedHtml('epDirs', p.dirs || [], 'Выбрать из списка')}</div>
         <label class="field"><span>Тема экспертизы</span><input class="input" id="epTopic" value="${esc(p.topic || (p.answers || {}).topic || '')}"></label>` : ''}
       ${p.type === 'partner' ? `<label class="field"><span>Категория</span><select class="select" id="epCat">${PARTNER_CATS.map(c => `<option value="${esc(c)}" ${p.cat === c ? 'selected' : ''}>${esc(noEmo(c))}</option>`).join('')}</select></label>
         <label class="field"><span>Контактное лицо</span><input class="input" id="epContact" value="${esc(p.contact || '')}"></label>` : ''}
+      <div class="field"><span>Теги</span>${pickedHtml('epTags', p.tags || [], 'Добавить теги')}</div>
       <label class="field"><span>Кто ведёт</span><select class="select" id="epOwner"><option value="">—</option>${Team.all().map(m => `<option value="${m.id}" ${p.owner === m.id ? 'selected' : ''}>${esc(Team.name(m))}</option>`).join('')}</select></label>
       <label class="field"><span>Группа</span><select class="select" id="epType">${Object.keys(TYPES).map(k => `<option value="${k}" ${p.type === k ? 'selected' : ''}>${groupName(k)}</option>`).join('')}</select></label>`,
     foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Сохранить</button>',
     onMount(el, close) {
-      on(el, 'click', '#epDirs button', (e, b) => b.classList.toggle('on'));
+      const picked = {epDirs: [...(p.dirs || [])], epTags: [...(p.tags || [])]};
+      wirePicked(el, picked, {epDirs: {items: DIRECTIONS, label: noEmo, placeholder: 'Найти направление…'}, epTags: {items: People.tagsOf(p.type).list, allowNew: true, placeholder: 'Найти или добавить тег…'}});
       $('[data-ok]', el).onclick = () => {
         const d = {name: $('#epName', el).value.trim() || p.name, tg: $('#epTg', el).value.trim(), city: $('#epCity', el).value.trim(), owner: $('#epOwner', el).value || null, type: $('#epType', el).value};
-        if ($('#epDirs', el)) { d.dirs = $$('#epDirs button.on', el).map(b => b.dataset.v); d.topic = $('#epTopic', el).value.trim(); }
+        if ($('#epDirs', el)) { d.dirs = picked.epDirs; d.topic = $('#epTopic', el).value.trim(); }
+        d.tags = picked.epTags;
         if ($('#epCat', el)) { d.cat = $('#epCat', el).value; d.contact = $('#epContact', el).value.trim(); }
         People.patch(p.id, d);
         close();
@@ -4765,12 +4953,31 @@ const Timer = {
     View.set('tm.' + pid, t);
   },
   reset(pid) { View.set('tm.' + pid, null); },
-  /* одна секундная стрелка на всё окно: обновляет все таймеры на экране */
+  /* одна секундная стрелка на всё окно: обновляет все таймеры и «в графике ли мы» на экране */
   wire() {
     if (this.id) return;
-    this.id = setInterval(() => $$('[data-timer-for]').forEach(el => { el.textContent = dur(Timer.secs(el.dataset.timerFor)); }), 1000);
+    this.id = setInterval(() => {
+      $$('[data-timer-for]').forEach(el => { el.textContent = dur(Timer.secs(el.dataset.timerFor)); });
+      $$('[data-pace]').forEach(el => { const [tone, text] = pace(Timer.secs(el.dataset.pace), Number(el.dataset.due), Number(el.dataset.total)); el.className = 'iv-plan ' + tone; el.textContent = text; });
+    }, 1000);
   },
 };
+/* план по времени (у разделов интервью есть минуты): к концу какой минуты должен закончиться каждый раздел */
+function talkPlan(type, blocks) {
+  if (!blocks.length || !blocks.every(g => g.min)) return null;
+  const lead = Math.ceil((TALK_SCRIPT_MIN[type] || 0) / 2);
+  let t = lead;
+  const ends = blocks.map(g => (t += g.min));
+  return {ends, total: t + (TALK_SCRIPT_MIN[type] || 0) - lead};
+}
+/* идём ли по плану: до старта — сколько всего, дальше — «в графике» или на сколько отстаём */
+function pace(secs, due, total) {
+  const m = secs / 60;
+  if (!secs) return ['', `план ${total} мин`];
+  if (m > total + 1) return ['bad', `дольше плана на ${Math.round(m - total)} мин`];
+  if (m > due + 1) return ['warn', `отстаём на ${Math.round(m - due)} мин`];
+  return ['good', `в графике · план ${total} мин`];
+}
 
 /* что показать из анкеты перед созвоном — самое полезное для разговора */
 const KNOWN = {
@@ -4784,7 +4991,7 @@ const KNOWN = {
 /* сценарий: что сказать в начале и в конце */
 const SCRIPT = {
   client: {
-    intro: ['Спасибо, что нашла время! Займёт минут 25.', 'Мы делаем Еву и хотим понять твой настоящий опыт. Правильных ответов нет, критика очень помогает.', 'Можно я буду коротко записывать? Ответы увидит только команда.', 'Буду спрашивать про то, что уже было, а не про «купила бы ты».'],
+    intro: ['Спасибо, что нашла время! Займёт около 40 минут.', 'Мы делаем Еву и хотим понять твой настоящий опыт. Правильных ответов нет, критика очень помогает.', 'Можно я буду коротко записывать? Ответы увидит только команда.', 'Буду спрашивать про то, что уже было, а не про «купила бы ты».'],
     outro: ['Что я не спросила, а стоило бы?', 'Можно написать тебе через месяц и показать, что получилось?', 'Кого из подруг нам стоит расспросить? Могу прислать ссылку.', 'Спасибо! Ты очень помогла.'],
   },
   expert: {
@@ -4833,6 +5040,18 @@ const LEGACY_TALK = {
     t9: 'Если уже пробовала Еву: что было самым полезным? Что раздражало?', t10: 'Какой формат тебе ближе: практика, мастер-класс, эфир, сообщество, офлайн?',
     t11: 'Когда тебе удобно получать напоминания? Какие уведомления бесят?', t12: 'Сколько должна стоить такая подписка?',
     t13: 'Что должно произойти, чтобы ты сказала подруге «попробуй Еву»?', t14: 'Если бы Ева была твоей: что бы ты добавила, а что убрала?', t15: 'Можно написать тебе через месяц? Кого из подруг расспросить?',
+    /* интервью до 23.10 (37 вопросов): эти вошли в соседние, ответы на них остаются в карточке */
+    t_mood: 'Что повышает тебе настроение?', t_selftime: 'Успеваешь уделять время себе утром — или день сразу начинается с суеты?', t_day: 'Опиши свой обычный день от обеда до вечера.',
+    t_audio: 'В какие моменты ты слушаешь подкасты или музыку?', t_fallasleep: 'Легко ли тебе уснуть? Что мешает?', t_switch: 'Что помогает тебе переключиться с работы и семьи на отдых?',
+    t_drain: 'Что сейчас больше всего забирает твои силы или настроение? Когда это было в последний раз?', t_best: 'Какая сфера твоей жизни сейчас закрыта лучше всего?',
+    t_grateful: 'За что ты благодарна своему нынешнему образу жизни?', t_hour: 'Если бы в твоём дне появился лишний час только для себя — на что бы ты его потратила?',
+    t_how: 'Как ты смотришь полезный контент: выделяешь время и сидишь с блокнотом, включаешь фоном за готовкой или в зале, слушаешь в дороге?',
+    t_annoy: 'Что тебя больше всего раздражает в приложениях — из-за чего сразу закрываешь или удаляешь?', t_push: 'Как ты относишься к push-уведомлениям? Какие бесят, а какие реально помогают?',
+    t_overload: 'Бывает ли у тебя ощущение перегруза? Что его вызывает?', t_saved: 'Сохраняешь ли ты полезное «на потом»? Как часто к нему возвращаешься?',
+    t_worth: 'За какой контент — курсы, гайды, подписки, вебинары — за последний год тебе было совсем не жалко денег? Почему?',
+    t_follow: 'На кого из известных женщин, спикеров или блогеров ты подписана и кого регулярно слушаешь? За что ты их ценишь?',
+    t_visual: 'Что быстрее привлекает твоё внимание: красивый «кинематографичный» кадр или динамичный разбор на доске или с презентацией?',
+    t_result: 'Как ты понимаешь, что прошла через трансформацию: изменилось состояние, появились результаты в деньгах или отношениях, стало легко на душе?',
   },
 };
 function legacyTalk(p) {
@@ -4856,12 +5075,16 @@ function interviewPane(p, canEdit) {
   const done = p.s2 === 'done';
   const blocks = groupByBlock(p.type, 'talk', qs);
   const legacy = legacyTalk(p);
+  const plan = talkPlan(p.type, blocks);
+  const curB = Math.max(0, cur ? blocks.findIndex(g => g.qs.includes(cur)) : blocks.length - 1);
+  const pc = plan ? pace(secs, plan.ends[curB], plan.total) : null;
   return `<div class="iv">
     <div class="iv-main">
       <div class="iv-bar">
         <span class="timer ${run ? 'on' : ''}" data-timer-for="${p.id}" title="Длительность">${dur(secs)}</span>
         ${canEdit ? `<button class="btn sm" data-iv-timer>${run ? `${icon('pause')}Пауза` : `${icon('play')}${secs ? 'Продолжить' : 'Старт'}`}</button>` : ''}
         <span class="iv-prog"><b>${n}</b> из ${qs.length} вопросов<span class="iv-pbar"><i style="width:${qs.length ? (n / qs.length * 100).toFixed(0) : 0}%"></i></span></span>
+        ${plan && !done ? `<span class="iv-plan ${pc[0]}" data-pace="${p.id}" data-due="${plan.ends[curB]}" data-total="${plan.total}" title="Раздел «${esc(blocks[curB].name)}» по плану заканчивается к ${plan.ends[curB]}-й минуте">${pc[1]}</span>` : ''}
         <span class="sp"></span>
         ${p.zoom ? `<a class="btn sm" href="${esc(p.zoom)}" target="_blank" rel="noopener">${icon('cam')}Zoom</a>` : ''}
         <button class="btn sm ghost" data-copy-q title="Скопировать вопросы в заметки Zoom">${icon('copy')}</button>
@@ -4869,8 +5092,8 @@ function interviewPane(p, canEdit) {
         ${done ? `<span class="st good">${p.callDur ? `прошёл · ${Math.round(p.callDur / 60)} мин` : 'прошёл'}</span>` : ''}
       </div>
       <details class="iv-script" ${n ? '' : 'open'}><summary>Начало разговора</summary><ol>${S.intro.map(x => `<li>${esc(x)}</li>`).join('')}</ol></details>
-      ${blocks.length > 1 ? `<nav class="iv-nav" aria-label="Блоки интервью">${blocks.map((g, bi) => { const k = g.qs.filter(asked).length; return `<a href="#" data-iv-go="${bi}" class="${k === g.qs.length ? 'done' : g.qs.includes(cur) ? 'cur' : ''}"><b>${esc(g.name)}</b><small>${k}/${g.qs.length}</small></a>`; }).join('')}</nav>` : ''}
-      <div class="talk">${blocks.map((g, bi) => `${blocks.length > 1 ? `<h3 class="iv-bh" id="ivb-${bi}">${esc(g.name)}<small>${g.qs.filter(asked).length} из ${g.qs.length}</small></h3>` : ''}${g.qs.map(q => { const i = qs.indexOf(q); const x = talk[q.id] || {}; const isAsked = asked(q); return `<div class="tq ${x.a ? 'filled' : ''} ${cur && cur.id === q.id ? 'cur' : ''} ${isAsked ? 'asked' : ''}">
+      ${blocks.length > 1 ? `<nav class="iv-nav" aria-label="Блоки интервью">${blocks.map((g, bi) => { const k = g.qs.filter(asked).length; return `<a href="#" data-iv-go="${bi}" class="${k === g.qs.length ? 'done' : g.qs.includes(cur) ? 'cur' : ''}"><b>${esc(g.name)}</b><small>${k}/${g.qs.length}${g.min ? ` · ${g.min} мин` : ''}</small></a>`; }).join('')}</nav>` : ''}
+      <div class="talk">${blocks.map((g, bi) => `${blocks.length > 1 ? `<h3 class="iv-bh" id="ivb-${bi}">${esc(g.name)}<small>${g.qs.filter(asked).length} из ${g.qs.length}${g.min ? ` · ≈${g.min} мин${plan ? `, к ${plan.ends[bi]}-й минуте` : ''}` : ''}</small></h3>` : ''}${g.qs.map(q => { const i = qs.indexOf(q); const x = talk[q.id] || {}; const isAsked = asked(q); return `<div class="tq ${x.a ? 'filled' : ''} ${cur && cur.id === q.id ? 'cur' : ''} ${isAsked ? 'asked' : ''}">
         <div class="tq-h">${canEdit ? `<button class="tq-n" data-asked="${q.id}" title="${isAsked ? 'Задан' : 'Отметить, что вопрос задан'}">${isAsked ? '✓' : i + 1}</button>` : `<i>${i + 1}</i>`}<b>${esc(q.t)}</b>${x.self ? '<span class="st violet" title="Ответ пришёл по ссылке на интервью">ответила сама</span>' : ''}${canEdit ? `<button class="star ${x.star ? 'on' : ''}" data-star="${q.id}" title="${x.star ? 'Убрать из цитат' : 'Яркая цитата — попадёт в статистику'}">${icon('star')}</button>` : x.star ? `<span class="star on">${icon('star')}</span>` : ''}</div>
         ${q.why ? `<div class="tq-why">Зачем: ${esc(q.why)}</div>` : ''}
         ${(q.pick || []).length ? `<div class="tq-pick" role="group" aria-label="Быстрая метка">${q.pick.map(o => `<button type="button" class="${x.pick === o ? 'on' : ''}" data-pick="${q.id}" data-v="${esc(o)}" ${canEdit ? '' : 'disabled'}>${esc(o)}</button>`).join('')}</div>` : ''}

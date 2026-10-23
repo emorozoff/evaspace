@@ -58,6 +58,7 @@ const CRM = require('./lib/crm-rules');
 const {Gcal} = require('./lib/gcal');
 const {Zoom, videoFile} = require('./lib/zoom');
 const {TgBot} = require('./lib/tg');
+const {runFixes} = require('./lib/crm-fixes');
 
 const HQ_DIR = path.resolve(__dirname, '..');                       // club/v2 — сам штаб
 const CRM_DIR = path.resolve(process.env.CRM_DIR || path.join(__dirname, '..', '..', '..', 'crm', 'v2'));
@@ -104,6 +105,8 @@ if (argv[0] === '--invite') {
 
 hq.store.load();
 crm.store.load();
+/* разовые правки данных CRM по просьбе основателей — каждая один раз, удалённое — копией (lib/crm-fixes.js) */
+runFixes(crm.store, DATA_DIR);
 const sessions = new A.Sessions(path.join(DATA_DIR, 'sessions.json'));
 const limiter = new A.Limiter();
 const gcal = new Gcal({file: path.join(DATA_DIR, 'gcal.json'), clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, publicUrl: PUBLIC_URL});
@@ -751,8 +754,60 @@ async function crmTalk(req, res) {
   return json(res, 200, {ok: true, c: code});
 }
 
+/* анкета: ответы сразу в карточку, без пересылки ссылки менеджеру. Личная ссылка — в карточку с этим
+   кодом; «Меня пригласили» или анкета без кода — новая карточка (у приглашённой — кто позвал). Без
+   входа — только ответы анкеты (строка, число, список строк) и ключевые поля из короткого списка */
+const ANK_KEYS = ['name', 'city', 'tg', 'cat', 'dirs', 'contact', 'evaId'];
+function ankValue(v) {
+  if (typeof v === 'string') return v.trim() ? v.trim().slice(0, 2000) : undefined;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : undefined;
+  if (Array.isArray(v)) { const l = v.filter(x => typeof x === 'string' && x.trim()).slice(0, 40).map(x => x.trim().slice(0, 300)); return l.length ? l : undefined; }
+  return undefined;
+}
+async function crmAnketa(req, res) {
+  const k = 'ank|' + ipOf(req);
+  const wait = limiter.blocked(k);
+  if (wait) return json(res, 429, {error: `Слишком много попыток. Попробуйте через ${wait} мин.`});
+  if (!sameSite(req)) return json(res, 403, {error: 'запрос не со страницы анкеты'});
+  const b = (await body(req)) || {};
+  const type = TALK_TYPES[b.t];
+  if (!type) return json(res, 400, {error: 'Непонятная анкета'});
+  const raw = isObj(b.a) ? b.a : {};
+  if (Object.keys(raw).length > 120 || JSON.stringify(raw).length > 100000) return json(res, 413, {error: 'Слишком длинные ответы'});
+  const a = {};
+  for (const [id, v] of Object.entries(raw)) { const x = TALK_ID.test(id) ? ankValue(v) : undefined; if (x !== undefined) a[id] = x; }
+  if (!Object.keys(a).length) return json(res, 400, {error: 'Нет ни одного ответа'});
+  const keys = {};
+  if (isObj(b.k)) for (const f of ANK_KEYS) { const x = ankValue(b.k[f]); if (x !== undefined) keys[f] = f === 'dirs' ? [].concat(x) : Array.isArray(x) ? x.join(', ').slice(0, 120) : String(x).slice(0, 120); }
+  const code = String(b.c || '').toUpperCase();
+  const owner = /^[A-Z0-9_-]{2,40}$/.test(code) ? crm.store.list('people').find(x => x.code === code) || null : null;
+  if (code && !owner && !b.r) { limiter.fail(k); return json(res, 404, {error: 'Ссылка устарела — попросите новую у менеджера Евы.'}); }
+  const now = Date.now();
+  /* анкета клиентки обещает подарок — неделю Евы: отмечаем, чтобы команда не забыла выдать */
+  const gift = p => (b.g && type === 'client' && !(p && p.gift) ? {gift: {at: now, done: false}} : {});
+  if (owner && !b.r) {
+    if (owner.type !== type) return json(res, 400, {error: 'Ссылка от другой анкеты'});
+    const {id, ...doc} = owner;
+    const fill = {};
+    for (const [f, v] of Object.entries(keys)) if (!doc[f] || (Array.isArray(doc[f]) && !doc[f].length) || f === 'dirs' || f === 'cat') fill[f] = v;
+    crm.store.set('people', id, {...doc, ...fill, answers: {...(doc.answers || {}), ...a}, s1: 'done', answeredAt: now, answeredBy: 'self', touchedAt: now, ...gift(doc),
+      log: {...(doc.log || {}), [A.uid()]: {t: now, by: 'self', emo: '📝', text: 'Заполнила анкету по ссылке'}}});
+    return json(res, 200, {ok: true, c: code});
+  }
+  const nk = 'anknew|' + ipOf(req), w = talkNew.blocked(nk);
+  if (w) return json(res, 429, {error: `С этого адреса уже пришло несколько анкет. Попробуйте через ${w} мин.`});
+  talkNew.fail(nk);
+  const id = A.uid(), name = keys.name || 'Без имени', newCode = talkCode(name);
+  crm.store.set('people', id, {type, ...keys, name, code: newCode, s1: 'done', s2: 'none', s3: 'none', answers: a, talk: {}, res: {tags: []},
+    answeredAt: now, answeredBy: 'self', ref: b.r ? (owner ? owner.code : code || null) : null, source: b.r ? 'ref' : 'link', ...gift(null),
+    createdAt: now, touchedAt: now,
+    log: {[A.uid()]: {t: now, by: 'self', emo: '✨', text: b.r ? `Пришла по ссылке ${owner ? owner.code : code}` : 'Заполнила анкету по ссылке'}}});
+  return json(res, 200, {ok: true, c: newCode});
+}
+
 async function crmApi(req, res, p, u) {
   if (p === 'talk' && req.method === 'POST') return crmTalk(req, res);
+  if (p === 'anketa' && req.method === 'POST') return crmAnketa(req, res);
   const ctx = ctxOf(req);
   const write = req.method !== 'GET';
   if (write && !sameSite(req)) return json(res, 403, {error: 'запрос не со страницы CRM'});
