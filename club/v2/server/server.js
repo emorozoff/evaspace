@@ -479,6 +479,13 @@ async function zoomWebhook(req, res) {
   if (!zoom.verify(req.headers, raw)) return json(res, 401, {error: 'подпись не сошлась'});
   const ev = String(j.event || ''), obj = (j.payload && j.payload.object) || {};
   if (ev === 'endpoint.url_validation') return json(res, 200, zoom.validation((j.payload || {}).plainToken));
+  /* в штаб — только собрания, встречу Зума к которым завёл штаб. Другие созвоны в общем Зуме компании (личные,
+     не про проект) штаб не трогает: протокол не заводит, запись и транскрипт не скачивает, бот о них не узнает */
+  const zid = String(obj.id || obj.meeting_id || '');
+  if (!(zid && hq.store.list('meetings').some(m => String(m.zoomId || '') === zid))) {
+    console.log(new Date().toISOString(), 'zoom', ev, '— встреча не из штаба, пропускаю');
+    return json(res, 200, {ok: true, skipped: true});
+  }
   try {
     /* запись готова; транскрипт речи Зум доделывает позже и присылает отдельным уведомлением */
     if (ev === 'recording.completed' || ev === 'recording.transcript_completed') {

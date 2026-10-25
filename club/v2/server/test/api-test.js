@@ -506,6 +506,15 @@ async function browserHash(pw, salt) {
         s2.end('WEBVTT\n\n1\n00:00:01.000 --> 00:00:03.000\nКирилл: Внимание, задача: Зоя готовит отчёт до пятницы\n\n2\n00:00:04.000 --> 00:00:05.000\nЗоя: Хорошо\n');
       });
       await new Promise(r => vtt.listen(0, r));
+      /* созвон не из штаба (личный в общем Зуме) — штаб пропускает: ни протокола, ни транскрипта */
+      const zsign = body => { const ts = String(Math.floor(Date.now() / 1000)); return {'content-type': 'application/json', 'x-zm-request-timestamp': ts, 'x-zm-signature': 'v0=' + require('crypto').createHmac('sha256', 'zsecret').update(`v0:${ts}:${body}`).digest('hex')}; };
+      for (const event of ['recording.completed', 'recording.transcript_completed', 'meeting.summary_completed']) {
+        const b = JSON.stringify({event, download_token: 'dtok', payload: {object: {id: 999, uuid: 'x9', topic: 'Личный созвон', start_time: '2026-10-21T12:00:00Z',
+          recording_files: [{file_type: 'TRANSCRIPT', download_url: `http://127.0.0.1:${vtt.address().port}/t.vtt`}]}}});
+        r = await fetch(B2 + '/api/zoom/webhook', {method: 'POST', headers: zsign(b), body: b});
+      }
+      ok(r.status === 200 && !Object.values((await own.state()).collections.protocols || {}).some(x => x.zoomId === '999'), 'созвон не из штаба в протоколы не попадает');
+      await own.put('meetings', 'mz777', {title: 'Созвон', date: '2026-10-21', start: '15:00', dur: 60, level: 3, organizer: 'pz', attendees: [], zoomId: '777'});
       const zbody = JSON.stringify({event: 'recording.transcript_completed', download_token: 'dtok', payload: {object: {id: 777, topic: 'Созвон', start_time: '2026-10-21T12:00:00Z',
         recording_files: [{file_type: 'TRANSCRIPT', download_url: `http://127.0.0.1:${vtt.address().port}/t.vtt`}]}}});
       const zts = String(Math.floor(Date.now() / 1000));
@@ -767,6 +776,7 @@ async function browserHash(pw, salt) {
         return fetch(B4 + '/api/zoom/webhook', {method: 'POST', headers: {'content-type': 'application/json', 'x-zm-request-timestamp': ts, 'x-zm-signature': sig}, body});
       };
       const dl = n => `http://localhost:${ZP}/rec/download/${n}`;
+      await own.put('meetings', 'mz888', {title: 'Созвон основателей', date: '2026-10-22', start: '15:00', dur: 60, level: 1, organizer: 'pm', attendees: [], zoomId: '888'});
       const rec = (uuid, start) => JSON.stringify({event: 'recording.completed', payload: {object: {id: 888, uuid, topic: 'Созвон основателей', start_time: start, share_url: 'https://zoom.us/rec/share/abc',
         recording_files: [
           {id: uuid + 'g', file_type: 'MP4', recording_type: 'gallery_view', status: 'completed', download_url: dl(uuid + 'g'), recording_start: start},
