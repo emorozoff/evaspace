@@ -898,6 +898,109 @@ async function browserHash(pw, salt) {
     ok(!Object.values(sv.talk).some(x => /Зачем:/.test(x.a || '')) && /Как понимает, что изменилась/.test(sv.talk.t_change.a), 'слитые вопросы — с подписью, шаблонного текста нет');
   }
 
+  console.log('22. бюджетирование: заявки, маршрут согласования, бюджеты направлений, биржа идей');
+  {
+    /* свой сервер на пустых данных: основатель (он же гендиректор), финансы (финдиректор), команда, инвестор, руководитель */
+    const {spawn} = require('child_process'), fs = require('fs'), os = require('os'), path = require('path');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eva-budget-'));
+    const B5 = `http://localhost:${Number(new URL(BASE).port || 8787) + 6}`;
+    const srv = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], {env: {...process.env, DATA_DIR: dir, PORT: new URL(B5).port, INSECURE_COOKIE: '1'}, stdio: 'ignore'});
+    try {
+      for (let i = 0; i < 50; i++) { try { if ((await fetch(B5 + '/healthz')).ok) break; } catch (e) { /* ещё не встал */ } await wait(100); }
+      const own = new Client('own5', B5), fin = new Client('fin5', B5), mem = new Client('mem5', B5), inv = new Client('inv5', B5), ld = new Client('lead5', B5);
+      await own.req('POST', '/api/auth/owner', {name: 'Основатель Бюджета', email: 'o@b.ru', pw: 'secret1'});
+      const oPid = Object.entries((await own.state()).collections.people).find(([, p]) => p.founder)[0];
+      for (const [code, role, pid, name] of [['FINA-2345', 'finance', 'pf', 'Фина'], ['MEMB-2345', 'member', 'pm', 'Мила'], ['INVE-2345', 'investor', null, 'Инна'], ['LEAD-2345', 'lead', null, 'Лев']]) {
+        if (pid) await own.put('people', pid, {name, title: 'Команда', order: 50});
+        await own.put('invites', code, {role, ...(pid ? {personId: pid} : {}), by: null, at: Date.now()});
+      }
+      await fin.req('POST', '/api/auth/join', {code: 'FINA-2345', given: 'Фина', surname: 'Финдир', email: 'f@b.ru', pw: 'secret1'});
+      await mem.req('POST', '/api/auth/join', {code: 'MEMB-2345', given: 'Мила', surname: 'Команда', email: 'm@b.ru', pw: 'secret1'});
+      const invAcc = (await inv.req('POST', '/api/auth/join', {code: 'INVE-2345', given: 'Инна', surname: 'Инвестор', email: 'i@b.ru', pw: 'secret1'})).j.me;
+      const ldAcc = (await ld.req('POST', '/api/auth/join', {code: 'LEAD-2345', given: 'Лев', surname: 'Лид', email: 'l@b.ru', pw: 'secret1'})).j.me;
+      const invKey = (await own.state()).collections.accounts[invAcc].personId || invAcc, ldKey = (await own.state()).collections.accounts[ldAcc].personId || ldAcc;
+      let n = 0;
+      const dec = (by, step, verdict, round = 1, note) => ({decisions: {['d' + (++n)]: {by, step, verdict, round, at: Date.now() + n, ...(note ? {note} : {})}}});
+      const req = (id, amount, by = 'pm', extra = {}) => ({title: 'Заявка ' + id, kind: 'event', amount, month: '2026-12', cat: 'marketing', dir: 'audience', why: 'расчёт', gain: 'охват', need: 'продажи', by, at: Date.now(), ...extra});
+      const planRow = async id => { for (let i = 0; i < 20; i++) { const p = ((await own.state()).collections.plan || {})['fr_' + id]; if (p) return p; await wait(50); } return null; };
+      const noRow = async id => { for (let i = 0; i < 20; i++) { if (!((await own.state()).collections.plan || {})['fr_' + id]) return true; await wait(50); } return false; };
+
+      /* разовая заявка до 50 000 ₽ — финдиректор сам */
+      ok((await mem.put('fundreqs', 'q1', req('q1', 30000, 'pf'))).status === 403, 'заявку от чужого имени — нет');
+      ok((await mem.put('fundreqs', 'q1', {...req('q1', 30000), ...dec('pf', 'cfo', 'ok')})).status === 403, 'заявку сразу с решением — нет');
+      ok((await mem.put('fundreqs', 'q1', req('q1', 30000))).status === 200, 'участница подаёт заявку черновиком');
+      ok((await mem.patch('fundreqs', 'q1', {sentAt: Date.now(), round: 1})).status === 200, 'и отправляет финдиректору');
+      ok((await mem.patch('fundreqs', 'q1', dec('pm', 'cfo', 'ok'))).status === 403, 'свою заявку сама не согласует');
+      ok((await ld.patch('fundreqs', 'q1', dec(ldKey, 'cfo', 'ok'))).status === 403, 'руководитель вместо финдиректора — нет');
+      ok((await fin.patch('fundreqs', 'q1', dec('pf', 'cfo', 'ok'))).status === 200, 'финдиректор согласует до 50 000 ₽ сам');
+      const r1 = await planRow('q1');
+      ok(r1 && r1.amount === 30000 && r1.group === 'once' && r1.months[0] === '2026-12' && r1.reqId === 'q1', 'согласованная заявка — строкой в плане платежей', r1);
+      ok((await mem.patch('fundreqs', 'q1', {amount: 90000})).status === 403, 'после согласования сумму не поменять');
+      ok((await own.patch('fundreqs', 'q1', {decisions: {d3: {by: 'pf', step: 'cfo', verdict: 'no', round: 1, at: 1, note: 'x'}}})).status === 403, 'решение не переписать');
+
+      /* от 50 до 150 тысяч — ещё гендиректор; на доработку — с комментарием, потом новый круг */
+      await mem.put('fundreqs', 'q2', {...req('q2', 100000), sentAt: Date.now(), round: 1});
+      ok((await fin.patch('fundreqs', 'q2', dec('pf', 'cfo', 'ok'))).status === 200, '100 000 ₽: финдиректор согласовал');
+      ok((await fin.patch('fundreqs', 'q2', dec('pf', 'ceo', 'ok'))).status === 403, 'за гендиректора — нет');
+      ok((await own.patch('fundreqs', 'q2', dec(oPid, 'ceo', 'revise'))).status === 403, 'на доработку без комментария — нет');
+      ok((await own.patch('fundreqs', 'q2', dec(oPid, 'ceo', 'revise', 1, 'Распишите смету'))).status === 200, 'гендиректор вернул на доработку');
+      ok((await mem.patch('fundreqs', 'q2', {amount: 90000, why: 'смета: 3 × 30 000'})).status === 200, 'автор правит заявку на доработке');
+      ok((await mem.patch('fundreqs', 'q2', {sentAt: Date.now(), round: 3})).status === 403, 'новый круг — только следующий по счёту');
+      ok((await mem.patch('fundreqs', 'q2', {sentAt: Date.now(), round: 2})).status === 200, 'и отправляет снова');
+      ok((await own.patch('fundreqs', 'q2', dec(oPid, 'ceo', 'ok', 2))).status === 403, 'новый круг снова начинается с финдиректора');
+      await fin.patch('fundreqs', 'q2', dec('pf', 'cfo', 'ok', 2));
+      ok((await own.patch('fundreqs', 'q2', dec(oPid, 'ceo', 'ok', 2))).status === 200 && (await planRow('q2')).amount === 90000, 'гендиректор согласовал — 90 000 ₽ в плане');
+
+      /* дороже 150 тысяч — ещё акционеры, решает большинство */
+      await mem.put('fundreqs', 'q3', {...req('q3', 200000), sentAt: Date.now(), round: 1});
+      await fin.patch('fundreqs', 'q3', dec('pf', 'cfo', 'ok'));
+      await own.patch('fundreqs', 'q3', dec(oPid, 'ceo', 'ok'));
+      ok((await mem.patch('fundreqs', 'q3', dec('pm', 'board', 'ok'))).status === 403, 'участница не голосует за акционеров');
+      ok((await own.patch('fundreqs', 'q3', dec(oPid, 'board', 'ok'))).status === 200, 'основатель голосует как акционер');
+      ok(await noRow('q3'), 'один голос из двух — ещё не большинство');
+      ok((await inv.patch('fundreqs', 'q3', dec(invKey, 'board', 'ok'))).status === 200 && (await planRow('q3')), 'инвестор согласовал — большинство, заявка в плане (строку ставит сервер)');
+      await mem.put('fundreqs', 'q4', {...req('q4', 300000), sentAt: Date.now(), round: 1});
+      ok((await fin.patch('fundreqs', 'q4', dec('pf', 'cfo', 'no', 1, 'Нет в бюджете'))).status === 200, 'финдиректор отказал');
+      ok((await mem.patch('fundreqs', 'q4', {withdrawn: true})).status === 403 && (await mem.patch('fundreqs', 'q4', {sentAt: Date.now(), round: 2})).status === 403, 'после отказа не отозвать и не отправить заново');
+
+      /* свою заявку согласует уровень выше */
+      await fin.put('fundreqs', 'q5', {...req('q5', 20000, 'pf'), sentAt: Date.now(), round: 1});
+      ok((await fin.patch('fundreqs', 'q5', dec('pf', 'cfo', 'ok'))).status === 403, 'финдиректор свою заявку не согласует');
+      ok((await own.patch('fundreqs', 'q5', dec(oPid, 'cfo', 'ok'))).status === 200, 'её согласует гендиректор');
+
+      const ms = (await mem.state()).collections, is = (await inv.state()).collections;
+      ok(ms.fundreqs.q1 && !ms.fundreqs.q5 && !Object.keys(ms.plan || {}).some(k => k.startsWith('fr_')), 'участница видит только свои заявки и не видит план', Object.keys(ms.fundreqs));
+      ok(is.fundreqs.q1 && is.fundreqs.q5, 'инвестор видит все заявки');
+      ok((await own.del('fundreqs', 'q1')).status === 200 && await noRow('q1'), 'заявку удалили — строка из плана ушла');
+
+      /* бюджет направления: один документ на период, маршрут по горизонту */
+      const bud = (ptype, period, extra = {}) => ({title: 'Бюджет', ptype, period, dir: 'content', lines: [{cat: 'content', title: 'Съёмки', amount: 120000}], why: 'план съёмок', gain: '20 роликов', need: 'охват', by: 'pm', at: Date.now(), ...extra});
+      ok((await mem.put('budgets', 'b_x', bud('month', '2026-12'))).status === 403, 'номер бюджета — по периоду и направлению');
+      ok((await mem.put('budgets', 'b_2026-12_content', {...bud('month', '2026-12'), sentAt: Date.now(), round: 1})).status === 200, 'бюджет на месяц подан');
+      ok((await fin.patch('budgets', 'b_2026-12_content', dec('pf', 'cfo', 'ok'))).status === 200, 'месяц согласует финдиректор');
+      ok((await fin.patch('budgets', 'b_2026-12_content', {lines: []})).status === 403, 'утверждённый бюджет не правят');
+      ok((await mem.put('budgets', 'b_2027-Q1_content', {...bud('quarter', '2027-Q1'), sentAt: Date.now(), round: 1})).status === 200, 'бюджет на квартал подан');
+      await fin.patch('budgets', 'b_2027-Q1_content', dec('pf', 'cfo', 'ok'));
+      ok((await own.patch('budgets', 'b_2027-Q1_content', dec(oPid, 'ceo', 'ok'))).status === 200, 'квартал — ещё гендиректор');
+      ok((await mem.patch('budgets', 'b_2027-Q1_content', {period: '2027-Q2'})).status === 403, 'период не поменять');
+
+      /* биржа идей */
+      ok((await mem.put('ideas', 'i1', {title: 'Чек-лист съёмки', type: 'kaizen', problem: 'забываем свет', proposal: 'чек-лист', by: 'pm', at: Date.now()})).status === 200, 'участница подаёт идею');
+      ok((await mem.put('ideas', 'i2', {title: 'x', by: 'pm', status: 'done'})).status === 403, 'сразу «внедрена» — нет');
+      ok((await mem.patch('ideas', 'i1', {status: 'accepted'})).status === 403, 'статус ставит не автор');
+      ok((await inv.patch('ideas', 'i1', {votes: {[invKey]: Date.now()}})).status === 200, 'голос — свой');
+      ok((await inv.patch('ideas', 'i1', {votes: {pm: Date.now()}})).status === 403, 'за другого не голосует');
+      ok((await inv.patch('ideas', 'i1', {comments: {c1: {by: invKey, at: Date.now(), text: 'Поддерживаю'}}})).status === 200, 'комментарий — свой');
+      ok((await mem.patch('ideas', 'i1', {comments: {c1: {by: invKey, at: 1, text: 'подмена'}}})).status === 403, 'чужой комментарий не поменять');
+      ok((await ld.patch('ideas', 'i1', {status: 'accepted', statusBy: ldKey, statusAt: Date.now(), verdict: 'Внедряем'})).status === 200, 'руководитель взял идею в работу');
+      ok((await mem.patch('ideas', 'i1', {proposal: 'другое'})).status === 403, 'взятую в работу идею автор не правит');
+      ok((await mem.patch('ideas', 'i1', {reward: {kind: 'bonus', amount: 100000}})).status === 403, 'премию себе не назначить');
+      ok((await fin.patch('ideas', 'i1', {status: 'done', reward: {kind: 'bonus', amount: 3000, by: 'pf', at: Date.now()}})).status === 200, 'финансы назначили премию');
+      ok((await mem.del('ideas', 'i1')).status === 403, 'рассмотренную идею автор не удалит');
+      ok((await mem.state()).collections.ideas.i1.reward.amount === 3000, 'автор видит свою премию');
+    } finally { srv.kill(); }
+  }
+
   console.log(`\nИтог: прошло ${pass}, не прошло ${failN}`);
   process.exit(failN ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(2); });

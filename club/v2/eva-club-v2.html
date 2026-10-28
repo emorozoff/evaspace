@@ -2150,6 +2150,150 @@ button.cw-adi{border:0; font:inherit; font-size:11.5px; text-align:left; cursor:
 .chat-sub .link-btn{white-space:nowrap;}
 /* кнопка Адама не закрывает конец страницы */
 .main{padding-bottom:96px;}
+
+/* ── 87-budget.css ── */
+/* ── бюджетирование ── */
+.bg-tabs{margin-bottom:20px;}
+.bg-wait{display:flex; flex-direction:column; gap:10px; margin-bottom:16px; border-left:3px solid var(--gold);}
+.bg-wait.back{border-left-color:var(--warn);}
+.bg-wait b{display:inline-flex; align-items:center; gap:6px; font-size:13.5px;}
+.bg-wait b svg, .bg-late svg, .fl-hint svg{width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.9; flex:none;}
+.bg-wait-list{display:flex; flex-wrap:wrap; gap:6px;}
+.bg-period{display:flex; flex-wrap:wrap; align-items:center; gap:12px 18px; margin-bottom:16px;}
+.bg-nav{display:flex; align-items:center; gap:8px;}
+.bg-nav b{min-width:150px; text-align:center; font-size:15px;}
+.icon-btn.flip svg{transform:scaleX(-1);}
+.bg-kpi{margin-bottom:6px; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));}
+table.bg-sum .dot, table.bg-cal .dot{margin-right:7px;}
+.bg-late{margin:14px 0 0; border-left:3px solid var(--bad); font-size:13.5px; display:flex; flex-wrap:wrap; align-items:center; gap:6px;}
+.bg-late b{display:inline-flex; align-items:center; gap:6px; color:var(--bad);}
+table.bg-sum td small.note{display:block; font-size:11px; margin-top:2px;}
+table.bg-sum tr.bg-sub td{background:var(--surface-2); font-size:12.5px;}
+.bg-indent{padding-left:18px; color:var(--ink-2);}
+.bg-bar-cell{min-width:90px;}
+.bg-bar-cell .bar{margin:0;}
+td.r .gold, .gold{color:var(--gold);}
+
+.bg-tools{display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; margin-bottom:12px;}
+.bg-tools .input{flex:1 1 220px; max-width:420px;}
+.bg-tools .select{width:auto;}
+.bg-tags{margin-bottom:14px;}
+.bg-list{display:flex; flex-direction:column; gap:8px;}
+.bg-row{display:grid; grid-template-columns:150px minmax(0,1fr) auto; gap:14px; align-items:center; padding:12px 16px; cursor:pointer;}
+.bg-row.need{box-shadow:inset 3px 0 0 var(--gold), var(--shadow);}
+.bg-row:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.bg-amt{display:flex; flex-direction:column;}
+.bg-amt b{font-variant-numeric:tabular-nums; font-size:14.5px;}
+.bg-amt small, .bg-main small{color:var(--ink-3); font-size:12px;}
+.bg-main{display:flex; flex-direction:column; gap:3px; min-width:0;}
+.bg-main small{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.bg-meta{display:flex; flex-direction:column; align-items:flex-end; gap:6px;}
+@media (max-width:760px){ .bg-row{grid-template-columns:minmax(0,1fr);} .bg-meta{align-items:flex-start;} }
+
+/* маршрут согласования */
+.fl-route{display:flex; flex-wrap:wrap; align-items:center; gap:4px;}
+.fl-step{display:inline-flex; flex-direction:column; padding:4px 9px; border-radius:8px; border:1px solid var(--line); background:var(--surface); line-height:1.2;}
+.fl-step b{font-size:11.5px; font-weight:600; white-space:nowrap;}
+.fl-step small{font-size:11px; color:var(--ink-3); white-space:nowrap;}
+.fl-step.good{border-color:transparent; background:var(--good-soft); color:var(--good);}
+.fl-step.gold{border-color:transparent; background:var(--gold-soft); color:var(--gold);}
+.fl-step.warn{border-color:transparent; background:var(--warn-soft); color:var(--warn);}
+.fl-step.bad{border-color:transparent; background:var(--bad-soft); color:var(--bad);}
+.fl-arr{font-style:normal; color:var(--ink-3); font-size:12px;}
+.fl-wait{font-size:11.5px; color:var(--ink-3);}
+.fl-wait.late{color:var(--bad); font-weight:600;}
+
+.fl-view{display:flex; flex-direction:column; gap:12px;}
+.fl-view > .note{margin:0;}
+.fl-head{display:flex; flex-wrap:wrap; align-items:center; gap:10px;}
+.fl-big{font:600 26px/1.1 var(--f-display); letter-spacing:-.02em; font-variant-numeric:tabular-nums;}
+.fl-verdict{padding:10px 14px; border-radius:10px; font-size:13.5px; background:var(--surface-2);}
+.fl-verdict.revise{background:var(--warn-soft);}
+.fl-verdict.rejected{background:var(--bad-soft);}
+.fl-verdict.approved{background:var(--good-soft);}
+.fl-text p{margin:4px 0 0; font-size:14px; line-height:1.55;}
+.fl-hist{display:flex; flex-direction:column; gap:6px; border-top:1px solid var(--line); padding-top:10px;}
+.fl-h{font-size:13px;}
+.fl-h small{color:var(--ink-3); margin-left:6px;}
+.fl-h p{margin:3px 0 0; color:var(--ink-2);}
+.fl-h.ok b{color:var(--good);} .fl-h.no b{color:var(--bad);} .fl-h.revise b{color:var(--warn);}
+.fl-act{border:1px solid var(--line); border-radius:10px; padding:12px; background:var(--surface-2); display:flex; flex-direction:column; gap:8px;}
+.fl-hint{display:flex; gap:8px; align-items:flex-start; margin:0; padding:10px 12px; border-radius:10px; background:var(--link-soft, var(--surface-2)); font-size:13px; color:var(--ink-2);}
+.fl-hint svg{margin-top:2px;}
+
+/* формы */
+.fr-form{display:flex; flex-direction:column; gap:14px;}
+.fr-quick{margin-top:-6px;}
+.fr-tagadd{margin-top:6px;}
+.fr-tagadd .input{max-width:200px;}
+table.bd-lines td{padding:6px 8px;}
+table.bd-lines .select, table.bd-lines .input{min-width:0;}
+table.bd-lines td:nth-child(3){width:150px;}
+table.bd-lines td:nth-child(4){width:40px;}
+
+/* бюджеты направлений и календарь */
+.bg-due{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-bottom:14px;}
+.bg-due.col{grid-template-columns:1fr;}
+.bg-due-i{display:flex; flex-direction:column; gap:3px; padding:12px 14px;}
+.bg-due.col .bg-due-i{padding:8px 0; border-bottom:1px solid var(--line);}
+.bg-due-i b{font-size:14px;}
+.bg-due-i small{font-size:12px; color:var(--ink-3);}
+.bg-due-i.soon small{color:var(--warn); font-weight:600;}
+.bg-due-i.late small{color:var(--bad); font-weight:600;}
+table.bg-cal td{vertical-align:middle;}
+.bg-cell{display:flex; flex-direction:column; align-items:flex-start; gap:1px; width:100%; min-width:110px; padding:6px 9px; border-radius:8px; border:1px dashed var(--line-strong); background:none; color:var(--ink-2); font:inherit; font-size:12.5px; text-align:left; cursor:pointer;}
+.bg-cell small{font-size:11px; color:inherit; opacity:.8; font-variant-numeric:tabular-nums;}
+.bg-cell.good{border:0; background:var(--good-soft); color:var(--good);}
+.bg-cell.gold{border:0; background:var(--gold-soft); color:var(--gold);}
+.bg-cell.warn{border:0; background:var(--warn-soft); color:var(--warn);}
+.bg-cell.bad{border:0; background:var(--bad-soft); color:var(--bad);}
+.bg-cell.line{border-style:solid;}
+.bg-plan-add{margin-top:12px;}
+.bg-cmp{display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink-2);}
+.bg-cmp .warn{color:var(--warn);}
+
+/* правила и настройки */
+.bg-rules h2{margin-bottom:6px;}
+.bg-rules h3{font-size:13.5px; margin:14px 0 4px;}
+.bg-rules p, .bg-rules li{font-size:13.5px; line-height:1.55; color:var(--ink-2);}
+.bg-rules ul{margin:4px 0; padding-left:20px;}
+.bg-set{display:flex; flex-direction:column; gap:14px;}
+.bs-dept{margin-bottom:6px; flex-wrap:nowrap;}
+.bs-dept .input{flex:1 1 200px;}
+.bs-dept .select{flex:0 1 200px;}
+@media (max-width:700px){ .bs-dept{flex-wrap:wrap;} }
+
+/* ── биржа идей ── */
+.id-kpi{margin-bottom:16px;}
+.id-grid{display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));}
+.id-card{display:flex; flex-direction:column; gap:8px; cursor:pointer; padding:16px;}
+.id-card:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.id-card.st-profit, .id-card.st-done{box-shadow:inset 0 3px 0 var(--good), var(--shadow);}
+.id-card.st-new{box-shadow:inset 0 3px 0 var(--gold), var(--shadow);}
+.id-top{display:flex; flex-wrap:wrap; gap:6px;}
+.id-title{font-size:15px; line-height:1.3;}
+.id-text{margin:0; font-size:13px; color:var(--ink-2); line-height:1.5; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;}
+.id-eff{margin:0; font-size:12.5px; color:var(--good);}
+.id-foot{display:flex; align-items:center; gap:8px; margin-top:auto; font-size:12px; color:var(--ink-3);}
+.id-acts{margin-left:auto; display:flex; align-items:center; gap:10px;}
+.id-vote{display:inline-flex; align-items:center; gap:4px; border:1px solid var(--line); border-radius:999px; background:var(--surface); padding:3px 9px; font:inherit; font-size:12px; color:var(--ink-2); cursor:pointer;}
+.id-vote svg{width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:1.9;}
+.id-vote.on{background:var(--rose-soft); border-color:transparent; color:var(--rose);}
+.id-vote.on svg{fill:currentColor;}
+.id-result{display:flex; flex-direction:column; gap:4px; padding:10px 14px; border-radius:10px; background:var(--good-soft); font-size:13.5px;}
+.id-desk{border:1px solid var(--line); border-radius:10px; padding:10px 14px; background:var(--surface-2);}
+.id-desk summary{cursor:pointer; font-weight:600; font-size:13.5px;}
+.id-desk[open]{display:flex; flex-direction:column; gap:12px;}
+.id-thread{display:flex; flex-direction:column; gap:8px; border-top:1px solid var(--line); padding-top:10px;}
+.id-c{font-size:13px;}
+.id-c small{color:var(--ink-3); margin-left:6px;}
+.id-c p{margin:3px 0 0; color:var(--ink-2); line-height:1.5;}
+.id-c.sys p{color:var(--violet);}
+.id-c-new{align-items:flex-end; flex-wrap:nowrap;}
+.id-c-new .textarea{flex:1;}
+.id-rules ol, .id-rules ul{margin:6px 0; padding-left:20px; font-size:13.5px; line-height:1.6; color:var(--ink-2);}
+.id-set{display:flex; flex-direction:column; gap:10px; margin-top:12px; border-top:1px solid var(--line); padding-top:12px;}
+@media (max-width:900px){ .id-rules{grid-template-columns:1fr;} }
 </style>
 <div id="app" class="app">
   <div class="boot" id="boot">
@@ -2163,6 +2307,112 @@ button.cw-adi{border:0; font:inherit; font-size:11.5px; text-align:left; cursor:
 <script>
 (() => {
 'use strict';
+/* ── flow.js ── */
+/* Бюджетирование: кто согласует, маршрут и где сейчас заявка или бюджет направления.
+   Один файл на двоих: штаб собирает его в страницу (build.py) — показать маршрут и кнопки,
+   сервер берёт через require — проверить, что решение принимает тот, чья очередь (hq-rules.js).
+   Поменяли правило здесь — оно поменялось и на экране, и в проверке.
+
+   Разовая заявка идёт по сумме: до 50 000 ₽ — финдиректор, до 150 000 ₽ — ещё гендиректор,
+   дороже — ещё акционеры (пороги меняются в настройках). Бюджет направления — по горизонту:
+   месяц — финдиректор, квартал — и гендиректор, год — и акционеры.
+   Свою заявку согласует уровень выше; один человек на двух шагах подряд решает один раз.
+   У акционеров решает большинство. «На доработку» возвращает автору: он правит и отправляет
+   снова — начинается новый круг, прежние решения остаются в истории. */
+
+const Flow = (() => {
+  const LIMITS = {cfoLimit: 50000, ceoLimit: 150000};
+  const STEPS = {cfo: 'Финдиректор', ceo: 'Гендиректор', board: 'Акционеры'};
+  const VERDICTS = ['ok', 'revise', 'no'];
+  const keyOf = a => a.personId || a.id;
+  const pad2 = n => String(n).padStart(2, '0');
+
+  /* настройки бюджета из docs/settings.budget с порогами по умолчанию */
+  function cfg(budget) {
+    const b = budget && typeof budget === 'object' ? budget : {};
+    const num = (v, d) => (Number(v) > 0 ? Number(v) : d);
+    return {...b, cfoLimit: num(b.cfoLimit, LIMITS.cfoLimit), ceoLimit: Math.max(num(b.ceoLimit, LIMITS.ceoLimit), num(b.cfoLimit, LIMITS.cfoLimit))};
+  }
+  /* кто согласует: выбранные в настройках, а если не выбраны — по ролям учёток.
+     Финдиректор — первая учётка «Финансы» (иначе основатель), гендиректор — основатель из «Команды»
+     (иначе первая учётка «Основатель»), акционеры — основатели и инвесторы */
+  function people(budget, accounts, persons) {
+    const b = budget || {};
+    const live = (accounts || []).filter(a => a && a.active !== false && a.name);
+    const byRole = r => live.filter(a => a.role === r).map(keyOf);
+    const founder = (persons || []).find(p => p && p.founder && !p.archived && live.some(a => a.personId === p.id));
+    const cfo = b.cfo || byRole('finance')[0] || byRole('owner')[0] || null;
+    const ceo = b.ceo || (founder && founder.id) || byRole('owner')[0] || null;
+    const board = Array.isArray(b.board) && b.board.length ? b.board : [...byRole('owner'), ...byRole('investor')];
+    return {cfo, ceo, board: board.filter((k, i, a) => k && a.indexOf(k) === i)};
+  }
+  /* маршрут: бюджет направления — по горизонту, разовая заявка — по сумме */
+  function route(doc, budget) {
+    if (doc.ptype) return doc.ptype === 'year' ? ['cfo', 'ceo', 'board'] : doc.ptype === 'quarter' ? ['cfo', 'ceo'] : ['cfo'];
+    const c = cfg(budget), a = Number(doc.amount) || 0;
+    return a <= c.cfoLimit ? ['cfo'] : a <= c.ceoLimit ? ['cfo', 'ceo'] : ['cfo', 'ceo', 'board'];
+  }
+  /* кто решает на шаге. Свою заявку согласует уровень выше: финдиректор → гендиректор → акционеры */
+  function deciders(step, who, author) {
+    const board = who.board.filter(k => k !== author);
+    if (step === 'board') return board;
+    if (step === 'ceo') return who.ceo && who.ceo !== author ? [who.ceo] : board;
+    if (who.cfo && who.cfo !== author) return [who.cfo];
+    return who.ceo && who.ceo !== author ? [who.ceo] : board;
+  }
+  /* где сейчас: draft — черновик, review — на согласовании (step — чей шаг, waiting — от кого ждём),
+     revise — на доработке, approved — согласовано, rejected — отказ, withdrawn — отозвано */
+  function state(doc, who, budget) {
+    const r = route(doc, budget), round = Number(doc.round) || 0;
+    const base = {route: r, step: null, waiting: [], round, done: {}};
+    if (doc.withdrawn) return {...base, status: 'withdrawn'};
+    if (!doc.sentAt || !round) return {...base, status: 'draft'};
+    const ds = Object.values(doc.decisions || {}).filter(d => d && d.round === round).sort((a, b) => (a.at || 0) - (b.at || 0));
+    let prev = null;
+    for (const step of r) {
+      const can = deciders(step, who, doc.by);
+      /* тот же единственный человек, что решал на прошлом шаге, второй раз не решает */
+      if (prev && can.length === 1 && prev.length === 1 && can[0] === prev[0]) { base.done[step] = base.done[r[r.indexOf(step) - 1]]; continue; }
+      const last = {};
+      ds.filter(d => d.step === step).forEach(d => { last[d.by] = d; });
+      const votes = Object.values(last);
+      const back = votes.find(d => d.verdict === 'revise');
+      if (back) return {...base, status: 'revise', step, by: back.by, note: back.note || ''};
+      if (step === 'board') {
+        const n = Math.max(1, can.length), ok = votes.filter(d => d.verdict === 'ok').length, no = votes.filter(d => d.verdict === 'no');
+        if (ok * 2 > n) { base.done[step] = votes.filter(d => d.verdict === 'ok'); prev = can; continue; }
+        if (no.length && no.length * 2 >= n) return {...base, status: 'rejected', step, by: no[no.length - 1].by, note: no[no.length - 1].note || ''};
+        return {...base, status: 'review', step, waiting: can.filter(k => !last[k])};
+      }
+      const d = votes[votes.length - 1];
+      if (!d) return {...base, status: 'review', step, waiting: can};
+      if (d.verdict === 'no') return {...base, status: 'rejected', step, by: d.by, note: d.note || ''};
+      base.done[step] = [d];
+      prev = can;
+    }
+    return {...base, status: 'approved'};
+  }
+
+  /* ── периоды бюджета: год «2027», квартал «2027-Q1», месяц «2027-01» ── */
+  function months(ptype, period) {
+    const y = Number(String(period).slice(0, 4));
+    if (ptype === 'year') return Array.from({length: 12}, (_, i) => `${y}-${pad2(i + 1)}`);
+    if (ptype === 'quarter') { const q = Number(String(period).slice(6)) || 1; return [0, 1, 2].map(i => `${y}-${pad2((q - 1) * 3 + i + 1)}`); }
+    return [String(period).slice(0, 7)];
+  }
+  /* бюджетный календарь: год сдаём за месяц до начала, квартал — за две недели, месяц — за неделю */
+  function deadline(ptype, period) {
+    const start = months(ptype, period)[0], [y, m] = start.split('-').map(Number);
+    const d = ptype === 'year' ? new Date(Date.UTC(y, m - 2, 1)) : new Date(Date.UTC(y, m - 1, 1 - (ptype === 'quarter' ? 14 : 7)));
+    return d.toISOString().slice(0, 10);
+  }
+  /* один бюджет на направление (или отдел) и период */
+  const budgetId = (period, dir, dept) => `b_${period}_${dir}${dept ? '_' + dept : ''}`;
+
+  return {LIMITS, STEPS, VERDICTS, cfg, people, route, deciders, state, months, deadline, budgetId};
+})();
+if (typeof module !== 'undefined' && module.exports) module.exports = Flow;
+
 /* ── 00-core.js ── */
 /* Ядро: DOM, форматирование чисел и дат. Все модули собираются в одну
    область видимости (см. build.py), поэтому функции отсюда видны везде. */
@@ -2350,8 +2600,10 @@ const NAV = [
   {id: 'protocols', name: 'Протоколы', icon: 'book'},
   {id: 'money',    name: 'Финансы',   icon: 'wallet', perm: 'money.view'},
   {id: 'scenarios', name: 'Сценарии', icon: 'layers', perm: 'money.view'},
+  {id: 'budget',   name: 'Бюджетирование', icon: 'pie'},
   {id: 'reports',  name: 'Отчёты',    icon: 'chart'},
   {id: 'metrics',  name: 'Метрики',   icon: 'funnel'},
+  {id: 'ideas',    name: 'Биржа идей', icon: 'bulb'},
   {id: 'team',     name: 'Команда',   icon: 'users', perm: 'tasks.view'},
   /* Eva CRM — отдельный артефакт; в меню — ссылка и число созвонов недели */
   {id: 'crm',      name: 'CRM',       icon: 'ext', perm: 'tasks.view', href: window.EvaServer ? window.EvaServer.urls.crm : 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA'},
@@ -2484,7 +2736,9 @@ const Store = (() => {
     /* анкета «Каким быть Ясеню»: ответ человека — документ с id его карточки или учётки */
     'yasen',
     /* файлы к задачам: скриншоты и документы в «Результате работы» и «Обсуждении» */
-    'files'];
+    'files',
+    /* бюджетирование: заявки на финансирование, бюджеты направлений; биржа идей и кайдзен */
+    'fundreqs', 'budgets', 'ideas'];
   const LS = 'eva-hq:';
   const data = Object.fromEntries(COLS.map(c => [c, new Map()]));
   const subs = new Set();
@@ -3100,6 +3354,8 @@ const ICONS = {
   spark: '<path d="M12 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/><path d="M19 15.5c.2 1.6.9 2.3 2.5 2.5-1.6.2-2.3.9-2.5 2.5-.2-1.6-.9-2.3-2.5-2.5 1.6-.2 2.3-.9 2.5-2.5z"/>',
   eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   eyeOff: '<path d="M3 3l18 18"/><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6C3.9 8.4 2 12 2 12s3.6 7 10 7a10 10 0 0 0 4.4-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+  pie: '<path d="M12 3v9h9"/><path d="M20.5 15.5A9 9 0 1 1 8.5 3.7"/>',
+  bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/>',
   layers: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',
   download: '<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
   upload: '<path d="M12 20V9"/><path d="m7 14 5-5 5 5"/><path d="M5 4h14"/>',
@@ -3693,7 +3949,7 @@ const App = {
         const k = crmWeek().length;
         return `<a href="${n.href}" target="_blank" rel="noopener" class="nav-ext" title="Eva CRM — кастдев и подключение. Число — созвоны CRM на этой неделе">${icon(n.icon)}<span>${n.name}</span>${k ? `<span class="nav-n">${k}</span>` : ''}</a>`;
       }
-      const b = n.id === 'tasks' ? taskBadge() : n.id === 'money' ? Fin.badge() : n.id === 'protocols' ? Proto.badge() : 0;
+      const b = n.id === 'tasks' ? taskBadge() : n.id === 'money' ? Fin.badge() : n.id === 'protocols' ? Proto.badge() : n.id === 'budget' ? Budget.badge() : n.id === 'ideas' ? Ideas.badge() : 0;
       return `<a href="#${n.id}" class="${n.id === active || (active === 'material' && n.id === 'home') ? 'on' : ''}">${icon(n.icon)}<span>${n.name}</span>${b ? `<span class="badge" title="Требуют внимания">${b}</span>` : ''}</a>`;
     }).join('');
     const me = Auth.me(), p = Auth.person();
@@ -13981,6 +14237,1062 @@ const Chat = {
   },
 };
 
+/* ── 87-budget.js ── */
+/* Бюджетирование: свод бюджета по направлениям и отделам, разовые заявки на финансирование,
+   бюджеты направлений на месяц, квартал и год, бюджетный календарь и правила.
+
+   Заявку подаёт любой из команды — под задачу, проект, направление, мероприятие или новую идею —
+   по единой форме: на что и сколько, обоснование затрат, что получим, чем это нужно бизнесу.
+   Бюджет направления (или отдела) готовит его ответственный к сроку бюджетного календаря.
+   Кто согласует и в каком порядке — Flow (server/lib/flow.js): тот же файл проверяет сервер,
+   поэтому кнопки «Согласовать» видит только тот, чья очередь, а чужое решение сервер не примет.
+   Согласованная заявка сама встаёт в план платежей (это делает сервер), там её и оплачивают.
+
+   Свод: утверждённый бюджет месяца — самый подробный из утверждённых (месяц, иначе треть квартала,
+   иначе двенадцатая часть года) + согласованные разовые заявки = план; факт — расходы из журнала:
+   направление берём у строки плана, которую оплатили (заявка, задача) или у самой операции. */
+
+const FR_KINDS = {task: 'Задача', project: 'Проект', dir: 'Направление', event: 'Мероприятие', idea: 'Новая идея', other: 'Другое'};
+const FR_TAGS = ['маркетинг', 'контент', 'съёмки', 'мероприятие', 'продукт', 'сервисы', 'команда', 'обучение', 'партнёры', 'эксперимент', 'экономия', 'срочно'];
+const FLOW_ST = {
+  draft: {name: 'Черновик', tone: 'line'}, review: {name: 'На согласовании', tone: 'gold'}, revise: {name: 'На доработке', tone: 'warn'},
+  approved: {name: 'Согласовано', tone: 'good'}, rejected: {name: 'Отказ', tone: 'bad'}, withdrawn: {name: 'Отозвано', tone: 'line'},
+};
+const FLOW_VERB = {ok: 'согласовал(а)', revise: 'вернул(а) на доработку', no: 'отказал(а)'};
+/* сколько дней даём на решение каждому шагу — дольше подсвечиваем */
+const FLOW_SLA = {cfo: 2, ceo: 2, board: 5};
+const PTYPES = {month: 'Месяц', quarter: 'Квартал', year: 'Год'};
+const QROMAN = ['I', 'II', 'III', 'IV'];
+const qOf = m => `${m.slice(0, 4)}-Q${Math.floor(monthIdx(m) / 3) + 1}`;
+function periodName(pt, p) {
+  if (pt === 'year') return `${p} год`;
+  if (pt === 'quarter') return `${QROMAN[Number(p.slice(6)) - 1]} квартал ${p.slice(0, 4)}`;
+  return monthName(p, true);
+}
+function periodShift(pt, p, n) {
+  if (pt === 'year') return String(Number(p) + n);
+  if (pt === 'quarter') { const i = Number(p.slice(0, 4)) * 4 + Number(p.slice(6)) - 1 + n; return `${Math.floor(i / 4)}-Q${i % 4 + 1}`; }
+  return addMonths(p, n);
+}
+const periodNow = pt => (pt === 'year' ? today().slice(0, 4) : pt === 'quarter' ? qOf(monthOf(today())) : monthOf(today()));
+const budTotal = d => sum(d.lines || [], l => l.amount);
+
+const Budget = {
+  _who: null,
+  me() { return Tasks.meKey(); },
+  set() { return Flow.cfg(settings().budget); },
+  who() { return this._who || (this._who = Flow.people(settings().budget, Store.all('accounts'), Store.all('people'))); },
+  state(d) { return Flow.state(d, this.who(), settings().budget); },
+  reqs() { return Store.all('fundreqs').filter(x => x.title).sort((a, b) => (b.sentAt || b.at || 0) - (a.sentAt || a.at || 0)); },
+  budgets() { return Store.all('budgets').filter(x => x.period && x.ptype); },
+  depts() { return ((settings().budget || {}).depts || []).filter(d => d && d.id && d.name); },
+  deptName(id) { const d = this.depts().find(x => x.id === id); return d ? d.name : id ? 'Отдел' : ''; },
+  head(dir, dept) { const b = settings().budget || {}; return dept ? (this.depts().find(x => x.id === dept) || {}).head || null : (b.heads || {})[dir] || null; },
+  scopeName(dir, dept) { return [dirName(dir), dept ? this.deptName(dept) : ''].filter(Boolean).join(' · '); },
+  amount(d) { return d.ptype ? budTotal(d) : Number(d.amount) || 0; },
+  lastAt(d) { return Math.max(d.sentAt || 0, ...Object.values(d.decisions || {}).map(x => x.at || 0)); },
+  /* сколько ждёт на текущем шаге: с отправки или с последнего решения этого круга */
+  waitDays(d) { const st = this.state(d); if (st.status !== 'review') return 0; return Math.floor((Date.now() - this.lastAt(d)) / 864e5); },
+  waitingMe() { const me = this.me(); return [...this.reqs(), ...this.budgets()].filter(d => this.state(d).waiting.includes(me)); },
+  mineBack() { const me = this.me(); return [...this.reqs(), ...this.budgets()].filter(d => d.by === me && this.state(d).status === 'revise'); },
+  badge() { return Auth.me() ? this.waitingMe().length + this.mineBack().length : 0; },
+  col(d) { return d.ptype ? 'budgets' : 'fundreqs'; },
+
+  decide(d, verdict, note) {
+    const st = this.state(d), x = {by: this.me(), step: st.step, verdict, round: d.round, at: Date.now(), ...(note ? {note} : {})}, k = uid();
+    Store.patch(this.col(d), d.id, {decisions: {[k]: x}, upd: Date.now()}, {mustExist: true});
+    const next = this.state({...d, decisions: {...(d.decisions || {}), [k]: x}});
+    if (verdict !== 'ok') toast(verdict === 'revise' ? 'Вернули на доработку — автор увидит комментарий' : 'Отказ записан — автор увидит причину');
+    else if (next.status === 'approved') toast(d.ptype ? 'Бюджет утверждён' : 'Согласовано — сумма встанет в план платежей');
+    else toast(`Ваше «да» записано. Дальше решает: ${next.waiting.map(whoFirst).join(', ') || Flow.STEPS[next.step]}`);
+  },
+  /* кто будет решать первым, когда отправим */
+  firstUp(d) { const st = this.state({...d, sentAt: 1, round: (Number(d.round) || 0) + 1}); return st.waiting.map(whoFirst).join(', ') || 'финдиректор'; },
+  send(d) {
+    Store.patch(this.col(d), d.id, {sentAt: Date.now(), round: (Number(d.round) || 0) + 1, upd: Date.now()}, {mustExist: true});
+    toast(`Отправлено — решает ${this.firstUp(d)}`);
+  },
+  withdraw(d) { Store.patch(this.col(d), d.id, {withdrawn: true, upd: Date.now()}, {mustExist: true}); toast('Отозвано'); },
+
+  /* утверждённый бюджет месяца направления (отдела): месяц, иначе треть квартала, иначе двенадцатая часть года */
+  monthBudget(m, dir, dept) {
+    for (const [id, k, src] of [[Flow.budgetId(m, dir, dept), 1, 'month'], [Flow.budgetId(qOf(m), dir, dept), 1 / 3, 'quarter'], [Flow.budgetId(m.slice(0, 4), dir, dept), 1 / 12, 'year']]) {
+      const d = Store.get('budgets', id);
+      if (!d || this.state(d).status !== 'approved') continue;
+      const cats = {};
+      (d.lines || []).forEach(l => { const c = l.cat || 'other'; cats[c] = (cats[c] || 0) + (Number(l.amount) || 0) * k; });
+      return {sum: sum(Object.values(cats)), cats, src, doc: d};
+    }
+    return {sum: 0, cats: {}, src: null, doc: null};
+  },
+  /* направление операции из журнала: своё, иначе у строки плана, которую ею оплатили */
+  factScope(e) {
+    if (e.dir) return {dir: e.dir, dept: e.dept || ''};
+    const pl = e.planId ? Store.get('plan', e.planId) : null;
+    if (pl && pl.reqId) { const q = Store.get('fundreqs', pl.reqId); if (q) return {dir: q.dir || '', dept: q.dept || ''}; }
+    if (pl && pl.dir) return {dir: pl.dir, dept: ''};
+    const t = pl && pl.taskId ? Store.get('tasks', pl.taskId) : null;
+    return {dir: (t && t.dir) || '', dept: ''};
+  },
+  /* свод периода: по направлению и отделу — бюджет, разовые, факт, что на согласовании; и по статьям */
+  summary(pt, p) {
+    const ms = Flow.months(pt, p), rows = {}, cats = {};
+    const row = (dir, dept) => rows[`${dir || ''}|${dept || ''}`] || (rows[`${dir || ''}|${dept || ''}`] = {dir: dir || '', dept: dept || '', bud: 0, req: 0, fact: 0, pend: 0, src: new Set()});
+    const cat = c => cats[c] || (cats[c] = {bud: 0, req: 0, plan: 0, fact: 0});
+    Object.keys(DIRS).forEach(dir => [['', null], ...this.depts().filter(x => x.dir === dir).map(x => [x.id])].forEach(([dept]) => ms.forEach(m => {
+      const b = this.monthBudget(m, dir, dept || '');
+      if (!b.sum) return;
+      const r = row(dir, dept);
+      r.bud += b.sum;
+      r.src.add(b.src);
+      Object.entries(b.cats).forEach(([c, v]) => { cat(c).bud += v; });
+    })));
+    this.budgets().forEach(b => { if (b.ptype === pt && b.period === p && this.state(b).status === 'review') row(b.dir, b.dept).pend += budTotal(b); });
+    this.reqs().forEach(q => {
+      if (!ms.includes(q.month)) return;
+      const st = this.state(q).status, a = Number(q.amount) || 0;
+      if (st === 'approved') { row(q.dir, q.dept).req += a; cat(q.cat || 'other').req += a; }
+      if (st === 'review') row(q.dir, q.dept).pend += a;
+    });
+    Store.all('ledger').forEach(e => {
+      if (e.kind !== 'out' || !ms.includes(monthOf(e.date))) return;
+      const s = this.factScope(e), a = Number(e.amount) || 0;
+      row(s.dir, s.dept).fact += a;
+      cat(e.cat || 'other').fact += a;
+    });
+    ms.forEach(m => Object.entries(Money.planByCat(m).all).forEach(([c, v]) => { cat(c).plan += v; }));
+    return {ms, rows: Object.values(rows), cats};
+  },
+  /* бюджетный календарь: ближайшие два месяца, следующий квартал и следующий год */
+  calendar() {
+    const m = monthOf(today());
+    return [['month', addMonths(m, 1)], ['month', addMonths(m, 2)], ['quarter', periodShift('quarter', qOf(m), 1)], ['year', String(Number(m.slice(0, 4)) + 1)]]
+      .map(([pt, p]) => ({pt, p, due: Flow.deadline(pt, p)})).sort((a, b) => a.due.localeCompare(b.due));
+  },
+  scopes() {
+    return Object.keys(DIRS).flatMap(dir => [{dir, dept: ''}, ...this.depts().filter(x => x.dir === dir).map(x => ({dir, dept: x.id}))]);
+  },
+  /* сдан ли бюджет на период: свой документ, а у отдела без своего — бюджет всего направления */
+  sent(d) { return !!d && !['draft', 'withdrawn'].includes(this.state(d).status); },
+  missing(pt, p, sc) {
+    const own = Store.get('budgets', Flow.budgetId(p, sc.dir, sc.dept));
+    if (this.sent(own)) return false;
+    return !(sc.dept && !own && this.sent(Store.get('budgets', Flow.budgetId(p, sc.dir, ''))));
+  },
+};
+Store.subscribe(c => { if (['accounts', 'people', 'docs'].includes(c)) Budget._who = null; });
+
+/* ── маленькие куски разметки ── */
+const flowPill = st => `<span class="pill ${FLOW_ST[st.status].tone}">${FLOW_ST[st.status].name}</span>`;
+function flowRoute(d, st) {
+  const who = Budget.who();
+  return `<div class="fl-route">${st.route.map(step => {
+    const done = !!st.done[step], cur = st.step === step && st.status !== 'approved';
+    const names = Flow.deciders(step, who, d.by).map(whoFirst);
+    const tone = done ? 'good' : cur ? FLOW_ST[st.status].tone : '';
+    return `<span class="fl-step ${tone}" title="${esc(names.join(', ') || 'не выбран — настройте в «Календарь и правила»')}"><b>${done ? '✓' : cur ? '●' : '○'} ${Flow.STEPS[step]}</b><small>${esc(step === 'board' ? `${names.length} ${plural(names.length, 'человек', 'человека', 'человек')}` : names[0] || 'не выбран')}</small></span>`;
+  }).join('<i class="fl-arr">→</i>')}</div>`;
+}
+function flowHistory(d) {
+  const list = Object.values(d.decisions || {}).sort((a, b) => (a.at || 0) - (b.at || 0));
+  if (!list.length) return '';
+  return `<div class="fl-hist"><span class="label">История решений</span>${list.map(x => `<div class="fl-h ${x.verdict}">
+      <b>${esc(whoName(x.by))}</b> · ${Flow.STEPS[x.step] || ''}${(d.round || 0) > 1 ? ` · круг ${x.round}` : ''} — ${FLOW_VERB[x.verdict] || ''}<small>${timeAgo(x.at)}</small>
+      ${x.note ? `<p>${esc(x.note)}</p>` : ''}</div>`).join('')}</div>`;
+}
+/* ждёт решения дольше, чем положено на шаг, — подсветим */
+function flowWait(d, st) {
+  if (st.status !== 'review') return '';
+  const n = Budget.waitDays(d), late = n > (FLOW_SLA[st.step] || 2);
+  const names = st.waiting.map(whoFirst).join(', ');
+  return `<span class="fl-wait ${late ? 'late' : ''}">ждём: ${esc(names || '—')}${n ? ` · ${n} ${plural(n, 'день', 'дня', 'дней')}` : ''}</span>`;
+}
+const flowText = (label, v) => (String(v || '').trim() ? `<div class="fl-text"><span class="label">${label}</span><p>${esc(v).replace(/\n/g, '<br>')}</p></div>` : '');
+
+/* ── страница ── */
+const BG_TABS = [['sum', 'Свод', 'money.view'], ['reqs', 'Заявки'], ['plans', 'Бюджеты направлений'], ['rules', 'Календарь и правила']];
+App.register('budget', {
+  title: 'Бюджетирование',
+  render(root, param) {
+    const tabs = BG_TABS.filter(t => !t[2] || Auth.can(t[2]));
+    if (param && App.cur !== 'budget:' + param && tabs.some(t => t[0] === param)) View.set('bg.tab', param);
+    let tab = View.get('bg.tab', tabs[0][0]);
+    if (!tabs.some(t => t[0] === tab)) tab = tabs[0][0];
+    const wait = Budget.waitingMe(), back = Budget.mineBack();
+    const nOf = isBud => wait.filter(d => !!d.ptype === isBud).length + back.filter(d => !!d.ptype === isBud).length;
+    const badge = {reqs: nOf(false), plans: nOf(true)};
+    const body = {sum: bgSumHtml, reqs: bgReqsHtml, plans: bgPlansHtml, rules: bgRulesHtml}[tab]();
+    root.innerHTML = `
+      ${pageHead('Бюджетирование', 'Свод бюджета по направлениям и отделам, заявки на финансирование и бюджеты на месяц, квартал и год — с согласованием.', `<button class="btn primary sm" id="bgNewReq">${icon('plus')}Заявка на финансирование</button>`)}
+      ${helpBox('budget', `<b>Как устроено бюджетирование.</b> Нужны деньги на задачу, проект, мероприятие или новую идею — нажмите «Заявка на финансирование» и заполните одну форму: сколько, на что, что получим и чем это нужно бизнесу. Заявка уходит финдиректору: до ${money(Budget.set().cfoLimit)} он решает сам, до ${money(Budget.set().ceoLimit)} — ещё гендиректор, дороже — ещё акционеры. Ответ — «Согласовать», «На доработку» с комментарием или «Отказать». Согласованная сумма сама встаёт в план платежей. Бюджеты направлений сдают по календарю: на год — за месяц, на квартал — за две недели, на месяц — за неделю до начала.`)}
+      ${wait.length ? `<div class="card bg-wait"><b>${icon('bell')}Ждут вашего решения: ${wait.length}</b><div class="bg-wait-list">${wait.slice(0, 6).map(d => `<button class="chip" data-flow="${Budget.col(d)}:${d.id}">${esc(d.ptype ? `Бюджет: ${Budget.scopeName(d.dir, d.dept)}, ${periodName(d.ptype, d.period)}` : d.title)} · ${money(Budget.amount(d))}</button>`).join('')}</div></div>` : ''}
+      ${back.length ? `<div class="card bg-wait back"><b>${icon('undo')}Вернули вам на доработку: ${back.length}</b><div class="bg-wait-list">${back.map(d => `<button class="chip" data-flow="${Budget.col(d)}:${d.id}">${esc(d.ptype ? `Бюджет: ${Budget.scopeName(d.dir, d.dept)}, ${periodName(d.ptype, d.period)}` : d.title)}</button>`).join('')}</div></div>` : ''}
+      <div class="tabs bg-tabs" role="tablist">${tabs.map(([k, n]) => `<button type="button" role="tab" data-bgtab="${k}" class="${k === tab ? 'on' : ''}">${n}${badge[k] ? ` <span class="n fin-n">${badge[k]}</span>` : ''}</button>`).join('')}</div>
+      <div id="bgView" data-tab="${tab}">${body}</div>`;
+    wireHelp(root);
+    on(root, 'click', '[data-bgtab]', (e, el) => { View.set('bg.tab', el.dataset.bgtab); App.render(); });
+    on(root, 'click', '[data-flow]', (e, el) => { const [c, id] = el.dataset.flow.split(':'); openFlow(Store.get(c, id)); });
+    on(root, 'keydown', '[data-flow]', (e, el) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === el && el.tagName !== 'BUTTON') { e.preventDefault(); el.click(); } });
+    $('#bgNewReq', root).onclick = () => editReq(null);
+    ({sum: wireBgSum, reqs: wireBgReqs, plans: wireBgPlans, rules: wireBgRules}[tab])(root);
+  },
+});
+function openFlow(d) { if (d) (d.ptype ? openBud : openReq)(d.id); }
+
+/* ── свод ── */
+function bgPeriodBar(key) {
+  const pt = View.get(key + '.pt', 'month'), p = View.get(`${key}.p.${pt}`, periodNow(pt));
+  return {pt, p, html: `<div class="bg-period">
+      <div class="seg">${Object.entries(PTYPES).map(([k, n]) => `<button type="button" data-bgpt="${k}" class="${k === pt ? 'on' : ''}">${n}</button>`).join('')}</div>
+      <div class="bg-nav"><button class="icon-btn" data-bgp="-1" aria-label="Раньше">${icon('back')}</button><b>${periodName(pt, p)}</b><button class="icon-btn flip" data-bgp="1" aria-label="Позже">${icon('back')}</button>
+        ${p !== periodNow(pt) ? '<button class="link-btn" data-bgp="0">сейчас</button>' : ''}</div></div>`};
+}
+function wireBgPeriod(root, key) {
+  on(root, 'click', '[data-bgpt]', (e, el) => { View.set(key + '.pt', el.dataset.bgpt); App.render(); });
+  on(root, 'click', '[data-bgp]', (e, el) => {
+    const pt = View.get(key + '.pt', 'month'), n = Number(el.dataset.bgp);
+    View.set(`${key}.p.${pt}`, n ? periodShift(pt, View.get(`${key}.p.${pt}`, periodNow(pt)), n) : periodNow(pt));
+    App.render();
+  });
+}
+function bgSumHtml() {
+  const {pt, p, html} = bgPeriodBar('bg.sum');
+  const s = Budget.summary(pt, p);
+  const tot = {bud: sum(s.rows, r => r.bud), req: sum(s.rows, r => r.req), fact: sum(s.rows, r => r.fact), pend: sum(s.rows, r => r.pend)};
+  const plan = tot.bud + tot.req;
+  const SRC = {month: 'бюджет месяца', quarter: 'доля квартала', year: 'доля года'};
+  const line = (r, sub) => {
+    const pl = r.bud + r.req, left = pl - r.fact, share = pl ? r.fact / pl : 0;
+    return `<tr class="${sub ? 'bg-sub' : 'bg-dir'}">
+      <td>${sub ? `<span class="bg-indent">${esc(Budget.deptName(r.dept))}</span>` : r.dir ? `<i class="dot" style="background:${DIRS[r.dir].color}"></i><b>${dirName(r.dir)}</b>` : '<b>Без направления</b>'}
+        ${!sub && r.src && r.src.size ? `<small class="note">${[...r.src].map(x => SRC[x]).join(', ')}</small>` : ''}</td>
+      <td class="r">${r.bud ? money(r.bud) : '—'}</td><td class="r">${r.req ? money(r.req) : '—'}</td><td class="r"><b>${pl ? money(pl) : '—'}</b></td>
+      <td class="r">${r.fact ? money(r.fact) : '—'}</td><td class="r ${left < 0 ? 'bad' : ''}">${pl || r.fact ? money(left) : '—'}</td>
+      <td class="bg-bar-cell">${pl ? progress(Math.min(1, share), share > 1 ? 'bad' : share > 0.9 ? 'warn' : 'good') : ''}</td>
+      <td class="r">${r.pend ? `<span class="gold">${money(r.pend)}</span>` : '—'}</td></tr>`;
+  };
+  const dirs = [...Object.keys(DIRS), ''];
+  const body = dirs.map(dir => {
+    const mine = s.rows.filter(r => r.dir === dir);
+    if (!dir && !mine.length) return '';
+    const agg = {dir, bud: sum(mine, r => r.bud), req: sum(mine, r => r.req), fact: sum(mine, r => r.fact), pend: sum(mine, r => r.pend), src: new Set(mine.flatMap(r => [...r.src]))};
+    const subs = mine.filter(r => r.dept);
+    return line(agg, false) + subs.map(r => line(r, true)).join('');
+  }).join('');
+  const catRows = Object.entries(s.cats).filter(([, v]) => v.bud || v.req || v.plan || v.fact).sort((a, b) => (b[1].bud + b[1].req) - (a[1].bud + a[1].req));
+  const late = Budget.calendar().filter(c => c.due < today()).flatMap(c => Budget.scopes().filter(sc => Budget.missing(c.pt, c.p, sc))
+    .map(sc => `${Budget.scopeName(sc.dir, sc.dept)} — ${periodName(c.pt, c.p).toLowerCase()}`));
+  return `${html}
+    <div class="cards tiles bg-kpi">
+      ${finTile('Утверждённый бюджет', money(tot.bud), 'бюджеты направлений на период')}
+      ${finTile('Разовые заявки', money(tot.req), 'согласованные сверх бюджетов')}
+      ${finTile('План расходов', money(plan), 'бюджет + разовые')}
+      ${finTile('Факт', `<span class="${tot.fact > plan && plan ? 'bad' : ''}">${money(tot.fact)}</span>`, plan ? `исполнено ${pct(tot.fact / plan)} · осталось ${money(plan - tot.fact)}` : 'расходы из журнала операций')}
+      ${finTile('На согласовании', `<span class="gold">${money(tot.pend)}</span>`, 'бюджеты и заявки ждут решения')}
+    </div>
+    ${late.length ? `<div class="card bg-late"><b>${icon('clock')}Бюджеты не сданы в срок:</b> ${esc(late.slice(0, 8).join('; '))}${late.length > 8 ? ' и ещё ' + (late.length - 8) : ''} <button class="link-btn" data-bgtab="plans">Календарь</button></div>` : ''}
+    <section class="section"><div class="section-head"><h2>По направлениям и отделам</h2><span class="hint-inline">План = утверждённый бюджет + согласованные разовые заявки. Факт — расходы из журнала: направление берём у оплаченной строки плана (заявка, задача).</span></div>
+      <div class="table-wrap"><table class="t bg-sum"><thead><tr><th>Направление</th><th class="r">Бюджет</th><th class="r">Разовые</th><th class="r">План</th><th class="r">Факт</th><th class="r">Остаток</th><th>Исполнение</th><th class="r">На согласовании</th></tr></thead>
+        <tbody>${body}</tbody>
+        <tfoot><tr class="total"><td>Итого</td><td class="r">${money(tot.bud)}</td><td class="r">${money(tot.req)}</td><td class="r">${money(plan)}</td><td class="r">${money(tot.fact)}</td><td class="r ${plan - tot.fact < 0 ? 'bad' : ''}">${money(plan - tot.fact)}</td><td></td><td class="r">${money(tot.pend)}</td></tr></tfoot></table></div></section>
+    <section class="section"><div class="section-head"><h2>По статьям расходов</h2><span class="hint-inline">«План платежей» — что стоит в финплане «Финансов» на эти месяцы (зарплаты, регулярные и разовые платежи).</span></div>
+      ${catRows.length ? `<div class="table-wrap"><table class="t"><thead><tr><th>Статья</th><th class="r">Бюджет</th><th class="r">Разовые</th><th class="r">План платежей</th><th class="r">Факт</th></tr></thead>
+        <tbody>${catRows.map(([c, v]) => `<tr><td>${esc(OUT_CATS[c] || c)}</td><td class="r">${v.bud ? money(v.bud) : '—'}</td><td class="r">${v.req ? money(v.req) : '—'}</td><td class="r">${v.plan ? money(v.plan) : '—'}</td><td class="r ${v.fact > v.bud + v.req && v.bud + v.req ? 'bad' : ''}">${v.fact ? money(v.fact) : '—'}</td></tr>`).join('')}</tbody></table></div>`
+        : '<div class="empty"><b>Пока пусто</b>Здесь появятся статьи, когда утвердят бюджеты направлений или появятся расходы.</div>'}</section>`;
+}
+function wireBgSum(root) { wireBgPeriod(root, 'bg.sum'); }
+
+/* ── заявки ── */
+function bgReqsHtml() {
+  const money_ = Auth.can('money.view'), me = Budget.me();
+  const scope = View.get('bg.rq', money_ ? 'all' : 'mine'), stF = View.get('bg.rqst', ''), q = View.get('bg.rqq', ''), tagF = View.get('bg.rqtag', '');
+  const norm = s => String(s || '').toLowerCase().replace(/ё/g, 'е');
+  const all = Budget.reqs();
+  const list = all.filter(d => {
+    const st = Budget.state(d);
+    if (scope === 'me' && !st.waiting.includes(me)) return false;
+    if (scope === 'mine' && d.by !== me) return false;
+    if (stF && st.status !== stF) return false;
+    if (tagF && !(d.tags || []).includes(tagF)) return false;
+    return !q || norm(`${d.title} ${d.why} ${d.gain} ${(d.tags || []).join(' ')} ${whoName(d.by)}`).includes(norm(q));
+  });
+  const tags = [...new Set(all.flatMap(d => d.tags || []))].sort((a, b) => a.localeCompare(b, 'ru'));
+  const nMe = all.filter(d => Budget.state(d).waiting.includes(me)).length;
+  return `<div class="bg-tools">
+      <div class="seg">${[['me', `Ждут меня${nMe ? ` · ${nMe}` : ''}`], ['mine', 'Мои'], ...(money_ ? [['all', 'Все']] : [])].map(([k, n]) => `<button type="button" data-bgrq="${k}" class="${k === scope ? 'on' : ''}">${n}</button>`).join('')}</div>
+      <select class="select" id="bgRqSt" aria-label="Статус"><option value="">Все статусы</option>${Object.entries(FLOW_ST).map(([k, x]) => `<option value="${k}" ${k === stF ? 'selected' : ''}>${x.name}</option>`).join('')}</select>
+      <input class="input" id="bgRqQ" type="search" placeholder="Поиск по заявкам" value="${esc(q)}">
+    </div>
+    ${tags.length ? `<div class="chips bg-tags">${tags.map(t => `<button type="button" class="chip ${t === tagF ? 'on' : ''}" data-bgtag="${esc(t)}">#${esc(t)}</button>`).join('')}</div>` : ''}
+    ${list.length ? `<div class="bg-list">${list.map(reqRowHtml).join('')}</div>`
+      : `<div class="empty"><b>${all.length ? 'Ничего не нашлось' : 'Заявок пока нет'}</b>${all.length ? 'Снимите фильтр или поищите другое слово.' : 'Нужны деньги на задачу, проект или идею — нажмите «Заявка на финансирование».'}</div>`}`;
+}
+function reqRowHtml(d) {
+  const st = Budget.state(d);
+  return `<div class="card bg-row ${st.waiting.includes(Budget.me()) ? 'need' : ''}" data-flow="fundreqs:${d.id}" role="button" tabindex="0">
+    <span class="bg-amt"><b>${money(Number(d.amount) || 0)}</b><small>${d.month ? monthName(d.month, true) : ''}</small></span>
+    <span class="bg-main"><b>${esc(d.title)}</b>
+      <small>${esc(FR_KINDS[d.kind] || 'Заявка')}${d.dir ? ' · ' + esc(Budget.scopeName(d.dir, d.dept)) : ''} · ${esc(whoName(d.by))}${(d.tags || []).length ? ' · ' + d.tags.map(t => '#' + esc(t)).join(' ') : ''}</small></span>
+    <span class="bg-meta">${flowPill(st)}${flowWait(d, st)}${flowRoute(d, st)}</span>
+  </div>`;
+}
+function wireBgReqs(root) {
+  on(root, 'click', '[data-bgrq]', (e, el) => { View.set('bg.rq', el.dataset.bgrq); App.render(); });
+  on(root, 'click', '[data-bgtag]', (e, el) => { View.set('bg.rqtag', View.get('bg.rqtag', '') === el.dataset.bgtag ? '' : el.dataset.bgtag); App.render(); });
+  $('#bgRqSt', root).onchange = e => { View.set('bg.rqst', e.target.value); App.render(); };
+  const qi = $('#bgRqQ', root);
+  let t = null;
+  qi.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { View.set('bg.rqq', qi.value); App.render({focus: 'bgRqQ'}); }, 300); });
+}
+
+/* карточка заявки или бюджета: маршрут, история и кнопки того, чья очередь */
+function flowActions(d, st, el, close) {
+  const box = $('#flAct', el);
+  on(el, 'click', '[data-fl]', async (e, b) => {
+    const v = b.dataset.fl;
+    if (v === 'ok') { Budget.decide(d, 'ok'); close(); return; }
+    if (v === 'revise' || v === 'no') {
+      box.hidden = false;
+      box.dataset.v = v;
+      $('#flNoteL', el).textContent = v === 'revise' ? 'Что доработать — автор увидит этот комментарий' : 'Почему отказ — автор увидит этот комментарий';
+      $('#flGo', el).textContent = v === 'revise' ? 'Вернуть на доработку' : 'Отказать';
+      $('#flGo', el).className = `btn ${v === 'no' ? 'danger solid' : 'primary'}`;
+      $('#flNote', el).focus();
+      return;
+    }
+    if (v === 'send') { Budget.send(d); close(); return; }
+    if (v === 'edit') { close(); (d.ptype ? editBud : editReq)(d.id); return; }
+    if (v === 'withdraw') { if (await confirmPop(b, {text: 'Отозвать? Вернуть отозванное нельзя — можно подать заново.', yes: 'Отозвать', danger: true})) { Budget.withdraw(d); close(); } return; }
+    if (v === 'del') { if (await confirmPop(b, {text: 'Удалить насовсем?', yes: 'Удалить', danger: true})) { Store.remove(Budget.col(d), d.id); close(); } return; }
+    if (v === 'copy') { close(); editReq(null, {...['title', 'kind', 'tags', 'dir', 'dept', 'taskId', 'ideaId', 'amount', 'month', 'cat', 'why', 'gain', 'need', 'risk'].reduce((o, k) => ({...o, [k]: clone(d[k])}), {})}); }
+  });
+  const go = $('#flGo', el);
+  if (go) go.onclick = () => {
+    const note = $('#flNote', el).value.trim();
+    if (!note) { $('#flNote', el).focus(); toast('Напишите комментарий для автора'); return; }
+    Budget.decide(d, box.dataset.v, note);
+    close();
+  };
+}
+function flowFoot(d, st) {
+  const me = Budget.me(), mine = d.by === me, open = ['draft', 'revise'].includes(st.status);
+  /* бюджет направления может поправить и отправить тот, кто ведёт деньги (финдиректор помогает собрать) */
+  const editor = mine || (!!d.ptype && Auth.can('money.edit'));
+  const left = [], right = [];
+  if ((mine && ['draft', 'withdrawn'].includes(st.status)) || Auth.isOwner()) left.push(`<button class="btn danger" data-fl="del" title="Удалить">${icon('trash')}</button>`);
+  if (editor && open) left.push(`<button class="btn" data-fl="edit">${icon('edit')}Изменить</button>`);
+  if (mine && ['review', 'revise'].includes(st.status)) right.push('<button class="btn ghost" data-fl="withdraw">Отозвать</button>');
+  if (!d.ptype && mine && ['rejected', 'withdrawn'].includes(st.status)) right.push(`<button class="btn" data-fl="copy">${icon('copy')}Подать заново</button>`);
+  right.push('<button class="btn" data-close>Закрыть</button>');
+  if (editor && open) right.push(`<button class="btn primary" data-fl="send">${st.status === 'revise' ? 'Отправить снова' : 'Отправить на согласование'}</button>`);
+  if (st.waiting.includes(me)) right.push('<button class="btn" data-fl="no">Отказать</button>', '<button class="btn" data-fl="revise">На доработку</button>', `<button class="btn primary" data-fl="ok">${icon('tick')}Согласовать</button>`);
+  return `${left.length ? `<span class="left row">${left.join('')}</span>` : ''}${right.join('')}`;
+}
+const flowNoteBox = () => `<div class="fl-act" id="flAct" hidden><label class="field"><span id="flNoteL">Комментарий</span><textarea class="textarea" id="flNote" rows="3"></textarea></label>
+  <div class="row"><button class="btn primary" id="flGo">Отправить</button></div></div>`;
+
+function openReq(id) {
+  const d = Store.get('fundreqs', id);
+  if (!d) return;
+  const st = Budget.state(d), task = d.taskId ? Tasks.get(d.taskId) : null, idea = d.ideaId ? Store.get('ideas', d.ideaId) : null;
+  const row = Auth.can('money.view') ? Store.get('plan', 'fr_' + id) : null;
+  const m = d.month || (row && (row.months || [])[0]);
+  const paid = row && m ? Money.paidAmount(row, m) : 0;
+  openModal({
+    title: d.title,
+    wide: true,
+    body: `<div class="fl-view">
+        <div class="fl-head"><span class="fl-big">${money(Number(d.amount) || 0)}</span>${flowPill(st)}${flowWait(d, st)}</div>
+        <p class="note">${esc(FR_KINDS[d.kind] || 'Заявка')}${d.dir ? ' · ' + esc(Budget.scopeName(d.dir, d.dept)) : ''} · статья «${esc(OUT_CATS[d.cat] || 'Прочие расходы')}» · ${d.month ? 'нужны в ' + esc(monthName(d.month, true).toLowerCase()) : ''} · подал(а) ${esc(whoName(d.by))}${d.sentAt ? ', ' + timeAgo(d.sentAt) : ''}</p>
+        ${(d.tags || []).length ? `<div class="chips">${d.tags.map(t => `<span class="pill line">#${esc(t)}</span>`).join('')}</div>` : ''}
+        ${task ? `<p class="note">Задача: <a href="#tasks" data-open-task="${task.id}">${esc(task.title)}</a></p>` : ''}${idea ? `<p class="note">Идея с биржи: <a href="#ideas" data-open-idea="${idea.id}">${esc(idea.title)}</a></p>` : ''}
+        ${flowRoute(d, st)}
+        ${st.status === 'revise' || st.status === 'rejected' ? `<div class="fl-verdict ${st.status}"><b>${esc(whoName(st.by))} ${FLOW_VERB[st.status === 'revise' ? 'revise' : 'no']}:</b> ${esc(st.note)}</div>` : ''}
+        ${st.status === 'approved' && row ? `<div class="fl-verdict approved">В плане платежей на ${esc(monthName(m, true).toLowerCase())}: оплачено ${money(paid)} из ${money(Money.planAmount(row, m))}. Оплатить — в «Финансах», раздел «План и прогноз».</div>` : ''}
+        ${flowText('Обоснование затрат', d.why)}${flowText('Что мы получим', d.gain)}${flowText('Чем это нужно бизнесу', d.need)}${flowText('Что будет, если не делать', d.risk)}
+        ${flowHistory(d)}
+        ${flowNoteBox()}
+      </div>`,
+    foot: flowFoot(d, st),
+    onMount(el, close) {
+      flowActions(d, st, el, close);
+      on(el, 'click', '[data-open-task]', (e, a) => { e.preventDefault(); close(); openTask(a.dataset.openTask); });
+      on(el, 'click', '[data-open-idea]', (e, a) => { e.preventDefault(); close(); openIdea(a.dataset.openIdea); });
+    },
+  });
+}
+
+/* единая форма заявки; preset — из идеи, задачи или «Подать заново» */
+function editReq(id, preset = {}) {
+  const cur = id ? Store.get('fundreqs', id) : null;
+  const v = cur ? clone(cur) : {title: '', kind: 'event', tags: [], dir: (Auth.person() || {}).dir || '', dept: '', taskId: '', ideaId: '', amount: '', month: addMonths(monthOf(today()), 1), cat: '', why: '', gain: '', need: '', risk: '', ...preset};
+  if (!v.cat) v.cat = DIR_CAT[v.dir] || 'other';
+  let catTouched = !!cur;
+  const months = Array.from({length: 13}, (_, i) => addMonths(monthOf(today()), i));
+  if (v.month && !months.includes(v.month)) months.unshift(v.month);
+  const tasks = Tasks.all().filter(t => t.status !== 'done' || t.id === v.taskId).sort((a, b) => a.title.localeCompare(b.title, 'ru'));
+  const tagsHtml = () => [...new Set([...FR_TAGS, ...(v.tags || [])])].map(t => `<button type="button" class="chip ${(v.tags || []).includes(t) ? 'on' : ''}" data-frtag="${esc(t)}">#${esc(t)}</button>`).join('');
+  const deptOpts = dir => `<option value="">— всё направление —</option>${Budget.depts().filter(x => x.dir === dir).map(x => `<option value="${esc(x.id)}" ${x.id === v.dept ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}`;
+  openModal({
+    title: cur ? 'Заявка на финансирование' : 'Новая заявка на финансирование',
+    wide: true,
+    body: `<div class="fr-form">
+      <label class="field"><span>Что нужно оплатить</span><input class="input" id="frT" maxlength="200" value="${esc(v.title)}" placeholder="Например: съёмка трёх роликов для запуска"></label>
+      <div class="field"><span>Под что</span><div class="seg" id="frKind">${Object.entries(FR_KINDS).map(([k, n]) => `<button type="button" data-frk="${k}" class="${k === v.kind ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+      <label class="field" id="frTaskF" ${v.kind === 'task' ? '' : 'hidden'}><span>Задача</span><select class="select" id="frTask"><option value="">— выберите задачу —</option>${tasks.map(t => `<option value="${t.id}" ${t.id === v.taskId ? 'selected' : ''}>${esc(t.title)}</option>`).join('')}</select></label>
+      <div class="grid3">
+        <label class="field"><span>Сумма, ₽</span><input class="input num" id="frA" inputmode="decimal" value="${esc(v.amount)}" placeholder="0"></label>
+        <label class="field"><span>Когда нужны деньги</span><select class="select" id="frM">${months.map(m => `<option value="${m}" ${m === v.month ? 'selected' : ''}>${monthName(m, true)}</option>`).join('')}</select></label>
+        <label class="field"><span>Статья расходов</span><select class="select" id="frCat">${Object.entries(OUT_CATS).filter(([k]) => !['tax', 'vat', 'acquiring', 'refunds', 'referral', 'authors', 'sellers'].includes(k)).map(([k, n]) => `<option value="${k}" ${k === v.cat ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+      </div>
+      <div class="chips fr-quick">${[10000, 30000, 50000, 100000, 150000].map(a => `<button type="button" class="chip" data-fra="${a}">${money(a).replace(',00', '')}</button>`).join('')}</div>
+      <div class="grid2">
+        <label class="field"><span>Направление</span><select class="select" id="frDir"><option value="">— не выбрано —</option>${Object.entries(DIRS).map(([k, x]) => `<option value="${k}" ${k === v.dir ? 'selected' : ''}>${x.name}</option>`).join('')}</select></label>
+        <label class="field"><span>Отдел</span><select class="select" id="frDept">${deptOpts(v.dir)}</select></label>
+      </div>
+      <div class="field"><span>Теги</span><div class="chips" id="frTags">${tagsHtml()}</div>
+        <div class="row fr-tagadd"><input class="input" id="frTagNew" maxlength="30" placeholder="свой тег"><button type="button" class="btn xs" id="frTagAdd">${icon('plus')}Тег</button></div></div>
+      <p class="fl-hint" id="frRoute"></p>
+      <label class="field"><span>Обоснование затрат <small>на что именно и как посчитали сумму</small></span><textarea class="textarea" id="frWhy" rows="3" placeholder="Оператор 2 дня × 15 000 ₽, монтаж 3 роликов × 5 000 ₽, свет — своё">${esc(v.why)}</textarea></label>
+      <label class="field"><span>Что мы получим <small>результат — лучше в цифрах</small></span><textarea class="textarea" id="frGain" rows="2" placeholder="3 ролика к запуску, 150 000 охвата, 200 регистраций">${esc(v.gain)}</textarea></label>
+      <label class="field"><span>Чем это нужно бизнесу <small>какую цель или метрику двигает</small></span><textarea class="textarea" id="frNeed" rows="2" placeholder="Цель квартала — 500 продаж: без роликов запуск идёт только на органике">${esc(v.need)}</textarea></label>
+      <label class="field"><span>Что будет, если не делать <small>необязательно</small></span><textarea class="textarea" id="frRisk" rows="2">${esc(v.risk)}</textarea></label>
+    </div>`,
+    foot: `<button class="btn" data-close>Отмена</button><button class="btn" id="frDraft">Сохранить черновик</button><button class="btn primary" id="frSend">Отправить финдиректору</button>`,
+    onMount(el, close) {
+      const amount = () => Math.max(0, Math.round(parseNum($('#frA', el).value) || 0));
+      const paint = () => {
+        const a = amount(), dir = $('#frDir', el).value, m = $('#frM', el).value;
+        const st = Budget.state({amount: a, by: Budget.me(), sentAt: 1, round: 1, decisions: {}});
+        const who = Budget.who();
+        const route = st.route.map(s => `${Flow.STEPS[s]}${s === 'board' ? '' : ` (${Flow.deciders(s, who, Budget.me()).map(whoFirst).join(', ') || 'не выбран'})`}`).join(' → ');
+        let left = '';
+        if (Auth.can('money.view') && dir) {
+          const b = Budget.monthBudget(m, dir, $('#frDept', el).value);
+          const used = sum(Budget.reqs().filter(q => q.id !== id && q.month === m && q.dir === dir && Budget.state(q).status === 'approved'), q => q.amount);
+          left = b.sum ? ` В бюджете «${dirName(dir)}» на ${monthName(m, true).toLowerCase()} — ${money(b.sum)}, разовых уже согласовано на ${money(used)}.` : ` У «${dirName(dir)}» на ${monthName(m, true).toLowerCase()} утверждённого бюджета нет — заявка пойдёт сверх бюджета.`;
+        }
+        $('#frRoute', el).innerHTML = `${icon('arrow')}<span>${a ? `Маршрут: <b>${esc(route)}</b>.` : 'Укажите сумму — покажем, кто будет согласовывать.'}${esc(left)}</span>`;
+      };
+      paint();
+      on(el, 'click', '[data-frk]', (e, b) => { v.kind = b.dataset.frk; $$('[data-frk]', el).forEach(x => x.classList.toggle('on', x === b)); $('#frTaskF', el).hidden = v.kind !== 'task'; });
+      on(el, 'click', '[data-fra]', (e, b) => { $('#frA', el).value = b.dataset.fra; paint(); });
+      on(el, 'click', '[data-frtag]', (e, b) => { const t = b.dataset.frtag; v.tags = (v.tags || []).includes(t) ? v.tags.filter(x => x !== t) : [...(v.tags || []), t]; b.classList.toggle('on'); });
+      $('#frTagAdd', el).onclick = () => {
+        const t = $('#frTagNew', el).value.trim().toLowerCase().replace(/^#/, '');
+        if (!t) return;
+        if (!(v.tags || []).includes(t)) v.tags = [...(v.tags || []), t];
+        $('#frTags', el).innerHTML = tagsHtml();
+        $('#frTagNew', el).value = '';
+      };
+      $('#frTask', el).onchange = e => { const t = Tasks.get(e.target.value); if (t && !$('#frT', el).value.trim()) $('#frT', el).value = t.title; if (t && t.dir && !$('#frDir', el).value) { $('#frDir', el).value = t.dir; $('#frDept', el).innerHTML = deptOpts(t.dir); } paint(); };
+      $('#frDir', el).onchange = e => { $('#frDept', el).innerHTML = deptOpts(e.target.value); if (!catTouched && DIR_CAT[e.target.value]) $('#frCat', el).value = DIR_CAT[e.target.value]; paint(); };
+      $('#frCat', el).onchange = () => { catTouched = true; };
+      ['#frA', '#frM', '#frDept'].forEach(s => $(s, el).addEventListener(s === '#frA' ? 'input' : 'change', paint));
+      const save = send => {
+        const title = $('#frT', el).value.trim(), a = amount();
+        const need = [['#frT', title, 'Напишите, что нужно оплатить'], ['#frA', a, 'Укажите сумму'], ['#frWhy', $('#frWhy', el).value.trim(), 'Обоснуйте затраты'], ['#frGain', $('#frGain', el).value.trim(), 'Напишите, что мы получим'], ['#frNeed', $('#frNeed', el).value.trim(), 'Напишите, чем это нужно бизнесу']];
+        const miss = send ? need.find(x => !x[1]) : need.slice(0, 1).find(x => !x[1]);
+        if (miss) { $(miss[0], el).focus(); toast(miss[2]); return; }
+        const body = {title, kind: v.kind, tags: v.tags || [], dir: $('#frDir', el).value, dept: $('#frDept', el).value, taskId: v.kind === 'task' ? $('#frTask', el).value : '', ideaId: v.ideaId || '',
+          amount: a, month: $('#frM', el).value, cat: $('#frCat', el).value, why: $('#frWhy', el).value.trim(), gain: $('#frGain', el).value.trim(), need: $('#frNeed', el).value.trim(), risk: $('#frRisk', el).value.trim(), upd: Date.now()};
+        if (cur) { Store.patch('fundreqs', cur.id, body, {mustExist: true}); if (send) Budget.send({...cur, ...body}); }
+        else Store.add('fundreqs', {...body, by: Budget.me(), at: Date.now(), ...(send ? {sentAt: Date.now(), round: 1} : {})});
+        if (!send) toast('Черновик сохранён — отправить можно из карточки заявки');
+        else if (!cur) toast(`Заявка отправлена — решает ${Budget.firstUp({...body, by: Budget.me()})}`);
+        close();
+      };
+      $('#frDraft', el).onclick = () => save(false);
+      $('#frSend', el).onclick = () => save(true);
+    },
+  });
+}
+
+/* ── бюджеты направлений ── */
+function bgPlansHtml() {
+  const money_ = Auth.can('money.view'), me = Budget.me();
+  const cal = Budget.calendar(), scopes = Budget.scopes();
+  const cell = (c, sc) => {
+    const d = Store.get('budgets', Flow.budgetId(c.p, sc.dir, sc.dept));
+    const st = d ? Budget.state(d) : null, inDir = !d && !Budget.missing(c.pt, c.p, sc);
+    const late = c.due < today() && Budget.missing(c.pt, c.p, sc);
+    const label = st ? FLOW_ST[st.status].name : inDir ? 'В бюджете направления' : late ? 'Просрочен' : 'Не начат';
+    const tone = st ? FLOW_ST[st.status].tone : late ? 'bad' : inDir ? 'line' : '';
+    return `<td><button class="bg-cell ${tone}" data-bgcell="${c.pt}|${c.p}|${sc.dir}|${sc.dept}">${label}${d ? `<small>${money(budTotal(d))}</small>` : ''}</button></td>`;
+  };
+  const daysTo = due => daysBetween(today(), due);
+  const mine = Budget.budgets().filter(d => money_ || d.by === me).sort((a, b) => (Flow.months(b.ptype, b.period)[0]).localeCompare(Flow.months(a.ptype, a.period)[0]) || dirName(a.dir).localeCompare(dirName(b.dir), 'ru'));
+  return `<section class="section"><div class="section-head"><h2>Бюджетный календарь</h2><span class="hint-inline">Бюджет на год сдаём за месяц до начала года, на квартал — за две недели, на месяц — за неделю. Нажмите на клетку, чтобы открыть или подготовить бюджет.</span></div>
+      <div class="bg-due">${cal.map(c => { const n = daysTo(c.due); return `<div class="card bg-due-i ${n < 0 ? 'late' : n <= 3 ? 'soon' : ''}"><span class="label">${PTYPES[c.pt]}</span><b>${periodName(c.pt, c.p)}</b><small>сдать до ${dayLong(c.due)}${n < 0 ? ' — срок прошёл' : n === 0 ? ' — сегодня' : ` · через ${n} ${plural(n, 'день', 'дня', 'дней')}`}</small></div>`; }).join('')}</div>
+      ${money_ ? `<div class="table-wrap"><table class="t bg-cal"><thead><tr><th>Направление · ответственный</th>${cal.map(c => `<th>${esc(periodName(c.pt, c.p))}</th>`).join('')}</tr></thead>
+        <tbody>${scopes.map(sc => { const h = Budget.head(sc.dir, sc.dept); return `<tr><td>${sc.dept ? `<span class="bg-indent">${esc(Budget.deptName(sc.dept))}</span>` : `<i class="dot" style="background:${DIRS[sc.dir].color}"></i><b>${dirName(sc.dir)}</b>`}${h ? `<small class="note"> · ${esc(whoFirst(h))}</small>` : ''}</td>${cal.map(c => cell(c, sc)).join('')}</tr>`; }).join('')}</tbody></table></div>`
+        : `<p class="note">Свой бюджет направления можно подготовить кнопкой ниже — он уйдёт финдиректору.</p>`}
+      <div class="row bg-plan-add"><button class="btn sm" id="bgNewBud">${icon('plus')}Подготовить бюджет</button></div></section>
+    <section class="section"><div class="section-head"><h2>${money_ ? 'Все бюджеты' : 'Мои бюджеты'}</h2></div>
+      ${mine.length ? `<div class="bg-list">${mine.map(d => { const st = Budget.state(d); return `<div class="card bg-row ${st.waiting.includes(me) ? 'need' : ''}" data-flow="budgets:${d.id}" role="button" tabindex="0">
+          <span class="bg-amt"><b>${money(budTotal(d))}</b><small>${esc(periodName(d.ptype, d.period))}</small></span>
+          <span class="bg-main"><b>${esc(Budget.scopeName(d.dir, d.dept))}</b><small>${(d.lines || []).length} ${plural((d.lines || []).length, 'строка', 'строки', 'строк')} · ${esc(whoName(d.by))}</small></span>
+          <span class="bg-meta">${flowPill(st)}${flowWait(d, st)}${flowRoute(d, st)}</span></div>`; }).join('')}</div>`
+        : '<div class="empty"><b>Бюджетов пока нет</b>Ответственные готовят бюджеты направлений по календарю выше.</div>'}</section>`;
+}
+function wireBgPlans(root) {
+  on(root, 'click', '[data-bgcell]', (e, el) => {
+    const [pt, p, dir, dept] = el.dataset.bgcell.split('|');
+    const d = Store.get('budgets', Flow.budgetId(p, dir, dept));
+    if (d) openBud(d.id); else editBud(null, {ptype: pt, period: p, dir, dept});
+  });
+  $('#bgNewBud', root).onclick = () => { const c = Budget.calendar()[0]; editBud(null, {ptype: c.pt, period: c.p, dir: (Auth.person() || {}).dir || 'content', dept: ''}); };
+}
+
+/* с чем сравнить бюджет: прошлый период и доля верхнего (для месяца — треть квартала, для квартала — четверть года) */
+function budCompare(d) {
+  const prev = Store.get('budgets', Flow.budgetId(periodShift(d.ptype, d.period, -1), d.dir, d.dept));
+  const prevOk = prev && Budget.state(prev).status === 'approved' ? prev : null;
+  const ms = Flow.months(d.ptype, d.period);
+  const parentId = d.ptype === 'month' ? Flow.budgetId(qOf(ms[0]), d.dir, d.dept) : d.ptype === 'quarter' ? Flow.budgetId(ms[0].slice(0, 4), d.dir, d.dept) : null;
+  const parent = parentId ? Store.get('budgets', parentId) : null;
+  const share = parent && Budget.state(parent).status === 'approved' ? budTotal(parent) / (d.ptype === 'month' ? 3 : 4) : null;
+  return {prev: prevOk, share, parent};
+}
+function openBud(id) {
+  const d = Store.get('budgets', id);
+  if (!d) return;
+  const st = Budget.state(d), tot = budTotal(d), cmp = budCompare(d);
+  const dev = cmp.share ? tot / cmp.share - 1 : null;
+  openModal({
+    title: `Бюджет: ${Budget.scopeName(d.dir, d.dept)} — ${periodName(d.ptype, d.period)}`,
+    wide: true,
+    body: `<div class="fl-view">
+        <div class="fl-head"><span class="fl-big">${money(tot)}</span>${flowPill(st)}${flowWait(d, st)}</div>
+        <p class="note">Сдать до ${dayLong(Flow.deadline(d.ptype, d.period))}${d.sentAt ? ` · отправлен ${timeAgo(d.sentAt)}` : ''} · готовит ${esc(whoName(d.by))}</p>
+        ${flowRoute(d, st)}
+        ${st.status === 'revise' || st.status === 'rejected' ? `<div class="fl-verdict ${st.status}"><b>${esc(whoName(st.by))} ${FLOW_VERB[st.status === 'revise' ? 'revise' : 'no']}:</b> ${esc(st.note)}</div>` : ''}
+        <div class="bg-cmp">${cmp.prev ? `<span>Прошлый период: <b>${money(budTotal(cmp.prev))}</b> (${signed(tot - budTotal(cmp.prev), money)})</span>` : ''}
+          ${cmp.share !== null ? `<span class="${Math.abs(dev) > 0.1 ? 'warn' : ''}">Доля ${d.ptype === 'month' ? 'квартала' : 'года'}: <b>${money(cmp.share)}</b>${Math.abs(dev) > 0.1 ? ` — отклонение ${pct(dev)}, нужно объяснение` : ''}</span>` : ''}</div>
+        <div class="table-wrap"><table class="t"><thead><tr><th>Статья</th><th>На что</th><th class="r">Сумма</th></tr></thead>
+          <tbody>${(d.lines || []).map(l => `<tr><td>${esc(OUT_CATS[l.cat] || 'Прочие расходы')}</td><td>${esc(l.title || '')}${l.note ? `<small class="note"> · ${esc(l.note)}</small>` : ''}</td><td class="r">${money(Number(l.amount) || 0)}</td></tr>`).join('')}</tbody>
+          <tfoot><tr class="total"><td colspan="2">Итого</td><td class="r">${money(tot)}</td></tr></tfoot></table></div>
+        ${flowText('Что получим за период', d.gain)}${flowText('Чем это нужно бизнесу', d.need)}${flowText('Что изменилось и почему', d.why)}${flowText('Что будет, если урезать', d.risk)}
+        ${flowHistory(d)}
+        ${flowNoteBox()}
+      </div>`,
+    foot: flowFoot(d, st),
+    onMount(el, close) { flowActions(d, st, el, close); },
+  });
+}
+function editBud(id, preset = {}) {
+  const cur = id ? Store.get('budgets', id) : null;
+  const v = cur ? clone(cur) : {ptype: 'month', period: addMonths(monthOf(today()), 1), dir: 'content', dept: '', lines: [], why: '', gain: '', need: '', risk: '', ...preset};
+  if (!cur) {
+    const ex = Store.get('budgets', Flow.budgetId(v.period, v.dir, v.dept));
+    if (ex) { openBud(ex.id); return; }
+  }
+  if (!v.lines.length) v.lines = [{cat: 'payroll', title: '', amount: 0}];
+  const periods = pt => {
+    const base = periodNow(pt), list = Array.from({length: pt === 'month' ? 8 : pt === 'quarter' ? 5 : 3}, (_, i) => periodShift(pt, base, i));
+    return list.includes(v.period) || v.ptype !== pt ? list : [v.period, ...list];
+  };
+  const catOpts = c => Object.entries(OUT_CATS).map(([k, n]) => `<option value="${k}" ${k === c ? 'selected' : ''}>${n}</option>`).join('');
+  const linesHtml = () => v.lines.map((l, i) => `<tr data-bl="${i}"><td><select class="select" data-blk="cat">${catOpts(l.cat)}</select></td>
+      <td><input class="input" data-blk="title" maxlength="200" value="${esc(l.title || '')}" placeholder="на что"></td>
+      <td><input class="input num" data-blk="amount" inputmode="decimal" value="${l.amount ? esc(l.amount) : ''}" placeholder="0"></td>
+      <td><button type="button" class="icon-btn" data-bldel="${i}" aria-label="Убрать строку">${icon('x')}</button></td></tr>`).join('');
+  const lock = !!cur;
+  openModal({
+    title: cur ? 'Бюджет направления' : 'Новый бюджет направления',
+    wide: true,
+    body: `<div class="fr-form">
+      <div class="grid3">
+        <div class="field"><span>Горизонт</span><div class="seg" id="bdPt">${Object.entries(PTYPES).map(([k, n]) => `<button type="button" data-bdpt="${k}" class="${k === v.ptype ? 'on' : ''}" ${lock ? 'disabled' : ''}>${n}</button>`).join('')}</div></div>
+        <label class="field"><span>Период</span><select class="select" id="bdP" ${lock ? 'disabled' : ''}></select></label>
+        <label class="field"><span>Направление</span><select class="select" id="bdDir" ${lock ? 'disabled' : ''}>${Object.entries(DIRS).map(([k, x]) => `<option value="${k}" ${k === v.dir ? 'selected' : ''}>${x.name}</option>`).join('')}</select></label>
+      </div>
+      <label class="field"><span>Отдел <small>если бюджет ведут по отделам</small></span><select class="select" id="bdDept" ${lock ? 'disabled' : ''}></select></label>
+      <p class="fl-hint" id="bdHint"></p>
+      <div class="field"><span>Статьи бюджета</span>
+        <div class="table-wrap"><table class="t bd-lines"><thead><tr><th>Статья</th><th>На что</th><th class="r">Сумма, ₽</th><th></th></tr></thead><tbody id="bdLines">${linesHtml()}</tbody>
+          <tfoot><tr class="total"><td colspan="2">Итого</td><td class="r" id="bdTot"></td><td></td></tr></tfoot></table></div>
+        <div class="row"><button type="button" class="btn xs" id="bdAdd">${icon('plus')}Строка</button><button type="button" class="btn xs ghost" id="bdCopy">${icon('copy')}Как в прошлом периоде</button></div></div>
+      <label class="field"><span>Что получим за период <small>цели и результат в цифрах</small></span><textarea class="textarea" id="bdGain" rows="2">${esc(v.gain)}</textarea></label>
+      <label class="field"><span>Чем это нужно бизнесу <small>какие цели квартала и метрики двигает</small></span><textarea class="textarea" id="bdNeed" rows="2">${esc(v.need)}</textarea></label>
+      <label class="field"><span>Что изменилось и почему <small>относительно прошлого периода; обязательно, если отклонение больше 10%</small></span><textarea class="textarea" id="bdWhy" rows="2">${esc(v.why)}</textarea></label>
+      <label class="field"><span>Что будет, если урезать <small>необязательно</small></span><textarea class="textarea" id="bdRisk" rows="2">${esc(v.risk)}</textarea></label>
+    </div>`,
+    foot: `<button class="btn" data-close>Отмена</button><button class="btn" id="bdDraft">Сохранить черновик</button><button class="btn primary" id="bdSend">Отправить финдиректору</button>`,
+    onMount(el, close) {
+      const read = () => $$('[data-bl]', el).forEach(tr => {
+        const l = v.lines[Number(tr.dataset.bl)];
+        l.cat = $('[data-blk="cat"]', tr).value;
+        l.title = $('[data-blk="title"]', tr).value.trim();
+        l.amount = Math.max(0, Math.round(parseNum($('[data-blk="amount"]', tr).value) || 0));
+      });
+      const paintPeriods = () => { $('#bdP', el).innerHTML = periods(v.ptype).map(p => `<option value="${p}" ${p === v.period ? 'selected' : ''}>${periodName(v.ptype, p)}</option>`).join(''); v.period = $('#bdP', el).value; };
+      const paintDept = () => { $('#bdDept', el).innerHTML = `<option value="">— всё направление —</option>${Budget.depts().filter(x => x.dir === v.dir).map(x => `<option value="${esc(x.id)}" ${x.id === v.dept ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}`; v.dept = $('#bdDept', el).value; };
+      const paint = () => {
+        read();
+        const tot = sum(v.lines, l => l.amount);
+        $('#bdTot', el).textContent = money(tot);
+        const cmp = budCompare(v), due = Flow.deadline(v.ptype, v.period), n = daysBetween(today(), due);
+        const route = Flow.route(v).map(s => Flow.STEPS[s]).join(' → ');
+        const dev = cmp.share ? tot / cmp.share - 1 : null;
+        $('#bdHint', el).innerHTML = `${icon('clock')}<span>Сдать до <b>${dayLong(due)}</b>${n < 0 ? ' — срок прошёл' : ''}. Маршрут: <b>${route}</b>.${cmp.prev ? ` Прошлый период: ${money(budTotal(cmp.prev))}.` : ''}${cmp.share !== null ? ` Доля ${v.ptype === 'month' ? 'квартала' : 'года'}: ${money(cmp.share)}${Math.abs(dev) > 0.1 ? ` — отклонение ${pct(dev)}, объясните в «Что изменилось»` : ''}.` : ''}</span>`;
+      };
+      paintPeriods(); paintDept(); paint();
+      on(el, 'click', '[data-bdpt]', (e, b) => { if (lock) return; v.ptype = b.dataset.bdpt; $$('[data-bdpt]', el).forEach(x => x.classList.toggle('on', x === b)); v.period = periodShift(v.ptype, periodNow(v.ptype), 1); paintPeriods(); paint(); });
+      $('#bdP', el).onchange = e => { v.period = e.target.value; paint(); };
+      $('#bdDir', el).onchange = e => { v.dir = e.target.value; v.dept = ''; paintDept(); paint(); };
+      $('#bdDept', el).onchange = e => { v.dept = e.target.value; paint(); };
+      on(el, 'input', '[data-bl] input', () => paint());
+      on(el, 'change', '[data-bl] select', () => paint());
+      on(el, 'click', '[data-bldel]', (e, b) => { read(); v.lines.splice(Number(b.dataset.bldel), 1); if (!v.lines.length) v.lines.push({cat: 'other', title: '', amount: 0}); $('#bdLines', el).innerHTML = linesHtml(); paint(); });
+      $('#bdAdd', el).onclick = () => { read(); v.lines.push({cat: 'other', title: '', amount: 0}); $('#bdLines', el).innerHTML = linesHtml(); paint(); };
+      $('#bdCopy', el).onclick = () => {
+        const prev = budCompare(v).prev;
+        if (!prev) { toast('В прошлом периоде утверждённого бюджета нет'); return; }
+        v.lines = clone(prev.lines || []);
+        $('#bdLines', el).innerHTML = linesHtml();
+        paint();
+      };
+      const save = send => {
+        read();
+        const lines = v.lines.filter(l => l.amount > 0 || l.title);
+        if (!lines.length || !sum(lines, l => l.amount)) { toast('Добавьте хотя бы одну строку с суммой'); return; }
+        const body = {title: `Бюджет ${Budget.scopeName(v.dir, v.dept)} — ${periodName(v.ptype, v.period)}`, lines, gain: $('#bdGain', el).value.trim(), need: $('#bdNeed', el).value.trim(), why: $('#bdWhy', el).value.trim(), risk: $('#bdRisk', el).value.trim(), upd: Date.now()};
+        if (send && (!body.gain || !body.need)) { $(body.gain ? '#bdNeed' : '#bdGain', el).focus(); toast('Напишите, что получим и чем это нужно бизнесу'); return; }
+        if (cur) { Store.patch('budgets', cur.id, body, {mustExist: true}); if (send) Budget.send({...cur, ...body}); }
+        else {
+          const nid = Flow.budgetId(v.period, v.dir, v.dept);
+          if (Store.get('budgets', nid)) { toast('Бюджет на этот период уже готовят — откройте его в календаре'); return; }
+          const doc = {...body, ptype: v.ptype, period: v.period, dir: v.dir, dept: v.dept || '', by: Budget.me(), at: Date.now()};
+          Store.put('budgets', nid, send ? {...doc, sentAt: Date.now(), round: 1} : doc);
+          if (send) toast(`Бюджет отправлен — решает ${Budget.firstUp(doc)}`);
+        }
+        if (!send) toast('Черновик бюджета сохранён');
+        close();
+      };
+      $('#bdDraft', el).onclick = () => save(false);
+      $('#bdSend', el).onclick = () => save(true);
+    },
+  });
+}
+
+/* ── календарь и правила ── */
+function bgRulesHtml() {
+  const c = Budget.set(), who = Budget.who();
+  const name = k => (k ? esc(whoName(k)) : '<i>не выбран</i>');
+  const cal = Budget.calendar();
+  return `<div class="split section">
+    <div class="card bg-rules">
+      <h2>Правила бюджетирования</h2>
+      <h3>1. Кто согласует</h3>
+      <p>Финдиректор — ${name(who.cfo)}, гендиректор — ${name(who.ceo)}, акционеры — ${who.board.length ? who.board.map(k => esc(whoFirst(k))).join(', ') : '<i>не выбраны</i>'}. У акционеров решает большинство. Свою заявку человек не согласует сам — её решает уровень выше.</p>
+      <h3>2. Разовые заявки</h3>
+      <p>Подать может любой из команды: под задачу, проект, направление, мероприятие или новую идею. Одна форма: сумма, когда нужны деньги, статья, направление, теги, обоснование затрат, что получим, чем это нужно бизнесу.</p>
+      <ul><li>до ${money(c.cfoLimit)} — решает финдиректор сам;</li><li>от ${money(c.cfoLimit)} до ${money(c.ceoLimit)} — финдиректор, затем гендиректор;</li><li>дороже ${money(c.ceoLimit)} — финдиректор, гендиректор, затем акционеры.</li></ul>
+      <h3>3. Бюджеты направлений</h3>
+      <p>Каждое направление (и отдел, если их завели) — центр ответственности: у него есть ответственный, и он сдаёт бюджет по статьям. Бюджеты каскадом: год → квартал → месяц. Месячный уточняет квартальный, квартальный — годовой; пока подробного нет, в своде считается доля верхнего (треть квартала, двенадцатая часть года).</p>
+      <ul><li>Год — сдать за месяц до начала года; согласуют финдиректор, гендиректор и акционеры.</li><li>Квартал — за две недели до начала квартала; финдиректор и гендиректор.</li><li>Месяц — за неделю до начала месяца; финдиректор.</li></ul>
+      <p>Если месячный бюджет отличается от доли квартала больше чем на 10% (или квартальный — от доли года), автор объясняет почему, а финдиректор решает, нужен ли гендиректор.</p>
+      <h3>4. Решения и сроки ответа</h3>
+      <p>Ответ — «Согласовать», «На доработку» с комментарием или «Отказать» с причиной. На доработке автор правит и отправляет снова — начинается новый круг с финдиректора, прежние решения остаются в истории. Отказ окончательный: можно подать новую заявку с другим обоснованием. Отвечаем быстро: финдиректор и гендиректор — за ${FLOW_SLA.cfo} дня, акционеры — за ${FLOW_SLA.board} дней; дольше — карточка подсвечивается.</p>
+      <h3>5. После согласования</h3>
+      <p>Согласованная заявка сама встаёт в план платежей на нужный месяц — в «Финансах» её оплачивают кнопкой «Оплатить», и она попадает в факт. Нужно больше согласованного — новая заявка на разницу. Утверждённый бюджет — лимит направления: тратим в его пределах, сверх — разовой заявкой.</p>
+    </div>
+    <div class="card"><h2>Ближайшие сроки</h2>
+      <div class="bg-due col">${cal.map(x => { const n = daysBetween(today(), x.due); return `<div class="bg-due-i ${n < 0 ? 'late' : n <= 3 ? 'soon' : ''}"><span class="label">${PTYPES[x.pt]}</span><b>${periodName(x.pt, x.p)}</b><small>до ${dayLong(x.due)}${n < 0 ? ' — срок прошёл' : ''}</small></div>`; }).join('')}</div>
+    </div></div>
+    ${Auth.can('settings.edit') ? bgSettingsHtml() : ''}`;
+}
+function bgSettingsHtml() {
+  const b = settings().budget || {}, c = Budget.set();
+  const accs = roles => Store.all('accounts').filter(a => a.active !== false && a.name && roles.includes(roleOf(a.role))).map(a => ({key: a.personId || a.id, name: whoName(a.personId || a.id), role: roleOf(a.role)}));
+  const sel = (id, cur, list, def) => `<select class="select" id="${id}"><option value="">${def}</option>${list.map(x => `<option value="${esc(x.key)}" ${x.key === cur ? 'selected' : ''}>${esc(x.name)} · ${ROLES[x.role].name}</option>`).join('')}</select>`;
+  const boardDef = accs(['owner', 'investor']).map(x => x.key), board = Array.isArray(b.board) && b.board.length ? b.board : boardDef;
+  const team = people().filter(p => p.status !== 'inactive');
+  const pSel = (attr, cur) => `<select class="select" ${attr}><option value="">— не выбран —</option>${team.map(p => `<option value="${esc(p.id)}" ${p.id === cur ? 'selected' : ''}>${esc(personName(p))}</option>`).join('')}</select>`;
+  return `<section class="section"><div class="section-head"><h2>Настройки бюджетирования</h2><span class="hint-inline">Видит и меняет основатель.</span></div>
+    <div class="card bg-set">
+      <div class="grid3">
+        <label class="field"><span>Финдиректор</span>${sel('bsCfo', b.cfo || '', accs(['owner', 'lead', 'finance']), 'по умолчанию — учётка «Финансы»')}</label>
+        <label class="field"><span>Гендиректор</span>${sel('bsCeo', b.ceo || '', accs(['owner', 'lead', 'finance']), 'по умолчанию — основатель')}</label>
+        <div class="field"><span>Порог финдиректора и гендиректора, ₽</span><div class="row"><input class="input num" id="bsL1" inputmode="numeric" value="${c.cfoLimit}"><input class="input num" id="bsL2" inputmode="numeric" value="${c.ceoLimit}"></div></div>
+      </div>
+      <div class="field"><span>Акционеры</span><div class="chips" id="bsBoard">${accs(['owner', 'lead', 'finance', 'investor']).map(x => `<button type="button" class="chip ${board.includes(x.key) ? 'on' : ''}" data-bsb="${esc(x.key)}">${esc(x.name)} <small class="note">${ROLES[x.role].name}</small></button>`).join('')}</div></div>
+      <div class="field"><span>Ответственные за бюджеты направлений</span><div class="grid2">${Object.entries(DIRS).map(([k, x]) => `<label class="field"><span>${x.name}</span>${pSel(`data-bshead="${k}"`, (b.heads || {})[k] || '')}</label>`).join('')}</div></div>
+      <div class="field"><span>Отделы <small>необязательно: если внутри направления бюджет ведут по отделам</small></span>
+        <div id="bsDepts">${(b.depts || []).map((d, i) => `<div class="row bs-dept" data-bsd="${i}"><input class="input" data-bsdk="name" value="${esc(d.name)}" placeholder="Название отдела"><select class="select" data-bsdk="dir">${Object.entries(DIRS).map(([k, x]) => `<option value="${k}" ${k === d.dir ? 'selected' : ''}>${x.name}</option>`).join('')}</select>${pSel('data-bsdk="head"', d.head || '')}<button type="button" class="icon-btn" data-bsddel="${i}" aria-label="Убрать отдел">${icon('x')}</button></div>`).join('') || '<p class="note">Отделов нет — бюджет ведётся по направлениям.</p>'}</div>
+        <div class="row"><button type="button" class="btn xs" id="bsDeptAdd">${icon('plus')}Отдел</button></div></div>
+      <div class="row"><button class="btn primary" id="bsSave">Сохранить настройки</button></div>
+    </div></section>`;
+}
+function wireBgRules(root) {
+  if (!Auth.can('settings.edit') || !$('#bsSave', root)) return;
+  const b = settings().budget || {};
+  let depts = clone(b.depts || []);
+  on(root, 'click', '[data-bsb]', (e, el) => el.classList.toggle('on'));
+  const readDepts = () => $$('[data-bsd]', root).forEach(row => {
+    const d = depts[Number(row.dataset.bsd)];
+    d.name = $('[data-bsdk="name"]', row).value.trim();
+    d.dir = $('[data-bsdk="dir"]', row).value;
+    d.head = $('[data-bsdk="head"]', row).value || null;
+  });
+  $('#bsDeptAdd', root).onclick = () => {
+    readDepts();
+    depts.push({id: 'd' + uid().slice(-6), name: '', dir: 'content', head: null});
+    saveSettings({budget: {depts}});
+  };
+  on(root, 'click', '[data-bsddel]', async (e, el) => {
+    if (!(await confirmPop(el, {text: 'Убрать отдел? Его бюджеты останутся в истории.', yes: 'Убрать', danger: true}))) return;
+    readDepts();
+    depts.splice(Number(el.dataset.bsddel), 1);
+    saveSettings({budget: {depts}});
+  });
+  $('#bsSave', root).onclick = () => {
+    readDepts();
+    const l1 = Math.max(0, Math.round(parseNum($('#bsL1', root).value) || 0)), l2 = Math.max(l1, Math.round(parseNum($('#bsL2', root).value) || 0));
+    const heads = Object.fromEntries($$('[data-bshead]', root).map(s => [s.dataset.bshead, s.value || null]));
+    saveSettings({budget: {cfo: $('#bsCfo', root).value || null, ceo: $('#bsCeo', root).value || null, board: $$('[data-bsb].on', root).map(x => x.dataset.bsb),
+      cfoLimit: l1 || Flow.LIMITS.cfoLimit, ceoLimit: l2 || Flow.LIMITS.ceoLimit, heads, depts: depts.filter(d => d.name)}});
+    toast('Настройки бюджетирования сохранены');
+  };
+}
+
+/* новая заявка или решение по моей — звук и уведомление; ответственным — напоминание о сроке сдачи бюджета */
+const BudgetNotify = {
+  since: 0,
+  wired: false,
+  init() {
+    if (this.wired) return;
+    this.wired = true;
+    this.since = Date.now() - 2000;
+    Store.subscribe(c => { if (c === 'fundreqs' || c === 'budgets') setTimeout(() => this.check(), 50); });
+    setTimeout(() => this.deadlines(), 5000);
+  },
+  check() {
+    if (!Auth.me()) return;
+    const me = Budget.me(), fresh = [];
+    Budget.waitingMe().forEach(d => { const t = Budget.lastAt(d); if (t > this.since) fresh.push({d, t, ring: true, text: `${d.ptype ? 'Бюджет' : 'Заявка'} на согласование: ${d.ptype ? Budget.scopeName(d.dir, d.dept) + ', ' + periodName(d.ptype, d.period).toLowerCase() : d.title} — ${money(Budget.amount(d))}`}); });
+    [...Budget.reqs(), ...Budget.budgets()].filter(d => d.by === me).forEach(d => Object.values(d.decisions || {}).forEach(x => {
+      if ((x.at || 0) > this.since && x.by !== me) fresh.push({d, t: x.at, ring: x.verdict !== 'ok', text: `${whoFirst(x.by)} ${FLOW_VERB[x.verdict]} — «${d.ptype ? Budget.scopeName(d.dir, d.dept) : d.title}»`});
+    }));
+    if (!fresh.length) return;
+    this.since = Math.max(this.since, ...fresh.map(f => f.t));
+    Sound.play('control');
+    fresh.slice(-3).forEach(f => toast(f.text, {ring: f.ring, action: {label: 'Открыть', fn: () => openFlow(Store.get(Budget.col(f.d), f.d.id))}}));
+  },
+  /* за 3 дня до срока: ответственному направления — если бюджет ещё не отправлен; раз в день */
+  deadlines() {
+    if (!Auth.me()) return;
+    const me = Budget.me(), day = today();
+    Budget.calendar().forEach(c => {
+      const n = daysBetween(day, c.due);
+      if (n > 3 || n < -7) return;
+      Budget.scopes().filter(sc => Budget.head(sc.dir, sc.dept) === me).forEach(sc => {
+        const d = Store.get('budgets', Flow.budgetId(c.p, sc.dir, sc.dept));
+        if (!Budget.missing(c.pt, c.p, sc)) return;
+        const key = `eva-bud-due:${c.p}:${sc.dir}:${sc.dept}:${day}`;
+        if (Local.get(key, false)) return;
+        Local.set(key, true);
+        toast(`Бюджет «${Budget.scopeName(sc.dir, sc.dept)}» на ${periodName(c.pt, c.p).toLowerCase()}: ${n < 0 ? 'срок сдачи прошёл' : n === 0 ? 'сдать сегодня' : `сдать до ${dayLong(c.due)}`}`, {ring: true, action: {label: 'Подготовить', fn: () => (d ? openBud(d.id) : editBud(null, {ptype: c.pt, period: c.p, dir: sc.dir, dept: sc.dept}))}});
+      });
+    });
+  },
+};
+
+/* ── 88-ideas.js ── */
+/* Биржа идей и кайдзен: команда подаёт идеи и маленькие улучшения, голосует и обсуждает,
+   основатель, руководитель и финансы рассматривают (за неделю), берут в работу — задачей и,
+   если нужны деньги, заявкой на финансирование. Когда идея принесла результат, финансы
+   записывают подтверждённый эффект и премию автору: за внедрённый кайдзен — фиксированная сумма,
+   за прибыль или экономию — процент от эффекта за первые месяцы, за новое направление — доля
+   или опцион по решению акционеров. Размеры премий — в настройках (видит и меняет основатель).
+   Кто что может — server/lib/hq-rules.js (ideaWrite). */
+
+const IDEA_TYPES = {
+  kaizen: {name: 'Кайдзен', about: 'маленькое улучшение того, как мы работаем', tone: 'good'},
+  idea:   {name: 'Идея', about: 'новое: продукт, канал, партнёрство, формат', tone: 'violet'},
+  save:   {name: 'Экономия', about: 'как тратить меньше без потери качества', tone: 'gold'},
+  event:  {name: 'Мероприятие', about: 'встреча, акция, запуск', tone: 'rose'},
+};
+const IDEA_ST = {
+  new: {name: 'Новая', tone: 'line'}, review: {name: 'На рассмотрении', tone: 'gold'}, accepted: {name: 'Внедряем', tone: 'violet'},
+  done: {name: 'Внедрена', tone: 'good'}, profit: {name: 'Принесла результат', tone: 'good'}, later: {name: 'Отложена', tone: 'line'}, declined: {name: 'Отклонена', tone: 'bad'},
+};
+const IDEA_TAGS = ['продукт', 'контент', 'маркетинг', 'клиенты', 'процессы', 'команда', 'автоматизация', 'партнёры', 'экономия', 'сервис'];
+const IDEA_REWARD = {bonus: 'Премия', pct: 'Процент от эффекта', share: 'Доля или опцион'};
+const IDEA_DEF = {ideaPct: 0.1, ideaMonths: 12, kaizenBonus: 3000, shareFrom: 3000000};
+
+const Ideas = {
+  cfg() { const b = settings().ideas || {}; return Object.fromEntries(Object.entries(IDEA_DEF).map(([k, d]) => [k, Number(b[k]) > 0 ? Number(b[k]) : d])); },
+  all() { return Store.all('ideas').filter(x => x.title).sort((a, b) => (b.at || 0) - (a.at || 0)); },
+  status(i) { return IDEA_ST[i.status] ? i.status : 'new'; },
+  votes(i) { return Object.values(i.votes || {}).filter(Boolean).length; },
+  voted(i) { return !!(i.votes || {})[Tasks.meKey()]; },
+  comments(i) { return Object.entries(i.comments || {}).map(([id, c]) => ({...c, id})).sort((a, b) => (a.at || 0) - (b.at || 0)); },
+  desk() { return Auth.can('tasks.manage'); },
+  canEdit(i) { return this.desk() || (i.by === Tasks.meKey() && ['new', 'review', 'later'].includes(this.status(i))); },
+  badge() { return Auth.me() && this.desk() ? this.all().filter(i => this.status(i) === 'new').length : 0; },
+  vote(i) { const me = Tasks.meKey(); Store.patch('ideas', i.id, {votes: {[me]: this.voted(i) ? null : Date.now()}}, {mustExist: true}); },
+  comment(i, text, extra = {}) { Store.patch('ideas', i.id, {comments: {[uid()]: {by: Tasks.meKey(), at: Date.now(), text, ...extra}}}, {mustExist: true}); },
+  /* какую премию предложить: кайдзен без денежного эффекта — фиксированная, есть эффект — процент, крупный — доля */
+  suggest(i) {
+    const c = this.cfg(), eff = Number((i.result || {}).amount) || 0;
+    if (!eff) return {kind: 'bonus', amount: c.kaizenBonus};
+    if (eff >= c.shareFrom) return {kind: 'share', pct: c.ideaPct, amount: Math.round(eff * c.ideaPct)};
+    return {kind: 'pct', pct: c.ideaPct, amount: Math.round(eff * c.ideaPct)};
+  },
+};
+
+App.register('ideas', {
+  title: 'Биржа идей',
+  render(root) {
+    const all = Ideas.all(), c = Ideas.cfg();
+    const stF = View.get('id.st', 'all'), tyF = View.get('id.ty', ''), sort = View.get('id.sort', 'new'), q = View.get('id.q', '');
+    const norm = s => String(s || '').toLowerCase().replace(/ё/g, 'е');
+    const groups = {all: null, new: ['new'], review: ['review'], accepted: ['accepted'], done: ['done', 'profit'], archive: ['later', 'declined']};
+    const list = all.filter(i => (!groups[stF] || groups[stF].includes(Ideas.status(i))) && (!tyF || i.type === tyF)
+      && (!q || norm(`${i.title} ${i.problem} ${i.proposal} ${i.effect} ${(i.tags || []).join(' ')} ${whoName(i.by)}`).includes(norm(q))));
+    if (sort === 'top') list.sort((a, b) => Ideas.votes(b) - Ideas.votes(a) || (b.at || 0) - (a.at || 0));
+    const done = all.filter(i => ['done', 'profit'].includes(Ideas.status(i)));
+    const effect = sum(all, i => (i.result || {}).amount), rewards = sum(all, i => (i.reward || {}).amount);
+    const n = st => all.filter(i => !groups[st] || groups[st].includes(Ideas.status(i))).length;
+    root.innerHTML = `
+      ${pageHead('Биржа идей', 'Идеи и кайдзен — непрерывные улучшения от всей команды. Идея принесла результат — автор получает премию.', `<button class="btn primary sm" id="idNew">${icon('plus')}Предложить идею</button>`)}
+      ${helpBox('ideas', `<b>Что такое кайдзен.</b> Японская система непрерывного улучшения: не ждём большой реформы, а каждый день понемногу улучшаем то, как работаем. Лучше всех знает, что улучшить, тот, кто делает работу. Заметили, что можно быстрее, дешевле или удобнее для клиенток, — нажмите «Предложить идею»: как сейчас, что предлагаете, что получим. Команда поддерживает голосом, руководители отвечают за неделю. Внедрили улучшение — премия ${money(c.kaizenBonus)}; идея принесла прибыль или экономию — ${pct(c.ideaPct)} от эффекта за первые ${c.ideaMonths} ${plural(c.ideaMonths, 'месяц', 'месяца', 'месяцев')}.`)}
+      <div class="cards tiles id-kpi">
+        ${finTile('Идей подано', fmt(all.length), `${fmt(n('new'))} ждут рассмотрения`)}
+        ${finTile('Внедрено', fmt(done.length), `в работе ${fmt(n('accepted'))}`)}
+        ${finTile('Подтверждённый эффект', money(effect), 'прибыль и экономия от идей')}
+        ${finTile('Премии авторам', money(rewards), `выплачено ${money(sum(all.filter(i => (i.reward || {}).paidAt), i => i.reward.amount))}`)}
+      </div>
+      <div class="bg-tools">
+        <div class="seg">${[['all', 'Все'], ['new', 'Новые'], ['review', 'На рассмотрении'], ['accepted', 'Внедряем'], ['done', 'Внедрены'], ['archive', 'Архив']].map(([k, nm]) => `<button type="button" data-idst="${k}" class="${k === stF ? 'on' : ''}">${nm}${n(k) && k !== 'all' ? ` · ${n(k)}` : ''}</button>`).join('')}</div>
+        <div class="seg">${[['new', 'Свежие'], ['top', 'Популярные']].map(([k, nm]) => `<button type="button" data-idsort="${k}" class="${k === sort ? 'on' : ''}">${nm}</button>`).join('')}</div>
+        <input class="input" id="idQ" type="search" placeholder="Поиск по идеям" value="${esc(q)}">
+      </div>
+      <div class="chips bg-tags">${Object.entries(IDEA_TYPES).map(([k, x]) => `<button type="button" class="chip ${k === tyF ? 'on' : ''}" data-idty="${k}" title="${esc(x.about)}">${x.name}</button>`).join('')}</div>
+      ${list.length ? `<div class="id-grid">${list.map(ideaCardHtml).join('')}</div>`
+        : `<div class="empty"><b>${all.length ? 'Ничего не нашлось' : 'Идей пока нет'}</b>${all.length ? 'Снимите фильтр или поищите другое слово.' : 'Будьте первой: что в нашей работе можно сделать быстрее, дешевле или удобнее?'}</div>`}
+      ${ideaRulesHtml()}`;
+    wireHelp(root);
+    on(root, 'click', '[data-idst]', (e, el) => { View.set('id.st', el.dataset.idst); App.render(); });
+    on(root, 'click', '[data-idsort]', (e, el) => { View.set('id.sort', el.dataset.idsort); App.render(); });
+    on(root, 'click', '[data-idty]', (e, el) => { View.set('id.ty', View.get('id.ty', '') === el.dataset.idty ? '' : el.dataset.idty); App.render(); });
+    on(root, 'click', '[data-idea]', (e, el) => {
+      const v = e.target.closest('[data-ivote]');
+      if (v) { const i = Store.get('ideas', v.dataset.ivote); if (i) Ideas.vote(i); return; }
+      openIdea(el.dataset.idea);
+    });
+    on(root, 'keydown', '[data-idea]', (e, el) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === el) { e.preventDefault(); openIdea(el.dataset.idea); } });
+    const qi = $('#idQ', root);
+    let t = null;
+    qi.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { View.set('id.q', qi.value); App.render({focus: 'idQ'}); }, 300); });
+    $('#idNew', root).onclick = () => editIdea(null);
+    if (Auth.can('settings.edit')) wireIdeaSettings(root);
+  },
+});
+
+function ideaCardHtml(i) {
+  const st = Ideas.status(i), ty = IDEA_TYPES[i.type] || IDEA_TYPES.idea, a = personById(i.by);
+  const nc = Ideas.comments(i).length;
+  return `<div class="card id-card st-${st}" data-idea="${i.id}" role="button" tabindex="0">
+    <div class="id-top"><span class="pill ${ty.tone}">${ty.name}</span><span class="pill ${IDEA_ST[st].tone}">${IDEA_ST[st].name}</span></div>
+    <b class="id-title">${esc(i.title)}</b>
+    <p class="id-text">${esc(String(i.proposal || i.problem || '').slice(0, 220))}</p>
+    ${Number(i.profitEst) > 0 || (i.result || {}).amount ? `<p class="id-eff">${(i.result || {}).amount ? `эффект <b>${money(i.result.amount)}</b>` : `ожидаем ${money(Number(i.profitEst))} в год`}${(i.reward || {}).amount ? ` · премия автору ${money(i.reward.amount)}` : ''}</p>` : ''}
+    <div class="id-foot">${avatar(a || {name: whoName(i.by)}, 'xs')}<span>${esc(whoFirst(i.by))} · ${timeAgo(i.at)}</span>
+      <span class="id-acts">${nc ? `<span class="t-cm">${icon('msg')}${nc}</span>` : ''}<button type="button" class="id-vote ${Ideas.voted(i) ? 'on' : ''}" data-ivote="${i.id}" title="${Ideas.voted(i) ? 'Убрать голос' : 'Поддержать идею'}">${icon('heart')}${Ideas.votes(i) || ''}</button></span></div>
+  </div>`;
+}
+
+function openIdea(id) {
+  const i = Store.get('ideas', id);
+  if (!i) return;
+  const st = Ideas.status(i), ty = IDEA_TYPES[i.type] || IDEA_TYPES.idea, desk = Ideas.desk(), me = Tasks.meKey();
+  const task = i.taskId ? Tasks.get(i.taskId) : null, req = (i.reqId && Store.get('fundreqs', i.reqId)) || Budget.reqs().find(q => q.ideaId === i.id) || null;
+  const sug = Ideas.suggest(i), rw = i.reward || null, res = i.result || null, c = Ideas.cfg();
+  const block = (label, v) => (String(v || '').trim() ? `<div class="fl-text"><span class="label">${label}</span><p>${esc(v).replace(/\n/g, '<br>')}</p></div>` : '');
+  openModal({
+    title: i.title,
+    wide: true,
+    body: `<div class="fl-view">
+        <div class="id-top"><span class="pill ${ty.tone}">${ty.name}</span><span class="pill ${IDEA_ST[st].tone}">${IDEA_ST[st].name}</span>${(i.tags || []).map(t => `<span class="pill line">#${esc(t)}</span>`).join('')}</div>
+        <p class="note">Предложил(а) ${esc(whoName(i.by))}, ${timeAgo(i.at)}${i.dir ? ' · ' + esc(dirName(i.dir)) : ''} · ${Ideas.votes(i)} ${plural(Ideas.votes(i), 'голос', 'голоса', 'голосов')}</p>
+        ${block('Как сейчас', i.problem)}${block('Что предлагаю', i.proposal)}${block('Что получим', i.effect)}
+        ${Number(i.profitEst) > 0 || Number(i.costEst) > 0 ? `<p class="note">${Number(i.profitEst) > 0 ? `Ожидаемая прибыль или экономия: <b>${money(Number(i.profitEst))}</b> в год. ` : ''}${Number(i.costEst) > 0 ? `Нужно денег на запуск: <b>${money(Number(i.costEst))}</b>.` : ''}</p>` : ''}
+        ${i.verdict ? `<div class="fl-verdict ${['declined'].includes(st) ? 'rejected' : st === 'later' ? 'revise' : 'approved'}"><b>${esc(whoName(i.statusBy))}:</b> ${esc(i.verdict)}</div>` : ''}
+        ${task || req ? `<p class="note">${task ? `Задача: <a href="#tasks" data-open-task="${task.id}">${esc(task.title)}</a>. ` : ''}${req ? `Заявка на финансирование: <a href="#budget" data-open-req="${req.id}">${esc(req.title)}</a> — ${FLOW_ST[Budget.state(req).status].name.toLowerCase()}.` : ''}</p>` : ''}
+        ${res || rw ? `<div class="id-result">${res ? `<span>Подтверждённый эффект: <b>${money(Number(res.amount) || 0)}</b>${res.months ? ` за ${res.months} ${plural(res.months, 'месяц', 'месяца', 'месяцев')}` : ''}${res.note ? ` — ${esc(res.note)}` : ''}</span>` : ''}
+          ${rw ? `<span>Премия автору: <b>${rw.kind === 'share' ? 'доля или опцион' : money(Number(rw.amount) || 0)}</b> · ${IDEA_REWARD[rw.kind] || ''}${rw.kind === 'pct' && rw.pct ? ` ${pct(rw.pct)}` : ''}${rw.note ? ` — ${esc(rw.note)}` : ''} · <b class="${rw.paidAt ? 'good' : 'gold'}">${rw.paidAt ? 'выплачено' : 'к выплате'}</b></span>` : ''}</div>` : ''}
+        ${desk ? `<details class="id-desk" ${['new', 'review'].includes(st) ? 'open' : ''}><summary>Рассмотрение и премия</summary>
+          <div class="field"><span>Статус</span><div class="seg" id="idSt">${Object.entries(IDEA_ST).map(([k, x]) => `<button type="button" data-idset="${k}" class="${k === st ? 'on' : ''}">${x.name}</button>`).join('')}</div></div>
+          <label class="field"><span>Решение для автора <small>почему берём, откладываем или нет — автор увидит</small></span><textarea class="textarea" id="idVerdict" rows="2">${esc(i.verdict || '')}</textarea></label>
+          <div class="grid3">
+            <label class="field"><span>Подтверждённый эффект, ₽</span><input class="input num" id="idEff" inputmode="decimal" value="${res ? esc(res.amount) : ''}" placeholder="прибыль или экономия"></label>
+            <label class="field"><span>За сколько месяцев</span><input class="input num" id="idEffM" inputmode="numeric" value="${res && res.months ? esc(res.months) : c.ideaMonths}"></label>
+            <label class="field"><span>Как посчитали</span><input class="input" id="idEffN" value="${res ? esc(res.note || '') : ''}" placeholder="откуда цифра"></label>
+          </div>
+          <div class="grid3">
+            <label class="field"><span>Премия</span><select class="select" id="idRwK">${Object.entries(IDEA_REWARD).map(([k, n]) => `<option value="${k}" ${k === ((rw && rw.kind) || sug.kind) ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+            <label class="field"><span>Сумма премии, ₽</span><input class="input num" id="idRwA" inputmode="decimal" value="${rw ? esc(rw.amount || '') : ''}" placeholder="${sug.amount}"></label>
+            <label class="field"><span>Комментарий</span><input class="input" id="idRwN" value="${rw ? esc(rw.note || '') : ''}" placeholder="например: за IV квартал"></label>
+          </div>
+          <p class="fl-hint">${icon('spark')}<span>По правилам: кайдзен — ${money(c.kaizenBonus)}, прибыль или экономия — ${pct(c.ideaPct)} от эффекта за ${c.ideaMonths} мес., новое направление с эффектом от ${money(c.shareFrom)} в год — доля или опцион по решению акционеров. Предлагаем: <b>${sug.kind === 'share' ? 'доля или опцион' : money(sug.amount)}</b>.</span></p>
+          <div class="row"><button class="btn primary" id="idDeskSave">Сохранить решение</button>${rw && !rw.paidAt ? '<button class="btn" id="idPaid">Отметить: премия выплачена</button>' : ''}
+            ${!task ? `<button class="btn ghost" id="idTask">${icon('check')}Поставить задачу</button>` : ''}</div>
+        </details>` : ''}
+        <div class="id-thread"><span class="label">Обсуждение</span>
+          ${Ideas.comments(i).map(x => `<div class="id-c ${x.kind === 'status' ? 'sys' : ''}"><b>${esc(whoName(x.by))}</b><small>${timeAgo(x.at)}</small><p>${esc(x.text).replace(/\n/g, '<br>')}</p></div>`).join('') || '<p class="note">Пока никто не писал. Поддержите идею или задайте вопрос автору.</p>'}
+          <div class="row id-c-new"><textarea class="textarea" id="idC" rows="2" placeholder="Вопрос, уточнение или как улучшить идею"></textarea><button class="btn sm" id="idCSend">${icon('msg')}Написать</button></div>
+        </div>
+      </div>`,
+    foot: `<span class="left row">${(i.by === me && st === 'new') || Auth.isOwner() ? `<button class="btn danger" id="idDel" title="Удалить">${icon('trash')}</button>` : ''}${Ideas.canEdit(i) ? `<button class="btn" id="idEdit">${icon('edit')}Изменить</button>` : ''}</span>
+      ${(i.by === me || desk) && !req && !['declined'].includes(st) ? `<button class="btn" id="idReq">${icon('pie')}Заявка на финансирование</button>` : ''}
+      <button class="btn" data-close>Закрыть</button>
+      <button class="btn ${Ideas.voted(i) ? '' : 'primary'}" id="idVote">${icon('heart')}${Ideas.voted(i) ? 'Убрать голос' : 'Поддержать'}</button>`,
+    onMount(el, close) {
+      $('#idVote', el).onclick = () => { Ideas.vote(i); close(); };
+      on(el, 'click', '[data-open-task]', (e, a) => { e.preventDefault(); close(); openTask(a.dataset.openTask); });
+      on(el, 'click', '[data-open-req]', (e, a) => { e.preventDefault(); close(); openReq(a.dataset.openReq); });
+      $('#idCSend', el).onclick = () => {
+        const t = $('#idC', el).value.trim();
+        if (!t) { $('#idC', el).focus(); return; }
+        Ideas.comment(i, t);
+        close();
+        setTimeout(() => openIdea(i.id), 60);
+      };
+      const ed = $('#idEdit', el);
+      if (ed) ed.onclick = () => { close(); editIdea(i.id); };
+      const del = $('#idDel', el);
+      if (del) del.onclick = async () => { if (await confirmPop(del, {text: 'Удалить идею насовсем?', yes: 'Удалить', danger: true})) { Store.remove('ideas', i.id); close(); } };
+      const rq = $('#idReq', el);
+      if (rq) rq.onclick = () => {
+        close();
+        editReq(null, {kind: 'idea', ideaId: i.id, title: i.title, dir: i.dir || '', amount: Number(i.costEst) || '', why: '', gain: i.effect || '', need: [i.problem, i.proposal].filter(Boolean).join('\n\n'), tags: (i.tags || []).slice(0, 5)});
+      };
+      if (!desk) return;
+      on(el, 'click', '[data-idset]', (e, b) => $$('[data-idset]', el).forEach(x => x.classList.toggle('on', x === b)));
+      $('#idRwK', el).onchange = e => { if (e.target.value === 'share') $('#idRwA', el).value = ''; };
+      $('#idDeskSave', el).onclick = () => {
+        const next = ($('[data-idset].on', el) || {}).dataset?.idset || st, verdict = $('#idVerdict', el).value.trim();
+        const eff = Math.round(parseNum($('#idEff', el).value) || 0), effM = Math.round(parseNum($('#idEffM', el).value) || 0);
+        const kind = $('#idRwK', el).value, amt = Math.round(parseNum($('#idRwA', el).value) || 0);
+        const patch = {upd: Date.now()};
+        if (next !== st || verdict !== (i.verdict || '')) Object.assign(patch, {status: next, verdict, statusBy: me, statusAt: Date.now()});
+        if (eff) patch.result = {amount: eff, months: effM || c.ideaMonths, note: $('#idEffN', el).value.trim(), by: me, at: Date.now()};
+        if (amt || kind === 'share' && (eff || rw)) patch.reward = {kind, amount: amt, ...(kind !== 'bonus' ? {pct: c.ideaPct} : {}), note: $('#idRwN', el).value.trim(), by: me, at: Date.now(), ...(rw && rw.paidAt ? {paidAt: rw.paidAt} : {})};
+        if (eff && !patch.status && !['profit'].includes(st)) Object.assign(patch, {status: 'profit', statusBy: me, statusAt: Date.now()});
+        if (next === 'declined' && !verdict) { $('#idVerdict', el).focus(); toast('Объясните автору, почему нет — так идеи будут лучше'); return; }
+        Store.patch('ideas', i.id, patch, {mustExist: true});
+        if (patch.status && patch.status !== st) Ideas.comment(i, `Статус: ${IDEA_ST[patch.status].name}${verdict ? ` — ${verdict}` : ''}`, {kind: 'status', status: patch.status});
+        toast('Решение по идее сохранено — автор получит уведомление');
+        close();
+      };
+      const paid = $('#idPaid', el);
+      if (paid) paid.onclick = () => { Store.patch('ideas', i.id, {reward: {paidAt: Date.now()}, upd: Date.now()}, {mustExist: true}); toast('Премия отмечена выплаченной'); close(); };
+      const tk = $('#idTask', el);
+      if (tk) tk.onclick = () => {
+        const tid = Tasks.create({title: `Внедрить идею: ${i.title}`.slice(0, 200), desc: [i.problem && `Как сейчас: ${i.problem}`, i.proposal && `Что предлагаем: ${i.proposal}`, i.effect && `Что получим: ${i.effect}`].filter(Boolean).join('\n\n'), assignee: personById(i.by) ? i.by : Auth.personId(), dir: i.dir || ''});
+        Store.patch('ideas', i.id, {taskId: tid, ...(['new', 'review'].includes(st) ? {status: 'accepted', statusBy: me, statusAt: Date.now()} : {}), upd: Date.now()}, {mustExist: true});
+        close();
+      };
+    },
+  });
+}
+
+function editIdea(id) {
+  const cur = id ? Store.get('ideas', id) : null;
+  const v = cur ? clone(cur) : {title: '', type: 'kaizen', problem: '', proposal: '', effect: '', profitEst: '', costEst: '', dir: (Auth.person() || {}).dir || '', tags: []};
+  const tagsHtml = () => [...new Set([...IDEA_TAGS, ...(v.tags || [])])].map(t => `<button type="button" class="chip ${(v.tags || []).includes(t) ? 'on' : ''}" data-itag="${esc(t)}">#${esc(t)}</button>`).join('');
+  openModal({
+    title: cur ? 'Идея' : 'Новая идея',
+    wide: true,
+    body: `<div class="fr-form">
+      <div class="field"><span>Что это</span><div class="seg" id="iTy">${Object.entries(IDEA_TYPES).map(([k, x]) => `<button type="button" data-ity="${k}" class="${k === v.type ? 'on' : ''}" title="${esc(x.about)}">${x.name}</button>`).join('')}</div><small id="iTyAbout">${esc((IDEA_TYPES[v.type] || IDEA_TYPES.idea).about)}</small></div>
+      <label class="field"><span>Коротко — в чём идея</span><input class="input" id="iT" maxlength="200" value="${esc(v.title)}" placeholder="Например: шаблон ответа на частые вопросы клиенток"></label>
+      <label class="field"><span>Как сейчас <small>что мешает, где теряем время или деньги</small></span><textarea class="textarea" id="iP" rows="2">${esc(v.problem)}</textarea></label>
+      <label class="field"><span>Что предлагаю <small>первый шаг, который можно сделать уже на этой неделе</small></span><textarea class="textarea" id="iPr" rows="3">${esc(v.proposal)}</textarea></label>
+      <label class="field"><span>Что получим <small>время, деньги, качество, довольные клиентки — лучше в цифрах</small></span><textarea class="textarea" id="iE" rows="2">${esc(v.effect)}</textarea></label>
+      <div class="grid3">
+        <label class="field"><span>Прибыль или экономия в год, ₽ <small>если можно оценить</small></span><input class="input num" id="iPe" inputmode="decimal" value="${esc(v.profitEst || '')}" placeholder="0"></label>
+        <label class="field"><span>Нужно денег на запуск, ₽</span><input class="input num" id="iCe" inputmode="decimal" value="${esc(v.costEst || '')}" placeholder="0"></label>
+        <label class="field"><span>Направление</span><select class="select" id="iDir"><option value="">— не выбрано —</option>${Object.entries(DIRS).map(([k, x]) => `<option value="${k}" ${k === v.dir ? 'selected' : ''}>${x.name}</option>`).join('')}</select></label>
+      </div>
+      <div class="field"><span>Теги</span><div class="chips" id="iTags">${tagsHtml()}</div></div>
+    </div>`,
+    foot: `<button class="btn" data-close>Отмена</button><button class="btn primary" id="iSave">${cur ? 'Сохранить' : 'Подать идею'}</button>`,
+    onMount(el, close) {
+      on(el, 'click', '[data-ity]', (e, b) => { v.type = b.dataset.ity; $$('[data-ity]', el).forEach(x => x.classList.toggle('on', x === b)); $('#iTyAbout', el).textContent = IDEA_TYPES[v.type].about; });
+      on(el, 'click', '[data-itag]', (e, b) => { const t = b.dataset.itag; v.tags = (v.tags || []).includes(t) ? v.tags.filter(x => x !== t) : [...(v.tags || []), t]; b.classList.toggle('on'); });
+      $('#iSave', el).onclick = () => {
+        const title = $('#iT', el).value.trim(), proposal = $('#iPr', el).value.trim();
+        if (!title) { $('#iT', el).focus(); toast('Назовите идею'); return; }
+        if (!proposal) { $('#iPr', el).focus(); toast('Напишите, что предлагаете'); return; }
+        const body = {title, type: v.type, problem: $('#iP', el).value.trim(), proposal, effect: $('#iE', el).value.trim(),
+          profitEst: Math.round(parseNum($('#iPe', el).value) || 0), costEst: Math.round(parseNum($('#iCe', el).value) || 0), dir: $('#iDir', el).value, tags: v.tags || [], upd: Date.now()};
+        if (cur) { Store.patch('ideas', cur.id, body, {mustExist: true}); toast('Идея сохранена'); }
+        else { Store.add('ideas', {...body, by: Tasks.meKey(), at: Date.now(), status: 'new'}); Sound.play('sent'); toast('Идея подана — руководители ответят в течение недели'); }
+        close();
+      };
+    },
+  });
+}
+
+/* правила биржи идей: как работает кайдзен и премии; основатель меняет размеры премий */
+function ideaRulesHtml() {
+  const c = Ideas.cfg();
+  return `<div class="split section id-rules">
+    <div class="card"><h2>Как у нас работает кайдзен</h2>
+      <ol><li><b>Маленький шаг сегодня</b> лучше идеального плана завтра.</li><li><b>Ищем причину, а не виноватого</b> — улучшаем процесс, а не ругаем людей.</li><li><b>Сначала то, что без денег</b>: порядок, шаблоны, договорённости.</li><li><b>Ответ — за неделю</b>: каждую идею рассматривают и объясняют решение автору.</li><li><b>Эффект измеряем</b>: часы, рубли, качество, отзывы клиенток.</li></ol>
+      <p class="note">Цикл улучшения: планируем → делаем → проверяем результат → закрепляем как стандарт (или пробуем иначе).</p></div>
+    <div class="card"><h2>Путь идеи и премии</h2>
+      <ol><li>Подали идею — команда поддерживает голосом и задаёт вопросы.</li><li>Основатель, руководитель или финансы за неделю отвечают: внедряем, откладываем или нет — с объяснением.</li><li>Внедряем — ставим задачу; если нужны деньги — заявка на финансирование прямо из идеи.</li><li>Через 1–3 месяца финансы записывают подтверждённый эффект.</li><li>Автор получает премию:</li></ol>
+      <ul><li>внедрённое улучшение (кайдзен) — <b>${money(c.kaizenBonus)}</b>;</li><li>прибыль или экономия — <b>${pct(c.ideaPct)}</b> от эффекта за первые ${c.ideaMonths} ${plural(c.ideaMonths, 'месяц', 'месяца', 'месяцев')}, выплата раз в квартал;</li><li>новое направление или продукт с эффектом от ${money(c.shareFrom)} в год — доля в прибыли или опцион по решению акционеров.</li></ul>
+      ${Auth.can('settings.edit') ? `<div class="id-set"><span class="label">Размеры премий</span><div class="grid2">
+        <label class="field"><span>Премия за кайдзен, ₽</span><input class="input num" id="isK" inputmode="numeric" value="${c.kaizenBonus}"></label>
+        <label class="field"><span>Процент от эффекта</span><input class="input num" id="isP" inputmode="decimal" value="${fmt(c.ideaPct * 100, 1).replace(',0', '')}"></label>
+        <label class="field"><span>Месяцев эффекта</span><input class="input num" id="isM" inputmode="numeric" value="${c.ideaMonths}"></label>
+        <label class="field"><span>Доля или опцион — от эффекта в год, ₽</span><input class="input num" id="isS" inputmode="numeric" value="${c.shareFrom}"></label>
+      </div><button class="btn sm primary" id="isSave">Сохранить</button></div>` : ''}</div>
+  </div>`;
+}
+function wireIdeaSettings(root) {
+  const b = $('#isSave', root);
+  if (!b) return;
+  b.onclick = () => {
+    const n = (s, k = 1) => Math.max(0, (parseNum($(s, root).value) || 0) * k);
+    saveSettings({ideas: {kaizenBonus: Math.round(n('#isK')) || IDEA_DEF.kaizenBonus, ideaPct: n('#isP', 0.01) || IDEA_DEF.ideaPct, ideaMonths: Math.round(n('#isM')) || IDEA_DEF.ideaMonths, shareFrom: Math.round(n('#isS')) || IDEA_DEF.shareFrom}});
+    toast('Размеры премий сохранены');
+  };
+}
+
+/* руководителям — о новых идеях; автору — о решении, премии и новых комментариях */
+const IdeaNotify = {
+  since: 0,
+  wired: false,
+  init() {
+    if (this.wired) return;
+    this.wired = true;
+    this.since = Date.now() - 2000;
+    Store.subscribe(c => { if (c === 'ideas') setTimeout(() => this.check(), 50); });
+  },
+  check() {
+    if (!Auth.me()) return;
+    const me = Tasks.meKey(), fresh = [];
+    Ideas.all().forEach(i => {
+      if (Ideas.desk() && i.by !== me && (i.at || 0) > this.since) fresh.push({i, t: i.at, text: `Новая идея: ${i.title} — ${whoFirst(i.by)}`});
+      if (i.by !== me) return;
+      if (i.statusBy !== me && (i.statusAt || 0) > this.since) fresh.push({i, t: i.statusAt, text: `Ваша идея «${i.title}»: ${IDEA_ST[Ideas.status(i)].name.toLowerCase()}`});
+      if (i.reward && i.reward.by !== me && (i.reward.at || 0) > this.since) fresh.push({i, t: i.reward.at, text: `Премия за идею «${i.title}»: ${i.reward.kind === 'share' ? 'доля или опцион' : money(Number(i.reward.amount) || 0)}`});
+      Ideas.comments(i).forEach(x => { if (x.by !== me && x.kind !== 'status' && (x.at || 0) > this.since) fresh.push({i, t: x.at, text: `${whoFirst(x.by)} написал(а) об идее «${i.title}»`}); });
+    });
+    if (!fresh.length) return;
+    this.since = Math.max(this.since, ...fresh.map(f => f.t));
+    Sound.play('info');
+    fresh.slice(-3).forEach(f => toast(f.text, {action: {label: 'Открыть', fn: () => openIdea(f.i.id)}}));
+  },
+};
+
 /* ── 99-boot.js ── */
 /* Запуск: подключаемся к базе (или к браузеру), затем рисуем штаб. */
 
@@ -14009,6 +15321,8 @@ const Chat = {
   MeetRemind.start();
   FinNotify.init();
   ProtoNotify.init();
+  BudgetNotify.init();
+  IdeaNotify.init();
   ZoomSt.load();
   /* для проверок и отладки из консоли */
   window.__eva = {Store, Auth, App, Tasks, Inbox, settings, Sales, Plan, Money, cashFlow, pnl, rateTable, rateCharge, rateAt, quarterPace, Sound, Strategy, openWelcome, inviteLink, inviteText, Adam, Chat, Msgs, MsgNotify, MeetRemind, Cal, openGEvent, remindGuests, openTask, Fin, Subs, Market, unitEcon, FinNotify};

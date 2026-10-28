@@ -6,6 +6,8 @@
   styles/*.css     — стили по порядку имени: токены → база → оболочка → компоненты → страницы
   body.html        — корневая разметка
   app/*.js         — код по порядку имени: ядро → данные → вход → интерфейс → страницы → запуск
+Плюс общие со сервером модули из server/lib (SHARED) — они идут первыми: одно правило
+и на экране, и в проверке сервера (например, маршрут согласования бюджета — flow.js).
 
 На выходе — eva-club-v2.html: тело страницы без <!doctype> и <head>.
 Этот же файл публикуется артефактом Claude (обёртку добавляет площадка),
@@ -25,6 +27,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT / 'src'
 OUT = ROOT / 'eva-club-v2.html'
+SHARED = [ROOT / 'server' / 'lib' / 'flow.js']
 
 
 def read(p: Path) -> str:
@@ -36,7 +39,7 @@ def build() -> str:
     css = '\n'.join(f'/* ── {p.name} ── */\n{read(p).strip()}\n'
                     for p in sorted((SRC / 'styles').glob('*.css')))
     js = '\n'.join(f'/* ── {p.name} ── */\n{read(p).strip()}\n'
-                   for p in sorted((SRC / 'app').glob('*.js')))
+                   for p in [*SHARED, *sorted((SRC / 'app').glob('*.js'))])
     body = read(SRC / 'body.html').strip()
     return (f"{head}\n<style>\n{css}</style>\n{body}\n"
             f"<script>\n(() => {{\n'use strict';\n{js}}})();\n</script>\n")
@@ -47,7 +50,7 @@ def check_names() -> None:
     в двух файлах молча перекрывает одно другим (function) — ловим заранее."""
     seen = defaultdict(list)
     pat = re.compile(r'^(?:async\s+)?function\s+(\w+)|^(?:const|let|var|class)\s+(\w+)')
-    for p in sorted((SRC / 'app').glob('*.js')):
+    for p in [*SHARED, *sorted((SRC / 'app').glob('*.js'))]:
         for line in read(p).splitlines():
             m = pat.match(line)
             if m:

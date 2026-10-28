@@ -182,7 +182,7 @@ const App = {
         const k = crmWeek().length;
         return `<a href="${n.href}" target="_blank" rel="noopener" class="nav-ext" title="Eva CRM — кастдев и подключение. Число — созвоны CRM на этой неделе">${icon(n.icon)}<span>${n.name}</span>${k ? `<span class="nav-n">${k}</span>` : ''}</a>`;
       }
-      const b = n.id === 'tasks' ? taskBadge() : n.id === 'money' ? Fin.badge() : n.id === 'protocols' ? Proto.badge() : 0;
+      const b = n.id === 'tasks' ? taskBadge() : n.id === 'money' ? Fin.badge() : n.id === 'protocols' ? Proto.badge() : n.id === 'budget' ? Budget.badge() : n.id === 'ideas' ? Ideas.badge() : 0;
       return `<a href="#${n.id}" class="${n.id === active || (active === 'material' && n.id === 'home') ? 'on' : ''}">${icon(n.icon)}<span>${n.name}</span>${b ? `<span class="badge" title="Требуют внимания">${b}</span>` : ''}</a>`;
     }).join('');
     const me = Auth.me(), p = Auth.person();

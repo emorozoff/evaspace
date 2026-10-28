@@ -56,6 +56,7 @@ dns.setDefaultResultOrder('ipv4first');
 const {JsonStore, merge, isObj} = require('./lib/store');
 const A = require('./lib/auth');
 const HQ = require('./lib/hq-rules');
+const Flow = require('./lib/flow');
 const CRM = require('./lib/crm-rules');
 const {Gcal} = require('./lib/gcal');
 const {Zoom, videoFile} = require('./lib/zoom');
@@ -273,6 +274,21 @@ hq.store.on(ev => {
   }
 });
 crm.store.on(ev => relay(crm, ev));
+
+/* согласованная разовая заявка на финансирование сама встаёт строкой в план платежей (разовые)
+   и уходит из него, если заявку отозвали или удалили. Пишет сервер: последним согласовать мог
+   акционер, у которого нет права вести план. Строка — fr_<заявка>, оплачивают её в финплане */
+function syncReqPlan(id) {
+  const q = hq.store.get('fundreqs', id), pid = 'fr_' + id, cur = hq.store.get('plan', pid);
+  const {budget, who} = HQ.flowCtx(hq.store);
+  if (!q || !(Number(q.amount) > 0) || Flow.state(q, who, budget).status !== 'approved') { if (cur) hq.store.set('plan', pid, null); return; }
+  const next = {title: `Заявка: ${q.title}`.slice(0, 200), group: 'once', cat: q.cat || 'other', amount: Math.round(Number(q.amount)),
+    months: [q.month || new Date(Date.now() + MSK).toISOString().slice(0, 7)], reqId: id, dir: q.dir || '', insurance: false};
+  if (cur && ['title', 'cat', 'amount', 'reqId', 'dir'].every(k => cur[k] === next[k]) && (cur.months || [])[0] === next.months[0]) return;
+  hq.store.set('plan', pid, cur ? {...cur, ...next} : next);
+}
+hq.store.on(ev => { if (!ev.reset && ev.col === 'fundreqs') setImmediate(() => syncReqPlan(ev.id)); });
+hq.store.list('fundreqs').forEach(q => syncReqPlan(q.id));
 
 /* ── учётки: вход, приглашение, сброс пароля ── */
 const fail = (message, status = 400) => err(status, message);

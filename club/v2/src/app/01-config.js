@@ -46,8 +46,10 @@ const NAV = [
   {id: 'protocols', name: 'Протоколы', icon: 'book'},
   {id: 'money',    name: 'Финансы',   icon: 'wallet', perm: 'money.view'},
   {id: 'scenarios', name: 'Сценарии', icon: 'layers', perm: 'money.view'},
+  {id: 'budget',   name: 'Бюджетирование', icon: 'pie'},
   {id: 'reports',  name: 'Отчёты',    icon: 'chart'},
   {id: 'metrics',  name: 'Метрики',   icon: 'funnel'},
+  {id: 'ideas',    name: 'Биржа идей', icon: 'bulb'},
   {id: 'team',     name: 'Команда',   icon: 'users', perm: 'tasks.view'},
   /* Eva CRM — отдельный артефакт; в меню — ссылка и число созвонов недели */
   {id: 'crm',      name: 'CRM',       icon: 'ext', perm: 'tasks.view', href: window.EvaServer ? window.EvaServer.urls.crm : 'https://claude.ai/artifact/3KRhRoeBVMY5cWps3oSASA'},
