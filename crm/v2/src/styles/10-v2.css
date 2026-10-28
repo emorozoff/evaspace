@@ -396,3 +396,4 @@ body.dragging-now .b3-zones{display:grid;}
 .gfind-res b{font-size:13px;} .gfind-res small{font-size:11.5px; color:var(--ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .gfind-res p{margin:0; padding:8px; font-size:12.5px; color:var(--ink-3);}
 @media (max-width:880px){ .gfind{order:2; flex:1 0 100%; margin:8px 0 0;} .gfind-res{right:0;} }
+.quote{white-space:pre-line;}

@@ -849,7 +849,8 @@ async function browserHash(pw, salt) {
   console.log('21. разовая правка данных CRM: тестовые карточки (без сервера, на копии)');
   {
     const fs = require('fs'), os = require('os'), path = require('path');
-    const {JsonStore} = require('../lib/store'), {runFixes} = require('../lib/crm-fixes');
+    const {JsonStore} = require('../lib/store'), {runFixes, FIXES} = require('../lib/crm-fixes');
+    const testFix = FIXES.filter(x => x.id === '2026-10-23-test-data');
     const mk = docs => { const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'evafix-')); const st = new JsonStore({file: path.join(dir, 'eva-crm.json'), cols: ['team', 'people', 'cfg'], format: 'eva-crm'}).load(); Object.entries(docs).forEach(([c, d]) => Object.entries(d).forEach(([id, x]) => st.set(c, id, x))); st.flush(); return {dir, st}; };
     const old = Date.UTC(2026, 9, 15), fresh = Date.UTC(2026, 9, 23, 12);
     const {dir, st} = mk({people: {
@@ -857,20 +858,33 @@ async function browserHash(pw, salt) {
       d1: {type: 'expert', name: 'Пример эксперт', demo: true, createdAt: old}, e1: {type: 'expert', name: 'Ирина Йога', createdAt: old}, e2: {type: 'partner', name: 'Студия тест', createdAt: fresh}},
       team: {dm_anna: {demo: true, name: 'Анна'}, tm1: {name: 'Зуля', uid: 'u1'}}, cfg: {meta2: {demo: true}, settings: {x: 1}}});
     const logs = [];
-    const done = runFixes(st, dir, {log: x => logs.push(x)});
+    const done = runFixes(st, dir, {log: x => logs.push(x), fixes: testFix});
     const ids = c => Object.keys(st.col(c)).sort().join(',');
     ok(ids('people') === 'al,c2,e1' && ids('team') === 'tm1' && ids('cfg') === 'settings', 'правка: осталась Алена, новые клиентки и настоящие эксперты', {people: ids('people'), team: ids('team'), cfg: ids('cfg')});
     const bk = JSON.parse(fs.readFileSync(path.join(dir, 'removed', '2026-10-23-test-data.json'), 'utf8'));
     ok(Object.keys(bk.collections.people).sort().join() === 'c1,d1,e2' && bk.collections.people.c1.name === 'Маша' && bk.collections.team.dm_anna, 'правка: удалённое сохранено копией', bk.collections);
     ok(done['2026-10-23-test-data'] && JSON.parse(fs.readFileSync(path.join(dir, 'crm-fixes.json'), 'utf8'))['2026-10-23-test-data'], 'правка отмечена сделанной', logs);
     st.set('people', 'c3', {type: 'client', name: 'Ещё тест', createdAt: old});
-    runFixes(st, dir, {log: () => {}});
+    runFixes(st, dir, {log: () => {}, fixes: testFix});
     ok(st.get('people', 'c3'), 'правка не повторяется при следующем запуске');
     const st2 = new JsonStore({file: path.join(dir, 'eva-crm.json'), cols: ['team', 'people', 'cfg'], format: 'eva-crm'}).load();
     ok(!st2.get('people', 'c1') && st2.get('people', 'al'), 'правка записана в файл данных');
     const b2 = mk({people: {c1: {type: 'client', name: 'Маша', createdAt: old}, d1: {type: 'client', name: 'Пример', demo: true, createdAt: old}}});
-    runFixes(b2.st, b2.dir, {log: () => {}});
+    runFixes(b2.st, b2.dir, {log: () => {}, fixes: testFix});
     ok(b2.st.get('people', 'c1') && !b2.st.get('people', 'd1'), 'нет карточки Алены — клиенток без пометок не трогаем, пример убираем');
+    /* интервью 1–3 из документов: у Алены карточка есть (с ответом команды), Раили и Светланы — нет */
+    const cdFix = FIXES.filter(x => x.id === '2026-10-28-custdev-1-3');
+    const b3 = mk({people: {al: {type: 'client', name: 'Алёна Красильникова', code: 'ALENA111', s1: 'done', s2: 'none', s3: 'none', answers: {energy: 5}, talk: {t_goal: {a: 'Записала команда'}}, createdAt: old}},
+      team: {th: {head: true, name: 'Зуля', uid: 'u1'}}});
+    runFixes(b3.st, b3.dir, {log: () => {}, fixes: cdFix});
+    const cl = b3.st.list('people').filter(p => p.type === 'client');
+    const al = b3.st.get('people', 'al'), ra = cl.find(p => p.name === 'Раиля Кадяшева'), sv = cl.find(p => p.name === 'Светлана Хилько');
+    ok(cl.length === 3 && ra && sv && /^[A-Z]+\d{3}$/.test(ra.code) && ra.code !== sv.code, 'интервью 1–3: Раиля и Светлана — новые карточки, Алена — та же', cl.map(p => p.name + ':' + p.code));
+    ok(al.talk.t_goal.a === 'Записала команда' && /ассистента/.test(al.talk.t_lack.a) && /Лишний час для себя: На чтение книги/.test(al.talk.t_lack.a) && al.answers.energy === 5, 'Алена: ответы из документа, записанное командой и анкета не тронуты', al.talk.t_lack);
+    ok(al.s2 === 'done' && al.s3 === 'done' && al.res.main && al.res.tags.length && al.talk.t_weather.pick === 'Солнечно' && al.talk.t_lack.star, 'Алена: этап «Итог · инсайты», итог, погода, цитата', {s2: al.s2, s3: al.s3});
+    ok(sv.s1 === 'skip' && sv.s2 === 'done' && sv.s3 === 'done' && Object.keys(sv.talk).filter(k => k !== '_extra').length === 18 && sv.owner === 'th' && sv.city === 'Москва', 'Светлана: все 18 вопросов, итог, ведёт главная', Object.keys(sv.talk).length);
+    ok(ra.s2 === 'none' && Object.keys(ra.talk).length >= 8 && !ra.talk.t_evening.a.includes('Ева с Юлей') && (ra.tags || []).includes('Интервью не закончено'), 'Раиля: интервью не закончено — на шаге «Интервью», чужой ответ не перенесён', ra.talk.t_evening);
+    ok(!Object.values(sv.talk).some(x => /Зачем:/.test(x.a || '')) && /Как понимает, что изменилась/.test(sv.talk.t_change.a), 'слитые вопросы — с подписью, шаблонного текста нет');
   }
 
   console.log(`\nИтог: прошло ${pass}, не прошло ${failN}`);
