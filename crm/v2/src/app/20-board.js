@@ -63,10 +63,9 @@ function wireActs(root) {
     if (!p) return;
     const act = el.dataset.act;
     const T = TYPES[p.type];
-    if (act === 'link') {
-      await copyOrShow(People.link(p), 'Ссылка скопирована 💌 Отправьте её в Telegram или WhatsApp');
-      if ((p.s1 || 'new') === 'new') People.patch(p.id, {s1: 'sent', sentAt: Date.now()}, 'Отправили ссылку на анкету', '🔗');
-    } else if (act === 'tlink') {
+    /* ссылка на анкету — окно: скопировать или сразу в Telegram / WhatsApp */
+    if (act === 'link') openSendLink(p);
+    else if (act === 'tlink') {
       await copyOrShow(People.talkLink(p), `Ссылка на вопросы ${p.type === 'client' ? 'интервью' : 'созвона'} скопирована 💬 Отправьте её человеку — ответы сами лягут в карточку`);
       if (!p.talkSentAt) People.patch(p.id, {talkSentAt: Date.now()}, 'Отправили ссылку на вопросы интервью', '💬');
     } else if (act === 'fill') { View.set('pp.last', p.id); View.set('pp.tab', 'anketa'); View.set('pp.edit', true); App.go('p-' + p.id); }
@@ -150,41 +149,6 @@ function wirePicked(el, picked, cfg) {
   });
 }
 
-/* быстро добавить человека: имя, контакт — и сразу ссылка */
-function openAdd(type) {
-  const T = TYPES[type];
-  const extra = type === 'expert' ? `<div class="field"><span>Направления</span>${pickedHtml('adDirs', [], 'Выбрать из списка')}</div>`
-    : type === 'partner' ? `<label class="field"><span>Категория</span><select class="select" id="adCat">${PARTNER_CATS.map(c => `<option value="${esc(c)}">${esc(noEmo(c))}</option>`).join('')}</select></label><label class="field"><span>Контактное лицо</span><input class="input" id="adContact" placeholder="Ирина, управляющая"></label>` : '';
-  openModal({title: `${T.one}: добавить`, body: `
-      <label class="field"><span>${type === 'partner' ? 'Название' : 'Имя'}</span><input class="input" id="adName" placeholder="${type === 'partner' ? 'Студия «Баланс»' : 'Анна Иванова'}"></label>
-      <div class="grid2"><label class="field"><span>Telegram или телефон</span><input class="input" id="adTg" placeholder="@username"></label>
-      <label class="field"><span>Город</span><input class="input" id="adCity" placeholder="Москва"></label></div>
-      ${extra}
-      <div class="field"><span>Теги</span>${pickedHtml('adTags', [], 'Добавить теги')}</div>
-      <p class="note">Ссылка на анкету скопируется сама — отправьте её человеку. Ответы попадут в карточку.</p>`,
-    foot: '<button class="btn" data-close>Отмена</button><button class="btn" data-only>Просто добавить</button><button class="btn primary" data-ok>Добавить и скопировать ссылку</button>',
-    onMount(el, close) {
-      const picked = {adDirs: [], adTags: []};
-      wirePicked(el, picked, {adDirs: {items: DIRECTIONS, label: noEmo, placeholder: 'Найти направление…'}, adTags: {items: People.tagsOf(type).list, allowNew: true, placeholder: 'Найти или добавить тег…'}});
-      const save = async withLink => {
-        const name = $('#adName', el).value.trim();
-        if (!name) { $('#adName', el).classList.add('need'); $('#adName', el).focus(); return; }
-        const f = {type, name, tg: $('#adTg', el).value.trim(), city: $('#adCity', el).value.trim()};
-        if (type === 'expert') f.dirs = picked.adDirs;
-        if (picked.adTags.length) f.tags = picked.adTags;
-        if (type === 'partner') { f.cat = $('#adCat', el).value; f.contact = $('#adContact', el).value.trim(); }
-        const id = People.create(f);
-        close();
-        if (withLink) {
-          const p = People.get(id);
-          await copyOrShow(People.link(p), 'Ссылка скопирована 💌 Отправьте её человеку');
-          People.patch(id, {s1: 'sent', sentAt: Date.now()}, 'Отправили ссылку на анкету', '🔗');
-        } else toast(`${name}: добавлено ✨`);
-      };
-      $('[data-ok]', el).onclick = () => save(true);
-      $('[data-only]', el).onclick = () => save(false);
-    }});
-}
 
 function audiencePage(type) {
   return {
@@ -198,6 +162,18 @@ function audiencePage(type) {
       if (q) list = list.filter(p => (People.name(p) + ' ' + (p.city || '') + ' ' + (p.code || '') + ' ' + (p.topic || '') + ' ' + (p.tags || []).join(' ')).toLowerCase().includes(q));
       if (f) list = list.filter(p => (type === 'expert' ? (p.dirs || []).includes(f) : type === 'partner' ? p.cat === f : true));
       if (tg) list = list.filter(p => (p.tags || []).includes(tg));
+      /* кто ведёт и порядок в колонке */
+      const ow = View.get(type + '.own', 'all'), sort = View.get(type + '.sort', 'new');
+      if (ow === 'me') list = list.filter(p => p.owner === Who.id());
+      else if (ow === 'none') list = list.filter(p => !p.owner);
+      else if (ow !== 'all') list = list.filter(p => p.owner === ow);
+      const SORTS = {new: ['Сначала новые ответы', (a, b) => ((b.fresh || {}).at || 0) - ((a.fresh || {}).at || 0) || (b.touchedAt || 0) - (a.touchedAt || 0)],
+        stale: ['Давно без движения', (a, b) => (a.touchedAt || a.createdAt || 0) - (b.touchedAt || b.createdAt || 0)],
+        added: ['Недавно добавленные', (a, b) => (b.createdAt || 0) - (a.createdAt || 0)],
+        name: ['По имени', (a, b) => People.name(a).localeCompare(People.name(b), 'ru')],
+        owner: ['По исполнителю', (a, b) => Team.name(Team.get(a.owner)).localeCompare(Team.name(Team.get(b.owner)), 'ru')],
+        call: ['Ближайшие созвоны', (a, b) => (a.callAt && a.s2 === 'set' ? a.callAt : 9e15) - (b.callAt && b.s2 === 'set' ? b.callAt : 9e15)]};
+      list = list.slice().sort((SORTS[sort] || SORTS.new)[1]);
       const tags = People.tagsOf(type);
       const cols = [1, 2, 3].map(c => list.filter(p => People.col(p) === c));
       const hints = [
@@ -214,23 +190,25 @@ function audiencePage(type) {
       const tSel = usedTags.length || tg ? `<select class="select sm t-filter" id="bt" aria-label="Тег"><option value="">Все теги</option>${[...new Set([...usedTags, ...(tg ? [tg] : [])])].map(t => `<option value="${esc(t)}" ${tg === t ? 'selected' : ''}>${esc(t)} · ${tags.n[t] || 0}</option>`).join('')}</select>` : '';
       const canEdit = People.canEdit();
       if (canEdit) hints[0] += ' Перенести на другой этап — кнопкой ⇄ на карточке или перетащить её.';
+      const oSel = `<select class="select sm t-filter" id="bo" aria-label="Кто ведёт"><option value="all">Все исполнители</option><option value="me" ${ow === 'me' ? 'selected' : ''}>Мои</option><option value="none" ${ow === 'none' ? 'selected' : ''}>Без исполнителя</option>${Team.assignable().map(m => `<option value="${m.id}" ${ow === m.id ? 'selected' : ''}>${esc(Team.name(m))}</option>`).join('')}</select>`;
+      const sSel = `<select class="select sm t-filter" id="bs" aria-label="Порядок">${Object.entries(SORTS).map(([k, [n]]) => `<option value="${k}" ${sort === k ? 'selected' : ''}>${n}</option>`).join('')}</select>`;
 
       root.innerHTML = `
         ${pageHead(`${T.emo} ${groupName(type)}`, esc(T.about),
           `<button class="btn" data-stats>${icon('chart')}Статистика</button>${canEdit ? `<button class="btn" data-tform>${icon('msg')}${type === 'client' ? 'Форма интервью' : 'Вопросы формой'}</button><button class="btn" data-paste>${icon('inbox')}Вставить ответы</button><button class="btn primary" data-add>${icon('plus')}${type === 'client' ? 'Клиентка' : T.one}</button>` : ''}${Who.can('delete') && everyone.length ? `<button class="icon-btn" data-bulk-del title="Удалить несколько карточек — например, тестовые">${icon('trash')}</button>` : ''}`)}
         ${!everyone.length ? `<div class="welcome"><span class="e">${T.emo}</span><div><b>Здесь пока никого</b><p>Добавьте первого человека — ссылка на анкету скопируется сама. ${type === 'client' ? 'Для кастдева хватит 10–15 интервью, чтобы увидеть закономерности.' : ''}</p></div></div>` : ''}
-        <div class="t-bar"><input class="input sm t-search" id="bq" placeholder="Поиск: имя, город, код, тег" value="${esc(View.get(type + '.q', ''))}">${fSel}${tSel}
-          ${f || tg ? '<button class="link-btn" data-f-clear>Сбросить</button>' : ''}<span class="t-bar-sp"></span>
+        <div class="t-bar"><input class="input sm t-search" id="bq" placeholder="Поиск: имя, город, код, тег" value="${esc(View.get(type + '.q', ''))}">${oSel}${fSel}${tSel}${sSel}
+          ${f || tg || ow !== 'all' ? '<button class="link-btn" data-f-clear>Сбросить</button>' : ''}<span class="t-bar-sp"></span>
           <span class="note">${list.length === everyone.length ? `${everyone.length} ${plural(everyone.length, 'человек', 'человека', 'человек')}` : `найдено ${list.length} из ${everyone.length}`}</span></div>
         <div class="board3 ${canEdit ? 'can-drag' : ''}">${[0, 1, 2].map(i => `
           <div class="b3-col" data-col="${i + 1}"><div class="b3-h"><span class="num">${i + 1}</span><b>${T.steps[i]}</b><span class="kb-n">${cols[i].length}</span></div>
             <div class="b3-hint">${esc(hints[i])}</div>
             ${i === 2 && canEdit ? `<div class="b3-zones">${Object.entries(s3Map(type)).filter(([k]) => k !== 'none').map(([k, z]) => `<div class="b3-zone ${z.tone}" data-zone="${k}">${esc(z.name)}</div>`).join('')}</div>` : ''}
-            <div class="b3-list">${cols[i].map(p => { const st = statusLine(p), acts = nextActs(p); return `<div class="pc" data-open="${p.id}" data-drag="${p.id}">
-              <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b>${canEdit ? `<button class="pc-move" data-move-pop="${p.id}" title="Перенести на другой этап" aria-label="Перенести на другой этап">${icon('swap')}</button>` : ''}</div>
+            <div class="b3-list">${cols[i].map(p => { const st = statusLine(p), acts = nextActs(p), o = Team.get(p.owner), isNew = freshFor(p); return `<div class="pc ${isNew ? 'is-new' : ''}" data-open="${p.id}" data-drag="${p.id}">
+              <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b>${isNew ? `<span class="new-dot" title="${esc(p.fresh.text)}">новое</span>` : ''}${o ? `<span class="pc-owner" title="Ведёт: ${esc(Team.name(o))}">${Team.av(o, 'xs')}</span>` : ''}${canEdit ? `<button class="pc-move" data-move-pop="${p.id}" title="Перенести на другой этап" aria-label="Перенести на другой этап">${icon('swap')}</button>` : ''}</div>
               ${People.sub(p, true) || p.ref ? `<div class="pc-sub">${esc(People.sub(p, true))}${p.ref ? `${People.sub(p, true) ? ' · ' : ''}<span class="pc-ref">по приглашению</span>` : ''}</div>` : ''}
               ${chipsOf(p, 3)}
-              ${st ? `<div>${st}</div>` : ''}
+              ${st || accessOn(p) ? `<div class="pc-st">${st}${accessOn(p) ? `<span class="st good" title="Подарен доступ к Еве">Ева до ${esc(dateRu(p.access.until))}</span>` : ''}</div>` : ''}
               ${acts ? `<div class="pc-acts">${acts}</div>` : ''}
             </div>`; }).join('') || '<p class="note" style="padding:6px 4px">Пусто</p>'}</div>
           </div>`).join('')}</div>`;
@@ -240,7 +218,9 @@ function audiencePage(type) {
       const bf = $('#bf', root), bt = $('#bt', root);
       if (bf) bf.onchange = () => { View.set(type + '.f', bf.value); App.render(); };
       if (bt) bt.onchange = () => { View.set(type + '.tag', bt.value); App.render(); };
-      on(root, 'click', '[data-f-clear]', () => { View.set(type + '.f', ''); View.set(type + '.tag', ''); App.render(); });
+      $('#bo', root).onchange = e => { View.set(type + '.own', e.target.value); App.render(); };
+      $('#bs', root).onchange = e => { View.set(type + '.sort', e.target.value); App.render(); };
+      on(root, 'click', '[data-f-clear]', () => { View.set(type + '.f', ''); View.set(type + '.tag', ''); View.set(type + '.own', 'all'); App.render(); });
       on(root, 'click', '[data-add]', () => openAdd(type));
       on(root, 'click', '[data-paste]', () => openPaste());
       on(root, 'click', '[data-tform]', () => openTalkForm(type));

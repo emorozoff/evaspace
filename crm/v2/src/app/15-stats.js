@@ -152,6 +152,8 @@ function processView() {
     <div class="two section">
       ${card('По неделям', 'последние 6 недель', `<div class="wk">${wk.map(x => `<div class="wk-c"><div class="wk-b">${[['added', 'var(--ink-3)'], ['ans', 'var(--link)'], ['calls', 'var(--good)']].map(([k, c]) => `<i style="height:${(x[k] / wmax * 100).toFixed(0)}%;background:${c}" title="${x[k]}"></i>`).join('')}</div><small>${dayShort(x.w)}</small></div>`).join('')}</div>
         <div class="cal-legend" style="margin:8px 0 0"><span><i class="cb-dot" style="background:var(--ink-3)"></i>добавили</span><span><i class="cb-dot" style="background:var(--link)"></i>анкет</span><span><i class="cb-dot" style="background:var(--good)"></i>созвонов прошло</span></div>`)}
+      ${card('Доступ к Еве в подарок', `сейчас действует: ${all.filter(accessOn).length}${all.filter(p => p.gift && !p.gift.done).length ? ` · ждут подарка за анкету: ${all.filter(p => p.gift && !p.gift.done).length}` : ''}`,
+        (() => { const rows = ACCESS_PLANS.map(([k, n]) => ({name: n, v: all.filter(p => p.access && p.access.plan === k).length})).filter(r => r.v); return rows.length ? hbarList(rows, {color: 'var(--good)'}) : '<p class="note">В карточке после встречи — «Доступ к Еве»: неделя, месяц, год.</p>'; })())}
       ${card('Кто сколько сделал', 'людей · созвонов · итогов', team.length ? `<div class="tm-list">${team.map(x => `<div class="tm-r">${Team.av(x.m)}<b>${esc(Team.name(x.m))}</b><span>${x.n}</span><span>${x.calls}</span><span>${x.res}</span></div>`).join('')}</div>` : '<p class="note">Назначьте ведущих в карточках — здесь появится вклад каждого.</p>')}
     </div>`;
 }

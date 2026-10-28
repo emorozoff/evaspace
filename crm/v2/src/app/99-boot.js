@@ -22,5 +22,6 @@
     await Demo.load();
   }
   App.start();
+  Fresh.init();
   window.__eva = {Store, Who, App, View, People, Questions, Stats, Codec, Import, Demo, recommendations};
 })();

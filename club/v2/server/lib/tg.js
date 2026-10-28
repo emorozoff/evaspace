@@ -327,6 +327,18 @@ class TgBot {
         markup: this.openMarkup('Открыть задачи', '#tasks')};
     }).filter(Boolean);
   }
+  /* одно сообщение человеку из «Команды» сейчас (новая анкета в CRM): false — бот не настроен или Telegram не подключён */
+  async notify(pid, text, hash = '') {
+    const p = this.configured && pid ? this.store.get('people', pid) : null;
+    if (!p || !p.tgChatId || p.archived) return false;
+    try {
+      await this.call('sendMessage', {chat_id: p.tgChatId, text: cut(text, 1000), reply_markup: hash ? this.openMarkup('Открыть в CRM', hash) : undefined, link_preview_options: {is_disabled: true}});
+      return true;
+    } catch (e) {
+      if (e.status === 403 || (e.status === 400 && /chat not found|deactivated/i.test(e.message))) this.unlink(pid);
+      throw e;
+    }
+  }
   async tick(now = Date.now()) {
     if (this.busy || !this.configured) return;
     this.busy = true;

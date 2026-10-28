@@ -96,6 +96,7 @@ const App = {
     $('#app').innerHTML = `<div class="shell">
       <aside class="side">
         <a class="brand" href="#home">${brandIcon('brand-mark')}<div><b>Eva CRM 2.0</b><span>кастдев и подключение</span></div></a>
+        <div class="gfind"><input class="gfind-in" id="gFind" type="search" autocomplete="off" placeholder="Найти контакт…" aria-label="Найти контакт: имя, Telegram, телефон или код"><div class="gfind-res" id="gFindRes" hidden></div></div>
         <nav class="nav" id="nav" aria-label="Разделы"></nav>
         <div class="side-foot">
           <div class="sync" id="sync"><i></i><span></span></div>
@@ -106,14 +107,18 @@ const App = {
     </div>`;
     this.shell = true;
     this.paintSync(Store.state);
+    wireGlobalFind();
   },
 
   paintNav(active) {
     /* у группы одна цифра — сколько в ней людей; что делать, видно на главной */
     $('#nav').innerHTML = NAV.map(n => {
       const pend = n.id === 'team' && Who.can('team') ? Team.pending().length : 0;
-      const cnt = TYPES[n.id] ? People.all(n.id).length : n.id === 'calendar' ? callsBetween(Date.now() - 3600e3, dateOf(addDays(weekStart(today()), 7)).getTime()).filter(p => p.s2 === 'set').length || null : pend || null;
-      return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${cnt ? `<span class="nav-n ${pend ? 'hot' : ''}" ${pend ? 'title="Ждут подтверждения"' : ''}>${cnt}</span>` : ''}</a>`;
+      const cnt = TYPES[n.id] ? People.all(n.id).length : n.id === 'calendar' ? callsBetween(Date.now() - 3600e3, dateOf(addDays(weekStart(today()), 7)).getTime()).filter(p => p.s2 === 'set').length || null
+        : n.id === 'meetings' ? Store.all('people').filter(p => People.col(p) === 2 && p.s2 !== 'set' && isMine(p)).length || null : pend || null;
+      /* новые ответы в группе для меня — розовой точкой с числом */
+      const fresh = TYPES[n.id] ? freshList().filter(p => p.type === n.id).length : 0;
+      return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${fresh ? `<span class="nav-n hot" title="Новые ответы">+${fresh}</span>` : ''}${cnt ? `<span class="nav-n ${pend ? 'hot' : ''}" ${pend ? 'title="Ждут подтверждения"' : n.id === 'meetings' ? 'title="Ждут назначения встречи"' : ''}>${cnt}</span>` : ''}</a>`;
     }).join('');
     const m = Who.member();
     const st = Who.status();

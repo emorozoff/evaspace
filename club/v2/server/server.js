@@ -34,6 +34,7 @@
                     в CRM как человек из команды и выдаёт приглашения с ролью «Команда»
                     (заголовок «Authorization: Bearer …», права — lib/hq-rules.js, роль bot);
                     каждая его правка с прежней версией пишется в DATA_DIR/bot-log.jsonl
+     (бот читает новые анкеты и ответы интервью: GET /crm/api/bot/events?since=мс — журнал DATA_DIR/crm-events.jsonl)
      HQ_TG_TOKEN    ключ бота штаба в Telegram (@BotFather): напоминания в личку с кнопками
                     «Буду» / «Не смогу» / «Ок», нажатия — сами в штаб (lib/tg.js). Адрес для
                     нажатий (PUBLIC_URL/api/tg/webhook) сервер сообщает Telegram сам при запуске
@@ -798,13 +799,47 @@ async function crmTalk(req, res) {
     crm.store.set('people', id, {type, name, ...(tg ? {tg} : {}), code: newCode, s1: 'skip', s2: 'done', s3: 'none', answers: {}, talk, res: {tags: []},
       talkAt: now, talkSelf: now, source: 'talk', createdAt: now, touchedAt: now,
       log: {[A.uid()]: {t: now, by: 'self', emo: '📝', text: 'Ответила на вопросы интервью по общей ссылке'}}});
+    crmNotice(id, 'talk');
     return json(res, 200, {ok: true, c: newCode});
   }
   const {id, ...doc} = p;
   const s1 = ['done', 'skip'].includes(doc.s1) ? doc.s1 : Object.keys(doc.answers || {}).length ? 'done' : 'skip';
   crm.store.set('people', id, {...doc, talk: {...(doc.talk || {}), ...talk}, s1, s2: 'done', talkAt: doc.talkAt || now, talkSelf: now, touchedAt: now,
     log: {...(doc.log || {}), [A.uid()]: {t: now, by: 'self', emo: '📝', text: 'Ответила на вопросы интервью по ссылке'}}});
+  crmNotice(id, 'talk');
   return json(res, 200, {ok: true, c: code});
+}
+
+/* ответы пришли (анкета, интервью по ссылке): пометка «новое» на карточке — её видит исполнитель в CRM;
+   сообщение исполнителю в Telegram от бота штаба (если он подключил уведомления; карточка без
+   исполнителя — главной CRM); строка в журнале событий для бота команды «Ясень» (GET /crm/api/bot/events) */
+const CRM_EVENTS = path.join(DATA_DIR, 'crm-events.jsonl');
+function crmPersonOf(teamId) {
+  const t = teamId ? crm.store.get('team', teamId) : null;
+  const acc = t && t.uid ? hq.store.get('accounts', t.uid) : null;
+  return (acc && acc.personId) || (t && t.person) || null;
+}
+function crmNotice(id, kind) {
+  const p = crm.store.get('people', id);
+  if (!p) return;
+  const now = Date.now(), she = p.type === 'client' ? 'а' : '(а)';
+  const text = kind === 'anketa' ? `${p.name || 'Без имени'} заполнил${she} анкету` : `${p.name || 'Без имени'} ответил${she} на вопросы интервью`;
+  crm.store.patch('people', id, {fresh: {at: now, kind, text}});
+  const ev = {at: now, kind, id, type: p.type, name: p.name || '', code: p.code || '', owner: p.owner || null, text};
+  try {
+    fs.mkdirSync(DATA_DIR, {recursive: true});
+    fs.appendFileSync(CRM_EVENTS, JSON.stringify(ev) + '\n', {mode: 0o600});
+    if (fs.statSync(CRM_EVENTS).size > 400e3) { const keep = fs.readFileSync(CRM_EVENTS, 'utf8').trim().split('\n').slice(-500); fs.writeFileSync(CRM_EVENTS, keep.join('\n') + '\n', {mode: 0o600}); }
+  } catch (e) { console.error(new Date().toISOString(), 'crm events:', e.message); }
+  const head = crm.store.list('team').find(t => t.head && !t.archived);
+  const pid = crmPersonOf(p.owner) || crmPersonOf(head && head.id);
+  if (pid) tg.notify(pid, `📝 ${text}\n${groupLabel(p.type)}${p.city ? ' · ' + p.city : ''}. Карточка — на шаге «${kind === 'anketa' ? 'Интервью' : 'Итог'}».`, 'crm/#p-' + id)
+    .catch(e => console.error(new Date().toISOString(), 'tg notify:', e.message));
+}
+const groupLabel = t => ({client: 'Кастдев', expert: 'Эксперты', partner: 'Партнёры', amb: 'Амбассадоры'}[t] || 'CRM');
+function crmEventsSince(since, n = 200) {
+  try { return fs.readFileSync(CRM_EVENTS, 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l)).filter(e => e.at > since).slice(-n); }
+  catch (e) { return []; }
 }
 
 /* анкета: ответы сразу в карточку, без пересылки ссылки менеджеру. Личная ссылка — в карточку с этим
@@ -845,6 +880,7 @@ async function crmAnketa(req, res) {
     for (const [f, v] of Object.entries(keys)) if (!doc[f] || (Array.isArray(doc[f]) && !doc[f].length) || f === 'dirs' || f === 'cat') fill[f] = v;
     crm.store.set('people', id, {...doc, ...fill, answers: {...(doc.answers || {}), ...a}, s1: 'done', answeredAt: now, answeredBy: 'self', touchedAt: now, ...gift(doc),
       log: {...(doc.log || {}), [A.uid()]: {t: now, by: 'self', emo: '📝', text: 'Заполнила анкету по ссылке'}}});
+    crmNotice(id, 'anketa');
     return json(res, 200, {ok: true, c: code});
   }
   const nk = 'anknew|' + ipOf(req), w = talkNew.blocked(nk);
@@ -853,8 +889,11 @@ async function crmAnketa(req, res) {
   const id = A.uid(), name = keys.name || 'Без имени', newCode = talkCode(name);
   crm.store.set('people', id, {type, ...keys, name, code: newCode, s1: 'done', s2: 'none', s3: 'none', answers: a, talk: {}, res: {tags: []},
     answeredAt: now, answeredBy: 'self', ref: b.r ? (owner ? owner.code : code || null) : null, source: b.r ? 'ref' : 'link', ...gift(null),
+    /* подругу ведёт тот же человек из команды, что и пригласившую */
+    ...(b.r && owner && owner.owner ? {owner: owner.owner} : {}),
     createdAt: now, touchedAt: now,
     log: {[A.uid()]: {t: now, by: 'self', emo: '✨', text: b.r ? `Пришла по ссылке ${owner ? owner.code : code}` : 'Заполнила анкету по ссылке'}}});
+  crmNotice(id, 'anketa');
   return json(res, 200, {ok: true, c: newCode});
 }
 
@@ -867,6 +906,8 @@ async function crmApi(req, res, p, u) {
   if (bot === false) return;
   if (bot) {
     if (p === 'state' && !write) return json(res, 200, {me: bot.accId, owner: false, crmRole: bot.crmRole, collections: stateOf(crm, bot)});
+    /* что нового: заполненные анкеты и ответы интервью после since (мс) — бот пишет об этом команде */
+    if (p === 'bot/events' && !write) return json(res, 200, {events: crmEventsSince(Number(u.searchParams.get('since')) || 0)});
     const bm = /^doc\/([a-z]{2,20})\/([^/]+)$/.exec(p);
     if (bm) return docApi(crm, req, res, bot, decodeURIComponent(bm[1]), decodeURIComponent(bm[2]));
     return json(res, 403, {error: 'боту в CRM доступны снимок и записи'});

@@ -343,6 +343,7 @@ async function browserHash(pw, salt) {
   r = await anon.req('POST', '/crm/api/anketa', {t: 'k', c: 'anna482', g: 1, a: {energy: 5, pain: ['Нет времени', 42], city: 'Казань', 'bad id!': 'x', obj: {x: 1}}, k: {name: 'Взлом', city: 'Казань', role: 'owner'}});
   let c1 = (await lead.get('/crm/api/state')).j.collections.people.c1;
   ok(r.status === 200 && r.j.c === 'ANNA482' && c1.answers.energy === 5 && c1.answers.pain.join() === 'Нет времени' && !c1.answers['bad id!'] && !c1.answers.obj, 'анкета: ответы в карточке, лишнее отброшено', c1.answers);
+  ok(c1.fresh && c1.fresh.kind === 'anketa' && /анкету/.test(c1.fresh.text), 'анкета: пометка «новое» для исполнителя', c1.fresh);
   ok(c1.s1 === 'done' && c1.answeredBy === 'self' && c1.name === 'Клиентка' && c1.city === 'Казань' && !c1.role && c1.gift && c1.gift.done === false, 'анкета: шаг, город, подарок; имя не затёрто', {s1: c1.s1, name: c1.name, city: c1.city, gift: c1.gift});
   r = await anon.req('POST', '/crm/api/anketa', {t: 'k', c: 'ANNA482', r: 1, a: {name: 'Подруга Аня', energy: 7}, k: {name: 'Подруга Аня'}});
   let fr = Object.values((await lead.get('/crm/api/state')).j.collections.people).find(x => x.name === 'Подруга Аня');
@@ -467,6 +468,13 @@ async function browserHash(pw, salt) {
       ok((await bot.get('/crm/api/export')).status === 403 && (await bot.get('/crm/api/events')).status === 403, 'выгрузка и поток событий CRM — нет');
       ok((await bot.req('PATCH', '/crm/api/doc/people/cc1', {name: 'x'}, {noHeader: true})).status === 403, 'запись в CRM без заголовка x-eva — нет');
       ok((await own.state('/crm/api')).collections.people.cc1.answers.q2 === 'новый', 'руководитель видит правку бота в CRM');
+      /* новые анкеты — боту журналом событий */
+      await own.patch('people', 'cc1', {code: 'CCBOT11', type: 'client'}, '/crm/api');
+      const t0 = Date.now() - 1;
+      ok((await new Client('anon3', bot.base).req('POST', '/crm/api/anketa', {t: 'k', c: 'CCBOT11', a: {energy: 4}})).status === 200, 'анкета по ссылке на сервере бота');
+      const evs = (await bot.get('/crm/api/bot/events?since=' + t0)).j.events || [];
+      ok(evs.length === 1 && evs[0].kind === 'anketa' && evs[0].code === 'CCBOT11' && /Клиентка Бота заполнила анкету/.test(evs[0].text), 'бот видит новую анкету в журнале событий', evs);
+      ok(((await bot.get('/crm/api/bot/events?since=' + Date.now())).j.events || []).length === 0, 'журнал событий: только новее since');
       const clog = ((await bot.get('/api/bot/log?n=10')).j.log || []).filter(x => x.app === 'crm');
       ok(clog.length === 2 && clog[0].prev.answers.q1 === 'старый ответ', 'правки бота в CRM — в журнал с прежней версией', clog);
 
@@ -659,6 +667,15 @@ async function browserHash(pw, salt) {
       const sa = (await ca.state()).collections.people;
       ok(sa.pA.tgLinked === true && !('tgChatId' in sa.pA) && !('tgChatId' in ((await own.state()).collections.people.pB || {})), 'в браузер — только «подключён», номер чата не уходит', sa.pA);
       ok((await ca.patch('people', 'pA', {tgLinked: false})).status === 403 && (await ca.patch('people', 'pA', {tgChatId: 5})).status === 403, 'привязку в карточке сам не подделать');
+
+      /* новая анкета в CRM — исполнителю карточки сообщение в Telegram */
+      const annaAcc = (await ca.state()).me;
+      await own.put('team', 'tmA', {uid: annaAcc, role: 'member', status: 'active', name: 'Анна'}, '/crm/api');
+      await own.put('people', 'cA', {type: 'client', name: 'Тест Клиентка', code: 'TGCL111', s1: 'sent', s2: 'none', s3: 'none', owner: 'tmA'}, '/crm/api');
+      ok((await anon3.req('POST', '/crm/api/anketa', {t: 'k', c: 'TGCL111', a: {energy: 6}})).status === 200, 'клиентка заполнила анкету');
+      ok(await until(() => sent(111, p => /Тест Клиентка заполнила анкету/.test(p.text)).length), 'исполнителю пришло сообщение в Telegram о новой анкете', calls.slice(-2));
+      ok(sent(111, p => /Тест Клиентка заполнила анкету/.test(p.text)).length === 1, 'сообщение — одно');
+      ok(!sent(222, p => /Тест Клиентка/.test(p.text)).length, 'остальным — ничего');
 
       /* собрание через полчаса: напоминание с кнопками участникам, кто не участник — ничего */
       const MSK = 3 * 3600e3, s0 = Math.ceil((Date.now() + 30 * 60e3) / 60e3) * 60e3;

@@ -303,7 +303,7 @@ function recommendations() {
   const clientsNoInsight = People.all('client').filter(p => ['done', 'skip'].includes(p.s2) && (p.s3 || 'none') === 'none');
   if (clientsNoInsight.length) add('now', 'client', `Разберите ${clientsNoInsight.length} ${plural(clientsNoInsight.length, 'интервью', 'интервью', 'интервью')}, пока разговор свежий: отметьте, что услышали.`, names3(clientsNoInsight), 1.05);
   const gifts = People.all('client').filter(p => p.gift && !p.gift.done);
-  if (gifts.length) add('now', 'client', `Выдайте подарок за анкету — неделю Евы: ${gifts.length} ${plural(gifts.length, 'клиентка ждёт', 'клиентки ждут', 'клиенток ждут')}. В карточке нажмите «Выдала».`, names3(gifts), 1.15);
+  if (gifts.length) add('now', 'client', `Выдайте подарок за анкету — неделю Евы: ${gifts.length} ${plural(gifts.length, 'клиентка ждёт', 'клиентки ждут', 'клиенток ждут')}. В карточке — «Подарить неделю».`, names3(gifts), 1.15);
   const noTax = People.all('amb').filter(p => /Пока нет/.test(String((p.answers || {}).tax || '')) && /карту/.test(String((p.answers || {}).pay || '')));
   if (noTax.length) add('now', 'amb', `Отправьте памятку про «Мой налог»: ${noTax.length} ${plural(noTax.length, 'амбассадор хочет', 'амбассадора хотят', 'амбассадоров хотят')} выплаты на карту, но без статуса. Или предложите баланс Евы +10%.`, names3(noTax), 0.7);
   /* что улучшить: самый частый вариант ответа, если он набрал заметную долю */

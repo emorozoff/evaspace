@@ -21,6 +21,7 @@ App.register('home', {
     const hour = new Date().getHours();
     const hello = hour < 5 ? 'Доброй ночи' : hour < 12 ? 'Доброе утро' : hour < 18 ? 'Добрый день' : 'Добрый вечер';
     const upcoming = callsSet.filter(p => p.callAt && p.callAt > Date.now() - 3600e3).sort((a, b) => a.callAt - b.callAt).slice(0, 5);
+    const fresh = freshList();
     const known = {answers: all.filter(p => p.s1 === 'done').length, talks: all.filter(p => p.s2 === 'done').length, quotes: Stats.quotes().length};
 
     const tile = (n, step, list, text, small) => `<a class="todo-i ${list.length ? 'hot' : ''}" href="#${topType(list)}">
@@ -32,6 +33,8 @@ App.register('home', {
         People.canEdit() ? `<button class="btn" data-paste>${icon('inbox')}Вставить ответы</button>` : '')}
       ${!all.length ? `<div class="welcome"><span class="e">🌱</span><div><b>Начнём?</b><p>Добавьте первого человека в любом разделе или загрузите пример в настройках, чтобы посмотреть, как всё работает.</p></div></div>` : ''}
       ${Who.can('team') && Team.pending().length ? `<a class="warnline team-banner" href="#team"><b>${Team.pending().length} ${plural(Team.pending().length, 'человек ждёт', 'человека ждут', 'человек ждут')} подтверждения в команду:</b> ${esc(Team.pending().slice(0, 3).map(t => Team.name(t)).join(', '))} — открыть «Команду»</a>` : ''}
+      ${fresh.length ? `<section class="card fresh-box"><div class="card-head"><h2>${icon('bell')}Новые ответы <span class="h-n">${fresh.length}</span></h2><span class="note">открыли карточку — пометка снимается</span></div>
+        <div class="fresh-list">${fresh.slice(0, 6).map(p => `<a class="fresh-i" href="#p-${p.id}">${avatar(People.name(p))}<span><b>${esc(p.fresh.text)}</b><small>${esc(groupName(p.type))} · ${esc(when(p.fresh.at))}${p.owner ? '' : ' · без исполнителя'}</small></span><em>${p.fresh.kind === 'anketa' ? 'Назначить встречу →' : 'Разобрать →'}</em></a>`).join('')}</div></section>` : ''}
       <h2 class="h-sm">Что сделать</h2>
       <div class="todo">
         ${tile(1, 'Анкета', toSend, 'отправить ссылку на анкету', waiting.length ? `ещё ${waiting.length} ${plural(waiting.length, 'ждёт', 'ждут', 'ждут')} ответа` : 'человек ответит сам за 3 минуты')}
@@ -51,7 +54,7 @@ App.register('home', {
           ${ideas.length ? `<h3 class="rec-h">Что улучшить</h3><div class="recs">${ideas.map(rec).join('')}</div>` : ''}
         </div>
         <div class="stack">
-          <div class="card"><div class="card-head"><h2>Ближайшие созвоны</h2><a class="note" href="#calendar">Календарь →</a></div>
+          <div class="card"><div class="card-head"><h2>Ближайшие созвоны</h2><a class="note" href="#meetings">Все встречи →</a></div>
             ${upcoming.length ? `<div class="calls">${upcoming.map(p => { const soon = Math.abs(p.callAt - Date.now()) < 40 * 60e3 || (p.callAt < Date.now() && p.callAt + callMin(p) * 60e3 > Date.now()); return `<div class="call ${soon ? 'soon' : ''}"><time>${esc(when(p.callAt))}</time><a href="#p-${p.id}"><b>${esc(People.name(p))}</b><small>${groupName(p.type)}${p.zoom ? ' · есть ссылка на Zoom' : ''}</small></a>${People.canEdit() ? `<button class="btn xs ${soon ? 'primary' : ''}" data-act="talk" data-pid="${p.id}">${soon ? 'Начать' : 'Открыть'}</button>` : ''}</div>`; }).join('')}</div>` : '<p class="note">Созвонов не назначено.</p>'}</div>
           <a class="card as-link known" href="#stats"><div class="card-head"><h2>Что уже знаем</h2><span class="note">Статистика →</span></div>
             <div class="kpis">${[[known.answers, 'анкет'], [known.talks, 'созвонов'], [known.quotes, 'цитат']].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div></a>

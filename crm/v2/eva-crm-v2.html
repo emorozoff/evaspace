@@ -752,6 +752,87 @@ body.dragging-now .b3-zones{display:grid;}
 .pc:hover{box-shadow:0 6px 18px rgba(17,16,20,.08); transform:translateY(-1px);}
 .tagchip.dir{background:var(--violet-soft); color:var(--violet);}
 
+/* ── путь контакта (26-flow.js) ── */
+.nav .nav-n.hot + .nav-n{margin-left:6px;}
+/* шаги в окне «Добавить»: контакт → ссылка → ответы */
+.add-steps{display:flex; gap:6px; flex-wrap:wrap; font-size:12px; color:var(--ink-3);}
+.add-steps span{display:inline-flex; align-items:center; gap:6px; padding:4px 10px 4px 4px; border-radius:14px; background:var(--sunken);}
+.add-steps i{width:18px; height:18px; border-radius:50%; display:inline-grid; place-items:center; font-style:normal; font-weight:700; font-size:11px; background:var(--surface); color:var(--ink-2);}
+.add-steps .on{background:var(--link-soft); color:var(--link); font-weight:600;} .add-steps .on i{background:var(--link); color:#fff;}
+.add-steps .done{color:var(--good);} .add-steps .done i{background:var(--good); color:#fff;}
+.add-find{background:var(--sunken); border-radius:10px; padding:12px 12px 4px;}
+.add-hits{display:flex; flex-direction:column; gap:6px; margin:8px 0;}
+.add-hits:empty{margin:0;}
+.add-hit{display:flex; align-items:center; gap:10px; padding:8px 10px; background:var(--surface); border:1px solid var(--line); border-radius:9px;}
+.add-hit .av{width:28px; height:28px; flex-basis:28px; font-size:11px;}
+.add-hit > span{flex:1; min-width:0; display:flex; flex-direction:column;}
+.add-hit b{font-size:13.5px;} .add-hit small{font-size:12px; color:var(--ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.add-or{display:flex; align-items:center; gap:10px; color:var(--ink-3); font-size:12px;}
+.add-or::before, .add-or::after{content:''; flex:1; height:1px; background:var(--line);}
+.add-dup{padding:9px 12px; border-radius:9px; background:var(--warn-soft); color:var(--warn); font-size:13px;}
+.add-dup a{color:inherit; font-weight:600;}
+.send-row{display:flex; gap:8px; flex-wrap:wrap;}
+.send-row .btn svg{width:15px; height:15px;}
+/* «новое» и исполнитель на карточке доски */
+.pc.is-new{border-color:var(--link); box-shadow:0 0 0 3px var(--link-soft);}
+.new-dot{flex:none; height:18px; padding:0 7px; border-radius:9px; background:var(--link); color:#fff; font-size:10.5px; font-weight:700; display:inline-flex; align-items:center; text-transform:uppercase; letter-spacing:.03em;}
+.pc-owner{flex:none; display:inline-flex;}
+.pc-owner .av, .mt-owner .av{width:22px; height:22px; flex-basis:22px; font-size:9.5px;}
+.pc-st{display:flex; gap:6px; flex-wrap:wrap;}
+.ph-owner{display:inline-flex; align-items:center; gap:6px; color:var(--ink-3);}
+.ph-owner .select{width:auto; height:26px; padding:0 26px 0 8px; font-size:12.5px;}
+/* доступ к Еве в подарок */
+.acc{margin-top:12px; padding:14px 16px; display:flex; flex-direction:column; gap:10px;}
+.acc.on{border-color:color-mix(in srgb, var(--good) 45%, var(--line)); background:color-mix(in srgb, var(--good-soft) 55%, var(--surface));}
+.acc-h{display:flex; align-items:center; gap:12px;}
+.acc-h > svg{width:22px; height:22px; flex:none; stroke:var(--link); fill:none; stroke-width:1.7;}
+.acc.on .acc-h > svg{stroke:var(--good);}
+.acc-h > div{flex:1; display:flex; flex-direction:column;}
+.acc-h b{font-size:14px;} .acc-h small{font-size:12.5px; color:var(--ink-2);}
+.acc-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.acc-plans{display:flex; gap:6px; flex-wrap:wrap;}
+.acc-plans button{height:30px; padding:0 12px; border-radius:15px; border:1px solid var(--line-strong); background:var(--surface); font-size:12.5px; font-weight:500; cursor:pointer;}
+.acc-plans button:hover{border-color:var(--link); color:var(--link);}
+.acc-plans button.sug{border-color:var(--link); background:var(--link-soft); color:var(--link); font-weight:600;}
+.acc-note{font-size:11.5px;}
+/* главная: новые ответы */
+.fresh-box{margin-bottom:18px; border-color:color-mix(in srgb, var(--link) 35%, var(--line));}
+.fresh-box h2{display:flex; align-items:center; gap:8px;}
+.fresh-box h2 svg{width:18px; height:18px; stroke:var(--link); fill:none; stroke-width:1.8;}
+.fresh-list{display:flex; flex-direction:column; gap:6px;}
+.fresh-i{display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:9px; background:var(--link-soft); color:inherit; text-decoration:none;}
+.fresh-i .av{width:30px; height:30px; flex-basis:30px; font-size:11px;}
+.fresh-i > span{flex:1; min-width:0; display:flex; flex-direction:column;}
+.fresh-i b{font-size:13.5px;} .fresh-i small{font-size:12px; color:var(--ink-3);}
+.fresh-i em{font-style:normal; font-size:12.5px; font-weight:600; color:var(--link); white-space:nowrap;}
+/* «Встречи» */
+.mt-sec{margin-top:14px;}
+.mt-list{display:flex; flex-direction:column;}
+.mt-r{display:grid; grid-template-columns:120px minmax(0,1fr) 130px auto; gap:12px; align-items:center; padding:10px 4px; border-top:1px solid var(--line);}
+.mt-r:first-child{border-top:0;}
+.mt-r.is-new{background:var(--link-soft); border-radius:8px; padding:10px 8px;}
+.mt-r time{font-size:12.5px; color:var(--ink-2); font-variant-numeric:tabular-nums;}
+.mt-who{display:flex; align-items:center; gap:10px; color:inherit; text-decoration:none; min-width:0;}
+.mt-who .av{width:30px; height:30px; flex-basis:30px; font-size:11px;}
+.mt-who > span{display:flex; flex-direction:column; min-width:0;}
+.mt-who b{font-size:13.5px;} .mt-who small{font-size:12px; color:var(--ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.mt-owner{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-2);}
+.mt-acts{display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;}
+@media (max-width:760px){ .mt-r{grid-template-columns:1fr; gap:6px;} .mt-acts{justify-content:flex-start;} }
+/* поиск контакта в меню */
+.gfind{position:relative; margin:0 0 14px;}
+.gfind-in{width:100%; height:34px; padding:0 12px; border-radius:9px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.07); color:#fff; font-size:13px;}
+.gfind-in::placeholder{color:var(--night-ink-2);}
+.gfind-in:focus{outline:none; border-color:rgba(255,255,255,.35); background:rgba(255,255,255,.11);}
+.gfind-res{position:absolute; left:0; right:-40px; top:40px; z-index:60; background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow-pop); padding:6px; display:flex; flex-direction:column; gap:2px; min-width:280px;}
+.gfind-res a{display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:8px; color:inherit; text-decoration:none;}
+.gfind-res a:hover, .gfind-res a.first{background:var(--sunken);}
+.gfind-res .av{width:26px; height:26px; flex-basis:26px; font-size:10px;}
+.gfind-res span{display:flex; flex-direction:column; min-width:0;}
+.gfind-res b{font-size:13px;} .gfind-res small{font-size:11.5px; color:var(--ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.gfind-res p{margin:0; padding:8px; font-size:12.5px; color:var(--ink-3);}
+@media (max-width:880px){ .gfind{order:2; flex:1 0 100%; margin:8px 0 0;} .gfind-res{right:0;} }
+
 /* ── 20-calendar.css ── */
 /* ── календарь созвонов: сетка недели как в штабе, цвет — по группе ── */
 .g-client{--g:var(--link);} .g-expert{--g:var(--violet);} .g-partner{--g:var(--good);} .g-amb{--g:var(--gold);} .g-google{--g:var(--ink-3);}
@@ -1430,6 +1511,7 @@ const NAV = [
   {id: 'expert',  emo: '🎓', name: 'Эксперты'},
   {id: 'partner', emo: '🤝', name: 'Партнёры'},
   {id: 'amb',     emo: '📣', name: 'Амбассадоры'},
+  {id: 'meetings', emo: '💬', name: 'Встречи'},
   {id: 'calendar', emo: '🗓', name: 'Календарь'},
   {id: 'stats',   emo: '📊', name: 'Статистика'},
   {id: 'questions', emo: '❓', name: 'Вопросы'},
@@ -2580,8 +2662,15 @@ function toast(text, opts = {}) {
     b.onclick = () => { close(); opts.undo(); };
     el.appendChild(b);
   }
+  /* своя кнопка: «Открыть» у сообщения о новой анкете */
+  if (opts.action) {
+    const b = document.createElement('button');
+    b.textContent = opts.action.label;
+    b.onclick = () => { close(); opts.action.fn(); };
+    el.appendChild(b);
+  }
   root.appendChild(el);
-  timer = setTimeout(close, opts.undo ? 7000 : 4200);
+  timer = setTimeout(close, opts.undo || opts.action ? 9000 : 4200);
   while (root.children.length > 3) root.firstChild.remove();
 }
 
@@ -2918,6 +3007,7 @@ const App = {
     $('#app').innerHTML = `<div class="shell">
       <aside class="side">
         <a class="brand" href="#home">${brandIcon('brand-mark')}<div><b>Eva CRM 2.0</b><span>кастдев и подключение</span></div></a>
+        <div class="gfind"><input class="gfind-in" id="gFind" type="search" autocomplete="off" placeholder="Найти контакт…" aria-label="Найти контакт: имя, Telegram, телефон или код"><div class="gfind-res" id="gFindRes" hidden></div></div>
         <nav class="nav" id="nav" aria-label="Разделы"></nav>
         <div class="side-foot">
           <div class="sync" id="sync"><i></i><span></span></div>
@@ -2928,14 +3018,18 @@ const App = {
     </div>`;
     this.shell = true;
     this.paintSync(Store.state);
+    wireGlobalFind();
   },
 
   paintNav(active) {
     /* у группы одна цифра — сколько в ней людей; что делать, видно на главной */
     $('#nav').innerHTML = NAV.map(n => {
       const pend = n.id === 'team' && Who.can('team') ? Team.pending().length : 0;
-      const cnt = TYPES[n.id] ? People.all(n.id).length : n.id === 'calendar' ? callsBetween(Date.now() - 3600e3, dateOf(addDays(weekStart(today()), 7)).getTime()).filter(p => p.s2 === 'set').length || null : pend || null;
-      return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${cnt ? `<span class="nav-n ${pend ? 'hot' : ''}" ${pend ? 'title="Ждут подтверждения"' : ''}>${cnt}</span>` : ''}</a>`;
+      const cnt = TYPES[n.id] ? People.all(n.id).length : n.id === 'calendar' ? callsBetween(Date.now() - 3600e3, dateOf(addDays(weekStart(today()), 7)).getTime()).filter(p => p.s2 === 'set').length || null
+        : n.id === 'meetings' ? Store.all('people').filter(p => People.col(p) === 2 && p.s2 !== 'set' && isMine(p)).length || null : pend || null;
+      /* новые ответы в группе для меня — розовой точкой с числом */
+      const fresh = TYPES[n.id] ? freshList().filter(p => p.type === n.id).length : 0;
+      return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${fresh ? `<span class="nav-n hot" title="Новые ответы">+${fresh}</span>` : ''}${cnt ? `<span class="nav-n ${pend ? 'hot' : ''}" ${pend ? 'title="Ждут подтверждения"' : n.id === 'meetings' ? 'title="Ждут назначения встречи"' : ''}>${cnt}</span>` : ''}</a>`;
     }).join('');
     const m = Who.member();
     const st = Who.status();
@@ -3275,7 +3369,7 @@ function recommendations() {
   const clientsNoInsight = People.all('client').filter(p => ['done', 'skip'].includes(p.s2) && (p.s3 || 'none') === 'none');
   if (clientsNoInsight.length) add('now', 'client', `Разберите ${clientsNoInsight.length} ${plural(clientsNoInsight.length, 'интервью', 'интервью', 'интервью')}, пока разговор свежий: отметьте, что услышали.`, names3(clientsNoInsight), 1.05);
   const gifts = People.all('client').filter(p => p.gift && !p.gift.done);
-  if (gifts.length) add('now', 'client', `Выдайте подарок за анкету — неделю Евы: ${gifts.length} ${plural(gifts.length, 'клиентка ждёт', 'клиентки ждут', 'клиенток ждут')}. В карточке нажмите «Выдала».`, names3(gifts), 1.15);
+  if (gifts.length) add('now', 'client', `Выдайте подарок за анкету — неделю Евы: ${gifts.length} ${plural(gifts.length, 'клиентка ждёт', 'клиентки ждут', 'клиенток ждут')}. В карточке — «Подарить неделю».`, names3(gifts), 1.15);
   const noTax = People.all('amb').filter(p => /Пока нет/.test(String((p.answers || {}).tax || '')) && /карту/.test(String((p.answers || {}).pay || '')));
   if (noTax.length) add('now', 'amb', `Отправьте памятку про «Мой налог»: ${noTax.length} ${plural(noTax.length, 'амбассадор хочет', 'амбассадора хотят', 'амбассадоров хотят')} выплаты на карту, но без статуса. Или предложите баланс Евы +10%.`, names3(noTax), 0.7);
   /* что улучшить: самый частый вариант ответа, если он набрал заметную долю */
@@ -3713,6 +3807,7 @@ App.register('home', {
     const hour = new Date().getHours();
     const hello = hour < 5 ? 'Доброй ночи' : hour < 12 ? 'Доброе утро' : hour < 18 ? 'Добрый день' : 'Добрый вечер';
     const upcoming = callsSet.filter(p => p.callAt && p.callAt > Date.now() - 3600e3).sort((a, b) => a.callAt - b.callAt).slice(0, 5);
+    const fresh = freshList();
     const known = {answers: all.filter(p => p.s1 === 'done').length, talks: all.filter(p => p.s2 === 'done').length, quotes: Stats.quotes().length};
 
     const tile = (n, step, list, text, small) => `<a class="todo-i ${list.length ? 'hot' : ''}" href="#${topType(list)}">
@@ -3724,6 +3819,8 @@ App.register('home', {
         People.canEdit() ? `<button class="btn" data-paste>${icon('inbox')}Вставить ответы</button>` : '')}
       ${!all.length ? `<div class="welcome"><span class="e">🌱</span><div><b>Начнём?</b><p>Добавьте первого человека в любом разделе или загрузите пример в настройках, чтобы посмотреть, как всё работает.</p></div></div>` : ''}
       ${Who.can('team') && Team.pending().length ? `<a class="warnline team-banner" href="#team"><b>${Team.pending().length} ${plural(Team.pending().length, 'человек ждёт', 'человека ждут', 'человек ждут')} подтверждения в команду:</b> ${esc(Team.pending().slice(0, 3).map(t => Team.name(t)).join(', '))} — открыть «Команду»</a>` : ''}
+      ${fresh.length ? `<section class="card fresh-box"><div class="card-head"><h2>${icon('bell')}Новые ответы <span class="h-n">${fresh.length}</span></h2><span class="note">открыли карточку — пометка снимается</span></div>
+        <div class="fresh-list">${fresh.slice(0, 6).map(p => `<a class="fresh-i" href="#p-${p.id}">${avatar(People.name(p))}<span><b>${esc(p.fresh.text)}</b><small>${esc(groupName(p.type))} · ${esc(when(p.fresh.at))}${p.owner ? '' : ' · без исполнителя'}</small></span><em>${p.fresh.kind === 'anketa' ? 'Назначить встречу →' : 'Разобрать →'}</em></a>`).join('')}</div></section>` : ''}
       <h2 class="h-sm">Что сделать</h2>
       <div class="todo">
         ${tile(1, 'Анкета', toSend, 'отправить ссылку на анкету', waiting.length ? `ещё ${waiting.length} ${plural(waiting.length, 'ждёт', 'ждут', 'ждут')} ответа` : 'человек ответит сам за 3 минуты')}
@@ -3743,7 +3840,7 @@ App.register('home', {
           ${ideas.length ? `<h3 class="rec-h">Что улучшить</h3><div class="recs">${ideas.map(rec).join('')}</div>` : ''}
         </div>
         <div class="stack">
-          <div class="card"><div class="card-head"><h2>Ближайшие созвоны</h2><a class="note" href="#calendar">Календарь →</a></div>
+          <div class="card"><div class="card-head"><h2>Ближайшие созвоны</h2><a class="note" href="#meetings">Все встречи →</a></div>
             ${upcoming.length ? `<div class="calls">${upcoming.map(p => { const soon = Math.abs(p.callAt - Date.now()) < 40 * 60e3 || (p.callAt < Date.now() && p.callAt + callMin(p) * 60e3 > Date.now()); return `<div class="call ${soon ? 'soon' : ''}"><time>${esc(when(p.callAt))}</time><a href="#p-${p.id}"><b>${esc(People.name(p))}</b><small>${groupName(p.type)}${p.zoom ? ' · есть ссылка на Zoom' : ''}</small></a>${People.canEdit() ? `<button class="btn xs ${soon ? 'primary' : ''}" data-act="talk" data-pid="${p.id}">${soon ? 'Начать' : 'Открыть'}</button>` : ''}</div>`; }).join('')}</div>` : '<p class="note">Созвонов не назначено.</p>'}</div>
           <a class="card as-link known" href="#stats"><div class="card-head"><h2>Что уже знаем</h2><span class="note">Статистика →</span></div>
             <div class="kpis">${[[known.answers, 'анкет'], [known.talks, 'созвонов'], [known.quotes, 'цитат']].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div></a>
@@ -3910,6 +4007,8 @@ function processView() {
     <div class="two section">
       ${card('По неделям', 'последние 6 недель', `<div class="wk">${wk.map(x => `<div class="wk-c"><div class="wk-b">${[['added', 'var(--ink-3)'], ['ans', 'var(--link)'], ['calls', 'var(--good)']].map(([k, c]) => `<i style="height:${(x[k] / wmax * 100).toFixed(0)}%;background:${c}" title="${x[k]}"></i>`).join('')}</div><small>${dayShort(x.w)}</small></div>`).join('')}</div>
         <div class="cal-legend" style="margin:8px 0 0"><span><i class="cb-dot" style="background:var(--ink-3)"></i>добавили</span><span><i class="cb-dot" style="background:var(--link)"></i>анкет</span><span><i class="cb-dot" style="background:var(--good)"></i>созвонов прошло</span></div>`)}
+      ${card('Доступ к Еве в подарок', `сейчас действует: ${all.filter(accessOn).length}${all.filter(p => p.gift && !p.gift.done).length ? ` · ждут подарка за анкету: ${all.filter(p => p.gift && !p.gift.done).length}` : ''}`,
+        (() => { const rows = ACCESS_PLANS.map(([k, n]) => ({name: n, v: all.filter(p => p.access && p.access.plan === k).length})).filter(r => r.v); return rows.length ? hbarList(rows, {color: 'var(--good)'}) : '<p class="note">В карточке после встречи — «Доступ к Еве»: неделя, месяц, год.</p>'; })())}
       ${card('Кто сколько сделал', 'людей · созвонов · итогов', team.length ? `<div class="tm-list">${team.map(x => `<div class="tm-r">${Team.av(x.m)}<b>${esc(Team.name(x.m))}</b><span>${x.n}</span><span>${x.calls}</span><span>${x.res}</span></div>`).join('')}</div>` : '<p class="note">Назначьте ведущих в карточках — здесь появится вклад каждого.</p>')}
     </div>`;
 }
@@ -4285,10 +4384,9 @@ function wireActs(root) {
     if (!p) return;
     const act = el.dataset.act;
     const T = TYPES[p.type];
-    if (act === 'link') {
-      await copyOrShow(People.link(p), 'Ссылка скопирована 💌 Отправьте её в Telegram или WhatsApp');
-      if ((p.s1 || 'new') === 'new') People.patch(p.id, {s1: 'sent', sentAt: Date.now()}, 'Отправили ссылку на анкету', '🔗');
-    } else if (act === 'tlink') {
+    /* ссылка на анкету — окно: скопировать или сразу в Telegram / WhatsApp */
+    if (act === 'link') openSendLink(p);
+    else if (act === 'tlink') {
       await copyOrShow(People.talkLink(p), `Ссылка на вопросы ${p.type === 'client' ? 'интервью' : 'созвона'} скопирована 💬 Отправьте её человеку — ответы сами лягут в карточку`);
       if (!p.talkSentAt) People.patch(p.id, {talkSentAt: Date.now()}, 'Отправили ссылку на вопросы интервью', '💬');
     } else if (act === 'fill') { View.set('pp.last', p.id); View.set('pp.tab', 'anketa'); View.set('pp.edit', true); App.go('p-' + p.id); }
@@ -4372,41 +4470,6 @@ function wirePicked(el, picked, cfg) {
   });
 }
 
-/* быстро добавить человека: имя, контакт — и сразу ссылка */
-function openAdd(type) {
-  const T = TYPES[type];
-  const extra = type === 'expert' ? `<div class="field"><span>Направления</span>${pickedHtml('adDirs', [], 'Выбрать из списка')}</div>`
-    : type === 'partner' ? `<label class="field"><span>Категория</span><select class="select" id="adCat">${PARTNER_CATS.map(c => `<option value="${esc(c)}">${esc(noEmo(c))}</option>`).join('')}</select></label><label class="field"><span>Контактное лицо</span><input class="input" id="adContact" placeholder="Ирина, управляющая"></label>` : '';
-  openModal({title: `${T.one}: добавить`, body: `
-      <label class="field"><span>${type === 'partner' ? 'Название' : 'Имя'}</span><input class="input" id="adName" placeholder="${type === 'partner' ? 'Студия «Баланс»' : 'Анна Иванова'}"></label>
-      <div class="grid2"><label class="field"><span>Telegram или телефон</span><input class="input" id="adTg" placeholder="@username"></label>
-      <label class="field"><span>Город</span><input class="input" id="adCity" placeholder="Москва"></label></div>
-      ${extra}
-      <div class="field"><span>Теги</span>${pickedHtml('adTags', [], 'Добавить теги')}</div>
-      <p class="note">Ссылка на анкету скопируется сама — отправьте её человеку. Ответы попадут в карточку.</p>`,
-    foot: '<button class="btn" data-close>Отмена</button><button class="btn" data-only>Просто добавить</button><button class="btn primary" data-ok>Добавить и скопировать ссылку</button>',
-    onMount(el, close) {
-      const picked = {adDirs: [], adTags: []};
-      wirePicked(el, picked, {adDirs: {items: DIRECTIONS, label: noEmo, placeholder: 'Найти направление…'}, adTags: {items: People.tagsOf(type).list, allowNew: true, placeholder: 'Найти или добавить тег…'}});
-      const save = async withLink => {
-        const name = $('#adName', el).value.trim();
-        if (!name) { $('#adName', el).classList.add('need'); $('#adName', el).focus(); return; }
-        const f = {type, name, tg: $('#adTg', el).value.trim(), city: $('#adCity', el).value.trim()};
-        if (type === 'expert') f.dirs = picked.adDirs;
-        if (picked.adTags.length) f.tags = picked.adTags;
-        if (type === 'partner') { f.cat = $('#adCat', el).value; f.contact = $('#adContact', el).value.trim(); }
-        const id = People.create(f);
-        close();
-        if (withLink) {
-          const p = People.get(id);
-          await copyOrShow(People.link(p), 'Ссылка скопирована 💌 Отправьте её человеку');
-          People.patch(id, {s1: 'sent', sentAt: Date.now()}, 'Отправили ссылку на анкету', '🔗');
-        } else toast(`${name}: добавлено ✨`);
-      };
-      $('[data-ok]', el).onclick = () => save(true);
-      $('[data-only]', el).onclick = () => save(false);
-    }});
-}
 
 function audiencePage(type) {
   return {
@@ -4420,6 +4483,18 @@ function audiencePage(type) {
       if (q) list = list.filter(p => (People.name(p) + ' ' + (p.city || '') + ' ' + (p.code || '') + ' ' + (p.topic || '') + ' ' + (p.tags || []).join(' ')).toLowerCase().includes(q));
       if (f) list = list.filter(p => (type === 'expert' ? (p.dirs || []).includes(f) : type === 'partner' ? p.cat === f : true));
       if (tg) list = list.filter(p => (p.tags || []).includes(tg));
+      /* кто ведёт и порядок в колонке */
+      const ow = View.get(type + '.own', 'all'), sort = View.get(type + '.sort', 'new');
+      if (ow === 'me') list = list.filter(p => p.owner === Who.id());
+      else if (ow === 'none') list = list.filter(p => !p.owner);
+      else if (ow !== 'all') list = list.filter(p => p.owner === ow);
+      const SORTS = {new: ['Сначала новые ответы', (a, b) => ((b.fresh || {}).at || 0) - ((a.fresh || {}).at || 0) || (b.touchedAt || 0) - (a.touchedAt || 0)],
+        stale: ['Давно без движения', (a, b) => (a.touchedAt || a.createdAt || 0) - (b.touchedAt || b.createdAt || 0)],
+        added: ['Недавно добавленные', (a, b) => (b.createdAt || 0) - (a.createdAt || 0)],
+        name: ['По имени', (a, b) => People.name(a).localeCompare(People.name(b), 'ru')],
+        owner: ['По исполнителю', (a, b) => Team.name(Team.get(a.owner)).localeCompare(Team.name(Team.get(b.owner)), 'ru')],
+        call: ['Ближайшие созвоны', (a, b) => (a.callAt && a.s2 === 'set' ? a.callAt : 9e15) - (b.callAt && b.s2 === 'set' ? b.callAt : 9e15)]};
+      list = list.slice().sort((SORTS[sort] || SORTS.new)[1]);
       const tags = People.tagsOf(type);
       const cols = [1, 2, 3].map(c => list.filter(p => People.col(p) === c));
       const hints = [
@@ -4436,23 +4511,25 @@ function audiencePage(type) {
       const tSel = usedTags.length || tg ? `<select class="select sm t-filter" id="bt" aria-label="Тег"><option value="">Все теги</option>${[...new Set([...usedTags, ...(tg ? [tg] : [])])].map(t => `<option value="${esc(t)}" ${tg === t ? 'selected' : ''}>${esc(t)} · ${tags.n[t] || 0}</option>`).join('')}</select>` : '';
       const canEdit = People.canEdit();
       if (canEdit) hints[0] += ' Перенести на другой этап — кнопкой ⇄ на карточке или перетащить её.';
+      const oSel = `<select class="select sm t-filter" id="bo" aria-label="Кто ведёт"><option value="all">Все исполнители</option><option value="me" ${ow === 'me' ? 'selected' : ''}>Мои</option><option value="none" ${ow === 'none' ? 'selected' : ''}>Без исполнителя</option>${Team.assignable().map(m => `<option value="${m.id}" ${ow === m.id ? 'selected' : ''}>${esc(Team.name(m))}</option>`).join('')}</select>`;
+      const sSel = `<select class="select sm t-filter" id="bs" aria-label="Порядок">${Object.entries(SORTS).map(([k, [n]]) => `<option value="${k}" ${sort === k ? 'selected' : ''}>${n}</option>`).join('')}</select>`;
 
       root.innerHTML = `
         ${pageHead(`${T.emo} ${groupName(type)}`, esc(T.about),
           `<button class="btn" data-stats>${icon('chart')}Статистика</button>${canEdit ? `<button class="btn" data-tform>${icon('msg')}${type === 'client' ? 'Форма интервью' : 'Вопросы формой'}</button><button class="btn" data-paste>${icon('inbox')}Вставить ответы</button><button class="btn primary" data-add>${icon('plus')}${type === 'client' ? 'Клиентка' : T.one}</button>` : ''}${Who.can('delete') && everyone.length ? `<button class="icon-btn" data-bulk-del title="Удалить несколько карточек — например, тестовые">${icon('trash')}</button>` : ''}`)}
         ${!everyone.length ? `<div class="welcome"><span class="e">${T.emo}</span><div><b>Здесь пока никого</b><p>Добавьте первого человека — ссылка на анкету скопируется сама. ${type === 'client' ? 'Для кастдева хватит 10–15 интервью, чтобы увидеть закономерности.' : ''}</p></div></div>` : ''}
-        <div class="t-bar"><input class="input sm t-search" id="bq" placeholder="Поиск: имя, город, код, тег" value="${esc(View.get(type + '.q', ''))}">${fSel}${tSel}
-          ${f || tg ? '<button class="link-btn" data-f-clear>Сбросить</button>' : ''}<span class="t-bar-sp"></span>
+        <div class="t-bar"><input class="input sm t-search" id="bq" placeholder="Поиск: имя, город, код, тег" value="${esc(View.get(type + '.q', ''))}">${oSel}${fSel}${tSel}${sSel}
+          ${f || tg || ow !== 'all' ? '<button class="link-btn" data-f-clear>Сбросить</button>' : ''}<span class="t-bar-sp"></span>
           <span class="note">${list.length === everyone.length ? `${everyone.length} ${plural(everyone.length, 'человек', 'человека', 'человек')}` : `найдено ${list.length} из ${everyone.length}`}</span></div>
         <div class="board3 ${canEdit ? 'can-drag' : ''}">${[0, 1, 2].map(i => `
           <div class="b3-col" data-col="${i + 1}"><div class="b3-h"><span class="num">${i + 1}</span><b>${T.steps[i]}</b><span class="kb-n">${cols[i].length}</span></div>
             <div class="b3-hint">${esc(hints[i])}</div>
             ${i === 2 && canEdit ? `<div class="b3-zones">${Object.entries(s3Map(type)).filter(([k]) => k !== 'none').map(([k, z]) => `<div class="b3-zone ${z.tone}" data-zone="${k}">${esc(z.name)}</div>`).join('')}</div>` : ''}
-            <div class="b3-list">${cols[i].map(p => { const st = statusLine(p), acts = nextActs(p); return `<div class="pc" data-open="${p.id}" data-drag="${p.id}">
-              <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b>${canEdit ? `<button class="pc-move" data-move-pop="${p.id}" title="Перенести на другой этап" aria-label="Перенести на другой этап">${icon('swap')}</button>` : ''}</div>
+            <div class="b3-list">${cols[i].map(p => { const st = statusLine(p), acts = nextActs(p), o = Team.get(p.owner), isNew = freshFor(p); return `<div class="pc ${isNew ? 'is-new' : ''}" data-open="${p.id}" data-drag="${p.id}">
+              <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b>${isNew ? `<span class="new-dot" title="${esc(p.fresh.text)}">новое</span>` : ''}${o ? `<span class="pc-owner" title="Ведёт: ${esc(Team.name(o))}">${Team.av(o, 'xs')}</span>` : ''}${canEdit ? `<button class="pc-move" data-move-pop="${p.id}" title="Перенести на другой этап" aria-label="Перенести на другой этап">${icon('swap')}</button>` : ''}</div>
               ${People.sub(p, true) || p.ref ? `<div class="pc-sub">${esc(People.sub(p, true))}${p.ref ? `${People.sub(p, true) ? ' · ' : ''}<span class="pc-ref">по приглашению</span>` : ''}</div>` : ''}
               ${chipsOf(p, 3)}
-              ${st ? `<div>${st}</div>` : ''}
+              ${st || accessOn(p) ? `<div class="pc-st">${st}${accessOn(p) ? `<span class="st good" title="Подарен доступ к Еве">Ева до ${esc(dateRu(p.access.until))}</span>` : ''}</div>` : ''}
               ${acts ? `<div class="pc-acts">${acts}</div>` : ''}
             </div>`; }).join('') || '<p class="note" style="padding:6px 4px">Пусто</p>'}</div>
           </div>`).join('')}</div>`;
@@ -4462,7 +4539,9 @@ function audiencePage(type) {
       const bf = $('#bf', root), bt = $('#bt', root);
       if (bf) bf.onchange = () => { View.set(type + '.f', bf.value); App.render(); };
       if (bt) bt.onchange = () => { View.set(type + '.tag', bt.value); App.render(); };
-      on(root, 'click', '[data-f-clear]', () => { View.set(type + '.f', ''); View.set(type + '.tag', ''); App.render(); });
+      $('#bo', root).onchange = e => { View.set(type + '.own', e.target.value); App.render(); };
+      $('#bs', root).onchange = e => { View.set(type + '.sort', e.target.value); App.render(); };
+      on(root, 'click', '[data-f-clear]', () => { View.set(type + '.f', ''); View.set(type + '.tag', ''); View.set(type + '.own', 'all'); App.render(); });
       on(root, 'click', '[data-add]', () => openAdd(type));
       on(root, 'click', '[data-paste]', () => openPaste());
       on(root, 'click', '[data-tform]', () => openTalkForm(type));
@@ -4666,12 +4745,13 @@ App.register('person', {
     const s1 = S1[p.s1 || 'new'], s2 = S2[p.s2 || 'none'], s3 = s3Map(p.type)[p.s3 || 'none'];
     const small = t => ` <span class="b3-when">${t}</span>`;
     /* подарок за анкету (неделя Евы): видно, выдан ли он, и кнопка «Выдала» */
-    const giftHtml = p.gift ? `<div class="gift-line ${p.gift.done ? 'done' : ''}">${icon('gift')}<span>Подарок за анкету: неделя Евы${p.gift.done ? ` — выдан ${when(p.gift.doneAt)}` : ' — ещё не выдан'}</span>${!p.gift.done && canEdit ? `<button class="btn sm" data-gift>Выдала</button>` : ''}</div>` : '';
+    const giftHtml = p.gift ? `<div class="gift-line ${p.gift.done ? 'done' : ''}">${icon('gift')}<span>Подарок за анкету: неделя Евы${p.gift.done ? ` — выдан ${when(p.gift.doneAt)}` : ' — ещё не выдан'}</span>${!p.gift.done && canEdit ? `<button class="btn sm" data-access="week">Подарить неделю</button>` : ''}</div>` : '';
     const steps = `<div class="big3">
       ${box(1, T.steps[0], `${esc(s1.name)}${p.s1 === 'done' && p.answeredAt ? small(`${when(p.answeredAt)} · ${p.answeredBy === 'self' ? 'по ссылке' : 'заполнила команда'}`) : p.s1 === 'sent' && p.sentAt ? small(`ссылка отправлена ${sinceDays(p.sentAt)}`) : ''}${giftHtml}`, col === 1 ? nextActs(p, true) : '', ['done', 'skip'].includes(p.s1), col === 1)}
       ${box(2, T.steps[1], `${esc(s2.name)}${p.callAt && p.s2 === 'set' ? small(when(p.callAt)) : ''}${p.zoom && p.s2 === 'set' ? ` <a class="b3-when" href="${esc(p.zoom)}" target="_blank" rel="noopener">Zoom ↗</a>` : ''}`, col === 2 ? nextActs(p, true) : '', ['done', 'skip'].includes(p.s2), col === 2)}
       ${box(3, T.steps[2], esc(s3.name), col === 3 && tab !== 'result' ? nextActs(p, true) : '', People.connected(p), col === 3)}
-    </div>`;
+    </div>
+    ${accessHtml(p, canEdit)}`;
 
     let pane = '';
     if (tab === 'anketa') {
@@ -4719,7 +4799,9 @@ App.register('person', {
             ${p.evaId ? `<span title="ID в приложении Ева">EVA ID ${esc(p.evaId)}</span>` : ''}
             ${p.contact ? `<span>контакт: ${esc(p.contact)}</span>` : ''}
             ${ref ? `<span>по приглашению <a href="#p-${ref.id}">${esc(People.name(ref))}</a></span>` : p.ref ? `<span>по приглашению ${esc(p.ref)}</span>` : ''}
-            ${invited.length ? `<span>по ссылке пришли: ${invited.length}</span>` : ''}</div>
+            ${invited.length ? `<span>по ссылке пришли: ${invited.length}</span>` : ''}
+            ${canEdit ? `<label class="ph-owner" title="Кто ведёт: ему приходят уведомления об ответах">Ведёт <select class="select xs" data-owner><option value="">никто</option>${Team.assignable().map(m => `<option value="${m.id}" ${p.owner === m.id ? 'selected' : ''}>${esc(Team.name(m))}</option>`).join('')}</select></label>`
+              : `<span>ведёт: ${esc(Team.name(Team.get(p.owner)))}</span>`}</div>
           ${(p.tags || []).length || (p.dirs || []).length || canEdit ? `<div class="ph-tags">${p.type === 'expert' ? (p.dirs || []).map(d => `<span class="tagchip dir">${esc(noEmo(d))}</span>`).join('') : ''}${(p.tags || []).map(t => `<span class="tagchip">${esc(t)}</span>`).join('')}${canEdit ? `<button class="tag-add" data-tags-edit title="Теги — по ним удобно искать и фильтровать на доске">${icon((p.tags || []).length ? 'edit' : 'tag')}${(p.tags || []).length ? 'Теги' : 'Добавить тег'}</button>` : ''}</div>` : ''}</div>
         <div class="ph-acts">${canEdit ? `<label class="pp-move"><span>Этап</span><select class="select sm" data-move>${opts(People.stages(p), People.stageOf(p))}</select></label>
           <button class="btn sm" data-act="link" data-pid="${p.id}">${icon('link')}Скопировать ссылку</button><button class="btn sm" data-act="tlink" data-pid="${p.id}" title="Вопросы ${p.type === 'client' ? 'интервью' : 'созвона'} — человек ответит сам, ответы лягут в карточку">${icon('link')}Ссылка на ${p.type === 'client' ? 'интервью' : 'вопросы'}</button><button class="icon-btn" data-edit-person title="Изменить данные">${icon('edit')}</button>` : ''}${Who.can('delete') ? `<button class="icon-btn" data-del title="Удалить">${icon('trash')}</button>` : ''}</div>
@@ -4798,11 +4880,11 @@ App.register('person', {
       People.patch(p.id, {s3: k, s2: ['done', 'skip'].includes(p.s2) ? p.s2 : 'done'}, `Итог: ${s.name}`, s.emo);
       toast(`${s.name} ${s.emo}`);
     });
-    on(root, 'click', '[data-gift]', () => {
-      People.patch(p.id, {gift: {...(People.get(p.id).gift || {}), done: true, doneAt: Date.now(), by: Who.id()}}, 'Выдала подарок за анкету — неделю Евы', '🎁');
-      toast('Отмечено: подарок выдан');
-    });
     on(root, 'click', '[data-edit-person]', () => openEditPerson(p));
+    on(root, 'change', '[data-owner]', (e, el) => { const o = Team.get(el.value); People.patch(p.id, {owner: el.value || null}, o ? `Ведёт: ${Team.name(o)}` : 'Исполнитель снят', '👤'); });
+    wireAccess(root, p);
+    /* исполнитель открыл карточку — «новое» прочитано */
+    seenFresh(p);
     /* теги: из списка группы (что уже стоит на карточках и готовые подсказки) или свой */
     on(root, 'click', '[data-tags-edit]', async (e, el) => {
       const cur = (People.get(p.id) || p).tags || [];
@@ -5812,6 +5894,254 @@ function callStatsHtml(S) {
   </div>`;
 }
 
+/* ── 26-flow.js ── */
+/* Путь контакта: добавить → ссылка на анкету → ответы пришли («новое» у исполнителя) → встреча →
+   итог → подарок доступа к Еве.
+   • «Добавить»: сначала поиск среди всех контактов CRM (в том числе тех, кто сам заполнил анкету на
+     сайте): нашёлся в этой группе — открываем его карточку, в другой — заводим карточку здесь по тем
+     же данным. Иначе — новый контакт: имя, Telegram, город, кто ведёт, теги. Похожий контакт
+     подсвечивается, чтобы не плодить дубли.
+   • После создания — личная ссылка на анкету: скопировать или отправить в Telegram / WhatsApp.
+   • Ответы приходят сами (сервер): на карточке пометка «новое», исполнителю — сообщение в Telegram,
+     в этом окне — всплывающее сообщение. Открыл карточку исполнитель — пометка снимается.
+   • Подарок: доступ к Еве на неделю, месяц, год… — записываем, кому и до какого числа. */
+
+/* ── поиск контакта ── */
+const normTg = s => tgUser(s).toLowerCase().replace(/\s+/g, '');
+const phoneOf = s => { const d = String(s || '').replace(/\D/g, ''); return d.length >= 10 ? d.slice(-10) : ''; };
+function findContacts(q, limit = 8) {
+  const v = String(q || '').trim().toLowerCase().replace(/ё/g, 'е');
+  if (v.length < 2) return [];
+  const tg = normTg(v), ph = phoneOf(v);
+  return Store.all('people').filter(p => {
+    const name = People.name(p).toLowerCase().replace(/ё/g, 'е');
+    return name.includes(v) || (p.code || '').toLowerCase() === v || (tg.length > 2 && normTg(p.tg) === tg) || (ph && phoneOf(p.tg) === ph);
+  }).sort((a, b) => (b.touchedAt || 0) - (a.touchedAt || 0)).slice(0, limit);
+}
+/* тот же человек: совпал Telegram или телефон, либо имя целиком */
+function sameContact(name, tg) {
+  const n = String(name || '').trim().toLowerCase().replace(/ё/g, 'е'), t = normTg(tg), ph = phoneOf(tg);
+  return Store.all('people').filter(p => (t.length > 2 && normTg(p.tg) === t) || (ph && phoneOf(p.tg) === ph) || (n.length > 3 && People.name(p).toLowerCase().replace(/ё/g, 'е') === n));
+}
+const contactLine = p => [groupName(p.type), `шаг ${People.col(p)} · ${TYPES[p.type].steps[People.col(p) - 1]}`, p.tg, p.city].filter(Boolean).join(' · ');
+
+/* поиск контакта в меню слева: из любого раздела — сразу в карточку (Enter — первая) */
+function wireGlobalFind() {
+  const inp = $('#gFind'), res = $('#gFindRes');
+  if (!inp) return;
+  const draw = () => {
+    const list = findContacts(inp.value, 7);
+    res.hidden = inp.value.trim().length < 2;
+    res.innerHTML = list.map((p, i) => `<a href="#p-${p.id}" class="${i ? '' : 'first'}">${avatar(People.name(p))}<span><b>${esc(People.name(p))}</b><small>${esc(contactLine(p))}</small></span></a>`).join('') || '<p>Никого не нашли</p>';
+  };
+  inp.addEventListener('input', draw);
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { inp.value = ''; res.hidden = true; inp.blur(); }
+    if (e.key === 'Enter') { const a = $('a', res); if (a) { location.hash = a.getAttribute('href').slice(1); inp.value = ''; res.hidden = true; inp.blur(); } }
+  });
+  res.addEventListener('click', e => { if (e.target.closest('a')) { inp.value = ''; res.hidden = true; } });
+  inp.addEventListener('blur', () => setTimeout(() => { res.hidden = true; }, 200));
+  inp.addEventListener('focus', () => { if (inp.value.trim().length >= 2) draw(); });
+}
+
+/* ── добавить контакт ── */
+function openAdd(type) {
+  const T = TYPES[type];
+  const me = Who.id();
+  const team = Team.assignable();
+  const extra = type === 'expert' ? `<div class="field"><span>Направления</span>${pickedHtml('adDirs', [], 'Выбрать из списка')}</div>`
+    : type === 'partner' ? `<div class="grid2"><label class="field"><span>Категория</span><select class="select" id="adCat">${PARTNER_CATS.map(c => `<option value="${esc(c)}">${esc(noEmo(c))}</option>`).join('')}</select></label><label class="field"><span>Контактное лицо</span><input class="input" id="adContact" placeholder="Ирина, управляющая"></label></div>` : '';
+  openModal({title: `Добавить: ${T.one.toLowerCase()}`, wide: true, body: `
+      <div class="add-steps"><span class="on"><i>1</i>Контакт</span><span><i>2</i>Ссылка на анкету</span><span><i>3</i>Ответы придут сами</span></div>
+      <section class="add-find"><label class="field"><span>Найти среди контактов</span><input class="input" id="adFind" type="search" autocomplete="off" placeholder="Имя, @telegram, телефон или код — например, тех, кто уже прошёл анкету на сайте"></label>
+        <div class="add-hits" id="adHits"></div></section>
+      <div class="add-or"><span>или новый контакт</span></div>
+      <label class="field"><span>${type === 'partner' ? 'Название' : 'Имя и фамилия'}</span><input class="input" id="adName" placeholder="${type === 'partner' ? 'Студия «Баланс»' : 'Анна Иванова'}"></label>
+      <div class="grid2"><label class="field"><span>Telegram или телефон</span><input class="input" id="adTg" placeholder="@username или +7…"></label>
+      <label class="field"><span>Город</span><input class="input" id="adCity" placeholder="Москва"></label></div>
+      <div class="add-dup" id="adDup" hidden></div>
+      ${extra}
+      <div class="grid2"><label class="field"><span>Кто ведёт</span><select class="select" id="adOwner"><option value="">Пока никто</option>${team.map(m => `<option value="${m.id}" ${m.id === me ? 'selected' : ''}>${esc(Team.name(m))}${m.id === me ? ' (я)' : ''}</option>`).join('')}</select><small>Этому человеку придёт уведомление, когда ответы будут готовы</small></label>
+      <div class="field"><span>Теги</span>${pickedHtml('adTags', [], 'Добавить теги')}</div></div>`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Создать карточку и ссылку</button>',
+    onMount(el, close) {
+      const picked = {adDirs: [], adTags: []};
+      wirePicked(el, picked, {adDirs: {items: DIRECTIONS, label: noEmo, placeholder: 'Найти направление…'}, adTags: {items: People.tagsOf(type).list, allowNew: true, placeholder: 'Найти или добавить тег…'}});
+      /* поиск: в этой группе — открыть карточку, в другой — завести здесь по тем же данным */
+      const hits = $('#adHits', el);
+      const drawHits = () => {
+        const list = findContacts($('#adFind', el).value);
+        hits.innerHTML = list.map(p => `<div class="add-hit">${avatar(People.name(p))}<span><b>${esc(People.name(p))}</b><small>${esc(contactLine(p))}${Object.keys(p.answers || {}).length ? ' · анкета есть' : ''}</small></span>
+          ${p.type === type ? `<button class="btn sm" data-open-hit="${p.id}">Открыть карточку</button>` : `<button class="btn sm primary" data-copy-hit="${p.id}">Завести здесь</button>`}</div>`).join('')
+          || ($('#adFind', el).value.trim().length >= 2 ? '<p class="note">Не нашли — заполните нового ниже.</p>' : '');
+      };
+      $('#adFind', el).addEventListener('input', drawHits);
+      on(el, 'click', '[data-open-hit]', (e, b) => { close(); App.go('p-' + b.dataset.openHit); });
+      on(el, 'click', '[data-copy-hit]', (e, b) => {
+        const src = People.get(b.dataset.copyHit);
+        if (!src) return;
+        const id = People.create({type, name: src.name, tg: src.tg || '', city: src.city || '', evaId: src.evaId || '', contact: src.contact || '', owner: $('#adOwner', el).value || null, from: src.id,
+          ...(src.tags ? {tags: src.tags} : {})});
+        close();
+        openSendLink(People.get(id), true);
+      });
+      /* похожий контакт уже есть — подсказка, не запрет */
+      const dup = $('#adDup', el);
+      const checkDup = () => {
+        const d = sameContact($('#adName', el).value, $('#adTg', el).value);
+        dup.hidden = !d.length;
+        dup.innerHTML = d.length ? `Похоже, такой контакт уже есть: ${d.slice(0, 3).map(p => `<a href="#p-${p.id}" data-close>${esc(People.name(p))}</a> <small>(${esc(groupName(p.type))})</small>`).join(', ')}` : '';
+      };
+      $('#adName', el).addEventListener('input', checkDup);
+      $('#adTg', el).addEventListener('input', checkDup);
+      $('[data-ok]', el).onclick = () => {
+        const name = $('#adName', el).value.trim();
+        if (!name) { $('#adName', el).classList.add('need'); $('#adName', el).focus(); return; }
+        const f = {type, name, tg: $('#adTg', el).value.trim(), city: $('#adCity', el).value.trim(), owner: $('#adOwner', el).value || null};
+        if (type === 'expert') f.dirs = picked.adDirs;
+        if (picked.adTags.length) f.tags = picked.adTags;
+        if (type === 'partner') { f.cat = $('#adCat', el).value; f.contact = $('#adContact', el).value.trim(); }
+        const id = People.create(f);
+        close();
+        openSendLink(People.get(id), true);
+      };
+      if (!matchMedia('(pointer:coarse)').matches) $('#adFind', el).focus();
+    }});
+}
+
+/* ── ссылка на анкету: скопировать или отправить сразу в мессенджер ── */
+function openSendLink(p, fresh = false) {
+  if (!p) return;
+  const link = People.link(p), T = TYPES[p.type];
+  const hi = T.you === 'ты' ? `Привет${p.name ? ', ' + String(p.name).split(' ')[0] : ''}! Это анкета Евы — пара минут, почти всё кнопками 💜` : `Здравствуйте${p.name ? ', ' + String(p.name).split(' ')[0] : ''}! Небольшая анкета Eva Space — несколько минут ✨`;
+  const tg = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(hi)}`;
+  const wa = `https://wa.me/?text=${encodeURIComponent(hi + ' ' + link)}`;
+  const sent = () => { const cur = People.get(p.id); if (cur && (cur.s1 || 'new') === 'new') People.patch(p.id, {s1: 'sent', sentAt: Date.now()}, 'Отправили ссылку на анкету', '🔗'); };
+  openModal({title: fresh ? `Карточка готова: ${People.name(p)}` : `Анкета для ${People.name(p)}`, body: `
+      ${fresh ? '<div class="add-steps"><span class="done"><i>✓</i>Контакт</span><span class="on"><i>2</i>Ссылка на анкету</span><span><i>3</i>Ответы придут сами</span></div>' : ''}
+      <p class="note">Личная ссылка ${esc(People.name(p))}: ответы сами лягут в карточку, ${p.owner ? `${esc(Team.name(Team.get(p.owner)))} получит` : 'команда получит'} уведомление, карточка перейдёт на шаг «${esc(T.steps[1])}».</p>
+      <div class="tf-link"><input class="input" readonly value="${esc(link)}" id="slUrl" aria-label="Ссылка на анкету"><button class="btn" data-copy>${icon('copy')}Скопировать</button></div>
+      <div class="send-row"><a class="btn primary" href="${esc(tg)}" target="_blank" rel="noopener" data-sent>${icon('send')}Отправить в Telegram</a><a class="btn" href="${esc(wa)}" target="_blank" rel="noopener" data-sent>${icon('msg')}В WhatsApp</a></div>`,
+    foot: `<button class="btn" data-close>Отправлю позже</button><button class="btn" data-open>Открыть карточку</button>`,
+    onMount(el, close) {
+      $('[data-copy]', el).onclick = async () => { await copyOrShow(link, 'Ссылка скопирована 💌 Отправьте её человеку'); sent(); };
+      on(el, 'click', '[data-sent]', () => sent());
+      $('[data-open]', el).onclick = () => { close(); App.go('p-' + p.id); };
+    }});
+}
+
+/* ── доступ к Еве в подарок ── */
+const ACCESS_PLANS = [['week', 'Неделя', 7], ['2w', '2 недели', 14], ['month', 'Месяц', 30], ['3m', '3 месяца', 91], ['6m', 'Полгода', 182], ['year', 'Год', 365]];
+const planOf = k => ACCESS_PLANS.find(x => x[0] === k) || null;
+const accessOn = p => !!(p.access && p.access.until && p.access.until > Date.now());
+const dateRu = ts => { const d = new Date(ts); return `${d.getDate()} ${['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'][d.getMonth()]}${d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : ''}`; };
+function giveAccess(p, key) {
+  const pl = planOf(key);
+  if (!pl) return;
+  const now = Date.now(), cur = People.get(p.id) || p;
+  /* продлеваем от конца действующего доступа */
+  const from = accessOn(cur) ? cur.access.until : now;
+  const access = {plan: key, days: pl[2], from, until: from + pl[2] * 864e5, by: Who.id(), at: now};
+  const gift = cur.gift && !cur.gift.done ? {gift: {...cur.gift, done: true, doneAt: now, by: Who.id()}} : {};
+  People.patch(p.id, {access, ...gift}, `Подарили доступ к Еве: ${pl[1].toLowerCase()} (до ${dateRu(access.until)})`, '🎁');
+  toast(`🎁 ${People.name(p)}: доступ к Еве — ${pl[1].toLowerCase()}, до ${dateRu(access.until)}`);
+}
+/* полоса в карточке: что подарено и кнопки сроков */
+function accessHtml(p, canEdit) {
+  const on = accessOn(p), a = p.access || null, pl = a && planOf(a.plan);
+  const owed = p.gift && !p.gift.done;
+  const plans = canEdit ? `<div class="acc-plans" role="group" aria-label="Срок доступа">${ACCESS_PLANS.map(([k, n]) => `<button type="button" class="${owed && k === 'week' && !on ? 'sug' : ''}" data-access="${k}">${n}</button>`).join('')}</div>` : '';
+  return `<div class="card acc ${on ? 'on' : ''}">
+    <div class="acc-h">${icon('gift')}<div><b>Доступ к Еве</b>
+      <small>${on ? `Подарен: ${esc(pl ? pl[1].toLowerCase() : a.days + ' дн.')} · до ${esc(dateRu(a.until))}${a.by && Team.get(a.by) ? ` · ${esc(Team.name(Team.get(a.by)))}` : ''}`
+        : a ? `Был до ${esc(dateRu(a.until))} — закончился` : owed ? 'За анкету обещали неделю Евы — подарите' : 'Можно подарить доступ на неделю, месяц, год'}</small></div>
+      ${on && canEdit ? '<button class="link-btn" data-access-off>Отменить</button>' : ''}</div>
+    ${canEdit ? `<div class="acc-row"><span class="note">${on ? 'Продлить ещё на:' : 'Подарить:'}</span>${plans}</div>
+      <p class="note acc-note">Доступ в самом приложении Евы открывает менеджер — здесь записываем, кому и до какого числа.</p>` : ''}
+  </div>`;
+}
+function wireAccess(root, p) {
+  on(root, 'click', '[data-access]', async (e, el) => {
+    const pl = planOf(el.dataset.access);
+    if (!pl || !await confirmPop(el, {text: `Подарить ${People.name(p)} доступ к Еве: ${pl[1].toLowerCase()}?`, yes: 'Подарить'})) return;
+    giveAccess(p, pl[0]);
+  });
+  on(root, 'click', '[data-access-off]', async (e, el) => {
+    if (!await confirmPop(el, {text: 'Отменить подаренный доступ?', yes: 'Отменить', danger: true})) return;
+    People.patch(p.id, {access: {...(People.get(p.id).access || {}), until: Date.now(), off: true}}, 'Отменили подаренный доступ к Еве', '↩');
+  });
+}
+
+/* ── «новое»: ответы пришли — исполнителю ── */
+/* моя карточка: веду я, или её никто не ведёт (тогда она общая) */
+const isMine = p => !p.owner || p.owner === Who.id();
+const freshFor = p => !!(p.fresh && p.fresh.at && isMine(p));
+const freshList = () => Store.all('people').filter(freshFor).sort((a, b) => b.fresh.at - a.fresh.at);
+/* исполнитель открыл карточку — пометка «новое» снимается (без записи в историю) */
+function seenFresh(p) {
+  if (p && p.fresh && p.fresh.at && (p.owner === Who.id() || (!p.owner && People.canEdit())) && People.canEdit()) Store.patch('people', p.id, {fresh: null});
+}
+/* пришли ответы, пока CRM открыта, — всплывающее сообщение со ссылкой */
+const Fresh = {
+  seen: new Map(),
+  t0: 0,
+  init() {
+    /* что пришло до открытия страницы — видно на главной и на доске, всплывать не нужно */
+    this.t0 = Date.now();
+    Store.all('people').forEach(p => { if (p.fresh) this.seen.set(p.id, p.fresh.at); });
+    Store.subscribe(c => {
+      if (c !== 'people') return;
+      Store.all('people').forEach(p => {
+        if (!p.fresh || !p.fresh.at || this.seen.get(p.id) === p.fresh.at) return;
+        this.seen.set(p.id, p.fresh.at);
+        if (freshFor(p) && p.fresh.at > this.t0 - 2000) toast(`📝 ${p.fresh.text}`, {action: {label: 'Открыть', fn: () => App.go('p-' + p.id)}});
+      });
+    });
+  },
+};
+
+/* ── «Встречи»: всё, что на шаге 2 — назначить, провести, разобрать ── */
+App.register('meetings', {
+  title: 'Встречи',
+  render(root) {
+    const who = View.get('mt.who', 'all'), grp = View.get('mt.type', '');
+    const me = Who.id();
+    let all = Store.all('people').filter(p => !grp || p.type === grp);
+    if (who === 'me') all = all.filter(p => p.owner === me);
+    else if (who === 'none') all = all.filter(p => !p.owner);
+    else if (who !== 'all') all = all.filter(p => p.owner === who);
+    const now = Date.now(), dayEnd = dateOf(addDays(today(), 1)).getTime();
+    const set = all.filter(p => People.col(p) === 2 && p.s2 === 'set').sort((a, b) => (a.callAt || 0) - (b.callAt || 0));
+    const todayL = set.filter(p => p.callAt && p.callAt < dayEnd);
+    const later = set.filter(p => !p.callAt || p.callAt >= dayEnd);
+    const need = all.filter(p => People.col(p) === 2 && ['none', 'noshow'].includes(p.s2 || 'none')).sort((a, b) => (a.answeredAt || 0) - (b.answeredAt || 0));
+    const review = all.filter(p => People.col(p) === 3 && (p.s3 || 'none') === 'none').sort((a, b) => (b.talkAt || 0) - (a.talkAt || 0));
+    const canEdit = People.canEdit();
+    const row = (p, acts) => { const o = Team.get(p.owner); return `<div class="mt-r ${p.fresh && freshFor(p) ? 'is-new' : ''}">
+        <time>${p.callAt && p.s2 === 'set' ? esc(when(p.callAt)) : p.answeredAt ? `анкета ${esc(sinceDays(p.answeredAt))}` : '—'}</time>
+        <a class="mt-who" href="#p-${p.id}">${avatar(People.name(p))}<span><b>${esc(People.name(p))}</b><small>${esc([groupName(p.type), People.sub(p, true)].filter(Boolean).join(' · '))}</small></span></a>
+        <span class="mt-owner" title="Кто ведёт">${o ? Team.av(o, 'xs') + esc(Team.first(o)) : '<span class="muted">никто</span>'}</span>
+        <span class="mt-acts">${canEdit ? acts(p) : ''}</span></div>`; };
+    const b = (act, p, label, primary = false) => `<button class="btn sm ${primary ? 'primary' : ''}" data-act="${act}" data-pid="${p.id}">${label}</button>`;
+    const sec = (title, note, list, acts, empty) => `<section class="section card mt-sec"><div class="card-head"><h2>${title} <span class="h-n">${list.length}</span></h2><span class="note">${note}</span></div>
+      ${list.length ? `<div class="mt-list">${list.map(p => row(p, acts)).join('')}</div>` : `<p class="note">${empty}</p>`}</section>`;
+    const talkW = p => (p.type === 'client' ? 'интервью' : 'созвон');
+    root.innerHTML = `
+      ${pageHead('Встречи', 'Все, кто прошёл анкету: назначить созвон, провести интервью по готовым вопросам и подвести итог. Ответы интервью сразу идут в статистику.')}
+      <div class="t-bar"><select class="select sm t-filter" id="mtWho" aria-label="Кто ведёт"><option value="all">Все исполнители</option><option value="me" ${who === 'me' ? 'selected' : ''}>Мои</option><option value="none" ${who === 'none' ? 'selected' : ''}>Без исполнителя</option>${Team.assignable().map(m => `<option value="${m.id}" ${who === m.id ? 'selected' : ''}>${esc(Team.name(m))}</option>`).join('')}</select>
+        <select class="select sm t-filter" id="mtType" aria-label="Группа"><option value="">Все группы</option>${Object.keys(TYPES).map(k => `<option value="${k}" ${grp === k ? 'selected' : ''}>${groupName(k)}</option>`).join('')}</select>
+        <span class="t-bar-sp"></span><a class="note" href="#calendar">Календарь →</a></div>
+      <div class="kpis kpis-4 card">${[[todayL.length, 'сегодня'], [later.length, 'назначено дальше'], [need.length, 'ждут назначения'], [review.length, 'ждут разбора']].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+      ${sec('Сегодня', 'кнопка «Начать» откроет вопросы, таймер и план на 40 минут', todayL, p => b('talk', p, `Начать ${talkW(p)}`, true) + b('time', p, 'Перенести'), 'Сегодня встреч нет.')}
+      ${sec('Ждут назначения', 'анкета пришла — договоритесь о времени или отправьте вопросы ссылкой', need, p => b('time', p, 'Назначить', true) + b('tlink', p, 'Вопросы ссылкой') + b('talk', p, 'Начать сейчас'), 'Все, кто прошёл анкету, уже с датой.')}
+      ${sec('Назначены', 'ближайшие встречи', later, p => b('talk', p, 'Открыть') + b('time', p, 'Перенести'), 'Пока ничего не назначено.')}
+      ${sec('Прошли — подвести итог', 'отметьте, что услышали: метки и цитаты попадут в статистику', review, p => b('result', p, p.type === 'client' ? 'Разобрать интервью' : 'Записать решение', true), 'Все встречи разобраны.')}`;
+    $('#mtWho', root).onchange = e => { View.set('mt.who', e.target.value); App.render(); };
+    $('#mtType', root).onchange = e => { View.set('mt.type', e.target.value); App.render(); };
+    wireActs(root);
+  },
+});
+
 /* ── 30-questions.js ── */
 /* База вопросов: для каждой группы — анкета (кнопки, статистика) и
    вопросы для созвона (открытые). Добавлять, править, прятать, менять
@@ -6278,6 +6608,7 @@ function openMyProfile() {
     await Demo.load();
   }
   App.start();
+  Fresh.init();
   window.__eva = {Store, Who, App, View, People, Questions, Stats, Codec, Import, Demo, recommendations};
 })();
 })();

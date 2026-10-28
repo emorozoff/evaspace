@@ -172,12 +172,13 @@ App.register('person', {
     const s1 = S1[p.s1 || 'new'], s2 = S2[p.s2 || 'none'], s3 = s3Map(p.type)[p.s3 || 'none'];
     const small = t => ` <span class="b3-when">${t}</span>`;
     /* подарок за анкету (неделя Евы): видно, выдан ли он, и кнопка «Выдала» */
-    const giftHtml = p.gift ? `<div class="gift-line ${p.gift.done ? 'done' : ''}">${icon('gift')}<span>Подарок за анкету: неделя Евы${p.gift.done ? ` — выдан ${when(p.gift.doneAt)}` : ' — ещё не выдан'}</span>${!p.gift.done && canEdit ? `<button class="btn sm" data-gift>Выдала</button>` : ''}</div>` : '';
+    const giftHtml = p.gift ? `<div class="gift-line ${p.gift.done ? 'done' : ''}">${icon('gift')}<span>Подарок за анкету: неделя Евы${p.gift.done ? ` — выдан ${when(p.gift.doneAt)}` : ' — ещё не выдан'}</span>${!p.gift.done && canEdit ? `<button class="btn sm" data-access="week">Подарить неделю</button>` : ''}</div>` : '';
     const steps = `<div class="big3">
       ${box(1, T.steps[0], `${esc(s1.name)}${p.s1 === 'done' && p.answeredAt ? small(`${when(p.answeredAt)} · ${p.answeredBy === 'self' ? 'по ссылке' : 'заполнила команда'}`) : p.s1 === 'sent' && p.sentAt ? small(`ссылка отправлена ${sinceDays(p.sentAt)}`) : ''}${giftHtml}`, col === 1 ? nextActs(p, true) : '', ['done', 'skip'].includes(p.s1), col === 1)}
       ${box(2, T.steps[1], `${esc(s2.name)}${p.callAt && p.s2 === 'set' ? small(when(p.callAt)) : ''}${p.zoom && p.s2 === 'set' ? ` <a class="b3-when" href="${esc(p.zoom)}" target="_blank" rel="noopener">Zoom ↗</a>` : ''}`, col === 2 ? nextActs(p, true) : '', ['done', 'skip'].includes(p.s2), col === 2)}
       ${box(3, T.steps[2], esc(s3.name), col === 3 && tab !== 'result' ? nextActs(p, true) : '', People.connected(p), col === 3)}
-    </div>`;
+    </div>
+    ${accessHtml(p, canEdit)}`;
 
     let pane = '';
     if (tab === 'anketa') {
@@ -225,7 +226,9 @@ App.register('person', {
             ${p.evaId ? `<span title="ID в приложении Ева">EVA ID ${esc(p.evaId)}</span>` : ''}
             ${p.contact ? `<span>контакт: ${esc(p.contact)}</span>` : ''}
             ${ref ? `<span>по приглашению <a href="#p-${ref.id}">${esc(People.name(ref))}</a></span>` : p.ref ? `<span>по приглашению ${esc(p.ref)}</span>` : ''}
-            ${invited.length ? `<span>по ссылке пришли: ${invited.length}</span>` : ''}</div>
+            ${invited.length ? `<span>по ссылке пришли: ${invited.length}</span>` : ''}
+            ${canEdit ? `<label class="ph-owner" title="Кто ведёт: ему приходят уведомления об ответах">Ведёт <select class="select xs" data-owner><option value="">никто</option>${Team.assignable().map(m => `<option value="${m.id}" ${p.owner === m.id ? 'selected' : ''}>${esc(Team.name(m))}</option>`).join('')}</select></label>`
+              : `<span>ведёт: ${esc(Team.name(Team.get(p.owner)))}</span>`}</div>
           ${(p.tags || []).length || (p.dirs || []).length || canEdit ? `<div class="ph-tags">${p.type === 'expert' ? (p.dirs || []).map(d => `<span class="tagchip dir">${esc(noEmo(d))}</span>`).join('') : ''}${(p.tags || []).map(t => `<span class="tagchip">${esc(t)}</span>`).join('')}${canEdit ? `<button class="tag-add" data-tags-edit title="Теги — по ним удобно искать и фильтровать на доске">${icon((p.tags || []).length ? 'edit' : 'tag')}${(p.tags || []).length ? 'Теги' : 'Добавить тег'}</button>` : ''}</div>` : ''}</div>
         <div class="ph-acts">${canEdit ? `<label class="pp-move"><span>Этап</span><select class="select sm" data-move>${opts(People.stages(p), People.stageOf(p))}</select></label>
           <button class="btn sm" data-act="link" data-pid="${p.id}">${icon('link')}Скопировать ссылку</button><button class="btn sm" data-act="tlink" data-pid="${p.id}" title="Вопросы ${p.type === 'client' ? 'интервью' : 'созвона'} — человек ответит сам, ответы лягут в карточку">${icon('link')}Ссылка на ${p.type === 'client' ? 'интервью' : 'вопросы'}</button><button class="icon-btn" data-edit-person title="Изменить данные">${icon('edit')}</button>` : ''}${Who.can('delete') ? `<button class="icon-btn" data-del title="Удалить">${icon('trash')}</button>` : ''}</div>
@@ -304,11 +307,11 @@ App.register('person', {
       People.patch(p.id, {s3: k, s2: ['done', 'skip'].includes(p.s2) ? p.s2 : 'done'}, `Итог: ${s.name}`, s.emo);
       toast(`${s.name} ${s.emo}`);
     });
-    on(root, 'click', '[data-gift]', () => {
-      People.patch(p.id, {gift: {...(People.get(p.id).gift || {}), done: true, doneAt: Date.now(), by: Who.id()}}, 'Выдала подарок за анкету — неделю Евы', '🎁');
-      toast('Отмечено: подарок выдан');
-    });
     on(root, 'click', '[data-edit-person]', () => openEditPerson(p));
+    on(root, 'change', '[data-owner]', (e, el) => { const o = Team.get(el.value); People.patch(p.id, {owner: el.value || null}, o ? `Ведёт: ${Team.name(o)}` : 'Исполнитель снят', '👤'); });
+    wireAccess(root, p);
+    /* исполнитель открыл карточку — «новое» прочитано */
+    seenFresh(p);
     /* теги: из списка группы (что уже стоит на карточках и готовые подсказки) или свой */
     on(root, 'click', '[data-tags-edit]', async (e, el) => {
       const cur = (People.get(p.id) || p).tags || [];
