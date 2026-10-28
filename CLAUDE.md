@@ -63,6 +63,8 @@ node club/v2/server/test/api-test.js; pkill -f "club/v2/server/server.js"
   там не работают — не завязывайте на них новое. Google Календарь работает через сервер
   (`server/lib/gcal.js`), инструменты те же, что у коннектора Claude.
 - Данные в браузере на сервере не кешируются (`localStorage` — только настройки вида).
+- Коллекции CRM: `team`, `people`, `cfg`, `tasks`, `groups`, `mail`, `collabs`. Новая — в `COLS` и `write`
+  в `server/lib/crm-rules.js` **и** в `COLS` в `crm/v2/src/app/02-store.js`, плюс проверка в `api-test.js`.
 - Нужна разовая правка данных CRM (убрать тестовое, вписать ответы из файла) — новая запись в
   `server/lib/crm-fixes.js` с новым `id`: сервер применит её один раз при запуске, что сделано — в
   `DATA_DIR/crm-fixes.json`, удалённое — копией в `DATA_DIR/removed/`. Проверка — раздел 21 в `api-test.js`.

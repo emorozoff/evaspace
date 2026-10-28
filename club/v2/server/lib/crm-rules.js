@@ -6,7 +6,8 @@
 'use strict';
 const {isObj} = require('./store');
 
-const COLS = ['team', 'people', 'cfg'];
+/* tasks — задачи по контактам, groups — свои группы продаж, mail — рассылки, collabs — коллабы партнёров */
+const COLS = ['team', 'people', 'cfg', 'tasks', 'groups', 'mail', 'collabs'];
 const ROLES = ['owner', 'member', 'viewer'];
 const roleOf = r => (ROLES.includes(r) ? r : 'member');
 /* строка команды: invited — место по коду приглашения, pending — заявка ждёт
@@ -58,8 +59,11 @@ function write(ctx, op, c, id, cur, body, next, store) {
     case 'people':
       if (op === 'delete') return owner ? yes(null) : no('удаляет карточки руководитель');
       return edit ? yes(next) : no('у вас в CRM доступ только на просмотр');
+    case 'tasks': case 'groups': case 'mail': case 'collabs':
+      /* рабочие записи команды: заводит, правит и удаляет команда CRM, наблюдатель только смотрит */
+      return edit ? yes(op === 'delete' ? null : next) : no('у вас в CRM доступ только на просмотр');
     case 'cfg':
-      if (/^q_[a-z]+$/.test(id)) return edit ? yes(next) : no('вопросы правит команда CRM');
+      if (/^(q_[a-z]+|ptrain|ambrules)$/.test(id)) return edit ? yes(next) : no('вопросы правит команда CRM');
       return owner ? yes(next) : no('настройки CRM меняет руководитель');
     default: return no('нет такой коллекции');
   }

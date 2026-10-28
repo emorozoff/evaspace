@@ -8,7 +8,7 @@
    клиентке одновременно, не затирают друг друга. */
 
 const Store = (() => {
-  const COLS = ['team', 'people', 'cfg'];
+  const COLS = ['team', 'people', 'cfg', 'tasks', 'groups', 'mail', 'collabs'];
   const LS = 'eva-crm2:';
   const data = Object.fromEntries(COLS.map(c => [c, new Map()]));
   const subs = new Set();

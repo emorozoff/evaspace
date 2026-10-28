@@ -208,15 +208,22 @@ App.register('person', {
           <label class="field"><span>Заметка</span><textarea class="textarea" data-res="note" placeholder="Условия, договорённости, что важно помнить">${esc(res.note || '')}</textarea></label>
           ${p.type === 'amb' ? `<div class="okline">Реферальная ссылка амбассадора — та же, что и для анкеты. Кто придёт по ней, появится с пометкой «по приглашению». Уже пришли: <b>${invited.length}</b></div>` : ''}</div>`;
       }
+    } else if (tab === 'profile') {
+      pane = profilePane(p, canEdit);
+    } else if (tab === 'sales') {
+      pane = salesPane(p, canEdit);
+    } else if (tab === 'partner') {
+      pane = partnerPane(p, canEdit);
     } else {
-      const log = Object.values(p.log || {}).sort((a, b) => b.t - a.t);
-      pane = `<div class="log">${log.map(l => `<div><time>${when(l.t)}</time><span>${esc(noEmo(l.text))}${l.by && Team.get(l.by) ? ` <span class="muted">· ${esc(Team.first(Team.get(l.by)))}</span>` : ''}</span></div>`).join('') || '<p class="note">Пока пусто</p>'}</div>`;
+      /* вся история: шаги и правки карточки, рассылки, задачи */
+      const log = historyItems(p);
+      pane = `<div class="log">${log.map(l => `<div><time>${when(l.t)}</time><span>${esc(l.text)}${l.by && Team.get(l.by) ? ` <span class="muted">· ${esc(Team.first(Team.get(l.by)))}</span>` : ''}</span></div>`).join('') || '<p class="note">Пока пусто</p>'}</div>`;
     }
 
     const talkN = Object.values(p.talk || {}).filter(x => x && x.a).length;
     const tgLink = p.tg ? (tgUrl ? `<a href="${esc(tgUrl)}" target="_blank" rel="noopener">@${esc(tgUser(p.tg))}</a>` : `<span>${esc(p.tg)}</span>`) : '';
     root.innerHTML = `
-      <a class="back-link" href="#${p.type}">${icon('back')}${groupName(p.type)}</a>
+      <div class="back-row"><a class="back-link" href="#${p.type}">${icon('back')}Кастдев · ${groupName(p.type)}</a><a class="back-link" href="#base">База</a>${p.type === 'partner' ? '<a class="back-link" href="#partners">Партнёры</a>' : p.type === 'amb' ? '<a class="back-link" href="#ambs">Амбассадоры</a>' : ''}${Sales.in(p) ? '<a class="back-link" href="#sales">Продажи</a>' : ''}</div>
       <div class="ph"><span class="type-emo" title="${esc(T.one)}">${T.emo}</span>
         <div><h1>${esc(People.name(p))}</h1>
           <div class="ph-sub"><span class="code" title="Личный код: в ссылке на анкету и в реферальной ссылке">${esc(p.code)}</span>
@@ -235,7 +242,8 @@ App.register('person', {
       </div>
       ${steps}
       <div class="card" style="padding:0;overflow:clip">
-        <div style="padding:0 12px;background:var(--surface-2)">${tabsHtml('pp.tab', [['anketa', 'Анкета', Object.keys(p.answers || {}).length || null], ['talk', p.type === 'client' ? 'Интервью' : 'Созвон', talkN || null], ['result', 'Итог'], ['log', 'История']], tab)}</div>
+        <div style="padding:0 12px;background:var(--surface-2)">${tabsHtml('pp.tab', [['profile', 'Профиль'], ['anketa', 'Анкета', Object.keys(p.answers || {}).length || null], ['talk', p.type === 'client' ? 'Интервью' : 'Созвон', talkN || null], ['result', 'Итог'],
+          ...(p.type === 'partner' ? [['partner', 'Партнёрство']] : [['sales', 'Продажи', Sales.status(p) ? '•' : null]]), ['log', 'История', null]], tab)}</div>
         <div style="padding:14px 18px">${pane}</div>
       </div>`;
 
@@ -272,6 +280,9 @@ App.register('person', {
     });
     on(root, 'click', '[data-copy-q]', () => copyOrShow(Questions.talk(p.type).map((q, i) => `${i + 1}. ${q.t}`).join('\n'), 'Вопросы скопированы — можно вставить в заметки Zoom 📋'));
     if (tab === 'talk') wireInterview(root, p);
+    if (tab === 'profile') wireProfile(root, p);
+    if (tab === 'sales') wireSales(root, p);
+    if (tab === 'partner') wirePartner(root, p);
     /* черновик итога от Claude */
     on(root, 'click', '[data-ai]', async () => {
       Drafts[p.id] = {loading: true};

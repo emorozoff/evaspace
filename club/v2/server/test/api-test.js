@@ -355,8 +355,19 @@ async function browserHash(pw, salt) {
   ok(r.status === 200 && fr && fr.type === 'expert' && fr.dirs.join() === 'Йога' && !fr.gift, 'анкета без кода: новая карточка эксперта', fr);
   ok((await lead.put('cfg', 'q_client', {test: [], talk: [], at: 1}, '/crm/api')).status === 200, 'вопросы анкеты — да');
   ok((await lead.patch('cfg', 'settings', {anketaUrl: 'https://evil'}, '/crm/api')).status === 404 && (await lead.put('cfg', 'settings', {anketaUrl: 'https://evil'}, '/crm/api')).status === 403, 'настройки CRM — нет');
+  /* рабочие записи CRM (задачи, группы, рассылки, коллабы, программа обучения партнёров): команда ведёт */
+  ok((await lead.put('tasks', 'tk1', {text: 'Написать про продление', pid: 'c1', due: '2026-11-01'}, '/crm/api')).status === 200
+    && (await lead.put('groups', 'g1', {name: 'Офлайн-встреча', members: ['c1']}, '/crm/api')).status === 200
+    && (await lead.put('mail', 'm1', {title: 'Продление', text: '{имя}, привет', ids: ['c1'], sent: {}}, '/crm/api')).status === 200
+    && (await lead.put('collabs', 'cb1', {title: 'Практика в студии', partners: []}, '/crm/api')).status === 200
+    && (await lead.put('cfg', 'ptrain', {list: [{id: 'a', t: 'Шаг'}]}, '/crm/api')).status === 200, 'команда ведёт задачи, группы, рассылки, коллабы и обучение партнёров');
+  ok((await lead.patch('mail', 'm1', {sent: {c1: 1}}, '/crm/api')).status === 200 && (await lead.del('tasks', 'tk1', '/crm/api')).status === 200, 'отметка рассылки и удаление задачи — да');
+  r = (await owner.get('/crm/api/state')).j.collections;
+  ok(['tasks', 'groups', 'mail', 'collabs'].every(c => c in r) && r.groups.g1.members[0] === 'c1', 'новые коллекции в снимке CRM', Object.keys(r));
   ok((await owner.patch('team', 'tm_lead', {role: 'viewer'}, '/crm/api')).status === 200, 'руководитель делает наблюдателем');
   ok((await lead.patch('people', 'c1', {name: 'Правка'}, '/crm/api')).status === 403, 'наблюдатель писать не может');
+  ok((await lead.put('tasks', 'tk2', {text: 'x'}, '/crm/api')).status === 403 && (await lead.del('mail', 'm1', '/crm/api')).status === 403, 'наблюдатель задачи и рассылки не меняет');
+  ok(((await lead.get('/crm/api/state')).j.collections.mail || {}).m1, 'но рассылки видит');
   ok((await lead.get('/crm/api/state')).j.collections.people.c1.name === 'Клиентка', 'но читает');
   const pr = (await lead.get('/crm/api/profiles')).j;
   ok(pr[ownerId] && pr[ownerId].name === 'Тест Основатель', 'имена для команды CRM — из учёток штаба', pr);

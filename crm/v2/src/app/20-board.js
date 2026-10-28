@@ -150,14 +150,17 @@ function wirePicked(el, picked, cfg) {
 }
 
 
+/* type 'all' — общая доска кастдева: все группы в одних трёх шагах */
+const ALL_T = {emo: '🔎', name: 'Все', one: 'Контакт', about: 'Весь кастдев на одной доске: эксперты, клиентки, партнёры и амбассадоры', steps: ['Анкета', 'Встреча', 'Итог']};
 function audiencePage(type) {
+  const ALL = type === 'all';
   return {
-    title: groupName(type),
+    title: ALL ? 'Кастдев' : groupName(type),
     render(root) {
-      const T = TYPES[type];
+      const T = ALL ? ALL_T : TYPES[type];
       const q = View.get(type + '.q', '').trim().toLowerCase();
       const f = View.get(type + '.f', ''), tg = View.get(type + '.tag', '');
-      const everyone = People.all(type);
+      const everyone = People.all(ALL ? null : type);
       let list = everyone;
       if (q) list = list.filter(p => (People.name(p) + ' ' + (p.city || '') + ' ' + (p.code || '') + ' ' + (p.topic || '') + ' ' + (p.tags || []).join(' ')).toLowerCase().includes(q));
       if (f) list = list.filter(p => (type === 'expert' ? (p.dirs || []).includes(f) : type === 'partner' ? p.cat === f : true));
@@ -174,12 +177,12 @@ function audiencePage(type) {
         owner: ['По исполнителю', (a, b) => Team.name(Team.get(a.owner)).localeCompare(Team.name(Team.get(b.owner)), 'ru')],
         call: ['Ближайшие созвоны', (a, b) => (a.callAt && a.s2 === 'set' ? a.callAt : 9e15) - (b.callAt && b.s2 === 'set' ? b.callAt : 9e15)]};
       list = list.slice().sort((SORTS[sort] || SORTS.new)[1]);
-      const tags = People.tagsOf(type);
+      const tags = People.tagsOf(ALL ? null : type);
       const cols = [1, 2, 3].map(c => list.filter(p => People.col(p) === c));
       const hints = [
         'Отправьте ссылку — человек ответит сам за 3 минуты. Или заполните за него.',
-        type === 'client' ? 'Интервью в Zoom — 40 минут по плану. Вопросы, таймер и заметки — в карточке; или вопросы ссылкой, письменно.' : 'Созвон 30 минут: знакомимся и договариваемся.',
-        type === 'client' ? 'Отметьте, что услышали, — это попадёт в статистику.' : 'Запишите решение: подключаем, думает или не сейчас.',
+        ALL ? 'Встреча в Zoom: у клиенток — интервью 40 минут, у остальных — созвон 30 минут.' : type === 'client' ? 'Интервью в Zoom — 40 минут по плану. Вопросы, таймер и заметки — в карточке; или вопросы ссылкой, письменно.' : 'Созвон 30 минут: знакомимся и договариваемся.',
+        ALL ? 'Подведите итог: у клиенток — что услышали, у остальных — решение.' : type === 'client' ? 'Отметьте, что услышали, — это попадёт в статистику.' : 'Запишите решение: подключаем, думает или не сейчас.',
       ];
       /* направления и категории — выпадающим списком (с числом людей), а не стеной кнопок */
       const filters = type === 'expert' ? DIRECTIONS.map(d => [d, everyone.filter(p => (p.dirs || []).includes(d)).length])
@@ -194,8 +197,8 @@ function audiencePage(type) {
       const sSel = `<select class="select sm t-filter" id="bs" aria-label="Порядок">${Object.entries(SORTS).map(([k, [n]]) => `<option value="${k}" ${sort === k ? 'selected' : ''}>${n}</option>`).join('')}</select>`;
 
       root.innerHTML = `
-        ${pageHead(`${T.emo} ${groupName(type)}`, esc(T.about),
-          `<button class="btn" data-stats>${icon('chart')}Статистика</button>${canEdit ? `<button class="btn" data-tform>${icon('msg')}${type === 'client' ? 'Форма интервью' : 'Вопросы формой'}</button><button class="btn" data-paste>${icon('inbox')}Вставить ответы</button><button class="btn primary" data-add>${icon('plus')}${type === 'client' ? 'Клиентка' : T.one}</button>` : ''}${Who.can('delete') && everyone.length ? `<button class="icon-btn" data-bulk-del title="Удалить несколько карточек — например, тестовые">${icon('trash')}</button>` : ''}`)}
+        ${pageHead(ALL ? 'Кастдев' : `${T.emo} ${groupName(type)}`, esc(T.about),
+          `${canEdit ? `<button class="btn" data-tform>${icon('msg')}${ALL || type === 'client' ? 'Форма интервью' : 'Вопросы формой'}</button><button class="btn" data-paste>${icon('inbox')}Вставить ответы</button><button class="btn primary" data-add>${icon('plus')}${ALL ? 'Добавить контакт' : type === 'client' ? 'Клиентка' : T.one}</button>` : ''}${!ALL && Who.can('delete') && everyone.length ? `<button class="icon-btn" data-bulk-del title="Удалить несколько карточек — например, тестовые">${icon('trash')}</button>` : ''}`)}
         ${!everyone.length ? `<div class="welcome"><span class="e">${T.emo}</span><div><b>Здесь пока никого</b><p>Добавьте первого человека — ссылка на анкету скопируется сама. ${type === 'client' ? 'Для кастдева хватит 10–15 интервью, чтобы увидеть закономерности.' : ''}</p></div></div>` : ''}
         <div class="t-bar"><input class="input sm t-search" id="bq" placeholder="Поиск: имя, город, код, тег" value="${esc(View.get(type + '.q', ''))}">${oSel}${fSel}${tSel}${sSel}
           ${f || tg || ow !== 'all' ? '<button class="link-btn" data-f-clear>Сбросить</button>' : ''}<span class="t-bar-sp"></span>
@@ -203,9 +206,10 @@ function audiencePage(type) {
         <div class="board3 ${canEdit ? 'can-drag' : ''}">${[0, 1, 2].map(i => `
           <div class="b3-col" data-col="${i + 1}"><div class="b3-h"><span class="num">${i + 1}</span><b>${T.steps[i]}</b><span class="kb-n">${cols[i].length}</span></div>
             <div class="b3-hint">${esc(hints[i])}</div>
-            ${i === 2 && canEdit ? `<div class="b3-zones">${Object.entries(s3Map(type)).filter(([k]) => k !== 'none').map(([k, z]) => `<div class="b3-zone ${z.tone}" data-zone="${k}">${esc(z.name)}</div>`).join('')}</div>` : ''}
+            ${i === 2 && canEdit && !ALL ? `<div class="b3-zones">${Object.entries(s3Map(type)).filter(([k]) => k !== 'none').map(([k, z]) => `<div class="b3-zone ${z.tone}" data-zone="${k}">${esc(z.name)}</div>`).join('')}</div>` : ''}
             <div class="b3-list">${cols[i].map(p => { const st = statusLine(p), acts = nextActs(p), o = Team.get(p.owner), isNew = freshFor(p); return `<div class="pc ${isNew ? 'is-new' : ''}" data-open="${p.id}" data-drag="${p.id}">
               <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b>${isNew ? `<span class="new-dot" title="${esc(p.fresh.text)}">новое</span>` : ''}${o ? `<span class="pc-owner" title="Ведёт: ${esc(Team.name(o))}">${Team.av(o, 'xs')}</span>` : ''}${canEdit ? `<button class="pc-move" data-move-pop="${p.id}" title="Перенести на другой этап" aria-label="Перенести на другой этап">${icon('swap')}</button>` : ''}</div>
+              ${ALL ? `<div class="pc-grp">${TYPES[p.type].emo} ${esc(TYPES[p.type].one)}</div>` : ''}
               ${People.sub(p, true) || p.ref ? `<div class="pc-sub">${esc(People.sub(p, true))}${p.ref ? `${People.sub(p, true) ? ' · ' : ''}<span class="pc-ref">по приглашению</span>` : ''}</div>` : ''}
               ${chipsOf(p, 3)}
               ${st || accessOn(p) ? `<div class="pc-st">${st}${accessOn(p) ? `<span class="st good" title="Подарен доступ к Еве">Ева до ${esc(dateRu(p.access.until))}</span>` : ''}</div>` : ''}
@@ -221,11 +225,14 @@ function audiencePage(type) {
       $('#bo', root).onchange = e => { View.set(type + '.own', e.target.value); App.render(); };
       $('#bs', root).onchange = e => { View.set(type + '.sort', e.target.value); App.render(); };
       on(root, 'click', '[data-f-clear]', () => { View.set(type + '.f', ''); View.set(type + '.tag', ''); View.set(type + '.own', 'all'); App.render(); });
-      on(root, 'click', '[data-add]', () => openAdd(type));
+      on(root, 'click', '[data-add]', async (e, el) => {
+        if (!ALL) return openAdd(type);
+        const t = await pickPop(el, Object.keys(TYPES).map(k => [k, `${TYPES[k].emo} ${TYPES[k].one}`]), 'client');
+        if (t) openAdd(t);
+      });
       on(root, 'click', '[data-paste]', () => openPaste());
-      on(root, 'click', '[data-tform]', () => openTalkForm(type));
+      on(root, 'click', '[data-tform]', () => openTalkForm(ALL ? 'client' : type));
       on(root, 'click', '[data-bulk-del]', () => openBulkDelete(type));
-      on(root, 'click', '[data-stats]', () => { View.set('st.type', type); App.go('stats'); });
       on(root, 'click', '[data-open]', (e, el) => { if (e.target.closest('button')) return; App.go('p-' + el.dataset.open); });
       on(root, 'click', '[data-move-pop]', async (e, el) => {
         const p = People.get(el.dataset.movePop);
@@ -241,10 +248,11 @@ function audiencePage(type) {
         const before = People.moveTo(p, Number(col), zone);
         if (!before) { App.render(); return; }
         syncCall(id);
-        const zn = zone ? ' · ' + s3Map(type)[zone].name.toLowerCase() : '';
+        const zn = zone ? ' · ' + s3Map(p.type)[zone].name.toLowerCase() : '';
         toast(`${People.name(p)} → ${T.steps[Number(col) - 1]}${zn}`, {undo: () => People.patch(id, before, 'Отменили перенос', '↩')});
       }});
     },
   };
 }
 Object.keys(TYPES).forEach(type => App.register(type, audiencePage(type)));
+App.register('cd-all', audiencePage('all'));

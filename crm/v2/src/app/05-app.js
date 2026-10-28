@@ -65,7 +65,7 @@ const App = {
     if (id === 'import') { this.buildShellOnce(); openImport(param); history.replaceState(null, '', '#home'); id = 'home'; param = null; }
     if (!this.pages[id]) { id = 'home'; param = null; }
     this.buildShellOnce();
-    this.paintNav(id === 'person' ? (People.get(param) || {}).type : id);
+    this.paintNav(id);
     const prev = $('#page');
     const page = prev.cloneNode(false);
     prev.replaceWith(page);
@@ -112,14 +112,19 @@ const App = {
 
   paintNav(active) {
     /* у группы одна цифра — сколько в ней людей; что делать, видно на главной */
+    active = NAV_OF[active] || active;
     $('#nav').innerHTML = NAV.map(n => {
       const pend = n.id === 'team' && Who.can('team') ? Team.pending().length : 0;
-      const cnt = TYPES[n.id] ? People.all(n.id).length : n.id === 'calendar' ? callsBetween(Date.now() - 3600e3, dateOf(addDays(weekStart(today()), 7)).getTime()).filter(p => p.s2 === 'set').length || null
-        : n.id === 'meetings' ? Store.all('people').filter(p => People.col(p) === 2 && p.s2 !== 'set' && isMine(p)).length || null : pend || null;
-      /* новые ответы в группе для меня — розовой точкой с числом */
-      const fresh = TYPES[n.id] ? freshList().filter(p => p.type === n.id).length : 0;
-      return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${fresh ? `<span class="nav-n hot" title="Новые ответы">+${fresh}</span>` : ''}${cnt ? `<span class="nav-n ${pend ? 'hot' : ''}" ${pend ? 'title="Ждут подтверждения"' : n.id === 'meetings' ? 'title="Ждут назначения встречи"' : ''}>${cnt}</span>` : ''}</a>`;
-    }).join('');
+      const cnt = n.id === 'base' ? People.all().length || null : n.id === 'calendar' ? callsBetween(Date.now() - 3600e3, dateOf(addDays(weekStart(today()), 7)).getTime()).filter(p => p.s2 === 'set').length || null
+        : n.id === 'custdev' ? Store.all('people').filter(p => People.col(p) === 2 && p.s2 !== 'set' && isMine(p)).length || null
+        : n.id === 'tasks' ? Tasks.due().filter(t => isMineTask(t)).length || null
+        : n.id === 'sales' ? Sales.people().filter(p => Sales.soon(p, 7)).length || null
+        : n.id === 'partners' ? People.all('partner').length || null : n.id === 'ambs' ? People.all('amb').length || null : pend || null;
+      /* новые ответы для меня — розовой точкой с числом */
+      const fresh = n.id === 'custdev' ? freshList().length : 0;
+      const tip = {custdev: 'Ждут назначения встречи', tasks: 'Задачи на сегодня и просроченные', sales: 'Подписка заканчивается в ближайшие 7 дней'}[n.id];
+      return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${fresh ? `<span class="nav-n hot" title="Новые ответы">+${fresh}</span>` : ''}${cnt ? `<span class="nav-n ${pend || n.id === 'tasks' ? 'hot' : ''}" ${pend ? 'title="Ждут подтверждения"' : tip ? `title="${tip}"` : ''}>${cnt}</span>` : ''}</a>`;
+    }).join('') + `<a class="nav-hq" href="${onServer() ? '/' : CRM_HOME.replace(/crm\/?$/, '')}"><span class="nav-emo" aria-hidden="true">🏛</span><span>Штаб Eva Club</span><span class="nav-n">→</span></a>`;
     const m = Who.member();
     const st = Who.status();
     $('#meChip').innerHTML = `<a class="me-link" href="#team" title="Команда и мой профиль">${m ? Team.av(m) : avatar('Гость')}<div class="who"><b>${esc(m ? Team.name(m) : 'Гость')}</b><span>${esc(st === 'pending' ? 'Ждёт подтверждения' : !m ? 'Без регистрации' : (m.head ? 'Главная · ' : '') + (ROLES[Who.role()] ? ROLES[Who.role()].name : 'Наблюдатель'))}</span></div></a>`;

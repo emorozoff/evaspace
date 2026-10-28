@@ -31,19 +31,21 @@ const MEMBER_ST = {
 };
 
 /* смайл — только «лицо» раздела в меню; в статусах, кнопках и у цифр их нет */
+/* меню: «Кастдев» собирает доску всех групп, встречи, статистику и вопросы (35-custdev.js) */
 const NAV = [
-  {id: 'home',    emo: '🏠', name: 'Главная'},
-  {id: 'client',  emo: '🌸', name: 'Кастдев'},
-  {id: 'expert',  emo: '🎓', name: 'Эксперты'},
-  {id: 'partner', emo: '🤝', name: 'Партнёры'},
-  {id: 'amb',     emo: '📣', name: 'Амбассадоры'},
-  {id: 'meetings', emo: '💬', name: 'Встречи'},
+  {id: 'home',     emo: '🏠', name: 'Главная'},
+  {id: 'base',     emo: '🗂', name: 'База'},
+  {id: 'custdev',  emo: '🌸', name: 'Кастдев'},
+  {id: 'sales',    emo: '💳', name: 'Продажи'},
+  {id: 'partners', emo: '🤝', name: 'Партнёры'},
+  {id: 'ambs',     emo: '📣', name: 'Амбассадоры'},
+  {id: 'tasks',    emo: '✅', name: 'Задачи'},
   {id: 'calendar', emo: '🗓', name: 'Календарь'},
-  {id: 'stats',   emo: '📊', name: 'Статистика'},
-  {id: 'questions', emo: '❓', name: 'Вопросы'},
-  {id: 'team',      emo: '👥', name: 'Команда'},
-  {id: 'settings',  emo: '⚙️', name: 'Настройки'},
+  {id: 'team',     emo: '👥', name: 'Команда'},
+  {id: 'settings', emo: '⚙️', name: 'Настройки'},
 ];
+/* какой пункт меню подсвечен на странице */
+const NAV_OF = {client: 'custdev', expert: 'custdev', partner: 'custdev', amb: 'custdev', meetings: 'custdev', stats: 'custdev', questions: 'custdev', person: 'base'};
 /* одно имя группы везде: в меню, вкладках, выгрузке, «назад» */
 const groupName = type => (type === 'client' ? 'Кастдев' : TYPES[type].name);
 

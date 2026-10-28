@@ -834,6 +834,92 @@ body.dragging-now .b3-zones{display:grid;}
 @media (max-width:880px){ .gfind{order:2; flex:1 0 100%; margin:8px 0 0;} .gfind-res{right:0;} }
 .quote{white-space:pre-line;}
 
+/* ── структура 28.10: Кастдев, База, Продажи, Партнёры, Амбассадоры, Задачи ── */
+.nav-hq{margin-top:10px; border-top:1px solid rgba(255,255,255,.08); padding-top:12px !important;}
+.cd-top{display:flex; flex-direction:column; gap:10px; margin:-4px 0 18px;}
+.cd-tabs{display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--line);}
+.cd-tabs a{padding:9px 14px; font-size:13.5px; font-weight:500; color:var(--ink-2); text-decoration:none; border-bottom:2px solid transparent; margin-bottom:-1px; display:inline-flex; gap:6px; align-items:center;}
+.cd-tabs a.on{color:var(--ink); border-bottom-color:var(--link); font-weight:600;}
+.cd-tabs a .n{min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--link); color:#fff; font-size:11px; display:inline-grid; place-items:center;}
+.cd-groups{display:flex; gap:6px; flex-wrap:wrap;}
+.cd-groups .chip{text-decoration:none;}
+.chip-new{margin-left:4px; padding:0 6px; border-radius:8px; background:var(--link); color:#fff; font-size:10.5px; font-weight:700;}
+.pc-grp{font-size:11.5px; color:var(--ink-3);}
+.back-row{display:flex; gap:14px; flex-wrap:wrap; align-items:center;}
+/* база */
+.base-kpi{margin-bottom:12px;}
+.base-dash{display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr); gap:12px; margin-bottom:14px;}
+@media (max-width:1100px){ .base-dash{grid-template-columns:1fr;} }
+.base-types{display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:8px; align-content:start;}
+.bt-type{display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:var(--surface); cursor:pointer; text-align:left;}
+.bt-type span{font-size:18px;} .bt-type b{font-size:20px; font-variant-numeric:tabular-nums;} .bt-type small{font-size:12px; color:var(--ink-3);}
+.bt-type.on, .bt-type:hover{border-color:var(--link); background:var(--link-soft);}
+.tag-cloud{display:flex; flex-wrap:wrap; gap:6px;}
+.base-t tbody tr{cursor:pointer;} .base-t tbody tr:hover{background:var(--surface-2);}
+.base-t tr.is-new{background:var(--link-soft);}
+.base-t td{vertical-align:top;}
+.bt-who{display:flex; align-items:center; gap:9px; color:inherit; text-decoration:none; min-width:180px;}
+.bt-who .av{width:28px; height:28px; flex-basis:28px; font-size:10.5px;}
+.bt-who > span{display:flex; flex-direction:column;} .bt-who small{font-size:11.5px; color:var(--ink-3);}
+.bt-grp{white-space:nowrap;}
+.warn-t{color:var(--warn); font-weight:600;} .bad-t{color:var(--bad); font-weight:600;}
+.nowrap{white-space:nowrap;} .nowrap > * + *{margin-left:4px;}
+/* профиль в карточке */
+.pf{display:flex; flex-direction:column; gap:14px;}
+.pf-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:10px 14px;}
+.pf-ref{display:flex; align-items:center; gap:8px; height:38px; text-decoration:none; color:inherit;} .pf-ref .av{width:24px; height:24px; flex-basis:24px; font-size:9.5px;} .pf-ref small{color:var(--ink-3);}
+.pf-sum{display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:8px; background:var(--surface-2); border-radius:10px; padding:12px 14px;}
+.pf-sum div{display:flex; flex-direction:column; gap:2px;} .pf-sum span{font-size:11.5px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.04em;} .pf-sum b{font-size:13.5px; font-weight:600;}
+/* продажи */
+.sl{display:flex; flex-direction:column; gap:14px;}
+.sl-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap;} .sl-head .sp{flex:1;}
+.sl-body{margin-top:14px;}
+.grp-list{display:flex; flex-direction:column; gap:8px;}
+.grp{padding:12px 14px;}
+.grp-h{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.grp-h > div{flex:1; min-width:200px; display:flex; flex-direction:column;} .grp-h small{font-size:12px; color:var(--ink-3);}
+.grp-n{min-width:34px; height:28px; padding:0 8px; border-radius:14px; background:var(--sunken); font-weight:700; display:inline-grid; place-items:center; font-variant-numeric:tabular-nums;}
+.grp-h .iv-pbar{width:90px;}
+.grp-m{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
+.grp-p{display:inline-flex; align-items:center; gap:7px; padding:5px 10px 5px 5px; border-radius:16px; background:var(--sunken); color:inherit; text-decoration:none; font-size:12.5px;}
+.grp-p .av{width:22px; height:22px; flex-basis:22px; font-size:9px;} .grp-p span{display:flex; flex-direction:column;} .grp-p small{font-size:10.5px; color:var(--ink-3);}
+.ml-head{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px;} .ml-head h2{font-size:17px;} .ml-head .sp{flex:1;}
+.ml-text{margin-bottom:12px;} .ml-text pre{white-space:pre-wrap; font:inherit; margin:0 0 10px; padding:12px; background:var(--surface-2); border-radius:8px;}
+tr.ml-done td{opacity:.6;}
+/* партнёры */
+.pt{display:flex; flex-direction:column; gap:8px;}
+.pt-stages{display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+.pt-stages button{height:30px; padding:0 12px; border-radius:15px; border:1px solid var(--line-strong); background:var(--surface); font-size:12.5px; cursor:pointer;}
+.pt-stages button.on{background:var(--good); border-color:var(--good); color:#fff; font-weight:600;}
+.pt-train{display:flex; flex-direction:column; gap:4px;}
+.pt-tm{display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border-radius:8px; background:var(--surface-2); cursor:pointer;}
+.pt-tm input{margin-top:3px; width:16px; height:16px; accent-color:var(--good);} .pt-tm span{display:flex; flex-direction:column;} .pt-tm small{font-size:12px; color:var(--ink-3);}
+.pt-tm.done b{color:var(--good);}
+.pt-points{display:flex; flex-direction:column; gap:6px;}
+.pt-point{display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:8px 10px; border:1px solid var(--line); border-radius:8px;}
+.pt-board{display:grid; grid-template-columns:repeat(5, minmax(200px, 1fr)); gap:10px; overflow-x:auto; align-items:start;}
+.pt-board .pc{text-decoration:none; color:inherit;}
+.pt-col[data-pst-col="active"]{--acc:var(--good);} .pt-col[data-pst-col="training"]{--acc:var(--violet);} .pt-col[data-pst-col="terms"]{--acc:var(--gold);} .pt-col[data-pst-col="new"]{--acc:var(--link);} .pt-col[data-pst-col="pause"]{--acc:var(--ink-3);}
+.collab-grid{display:grid; grid-template-columns:repeat(4, minmax(200px, 1fr)); gap:12px; overflow-x:auto;}
+.collab{padding:12px 14px; display:flex; flex-direction:column; gap:4px; cursor:pointer; margin-bottom:8px; font-size:13px;}
+.collab:hover{border-color:var(--line-strong);}
+.collab-h{display:flex; gap:8px; align-items:center; justify-content:space-between;}
+.collab small{color:var(--ink-3);}
+.tr-list{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:8px;}
+.tr-list li{padding-left:4px;} .tr-list li{display:list-item;}
+.tr-list li > span:first-child{display:inline-flex; flex-direction:column; min-width:60%;} .tr-list small{color:var(--ink-3); font-size:12px;}
+/* задачи */
+.tk{display:flex; align-items:center; gap:10px; padding:8px 4px; border-top:1px solid var(--line);}
+.tk:first-of-type{border-top:0;}
+.tk input[type=checkbox]{width:17px; height:17px; flex:none; accent-color:var(--good);}
+.tk-t{flex:1; display:flex; flex-direction:column; min-width:0;} .tk-t small{font-size:12px; color:var(--ink-3);}
+.tk.done .tk-t b{text-decoration:line-through; color:var(--ink-3); font-weight:500;}
+.tk.late{background:var(--bad-soft); border-radius:8px; padding:8px;}
+.tk-add{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px;}
+.tk-add input[name=text]{flex:1 1 260px;} .tk-add .input[type=date]{width:auto;} .tk-add .select{width:auto;}
+.tk-box{border-top:1px solid var(--line); padding-top:6px;}
+@media (max-width:760px){ .pt-board, .collab-grid{grid-template-columns:repeat(5, 240px);} }
+
 /* ── 20-calendar.css ── */
 /* ── календарь созвонов: сетка недели как в штабе, цвет — по группе ── */
 .g-client{--g:var(--link);} .g-expert{--g:var(--violet);} .g-partner{--g:var(--good);} .g-amb{--g:var(--gold);} .g-google{--g:var(--ink-3);}
@@ -1506,19 +1592,21 @@ const MEMBER_ST = {
 };
 
 /* смайл — только «лицо» раздела в меню; в статусах, кнопках и у цифр их нет */
+/* меню: «Кастдев» собирает доску всех групп, встречи, статистику и вопросы (35-custdev.js) */
 const NAV = [
-  {id: 'home',    emo: '🏠', name: 'Главная'},
-  {id: 'client',  emo: '🌸', name: 'Кастдев'},
-  {id: 'expert',  emo: '🎓', name: 'Эксперты'},
-  {id: 'partner', emo: '🤝', name: 'Партнёры'},
-  {id: 'amb',     emo: '📣', name: 'Амбассадоры'},
-  {id: 'meetings', emo: '💬', name: 'Встречи'},
+  {id: 'home',     emo: '🏠', name: 'Главная'},
+  {id: 'base',     emo: '🗂', name: 'База'},
+  {id: 'custdev',  emo: '🌸', name: 'Кастдев'},
+  {id: 'sales',    emo: '💳', name: 'Продажи'},
+  {id: 'partners', emo: '🤝', name: 'Партнёры'},
+  {id: 'ambs',     emo: '📣', name: 'Амбассадоры'},
+  {id: 'tasks',    emo: '✅', name: 'Задачи'},
   {id: 'calendar', emo: '🗓', name: 'Календарь'},
-  {id: 'stats',   emo: '📊', name: 'Статистика'},
-  {id: 'questions', emo: '❓', name: 'Вопросы'},
-  {id: 'team',      emo: '👥', name: 'Команда'},
-  {id: 'settings',  emo: '⚙️', name: 'Настройки'},
+  {id: 'team',     emo: '👥', name: 'Команда'},
+  {id: 'settings', emo: '⚙️', name: 'Настройки'},
 ];
+/* какой пункт меню подсвечен на странице */
+const NAV_OF = {client: 'custdev', expert: 'custdev', partner: 'custdev', amb: 'custdev', meetings: 'custdev', stats: 'custdev', questions: 'custdev', person: 'base'};
 /* одно имя группы везде: в меню, вкладках, выгрузке, «назад» */
 const groupName = type => (type === 'client' ? 'Кастдев' : TYPES[type].name);
 
@@ -2195,7 +2283,7 @@ function answerLabels(q, v) {
    клиентке одновременно, не затирают друг друга. */
 
 const Store = (() => {
-  const COLS = ['team', 'people', 'cfg'];
+  const COLS = ['team', 'people', 'cfg', 'tasks', 'groups', 'mail', 'collabs'];
   const LS = 'eva-crm2:';
   const data = Object.fromEntries(COLS.map(c => [c, new Map()]));
   const subs = new Set();
@@ -2977,7 +3065,7 @@ const App = {
     if (id === 'import') { this.buildShellOnce(); openImport(param); history.replaceState(null, '', '#home'); id = 'home'; param = null; }
     if (!this.pages[id]) { id = 'home'; param = null; }
     this.buildShellOnce();
-    this.paintNav(id === 'person' ? (People.get(param) || {}).type : id);
+    this.paintNav(id);
     const prev = $('#page');
     const page = prev.cloneNode(false);
     prev.replaceWith(page);
@@ -3024,14 +3112,19 @@ const App = {
 
   paintNav(active) {
     /* у группы одна цифра — сколько в ней людей; что делать, видно на главной */
+    active = NAV_OF[active] || active;
     $('#nav').innerHTML = NAV.map(n => {
       const pend = n.id === 'team' && Who.can('team') ? Team.pending().length : 0;
-      const cnt = TYPES[n.id] ? People.all(n.id).length : n.id === 'calendar' ? callsBetween(Date.now() - 3600e3, dateOf(addDays(weekStart(today()), 7)).getTime()).filter(p => p.s2 === 'set').length || null
-        : n.id === 'meetings' ? Store.all('people').filter(p => People.col(p) === 2 && p.s2 !== 'set' && isMine(p)).length || null : pend || null;
-      /* новые ответы в группе для меня — розовой точкой с числом */
-      const fresh = TYPES[n.id] ? freshList().filter(p => p.type === n.id).length : 0;
-      return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${fresh ? `<span class="nav-n hot" title="Новые ответы">+${fresh}</span>` : ''}${cnt ? `<span class="nav-n ${pend ? 'hot' : ''}" ${pend ? 'title="Ждут подтверждения"' : n.id === 'meetings' ? 'title="Ждут назначения встречи"' : ''}>${cnt}</span>` : ''}</a>`;
-    }).join('');
+      const cnt = n.id === 'base' ? People.all().length || null : n.id === 'calendar' ? callsBetween(Date.now() - 3600e3, dateOf(addDays(weekStart(today()), 7)).getTime()).filter(p => p.s2 === 'set').length || null
+        : n.id === 'custdev' ? Store.all('people').filter(p => People.col(p) === 2 && p.s2 !== 'set' && isMine(p)).length || null
+        : n.id === 'tasks' ? Tasks.due().filter(t => isMineTask(t)).length || null
+        : n.id === 'sales' ? Sales.people().filter(p => Sales.soon(p, 7)).length || null
+        : n.id === 'partners' ? People.all('partner').length || null : n.id === 'ambs' ? People.all('amb').length || null : pend || null;
+      /* новые ответы для меня — розовой точкой с числом */
+      const fresh = n.id === 'custdev' ? freshList().length : 0;
+      const tip = {custdev: 'Ждут назначения встречи', tasks: 'Задачи на сегодня и просроченные', sales: 'Подписка заканчивается в ближайшие 7 дней'}[n.id];
+      return `<a href="#${n.id}" class="${n.id === active ? 'on' : ''}"><span class="nav-emo" aria-hidden="true">${n.emo}</span><span>${n.name}</span>${fresh ? `<span class="nav-n hot" title="Новые ответы">+${fresh}</span>` : ''}${cnt ? `<span class="nav-n ${pend || n.id === 'tasks' ? 'hot' : ''}" ${pend ? 'title="Ждут подтверждения"' : tip ? `title="${tip}"` : ''}>${cnt}</span>` : ''}</a>`;
+    }).join('') + `<a class="nav-hq" href="${onServer() ? '/' : CRM_HOME.replace(/crm\/?$/, '')}"><span class="nav-emo" aria-hidden="true">🏛</span><span>Штаб Eva Club</span><span class="nav-n">→</span></a>`;
     const m = Who.member();
     const st = Who.status();
     $('#meChip').innerHTML = `<a class="me-link" href="#team" title="Команда и мой профиль">${m ? Team.av(m) : avatar('Гость')}<div class="who"><b>${esc(m ? Team.name(m) : 'Гость')}</b><span>${esc(st === 'pending' ? 'Ждёт подтверждения' : !m ? 'Без регистрации' : (m.head ? 'Главная · ' : '') + (ROLES[Who.role()] ? ROLES[Who.role()].name : 'Наблюдатель'))}</span></div></a>`;
@@ -4472,14 +4565,17 @@ function wirePicked(el, picked, cfg) {
 }
 
 
+/* type 'all' — общая доска кастдева: все группы в одних трёх шагах */
+const ALL_T = {emo: '🔎', name: 'Все', one: 'Контакт', about: 'Весь кастдев на одной доске: эксперты, клиентки, партнёры и амбассадоры', steps: ['Анкета', 'Встреча', 'Итог']};
 function audiencePage(type) {
+  const ALL = type === 'all';
   return {
-    title: groupName(type),
+    title: ALL ? 'Кастдев' : groupName(type),
     render(root) {
-      const T = TYPES[type];
+      const T = ALL ? ALL_T : TYPES[type];
       const q = View.get(type + '.q', '').trim().toLowerCase();
       const f = View.get(type + '.f', ''), tg = View.get(type + '.tag', '');
-      const everyone = People.all(type);
+      const everyone = People.all(ALL ? null : type);
       let list = everyone;
       if (q) list = list.filter(p => (People.name(p) + ' ' + (p.city || '') + ' ' + (p.code || '') + ' ' + (p.topic || '') + ' ' + (p.tags || []).join(' ')).toLowerCase().includes(q));
       if (f) list = list.filter(p => (type === 'expert' ? (p.dirs || []).includes(f) : type === 'partner' ? p.cat === f : true));
@@ -4496,12 +4592,12 @@ function audiencePage(type) {
         owner: ['По исполнителю', (a, b) => Team.name(Team.get(a.owner)).localeCompare(Team.name(Team.get(b.owner)), 'ru')],
         call: ['Ближайшие созвоны', (a, b) => (a.callAt && a.s2 === 'set' ? a.callAt : 9e15) - (b.callAt && b.s2 === 'set' ? b.callAt : 9e15)]};
       list = list.slice().sort((SORTS[sort] || SORTS.new)[1]);
-      const tags = People.tagsOf(type);
+      const tags = People.tagsOf(ALL ? null : type);
       const cols = [1, 2, 3].map(c => list.filter(p => People.col(p) === c));
       const hints = [
         'Отправьте ссылку — человек ответит сам за 3 минуты. Или заполните за него.',
-        type === 'client' ? 'Интервью в Zoom — 40 минут по плану. Вопросы, таймер и заметки — в карточке; или вопросы ссылкой, письменно.' : 'Созвон 30 минут: знакомимся и договариваемся.',
-        type === 'client' ? 'Отметьте, что услышали, — это попадёт в статистику.' : 'Запишите решение: подключаем, думает или не сейчас.',
+        ALL ? 'Встреча в Zoom: у клиенток — интервью 40 минут, у остальных — созвон 30 минут.' : type === 'client' ? 'Интервью в Zoom — 40 минут по плану. Вопросы, таймер и заметки — в карточке; или вопросы ссылкой, письменно.' : 'Созвон 30 минут: знакомимся и договариваемся.',
+        ALL ? 'Подведите итог: у клиенток — что услышали, у остальных — решение.' : type === 'client' ? 'Отметьте, что услышали, — это попадёт в статистику.' : 'Запишите решение: подключаем, думает или не сейчас.',
       ];
       /* направления и категории — выпадающим списком (с числом людей), а не стеной кнопок */
       const filters = type === 'expert' ? DIRECTIONS.map(d => [d, everyone.filter(p => (p.dirs || []).includes(d)).length])
@@ -4516,8 +4612,8 @@ function audiencePage(type) {
       const sSel = `<select class="select sm t-filter" id="bs" aria-label="Порядок">${Object.entries(SORTS).map(([k, [n]]) => `<option value="${k}" ${sort === k ? 'selected' : ''}>${n}</option>`).join('')}</select>`;
 
       root.innerHTML = `
-        ${pageHead(`${T.emo} ${groupName(type)}`, esc(T.about),
-          `<button class="btn" data-stats>${icon('chart')}Статистика</button>${canEdit ? `<button class="btn" data-tform>${icon('msg')}${type === 'client' ? 'Форма интервью' : 'Вопросы формой'}</button><button class="btn" data-paste>${icon('inbox')}Вставить ответы</button><button class="btn primary" data-add>${icon('plus')}${type === 'client' ? 'Клиентка' : T.one}</button>` : ''}${Who.can('delete') && everyone.length ? `<button class="icon-btn" data-bulk-del title="Удалить несколько карточек — например, тестовые">${icon('trash')}</button>` : ''}`)}
+        ${pageHead(ALL ? 'Кастдев' : `${T.emo} ${groupName(type)}`, esc(T.about),
+          `${canEdit ? `<button class="btn" data-tform>${icon('msg')}${ALL || type === 'client' ? 'Форма интервью' : 'Вопросы формой'}</button><button class="btn" data-paste>${icon('inbox')}Вставить ответы</button><button class="btn primary" data-add>${icon('plus')}${ALL ? 'Добавить контакт' : type === 'client' ? 'Клиентка' : T.one}</button>` : ''}${!ALL && Who.can('delete') && everyone.length ? `<button class="icon-btn" data-bulk-del title="Удалить несколько карточек — например, тестовые">${icon('trash')}</button>` : ''}`)}
         ${!everyone.length ? `<div class="welcome"><span class="e">${T.emo}</span><div><b>Здесь пока никого</b><p>Добавьте первого человека — ссылка на анкету скопируется сама. ${type === 'client' ? 'Для кастдева хватит 10–15 интервью, чтобы увидеть закономерности.' : ''}</p></div></div>` : ''}
         <div class="t-bar"><input class="input sm t-search" id="bq" placeholder="Поиск: имя, город, код, тег" value="${esc(View.get(type + '.q', ''))}">${oSel}${fSel}${tSel}${sSel}
           ${f || tg || ow !== 'all' ? '<button class="link-btn" data-f-clear>Сбросить</button>' : ''}<span class="t-bar-sp"></span>
@@ -4525,9 +4621,10 @@ function audiencePage(type) {
         <div class="board3 ${canEdit ? 'can-drag' : ''}">${[0, 1, 2].map(i => `
           <div class="b3-col" data-col="${i + 1}"><div class="b3-h"><span class="num">${i + 1}</span><b>${T.steps[i]}</b><span class="kb-n">${cols[i].length}</span></div>
             <div class="b3-hint">${esc(hints[i])}</div>
-            ${i === 2 && canEdit ? `<div class="b3-zones">${Object.entries(s3Map(type)).filter(([k]) => k !== 'none').map(([k, z]) => `<div class="b3-zone ${z.tone}" data-zone="${k}">${esc(z.name)}</div>`).join('')}</div>` : ''}
+            ${i === 2 && canEdit && !ALL ? `<div class="b3-zones">${Object.entries(s3Map(type)).filter(([k]) => k !== 'none').map(([k, z]) => `<div class="b3-zone ${z.tone}" data-zone="${k}">${esc(z.name)}</div>`).join('')}</div>` : ''}
             <div class="b3-list">${cols[i].map(p => { const st = statusLine(p), acts = nextActs(p), o = Team.get(p.owner), isNew = freshFor(p); return `<div class="pc ${isNew ? 'is-new' : ''}" data-open="${p.id}" data-drag="${p.id}">
               <div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b>${isNew ? `<span class="new-dot" title="${esc(p.fresh.text)}">новое</span>` : ''}${o ? `<span class="pc-owner" title="Ведёт: ${esc(Team.name(o))}">${Team.av(o, 'xs')}</span>` : ''}${canEdit ? `<button class="pc-move" data-move-pop="${p.id}" title="Перенести на другой этап" aria-label="Перенести на другой этап">${icon('swap')}</button>` : ''}</div>
+              ${ALL ? `<div class="pc-grp">${TYPES[p.type].emo} ${esc(TYPES[p.type].one)}</div>` : ''}
               ${People.sub(p, true) || p.ref ? `<div class="pc-sub">${esc(People.sub(p, true))}${p.ref ? `${People.sub(p, true) ? ' · ' : ''}<span class="pc-ref">по приглашению</span>` : ''}</div>` : ''}
               ${chipsOf(p, 3)}
               ${st || accessOn(p) ? `<div class="pc-st">${st}${accessOn(p) ? `<span class="st good" title="Подарен доступ к Еве">Ева до ${esc(dateRu(p.access.until))}</span>` : ''}</div>` : ''}
@@ -4543,11 +4640,14 @@ function audiencePage(type) {
       $('#bo', root).onchange = e => { View.set(type + '.own', e.target.value); App.render(); };
       $('#bs', root).onchange = e => { View.set(type + '.sort', e.target.value); App.render(); };
       on(root, 'click', '[data-f-clear]', () => { View.set(type + '.f', ''); View.set(type + '.tag', ''); View.set(type + '.own', 'all'); App.render(); });
-      on(root, 'click', '[data-add]', () => openAdd(type));
+      on(root, 'click', '[data-add]', async (e, el) => {
+        if (!ALL) return openAdd(type);
+        const t = await pickPop(el, Object.keys(TYPES).map(k => [k, `${TYPES[k].emo} ${TYPES[k].one}`]), 'client');
+        if (t) openAdd(t);
+      });
       on(root, 'click', '[data-paste]', () => openPaste());
-      on(root, 'click', '[data-tform]', () => openTalkForm(type));
+      on(root, 'click', '[data-tform]', () => openTalkForm(ALL ? 'client' : type));
       on(root, 'click', '[data-bulk-del]', () => openBulkDelete(type));
-      on(root, 'click', '[data-stats]', () => { View.set('st.type', type); App.go('stats'); });
       on(root, 'click', '[data-open]', (e, el) => { if (e.target.closest('button')) return; App.go('p-' + el.dataset.open); });
       on(root, 'click', '[data-move-pop]', async (e, el) => {
         const p = People.get(el.dataset.movePop);
@@ -4563,13 +4663,14 @@ function audiencePage(type) {
         const before = People.moveTo(p, Number(col), zone);
         if (!before) { App.render(); return; }
         syncCall(id);
-        const zn = zone ? ' · ' + s3Map(type)[zone].name.toLowerCase() : '';
+        const zn = zone ? ' · ' + s3Map(p.type)[zone].name.toLowerCase() : '';
         toast(`${People.name(p)} → ${T.steps[Number(col) - 1]}${zn}`, {undo: () => People.patch(id, before, 'Отменили перенос', '↩')});
       }});
     },
   };
 }
 Object.keys(TYPES).forEach(type => App.register(type, audiencePage(type)));
+App.register('cd-all', audiencePage('all'));
 
 /* ── 21-person.js ── */
 /* Карточка человека: три шага крупно, анкета (ответы кнопками), режим
@@ -4782,15 +4883,22 @@ App.register('person', {
           <label class="field"><span>Заметка</span><textarea class="textarea" data-res="note" placeholder="Условия, договорённости, что важно помнить">${esc(res.note || '')}</textarea></label>
           ${p.type === 'amb' ? `<div class="okline">Реферальная ссылка амбассадора — та же, что и для анкеты. Кто придёт по ней, появится с пометкой «по приглашению». Уже пришли: <b>${invited.length}</b></div>` : ''}</div>`;
       }
+    } else if (tab === 'profile') {
+      pane = profilePane(p, canEdit);
+    } else if (tab === 'sales') {
+      pane = salesPane(p, canEdit);
+    } else if (tab === 'partner') {
+      pane = partnerPane(p, canEdit);
     } else {
-      const log = Object.values(p.log || {}).sort((a, b) => b.t - a.t);
-      pane = `<div class="log">${log.map(l => `<div><time>${when(l.t)}</time><span>${esc(noEmo(l.text))}${l.by && Team.get(l.by) ? ` <span class="muted">· ${esc(Team.first(Team.get(l.by)))}</span>` : ''}</span></div>`).join('') || '<p class="note">Пока пусто</p>'}</div>`;
+      /* вся история: шаги и правки карточки, рассылки, задачи */
+      const log = historyItems(p);
+      pane = `<div class="log">${log.map(l => `<div><time>${when(l.t)}</time><span>${esc(l.text)}${l.by && Team.get(l.by) ? ` <span class="muted">· ${esc(Team.first(Team.get(l.by)))}</span>` : ''}</span></div>`).join('') || '<p class="note">Пока пусто</p>'}</div>`;
     }
 
     const talkN = Object.values(p.talk || {}).filter(x => x && x.a).length;
     const tgLink = p.tg ? (tgUrl ? `<a href="${esc(tgUrl)}" target="_blank" rel="noopener">@${esc(tgUser(p.tg))}</a>` : `<span>${esc(p.tg)}</span>`) : '';
     root.innerHTML = `
-      <a class="back-link" href="#${p.type}">${icon('back')}${groupName(p.type)}</a>
+      <div class="back-row"><a class="back-link" href="#${p.type}">${icon('back')}Кастдев · ${groupName(p.type)}</a><a class="back-link" href="#base">База</a>${p.type === 'partner' ? '<a class="back-link" href="#partners">Партнёры</a>' : p.type === 'amb' ? '<a class="back-link" href="#ambs">Амбассадоры</a>' : ''}${Sales.in(p) ? '<a class="back-link" href="#sales">Продажи</a>' : ''}</div>
       <div class="ph"><span class="type-emo" title="${esc(T.one)}">${T.emo}</span>
         <div><h1>${esc(People.name(p))}</h1>
           <div class="ph-sub"><span class="code" title="Личный код: в ссылке на анкету и в реферальной ссылке">${esc(p.code)}</span>
@@ -4809,7 +4917,8 @@ App.register('person', {
       </div>
       ${steps}
       <div class="card" style="padding:0;overflow:clip">
-        <div style="padding:0 12px;background:var(--surface-2)">${tabsHtml('pp.tab', [['anketa', 'Анкета', Object.keys(p.answers || {}).length || null], ['talk', p.type === 'client' ? 'Интервью' : 'Созвон', talkN || null], ['result', 'Итог'], ['log', 'История']], tab)}</div>
+        <div style="padding:0 12px;background:var(--surface-2)">${tabsHtml('pp.tab', [['profile', 'Профиль'], ['anketa', 'Анкета', Object.keys(p.answers || {}).length || null], ['talk', p.type === 'client' ? 'Интервью' : 'Созвон', talkN || null], ['result', 'Итог'],
+          ...(p.type === 'partner' ? [['partner', 'Партнёрство']] : [['sales', 'Продажи', Sales.status(p) ? '•' : null]]), ['log', 'История', null]], tab)}</div>
         <div style="padding:14px 18px">${pane}</div>
       </div>`;
 
@@ -4846,6 +4955,9 @@ App.register('person', {
     });
     on(root, 'click', '[data-copy-q]', () => copyOrShow(Questions.talk(p.type).map((q, i) => `${i + 1}. ${q.t}`).join('\n'), 'Вопросы скопированы — можно вставить в заметки Zoom 📋'));
     if (tab === 'talk') wireInterview(root, p);
+    if (tab === 'profile') wireProfile(root, p);
+    if (tab === 'sales') wireSales(root, p);
+    if (tab === 'partner') wirePartner(root, p);
     /* черновик итога от Claude */
     on(root, 'click', '[data-ai]', async () => {
       Drafts[p.id] = {loading: true};
@@ -6313,6 +6425,908 @@ function openQuestion(type, part, i) {
       };
     }});
 }
+
+/* ── 35-custdev.js ── */
+/* Кастдев — один раздел вместо четырёх: сверху вкладки «Доска · Встречи · Статистика · Настройки»,
+   на доске — переключатель групп «Все · Эксперты · Клиентки · Партнёры · Амбассадоры». Старые адреса
+   (#client, #expert, #partner, #amb, #meetings, #stats, #questions) работают и открываются внутри раздела. */
+
+const CD_TABS = [['custdev', 'Доска'], ['meetings', 'Встречи'], ['stats', 'Статистика'], ['questions', 'Настройки: вопросы и формы']];
+const CD_GROUPS = [['all', 'Все'], ['expert', 'Эксперты'], ['client', 'Клиентки'], ['partner', 'Партнёры'], ['amb', 'Амбассадоры']];
+const CD_ROUTES = ['custdev', 'meetings', 'stats', 'questions', ...Object.keys(TYPES)];
+const cdHash = g => (g === 'all' ? 'custdev' : g);
+
+function cdTop(tab, group) {
+  const n = g => (g === 'all' ? People.all().length : People.all(g).length);
+  const fresh = g => freshList().filter(p => g === 'all' || p.type === g).length;
+  return `<div class="cd-top">
+    <nav class="cd-tabs" aria-label="Кастдев">${CD_TABS.map(([k, name]) => `<a href="#${k === 'custdev' ? cdHash(group) : k}" class="${tab === k ? 'on' : ''}">${name}${k === 'meetings' ? (() => { const c = Store.all('people').filter(p => People.col(p) === 2 && p.s2 !== 'set').length; return c ? `<span class="n">${c}</span>` : ''; })() : ''}</a>`).join('')}</nav>
+    ${tab === 'custdev' ? `<div class="cd-groups" role="group" aria-label="Группа">${CD_GROUPS.map(([g, name]) => `<a href="#${cdHash(g)}" class="chip ${group === g ? 'on' : ''}">${g === 'all' ? '' : TYPES[g].emo + ' '}${name}<span class="chip-n">${n(g)}</span>${fresh(g) ? `<span class="chip-new">+${fresh(g)}</span>` : ''}</a>`).join('')}</div>` : ''}
+  </div>`;
+}
+/* страница внутри раздела: полоса сверху и сама страница ниже */
+function cdWrap(tab, inner, group = null) {
+  return {
+    title: inner.title,
+    render(root) {
+      const g = group || View.get('cd.type', 'all');
+      if (group) View.set('cd.type', group);
+      root.innerHTML = `${cdTop(tab, g)}<div class="cd-body"></div>`;
+      inner.render($('.cd-body', root));
+    },
+  };
+}
+(() => {
+  const P = App.pages;
+  const board = g => (g === 'all' ? P['cd-all'] : P[g]);
+  const boards = Object.fromEntries(Object.keys(TYPES).map(k => [k, P[k]]));
+  App.register('custdev', {title: 'Кастдев', render(root) { View.set('cd.type', 'all'); cdWrap('custdev', board('all'), 'all').render(root); }});
+  Object.keys(TYPES).forEach(k => App.register(k, cdWrap('custdev', boards[k], k)));
+  ['meetings', 'stats', 'questions'].forEach(k => App.register(k, cdWrap(k, P[k])));
+})();
+
+/* ── 36-base.js ── */
+/* База — все контакты разом: клиентки, эксперты, партнёры, амбассадоры. Сверху — сводка, ниже —
+   список с поиском, фильтрами (группа, этап, канал, тег, срок) и сортировкой; строка ведёт в карточку.
+   В карточке вкладка «Профиль»: ID в Еве, канал, кем привлечён, продукты, подписчики, скидка партнёра
+   и задачи по контакту; «История» — все касания: шаги, рассылки, задачи. */
+
+const CHANNELS = ['Telegram', 'Instagram', 'ВКонтакте', 'YouTube', 'Блогер', 'Подруга / рекомендация', 'Эксперт', 'Партнёр: студия или салон', 'Мероприятие', 'Сайт', 'Реклама', 'Другое'];
+const PRODUCTS = ['Подписка Ева', 'Годовая программа', 'Курс эксперта', 'Мастер-класс', 'Ретрит', 'Офлайн-встреча', 'Маркет'];
+/* канал: указан в карточке → ответ анкеты «Откуда узнала» → пришла по ссылке подруги */
+function channelOf(p) {
+  if (p.channel) return p.channel;
+  const s = noEmo((p.answers || {}).source || '');
+  if (s) return ({'Подруга': 'Подруга / рекомендация', 'Студия или салон': 'Партнёр: студия или салон'})[s] || (CHANNELS.includes(s) ? s : s.startsWith('Другое') ? 'Другое' : s);
+  return p.ref ? 'Подруга / рекомендация' : '';
+}
+/* кем привлечён: человек из базы по реферальной ссылке или как записали руками */
+function recruiter(p) { const r = p.ref ? People.byCode(p.ref) : null; return r ? {p: r, name: People.name(r)} : p.refText ? {name: p.refText} : null; }
+/* продукты: отмеченные + действующая подписка и подарочный доступ */
+function productsOf(p) {
+  const out = [...(p.products || [])];
+  const st = Sales.status(p);
+  if (['paid', 'renewed'].includes(st) && !out.includes('Подписка Ева')) out.unshift('Подписка Ева');
+  if (accessOn(p)) out.push('Доступ в подарок');
+  return out;
+}
+const lastTouch = p => p.touchedAt || p.createdAt || 0;
+const DAY = 864e5;
+
+const BASE_STATUS = [['', 'Все этапы'], ['s1', 'Шаг 1 · анкета'], ['s2', 'Шаг 2 · встреча'], ['s3', 'Шаг 3 · итог'], ['sub', 'С подпиской'], ['gift', 'С доступом в подарок'], ['reg', 'Зарегистрированы, не купили'], ['churn', 'Не продлили']];
+const BASE_PERIOD = [['', 'За всё время'], ['7', 'Добавлены за 7 дней'], ['30', 'Добавлены за 30 дней'], ['90', 'Добавлены за 90 дней'], ['idle30', 'Без касаний больше 30 дней'], ['exp7', 'Подписка или доступ кончается за 7 дней']];
+const BASE_SORT = {
+  new: ['Сначала новые', (a, b) => (b.createdAt || 0) - (a.createdAt || 0)],
+  touch: ['Последние касания', (a, b) => lastTouch(b) - lastTouch(a)],
+  idle: ['Давно без касаний', (a, b) => lastTouch(a) - lastTouch(b)],
+  name: ['По имени', (a, b) => People.name(a).localeCompare(People.name(b), 'ru')],
+  until: ['Скоро кончается доступ', (a, b) => (untilOf(a) || 9e15) - (untilOf(b) || 9e15)],
+};
+/* до какого числа у человека есть Ева: подписка или подарок */
+const untilOf = p => Math.max(Sales.until(p) || 0, accessOn(p) ? p.access.until : 0) || null;
+function baseMatch(p, st) {
+  if (!st) return true;
+  if (st === 's1' || st === 's2' || st === 's3') return People.col(p) === Number(st[1]);
+  const s = Sales.status(p);
+  if (st === 'sub') return ['paid', 'renewed'].includes(s);
+  if (st === 'gift') return accessOn(p);
+  if (st === 'reg') return s === 'reg' || s === 'trial';
+  if (st === 'churn') return s === 'churn';
+  return true;
+}
+
+App.register('base', {
+  title: 'База',
+  render(root) {
+    const V = k => View.get('b.' + k, '');
+    const type = V('type'), q = V('q').trim().toLowerCase(), tag = V('tag'), ch = V('ch'), st = V('st'), per = V('per'), sort = V('sort') || 'new';
+    const all = People.all();
+    const now = Date.now();
+    let list = type ? all.filter(p => p.type === type) : all;
+    if (q) list = list.filter(p => [People.name(p), p.city, p.code, p.evaId, p.tg, (p.tags || []).join(' '), channelOf(p)].join(' ').toLowerCase().includes(q));
+    if (tag) list = list.filter(p => (p.tags || []).includes(tag));
+    if (ch) list = list.filter(p => channelOf(p) === ch);
+    list = list.filter(p => baseMatch(p, st));
+    if (/^\d+$/.test(per)) list = list.filter(p => (p.createdAt || 0) > now - Number(per) * DAY);
+    if (per === 'idle30') list = list.filter(p => lastTouch(p) < now - 30 * DAY);
+    if (per === 'exp7') list = list.filter(p => { const u = untilOf(p); return u && u > now && u < now + 7 * DAY; });
+    list = list.slice().sort((BASE_SORT[sort] || BASE_SORT.new)[1]);
+    /* сводка — по всей базе, не по фильтру */
+    const by = k => all.filter(p => p.type === k).length;
+    const fresh30 = all.filter(p => (p.createdAt || 0) > now - 30 * DAY).length;
+    const subs = all.filter(p => ['paid', 'renewed'].includes(Sales.status(p))).length;
+    const gifts = all.filter(accessOn).length, refs = all.filter(p => p.ref).length;
+    const chRows = Object.entries(all.reduce((m, p) => { const c = channelOf(p); if (c) m[c] = (m[c] || 0) + 1; return m; }, {})).map(([name, v]) => ({name, v})).sort((a, b) => b.v - a.v).slice(0, 7);
+    const tagN = all.reduce((m, p) => { (p.tags || []).forEach(t => { m[t] = (m[t] || 0) + 1; }); return m; }, {});
+    const tagRows = Object.entries(tagN).map(([name, v]) => ({name, v})).sort((a, b) => b.v - a.v);
+    const canEdit = People.canEdit();
+    const sel = (id, opts, cur, label) => `<select class="select sm t-filter" id="${id}" aria-label="${label}">${opts.map(([v, n]) => `<option value="${esc(v)}" ${cur === v ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>`;
+    const row = p => { const r = recruiter(p), u = untilOf(p), o = Team.get(p.owner), pr = productsOf(p);
+      return `<tr data-open="${p.id}" class="${freshFor(p) ? 'is-new' : ''}">
+        <td><div class="bt-who">${avatar(People.name(p))}<span><b>${esc(People.name(p))}</b><small>${esc(p.code || '')}${p.evaId ? ' · EVA ' + esc(p.evaId) : ''}${p.tg ? ' · ' + esc(p.tg) : ''}</small></span></div></td>
+        <td><span class="bt-grp">${TYPES[p.type].emo} ${esc(TYPES[p.type].one)}</span></td>
+        <td>${esc(TYPES[p.type].steps[People.col(p) - 1])}${Sales.status(p) ? `<br><small class="muted">${esc(Sales.label(p))}</small>` : ''}</td>
+        <td>${esc(channelOf(p) || '—')}${r ? `<br><small class="muted">привлекла: ${esc(r.name)}</small>` : ''}</td>
+        <td>${pr.length ? pr.map(x => `<span class="tagchip">${esc(x)}</span>`).join(' ') : '<span class="muted">—</span>'}${u ? `<br><small class="${u < now + 7 * DAY ? 'warn-t' : 'muted'}">до ${esc(dateRu(u))}</small>` : ''}</td>
+        <td>${(p.tags || []).slice(0, 3).map(t => `<span class="tagchip">${esc(t)}</span>`).join(' ')}</td>
+        <td>${o ? esc(Team.first(o)) : '<span class="muted">—</span>'}</td>
+        <td class="r"><small>${esc(sinceDays(lastTouch(p)))}</small></td></tr>`; };
+    root.innerHTML = `
+      ${pageHead('База', 'Все контакты в одном месте: кто это, откуда пришёл, кем привлечён, чем пользуется и вся история. Нажмите на строку — откроется карточка.',
+        `<button class="btn" data-csv>${icon('download')}Выгрузить в Excel</button>${canEdit ? `<button class="btn primary" data-add>${icon('plus')}Добавить контакт</button>` : ''}`)}
+      <div class="kpis kpis-4 card base-kpi">${[[all.length, 'контактов в базе'], [fresh30, 'новых за 30 дней'], [subs, 'с подпиской'], [gifts, 'с доступом в подарок']].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+      <div class="base-dash">
+        <div class="card base-types">${Object.keys(TYPES).map(k => `<button class="bt-type ${type === k ? 'on' : ''}" data-btype="${k}"><span>${TYPES[k].emo}</span><b>${by(k)}</b><small>${esc(TYPES[k].name)}</small></button>`).join('')}
+          <button class="bt-type ${refs && st === '' && ch === 'Подруга / рекомендация' ? 'on' : ''}" data-bch="Подруга / рекомендация"><span>👭</span><b>${refs}</b><small>по рекомендации</small></button></div>
+        <div class="card"><div class="card-head"><h2>Каналы</h2><span class="note">откуда приходят</span></div>${chRows.length ? hbarList(chRows, {color: 'var(--link)'}) : '<p class="note">Канал — из ответа анкеты «Откуда узнала» или в профиле карточки.</p>'}</div>
+        <div class="card"><div class="card-head"><h2>Теги</h2><span class="note">нажмите — отфильтрую</span></div>${tagRows.length ? `<div class="tag-cloud">${tagRows.slice(0, 18).map(t => `<button class="chip ${tag === t.name ? 'on' : ''}" data-btag="${esc(t.name)}">${esc(t.name)}<span class="chip-n">${t.v}</span></button>`).join('')}</div>` : '<p class="note">Теги ставятся в карточке — «Добавить тег».</p>'}</div>
+      </div>
+      <div class="t-bar"><input class="input sm t-search" id="bbq" placeholder="Поиск: имя, @telegram, код, EVA ID, город" value="${esc(V('q'))}">
+        ${sel('bbType', [['', 'Все группы'], ...Object.keys(TYPES).map(k => [k, TYPES[k].name])], type, 'Группа')}
+        ${sel('bbSt', BASE_STATUS, st, 'Этап')}${sel('bbCh', [['', 'Все каналы'], ...CHANNELS.map(c => [c, c])], ch, 'Канал')}
+        ${sel('bbTag', [['', 'Все теги'], ...Object.keys(tagN).sort().map(t => [t, t])], tag, 'Тег')}${sel('bbPer', BASE_PERIOD, per, 'Срок')}${sel('bbSort', Object.entries(BASE_SORT).map(([k, [n]]) => [k, n]), sort, 'Порядок')}
+        ${type || q || tag || ch || st || per ? '<button class="link-btn" data-bclear>Сбросить</button>' : ''}<span class="t-bar-sp"></span>
+        <span class="note">${list.length === all.length ? `${all.length} ${plural(all.length, 'контакт', 'контакта', 'контактов')}` : `найдено ${list.length} из ${all.length}`}</span></div>
+      <div class="card" style="padding:0;overflow:auto">${list.length ? `<table class="t base-t"><thead><tr><th>Контакт</th><th>Группа</th><th>Этап</th><th>Канал</th><th>Продукты</th><th>Теги</th><th>Ведёт</th><th class="r">Касание</th></tr></thead>
+        <tbody>${list.slice(0, 400).map(row).join('')}</tbody></table>${list.length > 400 ? `<p class="note" style="padding:10px 14px">Показаны первые 400 — уточните фильтр.</p>` : ''}` : '<p class="note" style="padding:16px">Никого не нашли — поменяйте фильтр.</p>'}</div>`;
+    const set = (k, v) => { View.set('b.' + k, v); App.render(); };
+    let qt;
+    $('#bbq', root).oninput = e => { clearTimeout(qt); const v = e.target.value; qt = setTimeout(() => { View.set('b.q', v); App.render({focus: 'bbq'}); }, 250); };
+    [['bbType', 'type'], ['bbSt', 'st'], ['bbCh', 'ch'], ['bbTag', 'tag'], ['bbPer', 'per'], ['bbSort', 'sort']].forEach(([id, k]) => { $('#' + id, root).onchange = e => set(k, e.target.value); });
+    on(root, 'click', '[data-btype]', (e, el) => set('type', type === el.dataset.btype ? '' : el.dataset.btype));
+    on(root, 'click', '[data-bch]', (e, el) => set('ch', ch === el.dataset.bch ? '' : el.dataset.bch));
+    on(root, 'click', '[data-btag]', (e, el) => set('tag', tag === el.dataset.btag ? '' : el.dataset.btag));
+    on(root, 'click', '[data-bclear]', () => { ['type', 'q', 'tag', 'ch', 'st', 'per'].forEach(k => View.set('b.' + k, '')); App.render(); });
+    on(root, 'click', '[data-open]', (e, el) => App.go('p-' + el.dataset.open));
+    on(root, 'click', '[data-csv]', () => downloadCsv(`eva-baza-${today()}.csv`, list));
+    on(root, 'click', '[data-add]', async (e, el) => { const t = type || await pickPop(el, Object.keys(TYPES).map(k => [k, `${TYPES[k].emo} ${TYPES[k].one}`]), 'client'); if (t) openAdd(t); });
+  },
+});
+
+/* выгрузка списка: Excel открывает CSV с «;» и BOM */
+function downloadCsv(name, list) {
+  const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const head = ['Имя', 'Группа', 'Код', 'EVA ID', 'Telegram / телефон', 'Город', 'Этап', 'Продажи', 'Канал', 'Кем привлечён', 'Продукты', 'Ева до', 'Теги', 'Ведёт', 'Добавлен', 'Последнее касание'];
+  const rows = list.map(p => { const r = recruiter(p), u = untilOf(p); return [People.name(p), TYPES[p.type].one, p.code, p.evaId, p.tg, p.city, TYPES[p.type].steps[People.col(p) - 1], Sales.label(p), channelOf(p), r ? r.name : '', productsOf(p).join(', '), u ? isoTs(u) : '', (p.tags || []).join(', '), Team.get(p.owner) ? Team.name(Team.get(p.owner)) : '', p.createdAt ? isoTs(p.createdAt) : '', lastTouch(p) ? isoTs(lastTouch(p)) : '']; });
+  const csv = '﻿' + [head, ...rows].map(r => r.map(cell).join(';')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv;charset=utf-8'}));
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+/* ── вкладка «Профиль» в карточке ── */
+function profilePane(p, canEdit) {
+  const r = recruiter(p), st = Sales.status(p), u = untilOf(p);
+  const ro = canEdit ? '' : 'disabled';
+  const inv = People.invited(p);
+  return `<div class="pf">
+    <div class="pf-grid">
+      <label class="field"><span>ID в приложении Ева</span><input class="input" data-pf="evaId" value="${esc(p.evaId || '')}" placeholder="например, 104382" ${ro}></label>
+      <label class="field"><span>Telegram или телефон</span><input class="input" data-pf="tg" value="${esc(p.tg || '')}" placeholder="@username или +7…" ${ro}></label>
+      <label class="field"><span>Канал — откуда пришёл</span><select class="select" data-pf="channel" ${ro}><option value="">${channelOf(p) && !p.channel ? `из анкеты: ${esc(channelOf(p))}` : '—'}</option>${CHANNELS.map(c => `<option ${p.channel === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
+      <label class="field"><span>Кем привлечён</span>${r && r.p ? `<a class="pf-ref" href="#p-${r.p.id}">${avatar(r.name)}${esc(r.name)} <small>по реферальной ссылке</small></a>` : `<input class="input" data-pf="refText" value="${esc(p.refText || '')}" placeholder="имя, блогер, партнёр…" ${ro}>`}</label>
+      <label class="field"><span>Город</span><input class="input" data-pf="city" value="${esc(p.city || '')}" ${ro}></label>
+      ${p.type === 'amb' || p.type === 'expert' ? `<label class="field"><span>Подписчики (аудитория)</span><input class="input" type="number" min="0" data-pf="followers" value="${esc(p.followers || '')}" placeholder="${esc(noEmo((p.answers || {}).size || '')) || 'сколько читают'}" ${ro}></label>` : ''}
+    </div>
+    <div class="field"><span>Продукты, которыми пользуется</span><div class="picked">${productsOf(p).map(x => `<span class="tagchip">${esc(x)}</span>`).join('')}${canEdit ? `<button type="button" class="btn sm" data-products>${icon('edit')}Отметить</button>` : ''}</div></div>
+    <div class="pf-sum">
+      <div><span>Добавлен</span><b>${p.createdAt ? esc(when(p.createdAt)) : '—'}</b></div>
+      <div><span>Последнее касание</span><b>${esc(sinceDays(lastTouch(p)))}</b></div>
+      <div><span>Кастдев</span><b>шаг ${People.col(p)} · ${esc(TYPES[p.type].steps[People.col(p) - 1])}</b></div>
+      <div><span>Продажи</span><b>${st ? esc(Sales.label(p)) : '—'}</b></div>
+      <div><span>Ева до</span><b>${u ? esc(dateRu(u)) : '—'}</b></div>
+      <div><span>Привёл(а) по своей ссылке</span><b>${inv.length ? inv.map(x => `<a href="#p-${x.id}">${esc(People.name(x))}</a>`).join(', ') : '—'}</b></div>
+      ${p.type === 'partner' && p.deal && p.deal.discount ? `<div><span>Скидка для участниц</span><b>${esc(p.deal.discount)}${p.deal.promo ? ' · промокод ' + esc(p.deal.promo) : ''}</b></div>` : ''}
+    </div>
+    ${tasksBox(p, canEdit)}
+  </div>`;
+}
+function wireProfile(root, p) {
+  on(root, 'change', '[data-pf]', (e, el) => {
+    const k = el.dataset.pf, v = el.type === 'number' ? (el.value ? Number(el.value) : null) : el.value.trim();
+    const names = {evaId: 'ID в Еве', tg: 'Telegram', channel: 'Канал', refText: 'Кем привлечён', city: 'Город', followers: 'Подписчики'};
+    People.patch(p.id, {[k]: v || null}, `${names[k]}: ${v || '—'}`, '🗂');
+  });
+  on(root, 'click', '[data-products]', async (e, el) => {
+    const v = await multiPop(el, {items: [...new Set([...PRODUCTS, ...People.all().flatMap(x => x.products || [])])], selected: p.products || [], allowNew: true, placeholder: 'Найти или добавить продукт…'});
+    if (v) People.patch(p.id, {products: v}, `Продукты: ${v.join(', ') || '—'}`, '🛍');
+  });
+  wireTasks(root, p);
+}
+/* история: шаги и правки карточки, рассылки, задачи — одной лентой */
+function historyItems(p) {
+  const out = Object.values(p.log || {}).map(l => ({t: l.t, text: noEmo(l.text), by: l.by}));
+  Store.all('mail').forEach(m => { const t = (m.sent || {})[p.id]; if (t) out.push({t, text: `Рассылка «${m.title}» (${m.channel === 'wa' ? 'WhatsApp' : m.channel === 'app' ? 'приложение Евы' : 'Telegram'})`, by: m.by}); });
+  Store.all('tasks').filter(x => x.pid === p.id).forEach(x => { out.push({t: x.at, text: `Задача: ${x.text}${x.due ? ' · срок ' + dayShort(x.due) : ''}`, by: x.by}); if (x.done) out.push({t: x.doneAt, text: `Сделано: ${x.text}`, by: x.doneBy}); });
+  return out.filter(x => x.t).sort((a, b) => b.t - a.t);
+}
+
+/* ── 37-sales.js ── */
+/* Продажи — после кастдева: кто зарегистрировался в Еве, купил, продлил или ушёл и почему.
+   • Данные в карточке: sale = {reg: дата регистрации, pays: [{id, at, plan, amount, until}],
+     churn: {reason, note, at}, likes, dislikes, engage: high | mid | low}. Связи с оплатами приложения
+     нет — оплаты вносит команда (по одной или списком из таблицы).
+   • Вкладки: Дашборд (воронка, выручка, ожидаемые продления, причины), Клиенты, Группы (10 готовых
+     + свои), Рассылки (по группе; Telegram, WhatsApp или список для приложения Евы; отметки «отправлено»). */
+
+const SALE_PLANS = [['month', 'Месяц', 1], ['3m', '3 месяца', 3], ['6m', 'Полгода', 6], ['year', 'Год', 12]];
+const salePlan = k => SALE_PLANS.find(x => x[0] === k) || SALE_PLANS[0];
+const CHURN_REASONS = ['Дорого', 'Нет времени', 'Не нашла нужного', 'Неудобно пользоваться', 'Технические проблемы', 'Ушла в другое приложение', 'Нужна пауза', 'Другое'];
+const ENGAGE = [['high', 'Часто пользуется'], ['mid', 'Иногда'], ['low', 'Почти не заходит']];
+const SALE_ST = {reg: ['Зарегистрирована, не купила', 'warn'], trial: ['Доступ в подарок, не купила', 'violet'], paid: ['Купила', 'good'], renewed: ['Продлила', 'good'], churn: ['Не продлила', 'bad']};
+/* дата + n месяцев (addMonths в 00-core — для строк «2026-10») */
+const plusMonths = (ts, n) => { const d = new Date(ts); d.setMonth(d.getMonth() + n); return d.getTime(); };
+const monthKey = ts => isoTs(ts).slice(0, 7);
+
+const Sales = {
+  pays(p) { return ((p.sale || {}).pays || []).filter(x => x && x.at).slice().sort((a, b) => a.at - b.at); },
+  in(p) { return !!(p.sale && (p.sale.reg || Sales.pays(p).length)); },
+  people() { return Store.all('people').filter(Sales.in); },
+  until(p) { const ps = Sales.pays(p); return ps.length ? Math.max(...ps.map(x => x.until || 0)) : null; },
+  last(p) { const ps = Sales.pays(p); return ps[ps.length - 1] || null; },
+  status(p) {
+    if (!p.sale) return null;
+    const ps = Sales.pays(p);
+    if (!ps.length) return p.sale.reg ? (accessOn(p) ? 'trial' : 'reg') : null;
+    if (Sales.until(p) > Date.now()) return ps.length > 1 ? 'renewed' : 'paid';
+    return 'churn';
+  },
+  active(p) { return ['paid', 'renewed'].includes(Sales.status(p)); },
+  label(p) { const s = Sales.status(p); return s ? SALE_ST[s][0] : ''; },
+  chip(p) { const s = Sales.status(p); return s ? stChip(SALE_ST[s][1], SALE_ST[s][0]) : ''; },
+  soon(p, days) { return Sales.active(p) && Sales.until(p) < Date.now() + days * DAY; },
+  total(p) { return Sales.pays(p).reduce((a, x) => a + (Number(x.amount) || 0), 0); },
+  /* сколько месяцев с первой оплаты */
+  months(p) { const ps = Sales.pays(p); return ps.length ? Math.max(0, Math.floor((Date.now() - ps[0].at) / (30.4 * DAY))) : 0; },
+};
+
+/* ── 10 готовых целевых групп ── */
+const isMom = p => (p.tags || []).includes('Мама') || stageGroupsOf(p.answers || {}).includes('Материнство') || /(^|[^а-яё])(мама|мамой|маме|дети|детей|детьми|детям|дочк|дочь|дочер|сын)/i.test(((p.talk || {}).t_job || {}).a || '');
+const prevMonth = () => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return monthKey(d.getTime()); };
+const SALES_GROUPS = [
+  {key: 'noBuy', name: 'Зарегистрировались, но не купили', about: 'дожать первую покупку: показать пользу и предложить месяц', f: p => ['reg', 'trial'].includes(Sales.status(p))},
+  {key: 'lastMonth', name: 'Купили в прошлом месяце и не продлили', about: 'например, купили в сентябре и не продлили в октябре', f: p => Sales.status(p) === 'churn' && Sales.pays(p).some(x => monthKey(x.at) === prevMonth()) && !Sales.pays(p).some(x => monthKey(x.at) === monthKey(Date.now()))},
+  {key: 'ending7', name: 'Подписка кончается за 7 дней', about: 'напомнить о продлении заранее', f: p => Sales.soon(p, 7)},
+  {key: 'long3', name: 'С нами больше трёх месяцев', about: 'самые верные — отзывы, годовая подписка, амбассадоры', f: p => Sales.active(p) && Sales.months(p) >= 3},
+  {key: 'year', name: 'На годовой подписке', about: 'закрытые встречи, ранний доступ к программам', f: p => Sales.active(p) && (Sales.last(p) || {}).plan === 'year'},
+  {key: 'churn', name: 'Не продлили', about: 'спросить почему и вернуть предложением', f: p => Sales.status(p) === 'churn'},
+  {key: 'moms', name: 'Мамы', about: 'тег «Мама», этап «Материнство» в анкете или дети в интервью', f: p => ['client', 'amb'].includes(p.type) && isMom(p)},
+  {key: 'giftEnd', name: 'Подарочный доступ кончается', about: 'за 7 дней до конца подарка — предложить купить', f: p => accessOn(p) && p.access.until < Date.now() + 7 * DAY && !Sales.active(p)},
+  {key: 'refs', name: 'Пришли по рекомендации', about: 'спасибо пригласившей, бонус за подругу', f: p => !!p.ref},
+  {key: 'lowEng', name: 'Платят, но почти не заходят', about: 'риск не продлить — вернуть в привычку', f: p => Sales.active(p) && (p.sale || {}).engage === 'low'},
+];
+/* участники группы: готовой — по правилу на сегодня, своей — кого добавили */
+function groupMembers(ref) {
+  if (!ref) return [];
+  if (ref.startsWith('g:')) { const g = SALES_GROUPS.find(x => x.key === ref.slice(2)); return g ? People.all().filter(g.f) : []; }
+  if (ref.startsWith('c:')) { const g = Store.get('groups', ref.slice(2)); return g ? (g.members || []).map(id => People.get(id)).filter(Boolean) : []; }
+  return [];
+}
+const groupName2 = ref => (ref.startsWith('g:') ? (SALES_GROUPS.find(x => x.key === ref.slice(2)) || {}).name : (Store.get('groups', ref.slice(2)) || {}).name) || 'Группа';
+const allGroupRefs = () => [...SALES_GROUPS.map(g => ['g:' + g.key, g.name]), ...Store.all('groups').sort((a, b) => (b.at || 0) - (a.at || 0)).map(g => ['c:' + g.id, `${g.name} (своя)`])];
+
+/* связаться: Telegram по нику или телефону, WhatsApp с готовым текстом */
+const isPhone = s => /^\+?\d[\d\s()-]{8,}$/.test(String(s || '').trim());
+const tgChat = p => (!p.tg ? '' : isPhone(p.tg) ? `https://t.me/+${phoneDigits(p.tg)}` : `https://t.me/${encodeURIComponent(tgUser(p.tg))}`);
+const waChat = (p, text = '') => { const d = isPhone(p.tg) ? phoneDigits(p.tg) : ''; return d.length >= 11 ? `https://wa.me/${d}${text ? '?text=' + encodeURIComponent(text) : ''}` : ''; };
+const personal = (text, p) => String(text || '').replace(/\{имя\}/gi, String(p.name || '').split(' ')[0] || '');
+
+/* ── карточка: вкладка «Продажи» ── */
+function salesPane(p, canEdit) {
+  const s = p.sale || {}, ps = Sales.pays(p), st = Sales.status(p), u = Sales.until(p);
+  const ro = canEdit ? '' : 'disabled';
+  return `<div class="sl">
+    <div class="sl-head">${st ? Sales.chip(p) : '<span class="st">Ещё не в продажах</span>'}
+      ${u ? `<span class="note">${Sales.active(p) ? 'подписка до' : 'закончилась'} ${esc(dateRu(u))}</span>` : ''}${ps.length ? `<span class="note">· оплачено всего ${rub(Sales.total(p))} · с нами ${Sales.months(p)} мес.</span>` : ''}
+      <span class="sp"></span>${canEdit ? `${!s.reg ? '<button class="btn sm" data-sale-reg>Зарегистрирована в Еве</button>' : ''}<button class="btn sm primary" data-sale-pay>${icon('plus')}Оплата</button>${st === 'churn' || Sales.soon(p, 30) ? '<button class="btn sm" data-sale-churn>Не продлила — почему</button>' : ''}` : ''}</div>
+    ${s.churn ? `<div class="warnline">Не продлила: <b>${esc(s.churn.reason)}</b>${s.churn.note ? ' — ' + esc(s.churn.note) : ''} <small>(${esc(when(s.churn.at))})</small></div>` : ''}
+    <div class="grid2">
+      <label class="field"><span>Зарегистрирована в Еве</span><input class="input" type="date" data-sale="reg" value="${s.reg ? isoTs(s.reg) : ''}" ${ro}></label>
+      <label class="field"><span>Как пользуется</span><select class="select" data-sale="engage" ${ro}><option value="">—</option>${ENGAGE.map(([k, n]) => `<option value="${k}" ${s.engage === k ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+      <label class="field"><span>Что нравится</span><textarea class="textarea" data-sale="likes" placeholder="практики на 5 минут, эксперт по сну…" ${ro}>${esc(s.likes || '')}</textarea></label>
+      <label class="field"><span>Что не нравится</span><textarea class="textarea" data-sale="dislikes" placeholder="много пушей, нет программ для мам…" ${ro}>${esc(s.dislikes || '')}</textarea></label>
+    </div>
+    <div class="field"><span>Оплаты</span>${ps.length ? `<table class="t"><thead><tr><th>Дата</th><th>Тариф</th><th class="r">Сумма</th><th>До</th><th></th></tr></thead><tbody>${ps.slice().reverse().map(x => `<tr><td>${esc(dateRu(x.at))}</td><td>${esc(salePlan(x.plan)[1])}</td><td class="r">${rub(x.amount)}</td><td>${esc(dateRu(x.until))}</td><td class="r">${canEdit ? `<button class="icon-btn" data-sale-del="${x.id}" title="Удалить оплату">${icon('trash')}</button>` : ''}</td></tr>`).join('')}</tbody></table>` : '<p class="note">Оплат пока нет.</p>'}</div>
+  </div>`;
+}
+function wireSales(root, p) {
+  const cur = () => People.get(p.id) || p;
+  const saleOf = () => ({...(cur().sale || {})});
+  on(root, 'change', '[data-sale]', (e, el) => {
+    const k = el.dataset.sale, s = saleOf();
+    s[k] = k === 'reg' ? (el.value ? dateOf(el.value).getTime() : null) : el.value.trim();
+    People.patch(p.id, {sale: s}, k === 'reg' ? `Регистрация в Еве: ${el.value || '—'}` : k === 'engage' ? `Пользуется: ${(ENGAGE.find(x => x[0] === el.value) || [0, '—'])[1].toLowerCase()}` : '', '💳');
+  });
+  on(root, 'click', '[data-sale-reg]', () => { const s = saleOf(); s.reg = Date.now(); People.patch(p.id, {sale: s}, 'Зарегистрировалась в Еве', '💳'); });
+  on(root, 'click', '[data-sale-pay]', () => openPayment(cur()));
+  on(root, 'click', '[data-sale-churn]', () => openChurn(cur()));
+  on(root, 'click', '[data-sale-del]', async (e, el) => {
+    if (!await confirmPop(el, {text: 'Удалить эту оплату?', yes: 'Удалить', danger: true})) return;
+    const s = saleOf(); s.pays = (s.pays || []).filter(x => x.id !== el.dataset.saleDel);
+    People.patch(p.id, {sale: s}, 'Удалили оплату', '↩');
+  });
+}
+function openPayment(p) {
+  const last = Sales.last(p);
+  openModal({title: `Оплата: ${People.name(p)}`, body: `
+      <div class="grid2"><label class="field"><span>Тариф</span><select class="select" id="pyPlan">${SALE_PLANS.map(([k, n]) => `<option value="${k}" ${(last ? last.plan : 'month') === k ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+      <label class="field"><span>Сумма, ₽</span><input class="input" id="pyAmt" type="number" min="0" value="${last ? last.amount : PRICE_NOW}"></label></div>
+      <label class="field"><span>Дата оплаты</span><input class="input" id="pyAt" type="date" value="${today()}"></label>
+      <p class="note">${Sales.active(p) ? `Действующая подписка до ${esc(dateRu(Sales.until(p)))} — новая начнётся с этого дня (продление).` : 'Подписка начнётся с даты оплаты.'}</p>`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Записать оплату</button>',
+    onMount(el, close) {
+      $('[data-ok]', el).onclick = () => {
+        const plan = $('#pyPlan', el).value, amount = Number($('#pyAmt', el).value) || 0, at = dateOf($('#pyAt', el).value || today()).getTime() + 12 * 3600e3;
+        const from = Sales.active(p) ? Math.max(Sales.until(p), at) : at;
+        const s = {...(p.sale || {})};
+        s.reg = s.reg || at;
+        s.pays = [...(s.pays || []), {id: uid(), at, plan, amount, until: plusMonths(from, salePlan(plan)[2])}];
+        delete s.churn;
+        People.patch(p.id, {sale: s}, `${Sales.pays(p).length ? 'Продление' : 'Покупка'}: ${salePlan(plan)[1].toLowerCase()}, ${rub(amount)}`, '💳');
+        close();
+        toast(`💳 ${People.name(p)}: ${salePlan(plan)[1].toLowerCase()} · ${rub(amount)}`);
+      };
+    }});
+}
+function openChurn(p) {
+  const c = (p.sale || {}).churn || {};
+  openModal({title: `Почему не продлила: ${People.name(p)}`, body: `
+      <div class="field"><span>Причина</span><div class="acc-plans" id="chR">${CHURN_REASONS.map(r => `<button type="button" class="${c.reason === r ? 'sug' : ''}" data-v="${esc(r)}">${esc(r)}</button>`).join('')}</div></div>
+      <label class="field"><span>Её словами</span><textarea class="textarea" id="chN" placeholder="Что сказала, что могло бы вернуть">${esc(c.note || '')}</textarea></label>`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Сохранить</button>',
+    onMount(el, close) {
+      let reason = c.reason || '';
+      on(el, 'click', '#chR button', (e, b) => { reason = b.dataset.v; $$('#chR button', el).forEach(x => x.classList.toggle('sug', x === b)); });
+      $('[data-ok]', el).onclick = () => {
+        if (!reason) { toast('Выберите причину'); return; }
+        People.patch(p.id, {sale: {...(p.sale || {}), churn: {reason, note: $('#chN', el).value.trim(), at: Date.now()}}}, `Не продлила: ${reason}`, '💔');
+        close();
+      };
+    }});
+}
+
+/* ── страница «Продажи» ── */
+App.register('sales', {
+  title: 'Продажи',
+  render(root) {
+    const tab = ['dash', 'list', 'groups', 'mail'].includes(View.get('sl.tab', 'dash')) ? View.get('sl.tab', 'dash') : 'dash';
+    const L = Sales.people();
+    const canEdit = People.canEdit();
+    const mailOpen = View.get('sl.mail', '');
+    let body = '';
+    if (tab === 'dash') body = salesDash(L);
+    else if (tab === 'list') body = salesList(L, canEdit);
+    else if (tab === 'groups') body = salesGroups(canEdit);
+    else body = mailOpen && Store.get('mail', mailOpen) ? mailView(Store.get('mail', mailOpen), canEdit) : mailList(canEdit);
+    root.innerHTML = `
+      ${pageHead('Продажи', 'Кто зарегистрировался в Еве, купил, продлил или ушёл — и почему. Группы для рассылок и сами рассылки.',
+        canEdit ? `<button class="btn" data-sl-import>${icon('upload')}Список из таблицы</button><button class="btn primary" data-sl-add>${icon('plus')}В продажи</button>` : '')}
+      ${tabsHtml('sl.tab', [['dash', 'Дашборд'], ['list', 'Клиенты', L.length || null], ['groups', 'Группы', SALES_GROUPS.length + Store.all('groups').length], ['mail', 'Рассылки', Store.all('mail').length || null]], tab)}
+      <div class="sl-body">${body}</div>`;
+    wireTabs(root);
+    on(root, 'click', '[data-tab-key="sl.tab"]', () => View.set('sl.mail', ''));
+    on(root, 'click', '[data-open]', (e, el) => { if (!e.target.closest('button, a, input, select')) App.go('p-' + el.dataset.open); });
+    on(root, 'click', '[data-sl-add]', (e, el) => addToSales(el));
+    on(root, 'click', '[data-sl-import]', () => openSalesImport());
+    on(root, 'click', '[data-pay]', (e, el) => openPayment(People.get(el.dataset.pay)));
+    on(root, 'click', '[data-churn]', (e, el) => openChurn(People.get(el.dataset.churn)));
+    on(root, 'click', '[data-slf]', (e, el) => { View.set('sl.f', el.dataset.slf); App.render(); });
+    wireGroups(root);
+    wireMail(root);
+  },
+});
+
+function salesDash(L) {
+  const now = Date.now();
+  const bought = L.filter(p => Sales.pays(p).length);
+  const active = L.filter(Sales.active);
+  const renewed = L.filter(p => Sales.pays(p).length > 1);
+  const churn = L.filter(p => Sales.status(p) === 'churn');
+  const noBuy = L.filter(p => ['reg', 'trial'].includes(Sales.status(p)));
+  const soon30 = active.filter(p => Sales.until(p) < now + 30 * DAY);
+  const expect = soon30.reduce((a, p) => a + (Number((Sales.last(p) || {}).amount) || 0), 0);
+  const year = active.filter(p => (Sales.last(p) || {}).plan === 'year');
+  const allPays = L.flatMap(p => Sales.pays(p).map(x => ({...x, p})));
+  const mNow = monthKey(now);
+  const revNow = allPays.filter(x => monthKey(x.at) === mNow).reduce((a, x) => a + (Number(x.amount) || 0), 0);
+  const avg = allPays.length ? allPays.reduce((a, x) => a + (Number(x.amount) || 0), 0) / allPays.length : 0;
+  const engaged = active.filter(p => (p.sale || {}).engage);
+  const high = engaged.filter(p => p.sale.engage === 'high').length;
+  /* выручка по месяцам: последние 6 */
+  const months = Array.from({length: 6}, (_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 5 + i); return monthKey(d.getTime()); });
+  const MON = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+  const byM = months.map(m => ({name: `${MON[Number(m.slice(5)) - 1]} ${m.slice(2, 4)}`, v: allPays.filter(x => monthKey(x.at) === m).reduce((a, x) => a + (Number(x.amount) || 0), 0)}));
+  const reasons = Object.entries(churn.reduce((m, p) => { const r = ((p.sale || {}).churn || {}).reason || 'Не спросили'; m[r] = (m[r] || 0) + 1; return m; }, {})).map(([name, v]) => ({name, v})).sort((a, b) => b.v - a.v);
+  const plans = SALE_PLANS.map(([k, n]) => ({name: n, v: active.filter(p => (Sales.last(p) || {}).plan === k).length})).filter(r => r.v);
+  const quotes = (k, list) => list.filter(p => (p.sale || {})[k]).slice(0, 5).map(p => `<div class="quote">«${esc(p.sale[k])}»<small><a href="#p-${p.id}">${esc(People.name(p))}</a></small></div>`).join('') || '<p class="note">Записывайте во вкладке «Продажи» карточки.</p>';
+  const pctOf = (a, b) => (b ? pct(a / b) : '—');
+  const kpi = items => `<div class="kpis kpis-4 card">${items.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
+  if (!L.length) return `<div class="welcome"><span class="e">💳</span><div><b>Продаж пока нет</b><p>Нажмите «В продажи» — найдите человека в базе и отметьте регистрацию в Еве или оплату. Или вставьте список из таблицы. Дальше — воронка, продления, группы и рассылки.</p></div></div>`;
+  return `
+    ${kpi([[L.length, 'зарегистрировались'], [noBuy.length, 'не купили'], [bought.length, `купили · ${pctOf(bought.length, L.length)}`], [active.length, 'подписок сейчас']])}
+    <div style="height:10px"></div>
+    ${kpi([[renewed.length, `продлили · ${pctOf(renewed.length, bought.length)}`], [churn.length, 'не продлили'], [`${soon30.length} · ${rub(expect)}`, 'продлений ждём за 30 дней'], [year.length, 'на годовой подписке']])}
+    <div style="height:10px"></div>
+    ${kpi([[rub(revNow), 'выручка в этом месяце'], [rub(avg), 'средний чек'], [engaged.length ? pct(high / engaged.length) : '—', 'часто пользуются (из отмеченных)'], [rub(L.reduce((a, p) => a + Sales.total(p), 0)), 'выручка за всё время']])}
+    <div class="two section">
+      ${card('Воронка продаж', 'от регистрации до продления', hbarList([{name: 'Зарегистрировались', v: L.length}, {name: 'Купили', v: bought.length}, {name: 'Продлили', v: renewed.length}, {name: 'Подписка сейчас', v: active.length}], {color: 'var(--good)'}))}
+      ${card('Выручка по месяцам', 'последние полгода', hbarList(byM, {color: 'var(--gold)', valFmt: rub}))}
+      ${card('Почему не продлевают', `${churn.length} ${plural(churn.length, 'человек', 'человека', 'человек')}`, reasons.length ? hbarList(reasons, {color: 'var(--bad)'}) : '<p class="note">Пока все продлевают.</p>')}
+      ${card('Тарифы сейчас', 'у действующих подписок', plans.length ? hbarList(plans, {color: 'var(--violet)'}) : '<p class="note">Нет действующих подписок.</p>')}
+      ${card('Что нравится', 'словами клиенток', `<div class="stack">${quotes('likes', L)}</div>`)}
+      ${card('Что не нравится', 'что исправить, чтобы продлевали', `<div class="stack">${quotes('dislikes', L)}</div>`)}
+    </div>`;
+}
+function salesList(L, canEdit) {
+  const f = View.get('sl.f', '');
+  const list = (f ? L.filter(p => (f === 'active' ? Sales.active(p) : Sales.status(p) === f)) : L).slice().sort((a, b) => (Sales.until(a) || 0) - (Sales.until(b) || 0));
+  const chips = [['', 'Все', L.length], ['reg', 'Не купили', L.filter(p => ['reg', 'trial'].includes(Sales.status(p))).length], ['active', 'С подпиской', L.filter(Sales.active).length], ['renewed', 'Продлили', L.filter(p => Sales.status(p) === 'renewed').length], ['churn', 'Не продлили', L.filter(p => Sales.status(p) === 'churn').length]];
+  return `<div class="chip-row">${chips.map(([k, n, c]) => `<button class="chip ${f === k ? 'on' : ''}" data-slf="${k}">${n}<span class="chip-n">${c}</span></button>`).join('')}</div>
+    <div class="card" style="padding:0;overflow:auto">${list.length ? `<table class="t base-t"><thead><tr><th>Контакт</th><th>Статус</th><th>Тариф</th><th class="r">Оплачено</th><th>С нами</th><th>Подписка до</th><th>Пользуется</th><th></th></tr></thead><tbody>
+      ${list.map(p => { const u = Sales.until(p), last = Sales.last(p), tg = tgChat(p), wa = waChat(p); return `<tr data-open="${p.id}">
+        <td><div class="bt-who">${avatar(People.name(p))}<span><b>${esc(People.name(p))}</b><small>${esc(p.tg || '')}${p.evaId ? ' · EVA ' + esc(p.evaId) : ''}</small></span></div></td>
+        <td>${Sales.chip(p)}${((p.sale || {}).churn || {}).reason ? `<br><small class="muted">${esc(p.sale.churn.reason)}</small>` : ''}</td>
+        <td>${last ? esc(salePlan(last.plan)[1]) : '—'}</td><td class="r">${rub(Sales.total(p))}</td><td>${Sales.pays(p).length ? `${Sales.months(p)} мес.` : '—'}</td>
+        <td>${u ? `<span class="${Sales.soon(p, 7) ? 'warn-t' : ''}">${esc(dateRu(u))}</span>` : '—'}</td>
+        <td>${esc(((ENGAGE.find(x => x[0] === (p.sale || {}).engage) || [0, '—'])[1]))}</td>
+        <td class="r nowrap">${tg ? `<a class="icon-btn" href="${esc(tg)}" target="_blank" rel="noopener" title="Написать в Telegram">${icon('send')}</a>` : ''}${wa ? `<a class="icon-btn" href="${esc(wa)}" target="_blank" rel="noopener" title="Написать в WhatsApp">${icon('msg')}</a>` : ''}${canEdit ? `<button class="btn xs" data-pay="${p.id}">Оплата</button>${Sales.status(p) === 'churn' ? `<button class="btn xs" data-churn="${p.id}">Почему</button>` : ''}` : ''}</td></tr>`; }).join('')}
+    </tbody></table>` : '<p class="note" style="padding:16px">Никого в этом статусе.</p>'}</div>`;
+}
+/* добавить в продажи: найти в базе — отметить регистрацию; нет в базе — новая клиентка */
+function addToSales(anchor) {
+  openModal({title: 'В продажи', body: `
+      <label class="field"><span>Найти в базе</span><input class="input" id="saFind" type="search" autocomplete="off" placeholder="Имя, @telegram, телефон, код"></label>
+      <div class="add-hits" id="saHits"></div>
+      <div class="add-or"><span>или новая клиентка</span></div>
+      <div class="grid2"><label class="field"><span>Имя</span><input class="input" id="saName"></label><label class="field"><span>Telegram или телефон</span><input class="input" id="saTg"></label></div>
+      <div class="grid2"><label class="field"><span>ID в Еве</span><input class="input" id="saEva"></label><label class="field"><span>Зарегистрирована</span><input class="input" type="date" id="saReg" value="${today()}"></label></div>`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Добавить</button>',
+    onMount(el, close) {
+      const mark = p => { People.patch(p.id, {sale: {...(p.sale || {}), reg: (p.sale || {}).reg || Date.now()}}, 'Добавили в продажи: зарегистрирована в Еве', '💳'); close(); View.set('pp.tab', 'sales'); App.go('p-' + p.id); };
+      $('#saFind', el).addEventListener('input', () => {
+        $('#saHits', el).innerHTML = findContacts($('#saFind', el).value).map(p => `<div class="add-hit">${avatar(People.name(p))}<span><b>${esc(People.name(p))}</b><small>${esc(contactLine(p))}${Sales.in(p) ? ' · уже в продажах' : ''}</small></span><button class="btn sm primary" data-pick="${p.id}">${Sales.in(p) ? 'Открыть' : 'Выбрать'}</button></div>`).join('');
+      });
+      on(el, 'click', '[data-pick]', (e, b) => mark(People.get(b.dataset.pick)));
+      $('[data-ok]', el).onclick = () => {
+        const name = $('#saName', el).value.trim();
+        if (!name) { $('#saName', el).classList.add('need'); return; }
+        const reg = dateOf($('#saReg', el).value || today()).getTime();
+        const id = People.create({type: 'client', name, tg: $('#saTg', el).value.trim(), evaId: $('#saEva', el).value.trim(), s1: 'skip', s2: 'skip', s3: 'none', sale: {reg}, source: 'sales'});
+        close(); View.set('pp.tab', 'sales'); App.go('p-' + id);
+      };
+    }});
+  void anchor;
+}
+/* список из таблицы: имя; telegram/телефон; EVA ID; дата регистрации; тариф; сумма; дата оплаты */
+function openSalesImport() {
+  openModal({title: 'Продажи списком из таблицы', wide: true, body: `
+      <p class="note">Скопируйте строки из Excel или Google-таблицы. Столбцы по порядку: <b>имя · Telegram или телефон · ID в Еве · дата регистрации · тариф (месяц, 3 месяца, полгода, год) · сумма · дата оплаты</b>. Пустые столбцы можно оставить пустыми. Человек уже есть в базе (по Telegram, телефону или ID) — допишем ему, нет — заведём клиентку.</p>
+      <textarea class="textarea" id="siBox" style="min-height:180px;font-family:var(--f-mono, monospace);font-size:12.5px" placeholder="Анна Иванова	@anna	104382	01.09.2026	месяц	2900	05.09.2026"></textarea>
+      <div id="siPrev" class="note"></div>`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Загрузить</button>',
+    onMount(el, close) {
+      const date = s => { const m = String(s || '').trim().match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/) || String(s || '').trim().match(/^(\d{4})-(\d\d)-(\d\d)$/); if (!m) return null; const [y, mo, d] = m[1].length === 4 ? [m[1], m[2], m[3]] : [m[3].length === 2 ? '20' + m[3] : m[3], m[2], m[1]]; return new Date(Number(y), Number(mo) - 1, Number(d), 12).getTime(); };
+      const plan = s => { const t = String(s || '').toLowerCase(); return /год|12/.test(t) ? 'year' : /пол|6/.test(t) ? '6m' : /3|квар/.test(t) ? '3m' : t ? 'month' : ''; };
+      const parse = () => $('#siBox', el).value.split('\n').map(l => l.split(/\t|;/).map(x => x.trim())).filter(c => c[0]);
+      $('#siBox', el).addEventListener('input', () => { const r = parse(); $('#siPrev', el).textContent = r.length ? `Строк: ${r.length}. Первая: ${r[0].filter(Boolean).join(' · ')}` : ''; });
+      $('[data-ok]', el).onclick = () => {
+        let made = 0, upd = 0;
+        parse().forEach(([name, tg, eva, regS, planS, amtS, payS]) => {
+          const ex = Store.all('people').find(p => (eva && p.evaId && String(p.evaId) === eva) || (tg && sameContact('', tg).includes(p)));
+          const reg = date(regS) || date(payS) || Date.now();
+          const pl = plan(planS), at = date(payS) || (pl ? reg : null);
+          const pay = pl && at ? {id: uid(), at, plan: pl, amount: Number(String(amtS || '').replace(/[^\d.]/g, '')) || 0, until: plusMonths(at, salePlan(pl)[2])} : null;
+          if (ex) {
+            const s = {...(ex.sale || {})}; s.reg = s.reg || reg; if (pay && !(s.pays || []).some(x => Math.abs(x.at - pay.at) < DAY && x.plan === pay.plan)) s.pays = [...(s.pays || []), pay];
+            People.patch(ex.id, {sale: s, ...(eva && !ex.evaId ? {evaId: eva} : {})}, 'Продажи: загрузили из таблицы', '💳'); upd++;
+          } else { People.create({type: 'client', name, tg: tg || '', evaId: eva || '', s1: 'skip', s2: 'skip', s3: 'none', sale: {reg, pays: pay ? [pay] : []}, source: 'sales'}); made++; }
+        });
+        close(); toast(`Загружено: новых ${made}, дописано ${upd}`); View.set('sl.tab', 'list'); App.render();
+      };
+    }});
+}
+
+/* ── группы ── */
+function salesGroups(canEdit) {
+  const open = View.get('sl.g', '');
+  const row = (ref, name, about, members, own) => `<div class="card grp ${open === ref ? 'open' : ''}">
+      <div class="grp-h"><div><b>${esc(name)}</b><small>${esc(about)}</small></div><span class="grp-n">${members.length}</span>
+        <button class="btn sm" data-gopen="${ref}">${open === ref ? 'Скрыть' : 'Кто здесь'}</button>
+        ${canEdit ? `<button class="btn sm primary" data-gmail="${ref}" ${members.length ? '' : 'disabled'}>${icon('send')}Рассылка</button>` : ''}
+        ${canEdit && own ? `<button class="icon-btn" data-gedit="${ref.slice(2)}" title="Изменить состав">${icon('edit')}</button><button class="icon-btn" data-gdel="${ref.slice(2)}" title="Удалить группу">${icon('trash')}</button>` : canEdit ? `<button class="icon-btn" data-gsave="${ref}" title="Сохранить как свою группу — дальше состав правится руками">${icon('copy')}</button>` : ''}</div>
+      ${open === ref ? `<div class="grp-m">${members.map(p => `<a href="#p-${p.id}" class="grp-p">${avatar(People.name(p))}<span>${esc(People.name(p))}<small>${esc(Sales.label(p) || TYPES[p.type].one)}</small></span></a>`).join('') || '<p class="note">Сейчас никого.</p>'}</div>` : ''}
+    </div>`;
+  const own = Store.all('groups').sort((a, b) => (b.at || 0) - (a.at || 0));
+  return `<div class="section-head"><h2>Целевые группы</h2><span class="hint-inline">считаются сами по данным продаж и карточек — на сегодня</span></div>
+    <div class="grp-list">${SALES_GROUPS.map(g => row('g:' + g.key, g.name, g.about, People.all().filter(g.f), false)).join('')}</div>
+    <div class="section-head" style="margin-top:22px"><h2>Свои группы</h2>${canEdit ? `<button class="btn sm primary" data-gnew>${icon('plus')}Новая группа</button>` : ''}</div>
+    <div class="grp-list">${own.map(g => row('c:' + g.id, g.name, `добавлены вручную · ${(g.members || []).length}`, groupMembers('c:' + g.id), true)).join('') || '<p class="note">Соберите свою группу руками — например, «Пришли на офлайн-встречу 12.10».</p>'}</div>`;
+}
+function editGroup(g) {
+  openModal({title: g ? `Группа «${g.name}»` : 'Новая группа', body: `
+      <label class="field"><span>Название</span><input class="input" id="grName" value="${esc(g ? g.name : '')}" placeholder="Например: офлайн-встреча 12.10"></label>
+      <div class="field"><span>Кто в группе</span>${pickedHtml('grMem', (g ? g.members || [] : []).map(id => People.name(People.get(id))), 'Добавить людей')}</div>`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Сохранить</button>',
+    onMount(el, close) {
+      let ids = g ? [...(g.members || [])] : [];
+      const all = People.all(), label = id => { const p = People.get(id); return p ? `${People.name(p)} · ${TYPES[p.type].one}` : id; };
+      on(el, 'click', '[data-pick-open]', async (e, b) => {
+        const v = await multiPop(b, {items: all.map(p => p.id), selected: ids, label, placeholder: 'Найти человека…'});
+        if (!v) return;
+        ids = v;
+        $('#grMem', el).outerHTML = pickedHtml('grMem', ids.map(id => People.name(People.get(id))), 'Добавить людей');
+      });
+      $('[data-ok]', el).onclick = () => {
+        const name = $('#grName', el).value.trim();
+        if (!name) { $('#grName', el).classList.add('need'); return; }
+        if (g) Store.patch('groups', g.id, {name, members: ids}); else Store.add('groups', {name, members: ids, at: Date.now(), by: Who.id()});
+        close();
+      };
+    }});
+}
+function wireGroups(root) {
+  on(root, 'click', '[data-gopen]', (e, el) => { View.set('sl.g', View.get('sl.g', '') === el.dataset.gopen ? '' : el.dataset.gopen); App.render(); });
+  on(root, 'click', '[data-gnew]', () => editGroup(null));
+  on(root, 'click', '[data-gedit]', (e, el) => editGroup(Store.get('groups', el.dataset.gedit)));
+  on(root, 'click', '[data-gdel]', async (e, el) => { if (await confirmPop(el, {text: 'Удалить группу? Люди останутся в базе.', yes: 'Удалить', danger: true})) Store.remove('groups', el.dataset.gdel); });
+  on(root, 'click', '[data-gsave]', (e, el) => {
+    const ref = el.dataset.gsave;
+    const id = Store.add('groups', {name: `${groupName2(ref)} · ${dayShort(today())}`, members: groupMembers(ref).map(p => p.id), at: Date.now(), by: Who.id()});
+    toast('Сохранили как свою группу — состав можно править'); View.set('sl.g', 'c:' + id); App.render();
+  });
+  on(root, 'click', '[data-gmail]', (e, el) => editMail(null, el.dataset.gmail));
+}
+
+/* ── рассылки ── */
+const MAIL_CH = [['tg', 'Telegram'], ['wa', 'WhatsApp'], ['app', 'В приложении Евы (список ID)']];
+function mailList(canEdit) {
+  const L = Store.all('mail').sort((a, b) => (b.at || 0) - (a.at || 0));
+  return `<div class="section-head"><h2>Рассылки</h2>${canEdit ? `<button class="btn sm primary" data-mnew>${icon('plus')}Новая рассылка</button>` : ''}</div>
+    <p class="note" style="margin-bottom:10px">Текст пишется один раз, {имя} подставится само. Отправка — по одному нажатию на каждого: откроется чат в Telegram или WhatsApp с готовым текстом, отметка «отправлено» ляжет в историю карточки. Для приложения Евы — выгрузка ID и текста для команды приложения.</p>
+    ${L.length ? `<div class="grp-list">${L.map(m => { const n = (m.ids || []).length, s = Object.keys(m.sent || {}).filter(id => (m.ids || []).includes(id)).length; return `<div class="card grp"><div class="grp-h"><div><b>${esc(m.title)}</b><small>${esc(groupName2(m.group || 'c:'))} · ${esc((MAIL_CH.find(x => x[0] === m.channel) || MAIL_CH[0])[1])} · ${esc(when(m.at))}</small></div>
+      <span class="grp-n">${s}/${n}</span><span class="iv-pbar"><i style="width:${n ? (s / n * 100).toFixed(0) : 0}%"></i></span><button class="btn sm ${s < n ? 'primary' : ''}" data-mopen="${m.id}">${s < n ? 'Отправлять' : 'Открыть'}</button></div></div>`; }).join('')}</div>` : '<p class="note">Рассылок пока нет. Начните с группы: «Группы» → «Рассылка».</p>'}`;
+}
+function editMail(m, group = '') {
+  openModal({title: m ? 'Изменить рассылку' : 'Новая рассылка', wide: true, body: `
+      <label class="field"><span>Название</span><input class="input" id="mlT" value="${esc(m ? m.title : '')}" placeholder="Например: продление · октябрь"></label>
+      <div class="grid2"><label class="field"><span>Кому — группа</span><select class="select" id="mlG" ${m ? 'disabled' : ''}>${allGroupRefs().map(([k, n]) => `<option value="${k}" ${(m ? m.group : group) === k ? 'selected' : ''}>${esc(n)} · ${groupMembers(k).length}</option>`).join('')}</select>${m ? '<small>Состав правится в самой рассылке: «Убрать» и «Добавить людей»</small>' : ''}</label>
+      <label class="field"><span>Куда</span><select class="select" id="mlC">${MAIL_CH.map(([k, n]) => `<option value="${k}" ${(m ? m.channel : 'tg') === k ? 'selected' : ''}>${n}</option>`).join('')}</select></label></div>
+      <label class="field"><span>Текст</span><textarea class="textarea" id="mlX" style="min-height:140px" placeholder="{имя}, привет! Твоя подписка на Еву заканчивается через 3 дня…">${esc(m ? m.text : '')}</textarea><small>{имя} — подставится имя каждого человека</small></label>`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Сохранить</button>',
+    onMount(el, close) {
+      $('[data-ok]', el).onclick = () => {
+        const title = $('#mlT', el).value.trim(), text = $('#mlX', el).value.trim();
+        if (!title || !text) { (title ? $('#mlX', el) : $('#mlT', el)).classList.add('need'); return; }
+        if (m) Store.patch('mail', m.id, {title, text, channel: $('#mlC', el).value});
+        else {
+          const g = $('#mlG', el).value;
+          const id = Store.add('mail', {title, text, channel: $('#mlC', el).value, group: g, ids: groupMembers(g).map(p => p.id), sent: {}, at: Date.now(), by: Who.id()});
+          View.set('sl.tab', 'mail'); View.set('sl.mail', id);
+        }
+        close(); App.render();
+      };
+    }});
+}
+function mailView(m, canEdit) {
+  const ppl = (m.ids || []).map(id => People.get(id)).filter(Boolean);
+  const sent = m.sent || {}, done = ppl.filter(p => sent[p.id]).length;
+  return `<div class="ml-head"><button class="link-btn" data-mback>${icon('back')}Все рассылки</button>
+      <h2>${esc(m.title)}</h2><span class="note">${esc(groupName2(m.group || 'c:'))} · ${esc((MAIL_CH.find(x => x[0] === m.channel) || MAIL_CH[0])[1])} · отправлено ${done} из ${ppl.length}</span>
+      <span class="sp"></span>${canEdit ? `<button class="btn sm" data-medit>${icon('edit')}Изменить</button><button class="btn sm" data-madd>${icon('plus')}Добавить людей</button><button class="icon-btn" data-mdel title="Удалить рассылку">${icon('trash')}</button>` : ''}</div>
+    <div class="card ml-text"><pre>${esc(m.text)}</pre><div class="row"><button class="btn sm" data-mcopy>${icon('copy')}Скопировать текст</button><button class="btn sm" data-mcontacts>${icon('copy')}Все контакты</button>${m.channel === 'app' ? `<button class="btn sm" data-mcsv>${icon('download')}Выгрузить ID для приложения</button>` : ''}</div></div>
+    <div class="card" style="padding:0;overflow:auto"><table class="t base-t"><thead><tr><th>Кому</th><th>Контакт</th><th>Отправить</th><th class="c">Отправлено</th><th></th></tr></thead><tbody>
+      ${ppl.map(p => { const txt = personal(m.text, p), link = m.channel === 'wa' ? waChat(p, txt) : m.channel === 'tg' ? tgChat(p) : ''; return `<tr class="${sent[p.id] ? 'ml-done' : ''}">
+        <td><a href="#p-${p.id}" class="bt-who">${avatar(People.name(p))}<span><b>${esc(People.name(p))}</b><small>${esc(Sales.label(p) || TYPES[p.type].one)}</small></span></a></td>
+        <td>${esc(p.tg || (m.channel === 'app' ? (p.evaId ? 'EVA ' + p.evaId : 'нет ID') : 'нет контакта'))}</td>
+        <td class="nowrap">${link ? `<a class="btn xs primary" href="${esc(link)}" target="_blank" rel="noopener" data-msend="${p.id}">${m.channel === 'wa' ? 'Открыть WhatsApp' : 'Открыть Telegram'}</a>` : ''}${m.channel !== 'wa' ? `<button class="btn xs" data-mone="${p.id}">Текст</button>` : ''}</td>
+        <td class="c"><input type="checkbox" data-mmark="${p.id}" ${sent[p.id] ? 'checked' : ''} ${canEdit ? '' : 'disabled'} aria-label="Отправлено"></td>
+        <td class="r">${canEdit ? `<button class="icon-btn" data-mrm="${p.id}" title="Убрать из рассылки">${icon('x')}</button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="5" class="note">Никого — добавьте людей.</td></tr>'}
+    </tbody></table></div>`;
+}
+function wireMail(root) {
+  const m = () => Store.get('mail', View.get('sl.mail', ''));
+  const markSent = (id, on = true) => {
+    const x = m(); if (!x) return;
+    const sent = {...(x.sent || {})};
+    if (on) sent[id] = Date.now(); else delete sent[id];
+    Store.put('mail', x.id, {...x, sent});
+    if (on) People.patch(id, {}, `Рассылка «${x.title}»`, '✉️');
+  };
+  on(root, 'click', '[data-mnew]', () => editMail(null, View.get('sl.g', '') || 'g:noBuy'));
+  on(root, 'click', '[data-mopen]', (e, el) => { View.set('sl.mail', el.dataset.mopen); App.render(); });
+  on(root, 'click', '[data-mback]', () => { View.set('sl.mail', ''); App.render(); });
+  on(root, 'click', '[data-medit]', () => editMail(m()));
+  on(root, 'click', '[data-mdel]', async (e, el) => { if (await confirmPop(el, {text: 'Удалить рассылку? Отметки в карточках останутся.', yes: 'Удалить', danger: true})) { Store.remove('mail', m().id); View.set('sl.mail', ''); } });
+  on(root, 'click', '[data-madd]', async (e, el) => {
+    const x = m();
+    const v = await multiPop(el, {items: People.all().map(p => p.id), selected: x.ids || [], label: id => { const p = People.get(id); return p ? `${People.name(p)} · ${TYPES[p.type].one}` : id; }, placeholder: 'Найти человека…'});
+    if (v) Store.patch('mail', x.id, {ids: v});
+  });
+  on(root, 'click', '[data-mrm]', (e, el) => { const x = m(); Store.patch('mail', x.id, {ids: (x.ids || []).filter(id => id !== el.dataset.mrm)}); });
+  on(root, 'click', '[data-mcopy]', () => copyOrShow(m().text, 'Текст скопирован'));
+  on(root, 'click', '[data-mone]', (e, el) => copyOrShow(personal(m().text, People.get(el.dataset.mone)), 'Текст скопирован — вставьте в чат'));
+  on(root, 'click', '[data-mcontacts]', () => copyOrShow((m().ids || []).map(id => People.get(id)).filter(Boolean).map(p => `${People.name(p)}\t${p.tg || ''}\t${p.evaId || ''}`).join('\n'), 'Контакты скопированы'));
+  on(root, 'click', '[data-mcsv]', () => { const x = m(); downloadCsv(`eva-rassylka-${today()}.csv`, (x.ids || []).map(id => People.get(id)).filter(Boolean)); });
+  on(root, 'click', '[data-msend]', (e, el) => { if (!(m().sent || {})[el.dataset.msend]) setTimeout(() => markSent(el.dataset.msend), 300); });
+  on(root, 'change', '[data-mmark]', (e, el) => markSent(el.dataset.mmark, el.checked));
+}
+
+/* ── 38-partners.js ── */
+/* Партнёры — рабочее место для офлайн-точек и маркета (знакомство и анкета — в «Кастдеве»):
+   • путь партнёра: Знакомство → Условия → Обучение → Работает (или Пауза);
+   • в карточке — вкладка «Партнёрство»: условия (что даёт участницам, скидка, промокод, что даёт Ева,
+     срок), обучение по программе, точки (офлайн-адреса и маркет), коллабы;
+   • страница: доска партнёров по пути, коллабы, все точки и маркет, программа обучения. */
+
+const P_STAGES = [['new', 'Знакомство', 'анкета и первый созвон'], ['terms', 'Условия', 'договариваемся, что даём друг другу'], ['training', 'Обучение', 'партнёр учится рассказывать о Еве'], ['active', 'Работает', 'приводит участниц, получает клиенток'], ['pause', 'Пауза', 'на время остановились']];
+const PTRAIN_DEFAULT = [
+  {id: 'about', t: 'Что такое Ева и для кого', d: 'созвон 15 минут: аудитория, программы, эксперты'},
+  {id: 'offer', t: 'Предложение для участниц', d: 'скидка, промокод, как клиентка его получает'},
+  {id: 'tell', t: 'Как рассказывать о Еве', d: 'фразы для администратора, где показать QR-код'},
+  {id: 'mat', t: 'Материалы получены', d: 'стойка с QR, шаблоны сторис, тексты для рассылки'},
+  {id: 'track', t: 'Учёт приведённых', d: 'промокод или ссылка, отчёт раз в месяц'},
+];
+const ptrain = () => ((Store.get('cfg', 'ptrain') || {}).list || PTRAIN_DEFAULT);
+const COLLAB_FORMATS = ['Мероприятие', 'Эфир', 'Акция', 'Совместный продукт', 'Розыгрыш', 'Маркет', 'Ретрит'];
+const COLLAB_ST = [['idea', 'Идея'], ['prep', 'Готовим'], ['live', 'Идёт'], ['done', 'Прошёл']];
+const POINT_KINDS = [['offline', 'Офлайн-точка'], ['market', 'Маркет']];
+/* этап: отмечен руками → по данным: обучение пройдено — работает, есть условия — обучение */
+function pStage(p) {
+  if (p.pstatus) return p.pstatus;
+  const tr = ptrain(), done = tr.filter(m => (p.train || {})[m.id]).length;
+  if (tr.length && done === tr.length) return 'active';
+  if (p.deal && (p.deal.offer || p.deal.discount || p.deal.promo)) return done ? 'training' : 'terms';
+  return 'new';
+}
+const collabsOf = p => Store.all('collabs').filter(c => [...(c.partners || []), ...(c.experts || []), ...(c.ambs || [])].includes(p.id));
+
+/* ── вкладка «Партнёрство» в карточке ── */
+function partnerPane(p, canEdit) {
+  const d = p.deal || {}, tr = ptrain(), st = pStage(p), ro = canEdit ? '' : 'disabled';
+  const f = (k, label, ph = '', type = 'text') => `<label class="field"><span>${label}</span><input class="input" type="${type}" data-deal="${k}" value="${esc(d[k] || '')}" placeholder="${esc(ph)}" ${ro}></label>`;
+  return `<div class="pt">
+    <div class="pt-stages">${P_STAGES.map(([k, n]) => `<button class="${st === k ? 'on' : ''}" data-pst="${k}" ${ro}>${esc(n)}</button>`).join('')}${p.pstatus && canEdit ? '<button class="link-btn" data-pst="">считать само</button>' : ''}</div>
+    <h3 class="tf-h">Условия</h3>
+    <div class="pf-grid">${f('offer', 'Что даёт участницам Евы', 'скидка 15% на абонемент')}${f('discount', 'Скидка', '15%')}${f('promo', 'Промокод', 'EVA15')}
+      ${f('give', 'Что даёт Ева', 'промо в приложении, упоминание экспертов')}${f('commission', 'Комиссия или доля', '10% с покупок по ссылке')}${f('from', 'Действует с', '', 'date')}${f('until', 'по', '', 'date')}</div>
+    <label class="field"><span>Заметки по договорённости</span><textarea class="textarea" data-deal="note" ${ro}>${esc(d.note || '')}</textarea></label>
+    <h3 class="tf-h">Обучение <span class="h-n">${tr.filter(m => (p.train || {})[m.id]).length} из ${tr.length}</span></h3>
+    <div class="pt-train">${tr.map(m => { const t = (p.train || {})[m.id]; return `<label class="pt-tm ${t ? 'done' : ''}"><input type="checkbox" data-train="${m.id}" ${t ? 'checked' : ''} ${ro}><span><b>${esc(m.t)}</b><small>${esc(m.d || '')}${t ? ` · ${esc(when(t))}` : ''}</small></span></label>`; }).join('')}</div>
+    <h3 class="tf-h">Точки и маркет ${canEdit ? `<button class="btn xs" data-point-add>${icon('plus')}Точка</button>` : ''}</h3>
+    ${(p.points || []).length ? `<div class="pt-points">${p.points.map(x => `<div class="pt-point"><span class="tagchip ${x.kind === 'market' ? 'dir' : ''}">${x.kind === 'market' ? 'Маркет' : 'Офлайн'}</span><b>${esc(x.name || '')}</b><span class="muted">${esc([x.city, x.address].filter(Boolean).join(', '))}</span>${x.link ? `<a href="${esc(x.link)}" target="_blank" rel="noopener">ссылка ↗</a>` : ''}${canEdit ? `<button class="icon-btn" data-point-rm="${x.id}" title="Убрать">${icon('x')}</button>` : ''}</div>`).join('')}</div>` : '<p class="note">Добавьте адрес студии или страницу в маркете — они появятся в общем списке точек.</p>'}
+    <h3 class="tf-h">Коллабы ${canEdit ? `<button class="btn xs" data-collab-new="${p.id}">${icon('plus')}Коллаб</button>` : ''}</h3>
+    ${collabsOf(p).map(collabCard).join('') || '<p class="note">Совместные мероприятия, эфиры, акции — с экспертами и амбассадорами.</p>'}
+  </div>`;
+}
+function wirePartner(root, p) {
+  const cur = () => People.get(p.id) || p;
+  on(root, 'change', '[data-deal]', (e, el) => People.patch(p.id, {deal: {...(cur().deal || {}), [el.dataset.deal]: el.value.trim()}}, `Условия: ${el.closest('label').querySelector('span').textContent.toLowerCase()} — ${el.value.trim() || '—'}`, '🤝'));
+  on(root, 'click', '[data-pst]', (e, el) => { const k = el.dataset.pst; People.patch(p.id, {pstatus: k || null}, k ? `Партнёрство: ${P_STAGES.find(x => x[0] === k)[1].toLowerCase()}` : '', '🤝'); });
+  on(root, 'change', '[data-train]', (e, el) => { const m = ptrain().find(x => x.id === el.dataset.train); People.patch(p.id, {train: {...(cur().train || {}), [el.dataset.train]: el.checked ? Date.now() : null}}, `${el.checked ? 'Обучение пройдено' : 'Обучение снято'}: ${m ? m.t : ''}`, '🎓'); });
+  on(root, 'click', '[data-point-add]', () => editPoint(cur()));
+  on(root, 'click', '[data-point-rm]', (e, el) => People.patch(p.id, {points: (cur().points || []).filter(x => x.id !== el.dataset.pointRm)}, 'Убрали точку', '📍'));
+  on(root, 'click', '[data-collab-new]', (e, el) => editCollab(null, el.dataset.collabNew));
+  on(root, 'click', '[data-collab]', (e, el) => editCollab(Store.get('collabs', el.dataset.collab)));
+}
+function editPoint(p) {
+  openModal({title: `Точка: ${People.name(p)}`, body: `
+      <div class="grid2"><label class="field"><span>Тип</span><select class="select" id="poK">${POINT_KINDS.map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}</select></label>
+      <label class="field"><span>Название</span><input class="input" id="poN" value="${esc(People.name(p))}"></label></div>
+      <div class="grid2"><label class="field"><span>Город</span><input class="input" id="poC" value="${esc(p.city || '')}"></label><label class="field"><span>Адрес</span><input class="input" id="poA" placeholder="ул. Пушкина, 10"></label></div>
+      <label class="field"><span>Ссылка (карта, маркет, сайт)</span><input class="input" id="poL" placeholder="https://"></label>`,
+    foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Добавить</button>',
+    onMount(el, close) {
+      $('[data-ok]', el).onclick = () => {
+        const link = $('#poL', el).value.trim();
+        const pt = {id: uid(), kind: $('#poK', el).value, name: $('#poN', el).value.trim(), city: $('#poC', el).value.trim(), address: $('#poA', el).value.trim(), link: /^https?:\/\//.test(link) ? link : ''};
+        People.patch(p.id, {points: [...(p.points || []), pt]}, `Точка: ${pt.name}${pt.city ? ', ' + pt.city : ''}`, '📍');
+        close();
+      };
+    }});
+}
+function collabCard(c) {
+  const ppl = ids => (ids || []).map(id => People.get(id)).filter(Boolean).map(x => `<a href="#p-${x.id}">${esc(People.name(x))}</a>`).join(', ');
+  const st = COLLAB_ST.find(x => x[0] === c.status) || COLLAB_ST[0];
+  return `<div class="card collab" data-collab="${c.id}"><div class="collab-h"><b>${esc(c.title)}</b><span class="st ${c.status === 'done' ? 'good' : c.status === 'live' ? 'violet' : c.status === 'prep' ? 'warn' : ''}">${esc(st[1])}</span></div>
+    <small>${esc([c.format, c.date ? dayShort(c.date) : '', c.city].filter(Boolean).join(' · '))}</small>
+    ${(c.partners || []).length ? `<div>Партнёры: ${ppl(c.partners)}</div>` : ''}${(c.experts || []).length ? `<div>Эксперты: ${ppl(c.experts)}</div>` : ''}${(c.ambs || []).length ? `<div>Амбассадоры: ${ppl(c.ambs)}</div>` : ''}
+    ${c.result ? `<div class="muted">Итог: ${esc(c.result)}</div>` : ''}</div>`;
+}
+function editCollab(c, partnerId = '') {
+  const pick = (id, ids) => pickedHtml(id, (ids || []).map(x => People.name(People.get(x))), 'Выбрать');
+  let sel = {coP: c ? [...(c.partners || [])] : partnerId ? [partnerId] : [], coE: c ? [...(c.experts || [])] : [], coA: c ? [...(c.ambs || [])] : []};
+  openModal({title: c ? c.title : 'Новый коллаб', wide: true, body: `
+      <label class="field"><span>Название</span><input class="input" id="coT" value="${esc(c ? c.title : '')}" placeholder="Утренняя практика в студии «Баланс»"></label>
+      <div class="grid2"><label class="field"><span>Формат</span><select class="select" id="coF">${COLLAB_FORMATS.map(x => `<option ${c && c.format === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+      <label class="field"><span>Статус</span><select class="select" id="coS">${COLLAB_ST.map(([k, n]) => `<option value="${k}" ${(c ? c.status : 'idea') === k ? 'selected' : ''}>${n}</option>`).join('')}</select></label></div>
+      <div class="grid2"><label class="field"><span>Дата</span><input class="input" type="date" id="coD" value="${esc(c ? c.date || '' : '')}"></label><label class="field"><span>Город или онлайн</span><input class="input" id="coC" value="${esc(c ? c.city || '' : '')}"></label></div>
+      <div class="field"><span>Партнёры</span>${pick('coP', sel.coP)}</div><div class="field"><span>Эксперты</span>${pick('coE', sel.coE)}</div><div class="field"><span>Амбассадоры</span>${pick('coA', sel.coA)}</div>
+      <label class="field"><span>Что делаем</span><textarea class="textarea" id="coX">${esc(c ? c.about || '' : '')}</textarea></label>
+      <label class="field"><span>Итог: сколько пришло, что получили</span><input class="input" id="coR" value="${esc(c ? c.result || '' : '')}"></label>`,
+    foot: `${c ? '<button class="btn danger left" data-del>Удалить</button>' : ''}<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Сохранить</button>`,
+    onMount(el, close) {
+      const types = {coP: 'partner', coE: 'expert', coA: 'amb'};
+      on(el, 'click', '[data-pick-open]', async (e, b) => {
+        const id = b.dataset.pickOpen;
+        const v = await multiPop(b, {items: People.all(types[id]).map(p => p.id), selected: sel[id], label: x => People.name(People.get(x)), placeholder: 'Найти…'});
+        if (!v) return;
+        sel[id] = v;
+        $('#' + id, el).outerHTML = pick(id, v);
+      });
+      if (c) $('[data-del]', el).onclick = async e => { if (await confirmPop(e.target, {text: 'Удалить коллаб?', yes: 'Удалить', danger: true})) { Store.remove('collabs', c.id); close(); } };
+      $('[data-ok]', el).onclick = () => {
+        const title = $('#coT', el).value.trim();
+        if (!title) { $('#coT', el).classList.add('need'); return; }
+        const doc = {title, format: $('#coF', el).value, status: $('#coS', el).value, date: $('#coD', el).value, city: $('#coC', el).value.trim(), partners: sel.coP, experts: sel.coE, ambs: sel.coA, about: $('#coX', el).value.trim(), result: $('#coR', el).value.trim()};
+        if (c) Store.patch('collabs', c.id, doc); else Store.add('collabs', {...doc, at: Date.now(), by: Who.id()});
+        close();
+      };
+    }});
+}
+
+/* ── страница «Партнёры» ── */
+App.register('partners', {
+  title: 'Партнёры',
+  render(root) {
+    const tab = ['list', 'collabs', 'points', 'train'].includes(View.get('pt.tab', 'list')) ? View.get('pt.tab', 'list') : 'list';
+    const L = People.all('partner'), canEdit = People.canEdit();
+    const cat = View.get('pt.cat', '');
+    const list = cat ? L.filter(p => p.cat === cat) : L;
+    const points = L.flatMap(p => (p.points || []).map(x => ({...x, p})));
+    const collabs = Store.all('collabs').sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+    const tr = ptrain();
+    let body;
+    if (tab === 'list') {
+      body = `<div class="t-bar"><select class="select sm t-filter" id="ptCat"><option value="">Все категории</option>${PARTNER_CATS.map(c => `<option value="${esc(c)}" ${cat === c ? 'selected' : ''}>${esc(noEmo(c))} · ${L.filter(p => p.cat === c).length}</option>`).join('')}</select><span class="t-bar-sp"></span><span class="note">${list.length} ${plural(list.length, 'партнёр', 'партнёра', 'партнёров')}</span></div>
+        <div class="pt-board">${P_STAGES.map(([k, n, about]) => { const col = list.filter(p => pStage(p) === k); return `<div class="b3-col pt-col" data-pst-col="${k}"><div class="b3-h"><b>${esc(n)}</b><span class="kb-n">${col.length}</span></div><div class="b3-hint">${esc(about)}</div>
+          <div class="b3-list">${col.map(p => { const d = p.deal || {}, done = tr.filter(m => (p.train || {})[m.id]).length; return `<a class="pc" href="#p-${p.id}" data-ptab="partner"><div class="pc-top">${avatar(People.name(p))}<b>${esc(People.name(p))}</b></div>
+            <div class="pc-sub">${esc([noEmo(p.cat), p.city].filter(Boolean).join(' · '))}</div>
+            <div class="pc-st">${d.discount || d.offer ? `<span class="st good">${esc(d.discount || d.offer)}</span>` : ''}${d.promo ? `<span class="st">${esc(d.promo)}</span>` : ''}${(p.points || []).length ? `<span class="st">${p.points.length} ${plural(p.points.length, 'точка', 'точки', 'точек')}</span>` : ''}</div>
+            ${k === 'training' || k === 'terms' ? `<span class="iv-pbar" title="Обучение ${done} из ${tr.length}"><i style="width:${tr.length ? (done / tr.length * 100).toFixed(0) : 0}%"></i></span>` : ''}</a>`; }).join('') || '<p class="note" style="padding:6px 4px">Пусто</p>'}</div></div>`; }).join('')}</div>`;
+    } else if (tab === 'collabs') {
+      body = `<div class="section-head"><h2>Коллабы</h2>${canEdit ? `<button class="btn sm primary" data-collab-new="">${icon('plus')}Новый коллаб</button>` : ''}</div>
+        <div class="collab-grid">${COLLAB_ST.map(([k, n]) => `<div><h3 class="qs-bh">${n} <small>${collabs.filter(c => (c.status || 'idea') === k).length}</small></h3>${collabs.filter(c => (c.status || 'idea') === k).map(collabCard).join('') || '<p class="note">—</p>'}</div>`).join('')}</div>`;
+    } else if (tab === 'points') {
+      body = `<div class="kpis kpis-4 card">${[[points.filter(x => x.kind !== 'market').length, 'офлайн-точек'], [points.filter(x => x.kind === 'market').length, 'в маркете'], [new Set(points.map(x => x.city).filter(Boolean)).size, 'городов'], [L.filter(p => pStage(p) === 'active').length, 'партнёров работают']].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+        <div class="card section" style="padding:0;overflow:auto">${points.length ? `<table class="t"><thead><tr><th>Точка</th><th>Тип</th><th>Город</th><th>Адрес</th><th>Партнёр</th><th>Предложение</th></tr></thead><tbody>${points.sort((a, b) => String(a.city || '').localeCompare(String(b.city || ''), 'ru')).map(x => `<tr><td><b>${esc(x.name)}</b>${x.link ? ` <a href="${esc(x.link)}" target="_blank" rel="noopener">↗</a>` : ''}</td><td>${x.kind === 'market' ? 'Маркет' : 'Офлайн'}</td><td>${esc(x.city || '')}</td><td>${esc(x.address || '')}</td><td><a href="#p-${x.p.id}">${esc(People.name(x.p))}</a></td><td>${esc(((x.p.deal || {}).discount || (x.p.deal || {}).offer || ''))}${(x.p.deal || {}).promo ? ' · ' + esc(x.p.deal.promo) : ''}</td></tr>`).join('')}</tbody></table>` : '<p class="note" style="padding:16px">Точки добавляются в карточке партнёра → «Партнёрство» → «Точка».</p>'}</div>`;
+    } else {
+      body = `<div class="section-head"><h2>Программа обучения партнёров</h2>${canEdit ? `<button class="btn sm primary" data-tr-add>${icon('plus')}Шаг</button>` : ''}</div>
+        <div class="card"><ol class="tr-list">${tr.map((m, i) => `<li><span><b>${esc(m.t)}</b><small>${esc(m.d || '')}</small></span><span class="muted">${L.filter(p => (p.train || {})[m.id]).length} из ${L.length}</span>${canEdit ? `<button class="icon-btn" data-tr-ed="${i}" title="Изменить">${icon('edit')}</button><button class="icon-btn" data-tr-rm="${i}" title="Убрать">${icon('trash')}</button>` : ''}</li>`).join('')}</ol></div>
+        ${L.length ? `<div class="card section" style="padding:0;overflow:auto"><table class="t"><thead><tr><th>Партнёр</th>${tr.map(m => `<th class="c" title="${esc(m.t)}">${esc(m.t.split(' ').slice(0, 2).join(' '))}</th>`).join('')}</tr></thead><tbody>${L.map(p => `<tr><td><a href="#p-${p.id}" data-ptab="partner">${esc(People.name(p))}</a></td>${tr.map(m => `<td class="c">${(p.train || {})[m.id] ? '✓' : '·'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : ''}`;
+    }
+    root.innerHTML = `
+      ${pageHead('Партнёры', 'Офлайн-точки и маркет: условия, обучение, адреса и коллабы. Знакомство и анкета партнёра — в «Кастдеве».',
+        canEdit ? `<a class="btn" href="#partner">${icon('funnel')}Кастдев партнёров</a><button class="btn primary" data-padd>${icon('plus')}Партнёр</button>` : '')}
+      ${tabsHtml('pt.tab', [['list', 'Партнёры', L.length || null], ['collabs', 'Коллабы', collabs.length || null], ['points', 'Точки и маркет', points.length || null], ['train', 'Обучение']], tab)}
+      <div class="sl-body">${body}</div>`;
+    wireTabs(root);
+    const pc = $('#ptCat', root);
+    if (pc) pc.onchange = () => { View.set('pt.cat', pc.value); App.render(); };
+    on(root, 'click', '[data-padd]', () => openAdd('partner'));
+    on(root, 'click', '[data-ptab]', () => View.set('pp.tab', 'partner'));
+    on(root, 'click', '[data-collab-new]', (e, el) => editCollab(null, el.dataset.collabNew));
+    on(root, 'click', '[data-collab]', (e, el) => { if (!e.target.closest('a')) editCollab(Store.get('collabs', el.dataset.collab)); });
+    const saveTr = list => Store.put('cfg', 'ptrain', {list, at: Date.now()});
+    const trEdit = i => {
+      const m = i >= 0 ? tr[i] : {id: 'm' + uid().slice(-5), t: '', d: ''};
+      openModal({title: i >= 0 ? 'Шаг обучения' : 'Новый шаг обучения', body: `<label class="field"><span>Шаг</span><input class="input" id="trT" value="${esc(m.t)}"></label><label class="field"><span>Что именно</span><input class="input" id="trD" value="${esc(m.d || '')}"></label>`,
+        foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Сохранить</button>',
+        onMount(el, close) { $('[data-ok]', el).onclick = () => { const t = $('#trT', el).value.trim(); if (!t) return; const list = tr.map(x => ({...x})); const n = {...m, t, d: $('#trD', el).value.trim()}; if (i >= 0) list[i] = n; else list.push(n); saveTr(list); close(); }; }});
+    };
+    on(root, 'click', '[data-tr-add]', () => trEdit(-1));
+    on(root, 'click', '[data-tr-ed]', (e, el) => trEdit(Number(el.dataset.trEd)));
+    on(root, 'click', '[data-tr-rm]', async (e, el) => { if (await confirmPop(el, {text: 'Убрать шаг из программы? Отметки партнёров останутся.', yes: 'Убрать', danger: true})) saveTr(tr.filter((x, i) => i !== Number(el.dataset.trRm))); });
+  },
+});
+
+/* ── 39-ambs-tasks.js ── */
+/* 6. Амбассадоры — реферальная программа: личная ссылка, кого привели, кто из них купил, аудитория,
+      вознаграждения (начислено / выплачено), рейтинг.
+   7. Задачи — «связаться через неделю», «прислать материалы»: по контакту или общие, со сроком и
+      исполнителем. Просроченные и на сегодня — в меню и на главной. */
+
+/* ── амбассадоры ── */
+const rewardsOf = p => (p.rewards || []).filter(Boolean);
+const owed = p => rewardsOf(p).filter(r => !r.paid).reduce((a, r) => a + (Number(r.amount) || 0), 0);
+App.register('ambs', {
+  title: 'Амбассадоры',
+  render(root) {
+    const L = People.all('amb'), canEdit = People.canEdit();
+    const rows = L.map(p => { const inv = People.invited(p); return {p, inv, ans: inv.filter(x => x.s1 === 'done').length, buy: inv.filter(x => Sales.pays(x).length).length, aud: Number(p.followers) || 0}; })
+      .sort((a, b) => b.buy - a.buy || b.inv.length - a.inv.length);
+    const tot = k => rows.reduce((a, r) => a + (k === 'inv' ? r.inv.length : r[k]), 0);
+    const rules = (Store.get('cfg', 'ambrules') || {}).text || '';
+    root.innerHTML = `
+      ${pageHead('Амбассадоры', 'Реферальная программа: у каждого своя ссылка — кто по ней пришёл, заполнил анкету и купил. Вознаграждения и рейтинг. Знакомство с амбассадором — в «Кастдеве».',
+        canEdit ? `<a class="btn" href="#amb">${icon('funnel')}Кастдев амбассадоров</a><button class="btn primary" data-aadd>${icon('plus')}Амбассадор</button>` : '')}
+      <div class="kpis kpis-4 card">${[[L.length, 'амбассадоров'], [tot('inv'), 'пришли по их ссылкам'], [tot('buy'), 'из них купили'], [rub(L.reduce((a, p) => a + owed(p), 0)), 'начислено, не выплачено']].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+      <div class="two section">
+        ${card('Рейтинг', 'по покупкам приглашённых', rows.filter(r => r.inv.length).length ? hbarList(rows.filter(r => r.inv.length).slice(0, 8).map(r => ({name: People.name(r.p), v: r.buy || 0})), {color: 'var(--good)', sub: r => ''}) : '<p class="note">Появится, когда по ссылкам придут первые люди.</p>')}
+        ${card('Условия программы', 'видит вся команда', canEdit ? `<textarea class="textarea" id="ambRules" style="min-height:120px" placeholder="Например: 500 ₽ за каждую подругу, купившую подписку; месяц Евы в подарок за 3 приглашения">${esc(rules)}</textarea>` : `<p>${esc(rules) || '<span class="note">Не заполнены.</span>'}</p>`)}
+      </div>
+      <div class="card section" style="padding:0;overflow:auto">${rows.length ? `<table class="t base-t"><thead><tr><th>Амбассадор</th><th class="r">Аудитория</th><th class="r">Пришли</th><th class="r">Анкета</th><th class="r">Купили</th><th class="r">К выплате</th><th></th></tr></thead><tbody>
+        ${rows.map(r => `<tr data-open="${r.p.id}"><td><div class="bt-who">${avatar(People.name(r.p))}<span><b>${esc(People.name(r.p))}</b><small>${esc(r.p.code)}${(r.p.answers || {}).where ? ' · ' + esc([].concat(r.p.answers.where).map(noEmo).join(', ')) : ''}</small></span></div></td>
+          <td class="r">${r.aud ? fmt(r.aud) : esc(noEmo((r.p.answers || {}).size || '—'))}</td><td class="r">${r.inv.length}</td><td class="r">${r.ans}</td><td class="r"><b>${r.buy}</b></td><td class="r">${owed(r.p) ? rub(owed(r.p)) : '—'}</td>
+          <td class="r nowrap"><button class="btn xs" data-act="link" data-pid="${r.p.id}">Ссылка</button>${canEdit ? `<button class="btn xs" data-reward="${r.p.id}">Начислить</button>${owed(r.p) ? `<button class="btn xs primary" data-paid="${r.p.id}">Выплачено</button>` : ''}` : ''}</td></tr>`).join('')}
+      </tbody></table>` : '<p class="note" style="padding:16px">Амбассадоров пока нет — добавьте в «Кастдеве».</p>'}</div>`;
+    on(root, 'click', '[data-open]', (e, el) => { if (!e.target.closest('button, a')) App.go('p-' + el.dataset.open); });
+    on(root, 'click', '[data-aadd]', () => openAdd('amb'));
+    wireActs(root);
+    const ar = $('#ambRules', root);
+    if (ar) ar.onchange = () => Store.put('cfg', 'ambrules', {text: ar.value.trim(), at: Date.now()});
+    on(root, 'click', '[data-reward]', (e, el) => {
+      const p = People.get(el.dataset.reward);
+      openModal({title: `Начислить: ${People.name(p)}`, body: `<div class="grid2"><label class="field"><span>Сумма, ₽</span><input class="input" type="number" id="rwA" value="500"></label><label class="field"><span>За что</span><input class="input" id="rwN" placeholder="подруга купила подписку"></label></div>`,
+        foot: '<button class="btn" data-close>Отмена</button><button class="btn primary" data-ok>Начислить</button>',
+        onMount(m, close) { $('[data-ok]', m).onclick = () => { const amount = Number($('#rwA', m).value) || 0, note = $('#rwN', m).value.trim(); People.patch(p.id, {rewards: [...rewardsOf(p), {id: uid(), at: Date.now(), amount, note, paid: false}]}, `Начислено ${rub(amount)}${note ? ': ' + note : ''}`, '🎁'); close(); }; }});
+    });
+    on(root, 'click', '[data-paid]', (e, el) => { const p = People.get(el.dataset.paid); People.patch(p.id, {rewards: rewardsOf(p).map(r => (r.paid ? r : {...r, paid: Date.now()}))}, `Выплачено ${rub(owed(p))}`, '💸'); });
+  },
+});
+
+/* ── задачи ── */
+const Tasks = {
+  all() { return Store.all('tasks'); },
+  open() { return this.all().filter(t => !t.done); },
+  /* на сегодня и просроченные */
+  due() { const d = today(); return this.open().filter(t => t.due && t.due <= d); },
+};
+const isMineTask = t => !t.owner || t.owner === Who.id();
+function addTask(f) { return Store.add('tasks', {text: f.text, pid: f.pid || null, due: f.due || '', owner: f.owner || Who.id(), done: false, at: Date.now(), by: Who.id()}); }
+function doneTask(t, on = true) { Store.patch('tasks', t.id, on ? {done: true, doneAt: Date.now(), doneBy: Who.id()} : {done: false, doneAt: null}); }
+const taskRow = (t, canEdit, withWho = true) => { const p = People.get(t.pid), o = Team.get(t.owner), late = t.due && t.due < today() && !t.done;
+  return `<div class="tk ${t.done ? 'done' : ''} ${late ? 'late' : ''}"><input type="checkbox" data-tdone="${t.id}" ${t.done ? 'checked' : ''} ${canEdit ? '' : 'disabled'} aria-label="Сделано">
+    <span class="tk-t"><b>${esc(t.text)}</b><small>${withWho && p ? `<a href="#p-${p.id}">${esc(People.name(p))}</a> · ` : ''}${t.due ? `<span class="${late ? 'bad-t' : ''}">${esc(dayOrWhen(t.due))}</span>` : 'без срока'}${o ? ` · ${esc(Team.first(o))}` : ''}</small></span>
+    ${canEdit ? `<button class="icon-btn" data-tdel="${t.id}" title="Удалить">${icon('trash')}</button>` : ''}</div>`; };
+function taskForm(pid = '') {
+  return `<form class="tk-add" data-tadd="${pid}"><input class="input sm" name="text" placeholder="${pid ? 'Задача по контакту: написать через неделю…' : 'Новая задача…'}" required>
+    <input class="input sm" type="date" name="due" value="${addDays(today(), 1)}" aria-label="Срок">
+    <select class="select sm" name="owner" aria-label="Кто">${Team.assignable().map(m => `<option value="${m.id}" ${m.id === Who.id() ? 'selected' : ''}>${esc(Team.first(m))}</option>`).join('')}</select>
+    ${pid ? '' : '<button type="button" class="btn sm" data-tpick>Контакт</button><input type="hidden" name="pid">'}<button class="btn sm primary">${icon('plus')}Добавить</button></form>`;
+}
+function wireTasks(root) {
+  on(root, 'change', '[data-tdone]', (e, el) => doneTask(Store.get('tasks', el.dataset.tdone), el.checked));
+  on(root, 'click', '[data-tdel]', (e, el) => Store.remove('tasks', el.dataset.tdel));
+  on(root, 'click', '[data-tpick]', async (e, el) => {
+    const v = await pickPop(el, People.all().slice(0, 300).map(p => [p.id, `${People.name(p)} · ${TYPES[p.type].one}`]), '');
+    if (!v) return;
+    el.form.pid.value = v; el.textContent = People.name(People.get(v));
+  });
+  on(root, 'submit', '[data-tadd]', (e, f) => {
+    e.preventDefault();
+    const text = f.text.value.trim();
+    if (!text) return;
+    addTask({text, due: f.due.value, owner: f.owner.value, pid: f.dataset.tadd || (f.pid ? f.pid.value : '')});
+    toast('Задача добавлена');
+  });
+}
+function tasksBox(p, canEdit) {
+  const L = Tasks.all().filter(t => t.pid === p.id).sort((a, b) => (a.done ? 1 : 0) - (b.done ? 1 : 0) || String(a.due || '9').localeCompare(String(b.due || '9')));
+  return `<div class="tk-box"><h3 class="tf-h">Задачи по контакту</h3>${L.map(t => taskRow(t, canEdit, false)).join('') || '<p class="note">Нет задач.</p>'}${canEdit ? taskForm(p.id) : ''}</div>`;
+}
+App.register('tasks', {
+  title: 'Задачи',
+  render(root) {
+    const who = View.get('tk.who', 'me'), canEdit = People.canEdit();
+    const L = Tasks.all().filter(t => who === 'all' || (who === 'me' ? isMineTask(t) : t.owner === who));
+    const d = today(), wk = addDays(d, 7);
+    const open = L.filter(t => !t.done).sort((a, b) => String(a.due || '9').localeCompare(String(b.due || '9')));
+    const sec = (title, list, empty) => `<section class="card section"><div class="card-head"><h2>${title} <span class="h-n">${list.length}</span></h2></div>${list.map(t => taskRow(t, canEdit)).join('') || `<p class="note">${empty}</p>`}</section>`;
+    root.innerHTML = `
+      ${pageHead('Задачи', 'Что сделать по контактам: написать, позвонить, прислать материалы. Просроченные и на сегодня видны в меню.')}
+      <div class="t-bar"><select class="select sm t-filter" id="tkWho"><option value="me">Мои</option><option value="all" ${who === 'all' ? 'selected' : ''}>Все</option>${Team.assignable().map(m => `<option value="${m.id}" ${who === m.id ? 'selected' : ''}>${esc(Team.name(m))}</option>`).join('')}</select><span class="t-bar-sp"></span><span class="note">открытых: ${open.length}</span></div>
+      ${canEdit ? `<div class="card section">${taskForm()}</div>` : ''}
+      ${sec('Просрочено', open.filter(t => t.due && t.due < d), 'Ничего не просрочено 👌')}
+      ${sec('Сегодня', open.filter(t => t.due === d), 'На сегодня задач нет.')}
+      ${sec('На неделе', open.filter(t => t.due > d && t.due <= wk), 'Пусто.')}
+      ${sec('Позже и без срока', open.filter(t => !t.due || t.due > wk), 'Пусто.')}
+      ${sec('Сделано', L.filter(t => t.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 15), 'Пока ничего.')}`;
+    $('#tkWho', root).onchange = e => { View.set('tk.who', e.target.value); App.render(); };
+    wireTasks(root);
+  },
+});
 
 /* ── 40-settings.js ── */
 /* Настройки: команда, как работает единая ссылка, пример данных, выгрузка
