@@ -28,6 +28,20 @@ const logHtml = d => {
 const monthOpts = (cur, months = finMonths()) => months.map(m => `<option value="${m}" ${m === cur ? 'selected' : ''}>${monthName(m, true)}</option>`).join('');
 
 /* ── обзор ── */
+/* burn и runway: средний расход и чистый расход в месяц за последние 3 полных месяца с операциями
+   (вложения не считаются приходом); runway — на сколько месяцев хватит баланса при таком чистом расходе */
+function burnRunway(cash) {
+  const cur = monthOf(today());
+  const income = m => Sales.month(m).revenue + Money.month(m).in;
+  let ms = [1, 2, 3].map(i => addMonths(cur, -i)).filter(m => Money.month(m).out || income(m)).reverse();
+  const partial = !ms.length;
+  if (partial) ms = [cur];
+  const out = sum(ms, m => Money.month(m).out) / ms.length, inc = sum(ms, income) / ms.length;
+  const net = out - inc;
+  const period = partial ? `${monthName(cur).toLowerCase()}, месяц ещё идёт` : ms.length === 1 ? `за ${monthName(ms[0]).toLowerCase()}` : `в среднем за ${ms.map(m => MONTHS_SH[monthIdx(m)]).join(', ')}`;
+  const runway = net <= 0 ? Infinity : Math.max(0, cash) / net;
+  return {out, inc, net, period, runway, until: isFinite(runway) && runway > 0 ? addMonths(cur, Math.floor(runway)) : ''};
+}
 function finOverviewHtml(sc) {
   const s = settings(), t = today(), m = monthOf(t);
   const cash = Money.cashNow();
@@ -40,6 +54,11 @@ function finOverviewHtml(sc) {
     finTile('Баланс на сегодня', money(cash), `старт ${money(s.cashStart)} на ${dayLong(s.cashDate)} + операции и выручка`, 'cash-card'),
     finTile(`Итог ${MONTHS_GEN[monthIdx(m)]}`, `<span class="${net < 0 ? 'bad' : 'good'}">${signedMoney(net)}</span>`, `приход ${money(income)} · расход ${money(led.out)}`),
     finTile('Прогноз на 31 декабря', `<span class="${last.close < 0 ? 'bad' : ''}">${money(last.close)}</span>`, minClose < 0 ? `<span class="bad">в минус уйдём в ${monthName(cf.find(r => r.close < 0).m).toLowerCase()} — нужны вложения</span>` : `сценарий «${SCENARIOS[sc].name}» и план платежей`),
+    (() => { const b = burnRunway(cash);
+      if (!b.out && !b.inc) return finTile('Burn — расход в месяц', '—', 'появится, когда в журнале будут расходы') + finTile('Runway — запас денег', '—', 'баланс ÷ burn: на сколько месяцев хватит денег');
+      return finTile('Burn — расход в месяц', `<span class="${b.net > 0 ? 'bad' : 'good'}">${b.net > 0 ? money(b.net) : '0 ₽'}</span>`, `чистый: расход ${money(b.out)} − приход ${money(b.inc)}, ${b.period}`)
+        + finTile('Runway — запас денег', `<span class="${isFinite(b.runway) && b.runway < 3 ? 'bad' : ''}">${isFinite(b.runway) ? fmt(b.runway, 1) + ' мес.' : '∞'}</span>`,
+          !isFinite(b.runway) ? 'приход покрывает расход' : cash <= 0 ? '<span class="bad">денег нет — нужны вложения</span>' : `баланс ÷ burn · хватит примерно до ${MONTHS_GEN[monthIdx(b.until)]}${b.until.slice(0, 4) !== today().slice(0, 4) ? ' ' + b.until.slice(0, 4) : ''}, без новых вложений`); })(),
     finTile('Платных подписчиков', fmt(sub.total), `месячных ${fmt(sub.endM)} · годовых ${fmt(sub.endY)}`),
     finTile('MRR', money(sub.mrr), `месячная выручка подписок: ${money(s.price)} и ${money(priceYear())}/12`),
     finTile('Продления', pctOr(rate && rate.renew), rate ? `${monthName(rate.m).toLowerCase()} · отток ${pctOr(rate.churn)}` : 'появятся после первого месяца'),
