@@ -4,6 +4,7 @@ import { start } from './lib/store.ts';
 import { applyDesign, getDesign, unlockSoundOnFirstTouch } from './lib/aska.ts';
 import './styles.css';
 import './v5.css';
+import './v6.css';
 
 applyDesign(getDesign());
 unlockSoundOnFirstTouch();

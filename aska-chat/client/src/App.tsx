@@ -12,6 +12,7 @@ import { Aux } from './components/Aux.tsx';
 import type { AuxKind } from './components/Aux.tsx';
 import { Svg, Dialog } from './components/Win.tsx';
 import { Profile, CircleInfo } from './components/Profile.tsx';
+import type { WallView } from './components/Wall.tsx';
 import { Plate } from './components/Plate.tsx';
 
 function chatFromHash(): string | null {
@@ -29,6 +30,7 @@ export default function App() {
   const [profile, setProfile] = useState<number | null>(null);
   const [circleInfo, setCircleInfo] = useState<string | null>(null);
   const [superCode, setSuperCode] = useState('');
+  const [wallView, setWallView] = useState<WallView>({ kind: 'feed' });
 
   useEffect(() => {
     if (location.hash.includes('chat=')) history.replaceState(null, '', location.pathname);
@@ -114,10 +116,12 @@ export default function App() {
     <div className={cls}>
       <div className="wins">
         <Contacts activeChat={chatOpen} onOpen={openChat} onProfile={setProfile} onSettings={() => setAux('settings')} onInvite={() => setAux('invite')} onAux={setAux} />
-        {aux && <Aux kind={aux} onBack={() => setAux(aux === 'admin' || aux === 'invite' ? 'settings' : null)} onOpen={openChat} onAux={setAux} />}
+        {aux && <Aux kind={aux} onBack={() => setAux(aux === 'admin' || aux === 'invite' ? 'settings' : null)} onOpen={openChat} onAux={setAux}
+          wallView={wallView} onWallView={setWallView} onProfile={setProfile} />}
         {chatOpen && <ChatView key={chatOpen} chatId={chatOpen} onBack={() => setChat(null)} onProfile={setProfile} onCircleInfo={setCircleInfo} onOpen={openChat} />}
       </div>
-      {profile !== null && <Profile userId={profile} onClose={() => setProfile(null)} onOpenChat={openChat} />}
+      {profile !== null && <Profile userId={profile} onClose={() => setProfile(null)} onOpenChat={openChat}
+        onWall={(id) => { setProfile(null); setChat(null); setWallView({ kind: 'user', userId: id }); setAux('wall'); }} />}
       {circleInfo && <CircleInfo chatId={circleInfo} onClose={() => setCircleInfo(null)} onProfile={(id) => { setCircleInfo(null); setProfile(id); }} />}
       {superCode && s.me && <SuperLinkInApp code={superCode} me={s.me.username} onClose={() => setSuperCode('')} />}
       {s.welcomePlate && (
@@ -139,6 +143,9 @@ export default function App() {
       <nav className="tabbar">
         <button className={!aux ? 'on' : ''} onClick={() => { setAux(null); setChat(null); }}>
           <i>💬</i><span>Чаты</span>{unread > 0 && <b className="tb-badge">{unread}</b>}
+        </button>
+        <button className={aux === 'wall' ? 'on' : ''} onClick={() => { if (aux !== 'wall') setWallView({ kind: 'feed' }); tab('wall'); }}>
+          <i>📌</i><span>Стена</span>{s.wallNew > 0 && <b className="tb-badge">{s.wallNew}</b>}
         </button>
         <button className={aux === 'circles' ? 'on' : ''} onClick={() => tab('circles')}>
           <i>⭕</i><span>Круги</span>

@@ -1,13 +1,15 @@
 // Фото хранится на сервере зашифрованным: скачиваем, расшифровываем на телефоне, показываем.
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { api } from '../lib/api.ts';
 import { decryptFile } from '../lib/crypto.ts';
 import type { ImageRef } from '../lib/protocol.ts';
+import { blobUrl } from '../lib/wall.ts';
 
 const urls = new Map<string, string>();
 const loading = new Map<string, Promise<string>>();
 
-function load(image: ImageRef): Promise<string> {
+export function load(image: ImageRef): Promise<string> {
   const hit = urls.get(image.blob);
   if (hit) return Promise.resolve(hit);
   let p = loading.get(image.blob);
@@ -16,7 +18,7 @@ function load(image: ImageRef): Promise<string> {
       const ct = await api.download(image.blob);
       const plain = decryptFile(ct, image.key, image.nonce, image.hash);
       if (!plain) throw new Error('decrypt');
-      const url = URL.createObjectURL(new Blob([plain as BlobPart], { type: image.mime || 'image/jpeg' }));
+      const url = blobUrl(new Blob([plain as BlobPart], { type: image.mime || 'image/jpeg' }));
       urls.set(image.blob, url);
       return url;
     })().finally(() => loading.delete(image.blob));
@@ -51,11 +53,13 @@ export function EncryptedImage({ image, local, onOpen }: { image: ImageRef; loca
   );
 }
 
-export function ImageViewer({ url, onClose }: { url: string; onClose: () => void }) {
+// Просмотр фото во весь экран; снизу — кнопки (сохранить, на стену)
+export function ImageViewer({ url, onClose, actions }: { url: string; onClose: () => void; actions?: ReactNode }) {
   return (
     <div className="aska-viewer" onClick={onClose}>
       <img src={url} alt="" />
-      <div className="h">Нажми, чтобы закрыть · удерживай, чтобы сохранить</div>
+      {actions ? <div className="aska-viewer-acts" onClick={(e) => e.stopPropagation()}>{actions}<button className="btn" onClick={onClose}>✕</button></div>
+        : <div className="h">Нажми, чтобы закрыть · удерживай, чтобы сохранить</div>}
     </div>
   );
 }

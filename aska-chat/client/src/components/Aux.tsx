@@ -17,17 +17,23 @@ import { Plates } from './Plates.tsx';
 import { Circles } from './Circles.tsx';
 import { MyAI } from './MyAI.tsx';
 import { Admin } from './Admin.tsx';
+import { Wall } from './Wall.tsx';
+import type { WallView } from './Wall.tsx';
 
-export type AuxKind = 'settings' | 'invite' | 'circles' | 'myai' | 'admin' | 'plates';
+export type AuxKind = 'settings' | 'invite' | 'circles' | 'myai' | 'admin' | 'plates' | 'wall';
 
 const TITLES: Record<AuxKind, string> = {
-  settings: 'Ещё', invite: 'Позвать друга', circles: 'Круги', myai: 'Мой ИИ', admin: 'Управление АСЬКОЙ', plates: 'Номера',
+  settings: 'Ещё', invite: 'Позвать друга', circles: 'Круги', myai: 'Мой ИИ', admin: 'Управление АСЬКОЙ', plates: 'Номера', wall: 'Стена',
 };
 
-export function Aux({ kind, onBack, onOpen, onAux }: { kind: AuxKind; onBack: () => void; onOpen: (chatId: string) => void; onAux: (k: AuxKind) => void }) {
+export function Aux({ kind, onBack, onOpen, onAux, wallView, onWallView, onProfile }: {
+  kind: AuxKind; onBack: () => void; onOpen: (chatId: string) => void; onAux: (k: AuxKind) => void;
+  wallView: WallView; onWallView: (v: WallView) => void; onProfile: (userId: number) => void;
+}) {
   return (
-    <Win id="auxwin" className="aux" title={TITLES[kind]} onBack={onBack} onClose={onBack} closeClass="close-aux">
+    <Win id="auxwin" className={`aux${kind === 'wall' ? ' aska-wall-win' : ''}`} title={TITLES[kind]} onBack={onBack} onClose={onBack} closeClass="close-aux">
       <div className="aux-body">
+        {kind === 'wall' && <Wall view={wallView} onView={onWallView} onProfile={onProfile} onOpenChat={onOpen} />}
         {kind === 'invite' && <Invite />}
         {kind === 'settings' && <Settings onAux={onAux} />}
         {kind === 'circles' && <Circles onOpen={onOpen} />}
@@ -137,7 +143,7 @@ function Settings({ onAux }: { onAux: (k: AuxKind) => void }) {
 
       <div className="hint">
         🔒 Переписка между людьми шифруется на телефоне — её не видит даже сервер. То, что пишешь ИИ (Аське, личным ИИ, ИИ-людям
-        и в круги, где они есть), читает сервер и нейросеть.
+        и в круги, где они есть), читает сервер и нейросеть. Стены не шифруются: их видят все в АСЬКЕ.
       </div>
 
       <div className="right"><button className="btn" onClick={() => setConfirmExit(true)}>Выйти из АСЬКИ</button></div>

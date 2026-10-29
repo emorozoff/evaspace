@@ -61,7 +61,7 @@ function PushPanel() {
   return <div className="me-panel aska-push">{body}</div>;
 }
 
-type AuxTarget = 'circles' | 'myai' | 'settings' | 'plates' | 'admin';
+type AuxTarget = 'circles' | 'myai' | 'settings' | 'plates' | 'admin' | 'wall';
 interface Props {
   activeChat: string | null;
   onOpen: (chatId: string) => void;
@@ -198,7 +198,6 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
             {myself?.status ? statusLine(myself.status) : '＋ статус'}
           </button>
         </span>
-        <span className="sp" />
         <span className="aska-me-plate" onClick={(e) => { e.stopPropagation(); onAux('plates'); }} title="Мои номера">
           <UserPlate user={myself} size="m" />
         </span>
@@ -214,10 +213,11 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
       <PushPanel />
       {/* на компьютере нижних вкладок нет — те же разделы кнопками */}
       <div className="aska-desk-nav">
-        <button className="btn" onClick={() => onAux('circles')}>⭕ Круги</button>
-        <button className="btn" onClick={() => onAux('plates')}>🚗 Номера</button>
-        <button className="btn" onClick={() => onAux('myai')}>🤖 Мой ИИ</button>
-        <button className="btn" onClick={() => onAux('settings')}>☰ Ещё</button>
+        <button className="btn" onClick={() => onAux('wall')}><i>📌</i><span>Стена</span></button>
+        <button className="btn" onClick={() => onAux('circles')}><i>⭕</i><span>Круги</span></button>
+        <button className="btn" onClick={() => onAux('plates')}><i>🚗</i><span>Номера</span></button>
+        <button className="btn" onClick={() => onAux('myai')}><i>🤖</i><span>Мой ИИ</span></button>
+        <button className="btn" onClick={() => onAux('settings')}><i>☰</i><span>Ещё</span></button>
       </div>
       {error && <div className="err aska-warn">{error}</div>}
       <div className="clist inset">

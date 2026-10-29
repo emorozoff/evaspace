@@ -7,6 +7,7 @@ import { getSetting, setSetting } from './db.js';
 import { ASKA_PLATE, formatCode, randomFreeCode, regionForCity, keyTaken, plateKey } from './plates.js';
 import * as M from './market.js';
 import * as P from './personas.js';
+import { CARDS, MAGNET_NAMES } from './wall.js';
 
 const ANNOUNCE = '2026-10-21-v2';
 const MSK = 3 * 3_600_000;
@@ -47,7 +48,11 @@ export function createBots(ctx) {
   const getChat = (id) => db.prepare('SELECT * FROM chats WHERE id = ?').get(id);
   const memberIds = (chatId) => ctx.memberIds(chatId);
   const peopleEnabled = () => getSetting(db, 'people') === '1';
-  const peopleOn = () => peopleEnabled() && ai.available();
+  // ИИ-люди живут и без «мозга»: в сети по расписанию, статусы, стены, короткие ответы в личке.
+  // Разговаривать по-настоящему, заводить беседы и писать в кругах они могут только с ключом Claude.
+  const peopleOn = () => peopleEnabled();
+  const brainy = () => peopleEnabled() && ai.available();
+  const wall = ctx.wall;
 
   function createBot({ kind, username, displayName, about, city, ownerId, persona }) {
     const keys = newKeys();
@@ -343,6 +348,10 @@ export function createBots(ctx) {
       case 'batya_hello': return batyaHelloJob(j.bot_id, j.chat_id, payload);
       case 'batya_q': return batyaAskJob(j.bot_id, j.chat_id, payload);
       case 'announce5': return announce5Job(j.bot_id, j.chat_id, payload);
+      case 'announce6': return announce6Job(j.bot_id, j.chat_id, payload);
+      case 'wall_note': return wallNoteJob(j.bot_id, payload);
+      case 'wall_react': return wallReactJob(j.bot_id, payload);
+      case 'wall_self': return wallSelfJob(j.bot_id);
       case 'thank': return thankJob(j.bot_id, payload);
       case 'person_answer': return personAnswerJob(j.bot_id, payload);
       default: return null;
@@ -393,7 +402,7 @@ export function createBots(ctx) {
     }
 
     if (chat.kind !== 'circle') return;
-    const people = peopleOn() ? bots.filter((b) => b.kind === 'person') : [];
+    const people = brainy() ? bots.filter((b) => b.kind === 'person') : [];
     if (!isBot(sender)) {
       const text = peek(bots[0].id, msgId)?.text || '';
       let chosen = people.filter((p) => mentions(text, p));
@@ -494,15 +503,26 @@ export function createBots(ctx) {
     ].filter(Boolean).join('\n');
     const system = `${P.PERSON_RULES}\n\nКто ты:\n${per.card}\nИмя в АСЬКЕ: «${bot.display_name}», номер ${plateText(bot)}.\nКак ты пишешь: ${per.style}`;
     const out = await ai.complete({ system, prompt, schema: P.REPLY_SCHEMA });
-    if (!out) return;
+    if (!out) return isDm && other?.kind === 'human' ? personFallback(bot, chat, last, otherId) : undefined;
     if (out.note && other?.kind === 'human') addNote(bot.id, otherId, out.note);
     await say(bot.id, chat.id, outMessages(out));
+  }
+
+  // Без «мозга»: пара коротких человеческих ответов в день, потом «занят(а)» — и тишина до завтра
+  async function personFallback(bot, chat, last, otherId) {
+    const key = `pfb:${bot.id}:${otherId}`;
+    const day = mskDay(now());
+    const st = JSON.parse(getSetting(db, key) || '{}');
+    const n = st.day === day ? st.n : 0;
+    if (n >= 3) return;
+    setSetting(db, key, JSON.stringify({ day, n: n + 1 }));
+    await say(bot.id, chat.id, n === 2 ? [pick(P.PERSON_BUSY)] : P.personScripted(last?.body?.text || ''));
   }
 
   async function openerJob(botId, chatId, { intro } = {}) {
     const bot = row(botId);
     const chat = getChat(chatId);
-    if (!bot || !chat || !peopleOn() || !memberIds(chatId).includes(botId)) return;
+    if (!bot || !chat || !brainy() || !memberIds(chatId).includes(botId)) return;
     const per = personaOf(bot);
     const hist = history(botId, chatId, 12);
     const prompt = [
@@ -695,6 +715,10 @@ export function createBots(ctx) {
     const q = batyaQuestion(userId);
     batyaAdvance(userId);
     const hist = history(botId, chatId, 16);
+    // иногда вешает на стену открытку: утром «Доброе утро», днём — «Чай»
+    const morning = mskHour(now()) < 13;
+    const card = wall && Math.random() < (timing.batyaCardChance ?? 0.3)
+      ? wall.post(botId, userId, morning ? { kind: 'card', card: 'sun', text: 'Доброе утро! Хорошего дня 🌅' } : { kind: 'card', card: 'tea', text: 'Заходи на чай ☕' }, { fromBot: true }).post : null;
     const out = await ai.complete({
       system: P.BATYA_RULES,
       prompt: [
@@ -703,12 +727,13 @@ export function createBots(ctx) {
         notesOf(botId, userId) && `Что ты о нём(ней) помнишь: ${notesOf(botId, userId)}`,
         hist.length ? `Ваша переписка (старые сверху):\n${transcript(hist, botId, nameOf)}` : 'Вы ещё не переписывались.',
         `Ты сам пишешь первым — проведать. Спроси по-своему вот это: «${q}». Можно коротко поздороваться по времени суток. Одно-два коротких сообщения.`,
+        card && `Ещё ты повесил ему(ей) на стену в АСЬКЕ открытку «${card.card === 'sun' ? 'Доброе утро' : 'Чай'}» — можешь коротко упомянуть.`,
         'note оставь пустым.',
       ].filter(Boolean).join('\n'),
       schema: P.REPLY_SCHEMA,
     });
     const texts = outMessages(out);
-    await say(botId, chatId, texts.length ? texts : [`${greet(now())} ${q}`]);
+    await say(botId, chatId, texts.length ? texts : [`${greet(now())} ${q}${card ? '\nОткрытку тебе на стену повесил 😉' : ''}`]);
     reach(botId, userId);
   }
 
@@ -831,6 +856,148 @@ export function createBots(ctx) {
     return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + (h >= 21 ? 1 : 0), 12) - MSK;
   }
 
+  // ---------- стены ----------
+
+  const wallPost = (id) => db.prepare('SELECT * FROM wall_posts WHERE id = ?').get(id);
+  const whatPost = (p) => (p.kind === 'photo' ? 'фото' : p.kind === 'card' ? `открытка «${CARDS[p.card] || p.card}»`
+    : p.kind === 'magnet' ? `магнит «${MAGNET_NAMES[p.magnet] || p.magnet}»` : `«${short(p.text, 60)}»`);
+  const describePost = (p) => [whatPost(p), p.kind !== 'text' && p.text ? `с подписью «${short(p.text, 200)}»` : ''].filter(Boolean).join(' ');
+  const isLiveBot = (u) => u && (u.kind === 'aska' || u.kind === 'friend' || (u.kind === 'person' && peopleOn()));
+
+  // Что делают боты, когда на стенах что-то происходит
+  const wallHooks = {
+    onPost(p) {
+      const owner = row(p.wall_id);
+      const author = row(p.author_id);
+      if (!owner || !author) return;
+      // хозяину стены — весточка от Аськи (несколько записей за минуту — одним сообщением); Аська и Батя и так на виду
+      if (owner.kind === 'human' && p.author_id !== p.wall_id && author.kind !== 'aska' && author.kind !== 'friend') {
+        schedule('wall_note', askaId(), `wn:${owner.id}`, now() + T(60_000), { toId: owner.id });
+      }
+      if (author.kind !== 'human') return;
+      // запись человека: хозяин-бот отвечает; ИИ-люди иногда дарят цветочек и пишут комментарий
+      if (isLiveBot(owner) && owner.id !== author.id) {
+        const at = owner.kind === 'person' ? nextOnline(owner, now() + T(rand(60_000, 600_000))) : now() + T(rand(8000, 40_000));
+        schedule('wall_react', owner.id, `wr:${p.id}`, at, { postId: p.id });
+      }
+      if (peopleOn() && Math.random() < (timing.wallReactChance ?? 0.5)) {
+        const pool = persons().filter((u) => u.id !== owner.id && isOnline(u));
+        if (pool.length) schedule('wall_react', pick(pool).id, `wr:${p.id}`, now() + T(rand(2 * 60_000, 30 * 60_000)), { postId: p.id });
+      }
+    },
+    onComment(p, c) {
+      const by = row(c.authorId);
+      if (!by || by.kind !== 'human') return;
+      const author = row(p.author_id);
+      if (author?.kind === 'human' && author.id !== by.id) schedule('wall_note', askaId(), `wn:${author.id}`, now() + T(60_000), { toId: author.id });
+      // ответили боту на его запись или на его стене — бот отвечает
+      const bot = [author, row(p.wall_id)].find((u) => isLiveBot(u) && u.id !== by.id);
+      if (bot) schedule('wall_react', bot.id, `wc:${p.id}`, bot.kind === 'person' ? nextOnline(bot, now() + T(rand(60_000, 900_000))) : now() + T(rand(8000, 40_000)), { postId: p.id, reply: true });
+    },
+    onBest(p, flowers) {
+      const author = row(p.author_id);
+      if (author?.kind !== 'human') return;
+      const where = p.wall_id === p.author_id ? 'на твоей стене' : `на стене у ${nameOf(p.wall_id)}`;
+      const aska = askaId();
+      say(aska, ctx.ensureDm(aska, author.id), [`🏆 Твоя запись ${where} — пост дня! 🌼×${flowers}, тебе +30 аськоинов 🪙`], { typing: false });
+    },
+  };
+
+  // Аська: что нового на твоей стене и под твоими записями
+  async function wallNoteJob(botId, { toId }) {
+    const to = row(toId);
+    if (!to || to.kind !== 'human' || to.blocked_at) return;
+    const since = Number(getSetting(db, `wall_note:${toId}`) || 0);
+    setSetting(db, `wall_note:${toId}`, String(now()));
+    const posts = db.prepare(`SELECT p.* FROM wall_posts p JOIN users u ON u.id = p.author_id
+      WHERE p.wall_id = ? AND p.author_id != ? AND p.created_at > ? AND u.kind NOT IN ('aska', 'friend') ORDER BY p.id`).all(toId, toId, since);
+    const comments = db.prepare(`SELECT c.* FROM wall_comments c JOIN wall_posts p ON p.id = c.post_id
+      WHERE p.author_id = ? AND c.author_id != ? AND c.created_at > ? ORDER BY c.id`).all(toId, toId, since);
+    if (!posts.length && !comments.length) return;
+    const lines = [
+      ...posts.slice(0, 8).map((p) => `• ${nameOf(p.author_id)} — ${whatPost(p)}`),
+      ...comments.slice(0, 8).map((c) => `• ${nameOf(c.author_id)} ответил(а) на твою запись: «${short(c.text, 60)}»`),
+    ];
+    await say(botId, ctx.ensureDm(botId, toId), [`📌 На твоей стене новое:\n${lines.join('\n')}\n\nОткрой вкладку «Стена».`], { typing: false });
+  }
+
+  // Бот на стене: дарит 🌼 и иногда пишет комментарий (с «мозгом» — своими словами)
+  async function wallReactJob(botId, { postId, reply }) {
+    const bot = row(botId);
+    const p = wallPost(postId);
+    if (!bot || !p || !wall || !isLiveBot(bot)) return;
+    if (!reply) wall.flower(botId, postId);
+    const comments = db.prepare('SELECT * FROM wall_comments WHERE post_id = ? ORDER BY id DESC LIMIT 10').all(postId).reverse();
+    const onMine = p.wall_id === botId || p.author_id === botId;
+    const system = bot.kind === 'aska' ? P.ASKA_RULES : bot.kind === 'friend' ? P.BATYA_RULES
+      : `${P.PERSON_RULES}\n\nКто ты:\n${personaOf(bot).card}\nИмя в АСЬКЕ: «${bot.display_name}».\nКак ты пишешь: ${personaOf(bot).style}`;
+    const out = await ai.complete({
+      system,
+      schema: P.REPLY_SCHEMA,
+      prompt: [
+        timeLine(bot.kind === 'person' ? personaOf(bot).tz : 0),
+        `Стена в АСЬКЕ (как в соцсети) у «${p.wall_id === botId ? 'тебя' : nameOf(p.wall_id)}». Запись от «${p.author_id === botId ? 'тебя' : nameOf(p.author_id)}»: ${describePost(p)}.`,
+        comments.length ? `Комментарии (старые сверху):\n${comments.map((c) => `${c.author_id === botId ? 'Ты' : nameOf(c.author_id)}: ${short(c.text, 200)}`).join('\n')}` : 'Комментариев пока нет.',
+        reply ? 'Тебе ответили в комментариях — ответь коротко, одним сообщением.' : 'Напиши короткий комментарий к записи — одно сообщение, как живой человек. Если сказать нечего — пустой список.',
+        'note оставь пустым.',
+      ].join('\n'),
+    });
+    let text = outMessages(out)[0];
+    if (!out) {
+      // без «мозга»: Аська и Батя благодарят за записи на своей стене, ИИ-люди иногда кидают эмодзи
+      if (bot.kind === 'aska' && onMine) text = reply ? 'Обнимаю 🌼' : 'Спасибо! Мне очень приятно 🌼';
+      else if (bot.kind === 'friend' && onMine) text = reply ? 'Ага, понял 👍' : p.card === 'tea' ? 'Чайку бы сейчас 😁 Спасибо!' : 'Спасибо, родной 🌹';
+      else if (bot.kind === 'person' && Math.random() < (timing.wallEmojiChance ?? 0.35)) text = pick(p.kind === 'photo' ? ['😍', '🔥', 'красота', 'вау'] : p.kind === 'card' ? ['спасибо)', '🫶'] : ['ахах', '👍', 'жиза', '😂']);
+    }
+    if (text) wall.comment(botId, postId, text);
+  }
+
+  // ИИ-человек с «мозгом» раз в день может написать что-то на своей стене
+  async function wallSelfJob(botId) {
+    const bot = row(botId);
+    if (!bot || !wall || !brainy() || bot.kind !== 'person') return;
+    const per = personaOf(bot);
+    const mine = db.prepare('SELECT text FROM wall_posts WHERE wall_id = ? AND author_id = ? ORDER BY id DESC LIMIT 5').all(botId, botId).map((r) => r.text).filter(Boolean);
+    const out = await ai.complete({
+      system: `${P.PERSON_RULES}\n\nКто ты:\n${per.card}\nИмя в АСЬКЕ: «${bot.display_name}».\nКак ты пишешь: ${per.style}`,
+      schema: P.REPLY_SCHEMA,
+      prompt: [timeLine(per.tz), 'Напиши короткую запись на свою стену в АСЬКЕ — как пост в соцсети: что у тебя сейчас происходит или о чём думаешь. Одно сообщение, без хэштегов.',
+        mine.length ? `Твои прошлые записи (не повторяйся): ${mine.map((t) => `«${short(t, 80)}»`).join(', ')}` : '', 'note оставь пустым.'].filter(Boolean).join('\n'),
+    });
+    const text = outMessages(out)[0];
+    if (text) wall.post(botId, botId, { kind: 'text', text: short(text, 400) }, { fromBot: true });
+  }
+
+  // Первые записи: Аська дарит каждому открытку, у ИИ-людей — по записи на стене
+  function seedWalls() {
+    if (!wall) return;
+    const aska = askaId();
+    if (getSetting(db, 'wall_seeded') !== '1') {
+      setSetting(db, 'wall_seeded', '1');
+      for (const h of humans().filter((u) => !u.blocked_at)) wall.post(aska, h.id, { kind: 'card', card: 'flowers', text: 'Теперь у тебя есть стена! Сюда друзья шлют фото, открытки и магниты 🌼' }, { fromBot: true });
+    }
+    if (peopleEnabled()) {
+      for (const u of persons()) {
+        const per = personaOf(u);
+        if (!per || db.prepare('SELECT 1 FROM wall_posts WHERE wall_id = ?').get(u.id)) continue;
+        if (P.PERSON_WALL[per.key]) wall.post(u.id, u.id, { kind: 'text', text: P.PERSON_WALL[per.key] }, { fromBot: true });
+      }
+    }
+  }
+
+  async function announce6Job(botId, chatId, { userId }) {
+    const u = row(userId);
+    if (!u || u.blocked_at) return;
+    await say(botId, chatId, [[
+      'Обновление АСЬКИ 🌼',
+      '📌 Стены! У каждого своя: друзья шлют туда фото, открытки и магниты. А «Стена АСЬКИ» — все стены в одной ленте.',
+      '🌼 Дари цветочки записям — автору +1 аськоин. Вечером запись с самым большим букетом становится «Постом дня» (+30 🪙).',
+      '🧲 Магниты из разных стран собираются на холодильнике у того, кому их прислали. Собери все!',
+      '📷 Фото из лички теперь можно сохранить или повесить себе на стену.',
+      'На твоей стене уже открытка от меня — вкладка «Стена» 💌',
+    ].join('\n')]);
+  }
+
   // ---------- новичок в АСЬКЕ ----------
 
   async function newbieJob(botId, { userId, toId, inviterId, bonus }) {
@@ -934,8 +1101,8 @@ export function createBots(ctx) {
 
   async function peopleJob(botId, chatId) {
     await say(botId, chatId, [
-      'Новости! В АСЬКУ пришли новые люди 👀',
-      'Среди них есть ИИ — а может, и нет 😏 Угадаешь, кто есть кто? В профиле любого человека есть кнопка «Человек или ИИ?». Новенькие сидят в кругах — заходи знакомиться!',
+      'Новости! В АСЬКУ пришли новые люди 👀 Они в «Знакомствах» и в кругах — заходи знакомиться, загляни к ним на стены!',
+      'И помни про игру «Кто здесь ИИ?» 😉 Кнопка — в профиле любого человека.',
     ]);
   }
 
@@ -1150,7 +1317,12 @@ export function createBots(ctx) {
         break;
       }
     }
-    if (!peopleOn() || (!force && (h < 10 || h >= 23))) return;
+    if (!brainy() || (!force && (h < 10 || h >= 23))) return;
+    // ИИ-человек пишет на своей стене (каждый — не чаще раза в день)
+    if (force || Math.random() < 0.1) {
+      const p = persons().filter((u) => isOnline(u) && getSetting(db, `wallself:${u.id}`) !== day).sort(() => Math.random() - 0.5)[0];
+      if (p) { setSetting(db, `wallself:${p.id}`, day); schedule('wall_self', p.id, `ws:${p.id}`, now() + T(rand(0, 600_000))); }
+    }
     // В тихом круге кто-то из ИИ-людей заводит разговор (не чаще двух раз в день на круг)
     for (const c of db.prepare("SELECT * FROM chats WHERE kind = 'circle'").all()) {
       const ppl = memberIds(c.id).map(row).filter((u) => u?.kind === 'person' && isOnline(u));
@@ -1220,6 +1392,7 @@ export function createBots(ctx) {
     if (on) {
       const first = getSetting(db, 'people_announced') !== '1';
       const born = ensurePeople();
+      seedWalls();
       if (first) {
         setSetting(db, 'people_announced', '1');
         const aska = askaId();
@@ -1258,8 +1431,16 @@ export function createBots(ctx) {
       if (per) db.prepare('UPDATE users SET persona = ? WHERE id = ?').run(JSON.stringify(per), u.id);
       ensureTwin(u.id);
     }
+    // Кирилл попросил новых друзей (29.10.2026): если ИИ-людей ещё ни разу не включали и не выключали — включаем
+    if (getSetting(db, 'people') === undefined && humans().length) setPeople(true);
     // новые ИИ-люди из кода появляются сами, если ИИ-люди уже включены
-    if (peopleEnabled() && getSetting(db, 'people_announced') === '1') introduce(ensurePeople());
+    else if (peopleEnabled() && getSetting(db, 'people_announced') === '1') introduce(ensurePeople());
+    seedWalls();
+    if (getSetting(db, 'announced_v6') !== '1') {
+      setSetting(db, 'announced_v6', '1');
+      const at6 = daytime(now() + T(90_000));
+      humans().filter((h) => !h.blocked_at).forEach((h, i) => schedule('announce6', aska, ctx.ensureDm(aska, h.id), at6 + T(i * 30_000), { userId: h.id }));
+    }
     // опрос о вечеринке зумеров — один раз всем, днём, по очереди
     if (!partyStarted()) {
       setSetting(db, 'party_started', String(now()));
@@ -1290,6 +1471,7 @@ export function createBots(ctx) {
     if (partyOpen()) schedule('party', aska, dm, daytime(now() + T(rand(3 * 60_000, 6 * 60_000))), { userId });
     const batya = ensureBatya();
     schedule('batya_hello', batya, ctx.ensureDm(batya, userId), daytime(now() + T(rand(15 * 60_000, 40 * 60_000))), { userId });
+    wall?.post(aska, userId, { kind: 'card', card: 'flowers', text: 'Добро пожаловать в АСЬКУ! Это твоя стена — сюда друзья шлют фото, открытки и магниты 🌼' }, { fromBot: true });
   }
 
   function onRecovered(userId) {
@@ -1324,6 +1506,6 @@ export function createBots(ctx) {
 
   return {
     init, start, stop, idle, tick, proactive, onMessage, onUserRegistered, onRecovered, onlineIds, isOnline,
-    setPeople, peopleEnabled, ensureTwin, twinName, addFacts, factsOf, askaId, batyaId, partyResults, statusOf,
+    setPeople, peopleEnabled, ensureTwin, twinName, addFacts, factsOf, askaId, batyaId, partyResults, statusOf, wallHooks,
   };
 }

@@ -7,6 +7,9 @@ interface Window {
     envelopeSvg(size?: number): string;
     smileSvg(id: string, size?: number): string;
     SMILES: AskaSmile[];
+    postcardSvg(kind: string): string;
+    magnetSvg(code: string, size?: number, opts?: { serial?: string }): string;
+    COUNTRIES: { code: string; name: string; from: string; flag: string; tier?: string }[];
   };
   AskaSound?: {
     enabled: boolean;

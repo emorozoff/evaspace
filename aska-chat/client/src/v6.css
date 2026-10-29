@@ -1,0 +1,104 @@
+/* АСЬКА 6 (29.10.2026): стены и удобный Миллениал. Классы стены — из «Аськи» (.wall-head, .post, .composer,
+   .postcard, .magnetcard, .magnet-grid, .fridge), здесь только своё. */
+
+/* ---------- стена ---------- */
+.aska-wall { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.aska-wall-tabs { flex: none; }
+.aska-wall .wall-posts.aska-wall-posts { flex: none; overflow: visible; min-height: 0; padding: 0; }
+.aska-wall-about, .aska-wall-public { font-size: 11.5px; }
+.aska-wall-public { opacity: .8; }
+.aska-wall-write { align-self: flex-start; }
+.aska-post { position: relative; }
+.aska-post .post-h { flex-wrap: nowrap; }
+.aska-post-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aska-post-who .link { cursor: pointer; }
+.aska-post-t { font-size: 10.5px; white-space: nowrap; }
+.aska-best { font-size: 10.5px; font-weight: 700; color: #8a5a00; background: #fff1b8; border: 1px solid #e0b030; padding: 0 5px; white-space: nowrap; }
+.aska-post.best { box-shadow: inset 3px 0 0 #e0b030; padding-left: 6px; }
+.aska-post .txt { white-space: pre-wrap; overflow-wrap: anywhere; margin: 2px 0; }
+.aska-post .postcard { width: min(260px, 100%); height: auto; aspect-ratio: 5 / 3; }
+.aska-post .aska-photo { margin: 4px 0; }
+.aska-post .magnetcard { max-width: 320px; }
+.aska-post .wall-actions { gap: 4px; margin-top: 3px; }
+.aska-post .wall-actions .like { min-width: 46px; }
+.aska-comments { margin: 2px 0 0 6px; padding-left: 6px; border-left: 2px solid rgba(0, 0, 0, .1); }
+.aska-comments .reply { font-size: 12px; gap: 5px; align-items: baseline; }
+.aska-comments .reply .muted { font-size: 10px; }
+.aska-comments .reply-add { gap: 4px; margin-top: 3px; }
+.aska-comments .reply-add .field { flex: 1; min-width: 0; height: 30px; font-size: 13px; }
+.aska-composer { display: flex; flex-direction: column; gap: 5px; }
+.aska-composer textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 44px; }
+.aska-composer-row { gap: 4px; flex-wrap: wrap; }
+.aska-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-height: 240px; overflow: auto; }
+.aska-card-pick { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 2px; background: #fff; border: 2px solid transparent; cursor: pointer; font: inherit; }
+.aska-card-pick span { display: block; width: 100%; aspect-ratio: 5 / 3; overflow: hidden; }
+.aska-card-pick span svg { width: 100%; height: 100%; display: block; }
+.aska-card-pick small { font-size: 10px; }
+.aska-card-pick.on { border-color: var(--a-accent, var(--sel)); background: #ffffe0; }
+.aska-composer .magnet-grid button { display: flex; flex-direction: column; align-items: center; gap: 1px; cursor: pointer; font: inherit; }
+.aska-composer .magnet-grid button small { font-size: 9.5px; white-space: nowrap; }
+.aska-fridge { flex: none; }
+.aska-fridge .fridge-door { min-height: 96px; align-content: flex-start; }
+.aska-fridge-cnt { flex-basis: 100%; font-size: 11px; font-weight: 700; opacity: .7; }
+.aska-fridge .magnet { cursor: default; }
+.aska-viewer-acts { position: absolute; left: 0; right: 0; bottom: calc(14px + env(safe-area-inset-bottom)); display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 0 10px; }
+.aska-towall-img { display: block; max-width: 100%; max-height: 40vh; margin: 0 auto 8px; object-fit: contain; }
+
+/* Зумер */
+.skin-aero .aska-post { background: rgba(255, 255, 255, .88); border: 1px solid var(--a-line); border-radius: 16px; padding: 9px 11px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0, 30, 70, .06); }
+.skin-aero .aska-post.best { box-shadow: 0 0 0 2px #f2c94c, 0 4px 14px rgba(214, 160, 30, .25); padding-left: 11px; }
+.skin-aero .aska-best { border-radius: 999px; padding: 1px 8px; }
+.skin-aero .aska-post .postcard { border-radius: 12px; }
+.skin-aero .aska-post .wall-actions .btn { min-height: 30px; padding: 3px 10px; }
+.skin-aero .aska-post .wall-actions .like.on { background: linear-gradient(180deg, #fff8d6, #ffe7a0); border-color: #e0b030; color: #6b4a00; }
+.skin-aero .aska-comments { border-left-color: var(--a-line); }
+.skin-aero .aska-composer { border-radius: 16px; background: rgba(255, 255, 255, .7); border: 1px solid var(--a-line); padding: 8px 10px; }
+.skin-aero .aska-card-pick { border-radius: 10px; }
+.skin-aero .aska-card-pick span { border-radius: 8px; }
+.skin-aero .aska-fridge .fridge-door { border-radius: 0 0 14px 14px; }
+.skin-aero .aska-fridge .fridge-top { border-radius: 14px 14px 0 0; }
+.skin-aero .aska-wall-write { border-radius: 999px; }
+
+/* кнопки разделов на компьютере: значок и подпись под ним — помещаются все пять */
+.aska-desk-nav .btn { display: flex; align-items: center; flex-direction: column; gap: 1px; padding: 3px 0 !important; min-height: 38px; line-height: 1.1; }
+.aska-desk-nav .btn i { font-style: normal; font-size: 15px; }
+.aska-desk-nav .btn span { font-size: 10px !important; white-space: nowrap; }
+@media (min-width: 720px) and (pointer: fine), (min-width: 901px) {
+  .aska-me .aska-plate.m { --h: 19px; }
+}
+
+/* ---------- Миллениал: тот же Windows 98, но удобнее ---------- */
+/* время последнего сообщения в списке */
+.skin-classic .aska-side .at { display: inline; font-size: 10px; color: #404040; }
+.skin-classic .aska-post .wall-actions .like.on { background: #fff1b8; border-color: #8a5a00; color: #6b4a00; }
+@media (max-width: 719px), (pointer: coarse) and (max-width: 900px) {
+  /* крупнее и просторнее: шрифт, строки списка, кнопки и поле ввода — под палец */
+  .skin-classic { --fs: 13px; --row: 34px; }
+  .skin-classic .titlebar { height: 30px; font-size: 13px; padding: 0 3px; }
+  .skin-classic .tbtn { width: 26px; height: 24px; font-size: 14px; line-height: 20px; }
+  .skin-classic .btn { min-height: 34px; padding: 4px 12px; font-size: 13px; }
+  .skin-classic .btn.icon { width: 38px; height: 34px; min-width: 38px; }
+  .skin-classic .field { height: 34px; font-size: 16px; }
+  .skin-classic textarea.field { font-size: 16px; }
+  .skin-classic .compose textarea { height: 64px; }
+  .skin-classic .compose .send-row .btn.primary { min-width: 110px; font-weight: bold; }
+  .skin-classic .citem { height: auto; min-height: 38px; padding: 3px 4px; gap: 8px; }
+  .skin-classic .citem .ico { width: 20px; height: 20px; }
+  .skin-classic .citem .ico svg { width: 18px; height: 18px; }
+  .skin-classic .cmeta { flex-direction: column; align-items: stretch; gap: 0; }
+  .skin-classic .cmeta .nick { font-size: 14px; }
+  .skin-classic .cmeta .sub { display: block; font-size: 11.5px; color: #404040; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .skin-classic .citem.sel .cmeta .sub { color: #fff; }
+  .skin-classic .cgroup { height: 28px; font-size: 13px; }
+  .skin-classic .me-panel { padding: 5px 6px; }
+  .skin-classic .me-panel .nick { font-size: 14px; }
+  .skin-classic .history { font-size: 14px; line-height: 1.4; }
+  .skin-classic .history .msg { padding: 3px 2px 4px; border-bottom: 1px dotted #c0c0c0; }
+  .skin-classic .history .msg.grp { border-top: 0; padding-top: 0; }
+  .skin-classic .chat-head { padding: 5px 6px; }
+  .skin-classic .chat-head .nick { font-size: 14px; }
+  .skin-classic .smiles button { width: 40px; height: 40px; }
+  .skin-classic .tabbar button span { font-size: 11px; }
+  .skin-classic .aska-post .wall-actions .btn { min-height: 30px; }
+  .skin-classic .aska-comments .reply { font-size: 13px; }
+}

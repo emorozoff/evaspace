@@ -10,7 +10,7 @@ import { BATYA_QUESTIONS, STATUSES, batyaScripted } from '../server/src/personas
 import { generateKeyPair, deriveFromPassword, sealSecret, toB64, fromB64, randomBytes } from '../client/src/lib/crypto.ts';
 import { encodeOutgoing, decodeIncoming } from '../client/src/lib/protocol.ts';
 
-const TIMING = { scale: 0, tickMs: 5, presenceMs: 50, proactiveMs: 3_600_000, alwaysOnline: true, circleChance: 0, chainChance: 0 };
+const TIMING = { scale: 0, tickMs: 5, presenceMs: 50, proactiveMs: 3_600_000, alwaysOnline: true, circleChance: 0, chainChance: 0, batyaCardChance: 0, wallReactChance: 0 };
 
 async function start({ ai, dataDir } = {}) {
   const s = { dataDir: dataDir || fs.mkdtempSync(path.join(os.tmpdir(), 'aska-v5-')), pushes: [], aiCalls: [] };

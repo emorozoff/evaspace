@@ -13,6 +13,7 @@ import { createSms, createCodes, normalizePhone, looksLikePhone } from './phone.
 import { parsePlate, plateKey, countryForPhone, defaultRegion, COUNTRIES, keyTaken, priceOf, isGoldCode, plateView, LEVELS, formatCode, randomFreeCode, rarityOf, RARITY, cityOf } from './plates.js';
 import * as M from './market.js';
 import { createSuperLinks } from './superlink.js';
+import { createWall } from './wall.js';
 import { STATUSES } from './personas.js';
 
 const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -346,10 +347,12 @@ export function createApp({
     return chatId;
   }
 
+  const wall = createWall({ db, dataDir, sendToAll, log });
   bots = createBots({
-    db, ai, log, timing: botTiming, memberIds, post: botPost, ensureDm, sendTo, broadcastChat, broadcastUser,
+    db, ai, log, timing: botTiming, memberIds, post: botPost, ensureDm, sendTo, broadcastChat, broadcastUser, wall,
     presence: (userId, online) => sendToAll({ type: 'presence', userId, online }),
   });
+  wall.setHooks(bots.wallHooks);
   bots.init();
 
   const onlineIds = () => [...new Set([...conns.keys(), ...offlineTimers.keys(), ...bots.onlineIds()])];
@@ -726,6 +729,9 @@ export function createApp({
     db.prepare('UPDATE users SET phone = ?, phone_verified = ? WHERE id = ?').run(phone, verified, req.userId);
     res.json({ phone, phoneVerified: Boolean(verified) });
   });
+
+  // Стены: записи, фото, открытки, магниты, цветочки и «Стена АСЬКИ» (server/src/wall.js)
+  wall.mount(api, { auth, json, allow, userRow });
 
   // Статус: готовый (key) или свой (emoji + text); пустой — снять
   api.post('/me/status', auth, json, (req, res) => {
@@ -1151,9 +1157,8 @@ export function createApp({
   });
 
   api.post('/admin/people', auth, admin, json, (req, res) => {
-    const on = Boolean(req.body?.on);
-    if (on && !ai.configured()) return res.status(400).json({ error: 'ai_off' });
-    bots.setPeople(on);
+    // без ключа ИИ-люди тоже живут (в сети, стены, короткие ответы), а разговаривают по-настоящему — с ключом
+    bots.setPeople(Boolean(req.body?.on));
     res.json({ people: bots.peopleEnabled() });
   });
 
@@ -1442,15 +1447,18 @@ export function createApp({
   }, 30_000);
   heartbeat.unref();
 
+  const wallTimer = setInterval(() => { try { wall.bestOfDay(); } catch (e) { log('wall best', e); } }, 60_000);
+  wallTimer.unref?.();
   if (startBots) bots.start();
 
   async function close() {
     clearInterval(heartbeat);
+    clearInterval(wallTimer);
     for (const t of offlineTimers.values()) clearTimeout(t);
     await bots.stop();
     for (const ws of wss.clients) ws.terminate();
     return new Promise((resolve) => server.close(() => { db.close(); resolve(); }));
   }
 
-  return { app, server, db, close, bots, ai, createInvite: (by) => formatInvite(createInvite(db, by)) };
+  return { app, server, db, close, bots, ai, wall, createInvite: (by) => formatInvite(createInvite(db, by)) };
 }

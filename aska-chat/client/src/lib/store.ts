@@ -7,6 +7,8 @@ import { kvGet, kvSet, allMessages, putMessages, wipeLocal } from './db.ts';
 import type { LocalUser, LocalChat, StoredMsg, Session, Keys, UserStatus } from './db.ts';
 import { prepareImage } from './images.ts';
 import { setBadge, pushSupported } from './platform.ts';
+import { emitWall, blobUrl } from './wall.ts';
+import type { WallEvent } from './wall.ts';
 
 export type Chat = LocalChat;
 export type User = LocalUser;
@@ -37,6 +39,7 @@ export interface State {
   guesses: Record<number, Truth>;      // кого я уже угадал(а) в игре «Кто здесь ИИ?» и что оказалось
   groups: Record<number, Group>;       // группы контактов: ближний круг, знакомства, работа
   brain: Brain | null;
+  wallNew: number;                     // новые записи на моей стене, пока не открыл «Стену»
   features: { ai: boolean; sms: boolean };
   typing: Record<string, Record<number, number>>; // чат → кто печатает → когда
   welcomePlate: string | null;         // только что выданный номер — показать поздравление
@@ -44,7 +47,7 @@ export interface State {
 
 const initial: State = {
   phase: 'loading', me: null, users: {}, chats: {}, messages: {}, connected: false, presence: {}, vapidKey: null, pushState: 'default',
-  profile: null, pins: [], guesses: {}, groups: {}, brain: null, features: { ai: false, sms: false }, typing: {}, welcomePlate: null,
+  profile: null, pins: [], guesses: {}, groups: {}, brain: null, wallNew: 0, features: { ai: false, sms: false }, typing: {}, welcomePlate: null,
 };
 
 let state: State = initial;
@@ -387,7 +390,8 @@ type ServerEvent =
   | { type: 'chat_left'; chatId: string }
   | { type: 'typing'; chatId: string; userId: number }
   | { type: 'presence'; userId: number; online: boolean }
-  | { type: 'user'; user: ServerUser };
+  | { type: 'user'; user: ServerUser }
+  | WallEvent;
 
 function onEvent(ev: ServerEvent) {
   switch (ev.type) {
@@ -438,6 +442,15 @@ function onEvent(ev: ServerEvent) {
       }, 5200);
       break;
     }
+    case 'wall':
+      if (ev.post.wallId === state.me?.userId && ev.post.authorId !== state.me?.userId && !ev.post.best) set({ wallNew: state.wallNew + 1 });
+      emitWall(ev);
+      break;
+    case 'wall_flower':
+    case 'wall_comment':
+    case 'wall_del':
+      emitWall(ev);
+      break;
     case 'user': {
       const users = { ...state.users, [ev.user.id]: mergeUser(ev.user, state.users[ev.user.id]) };
       set({ users });
@@ -577,7 +590,7 @@ export async function sendImage(chatId: string, file: File, reply?: number) {
     image: { blob: '', key: f.key, nonce: f.nonce, hash: f.hash, w: prep.w, h: prep.h, mime: prep.mime, thumb: prep.thumb },
   };
   if (reply) body.reply = reply;
-  const msg: Msg = { ...newPending(chatId, body), localImage: URL.createObjectURL(new Blob([prep.bytes as BlobPart], { type: prep.mime })) };
+  const msg: Msg = { ...newPending(chatId, body), localImage: blobUrl(new Blob([prep.bytes as BlobPart], { type: prep.mime })) };
   pending.set(msg.uuid, { msg, ct: f.ct });
   putPending(msg);
   await deliver(msg.uuid);
@@ -728,6 +741,8 @@ export async function setPin(userId: number, on: boolean) {
   const r = await api.post<{ pins: number[] }>('/pins', { userId, on });
   set({ pins: r.pins });
 }
+
+export const seenWall = () => { if (state.wallNew) set({ wallNew: 0 }); };
 
 export async function setGroup(userId: number, group: Group) {
   set({ groups: { ...state.groups, [userId]: group } });

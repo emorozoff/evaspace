@@ -193,7 +193,8 @@ test('администратор и обычный человек', async () => 
   assert.equal(key.data.ai.model, 'claude-haiku-5-5');
   assert.ok(!JSON.stringify(key.data).includes('sk-ant-test-1234'));
   await A.call('POST', '/api/admin/ai', { token: U.egor.token, body: { apiKey: '' } });
-  assert.equal((await A.call('POST', '/api/admin/people', { token: U.egor.token, body: { on: true } })).status, 400, 'без ИИ нельзя включить ИИ-людей');
+  // с 29.10.2026 ИИ-люди включаются и без ключа (без «мозга» отвечают коротко) — здесь только выключаем
+  assert.equal((await A.call('POST', '/api/admin/people', { token: U.egor.token, body: { on: false } })).data.people, false);
 });
 
 test('восстановление по коду от администратора: новый ключ, старые входы закрыты', async () => {

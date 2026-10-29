@@ -16,7 +16,7 @@ import { StatusPicker } from './Status.tsx';
 
 const GROUP_NAMES: { key: Group; label: string }[] = [{ key: 'close', label: '💛 Ближний круг' }, { key: 'meet', label: '👋 Знакомства' }, { key: 'work', label: '💼 Работа' }];
 
-export function Profile({ userId, onClose, onOpenChat }: { userId: number; onClose: () => void; onOpenChat: (chatId: string) => void }) {
+export function Profile({ userId, onClose, onOpenChat, onWall }: { userId: number; onClose: () => void; onOpenChat: (chatId: string) => void; onWall: (userId: number) => void }) {
   const s = useStore();
   const [error, setError] = useState('');
   const [twinAsk, setTwinAsk] = useState(false);
@@ -60,7 +60,12 @@ export function Profile({ userId, onClose, onOpenChat }: { userId: number; onClo
             {u.status && <div className="aska-st-line">{statusLine(u.status)}</div>}
           </div>
         </div>
-        {itsMe && <button className="btn aska-st-btn" onClick={() => setStatusOpen(true)}>{u.status ? '✏️ Сменить статус' : '＋ Поставить статус'}</button>}
+        {itsMe && (
+          <div className="row aska-actions">
+            <button className="btn aska-st-btn" onClick={() => setStatusOpen(true)}>{u.status ? '✏️ Сменить статус' : '＋ Поставить статус'}</button>
+            <button className="btn aska-st-btn" onClick={() => onWall(u.id)}>📌 Моя стена</button>
+          </div>
+        )}
         {statusOpen && <StatusPicker onClose={() => setStatusOpen(false)} />}
         {u.plate && <div className="aska-profile-plate"><UserPlate user={u} size="l" onClick={u.plateId ? () => setCard(true) : undefined} /></div>}
         {card && u.plateId && <PlateCard id={u.plateId} onClose={() => setCard(false)} />}
@@ -73,6 +78,7 @@ export function Profile({ userId, onClose, onOpenChat }: { userId: number; onClo
         {!itsMe && !u.blocked && (
           <div className="aska-actions">
             <button className="btn primary" onClick={write} disabled={busy}>💬 Написать</button>
+            {u.kind !== 'twin' && <button className="btn" onClick={() => onWall(u.id)}>📌 Стена</button>}
             {twin && <button className="btn" onClick={() => setTwinAsk((v) => !v)} disabled={busy}>🤖 Личный ИИ</button>}
             {person && <button className="btn" onClick={() => act(() => setPin(u.id, !pinned))} disabled={busy}>{pinned ? '📌 Открепить' : '📌 Закрепить'}</button>}
           </div>

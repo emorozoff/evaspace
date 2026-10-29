@@ -234,6 +234,7 @@ function migrate(db) {
   migrateV3(db);
   migrateV4(db);
   migrateV5(db);
+  migrateV6(db);
 }
 
 // Третья версия (22.10.2026): номера-токены (покупка, улучшение, рынок), аськоины, роли (голд-админы, супер-админ), блокировка.
@@ -349,6 +350,49 @@ function migrateV5(db) {
       target_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       grp TEXT NOT NULL,
       PRIMARY KEY (user_id, target_id)
+    );
+  `);
+}
+
+// Шестое обновление: стены — записи, цветочки, комментарии, фото
+function migrateV6(db) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS wall_posts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      wall_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      author_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL,
+      text TEXT,
+      card TEXT,
+      magnet TEXT,
+      photo TEXT,
+      w INTEGER,
+      h INTEGER,
+      created_at INTEGER NOT NULL,
+      best_day TEXT
+    );
+    CREATE INDEX IF NOT EXISTS wall_posts_wall ON wall_posts (wall_id, id);
+    CREATE INDEX IF NOT EXISTS wall_posts_author ON wall_posts (author_id);
+    CREATE TABLE IF NOT EXISTS wall_flowers (
+      post_id INTEGER NOT NULL REFERENCES wall_posts(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at INTEGER NOT NULL,
+      PRIMARY KEY (post_id, user_id)
+    );
+    CREATE TABLE IF NOT EXISTS wall_comments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      post_id INTEGER NOT NULL REFERENCES wall_posts(id) ON DELETE CASCADE,
+      author_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      text TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS wall_comments_post ON wall_comments (post_id, id);
+    CREATE TABLE IF NOT EXISTS wall_photos (
+      id TEXT PRIMARY KEY,
+      uploader_id INTEGER,
+      size INTEGER,
+      mime TEXT,
+      created_at INTEGER NOT NULL
     );
   `);
 }

@@ -10,7 +10,9 @@ import { isTouch } from '../lib/platform.ts';
 import { flower, smiles, smileSvg, splitSmiles, play, playSmile, userFlower } from '../lib/aska.ts';
 import { SFX, sfxOf, playSfx, isEmojiOnly } from '../lib/sfx.ts';
 import { statusLine } from '../lib/statuses.ts';
-import { EncryptedImage, ImageViewer } from './EncryptedImage.tsx';
+import { EncryptedImage, ImageViewer, load as loadImage } from './EncryptedImage.tsx';
+import { ToWallDialog } from './Wall.tsx';
+import { saveImage } from '../lib/wall.ts';
 import { Win, Svg, Ico, Dialog } from './Win.tsx';
 import { Gold } from './Plate.tsx';
 
@@ -144,6 +146,7 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
   const [reply, setReply] = useState<Msg | null>(null);
   const [menu, setMenu] = useState<Msg | null>(null);
   const [viewer, setViewer] = useState<string | null>(null);
+  const [toWall, setToWall] = useState<string | null>(null);
   const [smilesOpen, setSmilesOpen] = useState(false);
   const [smileTab, setSmileTab] = useState<'sfx' | 'icq'>('sfx');
   const [flash, setFlash] = useState<number | null>(null);
@@ -322,6 +325,11 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
     } else if (!menu.status) {
       menuButtons.push(<button key="a" className="btn primary" onClick={() => { close(); setReply(menu); inputRef.current?.focus(); }}>Ответить</button>);
     }
+    const img = menu.body?.kind === 'image' && menu.body.image?.blob ? menu.body.image : null;
+    if (img) {
+      menuButtons.push(<button key="sv" className="btn" onClick={() => { close(); loadImage(img).then((u) => saveImage(u)).catch(() => {}); }}>⬇ Сохранить фото</button>);
+      menuButtons.push(<button key="tw" className="btn" onClick={() => { close(); loadImage(img).then(setToWall).catch(() => {}); }}>📌 На мою стену</button>);
+    }
     const t = menu.body?.text;
     if (t) menuButtons.push(<button key="c" className="btn" onClick={() => { close(); navigator.clipboard?.writeText(t).catch(() => {}); }}>Скопировать</button>);
     menuButtons.push(<button key="x" className="btn" onClick={close}>Отмена</button>);
@@ -437,7 +445,13 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
           <div className="aska-menu-preview">{msgPreview(menu)}</div>
         </Dialog>
       )}
-      {viewer && <ImageViewer url={viewer} onClose={() => setViewer(null)} />}
+      {viewer && (
+        <ImageViewer url={viewer} onClose={() => setViewer(null)} actions={<>
+          <button className="btn" onClick={() => saveImage(viewer).catch(() => {})}>⬇ Сохранить</button>
+          <button className="btn" onClick={() => { setToWall(viewer); setViewer(null); }}>📌 На мою стену</button>
+        </>} />
+      )}
+      {toWall && <ToWallDialog url={toWall} onClose={() => setToWall(null)} />}
     </Win>
   );
 }
