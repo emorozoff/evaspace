@@ -8,7 +8,8 @@ import { chatTitle, dmPeer, dayKey, plural, timeShort } from '../lib/format.ts';
 import { previewText } from '../lib/protocol.ts';
 import { isTouch } from '../lib/platform.ts';
 import { flower, smiles, smileSvg, splitSmiles, play, playSmile, userFlower } from '../lib/aska.ts';
-import { SFX, sfxOf, playSfx, isEmojiOnly } from '../lib/sfx.ts';
+import { SFX, sfxOf, playSfx, isEmojiOnly, SUPER, superOf, playSuper } from '../lib/sfx.ts';
+import { SuperSmile, SymbolGrid } from './SuperSmile.tsx';
 import { statusLine } from '../lib/statuses.ts';
 import { EncryptedImage, ImageViewer, load as loadImage } from './EncryptedImage.tsx';
 import { ToWallDialog } from './Wall.tsx';
@@ -75,6 +76,7 @@ function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onIm
   // одни эмодзи — крупно и без пузыря; звуковой смайл звучит по нажатию
   const big = body?.kind === 'text' && !body.reply && isEmojiOnly(body.text);
   const sfx = big ? sfxOf(body?.text) : undefined;
+  const sup = big ? superOf(body?.text) : undefined;
 
   let tick: ReactNode = null;
   if (out) {
@@ -86,7 +88,7 @@ function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onIm
   return (
     <div
       id={`m-${m.id}`}
-      className={`msg ${out ? 'me' : 'them'}${grp ? ' grp' : ''}${isNew ? ' new' : ''}${flash ? ' aska-flash' : ''}${m.status === 'failed' ? ' aska-failed' : ''}${big ? ' aska-big' : ''}${sfx ? ' aska-sfx' : ''}`}
+      className={`msg ${out ? 'me' : 'them'}${grp ? ' grp' : ''}${isNew ? ' new' : ''}${flash ? ' aska-flash' : ''}${m.status === 'failed' ? ' aska-failed' : ''}${big ? ' aska-big' : ''}${sfx ? ' aska-sfx' : ''}${sup ? ' aska-supermsg' : ''}`}
       onContextMenu={(e) => { e.preventDefault(); onMenu(m); }}
       onTouchStart={(e) => {
         const t = e.touches[0];
@@ -115,7 +117,7 @@ function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onIm
         )}
         {!body && <i className="muted">🔒 не удалось расшифровать</i>}
         {body?.kind === 'image' && body.image && <EncryptedImage image={body.image} local={m.localImage} onOpen={onImage} />}
-        {body?.text && (big ? body.text : renderText(body.text))}
+        {body?.text && (sup ? <SuperSmile e={sup.e} size="l" /> : big ? body.text : renderText(body.text))}
         {sfx && <span className="aska-sfx-ico" aria-label="звуковой смайл">🔊</span>}
       </span>
     </div>
@@ -148,7 +150,7 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
   const [viewer, setViewer] = useState<string | null>(null);
   const [toWall, setToWall] = useState<string | null>(null);
   const [smilesOpen, setSmilesOpen] = useState(false);
-  const [smileTab, setSmileTab] = useState<'sfx' | 'icq'>('sfx');
+  const [smileTab, setSmileTab] = useState<'super' | 'sfx' | 'icq' | 'sym'>('super');
   const [flash, setFlash] = useState<number | null>(null);
   const [act, setAct] = useState<Act>(null);
   const [gifts, setGifts] = useState(false);
@@ -267,6 +269,19 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
     setSmilesOpen(false);
     near.current = true;
     sendText(chatId, e);
+  }
+
+  // Супер-смайл тоже уходит сразу: у друга он большой, с движением и звуком на 2 секунды
+  function sendSuper(e: string) {
+    playSuper(e);
+    setSmilesOpen(false);
+    near.current = true;
+    sendText(chatId, e);
+  }
+
+  function addSymbol(sym: string) {
+    setText((t) => (t && !/\s$/.test(t) ? `${t} ${sym} ` : `${t}${sym} `));
+    inputRef.current?.focus();
   }
 
   function addSmile(code: string, id: string) {
@@ -415,12 +430,24 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
         </div>
       </div>
       {smilesOpen && (
-        <div className="smiles aska-smiles">
+        <div className={`smiles aska-smiles t-${smileTab}`}>
           <div className="aska-smile-tabs">
-            <button className={smileTab === 'sfx' ? 'on' : ''} onClick={() => setSmileTab('sfx')}>🔊 Звуковые</button>
-            <button className={smileTab === 'icq' ? 'on' : ''} onClick={() => setSmileTab('icq')}>☺ Смайлы Аськи</button>
+            <button className={smileTab === 'super' ? 'on' : ''} onClick={() => setSmileTab('super')}>🤩 Супер</button>
+            <button className={smileTab === 'sfx' ? 'on' : ''} onClick={() => setSmileTab('sfx')}>🔊 Звуки</button>
+            <button className={smileTab === 'icq' ? 'on' : ''} onClick={() => setSmileTab('icq')}>☺ Аськи</button>
+            <button className={smileTab === 'sym' ? 'on' : ''} onClick={() => setSmileTab('sym')}>✨ Символы</button>
           </div>
-          {smileTab === 'sfx' ? (
+          {smileTab === 'super' ? (
+            <>
+              {SUPER.map((x) => (
+                <button key={x.e} className="aska-super-btn" title={x.name} style={{ ['--glow' as string]: x.glow }}
+                  onMouseDown={(e) => e.preventDefault()} onClick={() => sendSuper(x.e)}>
+                  <i className={`ss-${x.anim}`}>{x.e}</i><small>{x.name}</small>
+                </button>
+              ))}
+              <div className="cap">нажми — у друга смайл оживёт и прозвучит 🔊</div>
+            </>
+          ) : smileTab === 'sfx' ? (
             <>
               {SFX.map((x) => (
                 <button key={x.e} className="aska-sfx-btn" title={x.name} onMouseDown={(e) => e.preventDefault()} onClick={() => sendSfx(x.e)}>
@@ -429,7 +456,7 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
               ))}
               <div className="cap">нажми — смайл улетит и прозвучит у друга 🔊</div>
             </>
-          ) : (
+          ) : smileTab === 'icq' ? (
             <>
               {smiles().slice(0, 24).map((sm) => (
                 <button key={sm.id} title={`${sm.codes[0]} — ${sm.name}`} onMouseDown={(e) => e.preventDefault()}
@@ -437,6 +464,8 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
               ))}
               <div className="cap">нажми — смайл вставится и скажет своё</div>
             </>
+          ) : (
+            <SymbolGrid onPick={addSymbol} />
           )}
         </div>
       )}

@@ -6,6 +6,7 @@ import './styles.css';
 import './v5.css';
 import './v6.css';
 import './v7.css';
+import './v8.css';
 
 applyDesign(getDesign());
 unlockSoundOnFirstTouch();
@@ -21,6 +22,20 @@ window.addEventListener('resize', fitViewport);
 fitViewport();
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch((e) => console.error('sw', e));
+
+// На iPhone приложение с экрана «Домой» неделями живёт в памяти и не видит новую версию.
+// Запоминаем версию сервера при запуске; вышла новая — тихо перезапускаемся, когда АСЬКУ снова открыли.
+let bootVersion = '';
+async function serverVersion() {
+  try { return String((await (await fetch('/api/health', { cache: 'no-store' })).json()).version || ''); } catch { return ''; }
+}
+serverVersion().then((v) => { bootVersion = v; });
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible') return;
+  const v = await serverVersion();
+  if (!bootVersion) bootVersion = v; // запустились без связи — запоминаем сейчас
+  else if (v && v !== bootVersion) location.reload();
+});
 
 createRoot(document.getElementById('root')!).render(<App />);
 start();

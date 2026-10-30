@@ -114,6 +114,143 @@ const SYNTH: Record<string, Synth> = {
   },
 };
 
+// Голос с дрожанием (вибрато) — для «уууу», «аww», свиста
+function voice(c: AudioContext, out: AudioNode, t: number, dur: number, o: { f: number; fEnd?: number; type?: OscillatorType; gain?: number; vib?: number; vibRate?: number; lp?: number; a?: number }) {
+  const osc = c.createOscillator();
+  osc.type = o.type || 'sine';
+  osc.frequency.setValueAtTime(o.f, t);
+  if (o.fEnd) osc.frequency.linearRampToValueAtTime(o.fEnd, t + dur);
+  if (o.vib) {
+    const lfo = c.createOscillator();
+    const lg = c.createGain();
+    lfo.frequency.value = o.vibRate || 6;
+    lg.gain.value = o.vib;
+    lfo.connect(lg).connect(osc.frequency);
+    lfo.start(t);
+    lfo.stop(t + dur + 0.05);
+  }
+  const g = c.createGain();
+  const peak = o.gain ?? 0.2;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(peak, t + (o.a ?? 0.05));
+  g.gain.setValueAtTime(peak, t + dur * 0.75);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  let last: AudioNode = osc;
+  if (o.lp) { const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; osc.connect(f); last = f; }
+  last.connect(g).connect(out);
+  osc.start(t);
+  osc.stop(t + dur + 0.05);
+}
+const notes = (c: AudioContext, o: AudioNode, t: number, seq: [number, number, number][], type: OscillatorType = 'triangle', gain = 0.2) =>
+  seq.forEach(([f, at, dur]) => tone(c, o, t + at, dur, { f, type, gain, a: 0.01 }));
+
+// Супер-смайлы: большой анимированный смайл с эффектами и своим звуком на 2 секунды.
+// В сообщении это обычный эмодзи — у кого старое приложение или в уведомлении, увидят его.
+export interface SuperDef { e: string; name: string; anim: string; fx?: string[]; glow: string; sound: Synth }
+export const SUPER: SuperDef[] = [
+  { e: '🤪', name: 'псих', anim: 'crazy', glow: '#ffd23f', sound: (c, o, t) => {
+    [0, 0.35, 0.7].forEach((d) => tone(c, o, t + d, 0.3, { f: 120, fEnd: 520, type: 'sine', gain: 0.35 }));
+    voice(c, o, t + 1.05, 0.9, { f: 500, fEnd: 1500, type: 'sine', gain: 0.18, vib: 30, vibRate: 9 });
+  } },
+  { e: '🥳', name: 'туса', anim: 'bounce', fx: ['🎊', '🎉', '✨'], glow: '#ff6fd8', sound: (c, o, t) => {
+    voice(c, o, t, 0.6, { f: 300, fEnd: 700, type: 'sawtooth', gain: 0.12, lp: 2500, vib: 15, vibRate: 12 });
+    notes(c, o, t + 0.65, [[523, 0, 0.15], [659, 0.15, 0.15], [784, 0.3, 0.15], [1047, 0.45, 0.8]], 'square', 0.08);
+    for (let i = 0; i < 10; i++) noise(c, o, t + 0.7 + Math.random() * 1.1, 0.04, { f: 3000 + Math.random() * 4000, q: 3, gain: 0.15 });
+  } },
+  { e: '👻', name: 'бу!', anim: 'ghost', glow: '#c9d6ff', sound: (c, o, t) => {
+    voice(c, o, t, 2, { f: 420, fEnd: 260, gain: 0.22, vib: 40, vibRate: 5, a: 0.3 });
+    voice(c, o, t + 0.2, 1.7, { f: 630, fEnd: 390, gain: 0.08, vib: 30, vibRate: 5.5, a: 0.3 });
+  } },
+  { e: '👽', name: 'пришелец', anim: 'ufo', fx: ['✨'], glow: '#7dff9b', sound: (c, o, t) => {
+    voice(c, o, t, 2, { f: 700, fEnd: 900, gain: 0.16, vib: 250, vibRate: 11 });
+    voice(c, o, t + 0.3, 1.6, { f: 350, fEnd: 450, type: 'triangle', gain: 0.1, vib: 120, vibRate: 7 });
+  } },
+  { e: '🤖', name: 'робот', anim: 'robot', glow: '#8fd3ff', sound: (c, o, t) => {
+    [880, 660, 990, 440, 1320, 700, 1100, 520].forEach((f, i) => tone(c, o, t + i * 0.22, 0.16, { f, type: 'square', gain: 0.09, lp: 3000, a: 0.002 }));
+  } },
+  { e: '🐔', name: 'ко-ко-ко', anim: 'peck', fx: ['🥚'], glow: '#ffd27a', sound: (c, o, t) => {
+    [0, 0.25, 0.5, 0.75].forEach((d) => tone(c, o, t + d, 0.12, { f: 700, fEnd: 500, type: 'square', gain: 0.1, lp: 1800 }));
+    voice(c, o, t + 1.1, 0.8, { f: 900, fEnd: 600, type: 'sawtooth', gain: 0.1, lp: 2200, vib: 60, vibRate: 14 });
+  } },
+  { e: '🦄', name: 'единорог', anim: 'float', fx: ['✨', '🌈', '💖'], glow: '#ff9ef0', sound: (c, o, t) => {
+    [523, 659, 784, 988, 1175, 1319, 1568, 1976].forEach((f, i) => tone(c, o, t + i * 0.09, 0.9, { f, gain: 0.08, a: 0.005 }));
+    [2093, 2637, 3136].forEach((f, i) => tone(c, o, t + 1 + i * 0.15, 0.8, { f, gain: 0.06, a: 0.002 }));
+  } },
+  { e: '🙈', name: 'не смотрю', anim: 'peek', glow: '#ffb27a', sound: (c, o, t) => {
+    [0, 0.3, 0.6, 1.0, 1.25].forEach((d, i) => voice(c, o, t + d, 0.25, { f: i % 2 ? 900 : 1200, fEnd: i % 2 ? 1400 : 800, type: 'triangle', gain: 0.15 }));
+  } },
+  { e: '🥶', name: 'холодрыга', anim: 'shiver', fx: ['❄️'], glow: '#8fe1ff', sound: (c, o, t) => {
+    for (let i = 0; i < 26; i++) noise(c, o, t + i * 0.05, 0.025, { f: 2500, q: 6, gain: 0.18 });
+    noise(c, o, t + 0.2, 1.8, { f: 500, fEnd: 1400, q: 2, gain: 0.08, a: 0.4 });
+  } },
+  { e: '🤑', name: 'бабки', anim: 'bounce', fx: ['💸', '🪙'], glow: '#7dff8a', sound: (c, o, t) => {
+    noise(c, o, t, 0.08, { f: 2500, q: 3, gain: 0.3 });
+    [2093, 2637, 3136].forEach((f, i) => tone(c, o, t + 0.1 + i * 0.05, 0.7, { f, gain: 0.1, a: 0.002 }));
+    for (let i = 0; i < 9; i++) tone(c, o, t + 0.8 + i * 0.12, 0.25, { f: 3000 + Math.random() * 1500, gain: 0.06, a: 0.001 });
+  } },
+  { e: '🤠', name: 'йи-ха', anim: 'tip', glow: '#ffc36b', sound: (c, o, t) => {
+    voice(c, o, t, 0.5, { f: 1200, fEnd: 1800, gain: 0.14, vib: 15, vibRate: 7 });
+    voice(c, o, t + 0.55, 0.6, { f: 1800, fEnd: 1100, gain: 0.14, vib: 15, vibRate: 7 });
+    notes(c, o, t + 1.2, [[220, 0, 0.18], [196, 0.2, 0.18], [220, 0.4, 0.4]], 'sawtooth', 0.08);
+  } },
+  { e: '😵‍💫', name: 'голова кругом', anim: 'spin', fx: ['⭐', '🐤'], glow: '#c3a3ff', sound: (c, o, t) => {
+    voice(c, o, t, 1, { f: 300, fEnd: 1200, type: 'triangle', gain: 0.12, vib: 80, vibRate: 8 });
+    [0, 0.25, 0.5].forEach((d) => { tone(c, o, t + 1.05 + d, 0.08, { f: 3200, fEnd: 4200, gain: 0.08 }); tone(c, o, t + 1.15 + d, 0.08, { f: 3600, fEnd: 4600, gain: 0.07 }); });
+  } },
+  { e: '🫠', name: 'таю', anim: 'melt', fx: ['💧'], glow: '#ffd23f', sound: (c, o, t) => {
+    voice(c, o, t, 1.3, { f: 900, fEnd: 120, type: 'triangle', gain: 0.16, vib: 12, vibRate: 5 });
+    [1.35, 1.6, 1.85].forEach((d) => tone(c, o, t + d, 0.12, { f: 1400, fEnd: 2400, gain: 0.12, a: 0.002 }));
+  } },
+  { e: '🥺', name: 'ну пожалуйста', anim: 'plead', fx: ['✨'], glow: '#ffd6a0', sound: (c, o, t) => {
+    voice(c, o, t, 0.9, { f: 520, fEnd: 780, type: 'sawtooth', gain: 0.07, lp: 1600, vib: 8, vibRate: 5.5, a: 0.15 });
+    voice(c, o, t + 0.9, 1.1, { f: 780, fEnd: 440, type: 'sawtooth', gain: 0.07, lp: 1600, vib: 9, vibRate: 5.5 });
+  } },
+  { e: '🤓', name: 'ботан', anim: 'nod', glow: '#a8e6ff', sound: (c, o, t) => {
+    for (let i = 0; i < 14; i++) noise(c, o, t + i * 0.09 + Math.random() * 0.03, 0.03, { f: 4000, q: 2, gain: 0.2 });
+    [1568, 2093].forEach((f) => tone(c, o, t + 1.45, 0.55, { f, gain: 0.12, a: 0.002 }));
+  } },
+  { e: '🤬', name: 'цензура', anim: 'rage', fx: ['💢'], glow: '#ff4b4b', sound: (c, o, t) => {
+    tone(c, o, t, 0.25, { f: 90, fEnd: 70, type: 'sawtooth', gain: 0.25, lp: 400 });
+    tone(c, o, t + 0.3, 1.3, { f: 1000, type: 'sine', gain: 0.18, a: 0.005 });
+    tone(c, o, t + 1.65, 0.3, { f: 80, fEnd: 60, type: 'sawtooth', gain: 0.25, lp: 400 });
+  } },
+  { e: '😤', name: 'пар из ушей', anim: 'steam', fx: ['💨'], glow: '#ff9a7a', sound: (c, o, t) => {
+    noise(c, o, t, 0.6, { f: 1200, fEnd: 3000, q: 1, gain: 0.12, a: 0.2 });
+    voice(c, o, t + 0.5, 1.5, { f: 1400, fEnd: 2600, gain: 0.12, vib: 25, vibRate: 9, a: 0.2 });
+  } },
+  { e: '🫡', name: 'есть, капитан!', anim: 'salute', glow: '#9be7ff', sound: (c, o, t) => {
+    notes(c, o, t, [[392, 0, 0.18], [523, 0.22, 0.18], [659, 0.44, 0.18], [784, 0.7, 0.3], [659, 1.05, 0.15], [784, 1.25, 0.7]], 'square', 0.07);
+  } },
+  { e: '🦖', name: 'р-р-р', anim: 'roar', glow: '#7be08a', sound: (c, o, t) => {
+    tone(c, o, t, 1.8, { f: 160, fEnd: 55, type: 'sawtooth', gain: 0.3, lp: 700, a: 0.15 });
+    noise(c, o, t, 1.8, { f: 400, fEnd: 150, q: 0.8, gain: 0.25, a: 0.15 });
+  } },
+  { e: '🎂', name: 'с днём рождения', anim: 'beat', fx: ['🎉', '✨'], glow: '#ffb3c7', sound: (c, o, t) => {
+    // «С днём рожденья тебя» — первые ноты (народная мелодия)
+    notes(c, o, t, [[392, 0, 0.18], [392, 0.2, 0.12], [440, 0.35, 0.35], [392, 0.75, 0.35], [523, 1.15, 0.35], [494, 1.55, 0.45]], 'triangle', 0.22);
+  } },
+];
+const SUPER_BY = new Map(SUPER.map((x) => [x.e.replace(/\uFE0F/g, ''), x]));
+export const superOf = (text?: string) => (text ? SUPER_BY.get(text.trim().replace(/\uFE0F/g, '')) : undefined);
+
+export function playSuper(e: string) {
+  const x = superOf(e);
+  if (!x || !soundEnabled()) return;
+  const c = audioCtx();
+  if (!c) return;
+  try {
+    const out = c.createGain();
+    out.gain.value = 0.9;
+    out.connect(c.destination);
+    x.sound(c, out, c.currentTime + 0.02);
+  } catch { /* звук не обязателен */ }
+}
+
+// Прикольные символы для комментариев и сообщений
+export const KAOMOJI = ['¯\\_(ツ)_/¯', '( ͡° ͜ʖ ͡°)', '(╯°□°)╯︵ ┻━┻', 'ʕ•ᴥ•ʔ', '(づ｡◕‿‿◕｡)づ', 'ಠ_ಠ', '(◕‿◕)', '(｡♥‿♥｡)', '٩(◕‿◕)۶', '(⌐■_■)',
+  '(¬‿¬)', '(ಥ﹏ಥ)', '(☞ﾟヮﾟ)☞', '♪~ ᕕ(ᐛ)ᕗ', 'ヽ(•‿•)ノ', '(ง •̀_•́)ง', '(｡•́︿•̀｡)', '(ᵔᴥᵔ)', '(ʘ‿ʘ)', '┬─┬ノ( º _ ºノ)'];
+export const SYMBOLS = ['♥', '♡', '❤', '★', '☆', '✿', '❀', '☀', '☁', '☂', '☃', '☕', '♪', '♫', '✌', '☺', 'ツ', '♛', '⚡', '∞', '✓', '✗', '☯', '☮', '♻', '✈', '☎', '✉', '⌛', '⚽', '♠', '♣', '♦', '☘', '✨', '💫', '➤', 'ღ', '๑', '〰'];
+
 // Порядок — как в панели. smile: голос смайла «Аськи», synth — свой звук
 export const SFX: { e: string; name: string; smile?: string; synth?: string }[] = [
   { e: '😂', name: 'ржака', smile: 'laugh' },

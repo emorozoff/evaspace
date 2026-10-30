@@ -37,10 +37,11 @@ const MSK = 3 * 3_600_000;
 const PHOTO_RE = /^[a-f0-9]{32}$/;
 const mskDay = (t) => new Date(t + MSK).toISOString().slice(0, 10);
 
-// Текст записи: без управляющих символов, переносы строк оставляем
+// Текст записи: без управляющих, невидимых и «переворачивающих» знаков; переносы строк
+// и ZWJ оставляем — на нём держатся составные эмодзи (😵‍💫)
 function cleanPost(s, max) {
   if (typeof s !== 'string') return '';
-  const t = s.replace(/[\u0000-\u0009\u000b-\u001f\u007f​-‏‪-‮⁦-⁩]/g, '').replace(/\n{3,}/g, '\n\n').trim();
+  const t = s.replace(/[\u0000-\u0009\u000b-\u001f\u007f​‌‎‏‪-‮⁦-⁩]/g, '').replace(/\n{3,}/g, '\n\n').trim();
   return t.length <= max ? t : null;
 }
 

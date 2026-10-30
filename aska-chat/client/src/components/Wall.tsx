@@ -16,6 +16,8 @@ import { userFlower, flower } from '../lib/aska.ts';
 import { photoSize, ImageViewer } from './EncryptedImage.tsx';
 import { Ico, Dialog } from './Win.tsx';
 import { UserPlate, Gold } from './Plate.tsx';
+import { SuperSmile, SymbolGrid } from './SuperSmile.tsx';
+import { SUPER, superOf, playSuper } from '../lib/sfx.ts';
 
 export type WallView = { kind: 'feed' } | { kind: 'top' } | { kind: 'user'; userId: number };
 
@@ -167,6 +169,7 @@ function Post({ p, me, feed, isGold, onProfile, onWallOf, onImage, patch, drop }
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [sheet, setSheet] = useState(false);
+  const [pick, setPick] = useState<'' | 'super' | 'sym' | 'gif'>('');
   const [bursts, setBursts] = useState<Burst[]>([]);
   const lastTap = useRef(0);
   const name = (id: number) => (id === me ? 'Ты' : s.users[id]?.displayName || '…');
@@ -188,16 +191,18 @@ function Post({ p, me, feed, isGold, onProfile, onWallOf, onImage, patch, drop }
     if (!off) burst(emoji, 5);
     try { const r = await reactTo(p.id, off ? null : emoji); patch(p.id, (x) => ({ ...x, reactions: r.reactions, myReaction: r.myReaction || undefined })); } catch { /* нет связи */ }
   }
-  async function send() {
-    const t = text.trim();
-    if (!t) return;
+  // комментарий текстом, супер-смайлом (уходит сразу и звучит) или гифкой
+  async function send(t = text.trim(), sticker?: string) {
+    if (!t && !sticker) return;
     setBusy(true);
     try {
-      const { comment } = await addComment(p.id, t);
-      setText('');
+      const { comment } = await addComment(p.id, t, sticker);
+      if (!sticker && t === text.trim()) setText('');
+      setPick('');
       patch(p.id, (x) => (x.comments.some((c) => c.id === comment.id) ? x : { ...x, comments: [...x.comments, comment] }));
     } catch { /* нет связи */ } finally { setBusy(false); }
   }
+  const addSym = (sym: string) => setText((t) => (t && !/\s$/.test(t) ? `${t} ${sym}` : `${t}${sym}`).slice(0, 300));
   // двойное нажатие на фото — ❤️
   const onPhotoTap = (url: string) => {
     const t = Date.now();
@@ -254,17 +259,49 @@ function Post({ p, me, feed, isGold, onProfile, onWallOf, onImage, patch, drop }
           {(open ? p.comments : p.comments.slice(-2)).map((c) => (
             <div key={c.id} className={`reply${c.sticker ? ' st' : ''}`}>
               <b className="link" onClick={() => onProfile(c.authorId)}>{name(c.authorId)}</b>
-              {c.sticker ? <Sticker id={c.sticker} size="s" /> : <span>{c.text}</span>}
+              {c.sticker ? <Sticker id={c.sticker} size="s" /> : superOf(c.text) ? <SuperSmile e={c.text} size="m" /> : <span>{c.text}</span>}
               <span className="muted">{ago(c.createdAt)}</span>
             </div>
           ))}
           {!open && p.comments.length > 2 && <button className="link aska-linkbtn" onClick={() => setOpen(true)}>все комментарии ({p.comments.length})</button>}
           {open && (
-            <div className="row reply-add">
-              <input className="field" value={text} maxLength={300} placeholder="Комментарий…" onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') send(); }} />
-              <button className="btn" disabled={busy || !text.trim()} onClick={send}>Ок</button>
-            </div>
+            <>
+              <div className="row reply-add">
+                <button className={`btn icon aska-cpick${pick ? ' on' : ''}`} title="Смайлы, символы, гифки" aria-label="Смайлы, символы, гифки"
+                  onClick={() => setPick((v) => (v ? '' : 'super'))}>☺</button>
+                <input className="field" value={text} maxLength={300} placeholder="Комментарий…" onChange={(e) => setText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') send(); }} />
+                <button className="btn" disabled={busy || !text.trim()} onClick={() => send()}>Ок</button>
+              </div>
+              {pick && (
+                <div className="aska-cpanel">
+                  <div className="aska-smile-tabs">
+                    <button className={pick === 'super' ? 'on' : ''} onClick={() => setPick('super')}>🤩 Смайлы</button>
+                    <button className={pick === 'sym' ? 'on' : ''} onClick={() => setPick('sym')}>✨ Символы</button>
+                    <button className={pick === 'gif' ? 'on' : ''} onClick={() => setPick('gif')}>🎞 Гифки</button>
+                  </div>
+                  {pick === 'super' && (
+                    <div className="aska-cgrid">
+                      {SUPER.map((x) => (
+                        <button key={x.e} className="aska-super-btn" title={x.name} style={{ ['--glow' as string]: x.glow }} disabled={busy}
+                          onClick={() => { playSuper(x.e); send(x.e); }}>
+                          <i className={`ss-${x.anim}`}>{x.e}</i><small>{x.name}</small>
+                        </button>
+                      ))}
+                      <div className="cap">нажми — смайл оживёт под записью и прозвучит 🔊</div>
+                    </div>
+                  )}
+                  {pick === 'sym' && <SymbolGrid onPick={addSym} />}
+                  {pick === 'gif' && (
+                    <div className="aska-cgrid gifs">
+                      {STICKERS.map((st) => (
+                        <button key={st.id} className="rw-gif" disabled={busy} onClick={() => send('', st.id)} title={st.cap}><Sticker id={st.id} size="s" /></button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

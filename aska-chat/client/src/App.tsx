@@ -4,7 +4,7 @@ import { onIncoming, onFriendOnline, activeChatId, unreadIn, store, openDm, dism
 import type { Msg } from './lib/store.ts';
 import { previewText } from './lib/protocol.ts';
 import { play, envelope, flower } from './lib/aska.ts';
-import { sfxOf, playSfx } from './lib/sfx.ts';
+import { sfxOf, playSfx, superOf, playSuper } from './lib/sfx.ts';
 import { Welcome, SuperLinkInApp, superFromUrl } from './components/Welcome.tsx';
 import { Contacts } from './components/Contacts.tsx';
 import { ChatView } from './components/ChatView.tsx';
@@ -60,9 +60,11 @@ export default function App() {
     let hideTimer: ReturnType<typeof setTimeout> | undefined;
     const off = onIncoming((m: Msg) => {
       if (document.visibilityState !== 'visible') return;
-      // звуковой смайл звучит сам вместо «о-оу»
-      const sfx = m.body?.kind === 'text' ? sfxOf(m.body.text) : undefined;
-      if (sfx) playSfx(sfx.e); else play('incoming');
+      // звуковой и супер-смайл звучат сами вместо «о-оу»
+      const msgText = m.body?.kind === 'text' ? m.body.text : undefined;
+      const sup = superOf(msgText);
+      const sfx = sfxOf(msgText);
+      if (sup) playSuper(sup.e); else if (sfx) playSfx(sfx.e); else play('incoming');
       if (activeChatId() === m.chatId) return;
       const st = store.get();
       const c = st.chats[m.chatId];

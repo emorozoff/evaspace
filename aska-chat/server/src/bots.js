@@ -941,6 +941,8 @@ export function createBots(ctx) {
   // Бот на стене: реакция, цветочек, комментарий или гифка (с «мозгом» — своими словами, без — как живой человек по заготовкам)
   const REACT_BY_KIND = { photo: ['😍', '🔥', '❤️', '👏'], card: ['❤️', '😍', '👍'], magnet: ['😮', '🔥', '👍'], sticker: ['😂', '💀', '💯'], text: ['👍', '😂', '💯', '❤️'] };
   const STICKER_BY_KIND = { photo: ['kaif', 'pushka', 'imba', 'lyublyu'], card: ['lyublyu', 'cvetok'], magnet: ['shok', 'pushka'], sticker: ['oru', 'baza', 'nuvse'], text: ['zhiza', 'baza', 'oru', 'ponyal', 'hm'] };
+  // супер-смайлы (оживают и звучат в приложении) — ≡ SUPER в client/src/lib/sfx.ts
+  const SUPER_BY_KIND = { photo: ['🥳', '🥺', '🦄', '🤑', '🙈'], card: ['🥺', '🥳', '🫠'], magnet: ['🤠', '👽', '🥶'], sticker: ['🤪', '😵‍💫', '🫡'], text: ['🫡', '🤓', '🤪', '🙈'] };
 
   async function wallReactJob(botId, { postId, reply }) {
     const bot = row(botId);
@@ -975,7 +977,10 @@ export function createBots(ctx) {
       else if (bot.kind === 'friend') text = onMine ? (reply ? 'Ага, понял 👍' : p.card === 'tea' ? 'Чайку бы сейчас 😁 Спасибо!' : 'Спасибо, родной 🌹') : 'Молодец 👍';
       else if (reply || onMine) text = P.personScripted(lastCommentText(comments, botId), per)[0];
       else if (Math.random() < (timing.wallCommentChance ?? 0.65)) {
-        if (Math.random() < (timing.wallStickerChance ?? 0.25)) sticker = pick(STICKER_BY_KIND[kind]);
+        const r = Math.random();
+        const sup = timing.wallSuperChance ?? 0.15;
+        if (r < sup) text = pick(SUPER_BY_KIND[kind]);
+        else if (r < sup + (timing.wallStickerChance ?? 0.25)) sticker = pick(STICKER_BY_KIND[kind]);
         else text = P.styled(per, P.gendered(per, pick(P.WALL_COMMENTS[kind])));
       }
     }
@@ -1540,6 +1545,12 @@ export function createBots(ctx) {
     if (wall && getSetting(db, 'announced_v7') !== '1') {
       setSetting(db, 'announced_v7', '1');
       wall.post(aska, aska, { kind: 'sticker', sticker: 'tusa', text: 'Новое на стенах! Под каждой записью теперь «+»: цветочек, лайк, аськоины автору, реакции и живые гифки-мемы 🎞 А если кто-то надоел — его можно убрать для себя.' }, { fromBot: true });
+    }
+    // восьмое — тоже записью на стене Аськи, и сразу супер-смайл в комментариях, чтобы его было видно и слышно
+    if (wall && getSetting(db, 'announced_v8') !== '1') {
+      setSetting(db, 'announced_v8', '1');
+      const r = wall.post(aska, aska, { kind: 'text', text: '🤩 Новое: супер-смайлы! В беседе нажми ☺ → «🤩 Супер» — у друга смайл оживёт и прозвучит, у каждого свой звук. А в комментариях под записями теперь есть ☺: супер-смайлы, ✨ символы вроде ¯\\_(ツ)_/¯ и гифки. Нажми на смайл ниже 👇' }, { fromBot: true });
+      if (r.post) wall.comment(aska, r.post.id, '🥳');
     }
     if (getSetting(db, 'announced_v6') !== '1') {
       setSetting(db, 'announced_v6', '1');
