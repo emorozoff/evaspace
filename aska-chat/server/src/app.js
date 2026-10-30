@@ -627,7 +627,7 @@ export function createApp({
         isAdmin: M.isGold(fresh), role: fresh.role, coins: fresh.coins, bonus, phone: fresh.phone || null, phoneVerified: Boolean(fresh.phone_verified),
         allowAnon: Boolean(fresh.allow_anon), plate: fresh.plate,
       },
-      pins, guesses, groups: groupsOf(req.userId), features: { ai: ai.available(), sms: sms.configured() },
+      pins, guesses, groups: groupsOf(req.userId), hidden: [...wall.hiddenSet(req.userId)], features: { ai: ai.available(), sms: sms.configured() },
       ...(M.isGold(fresh) ? { brain: { key: ai.configured(), people: bots.peopleEnabled(), error: ai.status().lastError || '' } } : {}),
     });
   });

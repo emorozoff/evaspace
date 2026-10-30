@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useStore } from '../useStore.ts';
 import {
-  enablePush, logout, myPublicKey, createInvite, listInvites, updateProfile, linkPhone, sendCode, verifyCode, game,
+  enablePush, logout, myPublicKey, createInvite, listInvites, updateProfile, linkPhone, sendCode, verifyCode, game, setHidden,
 } from '../lib/store.ts';
 import { ApiError } from '../lib/api.ts';
 import { safetyCode, fromB64 } from '../lib/crypto.ts';
@@ -128,6 +128,19 @@ function Settings({ onAux }: { onAux: (k: AuxKind) => void }) {
           </ol>
         )}
       </div>
+
+      {s.hidden.length > 0 && (
+        <details className="groupbox">
+          <summary className="legend">🚫 Убранные для себя ({s.hidden.length})</summary>
+          {s.hidden.map((id) => (
+            <div className="row" key={id}>
+              <span className="sp">{s.users[id]?.displayName || '…'}</span>
+              <button className="btn" onClick={() => setHidden(id, false).catch(() => {})}>↩ Вернуть</button>
+            </div>
+          ))}
+          <div className="hint">Их записи и комментарии не видны тебе на стенах, а в списке их нет.</div>
+        </details>
+      )}
 
       <details className="groupbox aska-codes">
         <summary className="legend">Коды безопасности</summary>

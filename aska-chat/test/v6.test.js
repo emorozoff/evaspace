@@ -11,7 +11,7 @@ import { setSetting } from '../server/src/db.js';
 import { generateKeyPair, deriveFromPassword, sealSecret, toB64, fromB64, randomBytes } from '../client/src/lib/crypto.ts';
 import { encodeOutgoing, decodeIncoming } from '../client/src/lib/protocol.ts';
 
-const TIMING = { scale: 0, tickMs: 5, presenceMs: 50, proactiveMs: 3_600_000, alwaysOnline: true, circleChance: 0, chainChance: 0, wallReactChance: 0, batyaCardChance: 0, wallEmojiChance: 0 };
+const TIMING = { scale: 0, tickMs: 5, presenceMs: 50, proactiveMs: 3_600_000, alwaysOnline: true, circleChance: 0, chainChance: 0, wallReactChance: 0, batyaCardChance: 0, wallEmojiChance: 0, askaReactChance: 0 };
 
 async function start({ ai, dataDir } = {}) {
   const s = { dataDir: dataDir || fs.mkdtempSync(path.join(os.tmpdir(), 'aska-v6-')), pushes: [], aiCalls: [] };
@@ -214,13 +214,19 @@ test('новые друзья: появляются и без «мозга», п
       assert.equal(pw.posts[0].text, PERSON_WALL.polina, 'на стене уже есть запись');
       assert.equal(polina.plateCountry, 'RU');
       assert.equal(ppl.find((u) => u.displayName === 'Алина').plateCountry, 'KZ', 'Алина из Алматы — казахстанский номер');
-      // в личке без «мозга»: пара коротких ответов, потом «занят(а)» — и тишина до завтра
+      // в личке без «мозга»: до пяти коротких человеческих ответов в день, шестой — «занят(а)», дальше тишина до завтра
       const dm = (await S2.call('POST', '/api/chats/dm', { token: me.token, body: { userId: polina.id } })).data.chat.id;
-      for (const t of ['привет!', 'как дела?', 'что делаешь?', 'ау?']) { await send(S2, me, dm, t); await S2.app.bots.idle(); }
-      const got = (await read(S2, me, dm)).filter((m) => m.senderId === polina.id).map((m) => m.text);
-      assert.equal(got.length, 3, got.join(' | '));
-      assert.ok(['привет)', 'хай!', 'о, привет', 'приветик)'].includes(got[0]));
-      assert.ok(/занят|бегу|завал/.test(got[2]));
+      const fromPolina = async () => (await read(S2, me, dm)).filter((m) => m.senderId === polina.id).map((m) => m.text);
+      await send(S2, me, dm, 'привет!');
+      await S2.app.bots.idle();
+      assert.ok(['привет)', 'хай!', 'о, привет', 'приветик)'].includes((await fromPolina())[0]));
+      for (const t of ['как дела?', 'что делаешь?', 'ты откуда?', 'люблю кино', 'ау?']) { await send(S2, me, dm, t); await S2.app.bots.idle(); }
+      const got = await fromPolina();
+      assert.ok(got.some((t) => t.includes('Санкт-Петербург')), got.join(' | '));
+      assert.match(got[got.length - 1], /занят|бегу|завал/);
+      await send(S2, me, dm, 'эй');
+      await S2.app.bots.idle();
+      assert.equal((await fromPolina()).length, got.length, 'после «занята» до завтра молчит');
       // всерьёз спросили — признаётся
       assert.match(personScripted('скажи честно, ты ии?')[0], /честно: я ИИ/);
     } finally {

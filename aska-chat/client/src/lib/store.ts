@@ -40,6 +40,7 @@ export interface State {
   groups: Record<number, Group>;       // группы контактов: ближний круг, знакомства, работа
   brain: Brain | null;
   wallNew: number;                     // новые записи на моей стене, пока не открыл «Стену»
+  hidden: number[];                    // кого я убрал(а) для себя: их записей и комментариев не вижу
   features: { ai: boolean; sms: boolean };
   typing: Record<string, Record<number, number>>; // чат → кто печатает → когда
   welcomePlate: string | null;         // только что выданный номер — показать поздравление
@@ -47,7 +48,7 @@ export interface State {
 
 const initial: State = {
   phase: 'loading', me: null, users: {}, chats: {}, messages: {}, connected: false, presence: {}, vapidKey: null, pushState: 'default',
-  profile: null, pins: [], guesses: {}, groups: {}, brain: null, wallNew: 0, features: { ai: false, sms: false }, typing: {}, welcomePlate: null,
+  profile: null, pins: [], guesses: {}, groups: {}, brain: null, wallNew: 0, hidden: [], features: { ai: false, sms: false }, typing: {}, welcomePlate: null,
 };
 
 let state: State = initial;
@@ -278,6 +279,7 @@ interface StateResp {
   pins: number[];
   guesses: Record<number, Truth>;
   groups?: Record<number, Group>;
+  hidden?: number[];
   brain?: Brain;
   features: { ai: boolean; sms: boolean };
 }
@@ -310,7 +312,7 @@ async function loadState() {
   for (const id of st.online || []) presence[id] = true;
   set({
     users, chats, vapidKey: st.vapidPublicKey, presence, profile: st.profile, pins: st.pins || [], guesses: st.guesses || {},
-    groups: st.groups || {}, brain: st.brain || null, features: st.features || { ai: false, sms: false },
+    groups: st.groups || {}, hidden: st.hidden || [], brain: st.brain || null, features: st.features || { ai: false, sms: false },
   });
   await Promise.all([kvSet('users', users), kvSet('chats', chats)]);
   updateBadge();
@@ -449,6 +451,8 @@ function onEvent(ev: ServerEvent) {
     case 'wall_flower':
     case 'wall_comment':
     case 'wall_del':
+    case 'wall_react':
+    case 'wall_tip':
       emitWall(ev);
       break;
     case 'user': {
@@ -744,6 +748,12 @@ export async function setPin(userId: number, on: boolean) {
 
 export const seenWall = () => { if (state.wallNew) set({ wallNew: 0 }); };
 
+// Убрать человека для себя (и вернуть): его записей и комментариев на стенах не видно, в списке его нет
+export async function setHidden(userId: number, on: boolean) {
+  const r = await api.post<{ hidden: number[] }>('/hides', { userId, on });
+  set({ hidden: r.hidden });
+}
+
 export async function setGroup(userId: number, group: Group) {
   set({ groups: { ...state.groups, [userId]: group } });
   const r = await api.post<{ groups: Record<number, Group> }>('/groups', { userId, group });
@@ -855,7 +865,7 @@ export interface MyPlates {
 }
 export interface Quote { code: string; text: string; country: string; region: string; city: string; price: number; rarity: number; rarityName: string; free: boolean; gold: boolean; allowed: boolean }
 
-function setCoins(coins: number) {
+export function setCoins(coins: number) {
   if (state.profile) set({ profile: { ...state.profile, coins } });
 }
 export const myPlates = () => api.get<MyPlates>('/plates/me').then((r) => { setCoins(r.coins); return r; });

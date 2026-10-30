@@ -1,0 +1,147 @@
+/* АСЬКА 7 (30.10.2026): «+» на записи — панель наград, реакции, живые гифки-мемы, «полёт» награды. */
+
+/* ---------- живые гифки-мемы ---------- */
+.aska-sticker { position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; vertical-align: middle;
+  border-radius: 14px; color: #fff; box-shadow: 0 4px 14px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .3); isolation: isolate; user-select: none; }
+.aska-sticker.s { width: 104px; height: 78px; border-radius: 12px; }
+.aska-sticker.m { width: 160px; height: 116px; }
+.aska-sticker.l { width: min(260px, 100%); height: 180px; border-radius: 18px; }
+.aska-sticker .st-e { font-size: 34px; line-height: 1; z-index: 2; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .3)); }
+.aska-sticker.m .st-e { font-size: 50px; }
+.aska-sticker.l .st-e { font-size: 78px; }
+.aska-sticker .st-cap { position: absolute; left: 4px; right: 4px; bottom: 5px; z-index: 3; text-align: center; font: 900 11px/1.05 Impact, 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: .3px; text-transform: uppercase; color: #fff; -webkit-text-stroke: .6px #000; text-shadow: 0 2px 0 #000, 0 0 6px rgba(0, 0, 0, .5); }
+.aska-sticker.m .st-cap { font-size: 15px; bottom: 7px; }
+.aska-sticker.l .st-cap { font-size: 22px; bottom: 10px; -webkit-text-stroke: 1px #000; }
+.aska-sticker::after { content: ''; position: absolute; inset: 0; z-index: 1; background: radial-gradient(120% 80% at 20% 0%, rgba(255, 255, 255, .35), transparent 55%); pointer-events: none; }
+.aska-sticker .st-fx { position: absolute; top: -20%; z-index: 1; font-style: normal; font-size: 12px; animation: st-fall 1.6s linear infinite; opacity: 0; }
+.aska-sticker.l .st-fx { font-size: 20px; }
+.aska-sticker.fx-confetti .st-fx, .aska-sticker.fx-notes .st-fx { animation-name: st-float-up; top: auto; bottom: -15%; }
+.aska-sticker.fx-sparkle .st-fx { animation-name: st-twinkle; top: auto; bottom: auto; }
+.aska-sticker.fx-sparkle .st-fx:nth-child(odd) { top: 12%; } .aska-sticker.fx-sparkle .st-fx:nth-child(even) { top: 48%; }
+.aska-sticker.fx-flash .st-fx { inset: 0; left: 0 !important; top: 0; width: 100%; height: 100%; font-size: 0; background: #fff; animation: st-flash 1.4s ease-out infinite; }
+@keyframes st-fall { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(160%); opacity: 0; } }
+@keyframes st-float-up { 0% { transform: translateY(0) rotate(0); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-140%) rotate(40deg); opacity: 0; } }
+@keyframes st-twinkle { 0%, 100% { transform: scale(.4); opacity: 0; } 50% { transform: scale(1.2); opacity: 1; } }
+@keyframes st-flash { 0%, 70% { opacity: 0; } 75% { opacity: .55; } 100% { opacity: 0; } }
+/* движение эмодзи */
+.an-shake .st-e { animation: an-shake .45s ease-in-out infinite; }
+.an-wobble .st-e { animation: an-wobble 1s ease-in-out infinite; }
+.an-zoom .st-e { animation: an-zoom 1.6s ease-in-out infinite; }
+.an-zoomfast .st-e { animation: an-zoom .7s ease-in-out infinite; }
+.an-drop .st-e { animation: an-drop 1.4s cubic-bezier(.3, 1.6, .5, 1) infinite; }
+.an-pulse .st-e { animation: an-zoom 1s ease-in-out infinite; }
+.an-flicker .st-e { animation: an-flicker .6s ease-in-out infinite alternate; }
+.an-bob .st-e { animation: an-bob .9s ease-in-out infinite; }
+.an-wave .st-e { animation: an-wave 1s ease-in-out infinite; transform-origin: 20% 90%; }
+.an-bounce .st-e { animation: an-bounce .8s cubic-bezier(.3, 1.6, .5, 1) infinite; }
+.an-float .st-e { animation: an-bob 2.2s ease-in-out infinite; }
+.an-sway .st-e { animation: an-wobble 1.6s ease-in-out infinite; }
+.an-spin .st-e { animation: an-spin 1.6s cubic-bezier(.5, 0, .5, 1) infinite; }
+.an-spinslow .st-e { animation: an-spin 4s linear infinite; }
+.an-nod .st-e { animation: an-nod 1.1s ease-in-out infinite; }
+.an-beat .st-e { animation: an-beat 1s ease-in-out infinite; }
+.an-dance .st-e { animation: an-dance .8s ease-in-out infinite; }
+.an-tilt .st-e { animation: an-tilt 2s ease-in-out infinite; }
+.an-boom .st-e { animation: an-boom 1.4s ease-out infinite; }
+@keyframes an-shake { 0%, 100% { transform: translate(0, 0) rotate(0); } 25% { transform: translate(-3px, 1px) rotate(-6deg); } 75% { transform: translate(3px, -1px) rotate(6deg); } }
+@keyframes an-wobble { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+@keyframes an-zoom { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+@keyframes an-drop { 0% { transform: translateY(-40%) scale(.9); } 60%, 100% { transform: translateY(0) scale(1); } }
+@keyframes an-flicker { from { transform: scale(1) rotate(-3deg); filter: brightness(1); } to { transform: scale(1.1) rotate(3deg); filter: brightness(1.3); } }
+@keyframes an-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12%); } }
+@keyframes an-wave { 0%, 100% { transform: rotate(-12deg); } 50% { transform: rotate(14deg); } }
+@keyframes an-bounce { 0%, 100% { transform: translateY(0) scaleY(1); } 30% { transform: translateY(-22%) scaleY(1.05); } 55% { transform: translateY(0) scaleY(.9); } }
+@keyframes an-spin { to { transform: rotate(360deg); } }
+@keyframes an-nod { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(10deg) translateY(4%); } 60% { transform: rotate(-4deg); } }
+@keyframes an-beat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.22); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } }
+@keyframes an-dance { 0%, 100% { transform: rotate(-12deg) translateX(-8%); } 50% { transform: rotate(12deg) translateX(8%) translateY(-6%); } }
+@keyframes an-tilt { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(10deg) translateX(4%); } }
+@keyframes an-boom { 0% { transform: scale(.6) rotate(0); } 30% { transform: scale(1.3) rotate(-8deg); } 60%, 100% { transform: scale(1) rotate(0); } }
+
+/* ---------- реакции и счётчики под записью ---------- */
+.aska-reacts { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 2px; }
+.aska-reacts button { border: 1px solid rgba(0, 0, 0, .12); background: rgba(255, 255, 255, .7); border-radius: 999px; padding: 2px 8px; font: inherit; font-size: 13px; cursor: pointer; line-height: 1.4; }
+.aska-reacts button b { font-size: 11.5px; margin-left: 2px; }
+.aska-reacts button.on { background: #fff4c2; border-color: #e0b030; }
+.aska-stat { font-size: 12.5px; padding: 0 4px; white-space: nowrap; }
+.aska-stat.on { font-weight: 700; }
+.aska-stat.coin { color: #8a5a00; font-weight: 700; }
+.aska-plus-btn { min-width: 40px; font-size: 20px !important; font-weight: 700; line-height: 1; }
+.aska-post-st { margin: 4px 0; }
+.aska-comments .reply.st { align-items: center; }
+.aska-comments .reply.st .aska-sticker { margin: 2px 0; }
+.aska-gif-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 6px; max-height: 260px; overflow: auto; padding: 2px; }
+.aska-gif-pick button { padding: 2px; border: 2px solid transparent; background: none; cursor: pointer; border-radius: 14px; }
+.aska-gif-pick button.on { border-color: var(--a-accent, var(--sel)); }
+
+/* «полёт» награды над записью */
+.aska-burst { position: absolute; left: 0; right: 0; bottom: 30px; height: 0; pointer-events: none; z-index: 5; }
+.aska-burst i { position: absolute; bottom: 0; font-style: normal; font-size: 22px; animation: aska-fly 1.4s cubic-bezier(.2, .8, .3, 1) forwards; opacity: 0; }
+.aska-burst i:nth-child(3n) { font-size: 16px; } .aska-burst i:nth-child(4n) { font-size: 28px; }
+@keyframes aska-fly {
+  0% { transform: translate(0, 0) scale(.4) rotate(0); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate(var(--dx, 0), -150px) scale(1.15) rotate(25deg); opacity: 0; }
+}
+.aska-burst i:nth-child(odd) { --dx: -28px; } .aska-burst i:nth-child(even) { --dx: 26px; } .aska-burst i:nth-child(3n) { --dx: 4px; }
+
+/* ---------- панель наград: выезжает снизу, как кошелёк ---------- */
+.aska-reward-ov { position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-end; justify-content: center; background: rgba(5, 12, 30, .45);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: rw-fade .2s ease both; }
+.aska-reward { width: min(440px, 100%); max-height: 88%; overflow: auto; padding: 8px 14px calc(16px + env(safe-area-inset-bottom)); border-radius: 26px 26px 0 0; color: #fff;
+  background: radial-gradient(120% 60% at 15% 0%, rgba(120, 255, 190, .18), transparent 60%), linear-gradient(165deg, #172452 0%, #0e1a38 55%, #072d36 100%);
+  box-shadow: 0 -18px 50px rgba(0, 10, 40, .5), inset 0 1px 0 rgba(255, 255, 255, .15); animation: rw-up .42s cubic-bezier(.2, 1.1, .3, 1) both; }
+@keyframes rw-up { from { transform: translateY(105%); } to { transform: none; } }
+@keyframes rw-fade { from { opacity: 0; } }
+@keyframes rw-pop { from { transform: translateY(14px) scale(.9); opacity: 0; } to { transform: none; opacity: 1; } }
+.rw-grip { width: 42px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .3); margin: 0 auto 10px; }
+.rw-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; margin-bottom: 10px; }
+.rw-wallet { flex: none; padding: 4px 11px; border-radius: 999px; font-weight: 800; color: #3d2a00; background: linear-gradient(180deg, #fff3b8, #f2c43c); box-shadow: 0 2px 10px rgba(242, 196, 60, .4); }
+.rw-main { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rw-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 4px 10px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, .14); color: #fff; cursor: pointer;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .04)); font: inherit; animation: rw-pop .4s cubic-bezier(.2, 1.2, .3, 1) both; transition: transform .1s; }
+.rw-tile:nth-child(2) { animation-delay: .05s; } .rw-tile:nth-child(3) { animation-delay: .1s; }
+.rw-tile:active { transform: scale(.94); }
+.rw-tile i { font-style: normal; font-size: 32px; line-height: 1.1; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .35)); }
+.rw-tile b { font-size: 13.5px; }
+.rw-tile small { font-size: 10.5px; opacity: .7; text-align: center; }
+.rw-tile.on, .rw-tile.money.on { border-color: #f2c43c; background: linear-gradient(180deg, rgba(242, 196, 60, .3), rgba(242, 196, 60, .08)); }
+.rw-tile:disabled { opacity: .45; cursor: default; }
+.rw-amounts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; animation: rw-pop .3s ease both; }
+.rw-amounts button { display: flex; flex-direction: column; align-items: center; padding: 8px 0; border-radius: 16px; border: 0; cursor: pointer; font: inherit; color: #3d2a00;
+  background: radial-gradient(circle at 35% 30%, #fff8d0, #f6cf45 55%, #c9921a); box-shadow: 0 4px 12px rgba(242, 196, 60, .35), inset 0 1px 0 rgba(255, 255, 255, .6); }
+.rw-amounts button b { font-size: 18px; }
+.rw-amounts button:disabled { opacity: .35; }
+.rw-note { grid-column: 1 / -1; font-size: 11px; opacity: .65; text-align: center; }
+.rw-reacts { display: flex; justify-content: space-between; gap: 2px; margin: 12px 0 8px; padding: 6px; border-radius: 999px; background: rgba(255, 255, 255, .08); }
+.rw-reacts button { flex: 1; border: 0; background: none; font-size: 24px; padding: 4px 0; border-radius: 999px; cursor: pointer; transition: transform .12s; }
+.rw-reacts button:active { transform: scale(1.35); }
+.rw-reacts button.on { background: rgba(242, 196, 60, .3); }
+.rw-row { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .06);
+  color: #fff; font: inherit; cursor: pointer; text-align: left; }
+.rw-row span { flex: 1; opacity: .65; font-size: 12px; }
+.rw-row em { font-style: normal; opacity: .6; }
+.rw-gifs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; max-height: 280px; overflow: auto; animation: rw-pop .3s ease both; }
+.rw-gifs button { padding: 0; border: 0; background: none; cursor: pointer; border-radius: 12px; transition: transform .1s; }
+.rw-gifs button:active { transform: scale(.93); }
+.rw-gifs .aska-sticker.s { width: 100%; }
+.rw-danger { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, .1); }
+.rw-danger button { border: 0; background: rgba(255, 80, 80, .12); color: #ffb3b3; padding: 10px 12px; border-radius: 12px; font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.aska-reward .err { color: #ffb3b3; margin-top: 8px; }
+
+/* Миллениал: панель — как окно Windows 98 */
+.skin-classic .aska-reward { color: #000; border-radius: 0; background: var(--face, #d4d0c8); border: 2px solid; border-color: #fff #404040 #404040 #fff; box-shadow: 2px 2px 0 rgba(0, 0, 0, .4); }
+.skin-classic .rw-grip { background: #808080; border-radius: 0; height: 3px; }
+.skin-classic .rw-tile, .skin-classic .rw-row, .skin-classic .rw-reacts { color: #000; border-radius: 0; background: var(--face, #d4d0c8); border: 2px solid; border-color: #fff #404040 #404040 #fff; animation: none; }
+.skin-classic .rw-tile.on, .skin-classic .rw-tile.money.on { border-color: #404040 #fff #fff #404040; background: #fff8c8; }
+.skin-classic .rw-amounts button { border-radius: 0; border: 2px solid; border-color: #fff #404040 #404040 #fff; box-shadow: none; }
+.skin-classic .rw-danger button { border-radius: 0; color: #8b0000; background: #fff; border: 1px solid #808080; }
+.skin-classic .rw-wallet { border-radius: 0; box-shadow: none; border: 1px solid #8a5a00; }
+.skin-classic .aska-reacts button { border-radius: 0; background: #fff; }
+.skin-aero .aska-plus-btn { background: linear-gradient(180deg, #3aa0ff, #1e7bff) !important; color: #fff !important; border-color: rgba(0, 60, 150, .4) !important; box-shadow: 0 3px 10px rgba(30, 123, 255, .35) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .aska-sticker .st-e, .aska-sticker .st-fx, .aska-burst i, .aska-reward, .rw-tile { animation: none !important; }
+  .aska-burst { display: none; }
+}

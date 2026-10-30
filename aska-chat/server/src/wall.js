@@ -26,6 +26,11 @@ export const MAGNET_NAMES = {
   DE: 'Германия', CZ: 'Чехия', CY: 'Кипр', GE: 'Грузия', AM: 'Армения', KZ: 'Казахстан', BY: 'Беларусь', CN: 'Китай', IN: 'Индия', BR: 'Бразилия',
   MV: 'Мальдивы', VN: 'Вьетнам', GB: 'Британия', RU: 'Сочи', UR: 'Урюпинск', AQ: 'Антарктида', MOON: 'Луна',
 };
+// Реакции на записи (одна от человека, можно сменить) и «живые гифки» — анимированные мемы
+export const REACTIONS = ['👍', '❤️', '😂', '🔥', '😍', '😮', '😢', '👏', '💯', '💀'];
+export const STICKERS = ['oru', 'kringe', 'baza', 'fiasko', 'zhiza', 'imba', 'vibe', 'redflag', 'sigma', 'nuvse', 'lois', 'shok', 'kaif',
+  'plak', 'tusa', 'ponyal', 'kotik', 'lyublyu', 'tancy', 'hm', 'mozg', 'gg', 'cvetok', 'pushka'];
+export const TIP_AMOUNTS = [5, 10, 25, 50];
 export const FLOWER_COIN = 1;
 export const BEST_COINS = 30;
 const MSK = 3 * 3_600_000;
@@ -58,8 +63,16 @@ export function createWall({ db, dataDir, sendToAll, log = console.log }) {
   function view(p, meId) {
     const flowers = db.prepare('SELECT COUNT(*) AS n FROM wall_flowers WHERE post_id = ?').get(p.id).n;
     const mine = meId ? Boolean(db.prepare('SELECT 1 FROM wall_flowers WHERE post_id = ? AND user_id = ?').get(p.id, meId)) : false;
-    const comments = db.prepare('SELECT id, author_id AS authorId, text, created_at AS createdAt FROM wall_comments WHERE post_id = ? ORDER BY id LIMIT 50').all(p.id).map((c) => ({ ...c }));
-    const v = { id: p.id, wallId: p.wall_id, authorId: p.author_id, kind: p.kind, text: p.text || '', createdAt: p.created_at, flowers, mine, comments };
+    const hidden = meId ? hiddenSet(meId) : new Set();
+    const comments = db.prepare('SELECT id, author_id AS authorId, text, sticker, created_at AS createdAt FROM wall_comments WHERE post_id = ? ORDER BY id LIMIT 50').all(p.id)
+      .filter((c) => !hidden.has(c.authorId)).map((c) => (c.sticker ? { ...c } : { id: c.id, authorId: c.authorId, text: c.text, createdAt: c.createdAt }));
+    const reactions = {};
+    for (const r of db.prepare('SELECT emoji, COUNT(*) AS n FROM wall_reactions WHERE post_id = ? GROUP BY emoji ORDER BY n DESC').all(p.id)) reactions[r.emoji] = r.n;
+    const my = meId ? db.prepare('SELECT emoji FROM wall_reactions WHERE post_id = ? AND user_id = ?').get(p.id, meId)?.emoji : null;
+    const tips = db.prepare('SELECT COALESCE(SUM(amount), 0) AS n FROM wall_tips WHERE post_id = ?').get(p.id).n;
+    const v = { id: p.id, wallId: p.wall_id, authorId: p.author_id, kind: p.kind, text: p.text || '', createdAt: p.created_at, flowers, mine, comments, reactions, tips };
+    if (my) v.myReaction = my;
+    if (p.sticker) v.sticker = p.sticker;
     if (p.card) v.card = p.card;
     if (p.magnet) v.magnet = p.magnet;
     if (p.photo) v.photo = { id: p.photo, w: p.w || 0, h: p.h || 0 };
@@ -68,9 +81,18 @@ export function createWall({ db, dataDir, sendToAll, log = console.log }) {
   }
 
   const notBlocked = 'author_id NOT IN (SELECT id FROM users WHERE blocked_at IS NOT NULL)';
+  // «Убрать для себя»: кого человек скрыл — их записей и комментариев он не видит, на его стену они не пишут
+  const hiddenSet = (userId) => new Set(db.prepare('SELECT target_id FROM user_hides WHERE user_id = ?').all(userId).map((r) => r.target_id));
+  const hides = (userId, targetId) => Boolean(db.prepare('SELECT 1 FROM user_hides WHERE user_id = ? AND target_id = ?').get(userId, targetId));
+  function setHidden(userId, targetId, on) {
+    if (on) db.prepare('INSERT OR IGNORE INTO user_hides (user_id, target_id, created_at) VALUES (?, ?, ?)').run(userId, targetId, Date.now());
+    else db.prepare('DELETE FROM user_hides WHERE user_id = ? AND target_id = ?').run(userId, targetId);
+    return [...hiddenSet(userId)];
+  }
 
   function list({ wallId, before, limit = 30, top }, meId) {
     const lim = Math.min(50, Math.max(1, limit));
+    const hidden = meId ? hiddenSet(meId) : new Set();
     let rows;
     if (top) {
       rows = db.prepare(`SELECT p.*, (SELECT COUNT(*) FROM wall_flowers f WHERE f.post_id = p.id) AS fl FROM wall_posts p
@@ -80,7 +102,7 @@ export function createWall({ db, dataDir, sendToAll, log = console.log }) {
     } else {
       rows = db.prepare(`SELECT * FROM wall_posts WHERE (? = 0 OR id < ?) AND ${notBlocked} ORDER BY id DESC LIMIT ?`).all(before || 0, before || 0, lim);
     }
-    return rows.map((p) => view(p, meId));
+    return rows.filter((p) => !hidden.has(p.author_id)).map((p) => view(p, meId));
   }
 
   // Холодильник: магниты, которые человеку прислали на стену (страна → сколько)
@@ -108,12 +130,16 @@ export function createWall({ db, dataDir, sendToAll, log = console.log }) {
     const author = row(authorId);
     const owner = row(wallId);
     if (!author || !hasWall(owner) || (!fromBot && author.blocked_at)) return { error: 'bad_wall' };
+    if (hides(wallId, authorId)) return { error: 'hidden' };
     const kind = b?.kind;
     const text = cleanPost(b?.text || '', 500);
     if (text === null) return { error: 'too_long' };
-    const rec = { kind, text, card: null, magnet: null, photo: null, w: null, h: null };
+    const rec = { kind, text, card: null, magnet: null, photo: null, w: null, h: null, sticker: null };
     if (kind === 'text') {
       if (!text) return { error: 'empty' };
+    } else if (kind === 'sticker') {
+      if (!STICKERS.includes(b.sticker)) return { error: 'bad_sticker' };
+      rec.sticker = b.sticker;
     } else if (kind === 'card') {
       if (!CARDS[b.card]) return { error: 'bad_card' };
       rec.card = b.card;
@@ -133,8 +159,8 @@ export function createWall({ db, dataDir, sendToAll, log = console.log }) {
       rec.h = Number.isInteger(ph.h) && ph.h > 0 && ph.h < 10000 ? ph.h : null;
     } else return { error: 'bad_kind' };
     const now = Date.now();
-    const { lastInsertRowid } = db.prepare(`INSERT INTO wall_posts (wall_id, author_id, kind, text, card, magnet, photo, w, h, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(wallId, authorId, kind, rec.text || null, rec.card, rec.magnet, rec.photo, rec.w, rec.h, now);
+    const { lastInsertRowid } = db.prepare(`INSERT INTO wall_posts (wall_id, author_id, kind, text, card, magnet, photo, w, h, sticker, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(wallId, authorId, kind, rec.text || null, rec.card, rec.magnet, rec.photo, rec.w, rec.h, rec.sticker, now);
     if (rec.price) M.addCoins(db, authorId, -rec.price, `магнит на стену: ${owner.display_name}`);
     const p = postRow(Number(lastInsertRowid));
     sendToAll({ type: 'wall', post: view(p) });
@@ -153,15 +179,50 @@ export function createWall({ db, dataDir, sendToAll, log = console.log }) {
     return n;
   }
 
-  function comment(userId, postId, text) {
+  // Комментарий: текст и/или гифка-мем
+  function comment(userId, postId, text, sticker) {
     const p = postRow(postId);
-    const t = cleanPost(text, 300);
-    if (!p || !t) return null;
-    const { lastInsertRowid } = db.prepare('INSERT INTO wall_comments (post_id, author_id, text, created_at) VALUES (?, ?, ?, ?)').run(postId, userId, t, Date.now());
+    const t = cleanPost(text || '', 300);
+    const st = sticker && STICKERS.includes(sticker) ? sticker : null;
+    if (!p || t === null || (!t && !st) || (sticker && !st)) return null;
+    if (hides(p.wall_id, userId) || hides(p.author_id, userId)) return null;
+    const { lastInsertRowid } = db.prepare('INSERT INTO wall_comments (post_id, author_id, text, sticker, created_at) VALUES (?, ?, ?, ?, ?)').run(postId, userId, t, st, Date.now());
     const c = { id: Number(lastInsertRowid), authorId: userId, text: t, createdAt: Date.now() };
+    if (st) c.sticker = st;
     sendToAll({ type: 'wall_comment', postId, comment: c });
     hooks.onComment?.(p, c);
     return c;
+  }
+
+  // Реакция: одна от человека, та же ещё раз — снять
+  function react(userId, postId, emoji) {
+    const p = postRow(postId);
+    if (!p || (emoji && !REACTIONS.includes(emoji))) return null;
+    const cur = db.prepare('SELECT emoji FROM wall_reactions WHERE post_id = ? AND user_id = ?').get(postId, userId)?.emoji;
+    if (!emoji || cur === emoji) db.prepare('DELETE FROM wall_reactions WHERE post_id = ? AND user_id = ?').run(postId, userId);
+    else db.prepare(`INSERT INTO wall_reactions (post_id, user_id, emoji, created_at) VALUES (?, ?, ?, ?)
+      ON CONFLICT(post_id, user_id) DO UPDATE SET emoji = excluded.emoji, created_at = excluded.created_at`).run(postId, userId, emoji, Date.now());
+    const v = view(p, userId);
+    sendToAll({ type: 'wall_react', postId, reactions: v.reactions, by: userId, emoji: v.myReaction || null });
+    if (emoji && cur !== emoji) hooks.onReact?.(p, userId, emoji);
+    return v;
+  }
+
+  // Аськоины автору записи в подарок
+  function tip(fromId, postId, amount) {
+    const p = postRow(postId);
+    const from = row(fromId);
+    if (!p || !from || !TIP_AMOUNTS.includes(amount)) return { error: 'bad_request' };
+    if (p.author_id === fromId) return { error: 'own_post' };
+    if ((from.coins || 0) < amount) return { error: 'no_coins' };
+    const to = row(p.author_id);
+    M.addCoins(db, fromId, -amount, `🪙 подарок за запись: ${to?.display_name || ''}`);
+    M.addCoins(db, p.author_id, amount, `🪙 подарок за запись от ${from.display_name}`);
+    db.prepare('INSERT INTO wall_tips (post_id, from_id, to_id, amount, created_at) VALUES (?, ?, ?, ?, ?)').run(postId, fromId, p.author_id, amount, Date.now());
+    const tips = db.prepare('SELECT COALESCE(SUM(amount), 0) AS n FROM wall_tips WHERE post_id = ?').get(postId).n;
+    sendToAll({ type: 'wall_tip', postId, tips, by: fromId, amount });
+    hooks.onTip?.(p, fromId, amount);
+    return { tips, coins: row(fromId).coins };
   }
 
   function remove(postId) {
@@ -239,9 +300,30 @@ export function createWall({ db, dataDir, sendToAll, log = console.log }) {
       res.json({ flowers: n });
     });
 
+    api.post('/wall/posts/:id/react', auth, json, (req, res) => {
+      if (!allow(`wallre:${req.userId}`, 120, 600_000)) return res.status(429).json({ error: 'too_many' });
+      const v = react(req.userId, Number(req.params.id), req.body?.emoji || null);
+      if (!v) return res.status(400).json({ error: 'bad_request' });
+      res.json({ reactions: v.reactions, myReaction: v.myReaction || null });
+    });
+
+    api.post('/wall/posts/:id/tip', auth, json, (req, res) => {
+      if (!allow(`walltip:${req.userId}`, 30, 600_000)) return res.status(429).json({ error: 'too_many' });
+      const r = tip(req.userId, Number(req.params.id), Number(req.body?.amount));
+      if (r.error) return res.status(r.error === 'no_coins' ? 402 : 400).json(r);
+      res.json(r);
+    });
+
+    // Скрыть человека для себя (и вернуть)
+    api.post('/hides', auth, json, (req, res) => {
+      const t = row(Number(req.body?.userId));
+      if (!t || t.id === req.userId || !['human', 'person'].includes(t.kind)) return res.status(400).json({ error: 'bad_user' });
+      res.json({ hidden: setHidden(req.userId, t.id, Boolean(req.body?.on)) });
+    });
+
     api.post('/wall/posts/:id/comments', auth, json, (req, res) => {
       if (!allow(`wallcm:${req.userId}`, 40, 600_000)) return res.status(429).json({ error: 'too_many' });
-      const c = comment(req.userId, Number(req.params.id), req.body?.text);
+      const c = comment(req.userId, Number(req.params.id), req.body?.text, req.body?.sticker);
       if (!c) return res.status(400).json({ error: 'bad_request' });
       res.json({ comment: c });
     });
@@ -257,7 +339,7 @@ export function createWall({ db, dataDir, sendToAll, log = console.log }) {
   }
 
   return {
-    mount, post, flower, comment, remove, bestOfDay, list, fridge, view, savePhoto,
+    mount, post, flower, comment, react, tip, remove, bestOfDay, list, fridge, view, savePhoto, hiddenSet, setHidden,
     setHooks: (h) => { hooks = h || {}; },
   };
 }

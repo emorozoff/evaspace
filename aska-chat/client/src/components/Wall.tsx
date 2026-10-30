@@ -2,12 +2,13 @@
 // На стену шлют текст, фото, открытки и магниты. 🌼 — цветочек записи (+1 аськоин автору), вечером — «Пост дня».
 // Магниты собираются у хозяина стены на холодильнике. Стена не шифруется: её видят все в АСЬКЕ.
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { ChangeEvent, ReactNode } from 'react';
 import { useStore } from '../useStore.ts';
-import { openDm, seenWall } from '../lib/store.ts';
+import { openDm, seenWall, setHidden, setCoins } from '../lib/store.ts';
 import {
   wallFeed, wallOf, postToWall, photoToWall, giveFlower, addComment, deletePost, wallPhotoUrl, onWall, saveImage, blobOf,
-  CARDS, magnetPrice, MAGNET_COUNT,
+  reactTo, tipPost, CARDS, magnetPrice, MAGNET_COUNT, REACTIONS, TIP_AMOUNTS, STICKERS, stickerOf,
 } from '../lib/wall.ts';
 import type { WallPost, WallInfo } from '../lib/wall.ts';
 import { ApiError } from '../lib/api.ts';
@@ -50,6 +51,113 @@ function WallPhoto({ photo, onOpen }: { photo: NonNullable<WallPost['photo']>; o
   );
 }
 
+// Живая гифка-мем: эмодзи двигается, вокруг эффект (дождь, конфетти, искры, ноты, вспышка), подпись как у мема
+export function Sticker({ id, size = 'm' }: { id: string; size?: 's' | 'm' | 'l' }) {
+  const st = stickerOf(id);
+  if (!st) return null;
+  const fx = st.fx ? Array.from({ length: st.fx === 'flash' ? 1 : 7 }, (_, i) => i) : [];
+  const fxChar = st.fx === 'rain' ? '💧' : st.fx === 'confetti' ? ['🎊', '✨', '🎉'] : st.fx === 'sparkle' ? '✨' : st.fx === 'notes' ? ['🎵', '🎶'] : '';
+  return (
+    <span className={`aska-sticker ${size} an-${st.anim}${st.fx ? ` fx-${st.fx}` : ''}`} style={{ background: `linear-gradient(135deg, ${st.bg[0]}, ${st.bg[1]})` }} title={st.cap}>
+      {fx.map((i) => <i key={i} className="st-fx" style={{ left: `${8 + i * 13}%`, animationDelay: `${(i * 0.37) % 1.6}s` }}>{Array.isArray(fxChar) ? fxChar[i % fxChar.length] : fxChar}</i>)}
+      <span className="st-e">{st.e}</span>
+      <b className="st-cap">{st.cap}</b>
+    </span>
+  );
+}
+
+// «Полёт» награды над записью: цветочки, монетки, реакции
+type Burst = { id: number; ch: string; n: number };
+let burstId = 0;
+
+// Панель наград: выезжает снизу, как кошелёк. Цветочек, лайк, аськоины, реакции, гифки, а ещё «удалить» и «убрать для себя»
+function RewardSheet({ p, me, isGold, onClose, onDone }: {
+  p: WallPost; me: number; isGold: boolean; onClose: () => void;
+  onDone: (what: { flower?: boolean; react?: string | null; tip?: number; sticker?: string; deleted?: boolean; hidden?: boolean }) => void;
+}) {
+  const s = useStore();
+  const [money, setMoney] = useState(false);
+  const [gifs, setGifs] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const author = s.users[p.authorId];
+  const own = p.authorId === me;
+  const coins = s.profile?.coins ?? 0;
+  const canDelete = own || p.wallId === me || isGold;
+  const canHide = !own && author && (author.kind || 'human') === 'human';
+
+  async function run(fn: () => Promise<void>) {
+    setBusy(true);
+    setError('');
+    try { await fn(); } catch (e) {
+      setError(e instanceof ApiError && e.code === 'no_coins' ? 'Не хватает аськоинов 🪙' : 'Не получилось. Проверь интернет.');
+    } finally { setBusy(false); }
+  }
+
+  // поверх всего экрана, включая нижние вкладки
+  return createPortal(
+    <div className="aska-reward-ov" onClick={onClose}>
+      <div className="aska-reward" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Наградить запись">
+        <div className="rw-grip" />
+        <div className="rw-head">
+          <span>Наградить запись{author ? <> · <b>{own ? 'твою' : author.displayName}</b></> : null}</span>
+          <span className="rw-wallet">🪙 {coins}</span>
+        </div>
+        <div className="rw-main">
+          <button className="rw-tile" disabled={busy || own || p.mine} onClick={() => run(async () => {
+            const r = await giveFlower(p.id); onDone({ flower: true }); void r;
+          })}>
+            <i>🌼</i><b>Цветочек</b><small>{own ? 'своей нельзя' : p.mine ? 'уже подарен' : '+1 🪙 автору'}</small>
+          </button>
+          <button className={`rw-tile${p.myReaction === '👍' ? ' on' : ''}`} disabled={busy} onClick={() => run(async () => {
+            await reactTo(p.id, '👍'); onDone({ react: p.myReaction === '👍' ? null : '👍' });
+          })}>
+            <i>👍</i><b>Лайк</b><small>{p.myReaction === '👍' ? 'убрать' : 'нравится'}</small>
+          </button>
+          <button className={`rw-tile money${money ? ' on' : ''}`} disabled={busy || own} onClick={() => { setGifs(false); setMoney((v) => !v); }}>
+            <i>🪙</i><b>Деньги</b><small>{own ? 'себе нельзя' : 'аськоины автору'}</small>
+          </button>
+        </div>
+        {money && (
+          <div className="rw-amounts">
+            {TIP_AMOUNTS.map((a) => (
+              <button key={a} disabled={busy || a > coins} onClick={() => run(async () => {
+                const r = await tipPost(p.id, a); setCoins(r.coins); onDone({ tip: a });
+              })}><b>{a}</b><small>🪙</small></button>
+            ))}
+            <div className="rw-note">Перевод автору записи — из твоих аськоинов</div>
+          </div>
+        )}
+        <div className="rw-reacts">
+          {REACTIONS.filter((r) => r !== '👍').map((r) => (
+            <button key={r} className={p.myReaction === r ? 'on' : ''} disabled={busy} onClick={() => run(async () => {
+              await reactTo(p.id, r); onDone({ react: p.myReaction === r ? null : r });
+            })}>{r}</button>
+          ))}
+        </div>
+        <button className={`rw-row${gifs ? ' on' : ''}`} onClick={() => { setMoney(false); setGifs((v) => !v); }}>🎞 <b>Гифка в ответ</b><span>живые мемы</span><em>{gifs ? '▴' : '▾'}</em></button>
+        {gifs && (
+          <div className="rw-gifs">
+            {STICKERS.map((st) => (
+              <button key={st.id} disabled={busy} onClick={() => run(async () => {
+                await addComment(p.id, '', st.id); onDone({ sticker: st.id });
+              })}><Sticker id={st.id} size="s" /></button>
+            ))}
+          </div>
+        )}
+        {(canDelete || canHide) && (
+          <div className="rw-danger">
+            {canDelete && <button disabled={busy} onClick={() => { if (confirm('Удалить запись?')) run(async () => { await deletePost(p.id); onDone({ deleted: true }); }); }}>🗑 Удалить запись</button>}
+            {canHide && <button disabled={busy} onClick={() => { if (confirm(`Убрать ${author!.displayName} для себя? Его записи и комментарии пропадут у тебя со стен, а сам он — из списка. Вернуть можно в «Ещё».`)) run(async () => { await setHidden(author!.id, true); onDone({ hidden: true }); }); }}>🚫 Убрать для себя: {author!.displayName}</button>}
+          </div>
+        )}
+        {error && <div className="err">{error}</div>}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 function Post({ p, me, feed, isGold, onProfile, onWallOf, onImage, patch, drop }: {
   p: WallPost; me: number; feed: boolean; isGold: boolean; onProfile: (id: number) => void; onWallOf: (id: number) => void;
   onImage: (url: string) => void; patch: (id: number, f: (p: WallPost) => WallPost) => void; drop: (id: number) => void;
@@ -58,15 +166,27 @@ function Post({ p, me, feed, isGold, onProfile, onWallOf, onImage, patch, drop }
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
+  const [sheet, setSheet] = useState(false);
+  const [bursts, setBursts] = useState<Burst[]>([]);
+  const lastTap = useRef(0);
   const name = (id: number) => (id === me ? 'Ты' : s.users[id]?.displayName || '…');
   const author = s.users[p.authorId];
-  const canDelete = p.authorId === me || p.wallId === me || isGold;
-  const ownPost = p.authorId === me;
 
-  async function flowerIt() {
-    if (p.mine || ownPost) return;
-    patch(p.id, (x) => ({ ...x, mine: true, flowers: x.flowers + 1 }));
-    try { const r = await giveFlower(p.id); patch(p.id, (x) => ({ ...x, flowers: r.flowers })); } catch { patch(p.id, (x) => ({ ...x, mine: false, flowers: x.flowers - 1 })); }
+  function burst(ch: string, n = 7) {
+    const b = { id: ++burstId, ch, n };
+    setBursts((x) => [...x, b]);
+    setTimeout(() => setBursts((x) => x.filter((y) => y.id !== b.id)), 1600);
+  }
+  async function react(emoji: string) {
+    const off = p.myReaction === emoji;
+    patch(p.id, (x) => {
+      const r = { ...x.reactions };
+      if (x.myReaction) { r[x.myReaction] = (r[x.myReaction] || 1) - 1; if (r[x.myReaction] <= 0) delete r[x.myReaction]; }
+      if (!off) r[emoji] = (r[emoji] || 0) + 1;
+      return { ...x, reactions: r, myReaction: off ? undefined : emoji };
+    });
+    if (!off) burst(emoji, 5);
+    try { const r = await reactTo(p.id, off ? null : emoji); patch(p.id, (x) => ({ ...x, reactions: r.reactions, myReaction: r.myReaction || undefined })); } catch { /* нет связи */ }
   }
   async function send() {
     const t = text.trim();
@@ -78,6 +198,14 @@ function Post({ p, me, feed, isGold, onProfile, onWallOf, onImage, patch, drop }
       patch(p.id, (x) => (x.comments.some((c) => c.id === comment.id) ? x : { ...x, comments: [...x.comments, comment] }));
     } catch { /* нет связи */ } finally { setBusy(false); }
   }
+  // двойное нажатие на фото — ❤️
+  const onPhotoTap = (url: string) => {
+    const t = Date.now();
+    if (t - lastTap.current < 320) { lastTap.current = 0; if (p.myReaction !== '❤️') react('❤️'); else burst('❤️', 5); return; }
+    lastTap.current = t;
+    setTimeout(() => { if (lastTap.current === t) onImage(url); }, 330);
+  };
+  const reacts = Object.entries(p.reactions || {}).sort((a, b) => b[1] - a[1]);
 
   return (
     <div className={`post aska-post${p.best ? ' best' : ''}`}>
@@ -99,21 +227,36 @@ function Post({ p, me, feed, isGold, onProfile, onWallOf, onImage, patch, drop }
           <span className="ti"><b>Магнит {country(p.magnet)?.flag || ''} {country(p.magnet)?.name || p.magnet}</b><br /><span className="muted">теперь на холодильнике у {p.wallId === me ? 'тебя' : name(p.wallId)}</span></span>
         </div>
       )}
-      {p.kind === 'photo' && p.photo && <WallPhoto photo={p.photo} onOpen={onImage} />}
+      {p.kind === 'sticker' && p.sticker && <div className="aska-post-st"><Sticker id={p.sticker} size="l" /></div>}
+      {p.kind === 'photo' && p.photo && <WallPhoto photo={p.photo} onOpen={onPhotoTap} />}
       {p.text && <div className="txt">{p.text}</div>}
+      {reacts.length > 0 && (
+        <div className="aska-reacts">
+          {reacts.map(([e, n]) => (
+            <button key={e} className={p.myReaction === e ? 'on' : ''} onClick={() => react(e)}>{e} <b>{n}</b></button>
+          ))}
+        </div>
+      )}
       <div className="row wall-actions">
-        <button className={`btn like${p.mine ? ' on' : ''}`} disabled={ownPost && !p.mine} onClick={flowerIt}
-          title={ownPost ? 'Своей записи цветочек не подаришь' : p.mine ? 'Ты уже подарил(а) цветочек' : 'Подарить цветочек: автору +1 🪙'}>
-          🌼 {p.flowers || ''}
-        </button>
+        <span className={`aska-stat${p.mine ? ' on' : ''}`} title="Цветочки">🌼 {p.flowers}</span>
+        {p.tips > 0 && <span className="aska-stat coin" title="Аськоины в подарок автору">🪙 {p.tips}</span>}
         <button className="btn" onClick={() => setOpen((v) => !v)}>💬 {p.comments.length || ''}</button>
         <span className="sp" />
-        {canDelete && <button className="btn" title="Удалить" onClick={async () => { if (confirm('Удалить запись?')) { await deletePost(p.id).catch(() => {}); drop(p.id); } }}>🗑</button>}
+        <button className="btn aska-plus-btn" title="Наградить: цветочек, лайк, аськоины, реакция, гифка" onClick={() => setSheet(true)}>+</button>
       </div>
+      {bursts.map((b) => (
+        <span key={b.id} className="aska-burst" aria-hidden="true">
+          {Array.from({ length: b.n }, (_, i) => <i key={i} style={{ left: `${30 + ((i * 37) % 45)}%`, animationDelay: `${i * 0.06}s` }}>{b.ch}</i>)}
+        </span>
+      ))}
       {(open || p.comments.length > 0) && (
         <div className="aska-comments">
           {(open ? p.comments : p.comments.slice(-2)).map((c) => (
-            <div key={c.id} className="reply"><b className="link" onClick={() => onProfile(c.authorId)}>{name(c.authorId)}</b><span>{c.text}</span><span className="muted">{ago(c.createdAt)}</span></div>
+            <div key={c.id} className={`reply${c.sticker ? ' st' : ''}`}>
+              <b className="link" onClick={() => onProfile(c.authorId)}>{name(c.authorId)}</b>
+              {c.sticker ? <Sticker id={c.sticker} size="s" /> : <span>{c.text}</span>}
+              <span className="muted">{ago(c.createdAt)}</span>
+            </div>
           ))}
           {!open && p.comments.length > 2 && <button className="link aska-linkbtn" onClick={() => setOpen(true)}>все комментарии ({p.comments.length})</button>}
           {open && (
@@ -125,6 +268,24 @@ function Post({ p, me, feed, isGold, onProfile, onWallOf, onImage, patch, drop }
           )}
         </div>
       )}
+      {sheet && (
+        <RewardSheet p={p} me={me} isGold={isGold} onClose={() => setSheet(false)} onDone={(w) => {
+          setSheet(false);
+          if (w.deleted || w.hidden) { drop(p.id); return; }
+          if (w.flower) { patch(p.id, (x) => ({ ...x, mine: true, flowers: x.flowers + 1 })); burst('🌼', 9); }
+          if (w.tip) { patch(p.id, (x) => ({ ...x, tips: x.tips + w.tip! })); burst('🪙', Math.min(12, 4 + w.tip / 5)); }
+          if (w.react !== undefined) {
+            patch(p.id, (x) => {
+              const r = { ...x.reactions };
+              if (x.myReaction) { r[x.myReaction] = (r[x.myReaction] || 1) - 1; if (r[x.myReaction] <= 0) delete r[x.myReaction]; }
+              if (w.react) r[w.react] = (r[w.react] || 0) + 1;
+              return { ...x, reactions: r, myReaction: w.react || undefined };
+            });
+            if (w.react) burst(w.react, 6);
+          }
+          if (w.sticker) { setOpen(true); burst(stickerOf(w.sticker)?.e || '🎞', 5); }
+        }} />
+      )}
     </div>
   );
 }
@@ -133,7 +294,7 @@ function Post({ p, me, feed, isGold, onProfile, onWallOf, onImage, patch, drop }
 function Composer({ wallId, onDone }: { wallId: number; onDone: (p: WallPost) => void }) {
   const s = useStore();
   const me = s.me!.userId;
-  const [mode, setMode] = useState<'text' | 'card' | 'magnet'>('text');
+  const [mode, setMode] = useState<'text' | 'card' | 'magnet' | 'sticker'>('text');
   const [text, setText] = useState('');
   const [pick, setPick] = useState('');
   const [busy, setBusy] = useState(false);
@@ -158,6 +319,7 @@ function Composer({ wallId, onDone }: { wallId: number; onDone: (p: WallPost) =>
   const submit = () => {
     if (mode === 'card' && pick) return run(() => postToWall(wallId, { kind: 'card', card: pick, text: text.trim() }));
     if (mode === 'magnet' && pick) return run(() => postToWall(wallId, { kind: 'magnet', magnet: pick, text: text.trim() }));
+    if (mode === 'sticker' && pick) return run(() => postToWall(wallId, { kind: 'sticker', sticker: pick, text: text.trim() }));
     if (text.trim()) return run(() => postToWall(wallId, { kind: 'text', text: text.trim() }));
   };
   const onFile = (e: ChangeEvent<HTMLInputElement>) => {
@@ -170,7 +332,14 @@ function Composer({ wallId, onDone }: { wallId: number; onDone: (p: WallPost) =>
     <div className="composer aska-composer">
       <div className="legend-line">{ownWall ? 'Написать на своей стене' : `Оставить на стене у ${owner?.displayName || '…'}`}</div>
       <textarea className="field" rows={2} maxLength={500} value={text} onChange={(e) => setText(e.target.value)}
-        placeholder={mode === 'card' ? 'Подпись к открытке (можно без неё)' : mode === 'magnet' ? 'Пара слов к магниту (можно без них)' : 'Что нового?'} />
+        placeholder={mode === 'card' ? 'Подпись к открытке (можно без неё)' : mode === 'magnet' ? 'Пара слов к магниту (можно без них)' : mode === 'sticker' ? 'Подпись к гифке (можно без неё)' : 'Что нового?'} />
+      {mode === 'sticker' && (
+        <div className="aska-gif-pick">
+          {STICKERS.map((st) => (
+            <button key={st.id} className={pick === st.id ? 'on' : ''} onClick={() => setPick(st.id)} title={st.cap}><Sticker id={st.id} size="s" /></button>
+          ))}
+        </div>
+      )}
       {mode === 'card' && (
         <div className="aska-cards">
           {CARDS.map((c) => (
@@ -199,6 +368,7 @@ function Composer({ wallId, onDone }: { wallId: number; onDone: (p: WallPost) =>
       <div className="row aska-composer-row">
         <button className={`btn${mode === 'card' ? ' down' : ''}`} onClick={() => { setPick(''); setMode(mode === 'card' ? 'text' : 'card'); }}>💌 Открытка</button>
         <button className={`btn${mode === 'magnet' ? ' down' : ''}`} onClick={() => { setPick(''); setMode(mode === 'magnet' ? 'text' : 'magnet'); }}>🧲 Магнит</button>
+        <button className={`btn${mode === 'sticker' ? ' down' : ''}`} onClick={() => { setPick(''); setMode(mode === 'sticker' ? 'text' : 'sticker'); }}>🎞 Гифка</button>
         <button className="btn" disabled={busy} onClick={() => fileRef.current?.click()}>📷 Фото</button>
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} />
         <span className="sp" />
@@ -263,6 +433,10 @@ export function Wall({ view, onView, onProfile, onOpenChat }: {
       setPosts((old) => old.map((p) => (p.id === e.postId && !p.comments.some((c) => c.id === e.comment.id) ? { ...p, comments: [...p.comments, e.comment] } : p)));
     } else if (e.type === 'wall_del') {
       setPosts((old) => old.filter((p) => p.id !== e.postId));
+    } else if (e.type === 'wall_react') {
+      setPosts((old) => old.map((p) => (p.id === e.postId ? { ...p, reactions: e.reactions, ...(e.by === me ? { myReaction: e.emoji || undefined } : {}) } : p)));
+    } else if (e.type === 'wall_tip') {
+      setPosts((old) => old.map((p) => (p.id === e.postId ? { ...p, tips: e.tips } : p)));
     }
   }), [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -328,8 +502,8 @@ export function Wall({ view, onView, onProfile, onOpenChat }: {
       <div className="wall-posts aska-wall-posts">
         {loading && <div className="hint">Загружаю…</div>}
         {!loading && !posts.length && <div className="empty-note">{view.kind === 'user' ? 'Здесь пока пусто. Оставь первую запись!' : 'Пока ни одной записи. Будь первым(ой)!'}</div>}
-        {posts.map((p) => (
-          <Post key={p.id} p={p} me={me} feed={view.kind !== 'user'} isGold={isGold} onProfile={onProfile}
+        {posts.filter((p) => !s.hidden.includes(p.authorId)).map((p) => (
+          <Post key={p.id} p={s.hidden.length ? { ...p, comments: p.comments.filter((c) => !s.hidden.includes(c.authorId)) } : p} me={me} feed={view.kind !== 'user'} isGold={isGold} onProfile={onProfile}
             onWallOf={(id) => onView({ kind: 'user', userId: id })} onImage={setViewer} patch={patch} drop={drop} />
         ))}
         {more && <button className="hist-more" onClick={() => load(posts[posts.length - 1]?.id || 0)}>показать ещё</button>}

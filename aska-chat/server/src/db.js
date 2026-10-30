@@ -235,6 +235,7 @@ function migrate(db) {
   migrateV4(db);
   migrateV5(db);
   migrateV6(db);
+  migrateV7(db);
 }
 
 // Третья версия (22.10.2026): номера-токены (покупка, улучшение, рынок), аськоины, роли (голд-админы, супер-админ), блокировка.
@@ -393,6 +394,35 @@ function migrateV6(db) {
       size INTEGER,
       mime TEXT,
       created_at INTEGER NOT NULL
+    );
+  `);
+}
+
+// Седьмое обновление: реакции, аськоины в подарок за запись, гифки-мемы, «скрыть человека для себя»
+function migrateV7(db) {
+  addColumn(db, 'wall_posts', 'sticker', 'TEXT');
+  addColumn(db, 'wall_comments', 'sticker', 'TEXT');
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS wall_reactions (
+      post_id INTEGER NOT NULL REFERENCES wall_posts(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      emoji TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      PRIMARY KEY (post_id, user_id)
+    );
+    CREATE TABLE IF NOT EXISTS wall_tips (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      post_id INTEGER NOT NULL REFERENCES wall_posts(id) ON DELETE CASCADE,
+      from_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      to_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      amount INTEGER NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS user_hides (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      target_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at INTEGER NOT NULL,
+      PRIMARY KEY (user_id, target_id)
     );
   `);
 }

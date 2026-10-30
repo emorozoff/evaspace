@@ -2,7 +2,7 @@
 // закрепить наверху, сыграть «Человек или ИИ?». И карточка круга: кто в нём и выйти.
 import { useState } from 'react';
 import { useStore } from '../useStore.ts';
-import { openDm, openTwinChat, setPin, setGroup, guess, twinOf, leaveCircle } from '../lib/store.ts';
+import { openDm, openTwinChat, setPin, setGroup, guess, twinOf, leaveCircle, setHidden } from '../lib/store.ts';
 import type { Group, Truth } from '../lib/store.ts';
 import { ApiError } from '../lib/api.ts';
 import { safetyCode, fromB64 } from '../lib/crypto.ts';
@@ -81,6 +81,11 @@ export function Profile({ userId, onClose, onOpenChat, onWall }: { userId: numbe
             {u.kind !== 'twin' && <button className="btn" onClick={() => onWall(u.id)}>📌 Стена</button>}
             {twin && <button className="btn" onClick={() => setTwinAsk((v) => !v)} disabled={busy}>🤖 Личный ИИ</button>}
             {person && <button className="btn" onClick={() => act(() => setPin(u.id, !pinned))} disabled={busy}>{pinned ? '📌 Открепить' : '📌 Закрепить'}</button>}
+            {person && <button className="btn" disabled={busy} onClick={() => act(async () => {
+              const hidden = s.hidden.includes(u.id);
+              if (!hidden && !confirm(`Убрать ${u.displayName} для себя? Записи и комментарии пропадут со стен, а сам(а) — из списка. Вернуть можно здесь же или в «Ещё».`)) return;
+              await setHidden(u.id, !hidden);
+            })}>{s.hidden.includes(u.id) ? '↩ Вернуть' : '🚫 Убрать для себя'}</button>}
           </div>
         )}
 

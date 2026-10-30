@@ -126,7 +126,7 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
   const aska = askaOf(s);
   const friendsAi = aiFriendsOf(s);
   const lastTime = (u: User) => lastOf(s, dmWith(s, u.id)?.id)?.createdAt ?? 0;
-  const people = Object.values(s.users).filter((u) => u.id !== me && (u.kind || 'human') === 'human' && !u.blocked);
+  const people = Object.values(s.users).filter((u) => u.id !== me && (u.kind || 'human') === 'human' && !u.blocked && !s.hidden.includes(u.id));
   const sortPeople = (list: User[]) => [...list].sort((a, b) => Number(s.pins.includes(b.id)) - Number(s.pins.includes(a.id))
     || Number(!!s.presence[b.id]) - Number(!!s.presence[a.id]) || lastTime(b) - lastTime(a) || a.displayName.localeCompare(b.displayName, 'ru'));
   const groupOf = (u: User): Group => s.groups[u.id] || 'meet';

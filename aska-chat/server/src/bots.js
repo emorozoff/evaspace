@@ -352,6 +352,8 @@ export function createBots(ctx) {
       case 'wall_note': return wallNoteJob(j.bot_id, payload);
       case 'wall_react': return wallReactJob(j.bot_id, payload);
       case 'wall_self': return wallSelfJob(j.bot_id);
+      case 'aska_wall': return askaWallJob(j.bot_id);
+      case 'person_open': return personOpenJob(j.bot_id, payload);
       case 'thank': return thankJob(j.bot_id, payload);
       case 'person_answer': return personAnswerJob(j.bot_id, payload);
       default: return null;
@@ -508,15 +510,16 @@ export function createBots(ctx) {
     await say(bot.id, chat.id, outMessages(out));
   }
 
-  // Без «мозга»: пара коротких человеческих ответов в день, потом «занят(а)» — и тишина до завтра
+  // Без «мозга»: до пяти коротких человеческих ответов в день, потом «занят(а)» — и тишина до завтра
   async function personFallback(bot, chat, last, otherId) {
     const key = `pfb:${bot.id}:${otherId}`;
     const day = mskDay(now());
     const st = JSON.parse(getSetting(db, key) || '{}');
     const n = st.day === day ? st.n : 0;
-    if (n >= 3) return;
+    if (n >= 6) return;
     setSetting(db, key, JSON.stringify({ day, n: n + 1 }));
-    await say(bot.id, chat.id, n === 2 ? [pick(P.PERSON_BUSY)] : P.personScripted(last?.body?.text || ''));
+    const per = personaOf(bot);
+    await say(bot.id, chat.id, n === 5 ? [P.styled(per, P.gendered(per, pick(P.PERSON_BUSY)))] : P.personScripted(last?.body?.text || '', per));
   }
 
   async function openerJob(botId, chatId, { intro } = {}) {
@@ -859,7 +862,7 @@ export function createBots(ctx) {
   // ---------- стены ----------
 
   const wallPost = (id) => db.prepare('SELECT * FROM wall_posts WHERE id = ?').get(id);
-  const whatPost = (p) => (p.kind === 'photo' ? 'фото' : p.kind === 'card' ? `открытка «${CARDS[p.card] || p.card}»`
+  const whatPost = (p) => (p.kind === 'photo' ? 'фото' : p.kind === 'sticker' ? 'гифка' : p.kind === 'card' ? `открытка «${CARDS[p.card] || p.card}»`
     : p.kind === 'magnet' ? `магнит «${MAGNET_NAMES[p.magnet] || p.magnet}»` : `«${short(p.text, 60)}»`);
   const describePost = (p) => [whatPost(p), p.kind !== 'text' && p.text ? `с подписью «${short(p.text, 200)}»` : ''].filter(Boolean).join(' ');
   const isLiveBot = (u) => u && (u.kind === 'aska' || u.kind === 'friend' || (u.kind === 'person' && peopleOn()));
@@ -880,10 +883,20 @@ export function createBots(ctx) {
         const at = owner.kind === 'person' ? nextOnline(owner, now() + T(rand(60_000, 600_000))) : now() + T(rand(8000, 40_000));
         schedule('wall_react', owner.id, `wr:${p.id}`, at, { postId: p.id });
       }
-      if (peopleOn() && Math.random() < (timing.wallReactChance ?? 0.5)) {
-        const pool = persons().filter((u) => u.id !== owner.id && isOnline(u));
-        if (pool.length) schedule('wall_react', pick(pool).id, `wr:${p.id}`, now() + T(rand(2 * 60_000, 30 * 60_000)), { postId: p.id });
+      // ИИ-люди заглядывают на стену: один-два человека дарят реакцию, цветочек, пишут комментарий
+      if (peopleOn() && Math.random() < (timing.wallReactChance ?? 0.7)) {
+        const pool = persons().filter((u) => u.id !== owner.id && isOnline(u)).sort(() => Math.random() - 0.5);
+        pool.slice(0, Math.random() < 0.4 ? 2 : 1).forEach((u) => schedule('wall_react', u.id, `wr:${p.id}`, now() + T(rand(60_000, 25 * 60_000)), { postId: p.id }));
       }
+      // и Аська — она любит фото и открытки
+      const aska = askaId();
+      if (owner.id !== aska && Math.random() < (timing.askaReactChance ?? (p.kind === 'photo' ? 0.6 : 0.3))) {
+        schedule('wall_react', aska, `wr:${p.id}`, now() + T(rand(20_000, 5 * 60_000)), { postId: p.id });
+      }
+    },
+    onTip(p, fromId) {
+      const author = row(p.author_id);
+      if (author?.kind === 'human' && author.id !== fromId) schedule('wall_note', askaId(), `wn:${author.id}`, now() + T(60_000), { toId: author.id });
     },
     onComment(p, c) {
       const by = row(c.authorId);
@@ -900,6 +913,7 @@ export function createBots(ctx) {
       const where = p.wall_id === p.author_id ? 'на твоей стене' : `на стене у ${nameOf(p.wall_id)}`;
       const aska = askaId();
       say(aska, ctx.ensureDm(aska, author.id), [`🏆 Твоя запись ${where} — пост дня! 🌼×${flowers}, тебе +30 аськоинов 🪙`], { typing: false });
+      wall?.post(aska, aska, { kind: 'sticker', sticker: 'cvetok', text: `🏆 Пост дня — ${nameOf(author.id)}${p.wall_id === p.author_id ? '' : ` на стене у ${nameOf(p.wall_id)}`}! 🌼×${flowers}. Поздравляем!` }, { fromBot: true });
     },
   };
 
@@ -910,62 +924,129 @@ export function createBots(ctx) {
     const since = Number(getSetting(db, `wall_note:${toId}`) || 0);
     setSetting(db, `wall_note:${toId}`, String(now()));
     const posts = db.prepare(`SELECT p.* FROM wall_posts p JOIN users u ON u.id = p.author_id
-      WHERE p.wall_id = ? AND p.author_id != ? AND p.created_at > ? AND u.kind NOT IN ('aska', 'friend') ORDER BY p.id`).all(toId, toId, since);
+      WHERE p.wall_id = ? AND p.author_id != ? AND p.created_at > ? AND u.kind NOT IN ('aska', 'friend') ORDER BY p.id`).all(toId, toId, since)
+      .filter((p) => !db.prepare('SELECT 1 FROM user_hides WHERE user_id = ? AND target_id = ?').get(toId, p.author_id));
     const comments = db.prepare(`SELECT c.* FROM wall_comments c JOIN wall_posts p ON p.id = c.post_id
       WHERE p.author_id = ? AND c.author_id != ? AND c.created_at > ? ORDER BY c.id`).all(toId, toId, since);
-    if (!posts.length && !comments.length) return;
+    const tips = db.prepare('SELECT * FROM wall_tips WHERE to_id = ? AND from_id != ? AND created_at > ? ORDER BY id').all(toId, toId, since);
+    if (!posts.length && !comments.length && !tips.length) return;
     const lines = [
       ...posts.slice(0, 8).map((p) => `• ${nameOf(p.author_id)} — ${whatPost(p)}`),
-      ...comments.slice(0, 8).map((c) => `• ${nameOf(c.author_id)} ответил(а) на твою запись: «${short(c.text, 60)}»`),
+      ...comments.slice(0, 8).map((c) => `• ${nameOf(c.author_id)} ответил(а) на твою запись: «${c.sticker ? 'гифка' : short(c.text, 60)}»`),
+      ...tips.slice(0, 8).map((t) => `• ${nameOf(t.from_id)} подарил(а) тебе ${t.amount} 🪙 за запись`),
     ];
     await say(botId, ctx.ensureDm(botId, toId), [`📌 На твоей стене новое:\n${lines.join('\n')}\n\nОткрой вкладку «Стена».`], { typing: false });
   }
 
-  // Бот на стене: дарит 🌼 и иногда пишет комментарий (с «мозгом» — своими словами)
+  // Бот на стене: реакция, цветочек, комментарий или гифка (с «мозгом» — своими словами, без — как живой человек по заготовкам)
+  const REACT_BY_KIND = { photo: ['😍', '🔥', '❤️', '👏'], card: ['❤️', '😍', '👍'], magnet: ['😮', '🔥', '👍'], sticker: ['😂', '💀', '💯'], text: ['👍', '😂', '💯', '❤️'] };
+  const STICKER_BY_KIND = { photo: ['kaif', 'pushka', 'imba', 'lyublyu'], card: ['lyublyu', 'cvetok'], magnet: ['shok', 'pushka'], sticker: ['oru', 'baza', 'nuvse'], text: ['zhiza', 'baza', 'oru', 'ponyal', 'hm'] };
+
   async function wallReactJob(botId, { postId, reply }) {
     const bot = row(botId);
     const p = wallPost(postId);
     if (!bot || !p || !wall || !isLiveBot(bot)) return;
-    if (!reply) wall.flower(botId, postId);
+    const per = bot.kind === 'person' ? personaOf(bot) : null;
+    if (!reply) {
+      wall.react(botId, postId, pick(REACT_BY_KIND[p.kind] || REACT_BY_KIND.text));
+      if (bot.kind !== 'person' || Math.random() < (timing.wallFlowerChance ?? 0.6)) wall.flower(botId, postId);
+    }
     const comments = db.prepare('SELECT * FROM wall_comments WHERE post_id = ? ORDER BY id DESC LIMIT 10').all(postId).reverse();
+    if (!reply && comments.some((c) => c.author_id === botId)) return; // уже комментировал(а)
     const onMine = p.wall_id === botId || p.author_id === botId;
     const system = bot.kind === 'aska' ? P.ASKA_RULES : bot.kind === 'friend' ? P.BATYA_RULES
-      : `${P.PERSON_RULES}\n\nКто ты:\n${personaOf(bot).card}\nИмя в АСЬКЕ: «${bot.display_name}».\nКак ты пишешь: ${personaOf(bot).style}`;
+      : `${P.PERSON_RULES}\n\nКто ты:\n${per.card}\nИмя в АСЬКЕ: «${bot.display_name}».\nКак ты пишешь: ${per.style}`;
     const out = await ai.complete({
       system,
       schema: P.REPLY_SCHEMA,
       prompt: [
-        timeLine(bot.kind === 'person' ? personaOf(bot).tz : 0),
+        timeLine(per ? per.tz : 0),
         `Стена в АСЬКЕ (как в соцсети) у «${p.wall_id === botId ? 'тебя' : nameOf(p.wall_id)}». Запись от «${p.author_id === botId ? 'тебя' : nameOf(p.author_id)}»: ${describePost(p)}.`,
-        comments.length ? `Комментарии (старые сверху):\n${comments.map((c) => `${c.author_id === botId ? 'Ты' : nameOf(c.author_id)}: ${short(c.text, 200)}`).join('\n')}` : 'Комментариев пока нет.',
+        comments.length ? `Комментарии (старые сверху):\n${comments.map((c) => `${c.author_id === botId ? 'Ты' : nameOf(c.author_id)}: ${c.sticker ? '[гифка]' : short(c.text, 200)}`).join('\n')}` : 'Комментариев пока нет.',
         reply ? 'Тебе ответили в комментариях — ответь коротко, одним сообщением.' : 'Напиши короткий комментарий к записи — одно сообщение, как живой человек. Если сказать нечего — пустой список.',
         'note оставь пустым.',
       ].join('\n'),
     });
     let text = outMessages(out)[0];
+    let sticker = null;
     if (!out) {
-      // без «мозга»: Аська и Батя благодарят за записи на своей стене, ИИ-люди иногда кидают эмодзи
-      if (bot.kind === 'aska' && onMine) text = reply ? 'Обнимаю 🌼' : 'Спасибо! Мне очень приятно 🌼';
-      else if (bot.kind === 'friend' && onMine) text = reply ? 'Ага, понял 👍' : p.card === 'tea' ? 'Чайку бы сейчас 😁 Спасибо!' : 'Спасибо, родной 🌹';
-      else if (bot.kind === 'person' && Math.random() < (timing.wallEmojiChance ?? 0.35)) text = pick(p.kind === 'photo' ? ['😍', '🔥', 'красота', 'вау'] : p.kind === 'card' ? ['спасибо)', '🫶'] : ['ахах', '👍', 'жиза', '😂']);
+      const kind = WALL_KINDS.includes(p.kind) ? p.kind : 'text';
+      if (bot.kind === 'aska') text = onMine ? (reply ? 'Обнимаю 🌼' : 'Спасибо! Мне очень приятно 🌼') : pick(P.ASKA_COMMENTS[kind]);
+      else if (bot.kind === 'friend') text = onMine ? (reply ? 'Ага, понял 👍' : p.card === 'tea' ? 'Чайку бы сейчас 😁 Спасибо!' : 'Спасибо, родной 🌹') : 'Молодец 👍';
+      else if (reply || onMine) text = P.personScripted(lastCommentText(comments, botId), per)[0];
+      else if (Math.random() < (timing.wallCommentChance ?? 0.65)) {
+        if (Math.random() < (timing.wallStickerChance ?? 0.25)) sticker = pick(STICKER_BY_KIND[kind]);
+        else text = P.styled(per, P.gendered(per, pick(P.WALL_COMMENTS[kind])));
+      }
     }
-    if (text) wall.comment(botId, postId, text);
+    if (text || sticker) wall.comment(botId, postId, text || '', sticker);
   }
+  const WALL_KINDS = ['photo', 'card', 'magnet', 'sticker', 'text'];
+  const lastCommentText = (comments, botId) => [...comments].reverse().find((c) => c.author_id !== botId && !c.sticker)?.text || '';
 
-  // ИИ-человек с «мозгом» раз в день может написать что-то на своей стене
+  // ИИ-человек пишет у себя на стене: с «мозгом» — своими словами, без — из своих заготовок (не повторяясь)
   async function wallSelfJob(botId) {
     const bot = row(botId);
-    if (!bot || !wall || !brainy() || bot.kind !== 'person') return;
+    if (!bot || !wall || !peopleOn() || bot.kind !== 'person') return;
     const per = personaOf(bot);
-    const mine = db.prepare('SELECT text FROM wall_posts WHERE wall_id = ? AND author_id = ? ORDER BY id DESC LIMIT 5').all(botId, botId).map((r) => r.text).filter(Boolean);
+    const mine = db.prepare('SELECT text FROM wall_posts WHERE wall_id = ? AND author_id = ? ORDER BY id DESC LIMIT 20').all(botId, botId).map((r) => r.text).filter(Boolean);
     const out = await ai.complete({
       system: `${P.PERSON_RULES}\n\nКто ты:\n${per.card}\nИмя в АСЬКЕ: «${bot.display_name}».\nКак ты пишешь: ${per.style}`,
       schema: P.REPLY_SCHEMA,
       prompt: [timeLine(per.tz), 'Напиши короткую запись на свою стену в АСЬКЕ — как пост в соцсети: что у тебя сейчас происходит или о чём думаешь. Одно сообщение, без хэштегов.',
-        mine.length ? `Твои прошлые записи (не повторяйся): ${mine.map((t) => `«${short(t, 80)}»`).join(', ')}` : '', 'note оставь пустым.'].filter(Boolean).join('\n'),
+        mine.length ? `Твои прошлые записи (не повторяйся): ${mine.slice(0, 5).map((t) => `«${short(t, 80)}»`).join(', ')}` : '', 'note оставь пустым.'].filter(Boolean).join('\n'),
     });
-    const text = outMessages(out)[0];
+    let text = outMessages(out)[0];
+    if (!out) {
+      const left = (P.PERSON_POSTS[per.key] || []).filter((t) => !mine.includes(t));
+      if (!left.length) return;
+      text = pick(left);
+      // иногда — с гифкой-мемом
+      if (Math.random() < (timing.wallStickerChance ?? 0.25)) return void wall.post(botId, botId, { kind: 'sticker', sticker: pick(['vibe', 'kaif', 'tusa', 'zhiza', 'imba']), text }, { fromBot: true });
+    }
     if (text) wall.post(botId, botId, { kind: 'text', text: short(text, 400) }, { fromBot: true });
+  }
+
+  // Аська раз в день пишет у себя на стене: с «мозгом» — своими словами, без — по очереди из заготовок
+  async function askaWallJob(botId) {
+    if (!wall) return;
+    const out = await ai.complete({
+      system: P.ASKA_RULES,
+      schema: P.REPLY_SCHEMA,
+      prompt: [timeLine(), 'Напиши короткую запись на свою стену в АСЬКЕ (её видят все в ленте «Стена АСЬКИ»): позови людей что-то сделать на стенах — показать фото, подарить цветочек, отправить открытку или магнит, задать вопрос всем. Одно сообщение, тепло и с эмодзи.', 'note оставь пустым.'].join('\n'),
+    });
+    let text = outMessages(out)[0];
+    if (!text) {
+      const i = Number(getSetting(db, 'aska_wall_i') || 0);
+      setSetting(db, 'aska_wall_i', String(i + 1));
+      text = P.ASKA_WALL[i % P.ASKA_WALL.length];
+    }
+    wall.post(botId, botId, { kind: 'text', text: short(text, 400) }, { fromBot: true });
+  }
+
+  // ИИ-человек сам знакомится в личке (без «мозга» — заготовкой, с ним — своими словами)
+  async function personOpenJob(botId, { userId }) {
+    const bot = row(botId);
+    const u = row(userId);
+    if (!bot || !u || u.blocked_at || !peopleOn() || bot.kind !== 'person') return;
+    if (db.prepare('SELECT 1 FROM user_hides WHERE user_id = ? AND target_id = ?').get(userId, botId)) return;
+    const chatId = ctx.ensureDm(botId, userId);
+    if (db.prepare('SELECT 1 FROM messages WHERE chat_id = ?').get(chatId)) return;
+    const per = personaOf(bot);
+    const recent = db.prepare("SELECT * FROM wall_posts WHERE wall_id = ? AND author_id = ? AND kind IN ('text', 'photo') ORDER BY id DESC LIMIT 1").get(userId, userId);
+    const out = await ai.complete({
+      system: `${P.PERSON_RULES}\n\nКто ты:\n${per.card}\nИмя в АСЬКЕ: «${bot.display_name}».\nКак ты пишешь: ${per.style}`,
+      schema: P.REPLY_SCHEMA,
+      prompt: [timeLine(per.tz), `Ты сам(а) пишешь первым(ой) человеку: ${describe(u)}.`, recent ? `У него(неё) на стене недавно: ${describePost(recent)}.` : '',
+        'Напиши короткое первое сообщение, как живой человек: зацепись за что-то или просто познакомься. Без «как дела» в лоб.', 'note оставь пустым.'].filter(Boolean).join('\n'),
+    });
+    let texts = outMessages(out);
+    if (!texts.length) {
+      const hook = recent?.kind === 'photo' ? 'увидел(а) твоё фото на стене — красиво 😍 ' : recent?.text ? `увидел(а) твою запись «${short(recent.text, 40)}» на стене) ` : '';
+      texts = [hook ? `привет! ${hook}` : pick(P.PERSON_OPENERS)].map((t) => P.styled(per, P.gendered(per, t)));
+    }
+    await say(botId, chatId, texts);
+    reach(botId, userId);
   }
 
   // Первые записи: Аська дарит каждому открытку, у ИИ-людей — по записи на стене
@@ -1317,12 +1398,31 @@ export function createBots(ctx) {
         break;
       }
     }
-    if (!brainy() || (!force && (h < 10 || h >= 23))) return;
-    // ИИ-человек пишет на своей стене (каждый — не чаще раза в день)
-    if (force || Math.random() < 0.1) {
-      const p = persons().filter((u) => isOnline(u) && getSetting(db, `wallself:${u.id}`) !== day).sort(() => Math.random() - 0.5)[0];
-      if (p) { setSetting(db, `wallself:${p.id}`, day); schedule('wall_self', p.id, `ws:${p.id}`, now() + T(rand(0, 600_000))); }
+    // Аська раз в день пишет у себя на стене
+    if ((force || h >= 12) && getSetting(db, 'aska_wall_day') !== day) {
+      setSetting(db, 'aska_wall_day', day);
+      schedule('aska_wall', aska, 'aw', now() + T(rand(0, 30 * 60_000)));
     }
+    if (peopleOn() && (force || (h >= 10 && h < 23))) {
+      // ИИ-человек пишет на своей стене (каждый — не чаще раза в день)
+      if (force || Math.random() < 0.08) {
+        const p = persons().filter((u) => isOnline(u) && getSetting(db, `wallself:${u.id}`) !== day).sort(() => Math.random() - 0.5)[0];
+        if (p) { setSetting(db, `wallself:${p.id}`, day); schedule('wall_self', p.id, `ws:${p.id}`, now() + T(rand(0, 600_000))); }
+      }
+      // ИИ-человек сам пишет в личку тому, с кем ещё не знаком (человеку — не чаще раза в день, ИИ-человеку — тоже)
+      if (force || Math.random() < 0.04) {
+        const ppl = persons().filter((u) => isOnline(u) && getSetting(db, `popen:${u.id}`) !== day).sort(() => Math.random() - 0.5);
+        const target = humans().filter((u) => !u.blocked_at && u.last_active && t - u.last_active < 2 * DAY && getSetting(db, `popened:${u.id}`) !== day)
+          .sort(() => Math.random() - 0.5)[0];
+        const p = target && ppl.find((x) => !getChat(`dm:${Math.min(x.id, target.id)}:${Math.max(x.id, target.id)}`));
+        if (p) {
+          setSetting(db, `popen:${p.id}`, day);
+          setSetting(db, `popened:${target.id}`, day);
+          schedule('person_open', p.id, `po:${target.id}`, now() + T(rand(0, 10 * 60_000)), { userId: target.id });
+        }
+      }
+    }
+    if (!brainy() || (!force && (h < 10 || h >= 23))) return;
     // В тихом круге кто-то из ИИ-людей заводит разговор (не чаще двух раз в день на круг)
     for (const c of db.prepare("SELECT * FROM chats WHERE kind = 'circle'").all()) {
       const ppl = memberIds(c.id).map(row).filter((u) => u?.kind === 'person' && isOnline(u));
@@ -1436,6 +1536,11 @@ export function createBots(ctx) {
     // новые ИИ-люди из кода появляются сами, если ИИ-люди уже включены
     else if (peopleEnabled() && getSetting(db, 'people_announced') === '1') introduce(ensurePeople());
     seedWalls();
+    // седьмое обновление — не в личку, а записью на стене Аськи (её видно в «Стене АСЬКИ»)
+    if (wall && getSetting(db, 'announced_v7') !== '1') {
+      setSetting(db, 'announced_v7', '1');
+      wall.post(aska, aska, { kind: 'sticker', sticker: 'tusa', text: 'Новое на стенах! Под каждой записью теперь «+»: цветочек, лайк, аськоины автору, реакции и живые гифки-мемы 🎞 А если кто-то надоел — его можно убрать для себя.' }, { fromBot: true });
+    }
     if (getSetting(db, 'announced_v6') !== '1') {
       setSetting(db, 'announced_v6', '1');
       const at6 = daytime(now() + T(90_000));
