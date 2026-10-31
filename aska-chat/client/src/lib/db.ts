@@ -13,6 +13,7 @@ export interface LocalUser {
   plate?: string | null; about?: string; city?: string; kind?: 'human' | 'aska' | 'friend' | 'twin'; ownerId?: number; prevPks?: string[];
   gold?: boolean; blocked?: boolean; plateId?: number; plateCountry?: string; plateLevel?: number; plateRarity?: number;
   status?: UserStatus | null;
+  tier?: 'guest' | 'gold' | 'black'; place?: string; vipRegion?: string; // уровень и «где я» (десятое обновление)
 }
 export interface Member { userId: number; readUpTo: number }
 export interface LocalChat {

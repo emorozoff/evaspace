@@ -15,6 +15,12 @@ import * as M from './market.js';
 import { createSuperLinks } from './superlink.js';
 import { createWall } from './wall.js';
 import { STATUSES } from './personas.js';
+import * as TIER from './tiers.js';
+import * as L from './ledger.js';
+import * as NET from './network.js';
+import { PLACES, placeOf, defaultPlace } from './places.js';
+import { createNight } from './night.js';
+import { createCatalog } from './catalog.js';
 
 const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
@@ -91,7 +97,7 @@ export function createApp({
 
   // Номера тем, у кого их ещё нет: голд — золотая серия (первому — А 001 МР 777), остальным — своей страны
   for (const u of db.prepare("SELECT * FROM users WHERE kind = 'human' AND plate_id IS NULL ORDER BY id").all()) {
-    tx(db, () => M.firstPlate(db, u.id, { country: countryForPhone(u.phone), gold: M.isGold(u), preferred: M.isGold(u) ? M.ADMIN_PLATE : null }));
+    tx(db, () => M.firstPlate(db, u.id, { country: countryForPhone(u.phone), gold: M.isAdmin(u), preferred: M.isAdmin(u) ? M.ADMIN_PLATE : null }));
   }
   M.seedShowcase(db);
 
@@ -144,10 +150,10 @@ export function createApp({
     next();
   }
 
-  // Админ = голд. Супер-админ — тоже голд, и его нельзя заблокировать или снять
+  // Администратор (role admin или super). Голд и Блэк — уровни (tiers.js), прав администратора они не дают
   function admin(req, res, next) {
     const me = userRow(req.userId);
-    if (!M.isGold(me) || me.blocked_at) return res.status(403).json({ error: 'not_admin' });
+    if (!M.isAdmin(me) || me.blocked_at) return res.status(403).json({ error: 'not_admin' });
     req.me = me;
     next();
   }
@@ -185,9 +191,17 @@ export function createApp({
     const o = {
       id: u.id, username: u.username, displayName: u.display_name, boxPk: u.box_pk,
       plate: u.plate || null, about: u.about || '', city: u.city || '', kind: u.kind === 'person' ? 'human' : u.kind,
-      gold: M.isGold(u), blocked: Boolean(u.blocked_at),
+      gold: TIER.isGoldTier(u), blocked: Boolean(u.blocked_at),
     };
     if (p) { o.plateId = p.id; o.plateCountry = p.country; o.plateLevel = p.level; o.plateRarity = p.rarity; }
+    // уровень и «где я»: регион на номере — VIP 777/888 у Голд и Блэк, у остальных — место
+    if (u.kind === 'human' || u.kind === 'person') {
+      o.tier = TIER.tierOf(u);
+      const reg = p?.country === 'RU' ? (/(\d{2,3})$/.exec(p.code) || [])[1] : null;
+      o.place = placeOf(u.place) ? u.place : defaultPlace(p?.country || 'RU', reg);
+      const vip = TIER.vipRegionOf(u);
+      if (vip) o.vipRegion = vip;
+    }
     if (u.kind === 'twin') o.ownerId = u.owner_id;
     const st = statusOf(u);
     if (st) o.status = st;
@@ -232,7 +246,7 @@ export function createApp({
   }
 
   // Вход по телефону, номеру АСЬКИ или старому логину
-  function findByLogin(login) {
+  function findByLogin(login, regionHint) {
     const s = String(login || '').trim();
     if (!s || s.length > 40) return null;
     const human = (sql, v) => db.prepare(`SELECT * FROM users WHERE kind = 'human' AND ${sql} = ?`).get(v);
@@ -248,6 +262,20 @@ export function createApp({
       if (u) return u;
     }
     for (const k of keys) { const u = k && human('old_plate_key', k); if (u) return u; } // номер АМР, сменённый при переходе на третью версию
+    // Только серия («А 001 МР»): регион в окне входа — это «где я сейчас», номер ищем по серии.
+    // У одной серии в разных регионах может быть несколько хозяев — тогда помогает регион или основной номер.
+    const ser = /^([A-Z])(\d{1,3})([A-Z]{2})$/.exec(plateKey(s));
+    if (ser) {
+      const prefix = `${ser[1]}${ser[2].padStart(3, '0')}${ser[3]}`;
+      const rows = db.prepare(`SELECT u.*, p.key AS pkey, p.id AS pid FROM users u JOIN plates p ON p.owner_id = u.id
+        WHERE u.kind = 'human' AND p.country = 'RU' AND p.key LIKE ? AND length(p.key) BETWEEN 8 AND 9`).all(`${prefix}%`);
+      const owners = [...new Map(rows.map((r) => [r.id, r])).values()];
+      if (owners.length === 1) return userRow(owners[0].id);
+      const reg = /^\d{2,3}$/.test(String(regionHint || '')) ? rows.find((r) => r.pkey === `${prefix}${regionHint}`) : null;
+      if (reg) return userRow(reg.id);
+      const main = owners.filter((o) => rows.some((r) => r.id === o.id && r.pid === o.plate_id));
+      if (main.length === 1) return userRow(main[0].id);
+    }
     const uname = s.toLowerCase();
     return USERNAME_RE.test(uname) ? human('username', uname) || null : null;
   }
@@ -356,6 +384,9 @@ export function createApp({
     presence: (userId, online) => sendToAll({ type: 'presence', userId, online }),
   });
   wall.setHooks(bots.wallHooks);
+  const coin = (id, d, why) => M.addCoins(db, id, d, why);
+  const night = createNight({ db, ai, log, addCoins: coin, userRow, sendToAll, timing: botTiming || {} });
+  const catalog = createCatalog({ db, addCoins: coin, userRow, askaId: () => bots.askaId() });
   bots.init();
 
   const onlineIds = () => [...new Set([...conns.keys(), ...offlineTimers.keys(), ...bots.onlineIds()])];
@@ -511,6 +542,8 @@ export function createApp({
         const inviter = db.prepare('SELECT created_by FROM invites WHERE code = ?').get(code)?.created_by;
         if (inviter) M.addCoins(db, inviter, INVITE_BONUS, `пригласил(а) ${name}`);
         db.prepare('UPDATE invites SET used_by = ?, used_at = ? WHERE code = ?').run(userId, now, code);
+        // нетворк: всем вверх по цепочке +1, 2-й и 3-й линии — аськоины
+        NET.onJoined(db, userId, name, (id, d, why) => M.addCoins(db, id, d, why));
         const maxId = db.prepare('SELECT MAX(id) AS id FROM messages').get().id || 0;
         db.prepare('INSERT INTO chat_members (chat_id, user_id, read_up_to) VALUES (?, ?, ?)').run(GENERAL_CHAT, userId, maxId);
         return { userId, plate, username: uname, token: createSession(userId), inviter: inviter || null };
@@ -531,7 +564,7 @@ export function createApp({
   api.get('/salt', (req, res) => {
     if (!allow(`salt:${req.ip}`, 60, 600_000)) return res.status(429).json({ error: 'too_many' });
     const login = String(req.query.login || req.query.username || '').trim();
-    const u = findByLogin(login);
+    const u = findByLogin(login, req.query.region);
     const key = normalizePhone(login) || plateKey(parsePlate(login, 'RU') || login) || login.toLowerCase();
     const salt = u ? u.kdf_salt
       : crypto.createHmac('sha256', serverSecret).update(`salt:${key}`).digest().subarray(0, 16).toString('base64');
@@ -541,7 +574,7 @@ export function createApp({
   api.post('/login', json, (req, res) => {
     const { authKey } = req.body || {};
     const login = req.body?.login ?? req.body?.username;
-    const user = findByLogin(login);
+    const user = findByLogin(login, req.body?.region);
     const lkey = user ? `login:u${user.id}` : `login:${String(login || '').toLowerCase()}`;
     if (!allow(`login:${req.ip}`, 20, 600_000) || !allow(lkey, 10, 600_000)) return res.status(429).json({ error: 'too_many' });
     if (!user || !b64Bytes(authKey, 32)) return res.status(401).json({ error: 'bad_login' });
@@ -620,18 +653,21 @@ export function createApp({
     let bonus = 0;
     if (me.kind === 'human' && me.daily_day !== mskDay()) {
       db.prepare('UPDATE users SET daily_day = ? WHERE id = ?').run(mskDay(), me.id);
-      M.addCoins(db, me.id, DAILY_BONUS, 'вход сегодня');
-      bonus = DAILY_BONUS;
+      bonus = TIER.perks(me).daily;
+      M.addCoins(db, me.id, bonus, 'вход сегодня');
     }
     const fresh = userRow(req.userId);
     res.json({
       me: req.userId, users, chats, vapidPublicKey: push.publicKey, badge: unreadCount(req.userId), online: onlineIds(),
       profile: {
-        isAdmin: M.isGold(fresh), role: fresh.role, coins: fresh.coins, bonus, phone: fresh.phone || null, phoneVerified: Boolean(fresh.phone_verified),
+        isAdmin: M.isAdmin(fresh), role: fresh.role, coins: fresh.coins, bonus, phone: fresh.phone || null, phoneVerified: Boolean(fresh.phone_verified),
         allowAnon: Boolean(fresh.allow_anon), plate: fresh.plate,
+        tier: TIER.tierOf(fresh), tierUntil: TIER.tierOf(fresh) === 'gold' && fresh.tier === 'gold' ? fresh.tier_until || null : null,
+        vipRegion: fresh.vip_region || null, netSize: fresh.net_size || 0, upass: TIER.isBlack(fresh) ? fresh.upass || null : null,
+        blackInvites: db.prepare("SELECT COUNT(*) AS n FROM tier_invites WHERE to_id = ? AND accepted_at IS NULL").get(fresh.id).n,
       },
       pins, guesses, groups: groupsOf(req.userId), hidden: [...wall.hiddenSet(req.userId)], features: { ai: ai.available(), sms: sms.configured() },
-      ...(M.isGold(fresh) ? { brain: { key: ai.configured(), people: bots.peopleEnabled(), error: ai.status().lastError || '' } } : {}),
+      ...(M.isAdmin(fresh) ? { brain: { key: ai.configured(), people: bots.peopleEnabled(), error: ai.status().lastError || '' } } : {}),
     });
   });
 
@@ -735,6 +771,190 @@ export function createApp({
 
   // Стены: записи, фото, открытки, магниты, цветочки и «Стена АСЬКИ» (server/src/wall.js)
   wall.mount(api, { auth, json, allow, userRow });
+
+  // ---------- уровни: Гость / Голд / Блэк ----------
+
+  // Закрытый чат Блэк: все, у кого уровень Блэк, — участники; остальных нет
+  function syncBlackChat(userId) {
+    const u = userRow(userId);
+    if (!u || u.kind !== 'human') return;
+    db.prepare(`INSERT OR IGNORE INTO chats (id, kind, title, emoji, about, is_public, created_at) VALUES (?, 'circle', 'Блэк', '🖤', ?, 0, ?)`)
+      .run(TIER.BLACK_CHAT, 'Закрытый чат уровня Блэк: только по приглашению', Date.now());
+    const inside = memberIds(TIER.BLACK_CHAT).includes(userId);
+    if (TIER.isBlack(u) && !u.blocked_at && !inside) {
+      const maxId = db.prepare('SELECT MAX(id) AS id FROM messages WHERE chat_id = ?').get(TIER.BLACK_CHAT).id || 0;
+      db.prepare('INSERT INTO chat_members (chat_id, user_id, read_up_to) VALUES (?, ?, ?)').run(TIER.BLACK_CHAT, userId, maxId);
+      broadcastChat(TIER.BLACK_CHAT);
+    } else if ((!TIER.isBlack(u) || u.blocked_at) && inside) {
+      db.prepare('DELETE FROM chat_members WHERE chat_id = ? AND user_id = ?').run(TIER.BLACK_CHAT, userId);
+      broadcastChat(TIER.BLACK_CHAT);
+      sendTo(userId, { type: 'chat_left', chatId: TIER.BLACK_CHAT });
+    }
+  }
+  // Стал Блэк: пропуск UPASS, закрытый чат, блок в цепочке
+  function becameBlack(userId, byId) {
+    const u = userRow(userId);
+    if (!u.upass) db.prepare('UPDATE users SET upass = ? WHERE id = ?').run(TIER.upassCode(), userId);
+    L.append(db, { kind: 'tier.black', ref: `user:${userId}`, actor: byId || null, data: { name: u.display_name } });
+    syncBlackChat(userId);
+  }
+  function setTier(userId, tier, until, byId) {
+    const before = TIER.tierOf(userRow(userId));
+    db.prepare('UPDATE users SET tier = ?, tier_until = ? WHERE id = ?').run(tier, until ?? null, userId);
+    const after = TIER.tierOf(userRow(userId));
+    if (after === 'black' && before !== 'black') becameBlack(userId, byId);
+    else syncBlackChat(userId);
+    // твой приглашённый стал Голд — тебе подарок (один раз за человека)
+    if (TIER.tierRank(userRow(userId)) >= 1 && before === 'guest' && getSetting(db, `gold_friend:${userId}`) !== '1') {
+      setSetting(db, `gold_friend:${userId}`, '1');
+      const inv = NET.inviterOf(db, userId);
+      if (inv && userRow(inv)?.kind === 'human') {
+        M.addCoins(db, inv, NET.GOLD_FRIEND_BONUS, `${userRow(userId).display_name} стал(а) Голд`);
+        bots.askaSay(inv, [`⭐ ${userRow(userId).display_name}, кого ты позвал(а), теперь Голд! Тебе +${NET.GOLD_FRIEND_BONUS} 🪙`]);
+      }
+    }
+    broadcastUser(userId);
+  }
+
+  function levelsView(u) {
+    const t = TIER.tierOf(u);
+    const sentBlack = db.prepare("SELECT COUNT(*) AS n FROM tier_invites WHERE from_id = ? AND created_at > ?").get(u.id, Date.now() - 30 * 86_400_000).n;
+    return {
+      tier: t, tierUntil: t === 'gold' && u.tier === 'gold' ? u.tier_until || null : null, coins: u.coins, netSize: u.net_size || 0,
+      tiers: TIER.TIER_ORDER.map((k) => ({ ...TIER.TIERS[k], perks: TIER.TIER_PERKS[k] })),
+      gold: { price: TIER.GOLD_PRICE, days: TIER.GOLD_DAYS, net: TIER.NET_GOLD },
+      vipRegion: u.vip_region || null, vipRegions: TIER.VIP_REGIONS, upass: TIER.isBlack(u) ? u.upass || null : null,
+      blackChat: TIER.isBlack(u) ? TIER.BLACK_CHAT : null,
+      blackInvites: db.prepare(`SELECT i.id, i.created_at AS createdAt, u.display_name AS fromName FROM tier_invites i JOIN users u ON u.id = i.from_id
+        WHERE i.to_id = ? AND i.accepted_at IS NULL`).all(u.id).map((r) => ({ ...r })),
+      canInviteBlack: (TIER.isBlack(u) || M.isAdmin(u)) && (M.isAdmin(u) || sentBlack < TIER.BLACK_INVITES_PER_MONTH),
+      isAdmin: M.isAdmin(u),
+    };
+  }
+  api.get('/levels', auth, (req, res) => res.json(levelsView(userRow(req.userId))));
+
+  // Голд за аськоины: 500 на 30 дней (продлевается с конца оплаченного срока). У Блэк и админов — не нужно.
+  api.post('/levels/gold', auth, (req, res) => {
+    const me = userRow(req.userId);
+    if (TIER.isBlack(me) || (TIER.tierOf(me) === 'gold' && me.tier !== 'gold')) return res.status(409).json({ error: 'already' });
+    if ((me.coins || 0) < TIER.GOLD_PRICE) return res.status(402).json({ error: 'no_coins', price: TIER.GOLD_PRICE });
+    const from = me.tier === 'gold' && me.tier_until && me.tier_until > Date.now() ? me.tier_until : Date.now();
+    tx(db, () => {
+      M.addCoins(db, me.id, -TIER.GOLD_PRICE, `Голд на ${TIER.GOLD_DAYS} дней`);
+      setTier(me.id, 'gold', from + TIER.GOLD_DAYS * 86_400_000, me.id);
+    });
+    res.json(levelsView(userRow(me.id)));
+  });
+
+  // VIP-регион на номере у Голд и Блэк: 777 или 888
+  api.post('/levels/vip-region', auth, json, (req, res) => {
+    const me = userRow(req.userId);
+    if (!TIER.isGoldTier(me)) return res.status(403).json({ error: 'level' });
+    if (!TIER.VIP_REGIONS.includes(req.body?.region)) return res.status(400).json({ error: 'bad_request' });
+    db.prepare('UPDATE users SET vip_region = ? WHERE id = ?').run(req.body.region, me.id);
+    broadcastUser(me.id);
+    res.json({ vipRegion: req.body.region });
+  });
+
+  // Где я сейчас — регион на номере (у Голд и Блэк виден в карточке, на номере — VIP)
+  api.post('/me/place', auth, json, (req, res) => {
+    if (!placeOf(req.body?.place)) return res.status(400).json({ error: 'bad_request' });
+    db.prepare('UPDATE users SET place = ? WHERE id = ?').run(req.body.place, req.userId);
+    broadcastUser(req.userId);
+    res.json({ place: req.body.place });
+  });
+  api.get('/places', (req, res) => res.json({ places: PLACES, vip: TIER.VIP_REGIONS }));
+
+  // Позвать в Блэк: Блэк — одного человека в месяц, администрация — без ограничений. Человек сам принимает.
+  api.post('/levels/black-invite', auth, json, (req, res) => {
+    const me = userRow(req.userId);
+    const target = Number.isInteger(req.body?.userId) ? userRow(req.body.userId) : null;
+    if (!target || target.kind !== 'human' || target.id === me.id || target.blocked_at) return res.status(400).json({ error: 'bad_request' });
+    if (!levelsView(me).canInviteBlack) return res.status(403).json({ error: 'forbidden' });
+    if (TIER.isBlack(target)) return res.status(409).json({ error: 'already' });
+    const { changes } = db.prepare("INSERT OR IGNORE INTO tier_invites (from_id, to_id, tier, created_at) VALUES (?, ?, 'black', ?)").run(me.id, target.id, Date.now());
+    if (!changes) return res.status(409).json({ error: 'invited' });
+    bots.askaSay(target.id, [`🖤 ${me.display_name} приглашает тебя в Блэк — закрытый уровень АСЬКИ: чёрная карта, закрытый чат, пропуск UPASS. Принять — «Ещё» → «🎖 Уровни».`]);
+    res.json({ ok: true });
+  });
+  api.post('/levels/black-accept', auth, json, (req, res) => {
+    const me = userRow(req.userId);
+    const inv = db.prepare("SELECT * FROM tier_invites WHERE id = ? AND to_id = ? AND accepted_at IS NULL").get(Number(req.body?.inviteId), me.id);
+    if (!inv) return res.status(404).json({ error: 'not_found' });
+    tx(db, () => {
+      db.prepare('UPDATE tier_invites SET accepted_at = ? WHERE id = ?').run(Date.now(), inv.id);
+      setTier(me.id, 'black', null, inv.from_id);
+    });
+    bots.askaSay(inv.from_id, [`🖤 ${me.display_name} принял(а) твоё приглашение в Блэк.`]);
+    res.json(levelsView(userRow(me.id)));
+  });
+
+  // ---------- мой нетворк ----------
+  api.get('/network', auth, (req, res) => {
+    const me = userRow(req.userId);
+    const nodeView = (id) => { const u = userRow(id); return { id, name: u?.display_name || '?', plate: u?.plate || null, tier: TIER.tierOf(u), blocked: Boolean(u?.blocked_at), size: u?.net_size || 0 }; };
+    const t = NET.tree(db, me.id, nodeView);
+    const earned = db.prepare("SELECT COALESCE(SUM(delta), 0) AS s FROM coin_log WHERE user_id = ? AND (reason LIKE 'пригласил(а)%' OR reason LIKE 'нетворк:%' OR reason LIKE '%стал(а) Голд')").get(me.id).s;
+    const inv = NET.inviterOf(db, me.id);
+    res.json({ ...t, earned, netSize: me.net_size || 0, invitedBy: inv ? nodeView(inv) : null, bonuses: { lines: NET.LINE_BONUS, gold: NET.GOLD_FRIEND_BONUS, penalty: NET.BLOCK_PENALTY, netGold: TIER.NET_GOLD } });
+  });
+
+  // ---------- администрация: уровень человека ----------
+  api.post('/admin/users/:id/tier', auth, admin, json, (req, res) => {
+    const target = humanTarget(req);
+    const tier = req.body?.tier;
+    const days = req.body?.days;
+    if (!target || !TIER.TIERS[tier] || (days != null && !(Number.isInteger(days) && days > 0 && days <= 3650))) return res.status(400).json({ error: 'bad_request' });
+    if (target.id !== req.me.id && !canManage(req.me, target) && target.role !== 'user') return res.status(403).json({ error: 'forbidden' });
+    tx(db, () => setTier(target.id, tier, tier === 'gold' && days ? Date.now() + days * 86_400_000 : null, req.me.id));
+    log(`tier ${target.username} → ${tier}${days ? ` ${days}d` : ''} by ${req.me.username}`);
+    res.json({ ok: true, tier: TIER.tierOf(userRow(target.id)) });
+  });
+
+  // ---------- ночь ----------
+  api.get('/night', auth, (req, res) => res.json(night.overview(req.userId)));
+  api.get('/night/collection', auth, (req, res) => res.json({ avatars: night.collection() }));
+  const sendResult = (res, r) => (r.error ? res.status(r.status).json({ error: r.error, ...(r.price != null ? { price: r.price } : {}), ...(r.freeLeft != null ? { freeLeft: r.freeLeft } : {}) }) : res.json(r));
+  api.post('/night/avatar', auth, json, (req, res) => {
+    if (!allow(`mint:${req.userId}`, 10, 600_000)) return res.status(429).json({ error: 'too_many' });
+    sendResult(res, night.mint(req.userId, req.body?.id, req.body?.nick));
+  });
+  api.get('/night/rooms/:key', auth, (req, res) => {
+    const v = night.roomView(req.userId, req.params.key, Number(req.query.before) || 0);
+    if (!v) return res.status(404).json({ error: 'not_found' });
+    res.json(v);
+  });
+  api.post('/night/rooms/:key/enter', auth, (req, res) => sendResult(res, night.enter(req.userId, req.params.key)));
+  api.post('/night/rooms/:key/pay', auth, (req, res) => sendResult(res, night.payHour(req.userId, req.params.key)));
+  api.post('/night/rooms/:key/messages', auth, json, (req, res) => {
+    if (!allow(`nmsg:${req.userId}`, 40, 600_000)) return res.status(429).json({ error: 'too_many' });
+    sendResult(res, night.post(req.userId, req.params.key, req.body?.text));
+  });
+  api.post('/night/messages/:id/thanks', auth, (req, res) => sendResult(res, night.thank(req.userId, Number(req.params.id))));
+  api.post('/admin/night/:key/president', auth, admin, json, (req, res) => {
+    const uid = req.body?.userId == null ? null : Number(req.body.userId);
+    if (uid !== null && userRow(uid)?.kind !== 'human') return res.status(400).json({ error: 'bad_request' });
+    if (!night.setPresident(req.params.key, uid)) return res.status(404).json({ error: 'not_found' });
+    res.json({ ok: true });
+  });
+
+  // ---------- реестр (музыка, кино, книги) и цепочка блоков ----------
+  api.get('/catalog', auth, (req, res) => res.json({ items: catalog.list({ kind: req.query.kind, q: String(req.query.q || '').slice(0, 60), before: Number(req.query.before) || 0, userId: req.query.mine ? req.userId : 0 }) }));
+  api.get('/catalog/:id', auth, (req, res) => { const it = catalog.get(Number(req.params.id)); return it ? res.json({ item: it }) : res.status(404).json({ error: 'not_found' }); });
+  api.post('/catalog', auth, json, (req, res) => {
+    if (!allow(`cat:${req.userId}`, 30, 86_400_000)) return res.status(429).json({ error: 'too_many' });
+    const r = catalog.add(req.userId, req.body);
+    if (r.error) return res.status(r.status).json({ error: r.error, ...(r.item ? { item: r.item } : {}) });
+    res.json(r);
+  });
+  api.post('/catalog/:id/claim', auth, (req, res) => sendResult(res, catalog.claim(req.userId, Number(req.params.id))));
+  api.get('/admin/catalog', auth, admin, (req, res) => res.json({ claims: catalog.claims() }));
+  api.post('/admin/catalog/:id', auth, admin, json, (req, res) => sendResult(res, catalog.decide(req.me.id, Number(req.params.id), Boolean(req.body?.ok), req.body?.note)));
+  api.get('/ledger', auth, (req, res) => {
+    const before = Number(req.query.before) || 0;
+    const rows = db.prepare(`SELECT * FROM ledger ${before ? 'WHERE id < ?' : ''} ORDER BY id DESC LIMIT 40`).all(...(before ? [before] : []));
+    res.json({ blocks: rows.map(L.blockView), check: L.verify(db) });
+  });
 
   // Статус: готовый (key) или свой (emoji + text); пустой — снять
   api.post('/me/status', auth, json, (req, res) => {
@@ -925,7 +1145,8 @@ export function createApp({
     const users = db.prepare("SELECT * FROM users WHERE kind = 'human' ORDER BY id").all().map((u) => ({
       id: u.id, displayName: u.display_name, username: u.username, plate: u.plate, plateView: plateView(M.plateRow(db, u.plate_id)),
       phone: u.phone, phoneVerified: Boolean(u.phone_verified), createdAt: u.created_at, lastActive: u.last_active,
-      isAdmin: M.isGold(u), role: u.role, blocked: Boolean(u.blocked_at), coins: u.coins,
+      isAdmin: M.isAdmin(u), role: u.role, blocked: Boolean(u.blocked_at), coins: u.coins,
+      tier: TIER.tierOf(u), tierUntil: u.tier === 'gold' ? u.tier_until || null : null, netSize: u.net_size || 0,
     }));
     const hasSuper = anySuper();
     res.json({ ai: ai.status(), people: bots.peopleEnabled(), sms: sms.status(), users, me: { role: req.me.role, id: req.me.id }, hasSuper, canInviteSuper: req.me.role === 'super' || !hasSuper, party: bots.partyResults() });
@@ -982,6 +1203,12 @@ export function createApp({
       }
     });
     if (blocked) for (const ws of conns.get(target.id) || []) ws.close(4003, 'blocked');
+    // «Мы в ответе за тех, кого пригласили»: с пригласившего — штраф
+    const inviter = blocked ? NET.inviterOf(db, target.id) : null;
+    if (inviter && userRow(inviter)?.kind === 'human') {
+      M.addCoins(db, inviter, -NET.BLOCK_PENALTY, `в ответе за приглашённого: ${target.display_name} заблокирован(а)`);
+      bots.askaSay(inviter, [`⚠️ ${target.display_name}, кого ты позвал(а) в АСЬКУ, заблокирован(а) за нарушение правил. По правилу «мы в ответе за тех, кого пригласили» — −${NET.BLOCK_PENALTY} 🪙. Зови тех, за кого ручаешься 🌼`]);
+    }
     for (const c of left) broadcastChat(c);
     broadcastUser(target.id);
     log(`${blocked ? 'blocked' : 'unblocked'} ${target.username} by ${req.me.username}`);
@@ -995,7 +1222,7 @@ export function createApp({
     const country = COUNTRIES[req.body?.country] ? req.body.country : 'RU';
     const code = parsePlate(req.body?.code, country, req.body?.region);
     if (!code) return res.status(400).json({ error: 'bad_plate' });
-    if (isGoldCode(country, code) && !M.isGold(target)) return res.status(400).json({ error: 'gold_only' });
+    if (isGoldCode(country, code) && !M.canGoldPlate(target)) return res.status(400).json({ error: 'gold_only' });
     const existing = db.prepare('SELECT * FROM plates WHERE key = ?').get(plateKey(code));
     if (existing && existing.owner_id && existing.owner_id !== target.id) {
       return res.status(409).json({ error: 'plate_taken', owner: userRow(existing.owner_id)?.display_name || '' });
@@ -1093,7 +1320,7 @@ export function createApp({
     const by = row.created_by ? userRow(row.created_by) : null;
     const t = row.target_id ? userRow(row.target_id) : null;
     // админ, создавший ссылку, должен оставаться админом; если с тех пор появился другой супер-админ — ссылка от админа не действует
-    if (!row.from_console && (!by || !M.isGold(by) || by.blocked_at || (by.role !== 'super' && anySuper(row.target_id || 0)))) return null;
+    if (!row.from_console && (!by || !M.isAdmin(by) || by.blocked_at || (by.role !== 'super' && anySuper(row.target_id || 0)))) return null;
     if (row.target_id && (!t || t.blocked_at || t.kind !== 'human')) return null;
     return { by, target: t };
   }
@@ -1210,7 +1437,7 @@ export function createApp({
     const plates = db.prepare('SELECT * FROM plates WHERE owner_id = ? ORDER BY id').all(req.userId).map((p) => plateView(p));
     const log = db.prepare('SELECT delta, reason, at FROM coin_log WHERE user_id = ? ORDER BY id DESC LIMIT 20').all(req.userId).map((r) => ({ ...r }));
     res.json({
-      coins: me.coins, activeId: me.plate_id, gold: M.isGold(me), plates, log, levels: LEVELS,
+      coins: me.coins, activeId: me.plate_id, gold: M.canGoldPlate(me), plates, log, levels: LEVELS, discount: TIER.perks(me).discount,
       countries: Object.entries(COUNTRIES).map(([id, c]) => ({ id, name: c.name, regions: c.regions })),
       bonuses: { daily: DAILY_BONUS, invite: INVITE_BONUS, guess: GUESS_BONUS },
     });
@@ -1248,8 +1475,8 @@ export function createApp({
     const gold = isGoldCode(country, code);
     const r = rarityOf(country, code);
     res.json({
-      code, text: formatCode(country, code), country, region, city: cityOf(country, region), price: priceOf(country, code),
-      rarity: r, rarityName: RARITY[r].name, free: !keyTaken(db, plateKey(code)), gold, allowed: !gold || M.isGold(me),
+      code, text: formatCode(country, code), country, region, city: cityOf(country, region), price: TIER.discounted(me, priceOf(country, code)), fullPrice: priceOf(country, code),
+      rarity: r, rarityName: RARITY[r].name, free: !keyTaken(db, plateKey(code)), gold, allowed: !gold || M.canGoldPlate(me),
     });
   });
 
@@ -1265,8 +1492,9 @@ export function createApp({
           const p = M.plateRow(db, b.plateId);
           if (!p || p.price === null || p.owner_id === me.id) return { error: 'not_for_sale', status: 400 };
           if (!M.canHold(me, p)) return { error: 'gold_only', status: 403 };
-          if (me.coins < p.price) return { error: 'no_coins', status: 402 };
-          M.addCoins(db, me.id, -p.price, `купил(а) номер ${formatCode(p.country, p.code)}`);
+          const pay = p.owner_id ? p.price : TIER.discounted(me, p.price); // витрина АСЬКИ — со скидкой уровня
+          if (me.coins < pay) return { error: 'no_coins', status: 402 };
+          M.addCoins(db, me.id, -pay, `купил(а) номер ${formatCode(p.country, p.code)}`);
           if (p.owner_id) M.addCoins(db, p.owner_id, p.price, `продал(а) номер ${formatCode(p.country, p.code)}`);
           db.prepare('UPDATE plates SET owner_id = ?, price = NULL WHERE id = ?').run(me.id, p.id);
           db.prepare("INSERT INTO plate_history (plate_id, from_id, to_id, price, kind, at) VALUES (?, ?, ?, ?, 'sale', ?)").run(p.id, p.owner_id, me.id, p.price, Date.now());
@@ -1278,8 +1506,8 @@ export function createApp({
         const code = parsePlate(b.code, country, region);
         if (!code) return { error: 'bad_plate', status: 400 };
         if (keyTaken(db, plateKey(code))) return { error: 'plate_taken', status: 409 };
-        if (isGoldCode(country, code) && !M.isGold(me)) return { error: 'gold_only', status: 403 };
-        const price = priceOf(country, code);
+        if (isGoldCode(country, code) && !M.canGoldPlate(me)) return { error: 'gold_only', status: 403 };
+        const price = TIER.discounted(me, priceOf(country, code));
         if (me.coins < price) return { error: 'no_coins', status: 402 };
         M.addCoins(db, me.id, -price, `купил(а) номер ${formatCode(country, code)}`);
         const id = M.give(db, me.id, { country, code, kind: 'buy', note: `за ${price}`, active: Boolean(b.activate) });
@@ -1310,9 +1538,10 @@ export function createApp({
   api.post('/plates/:id/upgrade', auth, (req, res) => {
     const p = ownPlate(req);
     if (!p) return res.status(404).json({ error: 'not_found' });
-    const cost = M.upgradeCost(p);
-    if (cost === null) return res.status(400).json({ error: 'max_level' });
     const me = userRow(req.userId);
+    const full = M.upgradeCost(p);
+    if (full === null) return res.status(400).json({ error: 'max_level' });
+    const cost = TIER.discounted(me, full);
     if (me.coins < cost) return res.status(402).json({ error: 'no_coins' });
     tx(db, () => {
       M.addCoins(db, me.id, -cost, `улучшил(а) номер ${formatCode(p.country, p.code)} до «${LEVELS[p.level + 1].name}»`);
@@ -1362,6 +1591,10 @@ export function createApp({
 
   api.post('/invites', auth, (req, res) => {
     if (!allow(`mkinv:${req.userId}`, 20, 3_600_000)) return res.status(429).json({ error: 'too_many' });
+    // свободных (ещё не использованных) приглашений — не больше, чем позволяет уровень
+    const me = userRow(req.userId);
+    const open = db.prepare('SELECT COUNT(*) AS n FROM invites WHERE created_by = ? AND used_by IS NULL').get(req.userId).n;
+    if (!M.isAdmin(me) && open >= TIER.perks(me).invites) return res.status(403).json({ error: 'invite_limit', limit: TIER.perks(me).invites });
     res.json({ code: formatInvite(createInvite(db, req.userId)) });
   });
 
@@ -1470,15 +1703,24 @@ export function createApp({
   const wallTimer = setInterval(() => { try { wall.bestOfDay(); } catch (e) { log('wall best', e); } }, 60_000);
   wallTimer.unref?.();
   if (startBots) bots.start();
+  // переход на десятую версию: нетворк считаем один раз, чат Блэк — у всех Блэк, реестр и Ночь — с первыми записями
+  if (getSetting(db, 'net_counted') !== '1') { NET.recountAll(db); setSetting(db, 'net_counted', '1'); }
+  for (const { id } of db.prepare("SELECT id FROM users WHERE kind = 'human' AND (tier = 'black' OR role = 'super')").all()) {
+    if (!userRow(id).upass) db.prepare('UPDATE users SET upass = ? WHERE id = ?').run(TIER.upassCode(), id);
+    syncBlackChat(id);
+  }
+  catalog.seed();
+  night.start();
 
   async function close() {
     clearInterval(heartbeat);
     clearInterval(wallTimer);
+    night.stop();
     for (const t of offlineTimers.values()) clearTimeout(t);
     await bots.stop();
     for (const ws of wss.clients) ws.terminate();
     return new Promise((resolve) => server.close(() => { db.close(); resolve(); }));
   }
 
-  return { app, server, db, close, bots, ai, wall, createInvite: (by) => formatInvite(createInvite(db, by)) };
+  return { app, server, db, close, bots, ai, wall, night, catalog, createInvite: (by) => formatInvite(createInvite(db, by)) };
 }

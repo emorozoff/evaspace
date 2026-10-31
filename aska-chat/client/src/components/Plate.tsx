@@ -2,6 +2,8 @@
 // Армения, Грузия, Германия (синяя полоса ЕС), США (Калифорния, Нью-Йорк), ОАЭ (Дубай), Великобритания.
 // Уровень улучшения (серебро, неон, голограмма, платина, бриллиант) — рамка и свечение; золотая серия АМР — золотая рамка.
 import type { User } from '../lib/store.ts';
+import { regionOf } from '../lib/places.ts';
+import type { RegionShow } from '../lib/places.ts';
 
 interface Parts { main: string; region?: string }
 
@@ -39,20 +41,34 @@ interface PlateProps {
   level?: number;
   size?: 's' | 'm' | 'l';
   onClick?: () => void;
+  region?: RegionShow | null; // регион «где я» или VIP 777/888 вместо региона токена
 }
 
-export function Plate({ plate, country = 'RU', level = 0, size = 'm', onClick }: PlateProps) {
+// Окошко региона: цифры и RUS с флагом, у мест за границей — код и флаг (BALI 🇮🇩), у VIP — золотое 777/888
+export function RegionBox({ region, fallback }: { region?: RegionShow | null; fallback?: string }) {
+  if (!region) return <span className="reg"><b>{fallback}</b><small>RUS<em className="flag f-RU" /></small></span>;
+  const cls = `reg${region.vip ? ' reg-vip' : ''}${region.ru ? '' : ' reg-world'}${region.place?.key === 'spb' && !region.vip ? ' reg-spb' : ''}${region.place?.theme ? ` reg-${region.place.theme}` : ''}`;
+  return (
+    <span className={cls} title={region.vip ? `VIP-регион ${region.code}` : region.place?.name}>
+      <b>{region.code}</b>
+      <small>{region.ru ? <>RUS<em className="flag f-RU" /></> : <i className="reg-flag">{region.flag}</i>}</small>
+    </span>
+  );
+}
+
+export function Plate({ plate, country = 'RU', level = 0, size = 'm', onClick, region }: PlateProps) {
   const p = plate ? plateParts(country, plate) : null;
   if (!p) return null;
-  const gold = isGoldPlate(plate, country);
+  const gold = isGoldPlate(plate, country) || Boolean(region?.vip);
   const cls = `aska-plate c-${country} ${size} lvl-${level}${gold ? ' gold' : ''}${onClick ? ' click' : ''}`;
-  const label = `номер ${plateText(plate, country)}`;
+  const shown = region && country === 'RU' ? `${p.main.replace(/\|/g, ' ')} ${region.code}` : plateText(plate, country);
+  const label = `номер ${shown}`;
   if (country === 'RU') {
     const [a, num, bc] = p.main.split('|');
     return (
-      <span className={cls} role="img" aria-label={label} title={plateText(plate, country)} onClick={onClick}>
+      <span className={cls} role="img" aria-label={label} title={shown} onClick={onClick}>
         <span className="main"><i>{a}</i><b>{num}</b><i>{bc}</i></span>
-        <span className="reg"><b>{p.region}</b><small>RUS<em className="flag f-RU" /></small></span>
+        <RegionBox region={region} fallback={p.region} />
       </span>
     );
   }
@@ -67,16 +83,18 @@ export function Plate({ plate, country = 'RU', level = 0, size = 'm', onClick }:
   );
 }
 
-// Основной номер человека
+// Основной номер человека: регион — где он сейчас (у Голд и Блэк — 777 или 888)
 export function UserPlate({ user, size = 'm', onClick }: { user?: User; size?: 's' | 'm' | 'l'; onClick?: () => void }) {
   if (!user?.plate) return null;
-  return <Plate plate={user.plate} country={user.plateCountry || 'RU'} level={user.plateLevel || 0} size={size} onClick={onClick} />;
+  const country = user.plateCountry || 'RU';
+  return <Plate plate={user.plate} country={country} level={user.plateLevel || 0} size={size} onClick={onClick} region={country === 'RU' ? regionOf(user) : null} />;
 }
 
-// Золотой значок голд-пользователя (админа)
+// Значок уровня у имени: ★ Голд (золотая), ◆ Блэк (чёрная)
 export function Gold({ user, big }: { user?: User; big?: boolean }) {
   if (!user?.gold) return null;
-  return <span className={`aska-gold${big ? ' big' : ''}`} title="Голд — администратор АСЬКИ" aria-label="голд">★</span>;
+  if (user.tier === 'black') return <span className={`aska-gold black${big ? ' big' : ''}`} title="Блэк — закрытый уровень АСЬКИ" aria-label="Блэк">◆</span>;
+  return <span className={`aska-gold${big ? ' big' : ''}`} title="Голд — VIP-уровень АСЬКИ" aria-label="голд">★</span>;
 }
 
 export const RARITY_CLASS = ['common', 'rare', 'epic', 'legendary', 'mythic'];

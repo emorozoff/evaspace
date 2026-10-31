@@ -1,9 +1,13 @@
 // Номера-токены и аськоины: выдать, купить, продать, улучшить, сделать основным.
-// Голд (админы) получают номер золотой серии АМР; при снятии голд золотые номера возвращаются АСЬКЕ.
+// Админы получают номер золотой серии АМР; при снятии админа золотые номера возвращаются АСЬКЕ.
+// С десятой версии «Голд» — это уровень (tiers.js), а не админ: золотую серию АМР могут взять Голд и Блэк.
 import { mintPlate, randomFreeCode, isGoldCode, partsOf, plateKey, keyTaken, priceOf, LEVELS, ADMIN_PLATE, SUPER_PLATE, defaultRegion, plateView, SHOWCASE } from './plates.js';
 import { getSetting, setSetting } from './db.js';
+import { isAdmin, isGoldTier } from './tiers.js';
 
-export const isGold = (u) => Boolean(u) && (u.role === 'admin' || u.role === 'super');
+export { isAdmin };
+// Золотая серия АМР — у администраторов и у тех, кто на уровне Голд или Блэк
+export const canGoldPlate = (u) => Boolean(u) && (isAdmin(u) || isGoldTier(u));
 export const plateRow = (db, id) => (id ? db.prepare('SELECT * FROM plates WHERE id = ?').get(id) : null);
 
 export function addCoins(db, userId, delta, reason) {
@@ -58,7 +62,7 @@ export function revokeGoldPlates(db, user) {
 }
 
 export function canHold(user, plate) {
-  return !plate.gold || isGold(user) || user.kind === 'aska';
+  return !plate.gold || canGoldPlate(user) || user.kind === 'aska';
 }
 
 // Популярные номера на витрине — выпускаются один раз

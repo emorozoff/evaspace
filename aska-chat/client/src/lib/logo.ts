@@ -61,6 +61,19 @@ export function markSvg(size = 28, shape: 'square' | 'circle' | 'full' = 'square
 }
 
 // Цветочек-статус голд: как в «Аське», только золотой
+// Чёрный цветочек уровня Блэк: глянцевые чёрные лепестки с золотой кромкой
+export function blackFlowerSvg(size = 16, online = true): string {
+  const id = `bf${++uid}`;
+  let petals = '';
+  for (let i = 0; i < 8; i++) {
+    const a = (i * Math.PI) / 4 - Math.PI / 2;
+    petals += `<circle cx="${(8 + 5 * Math.cos(a)).toFixed(2)}" cy="${(8 + 5 * Math.sin(a)).toFixed(2)}" r="2.7" fill="url(#${id})" stroke="#c9a45c" stroke-width=".5"/>`;
+  }
+  return `<svg viewBox="0 0 16 16" width="${size}" height="${size}" aria-hidden="true"${online ? '' : ' opacity=".5"'}><defs>
+<radialGradient id="${id}" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#6b6b75"/><stop offset=".45" stop-color="#1c1c22"/><stop offset="1" stop-color="#000"/></radialGradient>
+</defs>${petals}<circle cx="8" cy="8" r="2.5" fill="#f6c83a" stroke="#6e4c00" stroke-width=".55"/></svg>`;
+}
+
 export function goldFlowerSvg(size = 16, online = true): string {
   const id = `gf${++uid}`;
   let petals = '';

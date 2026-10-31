@@ -831,7 +831,7 @@ export function createBots(ctx) {
 
   async function partyDigestJob(botId, { toId }) {
     const to = row(toId);
-    if (!to || !M.isGold(to)) return;
+    if (!to || !M.isAdmin(to)) return;
     const since = Number(getSetting(db, `party_digest:${toId}`) || 0);
     const rows = db.prepare('SELECT * FROM party_votes WHERE updated_at > ? AND user_id != ? ORDER BY updated_at').all(since, toId);
     setSetting(db, `party_digest:${toId}`, String(now()));
@@ -1145,7 +1145,7 @@ export function createBots(ctx) {
   async function announce3Job(botId, chatId, { userId }) {
     const u = row(userId);
     if (!u) return;
-    const gold = M.isGold(u);
+    const gold = M.isAdmin(u);
     const msgs = [
       `Обновление 🚗 Номера в АСЬКЕ теперь коллекционные — как NFT: у каждого свой токен, редкость и история владельцев. Красивые номера, номера своего города и других стран можно покупать, улучшать (серебро, неон, голограмма, платина, бриллиант) и продавать другим. Всё во вкладке «Номера».`,
       gold
@@ -1169,8 +1169,8 @@ export function createBots(ctx) {
       '🗂 Группы: ИИ-друзья, Ближний круг, Знакомства, Работа. Перенести человека — в его карточке.',
       '🔊 Звуковые смайлы — кнопка ☺ в беседе. Их слышит и тот, кому отправил.',
     ];
-    if (M.isGold(u)) lines.push('👑 У голд теперь золотой цветок.');
-    if (M.isGold(u) && !ai.configured()) lines.push('\nЧтобы ИИ заговорили своими словами, а ИИ-люди появились, нужен ключ Claude: «Ещё» → «Управление АСЬКОЙ» → «Мозг ИИ».');
+    if (M.isAdmin(u)) lines.push('👑 У голд теперь золотой цветок.');
+    if (M.isAdmin(u) && !ai.configured()) lines.push('\nЧтобы ИИ заговорили своими словами, а ИИ-люди появились, нужен ключ Claude: «Ещё» → «Управление АСЬКОЙ» → «Мозг ИИ».');
     await say(botId, chatId, [lines.join('\n')]);
   }
 
@@ -1552,6 +1552,11 @@ export function createBots(ctx) {
       const r = wall.post(aska, aska, { kind: 'text', text: '🤩 Новое: супер-смайлы! В беседе нажми ☺ → «🤩 Супер» — у друга смайл оживёт и прозвучит, у каждого свой звук. А в комментариях под записями теперь есть ☺: супер-смайлы, ✨ символы вроде ¯\\_(ツ)_/¯ и гифки. Нажми на смайл ниже 👇' }, { fromBot: true });
       if (r.post) wall.comment(aska, r.post.id, '🥳');
     }
+    // десятое — уровни, нетворк, место на номере, Ночь, реестр
+    if (wall && getSetting(db, 'announced_v10') !== '1') {
+      setSetting(db, 'announced_v10', '1');
+      wall.post(aska, aska, { kind: 'text', text: '🎖 Большое обновление! Уровни: 👤 Гость → ⭐ Голд → 🖤 Блэк (только по приглашению). 🕸 «Мой нетворк» — все, кого ты позвал, и цепочка дальше: +50, +15, +5 🪙. 📍 Регион на номере — где ты сейчас: Москва 197, Питер 198, Бали, Дубай… 🌙 Ночь: комнаты-форумы с НФТ-аватарами, музыка, кино и книги — кто первый занёс, того и тапки ⛓ Всё в «Ещё» → «🎖 Уровни» и «📜 Правила».' }, { fromBot: true });
+    }
     // девятое — стили в «Ещё» и «Бизнес»
     if (wall && getSetting(db, 'announced_v9') !== '1') {
       setSetting(db, 'announced_v9', '1');
@@ -1628,5 +1633,11 @@ export function createBots(ctx) {
   return {
     init, start, stop, idle, tick, proactive, onMessage, onUserRegistered, onRecovered, onlineIds, isOnline,
     setPeople, peopleEnabled, ensureTwin, twinName, addFacts, factsOf, askaId, batyaId, partyResults, statusOf, wallHooks,
+    // Аська пишет человеку (уровни, нетворк, Блэк) — сразу, без «печатает…»
+    // (отложено на следующий оборот: её могут позвать изнутри транзакции, а say открывает свою)
+    askaSay: (userId, lines) => setImmediate(() => {
+      const aska = askaId();
+      if (aska && row(userId)?.kind === 'human') say(aska, ctx.ensureDm(aska, userId), lines, { typing: false }).catch(() => {});
+    }),
   };
 }

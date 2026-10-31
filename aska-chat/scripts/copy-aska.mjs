@@ -6,7 +6,7 @@ import path from 'node:path';
 const root = path.resolve(import.meta.dirname, '..');
 const src = path.resolve(root, '../aska');
 const dst = path.join(root, 'client/public/aska');
-const files = ['styles.css', 'aero.css', 'art.js', 'sounds.js'];
+const files = ['styles.css', 'aero.css', 'art.js', 'sounds.js', 'music.js']; // music.js — синтез-плеер хитов «Аськи» для Ночи
 
 if (!fs.existsSync(path.join(src, 'aero.css'))) {
   console.error(`Нет дизайна «Аськи» в ${src}`);

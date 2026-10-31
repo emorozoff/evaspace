@@ -2,10 +2,12 @@
 export class ApiError extends Error {
   status: number;
   code: string;
-  constructor(status: number, code: string) {
+  data?: unknown; // всё тело ответа с ошибкой (например, уже занесённая запись реестра)
+  constructor(status: number, code: string, data?: unknown) {
     super(code);
     this.status = status;
     this.code = code;
+    this.data = data;
   }
 }
 
@@ -32,8 +34,9 @@ async function request<T>(method: string, path: string, body?: unknown, raw?: Ui
   }
   if (!res.ok) {
     let code = 'error';
-    try { code = (await res.json()).error || code; } catch { /* пусто */ }
-    throw new ApiError(res.status, code);
+    let data: unknown;
+    try { data = await res.json(); code = (data as { error?: string }).error || code; } catch { /* пусто */ }
+    throw new ApiError(res.status, code, data);
   }
   return res.json();
 }

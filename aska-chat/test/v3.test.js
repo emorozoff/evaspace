@@ -99,9 +99,9 @@ test('регистрация: голд у первого, номер стран�
   assert.equal(s1.users.find((u) => u.id === U.boss.userId).gold, true, 'у голд золотой значок');
   assert.equal(s1.users.find((u) => u.id === U.ann.userId).gold, false);
   assert.equal(s1.users.find((u) => u.id === U.max.userId).plateCountry, 'BY');
-  // 100 на старт + 2×50 за друзей + 20 за вход сегодня
-  assert.equal(s1.profile.bonus, 20);
-  assert.equal(s1.profile.coins, 220);
+  // 100 на старт + 2×50 за друзей + 40 за вход сегодня (с десятой версии админ — не ниже Голд, у Голд бонус 40)
+  assert.equal(s1.profile.bonus, 40);
+  assert.equal(s1.profile.coins, 240);
   assert.equal((await st(S, U.boss)).profile.bonus, 0, 'бонус за вход — раз в день');
   assert.equal((await login(S, `${U.max.plate.slice(0, 4)} ${U.max.plate.slice(4).toLowerCase()}`, 'пароль макса')).status, 200, 'вход по белорусскому номеру');
 });

@@ -13,6 +13,12 @@ import { APP_VERSION } from './Welcome.tsx';
 import { StylePick } from './Styles.tsx';
 import { BizManager } from './Business.tsx';
 import { useSplit, setSplit, useDesign } from '../lib/space.ts';
+import { Levels, TierBadge, PlacePicker } from './Levels.tsx';
+import { Network } from './Network.tsx';
+import { Rules } from './Rules.tsx';
+import { Night } from './Night.tsx';
+import { Catalog, Ledger } from './Catalog.tsx';
+import { placeOf } from '../lib/places.ts';
 import { Win, Ico, Dialog } from './Win.tsx';
 import { UserPlate, Gold } from './Plate.tsx';
 import { Plates } from './Plates.tsx';
@@ -22,11 +28,13 @@ import { Admin } from './Admin.tsx';
 import { Wall } from './Wall.tsx';
 import type { WallView } from './Wall.tsx';
 
-export type AuxKind = 'settings' | 'invite' | 'circles' | 'myai' | 'admin' | 'plates' | 'wall' | 'biz';
+export type AuxKind = 'settings' | 'invite' | 'circles' | 'myai' | 'admin' | 'plates' | 'wall' | 'biz'
+  | 'levels' | 'network' | 'rules' | 'night' | 'music' | 'films' | 'books' | 'ledger';
 
 const TITLES: Record<AuxKind, string> = {
   settings: 'Ещё', invite: 'Позвать друга', circles: 'Круги', myai: 'Мой ИИ', admin: 'Управление АСЬКОЙ', plates: 'Номера', wall: 'Стена',
-  biz: 'Рабочие контакты',
+  biz: 'Рабочие контакты', levels: 'Уровни', network: 'Мой нетворк', rules: 'Правила АСЬКИ', night: 'Ночь', music: 'Музыка', films: 'Кино',
+  books: 'Книги', ledger: 'Цепочка блоков',
 };
 
 export function Aux({ kind, onBack, onOpen, onAux, wallView, onWallView, onProfile }: {
@@ -44,6 +52,14 @@ export function Aux({ kind, onBack, onOpen, onAux, wallView, onWallView, onProfi
         {kind === 'admin' && <Admin />}
         {kind === 'plates' && <Plates />}
         {kind === 'biz' && <BizManager onOpen={onOpen} onProfile={onProfile} />}
+        {kind === 'levels' && <Levels onAux={onAux} onOpen={onOpen} />}
+        {kind === 'network' && <Network onProfile={onProfile} onInvite={() => onAux('invite')} />}
+        {kind === 'rules' && <Rules />}
+        {kind === 'night' && <Night onLevels={() => onAux('levels')} />}
+        {kind === 'music' && <Catalog kind="music" onLedger={() => onAux('ledger')} />}
+        {kind === 'films' && <Catalog kind="film" onLedger={() => onAux('ledger')} />}
+        {kind === 'books' && <Catalog kind="book" onLedger={() => onAux('ledger')} />}
+        {kind === 'ledger' && <Ledger />}
       </div>
     </Win>
   );
@@ -53,6 +69,7 @@ function Settings({ onAux }: { onAux: (k: AuxKind) => void }) {
   const s = useStore();
   const design = useDesign();
   const split = useSplit();
+  const [placeOpen, setPlaceOpen] = useState(false);
   const [sound, setSound] = useState(soundEnabled());
   const [myCode, setMyCode] = useState('');
   const [pushError, setPushError] = useState('');
@@ -100,6 +117,22 @@ function Settings({ onAux }: { onAux: (k: AuxKind) => void }) {
         </div>
         {!phone && <div className="hint">С телефоном легко вернуть вход, если забудешь пароль.</div>}
       </div>
+
+      <div className="aska-level-card" onClick={() => onAux('levels')}>
+        <TierBadge tier={s.profile?.tier} />
+        <span className="t"><b>Мой уровень</b><small>{s.profile?.tier === 'black' ? 'Блэк — закрытый уровень' : s.profile?.tier === 'gold' ? 'Голд — VIP' : 'Гость → Голд: 500 🪙 или 10 человек в нетворке'}</small></span>
+        <span className="go">›</span>
+      </div>
+      <div className="aska-actions aska-actions3">
+        <button className="btn" onClick={() => onAux('levels')}>🎖 Уровни</button>
+        <button className="btn" onClick={() => onAux('network')}>🕸 Мой нетворк{s.profile?.netSize ? ` (${s.profile.netSize})` : ''}</button>
+        <button className="btn" onClick={() => onAux('rules')}>📜 Правила</button>
+      </div>
+      <div className="row aska-kv aska-place-row">
+        <span>📍 Где я сейчас</span><b>{placeOf(me?.place)?.flag} {placeOf(me?.place)?.name || '—'}</b><span className="sp" />
+        <button className="btn" onClick={() => setPlaceOpen(true)}>Сменить</button>
+      </div>
+      {placeOpen && <PlacePicker onClose={() => setPlaceOpen(false)} />}
 
       <div className="aska-actions">
         <button className="btn primary" onClick={() => onAux('invite')}>➕ Позвать друга</button>

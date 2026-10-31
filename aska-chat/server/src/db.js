@@ -237,6 +237,7 @@ function migrate(db) {
   migrateV6(db);
   migrateV7(db);
   migrateV9(db);
+  migrateV10(db);
 }
 
 // Третья версия (22.10.2026): номера-токены (покупка, улучшение, рынок), аськоины, роли (голд-админы, супер-админ), блокировка.
@@ -454,4 +455,110 @@ export function setSetting(db, key, value) {
 // (team — команда, work — работа, biz — бизнес, partners — партнёры). В личных стилях их не видно.
 function migrateV9(db) {
   addColumn(db, 'chats', 'biz', 'TEXT');
+}
+
+// Десятое обновление (31.10.2026): уровни (Гость / Голд / Блэк), нетворк, место-регион на номере,
+// реестр на внутренней цепочке блоков (музыка, кино, книги), ночные комнаты с НФТ-аватарами.
+function migrateV10(db) {
+  // уровень: guest | gold | black; tier_until — до какого времени оплачен Голд (NULL — навсегда)
+  addColumn(db, 'users', 'tier', "TEXT NOT NULL DEFAULT 'guest'");
+  addColumn(db, 'users', 'tier_until', 'INTEGER');
+  addColumn(db, 'users', 'vip_region', 'TEXT');   // 777 или 888 — у Голд и Блэк вместо места
+  addColumn(db, 'users', 'place', 'TEXT');        // где человек сейчас — регион на номере (ключ из places.js)
+  addColumn(db, 'users', 'net_size', 'INTEGER NOT NULL DEFAULT 0'); // сколько человек во всём нетворке (вся цепочка вниз)
+  addColumn(db, 'users', 'upass', 'TEXT');        // номер пропуска UPASS у Блэк
+  db.exec(`
+    -- Приглашение в Блэк: только от Блэк или администрации, человек сам принимает
+    CREATE TABLE IF NOT EXISTS tier_invites (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      from_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      to_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      tier TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      accepted_at INTEGER,
+      UNIQUE (to_id, tier)
+    );
+    -- Внутренний блокчейн АСЬКИ: каждая запись ссылается на хеш предыдущей
+    CREATE TABLE IF NOT EXISTS ledger (
+      id INTEGER PRIMARY KEY,
+      kind TEXT NOT NULL,
+      ref TEXT NOT NULL,
+      actor_id INTEGER,
+      data TEXT NOT NULL,
+      prev_hash TEXT NOT NULL,
+      hash TEXT NOT NULL UNIQUE,
+      at INTEGER NOT NULL
+    );
+    -- Реестр: музыка, кино, книги. key — чтобы одно и то же не занесли дважды («кто первый занёс»)
+    CREATE TABLE IF NOT EXISTS catalog_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      kind TEXT NOT NULL,
+      key TEXT NOT NULL UNIQUE,
+      title TEXT NOT NULL,
+      author TEXT NOT NULL,
+      year INTEGER,
+      link TEXT,
+      note TEXT,
+      added_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at INTEGER NOT NULL,
+      block INTEGER NOT NULL,
+      rights TEXT NOT NULL DEFAULT 'none',
+      rights_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      rights_note TEXT,
+      rights_block INTEGER,
+      synth TEXT
+    );
+    CREATE INDEX IF NOT EXISTS catalog_kind ON catalog_items (kind, id);
+    -- Ночь: НФТ-аватары (пиксельные), у людей — owner_id, у ночных ботов — bot
+    CREATE TABLE IF NOT EXISTS night_avatars (
+      id INTEGER PRIMARY KEY,
+      owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      bot TEXT UNIQUE,
+      nick TEXT NOT NULL UNIQUE,
+      minted_at INTEGER NOT NULL,
+      block INTEGER
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS night_avatar_owner ON night_avatars (owner_id) WHERE owner_id IS NOT NULL;
+    CREATE TABLE IF NOT EXISTS night_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      room TEXT NOT NULL,
+      avatar_id INTEGER NOT NULL REFERENCES night_avatars(id),
+      text TEXT NOT NULL,
+      at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS night_messages_room ON night_messages (room, id);
+    -- Репутация в комнате: из неё ранги (советники, хранители, джедаи, самураи)
+    CREATE TABLE IF NOT EXISTS night_rep (
+      room TEXT NOT NULL,
+      avatar_id INTEGER NOT NULL REFERENCES night_avatars(id),
+      posts INTEGER NOT NULL DEFAULT 0,
+      rep INTEGER NOT NULL DEFAULT 0,
+      last_at INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (room, avatar_id)
+    );
+    -- Пропуск в комнату: первый час в день бесплатно, дальше — аськоины за час
+    CREATE TABLE IF NOT EXISTS night_passes (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      room TEXT NOT NULL,
+      until INTEGER NOT NULL DEFAULT 0,
+      free_day TEXT,
+      paid INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (user_id, room)
+    );
+    -- «Спасибо» за сообщение в комнате (+2 к репутации автора), одно от человека
+    CREATE TABLE IF NOT EXISTS night_thanks (
+      message_id INTEGER NOT NULL REFERENCES night_messages(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      PRIMARY KEY (message_id, user_id)
+    );
+    -- Президент комнаты назначается (человек), остальные ранги — по репутации
+    CREATE TABLE IF NOT EXISTS night_seats (
+      room TEXT PRIMARY KEY,
+      president_user INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      president_avatar INTEGER REFERENCES night_avatars(id)
+    );
+  `);
+  // Админы — не ниже Голд (супер-админ — Блэк); Голд и Блэк у них навсегда
+  db.prepare("UPDATE users SET tier = 'black' WHERE role = 'super' AND tier != 'black'").run();
+  db.prepare("UPDATE users SET tier = 'gold' WHERE role = 'admin' AND tier = 'guest'").run();
 }

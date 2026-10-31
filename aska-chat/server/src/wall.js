@@ -255,7 +255,7 @@ export function createWall({ db, dataDir, sendToAll, log = console.log }) {
   // ---------- API ----------
   function mount(api, { auth, json, allow, userRow }) {
     const me = (req) => userRow(req.userId);
-    const isGold = (u) => M.isGold(u);
+    const isGold = (u) => M.isAdmin(u);
 
     api.get('/wall/feed', auth, (req, res) => {
       const before = Math.max(0, parseInt(req.query.before, 10) || 0);

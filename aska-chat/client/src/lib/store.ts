@@ -8,6 +8,7 @@ import type { LocalUser, LocalChat, StoredMsg, Session, Keys, UserStatus } from 
 import { prepareImage } from './images.ts';
 import { setBadge, pushSupported } from './platform.ts';
 import { emitWall, blobUrl } from './wall.ts';
+import { emitNight } from './night.ts';
 import type { WallEvent } from './wall.ts';
 
 export type Chat = LocalChat;
@@ -17,7 +18,9 @@ export type PushState = 'unsupported' | 'default' | 'denied' | 'subscribed';
 export interface Profile {
   isAdmin: boolean; role?: 'user' | 'admin' | 'super'; coins?: number; bonus?: number;
   phone: string | null; phoneVerified: boolean; allowAnon: boolean; plate: string | null;
+  tier?: Tier; tierUntil?: number | null; vipRegion?: string | null; netSize?: number; upass?: string | null; blackInvites?: number;
 }
+export type Tier = 'guest' | 'gold' | 'black';
 export type Truth = 'ai' | 'human';
 export type Group = 'close' | 'meet' | 'team' | 'work' | 'biz' | 'partners';
 export type { UserStatus } from './db.ts';
@@ -158,12 +161,13 @@ export async function register(
 }
 
 // Вход по телефону, номеру АСЬКИ (А 001 МР 777) или старому логину
-export async function login(loginName: string, password: string, onProgress?: (p: number) => void) {
+export async function login(loginName: string, password: string, onProgress?: (p: number) => void, region?: string) {
   const l = loginName.trim();
-  const { salt } = await api.get<{ salt: string }>(`/salt?login=${encodeURIComponent(l)}`);
+  const reg = region && /^\d{2,3}$/.test(region) ? region : undefined; // регион-цифры помогают найти номер, если серия у нескольких
+  const { salt } = await api.get<{ salt: string }>(`/salt?login=${encodeURIComponent(l)}${reg ? `&region=${reg}` : ''}`);
   const { encKey, authKey } = await C.deriveFromPassword(password, C.fromB64(salt), onProgress);
   const r = await api.post<{ token: string; userId: number; username: string; boxPk: string; backup: C.Sealed }>('/login', {
-    login: l, authKey: C.toB64(authKey),
+    login: l, authKey: C.toB64(authKey), region: reg,
   });
   const secret = C.openSecret(r.backup, encKey);
   if (!secret || C.toB64(C.publicFromSecret(secret)) !== r.boxPk) throw new Error('backup_broken');
@@ -266,6 +270,7 @@ interface ServerUser {
   plate?: string | null; about?: string; city?: string; kind?: 'human' | 'aska' | 'friend' | 'twin'; ownerId?: number; prevPks?: string[];
   gold?: boolean; blocked?: boolean; plateId?: number; plateCountry?: string; plateLevel?: number; plateRarity?: number;
   status?: UserStatus | null;
+  tier?: Tier; place?: string; vipRegion?: string;
 }
 
 interface StateResp {
@@ -293,6 +298,7 @@ function mergeUser(u: ServerUser, prev: User | undefined, myPk?: string): User {
     about: u.about || '', city: u.city || '', kind: u.kind || 'human', ownerId: u.ownerId, prevPks: u.prevPks,
     gold: Boolean(u.gold), blocked: Boolean(u.blocked), plateId: u.plateId, plateCountry: u.plateCountry || 'RU', plateLevel: u.plateLevel || 0, plateRarity: u.plateRarity || 0,
     status: u.status || null,
+    tier: u.tier, place: u.place, vipRegion: u.vipRegion,
   };
   if (!pinned || pinned === u.boxPk) return prev?.keyRotated ? { ...base, keyRotated: true } : base;
   if ((u.prevPks || []).includes(pinned)) return { ...base, keyRotated: true };
@@ -300,6 +306,9 @@ function mergeUser(u: ServerUser, prev: User | undefined, myPk?: string): User {
 }
 
 let pushChecked = false;
+
+// Перечитать состояние (после покупки Голд, смены уровня и т. п.)
+export const refreshState = () => loadState();
 
 async function loadState() {
   const st = await api.get<StateResp>('/state');
@@ -447,6 +456,9 @@ function onEvent(ev: ServerEvent) {
     case 'wall':
       if (ev.post.wallId === state.me?.userId && ev.post.authorId !== state.me?.userId && !ev.post.best) set({ wallNew: state.wallNew + 1 });
       emitWall(ev);
+      break;
+    case 'night_msg':
+      emitNight(ev.message);
       break;
     case 'wall_flower':
     case 'wall_comment':
@@ -824,6 +836,7 @@ export interface AdminInfo {
   users: {
     id: number; displayName: string; username: string; plate: string; plateView: PlateInfo | null; phone: string | null; phoneVerified: boolean;
     createdAt: number; lastActive: number | null; isAdmin: boolean; role: 'user' | 'admin' | 'super'; blocked: boolean; coins: number;
+    tier?: Tier; tierUntil?: number | null; netSize?: number;
   }[];
   me: { role: 'user' | 'admin' | 'super'; id: number };
   hasSuper: boolean;

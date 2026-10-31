@@ -66,7 +66,7 @@ function PushPanel() {
   return <div className="me-panel aska-push">{body}</div>;
 }
 
-type AuxTarget = 'circles' | 'myai' | 'settings' | 'plates' | 'admin' | 'wall' | 'biz';
+type AuxTarget = 'circles' | 'myai' | 'settings' | 'plates' | 'admin' | 'wall' | 'biz' | 'night' | 'music' | 'films' | 'books' | 'levels';
 interface Props {
   activeChat: string | null;
   onOpen: (chatId: string) => void;
@@ -120,15 +120,20 @@ const GROUPS: { key: Group; label: string; empty: string }[] = [
   { key: 'meet', label: '👋 Знакомства', empty: 'Новые люди появятся здесь.' },
 ];
 
-// «🏠 Личное | 💼 Бизнес» — одно нажатие, и рядом счётчик непрочитанного в другом месте
-function SpaceSwitch({ business, homeUnread, bizUnread }: { business: boolean; homeUnread: number; bizUnread: number }) {
+// «🏠 Личное | 💼 Бизнес | 🌙 Ночь» — одно нажатие, и рядом счётчик непрочитанного в другом месте
+function SpaceSwitch({ business, night, homeUnread, bizUnread, onNight }: { business: boolean; night: boolean; homeUnread: number; bizUnread: number; onNight: () => void }) {
+  const home = !business && !night;
+  const toHome = () => { const d = homeDesign(); setDesign(d === 'night' ? 'zoomer' : d); };
   return (
-    <div className="aska-space" role="tablist" aria-label="Личное или Бизнес">
-      <button role="tab" aria-selected={!business} className={!business ? 'on' : ''} onClick={() => business && setDesign(homeDesign())}>
+    <div className="aska-space" role="tablist" aria-label="Личное, Бизнес или Ночь">
+      <button role="tab" aria-selected={home} className={home ? 'on' : ''} onClick={() => !home && toHome()}>
         🏠 Личное{homeUnread > 0 && <b>{homeUnread}</b>}
       </button>
       <button role="tab" aria-selected={business} className={business ? 'on' : ''} onClick={() => !business && setDesign('business')}>
         💼 Бизнес{bizUnread > 0 && <b>{bizUnread}</b>}
+      </button>
+      <button role="tab" aria-selected={night} className={night ? 'on' : ''} onClick={() => (night ? onNight() : setDesign('night'))}>
+        🌙 Ночь
       </button>
     </div>
   );
@@ -142,7 +147,9 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
   const [statusOpen, setStatusOpen] = useState(false);
   const [adding, setAdding] = useState<BizKey | null>(null);
   const [chatFor, setChatFor] = useState<BizKey | null>(null);
-  const business = useDesign() === 'business';
+  const design = useDesign();
+  const business = design === 'business';
+  const night = design === 'night';
   const split = useSplit();
   const showHome = !business || !split; // личное видно
   const showBiz = business || !split;   // рабочее видно
@@ -276,9 +283,17 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
         </button>
       )}
       <PushPanel />
-      <SpaceSwitch business={business} homeUnread={homeUnread} bizUnread={bizUnread} />
+      <SpaceSwitch business={business} night={night} homeUnread={homeUnread} bizUnread={bizUnread} onNight={() => onAux('night')} />
       {/* на компьютере нижних вкладок нет — те же разделы кнопками */}
-      {business ? (
+      {night ? (
+        <div className="aska-desk-nav">
+          <button className="btn" onClick={() => onAux('night')}><i>🚪</i><span>Комнаты</span></button>
+          <button className="btn" onClick={() => onAux('music')}><i>🎵</i><span>Музыка</span></button>
+          <button className="btn" onClick={() => onAux('films')}><i>🎬</i><span>Кино</span></button>
+          <button className="btn" onClick={() => onAux('books')}><i>📚</i><span>Книги</span></button>
+          <button className="btn" onClick={() => onAux('settings')}><i>☰</i><span>Ещё</span></button>
+        </div>
+      ) : business ? (
         <div className="aska-desk-nav">
           <button className="btn" onClick={() => setChatFor('team')}><i>💬</i><span>Новый чат</span></button>
           <button className="btn" onClick={() => onAux('biz')}><i>📇</i><span>Контакты</span></button>

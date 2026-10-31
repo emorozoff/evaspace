@@ -14,6 +14,7 @@ on:
       - 'aska/*.css'
       - 'aska/icons/**'
       - 'aska/sounds.js'
+      - 'aska/music.js'
       - '.github/workflows/aska-chat.yml'
   workflow_dispatch:
 

@@ -1,7 +1,7 @@
 // Обёртки над графикой и звуками «Аськи» + выбор дизайна (Зумер / Миллениал).
 // Если файлы «Аськи» почему-то не загрузились, приложение работает без цветочков и звуков.
 
-import { markSvg, goldFlowerSvg } from './logo.ts';
+import { markSvg, goldFlowerSvg, blackFlowerSvg } from './logo.ts';
 
 // Стили: на входе — Зумер или Миллениал; в «Ещё» → «Вид» ещё Бизнес (отдельные рабочие переписки) и Ночь.
 // Бизнес и Ночь построены поверх Зумера (skin-aero) — свои цвета и форма в v9.css (st-business, st-night).
@@ -61,7 +61,8 @@ export function logoFlower(size = 44): string {
 }
 
 // Цветочек человека: у голд — золотой, у остальных — зелёный «в сети» и красный «не в сети»
-export function userFlower(user: { gold?: boolean } | undefined, online: boolean, size = 16): string {
+export function userFlower(user: { gold?: boolean; tier?: string } | undefined, online: boolean, size = 16): string {
+  if (user?.tier === 'black') return blackFlowerSvg(size, online);
   return user?.gold ? goldFlowerSvg(size, online) : flower(online ? 'online' : 'offline', size);
 }
 

@@ -96,7 +96,8 @@ export type WallEvent =
   | { type: 'wall_comment'; postId: number; comment: WallComment }
   | { type: 'wall_del'; postId: number }
   | { type: 'wall_react'; postId: number; reactions: Record<string, number>; by: number; emoji: string | null }
-  | { type: 'wall_tip'; postId: number; tips: number; by: number; amount: number };
+  | { type: 'wall_tip'; postId: number; tips: number; by: number; amount: number }
+  | { type: 'night_msg'; message: import('./night.ts').NightMsg };
 const listeners = new Set<(e: WallEvent) => void>();
 export function onWall(l: (e: WallEvent) => void) {
   listeners.add(l);

@@ -5,6 +5,10 @@ import { adminInfo, adminSetAi, adminCheckAi, adminSetPeople, adminSetSms, admin
 import type { AdminInfo } from '../lib/store.ts';
 
 type AdminUser = AdminInfo['users'][number];
+import { adminSetTier, catalogClaims, decideClaim } from '../lib/levels.ts';
+import type { CatalogItem } from '../lib/levels.ts';
+import { setPresident } from '../lib/night.ts';
+import { TierBadge } from './Levels.tsx';
 import { ApiError } from '../lib/api.ts';
 import { Plate } from './Plate.tsx';
 import { Dialog } from './Win.tsx';
@@ -160,7 +164,7 @@ export function Admin() {
 
       <div className="groupbox">
         <div className="legend">👥 Люди ({info.users.length})</div>
-        <div className="hint">★ — голд (админы, у них золотая серия АМР). Голд может менять номера, начислять аськоины, блокировать и назначать голд. Снять голд и заблокировать админа может только супер-админ.</div>
+        <div className="hint">👑 — админы: меняют номера, начисляют аськоины, блокируют, выдают уровни. Снять админа и заблокировать админа может только супер-админ. Уровни: 👤 Гость, ⭐ Голд (навсегда или на 30 дней), 🖤 Блэк. Админ всегда не ниже Голд, супер-админ — Блэк.</div>
         <div className="aska-admin-users">
           {info.users.map((u) => {
             const isMe = u.id === info.me.id;
@@ -168,18 +172,29 @@ export function Admin() {
             return (
               <div key={u.id} className={`aska-admin-user${u.blocked ? ' blocked' : ''}`}>
                 <div className="row">
-                  <b>{u.displayName}{u.isAdmin && <span className="aska-gold" title="Голд">★</span>}{u.role === 'super' ? ' · супер-админ' : ''}{isMe ? ' (ты)' : ''}</b>
+                  <b>{u.displayName}{u.isAdmin && <span title="Администратор"> 👑</span>}{u.role === 'super' ? ' · супер-админ' : ''}{isMe ? ' (ты)' : ''}</b>
+                  <TierBadge tier={u.tier} />
                   <span className="sp" />
                   {u.plateView && <Plate plate={u.plateView.code} country={u.plateView.country} level={u.plateView.level} size="s" />}
                 </div>
                 <div className="row muted">
-                  <span>{u.blocked ? '⛔ заблокирован(а) · ' : ''}{fmtPhone(u.phone)}{u.phone ? (u.phoneVerified ? ' ✓' : ' (не подтверждён)') : ''} · 🪙 {u.coins} · был(а) {ago(u.lastActive)} · логин {u.username}</span>
+                  <span>{u.blocked ? '⛔ заблокирован(а) · ' : ''}{u.tier === 'gold' && u.tierUntil ? `Голд до ${new Date(u.tierUntil).toLocaleDateString('ru-RU')} · ` : ''}{u.netSize ? `🕸 ${u.netSize} · ` : ''}{fmtPhone(u.phone)}{u.phone ? (u.phoneVerified ? ' ✓' : ' (не подтверждён)') : ''} · 🪙 {u.coins} · был(а) {ago(u.lastActive)} · логин {u.username}</span>
                 </div>
                 <div className="aska-admin-actions">
                   <button className="btn" disabled={busy} onClick={() => setPlateFor(u)}>🚗 Номер</button>
                   <button className="btn" disabled={busy} onClick={() => setCoinsFor(u)}>🪙 Аськоины</button>
-                  {u.role === 'user' && !u.blocked && <button className="btn" disabled={busy} onClick={() => act(() => adminSetRole(u.id, 'admin'))}>★ Сделать голд</button>}
-                  {u.role !== 'user' && canTouch && <button className="btn" disabled={busy} onClick={() => act(() => adminSetRole(u.id, 'user'))}>Снять голд</button>}
+                  {u.role === 'user' && !u.blocked && <button className="btn" disabled={busy} onClick={() => act(() => adminSetRole(u.id, 'admin'))}>👑 Сделать админом</button>}
+                  {u.role !== 'user' && canTouch && <button className="btn" disabled={busy} onClick={() => act(() => adminSetRole(u.id, 'user'))}>Снять админа</button>}
+                  {(canTouch || u.role === 'user') && !u.blocked && (
+                    <select className="field aska-tier-select" value="" disabled={busy} aria-label={`Уровень: ${u.displayName}`}
+                      onChange={(e) => { const [t, d] = e.target.value.split(':'); if (t) act(() => adminSetTier(u.id, t as 'guest' | 'gold' | 'black', d ? Number(d) : undefined)); }}>
+                      <option value="">🎖 Уровень…</option>
+                      <option value="guest">👤 Гость</option>
+                      <option value="gold:30">⭐ Голд на 30 дней</option>
+                      <option value="gold">⭐ Голд навсегда</option>
+                      <option value="black">🖤 Блэк</option>
+                    </select>
+                  )}
                   {canTouch && <button className="btn" disabled={busy} onClick={() => act(() => adminBlock(u.id, !u.blocked))}>{u.blocked ? 'Разблокировать' : '⛔ Заблокировать'}</button>}
                   {!isMe && !u.blocked && <button className="btn" disabled={busy} onClick={() => act(async () => { const r = await adminHelpCode(u.id); setCodes((c) => ({ ...c, [u.id]: r.code })); })}>Код для входа</button>}
                 </div>
@@ -189,6 +204,9 @@ export function Admin() {
           })}
         </div>
       </div>
+
+      <Claims />
+      <Presidents users={info.users} />
 
       {info.canInviteSuper && <SuperBox hasSuper={info.hasSuper} onDone={load} />}
 
@@ -212,7 +230,7 @@ function PlateDialog({ user, onClose, onDone }: { user: AdminUser; onClose: () =
     setError('');
     try { await adminSetPlate(user.id, { country, code }); onDone(); } catch (err) {
       const c = err instanceof ApiError ? err.code : '';
-      setError(c === 'gold_only' ? 'Серия АМР — только для голд. Сначала сделай человека голд.' : c === 'plate_taken' ? 'Этот номер уже у другого человека.' : c === 'bad_plate' ? 'Такого номера не бывает — проверь формат.' : 'Не получилось.');
+      setError(c === 'gold_only' ? 'Серия АМР — с уровня Голд. Сначала выдай человеку Голд.' : c === 'plate_taken' ? 'Этот номер уже у другого человека.' : c === 'bad_plate' ? 'Такого номера не бывает — проверь формат.' : 'Не получилось.');
       setBusy(false);
     }
   }
@@ -265,7 +283,7 @@ const SUPER_ERRORS: Record<string, string> = {
   blocked: 'Человек заблокирован — сначала разблокируй.',
 };
 
-// Супер-админ: только он может снять голд с админа и заблокировать админа. Зовут ссылкой — пароль человек задаёт сам.
+// Супер-админ: только он может снять админа и заблокировать админа. Зовут ссылкой — пароль человек задаёт сам.
 function SuperBox({ hasSuper, onDone }: { hasSuper: boolean; onDone: () => void }) {
   const [login, setLogin] = useState('');
   const [error, setError] = useState('');
@@ -293,7 +311,7 @@ function SuperBox({ hasSuper, onDone }: { hasSuper: boolean; onDone: () => void 
     <div className="groupbox col">
       <div className="legend">👑 Супер-админ</div>
       <div className="hint">
-        Только супер-админ может снять голд с админа и заблокировать админа. Позови по ссылке: впиши логин, телефон или номер
+        Только супер-админ может снять админа и заблокировать админа. Позови по ссылке: впиши логин, телефон или номер
         человека из АСЬКИ — он войдёт своим паролем (или задаст новый). Или впиши новый логин — человек сам придумает пароль.
         {hasSuper ? ' Супер-админов может быть несколько.' : ''}
       </div>
@@ -390,6 +408,52 @@ function Party({ party }: { party: AdminInfo['party'] }) {
         </div>
       )}
       {silent.length > 0 && <div className="hint mt">Ещё не ответили: {silent.map((v) => v.name).join(', ')}</div>}
+    </div>
+  );
+}
+
+// Авторство в реестре: человек отметил «это моё» — администрация согласует (галочка ✓ и блок в цепочке)
+function Claims() {
+  const [list, setList] = useState<CatalogItem[] | null>(null);
+  const load = () => catalogClaims().then(setList).catch(() => setList([]));
+  useEffect(() => { load(); }, []);
+  if (!list) return null;
+  return (
+    <div className="groupbox">
+      <div className="legend">⛓ Авторство в реестре ({list.length})</div>
+      {!list.length && <div className="hint">Заявок нет. Когда кто-то занесёт трек, фильм или книгу с отметкой «это моё», заявка появится здесь.</div>}
+      {list.map((it) => (
+        <div key={it.id} className="aska-admin-user">
+          <div className="row"><b>{it.title}</b><span className="muted"> · {it.author}{it.year ? ` · ${it.year}` : ''}</span><span className="sp" /><code>{it.token}</code></div>
+          <div className="row muted">Заявил(а): {it.rightsByName} · занёс(ла): {it.addedByName}{it.link ? ' · ' : ''}{it.link && <a href={it.link} target="_blank" rel="noopener noreferrer">ссылка</a>}</div>
+          <div className="aska-admin-actions">
+            <button className="btn primary" onClick={() => decideClaim(it.id, true).then(load).catch(() => {})}>✓ Подтвердить авторство</button>
+            <button className="btn" onClick={() => decideClaim(it.id, false).then(load).catch(() => {})}>Отказать</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Президенты ночных комнат: в «Портале» по умолчанию — Егор (первый человек АСЬКИ), в остальных — постоялец
+const NIGHT_ROOMS = [['matrix', '🟩 Матрица'], ['shar', '🔵 Шарики'], ['sofa', '🛋 Жёлтый диван'], ['portal', '🌀 Портал']];
+function Presidents({ users }: { users: AdminUser[] }) {
+  const [note, setNote] = useState('');
+  return (
+    <div className="groupbox">
+      <div className="legend">🌙 Президенты ночных комнат</div>
+      <div className="hint">Президент — главный в комнате (👑). Остальные ранги — советники, хранители, джедаи — по репутации.</div>
+      {NIGHT_ROOMS.map(([key, name]) => (
+        <div key={key} className="row aska-kv">
+          <span>{name}</span><span className="sp" />
+          <select className="field aska-tier-select" defaultValue="" onChange={(e) => setPresident(key, e.target.value ? Number(e.target.value) : null).then(() => setNote(`Готово: ${name}`)).catch(() => setNote('Не получилось'))}>
+            <option value="">{key === 'portal' ? 'по умолчанию (Егор)' : 'постоялец комнаты'}</option>
+            {users.filter((u) => !u.blocked).map((u) => <option key={u.id} value={u.id}>{u.displayName}</option>)}
+          </select>
+        </div>
+      ))}
+      {note && <div className="aska-note">{note}</div>}
     </div>
   );
 }

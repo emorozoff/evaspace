@@ -10,6 +10,9 @@ import { isIOS, isStandalone } from '../lib/platform.ts';
 import { getDesign, setDesign, logoFlower, flower } from '../lib/aska.ts';
 import type { Design } from '../lib/aska.ts';
 import { Win, Svg, Dialog } from './Win.tsx';
+import { Plate } from './Plate.tsx';
+import { PLACES, VIP_REGIONS, placeOf, lastPlace, rememberPlace } from '../lib/places.ts';
+import { setPlace as savePlace, setVipRegion } from '../lib/levels.ts';
 
 export const APP_VERSION = 'v2.0';
 
@@ -164,21 +167,35 @@ function PasswordInput({ value, onChange, autoComplete, autoFocus }: { value: st
   );
 }
 
+// Вход: номер АСЬКИ пишется прямо в «номер» — серия (А 001 МР), а регион выбирается: это место, где ты сейчас
+// (Москва 197, Питер 198, Бали, Дубай…; у Голд — 777 или 888). Можно и по телефону или старому логину.
+const LAT2CYR: Record<string, string> = { A: 'А', B: 'В', E: 'Е', K: 'К', M: 'М', H: 'Н', O: 'О', P: 'Р', C: 'С', T: 'Т', Y: 'У', X: 'Х' };
+const seriesText = (v: string) => v.toUpperCase().replace(/[ABEKMHOPCTYX]/g, (c) => LAT2CYR[c] || c).replace(/[^0-9А-ЯЁ ]/g, '').slice(0, 10);
+
 function Login({ onInvite, onForgot }: { onInvite: () => void; onForgot: (phone: string) => void }) {
+  const [byPlate, setByPlate] = useState(true);
   const [loginName, setLogin] = useState('');
+  const [region, setRegion] = useState(lastPlace());
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
+  const vip = VIP_REGIONS.includes(region);
+  const regionCode = vip ? region : placeOf(region)?.code || '';
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError('');
-    if (!loginName.trim() || !password) return setError('Введи телефон или номер АСЬКИ и пароль.');
+    if (!loginName.trim() || !password) return setError(byPlate ? 'Введи номер АСЬКИ и пароль.' : 'Введи телефон или логин и пароль.');
     setBusy(true);
     setProgress(0);
     try {
-      await login(loginName, password, setProgress);
+      await login(loginName, password, setProgress, byPlate ? regionCode : undefined);
+      // регион «где я» — сразу на номер (у Голд — VIP 777/888)
+      if (byPlate) {
+        if (vip) setVipRegion(region).catch(() => {});
+        else { rememberPlace(region); savePlace(region).catch(() => {}); }
+      }
     } catch (err) {
       setError(errorText(err));
       setBusy(false);
@@ -188,18 +205,40 @@ function Login({ onInvite, onForgot }: { onInvite: () => void; onForgot: (phone:
   return (
     <form className="col" onSubmit={submit}>
       <div className="aska-step-title">Вход</div>
-      <Field label="Телефон, номер АСЬКИ или логин">
-        <input className="field" value={loginName} onChange={(e) => setLogin(e.target.value)} placeholder="+7 999…, А 001 МР или логин"
-          autoCapitalize="characters" autoCorrect="off" spellCheck={false} autoComplete="username" />
-      </Field>
+      <div className="aska-plate-hero">
+        <Plate plate="А777МР777" country="RU" size="l" region={{ code: '777', flag: '🇷🇺', vip: true, ru: true }} />
+        <small>Например, <b>А 777 МР 777</b> — это АСЬКА Кирилла. У каждого свой номер — им и входят.</small>
+      </div>
+      {byPlate ? (
+        <Field label="Твой номер АСЬКИ">
+          <span className={`aska-plate-input${vip ? ' vip' : ''}`}>
+            <input className="pi-series" value={loginName} onChange={(e) => setLogin(seriesText(e.target.value))} placeholder="А 001 МР"
+              autoCapitalize="characters" autoCorrect="off" spellCheck={false} autoComplete="username" aria-label="Серия номера: буква, три цифры, две буквы" />
+            <select className="pi-region" value={region} onChange={(e) => setRegion(e.target.value)} aria-label="Регион — где ты сейчас">
+              <optgroup label="Где ты сейчас">
+                {PLACES.map((p) => <option key={p.key} value={p.key}>{p.code} {p.flag} {p.name}</option>)}
+              </optgroup>
+              <optgroup label="VIP (Голд и Блэк)">
+                {VIP_REGIONS.map((r) => <option key={r} value={r}>{r} ⭐ VIP</option>)}
+              </optgroup>
+            </select>
+          </span>
+        </Field>
+      ) : (
+        <Field label="Телефон или логин">
+          <input className="field" value={loginName} onChange={(e) => setLogin(e.target.value)} placeholder="+7 999… или логин"
+            autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="username" />
+        </Field>
+      )}
+      {byPlate && <div className="hint aska-region-hint">Регион — это место, где ты сейчас: {placeOf(region)?.name || `VIP ${region}`}. Его увидят на твоём номере.</div>}
       <Field label="Пароль">
         <PasswordInput value={password} onChange={setPassword} autoComplete="current-password" />
       </Field>
       <div className="err">{error}</div>
-      <div className="hint">Регистрировался(ась) раньше с логином (например, kirill)? Он тоже подходит, пароль — прежний.</div>
       <button className="btn primary aska-wide" disabled={busy}>{busy ? <Busy label="Проверяю пароль…" progress={progress} /> : 'Войти'}</button>
       <div className="aska-links">
-        <button type="button" className="link aska-linkbtn" onClick={() => onForgot(/\d{6,}/.test(loginName.replace(/\D/g, '')) ? loginName : '')}>Не помню пароль</button>
+        <button type="button" className="link aska-linkbtn" onClick={() => { setByPlate((v) => !v); setLogin(''); setError(''); }}>{byPlate ? 'Войти по телефону или логину' : 'Войти по номеру АСЬКИ'}</button>
+        <button type="button" className="link aska-linkbtn" onClick={() => onForgot(/\d{6,}/.test(loginName.replace(/\D/g, '')) && !byPlate ? loginName : '')}>Не помню пароль</button>
         <button type="button" className="link aska-linkbtn" onClick={onInvite}>У меня приглашение</button>
       </div>
       <a className="link aska-linkbtn aska-about-link" href="/site/" target="_blank" rel="noopener">Что такое АСЬКА? Правила и уровни →</a>

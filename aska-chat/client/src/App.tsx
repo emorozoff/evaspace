@@ -15,6 +15,7 @@ import { Profile, CircleInfo } from './components/Profile.tsx';
 import type { WallView } from './components/Wall.tsx';
 import { Plate } from './components/Plate.tsx';
 import { useDesign, useSplit, chatIsBiz } from './lib/space.ts';
+import { VipPicker } from './components/Levels.tsx';
 
 function chatFromHash(): string | null {
   const m = location.hash.match(/chat=([^&]+)/);
@@ -32,8 +33,20 @@ export default function App() {
   const [circleInfo, setCircleInfo] = useState<string | null>(null);
   const [superCode, setSuperCode] = useState('');
   const [wallView, setWallView] = useState<WallView>({ kind: 'feed' });
-  const business = useDesign() === 'business';
+  const design = useDesign();
+  const business = design === 'business';
+  const night = design === 'night';
   const split = useSplit();
+  const [vipAsk, setVipAsk] = useState(false);
+  // в Ночь — сразу к комнатам
+  useEffect(() => { if (night) { setChat(null); setAux('night'); } }, [night]);
+  // Голд или Блэк без VIP-региона — один раз спросить: 777 или 888
+  const tierNow = s.profile?.tier;
+  useEffect(() => {
+    if (s.phase !== 'ready' || !tierNow || tierNow === 'guest' || s.profile?.vipRegion) return;
+    try { if (localStorage.getItem('aska-vip-asked') === '1') return; localStorage.setItem('aska-vip-asked', '1'); } catch { /* приватный режим */ }
+    setVipAsk(true);
+  }, [s.phase, tierNow, s.profile?.vipRegion]);
 
   useEffect(() => {
     if (location.hash.includes('chat=')) history.replaceState(null, '', location.pathname);
@@ -123,7 +136,7 @@ export default function App() {
     <div className={cls}>
       <div className="wins">
         <Contacts activeChat={chatOpen} onOpen={openChat} onProfile={setProfile} onSettings={() => setAux('settings')} onInvite={() => setAux('invite')} onAux={setAux} />
-        {aux && <Aux kind={aux} onBack={() => setAux(aux === 'admin' || aux === 'invite' ? 'settings' : null)} onOpen={openChat} onAux={setAux}
+        {aux && <Aux kind={aux} onBack={() => setAux(['admin', 'invite', 'levels', 'network', 'rules'].includes(aux) ? 'settings' : aux === 'ledger' ? 'music' : null)} onOpen={openChat} onAux={setAux}
           wallView={wallView} onWallView={setWallView} onProfile={setProfile} />}
         {chatOpen && <ChatView key={chatOpen} chatId={chatOpen} onBack={() => setChat(null)} onProfile={setProfile} onCircleInfo={setCircleInfo} onOpen={openChat} />}
       </div>
@@ -147,7 +160,19 @@ export default function App() {
           <div className="t"><b>{toast.name}</b><div>{toast.text}</div></div>
         </div>
       )}
-      {business ? (
+      {vipAsk && <VipPicker first onClose={() => setVipAsk(false)} />}
+      {night ? (
+        <nav className="tabbar aska-night-tabs">
+          <button className={aux === 'night' ? 'on' : ''} onClick={() => tab('night')}><i>🚪</i><span>Комнаты</span></button>
+          <button className={aux === 'music' || aux === 'ledger' ? 'on' : ''} onClick={() => tab('music')}><i>🎵</i><span>Музыка</span></button>
+          <button className={aux === 'films' ? 'on' : ''} onClick={() => tab('films')}><i>🎬</i><span>Кино</span></button>
+          <button className={aux === 'books' ? 'on' : ''} onClick={() => tab('books')}><i>📚</i><span>Книги</span></button>
+          <button className={!aux ? 'on' : ''} onClick={() => { setAux(null); setChat(null); }}>
+            <i>💬</i><span>Чаты</span>{unread > 0 && <b className="tb-badge">{unread}</b>}
+          </button>
+          <button className={['settings', 'invite', 'admin', 'levels', 'network', 'rules'].includes(aux || '') ? 'on' : ''} onClick={() => tab('settings')}><i>☰</i><span>Ещё</span></button>
+        </nav>
+      ) : business ? (
         <nav className="tabbar aska-biz-tabs">
           <button className={!aux ? 'on' : ''} onClick={() => { setAux(null); setChat(null); }}>
             <i>💬</i><span>Чаты</span>{unread > 0 && <b className="tb-badge">{unread}</b>}

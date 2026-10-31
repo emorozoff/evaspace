@@ -14,6 +14,8 @@ import { UserPlate, Gold } from './Plate.tsx';
 import { PlateCard } from './Plates.tsx';
 import { StatusPicker } from './Status.tsx';
 import { AddMembersDialog } from './Business.tsx';
+import { TierBadge } from './Levels.tsx';
+import { placeOf } from '../lib/places.ts';
 import { BIZ_SECTIONS, isBizGroup, useSplit, bizOf } from '../lib/space.ts';
 
 const GROUP_NAMES: { key: Group; label: string }[] = [{ key: 'close', label: '💛 Ближний круг' }, { key: 'meet', label: '👋 Знакомства' }];
@@ -60,7 +62,13 @@ export function Profile({ userId, onClose, onOpenChat, onWall }: { userId: numbe
           <Ico className={`ico big${u.gold ? ' gold' : ''}`} html={isAska ? flower('chat', 40) : isFriendAi ? '<span class="aska-ico-emo">👨</span>' : userFlower(u, online || itsMe, 40)} />
           <div className="who">
             <b>{u.displayName}<Gold user={u} big />{(isAska || isFriendAi) && <span className="aska-tag">ИИ</span>}</b>
-            <div className="muted">{u.blocked ? 'заблокирован(а)' : isAska ? 'всегда на связи' : online || itsMe ? 'в сети' : 'не в сети'}{u.city ? ` · ${u.city}` : ''}{u.gold ? ' · голд' : ''}</div>
+            <div className="muted">{u.blocked ? 'заблокирован(а)' : isAska ? 'всегда на связи' : online || itsMe ? 'в сети' : 'не в сети'}{u.city ? ` · ${u.city}` : ''}</div>
+            {!isAska && !isFriendAi && (
+              <div className="aska-prof-tags">
+                {u.tier && u.tier !== 'guest' && <TierBadge tier={u.tier} />}
+                {placeOf(u.place) && <span className="aska-place-chip">📍 {placeOf(u.place)!.flag} {placeOf(u.place)!.name}</span>}
+              </div>
+            )}
             {u.status && <div className="aska-st-line">{statusLine(u.status)}</div>}
           </div>
         </div>
