@@ -194,14 +194,14 @@ test('видео-квадратик: вид сообщения в шифре, п
   assert.equal(body.kind, 'video');
   assert.equal(body.video.blob, 'abc123');
   assert.equal(body.video.dur, 7.4);
-  assert.equal(previewText(body), '🎬 Видео-квадратик');
-  assert.equal(serverPreview({ kind: 'video' }), '🎬 Видео-квадратик');
+  assert.equal(previewText(body), '🎬 Видеоквадратик');
+  assert.equal(serverPreview({ kind: 'video' }), '🎬 Видеоквадратик');
   // чужой «mime» и картинка не из data: не проходят
   const bad = encodeOutgoing('dm:1:2', 'u-2', { kind: 'video', video: { ...video, mime: 'text/html', thumb: 'https://evil' } }, [{ id: 2, pk: b.pk }], 1, a.sk);
   const badBody = decodeIncoming({ id: 6, chatId: 'dm:1:2', senderId: 1, uuid: 'u-2', createdAt: 1, ...bad[0] }, a.pk, b.sk);
   assert.equal(badBody.kind, 'text');
   const thumbOk = encodeOutgoing('dm:1:2', 'u-3', { kind: 'video', video: { ...video, thumb: 'https://evil' } }, [{ id: 2, pk: b.pk }], 1, a.sk);
   assert.equal(decodeIncoming({ id: 7, chatId: 'dm:1:2', senderId: 1, uuid: 'u-3', createdAt: 1, ...thumbOk[0] }, a.pk, b.sk).video.thumb, undefined);
-  assert.match(P.askaScripted('[видео-квадратик]', {}).join(' '), /квадратик/);
+  assert.match(P.askaScripted('[видеоквадратик]', {}).join(' '), /квадратик/);
   assert.ok(fromB64);
 });

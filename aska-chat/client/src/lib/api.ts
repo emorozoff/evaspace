@@ -46,6 +46,8 @@ export const api = {
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body ?? {}),
   del: <T>(path: string) => request<T>('DELETE', path),
   upload: (data: Uint8Array) => request<{ id: string }>('POST', '/blobs', undefined, data),
+  // файл как есть (НФТ-галерея: фото, видео, музыка) — тип файла сервер проверяет по первым байтам
+  uploadRaw: <T>(path: string, data: Uint8Array, type: string) => request<T>('POST', path, undefined, data, type),
   // фото для стены — не шифруется: стену видят все в АСЬКЕ
   uploadWallPhoto: (data: Uint8Array, mime: string) => request<{ id: string }>('POST', '/wall/photo', undefined, data, mime),
   async fetchBlob(path: string): Promise<Blob> {

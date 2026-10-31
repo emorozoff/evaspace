@@ -39,6 +39,20 @@ export const STICKERS: StickerDef[] = [
   { id: 'gg', e: '🎮', cap: 'GG', bg: ['#1b2a6b', '#00c2ff'], anim: 'bounce' },
   { id: 'cvetok', e: '🌼', cap: 'ЦВЕТОЧЕК ТЕБЕ', bg: ['#7be08a', '#2fb36a'], anim: 'spinslow', fx: 'sparkle' },
   { id: 'pushka', e: '💣', cap: 'ПУШКА', bg: ['#3b0d0d', '#ff3b1f'], anim: 'shake', fx: 'flash' },
+  { id: 'rrr', e: '🦖', cap: 'Р-Р-Р!', bg: ['#9be36b', '#2e7d32'], anim: 'shake', fx: 'flash' },
+  { id: 'gav', e: '🐶', cap: 'ГАВ!', bg: ['#ffd27a', '#ff8a3d'], anim: 'bounce' },
+  { id: 'mur', e: '🐈', cap: 'МУР', bg: ['#ffcfa8', '#ff8fa3'], anim: 'sway', fx: 'sparkle' },
+  { id: 'kek', e: '😹', cap: 'КЕК', bg: ['#ffe14d', '#ff9500'], anim: 'wobble' },
+  { id: 'izi', e: '😏', cap: 'ИЗИ', bg: ['#4fd1ff', '#1565ff'], anim: 'tilt' },
+  { id: 'rofl', e: '🤣', cap: 'РОФЛ', bg: ['#ff9a3c', '#ff3d3d'], anim: 'spin' },
+  { id: 'dushno', e: '🥵', cap: 'ДУШНО', bg: ['#ff8a3d', '#c2185b'], anim: 'pulse' },
+  { id: 'bro', e: '🤜', cap: 'БРО', bg: ['#3b2a6b', '#7b2ff7'], anim: 'boom', fx: 'flash' },
+  { id: 'slay', e: '💅', cap: 'СЛЭЙ', bg: ['#ff8fb8', '#b06cff'], anim: 'bob', fx: 'sparkle' },
+  { id: 'vau', e: '🤩', cap: 'ВАУ', bg: ['#ffd23f', '#ff5fb7'], anim: 'zoomfast', fx: 'sparkle' },
+  { id: 'go', e: '🏃', cap: 'ГО!', bg: ['#4cd97b', '#14936b'], anim: 'dance' },
+  { id: 'sps', e: '🙏', cap: 'СПС', bg: ['#7ec8ff', '#5b8cff'], anim: 'nod', fx: 'sparkle' },
+  { id: 'velichestvo', e: '👑', cap: 'ВАШЕ ВЕЛИЧЕСТВО', bg: ['#a3233b', '#c9a14a'], anim: 'float', fx: 'sparkle' },
+  { id: 'nft', e: '💎', cap: 'ЭТО НФТ', bg: ['#1b2a6b', '#00c2ff'], anim: 'spinslow', fx: 'sparkle' },
 ];
 export const stickerOf = (id?: string) => STICKERS.find((x) => x.id === id);
 export interface WallInfo { owner: number; posts: WallPost[]; fridge: { code: string; n: number }[]; stats: { posts: number; flowers: number } }

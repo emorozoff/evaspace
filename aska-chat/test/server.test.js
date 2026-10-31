@@ -118,7 +118,10 @@ test('регистрация по приглашениям', async () => {
   assert.ok(st.data.users.some((u) => u.kind === 'aska'), 'Аська есть у всех');
   assert.equal(st.data.users.filter((u) => u.kind === 'twin').length, 3, 'у каждого свой ИИ');
   const general = st.data.chats.find((x) => x.id === 'general');
-  assert.equal(general.members.length, 3);
+  const aska = st.data.users.find((u) => u.kind === 'aska');
+  assert.equal(general.members.length, 4, 'в общем чате все участники и Аська-консьерж');
+  assert.ok(general.members.some((m) => m.userId === aska.id));
+  U.aska = { userId: aska.id, pk: fromB64(aska.boxPk) };
   assert.ok(st.data.vapidPublicKey);
 });
 
@@ -143,7 +146,8 @@ test('сообщение в общий чат: доставка, расшифр�
   });
   assert.equal(evil.status, 400, 'чужие адреса для пушей не принимаем');
 
-  const members = [U.alice, U.bob, U.carol].map((u) => ({ id: u.userId, pk: u.kp.pk }));
+  // в общем чате ещё и Аська-консьерж — шифруем и для неё
+  const members = [...[U.alice, U.bob, U.carol].map((u) => ({ id: u.userId, pk: u.kp.pk })), { id: U.aska.userId, pk: U.aska.pk }];
   const boxes = encodeOutgoing('general', 'uuid-0001', { kind: 'text', text: 'Привет всем!' }, members, U.alice.userId, U.alice.kp.sk);
 
   const bad = await call('POST', '/api/messages', { token: U.alice.token, body: { chatId: 'general', uuid: 'uuid-0000', boxes: boxes.slice(0, 2) } });
@@ -198,7 +202,7 @@ test('кто в сети: видно в состоянии и приходит �
 
 test('сервер не может перенести сообщение в другой чат', async () => {
   const sync = await call('GET', '/api/sync?after=0', { token: U.bob.token });
-  const row = sync.data.messages[0];
+  const row = sync.data.messages.find((m) => m.id === U.firstMsg);
   assert.ok(decodeIncoming(row, U.alice.kp.pk, U.bob.kp.sk));
   assert.equal(decodeIncoming({ ...row, chatId: 'dm:1:2' }, U.alice.kp.pk, U.bob.kp.sk), null);
   assert.equal(decodeIncoming(row, U.carol.kp.pk, U.bob.kp.sk), null, 'подделать отправителя нельзя');

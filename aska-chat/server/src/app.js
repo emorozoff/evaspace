@@ -23,6 +23,8 @@ import { createNight } from './night.js';
 import { createCatalog } from './catalog.js';
 import { bookView } from './book.js';
 import { createCalls } from './calls.js';
+import { createNft } from './nft.js';
+import { createFx } from './fx.js';
 
 const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
@@ -80,7 +82,7 @@ const GUESS_BONUS = 15;
 const WELCOME_COINS = 100;
 
 export function createApp({
-  dataDir, staticDir, publicUrl, pushSender, smsSender, aiImpl, botTiming, startBots = true, trustProxy = false, log = console.log,
+  dataDir, staticDir, publicUrl, pushSender, smsSender, aiImpl, botTiming, startBots = true, trustProxy = false, log = console.log, fxFetch,
 }) {
   const db = openDb(dataDir);
   const blobDir = path.join(dataDir, 'blobs');
@@ -392,6 +394,19 @@ export function createApp({
   const coin = (id, d, why) => M.addCoins(db, id, d, why);
   const night = createNight({ db, ai, log, addCoins: coin, userRow, sendToAll, timing: botTiming || {} });
   const catalog = createCatalog({ db, addCoins: coin, userRow, askaId: () => bots.askaId() });
+  // 💎 НФТ-галерея: весточки от Аськи совладельцам (при выпуске) и правообладателям с продавцом (при продаже)
+  const nft = createNft({ db, dataDir, ai, addCoins: M.addCoins, userRow, log, onEvent: (what, e) => {
+    try {
+      const title = `«${e.nft.title}» (${e.nft.token})`;
+      if (what === 'mint') {
+        for (const r of e.rights) if (r.role === 'coauthor') bots.askaSay(r.userId, [`💎 ${e.nft.authorName} выпустил(а) НФТ ${title} и указал(а) тебя совладельцем: твоя доля — ${r.share}%. При продаже часть аськоинов придёт тебе. Галерея — «Ещё» → «💎 Галерея НФТ».`]);
+      } else if (what === 'sale') {
+        const buyer = userRow(e.buyerId)?.display_name || '?';
+        for (const p of e.payouts) bots.askaSay(p.userId, [`💎 ${buyer} купил(а) НФТ ${title} за ${e.price} 🪙. ${p.seller ? 'Тебе как продавцу' : 'Твоя доля правообладателя'}: +${p.coins} 🪙`]);
+      }
+    } catch (err) { log('nft event', err); }
+  } });
+  const fx = createFx({ db, fetchImpl: fxFetch || globalThis.fetch, log });
   bots.init();
 
   const onlineIds = () => [...new Set([...conns.keys(), ...offlineTimers.keys(), ...bots.onlineIds()])];
@@ -550,6 +565,7 @@ export function createApp({
         db.prepare('UPDATE invites SET used_by = ?, used_at = ? WHERE code = ?').run(userId, now, code);
         // нетворк: всем вверх по цепочке +1, 2-й и 3-й линии — аськоины
         NET.onJoined(db, userId, name, (id, d, why) => M.addCoins(db, id, d, why));
+        if (body.charter) db.prepare('UPDATE users SET charter_at = ? WHERE id = ?').run(now, userId); // прочитал(а) «Правила и цели»
         const maxId = db.prepare('SELECT MAX(id) AS id FROM messages').get().id || 0;
         db.prepare('INSERT INTO chat_members (chat_id, user_id, read_up_to) VALUES (?, ?, ?)').run(GENERAL_CHAT, userId, maxId);
         return { userId, plate, username: uname, token: createSession(userId), inviter: inviter || null };
@@ -778,6 +794,43 @@ export function createApp({
 
   // Стены: записи, фото, открытки, магниты, цветочки и «Стена АСЬКИ» (server/src/wall.js)
   wall.mount(api, { auth, json, allow, userRow });
+  nft.mount(api, { auth, json, allow, isAdmin: M.isAdmin });
+
+  // 📈 биржа: курсы валют, условный курс аськоина (10 🪙 = $1) и рынок НФТ
+  api.get('/fx', auth, async (req, res) => {
+    const r = await fx.rates();
+    const coins = db.prepare("SELECT COALESCE(SUM(coins), 0) AS n, COUNT(*) AS people FROM users WHERE kind = 'human'").get();
+    res.json({ ...r, market: nft.market(), coins: { total: coins.n, people: coins.people } });
+  });
+
+  // 🔗 цепочка для телефонов: каждый хранит у себя копию блоков и сам проверяет хеши — подделку увидит любой
+  api.get('/ledger/chain', auth, (req, res) => {
+    const after = Math.max(0, parseInt(req.query.after, 10) || 0);
+    const rows = db.prepare('SELECT * FROM ledger WHERE id > ? ORDER BY id LIMIT 500').all(after);
+    const head = db.prepare('SELECT id, hash FROM ledger ORDER BY id DESC LIMIT 1').get();
+    const at = parseInt(req.query.check, 10); // сверить свой старый блок: тот же ли хеш у сервера
+    const checkRow = at > 0 ? db.prepare('SELECT id, hash FROM ledger WHERE id = ?').get(at) : null;
+    res.json({
+      blocks: rows.map((b) => ({ id: b.id, kind: b.kind, ref: b.ref, actor: b.actor_id, data: b.data, prev: b.prev_hash, hash: b.hash, at: b.at })),
+      head: head ? { block: head.id, hash: head.hash } : { block: 0, hash: L.GENESIS }, check: checkRow ? { block: checkRow.id, hash: checkRow.hash } : null,
+    });
+  });
+  const witnesses = () => {
+    const head = db.prepare('SELECT id, hash FROM ledger ORDER BY id DESC LIMIT 1').get();
+    const ok = db.prepare('SELECT COUNT(*) AS n FROM ledger_witness w JOIN ledger l ON l.id = w.block AND l.hash = w.hash').get().n;
+    const atHead = head ? db.prepare('SELECT COUNT(*) AS n FROM ledger_witness WHERE block = ? AND hash = ?').get(head.id, head.hash).n : 0;
+    return { blocks: head?.id || 0, head: head?.hash || L.GENESIS, witnesses: ok, atHead };
+  };
+  api.post('/ledger/witness', auth, json, (req, res) => {
+    const block = Number(req.body?.block);
+    const hash = String(req.body?.hash || '');
+    const b = Number.isInteger(block) && block > 0 ? db.prepare('SELECT id, hash FROM ledger WHERE id = ?').get(block) : null;
+    if (!b || b.hash !== hash) return res.status(409).json({ error: 'mismatch', ...witnesses() });
+    db.prepare('INSERT INTO ledger_witness (user_id, block, hash, at) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET block = excluded.block, hash = excluded.hash, at = excluded.at')
+      .run(req.userId, block, hash, Date.now());
+    res.json({ ok: true, ...witnesses() });
+  });
+  api.get('/ledger/network', auth, (req, res) => res.json(witnesses()));
 
   // ---------- уровни: Гость / Голд / Блэк ----------
 
@@ -1599,7 +1652,7 @@ export function createApp({
 
   // ---------- файлы, приглашения, пуши ----------
 
-  api.post('/blobs', auth, express.raw({ type: 'application/octet-stream', limit: '20mb' }), (req, res) => {
+  api.post('/blobs', auth, express.raw({ type: 'application/octet-stream', limit: '50mb' }), (req, res) => {
     if (!allow(`blob:${req.userId}`, 60, 600_000)) return res.status(429).json({ error: 'too_many' });
     if (!Buffer.isBuffer(req.body) || req.body.length < 17) return res.status(400).json({ error: 'empty' });
     const id = crypto.randomBytes(16).toString('hex');
@@ -1767,5 +1820,5 @@ export function createApp({
     return new Promise((resolve) => server.close(() => { db.close(); resolve(); }));
   }
 
-  return { app, server, db, close, bots, ai, wall, night, catalog, calls, createInvite: (by) => formatInvite(createInvite(db, by)) };
+  return { app, server, db, close, bots, ai, wall, night, catalog, calls, nft, fx, createInvite: (by) => formatInvite(createInvite(db, by)) };
 }

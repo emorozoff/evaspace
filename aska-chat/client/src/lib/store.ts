@@ -156,7 +156,7 @@ export async function register(
 ) {
   const k = await newKeys(f.password, onProgress);
   const r = await api.post<{ token: string; userId: number; plate: string; username: string }>('/register', {
-    invite: f.invite, displayName: f.displayName, phone: f.phone, phoneTicket: f.phoneTicket, ...k.body,
+    invite: f.invite, displayName: f.displayName, phone: f.phone, phoneTicket: f.phoneTicket, charter: true, ...k.body, // charter — прочитал(а) «Правила и цели»
   });
   const session = { token: r.token, userId: r.userId, username: r.username };
   await saveCredentials(session, k.keys);
@@ -631,7 +631,7 @@ function putPending(msg: Msg) {
   set({ messages });
 }
 
-export async function sendText(chatId: string, text: string, reply?: number, extra?: Pick<Body, 'act' | 'gift'>) {
+export async function sendText(chatId: string, text: string, reply?: number, extra?: Pick<Body, 'act' | 'gift' | 'gif'>) {
   const body: Body = { kind: 'text', text, ...extra };
   if (reply) body.reply = reply;
   const msg: Msg = newPending(chatId, body);
@@ -654,12 +654,26 @@ export async function sendImage(chatId: string, file: File, reply?: number) {
   await deliver(msg.uuid);
 }
 
-// Видео-квадратик: шифруем целиком на телефоне, как фото
-export async function sendVideo(chatId: string, video: Blob, dur: number, thumb?: string, reply?: number) {
+// Видеоквадратик (или видео из галереи — sq: false): шифруем целиком на телефоне, как фото
+export async function sendVideo(chatId: string, video: Blob, dur: number, thumb?: string, reply?: number, opts?: { sq?: boolean; w?: number; h?: number }) {
   const bytes = new Uint8Array(await video.arrayBuffer());
   const f = C.encryptFile(bytes);
   const mime = (video.type || 'video/mp4').split(';')[0];
-  const body: Body = { kind: 'video', video: { blob: '', key: f.key, nonce: f.nonce, hash: f.hash, mime, dur: Math.round(dur * 10) / 10, thumb } };
+  const body: Body = { kind: 'video', video: { blob: '', key: f.key, nonce: f.nonce, hash: f.hash, mime, dur: Math.round(dur * 10) / 10, thumb,
+    ...(opts?.sq === false ? { sq: false, w: opts.w || 0, h: opts.h || 0 } : {}) } };
+  if (reply) body.reply = reply;
+  const msg: Msg = { ...newPending(chatId, body), localImage: blobUrl(new Blob([bytes as BlobPart], { type: mime })) };
+  pending.set(msg.uuid, { msg, ct: f.ct });
+  putPending(msg);
+  await deliver(msg.uuid);
+}
+
+// Музыка из файлов телефона — тоже шифруется целиком
+export async function sendAudio(chatId: string, file: Blob, dur: number, name?: string, reply?: number) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const f = C.encryptFile(bytes);
+  const mime = (file.type || 'audio/mpeg').split(';')[0];
+  const body: Body = { kind: 'audio', audio: { blob: '', key: f.key, nonce: f.nonce, hash: f.hash, mime, dur: Math.round(dur), name: name?.slice(0, 80) } };
   if (reply) body.reply = reply;
   const msg: Msg = { ...newPending(chatId, body), localImage: blobUrl(new Blob([bytes as BlobPart], { type: mime })) };
   pending.set(msg.uuid, { msg, ct: f.ct });
@@ -687,6 +701,10 @@ async function deliver(uuid: string) {
     if (msg.body?.kind === 'video' && msg.body.video && !msg.body.video.blob) {
       const { id } = await api.upload(p.ct!);
       msg.body = { ...msg.body, video: { ...msg.body.video, blob: id } };
+    }
+    if (msg.body?.kind === 'audio' && msg.body.audio && !msg.body.audio.blob) {
+      const { id } = await api.upload(p.ct!);
+      msg.body = { ...msg.body, audio: { ...msg.body.audio, blob: id } };
     }
     let r: { id: number; createdAt: number } | null = null;
     for (let attempt = 0; !r; attempt++) {

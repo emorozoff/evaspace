@@ -239,6 +239,7 @@ function migrate(db) {
   migrateV9(db);
   migrateV10(db);
   migrateV11(db);
+  migrateV12(db);
 }
 
 // Третья версия (22.10.2026): номера-токены (покупка, улучшение, рынок), аськоины, роли (голд-админы, супер-админ), блокировка.
@@ -460,6 +461,78 @@ function migrateV9(db) {
 
 // Десятое обновление (31.10.2026): уровни (Гость / Голд / Блэк), нетворк, место-регион на номере,
 // реестр на внутренней цепочке блоков (музыка, кино, книги), ночные комнаты с НФТ-аватарами.
+// Двенадцатое (31.10.2026): НФТ-галерея (фото, видео, музыка, гифки) с авторами и совладельцами, сделки,
+// курсы валют для биржи, «свидетели» цепочки (телефоны, которые проверили блоки), принятие правил при регистрации
+function migrateV12(db) {
+  addColumn(db, 'users', 'charter_at', 'INTEGER'); // когда человек принял «Правила и цели»
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS nfts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      kind TEXT NOT NULL,                 -- gif | photo | video | music
+      title TEXT NOT NULL,
+      about TEXT,
+      spec TEXT,                          -- гифка по ТЗ: JSON (эмодзи, подпись, фон, движение, эффект, голос)
+      brief TEXT,                         -- само ТЗ
+      media TEXT,                         -- файл (фото, видео, музыка, загруженная гифка)
+      mime TEXT,
+      media_hash TEXT,                    -- SHA-256 файла: сертификат доказывает, что файл тот самый
+      w INTEGER, h INTEGER, dur REAL,
+      author_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      owner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      price INTEGER NOT NULL,
+      for_sale INTEGER NOT NULL DEFAULT 1,
+      physical_kind TEXT,                 -- ring | necklace | bracelet | other — вещь в реальном мире
+      physical_serial TEXT,               -- её особый номер (эксклюзивный экземпляр)
+      physical_note TEXT,
+      created_at INTEGER NOT NULL,
+      block INTEGER,
+      hidden INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS nfts_kind ON nfts (kind, id);
+    CREATE INDEX IF NOT EXISTS nfts_owner ON nfts (owner_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS nfts_serial ON nfts (physical_serial) WHERE physical_serial IS NOT NULL;
+    -- правообладатели и выгодоприобретатели: автор и совладельцы (ближний круг) со своими долями, вместе 100%
+    CREATE TABLE IF NOT EXISTS nft_rights (
+      nft_id INTEGER NOT NULL REFERENCES nfts(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      share INTEGER NOT NULL,
+      role TEXT NOT NULL,                 -- author | coauthor
+      PRIMARY KEY (nft_id, user_id)
+    );
+    CREATE TABLE IF NOT EXISTS nft_trades (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nft_id INTEGER NOT NULL REFERENCES nfts(id) ON DELETE CASCADE,
+      seller_id INTEGER, buyer_id INTEGER,
+      price INTEGER NOT NULL,
+      at INTEGER NOT NULL,
+      block INTEGER
+    );
+    CREATE INDEX IF NOT EXISTS nft_trades_at ON nft_trades (at);
+    CREATE TABLE IF NOT EXISTS nft_media (
+      id TEXT PRIMARY KEY,
+      uploader_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      mime TEXT NOT NULL,
+      size INTEGER NOT NULL,
+      hash TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+    -- курсы валют по дням (рублей за единицу) — для биржи и графиков
+    CREATE TABLE IF NOT EXISTS fx_rates (
+      date TEXT PRIMARY KEY,
+      data TEXT NOT NULL,
+      source TEXT NOT NULL,
+      at INTEGER NOT NULL
+    );
+    -- телефоны-свидетели: до какого блока человек проверил цепочку у себя и с каким хешем
+    CREATE TABLE IF NOT EXISTS ledger_witness (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      block INTEGER NOT NULL,
+      hash TEXT NOT NULL,
+      at INTEGER NOT NULL
+    );
+  `);
+}
+
 // Одиннадцатое (31.10.2026): стиль «Царская особа» — Аська обращается «Ваше Величество»
 function migrateV11(db) {
   addColumn(db, 'users', 'royal', 'INTEGER NOT NULL DEFAULT 0');

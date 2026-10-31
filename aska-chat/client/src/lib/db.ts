@@ -37,6 +37,7 @@ interface KV {
   users: Record<number, LocalUser>;
   chats: Record<string, LocalChat>;
   lastSeq: number;
+  chain: { blocks: { id: number; kind: string; ref: string; actor: number | null; data: string; prev: string; hash: string; at: number }[]; verifiedAt: number; ok: boolean; brokenAt?: number; tamperedAt?: number }; // копия цепочки АСЬКИ (Web3)
 }
 
 let dbp: Promise<IDBPDatabase> | null = null;

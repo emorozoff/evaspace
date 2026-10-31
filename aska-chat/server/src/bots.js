@@ -3,11 +3,12 @@
 // сообщения и отвечают так же, как люди. Все отложенные дела лежат в таблице bot_jobs и переживают перезапуск.
 import crypto from 'node:crypto';
 import { newKeys, decodeIncoming } from './seal.js';
-import { getSetting, setSetting } from './db.js';
+import { getSetting, setSetting, GENERAL_CHAT } from './db.js';
 import { ASKA_PLATE, formatCode, randomFreeCode, regionForCity, keyTaken, plateKey } from './plates.js';
 import * as M from './market.js';
 import * as P from './personas.js';
 import { CARDS, MAGNET_NAMES } from './wall.js';
+import { placeOf } from './places.js';
 
 const ANNOUNCE = '2026-10-21-v2';
 const MSK = 3 * 3_600_000;
@@ -152,7 +153,9 @@ export function createBots(ctx) {
     if (!body) return '(не удалось прочитать)';
     let t = body.text ? String(body.text).slice(0, 1500) : '';
     if (body.kind === 'image') t = `[фото]${t ? ` ${t}` : ''}`;
-    if (body.kind === 'video') t = '[видео-квадратик]';
+    if (body.kind === 'video') t = '[видеоквадратик]';
+    if (body.kind === 'audio') t = `[музыка${body.audio?.name ? `: ${String(body.audio.name).slice(0, 60)}` : ''}]`;
+    if (body.gif) t = `[гифка «${String(body.gif.cap || '').slice(0, 30)}»]`;
     if (body.act === 'compliment') t = `[просит передать хозяину комплимент] ${t}`;
     if (body.act === 'question') t = `[вопрос хозяину] ${t}`;
     if (body.act === 'gift') t = `[дарит хозяину ${(P.GIFTS[body.gift] || P.GIFTS.flowers).name}] ${t}`;
@@ -357,6 +360,10 @@ export function createBots(ctx) {
       case 'person_open': return personOpenJob(j.bot_id, payload);
       case 'thank': return thankJob(j.bot_id, payload);
       case 'person_answer': return personAnswerJob(j.bot_id, payload);
+      case 'aska_clip': return askaClipJob(j.bot_id, j.chat_id, payload);
+      case 'concierge_hello': return conciergeHelloJob(j.bot_id, payload);
+      case 'concierge_reply': return conciergeReplyJob(j.bot_id, payload);
+      case 'concierge_intro': return conciergeIntroJob(j.bot_id);
       default: return null;
     }
   }
@@ -401,6 +408,18 @@ export function createBots(ctx) {
       if (b.kind === 'person' && !peopleOn()) return;
       const due = replyDue(b, false);
       if (due) schedule('reply', b.id, chatId, due);
+      return;
+    }
+
+    // 🛎 общий чат: Аська-консьерж отвечает, когда её зовут, и встречает первое сообщение новичка
+    if (chat.kind === 'general') {
+      const aska = bots.find((b) => b.kind === 'aska');
+      if (!aska || isBot(sender)) return;
+      const text = peek(aska.id, msgId)?.text || '';
+      const called = /(^|[^а-яa-z])(аськ|консьерж|asya|aska)/i.test(text);
+      const fresh = now() - (sender.created_at || 0) < 2 * DAY
+        && !db.prepare('SELECT 1 FROM messages WHERE chat_id = ? AND sender_id = ? AND id < ?').get(chatId, senderId, msgId);
+      if (called || fresh) schedule('concierge_reply', aska.id, `cr:${senderId}`, now() + T(rand(4000, 15000)), { msgId, senderId, fresh: !called });
       return;
     }
 
@@ -648,7 +667,7 @@ export function createBots(ctx) {
       return say(bot.id, chat.id, outMessages(out));
     }
     if (!isDm) return; // по шпаргалке в кругах не болтаем
-    const text = fresh.map((m) => (m.body?.kind === 'video' ? '[видео-квадратик]' : m.body?.text || '')).join(' ');
+    const text = fresh.map((m) => (m.body?.kind === 'video' ? '[видеоквадратик]' : m.body?.kind === 'audio' ? '[музыка]' : m.body?.text || '')).join(' ');
     if (vote && (vote.attended === null || (vote.attended === 1 && vote.rating === null))) {
       const v = applyParty(userId, P.parseParty(text));
       if (v) {
@@ -1176,9 +1195,80 @@ export function createBots(ctx) {
     await say(botId, chatId, [lines.join('\n')]);
   }
 
+  // 🎬 видеоквадратик Аськи: приложение рисует Аську, которая говорит эти строчки (субтитры и голос телефона)
+  function sayClip(botId, chatId, lines) {
+    if (!memberIds(chatId).includes(botId)) return null;
+    const clean = lines.map((l) => String(l).slice(0, 220)).filter(Boolean).slice(0, 8);
+    return ctx.post(botId, chatId, { kind: 'text', text: clean.join(' ').slice(0, 1500), clip: { lines: clean } });
+  }
+  async function askaClipJob(botId, chatId, { userId, clip }) {
+    const u = row(userId);
+    if (!u || u.blocked_at) return;
+    sayClip(botId, chatId, clip === 'v12' ? P.announceClip12(u.display_name) : P.welcomeClip(u.display_name));
+  }
+
+  // ---------- 🛎 Аська-консьерж в общем чате ----------
+  const whoIs = (u) => [u.display_name, u.city || placeOf(u.place)?.name || '', u.about ? `«${String(u.about).slice(0, 60)}»` : ''].filter(Boolean).join(', ');
+  const activeHumans = (days = 30) => humans().filter((h) => !h.blocked_at && (h.last_active || h.created_at || 0) > now() - days * DAY);
+  const talked = (a, b) => !!db.prepare('SELECT 1 FROM chats WHERE id = ?').get(`dm:${Math.min(a, b)}:${Math.max(a, b)}`)
+    && !!db.prepare('SELECT 1 FROM messages WHERE chat_id = ? LIMIT 1').get(`dm:${Math.min(a, b)}:${Math.max(a, b)}`);
+  // пара, которая ещё не переписывалась
+  function pairFor(userId = null) {
+    const list = activeHumans().filter((h) => h.id !== userId);
+    const base = userId ? [row(userId)] : list;
+    for (const a of base.sort(() => Math.random() - 0.5)) {
+      const b = list.filter((x) => x.id !== a.id && !talked(a.id, x.id)).sort(() => Math.random() - 0.5)[0];
+      if (b) return [a, b];
+    }
+    return null;
+  }
+  // все участники АСЬКИ — в общем чате, и Аська-консьерж тоже
+  function syncGeneral() {
+    const aska = askaId();
+    if (!getChat(GENERAL_CHAT)) return;
+    const maxId = db.prepare('SELECT MAX(id) AS id FROM messages WHERE chat_id = ?').get(GENERAL_CHAT).id || 0;
+    const ins = db.prepare('INSERT OR IGNORE INTO chat_members (chat_id, user_id, read_up_to) VALUES (?, ?, ?)');
+    let changed = 0;
+    for (const id of [aska, ...humans().filter((h) => !h.blocked_at).map((h) => h.id)]) changed += Number(ins.run(GENERAL_CHAT, id, maxId).changes || 0);
+    if (changed) ctx.broadcastChat(GENERAL_CHAT);
+  }
+  async function conciergeHelloJob(botId, { userId, inviterId }) {
+    const u = row(userId);
+    if (!u || u.blocked_at || !memberIds(GENERAL_CHAT).includes(botId)) return;
+    const inv = inviterId ? row(inviterId) : null;
+    await say(botId, GENERAL_CHAT, [P.conciergeHello(u.display_name, inv?.display_name)]);
+  }
+  async function conciergeReplyJob(botId, { msgId, senderId, fresh }) {
+    const u = row(senderId);
+    if (!u || !memberIds(GENERAL_CHAT).includes(botId)) return;
+    markRead(botId, GENERAL_CHAT);
+    const text = peek(botId, msgId)?.text || '';
+    if (ai.available()) {
+      const hist = history(botId, GENERAL_CHAT, 20);
+      const people = activeHumans().slice(0, 30).map(whoIs).join('; ');
+      const out = await ai.complete({ system: `${P.ASKA_RULES}\n\n${P.CONCIERGE_RULES}`, schema: P.REPLY_SCHEMA, prompt: [
+        timeLine(), 'Общий чат АСЬКИ — тут все участники.', `Кто есть в АСЬКЕ: ${people}.`, u.royal ? P.ROYAL_PROMPT : '',
+        'Переписка (старые сверху):', transcript(hist.slice(-15), botId, nameOf),
+        fresh ? `${u.display_name} — новенький(ая) и впервые написал(а) в общий чат: тепло встреть и с кем-нибудь познакомь.` : `Тебя позвал(а) ${u.display_name}: ответь.`, 'note оставь пустым.',
+      ].filter(Boolean).join('\n') });
+      const msgs = outMessages(out);
+      if (msgs.length) return say(botId, GENERAL_CHAT, msgs.slice(0, 2));
+    }
+    const pair = pairFor(senderId);
+    return say(botId, GENERAL_CHAT, P.conciergeScripted(text, { name: u.display_name, fresh, other: pair ? whoIs(pair[1]) : null, otherName: pair?.[1]?.display_name }));
+  }
+  async function conciergeIntroJob(botId) {
+    if (!memberIds(GENERAL_CHAT).includes(botId)) return;
+    const pair = pairFor();
+    if (!pair) return;
+    await say(botId, GENERAL_CHAT, [P.conciergeIntro(whoIs(pair[0]), whoIs(pair[1]), pair[0].display_name, pair[1].display_name)]);
+  }
+
   async function welcomeJob(botId, chatId, { userId }) {
     const u = row(userId);
     if (!u) return;
+    sayClip(botId, chatId, P.welcomeClip(u.display_name)); // приветственный видеоквадратик от Аськи-ассистента
+    await sleep(3000);
     await say(botId, chatId, [
       `Привет, ${u.display_name}! Я Аська 🌼 Добро пожаловать в АСЬКУ!`,
       `Твой номер — ${plateText(u)}. Им можно входить вместо телефона и делиться с друзьями.`,
@@ -1383,6 +1473,11 @@ export function createBots(ctx) {
       const idx = Math.floor(t / DAY) % P.QUESTIONS_OF_DAY.length;
       schedule('qday', aska, 'circle:q', now(), { q: P.QUESTIONS_OF_DAY[idx] });
     }
+    // 🛎 консьерж раз в день знакомит в общем чате двоих, кто ещё не переписывался
+    if (((h >= 12 && h < 20) || force) && getSetting(db, 'concierge_day') !== day && memberIds(GENERAL_CHAT).includes(aska)) {
+      setSetting(db, 'concierge_day', day);
+      schedule('concierge_intro', aska, GENERAL_CHAT, now() + T(rand(60_000, 3 * 3_600_000)));
+    }
     // Батя раз в день проведывает каждого
     if ((force || (h >= 10 && h < 20)) && getSetting(db, 'batya_plan') !== day) {
       setSetting(db, 'batya_plan', day);
@@ -1531,6 +1626,14 @@ export function createBots(ctx) {
       const at = daytime(now() + T(60_000));
       humans().filter((h) => !h.blocked_at).forEach((h, i) => schedule('announce5', aska, ctx.ensureDm(aska, h.id), at + T(i * 30_000), { userId: h.id }));
     }
+    // 🛎 общий чат — для всех участников АСЬКИ, Аська в нём консьерж
+    syncGeneral();
+    // двенадцатое — каждому приветственный видеоквадратик от Аськи-ассистента (днём, по очереди)
+    if (getSetting(db, 'announced_clip12') !== '1') {
+      setSetting(db, 'announced_clip12', '1');
+      const at = daytime(now() + T(90_000));
+      humans().filter((h) => !h.blocked_at).forEach((h, i) => schedule('aska_clip', aska, ctx.ensureDm(aska, h.id), at + T(i * 40_000), { userId: h.id, clip: 'v12' }));
+    }
     // характеры ИИ-людей обновляются вместе с кодом
     for (const u of persons()) {
       const key = personaOf(u)?.key;
@@ -1555,6 +1658,11 @@ export function createBots(ctx) {
       if (r.post) wall.comment(aska, r.post.id, '🥳');
     }
     // десятое — уровни, нетворк, место на номере, Ночь, реестр
+    // двенадцатое — зверята, гифки по ТЗ, НФТ-галерея, биржа, Web3, консьерж
+    if (wall && getSetting(db, 'announced_v12') !== '1') {
+      setSetting(db, 'announced_v12', '1');
+      wall.post(aska, aska, { kind: 'sticker', sticker: 'rrr', text: '🦖 Большое обновление! Зверята со звуками (☺ → «🦖 Зверята»), гифки по твоему ТЗ, 💎 НФТ-галерея — у каждого фото, видео и трека автор, совладельцы и цена, а ещё 📈 биржа (10 🪙 = $1) и 🔗 «Мои данные». Видеоквадратики — на весь экран, у Голд — до 40 секунд. А я теперь консьерж в общем чате 🛎 Всё в «Ещё» → «Web3 · тестовые механизмы UPASS».' }, { fromBot: true });
+    }
     // одиннадцатое — звонки, видео-квадратики, «Царская особа»
     if (wall && getSetting(db, 'announced_v11') !== '1') {
       setSetting(db, 'announced_v11', '1');
@@ -1602,6 +1710,8 @@ export function createBots(ctx) {
     if (twin) ctx.broadcastUser(twin);
     const dm = ctx.ensureDm(aska, userId);
     schedule('welcome', aska, dm, now() + T(2500), { userId });
+    syncGeneral();
+    schedule('concierge_hello', aska, `ch:${userId}`, now() + T(rand(20_000, 60_000)), { userId, inviterId: inviterId || null });
     // администраторам и тому, кто позвал, — весточка о новичке (придёт пушем)
     const tell = new Set(admins().map((a) => a.id).filter((id) => id !== userId));
     if (inviterId && inviterId !== userId && row(inviterId)?.kind === 'human') tell.add(inviterId);

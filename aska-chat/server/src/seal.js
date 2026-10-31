@@ -16,7 +16,10 @@ export function newKeys() {
 
 export function previewText(body) {
   if (body.kind === 'image') return body.text ? `📷 ${body.text}` : '📷 Фото';
-  if (body.kind === 'video') return '🎬 Видео-квадратик';
+  if (body.kind === 'video') return body.video?.sq === false ? '🎬 Видео' : '🎬 Видеоквадратик';
+  if (body.kind === 'audio') return `🎵 ${body.audio?.name || 'Музыка'}`;
+  if (body.clip) return '🎬 Видеоквадратик от Аськи';
+  if (body.gif) return `🎞 ${body.gif.cap || 'Гифка'}`;
   const t = (body.text || '').replace(/\s+/g, ' ').trim();
   return t.length > 140 ? `${t.slice(0, 140)}…` : t;
 }

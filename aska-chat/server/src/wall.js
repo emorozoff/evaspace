@@ -29,7 +29,7 @@ export const MAGNET_NAMES = {
 // Реакции на записи (одна от человека, можно сменить) и «живые гифки» — анимированные мемы
 export const REACTIONS = ['👍', '❤️', '😂', '🔥', '😍', '😮', '😢', '👏', '💯', '💀'];
 export const STICKERS = ['oru', 'kringe', 'baza', 'fiasko', 'zhiza', 'imba', 'vibe', 'redflag', 'sigma', 'nuvse', 'lois', 'shok', 'kaif',
-  'plak', 'tusa', 'ponyal', 'kotik', 'lyublyu', 'tancy', 'hm', 'mozg', 'gg', 'cvetok', 'pushka'];
+  'plak', 'tusa', 'ponyal', 'kotik', 'lyublyu', 'tancy', 'hm', 'mozg', 'gg', 'cvetok', 'pushka', 'rrr', 'gav', 'mur', 'kek', 'izi', 'rofl', 'dushno', 'bro', 'slay', 'vau', 'go', 'sps', 'velichestvo', 'nft'];
 export const TIP_AMOUNTS = [5, 10, 25, 50];
 export const FLOWER_COIN = 1;
 export const BEST_COINS = 30;

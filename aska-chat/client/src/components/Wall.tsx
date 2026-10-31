@@ -17,7 +17,7 @@ import { photoSize, ImageViewer } from './EncryptedImage.tsx';
 import { Ico, Dialog } from './Win.tsx';
 import { UserPlate, Gold } from './Plate.tsx';
 import { SuperSmile, SymbolGrid } from './SuperSmile.tsx';
-import { SUPER, superOf, playSuper } from '../lib/sfx.ts';
+import { SUPER, ZOO, superOf, playSuper } from '../lib/sfx.ts';
 
 export type WallView = { kind: 'feed' } | { kind: 'top' } | { kind: 'user'; userId: number };
 
@@ -282,7 +282,7 @@ function Post({ p, me, feed, isGold, onProfile, onWallOf, onImage, patch, drop }
                   </div>
                   {pick === 'super' && (
                     <div className="aska-cgrid">
-                      {SUPER.map((x) => (
+                      {[...SUPER, ...ZOO].map((x) => (
                         <button key={x.e} className="aska-super-btn" title={x.name} style={{ ['--glow' as string]: x.glow }} disabled={busy}
                           onClick={() => { playSuper(x.e); send(x.e); }}>
                           <i className={`ss-${x.anim}`}>{x.e}</i><small>{x.name}</small>

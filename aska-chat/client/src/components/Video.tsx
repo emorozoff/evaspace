@@ -1,11 +1,14 @@
-// 🎬 Видео-квадратики: ролики до 20 секунд с камеры, как «кружочки», только квадратные.
+// 🎬 Видеоквадратики: ролики с камеры, как «кружочки», только квадратные — до 20 секунд, у Голд и Блэк — до 40.
+// Плюс видео и музыка из файлов телефона, просмотр на весь экран (повтор или следующее) и видеоквадратики Аськи-ассистента.
 // Запись — MediaRecorder прямо на телефоне, файл шифруется как фото (sendVideo в lib/store.ts), сервер видит только шифр.
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { VideoRef } from '../lib/protocol.ts';
+import type { VideoRef, AudioRef, ClipRef } from '../lib/protocol.ts';
+import { flower, soundEnabled } from '../lib/aska.ts';
 import { load } from './EncryptedImage.tsx';
 
-export const VIDEO_MAX = 20; // секунд
+export const VIDEO_MAX = 20;      // секунд
+export const VIDEO_MAX_GOLD = 40; // у Голд и Блэк
 
 const fmt = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
 
@@ -27,38 +30,58 @@ function Ring({ p }: { p: number }) {
   );
 }
 
-// Квадратик в беседе: первый кадр и ▶; нажал — играет со звуком, ещё раз — пауза
-export function VideoSquare({ video, local }: { video: VideoRef; local?: string }) {
+// Кто играет сейчас в беседе: по окончании — следующее видео (playMedia), на весь экран — MediaViewer
+const players = new Map<string, { play: () => void; el: () => HTMLElement | null }>();
+export function playMedia(key: string) {
+  const p = players.get(key);
+  if (!p) return false;
+  p.el()?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  p.play();
+  return true;
+}
+
+// Видеоквадратик в беседе: первый кадр и ▶; нажал — играет со звуком, ещё раз — пауза.
+// В левом верхнем уголке ⤢ — на весь экран. Видео из галереи телефона рисуется в своих пропорциях.
+export function VideoSquare({ video, local, mkey, onEnded, onExpand }: { video: VideoRef; local?: string; mkey?: string; onEnded?: () => void; onExpand?: () => void }) {
   const [url, setUrl] = useState<string | null>(local || null);
   const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'paused' | 'failed'>('idle');
   const [p, setP] = useState(0);
   const ref = useRef<HTMLVideoElement>(null);
+  const box = useRef<HTMLSpanElement>(null);
+  const wide = video.sq === false && video.w && video.h ? video.w / video.h : 1;
 
-  async function toggle(e: React.MouseEvent) {
-    e.stopPropagation();
+  async function start() {
     const v = ref.current;
-    if (state === 'playing') { v?.pause(); setState('paused'); return; }
     if (url && v) { v.muted = false; v.play().then(() => setState('playing')).catch(() => setState('paused')); return; }
     if (!video.blob) return;
     setState('loading');
-    try {
-      const u = await load(video);
-      setUrl(u);
-      setState('playing'); // играть начнёт onCanPlay
-    } catch { setState('failed'); }
+    try { setUrl(await load(video)); setState('playing'); } catch { setState('failed'); }
+  }
+  useEffect(() => {
+    if (!mkey) return;
+    players.set(mkey, { play: () => { start(); }, el: () => box.current });
+    return () => { players.delete(mkey); };
+  }); // каждый рендер — свежий start с текущим url
+
+  function toggle(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (state === 'playing') { ref.current?.pause(); setState('paused'); return; }
+    start();
   }
 
   return (
-    <span className={`aska-vsq s-${state}`} onClick={toggle} role="button" aria-label={state === 'playing' ? 'Пауза' : 'Смотреть видео-квадратик'}>
+    <span ref={box} className={`aska-vsq s-${state}${video.sq === false ? ' wide' : ''}`} style={video.sq === false ? { aspectRatio: String(Math.max(0.5, Math.min(2, wide))) } : undefined}
+      onClick={toggle} role="button" aria-label={state === 'playing' ? 'Пауза' : 'Смотреть видео'}>
       {video.thumb && <img className="vsq-thumb" src={video.thumb} alt="" draggable={false} />}
       {url && (
         <video ref={ref} src={url} playsInline preload="metadata"
           onCanPlay={() => { if (state === 'playing' && ref.current?.paused) ref.current.play().catch(() => setState('paused')); }}
           onTimeUpdate={() => { const v = ref.current; if (v && v.duration) setP(v.currentTime / v.duration); }}
-          onEnded={() => { setState('idle'); setP(0); if (ref.current) ref.current.currentTime = 0; }}
+          onEnded={() => { setState('idle'); setP(0); if (ref.current) ref.current.currentTime = 0; onEnded?.(); }}
           onError={() => setState('failed')} />
       )}
-      <Ring p={p} />
+      {video.sq !== false && <Ring p={p} />}
+      {onExpand && <button type="button" className="vsq-full" onClick={(e) => { e.stopPropagation(); ref.current?.pause(); setState((st) => (st === 'playing' ? 'paused' : st)); onExpand(); }} aria-label="На весь экран" title="На весь экран">⤢</button>}
       {state !== 'playing' && state !== 'loading' && state !== 'failed' && <span className="vsq-play" aria-hidden="true">▶</span>}
       {state === 'loading' && <span className="spin" />}
       {state === 'failed' && <span className="fail">Видео не открылось на этом устройстве</span>}
@@ -68,7 +91,7 @@ export function VideoSquare({ video, local }: { video: VideoRef; local?: string 
 }
 
 // Запись квадратика: камера в квадрате, большая кнопка, 20 секунд, переснять или отправить
-export function VideoRecorder({ onSend, onClose }: { onSend: (video: Blob, dur: number, thumb?: string) => void; onClose: () => void }) {
+export function VideoRecorder({ onSend, onClose, max = VIDEO_MAX }: { onSend: (video: Blob, dur: number, thumb?: string) => void; onClose: () => void; max?: number }) {
   const live = useRef<HTMLVideoElement>(null);
   const stream = useRef<MediaStream | null>(null);
   const rec = useRef<MediaRecorder | null>(null);
@@ -137,7 +160,7 @@ export function VideoRecorder({ onSend, onClose }: { onSend: (video: Blob, dur: 
     r.ondataavailable = (e) => { if (e.data.size) chunks.current.push(e.data); };
     r.onstop = () => {
       clearInterval(timer.current);
-      const dur = Math.min(VIDEO_MAX, (Date.now() - started.current) / 1000);
+      const dur = Math.min(max, (Date.now() - started.current) / 1000);
       const blob = new Blob(chunks.current, { type: r.mimeType || mimeType || 'video/mp4' });
       if (dur < 0.7 || !blob.size) { setPhase('ready'); return; } // случайное касание
       setClip({ blob, url: URL.createObjectURL(blob), dur });
@@ -151,7 +174,7 @@ export function VideoRecorder({ onSend, onClose }: { onSend: (video: Blob, dur: 
     timer.current = window.setInterval(() => {
       const t = (Date.now() - started.current) / 1000;
       setSec(t);
-      if (t >= VIDEO_MAX) stop();
+      if (t >= max) stop();
     }, 100);
   }
 
@@ -177,16 +200,16 @@ export function VideoRecorder({ onSend, onClose }: { onSend: (video: Blob, dur: 
 
   return createPortal(
     <div className="aska-vrec-ov" onClick={onClose}>
-      <div className="aska-vrec" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Видео-квадратик">
+      <div className="aska-vrec" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Видеоквадратик">
         <div className="vrec-top">
-          <b>🎬 Видео-квадратик</b>
-          <span className="vrec-time">{phase === 'done' && clip ? fmt(clip.dur) : `${fmt(sec)} / 0:${VIDEO_MAX}`}</span>
+          <b>🎬 Видеоквадратик</b>
+          <span className="vrec-time">{phase === 'done' && clip ? fmt(clip.dur) : `${fmt(sec)} / ${fmt(max)}`}</span>
           <button type="button" className="btn vrec-x" onClick={onClose} aria-label="Закрыть">×</button>
         </div>
         <div className={`vrec-box${facing === 'user' ? ' mirror' : ''}${phase === 'rec' ? ' on' : ''}`}>
           <video ref={live} className={phase === 'done' ? 'hide' : ''} muted playsInline autoPlay />
           {phase === 'done' && clip && <video className="vrec-clip" src={clip.url} playsInline autoPlay loop controls={false} onClick={(e) => { const v = e.currentTarget; v.muted = !v.muted; }} />}
-          {phase === 'rec' && <Ring p={sec / VIDEO_MAX} />}
+          {phase === 'rec' && <Ring p={sec / max} />}
           {phase === 'rec' && <span className="vrec-dot">● запись</span>}
           {phase === 'ask' && <span className="spin" />}
           {phase === 'error' && <span className="vrec-err">{error}</span>}
@@ -202,7 +225,7 @@ export function VideoRecorder({ onSend, onClose }: { onSend: (video: Blob, dur: 
               <button type="button" className="btn vrec-flip" onClick={() => setFacing((f) => (f === 'user' ? 'environment' : 'user'))} disabled={phase === 'rec' || phase === 'error'} aria-label="Другая камера">🔄</button>
               <button type="button" className={`vrec-btn${phase === 'rec' ? ' on' : ''}`} onClick={phase === 'rec' ? stop : start} disabled={phase !== 'ready' && phase !== 'rec'}
                 aria-label={phase === 'rec' ? 'Остановить' : 'Записать'}><i /></button>
-              <span className="vrec-hint">{phase === 'rec' ? 'нажми ещё раз — стоп' : `до ${VIDEO_MAX} секунд`}</span>
+              <span className="vrec-hint">{phase === 'rec' ? 'нажми ещё раз — стоп' : `до ${max} секунд`}</span>
             </>
           )}
         </div>
@@ -211,4 +234,186 @@ export function VideoRecorder({ onSend, onClose }: { onSend: (video: Blob, dur: 
     </div>,
     document.body,
   );
+}
+
+// ---------- 🎵 музыка из файлов телефона ----------
+export function AudioMsg({ audio, local }: { audio: AudioRef; local?: string }) {
+  const [url, setUrl] = useState<string | null>(local || null);
+  const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'paused' | 'failed'>('idle');
+  const [t, setT] = useState(0);
+  const ref = useRef<HTMLAudioElement>(null);
+  async function toggle(e: React.MouseEvent) {
+    e.stopPropagation();
+    const a = ref.current;
+    if (state === 'playing') { a?.pause(); setState('paused'); return; }
+    if (url && a) { a.play().then(() => setState('playing')).catch(() => setState('paused')); return; }
+    setState('loading');
+    try { setUrl(await load(audio)); setState('playing'); } catch { setState('failed'); }
+  }
+  const dur = audio.dur || 0;
+  return (
+    <span className={`aska-amsg s-${state}`} onClick={(e) => e.stopPropagation()}>
+      <button type="button" className="am-play" onClick={toggle} aria-label={state === 'playing' ? 'Пауза' : 'Слушать'}>{state === 'playing' ? '⏸' : state === 'loading' ? '…' : '▶'}</button>
+      <span className="am-body">
+        <b>🎵 {audio.name || 'Музыка'}</b>
+        <span className="am-bar"><i style={{ width: `${dur ? Math.min(100, (t / dur) * 100) : 0}%` }} /></span>
+        <small>{state === 'failed' ? 'не открылась на этом устройстве' : `${fmt(t)} / ${fmt(dur)}`}</small>
+      </span>
+      {url && <audio ref={ref} src={url} preload="metadata" onCanPlay={() => { if (state === 'playing' && ref.current?.paused) ref.current.play().catch(() => setState('paused')); }}
+        onTimeUpdate={() => setT(ref.current?.currentTime || 0)} onEnded={() => { setState('idle'); setT(0); }} onError={() => setState('failed')} />}
+    </span>
+  );
+}
+
+// ---------- 🌼 видеоквадратик Аськи-ассистента ----------
+// Рисуется прямо в приложении: Аська (цветок с лицом) говорит по строчкам — субтитры и голос телефона (если есть русский).
+const lineMs = (l: string) => Math.max(1800, Math.min(7000, l.length * 65));
+export const clipDuration = (c: ClipRef) => c.lines.reduce((n, l) => n + lineMs(l), 0) / 1000;
+function speak(text: string, onEnd: () => void): () => void {
+  const synth = typeof speechSynthesis !== 'undefined' ? speechSynthesis : null;
+  let done = false;
+  const finish = () => { if (!done) { done = true; onEnd(); } };
+  const timer = window.setTimeout(finish, lineMs(text) + 2500); // голоса нет или он молчит — дальше по таймеру
+  if (synth && soundEnabled()) {
+    try {
+      const u = new SpeechSynthesisUtterance(text.replace(/\p{Extended_Pictographic}/gu, ''));
+      u.lang = 'ru-RU';
+      u.rate = 1.05;
+      u.pitch = 1.25;
+      const v = synth.getVoices().find((x) => /^ru/i.test(x.lang) && /female|milena|katya|алёна|anna|irina|yandex|google/i.test(x.name)) || synth.getVoices().find((x) => /^ru/i.test(x.lang));
+      if (v) u.voice = v;
+      u.onend = () => { clearTimeout(timer); window.setTimeout(finish, 250); };
+      synth.cancel();
+      synth.speak(u);
+    } catch { /* без голоса */ }
+  } else { clearTimeout(timer); window.setTimeout(finish, lineMs(text)); }
+  return () => { done = true; clearTimeout(timer); try { synth?.cancel(); } catch { /* */ } };
+}
+
+export function AskaClip({ clip, size = 'm', mkey, autoPlay, onEnded, onExpand }: { clip: ClipRef; size?: 'm' | 'l'; mkey?: string; autoPlay?: boolean; onEnded?: () => void; onExpand?: () => void }) {
+  const [i, setI] = useState(-1); // какая строчка звучит; -1 — стоит
+  const stop = useRef<(() => void) | null>(null);
+  const box = useRef<HTMLSpanElement>(null);
+  const total = clipDuration(clip);
+  function play(from = 0) {
+    stop.current?.();
+    if (from >= clip.lines.length) { setI(-1); onEnded?.(); return; }
+    setI(from);
+    stop.current = speak(clip.lines[from], () => play(from + 1));
+  }
+  useEffect(() => () => stop.current?.(), []);
+  useEffect(() => { if (autoPlay) play(0); }, [autoPlay]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!mkey) return;
+    players.set(mkey, { play: () => play(0), el: () => box.current });
+    return () => { players.delete(mkey); };
+  });
+  const playing = i >= 0;
+  const done = playing ? clip.lines.slice(0, i).reduce((n, l) => n + lineMs(l), 0) / 1000 / total : 0;
+  return (
+    <span ref={box} className={`aska-vsq aska-clip ${size}${playing ? ' s-playing' : ''}`} role="button" aria-label={playing ? 'Остановить' : 'Смотреть видеоквадратик Аськи'}
+      onClick={(e) => { e.stopPropagation(); if (playing) { stop.current?.(); setI(-1); } else play(0); }}>
+      <span className="clip-stage" aria-hidden="true">
+        <span className="clip-char">
+          <span className="clip-flower" dangerouslySetInnerHTML={{ __html: flower('online', size === 'l' ? 240 : 120) }} />
+          <span className={`clip-face${playing ? ' talk' : ''}`}><i className="eye l" /><i className="eye r" /><i className="mouth" /></span>
+        </span>
+        <span className="clip-spark s1">✨</span><span className="clip-spark s2">🌼</span>
+      </span>
+      <span className="clip-badge">Аська · ИИ</span>
+      <span className="clip-sub">{playing ? clip.lines[i] : clip.lines[0]}</span>
+      <Ring p={playing ? done : 0} />
+      {onExpand && <button type="button" className="vsq-full" onClick={(e) => { e.stopPropagation(); stop.current?.(); setI(-1); onExpand(); }} aria-label="На весь экран" title="На весь экран">⤢</button>}
+      {!playing && <span className="vsq-play" aria-hidden="true">▶</span>}
+      <span className="vsq-dur">🎬 {fmt(total)}</span>
+    </span>
+  );
+}
+
+// ---------- ⤢ на весь экран: повтор или следующее ----------
+export type MediaItem = { key: string; video?: VideoRef; clip?: ClipRef; local?: string; from: string };
+export function MediaViewer({ items, start, onClose }: { items: MediaItem[]; start: number; onClose: () => void }) {
+  const [idx, setIdx] = useState(Math.max(0, Math.min(items.length - 1, start)));
+  const [mode, setMode] = useState<'loop' | 'next'>(() => (items.length > 1 ? 'next' : 'loop'));
+  const [url, setUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [round, setRound] = useState(0); // для повтора видеоквадратика Аськи
+  const ref = useRef<HTMLVideoElement>(null);
+  const it = items[idx];
+  useEffect(() => {
+    setUrl(null); setFailed(false);
+    if (!it?.video) return;
+    let alive = true;
+    if (it.local) setUrl(it.local);
+    else load(it.video).then((u) => alive && setUrl(u)).catch(() => alive && setFailed(true));
+    return () => { alive = false; };
+  }, [idx]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); if (e.key === 'ArrowRight') go(1); if (e.key === 'ArrowLeft') go(-1); };
+    addEventListener('keydown', onKey);
+    return () => removeEventListener('keydown', onKey);
+  });
+  function go(d: number) { setIdx((i) => Math.max(0, Math.min(items.length - 1, i + d))); }
+  function ended() {
+    if (mode === 'loop') { if (ref.current) { ref.current.currentTime = 0; ref.current.play().catch(() => {}); } else setRound((r) => r + 1); return; }
+    if (idx < items.length - 1) go(1);
+  }
+  if (!it) return null;
+  return createPortal(
+    <div className="aska-mview" role="dialog" aria-label="Видео на весь экран" onClick={onClose}>
+      <div className="mv-top" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="mv-btn" onClick={onClose} aria-label="Закрыть">×</button>
+        <span className="mv-title">{it.from} · {idx + 1} из {items.length}</span>
+        <button type="button" className={`mv-btn mv-mode${mode === 'loop' ? ' on' : ''}`} onClick={() => setMode((m) => (m === 'loop' ? 'next' : 'loop'))}
+          aria-label={mode === 'loop' ? 'Сейчас: повтор. Переключить на «следующее»' : 'Сейчас: следующее. Переключить на повтор'}>
+          {mode === 'loop' ? '🔁 Повтор' : '⏭ Следующее'}
+        </button>
+      </div>
+      <div className="mv-stage" onClick={(e) => e.stopPropagation()}>
+        {it.clip ? <AskaClip key={`${it.key}:${round}`} clip={it.clip} size="l" autoPlay onEnded={ended} />
+          : failed ? <span className="mv-fail">Видео не открылось на этом устройстве</span>
+            : url ? <video key={it.key} ref={ref} className={it.video?.sq === false ? 'wide' : 'sq'} src={url} playsInline autoPlay controls onEnded={ended} />
+              : <span className="spin" />}
+      </div>
+      <div className="mv-nav" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="mv-btn" disabled={idx === 0} onClick={() => go(-1)} aria-label="Предыдущее">◀</button>
+        <span className="mv-hint">{mode === 'loop' ? 'по кругу' : idx < items.length - 1 ? 'дальше — следующее' : 'это последнее'}</span>
+        <button type="button" className="mv-btn" disabled={idx >= items.length - 1} onClick={() => go(1)} aria-label="Следующее">▶</button>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+// Длительность, размеры и первый кадр файла из телефона (видео — для превью в беседе)
+export function mediaMeta(file: Blob, kind: 'video' | 'audio'): Promise<{ dur: number; w?: number; h?: number; thumb?: string }> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const el = document.createElement(kind);
+    let done = false;
+    const finish = (r: { dur: number; w?: number; h?: number; thumb?: string }) => { if (done) return; done = true; URL.revokeObjectURL(url); resolve(r); };
+    setTimeout(() => finish({ dur: 0 }), 8000);
+    el.preload = 'metadata';
+    el.muted = true;
+    (el as HTMLVideoElement).playsInline = true;
+    el.onloadedmetadata = () => {
+      const dur = Number.isFinite(el.duration) ? el.duration : 0;
+      if (kind === 'audio') return finish({ dur });
+      const v = el as HTMLVideoElement;
+      v.currentTime = Math.min(0.1, dur / 2);
+      v.onseeked = () => {
+        let thumb: string | undefined;
+        try {
+          const c = document.createElement('canvas');
+          const k = 160 / Math.max(v.videoWidth, v.videoHeight, 1);
+          c.width = Math.max(1, Math.round(v.videoWidth * k)); c.height = Math.max(1, Math.round(v.videoHeight * k));
+          c.getContext('2d')?.drawImage(v, 0, 0, c.width, c.height);
+          thumb = c.toDataURL('image/jpeg', 0.6);
+        } catch { /* без превью */ }
+        finish({ dur, w: v.videoWidth, h: v.videoHeight, thumb });
+      };
+    };
+    el.onerror = () => finish({ dur: 0 });
+    el.src = url;
+  });
 }

@@ -20,6 +20,11 @@ import { Night } from './Night.tsx';
 import { Catalog, Ledger } from './Catalog.tsx';
 import { History } from './History.tsx';
 import { Book } from './Book.tsx';
+import { Gallery } from './Gallery.tsx';
+import { GifMaker } from './GifMaker.tsx';
+import { Exchange } from './Exchange.tsx';
+import { Web3 } from './Web3.tsx';
+import { Charter } from './Charter.tsx';
 import { placeOf } from '../lib/places.ts';
 import { Win, Ico, Dialog } from './Win.tsx';
 import { UserPlate, Gold } from './Plate.tsx';
@@ -31,12 +36,13 @@ import { Wall } from './Wall.tsx';
 import type { WallView } from './Wall.tsx';
 
 export type AuxKind = 'settings' | 'invite' | 'circles' | 'myai' | 'admin' | 'plates' | 'wall' | 'biz'
-  | 'levels' | 'network' | 'rules' | 'night' | 'music' | 'films' | 'books' | 'ledger' | 'history' | 'book';
+  | 'levels' | 'network' | 'rules' | 'night' | 'music' | 'films' | 'books' | 'ledger' | 'history' | 'book' | 'gallery' | 'gifmaker' | 'exchange' | 'web3' | 'charter';
 
 const TITLES: Record<AuxKind, string> = {
   settings: 'Ещё', invite: 'Позвать друга', circles: 'Круги', myai: 'Мой ИИ', admin: 'Управление АСЬКОЙ', plates: 'Номера', wall: 'Стена',
   biz: 'Рабочие контакты', levels: 'Уровни', network: 'Мой нетворк', rules: 'Правила АСЬКИ', night: 'Ночь', music: 'Музыка', films: 'Кино',
   books: 'Книги', ledger: 'Цепочка блоков', history: 'История АСЬКИ', book: 'Книга перемен',
+  gallery: 'Галерея НФТ', gifmaker: 'Гифка по ТЗ', exchange: 'Биржа', web3: 'Мои данные · Web3', charter: 'Правила и цели',
 };
 
 export function Aux({ kind, onBack, onOpen, onAux, wallView, onWallView, onProfile }: {
@@ -64,6 +70,11 @@ export function Aux({ kind, onBack, onOpen, onAux, wallView, onWallView, onProfi
         {kind === 'ledger' && <Ledger />}
         {kind === 'history' && <History />}
         {kind === 'book' && <Book />}
+        {kind === 'gallery' && <Gallery onGifMaker={() => onAux('gifmaker')} />}
+        {kind === 'gifmaker' && <GifMaker onGallery={() => onAux('gallery')} />}
+        {kind === 'exchange' && <Exchange />}
+        {kind === 'web3' && <Web3 onCharter={() => onAux('charter')} />}
+        {kind === 'charter' && <><Charter /><div className="aska-rules-sep">Правила по уровням</div><Rules /></>}
       </div>
     </Win>
   );
@@ -127,10 +138,19 @@ function Settings({ onAux }: { onAux: (k: AuxKind) => void }) {
         <span className="t"><b>Мой уровень</b><small>{s.profile?.tier === 'black' ? 'Блэк — закрытый уровень' : s.profile?.tier === 'gold' ? 'Голд — VIP' : 'Гость → Голд: 500 🪙 или 10 человек в нетворке'}</small></span>
         <span className="go">›</span>
       </div>
+      <div className="groupbox aska-w3box">
+        <div className="legend">🧪 Web3 · тестовые механизмы UPASS</div>
+        <div className="aska-actions aska-actions2">
+          <button className="btn primary" onClick={() => onAux('gallery')}>💎 Галерея НФТ</button>
+          <button className="btn" onClick={() => onAux('gifmaker')}>🎞 Гифка по ТЗ</button>
+          <button className="btn" onClick={() => onAux('exchange')}>📈 Биржа</button>
+          <button className="btn" onClick={() => onAux('web3')}>🔗 Мои данные</button>
+        </div>
+      </div>
       <div className="aska-actions aska-actions3">
         <button className="btn" onClick={() => onAux('levels')}>🎖 Уровни</button>
         <button className="btn" onClick={() => onAux('network')}>🕸 Мой нетворк{s.profile?.netSize ? ` (${s.profile.netSize})` : ''}</button>
-        <button className="btn" onClick={() => onAux('rules')}>📜 Правила</button>
+        <button className="btn" onClick={() => onAux('charter')}>📜 Правила и цели</button>
       </div>
       <div className="row aska-kv aska-place-row">
         <span>📍 Где я сейчас</span><b>{placeOf(me?.place)?.flag} {placeOf(me?.place)?.name || '—'}</b><span className="sp" />

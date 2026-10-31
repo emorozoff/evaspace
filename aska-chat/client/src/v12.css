@@ -1,0 +1,229 @@
+/* ══ Двенадцатое обновление: зверята, гифки по ТЗ, НФТ-галерея, биржа, Web3 ══ */
+
+/* 🦖 движения зверят (супер-смайлы, как в v8.css: --ss имя, --ssd длительность, --ssn повторы) */
+.ss-stomp { --ss: ss-stomp; --ssd: .45s; --ssn: 4; transform-origin: 50% 100%; }
+.ss-howl { --ss: ss-howl; --ssd: 2s; --ssn: 1; transform-origin: 50% 90%; }
+.ss-wag { --ss: ss-wag; --ssd: .3s; --ssn: 6; }
+.ss-sway { --ss: ss-sway; --ssd: 1s; --ssn: 2; }
+.ss-buzz { --ss: ss-buzz; --ssd: 1.8s; --ssn: 1; }
+.ss-swim { --ss: ss-swim; --ssd: 1s; --ssn: 2; }
+.ss-flap { --ss: ss-flap; --ssd: .35s; --ssn: 5; }
+@keyframes ss-stomp { 0%, 100% { transform: translateY(0) scale(1, 1); } 40% { transform: translateY(-14%) scale(.96, 1.05); } 70% { transform: translateY(0) scale(1.08, .9); } }
+@keyframes ss-howl { 0% { transform: rotate(0); } 25%, 75% { transform: rotate(-22deg) translateY(-6%); } 100% { transform: rotate(0); } }
+@keyframes ss-wag { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+@keyframes ss-sway { 0%, 100% { transform: translateX(0) rotate(0); } 25% { transform: translateX(-8%) rotate(-6deg); } 75% { transform: translateX(8%) rotate(6deg); } }
+@keyframes ss-buzz { 0% { transform: translate(-30%, 10%) rotate(-10deg); } 20% { transform: translate(25%, -15%) rotate(8deg); } 40% { transform: translate(-20%, -25%) rotate(-6deg); }
+  60% { transform: translate(30%, 5%) rotate(10deg); } 80% { transform: translate(-10%, 15%) rotate(-8deg); } 100% { transform: translate(0, 0) rotate(0); } }
+@keyframes ss-swim { 0%, 100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-16%) rotate(-12deg); } 60% { transform: translateY(6%) rotate(8deg); } }
+@keyframes ss-flap { 0%, 100% { transform: translateY(0) scaleX(1); } 50% { transform: translateY(-10%) scaleX(.86); } }
+@media (prefers-reduced-motion: reduce) { .ss-stomp, .ss-howl, .ss-wag, .ss-sway, .ss-buzz, .ss-swim, .ss-flap { --ss: none; } }
+
+/* ── общее для Web3-экранов ── */
+.legend-s { margin: 12px 0 4px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; opacity: .7; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .92em; word-break: break-all; }
+.aska-w3box .aska-actions2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.aska-w3box .aska-actions2 .btn { min-height: 44px; }
+.nft-hero { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; margin-bottom: 10px; color: #fff;
+  background: radial-gradient(120% 140% at 0% 0%, #2f6bff, #1b1446 60%, #0b0820); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+.nft-hero > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.nft-hero b { font-size: 17px; }
+.nft-hero small { opacity: .85; font-size: 12.5px; line-height: 1.35; }
+.nft-coins { font-weight: 800; white-space: nowrap; padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, .14); }
+.nft-actions { display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px; margin-bottom: 10px; }
+.nft-actions .btn { min-height: 44px; display: flex; align-items: center; justify-content: center; text-align: center; }
+.nft-file { cursor: pointer; }
+.nft-tabs { flex-wrap: wrap; margin-bottom: 8px; }
+.nft-kinds { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; }
+.nft-kinds .chip { min-height: 32px; }
+.nft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 10px; margin-bottom: 10px; }
+.nft-card { display: flex; flex-direction: column; text-align: left; padding: 0; border-radius: 14px; overflow: hidden; cursor: pointer; font: inherit; color: inherit;
+  background: var(--a-card, #fff); border: 1px solid var(--a-line, rgba(0, 0, 0, .1)); box-shadow: 0 2px 8px rgba(0, 0, 0, .06); }
+.nft-thumb { display: grid; place-items: center; aspect-ratio: 1; overflow: hidden; background: rgba(0, 0, 0, .05); }
+.nft-thumb .aska-sticker.m { width: 100%; height: 100%; border-radius: 0; }
+.nft-meta { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px 10px; min-width: 0; }
+.nft-meta b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nft-meta small { opacity: .7; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nft-price { font-weight: 800; font-size: 13px; }
+.nft-pic { display: grid; place-items: center; width: 100%; height: 100%; }
+.nft-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.nft-ph { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 100%; height: 100%; font-size: 44px; color: #fff; }
+.nft-ph small { font-size: 12px; opacity: .85; }
+.nft-ph.v { background: linear-gradient(135deg, #1b2a6b, #7b2ff7); }
+.nft-ph.m { background: linear-gradient(135deg, #ff6fd8, #3a2fb8); }
+.nft-empty { padding: 18px 4px; text-align: center; }
+.nft-mint { display: flex; flex-direction: column; gap: 8px; }
+.nft-mint-prev { display: grid; place-items: center; max-height: 220px; overflow: hidden; border-radius: 12px; background: rgba(0, 0, 0, .05); }
+.nft-mint-prev img, .nft-mint-prev video { max-width: 100%; max-height: 220px; display: block; }
+.nft-mint-prev audio { width: 100%; margin: 12px; }
+.nft-price-in { width: 110px; flex: none; }
+.nft-co { display: flex; flex-direction: column; gap: 6px; }
+.nft-co-row input { width: 64px; flex: none; }
+.nft-co-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 160px; overflow-y: auto; }
+.nft-phys { display: flex; flex-direction: column; gap: 6px; }
+.aska-check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.aska-check input { width: 20px; height: 20px; flex: none; }
+.aska-nft-ov .aska-story-win { width: min(560px, 100%); }
+.nft-detail { background: var(--a-card, #fff); color: var(--a-text, #111); border-radius: 16px; padding: 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, .3); }
+.skin-classic .nft-detail { background: #fff; color: #000; }
+.nft-detail h2 { margin: 10px 0 4px; font-size: 22px; }
+.nft-big { display: grid; place-items: center; border-radius: 14px; overflow: hidden; background: rgba(0, 0, 0, .05); }
+.nft-big .nft-pic img { max-height: 60vh; object-fit: contain; }
+.nft-big .nft-video { width: 100%; max-height: 60vh; background: #000; display: block; }
+.nft-audio { display: flex; flex-direction: column; width: 100%; }
+.nft-audio .nft-ph { height: 140px; }
+.nft-audio audio { width: 100%; }
+.nft-about { margin: 4px 0; line-height: 1.45; white-space: pre-wrap; }
+.nft-price-big { font-size: 20px; font-weight: 800; margin: 8px 0; }
+.nft-own { display: flex; flex-direction: column; gap: 8px; }
+/* сертификат — золото на тёмном, как пропуск UPASS */
+.nft-cert { margin-top: 14px; padding: 16px; border-radius: 14px; color: #efe6d2; background: radial-gradient(120% 80% at 50% 0%, #2a2114, #0d0b08);
+  box-shadow: inset 0 0 0 1px rgba(217, 178, 107, .6), inset 0 0 0 5px #0d0b08, inset 0 0 0 6px rgba(217, 178, 107, .3); font-size: 14px; }
+.nft-cert-head { text-align: center; display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+.nft-cert-orn { color: #d9b26b; letter-spacing: .3em; font-size: 11px; }
+.nft-cert-head b { font-size: 20px; color: #f3d99b; font-family: "AskaCormorant", Georgia, serif; }
+.nft-cert-head span { opacity: .8; font-size: 12.5px; }
+.nft-cert dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; }
+.nft-cert dt { color: #d9b26b; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+.nft-cert dd { margin: 0; line-height: 1.4; overflow-wrap: anywhere; }
+.nft-cert-trades { margin-top: 10px; }
+.nft-cert-trades .row { gap: 8px; flex-wrap: wrap; }
+.nft-cert-foot { margin-top: 12px; text-align: center; font-size: 11.5px; color: #d9b26b; opacity: .85; }
+@media (max-width: 420px) { .nft-cert dl { grid-template-columns: 1fr; } .nft-cert dt { margin-top: 4px; } }
+
+/* ── гифки по ТЗ ── */
+.aska-gifmaker { display: flex; flex-direction: column; gap: 10px; }
+.gm-ideas { display: flex; flex-wrap: wrap; gap: 6px; }
+.gm-ideas .chip { font-size: 12.5px; text-align: left; }
+.gm-result { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 14px; background: rgba(0, 0, 0, .04); border: 1px solid var(--a-line, rgba(0, 0, 0, .1)); }
+.gm-prev { display: grid; place-items: center; }
+.gm-edit { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.gm-edit label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; opacity: .9; }
+.gm-pal { display: flex; flex-wrap: wrap; gap: 8px; }
+.gm-sw { width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .8); box-shadow: 0 0 0 1px rgba(0, 0, 0, .2); cursor: pointer; padding: 0; }
+.gm-sw.on { box-shadow: 0 0 0 3px var(--a-accent, #2c8de0); }
+.aska-sticker .st-snd { position: absolute; top: 4px; right: 6px; z-index: 4; font-style: normal; font-size: 12px; opacity: .85; }
+.aska-sticker.has-snd { cursor: pointer; }
+@media (max-width: 360px) { .gm-edit { grid-template-columns: 1fr; } }
+
+/* ── биржа ── */
+.aska-exchange { display: flex; flex-direction: column; gap: 10px; }
+.fx-hero { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fx-hero > div { display: flex; flex-direction: column; gap: 2px; padding: 12px; border-radius: 14px; color: #fff; }
+.fx-ask { background: linear-gradient(135deg, #f2b632, #b5651d); }
+.fx-mine { background: linear-gradient(135deg, #2f6bff, #1b1446); }
+.fx-hero span { font-size: 12.5px; opacity: .9; }
+.fx-hero b { font-size: 24px; line-height: 1.1; }
+.fx-hero small { font-size: 12px; opacity: .9; }
+.fx-conv { display: flex; flex-direction: column; gap: 8px; }
+.fx-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 8px; }
+.fx-out { display: flex; align-items: center; font-weight: 800; font-size: 18px; overflow: hidden; }
+.fx-swap { align-self: center; width: 44px; min-height: 36px; padding: 0 !important; font-size: 18px; }
+.fx-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.fx-table { display: flex; flex-direction: column; }
+.fx-tr { display: grid; grid-template-columns: 74px minmax(0, 1fr) 60px auto 62px; align-items: center; gap: 8px; padding: 8px 4px; border: 0; border-bottom: 1px solid var(--a-line, rgba(0, 0, 0, .08));
+  background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; min-height: 44px; }
+.fx-tr.on { background: rgba(44, 141, 224, .1); }
+.fx-c { font-weight: 800; white-space: nowrap; }
+.fx-n { font-size: 12px; opacity: .7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-tr b { text-align: right; white-space: nowrap; }
+.fx-d { font-size: 12px; text-align: right; opacity: .75; white-space: nowrap; }
+.fx-d.up { color: #1f9d55; opacity: 1; } .fx-d.down { color: #d32f2f; opacity: 1; }
+.fx-spark { width: 60px; height: 20px; }
+.fx-spark path { fill: none; stroke: var(--a-accent, #2c8de0); stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.fx-chart { margin-top: 10px; }
+.fx-chart svg { display: block; width: 100%; height: auto; touch-action: none; cursor: crosshair; }
+.fx-line { fill: none; stroke: var(--a-accent, #2c8de0); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.fx-grid { stroke: currentColor; stroke-opacity: .12; stroke-width: 1; }
+.fx-cross { stroke: currentColor; stroke-opacity: .35; stroke-width: 1; stroke-dasharray: 3 3; }
+.fx-dot { fill: var(--a-accent, #2c8de0); stroke: var(--a-card, #fff); stroke-width: 2; }
+.fx-axis { fill: currentColor; fill-opacity: .6; font-size: 10px; }
+.fx-tip { font-size: 12.5px; opacity: .85; text-align: center; min-height: 18px; }
+.fx-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.fx-stats > div { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 8px 4px; border-radius: 12px; background: rgba(0, 0, 0, .04); }
+.fx-stats b { font-size: 16px; overflow-wrap: anywhere; }
+.fx-stats small { font-size: 11px; opacity: .7; }
+.fx-last .row { gap: 8px; }
+.fx-legal { font-size: 12px; }
+@media (max-width: 420px) { .fx-stats { grid-template-columns: 1fr 1fr; } .fx-tr { grid-template-columns: 66px minmax(0, 1fr) auto 56px; } .fx-tr .fx-spark { display: none; } }
+.skin-aero.st-night .fx-stats > div, .skin-aero.st-night .gm-result { background: rgba(255, 255, 255, .05); }
+
+/* ── Мои данные (Web3) ── */
+.aska-web3 { display: flex; flex-direction: column; gap: 10px; }
+.w3-node { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 14px; color: #fff; background: linear-gradient(135deg, #0f766e, #134e4a); }
+.w3-node.bad { background: linear-gradient(135deg, #b91c1c, #7f1d1d); }
+.w3-node > div:last-child { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.w3-node small { opacity: .9; line-height: 1.35; }
+.w3-ico { font-size: 34px; }
+.w3-list { margin: 0; padding-left: 4px; list-style: none; display: flex; flex-direction: column; gap: 6px; line-height: 1.4; }
+.w3-stats b { font-size: 15px; }
+
+/* ── Правила и цели ── */
+.aska-charter { line-height: 1.5; }
+.aska-charter h3 { margin: 14px 0 6px; font-size: 16px; }
+.aska-charter ol, .aska-charter ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; }
+.aska-charter.short { font-size: 13.5px; max-height: 46vh; overflow-y: auto; padding-right: 4px; }
+.aska-charter-box { border: 1px solid var(--a-line, rgba(0, 0, 0, .15)); border-radius: 12px; padding: 8px 10px; margin: 8px 0; background: rgba(0, 0, 0, .03); }
+.aska-charter-box summary { cursor: pointer; font-weight: 700; min-height: 32px; display: flex; align-items: center; }
+.aska-agree { margin: 6px 0; font-size: 14px; }
+.aska-rules-sep { margin: 16px 0 6px; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; opacity: .7; }
+
+/* ── 🎬 видеоквадратики: ⤢ на весь экран, видео из галереи, музыка, клипы Аськи ── */
+.aska-vsq .vsq-full { position: absolute; top: 6px; left: 6px; z-index: 3; width: 34px; height: 34px; border: 0; border-radius: 10px; cursor: pointer;
+  background: rgba(0, 0, 0, .5); color: #fff; font-size: 18px; line-height: 1; display: grid; place-items: center; padding: 0; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.aska-vsq.wide { width: 240px; height: auto; max-height: 320px; border-radius: 14px; }
+.aska-vsq.wide video, .aska-vsq.wide .vsq-thumb { object-fit: contain; background: #000; }
+.aska-amsg { display: flex; align-items: center; gap: 10px; min-width: 220px; max-width: 280px; padding: 8px 10px; border-radius: 14px; background: rgba(0, 0, 0, .06); }
+.msg.me .aska-amsg { background: rgba(255, 255, 255, .18); }
+.am-play { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer; font-size: 16px; background: var(--a-accent, #2c8de0); color: #fff; }
+.am-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.am-body b { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.am-body small { font-size: 11px; opacity: .75; font-variant-numeric: tabular-nums; }
+.am-bar { height: 4px; border-radius: 2px; background: rgba(127, 127, 127, .3); overflow: hidden; }
+.am-bar i { display: block; height: 100%; background: currentColor; opacity: .8; }
+.aska-clip { background: radial-gradient(120% 100% at 30% 10%, #ffe68a, #ff9ec7 45%, #7b5cff 100%); }
+.aska-clip.l { width: min(78vmin, 520px); height: min(78vmin, 520px); max-width: none; max-height: none; border-radius: 28px; }
+.clip-stage { position: absolute; inset: 0; display: grid; place-items: center; }
+.clip-char { position: relative; width: 58%; aspect-ratio: 1; margin-top: -22%; animation: clip-bob 2.4s ease-in-out infinite; transform-origin: 50% 80%; }
+.aska-clip.s-playing .clip-char { animation-duration: .9s; }
+.clip-flower { position: absolute; inset: 0; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .25)); }
+.clip-flower svg { width: 100%; height: 100%; display: block; }
+.clip-face { position: absolute; left: 50%; top: 50%; width: 36%; height: 36%; transform: translate(-50%, -50%); border-radius: 50%; background: #ffe066; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .12); pointer-events: none; }
+.clip-face .eye { position: absolute; top: 30%; width: 14%; height: 22%; border-radius: 50%; background: #1b1446; animation: clip-blink 3.6s infinite; }
+.clip-face .eye.l { left: 26%; } .clip-face .eye.r { right: 26%; }
+.clip-face .mouth { position: absolute; left: 50%; top: 62%; width: 34%; height: 10%; transform: translateX(-50%); border-radius: 0 0 60% 60%; background: #c2185b; }
+.clip-face.talk .mouth { animation: clip-talk .22s ease-in-out infinite alternate; }
+.clip-spark { position: absolute; font-size: 18px; animation: clip-twinkle 2s ease-in-out infinite; }
+.clip-spark.s1 { top: 12%; right: 14%; } .clip-spark.s2 { bottom: 30%; left: 12%; animation-delay: 1s; }
+.clip-badge { position: absolute; top: 8px; right: 8px; z-index: 3; padding: 2px 8px; border-radius: 999px; background: rgba(27, 20, 70, .65); color: #fff; font-size: 11px; font-weight: 700; }
+.clip-sub { position: absolute; left: 8px; right: 8px; bottom: 34px; z-index: 3; padding: 4px 8px; border-radius: 10px; background: rgba(0, 0, 0, .55); color: #fff;
+  font-size: 12px; line-height: 1.3; text-align: center; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.aska-clip.l .clip-sub { font-size: 17px; bottom: 46px; -webkit-line-clamp: 4; }
+@keyframes clip-bob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-5%) rotate(2deg); } }
+@keyframes clip-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+@keyframes clip-talk { from { height: 6%; } to { height: 24%; } }
+@keyframes clip-twinkle { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
+.aska-mview { position: fixed; inset: 0; z-index: 97; display: grid; grid-template-rows: auto 1fr auto; background: rgba(0, 0, 0, .94); color: #fff;
+  padding: calc(8px + var(--safe-t, 0px)) 10px calc(10px + var(--safe-b, 0px)); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.mv-top, .mv-nav { display: flex; align-items: center; gap: 10px; }
+.mv-title { flex: 1; min-width: 0; text-align: center; font-size: 14px; opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mv-btn { min-width: 44px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 12px; background: rgba(255, 255, 255, .14); color: #fff; font-size: 16px; cursor: pointer; }
+.mv-btn:disabled { opacity: .35; }
+.mv-mode.on { background: #ffd24a; color: #111; }
+.mv-stage { display: grid; place-items: center; min-height: 0; padding: 8px 0; }
+.mv-stage video { max-width: 100%; max-height: 100%; border-radius: 18px; background: #000; }
+.mv-stage video.sq { width: min(92vmin, 640px); height: min(92vmin, 640px); object-fit: cover; }
+.mv-fail { opacity: .8; }
+.mv-nav { justify-content: space-between; }
+.mv-hint { font-size: 13px; opacity: .7; }
+.aska-chat-gifs { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; width: 100%; }
+/* шесть вкладок смайлов: в узком окне — в две строки, ничего не прячется вбок */
+.aska-smile-tabs { flex-wrap: wrap; }
+.aska-smile-tabs button { flex: 1 1 30%; min-width: 0; white-space: nowrap; }
+.aska-chat-gifs .rw-gif { padding: 0; border: 0; background: none; cursor: pointer; }
+.aska-chat-gifs .aska-sticker.s { width: 100%; }
+.aska-chat-gifs .cap { grid-column: 1 / -1; }
+.msg.aska-gifmsg { background: none !important; box-shadow: none !important; border: 0 !important; padding-left: 0; padding-right: 0; }
+.aska-concierge-bar { padding: 6px 10px; font-size: 12.5px; line-height: 1.35; background: #fff7dd; color: #6b4a00; border-bottom: 1px solid #f0dc9a; }
+.skin-aero.st-night .aska-concierge-bar { background: rgba(255, 210, 74, .12); color: #ffe7a3; border-bottom-color: rgba(255, 210, 74, .25); }
+.st-royal .aska-concierge-bar { background: #f6e7c3; color: #5c0f1d; border-bottom-color: #c9a14a; }
+@media (prefers-reduced-motion: reduce) { .clip-char, .clip-face .eye, .clip-face.talk .mouth, .clip-spark { animation: none !important; } }

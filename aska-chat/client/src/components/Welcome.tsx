@@ -16,6 +16,7 @@ import { PLACES, VIP_REGIONS, placeOf, lastPlace, rememberPlace } from '../lib/p
 import { setPlace as savePlace, setVipRegion } from '../lib/levels.ts';
 import { History } from './History.tsx';
 import { Book } from './Book.tsx';
+import { Charter } from './Charter.tsx';
 
 export const APP_VERSION = 'v2.0';
 
@@ -279,6 +280,8 @@ function Steps({ step, list }: { step: string; list: string[] }) {
 
 function SignUp({ initialInvite, onLogin }: { initialInvite: string; onLogin: () => void }) {
   const [step, setStep] = useState<SignStep>(initialInvite ? 'name' : 'code');
+  const [agreed, setAgreed] = useState(false);
+  const [charterOpen, setCharterOpen] = useState(false);
   const [invite, setInvite] = useState(initialInvite);
   const [invitedBy, setInvitedBy] = useState<string | null>(null);
   const [smsOn, setSmsOn] = useState(false);
@@ -317,6 +320,7 @@ function SignUp({ initialInvite, onLogin }: { initialInvite: string; onLogin: ()
   function onName(e: FormEvent) {
     e.preventDefault();
     if (!name.trim()) return setError('Как тебя зовут?');
+    if (!agreed) return setError('Прочитай «Правила и цели» и поставь галочку.');
     setError('');
     setStep('phone');
   }
@@ -364,6 +368,11 @@ function SignUp({ initialInvite, onLogin }: { initialInvite: string; onLogin: ()
           <Field label="Как тебя зовут?">
             <input className="field" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder="Имя или ник" autoComplete="nickname" autoFocus />
           </Field>
+          <details className="aska-charter-box" open={charterOpen} onToggle={(e) => setCharterOpen((e.target as HTMLDetailsElement).open)}>
+            <summary>📜 Правила и цели АСЬКИ — прочитай перед входом</summary>
+            <Charter short />
+          </details>
+          <label className="row aska-check aska-agree"><input type="checkbox" checked={agreed} onChange={(e) => { setAgreed(e.target.checked); setError(''); }} /> Я прочитал(а) «Правила и цели» и принимаю их</label>
           <div className="err">{error}</div>
           <button className="btn primary aska-wide" disabled={busy}>Дальше</button>
           <div className="aska-links"><button type="button" className="link aska-linkbtn" onClick={onLogin}>У меня уже есть АСЬКА</button></div>

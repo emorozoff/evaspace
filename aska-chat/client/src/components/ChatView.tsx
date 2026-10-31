@@ -2,21 +2,26 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, KeyboardEvent, ReactNode } from 'react';
 import { useStore } from '../useStore.ts';
-import { sendText, sendImage, sendVideo, setActiveChat, retrySend, discardFailed, sendTyping, typingIn, openTwinChat } from '../lib/store.ts';
+import { sendText, sendImage, sendVideo, sendAudio, setActiveChat, retrySend, discardFailed, sendTyping, typingIn, openTwinChat } from '../lib/store.ts';
 import type { Msg } from '../lib/store.ts';
 import { chatTitle, dmPeer, dayKey, plural, timeShort } from '../lib/format.ts';
 import { previewText } from '../lib/protocol.ts';
 import { isTouch } from '../lib/platform.ts';
 import { flower, smiles, smileSvg, splitSmiles, play, playSmile, userFlower } from '../lib/aska.ts';
-import { SFX, sfxOf, playSfx, isEmojiOnly, SUPER, superOf, playSuper } from '../lib/sfx.ts';
+import { SFX, sfxOf, playSfx, isEmojiOnly, SUPER, ZOO, superOf, playSuper } from '../lib/sfx.ts';
 import { SuperSmile, SymbolGrid } from './SuperSmile.tsx';
 import { statusLine } from '../lib/statuses.ts';
 import { EncryptedImage, ImageViewer, load as loadImage } from './EncryptedImage.tsx';
 import { ToWallDialog } from './Wall.tsx';
-import { saveImage } from '../lib/wall.ts';
+import { saveImage, blobOf, STICKERS } from '../lib/wall.ts';
 import { Win, Svg, Ico, Dialog } from './Win.tsx';
 import { Gold } from './Plate.tsx';
-import { VideoSquare, VideoRecorder, canRecordVideo } from './Video.tsx';
+import { VideoSquare, VideoRecorder, canRecordVideo, VIDEO_MAX, VIDEO_MAX_GOLD, AudioMsg, AskaClip, MediaViewer, playMedia, mediaMeta } from './Video.tsx';
+import type { MediaItem } from './Video.tsx';
+import { LiveGif } from './LiveGif.tsx';
+import { MintDialog } from './Gallery.tsx';
+import { nftList } from '../lib/web3.ts';
+import type { GifSpec, Nft } from '../lib/web3.ts';
 import { CallButton, CallBanner } from './Call.tsx';
 
 const drafts = new Map<string, string>();
@@ -68,9 +73,13 @@ interface LineProps {
   onMenu: (m: Msg) => void;
   onImage: (url: string) => void;
   onQuote: () => void;
+  fromAska: boolean;                 // видеоквадратики-клипы рисуем только от Аськи
+  onMediaEnd: (key: string) => void; // кончилось видео — играть следующее
+  onExpand: (key: string) => void;   // ⤢ на весь экран
 }
 
-function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onImage, onQuote }: LineProps) {
+function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onImage, onQuote, fromAska, onMediaEnd, onExpand }: LineProps) {
+  const mkey = `${m.senderId}:${m.uuid}`;
   const timer = useRef<number | undefined>(undefined);
   const start = useRef<{ x: number; y: number } | null>(null);
   const body = m.body;
@@ -90,7 +99,7 @@ function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onIm
   return (
     <div
       id={`m-${m.id}`}
-      className={`msg ${out ? 'me' : 'them'}${grp ? ' grp' : ''}${isNew ? ' new' : ''}${flash ? ' aska-flash' : ''}${m.status === 'failed' ? ' aska-failed' : ''}${big ? ' aska-big' : ''}${sfx ? ' aska-sfx' : ''}${sup ? ' aska-supermsg' : ''}${body?.kind === 'video' ? ' aska-vmsg' : ''}`}
+      className={`msg ${out ? 'me' : 'them'}${grp ? ' grp' : ''}${isNew ? ' new' : ''}${flash ? ' aska-flash' : ''}${m.status === 'failed' ? ' aska-failed' : ''}${big ? ' aska-big' : ''}${sfx ? ' aska-sfx' : ''}${sup ? ' aska-supermsg' : ''}${body?.kind === 'video' || (body?.clip && fromAska) ? ' aska-vmsg' : ''}${body?.gif ? ' aska-gifmsg' : ''}`}
       onContextMenu={(e) => { e.preventDefault(); onMenu(m); }}
       onTouchStart={(e) => {
         const t = e.touches[0];
@@ -119,8 +128,11 @@ function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onIm
         )}
         {!body && <i className="muted">🔒 не удалось расшифровать</i>}
         {body?.kind === 'image' && body.image && <EncryptedImage image={body.image} local={m.localImage} onOpen={onImage} />}
-        {body?.kind === 'video' && body.video && <VideoSquare video={body.video} local={m.localImage} />}
-        {body?.text && body.kind !== 'video' && (sup ? <SuperSmile e={sup.e} size="l" /> : big ? body.text : renderText(body.text))}
+        {body?.kind === 'video' && body.video && <VideoSquare video={body.video} local={m.localImage} mkey={mkey} onEnded={() => onMediaEnd(mkey)} onExpand={() => onExpand(mkey)} />}
+        {body?.kind === 'audio' && body.audio && <AudioMsg audio={body.audio} local={m.localImage} />}
+        {body?.clip && fromAska && <AskaClip clip={body.clip} mkey={mkey} onEnded={() => onMediaEnd(mkey)} onExpand={() => onExpand(mkey)} />}
+        {body?.gif && <LiveGif spec={body.gif} size="m" />}
+        {body?.text && body.kind === 'text' && !body.gif && !(body.clip && fromAska) && (sup ? <SuperSmile e={sup.e} size="l" /> : big ? body.text : renderText(body.text))}
         {sfx && <span className="aska-sfx-ico" aria-label="звуковой смайл">🔊</span>}
       </span>
     </div>
@@ -153,11 +165,15 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
   const [viewer, setViewer] = useState<string | null>(null);
   const [toWall, setToWall] = useState<string | null>(null);
   const [smilesOpen, setSmilesOpen] = useState(false);
-  const [smileTab, setSmileTab] = useState<'super' | 'sfx' | 'icq' | 'sym'>('super');
+  const [smileTab, setSmileTab] = useState<'super' | 'zoo' | 'gif' | 'sfx' | 'icq' | 'sym'>('super');
   const [flash, setFlash] = useState<number | null>(null);
   const [act, setAct] = useState<Act>(null);
   const [gifts, setGifts] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [mview, setMview] = useState<number | null>(null);      // ⤢ на весь экран: с какого видео
+  const [mintFile, setMintFile] = useState<File | null>(null);  // 💎 своё фото/видео/музыка → НФТ
+  const [myGifs, setMyGifs] = useState<Nft[] | null>(null);     // мои гифки-НФТ для вкладки «🎞 Гифки»
+  const [fileErr, setFileErr] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -256,14 +272,28 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
     }
   }
 
+  // 📎 фото, видео и музыка из телефона: всё шифруется на телефоне, как фото
   async function onFiles(e: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || []);
     e.target.value = '';
     const r = reply?.id;
     setReply(null);
+    setFileErr('');
     near.current = true;
     for (const f of files) {
-      try { await sendImage(chatId, f, r); play('sent'); } catch (err) { console.error(err); }
+      try {
+        if (f.type.startsWith('image/')) await sendImage(chatId, f, r);
+        else if (f.type.startsWith('video/')) {
+          if (f.size > 50 << 20) { setFileErr('Видео больше 50 МБ — обрежь его в «Фото» или пришли видеоквадратиком.'); continue; }
+          const meta = await mediaMeta(f, 'video');
+          await sendVideo(chatId, f, meta.dur, meta.thumb, r, { sq: false, w: meta.w, h: meta.h });
+        } else if (f.type.startsWith('audio/')) {
+          if (f.size > 50 << 20) { setFileErr('Файл больше 50 МБ.'); continue; }
+          const meta = await mediaMeta(f, 'audio');
+          await sendAudio(chatId, f, meta.dur, f.name.replace(/\.[^.]+$/, ''), r);
+        } else { setFileErr('Такой файл не отправить: нужны фото, видео или музыка.'); continue; }
+        play('sent');
+      } catch (err) { console.error(err); setFileErr('Не отправилось — проверь связь.'); }
     }
   }
 
@@ -272,6 +302,13 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
     setReply(null);
     near.current = true;
     sendVideo(chatId, blob, dur, thumb, r).then(() => play('sent')).catch((err) => console.error(err));
+  }
+
+  function sendGif(spec: GifSpec) {
+    setSmilesOpen(false);
+    near.current = true;
+    play('sent');
+    sendText(chatId, `🎞 ${spec.cap || 'Гифка'}`, undefined, { gif: spec });
   }
 
   // Звуковой смайл уходит сразу, как стикер
@@ -309,6 +346,14 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
     setTimeout(() => setFlash(null), 1200);
   }
 
+  // видео и видеоквадратики Аськи по порядку: по окончании одного — следующее, ⤢ — на весь экран
+  const media: MediaItem[] = list.filter((m) => (m.body?.kind === 'video' && m.body.video) || (m.body?.clip && s.users[m.senderId]?.kind === 'aska'))
+    .map((m) => ({ key: `${m.senderId}:${m.uuid}`, video: m.body?.kind === 'video' ? m.body.video : undefined, clip: m.body?.clip, local: m.localImage, from: nameOf(m.senderId) }));
+  function onMediaEnd(k: string) {
+    const i = media.findIndex((x) => x.key === k);
+    if (i >= 0 && i < media.length - 1) playMedia(media[i + 1].key);
+  }
+
   const items: ReactNode[] = [];
   let prevDay = 0;
   list.forEach((m, i) => {
@@ -338,6 +383,9 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
         onMenu={setMenu}
         onImage={setViewer}
         onQuote={() => replyId && jumpTo(replyId)}
+        fromAska={s.users[m.senderId]?.kind === 'aska'}
+        onMediaEnd={onMediaEnd}
+        onExpand={(k) => { const i = media.findIndex((x) => x.key === k); if (i >= 0) setMview(i); }}
       />,
     );
   });
@@ -356,7 +404,13 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
       menuButtons.push(<button key="sv" className="btn" onClick={() => { close(); loadImage(img).then((u) => saveImage(u)).catch(() => {}); }}>⬇ Сохранить фото</button>);
       menuButtons.push(<button key="tw" className="btn" onClick={() => { close(); loadImage(img).then(setToWall).catch(() => {}); }}>📌 На мою стену</button>);
     }
-    const t = menu.body?.text;
+    // 💎 своё фото, видео или музыку — в НФТ-галерею (файл расшифровывается на телефоне и уходит в открытую галерею)
+    const ref = menu.senderId === me && !menu.status ? (menu.body?.kind === 'image' ? menu.body.image : menu.body?.kind === 'video' ? menu.body.video : menu.body?.kind === 'audio' ? menu.body.audio : null) : null;
+    if (ref?.blob) {
+      const nm = menu.body?.kind === 'audio' ? menu.body.audio?.name || 'Музыка' : menu.body?.kind === 'video' ? 'Видео' : 'Фото';
+      menuButtons.push(<button key="nft" className="btn" onClick={() => { close(); loadImage(ref).then(blobOf).then((b) => setMintFile(new File([b], nm, { type: ref.mime }))).catch(() => setFileErr('Файл не открылся.')); }}>💎 В галерею НФТ</button>);
+    }
+    const t = menu.body?.kind === 'text' && !menu.body.gif && !menu.body.clip ? menu.body.text : undefined;
     if (t) menuButtons.push(<button key="c" className="btn" onClick={() => { close(); navigator.clipboard?.writeText(t).catch(() => {}); }}>Скопировать</button>);
     menuButtons.push(<button key="x" className="btn" onClick={close}>Отмена</button>);
   }
@@ -373,6 +427,7 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
         <CallButton chatId={chatId} />
       </div>
       <CallBanner chatId={chatId} />
+      {chat.kind === 'general' && <div className="aska-concierge-bar">🛎 Здесь все участники АСЬКИ. Аська-консьерж (ИИ) знакомит людей и помогает — сообщения в общем чате читает она.</div>}
       {friendTwin && (
         <div className="aska-twin-bar">
           <span>{chat.twin?.anon ? `🕶 Анонимно: ${twinOwner.displayName} не узнает, кто пишет.` : `🙂 Открыто: ${twinOwner.displayName} увидит, что это ты.`}</span>
@@ -437,10 +492,10 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
           <button className="btn icon" onClick={() => setSmilesOpen((v) => !v)} title="Смайлы" aria-label="Смайлы">
             <Svg html={smileSvg('smile', 18) || '☺'} />
           </button>
-          <button className="btn icon" onClick={() => fileRef.current?.click()} title="Фото" aria-label="Фото">📷</button>
-          <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={onFiles} />
-          {canRecordVideo() && <button className="btn icon aska-vbtn" onClick={() => { setSmilesOpen(false); setRecording(true); }} title="Видео-квадратик" aria-label="Видео-квадратик">🎬</button>}
-          <span className="hint">{!s.connected ? 'нет связи' : ''}</span>
+          <button className="btn icon" onClick={() => fileRef.current?.click()} title="Фото, видео, музыка" aria-label="Фото, видео, музыка">📎</button>
+          <input ref={fileRef} type="file" accept="image/*,video/*,audio/*" multiple hidden onChange={onFiles} />
+          {canRecordVideo() && <button className="btn icon aska-vbtn" onClick={() => { setSmilesOpen(false); setRecording(true); }} title="Видеоквадратик" aria-label="Видеоквадратик">🎬</button>}
+          <span className="hint">{!s.connected ? 'нет связи' : fileErr}</span>
           <button className="btn primary" disabled={!text.trim()} onMouseDown={(e) => e.preventDefault()} onClick={submit}>Отправить</button>
         </div>
       </div>
@@ -448,19 +503,21 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
         <div className={`smiles aska-smiles t-${smileTab}`}>
           <div className="aska-smile-tabs">
             <button className={smileTab === 'super' ? 'on' : ''} onClick={() => setSmileTab('super')}>🤩 Супер</button>
+            <button className={smileTab === 'zoo' ? 'on' : ''} onClick={() => setSmileTab('zoo')}>🦖 Зверята</button>
+            <button className={smileTab === 'gif' ? 'on' : ''} onClick={() => { setSmileTab('gif'); if (!myGifs) nftList({ kind: 'gif', mine: true }).then(setMyGifs).catch(() => setMyGifs([])); }}>🎞 Гифки</button>
             <button className={smileTab === 'sfx' ? 'on' : ''} onClick={() => setSmileTab('sfx')}>🔊 Звуки</button>
             <button className={smileTab === 'icq' ? 'on' : ''} onClick={() => setSmileTab('icq')}>☺ Аськи</button>
             <button className={smileTab === 'sym' ? 'on' : ''} onClick={() => setSmileTab('sym')}>✨ Символы</button>
           </div>
-          {smileTab === 'super' ? (
+          {smileTab === 'super' || smileTab === 'zoo' ? (
             <>
-              {SUPER.map((x) => (
+              {(smileTab === 'zoo' ? ZOO : SUPER).map((x) => (
                 <button key={x.e} className="aska-super-btn" title={x.name} style={{ ['--glow' as string]: x.glow }}
                   onMouseDown={(e) => e.preventDefault()} onClick={() => sendSuper(x.e)}>
                   <i className={`ss-${x.anim}`}>{x.e}</i><small>{x.name}</small>
                 </button>
               ))}
-              <div className="cap">нажми — у друга смайл оживёт и прозвучит 🔊</div>
+              <div className="cap">{smileTab === 'zoo' ? 'зверята рычат, лают и поют — у друга тоже 🔊' : 'нажми — у друга смайл оживёт и прозвучит 🔊'}</div>
             </>
           ) : smileTab === 'sfx' ? (
             <>
@@ -479,6 +536,18 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
               ))}
               <div className="cap">нажми — смайл вставится и скажет своё</div>
             </>
+          ) : smileTab === 'gif' ? (
+            <div className="aska-chat-gifs">
+              {(myGifs || []).filter((n) => n.spec).map((n) => (
+                <button key={n.id} className="rw-gif" onMouseDown={(e) => e.preventDefault()} onClick={() => sendGif(n.spec!)} title={`${n.title} · ${n.token}`}><LiveGif spec={n.spec!} size="s" /></button>
+              ))}
+              {STICKERS.map((st) => (
+                <button key={st.id} className="rw-gif" onMouseDown={(e) => e.preventDefault()} onClick={() => sendGif({ e: st.e, cap: st.cap, bg: st.bg, anim: st.anim, fx: st.fx })} title={st.cap}>
+                  <LiveGif spec={{ e: st.e, cap: st.cap, bg: st.bg, anim: st.anim, fx: st.fx }} size="s" />
+                </button>
+              ))}
+              <div className="cap">{myGifs?.some((n) => n.spec) ? 'сначала — твои гифки-НФТ, дальше живые гифки АСЬКИ' : 'свою гифку можно собрать по ТЗ: «Ещё» → «🎞 Гифка по ТЗ»'}</div>
+            </div>
           ) : (
             <SymbolGrid onPick={addSymbol} />
           )}
@@ -496,7 +565,9 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
         </>} />
       )}
       {toWall && <ToWallDialog url={toWall} onClose={() => setToWall(null)} />}
-      {recording && <VideoRecorder onSend={onVideo} onClose={() => setRecording(false)} />}
+      {recording && <VideoRecorder onSend={onVideo} onClose={() => setRecording(false)} max={s.profile?.tier === 'gold' || s.profile?.tier === 'black' ? VIDEO_MAX_GOLD : VIDEO_MAX} />}
+      {mview !== null && media.length > 0 && <MediaViewer items={media} start={mview} onClose={() => setMview(null)} />}
+      {mintFile && <MintDialog file={mintFile} title={mintFile.name} onClose={() => setMintFile(null)} onDone={() => setMintFile(null)} />}
     </Win>
   );
 }

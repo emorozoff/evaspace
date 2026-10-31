@@ -2,6 +2,8 @@
 // В сообщении это обычный текст (сам эмодзи), шифрование и протокол те же. Звуки синтезируются
 // на лету: часть — голоса смайлов «Аськи» (AskaSound.smile), часть — свои ниже.
 import { audioCtx, soundEnabled } from './aska.ts';
+import { ZOO, zooOf, dinoRoar } from './zoo.ts';
+export { ZOO } from './zoo.ts';
 
 type Synth = (c: AudioContext, out: AudioNode, t: number) => void;
 
@@ -221,17 +223,15 @@ export const SUPER: SuperDef[] = [
   { e: '🫡', name: 'есть, капитан!', anim: 'salute', glow: '#9be7ff', sound: (c, o, t) => {
     notes(c, o, t, [[392, 0, 0.18], [523, 0.22, 0.18], [659, 0.44, 0.18], [784, 0.7, 0.3], [659, 1.05, 0.15], [784, 1.25, 0.7]], 'square', 0.07);
   } },
-  { e: '🦖', name: 'р-р-р', anim: 'roar', glow: '#7be08a', sound: (c, o, t) => {
-    tone(c, o, t, 1.8, { f: 160, fEnd: 55, type: 'sawtooth', gain: 0.3, lp: 700, a: 0.15 });
-    noise(c, o, t, 1.8, { f: 400, fEnd: 150, q: 0.8, gain: 0.25, a: 0.15 });
-  } },
+  { e: '🦖', name: 'р-р-р', anim: 'roar', fx: ['💥'], glow: '#7be08a', sound: dinoRoar }, // настоящий рык — lib/zoo.ts
   { e: '🎂', name: 'с днём рождения', anim: 'beat', fx: ['🎉', '✨'], glow: '#ffb3c7', sound: (c, o, t) => {
     // «С днём рожденья тебя» — первые ноты (народная мелодия)
     notes(c, o, t, [[392, 0, 0.18], [392, 0.2, 0.12], [440, 0.35, 0.35], [392, 0.75, 0.35], [523, 1.15, 0.35], [494, 1.55, 0.45]], 'triangle', 0.22);
   } },
 ];
 const SUPER_BY = new Map(SUPER.map((x) => [x.e.replace(/\uFE0F/g, ''), x]));
-export const superOf = (text?: string) => (text ? SUPER_BY.get(text.trim().replace(/\uFE0F/g, '')) : undefined);
+// супер-смайл — из основного набора или зверята (lib/zoo.ts): у всех движение, свечение и свой звук
+export const superOf = (text?: string): SuperDef | undefined => (text ? SUPER_BY.get(text.trim().replace(/\uFE0F/g, '')) || zooOf(text) : undefined);
 
 export function playSuper(e: string) {
   const x = superOf(e);
