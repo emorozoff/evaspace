@@ -2,6 +2,7 @@
 // (имя → телефон → код из СМС → пароль) и «не помню пароль» (код из СМС или от администратора → новый пароль).
 // Плюс ссылка супер-админа (#super=…): войти своим паролем, задать новый или создать новый вход.
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { FormEvent, ReactNode } from 'react';
 import { checkInvite, register, login, recover, sendCode, verifyCode, smsAvailable, superLinkInfo, claimSuperWithLogin, claimSuperWithPassword, claimSuperHere, logout } from '../lib/store.ts';
 import type { SuperLinkInfo } from '../lib/store.ts';
@@ -13,6 +14,7 @@ import { Win, Svg, Dialog } from './Win.tsx';
 import { Plate } from './Plate.tsx';
 import { PLACES, VIP_REGIONS, placeOf, lastPlace, rememberPlace } from '../lib/places.ts';
 import { setPlace as savePlace, setVipRegion } from '../lib/levels.ts';
+import { History } from './History.tsx';
 
 export const APP_VERSION = 'v2.0';
 
@@ -174,6 +176,7 @@ const seriesText = (v: string) => v.toUpperCase().replace(/[ABEKMHOPCTYX]/g, (c)
 
 function Login({ onInvite, onForgot }: { onInvite: () => void; onForgot: (phone: string) => void }) {
   const [byPlate, setByPlate] = useState(true);
+  const [story, setStory] = useState(false);
   const [loginName, setLogin] = useState('');
   const [region, setRegion] = useState(lastPlace());
   const [password, setPassword] = useState('');
@@ -241,7 +244,18 @@ function Login({ onInvite, onForgot }: { onInvite: () => void; onForgot: (phone:
         <button type="button" className="link aska-linkbtn" onClick={() => onForgot(/\d{6,}/.test(loginName.replace(/\D/g, '')) && !byPlate ? loginName : '')}>Не помню пароль</button>
         <button type="button" className="link aska-linkbtn" onClick={onInvite}>У меня приглашение</button>
       </div>
+      <button type="button" className="link aska-linkbtn aska-about-link" onClick={() => setStory(true)}>📖 История АСЬКИ — с чего всё началось</button>
       <a className="link aska-linkbtn aska-about-link" href="/site/" target="_blank" rel="noopener">Что такое АСЬКА? Правила и уровни →</a>
+      {/* поверх всей страницы: окно входа анимируется, и fixed внутри него был бы зажат его рамками */}
+      {story && createPortal(
+        <div className="overlay aska-story-ov" onClick={() => setStory(false)}>
+          <div className="aska-story-win" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="btn aska-story-close" onClick={() => setStory(false)} aria-label="Закрыть">×</button>
+            <History />
+          </div>
+        </div>,
+        document.body,
+      )}
     </form>
   );
 }

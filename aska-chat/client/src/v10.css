@@ -300,3 +300,36 @@
 /* переключатель «Личное / Бизнес / Ночь»: в узком окне — без переносов, счётчик в уголке */
 .aska-space button { position: relative; white-space: nowrap; font-size: 12.5px; padding-left: 4px; padding-right: 4px; }
 .aska-space b { position: absolute; top: -5px; right: -2px; min-width: 16px; height: 16px; line-height: 16px; font-size: 9.5px; padding: 0 4px; }
+
+/* ══ 📖 История АСЬКИ: книга-летопись (пергамент, киноварь, золото, буквицы) ══ */
+@font-face { font-family: "AskaCormorant"; font-style: normal; font-weight: 400 700; font-display: swap; src: url(/site/fonts/cormorant-cyrillic.woff2) format("woff2"); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "AskaCormorant"; font-style: normal; font-weight: 400 700; font-display: swap; src: url(/site/fonts/cormorant-latin.woff2) format("woff2"); unicode-range: U+0000-00FF, U+2000-206F; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.aska-history { --ink: #2a1a10; --red: #b3261e; --gold: #b8860b; color: var(--ink); font-family: "AskaCormorant", Georgia, "Times New Roman", serif; font-size: 18px; line-height: 1.5;
+  background: radial-gradient(120% 80% at 50% 0%, #fbf3df, #f1e2bd 70%, #e8d3a3); border-radius: 14px; padding: 18px 16px 22px;
+  box-shadow: inset 0 0 0 2px #fff8e6, inset 0 0 0 4px var(--gold), inset 0 0 0 6px #fff8e6, inset 0 0 40px rgba(120, 80, 20, .25); }
+.hist-head { text-align: center; padding: 6px 0 4px; }
+.hist-head h1 { margin: 4px 0 0; font-size: 32px; line-height: 1.1; color: var(--red); letter-spacing: .02em; text-shadow: 0 1px 0 #fff8e6; }
+.hist-sub { margin: 4px 0; font-style: italic; font-size: 17px; }
+.hist-orn { color: var(--gold); letter-spacing: .5em; font-size: 16px; }
+.hist-ch { margin-top: 18px; }
+.hist-n { text-align: center; font-size: 13px; text-transform: uppercase; letter-spacing: .25em; color: var(--gold); }
+.hist-ch h2 { text-align: center; margin: 2px 0 8px; font-size: 24px; line-height: 1.15; color: var(--red); }
+.hist-p { margin: 0 0 10px; text-align: left; hyphens: auto; -webkit-hyphens: auto; }
+.hist-first::after { content: ''; display: block; clear: both; }
+.hist-cap { float: left; font-size: 58px; line-height: .9; margin: 4px 8px 0 0; padding: 4px 8px 6px; color: var(--red); background: #fff8e6;
+  border: 2px solid var(--gold); border-radius: 4px; box-shadow: 0 0 0 3px #fff8e6, 0 0 0 4px var(--red); font-weight: 700; }
+.hist-div { text-align: center; color: var(--gold); font-size: 20px; margin: 6px 0 0; }
+.hist-art { margin: 0 auto 10px; max-width: 360px; text-align: center; }
+.hist-art svg { display: block; width: 100%; height: auto; background: #fffdf6; border: 2px solid var(--ink); border-radius: 10px; box-shadow: 4px 4px 0 rgba(42, 26, 16, .2); }
+.hist-art figcaption { font-size: 13px; font-style: italic; opacity: .75; margin-top: 4px; display: flex; justify-content: center; gap: 10px; align-items: center; }
+.hist-reset { border: 1px solid var(--ink); background: #fff8e6; color: var(--ink); border-radius: 999px; font: inherit; font-size: 12px; padding: 0 8px; cursor: pointer; }
+.hist-art svg g[style] { transition: fill .25s; }
+.hist-foot { margin-top: 20px; text-align: center; }
+.hist-end { font-style: italic; }
+.hist-sign { font-size: 22px; color: var(--red); font-weight: 700; letter-spacing: .05em; }
+.overlay.aska-story-ov { position: fixed; inset: 0; z-index: 80; display: block !important; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: calc(10px + var(--safe-t, 0px)) 6px calc(20px + var(--safe-b, 0px)); background: rgba(20, 12, 4, .6); }
+.aska-story-win { position: relative; width: min(680px, 100%); margin: 0 auto; }
+.aska-story-close { position: sticky; top: 4px; float: right; z-index: 2; width: 36px; height: 36px; border-radius: 50% !important; padding: 0 !important; font-size: 20px; }
+.skin-aero.st-night .aska-history, .skin-aero.st-business .aska-history { color: var(--ink); }
+@media (min-width: 720px) { .aska-history { font-size: 19px; padding: 26px 30px 30px; } .hist-head h1 { font-size: 40px; } .hist-p { text-align: justify; } }
