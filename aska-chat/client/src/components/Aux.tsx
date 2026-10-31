@@ -19,6 +19,7 @@ import { Rules } from './Rules.tsx';
 import { Night } from './Night.tsx';
 import { Catalog, Ledger } from './Catalog.tsx';
 import { History } from './History.tsx';
+import { Book } from './Book.tsx';
 import { placeOf } from '../lib/places.ts';
 import { Win, Ico, Dialog } from './Win.tsx';
 import { UserPlate, Gold } from './Plate.tsx';
@@ -30,12 +31,12 @@ import { Wall } from './Wall.tsx';
 import type { WallView } from './Wall.tsx';
 
 export type AuxKind = 'settings' | 'invite' | 'circles' | 'myai' | 'admin' | 'plates' | 'wall' | 'biz'
-  | 'levels' | 'network' | 'rules' | 'night' | 'music' | 'films' | 'books' | 'ledger' | 'history';
+  | 'levels' | 'network' | 'rules' | 'night' | 'music' | 'films' | 'books' | 'ledger' | 'history' | 'book';
 
 const TITLES: Record<AuxKind, string> = {
   settings: 'Ещё', invite: 'Позвать друга', circles: 'Круги', myai: 'Мой ИИ', admin: 'Управление АСЬКОЙ', plates: 'Номера', wall: 'Стена',
   biz: 'Рабочие контакты', levels: 'Уровни', network: 'Мой нетворк', rules: 'Правила АСЬКИ', night: 'Ночь', music: 'Музыка', films: 'Кино',
-  books: 'Книги', ledger: 'Цепочка блоков', history: 'История АСЬКИ',
+  books: 'Книги', ledger: 'Цепочка блоков', history: 'История АСЬКИ', book: 'Книга перемен',
 };
 
 export function Aux({ kind, onBack, onOpen, onAux, wallView, onWallView, onProfile }: {
@@ -62,6 +63,7 @@ export function Aux({ kind, onBack, onOpen, onAux, wallView, onWallView, onProfi
         {kind === 'books' && <Catalog kind="book" onLedger={() => onAux('ledger')} />}
         {kind === 'ledger' && <Ledger />}
         {kind === 'history' && <History />}
+        {kind === 'book' && <Book />}
       </div>
     </Win>
   );
@@ -139,7 +141,8 @@ function Settings({ onAux }: { onAux: (k: AuxKind) => void }) {
       <div className="aska-actions">
         <button className="btn primary" onClick={() => onAux('invite')}>➕ Позвать друга</button>
         {s.profile?.isAdmin && <button className="btn" onClick={() => onAux('admin')}>👑 Управление АСЬКОЙ</button>}
-        <button className="btn" onClick={() => onAux('history')}>📖 История АСЬКИ</button>
+        <button className="btn" onClick={() => onAux('book')}>📖 Книга перемен</button>
+        <button className="btn" onClick={() => onAux('history')}>📜 История АСЬКИ</button>
         <a className="btn" href="/site/" target="_blank" rel="noopener">📜 Правила и уровни</a>
       </div>
 

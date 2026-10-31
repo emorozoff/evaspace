@@ -21,6 +21,7 @@ import * as NET from './network.js';
 import { PLACES, placeOf, defaultPlace } from './places.js';
 import { createNight } from './night.js';
 import { createCatalog } from './catalog.js';
+import { bookView } from './book.js';
 
 const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
@@ -864,6 +865,8 @@ export function createApp({
     res.json({ place: req.body.place });
   });
   api.get('/places', (req, res) => res.json({ places: PLACES, vip: TIER.VIP_REGIONS }));
+  // 📖 «Книга перемен» — открыта всем, в том числе до входа
+  api.get('/book', (req, res) => res.json(bookView()));
 
   // Позвать в Блэк: Блэк — одного человека в месяц, администрация — без ограничений. Человек сам принимает.
   api.post('/levels/black-invite', auth, json, (req, res) => {

@@ -1,0 +1,59 @@
+/* ══ 📖 «Книга перемен» (автор — Адам): чёрная книга с золотом, как UPASS и UHOME ══
+   Шрифт AskaCormorant объявлен в v10.css. Книга сама задаёт фон и цвета — одинаково во всех стилях АСЬКИ. */
+.aska-book { --bk-bg: #0d0b08; --bk-ink: #efe6d2; --bk-dim: #c9bc9f; --bk-gold: #d9b26b; --bk-gold2: #f3d99b; --bk-red: #e2735f;
+  position: relative; color: var(--bk-ink); font-family: "AskaCormorant", Georgia, "Times New Roman", serif; font-size: 18px; line-height: 1.55;
+  border-radius: 16px; padding: 20px 16px 24px; overflow: hidden;
+  background:
+    radial-gradient(1.2px 1.2px at 12% 8%, rgba(243, 217, 155, .7), transparent 60%),
+    radial-gradient(1px 1px at 78% 4%, rgba(255, 255, 255, .6), transparent 60%),
+    radial-gradient(1.4px 1.4px at 64% 14%, rgba(243, 217, 155, .5), transparent 60%),
+    radial-gradient(1px 1px at 30% 22%, rgba(255, 255, 255, .45), transparent 60%),
+    radial-gradient(120% 60% at 50% 0%, #2a2114 0%, #15110b 45%, var(--bk-bg) 100%);
+  box-shadow: inset 0 0 0 1px rgba(217, 178, 107, .55), inset 0 0 0 5px var(--bk-bg), inset 0 0 0 6px rgba(217, 178, 107, .3), 0 10px 30px rgba(0, 0, 0, .35); }
+.aska-book::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 560px; pointer-events: none; opacity: .08;
+  -webkit-mask-image: linear-gradient(#000 40%, transparent); mask-image: linear-gradient(#000 40%, transparent);
+  background: repeating-radial-gradient(circle at 50% 120px, transparent 0 9px, var(--bk-gold) 9px 10px); }
+.aska-book > * { position: relative; }
+.bk-wait { text-align: center; color: var(--bk-dim); font-style: italic; margin: 30px 0; }
+.bk-head { text-align: center; padding: 4px 0 6px; }
+.bk-head h1 { margin: 6px 0 0; font-size: 36px; line-height: 1.05; font-weight: 600; letter-spacing: .04em;
+  color: var(--bk-gold2); background: linear-gradient(180deg, #fbe7b5, var(--bk-gold) 60%, #a77d3c); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.bk-sub { margin: 6px auto 0; max-width: 30em; font-style: italic; color: var(--bk-dim); font-size: 17px; }
+.bk-author { margin: 8px 0 0; font-size: 14px; letter-spacing: .28em; text-transform: uppercase; color: var(--bk-gold); }
+.bk-author b { font-weight: 700; }
+.bk-orn { color: var(--bk-gold); letter-spacing: .6em; font-size: 15px; opacity: .85; }
+.bk-intro { margin: 14px 0 6px; }
+.bk-p { margin: 0 0 10px; text-align: left; hyphens: auto; -webkit-hyphens: auto; }
+.bk-lead::first-letter { float: left; font-size: 54px; line-height: .85; margin: 6px 8px 0 0; color: var(--bk-gold2); font-weight: 700; }
+.bk-lead::after { content: ''; display: block; clear: both; }
+
+/* оглавление: 12 знаков — нажал и перешёл к перемене */
+.bk-toc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 16px 0 6px; }
+.bk-toc-i { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 44px; padding: 10px 4px 8px; cursor: pointer;
+  background: linear-gradient(180deg, rgba(217, 178, 107, .1), rgba(217, 178, 107, .03)); border: 1px solid rgba(217, 178, 107, .35); border-radius: 12px;
+  color: var(--bk-ink); font: inherit; font-size: 15px; line-height: 1.15; transition: transform .15s, border-color .15s; }
+.bk-toc-i:hover, .bk-toc-i:focus-visible { border-color: var(--bk-gold); transform: translateY(-1px); outline: none; }
+.bk-toc-i .bk-hex { width: 30px; height: 28px; }
+.bk-toc-n { font-size: 11px; letter-spacing: .2em; color: var(--bk-gold); }
+.bk-toc-t { font-weight: 600; text-align: center; overflow-wrap: anywhere; }
+.bk-hex { display: block; fill: var(--bk-gold); }
+
+/* перемена */
+.bk-ch { margin-top: 26px; padding-top: 18px; border-top: 1px solid rgba(217, 178, 107, .25); scroll-margin-top: 50px; }
+.bk-sign { display: flex; justify-content: center; margin-bottom: 8px; }
+.bk-sign .bk-hex { width: 64px; height: 60px; filter: drop-shadow(0 0 8px rgba(217, 178, 107, .35)); }
+.bk-n { text-align: center; font-size: 12.5px; text-transform: uppercase; letter-spacing: .3em; color: var(--bk-gold); }
+.bk-ch h2 { text-align: center; margin: 2px 0 10px; font-size: 30px; line-height: 1.1; font-weight: 600; color: var(--bk-gold2); }
+.bk-label { display: block; font-style: normal; font-size: 11.5px; text-transform: uppercase; letter-spacing: .3em; color: var(--bk-gold); margin-bottom: 2px; }
+.bk-image { margin: 0 auto 12px; max-width: 32em; text-align: center; font-style: italic; color: var(--bk-dim); }
+.bk-advice { margin: 12px 0 0; padding: 10px 14px; border-left: 3px solid var(--bk-gold); border-radius: 0 10px 10px 0; background: rgba(217, 178, 107, .08); font-style: italic; }
+.bk-foot { margin-top: 26px; padding-top: 18px; border-top: 1px solid rgba(217, 178, 107, .25); text-align: center; }
+.bk-foot .bk-hex { width: 40px; height: 38px; margin: 0 auto 10px; }
+.bk-end { font-style: italic; color: var(--bk-dim); max-width: 30em; margin: 0 auto 10px; }
+.bk-sign-off { font-size: 20px; color: var(--bk-gold2); font-weight: 700; letter-spacing: .05em; margin: 0; }
+
+/* окно поверх экрана входа */
+.overlay.aska-story-ov.aska-book-ov { background: rgba(4, 3, 2, .78); }
+@media (min-width: 560px) { .bk-toc { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 720px) { .aska-book { font-size: 19px; padding: 28px 34px 32px; } .bk-head h1 { font-size: 46px; } .bk-p { text-align: justify; } .bk-toc { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .bk-toc-i { transition: none; } }

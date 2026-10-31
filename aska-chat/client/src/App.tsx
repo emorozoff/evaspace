@@ -136,7 +136,7 @@ export default function App() {
     <div className={cls}>
       <div className="wins">
         <Contacts activeChat={chatOpen} onOpen={openChat} onProfile={setProfile} onSettings={() => setAux('settings')} onInvite={() => setAux('invite')} onAux={setAux} />
-        {aux && <Aux kind={aux} onBack={() => setAux(['admin', 'invite', 'levels', 'network', 'rules', 'history'].includes(aux) ? 'settings' : aux === 'ledger' ? 'music' : null)} onOpen={openChat} onAux={setAux}
+        {aux && <Aux kind={aux} onBack={() => setAux(['admin', 'invite', 'levels', 'network', 'rules', 'history', 'book'].includes(aux) ? 'settings' : aux === 'ledger' ? 'music' : null)} onOpen={openChat} onAux={setAux}
           wallView={wallView} onWallView={setWallView} onProfile={setProfile} />}
         {chatOpen && <ChatView key={chatOpen} chatId={chatOpen} onBack={() => setChat(null)} onProfile={setProfile} onCircleInfo={setCircleInfo} onOpen={openChat} />}
       </div>
