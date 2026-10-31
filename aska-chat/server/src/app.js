@@ -22,6 +22,7 @@ import { PLACES, placeOf, defaultPlace } from './places.js';
 import { createNight } from './night.js';
 import { createCatalog } from './catalog.js';
 import { bookView } from './book.js';
+import { createCalls } from './calls.js';
 
 const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
@@ -306,7 +307,7 @@ export function createApp({
   function wentOffline(userId) {
     offlineTimers.set(userId, setTimeout(() => {
       offlineTimers.delete(userId);
-      if (!conns.has(userId)) sendToAll({ type: 'presence', userId, online: false });
+      if (!conns.has(userId)) { sendToAll({ type: 'presence', userId, online: false }); calls.dropUser(userId); }
     }, OFFLINE_DELAY));
   }
   function isVisible(userId) {
@@ -315,6 +316,9 @@ export function createApp({
     for (const ws of set) if (ws.readyState === 1 && ws.visible) return true;
     return false;
   }
+
+  // 📞 звонки: сервер только знакомит телефоны и передаёт им зашифрованные сигналы (calls.js)
+  const calls = createCalls({ db, memberIds, userRow, sendTo, isVisible, log, ringMs: botTiming?.callRingMs, notify: (id, data) => push.notify(id, data) });
 
   // ---------- сообщения ----------
 
@@ -408,6 +412,7 @@ export function createApp({
       "script-src 'self'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' blob: data:",
+      "media-src 'self' blob:", // видео-квадратики (расшифрованы на телефоне) и звук
       `connect-src 'self' ${wsOrigin}`.trim(),
       "worker-src 'self'",
       "manifest-src 'self'",
@@ -666,6 +671,7 @@ export function createApp({
         tier: TIER.tierOf(fresh), tierUntil: TIER.tierOf(fresh) === 'gold' && fresh.tier === 'gold' ? fresh.tier_until || null : null,
         vipRegion: fresh.vip_region || null, netSize: fresh.net_size || 0, upass: TIER.isBlack(fresh) ? fresh.upass || null : null,
         blackInvites: db.prepare("SELECT COUNT(*) AS n FROM tier_invites WHERE to_id = ? AND accepted_at IS NULL").get(fresh.id).n,
+        royal: Boolean(fresh.royal),
       },
       pins, guesses, groups: groupsOf(req.userId), hidden: [...wall.hiddenSet(req.userId)], features: { ai: ai.available(), sms: sms.configured() },
       ...(M.isAdmin(fresh) ? { brain: { key: ai.configured(), people: bots.peopleEnabled(), error: ai.status().lastError || '' } } : {}),
@@ -865,6 +871,30 @@ export function createApp({
     res.json({ place: req.body.place });
   });
   api.get('/places', (req, res) => res.json({ places: PLACES, vip: TIER.VIP_REGIONS }));
+  // 👑 выбранный стиль: в «Царской особе» Аська обращается «Ваше Величество»
+  api.post('/me/design', auth, json, (req, res) => {
+    const royal = req.body?.design === 'royal' ? 1 : 0;
+    db.prepare('UPDATE users SET royal = ? WHERE id = ?').run(royal, req.userId);
+    res.json({ royal: Boolean(royal) });
+  });
+  // 📞 серверы для соединения звонков: STUN по умолчанию; TURN (для сложных сетей) администратор задаёт в «Управлении»
+  const turnConfig = () => { try { return JSON.parse(getSetting(db, 'turn') || 'null'); } catch { return null; } };
+  api.get('/calls/ice', auth, (req, res) => {
+    const t = turnConfig();
+    const iceServers = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }];
+    if (t?.urls?.length) iceServers.push({ urls: t.urls, username: t.username || undefined, credential: t.credential || undefined });
+    res.json({ iceServers });
+  });
+  api.post('/admin/turn', auth, admin, json, (req, res) => {
+    const raw = typeof req.body?.urls === 'string' ? req.body.urls : '';
+    const urls = raw.split(/[\s,]+/).map((u) => u.trim()).filter((u) => /^turns?:[\w.:-]+(\?transport=(udp|tcp))?$/.test(u)).slice(0, 4);
+    if (!urls.length) { setSetting(db, 'turn', ''); return res.json({ turn: null }); }
+    const username = String(req.body?.username || '').slice(0, 200);
+    const credential = String(req.body?.credential || '').slice(0, 200);
+    setSetting(db, 'turn', JSON.stringify({ urls, username, credential }));
+    res.json({ turn: { urls, username } });
+  });
+
   // 📖 «Книга перемен» — открыта всем, в том числе до входа
   api.get('/book', (req, res) => res.json(bookView()));
 
@@ -1152,7 +1182,7 @@ export function createApp({
       tier: TIER.tierOf(u), tierUntil: u.tier === 'gold' ? u.tier_until || null : null, netSize: u.net_size || 0,
     }));
     const hasSuper = anySuper();
-    res.json({ ai: ai.status(), people: bots.peopleEnabled(), sms: sms.status(), users, me: { role: req.me.role, id: req.me.id }, hasSuper, canInviteSuper: req.me.role === 'super' || !hasSuper, party: bots.partyResults() });
+    res.json({ ai: ai.status(), people: bots.peopleEnabled(), sms: sms.status(), users, me: { role: req.me.role, id: req.me.id }, hasSuper, canInviteSuper: req.me.role === 'super' || !hasSuper, party: bots.partyResults(), turn: turnConfig()?.urls?.length ? { urls: turnConfig().urls, username: turnConfig().username || '' } : null });
   });
 
   // Кто кого может менять: админа и супер-админа — только супер-админ; обычных — любой админ. Себя — никто.
@@ -1653,7 +1683,7 @@ export function createApp({
   // ---------- WebSocket ----------
 
   const server = http.createServer(app);
-  const wss = new WebSocketServer({ noServer: true, maxPayload: 4096 });
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 32 * 1024 }); // сигналы звонков (зашифрованный SDP) — до ~24 КБ
 
   server.on('upgrade', (req, socket, head) => {
     const url = new URL(req.url, 'http://local');
@@ -1684,6 +1714,15 @@ export function createApp({
           const members = memberIds(msg.chatId);
           if (!members.includes(userId)) return;
           for (const id of members) if (id !== userId) sendTo(id, { type: 'typing', chatId: msg.chatId, userId });
+        } else if (typeof msg.type === 'string' && msg.type.startsWith('call_') && typeof msg.chatId === 'string' && msg.chatId.length < 100) {
+          if (!allow(`call:${userId}`, 120, 10_000)) return; // сигналов много в начале звонка, но не бесконечно
+          let r = null;
+          if (msg.type === 'call_start') r = calls.start(userId, msg.chatId);
+          else if (msg.type === 'call_join') r = calls.join(userId, msg.chatId);
+          else if (msg.type === 'call_leave') calls.leave(userId, msg.chatId);
+          else if (msg.type === 'call_decline') calls.decline(userId, msg.chatId);
+          else if (msg.type === 'call_signal' && Number.isInteger(msg.to)) calls.signal(userId, msg.chatId, msg.to, msg.data);
+          if (r?.error) ws.send(JSON.stringify({ type: 'call_error', chatId: msg.chatId, error: r.error }));
         }
       });
       ws.on('close', () => {
@@ -1691,6 +1730,8 @@ export function createApp({
         if (set) { set.delete(ws); if (!set.size) { conns.delete(userId); wentOffline(userId); } }
       });
       ws.send(JSON.stringify({ type: 'hello' }));
+      const mine = calls.listFor(userId);
+      if (mine.length) ws.send(JSON.stringify({ type: 'calls', calls: mine }));
     });
   });
 
@@ -1719,11 +1760,12 @@ export function createApp({
     clearInterval(heartbeat);
     clearInterval(wallTimer);
     night.stop();
+    calls.stop();
     for (const t of offlineTimers.values()) clearTimeout(t);
     await bots.stop();
     for (const ws of wss.clients) ws.terminate();
     return new Promise((resolve) => server.close(() => { db.close(); resolve(); }));
   }
 
-  return { app, server, db, close, bots, ai, wall, night, catalog, createInvite: (by) => formatInvite(createInvite(db, by)) };
+  return { app, server, db, close, bots, ai, wall, night, catalog, calls, createInvite: (by) => formatInvite(createInvite(db, by)) };
 }

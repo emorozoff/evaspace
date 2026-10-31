@@ -3,13 +3,14 @@ import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { api } from '../lib/api.ts';
 import { decryptFile } from '../lib/crypto.ts';
-import type { ImageRef } from '../lib/protocol.ts';
+import type { ImageRef, VideoRef } from '../lib/protocol.ts';
 import { blobUrl } from '../lib/wall.ts';
 
 const urls = new Map<string, string>();
 const loading = new Map<string, Promise<string>>();
 
-export function load(image: ImageRef): Promise<string> {
+// Фото и видео-квадратики: скачать шифр, расшифровать на телефоне, отдать ссылку blob:
+export function load(image: ImageRef | VideoRef): Promise<string> {
   const hit = urls.get(image.blob);
   if (hit) return Promise.resolve(hit);
   let p = loading.get(image.blob);

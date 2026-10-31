@@ -152,6 +152,7 @@ export function createBots(ctx) {
     if (!body) return '(не удалось прочитать)';
     let t = body.text ? String(body.text).slice(0, 1500) : '';
     if (body.kind === 'image') t = `[фото]${t ? ` ${t}` : ''}`;
+    if (body.kind === 'video') t = '[видео-квадратик]';
     if (body.act === 'compliment') t = `[просит передать хозяину комплимент] ${t}`;
     if (body.act === 'question') t = `[вопрос хозяину] ${t}`;
     if (body.act === 'gift') t = `[дарит хозяину ${(P.GIFTS[body.gift] || P.GIFTS.flowers).name}] ${t}`;
@@ -634,6 +635,7 @@ export function createBots(ctx) {
       isDm ? 'Личная переписка.' : `Круг «${chat.emoji || ''} ${chat.title}». Тут ты ведущая: реагируй коротко и по-доброму, не на каждое сообщение.`,
       askaContext(userId),
       vote && partyPrompt(vote),
+      u?.royal ? P.ROYAL_PROMPT : '',
       'Переписка (старые сверху):',
       transcript(hist.slice(-20), bot.id, nameOf),
       isDm ? 'Ответь на последние сообщения.' : 'Ответь, если к месту, иначе — пустой список.',
@@ -646,7 +648,7 @@ export function createBots(ctx) {
       return say(bot.id, chat.id, outMessages(out));
     }
     if (!isDm) return; // по шпаргалке в кругах не болтаем
-    const text = fresh.map((m) => m.body?.text || '').join(' ');
+    const text = fresh.map((m) => (m.body?.kind === 'video' ? '[видео-квадратик]' : m.body?.text || '')).join(' ');
     if (vote && (vote.attended === null || (vote.attended === 1 && vote.rating === null))) {
       const v = applyParty(userId, P.parseParty(text));
       if (v) {
@@ -655,7 +657,7 @@ export function createBots(ctx) {
         return say(bot.id, chat.id, [...P.PARTY.thanks(v.rating), ...(v.comment ? [] : P.PARTY.askComment)]);
       }
     }
-    return say(bot.id, chat.id, P.askaScripted(text, { name: u?.display_name, plate: plateText(u) }));
+    return say(bot.id, chat.id, P.askaScripted(text, { name: u?.display_name, plate: plateText(u), royal: !!u?.royal }));
   }
 
   // ---------- Батя ----------
@@ -1553,6 +1555,11 @@ export function createBots(ctx) {
       if (r.post) wall.comment(aska, r.post.id, '🥳');
     }
     // десятое — уровни, нетворк, место на номере, Ночь, реестр
+    // одиннадцатое — звонки, видео-квадратики, «Царская особа»
+    if (wall && getSetting(db, 'announced_v11') !== '1') {
+      setSetting(db, 'announced_v11', '1');
+      wall.post(aska, aska, { kind: 'text', text: '📞 Теперь в АСЬКЕ можно звонить! Трубка в шапке беседы — звонок другу, а в рабочем чате или круге — общий звонок до 8 человек. Звук идёт напрямую между телефонами и шифруется. 🎬 А ещё видео-квадратики: кнопка 🎬 рядом с фото, до 20 секунд. 👑 И третий стиль — «Царская особа»: «Ещё» → «Вид». Здравия желаю, Ваше Величество! 🌼' }, { fromBot: true });
+    }
     // «Книга перемен» — история проектов и нового интернета (автор — Адам)
     if (wall && getSetting(db, 'announced_book') !== '1') {
       setSetting(db, 'announced_book', '1');

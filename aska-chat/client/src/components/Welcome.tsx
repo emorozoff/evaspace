@@ -8,7 +8,7 @@ import { checkInvite, register, login, recover, sendCode, verifyCode, smsAvailab
 import type { SuperLinkInfo } from '../lib/store.ts';
 import { ApiError } from '../lib/api.ts';
 import { isIOS, isStandalone } from '../lib/platform.ts';
-import { getDesign, setDesign, logoFlower, flower } from '../lib/aska.ts';
+import { getDesign, setDesign, logoFlower, flower, MAIN_DESIGNS } from '../lib/aska.ts';
 import type { Design } from '../lib/aska.ts';
 import { Win, Svg, Dialog } from './Win.tsx';
 import { Plate } from './Plate.tsx';
@@ -40,6 +40,10 @@ export function DesignPick({ value, onChange }: { value: Design; onChange: (d: D
         data-design="millennial" onClick={() => onChange('millennial')}>
         <b>Миллениал</b><small>классика 2000-х, окна</small>
       </button>
+      <button type="button" role="radio" aria-checked={value === 'royal'} className={value === 'royal' ? 'on' : ''}
+        data-design="royal" onClick={() => onChange('royal')}>
+        <b>👑 Царская особа</b><small>бархат, золото, «Ваше Величество»</small>
+      </button>
     </div>
   );
 }
@@ -67,9 +71,9 @@ export function Welcome() {
                 : <Auth initialInvite={invite} />}
             <div className="aska-design-mini">
               <span className="hint">Вид:</span>
-              {(['zoomer', 'millennial'] as Design[]).map((d) => (
+              {MAIN_DESIGNS.map((d) => (
                 <button key={d} type="button" className={`chip${design === d ? ' on' : ''}`} data-design={d} onClick={() => pick(d)}>
-                  {d === 'zoomer' ? 'Зумер' : 'Миллениал'}
+                  {d === 'zoomer' ? 'Зумер' : d === 'millennial' ? 'Миллениал' : '👑 Царская'}
                 </button>
               ))}
             </div>

@@ -4,6 +4,7 @@ import type { Design } from '../lib/aska.ts';
 export const STYLES: { key: Design; name: string; note: string }[] = [
   { key: 'zoomer', name: 'Зумер', note: 'стекло, пузыри, крупно' },
   { key: 'millennial', name: 'Миллениал', note: 'классика 2000-х, окна' },
+  { key: 'royal', name: 'Царская особа', note: 'бархат, золото, «Ваше Величество»' },
   { key: 'business', name: 'Бизнес', note: 'строго, рабочие чаты отдельно' },
   { key: 'night', name: 'Ночь', note: 'тёмный, бережёт глаза' },
 ];

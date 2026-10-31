@@ -3,7 +3,7 @@ import { decodePreview } from './lib/protocol.ts';
 import { fromB64 } from './lib/crypto.ts';
 import type { Keys, LocalUser, LocalChat } from './lib/db.ts';
 
-export interface PushData { t?: string; c?: string; s?: number; i?: number; pn?: string; pc?: string; b?: number; sn?: string; spk?: string }
+export interface PushData { t?: string; c?: string; s?: number; i?: number; pn?: string; pc?: string; b?: number; sn?: string; spk?: string; g?: number }
 export interface LocalView {
   keys?: Keys;
   users?: Record<number, LocalUser>;
@@ -17,6 +17,13 @@ export function buildNotification(data: PushData, view: LocalView): { title: str
   // Аська и другие боты могут быть ещё не известны телефону — сервер присылает их имя и открытый ключ
   const senderName = sender?.displayName || data.sn || 'Кто-то';
   const senderPk = sender?.pk || data.spk;
+
+  // 📞 звонок: текста нет — только кто звонит
+  if (data.t === 'c') {
+    if (!data.g) return { title: '📞 Звонок в АСЬКЕ', body: `${senderName} звонит тебе — открой, чтобы ответить` };
+    const where = chat?.title ? ` в «${chat.title}»` : '';
+    return { title: '📞 Групповой звонок', body: `${senderName} зовёт в звонок${where} — открой, чтобы присоединиться` };
+  }
 
   let text: string | null = null;
   if (data.pn && data.pc && senderPk && view.keys) {

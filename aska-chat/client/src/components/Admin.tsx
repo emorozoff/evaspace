@@ -1,7 +1,7 @@
 // Управление АСЬКОЙ (только для администратора): «мозг» ИИ (ключ Claude, модель, лимит), ИИ-люди,
 // СМС (SMS.ru) и люди — с кодом для входа, если кто-то забыл пароль, а СМС не подключены.
 import { useEffect, useState } from 'react';
-import { adminInfo, adminSetAi, adminCheckAi, adminSetPeople, adminSetSms, adminCheckSms, adminHelpCode, adminSetRole, adminBlock, adminSetPlate, adminCoins, adminCreateSuper, adminSuperLink } from '../lib/store.ts';
+import { adminInfo, adminSetAi, adminCheckAi, adminSetPeople, adminSetSms, adminCheckSms, adminSetTurn, adminHelpCode, adminSetRole, adminBlock, adminSetPlate, adminCoins, adminCreateSuper, adminSuperLink } from '../lib/store.ts';
 import type { AdminInfo } from '../lib/store.ts';
 
 type AdminUser = AdminInfo['users'][number];
@@ -117,6 +117,7 @@ export function Admin() {
   const [info, setInfo] = useState<AdminInfo | null>(null);
   const [smsKey, setSmsKey] = useState('');
   const [smsCheck, setSmsCheck] = useState('');
+  const [turn, setTurn] = useState({ urls: '', username: '', credential: '' });
   const [codes, setCodes] = useState<Record<number, string>>({});
   const [plateFor, setPlateFor] = useState<AdminUser | null>(null);
   const [coinsFor, setCoinsFor] = useState<AdminUser | null>(null);
@@ -160,6 +161,22 @@ export function Admin() {
           {info.sms.hasKey && <button className="btn" disabled={busy} onClick={() => act(() => adminSetSms(''))}>Отключить</button>}
         </div>
         {smsCheck && <div className="hint">{smsCheck}</div>}
+      </div>
+
+      <div className="groupbox">
+        <div className="legend">📞 Звонки — TURN-сервер</div>
+        <div className="hint">Звонки идут напрямую между телефонами. В строгих сетях (часть мобильных операторов, офисный Wi-Fi) без TURN-сервера звонок может не соединиться. Адрес, логин и пароль даёт TURN-сервис (например, платный тариф любого поставщика TURN). Не обязательно.</div>
+        <div className="row aska-kv"><span>Статус</span><b>{info.turn ? `подключён: ${info.turn.urls.join(', ')}` : 'не подключён — только STUN'}</b></div>
+        <input className="field" value={turn.urls} onChange={(e) => setTurn({ ...turn, urls: e.target.value })} placeholder="turn:адрес:3478 (можно несколько через запятую)" autoComplete="off" autoCapitalize="none" spellCheck={false} />
+        <span className="row mt">
+          <input className="field" value={turn.username} onChange={(e) => setTurn({ ...turn, username: e.target.value })} placeholder="логин" autoComplete="off" autoCapitalize="none" />
+          <input className="field" type="password" value={turn.credential} onChange={(e) => setTurn({ ...turn, credential: e.target.value })} placeholder="пароль" autoComplete="new-password" />
+        </span>
+        <div className="row mt">
+          <button className="btn" disabled={busy || !turn.urls.trim()} onClick={() => act(async () => { await adminSetTurn(turn); setTurn({ urls: '', username: '', credential: '' }); })}>Сохранить</button>
+          <span className="sp" />
+          {info.turn && <button className="btn" disabled={busy} onClick={() => act(() => adminSetTurn({ urls: '' }))}>Отключить</button>}
+        </div>
       </div>
 
       <div className="groupbox">

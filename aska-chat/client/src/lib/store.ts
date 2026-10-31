@@ -9,16 +9,20 @@ import { prepareImage } from './images.ts';
 import { setBadge, pushSupported } from './platform.ts';
 import { emitWall, blobUrl } from './wall.ts';
 import { emitNight } from './night.ts';
+import { emitCall } from './callbus.ts';
+import { getDesign, onDesign } from './aska.ts';
+import type { CallEvent } from './callbus.ts';
 import type { WallEvent } from './wall.ts';
 
 export type Chat = LocalChat;
 export type User = LocalUser;
-export interface Msg extends StoredMsg { status?: 'sending' | 'failed'; localImage?: string }
+export interface Msg extends StoredMsg { status?: 'sending' | 'failed'; localImage?: string } // localImage — своё фото или видео, пока шлётся
 export type PushState = 'unsupported' | 'default' | 'denied' | 'subscribed';
 export interface Profile {
   isAdmin: boolean; role?: 'user' | 'admin' | 'super'; coins?: number; bonus?: number;
   phone: string | null; phoneVerified: boolean; allowAnon: boolean; plate: string | null;
   tier?: Tier; tierUntil?: number | null; vipRegion?: string | null; netSize?: number; upass?: string | null; blackInvites?: number;
+  royal?: boolean; // выбран стиль «Царская особа» — Аська обращается «Ваше Величество»
 }
 export type Tier = 'guest' | 'gold' | 'black';
 export type Truth = 'ai' | 'human';
@@ -310,6 +314,16 @@ let pushChecked = false;
 // Перечитать состояние (после покупки Голд, смены уровня и т. п.)
 export const refreshState = () => loadState();
 
+// 👑 Сервер знает только одно: выбрана ли «Царская особа» (чтобы Аська обращалась «Ваше Величество»)
+function syncDesign() {
+  if (state.phase !== 'ready' || !state.profile) return;
+  const royal = getDesign() === 'royal';
+  if (!!state.profile.royal === royal) return;
+  set({ profile: { ...state.profile, royal } });
+  api.post('/me/design', { design: getDesign() }).catch(() => {});
+}
+onDesign(syncDesign);
+
 async function loadState() {
   const st = await api.get<StateResp>('/state');
   const myKeys = await kvGet('keys');
@@ -325,6 +339,7 @@ async function loadState() {
   });
   await Promise.all([kvSet('users', users), kvSet('chats', chats)]);
   updateBadge();
+  syncDesign();
   if (!pushChecked) {
     pushChecked = true;
     refreshPushState();
@@ -402,6 +417,7 @@ type ServerEvent =
   | { type: 'typing'; chatId: string; userId: number }
   | { type: 'presence'; userId: number; online: boolean }
   | { type: 'user'; user: ServerUser }
+  | CallEvent
   | WallEvent;
 
 function onEvent(ev: ServerEvent) {
@@ -460,6 +476,13 @@ function onEvent(ev: ServerEvent) {
     case 'night_msg':
       emitNight(ev.message);
       break;
+    case 'call':
+    case 'calls':
+    case 'call_end':
+    case 'call_signal':
+    case 'call_error':
+      emitCall(ev);
+      break;
     case 'wall_flower':
     case 'wall_comment':
     case 'wall_del':
@@ -480,6 +503,25 @@ function clearTyping(chatId: string, userId: number) {
   if (!state.typing[chatId]?.[userId]) return;
   const { [userId]: _gone, ...rest } = state.typing[chatId];
   set({ typing: { ...state.typing, [chatId]: rest } });
+}
+
+// 📞 звонки: отправить событие по WebSocket; сигналы шифруются ключом собеседника (сервер их не читает)
+export function wsSend(obj: object): boolean {
+  if (ws?.readyState !== 1) return false;
+  ws.send(JSON.stringify(obj));
+  return true;
+}
+export function sealFor(userId: number, obj: object): { n: string; c: string } | null {
+  const u = state.users[userId];
+  if (!u || !sk) return null;
+  return C.boxFor(C.utf8(JSON.stringify(obj)), C.fromB64(u.pk), sk);
+}
+export function openFromUser(userId: number, sealed: { n: string; c: string }): unknown {
+  const u = state.users[userId];
+  if (!u || !sk) return null;
+  const plain = C.openFrom(sealed, C.fromB64(u.pk), sk);
+  if (!plain) return null;
+  try { return JSON.parse(C.fromUtf8(plain)); } catch { return null; }
 }
 
 // «печатает…» — сообщаем собеседникам не чаще раза в 2,5 секунды
@@ -612,6 +654,19 @@ export async function sendImage(chatId: string, file: File, reply?: number) {
   await deliver(msg.uuid);
 }
 
+// Видео-квадратик: шифруем целиком на телефоне, как фото
+export async function sendVideo(chatId: string, video: Blob, dur: number, thumb?: string, reply?: number) {
+  const bytes = new Uint8Array(await video.arrayBuffer());
+  const f = C.encryptFile(bytes);
+  const mime = (video.type || 'video/mp4').split(';')[0];
+  const body: Body = { kind: 'video', video: { blob: '', key: f.key, nonce: f.nonce, hash: f.hash, mime, dur: Math.round(dur * 10) / 10, thumb } };
+  if (reply) body.reply = reply;
+  const msg: Msg = { ...newPending(chatId, body), localImage: blobUrl(new Blob([bytes as BlobPart], { type: mime })) };
+  pending.set(msg.uuid, { msg, ct: f.ct });
+  putPending(msg);
+  await deliver(msg.uuid);
+}
+
 function newPending(chatId: string, body: Body): Msg {
   return {
     id: TEMP_BASE + ++tempCounter, chatId, senderId: state.me!.userId, uuid: crypto.randomUUID(),
@@ -628,6 +683,10 @@ async function deliver(uuid: string) {
     if (msg.body?.kind === 'image' && msg.body.image && !msg.body.image.blob) {
       const { id } = await api.upload(p.ct!);
       msg.body = { ...msg.body, image: { ...msg.body.image, blob: id } };
+    }
+    if (msg.body?.kind === 'video' && msg.body.video && !msg.body.video.blob) {
+      const { id } = await api.upload(p.ct!);
+      msg.body = { ...msg.body, video: { ...msg.body.video, blob: id } };
     }
     let r: { id: number; createdAt: number } | null = null;
     for (let attempt = 0; !r; attempt++) {
@@ -833,6 +892,7 @@ export interface AdminInfo {
   };
   people: boolean;
   sms: { configured: boolean; hasKey: boolean; lastError: string };
+  turn?: { urls: string[]; username: string } | null; // 📞 TURN-сервер для звонков (пароль наружу не отдаётся)
   users: {
     id: number; displayName: string; username: string; plate: string; plateView: PlateInfo | null; phone: string | null; phoneVerified: boolean;
     createdAt: number; lastActive: number | null; isAdmin: boolean; role: 'user' | 'admin' | 'super'; blocked: boolean; coins: number;
@@ -851,6 +911,7 @@ export const adminSetAi = async (p: { apiKey?: string; model?: string; dailyLimi
 export const adminCheckAi = () => api.post<{ ok: boolean; reply?: string; error?: string }>('/admin/ai/check');
 export const adminSetPeople = async (on: boolean) => { await api.post('/admin/people', { on }); await loadState(); };
 export const adminSetSms = (apiId: string) => api.post('/admin/sms', { apiId });
+export const adminSetTurn = (t: { urls: string; username?: string; credential?: string }) => api.post('/admin/turn', t);
 export const adminCheckSms = () => api.post<{ ok: boolean; balance?: number; error?: string }>('/admin/sms/check');
 export const adminHelpCode = (userId: number) => api.post<{ code: string; login: string }>('/admin/help-code', { userId });
 export const adminSetRole = async (userId: number, role: 'admin' | 'user') => { await api.post(`/admin/users/${userId}/role`, { role }); await loadState(); };

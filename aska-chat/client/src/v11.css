@@ -57,3 +57,180 @@
 @media (min-width: 560px) { .bk-toc { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (min-width: 720px) { .aska-book { font-size: 19px; padding: 28px 34px 32px; } .bk-head h1 { font-size: 46px; } .bk-p { text-align: justify; } .bk-toc { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .bk-toc-i { transition: none; } }
+
+/* ══ 🎬 Видео-квадратики ══ */
+.aska-vsq { position: relative; display: block; color: #fff; width: 200px; height: 200px; max-width: 62vw; max-height: 62vw; margin: 2px 0; border-radius: 18px; overflow: hidden; cursor: pointer;
+  background: #1b1b1f; box-shadow: 0 2px 10px rgba(0, 0, 0, .18); -webkit-tap-highlight-color: transparent; }
+.aska-vsq .vsq-thumb, .aska-vsq video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.aska-vsq video { opacity: 0; transition: opacity .2s; }
+.aska-vsq.s-playing video, .aska-vsq.s-paused video { opacity: 1; }
+.vsq-ring { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.vsq-ring path { fill: none; stroke: #ffd24a; stroke-width: 2; stroke-linecap: round; }
+.msg.aska-vmsg { padding: 6px 6px 8px; }
+.msg.aska-vmsg .hdr { padding: 0 6px 4px; }
+.vsq-play { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(0, 0, 0, .45); color: #fff; font-size: 22px; padding-left: 4px; box-sizing: border-box; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.vsq-dur { position: absolute; left: 8px; bottom: 8px; padding: 2px 8px; border-radius: 999px; background: rgba(0, 0, 0, .55); color: #fff; font-size: 12px; line-height: 18px; }
+.aska-vsq .spin { position: absolute; left: 50%; top: 50%; margin: -12px 0 0 -12px; }
+.aska-vsq .fail { position: absolute; inset: auto 8px 36px; color: #fff; font-size: 12px; text-align: center; text-shadow: 0 1px 2px #000; }
+.msg .txt .aska-vsq + br { display: none; }
+
+/* запись */
+.aska-vrec-ov { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: calc(12px + var(--safe-t, 0px)) 12px calc(12px + var(--safe-b, 0px)); background: rgba(8, 10, 16, .82); }
+.aska-vrec { width: min(420px, 100%); color: #fff; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.vrec-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.vrec-top b { font-size: 16px; }
+.vrec-time { margin-left: auto; font-variant-numeric: tabular-nums; opacity: .85; }
+.vrec-x { width: 40px; height: 40px; min-width: 40px; border-radius: 50% !important; padding: 0 !important; font-size: 22px; }
+.vrec-box { position: relative; width: 100%; aspect-ratio: 1; border-radius: 26px; overflow: hidden; background: #000; box-shadow: 0 0 0 3px rgba(255, 255, 255, .12); }
+.vrec-box.on { box-shadow: 0 0 0 3px #ff3b30; }
+.vrec-box video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.vrec-box.mirror video:not(.vrec-clip) { transform: scaleX(-1); }
+.vrec-box video.hide { visibility: hidden; }
+.vrec-box .vsq-ring path { stroke: #ff3b30; stroke-width: 1.4; }
+.vrec-dot { position: absolute; top: 12px; left: 12px; padding: 3px 10px; border-radius: 999px; background: rgba(0, 0, 0, .5); color: #ff6b61; font-size: 13px; }
+.vrec-box .spin { position: absolute; left: 50%; top: 50%; margin: -12px 0 0 -12px; }
+.vrec-err { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; line-height: 1.4; }
+.vrec-actions { display: flex; align-items: center; justify-content: center; gap: 22px; margin-top: 16px; min-height: 76px; }
+.vrec-actions .btn { min-height: 44px; padding: 0 18px; font-size: 15px; }
+.aska-vrec .btn:not(.primary), .skin-classic .aska-vrec .btn { color: #1b1b1f; }
+.vrec-flip { width: 48px; height: 48px; border-radius: 50% !important; padding: 0 !important; font-size: 20px; }
+.vrec-btn { width: 76px; height: 76px; border-radius: 50%; border: 4px solid #fff; background: transparent; display: grid; place-items: center; cursor: pointer; padding: 0; }
+.vrec-btn i { width: 58px; height: 58px; border-radius: 50%; background: #ff3b30; transition: all .2s; }
+.vrec-btn.on i { width: 30px; height: 30px; border-radius: 8px; }
+.vrec-btn:disabled { opacity: .5; }
+.vrec-hint { min-width: 48px; font-size: 12.5px; opacity: .8; text-align: center; }
+.vrec-note { margin-top: 10px; text-align: center; font-size: 12.5px; opacity: .75; }
+
+/* ══ 📞 Звонки ══ */
+.aska-call-btn { flex: none; width: 34px; height: 30px; min-width: 34px; padding: 0 !important; font-size: 16px; margin-left: 6px; }
+.aska-call-btn.live { animation: aska-call-pulse 1.4s ease-in-out infinite; }
+@keyframes aska-call-pulse { 50% { box-shadow: 0 0 0 4px rgba(52, 199, 89, .45); } }
+.aska-call-banner { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 10px; background: #e7f8ec; color: #145a2a; border-bottom: 1px solid #b9e6c6; font-size: 13px; }
+.aska-call-banner span { flex: 1 1 160px; min-width: 0; }
+.aska-call-banner .btn { min-height: 32px; }
+.aska-call-ov { position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; padding: calc(16px + var(--safe-t, 0px)) 16px calc(16px + var(--safe-b, 0px));
+  background: radial-gradient(120% 90% at 50% 0%, #20314f, #0b1220 70%); color: #fff; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; overflow-y: auto; }
+.aska-call-ov.ring { background: radial-gradient(120% 90% at 50% 0%, #1f5a3a, #0a1a12 70%); }
+.call-card { width: min(440px, 100%); text-align: center; }
+.call-ava { width: 112px; height: 112px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .1); }
+.aska-call-ov.ring .call-ava { animation: aska-call-ring 1.6s ease-in-out infinite; }
+@keyframes aska-call-ring { 0%, 100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, .5); } 60% { box-shadow: 0 0 0 22px rgba(52, 199, 89, 0); } }
+.call-kind { font-size: 15px; opacity: .85; }
+.call-name { font-size: 28px; font-weight: 700; margin-top: 4px; overflow-wrap: anywhere; }
+.call-sub { opacity: .8; margin-top: 2px; }
+.call-time { font-size: 15px; opacity: .85; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.call-people { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 22px 0 10px; }
+.call-people .call-person { width: 104px; box-sizing: border-box; }
+.call-person { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border-radius: 16px; background: rgba(255, 255, 255, .08); min-width: 0; }
+.call-person span { font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.call-person small { opacity: .8; font-size: 12px; }
+.call-person.connected { background: rgba(52, 199, 89, .18); }
+.call-person.failed { background: rgba(255, 59, 48, .2); }
+.call-hint { font-size: 13px; opacity: .85; margin: 6px 0; line-height: 1.35; }
+.call-acts { display: flex; justify-content: center; gap: 26px; margin-top: 26px; flex-wrap: wrap; }
+.call-round { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; color: #fff; font: inherit; font-size: 13px; cursor: pointer; padding: 0; }
+.call-round i { width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; font-size: 28px; font-style: normal; background: rgba(255, 255, 255, .16); }
+.call-round.yes i { background: #34c759; }
+.call-round.no i { background: #ff3b30; transform: rotate(135deg); }
+.call-round.mute.on i { background: #fff; color: #111; }
+.call-note { margin-top: 22px; font-size: 12.5px; opacity: .65; line-height: 1.35; }
+.aska-call-mini { position: fixed; z-index: 94; top: calc(6px + var(--safe-t, 0px)); left: 50%; transform: translateX(-50%); max-width: calc(100vw - 24px);
+  display: flex; align-items: center; gap: 8px; padding: 8px 14px; border: 0; border-radius: 999px; background: #34c759; color: #fff; font: 600 13.5px system-ui, -apple-system, sans-serif;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .25); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.aska-call-mini b { margin-left: 4px; padding: 1px 8px; border-radius: 999px; background: rgba(255, 255, 255, .25); font-weight: 600; }
+.aska-call-mini .dot { width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: aska-blink 1s steps(2) infinite; }
+@keyframes aska-blink { 50% { opacity: .2; } }
+.aska-call-note { position: fixed; z-index: 96; left: 50%; bottom: calc(80px + var(--safe-b, 0px)); transform: translateX(-50%); max-width: calc(100vw - 32px);
+  padding: 10px 16px; border-radius: 14px; background: rgba(20, 20, 24, .92); color: #fff; font: 14px system-ui, -apple-system, sans-serif; text-align: center; }
+.aska-call-audio { display: none; }
+@media (prefers-reduced-motion: reduce) { .aska-call-btn.live, .aska-call-ov.ring .call-ava, .aska-call-mini .dot { animation: none; } .vrec-btn i { transition: none; } }
+
+/* ══ 👑 Стиль «Царская особа» (поверх Зумера): бархат, золото, пергамент; слова — lib/royal.ts ══ */
+body.skin-aero.st-royal {
+  --a-text: #2a1610; --a-muted: #7a5a44; --a-line: rgba(122, 20, 38, .18); --a-accent: #8e1b2f; --a-accent2: #c9a14a; --a-me1: #9b1f35; --a-me2: #6b1022;
+  --a-glass: rgba(251, 243, 223, .97); --a-glass2: #fffaf0; --a-card: #fffaf0; --sel: #8e1b2f; --link: #8e1b2f; --shadow: #b39a74; --face: #fbf3df;
+  --rg: #c9a14a; --rg2: #f3d99b; --rr: #7a1426; --rr2: #5c0f1d;
+  color: var(--a-text); font-family: Georgia, "Times New Roman", serif;
+}
+.skin-aero.st-royal .desktop {
+  background:
+    radial-gradient(90% 50% at 50% 0%, rgba(243, 217, 155, .2), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(201, 161, 74, .08) 0 2px, transparent 2px 16px),
+    repeating-linear-gradient(-45deg, rgba(201, 161, 74, .08) 0 2px, transparent 2px 16px),
+    linear-gradient(180deg, #6b1022, #3a0812);
+}
+.skin-aero.st-royal .desktop::before { display: none; }
+.skin-aero.st-royal .win { background: var(--a-glass); -webkit-backdrop-filter: none; backdrop-filter: none; border: 1px solid var(--rg);
+  box-shadow: 0 0 0 3px #fbf3df, 0 0 0 4px rgba(201, 161, 74, .75), 0 24px 60px rgba(20, 0, 4, .55); }
+.skin-aero.st-royal .titlebar { background: linear-gradient(180deg, #9b1f35, #6b1022); color: var(--rg2); border-bottom: 2px solid var(--rg); }
+.skin-aero.st-royal .titlebar .ttl { font-family: "AskaCormorant", Georgia, serif; font-weight: 700; font-size: 1.12em; letter-spacing: .02em; }
+.skin-aero.st-royal .titlebar .ttl::before { content: '♛ '; color: var(--rg2); }
+.skin-aero.st-royal .titlebar .ttl small { color: #f0d9a6; }
+.skin-aero.st-royal .tbtn { background: rgba(243, 217, 155, .14); border-color: rgba(243, 217, 155, .45); color: var(--rg2); box-shadow: none; }
+.skin-aero.st-royal .btn { background: linear-gradient(180deg, #fffaf0, #f3e6c4); border: 1px solid var(--rg); color: var(--rr2); box-shadow: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 1px 2px rgba(92, 15, 29, .12); font-weight: 600; }
+.skin-aero.st-royal .btn:hover { box-shadow: 0 0 0 1px var(--rg), 0 2px 8px rgba(92, 15, 29, .18); }
+.skin-aero.st-royal .btn:active { background: #efe0b8; }
+.skin-aero.st-royal .btn.primary { background: linear-gradient(180deg, #a3233b, #6b1022); border-color: var(--rg); color: #fbe7b5; text-shadow: none; box-shadow: 0 3px 10px rgba(107, 16, 34, .35), inset 0 1px 0 rgba(243, 217, 155, .35); }
+.skin-aero.st-royal .btn:disabled { background: #efe6d0; color: #8a7a66; border-color: #d8c8a4; box-shadow: none; }
+.skin-aero.st-royal .inset, .skin-aero.st-royal .clist { background: #fffaf0; border-color: rgba(201, 161, 74, .55); box-shadow: none; }
+.skin-aero.st-royal .field, .skin-aero.st-royal textarea.field, .skin-aero.st-royal select.field { background: #fffdf7; border-color: #d8c08a; color: var(--a-text); box-shadow: none; }
+.skin-aero.st-royal .field::placeholder { color: #9a8064; font-style: italic; }
+.skin-aero.st-royal .groupbox { background: rgba(255, 250, 240, .85); border-color: #d8c08a; }
+.skin-aero.st-royal .groupbox .legend, .skin-aero.st-royal .cgroup { color: var(--rr); font-family: "AskaCormorant", Georgia, serif; font-weight: 700; letter-spacing: .04em; }
+.skin-aero.st-royal .tabs { background: #f1e3c0; }
+.skin-aero.st-royal .tabs button.on { background: #fffaf0; color: var(--rr); box-shadow: 0 0 0 1px var(--rg); }
+.skin-aero.st-royal .me-panel { background: linear-gradient(135deg, #fffaf0, #f6e7c3); border: 1px solid var(--rg); }
+.skin-aero.st-royal .aska-me .nick::before { content: '👑 '; }
+.skin-aero.st-royal .aska-me .nick::after { content: 'Ваше Величество'; display: block; font: italic 600 12px/1.2 "AskaCormorant", Georgia, serif; color: var(--rr); letter-spacing: .03em; }
+.skin-aero.st-royal .aska-me.gold { background: linear-gradient(135deg, #fff6dc, #f1d98f); }
+.skin-aero.st-royal .citem:hover { background: rgba(201, 161, 74, .12); }
+.skin-aero.st-royal .citem.sel { background: rgba(142, 27, 47, .1); box-shadow: inset 3px 0 0 var(--rr); }
+.skin-aero.st-royal .citem .ico { background: radial-gradient(circle at 50% 30%, #fffaf0, #f1e2bd); box-shadow: inset 0 0 0 1px rgba(201, 161, 74, .7); }
+.skin-aero.st-royal .citem .badge { background: var(--rr); box-shadow: 0 0 0 1px var(--rg); }
+.skin-aero.st-royal .chat-head, .skin-aero.st-royal .wall-head, .skin-aero.st-royal .aska-composer { background: #fffaf0; border-color: rgba(201, 161, 74, .6); }
+.skin-aero.st-royal .history { background: linear-gradient(rgba(201, 161, 74, .05) 1px, transparent 1px) 0 0 / 100% 26px, #f8eed6; }
+.skin-aero.st-royal .history .day { background: #efe0b8; color: var(--rr); box-shadow: 0 0 0 1px rgba(201, 161, 74, .6); font-family: "AskaCormorant", Georgia, serif; font-weight: 700; }
+.skin-aero.st-royal .msg { background: #fffaf0; color: var(--a-text); border: 1px solid #e3cf9f; box-shadow: 0 1px 2px rgba(92, 15, 29, .08); }
+.skin-aero.st-royal .msg.me { background: linear-gradient(180deg, #9b1f35, #6b1022); color: #fff3d6; border-color: var(--rg); }
+.skin-aero.st-royal .msg.me a { color: #fbe7b5; }
+.skin-aero.st-royal .msg .nk { color: var(--rr); font-family: "AskaCormorant", Georgia, serif; font-weight: 700; }
+.skin-aero.st-royal .msg.me .nk { color: var(--rg2); }
+.skin-aero.st-royal .msg.aska-big, .skin-aero.st-royal .msg.rich { background: none; border: 0; box-shadow: none; }
+.skin-aero.st-royal .smiles, .skin-aero.st-royal .toast, .skin-aero.st-royal .menu, .skin-aero.st-royal .dialog { background: #fffaf0; border-color: var(--rg); }
+.skin-aero.st-royal .overlay { background: rgba(40, 4, 10, .5); }
+.skin-aero.st-royal .chip { background: #fffaf0; border-color: #d8c08a; color: var(--rr2); }
+.skin-aero.st-royal .chip.on { background: linear-gradient(180deg, #9b1f35, #6b1022); border-color: var(--rg); color: #fbe7b5; }
+.skin-aero.st-royal .aska-space { background: #efe0b8; }
+.skin-aero.st-royal .aska-space button.on { background: #fffaf0; color: var(--rr); box-shadow: 0 0 0 1px var(--rg); }
+.skin-aero.st-royal .aska-ptile, .skin-aero.st-royal .aska-post, .skin-aero.st-royal .aska-style { background: #fffaf0; border-color: #e3cf9f; }
+.skin-aero.st-royal a, .skin-aero.st-royal .link { color: var(--link); }
+.skin-aero.st-royal .aska-plus-btn { background: linear-gradient(180deg, #a3233b, #6b1022); color: #fbe7b5; box-shadow: 0 0 0 1px var(--rg), 0 3px 10px rgba(107, 16, 34, .3); }
+.skin-aero.st-royal .aska-call-banner { background: #f6e7c3; color: var(--rr2); border-bottom-color: var(--rg); }
+.skin-aero.st-royal .logo-word { font-family: "AskaCormorant", Georgia, serif; color: var(--rr); }
+.skin-aero.st-royal .aska-smile-tabs { background: #f1e3c0; }
+.skin-aero.st-royal .aska-smile-tabs button.on { background: #fffaf0; color: var(--rr); }
+@media (max-width: 719px), (pointer: coarse) and (max-width: 900px) {
+  .skin-aero.st-royal .win { background: #fbf3df; border: 0; box-shadow: none; }
+  .skin-aero.st-royal .overlay .win.dialog { background: #fffaf0; box-shadow: 0 0 0 2px var(--rg); }
+  .skin-aero.st-royal .overlay .win.dialog::before { background: rgba(243, 217, 155, .6); }
+  .skin-aero.st-royal .tabbar { background: linear-gradient(180deg, #7a1426, #4a0b17); border-top: 2px solid var(--rg); box-shadow: 0 -6px 20px rgba(40, 4, 10, .35); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .skin-aero.st-royal .tabbar button { color: #e8cf98; font-family: "AskaCormorant", Georgia, serif; font-weight: 700; }
+  .skin-aero.st-royal .tabbar button.on { color: #fff3d6; }
+  .skin-aero.st-royal .tabbar button.on i { filter: drop-shadow(0 0 6px rgba(243, 217, 155, .8)); }
+}
+/* превью стиля в «Ещё» → «Вид» и выбор на входе */
+.sp-royal { background: repeating-linear-gradient(45deg, rgba(201, 161, 74, .12) 0 2px, transparent 2px 10px), #fbf3df; box-shadow: inset 0 0 0 1px #c9a14a; }
+.sp-royal .t { background: linear-gradient(180deg, #9b1f35, #6b1022); border-bottom: 2px solid #c9a14a; }
+.sp-royal .r { background: #fffaf0; border: 1px solid #e3cf9f; }
+.sp-royal .m { background: linear-gradient(180deg, #9b1f35, #6b1022); box-shadow: 0 0 0 1px #c9a14a; }
+.aska-design-mini { flex-wrap: wrap; }
+.st-royal .aska-call-ov { background: radial-gradient(120% 80% at 50% 0%, #8e1b2f, #3a0812 70%); font-family: Georgia, "Times New Roman", serif; }
+.st-royal .aska-call-ov::before { content: ''; position: fixed; inset: 0; pointer-events: none; background: repeating-linear-gradient(45deg, rgba(201, 161, 74, .07) 0 2px, transparent 2px 16px), repeating-linear-gradient(-45deg, rgba(201, 161, 74, .07) 0 2px, transparent 2px 16px); }
+.st-royal .aska-call-ov .call-card { position: relative; }
+.st-royal .aska-call-ov .call-name, .st-royal .aska-call-ov .call-kind { font-family: "AskaCormorant", Georgia, serif; color: #f3d99b; }
+.st-royal .aska-call-ov .call-person { background: rgba(243, 217, 155, .1); box-shadow: inset 0 0 0 1px rgba(201, 161, 74, .45); }
+.st-royal .aska-call-ov .call-person.connected { background: rgba(243, 217, 155, .2); }
+.st-royal .aska-call-ov .call-ava { box-shadow: 0 0 0 2px #c9a14a; }
+.st-royal .aska-call-mini { background: linear-gradient(180deg, #9b1f35, #6b1022); box-shadow: 0 0 0 1px #c9a14a, 0 6px 18px rgba(0, 0, 0, .3); color: #fbe7b5; }
+.skin-aero.st-royal .design-pick button.on { background: linear-gradient(180deg, #fffaf0, #f6e7c3); box-shadow: 0 0 0 2px var(--rr), 0 4px 14px rgba(107, 16, 34, .2); }

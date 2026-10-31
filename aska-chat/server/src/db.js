@@ -238,6 +238,7 @@ function migrate(db) {
   migrateV7(db);
   migrateV9(db);
   migrateV10(db);
+  migrateV11(db);
 }
 
 // Третья версия (22.10.2026): номера-токены (покупка, улучшение, рынок), аськоины, роли (голд-админы, супер-админ), блокировка.
@@ -459,6 +460,11 @@ function migrateV9(db) {
 
 // Десятое обновление (31.10.2026): уровни (Гость / Голд / Блэк), нетворк, место-регион на номере,
 // реестр на внутренней цепочке блоков (музыка, кино, книги), ночные комнаты с НФТ-аватарами.
+// Одиннадцатое (31.10.2026): стиль «Царская особа» — Аська обращается «Ваше Величество»
+function migrateV11(db) {
+  addColumn(db, 'users', 'royal', 'INTEGER NOT NULL DEFAULT 0');
+}
+
 function migrateV10(db) {
   // уровень: guest | gold | black; tier_until — до какого времени оплачен Голд (NULL — навсегда)
   addColumn(db, 'users', 'tier', "TEXT NOT NULL DEFAULT 'guest'");

@@ -2,7 +2,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, KeyboardEvent, ReactNode } from 'react';
 import { useStore } from '../useStore.ts';
-import { sendText, sendImage, setActiveChat, retrySend, discardFailed, sendTyping, typingIn, openTwinChat } from '../lib/store.ts';
+import { sendText, sendImage, sendVideo, setActiveChat, retrySend, discardFailed, sendTyping, typingIn, openTwinChat } from '../lib/store.ts';
 import type { Msg } from '../lib/store.ts';
 import { chatTitle, dmPeer, dayKey, plural, timeShort } from '../lib/format.ts';
 import { previewText } from '../lib/protocol.ts';
@@ -16,6 +16,8 @@ import { ToWallDialog } from './Wall.tsx';
 import { saveImage } from '../lib/wall.ts';
 import { Win, Svg, Ico, Dialog } from './Win.tsx';
 import { Gold } from './Plate.tsx';
+import { VideoSquare, VideoRecorder, canRecordVideo } from './Video.tsx';
+import { CallButton, CallBanner } from './Call.tsx';
 
 const drafts = new Map<string, string>();
 const GROUP_GAP = 5 * 60 * 1000;
@@ -88,7 +90,7 @@ function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onIm
   return (
     <div
       id={`m-${m.id}`}
-      className={`msg ${out ? 'me' : 'them'}${grp ? ' grp' : ''}${isNew ? ' new' : ''}${flash ? ' aska-flash' : ''}${m.status === 'failed' ? ' aska-failed' : ''}${big ? ' aska-big' : ''}${sfx ? ' aska-sfx' : ''}${sup ? ' aska-supermsg' : ''}`}
+      className={`msg ${out ? 'me' : 'them'}${grp ? ' grp' : ''}${isNew ? ' new' : ''}${flash ? ' aska-flash' : ''}${m.status === 'failed' ? ' aska-failed' : ''}${big ? ' aska-big' : ''}${sfx ? ' aska-sfx' : ''}${sup ? ' aska-supermsg' : ''}${body?.kind === 'video' ? ' aska-vmsg' : ''}`}
       onContextMenu={(e) => { e.preventDefault(); onMenu(m); }}
       onTouchStart={(e) => {
         const t = e.touches[0];
@@ -117,7 +119,8 @@ function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onIm
         )}
         {!body && <i className="muted">🔒 не удалось расшифровать</i>}
         {body?.kind === 'image' && body.image && <EncryptedImage image={body.image} local={m.localImage} onOpen={onImage} />}
-        {body?.text && (sup ? <SuperSmile e={sup.e} size="l" /> : big ? body.text : renderText(body.text))}
+        {body?.kind === 'video' && body.video && <VideoSquare video={body.video} local={m.localImage} />}
+        {body?.text && body.kind !== 'video' && (sup ? <SuperSmile e={sup.e} size="l" /> : big ? body.text : renderText(body.text))}
         {sfx && <span className="aska-sfx-ico" aria-label="звуковой смайл">🔊</span>}
       </span>
     </div>
@@ -154,6 +157,7 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
   const [flash, setFlash] = useState<number | null>(null);
   const [act, setAct] = useState<Act>(null);
   const [gifts, setGifts] = useState(false);
+  const [recording, setRecording] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -263,6 +267,13 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
     }
   }
 
+  function onVideo(blob: Blob, dur: number, thumb?: string) {
+    const r = reply?.id;
+    setReply(null);
+    near.current = true;
+    sendVideo(chatId, blob, dur, thumb, r).then(() => play('sent')).catch((err) => console.error(err));
+  }
+
   // Звуковой смайл уходит сразу, как стикер
   function sendSfx(e: string) {
     playSfx(e);
@@ -359,7 +370,9 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
         {(peer?.kind === 'aska' || peer?.kind === 'friend') && <span className="aska-tag">ИИ</span>}
         <span className="sp" />
         <span className={`hint${typers.length ? ' aska-typing' : ''}`}>{statusHint}</span>
+        <CallButton chatId={chatId} />
       </div>
+      <CallBanner chatId={chatId} />
       {friendTwin && (
         <div className="aska-twin-bar">
           <span>{chat.twin?.anon ? `🕶 Анонимно: ${twinOwner.displayName} не узнает, кто пишет.` : `🙂 Открыто: ${twinOwner.displayName} увидит, что это ты.`}</span>
@@ -426,6 +439,7 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
           </button>
           <button className="btn icon" onClick={() => fileRef.current?.click()} title="Фото" aria-label="Фото">📷</button>
           <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={onFiles} />
+          {canRecordVideo() && <button className="btn icon aska-vbtn" onClick={() => { setSmilesOpen(false); setRecording(true); }} title="Видео-квадратик" aria-label="Видео-квадратик">🎬</button>}
           <span className="hint">{!s.connected ? 'нет связи' : ''}</span>
           <button className="btn primary" disabled={!text.trim()} onMouseDown={(e) => e.preventDefault()} onClick={submit}>Отправить</button>
         </div>
@@ -482,6 +496,7 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
         </>} />
       )}
       {toWall && <ToWallDialog url={toWall} onClose={() => setToWall(null)} />}
+      {recording && <VideoRecorder onSend={onVideo} onClose={() => setRecording(false)} />}
     </Win>
   );
 }

@@ -16,6 +16,7 @@ export function newKeys() {
 
 export function previewText(body) {
   if (body.kind === 'image') return body.text ? `📷 ${body.text}` : '📷 Фото';
+  if (body.kind === 'video') return '🎬 Видео-квадратик';
   const t = (body.text || '').replace(/\s+/g, ' ').trim();
   return t.length > 140 ? `${t.slice(0, 140)}…` : t;
 }

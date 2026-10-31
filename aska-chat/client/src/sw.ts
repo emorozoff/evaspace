@@ -73,7 +73,8 @@ self.addEventListener('push', (event) => {
       body: n.body,
       icon: '/icons/icon-192.png',
       data: { chatId: data.c },
-    });
+      ...(data.t === 'c' ? { tag: `call:${data.c}`, renotify: true, requireInteraction: true } : {}),
+    } as NotificationOptions);
     const nav = self.navigator as WorkerNavigator & { setAppBadge?: (n: number) => Promise<void>; clearAppBadge?: () => Promise<void> };
     if (typeof data.b === 'number') {
       try { await (data.b > 0 ? nav.setAppBadge?.(data.b) : nav.clearAppBadge?.()); } catch { /* нет поддержки */ }

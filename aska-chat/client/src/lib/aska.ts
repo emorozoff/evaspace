@@ -3,10 +3,12 @@
 
 import { markSvg, goldFlowerSvg, blackFlowerSvg } from './logo.ts';
 
-// Стили: на входе — Зумер или Миллениал; в «Ещё» → «Вид» ещё Бизнес (отдельные рабочие переписки) и Ночь.
-// Бизнес и Ночь построены поверх Зумера (skin-aero) — свои цвета и форма в v9.css (st-business, st-night).
-export type Design = 'zoomer' | 'millennial' | 'business' | 'night';
-export const DESIGNS: Design[] = ['zoomer', 'millennial', 'business', 'night'];
+// Три основных стиля — Зумер, Миллениал и Царская особа (на входе и в «Ещё» → «Вид»); там же Бизнес (отдельные рабочие
+// переписки) и Ночь. Бизнес, Ночь и Царская особа построены поверх Зумера (skin-aero): v9.css (st-business, st-night),
+// v11.css (st-royal; царские слова в интерфейсе — lib/royal.ts).
+export type Design = 'zoomer' | 'millennial' | 'royal' | 'business' | 'night';
+export const DESIGNS: Design[] = ['zoomer', 'millennial', 'royal', 'business', 'night'];
+export const MAIN_DESIGNS: Design[] = ['zoomer', 'millennial', 'royal'];
 const DESIGN_KEY = 'aska-design';
 const HOME_KEY = 'aska-design-home'; // последний личный стиль — куда вернуться из «Бизнеса»
 const SOUND_KEY = 'aska-sound';
@@ -28,17 +30,21 @@ export function homeDesign(): Design {
   return d && DESIGNS.includes(d) && d !== 'business' ? d : getDesign() === 'business' ? 'zoomer' : getDesign();
 }
 
-const THEME_COLOR: Record<Design, string> = { zoomer: '#2c8de0', millennial: '#0a246a', business: '#0f1d33', night: '#070d1f' };
+const THEME_COLOR: Record<Design, string> = { zoomer: '#2c8de0', millennial: '#0a246a', royal: '#5c0f1d', business: '#0f1d33', night: '#070d1f' };
 export function applyDesign(d: Design) {
   const cl = document.body.classList;
   cl.toggle('skin-aero', d !== 'millennial');
   cl.toggle('skin-classic', d === 'millennial');
   cl.toggle('st-business', d === 'business');
   cl.toggle('st-night', d === 'night');
+  cl.toggle('st-royal', d === 'royal');
   cl.add('theme-chat');
+  for (const l of applyHooks) l(d);
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLOR[d]);
 }
 
+const applyHooks = new Set<(d: Design) => void>(); // царские слова включаются вместе со стилем (lib/royal.ts)
+export function onApplyDesign(l: (d: Design) => void) { applyHooks.add(l); }
 const designListeners = new Set<() => void>();
 export function onDesign(l: () => void) { designListeners.add(l); return () => { designListeners.delete(l); }; }
 

@@ -1,3 +1,4 @@
+import { CallLayer } from './components/Call.tsx';
 import { useEffect, useState } from 'react';
 import { useStore } from './useStore.ts';
 import { onIncoming, onFriendOnline, activeChatId, unreadIn, store, openDm, dismissWelcomePlate, twinOf } from './lib/store.ts';
@@ -161,6 +162,7 @@ export default function App() {
         </div>
       )}
       {vipAsk && <VipPicker first onClose={() => setVipAsk(false)} />}
+      <CallLayer onOpenChat={openChat} />
       {night ? (
         <nav className="tabbar aska-night-tabs">
           <button className={aux === 'night' ? 'on' : ''} onClick={() => tab('night')}><i>🚪</i><span>Комнаты</span></button>

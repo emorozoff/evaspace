@@ -13,11 +13,23 @@ export interface ImageRef {
   thumb?: string;    // крошечное превью (data URL), показываем, пока грузится фото
 }
 
+// Видео-квадратик (до 20 секунд): файл зашифрован так же, как фото
+export interface VideoRef {
+  blob: string;
+  key: string;
+  nonce: string;
+  hash: string;
+  mime: string;
+  dur: number;       // длительность, секунды
+  thumb?: string;    // первый кадр (data URL), пока видео не скачалось
+}
+
 export interface Body {
-  kind: 'text' | 'image';
+  kind: 'text' | 'image' | 'video';
   text?: string;
   reply?: number;    // id сообщения, на которое отвечаем
   image?: ImageRef;
+  video?: VideoRef;
   act?: 'compliment' | 'question' | 'gift'; // просьба к личному ИИ друга: передать комплимент, вопрос или подарок
   gift?: string;
 }
@@ -43,6 +55,7 @@ export interface ServerRow {
 
 export function previewText(body: Body): string {
   if (body.kind === 'image') return body.text ? `📷 ${body.text}` : '📷 Фото';
+  if (body.kind === 'video') return '🎬 Видео-квадратик';
   const t = (body.text || '').replace(/\s+/g, ' ').trim();
   return t.length > 140 ? `${t.slice(0, 140)}…` : t;
 }
@@ -66,10 +79,16 @@ export function decodeIncoming(row: ServerRow, senderPk: Bytes, mySk: Bytes): Bo
     const inner = JSON.parse(fromUtf8(plain)) as Inner;
     // Сервер не может перенести сообщение в другой чат: чат и id записаны внутри шифра.
     if (inner.v !== 1 || inner.chat !== row.chatId || inner.uuid !== row.uuid) return null;
-    const body: Body = { kind: inner.kind === 'image' ? 'image' : 'text' };
+    const body: Body = { kind: inner.kind === 'image' || inner.kind === 'video' ? inner.kind : 'text' };
     if (typeof inner.text === 'string') body.text = inner.text.slice(0, 20000);
     if (Number.isInteger(inner.reply)) body.reply = inner.reply;
     if (body.kind === 'image' && inner.image && typeof inner.image.blob === 'string') body.image = inner.image;
+    if (body.kind === 'video') {
+      const v = inner.video;
+      if (!v || typeof v.blob !== 'string' || typeof v.mime !== 'string' || !/^video\/[\w.+-]+(;.*)?$/.test(v.mime)) return { kind: 'text', text: '🎬 Видео-квадратик (не открылось)' };
+      body.video = { blob: v.blob, key: String(v.key), nonce: String(v.nonce), hash: String(v.hash), mime: v.mime, dur: Math.max(0, Math.min(30, Number(v.dur) || 0)),
+        thumb: typeof v.thumb === 'string' && v.thumb.startsWith('data:image/') ? v.thumb : undefined };
+    }
     return body;
   } catch {
     return null;
