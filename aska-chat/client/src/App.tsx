@@ -198,7 +198,7 @@ export default function App() {
           <i>📌</i><span>Стена</span>{s.wallNew > 0 && <b className="tb-badge">{s.wallNew}</b>}
         </button>
         <button className={aux === 'circles' ? 'on' : ''} onClick={() => tab('circles')}>
-          <i>⭕</i><span>Круги</span>
+          <i>🏠</i><span>Комнаты</span>
         </button>
         <button className={aux === 'plates' ? 'on' : ''} onClick={() => tab('plates')}>
           <i>🚗</i><span>Номера</span>

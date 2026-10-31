@@ -302,7 +302,7 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
       ) : (
         <div className="aska-desk-nav">
           <button className="btn" onClick={() => onAux('wall')}><i>📌</i><span>Стена</span></button>
-          <button className="btn" onClick={() => onAux('circles')}><i>⭕</i><span>Круги</span></button>
+          <button className="btn" onClick={() => onAux('circles')}><i>🏠</i><span>Комнаты</span></button>
           <button className="btn" onClick={() => onAux('plates')}><i>🚗</i><span>Номера</span></button>
           <button className="btn" onClick={() => onAux('myai')}><i>🤖</i><span>Мой ИИ</span></button>
           <button className="btn" onClick={() => onAux('settings')}><i>☰</i><span>Ещё</span></button>

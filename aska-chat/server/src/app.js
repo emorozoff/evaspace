@@ -1012,6 +1012,8 @@ export function createApp({
   });
   api.post('/night/rooms/:key/enter', auth, (req, res) => sendResult(res, night.enter(req.userId, req.params.key)));
   api.post('/night/rooms/:key/pay', auth, (req, res) => sendResult(res, night.payHour(req.userId, req.params.key)));
+  api.post('/night/rooms/:key/join', auth, (req, res) => sendResult(res, night.join(req.userId, req.params.key)));
+  api.post('/night/rooms/:key/leave', auth, (req, res) => sendResult(res, night.leave(req.userId, req.params.key)));
   api.post('/night/rooms/:key/messages', auth, json, (req, res) => {
     if (!allow(`nmsg:${req.userId}`, 40, 600_000)) return res.status(429).json({ error: 'too_many' });
     sendResult(res, night.post(req.userId, req.params.key, req.body?.text));

@@ -111,7 +111,7 @@ export function Levels({ onAux, onOpen }: { onAux: (k: 'plates' | 'night' | 'net
       {lv.blackInvites.map((inv) => (
         <div key={inv.id} className="aska-black-invite">
           <b>🖤 {inv.fromName} зовёт тебя в Блэк</b>
-          <span>Закрытый уровень: чёрная карта, закрытый чат, пропуск UPASS, Ночь без оплаты.</span>
+          <span>Закрытый уровень: чёрная карта, закрытый чат, пропуск UPASS.</span>
           <button className="btn primary" disabled={busy} onClick={() => act(() => acceptBlack(inv.id), 'Добро пожаловать в Блэк 🖤')}>Принять</button>
         </div>
       ))}

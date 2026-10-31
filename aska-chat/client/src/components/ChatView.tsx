@@ -139,6 +139,11 @@ function Line({ m, out, grp, isNew, name, gold, quote, read, flash, onMenu, onIm
   );
 }
 
+// Значки строки ввода, как в Телеграме: скрепка, бумажный самолётик и видеоквадратик (камера в квадрате)
+const CLIP_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 01-7.8-7.8l8.9-8.9a3.7 3.7 0 015.2 5.2l-8.9 8.9a1.8 1.8 0 01-2.6-2.6l8.2-8.2"/></svg>';
+const SEND_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4l17.5-7.5a1 1 0 000-1.8L3.4 3.6a.9.9 0 00-1.3 1l1.6 6.1 9.3 1.3-9.3 1.3-1.6 6.1a.9.9 0 001.3 1z"/></svg>';
+const VQ_SVG = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="4.5"/><rect x="6.5" y="8.6" width="7.6" height="6.8" rx="1.4" fill="currentColor" stroke="none"/><path d="M14.6 12l3.4-2.3v4.6z" fill="currentColor" stroke="none"/></svg>';
+
 const GIFTS: { id: string; emoji: string; name: string }[] = [
   { id: 'flowers', emoji: '💐', name: 'Цветы' }, { id: 'coffee', emoji: '☕', name: 'Кофе' }, { id: 'cake', emoji: '🍰', name: 'Тортик' },
   { id: 'hug', emoji: '🤗', name: 'Обнимашки' }, { id: 'star', emoji: '⭐', name: 'Звёздочка' }, { id: 'heart', emoji: '💛', name: 'Сердечко' },
@@ -170,6 +175,17 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
   const [act, setAct] = useState<Act>(null);
   const [gifts, setGifts] = useState(false);
   const [recording, setRecording] = useState(false);
+  // подсказка про видеоквадратик — первые три раза, пока человек не привык к значку
+  const [vqHint] = useState(() => {
+    try { const n = Number(localStorage.getItem('aska.vqhint') || 0); if (n >= 3) return false; localStorage.setItem('aska.vqhint', String(n + 1)); return true; } catch { return false; }
+  });
+  // поле ввода растёт вместе с текстом (до ~5 строк), как в Телеграме
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = '';
+    if (text && el.scrollHeight > el.clientHeight) el.style.height = `${Math.min(140, el.scrollHeight + 2)}px`;
+  }, [text]);
   const [mview, setMview] = useState<number | null>(null);      // ⤢ на весь экран: с какого видео
   const [mintFile, setMintFile] = useState<File | null>(null);  // 💎 своё фото/видео/музыка → НФТ
   const [myGifs, setMyGifs] = useState<Nft[] | null>(null);     // мои гифки-НФТ для вкладки «🎞 Гифки»
@@ -476,28 +492,39 @@ export function ChatView({ chatId, onBack, onProfile, onCircleInfo, onOpen }: Ch
             <button className="tbtn" onClick={() => setReply(null)} aria-label="Отменить ответ">×</button>
           </div>
         )}
-        <textarea
-          ref={inputRef}
-          className="field"
-          rows={2}
-          maxLength={20000}
-          value={text}
-          onChange={(e) => { setText(e.target.value); if (e.target.value.trim()) sendTyping(chatId); }}
-          onKeyDown={onKeyDown}
-          placeholder={act === 'compliment' ? `Комплимент — ${twinOwner?.displayName} увидит${chat.twin?.anon ? ', но не узнает от кого' : ''}`
-            : act === 'question' ? `Вопрос — ${twinOwner?.displayName} ответит`
-              : isTouch ? 'Напиши что-нибудь…' : 'Напиши что-нибудь… Enter — отправить'}
-        />
-        <div className="send-row">
-          <button className="btn icon" onClick={() => setSmilesOpen((v) => !v)} title="Смайлы" aria-label="Смайлы">
-            <Svg html={smileSvg('smile', 18) || '☺'} />
+        <div className="send-row aska-tg-row">
+          <button className="btn icon aska-tg-smile" onClick={() => setSmilesOpen((v) => !v)} title="Смайлы" aria-label="Смайлы">
+            <Svg html={smileSvg('smile', 20) || '☺'} />
           </button>
-          <button className="btn icon" onClick={() => fileRef.current?.click()} title="Фото, видео, музыка" aria-label="Фото, видео, музыка">📎</button>
+          <textarea
+            ref={inputRef}
+            className="field"
+            rows={1}
+            maxLength={20000}
+            value={text}
+            onChange={(e) => { setText(e.target.value); if (e.target.value.trim()) sendTyping(chatId); }}
+            onKeyDown={onKeyDown}
+            placeholder={act === 'compliment' ? `Комплимент — ${twinOwner?.displayName} увидит${chat.twin?.anon ? ', но не узнает от кого' : ''}`
+              : act === 'question' ? `Вопрос — ${twinOwner?.displayName} ответит`
+                : isTouch ? 'Напиши что-нибудь…' : 'Напиши что-нибудь… Enter — отправить'}
+          />
+          <button className="btn icon aska-tg-clip" onClick={() => fileRef.current?.click()} title="Фото, видео, музыка" aria-label="Фото, видео, музыка">
+            <Svg html={CLIP_SVG} />
+          </button>
           <input ref={fileRef} type="file" accept="image/*,video/*,audio/*" multiple hidden onChange={onFiles} />
-          {canRecordVideo() && <button className="btn icon aska-vbtn" onClick={() => { setSmilesOpen(false); setRecording(true); }} title="Видеоквадратик" aria-label="Видеоквадратик">🎬</button>}
-          <span className="hint">{!s.connected ? 'нет связи' : fileErr}</span>
-          <button className="btn primary" disabled={!text.trim()} onMouseDown={(e) => e.preventDefault()} onClick={submit}>Отправить</button>
+          {text.trim() || !canRecordVideo() ? (
+            <button className="aska-vq-btn send" disabled={!text.trim()} onMouseDown={(e) => e.preventDefault()} onClick={submit} title="Отправить" aria-label="Отправить">
+              <Svg html={SEND_SVG} /><span className="sr-only">Отправить</span>
+            </button>
+          ) : (
+            <button className="aska-vq-btn" onClick={() => { setSmilesOpen(false); setRecording(true); }}
+              title="Видеоквадратик — нажми и запиши" aria-label="Записать видеоквадратик">
+              <Svg html={VQ_SVG} />
+              {vqHint && <span className="aska-vq-hint">📹 Видеоквадратик — нажми и запиши</span>}
+            </button>
+          )}
         </div>
+        {(!s.connected || fileErr) && <div className="hint aska-tg-note">{!s.connected ? 'нет связи' : fileErr}</div>}
       </div>
       {smilesOpen && (
         <div className={`smiles aska-smiles t-${smileTab}`}>

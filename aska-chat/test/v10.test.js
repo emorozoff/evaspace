@@ -202,37 +202,41 @@ test('реестр: Голд заносит, кто первый — того и
   }
 });
 
-test('ночь: НФТ-аватар, час бесплатно, дальше 10 🪙, ранги, постояльцы отвечают, у Блэк — без оплаты', async () => {
+test('комнаты: вход бесплатный, пишут под своим именем или НФТ-ником, ранги, постояльцы отвечают', async () => {
   const S = await start();
   try {
     const boss = await register(S, S.app.createInvite(null), 'Лиза', 'пароль лизы');
     const artem = await register(S, S.app.createInvite(boss.userId), 'Артём', 'пароль артёма');
     const ov = (await S.call('GET', '/api/night', { token: artem.token })).data;
     assert.equal(ov.rooms.length, ROOMS.length);
-    assert.equal(ov.canWrite, false);
+    assert.equal(ov.canWrite, true, 'писать могут все — бесплатно');
+    assert.equal(ov.prices.hour, 0);
     assert.equal(ov.rooms.find((r) => r.key === 'portal').president.nick, 'Лиза', 'в «Портале» президент — первый человек АСЬКИ');
     const room = (await S.call('GET', '/api/night/rooms/matrix', { token: artem.token })).data;
     assert.ok(room.messages.length >= 8, 'в комнате уже идёт разговор');
+    assert.equal(room.joined, false);
     assert.equal(room.council.president.nick, NIGHT_BOTS.find((b) => b.room === 'matrix' && b.president).nick);
     assert.equal(room.council.advisors.length, 2);
     assert.equal(room.council.keepers.length, 3);
-    assert.equal((await S.call('POST', '/api/night/avatar', { token: artem.token, body: { id: 50, nick: 'Нео_из_Химок' } })).status, 403, 'писать — с Голд');
-    await S.call('POST', `/api/admin/users/${artem.userId}/tier`, { token: boss.token, body: { tier: 'gold' } });
+    // гость пишет бесплатно, под своим именем — и сразу в комнате
+    const p0 = await S.call('POST', '/api/night/rooms/matrix/messages', { token: artem.token, body: { text: 'привет' } });
+    assert.equal(p0.status, 200, JSON.stringify(p0.data));
+    assert.equal(p0.data.message.avatar.nick, 'Артём');
+    assert.equal(p0.data.message.avatar.profile, true);
+    assert.equal((await S.call('GET', '/api/night/rooms/matrix', { token: artem.token })).data.joined, true);
+    // пиксельный НФТ-аватар — по желанию (100 🪙, у Голд скидка 20%)
     const coll = (await S.call('GET', '/api/night/collection', { token: artem.token })).data.avatars;
     assert.equal(coll.length, COLLECTION_SIZE);
     assert.ok(coll.find((a) => a.id === 7).taken, 'аватары постояльцев заняты');
     assert.equal((await S.call('POST', '/api/night/avatar', { token: artem.token, body: { id: 7, nick: 'Занятый' } })).status, 409);
     assert.equal((await S.call('POST', '/api/night/avatar', { token: artem.token, body: { id: 50, nick: 'Кролик_404' } })).status, 409, 'ник занят');
     assert.equal((await S.call('POST', '/api/night/avatar', { token: artem.token, body: { id: 50, nick: 'a' } })).status, 400);
+    await S.call('POST', `/api/admin/users/${artem.userId}/tier`, { token: boss.token, body: { tier: 'gold' } });
     const c0 = await coins(S, artem);
     const minted = await S.call('POST', '/api/night/avatar', { token: artem.token, body: { id: 50, nick: 'Нео_из_Химок' } });
     assert.equal(minted.status, 200, JSON.stringify(minted.data));
     assert.equal(await coins(S, artem), c0 - 80, 'НФТ 100 🪙, у Голд скидка 20%');
     assert.equal((await S.call('POST', '/api/night/avatar', { token: artem.token, body: { id: 51, nick: 'Второй' } })).status, 409, 'один аватар');
-    // без пропуска писать нельзя; первый час — бесплатно
-    assert.equal((await S.call('POST', '/api/night/rooms/matrix/messages', { token: artem.token, body: { text: 'привет' } })).status, 402);
-    const ent = await S.call('POST', '/api/night/rooms/matrix/enter', { token: artem.token });
-    assert.equal(ent.data.free, true);
     const posted = await S.call('POST', '/api/night/rooms/matrix/messages', { token: artem.token, body: { text: 'Всем привет из Химок!' } });
     assert.equal(posted.status, 200);
     assert.equal(posted.data.message.avatar.nick, 'Нео_из_Химок');
@@ -241,23 +245,19 @@ test('ночь: НФТ-аватар, час бесплатно, дальше 10 
     const after = (await S.call('GET', '/api/night/rooms/matrix', { token: artem.token })).data.messages;
     const mine = after.findIndex((m) => m.id === posted.data.message.id);
     assert.ok(after.slice(mine + 1).some((m) => m.text.includes('Нео_из_Химок') || m.avatar.nick !== 'Нео_из_Химок'), 'постоялец ответил');
-    // спасибо за сообщение: +2 к репутации, себе — нельзя
+    // спасибо за сообщение: +2 к репутации, себе — нельзя (и под своим именем тоже)
     assert.equal((await S.call('POST', `/api/night/messages/${posted.data.message.id}/thanks`, { token: artem.token })).status, 400);
+    assert.equal((await S.call('POST', `/api/night/messages/${p0.data.message.id}/thanks`, { token: artem.token })).status, 400);
     assert.equal((await S.call('POST', `/api/night/messages/${posted.data.message.id}/thanks`, { token: boss.token })).data.thanks, 1);
-    // час кончился, бесплатный уже был — 402, оплатил — снова можно
-    S.app.db.prepare('UPDATE night_passes SET until = ? WHERE user_id = ?').run(Date.now() - 1, artem.userId);
-    assert.equal((await S.call('POST', '/api/night/rooms/matrix/enter', { token: artem.token })).status, 402);
+    // старые «зайти» и «оплатить час» — теперь просто бесплатно вступить
     const c1 = await coins(S, artem);
-    assert.equal((await S.call('POST', '/api/night/rooms/matrix/pay', { token: artem.token })).status, 200);
-    assert.equal(await coins(S, artem), c1 - 10);
-    assert.equal((await S.call('POST', '/api/night/rooms/matrix/messages', { token: artem.token, body: { text: 'я снова тут' } })).status, 200);
+    assert.equal((await S.call('POST', '/api/night/rooms/sofa/enter', { token: artem.token })).data.pass.unlimited, true);
+    assert.equal((await S.call('POST', '/api/night/rooms/sofa/pay', { token: artem.token })).status, 200);
+    assert.equal(await coins(S, artem), c1, 'ничего не списалось');
     // постоялец сам говорит по расписанию
     const n0 = S.app.db.prepare("SELECT COUNT(*) AS n FROM night_messages WHERE room = 'shar'").get().n;
     await S.app.night.chatter('shar');
     assert.equal(S.app.db.prepare("SELECT COUNT(*) AS n FROM night_messages WHERE room = 'shar'").get().n, n0 + 1);
-    // Блэк — без оплаты по часам
-    await S.call('POST', `/api/admin/users/${artem.userId}/tier`, { token: boss.token, body: { tier: 'black' } });
-    assert.equal((await S.call('POST', '/api/night/rooms/sofa/enter', { token: artem.token })).data.pass.unlimited, true);
     assert.ok(L.verify(S.app.db).ok);
   } finally {
     await stop(S);

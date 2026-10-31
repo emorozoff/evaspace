@@ -16,11 +16,11 @@ import { useSplit, setSplit, useDesign } from '../lib/space.ts';
 import { Levels, TierBadge, PlacePicker } from './Levels.tsx';
 import { Network } from './Network.tsx';
 import { Rules } from './Rules.tsx';
-import { Night } from './Night.tsx';
 import { Catalog, Ledger } from './Catalog.tsx';
 import { History } from './History.tsx';
 import { Book } from './Book.tsx';
 import { Gallery } from './Gallery.tsx';
+import { Rooms } from './Rooms.tsx';
 import { GifMaker } from './GifMaker.tsx';
 import { Exchange } from './Exchange.tsx';
 import { Web3 } from './Web3.tsx';
@@ -29,7 +29,6 @@ import { placeOf } from '../lib/places.ts';
 import { Win, Ico, Dialog } from './Win.tsx';
 import { UserPlate, Gold } from './Plate.tsx';
 import { Plates } from './Plates.tsx';
-import { Circles } from './Circles.tsx';
 import { MyAI } from './MyAI.tsx';
 import { Admin } from './Admin.tsx';
 import { Wall } from './Wall.tsx';
@@ -39,8 +38,8 @@ export type AuxKind = 'settings' | 'invite' | 'circles' | 'myai' | 'admin' | 'pl
   | 'levels' | 'network' | 'rules' | 'night' | 'music' | 'films' | 'books' | 'ledger' | 'history' | 'book' | 'gallery' | 'gifmaker' | 'exchange' | 'web3' | 'charter';
 
 const TITLES: Record<AuxKind, string> = {
-  settings: 'Ещё', invite: 'Позвать друга', circles: 'Круги', myai: 'Мой ИИ', admin: 'Управление АСЬКОЙ', plates: 'Номера', wall: 'Стена',
-  biz: 'Рабочие контакты', levels: 'Уровни', network: 'Мой нетворк', rules: 'Правила АСЬКИ', night: 'Ночь', music: 'Музыка', films: 'Кино',
+  settings: 'Ещё', invite: 'Позвать друга', circles: 'Комнаты', myai: 'Мой ИИ', admin: 'Управление АСЬКОЙ', plates: 'Номера', wall: 'Стена',
+  biz: 'Рабочие контакты', levels: 'Уровни', network: 'Мой нетворк', rules: 'Правила АСЬКИ', night: 'Комнаты', music: 'Музыка', films: 'Кино',
   books: 'Книги', ledger: 'Цепочка блоков', history: 'История АСЬКИ', book: 'Книга перемен',
   gallery: 'Галерея НФТ', gifmaker: 'Гифка по ТЗ', exchange: 'Биржа', web3: 'Мои данные · Web3', charter: 'Правила и цели',
 };
@@ -55,7 +54,7 @@ export function Aux({ kind, onBack, onOpen, onAux, wallView, onWallView, onProfi
         {kind === 'wall' && <Wall view={wallView} onView={onWallView} onProfile={onProfile} onOpenChat={onOpen} />}
         {kind === 'invite' && <Invite />}
         {kind === 'settings' && <Settings onAux={onAux} />}
-        {kind === 'circles' && <Circles onOpen={onOpen} />}
+        {kind === 'circles' && <Rooms onOpenChat={onOpen} onLevels={() => onAux('levels')} />}
         {kind === 'myai' && <MyAI onOpen={onOpen} />}
         {kind === 'admin' && <Admin />}
         {kind === 'plates' && <Plates />}
@@ -63,7 +62,7 @@ export function Aux({ kind, onBack, onOpen, onAux, wallView, onWallView, onProfi
         {kind === 'levels' && <Levels onAux={onAux} onOpen={onOpen} />}
         {kind === 'network' && <Network onProfile={onProfile} onInvite={() => onAux('invite')} />}
         {kind === 'rules' && <Rules />}
-        {kind === 'night' && <Night onLevels={() => onAux('levels')} />}
+        {kind === 'night' && <Rooms onOpenChat={onOpen} onLevels={() => onAux('levels')} />}
         {kind === 'music' && <Catalog kind="music" onLedger={() => onAux('ledger')} />}
         {kind === 'films' && <Catalog kind="film" onLedger={() => onAux('ledger')} />}
         {kind === 'books' && <Catalog kind="book" onLedger={() => onAux('ledger')} />}

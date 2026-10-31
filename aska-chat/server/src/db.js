@@ -240,6 +240,7 @@ function migrate(db) {
   migrateV10(db);
   migrateV11(db);
   migrateV12(db);
+  migrateV13(db);
 }
 
 // Третья версия (22.10.2026): номера-токены (покупка, улучшение, рынок), аськоины, роли (голд-админы, супер-админ), блокировка.
@@ -461,6 +462,19 @@ function migrateV9(db) {
 
 // Десятое обновление (31.10.2026): уровни (Гость / Голд / Блэк), нетворк, место-регион на номере,
 // реестр на внутренней цепочке блоков (музыка, кино, книги), ночные комнаты с НФТ-аватарами.
+// Тринадцатое (31.10.2026): комнаты как сообщества — кто вступил (вход бесплатный)
+function migrateV13(db) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS night_members (
+      room TEXT NOT NULL,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      joined_at INTEGER NOT NULL,
+      PRIMARY KEY (room, user_id)
+    );
+    CREATE INDEX IF NOT EXISTS night_members_user ON night_members (user_id);
+  `);
+}
+
 // Двенадцатое (31.10.2026): НФТ-галерея (фото, видео, музыка, гифки) с авторами и совладельцами, сделки,
 // курсы валют для биржи, «свидетели» цепочки (телефоны, которые проверили блоки), принятие правил при регистрации
 function migrateV12(db) {
