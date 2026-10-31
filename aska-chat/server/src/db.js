@@ -236,6 +236,7 @@ function migrate(db) {
   migrateV5(db);
   migrateV6(db);
   migrateV7(db);
+  migrateV9(db);
 }
 
 // Третья версия (22.10.2026): номера-токены (покупка, улучшение, рынок), аськоины, роли (голд-админы, супер-админ), блокировка.
@@ -447,4 +448,10 @@ export function getSetting(db, key) {
 export function setSetting(db, key, value) {
   db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
     .run(key, value);
+}
+
+// Девятое обновление (31.10.2026): «Бизнес» — групповые чаты для работы помечены разделом
+// (team — команда, work — работа, biz — бизнес, partners — партнёры). В личных стилях их не видно.
+function migrateV9(db) {
+  addColumn(db, 'chats', 'biz', 'TEXT');
 }

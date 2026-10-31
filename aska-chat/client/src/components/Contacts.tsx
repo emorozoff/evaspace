@@ -1,5 +1,7 @@
-// Главная: карточка «я» (номер, статус, аськоины) и группы контактов — ИИ-друзья (Аська, Батя, личные ИИ друзей),
-// Ближний круг, Знакомства, Работа, потом мои круги. Нажал — открылась беседа, удержал — карточка человека.
+// Главная: карточка «я» (номер, статус, аськоины), переключатель «Личное / Бизнес» и группы контактов.
+// Личное: ИИ-друзья (Аська, Батя, личные ИИ друзей), Ближний круг, Знакомства, мои круги.
+// Бизнес: Команда, Работа, Бизнес, Партнёры — люди и рабочие чаты каждого раздела.
+// Нажал — открылась беседа, удержал — карточка человека.
 import { useRef, useState } from 'react';
 import type { MouseEvent, ReactNode } from 'react';
 import { useStore } from '../useStore.ts';
@@ -7,7 +9,10 @@ import { enablePush, openDm, unreadIn, typingIn, askaOf, aiFriendsOf } from '../
 import type { Chat, Group, Msg, State, User } from '../lib/store.ts';
 import { previewText } from '../lib/protocol.ts';
 import { isIOS, isStandalone } from '../lib/platform.ts';
-import { flower, envelope, logoFlower, userFlower } from '../lib/aska.ts';
+import { flower, envelope, logoFlower, userFlower, setDesign, homeDesign } from '../lib/aska.ts';
+import { BIZ_SECTIONS, useDesign, useSplit, userIsBiz, chatIsBiz } from '../lib/space.ts';
+import type { BizKey } from '../lib/space.ts';
+import { BizAddDialog, BizChatDialog } from './Business.tsx';
 import { statusLine } from '../lib/statuses.ts';
 import { timeShort } from '../lib/format.ts';
 import { Win, Svg, Ico } from './Win.tsx';
@@ -61,7 +66,7 @@ function PushPanel() {
   return <div className="me-panel aska-push">{body}</div>;
 }
 
-type AuxTarget = 'circles' | 'myai' | 'settings' | 'plates' | 'admin' | 'wall';
+type AuxTarget = 'circles' | 'myai' | 'settings' | 'plates' | 'admin' | 'wall' | 'biz';
 interface Props {
   activeChat: string | null;
   onOpen: (chatId: string) => void;
@@ -113,8 +118,21 @@ function Item({ active, off, icon, gold, blink, nick, sub, badge, at, onClick, o
 const GROUPS: { key: Group; label: string; empty: string }[] = [
   { key: 'close', label: '💛 Ближний круг', empty: 'Тут самые близкие. Удержи контакт → «Группа» → «Ближний круг».' },
   { key: 'meet', label: '👋 Знакомства', empty: 'Новые люди появятся здесь.' },
-  { key: 'work', label: '💼 Работа', empty: 'Коллеги и дела. Удержи контакт → «Группа» → «Работа».' },
 ];
+
+// «🏠 Личное | 💼 Бизнес» — одно нажатие, и рядом счётчик непрочитанного в другом месте
+function SpaceSwitch({ business, homeUnread, bizUnread }: { business: boolean; homeUnread: number; bizUnread: number }) {
+  return (
+    <div className="aska-space" role="tablist" aria-label="Личное или Бизнес">
+      <button role="tab" aria-selected={!business} className={!business ? 'on' : ''} onClick={() => business && setDesign(homeDesign())}>
+        🏠 Личное{homeUnread > 0 && <b>{homeUnread}</b>}
+      </button>
+      <button role="tab" aria-selected={business} className={business ? 'on' : ''} onClick={() => !business && setDesign('business')}>
+        💼 Бизнес{bizUnread > 0 && <b>{bizUnread}</b>}
+      </button>
+    </div>
+  );
+}
 
 export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, onAux }: Props) {
   const s = useStore();
@@ -122,16 +140,26 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
   const [closed, setClosed] = useState<Record<string, boolean>>({});
   const [error, setError] = useState('');
   const [statusOpen, setStatusOpen] = useState(false);
+  const [adding, setAdding] = useState<BizKey | null>(null);
+  const [chatFor, setChatFor] = useState<BizKey | null>(null);
+  const business = useDesign() === 'business';
+  const split = useSplit();
+  const showHome = !business || !split; // личное видно
+  const showBiz = business || !split;   // рабочее видно
   const myself = s.users[me];
   const aska = askaOf(s);
   const friendsAi = aiFriendsOf(s);
   const lastTime = (u: User) => lastOf(s, dmWith(s, u.id)?.id)?.createdAt ?? 0;
-  const people = Object.values(s.users).filter((u) => u.id !== me && (u.kind || 'human') === 'human' && !u.blocked && !s.hidden.includes(u.id));
+  const everyone = Object.values(s.users).filter((u) => u.id !== me && (u.kind || 'human') === 'human' && !u.blocked && !s.hidden.includes(u.id));
+  const people = everyone.filter((u) => !userIsBiz(s, u));
+  const bizPeople = everyone.filter((u) => userIsBiz(s, u));
   const sortPeople = (list: User[]) => [...list].sort((a, b) => Number(s.pins.includes(b.id)) - Number(s.pins.includes(a.id))
     || Number(!!s.presence[b.id]) - Number(!!s.presence[a.id]) || lastTime(b) - lastTime(a) || a.displayName.localeCompare(b.displayName, 'ru'));
   const groupOf = (u: User): Group => s.groups[u.id] || 'meet';
-  const circles = Object.values(s.chats).filter((c) => c.kind === 'general' || c.kind === 'circle')
+  const circles = Object.values(s.chats).filter((c) => (c.kind === 'general' || c.kind === 'circle') && !c.biz)
     .sort((a, b) => (a.kind === 'general' ? -1 : b.kind === 'general' ? 1 : (lastOf(s, b.id)?.createdAt ?? 0) - (lastOf(s, a.id)?.createdAt ?? 0)));
+  const bizChats = Object.values(s.chats).filter((c) => c.biz)
+    .sort((a, b) => (lastOf(s, b.id)?.createdAt ?? 0) - (lastOf(s, a.id)?.createdAt ?? 0));
   const twinChats = Object.values(s.chats).filter((c) => c.kind === 'twin')
     .sort((a, b) => (lastOf(s, b.id)?.createdAt ?? 0) - (lastOf(s, a.id)?.createdAt ?? 0));
   const status = s.connected ? 'online' : 'offline';
@@ -185,10 +213,47 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
   };
   const aiCount = (aska ? 1 : 0) + friendsAi.length + twinChats.length;
 
-  const brainOff = s.profile?.isAdmin && s.brain && (!s.brain.key || !s.brain.people);
+  const brainOff = s.profile?.isAdmin && s.brain && (!s.brain.key || !s.brain.people) && !business;
+  // непрочитанное в «Личном» и в «Бизнесе» (своего личного ИИ не считаем — у него своя вкладка)
+  let homeUnread = 0, bizUnread = 0;
+  for (const c of Object.values(s.chats)) { const n = unreadIn(c.id, s); if (n) { if (chatIsBiz(s, c)) bizUnread += n; else homeUnread += n; } }
+
+  const circleItem = (c: Chat, fallbackEmoji: string) => {
+    const unread = unreadIn(c.id, s);
+    return (
+      <Item key={c.id} active={c.id === activeChat} blink={!!unread}
+        icon={unread ? envelope(16) : flower('chat', 16)}
+        nick={<><span className="aska-emoji">{c.emoji || fallbackEmoji}</span> {c.title || 'Общий чат'}</>}
+        sub={preview(s, lastOf(s, c.id), true) ?? (c.about || (c.biz ? `${c.members.length} участников` : 'здесь пока тихо'))} badge={unread} at={when(lastOf(s, c.id)?.createdAt)}
+        onClick={() => onOpen(c.id)} />
+    );
+  };
+
+  // Раздел «Бизнеса»: рабочие чаты и люди, «＋» — добавить
+  const bizSections = BIZ_SECTIONS.map((sec) => {
+    const list = sortPeople(bizPeople.filter((u) => groupOf(u) === sec.key));
+    const chats = bizChats.filter((c) => c.biz === sec.key);
+    const key = `biz-${sec.key}`;
+    return (
+      <div key={key} className={`aska-grp aska-biz g-${sec.key}`}>
+        <div className="cgroup" onClick={() => toggle(key)}>
+          <span className="box">{closed[key] ? '+' : '−'}</span>{sec.emoji} {sec.label} <span className="cnt">({list.length + chats.length})</span>
+          <span className="sp" />
+          <button className="aska-grp-add" title={`Добавить в «${sec.label}»`} aria-label={`Добавить в «${sec.label}»`}
+            onClick={(e) => { e.stopPropagation(); setAdding(sec.key); }}>＋</button>
+        </div>
+        {!closed[key] && chats.map((c) => circleItem(c, sec.emoji))}
+        {!closed[key] && list.map(personItem)}
+        {!closed[key] && !list.length && !chats.length && (
+          <button className="aska-grp-empty aska-biz-empty" onClick={() => setAdding(sec.key)}>{sec.empty} — <u>добавить</u></button>
+        )}
+      </div>
+    );
+  });
+  const bizEmpty = business && !bizPeople.length && !bizChats.length;
 
   return (
-    <Win id="cwin" className="contacts" title="АСЬКА" icon={logoFlower(16)}
+    <Win id="cwin" className={`contacts${business ? ' aska-bizwin' : ''}`} title={business ? <>АСЬКА <small>Бизнес</small></> : 'АСЬКА'} icon={logoFlower(16)}
       extra={<button className="tbtn" onClick={onSettings} title="Настройки" aria-label="Настройки">☰</button>}>
       <div className={`me-panel aska-me${myself?.gold ? ' gold' : ''}`} onClick={() => onProfile(me)}>
         <Ico className={`ico${myself?.gold ? ' gold' : ''}`} html={userFlower(myself, s.connected, 16)} />
@@ -211,17 +276,37 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
         </button>
       )}
       <PushPanel />
+      <SpaceSwitch business={business} homeUnread={homeUnread} bizUnread={bizUnread} />
       {/* на компьютере нижних вкладок нет — те же разделы кнопками */}
-      <div className="aska-desk-nav">
-        <button className="btn" onClick={() => onAux('wall')}><i>📌</i><span>Стена</span></button>
-        <button className="btn" onClick={() => onAux('circles')}><i>⭕</i><span>Круги</span></button>
-        <button className="btn" onClick={() => onAux('plates')}><i>🚗</i><span>Номера</span></button>
-        <button className="btn" onClick={() => onAux('myai')}><i>🤖</i><span>Мой ИИ</span></button>
-        <button className="btn" onClick={() => onAux('settings')}><i>☰</i><span>Ещё</span></button>
-      </div>
+      {business ? (
+        <div className="aska-desk-nav">
+          <button className="btn" onClick={() => setChatFor('team')}><i>💬</i><span>Новый чат</span></button>
+          <button className="btn" onClick={() => onAux('biz')}><i>📇</i><span>Контакты</span></button>
+          <button className="btn" onClick={() => onAux('settings')}><i>☰</i><span>Ещё</span></button>
+        </div>
+      ) : (
+        <div className="aska-desk-nav">
+          <button className="btn" onClick={() => onAux('wall')}><i>📌</i><span>Стена</span></button>
+          <button className="btn" onClick={() => onAux('circles')}><i>⭕</i><span>Круги</span></button>
+          <button className="btn" onClick={() => onAux('plates')}><i>🚗</i><span>Номера</span></button>
+          <button className="btn" onClick={() => onAux('myai')}><i>🤖</i><span>Мой ИИ</span></button>
+          <button className="btn" onClick={() => onAux('settings')}><i>☰</i><span>Ещё</span></button>
+        </div>
+      )}
       {error && <div className="err aska-warn">{error}</div>}
       <div className="clist inset">
-        {aiCount > 0 && (
+        {bizEmpty && (
+          <div className="aska-biz-hero">
+            <b>💼 Здесь — только работа</b>
+            <span>Добавь коллег, клиентов и партнёров по разделам или создай рабочий чат. {split ? 'В личном списке их не будет — и наоборот.' : ''}</span>
+            <span className="row">
+              <button className="btn primary" onClick={() => setAdding('team')}>＋ Добавить людей</button>
+              <button className="btn" onClick={() => setChatFor('team')}>💬 Рабочий чат</button>
+            </span>
+          </div>
+        )}
+        {business && bizSections}
+        {showHome && aiCount > 0 && (
           <>
             {group('ai', '✨ ИИ-друзья', aiCount)}
             {!closed.ai && (
@@ -243,7 +328,7 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
             )}
           </>
         )}
-        {GROUPS.map((g) => {
+        {showHome && GROUPS.map((g) => {
           const list = sortPeople(people.filter((u) => groupOf(u) === g.key));
           const on = list.filter((u) => s.presence[u.id]).length;
           return (
@@ -254,23 +339,14 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
             </div>
           );
         })}
-        {circles.length > 0 && (
+        {!business && showBiz && bizSections}
+        {showHome && circles.length > 0 && (
           <>
             {group('circles', '⭕ Мои круги', circles.length)}
-            {!closed.circles && circles.map((c) => {
-              const unread = unreadIn(c.id, s);
-              const emoji = c.emoji || (c.kind === 'general' ? '🌼' : '⭕');
-              return (
-                <Item key={c.id} active={c.id === activeChat} blink={!!unread}
-                  icon={unread ? envelope(16) : flower('chat', 16)}
-                  nick={<><span className="aska-emoji">{emoji}</span> {c.title || 'Общий чат'}</>}
-                  sub={preview(s, lastOf(s, c.id), true) ?? (c.about || 'здесь пока тихо')} badge={unread} at={when(lastOf(s, c.id)?.createdAt)}
-                  onClick={() => onOpen(c.id)} />
-              );
-            })}
+            {!closed.circles && circles.map((c) => circleItem(c, c.kind === 'general' ? '🌼' : '⭕'))}
           </>
         )}
-        {!people.length && <div className="empty-note">Пока здесь только ты и ИИ-друзья. Позови своих — кнопка «+» вверху.</div>}
+        {!business && !people.length && <div className="empty-note">Пока здесь только ты и ИИ-друзья. Позови своих — кнопка «+» внизу.</div>}
       </div>
       <div className="bottom-bar">
         <button className="btn status-btn" onClick={() => setStatusOpen(true)}>
@@ -282,10 +358,12 @@ export function Contacts({ activeChat, onOpen, onProfile, onSettings, onInvite, 
         <button className="btn icon" onClick={onInvite} title="Позвать друга" aria-label="Позвать друга">+</button>
       </div>
       <div className="statusbar">
-        <div className="cell">Людей: {people.length}, в сети: {people.filter((u) => s.presence[u.id]).length}</div>
+        <div className="cell">{business ? `Рабочих контактов: ${bizPeople.length}` : `Людей: ${people.length}, в сети: ${people.filter((u) => s.presence[u.id]).length}`}</div>
         <div className="cell fit"><Svg html={flower(status, 12)} /> {s.connected ? 'в сети' : 'нет связи'}</div>
       </div>
       {statusOpen && <StatusPicker onClose={() => setStatusOpen(false)} />}
+      {adding && <BizAddDialog section={adding} onClose={() => setAdding(null)} onNewChat={(k) => { setAdding(null); setChatFor(k); }} />}
+      {chatFor && <BizChatDialog section={chatFor} onClose={() => setChatFor(null)} onOpen={onOpen} />}
     </Win>
   );
 }

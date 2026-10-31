@@ -1,0 +1,210 @@
+/* Девятое обновление: все кнопки видно, стили в «Ещё» (Бизнес, Ночь), «Личное / Бизнес», рабочие разделы и чаты */
+
+/* ══ 1. Чтобы ни одна кнопка не пряталась ══════════════════════════════════ */
+/* ряды вкладок больше не уезжают вбок — переносятся на новую строку */
+.skin-aero .tabs { flex-wrap: wrap; overflow: visible; }
+.skin-aero .tabs button { flex: 1 1 auto; }
+/* реакции в панели наград помещаются даже на самом узком телефоне */
+.rw-reacts { flex-wrap: wrap; justify-content: center; }
+.rw-reacts button { flex: 1 0 auto; min-width: 28px; font-size: min(24px, 6.2vw); }
+/* недоступные кнопки — заметно серые, но читаются (раньше почти исчезали) */
+.skin-aero .btn:disabled { opacity: .62; filter: grayscale(.7); }
+.skin-aero .btn.primary:disabled { opacity: .55; }
+/* вкладки панели смайлов не обрезаются */
+.aska-smile-tabs button { padding: 5px 3px !important; font-size: 11.5px; }
+/* на компьютере кнопки в заголовке окна крупнее */
+@media (min-width: 720px) {
+  .skin-aero .tbtn { width: 26px; height: 26px; font-size: 14px; line-height: 24px; }
+  .skin-classic .titlebar .tbtn { min-width: 18px; height: 16px; font-size: 11px; line-height: 12px; }
+}
+/* выбор группы в карточке — две строки: личное и бизнес */
+.aska-grp-pick { display: flex; flex-direction: column; gap: 4px; }
+.aska-grp-pick .tabs { margin-bottom: 4px; }
+.skin-classic .aska-grp-pick .tabs { display: flex; flex-wrap: wrap; gap: 2px; }
+.skin-classic .aska-grp-pick .tabs button { flex: 1 1 auto; }
+
+/* ══ 2. «🏠 Личное | 💼 Бизнес» ══════════════════════════════════════════ */
+.aska-space { display: flex; gap: 4px; flex: none; margin: 0 0 8px; padding: 3px; }
+.aska-space button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 4px 8px; font: inherit; font-weight: 600; cursor: pointer; }
+.aska-space b { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #e5352a; color: #fff; font-size: 10.5px; line-height: 18px; }
+.skin-aero .aska-space { margin-left: 10px; margin-right: 10px; border-radius: 14px; background: rgba(20, 70, 130, .09); }
+.skin-aero .aska-space button { border: 0; border-radius: 11px; background: none; color: var(--a-muted); transition: background .15s, color .15s; }
+.skin-aero .aska-space button.on { background: #fff; color: var(--a-text); box-shadow: 0 1px 5px rgba(0, 30, 70, .18); }
+.skin-classic .aska-space { padding: 0; gap: 2px; }
+.skin-classic .aska-space button { background: var(--face); border: 1px solid; border-color: var(--light) var(--black) var(--black) var(--light); box-shadow: inset -1px -1px var(--shadow); }
+.skin-classic .aska-space button.on { border-color: var(--black) var(--light) var(--light) var(--black); box-shadow: inset 1px 1px var(--shadow); background: #fff; }
+
+/* ══ 3. Разделы «Бизнеса» в списке ════════════════════════════════════════ */
+.aska-biz .cgroup { display: flex; align-items: center; }
+.aska-grp-add { margin-left: auto; width: 26px; height: 22px; border-radius: 8px; border: 1px solid currentColor; background: none; color: inherit; font: 700 14px/1 inherit; cursor: pointer; opacity: .85; }
+.aska-biz-empty { display: block; width: 100%; text-align: left; border: 0; background: none; font: inherit; cursor: pointer; }
+.aska-biz-hero { display: flex; flex-direction: column; gap: 6px; padding: 12px; margin: 4px 0 8px; border-radius: 14px; line-height: 1.35; }
+.aska-biz-hero b { font-size: 15px; }
+.aska-biz-hero .row { gap: 6px; flex-wrap: wrap; }
+.skin-aero .aska-biz-hero { background: linear-gradient(135deg, #0f1d33, #1d3a66); color: #fff; }
+.skin-aero .aska-biz-hero span { color: rgba(255, 255, 255, .82); }
+.skin-classic .aska-biz-hero { background: #fffbe0; border: 1px solid var(--shadow); }
+.aska-biz-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 6px; }
+.aska-biz-chips .chip { cursor: pointer; }
+.aska-biz-pick { display: flex; flex-direction: column; gap: 2px; max-height: 300px; overflow: auto; margin: 6px 0; }
+.aska-biz-person { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 4px 8px; text-align: left; font: inherit; color: inherit; background: none; border: 1px solid transparent; border-radius: 10px; cursor: pointer; }
+.aska-biz-person .ico { flex: none; width: 30px; height: 30px; display: grid; place-items: center; font-size: 18px; }
+.aska-biz-person .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aska-biz-person small { opacity: .65; font-weight: 400; }
+.aska-biz-person .mark { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; font-weight: 700; }
+.aska-biz-person.on .mark { background: #2563eb; color: #fff; }
+.aska-biz-person.on { border-color: rgba(37, 99, 235, .35); background: rgba(37, 99, 235, .07); }
+.aska-biz-person .aska-plate { flex: none; }
+.aska-biz-person > .btn.icon { flex: none; }
+div.aska-biz-person { cursor: default; }
+.aska-biz-newchat { width: 100%; justify-content: center; }
+.aska-biz-lbl { display: block; margin-top: 6px; font-size: .92em; opacity: .85; }
+.aska-biz-sec .legend .cnt { opacity: .6; font-weight: 400; }
+.aska-biz-acts { gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.aska-split span b { font-weight: 600; }
+.skin-classic .aska-biz-person.on { background: #dfe8ff; border-color: var(--shadow); border-radius: 0; }
+.skin-classic .aska-biz-person { border-radius: 0; }
+
+/* ══ 4. Галерея стилей ═══════════════════════════════════════════════════ */
+.aska-styles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.aska-style { display: flex; flex-direction: column; align-items: stretch; gap: 3px; padding: 6px 6px 8px; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.aska-style b { font-size: 13.5px; padding: 2px 2px 0; }
+.aska-style small { font-size: 11px; opacity: .7; padding: 0 2px; line-height: 1.2; }
+.skin-aero .aska-style { border: 1px solid var(--a-line); border-radius: 14px; background: rgba(255, 255, 255, .75); }
+.skin-aero .aska-style.on { border-color: var(--a-accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--a-accent) 35%, transparent); }
+.skin-classic .aska-style { background: var(--face); border: 1px solid; border-color: var(--light) var(--black) var(--black) var(--light); }
+.skin-classic .aska-style.on { border-color: var(--black) var(--light) var(--light) var(--black); background: #fff; }
+/* превью: шапка, три строки, пузырь */
+.sp-prev { position: relative; display: block; height: 66px; border-radius: 9px; overflow: hidden; }
+.sp-prev i { position: absolute; display: block; }
+.sp-prev .t { left: 0; right: 0; top: 0; height: 14px; }
+.sp-prev .r { left: 8px; height: 8px; border-radius: 4px; }
+.sp-prev .a { top: 21px; width: 58%; } .sp-prev .b { top: 34px; width: 44%; } .sp-prev .c { top: 47px; width: 52%; }
+.sp-prev .m { right: 8px; top: 30px; width: 30%; height: 16px; border-radius: 9px 9px 3px 9px; }
+.sp-zoomer { background: radial-gradient(28px 28px at 78% 70%, rgba(255, 255, 255, .7), transparent 70%), linear-gradient(180deg, #6fd0ff, #2c8de0); }
+.sp-zoomer .t { background: linear-gradient(180deg, #fff, #dcecff); } .sp-zoomer .r { background: rgba(255, 255, 255, .9); } .sp-zoomer .m { background: linear-gradient(180deg, #6cc8ff, #1e8fff); }
+.sp-millennial { background: #008080; border-radius: 0; }
+.sp-millennial .t { background: linear-gradient(90deg, #0a246a, #a6caf0); } .sp-millennial .r { background: #c0c0c0; border-radius: 0; } .sp-millennial .m { background: #fff; border-radius: 0; border: 1px solid #000; }
+.sp-business { background: #eef1f5; }
+.sp-business .t { background: #0f1d33; } .sp-business .r { background: #fff; border: 1px solid #dfe4ea; } .sp-business .m { background: #2563eb; }
+.sp-night { background: radial-gradient(2px 2px at 20% 30%, #fff, transparent), radial-gradient(1.5px 1.5px at 70% 18%, #cfe0ff, transparent), linear-gradient(180deg, #0d1733, #050914); }
+.sp-night .t { background: rgba(255, 255, 255, .08); } .sp-night .r { background: rgba(255, 255, 255, .14); } .sp-night .m { background: linear-gradient(180deg, #4d9cff, #1d4ed8); }
+
+/* ══ 5. Стиль «Бизнес» (поверх Зумера): строго, светло, тёмно-синяя шапка ══ */
+@font-face { font-family: "AskaManrope"; font-style: normal; font-weight: 300 800; font-display: swap; src: url(/site/fonts/manrope-cyrillic.woff2) format("woff2"); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "AskaManrope"; font-style: normal; font-weight: 300 800; font-display: swap; src: url(/site/fonts/manrope-latin.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122, U+2212; }
+body.skin-aero.st-business {
+  --a-text: #0f1d33; --a-muted: #5b6b82; --a-line: #e1e6ed; --a-accent: #2563eb; --a-accent2: #3b82f6; --a-me1: #2f6df0; --a-me2: #2563eb;
+  --a-glass: #fff; --a-glass2: #fff; --a-card: #fff; --sel: #2563eb; --link: #1d4ed8; --shadow: #8a97a8; --face: #f3f5f8;
+  --biz-navy: #0f1d33; --biz-gold: #c9a45c; --biz-bg: #eef1f5;
+  font-family: "AskaManrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; letter-spacing: -.005em;
+}
+.skin-aero.st-business .desktop { background: linear-gradient(180deg, #0f1d33 0 220px, #eef1f5 220px); }
+.skin-aero.st-business .desktop::before { display: none; }
+.skin-aero.st-business .win { background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; border: 1px solid #dfe4ea; border-radius: 14px; box-shadow: 0 18px 50px rgba(15, 29, 51, .18), 0 1px 3px rgba(15, 29, 51, .08); }
+.skin-aero.st-business .titlebar { background: var(--biz-navy); color: #fff; border-bottom: 0; border-radius: 14px 14px 0 0; font-weight: 700; }
+.skin-aero.st-business .titlebar .ttl small { color: var(--biz-gold); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: .78em; margin-left: 4px; }
+.skin-aero.st-business .tbtn { background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .22); color: #fff; box-shadow: none; }
+.skin-aero.st-business .btn { border-radius: 9px; background: #fff; border: 1px solid #d3dae3; box-shadow: 0 1px 1px rgba(15, 29, 51, .05); color: var(--a-text); font-weight: 600; }
+.skin-aero.st-business .btn:hover { box-shadow: 0 2px 6px rgba(15, 29, 51, .1); border-color: #b9c3d0; }
+.skin-aero.st-business .btn:active { background: #f1f4f8; box-shadow: inset 0 1px 2px rgba(15, 29, 51, .1); }
+.skin-aero.st-business .btn.primary { background: var(--a-accent); border-color: #1d4ed8; color: #fff; text-shadow: none; box-shadow: 0 2px 8px rgba(37, 99, 235, .3); }
+.skin-aero.st-business .inset, .skin-aero.st-business .clist { background: #fff; border: 1px solid #e1e6ed; border-radius: 12px; box-shadow: none; }
+.skin-aero.st-business .field, .skin-aero.st-business textarea.field { border-radius: 9px; border-color: #d3dae3; box-shadow: none; }
+.skin-aero.st-business .groupbox { background: #fff; border-color: #e1e6ed; border-radius: 12px; }
+.skin-aero.st-business .tabs { background: #eef1f5; border-radius: 10px; }
+.skin-aero.st-business .tabs button.on { background: #fff; color: var(--a-text); box-shadow: 0 1px 3px rgba(15, 29, 51, .14); }
+.skin-aero.st-business .me-panel { background: #fff; border: 1px solid #e1e6ed; border-radius: 12px; box-shadow: inset 3px 0 0 var(--biz-gold); }
+.skin-aero.st-business .aska-me.gold { background: #fff; }
+.skin-aero.st-business .cgroup { color: #6b7a90; letter-spacing: .06em; }
+.skin-aero.st-business .citem { border-radius: 10px; }
+.skin-aero.st-business .citem:hover { background: #f4f6f9; }
+.skin-aero.st-business .citem.sel { background: #eaf1ff; box-shadow: inset 3px 0 0 var(--a-accent); }
+.skin-aero.st-business .citem .ico { background: #f1f4f8; box-shadow: inset 0 0 0 1px #e1e6ed; }
+.skin-aero.st-business .citem .badge { background: #ef4444; box-shadow: none; }
+.skin-aero.st-business .aska-space { background: #e7ebf1; }
+.skin-aero.st-business .aska-space button.on { color: var(--biz-navy); }
+.skin-aero.st-business .chat-head { background: #fff; border-color: #e1e6ed; border-radius: 12px; }
+.skin-aero.st-business .history { background: #f5f7fa; border-radius: 12px; }
+.skin-aero.st-business .msg { box-shadow: 0 1px 1px rgba(15, 29, 51, .06); border: 1px solid #e6eaf0; border-radius: 14px; }
+.skin-aero.st-business .msg.them { border-bottom-left-radius: 4px; }
+.skin-aero.st-business .msg.me { background: var(--a-accent); border-color: var(--a-accent); border-bottom-right-radius: 4px; box-shadow: 0 1px 2px rgba(37, 99, 235, .25); }
+.skin-aero.st-business .msg.aska-big { border: 0; background: none; box-shadow: none; }
+.skin-aero.st-business .history .day { background: #e7ebf1; box-shadow: none; }
+.skin-aero.st-business .compose textarea { border-radius: 12px; }
+.skin-aero.st-business .smiles, .skin-aero.st-business .toast { background: #fff; border-color: #e1e6ed; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.skin-aero.st-business .overlay { background: rgba(15, 29, 51, .4); }
+.skin-aero.st-business .chip { border-radius: 8px; }
+.skin-aero.st-business .chip.on { background: var(--biz-navy); color: #fff; border-color: var(--biz-navy); }
+.skin-aero.st-business .aska-biz-hero { background: linear-gradient(135deg, #0f1d33, #22406e); }
+.skin-aero.st-business .aska-biz .cgroup .aska-grp-add { color: var(--a-accent); border-color: rgba(37, 99, 235, .4); }
+.skin-aero.st-business .aska-style { background: #fff; border-radius: 12px; }
+.skin-aero.st-business .aska-ptile, .skin-aero.st-business .aska-post { background: #fff; border-color: #e1e6ed; }
+@media (max-width: 719px), (pointer: coarse) and (max-width: 900px) {
+  .skin-aero.st-business .win { background: #f6f8fb; border: 0; border-radius: 0; box-shadow: none; }
+  .skin-aero.st-business .titlebar { border-radius: 0; }
+  .skin-aero.st-business .overlay .win.dialog { background: #fff; }
+  .skin-aero.st-business .overlay .win.dialog .titlebar { border-radius: 18px 18px 0 0; }
+  .skin-aero.st-business .overlay .win.dialog::before { background: rgba(255, 255, 255, .45); }
+  .skin-aero.st-business .tabbar { background: #fff; border-top: 1px solid #e1e6ed; box-shadow: 0 -4px 16px rgba(15, 29, 51, .06); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .skin-aero.st-business .tabbar button.on { color: var(--a-accent); }
+  .skin-aero.st-business .tabbar button.on i { transform: none; }
+  .skin-aero.st-business .tabbar button.on::before { content: ''; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; border-radius: 0 0 3px 3px; background: var(--a-accent); }
+}
+
+/* ══ 6. Стиль «Ночь» (поверх Зумера): тёмное небо, тусклые пузыри, светлый текст ══ */
+body.skin-aero.st-night {
+  --a-text: #e6edf8; --a-muted: #93a3bf; --a-line: rgba(255, 255, 255, .1); --a-accent: #4d9cff; --a-accent2: #7cc4ff; --a-me1: #3d8bff; --a-me2: #1d4ed8;
+  --a-glass: rgba(14, 22, 42, .9); --a-glass2: rgba(16, 25, 48, .97); --a-card: #16213d; --sel: #4d9cff; --link: #7cb8ff; --shadow: #5b6a86; --face: #16213d;
+  color: var(--a-text); color-scheme: dark;
+}
+.skin-aero.st-night .desktop { background: radial-gradient(1.5px 1.5px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 33% 64%, #cfe0ff, transparent), radial-gradient(1.5px 1.5px at 78% 12%, #fff, transparent), radial-gradient(1px 1px at 88% 52%, #cfe0ff, transparent), radial-gradient(900px 480px at 15% -10%, rgba(77, 156, 255, .25), transparent 60%), linear-gradient(180deg, #0d1733 0%, #070d1f 60%, #04070f 100%); }
+.skin-aero.st-night .desktop::before { opacity: .18; }
+.skin-aero.st-night .win { background: var(--a-glass); border-color: rgba(255, 255, 255, .1); box-shadow: 0 22px 60px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .06); }
+.skin-aero.st-night .titlebar { background: linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .02)); color: var(--a-text); border-bottom-color: var(--a-line); }
+.skin-aero.st-night .tbtn { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .16); color: var(--a-text); box-shadow: none; }
+.skin-aero.st-night .btn { background: rgba(255, 255, 255, .07); border-color: rgba(255, 255, 255, .14); color: var(--a-text); box-shadow: none; }
+.skin-aero.st-night .btn:hover { background: rgba(255, 255, 255, .11); box-shadow: 0 0 0 1px rgba(77, 156, 255, .3); }
+.skin-aero.st-night .btn:active { background: rgba(255, 255, 255, .04); }
+.skin-aero.st-night .btn.primary { background: linear-gradient(180deg, #4d9cff, #2563eb); border-color: #3b82f6; color: #fff; box-shadow: 0 4px 16px rgba(59, 130, 246, .35); }
+.skin-aero.st-night .btn.icon.on { background: rgba(224, 48, 106, .2); color: #ff7aa8; }
+.skin-aero.st-night .inset, .skin-aero.st-night .clist { background: rgba(255, 255, 255, .03); border-color: var(--a-line); box-shadow: none; }
+.skin-aero.st-night .field, .skin-aero.st-night textarea.field, .skin-aero.st-night select.field { background: #0c1429; border-color: rgba(255, 255, 255, .16); color: var(--a-text); box-shadow: none; }
+.skin-aero.st-night .field::placeholder { color: #6f7f9c; }
+.skin-aero.st-night .groupbox { background: rgba(255, 255, 255, .04); border-color: var(--a-line); }
+.skin-aero.st-night .tabs { background: rgba(255, 255, 255, .06); }
+.skin-aero.st-night .tabs button.on { background: rgba(255, 255, 255, .14); color: #fff; box-shadow: none; }
+.skin-aero.st-night .me-panel, .skin-aero.st-night .chat-head, .skin-aero.st-night .wall-head, .skin-aero.st-night .aska-composer { background: rgba(255, 255, 255, .05); border-color: var(--a-line); }
+.skin-aero.st-night .aska-me.gold { background: linear-gradient(135deg, rgba(242, 201, 76, .16), rgba(255, 255, 255, .04)); }
+.skin-aero.st-night .citem:hover { background: rgba(255, 255, 255, .05); }
+.skin-aero.st-night .citem.sel { background: rgba(77, 156, 255, .18); box-shadow: inset 0 0 0 1px rgba(77, 156, 255, .35); }
+.skin-aero.st-night .citem .ico { background: radial-gradient(circle at 50% 30%, #24345a, #141f3a); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); }
+.skin-aero.st-night .citem.off .nick { color: #8291ad; }
+.skin-aero.st-night .history { background: rgba(0, 0, 0, .22); }
+.skin-aero.st-night .history .day { background: rgba(255, 255, 255, .08); color: var(--a-muted); box-shadow: none; }
+.skin-aero.st-night .msg { background: #1a2644; color: var(--a-text); box-shadow: none; }
+.skin-aero.st-night .msg.me { background: linear-gradient(180deg, #3d8bff, #1d4ed8); color: #fff; }
+.skin-aero.st-night .msg.aska-big, .skin-aero.st-night .msg.rich { background: none; }
+.skin-aero.st-night .msg:not(.me):not(.them) { background: rgba(255, 255, 255, .08); }
+.skin-aero.st-night .smiles, .skin-aero.st-night .toast, .skin-aero.st-night .menu, .skin-aero.st-night .dialog { background: #121c36; border-color: rgba(255, 255, 255, .1); }
+.skin-aero.st-night .overlay { background: rgba(0, 0, 0, .5); }
+.skin-aero.st-night .chip { background: rgba(255, 255, 255, .07); border-color: rgba(255, 255, 255, .15); color: var(--a-text); }
+.skin-aero.st-night .chip.on { background: var(--a-accent); border-color: var(--a-accent); color: #fff; }
+.skin-aero.st-night .aska-space { background: rgba(255, 255, 255, .07); }
+.skin-aero.st-night .aska-space button.on { background: rgba(255, 255, 255, .15); color: #fff; box-shadow: none; }
+.skin-aero.st-night .aska-ptile, .skin-aero.st-night .aska-post, .skin-aero.st-night .aska-style, .skin-aero.st-night .trackcard, .skin-aero.st-night .magnetcard { background: rgba(255, 255, 255, .05); border-color: var(--a-line); color: var(--a-text); }
+.skin-aero.st-night .aska-reacts button, .skin-aero.st-night .aska-stat { background: rgba(255, 255, 255, .07); border-color: rgba(255, 255, 255, .12); color: var(--a-text); }
+.skin-aero.st-night .aska-symbols .aska-kao, .skin-aero.st-night .aska-symbols .aska-sym { background: rgba(255, 255, 255, .07); border-color: rgba(255, 255, 255, .12); }
+.skin-aero.st-night .aska-cpanel { background: #121c36; border-color: var(--a-line); }
+.skin-aero.st-night .aska-smile-tabs { background: rgba(255, 255, 255, .06); }
+.skin-aero.st-night .aska-smile-tabs button.on { background: rgba(255, 255, 255, .15); color: #fff; }
+.skin-aero.st-night a, .skin-aero.st-night .link { color: var(--link); }
+.skin-aero.st-night .aska-brain-note, .skin-aero.st-night .aska-push { color: var(--a-text); }
+@media (max-width: 719px), (pointer: coarse) and (max-width: 900px) {
+  .skin-aero.st-night .win { background: linear-gradient(180deg, rgba(12, 20, 40, .96), rgba(8, 13, 28, .98)); }
+  .skin-aero.st-night .overlay .win.dialog { background: #111a33; }
+  .skin-aero.st-night .overlay .win.dialog::before { background: rgba(255, 255, 255, .25); }
+  .skin-aero.st-night .tabbar { background: rgba(9, 15, 31, .94); border-top-color: var(--a-line); box-shadow: 0 -6px 20px rgba(0, 0, 0, .35); }
+  .skin-aero.st-night .tabbar button { color: #8696b3; }
+  .skin-aero.st-night .tabbar button.on { color: #7cb8ff; }
+}

@@ -1552,6 +1552,11 @@ export function createBots(ctx) {
       const r = wall.post(aska, aska, { kind: 'text', text: '🤩 Новое: супер-смайлы! В беседе нажми ☺ → «🤩 Супер» — у друга смайл оживёт и прозвучит, у каждого свой звук. А в комментариях под записями теперь есть ☺: супер-смайлы, ✨ символы вроде ¯\\_(ツ)_/¯ и гифки. Нажми на смайл ниже 👇' }, { fromBot: true });
       if (r.post) wall.comment(aska, r.post.id, '🥳');
     }
+    // девятое — стили в «Ещё» и «Бизнес»
+    if (wall && getSetting(db, 'announced_v9') !== '1') {
+      setSetting(db, 'announced_v9', '1');
+      wall.post(aska, aska, { kind: 'text', text: '🎨 Новое: стили! «Ещё» → «Вид»: Зумер, Миллениал, 🌙 Ночь и 💼 Бизнес. А «Бизнес» — это отдельные рабочие переписки: Команда, Работа, Бизнес, Партнёры и рабочие групповые чаты. Переключатель «🏠 Личное | 💼 Бизнес» — прямо на главной. Рабочее не смешается с личным 💼' }, { fromBot: true });
+    }
     if (getSetting(db, 'announced_v6') !== '1') {
       setSetting(db, 'announced_v6', '1');
       const at6 = daytime(now() + T(90_000));

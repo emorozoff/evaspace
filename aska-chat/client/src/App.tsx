@@ -14,6 +14,7 @@ import { Svg, Dialog } from './components/Win.tsx';
 import { Profile, CircleInfo } from './components/Profile.tsx';
 import type { WallView } from './components/Wall.tsx';
 import { Plate } from './components/Plate.tsx';
+import { useDesign, useSplit, chatIsBiz } from './lib/space.ts';
 
 function chatFromHash(): string | null {
   const m = location.hash.match(/chat=([^&]+)/);
@@ -31,6 +32,8 @@ export default function App() {
   const [circleInfo, setCircleInfo] = useState<string | null>(null);
   const [superCode, setSuperCode] = useState('');
   const [wallView, setWallView] = useState<WallView>({ kind: 'feed' });
+  const business = useDesign() === 'business';
+  const split = useSplit();
 
   useEffect(() => {
     if (location.hash.includes('chat=')) history.replaceState(null, '', location.pathname);
@@ -108,7 +111,9 @@ export default function App() {
   const unreadOf = (pred: (id: string) => boolean) => chatIds.filter(pred).reduce((n, id) => n + unreadIn(id, s), 0);
   const myTwin = twinOf(s.me!.userId, s);
   const isTwinChat = (id: string) => !!myTwin && s.chats[id]?.kind === 'dm' && s.chats[id].members.some((m) => m.userId === myTwin.id);
-  const unread = unreadOf((id) => !isTwinChat(id));
+  // на вкладке «Чаты» — непрочитанное своего места (Личное или Бизнес), если они разделены
+  const inSpace = (id: string) => !split || chatIsBiz(s, s.chats[id]) === business;
+  const unread = unreadOf((id) => !isTwinChat(id) && inSpace(id));
   const twinUnread = unreadOf(isTwinChat);
   const chatOpen = chat && s.chats[chat] ? chat : null;
   const cls = ['desktop', chatOpen && 'mode-chat', aux && 'mode-aux', aux && 'focus-aux'].filter(Boolean).join(' ');
@@ -142,6 +147,22 @@ export default function App() {
           <div className="t"><b>{toast.name}</b><div>{toast.text}</div></div>
         </div>
       )}
+      {business ? (
+        <nav className="tabbar aska-biz-tabs">
+          <button className={!aux ? 'on' : ''} onClick={() => { setAux(null); setChat(null); }}>
+            <i>💬</i><span>Чаты</span>{unread > 0 && <b className="tb-badge">{unread}</b>}
+          </button>
+          <button className={aux === 'biz' ? 'on' : ''} onClick={() => tab('biz')}>
+            <i>📇</i><span>Контакты</span>
+          </button>
+          <button className={aux === 'myai' ? 'on' : ''} onClick={() => tab('myai')}>
+            <i>🤖</i><span>Мой ИИ</span>{twinUnread > 0 && <b className="tb-badge">{twinUnread}</b>}
+          </button>
+          <button className={aux === 'settings' || aux === 'invite' || aux === 'admin' ? 'on' : ''} onClick={() => tab('settings')}>
+            <i>☰</i><span>Ещё</span>
+          </button>
+        </nav>
+      ) : (
       <nav className="tabbar">
         <button className={!aux ? 'on' : ''} onClick={() => { setAux(null); setChat(null); }}>
           <i>💬</i><span>Чаты</span>{unread > 0 && <b className="tb-badge">{unread}</b>}
@@ -162,6 +183,7 @@ export default function App() {
           <i>☰</i><span>Ещё</span>
         </button>
       </nav>
+      )}
     </div>
   );
 }

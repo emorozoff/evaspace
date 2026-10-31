@@ -164,8 +164,10 @@ export function createApp({
     } catch { return null; }
   }
 
-  // Группы контактов: Ближний круг, Знакомства, Работа. Кого человек позвал или кто позвал его — сразу в ближний круг
-  const GROUPS = ['close', 'meet', 'work'];
+  // Группы контактов: личные — Ближний круг, Знакомства; рабочие («Бизнес») — Команда, Работа, Бизнес, Партнёры.
+  // Кого человек позвал или кто позвал его — сразу в ближний круг
+  const BIZ = ['team', 'work', 'biz', 'partners'];
+  const GROUPS = ['close', 'meet', ...BIZ];
   function groupsOf(userId) {
     const out = {};
     for (const r of db.prepare("SELECT id FROM users WHERE kind IN ('human', 'person') AND id != ?").all(userId)) out[r.id] = 'meet';
@@ -203,6 +205,7 @@ export function createApp({
     if (chat.emoji) v.emoji = chat.emoji;
     if (chat.about) v.about = chat.about;
     if (chat.kind === 'circle') { v.isPublic = Boolean(chat.is_public); v.createdBy = chat.created_by || null; }
+    if (chat.biz) v.biz = chat.biz;
     if (chat.kind === 'twin') { const m = JSON.parse(chat.meta || '{}'); v.twin = { twinId: m.twinId, anon: Boolean(m.anon) }; }
     return v;
   }
@@ -808,7 +811,7 @@ export function createApp({
         const lastAt = db.prepare('SELECT MAX(created_at) AS t FROM messages WHERE chat_id = ?').get(c.id).t || 0;
         return {
           id: c.id, kind: c.kind, title: c.title, emoji: c.emoji || (c.kind === 'general' ? '🌼' : '⭕'), about: c.about || (c.kind === 'general' ? 'Все свои: здесь каждый, кого пригласили' : ''),
-          isPublic: c.kind === 'general' || Boolean(c.is_public), member: Boolean(c.member), count: ids.length,
+          isPublic: c.kind === 'general' || Boolean(c.is_public), member: Boolean(c.member), count: ids.length, biz: c.biz || undefined,
           online: ids.filter((id) => online.has(id)).length, lastAt,
         };
       }),
@@ -821,14 +824,16 @@ export function createApp({
     const title = cleanName(b.title);
     const about = b.about ? cleanText(b.about, 140) : '';
     const emoji = typeof b.emoji === 'string' && [...b.emoji].length <= 4 ? b.emoji.trim() : '⭕';
-    if (!title || about === null) return res.status(400).json({ error: 'bad_request' });
+    // рабочий чат («Бизнес»): всегда закрытый, в своём разделе
+    const biz = b.biz == null ? null : BIZ.includes(b.biz) ? b.biz : undefined;
+    if (!title || about === null || biz === undefined) return res.status(400).json({ error: 'bad_request' });
     const ids = [...new Set(Array.isArray(b.memberIds) ? b.memberIds : [])]
       .filter((id) => Number.isInteger(id) && id !== req.userId)
       .filter((id) => ['human', 'person'].includes(userRow(id)?.kind));
     const id = `circle:${crypto.randomBytes(6).toString('hex')}`;
     tx(db, () => {
-      db.prepare("INSERT INTO chats (id, kind, title, emoji, about, is_public, created_by, created_at) VALUES (?, 'circle', ?, ?, ?, ?, ?, ?)")
-        .run(id, title, emoji || '⭕', about || null, b.isPublic ? 1 : 0, req.userId, Date.now());
+      db.prepare("INSERT INTO chats (id, kind, title, emoji, about, is_public, created_by, created_at, biz) VALUES (?, 'circle', ?, ?, ?, ?, ?, ?, ?)")
+        .run(id, title, emoji || '⭕', about || null, b.isPublic && !biz ? 1 : 0, req.userId, Date.now(), biz);
       const ins = db.prepare('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)');
       for (const uid of [req.userId, ...ids]) ins.run(id, uid);
     });
@@ -841,6 +846,21 @@ export function createApp({
     if (!c || (c.kind === 'circle' && !c.is_public && !memberIds(c.id).includes(req.userId))) return res.status(404).json({ error: 'not_found' });
     const maxId = db.prepare('SELECT MAX(id) AS id FROM messages WHERE chat_id = ?').get(c.id).id || 0;
     db.prepare('INSERT OR IGNORE INTO chat_members (chat_id, user_id, read_up_to) VALUES (?, ?, ?)').run(c.id, req.userId, maxId);
+    broadcastChat(c.id);
+    res.json({ chat: chatView(c.id) });
+  });
+
+  // Позвать людей в закрытый круг или рабочий чат: может любой его участник. Новенькие видят переписку с этого момента.
+  api.post('/circles/:id/members', auth, json, (req, res) => {
+    const c = db.prepare("SELECT * FROM chats WHERE id = ? AND kind = 'circle'").get(req.params.id);
+    if (!c || !memberIds(c.id).includes(req.userId)) return res.status(404).json({ error: 'not_found' });
+    if (!allow(`cmem:${req.userId}`, 60, 3_600_000)) return res.status(429).json({ error: 'too_many' });
+    const ids = [...new Set(Array.isArray(req.body?.userIds) ? req.body.userIds : [])]
+      .filter((id) => Number.isInteger(id) && ['human', 'person'].includes(userRow(id)?.kind) && !userRow(id).blocked_at);
+    if (!ids.length || ids.length > 50) return res.status(400).json({ error: 'bad_request' });
+    const maxId = db.prepare('SELECT MAX(id) AS id FROM messages WHERE chat_id = ?').get(c.id).id || 0;
+    const ins = db.prepare('INSERT OR IGNORE INTO chat_members (chat_id, user_id, read_up_to) VALUES (?, ?, ?)');
+    tx(db, () => { for (const uid of ids) ins.run(c.id, uid, maxId); });
     broadcastChat(c.id);
     res.json({ chat: chatView(c.id) });
   });

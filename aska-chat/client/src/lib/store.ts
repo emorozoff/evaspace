@@ -19,7 +19,7 @@ export interface Profile {
   phone: string | null; phoneVerified: boolean; allowAnon: boolean; plate: string | null;
 }
 export type Truth = 'ai' | 'human';
-export type Group = 'close' | 'meet' | 'work';
+export type Group = 'close' | 'meet' | 'team' | 'work' | 'biz' | 'partners';
 export type { UserStatus } from './db.ts';
 // Состояние «мозга» — только для голд (администраторов)
 export interface Brain { key: boolean; people: boolean; error: string }
@@ -776,7 +776,7 @@ export const game = () => api.get<{ right: number; total: number; top: { userId:
 
 export interface CircleInfo {
   id: string; kind: 'general' | 'circle'; title: string; emoji: string; about: string; isPublic: boolean;
-  member: boolean; count: number; online: number; lastAt: number;
+  member: boolean; count: number; online: number; lastAt: number; biz?: string;
 }
 export const listCircles = () => api.get<{ circles: CircleInfo[] }>('/circles').then((r) => r.circles);
 
@@ -791,9 +791,14 @@ export async function leaveCircle(id: string) {
   const { [id]: _gone, ...rest } = state.chats;
   setChats(rest);
 }
-export async function createCircle(c: { title: string; emoji: string; about: string; memberIds: number[]; isPublic: boolean }) {
+export async function createCircle(c: { title: string; emoji: string; about: string; memberIds: number[]; isPublic: boolean; biz?: string }) {
   if (c.memberIds.some((id) => !state.users[id])) await loadState();
   return gotChat((await api.post<{ chat: Chat }>('/circles', c)).chat);
+}
+
+// Позвать людей в закрытый круг или рабочий чат
+export async function addCircleMembers(chatId: string, userIds: number[]) {
+  return gotChat((await api.post<{ chat: Chat }>(`/circles/${chatId}/members`, { userIds })).chat);
 }
 
 export const openTwinChat = async (twinId: number, anon: boolean) => gotChat((await api.post<{ chat: Chat }>(`/twins/${twinId}/chat`, { anon })).chat);

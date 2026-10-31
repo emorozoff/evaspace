@@ -3,8 +3,12 @@
 
 import { markSvg, goldFlowerSvg } from './logo.ts';
 
-export type Design = 'zoomer' | 'millennial';
+// Стили: на входе — Зумер или Миллениал; в «Ещё» → «Вид» ещё Бизнес (отдельные рабочие переписки) и Ночь.
+// Бизнес и Ночь построены поверх Зумера (skin-aero) — свои цвета и форма в v9.css (st-business, st-night).
+export type Design = 'zoomer' | 'millennial' | 'business' | 'night';
+export const DESIGNS: Design[] = ['zoomer', 'millennial', 'business', 'night'];
 const DESIGN_KEY = 'aska-design';
+const HOME_KEY = 'aska-design-home'; // последний личный стиль — куда вернуться из «Бизнеса»
 const SOUND_KEY = 'aska-sound';
 
 function readLS(key: string) {
@@ -15,19 +19,34 @@ function writeLS(key: string, value: string) {
 }
 
 export function getDesign(): Design {
-  return readLS(DESIGN_KEY) === 'millennial' ? 'millennial' : 'zoomer';
+  const d = readLS(DESIGN_KEY) as Design | null;
+  return d && DESIGNS.includes(d) ? d : 'zoomer';
+}
+// личный стиль, в который возвращаемся из «Бизнеса»
+export function homeDesign(): Design {
+  const d = readLS(HOME_KEY) as Design | null;
+  return d && DESIGNS.includes(d) && d !== 'business' ? d : getDesign() === 'business' ? 'zoomer' : getDesign();
 }
 
+const THEME_COLOR: Record<Design, string> = { zoomer: '#2c8de0', millennial: '#0a246a', business: '#0f1d33', night: '#070d1f' };
 export function applyDesign(d: Design) {
-  document.body.classList.toggle('skin-aero', d === 'zoomer');
-  document.body.classList.toggle('skin-classic', d === 'millennial');
-  document.body.classList.add('theme-chat');
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', d === 'zoomer' ? '#2c8de0' : '#0a246a');
+  const cl = document.body.classList;
+  cl.toggle('skin-aero', d !== 'millennial');
+  cl.toggle('skin-classic', d === 'millennial');
+  cl.toggle('st-business', d === 'business');
+  cl.toggle('st-night', d === 'night');
+  cl.add('theme-chat');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLOR[d]);
 }
+
+const designListeners = new Set<() => void>();
+export function onDesign(l: () => void) { designListeners.add(l); return () => { designListeners.delete(l); }; }
 
 export function setDesign(d: Design) {
   writeLS(DESIGN_KEY, d);
+  if (d !== 'business') writeLS(HOME_KEY, d);
   applyDesign(d);
+  designListeners.forEach((l) => l());
 }
 
 // ---------- цветочки ----------

@@ -8,9 +8,11 @@ import {
 import { ApiError } from '../lib/api.ts';
 import { safetyCode, fromB64 } from '../lib/crypto.ts';
 import { isIOS, isStandalone } from '../lib/platform.ts';
-import { getDesign, setDesign, soundEnabled, setSoundEnabled, play, flower } from '../lib/aska.ts';
-import type { Design } from '../lib/aska.ts';
-import { DesignPick, APP_VERSION } from './Welcome.tsx';
+import { setDesign, soundEnabled, setSoundEnabled, play, flower } from '../lib/aska.ts';
+import { APP_VERSION } from './Welcome.tsx';
+import { StylePick } from './Styles.tsx';
+import { BizManager } from './Business.tsx';
+import { useSplit, setSplit, useDesign } from '../lib/space.ts';
 import { Win, Ico, Dialog } from './Win.tsx';
 import { UserPlate, Gold } from './Plate.tsx';
 import { Plates } from './Plates.tsx';
@@ -20,10 +22,11 @@ import { Admin } from './Admin.tsx';
 import { Wall } from './Wall.tsx';
 import type { WallView } from './Wall.tsx';
 
-export type AuxKind = 'settings' | 'invite' | 'circles' | 'myai' | 'admin' | 'plates' | 'wall';
+export type AuxKind = 'settings' | 'invite' | 'circles' | 'myai' | 'admin' | 'plates' | 'wall' | 'biz';
 
 const TITLES: Record<AuxKind, string> = {
   settings: 'Ещё', invite: 'Позвать друга', circles: 'Круги', myai: 'Мой ИИ', admin: 'Управление АСЬКОЙ', plates: 'Номера', wall: 'Стена',
+  biz: 'Рабочие контакты',
 };
 
 export function Aux({ kind, onBack, onOpen, onAux, wallView, onWallView, onProfile }: {
@@ -40,6 +43,7 @@ export function Aux({ kind, onBack, onOpen, onAux, wallView, onWallView, onProfi
         {kind === 'myai' && <MyAI onOpen={onOpen} />}
         {kind === 'admin' && <Admin />}
         {kind === 'plates' && <Plates />}
+        {kind === 'biz' && <BizManager onOpen={onOpen} onProfile={onProfile} />}
       </div>
     </Win>
   );
@@ -47,7 +51,8 @@ export function Aux({ kind, onBack, onOpen, onAux, wallView, onWallView, onProfi
 
 function Settings({ onAux }: { onAux: (k: AuxKind) => void }) {
   const s = useStore();
-  const [design, setD] = useState<Design>(getDesign());
+  const design = useDesign();
+  const split = useSplit();
   const [sound, setSound] = useState(soundEnabled());
   const [myCode, setMyCode] = useState('');
   const [pushError, setPushError] = useState('');
@@ -103,8 +108,22 @@ function Settings({ onAux }: { onAux: (k: AuxKind) => void }) {
       </div>
 
       <div className="groupbox">
-        <div className="legend">Вид</div>
-        <DesignPick value={design} onChange={(d) => { setDesign(d); setD(d); }} />
+        <div className="legend">Вид — стиль АСЬКИ</div>
+        <StylePick value={design} onChange={setDesign} />
+        <div className="hint">Меняется сразу, переписка и контакты остаются. «Бизнес» — отдельные рабочие переписки.</div>
+      </div>
+
+      <div className="groupbox">
+        <div className="legend">💼 Бизнес</div>
+        <label className="row aska-check">
+          <input type="checkbox" checked={split} onChange={(e) => setSplit(e.target.checked)} />
+          <span>Рабочие контакты — только в «Бизнесе», личные — только в личных стилях</span>
+        </label>
+        <div className="row mt">
+          <button className="btn" onClick={() => onAux('biz')}>📇 Рабочие контакты</button>
+          <span className="sp" />
+          {design !== 'business' && <button className="btn primary" onClick={() => setDesign('business')}>💼 Открыть «Бизнес»</button>}
+        </div>
       </div>
 
       <div className="groupbox">

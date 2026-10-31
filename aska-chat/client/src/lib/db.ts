@@ -18,6 +18,7 @@ export interface Member { userId: number; readUpTo: number }
 export interface LocalChat {
   id: string; kind: 'general' | 'dm' | 'group' | 'circle' | 'twin'; title: string | null; members: Member[]; lastId: number;
   emoji?: string; about?: string; isPublic?: boolean; createdBy?: number | null; twin?: { twinId: number; anon: boolean };
+  biz?: string; // рабочий чат («Бизнес»): team | work | biz | partners
 }
 
 export interface StoredMsg {

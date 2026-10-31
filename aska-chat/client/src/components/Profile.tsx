@@ -13,8 +13,11 @@ import { Dialog, Ico } from './Win.tsx';
 import { UserPlate, Gold } from './Plate.tsx';
 import { PlateCard } from './Plates.tsx';
 import { StatusPicker } from './Status.tsx';
+import { AddMembersDialog } from './Business.tsx';
+import { BIZ_SECTIONS, isBizGroup, useSplit, bizOf } from '../lib/space.ts';
 
-const GROUP_NAMES: { key: Group; label: string }[] = [{ key: 'close', label: '💛 Ближний круг' }, { key: 'meet', label: '👋 Знакомства' }, { key: 'work', label: '💼 Работа' }];
+const GROUP_NAMES: { key: Group; label: string }[] = [{ key: 'close', label: '💛 Ближний круг' }, { key: 'meet', label: '👋 Знакомства' }];
+const BIZ_NAMES: { key: Group; label: string }[] = BIZ_SECTIONS.map((x) => ({ key: x.key, label: `${x.emoji} ${x.label}` }));
 
 export function Profile({ userId, onClose, onOpenChat, onWall }: { userId: number; onClose: () => void; onOpenChat: (chatId: string) => void; onWall: (userId: number) => void }) {
   const s = useStore();
@@ -22,6 +25,7 @@ export function Profile({ userId, onClose, onOpenChat, onWall }: { userId: numbe
   const [twinAsk, setTwinAsk] = useState(false);
   const [result, setResult] = useState<{ correct: boolean; truth: Truth } | null>(null);
   const [busy, setBusy] = useState(false);
+  const split = useSplit();
   const [card, setCard] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const u = s.users[userId];
@@ -91,13 +95,21 @@ export function Profile({ userId, onClose, onOpenChat, onWall }: { userId: numbe
 
         {person && !itsMe && !u.blocked && (
           <div className="aska-grp-pick">
-            <span className="hint">Группа:</span>
+            <span className="hint">Личное:</span>
             <div className="tabs">
               {GROUP_NAMES.map((g) => (
                 <button key={g.key} className={(s.groups[u.id] || 'meet') === g.key ? 'on' : ''} disabled={busy}
                   onClick={() => act(() => setGroup(u.id, g.key))}>{g.label}</button>
               ))}
             </div>
+            <span className="hint">💼 Бизнес:</span>
+            <div className="tabs">
+              {BIZ_NAMES.map((g) => (
+                <button key={g.key} className={s.groups[u.id] === g.key ? 'on' : ''} disabled={busy}
+                  onClick={() => act(() => setGroup(u.id, g.key))}>{g.label}</button>
+              ))}
+            </div>
+            {split && isBizGroup(s.groups[u.id]) && <span className="hint">Теперь {u.displayName} — только в «Бизнесе» ({bizOf(s.groups[u.id])?.label}).</span>}
           </div>
         )}
 
@@ -152,9 +164,11 @@ export function Profile({ userId, onClose, onOpenChat, onWall }: { userId: numbe
 export function CircleInfo({ chatId, onClose, onProfile }: { chatId: string; onClose: () => void; onProfile: (userId: number) => void }) {
   const s = useStore();
   const [busy, setBusy] = useState(false);
+  const [inviting, setInviting] = useState(false);
   const chat = s.chats[chatId];
   if (!chat) return null;
   const general = chat.kind === 'general';
+  const sec = bizOf(chat.biz);
   const people = chat.members.map((m) => s.users[m.userId]).filter((u) => u && u.kind !== 'twin');
   const online = people.filter((u) => s.presence[u!.id]).length;
   return (
@@ -174,12 +188,16 @@ export function CircleInfo({ chatId, onClose, onProfile }: { chatId: string; onC
             ))}
           </div>
         )}
-        {!general && <div className="hint">В кругах бывают и ИИ. Секреты лучше писать лично.</div>}
+        {sec && <div className="hint">{sec.emoji} Рабочий чат, раздел «{sec.label}». 🔒 Переписка шифруется на телефоне.</div>}
+        {!general && !sec && <div className="hint">В кругах бывают и ИИ. Секреты лучше писать лично.</div>}
         {!general && (
-          <div className="right mt">
-            <button className="btn" disabled={busy} onClick={async () => { setBusy(true); try { await leaveCircle(chatId); onClose(); } finally { setBusy(false); } }}>Выйти из круга</button>
+          <div className="row mt">
+            {!chat.isPublic && <button className="btn primary" onClick={() => setInviting(true)}>＋ Позвать людей</button>}
+            <span className="sp" />
+            <button className="btn" disabled={busy} onClick={async () => { setBusy(true); try { await leaveCircle(chatId); onClose(); } finally { setBusy(false); } }}>{sec ? 'Выйти из чата' : 'Выйти из круга'}</button>
           </div>
         )}
+        {inviting && <AddMembersDialog chatId={chatId} onClose={() => setInviting(false)} />}
       </div>
     </Dialog>
   );

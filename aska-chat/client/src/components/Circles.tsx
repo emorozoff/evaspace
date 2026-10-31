@@ -17,7 +17,8 @@ export function Circles({ onOpen }: { onOpen: (chatId: string) => void }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const load = () => listCircles().then(setList).catch(() => setError('Не получилось загрузить круги. Проверь интернет.'));
+  // рабочие чаты («Бизнес») живут в своих разделах, не среди кругов
+  const load = () => listCircles().then((l) => setList(l.filter((c) => !c.biz))).catch(() => setError('Не получилось загрузить круги. Проверь интернет.'));
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function join(c: CircleInfo) {
